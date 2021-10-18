@@ -25,9 +25,18 @@
     <a href="{{url('/')}}/plugin/reservations/createBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link {{ $action == 'createBuckets' ? 'active' : '' }}">新規作成</a>
 </li>
 <li role="presentation" class="nav-item">
-    <a href="{{url('/')}}/plugin/reservations/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link {{ $action == 'listBuckets' ? 'active' : '' }}">表示コンテンツ選択</a>
+    <a href="{{url('/')}}/plugin/reservations/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link {{ $action == 'listBuckets' ? 'active' : '' }}">施設予約選択</a>
 </li>
 {{-- TODO:権限機能が解析しきれていない為、一旦非表示＠2019/12/17 --}}
 {{-- <li class="nav-item">
     <a href="{{url('/')}}/plugin/reservations/editBucketsRoles/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link {{ $action == 'editBucketsRoles' || $action == '' ? 'active' : '' }}">権限設定</a>
 </li> --}}
+@if ($action == 'editBucketsMails')
+    <li role="presentation" class="nav-item">
+        <span class="nav-link"><span class="active">メール設定</span></span>
+    </li>
+@else
+    <li role="presentation" class="nav-item">
+        <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/editBucketsMails/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">メール設定</a>
+    </li>
+@endif

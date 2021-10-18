@@ -5,11 +5,26 @@ namespace App\Models\User\Reservations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\App;
 
+use App\UserableNohistory;
+
 use App\Enums\ConnectLocale;
 use App\Enums\DayOfWeek;
 
 class ReservationsInput extends Model
 {
+    // 保存時のユーザー関連データの保持（履歴なしUserable）
+    use UserableNohistory;
+
+    // 更新する項目の定義
+    protected $fillable = [
+        'reservations_id',
+        'facility_id',
+        'start_datetime',
+        'end_datetime',
+        'first_committed_at',
+        'status',
+    ];
+
     protected $dates = ['start_datetime', 'end_datetime'];
 
     /**

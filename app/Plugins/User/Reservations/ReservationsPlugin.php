@@ -22,6 +22,8 @@ use App\Plugins\User\UserPluginBase;
 use App\Enums\Required;
 use App\Enums\ReservationCalendarDisplayType;
 use App\Enums\ReservationColumnType;
+use App\Enums\SendMailTiming;
+use App\Enums\StatusType;
 
 /**
  * 施設予約プラグイン
@@ -70,6 +72,7 @@ class ReservationsPlugin extends UserPluginBase
             'updateSelectSequence',
             'editBooking',
             'saveBooking',
+            'approvalBooking',
             'destroyBooking',
         ];
         return $functions;
@@ -100,9 +103,10 @@ class ReservationsPlugin extends UserPluginBase
         $role_check_table["updateSelect"] = ['role_article'];
         $role_check_table["updateSelectSequence"] = ['role_article'];
 
-        $role_check_table["editBooking"] = ['role_article'];
-        $role_check_table["saveBooking"] = ['role_article'];
-        $role_check_table["destroyBooking"] = ['role_article'];
+        $role_check_table["editBooking"] = ['posts.create'];
+        $role_check_table["saveBooking"] = ['posts.create', 'posts.update'];
+        $role_check_table["approvalBooking"] = ['posts.approval'];
+        $role_check_table["destroyBooking"] = ['posts.delete'];
 
         return $role_check_table;
     }
@@ -110,10 +114,12 @@ class ReservationsPlugin extends UserPluginBase
     /**
      * メール送信で使用するメソッド
      */
-    // public function useBucketMailMethods()
-    // {
-    //     return ['notice'];
-    // }
+    public function useBucketMailMethods()
+    {
+        // [TODO] 承認実装まだ
+        // return ['notice', 'approval', 'approved'];
+        return ['notice'];
+    }
 
     /**
      *  編集画面の最初のタブ（コアから呼び出す）
@@ -245,17 +251,22 @@ class ReservationsPlugin extends UserPluginBase
             new ReservationsInput();
 
         // 新規登録の判定のために、保存する前のレコードを退避しておく。
-        // $before_reservations_inputs = clone $reservations_inputs;
+        $before_reservations_inputs = clone $reservations_inputs;
+
+        // 承認の要否確認とステータス処理
+        if ($this->isApproval()) {
+            $reservations_inputs->status = StatusType::approval_pending;  // 承認待ち
+        } else {
+            $reservations_inputs->status = StatusType::active;  // 公開
+        }
 
         // 新規登録時のみの登録項目
         if (!$request->booking_id) {
             $reservations_inputs->reservations_id = $request->reservations_id;
             $reservations_inputs->facility_id = $request->facility_id;
-            $reservations_inputs->input_user_id = Auth::user()->userid;
         }
         $reservations_inputs->start_datetime = new Carbon($target_ymd . ' ' . $request->start_datetime . ':00');
         $reservations_inputs->end_datetime = new Carbon($target_ymd . ' ' . $request->end_datetime . ':00');
-        $reservations_inputs->update_user_id = Auth::user()->userid;
         $reservations_inputs->save();
 
         // 項目IDを取得
@@ -282,9 +293,8 @@ class ReservationsPlugin extends UserPluginBase
         $str_mode = $request->booking_id ? '更新' : '登録';
         $message = '予約を' . $str_mode . 'しました。【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
 
-        // [TODO] まだ。予約の詳細画面がないため、メール通知しても表示できない
         // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
-        // $this->sendPostNotice($reservations_inputs, $before_reservations_inputs, 'showBooking');
+        $this->sendPostNotice($reservations_inputs, $before_reservations_inputs, 'showBooking');
 
         // 登録後はカレンダー表示
         return $this->index($request, $page_id, $frame_id, null, null, $message);
@@ -432,11 +442,10 @@ class ReservationsPlugin extends UserPluginBase
     {
         // 登録データ行の取得
         $input = ReservationsInput::where('id', $id)
-            // [TODO] 実装まだ。reservations_inputsテーブルに status, created_id カラムがないため。
-            // ->where(function ($query) {
-            //     // 権限によって表示する記事を絞る
-            //     $query = $this->appendAuthWhereBase($query, 'reservations_inputs');
-            // })
+            ->where(function ($query) {
+                // 権限によって表示する記事を絞る
+                $query = $this->appendAuthWhereBase($query, 'reservations_inputs');
+            })
             ->first();
 
         return $input;
@@ -465,10 +474,42 @@ class ReservationsPlugin extends UserPluginBase
         return $inputs_columns;
     }
 
+    /**
+     * [TODO] 画面からの呼び出し実装まだ
+     * 予約の承認処理
+     */
+    public function approvalBooking($request, $page_id, $frame_id, $input_id = null)
+    {
+        // 登録データ行の取得
+        $reservations_inputs = $this->getReservationsInput($input_id);
+        // データがあることを確認
+        if (empty($reservations_inputs)) {
+            return;
+        }
+
+        // 承認済みの判定のために、保存する前のレコードを退避しておく。
+        $before_reservations_inputs = clone $reservations_inputs;
+
+        // データがあることを確認
+        if (empty($reservations_inputs)) {
+            return;
+        }
+
+        // 更新されたら、行レコードの updated_at を更新したいので、update()
+        // $reservations_inputs->updated_at = now();
+        $reservations_inputs->status = StatusType::active;  // 公開
+        $reservations_inputs->update();
+
+        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
+        $this->sendPostNotice($reservations_inputs, $before_reservations_inputs, 'showBooking');
+
+        // 登録後は画面側の指定により、リダイレクトして表示画面を開く。
+        return;
+    }
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
      */
     public function index($request, $page_id, $frame_id, $view_format = null, $carbon_target_date = null, $message = null)
     {
@@ -862,6 +903,9 @@ class ReservationsPlugin extends UserPluginBase
             $input = ReservationsInput::where('id', $request->booking_id)->first();
             $facility = ReservationsFacility::where('id', $input->facility_id)->first();
             $message = '予約を削除しました。【場所】' . $facility->facility_name . ' 【日時】' . date_format($input->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($input->end_datetime, 'H時i分');
+
+            // メール送信 引数(削除した行, 詳細表示メソッド, 削除データを表すメッセージ, メール送信方法)
+            $this->sendDeleteNotice($input, 'showBooking', $message, SendMailTiming::sync);
 
             // 予約（親）を削除
             $input->delete();
