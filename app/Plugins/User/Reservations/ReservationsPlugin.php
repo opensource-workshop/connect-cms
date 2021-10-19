@@ -88,25 +88,25 @@ class ReservationsPlugin extends UserPluginBase
         //
         // 権限チェックテーブル
         $role_check_table = [];
-        $role_check_table["addFacility"] = ['role_article'];
-        $role_check_table["editFacilities"] = ['role_article'];
-        $role_check_table["updateFacility"] = ['role_article'];
-        $role_check_table["updateFacilitySequence"] = ['role_article'];
+        $role_check_table["addFacility"]            = ['buckets.addColumn'];
+        $role_check_table["editFacilities"]         = ['buckets.editColumn'];
+        $role_check_table["updateFacility"]         = ['buckets.editColumn'];
+        $role_check_table["updateFacilitySequence"] = ['buckets.editColumn'];
 
-        $role_check_table["addColumn"] = ['role_article'];
-        $role_check_table["editColumns"] = ['role_article'];
-        $role_check_table["editColumnDetail"] = ['role_article'];
-        $role_check_table["updateColumn"] = ['role_article'];
-        $role_check_table["updateColumnSequence"] = ['role_article'];
+        $role_check_table["addColumn"]              = ['buckets.addColumn'];
+        $role_check_table["editColumns"]            = ['buckets.editColumn'];
+        $role_check_table["editColumnDetail"]       = ['buckets.editColumn'];
+        $role_check_table["updateColumn"]           = ['buckets.editColumn'];
+        $role_check_table["updateColumnSequence"]   = ['buckets.editColumn'];
 
-        $role_check_table["addSelect"] = ['role_article'];
-        $role_check_table["updateSelect"] = ['role_article'];
-        $role_check_table["updateSelectSequence"] = ['role_article'];
+        $role_check_table["addSelect"]              = ['buckets.addColumn'];
+        $role_check_table["updateSelect"]           = ['buckets.editColumn'];
+        $role_check_table["updateSelectSequence"]   = ['buckets.editColumn'];
 
-        $role_check_table["editBooking"] = ['posts.create'];
-        $role_check_table["saveBooking"] = ['posts.create', 'posts.update'];
-        $role_check_table["approvalBooking"] = ['posts.approval'];
-        $role_check_table["destroyBooking"] = ['posts.delete'];
+        $role_check_table["editBooking"]            = ['posts.create'];
+        $role_check_table["saveBooking"]            = ['posts.create', 'posts.update'];
+        $role_check_table["approvalBooking"]        = ['posts.approval'];
+        $role_check_table["destroyBooking"]         = ['posts.delete'];
 
         return $role_check_table;
     }
