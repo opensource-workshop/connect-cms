@@ -16,6 +16,10 @@ use App\Models\Common\BucketsMail;
 
 class RelateNoticeJob implements ShouldQueue
 {
+    /**
+     * 1.キューに入っているジョブがコンストラクタで Eloquent モデルを受け入れる場合、SerializesModels トレイトにより、モデルの識別子だけがキューにシリアル化されます。
+     * 2.ジョブが実際に処理されると、キューシステムはデータベースからモデルインスタンス全体を自動的に再取得します。
+     */
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
@@ -26,25 +30,23 @@ class RelateNoticeJob implements ShouldQueue
      */
     public $tries = 1;
 
-    private $frame = null;
     private $bucket = null;
-    private $post = null;
-    private $show_method = null;
-    private $mail_users = null;
+    private $notice_embedded_tags = null;
+    // private $mail_users = null;
+    private $relate_user_emails = null;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($frame, $bucket, $post, $show_method, $mail_users)
+    public function __construct($bucket, array $notice_embedded_tags, array $relate_user_emails)
     {
         // buckets などの受け取り
-        $this->frame  = $frame;
-        $this->bucket = $bucket;
-        $this->post   = $post;
-        $this->show_method = $show_method;
-        $this->mail_users  = $mail_users;
+        $this->bucket               = $bucket;
+        $this->notice_embedded_tags = $notice_embedded_tags;
+        // $this->mail_users           = $mail_users;
+        $this->relate_user_emails   = $relate_user_emails;
     }
 
     /**
@@ -58,13 +60,20 @@ class RelateNoticeJob implements ShouldQueue
         $bucket_mail = BucketsMail::firstOrNew(['buckets_id' => $this->bucket->id]);
 
         // メール送信
-        if (empty($this->mail_users)) {
+        if (empty($this->relate_user_emails)) {
             return;
         }
-        foreach ($this->mail_users as $relate_user) {
-            if ($relate_user->email) {
-                Mail::to($relate_user->email)->send(new RelateNotice($this->frame, $this->bucket, $this->post, $this->show_method, $bucket_mail));
-            }
+
+        // bugfix: $this->mail_users は Eloquent モデルのため handle() で $this->mail_users を使用すると、キューシステムがモデルインスタンスを再取得したため、
+        // 結合されたすべてのデータが消えてしまうため、代わりに配列変数 $this->relate_user_emails を使う。
+        //
+        // foreach ($this->mail_users as $relate_user) {
+        //     if ($relate_user->email) {
+        //         Mail::to($relate_user->email)->send(new RelateNotice($this->frame, $this->bucket, $this->post, $this->title, $this->show_method, $bucket_mail));
+        //     }
+        // }
+        foreach ($this->relate_user_emails as $email) {
+            Mail::to($email)->send(new RelateNotice($this->notice_embedded_tags, $bucket_mail));
         }
     }
 }

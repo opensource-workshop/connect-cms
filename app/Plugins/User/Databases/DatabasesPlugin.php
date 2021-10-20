@@ -48,8 +48,7 @@ use App\Enums\DatabaseColumnRoleName;
 use App\Enums\DatabaseRoleName;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\Required;
-use App\Enums\SendMailTiming;
-use App\Enums\StatusType;
+use App\Enums\NoticeEmbeddedTag;
 
 /**
  * データベース・プラグイン
@@ -264,13 +263,23 @@ class DatabasesPlugin extends UserPluginBase
     private function getDatabasesInputCols($id)
     {
         // データ詳細の取得
-        $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'databases_columns.column_type', 'databases_columns.column_name', 'databases_columns.classname', 'databases_columns.role_display_control_flag', 'uploads.client_original_name')
-                                        ->leftJoin('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
-                                        ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
-                                        ->where('databases_inputs_id', $id)
-                                        ->orderBy('databases_inputs_id', 'asc')
-                                        ->orderBy('databases_columns_id', 'asc')
-                                        ->get();
+        $input_cols = DatabasesInputCols::
+            select(
+                'databases_input_cols.*',
+                'databases_columns.column_type',
+                'databases_columns.column_name',
+                'databases_columns.classname',
+                'databases_columns.role_display_control_flag',
+                'databases_columns.databases_id',
+                'databases_columns.title_flag',
+                'uploads.client_original_name'
+            )
+            ->leftJoin('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+            ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
+            ->where('databases_inputs_id', $id)
+            ->orderBy('databases_inputs_id', 'asc')
+            ->orderBy('databases_columns_id', 'asc')
+            ->get();
         return $input_cols;
     }
 
@@ -1509,8 +1518,11 @@ class DatabasesPlugin extends UserPluginBase
         // メール送信 引数(詳細表示メソッド, 登録したid, 登録か更新か)
         //$this->sendPostNotice($databases_inputs->id, 'detail', empty($databases_inputs->first_committed_at) ? "notice_create" : "notice_update");
 
-        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
-        $this->sendPostNotice($databases_inputs, $before_databases_inputs, 'detail');
+        // titleカラムが無いため、プラグイン独自でセット
+        $overwrite_notice_embedded_tags = [NoticeEmbeddedTag::title => $this->getTitle($databases_inputs)];
+
+        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド, 上書き埋め込みタグ)
+        $this->sendPostNotice($databases_inputs, $before_databases_inputs, 'detail', $overwrite_notice_embedded_tags);
 //        $this->sendPostNotice($databases_inputs, 'detail');
 
         // delete: フォームの名残で残っていたメール送信処理をコメントアウト
@@ -1604,11 +1616,12 @@ class DatabasesPlugin extends UserPluginBase
             }
         }
 
+        // メール送信のために、削除する前に行レコードを退避しておく。
+        $deleted_input = DatabasesInputs::firstOrNew(['id' => $id]);
+        $deleted_title = $this->getTitle($deleted_input);
+
         // 詳細カラムデータを削除
         DatabasesInputCols::where('databases_inputs_id', $id)->delete();
-
-        // メール送信のために、削除する前に行レコードを退避しておく。
-        $delete_input = DatabasesInputs::firstOrNew(['id' => $id]);
 
         // 行データを削除
         DatabasesInputs::where('id', $id)->delete();
@@ -1616,17 +1629,126 @@ class DatabasesPlugin extends UserPluginBase
         // 削除通知に渡すために、項目の編集（最初の公開（権限で制御しない）の項目名と値）
         $notice_cols = $input_cols->where("role_display_control_flag", 0);
         $delete_comment = "";
+        $overwrite_notice_embedded_tags = [];
         if ($notice_cols->isNotEmpty()) {
             $notice_cols_first = $notice_cols->first();
             $delete_comment  = "以下、削除されたデータの最初の公開項目です。\n";
             $delete_comment .= "「" . $notice_cols_first->column_name . "：" . $notice_cols_first->value . "」の行を削除しました。";
+
+            // titleカラムが無いため、プラグイン独自でセット
+            $overwrite_notice_embedded_tags = [NoticeEmbeddedTag::title => $deleted_title];
         }
 
-        // メール送信 引数(削除した行, 詳細表示メソッド, 削除データを表すメッセージ, メール送信方法)
-        $this->sendDeleteNotice($delete_input, 'detail', $delete_comment, SendMailTiming::sync);
+        // メール送信 引数(削除した行, 詳細表示メソッド, 削除データを表すメッセージ, 上書き埋め込みタグ)
+        $this->sendDeleteNotice($deleted_input, 'detail', $delete_comment, $overwrite_notice_embedded_tags);
 
         // 表示テンプレートを呼び出す。
         return $this->index($request, $page_id, $frame_id);
+    }
+
+    /**
+     * タイトル取得
+     *
+     * [TODO] このメソッドの不具合ではないが、新着等のタイトル取得は不十分になってる臭い。
+     *        おそらく input_cols のタイトル取得のみに対応していて、input_cols にデータがない 登録日型 や、
+     *        input_cols にデータがあってもファイル型のような、input_cols->value には ファイルID のみ格納していて、別途 client_original_name 等を取得するものは対応してなさそう。
+     */
+    private function getTitle($input)
+    {
+        if (is_null($input)) {
+            return '';
+        }
+
+        // タイトルカラム
+        $column = DatabasesColumns::where('databases_id', $input->databases_id)
+            ->where('title_flag', '1')
+            ->orderBy('display_sequence', 'asc')
+            ->first();
+
+        if (is_null($column)) {
+            return '';
+        }
+
+        // タイトルカラムの入力値（入力値があるものだけ。例えば 登録日型 は input_cols にデータない）
+        $input_cols = $this->getDatabasesInputCols($input->id);
+        $obj = $input_cols->firstWhere('title_flag', '1');
+
+        // ファイル型
+        if ($column->column_type == DatabaseColumnType::file) {
+            if (empty($obj)) {
+                $value = '';
+            }
+            else {
+                $value = $obj->client_original_name;
+            }
+        }
+        // 画像型
+        elseif ($column->column_type == DatabaseColumnType::image) {
+            if (empty($obj)) {
+                $value = '';
+            }
+            else {
+                $value = Uploads::getFilenameNoExtensionById($obj->value);
+            }
+        }
+        // 動画型
+        elseif ($column->column_type == DatabaseColumnType::video) {
+            if (empty($obj)) {
+                $value = '';
+            }
+            else {
+                $value = $obj->client_original_name;
+            }
+        }
+        // リンク型
+        elseif ($column->column_type == DatabaseColumnType::link) {
+            if (empty($obj)) {
+                $value = '';
+            }
+            else {
+                $value = $obj->value;
+            }
+        }
+        // 日付型
+        elseif ($column->column_type == DatabaseColumnType::date) {
+            if (empty($obj) || empty($obj->value)) {
+                $value = '';
+            }
+            else {
+                $value = date('Y/m/d',  strtotime($obj->value));
+            }
+        }
+        // 複数選択型
+        elseif ($column->column_type == DatabaseColumnType::checkbox) {
+            if (empty($obj)) {
+                $value = '';
+            }
+            else {
+                $value = str_replace('|', ', ', $obj->value);
+            }
+        }
+        // 登録日型
+        elseif ($column->column_type == DatabaseColumnType::created) {
+            $value = $input->created_at;
+        }
+        // 更新日型
+        elseif ($column->column_type == DatabaseColumnType::updated) {
+            $value = $input->updated_at;
+        }
+        // 公開日型
+        elseif ($column->column_type == DatabaseColumnType::posted) {
+            $value = $input->posted_at;
+        }
+        // 表示順型
+        elseif ($column->column_type == DatabaseColumnType::display) {
+            $value = $input->display_sequence;
+        }
+        // その他の型
+        else {
+            $value = $obj ? $obj->value : "";
+        }
+
+        return $value;
     }
 
     /**

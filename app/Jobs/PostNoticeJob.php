@@ -26,25 +26,19 @@ class PostNoticeJob implements ShouldQueue
      */
     public $tries = 1;
 
-    private $frame = null;
     private $bucket = null;
-    private $post = null;
-    private $show_method = null;
-    private $notice_method = null;
+    private $notice_embedded_tags = null;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($frame, $bucket, $post, $show_method, $notice_method)
+    public function __construct($bucket, array $notice_embedded_tags)
     {
         // buckets などの受け取り
-        $this->frame  = $frame;
-        $this->bucket = $bucket;
-        $this->post   = $post;
-        $this->show_method   = $show_method;
-        $this->notice_method = $notice_method;
+        $this->bucket               = $bucket;
+        $this->notice_embedded_tags = $notice_embedded_tags;
     }
 
     /**
@@ -68,7 +62,8 @@ class PostNoticeJob implements ShouldQueue
             return;
         }
         foreach ($notice_addresses as $notice_address) {
-            Mail::to($notice_address)->send(new PostNotice($this->frame, $this->bucket, $this->post, $this->show_method, $this->notice_method, $bucket_mail));
+            // Mail::to($notice_address)->send(new PostNotice($this->frame, $this->bucket, $this->post, $this->title, $this->show_method, $this->notice_method, $bucket_mail));
+            Mail::to($notice_address)->send(new PostNotice($this->notice_embedded_tags, $bucket_mail));
         }
     }
 }

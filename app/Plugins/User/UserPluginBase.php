@@ -4,6 +4,7 @@ namespace App\Plugins\User;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -19,7 +20,6 @@ use Monolog\Handler\RotatingFileHandler;
 use Symfony\Component\Process\PhpExecutableFinder;
 // use Symfony\Component\Process\Process;
 
-use File;
 use HTMLPurifier;
 use HTMLPurifier_Config;
 use Request;
@@ -39,8 +39,8 @@ use App\Models\Common\Frame;
 use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
 
+use App\Enums\NoticeJobType;
 use App\Enums\StatusType;
-use App\Enums\SendMailTiming;
 
 use App\Plugins\PluginBase;
 
@@ -819,7 +819,7 @@ class UserPluginBase extends PluginBase
      *   - 投稿通知を実装するには指定したデータ（$post_row, $before_row）のテーブルに status, first_committed_at カラムがある事
      *   - 指定したデータのテーブルのモデルで trait UserableNohistory を使ってる事。（[TODO] 2021/10/15時点 Userableは first_committed_at の自動セット未対応）
      */
-    public function sendPostNotice($post_row, $before_row, $show_method)
+    public function sendPostNotice($post_row, $before_row, $show_method, array $overwrite_notice_embedded_tags = [])
     {
         // 行を表すレコードかのチェック
         //if (Schema::hasColumn($post_row->getTable(), 'id') && Schema::hasColumn($post_row->getTable(), 'first_committed_at') && Schema::hasColumn($post_row->getTable(), 'status')) {
@@ -852,13 +852,13 @@ class UserPluginBase extends PluginBase
         // before_row（更新前）をチェックしない。
         // 承認待ちの記事を変更した場合は、再度、承認待ちメールが飛ぶが、それでOKだと考える。
         if ($bucket_mail->approval_on === 1 && $post_row->status === 2) {
-            $notice_methods[] = "notice_approval";
+            $notice_methods[] = NoticeJobType::notice_approval;
         }
 
         // 承認済み通知がon の場合
         // before_row（更新前）の（status === 2）でpost_row の status が公開（=== 0）の場合に送信（notice_approved）
         if ($bucket_mail->approved_on === 1 && $before_row->status === 2 && $post_row->status === 0) {
-            $notice_methods[] = "notice_approved";
+            $notice_methods[] = NoticeJobType::notice_approved;
         }
 
         // 投稿通知がon の場合
@@ -867,10 +867,10 @@ class UserPluginBase extends PluginBase
         if ($bucket_mail->notice_on === 1) {
             if ($bucket_mail->notice_create === 1 && empty($before_row->first_committed_at) && $post_row->status === 0) {
                 // 対象（登録）
-                $notice_methods[] = "notice_create";
+                $notice_methods[] = NoticeJobType::notice_create;
             } elseif ($bucket_mail->notice_update === 1 && !empty($before_row->first_committed_at) && $post_row->status === 0) {
                 // 対象（変更）
-                $notice_methods[] = "notice_update";
+                $notice_methods[] = NoticeJobType::notice_update;
             }
         }
 
@@ -882,7 +882,7 @@ class UserPluginBase extends PluginBase
         // --- メール送信の処理を呼ぶ
 
         // 承認通知
-        if (in_array("notice_approval", $notice_methods, true)) {
+        if (in_array(NoticeJobType::notice_approval, $notice_methods, true)) {
             // // 送信方法の確認
             // if ($bucket_mail->timing == 0) {
             //     // 即時送信
@@ -892,13 +892,16 @@ class UserPluginBase extends PluginBase
             //     ApprovalNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method);
             // }
 
+            // 埋め込みタグ
+            $notice_embedded_tags = BucketsMail::getNoticeEmbeddedTags($this->frame, $this->buckets, $post_row, $overwrite_notice_embedded_tags, $show_method, NoticeJobType::notice_approval);
+
             // 送信
             //   - .envのQUEUE_CONNECTION=syncの場合、dispatch()でも即時送信になるため、メール送信メソッド１本化
-            ApprovalNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method);
+            ApprovalNoticeJob::dispatch($this->buckets, $notice_embedded_tags);
         }
 
         // 承認済み通知
-        if (in_array("notice_approved", $notice_methods, true)) {
+        if (in_array(NoticeJobType::notice_approved, $notice_methods, true)) {
             // // 送信方法の確認
             // if ($bucket_mail->timing == 0) {
             //     // 即時送信
@@ -907,11 +910,14 @@ class UserPluginBase extends PluginBase
             //     // スケジュール送信
             //     ApprovedNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $post_row->created_id, $show_method);
             // }
-            ApprovedNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $post_row->created_id, $show_method);
+
+            $notice_embedded_tags = BucketsMail::getNoticeEmbeddedTags($this->frame, $this->buckets, $post_row, $overwrite_notice_embedded_tags, $show_method, NoticeJobType::notice_approved);
+
+            ApprovedNoticeJob::dispatch($this->buckets, $notice_embedded_tags, $post_row->created_id);
         }
 
         // 投稿通知（登録）
-        if (in_array("notice_create", $notice_methods, true)) {
+        if (in_array(NoticeJobType::notice_create, $notice_methods, true)) {
             // // 送信方法の確認
             // if ($bucket_mail->timing == 0) {
             //     // 即時送信
@@ -920,11 +926,14 @@ class UserPluginBase extends PluginBase
             //     // スケジュール送信
             //     PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method, "notice_create");
             // }
-            PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method, "notice_create");
+
+            $notice_embedded_tags = BucketsMail::getNoticeEmbeddedTags($this->frame, $this->buckets, $post_row, $overwrite_notice_embedded_tags, $show_method, NoticeJobType::notice_create);
+
+            PostNoticeJob::dispatch($this->buckets, $notice_embedded_tags);
         }
 
         // 投稿通知（変更）
-        if (in_array("notice_update", $notice_methods, true)) {
+        if (in_array(NoticeJobType::notice_update, $notice_methods, true)) {
             // // 送信方法の確認
             // if ($bucket_mail->timing == 0) {
             //     // 即時送信
@@ -933,7 +942,10 @@ class UserPluginBase extends PluginBase
             //     // スケジュール送信
             //     PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method, "notice_update");
             // }
-            PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method, "notice_update");
+
+            $notice_embedded_tags = BucketsMail::getNoticeEmbeddedTags($this->frame, $this->buckets, $post_row, $overwrite_notice_embedded_tags, $show_method, NoticeJobType::notice_update);
+
+            PostNoticeJob::dispatch($this->buckets, $notice_embedded_tags);
         }
 
         // 非同期でキューワーカ実行
@@ -943,7 +955,7 @@ class UserPluginBase extends PluginBase
     /**
      * 関連投稿通知の送信
      */
-    public function sendRelateNotice($post, $mail_users, $show_method)
+    public function sendRelateNotice($post, $mail_users, $show_method, array $overwrite_notice_embedded_tags = [])
     {
         // buckets がない場合
         if (empty($this->buckets)) {
@@ -971,7 +983,19 @@ class UserPluginBase extends PluginBase
         //     // スケジュール送信
         //     RelateNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $mail_users);
         // }
-        RelateNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $mail_users);
+
+        // 関連通知するメール
+        $relate_user_emails = [];
+        foreach ($mail_users as $relate_user) {
+            if ($relate_user->email) {
+                $relate_user_emails[] = $relate_user->email;
+            }
+        }
+
+        // 埋め込みタグ
+        $notice_embedded_tags = BucketsMail::getNoticeEmbeddedTags($this->frame, $this->buckets, $post, $overwrite_notice_embedded_tags, $show_method, NoticeJobType::notice_relate);
+
+        RelateNoticeJob::dispatch($this->buckets, $notice_embedded_tags, $relate_user_emails);
 
         // 非同期でキューワーカ実行
         $this->asyncQueueWork();
@@ -979,10 +1003,8 @@ class UserPluginBase extends PluginBase
 
     /**
      * 削除通知の送信
-     *
-     * $timing = 1:スケジュール送信（非同期送信、デフォルト), 0:即時送信（同期送信）
      */
-    public function sendDeleteNotice($post, $show_method, $delete_comment, $timing = SendMailTiming::async)
+    public function sendDeleteNotice($post, $show_method, $delete_comment, array $overwrite_notice_embedded_tags = [])
     {
         // buckets がない場合
         if (empty($this->buckets)) {
@@ -1007,17 +1029,25 @@ class UserPluginBase extends PluginBase
 
         // 送信方法の確認
         // if ($bucket_mail->timing == 0) {
-        if ($timing == SendMailTiming::sync) {
-            // 同期送信
-            // （物理削除時は、非同期だとメール送信前にデータが消えてしまいModelNotFoundExceptionエラーになるため、同期でメール送信）
-            dispatch_now(new DeleteNoticeJob($this->frame, $this->buckets, $post, $show_method, $delete_comment));
-        } else {
-            // スケジュール送信
-            DeleteNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $delete_comment);
+        // if ($timing == SendMailTiming::sync) {
+        //     // 同期送信
+        //     // （物理削除時は、非同期だとメール送信前にデータが消えてしまいModelNotFoundExceptionエラーになるため、同期でメール送信）
+        //     dispatch_now(new DeleteNoticeJob($this->frame, $this->buckets, $post, $title, $show_method, $delete_comment));
+        // } else {
+        //     // スケジュール送信
+        //     DeleteNoticeJob::dispatch($this->frame, $this->buckets, $post, $title, $show_method, $delete_comment);
 
-            // 非同期でキューワーカ実行
-            $this->asyncQueueWork();
-        }
+        //     // 非同期でキューワーカ実行
+        //     $this->asyncQueueWork();
+        // }
+
+        // 埋め込みタグ
+        $notice_embedded_tags = BucketsMail::getNoticeEmbeddedTags($this->frame, $this->buckets, $post, $overwrite_notice_embedded_tags, $show_method, NoticeJobType::notice_delete, $delete_comment);
+
+        DeleteNoticeJob::dispatch($this->buckets, $notice_embedded_tags);
+
+        // 非同期でキューワーカ実行
+        $this->asyncQueueWork();
     }
 
     /**
