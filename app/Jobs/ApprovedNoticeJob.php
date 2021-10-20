@@ -27,25 +27,22 @@ class ApprovedNoticeJob implements ShouldQueue
      */
     public $tries = 1;
 
-    private $frame = null;
     private $bucket = null;
-    private $post = null;
+    private $notice_embedded_tags = null;
     private $created_id = null;
-    private $show_method = null;
+
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($frame, $bucket, $post, $created_id, $show_method)
+    public function __construct($bucket, array $notice_embedded_tags, $created_id)
     {
         // buckets などの受け取り
-        $this->frame       = $frame;
-        $this->bucket      = $bucket;
-        $this->post        = $post;
+        $this->bucket               = $bucket;
+        $this->notice_embedded_tags = $notice_embedded_tags;
         $this->created_id  = $created_id;
-        $this->show_method = $show_method;
     }
 
     /**
@@ -69,14 +66,16 @@ class ApprovedNoticeJob implements ShouldQueue
             return;
         }
         foreach ($approved_addresses as $approved_address) {
-            Mail::to($approved_address)->send(new ApprovedNotice($this->frame, $this->bucket, $this->post, $this->show_method, $bucket_mail));
+            // Mail::to($approved_address)->send(new ApprovedNotice($this->frame, $this->bucket, $this->post, $this->show_method, $bucket_mail));
+            Mail::to($approved_address)->send(new ApprovedNotice($this->notice_embedded_tags, $bucket_mail));
         }
 
         // メール送信（投稿者へ通知する）
         if ($bucket_mail->approved_author) {
             $post_user = User::findOrNew($this->created_id);
             if ($post_user->email) {
-                Mail::to($post_user->email)->send(new ApprovedNotice($this->frame, $this->bucket, $this->post, $this->show_method, $bucket_mail));
+                // Mail::to($post_user->email)->send(new ApprovedNotice($this->frame, $this->bucket, $this->post, $this->title, $this->show_method, $bucket_mail));
+                Mail::to($post_user->email)->send(new ApprovedNotice($this->notice_embedded_tags, $bucket_mail));
             }
         }
     }

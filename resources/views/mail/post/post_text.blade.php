@@ -1,1 +1,1 @@
-{{$bucket_mail->getFormatedNoticeBody($frame, $bucket, $post, $show_method, $notice_method)}}
+{{$bucket_mail->getFormatedNoticeBody($notice_embedded_tags)}}
