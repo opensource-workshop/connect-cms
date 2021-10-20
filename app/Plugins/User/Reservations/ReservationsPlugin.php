@@ -22,7 +22,6 @@ use App\Plugins\User\UserPluginBase;
 use App\Enums\Required;
 use App\Enums\ReservationCalendarDisplayType;
 use App\Enums\ReservationColumnType;
-use App\Enums\SendMailTiming;
 use App\Enums\StatusType;
 
 /**
@@ -904,8 +903,8 @@ class ReservationsPlugin extends UserPluginBase
             $facility = ReservationsFacility::where('id', $input->facility_id)->first();
             $message = '予約を削除しました。【場所】' . $facility->facility_name . ' 【日時】' . date_format($input->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($input->end_datetime, 'H時i分');
 
-            // メール送信 引数(削除した行, 詳細表示メソッド, 削除データを表すメッセージ, メール送信方法)
-            $this->sendDeleteNotice($input, 'showBooking', $message, SendMailTiming::sync);
+            // メール送信
+            $this->sendDeleteNotice($input, 'showBooking', $message);
 
             // 予約（親）を削除
             $input->delete();
