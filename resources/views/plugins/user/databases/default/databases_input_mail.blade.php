@@ -13,5 +13,5 @@
         $value = $value_obj->value;
     }
 @endphp
-<input name="databases_columns_value[{{$database_obj->id}}]" class="form-control @if ($errors && $errors->has("databases_columns_value.$database_obj->id")) border-danger @endif" type="email" value="@if ($frame_id == $request->frame_id){{old('databases_columns_value.'.$database_obj->id, $value)}}@endif">
+<input name="databases_columns_value[{{$database_obj->id}}]" class="form-control @if ($errors && $errors->has("databases_columns_value.$database_obj->id")) border-danger @endif" type="text" value="@if ($frame_id == $request->frame_id){{old('databases_columns_value.'.$database_obj->id, $value)}}@endif">
 @include('plugins.common.errors_inline', ['name' => "databases_columns_value.$database_obj->id"])

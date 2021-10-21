@@ -81,7 +81,7 @@ use App\Models\Core\UsersColumns;
             <label for="email" class="col-md-4 col-form-label text-md-right">eメールアドレス</label>
 
             <div class="col-md-8">
-                <input id="email" type="email" class="form-control" name="email" value="{{ old('email', $user->email) }}" placeholder="{{ __('messages.input_email') }}">
+                <input id="email" type="text" class="form-control" name="email" value="{{ old('email', $user->email) }}" placeholder="{{ __('messages.input_email') }}">
 
                 @if ($errors->has('email'))
                     <div class="text-danger">{{ $errors->first('email') }}</div>
@@ -94,7 +94,7 @@ use App\Models\Core\UsersColumns;
             <label for="email" class="col-md-4 col-form-label text-md-right">eメールアドレス <label class="badge badge-danger">必須</label></label>
 
             <div class="col-md-8">
-                <input id="email" type="email" class="form-control" name="email" value="{{ old('email', $user->email) }}" placeholder="{{ __('messages.input_email') }}" required autofocus>
+                <input id="email" type="text" class="form-control" name="email" value="{{ old('email', $user->email) }}" placeholder="{{ __('messages.input_email') }}" required autofocus>
 
                 @if ($errors->has('email'))
                     <div class="text-danger">{{ $errors->first('email') }}</div>

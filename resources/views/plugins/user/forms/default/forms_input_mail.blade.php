@@ -9,7 +9,7 @@
 <input 
     name="forms_columns_value[{{$form_obj->id}}]" 
     class="form-control" 
-    type="email" 
+    type="text" 
     value="@if ($frame_id == $request->frame_id){{old('forms_columns_value.'.$form_obj->id, $request->forms_columns_value[$form_obj->id])}}@endif"
     placeholder="{{ $form_obj->place_holder }}"
     id="{{$label_id}}"
@@ -18,7 +18,7 @@
 <input 
     name="forms_columns_value_confirmation[{{$form_obj->id}}]" 
     class="form-control" 
-    type="email" 
+    type="text" 
     value="@if ($frame_id == $request->frame_id){{old('forms_columns_value_confirmation.'.$form_obj->id, $request->forms_columns_value_confirmation[$form_obj->id])}}@endif"
     placeholder="{{ __('messages.enter_same_email') }}"
     title="{{ __('messages.enter_same_email') }}"

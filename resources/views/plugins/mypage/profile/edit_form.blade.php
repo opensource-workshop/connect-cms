@@ -17,7 +17,7 @@
         <label for="email" class="col-md-4 col-form-label text-md-right">eメールアドレス</label>
 
         <div class="col-md-8">
-            <input id="email" type="email" class="form-control" name="email" value="{{ old('email', $user->email) }}" placeholder="メールアドレスを入力します。">
+            <input id="email" type="text" class="form-control" name="email" value="{{ old('email', $user->email) }}" placeholder="メールアドレスを入力します。">
 
             @if ($errors->has('email'))
                 <span class="text-danger">
