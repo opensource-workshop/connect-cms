@@ -20,7 +20,7 @@
                         <div class="form-group row">
                             <label for="userid" class="col-md-3 col-form-label text-md-right">eメール</label>
                             <div class="col-md-7">
-                                <input id="email" type="email" class="form-control" name="email" value="{{ old('email') }}" required>
+                                <input id="email" type="text" class="form-control" name="email" value="{{ old('email') }}" required>
                                 @if ($errors->has('email'))
                                     <span class="help-block">
                                         <strong>{{ $errors->first('email') }}</strong>
