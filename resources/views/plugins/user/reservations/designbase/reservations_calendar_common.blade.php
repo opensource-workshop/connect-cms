@@ -21,7 +21,7 @@
         )
 
         {{-- 予約詳細モーダルウィンドウ --}}
-        <div class="modal" id="bookingDetailModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal" id="bookingDetailModal{{$frame_id}}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
 
@@ -61,25 +61,25 @@
                         </button>
                         {{-- 予約編集ボタン（ログイン時のみ表示） --}}
                         @auth
-                            <form action="{{URL::to('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_edit_booking" method="POST" class="form-horizontal">
+                            <form action="{{URL::to('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_edit_booking{{$frame_id}}" method="POST" class="form-horizontal">
                                 {{ csrf_field() }}
 
                                 {{-- 予約ID --}}
                                 <input type="hidden" name="booking_id" value="">
                                 {{-- ＋ボタンクリックでformサブミット --}}
-                                <a href="javascript:form_edit_booking.submit()">
+                                <a href="javascript:form_edit_booking{{$frame_id}}.submit()">
                                     <button type="button" class="btn btn-success">
                                         <i class="far fa-edit"></i> {{ __('messages.edit') }}
                                     </button>
                                 </a>
                             </form>
-                            <form action="{{URL::to('/')}}/plugin/reservations/destroyBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_destroy_booking" method="POST" class="form-horizontal">
+                            <form action="{{URL::to('/')}}/plugin/reservations/destroyBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_destroy_booking{{$frame_id}}" method="POST" class="form-horizontal">
                                 {{ csrf_field() }}
 
                                 {{-- 予約ID --}}
                                 <input type="hidden" name="booking_id" value="">
                                 {{-- ＋ボタンクリックでformサブミット --}}
-                                <a href="javascript:form_destroy_booking.submit()">
+                                <a href="javascript:form_destroy_booking{{$frame_id}}.submit()">
                                     <button type="button" class="btn btn-danger" onclick="javascript:return confirm('予約を削除します。\nよろしいですか？')">
                                         <i class="fas fa-trash-alt"></i> {{ __('messages.delete') }}
                                     </button>
@@ -93,7 +93,7 @@
 
         <script type="text/javascript">
             // モーダル表示前イベント時処理
-            $('#bookingDetailModal').on('show.bs.modal', function (event) {
+            $('#bookingDetailModal{{$frame_id}}').on('show.bs.modal', function (event) {
                 var button = $(event.relatedTarget)
                 var modal = $(this)
                 // モーダルタイトル
