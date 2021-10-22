@@ -771,6 +771,7 @@ class ReservationsPlugin extends UserPluginBase
             // Frame のbucket_id があれば、bucket_id から施設データ取得、なければ、新規作成か選択へ誘導
             $reservation = Reservation::where('bucket_id', $reservation_frame->bucket_id)->first();
         }
+        $reservation = $reservation ?? new Reservation();
 
         // 表示テンプレートを呼び出す。
         return $this->view('reservations_edit', [
