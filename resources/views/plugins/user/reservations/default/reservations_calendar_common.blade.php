@@ -4,10 +4,10 @@
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
- --}}
- @extends('core.cms_frame_base')
+--}}
+@extends('core.cms_frame_base')
 
- @section("plugin_contents_$frame->id")
+@section("plugin_contents_$frame->id")
     {{-- 必要なデータ揃っているか確認 --}}
     @if (
         // フレームに紐づいた施設予約親データが存在すること
@@ -141,38 +141,20 @@
             </li>
         </ul>
 
-        @if (isset($is_template_designbase))
-            {{-- designbaseテンプレート --}}
-            <div class="orderCalendar">
-                @if ($view_format == ReservationCalendarDisplayType::month)
+        {{-- defaultテンプレート --}}
+        <div>
+            @if ($view_format == ReservationCalendarDisplayType::month)
 
-                    {{-- 月で表示 --}}
-                    @include('plugins.user.reservations.designbase.reservations_calendar_month')
+                {{-- 月で表示 --}}
+                @include('plugins.user.reservations.default.reservations_calendar_month')
 
-                @elseif ($view_format == ReservationCalendarDisplayType::week)
+            @elseif ($view_format == ReservationCalendarDisplayType::week)
 
-                    {{-- 週で表示 --}}
-                    @include('plugins.user.reservations.designbase.reservations_calendar_week')
+                {{-- 週で表示 --}}
+                @include('plugins.user.reservations.default.reservations_calendar_week')
 
-                @endif
-            </div>
-
-        @else
-            {{-- defaultテンプレート --}}
-            <div>
-                @if ($view_format == ReservationCalendarDisplayType::month)
-
-                    {{-- 月で表示 --}}
-                    @include('plugins.user.reservations.default.reservations_calendar_month')
-
-                @elseif ($view_format == ReservationCalendarDisplayType::week)
-
-                    {{-- 週で表示 --}}
-                    @include('plugins.user.reservations.default.reservations_calendar_week')
-
-                @endif
-            </div>
-        @endif
+            @endif
+        </div>
 
     @else
         {{-- 未ログイン時は何も表示しない --}}

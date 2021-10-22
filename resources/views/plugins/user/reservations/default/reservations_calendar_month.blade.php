@@ -4,7 +4,7 @@
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
- --}}
+--}}
 
 {{-- カレンダーヘッダ部 --}}
 <br>
@@ -19,13 +19,8 @@
 <div class="row">
     <div class="col-12 clearfix">
 
-        @if (isset($is_template_designbase))
-        {{-- designbaseテンプレート --}}
-        <div class="float-left month_nav">
-        @else
         {{-- defaultテンプレート --}}
         <div class="float-left">
-        @endif
 
             <div class="list-group list-group-horizontal">
                 {{-- 前月ボタン --}}
@@ -43,13 +38,8 @@
             </div>
         </div>
 
-        @if (isset($is_template_designbase))
-        {{-- designbaseテンプレート --}}
-        <div class="float-right col-sm-5 to_current">
-        @else
         {{-- defaultテンプレート --}}
         <div class="float-right col-sm-5">
-        @endif
 
             {{-- 今月へボタン --}}
             <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ym') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light rounded-pill">
@@ -91,14 +81,9 @@
                             {{-- 当月、且つ、日曜なら赤文字 --}}
                             {{ $cell['date']->month == $carbon_target_date->month && $cell['date']->dayOfWeek == DayOfWeek::sat ? ' text-primary' : '' }}
 
-                            @if (isset($is_template_designbase))
-                                {{-- designbaseテンプレート --}}
-                                {{ $cell['date'] == Carbon::today() ? ' current' : '' }}
-                            @else
-                                {{-- defaultテンプレート --}}
-                                {{-- 当日ならセル背景を黄色 --}}
-                                {{ $cell['date'] == Carbon::today() ? ' bg-warning' : '' }}
-                            @endif
+                            {{-- defaultテンプレート --}}
+                            {{-- 当日ならセル背景を黄色 --}}
+                            {{ $cell['date'] == Carbon::today() ? ' bg-warning' : '' }}
                             "
                         >
                             <div class="clearfix">
