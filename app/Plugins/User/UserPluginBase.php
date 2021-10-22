@@ -36,6 +36,7 @@ use App\Models\Common\Buckets;
 use App\Models\Common\BucketsMail;
 use App\Models\Common\BucketsRoles;
 use App\Models\Common\Frame;
+use App\Models\Common\Group;
 use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
 
@@ -43,6 +44,10 @@ use App\Enums\NoticeJobType;
 use App\Enums\StatusType;
 
 use App\Plugins\PluginBase;
+use App\Plugins\Manage\UserManage\UsersTool;
+
+use App\Rules\CustomValiEmails;
+use App\Rules\CustomValiRequiredWithoutAllSupportsArrayInput;
 
 use App\Traits\ConnectCommonTrait;
 
@@ -614,6 +619,10 @@ class UserPluginBase extends PluginBase
 
         // Buckets のメール設定取得
         $bucket_mail = $this->getBucketMail($bucket);
+        // チェックボックス値の配列化
+        $bucket_mail->notice_groups_array   = explode(UsersTool::CHECKBOX_SEPARATOR, $bucket_mail->notice_groups);
+        $bucket_mail->approval_groups_array = explode(UsersTool::CHECKBOX_SEPARATOR, $bucket_mail->approval_groups);
+        $bucket_mail->approved_groups_array = explode(UsersTool::CHECKBOX_SEPARATOR, $bucket_mail->approved_groups);
 
         // 使用するメール送信メソッドが指定されている場合は、そのメソッドの指定のみできるようにする。
         if (method_exists($this, 'useBucketMailMethods')) {
@@ -624,11 +633,14 @@ class UserPluginBase extends PluginBase
             $use_bucket_mail_methods = ['notice', 'relate', 'approval', 'approved'];
         }
 
+        $groups = Group::orderBy('id', 'asc')->get();
+
         return $this->commonView('frame_edit_mails', [
             'bucket'       => $bucket,
             'bucket_mail'  => $bucket_mail,
             'plugin_name'  => $this->frame->plugin_name,
             'use_bucket_mail_methods' => $use_bucket_mail_methods,
+            'groups'       => $groups,
         ]);
     }
 
@@ -740,15 +752,57 @@ class UserPluginBase extends PluginBase
         ];
 
         // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'notice_addresses' => ['nullable', 'email', Rule::requiredIf($request->notice_on == 1)],
-            'approval_addresses' => ['nullable', 'email', Rule::requiredIf($request->approval_on == 1)],
-            'approved_addresses' => ['nullable', 'email', Rule::requiredIf($request->approved_on == 1)],
-        ]);
+        // $validator = Validator::make($request->all(), [
+        //     'notice_addresses' => ['nullable', 'email', Rule::requiredIf($request->notice_on == 1)],
+        //     'approval_addresses' => ['nullable', 'email', Rule::requiredIf($request->approval_on == 1)],
+        //     'approved_addresses' => ['nullable', 'email', Rule::requiredIf($request->approved_on == 1)],
+        // ]);
+        $rules = [
+            'notice_addresses' => [],
+            'approval_addresses' => [],
+            'approved_addresses' => [],
+        ];
+
+        // １項目複数ルール時に nullable を入れると CustomVali を入れても null でチェックOKになってしまうため、入力が有った時だけemailチェック追加
+        if ($request->notice_addresses) {
+            $rules['notice_addresses'][] = new CustomValiEmails();
+        }
+        if ($request->approval_addresses) {
+            $rules['approval_addresses'][] = new CustomValiEmails();
+        }
+        if ($request->approved_addresses) {
+            $rules['approved_addresses'][] = new CustomValiEmails();
+        }
+
+        if ($request->notice_on) {
+            // 投稿通知onの時、送信先メール or 送信先グループ いずれか必須
+            $name = '送信先メールアドレス, 送信先グループ';
+            $rules['notice_addresses'][]  = new CustomValiRequiredWithoutAllSupportsArrayInput([$request->notice_groups], $name);
+            $rules['notice_groups']       = [new CustomValiRequiredWithoutAllSupportsArrayInput([$request->notice_addresses], $name)];
+        }
+        if ($request->approval_on) {
+            // 承認通知onの時、送信先メール or 送信先グループ いずれか必須
+            $name = '送信先メールアドレス, 送信先グループ';
+            $rules['approval_addresses'][]  = new CustomValiRequiredWithoutAllSupportsArrayInput([$request->approval_groups], $name);
+            $rules['approval_groups']       = [new CustomValiRequiredWithoutAllSupportsArrayInput([$request->approval_addresses], $name)];
+        }
+        if ($request->approved_on) {
+            // 承認済み通知onの時、投稿者へ通知 or 送信先メール or 送信先グループ いずれか必須
+            $name = '投稿者へ通知する, 送信先メールアドレス, 送信先グループ';
+            $rules['approved_author']      = [new CustomValiRequiredWithoutAllSupportsArrayInput([$request->approved_addresses, $request->approved_groups], $name)];
+            $rules['approved_addresses'][] = new CustomValiRequiredWithoutAllSupportsArrayInput([$request->approved_author, $request->approved_groups], $name);
+            $rules['approved_groups']      = [new CustomValiRequiredWithoutAllSupportsArrayInput([$request->approved_author, $request->approved_addresses], $name)];
+        }
+
+        $validator = Validator::make($request->all(), $rules);
         $validator->setAttributeNames([
             'notice_addresses' => '送信先メールアドレス',
+            'notice_groups' => '送信先グループ',
             'approval_addresses' => '送信先メールアドレス',
+            'approval_groups' => '送信先グループ',
+            'approved_author' => '投稿者へ通知する',
             'approved_addresses' => '送信先メールアドレス',
+            'approved_groups' => '送信先グループ',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -782,7 +836,8 @@ class UserPluginBase extends PluginBase
         $bucket_mail->notice_update      = $this->inputNullToZero($request, "notice_update");
         $bucket_mail->notice_delete      = $this->inputNullToZero($request, "notice_delete");
         $bucket_mail->notice_addresses   = $request->notice_addresses;
-        $bucket_mail->notice_groups      = $request->notice_groups;
+        // array_filter()でarrayの空要素削除, implode()でarrayを文字列化
+        $bucket_mail->notice_groups      = $request->notice_groups ? implode(UsersTool::CHECKBOX_SEPARATOR, array_filter($request->notice_groups)) : null;
         $bucket_mail->notice_roles       = $request->notice_roles;
         $bucket_mail->notice_subject     = $request->notice_subject;
         $bucket_mail->notice_body        = $request->notice_body;
@@ -795,6 +850,7 @@ class UserPluginBase extends PluginBase
         // 承認通知
         $bucket_mail->approval_on        = $this->inputNullToZero($request, "approval_on");
         $bucket_mail->approval_addresses = $request->approval_addresses;
+        $bucket_mail->approval_groups    = $request->approval_groups ? implode(UsersTool::CHECKBOX_SEPARATOR, array_filter($request->approval_groups)) : null;
         $bucket_mail->approval_subject   = $request->approval_subject;
         $bucket_mail->approval_body      = $request->approval_body;
 
@@ -802,6 +858,7 @@ class UserPluginBase extends PluginBase
         $bucket_mail->approved_on        = $this->inputNullToZero($request, "approved_on");
         $bucket_mail->approved_author    = $this->inputNullToZero($request, "approved_author");
         $bucket_mail->approved_addresses = $request->approved_addresses;
+        $bucket_mail->approved_groups    = $request->approved_groups ? implode(UsersTool::CHECKBOX_SEPARATOR, array_filter($request->approved_groups)) : null;
         $bucket_mail->approved_subject   = $request->approved_subject;
         $bucket_mail->approved_body      = $request->approved_body;
 

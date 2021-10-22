@@ -528,6 +528,11 @@ a.cc-cursor-text:hover {
     border-radius: 0;
 }
 
+.cc_scroll_checkboxes {
+    height: 100px;
+    overflow: auto;
+}
+
 /* border 関係
 ------------------------------------- */
 .cc_label_panel_list .cc_border_top_none {

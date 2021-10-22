@@ -5,11 +5,21 @@ namespace App\Models\Common;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 
+use App\User;
+
 use App\Enums\NoticeJobType;
 use App\Enums\NoticeEmbeddedTag;
+use App\Enums\UserStatus;
+
+use App\Plugins\Manage\UserManage\UsersTool;
+
+use App\UserableNohistory;
 
 class BucketsMail extends Model
 {
+    // 保存時のユーザー関連データの保持（履歴なしUserable）
+    use UserableNohistory;
+
     // firstOrNew で使うためにguarded が必要だった。
     // ない場合は「Illuminate\Database\Eloquent\MassAssignmentException: bucket_id」でエラーになった。
     protected $guarded = ['buckets_id'];
@@ -129,5 +139,74 @@ class BucketsMail extends Model
             $body = str_ireplace("[[{$tag}]]", $value, $body);
         }
         return $body;
+    }
+
+    /**
+     * 送信者メールとグループから、通知するメールアドレス取得
+     */
+    public function getEmailFromAddressesAndGroups(?string $addresses, ?string $notice_groups) : array
+    {
+        // 送信メール
+        $notice_addresses = explode(',', $addresses);
+
+        // グループ全員のメール取得
+        $groups_ids = explode(UsersTool::CHECKBOX_SEPARATOR, $notice_groups);
+        // array_filter()でarrayの空要素削除
+        $groups_ids = array_filter($groups_ids);
+
+        // グループユーザのメール取得
+        $group_user_emails = [];
+        if (! empty($groups_ids)) {
+            $group_user_emails = GroupUser::select('users.email')
+                ->join('users', function ($join) {
+                    $join->on('users.id', '=', 'group_users.user_id')
+                        ->where('users.status', UserStatus::active)
+                        ->whereNotNull('users.email');
+                })
+                ->whereIn('group_users.group_id', $groups_ids)
+                ->pluck('users.email')
+                ->toArray();
+        }
+
+        // [debug]
+        // var_dump($notice_addresses, $group_user_emails);
+
+        $notice_addresses = array_merge($notice_addresses, $group_user_emails);
+        // array_filter()でarrayの空要素削除
+        $notice_addresses = array_filter($notice_addresses);
+        // 重複メールアドレス削除
+        $notice_addresses = array_unique($notice_addresses);
+
+        return $notice_addresses;
+    }
+
+    /**
+     * 承認済み通知の 送信者メール,グループ,投稿者へ通知 から、通知するメールアドレス取得
+     */
+    public function getApprovedEmailFromAddressesAndGroups(?string $addresses, ?string $approved_groups, $created_id) : array
+    {
+        // 送信者メールとグループから、通知するメールアドレス取得
+        $approved_addresses = $this->getEmailFromAddressesAndGroups($addresses, $approved_groups);
+
+        // 投稿者へ通知する
+        $approved_author_email = [];
+        if ($this->approved_author) {
+            $post_user = User::where('id', $created_id)
+                ->where('users.status', UserStatus::active)
+                ->whereNotNull('users.email')
+                ->first();
+
+            if ($post_user) {
+                $approved_author_email[] = $post_user->email;
+            }
+        }
+
+        $approved_addresses = array_merge($approved_addresses, $approved_author_email);
+        // array_filter()でarrayの空要素削除
+        $approved_addresses = array_filter($approved_addresses);
+        // 重複メールアドレス削除
+        $approved_addresses = array_unique($approved_addresses);
+
+        return $approved_addresses;
     }
 }

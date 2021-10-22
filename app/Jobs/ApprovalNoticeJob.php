@@ -51,16 +51,20 @@ class ApprovalNoticeJob implements ShouldQueue
         // buckets_mails の取得
         $bucket_mail = BucketsMail::firstOrNew(['buckets_id' => $this->bucket->id]);
 
+        // 送信者メールとグループから、通知するメールアドレス取得
+        $approval_addresses = $bucket_mail->getEmailFromAddressesAndGroups($bucket_mail->approval_addresses, $bucket_mail->approval_groups);
+
         // エラーチェック（とりあえずデバックログに出力。管理画面で確認できるエラーテーブルに移すこと）
-        if (!$bucket_mail->approval_addresses) {
+        // if (!$bucket_mail->approval_addresses) {
+        if (empty($approval_addresses)) {
             Log::debug("送信先メールアドレスの指定なし。buckets_id = " . $this->bucket->id);
         }
 
         // メール送信
-        $approval_addresses = explode(',', $bucket_mail->approval_addresses);
-        if (empty($approval_addresses)) {
-            return;
-        }
+        // $approval_addresses = explode(',', $bucket_mail->approval_addresses);
+        // if (empty($approval_addresses)) {
+        //     return;
+        // }
         foreach ($approval_addresses as $approval_address) {
             // Mail::to($approval_address)->send(new ApprovalNotice($this->frame, $this->bucket, $this->post, $this->title, $this->show_method, $bucket_mail));
             Mail::to($approval_address)->send(new ApprovalNotice($this->notice_embedded_tags, $bucket_mail));
