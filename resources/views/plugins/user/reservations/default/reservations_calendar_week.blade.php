@@ -48,11 +48,12 @@
     <table class="table table-bordered cc_responsive_table" style="table-layout:fixed;">
         <thead>
             {{-- カレンダーヘッダ部の曜日を表示 --}}
-            <tr>
+            <tr class="text-nowrap">
                 @foreach ($calendar_details['calendar_cells'] as $cell)
                     {{-- 日曜なら赤文字、土曜なら青文字 --}}
-                    <th class="text-center bg-light{{ $cell['date']->dayOfWeek == DayOfWeek::sun ? ' text-danger' : '' }}{{ $cell['date']->dayOfWeek == DayOfWeek::sat ? ' text-primary' : '' }}">
-                        {{ $cell['date']->day . '(' . DayOfWeek::getDescription($cell['date']->dayOfWeek) . ')' }}
+                    <th class="text-center bg-light{{ $cell['date']->dayOfWeek == DayOfWeek::sun ? ' cc-color-sunday' : '' }}{{ $cell['date']->dayOfWeek == DayOfWeek::sat ? ' cc-color-saturday' : '' }}">
+                        @include('plugins.user.reservations.default.include_calendar_day', ['date' => $cell['date']])
+                        @include('plugins.user.reservations.default.include_calendar_day_of_week', ['date' => $cell['date']])
                     </th>
                 @endforeach
             </tr>
@@ -63,19 +64,16 @@
                 @foreach ($calendar_details['calendar_cells'] as $cell)
                     <td class="
                         {{-- 日曜なら赤文字 --}}
-                        {{ $cell['date']->dayOfWeek == DayOfWeek::sun ? 'text-danger' : '' }}
+                        {{ $cell['date']->dayOfWeek == DayOfWeek::sun ? 'cc-color-sunday' : '' }}
                         {{-- 土曜なら青文字 --}}
-                        {{ $cell['date']->dayOfWeek == DayOfWeek::sat ? 'text-primary' : '' }}
-
-                        {{-- defaultテンプレート --}}
-                        {{-- 当日ならセル背景を黄色 --}}
-                        {{ $cell['date'] == Carbon::today() ? ' bg-warning' : '' }}
+                        {{ $cell['date']->dayOfWeek == DayOfWeek::sat ? 'cc-color-saturday' : '' }}
                         "
                     >
                         <div class="clearfix">
                             {{-- 日付＆曜日（767px以下で表示） --}}
-                            <div class="float-left d-md-none">
-                                {{ $cell['date']->day . ' (' . DayOfWeek::getDescription($cell['date']->dayOfWeek) . ')' }}
+                            <div class="float-left d-md-none font-weight-bold text-secondary">
+                                @include('plugins.user.reservations.default.include_calendar_day', ['date' => $cell['date']])
+                                @include('plugins.user.reservations.default.include_calendar_day_of_week', ['date' => $cell['date']])
                             </div>
 
                             {{-- ＋ボタン --}}
@@ -100,43 +98,50 @@
                         </div>
                         @if (isset($cell['bookings']))
                             @foreach ($cell['bookings'] as $booking)
-                                <a href="#bookingDetailModal{{$frame_id}}" role="button" data-toggle="modal"
-                                    {{-- モーダルウィンドウに渡す予約入力値をセット（固定項目） --}}
-                                    data-booking_id="{{ $booking['booking_header']->id }}"
-                                    data-facility_name="{{ $facility_name }}"
-                                    data-reservation_date_display="{{$booking['booking_header']->displayDate()}}"
-                                    data-reservation_time="{{ $booking['booking_header']->start_datetime->format('H:i')}} ~ {{$booking['booking_header']->end_datetime->format('H:i') }}"
-                                    @can('posts.update', [[$booking['booking_header'], $frame->plugin_name, $buckets]]) data-is_edit="1" @endcan
-                                    @can('posts.delete', [[$booking['booking_header'], $frame->plugin_name, $buckets]]) data-is_delete="1" @endcan
-                                {{-- モーダルウィンドウに渡す予約入力値をセット（可変項目） --}}
-                                    @foreach ($booking['booking_details'] as $bookingDetail)
-                                        @switch($bookingDetail->column_type)
-                                            {{-- テキスト項目 --}}
-                                            @case(ReservationColumnType::text)
+                                <div class="row py-1">
+                                    <div class="d-md-none col-1"></div>
+                                    <div class="col-11 col-md-12">
 
-                                                data-column_{{ $bookingDetail->column_id }}="{{ $bookingDetail->value ? $bookingDetail->value : " " }}"
-                                                @break
+                                        <a href="#bookingDetailModal{{$frame_id}}" role="button" data-toggle="modal"
+                                            {{-- モーダルウィンドウに渡す予約入力値をセット（固定項目） --}}
+                                            data-booking_id="{{ $booking['booking_header']->id }}"
+                                            data-facility_name="{{ $facility_name }}"
+                                            data-reservation_date_display="{{$booking['booking_header']->displayDate()}}"
+                                            data-reservation_time="{{ $booking['booking_header']->start_datetime->format('H:i')}} ~ {{$booking['booking_header']->end_datetime->format('H:i') }}"
+                                            @can('posts.update', [[$booking['booking_header'], $frame->plugin_name, $buckets]]) data-is_edit="1" @endcan
+                                            @can('posts.delete', [[$booking['booking_header'], $frame->plugin_name, $buckets]]) data-is_delete="1" @endcan
+                                            {{-- モーダルウィンドウに渡す予約入力値をセット（可変項目） --}}
+                                            @foreach ($booking['booking_details'] as $bookingDetail)
+                                                @switch($bookingDetail->column_type)
+                                                    {{-- テキスト項目 --}}
+                                                    @case(ReservationColumnType::text)
 
-                                            {{-- ラジオボタン項目 --}}
-                                            @case(ReservationColumnType::radio)
+                                                        data-column_{{ $bookingDetail->column_id }}="{{ $bookingDetail->value ? $bookingDetail->value : " " }}"
+                                                        @break
 
-                                                {{-- ラジオボタン項目の場合、valueにはreservations_columns_selectsテーブルのIDが入っているので、該当の選択肢データを取得して選択肢名をセットする --}}
-                                                @php
-                                                    $filtered_select = $selects->first(function($select) use($bookingDetail) {
-                                                        return $select->reservations_id == $bookingDetail->reservations_id && $select->column_id == $bookingDetail->id && $select->id == $bookingDetail->value;
-                                                    });
-                                                    $filtered_select ? $filtered_select->toArray() : null;
-                                                @endphp
-                                                    data-column_{{ $bookingDetail->column_id }}="{{ $filtered_select ? $filtered_select->select_name : '' }}"
-                                                    @break
-                                            @default
+                                                    {{-- ラジオボタン項目 --}}
+                                                    @case(ReservationColumnType::radio)
 
-                                        @endswitch
-                                    @endforeach
-                                >
-                                    {{-- 表示用の予約時間 --}}
-                                    <div class="small">{{ substr($booking['booking_header']->start_datetime, 11, 5) . '~' . substr($booking['booking_header']->end_datetime, 11, 5) }}</div>
-                                </a>
+                                                        {{-- ラジオボタン項目の場合、valueにはreservations_columns_selectsテーブルのIDが入っているので、該当の選択肢データを取得して選択肢名をセットする --}}
+                                                        @php
+                                                            $filtered_select = $selects->first(function($select) use($bookingDetail) {
+                                                                return $select->reservations_id == $bookingDetail->reservations_id && $select->column_id == $bookingDetail->id && $select->id == $bookingDetail->value;
+                                                            });
+                                                            $filtered_select ? $filtered_select->toArray() : null;
+                                                        @endphp
+                                                            data-column_{{ $bookingDetail->column_id }}="{{ $filtered_select ? $filtered_select->select_name : '' }}"
+                                                            @break
+                                                    @default
+
+                                                @endswitch
+                                            @endforeach
+                                        >
+                                            {{-- 表示用の予約時間 --}}
+                                            <div class="small">{{ $booking['booking_header']->start_datetime->format('H:i')}}~{{$booking['booking_header']->end_datetime->format('H:i') }}</div>
+                                        </a>
+
+                                    </div>
+                                </div>
                             @endforeach
                         @endif
                     </td>

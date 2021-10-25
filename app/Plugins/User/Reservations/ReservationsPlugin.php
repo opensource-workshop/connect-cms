@@ -2,7 +2,9 @@
 
 namespace App\Plugins\User\Reservations;
 
-use Carbon\Carbon;
+// use Carbon\Carbon;
+use App\Models\Common\ConnectCarbon;
+
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -265,8 +267,8 @@ class ReservationsPlugin extends UserPluginBase
             $reservations_inputs->reservations_id = $request->reservations_id;
             $reservations_inputs->facility_id = $request->facility_id;
         }
-        $reservations_inputs->start_datetime = new Carbon($target_ymd . ' ' . $request->start_datetime . ':00');
-        $reservations_inputs->end_datetime = new Carbon($target_ymd . ' ' . $request->end_datetime . ':00');
+        $reservations_inputs->start_datetime = new ConnectCarbon($target_ymd . ' ' . $request->start_datetime . ':00');
+        $reservations_inputs->end_datetime = new ConnectCarbon($target_ymd . ' ' . $request->end_datetime . ':00');
         $reservations_inputs->save();
 
         // 項目IDを取得
@@ -355,7 +357,7 @@ class ReservationsPlugin extends UserPluginBase
             // 予約項目データの内、選択肢が指定されていた場合の選択肢データ
             $selects = ReservationsColumnsSelect::where('reservations_id', $booking->reservations_id)->whereNull('hide_flag')->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
 
-            $target_date = new Carbon($booking->start_datetime);
+            $target_date = new ConnectCarbon($booking->start_datetime);
         } else {
             /**
              * 予約の新規登録モード
@@ -382,7 +384,7 @@ class ReservationsPlugin extends UserPluginBase
             // 予約項目データの内、選択肢が指定されていた場合の選択肢データ
             $selects = ReservationsColumnsSelect::where('reservations_id', $request->reservations_id)->whereNull('hide_flag')->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
 
-            $target_date = new Carbon($target_ymd);
+            $target_date = new ConnectCarbon($target_ymd);
         }
 
         return $this->view('edit_booking', [
@@ -550,7 +552,7 @@ class ReservationsPlugin extends UserPluginBase
 
         // 対象日時未設定（初期表示）の場合は現在日時をセット
         if (empty($carbon_target_date)) {
-            $carbon_target_date = Carbon::today();
+            $carbon_target_date = ConnectCarbon::today();
         }
 
         /**
@@ -565,7 +567,7 @@ class ReservationsPlugin extends UserPluginBase
             /**
              * 月表示用のデータ
              */
-            $firstDay = new Carbon("$carbon_target_date->year-$carbon_target_date->month-01");
+            $firstDay = new ConnectCarbon("$carbon_target_date->year-$carbon_target_date->month-01");
             // カレンダーを四角形にするため、前月となる左上の隙間用のデータを入れるためずらす
             $firstDay->subDay($firstDay->dayOfWeek);
             // 35マス（7列×5行）で収まらない場合の加算日数の算出
@@ -602,7 +604,7 @@ class ReservationsPlugin extends UserPluginBase
          * カレンダー情報は入れ子の連想配列で返却する
          * calendars['施設名'] : 施設データ
          * calendars['calendar_cells'] : カレンダーセルデータの連想配列
-         *   calendar_cell['date'] : Carbon日付データ
+         *   calendar_cell['date'] : ConnectCarbon日付データ
          *   calendar_cell['bookings'] : 予約データの連想配列
          *     calendar_cell['booking_header'] : 予約データの親テーブル（reservations_inputs）情報
          *     calendar_cell['booking_details'] : 予約データの子テーブル（reservations_inputs_columns）情報
@@ -699,7 +701,7 @@ class ReservationsPlugin extends UserPluginBase
         if (!checkdate($month, $day, $year)) {
             return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
         }
-        $carbon_target_date = new Carbon("$target_ymd");
+        $carbon_target_date = new ConnectCarbon("$target_ymd");
         return $this->index($request, $page_id, $frame_id, ReservationCalendarDisplayType::week, $carbon_target_date, null);
     }
 
@@ -713,7 +715,7 @@ class ReservationsPlugin extends UserPluginBase
         if (!checkdate($month, '01', $year)) {
             return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . ')');
         }
-        $carbon_target_date = new Carbon("$year-$month-01");
+        $carbon_target_date = new ConnectCarbon("$year-$month-01");
         return $this->index($request, $page_id, $frame_id, ReservationCalendarDisplayType::month, $carbon_target_date, null);
     }
 
