@@ -384,7 +384,7 @@ class ReservationsPlugin extends UserPluginBase
             $target_date = new Carbon($target_ymd);
         }
 
-        return $this->view('reservations_calendar_edit_booking', [
+        return $this->view('edit_booking', [
             'target_date' => $target_date,
             'reservation' => $reservation,
             'facility' => $facility,
