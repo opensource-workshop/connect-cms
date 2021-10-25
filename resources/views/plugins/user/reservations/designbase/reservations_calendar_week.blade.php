@@ -134,7 +134,7 @@
                                     @endforeach
                                 >
                                     {{-- 表示用の予約時間 --}}
-                                    <div class="small">{{ substr($booking['booking_header']->start_datetime, 11, 5) . '~' . substr($booking['booking_header']->end_datetime, 11, 5) }}</div>
+                                    <div class="small">{{ $booking['booking_header']->start_datetime->format('H:i')}}~{{$booking['booking_header']->end_datetime->format('H:i') }}</div>
                                 </a>
                             @endforeach
                         @endif
