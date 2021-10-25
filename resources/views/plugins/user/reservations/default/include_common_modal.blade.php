@@ -47,7 +47,7 @@
 
                 {{-- 予約編集ボタン（ログイン時のみ表示） --}}
                 @auth
-                    <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/' + form_booking{{$frame_id}}.booking_id.value + '#frame-{{$frame->id}}'">
+                    <button type="button" class="btn btn-success" id="reservation_edit_button" onclick="location.href='{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/' + form_booking{{$frame_id}}.booking_id.value + '#frame-{{$frame->id}}'">
                         <i class="far fa-edit"></i> {{ __('messages.edit') }}
                     </button>
                 @endauth
@@ -63,7 +63,7 @@
 
                         {{-- 予約ID --}}
                         <input type="hidden" name="booking_id" value="">
-                        <button type="button" class="btn btn-danger" onclick="destroy_booking{{$frame_id}}()">
+                        <button type="button" class="btn btn-danger" id="reservation_destroy_button" onclick="destroy_booking{{$frame_id}}()">
                             <i class="fas fa-trash-alt"></i> {{ __('messages.delete') }}
                         </button>
                     </form>
@@ -88,6 +88,24 @@
         @foreach ($columns as $column)
             modal.find('#column_{{ $column->id }}').val(button.data('column_{{ $column->id }}'))
         @endforeach
+
+        @auth
+            // 編集権限ありならボタン表示, なしは非表示
+            if (button.data('is_edit') == '1') {
+                // find結果はjquery object
+                modal.find('#reservation_edit_button').show();
+            } else {
+                modal.find('#reservation_edit_button').hide();
+            }
+
+            // 削除権限ありならボタン表示, なしは非表示
+            if (button.data('is_delete') == '1') {
+                // finc結果はjquery object
+                modal.find('#reservation_destroy_button').show();
+            } else {
+                modal.find('#reservation_destroy_button').hide();
+            }
+        @endauth
     })
 
     function destroy_booking{{$frame_id}}() {

@@ -52,11 +52,6 @@ if ($frame->isExpandNarrow()) {
                 </form>
             @endcan
         @endif --}}
-        @can('posts.update',[[$inputs, $frame->plugin_name, $buckets]])
-            @if ($inputs->status == 1)
-                <span class="badge badge-warning align-bottom">一時保存</span>
-            @endif
-        @endcan
 
         <a class="btn btn-success btn-sm ml-2" href="{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}#frame-{{$frame_id}}">
             <i class="far fa-edit"></i> 編集

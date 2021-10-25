@@ -102,6 +102,7 @@ class ReservationsPlugin extends UserPluginBase
         $role_check_table["updateSelect"]           = ['buckets.editColumn'];
         $role_check_table["updateSelectSequence"]   = ['buckets.editColumn'];
 
+        // posts.create, posts.delete等は AppServiceProviderのGateでチェックされる。自分の登録データかは、$post->created_id でチェックされるため、DBカラムに created_id 必要。
         $role_check_table["editBooking"]            = ['posts.create'];
         $role_check_table["saveBooking"]            = ['posts.create', 'posts.update'];
         $role_check_table["approvalBooking"]        = ['posts.approval'];
@@ -944,6 +945,16 @@ class ReservationsPlugin extends UserPluginBase
 
         // 表示施設予約選択画面を呼ぶ
         return $this->listBuckets($request, $page_id, $frame_id, $id);
+    }
+
+    /**
+     * 権限設定 変更画面
+     */
+    public function editBucketsRoles($request, $page_id, $frame_id, $id = null, $use_approval = true)
+    {
+        // [TODO] 一旦承認なしで実装
+        $use_approval = false;
+        return parent::editBucketsRoles($request, $page_id, $frame_id, $id, $use_approval);
     }
 
     /**

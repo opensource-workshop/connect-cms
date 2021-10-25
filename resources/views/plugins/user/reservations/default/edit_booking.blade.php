@@ -13,7 +13,7 @@
      * 登録ボタン押下
      */
      function submit_booking_store(btn) {
-        form_save_booking{{$frame_id}}.action = "{{URL::to('/')}}/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        // form_save_booking{{$frame_id}}.action = "{{URL::to('/')}}/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         btn.disabled = true;
         form_save_booking{{$frame_id}}.submit();
     }
@@ -65,7 +65,7 @@
     });
 </script>
 
-<form action="" name="form_save_booking{{$frame_id}}" method="POST">
+<form action="{{url('/')}}/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_save_booking{{$frame_id}}" method="POST">
     {{-- メッセージエリア --}}
     <div class="alert {{ $booking ? 'alert-warning' : 'alert-info' }} mt-2">
         <i class="fas fa-exclamation-circle"></i> 対象施設の予約を{{ $booking ? '更新' : '登録' }}します。
@@ -199,13 +199,55 @@
 
     {{-- ボタンエリア --}}
     <div class="form-group text-center">
-        {{-- キャンセルボタン --}}
-        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link) . '#frame-' . $frame->id}}'">
-                <i class="fas fa-times"></i> キャンセル
-            </button>
-    {{-- <button type="button" class="btn btn-secondary mr-2" onclick="javascript:submit_booking_cancel();"><i class="fas fa-times"></i> キャンセル</button> --}}
-        {{-- 登録ボタン --}}
-        <button type="submit" class="btn btn-primary" onclick="javascript:submit_booking_store(this);"><i class="fas fa-check"></i> {{ $booking ? '更新' : '登録' }} </button>
+        <div class="row">
+            <div class="col-3"></div>
+            <div class="col-6">
+                <div class="text-center">
+                    <a href="{{URL::to($page->permanent_link)}}" class="btn btn-secondary mr-2"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span></a>
+
+                    @if (empty($booking))
+                        @if ($buckets->needApprovalUser(Auth::user(), $frame))
+                            <button type="submit" class="btn btn-success" onclick="submit_booking_store(this)"><i class="far fa-edit"></i> 登録申請</button>
+                        @else
+                            <button type="submit" class="btn btn-primary" onclick="submit_booking_store(this)"><i class="fas fa-check"></i> 登録確定</button>
+                        @endif
+                    @else
+                        @if ($buckets->needApprovalUser(Auth::user(), $frame))
+                            <button type="submit" class="btn btn-success" onclick="submit_booking_store(this)"><i class="far fa-edit"></i> 変更申請</button>
+                        @else
+                            <button type="submit" class="btn btn-primary" onclick="submit_booking_store(this)"><i class="fas fa-check"></i> 変更確定</button>
+                        @endif
+                    @endif
+                </div>
+            </div>
+            @if (!empty($booking))
+                <div class="col-3 text-right">
+                    <a data-toggle="collapse" href="#collapse{{$booking->id}}">
+                        <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> 削除</span></span>
+                    </a>
+                </div>
+            @endif
+        </div>
     </div>
 </form>
+
+@if (!empty($booking))
+    <div id="collapse{{$booking->id}}" class="collapse">
+        <div class="card border-danger">
+            <div class="card-body">
+                <span class="text-danger">データを削除します。<br>元に戻すことはできないため、よく確認して実行してください。</span>
+
+                <div class="text-center">
+                    {{-- 削除ボタン --}}
+                    <form action="{{url('/')}}/redirect/plugin/reservations/destroyBooking/{{$page->id}}/{{$frame_id}}/{{$booking->id}}#frame-{{$frame->id}}" method="POST">
+                        {{csrf_field()}}
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+@endif
+
 @endsection

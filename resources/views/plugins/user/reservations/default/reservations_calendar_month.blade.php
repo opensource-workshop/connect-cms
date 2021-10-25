@@ -86,7 +86,7 @@
                                 </div>
                                 {{-- ＋ボタン --}}
                                 <div class="float-right">
-                                    @auth
+                                    @can('posts.create',[[null, $frame->plugin_name, $buckets]])
                                         {{-- セル毎に予約追加画面呼び出し用のformをセット --}}
                                         <form action="{{URL::to('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_edit_booking_{{$frame_id}}_{{ $reservations->id }}_{{ $calendar_details['facility']->id }}_{{ $cell['date']->format('Ymd') }}" method="POST" class="form-horizontal">
                                             {{ csrf_field() }}
@@ -101,7 +101,7 @@
                                                 <i class="fas fa-plus"></i>
                                             </a>
                                         </form>
-                                    @endauth
+                                    @endcan
                                 </div>
                             </div>
                             @if (isset($cell['bookings']))
@@ -112,6 +112,8 @@
                                         data-facility_name="{{ $facility_name }}"
                                         data-reservation_date_display="{{$booking['booking_header']->displayDate()}}"
                                         data-reservation_time="{{ $booking['booking_header']->start_datetime->format('H:i')}} ~ {{$booking['booking_header']->end_datetime->format('H:i') }}"
+                                        @can('posts.update', [[$booking['booking_header'], $frame->plugin_name, $buckets]]) data-is_edit="1" @endcan
+                                        @can('posts.delete', [[$booking['booking_header'], $frame->plugin_name, $buckets]]) data-is_delete="1" @endcan
                                         {{-- モーダルウィンドウに渡す予約入力値をセット（可変項目） --}}
                                         @foreach ($booking['booking_details'] as $bookingDetail)
                                             @switch($bookingDetail->column_type)
