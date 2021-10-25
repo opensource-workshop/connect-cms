@@ -35,47 +35,37 @@
 
             {{-- フッター --}}
             <div class="modal-footer" style="justify-content : left;">
+                <form action="" name="form_booking{{$frame_id}}" method="get">
+                    {{-- input_id(予約ID) --}}
+                    <input type="hidden" name="booking_id" value="">
+                </form>
+
                 {{-- 閉じるボタン --}}
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">
                     <i class="fas fa-times"></i> {{ __('messages.close') }}
                 </button>
+
                 {{-- 予約編集ボタン（ログイン時のみ表示） --}}
                 @auth
-                    <form action="{{URL::to('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_edit_booking{{$frame_id}}" method="POST" class="form-horizontal">
-                        {{ csrf_field() }}
-
-                        {{-- 予約ID --}}
-                        <input type="hidden" name="booking_id" value="">
-                        {{-- ＋ボタンクリックでformサブミット --}}
-                        <a href="javascript:form_edit_booking{{$frame_id}}.submit()">
-                            <button type="button" class="btn btn-success">
-                                <i class="far fa-edit"></i> {{ __('messages.edit') }}
-                            </button>
-                        </a>
-                    </form>
+                    <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/' + form_booking{{$frame_id}}.booking_id.value + '#frame-{{$frame->id}}'">
+                        <i class="far fa-edit"></i> {{ __('messages.edit') }}
+                    </button>
                 @endauth
 
-                {{-- 詳細画面 --}}
-                <form action="" name="form_show_booking{{$frame_id}}" method="get" class="form-horizontal">
-                    {{-- input_id(予約ID) --}}
-                    <input type="hidden" name="booking_id" value="">
-                    <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/reservations/showBooking/{{$page->id}}/{{$frame_id}}/' + form_show_booking{{$frame_id}}.booking_id.value + '#frame-{{$frame->id}}'">
-                        {{ __('messages.detail') }}  <i class="fas fa-angle-right"></i>
-                    </button>
-                </form>
+                {{-- 詳細 --}}
+                <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/reservations/showBooking/{{$page->id}}/{{$frame_id}}/' + form_booking{{$frame_id}}.booking_id.value + '#frame-{{$frame->id}}'">
+                    {{ __('messages.detail') }}  <i class="fas fa-angle-right"></i>
+                </button>
 
                 @auth
-                    <form action="{{URL::to('/')}}/plugin/reservations/destroyBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_destroy_booking{{$frame_id}}" method="POST" class="form-horizontal">
+                    <form action="" name="form_destroy_booking{{$frame_id}}" method="POST" class="form-horizontal">
                         {{ csrf_field() }}
 
                         {{-- 予約ID --}}
                         <input type="hidden" name="booking_id" value="">
-                        {{-- ＋ボタンクリックでformサブミット --}}
-                        <a href="javascript:form_destroy_booking{{$frame_id}}.submit()">
-                            <button type="button" class="btn btn-danger" onclick="javascript:return confirm('予約を削除します。\nよろしいですか？')">
-                                <i class="fas fa-trash-alt"></i> {{ __('messages.delete') }}
-                            </button>
-                        </a>
+                        <button type="button" class="btn btn-danger" onclick="destroy_booking{{$frame_id}}()">
+                            <i class="fas fa-trash-alt"></i> {{ __('messages.delete') }}
+                        </button>
                     </form>
                 @endauth
             </div>
@@ -99,4 +89,11 @@
             modal.find('#column_{{ $column->id }}').val(button.data('column_{{ $column->id }}'))
         @endforeach
     })
+
+    function destroy_booking{{$frame_id}}() {
+        if (confirm('予約を削除します。\nよろしいですか？')) {
+            form_destroy_booking{{$frame_id}}.action = "{{url('/')}}/redirect/plugin/reservations/destroyBooking/{{$page->id}}/{{$frame_id}}/" + form_destroy_booking{{$frame_id}}.booking_id.value + "#frame-{{$frame->id}}";
+            form_destroy_booking{{$frame_id}}.submit();
+        }
+    }
 </script>

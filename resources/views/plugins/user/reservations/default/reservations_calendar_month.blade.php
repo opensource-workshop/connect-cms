@@ -5,17 +5,6 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
 --}}
-
-{{-- カレンダーヘッダ部 --}}
-<br>
-
-{{-- メッセージエリア --}}
-@if ($message)
-    <div class="alert alert-info mt-2">
-        <i class="fas fa-exclamation-circle"></i>{{ $message }}
-    </div>
-@endif
-
 <div class="row">
     <div class="col-12 clearfix">
 

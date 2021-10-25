@@ -45,6 +45,21 @@
 
         {{-- defaultテンプレート --}}
         <div>
+
+            {{-- カレンダーヘッダ部 --}}
+            <br>
+
+            {{-- メッセージエリア --}}
+            @if ($message)
+                <div class="alert alert-success mt-2">
+                    <i class="fas fa-exclamation-circle"></i> {{ $message }}
+                </div>
+
+            @elseif (session('flash_message'))
+                {{-- リダイレクト用登録後メッセージ表示 --}}
+                @include('plugins.common.flash_message')
+            @endif
+
             @if ($view_format == ReservationCalendarDisplayType::month)
 
                 {{-- 月で表示 --}}

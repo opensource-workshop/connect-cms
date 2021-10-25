@@ -319,14 +319,6 @@ class ReservationsPlugin extends UserPluginBase
 
         $booking = null;
 
-        // URLにidがない場合、$request->booking_id から取る
-        // 2パターンのURLに対応
-        // ・(POST, 詳細ダイアログ＞編集) http://localhost/plugin/reservations/editBooking/18/35#frame-35 ＆ booking_idをPOST
-        // ・(GET, 詳細画面＞編集) http://localhost/plugin/reservations/editBooking/18/35/6#frame-35
-        if (is_null($input_id)) {
-            $input_id = $request->booking_id;
-        }
-
         // if ($request->booking_id) {
         if ($input_id) {
 
@@ -890,31 +882,37 @@ class ReservationsPlugin extends UserPluginBase
     }
 
     /**
-     *  予約削除
+     * 予約削除
      */
-    public function destroyBooking($request, $page_id, $frame_id)
+    public function destroyBooking($request, $page_id, $frame_id, $input_id)
     {
         $message = null;
         // id がある場合、データを削除
-        if ($request->booking_id) {
+        // if ($request->booking_id) {
+        if ($input_id) {
             // 予約（子）を削除
-            $input_columns = ReservationsInputsColumn::where('inputs_id', $request->booking_id)->get();
+            // $input_columns = ReservationsInputsColumn::where('inputs_id', $request->booking_id)->get();
+            $input_columns = ReservationsInputsColumn::where('inputs_id', $input_id)->get();
             foreach ($input_columns as $input_column) {
                 $input_column->delete();
             }
 
             // 予約（親）、施設情報を取得してメッセージ修正
-            $input = ReservationsInput::where('id', $request->booking_id)->first();
+            // $input = ReservationsInput::where('id', $request->booking_id)->first();
+            $input = ReservationsInput::where('id', $input_id)->first();
             $facility = ReservationsFacility::where('id', $input->facility_id)->first();
             $message = '予約を削除しました。【場所】' . $facility->facility_name . ' 【日時】' . date_format($input->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($input->end_datetime, 'H時i分');
 
             // メール送信
             $this->sendDeleteNotice($input, 'showBooking', $message);
 
+            session()->flash('flash_message', $message);
+
             // 予約（親）を削除
             $input->delete();
         }
-        return $this->index($request, $page_id, $frame_id, null, null, $message);
+        // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+        // return $this->index($request, $page_id, $frame_id, null, null, $message);
     }
 
    /**
