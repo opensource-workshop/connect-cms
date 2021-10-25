@@ -8,95 +8,58 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
-    {{-- 必要なデータ揃っているか確認 --}}
-    @if (
-        // フレームに紐づいた施設予約親データが存在すること
-        isset($frame) && $frame->bucket_id &&
-        // 施設データが存在すること
-        !$facilities->isEmpty() &&
-        // 予約項目データが存在すること
-        !$columns->isEmpty() &&
-        // 予約項目で選択肢が指定されていた場合に選択肢データが存在すること
-        $isExistSelect
-        )
 
-        {{-- 予約詳細モーダルウィンドウ --}}
-        @include('plugins.user.reservations.default.include_common_modal')
+    {{-- 予約詳細モーダルウィンドウ --}}
+    @include('plugins.user.reservations.default.include_common_modal')
 
-        {{-- タブ表示 --}}
-        <ul class="nav nav-tabs">
-            <li class="nav-item">
-                {{-- 月タブ --}}
-                <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::now()->format('Ym') }}#frame-{{$frame->id}}"
-                    class="nav-link{{ $view_format == ReservationCalendarDisplayType::month ? ' active' : '' }}"
-                >
-                    {{ __('messages.month') }}
-                </a>
-            </li>
-            <li class="nav-item">
-                {{-- 週タブ --}}
-                <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ymd') }}#frame-{{$frame->id}}"
-                    class="nav-link{{ $view_format == ReservationCalendarDisplayType::week ? ' active' : '' }}"
-                >
-                    {{ __('messages.week') }}
-                </a>
-            </li>
-        </ul>
+    {{-- タブ表示 --}}
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            {{-- 月タブ --}}
+            <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::now()->format('Ym') }}#frame-{{$frame->id}}"
+                class="nav-link{{ $view_format == ReservationCalendarDisplayType::month ? ' active' : '' }}"
+            >
+                {{ __('messages.month') }}
+            </a>
+        </li>
+        <li class="nav-item">
+            {{-- 週タブ --}}
+            <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ymd') }}#frame-{{$frame->id}}"
+                class="nav-link{{ $view_format == ReservationCalendarDisplayType::week ? ' active' : '' }}"
+            >
+                {{ __('messages.week') }}
+            </a>
+        </li>
+    </ul>
 
-        {{-- defaultテンプレート --}}
-        <div>
+    {{-- defaultテンプレート --}}
+    <div>
 
-            {{-- カレンダーヘッダ部 --}}
-            <br>
+        {{-- カレンダーヘッダ部 --}}
+        <br>
 
-            {{-- メッセージエリア --}}
-            @if ($message)
-                <div class="alert alert-success mt-2">
-                    <i class="fas fa-exclamation-circle"></i> {{ $message }}
-                </div>
-
-            @elseif (session('flash_message'))
-                {{-- リダイレクト用登録後メッセージ表示 --}}
-                @include('plugins.common.flash_message')
-            @endif
-
-            @if ($view_format == ReservationCalendarDisplayType::month)
-
-                {{-- 月で表示 --}}
-                @include('plugins.user.reservations.default.reservations_calendar_month')
-
-            @elseif ($view_format == ReservationCalendarDisplayType::week)
-
-                {{-- 週で表示 --}}
-                @include('plugins.user.reservations.default.reservations_calendar_week')
-
-            @endif
-        </div>
-
-    @else
-        {{-- 未ログイン時は何も表示しない --}}
-        @if (Auth::check())
-            {{-- フレームに紐づくコンテンツがない場合、データ登録を促すメッセージを表示 --}}
-            <div class="card border-danger">
-                <div class="card-body">
-                    {{-- フレームに紐づく親データがない場合 --}}
-                    @if (!(isset($frame) && $frame->bucket_id))
-                        <p class="text-center cc_margin_bottom_0">フレームの設定画面から、使用する施設予約を選択するか、作成してください。</p>
-                    @endif
-                    {{-- 施設データがない場合 --}}
-                    @if ($facilities->isEmpty())
-                        <p class="text-center cc_margin_bottom_0">フレームの設定画面から、施設データを作成してください。</p>
-                    @endif
-                    {{-- 予約項目データがない場合 --}}
-                    @if ($columns->isEmpty())
-                        <p class="text-center cc_margin_bottom_0">フレームの設定画面から、予約項目データを作成してください。</p>
-                    @endif
-                    {{-- 予約項目で選択肢のデータ型が指定されていた時に選択肢データがない場合 --}}
-                    @if (!$isExistSelect)
-                        <p class="text-center cc_margin_bottom_0">フレームの設定画面から、予約項目の選択肢データを作成してください。</p>
-                    @endif
-                </div>
+        {{-- メッセージエリア --}}
+        @if ($message)
+            <div class="alert alert-success mt-2">
+                <i class="fas fa-exclamation-circle"></i> {{ $message }}
             </div>
+
+        @elseif (session('flash_message'))
+            {{-- リダイレクト用登録後メッセージ表示 --}}
+            @include('plugins.common.flash_message')
         @endif
-    @endif
+
+        @if ($view_format == ReservationCalendarDisplayType::month)
+
+            {{-- 月で表示 --}}
+            @include('plugins.user.reservations.default.reservations_calendar_month')
+
+        @elseif ($view_format == ReservationCalendarDisplayType::week)
+
+            {{-- 週で表示 --}}
+            @include('plugins.user.reservations.default.reservations_calendar_week')
+
+        @endif
+    </div>
+
 @endsection

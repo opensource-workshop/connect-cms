@@ -653,20 +653,38 @@ class ReservationsPlugin extends UserPluginBase
             $calendars[$facility->facility_name] = $calendar;
         }
 
-        // $time = microtime(true) - $time_start;  //debug用
-        // dd($time . '秒');  //debug用
-        // dd($calendars);  //debug用
-        return $this->view('reservations_calendar_common', [
-            'view_format' => $view_format,
-            'carbon_target_date' => $carbon_target_date,
-            'reservations' => $reservations,
-            'facilities' => $facilities,
-            'columns' => $columns,
-            'selects' => $selects,
-            'isExistSelect' => $isExistSelect,
-            'calendars' => $calendars,
-            'message' => $message,
-        ]);
+        // 必要なデータ揃っているか確認
+        // フレームに紐づいた施設予約親データが存在すること
+        if (isset($this->frame) && $this->frame->bucket_id &&
+            // 施設データが存在すること
+            !$facilities->isEmpty() &&
+            // 予約項目データが存在すること
+            !$columns->isEmpty() &&
+            // 予約項目で選択肢が指定されていた場合に選択肢データが存在すること
+            $isExistSelect) {
+
+            // $time = microtime(true) - $time_start;  //debug用
+            // dd($time . '秒');  //debug用
+            // dd($calendars);  //debug用
+            return $this->view('reservations_calendar_common', [
+                'view_format' => $view_format,
+                'carbon_target_date' => $carbon_target_date,
+                'reservations' => $reservations,
+                'facilities' => $facilities,
+                'columns' => $columns,
+                'selects' => $selects,
+                'calendars' => $calendars,
+                'message' => $message,
+            ]);
+        } else {
+
+            // バケツ等なし
+            return $this->view('empty_bucket', [
+                'facilities' => $facilities,
+                'columns' => $columns,
+                'isExistSelect' => $isExistSelect,
+            ]);
+        }
     }
 
     /**
