@@ -18,11 +18,14 @@ if ($frame->isExpandNarrow()) {
 @endphp
 
 <dl class="row">
+    {{-- 施設名 --}}
+    <dt class="{{$label_class}}">{{__('messages.facility_name')}}</dt>
+    <dd class="{{$value_class}}">{{$inputs->facility_name}}</dd>
     {{-- 利用日 --}}
-    <dt class="{{$label_class}}">{{ __('messages.day_of_use')}}</dt>
+    <dt class="{{$label_class}}">{{__('messages.day_of_use')}}</dt>
     <dd class="{{$value_class}}">{{$inputs->displayDate()}}</dd>
     {{-- 利用時間 --}}
-    <dt class="{{$label_class}}">{{ __('messages.time_of_use')}}</dt>
+    <dt class="{{$label_class}}">{{__('messages.time_of_use')}}</dt>
     <dd class="{{$value_class}}">{{$inputs->start_datetime->format('H:i')}} ~ {{$inputs->end_datetime->format('H:i')}}</dd>
 
     @foreach($columns as $column)

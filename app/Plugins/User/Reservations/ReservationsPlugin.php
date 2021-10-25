@@ -440,7 +440,11 @@ class ReservationsPlugin extends UserPluginBase
     private function getReservationsInput($id)
     {
         // 登録データ行の取得
-        $input = ReservationsInput::where('id', $id)
+        $input = ReservationsInput::select('reservations_inputs.*', 'reservations_facilities.facility_name')
+            ->join('reservations_facilities', function ($join) {
+                $join->on('reservations_inputs.facility_id', '=', 'reservations_facilities.id');
+            })
+            ->where('reservations_inputs.id', $id)
             ->where(function ($query) {
                 // 権限によって表示する記事を絞る
                 $query = $this->appendAuthWhereBase($query, 'reservations_inputs');

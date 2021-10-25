@@ -61,6 +61,7 @@ $messages = [
     'search' => '検索',
     'photo' => '写真',
     'research_seeds' => '研究シーズ',
+    'facility_name' => '施設名',
 ];
 
 foreach ($messages as $key => $message) {

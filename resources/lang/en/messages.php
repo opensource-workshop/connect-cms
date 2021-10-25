@@ -61,4 +61,5 @@ return [
     'search' => 'search',
     'photo' => 'Photo',
     'research_seeds' => 'Research Seeds',
+    'facility_name' => 'Facility Name',
 ];
