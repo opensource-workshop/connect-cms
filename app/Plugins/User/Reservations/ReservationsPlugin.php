@@ -239,7 +239,7 @@ class ReservationsPlugin extends UserPluginBase
 
         // バリデーション実施、エラー時は予約画面へ戻る
         if ($validator->fails()) {
-            return $this->editBooking($request, $page_id, $frame_id, null, $validator->errors());
+            return $this->editBooking($request, $page_id, $frame_id, $request->booking_id, $validator->errors());
         }
 
         // 施設データ
