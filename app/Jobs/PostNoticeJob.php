@@ -58,6 +58,7 @@ class PostNoticeJob implements ShouldQueue
         // if (!$bucket_mail->notice_addresses) {
         if (empty($notice_addresses)) {
             Log::debug("送信メールアドレスなし。buckets_id = " . $this->bucket->id);
+            return;
         }
 
         // メール送信

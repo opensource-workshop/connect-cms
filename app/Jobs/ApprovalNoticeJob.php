@@ -58,6 +58,7 @@ class ApprovalNoticeJob implements ShouldQueue
         // if (!$bucket_mail->approval_addresses) {
         if (empty($approval_addresses)) {
             Log::debug("送信先メールアドレスの指定なし。buckets_id = " . $this->bucket->id);
+            return;
         }
 
         // メール送信
