@@ -11,7 +11,6 @@
     "require": {
         "php": ">=7.2.5",
         "azuyalabs/yasumi": "^2.3",
-        "bensampo/laravel-enum": "1.38.*",
         "doctrine/dbal": "^2.10",
         "ezyang/htmlpurifier": "^4.13",
         "fideloper/proxy": "^4.4",
