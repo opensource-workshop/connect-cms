@@ -5,7 +5,7 @@ namespace App\Enums;
 /**
  * コネクト用ロケール
  */
-final class ConnectLocale
+final class ConnectLocale extends EnumsBase
 {
     // 定数メンバ
     const ja = 'ja';
@@ -16,20 +16,4 @@ final class ConnectLocale
         self::ja=>'日本語',
         self::en=>'英語',
     ];
-
-    /*
-    * 対応した和名を返す
-    */
-    public static function getDescription($key): string
-    {
-        return self::enum[$key];
-    }
-
-    /*
-    * key/valueの連想配列を返す
-    */
-    public static function getMembers()
-    {
-        return self::enum;
-    }
 }

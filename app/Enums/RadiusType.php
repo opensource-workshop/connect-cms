@@ -5,7 +5,7 @@ namespace App\Enums;
 /**
  * ボタンの形（BootStrap4版のBorder-radiusの一部を使用）
  */
-final class RadiusType
+final class RadiusType extends EnumsBase
 {
     // 定数メンバ
     const rounded = 'rounded';
@@ -18,20 +18,4 @@ final class RadiusType
         self::circle=>'円形',
         self::pill=>'楕円形',
     ];
-
-    /*
-    * 対応した和名を返す
-    */
-    public static function getDescription($key): string
-    {
-        return self::enum[$key];
-    }
-
-    /*
-    * key/valueの連想配列を返す
-    */
-    public static function getMembers()
-    {
-        return self::enum;
-    }
 }

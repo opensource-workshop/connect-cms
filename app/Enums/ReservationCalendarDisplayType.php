@@ -5,7 +5,7 @@ namespace App\Enums;
 /**
  * 施設予約のカレンダー表示区分
  */
-final class ReservationCalendarDisplayType
+final class ReservationCalendarDisplayType extends EnumsBase
 {
     // 定数メンバ
     const month = '1';
@@ -16,20 +16,4 @@ final class ReservationCalendarDisplayType
         self::month=>'月',
         self::week=>'週',
     ];
-
-    /*
-    * 対応した和名を返す
-    */
-    public static function getDescription($key): string
-    {
-        return self::enum[$key];
-    }
-
-    /*
-    * key/valueの連想配列を返す
-    */
-    public static function getMembers()
-    {
-        return self::enum;
-    }
 }
