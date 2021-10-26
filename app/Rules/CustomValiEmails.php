@@ -6,6 +6,8 @@ use Illuminate\Contracts\Validation\Rule;
 
 use Illuminate\Validation\Concerns\ValidatesAttributes;
 
+use Illuminate\Support\Facades\Lang;
+
 /**
  * 複数カンマ区切りのメールアドレスチェック
  */
@@ -52,6 +54,6 @@ class CustomValiEmails implements Rule
      */
     public function message()
     {
-        return \Lang::get('validation.email');
+        return Lang::get('validation.email');
     }
 }

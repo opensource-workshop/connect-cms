@@ -17,6 +17,7 @@ return [
     'month' => 'Month',
     'week' => 'Week',
     'reservation_details' => 'Reservation Details',
+    'detail' => 'Detail',
     'day_of_use' => 'Day',
     'time_of_use' => 'Time',
     'close' => 'Close',
@@ -60,4 +61,5 @@ return [
     'search' => 'search',
     'photo' => 'Photo',
     'research_seeds' => 'Research Seeds',
+    'facility_name' => 'Facility Name',
 ];
