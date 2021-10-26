@@ -5,39 +5,32 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
 --}}
-<div class="row">
-    <div class="col-12 clearfix">
+<div class="text-center mb-1">
+    {{-- 前月ボタン --}}
+    <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->subDay(7)->format('Ymd') }}#frame-{{$frame->id}}">
+        <i class="fas fa-chevron-circle-left"></i>
+    </a>
+    {{-- 当月表示 --}}
+    @if (App::getLocale() == ConnectLocale::ja)
+        <div class="h5 d-inline">{{$carbon_target_date->format('Y年')}}</div>
+        <div class="h3 d-inline">{{$carbon_target_date->format('n月')}}</div>
+    @else
+        <div class="h3 d-inline">{{$carbon_target_date->format('M')}}</div>
+        <div class="h5 d-inline">{{$carbon_target_date->format('Y')}}</div>
+    @endif
+    {{-- 翌月ボタン --}}
+    <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->addDay(7)->format('Ymd') }}#frame-{{$frame->id}}">
+        <i class="fas fa-chevron-circle-right"></i>
+    </a>
 
-        {{-- defaultテンプレート --}}
-        <div class="float-left">
-
-            <div class="list-group list-group-horizontal">
-                {{-- 前週ボタン --}}
-                <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->subDay(7)->format('Ymd') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light d-flex align-items-center">
-                    <i class="fas fa-angle-double-left"></i>
-                </a>
-                {{-- 当月表示 --}}
-                <a class="list-group-item h5 d-flex align-items-center">
-                    {{ App::getLocale() == ConnectLocale::ja ? $carbon_target_date->format('Y年n月') : $carbon_target_date->format('M Y') }}
-                </a>
-                {{-- 翌週ボタン --}}
-                <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->addDay(7)->format('Ymd') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light d-flex align-items-center">
-                    <i class="fas fa-angle-double-right"></i>
-                </a>
-            </div>
-        </div>
-
-        {{-- defaultテンプレート --}}
-        <div class="float-right col-sm-5">
-
-            {{-- 当日へボタン --}}
-            <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ymd') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light rounded-pill">
-                {{__('messages.to_today')}}<br>({{ App::getLocale() == ConnectLocale::ja ? Carbon::today()->format('Y年n月j日') : Carbon::today()->format('j M Y') }})
-            </a>
-        </div>
+    {{-- 当日へボタン --}}
+    <div class="d-inline align-bottom ml-3">
+        <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ymd') }}#frame-{{$frame->id}}" class="badge badge-pill badge-info">
+            {{__('messages.to_today')}}
+        </a>
     </div>
 </div>
-<br>
+
 {{-- 登録している施設分ループ --}}
 @foreach ($calendars as $facility_name => $calendar_details)
 
