@@ -835,7 +835,7 @@ trait MigrationTrait
                 $this->putMonitor(1, "Page data loop.", "dir = " . basename($path));
 
                 // ページの設定取得
-                $page_ini = parse_ini_file($path . '/page.ini', true);
+                $page_ini = @parse_ini_file($path . '/page.ini', true);
                 //print_r($page_ini);
 
                 // @insert で page.ini がない場合は、import から参照する。
@@ -7839,7 +7839,10 @@ trait MigrationTrait
         $module_name = $nc2_block->getModuleName();
         if ($module_name == 'journal') {
             $nc2_journal_block = Nc2JournalBlock::where('block_id', $nc2_block->block_id)->first();
-            $ret = "blog_id = \"" . $this->zeroSuppress($nc2_journal_block->journal_id) . "\"\n";
+            // ブロックがあり、ブログがない場合は対象外
+            if (!empty($nc2_journal_block)) {
+                $ret = "blog_id = \"" . $this->zeroSuppress($nc2_journal_block->journal_id) . "\"\n";
+            }
         } elseif ($module_name == 'bbs') {
             $nc2_bbs_block = Nc2BbsBlock::where('block_id', $nc2_block->block_id)->first();
             $ret = "blog_id = \"bbs_" . $this->zeroSuppress($nc2_bbs_block->bbs_id) . "\"\n";
