@@ -560,7 +560,7 @@ class BbsesPlugin extends UserPluginBase
                              ->where('bbs_posts.status', StatusType::active)
                              ->distinct()
                              ->get();
-        $this->sendRelateNotice($post, $mail_users, 'show');
+        $this->sendRelateNotice($post, $before_post, $mail_users, 'show');
 
         // 登録後はリダイレクトして詳細画面を開く。(form のリダイレクト指定では post した id が渡せないため)
         return new Collection(['redirect_path' => url('/') . "/plugin/bbses/show/" . $page_id . "/" . $frame_id . "/" . $post->id . "#frame-" . $frame_id]);

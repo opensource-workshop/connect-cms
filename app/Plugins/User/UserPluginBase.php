@@ -955,7 +955,7 @@ class UserPluginBase extends PluginBase
     /**
      * 関連投稿通知の送信
      */
-    public function sendRelateNotice($post, $mail_users, $show_method, array $overwrite_notice_embedded_tags = [])
+    public function sendRelateNotice($post, $before_post, $mail_users, $show_method, array $overwrite_notice_embedded_tags = [])
     {
         // buckets がない場合
         if (empty($this->buckets)) {
@@ -972,6 +972,15 @@ class UserPluginBase extends PluginBase
             // 関連通知を送信する。
         } else {
             // 関連通知を送信しない。
+            return;
+        }
+
+        // before_row（更新前）のfirst_committed_at が空でstatus が公開（=== 0）は「登録」（notice_create）
+        // before_row（更新前）のfirst_committed_at が空ではなく、status が公開（=== 0）は「更新」（notice_update）
+        if ($bucket_mail->notice_create === 1 && empty($before_post->first_committed_at) && $post->status === 0) {
+            // 対象（登録）- 関連通知を送信する。
+        } elseif ($bucket_mail->notice_update === 1 && !empty($before_post->first_committed_at) && $post->status === 0) {
+            // 対象（変更）- 関連通知を送信しない。
             return;
         }
 
