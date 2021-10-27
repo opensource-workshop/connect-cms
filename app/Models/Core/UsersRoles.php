@@ -23,7 +23,7 @@ class UsersRoles extends Model
      * ユーザー権限の取得
      *
      * @param int $users_id
-     * @return roles array
+     * @return array roles
      */
     //public static function getUsersRoles($users_id, $target = null, $role_name = null)
     public function getUsersRoles($users_id, $target = null)
@@ -53,6 +53,8 @@ class UsersRoles extends Model
 
     /**
      * roles を array に変換
+     *
+     * @return array
      */
     public static function rolesToArray(Collection $collect_roles)
     {
