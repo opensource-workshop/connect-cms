@@ -69,9 +69,11 @@ class BlogsPlugin extends UserPluginBase
         // 標準権限は右記で定義 config/cc_role.php
         //
         // 権限チェックテーブル
-        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
-        $role_ckeck_table = array();
-        return $role_ckeck_table;
+        $role_check_table = [];
+        $role_check_table["settingBlogFrame"]        = ['frames.edit'];
+        $role_check_table["saveBlogFrame"]           = ['frames.edit'];
+
+        return $role_check_table;
     }
 
     /**
@@ -940,8 +942,8 @@ WHERE status = 0
     }
 
     /**
-    * 承認
-    */
+     * 承認
+     */
     public function approval($request, $page_id = null, $frame_id = null, $id = null)
     {
         // 新規オブジェクト生成
@@ -1195,8 +1197,8 @@ WHERE status = 0
     }
 
     /**
-    * データ紐づけ変更関数
-    */
+     * データ紐づけ変更関数
+     */
     public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新
