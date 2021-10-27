@@ -44,9 +44,9 @@ class ContentsPlugin extends UserPluginBase
     public function getPublicFunctions()
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
-        $functions = array();
-        $functions['get']  = ['editBucketsRoles'];
-        $functions['post'] = ['saveBucketsRoles'];
+        $functions = [];
+        $functions['get']  = [];
+        $functions['post'] = [];
         return $functions;
     }
 
@@ -58,10 +58,9 @@ class ContentsPlugin extends UserPluginBase
         // 標準権限以外で設定画面などから呼ばれる権限の定義
         // 標準権限は右記で定義 config/cc_role.php
         //
-        // 権限チェックテーブル
-        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
-        $role_ckeck_table = array();
-        return $role_ckeck_table;
+        // 権限チェックテーブル (追加チェックなし)
+        $role_check_table = [];
+        return $role_check_table;
     }
 
     /**

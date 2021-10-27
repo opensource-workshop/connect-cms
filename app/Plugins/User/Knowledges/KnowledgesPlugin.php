@@ -21,7 +21,7 @@ use App\Plugins\User\UserPluginBase;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ナレッジ・プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class KnowledgesPlugin extends UserPluginBase
 {
@@ -44,7 +44,9 @@ class KnowledgesPlugin extends UserPluginBase
     public function getPublicFunctions()
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
-        $functions = array();
+        $functions = [];
+        $functions['get']  = [];
+        $functions['post'] = [];
         return $functions;
     }
 
@@ -57,9 +59,8 @@ class KnowledgesPlugin extends UserPluginBase
         // 標準権限は右記で定義 config/cc_role.php
         //
         // 権限チェックテーブル
-        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
-        $role_ckeck_table = array();
-        return $role_ckeck_table;
+        $role_check_table = [];
+        return $role_check_table;
     }
 
     /**

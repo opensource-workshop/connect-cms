@@ -69,9 +69,11 @@ class BlogsPlugin extends UserPluginBase
         // 標準権限は右記で定義 config/cc_role.php
         //
         // 権限チェックテーブル
-        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
-        $role_ckeck_table = array();
-        return $role_ckeck_table;
+        $role_check_table = [];
+        $role_check_table["settingBlogFrame"]        = ['frames.edit'];
+        $role_check_table["saveBlogFrame"]           = ['frames.edit'];
+
+        return $role_check_table;
     }
 
     /**
@@ -220,24 +222,7 @@ class BlogsPlugin extends UserPluginBase
      */
     private function appendAuthWhere($query)
     {
-        // 記事修正権限、コンテンツ管理者の場合、全記事の取得
-        if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
-            // 全件取得のため、追加条件なしで戻る。
-        } elseif ($this->isCan('role_approval')) {
-            // 承認権限の場合、Active ＋ 承認待ちの取得
-            $query->Where('status', '=', 0)
-                  ->orWhere('status', '=', 2);
-        } elseif ($this->isCan('role_reporter')) {
-            // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
-            $query->Where('status', '=', 0)
-                  ->orWhere('blogs_posts.created_id', '=', Auth::user()->id);
-        } else {
-            // その他（ゲスト）
-            $query->where('status', 0);
-            $query->where('blogs_posts.posted_at', '<=', Carbon::now());
-        }
-
-        return $query;
+        return $this->appendAuthWhereBase($query, 'blogs_posts');
     }
 
     /**
@@ -941,8 +926,8 @@ WHERE status = 0
     }
 
     /**
-    * 承認
-    */
+     * 承認
+     */
     public function approval($request, $page_id = null, $frame_id = null, $id = null)
     {
         // 新規オブジェクト生成
@@ -1196,8 +1181,8 @@ WHERE status = 0
     }
 
     /**
-    * データ紐づけ変更関数
-    */
+     * データ紐づけ変更関数
+     */
     public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新

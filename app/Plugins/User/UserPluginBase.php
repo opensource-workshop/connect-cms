@@ -1453,15 +1453,15 @@ class UserPluginBase extends PluginBase
             //
             // 承認者(role_approval)権限 = Active ＋ 承認待ちの取得
             //
-            $query->Where($table_name . '.status', '=', StatusType::active)
-                    ->orWhere($table_name . '.status', '=', StatusType::approval_pending);
+            $query->Where($table_name . '.status', StatusType::active)
+                ->orWhere($table_name . '.status', StatusType::approval_pending);
         } elseif ($this->isCan('role_reporter')) {
             //
             // 編集者(role_reporter)権限 = Active ＋ 自分の全ステータス記事の取得
             //
             $query->where(function ($tmp_query) use ($table_name) {
-                    $tmp_query->where($table_name . '.status', '=', StatusType::active)
-                    ->orWhere($table_name . '.created_id', '=', Auth::user()->id);
+                $tmp_query->where($table_name . '.status', StatusType::active)
+                    ->orWhere($table_name . '.created_id', Auth::user()->id);
             });
         } else {
             // 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）
