@@ -13,7 +13,7 @@
     @include('plugins.user.reservations.default.include_common_modal')
 
     {{-- タブ表示 --}}
-    <ul class="nav nav-tabs">
+    <ul class="nav nav-tabs mb-3">
         <li class="nav-item">
             {{-- 月タブ --}}
             <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::now()->format('Ym') }}#frame-{{$frame->id}}"
@@ -34,9 +34,6 @@
 
     {{-- defaultテンプレート --}}
     <div>
-
-        {{-- カレンダーヘッダ部 --}}
-        <br>
 
         {{-- メッセージエリア --}}
         @if ($message)
