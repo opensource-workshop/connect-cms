@@ -4,7 +4,6 @@ namespace App\Plugins\User\Menus;
 
 use Illuminate\Support\Facades\Log;
 
-use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Common\PageRole;
 use App\Models\User\Menus\Menu;
@@ -57,8 +56,10 @@ class MenusPlugin extends UserPluginBase
         // 標準権限は右記で定義 config/cc_role.php
         //
         // 権限チェックテーブル
-        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
-        $role_check_table = array();
+        $role_check_table = [];
+        $role_check_table["select"]            = ['role_arrangement'];
+        $role_check_table["saveSelect"]        = ['role_arrangement'];
+
         return $role_check_table;
     }
 
@@ -124,12 +125,6 @@ class MenusPlugin extends UserPluginBase
      */
     public function select($request, $page_id, $frame_id)
     {
-        // 権限チェック
-        // ページ選択プラグインの特別処理。個別に権限チェックする。
-        if ($this->can('role_arrangement')) {
-            return $this->view_error(403);
-        }
-
         // ページデータ＆深さを全て取得
         // 表示順は入れ子集合モデルの順番
         $format = null;
@@ -156,12 +151,6 @@ class MenusPlugin extends UserPluginBase
      */
     public function saveSelect($request, $page_id, $frame_id)
     {
-        // 権限チェック
-        // ページ選択プラグインの特別処理。個別に権限チェックする。
-        if ($this->can('role_arrangement')) {
-            return $this->view_error(403);
-        }
-
         // メニューデータ作成 or 更新
         Menu::updateOrCreate(
             ['frame_id'          => $frame_id],
