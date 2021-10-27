@@ -155,7 +155,8 @@ class ContentsPlugin extends UserPluginBase
     }
 
     /**
-     *  記事の取得権限に対する条件追加
+     * 記事の取得権限に対する条件追加
+     * 固定記事は独自処理があるため、共通処理（appendAuthWhereBase）を使わない。
      */
     private function appendAuthWhere($query)
     {
