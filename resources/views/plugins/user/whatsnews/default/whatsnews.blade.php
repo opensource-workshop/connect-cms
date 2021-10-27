@@ -39,6 +39,18 @@
             </a>
             @endif
         </dd>
+
+        {{-- サムネイル (サムネイル表示がon ＆ 記事中にサムネイルがある場合に表示) --}}
+        @if (FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail) && $whatsnew->first_image_path)
+        <dd>
+            @if (empty(FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_width)))
+                <img src="{{$whatsnew->first_image_path}}" style="width: 200px;">
+            @else
+                <img src="{{$whatsnew->first_image_path}}" style="width:{{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_width) }}px;">
+            @endif
+        </dd>
+        @endif
+
         {{-- 投稿者 --}}
         @if ($whatsnews_frame->view_posted_name)
         <dd>

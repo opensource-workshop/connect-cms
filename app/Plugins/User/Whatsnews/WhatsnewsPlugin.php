@@ -13,7 +13,10 @@ use DB;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Core\Configs;
+use App\Models\Core\FrameConfig;
 use App\Models\User\Whatsnews\Whatsnews;
+
+use App\Enums\WhatsnewFrameConfig;
 
 use App\Plugins\User\UserPluginBase;
 use App\Traits\ConnectCommonTrait;
@@ -255,6 +258,27 @@ class WhatsnewsPlugin extends UserPluginBase
             $whatsnews = $whatsnews->where('posted_at', '>=', date('Y-m-d H:i:s', strtotime("- " . $whatsnews_frame->days . " day")));
         }
 
+        // 記事詳細から、最初の画像を抜き出し
+        $pattern_img = '/<img.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
+        $pattern_alt = '/(alt)=("[^"]*")/i';
+        foreach ($whatsnews as &$whatsnew) {
+            // 画像があるときはファイルパスを抽出
+            preg_match($pattern_img, $whatsnew->post_detail, $images);
+            if (is_array($images) && count($images) > 1) {
+                $whatsnew->first_image_path = $images[1];
+                // altがあるときはaltを抽出
+                preg_match($pattern_alt, $images[0], $alts);
+                if (is_array($alts) && count($alts) > 2) {
+                    $whatsnew->first_image_alt = $alts[2];
+                } else {
+                    $whatsnew->first_image_alt = null;
+                }
+            } else {
+                $whatsnew->first_image_path = null;
+                $whatsnew->first_image_alt = null;
+            }
+        }
+
         // 一旦オブジェクト変数へ。（Singleton のため。フレーム表示確認でコアが使用する）
         $this->whatsnews_results = array($whatsnews, $link_pattern, $link_base);
 
@@ -271,6 +295,7 @@ class WhatsnewsPlugin extends UserPluginBase
                 'frame_id',
                 'post_id',
                 'post_title',
+                'post_detail',
                 DB::raw("null as important"),
                 'posted_at',
                 DB::raw("null as posted_name"),
@@ -366,6 +391,15 @@ class WhatsnewsPlugin extends UserPluginBase
 
         // 整形して返却
         return json_encode(json_decode($whatsnewses), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    }
+
+    /**
+     * プラグインのバケツ取得関数
+     */
+    public function getPluginBucket($bucket_id)
+    {
+        // プラグインのメインデータを取得する。
+        return Whatsnews::firstOrNew(['bucket_id' => $bucket_id]);
     }
 
     /* 画面アクション関数 */
@@ -615,6 +649,63 @@ class WhatsnewsPlugin extends UserPluginBase
 
         // 新着情報設定選択画面を呼ぶ
         return $this->listBuckets($request, $page_id, $frame_id, $id);
+    }
+
+    /**
+     * フレーム表示設定画面の表示
+     */
+    public function editView($request, $page_id, $frame_id)
+    {
+        // 表示テンプレートを呼び出す。
+        return $this->view('whatsnews_frame', [
+            'whatsnew' => $this->getPluginBucket($this->getBucketId()),
+        ]);
+    }
+
+    /**
+     * フレーム表示設定の保存
+     */
+    public function saveView($request, $page_id, $frame_id, $cabinet_id)
+    {
+        // フレーム設定保存
+        $this->saveFrameConfigs($request, $frame_id, WhatsnewFrameConfig::getMemberKeys());
+
+        // 更新したので、frame_configsを設定しなおす
+        $this->refreshFrameConfigs();
+
+        return;
+    }
+
+    /**
+     * フレーム設定を保存する。
+     *
+     * @param Illuminate\Http\Request $request リクエスト
+     * @param int $frame_id フレームID
+     * @param array $frame_config_names フレーム設定のname配列
+     */
+    protected function saveFrameConfigs(\Illuminate\Http\Request $request, int $frame_id, array $frame_config_names)
+    {
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'thumbnail_width'  => ['numeric'],
+        ]);
+        $validator->setAttributeNames([
+            'thumbnail_width'  => WhatsnewFrameConfig::enum['thumbnail_width'],
+        ]);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        foreach ($frame_config_names as $key => $value) {
+
+            FrameConfig::updateOrCreate(
+                ['frame_id' => $frame_id, 'name' => $value],
+                ['value' => $request->$value]
+            );
+        }
     }
 
     /**

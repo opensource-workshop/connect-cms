@@ -275,6 +275,7 @@ class BbsesPlugin extends UserPluginBase
                 'frames.id              as frame_id',
                 'bbs_posts.id           as post_id',
                 'bbs_posts.title        as post_title',
+                'bbs_posts.body         as post_detail',
                 DB::raw("null           as important"),
                 'bbs_posts.created_at   as posted_at',
                 'bbs_posts.created_name as posted_name',

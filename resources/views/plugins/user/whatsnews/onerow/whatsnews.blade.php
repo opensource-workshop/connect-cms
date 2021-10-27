@@ -47,6 +47,17 @@
             @endif
         </div>
         
+        {{-- サムネイル --}}
+        @if (FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail))
+        <div class="p-0 col-12 col-sm-12 col-md col-lg mr-2 text-right">
+            @if (empty(FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_width)))
+                <img src="{{$whatsnew->first_image_path}}" style="width: 200px;">
+            @else
+                <img src="{{$whatsnew->first_image_path}}" style="width:{{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_width) }}px;">
+            @endif
+        </div>
+        @endif
+        
         {{-- 投稿者 --}}
         @if( $whatsnews_frame->view_posted_name )
         <div class="p-0 col-12 col-sm-12 col-md-3 col-lg-2 text-right text-nowrap">

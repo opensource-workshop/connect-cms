@@ -1673,78 +1673,63 @@ class DatabasesPlugin extends UserPluginBase
         $input_cols = $this->getDatabasesInputCols($input->id);
         $obj = $input_cols->firstWhere('title_flag', '1');
 
-        // ファイル型
+        // 項目の型で処理を分ける。
         if ($column->column_type == DatabaseColumnType::file) {
+            // ファイル型
             if (empty($obj)) {
                 $value = '';
-            }
-            else {
+            } else {
                 $value = $obj->client_original_name;
             }
-        }
-        // 画像型
-        elseif ($column->column_type == DatabaseColumnType::image) {
+        } elseif ($column->column_type == DatabaseColumnType::image) {
+            // 画像型
             if (empty($obj)) {
                 $value = '';
-            }
-            else {
+            } else {
                 $value = Uploads::getFilenameNoExtensionById($obj->value);
             }
-        }
-        // 動画型
-        elseif ($column->column_type == DatabaseColumnType::video) {
+        } elseif ($column->column_type == DatabaseColumnType::video) {
+            // 動画型
             if (empty($obj)) {
                 $value = '';
-            }
-            else {
+            } else {
                 $value = $obj->client_original_name;
             }
-        }
-        // リンク型
-        elseif ($column->column_type == DatabaseColumnType::link) {
+        } elseif ($column->column_type == DatabaseColumnType::link) {
+            // リンク型
             if (empty($obj)) {
                 $value = '';
-            }
-            else {
+            } else {
                 $value = $obj->value;
             }
-        }
-        // 日付型
-        elseif ($column->column_type == DatabaseColumnType::date) {
+        } elseif ($column->column_type == DatabaseColumnType::date) {
+            // 日付型
             if (empty($obj) || empty($obj->value)) {
                 $value = '';
+            } else {
+                $value = date('Y/m/d', strtotime($obj->value));
             }
-            else {
-                $value = date('Y/m/d',  strtotime($obj->value));
-            }
-        }
-        // 複数選択型
-        elseif ($column->column_type == DatabaseColumnType::checkbox) {
+        } elseif ($column->column_type == DatabaseColumnType::checkbox) {
+            // 複数選択型
             if (empty($obj)) {
                 $value = '';
-            }
-            else {
+            } else {
                 $value = str_replace('|', ', ', $obj->value);
             }
-        }
-        // 登録日型
-        elseif ($column->column_type == DatabaseColumnType::created) {
+        } elseif ($column->column_type == DatabaseColumnType::created) {
+            // 登録日型
             $value = $input->created_at;
-        }
-        // 更新日型
-        elseif ($column->column_type == DatabaseColumnType::updated) {
+        } elseif ($column->column_type == DatabaseColumnType::updated) {
+            // 更新日型
             $value = $input->updated_at;
-        }
-        // 公開日型
-        elseif ($column->column_type == DatabaseColumnType::posted) {
+        } elseif ($column->column_type == DatabaseColumnType::posted) {
+            // 公開日型
             $value = $input->posted_at;
-        }
-        // 表示順型
-        elseif ($column->column_type == DatabaseColumnType::display) {
+        } elseif ($column->column_type == DatabaseColumnType::display) {
+            // 表示順型
             $value = $input->display_sequence;
-        }
-        // その他の型
-        else {
+        } else {
+            // その他の型
             $value = $obj ? $obj->value : "";
         }
 
@@ -3919,6 +3904,7 @@ AND databases_inputs.posted_at <= NOW()
             'frames.id                     as frame_id',
             'databases_inputs.id           as post_id,',
             'databases_input_cols.value    as post_title,',
+            DB::raw('null                  as post_detail'),
             DB::raw('null                  as important'),
             'databases_inputs.posted_at    as posted_at',
             'databases_inputs.created_name as posted_name',
