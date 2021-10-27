@@ -163,23 +163,7 @@ class FaqsPlugin extends UserPluginBase
      */
     private function appendAuthWhere($query)
     {
-        if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
-            // 記事修正権限、コンテンツ管理者の場合、全件取得のため、追加条件なしで戻る。
-        } elseif ($this->isCan('role_approval')) {
-            // 承認権限の場合、Active ＋ 承認待ちの取得
-            $query->Where('status', '=', 0)
-                  ->orWhere('status', '=', 2);
-        } elseif ($this->isCan('role_reporter')) {
-            // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
-            $query->Where('status', '=', 0)
-                  ->orWhere('faqs_posts.created_id', '=', Auth::user()->id);
-        } else {
-            // その他（ゲスト）
-            $query->where('status', 0);
-            $query->where('faqs_posts.posted_at', '<=', Carbon::now());
-        }
-
-        return $query;
+        return $this->appendAuthWhereBase($query, 'faqs_posts');
     }
 
     // delete: 使ってないprivateメソッド
