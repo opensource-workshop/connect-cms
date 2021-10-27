@@ -397,19 +397,25 @@ class AppServiceProvider extends AuthServiceProvider
         //     記事の承認は、ユーザ権限のrole_approvalでチェックするので、approval_flag(承認が必要)ではチェックしない。
         // Buckets にrole が指定されていなければ、標準のrole を使用
         $checkRoles = config('cc_role.CC_AUTHORITY')[$authority];
-        $post_buckets_roles = $this->getPostBucketsRoles($buckets_obj);
+        // $post_buckets_roles = $this->getPostBucketsRoles($buckets_obj);
 
-        // if (!empty($this->getPostBucketsRoles($buckets_obj))) {
-        if (!empty($post_buckets_roles)) {
-            $checkRoles = array();
-            // $post_buckets_roles = $this->getPostBucketsRoles($buckets_obj);
+        // Buckets role からチェックロール追加は、記事系の権限のみに絞る。
+        if (in_array($authority, ['posts.create', 'posts.update', 'posts.delete', 'posts.approval'])) {
 
-            // Buckets に設定されたrole から、関連role を取得してチェック。
-            foreach ($post_buckets_roles as $post_buckets_role) {
-                $checkRoles = array_merge($checkRoles, config('cc_role.CC_ROLE_HIERARCHY')[$post_buckets_role]);
+            $post_buckets_roles = $this->getPostBucketsRoles($buckets_obj);
+
+            // if (!empty($this->getPostBucketsRoles($buckets_obj))) {
+            if (!empty($post_buckets_roles)) {
+                $checkRoles = array();
+                // $post_buckets_roles = $this->getPostBucketsRoles($buckets_obj);
+
+                // Buckets に設定されたrole から、関連role を取得してチェック。
+                foreach ($post_buckets_roles as $post_buckets_role) {
+                    $checkRoles = array_merge($checkRoles, config('cc_role.CC_ROLE_HIERARCHY')[$post_buckets_role]);
+                }
+                // 配列は添字型になるので、array_merge で結合してから重複を取り除く
+                $checkRoles = array_unique($checkRoles);
             }
-            // 配列は添字型になるので、array_merge で結合してから重複を取り除く
-            $checkRoles = array_unique($checkRoles);
         }
 
         // app\Http\Middleware\ConnectPage.php でセットした値
