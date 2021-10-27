@@ -15,7 +15,6 @@ use Illuminate\Support\Collection;
 use App\User;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
-use App\Models\Common\Page;
 use App\Models\Core\Configs;
 use App\Models\Core\UsersRoles;
 use App\Models\User\Opacs\Opacs;
@@ -33,7 +32,7 @@ use App\Plugins\User\UserPluginBase;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category Opacプラグイン
- * @package Contoroller
+ * @package Controller
  */
 class OpacsPlugin extends UserPluginBase
 {
@@ -64,9 +63,26 @@ class OpacsPlugin extends UserPluginBase
         // 標準権限は右記で定義 config/cc_role.php
         //
         // 権限チェックテーブル
-        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
-        $role_ckeck_table = array();
-        return $role_ckeck_table;
+        $role_check_table = [];
+        $role_check_table["settingOpacFrame"]  = ['frames.edit'];
+        $role_check_table["saveOpacFrame"]     = ['frames.edit'];
+
+        // 貸出・返却系はログインのみ必要でメソッド側でチェック済み。ここで設定しない。
+        // $role_check_table["lent"]              = ['posts.create'];
+        // $role_check_table["requestLent"]       = ['posts.create'];
+        // $role_check_table["returnLent"]        = ['posts.update'];
+        // $role_check_table["destroyRequest"]    = ['posts.delete'];
+
+        $role_check_table["lentlist"]          = ['role_article'];
+        $role_check_table["roleLent"]          = ['role_article'];
+        $role_check_table["getBookInfo"]       = ['role_article'];
+
+        $role_check_table["create"]            = ['role_article'];
+        $role_check_table["edit"]              = ['role_article'];
+        $role_check_table["save"]              = ['role_article'];
+        $role_check_table["destroy"]           = ['role_article'];
+
+        return $role_check_table;
     }
 
     /**
@@ -1190,7 +1206,7 @@ class OpacsPlugin extends UserPluginBase
     /**
      * 貸出冊数チェック
      */
-    public function lentCountCheck($opac_frame)
+    private function lentCountCheck($opac_frame)
     {
         // すでに借りている冊数を取得
         $user = Auth::user();
