@@ -44,7 +44,9 @@ class ContentsPlugin extends UserPluginBase
     public function getPublicFunctions()
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
-        $functions = array();
+        $functions = [];
+        $functions['get']  = [];
+        $functions['post'] = [];
         return $functions;
     }
 
