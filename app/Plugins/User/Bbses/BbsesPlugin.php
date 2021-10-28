@@ -65,11 +65,11 @@ class BbsesPlugin extends UserPluginBase
     public function declareRole()
     {
         // 権限チェックテーブル
-        $role_ckeck_table = array();
-        $role_ckeck_table["editView"] = array('role_arrangement');
-        $role_ckeck_table["saveView"] = array('role_arrangement');
-        $role_ckeck_table["reply"]    = array('role_reporter');
-        return $role_ckeck_table;
+        $role_check_table = [];
+        $role_check_table["editView"] = array('role_arrangement');
+        $role_check_table["saveView"] = array('role_arrangement');
+        $role_check_table["reply"]    = array('posts.create');
+        return $role_check_table;
     }
 
     /**
@@ -367,7 +367,7 @@ class BbsesPlugin extends UserPluginBase
     /**
      * 関連投稿の取得
      */
-    public function getThreadPost($plugin_frame, $post)
+    private function getThreadPost($plugin_frame, $post)
     {
         // 変数準備
         $thread_root_post = null;
