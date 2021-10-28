@@ -4,11 +4,11 @@ namespace App\Plugins\User\Calendars;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 //use Carbon\Carbon;
-use DB;
 
 use App\Enums\StatusType;
 
@@ -65,9 +65,9 @@ class CalendarsPlugin extends UserPluginBase
      */
     public function declareRole()
     {
-        // 権限チェックテーブル
-        $role_ckeck_table = array();
-        return $role_ckeck_table;
+        // 権限チェックテーブル (追加チェックなし)
+        $role_check_table = [];
+        return $role_check_table;
     }
 
     /**
@@ -386,23 +386,6 @@ class CalendarsPlugin extends UserPluginBase
         // 変更画面を呼び出す。
         return $this->view('edit', [
             'post' => $post,
-        ]);
-    }
-
-    /**
-     * 記事返信画面
-     */
-    public function reply($request, $page_id, $frame_id, $post_id)
-    {
-        // 記事取得
-        $post = $this->getPost($post_id);
-
-        // 変更画面を呼び出す。
-        return $this->view('edit', [
-            'post'        => new CalendarPost(),
-            'parent_post' => $post,
-            'reply'       => $request->get('reply'),
-            'reply_flag'  => true,
         ]);
     }
 
