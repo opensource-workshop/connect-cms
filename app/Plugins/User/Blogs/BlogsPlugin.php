@@ -1058,29 +1058,21 @@ WHERE status = 0
         $validator->setAttributeNames($validator_attributes);
 
         // エラーがあった場合は入力画面に戻る。
-        $message = null;
         if ($validator->fails()) {
-            // if (empty($blogs_id)) {
-            //     $create_flag = true;
-            //     return $this->createBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $validator->errors());
-            // } else {
-            //     $create_flag = false;
-            //     return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $validator->errors());
-            // }
             return back()->withErrors($validator)->withInput();
         }
 
         // 画面から渡ってくるblogs_id が空ならバケツとブログを新規登録
         if (empty($request->blogs_id)) {
             // バケツの登録
-            $bucket_id = DB::table('buckets')->insertGetId([
+            $bucket = Buckets::create([
                 'bucket_name' => $request->blog_name,
                 'plugin_name' => 'blogs'
             ]);
 
             // ブログデータ新規オブジェクト
             $blogs = new Blogs();
-            $blogs->bucket_id = $bucket_id;
+            $blogs->bucket_id = $bucket->id;
 
             // Frame のBuckets を見て、Buckets が設定されていなければ、作成したものに紐づける。
             // Frame にBuckets が設定されていない ＞ 新規のフレーム＆ブログ作成
@@ -1089,7 +1081,7 @@ WHERE status = 0
             $frame = Frame::where('id', $frame_id)->first();
             if (empty($frame->bucket_id)) {
                 // FrameのバケツIDの更新
-                $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
+                $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket->id]);
             }
 
             $request->flash_message = 'ブログ設定を追加しました。';
@@ -1098,6 +1090,9 @@ WHERE status = 0
             // blogs_id があれば、ブログを更新
             // ブログデータ取得
             $blogs = Blogs::where('id', $request->blogs_id)->first();
+
+            $bucket = Buckets::where('id', $blogs->bucket_id)
+                ->update(['bucket_name' => $request->blog_name, 'plugin_name' => 'blogs']);
 
             $request->flash_message = 'ブログ設定を変更しました。';
         }
