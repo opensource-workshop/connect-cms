@@ -2,14 +2,11 @@
 
 namespace App\Plugins\User\Openingcalendars;
 
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 use Carbon\Carbon;
-
-use DB;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
@@ -30,7 +27,7 @@ use App\Traits\ConnectCommonTrait;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
- * @package Contoroller
+ * @package Controller
  */
 class OpeningcalendarsPlugin extends UserPluginBase
 {
@@ -47,7 +44,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['listPatterns', 'editYearschedule', 'sendYearschedule'];
+        $functions['get']  = ['listPatterns', 'editYearschedule'];
         $functions['post'] = ['edit', 'savePatterns', 'deletePatterns', 'saveYearschedule'];
         return $functions;
     }
@@ -61,9 +58,14 @@ class OpeningcalendarsPlugin extends UserPluginBase
         // 標準権限は右記で定義 config/cc_role.php
         //
         // 権限チェックテーブル
-        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
-        $role_ckeck_table = array();
-        return $role_ckeck_table;
+        $role_check_table = [];
+        $role_check_table["listPatterns"]        = ['role_arrangement'];
+        $role_check_table["savePatterns"]        = ['role_arrangement'];
+        $role_check_table["deletePatterns"]      = ['role_arrangement'];
+        $role_check_table["editYearschedule"]    = ['role_article'];
+        $role_check_table["saveYearschedule"]    = ['role_article'];
+
+        return $role_check_table;
     }
 
     /**
@@ -84,21 +86,21 @@ class OpeningcalendarsPlugin extends UserPluginBase
     private function getOpeningcalendarFrame($frame_id)
     {
         // Frame データ
-        $frame = DB::table('frames')
-                 ->select(
-                     'frames.*',
-                     'openingcalendars.id as openingcalendars_id',
-                     'openingcalendars.openingcalendar_name',
-                     'openingcalendars.openingcalendar_sub_name',
-                     'openingcalendars.month_format',
-                     'openingcalendars.week_format',
-                     'openingcalendars.view_before_month',
-                     'openingcalendars.view_after_month',
-                     'openingcalendars.yearschedule_uploads_id',
-                     'openingcalendars.yearschedule_link_text',
-                     'openingcalendars.smooth_scroll',
-                     'uploads.client_original_name'
-                 )
+        $frame = Frame::
+                select(
+                    'frames.*',
+                    'openingcalendars.id as openingcalendars_id',
+                    'openingcalendars.openingcalendar_name',
+                    'openingcalendars.openingcalendar_sub_name',
+                    'openingcalendars.month_format',
+                    'openingcalendars.week_format',
+                    'openingcalendars.view_before_month',
+                    'openingcalendars.view_after_month',
+                    'openingcalendars.yearschedule_uploads_id',
+                    'openingcalendars.yearschedule_link_text',
+                    'openingcalendars.smooth_scroll',
+                    'uploads.client_original_name'
+                )
                  ->leftJoin('openingcalendars', 'openingcalendars.bucket_id', '=', 'frames.bucket_id')
                  ->leftJoin('uploads', 'uploads.id', '=', 'openingcalendars.yearschedule_uploads_id')
                  ->where('frames.id', $frame_id)
@@ -112,8 +114,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
     private function getOpeningcalendars($frame_id)
     {
         // 開館カレンダー
-        return $openingcalendar = DB::table('frames')
-                 ->select('openingcalendars.*')
+        return Frame::select('openingcalendars.*')
                  ->join('buckets', 'buckets.id', '=', 'frames.bucket_id')
                  ->join('openingcalendars', 'openingcalendars.bucket_id', '=', 'buckets.id')
                  ->where('frames.id', $frame_id)
@@ -451,10 +452,10 @@ class OpeningcalendarsPlugin extends UserPluginBase
 
                 OpeningcalendarsDays::updateOrCreate(
                     ['opening_date'                 => $date,
-                                                      'openingcalendars_id'          => $openingcalendar_frame->openingcalendars_id],
+                     'openingcalendars_id'          => $openingcalendar_frame->openingcalendars_id],
                     ['openingcalendars_id'          => $openingcalendar_frame->openingcalendars_id,
-                                                      'opening_date'                 => $date,
-                                                      'openingcalendars_patterns_id' => $patterns_id,
+                     'opening_date'                 => $date,
+                     'openingcalendars_patterns_id' => $patterns_id,
                     ]
                 );
             }
@@ -467,20 +468,13 @@ class OpeningcalendarsPlugin extends UserPluginBase
         }
         OpeningcalendarsMonths::updateOrCreate(
             ['month'               => $target_ym,
-                                                'openingcalendars_id' => $openingcalendar_frame->openingcalendars_id],
+             'openingcalendars_id' => $openingcalendar_frame->openingcalendars_id],
             ['openingcalendars_id' => $openingcalendar_frame->openingcalendars_id,
-            'comments'            => $comments]
+             'comments'            => $comments]
         );
 
         // 登録後は編集画面を呼ぶ。
         return $this->edit($request, $page_id, $frame_id);
-    }
-
-    /**
-     *  削除処理
-     */
-    public function delete($request, $page_id, $frame_id, $id)
-    {
     }
 
     /**
@@ -590,14 +584,14 @@ class OpeningcalendarsPlugin extends UserPluginBase
         if (empty($request->openingcalendars_id)) {
             // 画面から渡ってくるopeningcalendars_id が空ならバケツと開館カレンダーを新規登録
             // バケツの登録
-            $bucket_id = DB::table('buckets')->insertGetId([
-                  'bucket_name' => '無題',
-                  'plugin_name' => 'openingcalendars'
+            $bucket = Buckets::create([
+                'bucket_name' => $request->openingcalendar_name,
+                'plugin_name' => 'openingcalendars'
             ]);
 
             // 開館カレンダーデータ新規オブジェクト
             $openingcalendars = new Openingcalendars();
-            $openingcalendars->bucket_id = $bucket_id;
+            $openingcalendars->bucket_id = $bucket->id;
 
             // Frame のBuckets を見て、Buckets が設定されていなければ、作成したものに紐づける。
             // Frame にBuckets が設定されていない ＞ 新規のフレーム＆開館カレンダー作成
@@ -606,7 +600,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
             $frame = Frame::where('id', $frame_id)->first();
             if (empty($frame->bucket_id)) {
                 // FrameのバケツIDの更新
-                $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
+                $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket->id]);
             }
 
             $message = '開館カレンダー設定を追加しました。';
@@ -614,6 +608,9 @@ class OpeningcalendarsPlugin extends UserPluginBase
             // openingcalendars_id があれば、開館カレンダーを更新
             // 開館カレンダーデータ取得
             $openingcalendars = Openingcalendars::where('id', $request->openingcalendars_id)->first();
+
+            Buckets::where('id', $openingcalendars->bucket_id)
+                ->update(['bucket_name' => $request->openingcalendar_name, 'plugin_name' => 'openingcalendars']);
 
             $message = '開館カレンダー設定を変更しました。';
         }
@@ -694,11 +691,6 @@ class OpeningcalendarsPlugin extends UserPluginBase
         // セッション初期化などのLaravel 処理。
         $request->flash();
 
-        // 権限チェック（listPatterns 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_arrangement')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         // 開館カレンダー
         $openingcalendar = $this->getOpeningcalendars($frame_id);
         if (empty($openingcalendar)) {
@@ -706,20 +698,20 @@ class OpeningcalendarsPlugin extends UserPluginBase
         }
 
         // パターンデータ
-        $openingcalendars_patterns = DB::table('frames')
-                 ->select(
-                     'frames.*',
-                     'openingcalendars_patterns.id as openingcalendars_patterns_id',
-                     'openingcalendars_patterns.caption',
-                     'openingcalendars_patterns.color',
-                     'openingcalendars_patterns.pattern',
-                     'openingcalendars_patterns.display_sequence'
-                 )
-                 ->join('openingcalendars', 'openingcalendars.bucket_id', '=', 'frames.bucket_id')
-                 ->join('openingcalendars_patterns', 'openingcalendars_patterns.openingcalendars_id', '=', 'openingcalendars.id')
-                 ->where('frames.id', $frame_id)
-                 ->orderBy('openingcalendars_patterns.display_sequence', 'asc')
-                 ->get();
+        $openingcalendars_patterns = Frame::
+            select(
+                'frames.*',
+                'openingcalendars_patterns.id as openingcalendars_patterns_id',
+                'openingcalendars_patterns.caption',
+                'openingcalendars_patterns.color',
+                'openingcalendars_patterns.pattern',
+                'openingcalendars_patterns.display_sequence'
+            )
+            ->join('openingcalendars', 'openingcalendars.bucket_id', '=', 'frames.bucket_id')
+            ->join('openingcalendars_patterns', 'openingcalendars_patterns.openingcalendars_id', '=', 'openingcalendars.id')
+            ->where('frames.id', $frame_id)
+            ->orderBy('openingcalendars_patterns.display_sequence', 'asc')
+            ->get();
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -737,11 +729,6 @@ class OpeningcalendarsPlugin extends UserPluginBase
      */
     public function savePatterns($request, $page_id, $frame_id, $id = null)
     {
-        // 権限チェック（savePatterns 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_arrangement')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         // 追加項目のどれかに値が入っていたら、行の他の項目も必須
         if (!empty($request->add_display_sequence) || !empty($request->add_pattern) || !empty($request->add_color)) {
             // 項目のエラーチェック
@@ -820,11 +807,6 @@ class OpeningcalendarsPlugin extends UserPluginBase
      */
     public function deletePatterns($request, $page_id, $frame_id, $id = null)
     {
-        // 権限チェック（deletePatterns 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_arrangement')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         // 削除
         OpeningcalendarsPatterns::where('id', $id)->delete();
 
@@ -836,11 +818,6 @@ class OpeningcalendarsPlugin extends UserPluginBase
      */
     public function editYearschedule($request, $page_id, $frame_id, $id = null, $errors = null)
     {
-        // 権限チェック（deletePatterns 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_article')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         // 開館カレンダー＆フレームデータ
         $openingcalendar_frame = $this->getOpeningcalendarFrame($frame_id);
 
@@ -861,11 +838,6 @@ class OpeningcalendarsPlugin extends UserPluginBase
      */
     public function saveYearschedule($request, $page_id, $frame_id, $id = null)
     {
-        // 権限チェック（deletePatterns 関数は標準チェックにないので、独自チェック）
-        if ($this->can('role_article')) {
-            return $this->view_error("403_inframe", null, '関数実行権限がありません。');
-        }
-
         // 開館カレンダー＆フレームデータ
         $openingcalendar_frame = $this->getOpeningcalendarFrame($frame_id);
 
@@ -928,24 +900,5 @@ class OpeningcalendarsPlugin extends UserPluginBase
 
         // アップロード画面に戻る
         return $this->editYearschedule($request, $page_id, $frame_id, $id);
-    }
-
-    /**
-     *  年間カレンダーPDF送出
-     *
-     */
-    public function sendYearschedule($request, $page_id, $frame_id, $id = null)
-    {
-
-        // 開館カレンダー＆フレームデータ
-        $openingcalendar_frame = $this->getOpeningcalendarFrame($frame_id);
-
-        // ファイルを返す(PDFの場合はinline)
-        $content_disposition = '';
-        //return response()
-        //         ->file( storage_path('app/plugins/openingcalendars/') . $openingcalendar_frame->openingcalendars_id . '.pdf');
-
-        echo response()->file(storage_path('app/plugins/openingcalendars/') . $openingcalendar_frame->openingcalendars_id . '.pdf');
-        exit;
     }
 }
