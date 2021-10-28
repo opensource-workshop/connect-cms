@@ -7,11 +7,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
-use DB;
-
-use App\Models\Common\Buckets;
-use App\Models\Common\Frame;
-use App\Models\Common\Page;
 use App\Models\User\Codestudies\Codestudies;
 
 use App\Plugins\User\UserPluginBase;
@@ -62,13 +57,12 @@ class CodestudiesPlugin extends UserPluginBase
         // 標準権限は右記で定義 config/cc_role.php
         //
         // 権限チェックテーブル
-        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
-        $role_ckeck_table = array();
-        $role_ckeck_table["editcode"]   = array('role_reporter');
-        $role_ckeck_table["savecode"]   = array('role_reporter');
-        $role_ckeck_table["run"]        = array('role_reporter');
-        $role_ckeck_table["deletecode"] = array('role_reporter');
-        return $role_ckeck_table;
+        $role_check_table = array();
+        $role_check_table["editcode"]   = array('role_reporter');
+        $role_check_table["savecode"]   = array('role_reporter');
+        $role_check_table["run"]        = array('role_reporter');
+        $role_check_table["deletecode"] = array('role_reporter');
+        return $role_check_table;
     }
 
     /**
