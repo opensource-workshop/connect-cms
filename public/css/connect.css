@@ -529,7 +529,7 @@ a.cc-cursor-text:hover {
 }
 
 .cc_scroll_checkboxes {
-    height: 100px;
+    min-height: 100px;
     overflow: auto;
 }
 
