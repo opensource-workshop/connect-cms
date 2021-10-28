@@ -102,7 +102,7 @@ class ConventionsPlugin extends UserPluginBase
     /**
      * プラグインのバケツ取得関数
      */
-    public function getPluginBucket($bucket_id)
+    private function getPluginBucket($bucket_id)
     {
         // プラグインのメインデータを取得する。
         return Convention::firstOrNew(['bucket_id' => $bucket_id]);

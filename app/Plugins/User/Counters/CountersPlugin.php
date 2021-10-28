@@ -90,7 +90,7 @@ class CountersPlugin extends UserPluginBase
     /**
      * プラグインのバケツ取得関数
      */
-    public function getPluginBucket($bucket_id)
+    private function getPluginBucket($bucket_id)
     {
         // プラグインのメインデータを取得する。
         return Counter::firstOrNew(['bucket_id' => $bucket_id]);

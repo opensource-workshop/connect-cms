@@ -60,11 +60,11 @@ class CabinetsPlugin extends UserPluginBase
     public function declareRole()
     {
         // 権限チェックテーブル
-        $role_ckeck_table = array();
-        $role_ckeck_table["upload"] = array('posts.create');
-        $role_ckeck_table["makeFolder"] = array('posts.create');
-        $role_ckeck_table["deleteContents"] = array('posts.delete');
-        return $role_ckeck_table;
+        $role_check_table = array();
+        $role_check_table["upload"] = array('posts.create');
+        $role_check_table["makeFolder"] = array('posts.create');
+        $role_check_table["deleteContents"] = array('posts.delete');
+        return $role_check_table;
     }
 
     /**
@@ -80,7 +80,7 @@ class CabinetsPlugin extends UserPluginBase
     /**
      * プラグインのバケツ取得関数
      */
-    public function getPluginBucket($bucket_id)
+    private function getPluginBucket($bucket_id)
     {
         // プラグインのメインデータを取得する。
         return Cabinet::firstOrNew(['bucket_id' => $bucket_id]);
