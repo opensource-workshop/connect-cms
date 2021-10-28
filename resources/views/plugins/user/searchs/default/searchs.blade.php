@@ -8,7 +8,7 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
-@if(isset($searchs_frame))
+@if ($searchs_frame->id)
     @include('plugins.user.searchs.default.searchs_form')
 @else
     <div class="alert alert-danger" style="margin-top: 10px;">
