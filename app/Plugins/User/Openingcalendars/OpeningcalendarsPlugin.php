@@ -2,6 +2,7 @@
 
 namespace App\Plugins\User\Openingcalendars;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -569,12 +570,12 @@ class OpeningcalendarsPlugin extends UserPluginBase
         // エラーがあった場合は入力画面に戻る。
         $message = null;
         if ($validator->fails()) {
-            if (empty($id)) {
+            if (empty($request->openingcalendars_id)) {
                 $create_flag = true;
-                return $this->createBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
+                return $this->createBuckets($request, $page_id, $frame_id, $request->openingcalendars_id, $create_flag, $message, $validator->errors());
             } else {
                 $create_flag = false;
-                return $this->editBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
+                return $this->editBuckets($request, $page_id, $frame_id, $request->openingcalendars_id, $create_flag, $message, $validator->errors());
             }
         }
 
@@ -629,7 +630,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
 
         // 新規作成フラグを付けて開館カレンダー設定変更画面を呼ぶ
         $create_flag = false;
-        return $this->editBuckets($request, $page_id, $frame_id, $id, $create_flag, $message);
+        return $this->editBuckets($request, $page_id, $frame_id, $request->openingcalendars_id, $create_flag, $message);
     }
 
     /**
