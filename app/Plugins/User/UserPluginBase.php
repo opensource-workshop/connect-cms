@@ -1470,8 +1470,11 @@ class UserPluginBase extends PluginBase
                         ->orWhere($table_name . '.created_id', Auth::user()->id);
             });
         } else {
+            //
+            // 共通条件（Active）
             // 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）
             // 未ログイン
+            //
             $query->where($table_name . '.status', StatusType::active);
 
             // DBカラム posted_at(投稿日時) 存在するか
@@ -1480,7 +1483,6 @@ class UserPluginBase extends PluginBase
             }
         }
 
-        // var_dump($query->get());
         return $query;
     }
 
