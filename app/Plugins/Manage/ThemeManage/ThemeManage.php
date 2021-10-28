@@ -750,7 +750,7 @@ class ThemeManage extends ManagePluginBase
         $theme_set['stitch-mix']=['menu_horizon'=>'white|skyblue|dashed|stitch','menu_vertical'=>'tan|orange|dashed|stitch','frame_tittle'=>'gray|green|dashed|stitch',];
 
         $theme_css = "";
-        if($request->has('theme_css')) {
+        if ($request->has('theme_css')) {
             $theme_css = $request->theme_css;
         }
 
@@ -807,7 +807,7 @@ class ThemeManage extends ManagePluginBase
 
         // 確認ボタンの場合は入力画面に戻る。
         $themes_css = $this->getSelectStyle($request);
-        if($request->has('confirm')){
+        if ($request->has('confirm')) {
             $request['theme_css'] = $themes_css;
             return $this->generateIndex($request, $id);
         }
@@ -868,9 +868,9 @@ EOM;
         $attributes = $request->except(["_token","dir_name","theme_name"]);
         // 各種設定項目ごとに分割する
         $arr_params = [];
-        foreach ($attributes as $selectkey => $val ) {
+        foreach ($attributes as $selectkey => $val) {
             foreach ($paramkeys as $paramkey) {
-                if(false !== strpos($selectkey, $paramkey)) {
+                if (false !== strpos($selectkey, $paramkey)) {
                     $style = str_replace($paramkey.'_', '', $selectkey);
                     $style = str_replace('_', '-', $style);
                     $arr_params[$paramkey][$style] = $val;
@@ -879,27 +879,28 @@ EOM;
         }
 
         $css_contents = "";
-        if($request->has('font_family')) {
+        if ($request->has('font_family')) {
             $css_contents .= $this->getBodyFontFamilyStyle($attributes['font_family']);
         }
         foreach ($arr_params as $target => $styles) {
-            switch($target){
+            switch ($target) {
                 case 'menu_horizon':
                     $css_contents .= $this->getMenuHorizonStyle($styles);
-                break;
+                    break;
                 case 'menu_vertical':
                     $css_contents .= $this->getMenuVerticalnStyle($styles);
-                break;
+                    break;
                 case 'frame_tittle':
                     $css_contents .= $this->getFrameTittleStyle($styles);
-                break;
+                    break;
             }
         }
 
         return $css_contents;
     }
     /* 選択された値を元にCSSを返却する menu_horizon*/
-    private function getMenuHorizonStyle($styles) {
+    private function getMenuHorizonStyle($styles)
+    {
 
         $css_contents = <<<EOM
 /* 横型メニューのCSS */
@@ -908,7 +909,7 @@ EOM;
 
         $gnav_font_color = self::COLORLIST[$styles['color']];
         $gnav_bk_color = ($styles['background'] != 'none') ? self::COLORLIST[$styles['background']] : false;
-        if( $gnav_font_color && $gnav_bk_color ) {
+        if ($gnav_font_color && $gnav_bk_color) {
             $css_contents = <<<EOM
 /* globalナビはメニューの色合いと合わせる */
 .bg-dark {
@@ -930,8 +931,8 @@ EOM;
         foreach ($styles as $style => $val) {
             
             $tmp_style = '';
-            switch($style) {
-                case 'color' : 
+            switch ($style) {
+                case 'color':
                     $code = self::COLORLIST[$val];
                     $tmp_style = <<<EOM
 /* 横型メニュー color */
@@ -943,9 +944,9 @@ EOM;
 }
 
 EOM;
-                break;
-                case 'background' : 
-                    if($val == 'none') {
+                    break;
+                case 'background':
+                    if ($val == 'none') {
                         break;
                     }
                     $code = self::COLORLIST[$val];
@@ -956,8 +957,8 @@ EOM;
 }
 
 EOM;
-                break;
-                case 'border' : 
+                    break;
+                case 'border':
                     $selected_color = self::COLORLIST[$styles['color']];
                     $tmp_style = <<<EOM
 /* 横型メニュー border */
@@ -974,12 +975,12 @@ EOM;
 }
 
 EOM;
-                break;
-                case 'background-image' : 
+                    break;
+                case 'background-image':
                     if ($val == 'none') {// 指定無しは返却
                         break;
                     }
-                    if($styles['background'] == 'none') {
+                    if ($styles['background'] == 'none') {
                         break;
                     }
                     $bk_param = $this->getHorizonBkimageParam($val, $styles['background']);
@@ -1035,7 +1036,7 @@ EOM;
 
 EOM;
                     }
-                    if($val == 'craft') {
+                    if ($val == 'craft') {
                         $tmp_style .= <<<EOM
 /* 横型メニュー $val */
 .plugin-menus .nav-tabs li.nav-item {
@@ -1058,7 +1059,7 @@ EOM;
 }
 EOM;
                     }
-                    if ($val == 'ledge'){
+                    if ($val == 'ledge') {
                         $tmp_style .= <<<EOM
 /* 横型メニュー $val */
 .plugin-menus .nav-tabs li.nav-item {
@@ -1079,7 +1080,7 @@ EOM;
 }
 EOM;
                     }
-                    if ($val == 'shiny'){
+                    if ($val == 'shiny') {
                         $color = self::COLORLIST[$styles['background']];
                         $tmp_style .= <<<EOM
 /* 横型メニュー $val */
@@ -1138,9 +1139,9 @@ EOM;
 
 EOM;
                     }
-                    if ($val == 'stitch'){
+                    if ($val == 'stitch') {
                         $background = $styles['background'];
-                        if($background == 'none') {
+                        if ($background == 'none') {
                             break;
                         }
                         $background_color = self::COLORLIST[$background];
@@ -1190,13 +1191,13 @@ EOM;
 EOM;
                     }
 
-                if ($val == 'underline'){
-                    $background = $styles['background'];
-                    if($background == 'none') {
-                        break;
-                    }
-                    $background_color = self::COLORLIST[$background];
-                    $tmp_style .= <<<EOM
+                    if ($val == 'underline') {
+                        $background = $styles['background'];
+                        if ($background == 'none') {
+                            break;
+                        }
+                        $background_color = self::COLORLIST[$background];
+                        $tmp_style .= <<<EOM
 /* 横型メニュー $val */
 .nav-tabs {
     border : 0;
@@ -1238,11 +1239,11 @@ EOM;
 }
 
 EOM;
-                }
-                break;
-                default : 
+                    }
+                    break;
+                default:
                     $tmp_style = '';
-                break;
+                    break;
             }
             $css_contents .= <<<EOM
 $tmp_style
@@ -1286,16 +1287,17 @@ EOM;
 
         return $css_contents;
     }
-    private function getHorizonBkimageParam($val, $bkcolor) {
+    private function getHorizonBkimageParam($val, $bkcolor)
+    {
         //$background_image_filepath = '/images/core/theme/menu/horizon/' .$val .'/' .$bkcolor .'/images'. '/';
         $background_image_filepath = '/images/core/theme/menu/horizon/' .$val .'/' .$bkcolor;
         $background_code = self::COLORLIST[$bkcolor];
         $bk_param = [];
-        switch($val){
-            case 'none' : 
+        switch ($val) {
+            case 'none':
                 $bk_param = [];
-            break;
-            case 'clear' : 
+                break;
+            case 'clear':
                 $bk_param = [
                     'background-image'=> 'url(' .$background_image_filepath .'.gif)',
                     'background-repeat'=>'repeat-x',
@@ -1304,8 +1306,8 @@ EOM;
                     'background-color' => 'transparent',
                     'height' => '43px',
                 ];
-            break;
-            case 'craft' : 
+                break;
+            case 'craft':
                 $bk_param = [
                     'background-image' => 'url(' .$background_image_filepath .'.jpg)',
                     'background-repeat' => 'repeat-x',
@@ -1314,32 +1316,32 @@ EOM;
                     'padding' => '5px 5px',
                     'border-radius' => '10px',
                 ];
-            break;
-            case 'ledge' : 
+                break;
+            case 'ledge':
                 $bk_param = [
                     'background-image' => 'url(' .$background_image_filepath .'.gif)',
                     'background-repeat' => 'repeat-x',
                     'background-position' => 'bottom left',
                     'background-color' => 'transparent',
                 ];
-            break;
-            case 'shiny' : 
+                break;
+            case 'shiny':
                 $bk_param = [
                     'background-image' =>  'url(' .$background_image_filepath .'.png)',
                     'background-repeat' => 'repeat',
                     'background-position' => 'center center',
                     'background-color' => 'transparent',
                 ];
-            break;
-            case 'stitch' : 
+                break;
+            case 'stitch':
                 $bk_param = [
                     //'background-color' => $background_code,
                     'border-collapse' => 'separate',
                     'border-spacing' => '8px',
                     'width' => '100%',
                 ];
-            break;
-            case 'washed' : 
+                break;
+            case 'washed':
                 // washedの場合はliタグに背景表示する
                 $bk_param = [
                     'background-image' => 'url(' .$background_image_filepath .'.png)',
@@ -1347,17 +1349,18 @@ EOM;
                     'background-position' => '-3px center',
                     'background-color' => 'transparent',
                 ];
-            break;
-            case 'underline' : 
+                break;
+            case 'underline':
                 $bk_param = [
                     'background' => 'transparent',
                 ];
-            break;
+                break;
         }
         return $bk_param;
     }
     /* 選択された値を元にCSSを返却する menu_vertical*/
-    private function getMenuVerticalnStyle($styles) {
+    private function getMenuVerticalnStyle($styles)
+    {
         $css_contents = <<<EOM
 
 
@@ -1367,13 +1370,13 @@ EOM;
         $color = $styles['color'];
         $color_code = self::COLORLIST[$color];
         $background_color = $styles['background'];
-        if($background_color !== 'none'){
+        if ($background_color !== 'none') {
             $background_color_code = self::COLORLIST[$background_color];
         }
         foreach ($styles as $style => $val) {
             $tmp_style = '';
-            switch($style) {
-                case 'color' : 
+            switch ($style) {
+                case 'color':
                     $tmp_style = <<<EOM
 /* 縦型（サイド）メニュー color */
 .plugin-menus .list-group > a.list-group-item {
@@ -1381,8 +1384,8 @@ EOM;
 }
 
 EOM;
-                break;
-                case 'background' : 
+                    break;
+                case 'background':
                     if ($val == 'none') {// 指定無しはそのまま返却
                         break;
                     }
@@ -1401,8 +1404,8 @@ EOM;
 }
 
 EOM;
-                break;
-                case 'border' : 
+                    break;
+                case 'border':
                     if ($val == 'none' || $val == 'hidden') {// 指定無しは返却
                         $tmp_style = <<<EOM
 /* 縦型（サイド）メニュー border */
@@ -1416,7 +1419,7 @@ EOM;
                         
                         break;
                     }
-                    if($styles['background'] == 'none') {
+                    if ($styles['background'] == 'none') {
                         break;
                     }
                     $border_val = $val ." 1px " .$color_code;
@@ -1435,12 +1438,12 @@ EOM;
 
 EOM;
 
-                break;
-                case 'background-image' : 
+                    break;
+                case 'background-image':
                     if ($val == 'none') {// 指定無しはそのまま返却
                         break;
                     }
-                    if($styles['background'] == 'none') {
+                    if ($styles['background'] == 'none') {
                         break;
                     }
     
@@ -1522,7 +1525,7 @@ EOM;
 
 EOM;
                     }
-                    if($val == 'craft'){
+                    if ($val == 'craft') {
                         $background_image = $bk_param['background-image'];
                         $background_image_hover = str_replace('.jpg', '_on.jpg', $background_image);
                         $tmp_style .= <<<EOM
@@ -1532,8 +1535,8 @@ EOM;
 }
 
 EOM;
-                    } 
-                    if($val == 'shiny'){
+                    }
+                    if ($val == 'shiny') {
                         $background_image = $bk_param['background-image'];
                         $background_image_hover = str_replace('.png', '_on.png', $background_image);
                         $tmp_style .= <<<EOM
@@ -1545,7 +1548,7 @@ EOM;
 
 EOM;
                     }
-                    if($val == 'stitch'){
+                    if ($val == 'stitch') {
                         $background_image = $bk_param['background-image'];
                         $background_image_hover = str_replace('.jpg', '_on.jpg', $background_image);
                         $tmp_style .= <<<EOM
@@ -1556,7 +1559,7 @@ EOM;
 
 EOM;
                     }
-                    if($val == 'underline'){
+                    if ($val == 'underline') {
                         $tmp_style .= <<<EOM
 /*  縦型（サイド）メニュー underline horizon */
 .plugin-menus .list-group > a.list-group-item,
@@ -1569,10 +1572,10 @@ EOM;
                     }
 
 
-                break;
-                default : 
+                    break;
+                default:
                     $tmp_style = '';
-                break;
+                    break;
             }
             $css_contents .= <<<EOM
 $tmp_style
@@ -1581,64 +1584,66 @@ EOM;
         return $css_contents;
     }
 
-    private function getVerticalBkimageParam($val, $bkcolor) {
+    private function getVerticalBkimageParam($val, $bkcolor)
+    {
         $background_image_filepath = '/images/core/theme/menu/vertical/' .$val .'/' .$bkcolor;
         $background_code = self::COLORLIST[$bkcolor];
         $bk_param = [];
-        switch($val){
-            case 'none' : 
+        switch ($val) {
+            case 'none':
                 $bk_param = [];
-            break;
-            case 'circle' : 
+                break;
+            case 'circle':
                 $bk_param = [
                     'position' => 'relative',
                     'display' => 'inline-block',
                     'padding-left' => '30px',
                     'background-color' => 'transparent',
                 ];
-            break;
-            case 'clear' : 
+                break;
+            case 'clear':
                 $bk_param = [
                     'background-color' => $background_code.'80',
                 ];
-            break;
-            case 'craft' : 
+                break;
+            case 'craft':
                 $bk_param = [
                     'background-image' => 'url(' .$background_image_filepath .'.jpg)',
                     'background-repeat' => 'repeat',
                     'background-position' => 'center center',
                     'font-weight' => 'bold',
                 ];
-            break;
-            case 'shiny' : 
+                break;
+            case 'shiny':
                 $bk_param = [
                     'background-image' => 'url(' .$background_image_filepath .'.png)',
                     'background-repeat' => 'repeat-x',
                     'background-position' => 'center center',
                     'background-color' => $background_code ,
                 ];
-            break;
-            case 'stitch' : 
+                break;
+            case 'stitch':
                 $bk_param = [
                     'background-image' => 'url(' .$background_image_filepath .'.jpg)',
                     'background-repeat' =>'repeat',
                     'background-position' =>'center center',
                     'background-color' => 'unset',
                 ];
-            break;
-            case 'underline' : 
+                break;
+            case 'underline':
                 $bk_param = [
                     'background' => 'transparent',
                     'border-left' => '0',
                     'border-top' => '0',
                     'border-right' => '0',
                 ];
-            break;
+                break;
         }
         return $bk_param;
     }
     /* 選択された値を元にCSSを返却する frame_tittle*/
-    private function getFrameTittleStyle($styles) {
+    private function getFrameTittleStyle($styles)
+    {
 
         $css_contents = <<<EOM
 
@@ -1649,12 +1654,12 @@ EOM;
 
         foreach ($styles as $style => $val) {
             $tmp_style = '';
-            switch($style) {
-                case 'color' : 
+            switch ($style) {
+                case 'color':
                     $code = self::COLORLIST[$val];
-                    if($val == 'white' && $styles['background'] != 'none') {
+                    if ($val == 'white' && $styles['background'] != 'none') {
                         $anchor_code = self::COLORLIST[$styles['background']];
-                    }else{
+                    } else {
                         $anchor_code = $code;
                     }
                     $anchor_code_80 = $anchor_code. '80';
@@ -1678,8 +1683,8 @@ EOM;
 
 EOM;
                     break;
-                case 'background' : 
-                    if($val == 'none') {
+                case 'background':
+                    if ($val == 'none') {
                         break;
                     }
                     $background_code = self::COLORLIST[$val];
@@ -1690,8 +1695,8 @@ EOM;
 }
 
 EOM;
-                break;
-                case 'border' : 
+                    break;
+                case 'border':
                     $color = $styles['color'];
                     $color_code = self::COLORLIST[$color];
                     $tmp_style .= <<<EOM
@@ -1704,12 +1709,12 @@ EOM;
 
 EOM;
 
-                break;
-                case 'background-image' : 
+                    break;
+                case 'background-image':
                     if ($val == 'none') {// 指定無しはそのまま返却
                         break;
                     }
-                    if($styles['background'] == 'none') {
+                    if ($styles['background'] == 'none') {
                         break;
                     }
                     $bk_param = $this->getFrameTittleBkimageParam($val, $styles['background']);
@@ -1767,7 +1772,7 @@ EOM;
 
 EOM;
                     }
-                    if ($val == 'craft'){
+                    if ($val == 'craft') {
                         $tmp_style .= <<<EOM
 .card-header.bg-default:before {
     position: absolute;
@@ -1786,7 +1791,7 @@ EOM;
 
 EOM;
                     }
-                    if ($val == 'stitch'){
+                    if ($val == 'stitch') {
                         $background_image_filepath = '/images/core/theme/frame/' .$val .'/kuina.jpg';
                         $tmp_style .= <<<EOM
 /* フレームタイトル stitch border unset */
@@ -1918,7 +1923,7 @@ EOM;
                     }
                     
 
-                break;
+                    break;
             }
             $css_contents .= <<<EOM
 $tmp_style
@@ -1926,24 +1931,25 @@ EOM;
         }
         return $css_contents;
     }
-    private function getFrameTittleBkimageParam($val, $bkcolor) {
+    private function getFrameTittleBkimageParam($val, $bkcolor)
+    {
         $background_image_filepath = '/images/core/theme/frame/' .$val .'/' .$bkcolor;
         $background_code = self::COLORLIST[$bkcolor];
         $bk_param = [];
 
-        switch($val){
-            case 'none' : 
+        switch ($val) {
+            case 'none':
                 $bk_param = [];
-            break;
-            case 'circle' : 
+                break;
+            case 'circle':
                 $bk_param = [
                     'position' => 'relative',
                     'display' => 'inline-block',
                     'padding-left' => '30px',
                     'background-color' => $background_code,
                 ];
-            break;
-            case 'craft' : 
+                break;
+            case 'craft':
                 $bk_param = [
                     'background-image' => 'url(' .$background_image_filepath .'.jpg)',
                     'background-repeat' => 'repeat',
@@ -1952,8 +1958,8 @@ EOM;
                     'background-color' => 'unset',
                     'padding-left' => '30px',
                 ];
-            break;
-            case 'rectangle' : 
+                break;
+            case 'rectangle':
                 $bk_param = [
                     'background-image' => 'url(' .$background_image_filepath .'.gif)',
                     'background-size' => 'contain',
@@ -1962,16 +1968,16 @@ EOM;
                     'border-left' => 'solid ' .$background_code .' 15px',
                     'background-color' => 'unset',
                 ];
-            break;
-            case 'shiny' : 
+                break;
+            case 'shiny':
                 $bk_param = [
                     'background-image' => 'url(' .$background_image_filepath .'.png)',
                     'background-repeat' => 'no-repeat',
                     'background-position' => 'right bottom',
                     'background-color' => 'unset',
                 ];
-            break;
-            case 'stitch' : 
+                break;
+            case 'stitch':
                 $bk_param = [
                     'background-image' => 'url(' .$background_image_filepath .'.png)',
                     'background-repeat' => 'no-repeat',
@@ -1981,44 +1987,45 @@ EOM;
                     'padding-left' => '35px',
                     'font-weight' => 'bold',
                 ];
-            break;
-            case 'center' : 
+                break;
+            case 'center':
                 $bk_param = [
                     'position' => 'relative',
                     'display' => 'inline-block',
                     'text-align' => 'center',
                 ];
-            break;
-            case 'ribbon' : 
+                break;
+            case 'ribbon':
                 $bk_param = [
                     'position' => 'relative',
                     'margin' => '0 -10px',
                     'background' => $background_code,
                 ];
-            break;
-            case 'balloon' : 
+                break;
+            case 'balloon':
                 $bk_param = [
                     'position' => 'relative',
                     'border-radius' => 'unset',
                 ];
-            break;
-            case 'emphasis' : 
+                break;
+            case 'emphasis':
                 $bk_param = [
                 ];
-            break;
-            case 'underline' : 
+                break;
+            case 'underline':
                 $bk_param = [
                     'border-radius' => 'unset',
                     'border-top' => 0,
                     'border-right' => 0,
                     'border-left' => 0,
                 ];
-            break;
+                break;
         }
         return $bk_param;
     }
     /* 選択された値を元にCSSを返却する font_family*/
-    private function getBodyFontFamilyStyle($font_family) {
+    private function getBodyFontFamilyStyle($font_family)
+    {
         $css_contents = <<<EOM
 /* 共通設定 */
 /* font_family */
