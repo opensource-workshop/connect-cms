@@ -2,12 +2,10 @@
 
 namespace App\Plugins\User\Themechangers;
 
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 
-use File;
-
 use App\Models\Core\Configs;
-use App\Models\Common\Frame;
 use App\Models\Common\Page;
 
 use App\Plugins\User\UserPluginBase;
@@ -20,7 +18,7 @@ use App\Plugins\User\UserPluginBase;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category テーマチェンジャー・プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class ThemechangersPlugin extends UserPluginBase
 {
@@ -45,10 +43,9 @@ class ThemechangersPlugin extends UserPluginBase
         // 標準権限以外で設定画面などから呼ばれる権限の定義
         // 標準権限は右記で定義 config/cc_role.php
         //
-        // 権限チェックテーブル
-        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
-        $role_ckeck_table = array();
-        return $role_ckeck_table;
+        // 権限チェックテーブル (追加チェックなし)
+        $role_check_table = [];
+        return $role_check_table;
     }
 
     /**
