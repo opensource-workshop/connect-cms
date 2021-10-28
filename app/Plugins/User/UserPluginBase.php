@@ -1437,6 +1437,9 @@ class UserPluginBase extends PluginBase
      */
     protected function appendAuthWhereBase($query, $table_name)
     {
+        // 各条件でSQL を or 追記する場合は、クロージャで記載することで、元のSQL とAND 条件でつながる。
+        // クロージャなしで追記した場合、or は元の whereNull('calendar_posts.parent_id') を打ち消したりするので注意。
+
         if (empty($query)) {
             // 空なら何もしない
             return $query;
