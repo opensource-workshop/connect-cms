@@ -23,6 +23,7 @@
         <a href="{{url('/')}}/plugin/conventions/createBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">新規作成</a>
     </li>
 @endif
+{{-- delete: イベントの総コマ数は設定の トラック数 x コマ数 で決まるため、表示件数を使って絞るとまずいため、削除
 @if ($action == 'editView')
     <li role="presentation" class="nav-item">
         <span class="nav-link"><span class="active">表示設定</span></span>
@@ -32,6 +33,7 @@
         <a href="{{url('/')}}/plugin/conventions/editView/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">表示設定</a>
     </li>
 @endif
+--}}
 @if ($action == 'listBuckets')
     <li role="presentation" class="nav-item">
         <span class="nav-link"><span class="active">イベント選択</span></span>
