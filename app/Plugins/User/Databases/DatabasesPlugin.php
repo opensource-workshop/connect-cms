@@ -75,7 +75,6 @@ class DatabasesPlugin extends UserPluginBase
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
         $functions['get']  = [
-            'editColumnDetail',
             'detail',
             'input',
             'search',
@@ -85,14 +84,7 @@ class DatabasesPlugin extends UserPluginBase
             'detail',
             'input',
             'cancel',
-            'updateColumn',
-            'updateColumnSequence',
-            'updateColumnDetail',
-            'addSelect',
             'addPref',
-            'updateSelect',
-            'updateSelectSequence',
-            'deleteSelect',
             'search',
         ];
         return $functions;
@@ -120,15 +112,7 @@ class DatabasesPlugin extends UserPluginBase
         $role_check_table["publicConfirm"]        = array('posts.create', 'posts.update');
         $role_check_table["publicStore"]          = array('posts.create', 'posts.update');
 
-        $role_check_table["editColumnDetail"]     = array('buckets.editColumn');
-        $role_check_table["updateColumn"]         = array('buckets.editColumn');
-        $role_check_table["updateColumnSequence"] = array('buckets.editColumn');
-        $role_check_table["updateColumnDetail"]   = array('buckets.editColumn');
-        $role_check_table["addSelect"]            = array('buckets.addColumn');
         $role_check_table["addPref"]              = array('buckets.addColumn');
-        $role_check_table["updateSelect"]         = array('buckets.editColumn');
-        $role_check_table["updateSelectSequence"] = array('buckets.editColumn');
-        $role_check_table["deleteSelect"]         = array('buckets.editColumn');
         return $role_check_table;
     }
 

@@ -67,7 +67,6 @@ class FormsPlugin extends UserPluginBase
         $functions = array();
         $functions['get']  = [
             'index',
-            'editColumnDetail',
             'publicConfirmToken',
             'listInputs',
             'editInput',
@@ -78,14 +77,7 @@ class FormsPlugin extends UserPluginBase
             'publicStore',
             'publicStoreToken',
             'cancel',
-            'updateColumn',
-            'updateColumnSequence',
-            'updateColumnDetail',
             'copyColumn',
-            'addSelect',
-            'updateSelect',
-            'updateSelectSequence',
-            'deleteSelect',
             'storeInput',
         ];
         return $functions;
@@ -102,15 +94,7 @@ class FormsPlugin extends UserPluginBase
         // 権限チェックテーブル
         $role_check_table = [];
 
-        $role_check_table["editColumnDetail"]     = ['buckets.editColumn'];
-        $role_check_table["updateColumn"]         = ['buckets.editColumn'];
-        $role_check_table["updateColumnSequence"] = ['buckets.editColumn'];
-        $role_check_table["updateColumnDetail"]   = ['buckets.editColumn'];
-        $role_check_table["copyColumn"]           = ['buckets.editColumn'];
-        $role_check_table["addSelect"]            = ['buckets.addColumn'];
-        $role_check_table["updateSelect"]         = ['buckets.editColumn'];
-        $role_check_table["updateSelectSequence"] = ['buckets.editColumn'];
-        $role_check_table["deleteSelect"]         = ['buckets.editColumn'];
+        $role_check_table["copyColumn"]           = ['buckets.saveColumn'];
         $role_check_table["listInputs"]           = ['frames.edit'];
         $role_check_table["editInput"]            = ['frames.edit'];
         $role_check_table["storeInput"]           = ['frames.edit'];

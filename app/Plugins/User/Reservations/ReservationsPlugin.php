@@ -56,7 +56,6 @@ class ReservationsPlugin extends UserPluginBase
             'week',
             'month',
             'editFacilities',
-            'editColumnDetail',
             'showBooking',
             'editBooking',
         ];
@@ -64,11 +63,6 @@ class ReservationsPlugin extends UserPluginBase
             'addFacility',
             'updateFacility',
             'updateFacilitySequence',
-            'updateColumn',
-            'updateColumnSequence',
-            'addSelect',
-            'updateSelect',
-            'updateSelectSequence',
             'editBooking',
             'saveBooking',
             'approvalBooking',
@@ -91,14 +85,6 @@ class ReservationsPlugin extends UserPluginBase
         $role_check_table["editFacilities"]         = ['buckets.editColumn'];
         $role_check_table["updateFacility"]         = ['buckets.editColumn'];
         $role_check_table["updateFacilitySequence"] = ['buckets.editColumn'];
-
-        $role_check_table["editColumnDetail"]       = ['buckets.editColumn'];
-        $role_check_table["updateColumn"]           = ['buckets.editColumn'];
-        $role_check_table["updateColumnSequence"]   = ['buckets.editColumn'];
-
-        $role_check_table["addSelect"]              = ['buckets.addColumn'];
-        $role_check_table["updateSelect"]           = ['buckets.editColumn'];
-        $role_check_table["updateSelectSequence"]   = ['buckets.editColumn'];
 
         // posts.create, posts.delete等は AppServiceProviderのGateでチェックされる。自分の登録データかは、$post->created_id でチェックされるため、DBカラムに created_id 必要。
         $role_check_table["editBooking"]            = ['posts.create'];
