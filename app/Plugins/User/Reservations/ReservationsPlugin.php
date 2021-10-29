@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\DB;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
-
 use App\Models\User\Reservations\Reservation;
 use App\Models\User\Reservations\ReservationsFacility;
 use App\Models\User\Reservations\ReservationsColumn;
@@ -119,8 +118,21 @@ class ReservationsPlugin extends UserPluginBase
      * POST取得関数（コアから呼び出す）
      * コアがPOSTチェックの際に呼び出す関数
      */
-    public function getPost($id)
+    public function getPost($id, $action = null)
     {
+        if (is_null($action)) {
+            //
+            // プラグイン内からの呼び出しを想定。処理を通す
+            //
+        } elseif (in_array($action, ['editBooking', 'saveBooking', 'destroyBooking'])) {
+            //
+            // posts.create|posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+            // それ以外のアクションは null で返す。
+            //
+        } else {
+            return null;
+        }
+
         // 一度読んでいれば、そのPOSTを再利用する。
         if (!empty($this->post)) {
             return $this->post;
