@@ -86,7 +86,7 @@ class ReservationsPlugin extends UserPluginBase
         $role_check_table["updateFacilitySequence"] = ['buckets.upColumnSequence', 'buckets.downColumnSequence'];
 
         // posts.create, posts.delete等は AppServiceProviderのGateでチェックされる。自分の登録データかは、$post->created_id でチェックされるため、DBカラムに created_id 必要。
-        $role_check_table["editBooking"]            = ['posts.create'];
+        $role_check_table["editBooking"]            = ['posts.create', 'posts.update'];
         $role_check_table["saveBooking"]            = ['posts.create', 'posts.update'];
         $role_check_table["approvalBooking"]        = ['posts.approval'];
         $role_check_table["destroyBooking"]         = ['posts.delete'];
@@ -126,7 +126,7 @@ class ReservationsPlugin extends UserPluginBase
             //
         } elseif (in_array($action, ['editBooking', 'saveBooking', 'destroyBooking'])) {
             //
-            // posts.create|posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+            // posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
             // それ以外のアクションは null で返す。
             //
         } else {
