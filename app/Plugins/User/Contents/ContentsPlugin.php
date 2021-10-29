@@ -31,11 +31,10 @@ class ContentsPlugin extends UserPluginBase
 
     /* オブジェクト変数 */
 
-    // delete: どこからもセットしてない変数
     /**
-     * POSTデータ
+     * POST チェックに使用する getPost() 関数を使うか
      */
-    // public $post = null;
+    public $use_getpost = false;
 
     /* コアから呼び出す関数 */
 
@@ -81,15 +80,6 @@ class ContentsPlugin extends UserPluginBase
      */
     private function getFrameContents($frame_id)
     {
-        // delete: どこからもセットしてない変数
-        // 一度読んでいれば、そのPOSTを再利用する。
-        // if (!empty($this->post)) {
-        //     return $this->post;
-        // }
-
-        // 認証されているユーザの取得
-        // $user = Auth::user();
-
         // buckets_id
         $buckets_id = null;
         if (!empty($this->buckets)) {
@@ -188,18 +178,6 @@ class ContentsPlugin extends UserPluginBase
 
         return $query;
     }
-
-    // move: UserPluginBaseに移動
-    // /**
-    //  *  要承認の判断
-    //  */
-    // protected function isApproval($frame_id)
-    // {
-    //     if (empty($this->buckets)) {
-    //         return false;
-    //     }
-    //     return $this->buckets->needApprovalUser(Auth::user());
-    // }
 
     /**
      *  検索用メソッド
