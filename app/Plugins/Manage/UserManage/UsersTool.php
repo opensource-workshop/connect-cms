@@ -8,8 +8,8 @@ use App\Models\Core\UsersColumns;
 use App\Models\Core\UsersColumnsSelects;
 use App\Models\Core\UsersInputCols;
 
-use App\Rules\CustomVali_AlphaNumForMultiByte;
-use App\Rules\CustomVali_CheckWidthForString;
+use App\Rules\CustomValiAlphaNumForMultiByte;
+use App\Rules\CustomValiCheckWidthForString;
 use App\Rules\CustomValiUserEmailUnique;
 
 /**
@@ -112,11 +112,11 @@ class UsersTool
         // 英数値チェック
         if ($users_column->rule_allowed_alpha_numeric) {
             $validator_rule[] = 'nullable';
-            $validator_rule[] = new CustomVali_AlphaNumForMultiByte();
+            $validator_rule[] = new CustomValiAlphaNumForMultiByte();
         }
         // 最大文字数チェック
         if ($users_column->rule_word_count) {
-            $validator_rule[] = new CustomVali_CheckWidthForString($users_column->column_name, $users_column->rule_word_count);
+            $validator_rule[] = new CustomValiCheckWidthForString($users_column->column_name, $users_column->rule_word_count);
         }
         // 指定桁数チェック
         if ($users_column->rule_digits_or_less) {

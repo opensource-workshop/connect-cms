@@ -9,7 +9,7 @@ use Illuminate\Validation\Concerns\ValidatesAttributes;
 /**
  * 複数カンマ区切りの年月入力チェック
  */
-class CustomVali_DatesYm implements Rule
+class CustomValiDatesYm implements Rule
 {
     // Laravelのvalidateチェックメソッド
     use ValidatesAttributes;

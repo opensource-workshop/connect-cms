@@ -25,11 +25,11 @@ use App\Models\User\Databases\DatabasesInputs;
 use App\Models\User\Databases\DatabasesInputCols;
 use App\Models\User\Databases\DatabasesRole;
 
-use App\Rules\CustomVali_AlphaNumForMultiByte;
-use App\Rules\CustomVali_CheckWidthForString;
-use App\Rules\CustomVali_DatesYm;
-use App\Rules\CustomVali_CsvImage;
-use App\Rules\CustomVali_CsvExtensions;
+use App\Rules\CustomValiAlphaNumForMultiByte;
+use App\Rules\CustomValiCheckWidthForString;
+use App\Rules\CustomValiDatesYm;
+use App\Rules\CustomValiCsvImage;
+use App\Rules\CustomValiCsvExtensions;
 use App\Rules\CustomValiWysiwygMax;
 
 use App\Plugins\User\UserPluginBase;
@@ -1073,11 +1073,11 @@ class DatabasesPlugin extends UserPluginBase
         // 英数値チェック
         if ($databases_column->rule_allowed_alpha_numeric) {
             $validator_rule[] = 'nullable';
-            $validator_rule[] = new CustomVali_AlphaNumForMultiByte();
+            $validator_rule[] = new CustomValiAlphaNumForMultiByte();
         }
         // 最大文字数チェック
         if ($databases_column->rule_word_count) {
-            $validator_rule[] = new CustomVali_CheckWidthForString($databases_column->column_name, $databases_column->rule_word_count);
+            $validator_rule[] = new CustomValiCheckWidthForString($databases_column->column_name, $databases_column->rule_word_count);
         }
         // 指定桁数チェック
         if ($databases_column->rule_digits_or_less) {
@@ -1108,7 +1108,7 @@ class DatabasesPlugin extends UserPluginBase
         // 複数年月型（テキスト入力）チェック
         if ($databases_column->column_type == DatabaseColumnType::dates_ym) {
             $validator_rule[] = 'nullable';
-            $validator_rule[] = new CustomVali_DatesYm();
+            $validator_rule[] = new CustomValiDatesYm();
         }
         // 時間チェック
         if ($databases_column->column_type == DatabaseColumnType::time) {
@@ -3439,10 +3439,10 @@ class DatabasesPlugin extends UserPluginBase
                         $rules[$col + 1] = [];
                     } elseif ($databases_column->column_type == DatabaseColumnType::image) {
                         // csv用のバリデーションで上書き
-                        $rules[$col + 1] = ['nullable', new CustomVali_CsvImage()];
+                        $rules[$col + 1] = ['nullable', new CustomValiCsvImage()];
                     } elseif ($databases_column->column_type == DatabaseColumnType::video) {
                         // csv用のバリデーションで上書き
-                        $rules[$col + 1] = ['nullable', new CustomVali_CsvExtensions(['mp4'])];
+                        $rules[$col + 1] = ['nullable', new CustomValiCsvExtensions(['mp4'])];
                     }
                 }
             } else {

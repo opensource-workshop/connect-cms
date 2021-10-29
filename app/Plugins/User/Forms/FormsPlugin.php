@@ -20,8 +20,8 @@ use App\Models\User\Forms\FormsColumnsSelects;
 use App\Models\User\Forms\FormsInputs;
 use App\Models\User\Forms\FormsInputCols;
 
-use App\Rules\CustomVali_AlphaNumForMultiByte;
-use App\Rules\CustomVali_CheckWidthForString;
+use App\Rules\CustomValiAlphaNumForMultiByte;
+use App\Rules\CustomValiCheckWidthForString;
 use App\Rules\CustomVali_Confirmed;
 use App\Rules\CustomVali_TimeFromTo;
 use App\Rules\CustomVali_BothRequired;
@@ -543,11 +543,11 @@ class FormsPlugin extends UserPluginBase
         // 英数値チェック
         if ($forms_column->rule_allowed_alpha_numeric) {
             $validator_rule[] = 'nullable';
-            $validator_rule[] = new CustomVali_AlphaNumForMultiByte();
+            $validator_rule[] = new CustomValiAlphaNumForMultiByte();
         }
         // 最大文字数チェック
         if ($forms_column->rule_word_count) {
-            $validator_rule[] = new CustomVali_CheckWidthForString($forms_column->column_name, $forms_column->rule_word_count);
+            $validator_rule[] = new CustomValiCheckWidthForString($forms_column->column_name, $forms_column->rule_word_count);
         }
         // 指定桁数チェック
         if ($forms_column->rule_digits_or_less) {

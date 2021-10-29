@@ -5,7 +5,7 @@ namespace App\Rules;
 /**
  * CSV用 画像バリデーション
  */
-class CustomVali_CsvImage extends CustomVali_CsvExtensions
+class CustomValiCsvImage extends CustomValiCsvExtensions
 {
     protected $allow_extension = null;
 
