@@ -698,11 +698,6 @@ class UserPluginBase extends PluginBase
         // Buckets の取得
         $buckets = $this->getBuckets($frame_id);
 
-        // Backet が取れないとおかしな操作をした可能性があるのでエラーにしておく。
-        if (empty($buckets)) {
-            return $this->view_error("error_inframe", "存在しないBucket");
-        }
-
         // buckets がまだない & 固定記事プラグインの場合
         if (empty($buckets) && $this->frame->plugin_name == 'contents') {
             $buckets = new Buckets;
@@ -714,6 +709,11 @@ class UserPluginBase extends PluginBase
             // Frame にbuckets_id を登録
             Frame::where('id', $frame_id)
                  ->update(['bucket_id' => $buckets->id]);
+        }
+
+        // Backet が取れないとおかしな操作をした可能性があるのでエラーにしておく。
+        if (empty($buckets)) {
+            return $this->view_error("error_inframe", "存在しないBucket");
         }
 
         // BucketsRoles の更新
