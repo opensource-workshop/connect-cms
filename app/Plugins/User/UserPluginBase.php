@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 
 use Monolog\Logger;
 use Monolog\Formatter\LineFormatter;
@@ -122,6 +121,11 @@ class UserPluginBase extends PluginBase
      * 画面間用メッセージ
      */
     public $cc_massage = null;
+
+    /**
+     * POST チェックに使用する getPost() 関数を使うか
+     */
+    public $use_getpost = true;
 
     /**
      * コンストラクタ
@@ -252,10 +256,12 @@ class UserPluginBase extends PluginBase
         $post = null;
 
         // POST チェックに使用する getPost() 関数の有無をチェック
-        // POST に関連しないメソッドは除外
-        if ($action != "destroyBuckets") {
-            if ($id && method_exists($obj, 'getPost')) {
-                $post = $obj->getPost($id, $action);
+        if ($this->use_getpost) {
+            // POST に関連しないメソッドは除外
+            if ($action != "destroyBuckets") {
+                if ($id && method_exists($obj, 'getPost')) {
+                    $post = $obj->getPost($id, $action);
+                }
             }
         }
 

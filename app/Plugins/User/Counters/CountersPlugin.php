@@ -30,6 +30,11 @@ class CountersPlugin extends UserPluginBase
 {
     /* オブジェクト変数 */
 
+    /**
+     * POST チェックに使用する getPost() 関数を使うか
+     */
+    public $use_getpost = false;
+
     /* コアから呼び出す関数 */
 
     /**
@@ -65,14 +70,6 @@ class CountersPlugin extends UserPluginBase
     {
         return "editBuckets";
     }
-
-    /**
-     * POST取得関数（コアから呼び出す）
-     * コアがPOSTチェックの際に呼び出す関数
-     */
-    // public function getPost($id)
-    // {
-    // }
 
     /* private関数 */
 
