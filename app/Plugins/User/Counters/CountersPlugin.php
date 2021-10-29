@@ -3,7 +3,6 @@
 namespace App\Plugins\User\Counters;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +24,7 @@ use App\Utilities\Csv\CsvUtils;
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category カウンター・プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class CountersPlugin extends UserPluginBase
 {
@@ -40,9 +39,8 @@ class CountersPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['editView'];
         $functions['get']  = ['listCounters'];
-        $functions['post'] = ['saveView'];
+        $functions['post'] = [];
         return $functions;
     }
 
@@ -52,11 +50,10 @@ class CountersPlugin extends UserPluginBase
     public function declareRole()
     {
         // 権限チェックテーブル
-        $role_ckeck_table = array();
-        $role_ckeck_table["editView"] = array('role_article');
-        $role_ckeck_table["saveView"] = array('role_article');
-        $role_ckeck_table["listCounters"] = array('role_article');
-        return $role_ckeck_table;
+        $role_check_table = [];
+        $role_check_table["listCounters"] = ['frames.edit'];
+
+        return $role_check_table;
     }
 
     /**
@@ -69,10 +66,10 @@ class CountersPlugin extends UserPluginBase
         return "editBuckets";
     }
 
-    // /**
-    //  * POST取得関数（コアから呼び出す）
-    //  * コアがPOSTチェックの際に呼び出す関数
-    //  */
+    /**
+     * POST取得関数（コアから呼び出す）
+     * コアがPOSTチェックの際に呼び出す関数
+     */
     // public function getPost($id)
     // {
     // }
@@ -98,9 +95,9 @@ class CountersPlugin extends UserPluginBase
 
     /* スタティック関数 */
 
-    // /**
-    //  * 新着情報用メソッド
-    //  */
+    /**
+     * 新着情報用メソッド
+     */
     // public static function getWhatsnewArgs()
     // {
     //     // 戻り値('sql_method'、'link_pattern'、'link_base')
@@ -108,9 +105,9 @@ class CountersPlugin extends UserPluginBase
     //     return $return;
     // }
 
-    // /**
-    //  * 検索用メソッド
-    //  */
+    /**
+     * 検索用メソッド
+     */
     // public static function getSearchArgs($search_keyword)
     // {
     //     $return = [];
@@ -413,22 +410,20 @@ class CountersPlugin extends UserPluginBase
      */
     public function destroyBuckets($request, $page_id, $frame_id, $counter_id)
     {
+        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
+
         // プラグインバケツの取得
         $counter = Counter::find($counter_id);
         if (empty($counter)) {
             return;
         }
 
-        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
-        // see) https://readouble.com/laravel/5.5/ja/collections.html#method-pluck
-        //
         // カウントデータ削除
-        // CounterCount::where('counter_id', $counter->id)->delete();
+        // see) https://readouble.com/laravel/5.5/ja/collections.html#method-pluck
         $counter_count_ids = CounterCount::where('counter_id', $counter->id)->pluck('id');
         CounterCount::destroy($counter_count_ids);
 
         // FrameのバケツIDの更新
-        // Frame::where('id', $frame_id)->update(['bucket_id' => null]);
         Frame::where('bucket_id', $counter->bucket_id)->update(['bucket_id' => null]);
 
         // delete: バケツ削除時に表示設定は消さない. 今後フレーム削除時にプラグイン側で追加処理ができるようになったら counter_frame を削除する
@@ -437,13 +432,10 @@ class CountersPlugin extends UserPluginBase
         // $counter_frame->delete();
 
         // バケツ削除
-        // Buckets::find($counter->bucket_id)->delete();
         Buckets::destroy($counter->bucket_id);
 
         // プラグインデータ削除
         $counter->delete();
-
-        return;
     }
 
     /**
@@ -463,8 +455,6 @@ class CountersPlugin extends UserPluginBase
         // $counter_frame->counter_id = $plugin_bucket->id;
         // $counter_frame->frame_id = $frame_id;
         // $counter_frame->save();
-
-        return;
     }
 
     /**
