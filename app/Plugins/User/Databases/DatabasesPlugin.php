@@ -3,11 +3,9 @@
 namespace App\Plugins\User\Databases;
 
 use Illuminate\Support\Facades\Auth;
-// use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Validation\Rule;
@@ -34,7 +32,6 @@ use App\Rules\CustomVali_CsvImage;
 use App\Rules\CustomVali_CsvExtensions;
 use App\Rules\CustomValiWysiwygMax;
 
-// use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
 
 use App\Utilities\Csv\CsvUtils;
@@ -81,7 +78,6 @@ class DatabasesPlugin extends UserPluginBase
             'editColumnDetail',
             'detail',
             'input',
-            'editView',
             'search',
         ];
         $functions['post'] = [
@@ -97,7 +93,6 @@ class DatabasesPlugin extends UserPluginBase
             'updateSelect',
             'updateSelectSequence',
             'deleteSelect',
-            'saveView',
             'search',
         ];
         return $functions;
@@ -120,24 +115,21 @@ class DatabasesPlugin extends UserPluginBase
         // 標準権限は右記で定義 config/cc_role.php
         //
         // 権限チェックテーブル
-        $role_ckeck_table = array();
-        $role_ckeck_table["input"]                = array('posts.create', 'posts.update');
-        $role_ckeck_table["publicConfirm"]        = array('posts.create', 'posts.update');
-        $role_ckeck_table["publicStore"]          = array('posts.create', 'posts.update');
+        $role_check_table = array();
+        $role_check_table["input"]                = array('posts.create', 'posts.update');
+        $role_check_table["publicConfirm"]        = array('posts.create', 'posts.update');
+        $role_check_table["publicStore"]          = array('posts.create', 'posts.update');
 
-        $role_ckeck_table["editColumnDetail"]     = array('buckets.editColumn');
-        $role_ckeck_table["updateColumn"]         = array('buckets.editColumn');
-        $role_ckeck_table["updateColumnSequence"] = array('buckets.editColumn');
-        $role_ckeck_table["updateColumnDetail"]   = array('buckets.editColumn');
-        $role_ckeck_table["addSelect"]            = array('buckets.addColumn');
-        $role_ckeck_table["addPref"]              = array('buckets.addColumn');
-        $role_ckeck_table["updateSelect"]         = array('buckets.editColumn');
-        $role_ckeck_table["updateSelectSequence"] = array('buckets.editColumn');
-        $role_ckeck_table["deleteSelect"]         = array('buckets.editColumn');
-        // $role_ckeck_table["deleteColumnsSelects"] = array('buckets.editColumn');
-        $role_ckeck_table["editView"]             = array('frames.edit');
-        $role_ckeck_table["saveView"]             = array('frames.edit');
-        return $role_ckeck_table;
+        $role_check_table["editColumnDetail"]     = array('buckets.editColumn');
+        $role_check_table["updateColumn"]         = array('buckets.editColumn');
+        $role_check_table["updateColumnSequence"] = array('buckets.editColumn');
+        $role_check_table["updateColumnDetail"]   = array('buckets.editColumn');
+        $role_check_table["addSelect"]            = array('buckets.addColumn');
+        $role_check_table["addPref"]              = array('buckets.addColumn');
+        $role_check_table["updateSelect"]         = array('buckets.editColumn');
+        $role_check_table["updateSelectSequence"] = array('buckets.editColumn');
+        $role_check_table["deleteSelect"]         = array('buckets.editColumn');
+        return $role_check_table;
     }
 
     /**
@@ -1382,7 +1374,6 @@ class DatabasesPlugin extends UserPluginBase
             $status = 1;  // 一時保存
         } else {
             // 承認の要否確認とステータス処理
-            // if ($this->buckets->needApprovalUser(Auth::user())) {
             if ($this->isApproval()) {
                 $status = 2;  // 承認待ち
             } else {
@@ -1468,13 +1459,6 @@ class DatabasesPlugin extends UserPluginBase
                                                 ->orderBy('display_sequence')
                                                 ->get();
 
-        // delete: フォームの名残で残っていたメール送信処理をコメントアウト
-        // // メールの送信文字列
-        // $contents_text = '';
-
-        // // 登録者のメールアドレス
-        // $user_mailaddresses = array();
-
         // databases_input_cols 登録
         foreach ($databases_columns as $databases_column) {
             // 登録日型・更新日型・公開日型・表示順は、databases_inputsテーブルの登録日・更新日・公開日・表示順を利用するため、登録しない
@@ -1504,59 +1488,13 @@ class DatabasesPlugin extends UserPluginBase
                     $uploads_count = Uploads::where('id', $value)->update(['temporary_flag' => 0]);
                 }
             }
-
-            // delete: フォームの名残で残っていたメール送信処理をコメントアウト
-            // // メールの内容
-            // $contents_text .= $databases_column->column_name . "：" . $value . "\n";
-
-            // // メール型
-            // if ($databases_column->column_type == DatabaseColumnType::mail) {
-            //     $user_mailaddresses[] = $value;
-            // }
         }
-
-        // メール送信 引数(詳細表示メソッド, 登録したid, 登録か更新か)
-        //$this->sendPostNotice($databases_inputs->id, 'detail', empty($databases_inputs->first_committed_at) ? "notice_create" : "notice_update");
 
         // titleカラムが無いため、プラグイン独自でセット
         $overwrite_notice_embedded_tags = [NoticeEmbeddedTag::title => $this->getTitle($databases_inputs)];
 
         // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド, 上書き埋め込みタグ)
         $this->sendPostNotice($databases_inputs, $before_databases_inputs, 'detail', $overwrite_notice_embedded_tags);
-//        $this->sendPostNotice($databases_inputs, 'detail');
-
-        // delete: フォームの名残で残っていたメール送信処理をコメントアウト
-        // // 最後の改行を除去
-        // $contents_text = trim($contents_text);
-
-        // // 採番 ※[採番プレフィックス文字列] + [ゼロ埋め採番6桁]
-        // $number = $database->numbering_use_flag ? $database->numbering_prefix . sprintf('%06d', $this->getNo('databases', $database->bucket_id, $database->numbering_prefix)) : null;
-
-        // // 登録後メッセージ内の採番文字列を置換
-        // // $after_message = str_replace('[[number]]', $number, $database->after_message);
-
-        // // メール送信
-        // if ($database->mail_send_flag) {
-        //     // メール本文の組み立て
-        //     $mail_databaseat = $database->mail_databaseat;
-        //     $mail_text = str_replace('[[body]]', $contents_text, $mail_databaseat);
-
-        //     // メール本文内の採番文字列を置換
-        //     $mail_text = str_replace('[[number]]', $number, $mail_text);
-
-        //     // メール送信（管理者側）
-        //     $mail_addresses = explode(',', $database->mail_send_address);
-        //     foreach ($mail_addresses as $mail_address) {
-        //         Mail::to($mail_address)->send(new ConnectMail(['subject' => $database->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
-        //     }
-
-        //     // メール送信（ユーザー側）
-        //     foreach ($user_mailaddresses as $user_mailaddress) {
-        //         if (!empty($user_mailaddress)) {
-        //             Mail::to($user_mailaddress)->send(new ConnectMail(['subject' => $database->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
-        //         }
-        //     }
-        // }
 
         // 登録時のAction を/redirect/plugin にしたため、ここでreturn しなくてよい。
 
@@ -1884,7 +1822,6 @@ class DatabasesPlugin extends UserPluginBase
         if (empty($databases_id)) {
             // バケツの登録
             $bucket = new Buckets();
-            // $bucket->bucket_name = '無題';
             $bucket->bucket_name = $request->databases_name;
             $bucket->plugin_name = 'databases';
             $bucket->save();
@@ -3635,7 +3572,6 @@ class DatabasesPlugin extends UserPluginBase
         if ($file_extension == 'zip') {
             // 空でないディレクトリを削除
             UnzipUtils::rmdirNotEmpty($unzip_dir_full_path);
-            // Storage::deleteDirectory($unzip_dir_full_path);
         }
 
         // 一時ファイルの削除
@@ -3716,19 +3652,11 @@ class DatabasesPlugin extends UserPluginBase
         $validator_values['view_count'] = ['required', 'numeric'];
         $validator_attributes['view_count'] = '表示件数';
 
-        // menuテンプレートでのみ使われる項目
-        // 半角数字
-        // $validator_values['view_page_id'] = ['numeric'];
-        // $validator_attributes['view_page_id'] = '表示するページID';
-        // $validator_values['view_frame_id'] = ['numeric'];
-        // $validator_attributes['view_frame_id'] = '表示するフレームID';
-
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $validator_values);
         $validator->setAttributeNames($validator_attributes);
 
         // エラーがあった場合は入力画面に戻る。
-        // $message = null;
         if ($validator->fails()) {
             return $this->editView($request, $page_id, $frame_id)->withErrors($validator);
         }
@@ -3738,10 +3666,6 @@ class DatabasesPlugin extends UserPluginBase
 
         // データベース＆フレームデータ
         $database_frame = $this->getDatabaseFrame($frame_id);
-
-        // Log::debug(var_export($request->use_filter_flag, true));
-        // Log::debug(var_export($request->filter_search_keyword, true));
-        // Log::debug(var_export($request->filter_search_columns, true));
 
         // 表示設定の保存
         $databases_frames = DatabasesFrames::updateOrCreate(
@@ -3762,8 +3686,6 @@ class DatabasesPlugin extends UserPluginBase
                 'use_filter_flag'   => $request->use_filter_flag,
                 'filter_search_keyword' => $request->filter_search_keyword,
                 'filter_search_columns' => json_encode($request->filter_search_columns),
-                // 'view_page_id'        => $request->view_page_id,
-                // 'view_frame_id'        => $request->view_frame_id
             ]
         );
 
@@ -3815,7 +3737,6 @@ class DatabasesPlugin extends UserPluginBase
     private function getDatabasesInputs($id)
     {
         // 登録データ行の取得
-        // $inputs = DatabasesInputs::where('id', $id)->first();
         $inputs = DatabasesInputs::where('id', $id)
             ->where(function ($query) {
                 // 権限によって表示する記事を絞る
