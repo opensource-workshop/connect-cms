@@ -149,7 +149,8 @@ class CabinetsPlugin extends UserPluginBase
     /**
      * フォルダを移動する
      */
-    public function changeDirectory($request, $page_id, $frame_id, $parent_id) {
+    public function changeDirectory($request, $page_id, $frame_id, $parent_id) 
+    {
         return $this->index($request, $page_id, $frame_id, $parent_id);
     }
 
