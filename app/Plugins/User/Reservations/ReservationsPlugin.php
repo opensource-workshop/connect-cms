@@ -121,15 +121,11 @@ class ReservationsPlugin extends UserPluginBase
     public function getPost($id, $action = null)
     {
         if (is_null($action)) {
-            //
-            // プラグイン内からの呼び出しを想定。処理を通す
-            //
+            // プラグイン内からの呼び出しを想定。処理を通す。
         } elseif (in_array($action, ['editBooking', 'saveBooking', 'destroyBooking'])) {
-            //
-            // posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
-            // それ以外のアクションは null で返す。
-            //
+            // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
         } else {
+            // それ以外のアクションは null で返す。
             return null;
         }
 
