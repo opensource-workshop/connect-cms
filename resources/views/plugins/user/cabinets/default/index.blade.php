@@ -82,6 +82,7 @@
 @endcan
 <form action="{{url('/')}}/redirect/plugin/cabinets/makeFolder/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST">
     {{csrf_field()}}
+    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/cabinets/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$parent_id}}/#frame-{{$frame->id}}">
     <input type="hidden" name="parent_id" value="{{$parent_id}}">
     <div class="collapse @if ($errors && $errors->has('folder_name')) show @endif bg-light border rounded border-white p-2" aria-expanded="false" aria-controls="collapseOne" id="collapse_mkdir{{$frame->id}}">
         <div class="form-group row">
@@ -99,6 +100,7 @@
 </form>
 <form action="{{url('/')}}/redirect/plugin/cabinets/upload/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" enctype="multipart/form-data">
     {{csrf_field()}}
+    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/cabinets/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$parent_id}}/#frame-{{$frame->id}}">
     <input type="hidden" name="parent_id" value="{{$parent_id}}">
     <div class="collapse @if ($errors && $errors->has('upload_file')) show @endif bg-light border rounded border-white p-2" aria-expanded="false" aria-controls="collapseOne" id="collapse_upload{{$frame->id}}">
         <div class="form-group">
@@ -117,7 +119,7 @@
 <ul class="breadcrumb bg-white">
 @foreach($breadcrumbs as $breadcrumb)
     @if (!$loop->last)
-        <li class="breadcrumb-item"><a href="{{url('/')}}/plugin/cabinets/index/{{$page->id}}/{{$frame_id}}?parent_id={{$breadcrumb->id}}#frame-{{$frame->id}}">{{$breadcrumb->name}}</a></li>
+        <li class="breadcrumb-item"><a href="{{url('/')}}/plugin/cabinets/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$breadcrumb->id}}/#frame-{{$frame->id}}">{{$breadcrumb->name}}</a></li>
     @else
         <li class="breadcrumb-item active">{{$breadcrumb->name}}</li>
     @endif
@@ -147,7 +149,7 @@
         {{-- ルート要素の表示時は「1つ上へ」を表示しない --}}
         @if (count($breadcrumbs) > 1)
             <tr>
-                <td colspan="4"><i class="fas fa-folder mr-1 text-warning"></i><a href="{{url('/')}}/plugin/cabinets/index/{{$page->id}}/{{$frame_id}}?parent_id={{$breadcrumbs->last()->parent_id}}#frame-{{$frame->id}}">1つ上へ</a></td>
+                <td colspan="4"><i class="fas fa-folder mr-1 text-warning"></i><a href="{{url('/')}}/plugin/cabinets/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$breadcrumbs->last()->parent_id}}/#frame-{{$frame->id}}">1つ上へ</a></td>
             </tr>
         @endif
 
@@ -166,7 +168,7 @@
                     </td>
                     @if ($cabinet_content->is_folder == true)
                         <td>
-                            <i class="fas fa-folder mr-1 text-warning"></i><a href="{{url('/')}}/plugin/cabinets/index/{{$page->id}}/{{$frame_id}}?parent_id={{$cabinet_content->id}}#frame-{{$frame->id}}">{{$cabinet_content->displayName}}</a>
+                            <i class="fas fa-folder mr-1 text-warning"></i><a href="{{url('/')}}/plugin/cabinets/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$cabinet_content->id}}/#frame-{{$frame->id}}">{{$cabinet_content->displayName}}</a>
                             <small class="form-text text-muted d-block d-md-none">
                                 - | {{$cabinet_content->created_at}}
                             </small>

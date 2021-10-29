@@ -49,7 +49,7 @@ class CabinetsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['index', 'download'];
+        $functions['get']  = ['index', 'download', 'changeDirectory'];
         $functions['post'] = ['makeFolder', 'upload', 'deleteContents'];
         return $functions;
     }
@@ -92,7 +92,7 @@ class CabinetsPlugin extends UserPluginBase
      *  データ初期表示関数
      *  コアがページ表示の際に呼び出す関数
      */
-    public function index($request, $page_id, $frame_id)
+    public function index($request, $page_id, $frame_id, $parent_id = null)
     {
         // バケツ未設定の場合はバケツ空テンプレートを呼び出す
         if (!isset($this->frame) || !$this->frame->bucket_id) {
@@ -102,7 +102,7 @@ class CabinetsPlugin extends UserPluginBase
 
         $cabinet = $this->getPluginBucket($this->frame->bucket_id);
 
-        $parent = $this->fetchCabinetContent($this->getParentId($request), $cabinet->id);
+        $parent = $this->fetchCabinetContent($parent_id, $cabinet->id);
 
         // 表示テンプレートを呼び出す。
         return $this->view('index', [
@@ -147,22 +147,10 @@ class CabinetsPlugin extends UserPluginBase
     }
 
     /**
-     * 親のキャビネットコンテンツIDを取得する。
-     *
-     * @param \Illuminate\Http\Request $request リクエスト
-     * @return int キャビネットコンテンツID
+     * フォルダを移動する
      */
-    private function getParentId($request)
-    {
-        $parent_id = '';
-        // エラーのとき、セッションからparent_idを取得
-        if (!empty(session('parent_id'))) {
-            $parent_id = session('parent_id');
-        } else {
-            $parent_id = $request->parent_id;
-        }
-
-        return $parent_id;
+    public function changeDirectory($request, $page_id, $frame_id, $parent_id) {
+        return $this->index($request, $page_id, $frame_id, $parent_id);
     }
 
     /**
@@ -264,7 +252,7 @@ class CabinetsPlugin extends UserPluginBase
         ]);
 
         // 登録後はリダイレクトして初期表示。
-        return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/index/" . $page_id . "/" . $frame_id . "/" . $this->frame->bucket_id . '?parent_id=' . $parent->id . "#frame-" . $frame_id ]);
+        return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/changeDirectory/" . $page_id . "/" . $frame_id  . "/" . $parent->id . "/#frame-" . $frame_id ]);
     }
 
     /**
@@ -291,7 +279,7 @@ class CabinetsPlugin extends UserPluginBase
         }
 
         // 登録後はリダイレクトして初期表示。
-        return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/index/" . $page_id . "/" . $frame_id . "/" . $this->frame->bucket_id . '?parent_id=' . $parent->id . "#frame-" . $frame_id ]);
+        return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/changeDirectory/" . $page_id . "/" . $frame_id . "/" . $parent->id . "/#frame-" . $frame_id ]);
     }
 
     /**
