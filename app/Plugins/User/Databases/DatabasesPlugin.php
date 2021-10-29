@@ -65,6 +65,11 @@ class DatabasesPlugin extends UserPluginBase
 
     /* オブジェクト変数 */
 
+    /**
+     * 変更時のPOSTデータ
+     */
+    public $post = null;
+
     /* コアから呼び出す関数 */
 
     /**
@@ -131,6 +136,32 @@ class DatabasesPlugin extends UserPluginBase
 
         // カラムの設定画面
         return "editColumn";
+    }
+
+    /**
+     *  POST取得関数（コアから呼び出す）
+     *  コアがPOSTチェックの際に呼び出す関数
+     */
+    public function getPost($id, $action = null)
+    {
+        if (is_null($action)) {
+            // プラグイン内からの呼び出しを想定。処理を通す。
+        } elseif (in_array($action, ['input', 'publicConfirm', 'publicStore', 'temporarysave', 'delete'])) {
+            // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+        } else {
+            // それ以外のアクションは null で返す。
+            return null;
+        }
+
+        // 一度読んでいれば、そのPOSTを再利用する。
+        if (!empty($this->post)) {
+            return $this->post;
+        }
+
+        // 登録データ行の取得
+        $this->post = $this->getDatabasesInputs($id);
+
+        return $this->post;
     }
 
     /* private関数 */
