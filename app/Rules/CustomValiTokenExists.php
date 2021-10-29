@@ -9,7 +9,7 @@ use App\Utilities\Token\TokenUtils;
 /**
  * トークン存在チェックバリデーション
  */
-class CustomVali_TokenExists implements Rule
+class CustomValiTokenExists implements Rule
 {
     protected $record_token = null;
     protected $record_created_at = null;

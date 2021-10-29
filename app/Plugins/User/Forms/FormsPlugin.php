@@ -22,10 +22,10 @@ use App\Models\User\Forms\FormsInputCols;
 
 use App\Rules\CustomValiAlphaNumForMultiByte;
 use App\Rules\CustomValiCheckWidthForString;
-use App\Rules\CustomVali_Confirmed;
-use App\Rules\CustomVali_TimeFromTo;
-use App\Rules\CustomVali_BothRequired;
-use App\Rules\CustomVali_TokenExists;
+use App\Rules\CustomValiConfirmed;
+use App\Rules\CustomValiTimeFromTo;
+use App\Rules\CustomValiBothRequired;
+use App\Rules\CustomValiTokenExists;
 use App\Rules\CustomValiEmails;
 
 // use App\Mail\ConnectMail;
@@ -523,7 +523,7 @@ class FormsPlugin extends UserPluginBase
             $validator_rule[] = 'nullable';
             $validator_rule[] = 'email';
             // 同値チェック
-            $validator_rule[] = new CustomVali_Confirmed($forms_column->column_name, $request->forms_columns_value_confirmation[$forms_column->id]);
+            $validator_rule[] = new CustomValiConfirmed($forms_column->column_name, $request->forms_columns_value_confirmation[$forms_column->id]);
         }
         // 数値チェック
         if ($forms_column->rule_allowed_numeric) {
@@ -590,7 +590,7 @@ class FormsPlugin extends UserPluginBase
             if ($time_from && $time_to) {
                 if (strtotime('1970-01-01 '. $time_from . ':00') && strtotime('1970-01-01 '. $time_to . ':00')) {
                     // 両方入力時、且つ、正常時間の場合、時間の前後チェック
-                    $validator_rule[] = new CustomVali_TimeFromTo(
+                    $validator_rule[] = new CustomValiTimeFromTo(
                         Carbon::createFromTimeString($time_from . ':00'),
                         Carbon::createFromTimeString($time_to . ':00')
                     );
@@ -601,7 +601,7 @@ class FormsPlugin extends UserPluginBase
                 $tmp_array[$forms_column->id] = $time_from . '~' . $time_to;
             } elseif ($time_from || $time_to) {
                 // いづれか入力時、条件必須チェック（いづれか入力時、両方必須）
-                $validator_rule[] = new CustomVali_BothRequired(
+                $validator_rule[] = new CustomValiBothRequired(
                     $request->forms_columns_value_for_time_from[$forms_column->id],
                     $request->forms_columns_value_for_time_to[$forms_column->id]
                 );
@@ -1072,7 +1072,7 @@ class FormsPlugin extends UserPluginBase
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'token' => new CustomVali_TokenExists($forms_inputs->add_token, $forms_inputs->add_token_created_at),
+            'token' => new CustomValiTokenExists($forms_inputs->add_token, $forms_inputs->add_token_created_at),
         ]);
 
         // getで日付形式エラーは表示しない（通常URLをコピペミス等でいじらなければエラーにならない想定）
@@ -1130,7 +1130,7 @@ class FormsPlugin extends UserPluginBase
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'token' => new CustomVali_TokenExists($forms_inputs->add_token, $forms_inputs->add_token_created_at),
+            'token' => new CustomValiTokenExists($forms_inputs->add_token, $forms_inputs->add_token_created_at),
         ]);
 
         // getで日付形式エラーは表示しない（通常URLをコピペミス等でいじらなければエラーにならない想定）
