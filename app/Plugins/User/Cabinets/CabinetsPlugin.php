@@ -238,7 +238,7 @@ class CabinetsPlugin extends UserPluginBase
     {
         $validator = $this->getMakeFoldertValidator($request);
         if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput()->with('parent_id', $request->parent_id);
+            return back()->withErrors($validator)->withInput();
         }
 
         $cabinet = $this->getPluginBucket($this->frame->bucket_id);
@@ -247,7 +247,7 @@ class CabinetsPlugin extends UserPluginBase
         $parent->children()->create([
             'cabinet_id' => $cabinet->id,
             'upload_id' => null,
-            'name' => $request->folder_name,
+            'name' => $request->folder_name[$frame_id],
             'is_folder' => CabinetContent::is_folder_on,
         ]);
 
@@ -267,15 +267,15 @@ class CabinetsPlugin extends UserPluginBase
         $cabinet = $this->getPluginBucket($this->frame->bucket_id);
         $validator = $this->getUploadValidator($request, $cabinet);
         if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput()->with('parent_id', $request->parent_id);
+            return back()->withErrors($validator)->withInput();
         }
 
         $parent = $this->fetchCabinetContent($request->parent_id);
-
-        if ($this->shouldOverwriteFile($parent, $request->file('upload_file')->getClientOriginalName())) {
-            $this->overwriteFile($request, $page_id, $parent);
+        $upload_file = $request->file('upload_file')[$frame_id];
+        if ($this->shouldOverwriteFile($parent, $upload_file->getClientOriginalName())) {
+            $this->overwriteFile($upload_file, $page_id, $parent);
         } else {
-            $this->writeFile($request, $page_id, $parent);
+            $this->writeFile($upload_file, $page_id, $parent);
         }
 
         // 登録後はリダイレクトして初期表示。
@@ -300,18 +300,18 @@ class CabinetsPlugin extends UserPluginBase
     /**
      * ファイル新規保存処理
      *
-     * @param \Illuminate\Http\Request $request リクエスト
+     * @param \Illuminate\Http\UploadedFile $file file
      * @param int $page_id ページID
      * @param int $frame_id フレームID
      */
-    private function writeFile($request, $page_id, $parent)
+    private function writeFile($file, $page_id, $parent)
     {
         // uploads テーブルに情報追加、ファイルのid を取得する
         $upload = Uploads::create([
-            'client_original_name' => $request->file('upload_file')->getClientOriginalName(),
-            'mimetype'             => $request->file('upload_file')->getClientMimeType(),
-            'extension'            => $request->file('upload_file')->getClientOriginalExtension(),
-            'size'                 => $request->file('upload_file')->getSize(),
+            'client_original_name' => $file->getClientOriginalName(),
+            'mimetype'             => $file->getClientMimeType(),
+            'extension'            => $file->getClientOriginalExtension(),
+            'size'                 => $file->getSize(),
             'plugin_name'          => 'cabinets',
             'page_id'              => $page_id,
             'temporary_flag'       => 0,
@@ -319,13 +319,12 @@ class CabinetsPlugin extends UserPluginBase
         ]);
 
         // ファイル保存
-        $request->file('upload_file')
-            ->storeAs($this->getDirectory($upload->id), $this->getContentsFileName($upload));
+        $file->storeAs($this->getDirectory($upload->id), $this->getContentsFileName($upload));
 
         $parent->children()->create([
             'cabinet_id' => $upload->id,
             'upload_id' => $upload->id,
-            'name' => $request->file('upload_file')->getClientOriginalName(),
+            'name' => $file->getClientOriginalName(),
             'is_folder' => CabinetContent::is_folder_off,
         ]);
     }
@@ -333,23 +332,23 @@ class CabinetsPlugin extends UserPluginBase
     /**
      * ファイル上書き保存処理
      *
-     * @param \Illuminate\Http\Request $request リクエスト
+     * @param \Illuminate\Http\UploadedFile $file file
      * @param int $page_id ページID
      * @param int $frame_id フレームID
      */
-    private function overwriteFile($request, $page_id, $parent)
+    private function overwriteFile($file, $page_id, $parent)
     {
         $content = CabinetContent::where('parent_id', $parent->id)
-            ->where('name', $request->file('upload_file')->getClientOriginalName())
+            ->where('name', $file->getClientOriginalName())
             ->where('is_folder', CabinetContent::is_folder_off)
             ->first();
 
         // uploads テーブルに情報追加、ファイルのid を取得する
         Uploads::find($content->upload_id)->update([
-            'client_original_name' => $request->file('upload_file')->getClientOriginalName(),
-            'mimetype'             => $request->file('upload_file')->getClientMimeType(),
-            'extension'            => $request->file('upload_file')->getClientOriginalExtension(),
-            'size'                 => $request->file('upload_file')->getSize(),
+            'client_original_name' => $file->getClientOriginalName(),
+            'mimetype'             => $file->getClientMimeType(),
+            'extension'            => $file->getClientOriginalExtension(),
+            'size'                 => $file->getSize(),
             'plugin_name'          => 'cabinets',
             'page_id'              => $page_id,
             'temporary_flag'       => 0,
@@ -357,8 +356,7 @@ class CabinetsPlugin extends UserPluginBase
         ]);
 
         // ファイル保存
-        $request->file('upload_file')
-            ->storeAs($this->getDirectory($content->upload_id), $this->getContentsFileName($content->upload));
+        $file->storeAs($this->getDirectory($content->upload_id), $this->getContentsFileName($content->upload));
 
         // 画面表示される更新日を更新する
         $content->touch();
@@ -708,7 +706,7 @@ class CabinetsPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'folder_name' => [
+            'folder_name.*' => [
                 'required',
                 'max:255',
                 // 重複チェック（同じ階層で同じ名前はNG）
@@ -718,7 +716,7 @@ class CabinetsPlugin extends UserPluginBase
             ],
         ]);
         $validator->setAttributeNames([
-            'folder_name' => 'フォルダ名',
+            'folder_name.*' => 'フォルダ名',
         ]);
 
         return $validator;
@@ -734,17 +732,17 @@ class CabinetsPlugin extends UserPluginBase
     private function getUploadValidator($request, $cabinet)
     {
         // ファイルチェック
-        $rules['upload_file'] = [
+        $rules['upload_file.*'] = [
             'required',
         ];
         if ($cabinet->upload_max_size !== UploadMaxSize::infinity) {
-            $rules['upload_file'][] = 'max:' . $cabinet->upload_max_size;
+            $rules['upload_file.*'][] = 'max:' . $cabinet->upload_max_size;
         }
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $rules);
         $validator->setAttributeNames([
-            'upload_file' => 'ファイル',
+            'upload_file.*' => 'ファイル',
         ]);
 
         return $validator;

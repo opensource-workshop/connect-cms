@@ -74,8 +74,6 @@
 </script>
 @can('posts.create', [[null, $frame->plugin_name, $buckets]])
 <div class="p-2 text-right mb-2">
-    @include('plugins.common.errors_inline', ['name' => 'upload_file'])
-    @include('plugins.common.errors_inline', ['name' => 'file_name'])
     <button class="btn btn-primary" data-toggle="collapse" data-target="#collapse_mkdir{{$frame->id}}"><i class="fas fa-folder-plus"></i><span class="d-none d-sm-inline"> フォルダ作成</span></button>
     <button class="btn btn-primary" data-toggle="collapse" data-target="#collapse_upload{{$frame->id}}" id="btn-upload-file"><i class="fas fa-file-upload"></i><span class="d-none d-sm-inline"> ファイル追加</span></button>
 </div>
@@ -84,12 +82,14 @@
     {{csrf_field()}}
     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/cabinets/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$parent_id}}/#frame-{{$frame->id}}">
     <input type="hidden" name="parent_id" value="{{$parent_id}}">
-    <div class="collapse @if ($errors && $errors->has('folder_name')) show @endif bg-light border rounded border-white p-2" aria-expanded="false" aria-controls="collapseOne" id="collapse_mkdir{{$frame->id}}">
+    <div class="collapse @if ($errors && $errors->has("folder_name.$frame_id")) show @endif bg-light border rounded border-white p-2" aria-expanded="false" aria-controls="collapseOne" id="collapse_mkdir{{$frame->id}}">
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass()}}" for="folder_name">フォルダ名</label>
             <div class="{{$frame->getSettingInputClass()}}">
-                <input type="text" name="folder_name" value="{{old('folder_name')}}" class="form-control @if ($errors && $errors->has('folder_name')) border-danger @endif" id="folder_name">
-                @include('plugins.common.errors_inline', ['name' => 'folder_name'])
+                <input type="text" name="folder_name[{{$frame_id}}]" value="{{old("folder_name.$frame_id")}}" class="form-control @if ($errors && $errors->has("folder_name.$frame_id")) border-danger @endif" id="folder_name">
+                @if ($errors && $errors->has("folder_name.$frame_id")) 
+                    <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("folder_name.*")}}</div>
+                @endif
             </div>
         </div>
         <div class="text-center">
@@ -102,12 +102,16 @@
     {{csrf_field()}}
     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/cabinets/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$parent_id}}/#frame-{{$frame->id}}">
     <input type="hidden" name="parent_id" value="{{$parent_id}}">
-    <div class="collapse @if ($errors && $errors->has('upload_file')) show @endif bg-light border rounded border-white p-2" aria-expanded="false" aria-controls="collapseOne" id="collapse_upload{{$frame->id}}">
+    <div class="collapse @if ($errors && $errors->has("upload_file.$frame_id")) show @endif bg-light border rounded border-white p-2" aria-expanded="false" aria-controls="collapseOne" id="collapse_upload{{$frame->id}}">
         <div class="form-group">
             <div class="custom-file">
-                <input type="file" name="upload_file" value="{{old('upload_file')}}" class="custom-file-input @if ($errors && $errors->has('upload_file')) border-danger @endif" id="upload_file">
+                <input type="hidden" name="upload_file[{{$frame_id}}]" value="">
+                <input type="file" name="upload_file[{{$frame_id}}]" value="{{old("upload_file.$frame_id")}}" class="custom-file-input @if ($errors && $errors->has("upload_file.$frame_id")) border-danger @endif" id="upload_file">
                 <label class="custom-file-label" for="upload_file" data-browse="参照">ファイル選択...</label>
             </div>
+            @if ($errors && $errors->has("upload_file.$frame_id")) 
+                <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("upload_file.*")}}</div>
+            @endif
         </div>
         <div class="text-center">
             <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#collapse_upload{{$frame->id}}">キャンセル</button>
