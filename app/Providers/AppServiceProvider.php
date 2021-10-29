@@ -400,7 +400,7 @@ class AppServiceProvider extends AuthServiceProvider
         // $post_buckets_roles = $this->getPostBucketsRoles($buckets_obj);
 
         // Buckets role からチェックロール追加は、記事系の権限のみに絞る。
-        if (in_array($authority, ['posts.create', 'posts.update', 'posts.delete', 'posts.approval'])) {
+        if (in_array($authority, ['posts.create', 'posts.update', 'posts.delete'])) {
 
             $post_buckets_roles = $this->getPostBucketsRoles($buckets_obj);
 
