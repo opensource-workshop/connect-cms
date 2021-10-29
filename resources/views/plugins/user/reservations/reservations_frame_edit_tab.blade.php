@@ -9,7 +9,7 @@
     <a href="{{url('/')}}/plugin/reservations/editFacilities/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link {{ $action == 'editFacilities' ? 'active' : '' }}">施設設定</a>
 </li>
 <li role="presentation" class="nav-item">
-    <a href="{{url('/')}}/plugin/reservations/editColumns/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link {{ $action == 'editColumns' ? 'active' : '' }}">項目設定</a>
+    <a href="{{url('/')}}/plugin/reservations/editColumn/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link {{ $action == 'editColumn' ? 'active' : '' }}">項目設定</a>
 </li>
 
 @if ($action == 'editColumnDetail')

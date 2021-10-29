@@ -56,7 +56,6 @@ class ReservationsPlugin extends UserPluginBase
             'week',
             'month',
             'editFacilities',
-            'editColumns',
             'editColumnDetail',
             'showBooking',
             'editBooking',
@@ -65,7 +64,6 @@ class ReservationsPlugin extends UserPluginBase
             'addFacility',
             'updateFacility',
             'updateFacilitySequence',
-            'addColumn',
             'updateColumn',
             'updateColumnSequence',
             'addSelect',
@@ -94,8 +92,6 @@ class ReservationsPlugin extends UserPluginBase
         $role_check_table["updateFacility"]         = ['buckets.editColumn'];
         $role_check_table["updateFacilitySequence"] = ['buckets.editColumn'];
 
-        $role_check_table["addColumn"]              = ['buckets.addColumn'];
-        $role_check_table["editColumns"]            = ['buckets.editColumn'];
         $role_check_table["editColumnDetail"]       = ['buckets.editColumn'];
         $role_check_table["updateColumn"]           = ['buckets.editColumn'];
         $role_check_table["updateColumnSequence"]   = ['buckets.editColumn'];
@@ -1038,7 +1034,7 @@ class ReservationsPlugin extends UserPluginBase
     /**
      * 予約項目の設定画面の表示
      */
-    public function editColumns($request, $page_id, $frame_id, $reservations_id = null, $message = null, $errors = null)
+    public function editColumn($request, $page_id, $frame_id, $reservations_id = null, $message = null, $errors = null)
     {
         if ($errors) {
             // エラーあり：入力値をフラッシュデータとしてセッションへ保存
@@ -1198,7 +1194,7 @@ class ReservationsPlugin extends UserPluginBase
         if ($validator->fails()) {
             // エラーと共に編集画面を呼び出す
             $errors = $validator->errors();
-            return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, null, $errors);
+            return $this->editColumn($request, $page_id, $frame_id, $request->reservations_id, null, $errors);
         }
 
         // 新規登録時の表示順を設定
@@ -1216,7 +1212,7 @@ class ReservationsPlugin extends UserPluginBase
         $message = '予約項目【 '. $request->column_name .' 】を追加しました。';
 
         // 編集画面を呼び出す
-        return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, $message, $errors);
+        return $this->editColumn($request, $page_id, $frame_id, $request->reservations_id, $message, $errors);
     }
 
     /**
@@ -1334,7 +1330,7 @@ class ReservationsPlugin extends UserPluginBase
         if ($validator->fails()) {
             // エラーと共に編集画面を呼び出す
             $errors = $validator->errors();
-            return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, null, $errors);
+            return $this->editColumn($request, $page_id, $frame_id, $request->reservations_id, null, $errors);
         }
 
         // 予約項目の更新処理
@@ -1347,7 +1343,7 @@ class ReservationsPlugin extends UserPluginBase
         $message = '予約項目【 '. $request->column_name .' 】を更新しました。';
 
         // 編集画面を呼び出す
-        return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, $message, $errors);
+        return $this->editColumn($request, $page_id, $frame_id, $request->reservations_id, $message, $errors);
     }
 
     /**
@@ -1411,7 +1407,7 @@ class ReservationsPlugin extends UserPluginBase
         $message = '予約項目【 '. $target_column->column_name .' 】の表示順を更新しました。';
 
         // 編集画面を呼び出す
-        return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, $message, null);
+        return $this->editColumn($request, $page_id, $frame_id, $request->reservations_id, $message, null);
     }
 
     /**

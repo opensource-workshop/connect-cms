@@ -150,7 +150,7 @@
 
     {{-- ボタンエリア --}}
     <div class="form-group text-center">
-        <a href="{{url('/')}}/plugin/reservations/editColumns/{{$page->id}}/{{$frame_id}}/#frame-{{$frame->id}}" class="btn btn-secondary">
+        <a href="{{url('/')}}/plugin/reservations/editColumn/{{$page->id}}/{{$frame_id}}/#frame-{{$frame->id}}" class="btn btn-secondary">
             <i class="fas fa-chevron-left"></i> 項目設定へ
         </a>
     </div>
