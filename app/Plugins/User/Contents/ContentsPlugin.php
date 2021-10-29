@@ -13,6 +13,7 @@ use App\Models\User\Contents\Contents;
 
 use App\Plugins\User\UserPluginBase;
 
+use App\Enums\StatusType;
 use App\Rules\CustomValiWysiwygMax;
 
 /**
@@ -111,7 +112,7 @@ class ContentsPlugin extends UserPluginBase
             ->where('contents.deleted_at', null)
             // 権限があるときは、アクティブ、一時保存、承認待ちを or で取得
             ->where(function ($query) {
-                    $query = $this->appendAuthWhere($query);
+                $query = $this->appendAuthWhere($query, 'contents');
             })
             ->orderBy('id', 'desc')
             ->first();
@@ -158,7 +159,7 @@ class ContentsPlugin extends UserPluginBase
      * 記事の取得権限に対する条件追加
      * 固定記事は独自処理があるため、共通処理（appendAuthWhereBase）を使わない。
      */
-    private function appendAuthWhere($query)
+    private function appendAuthWhere($query, $table_name)
     {
         // コンテンツ管理者の場合、全記事の取得
         // bugfix: 固定記事のモデレータは 権限設定 で 投稿できる 権限を制御してるため、ここでは許可しない
@@ -166,22 +167,23 @@ class ContentsPlugin extends UserPluginBase
         if ($this->isCan('role_article_admin')) {
             // 全件取得のため、追加条件なしで戻る。
         } elseif ($this->isCan('role_approval')) {
-
-            // 承認権限の場合、Active ＋ 承認待ちの取得
-            $query->Where('status', '=', 0)
-                  ->orWhere('status', '=', 2);
+            //
+            // 承認者(role_approval)権限 = Active ＋ 承認待ちの取得
+            //
+            $query->WhereIn($table_name . '.status', [StatusType::active, StatusType::approval_pending]);
 
         } elseif ($this->buckets && $this->buckets->canPostUser(Auth::user())) {
-
+            //
             // モデレータ or 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
+            //
             // bugfix: 承認あり なら、自分の承認ありデータも見れる必要あり。
             // $query->Where('status', '=', 0)
-            $query->WhereIn('status', [0, 2])
-                ->orWhere('contents.created_id', '=', Auth::user()->id);
+            $query->WhereIn($table_name . '.status', [StatusType::active, StatusType::approval_pending])
+                ->orWhere($table_name . '.created_id', '=', Auth::user()->id);
 
         } else {
             // その他（ゲスト）
-            $query->where('status', 0);
+            $query->where($table_name . '.status', StatusType::active);
         }
 
         return $query;
