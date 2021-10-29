@@ -1462,10 +1462,7 @@ class UserPluginBase extends PluginBase
             //
             // 承認者(role_approval)権限 = Active ＋ 承認待ちの取得
             //
-            $query->where(function ($tmp_query) use ($table_name) {
-                $tmp_query->Where($table_name . '.status', StatusType::active)
-                        ->orWhere($table_name . '.status', StatusType::approval_pending);
-            });
+            $query->WhereIn($table_name . '.status', [StatusType::active, StatusType::approval_pending]);
 
         } elseif ($this->isCan('role_reporter')) {
             //
