@@ -5,15 +5,9 @@ namespace App\Plugins\User\Databasesearches;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-use DB;
-
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
-//use App\Models\Common\Page;
-// use App\Models\User\Databases\Databases;
-use App\Models\User\Databases\DatabasesColumns;
 use App\Models\User\Databases\DatabasesInputCols;
-// use App\Models\User\Databases\DatabasesInputs;
 use App\Models\User\Databasesearches\Databasesearches;
 
 use App\Plugins\User\UserPluginBase;
@@ -27,7 +21,7 @@ use App\Plugins\User\Databases\DatabasesTool;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース検索プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class DatabasesearchesPlugin extends UserPluginBase
 {
@@ -60,13 +54,9 @@ class DatabasesearchesPlugin extends UserPluginBase
     public function declareRole()
     {
         // 権限チェックテーブル
-        $role_ckeck_table = array();
-        $role_ckeck_table["input"]       = array('role_article');
-
-        $role_ckeck_table["editBuckets"] = array('role_arrangement');
-        $role_ckeck_table["saveBuckets"] = array('role_arrangement');
-        $role_ckeck_table["change"]      = array('role_arrangement');
-        return $role_ckeck_table;
+        $role_check_table = array();
+        $role_check_table["change"]      = array('frames.change');
+        return $role_check_table;
     }
 
     /**
@@ -380,9 +370,12 @@ class DatabasesearchesPlugin extends UserPluginBase
         return $this->editBuckets($request, $page_id, $frame_id, $id);
     }
 
-   /**
-    * データ紐づけ変更関数
-    */
+    /**
+     * データ紐づけ変更関数
+     *
+     * changeBuckets と同等. resources\views\plugins\common\edit_datalist.blade.php からPOSTされる。
+     * ※ listBuckets の定義がプラグインにないため UserPluginBase のメソッドを使っていた。
+     */
     public function change($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新
