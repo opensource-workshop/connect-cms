@@ -16,5 +16,5 @@ class ConventionFrame extends Model
     use UserableNohistory;
 
     // 更新する項目の定義
-    protected $fillable = ['convention_id', 'frame_id', 'view_count'];
+    protected $fillable = ['convention_id', 'frame_id'];
 }
