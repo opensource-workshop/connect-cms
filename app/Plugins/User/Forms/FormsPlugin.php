@@ -96,21 +96,21 @@ class FormsPlugin extends UserPluginBase
         // 標準権限は右記で定義 config/cc_role.php
         //
         // 権限チェックテーブル
-        $role_ckeck_table = [];
+        $role_check_table = [];
 
-        $role_ckeck_table["editColumnDetail"]     = ['buckets.editColumn'];
-        $role_ckeck_table["updateColumn"]         = ['buckets.editColumn'];
-        $role_ckeck_table["updateColumnSequence"] = ['buckets.editColumn'];
-        $role_ckeck_table["updateColumnDetail"]   = ['buckets.editColumn'];
-        $role_ckeck_table["copyColumn"]           = ['buckets.editColumn'];
-        $role_ckeck_table["addSelect"]            = ['buckets.addColumn'];
-        $role_ckeck_table["updateSelect"]         = ['buckets.editColumn'];
-        $role_ckeck_table["updateSelectSequence"] = ['buckets.editColumn'];
-        $role_ckeck_table["deleteSelect"]         = ['buckets.editColumn'];
-        $role_ckeck_table["listInputs"]           = ['frames.edit'];
-        $role_ckeck_table["editInput"]            = ['frames.edit'];
-        $role_ckeck_table["storeInput"]           = ['frames.edit'];
-        return $role_ckeck_table;
+        $role_check_table["editColumnDetail"]     = ['buckets.editColumn'];
+        $role_check_table["updateColumn"]         = ['buckets.editColumn'];
+        $role_check_table["updateColumnSequence"] = ['buckets.editColumn'];
+        $role_check_table["updateColumnDetail"]   = ['buckets.editColumn'];
+        $role_check_table["copyColumn"]           = ['buckets.editColumn'];
+        $role_check_table["addSelect"]            = ['buckets.addColumn'];
+        $role_check_table["updateSelect"]         = ['buckets.editColumn'];
+        $role_check_table["updateSelectSequence"] = ['buckets.editColumn'];
+        $role_check_table["deleteSelect"]         = ['buckets.editColumn'];
+        $role_check_table["listInputs"]           = ['frames.edit'];
+        $role_check_table["editInput"]            = ['frames.edit'];
+        $role_check_table["storeInput"]           = ['frames.edit'];
+        return $role_check_table;
     }
 
     /**
