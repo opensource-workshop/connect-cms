@@ -65,9 +65,19 @@
         <br />
         <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span></button>
         <button type="button" class="btn btn-info mr-2" onclick="save_action();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
-        <button type="submit" class="btn btn-primary">
-            <i class="fas fa-check"></i>@if (empty($contents->id)) 登録確定 @else 変更確定 @endif
-        </button>
+        @if (empty($contents->id))
+            @if ($buckets && $buckets->needApprovalUser(Auth::user(), $frame))
+                <button type="submit" class="btn btn-success"><i class="far fa-edit"></i> 登録申請</button>
+            @else
+                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 登録確定</button>
+            @endif
+        @else
+            @if ($buckets && $buckets->needApprovalUser(Auth::user(), $frame))
+                <button type="submit" class="btn btn-success"><i class="far fa-edit"></i> 変更申請</button>
+            @else
+                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更確定</button>
+            @endif
+        @endif
     </div>
 </form>
 @endsection
