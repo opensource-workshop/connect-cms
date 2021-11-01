@@ -159,7 +159,12 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // 登録データ行の取得
-        $this->post = $this->getDatabasesInputs($id);
+        $this->post = DatabasesInputs::where('id', $id)
+            ->where(function ($query) {
+                // 権限によって表示する記事を絞る
+                $query = $this->appendAuthWhereBase($query, 'databases_inputs');
+            })
+            ->first();
 
         return $this->post;
     }
@@ -3751,15 +3756,7 @@ class DatabasesPlugin extends UserPluginBase
      */
     private function getDatabasesInputs($id)
     {
-        // 登録データ行の取得
-        $inputs = DatabasesInputs::where('id', $id)
-            ->where(function ($query) {
-                // 権限によって表示する記事を絞る
-                $query = $this->appendAuthWhereBase($query, 'databases_inputs');
-            })
-            ->first();
-
-        return $inputs;
+        return $this->getPost($id);
     }
 
     /**
