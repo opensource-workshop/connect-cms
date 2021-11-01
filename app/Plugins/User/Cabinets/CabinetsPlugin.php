@@ -374,7 +374,7 @@ class CabinetsPlugin extends UserPluginBase
     {
         $validator = $this->getContentsControlValidator($request);
         if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput()->with('parent_id', $request->parent_id);
+            return back()->withErrors($validator)->withInput();
         }
 
         foreach ($request->cabinet_content_id as $cabinet_content_id) {
@@ -387,7 +387,7 @@ class CabinetsPlugin extends UserPluginBase
         }
 
         // 登録後はリダイレクトして初期表示。
-        return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/index/" . $page_id . "/" . $frame_id . "/" . $this->frame->bucket_id . '?parent_id=' . $request->parent_id . "#frame-" . $frame_id ]);
+        return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/changeDirectory/" . $page_id . "/" . $frame_id . "/" . $request->parent_id . "/#frame-" . $frame_id ]);
     }
 
     /**
