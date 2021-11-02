@@ -437,56 +437,48 @@ class AppServiceProvider extends AuthServiceProvider
                 // ターゲット処理をループ
                 foreach ($target as $user_role => $user_role_value) {
 
-                    // 要求されているのが承認権限の場合、Buckets の投稿権限にはないため、ここでチェックする。
-                    if ($authority == 'posts.approval') {
-                        // コンテンツ管理者（role_article_admin）でも承認ボタン表示.
-                        if ($user_role == 'role_article_admin' || $user_role == 'role_approval') {
-                            return true;
-                        }
-                    } else {
-                        // 必要なロールを保持している
-                        if ($checkRole == $user_role && $user_role_value) {
+                    // 必要なロールを保持している
+                    if ($checkRole == $user_role && $user_role_value) {
 
-                            // コンテンツ管理者（role_article_admin）は、許可
-                            if ($user_role == 'role_article_admin') {
-                                return true;
-                            }
+                        // ロール(権限)持っていても、post(記事)チェックは必要
+                        if (in_array($authority, ['posts.create', 'posts.update', 'posts.delete'])) {
 
-                            // モデレータ（role_article）で 固定記事以外は、許可
-                            if ($user_role == 'role_article' &&
-                                $plugin_name != PluginName::getPluginName(PluginName::contents)) {
-                                return true;
-                            }
-
-                            // 自分のオブジェクトチェックが必要ならチェックする
                             if (empty($post)) {
-                                // 許可OKなら、だいたいここに入る。
+                                // 新規登録時の posts.create はここ入る。
                                 return true;
                             } else {
 
                                 if ($plugin_name == PluginName::getPluginName(PluginName::contents)) {
                                     // 固定記事の場合、権限設定で 投稿できるON なら $post->created_id 以外でも編集可
-                                    if ($authority == 'posts.create' || $authority == 'posts.update' || $authority == 'posts.delete') {
-                                        return true;
-                                    }
+                                    return true;
                                 } else {
                                     // 固定記事プラグイン以外
 
+                                    // コンテンツ管理者（role_article_admin）は、$post->created_id 以外でも編集可
+                                    if ($user_role == 'role_article_admin') {
+                                        return true;
+                                    }
+
+                                    // モデレータ（role_article）で 固定記事以外は、$post->created_id 以外でも編集可
+                                    if ($user_role == 'role_article') {
+                                        return true;
+                                    }
+
                                     // 投稿者なら編集可.
                                     // 例えば save で アンド条件に posts.create も含まれるため、ここに来る。
-                                    if (($authority == 'posts.create' || $authority == 'posts.update' || $authority == 'posts.delete') &&
-                                        $user->id == $post->created_id) {
-
+                                    if ($user->id == $post->created_id) {
                                         return true;
                                     } else {
                                         // 複数ロールをチェックするため、ここではreturn しない。
                                         // return false;
                                     }
                                 }
-
                             }
-                            // 複数ロールをチェックするため、ここではreturn しない。
-                            // return true;
+
+                        } else {
+                            // post(記事)チェック以外は、ロール(権限)持っていれば、許可
+                            // posts.approval はここ入る。
+                            return true;
                         }
                     }
                 }
