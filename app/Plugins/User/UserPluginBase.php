@@ -309,7 +309,7 @@ class UserPluginBase extends PluginBase
     /**
      * 記載されているメソッドすべての権限を有することをチェック
      *
-     * @return view 権限チェックの結果、エラーがあればエラー表示用HTML が返ってくる。
+     * @return view|null 権限チェックの結果、エラーがあればエラー表示用HTML が返ってくる。
      */
     private function checkFunctionAuthority($role_ckeck_table, $post = null)
     {
