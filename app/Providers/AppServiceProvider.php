@@ -446,7 +446,7 @@ class AppServiceProvider extends AuthServiceProvider
                     } else {
                         // 必要なロールを保持している
                         if ($checkRole == $user_role && $user_role_value) {
-                            if ($user_role == 'role_article_admin' || $user_role == 'role_approval') {
+                            if ($user_role == 'role_article_admin') {
                                 return true;
                             }
 
@@ -462,24 +462,17 @@ class AppServiceProvider extends AuthServiceProvider
                                 return true;
                             } else {
 
-                                // bugfix: 固定記事の場合、権限設定で 投稿できるON なら $post->created_id 以外でも編集可
                                 if ($plugin_name == PluginName::getPluginName(PluginName::contents)) {
-
-                                    if ($authority == 'posts.create' ||
-                                        $authority == 'posts.update' ||
-                                        $authority == 'posts.delete') {
-
+                                    // 固定記事の場合、権限設定で 投稿できるON なら $post->created_id 以外でも編集可
+                                    if ($authority == 'posts.update' || $authority == 'posts.delete') {
                                         return true;
                                     }
                                 } else {
                                     // 固定記事プラグイン以外
 
                                     // 投稿者なら編集可
-                                    if ((($authority == 'buckets.delete') ||
-                                        ($authority == 'posts.create') ||
-                                        ($authority == 'posts.update') ||
-                                        ($authority == 'posts.delete')) &&
-                                        ($user->id == $post->created_id)) {
+                                    if (($authority == 'posts.update' || $authority == 'posts.delete') &&
+                                        $user->id == $post->created_id) {
 
                                         return true;
                                     } else {
