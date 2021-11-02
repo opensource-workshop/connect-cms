@@ -308,7 +308,7 @@ class CalendarsPlugin extends UserPluginBase
     public function show($request, $page_id, $frame_id, $post_id)
     {
         // プラグインのフレームデータ
-        $plugin_frame = $this->getPluginFrame($frame_id);
+        // $plugin_frame = $this->getPluginFrame($frame_id);
 
         // 記事取得
         $post = $this->getPost($post_id);
@@ -398,13 +398,13 @@ class CalendarsPlugin extends UserPluginBase
         // }
 
         // 承認の要否確認とステータス処理
-        if ($request->status == "1") {
-            $post->status = 1;  // 一時保存
+        if ($request->status == StatusType::temporary) {
+            $post->status = StatusType::temporary;  // 一時保存
         // } elseif ($this->buckets->needApprovalUser(Auth::user())) {
         } elseif ($this->isApproval()) {
-            $post->status = 2;  // 承認待ち
+            $post->status = StatusType::approval_pending;  // 承認待ち
         } else {
-            $post->status = 0;  // 公開
+            $post->status = StatusType::active;  // 公開
         }
 
         // 保存
@@ -429,7 +429,7 @@ class CalendarsPlugin extends UserPluginBase
 
         // 更新されたら、行レコードの updated_at を更新したいので、update()
         $post->updated_at = now();
-        $post->status = 0;  // 公開
+        $post->status = StatusType::active;  // 公開
         $post->update();
 
         // 登録後は画面側の指定により、リダイレクトして表示画面を開く。
