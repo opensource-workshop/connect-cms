@@ -482,10 +482,11 @@ class ContentsPlugin extends UserPluginBase
 
         // バケツがまだ登録されていなかったら登録する。
         if (empty($this->buckets)) {
-            $bucket_id = DB::table('buckets')->insertGetId([
+            $bucket = Buckets::create([
                 'bucket_name' => $request->bucket_name ?? '無題',
                 'plugin_name' => 'contents'
             ]);
+            $bucket_id = $bucket->id;
         } else {
             $bucket_id = $this->buckets['id'];
         }
