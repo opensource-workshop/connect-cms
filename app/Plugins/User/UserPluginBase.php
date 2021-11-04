@@ -323,10 +323,12 @@ class UserPluginBase extends PluginBase
 //print_r($this->buckets);
                 // POST があれば、POST の登録者チェックを行う
                 if (empty($post)) {
-                    $ret = $this->can($function_authority, null, null, $this->buckets);
+                    // $ret = $this->can($function_authority, null, null, $this->buckets);
+                    $ret = $this->can($function_authority, null, $this->frame->plugin_name, $this->buckets, $this->frame);
                 } else {
 //print_r($post);
-                    $ret = $this->can($function_authority, $post, null, $this->buckets);
+                    // $ret = $this->can($function_authority, $post, null, $this->buckets);
+                    $ret = $this->can($function_authority, $post, $this->frame->plugin_name, $this->buckets, $this->frame);
                 }
 
                 // 権限チェック結果。値があれば、エラーメッセージ用HTML
