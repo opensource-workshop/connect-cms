@@ -570,12 +570,6 @@ class ContentsPlugin extends UserPluginBase
      */
     public function update($request, $page_id = null, $frame_id = null, $id = null)
     {
-        // 記事取得可能チェック
-        $check_post = $this->getPost($id);
-        if (empty($check_post->id)) {
-            return $this->view_error("403_inframe", null, 'ユーザー権限に応じたPOST ID チェック');
-        }
-
         // 項目のエラーチェック
         $validator = $this->makeValidator($request);
 
@@ -627,12 +621,6 @@ class ContentsPlugin extends UserPluginBase
             $status = 1;
             return $this->store($request, $page_id, $frame_id, $id, $status);
         } else {
-            // 記事取得可能チェック
-            $check_post = $this->getPost($id);
-            if (empty($check_post->id)) {
-                return $this->view_error("403_inframe", null, 'ユーザー権限に応じたPOST ID チェック');
-            }
-
             // 項目のエラーチェック
             $validator = $this->makeValidator($request);
 
@@ -711,12 +699,6 @@ class ContentsPlugin extends UserPluginBase
     {
         // id がある場合、コンテンツを削除
         if ($id) {
-            // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
-            $check_post = $this->getPost($id);
-            if (empty($check_post->id)) {
-                return $this->view_error("403_inframe", null, 'ユーザー権限に応じたPOST ID チェック');
-            }
-
             // Contents データ
             $content = Contents::where('id', $id)->first();
 
