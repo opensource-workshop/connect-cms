@@ -111,7 +111,11 @@ class BlogsPlugin extends UserPluginBase
 
         // 指定されたPOST がない場合は、不正な処理として空で返す。
         if (empty($arg_post)) {
-            return null;
+            // return null;
+
+            // 空なら、空オブジェクトを保持して同じSQLの再実行を防ぐ
+            $this->post = new BlogsPosts();
+            return $this->post;
         }
 
         // 指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。
@@ -151,8 +155,10 @@ class BlogsPlugin extends UserPluginBase
         // いいねのleftJoin
         $blogs_query = Like::appendLikeLeftJoin($blogs_query, $this->frame->plugin_name, 'blogs_posts.contents_id', 'blogs_posts.blogs_id');
 
-        $this->post = $blogs_query->orderBy('id', 'desc')     // 履歴最新を取得するために、idをdesc指定
-            ->first();
+        $this->post = $blogs_query->orderBy('id', 'desc')->first();     // 履歴最新を取得するために、idをdesc指定
+
+        // firstOrNewの代わり
+        $this->post = $this->post ?? new BlogsPosts();
 
         // 続きを読むボタン名・続きを閉じるボタン名が空なら、初期値セットする
         if (empty($this->post->read_more_button)) {
@@ -646,7 +652,7 @@ WHERE status = 0
 
         // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $blogs_post = $this->getPost($blogs_posts_id);
-        if (empty($blogs_post)) {
+        if (empty($blogs_post->id)) {
             return $this->view_error("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
         }
 
@@ -743,7 +749,7 @@ WHERE status = 0
 
         // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $blogs_post = $this->getPost($blogs_posts_id);
-        if (empty($blogs_post)) {
+        if (empty($blogs_post->id)) {
             return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
@@ -791,7 +797,7 @@ WHERE status = 0
             $check_blogs_post = $this->getPost($blogs_posts_id);
 
             // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
-            if (empty($check_blogs_post) || $check_blogs_post->id != $old_blogs_post->id) {
+            if (empty($check_blogs_post->id) || $check_blogs_post->id != $old_blogs_post->id) {
                 return $this->view_error("403_inframe", null, 'saveのユーザー権限に応じたPOST ID チェック');
             }
         }
@@ -879,7 +885,7 @@ WHERE status = 0
             $check_blogs_post = $this->getPost($id);
 
             // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
-            if (empty($check_blogs_post) || $check_blogs_post->id != $id) {
+            if (empty($check_blogs_post->id) || $check_blogs_post->id != $id) {
                 return $this->view_error("403_inframe", null, 'temporarysaveのユーザー権限に応じたPOST ID チェック');
             }
         }
@@ -915,6 +921,12 @@ WHERE status = 0
     {
         // id がある場合、データを削除
         if ($blogs_posts_id) {
+            // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
+            $check_blogs_post = $this->getPost($blogs_posts_id);
+            if (empty($check_blogs_post->id)) {
+                return $this->view_error("403_inframe", null, 'deleteのユーザー権限に応じたPOST ID チェック');
+            }
+
             // 同じcontents_id のデータを削除するため、一旦、対象データを取得
             $post = BlogsPosts::where('id', $blogs_posts_id)->first();
 
@@ -940,7 +952,7 @@ WHERE status = 0
         $check_blogs_post = $this->getPost($id);
 
         // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
-        if (empty($check_blogs_post) || $check_blogs_post->id != $id) {
+        if (empty($check_blogs_post->id) || $check_blogs_post->id != $id) {
             return $this->view_error("403_inframe", null, 'approvalのユーザー権限に応じたPOST ID チェック');
         }
 
