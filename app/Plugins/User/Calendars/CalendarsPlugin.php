@@ -101,7 +101,12 @@ class CalendarsPlugin extends UserPluginBase
         }
 
         // POST を取得する。
-        $this->post = CalendarPost::firstOrNew(['id' => $id]);
+        $this->post = CalendarPost::
+            where(function ($query) {
+                $query = $this->appendAuthWhereBase($query, 'calendar_posts');
+            })
+            ->firstOrNew(['id' => $id]);
+
         return $this->post;
     }
 
