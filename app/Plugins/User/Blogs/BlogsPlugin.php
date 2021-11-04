@@ -109,11 +109,9 @@ class BlogsPlugin extends UserPluginBase
         // データのグループ（contents_id）が欲しいため、指定されたID のPOST を読む
         $arg_post = BlogsPosts::where('id', $id)->first();
 
-        // 指定されたPOST がない場合は、不正な処理として空で返す。
+        // 指定されたPOST がない場合は、不正な処理として空オブジェクトを保持して同じSQLの再実行を防ぐ
         if (empty($arg_post)) {
             // return null;
-
-            // 空なら、空オブジェクトを保持して同じSQLの再実行を防ぐ
             $this->post = new BlogsPosts();
             return $this->post;
         }
