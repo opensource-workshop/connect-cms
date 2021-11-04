@@ -432,7 +432,7 @@ class CalendarsPlugin extends UserPluginBase
         $post = $this->getPost($post_id);
 
         // データがあることを確認
-        if (empty($post)) {
+        if (empty($post->id)) {
             return;
         }
 
