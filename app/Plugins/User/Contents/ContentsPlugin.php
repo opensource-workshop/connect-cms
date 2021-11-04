@@ -100,15 +100,12 @@ class ContentsPlugin extends UserPluginBase
             return $this->post;
         }
 
-        $this->post = Contents::where('contents.id', $id)
+        $this->post = Contents::
             // 権限があるときは、アクティブ、一時保存、承認待ちを or で取得
-            ->where(function ($query) {
+            where(function ($query) {
                 $query = $this->appendAuthWhere($query, 'contents');
             })
-            ->first();
-
-        // firstOrNewの代わり
-        $this->post = $this->post ?? new Contents();
+            ->firstOrNew(['id' => $id]);
 
         return $this->post;
     }
