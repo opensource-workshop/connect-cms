@@ -168,8 +168,10 @@ class ContentsPlugin extends UserPluginBase
             //
             // bugfix: 承認あり なら、自分の承認ありデータも見れる必要あり。
             // $query->Where('status', '=', 0)
-            $query->WhereIn($table_name . '.status', [StatusType::active, StatusType::approval_pending])
-                ->orWhere($table_name . '.created_id', '=', Auth::user()->id);
+            $query->where(function ($tmp_query) use ($table_name) {
+                $tmp_query->WhereIn($table_name . '.status', [StatusType::active, StatusType::approval_pending])
+                    ->orWhere($table_name . '.created_id', '=', Auth::user()->id);
+            });
 
         } else {
             // その他（ゲスト）
