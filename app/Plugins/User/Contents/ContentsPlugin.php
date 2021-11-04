@@ -32,9 +32,9 @@ class ContentsPlugin extends UserPluginBase
     /* オブジェクト変数 */
 
     /**
-     * POST チェックに使用する getPost() 関数を使うか
+     * 変更時のPOSTデータ
      */
-    public $use_getpost = false;
+    public $post = null;
 
     /* コアから呼び出す関数 */
 
@@ -58,8 +58,10 @@ class ContentsPlugin extends UserPluginBase
         // 標準権限以外で設定画面などから呼ばれる権限の定義
         // 標準権限は右記で定義 config/cc_role.php
         //
-        // 権限チェックテーブル (追加チェックなし)
+        // 権限チェックテーブル
         $role_check_table = [];
+        $role_check_table["show"]      = ['frames.delete'];
+        $role_check_table["delete"]    = ['frames.delete'];
         return $role_check_table;
     }
 
@@ -74,6 +76,42 @@ class ContentsPlugin extends UserPluginBase
         return "editBucketsRoles";
     }
 */
+
+    /**
+     * POST取得関数（コアから呼び出す）
+     * コアがPOSTチェックの際に呼び出す関数
+     */
+    public function getPost($id, $action = null)
+    {
+        if (is_null($action)) {
+            // プラグイン内からの呼び出しを想定。処理を通す。
+
+        // } elseif (in_array($action, ['edit', 'update', 'temporarysave', 'delete'])) {
+        } elseif (in_array($action, ['update', 'temporarysave', 'delete'])) {
+            // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+            // editはURLにidを含めていないため、メソッド側で追加の権限チェックで対応
+        } else {
+            // それ以外のアクションは null で返す。
+            return null;
+        }
+
+        // 一度読んでいれば、そのPOSTを再利用する。
+        if (!empty($this->post)) {
+            return $this->post;
+        }
+
+        $this->post = Contents::where('contents.id', $id)
+            // 権限があるときは、アクティブ、一時保存、承認待ちを or で取得
+            ->where(function ($query) {
+                $query = $this->appendAuthWhere($query, 'contents');
+            })
+            ->first();
+
+        // firstOrNewの代わり
+        $this->post = $this->post ?? new Contents();
+
+        return $this->post;
+    }
 
     /**
      *  データ取得
@@ -99,7 +137,7 @@ class ContentsPlugin extends UserPluginBase
                 $join->on('frames.bucket_id', '=', 'buckets.id');
             })
             ->where('buckets.id', $buckets_id)
-            ->where('contents.deleted_at', null)
+            // ->where('contents.deleted_at', null)
             // 権限があるときは、アクティブ、一時保存、承認待ちを or で取得
             ->where(function ($query) {
                 $query = $this->appendAuthWhere($query, 'contents');
@@ -428,6 +466,12 @@ class ContentsPlugin extends UserPluginBase
         // データ取得
         $contents = $this->getFrameContents($frame_id);
 
+        // 引数idを使ってないため、追加で権限チェック
+        $view_error = $this->can('posts.update', $contents, $this->frame->plugin_name, $this->buckets, $this->frame);
+        if ($view_error) {
+            return $view_error;
+        }
+
         // データがない場合
         $contents = $contents ?? new Contents();
 
@@ -444,8 +488,12 @@ class ContentsPlugin extends UserPluginBase
     {
         // 権限チェック
         // 固定記事プラグインの特別処理。削除のための表示であり、フレーム画面のため、個別に権限チェックする。
-        if ($this->can('frames.delete')) {
-            return $this->view_error(403);
+        // if ($this->can('frames.delete')) {
+        //     return $this->view_error(403);
+        // }
+        $view_error = $this->can('frames.delete');
+        if ($view_error) {
+            return $view_error;
         }
 
         // データ取得
@@ -525,6 +573,12 @@ class ContentsPlugin extends UserPluginBase
      */
     public function update($request, $page_id = null, $frame_id = null, $id = null)
     {
+        // 記事取得可能チェック
+        $check_post = $this->getPost($id);
+        if (empty($check_post->id)) {
+            return $this->view_error("403_inframe", null, 'ユーザー権限に応じたPOST ID チェック');
+        }
+
         // 項目のエラーチェック
         $validator = $this->makeValidator($request);
 
@@ -576,6 +630,12 @@ class ContentsPlugin extends UserPluginBase
             $status = 1;
             return $this->store($request, $page_id, $frame_id, $id, $status);
         } else {
+            // 記事取得可能チェック
+            $check_post = $this->getPost($id);
+            if (empty($check_post->id)) {
+                return $this->view_error("403_inframe", null, 'ユーザー権限に応じたPOST ID チェック');
+            }
+
             // 項目のエラーチェック
             $validator = $this->makeValidator($request);
 
@@ -654,6 +714,12 @@ class ContentsPlugin extends UserPluginBase
     {
         // id がある場合、コンテンツを削除
         if ($id) {
+            // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
+            $check_post = $this->getPost($id);
+            if (empty($check_post->id)) {
+                return $this->view_error("403_inframe", null, 'ユーザー権限に応じたPOST ID チェック');
+            }
+
             // Contents データ
             $content = Contents::where('id', $id)->first();
 
