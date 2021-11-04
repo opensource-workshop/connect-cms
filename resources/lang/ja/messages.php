@@ -61,7 +61,19 @@ $messages = [
     'search' => '検索',
     'photo' => '写真',
     'research_seeds' => '研究シーズ',
+    'words_in_research_seeds' => '研究シーズフリーワード',
     'facility_name' => '施設名',
+    'area' => '地区',
+    'discipline' => '研究分野（大分類）',
+    'research_field' => '研究分野（小分類）',
+    'gender' => '性別',
+    'last_modified' => '最終更新日',
+    'advanced_search' => '詳細検索',
+    'male' => '男性',
+    'female' => '女性',
+    'other' => 'その他',
+    'within_weeks' => ':count 週間以内',
+    'within_months' => ':count か月以内',
 ];
 
 foreach ($messages as $key => $message) {
