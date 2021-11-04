@@ -1035,11 +1035,6 @@ class DatabasesPlugin extends UserPluginBase
                 return;
             }
 
-            // 権限チェック
-            if ($this->can('posts.update', $inputs, $this->frame->plugin_name, $this->buckets)) {
-                return $this->view_error(403);
-            }
-
             // データ詳細の取得
             $input_cols = $this->getDatabasesInputCols($id);
         }
