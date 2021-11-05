@@ -136,12 +136,14 @@ class LearningtasksPlugin extends UserPluginBase
         $role_check_table["saveMail"]         = array('role_arrangement');
 
         // コンテンツ管理者（科目の編集から飛べる処理）
+        $role_check_table["edit"]             = array('role_article_admin');
         $role_check_table["editUsers"]        = array('role_article_admin');
         $role_check_table["editReport"]       = array('role_article_admin');
         $role_check_table["editExaminations"] = array('role_article_admin');
         $role_check_table["editEvaluate"]     = array('role_article_admin');
         $role_check_table["listGrade"]        = array('role_article_admin');
 
+        $role_check_table["save"]             = array('role_article_admin');
         $role_check_table["saveUsers"]        = array('role_article_admin');
         $role_check_table["saveReport"]       = array('role_article_admin');
         $role_check_table["saveExaminations"] = array('role_article_admin');
@@ -152,6 +154,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         $role_check_table["saveEvaluate"]     = array('role_article_admin');
         $role_check_table["downloadGrade"]    = array('role_article_admin');
+        $role_check_table["delete"]           = array('role_article_admin');
         $role_check_table["deleteStatus"]     = array('role_article_admin');
 
         $role_check_table["switchUser"]       = array('role_guest');
@@ -183,13 +186,19 @@ class LearningtasksPlugin extends UserPluginBase
      */
     public function getPost($id, $action = null)
     {
+        // データ存在チェックのために getPost を利用
+
         // id がない場合は処理しない。
         if (empty($id)) {
             return null;
         }
 
-        // deleteCategories の場合は、Learningtasks_posts のオブジェクトではないので、nullで返す。
-        if ($action == 'deleteCategories') {
+        if (is_null($action)) {
+            // プラグイン内からの呼び出しを想定。処理を通す。
+        } elseif (in_array($action, ['edit', 'save', 'delete'])) {
+            // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+        } else {
+            // それ以外のアクションは null で返す。
             return null;
         }
 
@@ -202,8 +211,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 履歴の廃止
         //$arg_post = LearningtasksPosts::where('id', $id)->first();
 
-        // 指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。
-        // $this->post = LearningtasksPosts::
+        // POST取得
         $learningtasks_query = LearningtasksPosts::
             select(
                 'learningtasks_posts.*',
@@ -213,13 +221,11 @@ class LearningtasksPlugin extends UserPluginBase
                 'categories.category as category',
                 'plugin_categories.view_flag as category_view_flag'
             )
-            // bugfix: 論理削除を考慮
-            // ->join('learningtasks', 'learningtasks.id', '=', 'learningtasks_posts.learningtasks_id')
+            // 論理削除を考慮
             ->join('learningtasks', function ($join) {
                 $join->on('learningtasks.id', '=', 'learningtasks_posts.learningtasks_id')
                     ->whereNull('learningtasks.deleted_at');
-            })
-            ->where('learningtasks_posts.id', $id);
+            });
             // 履歴の廃止
             //->where('contents_id', $arg_post->contents_id)
             //->where(function ($query) {
@@ -232,7 +238,7 @@ class LearningtasksPlugin extends UserPluginBase
         $learningtasks_query = Categories::appendCategoriesLeftJoin($learningtasks_query, $this->frame->plugin_name, 'learningtasks_posts.categories_id', 'learningtasks.id');
 
         // 履歴最新を取得するために、idをdesc指定（履歴を廃止しても過去データのため必要かも）
-        $this->post = $learningtasks_query->orderBy('id', 'desc')->first();
+        $this->post = $learningtasks_query->orderBy('id', 'desc')->firstOrNew(['learningtasks_posts.id' => $id]);
 
         return $this->post;
     }
@@ -1062,7 +1068,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 記事取得
         $post = $this->getPost($post_id);
-        if (empty($post)) {
+        if (empty($post->id)) {
             return $this->view_error("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
         }
 
@@ -1126,7 +1132,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 記事取得
         $learningtasks_post = $this->getPost($learningtasks_posts_id);
-        if (empty($learningtasks_post)) {
+        if (empty($learningtasks_post->id)) {
             return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
@@ -1164,7 +1170,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 記事取得
         $learningtasks_posts = $this->getPost($post_id);
-        if (empty($learningtasks_posts)) {
+        if (empty($learningtasks_posts->id)) {
             return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
@@ -1283,7 +1289,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 記事取得
         $learningtasks_posts = $this->getPost($post_id);
-        if (empty($learningtasks_posts)) {
+        if (empty($learningtasks_posts->id)) {
             return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
@@ -1374,7 +1380,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $learningtasks_post = $this->getPost($post_id);
-        if (empty($learningtasks_post)) {
+        if (empty($learningtasks_post->id)) {
             return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
@@ -2251,13 +2257,11 @@ class LearningtasksPlugin extends UserPluginBase
         $tool = new LearningtasksTool($request, $page_id, $learningtask, $post, $frame_id);
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'learningtasks_edit_mail', [
+        return $this->view('learningtasks_edit_mail', [
             'learningtask'        => $learningtask,
-            'learningtasks_posts' => $post,
+            // 'learningtasks_posts' => $post,
             'tool'                => $tool,
-            ]
-        );
+        ]);
     }
 
     /**
@@ -2600,7 +2604,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 記事取得
         $learningtasks_post = $this->getPost($learningtasks_posts_id);
-        if (empty($learningtasks_post)) {
+        if (empty($learningtasks_post->id)) {
             return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
