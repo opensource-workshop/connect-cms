@@ -32,9 +32,9 @@ class LinklistsPlugin extends UserPluginBase
     /* オブジェクト変数 */
 
     /**
-     * POST チェックに使用する getPost() 関数を使うか
+     * 変更時のPOSTデータ
      */
-    public $use_getpost = false;
+    public $post = null;
 
     /* コアから呼び出す関数 */
 
@@ -51,7 +51,7 @@ class LinklistsPlugin extends UserPluginBase
     }
 
     /**
-     * 権限定義
+     * 追加の権限定義（コアから呼び出す）
      */
     public function declareRole()
     {
@@ -73,15 +73,34 @@ class LinklistsPlugin extends UserPluginBase
         return "editBuckets";
     }
 
-    /* private関数 */
-
     /**
-     * リンクデータ取得
+     * POST取得関数（コアから呼び出す）
+     * コアがPOSTチェックの際に呼び出す関数
      */
-    private function getLinklistPost($id)
+    public function getPost($id, $action = null)
     {
-        return LinklistPost::firstOrNew(['id' => $id]);
+        // データ存在チェックのために getPost を利用
+
+        if (is_null($action)) {
+            // プラグイン内からの呼び出しを想定。処理を通す。
+        } elseif (in_array($action, ['edit', 'save', 'delete'])) {
+            // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+        } else {
+            // それ以外のアクションは null で返す。
+            return null;
+        }
+
+        // 一度読んでいれば、そのPOSTを再利用する。
+        if (!empty($this->post)) {
+            return $this->post;
+        }
+
+        // POST を取得する。（statusカラムなしのため、appendAuthWhereBase 使わない）
+        $this->post = LinklistPost::firstOrNew(['id' => $id]);
+        return $this->post;
     }
+
+    /* private関数 */
 
     /**
      * プラグインのフレーム
@@ -251,14 +270,7 @@ class LinklistsPlugin extends UserPluginBase
     public function edit($request, $page_id, $frame_id, $post_id = null)
     {
         // 記事取得
-        $post = $this->getLinklistPost($post_id);
-
-        // 更新時
-        if ($post_id) {
-            if (empty($post->id)) {
-                return $this->view_error("403_inframe", null, 'データ存在チェック');
-            }
-        }
+        $post = $this->getPost($post_id);
 
         // バケツから linklist_id 取得
         $linklist = $this->getPluginBucket($this->getBucketId());
@@ -278,16 +290,6 @@ class LinklistsPlugin extends UserPluginBase
      */
     public function save($request, $page_id, $frame_id, $post_id = null)
     {
-        // POSTデータのモデル取得
-        $post = $this->getLinklistPost($post_id);
-
-        // 更新時
-        if ($post_id) {
-            if (empty($post->id)) {
-                return $this->view_error("403_inframe", null, 'データ存在チェック');
-            }
-        }
-
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'title'            => ['required', 'max:255'],
@@ -306,6 +308,9 @@ class LinklistsPlugin extends UserPluginBase
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
+
+        // POSTデータのモデル取得
+        $post = $this->getPost($post_id);
 
         // バケツから linklist_id 取得
         // bugfix: linklist_idはフレームではなく、表示しているバケツから取得する
@@ -343,12 +348,6 @@ class LinklistsPlugin extends UserPluginBase
     {
         // id がある場合、データを削除
         if ($post_id) {
-
-            $post = $this->getLinklistPost($post_id);
-            if (empty($post->id)) {
-                return $this->view_error("403_inframe", null, 'データ存在チェック');
-            }
-
             // データを削除する。
             LinklistPost::where('id', $post_id)->delete();
         }
