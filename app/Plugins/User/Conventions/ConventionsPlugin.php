@@ -51,12 +51,15 @@ class ConventionsPlugin extends UserPluginBase
     }
 
     /**
-     *  権限定義
+     * 追加の権限定義（コアから呼び出す）
      */
     public function declareRole()
     {
-        // 権限チェックテーブル (追加チェックなし)
+        // 権限チェックテーブル
         $role_check_table = [];
+        $role_check_table["edit"]        = ['frames.edit'];
+        $role_check_table["save"]        = ['frames.create'];
+        $role_check_table["delete"]      = ['frames.delete'];
         return $role_check_table;
     }
 
@@ -74,14 +77,25 @@ class ConventionsPlugin extends UserPluginBase
      * POST取得関数（コアから呼び出す）
      * コアがPOSTチェックの際に呼び出す関数
      */
-    public function getPost($id)
+    public function getPost($id, $action = null)
     {
+        // データ存在チェックのために getPost を利用
+
+        if (is_null($action)) {
+            // プラグイン内からの呼び出しを想定。処理を通す。
+        } elseif (in_array($action, ['edit', 'save', 'delete'])) {
+            // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+        } else {
+            // それ以外のアクションは null で返す。
+            return null;
+        }
+
         // 一度読んでいれば、そのPOSTを再利用する。
         if (!empty($this->post)) {
             return $this->post;
         }
 
-        // POST を取得する。
+        // POST を取得する。（statusカラムなしのため、appendAuthWhereBase 使わない）
         $this->post = ConventionPost::firstOrNew(['id' => $id]);
         return $this->post;
     }
