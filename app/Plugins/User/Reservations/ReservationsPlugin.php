@@ -5,7 +5,6 @@ namespace App\Plugins\User\Reservations;
 // use Carbon\Carbon;
 use App\Models\Common\ConnectCarbon;
 
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 
@@ -75,9 +74,6 @@ class ReservationsPlugin extends UserPluginBase
      */
     public function declareRole()
     {
-        // 標準権限以外で設定画面などから呼ばれる権限の定義
-        // 標準権限は右記で定義 config/cc_role.php
-        //
         // 権限チェックテーブル
         $role_check_table = [];
         $role_check_table["addFacility"]            = ['buckets.addColumn'];
@@ -85,7 +81,7 @@ class ReservationsPlugin extends UserPluginBase
         $role_check_table["updateFacility"]         = ['buckets.saveColumn'];
         $role_check_table["updateFacilitySequence"] = ['buckets.upColumnSequence', 'buckets.downColumnSequence'];
 
-        // posts.create, posts.delete等は AppServiceProviderのGateでチェックされる。自分の登録データかは、$post->created_id でチェックされるため、DBカラムに created_id 必要。
+        // posts.create, posts.deleteの自分の登録データかはDBカラムに created_id 必要。
         $role_check_table["editBooking"]            = ['posts.create', 'posts.update'];
         $role_check_table["saveBooking"]            = ['posts.create', 'posts.update'];
         $role_check_table["approvalBooking"]        = ['posts.approval'];
@@ -196,15 +192,12 @@ class ReservationsPlugin extends UserPluginBase
     /* 画面アクション関数 */
 
     /**
-     *  予約追加処理
+     * 予約追加処理
+     * [TODO] 引数 $target_ymd はメソッドで上書きされて使ってない
+     * [TODO] 今後 $request->booking_id を 引数に追加対応する
      */
     public function saveBooking($request, $page_id, $frame_id, $target_ymd)
     {
-        // 認証チェック
-        if (!Auth::check()) {
-            return $this->view_error("403_inframe", null, 'ログインしてから操作してください。');
-        }
-
         $target_ymd = $request->target_date;
         // URLパラメータチェック
         $year = substr($target_ymd, 0, 4);
@@ -310,11 +303,6 @@ class ReservationsPlugin extends UserPluginBase
         } else {
             // エラーなし：セッションから入力値を消去
             $request->flush();
-        }
-
-        // 認証チェック
-        if (!Auth::check()) {
-            return $this->view_error("403_inframe", null, 'ログインしてから操作してください。');
         }
 
         $booking = null;
