@@ -53,9 +53,6 @@ class CodestudiesPlugin extends UserPluginBase
      */
     public function declareRole()
     {
-        // 標準権限以外で設定画面などから呼ばれる権限の定義
-        // 標準権限は右記で定義 config/cc_role.php
-        //
         // 権限チェックテーブル
         $role_check_table = array();
         $role_check_table["editcode"]   = array('role_reporter');
