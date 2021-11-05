@@ -135,12 +135,11 @@ class ReservationsPlugin extends UserPluginBase
             ->join('reservations_facilities', function ($join) {
                 $join->on('reservations_inputs.facility_id', '=', 'reservations_facilities.id');
             })
-            ->where('reservations_inputs.id', $id)
             ->where(function ($query) {
                 // 権限によって表示する記事を絞る
                 $query = $this->appendAuthWhereBase($query, 'reservations_inputs');
             })
-            ->first();
+            ->firstOrNew(['reservations_inputs.id' => $id]);
 
         return $this->post;
     }
@@ -391,7 +390,7 @@ class ReservationsPlugin extends UserPluginBase
         // 登録データ行の取得
         $inputs = $this->getReservationsInput($input_id);
         // データがあることを確認
-        if (empty($inputs)) {
+        if (empty($inputs->id)) {
             return;
         }
 
@@ -454,7 +453,7 @@ class ReservationsPlugin extends UserPluginBase
         // 登録データ行の取得
         $reservations_inputs = $this->getReservationsInput($input_id);
         // データがあることを確認
-        if (empty($reservations_inputs)) {
+        if (empty($reservations_inputs->id)) {
             return;
         }
 
