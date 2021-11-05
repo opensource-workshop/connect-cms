@@ -28,6 +28,40 @@
         {{ csrf_field() }}
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/whatsnews/editView/{{$page->id}}/{{$frame_id}}/{{$whatsnew->bucket_id}}#frame-{{$frame_id}}">
 
+        {{-- 本文 --}}
+        <h5><span class="badge badge-secondary">本文</span></h5>
+
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">本文</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                @foreach (ShowType::enum as $key => $value)
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input
+                            type="radio"
+                            value="{{ $key }}"
+                            id="{{ "post_detail_${key}" }}"
+                            name="post_detail"
+                            class="custom-control-input"
+                            {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::post_detail) == $key ? 'checked' : '' }}
+                        >
+                        <label class="custom-control-label" for="{{ "post_detail_${key}" }}">
+                            {{ $value }}
+                        </label>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- 本文の表示文字数 --}}
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}">本文の表示文字数</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <input type="text" name="post_detail_length" value="{{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::post_detail_length) }}" class="form-control col-sm-3">
+                @if ($errors && $errors->has('post_detail_length')) <div class="text-danger">{{$errors->first('post_detail_length')}}</div> @endif
+                <small class="text-muted">※ 0の場合、全文が表示されます。</small>
+            </div>
+        </div>
+
         {{-- サムネイル --}}
         <h5><span class="badge badge-secondary">サムネイル画像</span></h5>
 
@@ -54,10 +88,35 @@
 
         {{-- サムネイル画像の表示幅 --}}
         <div class="form-group row">
-            <label class="{{$frame->getSettingLabelClass()}}">画像サイズ（横）</label>
+            <label class="{{$frame->getSettingLabelClass()}}">最大画像サイズ</label>
             <div class="{{$frame->getSettingInputClass()}}">
-                <input type="text" name="thumbnail_width" value="{{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_width) }}" class="form-control col-sm-3">
-                @if ($errors && $errors->has('thumbnail_width')) <div class="text-danger">{{$errors->first('thumbnail_width')}}</div> @endif
+                <input type="text" name="thumbnail_size" value="{{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}" class="form-control col-sm-3">
+                @if ($errors && $errors->has('thumbnail_size')) <div class="text-danger">{{$errors->first('thumbnail_size')}}</div> @endif
+                <small class="text-muted">※ 縦横の長い方に適用。0の場合、200が適用されます。</small>
+            </div>
+        </div>
+
+        {{-- 記事間の罫線 --}}
+        <h5><span class="badge badge-secondary">記事間の罫線</span></h5>
+
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">記事間の罫線</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                @foreach (ShowType::enum as $key => $value)
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input
+                            type="radio"
+                            value="{{ $key }}"
+                            id="{{ "border_${key}" }}"
+                            name="border"
+                            class="custom-control-input"
+                            {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::border) == $key ? 'checked' : '' }}
+                        >
+                        <label class="custom-control-label" for="{{ "border_${key}" }}">
+                            {{ $value }}
+                        </label>
+                    </div>
+                @endforeach
             </div>
         </div>
 

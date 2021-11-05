@@ -18,7 +18,11 @@
                 view_posted_at: {{ $whatsnews_frame->view_posted_at }},
                 view_posted_name: {{ $whatsnews_frame->view_posted_name }},
                 limit: {{ $whatsnews_frame->read_more_fetch_count }},
-                offset: {{ $whatsnews->count() }} // 何件目から取得するか（＝現時点の取得件数）※初期値はサーバから返された一覧件数
+                offset: {{ $whatsnews->count() }}, // 何件目から取得するか（＝現時点の取得件数）※初期値はサーバから返された一覧件数
+                post_detail: @json($frame_configs->where('name', 'post_detail')->first()->value),
+                thumbnail: @json($frame_configs->where('name', 'thumbnail')->first()->value),
+                thumbnail_size: @json($frame_configs->where('name', 'thumbnail_size')->first()->value),
+                border: @json($frame_configs->where('name', 'border')->first()->value)
             }
         },
         methods: {

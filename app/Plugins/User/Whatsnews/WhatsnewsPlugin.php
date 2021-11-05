@@ -45,6 +45,7 @@ class WhatsnewsPlugin extends UserPluginBase
     /**
      *  新着の総件数
      */
+
     public $whatsnews_total_count = 0;
 
     /**
@@ -688,10 +689,12 @@ class WhatsnewsPlugin extends UserPluginBase
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'thumbnail_width'  => ['numeric'],
+            'thumbnail_size'  => ['numeric'],
+            'post_detail_length'  => ['numeric'],
         ]);
         $validator->setAttributeNames([
-            'thumbnail_width'  => WhatsnewFrameConfig::enum['thumbnail_width'],
+            'thumbnail_size'  => WhatsnewFrameConfig::enum['thumbnail_size'],
+            'post_detail_length'  => WhatsnewFrameConfig::enum['post_detail_length'],
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -699,6 +702,7 @@ class WhatsnewsPlugin extends UserPluginBase
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
+        // フレーム設定の定数にあるものがrequest にあれば、保存する。
         foreach ($frame_config_names as $key => $value) {
 
             FrameConfig::updateOrCreate(
