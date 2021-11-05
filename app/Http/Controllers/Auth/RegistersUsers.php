@@ -19,7 +19,7 @@ use App\Traits\ConnectMailTrait;
 
 use App\Plugins\Manage\UserManage\UsersTool;
 use App\Utilities\Token\TokenUtils;
-use App\Rules\CustomVali_TokenExists;
+use App\Rules\CustomValiTokenExists;
 use App\Providers\RouteServiceProvider;
 
 trait RegistersUsers
@@ -360,7 +360,7 @@ trait RegistersUsers
         $validator = Validator::make(
             ['token' => $token],
             [
-                'token' => [new CustomVali_TokenExists($user->add_token, $user->add_token_created_at)],
+                'token' => [new CustomValiTokenExists($user->add_token, $user->add_token_created_at)],
             ]
         );
         // getで日付形式エラーは表示しない（通常URLをコピペミス等でいじらなければエラーにならない想定）
@@ -423,7 +423,7 @@ trait RegistersUsers
         $validator = Validator::make(
             ['token' => $token],
             [
-                'token' => [new CustomVali_TokenExists($user->add_token, $user->add_token_created_at)],
+                'token' => [new CustomValiTokenExists($user->add_token, $user->add_token_created_at)],
             ]
         );
         // getで日付形式エラーは表示しない（通常URLをコピペミス等でいじらなければエラーにならない想定）

@@ -6,14 +6,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
-//use Illuminate\Support\ServiceProvider;
+// use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider;
 use Illuminate\Queue\Events\JobFailed;
 
 use App\Traits\ConnectRoleTrait;
-
-use App\Models\Common\Page;
 
 use App\Enums\PluginName;
 
@@ -400,7 +398,7 @@ class AppServiceProvider extends AuthServiceProvider
         // $post_buckets_roles = $this->getPostBucketsRoles($buckets_obj);
 
         // Buckets role からチェックロール追加は、記事系の権限のみに絞る。
-        if (in_array($authority, ['posts.create', 'posts.update', 'posts.delete', 'posts.approval'])) {
+        if (in_array($authority, ['posts.create', 'posts.update', 'posts.delete'])) {
 
             $post_buckets_roles = $this->getPostBucketsRoles($buckets_obj);
 
@@ -438,72 +436,49 @@ class AppServiceProvider extends AuthServiceProvider
             foreach ($user_roles as $target) {
                 // ターゲット処理をループ
                 foreach ($target as $user_role => $user_role_value) {
-                    // 要求されているのが承認権限の場合、Buckets の投稿権限にはないため、ここでチェックする。
-                    // bugfix:  モデレータに「承認が必要」としても、モデレータは自分で承認できてしまう不具合修正
-                    //          承認権限チェック（$authority == 'posts.approval'）なのに、ここでtrueとならず、必要なロールを保持している（$user_role == 'role_article'）でtrueとなっていた。
-                    //          承認権限チェックとそれ以外でif文見直す。
-                    // if ($authority == 'posts.approval' && $user_role == 'role_approval') {
-                    //     return true;
-                    // }
-                    if ($authority == 'posts.approval') {
-                        // bugfix: コンテンツ管理者（role_article_admin）で承認ボタンが表示されなかったため、role_article_adminを追加
-                        if ($user_role == 'role_article_admin' || $user_role == 'role_approval') {
-                            return true;
-                        }
-                    } else {
-                        // 必要なロールを保持している
-                        if ($checkRole == $user_role && $user_role_value) {
-                            // bugfix: 固定記事、権限設定の「投稿できる」権限が機能してないバグ修正
-                            //        ここで role_article モデレータ（他ユーザの記事も更新）を許可すると、
-                            //        固定記事の権限設定で モデレータ を 投稿できるOFF でも設定を無視して、投稿できてしまう。
-                            // 他者の記事を更新できる権限の場合は、記事作成者のチェックは不要
-                            // if (($user_role == 'role_article_admin') ||
-                            //     ($user_role == 'role_article') ||
-                            //     ($user_role == 'role_approval')) {
-                            if ($user_role == 'role_article_admin' || $user_role == 'role_approval') {
-                                return true;
-                            }
 
-                            // モデレータ（role_article ）で 固定記事以外は、許可
-                            if ($user_role == 'role_article' &&
-                                $plugin_name != PluginName::getPluginName(PluginName::contents)) {
-                                return true;
-                            }
+                    // 必要なロールを保持している
+                    if ($checkRole == $user_role && $user_role_value) {
 
-                            // 自分のオブジェクトチェックが必要ならチェックする
+                        // ロール(権限)持っていても、post(記事)チェックは必要
+                        if (in_array($authority, ['posts.create', 'posts.update', 'posts.delete'])) {
+
                             if (empty($post)) {
+                                // 新規登録時の posts.create はここ入る。
                                 return true;
                             } else {
 
-                                // bugfix: 固定記事の場合、権限設定で 投稿できるON なら $post->created_id 以外でも編集可
                                 if ($plugin_name == PluginName::getPluginName(PluginName::contents)) {
-
-                                    if ($authority == 'posts.create' ||
-                                        $authority == 'posts.update' ||
-                                        $authority == 'posts.delete') {
-
-                                        return true;
-                                    }
+                                    // 固定記事の場合、権限設定で 投稿できるON なら $post->created_id 以外でも編集可
+                                    return true;
                                 } else {
                                     // 固定記事プラグイン以外
 
-                                    // 投稿者なら編集可
-                                    if ((($authority == 'buckets.delete') ||
-                                        ($authority == 'posts.create') ||
-                                        ($authority == 'posts.update') ||
-                                        ($authority == 'posts.delete')) &&
-                                        ($user->id == $post->created_id)) {
+                                    // コンテンツ管理者（role_article_admin）は、$post->created_id 以外でも編集可
+                                    if ($user_role == 'role_article_admin') {
+                                        return true;
+                                    }
 
+                                    // モデレータ（role_article）で 固定記事以外は、$post->created_id 以外でも編集可
+                                    if ($user_role == 'role_article') {
+                                        return true;
+                                    }
+
+                                    // 投稿者なら編集可.
+                                    // 例えば save で アンド条件に posts.create も含まれるため、ここに来る。
+                                    if ($user->id == $post->created_id) {
                                         return true;
                                     } else {
                                         // 複数ロールをチェックするため、ここではreturn しない。
                                         // return false;
                                     }
                                 }
-
                             }
-                            // 複数ロールをチェックするため、ここではreturn しない。
-                            // return true;
+
+                        } else {
+                            // post(記事)チェック以外は、ロール(権限)持っていれば、許可
+                            // posts.approval はここ入る。
+                            return true;
                         }
                     }
                 }
@@ -533,6 +508,7 @@ class AppServiceProvider extends AuthServiceProvider
      * Buckets の投稿権限データをrole の配列で返却
      * (ConnectCommonTraitから移動してきた)
      *
+     * @param \App\Models\Common\Buckets $buckets
      * @return boolean|array
      */
     private function getPostBucketsRoles($buckets)

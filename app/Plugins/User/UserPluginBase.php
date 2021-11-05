@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 
 use Monolog\Logger;
 use Monolog\Formatter\LineFormatter;
@@ -122,6 +121,11 @@ class UserPluginBase extends PluginBase
      * 画面間用メッセージ
      */
     public $cc_massage = null;
+
+    /**
+     * POST チェックに使用する getPost() 関数を使うか
+     */
+    public $use_getpost = true;
 
     /**
      * コンストラクタ
@@ -252,10 +256,12 @@ class UserPluginBase extends PluginBase
         $post = null;
 
         // POST チェックに使用する getPost() 関数の有無をチェック
-        // POST に関連しないメソッドは除外
-        if ($action != "destroyBuckets") {
-            if ($id && method_exists($obj, 'getPost')) {
-                $post = $obj->getPost($id, $action);
+        if ($this->use_getpost) {
+            // POST に関連しないメソッドは除外
+            if ($action != "destroyBuckets") {
+                if ($id && method_exists($obj, 'getPost')) {
+                    $post = $obj->getPost($id, $action);
+                }
             }
         }
 
@@ -303,7 +309,7 @@ class UserPluginBase extends PluginBase
     /**
      * 記載されているメソッドすべての権限を有することをチェック
      *
-     * @return view 権限チェックの結果、エラーがあればエラー表示用HTML が返ってくる。
+     * @return view|null 権限チェックの結果、エラーがあればエラー表示用HTML が返ってくる。
      */
     private function checkFunctionAuthority($role_ckeck_table, $post = null)
     {
@@ -317,10 +323,12 @@ class UserPluginBase extends PluginBase
 //print_r($this->buckets);
                 // POST があれば、POST の登録者チェックを行う
                 if (empty($post)) {
-                    $ret = $this->can($function_authority, null, null, $this->buckets);
+                    // $ret = $this->can($function_authority, null, null, $this->buckets);
+                    $ret = $this->can($function_authority, null, $this->frame->plugin_name, $this->buckets, $this->frame);
                 } else {
 //print_r($post);
-                    $ret = $this->can($function_authority, $post, null, $this->buckets);
+                    // $ret = $this->can($function_authority, $post, null, $this->buckets);
+                    $ret = $this->can($function_authority, $post, $this->frame->plugin_name, $this->buckets, $this->frame);
                 }
 
                 // 権限チェック結果。値があれば、エラーメッセージ用HTML
@@ -692,11 +700,6 @@ class UserPluginBase extends PluginBase
         // Buckets の取得
         $buckets = $this->getBuckets($frame_id);
 
-        // Backet が取れないとおかしな操作をした可能性があるのでエラーにしておく。
-        if (empty($buckets)) {
-            return $this->view_error("error_inframe", "存在しないBucket");
-        }
-
         // buckets がまだない & 固定記事プラグインの場合
         if (empty($buckets) && $this->frame->plugin_name == 'contents') {
             $buckets = new Buckets;
@@ -708,6 +711,11 @@ class UserPluginBase extends PluginBase
             // Frame にbuckets_id を登録
             Frame::where('id', $frame_id)
                  ->update(['bucket_id' => $buckets->id]);
+        }
+
+        // Backet が取れないとおかしな操作をした可能性があるのでエラーにしておく。
+        if (empty($buckets)) {
+            return $this->view_error("error_inframe", "存在しないBucket");
         }
 
         // BucketsRoles の更新
@@ -1437,6 +1445,9 @@ class UserPluginBase extends PluginBase
      */
     protected function appendAuthWhereBase($query, $table_name)
     {
+        // 各条件でSQL を or 追記する場合は、クロージャで記載することで、元のSQL とAND 条件でつながる。
+        // クロージャなしで追記した場合、or は元の whereNull('calendar_posts.parent_id') を打ち消したりするので注意。
+
         if (empty($query)) {
             // 空なら何もしない
             return $query;
@@ -1453,19 +1464,22 @@ class UserPluginBase extends PluginBase
             //
             // 承認者(role_approval)権限 = Active ＋ 承認待ちの取得
             //
-            $query->Where($table_name . '.status', StatusType::active)
-                ->orWhere($table_name . '.status', StatusType::approval_pending);
+            $query->WhereIn($table_name . '.status', [StatusType::active, StatusType::approval_pending]);
+
         } elseif ($this->isCan('role_reporter')) {
             //
             // 編集者(role_reporter)権限 = Active ＋ 自分の全ステータス記事の取得
             //
             $query->where(function ($tmp_query) use ($table_name) {
                 $tmp_query->where($table_name . '.status', StatusType::active)
-                    ->orWhere($table_name . '.created_id', Auth::user()->id);
+                        ->orWhere($table_name . '.created_id', Auth::user()->id);
             });
         } else {
+            //
+            // 共通条件（Active）
             // 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）
             // 未ログイン
+            //
             $query->where($table_name . '.status', StatusType::active);
 
             // DBカラム posted_at(投稿日時) 存在するか
@@ -1474,7 +1488,6 @@ class UserPluginBase extends PluginBase
             }
         }
 
-        // var_dump($query->get());
         return $query;
     }
 

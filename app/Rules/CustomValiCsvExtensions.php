@@ -9,7 +9,7 @@ use Illuminate\Filesystem\Filesystem;
 /**
  * CSV用 拡張子バリデーション
  */
-class CustomVali_CsvExtensions implements Rule
+class CustomValiCsvExtensions implements Rule
 {
     protected $allow_extension = null;
 

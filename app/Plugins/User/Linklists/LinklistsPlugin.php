@@ -3,11 +3,9 @@
 namespace App\Plugins\User\Linklists;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-
-use DB;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
@@ -47,21 +45,22 @@ class LinklistsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['editView'];
-        $functions['post'] = ['saveView'];
+        $functions['get']  = [];
+        $functions['post'] = [];
         return $functions;
     }
 
     /**
-     *  権限定義
+     * 追加の権限定義（コアから呼び出す）
      */
     public function declareRole()
     {
         // 権限チェックテーブル
-        $role_ckeck_table = array();
-        $role_ckeck_table["editView"] = array('role_article');
-        $role_ckeck_table["saveView"] = array('role_article');
-        return $role_ckeck_table;
+        $role_check_table = [];
+        $role_check_table["edit"]        = ['frames.edit'];
+        $role_check_table["save"]        = ['frames.create'];
+        $role_check_table["delete"]      = ['frames.delete'];
+        return $role_check_table;
     }
 
     /**
@@ -78,14 +77,25 @@ class LinklistsPlugin extends UserPluginBase
      * POST取得関数（コアから呼び出す）
      * コアがPOSTチェックの際に呼び出す関数
      */
-    public function getPost($id)
+    public function getPost($id, $action = null)
     {
+        // データ存在チェックのために getPost を利用
+
+        if (is_null($action)) {
+            // プラグイン内からの呼び出しを想定。処理を通す。
+        } elseif (in_array($action, ['edit', 'save', 'delete'])) {
+            // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+        } else {
+            // それ以外のアクションは null で返す。
+            return null;
+        }
+
         // 一度読んでいれば、そのPOSTを再利用する。
         if (!empty($this->post)) {
             return $this->post;
         }
 
-        // POST を取得する。
+        // POST を取得する。（statusカラムなしのため、appendAuthWhereBase 使わない）
         $this->post = LinklistPost::firstOrNew(['id' => $id]);
         return $this->post;
     }
@@ -103,7 +113,7 @@ class LinklistsPlugin extends UserPluginBase
     /**
      * プラグインのバケツ取得関数
      */
-    public function getPluginBucket($bucket_id)
+    private function getPluginBucket($bucket_id)
     {
         // プラグインのメインデータを取得する。
         return Linklist::firstOrNew(['bucket_id' => $bucket_id]);
@@ -300,7 +310,7 @@ class LinklistsPlugin extends UserPluginBase
         }
 
         // POSTデータのモデル取得
-        $post = LinklistPost::firstOrNew(['id' => $post_id]);
+        $post = $this->getPost($post_id);
 
         // バケツから linklist_id 取得
         // bugfix: linklist_idはフレームではなく、表示しているバケツから取得する
@@ -475,17 +485,16 @@ class LinklistsPlugin extends UserPluginBase
      */
     public function destroyBuckets($request, $page_id, $frame_id, $linklist_id)
     {
+        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
+
         // プラグインバケツの取得
         $linklist = Linklist::find($linklist_id);
         if (empty($linklist)) {
             return;
         }
 
-        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
-        // see) https://readouble.com/laravel/5.5/ja/collections.html#method-pluck
-        //
         // POSTデータ削除
-        // LinklistPost::where('linklist_id', $linklist->id)->delete();
+        // see) https://readouble.com/laravel/5.5/ja/collections.html#method-pluck
         $linklist_post_ids = LinklistPost::where('linklist_id', $linklist->id)->pluck('id');
         LinklistPost::destroy($linklist_post_ids);
 
@@ -493,7 +502,6 @@ class LinklistsPlugin extends UserPluginBase
         Categories::destroyBucketsCategories($this->frame->plugin_name, $linklist->id);
 
         // FrameのバケツIDの更新
-        // Frame::where('id', $frame_id)->update(['bucket_id' => null]);
         Frame::where('bucket_id', $linklist->bucket_id)->update(['bucket_id' => null]);
 
         // delete: バケツ削除時に表示設定は消さない. 今後フレーム削除時にプラグイン側で追加処理ができるようになったら linklist_frame を削除する
@@ -502,7 +510,6 @@ class LinklistsPlugin extends UserPluginBase
         // $linklist_frame->delete();
 
         // バケツ削除
-        // Buckets::find($linklist->bucket_id)->delete();
         Buckets::destroy($linklist->bucket_id);
 
         // プラグインデータ削除

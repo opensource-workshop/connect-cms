@@ -4,10 +4,9 @@ namespace App\Plugins\User\Conventions;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-
-use DB;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
@@ -26,7 +25,7 @@ use App\Plugins\User\UserPluginBase;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category イベント管理・プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class ConventionsPlugin extends UserPluginBase
 {
@@ -46,21 +45,22 @@ class ConventionsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['editView'];
-        $functions['post'] = ['saveView', 'join', 'joinOff'];
+        $functions['get']  = [];
+        $functions['post'] = ['join', 'joinOff'];
         return $functions;
     }
 
     /**
-     *  権限定義
+     * 追加の権限定義（コアから呼び出す）
      */
     public function declareRole()
     {
         // 権限チェックテーブル
-        $role_ckeck_table = array();
-        $role_ckeck_table["editView"] = array('role_article');
-        $role_ckeck_table["saveView"] = array('role_article');
-        return $role_ckeck_table;
+        $role_check_table = [];
+        $role_check_table["edit"]        = ['frames.edit'];
+        $role_check_table["save"]        = ['frames.create'];
+        $role_check_table["delete"]      = ['frames.delete'];
+        return $role_check_table;
     }
 
     /**
@@ -77,14 +77,25 @@ class ConventionsPlugin extends UserPluginBase
      * POST取得関数（コアから呼び出す）
      * コアがPOSTチェックの際に呼び出す関数
      */
-    public function getPost($id)
+    public function getPost($id, $action = null)
     {
+        // データ存在チェックのために getPost を利用
+
+        if (is_null($action)) {
+            // プラグイン内からの呼び出しを想定。処理を通す。
+        } elseif (in_array($action, ['edit', 'save', 'delete'])) {
+            // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+        } else {
+            // それ以外のアクションは null で返す。
+            return null;
+        }
+
         // 一度読んでいれば、そのPOSTを再利用する。
         if (!empty($this->post)) {
             return $this->post;
         }
 
-        // POST を取得する。
+        // POST を取得する。（statusカラムなしのため、appendAuthWhereBase 使わない）
         $this->post = ConventionPost::firstOrNew(['id' => $id]);
         return $this->post;
     }
@@ -102,7 +113,7 @@ class ConventionsPlugin extends UserPluginBase
     /**
      * プラグインのバケツ取得関数
      */
-    public function getPluginBucket($bucket_id)
+    private function getPluginBucket($bucket_id)
     {
         // プラグインのメインデータを取得する。
         return Convention::firstOrNew(['bucket_id' => $bucket_id]);
@@ -124,7 +135,7 @@ class ConventionsPlugin extends UserPluginBase
                                    ->orderBy('created_at', 'asc');
 
         // 取得
-        return $posts_query->paginate($convention_frame->view_count);
+        return $posts_query->get();
     }
 
     /**
@@ -414,48 +425,46 @@ class ConventionsPlugin extends UserPluginBase
         return $this->editBuckets($request, $page_id, $frame_id);
     }
 
+    // delete: イベントの総コマ数は設定の トラック数 x コマ数 で決まるため、表示件数を使って絞るとまずいため、削除
     /**
      * フレーム表示設定画面の表示
      */
-    public function editView($request, $page_id, $frame_id)
-    {
-        // 表示テンプレートを呼び出す。
-        return $this->view('frame', [
-            // 表示中のバケツデータ
-            'convention'       => $this->getPluginBucket($this->getBucketId()),
-            'convention_frame' => $this->getPluginFrame($frame_id),
-        ]);
-    }
-
+    // public function editView($request, $page_id, $frame_id)
+    // {
+    //     // 表示テンプレートを呼び出す。
+    //     return $this->view('frame', [
+    //         // 表示中のバケツデータ
+    //         'convention'       => $this->getPluginBucket($this->getBucketId()),
+    //         'convention_frame' => $this->getPluginFrame($frame_id),
+    //     ]);
+    // }
+    //
     /**
      * フレーム表示設定の保存
      */
-    public function saveView($request, $page_id, $frame_id, $convention_id)
-    {
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'view_count' => ['nullable', 'numeric'],
-            'type'       => ['nullable', 'numeric'],
-        ]);
-        $validator->setAttributeNames([
-            'view_count' => '表示件数',
-            'type'       => '表示形式',
-        ]);
+    // public function saveView($request, $page_id, $frame_id, $convention_id)
+    // {
+    //     // 項目のエラーチェック
+    //     $validator = Validator::make($request->all(), [
+    //         'view_count' => ['nullable', 'numeric'],
+    //     ]);
+    //     $validator->setAttributeNames([
+    //         'view_count' => '表示件数',
+    //     ]);
 
-        // エラーがあった場合は入力画面に戻る。
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
+    //     // エラーがあった場合は入力画面に戻る。
+    //     if ($validator->fails()) {
+    //         return back()->withErrors($validator)->withInput();
+    //     }
 
-        // フレームごとの表示設定の更新
-        $convention_frame = ConventionFrame::updateOrCreate(
-            ['convention_id'   => $convention_id, 'frame_id' => $frame_id],
-            ['view_count' => $request->view_count,
-             'type'       => $request->type],
-        );
+    //     // フレームごとの表示設定の更新
+    //     $convention_frame = ConventionFrame::updateOrCreate(
+    //         ['convention_id'   => $convention_id, 'frame_id' => $frame_id],
+    //         ['view_count'      => $request->view_count],
+    //     );
 
-        return;
-    }
+    //     return;
+    // }
 
     /**
      * バケツ設定変更画面の表示

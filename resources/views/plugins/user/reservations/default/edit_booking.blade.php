@@ -83,10 +83,12 @@
         <div class="card-body">
 
             {{-- コンテンツ名 --}}
+            {{-- delete: 他プラグイン同様に、登録・編集画面にバケツ名は表示しない
             <div class="row">
                 <div class="col-md-3">コンテンツ名：</div>
                 <div class="col-md-9">{{ $reservation->reservation_name }}</div>
             </div>
+            --}}
             {{-- 施設名 --}}
             <div class="row">
                 <div class="col-md-3">施設名：</div>

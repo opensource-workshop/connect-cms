@@ -129,53 +129,45 @@ class LearningtasksPlugin extends UserPluginBase
     public function declareRole()
     {
         // 権限チェックテーブル
-        $role_ckeck_table = array();
+        $role_check_table = array();
 
         // プラグイン管理者
-        $role_ckeck_table["editMail"]         = array('role_arrangement');
-        $role_ckeck_table["saveMail"]         = array('role_arrangement');
+        $role_check_table["editMail"]         = array('role_arrangement');
+        $role_check_table["saveMail"]         = array('role_arrangement');
 
         // コンテンツ管理者（科目の編集から飛べる処理）
-        // $role_ckeck_table["editUsers"]        = array('role_article');
-        // $role_ckeck_table["editReport"]       = array('role_article');
-        // $role_ckeck_table["editExaminations"] = array('role_article');
-        // $role_ckeck_table["editEvaluate"]     = array('role_article');
-        // $role_ckeck_table["listGrade"]        = array('role_article');
+        $role_check_table["edit"]             = array('role_article_admin');
+        $role_check_table["editUsers"]        = array('role_article_admin');
+        $role_check_table["editReport"]       = array('role_article_admin');
+        $role_check_table["editExaminations"] = array('role_article_admin');
+        $role_check_table["editEvaluate"]     = array('role_article_admin');
+        $role_check_table["listGrade"]        = array('role_article_admin');
 
-        // $role_ckeck_table["saveUsers"]        = array('role_article');
-        // $role_ckeck_table["saveReport"]       = array('role_article');
-        // $role_ckeck_table["saveExaminations"] = array('role_article');
-        // $role_ckeck_table["saveEvaluate"]     = array('role_article');
-        // $role_ckeck_table["downloadGrade"]    = array('role_article');
-        $role_ckeck_table["editUsers"]        = array('role_article_admin');
-        $role_ckeck_table["editReport"]       = array('role_article_admin');
-        $role_ckeck_table["editExaminations"] = array('role_article_admin');
-        $role_ckeck_table["editEvaluate"]     = array('role_article_admin');
-        $role_ckeck_table["listGrade"]        = array('role_article_admin');
+        $role_check_table["save"]             = array('role_article_admin');
+        $role_check_table["saveUsers"]        = array('role_article_admin');
+        $role_check_table["saveReport"]       = array('role_article_admin');
+        $role_check_table["saveExaminations"] = array('role_article_admin');
+        $role_check_table["importExaminations"] = array('role_article_admin');
+        $role_check_table["uploadCsvExaminations"] = array('role_article_admin');
+        $role_check_table["downloadCsvFormatExaminations"] = array('role_article_admin');
+        $role_check_table["downloadCsvExaminations"] = array('role_article_admin');
 
-        $role_ckeck_table["saveUsers"]        = array('role_article_admin');
-        $role_ckeck_table["saveReport"]       = array('role_article_admin');
-        $role_ckeck_table["saveExaminations"] = array('role_article_admin');
-        $role_ckeck_table["importExaminations"] = array('role_article_admin');
-        $role_ckeck_table["uploadCsvExaminations"] = array('role_article_admin');
-        $role_ckeck_table["downloadCsvFormatExaminations"] = array('role_article_admin');
-        $role_ckeck_table["downloadCsvExaminations"] = array('role_article_admin');
+        $role_check_table["saveEvaluate"]     = array('role_article_admin');
+        $role_check_table["downloadGrade"]    = array('role_article_admin');
+        $role_check_table["delete"]           = array('role_article_admin');
+        $role_check_table["deleteStatus"]     = array('role_article_admin');
 
-        $role_ckeck_table["saveEvaluate"]     = array('role_article_admin');
-        $role_ckeck_table["downloadGrade"]    = array('role_article_admin');
-        $role_ckeck_table["deleteStatus"]     = array('role_article_admin');
-
-        $role_ckeck_table["switchUser"]       = array('role_guest');
-        $role_ckeck_table["switchUserUrl"]    = array('role_guest');
-        $role_ckeck_table["changeStatus1"]    = array('role_guest');
-        $role_ckeck_table["changeStatus2"]    = array('role_guest');
-        $role_ckeck_table["changeStatus3"]    = array('role_guest');
-        $role_ckeck_table["changeStatus4"]    = array('role_guest');
-        $role_ckeck_table["changeStatus5"]    = array('role_guest');
-        $role_ckeck_table["changeStatus6"]    = array('role_guest');
-        $role_ckeck_table["changeStatus7"]    = array('role_guest');
-        $role_ckeck_table["changeStatus8"]    = array('role_guest');
-        return $role_ckeck_table;
+        $role_check_table["switchUser"]       = array('role_guest');
+        $role_check_table["switchUserUrl"]    = array('role_guest');
+        $role_check_table["changeStatus1"]    = array('role_guest');
+        $role_check_table["changeStatus2"]    = array('role_guest');
+        $role_check_table["changeStatus3"]    = array('role_guest');
+        $role_check_table["changeStatus4"]    = array('role_guest');
+        $role_check_table["changeStatus5"]    = array('role_guest');
+        $role_check_table["changeStatus6"]    = array('role_guest');
+        $role_check_table["changeStatus7"]    = array('role_guest');
+        $role_check_table["changeStatus8"]    = array('role_guest');
+        return $role_check_table;
     }
 
     /**
@@ -194,13 +186,19 @@ class LearningtasksPlugin extends UserPluginBase
      */
     public function getPost($id, $action = null)
     {
+        // データ存在チェックのために getPost を利用
+
         // id がない場合は処理しない。
         if (empty($id)) {
             return null;
         }
 
-        // deleteCategories の場合は、Learningtasks_posts のオブジェクトではないので、nullで返す。
-        if ($action == 'deleteCategories') {
+        if (is_null($action)) {
+            // プラグイン内からの呼び出しを想定。処理を通す。
+        } elseif (in_array($action, ['edit', 'save', 'delete'])) {
+            // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+        } else {
+            // それ以外のアクションは null で返す。
             return null;
         }
 
@@ -213,8 +211,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 履歴の廃止
         //$arg_post = LearningtasksPosts::where('id', $id)->first();
 
-        // 指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。
-        // $this->post = LearningtasksPosts::
+        // POST取得
         $learningtasks_query = LearningtasksPosts::
             select(
                 'learningtasks_posts.*',
@@ -224,13 +221,11 @@ class LearningtasksPlugin extends UserPluginBase
                 'categories.category as category',
                 'plugin_categories.view_flag as category_view_flag'
             )
-            // bugfix: 論理削除を考慮
-            // ->join('learningtasks', 'learningtasks.id', '=', 'learningtasks_posts.learningtasks_id')
+            // 論理削除を考慮
             ->join('learningtasks', function ($join) {
                 $join->on('learningtasks.id', '=', 'learningtasks_posts.learningtasks_id')
                     ->whereNull('learningtasks.deleted_at');
-            })
-            ->where('learningtasks_posts.id', $id);
+            });
             // 履歴の廃止
             //->where('contents_id', $arg_post->contents_id)
             //->where(function ($query) {
@@ -243,7 +238,7 @@ class LearningtasksPlugin extends UserPluginBase
         $learningtasks_query = Categories::appendCategoriesLeftJoin($learningtasks_query, $this->frame->plugin_name, 'learningtasks_posts.categories_id', 'learningtasks.id');
 
         // 履歴最新を取得するために、idをdesc指定（履歴を廃止しても過去データのため必要かも）
-        $this->post = $learningtasks_query->orderBy('id', 'desc')->first();
+        $this->post = $learningtasks_query->orderBy('id', 'desc')->firstOrNew(['learningtasks_posts.id' => $id]);
 
         return $this->post;
     }
@@ -276,25 +271,6 @@ class LearningtasksPlugin extends UserPluginBase
         //return $frame;
     }
 
-    // /**
-    //  * 課題管理記事チェック設定
-    //  */
-    // private function makeValidator($request)
-    // {
-    //     // 項目のエラーチェック
-    //     $validator = Validator::make($request->all(), [
-    //         'post_title' => ['required'],
-    //         'posted_at'  => ['required', 'date_format:Y-m-d H:i'],
-    //         'post_text'  => ['required'],
-    //     ]);
-    //     $validator->setAttributeNames([
-    //         'post_title' => 'タイトル',
-    //         'posted_at'  => '投稿日時',
-    //         'post_text'  => '本文',
-    //     ]);
-    //     return $validator;
-    // }
-
     /**
      *  記事の取得権限に対する条件追加
      *  履歴の廃止
@@ -319,25 +295,6 @@ class LearningtasksPlugin extends UserPluginBase
     //
     //    return $query;
     //}
-
-    // /**
-    //  * 表示条件に対するソート条件追加
-    //  */
-    // private function appendOrder($query, $learningtasks_frame)
-    // {
-    //     if ($learningtasks_frame->sequence_conditions == 0) {
-    //         // 最新順
-    //         $query->orderBy('posted_at', 'desc');
-    //     } elseif ($learningtasks_frame->sequence_conditions == 1) {
-    //         // 投稿順
-    //         $query->orderBy('posted_at', 'asc');
-    //     } elseif ($learningtasks_frame->sequence_conditions == 2) {
-    //         // 指定順
-    //         $query->orderBy('display_sequence', 'asc');
-    //     }
-
-    //     return $query;
-    // }
 
     /**
      * 課題管理記事一覧取得
@@ -1111,7 +1068,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 記事取得
         $post = $this->getPost($post_id);
-        if (empty($post)) {
+        if (empty($post->id)) {
             return $this->view_error("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
         }
 
@@ -1175,7 +1132,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 記事取得
         $learningtasks_post = $this->getPost($learningtasks_posts_id);
-        if (empty($learningtasks_post)) {
+        if (empty($learningtasks_post->id)) {
             return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
@@ -1213,7 +1170,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 記事取得
         $learningtasks_posts = $this->getPost($post_id);
-        if (empty($learningtasks_posts)) {
+        if (empty($learningtasks_posts->id)) {
             return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
@@ -1332,7 +1289,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 記事取得
         $learningtasks_posts = $this->getPost($post_id);
-        if (empty($learningtasks_posts)) {
+        if (empty($learningtasks_posts->id)) {
             return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
@@ -1423,7 +1380,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $learningtasks_post = $this->getPost($post_id);
-        if (empty($learningtasks_post)) {
+        if (empty($learningtasks_post->id)) {
             return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
@@ -1516,7 +1473,7 @@ class LearningtasksPlugin extends UserPluginBase
     /**
      * 成績ダウンロード（管理者用）
      */
-    public function downloadGradeImpl($request, $page_id, $frame_id, $post_id)
+    private function downloadGradeImpl($request, $page_id, $frame_id, $post_id)
     {
         // 成績
         $users_statuses = LearningtasksUsersStatuses::
@@ -1565,7 +1522,6 @@ class LearningtasksPlugin extends UserPluginBase
     public function save($request, $page_id, $frame_id, $post_id = null)
     {
         // 項目のエラーチェック
-        // $validator = $this->makeValidator($request);
         $validate_value = [
             'post_title' => ['required', 'max:255'],
             'posted_at' => ['required', 'date_format:Y-m-d H:i'],
@@ -2301,13 +2257,11 @@ class LearningtasksPlugin extends UserPluginBase
         $tool = new LearningtasksTool($request, $page_id, $learningtask, $post, $frame_id);
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'learningtasks_edit_mail', [
+        return $this->view('learningtasks_edit_mail', [
             'learningtask'        => $learningtask,
-            'learningtasks_posts' => $post,
+            // 'learningtasks_posts' => $post,
             'tool'                => $tool,
-            ]
-        );
+        ]);
     }
 
     /**
@@ -2650,7 +2604,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         // 記事取得
         $learningtasks_post = $this->getPost($learningtasks_posts_id);
-        if (empty($learningtasks_post)) {
+        if (empty($learningtasks_post->id)) {
             return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 

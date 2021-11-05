@@ -13,6 +13,7 @@ use App\Models\User\Contents\Contents;
 
 use App\Plugins\User\UserPluginBase;
 
+use App\Enums\StatusType;
 use App\Rules\CustomValiWysiwygMax;
 
 /**
@@ -30,11 +31,10 @@ class ContentsPlugin extends UserPluginBase
 
     /* オブジェクト変数 */
 
-    // delete: どこからもセットしてない変数
     /**
-     * POSTデータ
+     * 変更時のPOSTデータ
      */
-    // public $post = null;
+    public $post = null;
 
     /* コアから呼び出す関数 */
 
@@ -58,8 +58,10 @@ class ContentsPlugin extends UserPluginBase
         // 標準権限以外で設定画面などから呼ばれる権限の定義
         // 標準権限は右記で定義 config/cc_role.php
         //
-        // 権限チェックテーブル (追加チェックなし)
+        // 権限チェックテーブル
         $role_check_table = [];
+        $role_check_table["show"]      = ['frames.delete'];
+        $role_check_table["delete"]    = ['frames.delete'];
         return $role_check_table;
     }
 
@@ -76,19 +78,43 @@ class ContentsPlugin extends UserPluginBase
 */
 
     /**
+     * POST取得関数（コアから呼び出す）
+     * コアがPOSTチェックの際に呼び出す関数
+     */
+    public function getPost($id, $action = null)
+    {
+        if (is_null($action)) {
+            // プラグイン内からの呼び出しを想定。処理を通す。
+
+        // } elseif (in_array($action, ['edit', 'update', 'temporarysave', 'delete'])) {
+        } elseif (in_array($action, ['update', 'temporarysave', 'delete'])) {
+            // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+            // editはURLにidを含めていないため、メソッド側で追加の権限チェックで対応
+        } else {
+            // それ以外のアクションは null で返す。
+            return null;
+        }
+
+        // 一度読んでいれば、そのPOSTを再利用する。
+        if (!empty($this->post)) {
+            return $this->post;
+        }
+
+        $this->post = Contents::
+            // 権限があるときは、アクティブ、一時保存、承認待ちを or で取得
+            where(function ($query) {
+                $query = $this->appendAuthWhere($query, 'contents');
+            })
+            ->firstOrNew(['id' => $id]);
+
+        return $this->post;
+    }
+
+    /**
      *  データ取得
      */
     private function getFrameContents($frame_id)
     {
-        // delete: どこからもセットしてない変数
-        // 一度読んでいれば、そのPOSTを再利用する。
-        // if (!empty($this->post)) {
-        //     return $this->post;
-        // }
-
-        // 認証されているユーザの取得
-        // $user = Auth::user();
-
         // buckets_id
         $buckets_id = null;
         if (!empty($this->buckets)) {
@@ -108,10 +134,10 @@ class ContentsPlugin extends UserPluginBase
                 $join->on('frames.bucket_id', '=', 'buckets.id');
             })
             ->where('buckets.id', $buckets_id)
-            ->where('contents.deleted_at', null)
+            // ->where('contents.deleted_at', null)
             // 権限があるときは、アクティブ、一時保存、承認待ちを or で取得
             ->where(function ($query) {
-                    $query = $this->appendAuthWhere($query);
+                $query = $this->appendAuthWhere($query, 'contents');
             })
             ->orderBy('id', 'desc')
             ->first();
@@ -155,9 +181,10 @@ class ContentsPlugin extends UserPluginBase
     }
 
     /**
-     *  記事の取得権限に対する条件追加
+     * 記事の取得権限に対する条件追加
+     * 固定記事は独自処理があるため、共通処理（appendAuthWhereBase）を使わない。
      */
-    private function appendAuthWhere($query)
+    private function appendAuthWhere($query, $table_name)
     {
         // コンテンツ管理者の場合、全記事の取得
         // bugfix: 固定記事のモデレータは 権限設定 で 投稿できる 権限を制御してるため、ここでは許可しない
@@ -165,38 +192,29 @@ class ContentsPlugin extends UserPluginBase
         if ($this->isCan('role_article_admin')) {
             // 全件取得のため、追加条件なしで戻る。
         } elseif ($this->isCan('role_approval')) {
-
-            // 承認権限の場合、Active ＋ 承認待ちの取得
-            $query->Where('status', '=', 0)
-                  ->orWhere('status', '=', 2);
+            //
+            // 承認者(role_approval)権限 = Active ＋ 承認待ちの取得
+            //
+            $query->WhereIn($table_name . '.status', [StatusType::active, StatusType::approval_pending]);
 
         } elseif ($this->buckets && $this->buckets->canPostUser(Auth::user())) {
-
+            //
             // モデレータ or 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
+            //
             // bugfix: 承認あり なら、自分の承認ありデータも見れる必要あり。
             // $query->Where('status', '=', 0)
-            $query->WhereIn('status', [0, 2])
-                ->orWhere('contents.created_id', '=', Auth::user()->id);
+            $query->where(function ($tmp_query) use ($table_name) {
+                $tmp_query->WhereIn($table_name . '.status', [StatusType::active, StatusType::approval_pending])
+                    ->orWhere($table_name . '.created_id', '=', Auth::user()->id);
+            });
 
         } else {
             // その他（ゲスト）
-            $query->where('status', 0);
+            $query->where($table_name . '.status', StatusType::active);
         }
 
         return $query;
     }
-
-    // move: UserPluginBaseに移動
-    // /**
-    //  *  要承認の判断
-    //  */
-    // protected function isApproval($frame_id)
-    // {
-    //     if (empty($this->buckets)) {
-    //         return false;
-    //     }
-    //     return $this->buckets->needApprovalUser(Auth::user());
-    // }
 
     /**
      *  検索用メソッド
@@ -445,6 +463,12 @@ class ContentsPlugin extends UserPluginBase
         // データ取得
         $contents = $this->getFrameContents($frame_id);
 
+        // 引数idを使ってないため、追加で権限チェック
+        $view_error = $this->can('posts.update', $contents, $this->frame->plugin_name, $this->buckets, $this->frame);
+        if ($view_error) {
+            return $view_error;
+        }
+
         // データがない場合
         $contents = $contents ?? new Contents();
 
@@ -461,8 +485,12 @@ class ContentsPlugin extends UserPluginBase
     {
         // 権限チェック
         // 固定記事プラグインの特別処理。削除のための表示であり、フレーム画面のため、個別に権限チェックする。
-        if ($this->can('frames.delete')) {
-            return $this->view_error(403);
+        // if ($this->can('frames.delete')) {
+        //     return $this->view_error(403);
+        // }
+        $view_error = $this->can('frames.delete');
+        if ($view_error) {
+            return $view_error;
         }
 
         // データ取得
@@ -501,10 +529,11 @@ class ContentsPlugin extends UserPluginBase
 
         // バケツがまだ登録されていなかったら登録する。
         if (empty($this->buckets)) {
-            $bucket_id = DB::table('buckets')->insertGetId([
+            $bucket = Buckets::create([
                 'bucket_name' => $request->bucket_name ?? '無題',
                 'plugin_name' => 'contents'
             ]);
+            $bucket_id = $bucket->id;
         } else {
             $bucket_id = $this->buckets['id'];
         }

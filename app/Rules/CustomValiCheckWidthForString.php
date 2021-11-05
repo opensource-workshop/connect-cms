@@ -3,11 +3,14 @@
 namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Support\Facades\App;
+
+use App\Enums\ConnectLocale;
 
 /**
  * 文字の幅数チェック
  */
-class CustomVali_CheckWidthForString implements Rule
+class CustomValiCheckWidthForString implements Rule
 {
     protected $attr;                // バリデーション対象の項目名（エラーメッセージに表示させる項目名）
     protected $target_digits;       // バリデーション対象の文字数
@@ -45,7 +48,7 @@ class CustomVali_CheckWidthForString implements Rule
      */
     public function message()
     {
-        return \App::getLocale() == \ConnectLocale::ja ?
+        return App::getLocale() == ConnectLocale::ja ?
             $this->attr . 'は全角' . floor($this->comparison_digits/2) . '文字（半角' . $this->comparison_digits . '文字）以内で入力してください。(半角換算した文字数：' . $this->target_digits . ')' :
             'Enter ' . $this->attr . ' within ' . floor($this->comparison_digits/2) . ' full-width (' . $this->comparison_digits . ' half-width) characters. (Number of half-width characters converted: ' . $this->target_digits . ')';
     }

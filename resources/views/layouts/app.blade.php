@@ -107,7 +107,7 @@
     <script src="{{asset('js/tempusdominus-bootstrap-4/tempusdominus-bootstrap-4.min.js')}}"></script>
 
     <!-- Connect-CMS Global CSS -->
-    <link href="{{ asset('css/connect.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/connect.css') }}?version={{ filemtime(public_path() . "/css/connect.css") }}" rel="stylesheet">
 
     <!-- Themes CSS（基本） -->
 @if (isset($themes['css']) && $themes['css'] != '')

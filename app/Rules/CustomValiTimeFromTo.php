@@ -4,10 +4,12 @@ namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
 
+use Illuminate\Support\Facades\Lang;
+
 /**
  * Carbonインスタンスの時刻比較
  */
-class CustomVali_TimeFromTo implements Rule
+class CustomValiTimeFromTo implements Rule
 {
     protected $carbon_time_from;
     protected $carbon_time_to;
@@ -42,6 +44,6 @@ class CustomVali_TimeFromTo implements Rule
      */
     public function message()
     {
-        return \Lang::get('messages.entered_time_is_invalid');
+        return Lang::get('messages.entered_time_is_invalid');
     }
 }

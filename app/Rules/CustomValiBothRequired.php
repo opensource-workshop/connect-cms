@@ -4,10 +4,12 @@ namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
 
+use Illuminate\Support\Facades\Lang;
+
 /**
  * 片方が入力されていたら両方必須
  */
-class CustomVali_BothRequired implements Rule
+class CustomValiBothRequired implements Rule
 {
     protected $param1;
     protected $param2;
@@ -32,9 +34,6 @@ class CustomVali_BothRequired implements Rule
      */
     public function passes($attribute, $value)
     {
-        $result;
-        $param1 = $this->param1;
-        $param2 = $this->param2;
         if ($this->param1 || $this->param2) {
             if ($this->param1 && $this->param2) {
                 // 両方、入力ありならTRUE
@@ -57,6 +56,6 @@ class CustomVali_BothRequired implements Rule
      */
     public function message()
     {
-        return \Lang::get('messages.both_required');
+        return Lang::get('messages.both_required');
     }
 }

@@ -4,10 +4,12 @@ namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
 
+use Illuminate\Support\Facades\Lang;
+
 /**
  * 同値チェック
  */
-class CustomVali_Confirmed implements Rule
+class CustomValiConfirmed implements Rule
 {
     protected $attr;                // バリデーション対象の項目名（エラーメッセージに表示させる項目名）
     protected $confirmed_value;     // 同値チェックするペアの値
@@ -42,6 +44,6 @@ class CustomVali_Confirmed implements Rule
      */
     public function message()
     {
-        return $this->attr . \Lang::get('messages.not_match_confirmation_value');
+        return $this->attr . Lang::get('messages.not_match_confirmation_value');
     }
 }

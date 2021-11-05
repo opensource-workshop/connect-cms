@@ -92,8 +92,12 @@ class BlogsPlugin extends UserPluginBase
      */
     public function getPost($id, $action = null)
     {
-        // deleteCategories の場合は、Blogs_posts のオブジェクトではないので、nullで返す。
-        if ($action == 'deleteCategories') {
+        if (is_null($action)) {
+            // プラグイン内からの呼び出しを想定。処理を通す。
+        } elseif (in_array($action, ['edit', 'save', 'temporarysave', 'delete'])) {
+            // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+        } else {
+            // それ以外のアクションは null で返す。
             return null;
         }
 
@@ -105,9 +109,11 @@ class BlogsPlugin extends UserPluginBase
         // データのグループ（contents_id）が欲しいため、指定されたID のPOST を読む
         $arg_post = BlogsPosts::where('id', $id)->first();
 
-        // 指定されたPOST がない場合は、不正な処理として空で返す。
+        // 指定されたPOST がない場合は、不正な処理として空オブジェクトを保持して同じSQLの再実行を防ぐ
         if (empty($arg_post)) {
-            return null;
+            // return null;
+            $this->post = new BlogsPosts();
+            return $this->post;
         }
 
         // 指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。
@@ -147,8 +153,10 @@ class BlogsPlugin extends UserPluginBase
         // いいねのleftJoin
         $blogs_query = Like::appendLikeLeftJoin($blogs_query, $this->frame->plugin_name, 'blogs_posts.contents_id', 'blogs_posts.blogs_id');
 
-        $this->post = $blogs_query->orderBy('id', 'desc')     // 履歴最新を取得するために、idをdesc指定
-            ->first();
+        $this->post = $blogs_query->orderBy('id', 'desc')->first();     // 履歴最新を取得するために、idをdesc指定
+
+        // firstOrNewの代わり
+        $this->post = $this->post ?? new BlogsPosts();
 
         // 続きを読むボタン名・続きを閉じるボタン名が空なら、初期値セットする
         if (empty($this->post->read_more_button)) {
@@ -643,7 +651,7 @@ WHERE status = 0
 
         // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $blogs_post = $this->getPost($blogs_posts_id);
-        if (empty($blogs_post)) {
+        if (empty($blogs_post->id)) {
             return $this->view_error("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
         }
 
@@ -740,7 +748,7 @@ WHERE status = 0
 
         // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $blogs_post = $this->getPost($blogs_posts_id);
-        if (empty($blogs_post)) {
+        if (empty($blogs_post->id)) {
             return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
@@ -788,7 +796,7 @@ WHERE status = 0
             $check_blogs_post = $this->getPost($blogs_posts_id);
 
             // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
-            if (empty($check_blogs_post) || $check_blogs_post->id != $old_blogs_post->id) {
+            if (empty($check_blogs_post->id) || $check_blogs_post->id != $old_blogs_post->id) {
                 return $this->view_error("403_inframe", null, 'saveのユーザー権限に応じたPOST ID チェック');
             }
         }
@@ -876,7 +884,7 @@ WHERE status = 0
             $check_blogs_post = $this->getPost($id);
 
             // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
-            if (empty($check_blogs_post) || $check_blogs_post->id != $id) {
+            if (empty($check_blogs_post->id) || $check_blogs_post->id != $id) {
                 return $this->view_error("403_inframe", null, 'temporarysaveのユーザー権限に応じたPOST ID チェック');
             }
         }
@@ -912,6 +920,12 @@ WHERE status = 0
     {
         // id がある場合、データを削除
         if ($blogs_posts_id) {
+            // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
+            $check_blogs_post = $this->getPost($blogs_posts_id);
+            if (empty($check_blogs_post->id)) {
+                return $this->view_error("403_inframe", null, 'deleteのユーザー権限に応じたPOST ID チェック');
+            }
+
             // 同じcontents_id のデータを削除するため、一旦、対象データを取得
             $post = BlogsPosts::where('id', $blogs_posts_id)->first();
 
@@ -937,7 +951,7 @@ WHERE status = 0
         $check_blogs_post = $this->getPost($id);
 
         // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
-        if (empty($check_blogs_post) || $check_blogs_post->id != $id) {
+        if (empty($check_blogs_post->id) || $check_blogs_post->id != $id) {
             return $this->view_error("403_inframe", null, 'approvalのユーザー権限に応じたPOST ID チェック');
         }
 
@@ -1059,29 +1073,21 @@ WHERE status = 0
         $validator->setAttributeNames($validator_attributes);
 
         // エラーがあった場合は入力画面に戻る。
-        $message = null;
         if ($validator->fails()) {
-            // if (empty($blogs_id)) {
-            //     $create_flag = true;
-            //     return $this->createBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $validator->errors());
-            // } else {
-            //     $create_flag = false;
-            //     return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message, $validator->errors());
-            // }
             return back()->withErrors($validator)->withInput();
         }
 
         // 画面から渡ってくるblogs_id が空ならバケツとブログを新規登録
         if (empty($request->blogs_id)) {
             // バケツの登録
-            $bucket_id = DB::table('buckets')->insertGetId([
+            $bucket = Buckets::create([
                 'bucket_name' => $request->blog_name,
                 'plugin_name' => 'blogs'
             ]);
 
             // ブログデータ新規オブジェクト
             $blogs = new Blogs();
-            $blogs->bucket_id = $bucket_id;
+            $blogs->bucket_id = $bucket->id;
 
             // Frame のBuckets を見て、Buckets が設定されていなければ、作成したものに紐づける。
             // Frame にBuckets が設定されていない ＞ 新規のフレーム＆ブログ作成
@@ -1090,7 +1096,7 @@ WHERE status = 0
             $frame = Frame::where('id', $frame_id)->first();
             if (empty($frame->bucket_id)) {
                 // FrameのバケツIDの更新
-                $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
+                $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket->id]);
             }
 
             $request->flash_message = 'ブログ設定を追加しました。';
@@ -1099,6 +1105,9 @@ WHERE status = 0
             // blogs_id があれば、ブログを更新
             // ブログデータ取得
             $blogs = Blogs::where('id', $request->blogs_id)->first();
+
+            $bucket = Buckets::where('id', $blogs->bucket_id)
+                ->update(['bucket_name' => $request->blog_name, 'plugin_name' => 'blogs']);
 
             $request->flash_message = 'ブログ設定を変更しました。';
         }

@@ -49,7 +49,7 @@ class CabinetsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['index', 'download'];
+        $functions['get']  = ['index', 'download', 'changeDirectory'];
         $functions['post'] = ['makeFolder', 'upload', 'deleteContents'];
         return $functions;
     }
@@ -60,11 +60,11 @@ class CabinetsPlugin extends UserPluginBase
     public function declareRole()
     {
         // 権限チェックテーブル
-        $role_ckeck_table = array();
-        $role_ckeck_table["upload"] = array('posts.create');
-        $role_ckeck_table["makeFolder"] = array('posts.create');
-        $role_ckeck_table["deleteContents"] = array('posts.delete');
-        return $role_ckeck_table;
+        $role_check_table = array();
+        $role_check_table["upload"] = array('posts.create');
+        $role_check_table["makeFolder"] = array('posts.create');
+        $role_check_table["deleteContents"] = array('posts.delete');
+        return $role_check_table;
     }
 
     /**
@@ -80,7 +80,7 @@ class CabinetsPlugin extends UserPluginBase
     /**
      * プラグインのバケツ取得関数
      */
-    public function getPluginBucket($bucket_id)
+    private function getPluginBucket($bucket_id)
     {
         // プラグインのメインデータを取得する。
         return Cabinet::firstOrNew(['bucket_id' => $bucket_id]);
@@ -92,7 +92,7 @@ class CabinetsPlugin extends UserPluginBase
      *  データ初期表示関数
      *  コアがページ表示の際に呼び出す関数
      */
-    public function index($request, $page_id, $frame_id)
+    public function index($request, $page_id, $frame_id, $parent_id = null)
     {
         // バケツ未設定の場合はバケツ空テンプレートを呼び出す
         if (!isset($this->frame) || !$this->frame->bucket_id) {
@@ -102,7 +102,7 @@ class CabinetsPlugin extends UserPluginBase
 
         $cabinet = $this->getPluginBucket($this->frame->bucket_id);
 
-        $parent = $this->fetchCabinetContent($this->getParentId($request), $cabinet->id);
+        $parent = $this->fetchCabinetContent($parent_id, $cabinet->id);
 
         // 表示テンプレートを呼び出す。
         return $this->view('index', [
@@ -147,22 +147,11 @@ class CabinetsPlugin extends UserPluginBase
     }
 
     /**
-     * 親のキャビネットコンテンツIDを取得する。
-     *
-     * @param \Illuminate\Http\Request $request リクエスト
-     * @return int キャビネットコンテンツID
+     * フォルダを移動する
      */
-    private function getParentId($request)
+    public function changeDirectory($request, $page_id, $frame_id, $parent_id) 
     {
-        $parent_id = '';
-        // エラーのとき、セッションからparent_idを取得
-        if (!empty(session('parent_id'))) {
-            $parent_id = session('parent_id');
-        } else {
-            $parent_id = $request->parent_id;
-        }
-
-        return $parent_id;
+        return $this->index($request, $page_id, $frame_id, $parent_id);
     }
 
     /**
@@ -250,7 +239,7 @@ class CabinetsPlugin extends UserPluginBase
     {
         $validator = $this->getMakeFoldertValidator($request);
         if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput()->with('parent_id', $request->parent_id);
+            return back()->withErrors($validator)->withInput();
         }
 
         $cabinet = $this->getPluginBucket($this->frame->bucket_id);
@@ -259,12 +248,12 @@ class CabinetsPlugin extends UserPluginBase
         $parent->children()->create([
             'cabinet_id' => $cabinet->id,
             'upload_id' => null,
-            'name' => $request->folder_name,
+            'name' => $request->folder_name[$frame_id],
             'is_folder' => CabinetContent::is_folder_on,
         ]);
 
         // 登録後はリダイレクトして初期表示。
-        return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/index/" . $page_id . "/" . $frame_id . "/" . $this->frame->bucket_id . '?parent_id=' . $parent->id . "#frame-" . $frame_id ]);
+        return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/changeDirectory/" . $page_id . "/" . $frame_id  . "/" . $parent->id . "/#frame-" . $frame_id ]);
     }
 
     /**
@@ -279,19 +268,19 @@ class CabinetsPlugin extends UserPluginBase
         $cabinet = $this->getPluginBucket($this->frame->bucket_id);
         $validator = $this->getUploadValidator($request, $cabinet);
         if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput()->with('parent_id', $request->parent_id);
+            return back()->withErrors($validator)->withInput();
         }
 
         $parent = $this->fetchCabinetContent($request->parent_id);
-
-        if ($this->shouldOverwriteFile($parent, $request->file('upload_file')->getClientOriginalName())) {
-            $this->overwriteFile($request, $page_id, $parent);
+        $upload_file = $request->file('upload_file')[$frame_id];
+        if ($this->shouldOverwriteFile($parent, $upload_file->getClientOriginalName())) {
+            $this->overwriteFile($upload_file, $page_id, $parent);
         } else {
-            $this->writeFile($request, $page_id, $parent);
+            $this->writeFile($upload_file, $page_id, $parent);
         }
 
         // 登録後はリダイレクトして初期表示。
-        return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/index/" . $page_id . "/" . $frame_id . "/" . $this->frame->bucket_id . '?parent_id=' . $parent->id . "#frame-" . $frame_id ]);
+        return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/changeDirectory/" . $page_id . "/" . $frame_id . "/" . $parent->id . "/#frame-" . $frame_id ]);
     }
 
     /**
@@ -312,18 +301,18 @@ class CabinetsPlugin extends UserPluginBase
     /**
      * ファイル新規保存処理
      *
-     * @param \Illuminate\Http\Request $request リクエスト
+     * @param \Illuminate\Http\UploadedFile $file file
      * @param int $page_id ページID
      * @param int $frame_id フレームID
      */
-    private function writeFile($request, $page_id, $parent)
+    private function writeFile($file, $page_id, $parent)
     {
         // uploads テーブルに情報追加、ファイルのid を取得する
         $upload = Uploads::create([
-            'client_original_name' => $request->file('upload_file')->getClientOriginalName(),
-            'mimetype'             => $request->file('upload_file')->getClientMimeType(),
-            'extension'            => $request->file('upload_file')->getClientOriginalExtension(),
-            'size'                 => $request->file('upload_file')->getSize(),
+            'client_original_name' => $file->getClientOriginalName(),
+            'mimetype'             => $file->getClientMimeType(),
+            'extension'            => $file->getClientOriginalExtension(),
+            'size'                 => $file->getSize(),
             'plugin_name'          => 'cabinets',
             'page_id'              => $page_id,
             'temporary_flag'       => 0,
@@ -331,13 +320,12 @@ class CabinetsPlugin extends UserPluginBase
         ]);
 
         // ファイル保存
-        $request->file('upload_file')
-            ->storeAs($this->getDirectory($upload->id), $this->getContentsFileName($upload));
+        $file->storeAs($this->getDirectory($upload->id), $this->getContentsFileName($upload));
 
         $parent->children()->create([
             'cabinet_id' => $upload->id,
             'upload_id' => $upload->id,
-            'name' => $request->file('upload_file')->getClientOriginalName(),
+            'name' => $file->getClientOriginalName(),
             'is_folder' => CabinetContent::is_folder_off,
         ]);
     }
@@ -345,23 +333,23 @@ class CabinetsPlugin extends UserPluginBase
     /**
      * ファイル上書き保存処理
      *
-     * @param \Illuminate\Http\Request $request リクエスト
+     * @param \Illuminate\Http\UploadedFile $file file
      * @param int $page_id ページID
      * @param int $frame_id フレームID
      */
-    private function overwriteFile($request, $page_id, $parent)
+    private function overwriteFile($file, $page_id, $parent)
     {
         $content = CabinetContent::where('parent_id', $parent->id)
-            ->where('name', $request->file('upload_file')->getClientOriginalName())
+            ->where('name', $file->getClientOriginalName())
             ->where('is_folder', CabinetContent::is_folder_off)
             ->first();
 
         // uploads テーブルに情報追加、ファイルのid を取得する
         Uploads::find($content->upload_id)->update([
-            'client_original_name' => $request->file('upload_file')->getClientOriginalName(),
-            'mimetype'             => $request->file('upload_file')->getClientMimeType(),
-            'extension'            => $request->file('upload_file')->getClientOriginalExtension(),
-            'size'                 => $request->file('upload_file')->getSize(),
+            'client_original_name' => $file->getClientOriginalName(),
+            'mimetype'             => $file->getClientMimeType(),
+            'extension'            => $file->getClientOriginalExtension(),
+            'size'                 => $file->getSize(),
             'plugin_name'          => 'cabinets',
             'page_id'              => $page_id,
             'temporary_flag'       => 0,
@@ -369,8 +357,7 @@ class CabinetsPlugin extends UserPluginBase
         ]);
 
         // ファイル保存
-        $request->file('upload_file')
-            ->storeAs($this->getDirectory($content->upload_id), $this->getContentsFileName($content->upload));
+        $file->storeAs($this->getDirectory($content->upload_id), $this->getContentsFileName($content->upload));
 
         // 画面表示される更新日を更新する
         $content->touch();
@@ -387,7 +374,7 @@ class CabinetsPlugin extends UserPluginBase
     {
         $validator = $this->getContentsControlValidator($request);
         if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput()->with('parent_id', $request->parent_id);
+            return back()->withErrors($validator)->withInput();
         }
 
         foreach ($request->cabinet_content_id as $cabinet_content_id) {
@@ -400,7 +387,7 @@ class CabinetsPlugin extends UserPluginBase
         }
 
         // 登録後はリダイレクトして初期表示。
-        return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/index/" . $page_id . "/" . $frame_id . "/" . $this->frame->bucket_id . '?parent_id=' . $request->parent_id . "#frame-" . $frame_id ]);
+        return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/changeDirectory/" . $page_id . "/" . $frame_id . "/" . $request->parent_id . "/#frame-" . $frame_id ]);
     }
 
     /**
@@ -720,7 +707,7 @@ class CabinetsPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'folder_name' => [
+            'folder_name.*' => [
                 'required',
                 'max:255',
                 // 重複チェック（同じ階層で同じ名前はNG）
@@ -730,7 +717,7 @@ class CabinetsPlugin extends UserPluginBase
             ],
         ]);
         $validator->setAttributeNames([
-            'folder_name' => 'フォルダ名',
+            'folder_name.*' => 'フォルダ名',
         ]);
 
         return $validator;
@@ -746,17 +733,17 @@ class CabinetsPlugin extends UserPluginBase
     private function getUploadValidator($request, $cabinet)
     {
         // ファイルチェック
-        $rules['upload_file'] = [
+        $rules['upload_file.*'] = [
             'required',
         ];
         if ($cabinet->upload_max_size !== UploadMaxSize::infinity) {
-            $rules['upload_file'][] = 'max:' . $cabinet->upload_max_size;
+            $rules['upload_file.*'][] = 'max:' . $cabinet->upload_max_size;
         }
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $rules);
         $validator->setAttributeNames([
-            'upload_file' => 'ファイル',
+            'upload_file.*' => 'ファイル',
         ]);
 
         return $validator;

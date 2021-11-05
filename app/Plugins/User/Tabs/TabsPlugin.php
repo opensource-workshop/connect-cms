@@ -5,7 +5,6 @@ namespace App\Plugins\User\Tabs;
 use Illuminate\Support\Facades\Log;
 
 use App\Models\Common\Frame;
-use App\Models\Common\Page;
 use App\Models\User\Tabs\Tabs;
 
 use App\Plugins\User\UserPluginBase;
@@ -18,7 +17,7 @@ use App\Plugins\User\UserPluginBase;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category タブ・プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class TabsPlugin extends UserPluginBase
 {
@@ -54,9 +53,11 @@ class TabsPlugin extends UserPluginBase
         // 標準権限は右記で定義 config/cc_role.php
         //
         // 権限チェックテーブル
-        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
-        $role_ckeck_table = array();
-        return $role_ckeck_table;
+        $role_check_table = [];
+        $role_check_table["select"]        = ['role_arrangement'];
+        $role_check_table["saveSelect"]    = ['role_arrangement'];
+
+        return $role_check_table;
     }
 
     /**
@@ -96,12 +97,6 @@ class TabsPlugin extends UserPluginBase
      */
     public function select($request, $page_id, $frame_id)
     {
-        // 権限チェック
-        // ページ選択プラグインの特別処理。個別に権限チェックする。
-        if ($this->can('role_arrangement')) {
-            return $this->view_error(403);
-        }
-
         // 自分自身の設定
         $tabs = Tabs::where('frame_id', $frame_id)->first();
 
@@ -127,12 +122,6 @@ class TabsPlugin extends UserPluginBase
      */
     public function saveSelect($request, $page_id, $frame_id)
     {
-        // 権限チェック
-        // ページ選択プラグインの特別処理。個別に権限チェックする。
-        if ($this->can('role_arrangement')) {
-            return $this->view_error(403);
-        }
-
         // タブデータ作成 or 更新
         Tabs::updateOrCreate(
             ['frame_id' => $frame_id],

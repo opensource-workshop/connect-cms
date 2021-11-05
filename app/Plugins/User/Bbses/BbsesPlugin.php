@@ -65,11 +65,11 @@ class BbsesPlugin extends UserPluginBase
     public function declareRole()
     {
         // 権限チェックテーブル
-        $role_ckeck_table = array();
-        $role_ckeck_table["editView"] = array('role_arrangement');
-        $role_ckeck_table["saveView"] = array('role_arrangement');
-        $role_ckeck_table["reply"]    = array('role_reporter');
-        return $role_ckeck_table;
+        $role_check_table = [];
+        $role_check_table["editView"] = array('role_arrangement');
+        $role_check_table["saveView"] = array('role_arrangement');
+        $role_check_table["reply"]    = array('posts.create');
+        return $role_check_table;
     }
 
     /**
@@ -86,8 +86,17 @@ class BbsesPlugin extends UserPluginBase
      * POST取得関数（コアから呼び出す）
      * コアがPOSTチェックの際に呼び出す関数
      */
-    public function getPost($id)
+    public function getPost($id, $action = null)
     {
+        if (is_null($action)) {
+            // プラグイン内からの呼び出しを想定。処理を通す。
+        } elseif (in_array($action, ['edit', 'save', 'delete'])) {
+            // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+        } else {
+            // それ以外のアクションは null で返す。
+            return null;
+        }
+
         // 一度読んでいれば、そのPOSTを再利用する。
         if (!empty($this->post)) {
             return $this->post;
@@ -128,7 +137,7 @@ class BbsesPlugin extends UserPluginBase
     /**
      * プラグインのバケツ取得関数
      */
-    public function getPluginBucket($bucket_id)
+    private function getPluginBucket($bucket_id)
     {
         // プラグインのメインデータを取得する。
         return Bbs::firstOrNew(['bucket_id' => $bucket_id]);
@@ -139,49 +148,7 @@ class BbsesPlugin extends UserPluginBase
      */
     protected function appendAuthWhere($query, $table_name)
     {
-        // 各条件でSQL を or 追記する場合は、クロージャで記載することで、元のSQL とAND 条件でつながる。
-        // クロージャなしで追記した場合、or は元の whereNull('bbs_posts.parent_id') を打ち消したりするので注意。
-
-        if (empty($query)) {
-            // 空なら何もしない
-            return $query;
-        }
-
-        // モデレータ(記事修正, role_article)権限以上（role_article, role_article_admin）
-        if ($this->isCan('role_article')) {
-            // 全件取得のため、追加条件なしで戻る。
-            return $query;
-        }
-
-        // 認証状況により、絞り込み条件を変える。
-        if (!Auth::check()) {
-            //
-            // 共通条件（Active）
-            // 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）
-            // 未ログイン
-            //
-            $query->where($table_name . '.status', '=', StatusType::active);
-        } elseif ($this->isCan('role_approval')) {
-            //
-            // 承認者(role_approval)権限 = Active ＋ 承認待ちの取得
-            //
-            $query->where(function ($auth_query) use ($table_name) {
-                $auth_query->orWhere($table_name . '.status', '=', StatusType::active);
-                $auth_query->orWhere($table_name . '.status', '=', StatusType::approval_pending);
-            });
-        } elseif ($this->isCan('role_reporter')) {
-            //
-            // 編集者(role_reporter)権限 = Active ＋ 自分の全ステータス記事の取得
-            // 一時保存の記事も、自分の記事を取得することで含まれる。
-            // 承認待ちの記事であっても、自分の記事なので、修正可能。
-            //
-            $query->where(function ($auth_query) use ($table_name) {
-                $auth_query->orWhere($table_name . '.status', '=', StatusType::active);
-                $auth_query->orWhere($table_name . '.created_id', '=', Auth::user()->id);
-            });
-        }
-
-        return $query;
+        return $this->appendAuthWhereBase($query, $table_name);
     }
 
     /**
@@ -368,7 +335,7 @@ class BbsesPlugin extends UserPluginBase
     /**
      * 関連投稿の取得
      */
-    public function getThreadPost($plugin_frame, $post)
+    private function getThreadPost($plugin_frame, $post)
     {
         // 変数準備
         $thread_root_post = null;

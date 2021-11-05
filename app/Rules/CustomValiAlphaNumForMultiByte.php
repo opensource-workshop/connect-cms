@@ -4,7 +4,7 @@ namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
 
-class CustomVali_AlphaNumForMultiByte implements Rule
+class CustomValiAlphaNumForMultiByte implements Rule
 {
     /**
      * Create a new rule instance.

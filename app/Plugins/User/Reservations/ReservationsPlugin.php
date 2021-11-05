@@ -5,13 +5,11 @@ namespace App\Plugins\User\Reservations;
 // use Carbon\Carbon;
 use App\Models\Common\ConnectCarbon;
 
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
-
 use App\Models\User\Reservations\Reservation;
 use App\Models\User\Reservations\ReservationsFacility;
 use App\Models\User\Reservations\ReservationsColumn;
@@ -56,8 +54,6 @@ class ReservationsPlugin extends UserPluginBase
             'week',
             'month',
             'editFacilities',
-            'editColumns',
-            'editColumnDetail',
             'showBooking',
             'editBooking',
         ];
@@ -65,12 +61,6 @@ class ReservationsPlugin extends UserPluginBase
             'addFacility',
             'updateFacility',
             'updateFacilitySequence',
-            'addColumn',
-            'updateColumn',
-            'updateColumnSequence',
-            'addSelect',
-            'updateSelect',
-            'updateSelectSequence',
             'editBooking',
             'saveBooking',
             'approvalBooking',
@@ -84,28 +74,15 @@ class ReservationsPlugin extends UserPluginBase
      */
     public function declareRole()
     {
-        // 標準権限以外で設定画面などから呼ばれる権限の定義
-        // 標準権限は右記で定義 config/cc_role.php
-        //
         // 権限チェックテーブル
         $role_check_table = [];
         $role_check_table["addFacility"]            = ['buckets.addColumn'];
         $role_check_table["editFacilities"]         = ['buckets.editColumn'];
-        $role_check_table["updateFacility"]         = ['buckets.editColumn'];
-        $role_check_table["updateFacilitySequence"] = ['buckets.editColumn'];
+        $role_check_table["updateFacility"]         = ['buckets.saveColumn'];
+        $role_check_table["updateFacilitySequence"] = ['buckets.upColumnSequence', 'buckets.downColumnSequence'];
 
-        $role_check_table["addColumn"]              = ['buckets.addColumn'];
-        $role_check_table["editColumns"]            = ['buckets.editColumn'];
-        $role_check_table["editColumnDetail"]       = ['buckets.editColumn'];
-        $role_check_table["updateColumn"]           = ['buckets.editColumn'];
-        $role_check_table["updateColumnSequence"]   = ['buckets.editColumn'];
-
-        $role_check_table["addSelect"]              = ['buckets.addColumn'];
-        $role_check_table["updateSelect"]           = ['buckets.editColumn'];
-        $role_check_table["updateSelectSequence"]   = ['buckets.editColumn'];
-
-        // posts.create, posts.delete等は AppServiceProviderのGateでチェックされる。自分の登録データかは、$post->created_id でチェックされるため、DBカラムに created_id 必要。
-        $role_check_table["editBooking"]            = ['posts.create'];
+        // posts.create, posts.deleteの自分の登録データかはDBカラムに created_id 必要。
+        $role_check_table["editBooking"]            = ['posts.create', 'posts.update'];
         $role_check_table["saveBooking"]            = ['posts.create', 'posts.update'];
         $role_check_table["approvalBooking"]        = ['posts.approval'];
         $role_check_table["destroyBooking"]         = ['posts.delete'];
@@ -137,8 +114,17 @@ class ReservationsPlugin extends UserPluginBase
      * POST取得関数（コアから呼び出す）
      * コアがPOSTチェックの際に呼び出す関数
      */
-    public function getPost($id)
+    public function getPost($id, $action = null)
     {
+        if (is_null($action)) {
+            // プラグイン内からの呼び出しを想定。処理を通す。
+        } elseif (in_array($action, ['editBooking', 'saveBooking', 'destroyBooking'])) {
+            // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+        } else {
+            // それ以外のアクションは null で返す。
+            return null;
+        }
+
         // 一度読んでいれば、そのPOSTを再利用する。
         if (!empty($this->post)) {
             return $this->post;
@@ -149,12 +135,11 @@ class ReservationsPlugin extends UserPluginBase
             ->join('reservations_facilities', function ($join) {
                 $join->on('reservations_inputs.facility_id', '=', 'reservations_facilities.id');
             })
-            ->where('reservations_inputs.id', $id)
             ->where(function ($query) {
                 // 権限によって表示する記事を絞る
                 $query = $this->appendAuthWhereBase($query, 'reservations_inputs');
             })
-            ->first();
+            ->firstOrNew(['reservations_inputs.id' => $id]);
 
         return $this->post;
     }
@@ -206,15 +191,12 @@ class ReservationsPlugin extends UserPluginBase
     /* 画面アクション関数 */
 
     /**
-     *  予約追加処理
+     * 予約追加処理
+     * [TODO] 引数 $target_ymd はメソッドで上書きされて使ってない
+     * [TODO] 今後 $request->booking_id を 引数に追加対応する
      */
     public function saveBooking($request, $page_id, $frame_id, $target_ymd)
     {
-        // 認証チェック
-        if (!Auth::check()) {
-            return $this->view_error("403_inframe", null, 'ログインしてから操作してください。');
-        }
-
         $target_ymd = $request->target_date;
         // URLパラメータチェック
         $year = substr($target_ymd, 0, 4);
@@ -322,11 +304,6 @@ class ReservationsPlugin extends UserPluginBase
             $request->flush();
         }
 
-        // 認証チェック
-        if (!Auth::check()) {
-            return $this->view_error("403_inframe", null, 'ログインしてから操作してください。');
-        }
-
         $booking = null;
 
         // if ($request->booking_id) {
@@ -413,7 +390,7 @@ class ReservationsPlugin extends UserPluginBase
         // 登録データ行の取得
         $inputs = $this->getReservationsInput($input_id);
         // データがあることを確認
-        if (empty($inputs)) {
+        if (empty($inputs->id)) {
             return;
         }
 
@@ -476,7 +453,7 @@ class ReservationsPlugin extends UserPluginBase
         // 登録データ行の取得
         $reservations_inputs = $this->getReservationsInput($input_id);
         // データがあることを確認
-        if (empty($reservations_inputs)) {
+        if (empty($reservations_inputs->id)) {
             return;
         }
 
@@ -1038,7 +1015,7 @@ class ReservationsPlugin extends UserPluginBase
     /**
      * 予約項目の設定画面の表示
      */
-    public function editColumns($request, $page_id, $frame_id, $reservations_id = null, $message = null, $errors = null)
+    public function editColumn($request, $page_id, $frame_id, $reservations_id = null, $message = null, $errors = null)
     {
         if ($errors) {
             // エラーあり：入力値をフラッシュデータとしてセッションへ保存
@@ -1198,7 +1175,7 @@ class ReservationsPlugin extends UserPluginBase
         if ($validator->fails()) {
             // エラーと共に編集画面を呼び出す
             $errors = $validator->errors();
-            return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, null, $errors);
+            return $this->editColumn($request, $page_id, $frame_id, $request->reservations_id, null, $errors);
         }
 
         // 新規登録時の表示順を設定
@@ -1216,7 +1193,7 @@ class ReservationsPlugin extends UserPluginBase
         $message = '予約項目【 '. $request->column_name .' 】を追加しました。';
 
         // 編集画面を呼び出す
-        return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, $message, $errors);
+        return $this->editColumn($request, $page_id, $frame_id, $request->reservations_id, $message, $errors);
     }
 
     /**
@@ -1334,7 +1311,7 @@ class ReservationsPlugin extends UserPluginBase
         if ($validator->fails()) {
             // エラーと共に編集画面を呼び出す
             $errors = $validator->errors();
-            return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, null, $errors);
+            return $this->editColumn($request, $page_id, $frame_id, $request->reservations_id, null, $errors);
         }
 
         // 予約項目の更新処理
@@ -1347,7 +1324,7 @@ class ReservationsPlugin extends UserPluginBase
         $message = '予約項目【 '. $request->column_name .' 】を更新しました。';
 
         // 編集画面を呼び出す
-        return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, $message, $errors);
+        return $this->editColumn($request, $page_id, $frame_id, $request->reservations_id, $message, $errors);
     }
 
     /**
@@ -1411,7 +1388,7 @@ class ReservationsPlugin extends UserPluginBase
         $message = '予約項目【 '. $target_column->column_name .' 】の表示順を更新しました。';
 
         // 編集画面を呼び出す
-        return $this->editColumns($request, $page_id, $frame_id, $request->reservations_id, $message, null);
+        return $this->editColumn($request, $page_id, $frame_id, $request->reservations_id, $message, null);
     }
 
     /**

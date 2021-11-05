@@ -84,8 +84,12 @@ class FaqsPlugin extends UserPluginBase
     public function getPost($id, $action = null)
     {
 
-        // deleteCategories の場合は、Faqs_posts のオブジェクトではないので、nullで返す。
-        if ($action == 'deleteCategories') {
+        if (is_null($action)) {
+            // プラグイン内からの呼び出しを想定。処理を通す。
+        } elseif (in_array($action, ['edit', 'save', 'temporarysave', 'delete'])) {
+            // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+        } else {
+            // それ以外のアクションは null で返す。
             return null;
         }
 
@@ -96,6 +100,12 @@ class FaqsPlugin extends UserPluginBase
 
         // データのグループ（contents_id）が欲しいため、指定されたID のPOST を読む
         $arg_post = FaqsPosts::where('id', $id)->first();
+
+        // 指定されたPOST がない場合は、不正な処理として空オブジェクトを保持して同じSQLの再実行を防ぐ
+        if (empty($arg_post)) {
+            $this->post = new FaqsPosts();
+            return $this->post;
+        }
 
         // 指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。
         // $this->post = FaqsPosts::
@@ -118,6 +128,9 @@ class FaqsPlugin extends UserPluginBase
         $faq_query = Categories::appendCategoriesLeftJoin($faq_query, $this->frame->plugin_name, 'faqs_posts.categories_id', 'faqs_posts.faqs_id');
 
         $this->post = $faq_query->orderBy('faqs_posts.id', 'desc')->first();
+
+        // firstOrNewの代わり
+        $this->post = $this->post ?? new FaqsPosts();
 
         return $this->post;
     }
@@ -163,23 +176,7 @@ class FaqsPlugin extends UserPluginBase
      */
     private function appendAuthWhere($query)
     {
-        if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
-            // 記事修正権限、コンテンツ管理者の場合、全件取得のため、追加条件なしで戻る。
-        } elseif ($this->isCan('role_approval')) {
-            // 承認権限の場合、Active ＋ 承認待ちの取得
-            $query->Where('status', '=', 0)
-                  ->orWhere('status', '=', 2);
-        } elseif ($this->isCan('role_reporter')) {
-            // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
-            $query->Where('status', '=', 0)
-                  ->orWhere('faqs_posts.created_id', '=', Auth::user()->id);
-        } else {
-            // その他（ゲスト）
-            $query->where('status', 0);
-            $query->where('faqs_posts.posted_at', '<=', Carbon::now());
-        }
-
-        return $query;
+        return $this->appendAuthWhereBase($query, 'faqs_posts');
     }
 
     // delete: 使ってないprivateメソッド
@@ -488,7 +485,7 @@ class FaqsPlugin extends UserPluginBase
 
         // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $faqs_post = $this->getPost($faqs_posts_id);
-        if (empty($faqs_post)) {
+        if (empty($faqs_post->id)) {
             return $this->view_error("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
         }
 
@@ -544,7 +541,7 @@ class FaqsPlugin extends UserPluginBase
 
         // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $faqs_post = $this->getPost($faqs_posts_id);
-        if (empty($faqs_post)) {
+        if (empty($faqs_post->id)) {
             return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
@@ -599,7 +596,7 @@ class FaqsPlugin extends UserPluginBase
             $check_faqs_post = $this->getPost($faqs_posts_id);
 
             // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
-            if (empty($check_faqs_post) || $check_faqs_post->id != $old_faqs_post->id) {
+            if (empty($check_faqs_post->id) || $check_faqs_post->id != $old_faqs_post->id) {
                 return $this->view_error("403_inframe", null, 'saveのユーザー権限に応じたPOST ID チェック');
             }
         }
@@ -704,7 +701,7 @@ class FaqsPlugin extends UserPluginBase
             $check_faqs_post = $this->getPost($id);
 
             // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
-            if (empty($check_faqs_post) || $check_faqs_post->id != $id) {
+            if (empty($check_faqs_post->id) || $check_faqs_post->id != $id) {
                 return $this->view_error("403_inframe", null, 'temporarysaveのユーザー権限に応じたPOST ID チェック');
             }
         }
@@ -765,7 +762,7 @@ class FaqsPlugin extends UserPluginBase
         $check_faqs_post = $this->getPost($id);
 
         // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
-        if (empty($check_faqs_post) || $check_faqs_post->id != $id) {
+        if (empty($check_faqs_post->id) || $check_faqs_post->id != $id) {
             return $this->view_error("403_inframe", null, 'approvalのユーザー権限に応じたPOST ID チェック');
         }
 

@@ -7,11 +7,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
-use DB;
-
-use App\Models\Common\Buckets;
-use App\Models\Common\Frame;
-use App\Models\Common\Page;
 use App\Models\User\Codestudies\Codestudies;
 
 use App\Plugins\User\UserPluginBase;
@@ -30,9 +25,9 @@ class CodestudiesPlugin extends UserPluginBase
     /* オブジェクト変数 */
 
     /**
-     * 変更時のPOSTデータ
+     * POST チェックに使用する getPost() 関数を使うか
      */
-    public $post = null;
+    public $use_getpost = false;
 
     /**
      *  実行関数チェック
@@ -58,17 +53,13 @@ class CodestudiesPlugin extends UserPluginBase
      */
     public function declareRole()
     {
-        // 標準権限以外で設定画面などから呼ばれる権限の定義
-        // 標準権限は右記で定義 config/cc_role.php
-        //
         // 権限チェックテーブル
-        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
-        $role_ckeck_table = array();
-        $role_ckeck_table["editcode"]   = array('role_reporter');
-        $role_ckeck_table["savecode"]   = array('role_reporter');
-        $role_ckeck_table["run"]        = array('role_reporter');
-        $role_ckeck_table["deletecode"] = array('role_reporter');
-        return $role_ckeck_table;
+        $role_check_table = array();
+        $role_check_table["editcode"]   = array('role_reporter');
+        $role_check_table["savecode"]   = array('role_reporter');
+        $role_check_table["run"]        = array('role_reporter');
+        $role_check_table["deletecode"] = array('role_reporter');
+        return $role_check_table;
     }
 
     /**
@@ -93,21 +84,21 @@ class CodestudiesPlugin extends UserPluginBase
     }
 
     /**
-     *  POST取得関数（コアから呼び出す）
-     *  コアがPOSTチェックの際に呼び出す関数
+     * コード取得
      */
-    public function getPost($id)
+    private function getCodestudy($id)
     {
-
-        // 一度読んでいれば、そのPOSTを再利用する。
-        if (!empty($this->post)) {
-            return $this->post;
+        if (!Auth::check()) {
+            // ユーザーは未ログイン
+            return null;
         }
 
         // コード取得
-        $this->post = Codestudies::where('id', $id)->first();
+        $post = Codestudies::where('id', $id)
+            ->where('created_id', Auth::user()->id)
+            ->first();
 
-        return $this->post;
+        return $post;
     }
 
     /* 画面アクション関数 */
@@ -174,12 +165,11 @@ class CodestudiesPlugin extends UserPluginBase
         $codestudies = Codestudies::where('created_id', $user->id)->get();
 
         // コード取得
-        $codestudy = $this->getPost($codestudy_id);
-
-        // if (empty($codestudy)) {
-        //     $codestudy = new Codestudies();
-        // }
-
+        $codestudy = $this->getCodestudy($codestudy_id);
+        if (empty($codestudy)) {
+            // $codestudy = new Codestudies();
+            return $this->view_error("403_inframe", null, 'データ存在チェック');
+        }
 
         // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
         return $this->view(
@@ -225,6 +215,13 @@ class CodestudiesPlugin extends UserPluginBase
      */
     public function savecode($request, $page_id, $frame_id, $codestudy_id)
     {
+        // 更新時
+        if ($codestudy_id) {
+            $check_codestudy = $this->getCodestudy($codestudy_id);
+            if (empty($check_codestudy)) {
+                return $this->view_error("403_inframe", null, 'データ存在チェック');
+            }
+        }
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
@@ -314,6 +311,14 @@ class CodestudiesPlugin extends UserPluginBase
      */
     public function run($request, $page_id, $frame_id, $codestudy_id)
     {
+        // 更新時
+        if ($codestudy_id) {
+            $check_codestudy = $this->getCodestudy($codestudy_id);
+            if (empty($check_codestudy)) {
+                return $this->view_error("403_inframe", null, 'データ存在チェック');
+            }
+        }
+
         // 権限チェック（run 関数は標準チェックにないので、独自チェック）
         //if ($this->can('posts.update', $this->getPost($codestudy_id))) {
         //    return $this->view_error(403);
@@ -419,6 +424,11 @@ class CodestudiesPlugin extends UserPluginBase
     {
         // id がある場合、データを削除
         if ($codestudy_id) {
+            $check_codestudy = $this->getCodestudy($codestudy_id);
+            if (empty($check_codestudy)) {
+                return $this->view_error("403_inframe", null, 'データ存在チェック');
+            }
+
             // データを削除する。
             Codestudies::where('id', $codestudy_id)->delete();
         }

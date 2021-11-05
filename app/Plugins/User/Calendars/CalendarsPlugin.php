@@ -4,11 +4,11 @@ namespace App\Plugins\User\Calendars;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 //use Carbon\Carbon;
-use DB;
 
 use App\Enums\StatusType;
 
@@ -65,9 +65,9 @@ class CalendarsPlugin extends UserPluginBase
      */
     public function declareRole()
     {
-        // 権限チェックテーブル
-        $role_ckeck_table = array();
-        return $role_ckeck_table;
+        // 権限チェックテーブル (追加チェックなし)
+        $role_check_table = [];
+        return $role_check_table;
     }
 
     /**
@@ -84,15 +84,29 @@ class CalendarsPlugin extends UserPluginBase
      * POST取得関数（コアから呼び出す）
      * コアがPOSTチェックの際に呼び出す関数
      */
-    public function getPost($id)
+    public function getPost($id, $action = null)
     {
+        if (is_null($action)) {
+            // プラグイン内からの呼び出しを想定。処理を通す。
+        } elseif (in_array($action, ['edit', 'save', 'delete'])) {
+            // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+        } else {
+            // それ以外のアクションは null で返す。
+            return null;
+        }
+
         // 一度読んでいれば、そのPOSTを再利用する。
         if (!empty($this->post)) {
             return $this->post;
         }
 
         // POST を取得する。
-        $this->post = CalendarPost::firstOrNew(['id' => $id]);
+        $this->post = CalendarPost::
+            where(function ($query) {
+                $query = $this->appendAuthWhereBase($query, 'calendar_posts');
+            })
+            ->firstOrNew(['id' => $id]);
+
         return $this->post;
     }
 
@@ -109,60 +123,10 @@ class CalendarsPlugin extends UserPluginBase
     /**
      * プラグインのバケツ取得関数
      */
-    public function getPluginBucket($bucket_id)
+    private function getPluginBucket($bucket_id)
     {
         // プラグインのメインデータを取得する。
         return Calendar::firstOrNew(['bucket_id' => $bucket_id]);
-    }
-
-    /**
-     *  データ取得時の権限条件の付与
-     */
-    protected function appendAuthWhere($query, $table_name)
-    {
-        // 各条件でSQL を or 追記する場合は、クロージャで記載することで、元のSQL とAND 条件でつながる。
-        // クロージャなしで追記した場合、or は元の whereNull('calendar_posts.parent_id') を打ち消したりするので注意。
-
-        if (empty($query)) {
-            // 空なら何もしない
-            return $query;
-        }
-
-        // モデレータ(記事修正, role_article)権限以上（role_article, role_article_admin）
-        if ($this->isCan('role_article')) {
-            // 全件取得のため、追加条件なしで戻る。
-            return $query;
-        }
-
-        // 認証状況により、絞り込み条件を変える。
-        if (!Auth::check()) {
-            //
-            // 共通条件（Active）
-            // 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）
-            // 未ログイン
-            //
-            $query->where($table_name . '.status', '=', StatusType::active);
-        } elseif ($this->isCan('role_approval')) {
-            //
-            // 承認者(role_approval)権限 = Active ＋ 承認待ちの取得
-            //
-            $query->where(function ($auth_query) use ($table_name) {
-                $auth_query->orWhere($table_name . '.status', '=', StatusType::active);
-                $auth_query->orWhere($table_name . '.status', '=', StatusType::approval_pending);
-            });
-        } elseif ($this->isCan('role_reporter')) {
-            //
-            // 編集者(role_reporter)権限 = Active ＋ 自分の全ステータス記事の取得
-            // 一時保存の記事も、自分の記事を取得することで含まれる。
-            // 承認待ちの記事であっても、自分の記事なので、修正可能。
-            //
-            $query->where(function ($auth_query) use ($table_name) {
-                $auth_query->orWhere($table_name . '.status', '=', StatusType::active);
-                $auth_query->orWhere($table_name . '.created_id', '=', Auth::user()->id);
-            });
-        }
-
-        return $query;
     }
 
     /**
@@ -177,11 +141,10 @@ class CalendarsPlugin extends UserPluginBase
                                           ->where('calendars.bucket_id', '=', $this->frame->bucket_id);
                                    })
                                    ->where('calendar_posts.start_date', '<=', $to_date)
-                                   ->where('calendar_posts.end_date', '>=', $from_date)
-                                   ->whereNull('calendar_posts.deleted_at');
+                                   ->where('calendar_posts.end_date', '>=', $from_date);
 
         // 権限によって表示する記事を絞る
-        $posts_query = $this->appendAuthWhere($posts_query, 'calendar_posts');
+        $posts_query = $this->appendAuthWhereBase($posts_query, 'calendar_posts');
 
         // 取得
         return $posts_query->get();
@@ -359,7 +322,7 @@ class CalendarsPlugin extends UserPluginBase
     public function show($request, $page_id, $frame_id, $post_id)
     {
         // プラグインのフレームデータ
-        $plugin_frame = $this->getPluginFrame($frame_id);
+        // $plugin_frame = $this->getPluginFrame($frame_id);
 
         // 記事取得
         $post = $this->getPost($post_id);
@@ -386,23 +349,6 @@ class CalendarsPlugin extends UserPluginBase
         // 変更画面を呼び出す。
         return $this->view('edit', [
             'post' => $post,
-        ]);
-    }
-
-    /**
-     * 記事返信画面
-     */
-    public function reply($request, $page_id, $frame_id, $post_id)
-    {
-        // 記事取得
-        $post = $this->getPost($post_id);
-
-        // 変更画面を呼び出す。
-        return $this->view('edit', [
-            'post'        => new CalendarPost(),
-            'parent_post' => $post,
-            'reply'       => $request->get('reply'),
-            'reply_flag'  => true,
         ]);
     }
 
@@ -466,13 +412,13 @@ class CalendarsPlugin extends UserPluginBase
         // }
 
         // 承認の要否確認とステータス処理
-        if ($request->status == "1") {
-            $post->status = 1;  // 一時保存
+        if ($request->status == StatusType::temporary) {
+            $post->status = StatusType::temporary;  // 一時保存
         // } elseif ($this->buckets->needApprovalUser(Auth::user())) {
         } elseif ($this->isApproval()) {
-            $post->status = 2;  // 承認待ち
+            $post->status = StatusType::approval_pending;  // 承認待ち
         } else {
-            $post->status = 0;  // 公開
+            $post->status = StatusType::active;  // 公開
         }
 
         // 保存
@@ -491,13 +437,13 @@ class CalendarsPlugin extends UserPluginBase
         $post = $this->getPost($post_id);
 
         // データがあることを確認
-        if (empty($post)) {
+        if (empty($post->id)) {
             return;
         }
 
         // 更新されたら、行レコードの updated_at を更新したいので、update()
         $post->updated_at = now();
-        $post->status = 0;  // 公開
+        $post->status = StatusType::active;  // 公開
         $post->update();
 
         // 登録後は画面側の指定により、リダイレクトして表示画面を開く。
