@@ -73,12 +73,14 @@
 
             {{-- 本文 --}}
             @if (FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::post_detail))
+            <div>
                 @if (FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::post_detail_length) == 0 ||
                      mb_strlen(strip_tags($whatsnew->post_detail)) <= FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::post_detail_length))
                     {{ strip_tags($whatsnew->post_detail) }}
                 @else
                     {{ mb_substr(strip_tags($whatsnew->post_detail), 0, FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::post_detail_length)) }}...
                 @endif
+            </div>
             @endif
         </div>
         @endif
@@ -115,8 +117,13 @@
             {{-- 本文、サムネイル --}}
             <div v-if="post_detail == '1' || thumbnail == '1'" class="pb-2 mt-1">
                 {{-- サムネイル --}}
-                <div v-if="thumbnail == '1'" class="p-0 text-right">
-                        <img src="@{{ whatsnews.first_image_path }}" class="float-right pb-1" style="">
+                <div v-if="thumbnail == '1' && whatsnews.first_image_path" class="p-0 text-right">
+                    <img v-if="thumbnail_size == 0 || thumbnail_size == ''" v-bind:src="whatsnews.first_image_path" class="float-right pb-1" style="max-width: 200px; max-height: 200px;">
+                    <img v-else v-bind:src="whatsnews.first_image_path" class="float-right pb-1" v-bind:style="thumbnail_style">
+                </div>
+                {{-- 本文 --}}
+                <div v-if="post_detail == '1'">
+                    @{{ whatsnews.post_detail_strip_tags }}
                 </div>
             </div>
         </article>

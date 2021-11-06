@@ -42,7 +42,7 @@
                             id="{{ "post_detail_${key}" }}"
                             name="post_detail"
                             class="custom-control-input"
-                            {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::post_detail) == $key ? 'checked' : '' }}
+                            {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::post_detail, 0) == $key ? 'checked' : '' }}
                         >
                         <label class="custom-control-label" for="{{ "post_detail_${key}" }}">
                             {{ $value }}
@@ -76,7 +76,7 @@
                             id="{{ "thumbnail_${key}" }}"
                             name="thumbnail"
                             class="custom-control-input"
-                            {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail) == $key ? 'checked' : '' }}
+                            {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail, 0) == $key ? 'checked' : '' }}
                         >
                         <label class="custom-control-label" for="{{ "thumbnail_${key}" }}">
                             {{ $value }}
@@ -110,7 +110,7 @@
                             id="{{ "border_${key}" }}"
                             name="border"
                             class="custom-control-input"
-                            {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::border) == $key ? 'checked' : '' }}
+                            {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::border, 0) == $key ? 'checked' : '' }}
                         >
                         <label class="custom-control-label" for="{{ "border_${key}" }}">
                             {{ $value }}

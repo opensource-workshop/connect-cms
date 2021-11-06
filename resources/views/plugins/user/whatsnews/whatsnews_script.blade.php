@@ -19,17 +19,40 @@
                 view_posted_name: {{ $whatsnews_frame->view_posted_name }},
                 limit: {{ $whatsnews_frame->read_more_fetch_count }},
                 offset: {{ $whatsnews->count() }}, // 何件目から取得するか（＝現時点の取得件数）※初期値はサーバから返された一覧件数
-                post_detail: @json($frame_configs->where('name', 'post_detail')->first()->value),
-                thumbnail: @json($frame_configs->where('name', 'thumbnail')->first()->value),
-                thumbnail_size: @json($frame_configs->where('name', 'thumbnail_size')->first()->value),
-                border: @json($frame_configs->where('name', 'border')->first()->value)
+                @if (is_null($frame_configs->where('name', 'post_detail_length')->first()))
+                    post_detail_length: '',
+                @else
+                    post_detail_length: {{$frame_configs->where('name', 'post_detail_length')->first()->value}},
+                @endif
+                @if (is_null($frame_configs->where('name', 'post_detail')->first()))
+                    post_detail: '',
+                @else
+                    post_detail: {{$frame_configs->where('name', 'post_detail')->first()->value}},
+                @endif
+                @if (is_null($frame_configs->where('name', 'thumbnail')->first()))
+                    thumbnail: '',
+                @else
+                    thumbnail: {{$frame_configs->where('name', 'thumbnail')->first()->value}},
+                @endif
+                @if (is_null($frame_configs->where('name', 'thumbnail_size')->first()))
+                    thumbnail_size: '',
+                    thumbnail_style: 'max-width: 200px; max-height: 200px',
+                @else
+                    thumbnail_size: {{$frame_configs->where('name', 'thumbnail_size')->first()->value}},
+                    thumbnail_style: 'max-width: {{$frame_configs->where("name", 'thumbnail_size')->first()->value}}px; max-height: {{$frame_configs->where("name", 'thumbnail_size')->first()->value}}px;',
+                @endif
+                @if (is_null($frame_configs->where('name', 'border')->first()))
+                    border: '',
+                @else
+                    border: {{$frame_configs->where('name', 'border')->first()->value}},
+                @endif
             }
         },
         methods: {
             searchWhatsnewses: function () {
                 let self = this;
                 // 非同期通信で追加の一覧を取得
-                axios.get("{{url('/')}}/json/whatsnews/indexJson/{{$page->id}}/{{$frame_id}}/?limit=" + this.limit + "&offset=" + this.offset)
+                axios.get("{{url('/')}}/json/whatsnews/indexJson/{{$page->id}}/{{$frame_id}}/?limit=" + this.limit + "&offset=" + this.offset + "&post_detail_length=" + this.post_detail_length)
                     .then(function(res){
                         // foreach内ではthisでvueインスタンスのwhatsnewsesが参照できない為、tmp_arrに一時的に代入
                         tmp_arr = self.whatsnewses;

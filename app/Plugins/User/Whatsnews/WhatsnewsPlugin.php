@@ -258,6 +258,22 @@ class WhatsnewsPlugin extends UserPluginBase
             $whatsnews = $whatsnews->where('posted_at', '>=', date('Y-m-d H:i:s', strtotime("- " . $whatsnews_frame->days . " day")));
         }
 
+        // 記事詳細から、最初の画像を抜き出して設定する。
+        $whatsnews = $this->addWhatsnewsValue($whatsnews);
+
+        // 一旦オブジェクト変数へ。（Singleton のため。フレーム表示確認でコアが使用する）
+        $this->whatsnews_results = array($whatsnews, $link_pattern, $link_base);
+
+        return $this->whatsnews_results;
+    }
+
+    /**
+     * 記事詳細から、最初の画像を抜き出して設定する。
+     * 記事詳細に、追加情報を設定する。
+     */
+//    private function addFirstImage($whatsnews)
+    private function addWhatsnewsValue($whatsnews, $post_detail_length = null)
+    {
         // 記事詳細から、最初の画像を抜き出し
         $pattern_img = '/<img.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
         $pattern_alt = '/(alt)=("[^"]*")/i';
@@ -277,12 +293,18 @@ class WhatsnewsPlugin extends UserPluginBase
                 $whatsnew->first_image_path = null;
                 $whatsnew->first_image_alt = null;
             }
+            // タグを取り除き、指定に応じて文字数制限した本文
+            if ($post_detail_length) {
+                $whatsnew->post_detail_strip_tags = mb_substr(strip_tags($whatsnew->post_detail), 0, $post_detail_length);
+                if (mb_strlen(strip_tags($whatsnew->post_detail)) > $post_detail_length) {
+                    $whatsnew->post_detail_strip_tags = $whatsnew->post_detail_strip_tags . '...';
+                }
+            } else {
+                $whatsnew->post_detail_strip_tags = strip_tags($whatsnew->post_detail);
+            }
         }
 
-        // 一旦オブジェクト変数へ。（Singleton のため。フレーム表示確認でコアが使用する）
-        $this->whatsnews_results = array($whatsnews, $link_pattern, $link_base);
-
-        return $this->whatsnews_results;
+        return $whatsnews;
     }
 
     private function buildQueryGetWhatsnews($whatsnews_frame, $union_sqls)
@@ -388,6 +410,9 @@ class WhatsnewsPlugin extends UserPluginBase
         }
         // データ抽出
         $whatsnewses = $whatsnews_query->get();
+
+        // 記事詳細から、最初の画像を抜き出して設定する。
+        $whatsnewses = $this->addWhatsnewsValue($whatsnewses, $request->post_detail_length);
 
         // 整形して返却
         return json_encode(json_decode($whatsnewses), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);

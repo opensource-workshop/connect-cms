@@ -20,7 +20,8 @@
     @foreach($whatsnews as $whatsnew)
         {{-- 登録日時、カテゴリ --}}
         @if ($whatsnews_frame->view_posted_at)
-        <dt>
+        {{-- 表示設定の記事間の罫線を確認（ただし、投稿日を表示しない場合は、次の項目で罫線を表示） --}}
+        <dt class="@if (!$loop->first && FrameConfig::getConfigValue($frame_configs, WhatsnewFrameConfig::border))border-top @endif">
             {{(new Carbon($whatsnew->posted_at))->format('Y/m/d')}}
             @if($whatsnew->category)
                 <span class="badge cc_category_{{$whatsnew->classname}}">{{$whatsnew->category}}</span>
@@ -28,7 +29,8 @@
         </dt>
         @endif
         {{-- タイトル＋リンク --}}
-        <dd>
+        {{-- 投稿日を表示しない場合は、ここで表示設定の記事間の罫線を確認 --}}
+        <dd class="@if (!$whatsnews_frame->view_posted_at && !$loop->first && FrameConfig::getConfigValue($frame_configs, WhatsnewFrameConfig::border))border-top @endif">
             @if ($link_pattern[$whatsnew->plugin_name] == 'show_page_frame_post')
             <a href="{{url('/')}}{{$link_base[$whatsnew->plugin_name]}}/{{$whatsnew->page_id}}/{{$whatsnew->frame_id}}/{{$whatsnew->post_id}}#frame-{{$whatsnew->frame_id}}">
                 @if ($whatsnew->post_title)
@@ -40,13 +42,25 @@
             @endif
         </dd>
 
+        {{-- 本文 --}}
+        @if (FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::post_detail))
+        <div>
+            @if (FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::post_detail_length) == 0 ||
+                 mb_strlen(strip_tags($whatsnew->post_detail)) <= FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::post_detail_length))
+                {{ strip_tags($whatsnew->post_detail) }}
+            @else
+                {{ mb_substr(strip_tags($whatsnew->post_detail), 0, FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::post_detail_length)) }}...
+            @endif
+        </div>
+        @endif
+
         {{-- サムネイル (サムネイル表示がon ＆ 記事中にサムネイルがある場合に表示) --}}
         @if (FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail) && $whatsnew->first_image_path)
         <dd>
-            @if (empty(FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_width)))
+            @if (empty(FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size)))
                 <img src="{{$whatsnew->first_image_path}}" style="width: 200px;">
             @else
-                <img src="{{$whatsnew->first_image_path}}" style="width:{{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_width) }}px;">
+                <img src="{{$whatsnew->first_image_path}}" style="width:{{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}px;">
             @endif
         </dd>
         @endif
@@ -61,16 +75,25 @@
     {{-- 「もっと見る」ボタン押下時、非同期で新着一覧をレンダリング ※templateタグはタグとして出力されないタグです。 --}}
     <template v-for="whatsnews in whatsnewses">
         {{-- 登録日時、カテゴリ --}}
-        <dt v-if="view_posted_at == 1">
+        <dt v-if="view_posted_at == 1" v-bind:class="{ 'border-top': border == '1' }">
             @{{ moment(whatsnews.posted_at).format('YYYY/MM/DD') }}
             <span v-if="whatsnews.category != null && whatsnews.category != ''" :class="'badge cc_category_' + whatsnews.classname">@{{ whatsnews.category }}</span>
         </dt>
         {{-- タイトル＋リンク --}}
-        <dd v-if="link_pattern[whatsnews.plugin_name] == 'show_page_frame_post'">
+        <dd v-if="link_pattern[whatsnews.plugin_name] == 'show_page_frame_post'" v-bind:class="{ 'border-top': border == '1' && view_posted_at != 1 }">
             <a :href="url + link_base[whatsnews.plugin_name] + '/' + whatsnews.page_id + '/' + whatsnews.frame_id + '/' + whatsnews.post_id + '#frame-' + whatsnews.frame_id">
                 <template v-if="whatsnews.post_title == null || whatsnews.post_title == ''">（無題）</template>
                 <template v-else>@{{ whatsnews.post_title }}</template>
             </a>
+        </dd>
+        {{-- 本文 --}}
+        <dd v-if="post_detail == '1'">
+            @{{ whatsnews.post_detail_strip_tags }}
+        </dd>
+        {{-- サムネイル (サムネイル表示がon ＆ 記事中にサムネイルがある場合に表示) --}}
+        <dd v-if="post_detail == '1' && whatsnews.first_image_path">
+            <img v-if="thumbnail_size == 0 || thumbnail_size == ''" v-bind:src="whatsnews.first_image_path" style="max-width: 200px; max-height: 200px;">
+            <img v-else v-bind:src="whatsnews.first_image_path" v-bind:style="thumbnail_style">
         </dd>
         {{-- 投稿者 --}}
         <dd v-if="view_posted_name == 1">
