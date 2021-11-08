@@ -25,6 +25,15 @@ use App\Plugins\User\UserPluginBase;
  */
 class MenusPlugin extends UserPluginBase
 {
+    /* オブジェクト変数 */
+
+    /**
+     * POST チェックに使用する getPost() 関数を使うか
+     */
+    public $use_getpost = false;
+
+    /* コアから呼び出す関数 */
+
     /**
      * 編集画面の最初のタブ
      *
@@ -62,6 +71,8 @@ class MenusPlugin extends UserPluginBase
 
         return $role_check_table;
     }
+
+    /* 画面アクション関数 */
 
     /**
      * ページデータ取得関数
