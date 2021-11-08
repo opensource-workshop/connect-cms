@@ -65,9 +65,9 @@ class OpeningcalendarsPlugin extends UserPluginBase
         //
         // 権限チェックテーブル
         $role_check_table = [];
-        $role_check_table["listPatterns"]        = ['role_arrangement'];
-        $role_check_table["savePatterns"]        = ['role_arrangement'];
-        $role_check_table["deletePatterns"]      = ['role_arrangement'];
+        $role_check_table["listPatterns"]        = ['frames.edit'];
+        $role_check_table["savePatterns"]        = ['frames.create'];
+        $role_check_table["deletePatterns"]      = ['frames.delete'];
         $role_check_table["editYearschedule"]    = ['role_article'];
         $role_check_table["saveYearschedule"]    = ['role_article'];
 
