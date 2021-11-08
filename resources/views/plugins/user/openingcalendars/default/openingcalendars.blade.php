@@ -223,7 +223,7 @@
 --}}
 
 {{-- @can("role_article") --}}
-@can("role_arrangement")
+@can("role_article_admin")
     <button type="button" class="btn btn-success mt-3" onclick="location.href='{{url('/')}}/plugin/openingcalendars/edit/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'"><i class="far fa-edit"></i> 編集</button>
 @endcan
 @endif

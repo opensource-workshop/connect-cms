@@ -71,9 +71,9 @@ class OpeningcalendarsPlugin extends UserPluginBase
         $role_check_table["editYearschedule"]    = ['role_article'];
         $role_check_table["saveYearschedule"]    = ['role_article'];
 
-        // edit,saveは 標準権限で posts.create,posts.update があり、role_article では権限足らないため、role_arrangementを指定
-        $role_check_table["edit"]                = ['role_arrangement'];
-        $role_check_table["save"]                = ['role_arrangement'];
+        // edit,saveは 標準権限で posts.create,posts.update があり、role_article では権限足らないため、role_article_adminを指定
+        $role_check_table["edit"]                = ['role_article_admin'];
+        $role_check_table["save"]                = ['role_article_admin'];
 
         return $role_check_table;
     }
