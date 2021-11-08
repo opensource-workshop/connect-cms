@@ -46,6 +46,7 @@ use App\Enums\DatabaseRoleName;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\Required;
 use App\Enums\NoticeEmbeddedTag;
+use App\Enums\StatusType;
 
 /**
  * データベース・プラグイン
@@ -1386,13 +1387,13 @@ class DatabasesPlugin extends UserPluginBase
         $database = $this->getDatabases($frame_id);
 
         if ($isTemporary) {
-            $status = 1;  // 一時保存
+            $status = StatusType::temporary;  // 一時保存
         } else {
             // 承認の要否確認とステータス処理
             if ($this->isApproval()) {
-                $status = 2;  // 承認待ち
+                $status = StatusType::approval_pending;  // 承認待ち
             } else {
-                $status = 0;  // 公開
+                $status = StatusType::active;  // 公開
             }
         }
 
@@ -3238,7 +3239,7 @@ class DatabasesPlugin extends UserPluginBase
             $posted_at = array_pop($csv_columns);
             $posted_at = new Carbon($posted_at);
 
-            $status = 0;  // 公開
+            $status = StatusType::active;  // 公開
 
             // // 一時ファイルの削除
             // fclose($fp);
@@ -3718,7 +3719,7 @@ class DatabasesPlugin extends UserPluginBase
 
         // 更新されたら、行レコードの updated_at を更新したいので、update()
         $databases_inputs->updated_at = now();
-        $databases_inputs->status = 0;  // 公開
+        $databases_inputs->status = StatusType::active;  // 公開
         $databases_inputs->update();
 
         // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
@@ -3814,7 +3815,7 @@ AND databases_inputs.posted_at <= NOW()
                 $leftJoin->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
                             ->on('databases_columns.id', '=', 'databases_input_cols.databases_columns_id');
             })
-            ->where('databases_inputs.status', 0)
+            ->where('databases_inputs.status', StatusType::active)
             ->where('databases_inputs.posted_at', '<=', Carbon::now());
 
         // 全データベースの検索キーワードの絞り込み と カラムの絞り込み
