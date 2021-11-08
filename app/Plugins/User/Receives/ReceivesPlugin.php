@@ -30,6 +30,11 @@ class ReceivesPlugin extends UserPluginBase
 
     /* オブジェクト変数 */
 
+    /**
+     * POST チェックに使用する getPost() 関数を使うか
+     */
+    public $use_getpost = false;
+
     /* コアから呼び出す関数 */
 
     /**
