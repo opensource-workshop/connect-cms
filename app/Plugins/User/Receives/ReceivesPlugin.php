@@ -2,11 +2,8 @@
 
 namespace App\Plugins\User\Receives;
 
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-
-use DB;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
@@ -25,13 +22,18 @@ use App\Traits\ConnectCommonTrait;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データ収集プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class ReceivesPlugin extends UserPluginBase
 {
     use ConnectCommonTrait;
 
     /* オブジェクト変数 */
+
+    /**
+     * POST チェックに使用する getPost() 関数を使うか
+     */
+    public $use_getpost = false;
 
     /* コアから呼び出す関数 */
 
@@ -126,9 +128,7 @@ class ReceivesPlugin extends UserPluginBase
         $receive_frame = $this->getReceiveFrame($frame_id);
 
         // 収集データ取得
-        $receive_datas = DB::table('receive_datas')
-                             ->select('receive_datas.*')
-                             ->join('receive_records', 'receive_records.id', '=', 'receive_datas.record_id')
+        $receive_datas = ReceiveData::join('receive_records', 'receive_records.id', '=', 'receive_datas.record_id')
                              ->join('receives', 'receives.id', '=', 'receive_records.receive_id')
                              ->where('receives.id', $receive_frame->receive_id)
                              ->orderBy('receive_datas.id', 'asc')
@@ -306,14 +306,14 @@ class ReceivesPlugin extends UserPluginBase
         if (empty($request->receives_id)) {
 
             // バケツの登録
-            $bucket_id = DB::table('buckets')->insertGetId([
-                  'bucket_name' => '無題',
-                  'plugin_name' => 'receives'
+            $bucket = Buckets::create([
+                'bucket_name' => $request->dataset_name,
+                'plugin_name' => 'receives'
             ]);
 
             // データ収集新規オブジェクト
             $receives = new Receive();
-            $receives->bucket_id = $bucket_id;
+            $receives->bucket_id = $bucket->id;
 
             // Frame のBuckets を見て、Buckets が設定されていなければ、作成したものに紐づける。
             // Frame にBuckets が設定されていない ＞ 新規のフレーム＆データ収集作成
@@ -323,7 +323,7 @@ class ReceivesPlugin extends UserPluginBase
             if (empty($frame->bucket_id)) {
 
                 // FrameのバケツIDの更新
-                $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
+                $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket->id]);
             }
 
             $message = 'データ収集設定を追加しました。';
@@ -333,6 +333,9 @@ class ReceivesPlugin extends UserPluginBase
 
             // データ収集設定取得
             $receives = Receive::where('id', $request->receives_id)->first();
+
+            $bucket = Buckets::where('id', $receives->bucket_id)
+                ->update(['bucket_name' => $request->dataset_name]);
 
             $message = 'データ収集設定を変更しました。';
         }

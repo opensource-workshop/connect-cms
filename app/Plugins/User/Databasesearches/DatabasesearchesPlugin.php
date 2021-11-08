@@ -25,6 +25,14 @@ use App\Plugins\User\Databases\DatabasesTool;
  */
 class DatabasesearchesPlugin extends UserPluginBase
 {
+    /* オブジェクト変数 */
+
+    /**
+     * POST チェックに使用する getPost() 関数を使うか
+     */
+    public $use_getpost = false;
+
+    /* コアから呼び出す関数 */
 
     /**
      *  編集画面の最初のタブ
@@ -58,6 +66,8 @@ class DatabasesearchesPlugin extends UserPluginBase
         $role_check_table["change"]      = array('frames.change');
         return $role_check_table;
     }
+
+    /* 画面アクション関数 */
 
     /**
      *  初期表示取得関数
@@ -374,7 +384,7 @@ class DatabasesearchesPlugin extends UserPluginBase
      * データ紐づけ変更関数
      *
      * changeBuckets と同等. resources\views\plugins\common\edit_datalist.blade.php からPOSTされる。
-     * ※ listBuckets の定義がプラグインにないため UserPluginBase のメソッドを使っていた。
+     * ※ listBuckets の定義がデータベース検索プラグインにないため UserPluginBase のメソッドを使っていた。
      */
     public function change($request, $page_id = null, $frame_id = null, $id = null)
     {

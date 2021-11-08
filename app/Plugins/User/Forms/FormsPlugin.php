@@ -56,6 +56,11 @@ class FormsPlugin extends UserPluginBase
 
     /* オブジェクト変数 */
 
+    /**
+     * POST チェックに使用する getPost() 関数を使うか
+     */
+    public $use_getpost = false;
+
     /* コアから呼び出す関数 */
 
     /**
@@ -97,7 +102,7 @@ class FormsPlugin extends UserPluginBase
         $role_check_table["copyColumn"]           = ['buckets.saveColumn'];
         $role_check_table["listInputs"]           = ['frames.edit'];
         $role_check_table["editInput"]            = ['frames.edit'];
-        $role_check_table["storeInput"]           = ['frames.edit'];
+        $role_check_table["storeInput"]           = ['frames.create'];
         return $role_check_table;
     }
 

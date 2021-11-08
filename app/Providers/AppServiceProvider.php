@@ -454,24 +454,28 @@ class AppServiceProvider extends AuthServiceProvider
                                 } else {
                                     // 固定記事プラグイン以外
 
-                                    // コンテンツ管理者（role_article_admin）は、$post->created_id 以外でも編集可
-                                    if ($user_role == 'role_article_admin') {
-                                        return true;
+                                    // idありなら、DBデータあると見なしてチェック
+                                    if ($post->id) {
+                                        // コンテンツ管理者（role_article_admin）は、$post->created_id 以外でも編集可
+                                        if ($user_role == 'role_article_admin') {
+                                            return true;
+                                        }
+
+                                        // モデレータ（role_article）で 固定記事以外は、$post->created_id 以外でも編集可
+                                        if ($user_role == 'role_article') {
+                                            return true;
+                                        }
+
+                                        // 投稿者なら編集可.
+                                        // 例えば save で アンド条件に posts.create も含まれるため、ここに来る。
+                                        if ($user->id == $post->created_id) {
+                                            return true;
+                                        } else {
+                                            // 複数ロールをチェックするため、ここではreturn しない。
+                                            // return false;
+                                        }
                                     }
 
-                                    // モデレータ（role_article）で 固定記事以外は、$post->created_id 以外でも編集可
-                                    if ($user_role == 'role_article') {
-                                        return true;
-                                    }
-
-                                    // 投稿者なら編集可.
-                                    // 例えば save で アンド条件に posts.create も含まれるため、ここに来る。
-                                    if ($user->id == $post->created_id) {
-                                        return true;
-                                    } else {
-                                        // 複数ロールをチェックするため、ここではreturn しない。
-                                        // return false;
-                                    }
                                 }
                             }
 
