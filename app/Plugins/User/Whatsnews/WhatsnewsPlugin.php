@@ -2,13 +2,9 @@
 
 namespace App\Plugins\User\Whatsnews;
 
-// use Illuminate\Support\Facades\Auth;
-// use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-
-// use Carbon\Carbon;
-
-use DB;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
@@ -26,13 +22,18 @@ use App\Traits\ConnectCommonTrait;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 新着情報プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class WhatsnewsPlugin extends UserPluginBase
 {
     use ConnectCommonTrait;
 
     /* オブジェクト変数 */
+
+    /**
+     * POST チェックに使用する getPost() 関数を使うか
+     */
+    public $use_getpost = false;
 
     /**
      *  新着の検索結果
