@@ -3693,45 +3693,6 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
-     *  検索用メソッド
-     */
-    public static function getSearchArgs($search_keyword, $page_ids = null)
-    {
-        // Query Builder のバグ？
-        // whereIn で指定した引数が展開されずに、引数の変数分だけ、setBindings の引数を要求される。
-        // そのため、whereIn とsetBindings 用の変数に同じ $page_ids を設定している。
-        $query = DB::table('databases_inputs')
-                   ->select(
-                       'databases_inputs.id         as post_id',
-                       'frames.id                   as frame_id',
-                       'frames.page_id              as page_id',
-                       'pages.permanent_link        as permanent_link',
-                       'databases_inputs.id         as post_title',
-                       DB::raw('0 as important'),
-                       'databases_inputs.created_at as posted_at',
-                       DB::raw('null as posted_name'),
-                       DB::raw('null as classname'),
-                       DB::raw('null as categories_id'),
-                       DB::raw('null as category'),
-                       DB::raw('"databases" as plugin_name')
-                   )
-                   ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
-                   ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
-                   ->join('pages', 'pages.id', '=', 'frames.page_id')
-                   ->whereIn('pages.id', $page_ids);
-
-        //$bind = array($page_ids, 0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
-        $bind = array($page_ids);
-
-        $return[] = $query;
-        $return[] = $bind;
-        $return[] = 'show_page';
-        $return[] = '/page';
-
-        return $return;
-    }
-
-    /**
      * 登録データ行の取得
      */
     private function getDatabasesInputs($id)
@@ -3866,6 +3827,45 @@ AND databases_inputs.posted_at <= NOW()
         $return[] = $inputs_query;
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/databases/detail';
+
+        return $return;
+    }
+
+    /**
+     *  検索用メソッド
+     */
+    public static function getSearchArgs($search_keyword, $page_ids = null)
+    {
+        // Query Builder のバグ？
+        // whereIn で指定した引数が展開されずに、引数の変数分だけ、setBindings の引数を要求される。
+        // そのため、whereIn とsetBindings 用の変数に同じ $page_ids を設定している。
+        $query = DB::table('databases_inputs')
+                   ->select(
+                       'databases_inputs.id         as post_id',
+                       'frames.id                   as frame_id',
+                       'frames.page_id              as page_id',
+                       'pages.permanent_link        as permanent_link',
+                       'databases_inputs.id         as post_title',
+                       DB::raw('0 as important'),
+                       'databases_inputs.created_at as posted_at',
+                       DB::raw('null as posted_name'),
+                       DB::raw('null as classname'),
+                       DB::raw('null as categories_id'),
+                       DB::raw('null as category'),
+                       DB::raw('"databases" as plugin_name')
+                   )
+                   ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
+                   ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
+                   ->join('pages', 'pages.id', '=', 'frames.page_id')
+                   ->whereIn('pages.id', $page_ids);
+
+        //$bind = array($page_ids, 0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
+        $bind = array($page_ids);
+
+        $return[] = $query;
+        $return[] = $bind;
+        $return[] = 'show_page';
+        $return[] = '/page';
 
         return $return;
     }
