@@ -25,10 +25,19 @@ use App\Plugins\User\UserPluginBase;
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>, 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category スライドショー・プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class SlideshowsPlugin extends UserPluginBase
 {
+    /* オブジェクト変数 */
+
+    /**
+     * POST チェックに使用する getPost() 関数を使うか
+     */
+    public $use_getpost = false;
+
+    /* コアから呼び出す関数 */
+
     /**
      *  関数定義（コアから呼び出す）
      */
@@ -48,6 +57,21 @@ class SlideshowsPlugin extends UserPluginBase
             'updateItemSequence',
         ];
         return $functions;
+    }
+
+    /**
+     * 追加の権限定義（コアから呼び出す）
+     */
+    public function declareRole()
+    {
+        // 権限チェックテーブル
+        $role_check_table = [];
+        $role_check_table["addItem"]            = ['buckets.addColumn'];
+        $role_check_table["editItem"]           = ['buckets.editColumn'];
+        $role_check_table["updateItems"]        = ['buckets.saveColumn'];
+        $role_check_table["deleteItem"]         = ['buckets.deleteColumn'];
+        $role_check_table["updateItemSequence"] = ['buckets.upColumnSequence', 'buckets.downColumnSequence'];
+        return $role_check_table;
     }
 
     /**
