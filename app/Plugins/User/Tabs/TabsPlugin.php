@@ -62,8 +62,8 @@ class TabsPlugin extends UserPluginBase
         //
         // 権限チェックテーブル
         $role_check_table = [];
-        $role_check_table["select"]        = ['role_arrangement'];
-        $role_check_table["saveSelect"]    = ['role_arrangement'];
+        $role_check_table["select"]            = ['frames.edit'];
+        $role_check_table["saveSelect"]        = ['frames.create'];
 
         return $role_check_table;
     }
