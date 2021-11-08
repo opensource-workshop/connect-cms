@@ -3788,33 +3788,34 @@ AND databases_inputs.posted_at <= NOW()
 ;
 */
         // データ詳細の取得
-        $inputs_query = DatabasesInputs::select(
-            'frames.page_id                as page_id',
-            'frames.id                     as frame_id',
-            'databases_inputs.id           as post_id,',
-            'databases_input_cols.value    as post_title,',
-            DB::raw('null                  as post_detail'),
-            DB::raw('null                  as important'),
-            'databases_inputs.posted_at    as posted_at',
-            'databases_inputs.created_name as posted_name',
-            DB::raw('null                  as classname'),
-            DB::raw('null                  as category'),
-            DB::raw('"databases"           as plugin_name')
-        )
-                ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
-                ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
-                ->leftJoin('databases_columns', function ($leftJoin) use ($hide_columns_ids) {
-                    $leftJoin->on('databases_inputs.databases_id', '=', 'databases_columns.databases_id')
-                                ->where('databases_columns.title_flag', 1)
-                                // タイトル指定しても、権限によって非表示columだったらvalue表示しない（基本的に、タイトル指定したけど権限で非表示は、設定ミスと思う。その時は(無題)で表示される）
-                                ->whereNotIn('databases_columns.id', $hide_columns_ids);
-                })
-                ->leftJoin('databases_input_cols', function ($leftJoin) {
-                    $leftJoin->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
-                                ->on('databases_columns.id', '=', 'databases_input_cols.databases_columns_id');
-                })
-                ->where('databases_inputs.status', 0)
-                ->where('databases_inputs.posted_at', '<=', Carbon::now());
+        $inputs_query = DatabasesInputs::
+            select(
+                'frames.page_id                as page_id',
+                'frames.id                     as frame_id',
+                'databases_inputs.id           as post_id,',
+                'databases_input_cols.value    as post_title,',
+                DB::raw('null                  as post_detail'),
+                DB::raw('null                  as important'),
+                'databases_inputs.posted_at    as posted_at',
+                'databases_inputs.created_name as posted_name',
+                DB::raw('null                  as classname'),
+                DB::raw('null                  as category'),
+                DB::raw('"databases"           as plugin_name')
+            )
+            ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
+            ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
+            ->leftJoin('databases_columns', function ($leftJoin) use ($hide_columns_ids) {
+                $leftJoin->on('databases_inputs.databases_id', '=', 'databases_columns.databases_id')
+                            ->where('databases_columns.title_flag', 1)
+                            // タイトル指定しても、権限によって非表示columだったらvalue表示しない（基本的に、タイトル指定したけど権限で非表示は、設定ミスと思う。その時は(無題)で表示される）
+                            ->whereNotIn('databases_columns.id', $hide_columns_ids);
+            })
+            ->leftJoin('databases_input_cols', function ($leftJoin) {
+                $leftJoin->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
+                            ->on('databases_columns.id', '=', 'databases_input_cols.databases_columns_id');
+            })
+            ->where('databases_inputs.status', 0)
+            ->where('databases_inputs.posted_at', '<=', Carbon::now());
 
         // 全データベースの検索キーワードの絞り込み と カラムの絞り込み
         $inputs_query = DatabasesTool::appendSearchKeywordAndSearchColumnsAllDb(
