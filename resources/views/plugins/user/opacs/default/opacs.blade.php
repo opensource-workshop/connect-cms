@@ -38,7 +38,8 @@
             <div class="col-sm-4">
 
             {{-- 新規登録 --}}
-            @can("role_article")
+            {{-- @can("role_article") --}}
+            @can("role_article_admin")
                 @if (isset($frame) && $frame->bucket_id)
                     <p class="text-right">
                         {{-- 新規登録ボタン --}}
@@ -195,7 +196,8 @@
         <tr>
             <td>@if ($book->lent_flag == 1 || $book->lent_flag == 2) <span style="color: red;"><i class="fas fa-user"></i></span> @endif</td>
             <td>
-                @can("role_article")
+                {{-- @can("role_article") --}}
+                @can("role_article_admin")
                 <a href="{{url('/')}}/plugin/opacs/edit/{{$page->id}}/{{$frame_id}}/{{$book->id}}#frame-{{$frame->id}}">
                     <i class="far fa-edit"></i>
                 </a>

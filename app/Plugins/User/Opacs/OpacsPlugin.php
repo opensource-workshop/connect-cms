@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\MessageBag;
 use Illuminate\Support\Collection;
 
-use App\User;
+// use App\User;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Core\Configs;
@@ -39,6 +39,11 @@ class OpacsPlugin extends UserPluginBase
 
     /* オブジェクト変数 */
 
+    /**
+     * 変更時のPOSTデータ
+     */
+    public $post = null;
+
     /* コアから呼び出す関数 */
 
     /**
@@ -48,8 +53,9 @@ class OpacsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['settingOpacFrame', 'lentlist', 'searchClear', 'searchDetailClear', 'roleLent'];
+        // $functions['get']  = ['settingOpacFrame', 'lentlist', 'searchClear', 'searchDetailClear', 'roleLent'];
         // $functions['post'] = ['lent', 'requestLent', 'returnLent', 'search', 'saveOpacFrame', 'getBookInfo', 'destroyRequest'];
+        $functions['get']  = ['settingOpacFrame', 'lentlist', 'searchClear', 'searchDetailClear'];
         $functions['post'] = ['requestLent', 'returnLent', 'search', 'saveOpacFrame', 'getBookInfo', 'destroyRequest'];
         return $functions;
     }
@@ -65,7 +71,7 @@ class OpacsPlugin extends UserPluginBase
         // 権限チェックテーブル
         $role_check_table = [];
         $role_check_table["settingOpacFrame"]  = ['frames.edit'];
-        $role_check_table["saveOpacFrame"]     = ['frames.edit'];
+        $role_check_table["saveOpacFrame"]     = ['frames.create'];
 
         // 貸出・返却系はログインのみ必要でメソッド側でチェック済み。ここで設定しない。
         // $role_check_table["lent"]              = ['posts.create'];
@@ -74,13 +80,23 @@ class OpacsPlugin extends UserPluginBase
         // $role_check_table["destroyRequest"]    = ['posts.delete'];
 
         $role_check_table["lentlist"]          = ['role_article'];
-        $role_check_table["roleLent"]          = ['role_article'];
-        $role_check_table["getBookInfo"]       = ['role_article'];
 
-        $role_check_table["create"]            = ['role_article'];
-        $role_check_table["edit"]              = ['role_article'];
-        $role_check_table["save"]              = ['role_article'];
-        $role_check_table["destroy"]           = ['role_article'];
+        // delete: 存在しないbladeを指定したメソッドのため、コメントアウト
+        // $role_check_table["roleLent"]          = ['role_article'];
+
+        // change: getBookInfoの呼び出しは create,edit のみ. create,edit の権限を設定する
+        // $role_check_table["getBookInfo"]       = ['role_article'];
+        $role_check_table["getBookInfo"]       = ['role_article_admin'];
+
+        // bugfix: 標準権限チェックの posts系権限 が role_article では足らないため、実質操作できる role_article_admin を指定
+        // $role_check_table["create"]            = ['role_article'];
+        // $role_check_table["edit"]              = ['role_article'];
+        // $role_check_table["save"]              = ['role_article'];
+        // $role_check_table["destroy"]           = ['role_article'];
+        $role_check_table["create"]            = ['role_article_admin'];
+        $role_check_table["edit"]              = ['role_article_admin'];
+        $role_check_table["save"]              = ['role_article_admin'];
+        $role_check_table["destroy"]           = ['role_article_admin'];
 
         return $role_check_table;
     }
@@ -93,6 +109,33 @@ class OpacsPlugin extends UserPluginBase
     public function getFirstFrameEditAction()
     {
         return "editBuckets";
+    }
+
+    /**
+     * POST取得関数（コアから呼び出す）
+     * コアがPOSTチェックの際に呼び出す関数
+     */
+    public function getPost($id, $action = null)
+    {
+        // データ存在チェックのために getPost を利用
+
+        if (is_null($action)) {
+            // プラグイン内からの呼び出しを想定。処理を通す。
+        } elseif (in_array($action, ['edit', 'save', 'destroy'])) {
+            // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+        } else {
+            // それ以外のアクションは null で返す。
+            return null;
+        }
+
+        // 一度読んでいれば、そのPOSTを再利用する。
+        if (!empty($this->post)) {
+            return $this->post;
+        }
+
+        // POST を取得する。（statusカラムなしのため、appendAuthWhereBase 使わない）
+        $this->post = OpacsBooks::firstOrNew(['id' => $id]);
+        return $this->post;
     }
 
     /* private 関数 */
@@ -873,12 +916,6 @@ class OpacsPlugin extends UserPluginBase
      */
     public function create($request, $page_id, $frame_id, $opacs_books_id = null)
     {
-        // 権限チェック
-        // 特別処理。role_article（記事修正）でチェック。
-        if ($this->can('role_article')) {
-            return $this->view_error(403);
-        }
-
         // セッション初期化などのLaravel 処理。
 //        $request->flash();
 
@@ -903,12 +940,6 @@ class OpacsPlugin extends UserPluginBase
      */
     public function edit($request, $page_id, $frame_id, $opacs_books_id = null)
     {
-        // 権限チェック
-        // 特別処理。role_article（記事修正）でチェック。
-        if ($this->can('role_article')) {
-            return $this->view_error(403);
-        }
-
         // セッション初期化などのLaravel 処理。
 //        $request->flash();
 
@@ -940,6 +971,9 @@ class OpacsPlugin extends UserPluginBase
 
         // 書籍情報取得
         $opacs_book = OpacsBooks::where('opacs_books.id', $opacs_books_id)->first();
+        if (empty($opacs_book)) {
+            return;
+        }
 
         // 書籍貸出情報取得
         $opacs_book_lents = OpacsBooksLents::where('opacs_books_id', $opacs_books_id)
@@ -987,7 +1021,7 @@ class OpacsPlugin extends UserPluginBase
             $done_requests = $this->lentRequestCheck($opacs_books_id, $user->userid);
         }
 
-        // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
+        // 変更画面を呼び出す。
         return $this->view(
             'opacs_show', [
             'opac_frame'             => $opac_frame,
@@ -1007,61 +1041,56 @@ class OpacsPlugin extends UserPluginBase
         );
     }
 
+    // delete: opacs_role_lent.blade.php は存在しないため、一旦コメントアウト。
     /**
-     *  書籍貸出画面表示（権限あり）
+     * 書籍貸出画面表示（権限あり）
      */
-    public function roleLent($request, $page_id, $frame_id, $opacs_books_id, $message = null, $message_class = null, $errors = null)
-    {
-         // 権限チェック
-        if ($this->can('role_article')) {
-            return $this->view_error(403);
-        }
+    // public function roleLent($request, $page_id, $frame_id, $opacs_books_id, $message = null, $message_class = null, $errors = null)
+    // {
+    //      // 権限チェック
+    //     if ($this->can('role_article')) {
+    //         return $this->view_error(403);
+    //     }
 
-        // セッション初期化などのLaravel 処理。
-        $request->flash();
+    //     // セッション初期化などのLaravel 処理。
+    //     $request->flash();
 
-        // Frame データ
-        $opac_frame = $this->getOpacFrame($frame_id);
+    //     // Frame データ
+    //     $opac_frame = $this->getOpacFrame($frame_id);
 
-        // 書誌データ取得
-        $opacs_book = OpacsBooks::where('id', $opacs_books_id)->first();
+    //     // 書誌データ取得
+    //     $opacs_book = OpacsBooks::where('id', $opacs_books_id)->first();
 
-        // 貸し出し済みかどうかチェックする
-        $done_lent = $this->lentCheck($opacs_books_id);
+    //     // 貸し出し済みかどうかチェックする
+    //     $done_lent = $this->lentCheck($opacs_books_id);
 
-        // 既に郵送リクエストされているようだったらその情報を取得する
-        $opacs_books_lent = OpacsBooksLents::where('id', $request->req_lent_id)->first();
+    //     // 既に郵送リクエストされているようだったらその情報を取得する
+    //     $opacs_books_lent = OpacsBooksLents::where('id', $request->req_lent_id)->first();
 
-        // ユーザー名取得
-        $user = User::where('userid', $opacs_books_lent->student_no)->first();
+    //     // ユーザー名取得
+    //     $user = User::where('userid', $opacs_books_lent->student_no)->first();
 
-        // 画面を呼び出す。(blade でold を使用するため、withInput 使用)
-        return $this->view(
-            'opacs_role_lent', [
-            'opac_frame'             => $opac_frame,
-            'opacs_books'            => $opacs_book,
-            'opacs_books_lents'      => $opacs_books_lent,
-            'opacs_books_id'         => $opacs_books_id,
-            'user_name'              => $user->name,
-            'done_lent'              => $done_lent,
-            'message'                => $message,
-            'message_class'          => $message_class,
-            'errors'                 => $errors,
-            ]
-        );
-    }
+    //     // 画面を呼び出す。
+    //     return $this->view(
+    //         'opacs_role_lent', [
+    //         'opac_frame'             => $opac_frame,
+    //         'opacs_books'            => $opacs_book,
+    //         'opacs_books_lents'      => $opacs_books_lent,
+    //         'opacs_books_id'         => $opacs_books_id,
+    //         'user_name'              => $user->name,
+    //         'done_lent'              => $done_lent,
+    //         'message'                => $message,
+    //         'message_class'          => $message_class,
+    //         'errors'                 => $errors,
+    //         ]
+    //     );
+    // }
 
     /**
      *  書誌データ登録処理
      */
     public function save($request, $page_id, $frame_id, $opacs_books_id = null)
     {
-        // 権限チェック
-        // 特別処理。role_article（記事修正）でチェック。
-        if ($this->can('role_article')) {
-            return $this->view_error(403);
-        }
-
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'title'        => ['required'],
@@ -1155,12 +1184,6 @@ class OpacsPlugin extends UserPluginBase
      */
     public function destroy($request, $page_id, $frame_id, $opacs_books_id)
     {
-        // 権限チェック
-        // 特別処理。role_article（記事修正）でチェック。
-        if ($this->can('role_article')) {
-            return $this->view_error(403);
-        }
-
         // id がある場合、データを削除
         if ($opacs_books_id) {
             // データを削除する。
@@ -1765,12 +1788,6 @@ class OpacsPlugin extends UserPluginBase
      */
     public function getBookInfo($request, $page_id, $frame_id, $opacs_books_id = null)
     {
-        // 権限チェック
-        // 特別処理。role_article（記事修正）でチェック。
-        if ($this->can('role_article')) {
-            return $this->view_error(403);
-        }
-
         // OPAC＆フレームデータ
         $opac_frame = $this->getOpacFrame($frame_id);
 
