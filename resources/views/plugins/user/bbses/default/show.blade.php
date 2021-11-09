@@ -46,7 +46,6 @@
 <form method="POST" name="form_bbses_posts{{$frame_id}}">
     {{csrf_field()}}
     <input type="hidden" name="redirect_path" value="">
-</form>
 
 <article>
     <header>
@@ -122,6 +121,7 @@
         </div>
     </footer>
 </article>
+</form>
 
 {{-- 一覧へ戻る --}}
 <nav class="row" aria-label="ページ移動">

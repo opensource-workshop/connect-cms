@@ -36,6 +36,11 @@ class OpeningcalendarsPlugin extends UserPluginBase
 
     /* オブジェクト変数 */
 
+    /**
+     * POST チェックに使用する getPost() 関数を使うか
+     */
+    public $use_getpost = false;
+
     /* コアから呼び出す関数 */
 
     /**
@@ -60,11 +65,15 @@ class OpeningcalendarsPlugin extends UserPluginBase
         //
         // 権限チェックテーブル
         $role_check_table = [];
-        $role_check_table["listPatterns"]        = ['role_arrangement'];
-        $role_check_table["savePatterns"]        = ['role_arrangement'];
-        $role_check_table["deletePatterns"]      = ['role_arrangement'];
+        $role_check_table["listPatterns"]        = ['frames.edit'];
+        $role_check_table["savePatterns"]        = ['frames.create'];
+        $role_check_table["deletePatterns"]      = ['frames.delete'];
         $role_check_table["editYearschedule"]    = ['role_article'];
         $role_check_table["saveYearschedule"]    = ['role_article'];
+
+        // edit,saveは 標準権限で posts.create,posts.update があり、role_article では権限足らないため、role_article_adminを指定
+        $role_check_table["edit"]                = ['role_article_admin'];
+        $role_check_table["save"]                = ['role_article_admin'];
 
         return $role_check_table;
     }

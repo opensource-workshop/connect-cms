@@ -22,6 +22,14 @@ use App\Plugins\User\UserPluginBase;
  */
 class ThemechangersPlugin extends UserPluginBase
 {
+    /* オブジェクト変数 */
+
+    /**
+     * POST チェックに使用する getPost() 関数を使うか
+     */
+    public $use_getpost = false;
+
+    /* コアから呼び出す関数 */
 
     /**
      *  関数定義（コアから呼び出す）
@@ -47,6 +55,8 @@ class ThemechangersPlugin extends UserPluginBase
         $role_check_table = [];
         return $role_check_table;
     }
+
+    /* private関数 */
 
     /**
      *  ページのカラム取得
@@ -108,6 +118,8 @@ class ThemechangersPlugin extends UserPluginBase
         // CSS、JS をチェックして配列にして返却
         return  $this->checkAsset($configs->value, $return_array);
     }
+
+    /* 画面アクション関数 */
 
     /**
      *  初期表示取得関数
