@@ -78,7 +78,7 @@
 <div id="app_{{$frame_id}}">
 @can('posts.create', [[null, $frame->plugin_name, $buckets]])
 <div class="p-2 text-right mb-2">
-    <button class="btn btn-primary" data-toggle="collapse" data-target="#collapse_mkdir{{$frame->id}}"><i class="fas fa-folder-plus"></i><span class="d-none d-sm-inline"> フォトアルバム作成</span></button>
+    <button class="btn btn-primary" data-toggle="collapse" data-target="#collapse_mkdir{{$frame->id}}"><i class="fas fa-folder-plus"></i><span class="d-none d-sm-inline"> アルバム作成</span></button>
     <button class="btn btn-primary" data-toggle="collapse" data-target="#collapse_upload{{$frame->id}}" id="btn-upload-file"><i class="fas fa-file-upload"></i><span class="d-none d-sm-inline"> ファイル追加</span></button>
 </div>
 @endcan
@@ -149,8 +149,12 @@
 
 <div class="row">
     <div class="col-sm-4">
-        <div class="card sm-4" style="background-color: #a0a0a0; height: 100px;">
-            サムネイル
+        <div class="card sm-4">
+            <img src="/debug/images/DSC_1941-3.JPG"
+                 id="photo_1"
+                 style="max-height: 150px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
+                 class="img-fluid" data-toggle="modal" data-target="#image_Modal_1"
+            >
         </div>
     </div>
     <div class="col-sm-8">
@@ -158,8 +162,12 @@
     </div>
 
     <div class="col-sm-4 mt-3">
-        <div class="card sm-4" style="background-color: #a0a0a0; height: 100px;">
-            サムネイル
+        <div class="card sm-4">
+            <img src="/debug/images/DSC_3582.jpg"
+                 id="photo_2"
+                 style="max-height: 150px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
+                 class="img-fluid" data-toggle="modal" data-target="#image_Modal_2"
+            >
         </div>
     </div>
     <div class="col-sm-8 mt-3">
@@ -185,7 +193,7 @@
         <div class="card mb-4 shadow-sm">
             <img src="/debug/images/DSC_1941-3.JPG"
                  id="photo_1"
-                 style="max-height: 200px; object-fit: scale-down; cursor:pointer;"
+                 style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
                  class="img-fluid" data-toggle="modal" data-target="#image_Modal_1"
             >
             <div class="modal fade" id="image_Modal_1" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel_1">
@@ -193,7 +201,7 @@
                     <div class="modal-content">
                         <div class="modal-body mx-auto">
                             <img src="/debug/images/DSC_1941-3.JPG"
-                                 style="object-fit: scale-down; cursor:pointer;"
+                                 style="max-height: 800px; object-fit: scale-down; cursor:pointer;"
                                  class="img-fluid" />
                         </div>
                         <div class="modal-img_footer">
@@ -227,7 +235,7 @@
         <div class="card mb-4 shadow-sm">
             <img src="/debug/images/DSC_3582.jpg"
                  id="photo_2"
-                 style="max-height: 200px; object-fit: scale-down; cursor:pointer;"
+                 style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
                  class="img-fluid" data-toggle="modal" data-target="#image_Modal_2"
             >
             <div class="modal fade" id="image_Modal_2" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel_2">
@@ -269,7 +277,7 @@
         <div class="card mb-4 shadow-sm">
             <img src="/debug/images/DSC_3583.jpg"
                  id="photo_3"
-                 style="max-height: 200px; object-fit: scale-down; cursor:pointer;"
+                 style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
                  class="img-fluid" data-toggle="modal" data-target="#image_Modal_3"
             >
             <div class="modal fade" id="image_Modal_3" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel_3">
@@ -277,7 +285,7 @@
                     <div class="modal-content">
                         <div class="modal-body mx-auto">
                             <img src="/debug/images/DSC_3583.jpg"
-                                 style="object-fit: scale-down; cursor:pointer;"
+                                 style="max-height: 800px; object-fit: scale-down; cursor:pointer;"
                                  class="img-fluid" />
                         </div>
                         <div class="modal-img_footer">
