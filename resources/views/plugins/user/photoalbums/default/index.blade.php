@@ -144,6 +144,172 @@
     @endcan
     <button class="btn btn-primary btn-sm btn-download" type="button" disabled><i class="fas fa-download"></i><span class="d-none d-sm-inline"> ダウンロード</span></button>
 </div>
+
+<hr />
+
+<div class="row">
+    <div class="col-sm-4">
+        <div class="card sm-4" style="background-color: #a0a0a0; height: 100px;">
+            サムネイル
+        </div>
+    </div>
+    <div class="col-sm-8">
+        <p class="card-text">This is a wider card with supporting text below as a natural</p>
+    </div>
+
+    <div class="col-sm-4 mt-3">
+        <div class="card sm-4" style="background-color: #a0a0a0; height: 100px;">
+            サムネイル
+        </div>
+    </div>
+    <div class="col-sm-8 mt-3">
+        <p class="card-text">This is a wider card with supporting text below as a natural</p>
+    </div>
+</div>
+
+<hr />
+
+<style>
+.modal-middle {        //モーダルウィンドウの縦表示位置を調整
+    margin: 5% auto;
+}
+
+.modal-img_footer {    //表示予定のテキストとボタンを中央揃え
+    padding: .5em;
+    text-align: center;
+}
+</style>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4 shadow-sm">
+            <img src="/debug/images/DSC_1941-3.JPG"
+                 id="photo_1"
+                 style="max-height: 200px; object-fit: scale-down; cursor:pointer;"
+                 class="img-fluid" data-toggle="modal" data-target="#image_Modal_1"
+            >
+            <div class="modal fade" id="image_Modal_1" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel_1">
+                <div class="modal-dialog modal-lg modal-middle">{{-- モーダルウィンドウの縦表示位置を調整・画像を大きく見せる --}}
+                    <div class="modal-content">
+                        <div class="modal-body mx-auto">
+                            <img src="/debug/images/DSC_1941-3.JPG"
+                                 style="object-fit: scale-down; cursor:pointer;"
+                                 class="img-fluid" />
+                        </div>
+                        <div class="modal-img_footer">
+                            <p>モーダル商品</p>
+                            <button type="button" class="btn btn-success" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="card-text">This is a wider card with supporting text below.</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="customCheck2" name="photoalbum_content_id[]" value="2" data-name="アルバム１">
+                        <label class="custom-control-label" for="customCheck2"></label>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="pop">Edit</button>
+                    </div>
+                </div>
+            </div>
+            <script>
+            $("#pop").on("click", function() {
+               $("#photo_1").modal();
+            });
+            </script>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4 shadow-sm">
+            <img src="/debug/images/DSC_3582.jpg"
+                 id="photo_2"
+                 style="max-height: 200px; object-fit: scale-down; cursor:pointer;"
+                 class="img-fluid" data-toggle="modal" data-target="#image_Modal_2"
+            >
+            <div class="modal fade" id="image_Modal_2" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel_2">
+                <div class="modal-dialog modal-lg modal-middle">{{-- モーダルウィンドウの縦表示位置を調整・画像を大きく見せる --}}
+                    <div class="modal-content">
+                        <div class="modal-body mx-auto">
+                            <img src="/debug/images/DSC_3582.jpg"
+                                 style="max-height: 800px; object-fit: scale-down; cursor:pointer;"
+                                 class="img-fluid" />
+                        </div>
+                        <div class="modal-img_footer">
+                            <p>モーダル商品</p>
+                            <button type="button" class="btn btn-success" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="card-text">This is a wider card with supporting text below.</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="customCheck2" name="photoalbum_content_id[]" value="2" data-name="アルバム１">
+                        <label class="custom-control-label" for="customCheck2"></label>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="pop">Edit</button>
+                    </div>
+                </div>
+            </div>
+            <script>
+            $("#pop").on("click", function() {
+               $("#photo_2").modal();
+            });
+            </script>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4 shadow-sm">
+            <img src="/debug/images/DSC_3583.jpg"
+                 id="photo_3"
+                 style="max-height: 200px; object-fit: scale-down; cursor:pointer;"
+                 class="img-fluid" data-toggle="modal" data-target="#image_Modal_3"
+            >
+            <div class="modal fade" id="image_Modal_3" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel_3">
+                <div class="modal-dialog modal-lg modal-middle">{{-- モーダルウィンドウの縦表示位置を調整・画像を大きく見せる --}}
+                    <div class="modal-content">
+                        <div class="modal-body mx-auto">
+                            <img src="/debug/images/DSC_3583.jpg"
+                                 style="object-fit: scale-down; cursor:pointer;"
+                                 class="img-fluid" />
+                        </div>
+                        <div class="modal-img_footer">
+                            <p>モーダル商品</p>
+                            <button type="button" class="btn btn-success" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="card-text">This is a wider card with supporting text below.</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="customCheck2" name="photoalbum_content_id[]" value="2" data-name="アルバム１">
+                        <label class="custom-control-label" for="customCheck2"></label>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="pop">Edit</button>
+                    </div>
+                </div>
+            </div>
+            <script>
+            $("#pop").on("click", function() {
+               $("#photo_3").modal();
+            });
+            </script>
+        </div>
+    </div>
+</div>
+
+<hr />
+
 <table class="table text-break">
     <thead>
         <tr class="d-none d-md-table-row">
