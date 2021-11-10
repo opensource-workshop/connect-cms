@@ -30,6 +30,10 @@
                         <input type="text" class="col-9 form-control-plaintext" id="column_{{ $column->id }}" readonly>
                     </div>
                     @endforeach
+                    {{-- 承認待ち --}}
+                    <div id="reservation_approval_pending_badge">
+                        <span class="badge badge-warning align-bottom">承認待ち</span>
+                    </div>
                 </form>
             </div>
 
@@ -106,6 +110,14 @@
                 modal.find('#reservation_destroy_button').hide();
             }
         @endauth
+
+        // 承認待ちがありなら表示, なしは非表示
+        if (button.data('is_approval_pending') == '1') {
+            // finc結果はjquery object
+            modal.find('#reservation_approval_pending_badge').show();
+        } else {
+            modal.find('#reservation_approval_pending_badge').hide();
+        }
     })
 
     function destroy_booking{{$frame_id}}() {

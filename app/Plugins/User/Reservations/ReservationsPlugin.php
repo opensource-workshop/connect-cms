@@ -27,6 +27,8 @@ use App\Enums\StatusType;
 /**
  * 施設予約プラグイン
  *
+ * 施設予約の特例処理：承認待ちの予約は他の人も見える。詳細は見せない。
+ *
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
@@ -95,9 +97,7 @@ class ReservationsPlugin extends UserPluginBase
      */
     public function useBucketMailMethods()
     {
-        // [TODO] 承認実装まだ
-        // return ['notice', 'approval', 'approved'];
-        return ['notice'];
+        return ['notice', 'approval', 'approved'];
     }
 
     /**
@@ -247,8 +247,10 @@ class ReservationsPlugin extends UserPluginBase
         // 承認の要否確認とステータス処理
         if ($this->isApproval()) {
             $reservations_inputs->status = StatusType::approval_pending;  // 承認待ち
+            $str_mode = $request->booking_id ? '予約の変更申請をしました。' : '予約の登録申請をしました。';
         } else {
             $reservations_inputs->status = StatusType::active;  // 公開
+            $str_mode = $request->booking_id ? '予約を更新しました。' : '予約を登録しました。';
         }
 
         // 新規登録時のみの登録項目
@@ -281,8 +283,9 @@ class ReservationsPlugin extends UserPluginBase
             ;
             $reservations_inputs_columns->save();
         }
-        $str_mode = $request->booking_id ? '更新' : '登録';
-        $message = '予約を' . $str_mode . 'しました。【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
+        // $str_mode = $request->booking_id ? '更新' : '登録';
+        // $message = '予約を' . $str_mode . 'しました。【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
+        $message = $str_mode . '【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
 
         // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
         $this->sendPostNotice($reservations_inputs, $before_reservations_inputs, 'showBooking');
@@ -445,7 +448,6 @@ class ReservationsPlugin extends UserPluginBase
     }
 
     /**
-     * [TODO] 画面からの呼び出し実装まだ
      * 予約の承認処理
      */
     public function approvalBooking($request, $page_id, $frame_id, $input_id = null)
@@ -460,13 +462,7 @@ class ReservationsPlugin extends UserPluginBase
         // 承認済みの判定のために、保存する前のレコードを退避しておく。
         $before_reservations_inputs = clone $reservations_inputs;
 
-        // データがあることを確認
-        if (empty($reservations_inputs)) {
-            return;
-        }
-
         // 更新されたら、行レコードの updated_at を更新したいので、update()
-        // $reservations_inputs->updated_at = now();
         $reservations_inputs->status = StatusType::active;  // 公開
         $reservations_inputs->update();
 
@@ -919,16 +915,6 @@ class ReservationsPlugin extends UserPluginBase
 
         // 表示施設予約選択画面を呼ぶ
         return $this->listBuckets($request, $page_id, $frame_id, $id);
-    }
-
-    /**
-     * 権限設定 変更画面
-     */
-    public function editBucketsRoles($request, $page_id, $frame_id, $id = null, $use_approval = true)
-    {
-        // [TODO] 一旦承認なしで実装
-        $use_approval = false;
-        return parent::editBucketsRoles($request, $page_id, $frame_id, $id, $use_approval);
     }
 
     /**
