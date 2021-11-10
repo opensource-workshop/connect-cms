@@ -228,7 +228,8 @@ class ReservationsPlugin extends UserPluginBase
 
         // バリデーション実施、エラー時は予約画面へ戻る
         if ($validator->fails()) {
-            return $this->editBooking($request, $page_id, $frame_id, $booking_id, $validator->errors());
+            // return $this->editBooking($request, $page_id, $frame_id, $booking_id, $validator->errors());
+            return back()->withErrors($validator)->withInput();
         }
 
         // 施設データ
@@ -283,13 +284,14 @@ class ReservationsPlugin extends UserPluginBase
         }
         // $str_mode = $request->booking_id ? '更新' : '登録';
         // $message = '予約を' . $str_mode . 'しました。【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
-        $message = $str_mode . '【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
+        $request->flash_message = $str_mode . '【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
 
         // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
         $this->sendPostNotice($reservations_inputs, $before_reservations_inputs, 'showBooking');
 
         // 登録後はカレンダー表示
-        return $this->index($request, $page_id, $frame_id, null, null, $message);
+        // return $this->index($request, $page_id, $frame_id, null, null, $message);
+        return collect(['redirect_path' => url($this->page->permanent_link)]);
     }
 
     /**
@@ -297,14 +299,6 @@ class ReservationsPlugin extends UserPluginBase
      */
     public function editBooking($request, $page_id, $frame_id, $input_id = null, $errors = null)
     {
-        if ($errors) {
-            // エラーあり：入力値をフラッシュデータとしてセッションへ保存
-            $request->flash();
-        } else {
-            // エラーなし：セッションから入力値を消去
-            $request->flush();
-        }
-
         $booking = null;
 
         // if ($request->booking_id) {
@@ -379,7 +373,6 @@ class ReservationsPlugin extends UserPluginBase
             'columns' => $columns,
             'selects' => $selects,
             'booking' => $booking,
-            'errors' => $errors,
         ]);
     }
 
@@ -475,7 +468,7 @@ class ReservationsPlugin extends UserPluginBase
      * データ初期表示関数
      * コアがページ表示の際に呼び出す関数
      */
-    public function index($request, $page_id, $frame_id, $view_format = null, $carbon_target_date = null, $message = null)
+    public function index($request, $page_id, $frame_id, $view_format = null, $carbon_target_date = null)
     {
         // 施設予約＆フレームデータ
         $reservations_frame = $this->getReservationsFrame($frame_id);
@@ -643,7 +636,6 @@ class ReservationsPlugin extends UserPluginBase
                 'columns' => $columns,
                 'selects' => $selects,
                 'calendars' => $calendars,
-                'message' => $message,
             ]);
         } else {
 
@@ -668,7 +660,7 @@ class ReservationsPlugin extends UserPluginBase
             return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
         }
         $carbon_target_date = new ConnectCarbon("$target_ymd");
-        return $this->index($request, $page_id, $frame_id, ReservationCalendarDisplayType::week, $carbon_target_date, null);
+        return $this->index($request, $page_id, $frame_id, ReservationCalendarDisplayType::week, $carbon_target_date);
     }
 
     /**
@@ -682,7 +674,7 @@ class ReservationsPlugin extends UserPluginBase
             return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . ')');
         }
         $carbon_target_date = new ConnectCarbon("$year-$month-01");
-        return $this->index($request, $page_id, $frame_id, ReservationCalendarDisplayType::month, $carbon_target_date, null);
+        return $this->index($request, $page_id, $frame_id, ReservationCalendarDisplayType::month, $carbon_target_date);
     }
 
     /**
