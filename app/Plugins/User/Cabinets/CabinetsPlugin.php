@@ -486,10 +486,13 @@ class CabinetsPlugin extends UserPluginBase
      */
     private function addContentsToZip(&$zip, $contents, $parent_name = '')
     {
+        // 保存先のパス
+        $save_path = $parent_name === '' ? $parent_name : $parent_name .'/';
+
         foreach ($contents as $content) {
             // ファイルが格納されていない空のフォルダだったら、空フォルダを追加
             if ($content->is_folder === CabinetContent::is_folder_on && $content->isLeaf()) {
-                $zip->addEmptyDir($parent_name .'/' . $content->name);
+                $zip->addEmptyDir($save_path . $content->name);
 
             // ファイル追加
             } elseif ($content->is_folder === CabinetContent::is_folder_off) {
@@ -503,12 +506,12 @@ class CabinetsPlugin extends UserPluginBase
                 }
                 $zip->addFile(
                     storage_path('app/') . $this->getContentsFilePath($content->upload),
-                    $parent_name .'/'. $content->name
+                    $save_path . $content->name
                 );
                 // ダウンロード回数をカウントアップ
                 Uploads::find($content->upload->id)->increment('download_count');
             }
-            $this->addContentsToZip($zip, $content->children, $parent_name .'/' . $content->name);
+            $this->addContentsToZip($zip, $content->children, $save_path . $content->name);
         }
     }
 
