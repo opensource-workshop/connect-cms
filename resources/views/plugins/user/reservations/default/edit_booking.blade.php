@@ -65,7 +65,11 @@
     });
 </script>
 
+@if ($booking)
+<form action="{{url('/')}}/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}/{{$booking->id}}#frame-{{$frame_id}}" name="form_save_booking{{$frame_id}}" method="POST">
+@else
 <form action="{{url('/')}}/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_save_booking{{$frame_id}}" method="POST">
+@endif
     {{-- メッセージエリア --}}
     <div class="alert {{ $booking ? 'alert-warning' : 'alert-info' }} mt-2">
         <i class="fas fa-exclamation-circle"></i> 対象施設の予約を{{ $booking ? '更新' : '登録' }}します。
@@ -74,7 +78,7 @@
     {{ csrf_field() }}
     <input type="hidden" name="reservations_id" value="{{ $reservation->id }}">
     <input type="hidden" name="facility_id" value="{{ $facility->id }}">
-    <input type="hidden" name="booking_id" value="{{ $booking ? $booking->id : '' }}">
+    {{-- <input type="hidden" name="booking_id" value="{{ $booking ? $booking->id : '' }}"> --}}
     <input type="hidden" name="target_date" value="{{ $target_date->format('Ymd') }}">
 
     {{-- 基本項目 --}}

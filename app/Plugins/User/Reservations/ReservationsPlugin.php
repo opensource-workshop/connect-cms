@@ -192,10 +192,8 @@ class ReservationsPlugin extends UserPluginBase
 
     /**
      * 予約追加処理
-     * [TODO] 引数 $target_ymd はメソッドで上書きされて使ってない
-     * [TODO] 今後 $request->booking_id を 引数に追加対応する
      */
-    public function saveBooking($request, $page_id, $frame_id, $target_ymd)
+    public function saveBooking($request, $page_id, $frame_id, $booking_id = null)
     {
         $target_ymd = $request->target_date;
         // URLパラメータチェック
@@ -230,15 +228,15 @@ class ReservationsPlugin extends UserPluginBase
 
         // バリデーション実施、エラー時は予約画面へ戻る
         if ($validator->fails()) {
-            return $this->editBooking($request, $page_id, $frame_id, $request->booking_id, $validator->errors());
+            return $this->editBooking($request, $page_id, $frame_id, $booking_id, $validator->errors());
         }
 
         // 施設データ
         $facility = ReservationsFacility::where('id', $request->facility_id)->first();
 
         // 予約ヘッダ 登録 ※予約IDがある場合は更新
-        $reservations_inputs = $request->booking_id ?
-            ReservationsInput::where('id', $request->booking_id)->first() :
+        $reservations_inputs = $booking_id ?
+            ReservationsInput::where('id', $booking_id)->first() :
             new ReservationsInput();
 
         // 新規登録の判定のために、保存する前のレコードを退避しておく。
@@ -247,14 +245,14 @@ class ReservationsPlugin extends UserPluginBase
         // 承認の要否確認とステータス処理
         if ($this->isApproval()) {
             $reservations_inputs->status = StatusType::approval_pending;  // 承認待ち
-            $str_mode = $request->booking_id ? '予約の変更申請をしました。' : '予約の登録申請をしました。';
+            $str_mode = $booking_id ? '予約の変更申請をしました。' : '予約の登録申請をしました。';
         } else {
             $reservations_inputs->status = StatusType::active;  // 公開
-            $str_mode = $request->booking_id ? '予約を更新しました。' : '予約を登録しました。';
+            $str_mode = $booking_id ? '予約を更新しました。' : '予約を登録しました。';
         }
 
         // 新規登録時のみの登録項目
-        if (!$request->booking_id) {
+        if (!$booking_id) {
             $reservations_inputs->reservations_id = $request->reservations_id;
             $reservations_inputs->facility_id = $request->facility_id;
         }
