@@ -37,6 +37,14 @@ class CabinetsPlugin extends UserPluginBase
 {
 
     /* オブジェクト変数 */
+
+    /**
+     * POST チェックに使用する getPost() 関数を使うか
+     * [TODO] 現在（2021/11/10）は、管理者がアップしたファイルも、編集者が削除できるため、getPost()は使わない設定にする。
+     *        今後自分がアップしたファイルのみ削除できるように見直しする想定で、その時は getPost()を使うと予想。
+     */
+    public $use_getpost = false;
+
     // ファイルダウンロードURL
     private $download_url = '';
 
@@ -149,7 +157,7 @@ class CabinetsPlugin extends UserPluginBase
     /**
      * フォルダを移動する
      */
-    public function changeDirectory($request, $page_id, $frame_id, $parent_id) 
+    public function changeDirectory($request, $page_id, $frame_id, $parent_id)
     {
         return $this->index($request, $page_id, $frame_id, $parent_id);
     }
