@@ -32,8 +32,6 @@
         $('.custom-file-input').on('change',function(){
             $(this).next('.custom-file-label').html($(this)[0].files[0].name);
         });
-
-
         @endcan
 
         $('#app_{{$frame_id}} input[type="checkbox"][name="photoalbum_content_id[]"]').on('change', function(){
@@ -145,38 +143,6 @@
     <button class="btn btn-primary btn-sm btn-download" type="button" disabled><i class="fas fa-download"></i><span class="d-none d-sm-inline"> ダウンロード</span></button>
 </div>
 
-<hr />
-
-<div class="row">
-    <div class="col-sm-4">
-        <div class="card sm-4">
-            <img src="/debug/images/DSC_1941-3.JPG"
-                 id="photo_1"
-                 style="max-height: 150px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
-                 class="img-fluid" data-toggle="modal" data-target="#image_Modal_1"
-            >
-        </div>
-    </div>
-    <div class="col-sm-8">
-        <p class="card-text">This is a wider card with supporting text below as a natural</p>
-    </div>
-
-    <div class="col-sm-4 mt-3">
-        <div class="card sm-4">
-            <img src="/debug/images/DSC_3582.jpg"
-                 id="photo_2"
-                 style="max-height: 150px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
-                 class="img-fluid" data-toggle="modal" data-target="#image_Modal_2"
-            >
-        </div>
-    </div>
-    <div class="col-sm-8 mt-3">
-        <p class="card-text">This is a wider card with supporting text below as a natural</p>
-    </div>
-</div>
-
-<hr />
-
 <style>
 .modal-middle {        //モーダルウィンドウの縦表示位置を調整
     margin: 5% auto;
@@ -188,133 +154,90 @@
 }
 </style>
 
+{{-- ルート要素の表示時は「1つ上へ」を表示しない --}}
+@if (count($breadcrumbs) > 1)
+    <ul class="breadcrumb bg-white">
+        <li class="breadcrumb-item active"><i class="fas fa-folder mr-1 text-warning"></i><a href="{{url('/')}}/plugin/photoalbums/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$breadcrumbs->last()->parent_id}}/#frame-{{$frame->id}}">1つ上へ</a></li>
+    </ul>
+@endif
+
+{{-- データ一覧にアルバムが含まれる場合 --}}
+@if ($photoalbum_contents->where('is_folder', 1)->isNotEmpty())
 <div class="row">
-    <div class="col-md-4">
-        <div class="card mb-4 shadow-sm">
-            <img src="/debug/images/DSC_1941-3.JPG"
-                 id="photo_1"
-                 style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
-                 class="img-fluid" data-toggle="modal" data-target="#image_Modal_1"
-            >
-            <div class="modal fade" id="image_Modal_1" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel_1">
-                <div class="modal-dialog modal-lg modal-middle">{{-- モーダルウィンドウの縦表示位置を調整・画像を大きく見せる --}}
-                    <div class="modal-content">
-                        <div class="modal-body mx-auto">
-                            <img src="/debug/images/DSC_1941-3.JPG"
-                                 style="max-height: 800px; object-fit: scale-down; cursor:pointer;"
-                                 class="img-fluid" />
-                        </div>
-                        <div class="modal-img_footer">
-                            <p>モーダル商品</p>
-                            <button type="button" class="btn btn-success" data-dismiss="modal">Close</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <p class="card-text">This is a wider card with supporting text below.</p>
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input" id="customCheck2" name="photoalbum_content_id[]" value="2" data-name="アルバム１">
-                        <label class="custom-control-label" for="customCheck2"></label>
-                    </div>
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="pop">Edit</button>
-                    </div>
-                </div>
-            </div>
-            <script>
-            $("#pop").on("click", function() {
-               $("#photo_1").modal();
-            });
-            </script>
+    @foreach($photoalbum_contents->where('is_folder', 1) as $photoalbum_content)
+    <div class="col-sm-4 mt-3">
+        <div class="card sm-4">
+            <a href="{{url('/')}}/plugin/photoalbums/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}/#frame-{{$frame->id}}" class="text-center">
+                <img src="/debug/images/DSC_1941-3.JPG"
+                     style="max-height: 150px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
+                     class="img-fluid"
+                >
+            </a>
         </div>
     </div>
+    <div class="col-sm-8 mt-3">
+        <h5 class="card-title">{{$photoalbum_content->name}}</h5>
+        <p class="card-text">This is a wider card with supporting text below as a natural</p>
 
-    <div class="col-md-4">
-        <div class="card mb-4 shadow-sm">
-            <img src="/debug/images/DSC_3582.jpg"
-                 id="photo_2"
-                 style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
-                 class="img-fluid" data-toggle="modal" data-target="#image_Modal_2"
-            >
-            <div class="modal fade" id="image_Modal_2" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel_2">
-                <div class="modal-dialog modal-lg modal-middle">{{-- モーダルウィンドウの縦表示位置を調整・画像を大きく見せる --}}
-                    <div class="modal-content">
-                        <div class="modal-body mx-auto">
-                            <img src="/debug/images/DSC_3582.jpg"
-                                 style="max-height: 800px; object-fit: scale-down; cursor:pointer;"
-                                 class="img-fluid" />
-                        </div>
-                        <div class="modal-img_footer">
-                            <p>モーダル商品</p>
-                            <button type="button" class="btn btn-success" data-dismiss="modal">Close</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <p class="card-text">This is a wider card with supporting text below.</p>
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input" id="customCheck2" name="photoalbum_content_id[]" value="2" data-name="アルバム１">
-                        <label class="custom-control-label" for="customCheck2"></label>
-                    </div>
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="pop">Edit</button>
-                    </div>
-                </div>
-            </div>
-            <script>
-            $("#pop").on("click", function() {
-               $("#photo_2").modal();
-            });
-            </script>
+        <div class="custom-control custom-checkbox">
+            <input type="checkbox" class="custom-control-input" id="customCheck_{{$photoalbum_content->id}}" name="photoalbum_content_id[]" value="{{$photoalbum_content->id}}" data-name="{{$photoalbum_content->displayName}}">
+            <label class="custom-control-label" for="customCheck_{{$photoalbum_content->id}}"></label>
         </div>
     </div>
-
-    <div class="col-md-4">
-        <div class="card mb-4 shadow-sm">
-            <img src="/debug/images/DSC_3583.jpg"
-                 id="photo_3"
-                 style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
-                 class="img-fluid" data-toggle="modal" data-target="#image_Modal_3"
-            >
-            <div class="modal fade" id="image_Modal_3" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel_3">
-                <div class="modal-dialog modal-lg modal-middle">{{-- モーダルウィンドウの縦表示位置を調整・画像を大きく見せる --}}
-                    <div class="modal-content">
-                        <div class="modal-body mx-auto">
-                            <img src="/debug/images/DSC_3583.jpg"
-                                 style="max-height: 800px; object-fit: scale-down; cursor:pointer;"
-                                 class="img-fluid" />
-                        </div>
-                        <div class="modal-img_footer">
-                            <p>モーダル商品</p>
-                            <button type="button" class="btn btn-success" data-dismiss="modal">Close</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <p class="card-text">This is a wider card with supporting text below.</p>
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input" id="customCheck2" name="photoalbum_content_id[]" value="2" data-name="アルバム１">
-                        <label class="custom-control-label" for="customCheck2"></label>
-                    </div>
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="pop">Edit</button>
-                    </div>
-                </div>
-            </div>
-            <script>
-            $("#pop").on("click", function() {
-               $("#photo_3").modal();
-            });
-            </script>
-        </div>
-    </div>
+    @endforeach
 </div>
+@endif
+
+{{-- データ一覧に画像が含まれる場合 --}}
+@if ($photoalbum_contents->where('is_folder', 0)->isNotEmpty())
+<div class="row">
+    @foreach($photoalbum_contents->where('is_folder', 0) as $photoalbum_content)
+    <div class="col-md-4">
+        <div class="card mt-3 shadow-sm">
+            <img src="/file/{{$photoalbum_content->upload_id}}"
+                 id="photo_{{$loop->iteration}}"
+                 style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
+                 class="img-fluid" data-toggle="modal" data-target="#image_Modal_{{$loop->iteration}}"
+            >
+            <div class="modal fade" id="image_Modal_{{$loop->iteration}}" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel_{{$loop->iteration}}">
+                <div class="modal-dialog modal-lg modal-middle">{{-- モーダルウィンドウの縦表示位置を調整・画像を大きく見せる --}}
+                    <div class="modal-content pb-3">
+                        <div class="modal-body mx-auto">
+                            <img src="/file/{{$photoalbum_content->upload_id}}"
+                                 style="max-height: 800px; object-fit: scale-down; cursor:pointer;"
+                                 class="img-fluid" />
+                        </div>
+                        <div class="modal-img_footer">
+                            <h5 class="card-title">{{$photoalbum_content->name}}</h5>
+                            <p class="card-text">This is a wider card with supporting text below as a natural</p>
+                            <button type="button" class="btn btn-success" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">{{$photoalbum_content->name}}</h5>
+                <p class="card-text">This is a wider card with supporting text below.</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="customCheck_{{$photoalbum_content->id}}" name="photoalbum_content_id[]" value="{{$photoalbum_content->id}}" data-name="{{$photoalbum_content->name}}">
+                        <label class="custom-control-label" for="customCheck_{{$photoalbum_content->id}}"></label>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="pop">Edit</button>
+                    </div>
+                </div>
+            </div>
+            <script>
+            $("#pop").on("click", function() {
+               $("#photo_{{$loop->iteration}}").modal();
+            });
+            </script>
+        </div>
+    </div>
+    @endforeach
+</div>
+@endif
 
 <hr />
 
@@ -329,6 +252,7 @@
     </thead>
     <tbody>
         {{-- ルート要素の表示時は「1つ上へ」を表示しない --}}
+{{--
         @if (count($breadcrumbs) > 1)
             <tr>
                 <td colspan="4"><i class="fas fa-folder mr-1 text-warning"></i><a href="{{url('/')}}/plugin/photoalbums/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$breadcrumbs->last()->parent_id}}/#frame-{{$frame->id}}">1つ上へ</a></td>
@@ -370,6 +294,7 @@
                 </tr>
             @endforeach
         @endif
+--}}
     </tbody>
 </table>
 <div class="bg-light p-2 text-right">
