@@ -1328,22 +1328,14 @@ class ReservationsPlugin extends UserPluginBase
         $str_required = "required_"."$request->column_id";
         $str_hide_flag = "hide_flag_"."$request->column_id";
 
-        // エラーチェック用に値を詰める
-        $request->merge([
-            "column_name" => $request->$str_column_name,
-            "column_type" => $request->$str_column_type,
-            "required" => $request->$str_required,
-            "hide_flag" => $request->$str_hide_flag,
-        ]);
-
         // エラーチェック
         $validator = Validator::make($request->all(), [
-            'column_name'  => ['required'],
-            'column_type'  => ['required'],
+            $str_column_name => ['required'],
+            $str_column_type => ['required'],
         ]);
         $validator->setAttributeNames([
-            'column_name'  => '予約項目名',
-            'column_type'  => '型',
+            $str_column_name => '予約項目名',
+            $str_column_type => '型',
         ]);
 
         $errors = null;
@@ -1355,12 +1347,12 @@ class ReservationsPlugin extends UserPluginBase
 
         // 予約項目の更新処理
         $column = ReservationsColumn::where('reservations_id', $request->reservations_id)->where('id', $request->column_id)->first();
-        $column->column_name = $request->column_name;
-        $column->column_type = $request->column_type;
-        $column->required = $request->required ? Required::on : Required::off;
-        $column->hide_flag = $request->hide_flag;
+        $column->column_name = $request->$str_column_name;
+        $column->column_type = $request->$str_column_type;
+        $column->required = $request->$str_required ? Required::on : Required::off;
+        $column->hide_flag = $request->$str_hide_flag;
         $column->save();
-        $message = '予約項目【 '. $request->column_name .' 】を更新しました。';
+        $message = '予約項目【 '. $request->$str_column_name .' 】を更新しました。';
 
         // 編集画面を呼び出す
         return $this->editColumn($request, $page_id, $frame_id, $request->reservations_id, $message, $errors);
