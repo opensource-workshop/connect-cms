@@ -99,20 +99,18 @@
             </div>
             --}}
             {{-- 施設名 --}}
-            <div class="row">
-                <div class="col-md-3">施設名：</div>
-                <div class="col-md-9">{{ $facility->facility_name }}</div>
+            <div class="form-group row">
+                <div class="col-md-2">施設名</div>
+                <div class="col-md-10">{{ $facility->facility_name }}</div>
             </div>
             {{-- 予約日 --}}
-            <div class="row">
-                <div class="col-md-3">予約日：</div>
-                <div class="col-md-9">{{ $target_date->format('Y年n月j日') . '(' . DayOfWeek::getDescription($target_date->dayOfWeek) . ')' }}</div>
+            <div class="form-group row">
+                <div class="col-md-2">予約日</div>
+                <div class="col-md-10">{{ $target_date->format('Y年n月j日') . '(' . DayOfWeek::getDescription($target_date->dayOfWeek) . ')' }}</div>
             </div>
             {{-- 予約時間 --}}
-            <div class="row">
-                <div class="col-md-3">予約時間：</div>
-            </div>
             <div class="form-group row">
+                <div class="col-md-2">予約時間</div>
                 {{-- 予約開始時間 --}}
                 <div class="col-md-3 input-group date" id="start_datetime" data-target-input="nearest">
                     {{-- 表示優先順：
@@ -157,14 +155,14 @@
             @foreach ($columns as $column)
                 <div class="form-group row">
                     {{-- 項目名称 --}}
-                    <label class="col-sm-2 control-label">{{$column->column_name}}
+                    <label class="col-md-2 control-label">{{$column->column_name}}
                         @if ($column->required)
                             {{-- 必須マーク --}}
                             <label class="badge badge-danger">必須</label>
                         @endif
                     </label>
                     {{-- 項目本体 --}}
-                    <div class="col-sm-10">
+                    <div class="col-md-10">
                         @switch($column->column_type)
 
                             {{-- テキスト項目 --}}
