@@ -69,7 +69,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
         $functions['get']  = ['index', 'download', 'changeDirectory'];
-        $functions['post'] = ['makeFolder', 'upload', 'deleteContents'];
+        $functions['post'] = ['makeFolder', 'upload', 'editContents', 'deleteContents'];
         return $functions;
     }
 
@@ -82,6 +82,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         $role_check_table = array();
         $role_check_table["upload"] = array('posts.create');
         $role_check_table["makeFolder"] = array('posts.create');
+        $role_check_table["editContents"] = array('posts.update');
         $role_check_table["deleteContents"] = array('posts.delete');
         return $role_check_table;
     }
@@ -111,8 +112,7 @@ class PhotoalbumsPlugin extends UserPluginBase
      *  データ初期表示関数
      *  コアがページ表示の際に呼び出す関数
      */
-    //public function index($request, $page_id, $frame_id, $parent_id = null)
-    public function index($request, $page_id, $frame_id, $album_id = null)
+    public function index($request, $page_id, $frame_id, $parent_id = null)
     {
         // バケツ未設定の場合はバケツ空テンプレートを呼び出す
         if (!isset($this->frame) || !$this->frame->bucket_id) {
@@ -122,7 +122,7 @@ class PhotoalbumsPlugin extends UserPluginBase
 
         $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
 
-        $parent = $this->fetchPhotoalbumContent($album_id, $photoalbum->id);
+        $parent = $this->fetchPhotoalbumContent($parent_id, $photoalbum->id);
 
         // 表示テンプレートを呼び出す。
         return $this->view('index', [
@@ -163,6 +163,21 @@ class PhotoalbumsPlugin extends UserPluginBase
             }),
             'breadcrumbs' => $this->fetchBreadCrumbs($photoalbum->id, $parent->id),
             'parent_id' =>  $parent->id,
+        ]);
+    }
+
+    /**
+     *  編集画面を表示する
+     */
+    public function edit($request, $page_id, $frame_id, $photoalbum_content_id)
+    {
+        // 対象のデータを取得して編集画面を表示する。
+        $photoalbum_content = PhotoalbumContent::find($photoalbum_content_id);
+
+        $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
+        return $this->view('edit', [
+            'photoalbum' => $photoalbum,
+            'photoalbum_content' => $photoalbum_content,
         ]);
     }
 
@@ -269,6 +284,7 @@ class PhotoalbumsPlugin extends UserPluginBase
             'photoalbum_id' => $photoalbum->id,
             'upload_id' => null,
             'name' => $request->folder_name[$frame_id],
+            'description' => $request->description[$frame_id],
             'is_folder' => PhotoalbumContent::is_folder_on,
         ]);
 
@@ -296,7 +312,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         if ($this->shouldOverwriteFile($parent, $upload_file->getClientOriginalName())) {
             $this->overwriteFile($upload_file, $page_id, $parent);
         } else {
-            $this->writeFile($upload_file, $page_id, $parent);
+            $this->writeFile($request, $upload_file, $page_id, $frame_id, $parent);
         }
 
         // 登録後はリダイレクトして初期表示。
@@ -325,7 +341,7 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param int $page_id ページID
      * @param int $frame_id フレームID
      */
-    private function writeFile($file, $page_id, $parent)
+    private function writeFile($request, $file, $page_id, $frame_id, $parent)
     {
         // uploads テーブルに情報追加、ファイルのid を取得する
         $upload = Uploads::create([
@@ -345,7 +361,8 @@ class PhotoalbumsPlugin extends UserPluginBase
         $parent->children()->create([
             'photoalbum_id' => $upload->id,
             'upload_id' => $upload->id,
-            'name' => $file->getClientOriginalName(),
+            'name' => empty($request->title[$frame_id]) ? $file->getClientOriginalName() : $request->title[$frame_id],
+            'description' => $request->description[$frame_id],
             'is_folder' => PhotoalbumContent::is_folder_off,
         ]);
     }
@@ -498,10 +515,13 @@ class PhotoalbumsPlugin extends UserPluginBase
      */
     private function addContentsToZip(&$zip, $contents, $parent_name = '')
     {
+        // 保存先のパス
+        $save_path = $parent_name === '' ? $parent_name : $parent_name .'/';
+
         foreach ($contents as $content) {
             // ファイルが格納されていない空のフォルダだったら、空フォルダを追加
             if ($content->is_folder === PhotoalbumContent::is_folder_on && $content->isLeaf()) {
-                $zip->addEmptyDir($parent_name .'/' . $content->name);
+                $zip->addEmptyDir($save_path . $content->name);
 
             // ファイル追加
             } elseif ($content->is_folder === PhotoalbumContent::is_folder_off) {
@@ -515,12 +535,12 @@ class PhotoalbumsPlugin extends UserPluginBase
                 }
                 $zip->addFile(
                     storage_path('app/') . $this->getContentsFilePath($content->upload),
-                    $parent_name .'/'. $content->name
+                    $save_path . $content->name
                 );
                 // ダウンロード回数をカウントアップ
                 Uploads::find($content->upload->id)->increment('download_count');
             }
-            $this->addContentsToZip($zip, $content->children, $parent_name .'/' . $content->name);
+            $this->addContentsToZip($zip, $content->children, $save_path . $content->name);
         }
     }
 

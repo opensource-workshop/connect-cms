@@ -86,11 +86,20 @@
     <input type="hidden" name="parent_id" value="{{$parent_id}}">
     <div class="collapse @if ($errors && $errors->has("folder_name.$frame_id")) show @endif bg-light border rounded border-white p-2" aria-expanded="false" aria-controls="collapseOne" id="collapse_mkdir{{$frame->id}}">
         <div class="form-group row">
-            <label class="{{$frame->getSettingLabelClass()}}" for="folder_name">フォトアルバム名</label>
+            <label class="{{$frame->getSettingLabelClass()}}" for="folder_name">フォトアルバム名 <label class="badge badge-danger">必須</label></label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <input type="text" name="folder_name[{{$frame_id}}]" value="{{old("folder_name.$frame_id")}}" class="form-control @if ($errors && $errors->has("folder_name.$frame_id")) border-danger @endif" id="folder_name{{$frame_id}}">
                 @if ($errors && $errors->has("folder_name.$frame_id")) 
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("folder_name.*")}}</div>
+                @endif
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}" for="description">説明</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <textarea name="description[{{$frame_id}}]" class="form-control @if ($errors->has('description.$frame_id')) border-danger @endif" rows=2>{!!old("description.$frame_id")!!}</textarea>
+                @if ($errors && $errors->has("description.$frame_id")) 
+                    <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("description.*")}}</div>
                 @endif
             </div>
         </div>
@@ -105,15 +114,35 @@
     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/photoalbums/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$parent_id}}/#frame-{{$frame->id}}">
     <input type="hidden" name="parent_id" value="{{$parent_id}}">
     <div class="collapse @if ($errors && $errors->has("upload_file.$frame_id")) show @endif bg-light border rounded border-white p-2" aria-expanded="false" aria-controls="collapseOne" id="collapse_upload{{$frame->id}}">
-        <div class="form-group">
-            <div class="custom-file">
+        <div class="form-group row no-gutters">
+            <label class="{{$frame->getSettingLabelClass()}} pr-3" for="upload_file">ファイル <label class="badge badge-danger">必須</label></label>
+            <div class="custom-file {{$frame->getSettingInputClass()}}">
                 <input type="hidden" name="upload_file[{{$frame_id}}]" value="">
                 <input type="file" name="upload_file[{{$frame_id}}]" value="{{old("upload_file.$frame_id")}}" class="custom-file-input @if ($errors && $errors->has("upload_file.$frame_id")) border-danger @endif" id="upload_file{{$frame_id}}">
-                <label class="custom-file-label" for="upload_file" data-browse="参照">ファイル選択...</label>
+                <label class="custom-file-label ml-md-2" for="upload_file" data-browse="参照">ファイル選択...</label>
+                @if ($errors && $errors->has("upload_file.$frame_id")) 
+                    <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("upload_file.*")}}</div>
+                @endif
             </div>
-            @if ($errors && $errors->has("upload_file.$frame_id")) 
-                <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("upload_file.*")}}</div>
-            @endif
+        </div>
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}" for="title">タイトル</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <input type="text" name="title[{{$frame_id}}]" value="{{old("title.$frame_id")}}" class="form-control @if ($errors && $errors->has("title.$frame_id")) border-danger @endif" id="title{{$frame_id}}">
+                <small class="form-text text-muted">空の場合、ファイル名をタイトルとして登録します。</small>
+                @if ($errors && $errors->has("title.$frame_id")) 
+                    <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("title.*")}}</div>
+                @endif
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}" for="description">説明</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <textarea name="description[{{$frame_id}}]" class="form-control @if ($errors->has('description.$frame_id')) border-danger @endif" rows=2>{!!old("description.$frame_id")!!}</textarea>
+                @if ($errors && $errors->has("description.$frame_id")) 
+                    <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("description.*")}}</div>
+                @endif
+            </div>
         </div>
         <div class="text-center">
             <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#collapse_upload{{$frame->id}}">キャンセル</button>
@@ -168,16 +197,17 @@
     <div class="col-sm-4 mt-3">
         <div class="card sm-4">
             <a href="{{url('/')}}/plugin/photoalbums/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}/#frame-{{$frame->id}}" class="text-center">
-                <img src="/debug/images/DSC_1941-3.JPG"
-                     style="max-height: 150px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
-                     class="img-fluid"
-                >
+                <svg class="bd-placeholder-img card-img-top" width="100%" height="150" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Image cap">
+                    <title>{{$photoalbum_content->name}}</title>
+                    <rect fill="#868e96" width="100%" height="100%"></rect>
+                    <text fill="#dee2e6"x="50%" y="50%" text-anchor="middle" dominant-baseline="central">{{$photoalbum_content->name}}</text>
+                </svg>
             </a>
         </div>
     </div>
     <div class="col-sm-8 mt-3">
         <h5 class="card-title">{{$photoalbum_content->name}}</h5>
-        <p class="card-text">This is a wider card with supporting text below as a natural</p>
+        <p class="card-text">{!!nl2br(e($photoalbum_content->description))!!}</p>
 
         <div class="custom-control custom-checkbox">
             <input type="checkbox" class="custom-control-input" id="customCheck_{{$photoalbum_content->id}}" name="photoalbum_content_id[]" value="{{$photoalbum_content->id}}" data-name="{{$photoalbum_content->displayName}}">
@@ -209,7 +239,7 @@
                         </div>
                         <div class="modal-img_footer">
                             <h5 class="card-title">{{$photoalbum_content->name}}</h5>
-                            <p class="card-text">This is a wider card with supporting text below as a natural</p>
+                            <p class="card-text">{!!nl2br(e($photoalbum_content->description))!!}</p>
                             <button type="button" class="btn btn-success" data-dismiss="modal">Close</button>
                         </div>
                     </div>
@@ -217,15 +247,17 @@
             </div>
             <div class="card-body">
                 <h5 class="card-title">{{$photoalbum_content->name}}</h5>
-                <p class="card-text">This is a wider card with supporting text below.</p>
+                <p class="card-text">{!!nl2br(e($photoalbum_content->description))!!}</p>
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="custom-control custom-checkbox">
                         <input type="checkbox" class="custom-control-input" id="customCheck_{{$photoalbum_content->id}}" name="photoalbum_content_id[]" value="{{$photoalbum_content->id}}" data-name="{{$photoalbum_content->name}}">
                         <label class="custom-control-label" for="customCheck_{{$photoalbum_content->id}}"></label>
                     </div>
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="pop">Edit</button>
-                    </div>
+                    @can('posts.update', [[$photoalbum_content, $frame->plugin_name, $buckets]])
+                    <a href="{{url('/')}}/plugin/photoalbums/edit/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}#frame-{{$frame->id}}">
+                        <i class="far fa-edit"></i>
+                    </a>
+                    @endcan
                 </div>
             </div>
             <script>
@@ -239,64 +271,6 @@
 </div>
 @endif
 
-<hr />
-
-<table class="table text-break">
-    <thead>
-        <tr class="d-none d-md-table-row">
-            <th>&nbsp;</th>
-            <th>名前</th>
-            <th>サイズ</th>
-            <th>更新日</th>
-        </tr>
-    </thead>
-    <tbody>
-        {{-- ルート要素の表示時は「1つ上へ」を表示しない --}}
-{{--
-        @if (count($breadcrumbs) > 1)
-            <tr>
-                <td colspan="4"><i class="fas fa-folder mr-1 text-warning"></i><a href="{{url('/')}}/plugin/photoalbums/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$breadcrumbs->last()->parent_id}}/#frame-{{$frame->id}}">1つ上へ</a></td>
-            </tr>
-        @endif
-
-        @if ($photoalbum_contents->count() === 0)
-            <tr>
-                <td colspan="4">ファイルがありません</td>
-            </tr>
-        @else
-            @foreach($photoalbum_contents as $photoalbum_content)
-                <tr>
-                    <td>
-                        <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="customCheck{{$photoalbum_content->id}}" name="photoalbum_content_id[]" value="{{$photoalbum_content->id}}" data-name="{{$photoalbum_content->displayName}}">
-                            <label class="custom-control-label" for="customCheck{{$photoalbum_content->id}}"></label>
-                        </div>
-                    </td>
-                    @if ($photoalbum_content->is_folder == true)
-                        <td>
-                            <i class="fas fa-folder mr-1 text-warning"></i><a href="{{url('/')}}/plugin/photoalbums/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}/#frame-{{$frame->id}}">{{$photoalbum_content->displayName}}</a>
-                            <small class="form-text text-muted d-block d-md-none">
-                                - | {{$photoalbum_content->created_at}}
-                            </small>
-                        </td>
-                        <td class="d-none d-md-table-cell">-</td>
-                        <td class="d-none d-md-table-cell">{{$photoalbum_content->created_at}}</td>
-                    @else
-                        <td>
-                            <i class="far fa-file mr-1 text-secondary"></i><a href="{{url('/')}}/file/{{$photoalbum_content->upload_id}}" target="_blank">{{$photoalbum_content->displayName}}</a>
-                            <small class="form-text text-muted d-block d-md-none">
-                                {{$photoalbum_content->upload->getFormatSize()}} | {{$photoalbum_content->created_at}}
-                            </small>
-                        </td>
-                        <td class="d-none d-md-table-cell">{{$photoalbum_content->upload->getFormatSize()}}</td>
-                        <td class="d-none d-md-table-cell">{{$photoalbum_content->updated_at}}</td>
-                    @endif
-                </tr>
-            @endforeach
-        @endif
---}}
-    </tbody>
-</table>
 <div class="bg-light p-2 text-right">
     <span class="mr-2">チェックした項目を</span>
     @can('posts.delete', [[null, $frame->plugin_name, $buckets]])

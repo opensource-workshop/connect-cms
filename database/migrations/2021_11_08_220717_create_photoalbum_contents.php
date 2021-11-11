@@ -19,7 +19,9 @@ class CreatePhotoalbumContents extends Migration
             $table->integer('photoalbum_id')->comment('フォトアルバムID');
             $table->integer('upload_id')->nullable()->comment('アップロードID');
             $table->string('name', 255)->comment('名前');
+            $table->text('description')->nullable()->comment('説明');
             $table->tinyInteger('is_folder')->comment('フォルダである');
+            $table->tinyInteger('is_cover')->default('0')->comment('アルバム表紙である');
             $table->nestedSet();
             $table->integer('created_id')->nullable();
             $table->string('created_name', 255)->nullable();
