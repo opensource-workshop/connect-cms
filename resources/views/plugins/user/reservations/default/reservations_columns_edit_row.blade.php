@@ -50,19 +50,19 @@
     </td>
     {{-- 選択肢の設定ボタン --}}
     <td class="text-center px-2">
-        @if ($column->column_type == ReservationColumnType::radio)
-            <button
-                type="button"
-                class="btn btn-success btn-xs cc-font-90 text-nowrap"
+        <button
+            type="button"
+            class="btn btn-success btn-xs cc-font-90 text-nowrap"
+            @if ($column->column_type == ReservationColumnType::radio)
                 {{-- 選択肢の設定がない場合のみツールチップを表示 --}}
                 @if ($column->select_count == 0)
                     id="detail-button-tip" data-toggle="tooltip" title="選択肢がありません。設定してください。" data-trigger="manual" data-placement="bottom"
                 @endif
-                onclick="location.href='{{url('/')}}/plugin/reservations/editColumnDetail/{{$page->id}}/{{$frame_id}}/{{ $column->id }}#frame-{{$frame->id}}'"
-            >
-                <i class="far fa-window-restore"></i> <span class="d-sm-none">詳細</span>
-            </button>
-        @endif
+            @endif
+            onclick="location.href='{{url('/')}}/plugin/reservations/editColumnDetail/{{$page->id}}/{{$frame_id}}/{{ $column->id }}#frame-{{$frame->id}}'"
+        >
+            <i class="far fa-window-restore"></i> <span class="d-sm-none">詳細</span>
+        </button>
     </td>
     {{-- 更新ボタン --}}
     <td class="text-center px-2">
@@ -75,19 +75,28 @@
     </td>
 </tr>
 {{-- 選択肢の設定内容の表示行 --}}
-@if ($column->column_type == ReservationColumnType::radio)
-<tr>
-    <td class="pt-0 border border-0"></td>
-    <td class="pt-0 border border-0" colspan="7">
+@if (
+    $column->column_type == ReservationColumnType::radio ||
+    $column->title_flag
+    )
+    <tr>
+        <td class="pt-0 border border-0"></td>
+        <td class="pt-0 border border-0" colspan="7">
+            @if ($column->select_count > 0)
+                {{-- 選択肢データがある場合、カンマ付で一覧表示する --}}
+                <i class="far fa-list-alt"></i>
+                {{ $column->select_names }}
+            @elseif (!$column->title_flag && $column->select_count == 0)
+                {{-- 選択肢データがなく、タイトル指定もない場合はツールチップ分、余白として改行する --}}
+                <br>
+            @endif
 
-    @if ($column->select_count > 0)
-        {{-- 選択肢データがある場合、カンマ付で一覧表示する --}}
-        <i class="far fa-list-alt"></i>
-        {{ $column->select_names }}
-    @elseif($column->select_count == 0)
-        {{-- 選択肢データがない場合はツールチップ分、余白として改行する --}}
-        <br>
-    @endif
-    </td>
-</tr>
+            @if ($column->title_flag)
+                {{-- タイトル指定が設定されている場合、タイトル指定を表示する --}}
+                <div class="small text-primary">
+                    <i class="fas fa-toggle-on"></i> タイトル指定
+                </div>
+            @endif
+        </td>
+    </tr>
 @endif

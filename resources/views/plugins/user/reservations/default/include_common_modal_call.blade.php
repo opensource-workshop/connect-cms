@@ -100,7 +100,7 @@
     >
         {{-- 表示用の予約時間 --}}
         <div class="small">
-            {{ $booking['booking_header']->start_datetime->format('H:i')}}~{{$booking['booking_header']->end_datetime->format('H:i') }}
+            {{ $booking['booking_header']->start_datetime->format('H:i')}}~{{$booking['booking_header']->end_datetime->format('H:i') . ' ' . $booking['booking_header']->title }}
         </div>
     </a>
 

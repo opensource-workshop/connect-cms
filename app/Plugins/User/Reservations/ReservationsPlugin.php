@@ -19,6 +19,7 @@ use App\Models\User\Reservations\ReservationsInputsColumn;
 
 use App\Plugins\User\UserPluginBase;
 
+use App\Enums\NoticeEmbeddedTag;
 use App\Enums\Required;
 use App\Enums\ReservationCalendarDisplayType;
 use App\Enums\ReservationColumnType;
@@ -286,8 +287,11 @@ class ReservationsPlugin extends UserPluginBase
         // $message = '予約を' . $str_mode . 'しました。【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
         $request->flash_message = $str_mode . '【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
 
-        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
-        $this->sendPostNotice($reservations_inputs, $before_reservations_inputs, 'showBooking');
+        // titleカラムが無いため、プラグイン独自でセット
+        $overwrite_notice_embedded_tags = [NoticeEmbeddedTag::title => $this->getTitle($reservations_inputs)];
+
+        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド, 上書き埋め込みタグ)
+        $this->sendPostNotice($reservations_inputs, $before_reservations_inputs, 'showBooking', $overwrite_notice_embedded_tags);
 
         // 登録後はカレンダー表示
         // return $this->index($request, $page_id, $frame_id, null, null, $message);
@@ -428,7 +432,13 @@ class ReservationsPlugin extends UserPluginBase
      */
     private function getReservationsInputsColumns($id)
     {
-        $inputs_columns = ReservationsInputsColumn::select('reservations_inputs_columns.*', 'reservations_columns.column_type', 'reservations_columns.column_name')
+        $inputs_columns = ReservationsInputsColumn::
+            select(
+                'reservations_inputs_columns.*',
+                'reservations_columns.column_type',
+                'reservations_columns.column_name',
+                'reservations_columns.title_flag'
+            )
             ->leftJoin('reservations_columns', 'reservations_columns.id', '=', 'reservations_inputs_columns.column_id')
             ->where('reservations_inputs_columns.inputs_id', $id)
             ->orderBy('reservations_inputs_columns.inputs_id', 'asc')
@@ -592,14 +602,23 @@ class ReservationsPlugin extends UserPluginBase
                     if ($date->format('Ymd') == $bookingHeader->start_datetime->format('Ymd')) {
                         // セルの予約配列に予約データを追加
                         $booking = null;
-                        $booking['booking_header'] = $bookingHeader;
-                        $booking['booking_details'] = ReservationsInputsColumn::leftjoin('reservations_columns', function ($join) {
+                        $booking['booking_details'] = ReservationsInputsColumn::
+                            select(
+                                'reservations_inputs_columns.*',
+                                'reservations_columns.title_flag'
+                            )
+                            ->leftJoin('reservations_columns', function ($join) {
                                 $join->on('reservations_inputs_columns.column_id', '=', 'reservations_columns.id');
                             })
                             ->where('reservations_inputs_columns.reservations_id', $reservations->id)
                             ->where('inputs_id', $bookingHeader->id)
                             ->orderBy('reservations_inputs_columns.column_id')
                             ->get();
+
+                        // タイトル設定
+                        $bookingHeader->title = $this->getTitle(null, $booking['booking_details']);
+
+                        $booking['booking_header'] = $bookingHeader;
 
                         $calendar_cell['bookings'][] = $booking;
                     }
@@ -646,6 +665,40 @@ class ReservationsPlugin extends UserPluginBase
                 'isExistSelect' => $isExistSelect,
             ]);
         }
+    }
+
+    /**
+     * タイトル取得
+     */
+    private function getTitle($input = null, $inputs_columns = null)
+    {
+        if (is_null($inputs_columns)) {
+
+            if (is_null($input)) {
+                return '';
+            }
+
+            // タイトルカラム
+            // $column = ReservationsColumn::where('reservations_id', $input->reservations_id)
+            //     ->where('title_flag', '1')
+            //     ->orderBy('display_sequence', 'asc')
+            //     ->first();
+
+            // if (is_null($column)) {
+            //     return '';
+            // }
+
+            $inputs_columns = $this->getReservationsInputsColumns($input->id);
+        }
+
+        $obj = $inputs_columns->firstWhere('title_flag', '1');
+
+        // 項目の型で処理を分ける。
+
+        // その他の型
+        $value = $obj ? $obj->value : "";
+
+        return $value;
     }
 
     /**
@@ -976,16 +1029,14 @@ class ReservationsPlugin extends UserPluginBase
         $selects = ReservationsColumnsSelect::where('column_id', $column->id)->orderby('display_sequence')->get();
 
         // 編集画面テンプレートを呼び出す。
-        return $this->view(
-            'reservations_columns_select_edit', [
+        return $this->view('reservations_columns_edit_row_detail', [
             'reservations_id' => $reservations_id,
             'reservation'     => $reservation,
-            'column'     => $column,
-            'selects'     => $selects,
-            'message'     => $message,
-            'errors'     => $errors,
-            ]
-        );
+            'column'          => $column,
+            'selects'         => $selects,
+            'message'         => $message,
+            'errors'          => $errors,
+        ]);
     }
 
     /**
@@ -1028,6 +1079,7 @@ class ReservationsPlugin extends UserPluginBase
                 'reservations_columns.column_name',
                 'reservations_columns.required',
                 'reservations_columns.hide_flag',
+                'reservations_columns.title_flag',
                 'reservations_columns.display_sequence',
                 DB::raw('count(reservations_columns_selects.id) as select_count'),
                 DB::raw('GROUP_CONCAT(reservations_columns_selects.select_name order by reservations_columns_selects.display_sequence SEPARATOR \',\') as select_names'),
@@ -1044,16 +1096,27 @@ class ReservationsPlugin extends UserPluginBase
                 'reservations_columns.column_name',
                 'reservations_columns.required',
                 'reservations_columns.hide_flag',
+                'reservations_columns.title_flag',
                 'reservations_columns.display_sequence',
             )
             ->orderby('reservations_columns.display_sequence')
             ->get();
+
+        // 新着等のタイトル指定 が設定されているか（施設予約毎に１つ設定）
+        $title_flag = 0;
+        foreach ($columns as $column) {
+            if ($column->title_flag) {
+                $title_flag = 1;
+                break;
+            }
+        }
 
         // 編集画面テンプレートを呼び出す。
         return $this->view('reservations_columns_edit', [
             'reservations_id' => $reservations_id,
             'reservation' => $reservation,
             'columns' => $columns,
+            'title_flag' => $title_flag,
             'message' => $message,
             'errors' => $errors,
         ]);
@@ -1301,6 +1364,36 @@ class ReservationsPlugin extends UserPluginBase
 
         // 編集画面を呼び出す
         return $this->editColumn($request, $page_id, $frame_id, $request->reservations_id, $message, $errors);
+    }
+
+    /**
+     * 項目に紐づく詳細設定の更新
+     */
+    public function updateColumnDetail($request, $page_id, $frame_id)
+    {
+        // タイトル指定
+        $title_flag = (empty($request->title_flag)) ? 0 : $request->title_flag;
+        if ($title_flag) {
+            // title_flagは施設予約内で１つだけ ON にする項目
+            // そのため title_flag = 1 なら 施設予約内の title_flag = 1 を一度 0 に更新する。
+            ReservationsColumn::where('reservations_id', $request->reservations_id)
+                ->where('title_flag', 1)
+                ->update(['title_flag' => 0]);
+        }
+
+        // 更新データは上記update後に取得しないと、title_flagが更新されない
+        $column = ReservationsColumn::where('id', $request->column_id)->first();
+
+        // タイトル指定
+        $column->title_flag = $title_flag;
+
+        // 保存
+        $column->save();
+
+        $message = '項目【 '. $column->column_name .' 】を更新しました。';
+
+        // 編集画面を呼び出す
+        return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, $message, null);
     }
 
     /**
