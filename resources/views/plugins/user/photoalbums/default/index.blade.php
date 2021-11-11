@@ -271,7 +271,7 @@
 </div>
 @endif
 
-<div class="bg-light p-2 text-right">
+<div class="bg-light mt-3 p-2 text-right">
     <span class="mr-2">チェックした項目を</span>
     @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
     <button class="btn btn-danger btn-sm btn-delete" type="button" data-toggle="modal" data-target="#delete-confirm{{$frame_id}}" disabled><i class="fas fa-trash-alt"></i><span class="d-none d-sm-inline"> 削除</span></button>

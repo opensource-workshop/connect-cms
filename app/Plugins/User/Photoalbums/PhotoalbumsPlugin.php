@@ -401,6 +401,34 @@ class PhotoalbumsPlugin extends UserPluginBase
     }
 
     /**
+     *  コンテンツ変更処理
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     */
+    public function editContents($request, $page_id, $frame_id, $photoalbum_content_id)
+    {
+
+        // 対象のデータを取得して編集する。
+        $photoalbum_content = PhotoalbumContent::find($photoalbum_content_id);
+        $photoalbum_content->name = empty($request->title[$frame_id]) ? $file->getClientOriginalName() : $request->title[$frame_id];
+        $photoalbum_content->description = $request->description[$frame_id];
+        $photoalbum_content->save();
+
+
+
+
+
+
+
+
+
+        // 登録後はリダイレクトして初期表示。
+        return new Collection(['redirect_path' => url('/') . "/plugin/photoalbums/changeDirectory/" . $page_id . "/" . $frame_id . "/" . $request->parent_id . "/#frame-" . $frame_id ]);
+    }
+
+    /**
      *  コンテンツ削除処理
      *
      * @param \Illuminate\Http\Request $request リクエスト

@@ -24,7 +24,7 @@
 </style>
 
 {{-- 投稿用フォーム --}}
-<form action="{{url('/')}}/redirect/plugin/photoalbums/save/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}#frame-{{$frame->id}}" method="POST" class="" name="form_post{{$frame_id}}">
+<form action="{{url('/')}}/redirect/plugin/photoalbums/editContents/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}#frame-{{$frame->id}}" method="POST" class="" name="form_post{{$frame_id}}">
     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/photoalbums/edit/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}#frame-{{$frame_id}}">
     {{ csrf_field() }}
 
