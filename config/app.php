@@ -288,6 +288,7 @@ $app_array = [
         'LinkOfPdfThumbnail' => \App\Enums\LinkOfPdfThumbnail::class,
         'ResizedImageSize' => \App\Enums\ResizedImageSize::class,
         'NoticeEmbeddedTag' => \App\Enums\NoticeEmbeddedTag::class,
+        'WhatsnewFrameConfig' => \App\Enums\WhatsnewFrameConfig::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

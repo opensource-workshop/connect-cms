@@ -46,6 +46,7 @@ use App\Enums\DatabaseRoleName;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\Required;
 use App\Enums\NoticeEmbeddedTag;
+use App\Enums\StatusType;
 
 /**
  * データベース・プラグイン
@@ -1386,13 +1387,13 @@ class DatabasesPlugin extends UserPluginBase
         $database = $this->getDatabases($frame_id);
 
         if ($isTemporary) {
-            $status = 1;  // 一時保存
+            $status = StatusType::temporary;  // 一時保存
         } else {
             // 承認の要否確認とステータス処理
             if ($this->isApproval()) {
-                $status = 2;  // 承認待ち
+                $status = StatusType::approval_pending;  // 承認待ち
             } else {
-                $status = 0;  // 公開
+                $status = StatusType::active;  // 公開
             }
         }
 
@@ -1626,78 +1627,63 @@ class DatabasesPlugin extends UserPluginBase
         $input_cols = $this->getDatabasesInputCols($input->id);
         $obj = $input_cols->firstWhere('title_flag', '1');
 
-        // ファイル型
+        // 項目の型で処理を分ける。
         if ($column->column_type == DatabaseColumnType::file) {
+            // ファイル型
             if (empty($obj)) {
                 $value = '';
-            }
-            else {
+            } else {
                 $value = $obj->client_original_name;
             }
-        }
-        // 画像型
-        elseif ($column->column_type == DatabaseColumnType::image) {
+        } elseif ($column->column_type == DatabaseColumnType::image) {
+            // 画像型
             if (empty($obj)) {
                 $value = '';
-            }
-            else {
+            } else {
                 $value = Uploads::getFilenameNoExtensionById($obj->value);
             }
-        }
-        // 動画型
-        elseif ($column->column_type == DatabaseColumnType::video) {
+        } elseif ($column->column_type == DatabaseColumnType::video) {
+            // 動画型
             if (empty($obj)) {
                 $value = '';
-            }
-            else {
+            } else {
                 $value = $obj->client_original_name;
             }
-        }
-        // リンク型
-        elseif ($column->column_type == DatabaseColumnType::link) {
+        } elseif ($column->column_type == DatabaseColumnType::link) {
+            // リンク型
             if (empty($obj)) {
                 $value = '';
-            }
-            else {
+            } else {
                 $value = $obj->value;
             }
-        }
-        // 日付型
-        elseif ($column->column_type == DatabaseColumnType::date) {
+        } elseif ($column->column_type == DatabaseColumnType::date) {
+            // 日付型
             if (empty($obj) || empty($obj->value)) {
                 $value = '';
+            } else {
+                $value = date('Y/m/d', strtotime($obj->value));
             }
-            else {
-                $value = date('Y/m/d',  strtotime($obj->value));
-            }
-        }
-        // 複数選択型
-        elseif ($column->column_type == DatabaseColumnType::checkbox) {
+        } elseif ($column->column_type == DatabaseColumnType::checkbox) {
+            // 複数選択型
             if (empty($obj)) {
                 $value = '';
-            }
-            else {
+            } else {
                 $value = str_replace('|', ', ', $obj->value);
             }
-        }
-        // 登録日型
-        elseif ($column->column_type == DatabaseColumnType::created) {
+        } elseif ($column->column_type == DatabaseColumnType::created) {
+            // 登録日型
             $value = $input->created_at;
-        }
-        // 更新日型
-        elseif ($column->column_type == DatabaseColumnType::updated) {
+        } elseif ($column->column_type == DatabaseColumnType::updated) {
+            // 更新日型
             $value = $input->updated_at;
-        }
-        // 公開日型
-        elseif ($column->column_type == DatabaseColumnType::posted) {
+        } elseif ($column->column_type == DatabaseColumnType::posted) {
+            // 公開日型
             $value = $input->posted_at;
-        }
-        // 表示順型
-        elseif ($column->column_type == DatabaseColumnType::display) {
+        } elseif ($column->column_type == DatabaseColumnType::display) {
+            // 表示順型
             $value = $input->display_sequence;
-        }
-        // その他の型
-        else {
+        } else {
+            // その他の型
             $value = $obj ? $obj->value : "";
         }
 
@@ -3253,7 +3239,7 @@ class DatabasesPlugin extends UserPluginBase
             $posted_at = array_pop($csv_columns);
             $posted_at = new Carbon($posted_at);
 
-            $status = 0;  // 公開
+            $status = StatusType::active;  // 公開
 
             // // 一時ファイルの削除
             // fclose($fp);
@@ -3708,45 +3694,6 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
-     *  検索用メソッド
-     */
-    public static function getSearchArgs($search_keyword, $page_ids = null)
-    {
-        // Query Builder のバグ？
-        // whereIn で指定した引数が展開されずに、引数の変数分だけ、setBindings の引数を要求される。
-        // そのため、whereIn とsetBindings 用の変数に同じ $page_ids を設定している。
-        $query = DB::table('databases_inputs')
-                   ->select(
-                       'databases_inputs.id         as post_id',
-                       'frames.id                   as frame_id',
-                       'frames.page_id              as page_id',
-                       'pages.permanent_link        as permanent_link',
-                       'databases_inputs.id         as post_title',
-                       DB::raw('0 as important'),
-                       'databases_inputs.created_at as posted_at',
-                       DB::raw('null as posted_name'),
-                       DB::raw('null as classname'),
-                       DB::raw('null as categories_id'),
-                       DB::raw('null as category'),
-                       DB::raw('"databases" as plugin_name')
-                   )
-                   ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
-                   ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
-                   ->join('pages', 'pages.id', '=', 'frames.page_id')
-                   ->whereIn('pages.id', $page_ids);
-
-        //$bind = array($page_ids, 0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
-        $bind = array($page_ids);
-
-        $return[] = $query;
-        $return[] = $bind;
-        $return[] = 'show_page';
-        $return[] = '/page';
-
-        return $return;
-    }
-
-    /**
      * 登録データ行の取得
      */
     private function getDatabasesInputs($id)
@@ -3772,7 +3719,7 @@ class DatabasesPlugin extends UserPluginBase
 
         // 更新されたら、行レコードの updated_at を更新したいので、update()
         $databases_inputs->updated_at = now();
-        $databases_inputs->status = 0;  // 公開
+        $databases_inputs->status = StatusType::active;  // 公開
         $databases_inputs->update();
 
         // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
@@ -3842,32 +3789,34 @@ AND databases_inputs.posted_at <= NOW()
 ;
 */
         // データ詳細の取得
-        $inputs_query = DatabasesInputs::select(
-            'frames.page_id                as page_id',
-            'frames.id                     as frame_id',
-            'databases_inputs.id           as post_id,',
-            'databases_input_cols.value    as post_title,',
-            DB::raw('null                  as important'),
-            'databases_inputs.posted_at    as posted_at',
-            'databases_inputs.created_name as posted_name',
-            DB::raw('null                  as classname'),
-            DB::raw('null                  as category'),
-            DB::raw('"databases"           as plugin_name')
-        )
-                ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
-                ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
-                ->leftJoin('databases_columns', function ($leftJoin) use ($hide_columns_ids) {
-                    $leftJoin->on('databases_inputs.databases_id', '=', 'databases_columns.databases_id')
-                                ->where('databases_columns.title_flag', 1)
-                                // タイトル指定しても、権限によって非表示columだったらvalue表示しない（基本的に、タイトル指定したけど権限で非表示は、設定ミスと思う。その時は(無題)で表示される）
-                                ->whereNotIn('databases_columns.id', $hide_columns_ids);
-                })
-                ->leftJoin('databases_input_cols', function ($leftJoin) {
-                    $leftJoin->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
-                                ->on('databases_columns.id', '=', 'databases_input_cols.databases_columns_id');
-                })
-                ->where('databases_inputs.status', 0)
-                ->where('databases_inputs.posted_at', '<=', Carbon::now());
+        $inputs_query = DatabasesInputs::
+            select(
+                'frames.page_id                as page_id',
+                'frames.id                     as frame_id',
+                'databases_inputs.id           as post_id,',
+                'databases_input_cols.value    as post_title,',
+                DB::raw('null                  as post_detail'),
+                DB::raw('null                  as important'),
+                'databases_inputs.posted_at    as posted_at',
+                'databases_inputs.created_name as posted_name',
+                DB::raw('null                  as classname'),
+                DB::raw('null                  as category'),
+                DB::raw('"databases"           as plugin_name')
+            )
+            ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
+            ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
+            ->leftJoin('databases_columns', function ($leftJoin) use ($hide_columns_ids) {
+                $leftJoin->on('databases_inputs.databases_id', '=', 'databases_columns.databases_id')
+                            ->where('databases_columns.title_flag', 1)
+                            // タイトル指定しても、権限によって非表示columだったらvalue表示しない（基本的に、タイトル指定したけど権限で非表示は、設定ミスと思う。その時は(無題)で表示される）
+                            ->whereNotIn('databases_columns.id', $hide_columns_ids);
+            })
+            ->leftJoin('databases_input_cols', function ($leftJoin) {
+                $leftJoin->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
+                            ->on('databases_columns.id', '=', 'databases_input_cols.databases_columns_id');
+            })
+            ->where('databases_inputs.status', StatusType::active)
+            ->where('databases_inputs.posted_at', '<=', Carbon::now());
 
         // 全データベースの検索キーワードの絞り込み と カラムの絞り込み
         $inputs_query = DatabasesTool::appendSearchKeywordAndSearchColumnsAllDb(
@@ -3880,6 +3829,45 @@ AND databases_inputs.posted_at <= NOW()
         $return[] = $inputs_query;
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/databases/detail';
+
+        return $return;
+    }
+
+    /**
+     *  検索用メソッド
+     */
+    public static function getSearchArgs($search_keyword, $page_ids = null)
+    {
+        // Query Builder のバグ？
+        // whereIn で指定した引数が展開されずに、引数の変数分だけ、setBindings の引数を要求される。
+        // そのため、whereIn とsetBindings 用の変数に同じ $page_ids を設定している。
+        $query = DB::table('databases_inputs')
+                   ->select(
+                       'databases_inputs.id         as post_id',
+                       'frames.id                   as frame_id',
+                       'frames.page_id              as page_id',
+                       'pages.permanent_link        as permanent_link',
+                       'databases_inputs.id         as post_title',
+                       DB::raw('0 as important'),
+                       'databases_inputs.created_at as posted_at',
+                       DB::raw('null as posted_name'),
+                       DB::raw('null as classname'),
+                       DB::raw('null as categories_id'),
+                       DB::raw('null as category'),
+                       DB::raw('"databases" as plugin_name')
+                   )
+                   ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
+                   ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
+                   ->join('pages', 'pages.id', '=', 'frames.page_id')
+                   ->whereIn('pages.id', $page_ids);
+
+        //$bind = array($page_ids, 0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
+        $bind = array($page_ids);
+
+        $return[] = $query;
+        $return[] = $bind;
+        $return[] = 'show_page';
+        $return[] = '/page';
 
         return $return;
     }

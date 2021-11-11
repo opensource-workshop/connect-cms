@@ -37,6 +37,14 @@ class CabinetsPlugin extends UserPluginBase
 {
 
     /* オブジェクト変数 */
+
+    /**
+     * POST チェックに使用する getPost() 関数を使うか
+     * [TODO] 現在（2021/11/10）は、管理者がアップしたファイルも、編集者が削除できるため、getPost()は使わない設定にする。
+     *        今後自分がアップしたファイルのみ削除できるように見直しする想定で、その時は getPost()を使うと予想。
+     */
+    public $use_getpost = false;
+
     // ファイルダウンロードURL
     private $download_url = '';
 
@@ -149,7 +157,7 @@ class CabinetsPlugin extends UserPluginBase
     /**
      * フォルダを移動する
      */
-    public function changeDirectory($request, $page_id, $frame_id, $parent_id) 
+    public function changeDirectory($request, $page_id, $frame_id, $parent_id)
     {
         return $this->index($request, $page_id, $frame_id, $parent_id);
     }
@@ -478,10 +486,13 @@ class CabinetsPlugin extends UserPluginBase
      */
     private function addContentsToZip(&$zip, $contents, $parent_name = '')
     {
+        // 保存先のパス
+        $save_path = $parent_name === '' ? $parent_name : $parent_name .'/';
+
         foreach ($contents as $content) {
             // ファイルが格納されていない空のフォルダだったら、空フォルダを追加
             if ($content->is_folder === CabinetContent::is_folder_on && $content->isLeaf()) {
-                $zip->addEmptyDir($parent_name .'/' . $content->name);
+                $zip->addEmptyDir($save_path . $content->name);
 
             // ファイル追加
             } elseif ($content->is_folder === CabinetContent::is_folder_off) {
@@ -495,12 +506,12 @@ class CabinetsPlugin extends UserPluginBase
                 }
                 $zip->addFile(
                     storage_path('app/') . $this->getContentsFilePath($content->upload),
-                    $parent_name .'/'. $content->name
+                    $save_path . $content->name
                 );
                 // ダウンロード回数をカウントアップ
                 Uploads::find($content->upload->id)->increment('download_count');
             }
-            $this->addContentsToZip($zip, $content->children, $parent_name .'/' . $content->name);
+            $this->addContentsToZip($zip, $content->children, $save_path . $content->name);
         }
     }
 
