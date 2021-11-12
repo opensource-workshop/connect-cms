@@ -280,7 +280,7 @@ class ReservationsPlugin extends UserPluginBase
                 $reservations_inputs_columns->column_id = $key;
             }
             $reservations_inputs_columns->value = $request->columns_value[$key];
-            ;
+
             $reservations_inputs_columns->save();
         }
         // $str_mode = $request->booking_id ? '更新' : '登録';
@@ -402,12 +402,16 @@ class ReservationsPlugin extends UserPluginBase
         // データ詳細の取得
         $inputs_columns = $this->getReservationsInputsColumns($input_id);
 
+        // 選択肢
+        $selects = ReservationsColumnsSelect::where('reservations_id', $inputs->reservations_id)->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
+
         // 詳細画面を呼び出す。
         return $this->view('show_booking', [
             'columns' => $columns,
             // inputにすると値があってもnullになるため、$inputsのままでいく
             'inputs' => $inputs,
             'inputs_columns' => $inputs_columns,
+            'selects' => $selects,
         ]);
     }
 
@@ -616,7 +620,7 @@ class ReservationsPlugin extends UserPluginBase
                             ->get();
 
                         // タイトル設定
-                        $bookingHeader->title = $this->getTitle(null, $booking['booking_details']);
+                        $bookingHeader->title = $this->getTitle($bookingHeader, $columns, $booking['booking_details']);
 
                         $booking['booking_header'] = $bookingHeader;
 
@@ -670,33 +674,62 @@ class ReservationsPlugin extends UserPluginBase
     /**
      * タイトル取得
      */
-    private function getTitle($input = null, $inputs_columns = null)
+    private function getTitle($input, $columns = null, $inputs_columns = null)
     {
+        // 入力行データ
+        if (is_null($input)) {
+            return '';
+        }
+
+        // カラム
+        if (is_null($columns)) {
+            $columns = $this->getReservationsColumns($input->reservations_id);
+        }
+
+        // title_flagのカラム1件に絞る
+        $column = $columns->firstWhere('title_flag', '1');
+        if (is_null($column)) {
+            return '';
+        }
+
+        // カラム入力値
         if (is_null($inputs_columns)) {
-
-            if (is_null($input)) {
-                return '';
-            }
-
-            // タイトルカラム
-            // $column = ReservationsColumn::where('reservations_id', $input->reservations_id)
-            //     ->where('title_flag', '1')
-            //     ->orderBy('display_sequence', 'asc')
-            //     ->first();
-
-            // if (is_null($column)) {
-            //     return '';
-            // }
-
             $inputs_columns = $this->getReservationsInputsColumns($input->id);
         }
 
+        // title_flagのカラム1件に絞る
         $obj = $inputs_columns->firstWhere('title_flag', '1');
 
         // 項目の型で処理を分ける。
+        if ($column->column_type == ReservationColumnType::radio) {
+            // ラジオ型
+            if ($obj) {
+                // ラジオボタン項目の場合、valueにはreservations_columns_selectsテーブルのIDが入っているので、該当の選択肢データを取得して選択肢名をセットする
+                $filtered_select = ReservationsColumnsSelect::where('reservations_id', $obj->reservations_id)
+                    ->where('column_id', $obj->column_id)
+                    ->where('id', $obj->value)
+                    ->first();
 
-        // その他の型
-        $value = $obj ? $obj->value : "";
+                $value = $filtered_select ? $filtered_select->select_name : '';
+            } else {
+                $value = '';
+            }
+        } elseif ($column->column_type == ReservationColumnType::created) {
+            // 登録日型
+            $value = $input->created_at;
+        } elseif ($column->column_type == ReservationColumnType::updated) {
+            // 更新日型
+            $value = $input->updated_at;
+        } elseif ($column->column_type == ReservationColumnType::created_name) {
+            // 登録者型
+            $value = $input->created_name;
+        } elseif ($column->column_type == ReservationColumnType::updated_name) {
+            // 更新者型
+            $value = $input->updated_name;
+        } else {
+            // その他の型
+            $value = $obj ? $obj->value : "";
+        }
 
         return $value;
     }
@@ -1086,10 +1119,10 @@ class ReservationsPlugin extends UserPluginBase
             )
             ->where('reservations_columns.reservations_id', $reservations_id)
             // 予約項目の子データ（選択肢）
-            ->leftjoin('reservations_columns_selects', function ($join) {
+            ->leftJoin('reservations_columns_selects', function ($join) {
                 $join->on('reservations_columns.id', '=', 'reservations_columns_selects.column_id');
             })
-            ->groupby(
+            ->groupBy(
                 'reservations_columns.id',
                 'reservations_columns.reservations_id',
                 'reservations_columns.column_type',
@@ -1099,7 +1132,7 @@ class ReservationsPlugin extends UserPluginBase
                 'reservations_columns.title_flag',
                 'reservations_columns.display_sequence',
             )
-            ->orderby('reservations_columns.display_sequence')
+            ->orderBy('reservations_columns.display_sequence')
             ->get();
 
         // 新着等のタイトル指定 が設定されているか（施設予約毎に１つ設定）

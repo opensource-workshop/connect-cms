@@ -5,6 +5,10 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
  --}}
+@php
+use App\Models\User\Reservations\ReservationsColumn;
+@endphp
+
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
@@ -153,6 +157,11 @@
         <div class="card-body">
             {{-- 予約項目の出力 --}}
             @foreach ($columns as $column)
+                {{-- 入力しないカラム型は表示しない --}}
+                @if (ReservationsColumn::isNotInputColumnType($column->column_type))
+                    @continue
+                @endif
+
                 <div class="form-group row">
                     {{-- 項目名称 --}}
                     <label class="col-md-2 control-label">{{$column->column_name}}

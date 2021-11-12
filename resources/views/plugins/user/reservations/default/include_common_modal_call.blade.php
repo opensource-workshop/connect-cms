@@ -17,40 +17,49 @@
                 @if ($booking['booking_header']->status == StatusType::approval_pending) data-is_approval_pending="1" @endif
             @endcan
             {{-- モーダルウィンドウに渡す予約入力値をセット（可変項目） --}}
-            @foreach ($booking['booking_details'] as $bookingDetail)
-                @switch($bookingDetail->column_type)
-                    {{-- テキスト項目 --}}
-                    @case(ReservationColumnType::text)
+            @foreach ($columns as $column)
+                @php
+                    $obj = $booking['booking_details']->where('column_id', $column->id)->first();
 
-                        data-column_{{ $bookingDetail->column_id }}="{{ $bookingDetail->value ? $bookingDetail->value : " " }}"
-                        @break
-
-                    {{-- ラジオボタン項目 --}}
-                    @case(ReservationColumnType::radio)
-
-                        {{-- ラジオボタン項目の場合、valueにはreservations_columns_selectsテーブルのIDが入っているので、該当の選択肢データを取得して選択肢名をセットする --}}
-                        @php
-                            $filtered_select = $selects->first(function($select) use($bookingDetail) {
-                                return $select->reservations_id == $bookingDetail->reservations_id && $select->column_id == $bookingDetail->id && $select->id == $bookingDetail->value;
-                            });
-                            $filtered_select ? $filtered_select->toArray() : null;
-                        @endphp
-                            data-column_{{ $bookingDetail->column_id }}="{{ $filtered_select ? $filtered_select->select_name : '' }}"
-                            @break
-                    @default
-
-                @endswitch
+                    // 項目の型で処理を分ける。
+                    if ($column->column_type == ReservationColumnType::radio) {
+                        // ラジオ型
+                        if ($obj) {
+                            // ラジオボタン項目の場合、valueにはreservations_columns_selectsテーブルのIDが入っているので、該当の選択肢データを取得して選択肢名をセットする
+                            $filtered_select = $selects->where('column_id', $column->id)->where('id', $obj->value)->first();
+                            $value = $filtered_select ? $filtered_select->select_name : '';
+                        } else {
+                            $value = '';
+                        }
+                    } elseif ($column->column_type == ReservationColumnType::created) {
+                        // 登録日型
+                        $value = $booking['booking_header']->created_at;
+                    } elseif ($column->column_type == ReservationColumnType::updated) {
+                        // 更新日型
+                        $value = $booking['booking_header']->updated_at;
+                    } elseif ($column->column_type == ReservationColumnType::created_name) {
+                        // 登録者型
+                        $value = $booking['booking_header']->created_name;
+                    } elseif ($column->column_type == ReservationColumnType::updated_name) {
+                        // 更新者型
+                        $value = $booking['booking_header']->updated_name;
+                    }  else {
+                        // その他の型
+                        $value = $obj ? $obj->value : "";
+                    }
+                @endphp
+                data-column_{{ $column->id }}="{{ $value }}"
             @endforeach
         >
             {{-- 表示用の予約時間 --}}
             <div class="small">
-                {{ $booking['booking_header']->start_datetime->format('H:i')}}~{{$booking['booking_header']->end_datetime->format('H:i') }}
+                {{ $booking['booking_header']->start_datetime->format('H:i')}}~{{$booking['booking_header']->end_datetime->format('H:i') . ' ' . $booking['booking_header']->title }}
                 <span class="badge badge-warning align-bottom">承認待ち</span>
             </div>
         </a>
 
     @else
-        {{-- 承認待ち：リンクなし --}}
+        {{-- 承認待ち：リンクなし＆タイトル表示しない --}}
 
         <div class="small">
             {{ $booking['booking_header']->start_datetime->format('H:i')}}~{{$booking['booking_header']->end_datetime->format('H:i') }}
@@ -73,29 +82,38 @@
             @if ($booking['booking_header']->status == StatusType::approval_pending) data-is_approval_pending="1" @endif
         @endcan
         {{-- モーダルウィンドウに渡す予約入力値をセット（可変項目） --}}
-        @foreach ($booking['booking_details'] as $bookingDetail)
-            @switch($bookingDetail->column_type)
-                {{-- テキスト項目 --}}
-                @case(ReservationColumnType::text)
+        @foreach ($columns as $column)
+            @php
+                $obj = $booking['booking_details']->where('column_id', $column->id)->first();
 
-                    data-column_{{ $bookingDetail->column_id }}="{{ $bookingDetail->value ? $bookingDetail->value : " " }}"
-                    @break
-
-                {{-- ラジオボタン項目 --}}
-                @case(ReservationColumnType::radio)
-
-                    {{-- ラジオボタン項目の場合、valueにはreservations_columns_selectsテーブルのIDが入っているので、該当の選択肢データを取得して選択肢名をセットする --}}
-                    @php
-                        $filtered_select = $selects->first(function($select) use($bookingDetail) {
-                            return $select->reservations_id == $bookingDetail->reservations_id && $select->column_id == $bookingDetail->id && $select->id == $bookingDetail->value;
-                        });
-                        $filtered_select ? $filtered_select->toArray() : null;
-                    @endphp
-                        data-column_{{ $bookingDetail->column_id }}="{{ $filtered_select ? $filtered_select->select_name : '' }}"
-                        @break
-                @default
-
-            @endswitch
+                // 項目の型で処理を分ける。
+                if ($column->column_type == ReservationColumnType::radio) {
+                    // ラジオ型
+                    if ($obj) {
+                        // ラジオボタン項目の場合、valueにはreservations_columns_selectsテーブルのIDが入っているので、該当の選択肢データを取得して選択肢名をセットする
+                        $filtered_select = $selects->where('column_id', $column->id)->where('id', $obj->value)->first();
+                        $value = $filtered_select ? $filtered_select->select_name : '';
+                    } else {
+                        $value = '';
+                    }
+                } elseif ($column->column_type == ReservationColumnType::created) {
+                    // 登録日型
+                    $value = $booking['booking_header']->created_at;
+                } elseif ($column->column_type == ReservationColumnType::updated) {
+                    // 更新日型
+                    $value = $booking['booking_header']->updated_at;
+                } elseif ($column->column_type == ReservationColumnType::created_name) {
+                    // 登録者型
+                    $value = $booking['booking_header']->created_name;
+                } elseif ($column->column_type == ReservationColumnType::updated_name) {
+                    // 更新者型
+                    $value = $booking['booking_header']->updated_name;
+                }  else {
+                    // その他の型
+                    $value = $obj ? $obj->value : "";
+                }
+            @endphp
+            data-column_{{ $column->id }}="{{ $value }}"
         @endforeach
     >
         {{-- 表示用の予約時間 --}}
