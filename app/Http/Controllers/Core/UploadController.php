@@ -139,7 +139,8 @@ class UploadController extends ConnectController
 
         // if (isset($uploads['extension']) && strtolower($uploads['extension']) == 'pdf') {
         // if (strtolower($uploads->extension) == 'pdf') {
-        if (in_array(strtolower($uploads->extension), $inline_extensions)) {
+        // if (in_array(strtolower($uploads->extension), $inline_extensions)) {
+        if (in_array(strtolower($uploads->extension), $inline_extensions) && $request->response != 'download') {
             return response()
                     ->file(
                         // storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,

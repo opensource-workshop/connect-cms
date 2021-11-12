@@ -492,7 +492,7 @@ class PhotoalbumsPlugin extends UserPluginBase
             $photoalbum_content->name = empty($request->title[$frame_id]) ? $photoalbum_content->name() : $request->title[$frame_id];
         }
         // 残りの項目設定
-        if ($request->is_cover[$frame_id] == PhotoalbumContent::is_cover_on) {
+        if ($request->has('is_cover') && $request->is_cover[$frame_id] == PhotoalbumContent::is_cover_on) {
             $photoalbum_content->is_cover = PhotoalbumContent::is_cover_on;
         } else {
             $photoalbum_content->is_cover = PhotoalbumContent::is_cover_off;
@@ -501,7 +501,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         $photoalbum_content->save();
 
         // アルバム表紙がチェックされていた場合、同じアルバム内の他の写真からは、アルバム表紙のチェックを外す。
-        if ($request->is_cover[$frame_id] == PhotoalbumContent::is_cover_on) {
+        if ($request->has('is_cover') && $request->is_cover[$frame_id] == PhotoalbumContent::is_cover_on) {
             PhotoalbumContent::where('parent_id', $photoalbum_content->parent_id)->where('id', '<>', $photoalbum_content->id)->update(['is_cover' => PhotoalbumContent::is_cover_off]);
         }
 
@@ -596,7 +596,9 @@ class PhotoalbumsPlugin extends UserPluginBase
         $zip->open($save_path, \ZipArchive::CREATE);
 
         foreach ($request->photoalbum_content_id as $photoalbum_content_id) {
-            $contents = PhotoalbumContent::descendantsAndSelf($photoalbum_content_id);
+            $contents = PhotoalbumContent::select('photoalbum_contents.*', 'uploads.client_original_name')
+                        ->leftJoin('uploads', 'photoalbum_contents.upload_id', '=', 'uploads.id')
+                        ->descendantsAndSelf($photoalbum_content_id);
             if (!$this->canDownload($request, $contents)) {
                 abort(403, 'ファイル参照権限がありません。');
             }
@@ -644,7 +646,7 @@ class PhotoalbumsPlugin extends UserPluginBase
                 }
                 $zip->addFile(
                     storage_path('app/') . $this->getContentsFilePath($content->upload),
-                    $save_path . $content->name
+                    $save_path . $content->client_original_name
                 );
                 // ダウンロード回数をカウントアップ
                 Uploads::find($content->upload->id)->increment('download_count');
@@ -673,7 +675,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         }
 
         // 単数ファイルダウンロード用パスを設定しておく
-        $this->download_url = "/file/" . $photoalbum_content->upload_id;
+        $this->download_url = "/file/" . $photoalbum_content->upload_id . '?response=download';
 
         return true;
     }
