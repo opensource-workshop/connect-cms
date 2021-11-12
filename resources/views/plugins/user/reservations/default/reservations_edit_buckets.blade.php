@@ -1,5 +1,5 @@
 {{--
- * 施設予約の編集画面
+ * 施設予約の設定画面
  *
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved

@@ -802,7 +802,7 @@ class ReservationsPlugin extends UserPluginBase
         $reservation = $reservation ?? new Reservation();
 
         // 表示テンプレートを呼び出す。
-        return $this->view('reservations_edit', [
+        return $this->view('reservations_edit_buckets', [
             'reservation_frame'  => $reservation_frame,
             'reservation'        => $reservation,
             'create_flag'        => $create_flag,
