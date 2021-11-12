@@ -12,6 +12,8 @@ class PhotoalbumContent extends Model
 {
     const is_folder_on = 1;
     const is_folder_off = 0;
+    const is_cover_on = 1;
+    const is_cover_off = 0;
 
     use NodeTrait;
 
@@ -19,7 +21,7 @@ class PhotoalbumContent extends Model
     use UserableNohistory;
 
     // 更新する項目の定義
-    protected $fillable = ['photoalbum_id', 'upload_id', 'name', 'description', 'is_folder'];
+    protected $fillable = ['photoalbum_id', 'upload_id', 'name', 'description', 'is_folder', 'is_cover'];
 
     // NC2移行用の一時項目
     public $migrate_parent_id = 0;

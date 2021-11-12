@@ -14,14 +14,10 @@ use App\Models\Common\Page;
 use App\Models\Common\PageRole;
 use App\Models\Common\Uploads;
 use App\Models\Core\FrameConfig;
-//use App\Models\User\Cabinets\Cabinet;
-//use App\Models\User\Cabinets\CabinetContent;
 use App\Models\User\Photoalbums\Photoalbum;
 use App\Models\User\Photoalbums\PhotoalbumContent;
 
 use App\Enums\UploadMaxSize;
-//use App\Enums\CabinetFrameConfig;
-//use App\Enums\CabinetSort;
 use App\Enums\PhotoalbumFrameConfig;
 use App\Enums\PhotoalbumSort;
 
@@ -69,7 +65,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
         $functions['get']  = ['index', 'download', 'changeDirectory'];
-        $functions['post'] = ['makeFolder', 'upload', 'editContents', 'deleteContents'];
+        $functions['post'] = ['makeFolder', 'editFolder', 'upload', 'editContents', 'deleteContents'];
         return $functions;
     }
 
@@ -82,6 +78,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         $role_check_table = array();
         $role_check_table["upload"] = array('posts.create');
         $role_check_table["makeFolder"] = array('posts.create');
+        $role_check_table["editFolder"] = array('posts.create');
         $role_check_table["editContents"] = array('posts.update');
         $role_check_table["deleteContents"] = array('posts.delete');
         return $role_check_table;
@@ -124,45 +121,89 @@ class PhotoalbumsPlugin extends UserPluginBase
 
         $parent = $this->fetchPhotoalbumContent($parent_id, $photoalbum->id);
 
+        $photoalbum_contents = $parent->children()->get()->sort(function ($first, $second) {
+            // フォルダ>ファイル
+            if ($first['is_folder'] == $second['is_folder']) {
+                // フォルダ同士 or ファイル同士を比較
+
+                $sort = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort);
+
+                if ($sort == '' || $sort == PhotoalbumSort::name_asc) {
+                    // 名前（昇順）
+                    // return $first['displayName'] < $second['displayName'] ? -1 : 1;
+                    return $this->sortAsc($first['displayName'], $second['displayName']);
+                } elseif ($sort == PhotoalbumSort::name_desc) {
+                    // 名前（降順）
+                    return $this->sortDesc($first['displayName'], $second['displayName']);
+                // } elseif ($sort == PhotoalbumSort::created_asc) {
+                //     // 登録日（昇順）
+                //     return $this->sortAsc($first['created_at'], $second['created_at']);
+                // } elseif ($sort == PhotoalbumSort::created_desc) {
+                //     // 登録日（降順）
+                //     return $this->sortDesc($first['created_at'], $second['created_at']);
+                } elseif ($sort == PhotoalbumSort::updated_asc) {
+                    // 更新日（昇順）
+                    return $this->sortAsc($first['updated_at'], $second['updated_at']);
+                } elseif ($sort == PhotoalbumSort::updated_desc) {
+                    // 更新日（降順）
+                    return $this->sortDesc($first['updated_at'], $second['updated_at']);
+                }
+            }
+            // フォルダとファイルの比較
+            // ファイル(is_folder=0)よりフォルダ(is_folder=1)を上（降順）にする
+            // return $first['is_folder'] < $second['is_folder'] ? 1 : -1;
+            return $this->sortDesc($first['is_folder'], $second['is_folder']);
+        });
+
+        // カバー写真に指定されている写真
+        $covers = PhotoalbumContent::whereIn('parent_id', $photoalbum_contents->where('is_folder', PhotoalbumContent::is_folder_on)->pluck('id'))->where('is_cover', PhotoalbumContent::is_cover_on)->get();
+
+//        print_r($covers);
+        //print_r($covers->where('id', 3)->first()->upload_id);
+
+
         // 表示テンプレートを呼び出す。
         return $this->view('index', [
             'photoalbum' => $photoalbum,
-            'photoalbum_contents' => $parent->children()->get()->sort(function ($first, $second) {
-                // フォルダ>ファイル
+            'photoalbum_contents' => $photoalbum_contents,
 
-                if ($first['is_folder'] == $second['is_folder']) {
-                    // フォルダ同士 or ファイル同士を比較
-
-                    $sort = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort);
-
-                    if ($sort == '' || $sort == PhotoalbumSort::name_asc) {
-                        // 名前（昇順）
-                        // return $first['displayName'] < $second['displayName'] ? -1 : 1;
-                        return $this->sortAsc($first['displayName'], $second['displayName']);
-                    } elseif ($sort == PhotoalbumSort::name_desc) {
-                        // 名前（降順）
-                        return $this->sortDesc($first['displayName'], $second['displayName']);
-                    // } elseif ($sort == PhotoalbumSort::created_asc) {
-                    //     // 登録日（昇順）
-                    //     return $this->sortAsc($first['created_at'], $second['created_at']);
-                    // } elseif ($sort == PhotoalbumSort::created_desc) {
-                    //     // 登録日（降順）
-                    //     return $this->sortDesc($first['created_at'], $second['created_at']);
-                    } elseif ($sort == PhotoalbumSort::updated_asc) {
-                        // 更新日（昇順）
-                        return $this->sortAsc($first['updated_at'], $second['updated_at']);
-                    } elseif ($sort == PhotoalbumSort::updated_desc) {
-                        // 更新日（降順）
-                        return $this->sortDesc($first['updated_at'], $second['updated_at']);
-                    }
-                }
-                // フォルダとファイルの比較
-                // ファイル(is_folder=0)よりフォルダ(is_folder=1)を上（降順）にする
-                // return $first['is_folder'] < $second['is_folder'] ? 1 : -1;
-                return $this->sortDesc($first['is_folder'], $second['is_folder']);
-            }),
+//            'photoalbum_contents' => $parent->children()->get()->sort(function ($first, $second) {
+//                // フォルダ>ファイル
+//
+//                if ($first['is_folder'] == $second['is_folder']) {
+//                    // フォルダ同士 or ファイル同士を比較
+//
+//                    $sort = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort);
+//
+//                    if ($sort == '' || $sort == PhotoalbumSort::name_asc) {
+//                        // 名前（昇順）
+//                        // return $first['displayName'] < $second['displayName'] ? -1 : 1;
+//                        return $this->sortAsc($first['displayName'], $second['displayName']);
+//                    } elseif ($sort == PhotoalbumSort::name_desc) {
+//                        // 名前（降順）
+//                        return $this->sortDesc($first['displayName'], $second['displayName']);
+//                    // } elseif ($sort == PhotoalbumSort::created_asc) {
+//                    //     // 登録日（昇順）
+//                    //     return $this->sortAsc($first['created_at'], $second['created_at']);
+//                    // } elseif ($sort == PhotoalbumSort::created_desc) {
+//                    //     // 登録日（降順）
+//                    //     return $this->sortDesc($first['created_at'], $second['created_at']);
+//                    } elseif ($sort == PhotoalbumSort::updated_asc) {
+//                        // 更新日（昇順）
+//                        return $this->sortAsc($first['updated_at'], $second['updated_at']);
+//                    } elseif ($sort == PhotoalbumSort::updated_desc) {
+//                        // 更新日（降順）
+//                        return $this->sortDesc($first['updated_at'], $second['updated_at']);
+//                    }
+//                }
+//                // フォルダとファイルの比較
+//                // ファイル(is_folder=0)よりフォルダ(is_folder=1)を上（降順）にする
+//                // return $first['is_folder'] < $second['is_folder'] ? 1 : -1;
+//                return $this->sortDesc($first['is_folder'], $second['is_folder']);
+//            }),
             'breadcrumbs' => $this->fetchBreadCrumbs($photoalbum->id, $parent->id),
             'parent_id' =>  $parent->id,
+            'covers' => $covers,
         ]);
     }
 
@@ -175,7 +216,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         $photoalbum_content = PhotoalbumContent::find($photoalbum_content_id);
 
         $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
-        return $this->view('edit', [
+        return $this->view($photoalbum_content->is_folder ? 'edit_folder' : 'edit_contents', [
             'photoalbum' => $photoalbum,
             'photoalbum_content' => $photoalbum_content,
         ]);
@@ -286,10 +327,32 @@ class PhotoalbumsPlugin extends UserPluginBase
             'name' => $request->folder_name[$frame_id],
             'description' => $request->description[$frame_id],
             'is_folder' => PhotoalbumContent::is_folder_on,
+            'is_cover' => PhotoalbumContent::is_cover_off,
         ]);
 
         // 登録後はリダイレクトして初期表示。
         return new Collection(['redirect_path' => url('/') . "/plugin/photoalbums/changeDirectory/" . $page_id . "/" . $frame_id  . "/" . $parent->id . "/#frame-" . $frame_id ]);
+    }
+
+    /**
+     *  フォルダ変更処理
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     */
+    public function editFolder($request, $page_id, $frame_id, $photoalbum_content_id)
+    {
+        // 対象のデータを取得して編集する。
+        $photoalbum_content = PhotoalbumContent::find($photoalbum_content_id);
+        $photoalbum_content->name = $request->name[$frame_id];
+        $photoalbum_content->description = $request->description[$frame_id];
+        $photoalbum_content->is_folder = PhotoalbumContent::is_folder_on;
+        $photoalbum_content->is_cover = PhotoalbumContent::is_cover_off;
+        $photoalbum_content->save();
+
+        // 登録後はリダイレクトして初期表示。
+        return new Collection(['redirect_path' => url('/') . "/plugin/photoalbums/changeDirectory/" . $page_id . "/" . $frame_id . "/" . $photoalbum_content->parent_id . "/#frame-" . $frame_id ]);
     }
 
     /**
@@ -309,11 +372,12 @@ class PhotoalbumsPlugin extends UserPluginBase
 
         $parent = $this->fetchPhotoalbumContent($request->parent_id);
         $upload_file = $request->file('upload_file')[$frame_id];
-        if ($this->shouldOverwriteFile($parent, $upload_file->getClientOriginalName())) {
-            $this->overwriteFile($upload_file, $page_id, $parent);
-        } else {
-            $this->writeFile($request, $upload_file, $page_id, $frame_id, $parent);
-        }
+        // if ($this->shouldOverwriteFile($parent, $upload_file->getClientOriginalName())) {
+        //     $this->overwriteFile($upload_file, $page_id, $parent);
+        // } else {
+        //     $this->writeFile($request, $upload_file, $page_id, $frame_id, $parent);
+        // }
+        $this->writeFile($request, $upload_file, $page_id, $frame_id, $parent);
 
         // 登録後はリダイレクトして初期表示。
         return new Collection(['redirect_path' => url('/') . "/plugin/photoalbums/changeDirectory/" . $page_id . "/" . $frame_id . "/" . $parent->id . "/#frame-" . $frame_id ]);
@@ -364,6 +428,7 @@ class PhotoalbumsPlugin extends UserPluginBase
             'name' => empty($request->title[$frame_id]) ? $file->getClientOriginalName() : $request->title[$frame_id],
             'description' => $request->description[$frame_id],
             'is_folder' => PhotoalbumContent::is_folder_off,
+            'is_cover' => $request->is_cover[$frame_id] ? PhotoalbumContent::is_cover_on : PhotoalbumContent::is_cover_off,
         ]);
     }
 
@@ -374,15 +439,15 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param int $page_id ページID
      * @param int $frame_id フレームID
      */
-    private function overwriteFile($file, $page_id, $parent)
+    private function overwriteFile($file, $photoalbum_content, $page_id)
     {
-        $content = PhotoalbumContent::where('parent_id', $parent->id)
-            ->where('name', $file->getClientOriginalName())
-            ->where('is_folder', PhotoalbumContent::is_folder_off)
-            ->first();
+        //$content = PhotoalbumContent::where('parent_id', $parent->id)
+        //    ->where('name', $file->getClientOriginalName())
+        //    ->where('is_folder', PhotoalbumContent::is_folder_off)
+        //    ->first();
 
         // uploads テーブルに情報追加、ファイルのid を取得する
-        Uploads::find($content->upload_id)->update([
+        Uploads::find($photoalbum_content->upload_id)->update([
             'client_original_name' => $file->getClientOriginalName(),
             'mimetype'             => $file->getClientMimeType(),
             'extension'            => $file->getClientOriginalExtension(),
@@ -394,10 +459,10 @@ class PhotoalbumsPlugin extends UserPluginBase
         ]);
 
         // ファイル保存
-        $file->storeAs($this->getDirectory($content->upload_id), $this->getContentsFileName($content->upload));
+        $file->storeAs($this->getDirectory($photoalbum_content->upload_id), $this->getContentsFileName($photoalbum_content->upload));
 
         // 画面表示される更新日を更新する
-        $content->touch();
+        $photoalbum_content->touch();
     }
 
     /**
@@ -409,23 +474,39 @@ class PhotoalbumsPlugin extends UserPluginBase
      */
     public function editContents($request, $page_id, $frame_id, $photoalbum_content_id)
     {
-
         // 対象のデータを取得して編集する。
         $photoalbum_content = PhotoalbumContent::find($photoalbum_content_id);
-        $photoalbum_content->name = empty($request->title[$frame_id]) ? $file->getClientOriginalName() : $request->title[$frame_id];
+
+        // ファイルの入れ替えがあるか。
+        if ($request->hasFile('upload_file.'.$frame_id)) {
+            // アップロードされたファイルの取得
+            $file = $request->file('upload_file')[$frame_id];
+
+            // ファイルの入れ替え
+            $this->overwriteFile($file, $photoalbum_content, $page_id);
+
+            // 写真レコードのタイトル（空ならファイル名）
+            $photoalbum_content->name = empty($request->title[$frame_id]) ? $file->getClientOriginalName() : $request->title[$frame_id];
+        } else {
+            // 写真レコードのタイトル（空ならもともと設定されていた内容＝ファイル名）
+            $photoalbum_content->name = empty($request->title[$frame_id]) ? $photoalbum_content->name() : $request->title[$frame_id];
+        }
+        // 残りの項目設定
+        if ($request->is_cover[$frame_id] == PhotoalbumContent::is_cover_on) {
+            $photoalbum_content->is_cover = PhotoalbumContent::is_cover_on;
+        } else {
+            $photoalbum_content->is_cover = PhotoalbumContent::is_cover_off;
+        }
         $photoalbum_content->description = $request->description[$frame_id];
         $photoalbum_content->save();
 
-
-
-
-
-
-
-
+        // アルバム表紙がチェックされていた場合、同じアルバム内の他の写真からは、アルバム表紙のチェックを外す。
+        if ($request->is_cover[$frame_id] == PhotoalbumContent::is_cover_on) {
+            PhotoalbumContent::where('parent_id', $photoalbum_content->parent_id)->where('id', '<>', $photoalbum_content->id)->update(['is_cover' => PhotoalbumContent::is_cover_off]);
+        }
 
         // 登録後はリダイレクトして初期表示。
-        return new Collection(['redirect_path' => url('/') . "/plugin/photoalbums/changeDirectory/" . $page_id . "/" . $frame_id . "/" . $request->parent_id . "/#frame-" . $frame_id ]);
+        return new Collection(['redirect_path' => url('/') . "/plugin/photoalbums/changeDirectory/" . $page_id . "/" . $frame_id . "/" . $photoalbum_content->parent_id . "/#frame-" . $frame_id ]);
     }
 
     /**

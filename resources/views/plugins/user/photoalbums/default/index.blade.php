@@ -144,6 +144,19 @@
                 @endif
             </div>
         </div>
+	    <div class="form-group row">
+	        <label class="{{$frame->getSettingLabelClass()}} pt-0">アルバム表紙</label>
+	        <div class="{{$frame->getSettingInputClass()}}">
+	            <div class="custom-control custom-checkbox">
+	                @if(old("is_cover.$frame_id"))
+	                    <input type="checkbox" name="is_cover[{{$frame_id}}]" value="1" class="custom-control-input" id="is_cover{{$frame_id}}" checked=checked>
+	                @else
+	                    <input type="checkbox" name="is_cover[{{$frame_id}}]" value="1" class="custom-control-input" id="is_cover{{$frame_id}}">
+	                @endif
+	                <label class="custom-control-label" for="is_cover{{$frame_id}}">チェックすると、アルバムの表紙に使われます。</label>
+	            </div>
+	        </div>
+	    </div>
         <div class="text-center">
             <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#collapse_upload{{$frame->id}}">キャンセル</button>
             <button class="btn btn-primary btn-sm" type="submit">追加</button>
@@ -197,21 +210,38 @@
     <div class="col-sm-4 mt-3">
         <div class="card sm-4">
             <a href="{{url('/')}}/plugin/photoalbums/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}/#frame-{{$frame->id}}" class="text-center">
-                <svg class="bd-placeholder-img card-img-top" width="100%" height="150" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Image cap">
-                    <title>{{$photoalbum_content->name}}</title>
-                    <rect fill="#868e96" width="100%" height="100%"></rect>
-                    <text fill="#dee2e6"x="50%" y="50%" text-anchor="middle" dominant-baseline="central">{{$photoalbum_content->name}}</text>
-                </svg>
+                {{-- カバー画像が指定されていれば使用し、指定されていなければ、グレーのカバーを使用 --}}
+                @if ($covers->where('parent_id', $photoalbum_content->id)->first())
+                    <img src="/file/{{$covers->where('parent_id', $photoalbum_content->id)->first()->upload_id}}"
+                         id="cover_{{$loop->iteration}}"
+                         style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
+                         class="img-fluid"
+                    >
+                @else
+
+                    <svg class="bd-placeholder-img card-img-top" width="100%" height="150" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Image cap">
+                        <title>{{$photoalbum_content->name}}</title>
+                        <rect fill="#868e96" width="100%" height="100%"></rect>
+                        <text fill="#dee2e6"x="50%" y="50%" text-anchor="middle" dominant-baseline="central">{{$photoalbum_content->name}}</text>
+                    </svg>
+                @endif
             </a>
         </div>
     </div>
     <div class="col-sm-8 mt-3">
         <h5 class="card-title">{{$photoalbum_content->name}}</h5>
         <p class="card-text">{!!nl2br(e($photoalbum_content->description))!!}</p>
+        <div class="d-flex justify-content-between align-items-center">
 
-        <div class="custom-control custom-checkbox">
-            <input type="checkbox" class="custom-control-input" id="customCheck_{{$photoalbum_content->id}}" name="photoalbum_content_id[]" value="{{$photoalbum_content->id}}" data-name="{{$photoalbum_content->displayName}}">
-            <label class="custom-control-label" for="customCheck_{{$photoalbum_content->id}}"></label>
+	        <div class="custom-control custom-checkbox">
+	            <input type="checkbox" class="custom-control-input" id="customCheck_{{$photoalbum_content->id}}" name="photoalbum_content_id[]" value="{{$photoalbum_content->id}}" data-name="{{$photoalbum_content->displayName}}">
+	            <label class="custom-control-label" for="customCheck_{{$photoalbum_content->id}}"></label>
+	        </div>
+            @can('posts.update', [[$photoalbum_content, $frame->plugin_name, $buckets]])
+            <a href="{{url('/')}}/plugin/photoalbums/edit/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}#frame-{{$frame->id}}" class="btn btn-sm btn-success">
+                <i class="far fa-edit"></i> 編集
+            </a>
+            @endcan
         </div>
     </div>
     @endforeach
@@ -240,7 +270,7 @@
                         <div class="modal-img_footer">
                             <h5 class="card-title">{{$photoalbum_content->name}}</h5>
                             <p class="card-text">{!!nl2br(e($photoalbum_content->description))!!}</p>
-                            <button type="button" class="btn btn-success" data-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-success" data-dismiss="modal">閉じる</button>
                         </div>
                     </div>
                 </div>
@@ -254,8 +284,8 @@
                         <label class="custom-control-label" for="customCheck_{{$photoalbum_content->id}}"></label>
                     </div>
                     @can('posts.update', [[$photoalbum_content, $frame->plugin_name, $buckets]])
-                    <a href="{{url('/')}}/plugin/photoalbums/edit/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}#frame-{{$frame->id}}">
-                        <i class="far fa-edit"></i>
+                    <a href="{{url('/')}}/plugin/photoalbums/edit/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}#frame-{{$frame->id}}" class="btn btn-sm btn-success">
+                        <i class="far fa-edit"></i> 編集
                     </a>
                     @endcan
                 </div>

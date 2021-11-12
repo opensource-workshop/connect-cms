@@ -23,8 +23,18 @@
 }
 </style>
 
+<script type="text/javascript">
+    $(function () {
+        @can('posts.create', [[null, $frame->plugin_name, $buckets]])
+        $('.custom-file-input').on('change',function(){
+            $(this).next('.custom-file-label').html($(this)[0].files[0].name);
+        });
+        @endcan
+    });
+</script>
+
 {{-- 投稿用フォーム --}}
-<form action="{{url('/')}}/redirect/plugin/photoalbums/editContents/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}#frame-{{$frame->id}}" method="POST" class="" name="form_post{{$frame_id}}">
+<form action="{{url('/')}}/redirect/plugin/photoalbums/editContents/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}#frame-{{$frame->id}}" method="POST" class="" name="form_post{{$frame_id}}" enctype="multipart/form-data">
     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/photoalbums/edit/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}#frame-{{$frame_id}}">
     {{ csrf_field() }}
 
@@ -81,7 +91,7 @@
     <div class="form-group row">
         <label class="col-md-2 control-label text-md-right">説明</label>
         <div class="col-md-10">
-            <textarea name="description" class="form-control @if ($errors->has("description.$frame_id")) border-danger @endif" id="description{{$frame_id}}" rows=2>{!!old("description.$frame_id", $photoalbum_content->description)!!}</textarea>
+            <textarea name="description[{{$frame_id}}]" class="form-control @if ($errors->has("description.$frame_id")) border-danger @endif" id="description{{$frame_id}}" rows=2>{!!old("description.$frame_id", $photoalbum_content->description)!!}</textarea>
             @if ($errors && $errors->has("description.$frame_id")) 
                 <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("description.*")}}</div>
             @endif
@@ -97,7 +107,7 @@
                 @else
                     <input type="checkbox" name="is_cover[{{$frame_id}}]" value="1" class="custom-control-input" id="is_cover{{$frame_id}}">
                 @endif
-                <label class="custom-control-label" for="is_cover">チェックすると、アルバムの表紙に使われます。</label>
+                <label class="custom-control-label" for="is_cover{{$frame_id}}">チェックすると、アルバムの表紙に使われます。</label>
             </div>
         </div>
     </div>
@@ -111,11 +121,12 @@
             <div class="col-9 col-xl-6">
             @endif
                 <div class="text-center">
-                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
+                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/photoalbums/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->parent_id}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
                     <input type="hidden" name="bucket_id[{{$frame_id}}]" value="">
                     <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更</button>
                 </div>
             </div>
+{{--
             @if (!empty($photoalbum_content->id))
             <div class="col-3 col-xl-3 text-right">
                 <a data-toggle="collapse" href="#collapse{{$frame_id}}">
@@ -123,6 +134,7 @@
                 </a>
             </div>
             @endif
+--}}
         </div>
     </div>
 </form>
