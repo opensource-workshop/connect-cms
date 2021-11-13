@@ -43,7 +43,7 @@
         <div class="col-md-10">
 
             <div class="mb-1">
-                <img src="/file/{{$photoalbum_content->upload_id}}"
+                <img src="/file/{{$photoalbum_content->upload_id}}?size=small"
                      id="photo"
                      style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
                      class="img-fluid" data-toggle="modal" data-target="#image_Modal"

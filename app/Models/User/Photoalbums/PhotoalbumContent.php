@@ -4,7 +4,8 @@ namespace App\Models\User\Photoalbums;
 
 use Illuminate\Database\Eloquent\Model;
 
-use App\UserableNohistory;
+// 表紙フラグの更新で複数レコードを更新する処理があるが、その際は更新日時を変更したくないため、コメント。
+//use App\UserableNohistory;
 use App\Models\Common\Uploads;
 use Kalnoy\Nestedset\NodeTrait;
 
@@ -14,17 +15,19 @@ class PhotoalbumContent extends Model
     const is_folder_off = 0;
     const is_cover_on = 1;
     const is_cover_off = 0;
+    const UPDATED_AT = NULL; // 更新日を自動で設定しないための処置
 
     use NodeTrait;
 
     // 保存時のユーザー関連データの保持
-    use UserableNohistory;
+    //use UserableNohistory;
 
     // 更新する項目の定義
     protected $fillable = ['photoalbum_id', 'upload_id', 'name', 'description', 'is_folder', 'is_cover'];
 
     // NC2移行用の一時項目
     public $migrate_parent_id = 0;
+
     /**
      * フォトアルバムコンテントに紐づくアップロードを取得
      */

@@ -428,7 +428,7 @@ class PhotoalbumsPlugin extends UserPluginBase
             'name' => empty($request->title[$frame_id]) ? $file->getClientOriginalName() : $request->title[$frame_id],
             'description' => $request->description[$frame_id],
             'is_folder' => PhotoalbumContent::is_folder_off,
-            'is_cover' => $request->is_cover[$frame_id] ? PhotoalbumContent::is_cover_on : PhotoalbumContent::is_cover_off,
+            'is_cover' => ($request->has('is_cover') && $request->is_cover[$frame_id]) ? PhotoalbumContent::is_cover_on : PhotoalbumContent::is_cover_off,
         ]);
     }
 
@@ -498,6 +498,10 @@ class PhotoalbumsPlugin extends UserPluginBase
             $photoalbum_content->is_cover = PhotoalbumContent::is_cover_off;
         }
         $photoalbum_content->description = $request->description[$frame_id];
+        // 表紙フラグの更新で複数レコードを更新する処理が、その際は更新日時を変更したくないため、自動化をしていないので、自分で設定。
+        $photoalbum_content->updated_id = Auth::user()->id;
+        $photoalbum_content->updated_name = Auth::user()->name;
+        $photoalbum_content->updated_at = now()->format('Y-m-d H:i:s');
         $photoalbum_content->save();
 
         // アルバム表紙がチェックされていた場合、同じアルバム内の他の写真からは、アルバム表紙のチェックを外す。
