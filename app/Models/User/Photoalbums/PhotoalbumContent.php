@@ -23,7 +23,7 @@ class PhotoalbumContent extends Model
     //use UserableNohistory;
 
     // 更新する項目の定義
-    protected $fillable = ['photoalbum_id', 'upload_id', 'name', 'description', 'is_folder', 'is_cover'];
+    protected $fillable = ['photoalbum_id', 'upload_id', 'name', 'width', 'height', 'description', 'is_folder', 'is_cover'];
 
     // NC2移行用の一時項目
     public $migrate_parent_id = 0;
@@ -53,5 +53,36 @@ class PhotoalbumContent extends Model
             $displayName = $this->upload->client_original_name;
         }
         return $displayName;
+    }
+
+    /**
+     * 拡大表示用のサイズを取得する
+     * アルバムの拡大写真は、サムネイルをクリックした際に動的に表示する。
+     * その際、写真表示用フレームの大きさが指定されていないと、写真を読み込んだ後、フレームの大きさが変化することで、ちらつきを感じる。
+     * ここでフレームの大きさを取得し、写真表示用フレームの大きさに設定しておくことで、このちらつきをなくす。
+     *
+     * @return string  拡大表示用のサイズ文字列
+     */
+    public function getModalMinSize()
+    {
+        // もし、幅、高さに有効な数値が入っていなかった場合は、空を返す。
+        if (!is_int($this->width) || !is_int($this->height)) {
+            return "";
+        }
+
+        // 幅が800px を超えていた場合、表示幅は800px に縮小される。そのため、高さも表示幅の縮小率と同じ高さで計算する。
+        if ($this->width > 800) {
+            $height = 800 / $this->width * $this->height;
+        } else {
+            $height = $this->height;
+        }
+
+        // 高さが800px より大きいときは、800+166=966px
+        // 高さが800px より小さいときは、表示の高さ+166
+        if ($height > 800) {
+            return "min-width: 800px; min-height: 966px;";
+        } else {
+            return "min-width: 800px; min-height: " . $height + 166 . "px;";
+        }
     }
 }

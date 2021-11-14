@@ -29,6 +29,34 @@
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/photoalbums/editView/{{$page->id}}/{{$frame_id}}/{{$photoalbum->bucket_id}}#frame-{{$frame_id}}">
 
         <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">表示件数</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                <input type="text" name="view_count" value="" class="form-control">
+            </div>
+        </div>
+{{--
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">投稿日</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                @foreach (ShowType::enum as $key => $value)
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input
+                            type="radio"
+                            value="{{ $key }}"
+                            id="{{ "posted_at_${key}" }}"
+                            name="posted_at"
+                            class="custom-control-input"
+                            {{ FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::posted_at, 0) == $key ? 'checked' : '' }}
+                        >
+                        <label class="custom-control-label" for="{{ "post_detail_${key}" }}">
+                            {{ $value }}
+                        </label>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+--}}
+        <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass(true)}}">並び順</label>
             <div class="{{$frame->getSettingInputClass(true)}}">
                 <select class="form-control" name="sort">

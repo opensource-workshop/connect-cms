@@ -21,6 +21,8 @@ use App\Enums\UploadMaxSize;
 use App\Enums\PhotoalbumFrameConfig;
 use App\Enums\PhotoalbumSort;
 
+use Intervention\Image\Facades\Image;
+
 use App\Plugins\User\UserPluginBase;
 
 /**
@@ -422,10 +424,15 @@ class PhotoalbumsPlugin extends UserPluginBase
         // ファイル保存
         $file->storeAs($this->getDirectory($upload->id), $this->getContentsFileName($upload));
 
+        // 幅、高さを取得するためにImage オブジェクトを生成しておく。
+        $img = Image::make($file->path());
+
         $parent->children()->create([
             'photoalbum_id' => $upload->id,
             'upload_id' => $upload->id,
             'name' => empty($request->title[$frame_id]) ? $file->getClientOriginalName() : $request->title[$frame_id],
+            'width' => $img->width(),
+            'height' => $img->height(),
             'description' => $request->description[$frame_id],
             'is_folder' => PhotoalbumContent::is_folder_off,
             'is_cover' => ($request->has('is_cover') && $request->is_cover[$frame_id]) ? PhotoalbumContent::is_cover_on : PhotoalbumContent::is_cover_off,
@@ -487,6 +494,12 @@ class PhotoalbumsPlugin extends UserPluginBase
 
             // 写真レコードのタイトル（空ならファイル名）
             $photoalbum_content->name = empty($request->title[$frame_id]) ? $file->getClientOriginalName() : $request->title[$frame_id];
+
+            // 写真の幅、高さ（幅、高さを取得するためにImage オブジェクトを生成しておく）
+            $img = Image::make($file->path());
+            $photoalbum_content->width = $img->width();
+            $photoalbum_content->height = $img->height();
+
         } else {
             // 写真レコードのタイトル（空ならもともと設定されていた内容＝ファイル名）
             $photoalbum_content->name = empty($request->title[$frame_id]) ? $photoalbum_content->name() : $request->title[$frame_id];

@@ -260,11 +260,11 @@
             >
             <div class="modal fade" id="image_Modal_{{$loop->iteration}}" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel_{{$loop->iteration}}">
                 <div class="modal-dialog modal-lg modal-middle">{{-- モーダルウィンドウの縦表示位置を調整・画像を大きく見せる --}}
-                    <div class="modal-content pb-3">
+                    <div class="modal-content pb-3" style="{{$photoalbum_content->getModalMinSize()}}">
                         <div class="modal-body mx-auto">
                             {{-- 拡大表示ウィンドウにも、初期設定でサムネイルを設定しておき、クリック時に実寸画像を読み込みなおす --}}
                             <img src="/file/{{$photoalbum_content->upload_id}}?size=small"
-                                 style="max-height: 800px; object-fit: scale-down; cursor:pointer;"
+                                 style="object-fit: scale-down; cursor:pointer;"
                                  id="popup_photo_{{$loop->iteration}}"
                                  class="img-fluid"/>
                         </div>

@@ -138,11 +138,18 @@ class UploadController extends ConnectController
         ];
 
         // サムネイル指定の場合は、キャッシュを使ってファイルを返す。
-        if ($request->has('size') && $request->size == 'small') {
-            $img = \Image::cache(function($image) use($fullpath) {
+        if ($request->has('size')) {
+            $size = config('connect.THUMBNAIL_SIZE')['SMALL']; // SMALL を初期値で設定
+            if ($request->size == 'medium') {
+                $size = config('connect.THUMBNAIL_SIZE')['MEDIUM'];
+            } elseif ($request->size == 'large') {
+                $size = config('connect.THUMBNAIL_SIZE')['LARGE'];
+            }
+
+            $img = \Image::cache(function($image) use($fullpath, $size) {
                 return $image->make($fullpath)->resize(
-                    config('connect.THUMBNAIL_SIZE')['SMALL'],
-                    config('connect.THUMBNAIL_SIZE')['SMALL'],
+                    $size,
+                    $size,
                     function ($constraint) {
                         $constraint->aspectRatio();
                         $constraint->upsize();
