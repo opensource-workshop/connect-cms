@@ -123,12 +123,22 @@ class PhotoalbumsPlugin extends UserPluginBase
 
         $parent = $this->fetchPhotoalbumContent($parent_id, $photoalbum->id);
 
-        $photoalbum_contents = $parent->children()->get()->sort(function ($first, $second) {
+        // フォルダ、ファイルの比較条件の取得
+        $sort_folder = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_folder);
+        $sort_file = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_file);
+
+        $photoalbum_contents = $parent->children()->get()->sort(function ($first, $second) use($sort_folder, $sort_file) {
             // フォルダ>ファイル
             if ($first['is_folder'] == $second['is_folder']) {
                 // フォルダ同士 or ファイル同士を比較
 
-                $sort = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort);
+                if ($first['is_folder'] == PhotoalbumContent::is_folder_on) {
+                    // フォルダを比較
+                    $sort = $sort_folder;
+                } else {
+                    // ファイルを比較
+                    $sort = $sort_file;
+                }
 
                 if ($sort == '' || $sort == PhotoalbumSort::name_asc) {
                     // 名前（昇順）
@@ -137,12 +147,6 @@ class PhotoalbumsPlugin extends UserPluginBase
                 } elseif ($sort == PhotoalbumSort::name_desc) {
                     // 名前（降順）
                     return $this->sortDesc($first['displayName'], $second['displayName']);
-                // } elseif ($sort == PhotoalbumSort::created_asc) {
-                //     // 登録日（昇順）
-                //     return $this->sortAsc($first['created_at'], $second['created_at']);
-                // } elseif ($sort == PhotoalbumSort::created_desc) {
-                //     // 登録日（降順）
-                //     return $this->sortDesc($first['created_at'], $second['created_at']);
                 } elseif ($sort == PhotoalbumSort::updated_asc) {
                     // 更新日（昇順）
                     return $this->sortAsc($first['updated_at'], $second['updated_at']);
@@ -160,49 +164,10 @@ class PhotoalbumsPlugin extends UserPluginBase
         // カバー写真に指定されている写真
         $covers = PhotoalbumContent::whereIn('parent_id', $photoalbum_contents->where('is_folder', PhotoalbumContent::is_folder_on)->pluck('id'))->where('is_cover', PhotoalbumContent::is_cover_on)->get();
 
-//        print_r($covers);
-        //print_r($covers->where('id', 3)->first()->upload_id);
-
-
         // 表示テンプレートを呼び出す。
         return $this->view('index', [
             'photoalbum' => $photoalbum,
             'photoalbum_contents' => $photoalbum_contents,
-
-//            'photoalbum_contents' => $parent->children()->get()->sort(function ($first, $second) {
-//                // フォルダ>ファイル
-//
-//                if ($first['is_folder'] == $second['is_folder']) {
-//                    // フォルダ同士 or ファイル同士を比較
-//
-//                    $sort = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort);
-//
-//                    if ($sort == '' || $sort == PhotoalbumSort::name_asc) {
-//                        // 名前（昇順）
-//                        // return $first['displayName'] < $second['displayName'] ? -1 : 1;
-//                        return $this->sortAsc($first['displayName'], $second['displayName']);
-//                    } elseif ($sort == PhotoalbumSort::name_desc) {
-//                        // 名前（降順）
-//                        return $this->sortDesc($first['displayName'], $second['displayName']);
-//                    // } elseif ($sort == PhotoalbumSort::created_asc) {
-//                    //     // 登録日（昇順）
-//                    //     return $this->sortAsc($first['created_at'], $second['created_at']);
-//                    // } elseif ($sort == PhotoalbumSort::created_desc) {
-//                    //     // 登録日（降順）
-//                    //     return $this->sortDesc($first['created_at'], $second['created_at']);
-//                    } elseif ($sort == PhotoalbumSort::updated_asc) {
-//                        // 更新日（昇順）
-//                        return $this->sortAsc($first['updated_at'], $second['updated_at']);
-//                    } elseif ($sort == PhotoalbumSort::updated_desc) {
-//                        // 更新日（降順）
-//                        return $this->sortDesc($first['updated_at'], $second['updated_at']);
-//                    }
-//                }
-//                // フォルダとファイルの比較
-//                // ファイル(is_folder=0)よりフォルダ(is_folder=1)を上（降順）にする
-//                // return $first['is_folder'] < $second['is_folder'] ? 1 : -1;
-//                return $this->sortDesc($first['is_folder'], $second['is_folder']);
-//            }),
             'breadcrumbs' => $this->fetchBreadCrumbs($photoalbum->id, $parent->id),
             'parent_id' =>  $parent->id,
             'covers' => $covers,
@@ -1091,7 +1056,7 @@ class PhotoalbumsPlugin extends UserPluginBase
     {
         foreach ($frame_config_names as $key => $value) {
 
-            if (empty($request->$value)) {
+            if (!$request->$value == '0' && empty($request->$value)) {
                 return;
             }
 

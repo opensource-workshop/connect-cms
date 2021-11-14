@@ -18,7 +18,7 @@
     {{ csrf_field() }}
 
     <div class="form-group row">
-        <label class="col-md-3 control-label text-md-right" for="title">フォトアルバム名 <label class="badge badge-danger">必須</label></label>
+        <label class="col-md-3 control-label text-md-right" for="title">アルバム名 <label class="badge badge-danger">必須</label></label>
         <div class="col-md-9">
             <input type="text" name="name[{{$frame_id}}]" value="{{old("name.$frame_id", $photoalbum_content->name)}}" class="form-control @if ($errors->has("name.$frame_id")) border-danger @endif" id="name{{$frame_id}}">
             @if ($errors && $errors->has("name.$frame_id")) 

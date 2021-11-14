@@ -26,7 +26,7 @@
 
         $('#collapse_upload{{$frame->id}}').on('hidden.bs.collapse', function () {
             $('#upload_file{{$frame_id}}').val('');
-            $('#upload_file{{$frame_id}}').next('.custom-file-label').html('ファイル選択...');
+            $('#upload_file{{$frame_id}}').next('.custom-file-label').html('画像ファイル選択...');
         });
 
         $('.custom-file-input').on('change',function(){
@@ -77,7 +77,7 @@
 @can('posts.create', [[null, $frame->plugin_name, $buckets]])
 <div class="p-2 text-right mb-2">
     <button class="btn btn-primary" data-toggle="collapse" data-target="#collapse_mkdir{{$frame->id}}"><i class="fas fa-folder-plus"></i><span class="d-none d-sm-inline"> アルバム作成</span></button>
-    <button class="btn btn-primary" data-toggle="collapse" data-target="#collapse_upload{{$frame->id}}" id="btn-upload-file"><i class="fas fa-file-upload"></i><span class="d-none d-sm-inline"> ファイル追加</span></button>
+    <button class="btn btn-primary" data-toggle="collapse" data-target="#collapse_upload{{$frame->id}}" id="btn-upload-file"><i class="fas fa-file-upload"></i><span class="d-none d-sm-inline"> 画像ファイル追加</span></button>
 </div>
 @endcan
 <form action="{{url('/')}}/redirect/plugin/photoalbums/makeFolder/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST">
@@ -86,7 +86,7 @@
     <input type="hidden" name="parent_id" value="{{$parent_id}}">
     <div class="collapse @if ($errors && $errors->has("folder_name.$frame_id")) show @endif bg-light border rounded border-white p-2" aria-expanded="false" aria-controls="collapseOne" id="collapse_mkdir{{$frame->id}}">
         <div class="form-group row">
-            <label class="{{$frame->getSettingLabelClass()}}" for="folder_name">フォトアルバム名 <label class="badge badge-danger">必須</label></label>
+            <label class="{{$frame->getSettingLabelClass()}}" for="folder_name">アルバム名 <label class="badge badge-danger">必須</label></label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <input type="text" name="folder_name[{{$frame_id}}]" value="{{old("folder_name.$frame_id")}}" class="form-control @if ($errors && $errors->has("folder_name.$frame_id")) border-danger @endif" id="folder_name{{$frame_id}}">
                 @if ($errors && $errors->has("folder_name.$frame_id")) 
@@ -115,17 +115,18 @@
     <input type="hidden" name="parent_id" value="{{$parent_id}}">
     <div class="collapse @if ($errors && $errors->has("upload_file.$frame_id")) show @endif bg-light border rounded border-white p-2" aria-expanded="false" aria-controls="collapseOne" id="collapse_upload{{$frame->id}}">
         <div class="form-group row no-gutters">
-            <label class="{{$frame->getSettingLabelClass()}} pr-3" for="upload_file">ファイル <label class="badge badge-danger">必須</label></label>
+            <label class="{{$frame->getSettingLabelClass()}} pr-3" for="upload_file">画像ファイル <label class="badge badge-danger">必須</label></label>
             <div class="custom-file {{$frame->getSettingInputClass()}}">
                 <input type="hidden" name="upload_file[{{$frame_id}}]" value="">
                 <input type="file" name="upload_file[{{$frame_id}}]" value="{{old("upload_file.$frame_id")}}" class="custom-file-input @if ($errors && $errors->has("upload_file.$frame_id")) border-danger @endif" id="upload_file{{$frame_id}}">
-                <label class="custom-file-label ml-md-2" for="upload_file" data-browse="参照">ファイル選択...</label>
+                <label class="custom-file-label ml-md-2" for="upload_file" data-browse="参照">画像ファイル選択...</label>
+                <small class="ml-md-2 form-text text-muted">jpg, png, gif, zip を許可します。zip の場合は展開されて登録されます。</small>
                 @if ($errors && $errors->has("upload_file.$frame_id")) 
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("upload_file.*")}}</div>
                 @endif
             </div>
         </div>
-        <div class="form-group row">
+        <div class="form-group row pt-3">
             <label class="{{$frame->getSettingLabelClass()}}" for="title">タイトル</label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <input type="text" name="title[{{$frame_id}}]" value="{{old("title.$frame_id")}}" class="form-control @if ($errors && $errors->has("title.$frame_id")) border-danger @endif" id="title{{$frame_id}}">

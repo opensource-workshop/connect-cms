@@ -39,7 +39,7 @@
     {{ csrf_field() }}
 
     <div class="form-group row">
-        <label class="col-md-2 control-label text-md-right" for="upload_file">ファイル</label>
+        <label class="col-md-2 control-label text-md-right" for="upload_file">画像ファイル</label>
         <div class="col-md-10">
 
             <div class="mb-1">
@@ -68,7 +68,7 @@
             <div class="custom-file">
                 <input type="hidden" name="upload_file[{{$frame_id}}]" value="">
                 <input type="file" name="upload_file[{{$frame_id}}]" value="{{old("upload_file.$frame_id")}}" class="custom-file-input @if ($errors && $errors->has("upload_file.$frame_id")) border-danger @endif" id="upload_file{{$frame_id}}">
-                <label class="custom-file-label" for="upload_file" data-browse="参照">ファイル選択...</label>
+                <label class="custom-file-label" for="upload_file" data-browse="参照">画像ファイル選択...</label>
                 <small class="form-text text-muted">ファイルを入れ替える際は指定します。</small>
                 @if ($errors && $errors->has("upload_file.$frame_id")) 
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("upload_file.*")}}</div>
