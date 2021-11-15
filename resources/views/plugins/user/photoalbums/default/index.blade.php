@@ -47,7 +47,13 @@
         });
 
         {{-- カスタムインプット対応（change でファイル名を明示的に設定する必要あり） --}}
-        $('.custom-file-input').on('change',function(){
+        $('#upload_file{{$frame_id}}').on('change',function(){
+            $(this).next('.custom-file-label').html($(this)[0].files[0].name);
+        });
+        $('#upload_video{{$frame_id}}').on('change',function(){
+            $(this).next('.custom-file-label').html($(this)[0].files[0].name);
+        });
+        $('#upload_poster{{$frame_id}}').on('change',function(){
             $(this).next('.custom-file-label').html($(this)[0].files[0].name);
         });
         @endcan
@@ -280,7 +286,7 @@
             </div>
         </div>
         <div class="text-center">
-            <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#collapse_upload{{$frame->id}}">キャンセル</button>
+            <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#collapse_video{{$frame->id}}">キャンセル</button>
             <button class="btn btn-primary btn-sm" type="submit">追加</button>
             <small id="upload-size-server-help" class="form-text text-muted">アップロードできる最大サイズ&nbsp;<span class="font-weight-bold">{{UploadMaxSize::getDescription($photoalbum->video_upload_max_size)}}</span></small>
         </div>

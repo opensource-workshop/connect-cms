@@ -67,7 +67,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
         $functions['get']  = ['index', 'download', 'changeDirectory'];
-        $functions['post'] = ['makeFolder', 'editFolder', 'upload', 'editContents', 'deleteContents'];
+        $functions['post'] = ['makeFolder', 'editFolder', 'upload', 'uploadVideo', 'editContents', 'deleteContents'];
         return $functions;
     }
 
@@ -350,6 +350,30 @@ class PhotoalbumsPlugin extends UserPluginBase
     }
 
     /**
+     * 動画ファイルアップロード処理
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     */
+    public function uploadVideo($request, $page_id, $frame_id)
+    {
+        $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
+        $validator = $this->getVideoUploadValidator($request, $photoalbum);
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $parent = $this->fetchPhotoalbumContent($request->parent_id);
+        //$upload_file = $request->file('upload_video')[$frame_id];
+        //$this->writeVideo($request, $upload_file, $page_id, $frame_id, $parent);
+        $this->writeVideo($request, $page_id, $frame_id, $parent);
+
+        // 登録後はリダイレクトして初期表示。
+        return new Collection(['redirect_path' => url('/') . "/plugin/photoalbums/changeDirectory/" . $page_id . "/" . $frame_id . "/" . $parent->id . "/#frame-" . $frame_id ]);
+    }
+
+    /**
      * ファイルを上書きすべきか
      *
      * @param \App\Models\User\Photoalbums\PhotoalbumContent $parent 親要素
@@ -402,6 +426,71 @@ class PhotoalbumsPlugin extends UserPluginBase
             'description' => $request->description[$frame_id],
             'is_folder' => PhotoalbumContent::is_folder_off,
             'is_cover' => ($request->has('is_cover') && $request->is_cover[$frame_id]) ? PhotoalbumContent::is_cover_on : PhotoalbumContent::is_cover_off,
+            'mimetype' => $upload->mimetype,
+        ]);
+    }
+
+    /**
+     * 動画ファイル新規保存処理
+     *
+     * @param \Illuminate\Http\UploadedFile $file file
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     */
+    private function writeVideo($request, $page_id, $frame_id, $parent)
+    {
+        // 動画ファイル
+        $video = $request->file('upload_video')[$frame_id];
+
+        // uploads テーブルに情報追加、ファイルのid を取得する
+        $upload = Uploads::create([
+            'client_original_name' => $video->getClientOriginalName(),
+            'mimetype'             => $video->getClientMimeType(),
+            'extension'            => $video->getClientOriginalExtension(),
+            'size'                 => $video->getSize(),
+            'plugin_name'          => 'photoalbums',
+            'page_id'              => $page_id,
+            'temporary_flag'       => 0,
+            'created_id'           => empty(Auth::user()) ? null : Auth::user()->id,
+        ]);
+
+        // ファイル保存
+        $video->storeAs($this->getDirectory($upload->id), $this->getContentsFileName($upload));
+
+        // ポスター画像
+        if (!empty($request->file('upload_poster'))) {
+            $poster = $request->file('upload_poster')[$frame_id];
+
+            // 幅、高さを取得するためにImage オブジェクトを生成しておく。
+            if ($upload->isImage()) {
+                $poster_img = Image::make($poster->path());
+            }
+
+            // uploads テーブルに情報追加、ファイルのid を取得する
+            $upload_poster = Uploads::create([
+                'client_original_name' => $poster->getClientOriginalName(),
+                'mimetype'             => $poster->getClientMimeType(),
+                'extension'            => $poster->getClientOriginalExtension(),
+                'size'                 => $poster->getSize(),
+                'plugin_name'          => 'photoalbums',
+                'page_id'              => $page_id,
+                'temporary_flag'       => 0,
+                'created_id'           => empty(Auth::user()) ? null : Auth::user()->id,
+            ]);
+        }
+
+        // コンテンツレコードの保存
+        $parent->children()->create([
+            'photoalbum_id' => $upload->id,
+            'upload_id' => $upload->id,
+            'poster_upload_id' => isset($upload_poster) ? $upload_poster->id : null,
+            'name' => empty($request->title[$frame_id]) ? $video->getClientOriginalName() : $request->title[$frame_id],
+            'width' => null,
+            'height' => null,
+            'description' => $request->description[$frame_id],
+            'is_folder' => PhotoalbumContent::is_folder_off,
+            'is_cover' => ($request->has('is_cover') && $request->is_cover[$frame_id]) ? PhotoalbumContent::is_cover_on : PhotoalbumContent::is_cover_off,
+            'mimetype' => $upload->mimetype,
         ]);
     }
 
@@ -465,7 +554,7 @@ class PhotoalbumsPlugin extends UserPluginBase
             $img = Image::make($file->path());
             $photoalbum_content->width = $img->width();
             $photoalbum_content->height = $img->height();
-
+            $photoalbum_content->mimetype = $file->getClientMimeType();
         } else {
             // 写真レコードのタイトル（空ならもともと設定されていた内容＝ファイル名）
             $photoalbum_content->name = empty($request->title[$frame_id]) ? $photoalbum_content->name() : $request->title[$frame_id];
@@ -883,6 +972,34 @@ class PhotoalbumsPlugin extends UserPluginBase
         $validator = Validator::make($request->all(), $rules);
         $validator->setAttributeNames([
             'upload_file.*' => 'ファイル',
+        ]);
+
+        return $validator;
+    }
+
+    /**
+     * 動画ファイルアップロードのバリデーターを取得する。
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param  App\Models\User\Photoalbums\Photoalbum フォトアルバム
+     * @return \Illuminate\Contracts\Validation\Validator バリデーター
+     */
+    private function getVideoUploadValidator($request, $photoalbum)
+    {
+        // ファイルチェック
+        $rules['upload_video.*'] = [
+            'required',
+        ];
+        if ($photoalbum->video_upload_max_size !== UploadMaxSize::infinity) {
+            $rules['upload_video.*'][] = 'max:' . $photoalbum->video_upload_max_size;
+            $rules['upload_poster.*'][] = 'max:' . $photoalbum->image_upload_max_size;
+        }
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), $rules);
+        $validator->setAttributeNames([
+            'upload_video.*' => '動画ファイル',
+            'upload_poster.*' => 'ポスター画像',
         ]);
 
         return $validator;
