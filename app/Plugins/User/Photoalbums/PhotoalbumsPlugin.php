@@ -413,12 +413,12 @@ class PhotoalbumsPlugin extends UserPluginBase
         $file->storeAs($this->getDirectory($upload->id), $this->getContentsFileName($upload));
 
         // 幅、高さを取得するためにImage オブジェクトを生成しておく。
-        if ($upload->isImage()) {
+        if (Uploads::isImage($upload->mimetype)) {
             $img = Image::make($file->path());
         }
 
         $parent->children()->create([
-            'photoalbum_id' => $upload->id,
+            'photoalbum_id' => $parent->photoalbum_id,
             'upload_id' => $upload->id,
             'name' => empty($request->title[$frame_id]) ? $file->getClientOriginalName() : $request->title[$frame_id],
             'width' => isset($img) ? $img->width() : 0,
@@ -462,7 +462,7 @@ class PhotoalbumsPlugin extends UserPluginBase
             $poster = $request->file('upload_poster')[$frame_id];
 
             // 幅、高さを取得するためにImage オブジェクトを生成しておく。
-            if ($upload->isImage()) {
+            if (Uploads::isImage($poster->getClientMimeType())) {
                 $poster_img = Image::make($poster->path());
             }
 

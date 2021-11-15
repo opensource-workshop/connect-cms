@@ -112,11 +112,11 @@ class Uploads extends Model
     /**
      *  画像ファイルか判定
      */
-    public function isImage()
+    public static function isImage($mimetype)
     {
-        if ($this->mimetype == 'image/png'  ||
-            $this->mimetype == 'image/jpeg' ||
-            $this->mimetype == 'image/gif') {
+        if ($mimetype == 'image/png'  ||
+            $mimetype == 'image/jpeg' ||
+            $mimetype == 'image/gif') {
             return true;
         }
         return false;
@@ -125,9 +125,9 @@ class Uploads extends Model
     /**
      *  動画ファイルか判定
      */
-    public function isVideo()
+    public static function isVideo($mimetype)
     {
-        if ($this->mimetype == 'video/mp4') {
+        if ($mimetype == 'video/mp4') {
             return true;
         }
         return false;

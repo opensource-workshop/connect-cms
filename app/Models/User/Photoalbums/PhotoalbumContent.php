@@ -39,14 +39,14 @@ class PhotoalbumContent extends Model
         return $this->hasOne(Uploads::class, 'id', 'upload_id')->withDefault();
     }
 
-    public function isImage()
+    public function isImage($mimetype)
     {
-        return $this->upload->isImage();
+        return Uploads::isImage($mimetype);
     }
 
-    public function isVideo()
+    public function isVideo($mimetype)
     {
-        return $this->upload->isVideo();
+        return Uploads::isVideo($mimetype);
     }
 
     /**

@@ -383,7 +383,7 @@
     @foreach($photoalbum_contents->where('is_folder', 0) as $photoalbum_content)
     <div class="col-md-4">
         <div class="card mt-3 shadow-sm">
-        @if ($photoalbum_content->isImage())
+        @if ($photoalbum_content->isImage($photoalbum_content->mimetype))
             <img src="/file/{{$photoalbum_content->upload_id}}?size=small"
                  id="photo_{{$loop->iteration}}"
                  style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
@@ -413,7 +413,7 @@
                $("#popup_photo_{{$loop->iteration}}").attr('src', "/file/{{$photoalbum_content->upload_id}}");
             });
             </script>
-        @elseif ($photoalbum_content->isVideo())
+        @elseif ($photoalbum_content->isVideo($photoalbum_content->mimetype))
             <video controls controlsList="nodownload"
                  src="/file/{{$photoalbum_content->upload_id}}"
                  id="video_{{$loop->iteration}}"
