@@ -133,7 +133,7 @@ class KnowledgesPlugin extends UserPluginBase
      *  データ詳細表示関数
      *  コアがページ表示の際に呼び出す関数
      */
-    public function edit_show($request, $page_id, $frame_id, $id = null)
+    public function show($request, $page_id, $frame_id, $id = null)
     {
         // データ取得
         $contents = $this->getContents($frame_id);
