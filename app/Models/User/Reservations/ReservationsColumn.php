@@ -36,5 +36,4 @@ class ReservationsColumn extends Model
         }
         return false;
     }
-
 }
