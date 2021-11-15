@@ -108,4 +108,28 @@ class Uploads extends Model
         }
         return '';
     }
+
+    /**
+     *  画像ファイルか判定
+     */
+    public function isImage()
+    {
+        if ($this->mimetype == 'image/png'  ||
+            $this->mimetype == 'image/jpeg' ||
+            $this->mimetype == 'image/gif') {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     *  動画ファイルか判定
+     */
+    public function isVideo()
+    {
+        if ($this->mimetype == 'video/mp4') {
+            return true;
+        }
+        return false;
+    }
 }

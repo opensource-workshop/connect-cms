@@ -17,9 +17,10 @@ class CreatePhotoalbums extends Migration
             $table->bigIncrements('id');
             $table->integer('bucket_id')->comment('バケツID');
             $table->string('name', 255)->comment('フォトアルバム名');
-            $table->string('upload_max_size', 255)->comment('ファイル最大サイズ');
-            $table->integer('approval_flag')->default(0)->comment('承認フラグ');
+            $table->string('image_upload_max_size', 255)->comment('画像ファイル最大サイズ');
+            $table->string('video_upload_max_size', 255)->comment('動画ファイル最大サイズ');
             $table->string('comment', 255)->nullable()->comment('コメント');
+            $table->integer('approval_flag')->default(0)->comment('承認フラグ');
             $table->integer('created_id')->nullable();
             $table->string('created_name', 255)->nullable();
             $table->timestamp('created_at')->nullable();

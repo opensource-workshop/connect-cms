@@ -29,54 +29,58 @@
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/photoalbums/editView/{{$page->id}}/{{$frame_id}}/{{$photoalbum->bucket_id}}#frame-{{$frame_id}}">
 
         {{-- 1ページの表示件数 --}}
+        {{-- 現時点では、データ読み込み後にソートしているので、ページングする際は、ソートロジックも見直してから。
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass(true)}}">{{PhotoalbumFrameConfig::enum[PhotoalbumFrameConfig::view_count]}}</label>
             <div class="{{$frame->getSettingInputClass(true)}}">
                 <input type="text" name="view_count" value="{{ FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::view_count, 10)}}" class="form-control">
             </div>
         </div>
+        --}}
         {{-- 投稿日 --}}
-	    <div class="form-group row">
-	        <label class="{{$frame->getSettingLabelClass(true)}}">{{PhotoalbumFrameConfig::enum[PhotoalbumFrameConfig::posted_at]}}</label>
-	        <div class="{{$frame->getSettingInputClass(true)}}">
-	            @foreach (ShowType::enum as $key => $value)
-	                <div class="custom-control custom-radio custom-control-inline">
-	                    <input
-	                        type="radio"
-	                        value="{{ $key }}"
-	                        id="{{ "posted_at_${key}" }}"
-	                        name="posted_at"
-	                        class="custom-control-input"
-	                        {{ FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::posted_at, 0) == $key ? 'checked' : '' }}
-	                    >
-	                    <label class="custom-control-label" for="{{ "posted_at_${key}" }}">
-	                        {{ $value }}
-	                    </label>
-	                </div>
-	            @endforeach
-	        </div>
-	    </div>
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">{{PhotoalbumFrameConfig::enum[PhotoalbumFrameConfig::posted_at]}}</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                @foreach (ShowType::enum as $key => $value)
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input
+                            type="radio"
+                            value="{{ $key }}"
+                            id="{{ "posted_at_${key}" }}"
+                            name="posted_at"
+                            class="custom-control-input"
+                            {{ FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::posted_at, 0) == $key ? 'checked' : '' }}
+                        >
+                        <label class="custom-control-label" for="{{ "posted_at_${key}" }}">
+                            {{ $value }}
+                        </label>
+                    </div>
+                @endforeach
+            </div>
+        </div>
         {{-- 撮影日 --}}
-	    <div class="form-group row">
-	        <label class="{{$frame->getSettingLabelClass(true)}}">{{PhotoalbumFrameConfig::enum[PhotoalbumFrameConfig::shooting_at]}}</label>
-	        <div class="{{$frame->getSettingInputClass(true)}}">
-	            @foreach (ShowType::enum as $key => $value)
-	                <div class="custom-control custom-radio custom-control-inline">
-	                    <input
-	                        type="radio"
-	                        value="{{ $key }}"
-	                        id="{{ "shooting_at_${key}" }}"
-	                        name="shooting_at"
-	                        class="custom-control-input"
-	                        {{ FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::shooting_at, 0) == $key ? 'checked' : '' }}
-	                    >
-	                    <label class="custom-control-label" for="{{ "shooting_at_${key}" }}">
-	                        {{ $value }}
-	                    </label>
-	                </div>
-	            @endforeach
-	        </div>
-	    </div>
+        {{-- 現時点では、テストなど実施しきれないので、今後へ。
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">{{PhotoalbumFrameConfig::enum[PhotoalbumFrameConfig::shooting_at]}}</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                @foreach (ShowType::enum as $key => $value)
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input
+                            type="radio"
+                            value="{{ $key }}"
+                            id="{{ "shooting_at_${key}" }}"
+                            name="shooting_at"
+                            class="custom-control-input"
+                            {{ FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::shooting_at, 0) == $key ? 'checked' : '' }}
+                        >
+                        <label class="custom-control-label" for="{{ "shooting_at_${key}" }}">
+                            {{ $value }}
+                        </label>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+        --}}
         {{-- アルバム並び順 --}}
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass(true)}}">{{PhotoalbumFrameConfig::enum[PhotoalbumFrameConfig::sort_folder]}}</label>

@@ -120,7 +120,6 @@ class PhotoalbumsPlugin extends UserPluginBase
         }
 
         $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
-
         $parent = $this->fetchPhotoalbumContent($parent_id, $photoalbum->id);
 
         // フォルダ、ファイルの比較条件の取得
@@ -147,12 +146,12 @@ class PhotoalbumsPlugin extends UserPluginBase
                 } elseif ($sort == PhotoalbumSort::name_desc) {
                     // 名前（降順）
                     return $this->sortDesc($first['displayName'], $second['displayName']);
-                } elseif ($sort == PhotoalbumSort::updated_asc) {
-                    // 更新日（昇順）
-                    return $this->sortAsc($first['updated_at'], $second['updated_at']);
-                } elseif ($sort == PhotoalbumSort::updated_desc) {
-                    // 更新日（降順）
-                    return $this->sortDesc($first['updated_at'], $second['updated_at']);
+                } elseif ($sort == PhotoalbumSort::created_asc) {
+                    // 登録日（昇順）
+                    return $this->sortAsc($first['created_at'], $second['created_at']);
+                } elseif ($sort == PhotoalbumSort::created_desc) {
+                    // 登録日（降順）
+                    return $this->sortDesc($first['created_at'], $second['created_at']);
                 }
             }
             // フォルダとファイルの比較
@@ -390,14 +389,16 @@ class PhotoalbumsPlugin extends UserPluginBase
         $file->storeAs($this->getDirectory($upload->id), $this->getContentsFileName($upload));
 
         // 幅、高さを取得するためにImage オブジェクトを生成しておく。
-        $img = Image::make($file->path());
+        if ($upload->isImage()) {
+            $img = Image::make($file->path());
+        }
 
         $parent->children()->create([
             'photoalbum_id' => $upload->id,
             'upload_id' => $upload->id,
             'name' => empty($request->title[$frame_id]) ? $file->getClientOriginalName() : $request->title[$frame_id],
-            'width' => $img->width(),
-            'height' => $img->height(),
+            'width' => isset($img) ? $img->width() : 0,
+            'height' => isset($img) ? $img->height() : 0,
             'description' => $request->description[$frame_id],
             'is_folder' => PhotoalbumContent::is_folder_off,
             'is_cover' => ($request->has('is_cover') && $request->is_cover[$frame_id]) ? PhotoalbumContent::is_cover_on : PhotoalbumContent::is_cover_off,
@@ -817,14 +818,19 @@ class PhotoalbumsPlugin extends UserPluginBase
                 'required',
                 'max:255'
             ],
-            'upload_max_size'=> [
+            'image_upload_max_size'=> [
+                'required',
+                Rule::in(UploadMaxSize::getMemberKeys()),
+            ],
+            'video_upload_max_size'=> [
                 'required',
                 Rule::in(UploadMaxSize::getMemberKeys()),
             ],
         ]);
         $validator->setAttributeNames([
             'name' => 'フォトアルバム名',
-            'upload_max_size' => 'ファイル最大サイズ',
+            'image_upload_max_size' => '画像の最大サイズ',
+            'video_upload_max_size' => '動画の最大サイズ',
         ]);
 
         return $validator;
@@ -869,8 +875,8 @@ class PhotoalbumsPlugin extends UserPluginBase
         $rules['upload_file.*'] = [
             'required',
         ];
-        if ($photoalbum->upload_max_size !== UploadMaxSize::infinity) {
-            $rules['upload_file.*'][] = 'max:' . $photoalbum->upload_max_size;
+        if ($photoalbum->image_upload_max_size !== UploadMaxSize::infinity) {
+            $rules['upload_file.*'][] = 'max:' . $photoalbum->image_upload_max_size;
         }
 
         // 項目のエラーチェック
@@ -928,7 +934,8 @@ class PhotoalbumsPlugin extends UserPluginBase
         // プラグインバケツにデータを設定して保存
         $photoalbum = $this->getPluginBucket($bucket->id);
         $photoalbum->name = $request->name;
-        $photoalbum->upload_max_size = $request->upload_max_size;
+        $photoalbum->image_upload_max_size = $request->image_upload_max_size;
+        $photoalbum->video_upload_max_size = $request->video_upload_max_size;
         $photoalbum->save();
 
         $this->saveRootPhotoalbumContent($photoalbum);

@@ -12,5 +12,5 @@ class Photoalbum extends Model
     use UserableNohistory;
 
     // 更新する項目の定義
-    protected $fillable = ['bucket_id', 'name', 'upload_max_size'];
+    protected $fillable = ['bucket_id', 'name', 'image_upload_max_size', 'video_upload_max_size'];
 }

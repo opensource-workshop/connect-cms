@@ -39,6 +39,16 @@ class PhotoalbumContent extends Model
         return $this->hasOne(Uploads::class, 'id', 'upload_id')->withDefault();
     }
 
+    public function isImage()
+    {
+        return $this->upload->isImage();
+    }
+
+    public function isVideo()
+    {
+        return $this->upload->isVideo();
+    }
+
     /**
      * 画面表示用のファイル名を取得する
      *
@@ -53,6 +63,26 @@ class PhotoalbumContent extends Model
             $displayName = $this->upload->client_original_name;
         }
         return $displayName;
+    }
+
+    /**
+     * 更新日、登録日の大きい方を返す。
+     *
+     * @return string  更新日、登録日の大きい方（Y-m-d H:i:s）
+     */
+    public function getUpdateOrCreatedAt($format = null)
+    {
+        $return_date = $this->created_at;
+        if ($this->updated_at > $this->created_at) {
+            $return_date = $this->updated_at;
+        }
+        if (empty($return_date)) {
+            return '';
+        }
+        if (empty($format)) {
+            return $return_date;
+        }
+        return date($format, strtotime($return_date));
     }
 
     /**
@@ -82,7 +112,7 @@ class PhotoalbumContent extends Model
         if ($height > 800) {
             return "min-width: 800px; min-height: 966px;";
         } else {
-            return "min-width: 800px; min-height: " . $height + 166 . "px;";
+            return "min-width: 800px; min-height: " . ($height + 166) . "px;";
         }
     }
 }

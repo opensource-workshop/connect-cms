@@ -49,16 +49,30 @@
         </div>
 
         <div class="form-group row">
-            <label class="{{$frame->getSettingLabelClass()}}" for="upload-max-size">ファイル最大サイズ</label>
+            <label class="{{$frame->getSettingLabelClass()}}" for="upload-max-size">画像の最大サイズ</label>
             <div class="{{$frame->getSettingInputClass()}}">
-                <select class="form-control col-md-3 @if ($errors && $errors->has('upload_max_size')) border-danger @endif" name="upload_max_size" id="upload-max-size">
+                <select class="form-control col-md-3 @if ($errors && $errors->has('image_upload_max_size')) border-danger @endif" name="image_upload_max_size" id="upload-max-size">
                     @foreach (UploadMaxSize::getMembers() as $key=>$value)
-                    <option value="{{$key}}" @if(old("upload_max_size", $photoalbum->upload_max_size) == $key) selected="selected" @endif>
+                    <option value="{{$key}}" @if(old("image_upload_max_size", $photoalbum->image_upload_max_size) == $key) selected="selected" @endif>
                         {{ $value }}
                     </option>
                     @endforeach
                 </select>
-                @include('plugins.common.errors_inline', ['name' => 'upload_max_size'])
+                @include('plugins.common.errors_inline', ['name' => 'image_upload_max_size'])
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}" for="upload-max-size">動画の最大サイズ</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <select class="form-control col-md-3 @if ($errors && $errors->has('video_upload_max_size')) border-danger @endif" name="video_upload_max_size" id="upload-max-size">
+                    @foreach (UploadMaxSize::getMembers() as $key=>$value)
+                    <option value="{{$key}}" @if(old("video_upload_max_size", $photoalbum->video_upload_max_size) == $key) selected="selected" @endif>
+                        {{ $value }}
+                    </option>
+                    @endforeach
+                </select>
+                @include('plugins.common.errors_inline', ['name' => 'video_upload_max_size'])
                 <small id="upload-size-help" class="form-text text-muted">サーバの設定によるため、サイズを変更しても反映されない場合があります。</small>
                 <small id="upload-size-server-help" class="form-text text-muted">サーバ設定：アップロードできる最大サイズ&nbsp;<span class="font-weight-bold">{{ini_get('upload_max_filesize')}}</span></small>
             </div>
