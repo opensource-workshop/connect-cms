@@ -23,7 +23,7 @@ class PhotoalbumContent extends Model
     //use UserableNohistory;
 
     // 更新する項目の定義
-    protected $fillable = ['photoalbum_id', 'upload_id', 'name', 'width', 'height', 'description', 'is_folder', 'is_cover'];
+    protected $fillable = ['photoalbum_id', 'upload_id', 'poster_upload_id', 'name', 'width', 'height', 'description', 'is_folder', 'is_cover', 'mimetype'];
 
     // NC2移行用の一時項目
     public $migrate_parent_id = 0;
@@ -102,7 +102,7 @@ class PhotoalbumContent extends Model
 
         // 幅が800px を超えていた場合、表示幅は800px に縮小される。そのため、高さも表示幅の縮小率と同じ高さで計算する。
         if ($this->width > 800) {
-            $height = 800 / $this->width * $this->height;
+            $height = ceil(800 / $this->width * $this->height);
         } else {
             $height = $this->height;
         }
@@ -112,7 +112,7 @@ class PhotoalbumContent extends Model
         if ($height > 800) {
             return "min-width: 800px; min-height: 966px;";
         } else {
-            return "min-width: 800px; min-height: " . ($height + 166) . "px;";
+            return "min-width: 800px; min-height: " . $height . "px;";
         }
     }
 }

@@ -391,8 +391,8 @@
             >
             <div class="modal fade" id="image_Modal_{{$loop->iteration}}" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel_{{$loop->iteration}}">
                 <div class="modal-dialog modal-lg modal-middle">{{-- モーダルウィンドウの縦表示位置を調整・画像を大きく見せる --}}
-                    <div class="modal-content pb-3" style="{{$photoalbum_content->getModalMinSize()}}">
-                        <div class="modal-body mx-auto">
+                    <div class="modal-content pb-3">
+                        <div class="modal-body mx-auto" style="{{$photoalbum_content->getModalMinSize()}}">
                             {{-- 拡大表示ウィンドウにも、初期設定でサムネイルを設定しておき、クリック時に実寸画像を読み込みなおす --}}
                             <img src="/file/{{$photoalbum_content->upload_id}}?size=small"
                                  style="object-fit: scale-down; cursor:pointer;"
@@ -419,6 +419,7 @@
                  id="video_{{$loop->iteration}}"
                  style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
                  class="img-fluid"
+                 @if ($photoalbum_content->poster_upload_id) poster="/file/{{$photoalbum_content->poster_upload_id}}" @endif
                  oncontextmenu="return false;"
             ></video>
         @endif

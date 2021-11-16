@@ -67,7 +67,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
         $functions['get']  = ['index', 'download', 'changeDirectory'];
-        $functions['post'] = ['makeFolder', 'editFolder', 'upload', 'uploadVideo', 'editContents', 'deleteContents'];
+        $functions['post'] = ['makeFolder', 'editFolder', 'upload', 'uploadVideo', 'editContents', 'editVideo', 'deleteContents'];
         return $functions;
     }
 
@@ -82,6 +82,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         $role_check_table["makeFolder"] = array('posts.create');
         $role_check_table["editFolder"] = array('posts.create');
         $role_check_table["editContents"] = array('posts.update');
+        $role_check_table["editVideo"] = array('posts.update');
         $role_check_table["deleteContents"] = array('posts.delete');
         return $role_check_table;
     }
@@ -182,7 +183,16 @@ class PhotoalbumsPlugin extends UserPluginBase
         $photoalbum_content = PhotoalbumContent::find($photoalbum_content_id);
 
         $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
-        return $this->view($photoalbum_content->is_folder ? 'edit_folder' : 'edit_contents', [
+
+        if ($photoalbum_content->is_folder) {
+            $blade = 'edit_folder';
+        } elseif (Uploads::isVideo($photoalbum_content->mimetype)) {
+            $blade = 'edit_video';
+        } else {
+            $blade = 'edit_contents';
+        }
+
+        return $this->view($blade, [
             'photoalbum' => $photoalbum,
             'photoalbum_content' => $photoalbum_content,
         ]);
@@ -458,13 +468,8 @@ class PhotoalbumsPlugin extends UserPluginBase
         $video->storeAs($this->getDirectory($upload->id), $this->getContentsFileName($upload));
 
         // ポスター画像
-        if (!empty($request->file('upload_poster'))) {
+        if ($request->hasFile('upload_poster.'.$frame_id)) {
             $poster = $request->file('upload_poster')[$frame_id];
-
-            // 幅、高さを取得するためにImage オブジェクトを生成しておく。
-            if (Uploads::isImage($poster->getClientMimeType())) {
-                $poster_img = Image::make($poster->path());
-            }
 
             // uploads テーブルに情報追加、ファイルのid を取得する
             $upload_poster = Uploads::create([
@@ -477,11 +482,14 @@ class PhotoalbumsPlugin extends UserPluginBase
                 'temporary_flag'       => 0,
                 'created_id'           => empty(Auth::user()) ? null : Auth::user()->id,
             ]);
+
+            // ファイル保存
+            $poster->storeAs($this->getDirectory($upload_poster->id), $this->getContentsFileName($upload_poster));
         }
 
         // コンテンツレコードの保存
         $parent->children()->create([
-            'photoalbum_id' => $upload->id,
+            'photoalbum_id' => $parent->photoalbum_id,
             'upload_id' => $upload->id,
             'poster_upload_id' => isset($upload_poster) ? $upload_poster->id : null,
             'name' => empty($request->title[$frame_id]) ? $video->getClientOriginalName() : $request->title[$frame_id],
@@ -489,7 +497,7 @@ class PhotoalbumsPlugin extends UserPluginBase
             'height' => null,
             'description' => $request->description[$frame_id],
             'is_folder' => PhotoalbumContent::is_folder_off,
-            'is_cover' => ($request->has('is_cover') && $request->is_cover[$frame_id]) ? PhotoalbumContent::is_cover_on : PhotoalbumContent::is_cover_off,
+            'is_cover' => PhotoalbumContent::is_cover_off,
             'mimetype' => $upload->mimetype,
         ]);
     }
@@ -501,15 +509,11 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param int $page_id ページID
      * @param int $frame_id フレームID
      */
-    private function overwriteFile($file, $photoalbum_content, $page_id)
+    private function overwriteFile($file, $photoalbum_content, $page_id, $target_column = 'upload_id')
     {
-        //$content = PhotoalbumContent::where('parent_id', $parent->id)
-        //    ->where('name', $file->getClientOriginalName())
-        //    ->where('is_folder', PhotoalbumContent::is_folder_off)
-        //    ->first();
-
         // uploads テーブルに情報追加、ファイルのid を取得する
-        Uploads::find($photoalbum_content->upload_id)->update([
+/*
+        Uploads::find($photoalbum_content->$target_column)->update([
             'client_original_name' => $file->getClientOriginalName(),
             'mimetype'             => $file->getClientMimeType(),
             'extension'            => $file->getClientOriginalExtension(),
@@ -519,12 +523,70 @@ class PhotoalbumsPlugin extends UserPluginBase
             'temporary_flag'       => 0,
             'updated_id'           => empty(Auth::user()) ? null : Auth::user()->id,
         ]);
+*/
+        $upload = Uploads::updateOrCreate(
+            ['id' => $photoalbum_content->$target_column],
+            ['client_original_name' => $file->getClientOriginalName(),
+             'mimetype'             => $file->getClientMimeType(),
+             'extension'            => $file->getClientOriginalExtension(),
+             'size'                 => $file->getSize(),
+             'plugin_name'          => 'photoalbums',
+             'page_id'              => $page_id,
+             'temporary_flag'       => 0,
+             'updated_id'           => empty(Auth::user()) ? null : Auth::user()->id]
+        );
 
         // ファイル保存
-        $file->storeAs($this->getDirectory($photoalbum_content->upload_id), $this->getContentsFileName($photoalbum_content->upload));
+        $file->storeAs($this->getDirectory($photoalbum_content->$target_column), $this->getContentsFileName($upload));
 
         // 画面表示される更新日を更新する
         $photoalbum_content->touch();
+
+        return $upload;
+    }
+
+    /**
+     *  アルバム表紙のチェック処理
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $frame_id フレームID
+     * @param \App\Models\User\Photoalbums\PhotoalbumContent フォトアルバムコンテンツ
+     */
+    private function updateCover($request, $frame_id, $photoalbum_content)
+    {
+        // アルバム表紙がチェックされていた場合、同じアルバム内の他の写真からは、アルバム表紙のチェックを外す。
+        if ($request->has('is_cover') && $request->is_cover[$frame_id] == PhotoalbumContent::is_cover_on) {
+            PhotoalbumContent::where('parent_id', $photoalbum_content->parent_id)->where('id', '<>', $photoalbum_content->id)->update(['is_cover' => PhotoalbumContent::is_cover_off]);
+        }
+    }
+
+    /**
+     *  フォトアルバムコンテンツのプレフィックス設定
+     *
+     * @param \App\Models\User\Photoalbums\PhotoalbumContent フォトアルバムコンテンツ（参照）
+     */
+    private function setPrefixPhotoalbumContent(&$photoalbum_content)
+    {
+        // 表紙フラグの更新で複数レコードを更新する処理について、この処理では更新日時を変更したくないため、自動化をしていないので、自分で設定。
+        $photoalbum_content->updated_id = Auth::user()->id;
+        $photoalbum_content->updated_name = Auth::user()->name;
+        $photoalbum_content->updated_at = now()->format('Y-m-d H:i:s');
+    }
+
+    /**
+     *  カバー写真かどうかのフラグのセット
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $frame_id フレームID
+     * @param \App\Models\User\Photoalbums\PhotoalbumContent フォトアルバムコンテンツ（参照）
+     */
+    private function setIsCover($request, $frame_id, &$photoalbum_content)
+    {
+        if ($request->has('is_cover') && $request->is_cover[$frame_id] == PhotoalbumContent::is_cover_on) {
+            $photoalbum_content->is_cover = PhotoalbumContent::is_cover_on;
+        } else {
+            $photoalbum_content->is_cover = PhotoalbumContent::is_cover_off;
+        }
     }
 
     /**
@@ -559,23 +621,66 @@ class PhotoalbumsPlugin extends UserPluginBase
             // 写真レコードのタイトル（空ならもともと設定されていた内容＝ファイル名）
             $photoalbum_content->name = empty($request->title[$frame_id]) ? $photoalbum_content->name() : $request->title[$frame_id];
         }
-        // 残りの項目設定
-        if ($request->has('is_cover') && $request->is_cover[$frame_id] == PhotoalbumContent::is_cover_on) {
-            $photoalbum_content->is_cover = PhotoalbumContent::is_cover_on;
-        } else {
-            $photoalbum_content->is_cover = PhotoalbumContent::is_cover_off;
-        }
-        $photoalbum_content->description = $request->description[$frame_id];
-        // 表紙フラグの更新で複数レコードを更新する処理が、その際は更新日時を変更したくないため、自動化をしていないので、自分で設定。
-        $photoalbum_content->updated_id = Auth::user()->id;
-        $photoalbum_content->updated_name = Auth::user()->name;
-        $photoalbum_content->updated_at = now()->format('Y-m-d H:i:s');
+        $this->setIsCover($request, $frame_id, $photoalbum_content); // カバー写真かどうかのフラグ
+        $photoalbum_content->description = $request->description[$frame_id]; // 説明欄
+        $this->setPrefixPhotoalbumContent($photoalbum_content); // フォトアルバムコンテンツのプレフィックス設定
         $photoalbum_content->save();
 
         // アルバム表紙がチェックされていた場合、同じアルバム内の他の写真からは、アルバム表紙のチェックを外す。
-        if ($request->has('is_cover') && $request->is_cover[$frame_id] == PhotoalbumContent::is_cover_on) {
-            PhotoalbumContent::where('parent_id', $photoalbum_content->parent_id)->where('id', '<>', $photoalbum_content->id)->update(['is_cover' => PhotoalbumContent::is_cover_off]);
+        $this->updateCover($request, $frame_id, $photoalbum_content);
+
+        // 登録後はリダイレクトして初期表示。
+        return new Collection(['redirect_path' => url('/') . "/plugin/photoalbums/changeDirectory/" . $page_id . "/" . $frame_id . "/" . $photoalbum_content->parent_id . "/#frame-" . $frame_id ]);
+    }
+
+    /**
+     *  動画コンテンツ変更処理
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     */
+    public function editVideo($request, $page_id, $frame_id, $photoalbum_content_id)
+    {
+        // 対象のデータを取得して編集する。
+        $photoalbum_content = PhotoalbumContent::find($photoalbum_content_id);
+
+        // 動画ファイルの入れ替えがあるか。
+        if ($request->hasFile('upload_video.'.$frame_id)) {
+            // アップロードされたファイルの取得
+            $video = $request->file('upload_video')[$frame_id];
+
+            // ファイルの入れ替え
+            $this->overwriteFile($video, $photoalbum_content, $page_id);
+
+            // 写真レコードのタイトル（空ならファイル名）
+            $photoalbum_content->name = empty($request->title[$frame_id]) ? $file->getClientOriginalName() : $request->title[$frame_id];
+
+            $photoalbum_content->width = null;
+            $photoalbum_content->height = null;
+            $photoalbum_content->mimetype = $video->getClientMimeType();
+        } else {
+            // 写真レコードのタイトル（空ならもともと設定されていた内容＝ファイル名）
+            $photoalbum_content->name = empty($request->title[$frame_id]) ? $photoalbum_content->name() : $request->title[$frame_id];
         }
+
+        // ポスター写真の入れ替えがあるか。
+        if ($request->hasFile('upload_poster.'.$frame_id)) {
+            // アップロードされたファイルの取得
+            $poster = $request->file('upload_poster')[$frame_id];
+
+            // ファイルの入れ替え
+            $upload = $this->overwriteFile($poster, $photoalbum_content, $page_id, 'poster_upload_id');
+            $photoalbum_content->poster_upload_id = $upload->id;
+        }
+
+        $this->setIsCover($request, $frame_id, $photoalbum_content); // カバー写真かどうかのフラグ
+        $photoalbum_content->description = $request->description[$frame_id]; // 説明欄
+        $this->setPrefixPhotoalbumContent($photoalbum_content); // フォトアルバムコンテンツのプレフィックス設定
+        $photoalbum_content->save();
+
+        // アルバム表紙がチェックされていた場合、同じアルバム内の他の写真からは、アルバム表紙のチェックを外す。
+        $this->updateCover($request, $frame_id, $photoalbum_content);
 
         // 登録後はリダイレクトして初期表示。
         return new Collection(['redirect_path' => url('/') . "/plugin/photoalbums/changeDirectory/" . $page_id . "/" . $frame_id . "/" . $photoalbum_content->parent_id . "/#frame-" . $frame_id ]);
