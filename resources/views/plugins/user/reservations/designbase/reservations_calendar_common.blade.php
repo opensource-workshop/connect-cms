@@ -39,15 +39,7 @@
         <br>
 
         {{-- メッセージエリア --}}
-        @if ($message)
-            <div class="alert alert-success mt-2">
-                <i class="fas fa-exclamation-circle"></i> {{ $message }}
-            </div>
-
-        @elseif (session('flash_message'))
-            {{-- リダイレクト用登録後メッセージ表示 --}}
-            @include('plugins.common.flash_message')
-        @endif
+        @include('plugins.common.flash_message')
 
         @if ($view_format == ReservationCalendarDisplayType::month)
 

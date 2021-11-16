@@ -2350,7 +2350,7 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
-     * 項目に紐づく選択肢の更新
+     * 項目に紐づく詳細設定の更新
      */
     public function updateColumnDetail($request, $page_id, $frame_id)
     {
