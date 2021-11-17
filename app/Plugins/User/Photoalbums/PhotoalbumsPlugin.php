@@ -38,29 +38,19 @@ class PhotoalbumsPlugin extends UserPluginBase
 
     /*
         【メモ】
-        ダウンロード ⇒ 参照に変更かな。
         zip ダウンロード ⇒ 閲覧回数アップ
-    */
-
-    /*
-        キャビネットをベースに開発
-
-        【読み替え情報】
-        フォルダ ⇒ アルバム
-
-        【その他】
-         フォルダ（アルバム）の階層はまずは一つ。
-         ただし、キャビネットと同様に、今後はサブフォルダの階層も検討する可能性がある。
     */
 
     /* オブジェクト変数 */
     // ファイルダウンロードURL
-    // private $download_url = '';
+    private $download_url = '';
 
     /* コアから呼び出す関数 */
 
     /**
      * 関数定義（コアから呼び出す）
+     *
+     * @return array 関数名
      */
     public function getPublicFunctions()
     {
@@ -73,14 +63,17 @@ class PhotoalbumsPlugin extends UserPluginBase
 
     /**
      *  権限定義
+     *
+     * @return array 関数名と権限
      */
     public function declareRole()
     {
         // 権限チェックテーブル
         $role_check_table = array();
-        $role_check_table["upload"] = array('posts.create');
         $role_check_table["makeFolder"] = array('posts.create');
         $role_check_table["editFolder"] = array('posts.create');
+        $role_check_table["upload"] = array('posts.create');
+        $role_check_table["uploadVideo"] = array('posts.create');
         $role_check_table["editContents"] = array('posts.update');
         $role_check_table["editVideo"] = array('posts.update');
         $role_check_table["deleteContents"] = array('posts.delete');
@@ -89,8 +82,9 @@ class PhotoalbumsPlugin extends UserPluginBase
 
     /**
      * 編集画面の最初のタブ（コアから呼び出す）
-     *
      * スーパークラスをオーバーライド
+     *
+     * @return string 関数名
      */
     public function getFirstFrameEditAction()
     {
@@ -99,6 +93,9 @@ class PhotoalbumsPlugin extends UserPluginBase
 
     /**
      * プラグインのバケツ取得関数
+     *
+     * @param int $bucket_id バケツID
+     * @return App\Models\User\Photoalbums\Photoalbum $bucket_id 処理するフォトアルバム
      */
     private function getPluginBucket($bucket_id)
     {
@@ -109,8 +106,14 @@ class PhotoalbumsPlugin extends UserPluginBase
     /* 画面アクション関数 */
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     * @param int $parent_id 表示する階層(ルートはnull)
+     * @return mixed $value テンプレートに渡す内容
      */
     public function index($request, $page_id, $frame_id, $parent_id = null)
     {
@@ -120,6 +123,7 @@ class PhotoalbumsPlugin extends UserPluginBase
             return $this->view('empty_bucket');
         }
 
+        // バケツデータとフォトアルバムデータ取得、フォトアルバムのルート階層はphotoalbum->id == nullのもの。
         $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
         $parent = $this->fetchPhotoalbumContent($parent_id, $photoalbum->id);
 
@@ -127,6 +131,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         $sort_folder = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_folder);
         $sort_file = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_file);
 
+        // データ取得してからソート(ページネートに対応するためにSQLソートに変更予定)
         $photoalbum_contents = $parent->children()->get()->sort(function ($first, $second) use($sort_folder, $sort_file) {
             // フォルダ>ファイル
             if ($first['is_folder'] == $second['is_folder']) {
@@ -175,7 +180,14 @@ class PhotoalbumsPlugin extends UserPluginBase
     }
 
     /**
-     *  編集画面を表示する
+     * 編集画面を表示する
+     * この関数はアルバム、画像、動画で共通使用
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     * @param int $photoalbum_content_id コンテンツID
+     * @return mixed $value テンプレートに渡す内容
      */
     public function edit($request, $page_id, $frame_id, $photoalbum_content_id)
     {
@@ -199,7 +211,13 @@ class PhotoalbumsPlugin extends UserPluginBase
     }
 
     /**
-     * フォルダを移動する
+     * アルバムを移動する
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     * @param int $parent_id 移動先の階層を示すid
+     * @return mixed $value テンプレートに渡す内容
      */
     public function changeDirectory($request, $page_id, $frame_id, $parent_id) 
     {
@@ -281,11 +299,12 @@ class PhotoalbumsPlugin extends UserPluginBase
     }
 
     /**
-     * フォルダ作成処理
+     * アルバム作成処理
      *
      * @param \Illuminate\Http\Request $request リクエスト
      * @param int $page_id ページID
      * @param int $frame_id フレームID
+     * @return \Illuminate\Support\Collection リダイレクト先のパス
      */
     public function makeFolder($request, $page_id, $frame_id)
     {
@@ -311,11 +330,13 @@ class PhotoalbumsPlugin extends UserPluginBase
     }
 
     /**
-     *  フォルダ変更処理
+     *  アルバム変更処理
      *
      * @param \Illuminate\Http\Request $request リクエスト
      * @param int $page_id ページID
      * @param int $frame_id フレームID
+     * @param int $photoalbum_content_id 対象のアルバムID
+     * @return \Illuminate\Support\Collection リダイレクト先のパス
      */
     public function editFolder($request, $page_id, $frame_id, $photoalbum_content_id)
     {
@@ -332,28 +353,23 @@ class PhotoalbumsPlugin extends UserPluginBase
     }
 
     /**
-     * ファイルアップロード処理
+     * 画像ファイルアップロード処理
      *
      * @param \Illuminate\Http\Request $request リクエスト
      * @param int $page_id ページID
      * @param int $frame_id フレームID
+     * @return \Illuminate\Support\Collection リダイレクト先のパス
      */
     public function upload($request, $page_id, $frame_id)
     {
         $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
-        $validator = $this->getUploadValidator($request, $photoalbum);
+        $validator = $this->getUploadValidator($request, $photoalbum); // バリデータ
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
 
         $parent = $this->fetchPhotoalbumContent($request->parent_id);
-        $upload_file = $request->file('upload_file')[$frame_id];
-        // if ($this->shouldOverwriteFile($parent, $upload_file->getClientOriginalName())) {
-        //     $this->overwriteFile($upload_file, $page_id, $parent);
-        // } else {
-        //     $this->writeFile($request, $upload_file, $page_id, $frame_id, $parent);
-        // }
-        $this->writeFile($request, $upload_file, $page_id, $frame_id, $parent);
+        $this->writeFile($request, $page_id, $frame_id, $parent);
 
         // 登録後はリダイレクトして初期表示。
         return new Collection(['redirect_path' => url('/') . "/plugin/photoalbums/changeDirectory/" . $page_id . "/" . $frame_id . "/" . $parent->id . "/#frame-" . $frame_id ]);
@@ -365,18 +381,17 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param \Illuminate\Http\Request $request リクエスト
      * @param int $page_id ページID
      * @param int $frame_id フレームID
+     * @return \Illuminate\Support\Collection リダイレクト先のパス
      */
     public function uploadVideo($request, $page_id, $frame_id)
     {
         $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
-        $validator = $this->getVideoUploadValidator($request, $photoalbum);
+        $validator = $this->getVideoUploadValidator($request, $photoalbum); // バリデータ
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
 
         $parent = $this->fetchPhotoalbumContent($request->parent_id);
-        //$upload_file = $request->file('upload_video')[$frame_id];
-        //$this->writeVideo($request, $upload_file, $page_id, $frame_id, $parent);
         $this->writeVideo($request, $page_id, $frame_id, $parent);
 
         // 登録後はリダイレクトして初期表示。
@@ -384,29 +399,18 @@ class PhotoalbumsPlugin extends UserPluginBase
     }
 
     /**
-     * ファイルを上書きすべきか
-     *
-     * @param \App\Models\User\Photoalbums\PhotoalbumContent $parent 親要素
-     * @param string $file_name アップロードするファイル名
-     * @return bool
-     */
-    private function shouldOverwriteFile($parent, $file_name)
-    {
-        return PhotoalbumContent::where('parent_id', $parent->id)
-            ->where('name', $file_name)
-            ->where('is_folder', PhotoalbumContent::is_folder_off)
-            ->exists();
-    }
-
-    /**
      * ファイル新規保存処理
      *
-     * @param \Illuminate\Http\UploadedFile $file file
+     * @param \Illuminate\Http\Request $request リクエスト
      * @param int $page_id ページID
      * @param int $frame_id フレームID
+     * @param \App\Models\User\Photoalbums\PhotoalbumContent $parent アルバムレコード
      */
-    private function writeFile($request, $file, $page_id, $frame_id, $parent)
+    private function writeFile($request, $page_id, $frame_id, $parent)
     {
+        // 画像ファイル
+        $file = $request->file('upload_file')[$frame_id];
+
         // uploads テーブルに情報追加、ファイルのid を取得する
         $upload = Uploads::create([
             'client_original_name' => $file->getClientOriginalName(),
@@ -446,6 +450,7 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param \Illuminate\Http\UploadedFile $file file
      * @param int $page_id ページID
      * @param int $frame_id フレームID
+     * @param \App\Models\User\Photoalbums\PhotoalbumContent $parent アルバムレコード
      */
     private function writeVideo($request, $page_id, $frame_id, $parent)
     {
@@ -506,13 +511,13 @@ class PhotoalbumsPlugin extends UserPluginBase
      * ファイル上書き保存処理
      *
      * @param \Illuminate\Http\UploadedFile $file file
+     * @param \App\Models\User\Photoalbums\PhotoalbumContent $photoalbum_content 更新対象レコード
      * @param int $page_id ページID
-     * @param int $frame_id フレームID
+     * @param string $target_column 画像、動画は'upload_id'、ポスター画像の場合は'poster_upload_id'がくる。
      */
     private function overwriteFile($file, $photoalbum_content, $page_id, $target_column = 'upload_id')
     {
-        // uploads テーブルに情報追加、ファイルのid を取得する
-/*
+        // uploads テーブルの上書き更新
         Uploads::find($photoalbum_content->$target_column)->update([
             'client_original_name' => $file->getClientOriginalName(),
             'mimetype'             => $file->getClientMimeType(),
@@ -523,24 +528,17 @@ class PhotoalbumsPlugin extends UserPluginBase
             'temporary_flag'       => 0,
             'updated_id'           => empty(Auth::user()) ? null : Auth::user()->id,
         ]);
-*/
-        $upload = Uploads::updateOrCreate(
-            ['id' => $photoalbum_content->$target_column],
-            ['client_original_name' => $file->getClientOriginalName(),
-             'mimetype'             => $file->getClientMimeType(),
-             'extension'            => $file->getClientOriginalExtension(),
-             'size'                 => $file->getSize(),
-             'plugin_name'          => 'photoalbums',
-             'page_id'              => $page_id,
-             'temporary_flag'       => 0,
-             'updated_id'           => empty(Auth::user()) ? null : Auth::user()->id]
-        );
-
-        // ファイル保存
-        $file->storeAs($this->getDirectory($photoalbum_content->$target_column), $this->getContentsFileName($upload));
 
         // 画面表示される更新日を更新する
         $photoalbum_content->touch();
+
+        // ファイル保存
+        if ($target_column == 'upload_id') {
+            $upload = $photoalbum_content->upload;
+        } else {
+            $upload = $photoalbum_content->poster_upload;
+        }
+        $file->storeAs($this->getDirectory($photoalbum_content->$target_column), $this->getContentsFileName($upload));
 
         return $upload;
     }
@@ -555,6 +553,7 @@ class PhotoalbumsPlugin extends UserPluginBase
     private function updateCover($request, $frame_id, $photoalbum_content)
     {
         // アルバム表紙がチェックされていた場合、同じアルバム内の他の写真からは、アルバム表紙のチェックを外す。
+        // ここで、アルバム表紙のチェックを外したレーコードの更新日は変更されたくないため、モデル側で更新情報の自動更新をOFF にしている。
         if ($request->has('is_cover') && $request->is_cover[$frame_id] == PhotoalbumContent::is_cover_on) {
             PhotoalbumContent::where('parent_id', $photoalbum_content->parent_id)->where('id', '<>', $photoalbum_content->id)->update(['is_cover' => PhotoalbumContent::is_cover_off]);
         }
@@ -595,14 +594,23 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param \Illuminate\Http\Request $request リクエスト
      * @param int $page_id ページID
      * @param int $frame_id フレームID
+     * @param int $photoalbum_content_id 対象レコードID
+     * @return \Illuminate\Support\Collection リダイレクト先のパス
      */
     public function editContents($request, $page_id, $frame_id, $photoalbum_content_id)
     {
         // 対象のデータを取得して編集する。
         $photoalbum_content = PhotoalbumContent::find($photoalbum_content_id);
+        $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
 
         // ファイルの入れ替えがあるか。
         if ($request->hasFile('upload_file.'.$frame_id)) {
+            // ファイルのエラーチェック
+            $validator = $this->getUploadValidator($request, $photoalbum);
+            if ($validator->fails()) {
+                return back()->withErrors($validator)->withInput();
+            }
+
             // アップロードされたファイルの取得
             $file = $request->file('upload_file')[$frame_id];
 
@@ -639,14 +647,24 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param \Illuminate\Http\Request $request リクエスト
      * @param int $page_id ページID
      * @param int $frame_id フレームID
+     * @param int $photoalbum_content_id 対象レコードID
+     * @return \Illuminate\Support\Collection リダイレクト先のパス
      */
     public function editVideo($request, $page_id, $frame_id, $photoalbum_content_id)
     {
         // 対象のデータを取得して編集する。
         $photoalbum_content = PhotoalbumContent::find($photoalbum_content_id);
+        $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
+
+        // ファイルのエラーチェック
+        $validator = $this->getVideoUploadValidator($request, $photoalbum, false);
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
 
         // 動画ファイルの入れ替えがあるか。
         if ($request->hasFile('upload_video.'.$frame_id)) {
+
             // アップロードされたファイルの取得
             $video = $request->file('upload_video')[$frame_id];
 
@@ -692,10 +710,11 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param \Illuminate\Http\Request $request リクエスト
      * @param int $page_id ページID
      * @param int $frame_id フレームID
+     * @return \Illuminate\Support\Collection リダイレクト先のパス
      */
     public function deleteContents($request, $page_id, $frame_id)
     {
-        $validator = $this->getContentsControlValidator($request);
+        $validator = $this->getContentsControlValidator($request); // 選択チェック
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
@@ -722,12 +741,25 @@ class PhotoalbumsPlugin extends UserPluginBase
     private function deletePhotoalbumContents($photoalbum_content_id, $photoalbum_contents)
     {
         // アップロードテーブル削除、実ファイルの削除
+/*
         foreach ($photoalbum_contents->whereNotNull('upload_id') as $content) {
             Storage::delete($this->getContentsFilePath($content->upload));
             Uploads::destroy($content->upload->id);
+        }]
+*/
+        // アップロードテーブル削除、実ファイルの削除（画像・動画は'upload_id'、ポスター画像は'poster_upload_id'）
+        foreach ($photoalbum_contents as $content) {
+            if (!empty($content->upload_id)) {
+                Storage::delete($this->getContentsFilePath($content->upload));
+                Uploads::destroy($content->upload->id);
+            }
+            if (!empty($content->poster_upload_id)) {
+                Storage::delete($this->getContentsFilePath($content->poster_upload));
+                Uploads::destroy($content->poster_upload->id);
+            }
         }
 
-        // フォトアルバムコンテンツの削除（再帰）
+        // フォトアルバムコンテンツの削除
         PhotoalbumContent::find($photoalbum_content_id)->delete();
     }
 
@@ -870,6 +902,7 @@ class PhotoalbumsPlugin extends UserPluginBase
     /**
      * フォトアルバムに格納されている実ファイルのパスを取得する
      *
+     * @param \App\Models\Common\Uploads $upload アップロード
      * @return string ファイルのフルパス
      */
     private function getContentsFilePath($upload)
@@ -1057,7 +1090,7 @@ class PhotoalbumsPlugin extends UserPluginBase
     }
 
     /**
-     * ファイルアップロードのバリデーターを取得する。
+     * 画像ファイルアップロードのバリデーターを取得する。
      *
      * @param \Illuminate\Http\Request $request リクエスト
      * @param  App\Models\User\Photoalbums\Photoalbum フォトアルバム
@@ -1065,15 +1098,18 @@ class PhotoalbumsPlugin extends UserPluginBase
      */
     private function getUploadValidator($request, $photoalbum)
     {
-        // ファイルチェック
+        // ファイルの存在チェック
         $rules['upload_file.*'] = [
             'required',
         ];
+
+        // ファイルサイズと形式チェック
         if ($photoalbum->image_upload_max_size !== UploadMaxSize::infinity) {
             $rules['upload_file.*'][] = 'max:' . $photoalbum->image_upload_max_size;
+            $rules['upload_file.*'][] = 'mimes:jpg,jpe,jpeg,png,gif';
         }
 
-        // 項目のエラーチェック
+        // 項目名設定
         $validator = Validator::make($request->all(), $rules);
         $validator->setAttributeNames([
             'upload_file.*' => 'ファイル',
@@ -1089,19 +1125,33 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param  App\Models\User\Photoalbums\Photoalbum フォトアルバム
      * @return \Illuminate\Contracts\Validation\Validator バリデーター
      */
-    private function getVideoUploadValidator($request, $photoalbum)
+    private function getVideoUploadValidator($request, $photoalbum, $video_require = true)
     {
-        // ファイルチェック
-        $rules['upload_video.*'] = [
-            'required',
-        ];
-        if ($photoalbum->video_upload_max_size !== UploadMaxSize::infinity) {
-            $rules['upload_video.*'][] = 'max:' . $photoalbum->video_upload_max_size;
-            $rules['upload_poster.*'][] = 'max:' . $photoalbum->image_upload_max_size;
+        // ファイルの存在チェック
+        $rules['upload_video.*'] = [];
+        if ($video_require) {
+            $rules['upload_video.*'][] = ['required'];
+        } else {
+            $rules['upload_video.*'][] = ['nullable'];
         }
 
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), $rules);
+        // ファイルサイズチェック(ポスターは画像サイズでチェック)
+        if ($photoalbum->video_upload_max_size !== UploadMaxSize::infinity) {
+            $rules['upload_video.*'][] = 'max:' . $photoalbum->video_upload_max_size;
+            $rules['upload_video.*'][] = 'mimetypes:video/mp4';
+            $rules['upload_poster.*'][] = 'nullable';
+            $rules['upload_poster.*'][] = 'max:' . $photoalbum->image_upload_max_size;
+            $rules['upload_poster.*'][] = 'mimetypes:image/jpeg,image/png,image/gif';
+        }
+
+        // オリジナルメッセージ（image/jpeg, image/png, image/gifのうちいずれかの形式のファイルを指定してください。では、わかりにくいので。）
+        $error_message = [
+            'upload_video.*.mimetypes' => '動画ファイルには、mp4形式のファイルを指定してください。',
+            'upload_poster.*.mimetypes' => 'ポスター画像には、jpeg, png, gif のうちいずれかの形式のファイルを指定してください。',
+        ];
+
+        // 項目名設定
+        $validator = Validator::make($request->all(), $rules, $error_message);
         $validator->setAttributeNames([
             'upload_video.*' => '動画ファイル',
             'upload_poster.*' => 'ポスター画像',
@@ -1281,7 +1331,7 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param int $frame_id フレームID
      * @param array $frame_config_names フレーム設定のname配列
      */
-    protected function saveFrameConfigs(\Illuminate\Http\Request $request, int $frame_id, array $frame_config_names)
+    private function saveFrameConfigs(\Illuminate\Http\Request $request, int $frame_id, array $frame_config_names)
     {
         foreach ($frame_config_names as $key => $value) {
 

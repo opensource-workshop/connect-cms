@@ -342,7 +342,7 @@
             <a href="{{url('/')}}/plugin/photoalbums/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}/#frame-{{$frame->id}}" class="text-center">
                 {{-- カバー画像が指定されていれば使用し、指定されていなければ、グレーのカバーを使用 --}}
                 @if ($covers->where('parent_id', $photoalbum_content->id)->first())
-                    <img src="/file/{{$covers->where('parent_id', $photoalbum_content->id)->first()->upload_id}}?size=small"
+                    <img src="/file/{{$covers->where('parent_id', $photoalbum_content->id)->first()->getCoverFileId()}}?size=small"
                          id="cover_{{$loop->iteration}}"
                          style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
                          class="img-fluid"

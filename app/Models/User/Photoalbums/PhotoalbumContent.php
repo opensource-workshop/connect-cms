@@ -39,6 +39,17 @@ class PhotoalbumContent extends Model
         return $this->hasOne(Uploads::class, 'id', 'upload_id')->withDefault();
     }
 
+    /**
+     * フォトアルバムコンテントに紐づくポスターアップロードを取得
+     */
+    public function poster_upload()
+    {
+        // uploadsテーブルをこのレコードから見て 1:1 で紐づけ
+        // キーは指定しておく。Uploads の id にこのレコードの upload_id を紐づける。
+        // withDefault() を指定しておくことで、Uploads がないときに空のオブジェクトが返ってくるので、null po 防止。
+        return $this->hasOne(Uploads::class, 'id', 'poster_upload_id')->withDefault();
+    }
+
     public function isImage($mimetype)
     {
         return Uploads::isImage($mimetype);
@@ -113,6 +124,21 @@ class PhotoalbumContent extends Model
             return "min-width: 800px; min-height: 966px;";
         } else {
             return "min-width: 800px; min-height: " . $height . "px;";
+        }
+    }
+
+    /**
+     * カバー写真のIDを返す。
+     * 画像レコードなら画像のID、動画レコードなら、ポスター画像のID
+     *
+     * @return int アップロードID
+     */
+    public function getCoverFileId()
+    {
+        if (Uploads::isImage($this->mimetype)) {
+            return $this->upload_id;
+        } else {
+            return $this->poster_upload_id;
         }
     }
 }
