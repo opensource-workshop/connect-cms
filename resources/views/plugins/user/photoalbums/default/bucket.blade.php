@@ -67,7 +67,7 @@
             <div class="{{$frame->getSettingInputClass()}}">
                 <select class="form-control col-md-6 @if ($errors && $errors->has('image_upload_max_px')) border-danger @endif" name="image_upload_max_px" id="image_upload_max_px">
                     @foreach (ResizedImageSize::getMembers() as $key=>$value)
-                    <option value="{{$key}}" @if(old("image_upload_max_px", $photoalbum->image_upload_max_size) == $key) selected="selected" @endif>
+                    <option value="{{$key}}" @if(old("image_upload_max_px", $photoalbum->image_upload_max_px) == $key) selected="selected" @endif>
                         {{ $value }}
                     </option>
                     @endforeach

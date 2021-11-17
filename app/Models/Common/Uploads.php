@@ -2,7 +2,9 @@
 
 namespace App\Models\Common;
 
+use App\Models\Core\Configs;
 use Illuminate\Database\Eloquent\Model;
+use Intervention\Image\Facades\Image;
 
 class Uploads extends Model
 {
@@ -131,5 +133,41 @@ class Uploads extends Model
             return true;
         }
         return false;
+    }
+
+    /**
+     *  画像ファイルの縮小
+     *
+     *  @param \Illuminate\Http\UploadedFile $file アップロードファイル
+     *  @param int $max_size 許容する最大サイズ（これより大きい幅、高さがあれば縮小する）
+     *  @return \Intervention\Image\Image 画像データ
+     */
+    public static function shrinkImage($file, $max_size)
+    {
+        // GDのリサイズでメモリを多く使うため、memory_limitセット
+        $configs = Configs::getSharedConfigs();
+        $memory_limit_for_image_resize = Configs::getConfigsValue($configs, 'memory_limit_for_image_resize', '256M');
+        ini_set('memory_limit', $memory_limit_for_image_resize);
+
+        // 画像オブジェクトの生成
+        $image = Image::make($file);
+
+        // 画像の回転対応: orientate()
+        $image = $image->orientate();
+
+        // サイズを確認して、縮小の必要がなければそのまま返す。
+        if ($image->width() <= $max_size && $image->height() <= $max_size) {
+            return $image;
+        }
+
+        // 縮小
+        return $image->resize(
+            $max_size,
+            $max_size,
+            function ($constraint) {
+                $constraint->aspectRatio();
+                $constraint->upsize();
+            }
+        );
     }
 }

@@ -21,6 +21,8 @@ use App\Enums\UploadMaxSize;
 use App\Enums\PhotoalbumFrameConfig;
 use App\Enums\PhotoalbumSort;
 
+use App\Traits\ConnectCommonTrait;
+
 use Intervention\Image\Facades\Image;
 
 use App\Plugins\User\UserPluginBase;
@@ -369,7 +371,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         }
 
         $parent = $this->fetchPhotoalbumContent($request->parent_id);
-        $this->writeFile($request, $page_id, $frame_id, $parent);
+        $this->writeFile($request, $page_id, $frame_id, $photoalbum, $parent);
 
         // 登録後はリダイレクトして初期表示。
         return new Collection(['redirect_path' => url('/') . "/plugin/photoalbums/changeDirectory/" . $page_id . "/" . $frame_id . "/" . $parent->id . "/#frame-" . $frame_id ]);
@@ -399,17 +401,31 @@ class PhotoalbumsPlugin extends UserPluginBase
     }
 
     /**
+     * 対象ディレクトリの取得、なければ作成も。
+     */
+    private function makeDirectory($file_id)
+    {
+        $directory = $this->getDirectory($file_id);
+        Storage::makeDirectory($directory);
+        return $directory;
+    }
+
+    /**
      * ファイル新規保存処理
      *
      * @param \Illuminate\Http\Request $request リクエスト
      * @param int $page_id ページID
      * @param int $frame_id フレームID
+     * @param \App\Models\User\Photoalbums\Photoalbum $photoalbum バケツレコード
      * @param \App\Models\User\Photoalbums\PhotoalbumContent $parent アルバムレコード
      */
-    private function writeFile($request, $page_id, $frame_id, $parent)
+    private function writeFile($request, $page_id, $frame_id, $photoalbum, $parent)
     {
         // 画像ファイル
         $file = $request->file('upload_file')[$frame_id];
+
+        // 必要なら縮小して、\Intervention\Image\Image オブジェクトを受け取る。
+        $image = Uploads::shrinkImage($file, $photoalbum->image_upload_max_px);
 
         // uploads テーブルに情報追加、ファイルのid を取得する
         $upload = Uploads::create([
@@ -424,19 +440,23 @@ class PhotoalbumsPlugin extends UserPluginBase
         ]);
 
         // ファイル保存
-        $file->storeAs($this->getDirectory($upload->id), $this->getContentsFileName($upload));
+        $directory = $this->makeDirectory($upload->id);
+        $image->save(storage_path('app/') . $directory . '/' . $upload->id . '.' . $file->getClientOriginalExtension());
 
-        // 幅、高さを取得するためにImage オブジェクトを生成しておく。
-        if (Uploads::isImage($upload->mimetype)) {
-            $img = Image::make($file->path());
-        }
+//        // ファイル保存
+//        $file->storeAs($this->getDirectory($upload->id), $this->getContentsFileName($upload));
+
+//        // 幅、高さを取得するためにImage オブジェクトを生成しておく。
+//        if (Uploads::isImage($upload->mimetype)) {
+//            $img = Image::make($file->path());
+//        }
 
         $parent->children()->create([
             'photoalbum_id' => $parent->photoalbum_id,
             'upload_id' => $upload->id,
             'name' => empty($request->title[$frame_id]) ? $file->getClientOriginalName() : $request->title[$frame_id],
-            'width' => isset($img) ? $img->width() : 0,
-            'height' => isset($img) ? $img->height() : 0,
+            'width' => $image->width(),
+            'height' => $image->height(),
             'description' => $request->description[$frame_id],
             'is_folder' => PhotoalbumContent::is_folder_off,
             'is_cover' => ($request->has('is_cover') && $request->is_cover[$frame_id]) ? PhotoalbumContent::is_cover_on : PhotoalbumContent::is_cover_off,
@@ -1207,6 +1227,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         $photoalbum = $this->getPluginBucket($bucket->id);
         $photoalbum->name = $request->name;
         $photoalbum->image_upload_max_size = $request->image_upload_max_size;
+        $photoalbum->image_upload_max_px = $request->image_upload_max_px;
         $photoalbum->video_upload_max_size = $request->video_upload_max_size;
         $photoalbum->save();
 

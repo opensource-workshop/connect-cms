@@ -43,4 +43,15 @@ final class ResizedImageSize extends EnumsBase
     {
         return self::asis;
     }
+
+    /**
+     * 画像アップロード時の変換メッセージ
+     */
+    public static function getImageUploadResizeMessage($size)
+    {
+        if ($size == self::asis) {
+            return '原寸(変換しない)';
+        }
+        return self::enum[$size];
+    }
 }
