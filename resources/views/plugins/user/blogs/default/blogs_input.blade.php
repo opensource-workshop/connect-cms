@@ -32,6 +32,14 @@ use App\Models\User\Blogs\BlogsPosts;
         @endif
         form_blogs_posts{{$frame_id}}.submit();
     }
+
+    @if ($blogs_posts->id)
+        function copy_action() {
+            form_blogs_posts{{$frame_id}}.action = "{{url('/')}}/redirect/plugin/blogs/copy/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}#frame-{{$frame->id}}";
+            // form_blogs_posts{{$frame_id}}.redirect_path = "{{url('/')}}/plugin/blogs/create/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}";
+            form_blogs_posts{{$frame_id}}.submit();
+        }
+    @endif
 </script>
 
 {{-- 投稿用フォーム --}}
@@ -44,6 +52,17 @@ use App\Models\User\Blogs\BlogsPosts;
 @endif
     {{ csrf_field() }}
     <input type="hidden" name="blogs_id" value="{{$blog_frame->blogs_id}}">
+
+    @if ($blogs_posts->id)
+        <div class="form-group">
+            <label class="control-label">コピーして登録画面へ</label>
+            <div>
+                <button type="button" class="btn btn-outline-primary form-horizontal" onclick="copy_action()">
+                    <i class="fas fa-copy "></i> コピー
+                </button>
+            </div>
+        </div>
+    @endif
 
     <div class="form-group">
         <label class="control-label">タイトル <span class="badge badge-danger">必須</span></label>

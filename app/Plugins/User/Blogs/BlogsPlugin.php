@@ -55,7 +55,7 @@ class BlogsPlugin extends UserPluginBase
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
         $functions['get']  = ['settingBlogFrame', 'saveLikeJson'];
-        $functions['post'] = ['saveBlogFrame'];
+        $functions['post'] = ['saveBlogFrame', 'copy'];
         return $functions;
     }
 
@@ -71,6 +71,7 @@ class BlogsPlugin extends UserPluginBase
         $role_check_table = [];
         $role_check_table["settingBlogFrame"]        = ['frames.edit'];
         $role_check_table["saveBlogFrame"]           = ['frames.edit'];
+        $role_check_table["copy"]                    = ['posts.create', 'posts.update'];
 
         return $role_check_table;
     }
@@ -968,6 +969,18 @@ WHERE status = 0
 
         // 登録後は表示用の初期処理を呼ぶ。
         // return $this->index($request, $page_id, $frame_id);
+    }
+
+    /**
+     * コピーして登録画面へ
+     */
+    public function copy($request, $page_id = null, $frame_id = null, $id = null)
+    {
+        // セッション初期化などのLaravel 処理。oldを保存。
+        $request->flash();
+
+        // 登録画面にリダイレクト
+        return collect(['redirect_path' => url('/') . "/plugin/blogs/create/{$page_id}/{$frame_id}#frame-{$frame_id}"]);
     }
 
     /**
