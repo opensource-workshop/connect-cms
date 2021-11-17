@@ -38,6 +38,13 @@
             <a href="{{url('/')}}/manage/group" class="list-group-item">グループ管理</a>
         @endif
     @endif
+    @if (Auth::user()->can('admin_user'))
+        @if (isset($plugin_name) && $plugin_name == 'reservation')
+            <a href="{{url('/')}}/manage/reservation" class="list-group-item active">施設管理</a>
+        @else
+            <a href="{{url('/')}}/manage/reservation" class="list-group-item">施設管理</a>
+        @endif
+    @endif
     @if (Auth::user()->can('admin_site'))
         @if (isset($plugin_name) && $plugin_name == 'security')
             <a href="{{url('/')}}/manage/security" class="list-group-item active">セキュリティ管理</a>
