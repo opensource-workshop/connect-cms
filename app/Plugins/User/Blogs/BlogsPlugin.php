@@ -54,7 +54,7 @@ class BlogsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['settingBlogFrame', 'saveLikeJson'];
+        $functions['get']  = ['settingBlogFrame', 'saveLikeJson', 'copy'];
         $functions['post'] = ['saveBlogFrame'];
         return $functions;
     }
@@ -71,6 +71,7 @@ class BlogsPlugin extends UserPluginBase
         $role_check_table = [];
         $role_check_table["settingBlogFrame"]        = ['frames.edit'];
         $role_check_table["saveBlogFrame"]           = ['frames.edit'];
+        $role_check_table["copy"]                    = ['posts.create', 'posts.update'];
 
         return $role_check_table;
     }
@@ -93,7 +94,7 @@ class BlogsPlugin extends UserPluginBase
     {
         if (is_null($action)) {
             // プラグイン内からの呼び出しを想定。処理を通す。
-        } elseif (in_array($action, ['edit', 'save', 'temporarysave', 'delete'])) {
+        } elseif (in_array($action, ['edit', 'save', 'temporarysave', 'delete', 'copy'])) {
             // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
         } else {
             // それ以外のアクションは null で返す。
@@ -737,7 +738,7 @@ WHERE status = 0
     /**
      * 記事編集画面
      */
-    public function edit($request, $page_id, $frame_id, $blogs_posts_id = null)
+    public function edit($request, $page_id, $frame_id, $blogs_posts_id = null, $is_copy = false)
     {
         // セッション初期化などのLaravel 処理。
         // $request->flash();
@@ -749,6 +750,12 @@ WHERE status = 0
         $blogs_post = $this->getPost($blogs_posts_id);
         if (empty($blogs_post->id)) {
             return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
+        }
+
+        // 記事コピーの場合は、id消して新規登録画面へ & 投稿日時を今に変更
+        if ($is_copy) {
+            $blogs_post->id = null;
+            $blogs_post->posted_at = date('Y-m-d H:i:00');
         }
 
         // カテゴリ
@@ -968,6 +975,15 @@ WHERE status = 0
 
         // 登録後は表示用の初期処理を呼ぶ。
         // return $this->index($request, $page_id, $frame_id);
+    }
+
+    /**
+     * コピーして登録画面へ
+     */
+    public function copy($request, $page_id = null, $frame_id = null, $id = null)
+    {
+        $is_copy = true;
+        return $this->edit($request, $page_id, $frame_id, $id, $is_copy);
     }
 
     /**
