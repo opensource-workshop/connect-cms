@@ -54,8 +54,8 @@ class BlogsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['settingBlogFrame', 'saveLikeJson'];
-        $functions['post'] = ['saveBlogFrame', 'copy'];
+        $functions['get']  = ['settingBlogFrame', 'saveLikeJson', 'copy'];
+        $functions['post'] = ['saveBlogFrame'];
         return $functions;
     }
 
@@ -738,7 +738,7 @@ WHERE status = 0
     /**
      * 記事編集画面
      */
-    public function edit($request, $page_id, $frame_id, $blogs_posts_id = null)
+    public function edit($request, $page_id, $frame_id, $blogs_posts_id = null, $is_copy = false)
     {
         // セッション初期化などのLaravel 処理。
         // $request->flash();
@@ -750,6 +750,12 @@ WHERE status = 0
         $blogs_post = $this->getPost($blogs_posts_id);
         if (empty($blogs_post->id)) {
             return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
+        }
+
+        // 記事コピーの場合は、id消して新規登録画面へ & 投稿日時を今に変更
+        if ($is_copy) {
+            $blogs_post->id = null;
+            $blogs_post->posted_at = date('Y-m-d H:i:00');
         }
 
         // カテゴリ
@@ -976,11 +982,8 @@ WHERE status = 0
      */
     public function copy($request, $page_id = null, $frame_id = null, $id = null)
     {
-        // セッション初期化などのLaravel 処理。oldを保存。
-        $request->flash();
-
-        // 登録画面にリダイレクト
-        return collect(['redirect_path' => url('/') . "/plugin/blogs/create/{$page_id}/{$frame_id}#frame-{$frame_id}"]);
+        $is_copy = true;
+        return $this->edit($request, $page_id, $frame_id, $id, $is_copy);
     }
 
     /**

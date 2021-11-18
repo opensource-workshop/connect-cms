@@ -196,9 +196,17 @@
                     @if ($post->status == 1)
                         <span class="badge badge-warning align-bottom">一時保存</span>
                     @endif
-                    <a href="{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
-                        <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
-                    </a>
+                    <div class="btn-group">
+                        <a href="{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" class="btn btn-success btn-sm">
+                            <i class="far fa-edit"></i> <span class="hidden-xs">編集</span>
+                        </a>
+                        <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span class="sr-only">ドロップダウンボタン</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <a href="{{url('/')}}/plugin/blogs/copy/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" class="dropdown-item"><i class="fas fa-copy "></i> コピー</a>
+                        </div>
+                    </div>
                 @endcan
                 </div>
             </footer>
