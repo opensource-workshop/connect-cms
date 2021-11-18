@@ -149,7 +149,7 @@ use App\Models\User\Blogs\BlogsPosts;
             <div class="col-9 col-xl-6">
             @endif
                 <div class="text-center">
-                    <a href="{{URL::to($page->permanent_link)}}" class="btn btn-secondary mr-2"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></a>
+                    <a href="{{URL::to($page->permanent_link)}}#frame-{{$frame_id}}" class="btn btn-secondary mr-2"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></a>
                     <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($blogs_posts->id))
