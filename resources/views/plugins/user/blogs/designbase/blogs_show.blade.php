@@ -90,9 +90,17 @@
             @if ($post->status == 1)
                 <span class="badge badge-warning align-bottom">一時保存</span>
             @endif
-            <a href="{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
-                <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
-            </a>
+            <div class="btn-group">
+                <a href="{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" class="btn btn-success btn-sm">
+                    <i class="far fa-edit"></i> <span class="hidden-xs">編集</span>
+                </a>
+                <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <span class="sr-only">ドロップダウンボタン</span>
+                </button>
+                <div class="dropdown-menu dropdown-menu-right">
+                    <a href="{{url('/')}}/plugin/blogs/copy/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" class="dropdown-item"><i class="fas fa-copy "></i> コピー</a>
+                </div>
+            </div>
         @endcan
         </div>
     </footer>
@@ -102,17 +110,17 @@
 <nav class="row" aria-label="{{$blog_frame->blog_name}}のページ移動">
     <div class="col-12 text-center mt-3">
         @if (isset($before_post))
-        <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$before_post->id}}#frame-{{$frame->id}}" class="mr-1">
-            <span class="btn btn-info"><i class="fas fa-chevron-left"></i> <span class="hidden-xs">{{__('messages.previous')}}</span></span>
-        </a>
+            <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$before_post->id}}#frame-{{$frame->id}}" class="btn btn-info">
+                <i class="fas fa-chevron-left"></i> <span class="hidden-xs">{{__('messages.previous')}}</span>
+            </a>
         @endif
-        <a href="{{url('/')}}{{$page->getLinkUrl()}}#frame-{{$frame->id}}">
-            <span class="btn btn-info"><i class="fas fa-list"></i> <span class="hidden-xs">{{__('messages.to_list')}}</span></span>
+        <a href="{{url('/')}}{{$page->getLinkUrl()}}#frame-{{$frame->id}}" class="btn btn-info">
+            <i class="fas fa-list"></i> <span class="hidden-xs">{{__('messages.to_list')}}</span>
         </a>
         @if (isset($after_post))
-        <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$after_post->id}}#frame-{{$frame->id}}" class="mr-1">
-            <span class="btn btn-info"><i class="fas fa-chevron-right"></i> <span class="hidden-xs">{{__('messages.next')}}</span></span>
-        </a>
+            <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$after_post->id}}#frame-{{$frame->id}}" class="btn btn-info">
+                <i class="fas fa-chevron-right"></i> <span class="hidden-xs">{{__('messages.next')}}</span>
+            </a>
         @endif
     </div>
 </nav>
