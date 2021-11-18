@@ -1461,7 +1461,7 @@ class OpacsPlugin extends UserPluginBase
 
         // 郵送リクエストしたユーザーに送付するメール本文
         $user_subject = '図書館で貸出処理が行われました。';
-        $user_content = "図書館で貸出処理が行われました。本が届くまでしばらくお待ちください。";
+        $user_content = "図書館で貸出処理が行われました。本が届くまでしばらくお待ちください。\n";
         $user_content .= 'ISBN：' . $opacs_books->isbn . "\n";
         $user_content .= 'タイトル：' . $opacs_books->title . "\n";
         $user_content .= '返却期限日：' . $request->return_scheduled . "\n";
