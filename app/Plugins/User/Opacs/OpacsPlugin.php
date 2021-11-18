@@ -1626,10 +1626,17 @@ class OpacsPlugin extends UserPluginBase
         $content .= 'タイトル：' . $opacs_books->title . "\n";
         $content .= '返却日：' . $books_lents->return_date . "\n";
 
+        // メール送信
+        $user_subject = '図書館で返却処理が終了しました。';
+        $user_content = "図書館で返却処理が終了しました。\n";
+        $user_content .= 'ISBN：' . $opacs_books->isbn . "\n";
+        $user_content .= 'タイトル：' . $opacs_books->title . "\n";
+        $user_content .= '返却日：' . $books_lents->return_date . "\n";
+
         $opacs = Opacs::where('id', $opacs_books->opacs_id)->first();
 
         self::sendMailOpac($opacs, $subject, $content);
-        self::sendMailOpacUser($opacs, $subject, $content, $add_email);
+        self::sendMailOpacUser($opacs, $user_subject, $user_content, $add_email);
 
         // MyOpac画面へ遷移
 //        return $this->index($request, $page_id, $frame_id, null, ['返却処理が完了しました。']);
