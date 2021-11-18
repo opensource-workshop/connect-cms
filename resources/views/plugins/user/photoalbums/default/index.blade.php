@@ -56,6 +56,12 @@
         $('#upload_poster{{$frame_id}}').on('change',function(){
             $(this).next('.custom-file-label').html($(this)[0].files[0].name);
         });
+
+        {{-- ポスター画像が選択されたら、アルバム表紙のチェックが可能にする --}}
+        $('#upload_poster{{$frame_id}}').change(function(){
+            $('#poster_is_cover{{$frame_id}}').prop('disabled', false);
+        });
+
         @endcan
 
         {{-- 一覧のチェックボックスによる削除、ダウンロードの制御 --}}
@@ -153,7 +159,7 @@
             <label class="{{$frame->getSettingLabelClass()}} pr-3 pb-0" for="upload_file">画像ファイル <label class="badge badge-danger">必須</label></label>
             <div class="custom-file {{$frame->getSettingInputClass()}}">
                 <input type="hidden" name="upload_file[{{$frame_id}}]" value="">
-                <input type="file" name="upload_file[{{$frame_id}}]" value="{{old("upload_file.$frame_id")}}" class="custom-file-input @if ($errors && $errors->has("upload_file.$frame_id")) border-danger @endif" id="upload_file{{$frame_id}}">
+                <input type="file" name="upload_file[{{$frame_id}}]" value="{{old("upload_file.$frame_id")}}" class="custom-file-input @if ($errors && $errors->has("upload_file.$frame_id")) border-danger @endif" id="upload_file{{$frame_id}}" multiple>
                 <label class="custom-file-label ml-md-2" for="upload_file" data-browse="参照">画像ファイル選択...</label>
             </div>
         </div>
@@ -283,6 +289,19 @@
                 @if ($errors && $errors->has("description.$frame_id")) 
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("description.*")}}</div>
                 @endif
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}} pt-0">アルバム表紙</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <div class="custom-control custom-checkbox">
+                    @if(old("is_cover.$frame_id"))
+                        <input type="checkbox" name="is_cover[{{$frame_id}}]" value="1" class="custom-control-input" id="poster_is_cover{{$frame_id}}" disabled checked=checked>
+                    @else
+                        <input type="checkbox" name="is_cover[{{$frame_id}}]" value="1" class="custom-control-input" id="poster_is_cover{{$frame_id}}" disabled>
+                    @endif
+                    <label class="custom-control-label" for="poster_is_cover{{$frame_id}}">チェックすると、ポスター画像がアルバムの表紙に使われます。</label>
+                </div>
             </div>
         </div>
         <div class="text-center">

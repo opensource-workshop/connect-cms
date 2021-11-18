@@ -522,7 +522,7 @@ class PhotoalbumsPlugin extends UserPluginBase
             'height' => null,
             'description' => $request->description[$frame_id],
             'is_folder' => PhotoalbumContent::is_folder_off,
-            'is_cover' => PhotoalbumContent::is_cover_off,
+            'is_cover' => ($request->has('is_cover') && $request->is_cover[$frame_id]) ? PhotoalbumContent::is_cover_on : PhotoalbumContent::is_cover_off,
             'mimetype' => $upload->mimetype,
         ]);
     }

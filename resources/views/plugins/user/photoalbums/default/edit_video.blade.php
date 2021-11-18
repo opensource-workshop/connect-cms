@@ -29,6 +29,11 @@
         $('.custom-file-input').on('change',function(){
             $(this).next('.custom-file-label').html($(this)[0].files[0].name);
         });
+
+        {{-- ポスター画像が選択されたら、アルバム表紙のチェックが可能にする --}}
+        $('#upload_poster{{$frame_id}}').change(function(){
+            $('#is_cover{{$frame_id}}').prop('disabled', false);
+        });
         @endcan
     });
 </script>
@@ -110,11 +115,11 @@
         <div class="col-md-10">
             <div class="custom-control custom-checkbox">
                 @if(old("is_cover.$frame_id", $photoalbum_content->is_cover))
-                    <input type="checkbox" name="is_cover[{{$frame_id}}]" value="1" class="custom-control-input" id="is_cover{{$frame_id}}" checked=checked>
+                    <input type="checkbox" name="is_cover[{{$frame_id}}]" value="1" class="custom-control-input" id="is_cover{{$frame_id}}" @if (!$photoalbum_content->poster_upload_id) disabled @endif checked=checked>
                 @else
-                    <input type="checkbox" name="is_cover[{{$frame_id}}]" value="1" class="custom-control-input" id="is_cover{{$frame_id}}">
+                    <input type="checkbox" name="is_cover[{{$frame_id}}]" value="1" class="custom-control-input" id="is_cover{{$frame_id}}" @if (!$photoalbum_content->poster_upload_id) disabled @endif>
                 @endif
-                <label class="custom-control-label" for="is_cover{{$frame_id}}">チェックすると、アルバムの表紙に使われます。</label>
+                <label class="custom-control-label" for="is_cover{{$frame_id}}">チェックすると、ポスター画像がアルバムの表紙に使われます。</label>
             </div>
         </div>
     </div>
