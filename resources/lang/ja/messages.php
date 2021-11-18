@@ -74,6 +74,9 @@ $messages = [
     'other' => 'その他',
     'within_weeks' => ':count 週間以内',
     'within_months' => ':count か月以内',
+    'unable_to_download_researcher_seeds' => '検索結果が多すぎるため、研究シーズをまとめてダウンロードできません。上限：:count 名',
+    'download' => 'ダウンロード',
+    'there_is_no_research_seeds_to_download' => 'ダウンロード可能な研究シーズがありません。',
 ];
 
 foreach ($messages as $key => $message) {

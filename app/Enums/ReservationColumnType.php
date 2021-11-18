@@ -14,6 +14,10 @@ final class ReservationColumnType extends EnumsBase
     // const checkbox = 'checkbox';
     // const select = 'select';
     // const datetime = 'datetime';
+    const created = 'created';
+    const updated = 'updated';
+    const created_name = 'created_name';
+    const updated_name = 'updated_name';
 
     // key/valueの連想配列
     const enum = [
@@ -23,5 +27,9 @@ final class ReservationColumnType extends EnumsBase
         // self::checkbox => '複数選択型',
         // self::select => 'リストボックス型',
         // self::datetime => '日付＆時間型',
+        self::created => '登録日型（自動更新）',
+        self::updated => '更新日型（自動更新）',
+        self::created_name => '登録者型（自動更新）',
+        self::updated_name => '更新者型（自動更新）',
     ];
 }

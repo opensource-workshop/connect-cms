@@ -250,9 +250,8 @@ class ReceivesPlugin extends UserPluginBase
         // id が渡ってくればid が対象
         if (!empty($id)) {
             $receive = Receive::where('id', $id)->first();
-        }
-        // Frame のbucket_id があれば、bucket_id からデータ収集設定取得、なければ、新規作成か選択へ誘導
-        elseif (!empty($receive_frame->bucket_id) && $create_flag == false) {
+        } elseif (!empty($receive_frame->bucket_id) && $create_flag == false) {
+            // Frame のbucket_id があれば、bucket_id からデータ収集設定取得、なければ、新規作成か選択へ誘導
             $receive = Receive::where('bucket_id', $receive_frame->bucket_id)->first();
         }
         // 表示テンプレートを呼び出す。
@@ -327,9 +326,8 @@ class ReceivesPlugin extends UserPluginBase
             }
 
             $message = 'データ収集設定を追加しました。';
-        }
-        // receive_id があれば、データ収集設定を更新
-        else {
+        } else {
+            // receive_id があれば、データ収集設定を更新
 
             // データ収集設定取得
             $receives = Receive::where('id', $request->receives_id)->first();

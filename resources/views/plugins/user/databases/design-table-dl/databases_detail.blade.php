@@ -46,7 +46,7 @@
     @endforeach
 </div>
 
-@can('posts.update', [[$inputs, $frame->plugin_name, $buckets]])
+@can('role_update_or_approval', [[$inputs, $frame->plugin_name, $buckets]])
 <div class="row mt-2">
     <div class="col-12 text-right mb-1">
         @if ($inputs->status == 2)
@@ -66,11 +66,11 @@
             @if ($inputs->status == 1)
                 <span class="badge badge-warning align-bottom">一時保存</span>
             @endif
-        @endcan
 
-        <button type="button" class="btn btn-success btn-sm ml-2" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}#frame-{{$frame_id}}'">
-            <i class="far fa-edit"></i> 編集
-        </button>
+            <button type="button" class="btn btn-success btn-sm ml-2" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}#frame-{{$frame_id}}'">
+                <i class="far fa-edit"></i> 編集
+            </button>
+        @endcan
     </div>
 </div>
 @endcan

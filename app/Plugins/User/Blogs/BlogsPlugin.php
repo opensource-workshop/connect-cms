@@ -3,7 +3,6 @@
 namespace App\Plugins\User\Blogs;
 
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -855,7 +854,7 @@ WHERE status = 0
 
         // 登録後はリダイレクトして表示用の初期処理を呼ぶ。
         // return $this->index($request, $page_id, $frame_id);
-        return new Collection(['redirect_path' => url($this->page->permanent_link)]);
+        return collect(['redirect_path' => url($this->page->permanent_link)]);
     }
 
     /**
@@ -868,7 +867,8 @@ WHERE status = 0
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            return ( $this->create($request, $page_id, $frame_id, $id, $validator->errors()) );
+            // return ( $this->create($request, $page_id, $frame_id, $id, $validator->errors()) );
+            return back()->withErrors($validator)->withInput();
         }
 
         // 新規オブジェクト生成
@@ -910,7 +910,8 @@ WHERE status = 0
         $this->saveTag($request, $blogs_post);
 
         // 登録後は表示用の初期処理を呼ぶ。
-        return $this->index($request, $page_id, $frame_id);
+        // return $this->index($request, $page_id, $frame_id);
+        return collect(['redirect_path' => url($this->page->permanent_link)]);
     }
 
     /**
@@ -936,7 +937,7 @@ WHERE status = 0
             BlogsPosts::where('contents_id', $post->contents_id)->delete();
         }
         // 削除後は表示用の初期処理を呼ぶ。
-        return $this->index($request, $page_id, $frame_id);
+        // return $this->index($request, $page_id, $frame_id);
     }
 
     /**
@@ -966,7 +967,7 @@ WHERE status = 0
         $this->copyTag($check_blogs_post, $blogs_post);
 
         // 登録後は表示用の初期処理を呼ぶ。
-        return $this->index($request, $page_id, $frame_id);
+        // return $this->index($request, $page_id, $frame_id);
     }
 
     /**
@@ -1134,7 +1135,7 @@ WHERE status = 0
         // 新規作成フラグを付けてブログ設定変更画面を呼ぶ.
         // $create_flag = false;
         // return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message);
-        return new Collection(['redirect_path' => url('/') . '/plugin/blogs/editBuckets/' . $page_id . '/' . $frame_id . '/' . $blogs->id . '#frame-' . $frame_id]);
+        return collect(['redirect_path' => url('/') . '/plugin/blogs/editBuckets/' . $page_id . '/' . $frame_id . '/' . $blogs->id . '#frame-' . $frame_id]);
     }
 
     /**

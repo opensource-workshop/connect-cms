@@ -36,26 +36,29 @@ if ($frame->isExpandNarrow()) {
     @endforeach
 </dl>
 
-@can('posts.update', [[$inputs, $frame->plugin_name, $buckets]])
+@can('role_update_or_approval', [[$inputs, $frame->plugin_name, $buckets]])
 <div class="row mt-2">
     <div class="col-12 text-right mb-1">
-        {{-- @if ($inputs->status == 2)   [TODO] 承認未実装
-            @can('role_update_or_approval',[[$inputs, $frame->plugin_name, $buckets]])
+        @if ($inputs->status == StatusType::approval_pending)
+            @can('role_update_or_approval', [[$inputs, $frame->plugin_name, $buckets]])
                 <span class="badge badge-warning align-bottom">承認待ち</span>
             @endcan
-            @can('posts.approval',[[$inputs, $frame->plugin_name, $buckets]])
-                <form action="{{url('/')}}/plugin/reservations/approval/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}#frame-{{$frame_id}}" method="post" name="form_approval" class="d-inline">
+            @can('posts.approval', [[$inputs, $frame->plugin_name, $buckets]])
+                <form action="{{url('/')}}/redirect/plugin/reservations/approvalBooking/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}#frame-{{$frame_id}}" method="post" name="form_approval" class="d-inline">
                     {{ csrf_field() }}
+                    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/reservations/showBooking/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}#frame-{{$frame_id}}">
                     <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
                         <i class="fas fa-check"></i> <span class="hidden-xs">承認</span>
                     </button>
                 </form>
             @endcan
-        @endif --}}
+        @endif
 
-        <a class="btn btn-success btn-sm ml-2" href="{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}#frame-{{$frame_id}}">
-            <i class="far fa-edit"></i> 編集
-        </a>
+        @can('posts.update', [[$inputs, $frame->plugin_name, $buckets]])
+            <a class="btn btn-success btn-sm" href="{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}#frame-{{$frame_id}}">
+                <i class="far fa-edit"></i> 編集
+            </a>
+        @endcan
     </div>
 </div>
 @endcan
