@@ -137,9 +137,32 @@ class UploadController extends ConnectController
             'gif',
         ];
 
+        // サムネイル指定の場合は、キャッシュを使ってファイルを返す。
+        if ($request->has('size')) {
+            $size = config('connect.THUMBNAIL_SIZE')['SMALL']; // SMALL を初期値で設定
+            if ($request->size == 'medium') {
+                $size = config('connect.THUMBNAIL_SIZE')['MEDIUM'];
+            } elseif ($request->size == 'large') {
+                $size = config('connect.THUMBNAIL_SIZE')['LARGE'];
+            }
+
+            $img = \Image::cache(function ($image) use ($fullpath, $size) {
+                return $image->make($fullpath)->resize(
+                    $size,
+                    $size,
+                    function ($constraint) {
+                        $constraint->aspectRatio();
+                        $constraint->upsize();
+                    }
+                );
+            }, config('connect.CACHE_MINUTS'), true); // 第3引数のtrue は戻り値にImage オブジェクトを返す意味。（false の場合は画像データ）
+            return $img->response();
+        }
+
         // if (isset($uploads['extension']) && strtolower($uploads['extension']) == 'pdf') {
         // if (strtolower($uploads->extension) == 'pdf') {
-        if (in_array(strtolower($uploads->extension), $inline_extensions)) {
+        // if (in_array(strtolower($uploads->extension), $inline_extensions)) {
+        if (in_array(strtolower($uploads->extension), $inline_extensions) && $request->response != 'download') {
             return response()
                     ->file(
                         // storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,

@@ -42,7 +42,7 @@
                             id="{{ "post_detail_${key}" }}"
                             name="post_detail"
                             class="custom-control-input"
-                            {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::post_detail, 0) == $key ? 'checked' : '' }}
+                            {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::posted_at, 0) == $key ? 'checked' : '' }}
                         >
                         <label class="custom-control-label" for="{{ "post_detail_${key}" }}">
                             {{ $value }}
