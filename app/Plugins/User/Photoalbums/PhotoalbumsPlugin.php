@@ -134,7 +134,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         $sort_file = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_file);
 
         // データ取得してからソート(ページネートに対応するためにSQLソートに変更予定)
-        $photoalbum_contents = $parent->children()->get()->sort(function ($first, $second) use($sort_folder, $sort_file) {
+        $photoalbum_contents = $parent->children()->get()->sort(function ($first, $second) use ($sort_folder, $sort_file) {
             // フォルダ>ファイル
             if ($first['is_folder'] == $second['is_folder']) {
                 // フォルダ同士 or ファイル同士を比較
@@ -243,7 +243,7 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param int $parent_id 移動先の階層を示すid
      * @return mixed $value テンプレートに渡す内容
      */
-    public function changeDirectory($request, $page_id, $frame_id, $parent_id) 
+    public function changeDirectory($request, $page_id, $frame_id, $parent_id)
     {
         return $this->index($request, $page_id, $frame_id, $parent_id);
     }
@@ -416,7 +416,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         }
 
         $parent = $this->fetchPhotoalbumContent($request->parent_id);
-        $this->writeVideo($request, $page_id, $frame_id, $parent);
+        $this->writeVideo($request, $page_id, $frame_id, $photoalbum, $parent);
 
         // 登録後はリダイレクトして初期表示。
         return new Collection(['redirect_path' => url('/') . "/plugin/photoalbums/changeDirectory/" . $page_id . "/" . $frame_id . "/" . $parent->id . "/#frame-" . $frame_id ]);
@@ -484,9 +484,10 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param \Illuminate\Http\UploadedFile $file file
      * @param int $page_id ページID
      * @param int $frame_id フレームID
+     * @param \App\Models\User\Photoalbums\Photoalbum $photoalbum バケツレコード
      * @param \App\Models\User\Photoalbums\PhotoalbumContent $parent アルバムレコード
      */
-    private function writeVideo($request, $page_id, $frame_id, $parent)
+    private function writeVideo($request, $page_id, $frame_id, $photoalbum, $parent)
     {
         // 動画ファイル
         $video = $request->file('upload_video')[$frame_id];
@@ -574,7 +575,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         if ($target_column == 'upload_id') {
             $upload = $photoalbum_content->upload;
         } else {
-            $upload = $photoalbum_content->poster_upload;
+            $upload = $photoalbum_content->posterUpload;
         }
         $file->storeAs($this->getDirectory($photoalbum_content->$target_column), $this->getContentsFileName($upload));
 
@@ -778,13 +779,6 @@ class PhotoalbumsPlugin extends UserPluginBase
      */
     private function deletePhotoalbumContents($photoalbum_content_id, $photoalbum_contents)
     {
-        // アップロードテーブル削除、実ファイルの削除
-/*
-        foreach ($photoalbum_contents->whereNotNull('upload_id') as $content) {
-            Storage::delete($this->getContentsFilePath($content->upload));
-            Uploads::destroy($content->upload->id);
-        }]
-*/
         // アップロードテーブル削除、実ファイルの削除（画像・動画は'upload_id'、ポスター画像は'poster_upload_id'）
         foreach ($photoalbum_contents as $content) {
             if (!empty($content->upload_id)) {
@@ -792,8 +786,8 @@ class PhotoalbumsPlugin extends UserPluginBase
                 Uploads::destroy($content->upload->id);
             }
             if (!empty($content->poster_upload_id)) {
-                Storage::delete($this->getContentsFilePath($content->poster_upload));
-                Uploads::destroy($content->poster_upload->id);
+                Storage::delete($this->getContentsFilePath($content->posterUpload));
+                Uploads::destroy($content->posterUpload->id);
             }
         }
 

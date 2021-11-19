@@ -146,7 +146,7 @@ class UploadController extends ConnectController
                 $size = config('connect.THUMBNAIL_SIZE')['LARGE'];
             }
 
-            $img = \Image::cache(function($image) use($fullpath, $size) {
+            $img = \Image::cache(function ($image) use ($fullpath, $size) {
                 return $image->make($fullpath)->resize(
                     $size,
                     $size,

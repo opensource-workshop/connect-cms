@@ -15,7 +15,7 @@ class PhotoalbumContent extends Model
     const is_folder_off = 0;
     const is_cover_on = 1;
     const is_cover_off = 0;
-    const UPDATED_AT = NULL; // 更新日を自動で設定しないための処置
+    const UPDATED_AT = null; // 更新日を自動で設定しないための処置
 
     use NodeTrait;
 
@@ -42,7 +42,7 @@ class PhotoalbumContent extends Model
     /**
      * フォトアルバムコンテントに紐づくポスターアップロードを取得
      */
-    public function poster_upload()
+    public function posterUpload()
     {
         // uploadsテーブルをこのレコードから見て 1:1 で紐づけ
         // キーは指定しておく。Uploads の id にこのレコードの upload_id を紐づける。
