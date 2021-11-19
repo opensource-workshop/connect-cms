@@ -20,6 +20,8 @@ final class PhotoalbumFrameConfig extends EnumsBase
     //const shooting_at = 'shooting_at';
     const sort_folder = 'sort_folder';
     const sort_file = 'sort_file';
+    const download = 'download';
+    const embed_code = 'embed_code';
 
     // key/valueの連想配列
     const enum = [
@@ -28,5 +30,7 @@ final class PhotoalbumFrameConfig extends EnumsBase
         //self::shooting_at => '撮影日',
         self::sort_folder => 'アルバム並び順',
         self::sort_file => '写真並び順',
+        self::download => 'ダウンロード',
+        self::embed_code => '動画埋め込みコード',
     ];
 }

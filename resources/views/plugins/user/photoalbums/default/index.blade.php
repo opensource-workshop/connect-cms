@@ -9,6 +9,19 @@
 
 @section("plugin_contents_$frame->id")
 
+@php
+    // ダウンロード処理が有効化の判断をして変数に保持。この後の画面判断で使う。
+    if ((Auth::user() &&
+         Auth::user()->can('posts.create', [[null, $frame->plugin_name, $buckets]])
+    ) || (
+        FrameConfig::getConfigValue($frame_configs, PhotoalbumFrameConfig::download)
+    )) {
+        $download_check = true;
+    } else {
+        $download_check = false;
+    }
+@endphp
+
 <script type="text/javascript">
     $(function () {
         {{-- ボタンでのフォームの折り畳み操作 --}}
@@ -61,10 +74,10 @@
         $('#upload_poster{{$frame_id}}').change(function(){
             $('#poster_is_cover{{$frame_id}}').prop('disabled', false);
         });
-
         @endcan
 
-        {{-- 一覧のチェックボックスによる削除、ダウンロードの制御 --}}
+        {{-- 一覧のチェックボックスによる削除、ダウンロードの制御(編集権限あり or フレームでダウンロードOK) --}}
+        @if ($download_check)
         $('#app_{{$frame_id}} input[type="checkbox"][name="photoalbum_content_id[]"]').on('change', function(){
 
             $('#selected-contents{{$frame_id}}').html('');
@@ -90,7 +103,14 @@
             $('#form-photoalbum-contents{{$frame_id}}').attr('action', '{{url('/')}}/download/plugin/photoalbums/download/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}');
             $('#form-photoalbum-contents{{$frame_id}}').submit();
         });
+        @endif
 
+        // 埋め込みコードの表示
+        $('#app_{{$frame_id}} .embed_code_check').on('click', function(){
+            $("#" + $(this).data('name')).slideToggle();
+            $("#" + $(this).data('name')).focus();
+            $("#" + $(this).data('name')).select();
+        });
     });
 
     {{-- 一覧のチェックボックスによる削除の処理 --}}
@@ -159,7 +179,7 @@
             <label class="{{$frame->getSettingLabelClass()}} pr-3 pb-0" for="upload_file">画像ファイル <label class="badge badge-danger">必須</label></label>
             <div class="custom-file {{$frame->getSettingInputClass()}}">
                 <input type="hidden" name="upload_file[{{$frame_id}}]" value="">
-                <input type="file" name="upload_file[{{$frame_id}}]" value="{{old("upload_file.$frame_id")}}" class="custom-file-input @if ($errors && $errors->has("upload_file.$frame_id")) border-danger @endif" id="upload_file{{$frame_id}}" multiple>
+                <input type="file" name="upload_file[{{$frame_id}}]" value="{{old("upload_file.$frame_id")}}" class="custom-file-input @if ($errors && $errors->has("upload_file.$frame_id")) border-danger @endif" id="upload_file{{$frame_id}}">
                 <label class="custom-file-label ml-md-2" for="upload_file" data-browse="参照">画像ファイル選択...</label>
             </div>
         </div>
@@ -326,6 +346,8 @@
 {{csrf_field()}}
 <input type="hidden" name="parent_id" value="{{$parent_id}}">
 @include('plugins.common.errors_inline', ['name' => 'photoalbum_content_id'])
+
+@if ($download_check)
 <div class="bg-light p-2 text-right">
     <span class="mr-2">チェックした項目を</span>
     @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
@@ -333,6 +355,7 @@
     @endcan
     <button class="btn btn-primary btn-sm btn-download" type="button" disabled><i class="fas fa-download"></i><span class="d-none d-sm-inline"> ダウンロード</span></button>
 </div>
+@endif
 
 <style>
 .modal-middle {        //モーダルウィンドウの縦表示位置を調整
@@ -377,14 +400,17 @@
         </div>
     </div>
     <div class="col-sm-8 mt-3">
-        <h5 class="card-title">{{$photoalbum_content->name}}</h5>
-        <p class="card-text">{!!nl2br(e($photoalbum_content->description))!!}</p>
-        <div class="d-flex justify-content-between align-items-center">
-
+        <div class="d-flex">
+            @if ($download_check)
             <div class="custom-control custom-checkbox">
                 <input type="checkbox" class="custom-control-input" id="customCheck_{{$photoalbum_content->id}}" name="photoalbum_content_id[]" value="{{$photoalbum_content->id}}" data-name="{{$photoalbum_content->displayName}}">
                 <label class="custom-control-label" for="customCheck_{{$photoalbum_content->id}}"></label>
             </div>
+            @endif
+            <h5 class="card-title">{{$photoalbum_content->name}}</h5>
+        </div>
+        <p class="card-text">{!!nl2br(e($photoalbum_content->description))!!}</p>
+        <div class="d-flex justify-content-between align-items-center">
             @can('posts.update', [[$photoalbum_content, $frame->plugin_name, $buckets]])
             <a href="{{url('/')}}/plugin/photoalbums/edit/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}#frame-{{$frame->id}}" class="btn btn-sm btn-success">
                 <i class="far fa-edit"></i> 編集
@@ -443,14 +469,28 @@
             ></video>
         @endif
             <div class="card-body">
-                <h5 class="card-title">{{$photoalbum_content->name}}</h5>
-                <p class="card-text">{{$photoalbum_content->getUpdateOrCreatedAt('Y年n月j日')}}</p>
-                <p class="card-text">{!!nl2br(e($photoalbum_content->description))!!}</p>
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="custom-control custom-checkbox">
+                <div class="d-flex">
+                    @if ($download_check)
+                    <div class="custom-control custom-checkbox d-inline">
                         <input type="checkbox" class="custom-control-input" id="customCheck_{{$photoalbum_content->id}}" name="photoalbum_content_id[]" value="{{$photoalbum_content->id}}" data-name="{{$photoalbum_content->name}}">
                         <label class="custom-control-label" for="customCheck_{{$photoalbum_content->id}}"></label>
                     </div>
+                    @endif
+                    <h5 class="card-title d-flex">{{$photoalbum_content->name}}</h5>
+                </div>
+                @if ($photoalbum_content->description)
+                    <div class="card-text">{!!nl2br(e($photoalbum_content->description))!!}</div>
+                @endif
+                @if (($photoalbum_content->isVideo($photoalbum_content->mimetype)) && FrameConfig::getConfigValue($frame_configs, PhotoalbumFrameConfig::embed_code))
+                    <div class="card-text">
+                        <a class="embed_code_check" data-name="embed_code{{$photoalbum_content->id}}" style="color: #007bff; cursor: pointer;"><small>埋め込みコード</small> <i class="fas fa-caret-right"></i></a>
+                        <input type="text" name="embed_code[{{$frame_id}}]" value='<iframe width="400" height="300" src="{{url('/')}}/download/plugin/photoalbums/embed/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}" frameborder="0" scrolling="no" allowfullscreen></iframe>' class="form-control" id="embed_code{{$photoalbum_content->id}}" style="display: none;">
+                    </div>
+                @endif
+                @if (FrameConfig::getConfigValue($frame_configs, PhotoalbumFrameConfig::posted_at, ShowType::not_show))
+                    <div class="card-text"><small>登録日：{{$photoalbum_content->getUpdateOrCreatedAt('Y年n月j日')}}</small></div>
+                @endif
+                <div class="d-flex justify-content-between align-items-center">
                     @can('posts.update', [[$photoalbum_content, $frame->plugin_name, $buckets]])
                     <a href="{{url('/')}}/plugin/photoalbums/edit/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}#frame-{{$frame->id}}" class="btn btn-sm btn-success">
                         <i class="far fa-edit"></i> 編集
@@ -464,6 +504,7 @@
 </div>
 @endif
 
+@if ($download_check)
 <div class="bg-light mt-3 p-2 text-right">
     <span class="mr-2">チェックした項目を</span>
     @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
@@ -471,6 +512,7 @@
     @endcan
     <button class="btn btn-primary btn-sm btn-download" type="button" disabled><i class="fas fa-download"></i><span class="d-none d-sm-inline"> ダウンロード</span></button>
 </div>
+@endif
 </form>
 @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
 {{-- 削除確認モーダルウィンドウ --}}

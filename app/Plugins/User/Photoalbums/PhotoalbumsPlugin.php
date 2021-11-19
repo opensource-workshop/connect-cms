@@ -58,7 +58,7 @@ class PhotoalbumsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['index', 'download', 'changeDirectory'];
+        $functions['get']  = ['index', 'download', 'changeDirectory', 'embed'];
         $functions['post'] = ['makeFolder', 'editFolder', 'upload', 'uploadVideo', 'editContents', 'editVideo', 'deleteContents'];
         return $functions;
     }
@@ -178,6 +178,28 @@ class PhotoalbumsPlugin extends UserPluginBase
             'breadcrumbs' => $this->fetchBreadCrumbs($photoalbum->id, $parent->id),
             'parent_id' =>  $parent->id,
             'covers' => $covers,
+        ]);
+    }
+
+    /**
+     * 動画の埋め込み画面を表示する
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     * @param int $photoalbum_content_id コンテンツID
+     * @return mixed $value テンプレートに渡す内容
+     */
+    public function embed($request, $page_id, $frame_id, $photoalbum_content_id)
+    {
+        // 対象のデータを取得して編集画面を表示する。
+        $photoalbum_content = PhotoalbumContent::find($photoalbum_content_id);
+
+        $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
+
+        return $this->view('embed', [
+            'photoalbum' => $photoalbum,
+            'photoalbum_content' => $photoalbum_content,
         ]);
     }
 
@@ -443,14 +465,6 @@ class PhotoalbumsPlugin extends UserPluginBase
         $directory = $this->makeDirectory($upload->id);
         $image->save(storage_path('app/') . $directory . '/' . $upload->id . '.' . $file->getClientOriginalExtension());
 
-//        // ファイル保存
-//        $file->storeAs($this->getDirectory($upload->id), $this->getContentsFileName($upload));
-
-//        // 幅、高さを取得するためにImage オブジェクトを生成しておく。
-//        if (Uploads::isImage($upload->mimetype)) {
-//            $img = Image::make($file->path());
-//        }
-
         $parent->children()->create([
             'photoalbum_id' => $parent->photoalbum_id,
             'upload_id' => $upload->id,
@@ -496,6 +510,9 @@ class PhotoalbumsPlugin extends UserPluginBase
         if ($request->hasFile('upload_poster.'.$frame_id)) {
             $poster = $request->file('upload_poster')[$frame_id];
 
+            // 必要なら縮小して、\Intervention\Image\Image オブジェクトを受け取る。
+            $image = Uploads::shrinkImage($poster, $photoalbum->image_upload_max_px);
+
             // uploads テーブルに情報追加、ファイルのid を取得する
             $upload_poster = Uploads::create([
                 'client_original_name' => $poster->getClientOriginalName(),
@@ -509,7 +526,8 @@ class PhotoalbumsPlugin extends UserPluginBase
             ]);
 
             // ファイル保存
-            $poster->storeAs($this->getDirectory($upload_poster->id), $this->getContentsFileName($upload_poster));
+            $directory = $this->makeDirectory($upload_poster->id);
+            $image->save(storage_path('app/') . $directory . '/' . $upload_poster->id . '.' . $poster->getClientOriginalExtension());
         }
 
         // コンテンツレコードの保存

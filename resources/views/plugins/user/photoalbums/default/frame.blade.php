@@ -37,6 +37,31 @@
             </div>
         </div>
         --}}
+        {{-- ダウンロード --}}
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">{{PhotoalbumFrameConfig::enum[PhotoalbumFrameConfig::download]}}</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                @foreach (ShowType::enum as $key => $value)
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input
+                            type="radio"
+                            value="{{ $key }}"
+                            id="{{ "download_${key}" }}"
+                            name="download"
+                            class="custom-control-input"
+                            {{ FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::download, 0) == $key ? 'checked' : '' }}
+                        >
+                        <label class="custom-control-label" for="{{ "download_${key}" }}">
+                            {{ $value }}
+                        </label>
+                    </div>
+                @endforeach
+            </div>
+            <label class="{{$frame->getSettingLabelClass(true)}}"></label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                <small class="form-text text-muted mt-0">ゲスト権限でのダウンロード処理の表示を制御します。（編集権限がある場合は表示されます。）</small>
+            </div>
+        </div>
         {{-- 投稿日 --}}
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass(true)}}">{{PhotoalbumFrameConfig::enum[PhotoalbumFrameConfig::posted_at]}}</label>
@@ -81,6 +106,27 @@
             </div>
         </div>
         --}}
+        {{-- 動画の埋め込みコード --}}
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">{{PhotoalbumFrameConfig::enum[PhotoalbumFrameConfig::embed_code]}}</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                @foreach (ShowType::enum as $key => $value)
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input
+                            type="radio"
+                            value="{{ $key }}"
+                            id="{{ "embed_code_${key}" }}"
+                            name="embed_code"
+                            class="custom-control-input"
+                            {{ FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::embed_code, 0) == $key ? 'checked' : '' }}
+                        >
+                        <label class="custom-control-label" for="{{ "embed_code_${key}" }}">
+                            {{ $value }}
+                        </label>
+                    </div>
+                @endforeach
+            </div>
+        </div>
         {{-- アルバム並び順 --}}
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass(true)}}">{{PhotoalbumFrameConfig::enum[PhotoalbumFrameConfig::sort_folder]}}</label>
