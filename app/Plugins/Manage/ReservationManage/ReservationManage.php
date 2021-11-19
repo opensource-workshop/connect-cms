@@ -2,10 +2,12 @@
 
 namespace App\Plugins\Manage\ReservationManage;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 use App\Models\User\Reservations\ReservationsFacility;
 use App\Models\User\Reservations\ReservationsCategory;
+use App\Models\User\Reservations\ReservationsColumn;
 use App\Models\User\Reservations\ReservationsColumnsSet;
 
 use App\Plugins\Manage\ManagePluginBase;
@@ -87,17 +89,18 @@ class ReservationManage extends ManagePluginBase
 
         // 施設
         $facilities = ReservationsFacility::
-            // where(function ($tmp_query) {
-            //     $tmp_query->whereNull('hide_flag')
-            //         ->orWhere('hide_flag', 0);
-            // })
             select(
                 'reservations_facilities.*',
-                'reservations_categories.category as category'
+                'reservations_categories.category as category',
+                'reservations_columns_sets.name as columns_set_name'
             )
             ->leftJoin('reservations_categories', function ($join) {
                 $join->on('reservations_facilities.reservations_categories_id', '=', 'reservations_categories.id')
                     ->whereNull('reservations_categories.deleted_at');
+            })
+            ->leftJoin('reservations_columns_sets', function ($join) {
+                $join->on('reservations_facilities.columns_set_id', '=', 'reservations_columns_sets.id')
+                    ->whereNull('reservations_columns_sets.deleted_at');
             })
             ->orderBy('reservations_categories.display_sequence')
             ->orderBy('reservations_facilities.display_sequence')
@@ -166,13 +169,13 @@ class ReservationManage extends ManagePluginBase
             'hide_flag'  => ['required'],
             'facility_name'  => ['required'],
             'reservations_categories_id'  => ['required'],
-            'reservations_columns_sets_id'  => ['required'],
+            'columns_set_id'  => ['required'],
         ]);
         $validator->setAttributeNames([
             'hide_flag'  => '表示',
             'facility_name'  => '施設名',
             'reservations_categories_id'  => '施設カテゴリ',
-            'reservations_columns_sets_id'  => '項目セット',
+            'columns_set_id'  => '項目セット',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -187,12 +190,12 @@ class ReservationManage extends ManagePluginBase
         $facility = ReservationsFacility::firstOrNew(['id' => $id]);
         // [TODO] 仮
         // $facility->reservations_id = $request->reservations_id;
-        $facility->reservations_id = 0;
+        $facility->reservations_id = $facility->reservations_id ?: 0;
 
         $facility->facility_name                = $request->facility_name;
         $facility->hide_flag                    = $request->hide_flag;
         $facility->reservations_categories_id   = $request->reservations_categories_id;
-        $facility->reservations_columns_sets_id = $request->reservations_columns_sets_id;
+        $facility->columns_set_id               = $request->columns_set_id;
         $facility->display_sequence             = $display_sequence;
         $facility->save();
 
@@ -385,9 +388,9 @@ class ReservationManage extends ManagePluginBase
      *
      * @return view
      */
-    public function registColumnSet($request, $id = null)
+    public function registColumnSet($request)
     {
-        return $this->editColumnSet($request, $id);
+        return $this->editColumnSet($request, null, 'registColumnSet');
     }
 
     /**
@@ -470,15 +473,79 @@ class ReservationManage extends ManagePluginBase
      *
      * @return view
      */
-    public function editColumns($request, $id = null)
+    public function editColumns($request, $id)
     {
         // 施設項目セット取得
         // $columns_sets = ReservationsColumnsSet::orderBy('display_sequence')->paginate(10, '*', 'page', $page);
+
+        // --- 基本データの取得
+        // 施設予約＆フレームデータ
+        // $reservation_frame = $this->getFrame($frame_id);
+
+        // 施設データ
+        // $reservation = new Reservation();
+
+        // if (!empty($reservations_id)) {
+        //     // id が渡ってくればid が対象
+        //     $reservation = Reservation::where('id', $reservations_id)->first();
+        // } elseif (!empty($reservation_frame->bucket_id)) {
+        //     // Frame のbucket_id があれば、bucket_id から施設データ取得
+        //     $reservation = Reservation::where('bucket_id', $reservation_frame->bucket_id)->first();
+        // }
+
+        // 施設予約データがない場合は0をセット
+        // $reservations_id = empty($reservation) ? null : $reservation->id;
+
+        // 予約項目データ
+        $columns = ReservationsColumn::
+            select(
+                'reservations_columns.id',
+                'reservations_columns.columns_set_id',
+                'reservations_columns.column_type',
+                'reservations_columns.column_name',
+                'reservations_columns.required',
+                'reservations_columns.hide_flag',
+                'reservations_columns.title_flag',
+                'reservations_columns.display_sequence',
+                DB::raw('count(reservations_columns_selects.id) as select_count'),
+                DB::raw('GROUP_CONCAT(reservations_columns_selects.select_name order by reservations_columns_selects.display_sequence SEPARATOR \',\') as select_names'),
+            )
+            // ->where('reservations_columns.reservations_id', $reservations_id)
+            ->where('reservations_columns.columns_set_id', $id)
+            // 予約項目の子データ（選択肢）
+            ->leftJoin('reservations_columns_selects', function ($join) {
+                $join->on('reservations_columns.id', '=', 'reservations_columns_selects.column_id');
+            })
+            ->groupBy(
+                'reservations_columns.id',
+                'reservations_columns.columns_set_id',
+                'reservations_columns.column_type',
+                'reservations_columns.column_name',
+                'reservations_columns.required',
+                'reservations_columns.hide_flag',
+                'reservations_columns.title_flag',
+                'reservations_columns.display_sequence',
+            )
+            ->orderBy('reservations_columns.display_sequence')
+            ->get();
+
+        // 新着等のタイトル指定 が設定されているか（施設予約毎に１つ設定）
+        $title_flag = 0;
+        foreach ($columns as $column) {
+            if ($column->title_flag) {
+                $title_flag = 1;
+                break;
+            }
+        }
 
         return view('plugins.manage.reservation.edit_columns', [
             "function"      => __FUNCTION__,
             "plugin_name"   => "reservation",
             // "columns_sets"  => $columns_sets,
+            // 'reservations_id' => $reservations_id,
+            // 'reservation'   => $reservation,
+            'columns'       => $columns,
+            'title_flag'    => $title_flag,
         ]);
     }
 }

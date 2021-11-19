@@ -20,14 +20,16 @@
         {{-- 一覧エリア --}}
         <div class="text-right"><span class="badge badge-pill badge-light">{{ $facilities->total() }} 件</span></div>
         <table class="table table-hover cc-font-90">
-            <tbody>
+            <thead>
                 <tr class="d-none d-sm-table-row">
                     <th class="d-block d-sm-table-cell text-break">施設名</th>
+                    <th class="d-block d-sm-table-cell text-break">項目セット</th>
                     <th class="d-block d-sm-table-cell text-break">表示順</th>
                     <th class="d-block d-sm-table-cell text-break">表示</th>
                     <th class="d-block d-sm-table-cell text-break">カテゴリ</th>
                 </tr>
-
+            </thead>
+            <tbody>
                 @php
                     // 一つ前の施設カテゴリID。ループして変わった時だけカテゴリ表示
                     $befor_reservations_categories_id = null;
@@ -35,19 +37,20 @@
                 @foreach($facilities as $facility)
                     @if ($facility->reservations_categories_id != $befor_reservations_categories_id)
                         <tr>
-                            <th nowrap colspan="4"><div class="h5 mb-0"><span class="badge badge-secondary">{{$facility->category}}</span></div></th>
+                            <th nowrap colspan="5"><div class="h5 mb-0"><span class="badge badge-secondary">{{$facility->category}}</span></div></th>
                         </tr>
                         @php
                            $befor_reservations_categories_id = $facility->reservations_categories_id;
                         @endphp
                     @endif
-                    <tr class="@if ($facility->hide_flag) bg-warning @endif">
+                    <tr class="@if ($facility->hide_flag) table-secondary @endif">
                         <td class="d-block d-sm-table-cell">
                             <a href="{{url('/')}}/manage/reservation/edit/{{$facility->id}}"><i class="far fa-edit"></i></a>
                             <span class="d-sm-none">注釈名：</span>{{$facility->facility_name}}
                         </td>
+                        <td class="d-block d-sm-table-cell"><span class="d-sm-none">項目セット：</span>{{ $facility->columns_set_name }}</td>
                         <td class="d-block d-sm-table-cell"><span class="d-sm-none">表示順：</span>{{$facility->display_sequence}}</td>
-                        <td class="d-block d-sm-table-cell"><span class="d-sm-none">表示：</span>{{ NotShowType::getDescriptionNullSupport($facility->hide_flag) }}</td>
+                        <td class="d-block d-sm-table-cell"><span class="d-sm-none">表示：</span>{{ NotShowType::getDescription($facility->hide_flag) }}</td>
                         <td class="d-block d-sm-table-cell"><span class="d-sm-none">カテゴリ：</span><span class="badge badge-secondary">{{$facility->category}}</span></td>
                     </tr>
                 @endforeach

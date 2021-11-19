@@ -15,10 +15,12 @@ class ReservationsColumn extends Model
     // 更新する項目の定義
     protected $fillable = [
         'reservations_id',
+        'columns_set_id',
         'column_type',
         'column_name',
         'required',
         'hide_flag',
+        'title_flag',
         'display_sequence',
     ];
 

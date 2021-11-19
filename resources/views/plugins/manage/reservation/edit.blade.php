@@ -62,22 +62,17 @@
             <div class="form-group form-row">
                 <label class="col-md-3 col-form-label text-md-right">表示 <span class="fas fa-info-circle" data-toggle="tooltip" title="施設予約カレンダーから当施設を表示するかしないか設定します。"> <span class="badge badge-danger">必須</span></label>
                 <div class="col-md-9 mt-1">
-                    <div class="custom-control custom-radio custom-control-inline">
-                        @if (old('hide_flag', $facility->hide_flag) == "1")
-                            <input type="radio" value="1" id="hide_flag_on" name="hide_flag" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="1" id="hide_flag_on" name="hide_flag" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="hide_flag_on">表示しない</label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline">
-                        @if (old('hide_flag', $facility->hide_flag) == "" || old('hide_flag', $facility->hide_flag) == "0")
-                            <input type="radio" value="0" id="hide_flag_off" name="hide_flag" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="0" id="hide_flag_off" name="hide_flag" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="hide_flag_off">表示する</label>
-                    </div>
+                    {{-- 初期値(空入力)は結果的に 0:表示する --}}
+                    @foreach (NotShowType::getMembers() as $enum_value => $enum_label)
+                        <div class="custom-control custom-radio custom-control-inline">
+                            @if (old('hide_flag', $facility->hide_flag) == $enum_value)
+                                <input type="radio" value="{{$enum_value}}" id="hide_flag_{{$enum_value}}" name="hide_flag" class="custom-control-input" checked="checked">
+                            @else
+                                <input type="radio" value="{{$enum_value}}" id="hide_flag_{{$enum_value}}" name="hide_flag" class="custom-control-input">
+                            @endif
+                            <label class="custom-control-label" for="hide_flag_{{$enum_value}}">{{$enum_label}}</label>
+                        </div>
+                    @endforeach
                     @include('plugins.common.errors_inline', ['name' => 'hide_flag'])
                 </div>
             </div>
@@ -103,15 +98,15 @@
             </div>
 
             <div class="form-group form-row">
-                <label for="reservations_columns_sets_id" class="col-md-3 col-form-label text-md-right">項目セット <span class="badge badge-danger">必須</span></label>
+                <label for="columns_set_id" class="col-md-3 col-form-label text-md-right">項目セット <span class="badge badge-danger">必須</span></label>
                 <div class="col-md-9">
-                    <select name="reservations_columns_sets_id" id="reservations_columns_sets_id" class="form-control @if ($errors && $errors->has('reservations_columns_sets_id')) border-danger @endif">
+                    <select name="columns_set_id" id="columns_set_id" class="form-control @if ($errors && $errors->has('columns_set_id')) border-danger @endif">
                         <option value=""></option>
                         @foreach ($columns_sets as $columns_set)
-                            <option value="{{$columns_set->id}}" @if (old('reservations_columns_sets_id', $facility->reservations_columns_sets_id) == $columns_set->id) selected="selected" @endif>{{$columns_set->name}}</option>
+                            <option value="{{$columns_set->id}}" @if (old('columns_set_id', $facility->columns_set_id) == $columns_set->id) selected="selected" @endif>{{$columns_set->name}}</option>
                         @endforeach
                     </select>
-                    @include('plugins.common.errors_inline', ['name' => 'reservations_columns_sets_id'])
+                    @include('plugins.common.errors_inline', ['name' => 'columns_set_id'])
                     <small class="text-muted">※ 施設予約時に登録する項目セットを選択します。</small>
                 </div>
             </div>

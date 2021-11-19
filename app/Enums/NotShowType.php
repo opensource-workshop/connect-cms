@@ -16,21 +16,4 @@ final class NotShowType extends EnumsBase
         self::not_show => '表示しない',
         self::show => '表示する',
     ];
-
-    /**
-     * 対応した和名を返す
-     */
-    public static function getDescriptionNullSupport($key = null): string
-    {
-        $key = $key ?? self::getDefault();
-        return static::enum[$key];
-    }
-
-    /**
-     * 初期値
-     */
-    public static function getDefault()
-    {
-        return self::show;
-    }
 }

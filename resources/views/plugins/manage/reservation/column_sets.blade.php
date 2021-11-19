@@ -24,13 +24,14 @@
         {{-- 一覧エリア --}}
         <div class="text-right mt-3"><span class="badge badge-pill badge-light">{{ $columns_sets->total() }} 件</span></div>
         <table class="table table-hover cc-font-90">
-            <tbody>
+            <thead>
                 <tr class="d-none d-sm-table-row">
                     <th class="d-block d-sm-table-cell text-break">項目セット名</th>
                     <th class="d-block d-sm-table-cell text-break">表示順</th>
                     <th class="d-block d-sm-table-cell text-break">詳細</th>
                 </tr>
-
+            </thead>
+            <tbody>
                 @foreach($columns_sets as $columns_set)
                 <tr>
                     <td class="d-block d-sm-table-cell">

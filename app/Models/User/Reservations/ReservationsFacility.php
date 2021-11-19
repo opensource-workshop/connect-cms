@@ -16,6 +16,8 @@ class ReservationsFacility extends Model
         'reservations_id',
         'facility_name',
         'hide_flag',
+        'reservations_categories_id',
+        'columns_set_id',
         'display_sequence',
     ];
 }

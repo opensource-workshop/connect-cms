@@ -20,6 +20,7 @@ use App\Models\User\Reservations\ReservationsInputsColumn;
 use App\Plugins\User\UserPluginBase;
 
 use App\Enums\NoticeEmbeddedTag;
+use App\Enums\NotShowType;
 use App\Enums\Required;
 use App\Enums\ReservationCalendarDisplayType;
 use App\Enums\ReservationColumnType;
@@ -216,7 +217,10 @@ class ReservationsPlugin extends UserPluginBase
         ];
 
         // バリデーション用の配列を生成（可変項目）
-        $required_columns = ReservationsColumn::where('reservations_id', $request->reservations_id)->whereNull('hide_flag')->where('required', Required::on)->get();
+        $required_columns = ReservationsColumn::where('reservations_id', $request->reservations_id)
+            ->where('hide_flag', NotShowType::show)
+            ->where('required', Required::on)
+            ->get();
         foreach ($required_columns as $column) {
             $key_str = 'columns_value.' . $column->id;
             $validationArray[$key_str] = ['required'];
@@ -333,12 +337,16 @@ class ReservationsPlugin extends UserPluginBase
                     $join->where('reservations_inputs_columns.inputs_id', '=', $booking->id);
                 })
                 ->where('reservations_columns.reservations_id', $booking->reservations_id)
-                ->whereNull('reservations_columns.hide_flag')
+                ->where('reservations_columns.hide_flag', NotShowType::show)
                 ->orderBy('reservations_columns.display_sequence')
                 ->get();
 
             // 予約項目データの内、選択肢が指定されていた場合の選択肢データ
-            $selects = ReservationsColumnsSelect::where('reservations_id', $booking->reservations_id)->whereNull('hide_flag')->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
+            $selects = ReservationsColumnsSelect::where('reservations_id', $booking->reservations_id)
+                ->where('hide_flag', NotShowType::show)
+                ->orderBy('id', 'asc')
+                ->orderBy('display_sequence', 'asc')
+                ->get();
 
             $target_date = new ConnectCarbon($booking->start_datetime);
         } else {
@@ -365,7 +373,11 @@ class ReservationsPlugin extends UserPluginBase
             $columns = $this->getReservationsColumns($request->reservations_id);
 
             // 予約項目データの内、選択肢が指定されていた場合の選択肢データ
-            $selects = ReservationsColumnsSelect::where('reservations_id', $request->reservations_id)->whereNull('hide_flag')->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
+            $selects = ReservationsColumnsSelect::where('reservations_id', $request->reservations_id)
+                ->where('hide_flag', NotShowType::show)
+                ->orderBy('id', 'asc')
+                ->orderBy('display_sequence', 'asc')
+                ->get();
 
             $target_date = new ConnectCarbon($target_ymd);
         }
@@ -428,7 +440,7 @@ class ReservationsPlugin extends UserPluginBase
      */
     private function getReservationsColumns($id)
     {
-        return ReservationsColumn::where('reservations_id', $id)->whereNull('hide_flag')->orderBy('display_sequence')->get();
+        return ReservationsColumn::where('reservations_id', $id)->where('hide_flag', NotShowType::show)->orderBy('display_sequence')->get();
     }
 
     /**
@@ -499,7 +511,10 @@ class ReservationsPlugin extends UserPluginBase
         $reservations = Reservation::where('id', $reservations_frame->reservations_id)->first();
 
         // 施設データ
-        $facilities = ReservationsFacility::where('reservations_id', $reservations_frame->reservations_id)->whereNull('hide_flag')->orderBy('display_sequence')->get();
+        $facilities = ReservationsFacility::where('reservations_id', $reservations_frame->reservations_id)
+            ->where('hide_flag', NotShowType::show)
+            ->orderBy('display_sequence')
+            ->get();
 
         // 予約項目データ
         // $columns = ReservationsColumn::where('reservations_id', $reservations_frame->reservations_id)->whereNull('hide_flag')->orderBy('display_sequence')->get();

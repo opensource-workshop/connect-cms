@@ -14,6 +14,7 @@ class ReservationsColumnsSelect extends Model
     // 更新する項目の定義
     protected $fillable = [
         'reservations_id',
+        'columns_set_id',
         'column_id',
         'select_name',
         'hide_flag',

@@ -58,13 +58,13 @@
                     <div class="offset-xl-3 col-9 col-xl-6">
                         <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/manage/reservation/columnSets'"><i class="fas fa-times"></i> キャンセル</button>
                         @if ($columns_set->id)
-                        <button type="button" class="btn btn-primary form-horizontal mr-2" onclick="submitAction('{{url('/')}}/manage/reservation/updateColumnSet/{{$columns_set->id}}')">
-                            <i class="fas fa-check"></i> 変更確定
-                        </button>
+                            <button type="button" class="btn btn-primary form-horizontal mr-2" onclick="submitAction('{{url('/')}}/manage/reservation/updateColumnSet/{{$columns_set->id}}')">
+                                <i class="fas fa-check"></i> 変更確定
+                            </button>
                         @else
-                        <button type="button" class="btn btn-primary form-horizontal mr-2" onclick="submitAction('{{url('/')}}/manage/reservation/storeColumnSet')">
-                            <i class="fas fa-check"></i> 登録確定
-                        </button>
+                            <button type="button" class="btn btn-primary form-horizontal mr-2" onclick="submitAction('{{url('/')}}/manage/reservation/storeColumnSet')">
+                                <i class="fas fa-check"></i> 登録確定
+                            </button>
                         @endif
                     </div>
 
