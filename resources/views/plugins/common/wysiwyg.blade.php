@@ -356,7 +356,7 @@
                     input.click();
                 }
                 // mosaic plugin. フィールド名の先頭がmosaic
-                else if (meta.fieldname.startsWith('mosaic')) {
+                else if (meta.fieldname.startsWith('photo')) {
                     // see) public\js\tinymce\plugins\mosaic\plugin.min.js
                     var input = document.getElementById('cc-mosaic-upload-{{$frame_id}}');
                     input.setAttribute('accept', '.jpg,.png');

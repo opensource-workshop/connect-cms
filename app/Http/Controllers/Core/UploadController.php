@@ -367,10 +367,10 @@ EOD;
     public function callMosaicApi($request)
     {
         // ファイル受け取り(リクエスト内)
-        if (!$request->hasFile('mosaic') || !$request->file('mosaic')->isValid()) {
+        if (!$request->hasFile('photo') || !$request->file('photo')->isValid()) {
             return array('location' => 'error');
         }
-        $image_file = $request->file('mosaic');
+        $image_file = $request->file('photo');
 
         $resize_width = 800;
         $resize_height = null;
@@ -401,8 +401,8 @@ EOD;
         // 送信データを指定
         $data = [
             //'api_key' => config('connect.PDF_THUMBNAIL_API_KEY'),
-            'photo' => base64_encode($request->file('mosaic')->get()),
             'scale' => 'rough',
+            'photo' => base64_encode($request->file('photo')->get()),
         ];
 
         // API URL取得
@@ -427,7 +427,9 @@ EOD;
 
         // 画面へ
         $msg_array = [];
-        $msg_array['link_text'] = 'ABC';
+        #$msg_array['link_text'] = 'ABC';
+\Log::debug($res_base64);
+        $msg_array['link_text'] = print_r($res_base64, true);
         return $msg_array;
     }
 
