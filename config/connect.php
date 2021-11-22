@@ -94,6 +94,11 @@ return [
     'PDF_TO_TEXT_API_URL' => env('PDF_TO_TEXT_API_URL', ''),
     'PDF_TO_TEXT_API_KEY' => env('PDF_TO_TEXT_API_KEY', ''),
 
+    // 外部APIを使ってPDFから文字列を抽出
+    'MOSAIC_API_URL' => env('MOSAIC_API_URL', ''),
+    'MOSAIC_API_KEY' => env('MOSAIC_API_KEY', ''),
+
+
     // WYSIWYG のバイト数チェックの数値（MySQLのtext型）
     'WYSIWYG_MAX_BYTE' => 65535,
 

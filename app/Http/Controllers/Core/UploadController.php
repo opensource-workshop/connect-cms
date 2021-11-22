@@ -337,9 +337,9 @@ EOD;
     }
 
     /**
-     * ファイル受け取り
+     * ファイル受け取り処理の振り分け
      */
-    public function postFile(Request $request)
+    public function postInvoke(Request $request, $method = null)
     {
         // ファイルアップロードには、記事の追加、変更の権限が必要
         //if (!$this->isCan('posts.create') || !$this->isCan('posts.update')) {
@@ -352,6 +352,90 @@ EOD;
             return array('location' => 'error');
         }
 
+        // 対象の処理の呼び出し
+        if ($method == null) {
+            // method が空の場合は、初期値としてpostFile を呼ぶ
+            return $this->postFile($request);
+        } elseif ($method == 'mosaic'){
+            return $this->callMosaicApi($request);
+        }
+    }
+
+    /**
+     * モザイクAPI の呼び出し
+     */
+    public function callMosaicApi($request)
+    {
+        // ファイル受け取り(リクエスト内)
+        if (!$request->hasFile('mosaic') || !$request->file('mosaic')->isValid()) {
+            return array('location' => 'error');
+        }
+        $image_file = $request->file('mosaic');
+
+        $resize_width = 800;
+        $resize_height = null;
+
+        // GDのリサイズでメモリを多く使うため、memory_limitセット
+        $configs = Configs::getSharedConfigs();
+        $memory_limit_for_image_resize = Configs::getConfigsValue($configs, 'memory_limit_for_image_resize', '256M');
+        ini_set('memory_limit', $memory_limit_for_image_resize);
+
+        // ファイルのリサイズ(メモリ内)
+        $image = Image::make($image_file);
+
+        // リサイズ
+        $image = $image->resize($resize_width, $resize_height, function ($constraint) {
+            // 横幅を指定する。高さは自動調整
+            $constraint->aspectRatio();
+
+            // 小さい画像が大きくなってぼやけるのを防止
+            $constraint->upsize();
+        });
+
+        // 画像の回転対応: orientate()
+        $image = $image->orientate();
+
+        // cURLセッションを初期化する
+        $ch = curl_init();
+
+        // 送信データを指定
+        $data = [
+            //'api_key' => config('connect.PDF_THUMBNAIL_API_KEY'),
+            'photo' => base64_encode($request->file('mosaic')->get()),
+            'scale' => 'rough',
+        ];
+
+        // API URL取得
+        $api_url = config('connect.MOSAIC_API_URL');
+
+        // URLとオプションを指定する
+        curl_setopt($ch, CURLOPT_URL, $api_url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        // URLの情報を取得する
+        $res = curl_exec($ch);
+\Log::debug($res);
+
+        // セッションを終了する
+        curl_close($ch);
+
+        // ファイルデータをdecode して復元、保存
+        $res_base64 = json_decode($res, true);
+//\Log::debug($res_base64);
+
+        // 画面へ
+        $msg_array = [];
+        $msg_array['link_text'] = 'ABC';
+        return $msg_array;
+    }
+
+    /**
+     * ファイル受け取り
+     */
+    public function postFile($request)
+    {
         // アップロードの場合（TinyMCE標準プラグイン）
         if ($request->hasFile('file')) {
             if ($request->file('file')->isValid()) {
