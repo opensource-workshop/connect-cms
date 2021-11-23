@@ -416,7 +416,7 @@ EOD;
 
         // URLの情報を取得する
         $res = curl_exec($ch);
-\Log::debug($res);
+//\Log::debug($res);
 
         // セッションを終了する
         curl_close($ch);
@@ -425,11 +425,31 @@ EOD;
         $res_base64 = json_decode($res, true);
 //\Log::debug($res_base64);
 
+        // uploads テーブルに情報追加、ファイルのid を取得する
+        $photo_upload = Uploads::create([
+            'client_original_name' => $request->file('photo')->getClientOriginalName(),
+            'mimetype'             => $request->file('photo')->getClientMimeType(),
+            'extension'            => $request->file('photo')->getClientOriginalExtension(),
+            'size'                 => $request->file('photo')->getSize(),
+            'page_id'              => $request->page_id,
+            'plugin_name'          => $request->plugin_name,
+        ]);
+
+        $directory = $this->getDirectory($photo_upload->id);
+        //$photo_upload_path = $request->file('photo')->storeAs($directory, $photo_upload->id . '.' . $request->file('photo')->getClientOriginalExtension());
+
+//\Log::debug($res_base64['mosaic_photo']);
+//\Log::debug($res_base64);
+
+        File::put(storage_path('app/') . $directory . '/' . $photo_upload->id . '.' . $request->file('photo')->getClientOriginalExtension(), base64_decode($res_base64['mosaic_photo']));
+
         // 画面へ
+
+        // URLのフルパスを込めても、wysiwyg のJSでドメイン取り除かれるため、含めない => ディレクトリインストールの場合はディレクトリが必要なので、url 追加
         $msg_array = [];
-        #$msg_array['link_text'] = 'ABC';
-\Log::debug($res_base64);
-        $msg_array['link_text'] = print_r($res_base64, true);
+        $msg_array['link_text'] = '<p><img src="' . url('/') . '/file/' . $photo_upload->id . '" class="img-fluid">' . $request->file('photo')->getClientOriginalName() . '</p>';
+
+//\Log::debug($res_base64);
         return $msg_array;
     }
 
