@@ -59,6 +59,7 @@ class ReservationManage extends ManagePluginBase
         $role_check_table["addColumn"]          = ['admin_site'];
         $role_check_table["updateColumn"]       = ['admin_site'];
         $role_check_table["editColumnDetail"]   = ['admin_site'];
+        $role_check_table["updateColumnDetail"] = ['admin_site'];
 
         return $role_check_table;
     }
@@ -639,5 +640,34 @@ class ReservationManage extends ManagePluginBase
             'column'          => $column,
             'selects'         => $selects,
         ]);
+    }
+
+    /**
+     * 項目に紐づく詳細設定の更新
+     */
+    public function updateColumnDetail($request, $id)
+    {
+        // タイトル指定
+        $title_flag = (empty($request->title_flag)) ? 0 : $request->title_flag;
+        if ($title_flag) {
+            // title_flagは施設予約内で１つだけ ON にする項目
+            // そのため title_flag = 1 なら 施設予約内の title_flag = 1 を一度 0 に更新する。
+            ReservationsColumn::where('columns_set_id', $request->columns_set_id)
+                ->where('title_flag', 1)
+                ->update(['title_flag' => 0]);
+        }
+
+        // 更新データは上記update後に取得しないと、title_flagが更新されない
+        $column = ReservationsColumn::where('id', $request->column_id)->first();
+
+        // タイトル指定
+        $column->title_flag = $title_flag;
+
+        // 保存
+        $column->save();
+
+        $message = '項目【 '. $column->column_name .' 】を更新しました。';
+
+        return redirect("/manage/reservation/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
     }
 }
