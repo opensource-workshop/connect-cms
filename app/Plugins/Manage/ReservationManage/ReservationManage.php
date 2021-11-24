@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\User\Reservations\ReservationsFacility;
 use App\Models\User\Reservations\ReservationsCategory;
 use App\Models\User\Reservations\ReservationsColumn;
+use App\Models\User\Reservations\ReservationsColumnsSelect;
 use App\Models\User\Reservations\ReservationsColumnsSet;
 
 use App\Plugins\Manage\ManagePluginBase;
@@ -57,6 +58,7 @@ class ReservationManage extends ManagePluginBase
         $role_check_table["editColumns"]        = ['admin_site'];
         $role_check_table["addColumn"]          = ['admin_site'];
         $role_check_table["updateColumn"]       = ['admin_site'];
+        $role_check_table["editColumnDetail"]   = ['admin_site'];
 
         return $role_check_table;
     }
@@ -481,7 +483,7 @@ class ReservationManage extends ManagePluginBase
     {
         $columns_set = ReservationsColumnsSet::find($id);
         if (!$columns_set) {
-            return;
+            abort(404, '項目セットデータがありません。');
         }
 
         // 予約項目データ
@@ -610,5 +612,32 @@ class ReservationManage extends ManagePluginBase
 
         // 編集画面を呼び出す
         return redirect("/manage/reservation/editColumns/" . $request->columns_set_id)->with('flash_message', $message);
+    }
+
+    /**
+     * 予約項目の設定画面の表示
+     */
+    public function editColumnDetail($request, $id)
+    {
+        // --- 画面に値を渡す準備
+        $column = ReservationsColumn::where('id', $id)->first();
+        if (!$column) {
+            abort(404, 'カラムデータがありません。');
+        }
+
+        $columns_set = ReservationsColumnsSet::find($column->columns_set_id);
+        if (!$columns_set) {
+            abort(404, '項目セットデータがありません。');
+        }
+
+        $selects = ReservationsColumnsSelect::where('column_id', $column->id)->orderby('display_sequence')->get();
+
+        return view('plugins.manage.reservation.edit_column_detail', [
+            "function"       => __FUNCTION__,
+            "plugin_name"    => "reservation",
+            'columns_set'     => $columns_set,
+            'column'          => $column,
+            'selects'         => $selects,
+        ]);
     }
 }
