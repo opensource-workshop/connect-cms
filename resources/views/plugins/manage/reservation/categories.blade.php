@@ -61,7 +61,7 @@
                                 <td nowrap>
                                     <input type="text" value="{{old('category.'.$category->id, $category->category)}}" name="category[{{$category->id}}]" class="form-control @if ($errors && $errors->has('category.'.$category->id)) border-danger @endif">
                                     @if ($category->id == 1)
-                                        <small class="text-muted">※ カテゴリなしのため、削除できません。</small>
+                                        <small class="text-muted">※ カテゴリなしは削除できません。</small>
                                     @endif
                                 </td>
                                 <td nowrap>
