@@ -58,6 +58,7 @@ class ReservationManage extends ManagePluginBase
         $role_check_table["editColumns"]        = ['admin_site'];
         $role_check_table["addColumn"]          = ['admin_site'];
         $role_check_table["updateColumn"]       = ['admin_site'];
+        $role_check_table["updateColumnSequence"] = ['admin_site'];
         $role_check_table["editColumnDetail"]   = ['admin_site'];
         $role_check_table["updateColumnDetail"] = ['admin_site'];
 
@@ -616,6 +617,38 @@ class ReservationManage extends ManagePluginBase
     }
 
     /**
+     * 予約項目の表示順の更新
+     */
+    public function updateColumnSequence($request, $id)
+    {
+        // ボタンが押された行の施設データ
+        $target_column = ReservationsColumn::where('columns_set_id', $request->columns_set_id)
+            ->where('id', $request->column_id)
+            ->first();
+
+        // ボタンが押された前（後）の施設データ
+        $query = ReservationsColumn::where('columns_set_id', $request->columns_set_id);
+        $pair_column = $request->display_sequence_operation == 'up' ?
+            $query->where('display_sequence', '<', $request->display_sequence)->orderby('display_sequence', 'desc')->limit(1)->first() :
+            $query->where('display_sequence', '>', $request->display_sequence)->orderby('display_sequence', 'asc')->limit(1)->first();
+
+        // それぞれの表示順を退避
+        $target_column_display_sequence = $target_column->display_sequence;
+        $pair_column_display_sequence = $pair_column->display_sequence;
+
+        // 入れ替えて更新
+        $target_column->display_sequence = $pair_column_display_sequence;
+        $target_column->save();
+        $pair_column->display_sequence = $target_column_display_sequence;
+        $pair_column->save();
+
+        $message = '予約項目【 '. $target_column->column_name .' 】の表示順を更新しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/reservation/editColumns/" . $request->columns_set_id)->with('flash_message', $message);
+    }
+
+    /**
      * 予約項目の設定画面の表示
      */
     public function editColumnDetail($request, $id)
@@ -666,7 +699,7 @@ class ReservationManage extends ManagePluginBase
         // 保存
         $column->save();
 
-        $message = '項目【 '. $column->column_name .' 】を更新しました。';
+        $message = '項目【 '. $column->column_name .' 】の詳細設定を更新しました。';
 
         return redirect("/manage/reservation/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
     }
