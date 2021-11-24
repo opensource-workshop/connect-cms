@@ -65,7 +65,7 @@
 
             {{-- メッセージエリア --}}
             <div class="alert alert-info mt-2">
-                <i class="fas fa-exclamation-circle"></i> 予約登録時の項目を追加・変更します。
+                <i class="fas fa-exclamation-circle"></i> 項目セット【 {{$columns_set->name}} 】の項目を追加・変更します。<br />　項目セットは予約登録時に使います。
             </div>
 
             {{-- ワーニングメッセージエリア --}}
