@@ -1,9 +1,10 @@
 <?php
 
-use Illuminate\Database\Seeder;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 use App\Models\User\Reservations\Reservation;
-use App\Models\User\Reservations\ReservationsCategory;
 use App\Models\User\Reservations\ReservationsColumn;
 use App\Models\User\Reservations\ReservationsColumnsSelect;
 use App\Models\User\Reservations\ReservationsColumnsSet;
@@ -13,27 +14,19 @@ use App\Enums\NotShowType;
 use App\Enums\Required;
 use App\Enums\ReservationColumnType;
 
-class DefaultReservationsManegeSeeder extends Seeder
+class InitAndMigrationFromReservationsColumnsSet extends Migration
 {
     /**
-     * Run the database seeds.
-     * 施設管理系のSeeder
+     * Run the migrations.
      *
      * @return void
      */
-    public function run()
+    public function up()
     {
-        // 施設カテゴリ
-        if (ReservationsCategory::count() == 0) {
-            // 施設カテゴリのid=1は、カテゴリなしで特別なデータ。消せないように対応する。
-            ReservationsCategory::insert([
-                'id' => 1,
-                'category' => 'カテゴリなし',
-                'display_sequence' => 1,
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s'),
-            ]);
-        }
+        // 各テーブルの reservations_id は今後削除する見込みのため、マイグレーションが走り終わったらseederではなく、マイグレーションで移行PGを作成する。
+        // ReservationsColumn.reservations_id
+        // ReservationsColumnsSelect.reservations_id
+        // ReservationsFacility.reservations_id
 
         // 項目セット
         // 項目セット（reservations_columns_sets）が無ければ reservations から移し替え
@@ -113,6 +106,14 @@ class DefaultReservationsManegeSeeder extends Seeder
                 // 後でdrop: reservations_columns_selects.reservations_id
             }
         }
+    }
 
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
     }
 }
