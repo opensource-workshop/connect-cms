@@ -397,12 +397,13 @@ EOD;
 
         // cURLセッションを初期化する
         $ch = curl_init();
-\Log::debug($request);
+
         // 送信データを指定
         $data = [
             //'api_key' => config('connect.PDF_THUMBNAIL_API_KEY'),
             'mosaic_scale' => $request->mosaic_scale,
             'photo' => base64_encode($request->file('photo')->get()),
+            'extension' => $request->file('photo')->getClientOriginalExtension(),
         ];
 
         // API URL取得
@@ -416,14 +417,14 @@ EOD;
 
         // URLの情報を取得する
         $res = curl_exec($ch);
-//\Log::debug($res);
+        //\Log::debug($res);
 
         // セッションを終了する
         curl_close($ch);
 
         // ファイルデータをdecode して復元、保存
         $res_base64 = json_decode($res, true);
-//\Log::debug($res_base64);
+        //\Log::debug($res_base64);
 
         // uploads テーブルに情報追加、ファイルのid を取得する
         $photo_upload = Uploads::create([
@@ -447,7 +448,7 @@ EOD;
 
         // URLのフルパスを込めても、wysiwyg のJSでドメイン取り除かれるため、含めない => ディレクトリインストールの場合はディレクトリが必要なので、url 追加
         $msg_array = [];
-        $msg_array['link_text'] = '<p><img src="' . url('/') . '/file/' . $photo_upload->id . '" class="img-fluid">' . $request->file('photo')->getClientOriginalName() . '</p>';
+        $msg_array['link_text'] = '<p><img src="' . url('/') . '/file/' . $photo_upload->id . '" class="img-fluid"></p>';
 
 //\Log::debug($res_base64);
         return $msg_array;
