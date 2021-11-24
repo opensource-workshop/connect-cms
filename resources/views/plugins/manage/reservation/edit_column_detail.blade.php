@@ -157,12 +157,12 @@
 
                                             {{-- 選択肢名 --}}
                                             <td>
-                                                <input class="form-control" type="text" name="select_name_{{ $select->id }}" value="{{ old('select_name_'.$select->id, $select->select_name)}}">
+                                                <input class="form-control @if ($errors && $errors->has('select_name_'.$select->id)) border-danger @endif" type="text" name="select_name_{{ $select->id }}" value="{{ old('select_name_'.$select->id, $select->select_name)}}">
                                             </td>
 
                                             {{-- 非表示フラグ --}}
                                             <td class="align-middle text-center">
-                                                <input name="hide_flag_{{ $select->id }}" id="hide_flag_{{ $select->id }}" value="1" type="checkbox" @if (isset($select->hide_flag)) checked="checked" @endif>
+                                                <input name="hide_flag_{{ $select->id }}" id="hide_flag_{{ $select->id }}" value="1" type="checkbox" @if (old('hide_flag_'.$select->id, $select->hide_flag)) checked="checked" @endif>
                                             </td>
 
                                             {{-- 更新ボタン --}}
@@ -185,7 +185,7 @@
                                         <td></td>
                                         <td>
                                             {{-- 選択肢名 --}}
-                                            <input class="form-control" type="text" name="select_name" value="{{ old('select_name') }}" placeholder="選択肢名">
+                                            <input class="form-control @if ($errors && $errors->has('select_name')) border-danger @endif" type="text" name="select_name" value="{{ old('select_name') }}" placeholder="選択肢名">
                                         </td>
                                         <td class="text-center">
                                             {{-- ＋ボタン --}}

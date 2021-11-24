@@ -59,8 +59,12 @@ class ReservationManage extends ManagePluginBase
         $role_check_table["addColumn"]          = ['admin_site'];
         $role_check_table["updateColumn"]       = ['admin_site'];
         $role_check_table["updateColumnSequence"] = ['admin_site'];
+
+        // 項目詳細設定
         $role_check_table["editColumnDetail"]   = ['admin_site'];
         $role_check_table["updateColumnDetail"] = ['admin_site'];
+        $role_check_table["addSelect"]          = ['admin_site'];
+        $role_check_table["updateSelect"]       = ['admin_site'];
 
         return $role_check_table;
     }
@@ -701,6 +705,75 @@ class ReservationManage extends ManagePluginBase
 
         $message = '項目【 '. $column->column_name .' 】の詳細設定を更新しました。';
 
+        return redirect("/manage/reservation/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
+    }
+
+    /**
+     * 予約詳細項目（選択肢）の登録
+     */
+    public function addSelect($request, $id)
+    {
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            'select_name'  => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'select_name'  => '選択肢名',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // 新規登録時の表示順を設定
+        $max_display_sequence = ReservationsColumnsSelect::where('column_id', $request->column_id)->max('display_sequence');
+        $max_display_sequence = $max_display_sequence ? $max_display_sequence + 1 : 1;
+
+        // 施設の登録処理
+        $select = new ReservationsColumnsSelect();
+        // [TODO] 仮
+        $select->reservations_id = 0;
+
+        $select->columns_set_id = $request->columns_set_id;
+        $select->column_id = $request->column_id;
+        $select->select_name = $request->select_name;
+        $select->display_sequence = $max_display_sequence;
+        $select->save();
+        $message = '選択肢【 '. $request->select_name .' 】を追加しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/reservation/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
+    }
+
+    /**
+     * 選択肢の更新
+     */
+    public function updateSelect($request, $id)
+    {
+        // 明細行から更新対象を抽出する為のnameを取得
+        $str_select_name = "select_name_"."$request->select_id";
+        $str_hide_flag = "hide_flag_"."$request->select_id";
+
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            $str_select_name => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            $str_select_name => '選択肢名',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // 予約項目の更新処理
+        $select = ReservationsColumnsSelect::where('id', $request->select_id)->first();
+        $select->select_name = $request->$str_select_name;
+        $select->hide_flag = $request->$str_hide_flag;
+        $select->save();
+        $message = '選択肢【 '. $request->$str_select_name .' 】を更新しました。';
+
+        // 編集画面を呼び出す
         return redirect("/manage/reservation/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
     }
 }
