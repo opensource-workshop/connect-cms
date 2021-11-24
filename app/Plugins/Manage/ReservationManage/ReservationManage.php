@@ -56,6 +56,7 @@ class ReservationManage extends ManagePluginBase
         // 項目設定
         $role_check_table["editColumns"]        = ['admin_site'];
         $role_check_table["addColumn"]          = ['admin_site'];
+        $role_check_table["updateColumn"]       = ['admin_site'];
 
         return $role_check_table;
     }
@@ -568,6 +569,44 @@ class ReservationManage extends ManagePluginBase
         $column->display_sequence = $max_display_sequence;
         $column->save();
         $message = '予約項目【 '. $request->column_name .' 】を追加しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/reservation/editColumns/" . $request->columns_set_id)->with('flash_message', $message);
+    }
+
+    /**
+     * 予約項目の更新
+     */
+    public function updateColumn($request, $page_id, $frame_id)
+    {
+        // 明細行から更新対象を抽出する為のnameを取得
+        $str_column_name = "column_name_"."$request->column_id";
+        $str_column_type = "column_type_"."$request->column_id";
+        $str_required = "required_"."$request->column_id";
+        $str_hide_flag = "hide_flag_"."$request->column_id";
+
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            $str_column_name => ['required'],
+            $str_column_type => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            $str_column_name => '予約項目名',
+            $str_column_type => '型',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // 予約項目の更新処理
+        $column = ReservationsColumn::where('columns_set_id', $request->columns_set_id)->where('id', $request->column_id)->first();
+        $column->column_name = $request->$str_column_name;
+        $column->column_type = $request->$str_column_type;
+        $column->required = $request->$str_required ? Required::on : Required::off;
+        $column->hide_flag = $request->$str_hide_flag;
+        $column->save();
+        $message = '予約項目【 '. $request->$str_column_name .' 】を更新しました。';
 
         // 編集画面を呼び出す
         return redirect("/manage/reservation/editColumns/" . $request->columns_set_id)->with('flash_message', $message);
