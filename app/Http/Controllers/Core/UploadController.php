@@ -356,15 +356,15 @@ EOD;
         if ($method == null) {
             // method が空の場合は、初期値としてpostFile を呼ぶ
             return $this->postFile($request);
-        } elseif ($method == 'mosaic'){
-            return $this->callMosaicApi($request);
+        } elseif ($method == 'face'){
+            return $this->callFaceApi($request);
         }
     }
 
     /**
      * モザイクAPI の呼び出し
      */
-    public function callMosaicApi($request)
+    public function callFaceApi($request)
     {
         // ファイル受け取り(リクエスト内)
         if (!$request->hasFile('photo') || !$request->file('photo')->isValid()) {
@@ -397,16 +397,16 @@ EOD;
 
         // cURLセッションを初期化する
         $ch = curl_init();
-
+\Log::debug($request);
         // 送信データを指定
         $data = [
             //'api_key' => config('connect.PDF_THUMBNAIL_API_KEY'),
-            'scale' => 'rough',
+            'mosaic_scale' => $request->mosaic_scale,
             'photo' => base64_encode($request->file('photo')->get()),
         ];
 
         // API URL取得
-        $api_url = config('connect.MOSAIC_API_URL');
+        $api_url = config('connect.FACE_API_URL');
 
         // URLとオプションを指定する
         curl_setopt($ch, CURLOPT_URL, $api_url);

@@ -156,7 +156,7 @@
     }
 
     // モザイク
-    $plugins .= ' mosaic';
+    $plugins .= ' face';
 
     $plugins = "plugins  : '" . $plugins . "',";
 
@@ -191,7 +191,7 @@
     }
 
     // モザイク
-    $toolbar .= ' mosaic ';
+    $toolbar .= ' face ';
 
     $toolbar = "toolbar  : '" . $toolbar . "',";
     $mobile_toolbar = "toolbar  : '" . $mobile_toolbar . "',";
@@ -222,8 +222,8 @@
 {{-- 非表示のinput type file. pdf plugin用. see) public\js\tinymce\plugins\pdf\plugin.min.js --}}
 <input type="file" class="d-none" id="cc-pdf-upload-{{$frame_id}}">
 
-{{-- 非表示のinput type file. mosaic plugin用. see) public\js\tinymce\plugins\mosaic\plugin.min.js --}}
-<input type="file" class="d-none" id="cc-mosaic-upload-{{$frame_id}}">
+{{-- 非表示のinput type file. face plugin用. see) public\js\tinymce\plugins\face\plugin.min.js --}}
+<input type="file" class="d-none" id="cc-face-upload-{{$frame_id}}">
 
 {{-- bugfix: iphone or ipad + safari のみ、DOM(実際のinput type file)がないと機能しないため対応
     see) https://stackoverflow.com/questions/47664777/javascript-file-input-onchange-not-working-ios-safari-only --}}
@@ -355,10 +355,10 @@
 
                     input.click();
                 }
-                // mosaic plugin. フィールド名の先頭がmosaic
+                // face plugin. フィールド名の先頭がface
                 else if (meta.fieldname.startsWith('photo')) {
-                    // see) public\js\tinymce\plugins\mosaic\plugin.min.js
-                    var input = document.getElementById('cc-mosaic-upload-{{$frame_id}}');
+                    // see) public\js\tinymce\plugins\face\plugin.min.js
+                    var input = document.getElementById('cc-face-upload-{{$frame_id}}');
                     input.setAttribute('accept', '.jpg,.png');
 
                     input.onchange = function () {
