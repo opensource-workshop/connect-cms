@@ -34,11 +34,11 @@
     </td>
     {{-- 必須 --}}
     <td class="align-middle text-center">
-        <input type="checkbox" name="required_{{ $column->id }}" value="1" @if ($column->required == Required::on) checked="checked" @endif>
+        <input type="checkbox" name="required_{{ $column->id }}" value="1" @if (old('required_'.$column->id, $column->required) == Required::on) checked="checked" @endif>
     </td>
     {{-- 非表示フラグ --}}
     <td class="align-middle text-center">
-        <input name="hide_flag_{{ $column->id }}" id="hide_flag_{{ $column->id }}" value="1" type="checkbox" @if ($column->hide_flag) checked="checked" @endif>
+        <input name="hide_flag_{{ $column->id }}" id="hide_flag_{{ $column->id }}" value="1" type="checkbox" @if (old('hide_flag_'.$column->id, $column->hide_flag)) checked="checked" @endif>
     </td>
     {{-- 選択肢の設定ボタン --}}
     <td class="text-center px-2">

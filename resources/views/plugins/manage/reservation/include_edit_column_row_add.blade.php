@@ -24,7 +24,7 @@
     </td>
     {{-- 必須 --}}
     <td class="align-middle text-center">
-        <input type="checkbox" name="required" value="1" data-toggle="tooltip" title="必須項目として指定します。">
+        <input type="checkbox" name="required" value="1" @if (old('required') == Required::on) checked="checked" @endif data-toggle="tooltip" title="必須項目として指定します。">
     </td>
     {{-- ＋ボタン --}}
     <td class="text-center">

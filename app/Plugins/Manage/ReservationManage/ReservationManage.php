@@ -12,6 +12,8 @@ use App\Models\User\Reservations\ReservationsColumnsSet;
 
 use App\Plugins\Manage\ManagePluginBase;
 
+use App\Enums\Required;
+
 /**
  * 施設管理
  *
@@ -28,31 +30,32 @@ class ReservationManage extends ManagePluginBase
     public function declareRole()
     {
         // 権限チェックテーブル
-        $role_check_table = array();
+        $role_check_table = [];
         // 施設一覧
-        $role_check_table["index"]              = array('admin_site');
-        $role_check_table["regist"]             = array('admin_site');
-        $role_check_table["store"]              = array('admin_site');
-        $role_check_table["edit"]               = array('admin_site');
-        $role_check_table["update"]             = array('admin_site');
-        $role_check_table["destroy"]            = array('admin_site');
-        $role_check_table["copy"]               = array('admin_site');
+        $role_check_table["index"]              = ['admin_site'];
+        $role_check_table["regist"]             = ['admin_site'];
+        $role_check_table["store"]              = ['admin_site'];
+        $role_check_table["edit"]               = ['admin_site'];
+        $role_check_table["update"]             = ['admin_site'];
+        $role_check_table["destroy"]            = ['admin_site'];
+        $role_check_table["copy"]               = ['admin_site'];
 
         // 施設カテゴリ設定
-        $role_check_table["categories"]         = array('admin_site');
-        $role_check_table["saveCategories"]     = array('admin_site');
-        $role_check_table["deleteCategories"]   = array('admin_site');
+        $role_check_table["categories"]         = ['admin_site'];
+        $role_check_table["saveCategories"]     = ['admin_site'];
+        $role_check_table["deleteCategories"]   = ['admin_site'];
 
         // 項目セット
-        $role_check_table["columnSets"]         = array('admin_site');
-        $role_check_table["registColumnSet"]    = array('admin_site');
-        $role_check_table["storeColumnSet"]     = array('admin_site');
-        $role_check_table["editColumnSet"]      = array('admin_site');
-        $role_check_table["updateColumnSet"]    = array('admin_site');
-        $role_check_table["destroyColumnSet"]   = array('admin_site');
+        $role_check_table["columnSets"]         = ['admin_site'];
+        $role_check_table["registColumnSet"]    = ['admin_site'];
+        $role_check_table["storeColumnSet"]     = ['admin_site'];
+        $role_check_table["editColumnSet"]      = ['admin_site'];
+        $role_check_table["updateColumnSet"]    = ['admin_site'];
+        $role_check_table["destroyColumnSet"]   = ['admin_site'];
 
         // 項目設定
-        $role_check_table["editColumns"]        = array('admin_site');
+        $role_check_table["editColumns"]        = ['admin_site'];
+        $role_check_table["addColumn"]          = ['admin_site'];
 
         return $role_check_table;
     }
@@ -528,5 +531,45 @@ class ReservationManage extends ManagePluginBase
             'columns'        => $columns,
             'title_flag'     => $title_flag,
         ]);
+    }
+
+    /**
+     * 予約項目の登録
+     */
+    public function addColumn($request, $id)
+    {
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            'column_name'  => ['required'],
+            'column_type'  => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'column_name'  => '予約項目名',
+            'column_type'  => '型',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // 新規登録時の表示順を設定
+        $max_display_sequence = ReservationsColumn::where('columns_set_id', $request->columns_set_id)->max('display_sequence');
+        $max_display_sequence = $max_display_sequence ? $max_display_sequence + 1 : 1;
+
+        // 施設の登録処理
+        $column = new ReservationsColumn();
+        // [TODO] 仮
+        $column->reservations_id = 0;
+
+        $column->columns_set_id = $request->columns_set_id;
+        $column->column_name = $request->column_name;
+        $column->column_type = $request->column_type;
+        $column->required = $request->required ? Required::on : Required::off;
+        $column->display_sequence = $max_display_sequence;
+        $column->save();
+        $message = '予約項目【 '. $request->column_name .' 】を追加しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/reservation/editColumns/" . $request->columns_set_id)->with('flash_message', $message);
     }
 }
