@@ -18,12 +18,7 @@
         <select class="form-control" name="column_type" style="min-width: 100px;">
             <option value="" disabled>型を指定</option>
             @foreach (ReservationColumnType::getMembers() as $key=>$value)
-                <option value="{{$key}}"
-                    {{-- validation用 --}}
-                    @if($key == old('column_type'))
-                        selected="selected"
-                    @endif
-                >{{ $value }}</option>
+                <option value="{{$key}}" @if ($key == old('column_type')) selected="selected" @endif>{{ $value }}</option>
             @endforeach
         </select>
     </td>
@@ -33,7 +28,9 @@
     </td>
     {{-- ＋ボタン --}}
     <td class="text-center">
-        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_column(this);"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
+        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_column(this);">
+            <i class="fas fa-plus"></i> <span class="d-sm-none">追加</span>
+        </button>
     </td>
     {{-- 表示上の区切り線が切れてしまう為、空のtdタグを設置 --}}
     <td></td>

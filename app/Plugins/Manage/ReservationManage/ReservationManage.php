@@ -475,26 +475,10 @@ class ReservationManage extends ManagePluginBase
      */
     public function editColumns($request, $id)
     {
-        // 施設項目セット取得
-        // $columns_sets = ReservationsColumnsSet::orderBy('display_sequence')->paginate(10, '*', 'page', $page);
-
-        // --- 基本データの取得
-        // 施設予約＆フレームデータ
-        // $reservation_frame = $this->getFrame($frame_id);
-
-        // 施設データ
-        // $reservation = new Reservation();
-
-        // if (!empty($reservations_id)) {
-        //     // id が渡ってくればid が対象
-        //     $reservation = Reservation::where('id', $reservations_id)->first();
-        // } elseif (!empty($reservation_frame->bucket_id)) {
-        //     // Frame のbucket_id があれば、bucket_id から施設データ取得
-        //     $reservation = Reservation::where('bucket_id', $reservation_frame->bucket_id)->first();
-        // }
-
-        // 施設予約データがない場合は0をセット
-        // $reservations_id = empty($reservation) ? null : $reservation->id;
+        $columns_set = ReservationsColumnsSet::find($id);
+        if (!$columns_set) {
+            return;
+        }
 
         // 予約項目データ
         $columns = ReservationsColumn::
@@ -510,7 +494,6 @@ class ReservationManage extends ManagePluginBase
                 DB::raw('count(reservations_columns_selects.id) as select_count'),
                 DB::raw('GROUP_CONCAT(reservations_columns_selects.select_name order by reservations_columns_selects.display_sequence SEPARATOR \',\') as select_names'),
             )
-            // ->where('reservations_columns.reservations_id', $reservations_id)
             ->where('reservations_columns.columns_set_id', $id)
             // 予約項目の子データ（選択肢）
             ->leftJoin('reservations_columns_selects', function ($join) {
@@ -539,13 +522,11 @@ class ReservationManage extends ManagePluginBase
         }
 
         return view('plugins.manage.reservation.edit_columns', [
-            "function"      => __FUNCTION__,
-            "plugin_name"   => "reservation",
-            // "columns_sets"  => $columns_sets,
-            // 'reservations_id' => $reservations_id,
-            // 'reservation'   => $reservation,
-            'columns'       => $columns,
-            'title_flag'    => $title_flag,
+            "function"       => __FUNCTION__,
+            "plugin_name"    => "reservation",
+            'columns_set'    => $columns_set,
+            'columns'        => $columns,
+            'title_flag'     => $title_flag,
         ]);
     }
 }

@@ -1,6 +1,7 @@
 {{--
  * 項目設定画面のメインテンプレート
  *
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設管理
@@ -54,11 +55,10 @@
         {{-- 一覧フォーム --}}
         <form action="{{url('/')}}/manage/reservation/addColumn" id="form_columns" name="form_columns" method="POST">
             {{ csrf_field() }}
-            {{-- <input type="hidden" name="reservations_id" value="{{$reservation->id}}"> --}}
+            <input type="hidden" name="columns_set_id" value="{{$columns_set->id}}">
             <input type="hidden" name="column_id" value="">
             <input type="hidden" name="display_sequence" value="">
             <input type="hidden" name="display_sequence_operation" value="">
-            <input type="hidden" name="return_frame_action" value="edit">
 
             {{-- 登録後メッセージ表示 --}}
             @include('plugins.common.flash_message')

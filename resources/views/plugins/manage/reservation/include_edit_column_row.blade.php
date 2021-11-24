@@ -8,7 +8,7 @@
 --}}
 <tr @if ($column->hide_flag) class="table-secondary" @endif>
     {{-- 表示順操作 --}}
-    <td nowrap>
+    <td class="align-middle text-center" nowrap>
         {{-- 上移動 --}}
         <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_display_sequence({{ $column->id }}, {{ $column->display_sequence }}, 'up')">
             <i class="fas fa-arrow-up"></i>
@@ -28,16 +28,7 @@
         <select class="form-control" name="column_type_{{ $column->id }}" style="min-width: 140px;">
             <option value="" disabled>型を指定</option>
             @foreach (ReservationColumnType::getMembers() as $key=>$value)
-                <option value="{{$key}}"
-                    {{-- 初期表示用 --}}
-                    @if($key == $column->column_type)
-                        selected="selected"
-                    @endif
-                    {{-- validation用 --}}
-                    @if($key == old("column_type_$column->id"))
-                        selected="selected"
-                    @endif
-                >{{ $value }}</option>
+                <option value="{{$key}}" @if ($key == old("column_type_$column->id", $column->column_type)) selected="selected" @endif>{{ $value }}</option>
             @endforeach
         </select>
     </td>
@@ -60,17 +51,14 @@
                     id="detail-button-tip" data-toggle="tooltip" title="選択肢がありません。設定してください。" data-trigger="manual" data-placement="bottom"
                 @endif
             @endif
-            onclick="location.href='{{url('/')}}/plugin/reservations/editColumnDetail/{{$page->id}}/{{$frame_id}}/{{ $column->id }}#frame-{{$frame->id}}'"
+            onclick="location.href='{{url('/')}}/manage/reservation/editColumnDetail/{{ $column->id }}'"
         >
             <i class="far fa-window-restore"></i> <span class="d-sm-none">詳細</span>
         </button>
     </td>
     {{-- 更新ボタン --}}
     <td class="text-center px-2">
-        <button
-            class="btn btn-primary cc-font-90 text-nowrap"
-            onclick="javascript:submit_update_column({{ $column->id }});"
-        >
+        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_update_column({{ $column->id }});">
             <i class="fas fa-check"></i> <span class="d-sm-none">更新</span>
         </button>
     </td>
