@@ -132,7 +132,7 @@ class InitAndMigrationFromReservationsColumnsSetAndReservationsCategory extends 
                     'reservations_id'            => $reservation->id,
                     'reservations_categories_id' => $reservations_category->id,
                     'view_flag'                  => ShowType::show,
-                    'display_sequence'           => 1,
+                    'display_sequence'           => $i + 2,
                 ]);
 
                 // [TODO]
