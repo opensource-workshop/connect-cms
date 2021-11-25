@@ -12,7 +12,7 @@
 
 {{-- バケツなし --}}
 <div class="alert alert-warning">
-    <i class="fas fa-exclamation-circle"></i> {{ __('messages.empty_bucket_setting', ['plugin_name' => PluginName::getDescriptionLowerKey($frame->plugin_name)]) }}
+    <i class="fas fa-exclamation-circle"></i> {{ __('messages.empty_bucket_setting', ['plugin_name' => $frame->plugin_name_full]) }}
 </div>
 
 @endsection
