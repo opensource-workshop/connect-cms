@@ -50,6 +50,18 @@
         form_selects.submit();
     }
 
+    /**
+     * 選択肢の削除ボタン押下
+     */
+     function submit_delete_select(select_id) {
+        if (confirm('選択肢を削除します。\nよろしいですか？')){
+            form_selects.action = "{{url('/')}}/manage/reservation/deleteSelect";
+            form_selects.select_id.value = select_id;
+            form_selects.submit();
+        }
+        return false;
+    }
+
     // ツールチップ
     $(function () {
         // 有効化
@@ -135,6 +147,7 @@
                                             <th class="text-center" nowrap>選択肢名</th>
                                             <th class="text-center" nowrap>非表示 <span class="fas fa-info-circle" data-toggle="tooltip" title="チェックした選択肢を非表示にします。"></th>
                                             <th class="text-center" nowrap>更新</th>
+                                            <th class="text-center" nowrap>削除</th>
                                         @endif
                                     </tr>
                                 </thead>
@@ -172,6 +185,16 @@
                                                     onclick="javascript:submit_update_select({{ $select->id }});"
                                                 >
                                                     <i class="fas fa-check"></i> <span class="d-sm-none">更新</span>
+                                                </button>
+                                            </td>
+
+                                            {{-- 削除ボタン --}}
+                                            <td class="text-center">
+                                                <button
+                                                    class="btn btn-danger cc-font-90 text-nowrap"
+                                                    onclick="javascript:return submit_delete_select({{ $select->id }});"
+                                                >
+                                                    <i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span>
                                                 </button>
                                             </td>
                                         </tr>

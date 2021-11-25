@@ -66,6 +66,7 @@ class ReservationManage extends ManagePluginBase
         $role_check_table["addSelect"]          = ['admin_site'];
         $role_check_table["updateSelect"]       = ['admin_site'];
         $role_check_table["updateSelectSequence"] = ['admin_site'];
+        $role_check_table["deleteSelect"]       = ['admin_site'];
 
         return $role_check_table;
     }
@@ -510,7 +511,8 @@ class ReservationManage extends ManagePluginBase
             ->where('reservations_columns.columns_set_id', $id)
             // 予約項目の子データ（選択肢）
             ->leftJoin('reservations_columns_selects', function ($join) {
-                $join->on('reservations_columns.id', '=', 'reservations_columns_selects.column_id');
+                $join->on('reservations_columns.id', '=', 'reservations_columns_selects.column_id')
+                    ->whereNull('reservations_columns_selects.deleted_at');
             })
             ->groupBy(
                 'reservations_columns.id',
@@ -804,6 +806,22 @@ class ReservationManage extends ManagePluginBase
         $pair_select->save();
 
         $message = '選択肢【 '. $target_select->select_name .' 】の表示順を更新しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/reservation/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
+    }
+
+    /**
+     * 項目に紐づく選択肢の削除
+     */
+    public function deleteSelect($request, $id)
+    {
+        // 削除
+        ReservationsColumnsSelect::destroy('id', $request->select_id);
+
+        // 明細行から削除対象の選択肢名を抽出
+        $str_select_name = "select_name_"."$request->select_id";
+        $message = '選択肢【 '. $request->$str_select_name .' 】を削除しました。';
 
         // 編集画面を呼び出す
         return redirect("/manage/reservation/editColumnDetail/" . $request->column_id)->with('flash_message', $message);

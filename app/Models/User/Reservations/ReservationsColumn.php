@@ -3,12 +3,16 @@
 namespace App\Models\User\Reservations;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 use App\UserableNohistory;
 use App\Enums\ReservationColumnType;
 
 class ReservationsColumn extends Model
 {
+    // 論理削除
+    use SoftDeletes;
+
     // 保存時のユーザー関連データの保持（履歴なしUserable）
     use UserableNohistory;
 
