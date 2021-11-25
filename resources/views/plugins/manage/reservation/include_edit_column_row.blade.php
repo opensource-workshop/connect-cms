@@ -62,6 +62,11 @@
             <i class="fas fa-check"></i> <span class="d-sm-none">更新</span>
         </button>
     </td>
+
+    {{-- 削除ボタン --}}
+    <td class="text-center px-2">
+        <button class="btn btn-danger cc-font-90 text-nowrap" onclick="javascript:return submit_delete_column({{ $column->id }});"><i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span></button>
+    </td>
 </tr>
 {{-- 選択肢の設定内容の表示行 --}}
 @if (

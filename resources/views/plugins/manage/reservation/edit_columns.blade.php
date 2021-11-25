@@ -13,27 +13,45 @@
 @section('manage_content')
 
 <script type="text/javascript">
-    {{-- 予約項目の追加のsubmit JavaScript --}}
+    /**
+     * 予約項目の追加
+     */
     function submit_add_column(btn) {
         form_columns.action = "{{url('/')}}/manage/reservation/addColumn";
         btn.disabled = true;
         form_columns.submit();
     }
 
-    {{-- 予約項目の更新のsubmit JavaScript --}}
+    /**
+     * 予約項目の更新
+     */
     function submit_update_column(column_id) {
         form_columns.action = "{{url('/')}}/manage/reservation/updateColumn";
         form_columns.column_id.value = column_id;
         form_columns.submit();
     }
 
-    {{-- 予約項目の表示順操作のsubmit JavaScript --}}
+    /**
+     * 予約項目の表示順操作
+     */
     function submit_display_sequence(column_id, display_sequence, display_sequence_operation) {
         form_columns.action = "{{url('/')}}/manage/reservation/updateColumnSequence";
         form_columns.column_id.value = column_id;
         form_columns.display_sequence.value = display_sequence;
         form_columns.display_sequence_operation.value = display_sequence_operation;
         form_columns.submit();
+    }
+
+    /**
+     * 項目の削除ボタン押下
+     */
+     function submit_delete_column(column_id) {
+        if (confirm('項目を削除します。\nよろしいですか？')){
+            form_columns.action = "{{url('/')}}/manage/reservation/deleteColumn";
+            form_columns.column_id.value = column_id;
+            form_columns.submit();
+        }
+        return false;
     }
 
     // ツールチップ
@@ -99,6 +117,7 @@
                                 <th class="text-center" nowrap>非表示 <span class="fas fa-info-circle" data-toggle="tooltip" title="チェックした項目を非表示にします。"></th>
                                 <th class="text-center" nowrap>詳細</th>
                                 <th class="text-center" nowrap>更新</th>
+                                <th class="text-center" nowrap>削除</th>
                             @endif
                         </tr>
                     </thead>
@@ -109,7 +128,7 @@
                         @endforeach
                         {{-- 新規登録用の行 --}}
                         <tr class="thead-light">
-                            <th colspan="7">【予約項目の追加行】</th>
+                            <th colspan="8">【予約項目の追加行】</th>
                         </tr>
                         @include('plugins.manage.reservation.include_edit_column_row_add')
                     </tbody>

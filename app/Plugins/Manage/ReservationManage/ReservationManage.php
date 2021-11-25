@@ -14,6 +14,7 @@ use App\Models\User\Reservations\ReservationsColumnsSet;
 use App\Plugins\Manage\ManagePluginBase;
 
 use App\Enums\Required;
+use App\Enums\NotShowType;
 
 /**
  * 施設管理
@@ -59,6 +60,7 @@ class ReservationManage extends ManagePluginBase
         $role_check_table["addColumn"]          = ['admin_site'];
         $role_check_table["updateColumn"]       = ['admin_site'];
         $role_check_table["updateColumnSequence"] = ['admin_site'];
+        $role_check_table["deleteColumn"]       = ['admin_site'];
 
         // 項目詳細設定
         $role_check_table["editColumnDetail"]   = ['admin_site'];
@@ -474,6 +476,8 @@ class ReservationManage extends ManagePluginBase
      */
     public function destroyColumnSet($request, $id)
     {
+        // 項目セットに紐づいてる項目・選択肢はあえて削除しない。
+
         $columns_set = ReservationsColumnsSet::find($id);
         $columns_set_name = $columns_set->name;
         $columns_set->delete();
@@ -577,6 +581,7 @@ class ReservationManage extends ManagePluginBase
         $column->column_name = $request->column_name;
         $column->column_type = $request->column_type;
         $column->required = $request->required ? Required::on : Required::off;
+        $column->hide_flag = NotShowType::show;
         $column->display_sequence = $max_display_sequence;
         $column->save();
         $message = '予約項目【 '. $request->column_name .' 】を追加しました。';
@@ -615,7 +620,7 @@ class ReservationManage extends ManagePluginBase
         $column->column_name = $request->$str_column_name;
         $column->column_type = $request->$str_column_type;
         $column->required = $request->$str_required ? Required::on : Required::off;
-        $column->hide_flag = $request->$str_hide_flag;
+        $column->hide_flag = $request->$str_hide_flag ? NotShowType::not_show : NotShowType::show;
         $column->save();
         $message = '予約項目【 '. $request->$str_column_name .' 】を更新しました。';
 
@@ -650,6 +655,28 @@ class ReservationManage extends ManagePluginBase
         $pair_column->save();
 
         $message = '予約項目【 '. $target_column->column_name .' 】の表示順を更新しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/reservation/editColumns/" . $request->columns_set_id)->with('flash_message', $message);
+    }
+
+    /**
+     * 項目の削除
+     */
+    public function deleteColumn($request, $id)
+    {
+        // 明細行から削除対象の項目名を抽出
+        $str_column_name = "column_name_"."$request->column_id";
+
+        // 項目の削除
+        ReservationsColumn::destroy('id', $request->column_id);
+
+        // 項目に紐づく選択肢の削除
+        // deleted_id, deleted_nameを自動セットするため、複数件削除する時は collectionのpluck('id')でid配列を取得して destroy()で消す。
+        $select_ids = ReservationsColumnsSelect::where('column_id', $request->column_id)->pluck('id');
+        ReservationsColumnsSelect::destroy($select_ids);
+
+        $message = '項目【 '. $request->$str_column_name .' 】を削除しました。';
 
         // 編集画面を呼び出す
         return redirect("/manage/reservation/editColumns/" . $request->columns_set_id)->with('flash_message', $message);
@@ -740,6 +767,7 @@ class ReservationManage extends ManagePluginBase
         $select->columns_set_id = $request->columns_set_id;
         $select->column_id = $request->column_id;
         $select->select_name = $request->select_name;
+        $select->hide_flag = NotShowType::show;
         $select->display_sequence = $max_display_sequence;
         $select->save();
         $message = '選択肢【 '. $request->select_name .' 】を追加しました。';
@@ -772,7 +800,7 @@ class ReservationManage extends ManagePluginBase
         // 予約項目の更新処理
         $select = ReservationsColumnsSelect::where('id', $request->select_id)->first();
         $select->select_name = $request->$str_select_name;
-        $select->hide_flag = $request->$str_hide_flag;
+        $select->hide_flag = $request->$str_hide_flag ? NotShowType::not_show : NotShowType::show;
         $select->save();
         $message = '選択肢【 '. $request->$str_select_name .' 】を更新しました。';
 
