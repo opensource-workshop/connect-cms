@@ -64,7 +64,7 @@
                                         <small class="text-muted">※ カテゴリなしは削除できません。</small>
                                     @endif
                                 </td>
-                                <td nowrap>
+                                <td nowrap class="text-center">
                                     {{-- カテゴリなしは削除不可 --}}
                                     @if ($category->id != 1)
                                         <a href="javascript:form_delete('{{$category->id}}');"><span class="btn btn-danger"><i class="fas fa-trash-alt"></i></span></a>
