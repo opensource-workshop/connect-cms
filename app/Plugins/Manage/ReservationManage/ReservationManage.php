@@ -120,7 +120,7 @@ class ReservationManage extends ManagePluginBase
             })
             ->orderBy('reservations_categories.display_sequence')
             ->orderBy('reservations_facilities.display_sequence')
-            ->paginate(50, null, 'page', $page);
+            ->paginate(100, null, 'page', $page);
 
         return view('plugins.manage.reservation.index', [
             "function" => __FUNCTION__,
