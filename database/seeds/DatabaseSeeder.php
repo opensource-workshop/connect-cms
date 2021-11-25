@@ -16,6 +16,5 @@ class DatabaseSeeder extends Seeder
         $this->call(DefaultUsersRolesTableSeeder::class);
         $this->call(DefaultConfigsTableSeeder::class);
         $this->call(DefaultPluginsTableSeeder::class);
-        $this->call(DefaultReservationsCategoryTableSeeder::class);
     }
 }

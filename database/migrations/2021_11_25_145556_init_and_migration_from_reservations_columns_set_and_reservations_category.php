@@ -5,6 +5,8 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 use App\Models\User\Reservations\Reservation;
+use App\Models\User\Reservations\ReservationsCategory;
+use App\Models\User\Reservations\ReservationsChoiceCategory;
 use App\Models\User\Reservations\ReservationsColumn;
 use App\Models\User\Reservations\ReservationsColumnsSelect;
 use App\Models\User\Reservations\ReservationsColumnsSet;
@@ -14,7 +16,7 @@ use App\Enums\NotShowType;
 use App\Enums\Required;
 use App\Enums\ReservationColumnType;
 
-class InitAndMigrationFromReservationsColumnsSet extends Migration
+class InitAndMigrationFromReservationsColumnsSetAndReservationsCategory extends Migration
 {
     /**
      * Run the migrations.
@@ -23,6 +25,18 @@ class InitAndMigrationFromReservationsColumnsSet extends Migration
      */
     public function up()
     {
+        // 施設カテゴリ
+        if (ReservationsCategory::count() == 0) {
+            // 施設カテゴリのid=1は、カテゴリなしで特別なデータ。消せないように対応する。
+            ReservationsCategory::insert([
+                'id' => 1,
+                'category' => 'カテゴリなし',
+                'display_sequence' => 1,
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+        }
+
         // 各テーブルの reservations_id は今後削除する見込みのため、マイグレーションが走り終わったらseederではなく、マイグレーションで移行PGを作成する。
         // ReservationsColumn.reservations_id
         // ReservationsColumnsSelect.reservations_id
@@ -88,7 +102,15 @@ class InitAndMigrationFromReservationsColumnsSet extends Migration
 
                 // 項目セット登録
                 $columns_set = ReservationsColumnsSet::create([
-                    'name'             => $reservation->reservation_name,
+                    'name'             => $reservation->reservation_name . 'セット',
+                    'display_sequence' => $i + 2,
+                ]);
+
+                // 施設カテゴリ登録
+                // - 移行後は、バケツから施設カテゴリを選んで、そのカテゴリの施設を表示するようにする。
+                // - 移行で現在と同じ状態にするには、バケツ名と同じカテゴリを作成して、それを表示する。
+                $reservations_category = ReservationsCategory::create([
+                    'category'         => $reservation->reservation_name . 'カテゴリ',
                     'display_sequence' => $i + 2,
                 ]);
 
@@ -99,7 +121,17 @@ class InitAndMigrationFromReservationsColumnsSet extends Migration
                 ReservationsColumnsSelect::where('reservations_id', $reservation->id)->update(['columns_set_id' => $columns_set->id]);
 
                 // 施設にセット
-                ReservationsFacility::where('reservations_id', $reservation->id)->update(['columns_set_id' => $columns_set->id]);
+                ReservationsFacility::where('reservations_id', $reservation->id)->update([
+                    'columns_set_id' => $columns_set->id,
+                    'reservations_categories_id' => $reservations_category->id
+                ]);
+
+                // バケツで使うカテゴリ配下の施設
+                $columns_set = ReservationsChoiceCategory::create([
+                    'reservations_id'            => $reservation->id,
+                    'reservations_categories_id' => $reservations_category->id,
+                    'display_sequence'           => 1,
+                ]);
 
                 // [TODO]
                 // 後でdrop: reservations_columns.reservations_id
