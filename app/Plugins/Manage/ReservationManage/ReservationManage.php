@@ -65,6 +65,7 @@ class ReservationManage extends ManagePluginBase
         $role_check_table["updateColumnDetail"] = ['admin_site'];
         $role_check_table["addSelect"]          = ['admin_site'];
         $role_check_table["updateSelect"]       = ['admin_site'];
+        $role_check_table["updateSelectSequence"] = ['admin_site'];
 
         return $role_check_table;
     }
@@ -772,6 +773,37 @@ class ReservationManage extends ManagePluginBase
         $select->hide_flag = $request->$str_hide_flag;
         $select->save();
         $message = '選択肢【 '. $request->$str_select_name .' 】を更新しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/reservation/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
+    }
+
+    /**
+     * 選択肢の表示順の更新
+     */
+    public function updateSelectSequence($request, $id)
+    {
+        // ボタンが押された行の施設データ
+        $target_select = ReservationsColumnsSelect::where('id', $request->select_id)->first();
+
+        // ボタンが押された前（後）の施設データ
+        $query = ReservationsColumnsSelect::where('columns_set_id', $request->columns_set_id)
+            ->where('column_id', $request->column_id);
+        $pair_select = $request->display_sequence_operation == 'up' ?
+            $query->where('display_sequence', '<', $request->display_sequence)->orderby('display_sequence', 'desc')->limit(1)->first() :
+            $query->where('display_sequence', '>', $request->display_sequence)->orderby('display_sequence', 'asc')->limit(1)->first();
+
+        // それぞれの表示順を退避
+        $target_select_display_sequence = $target_select->display_sequence;
+        $pair_select_display_sequence = $pair_select->display_sequence;
+
+        // 入れ替えて更新
+        $target_select->display_sequence = $pair_select_display_sequence;
+        $target_select->save();
+        $pair_select->display_sequence = $target_select_display_sequence;
+        $pair_select->save();
+
+        $message = '選択肢【 '. $target_select->select_name .' 】の表示順を更新しました。';
 
         // 編集画面を呼び出す
         return redirect("/manage/reservation/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
