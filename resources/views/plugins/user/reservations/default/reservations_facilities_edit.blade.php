@@ -13,13 +13,6 @@
 @endsection
 
 @section("plugin_setting_$frame->id")
-@auth
-@if (!$reservation->id)
-    <div class="alert alert-warning mt-2">
-        <i class="fas fa-exclamation-circle"></i>
-        使用する施設予約を選択するか、新規作成してください。
-    </div>
-@else
 
 <script type="text/javascript">
     {{-- 施設追加のsubmit JavaScript --}}
@@ -49,7 +42,6 @@
         // 有効化
         $('[data-toggle="tooltip"]').tooltip()
     })
-
 </script>
 
 <!-- Add or Update Form Button -->
@@ -83,13 +75,13 @@
                 <tbody>
                     {{-- 更新用の行 --}}
                     @foreach($facilities as $facility)
-                        @include('plugins.user.reservations.default.reservations_facilities_edit_row')
+                        {{-- @include('plugins.user.reservations.default.reservations_facilities_edit_row') --}}
                     @endforeach
                     {{-- 新規登録用の行 --}}
                     <tr class="thead-light">
                         <th colspan="4">【施設の追加行】</th>
                     </tr>
-                    @include('plugins.user.reservations.default.reservations_facilities_edit_row_add')
+                    {{-- @include('plugins.user.reservations.default.reservations_facilities_edit_row_add') --}}
                 </tbody>
             </table>
         </div>
@@ -111,6 +103,5 @@
         </div>
     </form>
 </div>
-@endif
-@endauth
+
 @endsection

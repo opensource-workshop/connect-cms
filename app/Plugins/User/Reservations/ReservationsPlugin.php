@@ -851,6 +851,11 @@ class ReservationsPlugin extends UserPluginBase
         }
         $reservation = $reservation ?? new Reservation();
 
+        if (!$reservation_frame->bucket_id) {
+            // バケツ空テンプレートを呼び出す。
+            return $this->commonView('empty_bucket_setting');
+        }
+
         // 表示テンプレートを呼び出す。
         return $this->view('reservations_edit_buckets', [
             'reservation_frame'  => $reservation_frame,
@@ -1035,6 +1040,11 @@ class ReservationsPlugin extends UserPluginBase
 
         // --- 画面に値を渡す準備
         $facilities = ReservationsFacility::where('reservations_id', $reservations_id)->orderby('display_sequence')->get();
+
+        if (!$reservation->id) {
+            // バケツ空テンプレートを呼び出す。
+            return $this->commonView('empty_bucket_setting');
+        }
 
         // 編集画面テンプレートを呼び出す。
         return $this->view('reservations_facilities_edit', [

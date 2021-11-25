@@ -18,26 +18,18 @@
 @include('plugins.common.errors_form_line')
 
 {{-- メッセージエリア --}}
-@if (!$reservation_frame->bucket_id)
-    <div class="alert alert-warning" style="margin-top: 10px;">
-        <i class="fas fa-exclamation-circle"></i>
-        使用する施設予約コンテンツを選択するか、新規作成してください。
-    </div>
-@else
-    <div class="alert alert-info" style="margin-top: 10px;">
-        <i class="fas fa-exclamation-circle"></i>
-
-        @if ($message)
-            {{$message}}
+<div class="alert alert-info" style="margin-top: 10px;">
+    <i class="fas fa-exclamation-circle"></i>
+    @if ($message)
+        {{$message}}
+    @else
+        @if (empty($reservation) || $create_flag)
+            新しい施設予約を登録します。
         @else
-            @if (empty($reservation) || $create_flag)
-                新しい施設予約を登録します。
-            @else
-                施設予約を変更します。
-            @endif
+            施設予約を変更します。
         @endif
-    </div>
-@endif
+    @endif
+</div>
 
 @if (!$reservation->id && !$create_flag)
 @else
