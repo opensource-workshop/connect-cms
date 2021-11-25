@@ -17,6 +17,7 @@ class CreateReservationsChoiceCategoriesTable extends Migration
             $table->bigIncrements('id');
             $table->integer('reservations_id')->comment('施設予約ID');
             $table->integer('reservations_categories_id')->comment('施設カテゴリID');
+            $table->integer('view_flag')->nullable();
             $table->integer('display_sequence')->default('0');
             $table->integer('created_id')->nullable();
             $table->string('created_name', 255)->nullable();

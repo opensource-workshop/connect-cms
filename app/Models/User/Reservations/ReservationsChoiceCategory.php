@@ -19,6 +19,7 @@ class ReservationsChoiceCategory extends Model
     protected $fillable = [
         'reservations_id',
         'reservations_categories_id',
+        'view_flag',
         'display_sequence',
     ];
 }

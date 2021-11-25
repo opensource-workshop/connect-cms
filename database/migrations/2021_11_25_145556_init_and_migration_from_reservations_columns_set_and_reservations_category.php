@@ -15,6 +15,7 @@ use App\Models\User\Reservations\ReservationsFacility;
 use App\Enums\NotShowType;
 use App\Enums\Required;
 use App\Enums\ReservationColumnType;
+use App\Enums\ShowType;
 
 class InitAndMigrationFromReservationsColumnsSetAndReservationsCategory extends Migration
 {
@@ -130,6 +131,7 @@ class InitAndMigrationFromReservationsColumnsSetAndReservationsCategory extends 
                 $columns_set = ReservationsChoiceCategory::create([
                     'reservations_id'            => $reservation->id,
                     'reservations_categories_id' => $reservations_category->id,
+                    'view_flag'                  => ShowType::show,
                     'display_sequence'           => 1,
                 ]);
 
