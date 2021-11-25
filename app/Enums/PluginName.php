@@ -62,4 +62,20 @@ final class PluginName extends EnumsBase
     {
         return strtolower($key);
     }
+
+    /**
+     * 小文字keyから対応した和名を返す
+     *
+     * @param string $key 小文字のみのkey
+     */
+    public static function getDescriptionLowerKey($lower_key): string
+    {
+        // 小文字keyのenumを作成
+        $lower_enums = [];
+        foreach (static::enum as $enum_key => $enum_value) {
+            $lower_enums[strtolower($enum_key)] = $enum_value;
+        }
+
+        return array_key_exists($lower_key, $lower_enums) ? $lower_enums[$lower_key] : '';
+    }
 }
