@@ -135,7 +135,8 @@ class ReservationsPlugin extends UserPluginBase
         // POST を取得する。(登録データ行の取得)
         $this->post = ReservationsInput::select('reservations_inputs.*', 'reservations_facilities.facility_name')
             ->join('reservations_facilities', function ($join) {
-                $join->on('reservations_inputs.facility_id', '=', 'reservations_facilities.id');
+                $join->on('reservations_inputs.facility_id', '=', 'reservations_facilities.id')
+                    ->whereNull('reservations_facilities.deleted_at');
             })
             ->where(function ($query) {
                 // 権限によって表示する記事を絞る
@@ -797,7 +798,8 @@ class ReservationsPlugin extends UserPluginBase
             DB::raw('GROUP_CONCAT(reservations_facilities.facility_name SEPARATOR \'\n\') as facility_names'),
         );
         $query->leftjoin('reservations_facilities', function ($join) {
-            $join->on('reservations.id', '=', 'reservations_facilities.reservations_id');
+            $join->on('reservations.id', '=', 'reservations_facilities.reservations_id')
+                ->whereNull('reservations_facilities.deleted_at');
         });
         $query->groupBy(
             'reservations.id',
