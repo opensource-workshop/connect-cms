@@ -64,21 +64,21 @@
             @include('plugins.common.flash_message')
 
             {{-- メッセージエリア --}}
-            <div class="alert alert-info mt-2">
+            <div class="alert alert-info">
                 <i class="fas fa-exclamation-circle"></i> 予約項目セット【 {{$columns_set->name}} 】の項目を追加・変更します。<br />
                 　予約項目セットは予約登録時に使います。
             </div>
 
             {{-- ワーニングメッセージエリア --}}
             @if (! $title_flag)
-                <div class="alert alert-warning mt-2">
+                <div class="alert alert-warning">
                     <i class="fas fa-exclamation-circle"></i> 新着情報等でタイトル表示する項目が未設定です。いずれかの項目の「詳細」よりタイトル設定をしてください。
                 </div>
             @endif
 
             {{-- エラーメッセージエリア --}}
             @if ($errors && $errors->any())
-                <div class="alert alert-danger mt-2">
+                <div class="alert alert-danger">
                     @foreach ($errors->all() as $error)
                         <i class="fas fa-exclamation-circle"></i> {{ $error }}<br>
                     @endforeach
