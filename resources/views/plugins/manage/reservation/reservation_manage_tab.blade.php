@@ -66,6 +66,12 @@
                         <span class="nav-link"><span class="active">項目設定</span></span>
                     </li>
                 @endif
+
+                @if ($function == 'editColumnDetail')
+                    <li role="presentation" class="nav-item">
+                        <span class="nav-link"><span class="active">項目詳細設定</span></span>
+                    </li>
+                @endif
             </ul>
         </div>
     </nav>
