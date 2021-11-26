@@ -54,9 +54,9 @@
                         {!! nl2br(e($reservation->facility_names)) !!}
                         <br>
                     @endif
-                    {{-- 施設登録・変更ボタン --}}
-                    <button class="btn btn-success btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/reservations/editFacilities/{{$page->id}}/{{$frame_id}}/{{ $reservation->id }}#frame-{{$frame->id}}'">
-                        <i class="far fa-edit"></i> 施設登録・変更
+                    {{-- 施設設定ボタン --}}
+                    <button class="btn btn-success btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/reservations/choiceFacilities/{{$page->id}}/{{$frame_id}}/{{ $reservation->id }}#frame-{{$frame->id}}'">
+                        <i class="far fa-edit"></i> 施設設定
                     </button>
                 </td>
                 {{-- 設定変更ボタン --}}
