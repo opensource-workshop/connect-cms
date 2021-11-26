@@ -259,7 +259,7 @@ class DatabasesTool
     {
         /**
          * キーワードでスペース連結してAND検索
-         * 
+         *
          * mb_convert_kanaメモ
          * s:全角スペース→半角スペース
          */
