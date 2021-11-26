@@ -257,8 +257,13 @@ class DatabasesTool
      */
     public static function appendSearchKeyword($where_in_colum_name, $inputs_query, $databases_columns_ids, $hide_columns_ids, $search_keyword)
     {
-        // add: キーワードでスペース連結してAND検索
-        $search_keywords = explode(' ', $search_keyword);
+        /**
+         * キーワードでスペース連結してAND検索
+         * 
+         * mb_convert_kanaメモ
+         * s:全角スペース→半角スペース
+         */
+        $search_keywords = explode(' ', mb_convert_kana($search_keyword, 's'));
 
         // キーワードAND検索
         foreach ($search_keywords as $search_keyword) {
