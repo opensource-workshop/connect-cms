@@ -51,6 +51,7 @@ class ServiceManage extends ManagePluginBase
             "configs" => $configs,
             "translate_api_disabled_label" => !config('connect.TRANSLATE_API_URL') ? 'disabled' : '',
             "pdf_api_disabled_label" => !config('connect.PDF_THUMBNAIL_API_URL') ? 'disabled' : '',
+            "face_api_disabled_label" => !config('connect.FACE_API_URL') ? 'disabled' : '',
         ]);
     }
 
@@ -69,6 +70,12 @@ class ServiceManage extends ManagePluginBase
         $configs = Configs::updateOrCreate(
             ['name' => 'use_pdf_thumbnail'],
             ['category' => 'service', 'value' => $request->use_pdf_thumbnail]
+        );
+
+        // AI顔認識を使用
+        $configs = Configs::updateOrCreate(
+            ['name' => 'use_face'],
+            ['category' => 'service', 'value' => $request->use_face]
         );
 
         // 画面に戻る

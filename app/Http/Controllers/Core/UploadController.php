@@ -372,9 +372,6 @@ EOD;
         }
         $image_file = $request->file('photo');
 
-        $resize_width = 800;
-        $resize_height = null;
-
         // GDのリサイズでメモリを多く使うため、memory_limitセット
         $configs = Configs::getSharedConfigs();
         $memory_limit_for_image_resize = Configs::getConfigsValue($configs, 'memory_limit_for_image_resize', '256M');
@@ -382,8 +379,16 @@ EOD;
 
         // ファイルのリサイズ(メモリ内)
         $image = Image::make($image_file);
-
+\Log::debug($request->image_size);
         // リサイズ
+        $resize_width = null;
+        $resize_height = null;
+        if ($image->width() > $image->height()) {
+            $resize_width = $request->image_size;
+        } else {
+            $resize_height = $request->image_size;
+        }
+
         $image = $image->resize($resize_width, $resize_height, function ($constraint) {
             // 横幅を指定する。高さは自動調整
             $constraint->aspectRatio();
@@ -402,7 +407,8 @@ EOD;
         $data = [
             //'api_key' => config('connect.PDF_THUMBNAIL_API_KEY'),
             'mosaic_scale' => $request->mosaic_scale,
-            'photo' => base64_encode($request->file('photo')->get()),
+            //'photo' => base64_encode($request->file('photo')->get()),
+            'photo' => base64_encode($image->stream()),
             'extension' => $request->file('photo')->getClientOriginalExtension(),
         ];
 
@@ -436,21 +442,14 @@ EOD;
             'plugin_name'          => $request->plugin_name,
         ]);
 
+        // ファイル保存
         $directory = $this->getDirectory($photo_upload->id);
-        //$photo_upload_path = $request->file('photo')->storeAs($directory, $photo_upload->id . '.' . $request->file('photo')->getClientOriginalExtension());
-
-//\Log::debug($res_base64['mosaic_photo']);
-//\Log::debug($res_base64);
-
         File::put(storage_path('app/') . $directory . '/' . $photo_upload->id . '.' . $request->file('photo')->getClientOriginalExtension(), base64_decode($res_base64['mosaic_photo']));
-
-        // 画面へ
 
         // URLのフルパスを込めても、wysiwyg のJSでドメイン取り除かれるため、含めない => ディレクトリインストールの場合はディレクトリが必要なので、url 追加
         $msg_array = [];
-        $msg_array['link_text'] = '<p><img src="' . url('/') . '/file/' . $photo_upload->id . '" class="img-fluid"></p>';
+        $msg_array['link_text'] = '<p><img src="' . url('/') . '/file/' . $photo_upload->id . '" class="img-fluid" alt="' . $request->alt . '"></p>';
 
-//\Log::debug($res_base64);
         return $msg_array;
     }
 
