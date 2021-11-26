@@ -510,11 +510,19 @@ class ReservationsPlugin extends UserPluginBase
         // 予約データ
         $reservations = Reservation::where('id', $reservations_frame->reservations_id)->first();
 
+        // [TODO]
         // 施設データ
         $facilities = ReservationsFacility::where('reservations_id', $reservations_frame->reservations_id)
             ->where('hide_flag', NotShowType::show)
             ->orderBy('display_sequence')
             ->get();
+        // $facilities = ReservationsChoiceCategory::
+        //     select(
+        //         '*'
+        //     )
+        //     ->where('reservations_choice_categories.view_flag', ShowType::show)
+        //     ->orderBy('reservations_choice_categories.display_sequence')
+        //     ->get();
 
         // 予約項目データ
         // $columns = ReservationsColumn::where('reservations_id', $reservations_frame->reservations_id)->whereNull('hide_flag')->orderBy('display_sequence')->get();
@@ -1054,7 +1062,7 @@ class ReservationsPlugin extends UserPluginBase
             ->orderBy('reservations_categories.display_sequence', 'asc')
             ->get();
 
-        $facilities = ReservationsFacility::get();
+        $facilities = ReservationsFacility::where('hide_flag', NotShowType::show)->get();
 
         foreach ($reservations_categories as $reservations_category) {
             // （初期登録時を想定）reservations_choice_categoriesの表示順が空なので、施設カテゴリの表示順を初期値にセット
