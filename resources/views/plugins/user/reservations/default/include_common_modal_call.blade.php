@@ -1,7 +1,5 @@
 {{--
  * 予約詳細モーダル呼び出し
- *
- * @param $columns 予約可変項目
 --}}
 @if ($booking['booking_header']->status == StatusType::approval_pending)
     @can('role_update_or_approval', [[$booking['booking_header'], $frame->plugin_name, $buckets]])
