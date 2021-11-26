@@ -205,9 +205,9 @@ class ReservationsPlugin extends UserPluginBase
     {
         $target_ymd = $request->target_date;
         // URLパラメータチェック
-        $year = substr($target_ymd, 0, 4);
-        $month = substr($target_ymd, 4, 2);
-        $day = substr($target_ymd, 6, 2);
+        $year = (int)substr($target_ymd, 0, 4);
+        $month = (int)substr($target_ymd, 4, 2);
+        $day = (int)substr($target_ymd, 6, 2);
         if (!checkdate($month, $day, $year)) {
             return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
         }
@@ -311,7 +311,7 @@ class ReservationsPlugin extends UserPluginBase
     /**
      * 予約追加画面の表示
      */
-    public function editBooking($request, $page_id, $frame_id, $input_id = null, $errors = null)
+    public function editBooking($request, $page_id, $frame_id, $input_id = null)
     {
         $booking = null;
 
@@ -359,20 +359,20 @@ class ReservationsPlugin extends UserPluginBase
             /**
              * 予約の新規登録モード
              */
-            // パラメータチェック
-            $target_ymd = $request->target_date;
-            $year = substr($target_ymd, 0, 4);
-            $month = substr($target_ymd, 4, 2);
-            $day = substr($target_ymd, 6, 2);
+            // パラメータチェック. saveの入力エラーで戻ってきた時はoldに値が入ってる。
+            $target_ymd = old('target_date', $request->target_date);
+            $year = (int)substr($target_ymd, 0, 4);
+            $month = (int)substr($target_ymd, 4, 2);
+            $day = (int)substr($target_ymd, 6, 2);
             if (!checkdate($month, $day, $year)) {
                 return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
             }
 
             // 施設予約データ
-            $reservation = Reservation::where('id', $request->reservations_id)->first();
+            $reservation = Reservation::where('id', old('reservations_id', $request->reservations_id))->first();
 
             // 施設データ
-            $facility = ReservationsFacility::where('id', $request->facility_id)->first();
+            $facility = ReservationsFacility::where('id', old('facility_id', $request->facility_id))->first();
 
             // 予約項目データ
             // $columns = ReservationsColumn::where('reservations_id', $request->reservations_id)->whereNull('hide_flag')->orderBy('display_sequence')->get();
@@ -381,7 +381,7 @@ class ReservationsPlugin extends UserPluginBase
 
             // 予約項目データの内、選択肢が指定されていた場合の選択肢データ
             // $selects = ReservationsColumnsSelect::where('reservations_id', $request->reservations_id)
-            $selects = ReservationsColumnsSelect::where('reservations_id', $facility->columns_set_id)
+            $selects = ReservationsColumnsSelect::where('columns_set_id', $facility->columns_set_id)
                 ->where('hide_flag', NotShowType::show)
                 ->orderBy('id', 'asc')
                 ->orderBy('display_sequence', 'asc')

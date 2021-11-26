@@ -122,7 +122,7 @@ use App\Models\User\Reservations\ReservationsColumn;
                         ・予約値（更新時）
                         ・初期表示値（新規登録時）
                     --}}
-                    <input type="text" name="start_datetime" value="{{ old('start_datetime', $booking ? $booking->start_datetime->format('H:i') : Carbon::now()->addHour(1)->hour) }}" class="form-control datetimepicker-input" data-target="#start_datetime">
+                    <input type="text" name="start_datetime" value="{{ old('start_datetime', $booking ? $booking->start_datetime->format('H:i') : Carbon::now()->addHour(1)->hour.':00') }}" class="form-control datetimepicker-input @if ($errors->has('start_datetime')) border-danger @endif" data-target="#start_datetime">
                     <div class="input-group-append" data-target="#start_datetime" data-toggle="datetimepicker">
                         <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
@@ -134,7 +134,7 @@ use App\Models\User\Reservations\ReservationsColumn;
                         ・予約値（更新時）
                         ・初期表示値（新規登録時）
                     --}}
-                    <input type="text" name="end_datetime" value="{{ old('end_datetime', $booking ? $booking->end_datetime->format('H:i') : Carbon::now()->addHour(2)->hour) }}" class="form-control datetimepicker-input" data-target="#end_datetime">
+                    <input type="text" name="end_datetime" value="{{ old('end_datetime', $booking ? $booking->end_datetime->format('H:i') : Carbon::now()->addHour(2)->hour.':00') }}" class="form-control datetimepicker-input @if ($errors->has('end_datetime')) border-danger @endif" data-target="#end_datetime">
                     <div class="input-group-append" data-target="#end_datetime" data-toggle="datetimepicker">
                         <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
@@ -142,8 +142,8 @@ use App\Models\User\Reservations\ReservationsColumn;
             </div>
             <div class="row">
                 <div class="col-12">
-                    @if ($errors && $errors->has('start_datetime')) <div class="text-danger">{{$errors->first('start_datetime')}}</div> @endif
-                    @if ($errors && $errors->has('end_datetime')) <div class="text-danger">{{$errors->first('end_datetime')}}</div> @endif
+                    @if ($errors->has('start_datetime')) <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first('start_datetime')}}</div> @endif
+                    @if ($errors->has('end_datetime')) <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first('end_datetime')}}</div> @endif
                 </div>
             </div>
         </div>
@@ -167,7 +167,7 @@ use App\Models\User\Reservations\ReservationsColumn;
                     <label class="col-md-2 control-label">{{$column->column_name}}
                         @if ($column->required)
                             {{-- 必須マーク --}}
-                            <label class="badge badge-danger">必須</label>
+                            <span class="badge badge-danger">必須</span>
                         @endif
                     </label>
                     {{-- 項目本体 --}}
@@ -177,10 +177,8 @@ use App\Models\User\Reservations\ReservationsColumn;
                             {{-- テキスト項目 --}}
                             @case(ReservationColumnType::text)
 
-                                <input name="columns_value[{{$column->id}}]" class="form-control" type="{{$column->column_type}}" value="{{old('columns_value.'.$column->id , $column->value ? $column->value : '')}}">
-                                    @if ($errors && $errors->has("columns_value.$column->id"))
-                                        <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("columns_value.$column->id")}}</div>
-                                    @endif
+                                <input name="columns_value[{{$column->id}}]" class="form-control @if ($errors->has('columns_value.'.$column->id)) border-danger @endif" type="{{$column->column_type}}" value="{{old('columns_value.'.$column->id , $column->value ? $column->value : '')}}">
+                                @include('plugins.common.errors_inline', ['name' => 'columns_value.'.$column->id])
                                 @break
 
                             {{-- ラジオボタン項目 --}}
