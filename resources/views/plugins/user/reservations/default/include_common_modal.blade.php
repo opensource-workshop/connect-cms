@@ -1,5 +1,7 @@
 {{--
  * 予約詳細モーダルウィンドウ
+ *
+ * @param $columns 予約可変項目
 --}}
 <div class="modal" id="bookingDetailModal{{$frame_id}}" tabindex="-1" role="dialog" aria-labelledby="bookingModalLabel{{$frame_id}}" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
