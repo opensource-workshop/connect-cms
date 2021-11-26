@@ -62,6 +62,7 @@ class ReservationsPlugin extends UserPluginBase
             'month',
             'choiceFacilities',
             'showBooking',
+            'showBookingJson',
             'editBooking',
         ];
         $functions['post'] = [
@@ -132,7 +133,12 @@ class ReservationsPlugin extends UserPluginBase
         }
 
         // POST を取得する。(登録データ行の取得)
-        $this->post = ReservationsInput::select('reservations_inputs.*', 'reservations_facilities.facility_name')
+        $this->post = ReservationsInput::
+            select(
+                'reservations_inputs.*',
+                'reservations_facilities.facility_name',
+                'reservations_facilities.columns_set_id'
+            )
             ->join('reservations_facilities', function ($join) {
                 $join->on('reservations_inputs.facility_id', '=', 'reservations_facilities.id')
                     ->whereNull('reservations_facilities.deleted_at');
@@ -370,10 +376,12 @@ class ReservationsPlugin extends UserPluginBase
 
             // 予約項目データ
             // $columns = ReservationsColumn::where('reservations_id', $request->reservations_id)->whereNull('hide_flag')->orderBy('display_sequence')->get();
-            $columns = $this->getReservationsColumns($request->reservations_id);
+            // $columns = $this->getReservationsColumns($request->reservations_id);
+            $columns = $this->getReservationsColumns($facility->columns_set_id);
 
             // 予約項目データの内、選択肢が指定されていた場合の選択肢データ
-            $selects = ReservationsColumnsSelect::where('reservations_id', $request->reservations_id)
+            // $selects = ReservationsColumnsSelect::where('reservations_id', $request->reservations_id)
+            $selects = ReservationsColumnsSelect::where('reservations_id', $facility->columns_set_id)
                 ->where('hide_flag', NotShowType::show)
                 ->orderBy('id', 'asc')
                 ->orderBy('display_sequence', 'asc')
@@ -395,7 +403,7 @@ class ReservationsPlugin extends UserPluginBase
     /**
      * 予約の詳細表示 URL版
      */
-    public function showBooking($request, $page_id, $frame_id, $input_id = null)
+    public function showBooking($request, $page_id, $frame_id, $input_id = null, $is_json = false)
     {
         // 登録データ行の取得
         $inputs = $this->getReservationsInput($input_id);
@@ -405,7 +413,7 @@ class ReservationsPlugin extends UserPluginBase
         }
 
         // カラムの取得
-        $columns = $this->getReservationsColumns($inputs->reservations_id);
+        $columns = $this->getReservationsColumns($inputs->columns_set_id);
         // データがあることを確認
         if (empty($columns)) {
             return;
@@ -417,14 +425,46 @@ class ReservationsPlugin extends UserPluginBase
         // 選択肢
         $selects = ReservationsColumnsSelect::where('reservations_id', $inputs->reservations_id)->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
 
-        // 詳細画面を呼び出す。
-        return $this->view('show_booking', [
-            'columns' => $columns,
-            // inputにすると値があってもnullになるため、$inputsのままでいく
-            'inputs' => $inputs,
-            'inputs_columns' => $inputs_columns,
-            'selects' => $selects,
-        ]);
+        if ($is_json) {
+
+            // 表示値をセット
+            $inputs->reservation_date_display = $inputs->displayDate();
+            $inputs->reservation_time_display = $inputs->start_datetime->format('H:i') . ' ~ ' . $inputs->end_datetime->format('H:i');
+
+            foreach ($columns as &$column) {
+                $obj = $inputs_columns->firstWhere('column_id', $column->id);
+
+                // カラムの表示値をセット
+                $column->display_value = $this->getColumnValue($inputs, $column, $obj);
+            }
+
+            // JSON
+            return [
+                'columns' => $columns,
+                // inputにすると値があってもnullになるため、$inputsのままでいく
+                'inputs' => $inputs,
+                'inputs_columns' => $inputs_columns,
+                'selects' => $selects,
+            ];
+        } else {
+            // 詳細画面を呼び出す。
+            return $this->view('show_booking', [
+                'columns' => $columns,
+                // inputにすると値があってもnullになるため、$inputsのままでいく
+                'inputs' => $inputs,
+                'inputs_columns' => $inputs_columns,
+                'selects' => $selects,
+            ]);
+        }
+    }
+
+    /**
+     * 予約の詳細表示 JSON版
+     */
+    public function showBookingJson($request, $page_id, $frame_id, $input_id = null)
+    {
+        $is_json = true;
+        return $this->showBooking($request, $page_id, $frame_id, $input_id, $is_json);
     }
 
     /**
@@ -440,7 +480,8 @@ class ReservationsPlugin extends UserPluginBase
      */
     private function getReservationsColumns($id)
     {
-        return ReservationsColumn::where('reservations_id', $id)->where('hide_flag', NotShowType::show)->orderBy('display_sequence')->get();
+        // return ReservationsColumn::where('reservations_id', $id)->where('hide_flag', NotShowType::show)->orderBy('display_sequence')->get();
+        return ReservationsColumn::where('columns_set_id', $id)->where('hide_flag', NotShowType::show)->orderBy('display_sequence')->get();
     }
 
     /**
@@ -455,7 +496,11 @@ class ReservationsPlugin extends UserPluginBase
                 'reservations_columns.column_name',
                 'reservations_columns.title_flag'
             )
-            ->leftJoin('reservations_columns', 'reservations_columns.id', '=', 'reservations_inputs_columns.column_id')
+            ->leftJoin('reservations_columns', function ($join) {
+                $join->on('reservations_columns.id', '=', 'reservations_inputs_columns.column_id')
+                    ->where('reservations_columns.hide_flag', NotShowType::show)
+                    ->whereNull('reservations_columns.deleted_at');
+            })
             ->where('reservations_inputs_columns.inputs_id', $id)
             ->orderBy('reservations_inputs_columns.inputs_id', 'asc')
             ->orderBy('reservations_inputs_columns.column_id', 'asc')
@@ -510,26 +555,39 @@ class ReservationsPlugin extends UserPluginBase
         // 予約データ
         $reservations = Reservation::where('id', $reservations_frame->reservations_id)->first();
 
-        // [TODO]
         // 施設データ
-        $facilities = ReservationsFacility::where('reservations_id', $reservations_frame->reservations_id)
-            ->where('hide_flag', NotShowType::show)
-            ->orderBy('display_sequence')
-            ->get();
-        // $facilities = ReservationsChoiceCategory::
-        //     select(
-        //         '*'
-        //     )
-        //     ->where('reservations_choice_categories.view_flag', ShowType::show)
-        //     ->orderBy('reservations_choice_categories.display_sequence')
+        // $facilities = ReservationsFacility::where('reservations_id', $reservations_frame->reservations_id)
+        //     ->where('hide_flag', NotShowType::show)
+        //     ->orderBy('display_sequence')
         //     ->get();
+        $facilities = ReservationsChoiceCategory::
+            select('reservations_facilities.*')
+            ->leftJoin('reservations_facilities', function ($join) {
+                $join->on('reservations_facilities.reservations_categories_id', '=', 'reservations_choice_categories.reservations_categories_id')
+                    ->where('reservations_facilities.hide_flag', NotShowType::show)
+                    ->whereNull('reservations_facilities.deleted_at');
+            })
+            ->where('reservations_choice_categories.reservations_id', $reservations_frame->reservations_id)
+            ->where('reservations_choice_categories.view_flag', ShowType::show)
+            ->orderBy('reservations_choice_categories.display_sequence', 'asc')
+            ->orderBy('reservations_facilities.display_sequence', 'asc')
+            ->get();
+
+        // [TODO] 仮
+        $columns_set_id = null;
+        if (!$facilities->isEmpty()) {
+            $facility = $facilities->first();
+            $columns_set_id = $facility->columns_set_id;
+        }
 
         // 予約項目データ
         // $columns = ReservationsColumn::where('reservations_id', $reservations_frame->reservations_id)->whereNull('hide_flag')->orderBy('display_sequence')->get();
-        $columns = $this->getReservationsColumns($reservations_frame->reservations_id);
+        // $columns = $this->getReservationsColumns($reservations_frame->reservations_id);
+        $columns = $this->getReservationsColumns($columns_set_id);
 
         // 予約項目データの内、選択肢が指定されていた場合の選択肢データ
-        $selects = ReservationsColumnsSelect::where('reservations_id', $reservations_frame->reservations_id)->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
+        // $selects = ReservationsColumnsSelect::where('reservations_id', $reservations_frame->reservations_id)->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
+        $selects = ReservationsColumnsSelect::where('columns_set_id', $columns_set_id)->orderBy('display_sequence', 'asc')->get();
 
         // 予約項目データの内、選択肢が指定されていた場合に選択肢データが登録済みかチェック
         $isExistSelect = true;
@@ -706,7 +764,7 @@ class ReservationsPlugin extends UserPluginBase
 
         // カラム
         if (is_null($columns)) {
-            $columns = $this->getReservationsColumns($input->reservations_id);
+            $columns = $this->getReservationsColumns($input->columns_set_id);
         }
 
         // title_flagのカラム1件に絞る
@@ -723,14 +781,25 @@ class ReservationsPlugin extends UserPluginBase
         // title_flagのカラム1件に絞る
         $obj = $inputs_columns->firstWhere('title_flag', '1');
 
+        // カラムの値取得
+        $value = $this->getColumnValue($input, $column, $obj);
+
+        return $value;
+    }
+
+    /**
+     * カラムの値取得
+     */
+    private function getColumnValue($input, $column = null, $inputs_column = null)
+    {
         // 項目の型で処理を分ける。
         if ($column->column_type == ReservationColumnType::radio) {
             // ラジオ型
-            if ($obj) {
+            if ($inputs_column) {
                 // ラジオボタン項目の場合、valueにはreservations_columns_selectsテーブルのIDが入っているので、該当の選択肢データを取得して選択肢名をセットする
-                $filtered_select = ReservationsColumnsSelect::where('reservations_id', $obj->reservations_id)
-                    ->where('column_id', $obj->column_id)
-                    ->where('id', $obj->value)
+                $filtered_select = ReservationsColumnsSelect::where('reservations_id', $inputs_column->reservations_id)
+                    ->where('column_id', $inputs_column->column_id)
+                    ->where('id', $inputs_column->value)
                     ->first();
 
                 $value = $filtered_select ? $filtered_select->select_name : '';
@@ -739,10 +808,10 @@ class ReservationsPlugin extends UserPluginBase
             }
         } elseif ($column->column_type == ReservationColumnType::created) {
             // 登録日型
-            $value = $input->created_at;
+            $value = $input->created_at->format('Y-n-j H:i:s');
         } elseif ($column->column_type == ReservationColumnType::updated) {
             // 更新日型
-            $value = $input->updated_at;
+            $value = $input->updated_at->format('Y-n-j H:i:s');
         } elseif ($column->column_type == ReservationColumnType::created_name) {
             // 登録者型
             $value = $input->created_name;
@@ -751,7 +820,7 @@ class ReservationsPlugin extends UserPluginBase
             $value = $input->updated_name;
         } else {
             // その他の型
-            $value = $obj ? $obj->value : "";
+            $value = $inputs_column ? $inputs_column->value : "";
         }
 
         return $value;
