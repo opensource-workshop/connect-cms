@@ -16,16 +16,16 @@
             @endif
             {{-- 施設データがない場合 --}}
             @if ($facilities->isEmpty())
-                <p class="text-center cc_margin_bottom_0">フレームの設定画面から、施設データを作成してください。</p>
+                <p class="text-center cc_margin_bottom_0">フレームの設定画面から、表示する施設を設定してください。</p>
             @endif
             {{-- 予約項目データがない場合 --}}
-            @if ($columns->isEmpty())
+            {{-- @if ($columns->isEmpty())
                 <p class="text-center cc_margin_bottom_0">フレームの設定画面から、予約項目データを作成してください。</p>
-            @endif
+            @endif --}}
             {{-- 予約項目で選択肢のデータ型が指定されていた時に選択肢データがない場合 --}}
-            @if (!$isExistSelect)
+            {{-- @if (!$isExistSelect)
                 <p class="text-center cc_margin_bottom_0">フレームの設定画面から、予約項目の選択肢データを作成してください。</p>
-            @endif
+            @endif --}}
         </div>
     </div>
 @endif

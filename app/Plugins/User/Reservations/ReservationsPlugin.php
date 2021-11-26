@@ -573,36 +573,20 @@ class ReservationsPlugin extends UserPluginBase
             ->orderBy('reservations_facilities.display_sequence', 'asc')
             ->get();
 
-        // [TODO] 仮
-        $columns_set_id = null;
-        if (!$facilities->isEmpty()) {
-            $facility = $facilities->first();
-            $columns_set_id = $facility->columns_set_id;
-        }
-
-        // 予約項目データ
-        // $columns = ReservationsColumn::where('reservations_id', $reservations_frame->reservations_id)->whereNull('hide_flag')->orderBy('display_sequence')->get();
-        // $columns = $this->getReservationsColumns($reservations_frame->reservations_id);
-        $columns = $this->getReservationsColumns($columns_set_id);
-
-        // 予約項目データの内、選択肢が指定されていた場合の選択肢データ
-        // $selects = ReservationsColumnsSelect::where('reservations_id', $reservations_frame->reservations_id)->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
-        $selects = ReservationsColumnsSelect::where('columns_set_id', $columns_set_id)->orderBy('display_sequence', 'asc')->get();
-
         // 予約項目データの内、選択肢が指定されていた場合に選択肢データが登録済みかチェック
-        $isExistSelect = true;
-        $filtered_columns = $columns->filter(function ($column) {
-            // 選択肢が設定可能なデータ型のみ抽出
-            return $column->column_type == ReservationColumnType::radio;
-        });
-        foreach ($filtered_columns as $column) {
-            $filtered_selects = $selects->filter(function ($select) use ($column) {
-                return $column->id == $select->column_id;
-            });
-            if ($filtered_selects->isEmpty()) {
-                $isExistSelect = false;
-            }
-        }
+        // $isExistSelect = true;
+        // $filtered_columns = $columns->filter(function ($column) {
+        //     // 選択肢が設定可能なデータ型のみ抽出
+        //     return $column->column_type == ReservationColumnType::radio;
+        // });
+        // foreach ($filtered_columns as $column) {
+        //     $filtered_selects = $selects->filter(function ($select) use ($column) {
+        //         return $column->id == $select->column_id;
+        //     });
+        //     if ($filtered_selects->isEmpty()) {
+        //         $isExistSelect = false;
+        //     }
+        // }
 
         // 対象日時未設定（初期表示）の場合は現在日時をセット
         if (empty($carbon_target_date)) {
@@ -672,11 +656,14 @@ class ReservationsPlugin extends UserPluginBase
             $calendar['facility'] = $facility;
 
             // カレンダー表示期間内で該当施設に紐づく予約データを抽出
-            $bookingHeaders = ReservationsInput::where('reservations_id', $reservations->id)
-                ->where('facility_id', $facility->id)
+            // $bookingHeaders = ReservationsInput::where('reservations_id', $reservations->id)
+            $bookingHeaders = ReservationsInput::where('facility_id', $facility->id)
                 ->whereBetween('start_datetime', [$search_start_date, $search_end_date])
                 ->orderBy('start_datetime')
                 ->get();
+
+            // 予約項目データ
+            $columns = $this->getReservationsColumns($facility->columns_set_id);
 
             foreach ($dates as $date) {
                 $calendar_cell = null;
@@ -695,8 +682,8 @@ class ReservationsPlugin extends UserPluginBase
                             ->leftJoin('reservations_columns', function ($join) {
                                 $join->on('reservations_inputs_columns.column_id', '=', 'reservations_columns.id');
                             })
-                            ->where('reservations_inputs_columns.reservations_id', $reservations->id)
-                            ->where('inputs_id', $bookingHeader->id)
+                            // ->where('reservations_inputs_columns.reservations_id', $reservations->id)
+                            ->where('reservations_inputs_columns.inputs_id', $bookingHeader->id)
                             ->orderBy('reservations_inputs_columns.column_id')
                             ->get();
 
@@ -723,11 +710,12 @@ class ReservationsPlugin extends UserPluginBase
         // フレームに紐づいた施設予約親データが存在すること
         if (isset($this->frame) && $this->frame->bucket_id &&
             // 施設データが存在すること
-            !$facilities->isEmpty() &&
+            !$facilities->isEmpty()) {
+
             // 予約項目データが存在すること
-            !$columns->isEmpty() &&
+            // !$columns->isEmpty()  &&
             // 予約項目で選択肢が指定されていた場合に選択肢データが存在すること
-            $isExistSelect) {
+            // $isExistSelect) {
 
             // $time = microtime(true) - $time_start;  //debug用
             // dd($time . '秒');  //debug用
@@ -737,8 +725,6 @@ class ReservationsPlugin extends UserPluginBase
                 'carbon_target_date' => $carbon_target_date,
                 'reservations' => $reservations,
                 'facilities' => $facilities,
-                'columns' => $columns,
-                'selects' => $selects,
                 'calendars' => $calendars,
             ]);
         } else {
@@ -746,8 +732,7 @@ class ReservationsPlugin extends UserPluginBase
             // バケツ等なし
             return $this->view('empty_bucket', [
                 'facilities' => $facilities,
-                'columns' => $columns,
-                'isExistSelect' => $isExistSelect,
+                // 'isExistSelect' => $isExistSelect,
             ]);
         }
     }
