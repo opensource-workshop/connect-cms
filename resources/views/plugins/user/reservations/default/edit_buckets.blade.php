@@ -17,24 +17,21 @@
 {{-- 共通エラーメッセージ 呼び出し --}}
 @include('plugins.common.errors_form_line')
 
+{{-- 登録後メッセージ表示 --}}
+@include('plugins.common.flash_message')
+
 {{-- メッセージエリア --}}
-<div class="alert alert-info" style="margin-top: 10px;">
-    <i class="fas fa-exclamation-circle"></i>
-    @if ($message)
-        {{$message}}
+<div class="alert alert-info">
+    @if (empty($reservation) || $create_flag)
+        <i class="fas fa-exclamation-circle"></i> 新しい施設予約を登録します。
     @else
-        @if (empty($reservation) || $create_flag)
-            新しい施設予約を登録します。
-        @else
-            施設予約を変更します。
-        @endif
+        <i class="fas fa-exclamation-circle"></i> 施設予約を変更します。
     @endif
 </div>
 
 @if (!$reservation->id && !$create_flag)
 @else
 
-{{--
 @if (empty($reservation->id))
 <form action="{{url('/')}}/redirect/plugin/reservations/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST">
     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/reservations/createBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
@@ -42,12 +39,7 @@
 <form action="{{url('/')}}/redirect/plugin/reservations/saveBuckets/{{$page->id}}/{{$frame_id}}/{{$reservation->id}}#frame-{{$frame->id}}" method="POST">
     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/reservations/editBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 @endif
---}}
-@if (empty($reservation->id))
-<form action="{{url('/')}}/plugin/reservations/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST">
-@else
-<form action="{{url('/')}}/plugin/reservations/saveBuckets/{{$page->id}}/{{$frame_id}}/{{$reservation->id}}#frame-{{$frame->id}}" method="POST">
-@endif
+
     {{ csrf_field() }}
 
     {{-- create_flag がtrue の場合、新規作成するためにreservations_id を空にする --}}
@@ -60,7 +52,7 @@
     {{-- 入力項目エリア --}}
     <div class="form-group">
         {{-- 施設予約名 --}}
-        <label class="control-label">コンテンツ名 <label class="badge badge-danger">必須</span></label></label>
+        <label class="control-label">施設予約名 <label class="badge badge-danger">必須</span></label></label>
         <input type="text" name="reservation_name" value="{{old('reservation_name', $reservation->reservation_name)}}" class="form-control @if ($errors && $errors->has('reservation_name')) border-danger @endif">
         @include('plugins.common.errors_inline', ['name' => 'reservation_name'])
 
@@ -97,9 +89,9 @@
         <div class="row">
             <div class="col-sm-3"></div>
             <div class="col-sm-6">
-                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link) . '#frame-' . $frame->id}}'">
-                    <i class="fas fa-times"></i> キャンセル
-                </button>
+                <a href="{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}" class="btn btn-secondary mr-2">
+                    <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
+                </a>
                 <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>
                 @if (empty($reservation) || $create_flag)
                     登録確定
@@ -113,7 +105,7 @@
             @if ($create_flag)
             @else
             <div class="col-sm-3 pull-right text-right">
-                <a data-toggle="collapse" href="#collapse{{$reservation_frame->id}}">
+                <a data-toggle="collapse" href="#collapse{{$frame->id}}">
                     <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="hidden-xs">削除</span></span>
                 </a>
             </div>
@@ -123,10 +115,10 @@
 </form>
 
 {{-- 削除ボタン押下時の表示エリア --}}
-<div id="collapse{{$reservation_frame->id}}" class="collapse" style="margin-top: 8px;">
+<div id="collapse{{$frame->id}}" class="collapse" style="margin-top: 8px;">
     <div class="card border-danger">
         <div class="card-body">
-            <span class="text-danger">コンテンツを削除します。<br>このコンテンツに紐づく施設、予約項目、予約も削除されます。よく確認して実行してください。</span>
+            <span class="text-danger">施設予約を削除します。<br>よく確認して実行してください。</span>
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
