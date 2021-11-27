@@ -87,6 +87,7 @@ use App\Models\User\Reservations\ReservationsColumn;
     {{ csrf_field() }}
     <input type="hidden" name="reservations_id" value="{{ $reservation->id }}">
     <input type="hidden" name="facility_id" value="{{ $facility->id }}">
+    <input type="hidden" name="columns_set_id" value="{{ $facility->columns_set_id }}">
     {{-- <input type="hidden" name="booking_id" value="{{ $booking ? $booking->id : '' }}"> --}}
     <input type="hidden" name="target_date" value="{{ $target_date->format('Ymd') }}">
 

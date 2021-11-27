@@ -223,7 +223,8 @@ class ReservationsPlugin extends UserPluginBase
         ];
 
         // バリデーション用の配列を生成（可変項目）
-        $required_columns = ReservationsColumn::where('reservations_id', $request->reservations_id)
+        // $required_columns = ReservationsColumn::where('reservations_id', $request->reservations_id)
+        $required_columns = ReservationsColumn::where('columns_set_id', $request->columns_set_id)
             ->where('hide_flag', NotShowType::show)
             ->where('required', Required::on)
             ->get();
@@ -276,10 +277,10 @@ class ReservationsPlugin extends UserPluginBase
         $keys = array_keys($request->columns_value);
         foreach ($keys as $key) {
             // 予約明細 更新レコード取得
-            $reservations_inputs_columns = ReservationsInputsColumn::where('reservations_id', $request->reservations_id)
-                    ->where('inputs_id', $reservations_inputs->id)
-                    ->where('column_id', $key)
-                    ->first();
+            // $reservations_inputs_columns = ReservationsInputsColumn::where('reservations_id', $request->reservations_id)
+            $reservations_inputs_columns = ReservationsInputsColumn::where('inputs_id', $reservations_inputs->id)
+                ->where('column_id', $key)
+                ->first();
 
             // 更新レコードが取得できなかったらnew
             if (!$reservations_inputs_columns) {
@@ -342,13 +343,15 @@ class ReservationsPlugin extends UserPluginBase
                     $join->on('reservations_inputs_columns.column_id', '=', 'reservations_columns.id');
                     $join->where('reservations_inputs_columns.inputs_id', '=', $booking->id);
                 })
-                ->where('reservations_columns.reservations_id', $booking->reservations_id)
+                // ->where('reservations_columns.reservations_id', $booking->reservations_id)
+                ->where('reservations_columns.columns_set_id', $facility->columns_set_id)
                 ->where('reservations_columns.hide_flag', NotShowType::show)
                 ->orderBy('reservations_columns.display_sequence')
                 ->get();
 
             // 予約項目データの内、選択肢が指定されていた場合の選択肢データ
-            $selects = ReservationsColumnsSelect::where('reservations_id', $booking->reservations_id)
+            // $selects = ReservationsColumnsSelect::where('reservations_id', $booking->reservations_id)
+            $selects = ReservationsColumnsSelect::where('columns_set_id', $booking->columns_set_id)
                 ->where('hide_flag', NotShowType::show)
                 ->orderBy('id', 'asc')
                 ->orderBy('display_sequence', 'asc')
@@ -423,7 +426,8 @@ class ReservationsPlugin extends UserPluginBase
         $inputs_columns = $this->getReservationsInputsColumns($input_id);
 
         // 選択肢
-        $selects = ReservationsColumnsSelect::where('reservations_id', $inputs->reservations_id)->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
+        // $selects = ReservationsColumnsSelect::where('reservations_id', $inputs->reservations_id)->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
+        $selects = ReservationsColumnsSelect::where('columns_set_id', $inputs->columns_set_id)->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
 
         if ($is_json) {
 
@@ -782,7 +786,8 @@ class ReservationsPlugin extends UserPluginBase
             // ラジオ型
             if ($inputs_column) {
                 // ラジオボタン項目の場合、valueにはreservations_columns_selectsテーブルのIDが入っているので、該当の選択肢データを取得して選択肢名をセットする
-                $filtered_select = ReservationsColumnsSelect::where('reservations_id', $inputs_column->reservations_id)
+                // $filtered_select = ReservationsColumnsSelect::where('reservations_id', $inputs_column->reservations_id)
+                $filtered_select = ReservationsColumnsSelect::where('columns_set_id', $column->columns_set_id)
                     ->where('column_id', $inputs_column->column_id)
                     ->where('id', $inputs_column->value)
                     ->first();
@@ -858,6 +863,7 @@ class ReservationsPlugin extends UserPluginBase
             'reservations.created_at',
             DB::raw('GROUP_CONCAT(reservations_facilities.facility_name SEPARATOR \'\n\') as facility_names'),
         );
+        // [TODO] 後で見直し
         $query->leftjoin('reservations_facilities', function ($join) {
             $join->on('reservations.id', '=', 'reservations_facilities.reservations_id')
                 ->whereNull('reservations_facilities.deleted_at');
