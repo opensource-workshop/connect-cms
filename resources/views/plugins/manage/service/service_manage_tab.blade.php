@@ -25,6 +25,14 @@
                     @endif
                 </li>
 
+                <li role="presentation" class="nav-item">
+                    @if ($function == "face")
+                        <span class="nav-link"><span class="active">AI顔認識</span></span>
+                    @else
+                        <a href="{{url('/')}}/manage/service/face" class="nav-link">AI顔認識</a></li>
+                    @endif
+                </li>
+
             </ul>
         </div>
     </nav>

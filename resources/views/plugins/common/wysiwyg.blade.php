@@ -747,6 +747,11 @@
             resized_image_size_initial: '{{  Configs::getConfigsValue($cc_configs, "resized_image_size_initial", ResizedImageSize::getDefault())  }}',
             // 画像プラグイン＞画像サイズを表示するか
             has_image_resize: {{  function_exists('gd_info') ? 'true' : 'false' }},
+            // AI顔認識の画像サイズ・粗さ
+            face_image_sizes: {!! ResizedImageSize::getWysiwygListBoxItems('asis') !!},
+            face_image_initial: '{{ Configs::getConfigsValue($cc_configs, "face_ai_initial_size", "middle") }}',
+            finenesses: {!! Fineness::getWysiwygListBoxItems() !!},
+            fineness_initial: '{{ Configs::getConfigsValue($cc_configs, "face_ai_initial_fineness", Fineness::getDefault()) }}'
         },
 
         setup: function(editor) {

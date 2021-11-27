@@ -379,7 +379,7 @@ EOD;
 
         // ファイルのリサイズ(メモリ内)
         $image = Image::make($image_file);
-\Log::debug($request->image_size);
+
         // リサイズ
         $resize_width = null;
         $resize_height = null;
@@ -406,14 +406,15 @@ EOD;
         // 送信データを指定
         $data = [
             //'api_key' => config('connect.PDF_THUMBNAIL_API_KEY'),
-            'mosaic_scale' => $request->mosaic_scale,
+            'mosaic_fineness' => $request->mosaic_fineness,
             //'photo' => base64_encode($request->file('photo')->get()),
             'photo' => base64_encode($image->stream()),
             'extension' => $request->file('photo')->getClientOriginalExtension(),
         ];
+        //\Log::debug($data);
 
         // API URL取得
-        $api_url = config('connect.FACE_API_URL');
+        $api_url = config('connect.FACE_AI_API_URL');
 
         // URLとオプションを指定する
         curl_setopt($ch, CURLOPT_URL, $api_url);

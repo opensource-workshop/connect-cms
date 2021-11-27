@@ -118,18 +118,18 @@
                 <div class="row">
                     <div class="col">
 
-                        @if($face_api_disabled_label)
-                            <input type="hidden" name="use_face" value="{{Configs::getConfigsValueAndOld($configs, "use_face", UseType::not_use)}}">
+                        @if($face_ai_api_disabled_label)
+                            <input type="hidden" name="use_face_ai" value="{{Configs::getConfigsValueAndOld($configs, "use_face_ai", UseType::not_use)}}">
                         @endif
 
                         {{-- ラジオ表示 --}}
                         @foreach (UseType::getMembers() as $value => $display)
                             <div class="custom-control custom-radio custom-control-inline">
                                 <input
-                                    type="radio" value="{{$value}}" class="custom-control-input" id="use_face_{{$value}}"
-                                    name="use_face" @if(Configs::getConfigsValueAndOld($configs, "use_face") == $value) checked @endif
+                                    type="radio" value="{{$value}}" class="custom-control-input" id="use_face_ai_{{$value}}"
+                                    name="use_face_ai" @if(Configs::getConfigsValueAndOld($configs, "use_face_ai") == $value) checked @endif
                                     {{$face_api_disabled_label}}>
-                                <label class="custom-control-label" for="use_face_{{$value}}">
+                                <label class="custom-control-label" for="use_face_ai_{{$value}}">
                                     {{$display}}
                                 </label>
                             </div>
