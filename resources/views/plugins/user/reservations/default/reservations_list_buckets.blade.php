@@ -18,7 +18,7 @@
 
     {{-- メッセージエリア --}}
     <div class="alert alert-info mt-2">
-        <i class="fas fa-exclamation-circle"></i> フレームに表示するコンテンツを変更します。
+        <i class="fas fa-exclamation-circle"></i> フレームに表示する施設予約を変更します。
     </div>
 
     <div class="form-group">
@@ -26,7 +26,7 @@
         <thead class="thead-light">
             <tr>
                 <th class="text-center"></th>
-                <th class="text-center">コンテンツ名</th>
+                <th class="text-center">施設予約名</th>
                 <th class="text-center">カレンダー<br>初期表示</th>
                 <th class="text-center">施設名</th>
                 <th class="text-center">コンテンツ編集</th>
