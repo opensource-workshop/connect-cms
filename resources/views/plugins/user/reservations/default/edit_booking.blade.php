@@ -17,7 +17,6 @@ use App\Models\User\Reservations\ReservationsColumn;
      * 登録ボタン押下
      */
      function submit_booking_store(btn) {
-        // form_save_booking{{$frame_id}}.action = "{{URL::to('/')}}/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         btn.disabled = true;
         form_save_booking{{$frame_id}}.submit();
     }
@@ -220,7 +219,9 @@ use App\Models\User\Reservations\ReservationsColumn;
             <div class="col-3"></div>
             <div class="col-6">
                 <div class="text-center">
-                    <a href="{{URL::to($page->permanent_link)}}" class="btn btn-secondary mr-2"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span></a>
+                    <a href="{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}" class="btn btn-secondary mr-2">
+                        <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
+                    </a>
 
                     @if (empty($booking))
                         @if ($buckets->needApprovalUser(Auth::user(), $frame))
