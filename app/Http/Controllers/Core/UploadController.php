@@ -405,7 +405,7 @@ EOD;
 
         // 送信データを指定
         $data = [
-            //'api_key' => config('connect.PDF_THUMBNAIL_API_KEY'),
+            'api_key' => config('connect.FACE_AI_API_KEY'),
             'mosaic_fineness' => $request->mosaic_fineness,
             //'photo' => base64_encode($request->file('photo')->get()),
             'photo' => base64_encode($image->stream()),
@@ -432,6 +432,12 @@ EOD;
         // ファイルデータをdecode して復元、保存
         $res_base64 = json_decode($res, true);
         //\Log::debug($res_base64);
+
+        // エラーチェック
+        if (array_key_exists('errors', $res_base64) && array_key_exists('message', $res_base64['errors']) && !empty($res_base64['errors']['message'])) {
+            $msg_array['link_text'] = '<p>エラーが発生しています：' . (array_key_exists('message', $res_base64['errors']) ? $res_base64['errors']['message'] : 'メッセージなし' ) . '</p>';
+            return $msg_array;
+        }
 
         // uploads テーブルに情報追加、ファイルのid を取得する
         $photo_upload = Uploads::create([
