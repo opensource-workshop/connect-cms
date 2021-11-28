@@ -356,7 +356,7 @@ EOD;
         if ($method == null) {
             // method が空の場合は、初期値としてpostFile を呼ぶ
             return $this->postFile($request);
-        } elseif ($method == 'face'){
+        } elseif ($method == 'face') {
             return $this->callFaceApi($request);
         }
     }
