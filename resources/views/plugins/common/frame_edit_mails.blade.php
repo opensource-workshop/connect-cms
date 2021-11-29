@@ -118,6 +118,9 @@
                         <span class="small">
                             ※ [[method]] を記述すると該当部分に処理名が入ります。<br />
                             ※ [[title]] を記述すると該当部分に記事のタイトルが入ります。<br />
+                            @if ($frame->plugin_name == 'bbses')
+                                ※ [[body]] を記述すると該当部分にHTMLを除去した本文が入ります。<br />
+                            @endif
                             ※ [[url]] を記述すると該当部分に削除前のURLが入ります。<br />
                             ※ [[delete_comment]] を記述すると該当部分に削除時のコメントが入ります。
                         </span>
