@@ -58,12 +58,13 @@
                         <input type="text" value="{{old('choice_display_sequence.'.$category->id, $category->choice_display_sequence)}}" name="choice_display_sequence[{{$category->id}}]" class="form-control @if ($errors && $errors->has('choice_display_sequence.'.$category->id)) border-danger @endif">
                     </td>
                     <td nowrap class="align-middle">{{$category->category}}</td>
-                    <td class="align-middle">{{$category->facilities_name}}</td>
+                    <td nowrap class="align-middle">{{$category->facilities_name}}</td>
                 </tr>
             @endforeach
 
             </tbody>
         </table>
+        <small class="text-muted">※ 横スクロールできます。</small>
     </div>
 
     <div class="form-group text-center">
