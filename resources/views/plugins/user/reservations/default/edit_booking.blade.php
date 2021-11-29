@@ -158,7 +158,7 @@ use App\Models\User\Reservations\ReservationsColumn;
             {{-- 予約項目の出力 --}}
             @foreach ($columns as $column)
                 {{-- 入力しないカラム型は表示しない --}}
-                @if (ReservationsColumn::isNotInputColumnType($column->column_type))
+                @if ($column->isNotInputColumnType())
                     @continue
                 @endif
 

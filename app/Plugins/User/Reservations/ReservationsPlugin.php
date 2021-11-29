@@ -6,7 +6,6 @@ namespace App\Plugins\User\Reservations;
 use App\Models\Common\ConnectCarbon;
 
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
@@ -191,117 +190,6 @@ class ReservationsPlugin extends UserPluginBase
     /* 画面アクション関数 */
 
     /**
-     * 予約追加処理
-     */
-    public function saveBooking($request, $page_id, $frame_id, $booking_id = null)
-    {
-        $target_ymd = $request->target_date;
-        // URLパラメータチェック
-        $year = (int)substr($target_ymd, 0, 4);
-        $month = (int)substr($target_ymd, 4, 2);
-        $day = (int)substr($target_ymd, 6, 2);
-        if (!checkdate($month, $day, $year)) {
-            return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
-        }
-
-        // バリデーション用の配列を生成（基本項目）
-        $validationArray = [
-            'start_datetime' => ['required'],
-            'end_datetime' => ['required', 'after:start_datetime'],
-        ];
-        $attributeArray = [
-            'start_datetime' => '開始時間',
-            'end_datetime' => '終了時間',
-        ];
-
-        // バリデーション用の配列を生成（可変項目）
-        // $required_columns = ReservationsColumn::where('reservations_id', $request->reservations_id)
-        $required_columns = ReservationsColumn::where('columns_set_id', $request->columns_set_id)
-            ->where('hide_flag', NotShowType::show)
-            ->where('required', Required::on)
-            ->get();
-        foreach ($required_columns as $column) {
-            $key_str = 'columns_value.' . $column->id;
-            $validationArray[$key_str] = ['required'];
-            $attributeArray[$key_str] = $column->column_name;
-        }
-
-        // バリデーション定義
-        $validator = Validator::make($request->all(), $validationArray);
-        $validator->setAttributeNames($attributeArray);
-
-        // バリデーション実施、エラー時は予約画面へ戻る
-        if ($validator->fails()) {
-            // return $this->editBooking($request, $page_id, $frame_id, $booking_id, $validator->errors());
-            return back()->withErrors($validator)->withInput();
-        }
-
-        // 施設データ
-        $facility = ReservationsFacility::where('id', $request->facility_id)->first();
-
-        // 予約ヘッダ 登録 ※予約IDがある場合は更新
-        $reservations_inputs = $booking_id ?
-            ReservationsInput::where('id', $booking_id)->first() :
-            new ReservationsInput();
-
-        // 新規登録の判定のために、保存する前のレコードを退避しておく。
-        $before_reservations_inputs = clone $reservations_inputs;
-
-        // 承認の要否確認とステータス処理
-        if ($this->isApproval()) {
-            $reservations_inputs->status = StatusType::approval_pending;  // 承認待ち
-            $str_mode = $booking_id ? '予約の変更申請をしました。' : '予約の登録申請をしました。';
-        } else {
-            $reservations_inputs->status = StatusType::active;  // 公開
-            $str_mode = $booking_id ? '予約を更新しました。' : '予約を登録しました。';
-        }
-
-        // 新規登録時のみの登録項目
-        if (!$booking_id) {
-            $reservations_inputs->reservations_id = $request->reservations_id;
-            $reservations_inputs->facility_id = $request->facility_id;
-        }
-        $reservations_inputs->start_datetime = new ConnectCarbon($target_ymd . ' ' . $request->start_datetime . ':00');
-        $reservations_inputs->end_datetime = new ConnectCarbon($target_ymd . ' ' . $request->end_datetime . ':00');
-        $reservations_inputs->save();
-
-        // 項目IDを取得
-        $keys = array_keys($request->columns_value);
-        foreach ($keys as $key) {
-            // 予約明細 更新レコード取得
-            // $reservations_inputs_columns = ReservationsInputsColumn::where('reservations_id', $request->reservations_id)
-            $reservations_inputs_columns = ReservationsInputsColumn::where('inputs_id', $reservations_inputs->id)
-                ->where('column_id', $key)
-                ->first();
-
-            // 更新レコードが取得できなかったらnew
-            if (!$reservations_inputs_columns) {
-                $reservations_inputs_columns = new ReservationsInputsColumn();
-                // 新規登録時のみの登録項目
-                $reservations_inputs_columns->reservations_id = $request->reservations_id;
-                $reservations_inputs_columns->inputs_id = $reservations_inputs->id;
-                $reservations_inputs_columns->column_id = $key;
-            }
-            $reservations_inputs_columns->value = $request->columns_value[$key];
-
-            $reservations_inputs_columns->save();
-        }
-        // $str_mode = $request->booking_id ? '更新' : '登録';
-        // $message = '予約を' . $str_mode . 'しました。【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
-        $request->flash_message = $str_mode . '【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
-
-        // titleカラムが無いため、プラグイン独自でセット
-        $overwrite_notice_embedded_tags = [NoticeEmbeddedTag::title => $this->getTitle($reservations_inputs)];
-
-        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド, 上書き埋め込みタグ)
-        $this->sendPostNotice($reservations_inputs, $before_reservations_inputs, 'showBooking', $overwrite_notice_embedded_tags);
-
-        // 登録後はカレンダー表示
-        // return $this->index($request, $page_id, $frame_id, null, null, $message);
-        return collect(['redirect_path' => url($this->page->permanent_link)]);
-    }
-
-    /**
      * 予約追加画面の表示
      */
     public function editBooking($request, $page_id, $frame_id, $input_id = null)
@@ -393,6 +281,122 @@ class ReservationsPlugin extends UserPluginBase
             'selects' => $selects,
             'booking' => $booking,
         ]);
+    }
+
+    /**
+     * 予約追加処理
+     */
+    public function saveBooking($request, $page_id, $frame_id, $booking_id = null)
+    {
+        $target_ymd = $request->target_date;
+        // URLパラメータチェック
+        $year = (int)substr($target_ymd, 0, 4);
+        $month = (int)substr($target_ymd, 4, 2);
+        $day = (int)substr($target_ymd, 6, 2);
+        if (!checkdate($month, $day, $year)) {
+            return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
+        }
+
+        // バリデーション用の配列を生成（基本項目）
+        $validationArray = [
+            'start_datetime' => ['required'],
+            'end_datetime' => ['required', 'after:start_datetime'],
+        ];
+        $attributeArray = [
+            'start_datetime' => '開始時間',
+            'end_datetime' => '終了時間',
+        ];
+
+        // バリデーション用の配列を生成（可変項目）
+        // $required_columns = ReservationsColumn::where('reservations_id', $request->reservations_id)
+        $required_columns = ReservationsColumn::where('columns_set_id', $request->columns_set_id)
+            ->where('hide_flag', NotShowType::show)
+            ->where('required', Required::on)
+            ->get();
+        foreach ($required_columns as $column) {
+            // 入力なしカラム型は、必須対象外
+            if ($column->isNotInputColumnType()) {
+                continue;
+            }
+
+            $key_str = 'columns_value.' . $column->id;
+            $validationArray[$key_str] = ['required'];
+            $attributeArray[$key_str] = $column->column_name;
+        }
+
+        // バリデーション定義
+        $validator = Validator::make($request->all(), $validationArray);
+        $validator->setAttributeNames($attributeArray);
+
+        // バリデーション実施、エラー時は予約画面へ戻る
+        if ($validator->fails()) {
+            // return $this->editBooking($request, $page_id, $frame_id, $booking_id, $validator->errors());
+            return back()->withErrors($validator)->withInput();
+        }
+
+        // 施設データ
+        $facility = ReservationsFacility::where('id', $request->facility_id)->first();
+
+        // 予約ヘッダ 登録 ※予約IDがある場合は更新
+        $reservations_inputs = $booking_id ?
+            ReservationsInput::where('id', $booking_id)->first() :
+            new ReservationsInput();
+
+        // 新規登録の判定のために、保存する前のレコードを退避しておく。
+        $before_reservations_inputs = clone $reservations_inputs;
+
+        // 承認の要否確認とステータス処理
+        if ($this->isApproval()) {
+            $reservations_inputs->status = StatusType::approval_pending;  // 承認待ち
+            $str_mode = $booking_id ? '予約の変更申請をしました。' : '予約の登録申請をしました。';
+        } else {
+            $reservations_inputs->status = StatusType::active;  // 公開
+            $str_mode = $booking_id ? '予約を更新しました。' : '予約を登録しました。';
+        }
+
+        // 新規登録時のみの登録項目
+        if (!$booking_id) {
+            $reservations_inputs->reservations_id = $request->reservations_id;
+            $reservations_inputs->facility_id = $request->facility_id;
+        }
+        $reservations_inputs->start_datetime = new ConnectCarbon($target_ymd . ' ' . $request->start_datetime . ':00');
+        $reservations_inputs->end_datetime = new ConnectCarbon($target_ymd . ' ' . $request->end_datetime . ':00');
+        $reservations_inputs->save();
+
+        // 項目IDを取得
+        $keys = array_keys($request->columns_value);
+        foreach ($keys as $key) {
+            // 予約明細 更新レコード取得
+            // $reservations_inputs_columns = ReservationsInputsColumn::where('reservations_id', $request->reservations_id)
+            $reservations_inputs_columns = ReservationsInputsColumn::where('inputs_id', $reservations_inputs->id)
+                ->where('column_id', $key)
+                ->first();
+
+            // 更新レコードが取得できなかったらnew
+            if (!$reservations_inputs_columns) {
+                $reservations_inputs_columns = new ReservationsInputsColumn();
+                // 新規登録時のみの登録項目
+                $reservations_inputs_columns->reservations_id = $request->reservations_id;
+                $reservations_inputs_columns->inputs_id = $reservations_inputs->id;
+                $reservations_inputs_columns->column_id = $key;
+            }
+            $reservations_inputs_columns->value = $request->columns_value[$key];
+
+            $reservations_inputs_columns->save();
+        }
+        // $str_mode = $request->booking_id ? '更新' : '登録';
+        // $message = '予約を' . $str_mode . 'しました。【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
+        $request->flash_message = $str_mode . '【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
+
+        // titleカラムが無いため、プラグイン独自でセット
+        $overwrite_notice_embedded_tags = [NoticeEmbeddedTag::title => $this->getTitle($reservations_inputs)];
+
+        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド, 上書き埋め込みタグ)
+        $this->sendPostNotice($reservations_inputs, $before_reservations_inputs, 'showBooking', $overwrite_notice_embedded_tags);
+
+        // 登録後はカレンダー表示
+        // return $this->index($request, $page_id, $frame_id, null, null, $message);
+        return collect(['redirect_path' => url($this->page->permanent_link)]);
     }
 
     /**

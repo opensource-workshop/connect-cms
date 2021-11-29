@@ -31,13 +31,13 @@ class ReservationsColumn extends Model
     /**
      * 入力しないカラム型か
      */
-    public static function isNotInputColumnType($column_type)
+    public function isNotInputColumnType()
     {
         // 登録日型・更新日型等は入力しない
-        if ($column_type == ReservationColumnType::created ||
-                $column_type == ReservationColumnType::updated ||
-                $column_type == ReservationColumnType::created_name ||
-                $column_type == ReservationColumnType::updated_name) {
+        if ($this->column_type == ReservationColumnType::created ||
+                $this->column_type == ReservationColumnType::updated ||
+                $this->column_type == ReservationColumnType::created_name ||
+                $this->column_type == ReservationColumnType::updated_name) {
             return true;
         }
         return false;
