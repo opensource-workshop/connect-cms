@@ -1120,7 +1120,7 @@ class ReservationsPlugin extends UserPluginBase
     /**
      * 施設カテゴリ選択の更新
      */
-    public function updateChoiceFacilities($request, $page_id, $frame_id)
+    public function updateChoiceFacilities($request, $page_id, $frame_id, $reservations_id = null)
     {
         /* エラーチェック
         ------------------------------------ */
@@ -1148,9 +1148,6 @@ class ReservationsPlugin extends UserPluginBase
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // 施設予約＆フレームデータ
-        $reservation_frame = $this->getReservationsFrame($frame_id);
-
         /* 表示フラグ更新(共通カテゴリ)
         ------------------------------------ */
         if (!empty($request->reservations_category_id)) {
@@ -1158,7 +1155,7 @@ class ReservationsPlugin extends UserPluginBase
                 // FAQプラグインのカテゴリー使用テーブルになければ追加、あれば更新
                 ReservationsChoiceCategory::updateOrCreate(
                     [
-                        'reservations_id' => $reservation_frame->reservations_id,
+                        'reservations_id' => $reservations_id,
                         'reservations_categories_id' => $reservations_category_id,
                     ],
                     [

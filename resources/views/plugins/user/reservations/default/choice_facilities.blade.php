@@ -26,9 +26,9 @@
     　施設や施設カテゴリ自体の登録は、管理者メニューの [ <a href="{{url('/')}}/manage/reservation">施設管理</a> ] から行えます。
 </div>
 
-<form action="{{url('/')}}/redirect/plugin/{{$frame->plugin_name}}/updateChoiceFacilities/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST">
+<form action="{{url('/')}}/redirect/plugin/{{$frame->plugin_name}}/updateChoiceFacilities/{{$page->id}}/{{$frame_id}}/{{$reservation->id}}#frame-{{$frame->id}}" method="POST">
     {{ csrf_field() }}
-    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/{{$frame->plugin_name}}/choiceFacilities/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
+    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/{{$frame->plugin_name}}/choiceFacilities/{{$page->id}}/{{$frame_id}}/{{$reservation->id}}#frame-{{$frame_id}}">
 
     <div class="form-group table-responsive">
         <table class="table table-hover table-sm mb-0">
