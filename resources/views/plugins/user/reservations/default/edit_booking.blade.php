@@ -112,39 +112,46 @@ use App\Models\User\Reservations\ReservationsColumn;
     {{-- 予約時間 --}}
     <div class="form-group row">
         <div class="col-md-2">予約時間 <span class="badge badge-danger">必須</span></div>
-        {{-- 予約開始時間 --}}
-        <div class="col-md-3">
-            <div class="input-group date" id="start_datetime" data-target-input="nearest">
-                {{-- 表示優先順：
-                    ・旧入力値（入力エラー時）
-                    ・予約値（更新時）
-                    ・初期表示値（新規登録時）
-                --}}
-                <input type="text" name="start_datetime" value="{{ old('start_datetime', $booking ? $booking->start_datetime->format('H:i') : Carbon::now()->addHour(1)->hour.':00') }}" class="form-control datetimepicker-input @if ($errors->has('start_datetime')) border-danger @endif" data-target="#start_datetime">
-                <div class="input-group-append" data-target="#start_datetime" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="far fa-clock"></i></div>
+        <div class="col-md-10">
+
+            <div class="row">
+                {{-- 予約開始時間 --}}
+                <div class="col-md-3">
+                    <div class="input-group date" id="start_datetime" data-target-input="nearest">
+                        {{-- 表示優先順：
+                            ・旧入力値（入力エラー時）
+                            ・予約値（更新時）
+                            ・初期表示値（新規登録時）
+                        --}}
+                        <input type="text" name="start_datetime" value="{{ old('start_datetime', $booking ? $booking->start_datetime->format('H:i') : Carbon::now()->addHour(1)->hour.':00') }}" class="form-control datetimepicker-input @if ($errors->has('start_datetime')) border-danger @endif" data-target="#start_datetime">
+                        <div class="input-group-append" data-target="#start_datetime" data-toggle="datetimepicker">
+                            <div class="input-group-text"><i class="far fa-clock"></i></div>
+                        </div>
+                    </div>
+                </div>
+                {{-- 予約終了時間 --}}
+                <div class="col-md-3">
+                    <div class="input-group date" id="end_datetime" data-target-input="nearest">
+                        {{-- 表示優先順：
+                            ・旧入力値（入力エラー時）
+                            ・予約値（更新時）
+                            ・初期表示値（新規登録時）
+                        --}}
+                        <input type="text" name="end_datetime" value="{{ old('end_datetime', $booking ? $booking->end_datetime->format('H:i') : Carbon::now()->addHour(2)->hour.':00') }}" class="form-control datetimepicker-input @if ($errors->has('end_datetime')) border-danger @endif" data-target="#end_datetime">
+                        <div class="input-group-append" data-target="#end_datetime" data-toggle="datetimepicker">
+                            <div class="input-group-text"><i class="far fa-clock"></i></div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        {{-- 予約終了時間 --}}
-        <div class="col-md-3">
-            <div class="input-group date" id="end_datetime" data-target-input="nearest">
-                {{-- 表示優先順：
-                    ・旧入力値（入力エラー時）
-                    ・予約値（更新時）
-                    ・初期表示値（新規登録時）
-                --}}
-                <input type="text" name="end_datetime" value="{{ old('end_datetime', $booking ? $booking->end_datetime->format('H:i') : Carbon::now()->addHour(2)->hour.':00') }}" class="form-control datetimepicker-input @if ($errors->has('end_datetime')) border-danger @endif" data-target="#end_datetime">
-                <div class="input-group-append" data-target="#end_datetime" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="far fa-clock"></i></div>
+
+            <div class="row">
+                <div class="col">
+                    @if ($errors->has('start_datetime')) <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first('start_datetime')}}</div> @endif
+                    @if ($errors->has('end_datetime')) <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first('end_datetime')}}</div> @endif
                 </div>
             </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-12">
-            @if ($errors->has('start_datetime')) <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first('start_datetime')}}</div> @endif
-            @if ($errors->has('end_datetime')) <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first('end_datetime')}}</div> @endif
+
         </div>
     </div>
 
@@ -195,6 +202,7 @@ use App\Models\User\Reservations\ReservationsColumn;
                                 </div>
                             @endforeach
                         </div>
+                        @include('plugins.common.errors_inline', ['name' => 'columns_value.'.$column->id])
                         @break
 
                     @default
