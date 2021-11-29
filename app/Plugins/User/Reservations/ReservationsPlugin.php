@@ -364,7 +364,8 @@ class ReservationsPlugin extends UserPluginBase
         $reservations_inputs->save();
 
         // 項目IDを取得
-        $keys = array_keys($request->columns_value);
+        $columns_value = $request->columns_value ?? [];
+        $keys = array_keys($columns_value);
         foreach ($keys as $key) {
             // 予約明細 更新レコード取得
             // $reservations_inputs_columns = ReservationsInputsColumn::where('reservations_id', $request->reservations_id)
@@ -380,7 +381,7 @@ class ReservationsPlugin extends UserPluginBase
                 $reservations_inputs_columns->inputs_id = $reservations_inputs->id;
                 $reservations_inputs_columns->column_id = $key;
             }
-            $reservations_inputs_columns->value = $request->columns_value[$key];
+            $reservations_inputs_columns->value = $columns_value[$key];
 
             $reservations_inputs_columns->save();
         }
