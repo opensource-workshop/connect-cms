@@ -838,7 +838,7 @@ class ReservationsPlugin extends UserPluginBase
     }
 
     /**
-     * 表示コンテンツ選択画面の表示
+     * 施設予約選択画面の表示
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -846,32 +846,32 @@ class ReservationsPlugin extends UserPluginBase
         $reservations_frame = $this->getReservationsFrame($frame_id);
 
         // 施設予約の取得
-        $query = Reservation::query();
-        $query->select(
-            'reservations.id',
-            'reservations.bucket_id',
-            'reservations.reservation_name',
-            'reservations.calendar_initial_display_type',
-            'reservations.created_at',
-            DB::raw('GROUP_CONCAT(reservations_facilities.facility_name SEPARATOR \'\n\') as facility_names'),
-        );
-        // [TODO] 後で見直し
-        $query->leftjoin('reservations_facilities', function ($join) {
-            $join->on('reservations.id', '=', 'reservations_facilities.reservations_id')
-                ->whereNull('reservations_facilities.deleted_at');
-        });
-        $query->groupBy(
-            'reservations.id',
-            'reservations.bucket_id',
-            'reservations.reservation_name',
-            'reservations.calendar_initial_display_type',
-            'reservations.created_at',
-        );
-        $query->orderBy('reservations.created_at', 'desc');
-        $reservations = $query->paginate(10, ["*"], "frame_{$frame_id}_page");
+        $reservations = Reservation::orderBy('reservations.created_at', 'desc')->paginate(10, ["*"], "frame_{$frame_id}_page");
+
+        // 一覧で表示する施設予約だけ、施設カテゴリ選択の取得
+        $choice_categories = ReservationsChoiceCategory::
+            select(
+                'reservations_categories.*',
+                'reservations_choice_categories.reservations_id',
+            )
+            ->whereIn('reservations_choice_categories.reservations_id', $reservations->pluck('id'))
+            ->where('reservations_choice_categories.view_flag', ShowType::show)
+            ->leftJoin('reservations_categories', function ($join) {
+                $join->on('reservations_categories.id', '=', 'reservations_choice_categories.reservations_categories_id')
+                    ->whereNull('reservations_categories.deleted_at');
+            })
+            ->orderBy('reservations_choice_categories.display_sequence', 'asc')
+            ->orderBy('reservations_categories.display_sequence', 'asc')
+            ->get();
+
+        foreach ($reservations as &$reservation) {
+            // 施設カテゴリ選択のカテゴリ名をセット
+            $reservation->choice_category_names = $choice_categories->where('reservations_id', $reservation->id)
+                ->pluck('category')->implode(',');
+        }
 
         // 表示テンプレートを呼び出す。
-        return $this->view('reservations_list_buckets', [
+        return $this->view('list_buckets', [
             'reservations_frame' => $reservations_frame,
             'reservations' => $reservations,
         ]);
@@ -1053,8 +1053,10 @@ class ReservationsPlugin extends UserPluginBase
         Frame::where('id', $frame_id)
             ->update(['bucket_id' => $request->select_bucket]);
 
-        // 表示施設予約選択画面を呼ぶ
-        return $this->listBuckets($request, $page_id, $frame_id, $id);
+        $request->flash_message = '表示する施設予約を変更しました。';
+
+        // redirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+        // return $this->listBuckets($request, $page_id, $frame_id, $id);
     }
 
     /**
