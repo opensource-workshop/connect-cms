@@ -94,6 +94,11 @@ return [
     'PDF_TO_TEXT_API_URL' => env('PDF_TO_TEXT_API_URL', ''),
     'PDF_TO_TEXT_API_KEY' => env('PDF_TO_TEXT_API_KEY', ''),
 
+    // 外部APIを使って顔認識処理
+    'FACE_AI_API_URL' => env('FACE_AI_API_URL', ''),
+    'FACE_AI_API_KEY' => env('FACE_AI_API_KEY', ''),
+    'FACE_AI_DEFAULT_SIZE' => '1200',
+
     // WYSIWYG のバイト数チェックの数値（MySQLのtext型）
     'WYSIWYG_MAX_BYTE' => 65535,
 

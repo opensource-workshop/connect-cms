@@ -93,7 +93,7 @@ Route::get('/download/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}
 Route::get('/file/css/{page_id?}.css', 'Core\UploadController@getCss')->name('get_css');
 
 // アップロードファイルの保存アクション
-Route::post('/upload', 'Core\UploadController@postFile')->name('post_upload');
+Route::post('/upload/{method?}', 'Core\UploadController@postInvoke')->name('post_upload');
 
 // アップロードファイルの取得アクション
 Route::get('/file/{id?}', 'Core\UploadController@getFile')->name('get_file');

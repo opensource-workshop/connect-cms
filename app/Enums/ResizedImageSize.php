@@ -26,10 +26,13 @@ final class ResizedImageSize extends EnumsBase
     /**
      * Wysiwyg＞画像プラグイン＞画像サイズの選択肢
      */
-    public static function getWysiwygListBoxItems()
+    public static function getWysiwygListBoxItems($ommit_key = null)
     {
         $items = '[';
         foreach (self::enum as $key => $value) {
+            if ($ommit_key == $key) {
+                continue;
+            }
             $items .= "{ text: '{$value}', value: '{$key}' },";
         }
         $items .= ']';

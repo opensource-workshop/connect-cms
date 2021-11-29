@@ -31,6 +31,8 @@ class ServiceManage extends ManagePluginBase
         $role_check_table["update"] = ['admin_site'];
         $role_check_table["pdf"] = ['admin_site'];
         $role_check_table["pdfUpdate"] = ['admin_site'];
+        $role_check_table["face"] = ['admin_site'];
+        $role_check_table["faceUpdate"] = ['admin_site'];
 
         return $role_check_table;
     }
@@ -51,6 +53,7 @@ class ServiceManage extends ManagePluginBase
             "configs" => $configs,
             "translate_api_disabled_label" => !config('connect.TRANSLATE_API_URL') ? 'disabled' : '',
             "pdf_api_disabled_label" => !config('connect.PDF_THUMBNAIL_API_URL') ? 'disabled' : '',
+            "face_ai_api_disabled_label" => !config('connect.FACE_AI_API_URL') ? 'disabled' : '',
         ]);
     }
 
@@ -69,6 +72,12 @@ class ServiceManage extends ManagePluginBase
         $configs = Configs::updateOrCreate(
             ['name' => 'use_pdf_thumbnail'],
             ['category' => 'service', 'value' => $request->use_pdf_thumbnail]
+        );
+
+        // AI顔認識を使用
+        $configs = Configs::updateOrCreate(
+            ['name' => 'use_face_ai'],
+            ['category' => 'service', 'value' => $request->use_face_ai]
         );
 
         // 画面に戻る
@@ -123,5 +132,49 @@ class ServiceManage extends ManagePluginBase
 
         // 画面に戻る
         return redirect("/manage/service/pdf")->with('flash_message', '更新しました。');
+    }
+
+    /**
+     * 顔認識設定 表示
+     *
+     * @return view
+     */
+    public function face($request, $id = null, $sub_id = null)
+    {
+        // Config データの取得
+        $configs = Configs::where('category', 'service')->get();
+
+        return view('plugins.manage.service.face', [
+            "function" => __FUNCTION__,
+            "plugin_name" => "service",
+            "configs" => $configs,
+            "face_ai_api_disabled_label" => !config('connect.FACE_AI_API_URL') ? 'disabled' : '',
+        ]);
+    }
+
+    /**
+     * 顔認識設定の保存
+     */
+    public function faceUpdate($request, $id = null)
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        // 初期に選択させる初期に選択させる画像の大きさ
+        $configs = Configs::updateOrCreate(
+            ['name' => 'face_ai_initial_size'],
+            ['category' => 'service', 'value' => $request->face_ai_initial_size]
+        );
+
+        // 初期に選択させるモザイクの粗さ
+        $configs = Configs::updateOrCreate(
+            ['name' => 'face_ai_initial_fineness'],
+            ['category' => 'service', 'value' => $request->face_ai_initial_fineness]
+        );
+
+        // 画面に戻る
+        return redirect("/manage/service/face")->with('flash_message', '更新しました。');
     }
 }

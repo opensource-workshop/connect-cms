@@ -291,6 +291,7 @@ $app_array = [
         'WhatsnewFrameConfig' => \App\Enums\WhatsnewFrameConfig::class,
         'PhotoalbumFrameConfig' => \App\Enums\PhotoalbumFrameConfig::class,
         'PhotoalbumSort' => \App\Enums\PhotoalbumSort::class,
+        'Fineness' => \App\Enums\Fineness::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
