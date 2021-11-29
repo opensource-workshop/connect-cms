@@ -21,7 +21,7 @@
 @include('plugins.common.flash_message')
 
 {{-- メッセージエリア --}}
-<div class="alert alert-info">
+<div class="alert alert-info mt-2">
     <i class="fas fa-exclamation-circle"></i> 施設カテゴリ単位で表示する予約施設を設定します。<br />
     　施設や施設カテゴリ自体の登録は、管理者メニューの [ <a href="{{url('/')}}/manage/reservation">施設管理</a> ] から行えます。
 </div>
