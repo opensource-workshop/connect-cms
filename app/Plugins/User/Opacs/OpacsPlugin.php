@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\MessageBag;
 use Illuminate\Support\Collection;
 
-// use App\User;
+use App\User;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Core\Configs;
@@ -53,10 +53,8 @@ class OpacsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        // $functions['get']  = ['settingOpacFrame', 'lentlist', 'searchClear', 'searchDetailClear', 'roleLent'];
-        // $functions['post'] = ['lent', 'requestLent', 'returnLent', 'search', 'saveOpacFrame', 'getBookInfo', 'destroyRequest'];
-        $functions['get']  = ['settingOpacFrame', 'lentlist', 'searchClear', 'searchDetailClear'];
-        $functions['post'] = ['requestLent', 'returnLent', 'search', 'saveOpacFrame', 'getBookInfo', 'destroyRequest'];
+        $functions['get']  = ['settingOpacFrame', 'lentlist', 'searchClear', 'searchDetailClear', 'roleLent'];
+        $functions['post'] = ['lent', 'requestLent', 'returnLent', 'search', 'saveOpacFrame', 'getBookInfo', 'destroyRequest'];
         return $functions;
     }
 
@@ -80,9 +78,7 @@ class OpacsPlugin extends UserPluginBase
         // $role_check_table["destroyRequest"]    = ['posts.delete'];
 
         $role_check_table["lentlist"]          = ['role_article'];
-
-        // delete: 存在しないbladeを指定したメソッドのため、コメントアウト
-        // $role_check_table["roleLent"]          = ['role_article'];
+        $role_check_table["roleLent"]          = ['role_article'];
 
         // change: getBookInfoの呼び出しは create,edit のみ. create,edit の権限を設定する
         // $role_check_table["getBookInfo"]       = ['role_article'];
@@ -1041,50 +1037,44 @@ class OpacsPlugin extends UserPluginBase
         );
     }
 
-    // delete: opacs_role_lent.blade.php は存在しないため、一旦コメントアウト。
     /**
      * 書籍貸出画面表示（権限あり）
      */
-    // public function roleLent($request, $page_id, $frame_id, $opacs_books_id, $message = null, $message_class = null, $errors = null)
-    // {
-    //      // 権限チェック
-    //     if ($this->can('role_article')) {
-    //         return $this->view_error(403);
-    //     }
+    public function roleLent($request, $page_id, $frame_id, $opacs_books_id, $message = null, $message_class = null, $errors = null)
+    {
+        // セッション初期化などのLaravel 処理。
+        $request->flash();
 
-    //     // セッション初期化などのLaravel 処理。
-    //     $request->flash();
+        // Frame データ
+        $opac_frame = $this->getOpacFrame($frame_id);
 
-    //     // Frame データ
-    //     $opac_frame = $this->getOpacFrame($frame_id);
+        // 書誌データ取得
+        $opacs_book = OpacsBooks::where('id', $opacs_books_id)->first();
 
-    //     // 書誌データ取得
-    //     $opacs_book = OpacsBooks::where('id', $opacs_books_id)->first();
+        // 貸し出し済みかどうかチェックする
+        $done_lent = $this->lentCheck($opacs_books_id);
 
-    //     // 貸し出し済みかどうかチェックする
-    //     $done_lent = $this->lentCheck($opacs_books_id);
+        // 既に郵送リクエストされているようだったらその情報を取得する
+        $opacs_books_lent = OpacsBooksLents::where('id', $request->req_lent_id)->first();
 
-    //     // 既に郵送リクエストされているようだったらその情報を取得する
-    //     $opacs_books_lent = OpacsBooksLents::where('id', $request->req_lent_id)->first();
+        // ユーザー名取得
+        $user = User::where('userid', $opacs_books_lent->student_no)->first();
 
-    //     // ユーザー名取得
-    //     $user = User::where('userid', $opacs_books_lent->student_no)->first();
-
-    //     // 画面を呼び出す。
-    //     return $this->view(
-    //         'opacs_role_lent', [
-    //         'opac_frame'             => $opac_frame,
-    //         'opacs_books'            => $opacs_book,
-    //         'opacs_books_lents'      => $opacs_books_lent,
-    //         'opacs_books_id'         => $opacs_books_id,
-    //         'user_name'              => $user->name,
-    //         'done_lent'              => $done_lent,
-    //         'message'                => $message,
-    //         'message_class'          => $message_class,
-    //         'errors'                 => $errors,
-    //         ]
-    //     );
-    // }
+        // 画面を呼び出す。
+        return $this->view(
+            'opacs_role_lent', [
+            'opac_frame'             => $opac_frame,
+            'opacs_books'            => $opacs_book,
+            'opacs_books_lents'      => $opacs_books_lent,
+            'opacs_books_id'         => $opacs_books_id,
+            'user_name'              => $user->name,
+            'done_lent'              => $done_lent,
+            'message'                => $message,
+            'message_class'          => $message_class,
+            'errors'                 => $errors,
+            ]
+        );
+    }
 
     /**
      *  書誌データ登録処理
@@ -1287,15 +1277,10 @@ class OpacsPlugin extends UserPluginBase
     /**
      *  メール送信
      */
-    public static function sendMailOpac($opacs, $subject, $content, $add_email = null)
+    public static function sendMailOpac($opacs, $subject, $content)
     {
         if (empty($opacs)) {
             return;
-        }
-
-        // 追加アドレスへのメール送付
-        if (empty($add_email) == false) {
-            Mail::to($add_email)->send(new ConnectMail(['subject' => $subject, 'template' => 'mail.send'], ['content' => $content]));
         }
 
         if ($opacs->moderator_mail_send_flag == 0 || empty($opacs->moderator_mail_send_address)) {
@@ -1310,167 +1295,184 @@ class OpacsPlugin extends UserPluginBase
         }
     }
 
-    // resources\views\plugins\user\opacs\default\opacs_my.blade.php の該当post部分はコメントアウトされていたため、一旦コメントアウト。今後ON/OFF設定つけて復活予定
+    /**
+     *  リクエストしたユーザーへのメール送信
+     */
+    public static function sendMailOpacUser($opacs, $subject, $content, $user_email = null)
+    {
+        if (empty($opacs)) {
+            return;
+        }
+
+        if ($opacs->request_mail_send_flag != 1 || empty($user_email)) {
+            return;
+        }
+
+        Mail::to($user_email)->send(new ConnectMail(['subject' => $subject, 'template' => 'mail.send'], ['content' => $content]));
+    }
+
     /**
      *  貸し出し登録
      *  ※現在はモデレータのみがモデレータの一覧から貸し出す事しか想定していない。
      *    その為、戻る画面はモデレータ用一覧かモデレータ用貸出画面になっている
      */
-    // public function lent($request, $page_id, $frame_id, $opacs_books_id = null)
-    // {
-    //     // 認証されているか確認
-    //     if (!Auth::check()) {
-    //         return $this->view_error(403);
-    //     }
+    public function lent($request, $page_id, $frame_id, $opacs_books_id = null)
+    {
+        // 認証されているか確認
+        if (!Auth::check()) {
+            return $this->view_error(403);
+        }
 
-    //     // 項目のエラーチェック
-    //     $validator = Validator::make($request->all(), [
-    //         'req_student_no'   => ['required'],
-    //         'barcode'          => ['required'],
-    //         'return_scheduled' => ['required'],
-    //     ]);
-    //     $validator->setAttributeNames([
-    //         'req_student_no'   => '学籍番号/教職員番号',
-    //         'barcode'          => '確認用バーコード',
-    //         'return_scheduled' => '返却予定日',
-    //     ]);
-    //     $message = null;
-    //     if ($validator->fails()) {
-    //         return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
-    //     }
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'req_student_no'   => ['required'],
+            'barcode'          => ['required'],
+            'return_scheduled' => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'req_student_no'   => '学籍番号/教職員番号',
+            'barcode'          => '確認用バーコード',
+            'return_scheduled' => '返却予定日',
+        ]);
+        $message = null;
+        if ($validator->fails()) {
+            return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
+        }
 
-    //     // lent_idがある場合、郵送リクエストからの貸出処理なのでデータ整合性チェックを行う
-    //     $opacs_books_lent = null;
-    //     if (empty($request->req_lent_id) == false) {
-    //         // 郵送リクエスト情報取得
-    //         $opacs_books_lent = OpacsBooksLents::where('id', $request->req_lent_id)
-    //                                            ->where('opacs_books_id', $opacs_books_id)
-    //                                            ->where('student_no', $request->req_student_no)
-    //                                            ->where('lent_flag', [2])->first();
-    //         if (empty($opacs_books_lent) == true) {
-    //             $messages = new MessageBag;
-    //             $messages->add('barcode', '該当する郵送リクエスト情報がありませんでした。');
-    //             return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id, null, null, $messages);
-    //         }
-    //     } else {
-    //         $opacs_books_lent = OpacsBooksLents::where('opacs_books_id', $opacs_books_id)
-    //                                            ->where('student_no', $request->req_student_no)
-    //                                            ->where('lent_flag', [2])->first();
-    //     }
+        // lent_idがある場合、郵送リクエストからの貸出処理なのでデータ整合性チェックを行う
+        $opacs_books_lent = null;
+        if (empty($request->req_lent_id) == false) {
+            // 郵送リクエスト情報取得
+            $opacs_books_lent = OpacsBooksLents::where('id', $request->req_lent_id)
+                                               ->where('opacs_books_id', $opacs_books_id)
+                                               ->where('student_no', $request->req_student_no)
+                                               ->where('lent_flag', [2])->first();
+            if (empty($opacs_books_lent) == true) {
+                $messages = new MessageBag;
+                $messages->add('barcode', '該当する郵送リクエスト情報がありませんでした。');
+                return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id, null, null, $messages);
+            }
+        } else {
+            $opacs_books_lent = OpacsBooksLents::where('opacs_books_id', $opacs_books_id)
+                                               ->where('student_no', $request->req_student_no)
+                                               ->where('lent_flag', [2])->first();
+        }
 
-    //     // 書籍情報取得
-    //     $opacs_books = OpacsBooks::where('id', $opacs_books_id)->first();
-    //     if ($opacs_books->barcode != $request->barcode) {
-    //         $messages = new MessageBag;
-    //         $messages->add('barcode', '確認用バーコードと一致しませんでした。');
-    //         return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id, null, null, $messages);
-    //     }
+        // 書籍情報取得
+        $opacs_books = OpacsBooks::where('id', $opacs_books_id)->first();
+        if ($opacs_books->barcode != $request->barcode) {
+            $messages = new MessageBag;
+            $messages->add('barcode', '確認用バーコードと一致しませんでした。');
+            return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id, null, null, $messages);
+        }
 
-    //     // 貸出中でないかのチェック
-    //     if (!$this->lentCheck($opacs_books_id)) {
-    //         $messages = new MessageBag;
-    //         $messages->add('barcode', 'この書籍は貸出中です。');
-    //         return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id, null, null, $messages);
-    //     }
+        // 貸出中でないかのチェック
+        if (!$this->lentCheck($opacs_books_id)) {
+            $messages = new MessageBag;
+            $messages->add('barcode', 'この書籍は貸出中です。');
+            return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id, null, null, $messages);
+        }
 
-    //     // 禁帯出でないかのチェック
-    //     if ($opacs_books->lend_flag == '9:禁帯出') {
-    //         $messages = new MessageBag;
-    //         $messages->add('barcode', 'この書籍は「禁帯出」のため、貸し出しはできません。');
-    //         return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id, null, null, $messages);
-    //     }
+        // 禁帯出でないかのチェック
+        if ($opacs_books->lend_flag == '9:禁帯出') {
+            $messages = new MessageBag;
+            $messages->add('barcode', 'この書籍は「禁帯出」のため、貸し出しはできません。');
+            return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id, null, null, $messages);
+        }
 
-    //     // Opac設定取得
-    //     $opac_frame = $this->getOpacFrame($frame_id);
+        // Opac設定取得
+        $opac_frame = $this->getOpacFrame($frame_id);
 
-    //     // 役割設定の情報取得
-    //     $original_roles = Configs::where('category', 'original_role')->orderBy('additional1', 'asc')->get();
+        // 役割設定の情報取得
+        $original_roles = Configs::where('category', 'original_role')->orderBy('additional1', 'asc')->get();
 
-    //     // Opac の設定情報
-    //     $opac_configs = OpacsConfigs::getConfigs($opac_frame->opacs_id, $original_roles);
+        // Opac の設定情報
+        $opac_configs = OpacsConfigs::getConfigs($opac_frame->opacs_id, $original_roles);
 
-    //     // 貸出期限
-    //     $return_scheduled_ts = strtotime($request->return_scheduled);
-    //     if (!checkdate(date('n', $return_scheduled_ts), date('j', $return_scheduled_ts), date('Y', $return_scheduled_ts))) {
-    //         $messages = new MessageBag;
-    //         $messages->add('return_scheduled', '貸し出し期限が正しい日付になっていません。');
-    //         return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id, null, null, $messages);
-    //     }
-    //     // ログインID
-    //     $student = User::where('userid', $request->req_student_no)->first();
-    //     if (empty($student)) {
-    //         session()->flash('lent_error', '存在しないログインIDです。');
-    //         return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id);
-    //     }
+        // 貸出期限
+        $return_scheduled_ts = strtotime($request->return_scheduled);
+        if (!checkdate(date('n', $return_scheduled_ts), date('j', $return_scheduled_ts), date('Y', $return_scheduled_ts))) {
+            $messages = new MessageBag;
+            $messages->add('return_scheduled', '貸し出し期限が正しい日付になっていません。');
+            return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id, null, null, $messages);
+        }
+        // ログインID
+        $student = User::where('userid', $request->req_student_no)->first();
+        if (empty($student)) {
+            session()->flash('lent_error', '存在しないログインIDです。');
+            return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id);
+        }
 
-    //     // 役割設定の情報取得
-    //     $original_roles = Configs::where('category', 'original_role')->orderBy('additional1', 'asc')->get();
+        // 役割設定の情報取得
+        $original_roles = Configs::where('category', 'original_role')->orderBy('additional1', 'asc')->get();
 
-    //     // Opac の設定情報
-    //     $opac_configs = OpacsConfigs::getConfigs($opac_frame->opacs_id, $original_roles);
+        // Opac の設定情報
+        $opac_configs = OpacsConfigs::getConfigs($opac_frame->opacs_id, $original_roles);
 
-    //     // 返却期限、貸出最大冊数を取得のため、ユーザのroleを取得
-    //     $users_roles = UsersRoles::where('users_id', $student->id)
-    //                              ->where('target', 'original_role')
-    //                              ->get();
+        // 返却期限、貸出最大冊数を取得のため、ユーザのroleを取得
+        $users_roles = UsersRoles::where('users_id', $student->id)
+                                 ->where('target', 'original_role')
+                                 ->get();
 
-    //     // 最大貸出数をオーバーしていないかどうかチェックする
-    //     $mex_lent_count = $this->getReturnMaxLentCount($opac_frame, $users_roles, $opac_configs);
-    //     $lent_infos = OpacsBooksLents::where('student_no', $request->req_student_no)->get();
-    //     $lent_count = count($lent_infos);
-    //     if ($lent_count > 0) {
-    //         if (empty($opacs_books_lent) == false) {
-    //             // lent_idがある場合は、当該ユーザーの貸出情報件数から-1する（一致する貸出情報があれば）
-    //             foreach ($lent_infos as $lent_info) {
-    //                 if ($lent_info->id == $opacs_books_lent->id) {
-    //                     $lent_count = $lent_count -1;
-    //                     break;
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     if ($mex_lent_count <= $lent_count) {
-    //         session()->flash('lent_error', '対象ユーザーの最大貸出数をオーバーしています。');
-    //         return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id);
-    //     }
+        // 最大貸出数をオーバーしていないかどうかチェックする
+        $mex_lent_count = $this->getReturnMaxLentCount($opac_frame, $users_roles, $opac_configs);
+        $lent_infos = OpacsBooksLents::where('student_no', $request->req_student_no)->get();
+        $lent_count = count($lent_infos);
+        if ($lent_count > 0) {
+            if (empty($opacs_books_lent) == false) {
+                // lent_idがある場合は、当該ユーザーの貸出情報件数から-1する（一致する貸出情報があれば）
+                foreach ($lent_infos as $lent_info) {
+                    if ($lent_info->id == $opacs_books_lent->id) {
+                        $lent_count = $lent_count -1;
+                        break;
+                    }
+                }
+            }
+        }
+        if ($mex_lent_count <= $lent_count) {
+            session()->flash('lent_error', '対象ユーザーの最大貸出数をオーバーしています。');
+            return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id);
+        }
 
-    //     if (empty($opacs_books_lent)) {
-    //         // 郵送リクエストがない場合は新規登録
-    //         $opacs_books_lent = new OpacsBooksLents();
-    //         $opacs_books_lent->opacs_books_id   = $opacs_books_id;
-    //         $opacs_books_lent->lent_flag        = 1;
-    //         $opacs_books_lent->student_no       = $request->req_student_no;
-    //         $opacs_books_lent->return_scheduled = date('Y-m-d 00:00:00', strtotime($request->return_scheduled));
-    //     } else {
-    //         $opacs_books_lent->lent_flag        = 1;
-    //         $opacs_books_lent->return_scheduled = date('Y-m-d 00:00:00', strtotime($request->return_scheduled));
-    //     }
-    //     // データ保存
-    //     $opacs_books_lent->save();
+        if (empty($opacs_books_lent)) {
+            // 郵送リクエストがない場合は新規登録
+            $opacs_books_lent = new OpacsBooksLents();
+            $opacs_books_lent->opacs_books_id   = $opacs_books_id;
+            $opacs_books_lent->lent_flag        = 1;
+            $opacs_books_lent->student_no       = $request->req_student_no;
+            $opacs_books_lent->return_scheduled = date('Y-m-d 00:00:00', strtotime($request->return_scheduled));
+        } else {
+            $opacs_books_lent->lent_flag        = 1;
+            $opacs_books_lent->return_scheduled = date('Y-m-d 00:00:00', strtotime($request->return_scheduled));
+        }
+        // データ保存
+        $opacs_books_lent->save();
 
-    //     $message = '貸し出し登録しました。';
+        $message = '貸し出し登録しました。';
 
-    //     // メール送信
-    //     $subject = '図書を貸し出し登録しました。';
-    //     $content = $request->req_student_no . " が貸し出し登録しました。\n";
-    //     $content .= 'ISBN：' . $opacs_books->isbn . "\n";
-    //     $content .= 'タイトル：' . $opacs_books->title . "\n";
-    //     $content .= '返却期限日：' . $request->return_scheduled . "\n";
+        // メール送信
+        $subject = '図書を貸し出し登録しました。';
+        $content = $request->req_student_no . " が貸し出し登録しました。\n";
+        $content .= 'ISBN：' . $opacs_books->isbn . "\n";
+        $content .= 'タイトル：' . $opacs_books->title . "\n";
+        $content .= '返却期限日：' . $request->return_scheduled . "\n";
 
-    //     $opacs = Opacs::where('id', $opacs_books->opacs_id)->first();
+        $opacs = Opacs::where('id', $opacs_books->opacs_id)->first();
 
-    //     // 郵送リクエストしたユーザーにもメールを投げる場合は追加アドレスに設定しておく
-    //     $add_email = null;
-    //     if ($opacs->request_mail_send_flag == 1) {
-    //         $add_email = $opacs_books_lent->email;
-    //     }
+        // 郵送リクエストしたユーザーに送付するメール本文
+        $user_subject = '図書館で貸出処理が行われました。';
+        $user_content = "図書館で貸出処理が行われました。本が届くまでしばらくお待ちください。\n";
+        $user_content .= 'ISBN：' . $opacs_books->isbn . "\n";
+        $user_content .= 'タイトル：' . $opacs_books->title . "\n";
+        $user_content .= '返却期限日：' . $request->return_scheduled . "\n";
 
-    //     // メール送付
-    //     self::sendMailOpac($opacs, $subject, $content, $add_email);
+        // メール送付
+        self::sendMailOpac($opacs, $subject, $content);
+        self::sendMailOpacUser($opacs, $user_subject, $user_content, $opacs_books_lent->email);
 
-    //     // モデレータの一覧画面へ戻る
-    //     return $this->lentlist($request, $page_id, $frame_id, '貸し出し処理が完了しました。');
-    // }
+        // モデレータの一覧画面へ戻る
+        return $this->lentlist($request, $page_id, $frame_id, '貸し出し処理が完了しました。');
+    }
 
     /**
      *  郵送貸し出しリクエスト
@@ -1624,13 +1626,17 @@ class OpacsPlugin extends UserPluginBase
         $content .= 'タイトル：' . $opacs_books->title . "\n";
         $content .= '返却日：' . $books_lents->return_date . "\n";
 
+        // メール送信
+        $user_subject = '図書館で返却処理が終了しました。';
+        $user_content = "図書館で返却処理が終了しました。\n";
+        $user_content .= 'ISBN：' . $opacs_books->isbn . "\n";
+        $user_content .= 'タイトル：' . $opacs_books->title . "\n";
+        $user_content .= '返却日：' . $books_lents->return_date . "\n";
+
         $opacs = Opacs::where('id', $opacs_books->opacs_id)->first();
 
-        // 郵送リクエスト者にメールを送付しない場合には、追加送付メールアドレスをクリア
-        if ($opacs->request_mail_send_flag != 1) {
-            $add_email = null;
-        }
-        self::sendMailOpac($opacs, $subject, $content, $add_email);
+        self::sendMailOpac($opacs, $subject, $content);
+        self::sendMailOpacUser($opacs, $user_subject, $user_content, $add_email);
 
         // MyOpac画面へ遷移
 //        return $this->index($request, $page_id, $frame_id, null, ['返却処理が完了しました。']);

@@ -279,6 +279,7 @@
                 {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
                 <div class="row">
                     <div class="col-12 text-right mb-1">
+                    {{-- delete: 承認機能なし
                     @if ($post->status == 2)
                         @can('role_update_or_approval',[[$post, 'learningtasks', $buckets]])
                             <span class="badge badge-warning align-bottom">承認待ち</span>
@@ -292,10 +293,13 @@
                             </form>
                         @endcan
                     @endif
+                    --}}
                     @can('posts.update',[[$post, 'learningtasks', $buckets]])
+                        {{-- delete: 一時保存機能なし
                         @if ($post->status == 1)
                             <span class="badge badge-warning align-bottom">一時保存</span>
                         @endif
+                        --}}
                         <a href="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}">
                             <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
                         </a>

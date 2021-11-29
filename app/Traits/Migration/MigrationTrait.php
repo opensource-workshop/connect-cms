@@ -7845,7 +7845,10 @@ trait MigrationTrait
             }
         } elseif ($module_name == 'bbs') {
             $nc2_bbs_block = Nc2BbsBlock::where('block_id', $nc2_block->block_id)->first();
-            $ret = "blog_id = \"bbs_" . $this->zeroSuppress($nc2_bbs_block->bbs_id) . "\"\n";
+            // ブロックがあり、掲示板がない場合は対象外
+            if (!empty($nc2_bbs_block)) {
+                $ret = "blog_id = \"bbs_" . $this->zeroSuppress($nc2_bbs_block->bbs_id) . "\"\n";
+            }
         } elseif ($module_name == 'faq') {
             $nc2_faq_block = Nc2FaqBlock::where('block_id', $nc2_block->block_id)->first();
             $ret = "faq_id = \"" . $this->zeroSuppress($nc2_faq_block->faq_id) . "\"\n";

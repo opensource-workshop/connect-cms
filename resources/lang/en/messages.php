@@ -74,4 +74,7 @@ return [
     'other' => 'Other',
     'within_weeks' => 'within :count week | within :count weeks',
     'within_months' => 'within :count month | within :count months',
+    'unable_to_download_researcher_seeds' => 'Unable to download researcher seeds because there are too many search results. Upper limit: :count',
+    'download' => 'Download',
+    'there_is_no_research_seeds_to_download' => 'There is no research seeds to download.',
 ];

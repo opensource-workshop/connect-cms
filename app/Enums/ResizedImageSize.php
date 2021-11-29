@@ -26,10 +26,13 @@ final class ResizedImageSize extends EnumsBase
     /**
      * Wysiwyg＞画像プラグイン＞画像サイズの選択肢
      */
-    public static function getWysiwygListBoxItems()
+    public static function getWysiwygListBoxItems($ommit_key = null)
     {
         $items = '[';
         foreach (self::enum as $key => $value) {
+            if ($ommit_key == $key) {
+                continue;
+            }
             $items .= "{ text: '{$value}', value: '{$key}' },";
         }
         $items .= ']';
@@ -42,5 +45,16 @@ final class ResizedImageSize extends EnumsBase
     public static function getDefault()
     {
         return self::asis;
+    }
+
+    /**
+     * 画像アップロード時の変換メッセージ
+     */
+    public static function getImageUploadResizeMessage($size)
+    {
+        if ($size == self::asis) {
+            return '原寸(変換しない)';
+        }
+        return self::enum[$size];
     }
 }

@@ -5,6 +5,10 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
  --}}
+@php
+use App\Models\User\Reservations\ReservationsColumn;
+@endphp
+
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
@@ -65,7 +69,16 @@
     });
 </script>
 
-<form action="{{url('/')}}/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_save_booking{{$frame_id}}" method="POST">
+@if ($booking)
+<form action="{{url('/')}}/redirect/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}/{{$booking->id}}#frame-{{$frame_id}}" name="form_save_booking{{$frame_id}}" method="POST">
+    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/{{$booking->id}}#frame-{{$frame_id}}">
+@else
+<form action="{{url('/')}}/redirect/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_save_booking{{$frame_id}}" method="POST">
+    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
+@endif
+    {{-- 共通エラーメッセージ 呼び出し --}}
+    @include('plugins.common.errors_form_line')
+
     {{-- メッセージエリア --}}
     <div class="alert {{ $booking ? 'alert-warning' : 'alert-info' }} mt-2">
         <i class="fas fa-exclamation-circle"></i> 対象施設の予約を{{ $booking ? '更新' : '登録' }}します。
@@ -74,7 +87,7 @@
     {{ csrf_field() }}
     <input type="hidden" name="reservations_id" value="{{ $reservation->id }}">
     <input type="hidden" name="facility_id" value="{{ $facility->id }}">
-    <input type="hidden" name="booking_id" value="{{ $booking ? $booking->id : '' }}">
+    {{-- <input type="hidden" name="booking_id" value="{{ $booking ? $booking->id : '' }}"> --}}
     <input type="hidden" name="target_date" value="{{ $target_date->format('Ymd') }}">
 
     {{-- 基本項目 --}}
@@ -90,20 +103,18 @@
             </div>
             --}}
             {{-- 施設名 --}}
-            <div class="row">
-                <div class="col-md-3">施設名：</div>
-                <div class="col-md-9">{{ $facility->facility_name }}</div>
+            <div class="form-group row">
+                <div class="col-md-2">施設名</div>
+                <div class="col-md-10">{{ $facility->facility_name }}</div>
             </div>
             {{-- 予約日 --}}
-            <div class="row">
-                <div class="col-md-3">予約日：</div>
-                <div class="col-md-9">{{ $target_date->format('Y年n月j日') . '(' . DayOfWeek::getDescription($target_date->dayOfWeek) . ')' }}</div>
+            <div class="form-group row">
+                <div class="col-md-2">予約日</div>
+                <div class="col-md-10">{{ $target_date->format('Y年n月j日') . '(' . DayOfWeek::getDescription($target_date->dayOfWeek) . ')' }}</div>
             </div>
             {{-- 予約時間 --}}
-            <div class="row">
-                <div class="col-md-3">予約時間：</div>
-            </div>
             <div class="form-group row">
+                <div class="col-md-2">予約時間</div>
                 {{-- 予約開始時間 --}}
                 <div class="col-md-3 input-group date" id="start_datetime" data-target-input="nearest">
                     {{-- 表示優先順：
@@ -146,16 +157,21 @@
         <div class="card-body">
             {{-- 予約項目の出力 --}}
             @foreach ($columns as $column)
+                {{-- 入力しないカラム型は表示しない --}}
+                @if (ReservationsColumn::isNotInputColumnType($column->column_type))
+                    @continue
+                @endif
+
                 <div class="form-group row">
                     {{-- 項目名称 --}}
-                    <label class="col-sm-2 control-label">{{$column->column_name}}
+                    <label class="col-md-2 control-label">{{$column->column_name}}
                         @if ($column->required)
                             {{-- 必須マーク --}}
                             <label class="badge badge-danger">必須</label>
                         @endif
                     </label>
                     {{-- 項目本体 --}}
-                    <div class="col-sm-10">
+                    <div class="col-md-10">
                         @switch($column->column_type)
 
                             {{-- テキスト項目 --}}

@@ -45,7 +45,7 @@
                         @endif
                     </a>
                 @else
-                    {{$view_col->value}}
+                    {!! $view_col->value !!}
                 @endif
             @endif
         @endforeach

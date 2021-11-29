@@ -62,10 +62,29 @@
         <input type="hidden" name="display_sequence" value="">
         <input type="hidden" name="display_sequence_operation" value="">
         <input type="hidden" name="return_frame_action" value="edit">
+
         {{-- メッセージエリア --}}
         <div class="alert alert-info mt-2">
             <i class="fas fa-exclamation-circle"></i> {{ $message ? $message : '予約登録時の項目を追加・変更します。' }}
         </div>
+
+        {{-- ワーニングメッセージエリア --}}
+        @if (! $title_flag)
+            <div class="alert alert-warning mt-2">
+                <i class="fas fa-exclamation-circle"></i>
+                新着情報等でタイトル表示する項目が未設定です。いずれかの項目の「詳細」よりタイトル設定をしてください。
+            </div>
+        @endif
+
+        {{-- エラーメッセージエリア --}}
+        @if ($errors && $errors->any())
+            <div class="alert alert-danger mt-2">
+                @foreach ($errors->all() as $error)
+                <i class="fas fa-exclamation-circle"></i>
+                    {{ $error }}<br>
+                @endforeach
+            </div>
+        @endif
 
         <div class="table-responsive">
 
@@ -97,15 +116,7 @@
                 </tbody>
             </table>
         </div>
-        {{-- エラーメッセージエリア --}}
-        @if ($errors && $errors->any())
-            <div class="alert alert-danger mt-2">
-                @foreach ($errors->all() as $error)
-                <i class="fas fa-exclamation-circle"></i>
-                    {{ $error }}<br>
-                @endforeach
-            </div>
-        @endif
+
         {{-- ボタンエリア --}}
         <div class="text-center">
             <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link) . '#frame-' . $frame->id}}'">

@@ -24,9 +24,11 @@ use App\Models\User\Blogs\BlogsPosts;
 <script type="text/javascript">
     function save_action() {
         @if (empty($blogs_posts->id))
-            form_blogs_posts{{$frame_id}}.action = "{{url('/')}}/plugin/blogs/temporarysave/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}";
+            form_blogs_posts{{$frame_id}}.action = "{{url('/')}}/redirect/plugin/blogs/temporarysave/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}";
+            form_blogs_posts{{$frame_id}}.redirect_path = "{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}";
         @else
-            form_blogs_posts{{$frame_id}}.action = "{{url('/')}}/plugin/blogs/temporarysave/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}#frame-{{$frame->id}}";
+            form_blogs_posts{{$frame_id}}.action = "{{url('/')}}/redirect/plugin/blogs/temporarysave/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}#frame-{{$frame->id}}";
+            form_blogs_posts{{$frame_id}}.redirect_path = "{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}#frame-{{$frame->id}}";
         @endif
         form_blogs_posts{{$frame_id}}.submit();
     }
@@ -147,7 +149,7 @@ use App\Models\User\Blogs\BlogsPosts;
             <div class="col-9 col-xl-6">
             @endif
                 <div class="text-center">
-                    <a href="{{URL::to($page->permanent_link)}}" class="btn btn-secondary mr-2"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></a>
+                    <a href="{{URL::to($page->permanent_link)}}#frame-{{$frame_id}}" class="btn btn-secondary mr-2"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></a>
                     <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($blogs_posts->id))
@@ -183,8 +185,9 @@ use App\Models\User\Blogs\BlogsPosts;
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
-                <form action="{{url('/')}}/plugin/blogs/delete/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}#frame-{{$frame->id}}" method="POST">
+                <form action="{{url('/')}}/redirect/plugin/blogs/delete/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}#frame-{{$frame->id}}" method="POST">
                     {{csrf_field()}}
+                    <input type="hidden" name="redirect_path" value="{{URL::to($page->permanent_link)}}">
                     <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>
             </div>

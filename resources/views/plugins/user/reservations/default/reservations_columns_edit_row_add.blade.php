@@ -11,7 +11,7 @@
     </td>
     {{-- 予約項目名 --}}
     <td>
-        <input class="form-control" type="text" name="column_name" value="{{ old('column_name') }}" placeholder="予約項目名">
+        <input class="form-control @if ($errors && $errors->has('column_name')) border-danger @endif" type="text" name="column_name" value="{{ old('column_name') }}" placeholder="予約項目名">
     </td>
     {{-- 入力データ型 --}}
     <td>
