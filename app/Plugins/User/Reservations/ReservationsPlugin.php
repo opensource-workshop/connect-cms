@@ -961,14 +961,10 @@ class ReservationsPlugin extends UserPluginBase
                 // FrameのバケツIDの更新
                 $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket->id]);
             }
-
-            $request->flash_message = '施設予約の設定を追加しました。';
         } else {
             // id があれば、施設予約を更新
             // 施設予約データ取得
             $reservations = Reservation::where('id', $request->reservations_id)->first();
-
-            $request->flash_message = '施設予約の設定を変更しました。';
         }
 
         // 施設設定
@@ -977,6 +973,13 @@ class ReservationsPlugin extends UserPluginBase
 
         // データ保存
         $reservations->save();
+
+        if (empty($request->reservations_id)) {
+            $request->flash_message = '施設予約の設定を追加しました。<br />' .
+                '　[ <a href="' . url('/') . "/plugin/reservations/choiceFacilities/{$page_id}/{$frame_id}/{$reservations->id}#frame-{$frame_id}" . '">施設設定</a> ]から表示する施設を設定してください。';
+        } else {
+            $request->flash_message = '施設予約の設定を変更しました。';
+        }
 
         // if (empty($request->reservations_id)) {
         //     // 新規登録後は、施設予約選択画面を呼び出す
