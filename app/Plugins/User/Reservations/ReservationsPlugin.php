@@ -1005,6 +1005,10 @@ class ReservationsPlugin extends UserPluginBase
 
             $reservation = Reservation::where('id', $reservations_id)->first();
 
+            // 施設カテゴリ選択の削除
+            $choice_category_ids = ReservationsChoiceCategory::where('reservations_id', $reservations_id)->pluck('id');
+            ReservationsChoiceCategory::destroy($choice_category_ids);
+
             // このバケツを表示していたFrameのバケツIDを空に更新
             Frame::where('bucket_id', $reservation->bucket_id)->update(['bucket_id' => null]);
 
