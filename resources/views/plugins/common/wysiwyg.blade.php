@@ -154,9 +154,10 @@
     if (Configs::getConfigsValue($cc_configs, 'use_pdf_thumbnail')) {
         $plugins .= ' pdf';
     }
-
-    // モザイク
-    $plugins .= ' face';
+    // AI顔認識
+    if (Configs::getConfigsValue($cc_configs, 'use_face_ai')) {
+        $plugins .= ' face';
+    }
 
     $plugins = "plugins  : '" . $plugins . "',";
 
