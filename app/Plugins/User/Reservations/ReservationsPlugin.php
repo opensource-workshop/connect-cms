@@ -893,7 +893,7 @@ class ReservationsPlugin extends UserPluginBase
     public function editBuckets($request, $page_id, $frame_id, $reservations_id = null, $create_flag = false)
     {
         // 施設データ
-        $reservation = new Reservation();
+        $reservation = null;
 
         if (!empty($reservations_id)) {
             // id が渡ってくればid が対象
@@ -909,10 +909,14 @@ class ReservationsPlugin extends UserPluginBase
             return $this->commonView('empty_bucket_setting');
         }
 
+        if (!$reservation->id && !$create_flag) {
+           return $this->view_error("404_inframe", null, '更新時にreservationが空');
+        }
+
         // 表示テンプレートを呼び出す。
         return $this->view('edit_buckets', [
-            'reservation'        => $reservation,
-            'create_flag'        => $create_flag,
+            'reservation' => $reservation,
+            'create_flag' => $create_flag,
         ]);
     }
 

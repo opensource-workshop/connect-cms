@@ -22,15 +22,12 @@
 
 {{-- メッセージエリア --}}
 <div class="alert alert-info">
-    @if (empty($reservation) || $create_flag)
+    @if ($create_flag)
         <i class="fas fa-exclamation-circle"></i> 新しい施設予約を登録します。
     @else
         <i class="fas fa-exclamation-circle"></i> 施設予約を変更します。
     @endif
 </div>
-
-@if (!$reservation->id && !$create_flag)
-@else
 
 @if (empty($reservation->id))
 <form action="{{url('/')}}/redirect/plugin/reservations/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST">
@@ -50,36 +47,36 @@
     @endif
 
     {{-- 入力項目エリア --}}
-    <div class="form-group">
+    <div class="form-group row">
         {{-- 施設予約名 --}}
-        <label class="control-label">施設予約名 <label class="badge badge-danger">必須</span></label></label>
-        <input type="text" name="reservation_name" value="{{old('reservation_name', $reservation->reservation_name)}}" class="form-control @if ($errors && $errors->has('reservation_name')) border-danger @endif">
-        @include('plugins.common.errors_inline', ['name' => 'reservation_name'])
+        <label class="{{$frame->getSettingLabelClass()}}">施設予約名 <span class="badge badge-danger">必須</span></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="reservation_name" value="{{old('reservation_name', $reservation->reservation_name)}}" class="form-control @if ($errors && $errors->has('reservation_name')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'reservation_name'])
+        </div>
+    </div>
 
+    <div class="form-group row">
         {{-- 初期表示設定（月/週） --}}
-        <label class="col-form-label">カレンダー初期表示 <label class="badge badge-danger">必須</span></label></label>
-        <div class="row">
-            <div class="col-md-1">
-                <div class="custom-control custom-radio custom-control-inline">
-                    {{-- 月 --}}
-                    <input type="radio" value="{{ ReservationCalendarDisplayType::month }}" id="calendar_initial_display_type_off" name="calendar_initial_display_type" class="custom-control-input"
-                        @if ($reservation->calendar_initial_display_type == ReservationCalendarDisplayType::month || $create_flag)
-                            checked="checked"
-                        @endif
-                     >
-                    <label class="custom-control-label" for="calendar_initial_display_type_off">{{ ReservationCalendarDisplayType::getDescription(ReservationCalendarDisplayType::month) }}</label>
-                </div>
-            </div>
-            <div class="col-md-1">
-                <div class="custom-control custom-radio custom-control-inline">
-                    {{-- 週 --}}
-                    <input type="radio" value="{{ ReservationCalendarDisplayType::week }}" id="calendar_initial_display_type_on" name="calendar_initial_display_type" class="custom-control-input"
-                        @if ($reservation->calendar_initial_display_type == ReservationCalendarDisplayType::week)
-                            checked="checked"
-                        @endif
+        <label class="{{$frame->getSettingLabelClass()}} pt-0">カレンダー初期表示 <span class="badge badge-danger">必須</span></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <div class="custom-control custom-radio custom-control-inline">
+                {{-- 月 --}}
+                <input type="radio" value="{{ ReservationCalendarDisplayType::month }}" id="calendar_initial_display_type_off" name="calendar_initial_display_type" class="custom-control-input"
+                    @if ($reservation->calendar_initial_display_type == ReservationCalendarDisplayType::month || $create_flag)
+                        checked="checked"
+                    @endif
                     >
-                    <label class="custom-control-label" for="calendar_initial_display_type_on">{{ ReservationCalendarDisplayType::getDescription(ReservationCalendarDisplayType::week) }}</label>
-                </div>
+                <label class="custom-control-label" for="calendar_initial_display_type_off">{{ ReservationCalendarDisplayType::getDescription(ReservationCalendarDisplayType::month) }}</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                {{-- 週 --}}
+                <input type="radio" value="{{ ReservationCalendarDisplayType::week }}" id="calendar_initial_display_type_on" name="calendar_initial_display_type" class="custom-control-input"
+                    @if ($reservation->calendar_initial_display_type == ReservationCalendarDisplayType::week)
+                        checked="checked"
+                    @endif
+                >
+                <label class="custom-control-label" for="calendar_initial_display_type_on">{{ ReservationCalendarDisplayType::getDescription(ReservationCalendarDisplayType::week) }}</label>
             </div>
         </div>
     </div>
@@ -93,22 +90,17 @@
                     <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
                 </a>
                 <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>
-                @if (empty($reservation) || $create_flag)
-                    登録確定
-                @else
-                    変更確定
-                @endif
+                    @if ($create_flag) 登録確定 @else 変更確定 @endif
                 </button>
             </div>
 
             {{-- 既存施設予約の場合は削除処理のボタンも表示 --}}
-            @if ($create_flag)
-            @else
-            <div class="col-sm-3 pull-right text-right">
-                <a data-toggle="collapse" href="#collapse{{$frame->id}}">
-                    <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="hidden-xs">削除</span></span>
-                </a>
-            </div>
+            @if (!$create_flag)
+                <div class="col-sm-3 pull-right text-right">
+                    <a data-toggle="collapse" href="#collapse{{$frame->id}}">
+                        <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="hidden-xs">削除</span></span>
+                    </a>
+                </div>
             @endif
         </div>
     </div>
@@ -131,5 +123,5 @@
         </div>
     </div>
 </div>
-@endif
+
 @endsection
