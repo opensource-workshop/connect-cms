@@ -80,7 +80,7 @@
             <div class="form-group form-row">
                 <label for="facility_name" class="col-md-3 col-form-label text-md-right">施設名 <span class="badge badge-danger">必須</span></label>
                 <div class="col-md-9">
-                    <input type="text" name="facility_name" id="facility_name" value="{{old('facility_name', $facility->facility_name)}}" class="form-control @if ($errors && $errors->has('facility_name')) border-danger @endif">
+                    <input type="text" name="facility_name" id="facility_name" value="{{old('facility_name', $facility->facility_name)}}" class="form-control @if ($errors->has('facility_name')) border-danger @endif">
                     @include('plugins.common.errors_inline', ['name' => 'facility_name'])
                 </div>
             </div>
@@ -88,7 +88,7 @@
             <div class="form-group form-row">
                 <label for="reservations_categories_id" class="col-md-3 col-form-label text-md-right">施設カテゴリ <span class="badge badge-danger">必須</span></label>
                 <div class="col-md-9">
-                    <select name="reservations_categories_id" id="reservations_categories_id" class="form-control @if ($errors && $errors->has('reservations_categories_id')) border-danger @endif">
+                    <select name="reservations_categories_id" id="reservations_categories_id" class="form-control @if ($errors->has('reservations_categories_id')) border-danger @endif">
                         @foreach ($categories as $category)
                             <option value="{{$category->id}}" @if (old('reservations_categories_id', $facility->reservations_categories_id) == $category->id) selected="selected" @endif>{{$category->category}}</option>
                         @endforeach
@@ -100,7 +100,7 @@
             <div class="form-group form-row">
                 <label for="columns_set_id" class="col-md-3 col-form-label text-md-right">項目セット <span class="badge badge-danger">必須</span></label>
                 <div class="col-md-9">
-                    <select name="columns_set_id" id="columns_set_id" class="form-control @if ($errors && $errors->has('columns_set_id')) border-danger @endif">
+                    <select name="columns_set_id" id="columns_set_id" class="form-control @if ($errors->has('columns_set_id')) border-danger @endif">
                         <option value=""></option>
                         @foreach ($columns_sets as $columns_set)
                             <option value="{{$columns_set->id}}" @if (old('columns_set_id', $facility->columns_set_id) == $columns_set->id) selected="selected" @endif>{{$columns_set->name}}</option>
@@ -114,7 +114,8 @@
             <div class="form-group form-row">
                 <label for="display_sequence" class="col-md-3 col-form-label text-md-right">表示順</label>
                 <div class="col-md-9">
-                    <input type="text" name="display_sequence" id="display_sequence" value="{{old('display_sequence', $facility->display_sequence)}}" class="form-control">
+                    <input type="text" name="display_sequence" id="display_sequence" value="{{old('display_sequence', $facility->display_sequence)}}" class="form-control @if ($errors->has('display_sequence')) border-danger @endif">
+                    @include('plugins.common.errors_inline', ['name' => 'display_sequence'])
                     <small class="text-muted">※ 未指定時は最後に表示されるように自動登録します。</small>
                 </div>
             </div>

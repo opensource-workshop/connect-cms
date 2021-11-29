@@ -34,41 +34,41 @@ class ReservationManage extends ManagePluginBase
         // 権限チェックテーブル
         $role_check_table = [];
         // 施設一覧
-        $role_check_table["index"]              = ['admin_site'];
-        $role_check_table["regist"]             = ['admin_site'];
-        $role_check_table["store"]              = ['admin_site'];
-        $role_check_table["edit"]               = ['admin_site'];
-        $role_check_table["update"]             = ['admin_site'];
-        $role_check_table["destroy"]            = ['admin_site'];
-        $role_check_table["copy"]               = ['admin_site'];
+        $role_check_table["index"]                = ['admin_site'];
+        $role_check_table["regist"]               = ['admin_site'];
+        $role_check_table["store"]                = ['admin_site'];
+        $role_check_table["edit"]                 = ['admin_site'];
+        $role_check_table["update"]               = ['admin_site'];
+        $role_check_table["destroy"]              = ['admin_site'];
+        $role_check_table["copy"]                 = ['admin_site'];
 
         // 施設カテゴリ設定
-        $role_check_table["categories"]         = ['admin_site'];
-        $role_check_table["saveCategories"]     = ['admin_site'];
-        $role_check_table["deleteCategories"]   = ['admin_site'];
+        $role_check_table["categories"]           = ['admin_site'];
+        $role_check_table["saveCategories"]       = ['admin_site'];
+        $role_check_table["deleteCategories"]     = ['admin_site'];
 
         // 項目セット
-        $role_check_table["columnSets"]         = ['admin_site'];
-        $role_check_table["registColumnSet"]    = ['admin_site'];
-        $role_check_table["storeColumnSet"]     = ['admin_site'];
-        $role_check_table["editColumnSet"]      = ['admin_site'];
-        $role_check_table["updateColumnSet"]    = ['admin_site'];
-        $role_check_table["destroyColumnSet"]   = ['admin_site'];
+        $role_check_table["columnSets"]           = ['admin_site'];
+        $role_check_table["registColumnSet"]      = ['admin_site'];
+        $role_check_table["storeColumnSet"]       = ['admin_site'];
+        $role_check_table["editColumnSet"]        = ['admin_site'];
+        $role_check_table["updateColumnSet"]      = ['admin_site'];
+        $role_check_table["destroyColumnSet"]     = ['admin_site'];
 
         // 項目設定
-        $role_check_table["editColumns"]        = ['admin_site'];
-        $role_check_table["addColumn"]          = ['admin_site'];
-        $role_check_table["updateColumn"]       = ['admin_site'];
+        $role_check_table["editColumns"]          = ['admin_site'];
+        $role_check_table["addColumn"]            = ['admin_site'];
+        $role_check_table["updateColumn"]         = ['admin_site'];
         $role_check_table["updateColumnSequence"] = ['admin_site'];
-        $role_check_table["deleteColumn"]       = ['admin_site'];
+        $role_check_table["deleteColumn"]         = ['admin_site'];
 
         // 項目詳細設定
-        $role_check_table["editColumnDetail"]   = ['admin_site'];
-        $role_check_table["updateColumnDetail"] = ['admin_site'];
-        $role_check_table["addSelect"]          = ['admin_site'];
-        $role_check_table["updateSelect"]       = ['admin_site'];
+        $role_check_table["editColumnDetail"]     = ['admin_site'];
+        $role_check_table["updateColumnDetail"]   = ['admin_site'];
+        $role_check_table["addSelect"]            = ['admin_site'];
+        $role_check_table["updateSelect"]         = ['admin_site'];
         $role_check_table["updateSelectSequence"] = ['admin_site'];
-        $role_check_table["deleteSelect"]       = ['admin_site'];
+        $role_check_table["deleteSelect"]         = ['admin_site'];
 
         return $role_check_table;
     }
@@ -183,15 +183,17 @@ class ReservationManage extends ManagePluginBase
         // エラーチェック
         $validator = Validator::make($request->all(), [
             'hide_flag'  => ['required'],
-            'facility_name'  => ['required'],
+            'facility_name'  => ['required', 'max:255'],
             'reservations_categories_id'  => ['required'],
             'columns_set_id'  => ['required'],
+            'display_sequence' => ['nullable', 'numeric'],
         ]);
         $validator->setAttributeNames([
             'hide_flag'  => '表示',
             'facility_name'  => '施設名',
             'reservations_categories_id'  => '施設カテゴリ',
             'columns_set_id'  => '項目セット',
+            'display_sequence' => '表示順',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -293,8 +295,8 @@ class ReservationManage extends ManagePluginBase
         // 追加項目のどれかに値が入っていたら、行の他の項目も必須
         if (!empty($request->add_display_sequence) || !empty($request->add_category)) {
             // 項目のエラーチェック
-            $rules['add_display_sequence'] = ['required'];
-            $rules['add_category'] = ['required'];
+            $rules['add_display_sequence'] = ['required', 'numeric'];
+            $rules['add_category'] = ['required', 'max:191'];
 
             $setAttributeNames['add_display_sequence'] = '追加行の表示順';
             $setAttributeNames['add_category'] = '追加行のカテゴリ';
@@ -304,8 +306,8 @@ class ReservationManage extends ManagePluginBase
         if (!empty($request->categories_id)) {
             foreach ($request->categories_id as $category_id) {
                 // 項目のエラーチェック
-                $rules['display_sequence.'.$category_id] = ['required'];
-                $rules['category.'.$category_id] = ['required'];
+                $rules['display_sequence.'.$category_id] = ['required', 'numeric'];
+                $rules['category.'.$category_id] = ['required', 'max:191'];
 
                 $setAttributeNames['display_sequence.'.$category_id] = '表示順';
                 $setAttributeNames['category.'.$category_id] = 'カテゴリ';
@@ -335,8 +337,8 @@ class ReservationManage extends ManagePluginBase
                 $categories = ReservationsCategory::where('id', $category_id)->first();
 
                 // データのセット
+                $categories->display_sequence = intval($request->display_sequence[$category_id]);
                 $categories->category         = $request->category[$category_id];
-                $categories->display_sequence = $request->display_sequence[$category_id];
 
                 // 保存
                 $categories->save();
@@ -442,10 +444,12 @@ class ReservationManage extends ManagePluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'name' => ['required'],
+            'name' => ['required', 'max:191'],
+            'display_sequence' => ['nullable', 'numeric'],
         ]);
         $validator->setAttributeNames([
             'name' => '項目セット名',
+            'display_sequence' => '表示順',
         ]);
 
         // エラーがあった場合は入力画面に戻る。

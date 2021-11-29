@@ -26,28 +26,29 @@
     </div>
     <div class="card-body">
 
+        @include('plugins.common.errors_form_line')
+
         <div class="alert alert-info" role="alert">
             <i class="fas fa-exclamation-circle"></i> 予約登録時の項目をまとめたセットを追加・変更します。
         </div>
-
-        @include('plugins.common.errors_form_line')
 
         <form name="form_code" action="" method="POST" class="form-horizontal">
             {{ csrf_field() }}
             <input name="page" value="{{$paginate_page}}" type="hidden">
 
             <div class="form-group form-row">
-                <label for="name" class="col-md-3 col-form-label text-md-right">項目セット名 <label class="badge badge-danger">必須</label></label>
+                <label for="name" class="col-md-3 col-form-label text-md-right">項目セット名 <span class="badge badge-danger">必須</span></label>
                 <div class="col-md-9">
-                    <input type="text" name="name" id="name" value="{{old('name', $columns_set->name)}}" class="form-control">
-                    @if ($errors && $errors->has('name')) <div class="text-danger">{{$errors->first('name')}}</div> @endif
+                    <input type="text" name="name" id="name" value="{{old('name', $columns_set->name)}}" class="form-control @if ($errors->has('name')) border-danger @endif">
+                    @include('plugins.common.errors_inline', ['name' => 'name'])
                 </div>
             </div>
 
             <div class="form-group form-row">
                 <label for="display_sequence" class="col-md-3 col-form-label text-md-right">表示順</label>
                 <div class="col-md-9">
-                    <input type="text" name="display_sequence" id="display_sequence" value="{{old('display_sequence', $columns_set->display_sequence)}}" class="form-control">
+                    <input type="text" name="display_sequence" id="display_sequence" value="{{old('display_sequence', $columns_set->display_sequence)}}" class="form-control @if ($errors->has('display_sequence')) border-danger @endif">
+                    @include('plugins.common.errors_inline', ['name' => 'display_sequence'])
                     <small class="text-muted">※ 未指定時は最後に表示されるように自動登録します。</small>
                 </div>
             </div>
