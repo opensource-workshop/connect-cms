@@ -4,6 +4,9 @@ namespace App\Enums;
 
 /**
  * 予約項目区分
+ *
+ * @see \App\Enums\DatabaseColumnType
+ * @see \App\Enums\FormColumnType
  */
 final class ReservationColumnType extends EnumsBase
 {
@@ -14,6 +17,7 @@ final class ReservationColumnType extends EnumsBase
     // const checkbox = 'checkbox';
     // const select = 'select';
     // const datetime = 'datetime';
+    const wysiwyg = 'wysiwyg';
     const created = 'created';
     const updated = 'updated';
     const created_name = 'created_name';
@@ -27,6 +31,7 @@ final class ReservationColumnType extends EnumsBase
         // self::checkbox => '複数選択型',
         // self::select => 'リストボックス型',
         // self::datetime => '日付＆時間型',
+        self::wysiwyg => 'ウィジウィグ型',
         self::created => '登録日型（自動更新）',
         self::updated => '更新日型（自動更新）',
         self::created_name => '登録者型（自動更新）',

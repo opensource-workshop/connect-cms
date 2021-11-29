@@ -107,28 +107,58 @@
                 //     <input type="text" class="col-9 form-control-plaintext" id="column_{{ $column->id }}" readonly>
                 // </div> --}}
 
-                $('#bookingDetailModalColumns{{$frame_id}}').append(
-                    $('<div></div>')
-                    .attr({
-                        class: 'form-group row'
-                    })
-                    .append(
-                        $('<label></label>')
-                        .attr({
-                            for: 'column_' + data.columns[i].id,
-                            class: 'col-3 col-form-label'
-                        })
-                        .text(data.columns[i].column_name)
-                    )
-                    .append(
+                if (data.columns[i].column_type == '{{ReservationColumnType::wysiwyg}}') {
+                    // wysiwyg
+                    $('#bookingDetailModalColumns{{$frame_id}}').append(
                         $('<div></div>')
                         .attr({
-                            class: 'col-9 form-control-plaintext',
-                            id: 'column_' + data.columns[i].id
+                            class: 'form-group row'
                         })
-                        .text(data.columns[i].display_value)
-                    )
-                );
+                        .append(
+                            $('<label></label>')
+                            .attr({
+                                for: 'column_' + data.columns[i].id,
+                                class: 'col-3 col-form-label'
+                            })
+                            .text(data.columns[i].column_name)
+                        )
+                        .append(
+                            $('<div></div>')
+                            .attr({
+                                class: 'col-9 form-control-plaintext',
+                                id: 'column_' + data.columns[i].id
+                            })
+                            // HTMLで出力
+                            .html(data.columns[i].display_value)
+                        )
+                    );
+                } else {
+                    // 通常
+                    $('#bookingDetailModalColumns{{$frame_id}}').append(
+                        $('<div></div>')
+                        .attr({
+                            class: 'form-group row'
+                        })
+                        .append(
+                            $('<label></label>')
+                            .attr({
+                                for: 'column_' + data.columns[i].id,
+                                class: 'col-3 col-form-label'
+                            })
+                            .text(data.columns[i].column_name)
+                        )
+                        .append(
+                            $('<div></div>')
+                            .attr({
+                                class: 'col-9 form-control-plaintext',
+                                id: 'column_' + data.columns[i].id
+                            })
+                            // テキストで出力
+                            .text(data.columns[i].display_value)
+                        )
+                    );
+                }
+
             }
         })
         .fail(function() {

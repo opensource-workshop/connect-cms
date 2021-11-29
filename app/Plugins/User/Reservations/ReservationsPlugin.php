@@ -6,6 +6,7 @@ namespace App\Plugins\User\Reservations;
 use App\Models\Common\ConnectCarbon;
 
 use Illuminate\Support\Facades\Validator;
+// use Illuminate\Validation\Rule;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
@@ -17,6 +18,8 @@ use App\Models\User\Reservations\ReservationsColumnsSelect;
 use App\Models\User\Reservations\ReservationsFacility;
 use App\Models\User\Reservations\ReservationsInput;
 use App\Models\User\Reservations\ReservationsInputsColumn;
+
+use App\Rules\CustomValiWysiwygMax;
 
 use App\Plugins\User\UserPluginBase;
 
@@ -188,353 +191,6 @@ class ReservationsPlugin extends UserPluginBase
     // }
 
     /* 画面アクション関数 */
-
-    /**
-     * 予約追加画面の表示
-     */
-    public function editBooking($request, $page_id, $frame_id, $input_id = null)
-    {
-        $booking = null;
-
-        // if ($request->booking_id) {
-        if ($input_id) {
-
-            /**
-             * 予約の更新モード
-             */
-
-            // 予約データ
-            // $booking = ReservationsInput::where('id', $request->booking_id)->first();
-            $booking = ReservationsInput::where('id', $input_id)->first();
-
-            // 施設予約データ
-            $reservation = Reservation::where('id', $booking->reservations_id)->first();
-
-            // 施設データ
-            $facility = ReservationsFacility::where('id', $booking->facility_id)->first();
-
-            // 予約項目データ（予約入力値付）
-            $columns = ReservationsColumn::
-                select(
-                    'reservations_columns.*',
-                    'reservations_inputs_columns.value',
-                )
-                ->leftJoin('reservations_inputs_columns', function ($join) use ($booking) {
-                    $join->on('reservations_inputs_columns.column_id', '=', 'reservations_columns.id');
-                    $join->where('reservations_inputs_columns.inputs_id', '=', $booking->id);
-                })
-                // ->where('reservations_columns.reservations_id', $booking->reservations_id)
-                ->where('reservations_columns.columns_set_id', $facility->columns_set_id)
-                ->where('reservations_columns.hide_flag', NotShowType::show)
-                ->orderBy('reservations_columns.display_sequence')
-                ->get();
-
-            // 予約項目データの内、選択肢が指定されていた場合の選択肢データ
-            // $selects = ReservationsColumnsSelect::where('reservations_id', $booking->reservations_id)
-            $selects = ReservationsColumnsSelect::where('columns_set_id', $facility->columns_set_id)
-                ->where('hide_flag', NotShowType::show)
-                ->orderBy('id', 'asc')
-                ->orderBy('display_sequence', 'asc')
-                ->get();
-
-            $target_date = new ConnectCarbon($booking->start_datetime);
-        } else {
-            /**
-             * 予約の新規登録モード
-             */
-            // パラメータチェック. saveの入力エラーで戻ってきた時はoldに値が入ってる。
-            $target_ymd = old('target_date', $request->target_date);
-            $year = (int)substr($target_ymd, 0, 4);
-            $month = (int)substr($target_ymd, 4, 2);
-            $day = (int)substr($target_ymd, 6, 2);
-            if (!checkdate($month, $day, $year)) {
-                return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
-            }
-
-            // 施設予約データ
-            $reservation = Reservation::where('id', old('reservations_id', $request->reservations_id))->first();
-
-            // 施設データ
-            $facility = ReservationsFacility::where('id', old('facility_id', $request->facility_id))->first();
-
-            // 予約項目データ
-            // $columns = ReservationsColumn::where('reservations_id', $request->reservations_id)->whereNull('hide_flag')->orderBy('display_sequence')->get();
-            // $columns = $this->getReservationsColumns($request->reservations_id);
-            $columns = $this->getReservationsColumns($facility->columns_set_id);
-
-            // 予約項目データの内、選択肢が指定されていた場合の選択肢データ
-            // $selects = ReservationsColumnsSelect::where('reservations_id', $request->reservations_id)
-            $selects = ReservationsColumnsSelect::where('columns_set_id', $facility->columns_set_id)
-                ->where('hide_flag', NotShowType::show)
-                ->orderBy('id', 'asc')
-                ->orderBy('display_sequence', 'asc')
-                ->get();
-
-            $target_date = new ConnectCarbon($target_ymd);
-        }
-
-        return $this->view('edit_booking', [
-            'target_date' => $target_date,
-            'reservation' => $reservation,
-            'facility' => $facility,
-            'columns' => $columns,
-            'selects' => $selects,
-            'booking' => $booking,
-        ]);
-    }
-
-    /**
-     * 予約追加処理
-     */
-    public function saveBooking($request, $page_id, $frame_id, $booking_id = null)
-    {
-        $target_ymd = $request->target_date;
-        // URLパラメータチェック
-        $year = (int)substr($target_ymd, 0, 4);
-        $month = (int)substr($target_ymd, 4, 2);
-        $day = (int)substr($target_ymd, 6, 2);
-        if (!checkdate($month, $day, $year)) {
-            return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
-        }
-
-        // バリデーション用の配列を生成（基本項目）
-        $validationArray = [
-            'start_datetime' => ['required'],
-            'end_datetime' => ['required', 'after:start_datetime'],
-        ];
-        $attributeArray = [
-            'start_datetime' => '開始時間',
-            'end_datetime' => '終了時間',
-        ];
-
-        // バリデーション用の配列を生成（可変項目）
-        // $required_columns = ReservationsColumn::where('reservations_id', $request->reservations_id)
-        $required_columns = ReservationsColumn::where('columns_set_id', $request->columns_set_id)
-            ->where('hide_flag', NotShowType::show)
-            ->where('required', Required::on)
-            ->get();
-        foreach ($required_columns as $column) {
-            // 入力なしカラム型は、必須対象外
-            if ($column->isNotInputColumnType()) {
-                continue;
-            }
-
-            $key_str = 'columns_value.' . $column->id;
-            $validationArray[$key_str] = ['required'];
-            $attributeArray[$key_str] = $column->column_name;
-        }
-
-        // バリデーション定義
-        $validator = Validator::make($request->all(), $validationArray);
-        $validator->setAttributeNames($attributeArray);
-
-        // バリデーション実施、エラー時は予約画面へ戻る
-        if ($validator->fails()) {
-            // return $this->editBooking($request, $page_id, $frame_id, $booking_id, $validator->errors());
-            return back()->withErrors($validator)->withInput();
-        }
-
-        // 施設データ
-        $facility = ReservationsFacility::where('id', $request->facility_id)->first();
-
-        // 予約ヘッダ 登録 ※予約IDがある場合は更新
-        $reservations_inputs = $booking_id ?
-            ReservationsInput::where('id', $booking_id)->first() :
-            new ReservationsInput();
-
-        // 新規登録の判定のために、保存する前のレコードを退避しておく。
-        $before_reservations_inputs = clone $reservations_inputs;
-
-        // 承認の要否確認とステータス処理
-        if ($this->isApproval()) {
-            $reservations_inputs->status = StatusType::approval_pending;  // 承認待ち
-            $str_mode = $booking_id ? '予約の変更申請をしました。' : '予約の登録申請をしました。';
-        } else {
-            $reservations_inputs->status = StatusType::active;  // 公開
-            $str_mode = $booking_id ? '予約を更新しました。' : '予約を登録しました。';
-        }
-
-        // 新規登録時のみの登録項目
-        if (!$booking_id) {
-            $reservations_inputs->reservations_id = $request->reservations_id;
-            $reservations_inputs->facility_id = $request->facility_id;
-        }
-        $reservations_inputs->start_datetime = new ConnectCarbon($target_ymd . ' ' . $request->start_datetime . ':00');
-        $reservations_inputs->end_datetime = new ConnectCarbon($target_ymd . ' ' . $request->end_datetime . ':00');
-        $reservations_inputs->save();
-
-        // 項目IDを取得
-        $columns_value = $request->columns_value ?? [];
-        $keys = array_keys($columns_value);
-        foreach ($keys as $key) {
-            // 予約明細 更新レコード取得
-            // $reservations_inputs_columns = ReservationsInputsColumn::where('reservations_id', $request->reservations_id)
-            $reservations_inputs_columns = ReservationsInputsColumn::where('inputs_id', $reservations_inputs->id)
-                ->where('column_id', $key)
-                ->first();
-
-            // 更新レコードが取得できなかったらnew
-            if (!$reservations_inputs_columns) {
-                $reservations_inputs_columns = new ReservationsInputsColumn();
-                // 新規登録時のみの登録項目
-                $reservations_inputs_columns->reservations_id = $request->reservations_id;
-                $reservations_inputs_columns->inputs_id = $reservations_inputs->id;
-                $reservations_inputs_columns->column_id = $key;
-            }
-            $reservations_inputs_columns->value = $columns_value[$key];
-
-            $reservations_inputs_columns->save();
-        }
-        // $str_mode = $request->booking_id ? '更新' : '登録';
-        // $message = '予約を' . $str_mode . 'しました。【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
-        $request->flash_message = $str_mode . '【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
-
-        // titleカラムが無いため、プラグイン独自でセット
-        $overwrite_notice_embedded_tags = [NoticeEmbeddedTag::title => $this->getTitle($reservations_inputs)];
-
-        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド, 上書き埋め込みタグ)
-        $this->sendPostNotice($reservations_inputs, $before_reservations_inputs, 'showBooking', $overwrite_notice_embedded_tags);
-
-        // 登録後はカレンダー表示
-        // return $this->index($request, $page_id, $frame_id, null, null, $message);
-        return collect(['redirect_path' => url($this->page->permanent_link)]);
-    }
-
-    /**
-     * 予約の詳細表示 URL版
-     */
-    public function showBooking($request, $page_id, $frame_id, $input_id = null, $is_json = false)
-    {
-        // 登録データ行の取得
-        $inputs = $this->getReservationsInput($input_id);
-        // データがあることを確認
-        if (empty($inputs->id)) {
-            return;
-        }
-
-        // カラムの取得
-        $columns = $this->getReservationsColumns($inputs->columns_set_id);
-        // データがあることを確認
-        if (empty($columns)) {
-            return;
-        }
-
-        // データ詳細の取得
-        $inputs_columns = $this->getReservationsInputsColumns($input_id);
-
-        // 選択肢
-        // $selects = ReservationsColumnsSelect::where('reservations_id', $inputs->reservations_id)->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
-        $selects = ReservationsColumnsSelect::where('columns_set_id', $inputs->columns_set_id)->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
-
-        if ($is_json) {
-
-            // 表示値をセット
-            $inputs->reservation_date_display = $inputs->displayDate();
-            $inputs->reservation_time_display = $inputs->start_datetime->format('H:i') . ' ~ ' . $inputs->end_datetime->format('H:i');
-
-            foreach ($columns as &$column) {
-                $obj = $inputs_columns->firstWhere('column_id', $column->id);
-
-                // カラムの表示値をセット
-                $column->display_value = $this->getColumnValue($inputs, $column, $obj);
-            }
-
-            // JSON
-            return [
-                'columns' => $columns,
-                // inputにすると値があってもnullになるため、$inputsのままでいく
-                'inputs' => $inputs,
-                'inputs_columns' => $inputs_columns,
-                'selects' => $selects,
-            ];
-        } else {
-            // 詳細画面を呼び出す。
-            return $this->view('show_booking', [
-                'columns' => $columns,
-                // inputにすると値があってもnullになるため、$inputsのままでいく
-                'inputs' => $inputs,
-                'inputs_columns' => $inputs_columns,
-                'selects' => $selects,
-            ]);
-        }
-    }
-
-    /**
-     * 予約の詳細表示 JSON版
-     */
-    public function showBookingJson($request, $page_id, $frame_id, $input_id = null)
-    {
-        $is_json = true;
-        return $this->showBooking($request, $page_id, $frame_id, $input_id, $is_json);
-    }
-
-    /**
-     * 登録データ行の取得
-     */
-    private function getReservationsInput($id)
-    {
-        return $this->getPost($id);
-    }
-
-    /**
-     * カラムの取得
-     */
-    private function getReservationsColumns($id)
-    {
-        // return ReservationsColumn::where('reservations_id', $id)->where('hide_flag', NotShowType::show)->orderBy('display_sequence')->get();
-        return ReservationsColumn::where('columns_set_id', $id)->where('hide_flag', NotShowType::show)->orderBy('display_sequence')->get();
-    }
-
-    /**
-     * データ詳細の取得
-     */
-    private function getReservationsInputsColumns($id)
-    {
-        $inputs_columns = ReservationsInputsColumn::
-            select(
-                'reservations_inputs_columns.*',
-                'reservations_columns.column_type',
-                'reservations_columns.column_name',
-                'reservations_columns.title_flag'
-            )
-            ->leftJoin('reservations_columns', function ($join) {
-                $join->on('reservations_columns.id', '=', 'reservations_inputs_columns.column_id')
-                    ->where('reservations_columns.hide_flag', NotShowType::show)
-                    ->whereNull('reservations_columns.deleted_at');
-            })
-            ->where('reservations_inputs_columns.inputs_id', $id)
-            ->orderBy('reservations_inputs_columns.inputs_id', 'asc')
-            ->orderBy('reservations_inputs_columns.column_id', 'asc')
-            ->get();
-
-        return $inputs_columns;
-    }
-
-    /**
-     * 予約の承認処理
-     */
-    public function approvalBooking($request, $page_id, $frame_id, $input_id = null)
-    {
-        // 登録データ行の取得
-        $reservations_inputs = $this->getReservationsInput($input_id);
-        // データがあることを確認
-        if (empty($reservations_inputs->id)) {
-            return;
-        }
-
-        // 承認済みの判定のために、保存する前のレコードを退避しておく。
-        $before_reservations_inputs = clone $reservations_inputs;
-
-        // 更新されたら、行レコードの updated_at を更新したいので、update()
-        $reservations_inputs->status = StatusType::active;  // 公開
-        $reservations_inputs->update();
-
-        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
-        $this->sendPostNotice($reservations_inputs, $before_reservations_inputs, 'showBooking');
-
-        // 登録後は画面側の指定により、リダイレクトして表示画面を開く。
-        return;
-    }
 
     /**
      * データ初期表示関数
@@ -843,6 +499,412 @@ class ReservationsPlugin extends UserPluginBase
     }
 
     /**
+     * 予約追加画面の表示
+     */
+    public function editBooking($request, $page_id, $frame_id, $input_id = null)
+    {
+        $booking = null;
+
+        // if ($request->booking_id) {
+        if ($input_id) {
+
+            /**
+             * 予約の更新モード
+             */
+
+            // 予約データ
+            // $booking = ReservationsInput::where('id', $request->booking_id)->first();
+            $booking = ReservationsInput::where('id', $input_id)->first();
+
+            // 施設予約データ
+            $reservation = Reservation::where('id', $booking->reservations_id)->first();
+
+            // 施設データ
+            $facility = ReservationsFacility::where('id', $booking->facility_id)->first();
+
+            // 予約項目データ（予約入力値付）
+            $columns = ReservationsColumn::
+                select(
+                    'reservations_columns.*',
+                    'reservations_inputs_columns.value',
+                )
+                ->leftJoin('reservations_inputs_columns', function ($join) use ($booking) {
+                    $join->on('reservations_inputs_columns.column_id', '=', 'reservations_columns.id');
+                    $join->where('reservations_inputs_columns.inputs_id', '=', $booking->id);
+                })
+                // ->where('reservations_columns.reservations_id', $booking->reservations_id)
+                ->where('reservations_columns.columns_set_id', $facility->columns_set_id)
+                ->where('reservations_columns.hide_flag', NotShowType::show)
+                ->orderBy('reservations_columns.display_sequence')
+                ->get();
+
+            // 予約項目データの内、選択肢が指定されていた場合の選択肢データ
+            // $selects = ReservationsColumnsSelect::where('reservations_id', $booking->reservations_id)
+            $selects = ReservationsColumnsSelect::where('columns_set_id', $facility->columns_set_id)
+                ->where('hide_flag', NotShowType::show)
+                ->orderBy('id', 'asc')
+                ->orderBy('display_sequence', 'asc')
+                ->get();
+
+            $target_date = new ConnectCarbon($booking->start_datetime);
+        } else {
+            /**
+             * 予約の新規登録モード
+             */
+            // パラメータチェック. saveの入力エラーで戻ってきた時はoldに値が入ってる。
+            $target_ymd = old('target_date', $request->target_date);
+            $year = (int)substr($target_ymd, 0, 4);
+            $month = (int)substr($target_ymd, 4, 2);
+            $day = (int)substr($target_ymd, 6, 2);
+            if (!checkdate($month, $day, $year)) {
+                return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
+            }
+
+            // 施設予約データ
+            $reservation = Reservation::where('id', old('reservations_id', $request->reservations_id))->first();
+
+            // 施設データ
+            $facility = ReservationsFacility::where('id', old('facility_id', $request->facility_id))->first();
+
+            // 予約項目データ
+            // $columns = ReservationsColumn::where('reservations_id', $request->reservations_id)->whereNull('hide_flag')->orderBy('display_sequence')->get();
+            // $columns = $this->getReservationsColumns($request->reservations_id);
+            $columns = $this->getReservationsColumns($facility->columns_set_id);
+
+            // 予約項目データの内、選択肢が指定されていた場合の選択肢データ
+            // $selects = ReservationsColumnsSelect::where('reservations_id', $request->reservations_id)
+            $selects = ReservationsColumnsSelect::where('columns_set_id', $facility->columns_set_id)
+                ->where('hide_flag', NotShowType::show)
+                ->orderBy('id', 'asc')
+                ->orderBy('display_sequence', 'asc')
+                ->get();
+
+            $target_date = new ConnectCarbon($target_ymd);
+        }
+
+        return $this->view('edit_booking', [
+            'target_date' => $target_date,
+            'reservation' => $reservation,
+            'facility' => $facility,
+            'columns' => $columns,
+            'selects' => $selects,
+            'booking' => $booking,
+        ]);
+    }
+
+    /**
+     * 予約追加処理
+     */
+    public function saveBooking($request, $page_id, $frame_id, $booking_id = null)
+    {
+        $target_ymd = $request->target_date;
+        // URLパラメータチェック
+        $year = (int)substr($target_ymd, 0, 4);
+        $month = (int)substr($target_ymd, 4, 2);
+        $day = (int)substr($target_ymd, 6, 2);
+        if (!checkdate($month, $day, $year)) {
+            return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
+        }
+
+        // エラーチェック配列
+        $validator_array = array('column' => array(), 'message' => array());
+
+        // バリデーション用の配列を生成（可変項目）
+        $columns = ReservationsColumn::where('columns_set_id', $request->columns_set_id)
+            ->where('hide_flag', NotShowType::show)
+            ->get();
+
+        foreach ($columns as $column) {
+            // バリデータールールをセット
+            $validator_array = $this->getValidatorRule($validator_array, $column);
+        }
+
+        // バリデーション用の配列を生成（基本項目）
+        $validator_array['column']['start_datetime'] = ['required'];
+        $validator_array['column']['end_datetime'] = ['required', 'after:start_datetime'];
+        $validator_array['message']['start_datetime'] = '開始時間';
+        $validator_array['message']['end_datetime'] = '終了時間';
+
+        // --- 入力値変換
+        foreach ($columns as $column) {
+            // 入力しないカラム型は、対象外
+            if ($column->isNotInputColumnType()) {
+                continue;
+            }
+
+            // wysiwyg型
+            if ($column->column_type == ReservationColumnType::wysiwyg) {
+                // XSS対応のJavaScript等の制限
+                $tmp_array = $request->columns_value;
+                $tmp_array[$column->id] = $this->clean($request->columns_value[$column->id]);
+                $request->merge([
+                    "columns_value" => $tmp_array,
+                ]);
+            }
+        }
+
+        // バリデーション定義
+        $validator = Validator::make($request->all(), $validator_array['column']);
+        $validator->setAttributeNames($validator_array['message']);
+
+        // バリデーション実施、エラー時は予約画面へ戻る
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        // 施設データ
+        $facility = ReservationsFacility::where('id', $request->facility_id)->first();
+
+        // 予約ヘッダ 登録 ※予約IDがある場合は更新
+        $reservations_inputs = $booking_id ?
+            ReservationsInput::where('id', $booking_id)->first() :
+            new ReservationsInput();
+
+        // 新規登録の判定のために、保存する前のレコードを退避しておく。
+        $before_reservations_inputs = clone $reservations_inputs;
+
+        // 承認の要否確認とステータス処理
+        if ($this->isApproval()) {
+            $reservations_inputs->status = StatusType::approval_pending;  // 承認待ち
+            $str_mode = $booking_id ? '予約の変更申請をしました。' : '予約の登録申請をしました。';
+        } else {
+            $reservations_inputs->status = StatusType::active;  // 公開
+            $str_mode = $booking_id ? '予約を更新しました。' : '予約を登録しました。';
+        }
+
+        // 新規登録時のみの登録項目
+        if (!$booking_id) {
+            $reservations_inputs->reservations_id = $request->reservations_id;
+            $reservations_inputs->facility_id = $request->facility_id;
+        }
+        $reservations_inputs->start_datetime = new ConnectCarbon($target_ymd . ' ' . $request->start_datetime . ':00');
+        $reservations_inputs->end_datetime = new ConnectCarbon($target_ymd . ' ' . $request->end_datetime . ':00');
+        $reservations_inputs->save();
+
+        // 項目IDを取得
+        $columns_value = $request->columns_value ?? [];
+        $keys = array_keys($columns_value);
+        foreach ($keys as $key) {
+            // 予約明細 更新レコード取得
+            // $reservations_inputs_columns = ReservationsInputsColumn::where('reservations_id', $request->reservations_id)
+            $reservations_inputs_columns = ReservationsInputsColumn::where('inputs_id', $reservations_inputs->id)
+                ->where('column_id', $key)
+                ->first();
+
+            // 更新レコードが取得できなかったらnew
+            if (!$reservations_inputs_columns) {
+                $reservations_inputs_columns = new ReservationsInputsColumn();
+                // 新規登録時のみの登録項目
+                $reservations_inputs_columns->reservations_id = $request->reservations_id;
+                $reservations_inputs_columns->inputs_id = $reservations_inputs->id;
+                $reservations_inputs_columns->column_id = $key;
+            }
+            $reservations_inputs_columns->value = $columns_value[$key];
+
+            $reservations_inputs_columns->save();
+        }
+        // $str_mode = $request->booking_id ? '更新' : '登録';
+        // $message = '予約を' . $str_mode . 'しました。【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
+        $request->flash_message = $str_mode . '【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
+
+        // titleカラムが無いため、プラグイン独自でセット
+        $overwrite_notice_embedded_tags = [NoticeEmbeddedTag::title => $this->getTitle($reservations_inputs)];
+
+        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド, 上書き埋め込みタグ)
+        $this->sendPostNotice($reservations_inputs, $before_reservations_inputs, 'showBooking', $overwrite_notice_embedded_tags);
+
+        // 登録後はカレンダー表示
+        return collect(['redirect_path' => url($this->page->permanent_link) . "#frame-{$frame_id}"]);
+    }
+
+    /**
+     * セットすべきバリデータールールが存在する場合、受け取った配列にセットして返す
+     */
+    private function getValidatorRule(array $validator_array, ReservationsColumn $column) : array
+    {
+        // 入力しないカラム型は、バリデータチェックしない
+        if ($column->isNotInputColumnType()) {
+            return $validator_array;
+        }
+
+        $validator_rule = null;
+        // 必須チェック
+        if ($column->required == Required::on) {
+            $validator_rule[] = 'required';
+        }
+        // textチェック
+        if ($column->column_type == ReservationColumnType::text) {
+            $validator_rule[] = 'max:255';
+        }
+        // wysiwygチェック
+        if ($column->column_type == ReservationColumnType::wysiwyg) {
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = new CustomValiWysiwygMax();
+        }
+        // [TODO] まだ
+        // 単一選択チェック
+        // if ($column->column_type == ReservationColumnType::radio) {
+        //     // カラムの選択肢用データ
+        //     $selects = ReservationsColumnsSelect::where('column_id', $column->id)
+        //         ->where('hide_flag', NotShowType::show)
+        //         ->orderBy('display_sequence', 'asc')
+        //         ->pluck('select_name')
+        //         ->toArray();
+
+        //     // 単一選択チェック
+        //     if ($column->column_type == ReservationColumnType::radio) {
+        //         $validator_rule[] = 'nullable';
+        //         // Rule::inのみで、selectsの中の１つが入ってるかチェック
+        //         $validator_rule[] = Rule::in($selects);
+        //     }
+        // }
+
+        // バリデータールールをセット
+        if ($validator_rule) {
+            $validator_array['column']['columns_value.' . $column->id] = $validator_rule;
+            $validator_array['message']['columns_value.' . $column->id] = $column->column_name;
+        }
+
+        return $validator_array;
+    }
+
+    /**
+     * 予約の詳細表示 URL版
+     */
+    public function showBooking($request, $page_id, $frame_id, $input_id = null, $is_json = false)
+    {
+        // 登録データ行の取得
+        $inputs = $this->getReservationsInput($input_id);
+        // データがあることを確認
+        if (empty($inputs->id)) {
+            return;
+        }
+
+        // カラムの取得
+        $columns = $this->getReservationsColumns($inputs->columns_set_id);
+        // データがあることを確認
+        if (empty($columns)) {
+            return;
+        }
+
+        // データ詳細の取得
+        $inputs_columns = $this->getReservationsInputsColumns($input_id);
+
+        // 選択肢
+        // $selects = ReservationsColumnsSelect::where('reservations_id', $inputs->reservations_id)->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
+        $selects = ReservationsColumnsSelect::where('columns_set_id', $inputs->columns_set_id)->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
+
+        if ($is_json) {
+
+            // 表示値をセット
+            $inputs->reservation_date_display = $inputs->displayDate();
+            $inputs->reservation_time_display = $inputs->start_datetime->format('H:i') . ' ~ ' . $inputs->end_datetime->format('H:i');
+
+            foreach ($columns as &$column) {
+                $obj = $inputs_columns->firstWhere('column_id', $column->id);
+
+                // カラムの表示値をセット
+                $column->display_value = $this->getColumnValue($inputs, $column, $obj);
+            }
+
+            // JSON
+            return [
+                'columns' => $columns,
+                // inputにすると値があってもnullになるため、$inputsのままでいく
+                'inputs' => $inputs,
+                'inputs_columns' => $inputs_columns,
+                'selects' => $selects,
+            ];
+        } else {
+            // 詳細画面を呼び出す。
+            return $this->view('show_booking', [
+                'columns' => $columns,
+                // inputにすると値があってもnullになるため、$inputsのままでいく
+                'inputs' => $inputs,
+                'inputs_columns' => $inputs_columns,
+                'selects' => $selects,
+            ]);
+        }
+    }
+
+    /**
+     * 予約の詳細表示 JSON版
+     */
+    public function showBookingJson($request, $page_id, $frame_id, $input_id = null)
+    {
+        $is_json = true;
+        return $this->showBooking($request, $page_id, $frame_id, $input_id, $is_json);
+    }
+
+    /**
+     * 登録データ行の取得
+     */
+    private function getReservationsInput($id)
+    {
+        return $this->getPost($id);
+    }
+
+    /**
+     * カラムの取得
+     */
+    private function getReservationsColumns($id)
+    {
+        // return ReservationsColumn::where('reservations_id', $id)->where('hide_flag', NotShowType::show)->orderBy('display_sequence')->get();
+        return ReservationsColumn::where('columns_set_id', $id)->where('hide_flag', NotShowType::show)->orderBy('display_sequence')->get();
+    }
+
+    /**
+     * データ詳細の取得
+     */
+    private function getReservationsInputsColumns($id)
+    {
+        $inputs_columns = ReservationsInputsColumn::
+            select(
+                'reservations_inputs_columns.*',
+                'reservations_columns.column_type',
+                'reservations_columns.column_name',
+                'reservations_columns.title_flag'
+            )
+            ->leftJoin('reservations_columns', function ($join) {
+                $join->on('reservations_columns.id', '=', 'reservations_inputs_columns.column_id')
+                    ->where('reservations_columns.hide_flag', NotShowType::show)
+                    ->whereNull('reservations_columns.deleted_at');
+            })
+            ->where('reservations_inputs_columns.inputs_id', $id)
+            ->orderBy('reservations_inputs_columns.inputs_id', 'asc')
+            ->orderBy('reservations_inputs_columns.column_id', 'asc')
+            ->get();
+
+        return $inputs_columns;
+    }
+
+    /**
+     * 予約の承認処理
+     */
+    public function approvalBooking($request, $page_id, $frame_id, $input_id = null)
+    {
+        // 登録データ行の取得
+        $reservations_inputs = $this->getReservationsInput($input_id);
+        // データがあることを確認
+        if (empty($reservations_inputs->id)) {
+            return;
+        }
+
+        // 承認済みの判定のために、保存する前のレコードを退避しておく。
+        $before_reservations_inputs = clone $reservations_inputs;
+
+        // 更新されたら、行レコードの updated_at を更新したいので、update()
+        $reservations_inputs->status = StatusType::active;  // 公開
+        $reservations_inputs->update();
+
+        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
+        $this->sendPostNotice($reservations_inputs, $before_reservations_inputs, 'showBooking');
+
+        // 登録後は画面側の指定により、リダイレクトして表示画面を開く。
+        return;
+    }
+
+    /**
      * 施設予約選択画面の表示
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
@@ -932,7 +994,7 @@ class ReservationsPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'reservation_name' => ['required'],
+            'reservation_name' => ['required', 'max:255'],
             'calendar_initial_display_type' => ['required'],
         ]);
         $validator->setAttributeNames([
@@ -1155,9 +1217,15 @@ class ReservationsPlugin extends UserPluginBase
         if (!empty($request->reservations_category_id)) {
             foreach ($request->reservations_category_id as $category_id) {
                 // 項目のエラーチェック
-                $rules['choice_display_sequence.'.$category_id] = ['required'];
+                $rules['choice_display_sequence.'.$category_id] = ['required', 'numeric'];
 
                 $setAttributeNames['choice_display_sequence.'.$category_id] = '表示順';
+
+                // 全角変換しても入力エラーでるため、対応見送り
+                // $request->merge([
+                //     // 表示順:  全角→半角変換
+                //     'choice_display_sequence.'.$category_id => StringUtils::convertNumericAndMinusZenkakuToHankaku($request->choice_display_sequence[$category_id]),
+                // ]);
             }
         }
 
@@ -1181,7 +1249,7 @@ class ReservationsPlugin extends UserPluginBase
                     ],
                     [
                         'view_flag' => $request->view_flag[$reservations_category_id] == ShowType::show ? ShowType::show : ShowType::not_show,
-                        'display_sequence' => $request->choice_display_sequence[$reservations_category_id],
+                        'display_sequence' => intval($request->choice_display_sequence[$reservations_category_id]),
                     ]
                 );
             }

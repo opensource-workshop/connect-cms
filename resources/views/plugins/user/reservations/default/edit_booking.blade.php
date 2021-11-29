@@ -116,7 +116,7 @@ use App\Models\User\Reservations\ReservationsColumn;
 
             <div class="row">
                 {{-- 予約開始時間 --}}
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="input-group date" id="start_datetime" data-target-input="nearest">
                         {{-- 表示優先順：
                             ・旧入力値（入力エラー時）
@@ -130,7 +130,7 @@ use App\Models\User\Reservations\ReservationsColumn;
                     </div>
                 </div>
                 {{-- 予約終了時間 --}}
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="input-group date" id="end_datetime" data-target-input="nearest">
                         {{-- 表示優先順：
                             ・旧入力値（入力エラー時）
@@ -156,6 +156,7 @@ use App\Models\User\Reservations\ReservationsColumn;
     </div>
 
     {{-- 詳細項目 --}}
+    <hr>
 
     {{-- 予約項目の出力 --}}
     @foreach ($columns as $column)
@@ -179,7 +180,7 @@ use App\Models\User\Reservations\ReservationsColumn;
                     {{-- テキスト項目 --}}
                     @case(ReservationColumnType::text)
 
-                        <input name="columns_value[{{$column->id}}]" class="form-control @if ($errors->has('columns_value.'.$column->id)) border-danger @endif" type="{{$column->column_type}}" value="{{old('columns_value.'.$column->id , $column->value ? $column->value : '')}}">
+                        <input name="columns_value[{{$column->id}}]" class="form-control @if ($errors->has('columns_value.'.$column->id)) border-danger @endif" type="{{$column->column_type}}" value="{{old('columns_value.'.$column->id , $column->value)}}">
                         @include('plugins.common.errors_inline', ['name' => 'columns_value.'.$column->id])
                         @break
 
@@ -203,6 +204,18 @@ use App\Models\User\Reservations\ReservationsColumn;
                             @endforeach
                         </div>
                         @include('plugins.common.errors_inline', ['name' => 'columns_value.'.$column->id])
+                        @break
+
+                    {{-- wysiwyg項目 --}}
+                    @case(ReservationColumnType::wysiwyg)
+
+                        {{-- WYSIWYG 呼び出し --}}
+                        @include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg'])
+
+                        <div @if ($errors->has("columns_value.$column->id")) class="border border-danger" @endif>
+                            <textarea name="columns_value[{{$column->id}}]" class="form-control wysiwyg">{{old('columns_value.'.$column->id, $column->value)}}</textarea>
+                        </div>
+                        @include('plugins.common.errors_inline_wysiwyg', ['name' => "columns_value.$column->id"])
                         @break
 
                     @default
