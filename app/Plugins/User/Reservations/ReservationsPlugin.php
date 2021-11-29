@@ -990,8 +990,9 @@ class ReservationsPlugin extends UserPluginBase
         //     return $this->editBuckets($request, $page_id, $frame_id, $request->reservations_id, $create_flag, $message);
         // }
 
-        // 設定変更画面を呼び出す
-        return collect(['redirect_path' => url('/') . '/plugin/reservations/editBuckets/' . $page_id . '/' . $frame_id . '/' . $reservations->id . '#frame-' . $frame_id]);
+        // 施設予約選択画面を呼び出す
+        // return collect(['redirect_path' => url('/') . '/plugin/reservations/editBuckets/' . $page_id . '/' . $frame_id . '/' . $reservations->id . '#frame-' . $frame_id]);
+        return collect(['redirect_path' => url('/') . '/plugin/reservations/listBuckets/' . $page_id . '/' . $frame_id . '#frame-' . $frame_id]);
     }
 
     /**
@@ -1017,8 +1018,12 @@ class ReservationsPlugin extends UserPluginBase
 
             // 施設予約を削除する。
             $reservation->delete();
+
+            $request->flash_message = '施設予約の設定を削除しました。';
         }
-        // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+
+        // 施設予約選択画面を呼び出す
+        return collect(['redirect_path' => url('/') . '/plugin/reservations/listBuckets/' . $page_id . '/' . $frame_id . '#frame-' . $frame_id]);
     }
 
     /**
