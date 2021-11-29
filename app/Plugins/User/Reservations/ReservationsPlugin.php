@@ -231,7 +231,7 @@ class ReservationsPlugin extends UserPluginBase
 
             // 予約項目データの内、選択肢が指定されていた場合の選択肢データ
             // $selects = ReservationsColumnsSelect::where('reservations_id', $booking->reservations_id)
-            $selects = ReservationsColumnsSelect::where('columns_set_id', $booking->columns_set_id)
+            $selects = ReservationsColumnsSelect::where('columns_set_id', $facility->columns_set_id)
                 ->where('hide_flag', NotShowType::show)
                 ->orderBy('id', 'asc')
                 ->orderBy('display_sequence', 'asc')
