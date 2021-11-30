@@ -394,6 +394,16 @@ class ReservationManage extends ManagePluginBase
         // 施設項目セット取得
         $columns_sets = ReservationsColumnsSet::orderBy('display_sequence')->paginate(10, '*', 'page', $page);
 
+        $columns = ReservationsColumn::whereIn('columns_set_id', $columns_sets->pluck('id'))
+            ->where('hide_flag', NotShowType::show)
+            ->get();
+
+        foreach ($columns_sets as $columns_set) {
+            // 項目名をセット
+            $columns_set->column_name = $columns->where('columns_set_id', $columns_set->id)
+                ->pluck('column_name')->implode(',');
+        }
+
         return view('plugins.manage.reservation.column_sets', [
             "function"      => __FUNCTION__,
             "plugin_name"   => "reservation",

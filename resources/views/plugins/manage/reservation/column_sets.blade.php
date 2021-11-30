@@ -28,7 +28,7 @@
                 <tr class="d-none d-sm-table-row">
                     <th class="d-block d-sm-table-cell text-break">項目セット名</th>
                     <th class="d-block d-sm-table-cell text-break">表示順</th>
-                    <th class="d-block d-sm-table-cell text-break">詳細</th>
+                    <th class="d-block d-sm-table-cell text-break">項目</th>
                 </tr>
             </thead>
             <tbody>
@@ -40,10 +40,9 @@
                     </td>
                     <td class="d-block d-sm-table-cell"><span class="d-sm-none">表示順：</span>{{$columns_set->display_sequence}}</td>
                     <td class="d-block d-sm-table-cell">
-                        <span class="d-sm-none">詳細：</span>
-                        <a class="btn btn-success btn-sm" href="{{url('/')}}/manage/reservation/editColumns/{{$columns_set->id}}">
-                            <i class="far fa-edit"></i> 項目設定
-                        </a>
+                        <span class="d-sm-none">項目：</span>
+                        <a href="{{url('/')}}/manage/reservation/editColumns/{{$columns_set->id}}"><i class="far fa-edit"></i></a>
+                        {{$columns_set->column_name}}
                     </td>
                 </tr>
                 @endforeach
