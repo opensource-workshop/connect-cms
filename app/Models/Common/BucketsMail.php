@@ -38,8 +38,9 @@ class BucketsMail extends Model
         // post に body が存在すれば、変換対象とする。
         // body が存在するかの判定が、項目を取ってみてのnull かどうかで判定。（他の方法があれば要検討）
         // その際は、HTML 改行タグを改行コードに変換し、その後にタグを取り除くことで、メールの本文に挿入するテキストにできる。
+        // html_entity_decode で、引用の > などをdecode する。（DB上は &gt; 等で格納しているため）
         if (!empty($post->body)) {
-            $default[NoticeEmbeddedTag::body] = strip_tags(preg_replace('/<br[[:space:]]*\/?[[:space:]]*>/i', "\n", $post->body));
+            $default[NoticeEmbeddedTag::body] = strip_tags(preg_replace('/<br[[:space:]]*\/?[[:space:]]*>/i', "\n", html_entity_decode($post->body)));
         }
 
         // 同じキーがあったら後勝ちで上書きされる。
