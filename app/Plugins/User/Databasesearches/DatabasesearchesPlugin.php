@@ -265,7 +265,7 @@ class DatabasesearchesPlugin extends UserPluginBase
         // Log::debug(var_export($inputs_ids_marge, true));
 
         // 登録データ詳細の取得
-        $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'databases_columns.column_name', 'uploads.client_original_name')
+        $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'databases_columns.column_name', 'uploads.client_original_name', 'databases_columns.column_type')
                                         ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
                                         ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
                                         ->whereIn('databases_inputs_id', $inputs_ids->pluck('databases_inputs_id'))
