@@ -78,13 +78,15 @@
         var button = $(event.relatedTarget)
         var modal = $(this)
 
-        // .phpファイルへのアクセス
+        // Ajaxが終わるまで非表示
+        modal.find('.modal-content').hide();
+
         $.ajax('{{url('/')}}/json/reservations/showBookingJson/{{$page->id}}/{{$frame_id}}/' + button.data('booking_id'),
             {
                 type: 'get',
                 dataType: 'json',
-                // 同期
-                async : false
+                // Ajax(XMLHttpRequest)の同期は非推奨のため使わない
+                // async : false
             }
         )
         .done(function(data) {
@@ -160,9 +162,15 @@
                 }
 
             }
+
+            // Ajax終了時に表示
+            modal.find('.modal-content').show();
         })
         .fail(function() {
             window.alert('予約の詳細データが取得できませんでした。');
+
+            // Ajax終了時に表示
+            modal.find('.modal-content').show();
         });
 
         // {{-- モーダルタイトル
