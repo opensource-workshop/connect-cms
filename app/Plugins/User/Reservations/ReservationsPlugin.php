@@ -227,6 +227,8 @@ class ReservationsPlugin extends UserPluginBase
             })
             ->where('reservations_choice_categories.reservations_id', $reservations_frame->reservations_id)
             ->where('reservations_choice_categories.view_flag', ShowType::show)
+            // 施設が紐づいてない施設カテゴリは表示しない
+            ->whereNotNull('reservations_facilities.id')
             ->orderBy('reservations_choice_categories.display_sequence', 'asc')
             ->orderBy('reservations_facilities.display_sequence', 'asc')
             ->get();
@@ -1250,11 +1252,11 @@ class ReservationsPlugin extends UserPluginBase
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        /* 表示フラグ更新(共通カテゴリ)
+        /* 表示フラグ更新
         ------------------------------------ */
         if (!empty($request->reservations_category_id)) {
             foreach ($request->reservations_category_id as $reservations_category_id) {
-                // FAQプラグインのカテゴリー使用テーブルになければ追加、あれば更新
+                // 施設カテゴリー選択テーブルになければ追加、あれば更新
                 ReservationsChoiceCategory::updateOrCreate(
                     [
                         'reservations_id' => $reservations_id,
@@ -1266,6 +1268,12 @@ class ReservationsPlugin extends UserPluginBase
                     ]
                 );
             }
+
+            // 画面表示されないカテゴリ（施設カテゴリから消したカテゴリ）は削除
+            $choice_category_ids = ReservationsChoiceCategory::where('reservations_id', $reservations_id)
+                ->whereNotIn('reservations_categories_id', $request->reservations_category_id)
+                ->pluck('id');
+            ReservationsChoiceCategory::destroy($choice_category_ids);
         }
 
         return redirect()->back()->with('flash_message', '変更しました。');
