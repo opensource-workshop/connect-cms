@@ -20,6 +20,7 @@ use App\Models\User\Reservations\ReservationsInput;
 use App\Models\User\Reservations\ReservationsInputsColumn;
 
 use App\Rules\CustomValiWysiwygMax;
+use App\Rules\CustomValiDuplicateBookings;
 
 use App\Plugins\User\UserPluginBase;
 
@@ -619,8 +620,28 @@ class ReservationsPlugin extends UserPluginBase
             $validator_array = $this->getValidatorRule($validator_array, $column);
         }
 
+        // 施設データ
+        $facility = ReservationsFacility::where('id', $request->facility_id)->first();
+
+        // 予約ヘッダ 登録 ※予約IDがある場合は更新
+        $reservations_inputs = ReservationsInput::firstOrNew(['id' => $booking_id]);
+
         // バリデーション用の配列を生成（基本項目）
         $validator_array['column']['start_datetime'] = ['required'];
+
+        if (!$facility->is_allow_duplicate) {
+            // 重複予約チェック追加
+            $validator_array['column']['start_datetime'] = [
+                'required',
+                new CustomValiDuplicateBookings(
+                    $request->facility_id,
+                    $reservations_inputs->id,
+                    "{$year}/{$month}/{$day} {$request->start_datetime}",
+                    "{$year}/{$month}/{$day} {$request->end_datetime}"
+                )
+            ];
+        }
+
         $validator_array['column']['end_datetime'] = ['required', 'after:start_datetime'];
         $validator_array['message']['start_datetime'] = '開始時間';
         $validator_array['message']['end_datetime'] = '終了時間';
@@ -651,14 +672,6 @@ class ReservationsPlugin extends UserPluginBase
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
-
-        // 施設データ
-        $facility = ReservationsFacility::where('id', $request->facility_id)->first();
-
-        // 予約ヘッダ 登録 ※予約IDがある場合は更新
-        $reservations_inputs = $booking_id ?
-            ReservationsInput::where('id', $booking_id)->first() :
-            new ReservationsInput();
 
         // 新規登録の判定のために、保存する前のレコードを退避しておく。
         $before_reservations_inputs = clone $reservations_inputs;

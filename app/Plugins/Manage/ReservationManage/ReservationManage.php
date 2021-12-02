@@ -15,6 +15,7 @@ use App\Plugins\Manage\ManagePluginBase;
 
 use App\Enums\Required;
 use App\Enums\NotShowType;
+use App\Enums\PermissionType;
 
 /**
  * 施設管理
@@ -182,18 +183,20 @@ class ReservationManage extends ManagePluginBase
     {
         // エラーチェック
         $validator = Validator::make($request->all(), [
-            'hide_flag'  => ['required'],
-            'facility_name'  => ['required', 'max:255'],
-            'reservations_categories_id'  => ['required'],
-            'columns_set_id'  => ['required'],
-            'display_sequence' => ['nullable', 'numeric'],
+            'hide_flag'                  => ['required'],
+            'facility_name'              => ['required', 'max:255'],
+            'reservations_categories_id' => ['required'],
+            'columns_set_id'             => ['required'],
+            'is_allow_duplicate'         => ['required'],
+            'display_sequence'           => ['nullable', 'numeric'],
         ]);
         $validator->setAttributeNames([
-            'hide_flag'  => '表示',
-            'facility_name'  => '施設名',
-            'reservations_categories_id'  => '施設カテゴリ',
-            'columns_set_id'  => '項目セット',
-            'display_sequence' => '表示順',
+            'hide_flag'                  => '表示',
+            'facility_name'              => '施設名',
+            'reservations_categories_id' => '施設カテゴリ',
+            'columns_set_id'             => '項目セット',
+            'is_allow_duplicate'         => '重複予約',
+            'display_sequence'           => '表示順',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -211,7 +214,8 @@ class ReservationManage extends ManagePluginBase
         $facility->reservations_id = $facility->reservations_id ?: 0;
 
         $facility->facility_name                = $request->facility_name;
-        $facility->hide_flag                    = $request->hide_flag;
+        $facility->hide_flag                    = $request->hide_flag ? NotShowType::not_show : NotShowType::show;
+        $facility->is_allow_duplicate           = $request->is_allow_duplicate ? PermissionType::allowed : PermissionType::not_allowed;
         $facility->reservations_categories_id   = $request->reservations_categories_id;
         $facility->columns_set_id               = $request->columns_set_id;
         $facility->display_sequence             = $display_sequence;

@@ -13,6 +13,7 @@ use App\Models\User\Reservations\ReservationsColumnsSet;
 use App\Models\User\Reservations\ReservationsFacility;
 
 use App\Enums\NotShowType;
+use App\Enums\PermissionType;
 use App\Enums\Required;
 use App\Enums\ReservationColumnType;
 use App\Enums\ShowType;
@@ -50,7 +51,7 @@ class InitAndMigrationFromReservationsColumnsSetAndReservationsCategory extends 
             ----------------------------------------------*/
 
             // 項目セット登録
-            $columns_set = ReservationsColumnsSet::create([
+            $columns_set_basic = ReservationsColumnsSet::create([
                 'name'             => '基本',
                 'display_sequence' => 1,
             ]);
@@ -59,7 +60,7 @@ class InitAndMigrationFromReservationsColumnsSetAndReservationsCategory extends 
             // 件名
             $column = ReservationsColumn::create([
                 'reservations_id'  => 0,
-                'columns_set_id'   => $columns_set->id,
+                'columns_set_id'   => $columns_set_basic->id,
                 'column_type'      => ReservationColumnType::text,
                 'column_name'      => '件名',
                 'required'         => Required::on,
@@ -70,7 +71,7 @@ class InitAndMigrationFromReservationsColumnsSetAndReservationsCategory extends 
             // 登録者（表示のみ）
             $column = ReservationsColumn::create([
                 'reservations_id'  => 0,
-                'columns_set_id'   => $columns_set->id,
+                'columns_set_id'   => $columns_set_basic->id,
                 'column_type'      => ReservationColumnType::created_name,
                 'column_name'      => '登録者',
                 'required'         => Required::off,
@@ -81,7 +82,7 @@ class InitAndMigrationFromReservationsColumnsSetAndReservationsCategory extends 
             // 更新日（表示のみ）
             $column = ReservationsColumn::create([
                 'reservations_id'  => 0,
-                'columns_set_id'   => $columns_set->id,
+                'columns_set_id'   => $columns_set_basic->id,
                 'column_type'      => ReservationColumnType::updated,
                 'column_name'      => '更新日',
                 'required'         => Required::off,
@@ -96,16 +97,16 @@ class InitAndMigrationFromReservationsColumnsSetAndReservationsCategory extends 
             $reservations = Reservation::get();
             foreach ($reservations as $i => $reservation) {
 
-                // カラムありバケツのみ、項目セット作成
                 if (ReservationsColumn::where('reservations_id', $reservation->id)->count() == 0) {
-                    continue;
+                    // カラムなしバケツは、基本セット使用
+                    $columns_set = $columns_set_basic;
+                } else {
+                    // カラムありバケツのみ、項目セット作成
+                    $columns_set = ReservationsColumnsSet::create([
+                        'name'             => $reservation->reservation_name . 'セット',
+                        'display_sequence' => $i + 2,
+                    ]);
                 }
-
-                // 項目セット登録
-                $columns_set = ReservationsColumnsSet::create([
-                    'name'             => $reservation->reservation_name . 'セット',
-                    'display_sequence' => $i + 2,
-                ]);
 
                 // 施設カテゴリ登録
                 // - 移行後は、バケツから施設カテゴリを選んで、そのカテゴリの施設を表示するようにする。
@@ -124,7 +125,8 @@ class InitAndMigrationFromReservationsColumnsSetAndReservationsCategory extends 
                 // 施設にセット
                 ReservationsFacility::where('reservations_id', $reservation->id)->update([
                     'columns_set_id' => $columns_set->id,
-                    'reservations_categories_id' => $reservations_category->id
+                    'reservations_categories_id' => $reservations_category->id,
+                    'is_allow_duplicate' => PermissionType::allowed,    // 重複許可はいままで可能だったため、重複許可した状態で移行する。
                 ]);
 
                 // バケツで使うカテゴリ配下の施設

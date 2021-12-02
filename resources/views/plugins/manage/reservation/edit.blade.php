@@ -60,8 +60,8 @@
             @endphp
 
             <div class="form-group form-row">
-                <label class="col-md-3 col-form-label text-md-right">表示 <span class="fas fa-info-circle" data-toggle="tooltip" title="施設予約カレンダーから当施設を表示するかしないか設定します。"> <span class="badge badge-danger">必須</span></label>
-                <div class="col-md-9 mt-1">
+                <label class="col-md-3 col-form-label text-md-right pt-0">表示 <span class="fas fa-info-circle" data-toggle="tooltip" title="施設予約カレンダーから当施設を表示するかしないか設定します。"> <span class="badge badge-danger">必須</span></label>
+                <div class="col-md-9">
                     {{-- 初期値(空入力)は結果的に 0:表示する --}}
                     @foreach (NotShowType::getMembers() as $enum_value => $enum_label)
                         <div class="custom-control custom-radio custom-control-inline">
@@ -108,6 +108,25 @@
                     </select>
                     @include('plugins.common.errors_inline', ['name' => 'columns_set_id'])
                     <small class="text-muted">※ 施設予約時に登録する項目セットを選択します。</small>
+                </div>
+            </div>
+
+            <div class="form-group form-row">
+                <label class="col-md-3 col-form-label text-md-right pt-0">重複予約 <span class="badge badge-danger">必須</span></label>
+                <div class="col-md-9">
+                    {{-- 初期値(空入力)は結果的に 0:許可しない --}}
+                    @foreach (PermissionType::getMembers() as $enum_value => $enum_label)
+                        <div class="custom-control custom-radio custom-control-inline">
+                            @if (old('is_allow_duplicate', $facility->is_allow_duplicate) == $enum_value)
+                                <input type="radio" value="{{$enum_value}}" id="is_allow_duplicate_{{$enum_value}}" name="is_allow_duplicate" class="custom-control-input" checked="checked">
+                            @else
+                                <input type="radio" value="{{$enum_value}}" id="is_allow_duplicate_{{$enum_value}}" name="is_allow_duplicate" class="custom-control-input">
+                            @endif
+                            <label class="custom-control-label" for="is_allow_duplicate_{{$enum_value}}">{{$enum_label}}</label>
+                        </div>
+                    @endforeach
+                    @include('plugins.common.errors_inline', ['name' => 'is_allow_duplicate'])
+                    <div><small class="text-muted">※ 「許可する」を設定した場合、予約時間が重なっていても予約可能になります。</small></div>
                 </div>
             </div>
 

@@ -22,6 +22,7 @@ class ReservationsFacility extends Model
         'hide_flag',
         'reservations_categories_id',
         'columns_set_id',
+        'is_allow_duplicate',
         'display_sequence',
     ];
 }
