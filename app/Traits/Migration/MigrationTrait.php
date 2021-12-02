@@ -3264,7 +3264,7 @@ trait MigrationTrait
     private function importHtml($page_id, $dir = null)
     {
         $page = Page::find($page_id);
-        $this->importHtmlImpl($page);
+        $this->importHtmlImpl($page, $dir);
     }
 
     /**
@@ -4524,7 +4524,7 @@ trait MigrationTrait
 
         // 画像ファイルや添付ファイルを取得する場合のテンポラリ・ディレクトリ
         //$uniq_tmp_dir = uniqid('migration_');
-        Storage::makeDirectory('migration/' . $page_id);
+        Storage::makeDirectory('migration/import/pages/' . $page_id);
 
         // 指定されたページのHTML を取得
         $html = $this->getHTMLPage($url);
@@ -4569,6 +4569,11 @@ trait MigrationTrait
 
             // プラグイン情報
             $frame_ini .= "plugin_name = \"contents\"\n";
+            $frame_ini .= "template = \"default\"\n";
+
+            // 元のNC3情報
+            $frame_ini .= "\n";
+            $frame_ini .= "[source_info]\n";
             $frame_ini .= "target_source_table = \"announcement\"\n";
 
             // 本文を抜き出します。
@@ -4597,7 +4602,7 @@ trait MigrationTrait
                     $downloadPath = $image_url;
 
                     $file_name = "frame_" . $frame_index_str . '_' . $image_index;
-                    $savePath = 'migration/' . $page_id . "/" . $file_name;
+                    $savePath = 'migration/import/pages/' . $page_id . "/" . $file_name;
                     $saveStragePath = storage_path() . '/app/' . $savePath;
 
                     // CURL 設定、ファイル取得
@@ -4607,9 +4612,11 @@ trait MigrationTrait
                     curl_setopt($ch, CURLOPT_HEADER, false);
                     curl_setopt($ch, CURLOPT_HEADERFUNCTION, array(&$this,'callbackHeader'));
                     $result = curl_exec($ch);
+                    if (!empty(curl_errno($ch))) {
+                        continue;
+                    }
                     curl_close($ch);
                     fclose($fp);
-
                     //echo $this->content_disposition;
 
                     //getimagesize関数で画像情報を取得する
@@ -4707,13 +4714,13 @@ trait MigrationTrait
             $frame_ini .= "contents_file = \"frame_" . $frame_index_str . ".html\"\n";
 
             // フレーム設定ファイルの出力
-            Storage::put('migration/' . $page_id . "/frame_" . $frame_index_str . '.ini', $frame_ini);
+            Storage::put('migration/import/pages/' . $page_id . "/frame_" . $frame_index_str . '.ini', $frame_ini);
 
             // Contents 変換
             $content_html = $this->migrationHtml($content_html);
 
             // HTML content の保存
-            Storage::put('migration/' . $page_id . "/frame_" . $frame_index_str . '.html', trim($content_html));
+            Storage::put('migration/import/pages/' . $page_id . "/frame_" . $frame_index_str . '.html', trim($content_html));
         }
     }
 
