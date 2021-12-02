@@ -308,6 +308,26 @@ class ReservationsPlugin extends UserPluginBase
          *     calendar_cell['booking_details'] : 予約データの子テーブル（reservations_inputs_columns）情報
          */
         $calendars = null;
+
+        // 予約データ
+        $booking_headers_base = ReservationsInput::whereIn('facility_id', $facilities->pluck('id'))
+            ->whereBetween('start_datetime', [$search_start_date, $search_end_date])
+            ->orderBy('start_datetime')
+            ->get();
+
+        // 予約詳細データ
+        $booking_details_base = ReservationsInputsColumn::
+            select(
+                'reservations_inputs_columns.*',
+                'reservations_columns.title_flag'
+            )
+            ->leftJoin('reservations_columns', function ($join) {
+                $join->on('reservations_inputs_columns.column_id', '=', 'reservations_columns.id');
+            })
+            ->whereIn('reservations_inputs_columns.inputs_id', $booking_headers_base->pluck('id'))
+            ->orderBy('reservations_inputs_columns.column_id')
+            ->get();
+
         // 施設毎に予約情報を付加したカレンダーデータを生成
         // $time_start = microtime(true); //debug用
         foreach ($facilities as $facility) {
@@ -316,11 +336,12 @@ class ReservationsPlugin extends UserPluginBase
             $calendar['facility'] = $facility;
 
             // カレンダー表示期間内で該当施設に紐づく予約データを抽出
-            // $bookingHeaders = ReservationsInput::where('reservations_id', $reservations->id)
-            $bookingHeaders = ReservationsInput::where('facility_id', $facility->id)
-                ->whereBetween('start_datetime', [$search_start_date, $search_end_date])
-                ->orderBy('start_datetime')
-                ->get();
+            // $booking_headers = ReservationsInput::where('reservations_id', $reservations->id)
+            // $booking_headers = ReservationsInput::where('facility_id', $facility->id)
+            //     ->whereBetween('start_datetime', [$search_start_date, $search_end_date])
+            //     ->orderBy('start_datetime')
+            //     ->get();
+            $booking_headers = $booking_headers_base->where('facility_id', $facility->id);
 
             // 予約項目データ
             $columns = $this->getReservationsColumns($facility->columns_set_id);
@@ -330,27 +351,29 @@ class ReservationsPlugin extends UserPluginBase
                 // セルの日付に日付データを追加
                 $calendar_cell['date'] = $date;
                 // 日付データと予約データを突き合わせて該当日に予約データを付加
-                foreach ($bookingHeaders as $bookingHeader) {
-                    if ($date->format('Ymd') == $bookingHeader->start_datetime->format('Ymd')) {
+                foreach ($booking_headers as $booking_header) {
+                    if ($date->format('Ymd') == $booking_header->start_datetime->format('Ymd')) {
                         // セルの予約配列に予約データを追加
                         $booking = null;
-                        $booking['booking_details'] = ReservationsInputsColumn::
-                            select(
-                                'reservations_inputs_columns.*',
-                                'reservations_columns.title_flag'
-                            )
-                            ->leftJoin('reservations_columns', function ($join) {
-                                $join->on('reservations_inputs_columns.column_id', '=', 'reservations_columns.id');
-                            })
-                            // ->where('reservations_inputs_columns.reservations_id', $reservations->id)
-                            ->where('reservations_inputs_columns.inputs_id', $bookingHeader->id)
-                            ->orderBy('reservations_inputs_columns.column_id')
-                            ->get();
+
+                        // $booking['booking_details'] = ReservationsInputsColumn::
+                        //     select(
+                        //         'reservations_inputs_columns.*',
+                        //         'reservations_columns.title_flag'
+                        //     )
+                        //     ->leftJoin('reservations_columns', function ($join) {
+                        //         $join->on('reservations_inputs_columns.column_id', '=', 'reservations_columns.id');
+                        //     })
+                        //     // ->where('reservations_inputs_columns.reservations_id', $reservations->id)
+                        //     ->where('reservations_inputs_columns.inputs_id', $booking_header->id)
+                        //     ->orderBy('reservations_inputs_columns.column_id')
+                        //     ->get();
+                        $booking['booking_details'] = $booking_details_base->where('reservations_inputs_columns.inputs_id', $booking_header->id);
 
                         // タイトル設定
-                        $bookingHeader->title = $this->getTitle($bookingHeader, $columns, $booking['booking_details']);
+                        $booking_header->title = $this->getTitle($booking_header, $columns, $booking['booking_details']);
 
-                        $booking['booking_header'] = $bookingHeader;
+                        $booking['booking_header'] = $booking_header;
 
                         $calendar_cell['bookings'][] = $booking;
                     }
