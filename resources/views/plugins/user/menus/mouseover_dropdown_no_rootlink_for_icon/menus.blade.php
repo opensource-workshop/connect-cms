@@ -2,7 +2,7 @@
  * メニュー表示画面
  *
  * @param obj $pages ページデータの配列
- * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牧野　可也子 <makino@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category メニュープラグイン
 --}}
