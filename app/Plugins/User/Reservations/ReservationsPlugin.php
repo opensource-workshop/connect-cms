@@ -220,15 +220,13 @@ class ReservationsPlugin extends UserPluginBase
         //     ->get();
         $facilities = ReservationsChoiceCategory::
             select('reservations_facilities.*')
-            ->leftJoin('reservations_facilities', function ($join) {
+            ->join('reservations_facilities', function ($join) {
                 $join->on('reservations_facilities.reservations_categories_id', '=', 'reservations_choice_categories.reservations_categories_id')
                     ->where('reservations_facilities.hide_flag', NotShowType::show)
                     ->whereNull('reservations_facilities.deleted_at');
             })
             ->where('reservations_choice_categories.reservations_id', $reservations_frame->reservations_id)
             ->where('reservations_choice_categories.view_flag', ShowType::show)
-            // 施設が紐づいてない施設カテゴリは表示しない
-            ->whereNotNull('reservations_facilities.id')
             ->orderBy('reservations_choice_categories.display_sequence', 'asc')
             ->orderBy('reservations_facilities.display_sequence', 'asc')
             ->get();
@@ -574,23 +572,47 @@ class ReservationsPlugin extends UserPluginBase
 
             $target_date = new ConnectCarbon($booking->start_datetime);
         } else {
+
             /**
              * 予約の新規登録モード
              */
-            // パラメータチェック. saveの入力エラーで戻ってきた時はoldに値が入ってる。
-            $target_ymd = old('target_date', $request->target_date);
-            $year = (int)substr($target_ymd, 0, 4);
-            $month = (int)substr($target_ymd, 4, 2);
-            $day = (int)substr($target_ymd, 6, 2);
-            if (!checkdate($month, $day, $year)) {
-                return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
+
+             // パラメータチェック. saveの入力エラーで戻ってきた時はoldに値が入ってる。
+            // $target_ymd = old('target_date', $request->target_date);
+            // $year = (int)substr($target_ymd, 0, 4);
+            // $month = (int)substr($target_ymd, 4, 2);
+            // $day = (int)substr($target_ymd, 6, 2);
+            // if (!checkdate($month, $day, $year)) {
+            //     return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
+            // }
+
+            // 施設予約＆フレームデータ
+            $reservations_frame = $this->getReservationsFrame($frame_id);
+            if (empty($reservations_frame)) {
+                return $this->view_error("404_inframe", null, 'フレームに紐づいたreservationsが空');
             }
 
             // 施設予約データ
-            $reservation = Reservation::where('id', old('reservations_id', $request->reservations_id))->first();
+            // $reservation = Reservation::where('id', old('reservations_id', $request->reservations_id))->first();
+            $reservation = Reservation::where('id', $reservations_frame->reservations_id)->first();
 
             // 施設データ
-            $facility = ReservationsFacility::where('id', old('facility_id', $request->facility_id))->first();
+            // $facility = ReservationsFacility::where('id', old('facility_id', $request->facility_id))->first();
+            $facility = ReservationsChoiceCategory::
+                select('reservations_facilities.*')
+                ->join('reservations_facilities', function ($join) use ($request) {
+                    $join->on('reservations_facilities.reservations_categories_id', '=', 'reservations_choice_categories.reservations_categories_id')
+                        ->where('reservations_facilities.id', $request->facility_id)
+                        ->where('reservations_facilities.hide_flag', NotShowType::show)
+                        ->whereNull('reservations_facilities.deleted_at');
+                })
+                ->where('reservations_choice_categories.reservations_id', $reservations_frame->reservations_id)
+                ->where('reservations_choice_categories.view_flag', ShowType::show)
+                ->first();
+
+            if (empty($facility)) {
+                return $this->view_error("404_inframe", null, 'facilityが空');
+            }
 
             // 予約項目データ
             // $columns = ReservationsColumn::where('reservations_id', $request->reservations_id)->whereNull('hide_flag')->orderBy('display_sequence')->get();
@@ -605,7 +627,7 @@ class ReservationsPlugin extends UserPluginBase
                 ->orderBy('display_sequence', 'asc')
                 ->get();
 
-            $target_date = new ConnectCarbon($target_ymd);
+            $target_date = new ConnectCarbon($request->target_date);
         }
 
         return $this->view('edit_booking', [
@@ -623,15 +645,6 @@ class ReservationsPlugin extends UserPluginBase
      */
     public function saveBooking($request, $page_id, $frame_id, $booking_id = null)
     {
-        $target_ymd = $request->target_date;
-        // URLパラメータチェック
-        $year = (int)substr($target_ymd, 0, 4);
-        $month = (int)substr($target_ymd, 4, 2);
-        $day = (int)substr($target_ymd, 6, 2);
-        if (!checkdate($month, $day, $year)) {
-            return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
-        }
-
         // エラーチェック配列
         $validator_array = array('column' => array(), 'message' => array());
 
@@ -652,6 +665,7 @@ class ReservationsPlugin extends UserPluginBase
         $reservations_inputs = ReservationsInput::firstOrNew(['id' => $booking_id]);
 
         // バリデーション用の配列を生成（基本項目）
+        $validator_array['column']['target_date']    = ['required', 'date_format:Y-m-d'];
         $validator_array['column']['start_datetime'] = ['required'];
 
         if (!$facility->is_allow_duplicate) {
@@ -661,15 +675,16 @@ class ReservationsPlugin extends UserPluginBase
                 new CustomValiDuplicateBookings(
                     $request->facility_id,
                     $reservations_inputs->id,
-                    "{$year}/{$month}/{$day} {$request->start_datetime}",
-                    "{$year}/{$month}/{$day} {$request->end_datetime}"
+                    "{$request->target_date} {$request->start_datetime}",
+                    "{$request->target_date} {$request->end_datetime}"
                 )
             ];
         }
 
         $validator_array['column']['end_datetime'] = ['required', 'after:start_datetime'];
+        $validator_array['message']['target_date']    = '予約日';
         $validator_array['message']['start_datetime'] = '開始時間';
-        $validator_array['message']['end_datetime'] = '終了時間';
+        $validator_array['message']['end_datetime']   = '終了時間';
 
         // --- 入力値変換
         foreach ($columns as $column) {
@@ -715,8 +730,8 @@ class ReservationsPlugin extends UserPluginBase
             $reservations_inputs->reservations_id = $request->reservations_id;
             $reservations_inputs->facility_id = $request->facility_id;
         }
-        $reservations_inputs->start_datetime = new ConnectCarbon($target_ymd . ' ' . $request->start_datetime . ':00');
-        $reservations_inputs->end_datetime = new ConnectCarbon($target_ymd . ' ' . $request->end_datetime . ':00');
+        $reservations_inputs->start_datetime = new ConnectCarbon($request->target_ymd . ' ' . $request->start_datetime . ':00');
+        $reservations_inputs->end_datetime = new ConnectCarbon($request->target_ymd . ' ' . $request->end_datetime . ':00');
         $reservations_inputs->save();
 
         // 項目IDを取得

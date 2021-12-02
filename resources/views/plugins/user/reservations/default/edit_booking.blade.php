@@ -21,7 +21,20 @@ use App\Models\User\Reservations\ReservationsColumn;
         form_save_booking{{$frame_id}}.submit();
     }
     /**
-     * 予約開始時間カレンダーボタン押下
+     * カレンダーボタン押下
+     */
+     $(function () {
+        $('#target_date_id').datetimepicker({
+            @if (App::getLocale() == ConnectLocale::ja)
+                dayViewHeaderFormat: 'YYYY年 M月',
+            @endif
+            locale: '{{ App::getLocale() }}',
+            format: 'YYYY-MM-DD',
+            timepicker:false
+        });
+    });
+    /**
+     * 予約開始時間ボタン押下
      */
      $(function () {
         $('#start_datetime').datetimepicker({
@@ -44,7 +57,7 @@ use App\Models\User\Reservations\ReservationsColumn;
         });
     });
     /**
-     * 予約終了時間カレンダーボタン押下
+     * 予約終了時間ボタン押下
      */
      $(function () {
         $('#end_datetime').datetimepicker({
@@ -73,7 +86,7 @@ use App\Models\User\Reservations\ReservationsColumn;
     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/{{$booking->id}}#frame-{{$frame_id}}">
 @else
 <form action="{{url('/')}}/redirect/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_save_booking{{$frame_id}}" method="POST">
-    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
+    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}?facility_id={{$facility->id}}&target_date={{$target_date->format('Y-m-d')}}#frame-{{$frame_id}}">
 @endif
     {{-- 共通エラーメッセージ 呼び出し --}}
     @include('plugins.common.errors_form_line')
@@ -88,7 +101,6 @@ use App\Models\User\Reservations\ReservationsColumn;
     <input type="hidden" name="facility_id" value="{{ $facility->id }}">
     <input type="hidden" name="columns_set_id" value="{{ $facility->columns_set_id }}">
     {{-- <input type="hidden" name="booking_id" value="{{ $booking ? $booking->id : '' }}"> --}}
-    <input type="hidden" name="target_date" value="{{ $target_date->format('Ymd') }}">
 
     {{-- 基本項目 --}}
 
@@ -106,8 +118,30 @@ use App\Models\User\Reservations\ReservationsColumn;
     </div>
     {{-- 予約日 --}}
     <div class="form-group row">
-        <div class="col-md-2">予約日</div>
-        <div class="col-md-10">{{ $target_date->format('Y年n月j日') . '(' . DayOfWeek::getDescription($target_date->dayOfWeek) . ')' }}</div>
+        <div class="col-md-2">予約日 <span class="badge badge-danger">必須</span></div>
+        <div class="col-md-10">
+
+            <div class="row">
+                <div class="input-group date col-md-5" id="target_date_id" data-target-input="nearest">
+                    <input
+                        type="text"
+                        name="target_date"
+                        value="{{old('target_date', $target_date->format('Y-m-d'))}}"
+                        class="form-control datetimepicker-input @if ($errors->has('target_date')) border-danger @endif"
+                        data-target="#target_date_id"
+                    >
+                    <div class="input-group-append" data-target="#target_date_id" data-toggle="datetimepicker">
+                        <div class="input-group-text @if ($errors->has('target_date')) border-danger @endif"><i class="fas fa-calendar-alt"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    @include('plugins.common.errors_inline', ['name' => 'target_date'])
+                </div>
+            </div>
+
+        </div>
     </div>
     {{-- 予約時間 --}}
     <div class="form-group row">
@@ -125,7 +159,7 @@ use App\Models\User\Reservations\ReservationsColumn;
                         --}}
                         <input type="text" name="start_datetime" value="{{ old('start_datetime', $booking ? $booking->start_datetime->format('H:i') : Carbon::now()->addHour(1)->hour.':00') }}" class="form-control datetimepicker-input @if ($errors->has('start_datetime')) border-danger @endif" data-target="#start_datetime">
                         <div class="input-group-append" data-target="#start_datetime" data-toggle="datetimepicker">
-                            <div class="input-group-text"><i class="far fa-clock"></i></div>
+                            <div class="input-group-text"><i class="fas fa-clock"></i></div>
                         </div>
                     </div>
                 </div>
@@ -139,7 +173,7 @@ use App\Models\User\Reservations\ReservationsColumn;
                         --}}
                         <input type="text" name="end_datetime" value="{{ old('end_datetime', $booking ? $booking->end_datetime->format('H:i') : Carbon::now()->addHour(2)->hour.':00') }}" class="form-control datetimepicker-input @if ($errors->has('end_datetime')) border-danger @endif" data-target="#end_datetime">
                         <div class="input-group-append" data-target="#end_datetime" data-toggle="datetimepicker">
-                            <div class="input-group-text"><i class="far fa-clock"></i></div>
+                            <div class="input-group-text"><i class="fas fa-clock"></i></div>
                         </div>
                     </div>
                 </div>
@@ -147,8 +181,8 @@ use App\Models\User\Reservations\ReservationsColumn;
 
             <div class="row">
                 <div class="col">
-                    @if ($errors->has('start_datetime')) <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first('start_datetime')}}</div> @endif
-                    @if ($errors->has('end_datetime')) <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first('end_datetime')}}</div> @endif
+                    @include('plugins.common.errors_inline', ['name' => 'start_datetime'])
+                    @include('plugins.common.errors_inline', ['name' => 'end_datetime'])
                 </div>
             </div>
 

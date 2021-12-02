@@ -77,20 +77,9 @@
                                 {{-- ＋ボタン --}}
                                 <div class="float-right">
                                     @can('posts.create',[[null, $frame->plugin_name, $buckets]])
-                                        {{-- セル毎に予約追加画面呼び出し用のformをセット --}}
-                                        <form action="{{URL::to('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_edit_booking_{{$frame_id}}_{{ $reservations->id }}_{{ $calendar_details['facility']->id }}_{{ $cell['date']->format('Ymd') }}" method="POST" class="form-horizontal">
-                                            {{ csrf_field() }}
-                                            {{-- 施設予約ID --}}
-                                            <input type="hidden" name="reservations_id" value="{{ $reservations->id }}">
-                                            {{-- 施設ID --}}
-                                            <input type="hidden" name="facility_id" value="{{ $calendar_details['facility']->id }}">
-                                            {{-- 対象日付 --}}
-                                            <input type="hidden" name="target_date" value="{{ $cell['date']->format('Ymd') }}">
-                                            {{-- ＋ボタンクリックでformサブミット --}}
-                                            <a href="javascript:form_edit_booking_{{$frame_id}}_{{ $reservations->id }}_{{ $calendar_details['facility']->id }}_{{ $cell['date']->format('Ymd') }}.submit()">
-                                                <i class="fas fa-plus"></i>
-                                            </a>
-                                        </form>
+                                        <a href="{{URL::to('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}?facility_id={{$calendar_details['facility']->id}}&target_date={{$cell['date']->format('Y-m-d')}}#frame-{{$frame_id}}">
+                                            <i class="fas fa-plus"></i>
+                                        </a>
                                     @endcan
                                 </div>
                             </div>
