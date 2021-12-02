@@ -14,7 +14,6 @@
     <ul class="nav nav-justified d-md-flex">
     {{-- 事前チェック。第一階層に表示できるページがあるかどうか、もしあるとした時、１つだけなのかどうか --}}
     <?php $count=0 ?>
-    <?php $menu_pages=null ?>
     @foreach($pages as $page_obj)
         @if ($page_obj->isView(Auth::user(), false, true, $page_roles))
             <?php $count++ ?>

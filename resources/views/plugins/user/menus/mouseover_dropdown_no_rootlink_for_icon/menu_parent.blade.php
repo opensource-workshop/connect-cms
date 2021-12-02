@@ -1,7 +1,7 @@
 {{--
  * メニューの親要素表示画面
  *
- * @param obj $pages ページデータの配列
+ * @param obj $page_obj ページデータの配列
  * @author 牧野　可也子 <makino@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category メニュープラグイン

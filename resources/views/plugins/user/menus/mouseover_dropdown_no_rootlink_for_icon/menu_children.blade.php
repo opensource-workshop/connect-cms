@@ -1,7 +1,7 @@
 {{--
  * メニューの子要素表示画面
  *
- * @param obj $pages ページデータの配列
+ * @param obj $children ページデータの配列
  * @author 牧野　可也子 <makino@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category メニュープラグイン
@@ -16,9 +16,9 @@
     @endif
 
         {{-- 各ページの深さをもとにインデントの表現 --}}
-        {{-- @for ($i = 0; $i < $children->depth; $i++)
+        @for ($i = 0; $i < $children->depth; $i++)
             @if ($i+1==$children->depth && $menu) {!!$menu->getIndentFont()!!} @else <span class="px-2"></span>@endif
-        @endfor --}}
+        @endfor
         {{$children->page_name}}
     </a>
     @if ($children->children && count($children->children) > 0)
