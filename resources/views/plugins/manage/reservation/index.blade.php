@@ -23,7 +23,10 @@
             <thead>
                 <tr class="d-none d-sm-table-row">
                     <th class="d-block d-sm-table-cell text-break">施設名</th>
+                    <th class="d-block d-sm-table-cell text-break">利用時間・曜日</th>
                     <th class="d-block d-sm-table-cell text-break">項目セット</th>
+                    <th class="d-block d-sm-table-cell text-break">施設管理者</th>
+                    <th class="d-block d-sm-table-cell text-break">補足</th>
                     <th class="d-block d-sm-table-cell text-break">表示順</th>
                     <th class="d-block d-sm-table-cell text-break">重複予約</th>
                     <th class="d-block d-sm-table-cell text-break">表示</th>
@@ -49,7 +52,10 @@
                             <a href="{{url('/')}}/manage/reservation/edit/{{$facility->id}}"><i class="far fa-edit"></i></a>
                             <span class="d-sm-none">注釈名：</span>{{$facility->facility_name}}
                         </td>
+                        <td class="d-block d-sm-table-cell"><span class="d-sm-none">利用時間・曜日：</span>{{ $facility->getDayOfWeeksDisplay() }} {{ substr($facility->start_time, 0, -3) }} ~ {{ substr($facility->end_time, 0, -3) }}</td>
                         <td class="d-block d-sm-table-cell"><span class="d-sm-none">項目セット：</span>{{ $facility->columns_set_name }}</td>
+                        <td class="d-block d-sm-table-cell"><span class="d-sm-none">施設管理者：</span>{{ $facility->facility_manager_name }}</td>
+                        <td class="d-block d-sm-table-cell"><span class="d-sm-none">補足：</span>{{ str_limit(strip_tags($facility->supplement),36,'...') }}</td>
                         <td class="d-block d-sm-table-cell"><span class="d-sm-none">表示順：</span>{{$facility->display_sequence}}</td>
                         <td class="d-block d-sm-table-cell"><span class="d-sm-none">重複予約：</span>{{ PermissionType::getDescription($facility->is_allow_duplicate) }}</td>
                         <td class="d-block d-sm-table-cell"><span class="d-sm-none">表示：</span>{{ NotShowType::getDescription($facility->hide_flag) }}</td>

@@ -17,6 +17,9 @@ use App\Enums\Required;
 use App\Enums\NotShowType;
 use App\Enums\PermissionType;
 
+use App\Rules\CustomValiRequiredWithoutAllSupportsArrayInput;
+use App\Rules\CustomValiWysiwygMax;
+
 /**
  * 施設管理
  *
@@ -181,22 +184,37 @@ class ReservationManage extends ManagePluginBase
      */
     public function update($request, $id)
     {
+
         // エラーチェック
         $validator = Validator::make($request->all(), [
             'hide_flag'                  => ['required'],
             'facility_name'              => ['required', 'max:255'],
+            'start_time'                 => ['required'],
+            'end_time'                   => ['required', 'after:start_time'],
+            'day_of_weeks'               => ['required', 'array', new CustomValiRequiredWithoutAllSupportsArrayInput($request->day_of_weeks, '利用曜日')],
             'reservations_categories_id' => ['required'],
             'columns_set_id'             => ['required'],
             'is_allow_duplicate'         => ['required'],
+            'facility_manager_name'      => ['max:191'],
+            'supplement'                 => [new CustomValiWysiwygMax()],
             'display_sequence'           => ['nullable', 'numeric'],
         ]);
         $validator->setAttributeNames([
             'hide_flag'                  => '表示',
             'facility_name'              => '施設名',
+            'start_time'                 => '利用開始時間',
+            'end_time'                   => '利用終了時間',
+            'day_of_weeks'               => '利用曜日',
             'reservations_categories_id' => '施設カテゴリ',
             'columns_set_id'             => '項目セット',
             'is_allow_duplicate'         => '重複予約',
+            'facility_manager_name'      => '施設管理者',
+            'supplement'                 => '補足',
             'display_sequence'           => '表示順',
+        ]);
+        // カスタムエラーメッセージ
+        $validator->setCustomMessages([
+            'end_time.after' => ':attributeには:date以降の時間を指定してください。',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -207,6 +225,15 @@ class ReservationManage extends ManagePluginBase
         // 表示順が空なら、自分を省いた最後の番号+1 をセット
         $display_sequence = $this->getSaveDisplaySequence(ReservationsFacility::query(), $request->display_sequence, $id);
 
+        // 配列のnull要素のみ取り除く
+        $filter_not_null = function ($var)
+        {
+            return !is_null($var);
+        };
+        $day_of_weeks = array_filter($request->day_of_weeks, $filter_not_null);
+
+        $day_of_weeks = implode('|', $day_of_weeks);
+
         // 施設の登録処理
         $facility = ReservationsFacility::firstOrNew(['id' => $id]);
         // [TODO] 仮
@@ -214,8 +241,14 @@ class ReservationManage extends ManagePluginBase
         $facility->reservations_id = $facility->reservations_id ?: 0;
 
         $facility->facility_name                = $request->facility_name;
+        $facility->start_time                   = $request->start_time . ':00';
+        $facility->end_time                     = $request->end_time . ':00';
+        $facility->day_of_weeks                 = $day_of_weeks;
         $facility->hide_flag                    = $request->hide_flag ? NotShowType::not_show : NotShowType::show;
         $facility->is_allow_duplicate           = $request->is_allow_duplicate ? PermissionType::allowed : PermissionType::not_allowed;
+        $facility->facility_manager_name        = $request->facility_manager_name;
+        // 管理画面はWysiwygのタグ制限なし
+        $facility->supplement                   = $request->supplement;
         $facility->reservations_categories_id   = $request->reservations_categories_id;
         $facility->columns_set_id               = $request->columns_set_id;
         $facility->display_sequence             = $display_sequence;

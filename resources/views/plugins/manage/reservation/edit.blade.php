@@ -5,30 +5,85 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設管理
 --}}
+@php
+use App\Models\User\Reservations\ReservationsFacility;
+@endphp
+
 {{-- 管理画面ベース画面 --}}
 @extends('plugins.manage.manage')
 
 {{-- 管理画面メイン部分のコンテンツ section:manage_content で作ること --}}
 @section('manage_content')
 
+<script type="text/javascript">
+
+    /**
+     * ボタンによってアクション切替
+     */
+    function submitAction(url) {
+        form_reservation.action = url;
+        form_reservation.submit();
+    }
+
+    /**
+     * 予約開始時間ボタン押下
+     */
+     $(function () {
+        $('#start_time').datetimepicker({
+            tooltips: {
+                close: '閉じる',
+                pickHour: '時間を取得',
+                incrementHour: '時間を増加',
+                decrementHour: '時間を減少',
+                pickMinute: '分を取得',
+                incrementMinute: '分を増加',
+                decrementMinute: '分を減少',
+                pickSecond: '秒を取得',
+                incrementSecond: '秒を増加',
+                decrementSecond: '秒を減少',
+                togglePeriod: '午前/午後切替',
+                selectTime: '時間を選択'
+            },
+            format: 'HH:mm',
+            stepping: 5
+        });
+    });
+
+    /**
+     * 予約終了時間ボタン押下
+     */
+     $(function () {
+        $('#end_time').datetimepicker({
+            tooltips: {
+                close: '閉じる',
+                pickHour: '時間を取得',
+                incrementHour: '時間を増加',
+                decrementHour: '時間を減少',
+                pickMinute: '分を取得',
+                incrementMinute: '分を増加',
+                decrementMinute: '分を減少',
+                pickSecond: '秒を取得',
+                incrementSecond: '秒を増加',
+                decrementSecond: '秒を減少',
+                togglePeriod: '午前/午後切替',
+                selectTime: '時間を選択'
+            },
+            format: 'HH:mm',
+            stepping: 5
+        });
+    });
+
+    // ツールチップ
+    $(function () {
+        // 有効化
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+</script>
+
 <div class="card">
     <div class="card-header p-0">
-
         {{-- 機能選択タブ --}}
         @include('plugins.manage.reservation.reservation_manage_tab')
-
-        {{-- ボタンによってアクション切替 --}}
-        <script type="text/javascript">
-            function submitAction(url) {
-                form_reservation.action = url;
-                form_reservation.submit();
-            }
-            // ツールチップ
-            $(function () {
-                // 有効化
-                $('[data-toggle="tooltip"]').tooltip()
-            })
-        </script>
     </div>
     <div class="card-body">
 
@@ -86,6 +141,62 @@
             </div>
 
             <div class="form-group form-row">
+                <label for="facility_name" class="col-md-3 col-form-label text-md-right">利用時間 <span class="badge badge-danger">必須</span></label>
+                <div class="col-md-9">
+
+                    <div class="row">
+                        {{-- 利用開始時間 --}}
+                        <div class="col-md-4">
+                            <div class="input-group date" id="start_time" data-target-input="nearest">
+                                <input type="text" name="start_time" value="{{ old('start_time', $booking ? $booking->start_time->format('H:i') : '09:00') }}" class="form-control datetimepicker-input @if ($errors->has('start_time')) border-danger @endif" data-target="#start_time">
+                                <div class="input-group-append" data-target="#start_time" data-toggle="datetimepicker">
+                                    <div class="input-group-text"><i class="fas fa-clock"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                        {{-- 利用終了時間 --}}
+                        <div class="col-md-4">
+                            <div class="input-group date" id="end_time" data-target-input="nearest">
+                                <input type="text" name="end_time" value="{{ old('end_time', $booking ? $booking->end_time->format('H:i') : '18:00') }}" class="form-control datetimepicker-input @if ($errors->has('end_time')) border-danger @endif" data-target="#end_time">
+                                <div class="input-group-append" data-target="#end_time" data-toggle="datetimepicker">
+                                    <div class="input-group-text"><i class="fas fa-clock"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col">
+                            @include('plugins.common.errors_inline', ['name' => 'start_time'])
+                            @include('plugins.common.errors_inline', ['name' => 'end_time'])
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="form-group form-row">
+                <label class="col-md-3 col-form-label text-md-right pt-0">利用曜日 <span class="badge badge-danger">必須</span></label>
+                <div class="col-md-9">
+                    @php
+                        // 初期値は月～金
+                        $day_of_weeks = $facility->day_of_weeks ?? ReservationsFacility::weekday;
+                        $day_of_weeks = explode('|', $day_of_weeks);
+                    @endphp
+                    @foreach (DayOfWeek::getMembers() as $enum_value => $enum_label)
+                        {{-- チェック外した場合にも値を飛ばす対応：value=""にするといずれか必須チェック（required_without）でも使える --}}
+                        <input type="hidden" value="" name="day_of_weeks[{{$enum_value}}]">
+
+                        <div class="custom-control custom-checkbox custom-control-inline">
+                            <input type="checkbox" name="day_of_weeks[{{$enum_value}}]" value="{{$enum_value}}" class="custom-control-input" id="day_of_weeks_{{$enum_value}}" @if(in_array((string)$enum_value, old("day_of_weeks", $day_of_weeks), true)) checked=checked @endif>
+                            <label class="custom-control-label" for="day_of_weeks_{{$enum_value}}">{{$enum_label}}</label>
+                        </div>
+                    @endforeach
+                    @include('plugins.common.errors_inline', ['name' => 'day_of_weeks'])
+                </div>
+            </div>
+
+            <div class="form-group form-row">
                 <label for="reservations_categories_id" class="col-md-3 col-form-label text-md-right">施設カテゴリ <span class="badge badge-danger">必須</span></label>
                 <div class="col-md-9">
                     <select name="reservations_categories_id" id="reservations_categories_id" class="form-control @if ($errors->has('reservations_categories_id')) border-danger @endif">
@@ -127,6 +238,28 @@
                     @endforeach
                     @include('plugins.common.errors_inline', ['name' => 'is_allow_duplicate'])
                     <div><small class="text-muted">※ 「許可する」を設定した場合、予約時間が重なっていても予約可能になります。</small></div>
+                </div>
+            </div>
+
+            <div class="form-group form-row">
+                <label for="facility_manager_name" class="col-md-3 col-form-label text-md-right">施設管理者</label>
+                <div class="col-md-9">
+                    <input type="text" name="facility_manager_name" id="facility_manager_name" value="{{old('facility_manager_name', $facility->facility_manager_name)}}" class="form-control @if ($errors->has('facility_manager_name')) border-danger @endif">
+                    @include('plugins.common.errors_inline', ['name' => 'facility_manager_name'])
+                </div>
+            </div>
+
+            <div class="form-group form-row">
+                <label for="supplement" class="col-md-3 col-form-label text-md-right">補足</label>
+                <div class="col-md-9">
+                    {{-- WYSIWYG 呼び出し --}}
+                    @include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg'])
+
+                    <div @if ($errors->has("supplement")) class="border border-danger" @endif>
+                        <textarea name="supplement" class="form-control wysiwyg">{{old('supplement', $facility->supplement)}}</textarea>
+                    </div>
+                    @include('plugins.common.errors_inline_wysiwyg', ['name' => "supplement"])
+                    <small class="text-muted">※ 施設情報の末尾に表示する補足です。項目名を表示しないため、補足情報等の記載にご利用ください。</small>
                 </div>
             </div>
 

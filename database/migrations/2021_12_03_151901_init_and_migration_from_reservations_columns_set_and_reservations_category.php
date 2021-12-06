@@ -91,55 +91,69 @@ class InitAndMigrationFromReservationsColumnsSetAndReservationsCategory extends 
                 'display_sequence' => 3,
             ]);
 
-            /* 移行
+            /* 既存データ移行
             ----------------------------------------------*/
+
+            $columns_set_display_sequence = 2;
+            $category_display_sequence = 2;
 
             $reservations = Reservation::get();
             foreach ($reservations as $i => $reservation) {
 
-                if (ReservationsColumn::where('reservations_id', $reservation->id)->count() == 0) {
+                $column_count = ReservationsColumn::where('reservations_id', $reservation->id)->count();
+                if ($column_count == 0) {
                     // カラムなしバケツは、基本セット使用
                     $columns_set = $columns_set_basic;
                 } else {
                     // カラムありバケツのみ、項目セット作成
                     $columns_set = ReservationsColumnsSet::create([
                         'name'             => $reservation->reservation_name . 'セット',
-                        'display_sequence' => $i + 2,
+                        'display_sequence' => $columns_set_display_sequence,
                     ]);
+                    $columns_set_display_sequence++;
+
+                    // 項目設定にセット
+                    ReservationsColumn::where('reservations_id', $reservation->id)->update(['columns_set_id' => $columns_set->id]);
+
+                    // 項目の選択肢にセット
+                    ReservationsColumnsSelect::where('reservations_id', $reservation->id)->update(['columns_set_id' => $columns_set->id]);
                 }
 
-                // 施設カテゴリ登録
-                // - 移行後は、バケツから施設カテゴリを選んで、そのカテゴリの施設を表示するようにする。
-                // - 移行で現在と同じ状態にするには、バケツ名と同じカテゴリを作成して、それを表示する。
-                $reservations_category = ReservationsCategory::create([
-                    'category'         => $reservation->reservation_name . 'カテゴリ',
-                    'display_sequence' => $i + 2,
-                ]);
+                if (ReservationsFacility::where('reservations_id', $reservation->id)->count() >= 1) {
+                    // 施設カテゴリ登録
+                    // - 移行後は、バケツから施設カテゴリを選んで、そのカテゴリの施設を表示するようにする。
+                    // - 移行で現在と同じ状態にするには、バケツ名と同じカテゴリを作成して、それを表示する。
+                    // - 施設がないバケツは、施設カテゴリ作成しない。施設ないため、表示する施設カテゴリ ReservationsChoiceCategory も作成しない。
+                    $reservations_category = ReservationsCategory::create([
+                        'category'         => $reservation->reservation_name . 'カテゴリ',
+                        'display_sequence' => $category_display_sequence,
+                    ]);
 
-                // 項目設定にセット
-                ReservationsColumn::where('reservations_id', $reservation->id)->update(['columns_set_id' => $columns_set->id]);
+                    // 施設にセット
+                    ReservationsFacility::where('reservations_id', $reservation->id)->update([
+                        'columns_set_id' => $columns_set->id,
+                        'reservations_categories_id' => $reservations_category->id,
+                        'is_allow_duplicate' => PermissionType::not_allowed,    // 重複予約を許可しない
+                        'start_time' => '09:00:00',
+                        'end_time'   => '18:00:00',
+                        'day_of_weeks' => ReservationsFacility::weekday,        // 平日
+                    ]);
 
-                // 項目の選択肢にセット
-                ReservationsColumnsSelect::where('reservations_id', $reservation->id)->update(['columns_set_id' => $columns_set->id]);
+                    // バケツで使うカテゴリ配下の施設
+                    $columns_set = ReservationsChoiceCategory::create([
+                        'reservations_id'            => $reservation->id,
+                        'reservations_categories_id' => $reservations_category->id,
+                        'view_flag'                  => ShowType::show,
+                        'display_sequence'           => $category_display_sequence,
+                    ]);
 
-                // 施設にセット
-                ReservationsFacility::where('reservations_id', $reservation->id)->update([
-                    'columns_set_id' => $columns_set->id,
-                    'reservations_categories_id' => $reservations_category->id,
-                    'is_allow_duplicate' => PermissionType::allowed,    // 重複許可はいままで可能だったため、重複許可した状態で移行する。
-                ]);
-
-                // バケツで使うカテゴリ配下の施設
-                $columns_set = ReservationsChoiceCategory::create([
-                    'reservations_id'            => $reservation->id,
-                    'reservations_categories_id' => $reservations_category->id,
-                    'view_flag'                  => ShowType::show,
-                    'display_sequence'           => $i + 2,
-                ]);
+                    $category_display_sequence++;
+                }
 
                 // [TODO]
                 // 後でdrop: reservations_columns.reservations_id
                 // 後でdrop: reservations_columns_selects.reservations_id
+                // 後でdrop: reservations_facilities.reservations_id
             }
         }
     }
