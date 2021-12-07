@@ -77,4 +77,9 @@ return [
     'unable_to_download_researcher_seeds' => 'Unable to download researcher seeds because there are too many search results. Upper limit: :count',
     'download' => 'Download',
     'there_is_no_research_seeds_to_download' => 'There is no research seeds to download.',
+    'researcher_info' => 'Researcher Infomation',
+    'researchmap' => 'researchmap',
+    'available' => 'Available',
+    'not_available' => 'Not Available',
+    'researcher_list' => 'Researcher List',
 ];
