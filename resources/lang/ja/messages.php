@@ -77,6 +77,11 @@ $messages = [
     'unable_to_download_researcher_seeds' => '検索結果が多すぎるため、研究シーズをまとめてダウンロードできません。上限：:count 名',
     'download' => 'ダウンロード',
     'there_is_no_research_seeds_to_download' => 'ダウンロード可能な研究シーズがありません。',
+    'researcher_info' => '研究者情報',
+    'researchmap' => 'researchmap',
+    'available' => '有',
+    'not_available' => '無',
+    'researcher_list' => '研究者一覧',
 ];
 
 foreach ($messages as $key => $message) {
