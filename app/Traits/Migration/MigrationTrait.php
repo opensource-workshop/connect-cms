@@ -58,6 +58,9 @@ use App\Models\User\Linklists\LinklistFrame;
 use App\Models\User\Linklists\LinklistPost;
 use App\Models\User\Menus\Menu;
 use App\Models\User\Whatsnews\Whatsnews;
+use App\Models\User\Slideshows\Slideshows;
+use App\Models\User\Slideshows\SlideshowsItems;
+
 use App\User;
 
 use App\Models\Migration\MigrationMapping;
@@ -107,6 +110,8 @@ use App\Models\Migration\Nc2\Nc2RegistrationItemData;
 use App\Models\Migration\Nc2\Nc2Upload;
 use App\Models\Migration\Nc2\Nc2User;
 use App\Models\Migration\Nc2\Nc2WhatsnewBlock;
+use App\Models\Migration\Nc2\Nc2Slides;
+use App\Models\Migration\Nc2\Nc2SlidesUrl;
 
 use App\Traits\ConnectCommonTrait;
 
@@ -201,6 +206,7 @@ trait MigrationTrait
         'search'        => 'searchs',      // 検索
         'todo'          => 'Development',  // ToDo
         'whatsnew'      => 'whatsnews',    // 新着情報
+        'slides'        => 'slideshows',   // スライダー
     ];
 
     // delete: 全体カテゴリは作らない
@@ -436,6 +442,14 @@ trait MigrationTrait
             Buckets::where('plugin_name', 'calendars')->delete();
             MigrationMapping::where('target_source_table', 'calendars')->delete();
         }
+
+        if ($target == 'slideshows' || $target == 'all') {
+            Slideshows::truncate();
+            SlideshowsItems::truncate();
+            Buckets::where('plugin_name', 'slideshows')->delete();
+            MigrationMapping::where('target_source_table', 'slideshows')->delete();
+        }
+
     }
 
     /**
@@ -804,6 +818,11 @@ trait MigrationTrait
         // カレンダーの取り込み
         if ($this->isTarget('cc_import', 'plugins', 'calendars')) {
             $this->importCalendars($redo);
+        }
+
+        // スライダーの取り込み
+        if ($this->isTarget('cc_import', 'plugins', 'slideshows')) {
+            $this->importSlideshows($redo);
         }
 
         // 固定URLの取り込み
@@ -3166,6 +3185,134 @@ trait MigrationTrait
     }
 
     /**
+     * Connect-CMS 移行形式のスライダーをインポート
+     */
+    private function importSlideshows($redo)
+    {
+        $this->putMonitor(3, "Slideshows import start.");
+
+        // データクリア
+        if ($redo === true) {
+            $this->clearData('slideshows');
+        }
+
+        // 定義の取り込み
+        $ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('slideshows/slideshows_*.ini'));
+        // 定義のループ
+        foreach ($ini_paths as $ini_path) {
+            // ini_file の解析
+            $ini = parse_ini_file($ini_path, true);
+
+            // nc2 の block_id
+            $nc2_slideshows_block_id = 0;
+            if (array_key_exists('source_info', $ini) && array_key_exists('slideshows_block_id', $ini['source_info'])) {
+                $nc2_slideshows_block_id = $ini['source_info']['slideshows_block_id'];
+            }
+
+            // マッピングテーブルの取得
+            $mapping = MigrationMapping::where('target_source_table', 'slideshows')->where('source_key', $nc2_slideshows_block_id)->first();
+
+            // マッピングテーブルを確認して、あれば削除
+            if (!empty($mapping)) {
+                // slideshows 取得。この情報から紐づけて、消すものを消してゆく。
+                $slideshows = slideshows::where('id', $mapping->destination_key)->first();
+                // コンテンツ削除
+                slideshowsItems::where('slideshows_id', $mapping->destination_key)->delete();
+                if (!empty($slideshows)) {
+                    // Buckets 削除
+                    Buckets::where('id', $slideshows->bucket_id)->delete();
+                    // 削除
+                    $slideshows->delete();
+                }
+                // マッピングテーブル削除
+                $mapping->delete();
+            }
+            // Buckets テーブルと slideshows テーブル、マッピングテーブルを追加
+            $slideshows_name = '無題';
+            $bucket = Buckets::create(['bucket_name' => $slideshows_name, 'plugin_name' => 'slideshows']);
+            $control_display_flag = 1;
+            $indicators_display_flag = 1;
+            $fade_use_flag = 1;
+            $image_interval = 1500;
+            $slideshows = Slideshows::create([
+                'bucket_id' => $bucket->id,
+                'slideshows_name' => $slideshows_name,
+                'control_display_flag' => $control_display_flag,
+                'indicators_display_flag' => $indicators_display_flag,
+                'fade_use_flag' => $fade_use_flag,
+                'image_interval' => $image_interval,
+            ]);
+
+            // スライダーのデータを取得（TSV）
+            $slideshows_tsv_filename = str_replace('ini', 'tsv', basename($ini_path));
+            if (Storage::exists($this->getImportPath('slideshows/') . $slideshows_tsv_filename)) {
+                // TSV ファイル取得（1つのTSV で1つのスライダー）
+                $slideshows_tsv = Storage::get($this->getImportPath('slideshows/') . $slideshows_tsv_filename);
+                // 無いものは対象外
+                if (empty($slideshows_tsv)) {
+                    continue;
+                }
+                // 改行で記事毎に分割
+                $slideshows_tsv_lines = explode("\n", $slideshows_tsv);
+                foreach ($slideshows_tsv_lines as $slideshows_tsv_line) {
+                    // タブで項目に分割
+                    $slideshows_tsv_cols = explode("\t", $slideshows_tsv_line);
+                    // image_path{\t}uploads_id{\t}link_url{\t}link_target{\t}caption{\t}display_flag{\t}display_sequence
+                    $image_path = isset($slideshows_tsv_cols[0]) ? $slideshows_tsv_cols[0] : null;
+                    $source_key = isset($slideshows_tsv_cols[1]) ? $slideshows_tsv_cols[1] : null;
+                    $link_url = isset($slideshows_tsv_cols[2]) ? $slideshows_tsv_cols[2] : null;
+                    $link_target = isset($slideshows_tsv_cols[3]) ? $slideshows_tsv_cols[3] : null;
+                    $caption = isset($slideshows_tsv_cols[4]) ? $slideshows_tsv_cols[4] : null;
+                    $display_flag = isset($slideshows_tsv_cols[5]) ? $slideshows_tsv_cols[5] : null;
+                    $display_sequence = isset($slideshows_tsv_cols[6]) ? $slideshows_tsv_cols[6] : null;
+
+                    /* uploads_idの取得 */
+                    $uploads_id = null;
+                    if ($source_key) {
+                        $upload_mapping = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $source_key)->first();
+                        $uploads_id = $upload_mapping ? $upload_mapping->destination_key : null;
+                        if ($uploads_id) {
+                            $upload = Uploads::find($uploads_id);
+                            if (empty($upload)) {
+                                $this->putMonitor(1, "No target = uploads", "uploads_id = " . $uploads_id);
+                            }else{
+                                // 100000
+                                $dir_no = 0;
+                                foreach (range(0, 1000000, 1000) as $number) {
+                                    $dir_no++;
+                                    if ($uploads_id <= $number) {
+                                        break;
+                                    }
+                                }
+                                $image_path = 'uploads/'.$dir_no.'/'.$uploads_id.'.'.$upload->extension;
+                            }
+                        }
+                    }
+
+                    
+                    // 付与テーブルデータを作成する
+                    $slideshows_count = SlideshowsItems::create([
+                        'slideshows_id' => $slideshows->id,
+                        'image_path' => $image_path,
+                        'uploads_id' => $uploads_id,
+                        'link_url' => $link_url,
+                        'link_target' => $link_target,
+                        'caption' => $caption,
+                        'display_flag' => $display_flag,
+                        'display_sequence' => $display_sequence,
+                    ]);
+                }
+            }
+            // マッピングテーブルの追加
+            $mapping = MigrationMapping::create([
+                'target_source_table'  => 'slideshows',
+                'source_key'           => $nc2_slideshows_block_id,
+                'destination_key'      => $slideshows->id,
+            ]);
+        }
+    }
+
+    /**
      * シーダーの呼び出し
      */
     //private function importSeeder($redo)
@@ -3406,6 +3553,9 @@ trait MigrationTrait
         } elseif ($plugin_name == 'calendars') {
             // カレンダー
             $this->importPluginCalendars($page, $page_dir, $frame_ini, $display_sequence);
+        } elseif ($plugin_name == 'slideshows') {
+            // スライダー
+            $this->importPluginSlideshows($page, $page_dir, $frame_ini, $display_sequence);
         }
     }
 
@@ -4054,6 +4204,50 @@ trait MigrationTrait
                 'frame_id' => $frame->id,
             ]);
         }
+    }
+
+    /**
+     * スライダープラグインの登録処理
+     */
+    private function importPluginSlideshows($page, $page_dir, $frame_ini, $display_sequence)
+    {
+        // 変数定義
+        $slideshows_block_id = null;
+        $slideshow_ini = null;
+        $nc2_slideshows_block_id = null;
+        $migration_mapping = null;
+        $slideshow = null;
+        $bucket = null;
+
+        // エクスポートファイルの slideshows_block_id 取得（エクスポート時の連番）
+        $slideshows_block_id = $this->getArrayValue($frame_ini, 'frame_base', 'slideshows_block_id', null);
+
+        // スライダーの情報取得
+        if (!empty($slideshows_block_id) && Storage::exists($this->getImportPath('slideshows/slideshows_') . $slideshows_block_id . '.ini')) {
+            $slideshow_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('slideshows/slideshows_') . $slideshows_block_id . '.ini', true);
+        }
+        // NC2 のslideshow_block_id
+        $nc2_slideshows_block_id = $this->getArrayValue($slideshow_ini, 'source_info', 'slideshows_block_id', null);
+
+        // NC2 のslideshow_block_id でマップ確認
+        if (!empty($slideshow_ini) && array_key_exists('source_info', $slideshow_ini) && array_key_exists('slideshows_block_id', $slideshow_ini['source_info'])) {
+            $migration_mapping = MigrationMapping::where('target_source_table', 'slideshows')->where('source_key', $nc2_slideshows_block_id)->first();
+        }
+
+        // マップから新Slideshow を取得
+        if (!empty($migration_mapping)) {
+            $slideshow = Slideshows::find($migration_mapping->destination_key);
+        }
+        // 新Slideshow からBucket ID を取得
+        if (!empty($slideshow)) {
+            $bucket = Buckets::find($slideshow->bucket_id);
+        }
+        // bucket がない場合は、フレームは作るけど、エラーログを出しておく。
+        if (empty($bucket)) {
+            $this->putError(1, 'Slideshow フレームのみで実体なし', "page_dir = " . $page_dir);
+        }
+        // Frames 登録
+        $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
     }
 
     /**
@@ -5230,6 +5424,11 @@ trait MigrationTrait
         // NC2 カレンダー（calendar）データのエクスポート
         if ($this->isTarget('nc2_export', 'plugins', 'calendars')) {
             $this->nc2ExportCalendar($redo);
+        }
+
+        // NC2 スライダー（slides）データのエクスポート
+        if ($this->isTarget('nc2_export', 'plugins', 'slideshows')) {
+            $this->nc2ExportSlides($redo);
         }
 
         // NC2 固定リンク（abbreviate_url）データのエクスポート
@@ -7491,6 +7690,79 @@ trait MigrationTrait
     }
 
     /**
+     * NC2：スライダー（スライダー）の移行
+     */
+    private function nc2ExportSlides($redo)
+    {
+        $this->putMonitor(3, "Start nc2ExportSlides.");
+
+        // データクリア
+        if ($redo === true) {
+            // 移行用ファイルの削除
+            Storage::deleteDirectory($this->getImportPath('slideshows/'));
+        }
+
+        // NC2スライダー（Slideshow）を移行する。
+        $where_slideshow_block_ids = $this->getMigrationConfig('slideshows', 'nc2_export_where_slideshow_block_ids');
+        if (empty($where_slideshow_block_ids)) {
+            $nc2_slideshows = Nc2Slides::orderBy('block_id')->get();
+        } else {
+            $nc2_slideshows = Nc2Slides::whereIn('block_id', $where_slideshow_block_ids)->orderBy('block_id')->get();
+        }
+
+        // 空なら戻る
+        if ($nc2_slideshows->isEmpty()) {
+            return;
+        }
+
+        // NC2スライダー（Slideshow）のループ
+        foreach ($nc2_slideshows as $nc2_slideshow) {
+            $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (!empty($room_ids) && !in_array($nc2_slideshow->room_id, $room_ids)) {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
+            // スライダー設定
+            $ini = "";
+            $ini .= "[slideshow_base]\n";
+            $ini .= "slideshow_speed = " . $nc2_slideshow->speed . "\n";
+            $ini .= "slideshow_pause = " . $nc2_slideshow->pause . "\n";
+            // NC2 情報
+            $ini .= "\n";
+            $ini .= "[source_info]\n";
+            $ini .= "slideshows_block_id = " . $nc2_slideshow->block_id . "\n";
+            $ini .= "room_id = " . $nc2_slideshow->room_id . "\n";
+            $ini .= "module_name = \"slides\"\n";
+
+            // 付与情報を移行する。
+            $nc2_slides_urls = Nc2SlidesUrl::where('slides_id', $nc2_slideshow->slides_id)->orderBy('slides_url_id')->get();
+            // TSV でエクスポート
+            // image_path{\t}uploads_id{\t}link_url{\t}link_target{\t}caption{\t}display_flag{\t}display_sequence
+            $slides_tsv = "";
+            foreach ($nc2_slides_urls as $nc2_slides_url) {
+                // TSV 形式でエクスポート
+                if (!empty($slides_tsv)) {
+                    $slides_tsv .= "\n";
+                }
+                $slides_tsv .= "\t"; //image_path
+                $slides_tsv .= $nc2_slides_url->image_file_id. "\t";                        //uploads_id
+                $slides_tsv .= $nc2_slides_url->url. "\t";                                  //link_url
+                $slides_tsv .= ($nc2_slides_url->target_new == 0 ) ? "\t" : '_blank' . "\t";  //link_target
+                $slides_tsv .= $nc2_slides_url->linkstr. "\t";                              //caption
+                $slides_tsv .= $nc2_slides_url->view. "\t";                                 //display_flag
+                $slides_tsv .= $nc2_slides_url->display_sequence. "\t";                     //display_sequence
+            }
+            // スライダーの設定を出力
+            $this->storagePut($this->getImportPath('slideshows/slideshows_') . $this->zeroSuppress($nc2_slideshow->block_id) . '.ini', $ini);
+            // スライダーの付与情報を出力
+            $this->storagePut($this->getImportPath('slideshows/slideshows_') . $this->zeroSuppress($nc2_slideshow->block_id) . '.tsv', $slides_tsv);
+
+        }
+    }
+
+    /**
      * NC2：固定リンク（abbreviate_url）の移行
      */
     private function nc2ExportAbbreviateUrl($redo)
@@ -7935,6 +8207,12 @@ trait MigrationTrait
             // ブロックがあり、カレンダーがない場合は対象外
             if (!empty($nc2_calendar_block)) {
                 $ret = "calendar_block_id = \"" . $this->zeroSuppress($nc2_calendar_block->block_id) . "\"\n";
+            }
+        } elseif ($module_name == 'slides') {
+            $nc2_slides = Nc2Slides::where('block_id', $nc2_block->block_id)->first();
+            // ブロックがあり、スライダーがない場合は対象外
+            if (!empty($nc2_slides)) {
+                $ret = "slideshows_block_id = \"" . $this->zeroSuppress($nc2_slides->block_id) . "\"\n";
             }
         }
         return $ret;

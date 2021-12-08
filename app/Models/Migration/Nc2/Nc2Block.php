@@ -135,6 +135,7 @@ class Nc2Block extends Model
         'search'        => 'searchs',      // 検索
         'todo'          => 'Development',  // ToDo
         'whatsnew'      => 'whatsnews',    // 新着情報
+        'slides'        => 'slideshows',   // スライダー
     ];
 
     /**
