@@ -15,7 +15,7 @@
 Add-Type -AssemblyName System.Windows.Forms
 
 # 実行確認
-$result = [System.Windows.Forms.MessageBox]::Show("Connect-CMS���̃��\�[�X���㏑�����܂����A��낵���ł����H","�m�F","YesNo","Question","Button2")
+$result = [System.Windows.Forms.MessageBox]::Show("Connect-CMS環境のリソースを上書きしますが、よろしいですか？","確認","YesNo","Question","Button2")
 
 # 実行可否を判定
 If($result -eq "No"){
