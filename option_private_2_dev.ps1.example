@@ -1,35 +1,35 @@
 ####################################################
-### Connect-CMSŠÂ‹«\’z-Windows—piŠO•”ƒvƒ‰ƒOƒCƒ“ ¨ Connect-CMSŠÂ‹«j
+### Connect-CMSï¿½Â‹ï¿½ï¿½\ï¿½z-Windowsï¿½pï¿½iï¿½Oï¿½ï¿½ï¿½vï¿½ï¿½ï¿½Oï¿½Cï¿½ï¿½ ï¿½ï¿½ Connect-CMSï¿½Â‹ï¿½ï¿½j
 ####################################################
 #
-# ŠO•”ƒvƒ‰ƒOƒCƒ“‚ğConnect-CMS‚Æ‚Í•ÊƒfƒBƒŒƒNƒgƒŠ‚ÅGitŠÇ—‚µ‚½‚¢ê‡‚È‚Ç‚Ég—p‚·‚éAƒRƒs[PowerShell‚Å‚·B
-# ŠO•”ƒvƒ‰ƒOƒCƒ“ƒfƒBƒŒƒNƒgƒŠ‚©‚çAConnect-CMSŠÂ‹«ƒfƒBƒŒƒNƒgƒŠ‚ÉƒRƒs[‚µ‚Ü‚·B
-# ƒRƒs[•s—v‚ÌƒfƒBƒŒƒNƒgƒŠ‚ÍAƒRƒƒ“ƒgƒAƒEƒg‚µ‚Ä‚­‚¾‚³‚¢B
-# •¶šƒR[ƒh‚Í Shift-JIS ‚Å‚·B
+# ï¿½Oï¿½ï¿½ï¿½vï¿½ï¿½ï¿½Oï¿½Cï¿½ï¿½ï¿½ï¿½Connect-CMSï¿½Æ‚Í•Êƒfï¿½Bï¿½ï¿½ï¿½Nï¿½gï¿½ï¿½ï¿½ï¿½Gitï¿½Ç—ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ê‡ï¿½È‚Ç‚Égï¿½pï¿½ï¿½ï¿½ï¿½Aï¿½Rï¿½sï¿½[PowerShellï¿½Å‚ï¿½ï¿½B
+# ï¿½Oï¿½ï¿½ï¿½vï¿½ï¿½ï¿½Oï¿½Cï¿½ï¿½ï¿½fï¿½Bï¿½ï¿½ï¿½Nï¿½gï¿½ï¿½ï¿½ï¿½ï¿½ï¿½AConnect-CMSï¿½Â‹ï¿½ï¿½fï¿½Bï¿½ï¿½ï¿½Nï¿½gï¿½ï¿½ï¿½ÉƒRï¿½sï¿½[ï¿½ï¿½ï¿½Ü‚ï¿½ï¿½B
+# ï¿½Rï¿½sï¿½[ï¿½sï¿½vï¿½Ìƒfï¿½Bï¿½ï¿½ï¿½Nï¿½gï¿½ï¿½ï¿½ÍAï¿½Rï¿½ï¿½ï¿½ï¿½ï¿½gï¿½Aï¿½Eï¿½gï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½B
+# ï¿½ï¿½ï¿½ï¿½ï¿½Rï¿½[ï¿½hï¿½ï¿½ Shift-JIS ï¿½Å‚ï¿½ï¿½B
 #
-# ƒRƒ}ƒ“ƒhƒvƒƒ“ƒvƒg‚ÅPowerShell‚ğÀsj
+# ï¿½Rï¿½}ï¿½ï¿½ï¿½hï¿½vï¿½ï¿½ï¿½ï¿½ï¿½vï¿½gï¿½ï¿½PowerShellï¿½ï¿½ï¿½ï¿½ï¿½sï¿½j
 # powershell -NoProfile -ExecutionPolicy Unrestricted .\option_private_2_dev.ps1
 #
 
-# ƒAƒZƒ“ƒuƒŠ‚Ìƒ[ƒh
+# ï¿½Aï¿½Zï¿½ï¿½ï¿½uï¿½ï¿½ï¿½Ìƒï¿½ï¿½[ï¿½h
 Add-Type -AssemblyName System.Windows.Forms
 
-# ÀsŠm”F
-$result = [System.Windows.Forms.MessageBox]::Show("Connect-CMSŠÂ‹«‚ÌƒŠƒ\[ƒX‚ğã‘‚«‚µ‚Ü‚·‚ªA‚æ‚ë‚µ‚¢‚Å‚·‚©H","Šm”F","YesNo","Question","Button2")
+# ï¿½ï¿½ï¿½sï¿½mï¿½F
+$result = [System.Windows.Forms.MessageBox]::Show("Connect-CMSï¿½Â‹ï¿½ï¿½Ìƒï¿½ï¿½\ï¿½[ï¿½Xï¿½ï¿½ï¿½ã‘ï¿½ï¿½ï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½ï¿½Aï¿½ï¿½ë‚µï¿½ï¿½ï¿½Å‚ï¿½ï¿½ï¿½ï¿½H","ï¿½mï¿½F","YesNo","Question","Button2")
 
-# Às‰Â”Û‚ğ”»’è
+# ï¿½ï¿½ï¿½sï¿½Â”Û‚ğ”»’ï¿½
 If($result -eq "No"){
     exit
 }
 
-### PATH“™‚ÌğŒ‚ğ•Ï”‚Éİ’è
-# ƒRƒs[Œ³‚Ìƒ‹[ƒgPATH
+### PATHï¿½ï¿½ï¿½Ìï¿½ï¿½ï¿½ï¿½ï¿½Ïï¿½ï¿½Éİ’ï¿½
+# ï¿½Rï¿½sï¿½[ï¿½ï¿½ï¿½Ìƒï¿½ï¿½[ï¿½gPATH
 $src_root_dir = "C:\path_to_option_private_dir\"
 
-# ƒRƒs[æ‚Ìƒ‹[ƒgPATH
+# ï¿½Rï¿½sï¿½[ï¿½ï¿½Ìƒï¿½ï¿½[ï¿½gPATH
 $dist_root_dir = "C:\path_to_dev_connect-cms\"
 
-# ƒRƒs[‘ÎÛ‚Ìƒvƒ‰ƒOƒCƒ“ƒfƒBƒŒƒNƒgƒŠ–¼
+# ï¿½Rï¿½sï¿½[ï¿½ÎÛ‚Ìƒvï¿½ï¿½ï¿½Oï¿½Cï¿½ï¿½ï¿½fï¿½Bï¿½ï¿½ï¿½Nï¿½gï¿½ï¿½ï¿½ï¿½
 $option_plugin = "PluginName"
 $option_plugin_controller_dir = "User\PluginName"
 $option_plugin_resources_dir = "user\pluginname"
@@ -37,16 +37,19 @@ $option_plugin_model_dir = $option_plugin_controller_dir
 $option_plugin_command_dir = $option_plugin_controller_dir
 
 
-### ƒRƒs[irobocopy <ƒRƒs[Œ³> <ƒRƒs[æ>j
+### ï¿½Rï¿½sï¿½[ï¿½irobocopy <ï¿½Rï¿½sï¿½[ï¿½ï¿½> <ï¿½Rï¿½sï¿½[ï¿½ï¿½>ï¿½j
 robocopy "${src_root_dir}${option_plugin}\app\PluginsOption\${option_plugin_controller_dir}" "${dist_root_dir}app\PluginsOption\${option_plugin_controller_dir}" /s
 robocopy "${src_root_dir}${option_plugin}\app\ModelsOption\${option_plugin_model_dir}" "${dist_root_dir}app\ModelsOption\${option_plugin_model_dir}" /s
 robocopy "${src_root_dir}${option_plugin}\resources\views\plugins_option\${option_plugin_resources_dir}" "${dist_root_dir}resources\views\plugins_option\${option_plugin_resources_dir}" /s
+robocopy "${src_root_dir}${option_plugin}\resources\views\mail_option\${option_plugin_resources_dir}" "${dist_root_dir}resources\views\mail_option\${option_plugin_resources_dir}" /s
 robocopy "${src_root_dir}${option_plugin}\app\Console\CommandsOption\${option_plugin_command_dir}" "${dist_root_dir}app\Console\CommandsOption\${option_plugin_command_dir}" /s
 
 robocopy "${src_root_dir}${option_plugin}\database\migrations_option" "${dist_root_dir}database\migrations_option" /s
+robocopy "${src_root_dir}${option_plugin}\database\seeds\options\${option_plugin}" "${dist_root_dir}database\seeds\options\${option_plugin}" /s /MIR
 robocopy "${src_root_dir}${option_plugin}\app\EnumsOption" "${dist_root_dir}app\EnumsOption" /s
+robocopy "${src_root_dir}${option_plugin}\public\images\plugins\${option_plugin}" "${dist_root_dir}public\images\plugins\${option_plugin}" /s /MIR
 
-# 1ƒtƒ@ƒCƒ‹‚Ì‚İƒRƒs[—á
+# 1ï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½Ì‚İƒRï¿½sï¿½[ï¿½ï¿½
 #Copy-Item -Path "${src_root_dir}${option_plugin}\resources\views\plugins_option\manage\menus_list.blade.php" -Destination "${dist_root_dir}resources\views\plugins_option\manage\"
 
 exit
