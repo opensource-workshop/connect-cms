@@ -186,6 +186,12 @@ use App\Models\User\Reservations\ReservationsColumn;
                 </div>
             </div>
 
+            <div class="row">
+                <div class="col">
+                    <small class="text-muted">【利用時間】 {{ $facility->getDayOfWeeksDisplay() }} {{ substr($facility->start_time, 0, -3) }} ~ {{ substr($facility->end_time, 0, -3) }}</small>
+                </div>
+            </div>
+
         </div>
     </div>
 

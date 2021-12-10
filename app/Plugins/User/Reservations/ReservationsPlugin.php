@@ -19,8 +19,10 @@ use App\Models\User\Reservations\ReservationsFacility;
 use App\Models\User\Reservations\ReservationsInput;
 use App\Models\User\Reservations\ReservationsInputsColumn;
 
-use App\Rules\CustomValiWysiwygMax;
+use App\Rules\CustomValiAvailableDayOfTheWeekBookings;
+use App\Rules\CustomValiAvailableTimeBookings;
 use App\Rules\CustomValiDuplicateBookings;
+use App\Rules\CustomValiWysiwygMax;
 
 use App\Plugins\User\UserPluginBase;
 
@@ -598,16 +600,16 @@ class ReservationsPlugin extends UserPluginBase
 
             // 施設データ
             // $facility = ReservationsFacility::where('id', old('facility_id', $request->facility_id))->first();
-            $facility = ReservationsChoiceCategory::
+            $facility = ReservationsFacility::
                 select('reservations_facilities.*')
-                ->join('reservations_facilities', function ($join) use ($request) {
-                    $join->on('reservations_facilities.reservations_categories_id', '=', 'reservations_choice_categories.reservations_categories_id')
-                        ->where('reservations_facilities.id', $request->facility_id)
-                        ->where('reservations_facilities.hide_flag', NotShowType::show)
-                        ->whereNull('reservations_facilities.deleted_at');
+                ->where('reservations_facilities.id', $request->facility_id)
+                ->where('reservations_facilities.hide_flag', NotShowType::show)
+                ->join('reservations_choice_categories', function ($join) use ($reservations_frame) {
+                    $join->on('reservations_choice_categories.reservations_categories_id', '=', 'reservations_facilities.reservations_categories_id')
+                        ->where('reservations_choice_categories.reservations_id', $reservations_frame->reservations_id)
+                        ->where('reservations_choice_categories.view_flag', ShowType::show)
+                        ->whereNull('reservations_choice_categories.deleted_at');
                 })
-                ->where('reservations_choice_categories.reservations_id', $reservations_frame->reservations_id)
-                ->where('reservations_choice_categories.view_flag', ShowType::show)
                 ->first();
 
             if (empty($facility)) {
@@ -665,26 +667,38 @@ class ReservationsPlugin extends UserPluginBase
         $reservations_inputs = ReservationsInput::firstOrNew(['id' => $booking_id]);
 
         // バリデーション用の配列を生成（基本項目）
-        $validator_array['column']['target_date']    = ['required', 'date_format:Y-m-d'];
-        $validator_array['column']['start_datetime'] = ['required'];
+        $validator_array['column']['target_date']    = [
+            'required',
+            'date_format:Y-m-d',
+            // 利用できる曜日チェック
+            new CustomValiAvailableDayOfTheWeekBookings($request->facility_id),
+        ];
+
+        $validator_array['column']['start_datetime'] = [
+            'required',
+            'date_format:H:i',
+            // 利用時間内チェック追加
+            new CustomValiAvailableTimeBookings(
+                $request->facility_id,
+                $request->start_datetime,
+                $request->end_datetime
+            )
+        ];
 
         if (!$facility->is_allow_duplicate) {
             // 重複予約チェック追加
-            $validator_array['column']['start_datetime'] = [
-                'required',
-                new CustomValiDuplicateBookings(
-                    $request->facility_id,
-                    $reservations_inputs->id,
-                    "{$request->target_date} {$request->start_datetime}",
-                    "{$request->target_date} {$request->end_datetime}"
-                )
-            ];
+            $validator_array['column']['start_datetime'][] = new CustomValiDuplicateBookings(
+                $request->facility_id,
+                $reservations_inputs->id,
+                "{$request->target_date} {$request->start_datetime}",
+                "{$request->target_date} {$request->end_datetime}"
+            );
         }
 
-        $validator_array['column']['end_datetime'] = ['required', 'after:start_datetime'];
+        $validator_array['column']['end_datetime'] = ['required', 'date_format:H:i', 'after:start_datetime'];
         $validator_array['message']['target_date']    = '予約日';
-        $validator_array['message']['start_datetime'] = '開始時間';
-        $validator_array['message']['end_datetime']   = '終了時間';
+        $validator_array['message']['start_datetime'] = '予約開始時間';
+        $validator_array['message']['end_datetime']   = '予約終了時間';
 
         // --- 入力値変換
         foreach ($columns as $column) {
@@ -706,6 +720,10 @@ class ReservationsPlugin extends UserPluginBase
 
         // バリデーション定義
         $validator = Validator::make($request->all(), $validator_array['column']);
+        // カスタムエラーメッセージ
+        $validator->setCustomMessages([
+            'end_datetime.after' => ':attributeには:date以降の時間を指定してください。',
+        ]);
         $validator->setAttributeNames($validator_array['message']);
 
         // バリデーション実施、エラー時は予約画面へ戻る
@@ -730,8 +748,8 @@ class ReservationsPlugin extends UserPluginBase
             $reservations_inputs->reservations_id = $request->reservations_id;
             $reservations_inputs->facility_id = $request->facility_id;
         }
-        $reservations_inputs->start_datetime = new ConnectCarbon($request->target_ymd . ' ' . $request->start_datetime . ':00');
-        $reservations_inputs->end_datetime = new ConnectCarbon($request->target_ymd . ' ' . $request->end_datetime . ':00');
+        $reservations_inputs->start_datetime = new ConnectCarbon($request->target_date . ' ' . $request->start_datetime . ':00');
+        $reservations_inputs->end_datetime = new ConnectCarbon($request->target_date . ' ' . $request->end_datetime . ':00');
         $reservations_inputs->save();
 
         // 項目IDを取得
