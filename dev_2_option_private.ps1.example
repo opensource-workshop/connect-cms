@@ -1,24 +1,24 @@
 ##########################################################
-### �O���v���O�C��PUSH-Windows�p�iConnect-CMS�� �� �O���v���O�C���j
+### 外部プラグインPUSH-Windows用（Connect-CMS環境 → 外部プラグイン）
 ##########################################################
 #
-# �O���v���O�C����Connect-CMS�Ƃ͕ʃf�B���N�g����Git�Ǘ��������ꍇ�ȂǂɎg�p����A�R�s�[PowerShell�ł��B
-# Connect-CMS���f�B���N�g������A�O���v���O�C���f�B���N�g���ɃR�s�[���܂��B
-# �R�s�[�s�v�̃f�B���N�g���́A�R�����g�A�E�g���Ă��������B
-# �����R�[�h�� Shift-JIS �ł��B
+# 外部プラグインをConnect-CMSとは別ディレクトリでGit管理したい場合などに使用する、コピーPowerShellです。
+# Connect-CMS環境ディレクトリから、外部プラグインディレクトリにコピーします。
+# コピー不要のディレクトリは、コメントアウトしてください。
+# 文字コードは Shift-JIS です。
 #
-# �R�}���h�v�����v�g��PowerShell�����s�j
+# コマンドプロンプトでPowerShellを実行）
 # powershell -NoProfile -ExecutionPolicy Unrestricted .\dev_2_option_private.ps1
 #
 
-### PATH���̏�����ϐ��ɐݒ�
-# �R�s�[���̃��[�gPATH
+### PATH等の条件を変数に設定
+# コピー元のルートPATH
 $src_root_dir = "C:\path_to_dev_connect-cms\"
 
-# �R�s�[��̃��[�gPATH
+# コピー先のルートPATH
 $dist_root_dir = "C:\path_to_option_private_dir\"
 
-# �R�s�[�Ώۂ̃v���O�C���f�B���N�g����
+# コピー対象のプラグインディレクトリ名
 $option_plugin = "PluginName"
 $option_plugin_controller_dir = "User\PluginName"
 $option_plugin_resources_dir = "user\pluginname"
@@ -26,7 +26,7 @@ $option_plugin_model_dir = $option_plugin_controller_dir
 $option_plugin_command_dir = $option_plugin_controller_dir
 
 
-### �R�s�[�irobocopy <�R�s�[��> <�R�s�[��>�j
+### コピー（robocopy <コピー元> <コピー先>）
 robocopy "${src_root_dir}app\PluginsOption\${option_plugin_controller_dir}" "${dist_root_dir}${option_plugin}\app\PluginsOption\${option_plugin_controller_dir}" /s /MIR
 robocopy "${src_root_dir}app\ModelsOption\${option_plugin_model_dir}" "${dist_root_dir}${option_plugin}\app\ModelsOption\${option_plugin_model_dir}" /s /MIR
 robocopy "${src_root_dir}resources\views\plugins_option\${option_plugin_resources_dir}" "${dist_root_dir}${option_plugin}\resources\views\plugins_option\${option_plugin_resources_dir}" /s /MIR
@@ -38,7 +38,7 @@ robocopy "${src_root_dir}database\seeds\options\${option_plugin}" "${dist_root_d
 robocopy "${src_root_dir}app\EnumsOption" "${dist_root_dir}${option_plugin}\app\EnumsOption" /s /MIR
 robocopy "${src_root_dir}public\images\plugins\${option_plugin}" "${dist_root_dir}${option_plugin}\public\images\plugins\${option_plugin}" /s /MIR
 
-# 1�t�@�C���̂݃R�s�[��
+# 1ファイルのみコピー例
 #Copy-Item -Path "${src_root_dir}resources\views\plugins_option\manage\menus_list.blade.php" -Destination "${dist_root_dir}${option_plugin}\resources\views\plugins_option\manage\"
 
 exit
