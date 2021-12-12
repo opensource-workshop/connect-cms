@@ -168,21 +168,18 @@ class PTASeeder extends Seeder
         $contens_arr = [];
         $contens_arr[] = [
             "/",
-            2,
-            NULL,
-            "none",
-            "default",
-            1,
+            2, NULL, "none", "default", 1,
             '<div class="contents"><div class="svg-wrapper" style="width: 100%;"><svg width="1200" height="300" style="width: 100%;"><rect width="100%" height="100%" style="fill: #6b8e23; stroke-width: 1; stroke: #000000;"></rect><text x="50" y="50" style="font-size:14px; fill: #000;">ここに、学校の写真や校章画像を指定してください。</text></svg></div></div>'
         ];
         $contens_arr[] = [
             "/",
-            2,
-            "PTA会長よりご挨拶",
-            "primary",
-            "default",
-            2,
+            2, "PTA会長よりご挨拶", "primary", "default", 2,
             '<p style="float: left; margin: 0px 10px 0px 5px; text-align: center;"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" style="width: 200px;"> <rect width="200" height="200" style="fill: #6b8e23; stroke-width: 1; stroke: #000000;"></rect> </svg><br />PTA 会長 〇〇〇　〇〇</p><p>PTA の意義や、目的などをこのエリアに記載しましょう。</p>'
+        ];
+        $contens_arr[] = [
+            "/",
+            4, NULL, "none", "default", 1,
+            '<div><table class="table cc-table-md-responsive"><tbody><tr><td><a href="/otayori">学校お便り</a></td><td>PTAより<br /><a href="/pta/honbu">本部</a><br /><a href="/pta/kouho">広報</a><br /><a href="/pta/kaikei">会計</a></td><td><a href="/gakkyu">学級</a><br /><a href="/patrol">校外パトロール</a></td><td><a href="/circle">サークル</a><br /><a href="/traning">研修</a></td></tr></tbody></table></div>'
         ];
 
         foreach($contens_arr as $val){
