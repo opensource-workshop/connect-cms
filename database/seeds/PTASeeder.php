@@ -194,7 +194,7 @@ class PTASeeder extends Seeder
         $contens_arr[] = [
             "/",
             4, NULL, "none", "default", 1,
-            '<div><table class="table cc-table-md-responsive"><tbody><tr><td><a href="/otayori">学校お便り</a></td><td>PTAより<br /><a href="/pta/honbu">本部</a><br /><a href="/pta/kouho">広報</a><br /><a href="/pta/kaikei">会計</a></td><td><a href="/gakkyu">学級</a><br /><a href="/patrol">校外パトロール</a></td><td><a href="/circle">サークル</a><br /><a href="/traning">研修</a></td></tr></tbody></table></div>'
+            '<div><table class="table cc-table-md-responsive"><tbody><tr><td><a href="' . url('/') . '/otayori">学校お便り</a></td><td>PTAより<br /><a href="' . url('/') . '/pta/honbu">本部</a><br /><a href="' . url('/') . '/pta/kouho">広報</a><br /><a href="' . url('/') . '/pta/kaikei">会計</a></td><td><a href="' . url('/') . '/gakkyu">学級</a><br /><a href="' . url('/') . '/patrol">校外パトロール</a></td><td><a href="' . url('/') . '/circle">サークル</a><br /><a href="' . url('/') . '/traning">研修</a></td></tr></tbody></table></div>'
         ];
         $contens_arr[] = [
             "/",
@@ -228,7 +228,7 @@ class PTASeeder extends Seeder
         */
         // 1ページに複数個配置されることを想定する
         $menus_arr = [];
-        $menus_arr[] = ["/",       0, NULL, "none", "dropdown", 1, 1, "1,2,3,4,5,6,7,8,9,10,11"];
+        $menus_arr[] = ["/",       0, NULL, "none", "dropdown", 2, 1, "1,2,3,4,5,6,7,8,9,10,11"];
         $menus_arr[] = ["/pta",    1, NULL ,"none", "default" , 1, 1, "3,4,5,6"];
         $menus_arr[] = ["/circle", 1, NULL ,"none", "default" , 1, 1, "9,10"];
 
