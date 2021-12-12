@@ -12,9 +12,11 @@ use App\Models\User\Cabinets\CabinetContent;
 use App\Models\User\Calendars\Calendar;
 use App\Models\User\Calendars\CalendarFrame;
 use App\Models\User\Calendars\CalendarPost;
+use App\Models\User\Searchs\Searchs;
 use App\User;
 use App\Models\Core\UsersRoles;
 use App\Models\Core\Configs;
+use App\Models\Common\Page;
 
 // 実行コマンドメモ
 //※注意※ Connect-CMS初期データ実行後に実行してください
@@ -43,8 +45,9 @@ class PTASeeder extends Seeder
         $calendars_data = $this->getCalendarsData();
 //        $counters_data = $this->getCountersData();
         //Config関係
-//        $configs_data = $this->getConfigsData();
+        $configs_data = $this->getConfigsData();
 //        $users_data = $this->getUsersData();
+        $searchs_data = $this->getSearchsData();
 
         // データをクリアする
         $this->trancate('pages');
@@ -100,21 +103,33 @@ class PTASeeder extends Seeder
                 $this->insertCalendarsData($page_id, $calendars_data[$row['permanent_link']]);
             }
 
+            // 検索登録
+            if(isset($searchs_data[$row['permanent_link']])) {
+                $this->insertSearchsData($page_id, $searchs_data[$row['permanent_link']]);
+            }
+
 //            // カウンター登録
 //            if(isset($counters_data[$row['permanent_link']])) {
 //                $this->insertCountersData($page_id, $counters_data[$row['permanent_link']]);
 //            }
         }
-//
-//        // サイト管理関係
-//        if($configs_data) {
-//            $this->insertConfigsData($configs_data);
-//        }
+
+        // サイト管理関係
+        if($configs_data) {
+            $this->insertConfigsData($configs_data);
+        }
+
 //        // ユーザデータ登録
 //        if($users_data) {
 //            $this->insertUsersData($users_data);
 //
 //        }
+
+        // 校外パトロールにカレンダーフレームの追加
+        $patrol_page = Page::where('permanent_link', '/patrol')->first();
+        $calendar = Calendar::where('name', '行事予定')->first();
+        $frame_row = $this->genFrameRows($patrol_page->id, 2, "行事予定", "primary", "calendars", "default", $calendar->bucket_id, 1);
+        $frame_id = $this->insertGetFrameId($frame_row);
     }
 
     private function getPagesData()
@@ -180,6 +195,11 @@ class PTASeeder extends Seeder
             "/",
             4, NULL, "none", "default", 1,
             '<div><table class="table cc-table-md-responsive"><tbody><tr><td><a href="/otayori">学校お便り</a></td><td>PTAより<br /><a href="/pta/honbu">本部</a><br /><a href="/pta/kouho">広報</a><br /><a href="/pta/kaikei">会計</a></td><td><a href="/gakkyu">学級</a><br /><a href="/patrol">校外パトロール</a></td><td><a href="/circle">サークル</a><br /><a href="/traning">研修</a></td></tr></tbody></table></div>'
+        ];
+        $contens_arr[] = [
+            "/",
+            0, NULL, "none", "default", 1,
+            '<div class="d-sm-flex flex-row-reverse"><form action="' . url('/') . '/search" method="get" role="search" aria-label="サイト内検索"><div class="input-group mt-2"><input type="text" name="search_keyword" class="form-control" value="" placeholder="キーワードでサイト内検索" title="サイト内検索" /><div class="input-group-append"><button type="submit" class="btn btn-primary" title="検索"> <i class="fas fa-search"></i> </button></div></div></form></div>'
         ];
 
         foreach($contens_arr as $val){
@@ -272,10 +292,26 @@ class PTASeeder extends Seeder
             NULL, 0, NULL, NULL, date('Y-m-d H:i:s')
         ];
         $blogs_arr[] = [
+            "/gakkyu",
+            2, "学級", "primary", "default", 1,
+            "学級",
+            5, 5, "学級ブログのサンプル記事",
+            "<p>ブログのサンプルの記事です。</p>",
+            NULL, 0, NULL, NULL, date('Y-m-d H:i:s')
+        ];
+        $blogs_arr[] = [
             "/circle/sports",
             2, "スポーツサークルより", "primary", "default", 1,
             "スポーツサークルより",
-            5, 5, "スポーツサークルブログのサンプル記事",
+            6, 6, "スポーツサークルブログのサンプル記事",
+            "<p>ブログのサンプルの記事です。</p>",
+            NULL, 0, NULL, NULL, date('Y-m-d H:i:s')
+        ];
+        $blogs_arr[] = [
+            "/traning",
+            2, "研修", "primary", "default", 1,
+            "研修より",
+            7, 7, "研修のサンプル記事",
             "<p>ブログのサンプルの記事です。</p>",
             NULL, 0, NULL, NULL, date('Y-m-d H:i:s')
         ];
@@ -373,7 +409,7 @@ class PTASeeder extends Seeder
 
     private function getCalendarsData()
     {
-        // 初期配置するキャビネットデータを記載する
+        // 初期配置するカレンダーデータを記載する
         /*
             SELECT 
                 P.permanent_link, F.area_id, F.frame_title, F.frame_design, F.template, F.display_sequence, 
@@ -395,6 +431,36 @@ class PTASeeder extends Seeder
         }        
         return $calendars_data;
     }
+
+    private function getSearchsData()
+    {
+        // 初期配置する検索データを記載する
+        /*
+            SELECT 
+                P.permanent_link, F.area_id, F.frame_title, F.frame_design, F.template, F.display_sequence, 
+                S.search_name, S.count, S.target_plugins, S.recieve_keyword
+            FROM `searchs` S 
+            INNER JOIN buckets B ON B.id = S.bucket_id 
+            INNER JOIN frames F ON B.id = F.bucket_id 
+            INNER JOIN pages P ON P.id = F.page_id 
+            ORDER BY S.id ASC
+        */
+        $searchs_arr = [];
+        $searchs_arr[] = [
+            "/search",
+            2, "サイト内検索", "primary", "default", 1,
+            "サイト内検索", 10, "contents,blogs,bbses", 1
+        ];
+
+        $searchs_data = [];
+        foreach($searchs_arr as $val){
+            $searchs_data[$val[0]][$val[5]] = ["area_id" => $val[1], "frame_title" => $val[2], "frame_design" => $val[3], "template" => $val[4], "display_sequence" => $val[5],
+             "search_name" => $val[6], "count" => $val[7], "target_plugins" => $val[8], "recieve_keyword" => $val[9]
+            ];
+        }        
+        return $searchs_data;
+    }
+
     private function getCountersData()
     {
         return [];
@@ -402,10 +468,6 @@ class PTASeeder extends Seeder
     private function getConfigsData()
     {
         $configs_arr = [];
-        $configs_arr[] = ["base_site_name","水鶏小学校","general"];
-        $configs_arr[] = ["additional_theme","Users/e_school","general"];
-        $configs_arr[] = ["browser_width_header","100%","browser_width"];
-        $configs_arr[] = ["browser_width_center",NULL,"browser_width"];
         $configs_arr[] = ["browser_width_footer","100%","browser_width"];
         $configs_data = [];
         foreach($configs_arr as $val){
@@ -496,6 +558,12 @@ class PTASeeder extends Seeder
     {
         foreach($calendars_data as $row) {
             $this->insertCalendars($page_id, $row);
+        }
+    }
+    private function insertSearchsData($page_id, $searchs_data)
+    {
+        foreach($searchs_data as $row) {
+            $this->insertSearchs($page_id, $row);
         }
     }
 
@@ -657,6 +725,7 @@ class PTASeeder extends Seeder
             ['name' => $cabinet->name]
         );
     }
+
     /* カレンダーを登録する */
     private function insertCalendars($page_id ,$row, $plugin_name = "calendars")
     {
@@ -673,6 +742,23 @@ class PTASeeder extends Seeder
             ['frame_id' => $frame_id],
             ['calendar_id' => $calendar->id, 'frame_id' => $frame_id],
         );
+    }
+
+    /* 検索を登録する */
+    private function insertSearchs($page_id ,$row, $plugin_name = "searchs")
+    {
+        // バケツを作る
+        $bucket_id = $this->insertGetBucketId($plugin_name);
+        // フレームを作る
+        $frame_row = $this->genFrameRows($page_id, $row["area_id"], $row["frame_title"], $row["frame_design"], $plugin_name, $row["template"], $bucket_id, $row["display_sequence"]);
+        $frame_id = $this->insertGetFrameId($frame_row);
+        $search = new Searchs();
+        $search->bucket_id = $bucket_id;
+        $search->search_name = $row["search_name"];
+        $search->count = $row["count"];
+        $search->target_plugins = $row["target_plugins"];
+        $search->recieve_keyword = $row["recieve_keyword"];
+        $search->save();
     }
 
     
