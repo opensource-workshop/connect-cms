@@ -16,6 +16,8 @@ class ReservationsFacility extends Model
 {
     // 平日
     const weekday = DayOfWeek::mon.'|'.DayOfWeek::tue.'|'.DayOfWeek::wed.'|'.DayOfWeek::thu.'|'.DayOfWeek::fri;
+    // 全日
+    const all_days = DayOfWeek::sun.'|'.DayOfWeek::mon.'|'.DayOfWeek::tue.'|'.DayOfWeek::wed.'|'.DayOfWeek::thu.'|'.DayOfWeek::fri.'|'.DayOfWeek::sat;
 
     // 論理削除
     use SoftDeletes;
@@ -28,6 +30,7 @@ class ReservationsFacility extends Model
         'reservations_id',
         'facility_name',
         'hide_flag',
+        'is_time_control',
         'start_time',
         'end_time',
         'day_of_weeks',
@@ -48,6 +51,8 @@ class ReservationsFacility extends Model
 
         if ($this->day_of_weeks == self::weekday) {
             return $locate == ConnectLocale::en ? 'weekday' : '平日';
+        } elseif ($this->day_of_weeks == self::all_days) {
+            return $locate == ConnectLocale::en ? 'all days' : '全日';
         }
 
         $display = '';

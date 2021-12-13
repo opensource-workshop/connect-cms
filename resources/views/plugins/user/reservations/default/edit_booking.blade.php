@@ -7,6 +7,7 @@
  --}}
 @php
 use App\Models\User\Reservations\ReservationsColumn;
+use App\Models\User\Reservations\ReservationsFacility;
 @endphp
 
 @extends('core.cms_frame_base')
@@ -135,9 +136,11 @@ use App\Models\User\Reservations\ReservationsColumn;
                     </div>
                 </div>
             </div>
+
             <div class="row">
                 <div class="col">
                     @include('plugins.common.errors_inline', ['name' => 'target_date'])
+                    @if ($facility->day_of_weeks != ReservationsFacility::all_days) <small class="text-muted">【利用曜日】 {{ $facility->getDayOfWeeksDisplay() }}</small> @endif
                 </div>
             </div>
 
@@ -183,12 +186,7 @@ use App\Models\User\Reservations\ReservationsColumn;
                 <div class="col">
                     @include('plugins.common.errors_inline', ['name' => 'start_datetime'])
                     @include('plugins.common.errors_inline', ['name' => 'end_datetime'])
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col">
-                    <small class="text-muted">【利用時間】 {{ $facility->getDayOfWeeksDisplay() }} {{ substr($facility->start_time, 0, -3) }} ~ {{ substr($facility->end_time, 0, -3) }}</small>
+                    @if ($facility->is_time_control) <small class="text-muted">【利用時間】 {{ substr($facility->start_time, 0, -3) }} ~ {{ substr($facility->end_time, 0, -3) }}</small> @endif
                 </div>
             </div>
 

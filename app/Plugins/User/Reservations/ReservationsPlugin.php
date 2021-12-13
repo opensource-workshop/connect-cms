@@ -677,13 +677,16 @@ class ReservationsPlugin extends UserPluginBase
         $validator_array['column']['start_datetime'] = [
             'required',
             'date_format:H:i',
+        ];
+
+        if ($facility->is_time_control) {
             // 利用時間内チェック追加
-            new CustomValiAvailableTimeBookings(
+            $validator_array['column']['start_datetime'][] = new CustomValiAvailableTimeBookings(
                 $request->facility_id,
                 $request->start_datetime,
                 $request->end_datetime
-            )
-        ];
+            );
+        }
 
         if (!$facility->is_allow_duplicate) {
             // 重複予約チェック追加

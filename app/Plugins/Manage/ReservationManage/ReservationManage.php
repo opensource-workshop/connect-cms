@@ -4,6 +4,7 @@ namespace App\Plugins\Manage\ReservationManage;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 use App\Models\User\Reservations\ReservationsFacility;
 use App\Models\User\Reservations\ReservationsCategory;
@@ -138,9 +139,9 @@ class ReservationManage extends ManagePluginBase
      *
      * @return view
      */
-    public function regist($request, $id = null, $errors = array())
+    public function regist($request, $id = null)
     {
-        return $this->edit($request, $id, 'regist', $errors);
+        return $this->edit($request, $id, 'regist');
     }
 
     /**
@@ -163,6 +164,14 @@ class ReservationManage extends ManagePluginBase
         $facility = ReservationsFacility::firstOrNew(['id' => $id]);
 
         $function = $function ?? 'edit';
+
+        if (!$facility->id) {
+            // 登録の初期値
+            $facility->is_time_control = 1;
+            $facility->start_time      = '09:00:00';
+            $facility->end_time        = '18:00:00';
+            $facility->day_of_weeks    = ReservationsFacility::weekday; // 月～金
+        }
 
         // カテゴリデータの取得
         $categories = ReservationsCategory::orderBy('display_sequence', 'asc')->get();
@@ -187,27 +196,23 @@ class ReservationManage extends ManagePluginBase
 
         // エラーチェック
         $validator = Validator::make($request->all(), [
-            'hide_flag'                  => ['required'],
             'facility_name'              => ['required', 'max:255'],
-            'start_time'                 => ['required'],
-            'end_time'                   => ['required', 'after:start_time'],
+            'start_time'                 => [Rule::requiredIf((bool)$request->end_time)],
+            'end_time'                   => ['nullable', Rule::requiredIf((bool)$request->start_time), 'after:start_time'],
             'day_of_weeks'               => ['required', 'array', new CustomValiRequiredWithoutAllSupportsArrayInput($request->day_of_weeks, '利用曜日')],
             'reservations_categories_id' => ['required'],
             'columns_set_id'             => ['required'],
-            'is_allow_duplicate'         => ['required'],
             'facility_manager_name'      => ['max:191'],
             'supplement'                 => [new CustomValiWysiwygMax()],
             'display_sequence'           => ['nullable', 'numeric'],
         ]);
         $validator->setAttributeNames([
-            'hide_flag'                  => '表示',
             'facility_name'              => '施設名',
             'start_time'                 => '利用開始時間',
             'end_time'                   => '利用終了時間',
             'day_of_weeks'               => '利用曜日',
             'reservations_categories_id' => '施設カテゴリ',
             'columns_set_id'             => '項目セット',
-            'is_allow_duplicate'         => '重複予約',
             'facility_manager_name'      => '施設管理者',
             'supplement'                 => '補足',
             'display_sequence'           => '表示順',
@@ -241,8 +246,9 @@ class ReservationManage extends ManagePluginBase
         $facility->reservations_id = $facility->reservations_id ?: 0;
 
         $facility->facility_name                = $request->facility_name;
-        $facility->start_time                   = $request->start_time . ':00';
-        $facility->end_time                     = $request->end_time . ':00';
+        $facility->is_time_control              = $request->is_time_control ? 1 : 0;
+        $facility->start_time                   = $request->start_time ? $request->start_time . ':00' : null;
+        $facility->end_time                     = $request->end_time ? $request->end_time . ':00' : null;
         $facility->day_of_weeks                 = $day_of_weeks;
         $facility->hide_flag                    = $request->hide_flag ? NotShowType::not_show : NotShowType::show;
         $facility->is_allow_duplicate           = $request->is_allow_duplicate ? PermissionType::allowed : PermissionType::not_allowed;

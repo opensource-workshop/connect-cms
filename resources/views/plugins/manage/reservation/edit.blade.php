@@ -72,12 +72,6 @@ use App\Models\User\Reservations\ReservationsFacility;
             stepping: 5
         });
     });
-
-    // ツールチップ
-    $(function () {
-        // 有効化
-        $('[data-toggle="tooltip"]').tooltip()
-    })
 </script>
 
 <div class="card">
@@ -115,7 +109,7 @@ use App\Models\User\Reservations\ReservationsFacility;
             @endphp
 
             <div class="form-group form-row">
-                <label class="col-md-3 col-form-label text-md-right pt-0">表示 <span class="fas fa-info-circle" data-toggle="tooltip" title="施設予約カレンダーから当施設を表示するかしないか設定します。"> <span class="badge badge-danger">必須</span></label>
+                <label class="col-md-3 col-form-label text-md-right pt-0">表示</label>
                 <div class="col-md-9">
                     {{-- 初期値(空入力)は結果的に 0:表示する --}}
                     @foreach (NotShowType::getMembers() as $enum_value => $enum_label)
@@ -129,6 +123,7 @@ use App\Models\User\Reservations\ReservationsFacility;
                         </div>
                     @endforeach
                     @include('plugins.common.errors_inline', ['name' => 'hide_flag'])
+                    <div><small class="text-muted">※ 施設予約カレンダーから当施設を表示するかしないか設定します。</small></div>
                 </div>
             </div>
 
@@ -141,37 +136,46 @@ use App\Models\User\Reservations\ReservationsFacility;
             </div>
 
             <div class="form-group form-row">
-                <label for="facility_name" class="col-md-3 col-form-label text-md-right">利用時間 <span class="badge badge-danger">必須</span></label>
+                <label for="facility_name" class="col-md-3 col-form-label text-md-right pt-0">利用時間</label>
                 <div class="col-md-9">
 
+                    <div class="form-group row">
+                        <div class="col">
+                            <label>利用時間の制御</label><br>
+                            <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" value="0" id="is_time_control_0" name="is_time_control" class="custom-control-input" @if(old('is_time_control', $facility->is_time_control) == 0) checked="checked" @endif>
+                                <label class="custom-control-label" for="is_time_control_0">利用時間で制御しない</label>
+                            </div>
+                            <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" value="1" id="is_time_control_1" name="is_time_control" class="custom-control-input" @if(old('is_time_control', $facility->is_time_control) == 1) checked="checked" @endif>
+                                <label class="custom-control-label" for="is_time_control_1">利用時間で制御する</label>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row">
-                        {{-- 利用開始時間 --}}
                         <div class="col-md-4">
+                            <label>利用開始時間</label>
                             <div class="input-group date" id="start_time" data-target-input="nearest">
-                                <input type="text" name="start_time" value="{{ old('start_time', $booking ? $booking->start_time->format('H:i') : '09:00') }}" class="form-control datetimepicker-input @if ($errors->has('start_time')) border-danger @endif" data-target="#start_time">
+                                <input type="text" name="start_time" value="{{ old('start_time', substr($facility->start_time, 0, -3)) }}" class="form-control datetimepicker-input @if ($errors->has('start_time')) border-danger @endif" data-target="#start_time">
                                 <div class="input-group-append" data-target="#start_time" data-toggle="datetimepicker">
                                     <div class="input-group-text"><i class="fas fa-clock"></i></div>
                                 </div>
                             </div>
+                            @include('plugins.common.errors_inline', ['name' => 'start_time'])
                         </div>
-                        {{-- 利用終了時間 --}}
+
                         <div class="col-md-4">
+                            <label>利用終了時間</label>
                             <div class="input-group date" id="end_time" data-target-input="nearest">
-                                <input type="text" name="end_time" value="{{ old('end_time', $booking ? $booking->end_time->format('H:i') : '18:00') }}" class="form-control datetimepicker-input @if ($errors->has('end_time')) border-danger @endif" data-target="#end_time">
+                                <input type="text" name="end_time" value="{{ old('end_time', substr($facility->end_time, 0, -3)) }}" class="form-control datetimepicker-input @if ($errors->has('end_time')) border-danger @endif" data-target="#end_time">
                                 <div class="input-group-append" data-target="#end_time" data-toggle="datetimepicker">
                                     <div class="input-group-text"><i class="fas fa-clock"></i></div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col">
-                            @include('plugins.common.errors_inline', ['name' => 'start_time'])
                             @include('plugins.common.errors_inline', ['name' => 'end_time'])
                         </div>
                     </div>
-
                 </div>
             </div>
 
@@ -179,9 +183,7 @@ use App\Models\User\Reservations\ReservationsFacility;
                 <label class="col-md-3 col-form-label text-md-right pt-0">利用曜日 <span class="badge badge-danger">必須</span></label>
                 <div class="col-md-9">
                     @php
-                        // 初期値は月～金
-                        $day_of_weeks = $facility->day_of_weeks ?? ReservationsFacility::weekday;
-                        $day_of_weeks = explode('|', $day_of_weeks);
+                        $day_of_weeks = explode('|', $facility->day_of_weeks);
                     @endphp
                     @foreach (DayOfWeek::getMembers() as $enum_value => $enum_label)
                         {{-- チェック外した場合にも値を飛ばす対応：value=""にするといずれか必須チェック（required_without）でも使える --}}
@@ -223,7 +225,7 @@ use App\Models\User\Reservations\ReservationsFacility;
             </div>
 
             <div class="form-group form-row">
-                <label class="col-md-3 col-form-label text-md-right pt-0">重複予約 <span class="badge badge-danger">必須</span></label>
+                <label class="col-md-3 col-form-label text-md-right pt-0">重複予約</label>
                 <div class="col-md-9">
                     {{-- 初期値(空入力)は結果的に 0:許可しない --}}
                     @foreach (PermissionType::getMembers() as $enum_value => $enum_label)

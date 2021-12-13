@@ -129,14 +129,13 @@ class InitAndMigrationFromReservationsColumnsSetAndReservationsCategory extends 
                         'display_sequence' => $category_display_sequence,
                     ]);
 
-                    // 施設にセット
+                    // 施設にセット（いままで通りの設定で既存データ移行）
                     ReservationsFacility::where('reservations_id', $reservation->id)->update([
                         'columns_set_id' => $columns_set->id,
                         'reservations_categories_id' => $reservations_category->id,
-                        'is_allow_duplicate' => PermissionType::not_allowed,    // 重複予約を許可しない
-                        'start_time' => '09:00:00',
-                        'end_time'   => '18:00:00',
-                        'day_of_weeks' => ReservationsFacility::weekday,        // 平日
+                        'is_allow_duplicate' => PermissionType::allowed,        // 重複予約を許可する
+                        'is_time_control' => 0,                                 // 利用時間で制御しない
+                        'day_of_weeks' => ReservationsFacility::all_days,       // 全ての曜日で予約許可
                     ]);
 
                     // バケツで使うカテゴリ配下の施設
