@@ -1273,7 +1273,7 @@ EOM;
     }
     private function getHorizonBkimageParam($val, $bkcolor)
     {
-        $background_image_filepath = '/images/core/theme/menu/horizon/' .$val;
+        $background_image_filepath = url('').'/images/core/theme/menu/horizon/' .$val;
         $background_code = self::COLORLIST[$bkcolor];
         $bk_param = [];
         switch ($val) {
@@ -1572,7 +1572,7 @@ EOM;
 
     private function getVerticalBkimageParam($val, $bkcolor)
     {
-        $background_image_filepath = '/images/core/theme/menu/vertical/' .$val;
+        $background_image_filepath = url('').'/images/core/theme/menu/vertical/' .$val;
         $background_code = self::COLORLIST[$bkcolor];
         $bk_param = [];
         switch ($val) {
@@ -1783,7 +1783,7 @@ EOM;
 EOM;
                     }
                     if ($val == 'stitch') {
-                        $background_image_filepath = '/images/core/theme/frame/stitch/kuina.png';
+                        $background_image_filepath = url('').'/images/core/theme/frame/stitch/kuina.png';
                         $tmp_style .= <<<EOM
 /* フレームタイトル stitch border unset */
 .card {
@@ -1926,7 +1926,7 @@ EOM;
     }
     private function getFrameTittleBkimageParam($val, $bkcolor)
     {
-        $background_image_filepath = '/images/core/theme/frame/' .$val;
+        $background_image_filepath = url('').'/images/core/theme/frame/' .$val;
         $background_code = self::COLORLIST[$bkcolor];
         $bk_param = [];
 
