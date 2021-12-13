@@ -8135,7 +8135,7 @@ trait MigrationTrait
         $nc2_toppage_display_sequence = $this->getMigrationConfig('basic', 'nc2_toppage_display_sequence', 1);
         if ($nc2_page->permalink == '' && $nc2_page->display_sequence == 1 && $nc2_page->space_type == 1 && $nc2_page->private_flag == 0 ||
             // トップページが削除されている場合も考慮
-            $nc2_page->room_id == 1 && $nc2_page->root_id == 1 && $nc2_page->parent_id == 1 && $nc2_page->thread_num == 1 && $nc2_toppage_display_sequence == 1 && $nc2_page->space_type == 1 && $nc2_page->private_flag == 0
+            $nc2_page->room_id == 1 && $nc2_page->root_id == 1 && $nc2_page->parent_id == 1 && $nc2_page->thread_num == 1 && $nc2_page->display_sequence == $nc2_toppage_display_sequence && $nc2_page->space_type == 1 && $nc2_page->private_flag == 0
         ) {
             // 指定されたページ内のブロックを取得
             $nc2_common_blocks_query = Nc2Block::select('blocks.*', 'pages.page_name')
