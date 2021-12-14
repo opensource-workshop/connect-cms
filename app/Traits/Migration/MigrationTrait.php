@@ -3267,7 +3267,7 @@ trait MigrationTrait
             $control_display_flag = 1;
             $indicators_display_flag = 1;
             $fade_use_flag = 1;
-            $image_interval = 1500;
+            $image_interval = 3000;
             $slideshows = Slideshows::create([
                 'bucket_id' => $bucket->id,
                 'slideshows_name' => $slideshows_name,
