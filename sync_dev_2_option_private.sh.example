@@ -29,7 +29,11 @@ rsync -arvz --delete "${src_root_dir}resources/views/plugins_option/user/${optio
 rsync -arvz --delete "${src_root_dir}app/Console/CommandsOption/${option_plugin_command_dir}" "${dist_root_dir}${option_plugin}/app/Console/CommandsOption/" 
 # マイグレーション
 rsync -arvz --delete --exclude '2020_06_03_163936_optionsamples_table.php' --exclude '_readme.txt' "${src_root_dir}database/migrations_option" "${dist_root_dir}${option_plugin}/database/"
+# シーダー
+rsync -arvz --delete "${src_root_dir}database/seeds/options/${option_plugin}" "${dist_root_dir}${option_plugin}/database/seeds/options/"
 # Enum
 rsync -arvz --delete "${src_root_dir}app/EnumsOption" "${dist_root_dir}${option_plugin}/app/"
 # 画像
 rsync -arvz --delete "${src_root_dir}public/images/plugins/${option_plugin_resources_dir}" "${dist_root_dir}${option_plugin}/public/images/plugins/"
+# メールテンプレート
+rsync -arvz --delete "${src_root_dir}resources/views/mail_option/${option_plugin_resources_dir}" "${dist_root_dir}${option_plugin}/resources/views/mail_option/"

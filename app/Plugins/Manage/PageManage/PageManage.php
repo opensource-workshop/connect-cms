@@ -650,12 +650,12 @@ class PageManage extends ManagePluginBase
         $pages = Page::defaultOrderWithDepth($return_obj);
 
         // 移行用に取り込んだページ単位ディレクトリの取得
-        $migration_directories = Storage::directories('migration');
+        $migration_directories = Storage::directories('migration/import/pages');
 
         // 移行用に取り込んだページ単位ディレクトリのページ情報
         $page_in = array();
         foreach ($migration_directories as $migration_directory) {
-            $page_in[] = str_replace('migration/', '', $migration_directory);
+            $page_in[] = str_replace('migration/import/pages/', '', $migration_directory);
         }
         //print_r($page_in);
 
@@ -688,7 +688,7 @@ class PageManage extends ManagePluginBase
         }
 
         // 指定されたディレクトリを削除
-        Storage::deleteDirectory("migration/" . $request->delete_file_page_id);
+        Storage::deleteDirectory("migration/import/pages/" . $request->delete_file_page_id);
 
         // 指示された画面に戻る。
         return $this->migration_order($request, $page_id);
@@ -749,8 +749,12 @@ class PageManage extends ManagePluginBase
                        ->withInput();
         }
 
+        // migration_config を生成
+        $this->migration_config['frames'] = ['import_frame_plugins'];
+        $this->migration_config['frames']['import_frame_plugins'] = ['contents'];
+
         // Connect-CMS 移行形式のHTML をインポートする
-        $this->importHtml($request->migration_page_id);
+        $this->importHtml($request->migration_page_id, storage_path() . '/app/migration/import/pages/' . $page_id);
 
         // 指示された画面に戻る。
         return $this->migration_order($request, $page_id);

@@ -94,6 +94,11 @@ return [
     'PDF_TO_TEXT_API_URL' => env('PDF_TO_TEXT_API_URL', ''),
     'PDF_TO_TEXT_API_KEY' => env('PDF_TO_TEXT_API_KEY', ''),
 
+    // 外部APIを使って顔認識処理
+    'FACE_AI_API_URL' => env('FACE_AI_API_URL', ''),
+    'FACE_AI_API_KEY' => env('FACE_AI_API_KEY', ''),
+    'FACE_AI_DEFAULT_SIZE' => '1200',
+
     // WYSIWYG のバイト数チェックの数値（MySQLのtext型）
     'WYSIWYG_MAX_BYTE' => 65535,
 
@@ -102,4 +107,14 @@ return [
 
     // URL 項目のバイト数チェックの数値（MySQLのTEXT型。MySQL の「最大行サイズは 65,535 バイト」の制約対応。8190 バイトでチェック）
     'URL_MAX_BYTE' => 8190,
+
+    // サムネイル サイズ
+    'THUMBNAIL_SIZE' => [
+        'SMALL' => 200,
+        'MEDIUM' => 400,
+        'LARGE' => 800,
+    ],
+
+    // キャッシュ保持時間（分）10080 は1週間（7日）
+    'CACHE_MINUTS' => 10080,
 ];

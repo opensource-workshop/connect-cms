@@ -58,6 +58,9 @@ use App\Models\User\Linklists\LinklistFrame;
 use App\Models\User\Linklists\LinklistPost;
 use App\Models\User\Menus\Menu;
 use App\Models\User\Whatsnews\Whatsnews;
+use App\Models\User\Slideshows\Slideshows;
+use App\Models\User\Slideshows\SlideshowsItems;
+
 use App\User;
 
 use App\Models\Migration\MigrationMapping;
@@ -107,6 +110,9 @@ use App\Models\Migration\Nc2\Nc2RegistrationItemData;
 use App\Models\Migration\Nc2\Nc2Upload;
 use App\Models\Migration\Nc2\Nc2User;
 use App\Models\Migration\Nc2\Nc2WhatsnewBlock;
+use App\Models\Migration\Nc2\Nc2Slides;
+use App\Models\Migration\Nc2\Nc2SlidesUrl;
+use App\Models\Migration\Nc2\Nc2Simplemovie;
 
 use App\Traits\ConnectCommonTrait;
 
@@ -201,6 +207,8 @@ trait MigrationTrait
         'search'        => 'searchs',      // 検索
         'todo'          => 'Development',  // ToDo
         'whatsnew'      => 'whatsnews',    // 新着情報
+        'slides'        => 'slideshows',   // スライダー
+        'simplemovie'   => 'contents',     // シンプル動画
     ];
 
     // delete: 全体カテゴリは作らない
@@ -436,6 +444,26 @@ trait MigrationTrait
             Buckets::where('plugin_name', 'calendars')->delete();
             MigrationMapping::where('target_source_table', 'calendars')->delete();
         }
+
+        if ($target == 'slideshows' || $target == 'all') {
+            Slideshows::truncate();
+            SlideshowsItems::truncate();
+            Buckets::where('plugin_name', 'slideshows')->delete();
+            MigrationMapping::where('target_source_table', 'slideshows')->delete();
+        }
+
+        if ($target == 'simplemovie' || $target == 'all') {
+            /* シンプル動画はコンテンツに移行する */
+            $simplimovieBuckets = Buckets::where('plugin_name', 'contents')->where('bucket_name', 'simplemovie')->get();
+            foreach ($simplimovieBuckets as $simplimovieBucket) {
+                Contents::where('bucket_id', $simplimovieBucket->id)->delete();
+            }
+            if ($simplimovieBuckets) {
+                Buckets::where('plugin_name', 'contents')->where('bucket_name', 'simplemovie')->delete();
+            }
+            MigrationMapping::where('target_source_table', 'simplemovie')->delete();
+        }
+
     }
 
     /**
@@ -806,6 +834,19 @@ trait MigrationTrait
             $this->importCalendars($redo);
         }
 
+        // スライダーの取り込み
+        if ($this->isTarget('cc_import', 'plugins', 'slideshows')) {
+            $this->importSlideshows($redo);
+        }
+
+        // Contentsに入れるためclearData('pages')処理後に実行
+        // シンプル動画の取り込み
+        $importSimplemovieFlg = false;
+        if ($this->isTarget('cc_import', 'plugins', 'simplemovie')) {
+            $importSimplemovieFlg = true;
+        }
+
+
         // 固定URLの取り込み
         $this->importPermalinks($redo);
 
@@ -815,6 +856,13 @@ trait MigrationTrait
             if ($redo === true) {
                 // トップページ以外の削除
                 $this->clearData('pages');
+            }
+
+            // Contentsに入れるためclearData('pages')処理後に実行
+            // シンプル動画の取り込み
+            if ($importSimplemovieFlg) {
+                $this->importSimplemovie($redo);
+                $importSimplemovieFlg = false;
             }
 
             $paths = File::glob(storage_path() . '/app/' . $this->getImportPath('pages/*'));
@@ -933,6 +981,11 @@ trait MigrationTrait
                 // ページの中身の作成
                 $this->importHtmlImpl($page, $path);
             }
+        }
+
+        // シンプル動画単独実行用
+        if ($importSimplemovieFlg) {
+            $this->importSimplemovie($redo);
         }
 
         // グループデータの取り込み
@@ -3166,6 +3219,222 @@ trait MigrationTrait
     }
 
     /**
+     * Connect-CMS 移行形式のスライダーをインポート
+     */
+    private function importSlideshows($redo)
+    {
+        $this->putMonitor(3, "Slideshows import start.");
+
+        // データクリア
+        if ($redo === true) {
+            $this->clearData('slideshows');
+        }
+
+        // 定義の取り込み
+        $ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('slideshows/slideshows_*.ini'));
+        // 定義のループ
+        foreach ($ini_paths as $ini_path) {
+            // ini_file の解析
+            $ini = parse_ini_file($ini_path, true);
+
+            // nc2 の block_id
+            $nc2_slideshows_block_id = 0;
+            if (array_key_exists('source_info', $ini) && array_key_exists('slideshows_block_id', $ini['source_info'])) {
+                $nc2_slideshows_block_id = $ini['source_info']['slideshows_block_id'];
+            }
+
+            // マッピングテーブルの取得
+            $mapping = MigrationMapping::where('target_source_table', 'slideshows')->where('source_key', $nc2_slideshows_block_id)->first();
+
+            // マッピングテーブルを確認して、あれば削除
+            if (!empty($mapping)) {
+                // slideshows 取得。この情報から紐づけて、消すものを消してゆく。
+                $slideshows = slideshows::where('id', $mapping->destination_key)->first();
+                // コンテンツ削除
+                slideshowsItems::where('slideshows_id', $mapping->destination_key)->delete();
+                if (!empty($slideshows)) {
+                    // Buckets 削除
+                    Buckets::where('id', $slideshows->bucket_id)->delete();
+                    // 削除
+                    $slideshows->delete();
+                }
+                // マッピングテーブル削除
+                $mapping->delete();
+            }
+            // Buckets テーブルと slideshows テーブル、マッピングテーブルを追加
+            $slideshows_name = '無題';
+            $bucket = Buckets::create(['bucket_name' => $slideshows_name, 'plugin_name' => 'slideshows']);
+            $control_display_flag = 1;
+            $indicators_display_flag = 1;
+            $fade_use_flag = 1;
+            $image_interval = 3000;
+            $slideshows = Slideshows::create([
+                'bucket_id' => $bucket->id,
+                'slideshows_name' => $slideshows_name,
+                'control_display_flag' => $control_display_flag,
+                'indicators_display_flag' => $indicators_display_flag,
+                'fade_use_flag' => $fade_use_flag,
+                'image_interval' => $image_interval,
+            ]);
+
+            // スライダーのデータを取得（TSV）
+            $slideshows_tsv_filename = str_replace('ini', 'tsv', basename($ini_path));
+            if (Storage::exists($this->getImportPath('slideshows/') . $slideshows_tsv_filename)) {
+                // TSV ファイル取得（1つのTSV で1つのスライダー）
+                $slideshows_tsv = Storage::get($this->getImportPath('slideshows/') . $slideshows_tsv_filename);
+                // 無いものは対象外
+                if (empty($slideshows_tsv)) {
+                    continue;
+                }
+                // 改行で記事毎に分割
+                $slideshows_tsv_lines = explode("\n", $slideshows_tsv);
+                foreach ($slideshows_tsv_lines as $slideshows_tsv_line) {
+                    // タブで項目に分割
+                    $slideshows_tsv_cols = explode("\t", $slideshows_tsv_line);
+                    // image_path{\t}uploads_id{\t}link_url{\t}link_target{\t}caption{\t}display_flag{\t}display_sequence
+                    $image_path = isset($slideshows_tsv_cols[0]) ? $slideshows_tsv_cols[0] : null;
+                    $source_key = isset($slideshows_tsv_cols[1]) ? $slideshows_tsv_cols[1] : null;
+                    $link_url = isset($slideshows_tsv_cols[2]) ? $slideshows_tsv_cols[2] : null;
+                    $link_target = isset($slideshows_tsv_cols[3]) ? $slideshows_tsv_cols[3] : null;
+                    $caption = isset($slideshows_tsv_cols[4]) ? $slideshows_tsv_cols[4] : null;
+                    $display_flag = isset($slideshows_tsv_cols[5]) ? $slideshows_tsv_cols[5] : null;
+                    $display_sequence = isset($slideshows_tsv_cols[6]) ? $slideshows_tsv_cols[6] : null;
+
+                    /* uploads_idの取得 */
+                    $uploads_id = null;
+                    if ($source_key) {
+                        $upload_mapping = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $source_key)->first();
+                        $uploads_id = $upload_mapping ? $upload_mapping->destination_key : null;
+                        if ($uploads_id) {
+                            $upload = Uploads::find($uploads_id);
+                            if (empty($upload)) {
+                                $this->putMonitor(1, "No target = uploads", "uploads_id = " . $uploads_id);
+                            }else{
+                                // 100000
+                                $dir_no = 0;
+                                foreach (range(0, 1000000, 1000) as $number) {
+                                    $dir_no++;
+                                    if ($uploads_id <= $number) {
+                                        break;
+                                    }
+                                }
+                                $image_path = 'uploads/'.$dir_no.'/'.$uploads_id.'.'.$upload->extension;
+                            }
+                        }
+                    }
+
+                    
+                    // 付与テーブルデータを作成する
+                    $slideshows_count = SlideshowsItems::create([
+                        'slideshows_id' => $slideshows->id,
+                        'image_path' => $image_path,
+                        'uploads_id' => $uploads_id,
+                        'link_url' => $link_url,
+                        'link_target' => $link_target,
+                        'caption' => $caption,
+                        'display_flag' => $display_flag,
+                        'display_sequence' => $display_sequence,
+                    ]);
+                }
+            }
+            // マッピングテーブルの追加
+            $mapping = MigrationMapping::create([
+                'target_source_table'  => 'slideshows',
+                'source_key'           => $nc2_slideshows_block_id,
+                'destination_key'      => $slideshows->id,
+            ]);
+        }
+    }
+
+    /**
+     * Connect-CMS 移行形式のシンプル動画をインポート
+     */
+    private function importSimplemovie($redo)
+    {
+        $this->putMonitor(3, "Simplemovie import start.");
+
+        // データクリア
+        if ($redo === true) {
+            $this->clearData('simplemovie');
+        }
+        // 定義の取り込み
+        $ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('simplemovie/simplemovie_*.ini'));
+        // 定義のループ
+        foreach ($ini_paths as $ini_path) {
+            // ini_file の解析
+            $ini = parse_ini_file($ini_path, true);
+
+            // nc2 の block_id
+            $nc2_simplemovie_block_id = 0;
+            if (array_key_exists('source_info', $ini) && array_key_exists('simplemovie_block_id', $ini['source_info'])) {
+                $nc2_simplemovie_block_id = $ini['source_info']['simplemovie_block_id'];
+            }
+
+            // マッピングテーブルの取得
+            $mapping = MigrationMapping::where('target_source_table', 'simplemovie')->where('source_key', $nc2_simplemovie_block_id)->first();
+
+            // マッピングテーブルを確認して、あれば削除
+            if (!empty($mapping)) {
+                /*
+
+                // TODO 固定記事のデータを参照して消込のはず
+
+                // simplemovie 取得。この情報から紐づけて、消すものを消してゆく。
+                $simplemovie = simplemovie::where('id', $mapping->destination_key)->first();
+                if (!empty($simplemovie)) {
+                    // Buckets 削除
+                    Buckets::where('id', $simplemovie->bucket_id)->delete();
+                    // 削除
+                    $simplemovie->delete();
+                }
+                */
+
+                // マッピングテーブル削除
+                $mapping->delete();
+
+            }
+            // Buckets テーブルと simplemovie テーブル、マッピングテーブルを追加
+            $simplemovie_name = 'simplemovie';//固定記事に移行するのでバケツ名はsimplemovieにする
+            $bucket = Buckets::create(['bucket_name' => $simplemovie_name, 'plugin_name' => 'contents']);
+
+            /* uploads_idの取得 */
+            $source_upload_ids = [
+                        'movie' => $ini['simplemovie_base']['simplemovie_movie_upload_id'],
+                        'thumb' => $ini['simplemovie_base']['simplemovie_thumbnail_upload_id'],
+            ];
+            $uploads_ids = [];
+            foreach($source_upload_ids as $key => $source_key){
+                if ($source_key) {
+                    $upload_mapping = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $source_key)->first();
+                    $uploads_id = $upload_mapping ? $upload_mapping->destination_key : null;
+                    if ($uploads_id) {
+                        $uploads_ids[$key] = $uploads_id;
+                    }
+                }
+            }
+            // 動画のHTMLを作成
+            $movie_file_path = '/file/'. $uploads_ids['movie'];
+            $thumb_file_path = '/file/'. $uploads_ids['thumb'];
+            $content_html = "
+                <video class=\"simplemovie\" controls=\"\" preload=\"none\" controlslist=\"nodownload\" style=\"max-width: 100%; height: auto;\" poster=\"$thumb_file_path\" >
+                    <source src=\"$movie_file_path\" type=\"video/mp4\">
+                </video>
+            ";
+            // 固定記事として登録
+            $content = Contents::create(['bucket_id' => $bucket->id,
+                                        'content_text' => $content_html,
+                                        'status' => 0]);
+
+            // マッピングテーブルの追加
+            $mapping = MigrationMapping::create([
+                'target_source_table'  => 'simplemovie',
+                'source_key'           => $nc2_simplemovie_block_id,
+                'destination_key'      => $content->id, //固定記事のID
+            ]);
+        }
+    }
+
+    /**
      * シーダーの呼び出し
      */
     //private function importSeeder($redo)
@@ -3264,7 +3533,7 @@ trait MigrationTrait
     private function importHtml($page_id, $dir = null)
     {
         $page = Page::find($page_id);
-        $this->importHtmlImpl($page);
+        $this->importHtmlImpl($page, $dir);
     }
 
     /**
@@ -3371,8 +3640,13 @@ trait MigrationTrait
 
         // プラグイン振り分け
         if ($plugin_name == 'contents') {
-            // 固定記事（お知らせ）
-            $this->importPluginContents($page, $page_dir, $frame_ini, $display_sequence);
+            if($frame_ini["source_info"]["target_source_table"] == 'simplemovie') {
+                // シンプル動画（固定記事登録）
+                $this->importPluginSimplemovie($page, $page_dir, $frame_ini, $display_sequence);
+            } else {
+                // 固定記事（お知らせ）
+                $this->importPluginContents($page, $page_dir, $frame_ini, $display_sequence);
+            }
         } elseif ($plugin_name == 'menus') {
             // メニュー
             $this->importPluginMenus($page, $page_dir, $frame_ini, $display_sequence);
@@ -3406,6 +3680,9 @@ trait MigrationTrait
         } elseif ($plugin_name == 'calendars') {
             // カレンダー
             $this->importPluginCalendars($page, $page_dir, $frame_ini, $display_sequence);
+        } elseif ($plugin_name == 'slideshows') {
+            // スライダー
+            $this->importPluginSlideshows($page, $page_dir, $frame_ini, $display_sequence);
         }
     }
 
@@ -4057,6 +4334,95 @@ trait MigrationTrait
     }
 
     /**
+     * スライダープラグインの登録処理
+     */
+    private function importPluginSlideshows($page, $page_dir, $frame_ini, $display_sequence)
+    {
+        // 変数定義
+        $slideshows_block_id = null;
+        $slideshow_ini = null;
+        $nc2_slideshows_block_id = null;
+        $migration_mapping = null;
+        $slideshow = null;
+        $bucket = null;
+
+        // エクスポートファイルの slideshows_block_id 取得（エクスポート時の連番）
+        $slideshows_block_id = $this->getArrayValue($frame_ini, 'frame_base', 'slideshows_block_id', null);
+
+        // スライダーの情報取得
+        if (!empty($slideshows_block_id) && Storage::exists($this->getImportPath('slideshows/slideshows_') . $slideshows_block_id . '.ini')) {
+            $slideshow_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('slideshows/slideshows_') . $slideshows_block_id . '.ini', true);
+        }
+        // NC2 のslideshow_block_id
+        $nc2_slideshows_block_id = $this->getArrayValue($slideshow_ini, 'source_info', 'slideshows_block_id', null);
+
+        // NC2 のslideshow_block_id でマップ確認
+        if (!empty($slideshow_ini) && array_key_exists('source_info', $slideshow_ini) && array_key_exists('slideshows_block_id', $slideshow_ini['source_info'])) {
+            $migration_mapping = MigrationMapping::where('target_source_table', 'slideshows')->where('source_key', $nc2_slideshows_block_id)->first();
+        }
+
+        // マップから新Slideshow を取得
+        if (!empty($migration_mapping)) {
+            $slideshow = Slideshows::find($migration_mapping->destination_key);
+        }
+        // 新Slideshow からBucket ID を取得
+        if (!empty($slideshow)) {
+            $bucket = Buckets::find($slideshow->bucket_id);
+        }
+        // bucket がない場合は、フレームは作るけど、エラーログを出しておく。
+        if (empty($bucket)) {
+            $this->putError(1, 'Slideshow フレームのみで実体なし', "page_dir = " . $page_dir);
+        }
+        // Frames 登録
+        $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+    }
+    /**
+     * シンプル動画（固定記事）プラグインの登録処理
+     */
+    private function importPluginSimplemovie($page, $page_dir, $frame_ini, $display_sequence)
+    {
+        // 変数定義
+        $simplemovie_block_id = null;
+        $simplemovie_ini = null;
+        $nc2_simplemovie_block_id = null;
+        $migration_mapping = null;
+        $simplemovie = null;
+        $bucket = null;
+
+        // エクスポートファイルの simplemovie_block_id 取得（エクスポート時の連番）
+        $simplemovie_block_id = $this->getArrayValue($frame_ini, 'frame_base', 'simplemovie_block_id', null);
+
+        // シンプル動画の情報取得
+        if (!empty($simplemovie_block_id) && Storage::exists($this->getImportPath('simplemovie/simplemovie_') . $simplemovie_block_id . '.ini')) {
+            $simplemovie_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('simplemovie/simplemovie_') . $simplemovie_block_id . '.ini', true);
+        }
+        // NC2 のsimplemovie_block_id
+        $nc2_simplemovie_block_id = $this->getArrayValue($simplemovie_ini, 'source_info', 'simplemovie_block_id', null);
+
+        // NC2 のsimplemovie_block_id でマップ確認
+        if (!empty($simplemovie_ini) && array_key_exists('source_info', $simplemovie_ini) && array_key_exists('simplemovie_block_id', $simplemovie_ini['source_info'])) {
+            $migration_mapping = MigrationMapping::where('target_source_table', 'simplemovie')->where('source_key', $nc2_simplemovie_block_id)->first();
+        }
+/* TODO ここがおかしいはず */
+        // マップから新Simplemovie を取得
+        if (!empty($migration_mapping)) {
+            $simplemovie = Contents::find($migration_mapping->destination_key);
+        }
+        // 新Simplemovie からBucket ID を取得
+        if (!empty($simplemovie)) {
+            $bucket = Buckets::find($simplemovie->bucket_id);
+        }
+
+        // bucket がない場合は、フレームは作るけど、エラーログを出しておく。
+        if (empty($bucket)) {
+            $this->putError(1, 'Simplemovie フレームのみで実体なし', "page_dir = " . $page_dir);
+        }
+        // Frames 登録
+        $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+    }
+
+
+    /**
      * HTML からGoogle Analytics タグ部分を削除
      */
     private function deleteGATag($content)
@@ -4524,7 +4890,7 @@ trait MigrationTrait
 
         // 画像ファイルや添付ファイルを取得する場合のテンポラリ・ディレクトリ
         //$uniq_tmp_dir = uniqid('migration_');
-        Storage::makeDirectory('migration/' . $page_id);
+        Storage::makeDirectory('migration/import/pages/' . $page_id);
 
         // 指定されたページのHTML を取得
         $html = $this->getHTMLPage($url);
@@ -4569,6 +4935,11 @@ trait MigrationTrait
 
             // プラグイン情報
             $frame_ini .= "plugin_name = \"contents\"\n";
+            $frame_ini .= "template = \"default\"\n";
+
+            // 元のNC3情報
+            $frame_ini .= "\n";
+            $frame_ini .= "[source_info]\n";
             $frame_ini .= "target_source_table = \"announcement\"\n";
 
             // 本文を抜き出します。
@@ -4597,7 +4968,7 @@ trait MigrationTrait
                     $downloadPath = $image_url;
 
                     $file_name = "frame_" . $frame_index_str . '_' . $image_index;
-                    $savePath = 'migration/' . $page_id . "/" . $file_name;
+                    $savePath = 'migration/import/pages/' . $page_id . "/" . $file_name;
                     $saveStragePath = storage_path() . '/app/' . $savePath;
 
                     // CURL 設定、ファイル取得
@@ -4607,9 +4978,11 @@ trait MigrationTrait
                     curl_setopt($ch, CURLOPT_HEADER, false);
                     curl_setopt($ch, CURLOPT_HEADERFUNCTION, array(&$this,'callbackHeader'));
                     $result = curl_exec($ch);
+                    if (!empty(curl_errno($ch))) {
+                        continue;
+                    }
                     curl_close($ch);
                     fclose($fp);
-
                     //echo $this->content_disposition;
 
                     //getimagesize関数で画像情報を取得する
@@ -4707,13 +5080,13 @@ trait MigrationTrait
             $frame_ini .= "contents_file = \"frame_" . $frame_index_str . ".html\"\n";
 
             // フレーム設定ファイルの出力
-            Storage::put('migration/' . $page_id . "/frame_" . $frame_index_str . '.ini', $frame_ini);
+            Storage::put('migration/import/pages/' . $page_id . "/frame_" . $frame_index_str . '.ini', $frame_ini);
 
             // Contents 変換
             $content_html = $this->migrationHtml($content_html);
 
             // HTML content の保存
-            Storage::put('migration/' . $page_id . "/frame_" . $frame_index_str . '.html', trim($content_html));
+            Storage::put('migration/import/pages/' . $page_id . "/frame_" . $frame_index_str . '.html', trim($content_html));
         }
     }
 
@@ -5223,6 +5596,16 @@ trait MigrationTrait
         // NC2 カレンダー（calendar）データのエクスポート
         if ($this->isTarget('nc2_export', 'plugins', 'calendars')) {
             $this->nc2ExportCalendar($redo);
+        }
+
+        // NC2 スライダー（slides）データのエクスポート
+        if ($this->isTarget('nc2_export', 'plugins', 'slideshows')) {
+            $this->nc2ExportSlides($redo);
+        }
+
+        // NC2 スライダー（slides）データのエクスポート
+        if ($this->isTarget('nc2_export', 'plugins', 'simplemovie')) {
+            $this->nc2ExportSimplemovie($redo);
         }
 
         // NC2 固定リンク（abbreviate_url）データのエクスポート
@@ -7484,6 +7867,141 @@ trait MigrationTrait
     }
 
     /**
+     * NC2：スライダー（スライダー）の移行
+     */
+    private function nc2ExportSlides($redo)
+    {
+        $this->putMonitor(3, "Start nc2ExportSlides.");
+
+        // データクリア
+        if ($redo === true) {
+            // 移行用ファイルの削除
+            Storage::deleteDirectory($this->getImportPath('slideshows/'));
+        }
+
+        // NC2スライダー（Slideshow）を移行する。
+        $where_slideshow_block_ids = $this->getMigrationConfig('slideshows', 'nc2_export_where_slideshow_block_ids');
+        if (empty($where_slideshow_block_ids)) {
+            $nc2_slideshows = Nc2Slides::orderBy('block_id')->get();
+        } else {
+            $nc2_slideshows = Nc2Slides::whereIn('block_id', $where_slideshow_block_ids)->orderBy('block_id')->get();
+        }
+
+        // 空なら戻る
+        if ($nc2_slideshows->isEmpty()) {
+            return;
+        }
+
+        // NC2スライダー（Slideshow）のループ
+        foreach ($nc2_slideshows as $nc2_slideshow) {
+            $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (!empty($room_ids) && !in_array($nc2_slideshow->room_id, $room_ids)) {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
+            // スライダー設定
+            $ini = "";
+            $ini .= "[slideshow_base]\n";
+            $ini .= "slideshow_speed = " . $nc2_slideshow->speed . "\n";
+            $ini .= "slideshow_pause = " . $nc2_slideshow->pause . "\n";
+            // NC2 情報
+            $ini .= "\n";
+            $ini .= "[source_info]\n";
+            $ini .= "slideshows_block_id = " . $nc2_slideshow->block_id . "\n";
+            $ini .= "room_id = " . $nc2_slideshow->room_id . "\n";
+            $ini .= "module_name = \"slides\"\n";
+
+            // 付与情報を移行する。
+            $nc2_slides_urls = Nc2SlidesUrl::where('slides_id', $nc2_slideshow->slides_id)->orderBy('slides_url_id')->get();
+            // TSV でエクスポート
+            // image_path{\t}uploads_id{\t}link_url{\t}link_target{\t}caption{\t}display_flag{\t}display_sequence
+            $slides_tsv = "";
+            foreach ($nc2_slides_urls as $nc2_slides_url) {
+                // TSV 形式でエクスポート
+                if (!empty($slides_tsv)) {
+                    $slides_tsv .= "\n";
+                }
+                $slides_tsv .= "\t"; //image_path
+                $slides_tsv .= $nc2_slides_url->image_file_id. "\t";                        //uploads_id
+                $slides_tsv .= $nc2_slides_url->url. "\t";                                  //link_url
+                $slides_tsv .= ($nc2_slides_url->target_new == 0 ) ? "\t" : '_blank' . "\t";  //link_target
+                $slides_tsv .= $nc2_slides_url->linkstr. "\t";                              //caption
+                $slides_tsv .= $nc2_slides_url->view. "\t";                                 //display_flag
+                $slides_tsv .= $nc2_slides_url->display_sequence. "\t";                     //display_sequence
+            }
+            // スライダーの設定を出力
+            $this->storagePut($this->getImportPath('slideshows/slideshows_') . $this->zeroSuppress($nc2_slideshow->block_id) . '.ini', $ini);
+            // スライダーの付与情報を出力
+            $this->storagePut($this->getImportPath('slideshows/slideshows_') . $this->zeroSuppress($nc2_slideshow->block_id) . '.tsv', $slides_tsv);
+
+        }
+    }
+
+    /**
+     * NC2：シンプル動画の移行
+     */
+    private function nc2ExportSimplemovie($redo)
+    {
+        $this->putMonitor(3, "Start nc2ExportSimplemovie.");
+
+        // データクリア
+        if ($redo === true) {
+            // 移行用ファイルの削除
+            Storage::deleteDirectory($this->getImportPath('simplemovie/'));
+        }
+
+        // NC2シンプル動画を移行する。
+        $where_simplemovie_block_ids = $this->getMigrationConfig('simplemovie', 'nc2_export_where_simplemovie_block_ids');
+        if (empty($where_simplemovie_block_ids)) {
+            $nc2_simplemovies = Nc2Simplemovie::orderBy('block_id')->get();
+        } else {
+            $nc2_simplemovies = Nc2Simplemovie::whereIn('block_id', $where_simplemovie_block_ids)->orderBy('block_id')->get();
+        }
+
+        // 空なら戻る
+        if ($nc2_simplemovies->isEmpty()) {
+            return;
+        }
+
+        // NC2スライダー（Slideshow）のループ
+        foreach ($nc2_simplemovies as $nc2_simplemovie) {
+            $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (!empty($room_ids) && !in_array($nc2_simplemovie->room_id, $room_ids)) {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
+            // 動画が設定されていない場合はエクスポートしない
+            if ($nc2_simplemovie->movie_upload_id == null) {
+                continue;
+            }
+
+            // シンプル動画設定
+            $ini = "";
+            $ini .= "[simplemovie_base]\n";
+            $ini .= "simplemovie_movie_upload_id = " . $nc2_simplemovie->movie_upload_id . "\n";
+            $ini .= "simplemovie_movie_upload_id_request = " . $nc2_simplemovie->movie_upload_id_request . "\n";
+            $ini .= "simplemovie_thumbnail_upload_id = " . $nc2_simplemovie->thumbnail_upload_id . "\n";
+            $ini .= "simplemovie_thumbnail_upload_id_request = " . $nc2_simplemovie->thumbnail_upload_id_request . "\n";
+            $ini .= "simplemovie_width = " . $nc2_simplemovie->width . "\n";
+            $ini .= "simplemovie_height = " . $nc2_simplemovie->height . "\n";
+            $ini .= "simplemovie_autoplay_flag = " . $nc2_simplemovie->autoplay_flag . "\n";
+            $ini .= "simplemovie_embed_show_flag = " . $nc2_simplemovie->embed_show_flag . "\n";
+            $ini .= "simplemovie_agree_flag = " . $nc2_simplemovie->agree_flag . "\n";
+            // NC2 情報
+            $ini .= "\n";
+            $ini .= "[source_info]\n";
+            $ini .= "simplemovie_block_id = " . $nc2_simplemovie->block_id . "\n";
+            $ini .= "room_id = " . $nc2_simplemovie->room_id . "\n";
+            $ini .= "module_name = \"simplemovie\"\n";
+            // シンプル動画の設定を出力
+            $this->storagePut($this->getImportPath('simplemovie/simplemovie_') . $this->zeroSuppress($nc2_simplemovie->block_id) . '.ini', $ini);
+        }
+    }
+    /**
      * NC2：固定リンク（abbreviate_url）の移行
      */
     private function nc2ExportAbbreviateUrl($redo)
@@ -7614,9 +8132,10 @@ trait MigrationTrait
 
         // トップページの場合のみ、ヘッダ、左、右のブロックを取得して、トップページに設置する。
         // NC2 では、ヘッダ、左、右が一つずつで共通のため、ここで処理する。
+        $nc2_toppage_display_sequence = $this->getMigrationConfig('basic', 'nc2_toppage_display_sequence', 1);
         if ($nc2_page->permalink == '' && $nc2_page->display_sequence == 1 && $nc2_page->space_type == 1 && $nc2_page->private_flag == 0 ||
             // トップページが削除されている場合も考慮
-            $nc2_page->room_id == 1 && $nc2_page->root_id == 1 && $nc2_page->parent_id == 1 && $nc2_page->thread_num == 1 && $nc2_page->display_sequence == 1 && $nc2_page->space_type == 1 && $nc2_page->private_flag == 0
+            $nc2_page->room_id == 1 && $nc2_page->root_id == 1 && $nc2_page->parent_id == 1 && $nc2_page->thread_num == 1 && $nc2_page->display_sequence == $nc2_toppage_display_sequence && $nc2_page->space_type == 1 && $nc2_page->private_flag == 0
         ) {
             // 指定されたページ内のブロックを取得
             $nc2_common_blocks_query = Nc2Block::select('blocks.*', 'pages.page_name')
@@ -7845,7 +8364,10 @@ trait MigrationTrait
             }
         } elseif ($module_name == 'bbs') {
             $nc2_bbs_block = Nc2BbsBlock::where('block_id', $nc2_block->block_id)->first();
-            $ret = "blog_id = \"bbs_" . $this->zeroSuppress($nc2_bbs_block->bbs_id) . "\"\n";
+            // ブロックがあり、掲示板がない場合は対象外
+            if (!empty($nc2_bbs_block)) {
+                $ret = "blog_id = \"bbs_" . $this->zeroSuppress($nc2_bbs_block->bbs_id) . "\"\n";
+            }
         } elseif ($module_name == 'faq') {
             $nc2_faq_block = Nc2FaqBlock::where('block_id', $nc2_block->block_id)->first();
             $ret = "faq_id = \"" . $this->zeroSuppress($nc2_faq_block->faq_id) . "\"\n";
@@ -7925,6 +8447,18 @@ trait MigrationTrait
             // ブロックがあり、カレンダーがない場合は対象外
             if (!empty($nc2_calendar_block)) {
                 $ret = "calendar_block_id = \"" . $this->zeroSuppress($nc2_calendar_block->block_id) . "\"\n";
+            }
+        } elseif ($module_name == 'slides') {
+            $nc2_slides = Nc2Slides::where('block_id', $nc2_block->block_id)->first();
+            // ブロックがあり、スライダーがない場合は対象外
+            if (!empty($nc2_slides)) {
+                $ret = "slideshows_block_id = \"" . $this->zeroSuppress($nc2_slides->block_id) . "\"\n";
+            }
+        } elseif ($module_name == 'simplemovie') {
+            $nc2_simplemovie = Nc2Simplemovie::where('block_id', $nc2_block->block_id)->first();
+            // ブロックがあり、スライダーがない場合は対象外
+            if (!empty($nc2_simplemovie)) {
+                $ret = "simplemovie_block_id = \"" . $this->zeroSuppress($nc2_simplemovie->block_id) . "\"\n";
             }
         }
         return $ret;

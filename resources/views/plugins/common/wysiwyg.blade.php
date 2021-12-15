@@ -154,6 +154,11 @@
     if (Configs::getConfigsValue($cc_configs, 'use_pdf_thumbnail')) {
         $plugins .= ' pdf';
     }
+    // AI顔認識
+    if (Configs::getConfigsValue($cc_configs, 'use_face_ai')) {
+        $plugins .= ' face';
+    }
+
     $plugins = "plugins  : '" . $plugins . "',";
 
     // 文字サイズの選択
@@ -186,6 +191,9 @@
         $mobile_toolbar .= 'pdf ';
     }
 
+    // モザイク
+    $toolbar .= ' face ';
+
     $toolbar = "toolbar  : '" . $toolbar . "',";
     $mobile_toolbar = "toolbar  : '" . $mobile_toolbar . "',";
 
@@ -214,6 +222,9 @@
 
 {{-- 非表示のinput type file. pdf plugin用. see) public\js\tinymce\plugins\pdf\plugin.min.js --}}
 <input type="file" class="d-none" id="cc-pdf-upload-{{$frame_id}}">
+
+{{-- 非表示のinput type file. face plugin用. see) public\js\tinymce\plugins\face\plugin.min.js --}}
+<input type="file" class="d-none" id="cc-face-upload-{{$frame_id}}">
 
 {{-- bugfix: iphone or ipad + safari のみ、DOM(実際のinput type file)がないと機能しないため対応
     see) https://stackoverflow.com/questions/47664777/javascript-file-input-onchange-not-working-ios-safari-only --}}
@@ -337,6 +348,19 @@
                     // see) public\js\tinymce\plugins\pdf\plugin.min.js
                     var input = document.getElementById('cc-pdf-upload-{{$frame_id}}');
                     input.setAttribute('accept', '.pdf');
+
+                    input.onchange = function () {
+                        var file = this.files[0];
+                        callback(file.name);
+                    };
+
+                    input.click();
+                }
+                // face plugin. フィールド名の先頭がface
+                else if (meta.fieldname.startsWith('photo')) {
+                    // see) public\js\tinymce\plugins\face\plugin.min.js
+                    var input = document.getElementById('cc-face-upload-{{$frame_id}}');
+                    input.setAttribute('accept', '.jpg,.png');
 
                     input.onchange = function () {
                         var file = this.files[0];
@@ -724,6 +748,11 @@
             resized_image_size_initial: '{{  Configs::getConfigsValue($cc_configs, "resized_image_size_initial", ResizedImageSize::getDefault())  }}',
             // 画像プラグイン＞画像サイズを表示するか
             has_image_resize: {{  function_exists('gd_info') ? 'true' : 'false' }},
+            // AI顔認識の画像サイズ・粗さ
+            face_image_sizes: {!! ResizedImageSize::getWysiwygListBoxItems('asis') !!},
+            face_image_initial: '{{ Configs::getConfigsValue($cc_configs, "face_ai_initial_size", "middle") }}',
+            finenesses: {!! Fineness::getWysiwygListBoxItems() !!},
+            fineness_initial: '{{ Configs::getConfigsValue($cc_configs, "face_ai_initial_fineness", Fineness::getDefault()) }}'
         },
 
         setup: function(editor) {

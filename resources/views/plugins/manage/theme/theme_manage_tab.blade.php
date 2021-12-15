@@ -21,6 +21,13 @@
                 @endif
                 </li>
                 <li role="presentation" class="nav-item">
+                @if ($function == "generate")
+                    <span class="nav-link"><span class="active">カスタムテーマ生成</span></span>
+                @else
+                    <a href="{{url('/manage/theme/generateIndex')}}" class="nav-link">カスタムテーマ生成</a></li>
+                @endif
+                </li>
+                <li role="presentation" class="nav-item">
                 @if ($function == "editCss")
                     <span class="nav-link"><span class="active">CSS編集</span></span>
                 @endif

@@ -137,9 +137,32 @@ class UploadController extends ConnectController
             'gif',
         ];
 
+        // サムネイル指定の場合は、キャッシュを使ってファイルを返す。
+        if ($request->has('size')) {
+            $size = config('connect.THUMBNAIL_SIZE')['SMALL']; // SMALL を初期値で設定
+            if ($request->size == 'medium') {
+                $size = config('connect.THUMBNAIL_SIZE')['MEDIUM'];
+            } elseif ($request->size == 'large') {
+                $size = config('connect.THUMBNAIL_SIZE')['LARGE'];
+            }
+
+            $img = \Image::cache(function ($image) use ($fullpath, $size) {
+                return $image->make($fullpath)->resize(
+                    $size,
+                    $size,
+                    function ($constraint) {
+                        $constraint->aspectRatio();
+                        $constraint->upsize();
+                    }
+                );
+            }, config('connect.CACHE_MINUTS'), true); // 第3引数のtrue は戻り値にImage オブジェクトを返す意味。（false の場合は画像データ）
+            return $img->response();
+        }
+
         // if (isset($uploads['extension']) && strtolower($uploads['extension']) == 'pdf') {
         // if (strtolower($uploads->extension) == 'pdf') {
-        if (in_array(strtolower($uploads->extension), $inline_extensions)) {
+        // if (in_array(strtolower($uploads->extension), $inline_extensions)) {
+        if (in_array(strtolower($uploads->extension), $inline_extensions) && $request->response != 'download') {
             return response()
                     ->file(
                         // storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
@@ -314,9 +337,9 @@ EOD;
     }
 
     /**
-     * ファイル受け取り
+     * ファイル受け取り処理の振り分け
      */
-    public function postFile(Request $request)
+    public function postInvoke(Request $request, $method = null)
     {
         // ファイルアップロードには、記事の追加、変更の権限が必要
         //if (!$this->isCan('posts.create') || !$this->isCan('posts.update')) {
@@ -329,6 +352,119 @@ EOD;
             return array('location' => 'error');
         }
 
+        // 対象の処理の呼び出し
+        if ($method == null) {
+            // method が空の場合は、初期値としてpostFile を呼ぶ
+            return $this->postFile($request);
+        } elseif ($method == 'face') {
+            return $this->callFaceApi($request);
+        }
+    }
+
+    /**
+     * モザイクAPI の呼び出し
+     */
+    public function callFaceApi($request)
+    {
+        // ファイル受け取り(リクエスト内)
+        if (!$request->hasFile('photo') || !$request->file('photo')->isValid()) {
+            return array('location' => 'error');
+        }
+        $image_file = $request->file('photo');
+
+        // GDのリサイズでメモリを多く使うため、memory_limitセット
+        $configs = Configs::getSharedConfigs();
+        $memory_limit_for_image_resize = Configs::getConfigsValue($configs, 'memory_limit_for_image_resize', '256M');
+        ini_set('memory_limit', $memory_limit_for_image_resize);
+
+        // ファイルのリサイズ(メモリ内)
+        $image = Image::make($image_file);
+
+        // リサイズ
+        $resize_width = null;
+        $resize_height = null;
+        if ($image->width() > $image->height()) {
+            $resize_width = $request->image_size;
+        } else {
+            $resize_height = $request->image_size;
+        }
+
+        $image = $image->resize($resize_width, $resize_height, function ($constraint) {
+            // 横幅を指定する。高さは自動調整
+            $constraint->aspectRatio();
+
+            // 小さい画像が大きくなってぼやけるのを防止
+            $constraint->upsize();
+        });
+
+        // 画像の回転対応: orientate()
+        $image = $image->orientate();
+
+        // cURLセッションを初期化する
+        $ch = curl_init();
+
+        // 送信データを指定
+        $data = [
+            'api_key' => config('connect.FACE_AI_API_KEY'),
+            'mosaic_fineness' => $request->mosaic_fineness,
+            //'photo' => base64_encode($request->file('photo')->get()),
+            'photo' => base64_encode($image->stream()),
+            'extension' => $request->file('photo')->getClientOriginalExtension(),
+        ];
+        //\Log::debug($data);
+
+        // API URL取得
+        $api_url = config('connect.FACE_AI_API_URL');
+
+        // URLとオプションを指定する
+        curl_setopt($ch, CURLOPT_URL, $api_url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        // URLの情報を取得する
+        $res = curl_exec($ch);
+        //\Log::debug($res);
+
+        // セッションを終了する
+        curl_close($ch);
+
+        // ファイルデータをdecode して復元、保存
+        $res_base64 = json_decode($res, true);
+        //\Log::debug($res_base64);
+
+        // エラーチェック
+        if (array_key_exists('errors', $res_base64) && array_key_exists('message', $res_base64['errors']) && !empty($res_base64['errors']['message'])) {
+            $msg_array['link_text'] = '<p>エラーが発生しています：' . (array_key_exists('message', $res_base64['errors']) ? $res_base64['errors']['message'] : 'メッセージなし' ) . '</p>';
+            return $msg_array;
+        }
+
+        // uploads テーブルに情報追加、ファイルのid を取得する
+        $photo_upload = Uploads::create([
+            'client_original_name' => $request->file('photo')->getClientOriginalName(),
+            'mimetype'             => $request->file('photo')->getClientMimeType(),
+            'extension'            => $request->file('photo')->getClientOriginalExtension(),
+            'size'                 => $request->file('photo')->getSize(),
+            'page_id'              => $request->page_id,
+            'plugin_name'          => $request->plugin_name,
+        ]);
+
+        // ファイル保存
+        $directory = $this->getDirectory($photo_upload->id);
+        File::put(storage_path('app/') . $directory . '/' . $photo_upload->id . '.' . $request->file('photo')->getClientOriginalExtension(), base64_decode($res_base64['mosaic_photo']));
+
+        // URLのフルパスを込めても、wysiwyg のJSでドメイン取り除かれるため、含めない => ディレクトリインストールの場合はディレクトリが必要なので、url 追加
+        $msg_array = [];
+        $msg_array['link_text'] = '<p><img src="' . url('/') . '/file/' . $photo_upload->id . '" class="img-fluid" alt="' . $request->alt . '"></p>';
+
+        return $msg_array;
+    }
+
+    /**
+     * ファイル受け取り
+     */
+    public function postFile($request)
+    {
         // アップロードの場合（TinyMCE標準プラグイン）
         if ($request->hasFile('file')) {
             if ($request->file('file')->isValid()) {
