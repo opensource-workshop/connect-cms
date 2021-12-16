@@ -99,6 +99,12 @@ return [
     'FACE_AI_API_KEY' => env('FACE_AI_API_KEY', ''),
     'FACE_AI_DEFAULT_SIZE' => '1200',
 
+    // cURL オプション
+    'HTTPPROXYTUNNEL' => env('HTTPPROXYTUNNEL', false),
+    'PROXYPORT' => env('PROXYPORT', ''),
+    'PROXY' => env('PROXY', ''),
+    'PROXYUSERPWD' => env('PROXYUSERPWD', ''),
+
     // WYSIWYG のバイト数チェックの数値（MySQLのtext型）
     'WYSIWYG_MAX_BYTE' => 65535,
 
