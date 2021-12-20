@@ -21,7 +21,7 @@
             <a class="nav-link dropdown-toggle {{ 'depth-' . $page_obj->depth }}" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">
         @endif
 
-                <span class="d-md-block d-none">{{$page_obj->page_name}}</span>
+                <span class="d-md-block">{{$page_obj->page_name}}</span>
                 <span class="caret"></span>
             </a>
             <div class="dropdown-menu dropdown-menu-right">

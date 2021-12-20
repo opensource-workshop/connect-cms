@@ -11,7 +11,7 @@
 @section("plugin_contents_$frame->id")
 @if ($pages)
     <nav aria-label="アイコンメニュー">
-    <ul class="nav nav-justified d-md-flex">
+    <ul class="nav nav-justified d-none d-md-flex">
     {{-- 事前チェック。第一階層に表示できるページがあるかどうか、もしあるとした時、１つだけなのかどうか --}}
     <?php $count=0 ?>
     @foreach($pages as $page_obj)
