@@ -4,11 +4,13 @@ namespace App\Plugins\Manage\UploadfileManage;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 use File;
 
 use App\Models\Common\Uploads;
+use App\Models\Core\Configs;
 
 use App\Plugins\Manage\ManagePluginBase;
 
@@ -36,6 +38,8 @@ class UploadfileManage extends ManagePluginBase
         $role_ckeck_table["save"]        = array('admin_site');
         $role_ckeck_table["uploadImage"] = array('admin_site');
         $role_ckeck_table["deleteImage"] = array('admin_site');
+        $role_ckeck_table["userdir"]    = array('admin_site');
+        $role_ckeck_table["saveUserdir"] = array('admin_site');
         return $role_ckeck_table;
     }
 
@@ -195,5 +199,54 @@ class UploadfileManage extends ManagePluginBase
         $upload->save();
 
         return redirect("/manage/uploadfile/edit/" . $uploads_id)->with('info_message', '更新しました。');
+    }
+
+    /**
+     *  ユーザファイルの設定画面
+     */
+    public function userdir($request)
+    {
+        // storage/user の下のディレクトリ参照
+        // この時点で、storage/user がなければ、作成される。
+        $user_directories = Storage::disk('user')->directories();
+
+        // Config のユーザディレクトリ許可設定
+        $userdir_allows = Configs::where('category', 'userdir_allow')->get();
+
+        // 画面呼び出し
+        return view('plugins.manage.uploadfile.userdir', [
+            "function"    => __FUNCTION__,
+            "plugin_name" => "uploadfile",
+            "user_directories" => $user_directories,
+            "userdir_allows" => $userdir_allows,
+        ]);
+    }
+
+    /**
+     *  ユーザファイルの設定を保存
+     */
+    public function saveUserdir($request)
+    {
+        // 入力内容が存在するかのチェック
+        if (!$request->has('userdir') || !is_array($request->userdir)) {
+            return $this->userdir($request);
+        }
+
+        // storage/user の下のディレクトリ参照。リクエストされて、ここにあるもののみ、保存対象
+        // リクエストの不正防止
+        $user_directories = Storage::disk('user')->directories();
+
+        // リクエストのuserdir をループして、閲覧制限値を設定する。
+        foreach ($request->userdir as $userdir => $value) {
+            if (in_array($userdir, $user_directories)) {
+                // ユーザファイルの設定を保存(念のため、ディレクトリはbasename関数で安全性の確保)
+                $config = Configs::updateOrCreate(
+                    ['category' => 'userdir_allow', 'name' => basename($userdir)],
+                    ['value' => $value]
+                );
+            }
+        }
+
+        return redirect("/manage/uploadfile/userdir")->with('info_message', '更新しました。');
     }
 }
