@@ -96,7 +96,7 @@ Route::get('/file/css/{page_id?}.css', 'Core\UploadController@getCss')->name('ge
 Route::post('/upload/{method?}', 'Core\UploadController@postInvoke')->name('post_upload');
 
 // アップロードファイルの取得アクション
-Route::get('/file/user/{dir}/{filename}', 'Core\UploadController@getUserFile')->name('get_userfile');
+Route::get('/file/user/{dir}/{filename}', 'Core\UploadController@getUserFile')->where('filename', '.*')->name('get_userfile');
 
 // アップロードファイルの取得アクション
 Route::get('/file/{id?}', 'Core\UploadController@getFile')->name('get_file');

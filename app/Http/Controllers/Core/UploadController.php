@@ -201,6 +201,11 @@ class UploadController extends ConnectController
             return;
         }
 
+        // ../ or ..\ が含まれる場合は空を返す。
+        if (strpos($filename, '../') !== false || strpos($filename, "..\\") !== false){
+            return;
+        }
+
         // ファイルの実体がない場合は空を返す。
         if (!Storage::disk('user')->exists($dir . '/' . $filename)) {
             return;
