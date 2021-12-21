@@ -65,6 +65,12 @@ return [
             'endpoint' => env('AWS_ENDPOINT'),
         ],
 
+        // ユーザのアップロードファイル用ディスクの追加
+        'user' => [
+            'driver' => 'local',
+            'root' => storage_path('user'),
+        ],
+
     ],
 
 ];
