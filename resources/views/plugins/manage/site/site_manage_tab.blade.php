@@ -80,6 +80,12 @@
                         @else
                             <a href="{{url('/manage/site/wysiwyg')}}" class="dropdown-item">WYSIWYG設定</a>
                         @endif
+
+                        @if ($function == "document")
+                            <a href="{{url('/manage/site/document')}}" class="dropdown-item active bg-light">サイト設計書</a>
+                        @else
+                            <a href="{{url('/manage/site/document')}}" class="dropdown-item">サイト設計書</a>
+                        @endif
                     </div>
                 </li>
             </ul>

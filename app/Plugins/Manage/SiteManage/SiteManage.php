@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
 
+use setasign\Fpdi\Tcpdf\Fpdi;
+
 use App\Models\Core\Configs;
 use App\Models\Common\Categories;
 use App\Models\Common\Page;
@@ -52,8 +54,10 @@ class SiteManage extends ManagePluginBase
         $role_ckeck_table["favicon"]          = array('admin_site');
         $role_ckeck_table["saveFavicon"]      = array('admin_site');
         $role_ckeck_table["deleteFavicon"]    = array('admin_site');
-        $role_ckeck_table["wysiwyg"] = array('admin_site');
-        $role_ckeck_table["saveWysiwyg"] = array('admin_site');
+        $role_ckeck_table["wysiwyg"]          = array('admin_site');
+        $role_ckeck_table["saveWysiwyg"]      = array('admin_site');
+        $role_ckeck_table["document"]         = array('admin_site');
+        $role_ckeck_table["downloadDocument"] = array('admin_site');
 
         return $role_ckeck_table;
     }
@@ -845,5 +849,106 @@ class SiteManage extends ManagePluginBase
 
         // WYSIWYG設定画面に戻る
         return redirect("/manage/site/wysiwyg")->with('flash_message', '更新しました。');
+    }
+
+    /**
+     * サイトドキュメント出力指示画面
+     */
+    public function document($request, $id = null)
+    {
+        // Config データの取得
+        $configs = Configs::get();
+
+        // 管理画面プラグインの戻り値の返し方
+        return view('plugins.manage.site.document', [
+            "function" => __FUNCTION__,
+            "plugin_name" => "site",
+            "configs" => $configs,
+        ]);
+    }
+
+    /**
+     * サイト設計書ダウンロード
+     */
+    public function downloadDocument($request)
+    {
+        // 必要なデータの取得
+        $configs = Configs::get(); // Config
+        $categories = Categories::whereNull('target')->get(); // 共通カテゴリ
+
+        // 出力内容の編集とため込み
+        $output = collect();
+
+        // サイト名
+        $output->put('base_site_name', $configs->firstWhere('name', 'base_site_name')->value);
+
+        // 出力するPDF の準備
+        $pdf = new Fpdi();
+
+        // PDF プロパティ設定
+        $pdf->SetTitle($output->get('base_site_name') . ' サイト設計書'); 
+        //$pdf->SetAuthor('');
+        //$pdf->SetSubject('');
+        //$pdf->SetKeywords('');
+        //$pdf->SetCreator('');
+
+        // フォントを登録
+        // 追加フォントをtcpdf用フォントファイルに変換してvendor\tecnickcom\tcpdf\fontsに登録
+        $font = new \TCPDF_FONTS();
+
+        // ttfフォントファイルからtcpdf用フォントファイルを生成（tcpdf用フォントファイルがある場合は再生成しない）
+        $fontX = $font->addTTFfont(resource_path('fonts/ipaexg.ttf'));
+
+        // ヘッダーのフォントの設定（フォント情報を配列で渡す必要があるので、要注意）
+        $pdf->setHeaderMargin(5);
+        $pdf->setHeaderFont(Array('ipaexg', '', 10));
+        $pdf->setHeaderData('', 0, $configs->firstWhere('name', 'base_site_name')->value . " - " . url('/'), '');
+
+        // フッター
+        $pdf->setPrintFooter(true);
+        $pdf->setFooterFont(Array('ipaexg', '', 10));
+        $pdf->setFooterData(array(0, 64, 0), array(0, 64, 128));
+
+        // フォント設定
+        $pdf->setFont('ipaexg', '', 12);
+
+        // 初期ページを追加
+        $pdf->addPage();
+
+        // サイト設計書表紙
+        $pdf->writeHTML(view('plugins.manage.site.pdf.cover', compact('configs'))->render(), false);
+
+        // ページを追加
+        $pdf->addPage();
+
+        // サイト基本設定
+        $pdf->writeHTML(view('plugins.manage.site.pdf.base', compact('configs'))->render(), false);
+
+        // メタ情報設定
+        $pdf->writeHTML(view('plugins.manage.site.pdf.meta', compact('configs'))->render(), false);
+
+        // レイアウト設定
+        $pdf->writeHTML(view('plugins.manage.site.pdf.layout', compact('configs'))->render(), false);
+
+        // 共通カテゴリ設定
+        $pdf->writeHTML(view('plugins.manage.site.pdf.category', compact('categories'))->render(), false);
+
+        // 他言語設定
+        $pdf->writeHTML(view('plugins.manage.site.pdf.language', compact('configs'))->render(), false);
+
+        // エラー設定
+        $pdf->writeHTML(view('plugins.manage.site.pdf.error', compact('configs'))->render(), false);
+
+        // アクセス解析
+        $pdf->writeHTML(view('plugins.manage.site.pdf.analytics', compact('configs'))->render(), false);
+
+        // fabicon
+        $pdf->writeHTML(view('plugins.manage.site.pdf.favicon', compact('configs'))->render(), false);
+
+        // WYSIWYG設定
+        $pdf->writeHTML(view('plugins.manage.site.pdf.wysiwyg', compact('configs'))->render(), false);
+
+        $pdf->output('SiteDocument-' . $output->get('base_site_name') . '.pdf', 'D');
+        return redirect()->back();
     }
 }
