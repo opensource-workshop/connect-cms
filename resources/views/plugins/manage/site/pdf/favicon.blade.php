@@ -19,7 +19,7 @@
 </style>
 
 <br />
-<h4>メタ情報</h4>
+<h4>ファビコン情報</h4>
 <table border="0" class="table_css">
     <tr>
         <th class="doc_th">設定項目</th>
@@ -33,6 +33,8 @@
         <td>ファビコン画像</td>
         @if ($configs->firstWhere('name', 'favicon')->value)
             <td><img src="{{url('/')}}/uploads/favicon/{{$configs->firstWhere('name', 'favicon')->value}}" style="width: 50px;" width=50></td>
+        @else
+            <td><br /></td>
         @endif
     </tr>
 </table>

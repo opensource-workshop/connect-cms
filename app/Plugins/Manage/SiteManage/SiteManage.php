@@ -13,6 +13,7 @@ use setasign\Fpdi\Tcpdf\Fpdi;
 use App\Models\Core\Configs;
 use App\Models\Common\Categories;
 use App\Models\Common\Page;
+use App\Models\Common\PageRole;
 
 use App\Plugins\Manage\ManagePluginBase;
 use App\Enums\BaseLoginRedirectPage;
@@ -883,7 +884,7 @@ class SiteManage extends ManagePluginBase
         $output->put('base_site_name', $configs->firstWhere('name', 'base_site_name')->value);
 
         // 出力するPDF の準備
-        $pdf = new Fpdi();
+        $pdf = new PDF();
 
         // PDF プロパティ設定
         $pdf->SetTitle($output->get('base_site_name') . ' サイト設計書'); 
@@ -906,11 +907,11 @@ class SiteManage extends ManagePluginBase
 
         // フッター
         $pdf->setPrintFooter(true);
-        $pdf->setFooterFont(Array('ipaexg', '', 10));
-        $pdf->setFooterData(array(0, 64, 0), array(0, 64, 128));
 
         // フォント設定
         $pdf->setFont('ipaexg', '', 12);
+
+        // サイト基本設定
 
         // 初期ページを追加
         $pdf->addPage();
@@ -948,7 +949,47 @@ class SiteManage extends ManagePluginBase
         // WYSIWYG設定
         $pdf->writeHTML(view('plugins.manage.site.pdf.wysiwyg', compact('configs'))->render(), false);
 
+        // ページ設定
+
+        // ページデータの取得(laravel-nestedset 使用)
+        $return_obj = 'flat';
+        $pages = Page::defaultOrderWithDepth($return_obj);
+
+
+        // ページ権限を取得してGroup オブジェクトに保持する。
+        $page_roles = PageRole::join('groups', 'groups.id', '=', 'page_roles.group_id')
+                ->whereNull('groups.deleted_at')
+                ->where('page_roles.role_value', 1)
+                ->get();
+        // \Log::debug(var_export($page_roles, true));
+
+        foreach ($pages as &$page) {
+            $page->page_roles = $page_roles->where('page_id', $page->id);
+        }
+
+        // 初期ページを追加
+        $pdf->addPage();
+
+        // ページ設定
+        $pdf->writeHTML(view('plugins.manage.site.pdf.page', compact('pages'))->render(), false);
+
+
+        // 出力
         $pdf->output('SiteDocument-' . $output->get('base_site_name') . '.pdf', 'D');
         return redirect()->back();
+    }
+}
+
+class PDF extends Fpdi {
+
+    function Footer() {
+        //Go to 1.5 cm from bottom
+        $this->SetY(-15);
+
+        //Select Arial italic 8
+        $this->SetFont('ipaexg','I',8);
+
+        //Print centered page number
+        $this->Cell(0, 10, 'Page ' . $this->PageNo(), 'T', 0, 'C');
     }
 }

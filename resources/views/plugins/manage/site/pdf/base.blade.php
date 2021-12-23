@@ -19,6 +19,9 @@
 </style>
 
 <br />
+<h2 style="text-align: center; font-size: 32px;">サイト基本設定</h2>
+
+<br />
 <h4>サイト基本設定</h4>
 <table border="0" class="table_css">
     <tr>
