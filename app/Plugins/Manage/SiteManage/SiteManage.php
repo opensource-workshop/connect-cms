@@ -13,6 +13,7 @@ use setasign\Fpdi\Tcpdf\Fpdi;
 
 use App\Models\Core\Configs;
 use App\Models\Core\ConfigsLoginPermits;
+use App\Models\Core\Plugins;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
 use App\Models\Common\Group;
@@ -1060,6 +1061,20 @@ class SiteManage extends ManagePluginBase
         $sections = [
             ['security_login',    compact('login_permits'), 'ログイン制限'],
             ['security_purifier', compact('purifiers'),     'HTML記述制限'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- プラグイン管理
+
+        $plugins = Plugins::orderBy('display_sequence')->get();
+
+        // プラグイン管理
+        $pdf->addPage();
+        $pdf->Bookmark('プラグイン管理', 0, 0, '', '', array(0, 0, 0));
+
+        // ログイン制限
+        $sections = [
+            ['plugin_list', compact('plugins'), 'プラグイン一覧'],
         ];
         $this->outputSection($pdf, $sections);
 
