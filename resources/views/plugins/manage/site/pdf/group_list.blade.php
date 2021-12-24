@@ -24,4 +24,9 @@
         <td>{{$group->group_users_count}}</td>
     </tr>
     @endforeach
+    @if($groups->isEmpty())
+    <tr>
+        <td colspan="2">グループの設定はありません。</td>
+    </tr>
+    @endif
 </table>

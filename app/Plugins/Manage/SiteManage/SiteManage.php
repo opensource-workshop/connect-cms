@@ -987,7 +987,7 @@ class SiteManage extends ManagePluginBase
         // Page モデルのwithDepth() を使いたかったので、フレーム取得だけれど、Page をメインにしてFrame をJOIN させています。
         $frames = Page::select('pages.page_name', 'buckets.bucket_name', 'frames.*')
                        ->join('frames', 'pages.id', '=', 'frames.page_id')
-                       ->join('buckets', 'frames.bucket_id', '=', 'buckets.id')
+                       ->leftJoin('buckets', 'frames.bucket_id', '=', 'buckets.id')
                        ->orderBy('pages._lft')
                        ->orderByRaw('FIELD(frames.area_id, 0, 1, 3, 4, 2)')
                        ->orderBy('frames.display_sequence')
@@ -1075,6 +1075,19 @@ class SiteManage extends ManagePluginBase
         // ログイン制限
         $sections = [
             ['plugin_list', compact('plugins'), 'プラグイン一覧'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- システム管理
+
+        // システム管理
+        $pdf->addPage();
+        $pdf->Bookmark('システム管理', 0, 0, '', '', array(0, 0, 0));
+
+        // ログイン制限
+        $sections = [
+            ['system_server', compact('configs'), 'サーバ設定'],
+            ['system_log',    compact('configs'), 'エラーログ設定'],
         ];
         $this->outputSection($pdf, $sections);
 

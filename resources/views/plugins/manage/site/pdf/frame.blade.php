@@ -18,10 +18,10 @@
         <th class="doc_th" style="width: 25%;">ページ名</th>
         <th class="doc_th" style="width: 25%;">フレームタイトル</th>
         <th class="doc_th" style="width: 20%;">プラグイン</th>
-        <th class="doc_th" style="width: 5%;">上</th>
-        <th class="doc_th" style="width: 5%;">左</th>
-        <th class="doc_th" style="width: 5%;">右</th>
-        <th class="doc_th" style="width: 5%;">下</th>
+        <th class="doc_th" style="width: 8%;">ヘッダ</th>
+        <th class="doc_th" style="width: 7%;">左</th>
+        <th class="doc_th" style="width: 7%;">右</th>
+        <th class="doc_th" style="width: 8%;">フッタ</th>
     </tr>
     @php
         $break_row = true;

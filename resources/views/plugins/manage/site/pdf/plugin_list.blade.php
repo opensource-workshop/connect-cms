@@ -16,14 +16,14 @@
 <table border="0" class="table_css">
     <tr>
         <th class="doc_th" style="width: 8%;">表示順</th>
-        <th class="doc_th" style="width: 5%;">表示</th>
-        <th class="doc_th" style="width: 40%;">プラグイン名</th>
+        <th class="doc_th" style="width: 15%;">表示</th>
+        <th class="doc_th" style="width: 77%;">プラグイン名</th>
     </tr>
-    @foreach($groups as $group)
+    @foreach($plugins as $plugin)
     <tr>
-        <td>{{$group->display_sequence}}</td>
-        @if ($group->display_flag == 1) <td>表示する</td> @else <td>表示しない</td> @endif
-        <td>{{$group->plugin_name}}</td>
+        <td>{{$plugin->display_sequence}}</td>
+        @if ($plugin->display_flag == 1) <td>表示する</td> @else <td>表示しない</td> @endif
+        <td>{{$plugin->plugin_name}}</td>
     </tr>
     @endforeach
 </table>

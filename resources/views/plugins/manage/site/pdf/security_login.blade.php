@@ -30,5 +30,10 @@
         @if ($login_permit->reject == 0) <td>許可する</td> @else <td>許可しない</td> @endif
     </tr>
     @endforeach
+    @if($login_permits->isEmpty())
+    <tr>
+        <td colspan="5">ログイン制限の設定はありません。</td>
+    </tr>
+    @endif
 </table>
 ※ IPアドレス (*でALL)<br />

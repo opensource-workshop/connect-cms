@@ -29,4 +29,9 @@
         <td style="background-color:{{$category->background_color}};"><span style="color: {{$category->color}};">{{$category->category}}</span></td>
     </tr>
     @endforeach
+    @if($categories->isEmpty())
+    <tr>
+        <td colspan="6">カテゴリの設定はありません。</td>
+    </tr>
+    @endif
 </table>
