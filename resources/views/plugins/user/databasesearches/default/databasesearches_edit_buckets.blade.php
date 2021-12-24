@@ -74,6 +74,22 @@
         </div>
 
         <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}">並べ替え条件</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <select class="form-control" name="sort_flag">
+                    @php
+                    $sort_flag = old('sort_flag', $databasesearches->sort_flag);
+                    @endphp
+
+                    <option value="">指定なし</option>
+                    @foreach (DatabaseSearcherSortFlag::getSortFlags() as $sort_key => $sort_view)
+                        <option value="{{$sort_key}}" @if($sort_flag == $sort_key) selected @endif>{{  $sort_view  }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass()}}">フレームの選択</label>
             <div class="{{$frame->getSettingInputClass(true)}}">
                 <div class="custom-control custom-radio custom-control-inline">
