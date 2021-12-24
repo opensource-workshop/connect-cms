@@ -5,18 +5,8 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category サイト管理
  --}}
-<style type="text/css">
-/* テーブル */
-.table_css {
-    border-collapse:  collapse;     /* セルの線を重ねる */
-}
-.table_css th, .table_css td {
-    border: 0.1px solid #000;       /* 枠線指定 */
-}
-.doc_th {
-    background-color: #d0d0d0;      /* 背景色指定 */
-}
-</style>
+{{-- CSS --}}
+@include('plugins/manage/site/pdf/css')
 
 <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
 <h1 style="text-align: center; font-size: 32px;">Webサイト設計書</h1>

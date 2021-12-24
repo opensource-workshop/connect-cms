@@ -3,6 +3,7 @@
 namespace App\Plugins\Manage\SiteManage;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -11,7 +12,10 @@ use Illuminate\Support\Facades\File;
 use setasign\Fpdi\Tcpdf\Fpdi;
 
 use App\Models\Core\Configs;
+use App\Models\Core\ConfigsLoginPermits;
 use App\Models\Common\Categories;
+use App\Models\Common\Frame;
+use App\Models\Common\Group;
 use App\Models\Common\Page;
 use App\Models\Common\PageRole;
 
@@ -869,6 +873,17 @@ class SiteManage extends ManagePluginBase
     }
 
     /**
+     * セクション出力
+     */
+    private function outputSection(&$pdf, &$sections)
+    {
+        foreach ($sections as $section) {
+            $pdf->writeHTML(view('plugins.manage.site.pdf.' . $section[0], $section[1])->render(), false);
+            $pdf->Bookmark($section[2], 1, 0, '', '', array(0, 0, 0));
+        }
+    }
+
+    /**
      * サイト設計書ダウンロード
      */
     public function downloadDocument($request)
@@ -911,7 +926,7 @@ class SiteManage extends ManagePluginBase
         // フォント設定
         $pdf->setFont('ipaexg', '', 12);
 
-        // サイト基本設定
+        // --- サイト管理
 
         // 初期ページを追加
         $pdf->addPage();
@@ -921,58 +936,153 @@ class SiteManage extends ManagePluginBase
 
         // ページを追加
         $pdf->addPage();
+        $pdf->Bookmark('サイト基本設定', 0, 0, '', '', array(0, 0, 0));
 
-        // サイト基本設定
-        $pdf->writeHTML(view('plugins.manage.site.pdf.base', compact('configs'))->render(), false);
+        // サイト管理
+        $sections = [
+            ['base_main',      compact('configs'),    'サイト基本設定'],
+            ['base_meta',      compact('configs'),    'メタ情報'],
+            ['base_layout',    compact('configs'),    'レイアウト設定'],
+            ['base_category',  compact('categories'), '共通カテゴリ設定'],
+            ['base_language',  compact('configs'),    '他言語設定'],
+            ['base_error',     compact('configs'),    'エラー設定'],
+            ['base_analytics', compact('configs'),    'アクセス解析'],
+            ['base_favicon',   compact('configs'),    'ファビコン'],
+            ['base_wysiwyg',   compact('configs'),    'WYSIWYG設定'],
+        ];
+        $this->outputSection($pdf, $sections);
 
-        // メタ情報設定
-        $pdf->writeHTML(view('plugins.manage.site.pdf.meta', compact('configs'))->render(), false);
-
-        // レイアウト設定
-        $pdf->writeHTML(view('plugins.manage.site.pdf.layout', compact('configs'))->render(), false);
-
-        // 共通カテゴリ設定
-        $pdf->writeHTML(view('plugins.manage.site.pdf.category', compact('categories'))->render(), false);
-
-        // 他言語設定
-        $pdf->writeHTML(view('plugins.manage.site.pdf.language', compact('configs'))->render(), false);
-
-        // エラー設定
-        $pdf->writeHTML(view('plugins.manage.site.pdf.error', compact('configs'))->render(), false);
-
-        // アクセス解析
-        $pdf->writeHTML(view('plugins.manage.site.pdf.analytics', compact('configs'))->render(), false);
-
-        // fabicon
-        $pdf->writeHTML(view('plugins.manage.site.pdf.favicon', compact('configs'))->render(), false);
-
-        // WYSIWYG設定
-        $pdf->writeHTML(view('plugins.manage.site.pdf.wysiwyg', compact('configs'))->render(), false);
-
-        // ページ設定
+        // --- ページ管理
 
         // ページデータの取得(laravel-nestedset 使用)
         $return_obj = 'flat';
         $pages = Page::defaultOrderWithDepth($return_obj);
-
 
         // ページ権限を取得してGroup オブジェクトに保持する。
         $page_roles = PageRole::join('groups', 'groups.id', '=', 'page_roles.group_id')
                 ->whereNull('groups.deleted_at')
                 ->where('page_roles.role_value', 1)
                 ->get();
-        // \Log::debug(var_export($page_roles, true));
 
         foreach ($pages as &$page) {
             $page->page_roles = $page_roles->where('page_id', $page->id);
         }
 
-        // 初期ページを追加
+        // ページを追加
         $pdf->addPage();
+        $pdf->Bookmark('ページ設定', 0, 0, '', '', array(0, 0, 0));
 
         // ページ設定
-        $pdf->writeHTML(view('plugins.manage.site.pdf.page', compact('pages'))->render(), false);
+        $sections = [
+            ['page',        compact('pages'), 'ページ設定'],
+            ['page_limit',  compact('pages'), '制限関連'],
+            ['page_design', compact('pages'), 'デザイン関連'],
+            ['page_action', compact('pages'), '動作関連'],
+        ];
+        $this->outputSection($pdf, $sections);
 
+        // --- フレーム管理
+
+        // Page モデルのwithDepth() を使いたかったので、フレーム取得だけれど、Page をメインにしてFrame をJOIN させています。
+        $frames = Page::select('pages.page_name', 'buckets.bucket_name', 'frames.*')
+                       ->join('frames', 'pages.id', '=', 'frames.page_id')
+                       ->join('buckets', 'frames.bucket_id', '=', 'buckets.id')
+                       ->orderBy('pages._lft')
+                       ->orderByRaw('FIELD(frames.area_id, 0, 1, 3, 4, 2)')
+                       ->orderBy('frames.display_sequence')
+                       ->withDepth()
+                       ->get();
+
+        // フレーム設定
+        $pdf->addPage();
+        $pdf->Bookmark('フレーム設定', 0, 0, '', '', array(0, 0, 0));
+
+        // フレーム設定
+        $sections = [
+            ['frame',        compact('frames'), 'フレーム基本情報'],
+            ['frame_data',   compact('frames'), 'フレームデータ情報'],
+            ['frame_design', compact('frames'), 'フレームデザイン情報'],
+            ['frame_limit',  compact('frames'), 'フレーム制限情報'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- ユーザ管理
+
+        // ユーザ設定
+        $pdf->addPage();
+        $pdf->Bookmark('ユーザ設定', 0, 0, '', '', array(0, 0, 0));
+
+        // フレーム設定
+        $sections = [
+            ['user_regist', compact('configs'), '自動ユーザ登録設定'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- グループ管理
+
+        $groups = Group::select('groups.id', 'groups.name', DB::raw("count(group_users.id) as group_users_count"))
+                       ->join('group_users', 'group_users.group_id', '=', 'groups.id')
+                       ->groupBy('groups.id', 'groups.name')
+                       ->get();
+
+        // グループ設定
+        $pdf->addPage();
+        $pdf->Bookmark('グループ設定', 0, 0, '', '', array(0, 0, 0));
+
+        // グループ設定
+        $sections = [
+            ['group_list', compact('groups'), 'グループ一覧'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- セキュリティ管理
+
+        $login_permits = ConfigsLoginPermits::orderBy('apply_sequence')->get();
+
+        // HTML記述制限
+        $purifiers = config('cc_role.CC_HTMLPurifier_ROLE_LIST');
+
+        // Config テーブルからHTML記述制限の取得
+        // Config テーブルにデータがあれば、配列を上書きする。
+        // 初期状態ではConfig テーブルはなく、cc_role.CC_HTMLPurifier_ROLE_LIST を初期値とするため。
+        $config_purifiers = Configs::where('category', 'html_purifier')->get();
+        foreach ($config_purifiers as $config_purifier) {
+            if (array_key_exists($config_purifier->name, $purifiers)) {
+                $purifiers[$config_purifier->name] = $config_purifier->value;
+            }
+        }
+
+        // セキュリティ管理
+        $pdf->addPage();
+        $pdf->Bookmark('セキュリティ管理', 0, 0, '', '', array(0, 0, 0));
+
+        // ログイン制限
+        $sections = [
+            ['security_login',    compact('login_permits'), 'ログイン制限'],
+            ['security_purifier', compact('purifiers'),     'HTML記述制限'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // 目次 --------------------
+
+        // 目次ページの追加
+        $pdf->addTOCPage();
+
+        // write the TOC title
+        $pdf->SetFont('ipaexg', 'B', 28);
+        $pdf->MultiCell(0, 0, 'Webサイト設計書　目次', 0, 'C', 0, 1, '', 20, true, 0);
+        $pdf->Ln();
+
+        $pdf->SetFont('ipaexg', '', 12);
+
+        // add a simple Table Of Content at first page
+        // (check the example n. 59 for the HTML version)
+        $pdf->addTOC(2, 'ipaexg', '.', 'INDEX', 'B', array(0, 0, 0));
+
+        // end of TOC page
+        $pdf->endTOCPage();
+
+        // 目次 --------------------/
 
         // 出力
         $pdf->output('SiteDocument-' . $output->get('base_site_name') . '.pdf', 'D');
@@ -986,8 +1096,8 @@ class PDF extends Fpdi {
         //Go to 1.5 cm from bottom
         $this->SetY(-15);
 
-        //Select Arial italic 8
-        $this->SetFont('ipaexg','I',8);
+        //Select ipaexg 8
+        $this->SetFont('ipaexg','',8);
 
         //Print centered page number
         $this->Cell(0, 10, 'Page ' . $this->PageNo(), 'T', 0, 'C');
