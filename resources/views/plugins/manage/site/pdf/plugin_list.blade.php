@@ -9,18 +9,18 @@
 @include('plugins/manage/site/pdf/css')
 
 <br />
-<h2 style="text-align: center; font-size: 32px;">プラグイン設定</h2>
+<h2 style="text-align: center; font-size: 28px;">プラグイン設定</h2>
 
 <br />
 <h4>プラグイン一覧</h4>
 <table border="0" class="table_css">
-    <tr>
-        <th class="doc_th" style="width: 8%;">表示順</th>
+    <tr nobr="true">
+        <th class="doc_th" style="width: 10%;">表示順</th>
         <th class="doc_th" style="width: 15%;">表示</th>
-        <th class="doc_th" style="width: 77%;">プラグイン名</th>
+        <th class="doc_th" style="width: 75%;">プラグイン名</th>
     </tr>
     @foreach($plugins as $plugin)
-    <tr>
+    <tr nobr="true">
         <td>{{$plugin->display_sequence}}</td>
         @if ($plugin->display_flag == 1) <td>表示する</td> @else <td>表示しない</td> @endif
         <td>{{$plugin->plugin_name}}</td>

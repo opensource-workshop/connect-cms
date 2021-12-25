@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\File;
 
 use setasign\Fpdi\Tcpdf\Fpdi;
 
+use App\Models\Core\ApiSecret;
 use App\Models\Core\Configs;
 use App\Models\Core\ConfigsLoginPermits;
 use App\Models\Core\Plugins;
@@ -900,7 +901,7 @@ class SiteManage extends ManagePluginBase
         $output->put('base_site_name', $configs->firstWhere('name', 'base_site_name')->value);
 
         // 出力するPDF の準備
-        $pdf = new PDF();
+        $pdf = new PDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
         // PDF プロパティ設定
         $pdf->SetTitle($output->get('base_site_name') . ' サイト設計書'); 
@@ -908,6 +909,9 @@ class SiteManage extends ManagePluginBase
         //$pdf->SetSubject('');
         //$pdf->SetKeywords('');
         //$pdf->SetCreator('');
+
+        // 余白
+        $pdf->SetMargins(15, 20, 15);
 
         // フォントを登録
         // 追加フォントをtcpdf用フォントファイルに変換してvendor\tecnickcom\tcpdf\fontsに登録
@@ -1091,6 +1095,61 @@ class SiteManage extends ManagePluginBase
         ];
         $this->outputSection($pdf, $sections);
 
+        // --- API管理
+
+        $api_secrets = ApiSecret::orderBy('id')->get();
+
+        // API管理
+        $pdf->addPage();
+        $pdf->Bookmark('API管理', 0, 0, '', '', array(0, 0, 0));
+
+        // API管理
+        $sections = [
+            ['api_list', compact('api_secrets'), 'Secret Code 一覧'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- メッセージ管理
+
+        // メッセージ管理
+        $pdf->addPage();
+        $pdf->Bookmark('メッセージ管理', 0, 0, '', '', array(0, 0, 0));
+
+        // メッセージ管理
+        $sections = [
+            ['massage_first', compact('configs'), '初回確認メッセージ'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- 外部認証
+
+        // 外部認証
+        $pdf->addPage();
+        $pdf->Bookmark('外部認証', 0, 0, '', '', array(0, 0, 0));
+
+        // 外部認証
+        $sections = [
+            ['auth_base',        compact('configs'), '認証設定'],
+            ['auth_ldap',        compact('configs'), 'LDAP認証'],
+            ['auth_shibboleth',  compact('configs'), 'Shibboleth認証'],
+            ['auth_netcommons2', compact('configs'), 'NetCommons2認証'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- 外部サービス設定
+
+        // 外部サービス設定
+        $pdf->addPage();
+        $pdf->Bookmark('外部サービス設定', 0, 0, '', '', array(0, 0, 0));
+
+        // 外部サービス設定
+        $sections = [
+            ['service_base',  compact('configs'), 'WYSIWYG設定'],
+            ['service_pdf',   compact('configs'), 'PDFアップロード'],
+            ['service_face',  compact('configs'), 'AI顔認識'],
+        ];
+        $this->outputSection($pdf, $sections);
+
         // 目次 --------------------
 
         // 目次ページの追加
@@ -1098,7 +1157,7 @@ class SiteManage extends ManagePluginBase
 
         // write the TOC title
         $pdf->SetFont('ipaexg', 'B', 28);
-        $pdf->MultiCell(0, 0, 'Webサイト設計書　目次', 0, 'C', 0, 1, '', 20, true, 0);
+        $pdf->MultiCell(0, 0, 'Webサイト設計書　目次', 0, 'C', 0, 1, '', 30, true, 0);
         $pdf->Ln();
 
         $pdf->SetFont('ipaexg', '', 12);
@@ -1112,22 +1171,37 @@ class SiteManage extends ManagePluginBase
 
         // 目次 --------------------/
 
-        // 出力
-        $pdf->output('SiteDocument-' . $output->get('base_site_name') . '.pdf', 'D');
+        // 出力 ( D：Download, I：Inline )
+        $pdf->output('SiteDocument-' . $output->get('base_site_name') . '.pdf', 'I');
         return redirect()->back();
     }
 }
 
+/**
+ * PDF 出力クラス
+ * TCODF <- Fpdi <- このクラス で継承している。
+ *
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category サイト管理
+ * @package Controller
+ */
 class PDF extends Fpdi {
 
-    function Footer() {
+    function __construct($orientation, $unit, $format, $unicode, $encoding, $diskcache) {
+        parent::__construct($orientation, $unit, $format, $unicode, $encoding, $diskcache);
+    }
+
+    // Page footer
+    public function Footer() {
+
         //Go to 1.5 cm from bottom
-        $this->SetY(-15);
+        $this->SetY(-15);       
 
-        //Select ipaexg 8
-        $this->SetFont('ipaexg','',8);
+        //Select font
+        $this->SetFont('ipaexg', '', 8);
 
-        //Print centered page number
-        $this->Cell(0, 10, 'Page ' . $this->PageNo(), 'T', 0, 'C');
+        // Page number(PageNo() だと、目次は最後のページ数になるので、getAliasNumPage() で、挿入したページの数を印字する)
+        $this->Cell(0, 10,  'Page '.$this->getAliasNumPage().' / '.$this->getAliasNbPages(), 'T', false, 'C', 0, '', 0, false, 'T', 'M');
     }
 }

@@ -9,19 +9,19 @@
 @include('plugins/manage/site/pdf/css')
 
 <br />
-<h2 style="text-align: center; font-size: 32px;">フレーム設定</h2>
+<h2 style="text-align: center; font-size: 28px;">フレーム設定</h2>
 
 <br />
 <h4>フレーム設定（基本情報）</h4>
 <table border="0" class="table_css">
-    <tr>
+    <tr nobr="true">
         <th class="doc_th" style="width: 25%;">ページ名</th>
         <th class="doc_th" style="width: 25%;">フレームタイトル</th>
         <th class="doc_th" style="width: 20%;">プラグイン</th>
-        <th class="doc_th" style="width: 8%;">ヘッダ</th>
-        <th class="doc_th" style="width: 7%;">左</th>
-        <th class="doc_th" style="width: 7%;">右</th>
-        <th class="doc_th" style="width: 8%;">フッタ</th>
+        <th class="doc_th" style="width: 9%;">ヘッダ</th>
+        <th class="doc_th" style="width: 6%;">左</th>
+        <th class="doc_th" style="width: 6%;">右</th>
+        <th class="doc_th" style="width: 9%;">フッタ</th>
     </tr>
     @php
         $break_row = true;
@@ -33,7 +33,7 @@
                 $count = count($frames->where('page_id', $frame->page_id));
             }
         @endphp
-        <tr>
+        <tr nobr="true">
             @if ($break_row)
                 @if ($count > 1) <td rowspan="{{$count}}">{{$frame->page_name}}</td>
                 @else <td>{{$frame->page_name}}</td>

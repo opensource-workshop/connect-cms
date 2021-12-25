@@ -11,11 +11,11 @@
 <br />
 <h4>アクセス解析</h4>
 <table border="0" class="table_css">
-    <tr>
+    <tr nobr="true">
         <th class="doc_th">設定項目</th>
         <th class="doc_th">設定内容</th>
     </tr>
-    <tr>
+    <tr nobr="true">
         <td>トラッキングコード</td>
         <td>{!!nl2br($configs->firstWhere('name', 'tracking_code')->value)!!}</td>
     </tr>

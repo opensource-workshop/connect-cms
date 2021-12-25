@@ -11,7 +11,7 @@
 <br />
 <h4>ページ設定（デザイン情報）</h4>
 <table border="0" class="table_css">
-    <tr>
+    <tr nobr="true">
         <th class="doc_th" style="width: 5%;">ID</th>
         <th class="doc_th" style="width: 35%;">ページ名</th>
         <th class="doc_th" style="width: 20%;">背景色</th>
@@ -19,7 +19,7 @@
         <th class="doc_th" style="width: 20%;">クラス名</th>
     </tr>
     @foreach($pages as $page)
-    <tr>
+    <tr nobr="true">
         <td>{{$page->id}}</td>
         <td>{{$page->page_name}}</td>
         <td>{{$page->background_color}}</td>

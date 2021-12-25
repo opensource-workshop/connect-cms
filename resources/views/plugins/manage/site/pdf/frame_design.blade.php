@@ -11,12 +11,12 @@
 <br />
 <h4>フレーム設定（デザイン情報）</h4>
 <table border="0" class="table_css">
-    <tr>
+    <tr nobr="true">
         <th class="doc_th" style="width: 25%;">ページ名</th>
         <th class="doc_th" style="width: 25%;">フレームタイトル</th>
-        <th class="doc_th" style="width: 10%;">デザイン</th>
+        <th class="doc_th" style="width: 12%;">デザイン</th>
         <th class="doc_th" style="width: 5%;">幅</th>
-        <th class="doc_th" style="width: 20%;">テンプレート</th>
+        <th class="doc_th" style="width: 18%;">テンプレート</th>
         <th class="doc_th" style="width: 15%;">class</th>
     </tr>
     @php
@@ -29,7 +29,7 @@
                 $count = count($frames->where('page_id', $frame->page_id));
             }
         @endphp
-        <tr>
+        <tr nobr="true">
             @if ($break_row)
                 @if ($count > 1) <td rowspan="{{$count}}">{{$frame->page_name}}</td>
                 @else <td>{{$frame->page_name}}</td>

@@ -11,15 +11,15 @@
 <br />
 <h4>ファビコン</h4>
 <table border="0" class="table_css">
-    <tr>
+    <tr nobr="true">
         <th class="doc_th">設定項目</th>
         <th class="doc_th">設定内容</th>
     </tr>
-    <tr>
+    <tr nobr="true">
         <td>ファビコン・ファイル</td>
         <td>{{$configs->firstWhere('name', 'favicon')->value}}</td>
     </tr>
-    <tr>
+    <tr nobr="true">
         <td>ファビコン画像</td>
         @if ($configs->firstWhere('name', 'favicon')->value)
             <td><img src="{{url('/')}}/uploads/favicon/{{$configs->firstWhere('name', 'favicon')->value}}" style="width: 50px;" width=50></td>

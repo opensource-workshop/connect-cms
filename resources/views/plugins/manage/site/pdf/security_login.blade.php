@@ -9,20 +9,20 @@
 @include('plugins/manage/site/pdf/css')
 
 <br />
-<h2 style="text-align: center; font-size: 32px;">セキュリティ管理設定</h2>
+<h2 style="text-align: center; font-size: 28px;">セキュリティ管理設定</h2>
 
 <br />
 <h4>ログイン制限</h4>
 <table border="0" class="table_css">
-    <tr>
-        <th class="doc_th" style="width: 8%;">適用順</th>
+    <tr nobr="true">
+        <th class="doc_th" style="width: 10%;">適用順</th>
         <th class="doc_th" style="width: 20%;">IPアドレス</th>
         <th class="doc_th" style="width: 20%;">権限</th>
-        <th class="doc_th" style="width: 37%;">メモ</th>
+        <th class="doc_th" style="width: 35%;">メモ</th>
         <th class="doc_th" style="width: 15%;">許可/拒否</th>
     </tr>
     @foreach($login_permits as $login_permit)
-    <tr>
+    <tr nobr="true">
         <td>{{$login_permit->apply_sequence}}</td>
         <td>{{$login_permit->ip_address}}</td>
         <td>{{$login_permit->getRoleName($login_permit)}}</td>
@@ -31,7 +31,7 @@
     </tr>
     @endforeach
     @if($login_permits->isEmpty())
-    <tr>
+    <tr nobr="true">
         <td colspan="5">ログイン制限の設定はありません。</td>
     </tr>
     @endif

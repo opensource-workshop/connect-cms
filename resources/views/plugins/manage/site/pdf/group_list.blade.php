@@ -9,23 +9,23 @@
 @include('plugins/manage/site/pdf/css')
 
 <br />
-<h2 style="text-align: center; font-size: 32px;">グループ設定</h2>
+<h2 style="text-align: center; font-size: 28px;">グループ設定</h2>
 
 <br />
 <h4>グループ一覧</h4>
 <table border="0" class="table_css">
-    <tr>
+    <tr nobr="true">
         <th class="doc_th" style="width: 50%;">グループ名</th>
         <th class="doc_th" style="width: 50%;">参加ユーザ数</th>
     </tr>
     @foreach($groups as $group)
-    <tr>
+    <tr nobr="true">
         <td>{{$group->name}}</td>
         <td>{{$group->group_users_count}}</td>
     </tr>
     @endforeach
     @if($groups->isEmpty())
-    <tr>
+    <tr nobr="true">
         <td colspan="2">グループの設定はありません。</td>
     </tr>
     @endif

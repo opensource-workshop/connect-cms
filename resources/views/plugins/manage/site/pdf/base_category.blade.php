@@ -10,8 +10,8 @@
 
 <br />
 <h4>共通カテゴリ設定</h4>
-<table border="0" class="table_css">
-    <tr>
+<table border="0" class="table_css" nobr="true">
+    <tr nobr="true">
         <th class="doc_th">表示順</th>
         <th class="doc_th">クラス名</th>
         <th class="doc_th">カテゴリ</th>
@@ -20,7 +20,7 @@
         <th class="doc_th">サンプル</th>
     </tr>
     @foreach($categories as $category)
-    <tr>
+    <tr nobr="true">
         <td>{{$category->display_sequence}}</td>
         <td>{{$category->classname}}</td>
         <td>{{$category->category}}</td>
@@ -30,7 +30,7 @@
     </tr>
     @endforeach
     @if($categories->isEmpty())
-    <tr>
+    <tr nobr="true">
         <td colspan="6">カテゴリの設定はありません。</td>
     </tr>
     @endif

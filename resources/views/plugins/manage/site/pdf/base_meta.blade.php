@@ -11,11 +11,11 @@
 <br />
 <h4>メタ情報</h4>
 <table border="0" class="table_css">
-    <tr>
+    <tr nobr="true">
         <th class="doc_th">設定項目</th>
         <th class="doc_th">設定内容</th>
     </tr>
-    <tr>
+    <tr nobr="true">
         <td>サイト概要</td>
         <td>{{$configs->firstWhere('name', 'description')->value}}</td>
     </tr>
