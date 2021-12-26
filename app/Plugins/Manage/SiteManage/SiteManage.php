@@ -1212,19 +1212,42 @@ class SiteManage extends ManagePluginBase
 
         // --- テーマ管理
 
-        $list = Storage::disk('public')->files('/');
-\Log::debug($list);
+        // Users テーマディレクトリの取得
+        $tmp_dirs = File::directories(public_path() . '/themes/Users/');
+        $dirs = array();
+        foreach ($tmp_dirs as $tmp_dir) {
+            // テーマ設定ファイル取得
+            $theme_inis = parse_ini_file(public_path() . '/themes/Users/' . basename($tmp_dir) . '/themes.ini');
+            $theme_name = '';
+            if (!empty($theme_inis) && array_key_exists('theme_name', $theme_inis)) {
+                $theme_name = $theme_inis['theme_name'];
+            }
+
+            $dirs[basename($tmp_dir)] = array('dir' => basename($tmp_dir), 'theme_name' => $theme_name);
+        }
+        asort($dirs);  // ディレクトリが名前に対して逆順になることがあるのでソートしておく。
 
         // テーマ管理
-//        $pdf->addPage();
-//        $pdf->Bookmark('テーマ管理', 0, 0, '', '', array(0, 0, 0));
+        $pdf->addPage();
+        $pdf->Bookmark('テーマ管理', 0, 0, '', '', array(0, 0, 0));
 
         // テーマ管理
-//        $sections = [
-//            ['theme_user', compact('configs'), 'ユーザ・テーマ'],
-//        ];
-//        $this->outputSection($pdf, $sections);
+        $sections = [
+            ['theme_user', compact('dirs'), 'ユーザ・テーマ'],
+        ];
+        $this->outputSection($pdf, $sections);
 
+        // --- ログ管理
+
+        // ログ管理
+        $pdf->addPage();
+        $pdf->Bookmark('ログ管理', 0, 0, '', '', array(0, 0, 0));
+
+        // ログ管理
+        $sections = [
+            ['log_main', compact('configs'), 'ログ設定'],
+        ];
+        $this->outputSection($pdf, $sections);
 
         // --- 問い合わせ先
 
