@@ -1,5 +1,5 @@
 {{--
- * サイト管理（サイト設計書）のセキュリティ管理設定のテンプレート
+ * サイト管理（サイト設計書）のセキュリティ設定のテンプレート
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
@@ -9,7 +9,7 @@
 @include('plugins/manage/site/pdf/css')
 
 <br />
-<h2 style="text-align: center; font-size: 28px;">セキュリティ管理設定</h2>
+<h2 style="text-align: center; font-size: 28px;">セキュリティ設定</h2>
 
 <br />
 <h4>ログイン制限</h4>

@@ -64,6 +64,7 @@ class SiteManage extends ManagePluginBase
         $role_ckeck_table["wysiwyg"]          = array('admin_site');
         $role_ckeck_table["saveWysiwyg"]      = array('admin_site');
         $role_ckeck_table["document"]         = array('admin_site');
+        $role_ckeck_table["saveDocument"]     = array('admin_site');
         $role_ckeck_table["downloadDocument"] = array('admin_site');
 
         return $role_ckeck_table;
@@ -875,6 +876,51 @@ class SiteManage extends ManagePluginBase
     }
 
     /**
+     * Configs 更新
+     */
+    private function updateConfigs($request, $config_values)
+    {
+        foreach($config_values as $category => $configs) {
+            foreach ($configs as $config) {
+                $configs = Configs::updateOrCreate(
+                    ['name'     => $config],
+                    ['category' => $category,
+                     'value'    => $request->input($config)]
+                );
+            }
+        }
+    }
+
+    /**
+     * サイト設計書設定保存
+     */
+    public function saveDocument($request)
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        // Configs 保存内容
+        $config_values = [
+            'document' => [
+                 'document_secret_name',
+                 'document_auth_netcomons2_admin_password',
+                 'document_support_org_title',
+                 'document_support_org_txt',
+                 'document_support_contact_title',
+                 'document_support_contact_txt',
+                 'document_support_other_title',
+                 'document_support_other_txt',
+            ],
+        ];
+        $this->updateConfigs($request, $config_values);
+
+        // ページ管理画面に戻る
+        return redirect("/manage/site/document");
+    }
+
+    /**
      * セクション出力
      */
     private function outputSection(&$pdf, &$sections)
@@ -931,13 +977,15 @@ class SiteManage extends ManagePluginBase
         // フォント設定
         $pdf->setFont('ipaexg', '', 12);
 
-        // --- サイト管理
+        // --- 表紙
 
         // 初期ページを追加
         $pdf->addPage();
 
         // サイト設計書表紙
         $pdf->writeHTML(view('plugins.manage.site.pdf.cover', compact('configs'))->render(), false);
+
+        // --- サイト管理
 
         // ページを追加
         $pdf->addPage();
@@ -1150,7 +1198,42 @@ class SiteManage extends ManagePluginBase
         ];
         $this->outputSection($pdf, $sections);
 
-        // 目次 --------------------
+        // --- アップロードファイル
+
+        // アップロードファイル
+        $pdf->addPage();
+        $pdf->Bookmark('アップロードファイル', 0, 0, '', '', array(0, 0, 0));
+
+        // アップロードファイル
+        $sections = [
+            ['upload_userfile', compact('configs'), 'ユーザディレクトリ一覧'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- テーマ管理
+
+        $list = Storage::disk('public')->files('/');
+\Log::debug($list);
+
+        // テーマ管理
+//        $pdf->addPage();
+//        $pdf->Bookmark('テーマ管理', 0, 0, '', '', array(0, 0, 0));
+
+        // テーマ管理
+//        $sections = [
+//            ['theme_user', compact('configs'), 'ユーザ・テーマ'],
+//        ];
+//        $this->outputSection($pdf, $sections);
+
+
+        // --- 問い合わせ先
+
+        // 問い合わせ先ページを追加
+        $pdf->addPage();
+
+        // 問い合わせ先
+        $pdf->writeHTML(view('plugins.manage.site.pdf.contact', compact('configs'))->render(), false);
+        $pdf->Bookmark('お問い合わせ先', 0, 0, '', '', array(0, 0, 0));
 
         // 目次ページの追加
         $pdf->addTOCPage();
@@ -1171,8 +1254,10 @@ class SiteManage extends ManagePluginBase
 
         // 目次 --------------------/
 
+        $disposition = ($request->filled('disposition') && $request->disposition == 'inline') ? 'I' : 'D';
+
         // 出力 ( D：Download, I：Inline )
-        $pdf->output('SiteDocument-' . $output->get('base_site_name') . '.pdf', 'I');
+        $pdf->output('SiteDocument-' . $output->get('base_site_name') . '.pdf', $disposition);
         return redirect()->back();
     }
 }
