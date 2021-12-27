@@ -24,8 +24,13 @@
         <td>{{$page->id}}</td>
         <td>{{$page->page_name}}</td>
         <td>{{$page->password}}</td>
-        <td>？？？？</td>
-        <td>？？？？</td>
+        @if ($page->membership_flag == 1) <td>メンバーシップページ</td>
+        @elseif ($page->membership_flag == 2) <td>ログインユーザ全員参加</td>
+        @else <td></td>
+        @endif
+        @if ($page->page_roles->isNotEmpty()) <td>権限あり</td>
+        @else <td></td>
+        @endif
         <td>{{$page->ip_address}}</td>
     </tr>
     @endforeach

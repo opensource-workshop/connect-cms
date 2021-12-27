@@ -27,7 +27,7 @@
         <td>{{$page->page_name}}</td>
         <td>{{$page->permanent_link}}</td>
         @if ($page->base_display_flag == 1) <td>〇</td> @else <td></td> @endif
-        <td><img src="{{url('/')}}/images/core/layout/1101.png" style="width: 10px;"></td>
+        @if ($page->getSimpleLayout()) <td><img src="{{url('/')}}/images/core/layout/{{$page->getSimpleLayout()}}.png" style="width: 10px;"></td> @else <td></td> @endif
     </tr>
     @endforeach
 </table>
