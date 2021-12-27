@@ -192,6 +192,87 @@ class UploadController extends ConnectController
     }
 
     /**
+     * ユーザファイル送出
+     */
+    public function getUserFile(Request $request, $dir, $filename)
+    {
+        // dir、filename がない場合は空を返す。
+        if (empty($dir) || empty($filename)) {
+            return;
+        }
+
+        // ../ or ..\ が含まれる場合は空を返す。
+        if (strpos($filename, '../') !== false || strpos($filename, "..\\") !== false){
+            return;
+        }
+
+        // ファイルの実体がない場合は空を返す。
+        if (!Storage::disk('user')->exists($dir . '/' . $filename)) {
+            return;
+        }
+
+        // ファイルの制限確認
+        $userdir_allow = Configs::where('category', 'userdir_allow')->where('name', $dir)->first();
+
+        // NGチェック
+        if (empty($userdir_allow)) {
+            // 該当ディレクトリの制限設定がされていないとき。
+            return;
+        }
+        if (empty($userdir_allow->value)) {
+            // 該当ディレクトリの制限設定が閲覧させない場合
+            return;
+        }
+
+        // OKチェック
+        if ($userdir_allow->value == 'allow_login') {
+            // 該当ディレクトリの制限設定がログインユーザのみ閲覧許可の場合
+            if (Auth::user()) {
+                // ログイン中なのでOK
+            } else {
+                // ログインしてないのでNG
+                return;
+            }
+        } elseif ($userdir_allow->value = 'allow_all') {
+            // 該当ディレクトリの制限設定が誰でも閲覧許可の場合
+        } else {
+            // OK条件に合致しない場合はNG
+            return;
+        }
+
+        // ファイルを返す
+        $fullpath = storage_path('user/') . $dir . '/' . $filename;
+
+        // httpヘッダー
+        $content_disposition = 'inline; filename="'. $filename .'"' . "; filename*=UTF-8''" . rawurlencode($filename);
+
+        // インライン表示する拡張子
+        $inline_extensions = [
+            'pdf',
+            'png',
+            'jpg',
+            'jpe',
+            'jpeg',
+            'gif',
+        ];
+
+        if (in_array(strtolower(pathinfo($filename, PATHINFO_EXTENSION)), $inline_extensions) && $request->response != 'download') {
+            return response()
+                    ->file(
+                        $fullpath,
+                        ['Content-Disposition' => $content_disposition]
+                    );
+        } else {
+            return response()
+                    ->download(
+                        $fullpath,
+                        $filename,
+                        ['Content-Disposition' => $content_disposition]
+                    );
+        }
+    }
+
+    /**
      * ファイルチェックメソッドの呼び出し
      */
     private function callCheckMethod($request, $upload)
