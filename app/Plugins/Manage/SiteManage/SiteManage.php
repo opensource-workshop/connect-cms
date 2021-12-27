@@ -18,6 +18,7 @@ use App\Models\Core\Plugins;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
 use App\Models\Common\Group;
+use App\Models\Common\Holiday;
 use App\Models\Common\Page;
 use App\Models\Common\PageRole;
 
@@ -1246,6 +1247,20 @@ class SiteManage extends ManagePluginBase
         // ログ管理
         $sections = [
             ['log_main', compact('configs'), 'ログ設定'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- 祝日管理
+
+        $holidays = Holiday::orderBy('holiday_date', 'asc')->get();
+
+        // 祝日管理
+        $pdf->addPage();
+        $pdf->Bookmark('祝日管理管理', 0, 0, '', '', array(0, 0, 0));
+
+        // 祝日管理
+        $sections = [
+            ['holiday_main', compact('holidays'), '変更内容一覧'],
         ];
         $this->outputSection($pdf, $sections);
 
