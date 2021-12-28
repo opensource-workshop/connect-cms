@@ -16,9 +16,9 @@
 <table border="0" class="table_css">
     <tr nobr="true">
         <th class="doc_th" style="width: 10%;">適用順</th>
-        <th class="doc_th" style="width: 20%;">IPアドレス</th>
+        <th class="doc_th" style="width: 22%;">IPアドレス</th>
         <th class="doc_th" style="width: 20%;">権限</th>
-        <th class="doc_th" style="width: 35%;">メモ</th>
+        <th class="doc_th" style="width: 33%;">メモ</th>
         <th class="doc_th" style="width: 15%;">許可/拒否</th>
     </tr>
     @foreach($login_permits as $login_permit)

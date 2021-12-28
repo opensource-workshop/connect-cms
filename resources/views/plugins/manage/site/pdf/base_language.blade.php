@@ -23,6 +23,7 @@
 
 @foreach ($configs->where('category', 'language')->sortBy('id') as $language)
     @if ($loop->first)
+        <br />
         <h4>設定済み言語</h4>
         <table border="0" class="table_css">
             <tr nobr="true">
