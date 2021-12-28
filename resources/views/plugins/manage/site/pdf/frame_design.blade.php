@@ -15,9 +15,9 @@
         <th class="doc_th" style="width: 25%;">ページ名</th>
         <th class="doc_th" style="width: 25%;">フレームタイトル</th>
         <th class="doc_th" style="width: 12%;">デザイン</th>
-        <th class="doc_th" style="width: 5%;">幅</th>
-        <th class="doc_th" style="width: 18%;">テンプレート</th>
-        <th class="doc_th" style="width: 15%;">class</th>
+        <th class="doc_th" style="width: 8%;">幅</th>
+        <th class="doc_th" style="width: 16%;">テンプレート</th>
+        <th class="doc_th" style="width: 14%;">class</th>
     </tr>
     @php
         $break_row = true;
@@ -40,7 +40,7 @@
             @endif
             <td>{{$frame->frame_title}}</td>
             <td>{{$frame->frame_design}}</td>
-            <td>{{$frame->frame_col}}</td>
+            @if ($frame->frame_col == 0) <td>100％</td> @else <td>{{$frame->frame_col}}</td> @endif
             <td>{{$frame->template}}</td>
             <td>{{$frame->classname}}</td>
         </tr>

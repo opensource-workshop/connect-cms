@@ -22,7 +22,7 @@
     <tr nobr="true">
         <td>{{$page->id}}</td>
         <td>{{str_repeat("・", $page->depth)}}{{$page->page_name}}</td>
-        <td>{{$page->othersite_url_target}}</td>
+        @if ($page->othersite_url_target == 1) <td>〇</td> @else <td></td> @endif
         @if ($page->transfer_lower_page_flag == 1) <td>〇</td> @else <td></td> @endif
         <td>{{$page->othersite_url}}</td>
     </tr>

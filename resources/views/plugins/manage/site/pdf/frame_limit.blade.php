@@ -40,11 +40,25 @@
                 @endphp
             @endif
             <td>{{$frame->frame_title}}</td>
-            <td>{{$frame->default_hidden}}</td>
-            <td>{{$frame->page_only}}</td>
-            <td>{{$frame->content_open_type}}</td>
+            @if ($frame->default_hidden == 1) <td>〇</td> @else <td></td> @endif
+            @if ($frame->area_id == 2) <td></td>
+            @elseif ($frame->page_only == 0) <td>全</td>
+            @elseif ($frame->page_only == 1) <td>表</td>
+            @elseif ($frame->page_only == 2) <td>非</td>
+            @else <td></td>
+            @endif
+            @if ($frame->content_open_type == 1) <td>公</td>
+            @elseif ($frame->content_open_type == 2) <td>非</td>
+            @elseif ($frame->content_open_type == 3) <td>限</td>
+            @else <td></td>
+            @endif
+            @if ($frame->content_open_type == 3)
             <td>{{$frame->content_open_date_from}}</td>
             <td>{{$frame->content_open_date_to}}</td>
+            @else
+            <td></td>
+            <td></td>
+            @endif
         </tr>
         @php
             $count--;
@@ -54,3 +68,11 @@
         @endphp
     @endforeach
 </table>
+<p style="font-size: 10px;">
+※ 対象はメイン以外の共通ページの設定です。内容は以下。<br />
+全：対象ページ全てで表示する。　表：このページのみ表示する。　非：このページのみ表示しない。
+</p>
+<p style="font-size: 10px;">
+※ 公開限定は公開・限定設定です。内容は以下。<br />
+公：公開　非：非公開　限：限定公開
+</p>
