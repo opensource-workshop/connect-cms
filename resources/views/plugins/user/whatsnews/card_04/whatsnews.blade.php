@@ -95,7 +95,7 @@
             <div class="row">
                 <div v-for="whatsnews in whatsnewses" class="col-12 col-sm-6 col-lg-3 whatsnew_card mb-2">
                     <div  class="p-2" style="height: 100%;"
-                        v-bind:class="{ 'border': border == '1' }"
+                        v-bind:class="{ 'border': border == show }"
                     >
                     <dl>
 
@@ -115,23 +115,23 @@
                         </dd>
 
                         {{-- 登録日時 --}}
-                        <dd v-if="view_posted_at == 1" class="text-center whatsnew_posted_at">
+                        <dd v-if="view_posted_at == show" class="text-center whatsnew_posted_at">
                             <span class="mr-2">@{{ moment(whatsnews.posted_at).format('YYYY/MM/DD')}}</span>
                         </dd>
 
                         {{-- 投稿者 --}}
-                        <dd v-if="view_posted_name == 1" class="text-center whatsnew_posted_name">
+                        <dd v-if="view_posted_name == show" class="text-center whatsnew_posted_name">
                             @{{ whatsnews.posted_name }}
                         </dd>
 
                         {{-- サムネイル --}}
-                        <dd v-if="thumbnail == '1' && whatsnews.first_image_path" class="text-center whatsnew_thumbnail">
+                        <dd v-if="thumbnail == show && whatsnews.first_image_path" class="text-center whatsnew_thumbnail">
                             <img v-if="thumbnail_size == 0 || thumbnail_size == ''" v-bind:src="whatsnews.first_image_path" class="pb-1" style="max-width: 200px; max-height: 200px;">
                             <img v-else v-bind:src="whatsnews.first_image_path" class="pb-1" v-bind:style="thumbnail_style">
                         </dd>
 
                         {{-- 本文 --}}
-                        <dd v-if="post_detail == '1'" class="whatsnew_post_detail">
+                        <dd v-if="post_detail == show" class="whatsnew_post_detail">
                             @{{ whatsnews.post_detail_strip_tags }}
                         </dd>
 
