@@ -1,7 +1,7 @@
 {{--
  * データベース検索画面テンプレート（カード４タイプ）
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>, 牧野　可也子 <makino@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース検索プラグイン
 --}}

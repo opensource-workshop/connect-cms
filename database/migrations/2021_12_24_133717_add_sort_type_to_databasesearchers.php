@@ -14,7 +14,7 @@ class AddSortFlagToDatabasesearchers extends Migration
     public function up()
     {
         Schema::table('databasesearches', function (Blueprint $table) {
-            $table->string('sort_flag', 191)->nullable()->comment('並び替え設定')->after('condition');
+            $table->string('sort_type')->nullable()->comment('並び替え設定')->after('condition');
         });
     }
 
@@ -26,7 +26,7 @@ class AddSortFlagToDatabasesearchers extends Migration
     public function down()
     {
         Schema::table('databasesearches', function (Blueprint $table) {
-            $table->dropColumn('sort_flag');
+            $table->dropColumn('sort_type');
         });
     }
 }

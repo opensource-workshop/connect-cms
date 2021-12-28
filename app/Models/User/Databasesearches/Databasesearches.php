@@ -12,7 +12,7 @@ class Databasesearches extends Model
     use UserableNohistory;
 
     // 更新する項目の定義
-    protected $fillable = ['bucket_id', 'databasesearches_name', 'view_count', 'view_columns', 'condition', 'sort_flag', 'frame_select', 'target_frame_ids', 'created_at', 'updated_at'];
+    protected $fillable = ['bucket_id', 'databasesearches_name', 'view_count', 'view_columns', 'condition', 'sort_type', 'frame_select', 'target_frame_ids', 'created_at', 'updated_at'];
 
     /**
      *  指定したFrame が表示対象か判定

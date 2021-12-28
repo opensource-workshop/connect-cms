@@ -13,9 +13,7 @@ use App\Models\User\Databasesearches\Databasesearches;
 use App\Plugins\User\UserPluginBase;
 use App\Plugins\User\Databases\DatabasesTool;
 
-use App\Enums\DatabaseSearcherSortFlag;
-
-use function Psy\debug;
+use App\Enums\DatabaseSearcherSortType;
 
 /**
  * データベース検索プラグイン
@@ -267,29 +265,29 @@ class DatabasesearchesPlugin extends UserPluginBase
         }
 
         // 並び替え条件指定
-        switch( $databasesearches->sort_flag ) {
-            case DatabaseSearcherSortFlag::created_asc:
+        switch( $databasesearches->sort_type ) {
+            case DatabaseSearcherSortType::created_asc:
                 $inputs_ids->orderBy( 'databases_inputs.created_at', 'asc' );
                 break;
-            case DatabaseSearcherSortFlag::created_desc:
+            case DatabaseSearcherSortType::created_desc:
                 $inputs_ids->orderBy( 'databases_inputs.created_at', 'desc' );
                 break;
-            case DatabaseSearcherSortFlag::updated_asc:
+            case DatabaseSearcherSortType::updated_asc:
                 $inputs_ids->orderBy( 'databases_inputs.updated_at', 'asc' );
                 break;
-            case DatabaseSearcherSortFlag::updated_desc:
+            case DatabaseSearcherSortType::updated_desc:
                 $inputs_ids->orderBy( 'databases_inputs.updated_at', 'desc' );
                 break;
-            case DatabaseSearcherSortFlag::posted_asc:
+            case DatabaseSearcherSortType::posted_asc:
                 $inputs_ids->orderBy( 'databases_inputs.posted_at', 'asc' );
                 break;
-            case DatabaseSearcherSortFlag::posted_desc:
+            case DatabaseSearcherSortType::posted_desc:
                 $inputs_ids->orderBy( 'databases_inputs.posted_at', 'desc' );
                 break;
-            case DatabaseSearcherSortFlag::display_asc:
+            case DatabaseSearcherSortType::display_asc:
                 $inputs_ids->orderBy( 'databases_inputs.display_sequence', 'asc' );
                 break;
-            case DatabaseSearcherSortFlag::display_desc:
+            case DatabaseSearcherSortType::display_desc:
                 $inputs_ids->orderBy( 'databases_inputs.display_sequence', 'desc' );
                 break;
         }
@@ -398,7 +396,7 @@ class DatabasesearchesPlugin extends UserPluginBase
              'view_count'            => intval($request->view_count),
              'view_columns'          => $request->view_columns,
              'condition'             => $request->condition,
-             'sort_flag'             => $request->sort_flag,
+             'sort_type'             => $request->sort_type,
              'frame_select'          => intval($request->frame_select),
              'target_frame_ids'      => empty($request->target_frame_ids) ? "": implode(',', $request->target_frame_ids),
             ]
