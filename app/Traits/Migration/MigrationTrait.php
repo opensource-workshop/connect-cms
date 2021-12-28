@@ -8373,7 +8373,10 @@ trait MigrationTrait
             $ret = "faq_id = \"" . $this->zeroSuppress($nc2_faq_block->faq_id) . "\"\n";
         } elseif ($module_name == 'linklist') {
             $nc2_linklist_block = Nc2LinklistBlock::where('block_id', $nc2_block->block_id)->first();
-            $ret = "linklist_id = \"" . $this->zeroSuppress($nc2_linklist_block->linklist_id) . "\"\n";
+            // ブロックがあり、リンクリストがない場合は対象外
+            if (!empty($nc2_linklist_block)) {
+                $ret = "linklist_id = \"" . $this->zeroSuppress($nc2_linklist_block->linklist_id) . "\"\n";
+            }
         } elseif ($module_name == 'multidatabase') {
             $nc2_multidatabase_block = Nc2MultidatabaseBlock::where('block_id', $nc2_block->block_id)->first();
             if (empty($nc2_multidatabase_block)) {
