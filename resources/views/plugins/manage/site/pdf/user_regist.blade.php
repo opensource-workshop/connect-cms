@@ -110,7 +110,7 @@
     </tr>
     <tr nobr="true">
         <td>個人情報保護方針の表示内容</td>
-        <td>下欄を参照</td>
+        <td>次行を参照</td>
     </tr>
     <tr nobr="true">
         <td colspan="2">{!!nl2br($configs->firstWhere('name', 'user_register_privacy_description')->value)!!}</td>
@@ -126,7 +126,7 @@
     </tr>
     <tr nobr="true">
         <td>ユーザ登録について</td>
-        <td>下欄を参照</td>
+        <td>次行を参照</td>
     </tr>
     <tr nobr="true">
         <td colspan="2">{!!nl2br($configs->firstWhere('name', 'user_register_description')->value)!!}</td>
