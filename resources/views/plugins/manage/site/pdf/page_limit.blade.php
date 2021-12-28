@@ -22,7 +22,7 @@
     @foreach($pages as $page)
     <tr nobr="true">
         <td>{{$page->id}}</td>
-        <td>{{$page->page_name}}</td>
+        <td>{{str_repeat("・", $page->depth)}}{{$page->page_name}}</td>
         <td>{{$page->password}}</td>
         @if ($page->membership_flag == 1) <td>メンバーシップページ</td>
         @elseif ($page->membership_flag == 2) <td>ログインユーザ全員参加</td>

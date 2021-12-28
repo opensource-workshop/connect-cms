@@ -24,7 +24,7 @@
     @foreach($pages as $page)
     <tr nobr="true">
         <td>{{$page->id}}</td>
-        <td>{{$page->page_name}}</td>
+        <td>{{str_repeat("・", $page->depth)}}{{$page->page_name}}</td>
         <td>{{$page->permanent_link}}</td>
         @if ($page->base_display_flag == 1) <td>〇</td> @else <td></td> @endif
         @if ($page->getSimpleLayout()) <td><img src="{{url('/')}}/images/core/layout/{{$page->getSimpleLayout()}}.png" style="width: 10px;"></td> @else <td></td> @endif

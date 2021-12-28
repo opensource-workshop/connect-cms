@@ -21,7 +21,7 @@
     @foreach($pages as $page)
     <tr nobr="true">
         <td>{{$page->id}}</td>
-        <td>{{$page->page_name}}</td>
+        <td>{{str_repeat("・", $page->depth)}}{{$page->page_name}}</td>
         <td>{{$page->background_color}}</td>
         <td>{{$page->header_color}}</td>
         <td>{{$page->class}}</td>
