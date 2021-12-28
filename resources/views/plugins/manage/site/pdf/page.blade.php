@@ -15,11 +15,11 @@
 <h4>ページ設定（基本情報）</h4>
 <table border="0" class="table_css">
     <tr nobr="true">
-        <th class="doc_th" style="width: 5%;">ID</th>
+        <th class="doc_th" style="width: 8%;">ID</th>
         <th class="doc_th" style="width: 35%;">ページ名</th>
         <th class="doc_th" style="width: 35%;">固定リンク</th>
-        <th class="doc_th" style="width: 15%;">メニュー<br />表示</th>
-        <th class="doc_th" style="width: 10%;">レイ<br />アウト</th>
+        <th class="doc_th" style="width: 13%;">メニュー<br />表示</th>
+        <th class="doc_th" style="width: 9%;">レイ<br />アウト</th>
     </tr>
     @foreach($pages as $page)
     <tr nobr="true">

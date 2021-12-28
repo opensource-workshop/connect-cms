@@ -12,11 +12,11 @@
 <h4>ページ設定（制限関連）</h4>
 <table border="0" class="table_css">
     <tr nobr="true">
-        <th class="doc_th" style="width: 5%;">ID</th>
+        <th class="doc_th" style="width: 8%;">ID</th>
         <th class="doc_th" style="width: 35%;">ページ名</th>
-        <th class="doc_th" style="width: 15%;">閲覧パスワード</th>
-        <th class="doc_th" style="width: 15%;">メンバーシップ等</th>
-        <th class="doc_th" style="width: 15%;">ページ権限</th>
+        <th class="doc_th" style="width: 14%;">閲覧パスワード</th>
+        <th class="doc_th" style="width: 14%;">メンバーシップ等</th>
+        <th class="doc_th" style="width: 14%;">ページ権限</th>
         <th class="doc_th" style="width: 15%;">IP制限</th>
     </tr>
     @foreach($pages as $page)
