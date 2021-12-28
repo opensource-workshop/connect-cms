@@ -265,30 +265,30 @@ class DatabasesearchesPlugin extends UserPluginBase
         }
 
         // 並び替え条件指定
-        switch( $databasesearches->sort_type ) {
+        switch ($databasesearches->sort_type) {
             case DatabaseSearcherSortType::created_asc:
-                $inputs_ids->orderBy( 'databases_inputs.created_at', 'asc' );
+                $inputs_ids->orderBy('databases_inputs.created_at', 'asc');
                 break;
             case DatabaseSearcherSortType::created_desc:
-                $inputs_ids->orderBy( 'databases_inputs.created_at', 'desc' );
+                $inputs_ids->orderBy('databases_inputs.created_at', 'desc');
                 break;
             case DatabaseSearcherSortType::updated_asc:
-                $inputs_ids->orderBy( 'databases_inputs.updated_at', 'asc' );
+                $inputs_ids->orderBy('databases_inputs.updated_at', 'asc');
                 break;
             case DatabaseSearcherSortType::updated_desc:
-                $inputs_ids->orderBy( 'databases_inputs.updated_at', 'desc' );
+                $inputs_ids->orderBy('databases_inputs.updated_at', 'desc');
                 break;
             case DatabaseSearcherSortType::posted_asc:
-                $inputs_ids->orderBy( 'databases_inputs.posted_at', 'asc' );
+                $inputs_ids->orderBy('databases_inputs.posted_at', 'asc');
                 break;
             case DatabaseSearcherSortType::posted_desc:
-                $inputs_ids->orderBy( 'databases_inputs.posted_at', 'desc' );
+                $inputs_ids->orderBy('databases_inputs.posted_at', 'desc');
                 break;
             case DatabaseSearcherSortType::display_asc:
-                $inputs_ids->orderBy( 'databases_inputs.display_sequence', 'asc' );
+                $inputs_ids->orderBy('databases_inputs.display_sequence', 'asc');
                 break;
             case DatabaseSearcherSortType::display_desc:
-                $inputs_ids->orderBy( 'databases_inputs.display_sequence', 'desc' );
+                $inputs_ids->orderBy('databases_inputs.display_sequence', 'desc');
                 break;
         }
 
