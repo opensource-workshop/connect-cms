@@ -7600,7 +7600,7 @@ trait MigrationTrait
             $ini .= "[source_info]\n";
             $ini .= "room_id = " . $nc2_page_room->room_id . "\n";
             // ルーム名
-            $ini .= "room_name = " . $nc2_page_room->page_name . "\n";
+            $ini .= "room_name = '" . $nc2_page_room->page_name . "'\n";
             // プライベートフラグ, 1:プライベートルーム, 0:プライベートルーム以外
             $ini .= "private_flag = " . $nc2_page_room->private_flag . "\n";
             // スペースタイプ, 1:パブリックスペース, 2:グループスペース
