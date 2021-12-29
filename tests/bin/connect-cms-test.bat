@@ -63,7 +63,7 @@ rem ---------------------------------------------
 
 echo.
 echo --- 管理画面アクセス
-rem php artisan dusk tests\Browser\Manage\IndexManageTest.php
+php artisan dusk tests\Browser\Manage\IndexManageTest.php
 
 echo.
 echo --- ページ管理のテスト
@@ -111,7 +111,7 @@ rem ---------------------------------------------
 
 echo.
 echo --- ヘッダー
-php artisan dusk tests\Browser\User\HeaderAreaTest.php
+rem php artisan dusk tests\Browser\User\HeaderAreaTest.php
 
 echo.
 echo --- ブログ

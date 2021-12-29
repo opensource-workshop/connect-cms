@@ -31,6 +31,18 @@ class IndexManage extends ManagePluginBase
     }
 
     /**
+     *  マニュアル定義
+     */
+    public function declareManual()
+    {
+        // 権限チェックテーブル
+        $manual["class_title"] = "管理画面インデックスクラス";
+        $manual["class_desc"] = "管理画面の初めに開く画面です。<br />Connect-CMS の公式サイトより、最新情報を取得して表示します。";
+        $manual["method_desc"]["index"] = "最新機能やバージョンアップ情報が表示されます。";
+        return $manual;
+    }
+
+    /**
      *  ページ初期表示
      *
      * @return view
