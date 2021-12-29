@@ -2,7 +2,6 @@
     <img src="https://user-images.githubusercontent.com/13323806/147623625-58a70f02-e51c-4e6d-97a4-accecb854521.png" />
     <div align="center">
         <img src="https://img.shields.io/github/license/opensource-workshop/connect-cms?style=plastic" />
-        <img src="https://img.shields.io/github/stars/opensource-workshop/connect-cms?style=plastic" />
     </div
 </p>
 
