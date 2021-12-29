@@ -23,6 +23,7 @@ use App\Models\Common\Page;
 use App\Models\Common\PageRole;
 
 use App\Plugins\Manage\ManagePluginBase;
+use App\Plugins\Manage\SiteManage\CCPDF;
 use App\Enums\BaseLoginRedirectPage;
 
 /**
@@ -881,7 +882,7 @@ class SiteManage extends ManagePluginBase
      */
     private function updateConfigs($request, $config_values)
     {
-        foreach($config_values as $category => $configs) {
+        foreach ($config_values as $category => $configs) {
             foreach ($configs as $config) {
                 $configs = Configs::updateOrCreate(
                     ['name'     => $config],
@@ -948,10 +949,10 @@ class SiteManage extends ManagePluginBase
         $output->put('base_site_name', $configs->firstWhere('name', 'base_site_name')->value);
 
         // 出力するPDF の準備
-        $pdf = new PDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+        $pdf = new CCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
         // PDF プロパティ設定
-        $pdf->SetTitle($output->get('base_site_name') . ' サイト設計書'); 
+        $pdf->SetTitle($output->get('base_site_name') . ' サイト設計書');
         //$pdf->SetAuthor('');
         //$pdf->SetSubject('');
         //$pdf->SetKeywords('');
@@ -969,7 +970,7 @@ class SiteManage extends ManagePluginBase
 
         // ヘッダーのフォントの設定（フォント情報を配列で渡す必要があるので、要注意）
         $pdf->setHeaderMargin(5);
-        $pdf->setHeaderFont(Array('ipaexg', '', 10));
+        $pdf->setHeaderFont(array('ipaexg', '', 10));
         $pdf->setHeaderData('', 0, $configs->firstWhere('name', 'base_site_name')->value . " - " . url('/'), '');
 
         // フッター
@@ -1297,34 +1298,5 @@ class SiteManage extends ManagePluginBase
         // 出力 ( D：Download, I：Inline )
         $pdf->output('SiteDocument-' . $output->get('base_site_name') . '.pdf', $disposition);
         return redirect()->back();
-    }
-}
-
-/**
- * PDF 出力クラス
- * TCODF <- Fpdi <- このクラス で継承している。
- *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>
- * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category サイト管理
- * @package Controller
- */
-class PDF extends Fpdi {
-
-    function __construct($orientation, $unit, $format, $unicode, $encoding, $diskcache) {
-        parent::__construct($orientation, $unit, $format, $unicode, $encoding, $diskcache);
-    }
-
-    // Page footer
-    public function Footer() {
-
-        //Go to 1.5 cm from bottom
-        $this->SetY(-15);       
-
-        //Select font
-        $this->SetFont('ipaexg', '', 8);
-
-        // Page number(PageNo() だと、目次は最後のページ数になるので、getAliasNumPage() で、挿入したページの数を印字する)
-        $this->Cell(0, 10,  'Page '.$this->getAliasNumPage().' / '.$this->getAliasNbPages(), 'T', false, 'C', 0, '', 0, false, 'T', 'M');
     }
 }
