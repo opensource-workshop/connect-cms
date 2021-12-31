@@ -49,7 +49,8 @@ class ApiPluginBase extends PluginBase
         }
 
         // 秘密コードのチェック(IPアドレス指定などで、複数のレコードがある可能性あり)
-        $api_secrets = ApiSecret::where('secret_code', $secret_code)->where('apis', 'like', '%User%')->get();
+        //$api_secrets = ApiSecret::where('secret_code', $secret_code)->where('apis', 'like', '%User%')->get();
+        $api_secrets = ApiSecret::where('secret_code', $secret_code)->get();
         if ($api_secrets->isEmpty()) {
             return array('code' => 403, 'message' => '閲覧条件に合致しません。');
         }
