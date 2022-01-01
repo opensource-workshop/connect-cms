@@ -285,3 +285,36 @@ Blockly.Blocks.drone_flip = {
 	});
   },
 };
+
+Blockly.Blocks.drone_loop = {
+  /**
+   * Block for Loop.
+   * @this Blockly.Block
+   */
+  init() {
+    this.jsonInit({
+		"type": "drone_loop",
+		"message0": "%1 回 %2 繰り返し %3",
+		"args0": [
+			{
+				"type": "field_number",
+				"name": "NAME",
+				"value": 0
+			},
+			{
+				"type": "input_dummy"
+			},
+			{
+				"type": "input_statement",
+				"name": "NAME",
+				"check": "Number"
+			}
+		],
+		"previousStatement": null,
+		"nextStatement": null,
+		"colour": 230,
+		"tooltip": "",
+		"helpUrl": ""
+	});
+  },
+};
