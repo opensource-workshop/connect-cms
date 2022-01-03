@@ -12,7 +12,6 @@ Blockly.Blocks.drone_takeoff = {
     this.jsonInit({
         "type": "drone_takeoff",
         "message0": Blockly.Msg["DRONE_TAKEOFF"],
-        "output": "String",
         "inputsInline": true,
         "previousStatement": null,
         "nextStatement": null,
@@ -36,7 +35,6 @@ Blockly.Blocks.drone_land = {
     this.jsonInit({
         "type": "drone_land",
         "message0": Blockly.Msg["DRONE_LAND"],
-        "output": "String",
         "inputsInline": false,
         "previousStatement": null,
         "nextStatement": null,
@@ -67,7 +65,6 @@ Blockly.Blocks.drone_up = {
           "value": 0
         }
       ],
-      "output": "String",
       "inputsInline": true,
       "previousStatement": null,
       "nextStatement": null,
@@ -99,7 +96,6 @@ Blockly.Blocks.drone_down = {
           "value": 0
         }
       ],
-      "output": "String",
       "inputsInline": true,
       "previousStatement": null,
       "nextStatement": null,
@@ -131,7 +127,6 @@ Blockly.Blocks.drone_forward = {
           "value": 0
         }
       ],
-      "output": "String",
       "inputsInline": true,
       "previousStatement": null,
       "nextStatement": null,
@@ -163,7 +158,6 @@ Blockly.Blocks.drone_back = {
           "value": 0
         }
       ],
-      "output": "String",
       "inputsInline": true,
       "previousStatement": null,
       "nextStatement": null,
@@ -195,7 +189,6 @@ Blockly.Blocks.drone_right = {
           "value": 0
         }
       ],
-      "output": "String",
       "inputsInline": true,
       "previousStatement": null,
       "nextStatement": null,
@@ -227,7 +220,6 @@ Blockly.Blocks.drone_left = {
           "value": 0
         }
       ],
-      "output": "String",
       "inputsInline": true,
       "previousStatement": null,
       "nextStatement": null,
@@ -259,7 +251,6 @@ Blockly.Blocks.drone_cw = {
           "value": 0
         }
       ],
-      "output": "String",
       "inputsInline": true,
       "previousStatement": null,
       "nextStatement": null,
@@ -291,7 +282,6 @@ Blockly.Blocks.drone_ccw = {
           "value": 0
         }
       ],
-      "output": "String",
       "inputsInline": true,
       "previousStatement": null,
       "nextStatement": null,
@@ -328,7 +318,6 @@ Blockly.Blocks.drone_flip = {
           ]
         }
       ],
-      "output": "String",
       "inputsInline": true,
       "previousStatement": null,
       "nextStatement": null,
@@ -368,7 +357,6 @@ Blockly.Blocks.drone_loop = {
                 "check": "Number"
             }
         ],
-        "output": "String",
         "previousStatement": null,
         "nextStatement": null,
         "colour": 230,
@@ -386,3 +374,23 @@ Blockly.PHP.drone_loop = function(block) {
     php_code = php_code + "}";
     return php_code + ";\n";
 };
+
+
+//Blockly.Blocks.drone_test = {
+//  /**
+//   * Block for Land.
+//   * @this Blockly.Block
+//   */
+//  init() {
+//    this.jsonInit({
+//		"type": "drone_test",
+//		"message0": "テスト",
+//		"previousStatement": null,
+//		"nextStatement": null,
+//		"colour": 230,
+//		"tooltip": "",
+//		"helpUrl": ""
+//	});
+//  },
+//};
+
