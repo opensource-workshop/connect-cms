@@ -10,22 +10,21 @@ Blockly.Blocks.drone_takeoff = {
 
     // TakeOff の設定
     this.jsonInit({
-		"type": "drone_takeoff",
-		"message0": "離陸",
-		"inputsInline": true,
-		"previousStatement": null,
-		"nextStatement": null,
-		"colour": 315,
-		"tooltip": "離陸",
-		"helpUrl": ""
+        "type": "drone_takeoff",
+        "message0": Blockly.Msg["DRONE_TAKEOFF"],
+        "output": "String",
+        "inputsInline": true,
+        "previousStatement": null,
+        "nextStatement": null,
+        "colour": 315,
+        "tooltip": Blockly.Msg["DRONE_TAKEOFF"],
+        "helpUrl": ""
     });
   },
 };
 
 Blockly.PHP.drone_takeoff = function(block) {
-  const args0 = Blockly.PHP.valueToCode(block, 'TEXT', Blockly.PHP.ORDER_FUNCTION_CALL) || '\'\'';
-  const OPERATOR = "$tello->takeoff();";
-  return [OPERATOR + args0, Blockly.PHP.ORDER_MEMBER];
+    return "$tello->takeoff();\n";
 };
 
 Blockly.Blocks.drone_land = {
@@ -36,15 +35,20 @@ Blockly.Blocks.drone_land = {
   init() {
     this.jsonInit({
         "type": "drone_land",
-        "message0": "着陸",
+        "message0": Blockly.Msg["DRONE_LAND"],
+        "output": "String",
         "inputsInline": false,
         "previousStatement": null,
         "nextStatement": null,
         "colour": 315,
-        "tooltip": "着陸",
+        "tooltip": Blockly.Msg["DRONE_LAND"],
         "helpUrl": ""
     });
   },
+};
+
+Blockly.PHP.drone_land = function(block) {
+    return "$tello->land();\n";
 };
 
 Blockly.Blocks.drone_up = {
@@ -54,23 +58,29 @@ Blockly.Blocks.drone_up = {
    */
   init() {
     this.jsonInit({
-	  "type": "drone_up",
-	  "message0": "上昇 (cm) %1",
-	  "args0": [
-	    {
-	      "type": "field_number",
-	      "name": "NAME",
-	      "value": 0
-	    }
-	  ],
-	  "inputsInline": true,
-	  "previousStatement": null,
-	  "nextStatement": null,
-	  "colour": 230,
-	  "tooltip": "上昇",
-	  "helpUrl": ""
-	});
+      "type": "drone_up",
+      "message0": Blockly.Msg["DRONE_UP_EXT"],
+      "args0": [
+        {
+          "type": "field_number",
+          "name": "arg_drone_up",
+          "value": 0
+        }
+      ],
+      "output": "String",
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "colour": 230,
+      "tooltip": Blockly.Msg["DRONE_UP"],
+      "helpUrl": ""
+    });
   },
+};
+
+Blockly.PHP.drone_up = function(block) {
+    arg_drone_up = block.getFieldValue('arg_drone_up');
+    return "$tello->up(" + arg_drone_up + ");\n";
 };
 
 Blockly.Blocks.drone_down = {
@@ -80,23 +90,29 @@ Blockly.Blocks.drone_down = {
    */
   init() {
     this.jsonInit({
-	  "type": "drone_down",
-	  "message0": "下降 (cm) %1",
-	  "args0": [
-	    {
-	      "type": "field_number",
-	      "name": "NAME",
-	      "value": 0
-	    }
-	  ],
-	  "inputsInline": true,
-	  "previousStatement": null,
-	  "nextStatement": null,
-	  "colour": 230,
-	  "tooltip": "下降",
-	  "helpUrl": ""
-	});
+      "type": "drone_down",
+      "message0": Blockly.Msg["DRONE_DOWN_EXT"],
+      "args0": [
+        {
+          "type": "field_number",
+          "name": "arg_drone_down",
+          "value": 0
+        }
+      ],
+      "output": "String",
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "colour": 230,
+      "tooltip": Blockly.Msg["DRONE_DOWN"],
+      "helpUrl": ""
+    });
   },
+};
+
+Blockly.PHP.drone_down = function(block) {
+    arg_drone_down = block.getFieldValue('arg_drone_down');
+    return "$tello->down(" + arg_drone_down + ");\n";
 };
 
 Blockly.Blocks.drone_forward = {
@@ -106,75 +122,61 @@ Blockly.Blocks.drone_forward = {
    */
   init() {
     this.jsonInit({
-	  "type": "drone_forward",
-	  "message0": "前進 (cm) %1",
-	  "args0": [
-	    {
-	      "type": "field_number",
-	      "name": "NAME",
-	      "value": 0
-	    }
-	  ],
-	  "inputsInline": true,
-	  "previousStatement": null,
-	  "nextStatement": null,
-	  "colour": 180,
-	  "tooltip": "前進",
-	  "helpUrl": ""
-	});
+      "type": "drone_forward",
+      "message0": Blockly.Msg["DRONE_FORWARD_EXT"],
+      "args0": [
+        {
+          "type": "field_number",
+          "name": "arg_drone_forward",
+          "value": 0
+        }
+      ],
+      "output": "String",
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "colour": 180,
+      "tooltip": Blockly.Msg["DRONE_FORWARD"],
+      "helpUrl": ""
+    });
   },
 };
 
-Blockly.Blocks.drone_backward = {
+Blockly.PHP.drone_forward = function(block) {
+    arg_drone_forward = block.getFieldValue('arg_drone_forward');
+    return "$tello->forward(" + arg_drone_forward + ");\n";
+};
+
+Blockly.Blocks.drone_back = {
   /**
-   * Block for Backward
+   * Block for Back
    * @this Blockly.Block
    */
   init() {
     this.jsonInit({
-	  "type": "drone_backward",
-	  "message0": "後進 (cm) %1",
-	  "args0": [
-	    {
-	      "type": "field_number",
-	      "name": "NAME",
-	      "value": 0
-	    }
-	  ],
-	  "inputsInline": true,
-	  "previousStatement": null,
-	  "nextStatement": null,
-	  "colour": 180,
-	  "tooltip": "後進",
-	  "helpUrl": ""
-	});
+      "type": "drone_back",
+      "message0": Blockly.Msg["DRONE_BACK_EXT"],
+      "args0": [
+        {
+          "type": "field_number",
+          "name": "arg_drone_back",
+          "value": 0
+        }
+      ],
+      "output": "String",
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "colour": 180,
+      "tooltip": Blockly.Msg["DRONE_BACK"],
+      "helpUrl": ""
+    });
   },
 };
 
-Blockly.Blocks.drone_left = {
-  /**
-   * Block for Left.
-   * @this Blockly.Block
-   */
-  init() {
-    this.jsonInit({
-	  "type": "drone_left",
-	  "message0": "左 (cm) %1",
-	  "args0": [
-	    {
-	      "type": "field_number",
-	      "name": "NAME",
-	      "value": 0
-	    }
-	  ],
-	  "inputsInline": true,
-	  "previousStatement": null,
-	  "nextStatement": null,
-	  "colour": 180,
-	  "tooltip": "左",
-	  "helpUrl": ""
-	});
-  },
+Blockly.PHP.drone_back = function(block) {
+    arg_drone_back = block.getFieldValue('arg_drone_back');
+    return "$tello->back(" + arg_drone_back + ");\n";
 };
 
 Blockly.Blocks.drone_right = {
@@ -184,75 +186,125 @@ Blockly.Blocks.drone_right = {
    */
   init() {
     this.jsonInit({
-	  "type": "drone_right",
-	  "message0": "右 (cm) %1",
-	  "args0": [
-	    {
-	      "type": "field_number",
-	      "name": "NAME",
-	      "value": 0
-	    }
-	  ],
-	  "inputsInline": true,
-	  "previousStatement": null,
-	  "nextStatement": null,
-	  "colour": 180,
-	  "tooltip": "右",
-	  "helpUrl": ""
-	});
+      "type": "drone_right",
+      "message0": Blockly.Msg["DRONE_RIGHT_EXT"],
+      "args0": [
+        {
+          "type": "field_number",
+          "name": "arg_drone_right",
+          "value": 0
+        }
+      ],
+      "output": "String",
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "colour": 180,
+      "tooltip": Blockly.Msg["DRONE_RIGHT"],
+      "helpUrl": ""
+    });
   },
 };
 
-Blockly.Blocks.drone_leftturn = {
+Blockly.PHP.drone_right = function(block) {
+    arg_drone_right = block.getFieldValue('arg_drone_right');
+    return "$tello->right(" + arg_drone_right + ");\n";
+};
+
+Blockly.Blocks.drone_left = {
   /**
-   * Block for Left turn.
+   * Block for Left.
    * @this Blockly.Block
    */
   init() {
     this.jsonInit({
-	  "type": "drone_leftturn",
-	  "message0": "左回転 (角度) %1",
-	  "args0": [
-	    {
-	      "type": "field_number",
-	      "name": "NAME",
-	      "value": 0
-	    }
-	  ],
-	  "inputsInline": true,
-	  "previousStatement": null,
-	  "nextStatement": null,
-	  "colour": 90,
-	  "tooltip": "左回転",
-	  "helpUrl": ""
-	});
+      "type": "drone_left",
+      "message0": Blockly.Msg["DRONE_LEFT_EXT"],
+      "args0": [
+        {
+          "type": "field_number",
+          "name": "arg_drone_left",
+          "value": 0
+        }
+      ],
+      "output": "String",
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "colour": 180,
+      "tooltip": Blockly.Msg["DRONE_LEFT"],
+      "helpUrl": ""
+    });
   },
 };
 
-Blockly.Blocks.drone_rightturn = {
+Blockly.PHP.drone_left = function(block) {
+    arg_drone_left = block.getFieldValue('arg_drone_left');
+    return "$tello->left(" + arg_drone_left + ");\n";
+};
+
+Blockly.Blocks.drone_cw = {
   /**
    * Block for Right turn.
    * @this Blockly.Block
    */
   init() {
     this.jsonInit({
-	  "type": "drone_rightturn",
-	  "message0": "右回転 (角度) %1",
-	  "args0": [
-	    {
-	      "type": "field_number",
-	      "name": "NAME",
-	      "value": 0
-	    }
-	  ],
-	  "inputsInline": true,
-	  "previousStatement": null,
-	  "nextStatement": null,
-	  "colour": 90,
-	  "tooltip": "右回転",
-	  "helpUrl": "",
-	});
+      "type": "drone_cw",
+      "message0": Blockly.Msg["DRONE_CW_EXT"],
+      "args0": [
+        {
+          "type": "field_number",
+          "name": "arg_drone_cw",
+          "value": 0
+        }
+      ],
+      "output": "String",
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "colour": 90,
+      "tooltip": Blockly.Msg["DRONE_CW"],
+      "helpUrl": "",
+    });
   },
+};
+
+Blockly.PHP.drone_cw = function(block) {
+    arg_drone_cw = block.getFieldValue('arg_drone_cw');
+    return "$tello->cw(" + arg_drone_cw + ");\n";
+};
+
+Blockly.Blocks.drone_ccw = {
+  /**
+   * Block for Left turn.
+   * @this Blockly.Block
+   */
+  init() {
+    this.jsonInit({
+      "type": "drone_ccw",
+      "message0": Blockly.Msg["DRONE_CCW_EXT"],
+      "args0": [
+        {
+          "type": "field_number",
+          "name": "arg_drone_ccw",
+          "value": 0
+        }
+      ],
+      "output": "String",
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "colour": 90,
+      "tooltip": Blockly.Msg["DRONE_CCW"],
+      "helpUrl": ""
+    });
+  },
+};
+
+Blockly.PHP.drone_ccw = function(block) {
+    arg_drone_ccw = block.getFieldValue('arg_drone_ccw');
+    return "$tello->ccw(" + arg_drone_ccw + ");\n";
 };
 
 Blockly.Blocks.drone_flip = {
@@ -262,28 +314,34 @@ Blockly.Blocks.drone_flip = {
    */
   init() {
     this.jsonInit({
-	  "type": "drone_flip",
-	  "message0": "宙返り %1",
-	  "args0": [
-	    {
-	      "type": "field_dropdown",
-	      "name": "宙返り",
-		  "options": [
-		    ["前[まえ]","flip_f"],
-		    ["後[うしろ]","flip_b"],
-		    ["左[ひだり]","flip_l"],
-		    ["右[みぎ]","flip_r"]
-		  ]
-	    }
-	  ],
-	  "inputsInline": true,
-	  "previousStatement": null,
-	  "nextStatement": null,
-	  "colour": 30,
-	  "tooltip": "宙返り",
-	  "helpUrl": "",
-	});
+      "type": "drone_flip",
+      "message0": Blockly.Msg["DRONE_FLIP_EXT"],
+      "args0": [
+        {
+          "type": "field_dropdown",
+          "name": "arg_drone_flip",
+          "options": [
+            [Blockly.Msg["DRONE_FLIP_FOWARD"],"f"],
+            [Blockly.Msg["DRONE_FLIP_BACK"],"b"],
+            [Blockly.Msg["DRONE_FLIP_RIGHT"],"r"],
+            [Blockly.Msg["DRONE_FLIP_LEFT"],"l"]
+          ]
+        }
+      ],
+      "output": "String",
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "colour": 30,
+      "tooltip": Blockly.Msg["DRONE_FLIP"],
+      "helpUrl": "",
+    });
   },
+};
+
+Blockly.PHP.drone_flip = function(block) {
+    arg_drone_flip = block.getFieldValue('arg_drone_flip');
+    return "$tello->flip(" + arg_drone_flip + ");\n";
 };
 
 Blockly.Blocks.drone_loop = {
@@ -293,28 +351,38 @@ Blockly.Blocks.drone_loop = {
    */
   init() {
     this.jsonInit({
-		"type": "drone_loop",
-		"message0": "%1 回 %2 繰り返し %3",
-		"args0": [
-			{
-				"type": "field_number",
-				"name": "NAME",
-				"value": 0
-			},
-			{
-				"type": "input_dummy"
-			},
-			{
-				"type": "input_statement",
-				"name": "NAME",
-				"check": "Number"
-			}
-		],
-		"previousStatement": null,
-		"nextStatement": null,
-		"colour": 230,
-		"tooltip": "",
-		"helpUrl": ""
-	});
+        "type": "drone_loop",
+        "message0": "%1 回 %2 繰り返し %3",
+        "args0": [
+            {
+                "type": "field_number",
+                "name": "arg_drone_loop",
+                "value": 0
+            },
+            {
+                "type": "input_dummy"
+            },
+            {
+                "type": "input_statement",
+                "name": "loop_statement",
+                "check": "Number"
+            }
+        ],
+        "output": "String",
+        "previousStatement": null,
+        "nextStatement": null,
+        "colour": 230,
+        "tooltip": "",
+        "helpUrl": ""
+    });
   },
+};
+
+Blockly.PHP.drone_loop = function(block) {
+    arg_drone_loop = block.getFieldValue('arg_drone_loop');
+    var statements_name_loop = Blockly.PHP.statementToCode(block, 'loop_statement');
+    var php_code = "for ($i = 0; $i < " + arg_drone_loop + "; $i++) {\n";
+    php_code = php_code + statements_name_loop;
+    php_code = php_code + "}";
+    return php_code + ";\n";
 };
