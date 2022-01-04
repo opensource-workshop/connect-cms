@@ -6,10 +6,8 @@
  * @category 施設予約プラグイン
 --}}
 <div class="text-center mb-1">
-    {{-- 前月ボタン --}}
-    <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->subDay(7)->format('Ymd') }}#frame-{{$frame->id}}">
-        <i class="fas fa-chevron-circle-left"></i>
-    </a>
+    {{-- 前月ボタン. aタグを改行しない事でオンマウスのアンダーラインを表示しない --}}
+    <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->subDay(7)->format('Ymd') }}#frame-{{$frame->id}}"><i class="fas fa-chevron-circle-left"></i></a>
     {{-- 当月表示 --}}
     @if (App::getLocale() == ConnectLocale::ja)
         <div class="h5 d-inline">{{$carbon_target_date->format('Y年')}}</div>
@@ -19,9 +17,7 @@
         <div class="h5 d-inline">{{$carbon_target_date->format('Y')}}</div>
     @endif
     {{-- 翌月ボタン --}}
-    <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->addDay(7)->format('Ymd') }}#frame-{{$frame->id}}">
-        <i class="fas fa-chevron-circle-right"></i>
-    </a>
+    <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->addDay(7)->format('Ymd') }}#frame-{{$frame->id}}"><i class="fas fa-chevron-circle-right"></i></a>
 
     {{-- 当日へボタン --}}
     <div class="d-inline align-bottom ml-3">
