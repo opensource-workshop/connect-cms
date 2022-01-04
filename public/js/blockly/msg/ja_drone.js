@@ -24,3 +24,5 @@ Blockly.Msg["DRONE_FLIP_FOWARD"] = "前";
 Blockly.Msg["DRONE_FLIP_BACK"] = "後";
 Blockly.Msg["DRONE_FLIP_RIGHT"] = "右";
 Blockly.Msg["DRONE_FLIP_LEFT"] = "左";
+Blockly.Msg["DRONE_LOOP"] = "繰り返し";
+Blockly.Msg["DRONE_LOOP_COUNT"] = "回";

@@ -1,4 +1,4 @@
-// This file was automatically generated.  Do not modify.
+// ひらがな用言語ファイル。必要な部分を都度、変更
 
 'use strict';
 

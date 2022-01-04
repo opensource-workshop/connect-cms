@@ -24,3 +24,5 @@ Blockly.Msg["DRONE_FLIP_FOWARD"] = "まえ";
 Blockly.Msg["DRONE_FLIP_BACK"] = "うしろ";
 Blockly.Msg["DRONE_FLIP_RIGHT"] = "みぎ";
 Blockly.Msg["DRONE_FLIP_LEFT"] = "ひだり";
+Blockly.Msg["DRONE_LOOP"] = "くりかえし";
+Blockly.Msg["DRONE_LOOP_COUNT"] = "かい";

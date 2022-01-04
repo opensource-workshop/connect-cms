@@ -341,7 +341,7 @@ Blockly.Blocks.drone_loop = {
   init() {
     this.jsonInit({
         "type": "drone_loop",
-        "message0": "%1 回 %2 繰り返し %3",
+        "message0": "%1 " + Blockly.Msg["DRONE_LOOP_COUNT"] + " %2 " + Blockly.Msg["DRONE_LOOP"] + " %3",
         "args0": [
             {
                 "type": "field_number",
