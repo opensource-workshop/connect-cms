@@ -11,7 +11,7 @@
 --}}
 @if (FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::blog_display_twitter_button) == ShowType::show)
 <a class="btn btn-sm btn-link btn-light border"
-   href="javascript:void window.open('http://twitter.com/intent/tweet');">
+   href="javascript:void window.open('http://www.facebook.com/share.php?u=','_blank');">
    <h6 class="d-inline"><i class="fab fa-twitter"></i></h6>
 </a>
 @endif
