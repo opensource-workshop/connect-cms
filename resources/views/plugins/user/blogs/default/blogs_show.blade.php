@@ -114,6 +114,12 @@
         'like_users_id' => $post->like_users_id,
     ])
 
+    {{-- Twitterボタン --}}
+    @include('plugins.common.twitter')
+
+    {{-- Facebookボタン --}}
+    @include('plugins.common.facebook')
+
     {{-- タグ --}}
     @isset($post_tags)
         @foreach($post_tags as $tags)
