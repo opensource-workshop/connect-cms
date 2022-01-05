@@ -23,7 +23,7 @@ Blockly.Blocks.drone_takeoff = {
 };
 
 Blockly.PHP.drone_takeoff = function(block) {
-    return "$tello->takeoff();\n";
+    return "takeoff\n";
 };
 
 Blockly.Blocks.drone_land = {
@@ -46,7 +46,7 @@ Blockly.Blocks.drone_land = {
 };
 
 Blockly.PHP.drone_land = function(block) {
-    return "$tello->land();\n";
+    return "land\n";
 };
 
 Blockly.Blocks.drone_up = {
@@ -77,7 +77,7 @@ Blockly.Blocks.drone_up = {
 
 Blockly.PHP.drone_up = function(block) {
     arg_drone_up = block.getFieldValue('arg_drone_up');
-    return "$tello->up(" + arg_drone_up + ");\n";
+    return "up," + arg_drone_up + "\n";
 };
 
 Blockly.Blocks.drone_down = {
@@ -108,7 +108,7 @@ Blockly.Blocks.drone_down = {
 
 Blockly.PHP.drone_down = function(block) {
     arg_drone_down = block.getFieldValue('arg_drone_down');
-    return "$tello->down(" + arg_drone_down + ");\n";
+    return "down," + arg_drone_down + "\n";
 };
 
 Blockly.Blocks.drone_forward = {
@@ -139,7 +139,7 @@ Blockly.Blocks.drone_forward = {
 
 Blockly.PHP.drone_forward = function(block) {
     arg_drone_forward = block.getFieldValue('arg_drone_forward');
-    return "$tello->forward(" + arg_drone_forward + ");\n";
+    return "forward," + arg_drone_forward + "\n";
 };
 
 Blockly.Blocks.drone_back = {
@@ -170,7 +170,7 @@ Blockly.Blocks.drone_back = {
 
 Blockly.PHP.drone_back = function(block) {
     arg_drone_back = block.getFieldValue('arg_drone_back');
-    return "$tello->back(" + arg_drone_back + ");\n";
+    return "back," + arg_drone_back + "\n";
 };
 
 Blockly.Blocks.drone_right = {
@@ -201,7 +201,7 @@ Blockly.Blocks.drone_right = {
 
 Blockly.PHP.drone_right = function(block) {
     arg_drone_right = block.getFieldValue('arg_drone_right');
-    return "$tello->right(" + arg_drone_right + ");\n";
+    return "right," + arg_drone_right + "\n";
 };
 
 Blockly.Blocks.drone_left = {
@@ -232,7 +232,7 @@ Blockly.Blocks.drone_left = {
 
 Blockly.PHP.drone_left = function(block) {
     arg_drone_left = block.getFieldValue('arg_drone_left');
-    return "$tello->left(" + arg_drone_left + ");\n";
+    return "left," + arg_drone_left + "\n";
 };
 
 Blockly.Blocks.drone_cw = {
@@ -263,7 +263,7 @@ Blockly.Blocks.drone_cw = {
 
 Blockly.PHP.drone_cw = function(block) {
     arg_drone_cw = block.getFieldValue('arg_drone_cw');
-    return "$tello->cw(" + arg_drone_cw + ");\n";
+    return "cw," + arg_drone_cw + "\n";
 };
 
 Blockly.Blocks.drone_ccw = {
@@ -294,7 +294,7 @@ Blockly.Blocks.drone_ccw = {
 
 Blockly.PHP.drone_ccw = function(block) {
     arg_drone_ccw = block.getFieldValue('arg_drone_ccw');
-    return "$tello->ccw(" + arg_drone_ccw + ");\n";
+    return "ccw," + arg_drone_ccw + "\n";
 };
 
 Blockly.Blocks.drone_flip = {
@@ -330,7 +330,7 @@ Blockly.Blocks.drone_flip = {
 
 Blockly.PHP.drone_flip = function(block) {
     arg_drone_flip = block.getFieldValue('arg_drone_flip');
-    return "$tello->flip(" + arg_drone_flip + ");\n";
+    return "flip," + arg_drone_flip + "\n";
 };
 
 Blockly.Blocks.drone_loop = {
@@ -367,12 +367,21 @@ Blockly.Blocks.drone_loop = {
 };
 
 Blockly.PHP.drone_loop = function(block) {
-    arg_drone_loop = block.getFieldValue('arg_drone_loop');
+/*
+    var arg_drone_loop = block.getFieldValue('arg_drone_loop');
     var statements_name_loop = Blockly.PHP.statementToCode(block, 'loop_statement');
     var php_code = "for ($i = 0; $i < " + arg_drone_loop + "; $i++) {\n";
     php_code = php_code + statements_name_loop;
     php_code = php_code + "}";
     return php_code + ";\n";
+*/
+    var arg_drone_loop = block.getFieldValue('arg_drone_loop');
+    var statements_name_loop = Blockly.PHP.statementToCode(block, 'loop_statement');
+    var php_code = "";
+    for (i = 0; i < arg_drone_loop; i++) {
+        php_code = php_code + statements_name_loop;
+    }
+    return php_code;
 };
 
 
