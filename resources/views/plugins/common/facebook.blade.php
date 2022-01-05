@@ -1,6 +1,8 @@
 {{--
  * facebook ボタンテンプレート
  *
+ * @param $post_title (プラグインで項目名が異なることがあるため、あえて明示的変数にしています)
+ *
  * // 暗黙で利用
  * @param $frame
  * @param $frame_configs
@@ -9,7 +11,7 @@
 --}}
 @if (FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::blog_display_facebook_button) == ShowType::show)
 <a class="btn btn-sm btn-link btn-light border"
-    href="javascript:void window.open('http://www.facebook.com/share.php?u='+encodeURIComponent('{{url("/")}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}'),'_blank');">
+    href="javascript:void window.open('{{urlencode("http://www.facebook.com/share.php?u=")}}{{url("/plugin/blogs/show/$page->id/$frame_id/$post->id&t=$post_title")}}','_blank');">
     <h6 class="d-inline"><i class="fab fa-facebook-square"></i></h6>
 </a>
 @endif
