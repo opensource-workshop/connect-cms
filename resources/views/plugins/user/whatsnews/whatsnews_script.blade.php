@@ -17,6 +17,7 @@
                 whatsnews_total_count: {{ $whatsnews_total_count }}, // 総件数
                 view_posted_at: {{ $whatsnews_frame->view_posted_at }},
                 view_posted_name: {{ $whatsnews_frame->view_posted_name }},
+                show: '1',
                 limit: {{ $whatsnews_frame->read_more_fetch_count }},
                 offset: {{ $whatsnews->count() }}, // 何件目から取得するか（＝現時点の取得件数）※初期値はサーバから返された一覧件数
                 @if (is_null($frame_configs->where('name', 'post_detail_length')->first()))
