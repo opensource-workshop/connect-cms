@@ -290,6 +290,9 @@ class DatabasesearchesPlugin extends UserPluginBase
             case DatabaseSearcherSortType::display_desc:
                 $inputs_ids->orderBy('databases_inputs.display_sequence', 'desc');
                 break;
+            default:
+                $inputs_ids->orderBy('databases_inputs.created_at', 'asc');
+                break;
         }
 
         $inputs_ids = $inputs_ids->paginate($databasesearches->view_count, ["*"], "frame_{$frame_id}_page");

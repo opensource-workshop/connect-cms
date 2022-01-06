@@ -46,7 +46,6 @@
                     </a>
                 @else
                     @if ($view_col->column_type == DatabaseColumnType::wysiwyg)
-                        {{-- 一旦、WYSIWYGのみHTMLエスケープ除外。resources\views\plugins\user\databases\default\databases_include_value.blade.phpと同様にするかは次の機会に検討する --}}
                         {!! $view_col->value !!}
                     @else
                         {{ $view_col->value }}

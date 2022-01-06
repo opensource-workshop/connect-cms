@@ -47,7 +47,6 @@
                         @else
                             <dd class="dbsearch_col_{{$view_col->databases_columns_id}}" style="display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;">
                             @if ($view_col->column_type == DatabaseColumnType::wysiwyg)
-                                {{-- 一旦、WYSIWYGのみHTMLエスケープ除外。resources\views\plugins\user\databases\default\databases_include_value.blade.phpと同様にするかは次の機会に検討する --}}
                                 <span class="column_title">{{$view_column}}：</span><span class="column_value">{!! $view_col->value !!}</span>
                             @elseif ($view_col->column_type == DatabaseColumnType::image)
                                 <img class="img-fluid" src="{{url('/')}}/file/{{$view_col->value}}">
