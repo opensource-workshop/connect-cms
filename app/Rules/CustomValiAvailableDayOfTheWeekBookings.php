@@ -13,42 +13,52 @@ use Carbon\Carbon;
 class CustomValiAvailableDayOfTheWeekBookings implements Rule
 {
     protected $facility_id;
+    protected $target_dates;
+    protected $message;
 
     /**
      * Create a new rule instance.
      *
      * @return void
      */
-    public function __construct($facility_id)
+    public function __construct(int $facility_id, array $target_dates, ?string $message = null)
     {
         $this->facility_id = $facility_id;
+        $this->target_dates = $target_dates;
+        $this->message = $message;
     }
 
     /**
      * Determine if the validation rule passes.
      *
      * @param  string  $attribute 項目名
-     * @param  mixed  $value 対象日
+     * @param  mixed  $value
      * @return bool
      */
     public function passes($attribute, $value)
     {
-        if (empty($value)) {
-            // 値がなければチェックしない（チェックOKにする）
-            return true;
-        }
-        $target_date = new Carbon($value);
-
         $facility = ReservationsFacility::find($this->facility_id);
-        $day_of_weeks = explode('|', $facility->day_of_weeks);
 
-        if (in_array((string)$target_date->dayOfWeek, $day_of_weeks, true)) {
-            // 対象日の曜日が含まれるため、正常
-            return true;
+        foreach ($this->target_dates as $target_date) {
+
+            if (empty($target_date)) {
+                // 値がなければチェックしない
+                continue;
+            }
+            $target_date = new Carbon($target_date);
+
+            $day_of_weeks = explode('|', $facility->day_of_weeks);
+
+            if (in_array((string)$target_date->dayOfWeek, $day_of_weeks, true)) {
+                // 対象日の曜日が含まれるため、正常. なにもしない
+            } else {
+                // 対象日の曜日が含まれないため、エラー
+                return false;
+            }
         }
 
-        // 対象日の曜日が含まれないため、エラー
-        return false;
+        // 正常
+        return true;
     }
 
     /**
@@ -58,6 +68,6 @@ class CustomValiAvailableDayOfTheWeekBookings implements Rule
      */
     public function message()
     {
-        return '利用できる曜日で入力してください。';
+        return $this->message ?? '利用できる曜日で入力してください。';
     }
 }

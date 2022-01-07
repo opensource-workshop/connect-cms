@@ -450,6 +450,11 @@ use App\Models\User\Reservations\ReservationsFacility;
                         @include('plugins.common.errors_inline', ['name' => 'rrule_until'])
                     </div>
                 </div>
+                <div class="row">
+                    <div class="col">
+                        @include('plugins.common.errors_inline', ['name' => 'rrule_repeat_end'])
+                    </div>
+                </div>
 
             </div>
         </div>

@@ -12,23 +12,27 @@ use App\Models\User\Reservations\ReservationsInput;
 class CustomValiDuplicateBookings implements Rule
 {
     protected $facility_id;
-    protected $inputs_id;
+    protected $inputs_parent_id;
 
     protected $start_datetime;
     protected $end_datetime;
+
+    protected $message;
 
     /**
      * Create a new rule instance.
      *
      * @return void
      */
-    public function __construct($facility_id, $inputs_id, $start_datetime, $end_datetime)
+    public function __construct(int $facility_id, ?int $inputs_parent_id, string $start_datetime, string $end_datetime, ?string $message = null)
     {
         $this->facility_id = $facility_id;
-        $this->inputs_id = $inputs_id;
+        $this->inputs_parent_id = $inputs_parent_id;
 
         $this->start_datetime = $start_datetime;
         $this->end_datetime = $end_datetime;
+
+        $this->message = $message;
     }
 
     /**
@@ -44,7 +48,7 @@ class CustomValiDuplicateBookings implements Rule
         // \DB::enableQueryLog();
 
         // 重複予約あるか
-        $input_cols = ReservationsInput::where('id', '!=', $this->inputs_id)
+        $input_cols = ReservationsInput::where('inputs_parent_id', '!=', $this->inputs_parent_id)
             ->where('facility_id', $this->facility_id)
             ->Where(function ($query) {
                 // 例)
@@ -90,6 +94,6 @@ class CustomValiDuplicateBookings implements Rule
      */
     public function message()
     {
-        return '既に予約が入っているため、予約できません。';
+        return $this->message ?? '既に予約が入っているため、予約できません。';
     }
 }

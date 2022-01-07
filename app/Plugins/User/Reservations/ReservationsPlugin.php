@@ -695,8 +695,7 @@ class ReservationsPlugin extends UserPluginBase
             'required',
             'date_format:Y-m-d',
             // 利用できる曜日チェック
-            // [TODO] 繰り返し予定対応
-            new CustomValiAvailableDayOfTheWeekBookings($request->facility_id),
+            new CustomValiAvailableDayOfTheWeekBookings($request->facility_id, [$request->target_date]),
         ];
 
         $validator_array['column']['start_datetime'] = [
@@ -715,14 +714,16 @@ class ReservationsPlugin extends UserPluginBase
 
         if (!$facility->is_allow_duplicate) {
             // 重複予約チェック追加
-            // [TODO] 繰り返し予定対応
             $validator_array['column']['start_datetime'][] = new CustomValiDuplicateBookings(
                 $request->facility_id,
-                $reservations_inputs->id,
+                $reservations_inputs->inputs_parent_id,
                 "{$request->target_date} {$request->start_datetime}",
                 "{$request->target_date} {$request->end_datetime}"
             );
         }
+
+        // 繰り返しrrule
+        $rrule = null;
 
         // 繰り返しバリデーション
         if ($request->rrule_freq == RruleFreq::DAILY ||
@@ -773,6 +774,87 @@ class ReservationsPlugin extends UserPluginBase
                 $validator_array['column']['rrule_count'] = ['required', 'numeric'];
                 $validator_array['message']['rrule_count'] = '指定の回数後';
             }
+
+            /* 繰り返しパターン
+             * see) https://github.com/rlanvin/php-rrule/wiki/RRule
+            -----------------------------------------*/
+            $rrule_setting['FREQ'] = $request->rrule_freq;
+
+            // 開始日
+            // ※ [要注意] NC2の reservation_reserve_details.rrule は DTSTART がないため、移行時は開始日の補完が必要。
+            //            DTSTART無指定だと、今日日付で処理される。
+            $rrule_setting['DTSTART'] = $request->target_date . ' ' . $request->start_datetime . ':00';
+
+            // 週の開始曜日
+            $rrule_setting['WKST'] = 'SU';
+
+            if ($request->rrule_freq == RruleFreq::DAILY) {
+                // 繰り返し：毎日
+
+                $rrule_setting['INTERVAL'] = (int) $request->rrule_interval_daily;              // 繰り返し間隔（日）
+
+            } elseif ($request->rrule_freq == RruleFreq::WEEKLY) {
+                // 繰り返し：毎週
+                // $request->rrule_bydays_weekly は必須で配列になるようバリデーション済み
+
+                $rrule_setting['INTERVAL'] = (int) $request->rrule_interval_weekly;             // 繰り返し間隔（週）
+                $rrule_setting['BYDAY'] = array_filter($request->rrule_bydays_weekly);          // 繰り返し曜日（配列, 空配列は取り除く）
+
+            } elseif ($request->rrule_freq == RruleFreq::MONTHLY) {
+                // 繰り返し：毎月
+
+                $rrule_setting['INTERVAL'] = (int) $request->rrule_interval_monthly;            // 繰り返し間隔（月）
+
+                // 毎月繰り返し指定
+                if ($request->rrule_repeat_monthly == 'BYDAY') {
+                    // 曜日指定 BYDAY
+                    $rrule_setting['BYDAY'] = $request->rrule_byday_monthly;                    // 曜日指定（月）
+                } else {
+                    // 日付指定 BYMONTHDAY
+                    $rrule_setting['BYMONTHDAY'] = (int) $request->rrule_bymonthday_monthly;    // 日付指定（月）
+                }
+
+            } elseif ($request->rrule_freq == RruleFreq::YEARLY) {
+                // 繰り返し：毎年
+                // $request->rrule_bymonths_yearly は必須で配列になるようバリデーション済み
+
+                $rrule_setting['INTERVAL'] = (int) $request->rrule_interval_yearly;             // 繰り返し間隔（年）
+                $rrule_setting['BYMONTH'] = array_filter($request->rrule_bymonths_yearly);      // 繰り返し月（配列, 空配列は取り除く）
+                $rrule_setting['BYDAY'] = $request->rrule_byday_yearly;                         // 曜日指定（年）
+
+                // [debug]
+                // \Log::debug(var_export($rrule_setting['BYMONTH'], true));
+            }
+
+            // 繰り返し終了
+            if ($request->rrule_repeat_end == 'UNTIL') {
+                // 指定日 UNTIL
+                $rrule_setting['UNTIL'] = $request->rrule_until . ' ' . $request->end_datetime . ':00';
+            } else {
+                // 指定の回数後 COUNT とみなす
+                $rrule_setting['COUNT'] = (int) $request->rrule_count;
+            }
+
+            $rrule = new RRule($rrule_setting);
+
+            $occurrence_dates = [];
+            foreach ($rrule as $occurrence) {
+                $occurrence_dates[] = $occurrence->format('Y-m-d');
+
+                if (!$facility->is_allow_duplicate) {
+                    // （繰り返し）重複予約チェック追加
+                    $validator_array['column']['rrule_repeat_end'][] = new CustomValiDuplicateBookings(
+                        $request->facility_id,
+                        $reservations_inputs->inputs_parent_id,
+                        "{$occurrence->format('Y-m-d')} {$request->start_datetime}",
+                        "{$occurrence->format('Y-m-d')} {$request->end_datetime}",
+                        '既に予約が入っている日が含まれるため、繰り返し内容を見直してください。'
+                    );
+                }
+            }
+
+            // （繰り返し）利用できる曜日チェック
+            $validator_array['column']['rrule_repeat_end'][] = new CustomValiAvailableDayOfTheWeekBookings($request->facility_id, $occurrence_dates, '利用できない曜日が含まれています。繰り返し内容を見直してください。');
         }
 
         $validator_array['column']['end_datetime'] = ['required', 'date_format:H:i', 'after:start_datetime'];
@@ -843,73 +925,9 @@ class ReservationsPlugin extends UserPluginBase
             $reservations_inputs->save();
         }
 
-        /* 繰り返し
-         * see) https://github.com/rlanvin/php-rrule/wiki/RRule
+        /* 繰り返し save
          * ----------------------------------------- */
-        if ($request->rrule_freq == RruleFreq::DAILY ||
-            $request->rrule_freq == RruleFreq::WEEKLY ||
-            $request->rrule_freq == RruleFreq::MONTHLY ||
-            $request->rrule_freq == RruleFreq::YEARLY) {
-
-            // 繰り返しパターン
-            $rrule_setting['FREQ'] = $request->rrule_freq;
-
-            // 開始日
-            // ※ [要注意] NC2の reservation_reserve_details.rrule は DTSTART がないため、移行時は開始日の補完が必要。
-            //            DTSTART無指定だと、今日日付で処理される。
-            $rrule_setting['DTSTART'] = $request->target_date . ' ' . $request->start_datetime . ':00';
-
-            // 週の開始曜日
-            $rrule_setting['WKST'] = 'SU';
-
-            if ($request->rrule_freq == RruleFreq::DAILY) {
-                // 繰り返し：毎日
-
-                $rrule_setting['INTERVAL'] = (int) $request->rrule_interval_daily;              // 繰り返し間隔（日）
-
-            } elseif ($request->rrule_freq == RruleFreq::WEEKLY) {
-                // 繰り返し：毎週
-                // $request->rrule_bydays_weekly は必須で配列になるようバリデーション済み
-
-                $rrule_setting['INTERVAL'] = (int) $request->rrule_interval_weekly;             // 繰り返し間隔（週）
-                $rrule_setting['BYDAY'] = array_filter($request->rrule_bydays_weekly);          // 繰り返し曜日（配列, 空配列は取り除く）
-
-            } elseif ($request->rrule_freq == RruleFreq::MONTHLY) {
-                // 繰り返し：毎月
-
-                $rrule_setting['INTERVAL'] = (int) $request->rrule_interval_monthly;            // 繰り返し間隔（月）
-
-                // 毎月繰り返し指定
-                if ($request->rrule_repeat_monthly == 'BYDAY') {
-                    // 曜日指定 BYDAY
-                    $rrule_setting['BYDAY'] = $request->rrule_byday_monthly;                    // 曜日指定（月）
-                } else {
-                    // 日付指定 BYMONTHDAY
-                    $rrule_setting['BYMONTHDAY'] = (int) $request->rrule_bymonthday_monthly;    // 日付指定（月）
-                }
-
-            } elseif ($request->rrule_freq == RruleFreq::YEARLY) {
-                // 繰り返し：毎年
-                // $request->rrule_bymonths_yearly は必須で配列になるようバリデーション済み
-
-                $rrule_setting['INTERVAL'] = (int) $request->rrule_interval_yearly;             // 繰り返し間隔（年）
-                $rrule_setting['BYMONTH'] = array_filter($request->rrule_bymonths_yearly);      // 繰り返し月（配列, 空配列は取り除く）
-                $rrule_setting['BYDAY'] = $request->rrule_byday_yearly;                         // 曜日指定（年）
-
-                // [debug]
-                // \Log::debug(var_export($rrule_setting['BYMONTH'], true));
-            }
-
-            // 繰り返し終了
-            if ($request->rrule_repeat_end == 'UNTIL') {
-                // 指定日 UNTIL
-                $rrule_setting['UNTIL'] = $request->rrule_until . ' ' . $request->end_datetime . ':00';
-            } else {
-                // 指定の回数後 COUNT とみなす
-                $rrule_setting['COUNT'] = (int) $request->rrule_count;
-            }
-
-            $rrule = new RRule($rrule_setting);
+        if ($rrule) {
 
             // rrule登録
             $reservations_inputs_repeat = InputsRepeat::firstOrNew([
