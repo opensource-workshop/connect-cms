@@ -3,16 +3,27 @@
 namespace App\Plugins\Manage\SiteManage;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
 
+use setasign\Fpdi\Tcpdf\Fpdi;
+
+use App\Models\Core\ApiSecret;
 use App\Models\Core\Configs;
+use App\Models\Core\ConfigsLoginPermits;
+use App\Models\Core\Plugins;
 use App\Models\Common\Categories;
+use App\Models\Common\Frame;
+use App\Models\Common\Group;
+use App\Models\Common\Holiday;
 use App\Models\Common\Page;
+use App\Models\Common\PageRole;
 
 use App\Plugins\Manage\ManagePluginBase;
+use App\Plugins\Manage\SiteManage\CCPDF;
 use App\Enums\BaseLoginRedirectPage;
 
 /**
@@ -52,8 +63,11 @@ class SiteManage extends ManagePluginBase
         $role_ckeck_table["favicon"]          = array('admin_site');
         $role_ckeck_table["saveFavicon"]      = array('admin_site');
         $role_ckeck_table["deleteFavicon"]    = array('admin_site');
-        $role_ckeck_table["wysiwyg"] = array('admin_site');
-        $role_ckeck_table["saveWysiwyg"] = array('admin_site');
+        $role_ckeck_table["wysiwyg"]          = array('admin_site');
+        $role_ckeck_table["saveWysiwyg"]      = array('admin_site');
+        $role_ckeck_table["document"]         = array('admin_site');
+        $role_ckeck_table["saveDocument"]     = array('admin_site');
+        $role_ckeck_table["downloadDocument"] = array('admin_site');
 
         return $role_ckeck_table;
     }
@@ -845,5 +859,444 @@ class SiteManage extends ManagePluginBase
 
         // WYSIWYG設定画面に戻る
         return redirect("/manage/site/wysiwyg")->with('flash_message', '更新しました。');
+    }
+
+    /**
+     * サイトドキュメント出力指示画面
+     */
+    public function document($request, $id = null)
+    {
+        // Config データの取得
+        $configs = Configs::get();
+
+        // 管理画面プラグインの戻り値の返し方
+        return view('plugins.manage.site.document', [
+            "function" => __FUNCTION__,
+            "plugin_name" => "site",
+            "configs" => $configs,
+        ]);
+    }
+
+    /**
+     * Configs 更新
+     */
+    private function updateConfigs($request, $config_values)
+    {
+        foreach ($config_values as $category => $configs) {
+            foreach ($configs as $config) {
+                $configs = Configs::updateOrCreate(
+                    ['name'     => $config],
+                    ['category' => $category,
+                     'value'    => $request->input($config)]
+                );
+            }
+        }
+    }
+
+    /**
+     * サイト設計書設定保存
+     */
+    public function saveDocument($request)
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        // Configs 保存内容
+        $config_values = [
+            'document' => [
+                 'document_secret_name',
+                 'document_auth_netcomons2_admin_password',
+                 'document_support_org_title',
+                 'document_support_org_txt',
+                 'document_support_contact_title',
+                 'document_support_contact_txt',
+                 'document_support_other_title',
+                 'document_support_other_txt',
+            ],
+        ];
+        $this->updateConfigs($request, $config_values);
+
+        // ページ管理画面に戻る
+        return redirect("/manage/site/document");
+    }
+
+    /**
+     * セクション出力
+     */
+    private function outputSection(&$pdf, &$sections)
+    {
+        foreach ($sections as $section) {
+            $pdf->writeHTML(view('plugins.manage.site.pdf.' . $section[0], $section[1])->render(), false);
+            $pdf->Bookmark($section[2], 1, 0, '', '', array(0, 0, 0));
+        }
+    }
+
+    /**
+     * サイト設計書ダウンロード
+     */
+    public function downloadDocument($request)
+    {
+        // 必要なデータの取得
+        $configs = Configs::get(); // Config
+        $categories = Categories::whereNull('target')->get(); // 共通カテゴリ
+
+        // 出力内容の編集とため込み
+        $output = collect();
+
+        // サイト名
+        $output->put('base_site_name', $configs->firstWhere('name', 'base_site_name')->value);
+
+        // 出力するPDF の準備
+        $pdf = new CCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+        // PDF プロパティ設定
+        $pdf->SetTitle($output->get('base_site_name') . ' サイト設計書');
+        //$pdf->SetAuthor('');
+        //$pdf->SetSubject('');
+        //$pdf->SetKeywords('');
+        //$pdf->SetCreator('');
+
+        // 余白
+        $pdf->SetMargins(15, 20, 15);
+
+        // フォントを登録
+        // 追加フォントをtcpdf用フォントファイルに変換してvendor\tecnickcom\tcpdf\fontsに登録
+        $font = new \TCPDF_FONTS();
+
+        // ttfフォントファイルからtcpdf用フォントファイルを生成（tcpdf用フォントファイルがある場合は再生成しない）
+        $fontX = $font->addTTFfont(resource_path('fonts/ipaexg.ttf'));
+
+        // ヘッダーのフォントの設定（フォント情報を配列で渡す必要があるので、要注意）
+        $pdf->setHeaderMargin(5);
+        $pdf->setHeaderFont(array('ipaexg', '', 10));
+        $pdf->setHeaderData('', 0, $configs->firstWhere('name', 'base_site_name')->value . " - " . url('/'), '');
+
+        // フッター
+        $pdf->setPrintFooter(true);
+
+        // フォント設定
+        $pdf->setFont('ipaexg', '', 12);
+
+        // --- 表紙
+
+        // 初期ページを追加
+        $pdf->addPage();
+
+        // サイト設計書表紙
+        $pdf->writeHTML(view('plugins.manage.site.pdf.cover', compact('configs'))->render(), false);
+
+        // --- サイト管理
+
+        // ページを追加
+        $pdf->addPage();
+        $pdf->Bookmark('サイト基本設定', 0, 0, '', '', array(0, 0, 0));
+
+        // サイト管理
+        $sections = [
+            ['base_main',      compact('configs'),    'サイト基本設定'],
+            ['base_meta',      compact('configs'),    'メタ情報'],
+            ['base_layout',    compact('configs'),    'レイアウト設定'],
+            ['base_category',  compact('categories'), '共通カテゴリ設定'],
+            ['base_language',  compact('configs'),    '他言語設定'],
+            ['base_error',     compact('configs'),    'エラー設定'],
+            ['base_analytics', compact('configs'),    'アクセス解析'],
+            ['base_favicon',   compact('configs'),    'ファビコン'],
+            ['base_wysiwyg',   compact('configs'),    'WYSIWYG設定'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- ページ管理
+
+        // ページデータの取得(laravel-nestedset 使用)
+        $return_obj = 'flat';
+        $pages = Page::defaultOrderWithDepth($return_obj);
+
+        // ページ権限を取得してGroup オブジェクトに保持する。
+        $page_roles = PageRole::join('groups', 'groups.id', '=', 'page_roles.group_id')
+                ->whereNull('groups.deleted_at')
+                ->where('page_roles.role_value', 1)
+                ->get();
+
+        foreach ($pages as &$page) {
+            $page->page_roles = $page_roles->where('page_id', $page->id);
+        }
+
+        // ページを追加
+        $pdf->addPage();
+        $pdf->Bookmark('ページ設定', 0, 0, '', '', array(0, 0, 0));
+
+        // ページ設定
+        $sections = [
+            ['page',        compact('pages'), 'ページ設定'],
+            ['page_limit',  compact('pages'), '制限関連'],
+            ['page_design', compact('pages'), 'デザイン関連'],
+            ['page_action', compact('pages'), '動作関連'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- フレーム管理
+
+        // Page モデルのwithDepth() を使いたかったので、フレーム取得だけれど、Page をメインにしてFrame をJOIN させています。
+        $frames = Page::select('pages.page_name', 'buckets.bucket_name', 'frames.*')
+                       ->join('frames', 'pages.id', '=', 'frames.page_id')
+                       ->leftJoin('buckets', 'frames.bucket_id', '=', 'buckets.id')
+                       ->orderBy('pages._lft')
+                       ->orderByRaw('FIELD(frames.area_id, 0, 1, 3, 4, 2)')
+                       ->orderBy('frames.display_sequence')
+                       ->withDepth()
+                       ->get();
+
+        // フレーム設定
+        $pdf->addPage();
+        $pdf->Bookmark('フレーム設定', 0, 0, '', '', array(0, 0, 0));
+
+        // フレーム設定
+        $sections = [
+            ['frame',        compact('frames'), 'フレーム基本情報'],
+            ['frame_data',   compact('frames'), 'フレームデータ情報'],
+            ['frame_design', compact('frames'), 'フレームデザイン情報'],
+            ['frame_limit',  compact('frames'), 'フレーム制限情報'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- ユーザ管理
+
+        // ユーザ設定
+        $pdf->addPage();
+        $pdf->Bookmark('ユーザ設定', 0, 0, '', '', array(0, 0, 0));
+
+        // フレーム設定
+        $sections = [
+            ['user_regist', compact('configs'), '自動ユーザ登録設定'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- グループ管理
+
+        $groups = Group::select('groups.id', 'groups.name', DB::raw("count(group_users.id) as group_users_count"))
+                       ->join('group_users', 'group_users.group_id', '=', 'groups.id')
+                       ->groupBy('groups.id', 'groups.name')
+                       ->get();
+
+        // グループ設定
+        $pdf->addPage();
+        $pdf->Bookmark('グループ設定', 0, 0, '', '', array(0, 0, 0));
+
+        // グループ設定
+        $sections = [
+            ['group_list', compact('groups'), 'グループ一覧'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- セキュリティ管理
+
+        $login_permits = ConfigsLoginPermits::orderBy('apply_sequence')->get();
+
+        // HTML記述制限
+        $purifiers = config('cc_role.CC_HTMLPurifier_ROLE_LIST');
+
+        // Config テーブルからHTML記述制限の取得
+        // Config テーブルにデータがあれば、配列を上書きする。
+        // 初期状態ではConfig テーブルはなく、cc_role.CC_HTMLPurifier_ROLE_LIST を初期値とするため。
+        $config_purifiers = Configs::where('category', 'html_purifier')->get();
+        foreach ($config_purifiers as $config_purifier) {
+            if (array_key_exists($config_purifier->name, $purifiers)) {
+                $purifiers[$config_purifier->name] = $config_purifier->value;
+            }
+        }
+
+        // セキュリティ管理
+        $pdf->addPage();
+        $pdf->Bookmark('セキュリティ管理', 0, 0, '', '', array(0, 0, 0));
+
+        // ログイン制限
+        $sections = [
+            ['security_login',    compact('login_permits'), 'ログイン制限'],
+            ['security_purifier', compact('purifiers'),     'HTML記述制限'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- プラグイン管理
+
+        $plugins = Plugins::orderBy('display_sequence')->get();
+
+        // プラグイン管理
+        $pdf->addPage();
+        $pdf->Bookmark('プラグイン管理', 0, 0, '', '', array(0, 0, 0));
+
+        // ログイン制限
+        $sections = [
+            ['plugin_list', compact('plugins'), 'プラグイン一覧'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- システム管理
+
+        // システム管理
+        $pdf->addPage();
+        $pdf->Bookmark('システム管理', 0, 0, '', '', array(0, 0, 0));
+
+        // ログイン制限
+        $sections = [
+            ['system_server', compact('configs'), 'サーバ設定'],
+            ['system_log',    compact('configs'), 'エラーログ設定'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- API管理
+
+        $api_secrets = ApiSecret::orderBy('id')->get();
+
+        // API管理
+        $pdf->addPage();
+        $pdf->Bookmark('API管理', 0, 0, '', '', array(0, 0, 0));
+
+        // API管理
+        $sections = [
+            ['api_list', compact('api_secrets'), 'Secret Code 一覧'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- メッセージ管理
+
+        // メッセージ管理
+        $pdf->addPage();
+        $pdf->Bookmark('メッセージ管理', 0, 0, '', '', array(0, 0, 0));
+
+        // メッセージ管理
+        $sections = [
+            ['massage_first', compact('configs'), '初回確認メッセージ'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- 外部認証
+
+        // 外部認証
+        $pdf->addPage();
+        $pdf->Bookmark('外部認証', 0, 0, '', '', array(0, 0, 0));
+
+        // 外部認証
+        $sections = [
+            ['auth_base',        compact('configs'), '認証設定'],
+            ['auth_ldap',        compact('configs'), 'LDAP認証'],
+            ['auth_shibboleth',  compact('configs'), 'Shibboleth認証'],
+            ['auth_netcommons2', compact('configs'), 'NetCommons2認証'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- 外部サービス設定
+
+        // 外部サービス設定
+        $pdf->addPage();
+        $pdf->Bookmark('外部サービス設定', 0, 0, '', '', array(0, 0, 0));
+
+        // 外部サービス設定
+        $sections = [
+            ['service_base',  compact('configs'), 'WYSIWYG設定'],
+            ['service_pdf',   compact('configs'), 'PDFアップロード'],
+            ['service_face',  compact('configs'), 'AI顔認識'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- アップロードファイル
+
+        // アップロードファイル
+        $pdf->addPage();
+        $pdf->Bookmark('アップロードファイル', 0, 0, '', '', array(0, 0, 0));
+
+        // アップロードファイル
+        $sections = [
+            ['upload_userfile', compact('configs'), 'ユーザディレクトリ一覧'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- テーマ管理
+
+        // Users テーマディレクトリの取得
+        $tmp_dirs = File::directories(public_path() . '/themes/Users/');
+        $dirs = array();
+        foreach ($tmp_dirs as $tmp_dir) {
+            // テーマ設定ファイル取得
+            $theme_inis = parse_ini_file(public_path() . '/themes/Users/' . basename($tmp_dir) . '/themes.ini');
+            $theme_name = '';
+            if (!empty($theme_inis) && array_key_exists('theme_name', $theme_inis)) {
+                $theme_name = $theme_inis['theme_name'];
+            }
+
+            $dirs[basename($tmp_dir)] = array('dir' => basename($tmp_dir), 'theme_name' => $theme_name);
+        }
+        asort($dirs);  // ディレクトリが名前に対して逆順になることがあるのでソートしておく。
+
+        // テーマ管理
+        $pdf->addPage();
+        $pdf->Bookmark('テーマ管理', 0, 0, '', '', array(0, 0, 0));
+
+        // テーマ管理
+        $sections = [
+            ['theme_user', compact('dirs'), 'ユーザ・テーマ'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- ログ管理
+
+        // ログ管理
+        $pdf->addPage();
+        $pdf->Bookmark('ログ管理', 0, 0, '', '', array(0, 0, 0));
+
+        // ログ管理
+        $sections = [
+            ['log_main', compact('configs'), 'ログ設定'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- 祝日管理
+
+        $holidays = Holiday::orderBy('holiday_date', 'asc')->get();
+
+        // 祝日管理
+        $pdf->addPage();
+        $pdf->Bookmark('祝日管理管理', 0, 0, '', '', array(0, 0, 0));
+
+        // 祝日管理
+        $sections = [
+            ['holiday_main', compact('holidays'), '変更内容一覧'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+        // --- 問い合わせ先
+
+        // 問い合わせ先ページを追加
+        $pdf->addPage();
+
+        // 問い合わせ先
+        $pdf->writeHTML(view('plugins.manage.site.pdf.contact', compact('configs'))->render(), false);
+        $pdf->Bookmark('お問い合わせ先', 0, 0, '', '', array(0, 0, 0));
+
+        // 目次ページの追加
+        $pdf->addTOCPage();
+
+        // write the TOC title
+        $pdf->SetFont('ipaexg', 'B', 28);
+        $pdf->MultiCell(0, 0, 'Webサイト設計書　目次', 0, 'C', 0, 1, '', 30, true, 0);
+        $pdf->Ln();
+
+        $pdf->SetFont('ipaexg', '', 12);
+
+        // add a simple Table Of Content at first page
+        // (check the example n. 59 for the HTML version)
+        $pdf->addTOC(2, 'ipaexg', '.', 'INDEX', 'B', array(0, 0, 0));
+
+        // end of TOC page
+        $pdf->endTOCPage();
+
+        // 目次 --------------------/
+
+        $disposition = ($request->filled('disposition') && $request->disposition == 'inline') ? 'I' : 'D';
+
+        // 出力 ( D：Download, I：Inline )
+        $pdf->output('SiteDocument-' . $output->get('base_site_name') . '.pdf', $disposition);
+        return redirect()->back();
     }
 }

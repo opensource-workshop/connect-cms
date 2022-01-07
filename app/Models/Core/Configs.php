@@ -165,4 +165,15 @@ class Configs extends Model
         }
         return $return_array;
     }
+
+    /**
+     * 値のチェック
+     */
+    public static function checkConfigValue($configs, $check_key, $check_value)
+    {
+        if ($configs->firstWhere('name', $check_key)->value == $check_value) {
+            return true;
+        }
+        return false;
+    }
 }
