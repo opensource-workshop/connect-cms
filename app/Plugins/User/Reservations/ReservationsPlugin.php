@@ -982,6 +982,14 @@ class ReservationsPlugin extends UserPluginBase
         // $str_mode = $request->booking_id ? '更新' : '登録';
         // $message = '予約を' . $str_mode . 'しました。【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
         $request->flash_message = $str_mode . '【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
+        // 繰り返しあり
+        if ($request->rrule_freq == RruleFreq::DAILY ||
+            $request->rrule_freq == RruleFreq::WEEKLY ||
+            $request->rrule_freq == RruleFreq::MONTHLY ||
+            $request->rrule_freq == RruleFreq::YEARLY) {
+
+            $request->flash_message .= ' 【繰り返し】あり';
+        }
 
         // titleカラムが無いため、プラグイン独自でセット
         $overwrite_notice_embedded_tags = [NoticeEmbeddedTag::title => $this->getTitle($reservations_inputs)];
