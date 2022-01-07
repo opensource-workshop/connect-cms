@@ -119,7 +119,7 @@
             $('#bookingDetailModalColumns{{$frame_id}}').empty();
 
             for (var i in data.columns) {
-                // {{-- <div class="form-group row">
+                // {{-- <div class="row">
                 //     <label for="column_{{ $column->id }}" class="col-3 col-form-label">{{ $column->column_name }}</label>
                 //     <input type="text" class="col-9 form-control-plaintext" id="column_{{ $column->id }}" readonly>
                 // </div> --}}
