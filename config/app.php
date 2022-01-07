@@ -293,6 +293,9 @@ $app_array = [
         'PhotoalbumFrameConfig' => \App\Enums\PhotoalbumFrameConfig::class,
         'PhotoalbumSort' => \App\Enums\PhotoalbumSort::class,
         'Fineness' => \App\Enums\Fineness::class,
+        'RruleFreq' => \App\Enums\RruleFreq::class,
+        'RruleDayOfWeek' => \App\Enums\RruleDayOfWeek::class,
+        'RruleByMonth' => \App\Enums\RruleByMonth::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

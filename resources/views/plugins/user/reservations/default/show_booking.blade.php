@@ -28,6 +28,15 @@ if ($frame->isExpandNarrow()) {
     <dt class="{{$label_class}}">{{__('messages.time_of_use')}}</dt>
     <dd class="{{$value_class}}">{{$inputs->start_datetime->format('H:i')}} ~ {{$inputs->end_datetime->format('H:i')}}</dd>
 
+    @if ($repeat->id)
+        {{-- 繰り返し --}}
+        <dt class="{{$label_class}}">{{__('messages.repetition')}}</dt>
+        <dd class="{{$value_class}}">
+            {{$repeat->showRruleDisplay()}}<br />
+            {{$repeat->showRruleEndDisplay()}}
+        </dd>
+    @endif
+
     @foreach($columns as $column)
         <dt class="{{$label_class}}">{{$column->column_name}}</dt>
         <dd class="{{$value_class}}">

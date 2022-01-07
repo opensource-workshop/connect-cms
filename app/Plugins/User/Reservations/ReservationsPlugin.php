@@ -5,11 +5,13 @@ namespace App\Plugins\User\Reservations;
 // use Carbon\Carbon;
 use App\Models\Common\ConnectCarbon;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-// use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rule;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
+use App\Models\Common\InputsRepeat;
 use App\Models\User\Reservations\Reservation;
 use App\Models\User\Reservations\ReservationsCategory;
 use App\Models\User\Reservations\ReservationsChoiceCategory;
@@ -22,6 +24,7 @@ use App\Models\User\Reservations\ReservationsInputsColumn;
 use App\Rules\CustomValiAvailableDayOfTheWeekBookings;
 use App\Rules\CustomValiAvailableTimeBookings;
 use App\Rules\CustomValiDuplicateBookings;
+use App\Rules\CustomValiRequiredWithoutAllSupportsArrayInput;
 use App\Rules\CustomValiWysiwygMax;
 
 use App\Plugins\User\UserPluginBase;
@@ -31,8 +34,11 @@ use App\Enums\NotShowType;
 use App\Enums\Required;
 use App\Enums\ReservationCalendarDisplayType;
 use App\Enums\ReservationColumnType;
+use App\Enums\RruleFreq;
 use App\Enums\ShowType;
 use App\Enums\StatusType;
+
+use RRule\RRule;
 
 /**
  * 施設予約プラグイン
@@ -324,7 +330,7 @@ class ReservationsPlugin extends UserPluginBase
             ->leftJoin('reservations_columns', function ($join) {
                 $join->on('reservations_inputs_columns.column_id', '=', 'reservations_columns.id');
             })
-            ->whereIn('reservations_inputs_columns.inputs_id', $booking_headers_base->pluck('id'))
+            ->whereIn('reservations_inputs_columns.inputs_parent_id', $booking_headers_base->pluck('inputs_parent_id'))
             ->orderBy('reservations_inputs_columns.column_id')
             ->get();
 
@@ -368,7 +374,7 @@ class ReservationsPlugin extends UserPluginBase
                         //     ->where('reservations_inputs_columns.inputs_id', $booking_header->id)
                         //     ->orderBy('reservations_inputs_columns.column_id')
                         //     ->get();
-                        $booking['booking_details'] = $booking_details_base->where('reservations_inputs_columns.inputs_id', $booking_header->id);
+                        $booking['booking_details'] = $booking_details_base->where('inputs_parent_id', $booking_header->inputs_parent_id);
 
                         // タイトル設定
                         $booking_header->title = $this->getTitle($booking_header, $columns, $booking['booking_details']);
@@ -443,7 +449,7 @@ class ReservationsPlugin extends UserPluginBase
 
         // カラム入力値
         if (is_null($inputs_columns)) {
-            $inputs_columns = $this->getReservationsInputsColumns($input->id);
+            $inputs_columns = $this->getReservationsInputsColumns($input->inputs_parent_id);
         }
 
         // title_flagのカラム1件に絞る
@@ -451,6 +457,10 @@ class ReservationsPlugin extends UserPluginBase
 
         // カラムの値取得
         $value = $this->getColumnValue($input, $column, $obj);
+
+        // [debug]
+        // \Log::debug(var_export($input->inputs_parent_id, true));
+        // \Log::debug(var_export($inputs_columns, true));
 
         return $value;
     }
@@ -542,6 +552,13 @@ class ReservationsPlugin extends UserPluginBase
             // $booking = ReservationsInput::where('id', $request->booking_id)->first();
             $booking = ReservationsInput::where('id', $input_id)->first();
 
+            // 予約繰り返しルール
+            $repeat = InputsRepeat::firstOrNew([
+                'target' => $this->frame->plugin_name,
+                'target_id' => $booking->facility_id,   // 施設予約は、施設IDをtarget_idにセット
+                'parent_id' => $booking->inputs_parent_id
+            ]);
+
             // 施設予約データ
             $reservation = Reservation::where('id', $booking->reservations_id)->first();
 
@@ -556,7 +573,7 @@ class ReservationsPlugin extends UserPluginBase
                 )
                 ->leftJoin('reservations_inputs_columns', function ($join) use ($booking) {
                     $join->on('reservations_inputs_columns.column_id', '=', 'reservations_columns.id');
-                    $join->where('reservations_inputs_columns.inputs_id', '=', $booking->id);
+                    $join->where('reservations_inputs_columns.inputs_parent_id', '=', $booking->inputs_parent_id);
                 })
                 // ->where('reservations_columns.reservations_id', $booking->reservations_id)
                 ->where('reservations_columns.columns_set_id', $facility->columns_set_id)
@@ -593,6 +610,9 @@ class ReservationsPlugin extends UserPluginBase
             if (empty($reservations_frame)) {
                 return $this->view_error("404_inframe", null, 'フレームに紐づいたreservationsが空');
             }
+
+            // 予約繰り返しルール
+            $repeat = new InputsRepeat();
 
             // 施設予約データ
             // $reservation = Reservation::where('id', old('reservations_id', $request->reservations_id))->first();
@@ -639,6 +659,7 @@ class ReservationsPlugin extends UserPluginBase
             'columns' => $columns,
             'selects' => $selects,
             'booking' => $booking,
+            'repeat' => $repeat,
         ]);
     }
 
@@ -647,6 +668,9 @@ class ReservationsPlugin extends UserPluginBase
      */
     public function saveBooking($request, $page_id, $frame_id, $booking_id = null)
     {
+        /* バリデーション
+         ------------------------------------------- */
+
         // エラーチェック配列
         $validator_array = array('column' => array(), 'message' => array());
 
@@ -671,6 +695,7 @@ class ReservationsPlugin extends UserPluginBase
             'required',
             'date_format:Y-m-d',
             // 利用できる曜日チェック
+            // [TODO] 繰り返し予定対応
             new CustomValiAvailableDayOfTheWeekBookings($request->facility_id),
         ];
 
@@ -690,12 +715,64 @@ class ReservationsPlugin extends UserPluginBase
 
         if (!$facility->is_allow_duplicate) {
             // 重複予約チェック追加
+            // [TODO] 繰り返し予定対応
             $validator_array['column']['start_datetime'][] = new CustomValiDuplicateBookings(
                 $request->facility_id,
                 $reservations_inputs->id,
                 "{$request->target_date} {$request->start_datetime}",
                 "{$request->target_date} {$request->end_datetime}"
             );
+        }
+
+        // 繰り返しバリデーション
+        if ($request->rrule_freq == RruleFreq::DAILY ||
+            $request->rrule_freq == RruleFreq::WEEKLY ||
+            $request->rrule_freq == RruleFreq::MONTHLY ||
+            $request->rrule_freq == RruleFreq::YEARLY) {
+
+            if ($request->rrule_freq == RruleFreq::WEEKLY) {
+                // 毎週
+
+                $validator_array['column']['rrule_bydays_weekly'] = ['required', 'array', new CustomValiRequiredWithoutAllSupportsArrayInput($request->rrule_bydays_weekly, '曜日')];
+                $validator_array['message']['rrule_bydays_weekly'] = '曜日';
+
+            } elseif ($request->rrule_freq == RruleFreq::MONTHLY) {
+                // 毎月
+
+                $validator_array['column']['rrule_repeat_monthly'] = ['required', Rule::in(['BYMONTHDAY', 'BYDAY'])];
+                $validator_array['message']['rrule_repeat_monthly'] = '毎月繰り返し指定';
+
+                // 毎月繰り返し指定
+                if ($request->rrule_repeat_monthly == 'BYDAY') {
+                    // 曜日指定 BYDAY
+                    $validator_array['column']['rrule_byday_monthly'] = ['required'];
+                    $validator_array['message']['rrule_byday_monthly'] = '曜日指定';
+                } else {
+                    // 日付指定 BYMONTHDAY
+                    $validator_array['column']['rrule_bymonthday_monthly'] = ['required', 'numeric'];
+                    $validator_array['message']['rrule_bymonthday_monthly'] = '日付指定';
+                }
+
+            } elseif ($request->rrule_freq == RruleFreq::YEARLY) {
+                // 毎年
+
+                $validator_array['column']['rrule_bymonths_yearly'] = ['required', 'array', new CustomValiRequiredWithoutAllSupportsArrayInput($request->rrule_bymonths_yearly, '月')];
+                $validator_array['message']['rrule_bymonths_yearly'] = '月';
+            }
+
+            // 繰り返し終了
+            $validator_array['column']['rrule_repeat_end'] = ['required', Rule::in(['COUNT', 'UNTIL'])];
+            $validator_array['message']['rrule_repeat_end'] = '繰り返し終了';
+
+            if ($request->rrule_repeat_end == 'UNTIL') {
+                // 指定日 UNTIL
+                $validator_array['column']['rrule_until'] = ['required', 'date_format:Y-m-d'];
+                $validator_array['message']['rrule_until'] = '指定日';
+            } else {
+                // 指定の回数後 COUNT とみなす
+                $validator_array['column']['rrule_count'] = ['required', 'numeric'];
+                $validator_array['message']['rrule_count'] = '指定の回数後';
+            }
         }
 
         $validator_array['column']['end_datetime'] = ['required', 'date_format:H:i', 'after:start_datetime'];
@@ -734,6 +811,9 @@ class ReservationsPlugin extends UserPluginBase
             return back()->withErrors($validator)->withInput();
         }
 
+        /* save
+         ------------------------------------------- */
+
         // 新規登録の判定のために、保存する前のレコードを退避しておく。
         $before_reservations_inputs = clone $reservations_inputs;
 
@@ -750,10 +830,132 @@ class ReservationsPlugin extends UserPluginBase
         if (!$booking_id) {
             $reservations_inputs->reservations_id = $request->reservations_id;
             $reservations_inputs->facility_id = $request->facility_id;
+            $reservations_inputs->created_id  = Auth::user()->id;            // 登録ユーザ
         }
         $reservations_inputs->start_datetime = new ConnectCarbon($request->target_date . ' ' . $request->start_datetime . ':00');
         $reservations_inputs->end_datetime = new ConnectCarbon($request->target_date . ' ' . $request->end_datetime . ':00');
         $reservations_inputs->save();
+
+        // 新規登録時のみの登録項目
+        if (!$booking_id) {
+            // 親IDセット
+            $reservations_inputs->inputs_parent_id = $reservations_inputs->id;
+            $reservations_inputs->save();
+        }
+
+        /* 繰り返し
+         * see) https://github.com/rlanvin/php-rrule/wiki/RRule
+         * ----------------------------------------- */
+        if ($request->rrule_freq == RruleFreq::DAILY ||
+            $request->rrule_freq == RruleFreq::WEEKLY ||
+            $request->rrule_freq == RruleFreq::MONTHLY ||
+            $request->rrule_freq == RruleFreq::YEARLY) {
+
+            // 繰り返しパターン
+            $rrule_setting['FREQ'] = $request->rrule_freq;
+
+            // 開始日
+            // ※ [要注意] NC2の reservation_reserve_details.rrule は DTSTART がないため、移行時は開始日の補完が必要。
+            //            DTSTART無指定だと、今日日付で処理される。
+            $rrule_setting['DTSTART'] = $request->target_date . ' ' . $request->start_datetime . ':00';
+
+            // 週の開始曜日
+            $rrule_setting['WKST'] = 'SU';
+
+            if ($request->rrule_freq == RruleFreq::DAILY) {
+                // 繰り返し：毎日
+
+                $rrule_setting['INTERVAL'] = (int) $request->rrule_interval_daily;              // 繰り返し間隔（日）
+
+            } elseif ($request->rrule_freq == RruleFreq::WEEKLY) {
+                // 繰り返し：毎週
+                // $request->rrule_bydays_weekly は必須で配列になるようバリデーション済み
+
+                $rrule_setting['INTERVAL'] = (int) $request->rrule_interval_weekly;             // 繰り返し間隔（週）
+                $rrule_setting['BYDAY'] = array_filter($request->rrule_bydays_weekly);          // 繰り返し曜日（配列, 空配列は取り除く）
+
+            } elseif ($request->rrule_freq == RruleFreq::MONTHLY) {
+                // 繰り返し：毎月
+
+                $rrule_setting['INTERVAL'] = (int) $request->rrule_interval_monthly;            // 繰り返し間隔（月）
+
+                // 毎月繰り返し指定
+                if ($request->rrule_repeat_monthly == 'BYDAY') {
+                    // 曜日指定 BYDAY
+                    $rrule_setting['BYDAY'] = $request->rrule_byday_monthly;                    // 曜日指定（月）
+                } else {
+                    // 日付指定 BYMONTHDAY
+                    $rrule_setting['BYMONTHDAY'] = (int) $request->rrule_bymonthday_monthly;    // 日付指定（月）
+                }
+
+            } elseif ($request->rrule_freq == RruleFreq::YEARLY) {
+                // 繰り返し：毎年
+                // $request->rrule_bymonths_yearly は必須で配列になるようバリデーション済み
+
+                $rrule_setting['INTERVAL'] = (int) $request->rrule_interval_yearly;             // 繰り返し間隔（年）
+                $rrule_setting['BYMONTH'] = array_filter($request->rrule_bymonths_yearly);      // 繰り返し月（配列, 空配列は取り除く）
+                $rrule_setting['BYDAY'] = $request->rrule_byday_yearly;                         // 曜日指定（年）
+
+                // [debug]
+                // \Log::debug(var_export($rrule_setting['BYMONTH'], true));
+            }
+
+            // 繰り返し終了
+            if ($request->rrule_repeat_end == 'UNTIL') {
+                // 指定日 UNTIL
+                $rrule_setting['UNTIL'] = $request->rrule_until . ' ' . $request->end_datetime . ':00';
+            } else {
+                // 指定の回数後 COUNT とみなす
+                $rrule_setting['COUNT'] = (int) $request->rrule_count;
+            }
+
+            $rrule = new RRule($rrule_setting);
+
+            // rrule登録
+            $reservations_inputs_repeat = InputsRepeat::firstOrNew([
+                'target' => $this->frame->plugin_name,
+                'target_id' => $reservations_inputs->facility_id,   // 施設予約は、施設IDをtarget_idにセット
+                'parent_id' => $reservations_inputs->inputs_parent_id
+            ]);
+            $reservations_inputs_repeat->rrule = $rrule->rfcString(false);
+            $reservations_inputs_repeat->save();
+            // [debug]
+            // \Log::debug(var_export($rrule->rfcString(false), true));
+            // $rrule2 = new RRule($rrule->rfcString(false));
+            // \Log::debug(var_export($rrule2->getRule(), true));
+
+
+            // 繰り返し予定は delete -> insert. 親IDは消さない
+            ReservationsInput::where('inputs_parent_id', $reservations_inputs->inputs_parent_id)
+                ->where('id', '!=', $reservations_inputs->id)
+                ->delete();
+
+            foreach ($rrule as $occurrence) {
+                $target_date = new ConnectCarbon($request->target_date);
+                $occurrence_date = new ConnectCarbon($occurrence->format('Y-m-d'));
+                if ($target_date == $occurrence_date) {
+                    // 例えば毎日繰り返しは、予約開始日も含まれる。
+                    // 予約開始日はスルーする
+                    continue;
+                }
+
+                // 毎週繰り返しで例えば「予約開始日が1/5水、日・月繰り返し、４回END」とイレギュラーな設定をした場合、
+                // 1/5水,1/9日,1/10月,1/16日,1/17月 の計5回になる。
+                // ・iColudカレンダーは、上記の計5回（rruleの標準の動き） ← Connectはこちらを選択
+                // ・nc2は、1/5水,1/9日,1/10月,1/16日の、計4回（nc2特有の動き）
+
+                // [debug]
+                // \Log::debug(var_export($occurrence->format('Y-m-d H:i'), true));
+
+                // コピー
+                $reservations_inputs_tmp = $reservations_inputs->replicate();
+                $reservations_inputs_tmp->start_datetime = new ConnectCarbon($occurrence->format('Y-m-d') . ' ' . $request->start_datetime . ':00');
+                $reservations_inputs_tmp->end_datetime = new ConnectCarbon($occurrence->format('Y-m-d') . ' ' . $request->end_datetime . ':00');
+                $reservations_inputs_tmp->created_id  = $reservations_inputs->created_id;    // 登録ユーザをコピー元からコピー
+                $reservations_inputs_tmp->save();
+            }
+        }
+
 
         // 項目IDを取得
         $columns_value = $request->columns_value ?? [];
@@ -761,7 +963,7 @@ class ReservationsPlugin extends UserPluginBase
         foreach ($keys as $key) {
             // 予約明細 更新レコード取得
             // $reservations_inputs_columns = ReservationsInputsColumn::where('reservations_id', $request->reservations_id)
-            $reservations_inputs_columns = ReservationsInputsColumn::where('inputs_id', $reservations_inputs->id)
+            $reservations_inputs_columns = ReservationsInputsColumn::where('inputs_parent_id', $reservations_inputs->inputs_parent_id)
                 ->where('column_id', $key)
                 ->first();
 
@@ -770,7 +972,7 @@ class ReservationsPlugin extends UserPluginBase
                 $reservations_inputs_columns = new ReservationsInputsColumn();
                 // 新規登録時のみの登録項目
                 $reservations_inputs_columns->reservations_id = $request->reservations_id;
-                $reservations_inputs_columns->inputs_id = $reservations_inputs->id;
+                $reservations_inputs_columns->inputs_parent_id = $reservations_inputs->id;
                 $reservations_inputs_columns->column_id = $key;
             }
             $reservations_inputs_columns->value = $columns_value[$key];
@@ -861,8 +1063,15 @@ class ReservationsPlugin extends UserPluginBase
             return;
         }
 
+        // 予約繰り返しルール
+        $repeat = InputsRepeat::firstOrNew([
+            'target' => $this->frame->plugin_name,
+            'target_id' => $inputs->facility_id,   // 施設予約は、施設IDをtarget_idにセット
+            'parent_id' => $inputs->inputs_parent_id
+        ]);
+
         // データ詳細の取得
-        $inputs_columns = $this->getReservationsInputsColumns($input_id);
+        $inputs_columns = $this->getReservationsInputsColumns($inputs->inputs_parent_id);
 
         // 選択肢
         // $selects = ReservationsColumnsSelect::where('reservations_id', $inputs->reservations_id)->orderBy('id', 'asc')->orderBy('display_sequence', 'asc')->get();
@@ -873,6 +1082,8 @@ class ReservationsPlugin extends UserPluginBase
             // 表示値をセット
             $inputs->reservation_date_display = $inputs->displayDate();
             $inputs->reservation_time_display = $inputs->start_datetime->format('H:i') . ' ~ ' . $inputs->end_datetime->format('H:i');
+            $repeat->reservation_repeat_display = $repeat->showRruleDisplay();
+            $repeat->reservation_repeat_end_display = $repeat->showRruleEndDisplay();
 
             foreach ($columns as &$column) {
                 $obj = $inputs_columns->firstWhere('column_id', $column->id);
@@ -887,6 +1098,7 @@ class ReservationsPlugin extends UserPluginBase
                 // inputにすると値があってもnullになるため、$inputsのままでいく
                 'inputs' => $inputs,
                 'inputs_columns' => $inputs_columns,
+                'repeat' => $repeat,
                 'selects' => $selects,
             ];
         } else {
@@ -896,6 +1108,7 @@ class ReservationsPlugin extends UserPluginBase
                 // inputにすると値があってもnullになるため、$inputsのままでいく
                 'inputs' => $inputs,
                 'inputs_columns' => $inputs_columns,
+                'repeat' => $repeat,
                 'selects' => $selects,
             ]);
         }
@@ -944,8 +1157,8 @@ class ReservationsPlugin extends UserPluginBase
                     ->where('reservations_columns.hide_flag', NotShowType::show)
                     ->whereNull('reservations_columns.deleted_at');
             })
-            ->where('reservations_inputs_columns.inputs_id', $id)
-            ->orderBy('reservations_inputs_columns.inputs_id', 'asc')
+            ->where('reservations_inputs_columns.inputs_parent_id', $id)
+            ->orderBy('reservations_inputs_columns.inputs_parent_id', 'asc')
             ->orderBy('reservations_inputs_columns.column_id', 'asc')
             ->get();
 
@@ -1176,16 +1389,22 @@ class ReservationsPlugin extends UserPluginBase
         // id がある場合、データを削除
         // if ($request->booking_id) {
         if ($input_id) {
-            // 予約（子）を削除
-            // $input_columns = ReservationsInputsColumn::where('inputs_id', $request->booking_id)->get();
-            $input_columns = ReservationsInputsColumn::where('inputs_id', $input_id)->get();
-            foreach ($input_columns as $input_column) {
-                $input_column->delete();
+            // 予約（親）
+            // $input = ReservationsInput::where('id', $request->booking_id)->first();
+            $input = ReservationsInput::where('id', $input_id)->first();
+
+            // 他の予約（親）で、予約（子）が使われなかったら削除
+            $count = ReservationsInput::where('id', '!=', $input_id)->where('inputs_parent_id', $input_id)->count();
+            if ($count == 0) {
+                // 予約（子）を削除
+                // $input_columns = ReservationsInputsColumn::where('inputs_id', $request->booking_id)->get();
+                $input_columns = ReservationsInputsColumn::where('inputs_parent_id', $input_id)->get();
+                foreach ($input_columns as $input_column) {
+                    $input_column->delete();
+                }
             }
 
             // 予約（親）、施設情報を取得してメッセージ修正
-            // $input = ReservationsInput::where('id', $request->booking_id)->first();
-            $input = ReservationsInput::where('id', $input_id)->first();
             $facility = ReservationsFacility::where('id', $input->facility_id)->first();
             $message = '予約を削除しました。【場所】' . $facility->facility_name . ' 【日時】' . date_format($input->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($input->end_datetime, 'H時i分');
 

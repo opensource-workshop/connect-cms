@@ -12,24 +12,32 @@
 
             {{-- メインコンテンツ --}}
             <div class="modal-body">
-                <form>
-                    {{-- 利用日 --}}
-                    <div class="form-group row">
-                        <label for="reservation_date_display" class="col-3 col-form-label">{{ __('messages.day_of_use')}}</label>
-                        <div class="col-9 form-control-plaintext" id="reservation_date_display"></div>
+                {{-- 利用日 --}}
+                <div class="row">
+                    <label for="reservation_date_display" class="col-3 col-form-label">{{ __('messages.day_of_use')}}</label>
+                    <div class="col-9 form-control-plaintext" id="reservation_date_display"></div>
+                </div>
+                {{-- 利用時間 --}}
+                <div class="row">
+                    <label for="reservation_time" class="col-3 col-form-label">{{ __('messages.time_of_use')}}</label>
+                    <div class="col-9 form-control-plaintext" id="reservation_time"></div>
+                </div>
+
+                {{-- 繰り返し --}}
+                <div class="row" id="reservation_repeat_div">
+                    <label class="col-3 col-form-label">{{__('messages.repetition')}}</label>
+                    <div class="col-9 form-control-plaintext">
+                        <span id="reservation_repeat"></span><br />
+                        <span id="reservation_repeat_end"></span>
                     </div>
-                    {{-- 利用時間 --}}
-                    <div class="form-group row">
-                        <label for="reservation_time" class="col-3 col-form-label">{{ __('messages.time_of_use')}}</label>
-                        <div class="col-9 form-control-plaintext" id="reservation_time"></div>
-                    </div>
-                    {{-- 予約可変項目エリア --}}
-                    <div id="bookingDetailModalColumns{{$frame_id}}"></div>
-                    {{-- 承認待ち --}}
-                    <div id="reservation_approval_pending_badge">
-                        <span class="badge badge-warning align-bottom">承認待ち</span>
-                    </div>
-                </form>
+                </div>
+
+                {{-- 予約可変項目エリア --}}
+                <div id="bookingDetailModalColumns{{$frame_id}}"></div>
+                {{-- 承認待ち --}}
+                <div id="reservation_approval_pending_badge">
+                    <span class="badge badge-warning align-bottom">承認待ち</span>
+                </div>
             </div>
 
             {{-- フッター --}}
@@ -99,6 +107,13 @@
             modal.find('#reservation_date_display').text(data.inputs.reservation_date_display);
             modal.find('#reservation_time').text(data.inputs.reservation_time_display);
 
+            // 繰り返しありで表示
+            if (data.repeat.id) {
+                modal.find('#reservation_repeat_div').show();
+                modal.find('#reservation_repeat').text(data.repeat.reservation_repeat_display);
+                modal.find('#reservation_repeat_end').text(data.repeat.reservation_repeat_end_display);
+            }
+
             // 予約項目（可変）
             // 予約項目（可変）エリアをクリア
             $('#bookingDetailModalColumns{{$frame_id}}').empty();
@@ -114,7 +129,7 @@
                     $('#bookingDetailModalColumns{{$frame_id}}').append(
                         $('<div></div>')
                         .attr({
-                            class: 'form-group row'
+                            class: 'row'
                         })
                         .append(
                             $('<label></label>')
@@ -139,7 +154,7 @@
                     $('#bookingDetailModalColumns{{$frame_id}}').append(
                         $('<div></div>')
                         .attr({
-                            class: 'form-group row'
+                            class: 'row'
                         })
                         .append(
                             $('<label></label>')
@@ -183,6 +198,9 @@
         // @foreach ($columns as $column)
         //     modal.find('#column_{{ $column->id }}').val(button.data('column_{{ $column->id }}'))
         // @endforeach --}}
+
+        // 繰り返しは初期、非表示
+        modal.find('#reservation_repeat_div').hide();
 
         @auth
             // 編集権限ありならボタン表示, なしは非表示

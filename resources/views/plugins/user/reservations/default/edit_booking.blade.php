@@ -17,28 +17,35 @@ use App\Models\User\Reservations\ReservationsFacility;
     /**
      * 登録ボタン押下
      */
-     function submit_booking_store(btn) {
+    function submit_booking_store(btn) {
         btn.disabled = true;
         form_save_booking{{$frame_id}}.submit();
     }
+
     /**
      * カレンダーボタン押下
      */
-     $(function () {
-        $('#target_date_id').datetimepicker({
+    $(function () {
+        let calendar_setting = {
             @if (App::getLocale() == ConnectLocale::ja)
                 dayViewHeaderFormat: 'YYYY年 M月',
             @endif
             locale: '{{ App::getLocale() }}',
             format: 'YYYY-MM-DD',
             timepicker:false
-        });
+        };
+
+        // 予約日
+        $('#target_date_id').datetimepicker(calendar_setting);
+        // 繰り返し終了：指定日
+        $('#rrule_until_id').datetimepicker(calendar_setting);
     });
+
     /**
-     * 予約開始時間ボタン押下
+     * 予約開始・終了時間ボタン押下
      */
-     $(function () {
-        $('#start_datetime').datetimepicker({
+    $(function () {
+        let time_setting = {
             tooltips: {
                 close: '閉じる',
                 pickHour: '時間を取得',
@@ -55,31 +62,68 @@ use App\Models\User\Reservations\ReservationsFacility;
             },
             format: 'HH:mm',
             stepping: 5
-        });
+        };
+
+        // 予約開始時間ボタン押下
+        $('#start_datetime').datetimepicker(time_setting);
+        // 予約終了時間ボタン押下
+        $('#end_datetime').datetimepicker(time_setting);
     });
+
     /**
-     * 予約終了時間ボタン押下
+     * 繰り返しselect.change
      */
-     $(function () {
-        $('#end_datetime').datetimepicker({
-            tooltips: {
-                close: '閉じる',
-                pickHour: '時間を取得',
-                incrementHour: '時間を増加',
-                decrementHour: '時間を減少',
-                pickMinute: '分を取得',
-                incrementMinute: '分を増加',
-                decrementMinute: '分を減少',
-                pickSecond: '秒を取得',
-                incrementSecond: '秒を増加',
-                decrementSecond: '秒を減少',
-                togglePeriod: '午前/午後切替',
-                selectTime: '時間を選択'
-            },
-            format: 'HH:mm',
-            stepping: 5
+    $(function () {
+        $('#rrule_freq_id').change(function(){
+            // 繰り返しルールの表示・非表示
+            change_repeat_rule($(this).val());
         });
     });
+
+    /**
+     * 繰り返しルールの表示・非表示
+     */
+    function change_repeat_rule(select_value) {
+        // 繰り返しルールの表示・非表示
+        switch (select_value) {
+            case '{{RruleFreq::DAILY}}':
+                $('#repeat_rule_id').collapse('show');
+                $('#repeat_rule_daily_id').collapse('show');
+                $('#repeat_rule_weekly_id').collapse('hide');
+                $('#repeat_rule_monthly_id').collapse('hide');
+                $('#repeat_rule_yearly_id').collapse('hide');
+                break;
+            case '{{RruleFreq::WEEKLY}}':
+                $('#repeat_rule_id').collapse('show');
+                $('#repeat_rule_daily_id').collapse('hide');
+                $('#repeat_rule_weekly_id').collapse('show');
+                $('#repeat_rule_monthly_id').collapse('hide');
+                $('#repeat_rule_yearly_id').collapse('hide');
+                break;
+            case '{{RruleFreq::MONTHLY}}':
+                $('#repeat_rule_id').collapse('show');
+                $('#repeat_rule_daily_id').collapse('hide');
+                $('#repeat_rule_weekly_id').collapse('hide');
+                $('#repeat_rule_monthly_id').collapse('show');
+                $('#repeat_rule_yearly_id').collapse('hide');
+                break;
+            case '{{RruleFreq::YEARLY}}':
+                $('#repeat_rule_id').collapse('show');
+                $('#repeat_rule_daily_id').collapse('hide');
+                $('#repeat_rule_weekly_id').collapse('hide');
+                $('#repeat_rule_monthly_id').collapse('hide');
+                $('#repeat_rule_yearly_id').collapse('show');
+                break;
+            default:
+                // 空の場合を想定
+                $('#repeat_rule_id').collapse('hide');
+                $('#repeat_rule_daily_id').collapse('hide');
+                $('#repeat_rule_weekly_id').collapse('hide');
+                $('#repeat_rule_monthly_id').collapse('hide');
+                $('#repeat_rule_yearly_id').collapse('hide');
+        }
+    }
+
 </script>
 
 @if ($booking)
@@ -123,7 +167,7 @@ use App\Models\User\Reservations\ReservationsFacility;
         <div class="col-md-10">
 
             <div class="row">
-                <div class="input-group date col-md-5" id="target_date_id" data-target-input="nearest">
+                <div class="input-group date col-sm-5" id="target_date_id" data-target-input="nearest">
                     <input
                         type="text"
                         name="target_date"
@@ -193,6 +237,224 @@ use App\Models\User\Reservations\ReservationsFacility;
         </div>
     </div>
 
+    {{-- 繰り返し予定 --}}
+    <div class="form-group row">
+        <div class="col-md-2">繰り返し</div>
+        <div class="col-md-10">
+
+            <select name="rrule_freq" class="custom-select" id="rrule_freq_id">
+                <option value="">なし</option>
+                @foreach (RruleFreq::getMembers() as $key => $label)
+                    <option value="{{$key}}" @if($key == old('rrule_freq', $repeat->getRruleFreq())) selected @endif>{{$label}}</option>
+                @endforeach
+            </select>
+
+        </div>
+    </div>
+
+    {{-- 繰り返しルール --}}
+    <div id="repeat_rule_id" class="collapse">
+        <div class="form-group row">
+            <div class="col-md-2">繰り返し間隔</div>
+            <div class="col-md-10">
+
+                {{-- 日ごと --}}
+                <div id="repeat_rule_daily_id" class="collapse">
+                    <div class="row">
+                        <div class="col">
+
+                            <div class="input-group">
+                                <select name="rrule_interval_daily" class="custom-select">
+                                    @for ($i = 1; $i <= 6; $i++)
+                                        <option value="{{$i}}" @if($i == old('rrule_interval_daily', $repeat->getRruleInterval(RruleFreq::DAILY))) selected @endif>{{$i}}日</option>
+                                    @endfor
+                                </select>
+                                <div class="input-group-append"><span class="input-group-text">ごと</span></div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                {{-- 週ごと --}}
+                <div id="repeat_rule_weekly_id" class="collapse">
+                    <div class="form-group row">
+                        <div class="col">
+
+                            <div class="input-group">
+                                <select name="rrule_interval_weekly" class="custom-select">
+                                    @for ($i = 1; $i <= 5; $i++)
+                                        <option value="{{$i}}" @if($i == old('rrule_interval_weekly', $repeat->getRruleInterval(RruleFreq::WEEKLY))) selected @endif>{{$i}}週</option>
+                                    @endfor
+                                </select>
+                                <div class="input-group-append"><span class="input-group-text">ごと</span></div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            @foreach (RruleDayOfWeek::getMembersJa() as $key => $label)
+                                {{-- チェック外した場合にも値を飛ばす対応：value=""にするといずれか必須チェック（required_without）でも使える --}}
+                                <input type="hidden" value="" name="rrule_bydays_weekly[{{$key}}]">
+
+                                <div class="custom-control custom-checkbox custom-control-inline">
+                                    <input name="rrule_bydays_weekly[{{$key}}]" value="{{$key}}" type="checkbox" class="custom-control-input" id="rrule_bydays_weekly_{{$key}}" @if(old('rrule_bydays_weekly.'.$key, $repeat->getRruleBydayWeekly($key, $target_date)) == $key) checked="checked" @endif>
+                                    <label class="custom-control-label" for="rrule_bydays_weekly_{{$key}}">{{$label}}</label>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            @include('plugins.common.errors_inline', ['name' => 'rrule_bydays_weekly'])
+                            <small class="text-muted">曜日を選択してください。</small>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- 月ごと --}}
+                <div id="repeat_rule_monthly_id" class="collapse">
+                    <div class="form-group row">
+                        <div class="col">
+
+                            <div class="input-group">
+                                <select name="rrule_interval_monthly" class="custom-select">
+                                    @for ($i = 1; $i <= 11; $i++)
+                                        <option value="{{$i}}" @if($i == old('rrule_interval_monthly', $repeat->getRruleInterval(RruleFreq::MONTHLY))) selected @endif>{{$i}}ヵ月</option>
+                                    @endfor
+                                </select>
+                                <div class="input-group-append"><span class="input-group-text">ごと</span></div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" value="BYMONTHDAY" id="rrule_repeat_monthly_ordmoday" name="rrule_repeat_monthly" class="custom-control-input" @if(old('rrule_repeat_monthly', $repeat->getRruleRepeatMonthly()) == 'BYMONTHDAY') checked="checked" @endif>
+                                <label class="custom-control-label" for="rrule_repeat_monthly_ordmoday">日付指定</label>
+                            </div>
+                            <select name="rrule_bymonthday_monthly" class="custom-select">
+                                <option value=""></option>
+                                @for ($i = 1; $i <= 31; $i++)
+                                    <option value="{{$i}}" @if($i == old('rrule_bymonthday_monthly', $repeat->getRruleBymonthday())) selected @endif>{{$i}}日</option>
+                                @endfor
+                            </select>
+                            @include('plugins.common.errors_inline', ['name' => 'rrule_bymonthday_monthly'])
+                        </div>
+
+                        <div class="col-sm-4">
+                            <div class="custom-control custom-radio">
+                                <input type="radio" value="BYDAY" id="rrule_repeat_monthly_byday" name="rrule_repeat_monthly" class="custom-control-input" @if(old('rrule_repeat_monthly', $repeat->getRruleRepeatMonthly()) == 'BYDAY') checked="checked" @endif>
+                                <label class="custom-control-label" for="rrule_repeat_monthly_byday">曜日指定</label>
+                            </div>
+                            <select name="rrule_byday_monthly" class="custom-select">
+                                <option value=""></option>
+                                @foreach (RruleDayOfWeek::getMembersBydayMonthlyJp() as $key => $label)
+                                    <option value="{{$key}}" @if($key == old('rrule_byday_monthly', $repeat->getRruleBydayMonthly())) selected @endif>{{$label}}</option>
+                                @endforeach
+                            </select>
+                            @include('plugins.common.errors_inline', ['name' => 'rrule_repeat_monthly'])
+                            @include('plugins.common.errors_inline', ['name' => 'rrule_byday_monthly'])
+                        </div>
+                    </div>
+                </div>
+
+                {{-- 年ごと --}}
+                <div id="repeat_rule_yearly_id" class="collapse">
+                    <div class="form-group row">
+                        <div class="col">
+
+                            <div class="input-group">
+                                <select name="rrule_interval_yearly" class="custom-select">
+                                    @for ($i = 1; $i <= 12; $i++)
+                                        <option value="{{$i}}" @if($i == old('rrule_interval_yearly', $repeat->getRruleInterval(RruleFreq::YEARLY))) selected @endif>{{$i}}年</option>
+                                    @endfor
+                                </select>
+                                <div class="input-group-append"><span class="input-group-text">ごと</span></div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+
+                            @foreach (RruleByMonth::getMembersJa() as $i => $label)
+                                {{-- チェック外した場合にも値を飛ばす対応：value=""にするといずれか必須チェック（required_without）でも使える --}}
+                                <input type="hidden" value="" name="rrule_bymonths_yearly[{{$i}}]">
+
+                                <div class="custom-control custom-checkbox custom-control-inline">
+                                    <input name="rrule_bymonths_yearly[{{$i}}]" value="{{$i}}" type="checkbox" class="custom-control-input" id="rrule_bymonths_yearly_{{$i}}" @if(old('rrule_bymonths_yearly.'.$i, $repeat->getRruleBymonthsYearly($i, $target_date)) == $i) checked="checked" @endif>
+                                    <label class="custom-control-label" for="rrule_bymonths_yearly_{{$i}}">{{$label}}</label>
+                                </div>
+                            @endforeach
+
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col">
+                            @include('plugins.common.errors_inline', ['name' => 'rrule_bymonths_yearly'])
+                            <small class="text-muted">月を選択してください。</small>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <select name="rrule_byday_yearly" class="custom-select">
+                                <option value="">開始日と同日</option>
+                                @foreach (RruleDayOfWeek::getMembersBydayMonthlyJp() as $key => $label)
+                                    <option value="{{$key}}" @if($key == old('rrule_byday_yearly', $repeat->getRruleBydayYearly())) selected @endif>{{$label}}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <div class="col-md-2">繰り返し終了</div>
+            <div class="col-md-10">
+
+                <div class="row">
+                    <div class="col-sm-4">
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="COUNT" id="rrule_repeat_end_count" name="rrule_repeat_end" class="custom-control-input" @if(old('rrule_repeat_end', $repeat->getRruleRepeatEnd()) == 'COUNT') checked="checked" @endif>
+                            <label class="custom-control-label" for="rrule_repeat_end_count">指定の回数後</label>
+                        </div>
+                        <div class="input-group">
+                            <input name="rrule_count" class="form-control @if ($errors->has('rrule_count')) border-danger @endif" type="text" value="{{old('rrule_count', $repeat->getRruleCount())}}">
+                            <div class="input-group-append"><span class="input-group-text">回</span></div>
+                        </div>
+                        @include('plugins.common.errors_inline', ['name' => 'rrule_count'])
+                    </div>
+
+                    <div class="col-sm-5">
+                        <div class="custom-control custom-radio">
+                            <input type="radio" value="UNTIL" id="rrule_repeat_end_until" name="rrule_repeat_end" class="custom-control-input" @if(old('rrule_repeat_end', $repeat->getRruleRepeatEnd()) == 'UNTIL') checked="checked" @endif>
+                            <label class="custom-control-label" for="rrule_repeat_end_until">指定日</label>
+                        </div>
+                        <div class="input-group date" id="rrule_until_id" data-target-input="nearest">
+                            <input
+                                type="text"
+                                name="rrule_until"
+                                value="{{old('rrule_until', $repeat->getRruleUntil())}}"
+                                class="form-control datetimepicker-input @if ($errors->has('rrule_until')) border-danger @endif"
+                                data-target="#rrule_until_id"
+                            >
+                            <div class="input-group-append" data-target="#rrule_until_id" data-toggle="datetimepicker">
+                                <div class="input-group-text @if ($errors->has('rrule_until')) border-danger @endif"><i class="fas fa-calendar-alt"></i></div>
+                            </div>
+                        </div>
+                        @include('plugins.common.errors_inline', ['name' => 'rrule_until'])
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     {{-- 詳細項目 --}}
     <hr>
 
@@ -218,7 +480,7 @@ use App\Models\User\Reservations\ReservationsFacility;
                     {{-- テキスト項目 --}}
                     @case(ReservationColumnType::text)
 
-                        <input name="columns_value[{{$column->id}}]" class="form-control @if ($errors->has('columns_value.'.$column->id)) border-danger @endif" type="{{$column->column_type}}" value="{{old('columns_value.'.$column->id , $column->value)}}">
+                        <input name="columns_value[{{$column->id}}]" class="form-control @if ($errors->has('columns_value.'.$column->id)) border-danger @endif" type="{{$column->column_type}}" value="{{old('columns_value.'.$column->id, $column->value)}}">
                         @include('plugins.common.errors_inline', ['name' => 'columns_value.'.$column->id])
                         @break
 
@@ -317,5 +579,11 @@ use App\Models\User\Reservations\ReservationsFacility;
         </div>
     </div>
 @endif
+
+{{-- 初期状態で開くもの --}}
+<script>
+    // 繰り返しルールの表示・非表示
+    change_repeat_rule('{{old('rrule_freq', $repeat->getRruleFreq())}}');
+</script>
 
 @endsection
