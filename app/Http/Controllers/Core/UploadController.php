@@ -548,8 +548,6 @@ EOD;
      */
     public function postFile($request)
     {
-        \Log::debug(var_export('000', true));
-
         // アップロードの場合（TinyMCE標準プラグイン）
         if ($request->hasFile('file')) {
             if ($request->file('file')->isValid()) {
@@ -574,15 +572,9 @@ EOD;
             return array('location' => 'error');
         }
 
-        \Log::debug(var_export('000', true));
-
         // image pluginの画像アップロードの場合
         if ($request->hasFile('image')) {
-            \Log::debug(var_export('111', true));
-
             if ($request->file('image')->isValid()) {
-                \Log::debug(var_export('222', true));
-
                 $image_file = $request->file('image');
                 $is_resize = false;
 
