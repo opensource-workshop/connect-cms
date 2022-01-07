@@ -20,6 +20,8 @@ return [
     'detail' => 'Detail',
     'day_of_use' => 'Day',
     'time_of_use' => 'Time',
+    'weekday' => 'Weekday',
+    'all_days' => 'All days',
     'format_date' => 'j M Y',
     'repetition' => 'Repetition',
     'rrule_daily' => '{1} Daily|[2,*] Every :interval days',

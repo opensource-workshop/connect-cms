@@ -50,9 +50,9 @@ class ReservationsFacility extends Model
         $locate = App::getLocale();
 
         if ($this->day_of_weeks == self::weekday) {
-            return $locate == ConnectLocale::en ? 'weekday' : '平日';
+            return __('messages.weekday');
         } elseif ($this->day_of_weeks == self::all_days) {
-            return $locate == ConnectLocale::en ? 'all days' : '全日';
+            return __('messages.all_days');
         }
 
         $display = '';
