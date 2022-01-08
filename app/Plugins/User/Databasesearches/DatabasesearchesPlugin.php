@@ -13,6 +13,8 @@ use App\Models\User\Databasesearches\Databasesearches;
 use App\Plugins\User\UserPluginBase;
 use App\Plugins\User\Databases\DatabasesTool;
 
+use App\Enums\DatabaseSearcherSortType;
+
 /**
  * データベース検索プラグイン
  *
@@ -244,6 +246,7 @@ class DatabasesearchesPlugin extends UserPluginBase
                                 ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
                                 ->join('databases', 'databases.id', '=', 'databases_columns.databases_id')
                                 ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
+                                ->join('databases_inputs', 'databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
                                 ->whereIn('databases_inputs_id', $inputs_ids_marge)
                                 ->groupBy('databases_inputs_id')
                                 ->groupBy('frames.id')
@@ -260,6 +263,38 @@ class DatabasesearchesPlugin extends UserPluginBase
         if ($databasesearches->frame_select == 1 && $databasesearches->target_frame_ids) {
             $inputs_ids->whereIn('frames.id', explode(',', $databasesearches->target_frame_ids));
         }
+
+        // 並び替え条件指定
+        switch ($databasesearches->sort_type) {
+            case DatabaseSearcherSortType::created_asc:
+                $inputs_ids->orderBy('databases_inputs.created_at', 'asc');
+                break;
+            case DatabaseSearcherSortType::created_desc:
+                $inputs_ids->orderBy('databases_inputs.created_at', 'desc');
+                break;
+            case DatabaseSearcherSortType::updated_asc:
+                $inputs_ids->orderBy('databases_inputs.updated_at', 'asc');
+                break;
+            case DatabaseSearcherSortType::updated_desc:
+                $inputs_ids->orderBy('databases_inputs.updated_at', 'desc');
+                break;
+            case DatabaseSearcherSortType::posted_asc:
+                $inputs_ids->orderBy('databases_inputs.posted_at', 'asc');
+                break;
+            case DatabaseSearcherSortType::posted_desc:
+                $inputs_ids->orderBy('databases_inputs.posted_at', 'desc');
+                break;
+            case DatabaseSearcherSortType::display_asc:
+                $inputs_ids->orderBy('databases_inputs.display_sequence', 'asc');
+                break;
+            case DatabaseSearcherSortType::display_desc:
+                $inputs_ids->orderBy('databases_inputs.display_sequence', 'desc');
+                break;
+            default:
+                $inputs_ids->orderBy('databases_inputs.created_at', 'asc');
+                break;
+        }
+
         $inputs_ids = $inputs_ids->paginate($databasesearches->view_count, ["*"], "frame_{$frame_id}_page");
         // Log::debug(var_export($inputs_ids->toArray(), true));
         // Log::debug(var_export($inputs_ids_marge, true));
@@ -364,6 +399,7 @@ class DatabasesearchesPlugin extends UserPluginBase
              'view_count'            => intval($request->view_count),
              'view_columns'          => $request->view_columns,
              'condition'             => $request->condition,
+             'sort_type'             => $request->sort_type,
              'frame_select'          => intval($request->frame_select),
              'target_frame_ids'      => empty($request->target_frame_ids) ? "": implode(',', $request->target_frame_ids),
             ]

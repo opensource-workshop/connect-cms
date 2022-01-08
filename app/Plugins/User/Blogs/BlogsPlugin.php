@@ -1438,7 +1438,7 @@ EOD;
         $configs = BlogFrameConfig::getMemberKeys();
         foreach ($configs as $key => $value) {
 
-            if (empty($request->$value)) {
+            if (!$request->$value == '0' && empty($request->$value)) {
                 return;
             }
 

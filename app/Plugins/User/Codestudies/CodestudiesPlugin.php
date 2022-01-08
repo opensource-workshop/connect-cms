@@ -7,17 +7,24 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
+use DB;
+
+use App\Models\Common\Buckets;
+use App\Models\Common\Frame;
+use App\Models\Common\Page;
 use App\Models\User\Codestudies\Codestudies;
+
+use App\Enums\CsvCharacterCode;
 
 use App\Plugins\User\UserPluginBase;
 
 /**
- * コードスタディプラグイン
+ * ブログプラグイン
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category コードスタディプラグイン
- * @package Controller
+ * @category コンテンツプラグイン
+ * @package Contoroller
  */
 class CodestudiesPlugin extends UserPluginBase
 {
@@ -25,9 +32,9 @@ class CodestudiesPlugin extends UserPluginBase
     /* オブジェクト変数 */
 
     /**
-     * POST チェックに使用する getPost() 関数を使うか
+     * 変更時のPOSTデータ
      */
-    public $use_getpost = false;
+    public $post = null;
 
     /**
      *  実行関数チェック
@@ -43,7 +50,7 @@ class CodestudiesPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['editcode'];
+        $functions['get']  = ['editcode', 'viewDownload', 'download'];
         $functions['post'] = ['savecode', 'run', 'deletecode'];
         return $functions;
     }
@@ -53,13 +60,19 @@ class CodestudiesPlugin extends UserPluginBase
      */
     public function declareRole()
     {
+        // 標準権限以外で設定画面などから呼ばれる権限の定義
+        // 標準権限は右記で定義 config/cc_role.php
+        //
         // 権限チェックテーブル
-        $role_check_table = array();
-        $role_check_table["editcode"]   = array('role_reporter');
-        $role_check_table["savecode"]   = array('role_reporter');
-        $role_check_table["run"]        = array('role_reporter');
-        $role_check_table["deletecode"] = array('role_reporter');
-        return $role_check_table;
+        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
+        $role_ckeck_table = array();
+        $role_ckeck_table["editcode"]   = array('role_reporter');
+        $role_ckeck_table["savecode"]   = array('role_reporter');
+        $role_ckeck_table["run"]        = array('role_reporter');
+        $role_ckeck_table["deletecode"] = array('role_reporter');
+        $role_ckeck_table["download"]     = array('role_arrangement');
+        $role_ckeck_table["viewDownload"] = array('role_arrangement');
+        return $role_ckeck_table;
     }
 
     /**
@@ -84,21 +97,21 @@ class CodestudiesPlugin extends UserPluginBase
     }
 
     /**
-     * コード取得
+     *  POST取得関数（コアから呼び出す）
+     *  コアがPOSTチェックの際に呼び出す関数
      */
-    private function getCodestudy($id)
+    public function getPost($id)
     {
-        if (!Auth::check()) {
-            // ユーザーは未ログイン
-            return null;
+
+        // 一度読んでいれば、そのPOSTを再利用する。
+        if (!empty($this->post)) {
+            return $this->post;
         }
 
         // コード取得
-        $post = Codestudies::where('id', $id)
-            ->where('created_id', Auth::user()->id)
-            ->first();
+        $this->post = Codestudies::where('id', $id)->first();
 
-        return $post;
+        return $this->post;
     }
 
     /* 画面アクション関数 */
@@ -165,11 +178,12 @@ class CodestudiesPlugin extends UserPluginBase
         $codestudies = Codestudies::where('created_id', $user->id)->get();
 
         // コード取得
-        $codestudy = $this->getCodestudy($codestudy_id);
-        if (empty($codestudy)) {
-            // $codestudy = new Codestudies();
-            return $this->view_error("403_inframe", null, 'データ存在チェック');
-        }
+        $codestudy = $this->getPost($codestudy_id);
+
+        // if (empty($codestudy)) {
+        //     $codestudy = new Codestudies();
+        // }
+
 
         // 変更画面を呼び出す。(blade でold を使用するため、withInput 使用)
         return $this->view(
@@ -215,13 +229,6 @@ class CodestudiesPlugin extends UserPluginBase
      */
     public function savecode($request, $page_id, $frame_id, $codestudy_id)
     {
-        // 更新時
-        if ($codestudy_id) {
-            $check_codestudy = $this->getCodestudy($codestudy_id);
-            if (empty($check_codestudy)) {
-                return $this->view_error("403_inframe", null, 'データ存在チェック');
-            }
-        }
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
@@ -311,14 +318,6 @@ class CodestudiesPlugin extends UserPluginBase
      */
     public function run($request, $page_id, $frame_id, $codestudy_id)
     {
-        // 更新時
-        if ($codestudy_id) {
-            $check_codestudy = $this->getCodestudy($codestudy_id);
-            if (empty($check_codestudy)) {
-                return $this->view_error("403_inframe", null, 'データ存在チェック');
-            }
-        }
-
         // 権限チェック（run 関数は標準チェックにないので、独自チェック）
         //if ($this->can('posts.update', $this->getPost($codestudy_id))) {
         //    return $this->view_error(403);
@@ -386,6 +385,8 @@ class CodestudiesPlugin extends UserPluginBase
                 if (!empty($cmd)) {
                     exec("$cmd 2>&1", $result);
                 }
+            } elseif ($codestudy->study_lang == 'javascript') {
+                    $result = $codestudy;
             } elseif ($codestudy->study_lang == 'java') {
                 // コンパイル
                 $cmd = 'javac -encoding UTF-8 ' . storage_path('app/codestudy/' . $codestudy->created_id . '/' . $codestudy_id . '/' . $class_name . '.java');
@@ -424,15 +425,110 @@ class CodestudiesPlugin extends UserPluginBase
     {
         // id がある場合、データを削除
         if ($codestudy_id) {
-            $check_codestudy = $this->getCodestudy($codestudy_id);
-            if (empty($check_codestudy)) {
-                return $this->view_error("403_inframe", null, 'データ存在チェック');
-            }
-
             // データを削除する。
             Codestudies::where('id', $codestudy_id)->delete();
         }
         // 削除後は表示用の初期処理を呼ぶ。
         return $this->index($request, $page_id, $frame_id);
+    }
+
+    /**
+     *  成績ダウンロード指示画面
+     */
+    public function viewDownload($request, $page_id, $frame_id)
+    {
+        // 表示テンプレートを呼び出す。
+        return $this->view(
+            'download', []
+        )->withInput($request->all);
+    }
+
+    /**
+     *  成績ダウンロード実行
+     */
+    public function download($request, $page_id, $frame_id)
+    {
+
+        $save_path = $this->getTmpDirectory() . uniqid('', true) . '.zip';
+        $this->makeZip($save_path, $request);
+
+        // 一時ファイルは削除して、ダウンロードレスポンスを返す
+        return response()->download(
+            $save_path,
+            'StudyCodes.zip',
+            ['Content-Disposition' => 'filename=StudyCodes.zip']
+        )->deleteFileAfterSend(true);
+    }
+
+    /**
+     * ダウンロードするZIPファイルを作成する。
+     *
+     * @param string $save_path 保存先パス
+     * @param \Illuminate\Http\Request $request リクエスト
+     */
+    private function makeZip($save_path, $request)
+    {
+        $zip = new \ZipArchive();
+        $zip->open($save_path, \ZipArchive::CREATE);
+
+        // フォルダがないとzipファイルを作れない
+        if (!is_dir($this->getTmpDirectory())) {
+            mkdir($this->getTmpDirectory(), 0777, true);
+        }
+
+        // 学生のコードを取得する。
+        // ユーザは削除された場合のことも想定しておく。
+        $codestudies = Codestudies::select(
+            'codestudies.*',
+            'users.userid',
+            'users.name',
+        )
+        ->leftJoin('users', 'users.id', '=', 'codestudies.created_id')
+        ->orderBy('codestudies.created_id', 'asc')
+        ->orderBy('codestudies.id', 'asc')
+        ->get();
+
+        // 学生ループ
+        $tmp_dir_name = '';
+        foreach ($codestudies as $codestudy) {
+            // 学生用フォルダ。ログインID（学籍番号を想定）で作成
+            // もしユーザデータがなかったら、_{$created_id}
+            $dir = $codestudy->userid;
+            if (empty($dir)) {
+                $dir = '_' . $codestudy->created_id;
+            }
+            // 学生用フォルダ作成
+            if ($tmp_dir_name != $dir) {
+                $zip->addEmptyDir($dir);
+                $tmp_dir_name = $dir;
+            }
+            // 拡張子
+            $ext = "";
+            if ($codestudy->study_lang == 'javascript') {
+                $ext = ".js";
+            } elseif ($codestudy->study_lang == 'java') {
+                $ext = ".java";
+            } elseif ($codestudy->study_lang == 'php') {
+                $ext = ".php";
+            }
+            // コードの保存
+            $zip->addFromString($dir . "/" . mb_convert_encoding($codestudy->title, CsvCharacterCode::sjis_win) . $ext, $codestudy->code_text . "\n");
+        }
+
+        // 空のZIPファイルが出来たら404
+        if ($zip->count() === 0) {
+            abort(404, 'ファイルがありません。');
+        }
+        $zip->close();
+    }
+
+    /**
+     * 一時フォルダのパスを取得する
+     *
+     * @return string 一時フォルダのパス
+     */
+    private function getTmpDirectory()
+    {
+        return storage_path('app/') . 'tmp/codestudies/';
     }
 }

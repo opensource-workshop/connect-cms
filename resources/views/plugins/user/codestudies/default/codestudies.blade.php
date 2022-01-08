@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コードスタディプラグイン
---}}
+ --}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
@@ -23,9 +23,9 @@
 
 {{-- 結果があれば表示 --}}
 @if (isset($run_check_msgs) && $run_check_msgs)
-<div class="card border-danger">
-    <div class="card-heading">制限エラー</div>
-    <div class="card-body">
+<div class="panel panel-danger">
+    <div class="panel-heading">制限エラー</div>
+    <div class="panel-body">
         @foreach ($run_check_msgs as $run_check_msg)
             {!!$run_check_msg!!}<br />
         @endforeach
@@ -41,9 +41,13 @@
 @endif
     <div class="card-header">実行結果</div>
     <div class="card-body">
-        @foreach ($result as $result_row)
-            {!!$result_row!!}<br />
-        @endforeach
+        @if ($codestudy->study_lang == 'javascript')
+            {!!$result->code_text!!}
+        @else
+            @foreach ($result as $result_row)
+                {!!$result_row!!}<br />
+            @endforeach
+        @endif
     </div>
 </div>
 @endif
@@ -76,8 +80,11 @@
     var editor = CodeMirror.fromTextArea(document.getElementById("txt-editor"),
     {
         //mode:"text/x-php",   // 言語を設定する
+        //mode:"htmlmixed",   // 言語を設定する
+        //mode:"text/javascript",   // 言語を設定する
         lineNumbers: true,   // 行番号を表示する
         lineWrapping: true,  // 行を折り返す
+        //indentUnit: 4,
     });
 </script>
 
@@ -94,6 +101,11 @@
                     <label class="m-0"><input name="study_lang" type="radio" value="php" checked> PHP</label>
                 @else
                     <label class="m-0"><input name="study_lang" type="radio" value="php"> PHP</label>
+                @endif
+                @if ($codestudy->study_lang == 'javascript' || old('study_lang') == 'javascript')
+                    <label class="m-0"><input name="study_lang" type="radio" value="javascript" checked> JavaScript</label>
+                @else
+                    <label class="m-0"><input name="study_lang" type="radio" value="javascript"> JavaScript</label>
                 @endif
             </div>
         </div>
@@ -123,7 +135,7 @@
                 <div class="text-center">
                     <button type="submit" class="btn btn-success mr-3"><i class="far fa-save"></i> 保存のみ</button>
                     <button type="button" class="btn btn-primary mr-3" onclick="javascript:submit_codestudies_run();"><i class="fas fa-check"></i> 保存と実行</button>
-                    <button type="button" class="btn btn-secondary" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i> キャンセル</button>
+                    <button type="button" class="btn btn-secondary" onclick="location.href='{{URL::to($page->permanent_link)}}'"><i class="fas fa-times"></i> キャンセル</button>
                 </div>
             </div>
             <div class="col-sm-2">
