@@ -367,14 +367,6 @@ Blockly.Blocks.drone_loop = {
 };
 
 Blockly.PHP.drone_loop = function(block) {
-/*
-    var arg_drone_loop = block.getFieldValue('arg_drone_loop');
-    var statements_name_loop = Blockly.PHP.statementToCode(block, 'loop_statement');
-    var php_code = "for ($i = 0; $i < " + arg_drone_loop + "; $i++) {\n";
-    php_code = php_code + statements_name_loop;
-    php_code = php_code + "}";
-    return php_code + ";\n";
-*/
     var arg_drone_loop = block.getFieldValue('arg_drone_loop');
     var statements_name_loop = Blockly.PHP.statementToCode(block, 'loop_statement');
     var php_code = "";
@@ -384,6 +376,51 @@ Blockly.PHP.drone_loop = function(block) {
     return php_code;
 };
 
+Blockly.Blocks.drone_streamon = {
+  /**
+   * Block for Stream On.
+   * @this Blockly.Block
+   */
+  init() {
+    this.jsonInit({
+        "type": "drone_streamon",
+        "message0": Blockly.Msg["DRONE_STREAMON"],
+        "inputsInline": false,
+        "previousStatement": null,
+        "nextStatement": null,
+        "colour": 300,
+        "tooltip": Blockly.Msg["DRONE_STREAMON"],
+        "helpUrl": ""
+    });
+  },
+};
+
+Blockly.PHP.drone_streamon = function(block) {
+    return "streamon\n";
+};
+
+Blockly.Blocks.drone_streamoff = {
+  /**
+   * Block for Stream Off.
+   * @this Blockly.Block
+   */
+  init() {
+    this.jsonInit({
+        "type": "drone_streamoff",
+        "message0": Blockly.Msg["DRONE_STREAMOFF"],
+        "inputsInline": false,
+        "previousStatement": null,
+        "nextStatement": null,
+        "colour": 300,
+        "tooltip": Blockly.Msg["DRONE_STREAMOFF"],
+        "helpUrl": ""
+    });
+  },
+};
+
+Blockly.PHP.drone_streamoff = function(block) {
+    return "streamoff\n";
+};
 
 //Blockly.Blocks.drone_test = {
 //  /**

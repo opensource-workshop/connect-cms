@@ -26,3 +26,5 @@ Blockly.Msg["DRONE_FLIP_RIGHT"] = "右";
 Blockly.Msg["DRONE_FLIP_LEFT"] = "左";
 Blockly.Msg["DRONE_LOOP"] = "繰り返し";
 Blockly.Msg["DRONE_LOOP_COUNT"] = "回";
+Blockly.Msg["DRONE_STREAMON"] = "映像ON";
+Blockly.Msg["DRONE_STREAMOFF"] = "映像OFF";
