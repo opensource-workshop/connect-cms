@@ -17,12 +17,12 @@ if "%1" == "db_clear" (
     rem 下記は、自動テストDB初期化で行っていないコマンド
     echo.
     echo --- キャッシュクリア
-    php artisan cache:clear
+    rem php artisan cache:clear
     rem php artisan config:clear
 
     echo.
     echo --- データベース・クリア
-    php artisan migrate:fresh --env=dusk.local
+    rem php artisan migrate:fresh --env=dusk.local
 
     rem echo.
     rem echo --- データ・初期追加
