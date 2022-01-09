@@ -10,7 +10,7 @@
 
 @section("core.cms_frame_edit_tab_$frame->id")
     {{-- プラグイン側のフレームメニュー --}}
-    @include('plugins.user.' . $frame->plugin_name . '.' . $frame->plugin_name . '_frame_edit_tab')
+    {{$frame->includeFrameTab($page, $frame, $action)}}
 @endsection
 
 @section("plugin_setting_$frame->id")
