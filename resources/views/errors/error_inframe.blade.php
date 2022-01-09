@@ -12,16 +12,19 @@
         @if ($e)
             {{$e->getStatusCode()}}. 
         @endif
-        {{$message}}<br />
+        @if (isset($message))
+            {{$message}}
+        @endif 
+        <br />
         @if (Config::get('app.debug'))
-        <div class="card mt-3">
-            <div class="card-header">
-                Debug message
+            <div class="card mt-3">
+                <div class="card-header">
+                    Debug message
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{$debug_message}}</p>
+                </div>
             </div>
-            <div class="card-body">
-                <p class="card-text">{{$debug_message}}</p>
-            </div>
-        </div>
         @endif
     </div>
 </div>
