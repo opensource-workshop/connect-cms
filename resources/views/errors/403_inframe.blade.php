@@ -9,7 +9,13 @@
     <div class="alert alert-danger mt-3" role="alert">
         <i class="fas fa-exclamation-triangle"></i>
         <span class="sr-only">Error:</span>
-        403 Forbidden. （権限がありません）<br />
+        403 Forbidden.
+        @if (isset($message))
+            {{$message}}
+        @else
+           （権限がありません）
+        @endif 
+        <br />
         @if (Config::get('app.debug'))
             <div class="card mt-3">
                 <div class="card-header">
