@@ -135,7 +135,15 @@ if ($default_hidden == '' & isset($frame->hidden_flag) && $frame->hidden_flag ==
                         } catch (\Throwable $e) {
                             $plugin_instances[$frame->frame_id]->putLog($e);
                     @endphp
+                    @if ($e->getStatusCode() == 403)
+                        @include('errors.403_inframe' ,['debug_message' => $e->getMessage()])
+                    @elseif ($e->getStatusCode() == 404)
+                        @include('errors.404_inframe' ,['debug_message' => $e->getMessage()])
+                    @elseif ($e->getStatusCode() == 500)
                         @include('errors.500_inframe' ,['debug_message' => $e->getMessage()])
+                    @else
+                        @include('errors.error_inframe' ,['debug_message' => $e->getMessage(), 'message' => $e->getMessage()])
+                    @endif
                     @php
                         }
                     @endphp
