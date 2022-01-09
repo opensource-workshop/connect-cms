@@ -9,6 +9,9 @@
     <div class="alert alert-danger mt-3" role="alert">
         <i class="fas fa-exclamation-triangle"></i>
         <span class="sr-only">Error:</span>
+        @if ($e)
+            {{$e->getStatusCode()}}. 
+        @endif
         {{$message}}<br />
         @if (Config::get('app.debug'))
         <div class="card mt-3">
