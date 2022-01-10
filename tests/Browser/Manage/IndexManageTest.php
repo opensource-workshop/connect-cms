@@ -6,7 +6,9 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
-use app\Plugins\Manage\IndexManage\IndexManage;
+use App\Models\Core\Dusks;
+
+use App\Plugins\Manage\IndexManage\IndexManage;
 
 class IndexManageTest extends DuskTestCase
 {
@@ -28,6 +30,7 @@ class IndexManageTest extends DuskTestCase
      */
     private function index()
     {
+        // 実行
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage')
                     ->assertTitle('Connect-CMS')
@@ -35,9 +38,20 @@ class IndexManageTest extends DuskTestCase
             //parent::screenshot($browser); // この記述の場合、ディレクトリは自動で判別＆日時付きでファイルが保存される。
         });
 
-require_once __DIR__.'/../../../app/Plugins/Manage/IndexManage/IndexManage.php';
-$index_manage = new IndexManage();
-print_r($index_manage->declareManual());
+        $manual = IndexManage::declareManual();
+
+        // 結果の保存
+        Dusks::create([
+            'category' => 'Manage',
+            'sort' => '2',
+            'method' => 'index',
+            'test_result' => 'OK',
+            'html_path' => 'Manage/IndexManageTest/IndexManage',
+            'function_title' => $manual['function_title'],
+            'method_desc' => $manual['method_desc']['index'],
+            'function_desc' => $manual['function_desc'],
+        ]);
+
 
 
 

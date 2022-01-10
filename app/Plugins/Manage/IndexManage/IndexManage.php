@@ -33,7 +33,7 @@ class IndexManage extends ManagePluginBase
     /**
      *  マニュアル定義
      */
-    public function declareManual()
+    public static function declareManual()
     {
         // 権限チェックテーブル
         $manual["function_title"] = "管理画面の初期表示";
