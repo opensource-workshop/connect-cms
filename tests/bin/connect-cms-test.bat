@@ -9,6 +9,13 @@ rem [How to test]
 rem https://github.com/opensource-workshop/connect-cms/wiki/Dusk
 rem ----------------------------------------------
 
+if exist .env.dusk.local (
+    echo .env.dusk.local で実行します。
+) else (
+    echo .env.dusk.local が存在しないため、テストを実行せずに終了します。
+    exit /b
+)
+
 rem テストコマンド実行時に１度だけ、自動テストDB初期化をするので不要です。
 rem   (see) https://github.com/opensource-workshop/connect-cms/wiki/Dusk#手動でテストdb初期化
 rem @php artisan config:clear
@@ -17,12 +24,12 @@ if "%1" == "db_clear" (
     rem 下記は、自動テストDB初期化で行っていないコマンド
     echo.
     echo --- キャッシュクリア
-    rem php artisan cache:clear
+    php artisan cache:clear
     rem php artisan config:clear
 
     echo.
     echo --- データベース・クリア
-    rem php artisan migrate:fresh --env=dusk.local
+    php artisan migrate:fresh --env=dusk.local
 
     rem echo.
     rem echo --- データ・初期追加
@@ -63,7 +70,7 @@ rem ---------------------------------------------
 
 echo.
 echo --- 管理画面アクセス
-php artisan dusk tests\Browser\Manage\IndexManageTest.php
+php artisan dusk tests\Browser\Manage\IndexManageTest.php ABC
 
 echo.
 echo --- ページ管理のテスト

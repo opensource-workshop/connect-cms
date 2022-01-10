@@ -20,6 +20,7 @@ class IndexManageTest extends DuskTestCase
     {
         $this->login(1); // user id = 1(admin)でログイン
         $this->index();
+//print_r($_SERVER['argv']);
     }
 
     /**
