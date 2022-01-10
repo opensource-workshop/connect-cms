@@ -4,8 +4,8 @@ namespace App\Plugins\User\Menus;
 
 use Illuminate\Support\Facades\Log;
 
-use App\Models\Common\Frame;
 use App\Models\Common\Page;
+use App\Models\Common\PageRole;
 use App\Models\User\Menus\Menu;
 
 use App\Plugins\User\UserPluginBase;
@@ -21,13 +21,21 @@ use App\Plugins\User\UserPluginBase;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページプラグイン
- * @package Contoroller
+ * @package Controller
  */
 class MenusPlugin extends UserPluginBase
 {
+    /* オブジェクト変数 */
 
     /**
-     *  編集画面の最初のタブ
+     * POST チェックに使用する getPost() 関数を使うか
+     */
+    public $use_getpost = false;
+
+    /* コアから呼び出す関数 */
+
+    /**
+     * 編集画面の最初のタブ
      *
      *  スーパークラスをオーバーライド
      */
@@ -37,7 +45,7 @@ class MenusPlugin extends UserPluginBase
     }
 
     /**
-     *  関数定義（コアから呼び出す）
+     * 関数定義（コアから呼び出す）
      */
     public function getPublicFunctions()
     {
@@ -57,15 +65,19 @@ class MenusPlugin extends UserPluginBase
         // 標準権限は右記で定義 config/cc_role.php
         //
         // 権限チェックテーブル
-        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
-        $role_ckeck_table = array();
-        return $role_ckeck_table;
+        $role_check_table = [];
+        $role_check_table["select"]            = ['frames.edit'];
+        $role_check_table["saveSelect"]        = ['frames.create'];
+
+        return $role_check_table;
     }
 
+    /* 画面アクション関数 */
+
     /**
-     *  ページデータ取得関数
+     * ページデータ取得関数
      *
-     *  ページデータを取得し、深さを追加して画面に。
+     * ページデータを取得し、深さを追加して画面に。
      *
      * @return view
      */
@@ -76,7 +88,8 @@ class MenusPlugin extends UserPluginBase
         //Log::debug(json_encode( $menu, JSON_UNESCAPED_UNICODE));
 
         // ページに対する権限
-        $page_roles = $this->getPageRoles();
+        // $page_roles = $this->getPageRoles();
+        $page_roles = PageRole::getPageRoles();
 
         // ページデータ＆深さを全て取得
         // 表示順は入れ子集合モデルの順番
@@ -91,7 +104,9 @@ class MenusPlugin extends UserPluginBase
 
         // パンくずリスト用に複製
         $ancestors_breadcrumbs = clone $ancestors;
-        $top_page = Page::where('permanent_link', '/')->first();
+        // $top_page = Page::where('permanent_link', '/')->first();
+        $top_page = Page::getTopPage();
+
         // トップページ以外は、トップページをパンくず先頭に追加
         if ($top_page && $top_page->id != $page_id) {
             // コレクションクラスの先頭に追加
@@ -112,21 +127,15 @@ class MenusPlugin extends UserPluginBase
             'menu'         => $menu,
             'page_roles'   => $page_roles,
             // 'ancestors_page_roles' => $ancestors_page_roles,
-//            'page'      => $this->page,
+            // 'page'      => $this->page,
         ]);
     }
 
     /**
-     *  ページ選択画面
+     * ページ選択画面
      */
     public function select($request, $page_id, $frame_id)
     {
-        // 権限チェック
-        // ページ選択プラグインの特別処理。個別に権限チェックする。
-        if ($this->can('role_arrangement')) {
-            return $this->view_error(403);
-        }
-
         // ページデータ＆深さを全て取得
         // 表示順は入れ子集合モデルの順番
         $format = null;
@@ -149,16 +158,10 @@ class MenusPlugin extends UserPluginBase
     }
 
     /**
-     *  ページ選択保存
+     * ページ選択保存
      */
     public function saveSelect($request, $page_id, $frame_id)
     {
-        // 権限チェック
-        // ページ選択プラグインの特別処理。個別に権限チェックする。
-        if ($this->can('role_arrangement')) {
-            return $this->view_error(403);
-        }
-
         // メニューデータ作成 or 更新
         Menu::updateOrCreate(
             ['frame_id'          => $frame_id],

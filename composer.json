@@ -11,11 +11,12 @@
     "require": {
         "php": ">=7.2.5",
         "azuyalabs/yasumi": "^2.3",
-        "bensampo/laravel-enum": "1.38.*",
         "doctrine/dbal": "^2.10",
         "ezyang/htmlpurifier": "^4.13",
         "fideloper/proxy": "^4.4",
+        "firebase/php-jwt": "^5.5",
         "intervention/image": "^2.5",
+        "intervention/imagecache": "^2.5",
         "kalnoy/nestedset": "5.0.3",
         "laravel/framework": "6.*",
         "laravel/helpers": "^1.4",
@@ -26,7 +27,7 @@
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.3",
-        "facade/ignition": "^1.16.4",
+        "filp/whoops": "~2.0",
         "fakerphp/faker": "^1.9.1",
         "laravel/dusk": "^6.11",
         "mockery/mockery": "^1.0",

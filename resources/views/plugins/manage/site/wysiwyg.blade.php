@@ -19,10 +19,16 @@
     <div class="card-body">
 
         {{-- 共通エラーメッセージ 呼び出し --}}
-        @include('common.errors_form_line')
+        @include('plugins.common.errors_form_line')
 
         {{-- 登録後メッセージ表示 --}}
         @include('plugins.common.flash_message')
+
+        @if ($gd_disabled_label)
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-circle"></i>「初期に選択させる画像サイズ」を設定するには、別途PHPライブラリの <code>GD</code> を有効にする必要があります。<br />
+            </div>
+        @endif
 
         <div class="alert alert-info" role="alert">
             <i class="fas fa-exclamation-circle"></i> WYSIWYG設定をします。
@@ -45,23 +51,43 @@
                 <label class="col-form-label">文字サイズの使用</label>
                 <div class="row">
                     <div class="col">
-                        <div class="custom-control custom-radio custom-control-inline">
-                            @if(Configs::getConfigsValueAndOld($configs, "fontsizeselect") == "0")
-                                <input type="radio" value="0" id="fontsizeselect_off" name="fontsizeselect" class="custom-control-input" checked="checked">
-                            @else
-                                <input type="radio" value="0" id="fontsizeselect_off" name="fontsizeselect" class="custom-control-input">
-                            @endif
-                            <label class="custom-control-label" for="fontsizeselect_off">使用しない</label>
-                        </div>
-                        <div class="custom-control custom-radio custom-control-inline">
-                            @if(Configs::getConfigsValueAndOld($configs, "fontsizeselect") == "1")
-                                <input type="radio" value="1" id="fontsizeselect_on" name="fontsizeselect" class="custom-control-input" checked="checked">
-                            @else
-                                <input type="radio" value="1" id="fontsizeselect_on" name="fontsizeselect" class="custom-control-input">
-                            @endif
-                            <label class="custom-control-label" for="fontsizeselect_on">使用する</label>
-                        </div>
+
+                        @foreach (UseType::getMembers() as $value => $display)
+                            <div class="custom-control custom-radio custom-control-inline">
+                                @if(Configs::getConfigsValueAndOld($configs, "fontsizeselect") == $value)
+                                    <input type="radio" value="{{$value}}" id="fontsizeselect_{{$value}}" name="fontsizeselect" class="custom-control-input" checked="checked">
+                                @else
+                                    <input type="radio" value="{{$value}}" id="fontsizeselect_{{$value}}" name="fontsizeselect" class="custom-control-input">
+                                @endif
+                                <label class="custom-control-label" for="fontsizeselect_{{$value}}">{{$display}}</label>
+                            </div>
+                        @endforeach
+
                     </div>
+                </div>
+            </div>
+
+            {{-- 初期に選択させる画像サイズ --}}
+            <div class="form-group row">
+
+                @if($gd_disabled_label)
+                    <input type="hidden" name="resized_image_size_initial" value="{{Configs::getConfigsValueAndOld($configs, "resized_image_size_initial", ResizedImageSize::getDefault())}}">
+                @endif
+
+                <div class="col">
+                    <label class="col-form-label">初期に選択させる画像サイズ</label>
+                    <select name="resized_image_size_initial" class="form-control" {{$gd_disabled_label}}>
+                        @foreach (ResizedImageSize::getMembers() as $enum_value => $enum_label)
+                            <div class="custom-control custom-radio custom-control-inline">
+                                @if(Configs::getConfigsValueAndOld($configs, "resized_image_size_initial", ResizedImageSize::getDefault()) == $enum_value)
+                                    <option value="{{$enum_value}}" selected>{{$enum_label}}</option>
+                                @else
+                                    <option value="{{$enum_value}}">{{$enum_label}}</option>
+                                @endif
+                            </div>
+                        @endforeach
+                    </select>
+                    <small class="text-muted">画像のリサイズで利用する設定です。</small>
                 </div>
             </div>
 

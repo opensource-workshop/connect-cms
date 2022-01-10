@@ -1,3 +1,6 @@
+{{--
+ * @deprecation [非推奨] resources\views\plugins\common\errors_form_line.blade.php にコピー済み。当ソースは今後廃止予定。
+ *--}}
 @if ($errors && count($errors) > 0)
     <!-- Form Error List -->
     <div class="alert alert-danger">

@@ -5,7 +5,6 @@ namespace App\Plugins\User\Tabs;
 use Illuminate\Support\Facades\Log;
 
 use App\Models\Common\Frame;
-use App\Models\Common\Page;
 use App\Models\User\Tabs\Tabs;
 
 use App\Plugins\User\UserPluginBase;
@@ -18,10 +17,18 @@ use App\Plugins\User\UserPluginBase;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category タブ・プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class TabsPlugin extends UserPluginBase
 {
+    /* オブジェクト変数 */
+
+    /**
+     * POST チェックに使用する getPost() 関数を使うか
+     */
+    public $use_getpost = false;
+
+    /* コアから呼び出す関数 */
 
     /**
      *  編集画面の最初のタブ
@@ -54,10 +61,14 @@ class TabsPlugin extends UserPluginBase
         // 標準権限は右記で定義 config/cc_role.php
         //
         // 権限チェックテーブル
-        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
-        $role_ckeck_table = array();
-        return $role_ckeck_table;
+        $role_check_table = [];
+        $role_check_table["select"]            = ['frames.edit'];
+        $role_check_table["saveSelect"]        = ['frames.create'];
+
+        return $role_check_table;
     }
+
+    /* 画面アクション関数 */
 
     /**
      *  初期表示取得関数
@@ -96,12 +107,6 @@ class TabsPlugin extends UserPluginBase
      */
     public function select($request, $page_id, $frame_id)
     {
-        // 権限チェック
-        // ページ選択プラグインの特別処理。個別に権限チェックする。
-        if ($this->can('role_arrangement')) {
-            return $this->view_error(403);
-        }
-
         // 自分自身の設定
         $tabs = Tabs::where('frame_id', $frame_id)->first();
 
@@ -127,12 +132,6 @@ class TabsPlugin extends UserPluginBase
      */
     public function saveSelect($request, $page_id, $frame_id)
     {
-        // 権限チェック
-        // ページ選択プラグインの特別処理。個別に権限チェックする。
-        if ($this->can('role_arrangement')) {
-            return $this->view_error(403);
-        }
-
         // タブデータ作成 or 更新
         Tabs::updateOrCreate(
             ['frame_id' => $frame_id],

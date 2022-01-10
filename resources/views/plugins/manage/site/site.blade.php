@@ -20,7 +20,7 @@
 <div class="card-body">
 
     {{-- 共通エラーメッセージ 呼び出し --}}
-    @include('common.errors_form_line')
+    @include('plugins.common.errors_form_line')
 
     <form action="{{url('/')}}/manage/site/update" method="POST">
         {{csrf_field()}}
@@ -300,7 +300,7 @@
                     </div>
                 @endforeach
             </div>
-            @include('common.errors_inline', ['name' => 'base_login_redirect_previous_page'])
+            @include('plugins.common.errors_inline', ['name' => 'base_login_redirect_previous_page'])
             <small class="form-text text-muted">「指定したページ」を選択する場合、下記の「ログイン後に移動する指定ページ」を選択してください。</small>
         </div>
 
@@ -318,7 +318,7 @@
                     </option>
                 @endforeach
             </select>
-            @include('common.errors_inline', ['name' => 'base_login_redirect_select_page'])
+            @include('plugins.common.errors_inline', ['name' => 'base_login_redirect_select_page'])
         </div>
 
         {{-- マイページ --}}

@@ -27,7 +27,7 @@ class BbsPost extends Model
     use UserableNohistory;
 
     // 更新する項目の定義
-    protected $fillable = ['bbs_id', 'title', 'body', 'thread_root_id', 'thread_updated_at', 'status', '_lft', '_rgt', 'parent_id'];
+    protected $fillable = ['bbs_id', 'title', 'body', 'thread_root_id', 'thread_updated_at', 'first_committed_at', 'status', '_lft', '_rgt', 'parent_id', 'created_name'];
 
     // 入れ子集合モデル
     use NodeTrait;

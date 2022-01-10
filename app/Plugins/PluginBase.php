@@ -18,7 +18,7 @@ use App\Traits\ConnectMailTrait;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ユーザープラグイン
- * @package Contoroller
+ * @package Controller
  */
 class PluginBase
 {
@@ -27,7 +27,7 @@ class PluginBase
     /*
         コンストラクタ
      */
-    function __construct()
+    public function __construct()
     {
 
         // PHP エラー捕捉のためのエラーハンドラを設定する。

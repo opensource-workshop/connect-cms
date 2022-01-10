@@ -22,9 +22,17 @@
                         // スマホの場合、最初と最後、カレントは表示
                         if ($page == 1 || $page == $paginator->lastPage() || $page == $paginator->currentPage()) {
                             $sm_class = '';
-                        }
-                        else {
-                            $sm_class = ' d-none d-sm-block';
+                        } else {
+                            // bugfix: ページ送り（paginate）が左右エリアに配置するとはみ出る事に対応
+                            // $sm_class = ' d-none d-sm-block';
+                            $is_expand_narrow = isset($frame) ? $frame->isExpandNarrow() : false;
+
+                            // 右・左エリアなら、スマホ表示と同様にする
+                            if ($is_expand_narrow) {
+                                $sm_class = ' d-none';
+                            } else {
+                                $sm_class = ' d-none d-sm-block';
+                            }
                         }
                     @endphp
 

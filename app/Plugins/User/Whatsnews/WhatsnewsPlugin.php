@@ -2,18 +2,17 @@
 
 namespace App\Plugins\User\Whatsnews;
 
-// use Illuminate\Support\Facades\Auth;
-// use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-
-// use Carbon\Carbon;
-
-use DB;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Core\Configs;
+use App\Models\Core\FrameConfig;
 use App\Models\User\Whatsnews\Whatsnews;
+
+use App\Enums\WhatsnewFrameConfig;
 
 use App\Plugins\User\UserPluginBase;
 use App\Traits\ConnectCommonTrait;
@@ -26,13 +25,18 @@ use App\Traits\ConnectCommonTrait;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 新着情報プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class WhatsnewsPlugin extends UserPluginBase
 {
     use ConnectCommonTrait;
 
     /* オブジェクト変数 */
+
+    /**
+     * POST チェックに使用する getPost() 関数を使うか
+     */
+    public $use_getpost = false;
 
     /**
      *  新着の検索結果
@@ -42,6 +46,7 @@ class WhatsnewsPlugin extends UserPluginBase
     /**
      *  新着の総件数
      */
+
     public $whatsnews_total_count = 0;
 
     /**
@@ -74,10 +79,9 @@ class WhatsnewsPlugin extends UserPluginBase
         // 標準権限以外で設定画面などから呼ばれる権限の定義
         // 標準権限は右記で定義 config/cc_role.php
         //
-        // 権限チェックテーブル
-        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
-        $role_ckeck_table = array();
-        return $role_ckeck_table;
+        // 権限チェックテーブル (追加チェックなし)
+        $role_check_table = [];
+        return $role_check_table;
     }
 
     /**
@@ -255,10 +259,53 @@ class WhatsnewsPlugin extends UserPluginBase
             $whatsnews = $whatsnews->where('posted_at', '>=', date('Y-m-d H:i:s', strtotime("- " . $whatsnews_frame->days . " day")));
         }
 
+        // 記事詳細から、最初の画像を抜き出して設定する。
+        $whatsnews = $this->addWhatsnewsValue($whatsnews);
+
         // 一旦オブジェクト変数へ。（Singleton のため。フレーム表示確認でコアが使用する）
         $this->whatsnews_results = array($whatsnews, $link_pattern, $link_base);
 
         return $this->whatsnews_results;
+    }
+
+    /**
+     * 記事詳細から、最初の画像を抜き出して設定する。
+     * 記事詳細に、追加情報を設定する。
+     */
+//    private function addFirstImage($whatsnews)
+    private function addWhatsnewsValue($whatsnews, $post_detail_length = null)
+    {
+        // 記事詳細から、最初の画像を抜き出し
+        $pattern_img = '/<img.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
+        $pattern_alt = '/(alt)=("[^"]*")/i';
+        foreach ($whatsnews as &$whatsnew) {
+            // 画像があるときはファイルパスを抽出
+            preg_match($pattern_img, $whatsnew->post_detail, $images);
+            if (is_array($images) && count($images) > 1) {
+                $whatsnew->first_image_path = $images[1];
+                // altがあるときはaltを抽出
+                preg_match($pattern_alt, $images[0], $alts);
+                if (is_array($alts) && count($alts) > 2) {
+                    $whatsnew->first_image_alt = $alts[2];
+                } else {
+                    $whatsnew->first_image_alt = null;
+                }
+            } else {
+                $whatsnew->first_image_path = null;
+                $whatsnew->first_image_alt = null;
+            }
+            // タグを取り除き、指定に応じて文字数制限した本文
+            if ($post_detail_length) {
+                $whatsnew->post_detail_strip_tags = mb_substr(strip_tags($whatsnew->post_detail), 0, $post_detail_length);
+                if (mb_strlen(strip_tags($whatsnew->post_detail)) > $post_detail_length) {
+                    $whatsnew->post_detail_strip_tags = $whatsnew->post_detail_strip_tags . '...';
+                }
+            } else {
+                $whatsnew->post_detail_strip_tags = strip_tags($whatsnew->post_detail);
+            }
+        }
+
+        return $whatsnews;
     }
 
     private function buildQueryGetWhatsnews($whatsnews_frame, $union_sqls)
@@ -271,6 +318,7 @@ class WhatsnewsPlugin extends UserPluginBase
                 'frame_id',
                 'post_id',
                 'post_title',
+                'post_detail',
                 DB::raw("null as important"),
                 'posted_at',
                 DB::raw("null as posted_name"),
@@ -364,8 +412,26 @@ class WhatsnewsPlugin extends UserPluginBase
         // データ抽出
         $whatsnewses = $whatsnews_query->get();
 
+        // bugfix: 新着タイトルにウィジウィグが入る事がある（databaseのウィジウィグ型をタイトルに指定）ため、タグ除去する。
+        $whatsnewses->transform(function ($whatsnew, $key) {
+            $whatsnew->post_title = strip_tags($whatsnew->post_title);
+            return $whatsnew;
+        });
+
+        // 記事詳細から、最初の画像を抜き出して設定する。
+        $whatsnewses = $this->addWhatsnewsValue($whatsnewses, $request->post_detail_length);
+
         // 整形して返却
         return json_encode(json_decode($whatsnewses), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    }
+
+    /**
+     * プラグインのバケツ取得関数
+     */
+    public function getPluginBucket($bucket_id)
+    {
+        // プラグインのメインデータを取得する。
+        return Whatsnews::firstOrNew(['bucket_id' => $bucket_id]);
     }
 
     /* 画面アクション関数 */
@@ -615,6 +681,66 @@ class WhatsnewsPlugin extends UserPluginBase
 
         // 新着情報設定選択画面を呼ぶ
         return $this->listBuckets($request, $page_id, $frame_id, $id);
+    }
+
+    /**
+     * フレーム表示設定画面の表示
+     */
+    public function editView($request, $page_id, $frame_id)
+    {
+        // 表示テンプレートを呼び出す。
+        return $this->view('whatsnews_frame', [
+            'whatsnew' => $this->getPluginBucket($this->getBucketId()),
+        ]);
+    }
+
+    /**
+     * フレーム表示設定の保存
+     */
+    public function saveView($request, $page_id, $frame_id, $cabinet_id)
+    {
+        // フレーム設定保存
+        $this->saveFrameConfigs($request, $frame_id, WhatsnewFrameConfig::getMemberKeys());
+
+        // 更新したので、frame_configsを設定しなおす
+        $this->refreshFrameConfigs();
+
+        return;
+    }
+
+    /**
+     * フレーム設定を保存する。
+     *
+     * @param Illuminate\Http\Request $request リクエスト
+     * @param int $frame_id フレームID
+     * @param array $frame_config_names フレーム設定のname配列
+     */
+    protected function saveFrameConfigs(\Illuminate\Http\Request $request, int $frame_id, array $frame_config_names)
+    {
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'thumbnail_size'  => ['numeric'],
+            'post_detail_length'  => ['numeric'],
+        ]);
+        $validator->setAttributeNames([
+            'thumbnail_size'  => WhatsnewFrameConfig::enum['thumbnail_size'],
+            'post_detail_length'  => WhatsnewFrameConfig::enum['post_detail_length'],
+        ]);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // フレーム設定の定数にあるものがrequest にあれば、保存する。
+        foreach ($frame_config_names as $key => $value) {
+
+            FrameConfig::updateOrCreate(
+                ['frame_id' => $frame_id, 'name' => $value],
+                ['value' => $request->$value]
+            );
+        }
     }
 
     /**

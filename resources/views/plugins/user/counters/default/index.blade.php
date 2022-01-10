@@ -31,12 +31,12 @@ $design_type = $plugin_frame->design_type ?? CounterDesignType::numeric;
     </div>
 @endif
 
-@if ($plugin_frame->use_yestday_count)
+@if ($plugin_frame->use_yesterday_count)
     <div>
         @include('plugins.user.counters.default.index_design_' . $design_type, [
-            'count_title' => $plugin_frame->yestday_count_title,
+            'count_title' => $plugin_frame->yesterday_count_title,
             'count' => $counter_count->yesterday_count,
-            'count_after' => $plugin_frame->yestday_count_after,
+            'count_after' => $plugin_frame->yesterday_count_after,
         ])
     </div>
 @endif

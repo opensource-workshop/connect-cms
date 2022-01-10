@@ -113,15 +113,10 @@
 </table>
 
 {{-- ページング処理 --}}
-{{-- アクセシビリティ対応。1ページしかない時に、空navを表示するとスクリーンリーダーに不要な Navigation がひっかかるため表示させない。 --}}
-@if ($inputs->lastPage() > 1)
-    <nav class="text-center mt-3" aria-label="{{$form->forms_name}}のページ付け">
-        {{ $inputs->fragment('frame-' . $frame_id)->links() }}
-    </nav>
-@endif
+@include('plugins.common.user_paginate', ['posts' => $inputs, 'frame' => $frame, 'aria_label_name' => $form->forms_name, 'class' => 'form-group mt-3'])
 
 {{-- ボタン --}}
-<div class="form-group text-center mt-3">
+<div class="text-center">
     <div class="row">
         <div class="col">
             <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}">

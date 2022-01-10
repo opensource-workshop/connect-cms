@@ -29,19 +29,17 @@
         });
     });
 </script>
-    {{-- 日付 --}}
-    <div class="input-group date" id="{{ $database_obj->id }}" data-target-input="nearest">
-        <input
-            type="text"
-            name="databases_columns_value[{{ $database_obj->id }}]"
-            value="{{old('databases_columns_value.'.$database_obj->id, $value)}}"
-            class="form-control datetimepicker-input"
-            data-target="#{{ $database_obj->id }}"
-        >
-        <div class="input-group-append" data-target="#{{ $database_obj->id }}" data-toggle="datetimepicker">
-            <div class="input-group-text"><i class="far fa-clock"></i></div>
-        </div>
+{{-- 日付 --}}
+<div class="input-group date" id="{{ $database_obj->id }}" data-target-input="nearest">
+    <input
+        type="text"
+        name="databases_columns_value[{{ $database_obj->id }}]"
+        value="{{old('databases_columns_value.'.$database_obj->id, $value)}}"
+        class="form-control datetimepicker-input @if ($errors && $errors->has("databases_columns_value.$database_obj->id")) border-danger @endif"
+        data-target="#{{ $database_obj->id }}"
+    >
+    <div class="input-group-append" data-target="#{{ $database_obj->id }}" data-toggle="datetimepicker">
+        <div class="input-group-text @if ($errors && $errors->has("databases_columns_value.$database_obj->id")) border-danger @endif"><i class="far fa-clock"></i></div>
     </div>
-@if ($errors && $errors->has("databases_columns_value.$database_obj->id"))
-    <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("databases_columns_value.$database_obj->id")}}</div>
-@endif
+</div>
+@include('plugins.common.errors_inline', ['name' => "databases_columns_value.$database_obj->id"])

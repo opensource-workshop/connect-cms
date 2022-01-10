@@ -1,5 +1,5 @@
 {{--
- * システム管理のメインテンプレート
+ * システム管理のログ設定テンプレート
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
@@ -19,6 +19,12 @@
 
 </div>
 <div class="card-body">
+
+    {{-- 共通エラーメッセージ 呼び出し --}}
+    @include('plugins.common.errors_form_line')
+
+    {{-- 登録後メッセージ表示 --}}
+    @include('plugins.common.flash_message')
 
     <form action="{{url('/')}}/manage/system/updateLog" method="POST">
     {{csrf_field()}}

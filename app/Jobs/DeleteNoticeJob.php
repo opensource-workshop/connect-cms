@@ -16,27 +16,36 @@ use App\Models\Common\BucketsMail;
 
 class DeleteNoticeJob implements ShouldQueue
 {
+    /**
+     * 1.キューに入っているジョブがコンストラクタで Eloquent モデルを受け入れる場合、SerializesModels トレイトにより、モデルの識別子だけがキューにシリアル化されます。
+     * 2.ジョブが実際に処理されると、キュー システムはデータベースからモデルインスタンス全体を自動的に再取得します。
+     */
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    private $frame = null;
+    /**
+     * 最大試行回数
+     * メールは大量送信時に途中で失敗した場合、同じメールが初めの方の人に再度送られるとまずいため、自動リトライしないため１回にする。
+     *
+     * @var int
+     */
+    public $tries = 1;
+
     private $bucket = null;
-    private $post = null;
-    private $show_method = null;
-    private $delete_comment = null;
+    // change: $postは Eloquent モデルのため 物理削除時にキューで再取得できない。代わりに配列変数を使う。
+    // private $post = null;
+    private $notice_embedded_tags = null;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($frame, $bucket, $post, $show_method, $delete_comment)
+    public function __construct($bucket, $notice_embedded_tags)
     {
         // buckets などの受け取り
-        $this->frame  = $frame;
         $this->bucket = $bucket;
-        $this->post   = $post;
-        $this->show_method    = $show_method;
-        $this->delete_comment = $delete_comment;
+        // $this->post   = $post;
+        $this->notice_embedded_tags = $notice_embedded_tags;
     }
 
     /**
@@ -60,7 +69,8 @@ class DeleteNoticeJob implements ShouldQueue
             return;
         }
         foreach ($notice_addresses as $notice_address) {
-            Mail::to($notice_address)->send(new DeleteNotice($this->frame, $this->bucket, $this->post, $this->show_method, $this->delete_comment, $bucket_mail));
+            // Mail::to($notice_address)->send(new DeleteNotice($this->frame, $this->bucket, $this->post, $this->title, $this->show_method, $this->delete_comment, $bucket_mail));
+            Mail::to($notice_address)->send(new DeleteNotice($this->notice_embedded_tags, $bucket_mail));
         }
     }
 }

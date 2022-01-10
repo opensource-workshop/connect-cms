@@ -42,27 +42,23 @@
             {{-- 投稿者名 --}}
             @if (FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)
                 [{{$post->created_name}}]
-             @endif
-            @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
+            @endif
+            {{-- カテゴリ --}}
+            @if ($post->category_view_flag)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
         </dt>
 
         <dd>
             {{-- タイトル --}}
             <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}"><span class="title">{{$post->post_title}}</span></a>
             {{-- 重要記事設定マーク ※ログイン時のみ表示 --}}
-            @if($post->important == 1 && Auth::user() && Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]))
+            @if ($post->important == 1 && Auth::user() && Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]))
                 <span class="badge badge-pill badge-danger">重要記事に設定</span>
             @endif
         </dd>
     @endforeach
 
-    {{-- ページング処理 --}}
-    {{-- アクセシビリティ対応。1ページしかない時に、空navを表示するとスクリーンリーダーに不要な Navigation がひっかかるため表示させない。 --}}
-    @if ($blogs_posts->lastPage() > 1)
-        <nav class="text-center" aria-label="{{$blog_frame->blog_name}}のページ付け">
-            {{ $blogs_posts->fragment('frame-' . $frame_id)->links() }}
-        </nav>
-    @endif
+        {{-- ページング処理 --}}
+        @include('plugins.common.user_paginate', ['posts' => $blogs_posts, 'frame' => $frame, 'aria_label_name' => $blog_frame->blog_name])
     </dl>
 </div>
 @endif

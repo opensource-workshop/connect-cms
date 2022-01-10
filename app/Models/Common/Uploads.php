@@ -2,14 +2,16 @@
 
 namespace App\Models\Common;
 
+use App\Models\Core\Configs;
 use Illuminate\Database\Eloquent\Model;
+use Intervention\Image\Facades\Image;
 
 class Uploads extends Model
 {
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['client_original_name', 'mimetype', 'extension', 'size', 'plugin_name', 'page_id', 'temporary_flag', 'check_method', 'created_id'];
+    protected $fillable = ['client_original_name', 'mimetype', 'extension', 'size', 'width', 'height', 'plugin_name', 'page_id', 'temporary_flag', 'check_method', 'created_id'];
 
     /**
      *  サイズのフォーマット
@@ -18,7 +20,9 @@ class Uploads extends Model
     {
         $size = $this->size;
         $units = array("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB");
-        for ($i = 0; $size >= 1024 && $i < 4; $i++) $size /= 1024;
+        for ($i = 0; $size >= 1024 && $i < 4; $i++) {
+            $size /= 1024;
+        }
         return round($size, $r).$units[$i];
     }
 
@@ -31,7 +35,7 @@ class Uploads extends Model
         // 2020-12-15 Connect-CMS 公式サイトで、ファイル名が空になったり一部しか取得できないケースがあった。
         // false を返すことなどもあるようで、ワーニングの抑止の意味も含めて @ 付きでCall
         @setlocale(LC_ALL, 'ja_JP.UTF-8');
-        return $path_parts = pathinfo($this->client_original_name, PATHINFO_FILENAME );
+        return $path_parts = pathinfo($this->client_original_name, PATHINFO_FILENAME);
     }
 
     /**
@@ -105,5 +109,65 @@ class Uploads extends Model
             return '一時保存ファイル';
         }
         return '';
+    }
+
+    /**
+     *  画像ファイルか判定
+     */
+    public static function isImage($mimetype)
+    {
+        if ($mimetype == 'image/png'  ||
+            $mimetype == 'image/jpeg' ||
+            $mimetype == 'image/gif') {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     *  動画ファイルか判定
+     */
+    public static function isVideo($mimetype)
+    {
+        if ($mimetype == 'video/mp4') {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     *  画像ファイルの縮小
+     *
+     *  @param \Illuminate\Http\UploadedFile $file アップロードファイル
+     *  @param int $max_size 許容する最大サイズ（これより大きい幅、高さがあれば縮小する）
+     *  @return \Intervention\Image\Image 画像データ
+     */
+    public static function shrinkImage($file, $max_size)
+    {
+        // GDのリサイズでメモリを多く使うため、memory_limitセット
+        $configs = Configs::getSharedConfigs();
+        $memory_limit_for_image_resize = Configs::getConfigsValue($configs, 'memory_limit_for_image_resize', '256M');
+        ini_set('memory_limit', $memory_limit_for_image_resize);
+
+        // 画像オブジェクトの生成
+        $image = Image::make($file);
+
+        // 画像の回転対応: orientate()
+        $image = $image->orientate();
+
+        // サイズを確認して、縮小の必要がなければそのまま返す。
+        if ($image->width() <= $max_size && $image->height() <= $max_size) {
+            return $image;
+        }
+
+        // 縮小
+        return $image->resize(
+            $max_size,
+            $max_size,
+            function ($constraint) {
+                $constraint->aspectRatio();
+                $constraint->upsize();
+            }
+        );
     }
 }

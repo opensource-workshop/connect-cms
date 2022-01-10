@@ -49,7 +49,7 @@
                         <span class="pr-2"><span class="h5"><span class="badge badge-primary">Q</span></span></span>{{$post->getNobrPostTitle()}}
 
                         {{-- カテゴリ --}}
-                        @if($post->category)
+                        @if($post->category_view_flag)
                             <span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>
                         @endif
 
@@ -88,12 +88,12 @@
                             @endif
 
                             {{-- 重要記事 --}}
-                            @if($post->important == 1)
+                            @if ($post->important == 1)
                                 <span class="badge badge-danger">重要</span>
                             @endif
 
                             {{-- カテゴリ --}}
-                            @if($post->category)
+                            @if ($post->category_view_flag)
                                 <span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>
                             @endif
 
@@ -144,12 +144,7 @@
     </div>
 
     {{-- ページング処理 --}}
-    {{-- アクセシビリティ対応。1ページしかない時に、空navを表示するとスクリーンリーダーに不要な Navigation がひっかかるため表示させない。 --}}
-    @if ($faqs_posts->lastPage() > 1)
-        <nav class="text-center mt-3" aria-label="{{$faq_frame->faq_name}}のページ付け">
-            {{ $faqs_posts->fragment('frame-' . $frame_id)->links() }}
-        </nav>
-    @endif
+    @include('plugins.common.user_paginate', ['posts' => $faqs_posts, 'frame' => $frame, 'aria_label_name' => $faq_frame->faq_name, 'class' => 'mt-3'])
 
 @endif
 @endsection

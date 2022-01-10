@@ -2,16 +2,6 @@
 
 namespace App\PluginsOption\User;
 
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-
-use DB;
-
-use App\Models\Common\Buckets;
-use App\Models\Common\BucketsRoles;
-use App\Models\Common\Frame;
-use App\Models\Core\Configs;
-
 use App\Plugins\User\UserPluginBase;
 
 /**
@@ -22,7 +12,7 @@ use App\Plugins\User\UserPluginBase;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ユーザープラグイン
- * @package Contoroller
+ * @package Controller
  */
 class UserPluginOptionBase extends UserPluginBase
 {

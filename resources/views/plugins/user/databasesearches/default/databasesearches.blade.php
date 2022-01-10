@@ -45,7 +45,11 @@
                         @endif
                     </a>
                 @else
-                    {{$view_col->value}}
+                    @if ($view_col->column_type == DatabaseColumnType::wysiwyg)
+                        {!! $view_col->value !!}
+                    @else
+                        {{ $view_col->value }}
+                    @endif
                 @endif
             @endif
         @endforeach
@@ -56,12 +60,7 @@
 </table>
 
 {{-- ページング処理 --}}
-{{-- アクセシビリティ対応。1ページしかない時に、空navを表示するとスクリーンリーダーに不要な Navigation がひっかかるため表示させない。 --}}
-@if ($inputs_ids->lastPage() > 1)
-    <nav class="text-center" aria-label="{{$databasesearches->databasesearches_name}}のページ付け">
-        {{ $inputs_ids->fragment('frame-' . $frame_id)->links() }}
-    </nav>
-@endif
+@include('plugins.common.user_paginate', ['posts' => $inputs_ids, 'frame' => $frame, 'aria_label_name' => $databasesearches->databasesearches_name])
 
 @else
     <div class="alert alert-danger" style="margin-top: 10px;">

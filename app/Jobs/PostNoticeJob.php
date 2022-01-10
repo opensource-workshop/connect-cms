@@ -18,25 +18,27 @@ class PostNoticeJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    private $frame = null;
+    /**
+     * 最大試行回数
+     * メールは大量送信時に途中で失敗した場合、同じメールが初めの方の人に再度送られるとまずいため、自動リトライしないため１回にする。
+     *
+     * @var int
+     */
+    public $tries = 1;
+
     private $bucket = null;
-    private $post = null;
-    private $show_method = null;
-    private $notice_method = null;
+    private $notice_embedded_tags = null;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($frame, $bucket, $post, $show_method, $notice_method)
+    public function __construct($bucket, array $notice_embedded_tags)
     {
         // buckets などの受け取り
-        $this->frame  = $frame;
-        $this->bucket = $bucket;
-        $this->post   = $post;
-        $this->show_method   = $show_method;
-        $this->notice_method = $notice_method;
+        $this->bucket               = $bucket;
+        $this->notice_embedded_tags = $notice_embedded_tags;
     }
 
     /**
@@ -49,18 +51,24 @@ class PostNoticeJob implements ShouldQueue
         // buckets_mails の取得
         $bucket_mail = BucketsMail::firstOrNew(['buckets_id' => $this->bucket->id]);
 
+        // 送信者メールとグループから、通知するメールアドレス取得
+        $notice_addresses = $bucket_mail->getEmailFromAddressesAndGroups($bucket_mail->notice_addresses, $bucket_mail->notice_groups);
+
         // エラーチェック（とりあえずデバックログに出力。管理画面で確認できるエラーテーブルに移すこと）
-        if (!$bucket_mail->notice_addresses) {
-            Log::debug("送信先メールアドレスの指定なし。buckets_id = " . $this->bucket->id);
+        // if (!$bucket_mail->notice_addresses) {
+        if (empty($notice_addresses)) {
+            Log::debug("送信メールアドレスなし。buckets_id = " . $this->bucket->id);
+            return;
         }
 
         // メール送信
-        $notice_addresses = explode(',', $bucket_mail->notice_addresses);
-        if (empty($notice_addresses)) {
-            return;
-        }
+        // $notice_addresses = explode(',', $bucket_mail->notice_addresses);
+        // if (empty($notice_addresses)) {
+        //     return;
+        // }
         foreach ($notice_addresses as $notice_address) {
-            Mail::to($notice_address)->send(new PostNotice($this->frame, $this->bucket, $this->post, $this->show_method, $this->notice_method, $bucket_mail));
+            // Mail::to($notice_address)->send(new PostNotice($this->frame, $this->bucket, $this->post, $this->title, $this->show_method, $this->notice_method, $bucket_mail));
+            Mail::to($notice_address)->send(new PostNotice($this->notice_embedded_tags, $bucket_mail));
         }
     }
 }

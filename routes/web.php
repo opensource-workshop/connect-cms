@@ -79,7 +79,7 @@ Route::get('/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\
 Route::post('/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePost')->name('post_plugin');
 
 // 一般プラグインのJSONレスポンスアクション
-Route::get('/json/{plugin_name}/{action}/{page_id?}/{frame_id?}', 'Core\DefaultController@invokeGetJson')->name('get_json');
+Route::get('/json/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokeGetJson')->name('get_json');
 
 // 一般プラグインの更新系アクション（リダイレクトする場合）
 Route::post('/redirect/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePostRedirect')->name('post_redirect');
@@ -93,7 +93,10 @@ Route::get('/download/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}
 Route::get('/file/css/{page_id?}.css', 'Core\UploadController@getCss')->name('get_css');
 
 // アップロードファイルの保存アクション
-Route::post('/upload', 'Core\UploadController@postFile')->name('post_upload');
+Route::post('/upload/{method?}', 'Core\UploadController@postInvoke')->name('post_upload');
+
+// アップロードファイルの取得アクション
+Route::get('/file/user/{dir}/{filename}', 'Core\UploadController@getUserFile')->where('filename', '.*')->name('get_userfile');
 
 // アップロードファイルの取得アクション
 Route::get('/file/{id?}', 'Core\UploadController@getFile')->name('get_file');

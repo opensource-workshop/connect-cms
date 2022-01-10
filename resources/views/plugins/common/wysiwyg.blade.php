@@ -148,9 +148,17 @@
     // change: tinymce5対応. textcolorは coreに含まれたため除外
     // $plugins = 'file image imagetools media link autolink preview textcolor code table lists advlist template ';
     $plugins = 'file image imagetools media link autolink preview code table lists advlist template hr ';
-    if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true) {
+    if (Configs::getConfigsValue($cc_configs, 'use_translate', UseType::not_use) == UseType::use) {
         $plugins .= ' translate';
     }
+    if (Configs::getConfigsValue($cc_configs, 'use_pdf_thumbnail')) {
+        $plugins .= ' pdf';
+    }
+    // AI顔認識
+    if (Configs::getConfigsValue($cc_configs, 'use_face_ai')) {
+        $plugins .= ' face';
+    }
+
     $plugins = "plugins  : '" . $plugins . "',";
 
     // 文字サイズの選択
@@ -162,19 +170,41 @@
     // toolbar
     // change: tinymce5対応
     // $toolbar = 'undo redo | bold italic underline strikethrough subscript superscript | formatselect | styleselect | forecolor backcolor | removeformat | table | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link jbimages | image file media | preview | code ';
-    $toolbar = "undo redo | bold italic underline strikethrough subscript superscript {$toolbar_fontsizeselect} | styleselect | forecolor backcolor | removeformat | table hr | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link | image file media | preview | code ";
-    $mobile_toolbar = "undo redo | image file media | link | code | bold italic underline strikethrough subscript superscript {$toolbar_fontsizeselect} | styleselect | forecolor backcolor | removeformat | table hr | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | preview ";
+    $toolbar = "undo redo | bold italic underline strikethrough subscript superscript {$toolbar_fontsizeselect} | styleselect | forecolor backcolor | removeformat | table hr | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link | image file media | preview | code";
+    $mobile_toolbar = "undo redo | image file media | link | code | bold italic underline strikethrough subscript superscript {$toolbar_fontsizeselect} | styleselect | forecolor backcolor | removeformat | table hr | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | preview";
     // 簡易テンプレート設定がない場合、テンプレート挿入ボタン押下でエラー出るため、設定ない場合はボタン表示しない。
     if (! empty($templates_file)) {
         $toolbar .= '| template ';
         $mobile_toolbar .= '| template ';
     }
-    if (config('connect.OSWS_TRANSLATE_AGREEMENT') === true) {
-        $toolbar .= '| translate ';
-        $mobile_toolbar .= '| translate ';
+    // いずれかの外部サービスONの場合、頭に区切り文字 | を追加する
+    if (Configs::getConfigsValue($cc_configs, 'use_translate', UseType::not_use) == UseType::use || Configs::getConfigsValue($cc_configs, 'use_pdf_thumbnail')) {
+        $toolbar .= ' | ';
+        $mobile_toolbar .= ' | ';
     }
+    if (Configs::getConfigsValue($cc_configs, 'use_translate', UseType::not_use) == UseType::use) {
+        $toolbar .= ' translate ';
+        $mobile_toolbar .= ' translate ';
+    }
+    if (Configs::getConfigsValue($cc_configs, 'use_pdf_thumbnail')) {
+        $toolbar .= ' pdf ';
+        $mobile_toolbar .= 'pdf ';
+    }
+
+    // モザイク
+    $toolbar .= ' face ';
+
     $toolbar = "toolbar  : '" . $toolbar . "',";
     $mobile_toolbar = "toolbar  : '" . $mobile_toolbar . "',";
+
+    $pc_toolbar_mode = '';
+    if (!is_null($frame) && $frame->isExpandNarrow()) {
+        // 左右エリアは、スマホ表示と同等にする
+        $pc_toolbar_mode = 'floating';
+        $toolbar = $mobile_toolbar;
+    } else {
+        $pc_toolbar_mode = 'wrap';
+    }
 
     // imagetools_toolbar (need imagetools plugin)
     // rotateleft rotateright flipv fliphは、フォーカスが外れないと images_upload_handler が走らないため、使わない。フォーカスが外さないで確定すると、固定記事の場合、コンテンツカラム内にbase64画像（超長い文字列)がそのまま送られ、カラムサイズオーバーでSQLエラーになる。
@@ -182,30 +212,29 @@
     $imagetools_toolbar = "imagetools_toolbar  : 'editimage imageoptions',";
 
 @endphp
-<input type="hidden" name="page_id" value="{{$page_id}}">
-<input type="hidden" name="frame_id" value="{{$frame_id}}">
 
-{{-- 非表示のinput type file. file plugin用. see) public\js\tinymce5\plugins\file\plugin.min.js --}}
+{{-- 非表示のinput type file. file plugin用. see) public\js\tinymce\plugins\file\plugin.min.js --}}
 <input type="file" class="d-none" id="cc-file-upload-file1-{{$frame_id}}">
 <input type="file" class="d-none" id="cc-file-upload-file2-{{$frame_id}}">
 <input type="file" class="d-none" id="cc-file-upload-file3-{{$frame_id}}">
 <input type="file" class="d-none" id="cc-file-upload-file4-{{$frame_id}}">
 <input type="file" class="d-none" id="cc-file-upload-file5-{{$frame_id}}">
 
+{{-- 非表示のinput type file. pdf plugin用. see) public\js\tinymce\plugins\pdf\plugin.min.js --}}
+<input type="file" class="d-none" id="cc-pdf-upload-{{$frame_id}}">
+
+{{-- 非表示のinput type file. face plugin用. see) public\js\tinymce\plugins\face\plugin.min.js --}}
+<input type="file" class="d-none" id="cc-face-upload-{{$frame_id}}">
+
 {{-- bugfix: iphone or ipad + safari のみ、DOM(実際のinput type file)がないと機能しないため対応
     see) https://stackoverflow.com/questions/47664777/javascript-file-input-onchange-not-working-ios-safari-only --}}
 <input type="file" class="d-none" id="cc-file-upload-file-{{$frame_id}}">
 
-{{-- 画像の幅と高さ. 登録時のリサイズ用 --}}
-<input type="text" class="d-none" id="cc-image-upload-width-{{$frame_id}}">
-<input type="text" class="d-none" id="cc-image-upload-height-{{$frame_id}}">
+{{-- 登録時のリサイズ用 --}}
+<input type="text" class="d-none" id="cc-resized-image-size-{{$frame_id}}">
 
 {{-- tinymce5対応. 同フォルダでライブラリを入れ替えたため、ファイル名の後ろに?付けてブラウザキャッシュ対応 --}}
 <script type="text/javascript" src="{{url('/')}}/js/tinymce/tinymce.min.js?v=5.8.0"></script>
-{{--
-<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
-<script type="text/javascript" src="{{url('/')}}/js/tinymce4.old/tinymce.min.js"></script>
---}}
 <script type="text/javascript">
     tinymce.init({
         @if(isset($target_class) && $target_class)
@@ -214,7 +243,7 @@
             selector : 'textarea',
         @endif
 
-        cache_suffix: '?v=5.8.0.3',
+        cache_suffix: '?v=5.8.0.11',
 
         // change: app.blade.phpと同様にlocaleを見て切替
         // language : 'ja',
@@ -264,7 +293,8 @@
         contextmenu : '',
 
         // add: tinymce5対応
-        toolbar_mode : 'wrap',
+        // toolbar_mode : 'wrap',
+        toolbar_mode : '{{$pc_toolbar_mode}}',
         mobile: {
             toolbar_mode : 'floating',
 
@@ -303,8 +333,34 @@
 
                 // file plugin. フィールド名の先頭がfileであれば. file1～5
                 if (meta.fieldname.startsWith('file')) {
-                    // see) public\js\tinymce5\plugins\file\plugin.min.js
+                    // see) public\js\tinymce\plugins\file\plugin.min.js
                     var input = document.getElementById('cc-file-upload-' + meta.fieldname + '-{{$frame_id}}');
+
+                    input.onchange = function () {
+                        var file = this.files[0];
+                        callback(file.name);
+                    };
+
+                    input.click();
+                }
+                // pdf plugin. フィールド名の先頭がpdf
+                else if (meta.fieldname.startsWith('pdf')) {
+                    // see) public\js\tinymce\plugins\pdf\plugin.min.js
+                    var input = document.getElementById('cc-pdf-upload-{{$frame_id}}');
+                    input.setAttribute('accept', '.pdf');
+
+                    input.onchange = function () {
+                        var file = this.files[0];
+                        callback(file.name);
+                    };
+
+                    input.click();
+                }
+                // face plugin. フィールド名の先頭がface
+                else if (meta.fieldname.startsWith('photo')) {
+                    // see) public\js\tinymce\plugins\face\plugin.min.js
+                    var input = document.getElementById('cc-face-upload-{{$frame_id}}');
+                    input.setAttribute('accept', '.jpg,.png');
 
                     input.onchange = function () {
                         var file = this.files[0];
@@ -359,6 +415,7 @@
                         var tokens = document.getElementsByName("csrf-token");
                         formData.append('_token', tokens[0].content);
                         formData.append('page_id', {{$page_id}});
+                        formData.append('plugin_name', tinymce.activeEditor.settings.cc_config.plugin_name);
                         xhr.send(formData);
                     };
 
@@ -412,9 +469,16 @@
                             var blobInfo = blobCache.create(id, file, base64);
                             blobCache.add(blobInfo);
 
+                            // 拡張子取り除き
+                            var file_name = new String(file.name).substring(file.name.lastIndexOf('/') + 1);
+                            if (file_name.lastIndexOf(".") != -1) {
+                                file_name = file_name.substring(0, file_name.lastIndexOf("."));
+                            }
+
                             /* call the callback and populate the Title field with the file name */
                             // callback(blobInfo.blobUri(), { title: file.name });
-                            callback(blobInfo.blobUri(), { alt: file.name });
+                            // callback(blobInfo.blobUri(), { alt: file.name });
+                            callback(blobInfo.blobUri(), { alt: file_name });
                             // callback(file.name);
                         };
                         reader.readAsDataURL(file);
@@ -460,6 +524,7 @@
                         var tokens = document.getElementsByName("csrf-token");
                         formData.append('_token', tokens[0].content);
                         formData.append('page_id', {{$page_id}});
+                        formData.append('plugin_name', tinymce.activeEditor.settings.cc_config.plugin_name);
                         xhr.send(formData);
                     };
                 }
@@ -523,6 +588,7 @@
                     var tokens = document.getElementsByName("csrf-token");
                     formData.append('_token', tokens[0].content);
                     formData.append('page_id', {{$page_id}});
+                    formData.append('plugin_name', tinymce.activeEditor.settings.cc_config.plugin_name);
                     xhr.send(formData);
                 };
 
@@ -560,6 +626,9 @@
         // delete: 不要なためコメントアウト
         // image_caption: true,
         // image_title: true,
+
+        // 画像プラグイン＞アップロード（タブ）非表示. アップロード（タブ）で画像アップロードすると即時アップロードされ、一般（タブ）のリサイズのパラメータが拾えず全て原寸でアップロードされるため、使わない。
+        image_uploadtab: false,
 
         image_class_list: [
             {title: 'Responsive', value: 'img-fluid'},
@@ -648,35 +717,51 @@
 
             // リサイズ用
             var frame_id = tinymce.activeEditor.settings.cc_config.frame_id;
-            var width = document.getElementById('cc-image-upload-width-' + frame_id).value;
-            var height = document.getElementById('cc-image-upload-height-' + frame_id).value;
+            var resize = document.getElementById('cc-resized-image-size-' + frame_id).value;
 
             var tokens = document.getElementsByName("csrf-token");
             formData.append('_token', tokens[0].content);
-            // formData.append('file', blobInfo.blob(), fileName);
             formData.append('image', blobInfo.blob(), fileName);
-            formData.append('width', width);
-            formData.append('height', height);
+            formData.append('resize', resize);
             formData.append('page_id', {{$page_id}});
+            formData.append('plugin_name', tinymce.activeEditor.settings.cc_config.plugin_name);
 
             xhr.send(formData);
 
             // クリア
-            document.getElementById('cc-image-upload-width-' + frame_id).value = '';
-            document.getElementById('cc-image-upload-height-' + frame_id).value = '';
+            document.getElementById('cc-resized-image-size-' + frame_id).value = '';
         },
 
         // Connect-CMS独自設定
         cc_config: {
             frame_id: '{{$frame_id}}',
+            plugin_name: '{{$frame->plugin_name ?? ''}}',
             upload_max_filesize_caption: '※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}',
+            // PDFサムネイルの大きさ 選択肢、初期値
+            width_of_pdf_thumbnails_items: {!!  WidthOfPdfThumbnail::getWysiwygListBoxItems()  !!},
+            width_of_pdf_thumbnails_initial: '{{  Configs::getConfigsValue($cc_configs, "width_of_pdf_thumbnails_initial", WidthOfPdfThumbnail::getDefault())  }}',
+            // PDFサムネイルの数 選択肢、初期値
+            number_of_pdf_thumbnails_items: {!!  NumberOfPdfThumbnail::getWysiwygListBoxItems()  !!},
+            number_of_pdf_thumbnails_initial: '{{  Configs::getConfigsValue($cc_configs, "number_of_pdf_thumbnails_initial", NumberOfPdfThumbnail::getDefault())  }}',
+            // 画像プラグイン＞画像サイズ 選択肢、初期値
+            resized_image_size_items: {!!  ResizedImageSize::getWysiwygListBoxItems()  !!},
+            resized_image_size_initial: '{{  Configs::getConfigsValue($cc_configs, "resized_image_size_initial", ResizedImageSize::getDefault())  }}',
+            // 画像プラグイン＞画像サイズを表示するか
+            has_image_resize: {{  function_exists('gd_info') ? 'true' : 'false' }},
+            // AI顔認識の画像サイズ・粗さ
+            face_image_sizes: {!! ResizedImageSize::getWysiwygListBoxItems('asis') !!},
+            face_image_initial: '{{ Configs::getConfigsValue($cc_configs, "face_ai_initial_size", "middle") }}',
+            finenesses: {!! Fineness::getWysiwygListBoxItems() !!},
+            fineness_initial: '{{ Configs::getConfigsValue($cc_configs, "face_ai_initial_fineness", Fineness::getDefault()) }}'
         },
 
         setup: function(editor) {
             // see) events https://www.tiny.cloud/docs/advanced/events/
             // see) editor https://www.tiny.cloud/docs/api/tinymce/tinymce.editor/
 
-            editor.on('ExecCommand', (event) => {
+            // bugfix: IE11でウィジウィグが動作しないバグ修正
+            // editor.on('ExecCommand', (event) => {
+            editor.on('ExecCommand', function (event) {
                 const command = event.command;
                 // console.log(event.command);
                 // console.log(editor.settings.cc_config.upload_max_filesize_caption);
@@ -687,14 +772,18 @@
                     // console.log(jQuery('.tox-textfield')[3].value);
                     var frame_id = editor.settings.cc_config.frame_id;
 
-                    // リサイズ用の画像幅と高さをinput type=textに保持
-                    document.getElementById('cc-image-upload-width-' + frame_id).value = jQuery('.tox-textfield')[2].value;
-                    document.getElementById('cc-image-upload-height-' + frame_id).value = jQuery('.tox-textfield')[3].value;
+                    // [TODO] 画像プラグイン＞アップロード（タブ）で「保存」を押下すると、下記要素がとれずJSエラーになる。
+                    //        アップロード後は、画像プラグイン＞一般（タブ）に自動遷移するため、運用上の問題は発生しないと思われるため、JSエラーはとりあえずそのままにする。
+                    //        エラーが出ないように要素が無い場合、処理しない事を検討したが、その場合、リサイズされなくなるため、対応を見送った。
 
+                    // リサイズ画像サイズをinput type=textに保持
+                    document.getElementById('cc-resized-image-size-' + frame_id).value = jQuery('.tox-listbox--select')[0].dataset.value
                 }
             });
 
-            editor.on('OpenWindow', (event) => {
+            // bugfix: IE11でウィジウィグが動作しないバグ修正
+            // editor.on('OpenWindow', (event) => {
+            editor.on('OpenWindow', function (event) {
                 // console.log(event);
                 // console.log('OpenWindow', event.dialog);
                 // console.log('OpenWindow', event.dialog.getData());
@@ -713,28 +802,6 @@
                     // 指定した要素の後に挿入
                     jQuery('.tox-form__controls-h-stack')[0].after(div);
                 }
-                // image plugin
-                if (title === '画像の挿入・編集') {
-                    // 新しいHTML要素を作成
-                    var div = document.createElement('div');
-                    div.setAttribute('style', 'font-size: 14px;');
-                    div.textContent = editor.settings.cc_config.upload_max_filesize_caption;
-
-                    // 指定した要素の中の末尾に挿入
-                    jQuery('.tox-form')[0].appendChild(div);
-
-                    @if (function_exists('gd_info'))
-                        var div2 = div.cloneNode(false);
-                        var div3 = div.cloneNode(false);
-
-                        div2.textContent = '※ この画面からアップロードするとjpeg, pngのリサイズができます。（アップロード(タブ)からはリサイズしません。）';
-                        div3.textContent = '※ リサイズは登録時のみ動き、「幅」と「高さ」の数字でリサイズします。';
-
-                        div.after(div2);
-                        div2.after(div3);
-                    @endif
-                }
-
             });
         }
     });

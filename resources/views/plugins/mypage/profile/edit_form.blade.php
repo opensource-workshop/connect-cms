@@ -2,7 +2,7 @@
  * copy by resources\views\auth\registe_form.blade.php
 --}}
 
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 @if ($errors->has('undelete'))
     <div class="alert alert-danger">
@@ -17,7 +17,7 @@
         <label for="email" class="col-md-4 col-form-label text-md-right">eメールアドレス</label>
 
         <div class="col-md-8">
-            <input id="email" type="email" class="form-control" name="email" value="{{ old('email', $user->email) }}" placeholder="メールアドレスを入力します。">
+            <input id="email" type="text" class="form-control" name="email" value="{{ old('email', $user->email) }}" placeholder="メールアドレスを入力します。">
 
             @if ($errors->has('email'))
                 <span class="text-danger">
@@ -72,7 +72,7 @@
     <div class="form-group row text-center">
         <div class="col-sm-3"></div>
         <div class="col-sm-6">
-            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 
+            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i>
                 更新
             </button>
         </div>

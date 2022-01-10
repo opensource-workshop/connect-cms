@@ -2,11 +2,8 @@
 
 namespace App\Plugins\User\Receives;
 
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-
-use DB;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
@@ -25,13 +22,18 @@ use App\Traits\ConnectCommonTrait;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データ収集プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class ReceivesPlugin extends UserPluginBase
 {
     use ConnectCommonTrait;
 
     /* オブジェクト変数 */
+
+    /**
+     * POST チェックに使用する getPost() 関数を使うか
+     */
+    public $use_getpost = false;
 
     /* コアから呼び出す関数 */
 
@@ -65,15 +67,16 @@ class ReceivesPlugin extends UserPluginBase
     private function getReceiveFrame($frame_id)
     {
         // Frame データ
-        $frame = DB::table('frames')
-                 ->select('frames.*',
-                          'receives.id as receive_id',
-                          'receives.dataset_name',
-                          'receives.columns',
-                         )
-                 ->leftJoin('receives', 'receives.bucket_id', '=', 'frames.bucket_id')
-                 ->where('frames.id', $frame_id)
-                 ->first();
+        $frame = Frame::
+            select(
+                'frames.*',
+                'receives.id as receive_id',
+                'receives.dataset_name',
+                'receives.columns',
+            )
+            ->leftJoin('receives', 'receives.bucket_id', '=', 'frames.bucket_id')
+            ->where('frames.id', $frame_id)
+            ->first();
         return $frame;
     }
 
@@ -85,32 +88,28 @@ class ReceivesPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id)
     {
-
         // Frame データ
         $receive_frame = $this->getReceiveFrame($frame_id);
 
         // データ件数
-        $receive_count = DB::table('receive_records')
-                           ->join('receives', 'receive_records.receive_id', '=', 'receives.id')
-                           ->join('frames', function ($join) use ($frame_id) {
-                               $join->on('frames.bucket_id', '=', 'receives.bucket_id')
-                                    ->where('frames.id', $frame_id);
-                           })
-                           ->count();
+        $receive_count = ReceiveRecord::join('receives', 'receive_records.receive_id', '=', 'receives.id')
+            ->join('frames', function ($join) use ($frame_id) {
+                $join->on('frames.bucket_id', '=', 'receives.bucket_id')
+                    ->where('frames.id', $frame_id);
+            })
+            ->count();
 
         // 最終登録日時
-        $receive_last = ReceiveRecord::select('receive_records.*')
-                            ->join('receives', 'receive_records.receive_id', '=', 'receives.id')
-                            ->join('frames', function ($join) use ($frame_id) {
-                                $join->on('frames.bucket_id', '=', 'receives.bucket_id')
-                                    ->where('frames.id', $frame_id);
-                            })
-                            ->orderBy('receive_records.created_at', 'desc')
-                            ->first();
+        $receive_last = ReceiveRecord::join('receives', 'receive_records.receive_id', '=', 'receives.id')
+            ->join('frames', function ($join) use ($frame_id) {
+                $join->on('frames.bucket_id', '=', 'receives.bucket_id')
+                    ->where('frames.id', $frame_id);
+            })
+            ->orderBy('receive_records.created_at', 'desc')
+            ->first();
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'receives', [
+        return $this->view('receives', [
             'receive_frame'  => $receive_frame,
             'receives_count' => $receive_count,
             'receives_last'  => $receive_last,
@@ -129,9 +128,7 @@ class ReceivesPlugin extends UserPluginBase
         $receive_frame = $this->getReceiveFrame($frame_id);
 
         // 収集データ取得
-        $receive_datas = DB::table('receive_datas')
-                             ->select('receive_datas.*')
-                             ->join('receive_records', 'receive_records.id', '=', 'receive_datas.record_id')
+        $receive_datas = ReceiveData::join('receive_records', 'receive_records.id', '=', 'receive_datas.record_id')
                              ->join('receives', 'receives.id', '=', 'receive_records.receive_id')
                              ->where('receives.id', $receive_frame->receive_id)
                              ->orderBy('receive_datas.id', 'asc')
@@ -169,7 +166,7 @@ class ReceivesPlugin extends UserPluginBase
         $columns = explode(',', $receive_frame->columns);
 
         // 見出し行
-        foreach($columns as $column) {
+        foreach ($columns as $column) {
             $csv_array[0][] = $column;
             $copy_base[$column] = '';
         }
@@ -177,7 +174,7 @@ class ReceivesPlugin extends UserPluginBase
         $copy_base['created_at'] = '';
 
         // データ
-        foreach($receive_datas as $data) {
+        foreach ($receive_datas as $data) {
             if (!array_key_exists($data->record_id, $csv_array)) {
                 $csv_array[$data->record_id] = $copy_base;
                 $csv_array[$data->record_id]['created_at'] = $data->created_at;
@@ -191,11 +188,11 @@ class ReceivesPlugin extends UserPluginBase
             'Content-Type' => 'text/csv',
             'content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
- 
+
         // データ
         $csv_data = '';
-        foreach($csv_array as $csv_line) {
-            foreach($csv_line as $csv_col) {
+        foreach ($csv_array as $csv_line) {
+            foreach ($csv_line as $csv_col) {
                 $csv_data .= '"' . $csv_col . '",';
             }
             $csv_data .= "\n";
@@ -216,12 +213,11 @@ class ReceivesPlugin extends UserPluginBase
         $receive_frame = $this->getReceiveFrame($frame_id);
 
         // データ取得（1ページの表示件数指定）
-        $receives = Receives::orderBy('created_at', 'desc')
-                            ->paginate(10);
+        $receives = Receive::orderBy('created_at', 'desc')
+            ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'receives_list_buckets', [
+        return $this->view('receives_list_buckets', [
             'receive_frame' => $receive_frame,
             'receives'      => $receives,
         ]);
@@ -254,9 +250,8 @@ class ReceivesPlugin extends UserPluginBase
         // id が渡ってくればid が対象
         if (!empty($id)) {
             $receive = Receive::where('id', $id)->first();
-        }
-        // Frame のbucket_id があれば、bucket_id からデータ収集設定取得、なければ、新規作成か選択へ誘導
-        else if (!empty($receive_frame->bucket_id) && $create_flag == false) {
+        } elseif (!empty($receive_frame->bucket_id) && $create_flag == false) {
+            // Frame のbucket_id があれば、bucket_id からデータ収集設定取得、なければ、新規作成か選択へ誘導
             $receive = Receive::where('bucket_id', $receive_frame->bucket_id)->first();
         }
         // 表示テンプレートを呼び出す。
@@ -267,7 +262,8 @@ class ReceivesPlugin extends UserPluginBase
             'create_flag'   => $create_flag,
             'message'       => $message,
             'errors'        => $errors,
-        ])->withInput($request->all);
+            ]
+        )->withInput($request->all);
     }
 
     /**
@@ -296,8 +292,7 @@ class ReceivesPlugin extends UserPluginBase
             if (empty($id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
-            }
-            else  {
+            } else {
                 $create_flag = false;
                 return $this->editBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
             }
@@ -310,14 +305,14 @@ class ReceivesPlugin extends UserPluginBase
         if (empty($request->receives_id)) {
 
             // バケツの登録
-            $bucket_id = DB::table('buckets')->insertGetId([
-                  'bucket_name' => '無題',
-                  'plugin_name' => 'receives'
+            $bucket = Buckets::create([
+                'bucket_name' => $request->dataset_name,
+                'plugin_name' => 'receives'
             ]);
 
             // データ収集新規オブジェクト
             $receives = new Receive();
-            $receives->bucket_id = $bucket_id;
+            $receives->bucket_id = $bucket->id;
 
             // Frame のBuckets を見て、Buckets が設定されていなければ、作成したものに紐づける。
             // Frame にBuckets が設定されていない ＞ 新規のフレーム＆データ収集作成
@@ -327,16 +322,18 @@ class ReceivesPlugin extends UserPluginBase
             if (empty($frame->bucket_id)) {
 
                 // FrameのバケツIDの更新
-                $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
+                $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket->id]);
             }
 
             $message = 'データ収集設定を追加しました。';
-        }
-        // receive_id があれば、データ収集設定を更新
-        else {
+        } else {
+            // receive_id があれば、データ収集設定を更新
 
             // データ収集設定取得
             $receives = Receive::where('id', $request->receives_id)->first();
+
+            $bucket = Buckets::where('id', $receives->bucket_id)
+                ->update(['bucket_name' => $request->dataset_name]);
 
             $message = 'データ収集設定を変更しました。';
         }

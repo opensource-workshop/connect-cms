@@ -1,1 +1,1 @@
-{{$bucket_mail->getFormatedRelateBody($frame, $bucket, $post, $show_method)}}
+{!!$bucket_mail->getFormatedRelateBody($notice_embedded_tags)!!}

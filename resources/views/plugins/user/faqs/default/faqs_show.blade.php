@@ -34,10 +34,10 @@
             @endif
 
             {{-- 重要記事 --}}
-            @if($post->important == 1)<span class="badge badge-danger">重要</span>@endif
+            @if ($post->important == 1)<span class="badge badge-danger">重要</span>@endif
 
             {{-- カテゴリ --}}
-            @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
+            @if ($post->category_view_flag)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
 
             {{-- タグ --}}
             @isset($post_tags)
@@ -50,11 +50,11 @@
         {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
         <div class="row pt-1">
             <div class="col text-right mb-1">
-            @if ($post->status == 2)
-                @can('preview',[[null, 'faqs', 'preview_off']])
+            @if ($post->status == StatusType::approval_pending)
+                @can('role_update_or_approval',[[$post, $frame->plugin_name, $buckets]])
                     <span class="badge badge-warning align-bottom">承認待ち</span>
                 @endcan
-                @can('posts.approval',[[$post, 'faqs', 'preview_off']])
+                @can('posts.approval', [[$post, $frame->plugin_name, $buckets]])
                     <form action="{{url('/')}}/plugin/faqs/approval/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" method="post" name="form_approval" class="d-inline">
                         {{ csrf_field() }}
                         <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
@@ -63,11 +63,9 @@
                     </form>
                 @endcan
             @endif
-            @can('posts.update',[[$post, 'faqs', 'preview_off']])
-                @if ($post->status == 1)
-                    @can('preview',[[$post, 'faqs', 'preview_off']])
-                        <span class="badge badge-warning align-bottom">一時保存</span>
-                    @endcan
+            @can('posts.update', [[$post, $frame->plugin_name, $buckets]])
+                @if ($post->status == StatusType::temporary)
+                    <span class="badge badge-warning align-bottom">一時保存</span>
                 @endif
                 <a href="{{url('/')}}/plugin/faqs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
                     <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>

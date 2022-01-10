@@ -19,7 +19,7 @@
     <div class="card-body">
 
         {{-- 共通エラーメッセージ 呼び出し --}}
-        @include('common.errors_form_line')
+        @include('plugins.common.errors_form_line')
 
         {{-- 登録後メッセージ表示 --}}
         @include('plugins.common.flash_message')
@@ -44,7 +44,7 @@
                         <input type="file" class="custom-file-input @if ($errors->has('favicon')) border-danger @endif" id="favicon" name="favicon" accept=".ico">
                         <label class="custom-file-label @if ($errors->has('favicon')) border-danger @endif" for="favicon" data-browse="参照">アイコンファイル(.ico)</label>
                     </div>
-                    @include('common.errors_inline', ['name' => 'favicon'])
+                    @include('plugins.common.errors_inline', ['name' => 'favicon'])
                 </div>
             </div>
 

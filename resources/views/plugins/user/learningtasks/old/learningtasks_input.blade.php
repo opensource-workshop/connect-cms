@@ -9,7 +9,7 @@
 
 @section("plugin_contents_$frame->id")
 {{-- WYSIWYG 呼び出し --}}
-@include('plugins.common.wysiwyg')
+@include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame->id])
 
 {{-- 一時保存ボタンのアクション --}}
 <script type="text/javascript">
@@ -34,13 +34,13 @@
 
     <div class="form-group">
         <label class="control-label">タイトル <label class="badge badge-danger">必須</label></label>
-        <textarea name="post_title">{!!old('post_title', $learningtasks_posts->post_title)!!}</textarea>
+        <textarea name="post_title" class="wysiwyg{{$frame->id}}">{!!old('post_title', $learningtasks_posts->post_title)!!}</textarea>
         @if ($errors && $errors->has('post_title')) <div class="text-danger">{{$errors->first('post_title')}}</div> @endif
     </div>
 
     <div class="form-group">
         <label class="control-label">本文 <label class="badge badge-danger">必須</label></label>
-        <textarea name="post_text">{!!old('post_text', $learningtasks_posts->post_text)!!}</textarea>
+        <textarea name="post_text" class="wysiwyg{{$frame->id}}">{!!old('post_text', $learningtasks_posts->post_text)!!}</textarea>
         @if ($errors && $errors->has('post_text')) <div class="text-danger">{{$errors->first('post_text')}}</div> @endif
     </div>
 
@@ -132,18 +132,25 @@
                     <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
                     <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
                     <input type="hidden" name="bucket_id" value="">
+                    {{--
                     @if (empty($learningtasks_posts->id))
-                        @if ($buckets->needApprovalUser(Auth::user()))
+                        @if ($buckets->needApprovalUser(Auth::user(), $frame))
                             <button type="submit" class="btn btn-success"><i class="far fa-edit"></i> 登録申請</button>
                         @else
                             <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 登録確定</button>
                         @endif
                     @else
-                        @if ($buckets->needApprovalUser(Auth::user()))
+                        @if ($buckets->needApprovalUser(Auth::user(), $frame))
                             <button type="submit" class="btn btn-success"><i class="far fa-edit"></i> 変更申請</button>
                         @else
                             <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更確定</button>
                         @endif
+                    @endif
+                    --}}
+                    @if (empty($learningtasks_posts->id))
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 登録確定</button>
+                    @else
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更確定</button>
                     @endif
                 </div>
             </div>

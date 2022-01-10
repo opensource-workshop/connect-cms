@@ -5,7 +5,7 @@ namespace App\Enums;
 /**
  * 許可区分
  */
-final class PermissionType
+final class PermissionType extends EnumsBase
 {
     // 定数メンバ
     const not_allowed = 0;
@@ -16,20 +16,4 @@ final class PermissionType
         self::not_allowed=>'許可しない',
         self::allowed=>'許可する',
     ];
-
-    /*
-    * 対応した和名を返す
-    */
-    public static function getDescription($key): string
-    {
-        return self::enum[$key];
-    }
-
-    /*
-    * key/valueの連想配列を返す
-    */
-    public static function getMembers()
-    {
-        return self::enum;
-    }
 }

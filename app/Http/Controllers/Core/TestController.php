@@ -21,11 +21,10 @@ use App\Models\Common\Page;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
- * @package Contoroller
+ * @package Controller
  */
 class TestController extends ConnectController
 {
-
     /**
      *  画面表示用にページやフレームなど呼び出し
      *

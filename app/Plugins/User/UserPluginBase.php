@@ -4,22 +4,26 @@ namespace App\Plugins\User;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 
 use Monolog\Logger;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\RotatingFileHandler;
 
-use DB;
-use File;
+use Symfony\Component\Process\PhpExecutableFinder;
+// use Symfony\Component\Process\Process;
+
 use HTMLPurifier;
 use HTMLPurifier_Config;
 use Request;
+
+use Carbon\Carbon;
 
 use App\Jobs\ApprovalNoticeJob;
 use App\Jobs\ApprovedNoticeJob;
@@ -31,10 +35,18 @@ use App\Models\Common\Buckets;
 use App\Models\Common\BucketsMail;
 use App\Models\Common\BucketsRoles;
 use App\Models\Common\Frame;
+use App\Models\Common\Group;
 use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
 
+use App\Enums\NoticeJobType;
+use App\Enums\StatusType;
+
 use App\Plugins\PluginBase;
+use App\Plugins\Manage\UserManage\UsersTool;
+
+use App\Rules\CustomValiEmails;
+use App\Rules\CustomValiRequiredWithoutAllSupportsArrayInput;
 
 use App\Traits\ConnectCommonTrait;
 
@@ -46,7 +58,7 @@ use App\Traits\ConnectCommonTrait;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ユーザープラグイン
- * @package Contoroller
+ * @package Controller
  */
 class UserPluginBase extends PluginBase
 {
@@ -54,67 +66,71 @@ class UserPluginBase extends PluginBase
     use ConnectCommonTrait;
 
     /**
-     *  ページオブジェクト
+     * ページオブジェクト
      */
     public $page = null;
 
     /**
-     *  ページ一覧オブジェクト
+     * ページ一覧オブジェクト
      */
     public $pages = null;
 
     /**
-     *  フレームオブジェクト
+     * フレームオブジェクト
      */
     public $frame = null;
 
     /**
-     *  Buckets オブジェクト
+     * Buckets オブジェクト
      */
     public $buckets = null;
 
     /**
-     *  Configs オブジェクト
+     * Configs オブジェクト
      */
     public $configs = null;
 
     /**
      * FrameConfig オブジェクト
      * FrameConfigのCollection
-     *
      */
     public $frame_configs = null;
 
     /**
-     *  アクション
+     * アクション
      */
     public $action = null;
 
     /**
-     *  リクエスト
+     * リクエスト
      */
     public $request = null;
 
     /**
-     *  id
+     * id
      */
     public $id = null;
 
     /**
-     *  purifier
-     *  保存処理時にインスタンスが代入され、シングルトンで使うことを想定
+     * purifier
+     * 保存処理時にインスタンスが代入され、シングルトンで使うことを想定
      */
     public $purifier = null;
 
     /**
-     *  画面間用メッセージ
+     * 画面間用メッセージ
      */
     public $cc_massage = null;
 
     /**
-     *  コンストラクタ
+     * POST チェックに使用する getPost() 関数を使うか
      */
-    public function __construct($page = null, $frame = null, $pages = null)
+    public $use_getpost = true;
+
+    /**
+     * コンストラクタ
+     */
+    public function __construct($page = null, $frame = null, $pages = null, $page_tree = null)
     {
         // ページの保持
         $this->page = $page;
@@ -130,20 +146,21 @@ class UserPluginBase extends PluginBase
 
         // Buckets の保持
         $this->buckets = Buckets::select('buckets.*')
-                                ->join('frames', function ($join) use ($frame) {
-                                    $join->on('frames.bucket_id', '=', 'buckets.id')
-                                         ->where('frames.id', '=', $frame->id);
-                                })
-                                ->first();
+            ->join('frames', function ($join) use ($frame) {
+                $join->on('frames.bucket_id', '=', 'buckets.id')
+                    ->where('frames.id', '=', $frame->id);
+            })
+            ->first();
 
         // Configs の保持
-        $this->configs = Configs::get();
+        // $this->configs = Configs::get();
+        $this->configs = Configs::getSharedConfigs();
 
         $this->setFrameConfigs();
     }
 
     /**
-     *  HTTPリクエストメソッドチェック
+     * HTTPリクエストメソッドチェック
      *
      * @param String $plugin_name
      * @return view
@@ -163,7 +180,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  関数定義チェック
+     * 関数定義チェック
      *
      * @param String $plugin_name
      * @return view
@@ -203,12 +220,18 @@ class UserPluginBase extends PluginBase
 
         // 関数定義メソッドの有無確認
         if (!method_exists($obj, $action)) {
+            // [TODO] DefaultController::invokePostRedirect() から「invokeを通して呼び出すことで権限チェックを実施」している関係で、この処理をいれていて、ちょっと無理くり対応している。
+            // Redirect時のエラー対応. リダイレクトせずエラー画面表示する。
+            // Redirect時に権限エラー等で403のViewオブジェクトを返しても、リダイレクト処理が走り、エラー画面が表示されないため、ここでエラー時はリダイレクトしない設定をリクエストに入れる。
+            $request->merge(['return_mode' => 'asis']);
             return $this->view_error("403_inframe", null, "存在しないメソッド");
         }
 
         // メソッドの可視性チェック
         $objReflectionMethod = new \ReflectionMethod(get_class($obj), $action);
         if (!$objReflectionMethod->isPublic()) {
+            // Redirect時のエラー対応. リダイレクトせずエラー画面表示する。
+            $request->merge(['return_mode' => 'asis']);
             return $this->view_error("403_inframe", null, "メソッドの可視性チェック");
         }
 
@@ -224,6 +247,8 @@ class UserPluginBase extends PluginBase
 
         // コアで定義しているHTTPリクエストメソッドチェック ＆ プラグイン側の関数定義チェック の両方がエラーの場合、権限エラー
         if (!$this->checkHttpRequestMethod($request, $action) && !$this->checkPublicFunctions($obj, $request, $action)) {
+            // Redirect時のエラー対応. リダイレクトせずエラー画面表示する。
+            $request->merge(['return_mode' => 'asis']);
             return $this->view_error("403_inframe", null, "HTTPリクエストメソッドチェック ＆ プラグイン側の関数定義チェック");
         }
 
@@ -231,10 +256,12 @@ class UserPluginBase extends PluginBase
         $post = null;
 
         // POST チェックに使用する getPost() 関数の有無をチェック
-        // POST に関連しないメソッドは除外
-        if ($action != "destroyBuckets") {
-            if ($id && method_exists($obj, 'getPost')) {
-                $post = $obj->getPost($id, $action);
+        if ($this->use_getpost) {
+            // POST に関連しないメソッドは除外
+            if ($action != "destroyBuckets") {
+                if ($id && method_exists($obj, 'getPost')) {
+                    $post = $obj->getPost($id, $action);
+                }
             }
         }
 
@@ -242,6 +269,8 @@ class UserPluginBase extends PluginBase
         $ret = $this->checkFunctionAuthority(config('cc_role.CC_METHOD_AUTHORITY'), $post);
         // 権限チェック結果。値があれば、エラーメッセージ用HTML
         if (!empty($ret)) {
+            // Redirect時のエラー対応. リダイレクトせずエラー画面表示する。
+            $request->merge(['return_mode' => 'asis']);
             return $ret;
         }
 
@@ -255,6 +284,8 @@ class UserPluginBase extends PluginBase
 
             // 権限チェック結果。値があれば、エラーメッセージ用HTML
             if (!empty($ret)) {
+                // Redirect時のエラー対応. リダイレクトせずエラー画面表示する。
+                $request->merge(['return_mode' => 'asis']);
                 return $ret;
             }
         }
@@ -278,7 +309,7 @@ class UserPluginBase extends PluginBase
     /**
      * 記載されているメソッドすべての権限を有することをチェック
      *
-     * @return view 権限チェックの結果、エラーがあればエラー表示用HTML が返ってくる。
+     * @return view|null 権限チェックの結果、エラーがあればエラー表示用HTML が返ってくる。
      */
     private function checkFunctionAuthority($role_ckeck_table, $post = null)
     {
@@ -292,10 +323,12 @@ class UserPluginBase extends PluginBase
 //print_r($this->buckets);
                 // POST があれば、POST の登録者チェックを行う
                 if (empty($post)) {
-                    $ret = $this->can($function_authority, null, null, $this->buckets);
+                    // $ret = $this->can($function_authority, null, null, $this->buckets);
+                    $ret = $this->can($function_authority, null, $this->frame->plugin_name, $this->buckets, $this->frame);
                 } else {
 //print_r($post);
-                    $ret = $this->can($function_authority, $post, null, $this->buckets);
+                    // $ret = $this->can($function_authority, $post, null, $this->buckets);
+                    $ret = $this->can($function_authority, $post, $this->frame->plugin_name, $this->buckets, $this->frame);
                 }
 
                 // 権限チェック結果。値があれば、エラーメッセージ用HTML
@@ -309,7 +342,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  View のパス
+     * View のパス
      *
      * @return view
      */
@@ -339,7 +372,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  View のパス
+     * View のパス
      *
      * @return view
      */
@@ -349,9 +382,9 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  編集画面の最初のタブ
+     * 編集画面の最初のタブ
      *
-     *  フレームの編集画面がある各プラグインからオーバーライドされることを想定。
+     * フレームの編集画面がある各プラグインからオーバーライドされることを想定。
      */
     public function getFirstFrameEditAction()
     {
@@ -359,7 +392,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  テンプレート
+     * テンプレート
      *
      * @return view
      */
@@ -369,9 +402,9 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  テーマ取得
-     *  配列で返却['css' => 'テーマ名', 'js' => 'テーマ名']
-     *  値がなければキーのみで値は空
+     * テーマ取得
+     * 配列で返却['css' => 'テーマ名', 'js' => 'テーマ名']
+     * 値がなければキーのみで値は空
      */
     protected function getThemeName()
     {
@@ -477,7 +510,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     * フォーム選択表示関数
+     * バケツ選択表示関数
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -485,23 +518,19 @@ class UserPluginBase extends PluginBase
         $plugin_name = $this->frame->plugin_name;
 
         // Frame データ
-        $plugin_frame = DB::table('frames')
-                            ->select('frames.*')
-                            ->where('frames.id', $frame_id)->first();
+        $plugin_frame = Frame::where('frames.id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
         $plugins = DB::table($plugin_name)
-                       ->select($plugin_name . '.*', $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name')
-                       ->orderBy('created_at', 'desc')
-                       ->paginate(10);
+            ->select($plugin_name . '.*', $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
-        return $this->commonView(
-            'edit_datalist', [
+        return $this->commonView('edit_datalist', [
             'plugin_frame' => $plugin_frame,
             'plugins'      => $plugins,
-            ]
-        );
+        ]);
     }
 
     /**
@@ -544,7 +573,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  フレームとBuckets 取得
+     * フレームとBuckets 取得
      */
     protected function getBuckets($frame_id)
     {
@@ -556,7 +585,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  Buckets のメール設定取得
+     * Buckets のメール設定取得
      */
     protected function getBucketMail($backet)
     {
@@ -598,6 +627,10 @@ class UserPluginBase extends PluginBase
 
         // Buckets のメール設定取得
         $bucket_mail = $this->getBucketMail($bucket);
+        // チェックボックス値の配列化
+        $bucket_mail->notice_groups_array   = explode(UsersTool::CHECKBOX_SEPARATOR, $bucket_mail->notice_groups);
+        $bucket_mail->approval_groups_array = explode(UsersTool::CHECKBOX_SEPARATOR, $bucket_mail->approval_groups);
+        $bucket_mail->approved_groups_array = explode(UsersTool::CHECKBOX_SEPARATOR, $bucket_mail->approved_groups);
 
         // 使用するメール送信メソッドが指定されている場合は、そのメソッドの指定のみできるようにする。
         if (method_exists($this, 'useBucketMailMethods')) {
@@ -608,11 +641,14 @@ class UserPluginBase extends PluginBase
             $use_bucket_mail_methods = ['notice', 'relate', 'approval', 'approved'];
         }
 
+        $groups = Group::orderBy('id', 'asc')->get();
+
         return $this->commonView('frame_edit_mails', [
             'bucket'       => $bucket,
             'bucket_mail'  => $bucket_mail,
             'plugin_name'  => $this->frame->plugin_name,
             'use_bucket_mail_methods' => $use_bucket_mail_methods,
+            'groups'       => $groups,
         ]);
     }
 
@@ -664,11 +700,6 @@ class UserPluginBase extends PluginBase
         // Buckets の取得
         $buckets = $this->getBuckets($frame_id);
 
-        // Backet が取れないとおかしな操作をした可能性があるのでエラーにしておく。
-        if (empty($buckets)) {
-            return $this->view_error("error_inframe", "存在しないBucket");
-        }
-
         // buckets がまだない & 固定記事プラグインの場合
         if (empty($buckets) && $this->frame->plugin_name == 'contents') {
             $buckets = new Buckets;
@@ -680,6 +711,11 @@ class UserPluginBase extends PluginBase
             // Frame にbuckets_id を登録
             Frame::where('id', $frame_id)
                  ->update(['bucket_id' => $buckets->id]);
+        }
+
+        // Backet が取れないとおかしな操作をした可能性があるのでエラーにしておく。
+        if (empty($buckets)) {
+            return $this->view_error("error_inframe", "存在しないBucket");
         }
 
         // BucketsRoles の更新
@@ -706,7 +742,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     * 権限設定 保存処理
+     * メール設定 保存処理
      */
     public function saveBucketsMails($request, $page_id, $frame_id, $block_id)
     {
@@ -724,16 +760,57 @@ class UserPluginBase extends PluginBase
         ];
 
         // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'notice_addresses' => ['nullable', 'email', Rule::requiredIf($request->notice_on)],
-            'approval_addresses' => ['nullable', 'email', Rule::requiredIf($request->approval_on)],
-            'approved_addresses' => ['nullable', 'email', Rule::requiredIf($request->approved_on)],
+        // $validator = Validator::make($request->all(), [
+        //     'notice_addresses' => ['nullable', 'email', Rule::requiredIf($request->notice_on == 1)],
+        //     'approval_addresses' => ['nullable', 'email', Rule::requiredIf($request->approval_on == 1)],
+        //     'approved_addresses' => ['nullable', 'email', Rule::requiredIf($request->approved_on == 1)],
+        // ]);
+        $rules = [
+            'notice_addresses' => [],
+            'approval_addresses' => [],
+            'approved_addresses' => [],
+        ];
 
-        ]);
+        // １項目複数ルール時に nullable を入れると CustomVali を入れても null でチェックOKになってしまうため、入力が有った時だけemailチェック追加
+        if ($request->notice_addresses) {
+            $rules['notice_addresses'][] = new CustomValiEmails();
+        }
+        if ($request->approval_addresses) {
+            $rules['approval_addresses'][] = new CustomValiEmails();
+        }
+        if ($request->approved_addresses) {
+            $rules['approved_addresses'][] = new CustomValiEmails();
+        }
+
+        if ($request->notice_on) {
+            // 投稿通知onの時、送信先メール or 送信先グループ いずれか必須
+            $name = '送信先メールアドレス, 送信先グループ';
+            $rules['notice_addresses'][]  = new CustomValiRequiredWithoutAllSupportsArrayInput([$request->notice_groups], $name);
+            $rules['notice_groups']       = [new CustomValiRequiredWithoutAllSupportsArrayInput([$request->notice_addresses], $name)];
+        }
+        if ($request->approval_on) {
+            // 承認通知onの時、送信先メール or 送信先グループ いずれか必須
+            $name = '送信先メールアドレス, 送信先グループ';
+            $rules['approval_addresses'][]  = new CustomValiRequiredWithoutAllSupportsArrayInput([$request->approval_groups], $name);
+            $rules['approval_groups']       = [new CustomValiRequiredWithoutAllSupportsArrayInput([$request->approval_addresses], $name)];
+        }
+        if ($request->approved_on) {
+            // 承認済み通知onの時、投稿者へ通知 or 送信先メール or 送信先グループ いずれか必須
+            $name = '投稿者へ通知する, 送信先メールアドレス, 送信先グループ';
+            $rules['approved_author']      = [new CustomValiRequiredWithoutAllSupportsArrayInput([$request->approved_addresses, $request->approved_groups], $name)];
+            $rules['approved_addresses'][] = new CustomValiRequiredWithoutAllSupportsArrayInput([$request->approved_author, $request->approved_groups], $name);
+            $rules['approved_groups']      = [new CustomValiRequiredWithoutAllSupportsArrayInput([$request->approved_author, $request->approved_addresses], $name)];
+        }
+
+        $validator = Validator::make($request->all(), $rules);
         $validator->setAttributeNames([
             'notice_addresses' => '送信先メールアドレス',
+            'notice_groups' => '送信先グループ',
             'approval_addresses' => '送信先メールアドレス',
+            'approval_groups' => '送信先グループ',
+            'approved_author' => '投稿者へ通知する',
             'approved_addresses' => '送信先メールアドレス',
+            'approved_groups' => '送信先グループ',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -767,7 +844,8 @@ class UserPluginBase extends PluginBase
         $bucket_mail->notice_update      = $this->inputNullToZero($request, "notice_update");
         $bucket_mail->notice_delete      = $this->inputNullToZero($request, "notice_delete");
         $bucket_mail->notice_addresses   = $request->notice_addresses;
-        $bucket_mail->notice_groups      = $request->notice_groups;
+        // array_filter()でarrayの空要素削除, implode()でarrayを文字列化
+        $bucket_mail->notice_groups      = $request->notice_groups ? implode(UsersTool::CHECKBOX_SEPARATOR, array_filter($request->notice_groups)) : null;
         $bucket_mail->notice_roles       = $request->notice_roles;
         $bucket_mail->notice_subject     = $request->notice_subject;
         $bucket_mail->notice_body        = $request->notice_body;
@@ -780,6 +858,7 @@ class UserPluginBase extends PluginBase
         // 承認通知
         $bucket_mail->approval_on        = $this->inputNullToZero($request, "approval_on");
         $bucket_mail->approval_addresses = $request->approval_addresses;
+        $bucket_mail->approval_groups    = $request->approval_groups ? implode(UsersTool::CHECKBOX_SEPARATOR, array_filter($request->approval_groups)) : null;
         $bucket_mail->approval_subject   = $request->approval_subject;
         $bucket_mail->approval_body      = $request->approval_body;
 
@@ -787,6 +866,7 @@ class UserPluginBase extends PluginBase
         $bucket_mail->approved_on        = $this->inputNullToZero($request, "approved_on");
         $bucket_mail->approved_author    = $this->inputNullToZero($request, "approved_author");
         $bucket_mail->approved_addresses = $request->approved_addresses;
+        $bucket_mail->approved_groups    = $request->approved_groups ? implode(UsersTool::CHECKBOX_SEPARATOR, array_filter($request->approved_groups)) : null;
         $bucket_mail->approved_subject   = $request->approved_subject;
         $bucket_mail->approved_body      = $request->approved_body;
 
@@ -799,8 +879,12 @@ class UserPluginBase extends PluginBase
 
     /**
      * 投稿通知の送信
+     *
+     * 基本：
+     *   - 投稿通知を実装するには指定したデータ（$post_row, $before_row）のテーブルに status, first_committed_at カラムがある事
+     *   - 指定したデータのテーブルのモデルで trait UserableNohistory を使ってる事。（[TODO] 2021/10/15時点 Userableは first_committed_at の自動セット未対応）
      */
-    public function sendPostNotice($post_row, $before_row, $show_method)
+    public function sendPostNotice($post_row, $before_row, $show_method, array $overwrite_notice_embedded_tags = [])
     {
         // 行を表すレコードかのチェック
         //if (Schema::hasColumn($post_row->getTable(), 'id') && Schema::hasColumn($post_row->getTable(), 'first_committed_at') && Schema::hasColumn($post_row->getTable(), 'status')) {
@@ -833,13 +917,13 @@ class UserPluginBase extends PluginBase
         // before_row（更新前）をチェックしない。
         // 承認待ちの記事を変更した場合は、再度、承認待ちメールが飛ぶが、それでOKだと考える。
         if ($bucket_mail->approval_on === 1 && $post_row->status === 2) {
-            $notice_methods[] = "notice_approval";
+            $notice_methods[] = NoticeJobType::notice_approval;
         }
 
         // 承認済み通知がon の場合
         // before_row（更新前）の（status === 2）でpost_row の status が公開（=== 0）の場合に送信（notice_approved）
         if ($bucket_mail->approved_on === 1 && $before_row->status === 2 && $post_row->status === 0) {
-            $notice_methods[] = "notice_approved";
+            $notice_methods[] = NoticeJobType::notice_approved;
         }
 
         // 投稿通知がon の場合
@@ -848,10 +932,10 @@ class UserPluginBase extends PluginBase
         if ($bucket_mail->notice_on === 1) {
             if ($bucket_mail->notice_create === 1 && empty($before_row->first_committed_at) && $post_row->status === 0) {
                 // 対象（登録）
-                $notice_methods[] = "notice_create";
+                $notice_methods[] = NoticeJobType::notice_create;
             } elseif ($bucket_mail->notice_update === 1 && !empty($before_row->first_committed_at) && $post_row->status === 0) {
                 // 対象（変更）
-                $notice_methods[] = "notice_update";
+                $notice_methods[] = NoticeJobType::notice_update;
             }
         }
 
@@ -863,58 +947,80 @@ class UserPluginBase extends PluginBase
         // --- メール送信の処理を呼ぶ
 
         // 承認通知
-        if (in_array("notice_approval", $notice_methods, true)) {
-            // 送信方法の確認
-            if ($bucket_mail->timing == 0) {
-                // 即時送信
-                dispatch_now(new ApprovalNoticeJob($this->frame, $this->buckets, $post_row, $show_method));
-            } else {
-                // スケジュール送信
-                ApprovalNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method);
-            }
+        if (in_array(NoticeJobType::notice_approval, $notice_methods, true)) {
+            // // 送信方法の確認
+            // if ($bucket_mail->timing == 0) {
+            //     // 即時送信
+            //     dispatch_now(new ApprovalNoticeJob($this->frame, $this->buckets, $post_row, $show_method));
+            // } else {
+            //     // スケジュール送信
+            //     ApprovalNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method);
+            // }
+
+            // 埋め込みタグ
+            $notice_embedded_tags = BucketsMail::getNoticeEmbeddedTags($this->frame, $this->buckets, $post_row, $overwrite_notice_embedded_tags, $show_method, NoticeJobType::notice_approval);
+
+            // 送信
+            //   - .envのQUEUE_CONNECTION=syncの場合、dispatch()でも即時送信になるため、メール送信メソッド１本化
+            ApprovalNoticeJob::dispatch($this->buckets, $notice_embedded_tags);
         }
 
         // 承認済み通知
-        if (in_array("notice_approved", $notice_methods, true)) {
-            // 送信方法の確認
-            if ($bucket_mail->timing == 0) {
-                // 即時送信
-                dispatch_now(new ApprovedNoticeJob($this->frame, $this->buckets, $post_row, $post_row->created_id, $show_method));
-            } else {
-                // スケジュール送信
-                ApprovedNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $post_row->created_id, $show_method);
-            }
+        if (in_array(NoticeJobType::notice_approved, $notice_methods, true)) {
+            // // 送信方法の確認
+            // if ($bucket_mail->timing == 0) {
+            //     // 即時送信
+            //     dispatch_now(new ApprovedNoticeJob($this->frame, $this->buckets, $post_row, $post_row->created_id, $show_method));
+            // } else {
+            //     // スケジュール送信
+            //     ApprovedNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $post_row->created_id, $show_method);
+            // }
+
+            $notice_embedded_tags = BucketsMail::getNoticeEmbeddedTags($this->frame, $this->buckets, $post_row, $overwrite_notice_embedded_tags, $show_method, NoticeJobType::notice_approved);
+
+            ApprovedNoticeJob::dispatch($this->buckets, $notice_embedded_tags, $post_row->created_id);
         }
 
         // 投稿通知（登録）
-        if (in_array("notice_create", $notice_methods, true)) {
-            // 送信方法の確認
-            if ($bucket_mail->timing == 0) {
-                // 即時送信
-                dispatch_now(new PostNoticeJob($this->frame, $this->buckets, $post_row, $show_method, "notice_create"));
-            } else {
-                // スケジュール送信
-                PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method, "notice_create");
-            }
+        if (in_array(NoticeJobType::notice_create, $notice_methods, true)) {
+            // // 送信方法の確認
+            // if ($bucket_mail->timing == 0) {
+            //     // 即時送信
+            //     dispatch_now(new PostNoticeJob($this->frame, $this->buckets, $post_row, $show_method, "notice_create"));
+            // } else {
+            //     // スケジュール送信
+            //     PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method, "notice_create");
+            // }
+
+            $notice_embedded_tags = BucketsMail::getNoticeEmbeddedTags($this->frame, $this->buckets, $post_row, $overwrite_notice_embedded_tags, $show_method, NoticeJobType::notice_create);
+
+            PostNoticeJob::dispatch($this->buckets, $notice_embedded_tags);
         }
 
         // 投稿通知（変更）
-        if (in_array("notice_update", $notice_methods, true)) {
-            // 送信方法の確認
-            if ($bucket_mail->timing == 0) {
-                // 即時送信
-                dispatch_now(new PostNoticeJob($this->frame, $this->buckets, $post_row, $show_method, "notice_update"));
-            } else {
-                // スケジュール送信
-                PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method, "notice_update");
-            }
+        if (in_array(NoticeJobType::notice_update, $notice_methods, true)) {
+            // // 送信方法の確認
+            // if ($bucket_mail->timing == 0) {
+            //     // 即時送信
+            //     dispatch_now(new PostNoticeJob($this->frame, $this->buckets, $post_row, $show_method, "notice_update"));
+            // } else {
+            //     // スケジュール送信
+            //     PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method, "notice_update");
+            // }
+
+            $notice_embedded_tags = BucketsMail::getNoticeEmbeddedTags($this->frame, $this->buckets, $post_row, $overwrite_notice_embedded_tags, $show_method, NoticeJobType::notice_update);
+
+            PostNoticeJob::dispatch($this->buckets, $notice_embedded_tags);
         }
+
+        // 非同期でキューワーカ実行
+        $this->asyncQueueWork();
     }
 
     /**
      * 関連投稿通知の送信
      */
-    public function sendRelateNotice($post, $mail_users, $show_method)
+    public function sendRelateNotice($post, $before_post, $mail_users, $show_method, array $overwrite_notice_embedded_tags = [])
     {
         // buckets がない場合
         if (empty($this->buckets)) {
@@ -934,20 +1040,45 @@ class UserPluginBase extends PluginBase
             return;
         }
 
-        // 送信方法の確認
-        if ($bucket_mail->timing == 0) {
-            // 即時送信
-            dispatch_now(new RelateNoticeJob($this->frame, $this->buckets, $post, $show_method, $mail_users));
-        } else {
-            // スケジュール送信
-            RelateNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $mail_users);
+        // before_row（更新前）のfirst_committed_at が空でstatus が公開（=== 0）は「登録」（notice_create）
+        // before_row（更新前）のfirst_committed_at が空ではなく、status が公開（=== 0）は「更新」（notice_update）
+        if ($bucket_mail->notice_create === 1 && empty($before_post->first_committed_at) && $post->status === 0) {
+            // 対象（登録）- 関連通知を送信する。
+        } elseif ($bucket_mail->notice_update === 1 && !empty($before_post->first_committed_at) && $post->status === 0) {
+            // 対象（変更）- 関連通知を送信しない。
+            return;
         }
+
+        // // 送信方法の確認
+        // if ($bucket_mail->timing == 0) {
+        //     // 即時送信
+        //     dispatch_now(new RelateNoticeJob($this->frame, $this->buckets, $post, $show_method, $mail_users));
+        // } else {
+        //     // スケジュール送信
+        //     RelateNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $mail_users);
+        // }
+
+        // 関連通知するメール
+        $relate_user_emails = [];
+        foreach ($mail_users as $relate_user) {
+            if ($relate_user->email) {
+                $relate_user_emails[] = $relate_user->email;
+            }
+        }
+
+        // 埋め込みタグ
+        $notice_embedded_tags = BucketsMail::getNoticeEmbeddedTags($this->frame, $this->buckets, $post, $overwrite_notice_embedded_tags, $show_method, NoticeJobType::notice_relate);
+
+        RelateNoticeJob::dispatch($this->buckets, $notice_embedded_tags, $relate_user_emails);
+
+        // 非同期でキューワーカ実行
+        $this->asyncQueueWork();
     }
 
     /**
      * 削除通知の送信
      */
-    public function sendDeleteNotice($post, $show_method, $delete_comment)
+    public function sendDeleteNotice($post, $show_method, $delete_comment, array $overwrite_notice_embedded_tags = [])
     {
         // buckets がない場合
         if (empty($this->buckets)) {
@@ -971,17 +1102,85 @@ class UserPluginBase extends PluginBase
         }
 
         // 送信方法の確認
-        if ($bucket_mail->timing == 0) {
-            // 即時送信
-            dispatch_now(new DeleteNoticeJob($this->frame, $this->buckets, $post, $show_method, $delete_comment));
-        } else {
-            // スケジュール送信
-            DeleteNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $delete_comment);
-        }
+        // if ($bucket_mail->timing == 0) {
+        // if ($timing == SendMailTiming::sync) {
+        //     // 同期送信
+        //     // （物理削除時は、非同期だとメール送信前にデータが消えてしまいModelNotFoundExceptionエラーになるため、同期でメール送信）
+        //     dispatch_now(new DeleteNoticeJob($this->frame, $this->buckets, $post, $title, $show_method, $delete_comment));
+        // } else {
+        //     // スケジュール送信
+        //     DeleteNoticeJob::dispatch($this->frame, $this->buckets, $post, $title, $show_method, $delete_comment);
+
+        //     // 非同期でキューワーカ実行
+        //     $this->asyncQueueWork();
+        // }
+
+        // 埋め込みタグ
+        $notice_embedded_tags = BucketsMail::getNoticeEmbeddedTags($this->frame, $this->buckets, $post, $overwrite_notice_embedded_tags, $show_method, NoticeJobType::notice_delete, $delete_comment);
+
+        DeleteNoticeJob::dispatch($this->buckets, $notice_embedded_tags);
+
+        // 非同期でキューワーカ実行
+        $this->asyncQueueWork();
     }
 
     /**
-     *  ページ取得
+     * 非同期でキューワーカ実行
+     * - キューをセット後に非同期でキューワーカを実行、キューされたすべてのジョブを実行して、キューワーカをプロセス停止する。
+     *
+     * @see https://readouble.com/laravel/6.x/ja/queues.html#running-the-queue-worker キューされたすべてのジョブを処理し、終了する - Laravel 6.x キュー
+     * @see config\queue.php キューの設定ファイル。[connections => [database => [retry_after]]](リトライ時間) > --timeout(タイムアウト) でないと例外が発生する。
+     */
+    private function asyncQueueWork()
+    {
+        if (config('queue.default') != 'database') {
+            // キュードライバがdatabase以外は実行しない
+            return;
+        }
+
+        // 実行可能な PHP バイナリの検索
+        $php_binary_finder = new PhpExecutableFinder();
+        $php = $php_binary_finder->find();
+
+        // artisanコマンドのパス
+        $artisan = base_path('artisan');
+
+        // キューされたすべてのジョブを処理し、終了する。最大でも１時間でタイムアウト（強制終了）する。
+        // php artisan queue:work --stop-when-empty --timeout=3600
+        $php_artisan_command = "{$php} \"{$artisan}\" queue:work --stop-when-empty --timeout=3600";
+
+        // 非同期実行する
+        if (strpos(PHP_OS, 'WIN') !== false) {
+            // Windows
+            // - start /B 新しいウインドウを開かずにアプリケーションを起動する。
+            $command = "start /B {$php_artisan_command}";
+            $fp = popen($command, 'r');
+            pclose($fp);
+        } else {
+            // Linux
+            $command = "{$php_artisan_command} > /dev/null &";
+            exec($command);
+        }
+
+        // [TODO] Laravel 6.x = Process v4.4.22 のため$process->setOptions()使えない。残念
+        // $timeout = null;    // 念のため、Processクラスでのコマンド実行のタイムアウトの無効化（非同期実行で一瞬でコマンド実行終わるため、問題ないと思うけど念のため）
+        // $process = new Process([$php_binary_path, 'artisan', 'queue:work', '--stop-when-empty', '--timeout=3600'], base_path(), null, null, $timeout);
+
+        // @see https://symfony.com/doc/current/components/process.html Processのsymfony公式Doc
+        // // このオプションを使用すると、メインスクリプトが終了した後も、サブプロセスを実行し続けることができます。
+        // // - (Required Process >= 5.2)
+        // // - Laravel 6.x = Process v4.4.22 のため使えない。残念
+        // $process->setOptions(['create_new_console' => true]);
+
+        // // 非同期実行（xamppではうまく動かなかった。Linuxサーバでは動いた。）
+        // $process->start();
+
+        // [debug] 同期実行
+        // $process->mustRun();
+    }
+
+    /**
+     * ページ取得
      */
     protected function getPages($format = null)
     {
@@ -1023,27 +1222,29 @@ class UserPluginBase extends PluginBase
         }
     }
 
-    /**
-     *  言語の取得
-     */
-    protected function getLanguages()
-    {
-        $configs = $this->configs;
-        if (empty($configs)) {
-            return null;
-        }
+    // delete: どこからも呼ばれていなかったため、コメントアウト
+    // /**
+    //  * 言語の取得
+    //  */
+    // protected function getLanguages()
+    // {
+    //     return Configs::getLanguages();
+    //     // $configs = $this->configs;
+    //     // if (empty($configs)) {
+    //     //     return null;
+    //     // }
 
-        $languages = array();
-        foreach ($configs as $config) {
-            if ($config->category == 'language') {
-                $languages[$config->additional1] = $config;
-            }
-        }
-        return $languages;
-    }
+    //     // $languages = array();
+    //     // foreach ($configs as $config) {
+    //     //     if ($config->category == 'language') {
+    //     //         $languages[$config->additional1] = $config;
+    //     //     }
+    //     // }
+    //     // return $languages;
+    // }
 
     /**
-     *  ログ出力
+     * ログ出力
      */
     public function putLog($e)
     {
@@ -1094,7 +1295,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  HTMLPurifier の実行
+     * HTMLPurifier の実行
      */
     public function clean($text)
     {
@@ -1127,8 +1328,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  HTMLPurifier 制限の判定
-     *
+     * HTMLPurifier 制限の判定
      */
     private function isHtmlPurifier()
     {
@@ -1145,8 +1345,9 @@ class UserPluginBase extends PluginBase
 
         // コンテンツ権限がついていること。
         if (!empty($user->user_roles) && array_key_exists('base', $user->user_roles)) {
+            // delete: 使ってない変数
             // セキュリティ管理のHTML制限を取得
-            $config_html_purifiers = $this->configs->where('category', 'html_purifier');
+            // $config_html_purifiers = $this->configs->where('category', 'html_purifier');
 
             // 設定されている権限
             $purifiers = config('cc_role.CC_HTMLPurifier_ROLE_LIST');
@@ -1174,8 +1375,7 @@ class UserPluginBase extends PluginBase
     }
 
     /**
-     *  プラグイン名の取得
-     *
+     * プラグイン名の取得
      */
     protected function getPluginName()
     {
@@ -1204,6 +1404,91 @@ class UserPluginBase extends PluginBase
     protected function refreshFrameConfigs()
     {
         $this->frame_configs = FrameConfig::where('frame_id', $this->frame->id)->get();
+    }
+
+    /**
+     * 要承認の判断
+     */
+    protected function isApproval()
+    {
+        if (empty($this->buckets)) {
+            return false;
+        }
+        return $this->buckets->needApprovalUser(Auth::user(), $this->frame);
+    }
+
+    /**
+     * 権限によって表示する記事を絞る
+     *
+     * 基本：
+     *   - 承認機能を実装するには指定したテーブル($table_name)に status, created_id カラムがある事
+     * オプション：
+     *   - テーブルに posted_at(投稿日時) カラムがある場合、投稿日時前＋権限なし or 未ログインなら表示しない
+     *
+     * status = 0:公開(Active)
+     * status = 1:Temporary（一時保存）
+     * status = 2:Approval pending（承認待ち）
+     * status = 9:History（履歴・データ削除）
+     * 参考) https://github.com/opensource-workshop/connect-cms/wiki/Data-history-policy（データ履歴の方針）
+     *
+     * コンテンツ管理者(role_article_admin): 無条件に全記事見れる
+     * モデレータ(role_article):            無条件に全記事見れる
+     * 承認者(role_approval):               0:公開(Active) or 2:承認待ち の全記事見れる
+     * 編集者(role_reporter):               0:公開(Active) or 自分の作成した記事 見れる
+     * 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）or 未ログイン:    0:公開(Active) 記事見れる
+     *
+     * [オプション：posted_at(投稿日時) カラムがある]
+     * 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）or 未ログイン:    0:公開(Active) and 投稿日時前 記事見れる
+     *
+     * 例) $table_name = 'blogs_posts';
+     * 例) $table_name = 'databases_inputs';
+     */
+    protected function appendAuthWhereBase($query, $table_name)
+    {
+        // 各条件でSQL を or 追記する場合は、クロージャで記載することで、元のSQL とAND 条件でつながる。
+        // クロージャなしで追記した場合、or は元の whereNull('calendar_posts.parent_id') を打ち消したりするので注意。
+
+        if (empty($query)) {
+            // 空なら何もしない
+            return $query;
+        }
+
+        // モデレータ(記事修正, role_article)権限
+        // コンテンツ管理者(role_article_admin)   = 全記事の取得
+        if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
+            // 全件取得のため、追加条件なしで戻る。
+            return $query;
+        }
+
+        if ($this->isCan('role_approval')) {
+            //
+            // 承認者(role_approval)権限 = Active ＋ 承認待ちの取得
+            //
+            $query->WhereIn($table_name . '.status', [StatusType::active, StatusType::approval_pending]);
+
+        } elseif ($this->isCan('role_reporter')) {
+            //
+            // 編集者(role_reporter)権限 = Active ＋ 自分の全ステータス記事の取得
+            //
+            $query->where(function ($tmp_query) use ($table_name) {
+                $tmp_query->where($table_name . '.status', StatusType::active)
+                        ->orWhere($table_name . '.created_id', Auth::user()->id);
+            });
+        } else {
+            //
+            // 共通条件（Active）
+            // 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）
+            // 未ログイン
+            //
+            $query->where($table_name . '.status', StatusType::active);
+
+            // DBカラム posted_at(投稿日時) 存在するか
+            if (Schema::hasColumn($table_name, 'posted_at')) {
+                $query->where($table_name . '.posted_at', '<=', Carbon::now());
+            }
+        }
+
+        return $query;
     }
 
     /**

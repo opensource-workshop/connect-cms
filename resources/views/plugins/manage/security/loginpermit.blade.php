@@ -86,6 +86,7 @@
                     <th nowrap style="width:10%;">適用順</th>
                     <th nowrap>IPアドレス(*でALL)</th>
                     <th nowrap style="min-width:150px;">権限</th>
+                    <th nowrap>メモ</th>
                     <th nowrap>許可/拒否</th>
                     <th nowrap><i class="fas fa-trash-alt"></i></th>
                 </tr>
@@ -113,6 +114,9 @@
                             @endforeach
                             </optgroup>
                         </select>
+                    </td>
+                    <td nowrap>
+                        <input type="text" value="{{old('memo.'.$login_permit->id, $login_permit->memo)}}" name="memo[{{$login_permit->id}}]" class="form-control">
                     </td>
                     <td nowrap>
 
@@ -162,6 +166,9 @@
                         </select>
                     </td>
                     <td nowrap>
+                        <input type="text" value="{{old('memo', '')}}" name="add_memo" class="form-control">
+                    </td>
+                    <td nowrap>
                         <div class="custom-control custom-radio custom-control-inline">
                             @if(old('reject')=="0")
                             <input type="radio" value="0" id="add_reject_on" name="add_reject" class="custom-control-input" checked>
@@ -190,6 +197,9 @@
                     </td>
                     <td nowrap>
                         <input type="text" value="{{old('add_ip_address', '')}}" name="add_ip_address" class="form-control">
+                    </td>
+                    <td nowrap>
+                        <input type="text" value="{{old('memo', '')}}" name="add_memo" class="form-control">
                     </td>
                     <td nowrap>
                         <div class="custom-control custom-radio custom-control-inline">

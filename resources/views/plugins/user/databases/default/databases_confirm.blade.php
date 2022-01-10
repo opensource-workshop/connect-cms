@@ -195,13 +195,13 @@ use App\Models\User\Databases\DatabasesColumns;
         <button type="button" class="btn btn-secondary mr-2" onclick="submit_databases_cancel();"><i class="fas fa-chevron-left"></i> 前へ</button>
         <button type="button" class="btn btn-info mr-2" onclick="submit_databases_temporary();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
         @if($id)
-            @if ($buckets->needApprovalUser(Auth::user()))
+            @if ($buckets->needApprovalUser(Auth::user(), $frame))
                 <button type="submit" class="btn btn-success" onclick="submit_databases_store();"><i class="far fa-edit"></i> 変更申請</button>
             @else
                 <button type="submit" class="btn btn-primary" onclick="submit_databases_store();"><i class="fas fa-check"></i> 変更確定</button>
             @endif
         @else
-            @if ($buckets->needApprovalUser(Auth::user()))
+            @if ($buckets->needApprovalUser(Auth::user(), $frame))
                 <button type="submit" class="btn btn-success" onclick="submit_databases_store();"><i class="far fa-edit"></i> 登録申請</button>
             @else
                 <button type="submit" class="btn btn-primary" onclick="submit_databases_store();"><i class="fas fa-check"></i> 登録確定</button>

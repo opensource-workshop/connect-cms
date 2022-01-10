@@ -75,6 +75,17 @@
                 </div>
                 <div class="card-body">
                     {!!$post->body!!}
+
+                    {{-- いいねボタン --}}
+                    @include('plugins.common.like', [
+                        'use_like' => $bbs->use_like,
+                        'like_button_name' => $bbs->like_button_name,
+                        'contents_id' => $post->id,
+                        'like_id' => $post->like_id,
+                        'like_count' => $post->like_count,
+                        'like_users_id' => $post->like_users_id,
+                    ])
+
                     @if ($children_posts->where("thread_root_id", $post->id)->isNotEmpty())
                         {{-- 一覧での展開方法の判定 --}}
                         @if ($plugin_frame->list_format != 0)
@@ -101,6 +112,16 @@
                                     </div>
                                     <div class="card-body">
                                         {!!$children_post->body!!}
+
+                                        {{-- いいねボタン --}}
+                                        @include('plugins.common.like', [
+                                            'use_like' => $bbs->use_like,
+                                            'like_button_name' => $bbs->like_button_name,
+                                            'contents_id' => $children_post->id,
+                                            'like_id' => $children_post->like_id,
+                                            'like_count' => $children_post->like_count,
+                                            'like_users_id' => $children_post->like_users_id,
+                                        ])
                                     </div>
                                 </div>
                             @endforeach
@@ -113,11 +134,6 @@
 @endif
 
 {{-- ページング処理 --}}
-{{-- アクセシビリティ対応。1ページしかない時に、空navを表示するとスクリーンリーダーに不要な Navigation がひっかかるため表示させない。 --}}
-@if ($posts->lastPage() > 1)
-    <nav class="text-center" aria-label="{{$bbs->name}}のページ付け">
-        {{ $posts->fragment('frame-' . $frame_id)->links() }}
-    </nav>
-@endif
+@include('plugins.common.user_paginate', ['posts' => $posts, 'frame' => $frame, 'aria_label_name' => $bbs->name])
 
 @endsection

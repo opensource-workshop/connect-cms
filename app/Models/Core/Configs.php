@@ -3,8 +3,8 @@
 namespace App\Models\Core;
 
 use Illuminate\Database\Eloquent\Model;
-
-// use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class Configs extends Model
 {
@@ -100,5 +100,80 @@ class Configs extends Model
         $values = explode(',', $value);
         $choise_value = $values[array_rand($values)];
         return $choise_value;
+    }
+
+    /**
+     * 言語の取得
+     * （ConnectController から移動してカスタマイズ）
+     */
+    public static function getLanguages()
+    {
+        $configs = self::getSharedConfigs();
+        if (empty($configs)) {
+            return null;
+        }
+
+        $languages = array();
+        foreach ($configs as $config) {
+            if ($config->category == 'language') {
+                $languages[$config->additional1] = $config;
+            }
+        }
+        return $languages;
+    }
+
+    /**
+     * 全Configから設定の値取得
+     */
+    public static function getSharedConfigsValue($key, $default = false)
+    {
+        $configs = self::getSharedConfigs();
+        return self::getConfigsValue($configs, $key, $default);
+    }
+
+    /**
+     * 全Configの取得（Middlewareでセットされたもの）
+     * （ConnectController から移動してカスタマイズ）
+     *
+     * @see \App\Http\Middleware\ConnectInit 全Congigsを request にセットしてる
+     */
+    public static function getSharedConfigs($format = null)
+    {
+        $request = app(Request::class);
+
+        // Configs. app\Http\Middleware\ConnectInit.php でセットした全Configs
+        $configs = $request->attributes->get('configs');
+        // dd($request->attributes->get('configs'));
+
+        if ($format == 'array') {
+            return self::changeConfigsArray($configs);
+        }
+        return $configs;
+    }
+
+    /**
+     * Configのarray変換
+     * （ConnectController から移動してカスタマイズ）
+     * @deprecated [TODO] 今後影響調査・対応して廃止したいなぁ
+     */
+    private static function changeConfigsArray($configs)
+    {
+        $return_array = array();
+
+        foreach ($configs as $config) {
+            $return_array[$config->name] = $config;
+        }
+        return $return_array;
+    }
+
+    /**
+     * 値のチェック
+     */
+    public static function checkConfigValue($configs, $check_key, $check_value)
+    {
+        if ($configs->firstWhere('name', $check_key)->value == $check_value) {
+            return true;
+        }
+        return false;
     }
 }

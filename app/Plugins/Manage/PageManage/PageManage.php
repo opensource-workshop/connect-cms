@@ -15,6 +15,9 @@ use App\Models\Common\Page;
 use App\Models\Common\PageRole;
 use App\Models\User\Contents\Contents;
 
+use App\Rules\CustomValiTextMax;
+use App\Rules\CustomValiUrlMax;
+
 use App\Traits\Migration\MigrationTrait;
 
 use App\Plugins\Manage\ManagePluginBase;
@@ -144,17 +147,41 @@ class PageManage extends ManagePluginBase
     }
 
     /**
+     * ページ登録・変更時のエラーチェック
+     */
+    private function pageValidator($request)
+    {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'page_name'        => ['required', 'max:255'],
+            'permanent_link'   => ['nullable', new CustomValiUrlMax(true)],
+            'password'         => ['nullable', 'max:255'],
+            'background_color' => ['nullable', 'max:255'],
+            'header_color'     => ['nullable', 'max:255'],
+            'ip_address'       => ['nullable', new CustomValiTextMax()],
+            'othersite_url'    => ['nullable', new CustomValiUrlMax()],
+            'class'            => ['nullable', 'max:255'],
+        ]);
+        $validator->setAttributeNames([
+            'page_name'        => 'ページ名',
+            'permanent_link'   => '固定リンク',
+            'password'         => 'パスワード',
+            'background_color' => '背景色',
+            'header_color'     => 'ヘッダーバーの背景色',
+            'ip_address'       => 'IPアドレス制限',
+            'othersite_url'    => '外部サイトURL',
+            'class'            => 'クラス名',
+        ]);
+        return $validator;
+    }
+
+    /**
      * ページ登録処理
      */
     public function store($request)
     {
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'page_name' => ['required'],
-        ]);
-        $validator->setAttributeNames([
-            'page_name' => 'ページ名',
-        ]);
+        // ページ登録・変更時のエラーチェック
+        $validator = $this->pageValidator($request);
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
@@ -194,13 +221,8 @@ class PageManage extends ManagePluginBase
      */
     public function update($request, $page_id)
     {
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'page_name' => ['required'],
-        ]);
-        $validator->setAttributeNames([
-            'page_name' => 'ページ名',
-        ]);
+        // ページ登録・変更時のエラーチェック
+        $validator = $this->pageValidator($request);
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
@@ -628,12 +650,12 @@ class PageManage extends ManagePluginBase
         $pages = Page::defaultOrderWithDepth($return_obj);
 
         // 移行用に取り込んだページ単位ディレクトリの取得
-        $migration_directories = Storage::directories('migration');
+        $migration_directories = Storage::directories('migration/import/pages');
 
         // 移行用に取り込んだページ単位ディレクトリのページ情報
         $page_in = array();
         foreach ($migration_directories as $migration_directory) {
-            $page_in[] = str_replace('migration/', '', $migration_directory);
+            $page_in[] = str_replace('migration/import/pages/', '', $migration_directory);
         }
         //print_r($page_in);
 
@@ -666,7 +688,7 @@ class PageManage extends ManagePluginBase
         }
 
         // 指定されたディレクトリを削除
-        Storage::deleteDirectory("migration/" . $request->delete_file_page_id);
+        Storage::deleteDirectory("migration/import/pages/" . $request->delete_file_page_id);
 
         // 指示された画面に戻る。
         return $this->migration_order($request, $page_id);
@@ -727,8 +749,12 @@ class PageManage extends ManagePluginBase
                        ->withInput();
         }
 
+        // migration_config を生成
+        $this->migration_config['frames'] = ['import_frame_plugins'];
+        $this->migration_config['frames']['import_frame_plugins'] = ['contents'];
+
         // Connect-CMS 移行形式のHTML をインポートする
-        $this->importHtml($request->migration_page_id);
+        $this->importHtml($request->migration_page_id, storage_path() . '/app/migration/import/pages/' . $page_id);
 
         // 指示された画面に戻る。
         return $this->migration_order($request, $page_id);

@@ -4,18 +4,21 @@ namespace App\Plugins\User\Bbses;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-use DB;
-
 use App\Enums\StatusType;
+use App\Enums\UserStatus;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
+use App\Models\Common\Like;
 use App\Models\User\Bbses\Bbs;
 use App\Models\User\Bbses\BbsFrame;
 use App\Models\User\Bbses\BbsPost;
+
+use App\Rules\CustomValiWysiwygMax;
 
 use App\Plugins\User\UserPluginBase;
 
@@ -25,7 +28,7 @@ use App\Plugins\User\UserPluginBase;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 掲示板・プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class BbsesPlugin extends UserPluginBase
 {
@@ -51,22 +54,22 @@ class BbsesPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['editView'];
+        $functions['get']  = ['editView', 'saveLikeJson'];
         $functions['post'] = ['saveView', 'edit', 'reply'];
         return $functions;
     }
 
     /**
-     *  権限定義
+     * 権限定義
      */
     public function declareRole()
     {
         // 権限チェックテーブル
-        $role_ckeck_table = array();
-        $role_ckeck_table["editView"] = array('role_arrangement');
-        $role_ckeck_table["saveView"] = array('role_arrangement');
-        $role_ckeck_table["reply"]    = array('role_reporter');
-        return $role_ckeck_table;
+        $role_check_table = [];
+        $role_check_table["editView"] = array('role_arrangement');
+        $role_check_table["saveView"] = array('role_arrangement');
+        $role_check_table["reply"]    = array('posts.create');
+        return $role_check_table;
     }
 
     /**
@@ -83,15 +86,41 @@ class BbsesPlugin extends UserPluginBase
      * POST取得関数（コアから呼び出す）
      * コアがPOSTチェックの際に呼び出す関数
      */
-    public function getPost($id)
+    public function getPost($id, $action = null)
     {
+        if (is_null($action)) {
+            // プラグイン内からの呼び出しを想定。処理を通す。
+        } elseif (in_array($action, ['edit', 'save', 'delete'])) {
+            // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+        } else {
+            // それ以外のアクションは null で返す。
+            return null;
+        }
+
         // 一度読んでいれば、そのPOSTを再利用する。
         if (!empty($this->post)) {
             return $this->post;
         }
 
-        // POST を取得する。
-        $this->post = BbsPost::firstOrNew(['id' => $id]);
+        // 権限によって表示する記事を絞る
+        // $this->post = BbsPost::select('bbs_posts.*')
+        $bbses_query = BbsPost::
+            select(
+                'bbs_posts.*',
+                'likes.id as like_id',
+                'likes.count as like_count',
+                'like_users.id as like_users_id'    // idあればいいね済み
+            )
+            ->where(function ($query) {
+                $query = $this->appendAuthWhere($query, 'bbs_posts');
+            });
+            // ->firstOrNew(['id' => $id]);
+
+        // いいねのleftJoin
+        $bbses_query = Like::appendLikeLeftJoin($bbses_query, $this->frame->plugin_name, 'bbs_posts.id', 'bbs_posts.bbs_id');
+
+        $this->post = $bbses_query->firstOrNew(['bbs_posts.id' => $id]);
+
         return $this->post;
     }
 
@@ -108,78 +137,45 @@ class BbsesPlugin extends UserPluginBase
     /**
      * プラグインのバケツ取得関数
      */
-    public function getPluginBucket($bucket_id)
+    private function getPluginBucket($bucket_id)
     {
         // プラグインのメインデータを取得する。
         return Bbs::firstOrNew(['bucket_id' => $bucket_id]);
     }
 
     /**
-     *  データ取得時の権限条件の付与
+     * データ取得時の権限条件の付与
      */
     protected function appendAuthWhere($query, $table_name)
     {
-        // 各条件でSQL を or 追記する場合は、クロージャで記載することで、元のSQL とAND 条件でつながる。
-        // クロージャなしで追記した場合、or は元の whereNull('bbs_posts.parent_id') を打ち消したりするので注意。
-
-        if (empty($query)) {
-            // 空なら何もしない
-            return $query;
-        }
-
-        // モデレータ(記事修正, role_article)権限以上（role_article, role_article_admin）
-        if ($this->isCan('role_article')) {
-            // 全件取得のため、追加条件なしで戻る。
-            return $query;
-        }
-
-        // 認証状況により、絞り込み条件を変える。
-        if (!Auth::check()) {
-            //
-            // 共通条件（Active）
-            // 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）
-            // 未ログイン
-            //
-            $query->where($table_name . '.status', '=', StatusType::active);
-        } elseif ($this->isCan('role_approval')) {
-            //
-            // 承認者(role_approval)権限 = Active ＋ 承認待ちの取得
-            //
-            $query->where(function ($auth_query) use ($table_name) {
-                $auth_query->orWhere($table_name . '.status', '=', StatusType::active);
-                $auth_query->orWhere($table_name . '.status', '=', StatusType::approval_pending);
-            });
-        } elseif ($this->isCan('role_reporter')) {
-            //
-            // 編集者(role_reporter)権限 = Active ＋ 自分の全ステータス記事の取得
-            // 一時保存の記事も、自分の記事を取得することで含まれる。
-            // 承認待ちの記事であっても、自分の記事なので、修正可能。
-            //
-            $query->where(function ($auth_query) use ($table_name) {
-                $auth_query->orWhere($table_name . '.status', '=', StatusType::active);
-                $auth_query->orWhere($table_name . '.created_id', '=', Auth::user()->id);
-            });
-        }
-
-        return $query;
+        return $this->appendAuthWhereBase($query, $table_name);
     }
 
     /**
-     *  Root の POST一覧取得
+     * Root の POST一覧取得
      */
-    private function getRootPosts($bbs_frame)
+    private function getRootPosts($bbs_frame, $frame_id)
     {
         // データ取得
-        $posts_query = BbsPost::select('bbs_posts.*')
-                                   ->join('bbses', function ($join) {
-                                       $join->on('bbses.id', '=', 'bbs_posts.bbs_id')
-                                          ->where('bbses.bucket_id', '=', $this->frame->bucket_id);
-                                   })
-                                   ->whereNull('bbs_posts.parent_id')
-                                   ->whereNull('bbs_posts.deleted_at');
+        $posts_query = BbsPost::
+            select(
+                'bbs_posts.*',
+                'likes.id as like_id',
+                'likes.count as like_count',
+                'like_users.id as like_users_id'    // idあればいいね済み
+            )
+            ->join('bbses', function ($join) {
+                $join->on('bbses.id', '=', 'bbs_posts.bbs_id')
+                    ->where('bbses.bucket_id', '=', $this->frame->bucket_id);
+            })
+            ->whereNull('bbs_posts.parent_id')
+            ->whereNull('bbs_posts.deleted_at');
 
         // 権限によって表示する記事を絞る
         $posts_query = $this->appendAuthWhere($posts_query, 'bbs_posts');
+
+        // いいねのleftJoin
+        $posts_query = Like::appendLikeLeftJoin($posts_query, $this->frame->plugin_name, 'bbs_posts.id', 'bbs_posts.bbs_id');
 
         // 根記事の表示順
         if ($bbs_frame->thread_sort_flag == 1) {
@@ -191,25 +187,34 @@ class BbsesPlugin extends UserPluginBase
         }
 
         // 取得
-        return $posts_query->paginate($bbs_frame->getViewCount());
+        return $posts_query->paginate($bbs_frame->getViewCount(), ["*"], "frame_{$frame_id}_page");
     }
 
     /**
-     *  指定されたスレッドの記事一覧取得
+     * 指定されたスレッドの記事一覧取得
      */
     private function getThreadPosts($bbs_frame, $thread_root_ids, $children_only = false)
     {
         // データ取得
-        $posts_query = BbsPost::select('bbs_posts.*')
-                                   ->join('bbses', function ($join) {
-                                       $join->on('bbses.id', '=', 'bbs_posts.bbs_id')
-                                          ->where('bbses.bucket_id', '=', $this->frame->bucket_id);
-                                   });
+        $posts_query = BbsPost::
+            select(
+                'bbs_posts.*',
+                'likes.id as like_id',
+                'likes.count as like_count',
+                'like_users.id as like_users_id'    // idあればいいね済み
+            )
+            ->join('bbses', function ($join) {
+                $join->on('bbses.id', '=', 'bbs_posts.bbs_id')
+                    ->where('bbses.bucket_id', '=', $this->frame->bucket_id);
+            });
 
         // ルートのポストは含まない場合
         if ($children_only) {
             $posts_query->whereColumn('bbs_posts.id', '<>', 'bbs_posts.thread_root_id');
         }
+
+        // いいねのleftJoin
+        $posts_query = Like::appendLikeLeftJoin($posts_query, $this->frame->plugin_name, 'bbs_posts.id', 'bbs_posts.bbs_id');
 
         // その他条件指定
         $posts_query->whereIn('bbs_posts.thread_root_id', $thread_root_ids)
@@ -226,29 +231,33 @@ class BbsesPlugin extends UserPluginBase
     /* スタティック関数 */
 
     /**
-     *  新着情報用メソッド
+     * 新着情報用メソッド
      */
     public static function getWhatsnewArgs()
     {
         // 戻り値('sql_method'、'link_pattern'、'link_base')
-        $return[] = DB::table('bbs_posts')
-                      ->select(
-                          'frames.page_id         as page_id',
-                          'frames.id              as frame_id',
-                          'bbs_posts.id           as post_id',
-                          'bbs_posts.title        as post_title',
-                          DB::raw("null           as important"),
-                          'bbs_posts.created_at   as posted_at',
-                          'bbs_posts.created_name as posted_name',
-                          DB::raw("null           as classname"),
-                          DB::raw("null           as category"),
-                          DB::raw('"bbses"        as plugin_name')
-                      )
-                      ->join('bbses', 'bbses.id', '=', 'bbs_posts.bbs_id')
-                      ->join('frames', 'frames.bucket_id', '=', 'bbses.bucket_id')
-                      ->where('bbs_posts.status', 0)
-                      ->where('frames.disable_whatsnews', 0)
-                      ->whereNull('bbs_posts.deleted_at');
+        $return[] = BbsPost::
+            select(
+                'frames.page_id         as page_id',
+                'frames.id              as frame_id',
+                'bbs_posts.id           as post_id',
+                'bbs_posts.title        as post_title',
+                'bbs_posts.body         as post_detail',
+                DB::raw("null           as important"),
+                'bbs_posts.created_at   as posted_at',
+                'bbs_posts.created_name as posted_name',
+                DB::raw("null           as classname"),
+                DB::raw("null           as category"),
+                DB::raw('"bbses"        as plugin_name')
+            )
+            ->join('bbses', function ($join) {
+                // 論理削除対応
+                $join->on('bbses.id', '=', 'bbs_posts.bbs_id')
+                    ->whereNull('bbses.deleted_at');
+            })
+            ->join('frames', 'frames.bucket_id', '=', 'bbses.bucket_id')
+            ->where('bbs_posts.status', StatusType::active)
+            ->where('frames.disable_whatsnews', 0);
 
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/bbses/show';
@@ -257,49 +266,50 @@ class BbsesPlugin extends UserPluginBase
     }
 
     /**
-     *  検索用メソッド
+     * 検索用メソッド
      */
-    /*
     public static function getSearchArgs($search_keyword)
     {
-        $return[] = DB::table('bbses_posts')
-                      ->select(
-                          'bbses_posts.id           as post_id',
-                          'frames.id                as frame_id',
-                          'frames.page_id           as page_id',
-                          'pages.permanent_link     as permanent_link',
-                          'bbses_posts.title        as post_title',
-                          DB::raw("null             as important"),
-                          'bbses_posts.created_at   as posted_at',
-                          'bbses_posts.created_name as posted_name',
-                          DB::raw("null             as classname"),
-                          DB::raw("null             as category_id"),
-                          DB::raw("null             as category"),
-                          DB::raw('"bbses"          as plugin_name')
-                      )
-                      ->join('bbses', 'bbses.id',  '=', 'bbses_posts.bbses_id')
-                      ->join('frames', 'frames.bucket_id', '=', 'bbses.bucket_id')
-                      ->leftjoin('pages', 'pages.id',      '=', 'frames.page_id')
-                      ->where(function ($plugin_query) use ($search_keyword) {
-                          $plugin_query->where('bbses_posts.title', 'like', '?')
-                                       ->orWhere('bbses_posts.body', 'like', '?');
-                      })
-                      ->whereNull('bbses_posts.deleted_at');
+        $return[] = BbsPost::
+            select(
+                'bbs_posts.id           as post_id',
+                'frames.id                as frame_id',
+                'frames.page_id           as page_id',
+                'pages.permanent_link     as permanent_link',
+                'bbs_posts.title        as post_title',
+                DB::raw("null             as important"),
+                'bbs_posts.created_at   as posted_at',
+                'bbs_posts.created_name as posted_name',
+                DB::raw("null             as classname"),
+                DB::raw("null             as category_id"),
+                DB::raw("null             as category"),
+                DB::raw('"bbses"          as plugin_name')
+            )
+            ->join('bbses', function ($join) {
+                // 論理削除対応
+                $join->on('bbses.id', '=', 'bbs_posts.bbs_id')
+                    ->whereNull('bbses.deleted_at');
+            })
+            ->join('frames', 'frames.bucket_id', '=', 'bbses.bucket_id')
+            ->leftjoin('pages', 'pages.id', '=', 'frames.page_id')
+            ->where(function ($plugin_query) {
+                $plugin_query->where('bbs_posts.title', 'like', '?')
+                    ->orWhere('bbs_posts.body', 'like', '?');
+            });
 
-        $bind = array('%'.$search_keyword.'%', '%'.$search_keyword.'%');
+        $bind = array('%' . $search_keyword . '%', '%' . $search_keyword . '%');
         $return[] = $bind;
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/bbses/show';
 
         return $return;
     }
-    */
 
     /* 画面アクション関数 */
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -307,7 +317,7 @@ class BbsesPlugin extends UserPluginBase
         $plugin_frame = $this->getPluginFrame($frame_id);
 
         // 掲示板データ一覧の取得
-        $posts = $this->getRootPosts($plugin_frame);
+        $posts = $this->getRootPosts($plugin_frame, $frame_id);
 
         // 表示対象のスレッドの記事一覧
         $thread_ids = $posts->pluck("id");
@@ -323,31 +333,53 @@ class BbsesPlugin extends UserPluginBase
     }
 
     /**
-     *  詳細表示関数
+     * 関連投稿の取得
      */
-    public function show($request, $page_id, $frame_id, $post_id)
+    private function getThreadPost($plugin_frame, $post)
     {
         // 変数準備
         $thread_root_post = null;
         $children_posts = null;
 
+        // 指定の記事がある場合
+        if ($post) {
+            // 根記事取得（getPost() はメインのPOST をシングルトンで保持するので、ここでは新たに取得する）
+            // $thread_root_post = BbsPost::firstOrNew(['id' => $post->thread_root_id]);
+            $thread_root_post_query = BbsPost::
+                select(
+                    'bbs_posts.*',
+                    'likes.id as like_id',
+                    'likes.count as like_count',
+                    'like_users.id as like_users_id'    // idあればいいね済み
+                );
+            $thread_root_post_query = Like::appendLikeLeftJoin($thread_root_post_query, $this->frame->plugin_name, 'bbs_posts.id', 'bbs_posts.bbs_id');
+            $thread_root_post = $thread_root_post_query->firstOrNew(['bbs_posts.id' => $post->thread_root_id]);
+
+            // 表示対象のスレッドの記事一覧
+            $children_posts = $this->getThreadPosts($plugin_frame, new Collection($post->thread_root_id), true);
+        }
+
+        // $thread_root_post, $children_posts を返す。
+        return array($thread_root_post, $children_posts);
+    }
+
+    /**
+     * 詳細表示関数
+     */
+    public function show($request, $page_id, $frame_id, $post_id)
+    {
         // プラグインのフレームデータ
         $plugin_frame = $this->getPluginFrame($frame_id);
 
         // 記事取得
         $post = $this->getPost($post_id);
 
-        // 指定の記事がある場合
-        if ($post) {
-            // 根記事取得（getPost() はメインのPOST をシングルトンで保持するので、ここでは新たに取得する）
-            $thread_root_post = BbsPost::firstOrNew(['id' => $post->thread_root_id]);
-
-            // 表示対象のスレッドの記事一覧
-            $children_posts = $this->getThreadPosts($plugin_frame, new Collection($post->thread_root_id), true);
-        }
+        // 関連投稿の取得
+        list($thread_root_post, $children_posts) = $this->getThreadPost($plugin_frame, $post);
 
         // 詳細画面を呼び出す。
         return $this->view('show', [
+            'bbs' => $this->getPluginBucket($this->getBucketId()),
             'post' => $post,
             'thread_root_post' => $thread_root_post,
             'children_posts'   => $children_posts,
@@ -381,27 +413,37 @@ class BbsesPlugin extends UserPluginBase
      */
     public function reply($request, $page_id, $frame_id, $post_id)
     {
+        // プラグインのフレームデータ
+        $plugin_frame = $this->getPluginFrame($frame_id);
+
         // 記事取得
         $post = $this->getPost($post_id);
 
+        // 関連投稿の取得
+        list($thread_root_post, $children_posts) = $this->getThreadPost($plugin_frame, $post);
+
         // 変更画面を呼び出す。
         return $this->view('edit', [
+            'bbs' => $this->getPluginBucket($this->getBucketId()),
             'post'        => new BbsPost(),
             'parent_post' => $post,
             'reply'       => $request->get('reply'),
             'reply_flag'  => true,
+            'thread_root_post' => $thread_root_post,
+            'children_posts'   => $children_posts,
+            'plugin_frame'     => $plugin_frame,
         ]);
     }
 
     /**
-     *  記事登録処理
+     * 記事登録処理
      */
     public function save($request, $page_id, $frame_id, $post_id = null)
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'title' => ['required'],
-            'body'  => ['required'],
+            'title' => ['required', 'max:255'],
+            'body'  => ['required', new CustomValiWysiwygMax()],
         ]);
         $validator->setAttributeNames([
             'title' => 'タイトル',
@@ -440,12 +482,13 @@ class BbsesPlugin extends UserPluginBase
         }
 
         // 承認の要否確認とステータス処理
-        if ($request->status == "1") {
-            $post->status = 1;  // 一時保存
-        } elseif ($this->buckets->needApprovalUser(Auth::user())) {
-            $post->status = 2;  // 承認待ち
+        if ($request->status == StatusType::temporary) {
+            $post->status = StatusType::temporary;  // 一時保存
+        // } elseif ($this->buckets->needApprovalUser(Auth::user())) {
+        } elseif ($this->isApproval()) {
+            $post->status = StatusType::approval_pending;  // 承認待ち
         } else {
-            $post->status = 0;  // 公開
+            $post->status = StatusType::active;  // 公開
         }
 
         // 返信の場合
@@ -478,21 +521,21 @@ class BbsesPlugin extends UserPluginBase
         // この post の thread_root_id と同じ post でかつ、この post 自身ではなく、データの status は公開のもの。
         $mail_users = BbsPost::select('users.name', 'users.email')
                              ->join('users', 'users.id', '=', 'bbs_posts.created_id')
-                             ->where('users.status', 0)
+                             ->where('users.status', UserStatus::active)
                              ->whereNotNull('users.email')
                              ->where('bbs_posts.thread_root_id', $post->thread_root_id)
                              ->where('bbs_posts.id', '!=', $post->id)
-                             ->where('bbs_posts.status', 0)
+                             ->where('bbs_posts.status', StatusType::active)
                              ->distinct()
                              ->get();
-        $this->sendRelateNotice($post, $mail_users, 'show');
+        $this->sendRelateNotice($post, $before_post, $mail_users, 'show');
 
         // 登録後はリダイレクトして詳細画面を開く。(form のリダイレクト指定では post した id が渡せないため)
         return new Collection(['redirect_path' => url('/') . "/plugin/bbses/show/" . $page_id . "/" . $frame_id . "/" . $post->id . "#frame-" . $frame_id]);
     }
 
     /**
-     *  承認処理
+     * 承認処理
      */
     public function approval($request, $page_id, $frame_id, $post_id)
     {
@@ -509,7 +552,7 @@ class BbsesPlugin extends UserPluginBase
 
         // 更新されたら、行レコードの updated_at を更新したいので、update()
         $post->updated_at = now();
-        $post->status = 0;  // 公開
+        $post->status = StatusType::active;  // 公開
         $post->update();
 
         // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
@@ -520,7 +563,7 @@ class BbsesPlugin extends UserPluginBase
     }
 
     /**
-     *  削除処理
+     * 削除処理
      */
     public function delete($request, $page_id, $frame_id, $post_id)
     {
@@ -555,7 +598,7 @@ class BbsesPlugin extends UserPluginBase
     {
         // 表示テンプレートを呼び出す。
         return $this->view('list_buckets', [
-            'plugin_buckets' => Bbs::orderBy('created_at', 'desc')->paginate(10),
+            'plugin_buckets' => Bbs::orderBy('created_at', 'desc')->paginate(10, ["*"], "frame_{$frame_id}_page"),
         ]);
     }
 
@@ -644,7 +687,7 @@ class BbsesPlugin extends UserPluginBase
     }
 
     /**
-     *  バケツ登録処理
+     * バケツ登録処理
      */
     public function saveBuckets($request, $page_id, $frame_id, $bucket_id = null)
     {
@@ -674,6 +717,8 @@ class BbsesPlugin extends UserPluginBase
         // プラグインバケツにデータを設定して保存
         $bbs = $this->getPluginBucket($bucket->id);
         $bbs->name = $request->name;
+        $bbs->use_like = $request->use_like;
+        $bbs->like_button_name = $request->like_button_name;
         $bbs->save();
 
         // プラグインフレームを作成 or 更新
@@ -687,7 +732,7 @@ class BbsesPlugin extends UserPluginBase
     }
 
     /**
-     *  削除処理
+     * 削除処理
      */
     public function destroyBuckets($request, $page_id, $frame_id, $bbs_id)
     {
@@ -716,9 +761,9 @@ class BbsesPlugin extends UserPluginBase
         return;
     }
 
-   /**
-    * データ紐づけ変更関数
-    */
+    /**
+     * データ紐づけ変更関数
+     */
     public function changeBuckets($request, $page_id, $frame_id)
     {
         // FrameのバケツIDの更新
@@ -734,5 +779,16 @@ class BbsesPlugin extends UserPluginBase
         $bbs_frame->save();
 
         return;
+    }
+
+    /**
+     * いいねをJSON形式で返す
+     */
+    public function saveLikeJson($request, $page_id, $frame_id, $id = null)
+    {
+        $bbs = $this->getPluginBucket($this->getBucketId());
+
+        $count = Like::saveLike($this->frame->plugin_name, $bbs->id, $id);
+        return $count;
     }
 }

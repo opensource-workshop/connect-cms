@@ -33,7 +33,7 @@
         　 記録した検索条件は、コード一覧に検索ボタンとして表示され、押すとその条件で検索します。
     </div>
 
-    @include('common.errors_form_line')
+    @include('plugins.common.errors_form_line')
 
     <form name="form_code" action="" method="POST" class="form-horizontal">
         {{ csrf_field() }}

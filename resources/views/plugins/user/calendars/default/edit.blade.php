@@ -10,10 +10,10 @@
 @section("plugin_contents_$frame->id")
 
 {{-- 共通エラーメッセージ 呼び出し --}}
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 {{-- WYSIWYG 呼び出し --}}
-@include('plugins.common.wysiwyg')
+@include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame->id])
 
 {{-- 一時保存ボタンのアクション --}}
 <script type="text/javascript">
@@ -57,9 +57,28 @@
     @if (isset($parent_post))
         <input type="hidden" name="parent_id" value="{{$parent_post->id}}">
     @endif
-    <div class="form-group row">
-        <label class="col-md-2 control-label text-md-right">状態</label>
-        <div class="col-md-10">
+
+    @php
+    if ($frame->isExpandNarrow()) {
+        // 右・左エリア = スマホ表示と同等にする
+        $label_class = 'col-12 control-label';
+        $input_area_class = 'col-12';
+        $input_area_date_class = 'col-12';
+        $input_area_time_class = 'col-12';
+        $errors_div_class = 'col-12';
+    } else {
+        // メインエリア・フッターエリア
+        $label_class = 'col-md-2 control-label text-md-right pr-3';
+        $input_area_class = 'col-md-10';
+        $input_area_date_class = 'col-md-3';
+        $input_area_time_class = 'col-md-2';
+        $errors_div_class = 'col-md-10 offset-md-2';
+    }
+    @endphp
+
+    <div class="form-group form-row">
+        <label class="{{$label_class}}">状態</label>
+        <div class="{{$input_area_class}}">
             @if ($post->status === null)
                 <span class="badge badge-info align-bottom">新規</span>
             @elseif ($post->status == 0)
@@ -72,17 +91,17 @@
         </div>
     </div>
 
-    <div class="form-group row">
-        <label class="col-md-2 control-label text-md-right"><label class="badge badge-danger">必須</label> タイトル</label>
-        <div class="col-md-10">
-            <input type="text" name="title" value="{{old('title', $post->title)}}" class="form-control">
-            @if ($errors && $errors->has('title')) <div class="text-danger">{{$errors->first('title')}}</div> @endif
+    <div class="form-group form-row">
+        <label class="{{$label_class}}"><label class="badge badge-danger">必須</label> タイトル</label>
+        <div class="{{$input_area_class}}">
+            <input type="text" name="title" value="{{old('title', $post->title)}}" class="form-control @if ($errors && $errors->has('title')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'title'])
         </div>
     </div>
 
-    <div class="form-group row">
-        <label class="col-md-2 control-label text-md-right">全日予定</label>
-        <div class="col-md-10">
+    <div class="form-group form-row">
+        <label class="{{$label_class}}">全日予定</label>
+        <div class="{{$input_area_class}}">
             <div class="custom-control custom-checkbox">
                 <input type="checkbox" name="allday_flag" value="1" class="custom-control-input" id="allday_flag{{$frame_id}}" onclick="check_allday();"@if(old('allday_flag', $post->allday_flag)) checked=checked @endif>
                 <label class="custom-control-label" for="allday_flag{{$frame_id}}">チェックすると、全日予定として扱います。</label>
@@ -90,14 +109,14 @@
         </div>
     </div>
 
-    <div class="form-group row mb-0">
-        <label class="col-md-2 control-label text-md-right"><label class="badge badge-danger">必須</label> 開始日時</label>
+    <div class="form-group form-row mb-0">
+        <label class="{{$label_class}}"><label class="badge badge-danger">必須</label> 開始日時</label>
 
-        <div class="col-md-3">
+        <div class="{{$input_area_date_class}}">
             <div class="input-group date" id="start_date" data-target-input="nearest">
-                <input type="text" name="start_date" value="{{old('start_date', $post->start_date)}}" class="form-control datetimepicker-input" data-target="#start_date"/>
+                <input type="text" name="start_date" value="{{old('start_date', $post->start_date)}}" class="form-control datetimepicker-input @if ($errors && $errors->has('start_date')) border-danger @endif" data-target="#start_date"/>
                 <div class="input-group-append" data-target="#start_date" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="fas fa-calendar-alt"></i></div>
+                    <div class="input-group-text @if ($errors && $errors->has('start_date')) border-danger @endif"><i class="fas fa-calendar-alt"></i></div>
                 </div>
             </div>
             <script type="text/javascript">
@@ -111,18 +130,18 @@
             </script>
         </div>
 
-        <div class="col-md-2">
+        <div class="{{$input_area_time_class}}">
             <div class="input-group date" id="start_time" data-target-input="nearest">
                 @if(old('allday_flag', $post->allday_flag))
                 <input type="text" name="start_time" value="" class="form-control datetimepicker-input" data-target="#start_time" disabled />
                 @else
-                <input type="text" name="start_time" value="{{old('start_time', $post->start_time)}}" class="form-control datetimepicker-input" data-target="#start_time" />
+                <input type="text" name="start_time" value="{{old('start_time', $post->start_time)}}" class="form-control datetimepicker-input @if ($errors && $errors->has('start_time')) border-danger @endif" data-target="#start_time" />
                 @endif
                 <div class="input-group-append" data-target="#start_time" data-toggle="datetimepicker">
                     <div class="input-group-text"><i class="fas fa-clock"></i></div>
                 </div>
             </div>
-            @if ($errors && $errors->has('start_time')) <div class="text-danger">{{$errors->first('start_time')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'start_time'])
             <script type="text/javascript">
                 $(function () {
                     $('#start_time').datetimepicker({
@@ -133,20 +152,17 @@
             </script>
         </div>
     </div>
-    <div class="form-group row">
-    @if ($errors && $errors->has('start_date'))
-        <div class="col-md-2"></div>
-        <div class="col-md-10 text-danger">{{$errors->first('start_date')}}</div>
-    @endif
+    <div class="form-group form-row">
+        @include('plugins.common.errors_inline', ['name' => 'start_date', 'class' => $errors_div_class])
     </div>
 
-    <div class="form-group row mb-0">
-        <label class="col-md-2 control-label text-md-right">終了日時</label>
-        <div class="col-md-3">
+    <div class="form-group form-row mb-0">
+        <label class="{{$label_class}}">終了日時</label>
+        <div class="{{$input_area_date_class}}">
             <div class="input-group date" id="end_date" data-target-input="nearest">
-                <input type="text" name="end_date" value="{{old('end_date', $post->end_date)}}" class="form-control datetimepicker-input" data-target="#end_date" />
+                <input type="text" name="end_date" value="{{old('end_date', $post->end_date)}}" class="form-control datetimepicker-input @if ($errors && $errors->has('end_date')) border-danger @endif" data-target="#end_date" />
                 <div class="input-group-append" data-target="#end_date" data-toggle="datetimepicker">
-                    <div class="input-group-text"><i class="fas fa-calendar-alt"></i></div>
+                    <div class="input-group-text @if ($errors && $errors->has('end_date')) border-danger @endif"><i class="fas fa-calendar-alt"></i></div>
                 </div>
             </div>
             <script type="text/javascript">
@@ -160,12 +176,12 @@
             </script>
         </div>
 
-        <div class="col-md-2">
+        <div class="{{$input_area_time_class}}">
             <div class="input-group date" id="end_time" data-target-input="nearest">
                 @if(old('allday_flag', $post->allday_flag))
                 <input type="text" name="end_time" value="" class="form-control datetimepicker-input" data-target="#end_time" disabled />
                 @else
-                <input type="text" name="end_time" value="{{old('end_time', $post->end_time)}}" class="form-control datetimepicker-input" data-target="#end_time" />
+                <input type="text" name="end_time" value="{{old('end_time', $post->end_time)}}" class="form-control datetimepicker-input @if ($errors && $errors->has('end_time')) border-danger @endif" data-target="#end_time" />
                 @endif
                 <div class="input-group-append" data-target="#end_time" data-toggle="datetimepicker">
                     <div class="input-group-text"><i class="fas fa-clock"></i></div>
@@ -182,22 +198,21 @@
         </div>
     </div>
 
-    <div class="form-group row">
-    @if ($errors && $errors->has('end_date'))
-        <div class="col-md-2"></div>
-        <div class="col-md-10 text-danger">{{$errors->first('end_date')}}</div>
-    @endif
+    <div class="form-group form-row">
+        @include('plugins.common.errors_inline', ['name' => 'end_date', 'class' => $errors_div_class])
     </div>
 
-    <div class="form-group row">
-        <label class="col-md-2 control-label text-md-right"><label class="badge badge-danger">必須</label> 本文</label>
-        <div class="col-md-10">
-            @if (isset($reply) && $reply == true)
-                <textarea name="body" class="form-control" rows=2>{!!old('body', $parent_post->getReplyBody())!!}</textarea>
-            @else
-                <textarea name="body" class="form-control" rows=2>{!!old('body', $post->body)!!}</textarea>
-            @endif
-            @if ($errors && $errors->has('body')) <div class="text-danger">{{$errors->first('body')}}</div> @endif
+    <div class="form-group form-row">
+        <label class="{{$label_class}}">本文</label>
+        <div class="{{$input_area_class}}">
+            <div @if ($errors && $errors->has('body')) class="border border-danger" @endif>
+                @if (isset($reply) && $reply == true)
+                    <textarea name="body" class="form-control wysiwyg{{$frame->id}}" rows=2>{!!old('body', $parent_post->getReplyBody())!!}</textarea>
+                @else
+                    <textarea name="body" class="form-control wysiwyg{{$frame->id}}" rows=2>{!!old('body', $post->body)!!}</textarea>
+                @endif
+            </div>
+            @include('plugins.common.errors_inline_wysiwyg', ['name' => 'body'])
         </div>
     </div>
 
@@ -223,13 +238,13 @@
                     <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($post->id))
-                        @if ($buckets->needApprovalUser(Auth::user()))
+                        @if ($buckets->needApprovalUser(Auth::user(), $frame))
                             <button type="submit" class="btn btn-success"><i class="far fa-edit"></i> 登録申請</button>
                         @else
                             <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 登録確定</button>
                         @endif
                     @else
-                        @if ($buckets->needApprovalUser(Auth::user()))
+                        @if ($buckets->needApprovalUser(Auth::user(), $frame))
                             <button type="submit" class="btn btn-success"><i class="far fa-edit"></i> 変更申請</button>
                         @else
                             <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更確定</button>

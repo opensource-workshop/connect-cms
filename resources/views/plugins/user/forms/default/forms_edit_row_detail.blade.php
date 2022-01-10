@@ -15,7 +15,7 @@
 
 @section("plugin_setting_$frame->id")
 
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 <script type="text/javascript">
 
@@ -390,6 +390,7 @@
                     <div class="card bg-light mt-1">
                         <div class="card-body px-2 pt-0 pb-1">
                             <span class="small">
+                                ※ HTMLタグが使用できます。<br />
                                 ※ [[upload_max_filesize]] を記述すると該当部分にアップロードできる１ファイルの最大サイズが入ります。<br />
                                 ※ （設定例：ファイル型に設定）<br />
                                 　 アップロードできる１ファイルの最大サイズ: [[upload_max_filesize]]<br />

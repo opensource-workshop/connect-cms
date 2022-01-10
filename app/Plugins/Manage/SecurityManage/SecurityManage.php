@@ -79,7 +79,7 @@ class SecurityManage extends ManagePluginBase
         );
 
         // 追加項目のどれかに値が入っていたら、行の他の項目も必須
-        if (!empty($request->add_apply_sequence) || !empty($request->add_ip_address) || !empty($request->add_reject)) {
+        if (!empty($request->add_apply_sequence) || !empty($request->add_ip_address) || !empty($request->add_reject) || !empty($request->add_memo)) {
             // 項目のエラーチェック
             $validator = Validator::make($request->all(), [
                 'add_apply_sequence'   => ['required'],
@@ -125,6 +125,7 @@ class SecurityManage extends ManagePluginBase
                                  'ip_address'     => $request->add_ip_address,
                                  'role'           => $request->add_role,
                                  'reject'         => $request->add_reject,
+                                 'memo'           => $request->add_memo,
             ]);
         }
 
@@ -139,6 +140,7 @@ class SecurityManage extends ManagePluginBase
                 $login_permits->ip_address     = $request->ip_address[$login_permit_id];
                 $login_permits->role           = $request->role[$login_permit_id];
                 $login_permits->reject         = $request->reject[$login_permit_id];
+                $login_permits->memo           = $request->memo[$login_permit_id];
 
                 // 保存
                 $login_permits->save();

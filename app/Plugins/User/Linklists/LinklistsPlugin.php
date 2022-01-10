@@ -3,17 +3,19 @@
 namespace App\Plugins\User\Linklists;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-use DB;
-
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
+use App\Models\Common\Categories;
 use App\Models\User\Linklists\Linklist;
 use App\Models\User\Linklists\LinklistFrame;
 use App\Models\User\Linklists\LinklistPost;
+
+use App\Rules\CustomValiTextMax;
+use App\Rules\CustomValiUrlMax;
 
 use App\Plugins\User\UserPluginBase;
 
@@ -23,7 +25,7 @@ use App\Plugins\User\UserPluginBase;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category リンクリスト・プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class LinklistsPlugin extends UserPluginBase
 {
@@ -43,21 +45,22 @@ class LinklistsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['editView'];
-        $functions['post'] = ['saveView'];
+        $functions['get']  = [];
+        $functions['post'] = [];
         return $functions;
     }
 
     /**
-     *  権限定義
+     * 追加の権限定義（コアから呼び出す）
      */
     public function declareRole()
     {
         // 権限チェックテーブル
-        $role_ckeck_table = array();
-        $role_ckeck_table["editView"] = array('role_article');
-        $role_ckeck_table["saveView"] = array('role_article');
-        return $role_ckeck_table;
+        $role_check_table = [];
+        $role_check_table["edit"]        = ['frames.edit'];
+        $role_check_table["save"]        = ['frames.create'];
+        $role_check_table["delete"]      = ['frames.delete'];
+        return $role_check_table;
     }
 
     /**
@@ -74,14 +77,25 @@ class LinklistsPlugin extends UserPluginBase
      * POST取得関数（コアから呼び出す）
      * コアがPOSTチェックの際に呼び出す関数
      */
-    public function getPost($id)
+    public function getPost($id, $action = null)
     {
+        // データ存在チェックのために getPost を利用
+
+        if (is_null($action)) {
+            // プラグイン内からの呼び出しを想定。処理を通す。
+        } elseif (in_array($action, ['edit', 'save', 'delete'])) {
+            // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+        } else {
+            // それ以外のアクションは null で返す。
+            return null;
+        }
+
         // 一度読んでいれば、そのPOSTを再利用する。
         if (!empty($this->post)) {
             return $this->post;
         }
 
-        // POST を取得する。
+        // POST を取得する。（statusカラムなしのため、appendAuthWhereBase 使わない）
         $this->post = LinklistPost::firstOrNew(['id' => $id]);
         return $this->post;
     }
@@ -99,7 +113,7 @@ class LinklistsPlugin extends UserPluginBase
     /**
      * プラグインのバケツ取得関数
      */
-    public function getPluginBucket($bucket_id)
+    private function getPluginBucket($bucket_id)
     {
         // プラグインのメインデータを取得する。
         return Linklist::firstOrNew(['bucket_id' => $bucket_id]);
@@ -111,17 +125,30 @@ class LinklistsPlugin extends UserPluginBase
     private function getPosts($linklist_frame)
     {
         // データ取得
-        $posts_query = LinklistPost::select('linklist_posts.*')
-                                   ->join('linklists', function ($join) {
-                                       $join->on('linklists.id', '=', 'linklist_posts.linklist_id')
-                                          ->where('linklists.bucket_id', '=', $this->frame->bucket_id);
-                                   })
-                                   ->whereNull('linklist_posts.deleted_at')
-                                   ->orderBy('display_sequence', 'asc')
-                                   ->orderBy('created_at', 'asc');
+        $posts_query = LinklistPost::
+            select(
+                'linklist_posts.*',
+                'categories.color as category_color',
+                'categories.background_color as category_background_color',
+                'categories.category as category',
+                'plugin_categories.view_flag as category_view_flag',
+                'plugin_categories.categories_id as plugin_categories_categories_id'
+            )
+            ->join('linklists', function ($join) {
+                $join->on('linklists.id', '=', 'linklist_posts.linklist_id')
+                    ->where('linklists.bucket_id', $this->frame->bucket_id)
+                    ->whereNull('linklists.deleted_at');
+            });
+
+        // カテゴリのleftJoin
+        $posts_query = Categories::appendCategoriesLeftJoin($posts_query, $this->frame->plugin_name, 'linklist_posts.categories_id', 'linklists.id');
+
+        $posts_query->orderBy('plugin_categories.display_sequence', 'asc')
+            ->orderBy('linklist_posts.display_sequence', 'asc')
+            ->orderBy('linklist_posts.created_at', 'asc');
 
         // 取得
-        return $posts_query->paginate($linklist_frame->view_count);
+        return $posts_query->paginate($linklist_frame->view_count, ["*"], "frame_{$linklist_frame->id}_page");
     }
 
     /* スタティック関数 */
@@ -209,10 +236,14 @@ class LinklistsPlugin extends UserPluginBase
         // リンクリストデータ一覧の取得
         $posts = $this->getPosts($plugin_frame);
 
+        // バケツから linklist_id 取得
+        $linklist = $this->getPluginBucket($this->getBucketId());
+
         // 表示テンプレートを呼び出す。
         return $this->view('index', [
-            'posts'        => $posts,
+            'posts' => $posts,
             'plugin_frame' => $plugin_frame,
+            'linklist' => $linklist,
         ]);
     }
 
@@ -241,9 +272,16 @@ class LinklistsPlugin extends UserPluginBase
         // 記事取得
         $post = $this->getPost($post_id);
 
+        // バケツから linklist_id 取得
+        $linklist = $this->getPluginBucket($this->getBucketId());
+
+        // カテゴリ
+        $categories = Categories::getInputCategories($this->frame->plugin_name, $linklist->id);
+
         // 変更画面を呼び出す。
         return $this->view('edit', [
             'post' => $post,
+            'categories' => $categories,
         ]);
     }
 
@@ -254,11 +292,15 @@ class LinklistsPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'title'            => ['required'],
+            'title'            => ['required', 'max:255'],
+            'url'              => ['required', new CustomValiUrlMax()],
+            'description'      => [new CustomValiTextMax()],
             'display_sequence' => ['nullable', 'numeric'],
         ]);
         $validator->setAttributeNames([
             'title'            => 'タイトル',
+            'url'              => 'URL',
+            'description'      => '説明',
             'display_sequence' => '表示順',
         ]);
 
@@ -268,7 +310,7 @@ class LinklistsPlugin extends UserPluginBase
         }
 
         // POSTデータのモデル取得
-        $post = LinklistPost::firstOrNew(['id' => $post_id]);
+        $post = $this->getPost($post_id);
 
         // バケツから linklist_id 取得
         // bugfix: linklist_idはフレームではなく、表示しているバケツから取得する
@@ -289,6 +331,7 @@ class LinklistsPlugin extends UserPluginBase
         $post->url               = $request->url;
         $post->target_blank_flag = $request->target_blank_flag;
         $post->description       = $request->description;
+        $post->categories_id     = $request->categories_id;
         $post->display_sequence  = $display_sequence;
 
         // データ保存
@@ -442,22 +485,23 @@ class LinklistsPlugin extends UserPluginBase
      */
     public function destroyBuckets($request, $page_id, $frame_id, $linklist_id)
     {
+        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
+
         // プラグインバケツの取得
         $linklist = Linklist::find($linklist_id);
         if (empty($linklist)) {
             return;
         }
 
-        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
-        // see) https://readouble.com/laravel/5.5/ja/collections.html#method-pluck
-        //
         // POSTデータ削除
-        // LinklistPost::where('linklist_id', $linklist->id)->delete();
+        // see) https://readouble.com/laravel/5.5/ja/collections.html#method-pluck
         $linklist_post_ids = LinklistPost::where('linklist_id', $linklist->id)->pluck('id');
         LinklistPost::destroy($linklist_post_ids);
 
+        // カテゴリ削除
+        Categories::destroyBucketsCategories($this->frame->plugin_name, $linklist->id);
+
         // FrameのバケツIDの更新
-        // Frame::where('id', $frame_id)->update(['bucket_id' => null]);
         Frame::where('bucket_id', $linklist->bucket_id)->update(['bucket_id' => null]);
 
         // delete: バケツ削除時に表示設定は消さない. 今後フレーム削除時にプラグイン側で追加処理ができるようになったら linklist_frame を削除する
@@ -466,7 +510,6 @@ class LinklistsPlugin extends UserPluginBase
         // $linklist_frame->delete();
 
         // バケツ削除
-        // Buckets::find($linklist->bucket_id)->delete();
         Buckets::destroy($linklist->bucket_id);
 
         // プラグインデータ削除
@@ -494,5 +537,60 @@ class LinklistsPlugin extends UserPluginBase
         // $linklist_frame->save();
 
         return;
+    }
+
+    /**
+     * カテゴリ表示関数
+     */
+    public function listCategories($request, $page_id, $frame_id, $id = null)
+    {
+        // バケツから linklist_id 取得
+        $linklist = $this->getPluginBucket($this->getBucketId());
+
+        // 共通カテゴリ
+        $general_categories = Categories::getGeneralCategories($this->frame->plugin_name, $linklist->id);
+
+        // 個別カテゴリ（プラグイン）
+        $plugin_categories = Categories::getPluginCategories($this->frame->plugin_name, $linklist->id);
+
+        // 表示テンプレートを呼び出す。
+        return $this->view('list_categories', [
+            'general_categories' => $general_categories,
+            'plugin_categories' => $plugin_categories,
+            'linklist' => $linklist,
+        ]);
+    }
+
+    /**
+     * カテゴリ登録処理
+     */
+    public function saveCategories($request, $page_id, $frame_id, $id = null)
+    {
+        /* エラーチェック
+        ------------------------------------ */
+
+        $validator = Categories::validatePluginCategories($request);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        /* カテゴリ追加
+        ------------------------------------ */
+
+        // バケツから linklist_id 取得
+        $linklist = $this->getPluginBucket($this->getBucketId());
+
+        Categories::savePluginCategories($request, $this->frame->plugin_name, $linklist->id);
+
+        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+    }
+
+    /**
+     * カテゴリ削除処理
+     */
+    public function deleteCategories($request, $page_id, $frame_id, $id = null)
+    {
+        Categories::deleteCategories($this->frame->plugin_name, $id);
     }
 }

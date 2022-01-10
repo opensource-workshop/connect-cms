@@ -3,7 +3,6 @@
 namespace App\Plugins\User\Counters;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -25,11 +24,16 @@ use App\Utilities\Csv\CsvUtils;
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category カウンター・プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class CountersPlugin extends UserPluginBase
 {
     /* オブジェクト変数 */
+
+    /**
+     * POST チェックに使用する getPost() 関数を使うか
+     */
+    public $use_getpost = false;
 
     /* コアから呼び出す関数 */
 
@@ -40,9 +44,8 @@ class CountersPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['editView'];
         $functions['get']  = ['listCounters'];
-        $functions['post'] = ['saveView'];
+        $functions['post'] = [];
         return $functions;
     }
 
@@ -52,11 +55,10 @@ class CountersPlugin extends UserPluginBase
     public function declareRole()
     {
         // 権限チェックテーブル
-        $role_ckeck_table = array();
-        $role_ckeck_table["editView"] = array('role_article');
-        $role_ckeck_table["saveView"] = array('role_article');
-        $role_ckeck_table["listCounters"] = array('role_article');
-        return $role_ckeck_table;
+        $role_check_table = [];
+        $role_check_table["listCounters"] = ['frames.edit'];
+
+        return $role_check_table;
     }
 
     /**
@@ -68,14 +70,6 @@ class CountersPlugin extends UserPluginBase
     {
         return "editBuckets";
     }
-
-    // /**
-    //  * POST取得関数（コアから呼び出す）
-    //  * コアがPOSTチェックの際に呼び出す関数
-    //  */
-    // public function getPost($id)
-    // {
-    // }
 
     /* private関数 */
 
@@ -90,7 +84,7 @@ class CountersPlugin extends UserPluginBase
     /**
      * プラグインのバケツ取得関数
      */
-    public function getPluginBucket($bucket_id)
+    private function getPluginBucket($bucket_id)
     {
         // プラグインのメインデータを取得する。
         return Counter::firstOrNew(['bucket_id' => $bucket_id]);
@@ -98,9 +92,9 @@ class CountersPlugin extends UserPluginBase
 
     /* スタティック関数 */
 
-    // /**
-    //  * 新着情報用メソッド
-    //  */
+    /**
+     * 新着情報用メソッド
+     */
     // public static function getWhatsnewArgs()
     // {
     //     // 戻り値('sql_method'、'link_pattern'、'link_base')
@@ -108,9 +102,9 @@ class CountersPlugin extends UserPluginBase
     //     return $return;
     // }
 
-    // /**
-    //  * 検索用メソッド
-    //  */
+    /**
+     * 検索用メソッド
+     */
     // public static function getSearchArgs($search_keyword)
     // {
     //     $return = [];
@@ -305,13 +299,13 @@ class CountersPlugin extends UserPluginBase
                 'design_type' => $request->design_type,
                 'use_total_count'  => (int)$request->use_total_count,
                 'use_today_count' => (int)$request->use_today_count,
-                'use_yestday_count' => (int)$request->use_yestday_count,
+                'use_yesterday_count' => (int)$request->use_yesterday_count,
                 'total_count_title' => $request->total_count_title,
                 'today_count_title' => $request->today_count_title,
-                'yestday_count_title' => $request->yestday_count_title,
+                'yesterday_count_title' => $request->yesterday_count_title,
                 'total_count_after' => $request->total_count_after,
                 'today_count_after' => $request->today_count_after,
-                'yestday_count_after' => $request->yestday_count_after,
+                'yesterday_count_after' => $request->yesterday_count_after,
             ],
         );
 
@@ -390,7 +384,7 @@ class CountersPlugin extends UserPluginBase
                 'design_type' => CounterDesignType::numeric,
                 'total_count_title' => '累計',
                 'today_count_title' => '今日',
-                'yestday_count_title' => '昨日',
+                'yesterday_count_title' => '昨日',
             ]
         );
 
@@ -413,22 +407,20 @@ class CountersPlugin extends UserPluginBase
      */
     public function destroyBuckets($request, $page_id, $frame_id, $counter_id)
     {
+        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
+
         // プラグインバケツの取得
         $counter = Counter::find($counter_id);
         if (empty($counter)) {
             return;
         }
 
-        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
-        // see) https://readouble.com/laravel/5.5/ja/collections.html#method-pluck
-        //
         // カウントデータ削除
-        // CounterCount::where('counter_id', $counter->id)->delete();
+        // see) https://readouble.com/laravel/5.5/ja/collections.html#method-pluck
         $counter_count_ids = CounterCount::where('counter_id', $counter->id)->pluck('id');
         CounterCount::destroy($counter_count_ids);
 
         // FrameのバケツIDの更新
-        // Frame::where('id', $frame_id)->update(['bucket_id' => null]);
         Frame::where('bucket_id', $counter->bucket_id)->update(['bucket_id' => null]);
 
         // delete: バケツ削除時に表示設定は消さない. 今後フレーム削除時にプラグイン側で追加処理ができるようになったら counter_frame を削除する
@@ -437,13 +429,10 @@ class CountersPlugin extends UserPluginBase
         // $counter_frame->delete();
 
         // バケツ削除
-        // Buckets::find($counter->bucket_id)->delete();
         Buckets::destroy($counter->bucket_id);
 
         // プラグインデータ削除
         $counter->delete();
-
-        return;
     }
 
     /**
@@ -463,8 +452,6 @@ class CountersPlugin extends UserPluginBase
         // $counter_frame->counter_id = $plugin_bucket->id;
         // $counter_frame->frame_id = $frame_id;
         // $counter_frame->save();
-
-        return;
     }
 
     /**

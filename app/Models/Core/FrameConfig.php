@@ -4,6 +4,7 @@ namespace App\Models\Core;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 use Illuminate\Support\Facades\Log;
 
@@ -11,7 +12,7 @@ use App\UserableNohistory;
 
 class FrameConfig extends Model
 {
-    use UserableNohistory;
+    use SoftDeletes, UserableNohistory;
 
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト

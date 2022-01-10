@@ -20,8 +20,8 @@
             {{-- カレントページ、もしくは自分が親の場合の処理 --}}
             @if ($page_obj->id == $page_id || $page->isDescendantOf($page_obj))
 
-                {{-- 子供のページがある場合 --}}
-                @if (count($page_obj->children) > 0)
+                {{-- 子供のページがあり、表示する子ページがある場合 --}}
+                @if (count($page_obj->children) > 0 && $page->existChildrenPagesToDisplay($page_obj->children))
 
                     <li class="nav-item dropdown {{$page_obj->getClass()}}">
                     {{-- カレント --}}
@@ -58,8 +58,8 @@
                     </li>
                 @endif
             @else
-                {{-- 子供のページがある場合 --}}
-                @if (count($page_obj->children) > 0)
+                {{-- 子供のページがあり、表示する子ページがある場合 --}}
+                @if (count($page_obj->children) > 0 && $page->existChildrenPagesToDisplay($page_obj->children))
                     <li class="nav-item dropdown {{$page_obj->getClass()}}">
                     @if ($ancestors->contains('id', $page_obj->id))
                         <a class="nav-link dropdown-toggle active" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!} aria-current="page">
@@ -74,12 +74,12 @@
                         <a class="nav-link text-nowrap" href="{{$page_obj->getUrl()}}" {!!$page_obj->getUrlTargetTag()!!}>
                     @endif
                 @endif
-                        {{$page_obj->page_name}}
+                            {{$page_obj->page_name}}
                             @if (count($page_obj->children) > 0)
-                            <span class="caret"></span>
-                        @endif
-                    </a>
-                </li>
+                                <span class="caret"></span>
+                            @endif
+                        </a>
+                    </li>
             @endif
         @endif
     @endforeach

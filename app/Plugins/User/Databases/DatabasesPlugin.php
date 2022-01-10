@@ -3,11 +3,9 @@
 namespace App\Plugins\User\Databases;
 
 use Illuminate\Support\Facades\Auth;
-// use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Validation\Rule;
@@ -27,13 +25,13 @@ use App\Models\User\Databases\DatabasesInputs;
 use App\Models\User\Databases\DatabasesInputCols;
 use App\Models\User\Databases\DatabasesRole;
 
-use App\Rules\CustomVali_AlphaNumForMultiByte;
-use App\Rules\CustomVali_CheckWidthForString;
-use App\Rules\CustomVali_DatesYm;
-use App\Rules\CustomVali_CsvImage;
-use App\Rules\CustomVali_CsvExtensions;
+use App\Rules\CustomValiAlphaNumForMultiByte;
+use App\Rules\CustomValiCheckWidthForString;
+use App\Rules\CustomValiDatesYm;
+use App\Rules\CustomValiCsvImage;
+use App\Rules\CustomValiCsvExtensions;
+use App\Rules\CustomValiWysiwygMax;
 
-// use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
 
 use App\Utilities\Csv\CsvUtils;
@@ -47,6 +45,7 @@ use App\Enums\DatabaseColumnRoleName;
 use App\Enums\DatabaseRoleName;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\Required;
+use App\Enums\NoticeEmbeddedTag;
 use App\Enums\StatusType;
 
 /**
@@ -59,13 +58,18 @@ use App\Enums\StatusType;
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class DatabasesPlugin extends UserPluginBase
 {
     const CHECKBOX_SEPARATOR = '|';
 
     /* オブジェクト変数 */
+
+    /**
+     * 変更時のPOSTデータ
+     */
+    public $post = null;
 
     /* コアから呼び出す関数 */
 
@@ -77,10 +81,8 @@ class DatabasesPlugin extends UserPluginBase
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
         $functions['get']  = [
-            'editColumnDetail',
             'detail',
             'input',
-            'editView',
             'search',
         ];
         $functions['post'] = [
@@ -88,15 +90,7 @@ class DatabasesPlugin extends UserPluginBase
             'detail',
             'input',
             'cancel',
-            'updateColumn',
-            'updateColumnSequence',
-            'updateColumnDetail',
-            'addSelect',
             'addPref',
-            'updateSelect',
-            'updateSelectSequence',
-            'deleteSelect',
-            'saveView',
             'search',
         ];
         return $functions;
@@ -119,24 +113,13 @@ class DatabasesPlugin extends UserPluginBase
         // 標準権限は右記で定義 config/cc_role.php
         //
         // 権限チェックテーブル
-        $role_ckeck_table = array();
-        $role_ckeck_table["input"]                = array('posts.create', 'posts.update');
-        $role_ckeck_table["publicConfirm"]        = array('posts.create', 'posts.update');
-        $role_ckeck_table["publicStore"]          = array('posts.create', 'posts.update');
+        $role_check_table = array();
+        $role_check_table["input"]                = array('posts.create', 'posts.update');
+        $role_check_table["publicConfirm"]        = array('posts.create', 'posts.update');
+        $role_check_table["publicStore"]          = array('posts.create', 'posts.update');
 
-        $role_ckeck_table["editColumnDetail"]     = array('buckets.editColumn');
-        $role_ckeck_table["updateColumn"]         = array('buckets.editColumn');
-        $role_ckeck_table["updateColumnSequence"] = array('buckets.editColumn');
-        $role_ckeck_table["updateColumnDetail"]   = array('buckets.editColumn');
-        $role_ckeck_table["addSelect"]            = array('buckets.addColumn');
-        $role_ckeck_table["addPref"]              = array('buckets.addColumn');
-        $role_ckeck_table["updateSelect"]         = array('buckets.editColumn');
-        $role_ckeck_table["updateSelectSequence"] = array('buckets.editColumn');
-        $role_ckeck_table["deleteSelect"]         = array('buckets.editColumn');
-        // $role_ckeck_table["deleteColumnsSelects"] = array('buckets.editColumn');
-        $role_ckeck_table["editView"]             = array('frames.edit');
-        $role_ckeck_table["saveView"]             = array('frames.edit');
-        return $role_ckeck_table;
+        $role_check_table["addPref"]              = array('buckets.addColumn');
+        return $role_check_table;
     }
 
     /**
@@ -154,6 +137,37 @@ class DatabasesPlugin extends UserPluginBase
 
         // カラムの設定画面
         return "editColumn";
+    }
+
+    /**
+     *  POST取得関数（コアから呼び出す）
+     *  コアがPOSTチェックの際に呼び出す関数
+     */
+    public function getPost($id, $action = null)
+    {
+        if (is_null($action)) {
+            // プラグイン内からの呼び出しを想定。処理を通す。
+        } elseif (in_array($action, ['input', 'publicConfirm', 'publicStore', 'temporarysave', 'delete'])) {
+            // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+        } else {
+            // それ以外のアクションは null で返す。
+            return null;
+        }
+
+        // 一度読んでいれば、そのPOSTを再利用する。
+        if (!empty($this->post)) {
+            return $this->post;
+        }
+
+        // 登録データ行の取得
+        $this->post = DatabasesInputs::
+            where(function ($query) {
+                // 権限によって表示する記事を絞る
+                $query = $this->appendAuthWhereBase($query, 'databases_inputs');
+            })
+            ->firstOrNew(['id' => $id]);
+
+        return $this->post;
     }
 
     /* private関数 */
@@ -228,31 +242,31 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
-     *  紐づくデータベースID とフレームデータの取得
+     * 紐づくデータベースID とフレームデータの取得
      */
     private function getDatabaseFrame($frame_id)
     {
         // Frame データ
-        $frame = DB::table('frames')
-                 ->select(
-                     'frames.*',
-                     'databases.id as databases_id',
-                     'databases_frames.id as databases_frames_id',
-                     'databases.databases_name',
-                     'databases.search_results_empty_message',
-                     'use_search_flag',
-                     'placeholder_search',
-                     'use_select_flag',
-                     'use_sort_flag',
-                     'view_count',
-                     'default_hide',
-                     'view_page_id',
-                     'view_frame_id'
-                 )
-                 ->leftJoin('databases', 'databases.bucket_id', '=', 'frames.bucket_id')
-                 ->leftJoin('databases_frames', 'databases_frames.frames_id', '=', 'frames.id')
-                 ->where('frames.id', $frame_id)
-                 ->first();
+        $frame = Frame::
+            select(
+                'frames.*',
+                'databases.id as databases_id',
+                'databases_frames.id as databases_frames_id',
+                'databases.databases_name',
+                'databases.search_results_empty_message',
+                'use_search_flag',
+                'placeholder_search',
+                'use_select_flag',
+                'use_sort_flag',
+                'view_count',
+                'default_hide'
+                // 'view_page_id',
+                // 'view_frame_id'
+            )
+            ->leftJoin('databases', 'databases.bucket_id', '=', 'frames.bucket_id')
+            ->leftJoin('databases_frames', 'databases_frames.frames_id', '=', 'frames.id')
+            ->where('frames.id', $frame_id)
+            ->first();
         return $frame;
     }
 
@@ -262,13 +276,23 @@ class DatabasesPlugin extends UserPluginBase
     private function getDatabasesInputCols($id)
     {
         // データ詳細の取得
-        $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'databases_columns.column_type', 'databases_columns.column_name', 'databases_columns.classname', 'databases_columns.role_display_control_flag', 'uploads.client_original_name')
-                                        ->leftJoin('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
-                                        ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
-                                        ->where('databases_inputs_id', $id)
-                                        ->orderBy('databases_inputs_id', 'asc')
-                                        ->orderBy('databases_columns_id', 'asc')
-                                        ->get();
+        $input_cols = DatabasesInputCols::
+            select(
+                'databases_input_cols.*',
+                'databases_columns.column_type',
+                'databases_columns.column_name',
+                'databases_columns.classname',
+                'databases_columns.role_display_control_flag',
+                'databases_columns.databases_id',
+                'databases_columns.title_flag',
+                'uploads.client_original_name'
+            )
+            ->leftJoin('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+            ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
+            ->where('databases_inputs_id', $id)
+            ->orderBy('databases_inputs_id', 'asc')
+            ->orderBy('databases_columns_id', 'asc')
+            ->get();
         return $input_cols;
     }
 
@@ -418,7 +442,7 @@ class DatabasesPlugin extends UserPluginBase
             }
 
             // 権限によって表示する記事を絞る
-            $inputs_query = $this->appendAuthWhere($inputs_query, 'databases_inputs');
+            $inputs_query = $this->appendAuthWhereBase($inputs_query, 'databases_inputs');
 
             // 権限によって非表示columのdatabases_columns_id配列を取得する
             $hide_columns_ids = (new DatabasesTool())->getHideColumnsIds($columns, 'list_detail_display_flag');
@@ -930,7 +954,7 @@ class DatabasesPlugin extends UserPluginBase
         $inputs = $this->getDatabasesInputs($id);
 
         // データがあることを確認
-        if (empty($inputs)) {
+        if (empty($inputs->id)) {
             return;
         }
 
@@ -1008,13 +1032,8 @@ class DatabasesPlugin extends UserPluginBase
             $inputs = $this->getDatabasesInputs($id);
 
             // データがあることを確認
-            if (empty($inputs)) {
+            if (empty($inputs->id)) {
                 return;
-            }
-
-            // 権限チェック
-            if ($this->can('posts.update', $inputs, $this->frame->plugin_name, $this->buckets)) {
-                return $this->view_error(403);
             }
 
             // データ詳細の取得
@@ -1070,11 +1089,11 @@ class DatabasesPlugin extends UserPluginBase
         // 英数値チェック
         if ($databases_column->rule_allowed_alpha_numeric) {
             $validator_rule[] = 'nullable';
-            $validator_rule[] = new CustomVali_AlphaNumForMultiByte();
+            $validator_rule[] = new CustomValiAlphaNumForMultiByte();
         }
         // 最大文字数チェック
         if ($databases_column->rule_word_count) {
-            $validator_rule[] = new CustomVali_CheckWidthForString($databases_column->column_name, $databases_column->rule_word_count);
+            $validator_rule[] = new CustomValiCheckWidthForString($databases_column->column_name, $databases_column->rule_word_count);
         }
         // 指定桁数チェック
         if ($databases_column->rule_digits_or_less) {
@@ -1105,7 +1124,7 @@ class DatabasesPlugin extends UserPluginBase
         // 複数年月型（テキスト入力）チェック
         if ($databases_column->column_type == DatabaseColumnType::dates_ym) {
             $validator_rule[] = 'nullable';
-            $validator_rule[] = new CustomVali_DatesYm();
+            $validator_rule[] = new CustomValiDatesYm();
         }
         // 時間チェック
         if ($databases_column->column_type == DatabaseColumnType::time) {
@@ -1121,6 +1140,11 @@ class DatabasesPlugin extends UserPluginBase
         if ($databases_column->column_type == DatabaseColumnType::video) {
             $validator_rule[] = 'nullable';
             $validator_rule[] = 'mimes:mp4';
+        }
+        // wysiwygチェック
+        if ($databases_column->column_type == DatabaseColumnType::wysiwyg) {
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = new CustomValiWysiwygMax();
         }
         // 単一選択チェック
         // 複数選択チェック
@@ -1363,13 +1387,13 @@ class DatabasesPlugin extends UserPluginBase
         $database = $this->getDatabases($frame_id);
 
         if ($isTemporary) {
-            $status = 1;  // 一時保存
+            $status = StatusType::temporary;  // 一時保存
         } else {
             // 承認の要否確認とステータス処理
-            if ($this->buckets->needApprovalUser(Auth::user())) {
-                $status = 2;  // 承認待ち
+            if ($this->isApproval()) {
+                $status = StatusType::approval_pending;  // 承認待ち
             } else {
-                $status = 0;  // 公開
+                $status = StatusType::active;  // 公開
             }
         }
 
@@ -1451,13 +1475,6 @@ class DatabasesPlugin extends UserPluginBase
                                                 ->orderBy('display_sequence')
                                                 ->get();
 
-        // delete: フォームの名残で残っていたメール送信処理をコメントアウト
-        // // メールの送信文字列
-        // $contents_text = '';
-
-        // // 登録者のメールアドレス
-        // $user_mailaddresses = array();
-
         // databases_input_cols 登録
         foreach ($databases_columns as $databases_column) {
             // 登録日型・更新日型・公開日型・表示順は、databases_inputsテーブルの登録日・更新日・公開日・表示順を利用するため、登録しない
@@ -1487,56 +1504,13 @@ class DatabasesPlugin extends UserPluginBase
                     $uploads_count = Uploads::where('id', $value)->update(['temporary_flag' => 0]);
                 }
             }
-
-            // delete: フォームの名残で残っていたメール送信処理をコメントアウト
-            // // メールの内容
-            // $contents_text .= $databases_column->column_name . "：" . $value . "\n";
-
-            // // メール型
-            // if ($databases_column->column_type == DatabaseColumnType::mail) {
-            //     $user_mailaddresses[] = $value;
-            // }
         }
 
-        // メール送信 引数(詳細表示メソッド, 登録したid, 登録か更新か)
-        //$this->sendPostNotice($databases_inputs->id, 'detail', empty($databases_inputs->first_committed_at) ? "notice_create" : "notice_update");
+        // titleカラムが無いため、プラグイン独自でセット
+        $overwrite_notice_embedded_tags = [NoticeEmbeddedTag::title => $this->getTitle($databases_inputs)];
 
-        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
-        $this->sendPostNotice($databases_inputs, $before_databases_inputs, 'detail');
-//        $this->sendPostNotice($databases_inputs, 'detail');
-
-        // delete: フォームの名残で残っていたメール送信処理をコメントアウト
-        // // 最後の改行を除去
-        // $contents_text = trim($contents_text);
-
-        // // 採番 ※[採番プレフィックス文字列] + [ゼロ埋め採番6桁]
-        // $number = $database->numbering_use_flag ? $database->numbering_prefix . sprintf('%06d', $this->getNo('databases', $database->bucket_id, $database->numbering_prefix)) : null;
-
-        // // 登録後メッセージ内の採番文字列を置換
-        // // $after_message = str_replace('[[number]]', $number, $database->after_message);
-
-        // // メール送信
-        // if ($database->mail_send_flag) {
-        //     // メール本文の組み立て
-        //     $mail_databaseat = $database->mail_databaseat;
-        //     $mail_text = str_replace('[[body]]', $contents_text, $mail_databaseat);
-
-        //     // メール本文内の採番文字列を置換
-        //     $mail_text = str_replace('[[number]]', $number, $mail_text);
-
-        //     // メール送信（管理者側）
-        //     $mail_addresses = explode(',', $database->mail_send_address);
-        //     foreach ($mail_addresses as $mail_address) {
-        //         Mail::to($mail_address)->send(new ConnectMail(['subject' => $database->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
-        //     }
-
-        //     // メール送信（ユーザー側）
-        //     foreach ($user_mailaddresses as $user_mailaddress) {
-        //         if (!empty($user_mailaddress)) {
-        //             Mail::to($user_mailaddress)->send(new ConnectMail(['subject' => $database->mail_subject, 'template' => 'mail.send'], ['content' => $mail_text]));
-        //         }
-        //     }
-        // }
+        // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド, 上書き埋め込みタグ)
+        $this->sendPostNotice($databases_inputs, $before_databases_inputs, 'detail', $overwrite_notice_embedded_tags);
 
         // 登録時のAction を/redirect/plugin にしたため、ここでreturn しなくてよい。
 
@@ -1596,11 +1570,12 @@ class DatabasesPlugin extends UserPluginBase
             }
         }
 
+        // メール送信のために、削除する前に行レコードを退避しておく。
+        $deleted_input = DatabasesInputs::firstOrNew(['id' => $id]);
+        $deleted_title = $this->getTitle($deleted_input);
+
         // 詳細カラムデータを削除
         DatabasesInputCols::where('databases_inputs_id', $id)->delete();
-
-        // メール送信のために、削除する前に行レコードを退避しておく。
-        $delete_input = DatabasesInputs::firstOrNew(['id' => $id]);
 
         // 行データを削除
         DatabasesInputs::where('id', $id)->delete();
@@ -1608,17 +1583,111 @@ class DatabasesPlugin extends UserPluginBase
         // 削除通知に渡すために、項目の編集（最初の公開（権限で制御しない）の項目名と値）
         $notice_cols = $input_cols->where("role_display_control_flag", 0);
         $delete_comment = "";
+        $overwrite_notice_embedded_tags = [];
         if ($notice_cols->isNotEmpty()) {
             $notice_cols_first = $notice_cols->first();
             $delete_comment  = "以下、削除されたデータの最初の公開項目です。\n";
             $delete_comment .= "「" . $notice_cols_first->column_name . "：" . $notice_cols_first->value . "」の行を削除しました。";
+
+            // titleカラムが無いため、プラグイン独自でセット
+            $overwrite_notice_embedded_tags = [NoticeEmbeddedTag::title => $deleted_title];
         }
 
-        // メール送信 引数(削除した行ID, 詳細表示メソッド, 削除データを表すメッセージ)
-        $this->sendDeleteNotice($delete_input, 'detail', $delete_comment);
+        // メール送信 引数(削除した行, 詳細表示メソッド, 削除データを表すメッセージ, 上書き埋め込みタグ)
+        $this->sendDeleteNotice($deleted_input, 'detail', $delete_comment, $overwrite_notice_embedded_tags);
 
         // 表示テンプレートを呼び出す。
         return $this->index($request, $page_id, $frame_id);
+    }
+
+    /**
+     * タイトル取得
+     *
+     * [TODO] このメソッドの不具合ではないが、新着等のタイトル取得は不十分になってる臭い。
+     *        おそらく input_cols のタイトル取得のみに対応していて、input_cols にデータがない 登録日型 や、
+     *        input_cols にデータがあってもファイル型のような、input_cols->value には ファイルID のみ格納していて、別途 client_original_name 等を取得するものは対応してなさそう。
+     */
+    private function getTitle($input)
+    {
+        if (is_null($input)) {
+            return '';
+        }
+
+        // タイトルカラム
+        $column = DatabasesColumns::where('databases_id', $input->databases_id)
+            ->where('title_flag', '1')
+            ->orderBy('display_sequence', 'asc')
+            ->first();
+
+        if (is_null($column)) {
+            return '';
+        }
+
+        // タイトルカラムの入力値（入力値があるものだけ。例えば 登録日型 は input_cols にデータない）
+        $input_cols = $this->getDatabasesInputCols($input->id);
+        $obj = $input_cols->firstWhere('title_flag', '1');
+
+        // 項目の型で処理を分ける。
+        if ($column->column_type == DatabaseColumnType::file) {
+            // ファイル型
+            if (empty($obj)) {
+                $value = '';
+            } else {
+                $value = $obj->client_original_name;
+            }
+        } elseif ($column->column_type == DatabaseColumnType::image) {
+            // 画像型
+            if (empty($obj)) {
+                $value = '';
+            } else {
+                $value = Uploads::getFilenameNoExtensionById($obj->value);
+            }
+        } elseif ($column->column_type == DatabaseColumnType::video) {
+            // 動画型
+            if (empty($obj)) {
+                $value = '';
+            } else {
+                $value = $obj->client_original_name;
+            }
+        } elseif ($column->column_type == DatabaseColumnType::link) {
+            // リンク型
+            if (empty($obj)) {
+                $value = '';
+            } else {
+                $value = $obj->value;
+            }
+        } elseif ($column->column_type == DatabaseColumnType::date) {
+            // 日付型
+            if (empty($obj) || empty($obj->value)) {
+                $value = '';
+            } else {
+                $value = date('Y/m/d', strtotime($obj->value));
+            }
+        } elseif ($column->column_type == DatabaseColumnType::checkbox) {
+            // 複数選択型
+            if (empty($obj)) {
+                $value = '';
+            } else {
+                $value = str_replace('|', ', ', $obj->value);
+            }
+        } elseif ($column->column_type == DatabaseColumnType::created) {
+            // 登録日型
+            $value = $input->created_at;
+        } elseif ($column->column_type == DatabaseColumnType::updated) {
+            // 更新日型
+            $value = $input->updated_at;
+        } elseif ($column->column_type == DatabaseColumnType::posted) {
+            // 公開日型
+            $value = $input->posted_at;
+        } elseif ($column->column_type == DatabaseColumnType::display) {
+            // 表示順型
+            $value = $input->display_sequence;
+        } else {
+            // その他の型
+            $value = $obj ? $obj->value : "";
+        }
+
+        return $value;
     }
 
     /**
@@ -1754,7 +1823,6 @@ class DatabasesPlugin extends UserPluginBase
         if (empty($databases_id)) {
             // バケツの登録
             $bucket = new Buckets();
-            // $bucket->bucket_name = '無題';
             $bucket->bucket_name = $request->databases_name;
             $bucket->plugin_name = 'databases';
             $bucket->save();
@@ -2282,7 +2350,7 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
-     * 項目に紐づく選択肢の更新
+     * 項目に紐づく詳細設定の更新
      */
     public function updateColumnDetail($request, $page_id, $frame_id)
     {
@@ -3171,7 +3239,7 @@ class DatabasesPlugin extends UserPluginBase
             $posted_at = array_pop($csv_columns);
             $posted_at = new Carbon($posted_at);
 
-            $status = 0;  // 公開
+            $status = StatusType::active;  // 公開
 
             // // 一時ファイルの削除
             // fclose($fp);
@@ -3372,10 +3440,10 @@ class DatabasesPlugin extends UserPluginBase
                         $rules[$col + 1] = [];
                     } elseif ($databases_column->column_type == DatabaseColumnType::image) {
                         // csv用のバリデーションで上書き
-                        $rules[$col + 1] = ['nullable', new CustomVali_CsvImage()];
+                        $rules[$col + 1] = ['nullable', new CustomValiCsvImage()];
                     } elseif ($databases_column->column_type == DatabaseColumnType::video) {
                         // csv用のバリデーションで上書き
-                        $rules[$col + 1] = ['nullable', new CustomVali_CsvExtensions(['mp4'])];
+                        $rules[$col + 1] = ['nullable', new CustomValiCsvExtensions(['mp4'])];
                     }
                 }
             } else {
@@ -3505,7 +3573,6 @@ class DatabasesPlugin extends UserPluginBase
         if ($file_extension == 'zip') {
             // 空でないディレクトリを削除
             UnzipUtils::rmdirNotEmpty($unzip_dir_full_path);
-            // Storage::deleteDirectory($unzip_dir_full_path);
         }
 
         // 一時ファイルの削除
@@ -3586,19 +3653,11 @@ class DatabasesPlugin extends UserPluginBase
         $validator_values['view_count'] = ['required', 'numeric'];
         $validator_attributes['view_count'] = '表示件数';
 
-        // menuテンプレートでのみ使われる項目
-        // 半角数字
-        $validator_values['view_page_id'] = ['numeric'];
-        $validator_attributes['view_page_id'] = '表示するページID';
-        $validator_values['view_frame_id'] = ['numeric'];
-        $validator_attributes['view_frame_id'] = '表示するフレームID';
-
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $validator_values);
         $validator->setAttributeNames($validator_attributes);
 
         // エラーがあった場合は入力画面に戻る。
-        // $message = null;
         if ($validator->fails()) {
             return $this->editView($request, $page_id, $frame_id)->withErrors($validator);
         }
@@ -3608,10 +3667,6 @@ class DatabasesPlugin extends UserPluginBase
 
         // データベース＆フレームデータ
         $database_frame = $this->getDatabaseFrame($frame_id);
-
-        // Log::debug(var_export($request->use_filter_flag, true));
-        // Log::debug(var_export($request->filter_search_keyword, true));
-        // Log::debug(var_export($request->filter_search_columns, true));
 
         // 表示設定の保存
         $databases_frames = DatabasesFrames::updateOrCreate(
@@ -3632,8 +3687,6 @@ class DatabasesPlugin extends UserPluginBase
                 'use_filter_flag'   => $request->use_filter_flag,
                 'filter_search_keyword' => $request->filter_search_keyword,
                 'filter_search_columns' => json_encode($request->filter_search_columns),
-                'view_page_id'        => $request->view_page_id,
-                'view_frame_id'        => $request->view_frame_id
             ]
         );
 
@@ -3641,128 +3694,11 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
-     *  検索用メソッド
-     */
-    public static function getSearchArgs($search_keyword, $page_ids = null)
-    {
-        // Query Builder のバグ？
-        // whereIn で指定した引数が展開されずに、引数の変数分だけ、setBindings の引数を要求される。
-        // そのため、whereIn とsetBindings 用の変数に同じ $page_ids を設定している。
-        $query = DB::table('databases_inputs')
-                   ->select(
-                       'databases_inputs.id         as post_id',
-                       'frames.id                   as frame_id',
-                       'frames.page_id              as page_id',
-                       'pages.permanent_link        as permanent_link',
-                       'databases_inputs.id         as post_title',
-                       DB::raw('0 as important'),
-                       'databases_inputs.created_at as posted_at',
-                       DB::raw('null as posted_name'),
-                       DB::raw('null as classname'),
-                       DB::raw('null as categories_id'),
-                       DB::raw('null as category'),
-                       DB::raw('"databases" as plugin_name')
-                   )
-                   ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
-                   ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
-                   ->join('pages', 'pages.id', '=', 'frames.page_id')
-                   ->whereIn('pages.id', $page_ids);
-
-        //$bind = array($page_ids, 0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
-        $bind = array($page_ids);
-
-        $return[] = $query;
-        $return[] = $bind;
-        $return[] = 'show_page';
-        $return[] = '/page';
-
-        return $return;
-    }
-
-    /**
      * 登録データ行の取得
      */
     private function getDatabasesInputs($id)
     {
-        // 登録データ行の取得
-        // $inputs = DatabasesInputs::where('id', $id)->first();
-        $inputs = DatabasesInputs::where('id', $id)
-                                    ->where(function ($query) {
-                                        // 権限によって表示する記事を絞る
-                                        $query = $this->appendAuthWhere($query, 'databases_inputs');
-                                    })
-                                    ->first();
-
-        return $inputs;
-    }
-
-    /**
-     * 権限によって表示する記事を絞る
-     *
-     * 基本：
-     *   - 承認機能を実装するには指定したテーブル($table_name)に status, created_id カラムがある事
-     * オプション：
-     *   - テーブルに posted_at(投稿日時) カラムがある場合、投稿日時前＋権限なし or 未ログインなら表示しない
-     *
-     * status = 0:公開(Active)
-     * status = 1:Temporary（一時保存）
-     * status = 2:Approval pending（承認待ち）
-     * status = 9:History（履歴・データ削除）
-     * 参考) https://github.com/opensource-workshop/connect-cms/wiki/Data-history-policy（データ履歴の方針）
-     *
-     * コンテンツ管理者(role_article_admin): 無条件に全記事見れる
-     * モデレータ(role_article):            無条件に全記事見れる
-     * 承認者(role_approval):               0:公開(Active) or 2:承認待ち の全記事見れる
-     * 編集者(role_reporter):               0:公開(Active) or 自分の作成した記事 見れる
-     * 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）or 未ログイン:    0:公開(Active) 記事見れる
-     *
-     * [オプション：posted_at(投稿日時) カラムがある]
-     * 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）or 未ログイン:    0:公開(Active) and 投稿日時前 記事見れる
-     *
-     * 例) $table_name = 'blogs_posts';
-     * 例) $table_name = 'databases_inputs';
-     */
-    protected function appendAuthWhere($query, $table_name)
-    {
-        if (empty($query)) {
-            // 空なら何もしない
-            return $query;
-        }
-
-        // モデレータ(記事修正, role_article)権限
-        // コンテンツ管理者(role_article_admin)   = 全記事の取得
-        if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
-            // 全件取得のため、追加条件なしで戻る。
-            return $query;
-        }
-
-        if ($this->isCan('role_approval')) {
-            //
-            // 承認者(role_approval)権限 = Active ＋ 承認待ちの取得
-            //
-            $query->Where($table_name . '.status', '=', StatusType::active)
-                    ->orWhere($table_name . '.status', '=', StatusType::approval_pending);
-        } elseif ($this->isCan('role_reporter')) {
-            //
-            // 編集者(role_reporter)権限 = Active ＋ 自分の全ステータス記事の取得
-            //
-            $query->where(function ($tmp_query) use ($table_name) {
-                    $tmp_query->where($table_name . '.status', '=', StatusType::active)
-                    ->orWhere($table_name . '.created_id', '=', Auth::user()->id);
-            });
-        } else {
-            // 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）
-            // 未ログイン
-            $query->where($table_name . '.status', StatusType::active);
-
-            // DBカラム posted_at(投稿日時) 存在するか
-            if (Schema::hasColumn($table_name, 'posted_at')) {
-                $query->where($table_name . '.posted_at', '<=', Carbon::now());
-            }
-        }
-
-        // var_dump($query->get());
-        return $query;
+        return $this->getPost($id);
     }
 
     /**
@@ -3777,13 +3713,13 @@ class DatabasesPlugin extends UserPluginBase
         $before_databases_inputs = clone $databases_inputs;
 
         // データがあることを確認
-        if (empty($databases_inputs)) {
+        if (empty($databases_inputs->id)) {
             return;
         }
 
         // 更新されたら、行レコードの updated_at を更新したいので、update()
         $databases_inputs->updated_at = now();
-        $databases_inputs->status = 0;  // 公開
+        $databases_inputs->status = StatusType::active;  // 公開
         $databases_inputs->update();
 
         // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
@@ -3853,32 +3789,34 @@ AND databases_inputs.posted_at <= NOW()
 ;
 */
         // データ詳細の取得
-        $inputs_query = DatabasesInputs::select(
-            'frames.page_id                as page_id',
-            'frames.id                     as frame_id',
-            'databases_inputs.id           as post_id,',
-            'databases_input_cols.value    as post_title,',
-            DB::raw('null                  as important'),
-            'databases_inputs.posted_at    as posted_at',
-            'databases_inputs.created_name as posted_name',
-            DB::raw('null                  as classname'),
-            DB::raw('null                  as category'),
-            DB::raw('"databases"           as plugin_name')
-        )
-                ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
-                ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
-                ->leftJoin('databases_columns', function ($leftJoin) use ($hide_columns_ids) {
-                    $leftJoin->on('databases_inputs.databases_id', '=', 'databases_columns.databases_id')
-                                ->where('databases_columns.title_flag', 1)
-                                // タイトル指定しても、権限によって非表示columだったらvalue表示しない（基本的に、タイトル指定したけど権限で非表示は、設定ミスと思う。その時は(無題)で表示される）
-                                ->whereNotIn('databases_columns.id', $hide_columns_ids);
-                })
-                ->leftJoin('databases_input_cols', function ($leftJoin) {
-                    $leftJoin->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
-                                ->on('databases_columns.id', '=', 'databases_input_cols.databases_columns_id');
-                })
-                ->where('databases_inputs.status', 0)
-                ->where('databases_inputs.posted_at', '<=', Carbon::now());
+        $inputs_query = DatabasesInputs::
+            select(
+                'frames.page_id                as page_id',
+                'frames.id                     as frame_id',
+                'databases_inputs.id           as post_id,',
+                'databases_input_cols.value    as post_title,',
+                DB::raw('null                  as post_detail'),
+                DB::raw('null                  as important'),
+                'databases_inputs.posted_at    as posted_at',
+                'databases_inputs.created_name as posted_name',
+                DB::raw('null                  as classname'),
+                DB::raw('null                  as category'),
+                DB::raw('"databases"           as plugin_name')
+            )
+            ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
+            ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
+            ->leftJoin('databases_columns', function ($leftJoin) use ($hide_columns_ids) {
+                $leftJoin->on('databases_inputs.databases_id', '=', 'databases_columns.databases_id')
+                            ->where('databases_columns.title_flag', 1)
+                            // タイトル指定しても、権限によって非表示columだったらvalue表示しない（基本的に、タイトル指定したけど権限で非表示は、設定ミスと思う。その時は(無題)で表示される）
+                            ->whereNotIn('databases_columns.id', $hide_columns_ids);
+            })
+            ->leftJoin('databases_input_cols', function ($leftJoin) {
+                $leftJoin->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
+                            ->on('databases_columns.id', '=', 'databases_input_cols.databases_columns_id');
+            })
+            ->where('databases_inputs.status', StatusType::active)
+            ->where('databases_inputs.posted_at', '<=', Carbon::now());
 
         // 全データベースの検索キーワードの絞り込み と カラムの絞り込み
         $inputs_query = DatabasesTool::appendSearchKeywordAndSearchColumnsAllDb(
@@ -3891,6 +3829,45 @@ AND databases_inputs.posted_at <= NOW()
         $return[] = $inputs_query;
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/databases/detail';
+
+        return $return;
+    }
+
+    /**
+     *  検索用メソッド
+     */
+    public static function getSearchArgs($search_keyword, $page_ids = null)
+    {
+        // Query Builder のバグ？
+        // whereIn で指定した引数が展開されずに、引数の変数分だけ、setBindings の引数を要求される。
+        // そのため、whereIn とsetBindings 用の変数に同じ $page_ids を設定している。
+        $query = DB::table('databases_inputs')
+                   ->select(
+                       'databases_inputs.id         as post_id',
+                       'frames.id                   as frame_id',
+                       'frames.page_id              as page_id',
+                       'pages.permanent_link        as permanent_link',
+                       'databases_inputs.id         as post_title',
+                       DB::raw('0 as important'),
+                       'databases_inputs.created_at as posted_at',
+                       DB::raw('null as posted_name'),
+                       DB::raw('null as classname'),
+                       DB::raw('null as categories_id'),
+                       DB::raw('null as category'),
+                       DB::raw('"databases" as plugin_name')
+                   )
+                   ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
+                   ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
+                   ->join('pages', 'pages.id', '=', 'frames.page_id')
+                   ->whereIn('pages.id', $page_ids);
+
+        //$bind = array($page_ids, 0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
+        $bind = array($page_ids);
+
+        $return[] = $query;
+        $return[] = $bind;
+        $return[] = 'show_page';
+        $return[] = '/page';
 
         return $return;
     }

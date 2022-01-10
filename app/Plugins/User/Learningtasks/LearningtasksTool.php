@@ -170,7 +170,7 @@ class LearningtasksTool
         // bugfix: 一覧画面でレポートの評価等、表示できてないバグ修正
         // if (!empty($this->learningtask) && !empty($this->post)) {
         if (!empty($this->learningtask)) {
-            if (empty($this->post)) {
+            if (empty($this->post->id)) {
                 // 一覧画面
                 $this->post_use_functions = LearningtasksUseSettings::where('learningtasks_id', $this->learningtask->id)->get();
             } else {
@@ -222,7 +222,7 @@ class LearningtasksTool
 
             // 総合評価の履歴
             // POST のWHERE が抜けていたので、追加（2020-12-21）これがないと、他の科目の総合評価を引っ張ってきて、評価できない。
-            if ($this->post) {
+            if ($this->post->id) {
                 $this->evaluate_statuses = LearningtasksUsersStatuses::where('user_id', '=', $this->student_id)
                         ->whereIn('task_status', [8])
                         ->where('post_id', $this->post->id)
@@ -244,7 +244,7 @@ class LearningtasksTool
         }
 
         // 受講生一覧と教員一覧の取得
-        if (!empty($this->post)) {
+        if (!empty($this->post->id)) {
             // ユーザの参加方式によって、対象を取得
             if ($this->post->student_join_flag == 2) {
                 // 配置ページのメンバーシップユーザ全員
@@ -850,7 +850,10 @@ class LearningtasksTool
      */
     public function canReportUpload($post_id)
     {
-        if (!$this->isStudent()) {
+        if ($this->isStudent() || $this->isLearningtaskAdmin()) {
+            // 処理続行
+        } else {
+            // 提出できない
             return false;
         }
 
@@ -1124,8 +1127,10 @@ class LearningtasksTool
     {
         $base_message = "試験に申し込む条件が不足しています。";
 
-        // 受講生でない場合は試験の申し込みはできない。
-        if (!$this->isStudent()) {
+        // 受講生 or 課題管理者でない場合は試験の申し込みはできない。
+        if ($this->isStudent() || $this->isLearningtaskAdmin()) {
+            // 処理続行
+        } else {
             return array(false, $base_message);
         }
 

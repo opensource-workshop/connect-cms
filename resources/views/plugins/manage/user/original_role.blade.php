@@ -19,7 +19,7 @@
     <div class="card-body">
 
         {{-- エラーメッセージ --}}
-        @include('common.category_errors')
+        @include('plugins.common.errors_all')
 
         {{-- 削除ボタンのアクション --}}
         <script type="text/javascript">

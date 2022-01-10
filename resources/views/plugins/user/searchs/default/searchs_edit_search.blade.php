@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 検索プラグイン
- --}}
+--}}
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -115,10 +115,10 @@
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass()}}">対象プラグイン <label class="badge badge-danger mb-0">必須</label></label>
                 <div class="{{$frame->getSettingInputClass(true)}}">
-                @foreach($searchs->getTargetPlugins() as $target_plugin => $use_flag)
+                @foreach($searchs->getTargetPlugins() as $key => $target_plugin)
                     <div class="custom-control custom-checkbox custom-control-inline">
-                        <input type="checkbox" name="target_plugin[{{$target_plugin}}]" value="{{$target_plugin}}" class="custom-control-input" id="target_plugin_{{$target_plugin}}" @if(old("target_plugin.$target_plugin", $use_flag)) checked=checked @endif>
-                        <label class="custom-control-label" for="target_plugin_{{$target_plugin}}">{{$target_plugin}}</label>
+                        <input type="checkbox" name="target_plugin[{{$key}}]" value="{{$key}}" class="custom-control-input" id="target_plugin_{{$key}}" @if(old("target_plugin.$key", $target_plugin['use_flag'])) checked=checked @endif>
+                        <label class="custom-control-label" for="target_plugin_{{$key}}">{{$target_plugin['plugin_name_full']}}</label>
                     </div>
                 @endforeach
                 </div>
@@ -147,7 +147,7 @@
                 </div>
             </div>
 
-            <div class="form-group row">
+            <div class="form-group row mb-0">
                 <label class="{{$frame->getSettingLabelClass()}}">フレームの選択</label>
                 <div class="{{$frame->getSettingInputClass(true)}}">
                     <div class="custom-control custom-radio custom-control-inline">
@@ -170,15 +170,37 @@
             </div>
 
             <div class="form-group row">
-                <label class="{{$frame->getSettingLabelClass()}}">対象ページ - フレーム</label>
-                <div class="card {{$frame->getSettingInputClass(false, true)}}">
-                    <div class="card-body py-2 pl-0">
+                <div class="{{$frame->getSettingLabelClass()}}"></div>
+                <div class="{{$frame->getSettingInputClass()}}">
+                    <small class="text-muted">※ 「選択したものだけ表示する」を選択した場合、「固定記事」は検索対象外になります。</small>
+                </div>
+            </div>
 
-                        @foreach($target_plugins_frames as $target_plugins_frame)
-                        <div class="custom-control custom-checkbox">
-                            <input type="checkbox" name="target_frame_ids[{{$target_plugins_frame->id}}]" value="{{$target_plugins_frame->id}}" class="custom-control-input" id="target_plugins_frame_{{$target_plugins_frame->id}}" @if(old("target_frame_ids.$target_plugins_frame->id", $searchs->isTargetFrame($target_plugins_frame->id))) checked=checked @endif>
-                            <label class="custom-control-label" for="target_plugins_frame_{{$target_plugins_frame->id}}">{{$target_plugins_frame->page_name}} - {{$target_plugins_frame->bucket_name}}</label>
-                        </div>
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">対象ページ - フレーム</label>
+                <div class="{{$frame->getSettingInputClass(false, true)}}">
+                    <ul class="nav nav-pills" role="tablist">
+                        @foreach(SearchsTargetPlugin::getPluginsCanSpecifiedFrames() as $target_plugin => $target_plugin_full)
+                            <li class="nav-item">
+                                <a href="#{{$target_plugin}}{{$frame->id}}" class="nav-link @if($loop->first) active @endif" data-toggle="tab" role="tab">{{$target_plugin_full}}</a>
+                            </li>
+                        @endforeach
+                    </ul>
+
+                    <div class="tab-content">
+                        @foreach(SearchsTargetPlugin::getPluginsCanSpecifiedFrames() as $target_plugin => $target_plugin_full)
+                            <div id="{{$target_plugin}}{{$frame->id}}" class="tab-pane card @if($loop->first) active @endif" role="tabpanel">
+                                <div class="card-body py-2 pl-3">
+                                    @foreach($target_plugins_frames as $target_plugins_frame)
+                                        @if ($target_plugins_frame->plugin_name == $target_plugin)
+                                            <div class="custom-control custom-checkbox">
+                                                <input type="checkbox" name="target_frame_ids[{{$target_plugins_frame->id}}]" value="{{$target_plugins_frame->id}}" class="custom-control-input" id="target_plugins_frame_{{$target_plugins_frame->id}}" @if(old("target_frame_ids.$target_plugins_frame->id", $searchs->isTargetFrame($target_plugins_frame->id))) checked=checked @endif>
+                                                <label class="custom-control-label" for="target_plugins_frame_{{$target_plugins_frame->id}}">{{$target_plugins_frame->page_name}} - {{$target_plugins_frame->frame_title}}</label>
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            </div>
                         @endforeach
                         @if ($errors && $errors->has('target_plugins_frames')) <div class="text-danger">{{$errors->first('target_plugins_frames')}}</div> @endif
                     </div>

@@ -2,23 +2,19 @@
 
 namespace App\Plugins\User\Searchs;
 
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-
-use Carbon\Carbon;
-
-use DB;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
-use App\Models\Core\Configs;
 use App\Models\User\Searchs\Searchs;
-use App\Models\User\Searchs\SearchsDual;
 
 use App\Plugins\User\UserPluginBase;
 use App\Traits\ConnectCommonTrait;
+
+use App\Enums\SearchsTargetPlugin;
 
 /**
  * 検索プラグイン
@@ -28,7 +24,7 @@ use App\Traits\ConnectCommonTrait;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 検索プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class SearchsPlugin extends UserPluginBase
 {
@@ -36,10 +32,15 @@ class SearchsPlugin extends UserPluginBase
 
     /* オブジェクト変数 */
 
+    /**
+     * POST チェックに使用する getPost() 関数を使うか
+     */
+    public $use_getpost = false;
+
     /* コアから呼び出す関数 */
 
     /**
-     *  関数定義（コアから呼び出す）
+     * 関数定義（コアから呼び出す）
      */
     public function getPublicFunctions()
     {
@@ -58,16 +59,15 @@ class SearchsPlugin extends UserPluginBase
         // 標準権限以外で設定画面などから呼ばれる権限の定義
         // 標準権限は右記で定義 config/cc_role.php
         //
-        // 権限チェックテーブル
-        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
-        $role_ckeck_table = array();
-        return $role_ckeck_table;
+        // 権限チェックテーブル (追加チェックなし)
+        $role_check_table = [];
+        return $role_check_table;
     }
 
     /**
-     *  編集画面の最初のタブ（コアから呼び出す）
+     * 編集画面の最初のタブ（コアから呼び出す）
      *
-     *  スーパークラスをオーバーライド
+     * スーパークラスをオーバーライド
      */
     public function getFirstFrameEditAction()
     {
@@ -77,37 +77,40 @@ class SearchsPlugin extends UserPluginBase
     /* private関数 */
 
     /**
-     *  紐づく検索とフレームデータの取得
+     * 紐づく検索とフレームデータの取得
      */
     private function getSearchsFrame($frame_id)
     {
         // Frame データ
-        $frame = Frame::select(
-            'searchs.*',
-            'frames.id as frames_id',
-            'frames.bucket_id',
-            'frames.disable_searchs'
-        )
-                        ->leftJoin('searchs', 'frames.bucket_id', '=', 'searchs.bucket_id')
-                        ->where('frames.id', $frame_id)
-                        ->first();
+        $frame = Frame::
+            select(
+                'searchs.*',
+                'frames.id as frames_id',
+                'frames.bucket_id',
+                'frames.disable_searchs'
+            )
+            ->leftJoin('searchs', 'frames.bucket_id', '=', 'searchs.bucket_id')
+            ->where('frames.id', $frame_id)
+            ->first();
 
         return $frame;
     }
 
     /**
-     *  新着対象のプラグインがあるフレームデータの取得
+     * 新着対象のプラグインがあるフレームデータの取得
      */
     private function getTargetPluginsFrames()
     {
         // Frame データ
         $frames = Frame::select('frames.*', 'pages._lft', 'pages.page_name', 'buckets.bucket_name')
-                       ->whereIn('frames.plugin_name', array('blogs'))
-                       ->leftJoin('buckets', 'frames.bucket_id', '=', 'buckets.id')
-                       ->leftJoin('pages', 'frames.page_id', '=', 'pages.id')
-                       ->where('disable_searchs', 0)
-                       ->orderBy('pages._lft', 'asc')
-                       ->get();
+            // ->whereIn('frames.plugin_name', array('blogs'))
+            ->whereIn('frames.plugin_name', SearchsTargetPlugin::getKeysPluginsCanSpecifiedFrames())
+            ->leftJoin('buckets', 'frames.bucket_id', '=', 'buckets.id')
+            ->leftJoin('pages', 'frames.page_id', '=', 'pages.id')
+            ->where('disable_searchs', 0)
+            ->orderBy('pages._lft', 'asc')
+            ->get();
+
         return $frames;
     }
 
@@ -210,8 +213,8 @@ class SearchsPlugin extends UserPluginBase
     /* 画面アクション関数 */
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
      */
     public function index($request, $page_id, $frame_id, $errors = null)
     {
@@ -239,7 +242,7 @@ class SearchsPlugin extends UserPluginBase
     }
 
     /**
-     *  検索アクション
+     * 検索アクション
      */
     public function search($request, $page_id, $frame_id)
     {
@@ -347,7 +350,7 @@ class SearchsPlugin extends UserPluginBase
     }
 
     /**
-     *  設定の登録処理
+     * 設定の登録処理
      */
     public function saveBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -369,12 +372,12 @@ class SearchsPlugin extends UserPluginBase
         // エラーがあった場合は入力画面に戻る。
         $message = null;
         if ($validator->fails()) {
-            if (empty($searchs_frame->searchs_id)) {
+            if (empty($request->searchs_id)) {
                 $create_flag = true;
-                return $this->createBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
+                return $this->createBuckets($request, $page_id, $frame_id, $request->searchs_id, $create_flag, $message, $validator->errors());
             } else {
                 $create_flag = false;
-                return $this->editBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
+                return $this->editBuckets($request, $page_id, $frame_id, $request->searchs_id, $create_flag, $message, $validator->errors());
             }
         }
 
@@ -384,14 +387,14 @@ class SearchsPlugin extends UserPluginBase
         if (empty($request->searchs_id)) {
             // 画面から渡ってくるsearchs_id が空ならバケツと設定を新規登録
             // バケツの登録
-            $bucket_id = DB::table('buckets')->insertGetId([
-                  'bucket_name' => '無題',
-                  'plugin_name' => 'searchs'
+            $bucket = Buckets::create([
+                'bucket_name' => $request->search_name,
+                'plugin_name' => 'searchs'
             ]);
 
             // 設定データ新規オブジェクト
             $searchs = new Searchs();
-            $searchs->bucket_id = $bucket_id;
+            $searchs->bucket_id = $bucket->id;
 
             // Frame のBuckets を見て、Buckets が設定されていなければ、作成したものに紐づける。
             // Frame にBuckets が設定されていない ＞ 新規のフレーム＆新着情報設定作成
@@ -399,7 +402,7 @@ class SearchsPlugin extends UserPluginBase
             // （新着情報設定選択から遷移してきて、内容だけ更新して、フレームに紐づけないケースもあるため）
             if (empty($searchs_frame->bucket_id)) {
                 // FrameのバケツIDの更新
-                $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
+                $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket->id]);
             }
 
             $message = '設定を追加しました。';
@@ -407,6 +410,9 @@ class SearchsPlugin extends UserPluginBase
             // whatsnews_id があれば、新着情報設定を更新
             // 新着情報設定の取得
             $searchs = Searchs::where('id', $request->searchs_id)->first();
+
+            Buckets::where('id', $searchs->bucket_id)
+                ->update(['bucket_name' => $request->search_name, 'plugin_name' => 'searchs']);
 
             $message = '設定を変更しました。';
         }
@@ -426,11 +432,11 @@ class SearchsPlugin extends UserPluginBase
 
         // 新規作成フラグを付けて新着情報設定変更画面を呼ぶ
         $create_flag = false;
-        return $this->editBuckets($request, $page_id, $frame_id, $id, $create_flag, $message);
+        return $this->editBuckets($request, $page_id, $frame_id, $request->searchs_id, $create_flag, $message);
     }
 
     /**
-     *  削除処理
+     * 削除処理
      */
     public function destroyBuckets($request, $page_id, $frame_id, $id)
     {
@@ -451,9 +457,9 @@ class SearchsPlugin extends UserPluginBase
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
-   /**
-    * データ紐づけ変更関数
-    */
+    /**
+     * データ紐づけ変更関数
+     */
     public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新

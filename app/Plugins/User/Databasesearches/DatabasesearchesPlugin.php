@@ -5,19 +5,15 @@ namespace App\Plugins\User\Databasesearches;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
-use DB;
-
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
-//use App\Models\Common\Page;
-// use App\Models\User\Databases\Databases;
-use App\Models\User\Databases\DatabasesColumns;
 use App\Models\User\Databases\DatabasesInputCols;
-// use App\Models\User\Databases\DatabasesInputs;
 use App\Models\User\Databasesearches\Databasesearches;
 
 use App\Plugins\User\UserPluginBase;
 use App\Plugins\User\Databases\DatabasesTool;
+
+use App\Enums\DatabaseSearcherSortType;
 
 /**
  * データベース検索プラグイン
@@ -27,10 +23,18 @@ use App\Plugins\User\Databases\DatabasesTool;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース検索プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class DatabasesearchesPlugin extends UserPluginBase
 {
+    /* オブジェクト変数 */
+
+    /**
+     * POST チェックに使用する getPost() 関数を使うか
+     */
+    public $use_getpost = false;
+
+    /* コアから呼び出す関数 */
 
     /**
      *  編集画面の最初のタブ
@@ -60,14 +64,12 @@ class DatabasesearchesPlugin extends UserPluginBase
     public function declareRole()
     {
         // 権限チェックテーブル
-        $role_ckeck_table = array();
-        $role_ckeck_table["input"]       = array('role_article');
-
-        $role_ckeck_table["editBuckets"] = array('role_arrangement');
-        $role_ckeck_table["saveBuckets"] = array('role_arrangement');
-        $role_ckeck_table["change"]      = array('role_arrangement');
-        return $role_ckeck_table;
+        $role_check_table = array();
+        $role_check_table["change"]      = array('frames.change');
+        return $role_check_table;
     }
+
+    /* 画面アクション関数 */
 
     /**
      *  初期表示取得関数
@@ -244,6 +246,7 @@ class DatabasesearchesPlugin extends UserPluginBase
                                 ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
                                 ->join('databases', 'databases.id', '=', 'databases_columns.databases_id')
                                 ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
+                                ->join('databases_inputs', 'databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
                                 ->whereIn('databases_inputs_id', $inputs_ids_marge)
                                 ->groupBy('databases_inputs_id')
                                 ->groupBy('frames.id')
@@ -260,12 +263,44 @@ class DatabasesearchesPlugin extends UserPluginBase
         if ($databasesearches->frame_select == 1 && $databasesearches->target_frame_ids) {
             $inputs_ids->whereIn('frames.id', explode(',', $databasesearches->target_frame_ids));
         }
+
+        // 並び替え条件指定
+        switch ($databasesearches->sort_type) {
+            case DatabaseSearcherSortType::created_asc:
+                $inputs_ids->orderBy('databases_inputs.created_at', 'asc');
+                break;
+            case DatabaseSearcherSortType::created_desc:
+                $inputs_ids->orderBy('databases_inputs.created_at', 'desc');
+                break;
+            case DatabaseSearcherSortType::updated_asc:
+                $inputs_ids->orderBy('databases_inputs.updated_at', 'asc');
+                break;
+            case DatabaseSearcherSortType::updated_desc:
+                $inputs_ids->orderBy('databases_inputs.updated_at', 'desc');
+                break;
+            case DatabaseSearcherSortType::posted_asc:
+                $inputs_ids->orderBy('databases_inputs.posted_at', 'asc');
+                break;
+            case DatabaseSearcherSortType::posted_desc:
+                $inputs_ids->orderBy('databases_inputs.posted_at', 'desc');
+                break;
+            case DatabaseSearcherSortType::display_asc:
+                $inputs_ids->orderBy('databases_inputs.display_sequence', 'asc');
+                break;
+            case DatabaseSearcherSortType::display_desc:
+                $inputs_ids->orderBy('databases_inputs.display_sequence', 'desc');
+                break;
+            default:
+                $inputs_ids->orderBy('databases_inputs.created_at', 'asc');
+                break;
+        }
+
         $inputs_ids = $inputs_ids->paginate($databasesearches->view_count, ["*"], "frame_{$frame_id}_page");
         // Log::debug(var_export($inputs_ids->toArray(), true));
         // Log::debug(var_export($inputs_ids_marge, true));
 
         // 登録データ詳細の取得
-        $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'databases_columns.column_name', 'uploads.client_original_name')
+        $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'databases_columns.column_name', 'uploads.client_original_name', 'databases_columns.column_type')
                                         ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
                                         ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
                                         ->whereIn('databases_inputs_id', $inputs_ids->pluck('databases_inputs_id'))
@@ -364,6 +399,7 @@ class DatabasesearchesPlugin extends UserPluginBase
              'view_count'            => intval($request->view_count),
              'view_columns'          => $request->view_columns,
              'condition'             => $request->condition,
+             'sort_type'             => $request->sort_type,
              'frame_select'          => intval($request->frame_select),
              'target_frame_ids'      => empty($request->target_frame_ids) ? "": implode(',', $request->target_frame_ids),
             ]
@@ -380,9 +416,12 @@ class DatabasesearchesPlugin extends UserPluginBase
         return $this->editBuckets($request, $page_id, $frame_id, $id);
     }
 
-   /**
-    * データ紐づけ変更関数
-    */
+    /**
+     * データ紐づけ変更関数
+     *
+     * changeBuckets と同等. resources\views\plugins\common\edit_datalist.blade.php からPOSTされる。
+     * ※ listBuckets の定義がデータベース検索プラグインにないため UserPluginBase のメソッドを使っていた。
+     */
     public function change($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新

@@ -15,7 +15,7 @@
 @section("plugin_setting_$frame->id")
 @if ($plugin_buckets->isEmpty())
     <div class="alert alert-warning">
-        <i class="fas fa-exclamation-circle"></i> {{ __('messages.empty_bucket_setting', ['plugin_name' => 'リンクリスト']) }}
+        <i class="fas fa-exclamation-circle"></i> {{ __('messages.empty_bucket_setting', ['plugin_name' => $frame->plugin_name_full]) }}
     </div>
 @else
     <form action="{{url('/')}}/redirect/plugin/linklists/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
@@ -33,23 +33,21 @@
             <tbody>
             @foreach($plugin_buckets as $plugin_bucket)
                 <tr @if ($plugin_bucket->bucket_id == $frame->bucket_id) class="cc-active-tr"@endif>
-                    <td>
+                    <td class="d-table-cell">
                         <input type="radio" value="{{$plugin_bucket->bucket_id}}" name="select_bucket"@if ($plugin_bucket->bucket_id == $frame->bucket_id) checked @endif>
-                        <span class="{{$frame->getSettingCaptionClass()}}">{{$plugin_bucket->name}}</span>
                     </td>
-                    <td>{{$plugin_bucket->name}}</td>
-                    <td>{{$plugin_bucket->created_at}}</td>
+                    <td><span class="{{$frame->getSettingCaptionClass()}}">{{$frame->plugin_name_full}}名：</span>{{$plugin_bucket->name}}</td>
+                    <td><span class="{{$frame->getSettingCaptionClass()}}">作成日：</span>{{$plugin_bucket->created_at}}</td>
                 </tr>
             @endforeach
             </tbody>
             </table>
         </div>
 
-        <div class="text-center">
-            {{ $plugin_buckets->fragment('frame-' . $frame_id)->links() }}
-        </div>
+        {{-- ページング処理 --}}
+        @include('plugins.common.user_paginate', ['posts' => $plugin_buckets, 'frame' => $frame, 'aria_label_name' => $frame->plugin_name_full . '選択', 'class' => 'form-group'])
 
-        <div class="form-group text-center mt-3">
+        <div class="text-center">
             <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i><span class="d-none d-md-inline"> キャンセル</span></button>
             <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示リンクリスト変更</button>
         </div>

@@ -282,25 +282,26 @@ class DatabasesInputs extends Model
         }
     }
 
+    // delete: menuテンプレートのみDB項目利用のため廃止
     /**
      * メニュー用のリンクを返す
      */
-    public function getPageFrameLink($frames, $pageid, $frameid)
-    {
-        //データベースが存在するフレーム設定を読み込む
-        $_obj = $frames->where('frames_id', $frameid)
-            ->select('view_page_id', 'view_frame_id')->first();
+    // public function getPageFrameLink($frames, $pageid, $frameid)
+    // {
+    //     //データベースが存在するフレーム設定を読み込む
+    //     $_obj = $frames->where('frames_id', $frameid)
+    //         ->select('view_page_id', 'view_frame_id')->first();
 
-        if (isset($_obj->view_page_id) && isset($_obj->view_frame_id) && $_obj->view_page_id && $_obj->view_frame_id) {
-            if ($_obj->view_page_id != $pageid) {
-                $pageid = $_obj->view_page_id;
-            }
-            if ($_obj->view_frame_id != $frameid) {
-                $frameid = $_obj->view_frame_id;
-            }
-        }
-        return url('/').'/plugin/databases/detail/'.$pageid.'/'.$frameid.'/';
-    }
+    //     if (isset($_obj->view_page_id) && isset($_obj->view_frame_id) && $_obj->view_page_id && $_obj->view_frame_id) {
+    //         if ($_obj->view_page_id != $pageid) {
+    //             $pageid = $_obj->view_page_id;
+    //         }
+    //         if ($_obj->view_frame_id != $frameid) {
+    //             $frameid = $_obj->view_frame_id;
+    //         }
+    //     }
+    //     return url('/').'/plugin/databases/detail/'.$pageid.'/'.$frameid.'/';
+    // }
 
     /**
      *  n番目の画像型の値を返却

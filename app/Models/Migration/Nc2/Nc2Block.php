@@ -109,12 +109,12 @@ class Nc2Block extends Model
     protected $plugin_name = [
         'announcement'  => 'contents',     // お知らせ
         'assignment'    => 'Development',  // レポート
-        'bbs'           => 'blogs',        // 掲示板     ※ 2020-09時点では掲示板はブログに移行
-        'cabinet'       => 'Development',  // キャビネット
-        'calendar'      => 'Development',  // カレンダー
+        'bbs'           => 'bbses',        // 掲示板
+        'cabinet'       => 'cabinets',     // キャビネット
+        'calendar'      => 'calendars',    // カレンダー
         'chat'          => 'Development',  // チャット
         'circular'      => 'Development',  // 回覧板
-        'counter'       => 'Development',  // カウンター
+        'counter'       => 'counters',     // カウンター
         'faq'           => 'faqs',         // FAQ
         'iframe'        => 'Development',  // iFrame
         'imagine'       => 'Abolition',    // imagine
@@ -135,6 +135,8 @@ class Nc2Block extends Model
         'search'        => 'searchs',      // 検索
         'todo'          => 'Development',  // ToDo
         'whatsnew'      => 'whatsnews',    // 新着情報
+        'slides'        => 'slideshows',   // スライダー
+        'simplemovie'   => 'contents',     // シンプル動画→固定記事へ
     ];
 
     /**

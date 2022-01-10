@@ -24,7 +24,11 @@ class Bbs extends Model
     use Userable;
 
     // 更新する項目の定義
-    protected $fillable = ['bucket_id', 'name'];
+    protected $fillable = [
+        'bucket_id',
+        'name',
+        'use_like',
+    ];
 
     // Laravel がBbs をすでに複数形と認識するためにテーブル名指定。
     protected $table = 'bbses';

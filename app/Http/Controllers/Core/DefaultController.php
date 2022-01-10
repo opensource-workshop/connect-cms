@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Core;
 
 use Illuminate\Http\Request;
+use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 
@@ -15,7 +18,7 @@ use App\Http\Controllers\Core\ConnectController;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Core\Configs;
-use App\Models\Core\Plugins;
+// use App\Models\Core\Plugins;
 
 use App\Traits\ConnectCommonTrait;
 
@@ -27,31 +30,64 @@ use App\Traits\ConnectCommonTrait;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
- * @package Contoroller
+ * @package Controller
+ *
+ *                                                                                      | 旧                                                                                                     | 現
+ * @method __invoke() 基本のアクション（コアの画面処理や各プラグインの処理はここから呼び出す。管理画面トップもここにくる） | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403)  | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403),403ならaction無効化
+ * @method changeLanguage() 言語切り替えアクション                                        | page,frame                                                                                             | 何もつけない
+ * @method invokePost() 一般プラグインの表示系・更新系アクション                            | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403)                            | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403),403ならaction無効化
+ * @method invokeGetJson() 一般プラグインのJSONレスポンスアクション                         | page,frame,setAppLocale()                                                                             | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403),403ならaction無効化  ※ page_id, frame_idを利用しているためチェック。
+ * @method invokePostRedirect() 一般プラグインの更新系アクション（リダイレクトする場合）     | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403),403ならaction無効化         | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403),403ならaction無効化  ※ 同左
+ * @method invokePostDownload() 一般プラグインのダウンロード系アクション                    | page,frame                                                                                             | page,frame,setAppLocale(),page->isRequestPassword(),checkPageForbidden(403),403ならaction無効化  ※ page_id, frame_idを利用しているためチェック。
+ * ※ setAppLocale() - page に依存
+ * ※ page->isRequestPassword() - session見てチェックしているため、一般プラグインのダウンロード系アクション（invokePostDownload()）でチェックしても、その処理にくるまでに観覧パスワード入力してるだろうから、問題ないだろう。
+ *
+ * @see routes\web.php このルーティングからDefaultController呼ばれる
  */
 class DefaultController extends ConnectController
 {
     use ConnectCommonTrait;
 
     /**
-     *  画面表示用にページやフレームなど呼び出し
+     * コンストラクタ
+     */
+    public function __construct()
+    {
+        // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+
+        // DefaultController::changeLanguage を除外（except）
+        $this->middleware('connect.page')->except(['changeLanguage']);
+        $this->middleware('connect.page.password')->except(['changeLanguage']);
+        $this->middleware('connect.frame')->except(['changeLanguage']);
+    }
+
+    /**
+     * 画面表示用にページやフレームなど呼び出し
      *
      * @param String $plugin_name
      * @return view
      */
     public function __invoke(Request $request)
     {
+        // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+
+        // app\Http\Middleware\ConnectPage.php でセットした値
+        $page = $request->attributes->get('page');
+        $pages = $request->attributes->get('pages');
+        $page_tree = $request->attributes->get('page_tree');
+
         // アプリのロケールを変更
-        $this->setAppLocale();
+        $this->setAppLocale($page);
 
-        // パスワード付きページのチェック（パスワードを要求するか確認）
-        if ($this->page && $this->page->isRequestPassword($request, $this->page_tree)) {
-            // 認証されていなくてパスワードを要求する場合、パスワード要求画面を表示
-            return redirect("/password/input/" . $this->page->id);
-        }
-
-        // 現在のページが参照可能か判定して、NG なら403 ページを振り向ける。
-        $this->checkPageForbidden();
+        // move: app\Http\Middleware\ConnectPage.php に処理移動
+        // // パスワード付きページのチェック（パスワードを要求するか確認）
+        // if ($this->page && $this->page->isRequestPassword($request, $this->page_tree)) {
+        //     // 認証されていなくてパスワードを要求する場合、パスワード要求画面を表示
+        //     return redirect("/password/input/" . $this->page->id);
+        // }
+        //
+        // // 現在のページが参照可能か判定して、NG なら403 ページを振り向ける。
+        // $this->checkPageForbidden();
 
         // 特別なPath が指定された場合は処理を行い、return する。
         if ($this->isSpecialPath($request->path())) {
@@ -59,19 +95,20 @@ class DefaultController extends ConnectController
         }
 
         // フレーム一覧取得（メインエリアのみ）
-        $frames = $this->getFramesMain($this->page->id);
+        // $frames = $this->getFramesMain($this->page->id);
+        $frames = $this->getFramesMain($page->id);
 
         // プラグインのインスタンス取得（メインエリアのみ）
-        $plugin_instances = $this->createInstanceMain($frames);
+        $plugin_instances = $this->createInstanceMain($frames, $page, $pages);
 
         // レイアウト取得
-        $layouts_info = $this->getLayoutsInfo();
+        $layouts_info = $this->getLayoutsInfo($page, $page_tree);
 
         // テーマ取得
-        $themes = $this->getThemes($request);
+        $themes = $this->getThemes($request, $page_tree);
 
         // プラグインのインスタンス生成（メインエリア以外の共通エリア）
-        $plugin_instances = $this->createInstanceCommonArea($layouts_info, $plugin_instances);
+        $plugin_instances = $this->createInstanceCommonArea($layouts_info, $plugin_instances, $page, $pages);
 
         // Page データ
         //$pages = Page::defaultOrder()->get();
@@ -94,11 +131,13 @@ class DefaultController extends ConnectController
         // メインページを呼び出し(coreのinvokeコントローラでは、スーパークラスのviewを使用)
         // 各フレーム内容の表示はメインページから行う。
         return $this->view('core.cms', [
-            'action'            => $request->action,
-            'frame_id'          => $request->frame_id,
-            'page'              => $this->page,
+            'action'            => $request->action,    // routes\web.php で Route::get or post( '{all}', 'Core\DefaultController')->where('all', '.*') で呼ばれるため、$request->action は基本 null の想定
+            'frame_id'          => $request->frame_id,  // 同上. $request->frame_id は基本 null の想定
+            // 'page'              => $this->page,
+            'page'              => $page,
             'frames'            => $frames,
-            'pages'             => $this->pages,
+            // 'pages'             => $this->pages,
+            'pages'             => $pages,
             'plugin_instances'  => $plugin_instances,
             'layouts_info'      => $layouts_info,
             'themes'            => $themes,
@@ -109,8 +148,308 @@ class DefaultController extends ConnectController
     }
 
     /**
-     *  多言語の切り替え機能
-     *
+     * アプリのロケールを変更
+     * コンストラクタではセッションの保持ができなかったので、各ルートから呼び出し
+     * （ConnectController から移動してきた）
+     */
+    private function setAppLocale($page)
+    {
+        // 多言語設定されていたら、ロケールに言語定数を設定
+        // if ($this->isLanguageMultiOn() && $this->page) {
+        if ($this->isLanguageMultiOn() && $page) {
+            // $view_language = $this->getPageLanguage($this->page, $this->getLanguages());
+            $view_language = $this->getPageLanguage($page, Configs::getLanguages());
+            if (empty($view_language)) {
+                $view_language = 'ja';
+            }
+            if (array_key_exists($view_language, Config::get('languages'))) {
+                // URLから取得した言語定数が言語定義にあれば、アプリのロケールをURL値で上書き
+                App::setLocale($view_language);
+            } else {
+                // なければデフォルト値でロケールを上書き
+                App::setLocale(Config::get('app.fallback_locale'));
+            }
+        }
+    }
+
+    /**
+     * 多言語設定がonか
+     * （ConnectController から移動してきた）
+     */
+    private function isLanguageMultiOn()
+    {
+        // foreach ($this->getConfigs() as $config) {
+        foreach (Configs::getSharedConfigs() as $config) {
+            if ($config->name == 'language_multi_on') {
+                if ($config->value == '1') {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * ページのレイアウト情報
+     */
+    private function getLayoutsInfo($page, $page_tree)
+    {
+        // if (empty($this->page)) {
+        if (empty($page)) {
+            //return null;
+            abort(404);
+        }
+        // if (empty($this->page->id)) {
+        if (empty($page->id)) {
+            //return null;
+            abort(404);
+        }
+
+        // ページの系統取得
+        // $page_tree = $this->getPageTree($this->page->id);
+        $page_tree = $this->getPageTree($page, $page_tree);
+
+        // ページのレイアウト取得
+        $layout_array = explode('|', $this->getLayout($page, $page_tree));
+
+        // ページのレイアウトがおかしな値の場合は、初期値として全カラムを設定しておく。
+        if (count($layout_array) != 4) {
+            $layout_array = array(1,1,1,1);
+        }
+
+        // 現ページの表示エリアの有無と幅の設定
+        $layouts_info = array();
+        $layouts_info[0]['exists'] = $layout_array[0];
+        $layouts_info[0]['col'] = 'col-lg-12';
+
+        $layouts_info[1]['exists'] = $layout_array[1];
+        $layouts_info[1]['col'] = ($layout_array[1] == '1' ? 'col-lg-3' : '' );
+
+        $layouts_info[2]['exists'] = '1';
+        if (!$layout_array[1] && !$layout_array[2]) {
+            $layouts_info[2]['col'] = 'col-lg-12';
+        } elseif ($layout_array[1] && !$layout_array[2]) {
+            $layouts_info[2]['col'] = 'col-lg-9';
+        } elseif (!$layout_array[1] && $layout_array[2]) {
+            $layouts_info[2]['col'] = 'col-lg-9';
+        } elseif ($layout_array[1] && $layout_array[2]) {
+            $layouts_info[2]['col'] = 'col-lg-6';
+        }
+
+        $layouts_info[3]['exists'] = $layout_array[2];
+        $layouts_info[3]['col'] = ($layout_array[2] == '1' ? 'col-lg-3' : '' );
+
+        $layouts_info[4]['exists'] = $layout_array[3];
+        $layouts_info[4]['col'] = 'col-lg-12';
+
+        // 共通エリアのフレーム取得
+
+        // フレームを取得するページID
+        $page_ins = array();
+        foreach ($page_tree as $tmp_page) {
+            $page_ins[] = $tmp_page->id;
+        }
+
+        // メインエリア以外のフレームの取得
+        // --- クロージャでインスタンス変数の参照が構文エラーになったのでローカル変数で持つ。
+        // $this_page_id = $this->page->id;
+        $this_page_id = $page->id;
+
+        $frames = Frame::where('area_id', '!=', 2)
+                       ->select('frames.*', 'frames.id as frame_id', 'plugins.plugin_name_full')
+                       ->leftJoin('plugins', 'plugins.plugin_name', '=', 'frames.plugin_name')
+                       ->whereIn('page_id', $page_ins)
+                       // このページにのみ表示する。の処理用クロージャ。
+                       ->where(function ($query) use ($this_page_id) {
+                           $query->Where('page_only', 0)
+                               ->orWhere(function ($query2) use ($this_page_id) {
+                                   $query2->Where('page_only', 1)
+                                          ->Where('page_id', $this_page_id);
+                               })
+                               ->orWhere('page_only', 2);
+                               // 管理者ではフレームが見えないと設定できないので、以下の条件は付けない
+                               //->orWhere(function($query3) use($this_page_id) {
+                               //    $query3->Where('page_only', 2)
+                               //           ->Where('page_id', '<>', $this_page_id);
+                               //});
+                       })
+                       ->orderBy('area_id', 'asc')
+                       ->orderBy('page_id', 'desc')
+                       ->orderBy('display_sequence', 'asc')
+                       ->get();
+
+        // 共通エリアの継承処理
+        foreach ($frames as $frame) {
+            // すでに子の設定で共通エリアにフレームがある場合は、対象外。
+            if (array_key_exists($frame['area_id'], $layouts_info) && array_key_exists('frames', $layouts_info[$frame['area_id']]) && !empty($layouts_info[$frame['area_id']]['frames'])) {
+                // 同じページの複数フレームは使用する。
+                if ($layouts_info[$frame['area_id']]['frames'][0]['page_id'] == $frame['page_id']) {
+                    $layouts_info[$frame['area_id']]['frames'][] = $frame;
+                }
+            } else {
+                // 子から遡って最初に出てきた共通エリアのフレーム
+                $layouts_info[$frame['area_id']]['frames'][] = $frame;
+            }
+        }
+        //print_r($layouts_info);
+
+        return $layouts_info;
+    }
+
+    /**
+     * ページの系統取得
+     */
+    private function getPageTree($page, $page_tree)
+    {
+        // 自分のページから親を遡って取得
+        // $page_tree = $this->getAncestorsAndSelf($page_id);
+
+        // トップページを取得
+        // $top_page = Page::orderBy('_lft', 'asc')->first();
+        $top_page = Page::getTopPage();
+
+        // 多言語設定の場合、多言語のトップページをツリーのrootに入れる。
+        if ($this->isLanguageMultiOn()) {
+            // $global_top_page = $this->getTopPage($this->page, $this->getLanguages());
+            $global_top_page = $this->getTopPage($page, Configs::getLanguages());
+            $page_tree->push($global_top_page);
+        }
+
+        // 自分のページツリーの最後（root）にトップが入っていなければ、トップページをページツリーの最後に追加する
+        if ($page_tree[count($page_tree)-1]->id != $top_page->id) {
+            $page_tree->push($top_page);
+        }
+        return $page_tree;
+    }
+
+    /**
+     * 現在の言語設定のトップページ
+     * （ConnectCommonTrait から移動してきた）
+     */
+    private function getTopPage($page, $languages = null)
+    {
+        $page_language = $this->getPageLanguage($page, $languages);
+
+        // 言語トップのページ確認
+        return Page::where('permanent_link', '/'.$page_language)->first();
+    }
+
+    /**
+     * ページのレイアウト取得
+     */
+    private function getLayout($page, $page_tree)
+    {
+        // レイアウトの初期値
+        $layout_default = '1|1|0|1';
+
+        // if (empty($this->page)) {
+        if (empty($page)) {
+            return $layout_default;
+        }
+
+        // レイアウト
+        $layout = null;
+
+        foreach ($page_tree as $tmp_page) {
+            // レイアウト
+            if (empty($layout) && $tmp_page->layout) {
+                $layout = $tmp_page->layout;
+            }
+        }
+        // 親も含めて空の場合は、初期値を返却
+        if (empty($layout)) {
+            $layout = $layout_default;
+        }
+        return $layout;
+    }
+
+    /**
+     * テーマ取得
+     * 配列で返却['css' => 'テーマ名', 'js' => 'テーマ名']
+     * 値がなければキーのみで値は空
+     * （ConnectController から移動してきた）
+     */
+    private function getThemes($request, $page_tree)
+    {
+        // 戻り値
+        $return_array = array(
+            'css' => '',
+            'js' => '',
+            'css_additional' => '',
+            'js_additional' => ''
+        );
+
+        // セッションにテーマの選択がある場合（テーマ・チェンジャーで選択時の動き）
+        if ($request && $request->session()->get('session_theme')) {
+            return  $this->checkAsset($request->session()->get('session_theme'), $return_array);
+        }
+
+        // ページ固有の設定がある場合
+        $theme = $this->getPagesColum('theme', $page_tree);
+        if ($theme) {
+            // CSS、JS をチェックして配列にして返却
+            return  $this->checkAsset($theme, $return_array);
+        }
+        // テーマが設定されていない場合は一般設定の取得
+        $configs = Configs::where('name', 'base_theme')->first();
+
+        // CSS、JS をチェックして配列にして返却
+        return  $this->checkAsset($configs->value, $return_array);
+    }
+
+    /**
+     * ・指定された基本テーマにCSS、JS があるか確認
+     * ・追加テーマにCSS、JS があれば設定
+     */
+    private function checkAsset($theme, $theme_setting_array)
+    {
+        // CSS 存在チェック
+        if (File::exists(public_path().'/themes/'.$theme.'/themes.css')) {
+            $theme_setting_array['css'] = $theme;
+        }
+
+        // JS 存在チェック
+        if (File::exists(public_path().'/themes/'.$theme.'/themes.js')) {
+            $theme_setting_array['js'] = $theme;
+        }
+
+        // 追加テーマが設定されていれば設定する
+        $configs = Configs::where('name', 'additional_theme')->first();
+        if ($configs) {
+            // CSS 存在チェック
+            if (File::exists(public_path().'/themes/'.$configs->value.'/themes.css')) {
+                $theme_setting_array['additional_css'] = $configs->value;
+            }
+
+            // JS 存在チェック
+            if (File::exists(public_path().'/themes/'.$configs->value.'/themes.js')) {
+                $theme_setting_array['additional_js'] = $configs->value;
+            }
+        }
+
+        return $theme_setting_array;
+    }
+
+    /**
+     * ページのカラム取得
+     * （ConnectController から移動してきた）
+     */
+    private function getPagesColum($col_name, $page_tree)
+    {
+        // 自分のページから親を遡って取得
+        // $page_tree = $this->getAncestorsAndSelf($this->page->id);
+        foreach ($page_tree as $page) {
+            if (isset($page[$col_name])) {
+                return $page[$col_name];
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 多言語の切り替え機能
      */
     public function changeLanguage(Request $request, $language_or_1stdir, $link_or_after2nd = null)
     {
@@ -182,8 +521,7 @@ class DefaultController extends ConnectController
     }
 
     /**
-     *  フレームで使用するテンプレート・リスト、プラグインのフレームメニュー
-     *
+     * フレームで使用するテンプレート・リスト、プラグインのフレームメニュー
      */
     private function getActionCoreFrame($request)
     {
@@ -286,24 +624,31 @@ class DefaultController extends ConnectController
     }
 
     /**
-     *  画面表示用にページやフレームなど呼び出し
+     * 画面表示用にページやフレームなど呼び出し
      *
      * @param String $plugin_name
      * @return view
      */
     public function invokePost(Request $request, $plugin_name, $action = null, $page_id = null, $frame_id = null, $id = null)
     {
+        // dd($request->frame_id, $frame_id, $router);
+        // app\Http\Middleware\ConnectPage.php でセットした値
+        $page = $request->attributes->get('page');
+        $pages = $request->attributes->get('pages');
+        $page_tree = $request->attributes->get('page_tree');
+
         // アプリのロケールを変更
-        $this->setAppLocale();
+        $this->setAppLocale($page);
 
-        // パスワード付きページのチェック（パスワードを要求するか確認）
-        if ($this->page && $this->page->isRequestPassword($request, $this->page_tree)) {
-            // 認証されていなくてパスワードを要求する場合、パスワード要求画面を表示
-            return redirect("/password/input/" . $this->page->id);
-        }
-
-        // 現在のページが参照可能か判定して、NG なら403 ページを振り向ける。
-        $this->checkPageForbidden();
+        // move: app\Http\Middleware\ConnectPage.php に処理移動
+        // // パスワード付きページのチェック（パスワードを要求するか確認）
+        // if ($this->page && $this->page->isRequestPassword($request, $this->page_tree)) {
+        //     // 認証されていなくてパスワードを要求する場合、パスワード要求画面を表示
+        //     return redirect("/password/input/" . $this->page->id);
+        // }
+        //
+        // // 現在のページが参照可能か判定して、NG なら403 ページを振り向ける。
+        // $this->checkPageForbidden();
 
 // 親クラスで取得しているはず
 /*
@@ -329,7 +674,8 @@ class DefaultController extends ConnectController
 */
 
         // フレーム一覧取得
-        $frames = $this->getFramesMain($this->page->id);
+        // $frames = $this->getFramesMain($this->page->id);
+        $frames = $this->getFramesMain($page->id);
 
         // フレームとプラグインの一致をチェック
         if (!$this->checkFrame2Plugin($plugin_name, $frame_id, $frames)) {
@@ -337,16 +683,16 @@ class DefaultController extends ConnectController
         }
 
         // インスタンス取得（メインエリアのみ）
-        $plugin_instances = $this->createInstanceMain($frames);
+        $plugin_instances = $this->createInstanceMain($frames, $page, $pages);
 
         // レイアウト取得
-        $layouts_info = $this->getLayoutsInfo();
+        $layouts_info = $this->getLayoutsInfo($page, $page_tree);
 
         // テーマ取得
-        $themes = $this->getThemes($request);
+        $themes = $this->getThemes($request, $page_tree);
 
         // プラグインのインスタンス生成（メインエリア以外の共通エリア）
-        $plugin_instances = $this->createInstanceCommonArea($layouts_info, $plugin_instances);
+        $plugin_instances = $this->createInstanceCommonArea($layouts_info, $plugin_instances, $page, $pages);
 
         // フレームとプラグインの一致をチェック
         foreach ($layouts_info as $area) {
@@ -383,9 +729,11 @@ class DefaultController extends ConnectController
             'frame_id'          => $frame_id,
             'id'                => $id,
             'page_id'           => $page_id,
-            'page'              => $this->page,
+            // 'page'              => $this->page,
+            'page'              => $page,
             'frames'            => $frames,
-            'pages'             => $this->pages,
+            // 'pages'             => $this->pages,
+            'pages'             => $pages,
             'plugin_instances'  => $plugin_instances,
             'layouts_info'      => $layouts_info,
             'themes'            => $themes,
@@ -398,25 +746,30 @@ class DefaultController extends ConnectController
     }
 
     /**
-     *  JSON-APIリクエスト（GET用）
+     * JSON-APIリクエスト（GET用）
      *     - フレームに紐づくプラグインをインスタンス化して該当プラグインのinvoke()を呼び出します。
      *     - Connect-CMSのview関連の処理を通さない為、returnにcollection渡してJSON返し等、Laravel的な処理が可能です。
      */
     public function invokeGetJson(Request $request, $plugin_name, $action = null, $page_id = null, $frame_id = null, $id = null)
     {
+        // app\Http\Middleware\ConnectPage.php でセットした値
+        $page = $request->attributes->get('page');
+        $pages = $request->attributes->get('pages');
+
         // アプリのロケールを変更
-        $this->setAppLocale();
+        $this->setAppLocale($page);
 
         // プラグインのインスタンス生成
         $frame = Frame::find($frame_id);
-        $class_name = $this->getClassname($frame->plugin_name);
-        $plugin_instance = new $class_name($this->page, $frame, $this->pages);
+        $class_name = $this->getClassName($frame->plugin_name);
+        // $plugin_instance = new $class_name($this->page, $frame, $this->pages);
+        $plugin_instance = new $class_name($page, $frame, $pages);
 
-        return $plugin_instance->invoke($plugin_instance, $request, $action, $page_id, $frame_id);
+        return $plugin_instance->invoke($plugin_instance, $request, $action, $page_id, $frame_id, $id);
     }
 
     /**
-     *  データがない場合にフレームも非表示にする。
+     * データがない場合にフレームも非表示にする。
      */
     private function setHiddenFrame($frames, $plugin_instances)
     {
@@ -444,7 +797,7 @@ class DefaultController extends ConnectController
     /**
      *  newするクラス名の取得
      */
-    private function getClassname($plugin_name)
+    private function getClassName($plugin_name)
     {
         // 標準プラグインとして存在するか確認
         $class_name = "App\Plugins\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
@@ -467,19 +820,25 @@ class DefaultController extends ConnectController
      */
     public function invokePostRedirect(Request $request, $plugin_name, $action = null, $page_id = null, $frame_id = null, $id = null)
     {
+        // app\Http\Middleware\ConnectPage.php でセットした値
+        $page = $request->attributes->get('page');
+        $pages = $request->attributes->get('pages');
+        $http_status_code = $request->attributes->get('http_status_code');
+
         // アプリのロケールを変更
-        $this->setAppLocale();
+        $this->setAppLocale($page);
 
-        // パスワード付きページのチェック（パスワードを要求するか確認）
-        if ($this->page && $this->page->isRequestPassword($request, $this->page_tree)) {
-            // 認証されていなくてパスワードを要求する場合、パスワード要求画面を表示
-            return redirect("/password/input/" . $this->page->id);
-        }
-
+        // move: app\Http\Middleware\ConnectPage.php に処理移動
+        // // パスワード付きページのチェック（パスワードを要求するか確認）
+        // if ($this->page && $this->page->isRequestPassword($request, $this->page_tree)) {
+        //     // 認証されていなくてパスワードを要求する場合、パスワード要求画面を表示
+        //     return redirect("/password/input/" . $this->page->id);
+        // }
+        //
         // 現在のページが参照可能か判定して、NG なら403 ページを振り向ける。
-        $http_status_code = $this->checkPageForbidden();
+        // $http_status_code = $this->checkPageForbidden();
 
-        // 403 なら、不正な実行を疑い、actoin を無効化する。
+        // 403 なら、不正な実行を疑い、action を無効化する。
         if ($http_status_code == 403) {
             $action = null;
         }
@@ -495,8 +854,9 @@ class DefaultController extends ConnectController
 
         // 引数のアクションと同じメソッドを呼び出す。
         //$class_name = "App\Plugins\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
-        $class_name = $this->getClassname($plugin_name);
-        $contentsPlugin = new $class_name($this->page, $action_frame, $this->pages);
+        $class_name = $this->getClassName($plugin_name);
+        // $contentsPlugin = new $class_name($this->page, $action_frame, $this->pages);
+        $contentsPlugin = new $class_name($page, $action_frame, $pages);
 
         // invokeを通して呼び出すことで権限チェックを実施
         $plugin_ret = $contentsPlugin->invoke($contentsPlugin, $request, $action, $page_id, $frame_id, $id);
@@ -536,7 +896,7 @@ class DefaultController extends ConnectController
             $page = Page::where('id', $page_id)->first();
             $base_url = url('/');
             return redirect($base_url . $page->permanent_link . "?frame_action=" . $request->return_frame_action . "&frame_id=" . $frame_id . ($page_no_link ? "&" . $page_no_link : "") . "#" . $frame_id);
-//            return redirect($base_url . $page->permanent_link . "?action=" . $return_frame_action . "&frame_id=" . $frame_id . ($page_no_link ? "&" . $page_no_link : "") . "#" . $frame_id);
+            // return redirect($base_url . $page->permanent_link . "?action=" . $return_frame_action . "&frame_id=" . $frame_id . ($page_no_link ? "&" . $page_no_link : "") . "#" . $frame_id);
         }
 
         // redirect_path があれば遷移
@@ -582,10 +942,15 @@ class DefaultController extends ConnectController
             $action_frame = Frame::where('id', $frame_id)->first();
         }
 
+        // app\Http\Middleware\ConnectPage.php でセットした値
+        $page = $request->attributes->get('page');
+        $pages = $request->attributes->get('pages');
+
         // 引数のアクションと同じメソッドを呼び出す。
         //$class_name = "App\Plugins\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
-        $class_name = $this->getClassname($plugin_name);
-        $contentsPlugin = new $class_name($this->page, $action_frame, $this->pages);
+        $class_name = $this->getClassName($plugin_name);
+        // $contentsPlugin = new $class_name($this->page, $action_frame, $this->pages);
+        $contentsPlugin = new $class_name($page, $action_frame, $pages);
 
         // invokeを通して呼び出すことで権限チェックを実施
         return $contentsPlugin->invoke($contentsPlugin, $request, $action, $page_id, $frame_id, $id);
@@ -593,16 +958,16 @@ class DefaultController extends ConnectController
 
     /**
      * メインエリアのインスタンス生成
-     *
      */
-    private function createInstanceMain($frames)
+    private function createInstanceMain($frames, $page, $pages)
     {
         // プラグインのインスタンス生成（メインエリア）
         $plugin_instances = array();
         foreach ($frames as $frame) {
             //$class_name = "App\Plugins\User\\" . ucfirst($frame->plugin_name) . "\\" . ucfirst($frame->plugin_name) . "Plugin";
-            $class_name = $this->getClassname($frame->plugin_name);
-            $plugin_instances[$frame->frame_id] = new $class_name($this->page, $frame, $this->pages);
+            $class_name = $this->getClassName($frame->plugin_name);
+            // $plugin_instances[$frame->frame_id] = new $class_name($this->page, $frame, $this->pages);
+            $plugin_instances[$frame->frame_id] = new $class_name($page, $frame, $pages);
         }
 
         // フレームの非表示条件を判定して非表示に合致するならFrame オブジェクトのhidden_flag をtrue に。
@@ -614,21 +979,21 @@ class DefaultController extends ConnectController
 
     /**
      * メインエリアのフレーム取得
-     *
      */
     private function getFramesMain($pages_id)
     {
         // フレーム一覧取得（メインエリアのみ）
-        $frames = Frame::select(
-            'frames.*', 'frames.id as frame_id',
-            'pages.page_name', 'pages.id as page_id',
-            'plugins.plugin_name_full'
-        )
-                       ->join('pages', 'frames.page_id', '=', 'pages.id')
-                       ->leftJoin('plugins', 'plugins.plugin_name', '=', 'frames.plugin_name')
-                       ->where('pages.id', $pages_id)
-                       ->where('frames.area_id', 2)
-                       ->orderBy('frames.display_sequence')->get();
+        $frames = Frame::
+            select(
+                'frames.*', 'frames.id as frame_id',
+                'pages.page_name', 'pages.id as page_id',
+                'plugins.plugin_name_full'
+            )
+            ->join('pages', 'frames.page_id', '=', 'pages.id')
+            ->leftJoin('plugins', 'plugins.plugin_name', '=', 'frames.plugin_name')
+            ->where('pages.id', $pages_id)
+            ->where('frames.area_id', 2)
+            ->orderBy('frames.display_sequence')->get();
 
 /*
         $frames = Frame::select('frames.*', 'pages.page_name', 'pages.id as page_id', 'frames.id as id', 'frames.id as frame_id', 'frames.area_id', 'frames.frame_title', 'frames.frame_design',
@@ -658,17 +1023,17 @@ class DefaultController extends ConnectController
 
     /**
      * 共通エリアのプラグインのインスタンス生成
-     *
      */
-    private function createInstanceCommonArea($layouts_info, $plugin_instances)
+    private function createInstanceCommonArea($layouts_info, $plugin_instances, $page, $pages)
     {
         // 共通エリアのプラグインのインスタンス生成
         foreach ($layouts_info as $area) {
             if (array_key_exists('frames', $area)) {
                 foreach ($area['frames'] as $frame) {
                     //$class_name = "App\Plugins\User\\" . ucfirst($frame->plugin_name) . "\\" . ucfirst($frame->plugin_name) . "Plugin";
-                    $class_name = $this->getClassname($frame->plugin_name);
-                    $plugin_instances[$frame->frame_id] = new $class_name($this->page, $frame, $this->pages);
+                    $class_name = $this->getClassName($frame->plugin_name);
+                    // $plugin_instances[$frame->frame_id] = new $class_name($this->page, $frame, $this->pages);
+                    $plugin_instances[$frame->frame_id] = new $class_name($page, $frame, $pages);
                 }
 
                 // フレームの非表示条件を判定して非表示に合致するならFrame オブジェクトのhidden_flag をtrue に。

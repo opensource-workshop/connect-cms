@@ -15,16 +15,15 @@
 @section("plugin_setting_$frame->id")
 
 {{-- 共通エラーメッセージ 呼び出し --}}
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 @if (empty($linklist->id))
     <div class="alert alert-warning">
-        <i class="fas fa-exclamation-circle"></i> {{ __('messages.empty_bucket_setting', ['plugin_name' => 'リンクリスト']) }}
+        <i class="fas fa-exclamation-circle"></i> {{ __('messages.empty_bucket_setting', ['plugin_name' => $frame->plugin_name_full]) }}
     </div>
 @else
     <div class="alert alert-info">
-        <i class="fas fa-exclamation-circle"></i>
-        フレームごとの表示設定を変更します。
+        <i class="fas fa-exclamation-circle"></i> フレームごとの表示設定を変更します。
     </div>
 
     <form action="{{url('/')}}/redirect/plugin/linklists/saveView/{{$page->id}}/{{$frame_id}}/{{$linklist->id}}#frame-{{$frame->id}}" method="POST" class="">
@@ -35,17 +34,11 @@
             <label class="{{$frame->getSettingLabelClass()}}">表示形式</label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <select class="form-control" name="type" class="form-control">
-                    <option value="0" @if(old('type', $linklist_frame->type)==0) selected="selected" @endif>マークなし</option>
-                    <option value="1" @if(old('type', $linklist_frame->type)==1) selected="selected" @endif>黒丸</option>
-                    <option value="2" @if(old('type', $linklist_frame->type)==2) selected="selected" @endif>白丸</option>
-                    <option value="3" @if(old('type', $linklist_frame->type)==3) selected="selected" @endif>黒四角</option>
-                    <option value="4" @if(old('type', $linklist_frame->type)==4) selected="selected" @endif>1, 2, 3,...</option>
-                    <option value="5" @if(old('type', $linklist_frame->type)==5) selected="selected" @endif>a, b, c,...</option>
-                    <option value="6" @if(old('type', $linklist_frame->type)==6) selected="selected" @endif>A, B, C,...</option>
-                    <option value="7" @if(old('type', $linklist_frame->type)==7) selected="selected" @endif>ⅰ,ⅱ,ⅲ,...</option>
-                    <option value="8" @if(old('type', $linklist_frame->type)==8) selected="selected" @endif>Ⅰ,Ⅱ,Ⅲ,...</option>
+                    @foreach (LinklistType::getMembers() as $enum_value => $enum_label)
+                        <option value="{{$enum_value}}" @if(old('type', $linklist_frame->type) == $enum_value) selected="selected" @endif>{{$enum_label}}</option>
+                    @endforeach
                 </select>
-                @if ($errors && $errors->has('type')) <div class="text-danger">{{$errors->first('type')}}</div> @endif
+                @include('plugins.common.errors_inline', ['name' => 'type'])
             </div>
         </div>
 
@@ -53,7 +46,7 @@
             <label class="{{$frame->getSettingLabelClass()}}">表示件数</label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <input type="text" name="view_count" value="{{old('view_count', $linklist_frame->view_count)}}" class="form-control">
-                @if ($errors && $errors->has('view_count')) <div class="text-danger">{{$errors->first('view_count')}}</div> @endif
+                @include('plugins.common.errors_inline', ['name' => 'view_count'])
                 <small class="text-muted">※ 未設定時は10件</small>
             </div>
         </div>

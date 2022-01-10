@@ -15,11 +15,11 @@
 @section("plugin_setting_$frame->id")
 
 {{-- 共通エラーメッセージ 呼び出し --}}
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 @if (empty($linklist->id) && $action != 'createBuckets')
     <div class="alert alert-warning">
-        <i class="fas fa-exclamation-circle"></i> {{ __('messages.empty_bucket_setting', ['plugin_name' => 'リンクリスト']) }}
+        <i class="fas fa-exclamation-circle"></i> {{ __('messages.empty_bucket_setting', ['plugin_name' => $frame->plugin_name_full]) }}
     </div>
 @else
     <div class="alert alert-info">

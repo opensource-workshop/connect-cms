@@ -10,7 +10,7 @@
 @section("plugin_contents_$frame->id")
 
 {{-- 共通エラーメッセージ 呼び出し --}}
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 {{-- 投稿用フォーム --}}
 @if (empty($post->id))
@@ -24,16 +24,16 @@
     <div class="form-group row">
         <label class="col-md-2 control-label text-md-right">タイトル <label class="badge badge-danger">必須</label></label>
         <div class="col-md-10">
-            <input type="text" name="title" value="{{old('title', $post->title)}}" class="form-control">
-            @if ($errors && $errors->has('title')) <div class="text-danger">{{$errors->first('title')}}</div> @endif
+            <input type="text" name="title" value="{{old('title', $post->title)}}" class="form-control @if ($errors->has('title')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'title'])
         </div>
     </div>
 
     <div class="form-group row">
         <label class="col-md-2 control-label text-md-right">URL</label>
         <div class="col-md-10">
-            <input type="text" name="url" value="{{old('url', $post->url)}}" class="form-control">
-            @if ($errors && $errors->has('url')) <div class="text-danger">{{$errors->first('url')}}</div> @endif
+            <input type="text" name="url" value="{{old('url', $post->url)}}" class="form-control @if ($errors->has('url')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'url'])
         </div>
     </div>
 
@@ -54,17 +54,30 @@
     <div class="form-group row">
         <label class="col-md-2 control-label text-md-right">説明</label>
         <div class="col-md-10">
-            <textarea name="description" class="form-control" rows=2>{!!old('description', $post->description)!!}</textarea>
-            @if ($errors && $errors->has('description')) <div class="text-danger">{{$errors->first('description')}}</div> @endif
+            <textarea name="description" class="form-control @if ($errors->has('description')) border-danger @endif" rows=2>{!!old('description', $post->description)!!}</textarea>
+            @include('plugins.common.errors_inline', ['name' => 'description'])
         </div>
     </div>
 
     <div class="form-group row">
         <label class="col-md-2 control-label text-md-right">表示順</label>
         <div class="col-md-10">
-            <input type="text" name="display_sequence" value="{{old('display_sequence', $post->display_sequence)}}" class="form-control">
+            <input type="text" name="display_sequence" value="{{old('display_sequence', $post->display_sequence)}}" class="form-control @if ($errors->has('display_sequence')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'display_sequence'])
             <small class="text-muted">※ 未指定時は最後に表示されるように自動登録します。</small>
-            @if ($errors && $errors->has('display_sequence')) <div class="text-danger">{{$errors->first('display_sequence')}}</div> @endif
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="col-md-2 control-label text-md-right">カテゴリ</label>
+        <div class="col-md-10">
+            <select class="form-control" name="categories_id" class="form-control">
+                <option value=""></option>
+                @foreach($categories as $category)
+                <option value="{{$category->id}}" @if(old('category', $post->categories_id)==$category->id) selected="selected" @endif>{{$category->category}}</option>
+                @endforeach
+            </select>
+            @include('plugins.common.errors_inline', ['name' => 'category'])
         </div>
     </div>
 

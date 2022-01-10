@@ -3,16 +3,18 @@
 namespace App\Plugins\User\Contents;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Gate;
-
-use DB;
+use Illuminate\Support\Facades\Validator;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\User\Contents\Contents;
 
 use App\Plugins\User\UserPluginBase;
+
+use App\Enums\StatusType;
+use App\Rules\CustomValiWysiwygMax;
 
 /**
  * コンテンツプラグイン
@@ -22,7 +24,7 @@ use App\Plugins\User\UserPluginBase;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
- * @package Contoroller
+ * @package Controller
  */
 class ContentsPlugin extends UserPluginBase
 {
@@ -30,7 +32,7 @@ class ContentsPlugin extends UserPluginBase
     /* オブジェクト変数 */
 
     /**
-     * POSTデータ
+     * 変更時のPOSTデータ
      */
     public $post = null;
 
@@ -42,9 +44,9 @@ class ContentsPlugin extends UserPluginBase
     public function getPublicFunctions()
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
-        $functions = array();
-        $functions['get']  = ['editBucketsRoles'];
-        $functions['post'] = ['saveBucketsRoles'];
+        $functions = [];
+        $functions['get']  = [];
+        $functions['post'] = [];
         return $functions;
     }
 
@@ -57,9 +59,10 @@ class ContentsPlugin extends UserPluginBase
         // 標準権限は右記で定義 config/cc_role.php
         //
         // 権限チェックテーブル
-        // [TODO] 【各プラグイン】declareRoleファンクションで適切な追加の権限定義を設定する https://github.com/opensource-workshop/connect-cms/issues/658
-        $role_ckeck_table = array();
-        return $role_ckeck_table;
+        $role_check_table = [];
+        $role_check_table["show"]      = ['frames.delete'];
+        $role_check_table["delete"]    = ['frames.delete'];
+        return $role_check_table;
     }
 
     /**
@@ -75,32 +78,43 @@ class ContentsPlugin extends UserPluginBase
 */
 
     /**
-     *  フレームとBuckets 取得
+     * POST取得関数（コアから呼び出す）
+     * コアがPOSTチェックの際に呼び出す関数
      */
-/*
-    private function getBuckets_____________($frame_id)
+    public function getPost($id, $action = null)
     {
-        $backets = Buckets::select('buckets.*', 'frames.id as frames_id')
-                      ->join('frames', 'frames.bucket_id', '=', 'buckets.id')
-                      ->where('frames.id', $frame_id)
-                      ->first();
-        return $backets;
-    }
-*/
-    /**
-     *  データ取得
-     */
-    private function getFrameContents($frame_id)
-    {
+        if (is_null($action)) {
+            // プラグイン内からの呼び出しを想定。処理を通す。
+
+        // } elseif (in_array($action, ['edit', 'update', 'temporarysave', 'delete'])) {
+        } elseif (in_array($action, ['update', 'temporarysave', 'delete'])) {
+            // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+            // editはURLにidを含めていないため、メソッド側で追加の権限チェックで対応
+        } else {
+            // それ以外のアクションは null で返す。
+            return null;
+        }
 
         // 一度読んでいれば、そのPOSTを再利用する。
         if (!empty($this->post)) {
             return $this->post;
         }
 
-        // 認証されているユーザの取得
-        $user = Auth::user();
+        $this->post = Contents::
+            // 権限があるときは、アクティブ、一時保存、承認待ちを or で取得
+            where(function ($query) {
+                $query = $this->appendAuthWhere($query, 'contents');
+            })
+            ->firstOrNew(['id' => $id]);
 
+        return $this->post;
+    }
+
+    /**
+     *  データ取得
+     */
+    private function getFrameContents($frame_id)
+    {
         // buckets_id
         $buckets_id = null;
         if (!empty($this->buckets)) {
@@ -108,20 +122,25 @@ class ContentsPlugin extends UserPluginBase
         }
 
         // Bucketsに応じたデータを返す。
-        $contents = DB::table('contents')
-                    ->select('contents.*', 'buckets.id as bucket_id', 'frames.page_id as page_id')
-                    ->join('buckets', 'buckets.id', '=', 'contents.bucket_id')
-                    ->join('frames', function ($join) {
-                        $join->on('frames.bucket_id', '=', 'buckets.id');
-                    })
-                    ->where('buckets.id', $buckets_id)
-                    ->where('contents.deleted_at', null)
-                    // 権限があるときは、アクティブ、一時保存、承認待ちを or で取得
-                    ->where(function ($query) {
-                          $query = $this->appendAuthWhere($query);
-                    })
-                    ->orderBy('id', 'desc')
-                    ->first();
+        $contents = Contents::
+            select(
+                'contents.*',
+                'buckets.id as bucket_id',
+                'buckets.bucket_name as bucket_name',
+                'frames.page_id as page_id'
+            )
+            ->join('buckets', 'buckets.id', '=', 'contents.bucket_id')
+            ->join('frames', function ($join) {
+                $join->on('frames.bucket_id', '=', 'buckets.id');
+            })
+            ->where('buckets.id', $buckets_id)
+            // ->where('contents.deleted_at', null)
+            // 権限があるときは、アクティブ、一時保存、承認待ちを or で取得
+            ->where(function ($query) {
+                $query = $this->appendAuthWhere($query, 'contents');
+            })
+            ->orderBy('id', 'desc')
+            ->first();
 
 //        // 管理者権限の場合は、一時保存も対象
 //        //if (!empty($user) && $this->isCan('admin_system')$user->role == config('cc_role.ROLE_SYSTEM_MANAGER')) {
@@ -162,38 +181,39 @@ class ContentsPlugin extends UserPluginBase
     }
 
     /**
-     *  記事の取得権限に対する条件追加
+     * 記事の取得権限に対する条件追加
+     * 固定記事は独自処理があるため、共通処理（appendAuthWhereBase）を使わない。
      */
-    private function appendAuthWhere($query)
+    private function appendAuthWhere($query, $table_name)
     {
-        // 記事修正権限、コンテンツ管理者の場合、全記事の取得
-        if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
+        // コンテンツ管理者の場合、全記事の取得
+        // bugfix: 固定記事のモデレータは 権限設定 で 投稿できる 権限を制御してるため、ここでは許可しない
+        // if ($this->isCan('role_article') || $this->isCan('role_article_admin')) {
+        if ($this->isCan('role_article_admin')) {
             // 全件取得のため、追加条件なしで戻る。
         } elseif ($this->isCan('role_approval')) {
-            // 承認権限の場合、Active ＋ 承認待ちの取得
-            $query->Where('status', '=', 0)
-                  ->orWhere('status', '=', 2);
+            //
+            // 承認者(role_approval)権限 = Active ＋ 承認待ちの取得
+            //
+            $query->WhereIn($table_name . '.status', [StatusType::active, StatusType::approval_pending]);
+
         } elseif ($this->buckets && $this->buckets->canPostUser(Auth::user())) {
-            // 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
-            $query->Where('status', '=', 0)
-                  ->orWhere('contents.created_id', '=', Auth::user()->id);
+            //
+            // モデレータ or 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
+            //
+            // bugfix: 承認あり なら、自分の承認ありデータも見れる必要あり。
+            // $query->Where('status', '=', 0)
+            $query->where(function ($tmp_query) use ($table_name) {
+                $tmp_query->WhereIn($table_name . '.status', [StatusType::active, StatusType::approval_pending])
+                    ->orWhere($table_name . '.created_id', '=', Auth::user()->id);
+            });
+
         } else {
             // その他（ゲスト）
-            $query->where('status', 0);
+            $query->where($table_name . '.status', StatusType::active);
         }
 
         return $query;
-    }
-
-    /**
-     *  要承認の判断
-     */
-    private function isApproval($frame_id)
-    {
-        if (empty($this->buckets)) {
-            return false;
-        }
-        return $this->buckets->needApprovalUser(Auth::user());
     }
 
     /**
@@ -290,7 +310,7 @@ class ContentsPlugin extends UserPluginBase
         $level1_pages = $this->getPages($format);
 
         // スマホメニュー用タグ生成とコンテンツ変換
-        $sp_menu = $this->getSmpMenu($level1_pages, $page_id);
+        $sp_menu = $this->getSmpMenu($level1_pages, $page_id, $this->page);
         if ($contents && $sp_menu) {
             $contents->content_text = str_replace('<cc value="cc:menu"></cc>', $sp_menu, $contents->content_text);
         }
@@ -301,11 +321,137 @@ class ContentsPlugin extends UserPluginBase
         }
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'contents', [
-            'contents'     => $contents,
-            ]
-        );
+        return $this->view('contents', [
+            'contents' => $contents,
+        ]);
+    }
+
+    /**
+     * 文字列変換
+     * （ConnectCommonTraitから移動してきた）
+     */
+    private function replaceConnectTagAll($contents, $page, $configs)
+    {
+        // Connect-CMSタグを値に変換する。
+        if (empty($contents)) {
+            return $contents;
+        }
+
+        $patterns = array();
+        $replacements = array();
+
+        // 固定リンク(多言語切り替えで使用)
+        $config_language_multi_on = null;
+        foreach ($configs as $config) {
+            if ($config->name == 'language_multi_on') {
+                $config_language_multi_on = $config->value;
+            }
+        }
+
+        // 言語設定の取得
+        $languages = array();
+        foreach ($configs as $config) {
+            if ($config->category == 'language') {
+                $languages[$config->additional1] = $config;
+            }
+        }
+        $page_language = $this->getPageLanguage($page, $languages);
+
+        // 確実に言語設定部分を取り除くために、permanent_link を / で分解して、1番目(/ の次)の内容を取得する。
+        $permanent_link_array = explode('/', $page->permanent_link);
+
+        // 多言語on＆現在のページがデフォルト以外の言語の場合、言語指定を取り除く
+        if ($config_language_multi_on &&
+            $page_language &&
+            $permanent_link_array &&
+            array_key_exists(1, $permanent_link_array) &&
+            $permanent_link_array[1] == $page_language) {
+            $patterns[0] = '/{{cc:permanent_link}}/';
+            $replacements[0] = trim(mb_substr($page->permanent_link, mb_strlen('/'.$page_language)), '/');
+        } else {
+            $patterns[0] = '/{{cc:permanent_link}}/';
+            $replacements[0] = trim($page->permanent_link, '/');
+        }
+
+        // 変換と値の返却
+        $contents->content_text = preg_replace($patterns, $replacements, $contents->content_text);
+        return $contents;
+    }
+
+    /**
+     * 固定記事からスマホメニューを出すためのタグ生成
+     * （ConnectController から移動してきた）
+     */
+    private function getSmpMenu($level1_pages, $page_id = null, $page = null)
+    {
+        $sp_menu  = '' . "\n";
+        $sp_menu .= '<nav class="sp_menu">' . "\n";
+        $sp_menu .= '<ul>' . "\n";
+        foreach ($level1_pages as $level1_page) {
+            // ページの表示条件の反映（IP制限など）
+            if (!$level1_page['parent']->isView(Auth::user())) {
+                continue;
+            }
+
+            // コンストラクタで全体作業用として取得したページを使用する想定
+            // そのため、ページの基本の表示設定を反映する。
+            if ($level1_page['parent']->base_display_flag == 0) {
+                continue;
+            }
+
+            // ルーツのチェック
+            // if ($level1_page['parent']->isAncestorOf($this->page)) {
+            if ($level1_page['parent']->isAncestorOf($page)) {
+                $active_class = ' class="active"';
+            } else {
+                $active_class = '';
+            }
+            //$sp_menu .= '<li class="' . $level1_page['parent']->getLinkUrl('/') . '_menu">' . "\n"; // ページにクラス名を保持する方式へ変更した。
+            $sp_menu .= '<li class="' . $level1_page['parent']->getClass() . '">' . "\n";
+
+            // クラス名取得
+            $classes = explode(' ', $level1_page['parent']->getClass());
+
+            // ページのクラスに "smp_a_link" がある場合は、a タグでリンクする。
+            if (is_array($classes) && in_array('smp_a_link', $classes)) {
+                $sp_menu .= '<a' . $active_class . ' href="' . $level1_page['parent']->getUrl() . '"' . $level1_page['parent']->getUrlTargetTag() . '>';
+                $sp_menu .= $level1_page['parent']->page_name;
+                $sp_menu .= '</a>' . "\n";
+            } else {
+                $sp_menu .= '<p' . $active_class . '>';
+                $sp_menu .= $level1_page['parent']->page_name;
+                $sp_menu .= '</p>' . "\n";
+            }
+
+            if (array_key_exists('child', $level1_page)) {
+                $sp_menu .= '<ul' . $active_class . '>' . "\n";
+                foreach ($level1_page['child'] as $child) {
+                    // ページの表示条件の反映（IP制限など）
+                    if (!$child->isView(Auth::user())) {
+                        continue;
+                    }
+
+                    if ($child->base_display_flag == 0) {
+                        continue;
+                    } else {
+                        $child_depth = intval($child->depth) - 1;
+                        $child_margin_left = ($child_depth > 0) ? $child_depth * 20 : 0;
+                        $sp_menu .= '<li><a href="' . $child->getUrl() . '"' . $child->getUrlTargetTag() . ' style="margin-left:' . $child_margin_left . 'px"' . '>';
+                        if ($page_id == $child->id) {
+                            $sp_menu .= '<u>' . $child->page_name . '</u>';
+                        } else {
+                            $sp_menu .= $child->page_name;
+                        }
+                        $sp_menu .= '</a></li>' . "\n";
+                    }
+                }
+                $sp_menu .= '</ul>' . "\n";
+            }
+            $sp_menu .= '</li>' . "\n";
+        }
+        $sp_menu .= '</ul>' . "\n";
+        $sp_menu .= '</nav>' . "\n";
+        return $sp_menu;
     }
 
     /**
@@ -317,21 +463,18 @@ class ContentsPlugin extends UserPluginBase
         // データ取得
         $contents = $this->getFrameContents($frame_id);
 
-        // データがない場合は、新規登録用画面
-        if (empty($contents)) {
-            // 新規登録画面を呼び出す
-            return $this->view(
-                'contents_create', [
-                ]
-            );
-        } else {
-            // 編集画面テンプレートを呼び出す。
-            return $this->view(
-                'contents_edit', [
-                'contents' => $contents,
-                ]
-            );
+        // 引数idを使ってないため、追加で権限チェック
+        $view_error = $this->can('posts.update', $contents, $this->frame->plugin_name, $this->buckets, $this->frame);
+        if ($view_error) {
+            return $view_error;
         }
+
+        // データがない場合
+        $contents = $contents ?? new Contents();
+
+        return $this->view('contents_edit', [
+            'contents' => $contents,
+        ]);
     }
 
     /**
@@ -342,8 +485,12 @@ class ContentsPlugin extends UserPluginBase
     {
         // 権限チェック
         // 固定記事プラグインの特別処理。削除のための表示であり、フレーム画面のため、個別に権限チェックする。
-        if ($this->can('frames.delete')) {
-            return $this->view_error(403);
+        // if ($this->can('frames.delete')) {
+        //     return $this->view_error(403);
+        // }
+        $view_error = $this->can('frames.delete');
+        if ($view_error) {
+            return $view_error;
         }
 
         // データ取得
@@ -367,17 +514,26 @@ class ContentsPlugin extends UserPluginBase
         );
     }
 
-   /**
-    * データ新規登録関数
-    */
+    /**
+     * データ新規登録関数
+     */
     public function store($request, $page_id = null, $frame_id = null, $id = null, $status = 0)
     {
+        // 項目のエラーチェック
+        $validator = $this->makeValidator($request);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
         // バケツがまだ登録されていなかったら登録する。
         if (empty($this->buckets)) {
-            $bucket_id = DB::table('buckets')->insertGetId([
-                  'bucket_name' => '無題',
-                  'plugin_name' => 'contents'
+            $bucket = Buckets::create([
+                'bucket_name' => $request->bucket_name ?? '無題',
+                'plugin_name' => 'contents'
             ]);
+            $bucket_id = $bucket->id;
         } else {
             $bucket_id = $this->buckets['id'];
         }
@@ -391,7 +547,7 @@ class ContentsPlugin extends UserPluginBase
         // 一時保存(status が 1 になる。)
         if ($status == 1) {
             $contents->status = 1;
-        } elseif ($this->isApproval($frame_id)) {
+        } elseif ($this->isApproval()) {
             // 承認フラグ(要承認の場合はstatus が 2 になる。)
             $contents->status = 2;
         } else {
@@ -402,16 +558,26 @@ class ContentsPlugin extends UserPluginBase
 
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)
-                  ->update(['bucket_id' => $bucket_id]);
+            ->update(['bucket_id' => $bucket_id]);
 
-        return;
+        // 登録後はリダイレクトして表示用の初期処理を呼ぶ。
+        // return;
+        return collect(['redirect_path' => url($this->page->permanent_link)]);
     }
 
-   /**
-    * データ更新（確定）関数
-    */
+    /**
+     * データ更新（確定）関数
+     */
     public function update($request, $page_id = null, $frame_id = null, $id = null)
     {
+        // 項目のエラーチェック
+        $validator = $this->makeValidator($request);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
         // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
         $oldrow = Contents::find($id);
 
@@ -420,7 +586,7 @@ class ContentsPlugin extends UserPluginBase
         $newrow->content_text = $this->clean($request->contents);
 
         // 承認フラグ(要承認の場合はstatus が2 になる。)
-        if ($this->isApproval($frame_id)) {
+        if ($this->isApproval()) {
             $newrow->status = 2;
         } else {
             $newrow->status = 0;
@@ -435,19 +601,34 @@ class ContentsPlugin extends UserPluginBase
         // 変更のデータ保存
         $newrow->save();
 
-        return;
+        // バケツのデータ名保存
+        $buckets = Buckets::find($oldrow->bucket_id);
+        $buckets->bucket_name = $request->bucket_name ?? '無題';
+        $buckets->save();
+
+        // 登録後はリダイレクトして表示用の初期処理を呼ぶ。
+        // return;
+        return collect(['redirect_path' => url($this->page->permanent_link)]);
     }
 
-   /**
-    * データ一時保存関数
-    */
+    /**
+     * データ一時保存関数
+     */
     public function temporarysave($request, $page_id = null, $frame_id = null, $id = null)
     {
         // 新規で一時保存しようとしたときは id、レコードがまだない。
         if (empty($id)) {
             $status = 1;
-            $this->store($request, $page_id, $frame_id, $id, $status);
+            return $this->store($request, $page_id, $frame_id, $id, $status);
         } else {
+            // 項目のエラーチェック
+            $validator = $this->makeValidator($request);
+
+            // エラーがあった場合は入力画面に戻る。
+            if ($validator->fails()) {
+                return back()->withErrors($validator)->withInput();
+            }
+
             // 旧データ取得
             $oldrow = Contents::find($id);
 
@@ -462,13 +643,39 @@ class ContentsPlugin extends UserPluginBase
             $newrow->content_text = $this->clean($request->contents);
             $newrow->status = 1; //（一時保存）
             $newrow->save();
+
+            // バケツのデータ名保存
+            $buckets = Buckets::find($oldrow->bucket_id);
+            $buckets->bucket_name = $request->bucket_name ?? '無題';
+            $buckets->save();
+
+            // 登録後はリダイレクトして表示用の初期処理を呼ぶ。
+            return collect(['redirect_path' => url($this->page->permanent_link)]);
         }
-        return;
+        // return;
     }
 
-   /**
-    * 承認
-    */
+    /**
+     * 入力チェック
+     */
+    private function makeValidator($request)
+    {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'contents'    => ['nullable', new CustomValiWysiwygMax()],
+            'bucket_name' => ['nullable', 'max:255'],
+        ]);
+        $validator->setAttributeNames([
+            'contents'    => '内容',
+            'bucket_name' => 'データ名',
+        ]);
+
+        return $validator;
+    }
+
+    /**
+     * 承認
+     */
     public function approval($request, $page_id = null, $frame_id = null, $id = null)
     {
         // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
@@ -485,9 +692,9 @@ class ContentsPlugin extends UserPluginBase
         return;
     }
 
-   /**
-    * データ削除関数
-    */
+    /**
+     * データ削除関数
+     */
     public function delete($request, $page_id = null, $frame_id = null, $id = null)
     {
         // id がある場合、コンテンツを削除
@@ -553,8 +760,7 @@ class ContentsPlugin extends UserPluginBase
         // データリストの場合の追加処理
         // * status は 0 のもののみ表示（データリスト表示はそれで良いと思う）
         // * 現在のものを最初に表示する。orderByRaw('buckets.id = ' . $this->buckets->id . ' desc') ※ desc 指定が必要だった。
-        $buckets_query = DB::table('buckets')
-                           ->select('buckets.*', 'contents.id as contents_id', 'contents.content_text', 'contents.updated_at as contents_updated_at', 'frames.id as frames_id', 'frames.frame_title', 'pages.page_name')
+        $buckets_query = Buckets::select('buckets.*', 'contents.id as contents_id', 'contents.content_text', 'contents.updated_at as contents_updated_at', 'frames.id as frames_id', 'frames.frame_title', 'pages.page_name')
                            ->join('contents', function ($join) {
                                $join->on('contents.bucket_id', '=', 'buckets.id');
                                $join->where('contents.status', '=', 0);
@@ -571,20 +777,18 @@ class ContentsPlugin extends UserPluginBase
         }
 
         $buckets_list = $buckets_query->orderBy($request_order_by[0], $request_order_by[1])
-                                      ->paginate(10, ["*"], "frame_{$frame_id}_page");
+            ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
-        return $this->view(
-            'contents_list_buckets', [
+        return $this->view('contents_list_buckets', [
             'buckets_list'      => $buckets_list,
             'order_link'        => $order_link,
             'request_order_str' => implode('|', $request_order_by)
-            ]
-        );
+        ]);
     }
 
-   /**
-    * データ紐づけ変更関数
-    */
+    /**
+     * データ紐づけ変更関数
+     */
     public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新

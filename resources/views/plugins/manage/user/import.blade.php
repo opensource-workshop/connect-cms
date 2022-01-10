@@ -16,7 +16,7 @@
     <div class="card-body">
 
         {{-- 共通エラーメッセージ 呼び出し --}}
-        @include('common.errors_form_line')
+        @include('plugins.common.errors_form_line')
 
         {{-- 登録後メッセージ表示 --}}
         @include('plugins.common.flash_message')
@@ -68,7 +68,7 @@
                 <label class="col-md-3 col-form-label text-md-right">CSVファイル <span class="badge badge-danger">必須</span></label>
                 <div class="col-md-9">
                     <div class="custom-file">
-                        <input type="file" class="custom-file-input @if ($errors->has('users_csv')) border-danger @endif" id="users_csv" name="users_csv">
+                        <input type="file" class="custom-file-input @if ($errors->has('users_csv')) border-danger @endif" id="users_csv" name="users_csv" accept=".csv">
                         <label class="custom-file-label @if ($errors->has('users_csv')) border-danger @endif" for="users_csv" data-browse="参照"></label>
                     </div>
                     @if ($errors && $errors->has('users_csv'))
@@ -91,7 +91,7 @@
                     <small class="text-muted">
                         ※ UTF-8はBOM付・BOMなしどちらにも対応しています。
                     </small>
-                    @include('common.errors_inline', ['name' => 'character_code'])
+                    @include('plugins.common.errors_inline', ['name' => 'character_code'])
                 </div>
             </div>
 

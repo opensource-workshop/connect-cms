@@ -29,6 +29,7 @@ final class PluginName extends EnumsBase
     const tabs = 'Tabs';
     const themechangers = 'Themechangers';
     const receives = 'Receives';
+    const linklists = 'Linklists';
 
     // key/valueの連想配列
     const enum = [
@@ -50,5 +51,15 @@ final class PluginName extends EnumsBase
         self::tabs => 'タブ',
         self::themechangers => 'テーマチェンジャー',
         self::receives => 'データ収集',
+        self::linklists => 'リンクリスト',
     ];
+
+    /**
+     * DBに登録される plugin_name を取得
+     * @see resources\views\layouts\add_plugin.blade.php
+     */
+    public static function getPluginName($key): string
+    {
+        return strtolower($key);
+    }
 }

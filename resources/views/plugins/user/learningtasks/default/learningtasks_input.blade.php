@@ -12,10 +12,10 @@
 
 @section("plugin_contents_$frame->id")
 
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 {{-- WYSIWYG 呼び出し --}}
-@include('plugins.common.wysiwyg')
+@include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame->id])
 
 {{-- 登録後メッセージ表示 --}}
 @include('plugins.common.flash_message')
@@ -36,7 +36,7 @@
         <div class="col-md-10">
             <input type="text" name="post_title" value="{{old('post_title', $learningtasks_posts->post_title)}}" class="form-control @if ($errors->has('post_title')) border-danger @endif">
             {{-- <textarea name="post_title">{!!old('post_title', $learningtasks_posts->post_title)!!}</textarea> --}}
-            @include('common.errors_inline', ['name' => 'post_title'])
+            @include('plugins.common.errors_inline', ['name' => 'post_title'])
         </div>
     </div>
 
@@ -44,9 +44,9 @@
         <label class="col-md-2">本文 <label class="badge badge-danger">必須</label></label>
         <div class="col-md-10">
             <div class="@if ($errors->has('post_text')) border border-danger @endif">
-                <textarea name="post_text">{!!old('post_text', $learningtasks_posts->post_text)!!}</textarea>
+                <textarea name="post_text" class="wysiwyg{{$frame->id}}">{!!old('post_text', $learningtasks_posts->post_text)!!}</textarea>
             </div>
-            @include('common.errors_inline', ['name' => 'post_text'])
+            @include('plugins.common.errors_inline_wysiwyg', ['name' => 'post_text'])
         </div>
     </div>
 
@@ -56,7 +56,7 @@
             <div class="custom-file">
                 <input type="file" class="custom-file-input @if ($errors->has('add_task_file')) border-danger @endif" id="add_task_file" name="add_task_file" accept=".pdf, .doc, .docx">
                 <label class="custom-file-label @if ($errors->has('add_task_file')) border-danger @endif" for="add_task_file" data-browse="参照">PDF もしくは ワード形式。</label>
-                @include('common.errors_inline', ['name' => 'add_task_file'])
+                @include('plugins.common.errors_inline', ['name' => 'add_task_file'])
                 <small class="text-muted">※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}</small><br />
             </div>
         </div>
@@ -88,7 +88,7 @@
                     <div class="input-group-text @if ($errors->has('posted_at')) border-danger @endif"><i class="far fa-clock"></i></div>
                 </div>
             </div>
-            @include('common.errors_inline', ['name' => 'posted_at'])
+            @include('plugins.common.errors_inline', ['name' => 'posted_at'])
         </div>
     </div>
     <script type="text/javascript">
@@ -173,18 +173,25 @@
                         <i class="fas fa-undo-alt"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span>
                     </button>
                     <input type="hidden" name="bucket_id" value="">
+                    {{--
                     @if (empty($learningtasks_posts->id))
-                        @if ($buckets->needApprovalUser(Auth::user()))
+                        @if ($buckets->needApprovalUser(Auth::user(), $frame))
                             <button type="submit" class="btn btn-success" onclick="javascript:return confirm('登録します。\nよろしいですか？')"><i class="far fa-edit"></i> 登録申請</button>
                         @else
                             <button type="submit" class="btn btn-primary" onclick="javascript:return confirm('登録します。\nよろしいですか？')"><i class="fas fa-check"></i> 登録確定</button>
                         @endif
                     @else
-                        @if ($buckets->needApprovalUser(Auth::user()))
+                        @if ($buckets->needApprovalUser(Auth::user(), $frame))
                             <button type="submit" class="btn btn-success" onclick="javascript:return confirm('変更します。\nよろしいですか？')"><i class="far fa-edit"></i> 変更申請</button>
                         @else
                             <button type="submit" class="btn btn-primary" onclick="javascript:return confirm('変更します。\nよろしいですか？')"><i class="fas fa-check"></i> 変更確定</button>
                         @endif
+                    @endif
+                    --}}
+                    @if (empty($learningtasks_posts->id))
+                        <button type="submit" class="btn btn-primary" onclick="javascript:return confirm('登録します。\nよろしいですか？')"><i class="fas fa-check"></i> 登録確定</button>
+                    @else
+                        <button type="submit" class="btn btn-primary" onclick="javascript:return confirm('変更します。\nよろしいですか？')"><i class="fas fa-check"></i> 変更確定</button>
                     @endif
                 </div>
             </div>

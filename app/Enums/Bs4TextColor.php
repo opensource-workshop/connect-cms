@@ -5,7 +5,7 @@ namespace App\Enums;
 /**
  * テキストカラー（BootStrap4版）
  */
-final class Bs4TextColor
+final class Bs4TextColor extends EnumsBase
 {
     // 定数メンバ
     const primary = 'text-primary';
@@ -32,20 +32,4 @@ final class Bs4TextColor
         self::muted=>'淡色',
         self::white=>'白',
     ];
-
-    /*
-    * 対応した和名を返す
-    */
-    public static function getDescription($key): string
-    {
-        return self::enum[$key];
-    }
-
-    /*
-    * key/valueの連想配列を返す
-    */
-    public static function getMembers()
-    {
-        return self::enum;
-    }
 }

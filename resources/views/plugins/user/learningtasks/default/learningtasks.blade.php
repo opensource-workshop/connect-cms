@@ -116,31 +116,41 @@
 
     @foreach($categories_and_posts as $category_id => $categories_and_post)  {{-- カテゴリのループ --}}
         <div class="accordion @if (!$loop->first) mt-3 @endif table-responsive" id="accordionLearningTask{{$frame_id}}_{{$category_id}}">
-            <span class="badge" style="color:{{$categories[$category_id]->category_color}};background-color:{{$categories[$category_id]->category_background_color}};">{{$categories[$category_id]->category}}</span>
+            @php
+            // レポート・試験をヘッダーに表示するか
+            $is_header_report = false;
+            $is_header_examination = false;
+
+            // カテゴリ表示するか
+            $category_view_flag = false;
+
+            foreach($categories_and_post as $post) {
+                $use_report = $tool->checkFunction(LearningtaskUseFunction::use_report, $post->id);
+                if ($use_report) {
+                    $is_header_report = true;
+                }
+
+                $use_examination = $tool->checkFunction(LearningtaskUseFunction::use_examination, $post->id);
+                if ($use_examination) {
+                    $is_header_examination = true;
+                }
+
+                if ($post->category_view_flag) {
+                    $category_view_flag = true;
+                }
+            }
+            @endphp
+
+            {{-- カテゴリ --}}
+            @if($category_view_flag)
+                <span class="badge" style="color:{{$categories[$category_id]->category_color}};background-color:{{$categories[$category_id]->category_background_color}};">{{$categories[$category_id]->category}}</span>
+            @endif
 
             <h5><span class="badge badge-secondary">課題一覧</span></h5>
 
             <table class="table table-bordered mb-0">
                 <thead class="bg-light">
                     <tr>
-                        @php
-                            // レポート・試験をヘッダーに表示するか
-                            $is_header_report = false;
-                            $is_header_examination = false;
-
-                            foreach($categories_and_post as $post) {
-                                $use_report = $tool->checkFunction(LearningtaskUseFunction::use_report, $post->id);
-                                if ($use_report) {
-                                    $is_header_report = true;
-                                }
-
-                                $use_examination = $tool->checkFunction(LearningtaskUseFunction::use_examination, $post->id);
-                                if ($use_examination) {
-                                    $is_header_examination = true;
-                                }
-                            }
-                        @endphp
-
                         <th scope="col" class="text-nowrap">科目名</th>
                         @if (Auth::check())
                             @if ($is_header_report)
@@ -194,9 +204,7 @@
     @endforeach
 
     {{-- ページング処理 --}}
-    <div class="text-center mt-2">
-        {{ $posts->fragment('frame-' . $frame_id)->links() }}
-    </div>
+    @include('plugins.common.user_paginate', ['posts' => $posts, 'frame' => $frame, 'aria_label_name' => $learningtask->learningtasks_name, 'class' => 'mt-3'])
 @endif
 
 @endsection

@@ -4,11 +4,11 @@ namespace App\Plugins\User\Calendars;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 //use Carbon\Carbon;
-use DB;
 
 use App\Enums\StatusType;
 
@@ -21,13 +21,15 @@ use App\Models\User\Calendars\CalendarPost;
 
 use App\Plugins\User\UserPluginBase;
 
+use App\Rules\CustomValiWysiwygMax;
+
 /**
  * カレンダー・プラグイン
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category カレンダー・プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class CalendarsPlugin extends UserPluginBase
 {
@@ -53,8 +55,8 @@ class CalendarsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['index', 'editView'];
-        $functions['post'] = ['saveView', 'edit'];
+        $functions['get']  = ['index'];
+        $functions['post'] = ['edit'];
         return $functions;
     }
 
@@ -63,11 +65,9 @@ class CalendarsPlugin extends UserPluginBase
      */
     public function declareRole()
     {
-        // 権限チェックテーブル
-        $role_ckeck_table = array();
-        $role_ckeck_table["editView"] = array('role_arrangement');
-        $role_ckeck_table["saveView"] = array('role_arrangement');
-        return $role_ckeck_table;
+        // 権限チェックテーブル (追加チェックなし)
+        $role_check_table = [];
+        return $role_check_table;
     }
 
     /**
@@ -84,15 +84,29 @@ class CalendarsPlugin extends UserPluginBase
      * POST取得関数（コアから呼び出す）
      * コアがPOSTチェックの際に呼び出す関数
      */
-    public function getPost($id)
+    public function getPost($id, $action = null)
     {
+        if (is_null($action)) {
+            // プラグイン内からの呼び出しを想定。処理を通す。
+        } elseif (in_array($action, ['edit', 'save', 'delete'])) {
+            // コアから呼び出し。posts.update|posts.deleteの権限チェックを指定したアクションは、処理を通す。
+        } else {
+            // それ以外のアクションは null で返す。
+            return null;
+        }
+
         // 一度読んでいれば、そのPOSTを再利用する。
         if (!empty($this->post)) {
             return $this->post;
         }
 
         // POST を取得する。
-        $this->post = CalendarPost::firstOrNew(['id' => $id]);
+        $this->post = CalendarPost::
+            where(function ($query) {
+                $query = $this->appendAuthWhereBase($query, 'calendar_posts');
+            })
+            ->firstOrNew(['id' => $id]);
+
         return $this->post;
     }
 
@@ -109,60 +123,10 @@ class CalendarsPlugin extends UserPluginBase
     /**
      * プラグインのバケツ取得関数
      */
-    public function getPluginBucket($bucket_id)
+    private function getPluginBucket($bucket_id)
     {
         // プラグインのメインデータを取得する。
         return Calendar::firstOrNew(['bucket_id' => $bucket_id]);
-    }
-
-    /**
-     *  データ取得時の権限条件の付与
-     */
-    protected function appendAuthWhere($query, $table_name)
-    {
-        // 各条件でSQL を or 追記する場合は、クロージャで記載することで、元のSQL とAND 条件でつながる。
-        // クロージャなしで追記した場合、or は元の whereNull('calendar_posts.parent_id') を打ち消したりするので注意。
-
-        if (empty($query)) {
-            // 空なら何もしない
-            return $query;
-        }
-
-        // モデレータ(記事修正, role_article)権限以上（role_article, role_article_admin）
-        if ($this->isCan('role_article')) {
-            // 全件取得のため、追加条件なしで戻る。
-            return $query;
-        }
-
-        // 認証状況により、絞り込み条件を変える。
-        if (!Auth::check()) {
-            //
-            // 共通条件（Active）
-            // 権限なし（コンテンツ管理者・モデレータ・承認者・編集者以外）
-            // 未ログイン
-            //
-            $query->where($table_name . '.status', '=', StatusType::active);
-        } elseif ($this->isCan('role_approval')) {
-            //
-            // 承認者(role_approval)権限 = Active ＋ 承認待ちの取得
-            //
-            $query->where(function ($auth_query) use ($table_name) {
-                $auth_query->orWhere($table_name . '.status', '=', StatusType::active);
-                $auth_query->orWhere($table_name . '.status', '=', StatusType::approval_pending);
-            });
-        } elseif ($this->isCan('role_reporter')) {
-            //
-            // 編集者(role_reporter)権限 = Active ＋ 自分の全ステータス記事の取得
-            // 一時保存の記事も、自分の記事を取得することで含まれる。
-            // 承認待ちの記事であっても、自分の記事なので、修正可能。
-            //
-            $query->where(function ($auth_query) use ($table_name) {
-                $auth_query->orWhere($table_name . '.status', '=', StatusType::active);
-                $auth_query->orWhere($table_name . '.created_id', '=', Auth::user()->id);
-            });
-        }
-
-        return $query;
     }
 
     /**
@@ -177,11 +141,10 @@ class CalendarsPlugin extends UserPluginBase
                                           ->where('calendars.bucket_id', '=', $this->frame->bucket_id);
                                    })
                                    ->where('calendar_posts.start_date', '<=', $to_date)
-                                   ->where('calendar_posts.end_date', '>=', $from_date)
-                                   ->whereNull('calendar_posts.deleted_at');
+                                   ->where('calendar_posts.end_date', '>=', $from_date);
 
         // 権限によって表示する記事を絞る
-        $posts_query = $this->appendAuthWhere($posts_query, 'calendar_posts');
+        $posts_query = $this->appendAuthWhereBase($posts_query, 'calendar_posts');
 
         // 取得
         return $posts_query->get();
@@ -299,24 +262,45 @@ class CalendarsPlugin extends UserPluginBase
         // プラグインのフレームデータ
         $plugin_frame = $this->getPluginFrame($frame_id);
 
+        // 1ページ複数カレンダー配置に対応するため、'month' . $frame_id 等 フレームIDを付けて対応する。
+        // 例えば 1ページ複数カレンダー配置して １個目カレンダーで $request->month = 11 とすると、２個目も $request->month = 11  がindex()に飛んでくるため。
+        $request_year_name = 'year' . $frame_id;
+        $request_month_name = 'month' . $frame_id;
+        $request_day_name = 'day' . $frame_id;
+        $session_year_name = 'calendar_year' . $frame_id;
+        $session_month_name = 'calendar_month' . $frame_id;
+        $session_day_name = 'calendar_day' . $frame_id;
+
         // 年月のセッション処理
-        if ($request->filled('year')) {
+        if ($request->filled($request_year_name)) {
             // リクエストに年月が渡ってきたら、セッションに保持しておく。（詳細や更新後に元のページに戻るため）
-            $request->session()->put('calendar_year', $request->year);
-        } elseif (!session()->has('calendar_year')) {
+            $request->session()->put($session_year_name, $request->$request_year_name);
+        } elseif (!session()->has($session_year_name)) {
             // 画面の指定もセッションにも値がなければ当日をセット
-            $request->session()->put('calendar_year', date("Y"));
+            $request->session()->put($session_year_name, date("Y"));
         }
-        if ($request->filled('month')) {
+        if ($request->filled($request_month_name)) {
             // リクエストに年月が渡ってきたら、セッションに保持しておく。（詳細や更新後に元のページに戻るため）
-            $request->session()->put('calendar_month', $request->month);
-        } elseif (!session()->has('calendar_month')) {
+            $request->session()->put($session_month_name, $request->$request_month_name);
+        } elseif (!session()->has($session_month_name)) {
             // 画面の指定もセッションにも値がなければ当日をセット
-            $request->session()->put('calendar_month', date("m"));
+            $request->session()->put($session_month_name, date("m"));
+        }
+        if ($request->filled($request_day_name)) {
+            // リクエストに年月が渡ってきたら、セッションに保持しておく。（詳細や更新後に元のページに戻るため）
+            $request->session()->put($session_day_name, $request->$request_day_name);
+        } elseif (!session()->has($session_day_name)) {
+
+            // 画面の指定もセッションにも値がなければ、テンプレートによって 01か当日 をセット
+            if ($this->frame->template == 'day') {
+                $request->session()->put($session_day_name, date("d"));
+            } else {
+                $request->session()->put($session_day_name, '01');
+            }
         }
 
         // カレンダーデータ一覧の取得
-        $dates = $this->getCalendarDates(session('calendar_year'), session('calendar_month'));
+        $dates = $this->getCalendarDates(session($session_year_name), session($session_month_name));
 
         // 該当年月のデータの取得
         $posts = $this->getPosts(array_key_first($dates), array_key_last($dates));
@@ -325,8 +309,9 @@ class CalendarsPlugin extends UserPluginBase
         return $this->view('index', [
             'dates'            => $dates,
             'posts'            => $posts,
-            'current_ym_first' => strtotime(session('calendar_year') . "/" . session('calendar_month') . "/01"),
-            'current_month'    => session('calendar_month'),
+            // 'current_ym_first' => strtotime(session('calendar_year') . "/" . session('calendar_month') . "/01"),
+            'current_ym_first' => strtotime(session($session_year_name) . "/" . session($session_month_name) . "/" . session($session_day_name)),
+            'current_month'    => session($session_month_name),
             'plugin_frame'     => $plugin_frame,
         ]);
     }
@@ -337,7 +322,7 @@ class CalendarsPlugin extends UserPluginBase
     public function show($request, $page_id, $frame_id, $post_id)
     {
         // プラグインのフレームデータ
-        $plugin_frame = $this->getPluginFrame($frame_id);
+        // $plugin_frame = $this->getPluginFrame($frame_id);
 
         // 記事取得
         $post = $this->getPost($post_id);
@@ -368,36 +353,19 @@ class CalendarsPlugin extends UserPluginBase
     }
 
     /**
-     * 記事返信画面
-     */
-    public function reply($request, $page_id, $frame_id, $post_id)
-    {
-        // 記事取得
-        $post = $this->getPost($post_id);
-
-        // 変更画面を呼び出す。
-        return $this->view('edit', [
-            'post'        => new CalendarPost(),
-            'parent_post' => $post,
-            'reply'       => $request->get('reply'),
-            'reply_flag'  => true,
-        ]);
-    }
-
-    /**
      *  記事登録処理
      */
     public function save($request, $page_id, $frame_id, $post_id = null)
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'title'      => ['required'],
-            'body'       => ['required'],
+            'title'      => ['required', 'max:255'],
+            'body'       => ['nullable', new CustomValiWysiwygMax()],
             'start_date' => ['required', 'date'],
         ]);
         $validator->setAttributeNames([
             'title'      => 'タイトル',
-            'body'       => '本文',
+            'body'      => '本文',
             'start_date' => '開始日時',
         ]);
         // エラーがあった場合は入力画面に戻る。
@@ -437,18 +405,20 @@ class CalendarsPlugin extends UserPluginBase
         $post->title       = $request->title;
         $post->body        = $this->clean($request->body);   // wysiwygのXSS対応のJavaScript等の制限
 
+        // bugfix: 【カレンダー】承認機能ONで一般が書き込んだ内容を、管理者が編集すると、以後その予定が一般で編集できなくなるバグ修正. created_idは UserableNohistory で自動セットするよう修正
         // 投稿者をセット
-        if (Auth::check()) {
-            $post->created_id = Auth::user()->id;
-        }
+        // if (Auth::check()) {
+        //     $post->created_id = Auth::user()->id;
+        // }
 
         // 承認の要否確認とステータス処理
-        if ($request->status == "1") {
-            $post->status = 1;  // 一時保存
-        } elseif ($this->buckets->needApprovalUser(Auth::user())) {
-            $post->status = 2;  // 承認待ち
+        if ($request->status == StatusType::temporary) {
+            $post->status = StatusType::temporary;  // 一時保存
+        // } elseif ($this->buckets->needApprovalUser(Auth::user())) {
+        } elseif ($this->isApproval()) {
+            $post->status = StatusType::approval_pending;  // 承認待ち
         } else {
-            $post->status = 0;  // 公開
+            $post->status = StatusType::active;  // 公開
         }
 
         // 保存
@@ -467,13 +437,13 @@ class CalendarsPlugin extends UserPluginBase
         $post = $this->getPost($post_id);
 
         // データがあることを確認
-        if (empty($post)) {
+        if (empty($post->id)) {
             return;
         }
 
         // 更新されたら、行レコードの updated_at を更新したいので、update()
         $post->updated_at = now();
-        $post->status = 0;  // 公開
+        $post->status = StatusType::active;  // 公開
         $post->update();
 
         // 登録後は画面側の指定により、リダイレクトして表示画面を開く。
@@ -517,51 +487,53 @@ class CalendarsPlugin extends UserPluginBase
         return $this->editBuckets($request, $page_id, $frame_id);
     }
 
-    /**
-     * フレーム表示設定画面の表示
-     */
-    public function editView($request, $page_id, $frame_id)
-    {
-        // 表示テンプレートを呼び出す。
-        return $this->view('frame', [
-            // 表示中のバケツデータ
-            'calendar'       => $this->getPluginBucket($this->getBucketId()),
-            'calendar_frame' => $this->getPluginFrame($frame_id),
-        ]);
-    }
+    // delete: 使ってない
+    // /**
+    //  * フレーム表示設定画面の表示
+    //  */
+    // public function editView($request, $page_id, $frame_id)
+    // {
+    //     // 表示テンプレートを呼び出す。
+    //     return $this->view('frame', [
+    //         // 表示中のバケツデータ
+    //         'calendar'       => $this->getPluginBucket($this->getBucketId()),
+    //         'calendar_frame' => $this->getPluginFrame($frame_id),
+    //     ]);
+    // }
 
-    /**
-     * フレーム表示設定の保存
-     */
-    public function saveView($request, $page_id, $frame_id, $calendar_id)
-    {
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'view_count'       => ['nullable', 'numeric'],
-            'view_format'      => ['nullable', 'numeric'],
-            'thread_sort_flag' => ['nullable', 'numeric'],
-        ]);
-        $validator->setAttributeNames([
-            'view_count'       => '表示件数',
-            'view_format'      => '表示形式',
-            'thread_sort_flag' => '根記事の表示順',
-        ]);
+    // delete: 使ってない
+    // /**
+    //  * フレーム表示設定の保存
+    //  */
+    // public function saveView($request, $page_id, $frame_id, $calendar_id)
+    // {
+    //     // 項目のエラーチェック
+    //     $validator = Validator::make($request->all(), [
+    //         'view_count'       => ['nullable', 'numeric'],
+    //         'view_format'      => ['nullable', 'numeric'],
+    //         'thread_sort_flag' => ['nullable', 'numeric'],
+    //     ]);
+    //     $validator->setAttributeNames([
+    //         'view_count'       => '表示件数',
+    //         'view_format'      => '表示形式',
+    //         'thread_sort_flag' => '根記事の表示順',
+    //     ]);
 
-        // エラーがあった場合は入力画面に戻る。
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
+    //     // エラーがあった場合は入力画面に戻る。
+    //     if ($validator->fails()) {
+    //         return back()->withErrors($validator)->withInput();
+    //     }
 
-        // フレームごとの表示設定の更新
-        $calendar_frame = CalendarFrame::updateOrCreate(
-            ['calendar_id' => $calendar_id, 'frame_id' => $frame_id],
-            ['view_count'       => $request->view_count,
-             'view_format'      => $request->view_format,
-             'thread_sort_flag' => $request->thread_sort_flag],
-        );
+    //     // フレームごとの表示設定の更新
+    //     $calendar_frame = CalendarFrame::updateOrCreate(
+    //         ['calendar_id' => $calendar_id, 'frame_id' => $frame_id],
+    //         ['view_count'       => $request->view_count,
+    //          'view_format'      => $request->view_format,
+    //          'thread_sort_flag' => $request->thread_sort_flag],
+    //     );
 
-        return;
-    }
+    //     return;
+    // }
 
     /**
      * バケツ設定変更画面の表示
@@ -626,7 +598,7 @@ class CalendarsPlugin extends UserPluginBase
     }
 
     /**
-     *  削除処理
+     * 削除処理
      */
     public function destroyBuckets($request, $page_id, $frame_id, $calendar_id)
     {
@@ -637,7 +609,10 @@ class CalendarsPlugin extends UserPluginBase
         }
 
         // POSTデータ削除(一気にDelete なので、deleted_id は入らない)
-        CalendarPost::where('calendar_id', $calendar->id)->delete();
+        // change: deleted_id, deleted_nameを自動セットするため、複数件削除する時は collectionのpluck('id')でid配列を取得して destroy()で消す。
+        // CalendarPost::where('calendar_id', $calendar->id)->delete();
+        $calendar_post_ids = CalendarPost::where('calendar_id', $calendar->id)->pluck('id');
+        CalendarPost::destroy($calendar_post_ids);
 
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)->update(['bucket_id' => null]);
@@ -655,9 +630,9 @@ class CalendarsPlugin extends UserPluginBase
         return;
     }
 
-   /**
-    * データ紐づけ変更関数
-    */
+    /**
+     * データ紐づけ変更関数
+     */
     public function changeBuckets($request, $page_id, $frame_id)
     {
         // FrameのバケツIDの更新

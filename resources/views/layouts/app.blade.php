@@ -35,7 +35,8 @@
     //$menu_pages = $page_obj::orderBy('display_sequence')->get();
     $menu_pages = $page_obj::defaultOrderWithDepth();
 */
-if (! isset($cc_configs)) {
+// move: app\Http\Middleware\ConnectInit.php で処理するように対応
+// if (! isset($cc_configs)) {
     // seederを実行した場合、必ずconfigsにデータができ、データが無い場合は通常ありえないので、異常終了させる。
     // うっかり操作ミスは誰にでもありえるのため、エラーメッセージで対応方法を表示する。
     // ※ 新規インストール時、seederを実行しないと、なんでか Middleware の ConnectInit まで到達せず、cc_configsはセットされなかったため、ここで簡易チェックする。（実行されれば空のコレクションがセットされてエラーにならないんだけどねぇ）
@@ -43,8 +44,9 @@ if (! isset($cc_configs)) {
     // 暫定対応：ページなしの場合、$cc_configsがセットされなかったため、exitしちゃだめ。（ページなし処理 ConnectController::__construct()から呼ばれる $this->checkPageNotFound() でabort() されるの、なんかあやしいかも。Middleware の ConnectInit が実行されない原因かも）
     // echo('DBテーブルのconfigsにデータが１件もありません。<code>php artisan db:seed</code> コマンドを実行して初期データを登録してください。');
     // exit;
-    $cc_configs = collect();
-}
+    // ↓
+    // $cc_configs = collect();
+// }
 ?>
 <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}">
@@ -105,26 +107,26 @@ if (! isset($cc_configs)) {
     <script src="{{asset('js/tempusdominus-bootstrap-4/tempusdominus-bootstrap-4.min.js')}}"></script>
 
     <!-- Connect-CMS Global CSS -->
-    <link href="{{ asset('css/connect.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/connect.css') }}?version={{ filemtime(public_path() . "/css/connect.css") }}" rel="stylesheet">
 
     <!-- Themes CSS（基本） -->
 @if (isset($themes['css']) && $themes['css'] != '')
-    <link href="{{url('/')}}/themes/{{$themes['css']}}/themes.css" rel="stylesheet">
+    <link href="{{url('/')}}/themes/{{$themes['css']}}/themes.css?version={{ filemtime(public_path() . "/themes/{$themes['css']}/themes.css") }}" rel="stylesheet">
 @endif
 
     <!-- Themes JS（基本） -->
 @if (isset($themes['js']) && $themes['js'] != '')
-    <script src="{{url('/')}}/themes/{{$themes['js']}}/themes.js"></script>
+    <script src="{{url('/')}}/themes/{{$themes['js']}}/themes.js?version={{ filemtime(public_path() . "/themes/{$themes['js']}/themes.js") }}"></script>
 @endif
 
     <!-- Themes CSS（追加） -->
 @if (isset($themes['additional_css']) && $themes['additional_css'] != '')
-    <link href="{{url('/')}}/themes/{{$themes['additional_css']}}/themes.css" rel="stylesheet">
+    <link href="{{url('/')}}/themes/{{$themes['additional_css']}}/themes.css?version={{ filemtime(public_path() . "/themes/{$themes['additional_css']}/themes.js") }}" rel="stylesheet">
 @endif
 
     <!-- Themes JS（追加） -->
 @if (isset($themes['additional_js']) && $themes['additional_js'] != '')
-    <script src="{{url('/')}}/themes/{{$themes['additional_js']}}/themes.js"></script>
+    <script src="{{url('/')}}/themes/{{$themes['additional_js']}}/themes.js?version={{ filemtime(public_path() . "/themes/{$themes['additional_js']}/themes.js") }}"></script>
 @endif
 
     <!-- Connect-CMS Page CSS -->
@@ -155,16 +157,18 @@ if (! isset($cc_configs)) {
     <!-- Polyfill -->
     {{-- ※IEが公式に消えたら（2022年6月16日）消したい。 --}}
     @php
-        $is_exist_whatsnews = false;
-        if(isset($plugin_instances)){
-            foreach($plugin_instances as $plugin_instance){
-                if($plugin_instance instanceof \App\Plugins\User\Whatsnews\WhatsnewsPlugin){
-                    $is_exist_whatsnews = true;
+        $is_exist_plugin = false;
+        if (isset($plugin_instances)) {
+            foreach ($plugin_instances as $plugin_instance){
+                if ($plugin_instance instanceof \App\Plugins\User\Whatsnews\WhatsnewsPlugin){
+                    $is_exist_plugin = true;
+                } elseif ($plugin_instance instanceof \App\Plugins\User\Blogs\BlogsPlugin) {
+                    $is_exist_plugin = true;
                 }
             }
         }
     @endphp
-    @if ($is_exist_whatsnews)
+    @if ($is_exist_plugin)
         {{-- IEで発生する「Promiseは定義されていません。」エラー回避＠新着プラグインの非同期処理 --}}
         <script>window.Promise || document.write('<script src="//www.promisejs.org/polyfills/promise-7.0.4.min.js"><\/script>');</script>
     @endif
@@ -237,7 +241,7 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
 
                             <li class="nav-item">
                             {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
-                            @if (isset($page_obj) && $page_obj->id == $page->id)
+                            @if (isset($page_obj) && isset($page) && $page_obj->id == $page->id)
                                 <a href="{{ $page_obj->getUrl() }}" {!!$page_obj->getUrlTargetTag()!!} class="nav-link active">
                             @else
                                 <a href="{{ $page_obj->getUrl() }}" {!!$page_obj->getUrlTargetTag()!!} class="nav-link">
@@ -258,11 +262,11 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                         @if ($page_obj->isView(Auth::user(), false, true, $page_roles))
 
                             {{-- カレント or 自分のルート筋 or 第1階層 or 子のページ or 同階層のページ なら表示する --}}
-                            @if ($page_obj->isAncestorOf($page) || $page->id == $page_obj->id || $page_obj->depth == 0 || $page_obj->isChildOf($page) || $page_obj->isSiblingOf($page))
+                            @if (isset($page) && ($page_obj->isAncestorOf($page) || $page->id == $page_obj->id || $page_obj->isChildOf($page) || $page_obj->isSiblingOf($page)) || $page_obj->depth == 0)
 
                                 <li class="nav-item">
                                 {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
-                                @if (isset($page_obj) && $page_obj->id == $page->id)
+                                @if (isset($page_obj) && isset($page) && $page_obj->id == $page->id)
                                     <a href="{{ $page_obj->getUrl() }}" {!!$page_obj->getUrlTargetTag()!!} class="nav-link active">
                                 @else
                                     <a href="{{ $page_obj->getUrl() }}" {!!$page_obj->getUrlTargetTag()!!} class="nav-link">
@@ -276,7 +280,7 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
 
                                 {{-- カレントもしくは自分のルート筋なら＋、違えば－を表示する --}}
                                 @if (count($page_obj->children) > 0)
-                                    @if ($page_obj->isAncestorOf($page) || $page_obj->id == $page->id)
+                                    @if (isset($page) && ($page_obj->isAncestorOf($page) || $page_obj->id == $page->id))
                                         <i class="fas fa-minus"></i>
                                     @else
                                         <i class="fas fa-plus"></i>
@@ -300,7 +304,7 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                 <li class="nav-item dropdown">
                     {{-- ページリストがある場合は、コンテンツ画面 --}}
                     @if (isset($page_list) && !$is_manage_page)
-                        <a class="nav-link dropdown-toggle" href="#" id="dropdown_manage" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">管理機能</a>
+                        <a class="nav-link dropdown-toggle" href="#" id="dropdown_manage" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">管理機能</a>
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdown_manage">
 
                             {{-- ページリストがある場合は、表のページとみなして「プラグイン追加」を表示 --}}
@@ -363,7 +367,7 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                 @endif
             @else
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="dropdown_auth" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">{{Auth::user()->name}}</a>
+                    <a class="nav-link dropdown-toggle" href="#" id="dropdown_auth" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{Auth::user()->name}}</a>
                     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdown_auth">
                         @if (\Route::currentRouteName() == 'get_mypage' || \Route::currentRouteName() == 'post_mypage')
                             {{-- マイページのトップ（get_allで来る）もしくは、ルートでget_mypage --}}

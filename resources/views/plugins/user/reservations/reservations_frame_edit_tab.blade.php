@@ -9,7 +9,7 @@
     <a href="{{url('/')}}/plugin/reservations/editFacilities/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link {{ $action == 'editFacilities' ? 'active' : '' }}">施設設定</a>
 </li>
 <li role="presentation" class="nav-item">
-    <a href="{{url('/')}}/plugin/reservations/editColumns/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link {{ $action == 'editColumns' ? 'active' : '' }}">項目設定</a>
+    <a href="{{url('/')}}/plugin/reservations/editColumn/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link {{ $action == 'editColumn' ? 'active' : '' }}">項目設定</a>
 </li>
 
 @if ($action == 'editColumnDetail')
@@ -25,9 +25,26 @@
     <a href="{{url('/')}}/plugin/reservations/createBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link {{ $action == 'createBuckets' ? 'active' : '' }}">新規作成</a>
 </li>
 <li role="presentation" class="nav-item">
-    <a href="{{url('/')}}/plugin/reservations/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link {{ $action == 'listBuckets' ? 'active' : '' }}">表示コンテンツ選択</a>
+    <a href="{{url('/')}}/plugin/reservations/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link {{ $action == 'listBuckets' ? 'active' : '' }}">施設予約選択</a>
 </li>
-{{-- TODO:権限機能が解析しきれていない為、一旦非表示＠2019/12/17 --}}
-{{-- <li class="nav-item">
-    <a href="{{url('/')}}/plugin/reservations/editBucketsRoles/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link {{ $action == 'editBucketsRoles' || $action == '' ? 'active' : '' }}">権限設定</a>
-</li> --}}
+
+<li class="nav-item dropdown">
+    <a href="#" class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        その他設定
+    </a>
+    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+
+        @if ($action == "editBucketsRoles")
+            <a href="{{url('/')}}/plugin/reservations/editBucketsRoles/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="dropdown-item active bg-light">権限設定</a>
+        @else
+            <a href="{{url('/')}}/plugin/reservations/editBucketsRoles/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="dropdown-item">権限設定</a>
+        @endif
+
+        @if ($action == "editBucketsMails")
+            <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/editBucketsMails/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="dropdown-item active bg-light">メール設定</a>
+        @else
+            <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/editBucketsMails/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="dropdown-item">メール設定</a>
+        @endif
+
+    </div>
+</li>

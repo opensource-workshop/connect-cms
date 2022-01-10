@@ -125,9 +125,9 @@
         @endif
 
         {{-- カテゴリ --}}
-        @if($post->category)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
+        @if ($post->category_view_flag)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
         {{-- 重要記事設定マーク ※ログイン時のみ表示 --}}
-        @if($post->important == 1 && Auth::user() && Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]))
+        @if ($post->important == 1 && Auth::user() && Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]))
             <span class="badge badge-pill badge-danger">重要記事に設定</span>
         @endif
 
@@ -155,6 +155,26 @@
                         </div>
                     @endif
 
+                    {{-- いいねボタン --}}
+                    @include('plugins.common.like', [
+                        'use_like' => $blog_frame->use_like,
+                        'like_button_name' => $blog_frame->like_button_name,
+                        'contents_id' => $post->contents_id,
+                        'like_id' => $post->like_id,
+                        'like_count' => $post->like_count,
+                        'like_users_id' => $post->like_users_id,
+                    ])
+
+                    {{-- Twitterボタン --}}
+                    @include('plugins.common.twitter', [
+                        'post_title' => $post->post_title,
+                    ])
+
+                    {{-- Facebookボタン --}}
+                    @include('plugins.common.facebook', [
+                        'post_title' => $post->post_title,
+                    ])
+
                     {{-- タグ --}}
                     @isset($post->tags)
                         @foreach($post->tags as $tag)
@@ -173,8 +193,9 @@
                         <span class="badge badge-warning align-bottom">承認待ち</span>
                     @endcan
                     @can('posts.approval',[[$post, $frame->plugin_name, $buckets]])
-                        <form action="{{url('/')}}/plugin/blogs/approval/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" method="post" name="form_approval" class="d-inline">
+                        <form action="{{url('/')}}/redirect/plugin/blogs/approval/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" method="post" name="form_approval" class="d-inline">
                             {{ csrf_field() }}
+                            <input type="hidden" name="redirect_path" value="{{URL::to($page->permanent_link)}}">
                             <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
                                 <i class="fas fa-check"></i> <span class="hidden-xs">承認</span>
                             </button>
@@ -185,9 +206,17 @@
                     @if ($post->status == 1)
                         <span class="badge badge-warning align-bottom">一時保存</span>
                     @endif
-                    <a href="{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
-                        <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
-                    </a>
+                    <div class="btn-group">
+                        <a href="{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" class="btn btn-success btn-sm">
+                            <i class="far fa-edit"></i> <span class="hidden-xs">編集</span>
+                        </a>
+                        <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span class="sr-only">ドロップダウンボタン</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <a href="{{url('/')}}/plugin/blogs/copy/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" class="dropdown-item"><i class="fas fa-copy "></i> コピー</a>
+                        </div>
+                    </div>
                 @endcan
                 </div>
             </footer>
@@ -198,12 +227,7 @@
     @if (isset($is_template_sidetitleindex))
     @else
         {{-- ページング処理 --}}
-        {{-- アクセシビリティ対応。1ページしかない時に、空navを表示するとスクリーンリーダーに不要な Navigation がひっかかるため表示させない。 --}}
-        @if ($blogs_posts->lastPage() > 1)
-            <nav class="text-center" aria-label="{{$blog_frame->blog_name}}のページ付け">
-                {{ $blogs_posts->fragment('frame-' . $frame_id)->links() }}
-            </nav>
-        @endif
+        @include('plugins.common.user_paginate', ['posts' => $blogs_posts, 'frame' => $frame, 'aria_label_name' => $blog_frame->blog_name, 'class' => 'mt-3'])
     @endif
 
     {{-- titleindexテンプレート・sidetitleindexテンプレート --}}

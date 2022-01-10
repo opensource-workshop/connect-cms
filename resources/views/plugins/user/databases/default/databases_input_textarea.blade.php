@@ -13,7 +13,5 @@
         $value = $value_obj->value;
     }
 @endphp
-<textarea name="databases_columns_value[{{$database_obj->id}}]" class="form-control">{{old('databases_columns_value.'.$database_obj->id, $value)}}</textarea>
-@if ($errors && $errors->has("databases_columns_value.$database_obj->id"))
-    <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("databases_columns_value.$database_obj->id")}}</div>
-@endif
+<textarea name="databases_columns_value[{{$database_obj->id}}]" class="form-control @if ($errors && $errors->has("databases_columns_value.$database_obj->id")) border-danger @endif">{{old('databases_columns_value.'.$database_obj->id, $value)}}</textarea>
+@include('plugins.common.errors_inline', ['name' => "databases_columns_value.$database_obj->id"])

@@ -10,15 +10,15 @@
 @section("plugin_contents_$frame->id")
 
 {{-- 共通エラーメッセージ 呼び出し --}}
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 {{-- WYSIWYG 呼び出し --}}
-@include('plugins.common.wysiwyg')
+@include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame->id])
 
 {{-- 一時保存ボタンのアクション --}}
 <script type="text/javascript">
     function save_action() {
-        form_bbses_posts{{$frame_id}}.status.value = "1";
+        form_bbses_posts{{$frame_id}}.status.value = "{{StatusType::temporary}}";
         form_bbses_posts{{$frame_id}}.submit();
     }
 </script>
@@ -38,7 +38,7 @@
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/bbses/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
 @endif
     {{ csrf_field() }}
-    <input type="hidden" name="status" value="0">
+    <input type="hidden" name="status" value="{{StatusType::active}}">
     @if (isset($parent_post))
         <input type="hidden" name="parent_id" value="{{$parent_post->id}}">
     @endif
@@ -61,23 +61,25 @@
         <label class="col-md-2 control-label text-md-right">タイトル <label class="badge badge-danger">必須</label></label>
         <div class="col-md-10">
             @if (isset($reply_flag) && $reply_flag == true)
-            <input type="text" name="title" value="{{old('title', $parent_post->getReplyTitle())}}" class="form-control">
+            <input type="text" name="title" value="{{old('title', $parent_post->getReplyTitle())}}" class="form-control @if ($errors->has('title')) border-danger @endif">
             @else
-            <input type="text" name="title" value="{{old('title', $post->title)}}" class="form-control">
+            <input type="text" name="title" value="{{old('title', $post->title)}}" class="form-control @if ($errors->has('title')) border-danger @endif">
             @endif
-            @if ($errors && $errors->has('title')) <div class="text-danger">{{$errors->first('title')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'title'])
         </div>
     </div>
 
     <div class="form-group row">
         <label class="col-md-2 control-label text-md-right">本文 <label class="badge badge-danger">必須</label></label>
         <div class="col-md-10">
-            @if (isset($reply) && $reply == true)
-                <textarea name="body" class="form-control" rows=2>{!!old('body', $parent_post->getReplyBody())!!}</textarea>
-            @else
-                <textarea name="body" class="form-control" rows=2>{!!old('body', $post->body)!!}</textarea>
-            @endif
-            @if ($errors && $errors->has('body')) <div class="text-danger">{{$errors->first('body')}}</div> @endif
+            <div @if ($errors && $errors->has('body')) class="border border-danger" @endif>
+                @if (isset($reply) && $reply == true)
+                    <textarea name="body" class="form-control wysiwyg{{$frame->id}}" rows=2>{!!old('body', $parent_post->getReplyBody())!!}</textarea>
+                @else
+                    <textarea name="body" class="form-control wysiwyg{{$frame->id}}" rows=2>{!!old('body', $post->body)!!}</textarea>
+                @endif
+            </div>
+            @include('plugins.common.errors_inline_wysiwyg', ['name' => 'body'])
         </div>
     </div>
 
@@ -103,13 +105,13 @@
                     <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($post->id))
-                        @if ($buckets->needApprovalUser(Auth::user()))
+                        @if ($buckets->needApprovalUser(Auth::user(), $frame))
                             <button type="submit" class="btn btn-success"><i class="far fa-edit"></i> 登録申請</button>
                         @else
                             <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 登録確定</button>
                         @endif
                     @else
-                        @if ($buckets->needApprovalUser(Auth::user()))
+                        @if ($buckets->needApprovalUser(Auth::user(), $frame))
                             <button type="submit" class="btn btn-success"><i class="far fa-edit"></i> 変更申請</button>
                         @else
                             <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更確定</button>
@@ -143,4 +145,10 @@
         </div>
     </div>
 </div>
+
+@if (isset($reply_flag) && $reply_flag == true)
+    {{-- スレッドの投稿一覧 --}}
+    @include('plugins.user.bbses.default.thread_show')
+@endif
+
 @endsection

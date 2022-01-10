@@ -7,11 +7,10 @@ use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\File;
 
 use App\Http\Controllers\Core\ConnectController;
 use App\Http\Requests;
-
-use File;
 
 use App\Plugins\Api\ApiPluginBase;
 
@@ -23,16 +22,18 @@ use App\User;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
- * @package Contoroller
+ * @package Controller
  */
 class ApiController extends ConnectController
 {
     /**
-     *  json encode
+     * json encode
+     *
+     * @todo app\Plugins\Api\ApiPluginBase.php で重複
      */
     public function encodeJson($value, $request = null)
     {
-        // UNOCIDE エスケープ指定
+        // UNICODE エスケープ指定
         if (!empty($request) && $request->filled('escape') && $request->escape == 'json_unescaped_unicode') {
             return json_encode($value, JSON_UNESCAPED_UNICODE);
         }
@@ -48,27 +49,58 @@ class ApiController extends ConnectController
     private static function createApiInstance($plugin_name)
     {
         // クラス名。初期値はプラグイン名
-        $class_name = $plugin_name;
+        // $class_name = $plugin_name;
+        $file_path = null;
+        $class_path = null;
 
         // プラグイン毎に動的にnew するので、use せずにここでrequire する。
-        $file_path = base_path() . "/app/Plugins/Api/" . ucfirst($plugin_name) . "/" . ucfirst($plugin_name) . ".php";
+        // $file_path = base_path() . "/app/Plugins/Api/" . ucfirst($plugin_name) . "/" . ucfirst($plugin_name) . ".php";
 
-        if (!File::exists($file_path)) {
-            $file_path = base_path() . "/app/Plugins/Api/" . ucfirst($plugin_name) . "/" . ucfirst($plugin_name) . "Api.php";
-            if (File::exists($file_path)) {
-                $class_name = $plugin_name . 'Api';
-            } else {
-                // 指定されたファイルがない
-                return false;
+        // if (!File::exists($file_path)) {
+        //     $file_path = base_path() . "/app/Plugins/Api/" . ucfirst($plugin_name) . "/" . ucfirst($plugin_name) . "Api.php";
+        //     if (File::exists($file_path)) {
+        //         $class_name = $plugin_name . 'Api';
+        //     } else {
+        //         // 指定されたファイルがない
+        //         return false;
+        //     }
+        // }
+        $apis = [
+            '0' => [
+                'file_path' => base_path() . "/app/Plugins/Api/" . ucfirst($plugin_name) . "/" . ucfirst($plugin_name) . ".php",
+                'class_path' => "app\Plugins\Api\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name),
+            ],
+            '1' => [
+                'file_path' => base_path() . "/app/Plugins/Api/" . ucfirst($plugin_name) . "/" . ucfirst($plugin_name) . "Api.php",
+                'class_path' => "app\Plugins\Api\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name . 'Api'),
+            ],
+            // '2' => [
+            //     'file_path' => base_path() . "/app/PluginsOption/Api/" . ucfirst($plugin_name) . "/" . ucfirst($plugin_name) . ".php",
+            //     'class_path' => "app\PluginsOption\Api\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name),
+            // ],
+            '3' => [
+                'file_path' => base_path() . "/app/PluginsOption/Api/" . ucfirst($plugin_name) . "/" . ucfirst($plugin_name) . "Api.php",
+                'class_path' => "app\PluginsOption\Api\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name . 'Api'),
+            ],
+        ];
+        foreach ($apis as $api) {
+            if (File::exists($api['file_path'])) {
+                $file_path = $api['file_path'];
+                $class_path = $api['class_path'];
+                break;
             }
+        }
+        if (is_null($file_path)) {
+            // 指定されたファイルがない
+            return false;
         }
 
         require $file_path;
 
         /// 引数のアクションと同じメソッドを呼び出す。
-        $class_path = "app\Plugins\Api\\" . ucfirst($plugin_name) . "\\" . ucfirst($class_name);
+        // $class_path = "app\Plugins\Api\\" . ucfirst($plugin_name) . "\\" . ucfirst($class_name);
         $plugin_instance = new $class_path;
-        return new $plugin_instance;
+        return $plugin_instance;
     }
 
     /**

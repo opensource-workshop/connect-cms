@@ -11,7 +11,7 @@
 @section("plugin_setting_$frame->id")
 
 {{-- 共通エラーメッセージ 呼び出し --}}
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 <div class="alert alert-info">
     <i class="fas fa-exclamation-circle"></i>
@@ -35,7 +35,7 @@
         <label class="{{$frame->getSettingLabelClass()}}">カウンター名 <span class="badge badge-danger">必須</span></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="name" value="{{old('name', $counter->name)}}" class="form-control @if ($errors && $errors->has('name')) border-danger @endif">
-            @include('common.errors_inline', ['name' => 'name'])
+            @include('plugins.common.errors_inline', ['name' => 'name'])
         </div>
     </div>
 
@@ -45,7 +45,7 @@
             <label class="{{$frame->getSettingLabelClass()}}">初期カウント数</label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <input type="text" name="initial_count" value="{{old('initial_count')}}" class="form-control @if ($errors && $errors->has('initial_count')) border-danger @endif">
-                @include('common.errors_inline', ['name' => 'initial_count'])
+                @include('plugins.common.errors_inline', ['name' => 'initial_count'])
                 <small class="text-muted">※ 未設定時は0で登録します。</small>
             </div>
         </div>

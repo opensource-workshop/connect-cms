@@ -38,7 +38,7 @@
 {{-- opac オブジェクトがない or (idがない ＆ 新規作成でもない) --}}
 @if (!$opac || (!$opac->id && !$create_flag))
 @else
-<form action="{{url('/')}}/plugin/opacs/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
+<form action="{{url('/')}}/plugin/opacs/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST">
     {{ csrf_field() }}
 
     {{-- create_flag がtrue の場合、新規作成するためにopacs_id を空にする --}}
@@ -68,6 +68,8 @@
         <label class="{{$frame->getSettingLabelClass()}}">メール送信先</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-checkbox">
+                {{-- チェック外した場合にも値を飛ばす対応 --}}
+                <input type="hidden" value="0" name="moderator_mail_send_flag">
                 <input type="checkbox" name="moderator_mail_send_flag" value="1" class="custom-control-input" id="moderator_mail_send_flag" @if(old('moderator_mail_send_flag', $opac->moderator_mail_send_flag)) checked=checked @endif>
                 <label class="custom-control-label" for="moderator_mail_send_flag">貸し出し・返却時に以下のアドレスにメール送信する</label>
             </div>
@@ -86,6 +88,8 @@
         <label class="{{$frame->getSettingLabelClass()}}"></label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-checkbox">
+                {{-- チェック外した場合にも値を飛ばす対応 --}}
+                <input type="hidden" value="0" name="request_mail_send_flag">
                 <input type="checkbox" name="request_mail_send_flag" value="1" class="custom-control-input" id="request_mail_send_flag" @if(old('request_mail_send_flag', $opac->request_mail_send_flag)) checked=checked @endif>
                 <label class="custom-control-label" for="request_mail_send_flag">貸出時郵送リクエストしたユーザーにメールを送る</label>
             </div>
@@ -279,7 +283,7 @@
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
-                <form action="{{url('/')}}/redirect/plugin/opacs/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$opac_frame->opacs_id}}#frame-{{$frame->id}}" method="POST">
+                <form action="{{url('/')}}/redirect/plugin/opacs/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$opac->id}}#frame-{{$frame->id}}" method="POST">
                     {{csrf_field()}}
                     <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>

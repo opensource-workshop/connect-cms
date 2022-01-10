@@ -32,6 +32,15 @@
         <a href="{{url('/')}}/plugin/linklists/editView/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">表示設定</a>
     </li>
 @endif
+@if ($action == 'listCategories')
+    <li role="presentation" class="nav-item">
+        <span class="nav-link"><span class="active">カテゴリ</span></span>
+    </li>
+@else
+    <li role="presentation" class="nav-item">
+        <a href="{{url('/')}}/plugin/linklists/listCategories/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">カテゴリ</a>
+    </li>
+@endif
 @if ($action == 'listBuckets')
     <li role="presentation" class="nav-item">
         <span class="nav-link"><span class="active">リンクリスト選択</span></span>

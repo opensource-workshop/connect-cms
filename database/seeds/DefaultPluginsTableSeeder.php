@@ -15,7 +15,7 @@ class DefaultPluginsTableSeeder extends Seeder
             DB::table('plugins')->insert(
                 [
                     /* -------------------------
-                       Display plugin 
+                       Display plugin
                        ------------------------- */
                     [
                         'plugin_name'=>'Blogs',
@@ -70,6 +70,78 @@ class DefaultPluginsTableSeeder extends Seeder
                         'plugin_name_full'=>'新着情報',
                         'display_flag'=>1,
                         'display_sequence'=>0,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ],
+                    [
+                        'plugin_name' => 'Bbses',
+                        'plugin_name_full' => '掲示板',
+                        'display_flag' => 1,
+                        'display_sequence' => 0,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ],
+                    [
+                        'plugin_name' => 'Cabinets',
+                        'plugin_name_full' => 'キャビネット',
+                        'display_flag' => 1,
+                        'display_sequence' => 0,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ],
+                    [
+                        'plugin_name' => 'Calendars',
+                        'plugin_name_full' => 'カレンダー',
+                        'display_flag' => 1,
+                        'display_sequence' => 0,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ],
+                    [
+                        'plugin_name' => 'Counters',
+                        'plugin_name_full' => 'カウンター',
+                        'display_flag' => 1,
+                        'display_sequence' => 0,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ],
+                    [
+                        'plugin_name' => 'Faqs',
+                        'plugin_name_full' => 'FAQ',
+                        'display_flag' => 1,
+                        'display_sequence' => 0,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ],
+                    [
+                        'plugin_name' => 'Linklists',
+                        'plugin_name_full' => 'リンクリスト',
+                        'display_flag' => 1,
+                        'display_sequence' => 0,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ],
+                    [
+                        'plugin_name' => 'Searchs',
+                        'plugin_name_full' => 'サイト内検索',
+                        'display_flag' => 1,
+                        'display_sequence' => 0,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ],
+                    [
+                        'plugin_name' => 'Tabs',
+                        'plugin_name_full' => 'タブ',
+                        'display_flag' => 1,
+                        'display_sequence' => 0,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ],
+                    [
+                        'plugin_name' => 'Slideshows',
+                        'plugin_name_full' => 'スライドショー',
+                        'display_flag' => 1,
+                        'display_sequence' => 0,
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
                     ],

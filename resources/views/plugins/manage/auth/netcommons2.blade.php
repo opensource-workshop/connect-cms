@@ -14,7 +14,11 @@
     </div>
 
     <div class="card-body">
-        <form name="form_auth" id="form_auth" class="form-horizontal" method="post" action="{{url('/')}}/manage/auth/netcommons2Update">
+
+        {{-- 登録後メッセージ表示 --}}
+         @include('plugins.common.flash_message')
+
+        <form name="form_auth" method="post" action="{{url('/')}}/manage/auth/netcommons2Update">
             {{ csrf_field() }}
 
             {{-- サイトURL --}}

@@ -6,24 +6,30 @@ use App\Models\Core\ApiSecret;
 
 use App\Plugins\PluginBase;
 
+use App\Traits\ConnectCommonTrait;
+
 /**
- * 管理プラグイン
+ * APIプラグイン
  *
- * 管理ページ用プラグインの基底クラス
+ * APIプラグインの基底クラス
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category 管理プラグイン
- * @package Contoroller
+ * @category APIプラグイン
+ * @package Controller
  */
 class ApiPluginBase extends PluginBase
 {
+    use ConnectCommonTrait;
+
     /**
-     *  json encode
+     * json encode
+     *
+     * @todo app\Http\Controllers\Core\ApiController.php で重複
      */
     public function encodeJson($value, $request = null)
     {
-        // UNOCIDE エスケープ指定
+        // UNICODE エスケープ指定
         if (!empty($request) && $request->filled('escape') && $request->escape == 'json_unescaped_unicode') {
             return json_encode($value, JSON_UNESCAPED_UNICODE);
         }
@@ -33,7 +39,7 @@ class ApiPluginBase extends PluginBase
     /**
      *  json encode
      */
-    public function apiCallCheck($request)
+    public function apiCallCheck($request, $plugin_name)
     {
         // 秘密コードがない場合はエラー
         if ($request->filled('secret_code')) {
@@ -43,7 +49,8 @@ class ApiPluginBase extends PluginBase
         }
 
         // 秘密コードのチェック(IPアドレス指定などで、複数のレコードがある可能性あり)
-        $api_secrets = ApiSecret::where('secret_code', $secret_code)->where('apis', 'like', '%User%')->get();
+        //$api_secrets = ApiSecret::where('secret_code', $secret_code)->where('apis', 'like', '%User%')->get();
+        $api_secrets = ApiSecret::where('secret_code', $secret_code)->where('apis', 'like', '%' . $plugin_name . '%')->get();
         if ($api_secrets->isEmpty()) {
             return array('code' => 403, 'message' => '閲覧条件に合致しません。');
         }

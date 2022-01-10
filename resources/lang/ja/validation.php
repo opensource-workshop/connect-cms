@@ -116,6 +116,12 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+        'image_file'     => '画像',
+        'image_interval' => '画像の静止時間',
+        'link_url'       => 'リンクURL',
+        'caption'        => 'キャプション',
+        'link_target'    => 'リンクターゲット',
+    ],
 
 ];

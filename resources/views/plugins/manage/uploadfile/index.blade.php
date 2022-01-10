@@ -80,36 +80,38 @@
             </div>
         </div>
 
-        <table class="table table-responsive text-nowrap">
-        <thead>
-            <th nowrap></th>
-            <th nowrap>ID</th>
-            <th nowrap>ファイル名</th>
-            <th nowrap>サイズ</th>
-            <th nowrap>アップロード日時</th>
-            <th nowrap>プラグイン</th>
-            <th nowrap>ダウンロード数</th>
-            <th nowrap>ページ</th>
-            {{-- <th nowrap>private</th> --}}
-            <th nowrap>一時保存フラグ</th>
-        </thead>
-        <tbody>
-            @foreach($uploads as $upload)
-            <tr>
-                <td><a href="{{url('/')}}/manage/uploadfile/edit/{{$upload->id}}"><i class="far fa-edit"></i></a></td>
-                <td>{{$upload->id}}</td>
-                <td><a href="{{url('/')}}/file/{{$upload->id}}" target="_blank">{{$upload->client_original_name}}</a></td>
-                <td>{{$upload->getFormatSize()}}</td>
-                <td>{{$upload->created_at}}</td>
-                <td>{{$upload->getPluginNameFull()}}</td>
-                <td>{{$upload->download_count}}</td>
-                <td>{!!$upload->getPageLinkTag('_blank')!!}</td>
-                {{-- <td>{{$upload->private}}</td> --}}
-                <td>{{$upload->getTemporaryFlagStr()}}</td>
-            </tr>
-            @endforeach
-        </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table text-nowrap">
+            <thead>
+                <th nowrap></th>
+                <th nowrap>ID</th>
+                <th nowrap>ファイル名</th>
+                <th nowrap>サイズ</th>
+                <th nowrap>アップロード日時</th>
+                <th nowrap>プラグイン</th>
+                <th nowrap>ダウンロード数</th>
+                <th nowrap>ページ</th>
+                {{-- <th nowrap>private</th> --}}
+                <th nowrap>一時保存フラグ</th>
+            </thead>
+            <tbody>
+                @foreach($uploads as $upload)
+                <tr>
+                    <td><a href="{{url('/')}}/manage/uploadfile/edit/{{$upload->id}}"><i class="far fa-edit"></i></a></td>
+                    <td>{{$upload->id}}</td>
+                    <td><a href="{{url('/')}}/file/{{$upload->id}}" target="_blank">{{$upload->client_original_name}}</a></td>
+                    <td>{{$upload->getFormatSize()}}</td>
+                    <td>{{$upload->created_at}}</td>
+                    <td>{{$upload->getPluginNameFull()}}</td>
+                    <td>{{$upload->download_count}}</td>
+                    <td>{!!$upload->getPageLinkTag('_blank')!!}</td>
+                    {{-- <td>{{$upload->private}}</td> --}}
+                    <td>{{$upload->getTemporaryFlagStr()}}</td>
+                </tr>
+                @endforeach
+            </tbody>
+            </table>
+        </div>
 
         {{-- ページング処理 --}}
         @if($uploads)

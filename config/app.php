@@ -243,6 +243,7 @@ $app_array = [
         'DatabaseColumnRoleName' => \App\Enums\DatabaseColumnRoleName::class,
         'DatabaseSortFlag' => \App\Enums\DatabaseSortFlag::class,
         'DatabaseRoleName' => \App\Enums\DatabaseRoleName::class,
+        'DatabaseSearcherSortType' => \App\Enums\DatabaseSearcherSortType::class,
         'DayOfWeek' => \App\Enums\DayOfWeek::class,
         'Bs4TextColor' => \App\Enums\Bs4TextColor::class,
         'Bs4Color' => \App\Enums\Bs4Color::class,
@@ -276,7 +277,22 @@ $app_array = [
         'BlogDisplayCreatedName' => \App\Enums\BlogDisplayCreatedName::class,
         'BaseHeaderFontColorClass' => \App\Enums\BaseHeaderFontColorClass::class,
         'UploadMaxSize' => \App\Enums\UploadMaxSize::class,
-        
+        'SearchsTargetPlugin' => \App\Enums\SearchsTargetPlugin::class,
+        'LayoutArea' => \App\Enums\LayoutArea::class,
+        'CabinetFrameConfig' => \App\Enums\CabinetFrameConfig::class,
+        'CabinetSort' => \App\Enums\CabinetSort::class,
+        'LinklistType' => \App\Enums\LinklistType::class,
+        'AuthLdapDnType' => \App\Enums\AuthLdapDnType::class,
+        'MemoryLimitForImageResize' => \App\Enums\MemoryLimitForImageResize::class,
+        'NumberOfPdfThumbnail' => \App\Enums\NumberOfPdfThumbnail::class,
+        'WidthOfPdfThumbnail' => \App\Enums\WidthOfPdfThumbnail::class,
+        'LinkOfPdfThumbnail' => \App\Enums\LinkOfPdfThumbnail::class,
+        'ResizedImageSize' => \App\Enums\ResizedImageSize::class,
+        'NoticeEmbeddedTag' => \App\Enums\NoticeEmbeddedTag::class,
+        'WhatsnewFrameConfig' => \App\Enums\WhatsnewFrameConfig::class,
+        'PhotoalbumFrameConfig' => \App\Enums\PhotoalbumFrameConfig::class,
+        'PhotoalbumSort' => \App\Enums\PhotoalbumSort::class,
+        'Fineness' => \App\Enums\Fineness::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
@@ -286,6 +302,7 @@ $app_array = [
         'Plugins' => \App\Models\Core\Plugins::class,
         'FrameConfig' => \App\Models\Core\FrameConfig::class,
         'Configs' => \App\Models\Core\Configs::class,
+        'Like' => \App\Models\Common\Like::class,
 
         // 画像処理
         'Image' => Intervention\Image\Facades\Image::class,

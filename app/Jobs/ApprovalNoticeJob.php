@@ -18,23 +18,27 @@ class ApprovalNoticeJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    private $frame = null;
+    /**
+     * 最大試行回数
+     * メールは大量送信時に途中で失敗した場合、同じメールが初めの方の人に再度送られるとまずいため、自動リトライしないため１回にする。
+     *
+     * @var int
+     */
+    public $tries = 1;
+
     private $bucket = null;
-    private $post = null;
-    private $show_method = null;
+    private $notice_embedded_tags = null;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($frame, $bucket, $post, $show_method)
+    public function __construct($bucket, array $notice_embedded_tags)
     {
         // buckets などの受け取り
-        $this->frame       = $frame;
-        $this->bucket      = $bucket;
-        $this->post        = $post;
-        $this->show_method = $show_method;
+        $this->bucket               = $bucket;
+        $this->notice_embedded_tags = $notice_embedded_tags;
     }
 
     /**
@@ -47,18 +51,24 @@ class ApprovalNoticeJob implements ShouldQueue
         // buckets_mails の取得
         $bucket_mail = BucketsMail::firstOrNew(['buckets_id' => $this->bucket->id]);
 
+        // 送信者メールとグループから、通知するメールアドレス取得
+        $approval_addresses = $bucket_mail->getEmailFromAddressesAndGroups($bucket_mail->approval_addresses, $bucket_mail->approval_groups);
+
         // エラーチェック（とりあえずデバックログに出力。管理画面で確認できるエラーテーブルに移すこと）
-        if (!$bucket_mail->approval_addresses) {
+        // if (!$bucket_mail->approval_addresses) {
+        if (empty($approval_addresses)) {
             Log::debug("送信先メールアドレスの指定なし。buckets_id = " . $this->bucket->id);
+            return;
         }
 
         // メール送信
-        $approval_addresses = explode(',', $bucket_mail->approval_addresses);
-        if (empty($approval_addresses)) {
-            return;
-        }
+        // $approval_addresses = explode(',', $bucket_mail->approval_addresses);
+        // if (empty($approval_addresses)) {
+        //     return;
+        // }
         foreach ($approval_addresses as $approval_address) {
-            Mail::to($approval_address)->send(new ApprovalNotice($this->frame, $this->bucket, $this->post, $this->show_method, $bucket_mail));
+            // Mail::to($approval_address)->send(new ApprovalNotice($this->frame, $this->bucket, $this->post, $this->title, $this->show_method, $bucket_mail));
+            Mail::to($approval_address)->send(new ApprovalNotice($this->notice_embedded_tags, $bucket_mail));
         }
     }
 }

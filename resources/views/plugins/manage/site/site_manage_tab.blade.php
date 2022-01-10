@@ -46,7 +46,7 @@
                 </li>
 
                 <li class="nav-item dropdown">
-                    <a href="#" class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onmouseover="this.click();this.blur();">
+                    <a href="#" class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         その他設定
                     </a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
@@ -79,6 +79,12 @@
                             <a href="{{url('/manage/site/wysiwyg')}}" class="dropdown-item active bg-light">WYSIWYG設定</a>
                         @else
                             <a href="{{url('/manage/site/wysiwyg')}}" class="dropdown-item">WYSIWYG設定</a>
+                        @endif
+
+                        @if ($function == "document")
+                            <a href="{{url('/manage/site/document')}}" class="dropdown-item active bg-light">サイト設計書</a>
+                        @else
+                            <a href="{{url('/manage/site/document')}}" class="dropdown-item">サイト設計書</a>
                         @endif
                     </div>
                 </li>

@@ -38,7 +38,8 @@
             <div class="col-sm-4">
 
             {{-- 新規登録 --}}
-            @can("role_article")
+            {{-- @can("role_article") --}}
+            @can("role_article_admin")
                 @if (isset($frame) && $frame->bucket_id)
                     <p class="text-right">
                         {{-- 新規登録ボタン --}}
@@ -66,7 +67,7 @@
         </div>
         <div id="search_collapse" class="collapse @if (session('opac_search_condition.'.$frame_id)) show @endif " aria-labelledby="user_search_condition" data-parent="#search_collapse">
             <div class="card-body">
-                
+
                 <div class="form-group row">
                     <label for="opac_search_condition_title" class="col-md-2 col-form-label text-md-right">タイトル</label>
                     <div class="col-md-10">
@@ -132,7 +133,7 @@
             content: "▲";
         }
     </style>
-    
+
     @if (isset($opacs_books))
     <div class="form-group form-row mb-3">
         <div class="col-md-7">
@@ -149,7 +150,7 @@
             <small class="form-text text-muted" id="sort_type{{$frame_id}}">選択すると自動的に並び順が変更されます。</small>
         </div>
         <div class="col-md-5">
-            
+
             {{-- 表示件数変更 --}}
             <select class="form-control" name="opac_search_view_count" onChange="javascript:submit(this.form);" aria-describedby="view_count{{$frame_id}}">
                 <option value="">表示件数</option>
@@ -164,7 +165,7 @@
         </div>
     </div>
     @endif
-    
+
 </form>
 
 
@@ -172,9 +173,7 @@
 
 @if (isset($opacs_books))
     {{-- ページング処理 --}}
-    <div class="form-group text-center">
-        {{ $opacs_books->fragment('frame-'.$frame_id)->links() }}
-    </div>
+    @include('plugins.common.user_paginate', ['posts' => $opacs_books, 'frame' => $frame, 'aria_label_name' => $opac_frame->opac_name, 'class' => 'form-group'])
 
     <style type="text/css">
     <!--
@@ -197,7 +196,8 @@
         <tr>
             <td>@if ($book->lent_flag == 1 || $book->lent_flag == 2) <span style="color: red;"><i class="fas fa-user"></i></span> @endif</td>
             <td>
-                @can("role_article")
+                {{-- @can("role_article") --}}
+                @can("role_article_admin")
                 <a href="{{url('/')}}/plugin/opacs/edit/{{$page->id}}/{{$frame_id}}/{{$book->id}}#frame-{{$frame->id}}">
                     <i class="far fa-edit"></i>
                 </a>
@@ -219,9 +219,7 @@
     </div>
 
     {{-- ページング処理 --}}
-    <div class="text-center">
-        {{ $opacs_books->fragment('frame-'.$frame_id)->links() }}
-    </div>
+    @include('plugins.common.user_paginate', ['posts' => $opacs_books, 'frame' => $frame, 'aria_label_name' => $opac_frame->opac_name])
 
 @endif
 

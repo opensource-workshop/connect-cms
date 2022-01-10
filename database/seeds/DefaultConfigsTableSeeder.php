@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Core\Configs;
 
 use App\Enums\BaseHeaderFontColorClass;
+use App\Enums\ResizedImageSize;
 
 class DefaultConfigsTableSeeder extends Seeder
 {
@@ -160,6 +161,24 @@ class DefaultConfigsTableSeeder extends Seeder
                 'name' => 'fontsizeselect',
                 'category' => 'wysiwyg',
                 'value' => 0
+            ]);
+        }
+
+        if (DB::table('configs')->where('name', 'memory_limit_for_image_resize')->count() == 0) {
+            // 画像リサイズ時のPHPメモリ数
+            $configs = Configs::create([
+                'name' => 'memory_limit_for_image_resize',
+                'category' => 'server',
+                'value' => '256M'
+            ]);
+        }
+
+        if (Configs::where('name', 'resized_image_size_initial')->count() == 0) {
+            // 初期に選択させる画像サイズ
+            $configs = Configs::create([
+                'name' => 'resized_image_size_initial',
+                'category' => 'wysiwyg',
+                'value' => ResizedImageSize::getDefault(),
             ]);
         }
 

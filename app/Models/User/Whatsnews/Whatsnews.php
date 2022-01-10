@@ -6,20 +6,22 @@ use Illuminate\Support\Facades\Log;
 
 use Illuminate\Database\Eloquent\Model;
 
+use App\Enums\WhatsnewsTargetPlugin;
+
 class Whatsnews extends Model
 {
     // 更新する項目の定義
     protected $fillable = [
-        'bucket_id', 
-        'whatsnew_name', 
-        'view_pattern', 
-        'count', 
-        'days', 
-        'rss', 
-        'rss_count', 
-        'view_posted_name', 
-        'view_posted_at', 
-        'target_plugins', 
+        'bucket_id',
+        'whatsnew_name',
+        'view_pattern',
+        'count',
+        'days',
+        'rss',
+        'rss_count',
+        'view_posted_name',
+        'view_posted_at',
+        'target_plugins',
         'frame_select',
         'read_more_use_flag',
         'read_more_name',
@@ -41,15 +43,22 @@ class Whatsnews extends Model
         //     "databases" => false,
         // );
         $target_plugins = array();
-        $target_plugin_keys = \WhatsnewsTargetPlugin::getMemberKeys();
-        foreach ($target_plugin_keys as $target_plugin_key) {
-            $target_plugins[$target_plugin_key] = false;
+        // $target_plugin_keys = WhatsnewsTargetPlugin::getMemberKeys();
+        // foreach ($target_plugin_keys as $target_plugin_key) {
+        //     $target_plugins[$target_plugin_key] = false;
+        // }
+
+        $enums_target_plugins = WhatsnewsTargetPlugin::getMembers();
+        foreach ($enums_target_plugins as $target_plugin_key => $enums_target_plugin) {
+            $target_plugins[$target_plugin_key]['use_flag'] = false;
+            $target_plugins[$target_plugin_key]['plugin_name_full'] = $enums_target_plugin;
         }
 
         // 表示ON になっているプラグインの情報を付与して返却
         if (!empty($this->target_plugins)) {
             foreach (explode(',', $this->target_plugins) as $target_plugin) {
-                $target_plugins[$target_plugin] = true;
+                // $target_plugins[$target_plugin] = true;
+                $target_plugins[$target_plugin]['use_flag'] = true;
             }
         }
 

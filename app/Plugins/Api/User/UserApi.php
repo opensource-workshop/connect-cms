@@ -31,7 +31,7 @@ class UserApi extends ApiPluginBase
     public function info($request, $userid)
     {
         // API 共通チェック
-        $ret = $this->apiCallCheck($request);
+        $ret = $this->apiCallCheck($request, 'User');
         if (!empty($ret['code'])) {
             return $this->encodeJson($ret, $request);
         }

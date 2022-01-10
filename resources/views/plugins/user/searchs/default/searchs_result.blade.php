@@ -49,12 +49,7 @@
     </dl>
 
     {{-- ページング処理 --}}
-    {{-- アクセシビリティ対応。1ページしかない時に、空navを表示するとスクリーンリーダーに不要な Navigation がひっかかるため表示させない。 --}}
-    @if ($searchs_results->lastPage() > 1)
-        <nav class="text-center" aria-label="{{$searchs_frame->search_name}}のページ付け">
-            {{ $searchs_results->appends(['search_keyword' => old('search_keyword')])->fragment('frame-' . $frame_id)->links() }}
-        </nav>
-    @endif
+    @include('plugins.common.user_paginate', ['posts' => $searchs_results, 'frame' => $frame, 'appends' => ['search_keyword' => old('search_keyword')], 'aria_label_name' => $searchs_frame->search_name])
 </div>
 @endif
 @endsection

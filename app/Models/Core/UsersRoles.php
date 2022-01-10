@@ -2,6 +2,7 @@
 
 namespace App\Models\Core;
 
+use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 
@@ -22,7 +23,7 @@ class UsersRoles extends Model
      * ユーザー権限の取得
      *
      * @param int $users_id
-     * @return roles array
+     * @return array roles
      */
     //public static function getUsersRoles($users_id, $target = null, $role_name = null)
     public function getUsersRoles($users_id, $target = null)
@@ -42,12 +43,27 @@ class UsersRoles extends Model
         }
 
         // 配列の形式は[target][role_name] = value{1|0}
-        $this->user_roles = array();
-        foreach ($users_roles as $users_role) {
-            $this->user_roles[$users_role->target][$users_role->role_name] = $users_role->role_value;
+        // $this->user_roles = array();
+        // foreach ($users_roles as $users_role) {
+        //     $this->user_roles[$users_role->target][$users_role->role_name] = $users_role->role_value;
+        // }
+        $this->user_roles = self::rolesToArray($users_roles);
+        return $this->user_roles;
+    }
+
+    /**
+     * roles を array に変換
+     *
+     * @return array
+     */
+    public static function rolesToArray(Collection $collect_roles)
+    {
+        $roles = array();
+        foreach ($collect_roles as $collect_role) {
+            $roles[$collect_role->target][$collect_role->role_name] = $collect_role->role_value;
         }
 
-        return $this->user_roles;
+        return $roles;
     }
 
     /**

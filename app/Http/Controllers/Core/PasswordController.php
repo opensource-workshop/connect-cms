@@ -6,15 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\View;
-
-use DB;
 
 use App\Http\Controllers\Core\ConnectController;
-
-use App\Models\Common\Frame;
-use App\Models\Common\Page;
-use App\Models\Core\Configs;
 
 use App\Traits\ConnectCommonTrait;
 
@@ -26,12 +19,19 @@ use App\Traits\ConnectCommonTrait;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
- * @package Contoroller
+ * @package Controller
  */
 class PasswordController extends ConnectController
 {
-
     use ConnectCommonTrait;
+
+    /**
+     * コンストラクタ
+     */
+    public function __construct()
+    {
+        $this->middleware('connect.page');
+    }
 
     /**
      *  処理の振り分け
@@ -54,7 +54,8 @@ class PasswordController extends ConnectController
     public function input($request, $page_id)
     {
         return $this->view('auth.page_auth', [
-            'page'    => $this->page,
+            // 'page'    => $this->page,
+            'page'    => $request->attributes->get('page'),
             'page_id' => $page_id,
         ]);
     }
@@ -71,13 +72,19 @@ class PasswordController extends ConnectController
             return $this->input($request, $page_id)->withErrors($validator);
         }
 
-        if (!$this->page) {
+        // app\Http\Middleware\ConnectPage.php でセットした値
+        $page = $request->attributes->get('page');
+        $page_tree = $request->attributes->get('page_tree');
+
+        // if (!$this->page) {
+        if (!$page) {
             // ページがなければチェック失敗
             return false;
         }
 
         // パスワードの照合
-        if (!$this->page->checkPassword($request->password, $this->page_tree)) {
+        // if (!$this->page->checkPassword($request->password, $this->page_tree)) {
+        if (!$page->checkPassword($request->password, $page_tree)) {
             $validator = Validator::make($request->all(), []);
             $validator->errors()->add('password', 'パスワードが異なります。');
 
@@ -87,7 +94,8 @@ class PasswordController extends ConnectController
         // セッションへの認証情報保持
         // 自分から先祖を遡って、最初にパスワードが設定されているページで認証するので、
         // セッションの保存もそのページで行う。
-        $page_tree = $this->getAncestorsAndSelf($page_id);
+        // $page_tree = $this->getAncestorsAndSelf($page_id);
+
         foreach ($page_tree as $page) {
             if (!empty($page->password)) {
                 $request->session()->put('page_auth.'.$page->id, 'authed');
@@ -96,6 +104,7 @@ class PasswordController extends ConnectController
         }
 
         // 本来表示したかったページへリダイレクト
-        return redirect($this->page->permanent_link);
+        // return redirect($this->page->permanent_link);
+        return redirect($page->permanent_link);
     }
 }

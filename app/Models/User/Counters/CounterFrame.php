@@ -17,17 +17,16 @@ class CounterFrame extends Model
 
     // 更新する項目の定義
     protected $fillable = [
-        'counter_id',
         'frame_id',
         'design_type',
         'use_total_count',
         'use_today_count',
-        'use_yestday_count',
+        'use_yesterday_count',
         'total_count_title',
         'today_count_title',
-        'yestday_count_title',
+        'yesterday_count_title',
         'total_count_after',
         'today_count_after',
-        'yestday_count_after',
+        'yesterday_count_after',
     ];
 }

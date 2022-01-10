@@ -24,6 +24,13 @@ body {
     background-color: #ededee !important;
 }
 
+/* WYSIWYG のプレビューでGoogle Map が表示されない問題の対応
+   WYSIWYG のプレビュー時に、embed-responsive と iframe の間にspan が生成され、
+   そのspan の position が relative になっていることが原因のため、static に設定する。 */
+.embed-responsive span.mce-preview-object {
+    position: static;
+}
+
 /* WYSIWYG で設定できる記事の書式
 ------------------------------------- */
 /* 囲み(グレー) */
@@ -521,6 +528,11 @@ a.cc-cursor-text:hover {
     border-radius: 0;
 }
 
+.cc_scroll_checkboxes {
+    min-height: 100px;
+    overflow: auto;
+}
+
 /* border 関係
 ------------------------------------- */
 .cc_label_panel_list .cc_border_top_none {
@@ -556,3 +568,17 @@ a.cc-cursor-text:hover {
     margin-bottom: 16px;
 }
 
+/* 点滅
+------------------------------------- */
+.blink {
+    -webkit-animation: blink 1s ease-in-out infinite alternate;
+    animation: blink 1s ease-in-out infinite alternate;
+}
+@-webkit-keyframes blink {
+    0% {opacity: 0;}
+    100% {opacity: 1;}
+}
+@keyframes blink {
+    0% {opacity: 0;}
+    100% {opacity: 1;}
+}

@@ -5,7 +5,7 @@ namespace App\Enums;
 /**
  * 分刻み指定
  */
-final class MinutesIncrements
+final class MinutesIncrements extends EnumsBase
 {
     // 定数メンバ
     const every5 = 5;
@@ -22,20 +22,4 @@ final class MinutesIncrements
         self::every30=>'30分刻み',
         self::every60=>'60分刻み',
     ];
-
-    /*
-    * 対応した和名を返す
-    */
-    public static function getDescription($key): string
-    {
-        return self::enum[$key];
-    }
-
-    /*
-    * key/valueの連想配列を返す
-    */
-    public static function getMembers()
-    {
-        return self::enum;
-    }
 }

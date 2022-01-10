@@ -3,11 +3,12 @@
 namespace App\Plugins\User\Forms;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 // use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
-use DB;
+use Carbon\Carbon;
 
 use App\Models\Core\Configs;
 use App\Models\Common\Buckets;
@@ -19,12 +20,12 @@ use App\Models\User\Forms\FormsColumnsSelects;
 use App\Models\User\Forms\FormsInputs;
 use App\Models\User\Forms\FormsInputCols;
 
-use App\Rules\CustomVali_AlphaNumForMultiByte;
-use App\Rules\CustomVali_CheckWidthForString;
-use App\Rules\CustomVali_Confirmed;
-use App\Rules\CustomVali_TimeFromTo;
-use App\Rules\CustomVali_BothRequired;
-use App\Rules\CustomVali_TokenExists;
+use App\Rules\CustomValiAlphaNumForMultiByte;
+use App\Rules\CustomValiCheckWidthForString;
+use App\Rules\CustomValiConfirmed;
+use App\Rules\CustomValiTimeFromTo;
+use App\Rules\CustomValiBothRequired;
+use App\Rules\CustomValiTokenExists;
 use App\Rules\CustomValiEmails;
 
 // use App\Mail\ConnectMail;
@@ -33,8 +34,11 @@ use App\Plugins\User\UserPluginBase;
 use App\Utilities\String\StringUtils;
 use App\Utilities\Token\TokenUtils;
 
+use App\Enums\Bs4TextColor;
 use App\Enums\CsvCharacterCode;
+use App\Enums\FormColumnType;
 use App\Enums\FormStatusType;
+use App\Enums\Required;
 
 /**
  * フォーム・プラグイン
@@ -44,13 +48,18 @@ use App\Enums\FormStatusType;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class FormsPlugin extends UserPluginBase
 {
     const CHECKBOX_SEPARATOR = '|';
 
     /* オブジェクト変数 */
+
+    /**
+     * POST チェックに使用する getPost() 関数を使うか
+     */
+    public $use_getpost = false;
 
     /* コアから呼び出す関数 */
 
@@ -63,7 +72,6 @@ class FormsPlugin extends UserPluginBase
         $functions = array();
         $functions['get']  = [
             'index',
-            'editColumnDetail',
             'publicConfirmToken',
             'listInputs',
             'editInput',
@@ -74,14 +82,7 @@ class FormsPlugin extends UserPluginBase
             'publicStore',
             'publicStoreToken',
             'cancel',
-            'updateColumn',
-            'updateColumnSequence',
-            'updateColumnDetail',
             'copyColumn',
-            'addSelect',
-            'updateSelect',
-            'updateSelectSequence',
-            'deleteSelect',
             'storeInput',
         ];
         return $functions;
@@ -96,21 +97,13 @@ class FormsPlugin extends UserPluginBase
         // 標準権限は右記で定義 config/cc_role.php
         //
         // 権限チェックテーブル
-        $role_ckeck_table = [];
+        $role_check_table = [];
 
-        $role_ckeck_table["editColumnDetail"]     = ['buckets.editColumn'];
-        $role_ckeck_table["updateColumn"]         = ['buckets.editColumn'];
-        $role_ckeck_table["updateColumnSequence"] = ['buckets.editColumn'];
-        $role_ckeck_table["updateColumnDetail"]   = ['buckets.editColumn'];
-        $role_ckeck_table["copyColumn"]           = ['buckets.editColumn'];
-        $role_ckeck_table["addSelect"]            = ['buckets.addColumn'];
-        $role_ckeck_table["updateSelect"]         = ['buckets.editColumn'];
-        $role_ckeck_table["updateSelectSequence"] = ['buckets.editColumn'];
-        $role_ckeck_table["deleteSelect"]         = ['buckets.editColumn'];
-        $role_ckeck_table["listInputs"]           = ['frames.edit'];
-        $role_ckeck_table["editInput"]            = ['frames.edit'];
-        $role_ckeck_table["storeInput"]           = ['frames.edit'];
-        return $role_ckeck_table;
+        $role_check_table["copyColumn"]           = ['buckets.saveColumn'];
+        $role_check_table["listInputs"]           = ['frames.edit'];
+        $role_check_table["editInput"]            = ['frames.edit'];
+        $role_check_table["storeInput"]           = ['frames.create'];
+        return $role_check_table;
     }
 
     /**
@@ -157,7 +150,7 @@ class FormsPlugin extends UserPluginBase
         $forms_columns = [];
         if (!empty($form)) {
             $forms_columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence')->get();
-            if ($form->user_mail_send_flag == '1' && empty($forms_columns->where('column_type', \FormColumnType::mail)->first())) {
+            if ($form->user_mail_send_flag == '1' && empty($forms_columns->where('column_type', FormColumnType::mail)->first())) {
                 return 'mail_setting_error';
             }
         }
@@ -170,7 +163,7 @@ class FormsPlugin extends UserPluginBase
         // グループがあれば、結果配列をネストする。
         $ret_array = array();
         for ($i = 0; $i < count($forms_columns); $i++) {
-            if ($forms_columns[$i]->column_type == \FormColumnType::group) {
+            if ($forms_columns[$i]->column_type == FormColumnType::group) {
                 $tmp_group = $forms_columns[$i];
                 $group_row = array();
                 for ($j = 1; $j <= $forms_columns[$i]->frame_col; $j++) {
@@ -247,7 +240,7 @@ class FormsPlugin extends UserPluginBase
                                     ->join('forms_columns', 'forms_columns.id', '=', 'forms_input_cols.forms_columns_id')
                                     ->leftJoin('uploads', 'uploads.id', '=', 'forms_input_cols.value')
                                     ->where('forms_inputs_id', $inputs_id)
-                                    ->whereIn('forms_columns.column_type', [\FormColumnType::file])
+                                    ->whereIn('forms_columns.column_type', [FormColumnType::file])
                                     ->orderBy('forms_inputs_id', 'asc')
                                     ->orderBy('forms_columns_id', 'asc')
                                     ->get();
@@ -270,13 +263,6 @@ class FormsPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id, $errors = null)
     {
-/*
-$content = array();
-$content["value1"] = "値その1-1";
-$content["value2"] = "値その2";
-Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
-*/
-
         // セッション初期化などのLaravel 処理。
         $request->flash();
 
@@ -291,7 +277,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $forms_columns_id_select = $this->getFormsColumnsSelects($form->id);
             if (FormsColumns::query()
                 ->where('forms_id', $form->id)
-                ->where('column_type', \FormColumnType::group)
+                ->where('column_type', FormColumnType::group)
                 ->whereNull('frame_col')
                 ->get()
                 ->count() > 0) {
@@ -364,18 +350,18 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                         // 入力なし
                         // 初期は入力なしのため、getでカラム名あればその値、なければnullで配列埋める
 
-                        if ($tmp_forms_column->column_type == \FormColumnType::mail) {
+                        if ($tmp_forms_column->column_type == FormColumnType::mail) {
                             // メール
                             // 同じメールアドレスを埋める
                             $forms_columns_value_confirmation[$tmp_forms_column->id] = $request->input($tmp_forms_column->column_name, null);
                             $forms_columns_value[$tmp_forms_column->id] = $request->input($tmp_forms_column->column_name, null);
-                        } elseif ($tmp_forms_column->column_type == \FormColumnType::checkbox) {
+                        } elseif ($tmp_forms_column->column_type == FormColumnType::checkbox) {
                             // チェックボックス
                             $checkbox = $request->input($tmp_forms_column->column_name, null);
                             $checkbox = explode(',', $checkbox);
 
                             $forms_columns_value[$tmp_forms_column->id] = $checkbox;
-                        } elseif ($tmp_forms_column->column_type == \FormColumnType::time_from_to) {
+                        } elseif ($tmp_forms_column->column_type == FormColumnType::time_from_to) {
                             // 時間型(FromTo)
                             $from_to = $request->input($tmp_forms_column->column_name, null);
                             $from_to = str_replace('~', '～', $from_to);
@@ -383,7 +369,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
                             $forms_columns_value_for_time_from[$tmp_forms_column->id] = isset($from_to[0]) ? $from_to[0] : null;
                             $forms_columns_value_for_time_to[$tmp_forms_column->id] = isset($from_to[1]) ? $from_to[1] : null;
-                        } elseif ($tmp_forms_column->column_type == \FormColumnType::group) {
+                        } elseif ($tmp_forms_column->column_type == FormColumnType::group) {
                             // まとめ行(なにもしない)
                         } else {
                             // その他
@@ -522,11 +508,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             $validator_rule[] = 'required';
         }
         // メールアドレスチェック
-        if ($forms_column->column_type == \FormColumnType::mail) {
+        if ($forms_column->column_type == FormColumnType::mail) {
             $validator_rule[] = 'nullable';
             $validator_rule[] = 'email';
             // 同値チェック
-            $validator_rule[] = new CustomVali_Confirmed($forms_column->column_name, $request->forms_columns_value_confirmation[$forms_column->id]);
+            $validator_rule[] = new CustomValiConfirmed($forms_column->column_name, $request->forms_columns_value_confirmation[$forms_column->id]);
         }
         // 数値チェック
         if ($forms_column->rule_allowed_numeric) {
@@ -546,11 +532,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         // 英数値チェック
         if ($forms_column->rule_allowed_alpha_numeric) {
             $validator_rule[] = 'nullable';
-            $validator_rule[] = new CustomVali_AlphaNumForMultiByte();
+            $validator_rule[] = new CustomValiAlphaNumForMultiByte();
         }
         // 最大文字数チェック
         if ($forms_column->rule_word_count) {
-            $validator_rule[] = new CustomVali_CheckWidthForString($forms_column->column_name, $forms_column->rule_word_count);
+            $validator_rule[] = new CustomValiCheckWidthForString($forms_column->column_name, $forms_column->rule_word_count);
         }
         // 指定桁数チェック
         if ($forms_column->rule_digits_or_less) {
@@ -575,16 +561,16 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         }
         // ～日以降を許容
         if ($forms_column->rule_date_after_equal) {
-            $comparison_date = \Carbon::now()->addDay($forms_column->rule_date_after_equal)->format('Y/m/d');
+            $comparison_date = Carbon::now()->addDay($forms_column->rule_date_after_equal)->format('Y/m/d');
             $validator_rule[] = 'after_or_equal:' . $comparison_date;
         }
         // 日付チェック
-        if ($forms_column->column_type == \FormColumnType::date) {
+        if ($forms_column->column_type == FormColumnType::date) {
             $validator_rule[] = 'nullable';
             $validator_rule[] = 'date';
         }
         // 「時間From~To型」チェック
-        if ($forms_column->column_type == \FormColumnType::time_from_to) {
+        if ($forms_column->column_type == FormColumnType::time_from_to) {
             $time_from = $request->forms_columns_value_for_time_from[$forms_column->id];
             $time_to = $request->forms_columns_value_for_time_to[$forms_column->id];
             // request内の入力値（配列）を一旦取り出して、時間型（From~To）の入力値をセットする
@@ -593,9 +579,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             if ($time_from && $time_to) {
                 if (strtotime('1970-01-01 '. $time_from . ':00') && strtotime('1970-01-01 '. $time_to . ':00')) {
                     // 両方入力時、且つ、正常時間の場合、時間の前後チェック
-                    $validator_rule[] = new CustomVali_TimeFromTo(
-                        \Carbon::createFromTimeString($time_from . ':00'),
-                        \Carbon::createFromTimeString($time_to . ':00')
+                    $validator_rule[] = new CustomValiTimeFromTo(
+                        Carbon::createFromTimeString($time_from . ':00'),
+                        Carbon::createFromTimeString($time_to . ':00')
                     );
                 } else {
                     // 不正時間の為、dateバリデーションで弾く
@@ -604,7 +590,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
                 $tmp_array[$forms_column->id] = $time_from . '~' . $time_to;
             } elseif ($time_from || $time_to) {
                 // いづれか入力時、条件必須チェック（いづれか入力時、両方必須）
-                $validator_rule[] = new CustomVali_BothRequired(
+                $validator_rule[] = new CustomValiBothRequired(
                     $request->forms_columns_value_for_time_from[$forms_column->id],
                     $request->forms_columns_value_for_time_to[$forms_column->id]
                 );
@@ -798,7 +784,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
             $forms_inputs->status = FormStatusType::temporary;
             $forms_inputs->add_token = $record_token;
-            $forms_inputs->add_token_created_at = new \Carbon();
+            $forms_inputs->add_token_created_at = new Carbon();
         } else {
             // 本登録
             $forms_inputs->status = FormStatusType::active;
@@ -820,7 +806,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // forms_input_cols 登録
         foreach ($forms_columns as $forms_column) {
-            if ($forms_column->column_type == \FormColumnType::group) {
+            if ($forms_column->column_type == FormColumnType::group) {
                 continue;
             }
 
@@ -860,7 +846,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             }
 
             // メール型
-            if ($forms_column->column_type == \FormColumnType::mail) {
+            if ($forms_column->column_type == FormColumnType::mail) {
                 $user_mailaddresses[] = $value;
             }
         }
@@ -1075,7 +1061,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'token' => new CustomVali_TokenExists($forms_inputs->add_token, $forms_inputs->add_token_created_at),
+            'token' => new CustomValiTokenExists($forms_inputs->add_token, $forms_inputs->add_token_created_at),
         ]);
 
         // getで日付形式エラーは表示しない（通常URLをコピペミス等でいじらなければエラーにならない想定）
@@ -1133,7 +1119,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'token' => new CustomVali_TokenExists($forms_inputs->add_token, $forms_inputs->add_token_created_at),
+            'token' => new CustomValiTokenExists($forms_inputs->add_token, $forms_inputs->add_token_created_at),
         ]);
 
         // getで日付形式エラーは表示しない（通常URLをコピペミス等でいじらなければエラーにならない想定）
@@ -1174,7 +1160,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $attach_uploads_ids = [];
 
         foreach ($forms_columns as $forms_column) {
-            if ($forms_column->column_type == \FormColumnType::group) {
+            if ($forms_column->column_type == FormColumnType::group) {
                 continue;
             }
 
@@ -1200,7 +1186,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
             }
 
             // メール型
-            if ($forms_column->column_type == \FormColumnType::mail) {
+            if ($forms_column->column_type == FormColumnType::mail) {
                 $user_mailaddresses[] = $value;
             }
         }
@@ -1542,11 +1528,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $forms->entry_limit         = $request->entry_limit;
         $forms->entry_limit_over_message = $request->entry_limit_over_message;
         $forms->display_control_flag = empty($request->display_control_flag) ? 0 : $request->display_control_flag;
-        $forms->display_from        = empty($request->display_from) ? null : new \Carbon($request->display_from);
-        $forms->display_to          = empty($request->display_to) ? null : new \Carbon($request->display_to);
+        $forms->display_from        = empty($request->display_from) ? null : new Carbon($request->display_from);
+        $forms->display_to          = empty($request->display_to) ? null : new Carbon($request->display_to);
         $forms->regist_control_flag = empty($request->regist_control_flag) ? 0 : $request->regist_control_flag;
-        $forms->regist_from         = empty($request->regist_from) ? null : new \Carbon($request->regist_from);
-        $forms->regist_to           = empty($request->regist_to) ? null : new \Carbon($request->regist_to);
+        $forms->regist_from         = empty($request->regist_from) ? null : new Carbon($request->regist_from);
+        $forms->regist_to           = empty($request->regist_to) ? null : new Carbon($request->regist_to);
         $forms->mail_send_flag      = empty($request->mail_send_flag) ? 0 : $request->mail_send_flag;
         $forms->mail_send_address   = $request->mail_send_address;
         $forms->user_mail_send_flag = empty($request->user_mail_send_flag) ? 0 : $request->user_mail_send_flag;
@@ -1696,9 +1682,9 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $column->forms_id = $request->forms_id;
         $column->column_name = $request->column_name;
         $column->column_type = $request->column_type;
-        $column->required = $request->required ? \Required::on : \Required::off;
+        $column->required = $request->required ? Required::on : Required::off;
         $column->display_sequence = $max_display_sequence;
-        $column->caption_color = \Bs4TextColor::dark;
+        $column->caption_color = Bs4TextColor::dark;
         $column->save();
         $message = '項目【 '. $request->column_name .' 】を追加しました。';
 
@@ -1812,7 +1798,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         if ($use_temporary_regist_mail_flag) {
             $is_exist = false;
             foreach ($columns as $column) {
-                if ($column->required && $column->column_type == \FormColumnType::mail) {
+                if ($column->required && $column->column_type == FormColumnType::mail) {
                     $is_exist = true;
                     break;
                 }
@@ -1888,7 +1874,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $column = FormsColumns::query()->where('id', $request->column_id)->first();
         $column->column_name = $request->$str_column_name;
         $column->column_type = $request->$str_column_type;
-        $column->required = $request->$str_required ? \Required::on : \Required::off;
+        $column->required = $request->$str_required ? Required::on : Required::off;
         $column->save();
         $message = '項目【 '. $request->$str_column_name .' 】を更新しました。';
 
@@ -1977,7 +1963,7 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $validator_attributes = null;
 
         // データ型が「まとめ行」の場合はまとめ数について必須チェック
-        if ($column->column_type == \FormColumnType::group) {
+        if ($column->column_type == FormColumnType::group) {
             $validator_values['frame_col'] = [
                 'required'
             ];
@@ -2038,11 +2024,11 @@ Mail::to('nagahara@osws.jp')->send(new ConnectMail($content));
         $column->place_holder = $request->place_holder;
         $column->frame_col = $request->frame_col;
         // 分刻み指定
-        if ($column->column_type == \FormColumnType::time) {
+        if ($column->column_type == FormColumnType::time) {
             $column->minutes_increments = $request->minutes_increments;
         }
         // 分刻み指定（FromTo）
-        if ($column->column_type == \FormColumnType::time_from_to) {
+        if ($column->column_type == FormColumnType::time_from_to) {
             $column->minutes_increments_from = $request->minutes_increments_from;
             $column->minutes_increments_to = $request->minutes_increments_to;
         }
@@ -2378,7 +2364,8 @@ ORDER BY forms_inputs_id, forms_columns_id
         $columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence', 'asc')->get();
 
         $inputs_query = FormsInputs::where('forms_id', $form->id);
-        $inputs_query->orderBy('forms_inputs.id', 'asc');
+        // $inputs_query->orderBy('forms_inputs.id', 'asc');
+        $inputs_query->orderBy('forms_inputs.created_at', 'desc');
 
         // データ取得
         $get_count = 10;

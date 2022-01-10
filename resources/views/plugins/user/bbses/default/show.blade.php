@@ -43,9 +43,10 @@
     })
 </script>
 
-<form method="POST" class="" name="form_bbses_posts{{$frame_id}}">
+<form method="POST" name="form_bbses_posts{{$frame_id}}">
     {{csrf_field()}}
     <input type="hidden" name="redirect_path" value="">
+
 <article>
     <header>
         {{-- タイトル --}}
@@ -60,7 +61,18 @@
 
     {{-- post データは以下のように2重配列で渡す（Laravelが配列の0番目のみ使用するので） --}}
     <footer class="row">
-        <div class="col-12 text-right mb-1">
+        <div class="col-sm-3 mb-1">
+            {{-- いいねボタン --}}
+            @include('plugins.common.like', [
+                'use_like' => $bbs->use_like,
+                'like_button_name' => $bbs->like_button_name,
+                'contents_id' => $post->id,
+                'like_id' => $post->like_id,
+                'like_count' => $post->like_count,
+                'like_users_id' => $post->like_users_id,
+            ])
+        </div>
+        <div class="col-sm-9 text-right mb-1">
             {{$post->getUpdatedAt()}}
         </div>
         <div class="col-12 text-right mb-1">
@@ -121,95 +133,7 @@
 </nav>
 
 {{-- スレッドの投稿一覧 --}}
-@if ($thread_root_post)
-
-    {{-- 詳細でのスレッド記事の展開方法の判定 --}}
-    @if ($plugin_frame->thread_format == 2)
-        {{-- 詳細でのスレッド記事の展開方法：すべて閉じる --}}
-        <div class="card mb-3">
-            {{-- 詳細でのスレッド記事の展開方法：すべて閉じるの場合は、card のヘッダに根記事のタイトルを表示 --}}
-            <div class="card-header">
-                {{$thread_root_post->title}}
-                @if ($thread_root_post->status == 1) <span class="badge badge-warning align-bottom">一時保存</span>
-                @elseif ($thread_root_post->status == 2) <span class="badge badge-warning align-bottom">承認待ち</span>
-                @endif
-                <span class="float-right">
-                    @include('plugins.user.bbses.default.post_created_at_and_name', ['post' => $thread_root_post])
-                </span>
-            </div>
-            {{-- 詳細でのスレッド記事の展開方法：すべて閉じるの場合は、card のボディに根記事を含めた記事のタイトル一覧を表示 --}}
-            <div class="card-body">
-                {{-- 根記事（スレッドの記事は古い順なので、根記事は最初） --}}
-                @include('plugins.user.bbses.default.post_title_div', ['view_post' => $thread_root_post, 'current_post' => $post, 'list_class' => ''])
-                {{-- スレッド記事 --}}
-                @foreach ($children_posts->where("thread_root_id", $thread_root_post->id) as $children_post)
-                    @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => $post, 'list_class' => ''])
-                @endforeach
-            </div>
-        </div>
-    @else
-        {{-- 詳細でのスレッド記事の展開方法：すべて展開 or すべて閉じておく --}}
-        <span class="badge badge-primary mb-1">スレッドの記事一覧</span>
-        <div class="card mb-3">
-            {{-- 詳細でのスレッド記事の展開方法の判定 --}}
-            @if ($plugin_frame->thread_format != 0)
-                {{-- 詳細でのスレッド記事の展開方法が詳細表示している記事のみ展開の場合 --}}
-                <div class="card-header">
-                    @include('plugins.user.bbses.default.post_title', ['view_post' => $thread_root_post, 'current_post' => $post, 'list_class' => ''])
-                </div>
-                {{-- 詳細でのスレッド記事の展開方法：すべて閉じるの場合は、card のボディに根記事を含めた記事のタイトル一覧を表示 --}}
-                <div class="card-body">
-                    {{-- 根記事（スレッドの記事は古い順なので、根記事は最初） --}}
-                    @if ($thread_root_post->id == $post->id)
-                        <div class="card mb-2">
-                            <div class="card-header">
-                                @include('plugins.user.bbses.default.post_title_div', ['view_post' => $thread_root_post, 'current_post' => $post, 'list_class' => ''])
-                            </div>
-                            <div class="card-body">
-                                {!!$thread_root_post->body!!}
-                            </div>
-                        </div>
-                    @else
-                        @include('plugins.user.bbses.default.post_title_div', ['view_post' => $thread_root_post, 'current_post' => $post, 'list_class' => ''])
-                    @endif
-
-                    {{-- スレッド記事 --}}
-                    @foreach ($children_posts->where("thread_root_id", $thread_root_post->id) as $children_post)
-                        @if ($children_post->id == $post->id)
-                            <div class="card mb-2">
-                                <div class="card-header">
-                                    @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => $post, 'list_class' => ''])
-                                </div>
-                                <div class="card-body">
-                                    {!!$children_post->body!!}
-                                </div>
-                            </div>
-                        @else
-                            @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => $post, 'list_class' => ''])
-                        @endif
-                    @endforeach
-                </div>
-            @else
-                <div class="card-header">
-                    @include('plugins.user.bbses.default.post_title_div', ['view_post' => $thread_root_post, 'current_post' => $post, 'list_class' => ''])
-                </div>
-                <div class="card-body">
-                    {!!$thread_root_post->body!!}
-                    @foreach ($children_posts as $children_post)
-                        <div class="card mt-3">
-                            <div class="card-header">
-                                @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => $post, 'list_class' => ''])
-                            </div>
-                            <div class="card-body">
-                                {!!$children_post->body!!}
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            @endif
-        </div>
-    @endif
-@endif
+@include('plugins.user.bbses.default.thread_show')
 
 {{-- / post がある想定の処理 --}}
 @endif

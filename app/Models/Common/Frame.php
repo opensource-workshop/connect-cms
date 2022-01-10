@@ -34,8 +34,8 @@ class Frame extends Model
         'none_hidden',
         'bucket_id',
         'display_sequence',
-        'content_open_type', 
-        'content_open_date_from', 
+        'content_open_type',
+        'content_open_date_from',
         'content_open_date_to',
     ];
 

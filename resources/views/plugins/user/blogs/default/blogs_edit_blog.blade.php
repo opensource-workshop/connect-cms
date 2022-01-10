@@ -15,7 +15,7 @@
 @section("plugin_setting_$frame->id")
 
 {{-- 共通エラーメッセージ 呼び出し --}}
-@include('common.errors_form_line')
+@include('plugins.common.errors_form_line')
 
 {{-- 登録後メッセージ表示 --}}
 @include('plugins.common.flash_message')
@@ -55,18 +55,18 @@
     @endif
 
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">ブログ名 <label class="badge badge-danger">必須</label></label>
+        <label class="{{$frame->getSettingLabelClass()}}">ブログ名 <span class="badge badge-danger">必須</span></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="blog_name" value="{{old('blog_name', $blog->blog_name)}}" class="form-control @if ($errors->has('blog_name')) border-danger @endif">
-            @include('common.errors_inline', ['name' => 'blog_name'])
+            @include('plugins.common.errors_inline', ['name' => 'blog_name'])
         </div>
     </div>
 
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">表示件数 <label class="badge badge-danger">必須</label></label>
+        <label class="{{$frame->getSettingLabelClass()}}">表示件数 <span class="badge badge-danger">必須</span></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="view_count" value="{{old('view_count', $blog->view_count)}}" class="form-control col-sm-3 @if ($errors->has('view_count')) border-danger @endif">
-            @include('common.errors_inline', ['name' => 'view_count'])
+            @include('plugins.common.errors_inline', ['name' => 'view_count'])
         </div>
     </div>
 
@@ -75,28 +75,51 @@
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
                 @if (old('rss', $blog->rss) == 1)
-                    <input type="radio" value="1" id="rss_off" name="rss" class="custom-control-input" checked="checked">
+                    <input type="radio" value="1" id="rss_on" name="rss" class="custom-control-input" checked="checked">
                 @else
-                    <input type="radio" value="1" id="rss_off" name="rss" class="custom-control-input">
+                    <input type="radio" value="1" id="rss_on" name="rss" class="custom-control-input">
                 @endif
-                <label class="custom-control-label" for="rss_off">表示する</label>
+                <label class="custom-control-label" for="rss_on">表示する</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
                 @if (old('rss', $blog->rss) == 0)
-                    <input type="radio" value="0" id="rss_on" name="rss" class="custom-control-input" checked="checked">
+                    <input type="radio" value="0" id="rss_off" name="rss" class="custom-control-input" checked="checked">
                 @else
-                    <input type="radio" value="0" id="rss_on" name="rss" class="custom-control-input">
+                    <input type="radio" value="0" id="rss_off" name="rss" class="custom-control-input">
                 @endif
-                <label class="custom-control-label" for="rss_on">表示しない</label>
+                <label class="custom-control-label" for="rss_off">表示しない</label>
             </div>
         </div>
     </div>
 
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">RSS件数 <label class="badge badge-danger">必須</label></label>
+        <label class="{{$frame->getSettingLabelClass()}}">RSS件数 <span class="badge badge-danger">必須</span></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="rss_count" value="{{old('rss_count', isset($blog->rss_count) ? $blog->rss_count : 0)}}" class="form-control col-sm-3 @if ($errors->has('rss_count')) border-danger @endif">
-            @include('common.errors_inline', ['name' => 'rss_count'])
+            @include('plugins.common.errors_inline', ['name' => 'rss_count'])
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">いいねボタンの表示</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" value="1" id="use_like_on" name="use_like" class="custom-control-input" data-toggle="collapse" data-target="#collapse_like_button_name:not(.show)" aria-expanded="false" aria-controls="collapse_like_button_name" @if (old('use_like', $blog->use_like) == 1) checked="checked" @endif>
+                <label class="custom-control-label" for="use_like_on">表示する</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" value="0" id="use_like_off" name="use_like" class="custom-control-input" data-toggle="collapse" data-target="#collapse_like_button_name.show" aria-expanded="false" aria-controls="collapse_like_button_name"  @if (old('use_like', $blog->use_like) == 0) checked="checked" @endif>
+                <label class="custom-control-label" for="use_like_off">表示しない</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row collapse" id="collapse_like_button_name">
+        <label class="{{$frame->getSettingLabelClass()}}">いいねボタン名</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="like_button_name" value="{{old('like_button_name', $blog->like_button_name)}}" class="form-control @if ($errors->has('like_button_name')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'like_button_name'])
+            <small class="form-text text-muted">空の場合「{{Like::like_button_default}}」を表示します。</small>
         </div>
     </div>
 
@@ -148,5 +171,13 @@
         </div>
     </div>
 </div>
+
+{{-- 初期状態で開くもの --}}
+@if(old('use_like', $blog->use_like) == 1)
+    <script>
+        $('#collapse_like_button_name').collapse('show')
+    </script>
+@endif
+
 @endif
 @endsection

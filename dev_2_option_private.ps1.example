@@ -1,38 +1,44 @@
 ##########################################################
-### ŠO•”ƒvƒ‰ƒOƒCƒ“PUSH-Windows—piŠJ”­ŠÂ‹« ¨ ŠO•”ƒvƒ‰ƒOƒCƒ“j
+### å¤–éƒ¨ãƒ—ãƒ©ã‚°ã‚¤ãƒ³PUSH-Windowsç”¨ï¼ˆConnect-CMSç’°å¢ƒ â†’ å¤–éƒ¨ãƒ—ãƒ©ã‚°ã‚¤ãƒ³ï¼‰
 ##########################################################
 #
-# ŠO•”ƒvƒ‰ƒOƒCƒ“‚ğConnect-CMS‚Æ‚Í•ÊƒfƒBƒŒƒNƒgƒŠ‚ÅGitŠÇ—‚µ‚½‚¢ê‡‚È‚Ç‚Ég—p‚·‚éAŠJ”­—p‚ÌƒRƒs[PowerShell‚Å‚·B
-# ŠJ”­ŠÂ‹«ƒfƒBƒŒƒNƒgƒŠ‚©‚çAŠO•”ƒvƒ‰ƒOƒCƒ“ƒfƒBƒŒƒNƒgƒŠ‚ÉƒRƒs[‚µ‚Ü‚·B
-# ƒRƒs[•s—v‚ÌƒfƒBƒŒƒNƒgƒŠ‚ÍAƒRƒƒ“ƒgƒAƒEƒg‚µ‚Ä‚­‚¾‚³‚¢B
-# •¶šƒR[ƒh‚Í Shift-JIS ‚Å‚·B
+# å¤–éƒ¨ãƒ—ãƒ©ã‚°ã‚¤ãƒ³ã‚’Connect-CMSã¨ã¯åˆ¥ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã§Gitç®¡ç†ã—ãŸã„å ´åˆãªã©ã«ä½¿ç”¨ã™ã‚‹ã€ã‚³ãƒ”ãƒ¼PowerShellã§ã™ã€‚
+# Connect-CMSç’°å¢ƒãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‹ã‚‰ã€å¤–éƒ¨ãƒ—ãƒ©ã‚°ã‚¤ãƒ³ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã«ã‚³ãƒ”ãƒ¼ã—ã¾ã™ã€‚
+# ã‚³ãƒ”ãƒ¼ä¸è¦ã®ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã¯ã€ã‚³ãƒ¡ãƒ³ãƒˆã‚¢ã‚¦ãƒˆã—ã¦ãã ã•ã„ã€‚
+# æ–‡å­—ã‚³ãƒ¼ãƒ‰ã¯ Shift-JIS ã§ã™ã€‚
 #
-# ƒRƒ}ƒ“ƒhƒvƒƒ“ƒvƒg‚ÅPowerShell‚ğÀsj
+# ã‚³ãƒãƒ³ãƒ‰ãƒ—ãƒ­ãƒ³ãƒ—ãƒˆã§PowerShellã‚’å®Ÿè¡Œï¼‰
 # powershell -NoProfile -ExecutionPolicy Unrestricted .\dev_2_option_private.ps1
 #
 
-### PATH“™‚ÌğŒ‚ğ•Ï”‚Éİ’è
-# ƒRƒs[Œ³‚Ìƒ‹[ƒgPATH
+### PATHç­‰ã®æ¡ä»¶ã‚’å¤‰æ•°ã«è¨­å®š
+# ã‚³ãƒ”ãƒ¼å…ƒã®ãƒ«ãƒ¼ãƒˆPATH
 $src_root_dir = "C:\path_to_dev_connect-cms\"
 
-# ƒRƒs[æ‚Ìƒ‹[ƒgPATH
+# ã‚³ãƒ”ãƒ¼å…ˆã®ãƒ«ãƒ¼ãƒˆPATH
 $dist_root_dir = "C:\path_to_option_private_dir\"
 
-# ƒRƒs[‘ÎÛ‚Ìƒvƒ‰ƒOƒCƒ“ƒfƒBƒŒƒNƒgƒŠ–¼
-$option_plugin = "pluginname"
-$option_plugin_controller_dir = "PluginName"
-$option_plugin_resources_dir = "pluginname"
+# ã‚³ãƒ”ãƒ¼å¯¾è±¡ã®ãƒ—ãƒ©ã‚°ã‚¤ãƒ³ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªå
+$option_plugin = "PluginName"
+$option_plugin_controller_dir = "User\PluginName"
+$option_plugin_resources_dir = "user\pluginname"
 $option_plugin_model_dir = $option_plugin_controller_dir
 $option_plugin_command_dir = $option_plugin_controller_dir
 
 
-### ƒRƒs[irobocopy <ƒRƒs[Œ³> <ƒRƒs[æ>j
-robocopy "${src_root_dir}app\PluginsOption\User\${option_plugin_controller_dir}" "${dist_root_dir}${option_plugin}\app\PluginsOption\User\${option_plugin_controller_dir}" /s
-robocopy "${src_root_dir}app\ModelsOption\User\${option_plugin_model_dir}" "${dist_root_dir}${option_plugin}\app\ModelsOption\User\${option_plugin_model_dir}" /s
-robocopy "${src_root_dir}resources\views\plugins_option\user\${option_plugin_resources_dir}" "${dist_root_dir}${option_plugin}\resources\views\plugins_option\user\${option_plugin_resources_dir}" /s
-robocopy "${src_root_dir}app\Console\CommandsOption\${option_plugin_command_dir}" "${dist_root_dir}${option_plugin}\app\Console\CommandsOption\${option_plugin_command_dir}" /s
+### ã‚³ãƒ”ãƒ¼ï¼ˆrobocopy <ã‚³ãƒ”ãƒ¼å…ƒ> <ã‚³ãƒ”ãƒ¼å…ˆ>ï¼‰
+robocopy "${src_root_dir}app\PluginsOption\${option_plugin_controller_dir}" "${dist_root_dir}${option_plugin}\app\PluginsOption\${option_plugin_controller_dir}" /s /MIR
+robocopy "${src_root_dir}app\ModelsOption\${option_plugin_model_dir}" "${dist_root_dir}${option_plugin}\app\ModelsOption\${option_plugin_model_dir}" /s /MIR
+robocopy "${src_root_dir}resources\views\plugins_option\${option_plugin_resources_dir}" "${dist_root_dir}${option_plugin}\resources\views\plugins_option\${option_plugin_resources_dir}" /s /MIR
+robocopy "${src_root_dir}resources\views\mail_option\${option_plugin_resources_dir}" "${dist_root_dir}${option_plugin}\resources\views\plugins_option\${option_plugin_resources_dir}" /s /MIR
+robocopy "${src_root_dir}app\Console\CommandsOption\${option_plugin_command_dir}" "${dist_root_dir}${option_plugin}\app\Console\CommandsOption\${option_plugin_command_dir}" /s /MIR
 
-robocopy "${src_root_dir}database\migrations_option" "${dist_root_dir}${option_plugin}\database\migrations_option" /s
-robocopy "${src_root_dir}app\EnumsOption" "${dist_root_dir}${option_plugin}\app\EnumsOption" /s
+robocopy "${src_root_dir}database\migrations_option" "${dist_root_dir}${option_plugin}\database\migrations_option" /s /xf _readme.txt
+robocopy "${src_root_dir}database\seeds\options\${option_plugin}" "${dist_root_dir}${option_plugin}\database\seeds\options\${option_plugin}" /s /MIR
+robocopy "${src_root_dir}app\EnumsOption" "${dist_root_dir}${option_plugin}\app\EnumsOption" /s /MIR
+robocopy "${src_root_dir}public\images\plugins\${option_plugin}" "${dist_root_dir}${option_plugin}\public\images\plugins\${option_plugin}" /s /MIR
+
+# 1ãƒ•ã‚¡ã‚¤ãƒ«ã®ã¿ã‚³ãƒ”ãƒ¼ä¾‹
+#Copy-Item -Path "${src_root_dir}resources\views\plugins_option\manage\menus_list.blade.php" -Destination "${dist_root_dir}${option_plugin}\resources\views\plugins_option\manage\"
 
 exit
