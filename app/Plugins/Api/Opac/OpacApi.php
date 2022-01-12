@@ -37,7 +37,7 @@ class OpacApi extends ApiPluginBase
     public function book($request, $opac_id, $key_column, $key_value)
     {
         // API 共通チェック
-        $ret = $this->apiCallCheck($request);
+        $ret = $this->apiCallCheck($request, 'Opac');
         if (!empty($ret['code'])) {
             return $this->encodeJson($ret, $request);
         }
