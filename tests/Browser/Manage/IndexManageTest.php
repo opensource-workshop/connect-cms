@@ -22,7 +22,6 @@ class IndexManageTest extends DuskTestCase
     {
         $this->login(1); // user id = 1(admin)でログイン
         $this->index();
-//print_r($_SERVER['argv']);
     }
 
     /**
@@ -34,26 +33,24 @@ class IndexManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage')
                     ->assertTitle('Connect-CMS')
-                    ->screenshot('Manage/IndexManageTest/IndexManage');
+                    ->screenshot('manage/index_manage/index');
             //parent::screenshot($browser); // この記述の場合、ディレクトリは自動で判別＆日時付きでファイルが保存される。
         });
 
-        $manual = IndexManage::declareManual();
+$this->putManualData();
 
         // 結果の保存
+/*
         Dusks::create([
             'category' => 'Manage',
             'sort' => '2',
             'method' => 'index',
             'test_result' => 'OK',
-            'html_path' => 'Manage/IndexManageTest/IndexManage',
+            'html_path' => 'manage/index_manage/index',
             'function_title' => $manual['function_title'],
             'method_desc' => $manual['method_desc']['index'],
             'function_desc' => $manual['function_desc'],
         ]);
-
-
-
-
+*/
     }
 }

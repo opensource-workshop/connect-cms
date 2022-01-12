@@ -9,9 +9,18 @@ use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Laravel\Dusk\TestCase as BaseTestCase;
 use Laravel\Dusk\Browser;
 
+use App\Models\Core\Dusks;
 use App\User;
 
 use TruncateAllTables;
+
+
+
+use App\Plugins\Manage\IndexManage\IndexManage;
+
+
+
+
 
 abstract class DuskTestCase extends BaseTestCase
 {
@@ -68,6 +77,8 @@ abstract class DuskTestCase extends BaseTestCase
     {
         parent::setUp();
 
+/* 一旦コメント。データのクリアは、意識して行いたいかもしれないので。
+
         // テスト実行のタイミングで一度だけ実行する
         if (! self::$migrated) {
             // config キャッシュクリア
@@ -84,6 +95,7 @@ abstract class DuskTestCase extends BaseTestCase
 
             self::$migrated = true;
         }
+*/
     }
 
     /**
@@ -197,5 +209,35 @@ abstract class DuskTestCase extends BaseTestCase
                     ->assertTitleContains('Connect-CMS');
             $this->screenshot($browser);
         });
+    }
+
+    /**
+     * マニュアルデータ出力
+     */
+    public function putManualData()
+    {
+
+echo "\n";
+echo __CLASS__;
+echo "\n";
+echo __FUNCTION__;
+echo "\n";
+echo get_class($this); // サブクラスの名前が取れた。
+echo "\n";
+
+
+        $manual = IndexManage::declareManual();
+
+        // 結果の保存
+        Dusks::create([
+            'category' => 'manage',
+            'sort' => '2',
+            'method' => 'index',
+            'test_result' => 'OK',
+            'html_path' => 'manage/index_manage/index',
+            'function_title' => $manual['function_title'],
+            'method_desc' => $manual['method_desc']['index'],
+            'function_desc' => $manual['function_desc'],
+        ]);
     }
 }

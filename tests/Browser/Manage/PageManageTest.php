@@ -51,8 +51,8 @@ class PageManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/page')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/page_manage/index');
         });
     }
 
@@ -69,8 +69,8 @@ class PageManageTest extends DuskTestCase
                     ->type('page_name', 'テスト')
                     ->type('permanent_link', '/test')
                     ->click('#label_base_display_flag')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/page_manage/edit');
         });
     }
 
@@ -81,8 +81,8 @@ class PageManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('ページ追加')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/page_manage/store');
         });
     }
 
@@ -96,8 +96,8 @@ class PageManageTest extends DuskTestCase
                     ->attach('page_csv', __DIR__.'/page.csv')
                     ->press('インポート')
                     ->acceptDialog()
-                    ->assertPathIs('/manage/page/import');
-            $this->screenshot($browser);
+                    ->assertPathIs('/manage/page/import')
+                    ->screenshot('manage/page_manage/upload');
         });
     }
 
@@ -113,8 +113,8 @@ class PageManageTest extends DuskTestCase
             $upload2 = Page::where('page_name', 'アップロード2')->first();
 
             $browser->visit('/manage/page')
-                    ->select('#form_select_page' . $upload2->id . ' .manage-page-selectpage', $upload->id);
-            $this->screenshot($browser);
+                    ->select('#form_select_page' . $upload2->id . ' .manage-page-selectpage', $upload->id)
+                    ->screenshot('manage/page_manage/move_page');
         });
     }
 
@@ -146,8 +146,8 @@ class PageManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) use ($name) {
             $browser->visit('/manage/group/edit')
                     ->type('name', $name)
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/page_manage/group_edit');
         });
     }
 
@@ -158,8 +158,8 @@ class PageManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('グループ変更')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/page_manage/group_update');
         });
     }
 
@@ -178,10 +178,11 @@ class PageManageTest extends DuskTestCase
             // collapseが表示されるまで、ちょっと待つ
             $browser->pause(500);
 
-            $this->screenshot($browser);
+            //$this->screenshot($browser);
+            $browser->screenshot('manage/page_manage/page_role');
 
-            $browser->click("label[for='role_reporter1']");
-            $this->screenshot($browser);
+            $browser->click("label[for='role_reporter1']")
+                    ->screenshot('manage/page_manage/page_role2');
         });
     }
 
@@ -197,12 +198,13 @@ class PageManageTest extends DuskTestCase
             // チェックボックスのクリックが反映されるまで、ちょっと待つ
             $browser->pause(500);
 
-            $this->screenshot($browser);
+            //$this->screenshot($browser);
+            $browser->screenshot('manage/page_manage/page_role_update');
 
             // [TODO] チェックボックスONにしてるはずなんだけど、なんでかチェック外れて更新できない。残念ギブアップ。
             $browser->press('権限更新')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/page_manage/page_role_update2');
         });
     }
 }

@@ -5,6 +5,8 @@ rem ----------------------------------------------
 rem batでまとめてテスト実行
 rem > tests\bin\connect-cms-test.bat
 rem
+rem > tests\bin\connect-cms-test.bat db_clear
+rem
 rem [How to test]
 rem https://github.com/opensource-workshop/connect-cms/wiki/Dusk
 rem ----------------------------------------------
@@ -22,18 +24,18 @@ rem @php artisan config:clear
 
 if "%1" == "db_clear" (
     rem 下記は、自動テストDB初期化で行っていないコマンド
-    echo.
-    echo --- キャッシュクリア
-    php artisan cache:clear
+    rem echo.
+    rem echo --- キャッシュクリア
+    rem php artisan cache:clear
     rem php artisan config:clear
 
     echo.
     echo --- データベース・クリア
     php artisan migrate:fresh --env=dusk.local
 
-    rem echo.
-    rem echo --- データ・初期追加
-    rem php artisan db:seed --env=dusk.local
+    echo.
+    echo --- データ・初期追加
+    php artisan db:seed --env=dusk.local
 )
 
 rem ---------------------------------------------
@@ -70,11 +72,11 @@ rem ---------------------------------------------
 
 echo.
 echo --- 管理画面アクセス
-php artisan dusk tests\Browser\Manage\IndexManageTest.php ABC
+php artisan dusk tests\Browser\Manage\IndexManageTest.php
 
 echo.
 echo --- ページ管理のテスト
-rem php artisan dusk tests\Browser\Manage\PageManageTest.php
+php artisan dusk tests\Browser\Manage\PageManageTest.php
 
 echo.
 echo --- サイト管理のテスト
