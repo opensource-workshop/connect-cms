@@ -37,15 +37,17 @@ class AlterDatabaseCharsetToUtf8mb4 extends Migration
         $connection = DB::connection();
         $schema_manager = $connection->getDoctrineSchemaManager();
 
+        // fix: mysql8対応. カラムの大文字小文字をDBテーブルと合わせる。
+
         // INDEXが設定されているテーブル名とカラム名を取得
         $indexs = DB::table('INFORMATION_SCHEMA.STATISTICS')
             ->select(
-                'table_name',
-                'column_name'
+                'TABLE_NAME',
+                'COLUMN_NAME'
             )
             // あらかじめ弾けるカラム名は弾く
-            ->whereNotIn('column_name', ['id','_lft','_rgt','parent_id'])
-            ->where('table_schema', $database_name)
+            ->whereNotIn('COLUMN_NAME', ['id','_lft','_rgt','parent_id'])
+            ->where('TABLE_SCHEMA', $database_name)
             ->get();
 
         // INDEX対象カラムの内、varchar(191)より大きいカラムのサイズをvarchar(191)に揃える
@@ -53,8 +55,8 @@ class AlterDatabaseCharsetToUtf8mb4 extends Migration
 
             // カラム定義を取得（before）
             $before_column = $connection->getDoctrineColumn(
-                $arr_table_and_column_names->table_name,
-                $arr_table_and_column_names->column_name
+                $arr_table_and_column_names->TABLE_NAME,
+                $arr_table_and_column_names->COLUMN_NAME
             );
 
             if ($before_column->toArray()['type'] instanceof Doctrine\DBAL\Types\StringType && $before_column->toArray()['length'] > 191) {
@@ -66,7 +68,7 @@ class AlterDatabaseCharsetToUtf8mb4 extends Migration
                 }
 
                 // ALTER文 構築
-                $column_modify_statement = "ALTER TABLE $arr_table_and_column_names->table_name MODIFY COLUMN $arr_table_and_column_names->column_name varchar(191)";
+                $column_modify_statement = "ALTER TABLE $arr_table_and_column_names->TABLE_NAME MODIFY COLUMN $arr_table_and_column_names->COLUMN_NAME varchar(191)";
 
                 // not null制約があれば引き継ぐ
                 if($before_column->toArray()['notnull'] == 'true'){
@@ -84,8 +86,8 @@ class AlterDatabaseCharsetToUtf8mb4 extends Migration
 
                 // カラム定義を取得（after）
                 $after_column = $connection->getDoctrineColumn(
-                    $arr_table_and_column_names->table_name,
-                    $arr_table_and_column_names->column_name
+                    $arr_table_and_column_names->TABLE_NAME,
+                    $arr_table_and_column_names->COLUMN_NAME
                 );
 
                 // log用文字列生成
@@ -166,12 +168,12 @@ class AlterDatabaseCharsetToUtf8mb4 extends Migration
         // INDEXが設定されているテーブル名とカラム名を取得
         $indexs = DB::table('INFORMATION_SCHEMA.STATISTICS')
             ->select(
-                'table_name',
-                'column_name'
+                'TABLE_NAME',
+                'COLUMN_NAME'
             )
             // あらかじめ弾けるカラム名は弾く
-            ->whereNotIn('column_name', ['id','_lft','_rgt','parent_id'])
-            ->where('table_schema', $database_name)
+            ->whereNotIn('COLUMN_NAME', ['id','_lft','_rgt','parent_id'])
+            ->where('TABLE_SCHEMA', $database_name)
             ->get();
 
         // INDEX対象カラムの内、varchar(191)より大きいカラムのサイズをvarchar(191)に揃える
@@ -179,8 +181,8 @@ class AlterDatabaseCharsetToUtf8mb4 extends Migration
 
             // カラム定義を取得（before）
             $before_column = $connection->getDoctrineColumn(
-                $arr_table_and_column_names->table_name,
-                $arr_table_and_column_names->column_name
+                $arr_table_and_column_names->TABLE_NAME,
+                $arr_table_and_column_names->COLUMN_NAME
             );
 
             if ($before_column->toArray()['type'] instanceof Doctrine\DBAL\Types\StringType && $before_column->toArray()['length'] == '191') {
@@ -192,7 +194,7 @@ class AlterDatabaseCharsetToUtf8mb4 extends Migration
                 }
 
                 // ALTER文 構築
-                $column_modify_statement = "ALTER TABLE $arr_table_and_column_names->table_name MODIFY COLUMN $arr_table_and_column_names->column_name varchar(255)";
+                $column_modify_statement = "ALTER TABLE $arr_table_and_column_names->TABLE_NAME MODIFY COLUMN $arr_table_and_column_names->COLUMN_NAME varchar(255)";
 
                 // not null制約があれば引き継ぐ
                 if($before_column->toArray()['notnull'] == 'true'){
@@ -210,8 +212,8 @@ class AlterDatabaseCharsetToUtf8mb4 extends Migration
 
                 // カラム定義を取得（after）
                 $after_column = $connection->getDoctrineColumn(
-                    $arr_table_and_column_names->table_name,
-                    $arr_table_and_column_names->column_name
+                    $arr_table_and_column_names->TABLE_NAME,
+                    $arr_table_and_column_names->COLUMN_NAME
                 );
 
                 // log用文字列生成
