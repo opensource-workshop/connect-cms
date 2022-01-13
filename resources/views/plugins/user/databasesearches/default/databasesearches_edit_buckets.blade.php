@@ -74,6 +74,22 @@
         </div>
 
         <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}">並べ替え条件</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <select class="form-control" name="sort_type">
+                    @php
+                    $sort_type = old('sort_type', $databasesearches->sort_type);
+                    @endphp
+
+                    <option value="">指定なし</option>
+                    @foreach (DatabaseSearcherSortType::getMembers() as $sort_key => $sort_view)
+                        <option value="{{$sort_key}}" @if($sort_type == $sort_key) selected @endif>{{  $sort_view  }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass()}}">フレームの選択</label>
             <div class="{{$frame->getSettingInputClass(true)}}">
                 <div class="custom-control custom-radio custom-control-inline">
