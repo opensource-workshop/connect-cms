@@ -323,7 +323,7 @@ class SlideshowsPlugin extends UserPluginBase
              * 明細データの削除
              */
             foreach ($slideshows_items as $slideshows_item) {
-                SlideshowsItems::where('slideshows_items_id', $slideshows_item->id)->delete();
+                SlideshowsItems::where('id', $slideshows_item->id)->delete();
             }
 
             $slideshows = Slideshows::find($slideshows_id);
