@@ -52,7 +52,7 @@ class PageManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/page')
                     ->assertTitleContains('Connect-CMS')
-                    ->screenshot('manage/page_manage/index');
+                    ->screenshot('manage/page/index');
         });
 
         // マニュアル用データ出力
@@ -94,6 +94,13 @@ class PageManageTest extends DuskTestCase
      */
     private function upload()
     {
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/manage/page/import')
+                    ->attach('page_csv', __DIR__.'/page.csv')
+                    ->assertPathIs('/manage/page/import')
+                    ->screenshot('manage/page/upload_0');
+        });
+
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/page/import')
                     ->attach('page_csv', __DIR__.'/page.csv')

@@ -31,7 +31,9 @@ if "%1" == "db_clear" (
 
     echo.
     echo --- データベース・クリア
-    php artisan migrate:fresh --env=dusk.local
+    rem php artisan migrate:fresh --env=dusk.local
+
+    php artisan db:seed --env=dusk.local --class=TruncateAllTables
 
     echo.
     echo --- データ・初期追加

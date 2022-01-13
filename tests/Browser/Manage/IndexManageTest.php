@@ -33,7 +33,7 @@ class IndexManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage')
                     ->assertTitle('Connect-CMS')
-                    ->screenshot('manage/index_manage/index');
+                    ->screenshot('manage/index/index');
             //parent::screenshot($browser); // この記述の場合、ディレクトリは自動で判別＆日時付きでファイルが保存される。
         });
 
