@@ -37,20 +37,7 @@ class IndexManageTest extends DuskTestCase
             //parent::screenshot($browser); // この記述の場合、ディレクトリは自動で判別＆日時付きでファイルが保存される。
         });
 
-$this->putManualData();
-
-        // 結果の保存
-/*
-        Dusks::create([
-            'category' => 'Manage',
-            'sort' => '2',
-            'method' => 'index',
-            'test_result' => 'OK',
-            'html_path' => 'manage/index_manage/index',
-            'function_title' => $manual['function_title'],
-            'method_desc' => $manual['method_desc']['index'],
-            'function_desc' => $manual['function_desc'],
-        ]);
-*/
+        // マニュアル用データ出力
+        $this->putManualData();
     }
 }

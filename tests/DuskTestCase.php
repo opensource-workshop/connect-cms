@@ -14,14 +14,6 @@ use App\User;
 
 use TruncateAllTables;
 
-
-
-use App\Plugins\Manage\IndexManage\IndexManage;
-
-
-
-
-
 abstract class DuskTestCase extends BaseTestCase
 {
     use CreatesApplication;
@@ -77,7 +69,7 @@ abstract class DuskTestCase extends BaseTestCase
     {
         parent::setUp();
 
-/* 一旦コメント。データのクリアは、意識して行いたいかもしれないので。
+/* 一旦コメントアウト。データのクリアは、意識して行いたいかもしれないので。
 
         // テスト実行のタイミングで一度だけ実行する
         if (! self::$migrated) {
@@ -212,32 +204,67 @@ abstract class DuskTestCase extends BaseTestCase
     }
 
     /**
+     *  newするクラス名の取得
+     */
+    private function getClassName($plugin_name)
+    {
+        // 管理プラグインとして存在するか確認
+        $class_name = "App\Plugins\Manage\\" . ucfirst($plugin_name) . "Manage\\" . ucfirst($plugin_name) . "Manage";
+        if (class_exists($class_name)) {
+            return $class_name;
+        }
+
+        // 標準プラグインとして存在するか確認
+        $class_name = "App\Plugins\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
+        if (class_exists($class_name)) {
+            return $class_name;
+        }
+
+        // オプションプラグインとして存在するか確認
+        $class_name = "App\PluginsOption\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
+        if (class_exists($class_name)) {
+            return $class_name;
+        }
+        return false;
+    }
+
+    /**
      * マニュアルデータ出力
      */
     public function putManualData()
     {
+        // 実行しているサブクラスの名前を取得して、マニュアル用に編集する。
+        $sub_class_name = \Str::snake(get_class($this));
+        $sub_class_array = explode('\\', $sub_class_name);
 
-echo "\n";
-echo __CLASS__;
-echo "\n";
-echo __FUNCTION__;
-echo "\n";
-echo get_class($this); // サブクラスの名前が取れた。
-echo "\n";
+        // 呼び出し元メソッド名
+        $dbg = debug_backtrace();
+        $source_method = $dbg[1]['function'];
 
+        // クラス名の本体部分の取得
+        $class_name_3 = trim($sub_class_array[3], '_');
+        $class_name_3_array = explode('_', $class_name_3);
+        $plugin_name = $class_name_3_array[0];
 
-        $manual = IndexManage::declareManual();
+        // html パスの生成
+        $html_path = trim($sub_class_array[2], '_') . '/' . $plugin_name . '/' . $source_method;
+
+        // 対象クラスの生成とマニュアル用文章の取得
+        $class_name = $this->getClassName($plugin_name);
+        $manual = $class_name::declareManual();
 
         // 結果の保存
-        Dusks::create([
-            'category' => 'manage',
+        Dusks::updateOrCreate(
+        ['html_path' => $html_path],
+        [
+            'category' => trim($sub_class_array[2], '_'),
             'sort' => '2',
-            'method' => 'index',
+            'method' => $source_method,
             'test_result' => 'OK',
-            'html_path' => 'manage/index_manage/index',
-            'function_title' => $manual['function_title'],
-            'method_desc' => $manual['method_desc']['index'],
-            'function_desc' => $manual['function_desc'],
+            'html_path' => $html_path,
+            'function_title' => array_key_exists('function_title', $manual) ? $manual['function_title'] : '',
+            'method_desc' => array_key_exists('method_desc', $manual) && array_key_exists($source_method, $manual['method_desc'])? $manual['method_desc'][$source_method] : '',
+            'function_desc' => array_key_exists('function_desc', $manual) ? $manual['function_desc'] : '',
         ]);
     }
 }

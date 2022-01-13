@@ -54,6 +54,9 @@ class PageManageTest extends DuskTestCase
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/page_manage/index');
         });
+
+        // マニュアル用データ出力
+        $this->putManualData();
     }
 
     /**
