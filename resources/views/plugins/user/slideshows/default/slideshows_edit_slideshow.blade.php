@@ -158,6 +158,7 @@
                         class="form-control @if ($errors && $errors->has('height')) border-danger @endif"
                     >
                     @if ($errors && $errors->has('height')) <div class="text-danger">{{$errors->first('height')}}</div> @endif
+                    <small class="text-muted">未指定の場合、フレーム幅に合わせた画像の高さで表示されます。</small>
                 </div>
             </div>
 
