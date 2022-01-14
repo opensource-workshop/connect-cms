@@ -45,6 +45,7 @@
                 <form action="" name="form_booking{{$frame_id}}" method="get">
                     {{-- input_id(予約ID) --}}
                     <input type="hidden" name="booking_id" value="">
+                    <input type="hidden" name="inputs_parent_id" value="">
                 </form>
 
                 {{-- 閉じるボタン --}}
@@ -52,11 +53,29 @@
                     <i class="fas fa-times"></i> {{ __('messages.close') }}
                 </button>
 
-                {{-- 予約編集ボタン（ログイン時のみ表示） --}}
+                {{-- 予約編集ボタン --}}
                 @auth
                     <button type="button" class="btn btn-success" id="reservation_edit_button" onclick="location.href='{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/' + form_booking{{$frame_id}}.booking_id.value + '#frame-{{$frame->id}}'">
                         <i class="far fa-edit"></i> {{ __('messages.edit') }}
                     </button>
+
+                    {{-- 繰り返しパターン --}}
+                    <div class="btn-group" id="reservation_repeat_edit_button">
+                        <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="far fa-edit"></i> {{ __('messages.edit') }}
+                        </button>
+                        <div class="dropdown-menu">
+                            <button class="dropdown-item" type="button" onclick="location.href='{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/' + form_booking{{$frame_id}}.booking_id.value + '?edit_plan_type={{EditPlanType::only}}#frame-{{$frame->id}}'">
+                                {{ __('messages.repeat_edit_plan_only', ['action' => __('messages.change')]) }}
+                            </button>
+                            <button class="dropdown-item" type="button" onclick="location.href='{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/' + form_booking{{$frame_id}}.booking_id.value + '?edit_plan_type={{EditPlanType::after}}#frame-{{$frame->id}}'">
+                                {{ __('messages.repeat_edit_plan_after', ['action' => __('messages.change')]) }}
+                            </button>
+                            <button class="dropdown-item" type="button" onclick="location.href='{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/' + form_booking{{$frame_id}}.inputs_parent_id.value + '?edit_plan_type={{EditPlanType::all}}#frame-{{$frame->id}}'">
+                                {{ __('messages.repeat_edit_plan_all', ['action' => __('messages.change')]) }}
+                            </button>
+                        </div>
+                    </div>
                 @endauth
 
                 {{-- 詳細 --}}
@@ -70,9 +89,28 @@
 
                         {{-- 予約ID --}}
                         <input type="hidden" name="booking_id" value="">
+                        <input type="hidden" name="inputs_parent_id" value="">
                         <button type="button" class="btn btn-danger" id="reservation_destroy_button" onclick="destroy_booking{{$frame_id}}()">
                             <i class="fas fa-trash-alt"></i> {{ __('messages.delete') }}
                         </button>
+
+                        {{-- 繰り返しパターン --}}
+                        <div class="btn-group" id="reservation_repeat_destroy_button">
+                            <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-trash-alt"></i> {{ __('messages.delete') }}
+                            </button>
+                            <div class="dropdown-menu">
+                                <button class="dropdown-item" type="button" onclick="destroy_repeat_booking{{$frame_id}}(form_destroy_booking{{$frame_id}}.booking_id.value, '{{EditPlanType::only}}')">
+                                    {{ __('messages.repeat_edit_plan_only', ['action' => __('messages.delete')]) }}
+                                </button>
+                                <button class="dropdown-item" type="button" onclick="destroy_repeat_booking{{$frame_id}}(form_destroy_booking{{$frame_id}}.booking_id.value, '{{EditPlanType::after}}')">
+                                    {{ __('messages.repeat_edit_plan_after', ['action' => __('messages.delete')]) }}
+                                </button>
+                                <button class="dropdown-item" type="button" onclick="destroy_repeat_booking{{$frame_id}}(form_destroy_booking{{$frame_id}}.inputs_parent_id.value, '{{EditPlanType::all}}')">
+                                    {{ __('messages.repeat_edit_plan_all', ['action' => __('messages.delete')]) }}
+                                </button>
+                            </div>
+                        </div>
                     </form>
                 @endauth
             </div>
@@ -104,6 +142,7 @@
             modal.find('.modal-title').text('{{ __('messages.reservation_details') }}（' + data.inputs.facility_name + '）');
             // 予約項目（固定）
             modal.find('[name=booking_id]').val(button.data('booking_id'));
+            modal.find('[name=inputs_parent_id]').val(data.inputs.inputs_parent_id);
             modal.find('#reservation_date_display').text(data.inputs.reservation_date_display);
             modal.find('#reservation_time').text(data.inputs.reservation_time_display);
 
@@ -112,6 +151,13 @@
                 modal.find('#reservation_repeat_div').show();
                 modal.find('#reservation_repeat').text(data.repeat.reservation_repeat_display);
                 modal.find('#reservation_repeat_end').text(data.repeat.reservation_repeat_end_display);
+
+                // ボタン切替
+                modal.find('#reservation_edit_button').hide();
+                modal.find('#reservation_repeat_edit_button').show();
+
+                modal.find('#reservation_destroy_button').hide();
+                modal.find('#reservation_repeat_destroy_button').show();
             }
 
             // 予約項目（可変）
@@ -207,16 +253,20 @@
             if (button.data('is_edit') == '1') {
                 // find結果はjquery object
                 modal.find('#reservation_edit_button').show();
+                modal.find('#reservation_repeat_edit_button').hide();
             } else {
                 modal.find('#reservation_edit_button').hide();
+                modal.find('#reservation_repeat_edit_button').hide();
             }
 
             // 削除権限ありならボタン表示, なしは非表示
             if (button.data('is_delete') == '1') {
-                // finc結果はjquery object
+                // find結果はjquery object
                 modal.find('#reservation_destroy_button').show();
+                modal.find('#reservation_repeat_destroy_button').hide();
             } else {
                 modal.find('#reservation_destroy_button').hide();
+                modal.find('#reservation_repeat_destroy_button').hide();
             }
         @endauth
 
@@ -232,6 +282,13 @@
     function destroy_booking{{$frame_id}}() {
         if (confirm('予約を削除します。\nよろしいですか？')) {
             form_destroy_booking{{$frame_id}}.action = "{{url('/')}}/redirect/plugin/reservations/destroyBooking/{{$page->id}}/{{$frame_id}}/" + form_destroy_booking{{$frame_id}}.booking_id.value + "#frame-{{$frame->id}}";
+            form_destroy_booking{{$frame_id}}.submit();
+        }
+    }
+
+    function destroy_repeat_booking{{$frame_id}}(booking_id, edit_plan_type) {
+        if (confirm('予約を削除します。\nよろしいですか？')) {
+            form_destroy_booking{{$frame_id}}.action = "{{url('/')}}/redirect/plugin/reservations/destroyBooking/{{$page->id}}/{{$frame_id}}/" + booking_id + "?edit_plan_type=" + edit_plan_type + "#frame-{{$frame->id}}";
             form_destroy_booking{{$frame_id}}.submit();
         }
     }

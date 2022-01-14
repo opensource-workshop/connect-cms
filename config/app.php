@@ -297,6 +297,7 @@ $app_array = [
         'RruleFreq' => \App\Enums\RruleFreq::class,
         'RruleDayOfWeek' => \App\Enums\RruleDayOfWeek::class,
         'RruleByMonth' => \App\Enums\RruleByMonth::class,
+        'EditPlanType' => \App\Enums\EditPlanType::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

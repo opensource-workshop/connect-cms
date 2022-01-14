@@ -29,6 +29,7 @@ use App\Rules\CustomValiWysiwygMax;
 
 use App\Plugins\User\UserPluginBase;
 
+use App\Enums\EditPlanType;
 use App\Enums\NoticeEmbeddedTag;
 use App\Enums\NotShowType;
 use App\Enums\Required;
@@ -539,8 +540,6 @@ class ReservationsPlugin extends UserPluginBase
      */
     public function editBooking($request, $page_id, $frame_id, $input_id = null)
     {
-        $booking = null;
-
         // if ($request->booking_id) {
         if ($input_id) {
 
@@ -552,12 +551,20 @@ class ReservationsPlugin extends UserPluginBase
             // $booking = ReservationsInput::where('id', $request->booking_id)->first();
             $booking = ReservationsInput::where('id', $input_id)->first();
 
-            // 予約繰り返しルール
-            $repeat = InputsRepeat::firstOrNew([
-                'target' => $this->frame->plugin_name,
-                'target_id' => $booking->facility_id,   // 施設予約は、施設IDをtarget_idにセット
-                'parent_id' => $booking->inputs_parent_id
-            ]);
+            // 予定編集区分
+            $edit_plan_type = $request->get('edit_plan_type', EditPlanType::all);
+
+            if ($edit_plan_type == EditPlanType::all || $edit_plan_type == EditPlanType::after) {
+                // 予約繰り返しルール「全ての予定」「この日付以降」のみ取得
+                $repeat = InputsRepeat::firstOrNew([
+                    'target' => $this->frame->plugin_name,
+                    'target_id' => $booking->facility_id,   // 施設予約は、施設IDをtarget_idにセット
+                    'parent_id' => $booking->inputs_parent_id
+                ]);
+            } else {
+                // 「この予定のみ」を想定。 繰り返しルールをクリア
+                $repeat = new InputsRepeat();
+            }
 
             // 施設予約データ
             $reservation = Reservation::where('id', $booking->reservations_id)->first();
@@ -605,11 +612,17 @@ class ReservationsPlugin extends UserPluginBase
             //     return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
             // }
 
+            // 予約データ
+            $booking = null;
+
             // 施設予約＆フレームデータ
             $reservations_frame = $this->getReservationsFrame($frame_id);
             if (empty($reservations_frame)) {
                 return $this->view_error("404_inframe", null, 'フレームに紐づいたreservationsが空');
             }
+
+            // 予定編集区分
+            $edit_plan_type = null;
 
             // 予約繰り返しルール
             $repeat = new InputsRepeat();
@@ -660,6 +673,7 @@ class ReservationsPlugin extends UserPluginBase
             'selects' => $selects,
             'booking' => $booking,
             'repeat' => $repeat,
+            'edit_plan_type' => $edit_plan_type,
         ]);
     }
 
@@ -923,6 +937,36 @@ class ReservationsPlugin extends UserPluginBase
             // 親IDセット
             $reservations_inputs->inputs_parent_id = $reservations_inputs->id;
             $reservations_inputs->save();
+        } else {
+            // 編集時
+
+            // 予定編集区分
+            if ($request->edit_plan_type == EditPlanType::all) {
+                // 「全ての予定」何もしない
+
+            } elseif ($request->edit_plan_type == EditPlanType::after) {
+                // 「この日付以降」
+
+                // 元親IDを退避
+                $before_inputs_parent_id = $reservations_inputs->inputs_parent_id;
+
+                // 親ID再セット
+                $reservations_inputs->inputs_parent_id = $reservations_inputs->id;
+                $reservations_inputs->save();
+
+                // この元親IDのrruleを、１つ前までの繰り返し予定に変更
+                $this->updateInputsRepeatUpToOneBefore($reservations_inputs, $before_inputs_parent_id);
+
+            } else {
+                // 「この予定のみ」を想定。
+
+                // 親IDの変更/削除で、繰り返しが残ってるなら、inputs_parent_idを残ってる一番若い予約日のidに更新
+                $this->updateParentId($reservations_inputs->id, $reservations_inputs->facility_id);
+
+                // 親ID再セット
+                $reservations_inputs->inputs_parent_id = $reservations_inputs->id;
+                $reservations_inputs->save();
+            }
         }
 
         /* 繰り返し save
@@ -930,20 +974,20 @@ class ReservationsPlugin extends UserPluginBase
         if ($rrule) {
 
             // rrule登録
-            $reservations_inputs_repeat = InputsRepeat::firstOrNew([
+            $inputs_repeat = InputsRepeat::firstOrNew([
                 'target' => $this->frame->plugin_name,
                 'target_id' => $reservations_inputs->facility_id,   // 施設予約は、施設IDをtarget_idにセット
                 'parent_id' => $reservations_inputs->inputs_parent_id
             ]);
-            $reservations_inputs_repeat->rrule = $rrule->rfcString(false);
-            $reservations_inputs_repeat->save();
+            $inputs_repeat->rrule = $rrule->rfcString(false);
+            $inputs_repeat->save();
             // [debug]
             // \Log::debug(var_export($rrule->rfcString(false), true));
             // $rrule2 = new RRule($rrule->rfcString(false));
             // \Log::debug(var_export($rrule2->getRule(), true));
 
 
-            // 繰り返し予定は delete -> insert. 親IDは消さない
+            // 繰り返し予定は delete -> insert. 自IDは消さない
             ReservationsInput::where('inputs_parent_id', $reservations_inputs->inputs_parent_id)
                 ->where('id', '!=', $reservations_inputs->id)
                 ->delete();
@@ -1411,7 +1455,6 @@ class ReservationsPlugin extends UserPluginBase
      */
     public function destroyBooking($request, $page_id, $frame_id, $input_id)
     {
-        $message = null;
         // id がある場合、データを削除
         // if ($request->booking_id) {
         if ($input_id) {
@@ -1420,13 +1463,46 @@ class ReservationsPlugin extends UserPluginBase
             $input = ReservationsInput::where('id', $input_id)->first();
 
             // 他の予約（親）で、予約（子）が使われなかったら削除
-            $count = ReservationsInput::where('id', '!=', $input_id)->where('inputs_parent_id', $input_id)->count();
+            $count = ReservationsInput::where('id', '!=', $input_id)->where('inputs_parent_id', $input->inputs_parent_id)->count();
             if ($count == 0) {
                 // 予約（子）を削除
                 // $input_columns = ReservationsInputsColumn::where('inputs_id', $request->booking_id)->get();
-                $input_columns = ReservationsInputsColumn::where('inputs_parent_id', $input_id)->get();
+                $input_columns = ReservationsInputsColumn::where('inputs_parent_id', $input->inputs_parent_id)->get();
                 foreach ($input_columns as $input_column) {
                     $input_column->delete();
+                }
+
+                // 繰り返しパターンを削除
+                InputsRepeat::where('target', $this->frame->plugin_name)
+                    ->where('target_id', $input->facility_id)
+                    ->where('parent_id', $input->inputs_parent_id)
+                    ->delete();
+            }
+
+            // 予約（親）使われてる
+            if ($count >= 1) {
+                // 予定編集区分. $request->get()でgetパラメータと、postパラメータどちらも取得できる
+                $edit_plan_type = $request->get('edit_plan_type', EditPlanType::all);
+
+                if ($edit_plan_type == EditPlanType::all) {
+                    // 「全ての予定」何もしない
+                    // ・inputs_parent_idの予約が消えること、なし
+
+                } elseif ($edit_plan_type == EditPlanType::after) {
+                    // 「この日付以降」
+                    // ・inputs_parent_idの予約が消えること、なし
+
+                    // 元親IDを退避
+                    $before_inputs_parent_id = $input->inputs_parent_id;
+
+                    // この元親IDのrruleを、１つ前までの繰り返し予定に変更
+                    $this->updateInputsRepeatUpToOneBefore($input, $before_inputs_parent_id);
+
+                } else {
+                    // 「この予定のみ」を想定。
+                    // ・inputs_parent_idの予約が消えること、あり
+                    // 　→ 親IDの変更/削除で、繰り返しが残ってるなら、inputs_parent_idを残ってる一番若い予約日のidに更新
+                    $this->updateParentId($input_id, $input->facility_id);
                 }
             }
 
@@ -1446,9 +1522,104 @@ class ReservationsPlugin extends UserPluginBase
         // return $this->index($request, $page_id, $frame_id, null, null, $message);
     }
 
-   /**
-    * データ紐づけ変更関数
-    */
+    /**
+     * この元親IDのrruleを、１つ前までの繰り返し予定に変更
+     */
+    private function updateInputsRepeatUpToOneBefore(ReservationsInput $input, int $before_inputs_parent_id) : void
+    {
+        $before_repeat = InputsRepeat::where('target', $this->frame->plugin_name)
+            ->where('target_id', $input->facility_id)         // 施設予約は、施設IDをtarget_idにセット
+            ->where('parent_id', $before_inputs_parent_id)
+            ->first();
+
+        $before_rrule = new RRule($before_repeat->rrule);
+        $before_rrule_array = $before_rrule->getRule();
+
+        // 1つ前の予定（初期値は指定日）
+        // 例) 繰り返し予定：1/11(火),1/12(水),1/18(火),1/19(水)
+        //     指定日：1/18(火)  => １つ前の予定：1/12(水)
+        //     指定日：1/11(火)  => １つ前の予定：ないので、1/11(火)。この後上書きされるため、問題なし。
+        // $before_occurrence_date = new ConnectCarbon($request->target_date);
+        // $tmp_before_date = new ConnectCarbon($request->target_date);
+        $target_date            = new ConnectCarbon($input->start_datetime->format('Y-m-d'));
+        $before_occurrence_date = new ConnectCarbon($input->start_datetime->format('Y-m-d'));
+        $tmp_before_date        = new ConnectCarbon($input->start_datetime->format('Y-m-d'));
+
+        foreach ($before_rrule as $occurrence) {
+            $occurrence_date = new ConnectCarbon($occurrence->format('Y-m-d'));
+
+            if ($target_date >= $occurrence_date) {
+                // 指定日 より前の日はデータ残す。
+                // 指定日 はデータ残す。（既に登録済みのため）
+
+                // 1つ前（ループ外へ）
+                $before_occurrence_date = $tmp_before_date;
+
+            } else {
+                // 指定日 より後は消す。後で再登録される
+                ReservationsInput::where('inputs_parent_id', $before_inputs_parent_id)
+                    ->where('id', '!=', $input->id)
+                    ->whereDate('start_datetime', $occurrence->format('Y-m-d'))
+                    ->whereDate('end_datetime', $occurrence->format('Y-m-d'))
+                    ->delete();
+            }
+
+            // 1つ前（ループ内）
+            $tmp_before_date = $occurrence_date;
+        }
+
+        // 繰り返し終了-指定の回数後: クリア
+        $before_rrule_array['COUNT'] = null;
+        // 繰り返し終了-指定日: １つ前の予定日をセット
+        // $before_rrule_array['UNTIL'] = $before_occurrence_date->format('Y-m-d') . ' ' . $request->end_datetime . ':00';
+        $before_rrule_array['UNTIL'] = $before_occurrence_date->format('Y-m-d') . ' ' . $input->end_datetime->format('H:i:s');
+        $before_rrule2 = new RRule($before_rrule_array);
+
+        $before_repeat->rrule = $before_rrule2->rfcString(false);
+        $before_repeat->save();
+    }
+
+    /**
+     * 親IDの変更/削除で、繰り返しが残ってるなら、inputs_parent_idを残ってる一番若い予約日のidに更新
+     */
+    private function updateParentId(int $input_id, int $facility_id) : void
+    {
+        // 親IDの変更/削除か
+        $parent_count = ReservationsInput::where('id', $input_id)
+            ->where('inputs_parent_id', $input_id)
+            ->count();
+
+        // 繰り返しパターンあるか
+        $repeat = InputsRepeat::where('target', $this->frame->plugin_name)
+            ->where('target_id', $facility_id)
+            ->where('parent_id', $input_id)
+            ->first();
+
+        if ($parent_count && $repeat) {
+            // 親ID以外で一番若い日
+            $input_earliest = ReservationsInput::where('id', '!=', $input_id)
+                ->where('inputs_parent_id', $input_id)
+                ->orderBy('start_datetime', 'asc')
+                ->first();
+
+            // 親ID更新
+            ReservationsInput::where('id', '!=', $input_id)
+                ->where('inputs_parent_id', $input_id)
+                ->update(['inputs_parent_id' => $input_earliest->id]);
+
+            ReservationsInputsColumn::where('inputs_parent_id', $input_id)
+                ->update(['inputs_parent_id' => $input_earliest->id]);
+
+            InputsRepeat::where('target', $this->frame->plugin_name)
+                ->where('target_id', $facility_id)
+                ->where('parent_id', $input_id)
+                ->update(['parent_id' => $input_earliest->id]);
+        }
+    }
+
+    /**
+     * データ紐づけ変更関数
+     */
     public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
     {
         // FrameのバケツIDの更新

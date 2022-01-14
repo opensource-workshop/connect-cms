@@ -146,6 +146,7 @@ use App\Models\User\Reservations\ReservationsFacility;
     <input type="hidden" name="facility_id" value="{{ $facility->id }}">
     <input type="hidden" name="columns_set_id" value="{{ $facility->columns_set_id }}">
     {{-- <input type="hidden" name="booking_id" value="{{ $booking ? $booking->id : '' }}"> --}}
+    <input type="hidden" name="edit_plan_type" value="{{ $edit_plan_type }}">
 
     {{-- 基本項目 --}}
 
@@ -576,6 +577,7 @@ use App\Models\User\Reservations\ReservationsFacility;
                     {{-- 削除ボタン --}}
                     <form action="{{url('/')}}/redirect/plugin/reservations/destroyBooking/{{$page->id}}/{{$frame_id}}/{{$booking->id}}#frame-{{$frame->id}}" method="POST">
                         {{csrf_field()}}
+                        <input type="hidden" name="edit_plan_type" value="{{ $edit_plan_type }}">
                         <button type="submit" class="btn btn-danger" onclick="return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                     </form>
                 </div>
