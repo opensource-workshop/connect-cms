@@ -50,7 +50,7 @@
 
                 {{-- 閉じるボタン --}}
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                    <i class="fas fa-times"></i> {{ __('messages.close') }}
+                    <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> {{ __('messages.close') }}</span>
                 </button>
 
                 {{-- 予約編集ボタン --}}
@@ -80,7 +80,7 @@
 
                 {{-- 詳細 --}}
                 <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/reservations/showBooking/{{$page->id}}/{{$frame_id}}/' + form_booking{{$frame_id}}.booking_id.value + '#frame-{{$frame->id}}'">
-                    {{ __('messages.detail') }}  <i class="fas fa-angle-right"></i>
+                    {{ __('messages.detail') }} <i class="fas fa-angle-right"></i>
                 </button>
 
                 @auth
@@ -91,13 +91,13 @@
                         <input type="hidden" name="booking_id" value="">
                         <input type="hidden" name="inputs_parent_id" value="">
                         <button type="button" class="btn btn-danger" id="reservation_destroy_button" onclick="destroy_booking{{$frame_id}}()">
-                            <i class="fas fa-trash-alt"></i> {{ __('messages.delete') }}
+                            <i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> {{ __('messages.delete') }}</span>
                         </button>
 
                         {{-- 繰り返しパターン --}}
                         <div class="btn-group" id="reservation_repeat_destroy_button">
                             <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-trash-alt"></i> {{ __('messages.delete') }}
+                                <i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> {{ __('messages.delete') }}</span>
                             </button>
                             <div class="dropdown-menu">
                                 <button class="dropdown-item" type="button" onclick="destroy_repeat_booking{{$frame_id}}(form_destroy_booking{{$frame_id}}.booking_id.value, '{{EditPlanType::only}}')">
