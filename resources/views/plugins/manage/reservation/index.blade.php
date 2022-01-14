@@ -53,7 +53,12 @@
                             <span class="d-sm-none">注釈名：</span>{{$facility->facility_name}}
                         </td>
                         <td class="d-block d-sm-table-cell"><span class="d-sm-none">利用曜日・時間：</span>{{ $facility->getDayOfWeeksDisplay() }} @if ($facility->is_time_control) {{ substr($facility->start_time, 0, -3) }} ~ {{ substr($facility->end_time, 0, -3) }} @endif</td>
-                        <td class="d-block d-sm-table-cell"><span class="d-sm-none">項目セット：</span>{{ $facility->columns_set_name }}</td>
+                        <td class="d-block d-sm-table-cell">
+                            <span class="d-sm-none">項目セット：</span>{{ $facility->columns_set_name }}
+                            @if ($facility->columns_set_name)
+                                <a href="{{url('/')}}/manage/reservation/editColumns/{{$facility->columns_set_id}}" class="badge badge-success"><i class="far fa-edit"></i> 項目</a>
+                            @endif
+                        </td>
                         <td class="d-block d-sm-table-cell"><span class="d-sm-none">施設管理者：</span>{{ $facility->facility_manager_name }}</td>
                         <td class="d-block d-sm-table-cell"><span class="d-sm-none">補足：</span>{{ str_limit(strip_tags($facility->supplement),36,'...') }}</td>
                         <td class="d-block d-sm-table-cell"><span class="d-sm-none">表示順：</span>{{$facility->display_sequence}}</td>
