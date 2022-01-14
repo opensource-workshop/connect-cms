@@ -247,25 +247,28 @@ abstract class DuskTestCase extends BaseTestCase
         $plugin_name = $class_name_3_array[0];
 
         // html パスの生成
-        $html_path = trim($sub_class_array[2], '_') . '/' . $plugin_name . '/' . $source_method;
+        $html_path = trim($sub_class_array[2], '_') . '/' . $plugin_name . '/' . $source_method . '.html';
+
+        // 結果の保存
+        $dusk = Dusks::firstOrNew(['html_path' => $html_path]);
+        $dusk->category = trim($sub_class_array[2], '_');
+        $dusk->sort = 2;
+        $dusk->plugin_name = $plugin_name;
+        $dusk->method_name = $source_method;
+        $dusk->test_result = 'OK';
+        $dusk->html_path   = $html_path;
 
         // 対象クラスの生成とマニュアル用文章の取得
         $class_name = $this->getClassName($plugin_name);
-        $manual = $class_name::declareManual();
+        $dusk = $class_name::declareManual($dusk);
+        $dusk->save();
 
-        // 結果の保存
-        Dusks::updateOrCreate(
-        ['html_path' => $html_path],
-        [
-            'category' => trim($sub_class_array[2], '_'),
-            'sort' => '2',
-            'plugin' => $plugin_name,
-            'method' => $source_method,
-            'test_result' => 'OK',
-            'html_path' => $html_path,
-            'function_title' => array_key_exists('function_title', $manual) ? $manual['function_title'] : '',
-            'method_desc' => array_key_exists('method_desc', $manual) && array_key_exists($source_method, $manual['method_desc'])? $manual['method_desc'][$source_method] : '',
-            'function_desc' => array_key_exists('function_desc', $manual) ? $manual['function_desc'] : '',
-        ]);
+        // 結果の親子関係の紐づけ
+        if ($source_method != 'index') {
+            // 親を取得して、子のparent をセットして保存する。（_lft, _rgt は自動的に変更される）
+            $parent = Dusks::where('category', $dusk->category)->where('plugin_name', $dusk->plugin_name)->where('method_name', 'index')->first();
+            $dusk->parent_id = $parent->id;
+            $dusk->save();
+        }
     }
 }

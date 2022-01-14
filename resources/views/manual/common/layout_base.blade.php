@@ -3,29 +3,23 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="./css/bootstrap.min.css">
-    <link rel="stylesheet" href="./font/css/all.min.css" type="text/css">
-    <script src="./js/jquery-3.6.0.min.js"></script>
-    <script src="./js/popper.min.js"></script>
-    <script src="./js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="{{$base_path}}css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{$base_path}}font/css/all.min.css" type="text/css">
+    <script src="{{$base_path}}js/jquery-3.6.0.min.js"></script>
+    <script src="{{$base_path}}js/popper.min.js"></script>
+    <script src="{{$base_path}}js/bootstrap.min.js"></script>
     <title>Connect-CMSマニュアル</title>
 </head>
 <body class=" ">
     <nav class="navbar navbar-expand-md bg-dark navbar-dark  " aria-label="ヘッダー">
 
         <!-- Branding Image -->
-        <a class="navbar-brand" href="./index.html">
+        <a class="navbar-brand" href="{{$base_path}}index.html">
             Connect-CMSマニュアル
         </a>
 
-        
-        <span class="badge badge-pill badge-secondary mr-2">設計</span>
-<span class="badge badge-pill badge-info mr-2">共通機能</span>
-<span class="badge badge-pill badge-danger mr-2"><a href="./manage/index.html" class="text-white">管理機能</a></span>
-<span class="badge badge-pill badge-primary mr-2">一般ユーザ機能</span>
-<span class="badge badge-pill badge-success mr-2">マイページ</span>
-<span class="badge badge-pill badge-warning mr-2">エラー説明</span>
-<span class="badge badge-pill badge-light mr-2">逆引き</span>
+        {{-- バッジ・メニュー --}}
+        @include('manual.common.badge_menu')
 
         <!-- SmartPhone Button -->
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="メニュー">
@@ -54,11 +48,7 @@
         </div>
     </nav>
 
-    <div class="container-fluid">
-    <div class="row mt-3">
-            これは、Connect-CMS のマニュアルです。
-    </div>
-</div>
+    @yield('section_main')
 
     <footer class="container">
         <div class="card border-0 mt-2">

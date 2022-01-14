@@ -76,14 +76,21 @@ class PageManage extends ManagePluginBase
     /**
      *  マニュアル定義
      */
-    public static function declareManual()
+    public static function declareManual($dusk)
     {
-        // 権限チェックテーブル
-        $manual["function_title"] = "ページ管理";
-        $manual["function_desc"] = "ページの作成や設定など、ページに関する機能が集まった管理機能です。";
-        $manual["method_desc"]["index"] = "ページの一覧が表示されます。<br />ページに関する設定などが俯瞰できる画面です。";
-        $manual["method_desc"]["edit"] = "ページの登録や編集を行う画面です。";
-        return $manual;
+        $dusk->plugin_title = "ページ管理";
+        $dusk->plugin_desc  = "ページの作成や設定など、ページに関する機能が集まった管理機能です。";
+        $dusk->setMethodManual([
+            "index" => [
+                "title"  => "ページ一覧",
+                "desc"   => "ページの一覧が表示されます。<br />ページに関する設定などが俯瞰できる画面です。",
+                "detail" => ""],
+            "edit" => [
+                "title"  => "ページ編集",
+                "desc"   => "ページの登録や編集を行う画面です。",
+                "detail" => ""],
+        ]);
+        return $dusk;
     }
 
     /**

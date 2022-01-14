@@ -33,13 +33,18 @@ class IndexManage extends ManagePluginBase
     /**
      *  マニュアル定義
      */
-    public static function declareManual()
+    public static function declareManual($dusk)
     {
-        // 権限チェックテーブル
-        $manual["function_title"] = "管理画面";
-        $manual["function_desc"] = "管理画面の初めに開く画面です。<br />Connect-CMS の公式サイトより、最新情報を取得して表示します。";
-        $manual["method_desc"]["index"] = "最新機能やバージョンアップ情報が表示されます。";
-        return $manual;
+        $dusk->plugin_title = "お知らせ";
+        $dusk->plugin_desc  = "管理画面の初めに開く画面です。<br />Connect-CMS の公式サイトより、最新情報を取得して表示します。";
+        $dusk->setMethodManual(
+            ["index" => [
+                "title"  => "お知らせ",
+                "desc"   => "最新機能やバージョンアップ情報が表示されます。",
+                "detail" => ""],
+            ]
+        );
+        return $dusk;
     }
 
     /**
