@@ -17,6 +17,7 @@ class CreateDusksTable extends Migration
             $table->bigIncrements('id');
             $table->string('category', 255)->comment('カテゴリ');
             $table->string('sort', 255)->comment('ソート順');
+            $table->string('plugin', 255)->comment('プラグイン名');
             $table->string('method', 255)->comment('メソッド名');
             $table->text('test_result')->nullable()->comment('テスト結果');
             $table->string('html_path', 255)->comment('HTMLパス');

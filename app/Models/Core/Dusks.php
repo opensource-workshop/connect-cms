@@ -10,5 +10,5 @@ class Dusks extends Model
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['category', 'sort', 'method', 'test_result', 'html_path', 'function_title', 'method_desc', 'function_desc'];
+    protected $fillable = ['category', 'sort', 'plugin', 'method', 'test_result', 'html_path', 'function_title', 'method_desc', 'function_desc'];
 }

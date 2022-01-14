@@ -259,6 +259,7 @@ abstract class DuskTestCase extends BaseTestCase
         [
             'category' => trim($sub_class_array[2], '_'),
             'sort' => '2',
+            'plugin' => $plugin_name,
             'method' => $source_method,
             'test_result' => 'OK',
             'html_path' => $html_path,
