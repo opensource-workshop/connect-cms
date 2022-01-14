@@ -5,6 +5,7 @@ namespace App\Plugins\User\Reservations;
 // use Carbon\Carbon;
 use App\Models\Common\ConnectCarbon;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -561,6 +562,7 @@ class ReservationsPlugin extends UserPluginBase
                     'target_id' => $booking->facility_id,   // 施設予約は、施設IDをtarget_idにセット
                     'parent_id' => $booking->inputs_parent_id
                 ]);
+
             } else {
                 // 「この予定のみ」を想定。 繰り返しルールをクリア
                 $repeat = new InputsRepeat();
@@ -613,7 +615,8 @@ class ReservationsPlugin extends UserPluginBase
             // }
 
             // 予約データ
-            $booking = null;
+            // $booking = null;
+            $booking = new ReservationsInput();
 
             // 施設予約＆フレームデータ
             $reservations_frame = $this->getReservationsFrame($frame_id);
@@ -727,10 +730,13 @@ class ReservationsPlugin extends UserPluginBase
         }
 
         if (!$facility->is_allow_duplicate) {
+            // 重複予約チェック用input_ids取得
+            $input_ids = $this->getInputIdsForDuplicate($request, $booking_id, $reservations_inputs);
+
             // 重複予約チェック追加
             $validator_array['column']['start_datetime'][] = new CustomValiDuplicateBookings(
                 $request->facility_id,
-                $reservations_inputs->inputs_parent_id,
+                $input_ids,
                 "{$request->target_date} {$request->start_datetime}",
                 "{$request->target_date} {$request->end_datetime}"
             );
@@ -851,6 +857,9 @@ class ReservationsPlugin extends UserPluginBase
 
             $rrule = new RRule($rrule_setting);
 
+            // 重複予約チェック用input_ids取得
+            $input_ids = $this->getInputIdsForDuplicate($request, $booking_id, $reservations_inputs);
+
             $occurrence_dates = [];
             foreach ($rrule as $occurrence) {
                 $occurrence_dates[] = $occurrence->format('Y-m-d');
@@ -859,7 +868,7 @@ class ReservationsPlugin extends UserPluginBase
                     // （繰り返し）重複予約チェック追加
                     $validator_array['column']['rrule_repeat_end'][] = new CustomValiDuplicateBookings(
                         $request->facility_id,
-                        $reservations_inputs->inputs_parent_id,
+                        $input_ids,
                         "{$occurrence->format('Y-m-d')} {$request->start_datetime}",
                         "{$occurrence->format('Y-m-d')} {$request->end_datetime}",
                         '既に予約が入っている日が含まれるため、繰り返し内容を見直してください。'
@@ -932,13 +941,15 @@ class ReservationsPlugin extends UserPluginBase
         $reservations_inputs->end_datetime = new ConnectCarbon($request->target_date . ' ' . $request->end_datetime . ':00');
         $reservations_inputs->save();
 
-        // 新規登録時のみの登録項目
         if (!$booking_id) {
+            // 登録
+
             // 親IDセット
             $reservations_inputs->inputs_parent_id = $reservations_inputs->id;
             $reservations_inputs->save();
+
         } else {
-            // 編集時
+            // 編集
 
             // 予定編集区分
             if ($request->edit_plan_type == EditPlanType::all) {
@@ -1112,6 +1123,37 @@ class ReservationsPlugin extends UserPluginBase
         }
 
         return $validator_array;
+    }
+
+    /**
+     * 重複予約チェック用input_ids取得
+     */
+    private function getInputIdsForDuplicate($request, ?int $booking_id, ReservationsInput $input) : Collection
+    {
+        if (!$booking_id) {
+            // 登録
+            $input_ids = ReservationsInput::where('inputs_parent_id', $input->inputs_parent_id)->pluck('id');
+
+        } else {
+            // 編集
+
+            if ($request->edit_plan_type == EditPlanType::all) {
+                // 「全ての予定」
+                $input_ids = ReservationsInput::where('inputs_parent_id', $input->inputs_parent_id)->pluck('id');
+
+            } elseif ($request->edit_plan_type == EditPlanType::after) {
+                // 「この日付以降」
+                $input_ids = ReservationsInput::where('inputs_parent_id', $input->inputs_parent_id)
+                    ->where('start_datetime', '>=', $input->start_datetime)
+                    ->pluck('id');
+
+            } else {
+                // 「この予定のみ」を想定。
+                $input_ids = collect($input->id);
+            }
+        }
+
+        return $input_ids;
     }
 
     /**

@@ -4,6 +4,8 @@ namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
 
+use Illuminate\Support\Collection;
+
 use App\Models\User\Reservations\ReservationsInput;
 
 /**
@@ -12,7 +14,7 @@ use App\Models\User\Reservations\ReservationsInput;
 class CustomValiDuplicateBookings implements Rule
 {
     protected $facility_id;
-    protected $inputs_parent_id;
+    protected $input_ids;
 
     protected $start_datetime;
     protected $end_datetime;
@@ -24,10 +26,10 @@ class CustomValiDuplicateBookings implements Rule
      *
      * @return void
      */
-    public function __construct(int $facility_id, ?int $inputs_parent_id, string $start_datetime, string $end_datetime, ?string $message = null)
+    public function __construct(int $facility_id, Collection $input_ids, string $start_datetime, string $end_datetime, ?string $message = null)
     {
         $this->facility_id = $facility_id;
-        $this->inputs_parent_id = $inputs_parent_id;
+        $this->input_ids = $input_ids;
 
         $this->start_datetime = $start_datetime;
         $this->end_datetime = $end_datetime;
@@ -47,8 +49,17 @@ class CustomValiDuplicateBookings implements Rule
         // debug:確認したいSQLの前にこれを仕込んで
         // \DB::enableQueryLog();
 
+        // 例）
+        // この予定のみ
+        // $input_cols = ReservationsInput::whereNotIn('id', [id2])
+        // この予定以降
+        // $input_cols = ReservationsInput::whereNotIn('id', [id3, id4])
+        // 全て
+        // $input_cols = ReservationsInput::whereNotIn('id', [id1, id2, id3, id4])
+
         // 重複予約あるか
-        $input_cols = ReservationsInput::where('inputs_parent_id', '!=', $this->inputs_parent_id)
+        // $input_cols = ReservationsInput::where('inputs_parent_id', '!=', $this->inputs_parent_id)
+        $input_cols = ReservationsInput::whereNotIn('id', $this->input_ids)
             ->where('facility_id', $this->facility_id)
             ->Where(function ($query) {
                 // 例)

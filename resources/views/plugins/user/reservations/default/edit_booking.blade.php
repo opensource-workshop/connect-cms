@@ -126,7 +126,7 @@ use App\Models\User\Reservations\ReservationsFacility;
 
 </script>
 
-@if ($booking)
+@if ($booking->id)
 <form action="{{url('/')}}/redirect/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}/{{$booking->id}}#frame-{{$frame_id}}" name="form_save_booking{{$frame_id}}" method="POST">
     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/{{$booking->id}}#frame-{{$frame_id}}">
 @else
@@ -137,8 +137,8 @@ use App\Models\User\Reservations\ReservationsFacility;
     @include('plugins.common.errors_form_line')
 
     {{-- メッセージエリア --}}
-    <div class="alert {{ $booking ? 'alert-warning' : 'alert-info' }} mt-2">
-        <i class="fas fa-exclamation-circle"></i> 対象施設の予約を{{ $booking ? '更新' : '登録' }}します。
+    <div class="alert {{ $booking->id ? 'alert-warning' : 'alert-info' }} mt-2">
+        <i class="fas fa-exclamation-circle"></i> 対象施設の予約を{{ $booking->id ? '更新' : '登録' }}します。
     </div>
 
     {{ csrf_field() }}
@@ -146,7 +146,7 @@ use App\Models\User\Reservations\ReservationsFacility;
     <input type="hidden" name="facility_id" value="{{ $facility->id }}">
     <input type="hidden" name="columns_set_id" value="{{ $facility->columns_set_id }}">
     {{-- <input type="hidden" name="booking_id" value="{{ $booking ? $booking->id : '' }}"> --}}
-    <input type="hidden" name="edit_plan_type" value="{{ $edit_plan_type }}">
+    <input type="hidden" name="edit_plan_type" value="{{ old('edit_plan_type', $edit_plan_type) }}">
 
     {{-- 基本項目 --}}
 
@@ -205,7 +205,7 @@ use App\Models\User\Reservations\ReservationsFacility;
                             ・予約値（更新時）
                             ・初期表示値（新規登録時）
                         --}}
-                        <input type="text" name="start_datetime" value="{{ old('start_datetime', $booking ? $booking->start_datetime->format('H:i') : Carbon::now()->addHour(1)->hour.':00') }}" class="form-control datetimepicker-input @if ($errors->has('start_datetime')) border-danger @endif" data-target="#start_datetime">
+                        <input type="text" name="start_datetime" value="{{ old('start_datetime', $booking->start_datetime ? $booking->start_datetime->format('H:i') : Carbon::now()->addHour(1)->hour.':00') }}" class="form-control datetimepicker-input @if ($errors->has('start_datetime')) border-danger @endif" data-target="#start_datetime">
                         <div class="input-group-append" data-target="#start_datetime" data-toggle="datetimepicker">
                             <div class="input-group-text"><i class="fas fa-clock"></i></div>
                         </div>
@@ -219,7 +219,7 @@ use App\Models\User\Reservations\ReservationsFacility;
                             ・予約値（更新時）
                             ・初期表示値（新規登録時）
                         --}}
-                        <input type="text" name="end_datetime" value="{{ old('end_datetime', $booking ? $booking->end_datetime->format('H:i') : Carbon::now()->addHour(2)->hour.':00') }}" class="form-control datetimepicker-input @if ($errors->has('end_datetime')) border-danger @endif" data-target="#end_datetime">
+                        <input type="text" name="end_datetime" value="{{ old('end_datetime', $booking->end_datetime ? $booking->end_datetime->format('H:i') : Carbon::now()->addHour(2)->hour.':00') }}" class="form-control datetimepicker-input @if ($errors->has('end_datetime')) border-danger @endif" data-target="#end_datetime">
                         <div class="input-group-append" data-target="#end_datetime" data-toggle="datetimepicker">
                             <div class="input-group-text"><i class="fas fa-clock"></i></div>
                         </div>
@@ -541,7 +541,7 @@ use App\Models\User\Reservations\ReservationsFacility;
                         <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
                     </a>
 
-                    @if (empty($booking))
+                    @if (empty($booking->id))
                         @if ($buckets->needApprovalUser(Auth::user(), $frame))
                             <button type="submit" class="btn btn-success" onclick="submit_booking_store(this)"><i class="far fa-edit"></i> 登録申請</button>
                         @else
@@ -556,7 +556,7 @@ use App\Models\User\Reservations\ReservationsFacility;
                     @endif
                 </div>
             </div>
-            @if (!empty($booking))
+            @if ($booking->id)
                 <div class="col-3 text-right">
                     <a data-toggle="collapse" href="#collapse{{$booking->id}}">
                         <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> 削除</span></span>
@@ -567,7 +567,7 @@ use App\Models\User\Reservations\ReservationsFacility;
     </div>
 </form>
 
-@if (!empty($booking))
+@if ($booking->id)
     <div id="collapse{{$booking->id}}" class="collapse">
         <div class="card border-danger">
             <div class="card-body">
