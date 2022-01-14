@@ -227,7 +227,7 @@ class SlideshowsPlugin extends UserPluginBase
         $validator_attributes['slideshows_name'] = 'スライドショー名';
         $validator_values['image_interval'] = ['required', 'numeric', 'integer', 'min:1', 'max:60000'];
         $validator_attributes['image_interval'] = '画像の静止時間';
-        $validator_values['height'] = ['nullable', 'numeric', 'max:65535'];
+        $validator_values['height'] = ['nullable', 'numeric', 'min:1', 'max:65535'];
         $validator_attributes['height'] = '高さ';
 
         // 項目のエラーチェック
