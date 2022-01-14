@@ -8,6 +8,10 @@ rem
 rem > tests\bin\connect-cms-test.bat db_clear  <<-- データのクリア＆シーダー
 rem > tests\bin\connect-cms-test.bat db_fresh  <<-- テーブルの再構築＆シーダー
 rem
+rem マニュアル出力
+rem > php artisan dusk tests\Manual\src\ManualOutput.php
+rem > php artisan manual
+rem
 rem [How to test]
 rem https://github.com/opensource-workshop/connect-cms/wiki/Dusk
 rem ----------------------------------------------
@@ -146,3 +150,10 @@ rem php artisan dusk tests\Browser\User\BlogTest.php
 echo.
 echo ※ スクリーンショットの保存先
 echo tests\Browser\screenshots
+
+rem ---------------------------------------------
+rem - マニュアル
+rem ---------------------------------------------
+
+
+
