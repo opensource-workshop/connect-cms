@@ -10,9 +10,10 @@
             data-booking_id="{{ $booking['booking_header']->id }}"
             @can('posts.update', [[$booking['booking_header'], $frame->plugin_name, $buckets]]) data-is_edit="1" @endcan
             @can('posts.delete', [[$booking['booking_header'], $frame->plugin_name, $buckets]]) data-is_delete="1" @endcan
-            @can('role_update_or_approval', [[$booking['booking_header'], $frame->plugin_name, $buckets]])
-                @if ($booking['booking_header']->status == StatusType::approval_pending) data-is_approval_pending="1" @endif
-            @endcan
+            @if ($booking['booking_header']->status == StatusType::approval_pending)
+                @can('role_update_or_approval', [[$booking['booking_header'], $frame->plugin_name, $buckets]]) data-is_approval_pending="1" @endcan
+                @can('posts.approval', [[$booking['booking_header'], $frame->plugin_name, $buckets]]) data-is_approval="1" @endcan
+            @endif
         >
             {{-- 表示用の予約時間 --}}
             <div class="small">
@@ -38,9 +39,10 @@
         data-booking_id="{{ $booking['booking_header']->id }}"
         @can('posts.update', [[$booking['booking_header'], $frame->plugin_name, $buckets]]) data-is_edit="1" @endcan
         @can('posts.delete', [[$booking['booking_header'], $frame->plugin_name, $buckets]]) data-is_delete="1" @endcan
-        @can('role_update_or_approval', [[$booking['booking_header'], $frame->plugin_name, $buckets]])
-            @if ($booking['booking_header']->status == StatusType::approval_pending) data-is_approval_pending="1" @endif
-        @endcan
+        @if ($booking['booking_header']->status == StatusType::approval_pending)
+            @can('role_update_or_approval', [[$booking['booking_header'], $frame->plugin_name, $buckets]]) data-is_approval_pending="1" @endcan
+            @can('posts.approval', [[$booking['booking_header'], $frame->plugin_name, $buckets]]) data-is_approval="1" @endcan
+        @endif
     >
         {{-- 表示用の予約時間 --}}
         <div class="small">

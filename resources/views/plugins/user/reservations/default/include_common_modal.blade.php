@@ -49,19 +49,27 @@
                 </form>
 
                 {{-- 閉じるボタン --}}
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
                     <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> {{ __('messages.close') }}</span>
                 </button>
 
-                {{-- 予約編集ボタン --}}
+                {{-- 承認・編集ボタン --}}
                 @auth
-                    <button type="button" class="btn btn-success" id="reservation_edit_button" onclick="location.href='{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/' + form_booking{{$frame_id}}.booking_id.value + '#frame-{{$frame->id}}'">
+                    <form action="" method="post" name="form_approval_booking{{$frame_id}}" id="reservation_approval_button">
+                        {{ csrf_field() }}
+                        <input type="hidden" name="booking_id" value="">
+                        <button type="button" class="btn btn-primary btn-sm" onclick="approval_booking{{$frame_id}}()">
+                            <i class="fas fa-check"></i> 承認
+                        </button>
+                    </form>
+
+                    <button type="button" class="btn btn-success btn-sm" id="reservation_edit_button" onclick="location.href='{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/' + form_booking{{$frame_id}}.booking_id.value + '#frame-{{$frame->id}}'">
                         <i class="far fa-edit"></i> {{ __('messages.edit') }}
                     </button>
 
                     {{-- 繰り返しパターン --}}
                     <div class="btn-group" id="reservation_repeat_edit_button">
-                        <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <button type="button" class="btn btn-success btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="far fa-edit"></i> {{ __('messages.edit') }}
                         </button>
                         <div class="dropdown-menu">
@@ -79,7 +87,7 @@
                 @endauth
 
                 {{-- 詳細 --}}
-                <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/reservations/showBooking/{{$page->id}}/{{$frame_id}}/' + form_booking{{$frame_id}}.booking_id.value + '#frame-{{$frame->id}}'">
+                <button type="button" class="btn btn-success btn-sm" onclick="location.href='{{url('/')}}/plugin/reservations/showBooking/{{$page->id}}/{{$frame_id}}/' + form_booking{{$frame_id}}.booking_id.value + '#frame-{{$frame->id}}'">
                     {{ __('messages.detail') }} <i class="fas fa-angle-right"></i>
                 </button>
 
@@ -90,13 +98,13 @@
                         {{-- 予約ID --}}
                         <input type="hidden" name="booking_id" value="">
                         <input type="hidden" name="inputs_parent_id" value="">
-                        <button type="button" class="btn btn-danger" id="reservation_destroy_button" onclick="destroy_booking{{$frame_id}}()">
+                        <button type="button" class="btn btn-danger btn-sm" id="reservation_destroy_button" onclick="destroy_booking{{$frame_id}}()">
                             <i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> {{ __('messages.delete') }}</span>
                         </button>
 
                         {{-- 繰り返しパターン --}}
                         <div class="btn-group" id="reservation_repeat_destroy_button">
-                            <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <button type="button" class="btn btn-danger btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> {{ __('messages.delete') }}</span>
                             </button>
                             <div class="dropdown-menu">
@@ -261,18 +269,23 @@
 
             // 削除権限ありならボタン表示, なしは非表示
             if (button.data('is_delete') == '1') {
-                // find結果はjquery object
                 modal.find('#reservation_destroy_button').show();
                 modal.find('#reservation_repeat_destroy_button').hide();
             } else {
                 modal.find('#reservation_destroy_button').hide();
                 modal.find('#reservation_repeat_destroy_button').hide();
             }
+
+            // 承認権限ありならボタン表示, なしは非表示
+            if (button.data('is_approval') == '1') {
+                modal.find('#reservation_approval_button').show();
+            } else {
+                modal.find('#reservation_approval_button').hide();
+            }
         @endauth
 
         // 承認待ちがありなら表示, なしは非表示
         if (button.data('is_approval_pending') == '1') {
-            // finc結果はjquery object
             modal.find('#reservation_approval_pending_badge').show();
         } else {
             modal.find('#reservation_approval_pending_badge').hide();
@@ -290,6 +303,13 @@
         if (confirm('予約を削除します。\nよろしいですか？')) {
             form_destroy_booking{{$frame_id}}.action = "{{url('/')}}/redirect/plugin/reservations/destroyBooking/{{$page->id}}/{{$frame_id}}/" + booking_id + "?edit_plan_type=" + edit_plan_type + "#frame-{{$frame->id}}";
             form_destroy_booking{{$frame_id}}.submit();
+        }
+    }
+
+    function approval_booking{{$frame_id}}() {
+        if (confirm('承認します。\nよろしいですか？')) {
+            form_approval_booking{{$frame_id}}.action = "{{url('/')}}/redirect/plugin/reservations/approvalBooking/{{$page->id}}/{{$frame_id}}/" + form_approval_booking{{$frame_id}}.booking_id.value + "#frame-{{$frame->id}}";
+            form_approval_booking{{$frame_id}}.submit();
         }
     }
 </script>

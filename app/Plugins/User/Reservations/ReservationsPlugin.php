@@ -1283,24 +1283,37 @@ class ReservationsPlugin extends UserPluginBase
     public function approvalBooking($request, $page_id, $frame_id, $input_id = null)
     {
         // 登録データ行の取得
-        $reservations_inputs = $this->getReservationsInput($input_id);
+        $reservations_input = $this->getReservationsInput($input_id);
         // データがあることを確認
-        if (empty($reservations_inputs->id)) {
+        if (empty($reservations_input->id)) {
             return;
         }
 
         // 承認済みの判定のために、保存する前のレコードを退避しておく。
-        $before_reservations_inputs = clone $reservations_inputs;
+        $before_reservations_input = clone $reservations_input;
 
         // 更新されたら、行レコードの updated_at を更新したいので、update()
-        $reservations_inputs->status = StatusType::active;  // 公開
-        $reservations_inputs->update();
+        $reservations_input->status = StatusType::active;  // 公開
+        $reservations_input->update();
+
+        // 自ID以外の親IDの承認を更新
+        $inputs = ReservationsInput::where('id', '!=', $input_id)
+            ->where('inputs_parent_id', $reservations_input->inputs_parent_id)
+            ->get();
+
+        foreach ($inputs as $input) {
+            // 更新されたら、行レコードの updated_at を更新したいので、update()
+            $input->status = StatusType::active;  // 公開
+            $input->update();
+        }
 
         // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
-        $this->sendPostNotice($reservations_inputs, $before_reservations_inputs, 'showBooking');
+        $this->sendPostNotice($reservations_input, $before_reservations_input, 'showBooking');
 
-        // 登録後は画面側の指定により、リダイレクトして表示画面を開く。
-        return;
+        $request->flash_message = ' 予約を承認しました。';
+
+        // 登録後はカレンダー表示
+        return collect(['redirect_path' => url($this->page->permanent_link) . "#frame-{$frame_id}"]);
     }
 
     /**
@@ -1534,11 +1547,8 @@ class ReservationsPlugin extends UserPluginBase
                     // 「この日付以降」
                     // ・inputs_parent_idの予約が消えること、なし
 
-                    // 元親IDを退避
-                    $before_inputs_parent_id = $input->inputs_parent_id;
-
                     // この元親IDのrruleを、１つ前までの繰り返し予定に変更
-                    $this->updateInputsRepeatUpToOneBefore($input, $before_inputs_parent_id);
+                    $this->updateInputsRepeatUpToOneBefore($input, $input->inputs_parent_id);
 
                 } else {
                     // 「この予定のみ」を想定。
