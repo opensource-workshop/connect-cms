@@ -5,7 +5,7 @@
         <div class="card mb-3">
             <div class="card-header text-white bg-primary">{{$method->plugin_title}}</div>
             <div class="card-body">
-                <p>{!!nl2br($method->plugin_desc)!!}</p>
+                <p>{!!$method->plugin_desc!!}</p>
             </div>
         </div>
     @endif
@@ -14,15 +14,24 @@
         <div class="card-header text-white bg-primary">{{$method->plugin_title}} - {{$method->method_title}}</div>
         <div class="card-body">
             <p>{!!nl2br($method->method_desc)!!}</p>
+
+	        <div class="card bg-light">
+	            <div class="card-body">
+	                {!!$method->method_detail!!}
+	            </div>
+	       </div>
+
         </div>
     </div>
 
+{{--
     <div class="card mt-3">
         <div class="card-header text-white bg-primary">詳細説明</div>
         <div class="card-body">
-            <p>{!!nl2br($method->method_detail)!!}</p>
+            <p>{!!$method->method_detail!!}</p>
         </div>
     </div>
+--}}
 
     @if ($method->img_paths)
     <div class="card mt-3">

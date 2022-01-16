@@ -17,7 +17,7 @@ use App\Plugins\Manage\ManagePluginBase;
  * @category 管理画面インデックス
  * @package Contoroller
  * @plugin_title 管理画面
- * @plugin_desc 管理画面の初めに開く画面です。
+ * @plugin_desc 管理画面の初めに開く画面です。<br />
                 Connect-CMS の公式サイトより、最新情報を取得して表示します。
  */
 class IndexManage extends ManagePluginBase
