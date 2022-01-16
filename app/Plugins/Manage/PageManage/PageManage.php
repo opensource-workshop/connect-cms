@@ -305,6 +305,9 @@ class PageManage extends ManagePluginBase
 
     /**
      * ページ指定場所移動
+     *
+     * @method_title ページ移動
+     * @method_desc ページは移動先を指定することで、階層を変更することができます。また、上下矢印でメニューへの表示順番を変更することもできます。
      */
     public function move_page($request, $page_id)
     {
@@ -456,6 +459,9 @@ class PageManage extends ManagePluginBase
      * ページインポート処理
      *
      * @return view
+     * @method_title CSVインポート
+     * @method_desc CSVファイルをアップロードして、ページの登録ができます。
+     * @method_detail 画面のCSVフォーマットをコピーして使用してください。
      */
     public function upload($request, $page_id)
     {

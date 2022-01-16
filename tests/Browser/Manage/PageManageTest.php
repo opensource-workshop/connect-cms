@@ -110,6 +110,9 @@ class PageManageTest extends DuskTestCase
                     ->assertPathIs('/manage/page/import')
                     ->screenshot('manage/page/upload');
         });
+
+        // マニュアル用データ出力
+        $this->putManualData('manage/page/upload');
     }
 
     /**
@@ -127,6 +130,9 @@ class PageManageTest extends DuskTestCase
                     ->select('#form_select_page' . $upload2->id . ' .manage-page-selectpage', $upload->id)
                     ->screenshot('manage/page/move_page');
         });
+
+        // マニュアル用データ出力
+        //$this->putManualData('manage/page/move_page');
     }
 
     /**

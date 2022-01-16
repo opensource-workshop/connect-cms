@@ -16,7 +16,7 @@ use App\Plugins\Manage\ManagePluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 管理画面インデックス
  * @package Contoroller
- * @plugin_title お知らせ
+ * @plugin_title 管理画面
  * @plugin_desc 管理画面の初めに開く画面です。
                 Connect-CMS の公式サイトより、最新情報を取得して表示します。
  */
