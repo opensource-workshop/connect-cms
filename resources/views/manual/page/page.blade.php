@@ -1,16 +1,5 @@
 @extends("manual.common.main_left_main")
 
-<style>
-.modal-middle {		//モーダルウィンドウの縦表示位置を調整
-	margin: 5% auto;
-}
-
-.modal-img_footer {	//表示予定のテキストとボタンを中央揃え
-	padding: .5em;
-	text-align: center;
-}
-</style>
-
 @section('content_main')
     @if ($method->method_name == 'index')
         <div class="card mb-3">
