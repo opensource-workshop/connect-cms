@@ -28,8 +28,15 @@
         </div>
     </div>
 
+    <div class="card mt-3">
+        <div class="card-header text-white bg-primary">詳細説明</div>
+        <div class="card-body">
+            <p>{!!nl2br($method->method_detail)!!}</p>
+        </div>
+    </div>
+
     @if ($method->img_paths)
-    <div class="card mt-3 mb-3">
+    <div class="card mt-3">
         <div class="card-header text-white bg-primary">画面</div>
         <div class="card-body">
             @foreach($method->getImgPathArray() as $img_path)
@@ -41,11 +48,4 @@
         </div>
     </div>
     @endif
-
-    <div class="card">
-        <div class="card-header text-white bg-primary">詳細説明</div>
-        <div class="card-body">
-            <p>{!!nl2br($method->method_detail)!!}</p>
-        </div>
-    </div>
 @endsection
