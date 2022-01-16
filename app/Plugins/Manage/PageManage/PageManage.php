@@ -29,6 +29,8 @@ use App\Plugins\Manage\ManagePluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページ管理
  * @package Contoroller
+ * @plugin_title ページ管理
+ * @plugin_desc ページの作成や設定など、ページに関する機能が集まった管理機能です。
  */
 class PageManage extends ManagePluginBase
 {
@@ -74,29 +76,12 @@ class PageManage extends ManagePluginBase
     }
 
     /**
-     *  マニュアル定義
-     */
-    public static function declareManual($dusk)
-    {
-        $dusk->plugin_title = "ページ管理";
-        $dusk->plugin_desc  = "ページの作成や設定など、ページに関する機能が集まった管理機能です。";
-        $dusk->setMethodManual([
-            "index" => [
-                "title"  => "ページ一覧",
-                "desc"   => "ページの一覧が表示されます。<br />ページに関する設定などが俯瞰できる画面です。",
-                "detail" => ""],
-            "edit" => [
-                "title"  => "ページ編集",
-                "desc"   => "ページの登録や編集を行う画面です。",
-                "detail" => ""],
-        ]);
-        return $dusk;
-    }
-
-    /**
      * ページ初期表示
      *
      * @return view
+     * @method_title ページ一覧
+     * @method_desc ページの一覧が表示されます。<br />ページに関する設定などが俯瞰できる画面です。
+     * @method_detail ページの内容を編集するときは、ページ名の左にある編集ボタンをクリックしてください。
      */
     public function index($request, $page_id = null, $errors = array())
     {
@@ -139,6 +124,9 @@ class PageManage extends ManagePluginBase
      * ページ編集画面表示
      *
      * @return view
+     * @method_title ページ編集
+     * @method_desc ページの登録や編集を行う画面です。
+     * @method_detail ページに関する設定をここで変更できます。
      */
     public function edit($request, $page_id = null)
     {
@@ -478,7 +466,6 @@ class PageManage extends ManagePluginBase
                 'required',
                 'file',
                 'mimes:csv,txt', // mimesの都合上text/csvなのでtxtも許可が必要
-                'mimetypes:text/plain',
             ],
         ]);
         $validator->setAttributeNames([

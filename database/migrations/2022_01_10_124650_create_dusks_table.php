@@ -17,15 +17,16 @@ class CreateDusksTable extends Migration
         Schema::create('dusks', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('category', 255)->comment('カテゴリ');
-            $table->string('sort', 255)->comment('ソート順');
+            $table->string('sort', 255)->nullable()->comment('ソート順');
             $table->string('plugin_name', 255)->comment('プラグイン英名');
             $table->text('plugin_title')->nullable()->comment('プラグイン名');
             $table->text('plugin_desc')->nullable()->comment('プラグイン詳細');
-            $table->string('method_name', 255)->comment('機能英名');
+            $table->string('method_name', 255)->nullable()->comment('機能英名');
             $table->text('method_title')->nullable()->comment('機能名');
             $table->text('method_desc')->nullable()->comment('機能概要');
             $table->text('method_detail')->nullable()->comment('機能詳細');
-            $table->string('html_path', 255)->comment('HTMLパス');
+            $table->string('html_path', 255)->nullable()->comment('HTMLパス');
+            $table->text('img_paths')->nullable()->comment('使用画像');
             $table->text('test_result')->nullable()->comment('テスト結果');
             $table->nestedSet();
             $table->integer('created_id')->nullable();

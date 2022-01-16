@@ -56,7 +56,7 @@ class PageManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData();
+        $this->putManualData('manage/page/index');
     }
 
     /**
@@ -82,7 +82,7 @@ class PageManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData();
+        $this->putManualData('manage/page/edit,manage/page/edit2');
     }
 
     /**

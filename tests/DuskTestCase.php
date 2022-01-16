@@ -229,9 +229,46 @@ abstract class DuskTestCase extends BaseTestCase
     }
 
     /**
+     *  ドキュメントコメントの解析
+     */
+    private function getAnnotation($document, $annotation_name)
+    {
+        if (strpos($document, " * @") === false) {
+            return "";
+        }
+        // 初めの * @ の前までを省き、アノテーションコメントを分割抽出、指定の内容を返却
+        $tmp = substr($document, strpos($document, " * @"));
+        $tmp = str_replace('*/', '', $tmp);
+        $annotation_list = explode(' * @', $tmp);
+        foreach ($annotation_list as $annotation_str) {
+            if (strpos($annotation_str, " ") === false) {
+                continue;
+            }
+            if (substr($annotation_str, 0, strpos($annotation_str, " ")) == $annotation_name) {
+                return substr($annotation_str, strpos($annotation_str, " "));
+            }
+        }
+        return "";
+    }
+
+    /**
+     *  ソースをリフレクションしてドキュメントを抽出する。
+     */
+    private function getDocument($annotation_name, $class_name, $method_name = null)
+    {
+        if ($method_name == null) {
+            $class = new \ReflectionClass($class_name);
+        } else {
+            $class = new \ReflectionMethod($class_name, $method_name);
+        }
+        $class_document = $class->getDocComment();
+        return trim($this->getAnnotation($class_document, $annotation_name));
+    }
+
+    /**
      * マニュアルデータ出力
      */
-    public function putManualData()
+    public function putManualData($img_paths = null)
     {
         // 実行しているサブクラスの名前を取得して、マニュアル用に編集する。
         $sub_class_name = \Str::snake(get_class($this));
@@ -260,7 +297,12 @@ abstract class DuskTestCase extends BaseTestCase
 
         // 対象クラスの生成とマニュアル用文章の取得
         $class_name = $this->getClassName($plugin_name);
-        $dusk = $class_name::declareManual($dusk);
+        $dusk->plugin_title = $this->getDocument('plugin_title', $class_name);
+        $dusk->plugin_desc = $this->getDocument('plugin_desc', $class_name);
+        $dusk->method_title = $this->getDocument('method_title', $class_name, $dusk->method_name);
+        $dusk->method_desc = $this->getDocument('method_desc', $class_name, $dusk->method_name);
+        $dusk->method_detail = $this->getDocument('method_detail', $class_name, $dusk->method_name);
+        $dusk->img_paths = $img_paths;
         $dusk->save();
 
         // 結果の親子関係の紐づけ

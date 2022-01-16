@@ -38,6 +38,6 @@ class IndexManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData();
+        $this->putManualData('manage/index/index');
     }
 }

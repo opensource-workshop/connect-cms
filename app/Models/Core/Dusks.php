@@ -19,7 +19,7 @@ class Dusks extends Model
         'category', 'sort',
         'plugin_name', 'plugin_title', 'plugin_desc',
         'method_name', 'method_title', 'method_desc', 'method_detail',
-        'html_path', 'test_result',
+        'html_path', 'img_paths', 'test_result',
     ];
 
     /**
@@ -31,5 +31,13 @@ class Dusks extends Model
         $this->method_title  = $method_doc['title'];
         $this->method_desc   = $method_doc['desc'];
         $this->method_detail = $method_doc['detail'];
+    }
+
+    /**
+     * 画像パスの配列
+     */
+    public function getImgPathArray()
+    {
+        return explode(',', $this->img_paths);
     }
 }
