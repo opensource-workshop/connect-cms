@@ -1,15 +1,6 @@
 @extends("manual.common.main_left_main")
 
 @section('content_main')
-    @if ($current_method->method_name == 'index')
-        <div class="card mb-3">
-            <div class="card-header text-white bg-primary">{{$current_method->plugin_title}}</div>
-            <div class="card-body">
-                <p>{!!$current_method->plugin_desc!!}</p>
-            </div>
-        </div>
-    @endif
-
     <div class="card">
         <div class="card-header text-white bg-primary">{{$current_method->plugin_title}} - {{$current_method->method_title}}</div>
         <div class="card-body">

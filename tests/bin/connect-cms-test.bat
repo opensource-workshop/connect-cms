@@ -140,7 +140,7 @@ rem ---------------------------------------------
 
 echo.
 echo --- ヘッダー
-rem php artisan dusk tests\Browser\User\HeaderAreaTest.php
+php artisan dusk tests\Browser\User\HeaderAreaTest.php
 
 echo.
 echo --- ブログ
