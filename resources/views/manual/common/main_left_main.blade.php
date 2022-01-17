@@ -8,11 +8,7 @@
                 <nav class="list-group d-none d-lg-block">
                     <div class="list-group">
                         @foreach($methods->where('method_name', 'index') as $method)
-                            @if($level == 'category')
-                                <a href="{{$base_path}}{{$method->category}}/{{$method->plugin_name}}/index.html"
-                            @else
-                                <a href="{{$base_path}}{{$method->html_path}}"
-                            @endif
+                            <a href="{{$base_path}}{{$method->category}}/{{$method->plugin_name}}/index.html"
                                 class="list-group-item
                                     @if(isset($current_method) &&
                                         $current_method->plugin_name == $method->plugin_name &&
@@ -22,20 +18,16 @@
                                     @endif
                             ">
                                 {{$method->plugin_title}}
-                                @if ($method->hasChildren() && count($method->children) > 0)
-                                    <i class="fas fa-plus"></i>
-                                @endif
                             </a>
-                            @if ($method->hasChildren() && (isset($current_method) && $current_method->plugin_name == $method->plugin_name) && $level == 'plugin')
+                            @if ($method->hasChildren() && (isset($current_method) && $current_method->plugin_name == $method->plugin_name) && ($level == 'plugin' || $level == 'method'))
                                 {{-- index アクションは、Children ではなく、親になっているので、個別にリンク生成 --}}
                                 <a href="{{$base_path}}{{$method->html_path}}"
                                     class="list-group-item
                                         @if(isset($current_method) &&
                                             $current_method->plugin_name == $method->plugin_name &&
-                                            $current_method->method_name == $method->method_name)
-{{--
+                                            $current_method->method_name == $method->method_name &&
+                                            $level == 'method')
                                             active
---}}
                                         @endif
                                 ">
                                     <i class="fas fa-chevron-right"></i>
@@ -49,7 +41,7 @@
                                             @if(isset($current_method) &&
                                                 $current_method->plugin_name == $children->plugin_name &&
                                                 $current_method->method_name == $children->method_name &&
-                                                $level == 'action')
+                                                $level == 'method')
                                                 active
                                             @endif
                                     ">
