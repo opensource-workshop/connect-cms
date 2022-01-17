@@ -53,6 +53,7 @@
                         required
                     >
                     @include('plugins.common.errors_inline', ['name' => BlogFrameConfig::blog_view_count])
+                    <small class="text-muted">※ 初期値は15件です。</small>
                 </div>
             </div>
 
