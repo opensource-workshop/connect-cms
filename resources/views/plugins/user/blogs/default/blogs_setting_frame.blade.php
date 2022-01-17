@@ -45,6 +45,8 @@
                 <div class="{{$frame->getSettingInputClass()}}">
                     <input 
                         type="number"
+                        min="1"
+                        max="100"
                         class="form-control col-sm-3 @if ($errors->has(BlogFrameConfig::blog_view_count)) border-danger @endif"
                         value="{{FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::blog_view_count)}}"
                         id="{{BlogFrameConfig::blog_view_count}}" name="{{BlogFrameConfig::blog_view_count}}"
