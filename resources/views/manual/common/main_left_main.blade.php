@@ -7,27 +7,49 @@
             <aside class="col-lg-2 order-1">
                 <nav class="list-group d-none d-lg-block">
                     <div class="list-group">
-                        @foreach($plugins->where('method_name', 'index') as $plugin)
-                            <a href="{{$base_path}}{{$plugin->html_path}}"
+                        @foreach($methods->where('method_name', 'index') as $method)
+                            @if($level == 'category')
+                                <a href="{{$base_path}}{{$method->category}}/{{$method->plugin_name}}/index.html"
+                            @else
+                                <a href="{{$base_path}}{{$method->html_path}}"
+                            @endif
                                 class="list-group-item
-                                    @if(isset($method) &&
-                                        $method->plugin_name == $plugin->plugin_name &&
-                                        $method->method_name == $plugin->method_name)
+                                    @if(isset($current_method) &&
+                                        $current_method->plugin_name == $method->plugin_name &&
+                                        $current_method->method_name == $method->method_name &&
+                                        $level == 'plugin')
                                         active
                                     @endif
                             ">
-                                {{$plugin->plugin_title}}
-                                @if ($plugin->hasChildren() && count($plugin->children) > 0)
+                                {{$method->plugin_title}}
+                                @if ($method->hasChildren() && count($method->children) > 0)
                                     <i class="fas fa-plus"></i>
                                 @endif
                             </a>
-                            @if ($plugin->hasChildren() && (isset($method) && $method->plugin_name == $plugin->plugin_name))
-                                @foreach($plugin->children as $children)
+                            @if ($method->hasChildren() && (isset($current_method) && $current_method->plugin_name == $method->plugin_name) && $level == 'plugin')
+                                {{-- index アクションは、Children ではなく、親になっているので、個別にリンク生成 --}}
+                                <a href="{{$base_path}}{{$method->html_path}}"
+                                    class="list-group-item
+                                        @if(isset($current_method) &&
+                                            $current_method->plugin_name == $method->plugin_name &&
+                                            $current_method->method_name == $method->method_name)
+{{--
+                                            active
+--}}
+                                        @endif
+                                ">
+                                    <i class="fas fa-chevron-right"></i>
+                                    {{$method->method_title}}
+                                </a>
+
+                                {{-- プラグインの各アクション --}}
+                                @foreach($method->children as $children)
                                     <a href="{{$base_path}}{{$children->html_path}}"
                                         class="list-group-item
-                                            @if(isset($method) &&
-                                                $method->plugin_name == $children->plugin_name &&
-                                                $method->method_name == $children->method_name)
+                                            @if(isset($current_method) &&
+                                                $current_method->plugin_name == $children->plugin_name &&
+                                                $current_method->method_name == $children->method_name &&
+                                                $level == 'action')
                                                 active
                                             @endif
                                     ">

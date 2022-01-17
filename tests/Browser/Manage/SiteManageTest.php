@@ -46,11 +46,25 @@ class SiteManageTest extends DuskTestCase
      */
     private function index()
     {
+        // サイト管理画面
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/site')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/index');
         });
+
+        // ページスクロール
+        $this->browse(function (Browser $browser) {
+            $browser->scrollIntoView('#base_header_optional_class')
+                    ->screenshot('manage/site/index2');
+        });
+        $this->browse(function (Browser $browser) {
+            $browser->scrollIntoView('footer')
+                    ->screenshot('manage/site/index3');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('manage/site/index,manage/site/index2,manage/site/index3');
     }
 
     /**
@@ -62,8 +76,8 @@ class SiteManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/site')
                     ->click('label[for="base_login_password_reset_off"]')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/edit');
         });
     }
 
@@ -74,8 +88,8 @@ class SiteManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/update');
         });
     }
 
@@ -87,9 +101,12 @@ class SiteManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/site/meta')
                     ->type('description', 'Connect-CMSのテストサイトです。')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/meta');
         });
+
+        // マニュアル用データ出力
+        $this->putManualData('manage/site/meta');
     }
 
     /**

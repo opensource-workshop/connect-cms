@@ -33,6 +33,8 @@ use App\Enums\BaseLoginRedirectPage;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category サイト管理
  * @package Controller
+ * @plugin_title サイト管理
+ * @plugin_desc サイトの基本設定など、サイト全体に関する機能が集まった管理機能です。
  */
 class SiteManage extends ManagePluginBase
 {
@@ -76,6 +78,9 @@ class SiteManage extends ManagePluginBase
      *  ページ初期表示
      *
      * @return view
+     * @method_title サイト基本設定
+     * @method_desc サイト名や基本のテーマなど、サイト全体の設定を行う画面です。
+     * @method_detail 
      */
     public function index($request, $page_id = null)
     {
@@ -594,7 +599,11 @@ class SiteManage extends ManagePluginBase
     }
 
     /**
-     *  meta設定　表示画面
+     * meta設定　表示画面
+     *
+     * @method_title meta情報設定
+     * @method_desc 画面出力時のMETAタグの設定を行う画面です。
+     * @method_detail 
      */
     public function meta($request, $id, $errors = null)
     {

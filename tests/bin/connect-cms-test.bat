@@ -100,7 +100,7 @@ php artisan dusk tests\Browser\Manage\PageManageTest.php
 
 echo.
 echo --- サイト管理のテスト
-rem php artisan dusk tests\Browser\Manage\SiteManageTest.php
+php artisan dusk tests\Browser\Manage\SiteManageTest.php
 
 echo.
 echo --- ユーザ管理のテスト

@@ -284,7 +284,7 @@ abstract class DuskTestCase extends BaseTestCase
         $plugin_name = $class_name_3_array[0];
 
         // html パスの生成
-        $html_path = trim($sub_class_array[2], '_') . '/' . $plugin_name . '/' . $source_method . '.html';
+        $html_path = trim($sub_class_array[2], '_') . '/' . $plugin_name . '/' . $source_method . '/index.html';
 
         // 結果の保存
         $dusk = Dusks::firstOrNew(['html_path' => $html_path]);

@@ -132,7 +132,7 @@ class PageManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        //$this->putManualData('manage/page/move_page');
+        $this->putManualData('manage/page/move_page');
     }
 
     /**
@@ -140,6 +140,7 @@ class PageManageTest extends DuskTestCase
      *
      * @group manage
      */
+/*
     public function testInvoke2()
     {
         $this->login(1);
@@ -154,6 +155,7 @@ class PageManageTest extends DuskTestCase
         $this->pageRole();
         $this->pageRoleUpdate();
     }
+*/
 
     /**
      * グループ登録画面

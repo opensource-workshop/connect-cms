@@ -40,4 +40,17 @@ class Dusks extends Model
     {
         return explode(',', $this->img_paths);
     }
+
+    /**
+     * html_path を取得
+     *
+     * @return string
+     */
+    public function getHtmlPathAttribute()
+    {
+        if (empty($this->id)) {
+            return "index.html";
+        }
+        return $this->attributes['html_path'];
+    }
 }
