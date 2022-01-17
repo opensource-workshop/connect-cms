@@ -47,17 +47,17 @@ class PageManage extends ManagePluginBase
         $role_ckeck_table["store"]           = array('admin_page');
         $role_ckeck_table["update"]          = array('admin_page');
         $role_ckeck_table["destroy"]         = array('admin_page');
-        $role_ckeck_table["sequence_up"]     = array('admin_page');
-        $role_ckeck_table["sequence_down"]   = array('admin_page');
-        $role_ckeck_table["move_page"]       = array('admin_page');
+        $role_ckeck_table["sequenceUp"]      = array('admin_page');
+        $role_ckeck_table["sequenceDown"]    = array('admin_page');
+        $role_ckeck_table["movePage"]        = array('admin_page');
         $role_ckeck_table["import"]          = array('admin_page');
         $role_ckeck_table["upload"]          = array('admin_page');
         $role_ckeck_table["role"]            = array('admin_page');
         $role_ckeck_table["saveRole"]        = array('admin_page');
-        $role_ckeck_table["migration_order"] = array('admin_page');
-        $role_ckeck_table["migration_get"]   = array('admin_page');
-        $role_ckeck_table["migration_imort"] = array('admin_page');
-        $role_ckeck_table["migration_file_delete"] = array('admin_page');
+        $role_ckeck_table["migrationOrder"]  = array('admin_page');
+        $role_ckeck_table["migrationGet"]    = array('admin_page');
+        $role_ckeck_table["migrationImort"]  = array('admin_page');
+        $role_ckeck_table["migrationFileDelete"] = array('admin_page');
 
 /*
         $role_ckeck_table = array();
@@ -272,7 +272,7 @@ class PageManage extends ManagePluginBase
     /**
      * ページ上移動
      */
-    public function sequence_up($request, $page_id)
+    public function sequenceUp($request, $page_id)
     {
         // 移動元のオブジェクトを取得して、up
         $pages = Page::find($page_id);
@@ -285,7 +285,7 @@ class PageManage extends ManagePluginBase
     /**
      * ページ下移動
      */
-    public function sequence_down($request, $page_id)
+    public function sequenceDown($request, $page_id)
     {
         // 移動元のオブジェクトを取得して、down
         $pages = Page::find($page_id);
@@ -298,7 +298,7 @@ class PageManage extends ManagePluginBase
     /**
      * ページ指定場所移動
      */
-    public function move_page($request, $page_id)
+    public function movePage($request, $page_id)
     {
         // ルートへ移動
         if ($request->destination_id == "0") {
@@ -630,7 +630,7 @@ class PageManage extends ManagePluginBase
      *
      * @return view
      */
-    public function migration_order($request, $page_id)
+    public function migrationOrder($request, $page_id)
     {
         // ページID で1件取得
         $current_page = Page::find($page_id);
@@ -679,19 +679,19 @@ class PageManage extends ManagePluginBase
      *
      * @return view
      */
-    public function migration_file_delete($request, $page_id)
+    public function migrationFileDelete($request, $page_id)
     {
         // 削除対象のディレクトリが指定されていること。
         if (!$request->has("delete_file_page_id") && !empty($request->delete_file_page_id)) {
             // 指示された画面に戻る。
-            return $this->migration_order($request, $page_id);
+            return $this->migrationOrder($request, $page_id);
         }
 
         // 指定されたディレクトリを削除
         Storage::deleteDirectory("migration/import/pages/" . $request->delete_file_page_id);
 
         // 指示された画面に戻る。
-        return $this->migration_order($request, $page_id);
+        return $this->migrationOrder($request, $page_id);
     }
 
     /**
@@ -699,7 +699,7 @@ class PageManage extends ManagePluginBase
      *
      * @return view
      */
-    public function migration_get($request, $page_id)
+    public function migrationGet($request, $page_id)
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
@@ -715,7 +715,7 @@ class PageManage extends ManagePluginBase
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            return redirect('manage/page/migration_order/' . $page_id)
+            return redirect('manage/page/migrationOrder/' . $page_id)
                        ->withErrors($validator)
                        ->withInput();
         }
@@ -724,7 +724,7 @@ class PageManage extends ManagePluginBase
         $this->migrationNC3Page($request->url, $request->destination_page_id);
 
         // 指示された画面に戻る。
-        return $this->migration_order($request, $page_id);
+        return $this->migrationOrder($request, $page_id);
     }
 
     /**
@@ -732,7 +732,7 @@ class PageManage extends ManagePluginBase
      *
      * @return view
      */
-    public function migration_imort($request, $page_id)
+    public function migrationImort($request, $page_id)
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
@@ -744,7 +744,7 @@ class PageManage extends ManagePluginBase
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            return redirect('manage/page/migration_order/' . $page_id)
+            return redirect('manage/page/migrationOrder/' . $page_id)
                        ->withErrors($validator)
                        ->withInput();
         }
@@ -757,6 +757,6 @@ class PageManage extends ManagePluginBase
         $this->importHtml($request->migration_page_id, storage_path() . '/app/migration/import/pages/' . $page_id);
 
         // 指示された画面に戻る。
-        return $this->migration_order($request, $page_id);
+        return $this->migrationOrder($request, $page_id);
     }
 }

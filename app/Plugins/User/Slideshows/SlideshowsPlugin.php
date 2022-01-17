@@ -227,6 +227,8 @@ class SlideshowsPlugin extends UserPluginBase
         $validator_attributes['slideshows_name'] = 'スライドショー名';
         $validator_values['image_interval'] = ['required', 'numeric', 'integer', 'min:1', 'max:60000'];
         $validator_attributes['image_interval'] = '画像の静止時間';
+        $validator_values['height'] = ['nullable', 'numeric', 'min:1', 'max:65535'];
+        $validator_attributes['height'] = '高さ';
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $validator_values);
@@ -287,6 +289,7 @@ class SlideshowsPlugin extends UserPluginBase
         $slideshows->indicators_display_flag = $request->indicators_display_flag;
         $slideshows->fade_use_flag = $request->fade_use_flag;
         $slideshows->image_interval = $request->image_interval;
+        $slideshows->height = $request->height;
         $slideshows->save();
 
         // 新規作成フラグを更新モードにセットして設定変更画面へ遷移
@@ -323,7 +326,7 @@ class SlideshowsPlugin extends UserPluginBase
              * 明細データの削除
              */
             foreach ($slideshows_items as $slideshows_item) {
-                SlideshowsItems::where('slideshows_items_id', $slideshows_item->id)->delete();
+                SlideshowsItems::where('id', $slideshows_item->id)->delete();
             }
 
             $slideshows = Slideshows::find($slideshows_id);
