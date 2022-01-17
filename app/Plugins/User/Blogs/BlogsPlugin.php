@@ -1389,7 +1389,7 @@ EOD;
 
         // 項目のエラーチェック
         $validator_values['scope_value'] = ['nullable', 'digits:4'];
-        $validator_values[BlogFrameConfig::blog_view_count] = ['required', 'numeric', 'min:1'];
+        $validator_values[BlogFrameConfig::blog_view_count] = ['required', 'numeric', 'min:1', 'max:100'];
         if ($request->scope == 'year' || $request->scope == 'fiscal') {
             $validator_values['scope_value'][] = ['required'];
         }
