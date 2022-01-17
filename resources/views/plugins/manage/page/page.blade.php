@@ -47,21 +47,21 @@
         </script>
 
         {{-- ページの上移動用フォーム(POSTのためのフォーム。一つ用意して一覧からJavascriptで呼び出し) --}}
-        <form action="{{url('/manage/page/sequence_up')}}" method="POST" name="form_sequence_up" id="form_sequence_up" class="form-horizontal">
+        <form action="{{url('/manage/page/sequenceUp')}}" method="POST" name="form_sequence_up" id="form_sequence_up" class="form-horizontal">
             {{ csrf_field() }}
             <input type="hidden" name="seq_method" value="sequence_up">
             <!input type="hidden" name="id" value="">
         </form>
 
         {{-- ページの下移動用フォーム(POSTのためのフォーム。一つ用意して一覧からJavascriptで呼び出し) --}}
-        <form action="{{url('/manage/page/sequence_down')}}" method="POST" name="form_sequence_down" id="form_sequence_down" class="form-horizontal">
+        <form action="{{url('/manage/page/sequenceDown')}}" method="POST" name="form_sequence_down" id="form_sequence_down" class="form-horizontal">
             {{ csrf_field() }}
             <input type="hidden" name="seq_method" value="sequence_down">
             <!input type="hidden" name="id" value="">
         </form>
 
         {{-- ページの指定場所移動用フォーム(POSTのためのフォーム。一つ用意して一覧からJavascriptで呼び出し) --}}
-        <form action="{{url('/manage/page/move_page')}}" method="POST" name="form_move_page" id="form_move_page" class="form-horizontal">
+        <form action="{{url('/manage/page/movePage')}}" method="POST" name="form_move_page" id="form_move_page" class="form-horizontal">
             {{ csrf_field() }}
             <input type="hidden" name="destination_id" value="">
         </form>
@@ -97,7 +97,7 @@
                             </button>
                             <div class="dropdown-menu dropdown-menu-right">
                                 <a class="dropdown-item" href="{{url('/manage/page/role')}}/{{$page_item->id}}" >ページ権限設定</a>
-                                <a class="dropdown-item" href="{{url('/manage/page/migration_order')}}/{{$page_item->id}}" >外部ページインポート</a>
+                                <a class="dropdown-item" href="{{url('/manage/page/migrationOrder')}}/{{$page_item->id}}" >外部ページインポート</a>
                             </div>
                         </div>
 

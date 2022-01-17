@@ -145,6 +145,23 @@
                 </div>
             </div>
 
+            {{-- スライドショーの高さ --}}
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">
+                    高さ（px）
+                </label>
+                <div class="{{$frame->getSettingInputClass()}}">
+                    <input
+                        type="number"
+                        name="height"
+                        value="{{old('height', isset($slideshow->height) ? $slideshow->height : '')}}"
+                        class="form-control @if ($errors && $errors->has('height')) border-danger @endif"
+                    >
+                    @if ($errors && $errors->has('height')) <div class="text-danger">{{$errors->first('height')}}</div> @endif
+                    <small class="text-muted">未指定の場合、フレーム幅に合わせた画像の高さで表示されます。</small>
+                </div>
+            </div>
+
             {{-- Submitボタン --}}
             <div class="form-group text-center">
                 <div class="row">

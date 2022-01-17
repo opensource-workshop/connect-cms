@@ -22,7 +22,7 @@
             移行先ページ名：{{$current_page->page_name}}
         </div>
 
-        <form action="{{url('/manage/page/migration_get')}}/{{$current_page->id}}" method="POST" class="form-horizontal">
+        <form action="{{url('/manage/page/migrationGet')}}/{{$current_page->id}}" method="POST" class="form-horizontal">
             {{ csrf_field() }}
             <input type="hidden" name="destination_page_id" value="{{$current_page->id}}">
 
@@ -100,14 +100,14 @@
             form_migration_file_delete.submit();
         }
     </script>
-    <form action="{{url('/manage/page/migration_file_delete')}}/{{$current_page->id}}" method="POST" name="form_migration_file_delete">
+    <form action="{{url('/manage/page/migrationFileDelete')}}/{{$current_page->id}}" method="POST" name="form_migration_file_delete">
         {{ csrf_field() }}
         <input type="hidden" name="delete_file_page_id" value="">
     </form>
 
 
     <div class="card-body">
-        <form action="{{url('/manage/page/migration_imort')}}/{{$current_page->id}}" method="POST" class="form-horizontal">
+        <form action="{{url('/manage/page/migrationImort')}}/{{$current_page->id}}" method="POST" class="form-horizontal">
             {{ csrf_field() }}
 
             <div class="form-group row">

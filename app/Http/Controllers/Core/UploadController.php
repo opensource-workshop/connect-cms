@@ -595,17 +595,17 @@ EOD;
                 if ($is_resize) {
                     // リサイズ
 
+                    // GDのリサイズでメモリを多く使うため、memory_limitセット
+                    $configs = Configs::getSharedConfigs();
+                    $memory_limit_for_image_resize = Configs::getConfigsValue($configs, 'memory_limit_for_image_resize', '256M');
+                    ini_set('memory_limit', $memory_limit_for_image_resize);
+
                     // GDが無いとここで GD Library extension not available with this PHP installation. エラーになる
                     // $image = Image::make($image_file)->resize($request->width, $request->height);
                     $image = Image::make($image_file);
 
                     $resize_width = $request->resize;
                     $resize_height = null;
-
-                    // GDのリサイズでメモリを多く使うため、memory_limitセット
-                    $configs = Configs::getSharedConfigs();
-                    $memory_limit_for_image_resize = Configs::getConfigsValue($configs, 'memory_limit_for_image_resize', '256M');
-                    ini_set('memory_limit', $memory_limit_for_image_resize);
 
                     // ※ [注意] リサイズ時メモリ多めに使った。8MB画像＋memory_limit=128Mでエラー。memory_limit=256Mで解消。
                     //           エラーメッセージ：ERROR: Allowed memory size of 134217728 bytes exhausted (tried to allocate 48771073 bytes) {"userId":1,"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Allowed memory size of 134217728 bytes exhausted (tried to allocate 48771073 bytes) at /path_to_connect-cms/vendor/intervention/image/src/Intervention/Image/Gd/Commands/ResizeCommand.php:58)
