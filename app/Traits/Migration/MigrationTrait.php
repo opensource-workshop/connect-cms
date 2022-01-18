@@ -889,7 +889,10 @@ trait MigrationTrait
                 // @insert で page.ini がない場合は、import から参照する。
                 if ($this->import_base == '@insert/') {
                     if (!File::exists($path . '/page.ini')) {
-                        $page_ini = parse_ini_file(str_replace('@insert', 'import', $path . '/page.ini'), true);
+                        $page_ini = @parse_ini_file(str_replace('@insert', 'import', $path . '/page.ini'), true);
+                    }
+                    if(!$page_ini){
+                        continue;
                     }
                 }
 
@@ -5416,16 +5419,16 @@ trait MigrationTrait
 
         // まだ配列になかった場合（各スペースのルートページ）
         if ($get_display_sequence) {
-            return 'r' . $this->zeroSuppress($nc2_page->root_id) . '_' . $this->zeroSuppress($nc2_page->display_sequence);
+            return $this->getRouteBlockLangStr($nc2_page->lang_dirname) . $this->zeroSuppress($nc2_page->root_id) . '_' . $this->zeroSuppress($nc2_page->display_sequence);
         } else {
-            return 'r' . $this->zeroSuppress($nc2_page->root_id) . '_' . $this->zeroSuppress($nc2_page->page_id);
+            return $this->getRouteBlockLangStr($nc2_page->lang_dirname) . $this->zeroSuppress($nc2_page->root_id) . '_' . $this->zeroSuppress($nc2_page->page_id);
         }
     }
 
     /**
      * 経路探索キーの取得（Block）
      */
-    private function getRouteBlockStr($nc2_block, $nc2_sort_blocks, $get_display_sequence = false)
+    private function getRouteBlockStr($nc2_block, $nc2_sort_blocks, $get_display_sequence = false, $nc2_page)
     {
         foreach ($nc2_sort_blocks as $nc2_sort_block_key => $nc2_sort_block) {
             if ($nc2_sort_block->block_id == $nc2_block->parent_id) {
@@ -5438,13 +5441,35 @@ trait MigrationTrait
                 }
             }
         }
-
+        
         // まだ配列になかった場合（各スペースのルートページ）
         if ($get_display_sequence) {
-            return 'r' . $this->zeroSuppress($nc2_block->root_id) . '_' . $this->zeroSuppress($nc2_block->row_num . $nc2_block->col_num . $nc2_block->thread_num) . '_' . $nc2_block->block_id;
+            return $this->getRouteBlockLangStr($nc2_page->lang_dirname) . $this->zeroSuppress($nc2_block->root_id) . '_' . $this->zeroSuppress($nc2_block->row_num . $nc2_block->col_num . $nc2_block->thread_num) . '_' . $nc2_block->block_id;
         } else {
-            return 'r' . $this->zeroSuppress($nc2_block->root_id) . '_' . $this->zeroSuppress($nc2_block->block_id);
+            return $this->getRouteBlockLangStr($nc2_page->lang_dirname) . $this->zeroSuppress($nc2_block->root_id) . '_' . $this->zeroSuppress($nc2_block->block_id);
         }
+    }
+
+    /**
+     * 多言語化判定（日本語）
+     */
+    private function checkLangDirnameJpn($lang_dirname)
+    {
+        /* 日本語（とgroupルーム等は空）の場合はtrue */
+        if ($lang_dirname == "japanese" || $lang_dirname == "" ) {
+            return true;
+        }
+        return false;
+    }
+    /**
+     * 多言語化対応文字列返却
+     */
+    private function getRouteBlockLangStr($lang_dirname)
+    {
+        if($this->checkLangDirnameJpn($lang_dirname)) {
+            return 'r';
+        }
+        return $lang_dirname;
     }
 
     /**
@@ -5689,10 +5714,16 @@ trait MigrationTrait
                         $membership_flag = 1;
                     }
                 }
-
+                /* 多言語化対応 */
+                if ($this->checkLangDirnameJpn($nc2_sort_page->lang_dirname)) {
+                    $lang_link = '';
+                }else{
+                    $lang_link = '/'.$nc2_sort_page->lang_dirname;
+                }
+                $permanent_link = ($lang_link != "" && $nc2_sort_page->permalink == "" ) ? $lang_link : $lang_link."/".$nc2_sort_page->permalink;
                 $page_ini = "[page_base]\n";
                 $page_ini .= "page_name = \"" . $nc2_sort_page->page_name . "\"\n";
-                $page_ini .= "permanent_link = \"/" . $nc2_sort_page->permalink . "\"\n";
+                $page_ini .= "permanent_link = \"". $permanent_link . "\"\n";
                 $page_ini .= "base_display_flag = 1\n";
                 $page_ini .= "membership_flag = " . $membership_flag . "\n";
                 $page_ini .= "nc2_page_id = \"" . $nc2_sort_page->page_id . "\"\n";
@@ -8166,8 +8197,8 @@ trait MigrationTrait
         // 経路探索の文字列をキーにしたページ配列の作成
         $nc2_sort_blocks = array();
         foreach ($nc2_blocks as $nc2_block) {
-            $nc2_block->route_path = $this->getRouteBlockStr($nc2_block, $nc2_sort_blocks);
-            $nc2_sort_blocks[$this->getRouteBlockStr($nc2_block, $nc2_sort_blocks, true)] = $nc2_block;
+            $nc2_block->route_path = $this->getRouteBlockStr($nc2_block, $nc2_sort_blocks, false, $nc2_page);
+            $nc2_sort_blocks[$this->getRouteBlockStr($nc2_block, $nc2_sort_blocks, true, $nc2_page)] = $nc2_block;
         }
         // Log::debug($nc2_sort_blocks);
 
