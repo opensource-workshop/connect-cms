@@ -58,8 +58,18 @@ class InitAndMigrationFromReservationsColumnsSetAndReservationsCategory extends 
 
             // 項目設定にセット
             // 件名
-            $column = ReservationsColumn::create([
-                'reservations_id'  => 0,
+            // fix: ReservationsColumnモデルのfillable でガードされない形に修正
+            // $column = ReservationsColumn::create([
+            //     'reservations_id'  => 0,
+            //     'columns_set_id'   => $columns_set_basic->id,
+            //     'column_type'      => ReservationColumnType::text,
+            //     'column_name'      => '件名',
+            //     'required'         => Required::on,
+            //     'hide_flag'        => NotShowType::show,
+            //     'title_flag'       => 1,
+            //     'display_sequence' => 1,
+            // ]);
+            $column = new ReservationsColumn([
                 'columns_set_id'   => $columns_set_basic->id,
                 'column_type'      => ReservationColumnType::text,
                 'column_name'      => '件名',
@@ -68,9 +78,21 @@ class InitAndMigrationFromReservationsColumnsSetAndReservationsCategory extends 
                 'title_flag'       => 1,
                 'display_sequence' => 1,
             ]);
+            $column->reservations_id = 0;
+            $column->save();
+
             // 登録者（表示のみ）
-            $column = ReservationsColumn::create([
-                'reservations_id'  => 0,
+            // $column = ReservationsColumn::create([
+            //     'reservations_id'  => 0,
+            //     'columns_set_id'   => $columns_set_basic->id,
+            //     'column_type'      => ReservationColumnType::created_name,
+            //     'column_name'      => '登録者',
+            //     'required'         => Required::off,
+            //     'hide_flag'        => NotShowType::show,
+            //     'title_flag'       => 0,
+            //     'display_sequence' => 2,
+            // ]);
+            $column = new ReservationsColumn([
                 'columns_set_id'   => $columns_set_basic->id,
                 'column_type'      => ReservationColumnType::created_name,
                 'column_name'      => '登録者',
@@ -79,9 +101,21 @@ class InitAndMigrationFromReservationsColumnsSetAndReservationsCategory extends 
                 'title_flag'       => 0,
                 'display_sequence' => 2,
             ]);
+            $column->reservations_id = 0;
+            $column->save();
+
             // 更新日（表示のみ）
-            $column = ReservationsColumn::create([
-                'reservations_id'  => 0,
+            // $column = ReservationsColumn::create([
+            //     'reservations_id'  => 0,
+            //     'columns_set_id'   => $columns_set_basic->id,
+            //     'column_type'      => ReservationColumnType::updated,
+            //     'column_name'      => '更新日',
+            //     'required'         => Required::off,
+            //     'hide_flag'        => NotShowType::show,
+            //     'title_flag'       => 0,
+            //     'display_sequence' => 3,
+            // ]);
+            $column = new ReservationsColumn([
                 'columns_set_id'   => $columns_set_basic->id,
                 'column_type'      => ReservationColumnType::updated,
                 'column_name'      => '更新日',
@@ -90,6 +124,8 @@ class InitAndMigrationFromReservationsColumnsSetAndReservationsCategory extends 
                 'title_flag'       => 0,
                 'display_sequence' => 3,
             ]);
+            $column->reservations_id = 0;
+            $column->save();
 
             /* 既存データ移行
             ----------------------------------------------*/
@@ -149,10 +185,6 @@ class InitAndMigrationFromReservationsColumnsSetAndReservationsCategory extends 
                     $category_display_sequence++;
                 }
 
-                // [TODO]
-                // 後でdrop: reservations_columns.reservations_id
-                // 後でdrop: reservations_columns_selects.reservations_id
-                // 後でdrop: reservations_facilities.reservations_id
             }
         }
     }

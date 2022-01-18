@@ -933,7 +933,7 @@ class ReservationsPlugin extends UserPluginBase
 
         // 新規登録時のみの登録項目
         if (!$booking_id) {
-            $reservations_inputs->reservations_id = $request->reservations_id;
+            // $reservations_inputs->reservations_id = $request->reservations_id;
             $reservations_inputs->facility_id = $request->facility_id;
             $reservations_inputs->created_id  = Auth::user()->id;            // 登録ユーザ
         }
@@ -1044,7 +1044,7 @@ class ReservationsPlugin extends UserPluginBase
             if (!$reservations_inputs_columns) {
                 $reservations_inputs_columns = new ReservationsInputsColumn();
                 // 新規登録時のみの登録項目
-                $reservations_inputs_columns->reservations_id = $request->reservations_id;
+                // $reservations_inputs_columns->reservations_id = $request->reservations_id;
                 $reservations_inputs_columns->inputs_parent_id = $reservations_inputs->id;
                 $reservations_inputs_columns->column_id = $key;
             }

@@ -27,7 +27,6 @@ class ReservationsFacility extends Model
 
     // 更新する項目の定義
     protected $fillable = [
-        'reservations_id',
         'facility_name',
         'hide_flag',
         'is_time_control',

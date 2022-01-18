@@ -13,7 +13,6 @@ class ReservationsInputsColumn extends Model
 
     // 更新する項目の定義
     protected $fillable = [
-        'reservations_id',
         'inputs_parent_id',
         'column_id',
         'value',

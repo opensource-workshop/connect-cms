@@ -241,10 +241,6 @@ class ReservationManage extends ManagePluginBase
 
         // 施設の登録処理
         $facility = ReservationsFacility::firstOrNew(['id' => $id]);
-        // [TODO] 仮
-        // $facility->reservations_id = $request->reservations_id;
-        $facility->reservations_id = $facility->reservations_id ?: 0;
-
         $facility->facility_name                = $request->facility_name;
         $facility->is_time_control              = $request->is_time_control ? 1 : 0;
         $facility->start_time                   = $request->start_time ? $request->start_time . ':00' : null;
@@ -631,9 +627,6 @@ class ReservationManage extends ManagePluginBase
 
         // 施設の登録処理
         $column = new ReservationsColumn();
-        // [TODO] 仮
-        $column->reservations_id = 0;
-
         $column->columns_set_id = $request->columns_set_id;
         $column->column_name = $request->column_name;
         $column->column_type = $request->column_type;
@@ -818,9 +811,6 @@ class ReservationManage extends ManagePluginBase
 
         // 施設の登録処理
         $select = new ReservationsColumnsSelect();
-        // [TODO] 仮
-        $select->reservations_id = 0;
-
         $select->columns_set_id = $request->columns_set_id;
         $select->column_id = $request->column_id;
         $select->select_name = $request->select_name;

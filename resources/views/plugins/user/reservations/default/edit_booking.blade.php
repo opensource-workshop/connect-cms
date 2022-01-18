@@ -142,7 +142,7 @@ use App\Models\User\Reservations\ReservationsFacility;
     </div>
 
     {{ csrf_field() }}
-    <input type="hidden" name="reservations_id" value="{{ $reservation->id }}">
+    {{-- <input type="hidden" name="reservations_id" value="{{ $reservation->id }}"> --}}
     <input type="hidden" name="facility_id" value="{{ $facility->id }}">
     <input type="hidden" name="columns_set_id" value="{{ $facility->columns_set_id }}">
     {{-- <input type="hidden" name="booking_id" value="{{ $booking ? $booking->id : '' }}"> --}}
@@ -496,7 +496,8 @@ use App\Models\User\Reservations\ReservationsFacility;
                         {{-- 項目に紐づく選択肢データを抽出 --}}
                         @php
                             $filtered_selects = $selects->filter(function($select) use($column) {
-                                return $select->reservations_id == $column->reservations_id && $select->column_id == $column->id;
+                                // return $select->reservations_id == $column->reservations_id && $select->column_id == $column->id;
+                                return $select->columns_set_id == $column->columns_set_id && $select->column_id == $column->id;
                             })->sortBy('display_sequence');
                         @endphp
 

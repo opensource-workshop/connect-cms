@@ -17,7 +17,6 @@ class ReservationsInput extends Model
     // 更新する項目の定義
     protected $fillable = [
         'inputs_parent_id',
-        'reservations_id',
         'facility_id',
         'start_datetime',
         'end_datetime',

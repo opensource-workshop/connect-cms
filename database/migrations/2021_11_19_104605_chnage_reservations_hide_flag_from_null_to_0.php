@@ -27,18 +27,19 @@ class ChnageReservationsHideFlagFromNullTo0 extends Migration
         // reservations_facilities.hide_flag
 
         // 予約カラム
-        if (ReservationsColumn::whereNull('hide_flag')->count() > 0) {
-            ReservationsColumn::whereNull('hide_flag')->update(['hide_flag' => NotShowType::show]);
+        // bugfix: この時点では論理削除カラムなしだが、モデルにはSoftDeletesを定義済みで、Unknown column 'reservations_columns.deleted_at'エラーが発生するため、withTrashed()使う
+        if (ReservationsColumn::whereNull('hide_flag')->withTrashed()->count() > 0) {
+            ReservationsColumn::whereNull('hide_flag')->withTrashed()->update(['hide_flag' => NotShowType::show]);
         }
 
         // 予約カラム選択肢
-        if (ReservationsColumnsSelect::whereNull('hide_flag')->count() > 0) {
-            ReservationsColumnsSelect::whereNull('hide_flag')->update(['hide_flag' => NotShowType::show]);
+        if (ReservationsColumnsSelect::whereNull('hide_flag')->withTrashed()->count() > 0) {
+            ReservationsColumnsSelect::whereNull('hide_flag')->withTrashed()->update(['hide_flag' => NotShowType::show]);
         }
 
         // 施設
-        if (ReservationsFacility::whereNull('hide_flag')->count() > 0) {
-            ReservationsFacility::whereNull('hide_flag')->update(['hide_flag' => NotShowType::show]);
+        if (ReservationsFacility::whereNull('hide_flag')->withTrashed()->count() > 0) {
+            ReservationsFacility::whereNull('hide_flag')->withTrashed()->update(['hide_flag' => NotShowType::show]);
         }
     }
 
