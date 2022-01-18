@@ -36,6 +36,27 @@
             <input type="hidden" name="blogs_id" value="{{$blog_frame->blogs_id}}">
             <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/blogs/settingBlogFrame/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 
+            {{-- 表示件数 --}}
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">
+                    {{BlogFrameConfig::getDescription('blog_view_count')}}
+                    <span class="badge badge-danger">必須</span>
+                </label>
+                <div class="{{$frame->getSettingInputClass()}}">
+                    <input 
+                        type="number"
+                        min="1"
+                        max="100"
+                        class="form-control col-sm-3 @if ($errors->has(BlogFrameConfig::blog_view_count)) border-danger @endif"
+                        value="{{FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::blog_view_count)}}"
+                        id="{{BlogFrameConfig::blog_view_count}}" name="{{BlogFrameConfig::blog_view_count}}"
+                        required
+                    >
+                    @include('plugins.common.errors_inline', ['name' => BlogFrameConfig::blog_view_count])
+                    <small class="text-muted">※ 初期値は15件です。</small>
+                </div>
+            </div>
+
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass()}}">表示条件</label>
                 <div class="{{$frame->getSettingInputClass(true)}}">
