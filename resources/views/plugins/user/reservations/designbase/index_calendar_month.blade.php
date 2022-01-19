@@ -11,7 +11,7 @@
 @section("plugin_contents_$frame->id")
 
     {{-- 予約詳細モーダルウィンドウ --}}
-    @include('plugins.user.reservations.default.include_common_modal')
+    @include('plugins.user.reservations.default.include_calendar_modal')
 
     {{-- タブ表示 --}}
     <ul class="nav nav-tabs">
@@ -144,7 +144,7 @@
                                         @foreach ($cell['bookings'] as $booking)
 
                                             {{-- 予約時間の表示 ＆ モーダルウィンドウ呼び出し --}}
-                                            @include('plugins.user.reservations.default.include_common_modal_call')
+                                            @include('plugins.user.reservations.default.include_calendar_modal_call')
 
                                         @endforeach
                                     @endif

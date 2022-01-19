@@ -410,7 +410,7 @@ class ReservationsPlugin extends UserPluginBase
 
             if ($view_format == ReservationCalendarDisplayType::month) {
                 // 月で表示
-                return $this->view('reservations_calendar_month', [
+                return $this->view('index_calendar_month', [
                     'view_format' => $view_format,
                     'carbon_target_date' => $carbon_target_date,
                     'reservations' => $reservations,
@@ -420,7 +420,7 @@ class ReservationsPlugin extends UserPluginBase
 
             } elseif ($view_format == ReservationCalendarDisplayType::week) {
                 // 週で表示
-                return $this->view('reservations_calendar_week', [
+                return $this->view('index_calendar_week', [
                     'view_format' => $view_format,
                     'carbon_target_date' => $carbon_target_date,
                     'reservations' => $reservations,
