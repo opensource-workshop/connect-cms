@@ -14,24 +14,7 @@
     @include('plugins.user.reservations.default.include_calendar_modal')
 
     {{-- タブ表示 --}}
-    <ul class="nav nav-tabs">
-        <li class="nav-item">
-            {{-- 月タブ --}}
-            <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::now()->format('Ym') }}#frame-{{$frame->id}}"
-                class="nav-link{{ $view_format == ReservationCalendarDisplayType::month ? ' active' : '' }}"
-            >
-                {{ __('messages.month') }}
-            </a>
-        </li>
-        <li class="nav-item">
-            {{-- 週タブ --}}
-            <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ymd') }}#frame-{{$frame->id}}"
-                class="nav-link{{ $view_format == ReservationCalendarDisplayType::week ? ' active' : '' }}"
-            >
-                {{ __('messages.week') }}
-            </a>
-        </li>
-    </ul>
+    @include('plugins.user.reservations.default.include_calendar_tab', ['is_template_designbase' => true])
 
     {{-- designbaseテンプレート --}}
     <div class="orderCalendar">
