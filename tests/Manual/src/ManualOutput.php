@@ -94,13 +94,40 @@ class ManualOutput extends DuskTestCase
         // 元画像, 切り取りする開始点の X, Y, 切り取りする W, H/*
         $json_paths = json_decode($method->img_paths);
         foreach ($json_paths as $json_path) {
+
+            $src_image = imagecreatefrompng($this->screenshots_root . $json_path->name . '.png');
+            $new_image = null;
+
             foreach ($json_path->img_methods as $img_method) {
-                if ($img_method == 'trim_h') {
-                    $src_image = imagecreatefrompng($this->screenshots_root . $json_path->name . '.png');
+
+                if (!\Storage::disk('manual')->exists(dirname($json_path->name))) {
+                    \Storage::disk('manual')->makeDirectory(dirname($json_path->name));
+                }
+
+                if ($img_method->img_method == 'trim_h') {
                     $new_image = imagecreatetruecolor(imagesx($src_image), intval($img_method->args[1]));
                     imagecopyresampled($new_image, $src_image, 0, 0, 0, 0, imagesx($src_image), imagesy($src_image), imagesx($src_image), imagesy($src_image));
-                    imagepng($new_image, dirname(config('filesystems.disks.manual.root') . '/' .  $method->html_path) . '/images/' . basename($img_method->name) . '.png');
                 }
+
+                if ($img_method->img_method == 'arc') {
+                    if ($new_image == null) {
+                        $new_image = imagecreatetruecolor(imagesx($src_image), imagesy($src_image));
+                    }
+                    $elipse_w = $img_method->args[2];
+                    $elipse_h = $img_method->args[3];
+                    for ($line = 0; $line < $img_method->args[4]; $line++) {
+                         $elipse_w--;
+                         imageellipse($new_image,
+                                      $img_method->args[0],
+                                      $img_method->args[1],
+                                      $elipse_w,
+                                      $elipse_h,
+                                      imagecolorallocate($new_image, 255, 0, 0)
+                         );
+                        $elipse_h--;
+                    }
+                }
+                imagepng($new_image, \Storage::disk('manual')->path($json_path->name . '.png'));
             }
         }
     }
@@ -114,17 +141,19 @@ class ManualOutput extends DuskTestCase
     {
         // 画像をコピーするディレクトリのパス確認
         if ($method->img_paths) {
-            if (!\Storage::disk('manual')->exists(dirname($method->html_path) . '/images')) {
-                \Storage::disk('manual')->makeDirectory(dirname($method->html_path) . '/images');
-            }
             // json か文字列かで処理を分岐
             if (json_decode($method->img_paths)) {
                 $this->trimingImage($method);
             } else {
                 // 画像をコピー
                 foreach (explode(',', $method->img_paths) as $img_path) {
-                    \File::copy($this->screenshots_root . $img_path . '.png',
-                                dirname(config('filesystems.disks.manual.root') . '/' .  $method->img_paths) . '/images/' . basename($img_path) . '.png');
+
+                    if (!\Storage::disk('manual')->exists(dirname($img_path))) {
+                        \Storage::disk('manual')->makeDirectory(dirname($img_path));
+                    }
+
+                    \File::copy(\Storage::disk('screenshot')->path($img_path . '.png'),
+                                \Storage::disk('manual')->path($img_path . '.png'));
                 }
             }
         }

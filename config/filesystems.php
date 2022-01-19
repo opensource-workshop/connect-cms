@@ -76,6 +76,10 @@ return [
             'driver' => 'local',
             'root' => base_path('tests/Manual/html'),
         ],
+        'screenshot' => [
+            'driver' => 'local',
+            'root' => base_path('tests/Browser/screenshots'),
+        ],
 
     ],
 

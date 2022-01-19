@@ -43,13 +43,21 @@ class HeaderAreaTest extends DuskTestCase
             'method_desc' => 'プラグイン追加の方法を紹介します。',
             'method_detail' => 'プラグインの追加方法は、各プラグインで共通です。',
             'html_path' => 'common/index/index/index.html',
-//            'img_paths' => 'common/index/add_plugin1,common/plugin/add_plugin2,common/plugin/add_plugin3',
             'img_paths' => '[
-                {"name": "common/index/add_plugin/images/add_plugin1", "img_methods": [{"img_method": "trim_h", "args": [0,250]}]},
-                {"name": "common/index/add_plugin/images/add_plugin2", "img_methods": [{"img_method": "trim_h", "args": [0,400]}]},
-                {"name": "common/index/add_plugin/images/add_plugin3", "img_methods": [{"img_method": "trim_h", "args": [0,600]}]},
-                {"name": "common/index/add_plugin/images/add_plugin4", "img_methods": [{"img_method": "trim_h", "args": [0,300]}]}
-             ]',
+                {"name": "common/index/index/images/add_plugin1", "img_methods": [
+                    {"img_method": "trim_h", "args": [0,250]},
+                    {"img_method": "arc", "args": [1670,75,200,50,10]}
+                ]},
+                {"name": "common/index/index/images/add_plugin2", "img_methods": [
+                    {"img_method": "trim_h", "args": [0,400]},
+                    {"img_method": "arc", "args": [960,130,200,50,10]}
+                ]},
+                {"name": "common/index/index/images/add_plugin3", "img_methods": [
+                    {"img_method": "trim_h", "args": [0,600]},
+                    {"img_method": "arc", "args": [960,230,200,40,10]}
+                ]},
+                {"name": "common/index/index/images/add_plugin4", "img_methods": [{"img_method": "trim_h", "args": [0,300]}]}
+            ]',
             'test_result' => 'OK',
         ]);
 
