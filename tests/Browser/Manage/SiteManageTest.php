@@ -50,21 +50,21 @@ class SiteManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/site')
                     ->assertTitleContains('Connect-CMS')
-                    ->screenshot('manage/site/index');
+                    ->screenshot('manage/site/index/images/index');
         });
 
         // ページスクロール
         $this->browse(function (Browser $browser) {
             $browser->scrollIntoView('#base_header_optional_class')
-                    ->screenshot('manage/site/index2');
+                    ->screenshot('manage/site/index/images/index2');
         });
         $this->browse(function (Browser $browser) {
             $browser->scrollIntoView('footer')
-                    ->screenshot('manage/site/index3');
+                    ->screenshot('manage/site/index/images/index3');
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/index,manage/site/index2,manage/site/index3');
+        $this->putManualData('manage/site/index/images/index,manage/site/index/images/index2,manage/site/index/images/index3');
     }
 
     /**
@@ -77,7 +77,7 @@ class SiteManageTest extends DuskTestCase
             $browser->visit('/manage/site')
                     ->click('label[for="base_login_password_reset_off"]')
                     ->assertTitleContains('Connect-CMS')
-                    ->screenshot('manage/site/edit');
+                    ->screenshot('manage/site/edit/images/edit');
         });
     }
 
@@ -89,7 +89,7 @@ class SiteManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
                     ->assertTitleContains('Connect-CMS')
-                    ->screenshot('manage/site/update');
+                    ->screenshot('manage/site/update/images/update');
         });
     }
 
@@ -102,11 +102,11 @@ class SiteManageTest extends DuskTestCase
             $browser->visit('/manage/site/meta')
                     ->type('description', 'Connect-CMSのテストサイトです。')
                     ->assertTitleContains('Connect-CMS')
-                    ->screenshot('manage/site/meta');
+                    ->screenshot('manage/site/meta/images/meta');
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/meta');
+        $this->putManualData('manage/site/meta/images/meta');
     }
 
     /**

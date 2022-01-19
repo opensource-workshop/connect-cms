@@ -52,11 +52,11 @@ class PageManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/page')
                     ->assertTitleContains('Connect-CMS')
-                    ->screenshot('manage/page/index');
+                    ->screenshot('manage/page/index/images/index');
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/page/index');
+        $this->putManualData('manage/page/index/images/index');
     }
 
     /**
@@ -73,16 +73,16 @@ class PageManageTest extends DuskTestCase
                     ->type('permanent_link', '/test')
                     ->click('#label_base_display_flag')
                     ->assertTitleContains('Connect-CMS')
-                    ->screenshot('manage/page/edit');
+                    ->screenshot('manage/page/edit/images/edit');
         });
 
         $this->browse(function (Browser $browser) {
             $browser->scrollIntoView('footer');
-            $browser->screenshot('manage/page/edit2');
+            $browser->screenshot('manage/page/edit/images/edit2');
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/page/edit,manage/page/edit2');
+        $this->putManualData('manage/page/edit/images/edit,manage/page/edit/images/edit2');
     }
 
     /**
@@ -93,7 +93,7 @@ class PageManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->press('ページ追加')
                     ->assertTitleContains('Connect-CMS')
-                    ->screenshot('manage/page/store');
+                    ->screenshot('manage/page/store/images/store');
         });
     }
 
@@ -108,11 +108,11 @@ class PageManageTest extends DuskTestCase
                     ->press('インポート')
                     ->acceptDialog()
                     ->assertPathIs('/manage/page/import')
-                    ->screenshot('manage/page/upload');
+                    ->screenshot('manage/page/upload/images/upload');
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/page/upload');
+        $this->putManualData('manage/page/upload/images/upload');
     }
 
     /**
@@ -128,11 +128,11 @@ class PageManageTest extends DuskTestCase
 
             $browser->visit('/manage/page')
                     ->select('#form_select_page' . $upload2->id . ' .manage-page-selectpage', $upload->id)
-                    ->screenshot('manage/page/move_page');
+                    ->screenshot('manage/page/move_page/images/move_page');
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/page/move_page');
+        $this->putManualData('manage/page/move_page/images/move_page');
     }
 
     /**
@@ -166,7 +166,7 @@ class PageManageTest extends DuskTestCase
             $browser->visit('/manage/group/edit')
                     ->type('name', $name)
                     ->assertTitleContains('Connect-CMS')
-                    ->screenshot('manage/page/group_edit');
+                    ->screenshot('manage/page/group_edit/images/group_edit');
         });
     }
 
@@ -178,7 +178,7 @@ class PageManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->press('グループ変更')
                     ->assertTitleContains('Connect-CMS')
-                    ->screenshot('manage/page/group_update');
+                    ->screenshot('manage/page/group_update/images/group_update');
         });
     }
 
@@ -198,10 +198,10 @@ class PageManageTest extends DuskTestCase
             $browser->pause(500);
 
             //$this->screenshot($browser);
-            $browser->screenshot('manage/page/page_role');
+            $browser->screenshot('manage/page/page_role/images/page_role');
 
             $browser->click("label[for='role_reporter1']")
-                    ->screenshot('manage/page/page_role2');
+                    ->screenshot('manage/page/page_role/images/page_role2');
         });
     }
 
@@ -218,12 +218,12 @@ class PageManageTest extends DuskTestCase
             $browser->pause(500);
 
             //$this->screenshot($browser);
-            $browser->screenshot('manage/page/page_role_update');
+            $browser->screenshot('manage/page/page_role_update/images/page_role_update');
 
             // [TODO] チェックボックスONにしてるはずなんだけど、なんでかチェック外れて更新できない。残念ギブアップ。
             $browser->press('権限更新')
                     ->assertTitleContains('Connect-CMS')
-                    ->screenshot('manage/page/page_role_update2');
+                    ->screenshot('manage/page/page_role_update/images/page_role_update2');
         });
     }
 }

@@ -135,12 +135,16 @@ echo --- 外部認証管理のテスト
 rem php artisan dusk tests\Browser\Manage\AuthManageTest.php
 
 rem ---------------------------------------------
-rem - 一般プラグイン
+rem - 共通
 rem ---------------------------------------------
 
 echo.
 echo --- ヘッダー
-php artisan dusk tests\Browser\User\HeaderAreaTest.php
+php artisan dusk tests\Browser\Common\HeaderAreaTest.php
+
+rem ---------------------------------------------
+rem - 一般プラグイン
+rem ---------------------------------------------
 
 echo.
 echo --- ブログ

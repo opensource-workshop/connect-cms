@@ -16,7 +16,7 @@
                 <div class="card bg-light mb-3">
                     <div class="card-body">
                         <dl class="row mb-0">
-                            @foreach($methods->where('plugin_name', $current_method->plugin_name) as $method)
+                            @foreach($methods->where('category', $current_method->category)->where('plugin_name', $current_method->plugin_name) as $method)
                                 <dd class="col-md-2"><a href="{{$base_path}}{{$method->html_path}}">{!!$method->method_title!!}</a></dd>
                                 <dd class="col-md-10">{!!$method->method_desc!!}</dd>
                             @endforeach

@@ -38,7 +38,16 @@ class Dusks extends Model
      */
     public function getImgPathArray()
     {
-        return explode(',', $this->img_paths);
+        if (json_decode($this->img_paths)) {
+            $json_paths = json_decode($this->img_paths);
+            $ret = array();
+            foreach ($json_paths as $json_path) {
+                $ret[] = $json_path->name;
+            }
+            return $ret;
+        } else {
+            return explode(',', $this->img_paths);
+        }
     }
 
     /**

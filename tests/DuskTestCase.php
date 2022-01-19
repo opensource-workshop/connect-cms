@@ -186,20 +186,22 @@ abstract class DuskTestCase extends BaseTestCase
             // 管理機能からプラグイン追加で固定記事を追加する。
             $browser->visit('/')
                     ->clickLink('管理機能')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('common/index/add_plugin/images/add_plugin1');
 
             // ヘッダーエリアにプラグイン追加
-            $browser->clickLink('プラグイン追加')
-                    ->assertTitleContains('Connect-CMS');
-
             // 早すぎると、プラグイン追加ダイアログが表示しきれないので、1秒待つ。
-            $browser->pause(1000);
-            $this->screenshot($browser);
+            $browser->clickLink('プラグイン追加')
+                    ->assertTitleContains('Connect-CMS')
+                    ->pause(1000)
+                    ->screenshot('common/index/add_plugin/images/add_plugin2');
 
-            $browser->select('add_plugin', $add_plugin)
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+            $browser->click('#form_add_plugin0')
+                    ->screenshot('common/index/add_plugin/images/add_plugin3');
+
+            $browser->select('#form_add_plugin0', $add_plugin)
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('common/index/add_plugin/images/add_plugin4');
         });
     }
 

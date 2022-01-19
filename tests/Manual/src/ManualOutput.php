@@ -85,6 +85,27 @@ class ManualOutput extends DuskTestCase
     }
 
     /**
+     * 画像トリミング
+     *
+     * @return void
+     */
+    private function trimingImage($method)
+    {
+        // 元画像, 切り取りする開始点の X, Y, 切り取りする W, H/*
+        $json_paths = json_decode($method->img_paths);
+        foreach ($json_paths as $json_path) {
+            foreach ($json_path->img_methods as $img_method) {
+                if ($img_method == 'trim_h') {
+                    $src_image = imagecreatefrompng($this->screenshots_root . $json_path->name . '.png');
+                    $new_image = imagecreatetruecolor(imagesx($src_image), intval($img_method->args[1]));
+                    imagecopyresampled($new_image, $src_image, 0, 0, 0, 0, imagesx($src_image), imagesy($src_image), imagesx($src_image), imagesy($src_image));
+                    imagepng($new_image, dirname(config('filesystems.disks.manual.root') . '/' .  $method->html_path) . '/images/' . basename($img_method->name) . '.png');
+                }
+            }
+        }
+    }
+
+    /**
      * 画像出力
      *
      * @return void
@@ -96,10 +117,15 @@ class ManualOutput extends DuskTestCase
             if (!\Storage::disk('manual')->exists(dirname($method->html_path) . '/images')) {
                 \Storage::disk('manual')->makeDirectory(dirname($method->html_path) . '/images');
             }
-            // 画像をコピー
-            foreach (explode(',', $method->img_paths) as $img_path) {
-                \File::copy($this->screenshots_root . $img_path . '.png',
-                            dirname(config('filesystems.disks.manual.root') . '/' .  $method->html_path) . '/images/' . basename($img_path) . '.png');
+            // json か文字列かで処理を分岐
+            if (json_decode($method->img_paths)) {
+                $this->trimingImage($method);
+            } else {
+                // 画像をコピー
+                foreach (explode(',', $method->img_paths) as $img_path) {
+                    \File::copy($this->screenshots_root . $img_path . '.png',
+                                dirname(config('filesystems.disks.manual.root') . '/' .  $method->img_paths) . '/images/' . basename($img_path) . '.png');
+                }
             }
         }
     }
