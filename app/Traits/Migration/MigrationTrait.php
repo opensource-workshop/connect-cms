@@ -26,6 +26,7 @@ use App\Models\Common\PageRole;
 use App\Models\Common\Permalink;
 use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
+use App\Models\Core\FrameConfig;
 use App\Models\Core\UsersRoles;
 use App\Models\User\Bbses\Bbs;
 use App\Models\User\Bbses\BbsPost;
@@ -116,6 +117,7 @@ use App\Models\Migration\Nc2\Nc2Simplemovie;
 
 use App\Traits\ConnectCommonTrait;
 
+use App\Enums\BlogFrameConfig;
 use App\Enums\CounterDesignType;
 use App\Enums\LinklistType;
 
@@ -1682,20 +1684,11 @@ trait MigrationTrait
                 }
                 $bucket = Buckets::create(['bucket_name' => $blog_name, 'plugin_name' => 'blogs']);
 
-                $view_count = 10;
-                if (array_key_exists('blog_base', $blog_ini) && array_key_exists('view_count', $blog_ini['blog_base'])) {
-                    $view_count = $blog_ini['blog_base']['view_count'];
-                    // view_count が 0 を含む空の場合は、初期値にする。（NC2 で0 で全件表示されているものがあるので、その対応）
-                    if (empty($view_count)) {
-                        $view_count = 10;
-                    }
-                }
-
                 $use_like = 0;
                 if (array_key_exists('blog_base', $blog_ini) && array_key_exists('use_like', $blog_ini['blog_base'])) {
                     $use_like = $blog_ini['blog_base']['use_like'];
                 }
-                $blog = Blogs::create(['bucket_id' => $bucket->id, 'blog_name' => $blog_name, 'view_count' => $view_count, 'use_like' => $use_like]);
+                $blog = Blogs::create(['bucket_id' => $bucket->id, 'blog_name' => $blog_name, 'use_like' => $use_like]);
 
                 // マッピングテーブルの追加
                 $mapping = MigrationMapping::create([
@@ -3814,6 +3807,24 @@ trait MigrationTrait
 
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+
+        // frame_configs 登録
+        if (!empty($blogs)) {
+            // 表示件数
+            $view_count = 10;
+            if (array_key_exists('blog_base', $blog_ini) && array_key_exists('view_count', $blog_ini['blog_base'])) {
+                $view_count = $blog_ini['blog_base']['view_count'];
+                // view_count が 0 を含む空の場合は、初期値にする。（NC2 で0 で全件表示されているものがあるので、その対応）
+                if (empty($view_count)) {
+                    $view_count = 10;
+                }
+            }
+
+            $frame_config = FrameConfig::updateOrCreate(
+                ['frame_id' => $frame->id, 'name' => BlogFrameConfig::blog_view_count],
+                ['value' => $view_count]
+            );
+        }
     }
 
     /**
