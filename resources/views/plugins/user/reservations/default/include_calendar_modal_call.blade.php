@@ -1,5 +1,9 @@
 {{--
  * 予約詳細モーダル呼び出し
+ *
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category 施設予約プラグイン
 --}}
 @if ($booking['booking_header']->status == StatusType::approval_pending)
     @can('role_update_or_approval', [[$booking['booking_header'], $frame->plugin_name, $buckets]])

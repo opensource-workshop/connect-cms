@@ -1,5 +1,9 @@
 {{--
  * 予約詳細モーダルウィンドウ
+ *
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category 施設予約プラグイン
 --}}
 <div class="modal" id="bookingDetailModal{{$frame_id}}" tabindex="-1" role="dialog" aria-labelledby="bookingModalLabel{{$frame_id}}" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
