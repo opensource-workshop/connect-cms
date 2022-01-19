@@ -48,6 +48,7 @@ use RRule\RRule;
  * 施設予約の特例処理：承認待ちの予約は他の人も見える。詳細は見せない。
  *
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
  * @package Controller
@@ -337,7 +338,6 @@ class ReservationsPlugin extends UserPluginBase
             ->get();
 
         // 施設毎に予約情報を付加したカレンダーデータを生成
-        // $time_start = microtime(true); //debug用
         foreach ($facilities as $facility) {
             $calendar = null;
             $calendar_cells = null;
@@ -408,16 +408,27 @@ class ReservationsPlugin extends UserPluginBase
             // 予約項目で選択肢が指定されていた場合に選択肢データが存在すること
             // $isExistSelect) {
 
-            // $time = microtime(true) - $time_start;  //debug用
-            // dd($time . '秒');  //debug用
-            // dd($calendars);  //debug用
-            return $this->view('reservations_calendar_common', [
-                'view_format' => $view_format,
-                'carbon_target_date' => $carbon_target_date,
-                'reservations' => $reservations,
-                'facilities' => $facilities,
-                'calendars' => $calendars,
-            ]);
+            if ($view_format == ReservationCalendarDisplayType::month) {
+                // 月で表示
+                return $this->view('reservations_calendar_month', [
+                    'view_format' => $view_format,
+                    'carbon_target_date' => $carbon_target_date,
+                    'reservations' => $reservations,
+                    'facilities' => $facilities,
+                    'calendars' => $calendars,
+                ]);
+
+            } elseif ($view_format == ReservationCalendarDisplayType::week) {
+                // 週で表示
+                return $this->view('reservations_calendar_week', [
+                    'view_format' => $view_format,
+                    'carbon_target_date' => $carbon_target_date,
+                    'reservations' => $reservations,
+                    'facilities' => $facilities,
+                    'calendars' => $calendars,
+                ]);
+            }
+
         } else {
 
             // バケツ等なし
