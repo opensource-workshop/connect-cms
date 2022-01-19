@@ -292,13 +292,11 @@ class BbsesPlugin extends UserPluginBase
             })
             ->join('frames', 'frames.bucket_id', '=', 'bbses.bucket_id')
             ->leftjoin('pages', 'pages.id', '=', 'frames.page_id')
-            ->where(function ($plugin_query) {
-                $plugin_query->where('bbs_posts.title', 'like', '?')
-                    ->orWhere('bbs_posts.body', 'like', '?');
+            ->where(function ($plugin_query)  use ($search_keyword) {
+                $plugin_query->where('bbs_posts.title', 'like', '%' . $search_keyword . '%')
+                    ->orWhere('bbs_posts.body', 'like', '%' . $search_keyword . '%');
             });
 
-        $bind = array('%' . $search_keyword . '%', '%' . $search_keyword . '%');
-        $return[] = $bind;
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/bbses/show';
 
