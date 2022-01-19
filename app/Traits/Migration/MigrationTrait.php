@@ -1684,15 +1684,6 @@ trait MigrationTrait
                 }
                 $bucket = Buckets::create(['bucket_name' => $blog_name, 'plugin_name' => 'blogs']);
 
-                $view_count = 10;
-                if (array_key_exists('blog_base', $blog_ini) && array_key_exists('view_count', $blog_ini['blog_base'])) {
-                    $view_count = $blog_ini['blog_base']['view_count'];
-                    // view_count が 0 を含む空の場合は、初期値にする。（NC2 で0 で全件表示されているものがあるので、その対応）
-                    if (empty($view_count)) {
-                        $view_count = 10;
-                    }
-                }
-
                 $use_like = 0;
                 if (array_key_exists('blog_base', $blog_ini) && array_key_exists('use_like', $blog_ini['blog_base'])) {
                     $use_like = $blog_ini['blog_base']['use_like'];
