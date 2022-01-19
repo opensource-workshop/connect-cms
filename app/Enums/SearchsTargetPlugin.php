@@ -13,12 +13,14 @@ final class SearchsTargetPlugin extends EnumsBase
     const contents = 'contents';
     const blogs = 'blogs';
     const bbses = 'bbses';
+    const databases = 'databases';
 
     // key/valueの連想配列
     const enum = [
         self::contents => '固定記事',
         self::blogs => 'ブログ',
         self::bbses => '掲示板',
+        self::databases => 'データベース',
     ];
 
     /**
