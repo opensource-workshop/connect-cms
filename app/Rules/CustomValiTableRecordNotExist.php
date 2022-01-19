@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
  * 該当トランザクションテーブルに指定ID($value)のレコードが存在しないこと
  * ※マスタテーブルレコード削除時にトランザクションテーブルに該当マスタ参照が残っていないことのチェックを想定
  */
-class CustomVali_TableRecordNotExist implements Rule
+class CustomValiTableRecordNotExist implements Rule
 {
     // トランザクションテーブル名を指定
     protected $transaction_table_name;

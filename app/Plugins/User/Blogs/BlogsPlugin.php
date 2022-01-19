@@ -182,7 +182,6 @@ class BlogsPlugin extends UserPluginBase
                 'frames.*',
                 'blogs.id as blogs_id',
                 'blogs.blog_name',
-                'blogs.view_count',
                 'blogs.rss',
                 'blogs.rss_count',
                 'blogs.use_like',
@@ -263,7 +262,7 @@ class BlogsPlugin extends UserPluginBase
         //$blogs_posts = null;
 
         // 件数
-        $count = $blog_frame->view_count;
+        $count = FrameConfig::getConfigValue($this->frame_configs, BlogFrameConfig::blog_view_count);
         if ($option_count != null) {
             $count = $option_count;
         }
@@ -989,7 +988,7 @@ WHERE status = 0
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
         // Frame データ
-        $blog_frame = Frame::select('frames.*', 'blogs.id as blogs_id', 'blogs.view_count')
+        $blog_frame = Frame::select('frames.*', 'blogs.id as blogs_id')
             ->leftJoin('blogs', 'blogs.bucket_id', '=', 'frames.bucket_id')
             ->where('frames.id', $frame_id)->first();
 
@@ -1075,11 +1074,9 @@ WHERE status = 0
     {
         // デフォルトでチェック
         $validator_values['blog_name'] = ['required'];
-        $validator_values['view_count'] = ['required', 'numeric'];
         $validator_values['rss_count'] = ['required', 'numeric'];
 
         $validator_attributes['blog_name'] = 'ブログ名';
-        $validator_attributes['view_count'] = '表示件数';
         $validator_attributes['rss_count'] = 'RSS件数';
 
         // 項目のエラーチェック
@@ -1128,7 +1125,6 @@ WHERE status = 0
 
         // ブログ設定
         $blogs->blog_name     = $request->blog_name;
-        $blogs->view_count    = (intval($request->view_count) < 0) ? 0 : intval($request->view_count);
         $blogs->rss           = $request->rss;
         $blogs->rss_count     = $request->rss_count;
         $blogs->use_like      = $request->use_like;
@@ -1390,10 +1386,12 @@ EOD;
 
         // 項目のエラーチェック
         $validator_values['scope_value'] = ['nullable', 'digits:4'];
+        $validator_values[BlogFrameConfig::blog_view_count] = ['required', 'numeric', 'min:1', 'max:100'];
         if ($request->scope == 'year' || $request->scope == 'fiscal') {
             $validator_values['scope_value'][] = ['required'];
         }
         $validator_attributes['scope_value'] = '指定年';
+        $validator_attributes[BlogFrameConfig::blog_view_count] = BlogFrameConfig::getDescription('blog_view_count');
 
         $validator = Validator::make($request->all(), $validator_values);
         $validator->setAttributeNames($validator_attributes);
