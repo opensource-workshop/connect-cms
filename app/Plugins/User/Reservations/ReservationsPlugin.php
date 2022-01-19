@@ -218,7 +218,20 @@ class ReservationsPlugin extends UserPluginBase
 
         // カレンダー表示タイプの指定がない場合はフレームに紐づくコンテンツの初期表示設定で表示する
         if (empty($view_format)) {
-            $view_format = $reservations_frame->calendar_initial_display_type;
+            // change: セッション対応
+            // $view_format = $reservations_frame->calendar_initial_display_type;
+            $view_format = session('view_format' . $frame_id, $reservations_frame->calendar_initial_display_type);
+        }
+
+        // 対象日時未設定（初期表示）の場合は現在日時をセット
+        if (empty($carbon_target_date)) {
+            // change: セッション対応
+            // ・指定があれば指定日でとる。
+            // ・なければセッションから指定日とる。
+            // ・セッションなければ、今日日付とる。
+            //
+            // $carbon_target_date = ConnectCarbon::today();
+            $carbon_target_date = new ConnectCarbon(session('target_ymd' . $frame_id, null));
         }
 
         // 予約データ
@@ -256,11 +269,6 @@ class ReservationsPlugin extends UserPluginBase
         //         $isExistSelect = false;
         //     }
         // }
-
-        // 対象日時未設定（初期表示）の場合は現在日時をセット
-        if (empty($carbon_target_date)) {
-            $carbon_target_date = ConnectCarbon::today();
-        }
 
         /**
          * カレンダー表示データの生成
@@ -519,7 +527,7 @@ class ReservationsPlugin extends UserPluginBase
     }
 
     /**
-     *  週表示関数
+     * 週表示関数
      */
     public function week($request, $page_id, $frame_id, $target_ymd)
     {
@@ -529,21 +537,28 @@ class ReservationsPlugin extends UserPluginBase
         if (!checkdate($month, $day, $year)) {
             return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
         }
-        $carbon_target_date = new ConnectCarbon("$target_ymd");
+        session()->put('target_ymd'. $frame_id, $target_ymd);
+        session()->put('view_format'. $frame_id, ReservationCalendarDisplayType::week);
+        $carbon_target_date = new ConnectCarbon($target_ymd);
         return $this->index($request, $page_id, $frame_id, ReservationCalendarDisplayType::week, $carbon_target_date);
     }
 
     /**
-     *  月表示関数
+     * 月表示関数
      */
     public function month($request, $page_id, $frame_id, $target_ym)
     {
         $year = substr($target_ym, 0, 4);
         $month = substr($target_ym, 4, 2);
-        if (!checkdate($month, '01', $year)) {
+        $day = substr($target_ym, 6, 2);
+        $day = empty($day) ? '01' : $day;
+        // if (!checkdate($month, '01', $year)) {
+        if (!checkdate($month, $day, $year)) {
             return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . ')');
         }
-        $carbon_target_date = new ConnectCarbon("$year-$month-01");
+        session()->put('target_ymd'. $frame_id, "$year-$month-$day");
+        session()->put('view_format'. $frame_id, ReservationCalendarDisplayType::month);
+        $carbon_target_date = new ConnectCarbon("$year-$month-$day");
         return $this->index($request, $page_id, $frame_id, ReservationCalendarDisplayType::month, $carbon_target_date);
     }
 

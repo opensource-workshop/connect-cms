@@ -51,7 +51,7 @@
                 <div class="float-right col-sm-5 to_current">
 
                     {{-- 今月へボタン --}}
-                    <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ym') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light rounded-pill">
+                    <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ymd') }}#frame-{{$frame->id}}" class="list-group-item btn btn-light rounded-pill">
                         {{__('messages.to_this_month')}}<br>({{ App::getLocale() == ConnectLocale::ja ? Carbon::today()->format('Y年n月') : Carbon::today()->format('M Y') }})
                     </a>
                 </div>

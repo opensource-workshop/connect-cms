@@ -38,7 +38,7 @@
 
             {{-- 今月へボタン --}}
             <div class="d-inline align-bottom ml-3">
-                <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ym') }}#frame-{{$frame->id}}" class="badge badge-pill badge-info">
+                <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ymd') }}#frame-{{$frame->id}}" class="badge badge-pill badge-info">
                     {{__('messages.to_this_month')}}
                 </a>
             </div>

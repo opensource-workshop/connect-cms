@@ -18,7 +18,7 @@
 
     <li class="nav-item">
         {{-- 月タブ --}}
-        <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ Carbon::now()->format('Ym') }}#frame-{{$frame->id}}"
+        <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->format('Ymd') }}#frame-{{$frame->id}}"
             @if (isset($is_template_designbase))
                 {{-- designbaseテンプレート --}}
                 class="nav-link{{ $view_format == ReservationCalendarDisplayType::month ? ' active' : '' }}"
@@ -32,7 +32,7 @@
     </li>
     <li class="nav-item">
         {{-- 週タブ --}}
-        <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ Carbon::today()->format('Ymd') }}#frame-{{$frame->id}}"
+        <a href="{{url('/')}}/plugin/reservations/week/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->format('Ymd') }}#frame-{{$frame->id}}"
             @if (isset($is_template_designbase))
                 {{-- designbaseテンプレート --}}
                 class="nav-link{{ $view_format == ReservationCalendarDisplayType::week ? ' active' : '' }}"
