@@ -168,33 +168,20 @@ class SearchsPlugin extends UserPluginBase
                  )
                  ->leftJoin('categories', 'categories.id', '=', 'searchs_dual.categories_id');
 
-        // フレームの選択が有効な場場合のため、フレームID を取っておく。
-        $frame_ids = explode(',', $searchs_frame->target_frame_ids);
-        // 各プラグインから受け取ったSQL Bind 用変数をまとめる。
-        $bindings = [];
         // 各プラグインのSQL をUNION
         foreach ($union_sqls as $union_sql) {
             // フレームの選択が行われる場合
             if ($searchs_frame->frame_select == 1) {
                 $union_sql->whereIn('frames.id', explode(',', $searchs_frame->target_frame_ids));
             }
-
-            // SQL Bind 用変数
-            $bindings = array_merge($bindings, $union_sql->getBindings());
             $searchs_sql->unionAll($union_sql);
         }
 
         // UNION 後をソート
         $searchs_sql->orderBy('posted_at', 'desc');
 
-        // UNION 後をページネーションしたいので、UNION で構築したSQL をサブクエリにする。
-        $searchs_query = DB::table(DB::raw('('.$searchs_sql->toSql().') AS searchs_result'));
-
-        // SQL に引数をBind する。
-        $searchs_query->setBindings($bindings);
-
         // ページングしてデータ取得
-        $searchs_results = $searchs_query->paginate($searchs_frame->count, ["*"], "frame_{$searchs_frame->id}_page");
+        $searchs_results = $searchs_sql->paginate($searchs_frame->count, ["*"], "frame_{$searchs_frame->id}_page");
 
         return array($searchs_results, $link_pattern, $link_base);
     }
