@@ -27,11 +27,11 @@
             <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->subMonthsNoOverflow('1')->format('Ym') }}#frame-{{$frame->id}}"><i class="fas fa-chevron-circle-left"></i></a>
             {{-- 当月表示 --}}
             @if (App::getLocale() == ConnectLocale::ja)
-                <h5 class="d-inline">{{$carbon_target_date->format('Y年')}}</h5>
-                <h3 class="d-inline">{{$carbon_target_date->format('n月')}}</h3>
+                <div class="h5 d-inline">{{$carbon_target_date->format('Y年')}}</div>
+                <div class="h3 d-inline">{{$carbon_target_date->format('n月')}}</div>
             @else
-                <h3 class="d-inline">{{$carbon_target_date->format('M')}}</h3>
-                <h5 class="d-inline">{{$carbon_target_date->format('Y')}}</h5>
+                <div class="h3 d-inline">{{$carbon_target_date->format('M')}}</div>
+                <div class="h5 d-inline">{{$carbon_target_date->format('Y')}}</div>
             @endif
             {{-- 翌月ボタン --}}
             <a href="{{url('/')}}/plugin/reservations/month/{{$page->id}}/{{$frame->id}}/{{ $carbon_target_date->copy()->addMonthsNoOverflow('1')->format('Ym') }}#frame-{{$frame->id}}"><i class="fas fa-chevron-circle-right"></i></a>
