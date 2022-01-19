@@ -1,5 +1,9 @@
 {{--
  * 施設予約・バケツなし画面テンプレート。
+ *
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category 施設予約プラグイン
 --}}
 @extends('core.cms_frame_base')
 
