@@ -242,17 +242,14 @@ class ContentsPlugin extends UserPluginBase
                    ->join('frames', 'frames.bucket_id', '=', 'contents.bucket_id')
                    ->join('pages', 'pages.id', '=', 'frames.page_id')
                    ->whereIn('pages.id', $page_ids)
-                   ->where('status', '?')
+                   ->where('status', StatusType::active)
                    ->where(function ($plugin_query) use ($search_keyword) {
-                       $plugin_query->where('contents.content_text', 'like', '?')
-                                    ->orWhere('frames.frame_title', 'like', '?');
+                       $plugin_query->where('contents.content_text', 'like', '%'.$search_keyword.'%')
+                                    ->orWhere('frames.frame_title', 'like', '%'.$search_keyword.'%');
                    })
                    ->whereNull('contents.deleted_at');
 
-        $bind = array($page_ids, 0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
-
         $return[] = $query;
-        $return[] = $bind;
         $return[] = 'show_page';
         $return[] = '/page';
 

@@ -3838,6 +3838,16 @@ AND databases_inputs.posted_at <= NOW()
      */
     public static function getSearchArgs($search_keyword, $page_ids = null)
     {
+
+        // 全ての「カラム」と「表示設定の絞り込み条件」の取得
+        $columns = DatabasesTool::getDatabasesColumnsAndFilterSearchAll();
+        $columns = $columns->get();
+
+        // 権限によって非表示columのdatabases_columns_id配列を取得する（各データベースの項目毎で権限によって非表示）
+        $hide_columns_ids = (new DatabasesTool())->getHideColumnsIds($columns, 'list_detail_display_flag');
+
+        // 各データベースのフレームの表示設定
+        $databases_frames_settings = DatabasesTool::getDatabasesFramesSettings($columns);
         // Query Builder のバグ？
         // whereIn で指定した引数が展開されずに、引数の変数分だけ、setBindings の引数を要求される。
         // そのため、whereIn とsetBindings 用の変数に同じ $page_ids を設定している。
@@ -3847,7 +3857,7 @@ AND databases_inputs.posted_at <= NOW()
                        'frames.id                   as frame_id',
                        'frames.page_id              as page_id',
                        'pages.permanent_link        as permanent_link',
-                       'databases_inputs.id         as post_title',
+                       'databases_input_cols.value  as post_title',
                        DB::raw('0 as important'),
                        'databases_inputs.created_at as posted_at',
                        DB::raw('null as posted_name'),
@@ -3859,15 +3869,40 @@ AND databases_inputs.posted_at <= NOW()
                    ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
                    ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
                    ->join('pages', 'pages.id', '=', 'frames.page_id')
-                   ->whereIn('pages.id', $page_ids);
-
-        //$bind = array($page_ids, 0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
-        $bind = array($page_ids);
+                   ->leftJoin('databases_columns', function ($leftJoin) use ($hide_columns_ids) {
+                        $leftJoin->on('databases_inputs.databases_id', '=', 'databases_columns.databases_id')
+                                    ->where('databases_columns.title_flag', 1)
+                                    // タイトル指定しても、権限によって非表示columだったらvalue表示しない（基本的に、タイトル指定したけど権限で非表示は、設定ミスと思う。その時は(無題)で表示される）
+                                    ->whereNotIn('databases_columns.id', $hide_columns_ids);
+                   })
+                   ->leftJoin('databases_input_cols', function ($leftJoin) {
+                        $leftJoin->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
+                                    ->on('databases_columns.id', '=', 'databases_input_cols.databases_columns_id');
+                   })
+                    ->where('databases_inputs.status', StatusType::active)
+                    ->where('databases_inputs.posted_at', '<=', Carbon::now())
+                    ->whereIn('pages.id', $page_ids);
+    
+            // 全データベースの検索キーワードの絞り込み と カラムの絞り込み
+            $query = DatabasesTool::appendSearchKeywordAndSearchColumnsAllDb(
+                'databases_inputs.id',
+                $query,
+                $databases_frames_settings,
+                $hide_columns_ids
+            );
+            
+            // キーワード検索
+            $query = DatabasesTool::appendSearchKeyword(
+                'databases_inputs.id',
+                $query,
+                $columns->pluck('id'),
+                $hide_columns_ids,
+                $search_keyword
+            );
 
         $return[] = $query;
-        $return[] = $bind;
-        $return[] = 'show_page';
-        $return[] = '/page';
+        $return[] = 'show_page_frame_post';
+        $return[] = '/plugin/databases/detail';
 
         return $return;
     }
