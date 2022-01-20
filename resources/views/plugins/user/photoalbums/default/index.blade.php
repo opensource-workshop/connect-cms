@@ -187,7 +187,7 @@
         <div class="row">
             <label class="{{$frame->getSettingLabelClass()}} p-0"></label>
             <div class="{{$frame->getSettingInputClass()}}">
-                <small class="my-0 form-text text-muted">jpg, png, gif, zip を許可します。zip の場合は展開されて登録されます。</small>
+                <small class="my-0 form-text text-muted">jpg, png, gif, zip を許可します。zip の場合は展開されて登録されます。(zip は予定)</small>
             </div>
         </div>
         @if ($errors && $errors->has("upload_file.$frame_id")) 
