@@ -5439,7 +5439,7 @@ trait MigrationTrait
     /**
      * 経路探索キーの取得（Block）
      */
-    private function getRouteBlockStr($nc2_block, $nc2_sort_blocks, $get_display_sequence = false, $nc2_page)
+    private function getRouteBlockStr($nc2_block, $nc2_sort_blocks, $get_display_sequence, $nc2_page)
     {
         foreach ($nc2_sort_blocks as $nc2_sort_block_key => $nc2_sort_block) {
             if ($nc2_sort_block->block_id == $nc2_block->parent_id) {

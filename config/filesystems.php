@@ -74,7 +74,7 @@ return [
         // マニュアルデータ用ストレージの追加
         'manual' => [
             'driver' => 'local',
-            'root' => base_path('tests/Manual/html'),
+            'root' => base_path('tests/Manual'),
         ],
         'screenshot' => [
             'driver' => 'local',

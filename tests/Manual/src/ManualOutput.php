@@ -33,7 +33,7 @@ class ManualOutput extends DuskTestCase
     {
         // ページ生成
         $html = view($view_path, ['level' => 'home', 'base_path' => './']);
-        \Storage::disk('manual')->put("index.html", $html);
+        \Storage::disk('manual')->put("html/index.html", $html);
     }
 
     /**
@@ -47,7 +47,7 @@ class ManualOutput extends DuskTestCase
         foreach($methods->where('plugin_name', 'index')->where('method_name', 'index') as $method) {
             // ページ生成
             $html = view($view_path, ['level' => 'category', 'base_path' => '../', 'methods' => $methods, 'current_method' => $method]);
-            \Storage::disk('manual')->put($method->category . "/index.html", $html);
+            \Storage::disk('manual')->put('html/' . $method->category . "/index.html", $html);
         }
     }
 
@@ -62,7 +62,7 @@ class ManualOutput extends DuskTestCase
         foreach($methods->where('method_name', 'index') as $method) {
             // ページ生成
             $html = view($view_path, ['level' => 'plugin', 'base_path' => '../../', 'methods' => $methods, 'current_method' => $method]);
-            \Storage::disk('manual')->put($method->category . '/' . $method->plugin_name . "/index.html", $html);
+            \Storage::disk('manual')->put('html/' . $method->category . '/' . $method->plugin_name . "/index.html", $html);
         }
     }
 
@@ -77,7 +77,7 @@ class ManualOutput extends DuskTestCase
         foreach($methods as $method) {
             // ページ生成
             $html = view($view_path, ['level' => 'method', 'base_path' => '../../../', 'methods' => $methods, 'current_method' => $method]);
-            \Storage::disk('manual')->put($method->category . '/' . $method->plugin_name . '/' . $method->method_name . "/index.html", $html);
+            \Storage::disk('manual')->put('html/' . $method->category . '/' . $method->plugin_name . '/' . $method->method_name . "/index.html", $html);
 
             // 画像の出力
             $this->outputImage($method);
@@ -100,8 +100,8 @@ class ManualOutput extends DuskTestCase
 
             foreach ($json_path->img_methods as $img_method) {
 
-                if (!\Storage::disk('manual')->exists(dirname($json_path->name))) {
-                    \Storage::disk('manual')->makeDirectory(dirname($json_path->name));
+                if (!\Storage::disk('manual')->exists('html/' . dirname($json_path->name))) {
+                    \Storage::disk('manual')->makeDirectory('html/' . dirname($json_path->name));
                 }
 
                 if ($img_method->img_method == 'trim_h') {
@@ -127,7 +127,7 @@ class ManualOutput extends DuskTestCase
                         $elipse_h--;
                     }
                 }
-                imagepng($new_image, \Storage::disk('manual')->path($json_path->name . '.png'));
+                imagepng($new_image, \Storage::disk('manual')->path('html/' . $json_path->name . '.png'));
             }
         }
     }
@@ -148,15 +148,26 @@ class ManualOutput extends DuskTestCase
                 // 画像をコピー
                 foreach (explode(',', $method->img_paths) as $img_path) {
 
-                    if (!\Storage::disk('manual')->exists(dirname($img_path))) {
-                        \Storage::disk('manual')->makeDirectory(dirname($img_path));
+                    if (!\Storage::disk('manual')->exists('html/' . dirname($img_path))) {
+                        \Storage::disk('manual')->makeDirectory('html/' . dirname($img_path));
                     }
 
                     \File::copy(\Storage::disk('screenshot')->path($img_path . '.png'),
-                                \Storage::disk('manual')->path($img_path . '.png'));
+                                \Storage::disk('manual')->path('html/' . $img_path . '.png'));
                 }
             }
         }
+    }
+
+    /**
+     * CSS やJavaScript などの生成したマニュアルで必要なHTML 部品のコピー
+     *
+     * @return void
+     */
+    private function htmlSrcCopy()
+    {
+        
+        \Storage::disk('manual')->copy('html_src/css/bootstrap.css', 'html/css/bootstrap.css');
     }
 
     /**
@@ -166,6 +177,8 @@ class ManualOutput extends DuskTestCase
      */
     public function testInvoke()
     {
+        $this->htmlSrcCopy();
+
         // Laravel がコンストラクタでbase_path など使えないので、ここで。
         $this->screenshots_root = base_path('tests/Browser/screenshots/');
 
