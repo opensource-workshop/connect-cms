@@ -43,7 +43,7 @@
         <div class="col-md-10">
 
             <div class="mb-1">
-                <img src="/file/{{$photoalbum_content->upload_id}}?size=small"
+                <img src="{{url('/')}}/file/{{$photoalbum_content->upload_id}}?size=small"
                      id="photo"
                      style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
                      class="img-fluid" data-toggle="modal" data-target="#image_Modal"
@@ -52,7 +52,7 @@
                     <div class="modal-dialog modal-lg modal-middle">{{-- モーダルウィンドウの縦表示位置を調整・画像を大きく見せる --}}
                         <div class="modal-content pb-3">
                             <div class="modal-body mx-auto">
-                                <img src="/file/{{$photoalbum_content->upload_id}}"
+                                <img src="{{url('/')}}/file/{{$photoalbum_content->upload_id}}"
                                      style="max-height: 800px; object-fit: scale-down; cursor:pointer;"
                                      class="img-fluid" />
                             </div>
