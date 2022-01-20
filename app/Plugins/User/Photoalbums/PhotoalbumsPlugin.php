@@ -557,7 +557,7 @@ class PhotoalbumsPlugin extends UserPluginBase
     private function overwriteFile($file, $photoalbum_content, $page_id, $target_column = 'upload_id')
     {
         // uploads テーブルの上書き更新
-        Uploads::find($photoalbum_content->$target_column)->update([
+        Uploads::updateOrCreate(['id' => $photoalbum_content->$target_column],[
             'client_original_name' => $file->getClientOriginalName(),
             'mimetype'             => $file->getClientMimeType(),
             'extension'            => $file->getClientOriginalExtension(),
