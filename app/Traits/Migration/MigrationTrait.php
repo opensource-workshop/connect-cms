@@ -7085,6 +7085,8 @@ trait MigrationTrait
                         } else {
                             $this->putMonitor(3, "No Match uploads_ini array_key_exists uploads_ini_uploads_upload.", "nc2_uploads_id = " . $nc2_uploads_id);
                         }
+                    } else {
+                        $this->putMonitor(3, "No Match content strpos. :". $content);
                     }
                 } elseif ($multidatabase_metadata_content->type === 6) {
                     // WYSIWYG
