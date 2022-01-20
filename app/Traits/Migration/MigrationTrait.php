@@ -7079,7 +7079,11 @@ trait MigrationTrait
                         if (array_key_exists('uploads', $this->uploads_ini) && array_key_exists('upload', $this->uploads_ini['uploads']) && array_key_exists($nc2_uploads_id, $this->uploads_ini['uploads']['upload'])) {
                             if (array_key_exists($nc2_uploads_id, $this->uploads_ini) && array_key_exists('temp_file_name', $this->uploads_ini[$nc2_uploads_id])) {
                                 $content = '../../uploads/' . $this->uploads_ini[$nc2_uploads_id]['temp_file_name'];
+                            } else {
+                                $this->putMonitor(3, "No Match uploads_ini array_key_exists temp_file_name.", "nc2_uploads_id = " . $nc2_uploads_id);
                             }
+                        } else {
+                            $this->putMonitor(3, "No Match uploads_ini array_key_exists uploads_ini_uploads_upload.", "nc2_uploads_id = " . $nc2_uploads_id);
                         }
                     }
                 } elseif ($multidatabase_metadata_content->type === 6) {
