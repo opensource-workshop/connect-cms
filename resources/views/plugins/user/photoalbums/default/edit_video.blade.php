@@ -49,11 +49,11 @@
 
             <div class="mb-1">
                 <video controls controlsList="nodownload"
-                     src="/file/{{$photoalbum_content->upload_id}}"
+                     src="{{url('/')}}/file/{{$photoalbum_content->upload_id}}"
                      id="video"
                      style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
                      class="img-fluid"
-                     @if ($photoalbum_content->poster_upload_id) poster="/file/{{$photoalbum_content->poster_upload_id}}" @endif
+                     @if ($photoalbum_content->poster_upload_id) poster="{{url('/')}}/file/{{$photoalbum_content->poster_upload_id}}" @endif
                      oncontextmenu="return false;"
                 ></video>
             </div>
@@ -74,7 +74,7 @@
         <div class="col-md-10">
             @if ($photoalbum_content->poster_upload_id)
             <div class="mb-1">
-                <img src="/file/{{$photoalbum_content->poster_upload_id}}?size=small"
+                <img src="{{url('/')}}/file/{{$photoalbum_content->poster_upload_id}}?size=small"
                      id="poster"
                      style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
                      class="img-fluid"

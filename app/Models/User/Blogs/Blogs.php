@@ -15,7 +15,6 @@ class Blogs extends Model
     protected $fillable = [
         'bucket_id',
         'blog_name',
-        'view_count',
         'use_like',
     ];
 }
