@@ -20,9 +20,9 @@ services:
             # 永続化
             - ./docker/db/mysql_data:/var/lib/mysql
         environment:
-            MYSQL_ROOT_PASSWORD: example
-            MYSQL_USER: test
-            MYSQL_PASSWORD: test
+            MYSQL_ROOT_PASSWORD: hogehoge
+            MYSQL_USER: JohnDoe
+            MYSQL_PASSWORD: foobar
             MYSQL_DATABASE: connect
             TZ: 'Asia/Tokyo'
     mailhog:
