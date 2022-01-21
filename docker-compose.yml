@@ -8,6 +8,9 @@ services:
         ports: 
             - 80:80
         environment:
+            DB_USERNAME: JohnDoe
+            DB_PASSWORD: foobar
+            DB_DATABASE: connect
             TZ: 'Asia/Tokyo'
     db:
         container_name: db
