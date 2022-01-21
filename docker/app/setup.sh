@@ -5,6 +5,8 @@ composer install
 
 # .envファイル作成
 cp -f .env.example .env
+# WSLから編集可能にする
+chown 1000:1000 .env
 
 ## DB設定
 sed -i 's/DB_HOST=127.0.0.1/DB_HOST=db/g' .env
