@@ -52,3 +52,6 @@ sync_option_private_2_dev.sh
 !/database/migrations_option/2020_06_03_163936_optionsamples_table.php
 /resources/views/plugins_option/*
 !/resources/views/plugins_option/user/optionsamples/*
+
+# Docker
+/docker/db
