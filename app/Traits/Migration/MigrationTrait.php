@@ -5439,7 +5439,7 @@ trait MigrationTrait
     /**
      * 経路探索キーの取得（Block）
      */
-    private function getRouteBlockStr($nc2_block, $nc2_sort_blocks, $get_display_sequence, $nc2_page)
+    private function getRouteBlockStr($nc2_block, $nc2_sort_blocks, $nc2_page, $get_display_sequence = false)
     {
         foreach ($nc2_sort_blocks as $nc2_sort_block_key => $nc2_sort_block) {
             if ($nc2_sort_block->block_id == $nc2_block->parent_id) {
@@ -8214,8 +8214,8 @@ trait MigrationTrait
         // 経路探索の文字列をキーにしたページ配列の作成
         $nc2_sort_blocks = array();
         foreach ($nc2_blocks as $nc2_block) {
-            $nc2_block->route_path = $this->getRouteBlockStr($nc2_block, $nc2_sort_blocks, false, $nc2_page);
-            $nc2_sort_blocks[$this->getRouteBlockStr($nc2_block, $nc2_sort_blocks, true, $nc2_page)] = $nc2_block;
+            $nc2_block->route_path = $this->getRouteBlockStr($nc2_block, $nc2_sort_blocks, $nc2_page, false);
+            $nc2_sort_blocks[$this->getRouteBlockStr($nc2_block, $nc2_sort_blocks, $nc2_page, true)] = $nc2_block;
         }
         // Log::debug($nc2_sort_blocks);
 
