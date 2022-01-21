@@ -166,8 +166,10 @@ class ManualOutput extends DuskTestCase
      */
     private function htmlSrcCopy()
     {
-        
-        \Storage::disk('manual')->copy('html_src/css/bootstrap.css', 'html/css/bootstrap.css');
+        $files = \Storage::disk('manual')->allFiles('html_src');
+        foreach ($files as $file) {
+            \Storage::disk('manual')->put(str_replace('html_src/', 'html/', $file), \Storage::disk('manual')->get($file));
+        }
     }
 
     /**
@@ -177,6 +179,7 @@ class ManualOutput extends DuskTestCase
      */
     public function testInvoke()
     {
+        // 共通ファイルのコピー
         $this->htmlSrcCopy();
 
         // Laravel がコンストラクタでbase_path など使えないので、ここで。
