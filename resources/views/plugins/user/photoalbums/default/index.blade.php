@@ -187,7 +187,7 @@
         <div class="row">
             <label class="{{$frame->getSettingLabelClass()}} p-0"></label>
             <div class="{{$frame->getSettingInputClass()}}">
-                <small class="my-0 form-text text-muted">jpg, png, gif, zip を許可します。zip の場合は展開されて登録されます。</small>
+                <small class="my-0 form-text text-muted">jpg, png, gif, zip を許可します。zip の場合は展開されて登録されます。(zip は予定)</small>
             </div>
         </div>
         @if ($errors && $errors->has("upload_file.$frame_id")) 
@@ -384,7 +384,7 @@
             <a href="{{url('/')}}/plugin/photoalbums/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}/#frame-{{$frame->id}}" class="text-center">
                 {{-- カバー画像が指定されていれば使用し、指定されていなければ、グレーのカバーを使用 --}}
                 @if ($covers->where('parent_id', $photoalbum_content->id)->first())
-                    <img src="/file/{{$covers->where('parent_id', $photoalbum_content->id)->first()->getCoverFileId()}}?size=small"
+                    <img src="{{url('/')}}/file/{{$covers->where('parent_id', $photoalbum_content->id)->first()->getCoverFileId()}}?size=small"
                          id="cover_{{$loop->iteration}}"
                          style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
                          class="img-fluid"
@@ -429,7 +429,7 @@
     <div class="col-md-4">
         <div class="card mt-3 shadow-sm">
         @if ($photoalbum_content->isImage($photoalbum_content->mimetype))
-            <img src="/file/{{$photoalbum_content->upload_id}}?size=small"
+            <img src="{{url('/')}}/file/{{$photoalbum_content->upload_id}}?size=small"
                  id="photo_{{$loop->iteration}}"
                  style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
                  class="img-fluid" data-toggle="modal" data-target="#image_Modal_{{$loop->iteration}}"
@@ -439,7 +439,7 @@
                     <div class="modal-content pb-3">
                         <div class="modal-body mx-auto" style="{{$photoalbum_content->getModalMinSize()}}">
                             {{-- 拡大表示ウィンドウにも、初期設定でサムネイルを設定しておき、クリック時に実寸画像を読み込みなおす --}}
-                            <img src="/file/{{$photoalbum_content->upload_id}}?size=small"
+                            <img src="{{url('/')}}/file/{{$photoalbum_content->upload_id}}?size=small"
                                  style="object-fit: scale-down; cursor:pointer;"
                                  id="popup_photo_{{$loop->iteration}}"
                                  class="img-fluid"/>
@@ -455,16 +455,16 @@
             <script>
             {{-- サムネイル枠のクリックで、実寸画像を読み込む。一覧表示時のネットワーク通信量の軽減対応 --}}
             $("#photo_{{$loop->iteration}}").on("click", function() {
-               $("#popup_photo_{{$loop->iteration}}").attr('src', "/file/{{$photoalbum_content->upload_id}}");
+               $("#popup_photo_{{$loop->iteration}}").attr('src', "{{url('/')}}/file/{{$photoalbum_content->upload_id}}");
             });
             </script>
         @elseif ($photoalbum_content->isVideo($photoalbum_content->mimetype))
             <video controls controlsList="nodownload"
-                 src="/file/{{$photoalbum_content->upload_id}}"
+                 src="{{url('/')}}/file/{{$photoalbum_content->upload_id}}"
                  id="video_{{$loop->iteration}}"
                  style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
                  class="img-fluid"
-                 @if ($photoalbum_content->poster_upload_id) poster="/file/{{$photoalbum_content->poster_upload_id}}" @endif
+                 @if ($photoalbum_content->poster_upload_id) poster="{{url('/')}}/file/{{$photoalbum_content->poster_upload_id}}" @endif
                  oncontextmenu="return false;"
             ></video>
         @endif

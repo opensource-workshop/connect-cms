@@ -557,7 +557,7 @@ class PhotoalbumsPlugin extends UserPluginBase
     private function overwriteFile($file, $photoalbum_content, $page_id, $target_column = 'upload_id')
     {
         // uploads テーブルの上書き更新
-        Uploads::find($photoalbum_content->$target_column)->update([
+        $upload = Uploads::updateOrCreate(['id' => $photoalbum_content->$target_column],[
             'client_original_name' => $file->getClientOriginalName(),
             'mimetype'             => $file->getClientMimeType(),
             'extension'            => $file->getClientOriginalExtension(),
@@ -572,12 +572,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         $photoalbum_content->touch();
 
         // ファイル保存
-        if ($target_column == 'upload_id') {
-            $upload = $photoalbum_content->upload;
-        } else {
-            $upload = $photoalbum_content->posterUpload;
-        }
-        $file->storeAs($this->getDirectory($photoalbum_content->$target_column), $this->getContentsFileName($upload));
+        $file->storeAs($this->getDirectory($upload->id), $this->getContentsFileName($upload));
 
         return $upload;
     }

@@ -14,7 +14,7 @@ use Illuminate\Contracts\Validation\Rule;
  * --- 本処理
  * --- ロックファイル撤去処理
  */
-class CustomVali_ExclusiveProcessing implements Rule
+class CustomValiExclusiveProcessing implements Rule
 {
     protected $lock_file_name;
     /**
