@@ -69,6 +69,13 @@ abstract class DuskTestCase extends BaseTestCase
     {
         parent::setUp();
 
+        // テスト実行のタイミングで一度だけ実行する
+        if (! self::$migrated) {
+            $this->browse(function (Browser $browser) {
+                $browser->resize(1920, 1080);
+            });
+        }
+
 /* 一旦コメントアウト。データのクリアは、意識して行いたいかもしれないので。
 
         // テスト実行のタイミングで一度だけ実行する
@@ -187,21 +194,21 @@ abstract class DuskTestCase extends BaseTestCase
             $browser->visit('/')
                     ->clickLink('管理機能')
                     ->assertTitleContains('Connect-CMS')
-                    ->screenshot('common/index/index/images/add_plugin1');
+                    ->screenshot('common/plugin/index/images/add_plugin1');
 
             // ヘッダーエリアにプラグイン追加
             // 早すぎると、プラグイン追加ダイアログが表示しきれないので、1秒待つ。
             $browser->clickLink('プラグイン追加')
                     ->assertTitleContains('Connect-CMS')
                     ->pause(1000)
-                    ->screenshot('common/index/index/images/add_plugin2');
+                    ->screenshot('common/plugin/index/images/add_plugin2');
 
             $browser->click('#form_add_plugin0')
-                    ->screenshot('common/index/index/images/add_plugin3');
+                    ->screenshot('common/plugin/index/images/add_plugin3');
 
             $browser->select('#form_add_plugin0', $add_plugin)
                     ->assertTitleContains('Connect-CMS')
-                    ->screenshot('common/index/index/images/add_plugin4');
+                    ->screenshot('common/plugin/index/images/add_plugin4');
         });
     }
 

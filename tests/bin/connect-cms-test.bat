@@ -139,8 +139,12 @@ rem - 共通
 rem ---------------------------------------------
 
 echo.
-echo --- ヘッダー
-php artisan dusk tests\Browser\Common\HeaderAreaTest.php
+echo --- ログイン・ログアウト
+php artisan dusk tests\Browser\Common\LoginLogoutTest.php
+
+echo.
+echo --- プラグイン
+php artisan dusk tests\Browser\Common\PluginTest.php
 
 rem ---------------------------------------------
 rem - 一般プラグイン

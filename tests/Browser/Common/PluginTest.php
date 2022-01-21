@@ -16,7 +16,7 @@ use App\Enums\PluginName;
  *
  * @see https://github.com/opensource-workshop/connect-cms/wiki/Dusk#テスト実行 [How to test]
  */
-class HeaderAreaTest extends DuskTestCase
+class PluginTest extends DuskTestCase
 {
     /**
      * テストする関数の制御
@@ -32,31 +32,31 @@ class HeaderAreaTest extends DuskTestCase
         $this->addPluginModal(PluginName::getPluginName(PluginName::contents));
 
         // マニュアル用データ出力
-        $dusk = Dusks::updateOrCreate(['html_path' => 'common/index/index/index.html'],[
+        $dusk = Dusks::updateOrCreate(['html_path' => 'common/plugin/index/index.html'],[
             'category' => 'common',
             'sort' => 2,
-            'plugin_name' => 'index',
+            'plugin_name' => 'plugin',
             'plugin_title' => 'プラグイン',
             'plugin_desc' => 'Connect-CMSで共通的に使用する機能について説明します。',
             'method_name' => 'index',
             'method_title' => 'プラグイン追加',
             'method_desc' => 'プラグイン追加の方法を紹介します。',
             'method_detail' => 'プラグインの追加方法は、各プラグインで共通です。',
-            'html_path' => 'common/index/index/index.html',
+            'html_path' => 'common/plugin/index/index.html',
             'img_paths' => '[
-                {"name": "common/index/index/images/add_plugin1", "img_methods": [
+                {"name": "common/plugin/index/images/add_plugin1", "img_methods": [
                     {"img_method": "trim_h", "args": [0,250]},
                     {"img_method": "arc", "args": [1670,75,200,50,10]}
                 ]},
-                {"name": "common/index/index/images/add_plugin2", "img_methods": [
+                {"name": "common/plugin/index/images/add_plugin2", "img_methods": [
                     {"img_method": "trim_h", "args": [0,400]},
                     {"img_method": "arc", "args": [960,130,200,50,10]}
                 ]},
-                {"name": "common/index/index/images/add_plugin3", "img_methods": [
+                {"name": "common/plugin/index/images/add_plugin3", "img_methods": [
                     {"img_method": "trim_h", "args": [0,600]},
-                    {"img_method": "arc", "args": [960,230,200,40,10]}
+                    {"img_method": "arc", "args": [960,215,200,40,10]}
                 ]},
-                {"name": "common/index/index/images/add_plugin4", "img_methods": [{"img_method": "trim_h", "args": [0,300]}]}
+                {"name": "common/plugin/index/images/add_plugin4", "img_methods": [{"img_method": "trim_h", "args": [0,300]}]}
             ]',
             'test_result' => 'OK',
         ]);
