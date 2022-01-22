@@ -46,7 +46,7 @@ class IndexCommonTest extends DuskTestCase
             'method_desc' => 'プラグイン配置の方法を紹介します。',
             'method_detail' => 'プラグインの配置は、各プラグインで共通です。',
             'html_path' => 'common/plugin/addPlugin/index.html',
-            'img_paths' => 'common/plugin/add_plugin1,common/plugin/add_plugin2,common/plugin/add_plugin3',
+            'img_args' => 'common/plugin/add_plugin1,common/plugin/add_plugin2,common/plugin/add_plugin3',
             'test_result' => 'OK',
         ]);
     }

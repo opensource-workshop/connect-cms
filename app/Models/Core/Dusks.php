@@ -2,6 +2,7 @@
 
 namespace App\Models\Core;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
@@ -19,7 +20,7 @@ class Dusks extends Model
         'category', 'sort',
         'plugin_name', 'plugin_title', 'plugin_desc',
         'method_name', 'method_title', 'method_desc', 'method_detail',
-        'html_path', 'img_paths', 'test_result',
+        'html_path', 'img_args', 'test_result',
     ];
 
     /**
@@ -36,18 +37,33 @@ class Dusks extends Model
     /**
      * 画像パスの配列
      */
-    public function getImgPathArray()
+    public function getImgArgs()
     {
-        if (json_decode($this->img_paths)) {
-            $json_paths = json_decode($this->img_paths);
-            $ret = array();
-            foreach ($json_paths as $json_path) {
-                $ret[] = $json_path->name;
+        // 画像関係の設定を展開する。
+        $ret_collection = new Collection();
+        $img_json = json_decode($this->img_args);
+
+        // 画像関係の設定がjson 文字列かで処理を分けて、共通の形式に保存する。
+        if ($img_json) {
+            foreach ($img_json as $img_arg) {
+                $ret_collection->push([
+                    "path" => $img_arg->path,
+                    "name" => property_exists($img_arg, "name") ? $img_arg->name : "",
+                    "comment" => property_exists($img_arg, "comment") ? $img_arg->comment : "",
+                    "style" => property_exists($img_arg, "style") ? $img_arg->style : ""
+                ]);
             }
-            return $ret;
         } else {
-            return explode(',', $this->img_paths);
+            foreach (explode(',', $this->img_args) as $img_path) {
+                $ret_collection->push([
+                    "path" => $img_path,
+                    "name" => "",
+                    "comment" => "",
+                    "style" => ""
+                ]);
+            }
         }
+        return $ret_collection;
     }
 
     /**
@@ -61,5 +77,23 @@ class Dusks extends Model
             return "index.html";
         }
         return $this->attributes['html_path'];
+    }
+
+    /**
+     * データ保存＆階層移動
+     *
+     * @return dusks
+     */
+    public static function putManualData($key, $value)
+    {
+        $dusk = Dusks::updateOrCreate($key, $value);
+
+        // 結果の親子関係の紐づけ
+        if ($dusk->method_name != 'index') {
+            // 親を取得して、子のparent をセットして保存する。（_lft, _rgt は自動的に変更される）
+            $parent = Dusks::where('category', $dusk->category)->where('plugin_name', $dusk->plugin_name)->where('method_name', 'index')->first();
+            $dusk->parent_id = $parent->id;
+            $dusk->save();
+        }
     }
 }

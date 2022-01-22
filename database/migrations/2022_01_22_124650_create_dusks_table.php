@@ -26,7 +26,7 @@ class CreateDusksTable extends Migration
             $table->text('method_desc')->nullable()->comment('機能概要');
             $table->text('method_detail')->nullable()->comment('機能詳細');
             $table->string('html_path', 255)->nullable()->comment('HTMLパス');
-            $table->text('img_paths')->nullable()->comment('使用画像');
+            $table->text('img_args')->nullable()->comment('画像指定');
             $table->text('test_result')->nullable()->comment('テスト結果');
             $table->nestedSet();
             $table->integer('created_id')->nullable();

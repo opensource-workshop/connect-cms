@@ -277,7 +277,7 @@ abstract class DuskTestCase extends BaseTestCase
     /**
      * マニュアルデータ出力
      */
-    public function putManualData($img_paths = null)
+    public function putManualData($img_args = null)
     {
         // 実行しているサブクラスの名前を取得して、マニュアル用に編集する。
         $sub_class_name = \Str::snake(get_class($this));
@@ -311,7 +311,7 @@ abstract class DuskTestCase extends BaseTestCase
         $dusk->method_title = $this->getDocument('method_title', $class_name, $dusk->method_name);
         $dusk->method_desc = $this->getDocument('method_desc', $class_name, $dusk->method_name);
         $dusk->method_detail = $this->getDocument('method_detail', $class_name, $dusk->method_name);
-        $dusk->img_paths = $img_paths;
+        $dusk->img_args = $img_args;
         $dusk->save();
 
         // 結果の親子関係の紐づけ

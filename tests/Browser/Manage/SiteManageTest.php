@@ -73,12 +73,14 @@ class SiteManageTest extends DuskTestCase
     private function edit()
     {
         // パスワードリセットの使用を「許可しない」にする。
+/*
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/site')
                     ->click('label[for="base_login_password_reset_off"]')
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/site/edit/images/edit');
         });
+*/
     }
 
     /**

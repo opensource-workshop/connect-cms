@@ -32,7 +32,7 @@ class PluginTest extends DuskTestCase
         $this->addPluginModal(PluginName::getPluginName(PluginName::contents));
 
         // マニュアル用データ出力
-        $dusk = Dusks::updateOrCreate(['html_path' => 'common/plugin/index/index.html'],[
+        $dusk = Dusks::putManualData(['html_path' => 'common/plugin/index/index.html'],[
             'category' => 'common',
             'sort' => 2,
             'plugin_name' => 'plugin',
@@ -43,20 +43,22 @@ class PluginTest extends DuskTestCase
             'method_desc' => 'プラグイン追加の方法を紹介します。',
             'method_detail' => 'プラグインの追加方法は、各プラグインで共通です。',
             'html_path' => 'common/plugin/index/index.html',
-            'img_paths' => '[
-                {"name": "common/plugin/index/images/add_plugin1", "img_methods": [
-                    {"img_method": "trim_h", "args": [0,250]},
-                    {"img_method": "arc", "args": [1670,75,200,50,10]}
+            'img_args' => '[
+                {"path": "common/plugin/index/images/add_plugin1", "methods": [
+                    {"method": "trim_h", "args": [0,250]},
+                    {"method": "arc", "args": [1670,75,200,50,10]}
                 ]},
-                {"name": "common/plugin/index/images/add_plugin2", "img_methods": [
-                    {"img_method": "trim_h", "args": [0,400]},
-                    {"img_method": "arc", "args": [960,130,200,50,10]}
+                {"path": "common/plugin/index/images/add_plugin2", "methods": [
+                    {"method": "trim_h", "args": [0,400]},
+                    {"method": "arc", "args": [960,130,200,50,10]}
                 ]},
-                {"name": "common/plugin/index/images/add_plugin3", "img_methods": [
-                    {"img_method": "trim_h", "args": [0,600]},
-                    {"img_method": "arc", "args": [960,215,200,40,10]}
+                {"path": "common/plugin/index/images/add_plugin3", "methods": [
+                    {"method": "trim_h", "args": [0,600]},
+                    {"method": "arc", "args": [960,215,200,40,10]}
                 ]},
-                {"name": "common/plugin/index/images/add_plugin4", "img_methods": [{"img_method": "trim_h", "args": [0,300]}]}
+                {"path": "common/plugin/index/images/add_plugin4", "methods": [
+                    {"method": "trim_h", "args": [0,300]}
+                ]}
             ]',
             'test_result' => 'OK',
         ]);

@@ -7,11 +7,21 @@
             <p>
                 @if($current_method->category == 'manage')
                     ここでは、Connect-CMS の【管理機能】について説明します。
+                @elseif($current_method->category == 'common')
+                    ここでは、Connect-CMS の【共通機能】について説明します。
                 @else
                     ここでは、Connect-CMS のカテゴリ・メニューについて説明します。
                 @endif
             </p>
-            <p>【{{$current_method->plugin_title}}】機能一覧<br />
+            <p>
+                @if($current_method->category == 'manage')
+                    【管理機能】
+                @elseif($current_method->category == 'common')
+                    【共通機能】
+                @else
+                    のカテゴリ・メニュー
+                @endif
+                一覧<br />
                 <div class="card bg-light mb-3">
                     <div class="card-body">
                         <dl class="row mb-0">

@@ -60,7 +60,7 @@
                                     $base_login_password_reset = Configs::where('name', 'base_login_password_reset')->first();
                                 @endphp
                                 @if (isset($base_login_password_reset) && $base_login_password_reset->value == '1')
-                                    <a class="btn btn-link" href="{{ route('password.request') }}">
+                                    <a class="btn btn-link" href="{{ route('password.request') }}" dusk="login_password_reset">
                                         パスワードを忘れた場合。
                                     </a>
                                 @endif

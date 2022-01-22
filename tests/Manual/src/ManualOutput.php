@@ -92,42 +92,44 @@ class ManualOutput extends DuskTestCase
     private function trimingImage($method)
     {
         // 元画像, 切り取りする開始点の X, Y, 切り取りする W, H/*
-        $json_paths = json_decode($method->img_paths);
+        $json_paths = json_decode($method->img_args);
         foreach ($json_paths as $json_path) {
 
-            $src_image = imagecreatefrompng($this->screenshots_root . $json_path->name . '.png');
+            $src_image = imagecreatefrompng($this->screenshots_root . $json_path->path . '.png');
             $new_image = null;
 
-            foreach ($json_path->img_methods as $img_method) {
+            if (property_exists($json_path, 'methods')) {
+                foreach ($json_path->methods as $method) {
 
-                if (!\Storage::disk('manual')->exists('html/' . dirname($json_path->name))) {
-                    \Storage::disk('manual')->makeDirectory('html/' . dirname($json_path->name));
-                }
-
-                if ($img_method->img_method == 'trim_h') {
-                    $new_image = imagecreatetruecolor(imagesx($src_image), intval($img_method->args[1]));
-                    imagecopyresampled($new_image, $src_image, 0, 0, 0, 0, imagesx($src_image), imagesy($src_image), imagesx($src_image), imagesy($src_image));
-                }
-
-                if ($img_method->img_method == 'arc') {
-                    if ($new_image == null) {
-                        $new_image = imagecreatetruecolor(imagesx($src_image), imagesy($src_image));
+                    if (!\Storage::disk('manual')->exists('html/' . dirname($json_path->path))) {
+                        \Storage::disk('manual')->makeDirectory('html/' . dirname($json_path->path));
                     }
-                    $elipse_w = $img_method->args[2];
-                    $elipse_h = $img_method->args[3];
-                    for ($line = 0; $line < $img_method->args[4]; $line++) {
-                         $elipse_w--;
-                         imageellipse($new_image,
-                                      $img_method->args[0],
-                                      $img_method->args[1],
-                                      $elipse_w,
-                                      $elipse_h,
-                                      imagecolorallocate($new_image, 255, 0, 0)
-                         );
-                        $elipse_h--;
+
+                    if ($method->method == 'trim_h') {
+                        $new_image = imagecreatetruecolor(imagesx($src_image), intval($method->args[1]));
+                        imagecopyresampled($new_image, $src_image, 0, 0, 0, 0, imagesx($src_image), imagesy($src_image), imagesx($src_image), imagesy($src_image));
                     }
+
+                    if ($method->method == 'arc') {
+                        if ($new_image == null) {
+                            $new_image = imagecreatetruecolor(imagesx($src_image), imagesy($src_image));
+                        }
+                        $elipse_w = $method->args[2];
+                        $elipse_h = $method->args[3];
+                        for ($line = 0; $line < $method->args[4]; $line++) {
+                             $elipse_w--;
+                             imageellipse($new_image,
+                                          $method->args[0],
+                                          $method->args[1],
+                                          $elipse_w,
+                                          $elipse_h,
+                                          imagecolorallocate($new_image, 255, 0, 0)
+                             );
+                            $elipse_h--;
+                        }
+                    }
+                    imagepng($new_image, \Storage::disk('manual')->path('html/' . $json_path->path . '.png'));
                 }
-                imagepng($new_image, \Storage::disk('manual')->path('html/' . $json_path->name . '.png'));
             }
         }
     }
@@ -140,13 +142,13 @@ class ManualOutput extends DuskTestCase
     private function outputImage($method)
     {
         // 画像をコピーするディレクトリのパス確認
-        if ($method->img_paths) {
+        if ($method->img_args) {
             // json か文字列かで処理を分岐
-            if (json_decode($method->img_paths)) {
+            if (json_decode($method->img_args)) {
                 $this->trimingImage($method);
             } else {
                 // 画像をコピー
-                foreach (explode(',', $method->img_paths) as $img_path) {
+                foreach (explode(',', $method->img_args) as $img_path) {
 
                     if (!\Storage::disk('manual')->exists('html/' . dirname($img_path))) {
                         \Storage::disk('manual')->makeDirectory('html/' . dirname($img_path));
