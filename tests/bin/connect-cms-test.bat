@@ -10,6 +10,7 @@ rem > tests\bin\connect-cms-test.bat fresh     <<-- テーブルの再構築＆シーダー
 rem
 rem マニュアル出力
 rem > php artisan dusk tests\Manual\src\ManualOutput.php
+rem > php artisan dusk tests\Manual\src\ManualPdf.php
 rem
 rem [How to test]
 rem https://github.com/opensource-workshop/connect-cms/wiki/Dusk
