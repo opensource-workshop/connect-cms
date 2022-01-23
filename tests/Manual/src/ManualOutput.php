@@ -85,6 +85,56 @@ class ManualOutput extends DuskTestCase
     }
 
     /**
+     * 角丸四角を描画
+     */
+    private function imgRectangle($new_image, $src_image, $args)
+    {
+        // args [0]:x1, [1]:y1, [2]:x2, [3]:y2
+        $x1 = $args[0];
+        $y1 = $args[1];
+        $x2 = $args[2];
+        $y2 = $args[3];
+        $color = imagecolorallocate($new_image, 255, 0, 0);
+
+        if ($new_image == null) {
+            $new_image = imagecreatetruecolor(imagesx($src_image), imagesy($src_image));
+        }
+
+        imagesetthickness($new_image, 6);
+
+        imagerectangle($new_image, $x1, $y1, $x2, $y2, $color);
+        return $new_image;
+    }
+
+    /**
+     * 角丸四角を描画
+     */
+    private function imgRoundedRectangle($new_image, $src_image, $args)
+    {
+        // args [0]:x1, [1]:y1, [2]:x2, [3]:y2 [4]:r
+        $x1 = $args[0];
+        $y1 = $args[1];
+        $x2 = $args[2];
+        $y2 = $args[3];
+        $r  = $args[4];
+        $color = imagecolorallocate($new_image, 255, 0, 0);
+
+        if ($new_image == null) {
+            $new_image = imagecreatetruecolor(imagesx($src_image), imagesy($src_image));
+        }
+
+        ImageLine($new_image, $x1 + $r, $y1, $x2 - $r, $y1, $color);
+        ImageLine($new_image, $x1 + $r, $y2, $x2 - $r, $y2, $color);
+        ImageLine($new_image, $x1, $y1 + $r, $x1, $y2 - $r, $color);
+        ImageLine($new_image, $x2, $y1 + $r, $x2, $y2 - $r, $color);
+        ImageArc($new_image, $x1 + $r, $y1 + $r, $r * 2, $r * 2, 180, 270, $color);
+        ImageArc($new_image, $x2 - $r, $y1 + $r, $r * 2, $r * 2, 270, 360, $color);
+        ImageArc($new_image, $x1 + $r, $y2 - $r, $r * 2, $r * 2, 90, 180, $color);
+        ImageArc($new_image, $x2 - $r, $y2 - $r, $r * 2, $r * 2, 0, 90, $color);
+        return $new_image;
+    }
+
+    /**
      * 画像トリミング
      *
      * @return void
@@ -94,7 +144,6 @@ class ManualOutput extends DuskTestCase
         // 元画像, 切り取りする開始点の X, Y, 切り取りする W, H/*
         $json_paths = json_decode($method->img_args);
         foreach ($json_paths as $json_path) {
-
             $src_image = imagecreatefrompng($this->screenshots_root . $json_path->path . '.png');
             $new_image = null;
 
@@ -128,8 +177,22 @@ class ManualOutput extends DuskTestCase
                             $elipse_h--;
                         }
                     }
+                    if ($method->method == 'rectangle') {
+                        $new_image = $this->imgRectangle($new_image, $src_image, $method->args);
+                    }
+                    if ($method->method == 'rounded_rectangle') {
+                        $new_image = $this->imgRoundedRectangle($new_image, $src_image, $method->args);
+                    }
                     imagepng($new_image, \Storage::disk('manual')->path('html/' . $json_path->path . '.png'));
                 }
+            } else {
+                // 加工なしでコピー
+                if (!\Storage::disk('manual')->exists('html/' . dirname($json_path->path))) {
+                    \Storage::disk('manual')->makeDirectory('html/' . dirname($json_path->path));
+                }
+
+                \File::copy(\Storage::disk('screenshot')->path($json_path->path . '.png'),
+                            \Storage::disk('manual')->path('html/' . $json_path->path . '.png'));
             }
         }
     }

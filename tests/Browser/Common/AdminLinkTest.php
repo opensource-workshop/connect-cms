@@ -16,7 +16,7 @@ use App\Enums\PluginName;
  *
  * @see https://github.com/opensource-workshop/connect-cms/wiki/Dusk#テスト実行 [How to test]
  */
-class PluginTest extends DuskTestCase
+class AdminLinkTest extends DuskTestCase
 {
     /**
      * テストする関数の制御
@@ -27,36 +27,95 @@ class PluginTest extends DuskTestCase
     public function testInvoke()
     {
         $this->login(1);
+        $this->adminLink();
+        $this->addPlugin();
+    }
 
+    /**
+     * 管理機能
+     */
+    private function adminLink()
+    {
+        // 管理機能
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/')
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('common/admin_link/index/images/admin_link1');
+
+            $browser->click('#dropdown_manage')
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('common/admin_link/index/images/admin_link2');
+
+        });
+
+        // マニュアル用データ出力
+        $dusk = Dusks::putManualData(['html_path' => 'common/admin_link/index/index.html'],[
+            'category' => 'common',
+            'sort' => 2,
+            'plugin_name' => 'admin_link',
+            'plugin_title' => '管理機能',
+            'plugin_desc' => 'プラグイン追加や管理者メニューなど、サイト管理機能への入り口です。',
+            'method_name' => 'index',
+            'method_title' => '管理機能',
+            'method_desc' => '管理機能メニューを開きます。',
+            'method_detail' => '',
+            'html_path' => 'common/admin_link/index/index.html',
+            'img_args' => '[
+                {"path": "common/admin_link/index/images/admin_link1",
+                 "name": "ログイン状態",
+                 "methods": [
+                    {"method": "trim_h", "args": [0,250]},
+                    {"method": "arc", "args": [1720,30,140,50,10]}
+                 ],
+                 "comment": "<ul class=\"mb-0\"><li>権限のあるユーザでログインしている場合、管理機能のリンクが表示されます。</li></ul>"
+                },
+                {"path": "common/admin_link/index/images/admin_link2",
+                 "name": "管理機能へのリンク",
+                 "methods": [
+                    {"method": "trim_h", "args": [0,400]},
+                    {"method": "rectangle", "args": [1670,5,1760,55]}
+                 ],
+                 "comment": "<ul class=\"mb-0\"><li>権限がある項目が表示されます。</li><li>プレビューモードは編集用のリンクなどが消えて、ゲストが見ている状態の画面を確認することができます。</li></ul>"
+                }
+            ]',
+            'test_result' => 'OK',
+        ]);
+    }
+
+    /**
+     * プラグイン追加
+     */
+    private function addPlugin()
+    {
         // 固定記事をプラグイン追加
         $this->addPluginModal(PluginName::getPluginName(PluginName::contents));
 
         // マニュアル用データ出力
-        $dusk = Dusks::putManualData(['html_path' => 'common/plugin/index/index.html'],[
+        $dusk = Dusks::putManualData(['html_path' => 'common/admin_link/plugin/index.html'],[
             'category' => 'common',
             'sort' => 2,
-            'plugin_name' => 'plugin',
+            'plugin_name' => 'admin_link',
             'plugin_title' => 'プラグイン',
             'plugin_desc' => 'Connect-CMSで共通的に使用する機能について説明します。',
-            'method_name' => 'index',
+            'method_name' => 'plugin',
             'method_title' => 'プラグイン追加',
             'method_desc' => 'プラグイン追加の方法を紹介します。',
             'method_detail' => 'プラグインの追加方法は、各プラグインで共通です。',
-            'html_path' => 'common/plugin/index/index.html',
+            'html_path' => 'common/admin_link/plugin/index.html',
             'img_args' => '[
-                {"path": "common/plugin/index/images/add_plugin1", "methods": [
+                {"path": "common/admin_link/plugin/images/add_plugin1", "methods": [
                     {"method": "trim_h", "args": [0,250]},
                     {"method": "arc", "args": [1670,75,200,50,10]}
                 ]},
-                {"path": "common/plugin/index/images/add_plugin2", "methods": [
+                {"path": "common/admin_link/plugin/images/add_plugin2", "methods": [
                     {"method": "trim_h", "args": [0,400]},
                     {"method": "arc", "args": [960,130,200,50,10]}
                 ]},
-                {"path": "common/plugin/index/images/add_plugin3", "methods": [
+                {"path": "common/admin_link/plugin/images/add_plugin3", "methods": [
                     {"method": "trim_h", "args": [0,600]},
                     {"method": "arc", "args": [960,215,200,40,10]}
                 ]},
-                {"path": "common/plugin/index/images/add_plugin4", "methods": [
+                {"path": "common/admin_link/plugin/images/add_plugin4", "methods": [
                     {"method": "trim_h", "args": [0,300]}
                 ]}
             ]',

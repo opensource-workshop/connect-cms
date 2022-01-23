@@ -143,8 +143,8 @@ echo --- ログイン・ログアウト
 php artisan dusk tests\Browser\Common\LoginLogoutTest.php
 
 echo.
-echo --- プラグイン
-php artisan dusk tests\Browser\Common\PluginTest.php
+echo --- 管理機能
+php artisan dusk tests\Browser\Common\AdminLinkTest.php
 
 rem ---------------------------------------------
 rem - 一般プラグイン
