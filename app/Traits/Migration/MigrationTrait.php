@@ -7070,7 +7070,7 @@ trait MigrationTrait
                 $content = str_replace("\n", "<br />", $multidatabase_metadata_content->content);
 
                 // メタデータの型による変換
-                if ($multidatabase_metadata_content->type === 0 || $multidatabase_metadata_content->type === 5) {
+                if ($multidatabase_metadata_content->type == 0 || $multidatabase_metadata_content->type == 5) {
                     // 画像型、ファイル型
                     if (strpos($content, '?action=multidatabase_action_main_filedownload&upload_id=') !== false) {
                         // NC2 のアップロードID 抜き出し
@@ -7088,10 +7088,10 @@ trait MigrationTrait
                     } else {
                         $this->putMonitor(3, "No Match content strpos. :". $content);
                     }
-                } elseif ($multidatabase_metadata_content->type === 6) {
+                } elseif ($multidatabase_metadata_content->type == 6) {
                     // WYSIWYG
                     $content = $this->nc2Wysiwyg(null, null, null, null, $content, 'multidatabase', $nc2_page);
-                } elseif ($multidatabase_metadata_content->type === 9) {
+                } elseif ($multidatabase_metadata_content->type == 9) {
                     // 日付型
                     if (!empty($content) && strlen($content) == 14) {
                         $content = $this->getCCDatetime($content);
