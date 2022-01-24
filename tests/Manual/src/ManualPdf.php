@@ -107,12 +107,26 @@ class ManualPdf extends DuskTestCase
         // 出力するPDF の準備
         $pdf = new CCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
+        // PDF プロパティ設定
+        $pdf->SetTitle('Connect-CMS マニュアル');
+
+        // 余白
+        $pdf->SetMargins(15, 20, 15);
+
         // フォントを登録
         // 追加フォントをtcpdf用フォントファイルに変換してvendor\tecnickcom\tcpdf\fontsに登録
         $font = new \TCPDF_FONTS();
 
         // ttfフォントファイルからtcpdf用フォントファイルを生成（tcpdf用フォントファイルがある場合は再生成しない）
         $fontX = $font->addTTFfont(resource_path('fonts/ipaexg.ttf'));
+
+        // ヘッダーのフォントの設定（フォント情報を配列で渡す必要があるので、要注意）
+        $pdf->setHeaderMargin(5);
+        $pdf->setHeaderFont(array('ipaexg', '', 10));
+        $pdf->setHeaderData('', 0, 'Connect-CMS マニュアル - https://connect-cms.jp', '');
+
+        // フッター
+        $pdf->setPrintFooter(true);
 
         // フォント設定
         $pdf->setFont('ipaexg', '', 12);
@@ -122,16 +136,24 @@ class ManualPdf extends DuskTestCase
         // 初期ページを追加
         $pdf->addPage();
 
-        // サイト設計書表紙
-        $pdf->writeHTML(view('manual.pdf.index')->render(), false);
+        // マニュアル表紙
+        $pdf->writeHTML(view('manual.pdf.cover')->render(), false);
 
+        // マニュアル用データをループ
+        // マニュアルHTML と違い、カテゴリ、プラグイン、メソッドの3重ループで処理する。
+        // マニュアルHTML は、カテゴリ、プラグイン、メソッドをそれぞれ独立でループした。（メニューの生成のため）
+
+
+
+        // 
         $pdf->addPage();
+        $pdf->Bookmark('サイト基本設定', 0, 0, '', '', array(0, 0, 0));
 
 $tmp_method = $methods->where('plugin_name', 'admin_link');
 $current_method = $methods->where('id', 11)->first();
         $pdf->writeHTML(
             view(
-                'manual.method',
+                'manual.pdf.method',
                 ['methods' => $tmp_method, 'current_method' => $current_method, 'base_path' => '', 'level' => 'method']
             ),
             false
@@ -139,6 +161,25 @@ $current_method = $methods->where('id', 11)->first();
 
 $tmp = view('manual.method',['methods' => $tmp_method, 'current_method' => $current_method, 'base_path' => '', 'level' => 'method']);
 \Log::debug($tmp);
+
+        // 目次ページの追加
+        $pdf->addTOCPage();
+
+        // write the TOC title
+        $pdf->SetFont('ipaexg', 'B', 28);
+        $pdf->MultiCell(0, 0, 'Connect-CMS マニュアル目次', 0, 'C', 0, 1, '', 30, true, 0);
+        $pdf->Ln();
+
+        $pdf->SetFont('ipaexg', '', 12);
+
+        // add a simple Table Of Content at first page
+        // (check the example n. 59 for the HTML version)
+        $pdf->addTOC(2, 'ipaexg', '.', 'INDEX', 'B', array(0, 0, 0));
+
+        // end of TOC page
+        $pdf->endTOCPage();
+
+        // 目次 --------------------/
 
         // 出力 ( D：Download, I：Inline )
         $pdf->output(\Storage::disk('manual')->path('pdf/manual.pdf'), 'F');

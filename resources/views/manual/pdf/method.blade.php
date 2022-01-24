@@ -9,6 +9,8 @@
         </div>
     </div>
 
+<img src="C:\Connect-CMS\htdocs\connect-cms\tests\Manual\html\common\admin_link\index\images\admin_link1.png" class="img-fluid img-thumbnail">
+
     @if ($current_method->img_args)
     <div class="card mt-3">
         <div class="card-header text-white bg-primary">画面</div>
