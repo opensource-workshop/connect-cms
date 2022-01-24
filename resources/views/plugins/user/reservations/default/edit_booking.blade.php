@@ -13,7 +13,7 @@ use App\Models\User\Reservations\ReservationsFacility;
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
- <script type="text/javascript">
+<script type="text/javascript">
     /**
      * 登録ボタン押下
      */
@@ -123,7 +123,6 @@ use App\Models\User\Reservations\ReservationsFacility;
                 $('#repeat_rule_yearly_id').collapse('hide');
         }
     }
-
 </script>
 
 @if ($booking->id)

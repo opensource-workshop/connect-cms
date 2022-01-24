@@ -13,7 +13,7 @@ final class ReservationCalendarDisplayType extends EnumsBase
 
     // key/valueの連想配列
     const enum = [
-        self::month=>'月',
-        self::week=>'週',
+        self::month => '月',
+        self::week => '週',
     ];
 }
