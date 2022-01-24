@@ -1,5 +1,8 @@
 FROM php:7-apache
 
+# APPLICATION ENVIROMENT: production or development
+ENV APP_ENV development
+
 RUN cd /usr/bin && curl -s http://getcomposer.org/installer | php && ln -s /usr/bin/composer.phar /usr/bin/composer
 RUN apt-get update \
 && apt-get install -y \
@@ -19,5 +22,8 @@ COPY ./sites-enabled/my.conf /etc/apache2/sites-available
 RUN a2dissite 000-default \
   && a2ensite my \
   && a2enmod rewrite
+
+# developmentのiniファイルを有効化
+RUN mv "$PHP_INI_DIR/php.ini-${APP_ENV}" "$PHP_INI_DIR/php.ini"
 
 WORKDIR /var/www/html
