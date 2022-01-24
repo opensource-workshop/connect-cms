@@ -19,7 +19,7 @@
     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/reservations/listBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 
     {{-- 登録後メッセージ表示 --}}
-    @include('plugins.common.flash_message')
+    @include('plugins.common.flash_message_for_frame')
 
     {{-- メッセージエリア --}}
     <div class="alert alert-info">

@@ -23,7 +23,7 @@
         <br>
 
         {{-- メッセージエリア --}}
-        @include('plugins.common.flash_message')
+        @include('plugins.common.flash_message_for_frame')
 
         <div class="row">
             <div class="col-12 clearfix">

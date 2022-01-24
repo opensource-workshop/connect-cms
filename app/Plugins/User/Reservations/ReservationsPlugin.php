@@ -1080,15 +1080,18 @@ class ReservationsPlugin extends UserPluginBase
         }
         // $str_mode = $request->booking_id ? '更新' : '登録';
         // $message = '予約を' . $str_mode . 'しました。【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
-        $request->flash_message = $str_mode . '【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
+        $flash_message = $str_mode . '【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
+
         // 繰り返しあり
         if ($request->rrule_freq == RruleFreq::DAILY ||
             $request->rrule_freq == RruleFreq::WEEKLY ||
             $request->rrule_freq == RruleFreq::MONTHLY ||
             $request->rrule_freq == RruleFreq::YEARLY) {
 
-            $request->flash_message .= ' 【繰り返し】あり';
+            $flash_message .= ' 【繰り返し】あり';
         }
+
+        session()->flash('flash_message_for_frame' . $frame_id, $flash_message);
 
         // titleカラムが無いため、プラグイン独自でセット
         $overwrite_notice_embedded_tags = [NoticeEmbeddedTag::title => $this->getTitle($reservations_inputs)];
@@ -1336,7 +1339,7 @@ class ReservationsPlugin extends UserPluginBase
         // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
         $this->sendPostNotice($reservations_input, $before_reservations_input, 'showBooking');
 
-        $request->flash_message = ' 予約を承認しました。';
+        session()->flash('flash_message_for_frame' . $frame_id, ' 予約を承認しました。');
 
         // 登録後はカレンダー表示
         return collect(['redirect_path' => url($this->page->permanent_link) . "#frame-{$frame_id}"]);
@@ -1480,11 +1483,12 @@ class ReservationsPlugin extends UserPluginBase
         $reservations->save();
 
         if (empty($request->reservations_id)) {
-            $request->flash_message = '施設予約の設定を追加しました。<br />' .
+            $flash_message = '施設予約の設定を追加しました。<br />' .
                 '　[ <a href="' . url('/') . "/plugin/reservations/choiceFacilities/{$page_id}/{$frame_id}/{$reservations->id}#frame-{$frame_id}" . '">施設設定</a> ]から表示する施設を設定してください。';
         } else {
-            $request->flash_message = '施設予約の設定を変更しました。';
+            $flash_message = '施設予約の設定を変更しました。';
         }
+        session()->flash('flash_message_for_frame' . $frame_id, $flash_message);
 
         // if (empty($request->reservations_id)) {
         //     // 新規登録後は、施設予約選択画面を呼び出す
@@ -1524,7 +1528,7 @@ class ReservationsPlugin extends UserPluginBase
             // 施設予約を削除する。
             $reservation->delete();
 
-            $request->flash_message = '施設予約の設定を削除しました。';
+            session()->flash('flash_message_for_frame' . $frame_id, '施設予約の設定を削除しました。');
         }
 
         // 施設予約選択画面を呼び出す
@@ -1591,7 +1595,7 @@ class ReservationsPlugin extends UserPluginBase
             // メール送信
             $this->sendDeleteNotice($input, 'showBooking', $message);
 
-            session()->flash('flash_message', $message);
+            session()->flash('flash_message_for_frame' . $frame_id, $message);
 
             // 予約（親）を削除
             $input->delete();
@@ -1704,7 +1708,7 @@ class ReservationsPlugin extends UserPluginBase
         Frame::where('id', $frame_id)
             ->update(['bucket_id' => $request->select_bucket]);
 
-        $request->flash_message = '表示する施設予約を変更しました。';
+        session()->flash('flash_message_for_frame' . $frame_id, '表示する施設予約を変更しました。');
 
         // redirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
         // return $this->listBuckets($request, $page_id, $frame_id, $id);
@@ -1829,6 +1833,7 @@ class ReservationsPlugin extends UserPluginBase
             ReservationsChoiceCategory::destroy($choice_category_ids);
         }
 
-        return redirect()->back()->with('flash_message', '変更しました。');
+        return redirect()->back()->with('flash_message_for_frame' . $frame_id, '変更しました。');
+    }
     }
 }

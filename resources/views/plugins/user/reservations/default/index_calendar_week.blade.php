@@ -20,7 +20,7 @@
     <div>
 
         {{-- メッセージエリア --}}
-        @include('plugins.common.flash_message')
+        @include('plugins.common.flash_message_for_frame')
 
         <div class="text-center mb-1">
             {{-- 前月ボタン. aタグを改行しない事でオンマウスのアンダーラインを表示しない --}}

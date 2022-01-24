@@ -18,7 +18,7 @@
 @include('plugins.common.errors_all')
 
 {{-- 登録後メッセージ表示 --}}
-@include('plugins.common.flash_message')
+@include('plugins.common.flash_message_for_frame')
 
 {{-- メッセージエリア --}}
 <div class="alert alert-info mt-2">
