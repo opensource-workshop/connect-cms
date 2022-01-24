@@ -13,6 +13,7 @@ use Illuminate\Validation\Rule;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\InputsRepeat;
+use App\Models\Core\FrameConfig;
 use App\Models\User\Reservations\Reservation;
 use App\Models\User\Reservations\ReservationsCategory;
 use App\Models\User\Reservations\ReservationsChoiceCategory;
@@ -31,11 +32,13 @@ use App\Rules\CustomValiWysiwygMax;
 use App\Plugins\User\UserPluginBase;
 
 use App\Enums\EditPlanType;
+use App\Enums\FacilityDisplayType;
 use App\Enums\NoticeEmbeddedTag;
 use App\Enums\NotShowType;
 use App\Enums\Required;
 use App\Enums\ReservationCalendarDisplayType;
 use App\Enums\ReservationColumnType;
+use App\Enums\ReservationFrameConfig;
 use App\Enums\RruleFreq;
 use App\Enums\ShowType;
 use App\Enums\StatusType;
@@ -220,7 +223,7 @@ class ReservationsPlugin extends UserPluginBase
         if (empty($view_format)) {
             // change: セッション対応
             // $view_format = $reservations_frame->calendar_initial_display_type;
-            $view_format = session('view_format' . $frame_id, $reservations_frame->calendar_initial_display_type);
+            $view_format = session('view_format' . $frame_id, FrameConfig::getConfigValue($this->frame_configs, ReservationFrameConfig::calendar_initial_display_type, ReservationCalendarDisplayType::month));
         }
 
         // 対象日時未設定（初期表示）の場合は現在日時をセット
@@ -305,7 +308,8 @@ class ReservationsPlugin extends UserPluginBase
             /**
              * 週表示用のデータ
              */
-            $firstDay = $carbon_target_date->copy();
+            // $firstDay = $carbon_target_date->copy();
+            $firstDay = new ConnectCarbon($carbon_target_date->format('Y-m-d'));
             for ($i = 0; $i < 7; $i++, $firstDay->addDay()) {
                 $dates[] = $firstDay->copy();
             }
@@ -1436,11 +1440,9 @@ class ReservationsPlugin extends UserPluginBase
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'reservation_name' => ['required', 'max:255'],
-            'calendar_initial_display_type' => ['required'],
         ]);
         $validator->setAttributeNames([
             'reservation_name'  => '施設予約名',
-            'calendar_initial_display_type'  => '初期表示設定',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -1477,10 +1479,28 @@ class ReservationsPlugin extends UserPluginBase
 
         // 施設設定
         $reservations->reservation_name = $request->reservation_name;
-        $reservations->calendar_initial_display_type = $request->calendar_initial_display_type;
+        // $reservations->calendar_initial_display_type = $request->calendar_initial_display_type;
 
         // データ保存
         $reservations->save();
+
+        // プラグインフレームが無ければ作成
+        if (FrameConfig::where('frame_id', $frame_id)->count() == 0) {
+            // カレンダー初期表示
+            FrameConfig::updateOrCreate(
+                ['frame_id' => $frame_id, 'name' => ReservationFrameConfig::calendar_initial_display_type],
+                ['value' => ReservationCalendarDisplayType::month]
+            );
+
+            // 施設表示
+            FrameConfig::updateOrCreate(
+                ['frame_id' => $frame_id, 'name' => ReservationFrameConfig::facility_display_type],
+                ['value' => FacilityDisplayType::all]
+            );
+        }
+
+        // 更新したので、frame_configsを設定しなおす
+        $this->refreshFrameConfigs();
 
         if (empty($request->reservations_id)) {
             $flash_message = '施設予約の設定を追加しました。<br />' .
@@ -1835,5 +1855,79 @@ class ReservationsPlugin extends UserPluginBase
 
         return redirect()->back()->with('flash_message_for_frame' . $frame_id, '変更しました。');
     }
+
+    /**
+     * フレーム表示設定画面の表示
+     */
+    public function editView($request, $page_id, $frame_id)
+    {
+        if (!$this->getBucketId()) {
+            // バケツ空テンプレートを呼び出す。
+            return $this->commonView('empty_bucket_setting');
+        }
+
+        // バケツは必ず取得できる想定。上でバケツがある事を確認済み。
+        $reservation = Reservation::where('bucket_id', $this->getBucketId())->first();
+
+        // 初期表示する施設
+        $facilities = ReservationsFacility::
+            select('reservations_facilities.*')
+            ->join('reservations_categories', function ($join) {
+                $join->on('reservations_categories.id', '=', 'reservations_facilities.reservations_categories_id')
+                    ->whereNull('reservations_categories.deleted_at');
+            })
+            ->join('reservations_choice_categories', function ($join) use ($reservation) {
+                $join->on('reservations_choice_categories.reservations_categories_id', '=', 'reservations_facilities.reservations_categories_id')
+                    ->where('reservations_choice_categories.reservations_id', $reservation->id)
+                    ->whereNull('reservations_choice_categories.deleted_at');
+            })
+            ->where('reservations_facilities.hide_flag', NotShowType::show)
+            ->where('reservations_choice_categories.view_flag', ShowType::show)
+            ->orderBy('reservations_choice_categories.display_sequence', 'asc')
+            ->orderBy('reservations_categories.display_sequence', 'asc')
+            ->orderBy('reservations_facilities.display_sequence', 'asc')
+            ->get();
+
+        return $this->view('frame', [
+            'reservation' => $reservation,
+            'facilities' => $facilities,
+        ]);
+    }
+
+    /**
+     * フレーム表示設定の保存
+     */
+    public function saveView($request, $page_id, $frame_id)
+    {
+        // フレーム設定保存
+        $this->saveFrameConfigs($request, $frame_id, ReservationFrameConfig::getMemberKeys());
+        // 更新したので、frame_configsを設定しなおす
+        $this->refreshFrameConfigs();
+
+        session()->flash('flash_message_for_frame' . $frame_id, '変更しました。');
+    }
+
+    /**
+     * フレーム設定を保存する。
+     * [TODO] 今後、FrameConfigモデルにメソッド移したいなぁ
+     *
+     * @param Illuminate\Http\Request $request リクエスト
+     * @param int $frame_id フレームID
+     * @param array $frame_config_names フレーム設定のname配列
+     */
+    private function saveFrameConfigs(\Illuminate\Http\Request $request, int $frame_id, array $frame_config_names) : void
+    {
+        foreach ($frame_config_names as $key => $name) {
+
+            // 0以外のemptyは保存しない
+            if ($request->$name != '0' && empty($request->$name)) {
+                continue;
+            }
+
+            FrameConfig::updateOrCreate(
+                ['frame_id' => $frame_id, 'name' => $name],
+                ['value' => $request->$name]
+            );
+        }
     }
 }

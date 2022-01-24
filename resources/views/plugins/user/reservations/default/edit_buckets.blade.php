@@ -56,31 +56,6 @@
         </div>
     </div>
 
-    <div class="form-group row">
-        {{-- 初期表示設定（月/週） --}}
-        <label class="{{$frame->getSettingLabelClass()}} pt-0">カレンダー初期表示 <span class="badge badge-danger">必須</span></label>
-        <div class="{{$frame->getSettingInputClass()}}">
-            <div class="custom-control custom-radio custom-control-inline">
-                {{-- 月 --}}
-                <input type="radio" value="{{ ReservationCalendarDisplayType::month }}" id="calendar_initial_display_type_off" name="calendar_initial_display_type" class="custom-control-input"
-                    @if ($reservation->calendar_initial_display_type == ReservationCalendarDisplayType::month || $create_flag)
-                        checked="checked"
-                    @endif
-                    >
-                <label class="custom-control-label" for="calendar_initial_display_type_off">{{ ReservationCalendarDisplayType::getDescription(ReservationCalendarDisplayType::month) }}</label>
-            </div>
-            <div class="custom-control custom-radio custom-control-inline">
-                {{-- 週 --}}
-                <input type="radio" value="{{ ReservationCalendarDisplayType::week }}" id="calendar_initial_display_type_on" name="calendar_initial_display_type" class="custom-control-input"
-                    @if ($reservation->calendar_initial_display_type == ReservationCalendarDisplayType::week)
-                        checked="checked"
-                    @endif
-                >
-                <label class="custom-control-label" for="calendar_initial_display_type_on">{{ ReservationCalendarDisplayType::getDescription(ReservationCalendarDisplayType::week) }}</label>
-            </div>
-        </div>
-    </div>
-
     {{-- ボタンエリア --}}
     <div class="form-group text-center">
         <div class="row">

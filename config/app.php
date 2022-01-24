@@ -298,6 +298,8 @@ $app_array = [
         'RruleDayOfWeek' => \App\Enums\RruleDayOfWeek::class,
         'RruleByMonth' => \App\Enums\RruleByMonth::class,
         'EditPlanType' => \App\Enums\EditPlanType::class,
+        'ReservationFrameConfig' => \App\Enums\ReservationFrameConfig::class,
+        'FacilityDisplayType' => \App\Enums\FacilityDisplayType::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
