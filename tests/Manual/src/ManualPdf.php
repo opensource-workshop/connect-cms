@@ -142,7 +142,8 @@ class ManualPdf extends DuskTestCase
         // マニュアル用データをループ
         // マニュアルHTML と違い、カテゴリ、プラグイン、メソッドの3重ループで処理する。
         // マニュアルHTML は、カテゴリ、プラグイン、メソッドをそれぞれ独立でループした。（メニューの生成のため）
-
+        foreach($methods->where('plugin_name', 'index')->where('method_name', 'index') as $method) {
+        }
 
 
         // 
