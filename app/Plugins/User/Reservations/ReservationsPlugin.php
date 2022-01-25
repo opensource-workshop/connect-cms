@@ -1899,35 +1899,16 @@ class ReservationsPlugin extends UserPluginBase
      */
     public function saveView($request, $page_id, $frame_id)
     {
+        // 「施設表示」が「全ての施設を表示」の場合、「初期表示する施設」はセットしない
+        if ($request->input(ReservationFrameConfig::facility_display_type) == FacilityDisplayType::all) {
+            $request->merge([ReservationFrameConfig::facility_initial_display_type => null]);
+        }
+
         // フレーム設定保存
-        $this->saveFrameConfigs($request, $frame_id, ReservationFrameConfig::getMemberKeys());
+        FrameConfig::saveFrameConfigs($request, $frame_id, ReservationFrameConfig::getMemberKeys());
         // 更新したので、frame_configsを設定しなおす
         $this->refreshFrameConfigs();
 
         session()->flash('flash_message_for_frame' . $frame_id, '変更しました。');
-    }
-
-    /**
-     * フレーム設定を保存する。
-     * [TODO] 今後、FrameConfigモデルにメソッド移したいなぁ
-     *
-     * @param Illuminate\Http\Request $request リクエスト
-     * @param int $frame_id フレームID
-     * @param array $frame_config_names フレーム設定のname配列
-     */
-    private function saveFrameConfigs(\Illuminate\Http\Request $request, int $frame_id, array $frame_config_names) : void
-    {
-        foreach ($frame_config_names as $key => $name) {
-
-            // 0以外のemptyは保存しない
-            if ($request->$name != '0' && empty($request->$name)) {
-                continue;
-            }
-
-            FrameConfig::updateOrCreate(
-                ['frame_id' => $frame_id, 'name' => $name],
-                ['value' => $request->$name]
-            );
-        }
     }
 }
