@@ -2440,6 +2440,16 @@ class DatabasesPlugin extends UserPluginBase
                     ->update(['body_flag' => 0]);
         }
 
+        // イメージ指定
+        $image_flag = (empty($request->image_flag)) ? 0 : $request->image_flag;
+        if ($image_flag) {
+            // image_flag ON にする項目
+            // そのため image_flag = 1 なら データベース内の image_flag = 1 を一度 0 に更新する。
+            DatabasesColumns::where('databases_id', $request->databases_id)
+                    ->where('image_flag', 1)
+                    ->update(['image_flag' => 0]);
+        }
+
         // bugfix: 更新データは上記update後に取得しないと、title_flagが更新されない不具合対応
         $column = DatabasesColumns::where('id', $request->column_id)->first();
 
@@ -2447,6 +2457,8 @@ class DatabasesPlugin extends UserPluginBase
         $column->title_flag = $title_flag;
         // 本文指定
         $column->body_flag = $body_flag;
+        // イメージ指定
+        $column->image_flag = $image_flag;
 
         // 項目の更新処理
         $column->caption = $request->caption;
