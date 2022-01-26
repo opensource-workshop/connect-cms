@@ -116,6 +116,22 @@
                     </div>
                 </div>
 
+                {{-- 本文指定 --}}
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass()}} pt-0">本文指定 </label>
+                    <div class="{{$frame->getSettingInputClass()}}">
+                        <div class="custom-control custom-checkbox">
+                            <input name="body_flag" value="1" type="checkbox" class="custom-control-input" id="body_flag"
+                                        @if(old('body_flag', $column->body_flag)) checked @endif >
+
+                            <label class="custom-control-label" for="body_flag">新着情報等の本文に指定する</label>
+                        </div>
+                        <small class="text-muted">
+                            ※ 本文指定できる項目は、データベース毎に１つです。既に他項目でイメージ指定している場合、自動的に解除されます。<br>
+                        </small>
+                    </div>
+                </div>
+
                 {{-- ボタンエリア --}}
                 <div class="form-group text-center">
                     <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary database-horizontal">
