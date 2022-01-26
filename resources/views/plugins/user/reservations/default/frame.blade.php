@@ -21,21 +21,21 @@
     $(function () {
         $('input[name="{{ReservationFrameConfig::facility_display_type}}"]').change(function() {
             // 初期表示する施設の表示・非表示
-            change_facility_initial_display_type($(this).val());
+            change_initial_facility($(this).val());
         });
     });
 
     /**
      * 初期表示する施設の表示・非表示
      */
-    function change_facility_initial_display_type(value) {
+    function change_initial_facility(value) {
         // 繰り返しルールの表示・非表示
         switch (value) {
             case '{{FacilityDisplayType::all}}':
-                $('#facility_initial_display_type_id').collapse('hide');
+                $('#initial_facility_id').collapse('hide');
                 break;
             case '{{FacilityDisplayType::only}}':
-                $('#facility_initial_display_type_id').collapse('show');
+                $('#initial_facility_id').collapse('show');
         }
     }
 </script>
@@ -93,16 +93,16 @@
                     </div>
                 </div>
 
-                <div id="facility_initial_display_type_id" class="row mt-3 collapse">
+                <div id="initial_facility_id" class="row mt-3 collapse">
                     <div class="col-md">
                         <label>初期表示する施設</label><br>
-                        <select class="form-control" name="{{ReservationFrameConfig::facility_initial_display_type}}" class="form-control">
+                        <select class="form-control" name="{{ReservationFrameConfig::initial_facility}}">
                             {{-- <option value=""></option> --}}
                             @foreach ($facilities as $facility)
-                                <option value="{{$facility->id}}" @if(FrameConfig::getConfigValueAndOld($frame_configs, ReservationFrameConfig::facility_initial_display_type) == $facility->id) selected="selected" @endif>{{$facility->facility_name}}</option>
+                                <option value="{{$facility->id}}" @if(FrameConfig::getConfigValueAndOld($frame_configs, ReservationFrameConfig::initial_facility) == $facility->id) selected="selected" @endif>{{$facility->facility_name}}</option>
                             @endforeach
                         </select>
-                        @include('plugins.common.errors_inline', ['name' => ReservationFrameConfig::facility_initial_display_type])
+                        @include('plugins.common.errors_inline', ['name' => ReservationFrameConfig::initial_facility])
                     </div>
                 </div>
 
@@ -124,7 +124,7 @@
 {{-- 初期状態で開くもの --}}
 <script>
     // 初期表示する施設の表示・非表示
-    change_facility_initial_display_type('{{FrameConfig::getConfigValueAndOld($frame_configs, ReservationFrameConfig::facility_display_type, FacilityDisplayType::all)}}');
+    change_initial_facility('{{FrameConfig::getConfigValueAndOld($frame_configs, ReservationFrameConfig::facility_display_type, FacilityDisplayType::all)}}');
 </script>
 
 @endsection

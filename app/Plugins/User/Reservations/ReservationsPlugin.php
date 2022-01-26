@@ -237,14 +237,17 @@ class ReservationsPlugin extends UserPluginBase
             $carbon_target_date = new ConnectCarbon(session('target_ymd' . $frame_id, null));
         }
 
+        // 「１つの施設を選んで表示」の時、初期表示する施設を取得
+        $facility_display_type = FrameConfig::getConfigValue($this->frame_configs, ReservationFrameConfig::facility_display_type, FacilityDisplayType::all);
+        $initial_facility = null;
+        if ($facility_display_type == FacilityDisplayType::only) {
+            $initial_facility = (int) session('initial_facility'. $frame_id, FrameConfig::getConfigValue($this->frame_configs, ReservationFrameConfig::initial_facility));
+        }
+
         // 予約データ
         $reservations = Reservation::where('id', $reservations_frame->reservations_id)->first();
 
         // 施設データ
-        // $facilities = ReservationsFacility::where('reservations_id', $reservations_frame->reservations_id)
-        //     ->where('hide_flag', NotShowType::show)
-        //     ->orderBy('display_sequence')
-        //     ->get();
         $facilities = ReservationsChoiceCategory::
             select('reservations_facilities.*')
             ->join('reservations_facilities', function ($join) {
@@ -257,6 +260,21 @@ class ReservationsPlugin extends UserPluginBase
             ->orderBy('reservations_choice_categories.display_sequence', 'asc')
             ->orderBy('reservations_facilities.display_sequence', 'asc')
             ->get();
+        $facilities_all = $facilities;
+
+        if ($facility_display_type == FacilityDisplayType::only) {
+            $tmp_facility = $facilities->where('id', $initial_facility);
+            if ($tmp_facility->isEmpty()) {
+                // 初期表示の施設がなくて、全施設が１件でもある時、１番目の施設を取得
+                // 施設がない時は、facilitiesそのまま
+                if (!$facilities->isEmpty()) {
+                    $facilities = collect([$facilities->first()]);
+                }
+            } else {
+                // 初期表示の施設のみ取得
+                $facilities = $tmp_facility;
+            }
+        }
 
         // 予約項目データの内、選択肢が指定されていた場合に選択肢データが登録済みかチェック
         // $isExistSelect = true;
@@ -413,7 +431,7 @@ class ReservationsPlugin extends UserPluginBase
         // フレームに紐づいた施設予約親データが存在すること
         if (isset($this->frame) && $this->frame->bucket_id &&
             // 施設データが存在すること
-            !$facilities->isEmpty()) {
+            !$facilities_all->isEmpty()) {
 
             // 予約項目データが存在すること
             // !$columns->isEmpty()  &&
@@ -426,7 +444,9 @@ class ReservationsPlugin extends UserPluginBase
                     'view_format' => $view_format,
                     'carbon_target_date' => $carbon_target_date,
                     'reservations' => $reservations,
-                    'facilities' => $facilities,
+                    'facilities' => $facilities_all,
+                    'facility_display_type' => $facility_display_type,
+                    'initial_facility' => $initial_facility,
                     'calendars' => $calendars,
                 ]);
 
@@ -436,7 +456,9 @@ class ReservationsPlugin extends UserPluginBase
                     'view_format' => $view_format,
                     'carbon_target_date' => $carbon_target_date,
                     'reservations' => $reservations,
-                    'facilities' => $facilities,
+                    'facilities' => $facilities_all,
+                    'facility_display_type' => $facility_display_type,
+                    'initial_facility' => $initial_facility,
                     'calendars' => $calendars,
                 ]);
             }
@@ -445,7 +467,7 @@ class ReservationsPlugin extends UserPluginBase
 
             // バケツ等なし
             return $this->view('empty_bucket', [
-                'facilities' => $facilities,
+                'facilities' => $facilities_all,
                 // 'isExistSelect' => $isExistSelect,
             ]);
         }
@@ -543,6 +565,7 @@ class ReservationsPlugin extends UserPluginBase
         }
         session()->put('target_ymd'. $frame_id, $target_ymd);
         session()->put('view_format'. $frame_id, ReservationCalendarDisplayType::week);
+        session()->put('initial_facility'. $frame_id, $request->get('initial_facility', session('initial_facility'. $frame_id)));
         $carbon_target_date = new ConnectCarbon($target_ymd);
         return $this->index($request, $page_id, $frame_id, ReservationCalendarDisplayType::week, $carbon_target_date);
     }
@@ -558,10 +581,11 @@ class ReservationsPlugin extends UserPluginBase
         $day = empty($day) ? '01' : $day;
         // if (!checkdate($month, '01', $year)) {
         if (!checkdate($month, $day, $year)) {
-            return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . ')');
+            return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
         }
         session()->put('target_ymd'. $frame_id, "$year-$month-$day");
         session()->put('view_format'. $frame_id, ReservationCalendarDisplayType::month);
+        session()->put('initial_facility'. $frame_id, $request->get('initial_facility', session('initial_facility'. $frame_id)));
         $carbon_target_date = new ConnectCarbon("$year-$month-$day");
         return $this->index($request, $page_id, $frame_id, ReservationCalendarDisplayType::month, $carbon_target_date);
     }
@@ -1901,7 +1925,7 @@ class ReservationsPlugin extends UserPluginBase
     {
         // 「施設表示」が「全ての施設を表示」の場合、「初期表示する施設」はセットしない
         if ($request->input(ReservationFrameConfig::facility_display_type) == FacilityDisplayType::all) {
-            $request->merge([ReservationFrameConfig::facility_initial_display_type => null]);
+            $request->merge([ReservationFrameConfig::initial_facility => null]);
         }
 
         // フレーム設定保存

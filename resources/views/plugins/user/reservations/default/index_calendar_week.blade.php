@@ -48,7 +48,7 @@
         @foreach ($calendars as $facility_name => $calendar_details)
 
             {{-- 施設名 --}}
-            <span class="h5">＜{{ $facility_name }}＞</span>
+            @include('plugins.user.reservations.default.include_calendar_facility_name', ['action' => 'week'])
 
             {{-- カレンダーデータ部 --}}
             <table class="table table-bordered cc_responsive_table" style="table-layout:fixed;">
