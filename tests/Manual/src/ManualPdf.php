@@ -5,6 +5,7 @@ namespace Tests\Manual\src;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
+use App\Enums\ManualCategory;
 use App\Models\Core\Dusks;
 use App\Plugins\Manage\SiteManage\CCPDF;
 
@@ -148,7 +149,7 @@ class ManualPdf extends DuskTestCase
         foreach($dusks->where('plugin_name', 'index')->where('method_name', 'index') as $category) {
             // echo "【" . $category->category . "】\n";
             $pdf->addPage();
-            $pdf->Bookmark($category->category, 0, 0, '', '', array(0, 0, 0));
+            $pdf->Bookmark(ManualCategory::getDescription($category->category), 0, 0, '', '', array(0, 0, 0));
             $pdf->writeHTML(
                 view(
                     'manual.pdf.category',
