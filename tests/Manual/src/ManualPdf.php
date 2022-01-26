@@ -102,7 +102,7 @@ class ManualPdf extends DuskTestCase
         });
 
         // 全データ取得
-        $methods = Dusks::get();
+        $dusks = Dusks::get();
 
         // 出力するPDF の準備
         $pdf = new CCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
@@ -142,7 +142,51 @@ class ManualPdf extends DuskTestCase
         // マニュアル用データをループ
         // マニュアルHTML と違い、カテゴリ、プラグイン、メソッドの3重ループで処理する。
         // マニュアルHTML は、カテゴリ、プラグイン、メソッドをそれぞれ独立でループした。（メニューの生成のため）
-        foreach($methods->where('plugin_name', 'index')->where('method_name', 'index') as $method) {
+
+        // カテゴリのループ
+        // echo "\n";
+        foreach($dusks->where('plugin_name', 'index')->where('method_name', 'index') as $category) {
+            // echo "【" . $category->category . "】\n";
+            $pdf->addPage();
+            $pdf->Bookmark($category->category, 0, 0, '', '', array(0, 0, 0));
+            $pdf->writeHTML(
+                view(
+                    'manual.pdf.category',
+                    [
+                        'category' => $category, 
+                        'plugins' => $dusks->where('category', $category->category)->where('method_name', 'index')
+                    ]
+                ),
+                false
+            );
+
+            // プラグインのループ
+            foreach($dusks->where('category', $category->category)->where('method_name', 'index') as $plugin) {
+                // echo "- " . $plugin->plugin_title . "\n";
+                $pdf->Bookmark($plugin->plugin_title, 1, 0, '', '', array(0, 0, 0));
+                $pdf->writeHTML(
+                    view(
+                        'manual.pdf.plugin',
+                        [
+                            'plugin' => $plugin,
+                            'methods' => $dusks->where('category', $category->category)->where('plugin_name', $plugin->plugin_name)
+                        ]
+                    ),
+                    false
+                );
+
+                foreach($dusks->where('category', $category->category)->where('plugin_name', $plugin->plugin_name) as $method) {
+                    // echo $method->method_title . "\n";
+                    $pdf->Bookmark($method->method_title, 2, 0, '', '', array(0, 0, 0));
+                    $pdf->writeHTML(
+                        view(
+                            'manual.pdf.method',
+                            ['method' => $method]
+                        ),
+                        false
+                    );
+                }
+            }
         }
 
 
@@ -150,11 +194,11 @@ class ManualPdf extends DuskTestCase
         $pdf->addPage();
         $pdf->Bookmark('サイト基本設定', 0, 0, '', '', array(0, 0, 0));
 
-$tmp_method = $methods->where('plugin_name', 'admin_link');
-$current_method = $methods->where('id', 11)->first();
+$tmp_method = $dusks->where('plugin_name', 'admin_link');
+$current_method = $dusks->where('id', 11)->first();
         $pdf->writeHTML(
             view(
-                'manual.pdf.method',
+                'manual.pdf.method_test',
                 ['methods' => $tmp_method, 'current_method' => $current_method, 'base_path' => '', 'level' => 'method']
             ),
             false

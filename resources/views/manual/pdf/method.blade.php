@@ -1,41 +1,14 @@
-@extends("manual.common.main_left_main")
+{{-- CSS --}}
+@include('plugins/manage/site/pdf/css')
 
-@section('content_main')
-    <div class="card">
-        <div class="card-header text-white bg-primary">{{$current_method->plugin_title}} - {{$current_method->method_title}}</div>
-        <div class="card-body">
-            <p>{!!nl2br($current_method->method_desc)!!}</p>
-            <p>{!!$current_method->method_detail!!}</p>
-        </div>
-    </div>
+<h2 style="text-align: center; font-size: 28px;">【{{$method->method_title}}】</h2>
+<br />
 
-<img src="C:\Connect-CMS\htdocs\connect-cms\tests\Manual\html\common\admin_link\index\images\admin_link1.png" class="img-fluid img-thumbnail">
+{!!$method->method_desc!!}<br />
+{!!$method->method_detail!!}<br />
+<br />
 
-    @if ($current_method->img_args)
-    <div class="card mt-3">
-        <div class="card-header text-white bg-primary">画面</div>
-        <div class="card-body">
-            @foreach($current_method->getImgArgs() as $img_arg)
-                <p>
-                    @if($img_arg["name"])
-                        【{{$img_arg["name"]}}】<br />
-                    @elseif(count($current_method->getImgArgs()) > 1)
-                        【画像：{{$loop->iteration}}】<br />
-                    @endif
-                    <img src="./images/{{basename($img_arg["path"])}}.png" class="img-fluid img-thumbnail"
-                        @if ($img_arg["style"]) style="{{$img_arg["style"]}}" @endif
-                    >
+@foreach($method->getImgArgs() as $img_arg)
+    <img src="{{\Storage::disk('manual')->path('html')}}/{{$img_arg["path"]}}.png">
+@endforeach
 
-                    @if($img_arg["comment"])
-                        <div class="card bg-light">
-                            <div class="card-body">
-                                {!!$img_arg["comment"]!!}
-                            </div>
-                        </div>
-                    @endif
-                </p>
-            @endforeach
-        </div>
-    </div>
-    @endif
-@endsection
