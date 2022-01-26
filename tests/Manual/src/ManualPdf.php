@@ -163,6 +163,7 @@ class ManualPdf extends DuskTestCase
             // プラグインのループ
             foreach($dusks->where('category', $category->category)->where('method_name', 'index') as $plugin) {
                 // echo "- " . $plugin->plugin_title . "\n";
+                $pdf->addPage();
                 $pdf->Bookmark($plugin->plugin_title, 1, 0, '', '', array(0, 0, 0));
                 $pdf->writeHTML(
                     view(
@@ -190,6 +191,7 @@ class ManualPdf extends DuskTestCase
         }
 
 
+/*
         // 
         $pdf->addPage();
         $pdf->Bookmark('サイト基本設定', 0, 0, '', '', array(0, 0, 0));
@@ -206,6 +208,7 @@ $current_method = $dusks->where('id', 11)->first();
 
 $tmp = view('manual.method',['methods' => $tmp_method, 'current_method' => $current_method, 'base_path' => '', 'level' => 'method']);
 \Log::debug($tmp);
+*/
 
         // 目次ページの追加
         $pdf->addTOCPage();

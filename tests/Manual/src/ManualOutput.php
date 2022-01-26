@@ -155,8 +155,9 @@ class ManualOutput extends DuskTestCase
                     }
 
                     if ($method->method == 'trim_h') {
-                        $new_image = imagecreatetruecolor(imagesx($src_image), intval($method->args[1]));
-                        imagecopyresampled($new_image, $src_image, 0, 0, 0, 0, imagesx($src_image), imagesy($src_image), imagesx($src_image), imagesy($src_image));
+                        // 画像の外枠を追加するために、X, Yに 2 足し、1 ずらしてコピーする。
+                        $new_image = imagecreatetruecolor(imagesx($src_image) + 2, intval($method->args[1]) + 2);
+                        imagecopyresampled($new_image, $src_image, 1, 1, 0, 0, imagesx($src_image), intval($method->args[1]), imagesx($src_image), intval($method->args[1]));
                     }
 
                     if ($method->method == 'arc') {
@@ -191,8 +192,11 @@ class ManualOutput extends DuskTestCase
                     \Storage::disk('manual')->makeDirectory('html/' . dirname($json_path->path));
                 }
 
-                \File::copy(\Storage::disk('screenshot')->path($json_path->path . '.png'),
-                            \Storage::disk('manual')->path('html/' . $json_path->path . '.png'));
+                // 画像の外枠を追加するために、X, Yに 2 足し、1 ずらしてコピーする。
+                $src_image = imagecreatefrompng(\Storage::disk('screenshot')->path($json_path->path . '.png'));
+                $new_image = imagecreatetruecolor(imagesx($src_image) + 2, imagesy($src_image) + 2);
+                imagecopyresampled($new_image, $src_image, 1, 1, 0, 0, imagesx($src_image), imagesy($src_image), imagesx($src_image), imagesy($src_image));
+                imagepng($new_image, \Storage::disk('manual')->path('html/' . $json_path->path . '.png'));
             }
         }
     }
@@ -217,8 +221,11 @@ class ManualOutput extends DuskTestCase
                         \Storage::disk('manual')->makeDirectory('html/' . dirname($img_path));
                     }
 
-                    \File::copy(\Storage::disk('screenshot')->path($img_path . '.png'),
-                                \Storage::disk('manual')->path('html/' . $img_path . '.png'));
+                    // 画像の外枠を追加するために、X, Yに 2 足し、1 ずらしてコピーする。
+                    $src_image = imagecreatefrompng(\Storage::disk('screenshot')->path($img_path . '.png'));
+                    $new_image = imagecreatetruecolor(imagesx($src_image) + 2, imagesy($src_image) + 2);
+                    imagecopyresampled($new_image, $src_image, 1, 1, 0, 0, imagesx($src_image), imagesy($src_image), imagesx($src_image), imagesy($src_image));
+                    imagepng($new_image, \Storage::disk('manual')->path('html/' . $img_path . '.png'));
                 }
             }
         }
