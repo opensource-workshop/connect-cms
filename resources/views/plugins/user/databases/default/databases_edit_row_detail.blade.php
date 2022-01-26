@@ -96,9 +96,9 @@
             {{ $message ? $message : '項目【' . $column->column_name . ' 】の詳細設定を行います。' }}
         </div>
 
-        {{-- タイトル設定 --}}
+        {{-- 新着情報等の設定 --}}
         <div class="card mb-4">
-            <h5 class="card-header">タイトルの設定</h5>
+            <h5 class="card-header">新着情報等の設定</h5>
             <div class="card-body">
                 {{-- タイトル指定 --}}
                 <div class="form-group row">
