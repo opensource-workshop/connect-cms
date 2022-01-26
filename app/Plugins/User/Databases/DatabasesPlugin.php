@@ -3819,7 +3819,13 @@ AND databases_inputs.posted_at <= NOW()
                 'frames.id                     as frame_id',
                 'databases_inputs.id           as post_id,',
                 'databases_input_cols.value    as post_title,',
-                DB::raw('null                  as post_detail'),
+                DB::raw(
+                    'IF(
+                        `input_cols_image`.`value` IS NULL,
+                        `input_cols_body`.`value`,
+                        CONCAT(`input_cols_body`.`value`, \'<img src="'. url('/') . '/file/' . '\', `input_cols_image`.`value`, '. '\'" />\')
+                    )                          as post_detail'
+                ),
                 DB::raw('null                  as important'),
                 'databases_inputs.posted_at    as posted_at',
                 'databases_inputs.created_name as posted_name',
@@ -3839,6 +3845,29 @@ AND databases_inputs.posted_at <= NOW()
                 $leftJoin->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
                             ->on('databases_columns.id', '=', 'databases_input_cols.databases_columns_id');
             })
+            // 本文
+            ->leftJoin('databases_columns as columns_body', function ($leftJoin) use ($hide_columns_ids) {
+                $leftJoin->on('databases_inputs.databases_id', '=', 'columns_body.databases_id')
+                            ->where('columns_body.body_flag', 1)
+                            // タイトル指定しても、権限によって非表示columだったらvalue表示しない（基本的に、タイトル指定したけど権限で非表示は、設定ミスと思う。その時は(無題)で表示される）
+                            ->whereNotIn('columns_body.id', $hide_columns_ids);
+            })
+            ->leftJoin('databases_input_cols as input_cols_body', function ($leftJoin) {
+                $leftJoin->on('databases_inputs.id', '=', 'input_cols_body.databases_inputs_id')
+                            ->on('columns_body.id', '=', 'input_cols_body.databases_columns_id');
+            })
+            // イメージ
+            ->leftJoin('databases_columns as columns_image', function ($leftJoin) use ($hide_columns_ids) {
+                $leftJoin->on('databases_inputs.databases_id', '=', 'columns_image.databases_id')
+                            ->where('columns_image.image_flag', 1)
+                            // タイトル指定しても、権限によって非表示columだったらvalue表示しない（基本的に、タイトル指定したけど権限で非表示は、設定ミスと思う。その時は(無題)で表示される）
+                            ->whereNotIn('columns_image.id', $hide_columns_ids);
+            })
+            ->leftJoin('databases_input_cols as input_cols_image', function ($leftJoin) {
+                $leftJoin->on('databases_inputs.id', '=', 'input_cols_image.databases_inputs_id')
+                            ->on('columns_image.id', '=', 'input_cols_image.databases_columns_id');
+            })
+
             ->where('databases_inputs.status', StatusType::active)
             ->where('databases_inputs.posted_at', '<=', Carbon::now());
 
@@ -3906,7 +3935,7 @@ AND databases_inputs.posted_at <= NOW()
                     ->where('databases_inputs.status', StatusType::active)
                     ->where('databases_inputs.posted_at', '<=', Carbon::now())
                     ->whereIn('pages.id', $page_ids);
-    
+
             // 全データベースの検索キーワードの絞り込み と カラムの絞り込み
             $query = DatabasesTool::appendSearchKeywordAndSearchColumnsAllDb(
                 'databases_inputs.id',
@@ -3914,7 +3943,7 @@ AND databases_inputs.posted_at <= NOW()
                 $databases_frames_settings,
                 $hide_columns_ids
             );
-            
+
             // キーワード検索
             $query = DatabasesTool::appendSearchKeyword(
                 'databases_inputs.id',
