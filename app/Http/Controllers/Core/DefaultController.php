@@ -257,8 +257,7 @@ class DefaultController extends ConnectController
         // $this_page_id = $this->page->id;
         $this_page_id = $page->id;
 
-        $frames = Frame::select('frames.*', 'pages._lft')
-                       ->where('area_id', '!=', 2)
+        $frames = Frame::where('area_id', '!=', 2)
                        ->select('frames.*', 'frames.id as frame_id', 'plugins.plugin_name_full')
                        ->join('pages', 'pages.id', '=', 'frames.page_id')
                        ->leftJoin('plugins', 'plugins.plugin_name', '=', 'frames.plugin_name')
@@ -278,7 +277,6 @@ class DefaultController extends ConnectController
                                //});
                        })
                        ->orderBy('area_id', 'asc')
-//                       ->orderBy('page_id', 'desc')
                        ->orderBy('pages._lft', 'desc')
                        ->orderBy('display_sequence', 'asc')
                        ->get();
