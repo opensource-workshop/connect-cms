@@ -60,34 +60,6 @@ if "%1" == "fresh" (
 )
 
 rem ---------------------------------------------
-rem - コア
-rem ---------------------------------------------
-
-echo.
-echo --- ページなし(404)
-rem php artisan dusk tests\Browser\Core\PageNotFoundTest.php
-
-echo.
-echo --- 権限なし(403)
-rem php artisan dusk tests\Browser\Core\PageForbiddenTest.php
-
-echo.
-echo --- 初回確認メッセージ動作テスト
-rem php artisan dusk tests\Browser\Core\MessageFirstShowTest.php
-
-echo.
-echo --- 初回確認メッセージ動作テスト 項目フル入力
-rem php artisan dusk tests\Browser\Core\MessageFirstShowFullTest.php
-
-echo.
-echo --- 閲覧パスワード付ページテスト
-rem php artisan dusk tests\Browser\Core\PagePasswordTest.php
-
-echo.
-echo --- ログインテスト
-rem php artisan dusk tests\Browser\Core\LoginTest.php
-
-rem ---------------------------------------------
 rem - 管理プラグイン
 rem ---------------------------------------------
 
@@ -134,6 +106,34 @@ rem php artisan dusk tests\Browser\Manage\MessageManageTest.php
 echo.
 echo --- 外部認証管理のテスト
 rem php artisan dusk tests\Browser\Manage\AuthManageTest.php
+
+rem ---------------------------------------------
+rem - コア
+rem ---------------------------------------------
+
+echo.
+echo --- ページなし(404)
+rem php artisan dusk tests\Browser\Core\PageNotFoundTest.php
+
+echo.
+echo --- 権限なし(403)
+rem php artisan dusk tests\Browser\Core\PageForbiddenTest.php
+
+echo.
+echo --- 初回確認メッセージ動作テスト
+rem php artisan dusk tests\Browser\Core\MessageFirstShowTest.php
+
+echo.
+echo --- 初回確認メッセージ動作テスト 項目フル入力
+rem php artisan dusk tests\Browser\Core\MessageFirstShowFullTest.php
+
+echo.
+echo --- 閲覧パスワード付ページテスト
+rem php artisan dusk tests\Browser\Core\PagePasswordTest.php
+
+echo.
+echo --- ログインテスト
+rem php artisan dusk tests\Browser\Core\LoginTest.php
 
 rem ---------------------------------------------
 rem - 共通
