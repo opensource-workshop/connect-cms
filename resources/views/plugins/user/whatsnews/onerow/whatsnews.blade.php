@@ -27,7 +27,7 @@
                 <span class="mr-2">{{(new Carbon($whatsnew->posted_at))->format('Y/m/d')}}</span>
             </div>
             @endif
-            
+
             {{-- カテゴリ --}}
             @if( $whatsnew->category )
             <div class="p-0 col-md-2 col-lg" style="display: contents;">
@@ -36,7 +36,7 @@
                 </div>
             </div>
             @endif
-            
+
             {{-- タイトル --}}
             <div class="p-0 col-12 col-sm-12 col-md col-lg mr-2 text-truncate">
                 @if ($link_pattern[$whatsnew->plugin_name] == 'show_page_frame_post')
@@ -49,7 +49,7 @@
                 </a>
                 @endif
             </div>
-            
+
             {{-- 投稿者 --}}
             @if( $whatsnews_frame->view_posted_name )
             <div class="p-0 col-12 col-sm-12 col-md-3 col-lg-2 text-right text-nowrap">
@@ -64,9 +64,9 @@
             @if ($whatsnew->first_image_path && FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail))
             <div class="p-0 text-right">
                 @if (empty(FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size)))
-                    <img src="{{$whatsnew->first_image_path}}" class="float-right pb-1" style="max-width: 200px; max-height: 200px;">
+                    <img src="{{$whatsnew->first_image_path}}?size=small" class="float-right pb-1" style="max-width: 200px; max-height: 200px;">
                 @else
-                    <img src="{{$whatsnew->first_image_path}}" class="float-right pb-1" style="max-width: {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}px; max-height: {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}px;">
+                    <img src="{{$whatsnew->first_image_path}}?size=small" class="float-right pb-1" style="max-width: {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}px; max-height: {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}px;">
                 @endif
             </div>
             @endif
@@ -128,7 +128,7 @@
             </div>
         </article>
     @endif
-    
+
     {{-- ページング処理 --}}
     {{-- @if ($whatsnews_frame->page_method == 1)
         <div class="text-center">
