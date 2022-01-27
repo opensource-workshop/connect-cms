@@ -373,5 +373,4 @@ class InputsRepeat extends Model
             return __('messages.rrule_count', ['count' => $count]);
         }
     }
-
 }
