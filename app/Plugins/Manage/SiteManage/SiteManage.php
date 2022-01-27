@@ -80,7 +80,7 @@ class SiteManage extends ManagePluginBase
      * @return view
      * @method_title サイト基本設定
      * @method_desc サイト名や基本のテーマなど、サイト全体の設定を行う画面です。
-     * @method_detail 
+     * @method_detail 各項目の説明は画面の項目ごとのコメントを参照してください。
      */
     public function index($request, $page_id = null)
     {
@@ -312,6 +312,10 @@ class SiteManage extends ManagePluginBase
 
     /**
      *  カテゴリ表示画面
+     *
+     * @method_title カテゴリ設定
+     * @method_desc サイトのカテゴリを設定できます。
+     * @method_detail サイト全体カテゴリとして登録して、各プラグインで使用することで、統一感のあるカテゴリ設計ができるようになります。
      */
     public function categories($request, $id)
     {
@@ -433,6 +437,10 @@ class SiteManage extends ManagePluginBase
 
     /**
      *  多言語設定　表示画面
+     *
+     * @method_title 多言語設定
+     * @method_desc 多言語対応サイトを作成するときに使用します。
+     * @method_detail 他言語設定することで、メニューが各言語ごとに表示されるようになり、他言語対応サイトとなります。
      */
     public function languages($request, $id, $errors = null)
     {
@@ -546,6 +554,10 @@ class SiteManage extends ManagePluginBase
 
     /**
      *  レイアウト設定　表示画面
+     *
+     * @method_title レイアウト設定
+     * @method_desc 画面幅をブラウザいっぱいまで広げたい場合などに使用します。
+     * @method_detail タブレットを意識した授業用サイトでは、全てのエリアを100％、トップページのヘッダー部分を幅100％でデザインしたい場合は、ヘッダーエリアのみ100％などと設定します。
      */
     public function layout($request, $id, $errors = null)
     {
@@ -601,9 +613,9 @@ class SiteManage extends ManagePluginBase
     /**
      * meta設定　表示画面
      *
-     * @method_title meta情報設定
+     * @method_title meta情報
      * @method_desc 画面出力時のMETAタグの設定を行う画面です。
-     * @method_detail 
+     * @method_detail 出力されるHTMLのHEAD部分の内容になります。
      */
     public function meta($request, $id, $errors = null)
     {
@@ -644,6 +656,10 @@ class SiteManage extends ManagePluginBase
 
     /**
      *  ページエラー設定　表示画面
+     *
+     * @method_title エラーページ設定
+     * @method_desc 404（該当ページなし）や403（該当ページに権限なし）の際に表示するエラーページを指定できます。
+     * @method_detail 指定したエラーページは、通常のページと同じように作成します。また、メニュー表示はOFFにしておきます。
      */
     public function pageError($request, $id, $errors = null)
     {
@@ -691,6 +707,10 @@ class SiteManage extends ManagePluginBase
 
     /**
      *  Analytics 設定　表示画面
+     *
+     * @method_title アクセス解析設定
+     * @method_desc GoogleAnalytics のトラッキングコードを埋め込むための画面です。
+     * @method_detail ここで設定したトラッキングコードは、各画面で自動的に使用されます。
      */
     public function analytics($request, $id, $errors = null)
     {
@@ -731,6 +751,10 @@ class SiteManage extends ManagePluginBase
 
     /**
      * Favicon 設定　表示画面
+     *
+     * @method_title Favicon 設定
+     * @method_desc Favicon を設定できます。
+     * @method_detail サイトで使用するFavicon 画像をアップロードします。
      */
     public function favicon($request)
     {
@@ -834,6 +858,10 @@ class SiteManage extends ManagePluginBase
 
     /**
      * WYSIWYG設定画面
+     *
+     * @method_title WYSIWYG 設定
+     * @method_desc WYSIWYG の設定を変更できます。
+     * @method_detail 文字サイズの変更をWYSIWYG で使用するかどうかを設定できます。自由度は増しますが、サイトの統一感を保持しにくい場合もあります。<br />画像アップロード時に初期に選択させる画像サイズもここで設定できます。
      */
     public function wysiwyg($request, $id = null)
     {
@@ -871,7 +899,11 @@ class SiteManage extends ManagePluginBase
     }
 
     /**
-     * サイトドキュメント出力指示画面
+     * サイト設計書出力指示画面
+     *
+     * @method_title サイト設計書
+     * @method_desc サイト設計書の出力ができます。
+     * @method_detail ページやフレームの設定をPDFの設計書で出力できます。
      */
     public function document($request, $id = null)
     {

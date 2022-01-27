@@ -20,7 +20,7 @@
                     @elseif(count($current_method->getImgArgs()) > 1)
                         【画像：{{$loop->iteration}}】<br />
                     @endif
-                    <img src="./images/{{basename($img_arg["path"])}}.png" class="img-fluid img-thumbnail"
+                    <img src="./images/{{basename($img_arg["path"])}}.png" class="img-fluid"
                         @if ($img_arg["style"]) style="{{$img_arg["style"]}}" @endif
                     >
 

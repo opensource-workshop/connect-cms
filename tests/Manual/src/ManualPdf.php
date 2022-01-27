@@ -27,45 +27,47 @@ class ManualPdf extends DuskTestCase
     }
 
     /**
-     * トップページ出力
+     * カテゴリ出力
      *
      * @return void
      */
-    private function outputHome($view_path)
+    private function outputCategory($pdf, $dusks, $category)
     {
-        // ページ生成
-        $html = view($view_path, ['level' => 'home', 'base_path' => './']);
-        //\Storage::disk('manual')->put("html/index.html", $html);
+        $pdf->addPage();
+        $pdf->Bookmark(ManualCategory::getDescription($category->category), 0, 0, '', '', array(0, 0, 0));
+        $pdf->writeHTML(
+            view(
+                'manual.pdf.category',
+                [
+                    'category' => $category, 
+                    'plugins' => $dusks->where('category', $category->category)->where('method_name', 'index')
+                ]
+            ),
+            false
+        );
+        return $pdf;
     }
 
     /**
-     * カテゴリトップ出力
+     * プラグイン出力
      *
      * @return void
      */
-    private function outputCategory($view_path, $methods)
+    private function outputPlugin($pdf, $dusks, $category, $plugin)
     {
-        // カテゴリをループ
-        foreach($methods->where('plugin_name', 'index')->where('method_name', 'index') as $method) {
-            // ページ生成
-            $html = view($view_path, ['level' => 'category', 'base_path' => '../', 'methods' => $methods, 'current_method' => $method]);
-            \Storage::disk('manual')->put('html/' . $method->category . "/index.html", $html);
-        }
-    }
-
-    /**
-     * プラグイントップ出力
-     *
-     * @return void
-     */
-    private function outputPlugin($view_path, $methods)
-    {
-        // プラグインをループ
-        foreach($methods->where('method_name', 'index') as $method) {
-            // ページ生成
-            $html = view($view_path, ['level' => 'plugin', 'base_path' => '../../', 'methods' => $methods, 'current_method' => $method]);
-            \Storage::disk('manual')->put('html/' . $method->category . '/' . $method->plugin_name . "/index.html", $html);
-        }
+        $pdf->addPage();
+        $pdf->Bookmark($plugin->plugin_title, 1, 0, '', '', array(0, 0, 0));
+        $pdf->writeHTML(
+            view(
+                'manual.pdf.plugin',
+                [
+                    'plugin' => $plugin,
+                    'methods' => $dusks->where('category', $category->category)->where('plugin_name', $plugin->plugin_name)
+                ]
+            ),
+            false
+        );
+        return $pdf;
     }
 
     /**
@@ -73,17 +75,17 @@ class ManualPdf extends DuskTestCase
      *
      * @return void
      */
-    private function outputMethod($view_path, $methods)
+    private function outputMethod($pdf, $method)
     {
-        // メソッドをループ
-        foreach($methods as $method) {
-            // ページ生成
-            $html = view($view_path, ['level' => 'method', 'base_path' => '../../../', 'methods' => $methods, 'current_method' => $method]);
-            \Storage::disk('manual')->put('html/' . $method->category . '/' . $method->plugin_name . '/' . $method->method_name . "/index.html", $html);
-
-            // 画像の出力
-            $this->outputImage($method);
-        }
+        $pdf->Bookmark($method->method_title, 2, 0, '', '', array(0, 0, 0));
+        $pdf->writeHTML(
+            view(
+                'manual.pdf.method',
+                ['method' => $method]
+            ),
+            false
+        );
+        return $pdf;
     }
 
     /**
@@ -147,69 +149,18 @@ class ManualPdf extends DuskTestCase
         // カテゴリのループ
         // echo "\n";
         foreach($dusks->where('plugin_name', 'index')->where('method_name', 'index') as $category) {
-            // echo "【" . $category->category . "】\n";
-            $pdf->addPage();
-            $pdf->Bookmark(ManualCategory::getDescription($category->category), 0, 0, '', '', array(0, 0, 0));
-            $pdf->writeHTML(
-                view(
-                    'manual.pdf.category',
-                    [
-                        'category' => $category, 
-                        'plugins' => $dusks->where('category', $category->category)->where('method_name', 'index')
-                    ]
-                ),
-                false
-            );
+            $pdf = $this->outputCategory($pdf, $dusks, $category);
 
             // プラグインのループ
             foreach($dusks->where('category', $category->category)->where('method_name', 'index') as $plugin) {
-                // echo "- " . $plugin->plugin_title . "\n";
-                $pdf->addPage();
-                $pdf->Bookmark($plugin->plugin_title, 1, 0, '', '', array(0, 0, 0));
-                $pdf->writeHTML(
-                    view(
-                        'manual.pdf.plugin',
-                        [
-                            'plugin' => $plugin,
-                            'methods' => $dusks->where('category', $category->category)->where('plugin_name', $plugin->plugin_name)
-                        ]
-                    ),
-                    false
-                );
+                $pdf = $this->outputPlugin($pdf, $dusks, $category, $plugin);
 
+                // メソッドのループ
                 foreach($dusks->where('category', $category->category)->where('plugin_name', $plugin->plugin_name) as $method) {
-                    // echo $method->method_title . "\n";
-                    $pdf->Bookmark($method->method_title, 2, 0, '', '', array(0, 0, 0));
-                    $pdf->writeHTML(
-                        view(
-                            'manual.pdf.method',
-                            ['method' => $method]
-                        ),
-                        false
-                    );
+                    $pdf = $this->outputMethod($pdf, $method);
                 }
             }
         }
-
-
-/*
-        // 
-        $pdf->addPage();
-        $pdf->Bookmark('サイト基本設定', 0, 0, '', '', array(0, 0, 0));
-
-$tmp_method = $dusks->where('plugin_name', 'admin_link');
-$current_method = $dusks->where('id', 11)->first();
-        $pdf->writeHTML(
-            view(
-                'manual.pdf.method_test',
-                ['methods' => $tmp_method, 'current_method' => $current_method, 'base_path' => '', 'level' => 'method']
-            ),
-            false
-        );
-
-$tmp = view('manual.method',['methods' => $tmp_method, 'current_method' => $current_method, 'base_path' => '', 'level' => 'method']);
-\Log::debug($tmp);
-*/
 
         // 目次ページの追加
         $pdf->addTOCPage();
@@ -232,19 +183,5 @@ $tmp = view('manual.method',['methods' => $tmp_method, 'current_method' => $curr
 
         // 出力 ( D：Download, I：Inline )
         $pdf->output(\Storage::disk('manual')->path('pdf/manual.pdf'), 'F');
-
-
-
-        // トップページ(トップページは Dusk レコードがないので、空の Dusks を使用する)
-//        $this->outputHome('manual/index');
-
-        // カテゴリトップ出力
-//        $this->outputCategory('manual/category', $methods);
-
-        // プラグイントップ出力
-//        $this->outputPlugin('manual/plugin', $methods);
-
-        // メソッド出力
-//        $this->outputMethod('manual/method', $methods);
     }
 }

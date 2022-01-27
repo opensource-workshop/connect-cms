@@ -2,6 +2,11 @@
 @include('plugins/manage/site/pdf/css')
 
 <h3 style="text-align: center; font-size: 24px;">【{{$plugin->plugin_title}}】</h3>
+
+Connect-CMS の【{{$plugin->plugin_title}}】プラグインについて説明します。<br />
+{!!$plugin->plugin_desc!!}<br />
+
+<h3 style="text-align: center; font-size: 20px;"><u>機能一覧</u></h3>
 <br />
 <table border="0" class="table_css">
     <tr nobr="true">

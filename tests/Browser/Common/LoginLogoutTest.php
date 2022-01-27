@@ -72,29 +72,29 @@ class LoginLogoutTest extends DuskTestCase
                 {"path": "common/index/index/images/login1",
                  "name": "ログイン前",
                  "methods": [
-                    {"method": "trim_h", "args": [0,250]},
-                    {"method": "arc", "args": [1860,30,100,50,10]}],
+                    {"method": "trim_h", "args": [0,200]},
+                    {"method": "arc", "args": [1225,30,100,50,6]}],
                  "comment": "<ul class=\"mb-0\"><li>画面の右上にログインリンクがあります。</li><li>設定でログインリンクを消している場合があります。その場合は管理者にログイン用のURLを確認してください。</li></ul>"
                 },
                 {"path": "common/index/index/images/login2",
                  "name": "ログインID、パスワードの入力",
                  "methods": [
-                    {"method": "trim_h", "args": [0,400]},
-                    {"method": "arc", "args": [950,160,200,50,10]},
-                    {"method": "arc", "args": [950,220,200,50,10]}],
+                    {"method": "trim_h", "args": [0,300]},
+                    {"method": "arc", "args": [700,160,300,50,6]},
+                    {"method": "arc", "args": [700,220,300,50,6]}],
                  "comment": "<ul class=\"mb-0\"><li>ログインID、パスワードを入力してログインします。</li><li>「ログイン状態を維持する」にチェックを入れてログインすることで、ブラウザを閉じてもログイン状態を維持することができます。</li></ul>"
                 },
                 {"path": "common/index/index/images/login3",
                  "name": "ログインボタンのクリック",
                  "methods": [
                     {"method": "trim_h", "args": [0,400]},
-                    {"method": "arc", "args": [908,318,150,50,10]}
+                    {"method": "arc", "args": [585,318,150,50,10]}
                 ]},
                 {"path": "common/index/index/images/login4",
                  "name": "ログイン後",
                  "methods": [
                     {"method": "trim_h", "args": [0,300]},
-                    {"method": "arc", "args": [1830,30,160,50,10]}],
+                    {"method": "arc", "args": [1190,30,160,50,10]}],
                  "comment": "<ul class=\"mb-0\"><li>ログインできると、画面右上にログインユーザ名が表示されます。</li></ul>"
                 }
             ]',
@@ -141,19 +141,20 @@ class LoginLogoutTest extends DuskTestCase
                  "name": "ログイン状態",
                  "methods": [
                     {"method": "trim_h", "args": [0,250]},
-                    {"method": "arc", "args": [1830,30,160,50,10]}],
+                    {"method": "arc", "args": [1190,30,160,50,10]}],
                  "comment": "<ul class=\"mb-0\"><li>ログイン中のユーザ名をクリックします。</li></ul>"
                 },
                 {"path": "common/index/logout/images/logout2",
                  "name": "ログアウトをクリック",
                  "methods": [
-                    {"method": "trim_h", "args": [0,400]},
-                    {"method": "arc", "args": [1810,128,160,50,10]}
+                    {"method": "trim_h", "args": [0,300]},
+                    {"method": "arc", "args": [1190,128,160,50,10]}
                 ]},
                 {"path": "common/index/logout/images/logout3",
                  "name": "ログアウト済み",
                  "methods": [
-                    {"method": "trim_h", "args": [0,250]}
+                    {"method": "trim_h", "args": [0,250]},
+                    {"method": "arc", "args": [1225,30,100,50,6]}
                 ]}
             ]',
             'test_result' => 'OK',
@@ -201,7 +202,7 @@ class LoginLogoutTest extends DuskTestCase
                  "name": "ログイン画面",
                  "methods": [
                     {"method": "trim_h", "args": [0,400]},
-                    {"method": "arc", "args": [1075,316,226,52,10]}],
+                    {"method": "arc", "args": [750,316,226,52,10]}],
                  "comment": "<ul class=\"mb-0\"><li>パスワードを忘れた場合はこのリンクをクリックします。</li><li>「パスワードを忘れた場合」のリンクがない場合は管理者が設定で消している可能性があります。<br />その場合は管理者にパスワードを忘れた場合の対応方法について確認してください。</li></ul>"
                 },
                 {"path": "common/index/reset/images/reset2",

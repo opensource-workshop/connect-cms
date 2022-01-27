@@ -72,7 +72,8 @@ abstract class DuskTestCase extends BaseTestCase
         // テスト実行のタイミングで一度だけ実行する
         if (! self::$migrated) {
             $this->browse(function (Browser $browser) {
-                $browser->resize(1920, 1080);
+                //$browser->resize(1920, 1080);
+                $browser->resize(1280, 800);
             });
         }
 
