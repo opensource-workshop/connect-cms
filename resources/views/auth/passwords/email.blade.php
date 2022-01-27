@@ -15,7 +15,7 @@
                     @endif
 
                     <form class="form-horizontal" method="POST" action="{{ route('password.email') }}">
-                        {{ csrf_field() }}
+                        <input type="hidden" name="_token" value="{{csrf_token()}}" dusk="token">
 
                         <div class="form-group row">
                             <label for="userid" class="col-md-3 col-form-label text-md-right">eメール</label>

@@ -293,6 +293,7 @@ $app_array = [
         'PhotoalbumFrameConfig' => \App\Enums\PhotoalbumFrameConfig::class,
         'PhotoalbumSort' => \App\Enums\PhotoalbumSort::class,
         'Fineness' => \App\Enums\Fineness::class,
+        'ManualCategory' => \App\Enums\ManualCategory::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

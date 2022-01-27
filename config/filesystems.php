@@ -65,10 +65,20 @@ return [
             'endpoint' => env('AWS_ENDPOINT'),
         ],
 
-        // ユーザのアップロードファイル用ディスクの追加
+        // ユーザのアップロードファイル用ストレージの追加
         'user' => [
             'driver' => 'local',
             'root' => storage_path('user'),
+        ],
+
+        // マニュアルデータ用ストレージの追加
+        'manual' => [
+            'driver' => 'local',
+            'root' => base_path('tests/Manual'),
+        ],
+        'screenshot' => [
+            'driver' => 'local',
+            'root' => base_path('tests/Browser/screenshots'),
         ],
 
     ],

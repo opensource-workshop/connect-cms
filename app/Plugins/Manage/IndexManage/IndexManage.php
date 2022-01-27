@@ -16,6 +16,9 @@ use App\Plugins\Manage\ManagePluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 管理画面インデックス
  * @package Contoroller
+ * @plugin_title 管理画面
+ * @plugin_desc 管理画面の初めに開く画面です。<br />
+                Connect-CMS の公式サイトより、最新情報を取得して表示します。
  */
 class IndexManage extends ManagePluginBase
 {
@@ -34,6 +37,9 @@ class IndexManage extends ManagePluginBase
      *  ページ初期表示
      *
      * @return view
+     * @method_title お知らせ
+     * @method_desc 最新機能やバージョンアップ情報が表示されます。
+     * @method_detail Connect-CMSのバージョンアップ情報は公式サイトでも確認できます。
      */
     public function index($request)
     {
