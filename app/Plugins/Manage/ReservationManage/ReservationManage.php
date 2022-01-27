@@ -231,8 +231,7 @@ class ReservationManage extends ManagePluginBase
         $display_sequence = $this->getSaveDisplaySequence(ReservationsFacility::query(), $request->display_sequence, $id);
 
         // 配列のnull要素のみ取り除く
-        $filter_not_null = function ($var)
-        {
+        $filter_not_null = function ($var) {
             return !is_null($var);
         };
         $day_of_weeks = array_filter($request->day_of_weeks, $filter_not_null);

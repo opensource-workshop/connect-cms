@@ -1446,7 +1446,7 @@ class ReservationsPlugin extends UserPluginBase
         }
 
         if (!$reservation->id && !$create_flag) {
-           return $this->view_error("404_inframe", null, '更新時にreservationが空');
+            return $this->view_error("404_inframe", null, '更新時にreservationが空');
         }
 
         // 表示テンプレートを呼び出す。
