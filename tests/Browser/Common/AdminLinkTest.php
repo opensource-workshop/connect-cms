@@ -45,41 +45,40 @@ class AdminLinkTest extends DuskTestCase
             $browser->click('#dropdown_manage')
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('common/admin_link/index/images/admin_link2');
-
         });
 
         // マニュアル用データ出力
-        $dusk = Dusks::putManualData(['html_path' => 'common/admin_link/index/index.html'],[
-            'category' => 'common',
-            'sort' => 2,
-            'plugin_name' => 'admin_link',
-            'plugin_title' => '管理機能',
-            'plugin_desc' => 'プラグイン追加や管理者メニューなど、サイト管理機能への入り口です。',
-            'method_name' => 'index',
-            'method_title' => '管理機能',
-            'method_desc' => '管理機能メニューを開きます。',
-            'method_detail' => '',
-            'html_path' => 'common/admin_link/index/index.html',
-            'img_args' => '[
-                {"path": "common/admin_link/index/images/admin_link1",
-                 "name": "ログイン状態",
-                 "methods": [
-                    {"method": "trim_h", "args": [0,200]},
-                    {"method": "arc", "args": [1080,30,120,50,6]}
-                 ],
-                 "comment": "<ul class=\"mb-0\"><li>権限のあるユーザでログインしている場合、管理機能のリンクが表示されます。</li></ul>"
-                },
-                {"path": "common/admin_link/index/images/admin_link2",
-                 "name": "管理機能へのリンク",
-                 "methods": [
-                    {"method": "trim_h", "args": [0,300]},
-                    {"method": "rectangle", "args": [950,50,1100,100]}
-                 ],
-                 "comment": "<ul class=\"mb-0\"><li>権限がある項目が表示されます。</li><li>プレビューモードは編集用のリンクなどが消えて、ゲストが見ている状態の画面を確認することができます。</li></ul>"
-                }
-            ]',
-            'test_result' => 'OK',
-        ]);
+        $dusk = Dusks::putManualData(
+            ['html_path' => 'common/admin_link/index/index.html'],
+            ['category' => 'common',
+             'sort' => 2,
+             'plugin_name' => 'admin_link',
+             'plugin_title' => '管理機能',
+             'plugin_desc' => 'プラグイン追加や管理者メニューなど、サイト管理機能への入り口です。',
+             'method_name' => 'index',
+             'method_title' => '管理機能',
+             'method_desc' => '管理機能メニューを開きます。',
+             'method_detail' => '',
+             'html_path' => 'common/admin_link/index/index.html',
+             'img_args' => '[
+                 {"path": "common/admin_link/index/images/admin_link1",
+                  "name": "ログイン状態",
+                  "methods": [
+                     {"method": "trim_h", "args": [0,200]},
+                     {"method": "arc", "args": [1080,30,120,50,6]}
+                  ],
+                  "comment": "<ul class=\"mb-0\"><li>権限のあるユーザでログインしている場合、管理機能のリンクが表示されます。</li></ul>"
+                 },
+                 {"path": "common/admin_link/index/images/admin_link2",
+                  "name": "管理機能へのリンク",
+                  "methods": [
+                     {"method": "trim_h", "args": [0,300]},
+                     {"method": "rectangle", "args": [950,50,1100,100]}
+                  ],
+                  "comment": "<ul class=\"mb-0\"><li>権限がある項目が表示されます。</li><li>プレビューモードは編集用のリンクなどが消えて、ゲストが見ている状態の画面を確認することができます。</li></ul>"
+                 }]',
+            'test_result' => 'OK']
+        );
     }
 
     /**
@@ -91,44 +90,44 @@ class AdminLinkTest extends DuskTestCase
         $this->addPluginModal(PluginName::getPluginName(PluginName::contents));
 
         // マニュアル用データ出力
-        $dusk = Dusks::putManualData(['html_path' => 'common/admin_link/plugin/index.html'],[
-            'category' => 'common',
-            'sort' => 2,
-            'plugin_name' => 'admin_link',
-            'plugin_title' => 'プラグイン',
-            'plugin_desc' => 'Connect-CMSで共通的に使用する機能について説明します。',
-            'method_name' => 'plugin',
-            'method_title' => 'プラグイン追加',
-            'method_desc' => 'プラグイン追加の方法を紹介します。',
-            'method_detail' => 'プラグインの追加方法は、各プラグインで共通です。',
-            'html_path' => 'common/admin_link/plugin/index.html',
-            'img_args' => '[
-                {"path": "common/admin_link/plugin/images/add_plugin1",
-                 "name": "プラグイン追加",
-                 "methods": [
-                    {"method": "trim_h", "args": [0,250]},
-                    {"method": "arc", "args": [1080,30,120,50,6]}
-                ]},
-                {"path": "common/admin_link/plugin/images/add_plugin2",
-                 "name": "ヘッダーに追加",
-                 "methods": [
-                    {"method": "trim_h", "args": [0,400]},
-                    {"method": "arc", "args": [640,130,200,50,6]}
-                ]},
-                {"path": "common/admin_link/plugin/images/add_plugin3",
-                 "name": "固定記事をクリック",
-                 "methods": [
-                    {"method": "trim_h", "args": [0,600]},
-                    {"method": "arc", "args": [640,215,200,40,6]}
-                ]},
-                {"path": "common/admin_link/plugin/images/add_plugin4",
-                 "name": "プラグインの追加完了",
-                 "methods": [
-                    {"method": "trim_h", "args": [0,300]}
-                ]}
-            ]',
-            'test_result' => 'OK',
-        ]);
+        $dusk = Dusks::putManualData(
+            ['html_path' => 'common/admin_link/plugin/index.html'],
+            ['category' => 'common',
+             'sort' => 2,
+             'plugin_name' => 'admin_link',
+             'plugin_title' => 'プラグイン',
+             'plugin_desc' => 'Connect-CMSで共通的に使用する機能について説明します。',
+             'method_name' => 'plugin',
+             'method_title' => 'プラグイン追加',
+             'method_desc' => 'プラグイン追加の方法を紹介します。',
+             'method_detail' => 'プラグインの追加方法は、各プラグインで共通です。',
+             'html_path' => 'common/admin_link/plugin/index.html',
+             'img_args' => '[
+                 {"path": "common/admin_link/plugin/images/add_plugin1",
+                  "name": "プラグイン追加",
+                  "methods": [
+                     {"method": "trim_h", "args": [0,250]},
+                     {"method": "arc", "args": [1080,30,120,50,6]}
+                 ]},
+                 {"path": "common/admin_link/plugin/images/add_plugin2",
+                  "name": "ヘッダーに追加",
+                  "methods": [
+                     {"method": "trim_h", "args": [0,400]},
+                     {"method": "arc", "args": [640,130,200,50,6]}
+                 ]},
+                 {"path": "common/admin_link/plugin/images/add_plugin3",
+                  "name": "固定記事をクリック",
+                  "methods": [
+                     {"method": "trim_h", "args": [0,600]},
+                     {"method": "arc", "args": [640,215,200,40,6]}
+                 ]},
+                 {"path": "common/admin_link/plugin/images/add_plugin4",
+                  "name": "プラグインの追加完了",
+                  "methods": [
+                     {"method": "trim_h", "args": [0,300]}
+                 ]}]',
+             'test_result' => 'OK']
+        );
 
         // 固定記事の編集
         $this->editContent();
