@@ -40,6 +40,8 @@ use App\Enums\UserStatus;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページ管理
  * @package Contoroller
+ * @plugin_title ユーザ管理
+ * @plugin_desc ユーザの一覧や追加など、ユーザに関する機能が集まった管理機能です。
  */
 class UserManage extends ManagePluginBase
 {
@@ -408,6 +410,9 @@ class UserManage extends ManagePluginBase
      *  ページ初期表示
      *
      * @return view
+     * @method_title ユーザ一覧
+     * @method_desc サイトに登録されているユーザを一覧で確認できます。
+     * @method_detail 絞り込み条件で権限やグループで絞り込むこともできます。
      */
     public function index($request, $id)
     {

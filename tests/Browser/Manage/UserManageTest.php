@@ -28,6 +28,7 @@ class UserManageTest extends DuskTestCase
         $this->saveOriginalRoles();
         $this->regist();
         $this->register();
+        $this->import();
         $this->index();
     }
 
@@ -36,11 +37,39 @@ class UserManageTest extends DuskTestCase
      */
     private function index()
     {
+        // ユーザ一覧の表示
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/user')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/user/index/images/index');
         });
+
+        // 絞り込み画面
+        $this->browse(function (Browser $browser) {
+            $browser->click('#user_search_condition')
+                    ->assertTitleContains('Connect-CMS')
+                    ->pause(500)
+                    ->screenshot('manage/user/index/images/user_search_condition');
+        });
+        $this->browse(function (Browser $browser) {
+            $browser->scrollIntoView('#user_search_condition_status');
+            $browser->screenshot('manage/user/index/images/user_search_condition2');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('[
+            {"path": "manage/user/index/images/index",
+             "name": "ユーザ一覧",
+             "comment": "<ul class=\"mb-0\"><li>ユーザの一覧が表示されます。</li><li>「グループ」列の編集ボタンから、「グループ参加」画面に飛べます。</li><li>「最終ログイン日時」列の履歴リンクから、「ログイン履歴」画面に飛べます</li></ul>"
+            },
+            {"path": "manage/user/index/images/user_search_condition",
+             "name": "絞り込み画面"
+            },
+            {"path": "manage/user/index/images/user_search_condition2",
+             "name": "絞り込み画面２",
+             "comment": "<ul class=\"mb-0\"><li>様々な条件でユーザを絞り込むことができます。</li><li>絞り込んだ内容でダウンロードすることができます。</li></ul>"
+            }
+        ]');
     }
 
     /**
@@ -53,8 +82,8 @@ class UserManageTest extends DuskTestCase
                     ->type('add_additional1', $add_additional1)
                     ->type('add_name', $add_name)
                     ->type('add_value', $add_value)
-                    ->assertPathIs('/manage/user/originalRole');
-            $this->screenshot($browser);
+                    ->assertPathIs('/manage/user/originalRole')
+                    ->screenshot('manage/user/originalRole/images/originalRole');
         });
     }
 
@@ -65,8 +94,8 @@ class UserManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('変更')
-                    ->assertPathIs('/manage/user/originalRole');
-            $this->screenshot($browser);
+                    ->assertPathIs('/manage/user/originalRole')
+                    ->screenshot('manage/user/saveOriginalRoles/images/saveOriginalRoles');
         });
     }
 
@@ -88,8 +117,8 @@ class UserManageTest extends DuskTestCase
                     ->type('password_confirmation', 'test-user')
                     ->click('#label_role_reporter')
                     ->click('#label_original_role' . $original_role_student->id)
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/user/regist/images/regist');
         });
     }
 
@@ -100,8 +129,8 @@ class UserManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('ユーザ登録')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/user/register/images/register');
         });
     }
 
@@ -110,7 +139,7 @@ class UserManageTest extends DuskTestCase
      *
      * @group manage
      */
-    public function testPaginate()
+    private function testPaginate()
     {
         $this->login(1);
         $this->import();
@@ -128,8 +157,8 @@ class UserManageTest extends DuskTestCase
                     ->attach('users_csv', __DIR__.'/users.csv')
                     ->press('インポート')
                     ->acceptDialog()
-                    ->assertSee('インポートしました');
-            $this->screenshot($browser);
+                    ->assertSee('インポートしました')
+                    ->screenshot('manage/user/import/images/import');
         });
     }
 
@@ -141,8 +170,8 @@ class UserManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/user?page=2')
                 ->assertSee('ユーザ一覧')
-                ->assertDontSee('500');        // "500" 文字がない事
-            $this->screenshot($browser);
+                ->assertDontSee('500')        // "500" 文字がない事
+                ->screenshot('manage/user/import/images/import2');
         });
     }
 }
