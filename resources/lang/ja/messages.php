@@ -33,6 +33,7 @@ $messages = [
     'rrule_until' => ':untilまで',
     'rrule_count' => ':count回まで',
     'change' => '変更',
+    'switch' => '切替',
     'repeat_edit_plan_only' => 'この予定のみ:actionする',
     'repeat_edit_plan_after' => 'この日付以降を:actionする',
     'repeat_edit_plan_all' => '全ての予定を:actionする',

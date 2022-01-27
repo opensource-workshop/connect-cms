@@ -33,6 +33,7 @@ return [
     'rrule_until' => 'Until :until',
     'rrule_count' => 'Up to :count times',
     'change' => 'Change',
+    'switch' => 'Switch',
     'repeat_edit_plan_only' => ':action only this schedule',
     'repeat_edit_plan_after' => ':action after this date ',
     'repeat_edit_plan_all' => ':action all schedule',

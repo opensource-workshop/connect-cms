@@ -17,7 +17,7 @@
                 <option value="{{$facility->id}}" @if(old('initial_facility', $initial_facility) == $facility->id) selected="selected" @endif>{{$facility->facility_name}}</option>
             @endforeach
         </select>
-        <button type="submit" class="btn btn-outline-primary ml-1">切替</button>
+        <button type="submit" class="btn btn-outline-primary ml-1">{{__('messages.switch')}}</button>
         {{-- <button type="button" class="btn btn-link">詳細</button> --}}
     </form>
 @endif
