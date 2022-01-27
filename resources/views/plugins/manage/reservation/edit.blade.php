@@ -26,10 +26,10 @@ use App\Models\User\Reservations\ReservationsFacility;
     }
 
     /**
-     * 予約開始時間ボタン押下
+     * 利用開始・終了時間ボタン押下
      */
      $(function () {
-        $('#start_time').datetimepicker({
+        let time_setting = {
             tooltips: {
                 close: '閉じる',
                 pickHour: '時間を取得',
@@ -46,31 +46,12 @@ use App\Models\User\Reservations\ReservationsFacility;
             },
             format: 'HH:mm',
             stepping: 5
-        });
-    });
+        };
 
-    /**
-     * 予約終了時間ボタン押下
-     */
-     $(function () {
-        $('#end_time').datetimepicker({
-            tooltips: {
-                close: '閉じる',
-                pickHour: '時間を取得',
-                incrementHour: '時間を増加',
-                decrementHour: '時間を減少',
-                pickMinute: '分を取得',
-                incrementMinute: '分を増加',
-                decrementMinute: '分を減少',
-                pickSecond: '秒を取得',
-                incrementSecond: '秒を増加',
-                decrementSecond: '秒を減少',
-                togglePeriod: '午前/午後切替',
-                selectTime: '時間を選択'
-            },
-            format: 'HH:mm',
-            stepping: 5
-        });
+        // 利用開始時間ボタン押下
+        $('#start_time').datetimepicker(time_setting);
+        // 利用終了時間ボタン押下
+        $('#end_time').datetimepicker(time_setting);
     });
 </script>
 
