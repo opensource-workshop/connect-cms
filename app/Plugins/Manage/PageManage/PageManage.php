@@ -29,6 +29,8 @@ use App\Plugins\Manage\ManagePluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページ管理
  * @package Contoroller
+ * @plugin_title ページ管理
+ * @plugin_desc ページの作成や設定など、ページに関する機能が集まった管理機能です。
  */
 class PageManage extends ManagePluginBase
 {
@@ -77,6 +79,9 @@ class PageManage extends ManagePluginBase
      * ページ初期表示
      *
      * @return view
+     * @method_title ページ一覧
+     * @method_desc ページの一覧が表示されます。<br />ページに関する設定などが俯瞰できる画面です。
+     * @method_detail ページの内容を編集するときは、ページ名の左にある編集ボタンをクリックしてください。
      */
     public function index($request, $page_id = null, $errors = array())
     {
@@ -119,6 +124,11 @@ class PageManage extends ManagePluginBase
      * ページ編集画面表示
      *
      * @return view
+     * @method_title ページ編集
+     * @method_desc ページの登録や編集を行う画面です。
+     * @method_detail <ul><li>ページに関する各項目を設定してページの作成ができます。</li>
+                          <li>IPアドレス制限は、学内や社内などの特定のIPアドレスから参照されている時だけ、表示を許可したい。という使い方です。IPアドレス制限した場合は、URLを直接指定しても、制限が有効になり指定したIPアドレス以外からは参照できません。</li>
+                          <li>ページを削除した場合でも、コンテンツは削除されていません。コンテンツを削除したい場合は、各コンテンツの設定画面にて削除を行ってください。</li></ul>
      */
     public function edit($request, $page_id = null)
     {
@@ -297,6 +307,9 @@ class PageManage extends ManagePluginBase
 
     /**
      * ページ指定場所移動
+     *
+     * @method_title ページ移動
+     * @method_desc ページは移動先を指定することで、階層を変更することができます。また、上下矢印でメニューへの表示順番を変更することもできます。
      */
     public function movePage($request, $page_id)
     {
@@ -448,6 +461,9 @@ class PageManage extends ManagePluginBase
      * ページインポート処理
      *
      * @return view
+     * @method_title CSVインポート
+     * @method_desc CSVファイルをアップロードして、ページの登録ができます。
+     * @method_detail 画面のCSVフォーマットをコピーして使用してください。
      */
     public function upload($request, $page_id)
     {
@@ -458,7 +474,6 @@ class PageManage extends ManagePluginBase
                 'required',
                 'file',
                 'mimes:csv,txt', // mimesの都合上text/csvなのでtxtも許可が必要
-                'mimetypes:text/plain',
             ],
         ]);
         $validator->setAttributeNames([

@@ -259,6 +259,7 @@ class DefaultController extends ConnectController
 
         $frames = Frame::where('area_id', '!=', 2)
                        ->select('frames.*', 'frames.id as frame_id', 'plugins.plugin_name_full')
+                       ->join('pages', 'pages.id', '=', 'frames.page_id')
                        ->leftJoin('plugins', 'plugins.plugin_name', '=', 'frames.plugin_name')
                        ->whereIn('page_id', $page_ins)
                        // このページにのみ表示する。の処理用クロージャ。
@@ -276,7 +277,7 @@ class DefaultController extends ConnectController
                                //});
                        })
                        ->orderBy('area_id', 'asc')
-                       ->orderBy('page_id', 'desc')
+                       ->orderBy('pages._lft', 'desc')
                        ->orderBy('display_sequence', 'asc')
                        ->get();
 

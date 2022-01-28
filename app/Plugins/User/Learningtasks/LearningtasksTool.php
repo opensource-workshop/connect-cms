@@ -222,7 +222,7 @@ class LearningtasksTool
 
             // 総合評価の履歴
             // POST のWHERE が抜けていたので、追加（2020-12-21）これがないと、他の科目の総合評価を引っ張ってきて、評価できない。
-            if ($this->post->id) {
+            if ($this->post && $this->post->id) {
                 $this->evaluate_statuses = LearningtasksUsersStatuses::where('user_id', '=', $this->student_id)
                         ->whereIn('task_status', [8])
                         ->where('post_id', $this->post->id)

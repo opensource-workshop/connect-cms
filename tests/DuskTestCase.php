@@ -9,6 +9,7 @@ use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Laravel\Dusk\TestCase as BaseTestCase;
 use Laravel\Dusk\Browser;
 
+use App\Models\Core\Dusks;
 use App\User;
 
 use TruncateAllTables;
@@ -70,6 +71,16 @@ abstract class DuskTestCase extends BaseTestCase
 
         // テスト実行のタイミングで一度だけ実行する
         if (! self::$migrated) {
+            $this->browse(function (Browser $browser) {
+                //$browser->resize(1920, 1080);
+                $browser->resize(1280, 800);
+            });
+        }
+
+/* 一旦コメントアウト。データのクリアは、意識して行いたいかもしれないので。
+
+        // テスト実行のタイミングで一度だけ実行する
+        if (! self::$migrated) {
             // config キャッシュクリア
             $this->artisan('config:clear');
 
@@ -84,6 +95,7 @@ abstract class DuskTestCase extends BaseTestCase
 
             self::$migrated = true;
         }
+*/
     }
 
     /**
@@ -182,20 +194,133 @@ abstract class DuskTestCase extends BaseTestCase
             // 管理機能からプラグイン追加で固定記事を追加する。
             $browser->visit('/')
                     ->clickLink('管理機能')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('common/admin_link/plugin/images/add_plugin1');
 
             // ヘッダーエリアにプラグイン追加
-            $browser->clickLink('プラグイン追加')
-                    ->assertTitleContains('Connect-CMS');
-
             // 早すぎると、プラグイン追加ダイアログが表示しきれないので、1秒待つ。
-            $browser->pause(1000);
-            $this->screenshot($browser);
+            $browser->clickLink('プラグイン追加')
+                    ->assertTitleContains('Connect-CMS')
+                    ->pause(1000)
+                    ->screenshot('common/admin_link/plugin/images/add_plugin2');
 
-            $browser->select('add_plugin', $add_plugin)
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+            $browser->click('#form_add_plugin0')
+                    ->screenshot('common/admin_link/plugin/images/add_plugin3');
+
+            $browser->select('#form_add_plugin0', $add_plugin)
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('common/admin_link/plugin/images/add_plugin4');
         });
+    }
+
+    /**
+     *  newするクラス名の取得
+     */
+    private function getClassName($plugin_name)
+    {
+        // 管理プラグインとして存在するか確認
+        $class_name = "App\Plugins\Manage\\" . ucfirst($plugin_name) . "Manage\\" . ucfirst($plugin_name) . "Manage";
+        if (class_exists($class_name)) {
+            return $class_name;
+        }
+
+        // 標準プラグインとして存在するか確認
+        $class_name = "App\Plugins\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
+        if (class_exists($class_name)) {
+            return $class_name;
+        }
+
+        // オプションプラグインとして存在するか確認
+        $class_name = "App\PluginsOption\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
+        if (class_exists($class_name)) {
+            return $class_name;
+        }
+        return false;
+    }
+
+    /**
+     *  ドキュメントコメントの解析
+     */
+    private function getAnnotation($document, $annotation_name)
+    {
+        if (strpos($document, " * @") === false) {
+            return "";
+        }
+        // 初めの * @ の前までを省き、アノテーションコメントを分割抽出、指定の内容を返却
+        $tmp = substr($document, strpos($document, " * @"));
+        $tmp = str_replace('*/', '', $tmp);
+        $annotation_list = explode(' * @', $tmp);
+        foreach ($annotation_list as $annotation_str) {
+            if (strpos($annotation_str, " ") === false) {
+                continue;
+            }
+            if (substr($annotation_str, 0, strpos($annotation_str, " ")) == $annotation_name) {
+                return substr($annotation_str, strpos($annotation_str, " "));
+            }
+        }
+        return "";
+    }
+
+    /**
+     *  ソースをリフレクションしてドキュメントを抽出する。
+     */
+    private function getDocument($annotation_name, $class_name, $method_name = null)
+    {
+        if ($method_name == null) {
+            $class = new \ReflectionClass($class_name);
+        } else {
+            $class = new \ReflectionMethod($class_name, $method_name);
+        }
+        $class_document = $class->getDocComment();
+        return trim($this->getAnnotation($class_document, $annotation_name));
+    }
+
+    /**
+     * マニュアルデータ出力
+     */
+    public function putManualData($img_args = null)
+    {
+        // 実行しているサブクラスの名前を取得して、マニュアル用に編集する。
+        $sub_class_name = \Str::snake(get_class($this));
+        $sub_class_array = explode('\\', $sub_class_name);
+
+        // 呼び出し元メソッド名
+        $dbg = debug_backtrace();
+        $source_method = $dbg[1]['function'];
+
+        // クラス名の本体部分の取得
+        $class_name_3 = trim($sub_class_array[3], '_');
+        $class_name_3_array = explode('_', $class_name_3);
+        $plugin_name = $class_name_3_array[0];
+
+        // html パスの生成
+        $html_path = trim($sub_class_array[2], '_') . '/' . $plugin_name . '/' . $source_method . '/index.html';
+
+        // 結果の保存
+        $dusk = Dusks::firstOrNew(['html_path' => $html_path]);
+        $dusk->category = trim($sub_class_array[2], '_');
+        $dusk->sort = 2;
+        $dusk->plugin_name = $plugin_name;
+        $dusk->method_name = $source_method;
+        $dusk->test_result = 'OK';
+        $dusk->html_path   = $html_path;
+
+        // 対象クラスの生成とマニュアル用文章の取得
+        $class_name = $this->getClassName($plugin_name);
+        $dusk->plugin_title = $this->getDocument('plugin_title', $class_name);
+        $dusk->plugin_desc = $this->getDocument('plugin_desc', $class_name);
+        $dusk->method_title = $this->getDocument('method_title', $class_name, $dusk->method_name);
+        $dusk->method_desc = $this->getDocument('method_desc', $class_name, $dusk->method_name);
+        $dusk->method_detail = $this->getDocument('method_detail', $class_name, $dusk->method_name);
+        $dusk->img_args = $img_args;
+        $dusk->save();
+
+        // 結果の親子関係の紐づけ
+        if ($source_method != 'index') {
+            // 親を取得して、子のparent をセットして保存する。（_lft, _rgt は自動的に変更される）
+            $parent = Dusks::where('category', $dusk->category)->where('plugin_name', $dusk->plugin_name)->where('method_name', 'index')->first();
+            $dusk->parent_id = $parent->id;
+            $dusk->save();
+        }
     }
 }

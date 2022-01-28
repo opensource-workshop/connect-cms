@@ -6,6 +6,10 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
+use App\Models\Core\Dusks;
+
+use App\Plugins\Manage\IndexManage\IndexManage;
+
 class IndexManageTest extends DuskTestCase
 {
     /**
@@ -16,7 +20,7 @@ class IndexManageTest extends DuskTestCase
      */
     public function testInvoke()
     {
-        $this->login(1);
+        $this->login(1); // user id = 1(admin)でログイン
         $this->index();
     }
 
@@ -25,10 +29,15 @@ class IndexManageTest extends DuskTestCase
      */
     private function index()
     {
+        // 実行
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage')
-                    ->assertTitle('Connect-CMS');
-            parent::screenshot($browser);
+                    ->assertTitle('Connect-CMS')
+                    ->screenshot('manage/index/index/images/index');
+            //parent::screenshot($browser); // この記述の場合、ディレクトリは自動で判別＆日時付きでファイルが保存される。
         });
+
+        // マニュアル用データ出力
+        $this->putManualData('manage/index/index/images/index');
     }
 }
