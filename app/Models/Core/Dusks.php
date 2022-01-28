@@ -96,4 +96,22 @@ class Dusks extends Model
             $dusk->save();
         }
     }
+
+    /**
+     * マニュアル用差込データの取得
+     *
+     * @return dusks
+     */
+    public function getInsertion($level)
+    {
+        $search_dir = '';
+        if ($level == 'plugin') {
+            $search_dir = 'insertion/' . $this->category . '/' . $this->plugin_name;
+        }
+
+        // ファイルの検索
+        if (\Storage::disk('manual')->exists($search_dir . '/foot.txt')) {
+            return \Storage::disk('manual')->get($search_dir . '/foot.txt');
+        }
+    }
 }

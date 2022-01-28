@@ -1,0 +1,77 @@
+<p>【追加情報】</p>
+<div class="card">
+<div class="card-body">
+<p>ダウンロードで出力される値には、コードのまま出力される項目があります。<br />コードのまま出力される項目と内容は以下の通りです。</p>
+<table class="table table-sm table-striped table_css">
+<thead>
+    <tr>
+        <th class="doc_th" style="width: 20%;">項目名</th>
+        <th class="doc_th" style="width: 40%;">コード</th>
+        <th class="doc_th" style="width: 40%;">内容</th>
+    </tr>
+</thead>
+<tbody>
+    <tr>
+        <td style="width: 20%;">権限</td>
+        <td style="width: 40%;">role_article_admin</td>
+        <td style="width: 40%;">コンテンツ権限-コンテンツ管理者</td>
+    </tr>
+    <tr>
+        <td style="width: 20%;"></td>
+        <td style="width: 40%;">role_arrangement</td>
+        <td style="width: 40%;">コンテンツ権限-プラグイン管理者</td>
+    </tr>
+    <tr>
+        <td style="width: 20%;"></td>
+        <td style="width: 40%;">role_article</td>
+        <td style="width: 40%;">コンテンツ権限-モデレータ</td>
+    </tr>
+    <tr>
+        <td style="width: 20%;"></td>
+        <td style="width: 40%;">role_approval</td>
+        <td style="width: 40%;">コンテンツ権限-承認者</td>
+    </tr>
+    <tr>
+        <td style="width: 20%;"></td>
+        <td style="width: 40%;">role_reporter</td>
+        <td style="width: 40%;">コンテンツ権限-編集者</td>
+    </tr>
+    <tr>
+        <td style="width: 20%;"></td>
+        <td style="width: 40%;">admin_system</td>
+        <td style="width: 40%;">管理権限-システム管理者</td>
+    </tr>
+    <tr>
+        <td style="width: 20%;"></td>
+        <td style="width: 40%;">admin_site</td>
+        <td style="width: 40%;">管理権限-サイト管理者</td>
+    </tr>
+    <tr>
+        <td style="width: 20%;"></td>
+        <td style="width: 40%;">admin_page</td>
+        <td style="width: 40%;">管理権限-ページ管理者</td>
+    </tr>
+    <tr>
+        <td style="width: 20%;"></td>
+        <td style="width: 40%;">admin_user</td>
+        <td style="width: 40%;">管理権限-ユーザ管理者</td>
+    </tr>
+    <tr>
+        <td style="width: 20%;">状態</td>
+        <td style="width: 40%;">0</td>
+        <td style="width: 40%;">利用可能</td>
+    </tr>
+    <tr>
+        <td style="width: 20%;"></td>
+        <td style="width: 40%;">1</td>
+        <td style="width: 40%;">利用不可</td>
+    </tr>
+    <tr>
+        <td style="width: 20%;"></td>
+        <td style="width: 40%;">2</td>
+        <td style="width: 40%;">仮登録</td>
+    </tr>
+</tbody>
+</table>
+</div>
+</div>
