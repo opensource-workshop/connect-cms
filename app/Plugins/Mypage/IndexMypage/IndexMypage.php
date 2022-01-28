@@ -36,6 +36,7 @@ class IndexMypage extends MypagePluginBase
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
         return view('plugins.mypage.index.index', [
+            'themes'          => $request->themes,
             "plugin_name"     => "index",
             "function"        => __FUNCTION__,
             "id"              => $user->id,
