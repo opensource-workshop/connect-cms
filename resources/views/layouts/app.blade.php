@@ -121,7 +121,7 @@
 
     <!-- Themes CSS（追加） -->
 @if (isset($themes['additional_css']) && $themes['additional_css'] != '')
-    <link href="{{url('/')}}/themes/{{$themes['additional_css']}}/themes.css?version={{ filemtime(public_path() . "/themes/{$themes['additional_css']}/themes.js") }}" rel="stylesheet">
+    <link href="{{url('/')}}/themes/{{$themes['additional_css']}}/themes.css?version={{ filemtime(public_path() . "/themes/{$themes['additional_css']}/themes.css") }}" rel="stylesheet">
 @endif
 
     <!-- Themes JS（追加） -->
