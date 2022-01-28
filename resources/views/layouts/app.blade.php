@@ -115,7 +115,7 @@
 @endif
 
     <!-- Themes JS（基本） -->
-@if (isset($themes['js']) && $themes['js'] != '')
+@if (isset($themes['js']) && $themes['js'] != '' && file_exists(public_path() . "/themes/{$themes['js']}/themes.js"))
     <script src="{{url('/')}}/themes/{{$themes['js']}}/themes.js?version={{ filemtime(public_path() . "/themes/{$themes['js']}/themes.js") }}"></script>
 @endif
 
@@ -125,7 +125,7 @@
 @endif
 
     <!-- Themes JS（追加） -->
-@if (isset($themes['additional_js']) && $themes['additional_js'] != '')
+@if (isset($themes['additional_js']) && $themes['additional_js'] != '' && file_exists(public_path() . "/themes/{$themes['additional_js']}/themes.js"))
     <script src="{{url('/')}}/themes/{{$themes['additional_js']}}/themes.js?version={{ filemtime(public_path() . "/themes/{$themes['additional_js']}/themes.js") }}"></script>
 @endif
 
