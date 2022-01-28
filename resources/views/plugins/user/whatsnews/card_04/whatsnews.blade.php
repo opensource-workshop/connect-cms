@@ -64,9 +64,9 @@
                         @if ($whatsnew->first_image_path && FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail))
                             <dd class="text-center whatsnew_thumbnail">
                                 @if (empty(FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size)))
-                                    <img src="{{$whatsnew->first_image_path}}" class="pb-1" style="max-width: 200px; max-height: 200px;">
+                                    <img src="{{$whatsnew->first_image_path}}?size=small" class="pb-1" style="max-width: 200px; max-height: 200px;">
                                 @else
-                                    <img src="{{$whatsnew->first_image_path}}" class="pb-1" style="max-width: {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}px; max-height: {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}px;">
+                                    <img src="{{$whatsnew->first_image_path}}?size=small" class="pb-1" style="max-width: {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}px; max-height: {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}px;">
                                 @endif
                             </dd>
                         @endif
