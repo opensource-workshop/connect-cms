@@ -24,6 +24,7 @@
                     </div>
                 </div>
             </p>
+            {!!$current_method->getInsertion($level)!!}
         </div>
     </div>
 @endsection

@@ -77,7 +77,7 @@ php artisan dusk tests\Browser\Manage\SiteManageTest.php
 
 echo.
 echo --- ユーザ管理のテスト
-rem php artisan dusk tests\Browser\Manage\UserManageTest.php
+php artisan dusk tests\Browser\Manage\UserManageTest.php
 
 echo.
 echo --- グループ管理のテスト

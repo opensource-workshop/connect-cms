@@ -9,8 +9,8 @@
 @foreach($method->getImgArgs() as $img_arg)
     <table nobr="true">
         <tr>
-            <td style="width: 5%;"></td>
-            <td style="width: 90%;">
+            <td style="width: 10%;"></td>
+            <td style="width: 80%;">
                 @if($img_arg["name"])
                     【{{$img_arg["name"]}}】
                 @else
@@ -20,7 +20,7 @@
 
                     <img src="{{\Storage::disk('manual')->path('html')}}/{{$img_arg["path"]}}.png">
             </td>
-            <td style="width: 5%;"></td>
+            <td style="width: 10%;"></td>
         </tr>
     </table>
     @if(array_key_exists("comment", $img_arg))

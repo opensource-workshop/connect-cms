@@ -40,6 +40,8 @@ use App\Enums\UserStatus;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページ管理
  * @package Contoroller
+ * @plugin_title ユーザ管理
+ * @plugin_desc ユーザの一覧や追加など、ユーザに関する機能が集まった管理機能です。
  */
 class UserManage extends ManagePluginBase
 {
@@ -408,6 +410,9 @@ class UserManage extends ManagePluginBase
      *  ページ初期表示
      *
      * @return view
+     * @method_title ユーザ一覧
+     * @method_desc サイトに登録されているユーザを一覧で確認できます。
+     * @method_detail 絞り込み条件で権限やグループで絞り込むこともできます。
      */
     public function index($request, $id)
     {
@@ -525,6 +530,10 @@ class UserManage extends ManagePluginBase
 
     /**
      *  ユーザ登録画面表示
+     *
+     * @method_title ユーザ登録画面
+     * @method_desc ユーザの登録や編集を行えます。
+     * @method_detail
      */
     public function regist($request, $id)
     {
@@ -795,7 +804,11 @@ class UserManage extends ManagePluginBase
     }
 
     /**
-     *  役割設定画面表示
+     * 役割設定画面表示
+     *
+     * @method_title 役割設定
+     * @method_desc ユーザの属性として役割を設定することができます。
+     * @method_detail 通常の権限内でさらに役割を分けることができます。内容は各プラグインの仕様となります。
      */
     public function originalRole($request, $id)
     {
@@ -986,6 +999,10 @@ class UserManage extends ManagePluginBase
 
     /**
      * 自動ユーザ登録設定 画面表示
+     *
+     * @method_title 自動ユーザ登録設定
+     * @method_desc 希望者が自らサイトにユーザ登録できるようにする設定です。
+     * @method_detail 自動ユーザ登録の許可や仮登録の動き、本登録の動きを設定できます。
      */
     public function autoRegist($request, $id)
     {
@@ -1356,6 +1373,10 @@ class UserManage extends ManagePluginBase
 
     /**
      * インポート画面表示
+     *
+     * @method_title CSVインポート
+     * @method_desc CSVファイルからユーザを作成できます。
+     * @method_detail ID カラムの指定により、ユーザの登録、更新にも対応しています。
      */
     public function import($request, $page_id = null)
     {
@@ -1836,6 +1857,10 @@ class UserManage extends ManagePluginBase
 
     /**
      * 一括削除画面表示
+     *
+     * @method_title 一括削除
+     * @method_desc 仮削除に設定してあるユーザを一括削除できます。
+     * @method_detail 安全に一括削除するため、最初に削除対象ユーザを仮削除にしてください。
      */
     public function bulkDelete($request, $id = null)
     {

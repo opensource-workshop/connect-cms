@@ -20,5 +20,7 @@ Connect-CMS の【{{$plugin->plugin_title}}】プラグインについて説明�
     </tr>
     @endforeach
 </table>
+{{-- 差し込み --}}
+{!!$plugin->getInsertion('plugin')!!}
 <br />
 <br />
