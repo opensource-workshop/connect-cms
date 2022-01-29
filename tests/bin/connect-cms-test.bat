@@ -89,11 +89,11 @@ php artisan dusk tests\Browser\Manage\SecurityManageTest.php
 
 echo.
 echo --- プラグイン管理のテスト
-rem php artisan dusk tests\Browser\Manage\PluginManageTest.php
+php artisan dusk tests\Browser\Manage\PluginManageTest.php
 
 echo.
 echo --- システム管理のテスト
-rem php artisan dusk tests\Browser\Manage\SystemManageTest.php
+php artisan dusk tests\Browser\Manage\SystemManageTest.php
 
 echo.
 echo --- API管理のテスト

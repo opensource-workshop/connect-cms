@@ -18,6 +18,8 @@ use App\Plugins\Manage\ManagePluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category システム管理
  * @package Contoroller
+ * @plugin_title システム管理
+ * @plugin_desc デバッグモードや使用メモリ、ログなどシステムの基本に関する機能が集まった管理機能です。
  */
 class SystemManage extends ManagePluginBase
 {
@@ -41,6 +43,9 @@ class SystemManage extends ManagePluginBase
      *  ページ初期表示
      *
      * @return view
+     * @method_title デバックモード
+     * @method_desc デバックモードが表示されます。
+     * @method_detail デバックモードは通常はOFF、調査が必要な場合のみONにしてください。
      */
     public function index($request, $page_id = null, $errors = array())
     {
@@ -96,6 +101,9 @@ class SystemManage extends ManagePluginBase
      *  ログ設定画面表示
      *
      * @return view
+     * @method_title エラーログ設定
+     * @method_desc エラーログファイルの出力方法を変更できます。
+     * @method_detail エラーログの形式は必要に応じて変更してください。
      */
     public function log($request, $page_id = null)
     {
@@ -150,6 +158,9 @@ class SystemManage extends ManagePluginBase
      * サーバ設定画面表示
      *
      * @return view
+     * @method_title サーバ設定
+     * @method_desc 画像リサイズ時のPHPメモリ数を設定できます。
+     * @method_detail 画像リサイズでエラーになるような場合は増やしてください。。
      */
     public function server($request, $page_id = null)
     {
