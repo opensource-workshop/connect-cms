@@ -20,6 +20,8 @@ use App\Plugins\Manage\ManagePluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category セキュリティ管理
  * @package Contoroller
+ * @plugin_title セキュリティ管理
+ * @plugin_desc ログイン制限やHTML記述制限など、セキュリティに関する機能が集まった管理機能です。
  */
 class SecurityManage extends ManagePluginBase
 {
@@ -42,6 +44,10 @@ class SecurityManage extends ManagePluginBase
 
     /**
      *  ログイン権限表示画面
+     *
+     * @method_title ログイン権限
+     * @method_desc ログイン権限を設定できます。
+     * @method_detail 権限は適用順に処理されます。全拒否してから特定の権限やIPアドレスを許可するような設定も可能です。
      */
     public function index($request, $id, $errors = null)
     {
@@ -163,6 +169,10 @@ class SecurityManage extends ManagePluginBase
 
     /**
      *  HTML記述制限
+     *
+     * @method_title HTML記述制限
+     * @method_desc 権限によるHTML記述制限を設定できます。
+     * @method_detail XSSの防止を考えて、サイト毎に適切な設定をしてください。
      */
     public function purifier($request, $id)
     {
