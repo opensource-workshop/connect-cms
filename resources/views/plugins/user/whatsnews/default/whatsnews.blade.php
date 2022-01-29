@@ -58,9 +58,9 @@
         @if (FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail) && $whatsnew->first_image_path)
         <dd>
             @if (empty(FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size)))
-                <img src="{{$whatsnew->first_image_path}}" style="width: 200px;">
+                <img src="{{$whatsnew->first_image_path}}?size=small" style="width: 200px;">
             @else
-                <img src="{{$whatsnew->first_image_path}}" style="width:{{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}px;">
+                <img src="{{$whatsnew->first_image_path}}?size=small" style="width:{{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}px;">
             @endif
         </dd>
         @endif

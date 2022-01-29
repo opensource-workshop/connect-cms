@@ -28,6 +28,7 @@ class LoginHistoryMypage extends MypagePluginBase
 
         // 画面呼び出し
         return view('plugins.mypage.loginhistory.list', [
+            'themes'          => $request->themes,
             "function" => __FUNCTION__,
             "plugin_name" => "loginhistory",
             "users_login_histories" => $users_login_histories,

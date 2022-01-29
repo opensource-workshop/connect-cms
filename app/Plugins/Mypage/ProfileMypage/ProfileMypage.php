@@ -30,6 +30,7 @@ class ProfileMypage extends MypagePluginBase
 
         // 画面呼び出し
         return view('plugins.mypage.profile.edit', [
+            'themes'                => $request->themes,
             "function"              => __FUNCTION__,
             "plugin_name"           => "profile",
             "id"                    => $user->id,
