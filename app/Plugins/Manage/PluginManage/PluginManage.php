@@ -20,6 +20,8 @@ use App\Plugins\Manage\ManagePluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category プラグイン管理
  * @package Contoroller
+ * @plugin_title プラグイン管理
+ * @plugin_desc プラグイン追加時の表示設定など、プラグインに関する機能が集まった管理機能です。
  */
 class PluginManage extends ManagePluginBase
 {
@@ -39,6 +41,9 @@ class PluginManage extends ManagePluginBase
      *  ページ初期表示
      *
      * @return view
+     * @method_title プラグイン一覧
+     * @method_desc プラグインが一覧表示されます。
+     * @method_detail プラグイン追加時の順番指定やプラグイン追加時の表示・非表示を設定できます。
      */
     public function index($request, $page_id = null, $errors = array())
     {
