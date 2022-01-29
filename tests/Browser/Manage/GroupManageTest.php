@@ -64,8 +64,8 @@ class GroupManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('グループ変更')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/group/update/images/update');
         });
     }
 }
