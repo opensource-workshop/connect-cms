@@ -97,11 +97,11 @@ php artisan dusk tests\Browser\Manage\SystemManageTest.php
 
 echo.
 echo --- API管理のテスト
-rem php artisan dusk tests\Browser\Manage\ApiManageTest.php
+php artisan dusk tests\Browser\Manage\ApiManageTest.php
 
 echo.
 echo --- メッセージ管理のテスト
-rem php artisan dusk tests\Browser\Manage\MessageManageTest.php
+php artisan dusk tests\Browser\Manage\MessageManageTest.php
 
 echo.
 echo --- 外部認証管理のテスト

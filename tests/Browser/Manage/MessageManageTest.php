@@ -32,9 +32,25 @@ class MessageManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/message')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/message/index/images/index');
         });
+
+        $this->browse(function (Browser $browser) {
+            $browser->scrollIntoView('footer');
+            $browser->screenshot('manage/message/index/images/index2');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('[
+            {"path": "manage/message/index/images/index",
+             "name": "初回確認メッセージ"
+            },
+            {"path": "manage/message/index/images/index2",
+             "name": "初回確認メッセージ２",
+             "comment": "<ul class=\"mb-0\"><li>サイトの利用確認など、初回にアクセスした際に確認したいメッセージを表示することができる設定です。</li></ul>"
+            }
+        ]');
     }
 
     /**
@@ -46,8 +62,8 @@ class MessageManageTest extends DuskTestCase
             $browser->click('#label_message_first_show_type_1')
                     ->type('message_first_content', 'テストのメッセージです。')
                     ->type('message_first_button_name', '確認')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/message/index/images/message');
         });
     }
 
@@ -71,8 +87,8 @@ class MessageManageTest extends DuskTestCase
             $browser->visit('/manage/message')
                     ->click('#label_message_first_show_type_0')
                     ->press('更新')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/message/index/images/update');
         });
     }
 }
