@@ -20,6 +20,8 @@ use App\Plugins\Manage\ManagePluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category メッセージ管理
  * @package Contoroller
+ * @plugin_title メッセージ管理
+ * @plugin_desc サイトの利用確認など、初回にアクセスした際に確認したいメッセージに関する機能が集まった管理機能です。
  */
 class MessageManage extends ManagePluginBase
 {
@@ -39,6 +41,9 @@ class MessageManage extends ManagePluginBase
      *  ページ初期表示
      *
      * @return view
+     * @method_title 初回確認メッセージ
+     * @method_desc 初回確認メッセージを設定します。
+     * @method_detail 表示の有無やメッセージ内容、メッセージ表示の除外URLなど、初回確認メッセージに関する詳細を設定できます。
      */
     public function index($request)
     {
