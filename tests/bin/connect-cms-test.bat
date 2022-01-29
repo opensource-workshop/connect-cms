@@ -105,7 +105,7 @@ php artisan dusk tests\Browser\Manage\MessageManageTest.php
 
 echo.
 echo --- 外部認証管理のテスト
-rem php artisan dusk tests\Browser\Manage\AuthManageTest.php
+php artisan dusk tests\Browser\Manage\AuthManageTest.php
 
 rem ---------------------------------------------
 rem - コア
