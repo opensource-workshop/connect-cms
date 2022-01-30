@@ -17,6 +17,8 @@ use App\Enums\AuthMethodType;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 外部サービス設定
  * @package Controller
+ * @plugin_title 外部サービス設定
+ * @plugin_desc Connect-CMS の外部サービス設定に関する機能が集まった管理機能です。
  */
 class ServiceManage extends ManagePluginBase
 {
@@ -41,6 +43,9 @@ class ServiceManage extends ManagePluginBase
      * 初期表示（WYSIWYG設定）
      *
      * @return view
+     * @method_title WYSIWYG設定
+     * @method_desc 現在のWYSIWYG設定が表示されます。
+     * @method_detail WYSIWYGでの外部サービスの使用を項目ごとに設定できます。
      */
     public function index($request, $id = null, $sub_id = null)
     {
@@ -88,6 +93,9 @@ class ServiceManage extends ManagePluginBase
      * PDFアップロード設定 表示
      *
      * @return view
+     * @method_title PDFアップロード
+     * @method_desc 外部サービスのPDFアップロードを設定します。
+     * @method_detail サムネイルの大きさの初期値など、いくつかの項目の初期値を設定します。
      */
     public function pdf($request, $id = null, $sub_id = null)
     {
@@ -138,6 +146,9 @@ class ServiceManage extends ManagePluginBase
      * 顔認識設定 表示
      *
      * @return view
+     * @method_title AI顔認識
+     * @method_desc 外部サービスのAI顔認識を設定します。
+     * @method_detail 初期に選択させるモザイクの粗さの初期値など、いくつかの項目の初期値を設定します。
      */
     public function face($request, $id = null, $sub_id = null)
     {

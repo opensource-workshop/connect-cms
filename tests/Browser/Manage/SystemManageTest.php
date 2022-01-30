@@ -40,8 +40,8 @@ class SystemManageTest extends DuskTestCase
         });
 
         // デバッグ画面はあらかじめ用意しておいたサンプル画像を使用
-        \Storage::disk('screenshot')->put('manage/system/index/images/system_error_example.png', \Storage::disk('manual')->get('img_data/system_error_example.png'));
-        \Storage::disk('screenshot')->put('manage/system/index/images/debug.png', \Storage::disk('manual')->get('img_data/debug.png'));
+        \Storage::disk('screenshot')->put('manage/system/index/images/system_error_example.png', \Storage::disk('manual')->get('copy_data/image/system_error_example.png'));
+        \Storage::disk('screenshot')->put('manage/system/index/images/debug.png', \Storage::disk('manual')->get('copy_data/image/debug.png'));
 
         // マニュアル用データ出力
         $this->putManualData('[
