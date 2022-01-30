@@ -70,10 +70,10 @@
     @foreach($dirs as $dir)
         <li class="list-group-item">
             {{$dir['dir']}}（{{$dir['theme_name']}}）　
-               <a href="javascript:view_css_edit('{{$dir['dir']}}');">［CSS編集］</a>
-               <a href="javascript:view_js_edit('{{$dir['dir']}}');">［JavaScript編集］</a>
-               <a href="javascript:view_list_images('{{$dir['dir']}}');">［画像管理］</a>
-               <a href="javascript:view_name_edit('{{$dir['dir']}}');">［テーマ編集］</a>
+               <a href="javascript:view_css_edit('{{$dir['dir']}}');" id="css_edit_{{$loop->iteration}}">［CSS編集］</a>
+               <a href="javascript:view_js_edit('{{$dir['dir']}}');" id="js_edit_{{$loop->iteration}}">［JavaScript編集］</a>
+               <a href="javascript:view_list_images('{{$dir['dir']}}');" id="js_edit_{{$loop->iteration}}">［画像管理］</a>
+               <a href="javascript:view_name_edit('{{$dir['dir']}}');" id="js_edit_{{$loop->iteration}}">［テーマ編集］</a>
         </li>
     @endforeach
 </ul>

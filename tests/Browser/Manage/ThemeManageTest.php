@@ -29,66 +29,39 @@ class ThemeManageTest extends DuskTestCase
     private function index()
     {
         // テスト用テーマがなければコピーする。
-echo "\n";
-echo public_path();
-echo "\n";
-
-//        if (!\Storage::disk('public')->exists('themes/Users/theme1')) {
         // Laravel Fileクラスのexistsはディレクトリでも判定できました。
-        if (!\Srorage::disk('public_real')->exists('themes/Users/theme1')) {
+        if (!\Storage::disk('public_real')->exists('themes/Users/theme1')) {
             $files = \Storage::disk('manual')->allFiles('copy_data/theme1');
-print_r($files);
-echo "\n";
-
             foreach ($files as $file) {
-                if (!\Storage::disk('public_real')->exists('/themes/Users/' . str_replace('copy_data', '', $file))) {
-                    \Storage::disk('public_real')->makeDirectory('/themes/Users/' . str_replace('copy_data', '', $file));
+                if (!\Storage::disk('public_real')->exists('/themes/Users/' . str_replace('copy_data', '', dirname($file)))) {
+                    \Storage::disk('public_real')->makeDirectory('/themes/Users/' . str_replace('copy_data', '', dirname($file)));
                 }
                 \Storage::disk('public_real')->put('/themes/Users/' . str_replace('copy_data', '', $file), \Storage::disk('manual')->get($file));
-//                \Storage::disk('public')->put($file, \Storage::disk('manual')->get($file));
             }
         }
 
-/*
-        // uploads を1行作成する。
-        \Storage::disk('screenshot')->put('data_manage/uploadfile/index/images/blobid0000000000001.jpg', \Storage::disk('manual')->get('copy_data/image/blobid0000000000001.jpg'));
-        Uploads::firstOrCreate(
-        ["client_original_name" => "blobid0000000000001.jpg"],
-        [
-            "client_original_name" => "blobid0000000000001.jpg",
-            "mimetype" => "image/jpeg",
-            "extension" => "jpg",
-            "size" => 34008,
-            "plugin_name" => "contents",
-            "download_count" => 0,
-            "page_id" => 1,
-            "private" => 0,
-            "temporary_flag" => 0,
-        ]);
-
         // 実行
         $this->browse(function (Browser $browser) {
-            $browser->visit('/manage/uploadfile')
+            $browser->visit('/manage/theme')
                     ->assertTitle('Connect-CMS')
-                    ->screenshot('manage/uploadfile/index/images/index');
+                    ->screenshot('manage/theme/index/images/index');
 
-            $browser->click('#edit_1')
+            $browser->click('#css_edit_1')
                     ->assertTitleContains('Connect-CMS')
-                    ->screenshot('manage/uploadfile/index/images/index2');
+                    ->screenshot('manage/theme/index/images/css_edit');
         });
 
         // マニュアル用データ出力
         $this->putManualData('[
-            {"path": "manage/uploadfile/index/images/index",
+            {"path": "manage/theme/index/images/index",
              "name": "アップロードファイル一覧",
              "comment": "<ul class=\"mb-0\"><li>アップロードファイルを一覧表示できます。</li></ul>"
             },
-            {"path": "manage/uploadfile/index/images/index2",
+            {"path": "manage/theme/index/images/css_edit",
              "name": "アップロードファイル編集",
              "comment": "<ul class=\"mb-0\"><li>ファイル名の変更が可能です。</li></ul>"
             }
         ]');
-*/
     }
 
     /**
