@@ -328,19 +328,8 @@ class WhatsnewsPlugin extends UserPluginBase
             )
             ->leftJoin('categories', 'categories.id', '=', 'whatsnews_dual.categories_id');
 
-        // 新着の取得方式が「日数で表示する」の場合用の条件日付を生成
-        $where_date = null;
-        if ($whatsnews_frame->view_pattern == 1) {
-            $where_date = date("Y-m-d", strtotime("-" . $whatsnews_frame->days ." day"));
-        }
-
         // 各プラグインのSQLにwhere条件を付加してUNION
         foreach ($union_sqls as $union_sql) {
-            // （where条件）日付
-            if ($where_date) {
-                $union_sql->where('posted_at', '>=', $where_date);
-            }
-
             // （where条件）フレーム選択
             if ($whatsnews_frame->frame_select == 1) {
                 $union_sql->whereIn('frames.id', explode(',', $whatsnews_frame->target_frame_ids));
