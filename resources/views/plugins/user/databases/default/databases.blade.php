@@ -109,6 +109,7 @@
     @endif
 
 @else
+    @can('posts.create',[[null, $frame->plugin_name, $buckets]])
     {{-- フレームに紐づくコンテンツがない場合等、表示に支障がある場合は、データ登録を促す等のメッセージを表示 --}}
     <div class="card border-danger">
         <div class="card-body">
@@ -117,5 +118,6 @@
             @endforeach
         </div>
     </div>
+    @endcan
 @endif
 @endsection
