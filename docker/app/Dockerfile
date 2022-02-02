@@ -13,8 +13,18 @@ vim
 
 RUN apt-get update \
     && apt-get install -y libpq-dev libzip-dev \
+        libfreetype6-dev \
+        libjpeg62-turbo-dev \
+        libwebp-dev \
+        libxpm-dev \
     && docker-php-ext-install pdo_mysql pdo_pgsql \
-    && docker-php-ext-install zip
+    && docker-php-ext-install zip \
+    && docker-php-ext-configure gd \
+        --with-freetype \
+        --with-jpeg \
+        --with-webp \
+        --with-xpm \
+    && docker-php-ext-install -j$(nproc) gd
 
 COPY ./sites-enabled/my.conf /etc/apache2/sites-available
 
