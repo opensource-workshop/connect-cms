@@ -4,6 +4,7 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
+@can('frames.edit',[[null, $frame->plugin_name, $buckets]])
 <div class="card border-danger">
     <div class="card-body">
         @foreach ($error_messages as $error_message)
@@ -11,4 +12,5 @@
         @endforeach
     </div>
 </div>
+@endcan
 @endsection

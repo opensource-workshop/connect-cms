@@ -11,9 +11,11 @@
 @if ($searchs_frame->id)
     @include('plugins.user.searchs.default.searchs_form')
 @else
+    @can('frames.edit',[[null, $frame->plugin_name, $buckets]])
     <div class="alert alert-danger" style="margin-top: 10px;">
         <i class="fas fa-exclamation-circle"></i>
         検索設定を作成してください。
     </div>
+    @endcan
 @endif
 @endsection
