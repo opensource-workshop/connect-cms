@@ -28,7 +28,7 @@
     </div>
 @else
     {{-- 新規登録 --}}
-    @can('posts.create',[[null, $frame->plugin_name, $buckets]])
+    @can('frames.edit',[[null, null, null, $frame]])
         <div class="card border-danger">
             <div class="card-body">
                 <p class="text-center cc_margin_bottom_0">フレームの設定画面から、使用するブログを選択するか、作成してください。</p>
