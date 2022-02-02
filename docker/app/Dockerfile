@@ -33,6 +33,9 @@ RUN a2dissite 000-default \
   && a2ensite my \
   && a2enmod rewrite
 
+# Timezone (PHP)
+RUN printf '[PHP]\ndate.timezone = "${TZ}"\n' > /usr/local/etc/php/conf.d/timezone.ini
+
 # APP_ENVのiniファイルを有効化
 RUN mv "$PHP_INI_DIR/php.ini-${APP_ENV}" "$PHP_INI_DIR/php.ini"
 
