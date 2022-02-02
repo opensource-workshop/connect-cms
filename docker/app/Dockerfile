@@ -33,7 +33,7 @@ RUN a2dissite 000-default \
   && a2ensite my \
   && a2enmod rewrite
 
-# developmentのiniファイルを有効化
+# APP_ENVのiniファイルを有効化
 RUN mv "$PHP_INI_DIR/php.ini-${APP_ENV}" "$PHP_INI_DIR/php.ini"
 
 WORKDIR /var/www/html
