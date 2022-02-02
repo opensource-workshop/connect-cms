@@ -20,7 +20,7 @@
 @if (isset($frame) && $frame->bucket_id)
     {{-- バケツあり --}}
 @else
-    @can('frames.edit',[[null, $frame->plugin_name, $buckets]])
+    @can('frames.edit',[[null, null, null, $frame]])
     {{-- バケツなし --}}
     <div class="card border-danger">
         <div class="card-body">

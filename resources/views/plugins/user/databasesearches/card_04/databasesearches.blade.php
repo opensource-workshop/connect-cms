@@ -70,7 +70,7 @@
 </div>
 
 @else
-    @can('frames.edit',[[null, $frame->plugin_name, $buckets]])
+    @can('frames.edit',[[null, null, null, $frame]])
     <div class="alert alert-danger" style="margin-top: 10px;">
         <i class="fas fa-exclamation-circle"></i>
         編集画面から、データベース検索の設定を作成してください。

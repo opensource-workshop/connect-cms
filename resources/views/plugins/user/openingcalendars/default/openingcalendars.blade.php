@@ -9,7 +9,7 @@
 
 @section("plugin_contents_$frame->id")
 @if (!$frame->bucket_id)
-    @can('frames.edit',[[null, $frame->plugin_name, $buckets]])
+    @can('frames.edit',[[null, null, null, $frame]])
     <div class="alert alert-warning" style="margin-top: 10px;">
         <i class="fas fa-exclamation-circle"></i>
         開館カレンダーが設定されていません。

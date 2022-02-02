@@ -109,7 +109,7 @@
     @endif
 
 @else
-    @can('frames.edit',[[null, $frame->plugin_name, $buckets]])
+    @can('frames.edit',[[null, null, null, $frame]])
     {{-- フレームに紐づくコンテンツがない場合等、表示に支障がある場合は、データ登録を促す等のメッセージを表示 --}}
     <div class="card border-danger">
         <div class="card-body">

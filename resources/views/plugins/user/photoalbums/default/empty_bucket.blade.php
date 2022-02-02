@@ -9,7 +9,7 @@
 
 @section("plugin_contents_$frame->id")
 
-@can('frames.edit',[[null, $frame->plugin_name, $buckets]])
+@can('frames.edit',[[null, null, null, $frame]])
 {{-- バケツなし --}}
 <div class="card border-danger">
     <div class="card-body">

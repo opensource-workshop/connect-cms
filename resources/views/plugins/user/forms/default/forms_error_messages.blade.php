@@ -17,7 +17,7 @@
 
 {{-- フォーム設定者向けのシステムメッセージ バケツ未設定など --}}
 @isset($setting_error_messages)
-@can('frames.edit',[[null, $frame->plugin_name, $buckets]])
+@can('frames.edit',[[null, null, null, $frame]])
 <div class="card border-danger">
     <div class="card-body">
         @foreach ($setting_error_messages as $error_message)
