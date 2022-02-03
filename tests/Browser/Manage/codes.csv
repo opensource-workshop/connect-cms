@@ -1,0 +1,4 @@
+id,プラグイン,注釈キー,buckets_id,prefix,type_name,type_code1,type_code2,type_code3,type_code4,type_code5,コード,値,additional1,additional2,additional3,additional4,additional5,additional6,additional7,additional8,additional9,additional10,表示順
+,,,,,学校,school,,,,,1,コネクト小学校,,,,,,,,,,,1
+,,,,,学校,school,,,,,2,コネクト中学校,,,,,,,,,,,2
+,,,,,学校,school,,,,,3,コネクト高等学校,,,,,,,,,,,3

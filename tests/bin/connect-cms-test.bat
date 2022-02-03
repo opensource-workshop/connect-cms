@@ -107,6 +107,30 @@ echo.
 echo --- 外部認証管理のテスト
 php artisan dusk tests\Browser\Manage\AuthManageTest.php
 
+echo.
+echo --- 外部サービス設定のテスト
+php artisan dusk tests\Browser\Manage\ServiceManageTest.php
+
+rem ---------------------------------------------
+rem - データ管理プラグイン
+rem ---------------------------------------------
+
+echo.
+echo --- アップロードファイル
+php artisan dusk tests\Browser\Manage\UploadfileManageTest.php
+
+echo.
+echo --- テーマ管理
+php artisan dusk tests\Browser\Manage\ThemeManageTest.php
+
+echo.
+echo --- 連番管理
+php artisan dusk tests\Browser\Manage\NumberManageTest.php
+
+echo.
+echo --- コード管理
+php artisan dusk tests\Browser\Manage\CodeManageTest.php
+
 rem ---------------------------------------------
 rem - コア
 rem ---------------------------------------------

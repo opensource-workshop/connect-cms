@@ -11,6 +11,7 @@ final class ManualCategory extends EnumsBase
     const blueprint = 'blueprint';
     const common = 'common';
     const manage = 'manage';
+    const manage_data = 'manage_data';
     const user = 'user';
     const my = 'my';
     const error = 'error';
@@ -21,6 +22,7 @@ final class ManualCategory extends EnumsBase
         self::blueprint => '設計',
         self::common => '共通機能',
         self::manage => '管理者',
+        self::manage_data => '管理者(データ管理)',
         self::user => '一般ユーザ',
         self::my => 'マイページ',
         self::error => 'エラー説明',

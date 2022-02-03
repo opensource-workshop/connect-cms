@@ -185,7 +185,7 @@ class LoginLogoutTest extends DuskTestCase
         });
 
         // パスワードリセット・メールはあらかじめ用意しておいたメールサンプル画像を使用
-        \Storage::disk('screenshot')->put('common/index/reset/images/password_reset_mail.png', \Storage::disk('manual')->get('img_data/password_reset_mail.png'));
+        \Storage::disk('screenshot')->put('common/index/reset/images/password_reset_mail.png', \Storage::disk('manual')->get('copy_data/image/password_reset_mail.png'));
 
         // マニュアル用データ出力
         $dusk = Dusks::putManualData(

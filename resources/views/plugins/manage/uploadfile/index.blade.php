@@ -97,7 +97,7 @@
             <tbody>
                 @foreach($uploads as $upload)
                 <tr>
-                    <td><a href="{{url('/')}}/manage/uploadfile/edit/{{$upload->id}}"><i class="far fa-edit"></i></a></td>
+                    <td><a href="{{url('/')}}/manage/uploadfile/edit/{{$upload->id}}" id="edit_{{$loop->iteration}}"><i class="far fa-edit"></i></a></td>
                     <td>{{$upload->id}}</td>
                     <td><a href="{{url('/')}}/file/{{$upload->id}}" target="_blank">{{$upload->client_original_name}}</a></td>
                     <td>{{$upload->getFormatSize()}}</td>

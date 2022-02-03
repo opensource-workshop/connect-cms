@@ -37,8 +37,8 @@ class MessageManageTest extends DuskTestCase
         });
 
         $this->browse(function (Browser $browser) {
-            $browser->scrollIntoView('footer');
-            $browser->screenshot('manage/message/index/images/index2');
+            $browser->scrollIntoView('footer')
+                    ->screenshot('manage/message/index/images/index2');
         });
 
         // マニュアル用データ出力
@@ -75,20 +75,20 @@ class MessageManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             // 設定の保存
             $browser->press('更新')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/message/index/images/update1');
 
             // 一般画面の表示
             $browser->visit('/')
-                    ->assertSee('テストのメッセージです。');
-            $this->screenshot($browser);
+                    ->assertSee('テストのメッセージです。')
+                    ->screenshot('manage/message/index/images/update2');
 
             // メッセージを表示しないに戻す
             $browser->visit('/manage/message')
                     ->click('#label_message_first_show_type_0')
                     ->press('更新')
                     ->assertTitleContains('Connect-CMS')
-                    ->screenshot('manage/message/index/images/update');
+                    ->screenshot('manage/message/index/images/update3');
         });
     }
 }

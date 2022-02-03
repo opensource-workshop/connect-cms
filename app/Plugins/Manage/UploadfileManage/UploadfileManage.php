@@ -21,6 +21,8 @@ use App\Plugins\Manage\ManagePluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category アップロードファイル管理
  * @package Contoroller
+ * @plugin_title アップロードファイル管理
+ * @plugin_desc アップロードファイルに関する機能が集まった管理機能です。
  */
 class UploadfileManage extends ManagePluginBase
 {
@@ -47,6 +49,9 @@ class UploadfileManage extends ManagePluginBase
      *  ページ初期表示
      *
      * @return view
+     * @method_title アップロードファイル一覧
+     * @method_desc アップロードファイルを一覧で確認できます。
+     * @method_detail アップロードファイルのサイズなどの情報が確認できます。
      */
     public function index($request)
     {
@@ -149,6 +154,10 @@ class UploadfileManage extends ManagePluginBase
 
     /**
      *  編集画面
+     *
+     * @method_title アップロードファイル編集
+     * @method_desc アップロードファイルのファイル名が編集できます。
+     * @method_detail
      */
     public function edit($request, $uploads_id)
     {
@@ -203,6 +212,10 @@ class UploadfileManage extends ManagePluginBase
 
     /**
      *  ユーザファイルの設定画面
+     *
+     * @method_title ユーザファイルの設定
+     * @method_desc SCP等でアップロードしたファイルをConnect-CMSで制御する設定です。
+     * @method_detail
      */
     public function userdir($request)
     {
