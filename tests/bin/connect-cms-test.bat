@@ -123,6 +123,14 @@ echo.
 echo --- テーマ管理
 php artisan dusk tests\Browser\Manage\ThemeManageTest.php
 
+echo.
+echo --- 連番管理
+php artisan dusk tests\Browser\Manage\NumberManageTest.php
+
+echo.
+echo --- コード管理
+php artisan dusk tests\Browser\Manage\CodeManageTest.php
+
 rem ---------------------------------------------
 rem - コア
 rem ---------------------------------------------

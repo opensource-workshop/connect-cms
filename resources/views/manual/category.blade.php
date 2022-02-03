@@ -26,7 +26,7 @@
                     <div class="card-body">
                         <dl class="row mb-0">
                             @foreach($methods->where('category', $current_method->category)->where('method_name', 'index') as $method)
-                                <dd class="col-md-2"><a href="{{$base_path}}{{dirname($method->html_path, 2)}}/index.html">{!!$method->plugin_title!!}</a></dd>
+                                <dt class="col-md-2"><a href="{{$base_path}}{{dirname($method->html_path, 2)}}/index.html">{!!$method->plugin_title!!}</a></dt>
                                 <dd class="col-md-10">{!!$method->plugin_desc!!}</dd>
                             @endforeach
                         </dl>

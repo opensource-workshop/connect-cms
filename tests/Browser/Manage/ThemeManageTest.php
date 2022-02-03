@@ -20,7 +20,11 @@ class ThemeManageTest extends DuskTestCase
     {
         $this->login(1); // user id = 1(admin)でログイン
         $this->index();
-        //$this->generateIndex();
+        $this->editCss();
+        $this->editJs();
+        $this->listImages();
+        $this->editName();
+        $this->generateIndex();
     }
 
     /**
@@ -46,41 +50,132 @@ class ThemeManageTest extends DuskTestCase
                     ->assertTitle('Connect-CMS')
                     ->screenshot('manage/theme/index/images/index');
 
-            $browser->click('#css_edit_1')
+            $browser->click('#image_edit_1')
                     ->assertTitleContains('Connect-CMS')
-                    ->screenshot('manage/theme/index/images/css_edit');
+                    ->screenshot('manage/theme/index/images/image_edit');
         });
 
         // マニュアル用データ出力
         $this->putManualData('[
             {"path": "manage/theme/index/images/index",
-             "name": "アップロードファイル一覧",
-             "comment": "<ul class=\"mb-0\"><li>アップロードファイルを一覧表示できます。</li></ul>"
-            },
-            {"path": "manage/theme/index/images/css_edit",
-             "name": "アップロードファイル編集",
-             "comment": "<ul class=\"mb-0\"><li>ファイル名の変更が可能です。</li></ul>"
+             "name": "ユーザ・テーマ一覧",
+             "comment": "<ul class=\"mb-0\"><li>ユーザ・テーマを一覧表示できます。</li></ul>"
             }
         ]');
     }
 
     /**
-     * ユーザファイル
+     * ユーザ・テーマのCSS編集
      */
-    private function userdir()
+    private function editCss()
     {
         // 実行
         $this->browse(function (Browser $browser) {
-            $browser->visit('/manage/uploadfile/userdir')
-                    ->assertTitle('Connect-CMS')
-                    ->screenshot('manage/uploadfile/userdir/images/userdir');
+            $browser->visit('/manage/theme')
+                    ->click('#css_edit_1')
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/theme/editCss/images/editCss');
         });
 
         // マニュアル用データ出力
         $this->putManualData('[
-            {"path": "manage/uploadfile/userdir/images/userdir",
-             "name": "ユーザディレクトリ一覧",
-             "comment": "<ul class=\"mb-0\"><li>サーバ上のファイルを操作できる環境用の設定です。</li><li>storage/user 配下のディレクトリをConnect-CMS で閲覧制御できます。</li><li>ファイル参照時は /file/user/ディレクトリ名/ファイル名 となります。</li></ul>"
+            {"path": "manage/theme/editCss/images/editCss",
+             "name": "ユーザ・テーマのCSS編集",
+             "comment": "<ul class=\"mb-0\"><li>ユーザ・テーマ毎のCSSを編集できます。</li></ul>"
+            }
+        ]');
+    }
+
+    /**
+     * ユーザ・テーマのJavaScript編集
+     */
+    private function editJs()
+    {
+        // 実行
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/manage/theme')
+                    ->click('#js_edit_1')
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/theme/editJs/images/editJs');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('[
+            {"path": "manage/theme/editJs/images/editJs",
+             "name": "ユーザ・テーマのJavaScript編集",
+             "comment": "<ul class=\"mb-0\"><li>ユーザ・テーマ毎のJavaScriptを編集できます。</li></ul>"
+            }
+        ]');
+    }
+
+    /**
+     * ユーザ・テーマの画像管理
+     */
+    private function listImages()
+    {
+        // 実行
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/manage/theme')
+                    ->click('#image_edit_1')
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/theme/listImages/images/listImages');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('[
+            {"path": "manage/theme/listImages/images/listImages",
+             "name": "ユーザ・テーマの画像管理",
+             "comment": "<ul class=\"mb-0\"><li>ユーザ・テーマ毎の画像を追加・削除できます。</li></ul>"
+            }
+        ]');
+    }
+
+    /**
+     * ユーザ・テーマの名前管理
+     */
+    private function editName()
+    {
+        // 実行
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/manage/theme')
+                    ->click('#name_edit_1')
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/theme/editName/images/editName');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('[
+            {"path": "manage/theme/editName/images/editName",
+             "name": "ユーザ・テーマの名前の編集",
+             "comment": "<ul class=\"mb-0\"><li>ユーザ・テーマの名前を変更できます。</li></ul>"
+            }
+        ]');
+    }
+
+    /**
+     * カスタムテーマ生成
+     */
+    private function generateIndex()
+    {
+        // 実行
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/manage/theme/generateIndex')
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/theme/generateIndex/images/generateIndex');
+
+            $browser->scrollIntoView('footer')
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/theme/generateIndex/images/generateIndex2');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('[
+            {"path": "manage/theme/generateIndex/images/generateIndex",
+             "name": "カスタムテーマ生成"
+            },
+            {"path": "manage/theme/generateIndex/images/generateIndex2",
+             "name": "カスタムテーマ生成２",
+             "comment": "<ul class=\"mb-0\"><li>ディレクトリ名とテーマ名を決めて、テーマを生成します。</li><li>テーマセットから選ぶことで、楽にテーマを作ることができます。</li><li>メニューの形式や書体をそれぞれ選択して、テーマを生成することもできます。</li></ul>"
             }
         ]');
     }

@@ -205,7 +205,7 @@ class UserManageTest extends DuskTestCase
                     ->attach('users_csv', __DIR__.'/users.csv')
                     ->press('インポート')
                     ->acceptDialog()
-                    ->assertTitleContains('Connect-CMS')
+                    ->assertDontSee('500')        // "500" 文字がない事
                     ->screenshot('manage/user/import/images/submitImport');
         });
     }

@@ -7,9 +7,12 @@ use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
 use App\Models\Common\Uploads;
+use App\Traits\ConnectCommonTrait;
 
 class UploadfileManageTest extends DuskTestCase
 {
+    use ConnectCommonTrait;
+
     /**
      * テストする関数の制御
      *
@@ -29,20 +32,23 @@ class UploadfileManageTest extends DuskTestCase
     private function index()
     {
         // uploads を1行作成する。
-        \Storage::disk('screenshot')->put('data_manage/uploadfile/index/images/blobid0000000000001.jpg', \Storage::disk('manual')->get('copy_data/image/blobid0000000000001.jpg'));
-        Uploads::firstOrCreate(
-        ["client_original_name" => "blobid0000000000001.jpg"],
-        [
-            "client_original_name" => "blobid0000000000001.jpg",
-            "mimetype" => "image/jpeg",
-            "extension" => "jpg",
-            "size" => 34008,
-            "plugin_name" => "contents",
-            "download_count" => 0,
-            "page_id" => 1,
-            "private" => 0,
-            "temporary_flag" => 0,
-        ]);
+        $upload = Uploads::firstOrCreate(
+            ["client_original_name" => "blobid0000000000001.jpg"],
+            [
+                "client_original_name" => "blobid0000000000001.jpg",
+                "mimetype" => "image/jpeg",
+                "extension" => "jpg",
+                "size" => 34008,
+                "plugin_name" => "contents",
+                "download_count" => 0,
+                "page_id" => 1,
+                "private" => 0,
+                "temporary_flag" => 0
+            ]
+        );
+
+        // 実ファイルがなくてもOKかもしれないので、ファイルを作らない。
+        //\Storage::put($this->getDirectory($upload->id) . '/' $upload->id . ".jpg", \Storage::disk('manual')->get('copy_data/image/blobid0000000000001.jpg'));
 
         // 実行
         $this->browse(function (Browser $browser) {

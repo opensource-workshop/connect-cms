@@ -41,8 +41,8 @@ class AuthManageTest extends DuskTestCase
         });
 
         $this->browse(function (Browser $browser) {
-            $browser->scrollIntoView('footer');
-            $browser->screenshot('manage/auth/index/images/index2');
+            $browser->scrollIntoView('footer')
+                    ->screenshot('manage/auth/index/images/index2');
         });
 
         // マニュアル用データ出力
@@ -128,10 +128,8 @@ class AuthManageTest extends DuskTestCase
     private function netcommons2()
     {
         $this->browse(function (Browser $browser) {
-            $browser->visit('/manage/auth/netcommons2');
-            $this->screenshot($browser);
-
-            $browser->type('auth_netcomons2_site_url', 'http://nc2.localhost')
+            $browser->visit('/manage/auth/netcommons2')
+                    ->type('auth_netcomons2_site_url', 'http://nc2.localhost')
                     ->type('auth_netcomons2_site_key', 'key_1234')
                     ->type('auth_netcomons2_salt', 'salt_1234')
                     ->type('auth_netcomons2_add_role', 'original_role:student')
