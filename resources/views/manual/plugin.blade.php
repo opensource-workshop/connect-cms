@@ -9,6 +9,7 @@
                 <div class="card bg-light mb-3">
                     <div class="card-body">
                         {!!$current_method->plugin_desc!!}
+                        {!!$current_method->getInsertion($level, 'desc', '<p>', '</p>')!!}
                     </div>
                 </div>
             </p>
@@ -24,7 +25,7 @@
                     </div>
                 </div>
             </p>
-            {!!$current_method->getInsertion($level)!!}
+            {!!$current_method->getInsertion($level, 'foot')!!}
         </div>
     </div>
 @endsection

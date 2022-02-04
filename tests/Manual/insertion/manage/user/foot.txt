@@ -1,6 +1,6 @@
 <p>【追加情報】</p>
-<div class="card">
-<div class="card-body">
+<div class="card" html_only>
+<div class="card-body" html_only>
 <p>ダウンロードで出力される値には、コードのまま出力される項目があります。<br />コードのまま出力される項目と内容は以下の通りです。</p>
 <table class="table table-sm table-striped table_css">
 <thead>
@@ -73,5 +73,5 @@
     </tr>
 </tbody>
 </table>
-</div>
-</div>
+</div html_only>
+</div html_only>

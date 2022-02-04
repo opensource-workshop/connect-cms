@@ -18,14 +18,15 @@ class CodeManageTest extends DuskTestCase
     {
         $this->login(1); // user id = 1(admin)でログイン
         $this->index();  // 初めにindex データを作っておく必要がある。
+        $this->import();
+        $this->download();
         $this->regist();
+        $this->edit();
         $this->display();
         $this->searchRegist();
         $this->searches();
         $this->helpMessageRegist();
         $this->helpMessages();
-        $this->import();
-        $this->download();
         $this->index();  // データが登録された後の状態のスクリーンショットが欲しいので、最後に実行
     }
 
@@ -45,7 +46,7 @@ class CodeManageTest extends DuskTestCase
         $this->putManualData('[
             {"path": "manage/code/index/images/index",
              "name": "コード一覧",
-             "comment": "<ul class=\"mb-0\"><li>プラグインで使うコードを一覧表示できます。</li></ul>"
+             "comment": "<ul class=\"mb-0\"><li>コード一覧に表示する項目は、「表示設定」から設定できます。</li><li>「ｘ」ボタンを押下すると、検索条件をクリアして再検索します。</li><li>「？」ボタンを押下すると、このオンラインマニュアルで下記の[ 検索条件の詳細 ]が確認できます。</li><li>「虫眼鏡 学校」ボタンは「検索条件登録」から登録した検索条件です。ボタンを押すと、指定した検索条件でコード一覧を表示します。</li></ul>"
             }
         ]');
     }
@@ -60,10 +61,48 @@ class CodeManageTest extends DuskTestCase
             $browser->visit('/manage/code/regist')
                     ->assertTitle('Connect-CMS')
                     ->screenshot('manage/code/regist/images/regist');
+
+            $browser->scrollIntoView('footer')
+                    ->screenshot('manage/code/regist/images/regist2');
         });
 
         // コード登録
-        $this->putManualData("manage/code/regist/images/regist");
+        $this->putManualData('[
+            {"path": "manage/code/regist/images/regist",
+             "name": "コード登録"
+            },
+            {"path": "manage/code/regist/images/regist2",
+             "name": "コード登録２",
+             "comment": "<ul class=\"mb-0\"><li>注釈名を選択すると、表示している各項目の注釈が切り替わります。注釈は「注釈登録」から登録できます。</li><li>各項目の注釈は設定なしの場合、なにも表示しません。</li></ul>"
+            }
+        ]');
+    }
+
+    /**
+     * コード変更
+     */
+    private function edit()
+    {
+        // 実行
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/manage/code/edit/1')
+                    ->assertTitle('Connect-CMS')
+                    ->screenshot('manage/code/edit/images/edit');
+
+            $browser->scrollIntoView('footer')
+                    ->screenshot('manage/code/edit/images/edit2');
+        });
+
+        // コード登録
+        $this->putManualData('[
+            {"path": "manage/code/edit/images/edit",
+             "name": "コード変更"
+            },
+            {"path": "manage/code/edit/images/edit2",
+             "name": "コード変更２",
+             "comment": "<ul class=\"mb-0\"><li>登録内容をコピーして、再登録できます。</li><li>注釈名を選択すると、表示している各項目の注釈が切り替わります。注釈は「注釈登録」から登録できます。</li><li>各項目の注釈は設定なしの場合、なにも表示しません。</li></ul>"
+            }
+        ]');
     }
 
     /**
@@ -85,7 +124,7 @@ class CodeManageTest extends DuskTestCase
             $browser->scrollIntoView('footer')
                     ->screenshot('manage/code/display/images/display2');
 
-            $browser->press('登録')
+            $browser->press('#display_update_button')
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/code/display/images/display3');
         });
@@ -155,7 +194,7 @@ class CodeManageTest extends DuskTestCase
         });
 
         // 注釈登録
-        $this->putManualData("manage/code/helpMessageRegist/images/helpMessageRegist,manage/code/helpMessageRegist/images/helpMessageRegist2,manage/code/helpMessageRegist/images/helpMessageRegist3");
+        $this->putManualData("manage/code/helpMessageRegist/images/helpMessageRegist,manage/code/helpMessageRegist/images/helpMessageRegist2");
     }
 
     /**
@@ -212,6 +251,11 @@ class CodeManageTest extends DuskTestCase
         });
 
         // ダウンロード
-        $this->putManualData("manage/code/download/images/download");
+        $this->putManualData('[
+            {"path": "manage/code/download/images/download",
+             "name": "CSVダウンロード",
+             "comment": "<ul class=\"mb-0\"><li>登録されているコード一覧をCSVでダウンロードできます。</li><li>ダウンロードする文字コードはShift-JISとUTF-8形式から選択できます。</li></ul>"
+            }
+        ]');
     }
 }

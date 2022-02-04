@@ -1,0 +1,72 @@
+<div class="card bg-light mb-3" html_only>
+<div class="card-body" html_only>
+<p>【CSVファイル項目説明】</p>
+<table class="table table-striped table-sm table-bordered table_css">
+<tbody>
+    <tr>
+        <th class="doc_th" style="width: 30%;">項目名</th>
+        <th class="doc_th" style="width: 10%;">必須</th>
+        <th class="doc_th" style="width: 60%;">説明</th>
+    </tr>
+    <tr>
+        <th>id</th>
+        <td></td>
+        <td>「id」が空の場合、登録します。<br>「id」がある場合、該当idのコードを更新します。<br>コードのidは「ダウンロード」から確認できます。</td>
+    </tr>
+    <tr>
+        <th>プラグイン</th>
+        <td></td>
+        <td>プラグイン（英語名）を入力します。<br>プラグインの値は「ダウンロード」から確認できます。</td>
+    </tr>
+    <tr>
+        <th>注釈キー</th>
+        <td></td>
+        <td>「注釈一覧」の「注釈キー」を入力します。</td>
+    </tr>
+    <tr>
+        <th>buckets_id</th>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <th>prefix</th>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <th>type_name</th>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <th>type_code1～5</th>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <th>コード</th>
+        <td><span class="badge badge-danger">必須</span></td>
+        <td></td>
+    </tr>
+    <tr>
+        <th>値</th>
+        <td><span class="badge badge-danger">必須</span></td>
+        <td></td>
+    </tr>
+    <tr>
+        <th>additional1～10</th>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <th>表示順</th>
+        <td></td>
+        <td>半角数字を入力します。</td>
+    </tr>
+</tbody>
+</table>
+<p>【CSVファイル例】</p>
+<p>"id","プラグイン","注釈キー","buckets_id","prefix","type_name","type_code1","type_code2","type_code3","type_code4","type_code5","コード","値","additional1","additional2","additional3","additional4","additional5","additional6","additional7","additional8","additional9","additional10","表示順"<br>"","","","","","","","","","","","code001","コード００１","","","","","","","","","","","1"<br>"","","","","","","","","","","","code002","コード００２","","","","","","","","","","","2"</p>
+<p>※ 文字コードは <code>Shift_JIS</code> 又は <code>UTF-8</code></p>
+</div html_only>
+</div html_only>

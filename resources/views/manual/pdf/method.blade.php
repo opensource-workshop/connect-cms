@@ -29,3 +29,5 @@
         </div>
     @endif
 @endforeach
+{{-- 差し込み --}}
+{!!$method->getInsertionPdf('method', 'foot')!!}
