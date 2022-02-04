@@ -8,8 +8,10 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
+    @can('frames.edit',[[null, null, null, $frame]])
     <div class="alert alert-warning text-center">
         <i class="fas fa-exclamation-circle"></i>
         Opac フレームの設定を行ってください。
     </div>
+    @endcan
 @endsection
