@@ -22,7 +22,7 @@
     @endcan
 @endif
 
-@if (isset($posts))
+@if ($convention->exists)
 {{-- トラックの表 --}}
 <table class="table table-bordered">
 <thead>
