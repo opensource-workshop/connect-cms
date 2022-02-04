@@ -84,6 +84,6 @@
     }
     /* メニューを画面右に隠す為、スクロールバーが出ないようにhmltとbodyタグに指定 */
     html,body{
-        overflow-x: hidden;
+        overflow-x: clip;
       }
     </style>
