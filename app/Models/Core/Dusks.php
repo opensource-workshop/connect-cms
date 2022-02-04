@@ -102,16 +102,41 @@ class Dusks extends Model
      *
      * @return dusks
      */
-    public function getInsertion($level)
+    public function getInsertion($level, $position, $front = '', $rear = '')
     {
         $search_dir = '';
         if ($level == 'plugin') {
             $search_dir = 'insertion/' . $this->category . '/' . $this->plugin_name;
+        } elseif ($level == 'method') {
+            $search_dir = 'insertion/' . $this->category . '/' . $this->plugin_name . '/'. $this->method_name;
         }
 
         // ファイルの検索
-        if (\Storage::disk('manual')->exists($search_dir . '/foot.txt')) {
-            return \Storage::disk('manual')->get($search_dir . '/foot.txt');
+        if (\Storage::disk('manual')->exists($search_dir . '/' . $position . '.txt')) {
+            return $front . \Storage::disk('manual')->get($search_dir . '/' . $position . '.txt') . $rear;
         }
+    }
+
+    /**
+     * マニュアル用差込データの取得 PDF用
+     * タグにhtml_only 属性がついている場合、タグを削除する。
+     *
+     * @return dusks
+     */
+    public function getInsertionPdf($level, $position, $front = '', $rear = '')
+    {
+        // HTML用と同じタグを取得
+        $insertion = $this->getInsertion($level, $position, $front, $rear);
+
+        // タグを抜き出して、html_only クラスがあれば、そのタグを削除する。
+        $match_ret = preg_match_all('/<([^>]*)>/', $insertion, $matches);
+        if ($match_ret !== false && $match_ret > 0) {
+            foreach ($matches[0] as $matche) {
+                if (strpos($matche, 'html_only') !== false) {
+                    $insertion = str_replace($matche, '', $insertion);
+                }
+            }
+        }
+        return $insertion;
     }
 }

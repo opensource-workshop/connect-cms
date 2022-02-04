@@ -29,7 +29,7 @@ use App\Enums\CsvCharacterCode;
  * @category コード管理
  * @package Contoroller
  * @plugin_title コード管理
- * @plugin_desc プラグインで使うコード管理に関する機能が集まった管理機能です。
+ * @plugin_desc 各プラグインでユーザーが使用するコードを一括管理できる機能です。
  */
 class CodeManage extends ManagePluginBase
 {
@@ -281,6 +281,9 @@ class CodeManage extends ManagePluginBase
      * コード変更画面表示
      *
      * @return view
+     * @method_title コード変更
+     * @method_desc プラグインで使うコードを変更できます。
+     * @method_detail
      */
     public function edit($request, $id = null, $function = null, $errors = array())
     {

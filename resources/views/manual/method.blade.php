@@ -33,6 +33,7 @@
                     @endif
                 </p>
             @endforeach
+            {!!$current_method->getInsertion($level, 'foot')!!}
         </div>
     </div>
     @endif
