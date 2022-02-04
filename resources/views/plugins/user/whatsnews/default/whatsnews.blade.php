@@ -8,6 +8,20 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
+
+@if (isset($frame) && $frame->bucket_id)
+    {{-- バケツあり --}}
+@else
+@can('frames.edit',[[null, null, null, $frame]])
+    {{-- バケツなし --}}
+    <div class="card border-danger">
+        <div class="card-body">
+            <p class="text-center cc_margin_bottom_0">{{ __('messages.empty_bucket', ['plugin_name' => '新着情報']) }}</p>
+        </div>
+    </div>
+    @endcan
+@endif
+
 @if ($whatsnews)
 <p class="text-left">
     @if (isset($whatsnews_frame->rss) && $whatsnews_frame->rss == 1)
