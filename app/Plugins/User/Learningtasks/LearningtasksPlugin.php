@@ -1194,7 +1194,7 @@ class LearningtasksPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'post_settings.report_end_at' => ['nullable', 'date_format:"Y-m-d H:i"', Rule::requiredIf($request->input('post_settings.use_report_end'))],
+            'post_settings.report_end_at' => ['nullable', 'date_format:"Y-m-d H:i"', Rule::requiredIf($request->input('post_settings.use_report_end') == 'on')],
         ]);
         $validator->setAttributeNames([
             'post_settings.use_report_end' => '以下の提出終了日時で制御する',
@@ -1820,7 +1820,7 @@ class LearningtasksPlugin extends UserPluginBase
             'learningtasks_name' => ['required'],
             'view_count' => ['required', 'numeric'],
             'sequence_conditions' => ['nullable', 'numeric'],
-            'base_settings.report_end_at' => ['nullable', 'date_format:"Y-m-d H:i"', Rule::requiredIf($request->input('base_settings.use_report_end'))],
+            'base_settings.report_end_at' => ['nullable', 'date_format:"Y-m-d H:i"', Rule::requiredIf($request->input('base_settings.use_report_end') == 'on')],
         ]);
         $validator->setAttributeNames([
             'learningtasks_name' => '課題管理名',
