@@ -8,28 +8,31 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
-{{-- 新規登録 --}}
-@can('posts.create',[[null, $frame->plugin_name, $buckets]])
-    @if (isset($buckets) && isset($frame) && $frame->bucket_id)
-        <div class="row">
-            <p class="text-left col-6">
-                @if (isset($blog_frame->rss) && $blog_frame->rss == 1)
-                <a href="{{url('/')}}/redirect/plugin/blogs/rss/{{$page->id}}/{{$frame_id}}/"><span class="badge badge-info">RSS2.0</span></a>
-                @endif
-            </p>
+@if (isset($buckets) && isset($frame) && $frame->bucket_id)
+    <div class="row">
+        <p class="text-left col-6">
+            @if (isset($blog_frame->rss) && $blog_frame->rss == 1)
+            <a href="{{url('/')}}/redirect/plugin/blogs/rss/{{$page->id}}/{{$frame_id}}/"><span class="badge badge-info">RSS2.0</span></a>
+            @endif
+        </p>
+        {{-- 新規登録 --}}
+        @can('posts.create',[[null, $frame->plugin_name, $buckets]])
             <p class="text-right col-6">
                 {{-- 新規登録ボタン --}}
                 <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/blogs/create/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'"><i class="far fa-edit"></i> 新規登録</button>
             </p>
+        @endcan
+    </div>
+@else
+    {{-- 新規登録 --}}
+    @can('frames.edit',[[null, null, null, $frame]])
+    <div class="card border-danger">
+        <div class="card-body">
+            <p class="text-center cc_margin_bottom_0">フレームの設定画面から、使用するブログを選択するか、作成してください。</p>
         </div>
-    @else
-        <div class="card border-danger">
-            <div class="card-body">
-                <p class="text-center cc_margin_bottom_0">フレームの設定画面から、使用するブログを選択するか、作成してください。</p>
-            </div>
-        </div>
-    @endif
-@endcan
+    </div>
+    @endcan
+@endif
 
 {{-- ブログ表示 --}}
 @if (isset($blogs_posts))

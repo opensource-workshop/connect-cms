@@ -415,7 +415,7 @@ class FormsPlugin extends UserPluginBase
         } else {
             // エラーあり
             return $this->view('forms_error_messages', [
-                'error_messages' => $setting_error_messages,
+                'setting_error_messages' => $setting_error_messages,
             ]);
         }
     }
