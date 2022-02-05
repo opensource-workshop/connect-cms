@@ -39,7 +39,7 @@ class ManualPdf extends DuskTestCase
             view(
                 'manual.pdf.category',
                 [
-                    'category' => $category, 
+                    'category' => $category,
                     'plugins' => $dusks->where('category', $category->category)->where('method_name', 'index')
                 ]
             ),
@@ -148,15 +148,15 @@ class ManualPdf extends DuskTestCase
 
         // カテゴリのループ
         // echo "\n";
-        foreach($dusks->where('plugin_name', 'index')->where('method_name', 'index') as $category) {
+        foreach ($dusks->where('plugin_name', 'index')->where('method_name', 'index') as $category) {
             $pdf = $this->outputCategory($pdf, $dusks, $category);
 
             // プラグインのループ
-            foreach($dusks->where('category', $category->category)->where('method_name', 'index') as $plugin) {
+            foreach ($dusks->where('category', $category->category)->where('method_name', 'index') as $plugin) {
                 $pdf = $this->outputPlugin($pdf, $dusks, $category, $plugin);
 
                 // メソッドのループ
-                foreach($dusks->where('category', $category->category)->where('plugin_name', $plugin->plugin_name) as $method) {
+                foreach ($dusks->where('category', $category->category)->where('plugin_name', $plugin->plugin_name) as $method) {
                     $pdf = $this->outputMethod($pdf, $method);
                 }
             }
