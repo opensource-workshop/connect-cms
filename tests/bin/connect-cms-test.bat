@@ -60,6 +60,14 @@ if "%1" == "fresh" (
 )
 
 rem ---------------------------------------------
+rem - 事前準備用の実行
+rem ---------------------------------------------
+
+echo.
+echo --- データ準備用 - ログ管理 - マニュアルなし
+php artisan dusk tests\Browser\Manage\LogManageTest.php no_manual
+
+rem ---------------------------------------------
 rem - 管理プラグイン
 rem ---------------------------------------------
 
@@ -130,6 +138,10 @@ php artisan dusk tests\Browser\Manage\NumberManageTest.php
 echo.
 echo --- コード管理
 php artisan dusk tests\Browser\Manage\CodeManageTest.php
+
+echo.
+echo --- ログ管理
+php artisan dusk tests\Browser\Manage\LogManageTest.php
 
 rem ---------------------------------------------
 rem - コア
