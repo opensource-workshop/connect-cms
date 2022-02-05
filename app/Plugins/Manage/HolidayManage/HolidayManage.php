@@ -22,7 +22,7 @@ use App\Plugins\Manage\ManagePluginBase;
  * @category 祝日管理
  * @package Contoroller
  * @plugin_title 祝日管理
- * @plugin_desc 祝日に関する機能が集まった管理機能です。<br />基本は Yasumiライブラリを使用しています。（ https://github.com/azuyalabs/yasumi ）<br />祝日の基本を変更する場合はYasumiライブラリをメンテナンスすることで対応します。
+ * @plugin_desc 祝日に関する機能が集まった管理機能です。
  */
 class HolidayManage extends ManagePluginBase
 {
@@ -116,7 +116,7 @@ class HolidayManage extends ManagePluginBase
      * @return view
      * @method_title 祝日一覧
      * @method_desc 年毎の祝日を一覧で確認できます。
-     * @method_detail
+     * @method_detail 基本は Yasumiライブラリを使用しています。（ <a href="https://github.com/azuyalabs/yasumi" target="_blank">https://github.com/azuyalabs/yasumi</a> ）<br />祝日の基本を変更する場合はYasumiライブラリをメンテナンスすることで対応します。
      */
     public function index($request)
     {

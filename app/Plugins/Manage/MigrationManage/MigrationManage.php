@@ -23,6 +23,8 @@ use App\Plugins\Manage\ManagePluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 他システム移行
  * @package Contoroller
+ * @plugin_title 他システム移行
+ * @plugin_desc 他システムからデータ移行する機能が集まった管理機能です。
  */
 class MigrationManage extends ManagePluginBase
 {
@@ -43,6 +45,9 @@ class MigrationManage extends ManagePluginBase
      *  ページ初期表示
      *
      * @return view
+     * @method_title NetCommons2移行
+     * @method_desc NetCommons2からデータ移行できます。
+     * @method_detail NetCommons2フルバックアップ・ファイルをアップロードすると、内容を展開してConnect-CMSに移します。
      */
     public function index($request)
     {
