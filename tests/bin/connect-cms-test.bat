@@ -143,6 +143,10 @@ echo.
 echo --- ƒƒOŠÇ—
 php artisan dusk tests\Browser\Manage\LogManageTest.php
 
+echo.
+echo --- j“úŠÇ—
+php artisan dusk tests\Browser\Manage\HolidayManageTest.php
+
 rem ---------------------------------------------
 rem - ƒRƒA
 rem ---------------------------------------------
