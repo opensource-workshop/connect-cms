@@ -46,11 +46,6 @@ class LogManageTest extends DuskTestCase
                     ->screenshot('manage/log/index/images/index3');
         });
 
-        // マニュアル用データ出力
-        if ($this->no_manual) {
-            return;
-        }
-
         $this->putManualData('[
             {"path": "manage/log/index/images/index",
              "name": "ログ一覧"
@@ -82,11 +77,6 @@ class LogManageTest extends DuskTestCase
                     ->assertTitle('Connect-CMS')
                     ->screenshot('manage/log/edit/images/edit');
         });
-
-        // マニュアル用データ出力
-        if ($this->no_manual) {
-            return;
-        }
 
         // マニュアル用データ出力
         $this->putManualData('[
