@@ -147,6 +147,10 @@ echo.
 echo --- 祝日管理
 php artisan dusk tests\Browser\Manage\HolidayManageTest.php
 
+echo.
+echo --- 他システム移行
+php artisan dusk tests\Browser\Manage\MigrationManageTest.php
+
 rem ---------------------------------------------
 rem - コア
 rem ---------------------------------------------
