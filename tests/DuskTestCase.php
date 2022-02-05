@@ -26,6 +26,11 @@ abstract class DuskTestCase extends BaseTestCase
     private static $migrated = false;
 
     /**
+     * マニュアルの生成可否
+     */
+    protected $no_manual = false;
+
+    /**
      * Prepare for Dusk test execution.
      *
      * @beforeClass
@@ -75,6 +80,13 @@ abstract class DuskTestCase extends BaseTestCase
                 //$browser->resize(1920, 1080);
                 $browser->resize(1280, 800);
             });
+        }
+
+        // コマンドライン引数 第5（配列インデックス4）に no_manual が指定されていた場合は、マニュアル作成しない。
+        if ($_SERVER && count($_SERVER['argv']) > 4) {
+            if ($_SERVER['argv'][4] == 'no_manual') {
+                $this->no_manual = true;
+            }
         }
 
 /* 一旦コメントアウト。データのクリアは、意識して行いたいかもしれないので。
