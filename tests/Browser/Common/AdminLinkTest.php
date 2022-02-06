@@ -21,20 +21,26 @@ class AdminLinkTest extends DuskTestCase
     /**
      * テストする関数の制御
      *
+     * 以下のエラーが出たので、とりあえず、関数名に 2 をつけてある。
+     * Fatal error: Access level to Tests\Browser\Common\AdminLinkTest::addPlugin() must be public (as in class Tests\DuskTestCase) in C:\SitesLaravel\connect-cms\htdocs\conne
+     * ct-cms\tests\Browser\Common\AdminLinkTest.php on line 19
+     * PHP Fatal error:  Access level to Tests\Browser\Common\AdminLinkTest::addPlugin() must be public (as in class Tests\DuskTestCase) in C:\SitesLaravel\connect-cms\htdocs\
+     * connect-cms\tests\Browser\Common\AdminLinkTest.php on line 19
+     *
      * @group user
      * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests
      */
     public function testInvoke()
     {
         $this->login(1);
-        $this->adminLink();
-        $this->addPlugin();
+        $this->adminLink2();
+        $this->addPlugin2();
     }
 
     /**
      * 管理機能
      */
-    private function adminLink()
+    private function adminLink2()
     {
         // 管理機能
         $this->browse(function (Browser $browser) {
@@ -84,7 +90,7 @@ class AdminLinkTest extends DuskTestCase
     /**
      * プラグイン追加
      */
-    private function addPlugin()
+    private function addPlugin2()
     {
         // 固定記事をプラグイン追加
         $this->addPluginModal(PluginName::getPluginName(PluginName::contents));

@@ -34,6 +34,8 @@ use App\Rules\CustomValiWysiwygMax;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ブログプラグイン
  * @package Controller
+ * @plugin_title ブログ
+ * @plugin_desc ブログを作成できるプラグインです。
  */
 class BlogsPlugin extends UserPluginBase
 {
@@ -562,8 +564,12 @@ WHERE status = 0
     /* 画面アクション関数 */
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
+     *
+     * @method_title 表示
+     * @method_desc ブログを表示します。
+     * @method_detail 日付が新しいものから、表示されます。
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -1028,6 +1034,10 @@ WHERE status = 0
 
     /**
      * ブログ新規作成画面
+     *
+     * @method_title 新規作成
+     * @method_desc ブログを新しく作成します。
+     * @method_detail ブログ名などの設定値を入力してブログを作成できます。
      */
     public function createBuckets($request, $page_id, $frame_id, $blogs_id = null, $create_flag = false, $message = null)
     {

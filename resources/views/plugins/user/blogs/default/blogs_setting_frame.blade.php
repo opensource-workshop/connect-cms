@@ -123,6 +123,7 @@
                 </div>
             </div>
 
+            {{-- 投稿者名 --}}
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass()}}">{{BlogFrameConfig::getDescription('blog_display_created_name')}}</label>
                 <div class="{{$frame->getSettingInputClass(true)}}">
@@ -133,7 +134,7 @@
                         @else
                             <input type="radio" value="{{BlogDisplayCreatedName::none}}" id="{{BlogFrameConfig::blog_display_created_name}}_0" name="{{BlogFrameConfig::blog_display_created_name}}" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_created_name}}_0">{{BlogDisplayCreatedName::getDescription('none')}}</label>
+                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_created_name}}_0" id="label_{{BlogFrameConfig::blog_display_created_name}}_0">{{BlogDisplayCreatedName::getDescription('none')}}</label>
                     </div>
                     <div class="custom-control custom-radio custom-control-inline">
                         @if (FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)
@@ -141,7 +142,7 @@
                         @else
                             <input type="radio" value="{{BlogDisplayCreatedName::display}}" id="{{BlogFrameConfig::blog_display_created_name}}_1" name="{{BlogFrameConfig::blog_display_created_name}}" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_created_name}}_1">{{BlogDisplayCreatedName::getDescription('display')}}</label>
+                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_created_name}}_1" id="label_{{BlogFrameConfig::blog_display_created_name}}_1">{{BlogDisplayCreatedName::getDescription('display')}}</label>
                     </div>
                 </div>
             </div>
@@ -157,7 +158,7 @@
                         @else
                             <input type="radio" value="{{ShowType::not_show}}" id="{{BlogFrameConfig::blog_display_twitter_button}}_0" name="{{BlogFrameConfig::blog_display_twitter_button}}" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_twitter_button}}_0">{{ShowType::getDescription(ShowType::not_show)}}</label>
+                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_twitter_button}}_0" id="label_{{BlogFrameConfig::blog_display_twitter_button}}_0">{{ShowType::getDescription(ShowType::not_show)}}</label>
                     </div>
                     <div class="custom-control custom-radio custom-control-inline">
                         @if (FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::blog_display_twitter_button) == ShowType::show)
@@ -165,7 +166,7 @@
                         @else
                             <input type="radio" value="{{ShowType::show}}" id="{{BlogFrameConfig::blog_display_twitter_button}}_1" name="{{BlogFrameConfig::blog_display_twitter_button}}" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_twitter_button}}_1">{{ShowType::getDescription(ShowType::show)}}</label>
+                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_twitter_button}}_1" id="label_{{BlogFrameConfig::blog_display_twitter_button}}_1">{{ShowType::getDescription(ShowType::show)}}</label>
                     </div>
                 </div>
             </div>
@@ -181,7 +182,7 @@
                         @else
                             <input type="radio" value="{{ShowType::not_show}}" id="{{BlogFrameConfig::blog_display_facebook_button}}_0" name="{{BlogFrameConfig::blog_display_facebook_button}}" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_facebook_button}}_0">{{ShowType::getDescription(ShowType::not_show)}}</label>
+                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_facebook_button}}_0" id="label_{{BlogFrameConfig::blog_display_facebook_button}}_0">{{ShowType::getDescription(ShowType::not_show)}}</label>
                     </div>
                     <div class="custom-control custom-radio custom-control-inline">
                         @if (FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::blog_display_facebook_button) == ShowType::show)
@@ -189,7 +190,7 @@
                         @else
                             <input type="radio" value="{{ShowType::show}}" id="{{BlogFrameConfig::blog_display_facebook_button}}_1" name="{{BlogFrameConfig::blog_display_facebook_button}}" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_facebook_button}}_1">{{ShowType::getDescription(ShowType::show)}}</label>
+                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_facebook_button}}_1" id="label_{{BlogFrameConfig::blog_display_facebook_button}}_1">{{ShowType::getDescription(ShowType::show)}}</label>
                     </div>
                 </div>
             </div>

@@ -96,7 +96,7 @@ EOF;
              'plugin_title' => '固定記事',
              'plugin_desc' => 'サイト上に文字や画像を配置できるプラグインです。',
              'method_name' => 'index',
-             'method_title' => '表示画面',
+             'method_title' => '表示',
              'method_desc' => 'サイト上に記載した文字や画像を表示できる基本となるプラグインです。',
              'method_detail' => '',
              'html_path' => 'user/contents/index/index.html',
