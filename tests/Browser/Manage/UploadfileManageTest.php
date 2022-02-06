@@ -23,6 +23,7 @@ class UploadfileManageTest extends DuskTestCase
     {
         $this->login(1); // user id = 1(admin)でログイン
         $this->index();
+        $this->edit();
         $this->userdir();
     }
 
@@ -47,18 +48,14 @@ class UploadfileManageTest extends DuskTestCase
             ]
         );
 
-        // 実ファイルがなくてもOKかもしれないので、ファイルを作らない。
-        //\Storage::put($this->getDirectory($upload->id) . '/' $upload->id . ".jpg", \Storage::disk('manual')->get('copy_data/image/blobid0000000000001.jpg'));
+        // 実ファイルのコピー
+        \Storage::put($this->getDirectory($upload->id) . '/' . $upload->id . ".jpg", \Storage::disk('manual')->get('copy_data/image/blobid0000000000001.jpg'));
 
         // 実行
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/uploadfile')
                     ->assertTitle('Connect-CMS')
                     ->screenshot('manage/uploadfile/index/images/index');
-
-            $browser->click('#edit_1')
-                    ->assertTitleContains('Connect-CMS')
-                    ->screenshot('manage/uploadfile/index/images/index2');
         });
 
         // マニュアル用データ出力
@@ -66,8 +63,26 @@ class UploadfileManageTest extends DuskTestCase
             {"path": "manage/uploadfile/index/images/index",
              "name": "アップロードファイル一覧",
              "comment": "<ul class=\"mb-0\"><li>アップロードファイルを一覧表示できます。</li></ul>"
-            },
-            {"path": "manage/uploadfile/index/images/index2",
+            }
+        ]');
+    }
+
+    /**
+     * アップロードファイル編集
+     */
+    private function edit()
+    {
+        // 実行
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/manage/uploadfile')
+                    ->click('#edit_1')
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/uploadfile/edit/images/edit');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('[
+            {"path": "manage/uploadfile/edit/images/edit",
              "name": "アップロードファイル編集",
              "comment": "<ul class=\"mb-0\"><li>ファイル名の変更が可能です。</li></ul>"
             }

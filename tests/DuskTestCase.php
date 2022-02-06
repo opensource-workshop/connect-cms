@@ -9,6 +9,8 @@ use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Laravel\Dusk\TestCase as BaseTestCase;
 use Laravel\Dusk\Browser;
 
+use App\Models\Common\Frame;
+use App\Models\Common\Page;
 use App\Models\Core\Dusks;
 use App\User;
 
@@ -29,6 +31,16 @@ abstract class DuskTestCase extends BaseTestCase
      * マニュアルの生成可否
      */
     protected $no_manual = false;
+
+    /**
+     * テストするフレーム
+     */
+    private $test_frame = null;
+
+    /**
+     * テストするページ
+     */
+    private $test_page = null;
 
     /**
      * Prepare for Dusk test execution.
@@ -195,6 +207,35 @@ abstract class DuskTestCase extends BaseTestCase
                 $browser->visit('/')->click('.phpdebugbar-close-btn');
             });
         }
+    }
+
+    /**
+     * テストするページID
+     */
+    public function getTestPageId()
+    {
+        return $this->test_page->id;
+    }
+
+    /**
+     * テストするフレームID
+     */
+    public function getTestFrameId()
+    {
+        return $this->test_frame->id;
+    }
+
+    /**
+     * プラグイン追加（なければ）
+     */
+    public function addPluginFirst($add_plugin, $permanent_link = '/', $area = 0, $screenshot = true)
+    {
+        if (!Frame::where('plugin_name', 'photoalbums')->first()) {
+            $this->addPluginModal($add_plugin, $permanent_link, $area, $screenshot);
+        }
+
+        $this->test_frame = Frame::where('plugin_name', 'photoalbums')->first();
+        $this->test_page = Page::where('permanent_link', $permanent_link)->first();
     }
 
     /**

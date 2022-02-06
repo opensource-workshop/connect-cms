@@ -44,10 +44,11 @@ class ManualOutput extends DuskTestCase
     private function outputCategory($view_path, $methods)
     {
         // カテゴリをループ
-        foreach($methods->where('plugin_name', 'index')->where('method_name', 'index') as $method) {
+        //foreach($methods->where('plugin_name', 'index')->where('method_name', 'index') as $method) {
+        foreach ($methods->groupBy('category') as $method) {
             // ページ生成
-            $html = view($view_path, ['level' => 'category', 'base_path' => '../', 'methods' => $methods, 'current_method' => $method]);
-            \Storage::disk('manual')->put('html/' . $method->category . "/index.html", $html);
+            $html = view($view_path, ['level' => 'category', 'base_path' => '../', 'methods' => $methods, 'current_method' => $method[0]]);
+            \Storage::disk('manual')->put('html/' . $method[0]->category . "/index.html", $html);
         }
     }
 
@@ -59,7 +60,7 @@ class ManualOutput extends DuskTestCase
     private function outputPlugin($view_path, $methods)
     {
         // プラグインをループ
-        foreach($methods->where('method_name', 'index') as $method) {
+        foreach ($methods->where('method_name', 'index') as $method) {
             // ページ生成
             $html = view($view_path, ['level' => 'plugin', 'base_path' => '../../', 'methods' => $methods, 'current_method' => $method]);
             \Storage::disk('manual')->put('html/' . $method->category . '/' . $method->plugin_name . "/index.html", $html);
@@ -74,7 +75,7 @@ class ManualOutput extends DuskTestCase
     private function outputMethod($view_path, $methods)
     {
         // メソッドをループ
-        foreach($methods as $method) {
+        foreach ($methods as $method) {
             // ページ生成
             $html = view($view_path, ['level' => 'method', 'base_path' => '../../../', 'methods' => $methods, 'current_method' => $method]);
             \Storage::disk('manual')->put('html/' . $method->category . '/' . $method->plugin_name . '/' . $method->method_name . "/index.html", $html);
@@ -168,12 +169,13 @@ class ManualOutput extends DuskTestCase
                         $elipse_h = $method->args[3];
                         for ($line = 0; $line < $method->args[4]; $line++) {
                              $elipse_w--;
-                             imageellipse($new_image,
-                                          $method->args[0],
-                                          $method->args[1],
-                                          $elipse_w,
-                                          $elipse_h,
-                                          imagecolorallocate($new_image, 255, 0, 0)
+                             imageellipse(
+                                 $new_image,
+                                 $method->args[0],
+                                 $method->args[1],
+                                 $elipse_w,
+                                 $elipse_h,
+                                 imagecolorallocate($new_image, 255, 0, 0)
                              );
                             $elipse_h--;
                         }

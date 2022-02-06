@@ -20,6 +20,9 @@ class PhotoalbumsPluginTest extends DuskTestCase
     {
         $this->login(1); // user id = 1(admin)でログイン
         $this->index();
+        $this->createBuckets();
+
+        $this->index();  // マニュアルデータ用
     }
 
     /**
@@ -27,8 +30,8 @@ class PhotoalbumsPluginTest extends DuskTestCase
      */
     private function index()
     {
-        // プラグイン追加
-        $this->addPluginModal(PluginName::getPluginName(PluginName::photoalbums), '/test/photoalbum', 2, false);
+        // プラグインがなければ追加(テストするFrameとページのインスタンス変数への保持も)
+        $this->addPluginFirst('photoalbums', '/test/photoalbum', 2);
 
         // 実行
         $this->browse(function (Browser $browser) {
@@ -39,5 +42,21 @@ class PhotoalbumsPluginTest extends DuskTestCase
 
         // マニュアルデータ
         $this->putManualData('user/photoalbums/index/images/index');
+    }
+
+    /**
+     * バケツ作成
+     */
+    private function createBuckets()
+    {
+        // 実行
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/plugin/photoalbums/createBuckets/' . $this->getTestPageId() . '/' . $this->getTestFrameId())
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/photoalbums/createBuckets/images/createBuckets');
+        });
+
+        // マニュアルデータ
+        $this->putManualData('user/photoalbums/createBuckets/images/createBuckets');
     }
 }
