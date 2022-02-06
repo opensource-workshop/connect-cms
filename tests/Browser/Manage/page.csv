@@ -15,4 +15,5 @@ OPAC,/test/opac,NULL,NULL,NULL,NULL,1
 データベース検索,/test/databasesearch,NULL,NULL,NULL,NULL,1
 掲示板,/test/bbs,NULL,NULL,NULL,NULL,1
 施設予約,/test/reservation,NULL,NULL,NULL,NULL,1
+メニュー,/test/menu,NULL,NULL,NULL,NULL,1
 タブ,/test/tab,NULL,NULL,NULL,NULL,1

@@ -35,12 +35,12 @@ abstract class DuskTestCase extends BaseTestCase
     /**
      * テストするフレーム
      */
-    private $test_frame = null;
+    protected $test_frame = null;
 
     /**
      * テストするページ
      */
-    private $test_page = null;
+    protected $test_page = null;
 
     /**
      * Prepare for Dusk test execution.
@@ -226,15 +226,26 @@ abstract class DuskTestCase extends BaseTestCase
     }
 
     /**
+     * プラグイン追加
+     */
+    public function addPlugin($add_plugin, $permanent_link = '/', $area = 0, $screenshot = true)
+    {
+        $this->addPluginModal($add_plugin, $permanent_link, $area, $screenshot);
+
+        $this->test_frame = Frame::where('plugin_name', $add_plugin)->orderBy('id', 'desc')->first();
+        $this->test_page = Page::where('permanent_link', $permanent_link)->first();
+    }
+
+    /**
      * プラグイン追加（なければ）
      */
     public function addPluginFirst($add_plugin, $permanent_link = '/', $area = 0, $screenshot = true)
     {
-        if (!Frame::where('plugin_name', 'photoalbums')->first()) {
+        if (!Frame::where('plugin_name', $add_plugin)->first()) {
             $this->addPluginModal($add_plugin, $permanent_link, $area, $screenshot);
         }
 
-        $this->test_frame = Frame::where('plugin_name', 'photoalbums')->first();
+        $this->test_frame = Frame::where('plugin_name', $add_plugin)->orderBy('id', 'desc')->first();
         $this->test_page = Page::where('permanent_link', $permanent_link)->first();
     }
 

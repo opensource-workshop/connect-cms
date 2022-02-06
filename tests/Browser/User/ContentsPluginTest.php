@@ -37,6 +37,7 @@ class ContentsPluginTest extends DuskTestCase
         $this->edit();
         $this->show();
         $this->listBuckets();
+        $this->editFrame();
     }
 
     /**
@@ -152,5 +153,16 @@ EOF;
 
         // マニュアル用データ出力
         $this->putManualData('user/contents/listBuckets/images/listBuckets');
+    }
+
+    /**
+     * フレームを編集する
+     */
+    private function editFrame()
+    {
+        // この後のマニュアルデータで、ヘッダーの固定記事のフレーム枠などが邪魔なので、none にするなど。
+        $this->frame->frame_title = null;
+        $this->frame->frame_design = 'none';
+        $this->frame->save();
     }
 }
