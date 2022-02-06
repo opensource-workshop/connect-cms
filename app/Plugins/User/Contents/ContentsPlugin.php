@@ -25,6 +25,8 @@ use App\Rules\CustomValiWysiwygMax;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
  * @package Controller
+ * @plugin_title 固定記事
+ * @plugin_desc サイト上に文字や画像を配置できるプラグインです。
  */
 class ContentsPlugin extends UserPluginBase
 {
@@ -291,8 +293,12 @@ class ContentsPlugin extends UserPluginBase
     /* 画面アクション関数 */
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
+     *
+     * @method_title 表示
+     * @method_desc サイト上に記載した文字や画像を表示できる基本となるプラグインです。
+     * @method_detail
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -454,6 +460,10 @@ class ContentsPlugin extends UserPluginBase
     /**
      * データ編集用表示関数
      * コアが編集画面表示の際に呼び出す関数
+     *
+     * @method_title 編集
+     * @method_desc 表示する内容を編集できます。
+     * @method_detail WYSIWYG の機能を使って、ワープロのように文章を編集できます。また、画像やPDF の挿入もできます。
      */
     public function edit($request, $page_id, $frame_id, $id = null)
     {
@@ -477,6 +487,10 @@ class ContentsPlugin extends UserPluginBase
     /**
      *  データ詳細表示関数
      *  コアがデータ削除の確認用に呼び出す関数
+     *
+     * @method_title 削除
+     * @method_desc 固定記事を削除できます。
+     * @method_detail フレームも同時に削除することで、画面上の枠も消えます。
      */
     public function show($request, $page_id, $frame_id, $id = null)
     {
@@ -719,6 +733,10 @@ class ContentsPlugin extends UserPluginBase
 
     /**
      * データ選択表示関数
+     *
+     * @method_title データ選択
+     * @method_desc このフレームに表示する固定記事を選択できます。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {

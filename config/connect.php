@@ -9,7 +9,7 @@ return [
     'forbidden_image_path' => 'app/public/forbidden.png',
 
     // uploads ディレクトリのベース・ディレクトリ
-    'directory_base' => "uploads/",
+    'directory_base' => env('UPLOADS_DIRECTORY_BASE', "uploads/"),
 
     // uploads ディレクトリの1ディレクトリの最大ファイル数
     'directory_file_limit' => 1000,
