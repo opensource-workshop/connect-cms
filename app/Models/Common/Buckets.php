@@ -189,8 +189,8 @@ class Buckets extends Model
                 continue;
             }
 
-            // コンテンツ管理者権限、プラグイン管理者権限、承認者権限があれば、承認不要
-            if ($user_role == 'role_article_admin' || $user_role == 'role_arrangement' || $user_role == 'role_approval') {
+            // コンテンツ管理者権限、承認者権限があれば、承認不要
+            if ($user_role == 'role_article_admin' || $user_role == 'role_approval') {
                 return false;
             }
 
