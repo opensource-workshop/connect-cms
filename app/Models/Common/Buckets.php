@@ -184,13 +184,15 @@ class Buckets extends Model
         }
 
         foreach ($user_roles_base as $user_role => $value) {
-            // ゲスト権限は見るだけユーザのため、承認チェックしない
-            if ($user_role == 'role_guest') {
+            // 承認チェックしない
+            // ・ゲスト権限は見るだけユーザのため
+            // ・プラグイン管理者権限に記事投稿権限はないため
+            if ($user_role == 'role_guest' || $user_role == 'role_arrangement') {
                 continue;
             }
 
-            // コンテンツ管理者権限、プラグイン管理者権限、承認者権限があれば、承認不要
-            if ($user_role == 'role_article_admin' || $user_role == 'role_arrangement' || $user_role == 'role_approval') {
+            // コンテンツ管理者権限、承認者権限があれば、承認不要
+            if ($user_role == 'role_article_admin' || $user_role == 'role_approval') {
                 return false;
             }
 
