@@ -20,18 +20,6 @@ use App\Models\User\Blogs\BlogsPosts;
 class BlogsPluginTest extends DuskTestCase
 {
     /**
-     * テスト前共通処理
-     *
-     * @return void
-     */
-    //protected function setUp(): void
-    //{
-    //    parent::setUp();
-    //    // APP_DEBUG=trueだと,phpdebugbar-header とボタンが被って、ボタンが押せずにテストエラーになるため、phpdebugbarを閉じる
-    //    $this->closePhpdebugar();
-    //}
-
-    /**
      * ブログテスト
      *
      * @group user
@@ -40,7 +28,7 @@ class BlogsPluginTest extends DuskTestCase
     public function testBlog()
     {
         // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'show', 'create', 'edit', 'createBuckets', 'settingBlogFrame', 'listCategories');
+        $this->reserveManual('index', 'show', 'create', 'edit', 'createBuckets', 'settingBlogFrame', 'listCategories', 'listBuckets');
 
         $this->login(1);
 
@@ -50,6 +38,7 @@ class BlogsPluginTest extends DuskTestCase
         $this->createBuckets();
         $this->settingBlogFrame();
         $this->listCategories();
+        $this->listBuckets();
 
         $this->create("テスト投稿　１件目");  // 記事登録
         $this->create("テスト投稿　２件目");  // 記事登録 2件目
@@ -91,6 +80,7 @@ class BlogsPluginTest extends DuskTestCase
         // マニュアル用データ出力
         $this->putManualData('[
             {"path": "user/blogs/index/images/index",
+             "name": "記事の一覧",
              "comment": "<ul class=\"mb-0\"><li>記事は新しいものから表示されます。</li></ul>"
             },
             {"path": "user/blogs/index/images/index2",
@@ -133,7 +123,14 @@ class BlogsPluginTest extends DuskTestCase
         }
 
         // マニュアル用データ出力(記事の登録はしていなくても、画像データはできているはず。reserveManual() で一旦、内容がクリアされているので、画像の登録は行う)
-        $this->putManualData('user/blogs/create/images/create,user/blogs/create/images/create2');
+        $this->putManualData('[
+            {"path": "user/blogs/create/images/create",
+             "comment": "<ul class=\"mb-0\"><li>記事は新しいものから表示されます。</li></ul>"
+            },
+            {"path": "user/blogs/create/images/create2",
+             "comment": "<ul class=\"mb-0\"><li>投稿日時に未来の日時を指定した場合、その日時になったら表示されます。</li><li>「重要記事」チェックは新着で上に出し続けるなど、新着での表示方法を変更できる機能です。<br />表示形式は新着情報プラグインの設定を参照してください。</li><li>また、「重要記事」タグも表示されます。</li><li>カテゴリを設定できます。カテゴリはサイト共通のものと、このブログ特有のものを設定できます。</li><li>タグを設定できます。</li></ul>"
+            }
+        ]');
     }
 
     /**
@@ -200,8 +197,12 @@ class BlogsPluginTest extends DuskTestCase
             });
         }
 
-        // マニュアル用データ出力(バケツの登録はしていなくても、画像データはできているはず。reserveManual() で一旦、内容がクリアされているので、画像の登録は行う)
-        $this->putManualData('user/blogs/createBuckets/images/createBuckets');
+        // マニュアル用データ出力
+        $this->putManualData('[
+            {"path": "user/blogs/createBuckets/images/createBuckets",
+             "comment": "<ul class=\"mb-0\"><li>RSSを表示するに設定した場合は、RSSリンクが表示されます。</li><li>いいねボタンを表示する設定にした場合は、いいねボタンが表示されます。</li></ul>"
+            }
+        ]');
     }
 
     /**
@@ -222,7 +223,11 @@ class BlogsPluginTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('user/blogs/settingBlogFrame/images/settingBlogFrame');
+        $this->putManualData('[
+            {"path": "user/blogs/settingBlogFrame/images/settingBlogFrame",
+             "comment": "<ul class=\"mb-0\"><li>表示条件には全て、年、年度があります。年と年度を選んだ場合は、年もしくは年度を指定します。これは、年や年度が替わった際、前年度の内容を別ページでアーカイブ表示したい場合に使用する機能です。</li><li>同じブログをフレーム毎に違う条件で絞り込みできます。</li><li>投稿者名の表示する・表示しないが選択できます。</li></ul>"
+            }
+        ]');
     }
 
     /**
@@ -238,6 +243,30 @@ class BlogsPluginTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('user/blogs/listCategories/images/listCategories');
+        $this->putManualData('[
+            {"path": "user/blogs/listCategories/images/listCategories",
+             "comment": "<ul class=\"mb-0\"><li>カテゴリ設定は共通カテゴリとこのブログ独自のカテゴリ設定があります。</li><li>上の表が共通カテゴリで、表示のON/OFFと順番が指定できます。</li><li>下の表でこのブログ独自のカテゴリを設定できます。</li></ul>"
+            }
+        ]');
+    }
+
+    /**
+     * ブログ選択
+     */
+    private function listBuckets()
+    {
+        // 実行
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/plugin/blogs/listBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/blogs/listBuckets/images/listBuckets');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('[
+            {"path": "user/blogs/listBuckets/images/listBuckets",
+             "comment": "<ul class=\"mb-0\"><li>表示ブログを変更できます。</li></ul>"
+            }
+        ]');
     }
 }

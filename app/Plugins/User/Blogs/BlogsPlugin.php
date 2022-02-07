@@ -1002,6 +1002,10 @@ WHERE status = 0
 
     /**
      * データ選択表示関数
+     *
+     * @method_title ブログ選択
+     * @method_desc このフレームに表示するブログを選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
