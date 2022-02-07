@@ -23,7 +23,15 @@
 {{-- 別フォルダから画像を持ってくる場合もあるので、ルートまで遡ってのパスにする。
                     <img src="./images/{{basename($img_arg["path"])}}.png" class="img-fluid img-manual"
 --}}
-                    <img src="../../../{{$img_arg["path"]}}.png" class="img-fluid img-manual"
+                    @php
+                        $image_info = getimagesize(\Storage::disk("manual")->path("html/" . $img_arg["path"] . ".png"));
+                        $width = $image_info[0];
+                        if ($width > 980) {
+                            $width = 980;
+                        }
+                    @endphp
+
+                    <img src="../../../{{$img_arg["path"]}}.png" class="img-fluid img-manual" style="max-width:{{$width}}px;"
                         @if ($img_arg["style"]) style="{{$img_arg["style"]}}" @endif
                     >
 

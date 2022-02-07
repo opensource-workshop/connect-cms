@@ -104,7 +104,7 @@
         <div class="{{$input_area_class}}">
             <div class="custom-control custom-checkbox">
                 <input type="checkbox" name="allday_flag" value="1" class="custom-control-input" id="allday_flag{{$frame_id}}" onclick="check_allday();"@if(old('allday_flag', $post->allday_flag)) checked=checked @endif>
-                <label class="custom-control-label" for="allday_flag{{$frame_id}}">チェックすると、全日予定として扱います。</label>
+                <label class="custom-control-label" for="allday_flag{{$frame_id}}" id="label_allday_flag">チェックすると、全日予定として扱います。</label>
             </div>
         </div>
     </div>
