@@ -34,6 +34,8 @@ use App\Rules\CustomValiWysiwygMax;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ブログプラグイン
  * @package Controller
+ * @plugin_title ブログ
+ * @plugin_desc ブログを作成できるプラグインです。<br />サイトからのニュース配信などにも使用します。
  */
 class BlogsPlugin extends UserPluginBase
 {
@@ -562,8 +564,12 @@ WHERE status = 0
     /* 画面アクション関数 */
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
+     *
+     * @method_title 記事一覧
+     * @method_desc ブログを表示します。
+     * @method_detail 日付が新しいものから、表示されます。
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -609,6 +615,10 @@ WHERE status = 0
 
     /**
      * 新規記事画面
+     *
+     * @method_title 記事登録
+     * @method_desc 記事を登録できます。
+     * @method_detail
      */
     public function create($request, $page_id, $frame_id, $blogs_posts_id = null)
     {
@@ -639,6 +649,10 @@ WHERE status = 0
 
     /**
      *  詳細表示関数
+     *
+     * @method_title 記事詳細
+     * @method_desc ブログの記事を表示します。
+     * @method_detail 記事に対する一意なURLが必要な場合は記事詳細画面のURLを使ってください。
      */
     public function show($request, $page_id, $frame_id, $blogs_posts_id = null)
     {
@@ -733,6 +747,10 @@ WHERE status = 0
 
     /**
      * 記事編集画面
+     *
+     * @method_title 記事編集
+     * @method_desc ブログの記事を編集します。
+     * @method_detail 記事の削除もこの画面から行います。
      */
     public function edit($request, $page_id, $frame_id, $blogs_posts_id = null, $is_copy = false)
     {
@@ -1028,6 +1046,10 @@ WHERE status = 0
 
     /**
      * ブログ新規作成画面
+     *
+     * @method_title 新規作成
+     * @method_desc ブログを新しく作成します。
+     * @method_detail ブログ名などの設定値を入力してブログを作成できます。
      */
     public function createBuckets($request, $page_id, $frame_id, $blogs_id = null, $create_flag = false, $message = null)
     {
@@ -1214,6 +1236,10 @@ WHERE status = 0
 
     /**
      * カテゴリ表示関数
+     *
+     * @method_title カテゴリ
+     * @method_desc ブログで使用するカテゴリを設定します。
+     * @method_detail 共通カテゴリの選択、もしくはブログ独自のカテゴリを登録します。
      */
     public function listCategories($request, $page_id, $frame_id, $id = null)
     {
@@ -1351,6 +1377,10 @@ EOD;
 
     /**
      *  Blogフレーム設定表示画面
+     *
+     * @method_title 表示設定
+     * @method_desc フレーム毎の表示方法を設定します。
+     * @method_detail
      */
     public function settingBlogFrame($request, $page_id, $frame_id)
     {

@@ -168,10 +168,10 @@ echo --- メニュー
 php artisan dusk tests\Browser\User\MenusPluginTest.php
 
 echo --- ブログ
-rem php artisan dusk tests\Browser\User\BlogTest.php
+php artisan dusk tests\Browser\User\BlogsPluginTest.php
 
 echo --- フォトアルバム
-php artisan dusk tests\Browser\User\PhotoalbumsPluginTest.php
+rem php artisan dusk tests\Browser\User\PhotoalbumsPluginTest.php
 
 echo ※ スクリーンショットの保存先
 echo tests\Browser\screenshots

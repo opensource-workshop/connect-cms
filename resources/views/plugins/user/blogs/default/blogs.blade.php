@@ -210,7 +210,7 @@
                         <a href="{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" class="btn btn-success btn-sm">
                             <i class="far fa-edit"></i> <span class="hidden-xs">編集</span>
                         </a>
-                        <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="button_copy{{$post->id}}">
                             <span class="sr-only">ドロップダウンボタン</span>
                         </button>
                         <div class="dropdown-menu dropdown-menu-right">
