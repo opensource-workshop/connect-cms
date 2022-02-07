@@ -9,32 +9,31 @@ use Tests\DuskTestCase;
 use App\Enums\PluginName;
 use App\Models\Common\Frame;
 use App\Models\Common\Uploads;
-use App\Models\Core\Dusks;
-use App\Models\User\Calendars\Calendar;
-use App\Models\User\Calendars\CalendarPost;
+use App\Models\User\Calendars\Slideshow;
+use App\Models\User\Calendars\SlideshowsItems;
 
 /**
- * カレンダーテスト
+ * スライドショーテスト
  *
  * @see https://github.com/opensource-workshop/connect-cms/wiki/Dusk#テスト実行 [How to test]
  */
-class CalendarsPluginTest extends DuskTestCase
+class SlideshowsPluginTest extends DuskTestCase
 {
     /**
-     * ブログテスト
+     * スライドショーテスト
      *
      * @group user
      * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests
      */
-    public function testBlog()
+    public function testSlideshow()
     {
         // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'show', 'edit', 'template', 'createBuckets', 'listBuckets');
+        $this->reserveManual('index', 'createBuckets', 'editItem', 'listBuckets');
 
         $this->login(1);
 
         // プラグインが配置されていなければ追加(テストするFrameとページのインスタンス変数への保持も)
-        $this->addPluginFirst('calendars', '/test/calendar', 2);
+        $this->addPluginFirst('calendars', '/test/slideshow', 2);
 
         $this->createBuckets();
         $this->listBuckets();
@@ -42,9 +41,8 @@ class CalendarsPluginTest extends DuskTestCase
         $this->edit();
 
         $this->logout();
-        $this->index();    // 記事一覧
-        $this->show();     // 記事詳細
-        $this->template(); // テンプレート
+        $this->index();   // 記事一覧
+        $this->show();    // 記事詳細
     }
 
     /**
@@ -189,14 +187,5 @@ class CalendarsPluginTest extends DuskTestCase
              "comment": "<ul class=\"mb-0\"><li>表示するカレンダーを変更できます。</li></ul>"
             }
         ]');
-    }
-
-    /**
-     * テンプレート
-     */
-    private function template()
-    {
-        Dusks::where('plugin_name', 'calendars')->where('method_name', 'template')->delete();
-        $this->putManualTemplateData($this->test_frame, 'user', '/test/calendar', ['calendars', 'カレンダー'], ['day' => '日表示', 'small_month' => '月表示（小）']);
     }
 }

@@ -10,7 +10,8 @@
     <table nobr="true">
         <tr>
             @php
-                $image_info = getimagesize(\Storage::disk("manual")->path("html/" . $img_arg["path"] . ".png"));
+                // ここでは、まだ、manual 側に画像ができていないので、screenshot を参照。
+                $image_info = getimagesize(\Storage::disk("screenshot")->path($img_arg["path"] . ".png"));
                 $width = $image_info[0];
                 if ($width > 800) {
                     $td_width = [10, 80];
