@@ -24,7 +24,8 @@
                     <img src="./images/{{basename($img_arg["path"])}}.png" class="img-fluid img-manual"
 --}}
                     @php
-                        $image_info = getimagesize(\Storage::disk("manual")->path("html/" . $img_arg["path"] . ".png"));
+                        // ここでは、まだ、manual 側に画像ができていないので、screenshot を参照。
+                        $image_info = getimagesize(\Storage::disk("screenshot")->path($img_arg["path"] . ".png"));
                         $width = $image_info[0];
                         if ($width > 980) {
                             $width = 980;

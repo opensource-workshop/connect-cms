@@ -218,7 +218,6 @@ class ManualOutput extends DuskTestCase
             } else {
                 // 画像をコピー
                 foreach (explode(',', $method->img_args) as $img_path) {
-
                     if (!\Storage::disk('manual')->exists('html/' . dirname($img_path))) {
                         \Storage::disk('manual')->makeDirectory('html/' . dirname($img_path));
                     }
