@@ -3072,8 +3072,8 @@ class LearningtasksPlugin extends UserPluginBase
         // レポートの評価(2)、レポートのコメント(3)、試験の評価(6)、試験のコメント(7)、総合評価(8)の場合は、教員によるログイン操作のため、セッションから
         $student_user_id = $user->id;
 
-        // 課題管理者のみ、代理のレポート提出(1), 試験申し込み(4)させる
-        if ($tool->isLearningtaskAdmin() && ($task_status == 1 || $task_status == 4)) {
+        // 課題管理者のみ、代理のレポート提出(1), 試験申し込み(4), 試験提出(5)させる
+        if ($tool->isLearningtaskAdmin() && ($task_status == 1 || $task_status == 4 || $task_status == 5)) {
             $student_user_id = $tool->getStudentId();
         }
 
