@@ -34,6 +34,8 @@ use App\Plugins\User\UserPluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォトアルバム・プラグイン
  * @package Controller
+ * @plugin_title フォトアルバム
+ * @plugin_desc 写真や動画をアルバム管理できるプラグインです。
  */
 class PhotoalbumsPlugin extends UserPluginBase
 {
@@ -116,6 +118,9 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param int $frame_id フレームID
      * @param int $parent_id 表示する階層(ルートはnull)
      * @return mixed $value テンプレートに渡す内容
+     * @method_title 初期画面
+     * @method_desc アルバムの一覧や表紙に追加した写真・動画の一覧が表示されます。
+     * @method_detail
      */
     public function index($request, $page_id, $frame_id, $parent_id = null)
     {

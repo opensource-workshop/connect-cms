@@ -18,6 +18,8 @@ use App\Plugins\Manage\ManagePluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category テーマ管理
  * @package Contoroller
+ * @plugin_title テーマ管理
+ * @plugin_desc テーマに関する機能が集まった管理機能です。
  */
 class ThemeManage extends ManagePluginBase
 {
@@ -241,9 +243,12 @@ class ThemeManage extends ManagePluginBase
 
 
     /**
-     *  ページ初期表示
+     * ページ初期表示
      *
      * @return view
+     * @method_title ユーザ・テーマ一覧
+     * @method_desc ユーザ・テーマを一覧で確認できます。
+     * @method_detail ユーザ・テーマのCSSやJavaScript編集画面に遷移できます。
      */
     public function index($request, $page_id = null, $errors = array())
     {
@@ -273,7 +278,7 @@ class ThemeManage extends ManagePluginBase
     }
 
     /**
-     *  ディレクトリ作成
+     * ディレクトリ作成
      */
     public function create($request, $id)
     {
@@ -323,7 +328,11 @@ class ThemeManage extends ManagePluginBase
     }
 
     /**
-     *  CSS 編集画面
+     * CSS 編集画面
+     *
+     * @method_title CSS編集
+     * @method_desc ユーザ・テーマ毎のCSSを画面で編集できます。
+     * @method_detail 保存したCSSは選択したテーマで反映されます。
      */
     public function editCss($request, $id)
     {
@@ -347,7 +356,7 @@ class ThemeManage extends ManagePluginBase
     }
 
     /**
-     *  CSS 保存画面
+     * CSS 保存画面
      */
     public function saveCss($request, $id)
     {
@@ -374,7 +383,11 @@ class ThemeManage extends ManagePluginBase
     }
 
     /**
-     *  JavaScript 編集画面
+     * JavaScript 編集画面
+     *
+     * @method_title JavaScript編集
+     * @method_desc ユーザ・テーマ毎のJavaScriptを画面で編集できます。
+     * @method_detail 保存したJavaScriptは選択したテーマで反映されます。
      */
     public function editJs($request, $id)
     {
@@ -406,7 +419,7 @@ class ThemeManage extends ManagePluginBase
     }
 
     /**
-     *  JavaScript 保存画面
+     * JavaScript 保存画面
      */
     public function saveJs($request, $id)
     {
@@ -433,7 +446,11 @@ class ThemeManage extends ManagePluginBase
     }
 
     /**
-     *  テーマ名編集画面
+     * テーマ名編集画面
+     *
+     * @method_title 名前の編集
+     * @method_desc ユーザ・テーマ毎の名前を編集できます。
+     * @method_detail
      */
     public function editName($request, $id, $errors = array())
     {
@@ -462,7 +479,7 @@ class ThemeManage extends ManagePluginBase
     }
 
     /**
-     *  テーマ名保存画面
+     * テーマ名保存画面
      */
     public function saveName($request, $id)
     {
@@ -506,7 +523,11 @@ class ThemeManage extends ManagePluginBase
     }
 
     /**
-     *  画像管理
+     * 画像管理
+     *
+     * @method_title 画像の管理
+     * @method_desc ユーザ・テーマ毎の画像を追加・削除できます。
+     * @method_detail
      */
     public function listImages($request, $id, $errors = array())
     {
@@ -552,7 +573,7 @@ class ThemeManage extends ManagePluginBase
     }
 
     /**
-     *  画像アップロード
+     * 画像アップロード
      */
     public function uploadImage($request, $id)
     {
@@ -609,7 +630,7 @@ class ThemeManage extends ManagePluginBase
     }
 
     /**
-     *  画像削除
+     * 画像削除
      */
     public function deleteImage($request, $id)
     {
@@ -637,7 +658,7 @@ class ThemeManage extends ManagePluginBase
     }
 
     /**
-     *  画像削除
+     * テーマ削除
      */
     public function deleteTheme($request, $id)
     {
@@ -663,6 +684,10 @@ class ThemeManage extends ManagePluginBase
 
     /**
      *  カスタムテーマ生成画面
+     *
+     * @method_title カスタムテーマ生成
+     * @method_desc テーマを生成することができます。
+     * @method_detail メニューや書体を選んで、自分好みのテーマを生成できます。
      */
     public function generateIndex($request, $page_id = null, $errors = array())
     {

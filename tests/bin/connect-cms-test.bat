@@ -29,109 +29,121 @@ rem @php artisan config:clear
 
 if "%1" == "trancate" (
     rem 下記は、自動テストDB初期化で行っていないコマンド
-    rem echo.
     rem echo --- キャッシュクリア
     rem php artisan cache:clear
     rem php artisan config:clear
 
-    echo.
     echo --- データベース・クリア
     php artisan db:seed --env=dusk.local --class=TruncateAllTables
 
-    echo.
     echo --- データ・初期追加
     php artisan db:seed --env=dusk.local
 )
 
 if "%1" == "fresh" (
     rem 下記は、自動テストDB初期化で行っていないコマンド
-    rem echo.
     rem echo --- キャッシュクリア
     rem php artisan cache:clear
     rem php artisan config:clear
 
-    echo.
     echo --- テーブルの再構築
     php artisan migrate:fresh --env=dusk.local
 
-    echo.
     echo --- データ・初期追加
     php artisan db:seed --env=dusk.local
 )
 
 rem ---------------------------------------------
+rem - 事前準備用の実行
+rem ---------------------------------------------
+
+echo --- データ準備用 - ログ管理 - マニュアルなし
+php artisan dusk tests\Browser\Manage\LogManageTest.php no_manual
+
+rem ---------------------------------------------
 rem - 管理プラグイン
 rem ---------------------------------------------
 
-echo.
 echo --- 管理画面アクセス
 php artisan dusk tests\Browser\Manage\IndexManageTest.php
 
-echo.
 echo --- ページ管理のテスト
 php artisan dusk tests\Browser\Manage\PageManageTest.php
 
-echo.
 echo --- サイト管理のテスト
 php artisan dusk tests\Browser\Manage\SiteManageTest.php
 
-echo.
 echo --- ユーザ管理のテスト
-rem php artisan dusk tests\Browser\Manage\UserManageTest.php
+php artisan dusk tests\Browser\Manage\UserManageTest.php
 
-echo.
 echo --- グループ管理のテスト
-rem php artisan dusk tests\Browser\Manage\GroupManageTest.php
+php artisan dusk tests\Browser\Manage\GroupManageTest.php
 
-echo.
 echo --- セキュリティ管理のテスト
-rem php artisan dusk tests\Browser\Manage\SecurityManageTest.php
+php artisan dusk tests\Browser\Manage\SecurityManageTest.php
 
-echo.
 echo --- プラグイン管理のテスト
-rem php artisan dusk tests\Browser\Manage\PluginManageTest.php
+php artisan dusk tests\Browser\Manage\PluginManageTest.php
 
-echo.
 echo --- システム管理のテスト
-rem php artisan dusk tests\Browser\Manage\SystemManageTest.php
+php artisan dusk tests\Browser\Manage\SystemManageTest.php
 
-echo.
 echo --- API管理のテスト
-rem php artisan dusk tests\Browser\Manage\ApiManageTest.php
+php artisan dusk tests\Browser\Manage\ApiManageTest.php
 
-echo.
 echo --- メッセージ管理のテスト
-rem php artisan dusk tests\Browser\Manage\MessageManageTest.php
+php artisan dusk tests\Browser\Manage\MessageManageTest.php
 
-echo.
 echo --- 外部認証管理のテスト
-rem php artisan dusk tests\Browser\Manage\AuthManageTest.php
+php artisan dusk tests\Browser\Manage\AuthManageTest.php
+
+echo --- 外部サービス設定のテスト
+php artisan dusk tests\Browser\Manage\ServiceManageTest.php
+
+rem ---------------------------------------------
+rem - データ管理プラグイン
+rem ---------------------------------------------
+
+echo --- アップロードファイル
+php artisan dusk tests\Browser\Manage\UploadfileManageTest.php
+
+echo --- テーマ管理
+php artisan dusk tests\Browser\Manage\ThemeManageTest.php
+
+echo --- 連番管理
+php artisan dusk tests\Browser\Manage\NumberManageTest.php
+
+echo --- コード管理
+php artisan dusk tests\Browser\Manage\CodeManageTest.php
+
+echo --- ログ管理
+php artisan dusk tests\Browser\Manage\LogManageTest.php
+
+echo --- 祝日管理
+php artisan dusk tests\Browser\Manage\HolidayManageTest.php
+
+echo --- 他システム移行
+php artisan dusk tests\Browser\Manage\MigrationManageTest.php
 
 rem ---------------------------------------------
 rem - コア
 rem ---------------------------------------------
 
-echo.
 echo --- ページなし(404)
 rem php artisan dusk tests\Browser\Core\PageNotFoundTest.php
 
-echo.
 echo --- 権限なし(403)
 rem php artisan dusk tests\Browser\Core\PageForbiddenTest.php
 
-echo.
 echo --- 初回確認メッセージ動作テスト
 rem php artisan dusk tests\Browser\Core\MessageFirstShowTest.php
 
-echo.
 echo --- 初回確認メッセージ動作テスト 項目フル入力
 rem php artisan dusk tests\Browser\Core\MessageFirstShowFullTest.php
 
-echo.
 echo --- 閲覧パスワード付ページテスト
 rem php artisan dusk tests\Browser\Core\PagePasswordTest.php
 
-echo.
 echo --- ログインテスト
 rem php artisan dusk tests\Browser\Core\LoginTest.php
 
@@ -139,11 +151,9 @@ rem ---------------------------------------------
 rem - 共通
 rem ---------------------------------------------
 
-echo.
 echo --- ログイン・ログアウト
 php artisan dusk tests\Browser\Common\LoginLogoutTest.php
 
-echo.
 echo --- 管理機能
 php artisan dusk tests\Browser\Common\AdminLinkTest.php
 
@@ -151,11 +161,18 @@ rem ---------------------------------------------
 rem - 一般プラグイン
 rem ---------------------------------------------
 
-echo.
-echo --- ブログ
-rem php artisan dusk tests\Browser\User\BlogTest.php
+echo --- 固定記事
+php artisan dusk tests\Browser\User\ContentsPluginTest.php
 
-echo.
+echo --- メニュー
+php artisan dusk tests\Browser\User\MenusPluginTest.php
+
+echo --- ブログ
+php artisan dusk tests\Browser\User\BlogsPluginTest.php
+
+echo --- フォトアルバム
+rem php artisan dusk tests\Browser\User\PhotoalbumsPluginTest.php
+
 echo ※ スクリーンショットの保存先
 echo tests\Browser\screenshots
 
@@ -163,5 +180,12 @@ rem ---------------------------------------------
 rem - マニュアル
 rem ---------------------------------------------
 
-
+rem 【情報の発信】 固定記事, ブログ, カレンダー, スライドショー, 開館カレンダー, 新着情報
+rem 【情報の蓄積】 FAQ, リンクリスト, キャビネット, フォトアルバム, データベース, OPAC, (researchmap連携), (機関リポジトリ)
+rem 【情報の収集】 フォーム, 課題管理, (データ収集)
+rem 【情報の検索】 サイト内検索, データベース検索
+rem 【情報の交換】 掲示板, 施設予約
+rem 【情報の整理】 メニュー, タブ
+rem 【情報の試行】 テーマチェンジャー
+rem 【情報の教育】 (DroneStudy), (CodeStudy)
 

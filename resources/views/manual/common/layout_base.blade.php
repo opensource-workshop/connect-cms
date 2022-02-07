@@ -3,7 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="{{$base_path}}css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{$base_path}}css/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="{{$base_path}}css/manual.css" type="text/css">
     <link rel="stylesheet" href="{{$base_path}}font/css/all.min.css" type="text/css">
     <script src="{{$base_path}}js/jquery-3.6.0.min.js"></script>
     <script src="{{$base_path}}js/popper.min.js"></script>
@@ -19,7 +20,9 @@
         </a>
 
         {{-- バッジ・メニュー --}}
-        @include('manual.common.badge_menu')
+        <div class="d-none d-md-block">
+            @include('manual.common.badge_menu')
+        </div>
 
         <!-- SmartPhone Button -->
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="メニュー">

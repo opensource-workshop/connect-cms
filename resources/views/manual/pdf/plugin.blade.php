@@ -5,6 +5,7 @@
 
 Connect-CMS の【{{$plugin->plugin_title}}】プラグインについて説明します。<br />
 {!!$plugin->plugin_desc!!}<br />
+{!!$plugin->getInsertionPdf('plugin', 'desc')!!}
 
 <h3 style="text-align: center; font-size: 20px;"><u>機能一覧</u></h3>
 <br />
@@ -20,5 +21,7 @@ Connect-CMS の【{{$plugin->plugin_title}}】プラグインについて説明�
     </tr>
     @endforeach
 </table>
+{{-- 差し込み --}}
+{!!$plugin->getInsertionPdf('plugin', 'foot')!!}
 <br />
 <br />

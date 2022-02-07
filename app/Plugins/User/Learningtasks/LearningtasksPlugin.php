@@ -1194,7 +1194,7 @@ class LearningtasksPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'post_settings.report_end_at' => ['nullable', 'date_format:"Y-m-d H:i"', Rule::requiredIf($request->input('post_settings.use_report_end'))],
+            'post_settings.report_end_at' => ['nullable', 'date_format:"Y-m-d H:i"', Rule::requiredIf($request->input('post_settings.use_report_end') == 'on')],
         ]);
         $validator->setAttributeNames([
             'post_settings.use_report_end' => '以下の提出終了日時で制御する',
@@ -1820,7 +1820,7 @@ class LearningtasksPlugin extends UserPluginBase
             'learningtasks_name' => ['required'],
             'view_count' => ['required', 'numeric'],
             'sequence_conditions' => ['nullable', 'numeric'],
-            'base_settings.report_end_at' => ['nullable', 'date_format:"Y-m-d H:i"', Rule::requiredIf($request->input('base_settings.use_report_end'))],
+            'base_settings.report_end_at' => ['nullable', 'date_format:"Y-m-d H:i"', Rule::requiredIf($request->input('base_settings.use_report_end') == 'on')],
         ]);
         $validator->setAttributeNames([
             'learningtasks_name' => '課題管理名',
@@ -3072,8 +3072,8 @@ class LearningtasksPlugin extends UserPluginBase
         // レポートの評価(2)、レポートのコメント(3)、試験の評価(6)、試験のコメント(7)、総合評価(8)の場合は、教員によるログイン操作のため、セッションから
         $student_user_id = $user->id;
 
-        // 課題管理者のみ、代理のレポート提出(1), 試験申し込み(4)させる
-        if ($tool->isLearningtaskAdmin() && ($task_status == 1 || $task_status == 4)) {
+        // 課題管理者のみ、代理のレポート提出(1), 試験申し込み(4), 試験提出(5)させる
+        if ($tool->isLearningtaskAdmin() && ($task_status == 1 || $task_status == 4 || $task_status == 5)) {
             $student_user_id = $tool->getStudentId();
         }
 

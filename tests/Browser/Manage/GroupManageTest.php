@@ -20,9 +20,10 @@ class GroupManageTest extends DuskTestCase
     public function testInvoke()
     {
         $this->login(1);
+        $this->index(); // マニュアル用インデックスデータ作成のため。
         $this->edit('テスト一般');
         $this->update();
-        $this->index();
+        $this->index(); // 中身のある画面で上書き
     }
 
     /**
@@ -32,9 +33,12 @@ class GroupManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/group')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/group/index/images/index');
         });
+
+        // マニュアル用データ出力
+        $this->putManualData('manage/group/index/images/index');
     }
 
     /**
@@ -45,9 +49,12 @@ class GroupManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) use ($name) {
             $browser->visit('/manage/group/edit')
                     ->type('name', $name)
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/group/edit/images/edit');
         });
+
+        // マニュアル用データ出力
+        $this->putManualData('manage/group/edit/images/edit');
     }
 
     /**
@@ -57,8 +64,8 @@ class GroupManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('グループ変更')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/group/update/images/update');
         });
     }
 }

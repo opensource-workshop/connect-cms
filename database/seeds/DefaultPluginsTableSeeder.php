@@ -145,6 +145,14 @@ class DefaultPluginsTableSeeder extends Seeder
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
                     ],
+                    [
+                        'plugin_name' => 'Photoalbums',
+                        'plugin_name_full' => 'フォトアルバム',
+                        'display_flag' => 1,
+                        'display_sequence' => 0,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ],
                     /* -------------------------
                        Hidden plugin
                        ------------------------- */

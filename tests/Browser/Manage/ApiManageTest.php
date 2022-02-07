@@ -36,9 +36,17 @@ class ApiManageTest extends DuskTestCase
                     ->type('ip_address', '192.168.10.101')
                     ->click('#label_apis_Opac')
                     ->click('#label_apis_User')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/api/index/images/index');
         });
+
+        // マニュアル用データ出力
+        $this->putManualData('[
+            {"path": "manage/api/index/images/index",
+             "name": "Secret Code 一覧",
+             "comment": "<ul class=\"mb-0\"><li>Connect-CMSでは、APIでの通信機能があります。</li><li>API管理では、秘密コードを設定し、秘密コード単位にIPアドレスでの制限や使用APIを選択することができます。</li><li>API毎の設定などは、マニュアルのAPIページを参照してください。</li></ul>"
+            }
+        ]');
     }
 
     /**
@@ -48,8 +56,8 @@ class ApiManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/api/index/images/update');
         });
     }
 }

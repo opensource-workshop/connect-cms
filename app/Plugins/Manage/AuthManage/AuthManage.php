@@ -17,6 +17,8 @@ use App\Enums\AuthMethodType;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 外部認証
  * @package Controller
+ * @plugin_title 外部認証
+ * @plugin_desc 他システムと連携した外部認証に関する設定が集まった管理機能です。
  */
 class AuthManage extends ManagePluginBase
 {
@@ -42,6 +44,10 @@ class AuthManage extends ManagePluginBase
      * 初期表示
      *
      * @return view
+     *
+     * @method_title 認証設定
+     * @method_desc 認証設定の基本設定を確認できます。
+     * @method_detail 外部認証を使用するか、しないか。どの外部設定を使用するかなどの基本の設定を行えます。
      */
     public function index($request)
     {
@@ -123,6 +129,9 @@ class AuthManage extends ManagePluginBase
      * NetCommons2認証表示
      *
      * @return view
+     * @method_title NetCommons2認証
+     * @method_desc NetCommons2を使った認証を設定できます。
+     * @method_detail NetCommons2認証を使用するには、NetCommons2側にも、Connect-CMS認証モジュールの導入が必要です。
      */
     public function netcommons2($request)
     {
@@ -172,6 +181,9 @@ class AuthManage extends ManagePluginBase
      * LDAP認証表示
      *
      * @return view
+     * @method_title LDAP認証
+     * @method_desc LDAPを使った認証を設定できます。
+     * @method_detail LDAP認証に必要な項目を設定します。
      */
     public function ldap($request)
     {
@@ -217,6 +229,9 @@ class AuthManage extends ManagePluginBase
      * Shibboleth認証表示
      *
      * @return view
+     * @method_title shibboleth認証
+     * @method_desc shibbolethを使った認証を設定できます。
+     * @method_detail shibboleth認証に必要な項目が表示されます。shibboleth認証の設定自体はファイルで設定します。
      */
     public function shibboleth($request)
     {

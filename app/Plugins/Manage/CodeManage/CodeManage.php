@@ -28,6 +28,8 @@ use App\Enums\CsvCharacterCode;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コード管理
  * @package Contoroller
+ * @plugin_title コード管理
+ * @plugin_desc 各プラグインでユーザーが使用するコードを一括管理できる機能です。
  */
 class CodeManage extends ManagePluginBase
 {
@@ -83,6 +85,9 @@ class CodeManage extends ManagePluginBase
      * ページ初期表示
      *
      * @return view
+     * @method_title コード一覧
+     * @method_desc プラグインで使うコードを一覧表示できます。
+     * @method_detail
      */
     public function index($request, $page_id = null)
     {
@@ -255,6 +260,9 @@ class CodeManage extends ManagePluginBase
      * コード登録画面表示
      *
      * @return view
+     * @method_title コード登録
+     * @method_desc プラグインで使うコードを登録できます。
+     * @method_detail
      */
     public function regist($request, $id = null, $errors = array())
     {
@@ -273,6 +281,9 @@ class CodeManage extends ManagePluginBase
      * コード変更画面表示
      *
      * @return view
+     * @method_title コード変更
+     * @method_desc プラグインで使うコードを変更できます。
+     * @method_detail
      */
     public function edit($request, $id = null, $function = null, $errors = array())
     {
@@ -411,6 +422,9 @@ class CodeManage extends ManagePluginBase
      * (コード一覧)表示設定 画面表示
      *
      * @return view
+     * @method_title 表示設定
+     * @method_desc コード一覧に表示する項目を設定します。
+     * @method_detail
      */
     public function display($request)
     {
@@ -514,6 +528,9 @@ class CodeManage extends ManagePluginBase
      * 検索条件一覧 初期表示
      *
      * @return view
+     * @method_title 検索条件一覧
+     * @method_desc 登録してある検索条件が一覧表示されます。
+     * @method_detail
      */
     public function searches($request, $page_id = null)
     {
@@ -538,6 +555,9 @@ class CodeManage extends ManagePluginBase
      * 検索条件 登録画面表示
      *
      * @return view
+     * @method_title 検索条件登録
+     * @method_desc コード一覧の検索条件を記録しておくことができます。
+     * @method_detail
      */
     public function searchRegist($request, $id = null, $errors = array())
     {
@@ -644,6 +664,9 @@ class CodeManage extends ManagePluginBase
      * 注釈一覧 初期表示
      *
      * @return view
+     * @method_title 注釈一覧
+     * @method_desc コード登録時に使用する注釈を一覧で確認できます。
+     * @method_detail
      */
     public function helpMessages($request, $page_id = null)
     {
@@ -668,6 +691,9 @@ class CodeManage extends ManagePluginBase
      * 注釈 登録画面表示
      *
      * @return view
+     * @method_title 注釈登録
+     * @method_desc コード登録時に使用する注釈を登録できます。
+     * @method_detail
      */
     public function helpMessageRegist($request, $id = null, $errors = array())
     {
@@ -800,6 +826,9 @@ class CodeManage extends ManagePluginBase
 
     /**
      * インポート画面表示
+     * @method_title インポート
+     * @method_desc コードをインポートできます。
+     * @method_detail
      */
     public function import($request, $page_id = null)
     {
@@ -1023,6 +1052,9 @@ class CodeManage extends ManagePluginBase
 
     /**
      * ダウンロード画面表示
+     * @method_title ダウンロード
+     * @method_desc コードをダウンロードできます。
+     * @method_detail
      */
     public function download($request, $page_id = null)
     {

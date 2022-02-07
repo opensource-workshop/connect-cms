@@ -9,6 +9,8 @@ use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Laravel\Dusk\TestCase as BaseTestCase;
 use Laravel\Dusk\Browser;
 
+use App\Models\Common\Frame;
+use App\Models\Common\Page;
 use App\Models\Core\Dusks;
 use App\User;
 
@@ -24,6 +26,21 @@ abstract class DuskTestCase extends BaseTestCase
      * @var boolean
      */
     private static $migrated = false;
+
+    /**
+     * マニュアルの生成可否
+     */
+    protected $no_manual = false;
+
+    /**
+     * テストするフレーム
+     */
+    protected $test_frame = null;
+
+    /**
+     * テストするページ
+     */
+    protected $test_page = null;
 
     /**
      * Prepare for Dusk test execution.
@@ -75,6 +92,13 @@ abstract class DuskTestCase extends BaseTestCase
                 //$browser->resize(1920, 1080);
                 $browser->resize(1280, 800);
             });
+        }
+
+        // コマンドライン引数 第5（配列インデックス4）に no_manual が指定されていた場合は、マニュアル作成しない。
+        if ($_SERVER && count($_SERVER['argv']) > 4) {
+            if ($_SERVER['argv'][4] == 'no_manual') {
+                $this->no_manual = true;
+            }
         }
 
 /* 一旦コメントアウト。データのクリアは、意識して行いたいかもしれないので。
@@ -186,30 +210,78 @@ abstract class DuskTestCase extends BaseTestCase
     }
 
     /**
+     * テストするページID
+     */
+    public function getTestPageId()
+    {
+        return $this->test_page->id;
+    }
+
+    /**
+     * テストするフレームID
+     */
+    public function getTestFrameId()
+    {
+        return $this->test_frame->id;
+    }
+
+    /**
      * プラグイン追加
      */
-    public function addPluginModal($add_plugin)
+    public function addPlugin($add_plugin, $permanent_link = '/', $area = 0, $screenshot = true)
     {
-        $this->browse(function (Browser $browser) use ($add_plugin) {
-            // 管理機能からプラグイン追加で固定記事を追加する。
-            $browser->visit('/')
-                    ->clickLink('管理機能')
-                    ->assertTitleContains('Connect-CMS')
-                    ->screenshot('common/admin_link/plugin/images/add_plugin1');
+        $this->addPluginModal($add_plugin, $permanent_link, $area, $screenshot);
 
-            // ヘッダーエリアにプラグイン追加
+        $this->test_frame = Frame::where('plugin_name', $add_plugin)->orderBy('id', 'desc')->first();
+        $this->test_page = Page::where('permanent_link', $permanent_link)->first();
+    }
+
+    /**
+     * プラグイン追加（なければ）
+     */
+    public function addPluginFirst($add_plugin, $permanent_link = '/', $area = 0, $screenshot = true)
+    {
+        if (!Frame::where('plugin_name', $add_plugin)->first()) {
+            $this->addPluginModal($add_plugin, $permanent_link, $area, $screenshot);
+        }
+
+        $this->test_frame = Frame::where('plugin_name', $add_plugin)->orderBy('id', 'desc')->first();
+        $this->test_page = Page::where('permanent_link', $permanent_link)->first();
+    }
+
+    /**
+     * プラグイン追加
+     */
+    public function addPluginModal($add_plugin, $permanent_link = '/', $area = 0, $screenshot = true)
+    {
+        $this->browse(function (Browser $browser) use ($add_plugin, $permanent_link, $area, $screenshot) {
+            // 管理機能からプラグイン追加で指定されたプラグインを追加する。
+            $browser->visit($permanent_link)
+                    ->clickLink('管理機能')
+                    ->assertPathBeginsWith('/');
+            if ($screenshot) {
+                $browser->screenshot('common/admin_link/plugin/images/add_plugin1');
+            }
+
+            // 指定されたエリアにプラグイン追加
             // 早すぎると、プラグイン追加ダイアログが表示しきれないので、1秒待つ。
             $browser->clickLink('プラグイン追加')
-                    ->assertTitleContains('Connect-CMS')
-                    ->pause(1000)
-                    ->screenshot('common/admin_link/plugin/images/add_plugin2');
+                    ->assertPathBeginsWith('/')
+                    ->pause(1000);
+            if ($screenshot) {
+                $browser->screenshot('common/admin_link/plugin/images/add_plugin2');
+            }
 
-            $browser->click('#form_add_plugin0')
-                    ->screenshot('common/admin_link/plugin/images/add_plugin3');
+            $browser->click('#form_add_plugin' . $area);
+            if ($screenshot) {
+                $browser->screenshot('common/admin_link/plugin/images/add_plugin3');
+            }
 
-            $browser->select('#form_add_plugin0', $add_plugin)
-                    ->assertTitleContains('Connect-CMS')
-                    ->screenshot('common/admin_link/plugin/images/add_plugin4');
+            $browser->select('#form_add_plugin' . $area, $add_plugin)
+                    ->assertPathBeginsWith('/');
+            if ($screenshot) {
+                $browser->screenshot('common/admin_link/plugin/images/add_plugin4');
+            }
         });
     }
 
@@ -276,17 +348,36 @@ abstract class DuskTestCase extends BaseTestCase
     }
 
     /**
+     * マニュアルデータの初期値出力
+     */
+    public function reserveManual(...$methods)
+    {
+        foreach ($methods as $method) {
+            $this->putManualData(null, $method);
+        }
+    }
+
+    /**
      * マニュアルデータ出力
      */
-    public function putManualData($img_args = null)
+    public function putManualData($img_args = null, $method = null)
     {
+        // マニュアル用データ出力がOFF の場合は、出力せずに戻る。
+        if ($this->no_manual) {
+            return;
+        }
+
         // 実行しているサブクラスの名前を取得して、マニュアル用に編集する。
         $sub_class_name = \Str::snake(get_class($this));
         $sub_class_array = explode('\\', $sub_class_name);
 
         // 呼び出し元メソッド名
-        $dbg = debug_backtrace();
-        $source_method = $dbg[1]['function'];
+        if (empty($method)) {
+            $dbg = debug_backtrace();
+            $source_method = $dbg[1]['function'];
+        } else {
+            $source_method = $method;
+        }
 
         // クラス名の本体部分の取得
         $class_name_3 = trim($sub_class_array[3], '_');

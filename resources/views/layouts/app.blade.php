@@ -110,7 +110,7 @@
     <link href="{{ asset('css/connect.css') }}?version={{ filemtime(public_path() . "/css/connect.css") }}" rel="stylesheet">
 
     <!-- Themes CSS（基本） -->
-@if (isset($themes['css']) && $themes['css'] != '')
+@if (isset($themes['css']) && $themes['css'] != '' && file_exists(public_path() . "/themes/{$themes['css']}/themes.css"))
     <link href="{{url('/')}}/themes/{{$themes['css']}}/themes.css?version={{ filemtime(public_path() . "/themes/{$themes['css']}/themes.css") }}" rel="stylesheet">
 @endif
 
@@ -120,8 +120,8 @@
 @endif
 
     <!-- Themes CSS（追加） -->
-@if (isset($themes['additional_css']) && $themes['additional_css'] != '')
-    <link href="{{url('/')}}/themes/{{$themes['additional_css']}}/themes.css?version={{ filemtime(public_path() . "/themes/{$themes['additional_css']}/themes.js") }}" rel="stylesheet">
+@if (isset($themes['additional_css']) && $themes['additional_css'] != '' && file_exists(public_path() . "/themes/{$themes['additional_css']}/themes.css"))
+    <link href="{{url('/')}}/themes/{{$themes['additional_css']}}/themes.css?version={{ filemtime(public_path() . "/themes/{$themes['additional_css']}/themes.css") }}" rel="stylesheet">
 @endif
 
     <!-- Themes JS（追加） -->

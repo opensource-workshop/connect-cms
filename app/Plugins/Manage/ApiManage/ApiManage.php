@@ -20,6 +20,8 @@ use App\Plugins\Manage\ManagePluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category プラグイン管理
  * @package Contoroller
+ * @plugin_title API管理
+ * @plugin_desc API のSecret Code 設定を行い、他のシステムと接続できるように設定できます。
  */
 class ApiManage extends ManagePluginBase
 {
@@ -40,6 +42,9 @@ class ApiManage extends ManagePluginBase
      *  ページ初期表示
      *
      * @return view
+     * @method_title Secret Code 一覧
+     * @method_desc Secret Code が一覧で表示されます。
+     * @method_detail 必要なSecret Code を設定できます。
      */
     public function index($request)
     {

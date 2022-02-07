@@ -24,6 +24,9 @@ use App\Plugins\Manage\ManagePluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category グループ管理
  * @package Contoroller
+ * @plugin_title グループ管理
+ * @plugin_desc ユーザをグループとして設定できます。<br />
+                このグループにページ毎の権限を付与することができます。
  */
 class GroupManage extends ManagePluginBase
 {
@@ -72,6 +75,9 @@ class GroupManage extends ManagePluginBase
      *  グループ初期表示
      *
      * @return view
+     * @method_title グループ一覧
+     * @method_desc グループの一覧を参照できます。
+     * @method_detail
      */
     public function index($request, $id)
     {
@@ -87,6 +93,10 @@ class GroupManage extends ManagePluginBase
 
     /**
      *  グループ登録・変更画面表示
+     *
+     * @method_title グループ登録
+     * @method_desc グループ名の変更及び、参加ユーザを一覧で確認できます。
+     * @method_detail
      */
     public function edit($request, $id = null)
     {

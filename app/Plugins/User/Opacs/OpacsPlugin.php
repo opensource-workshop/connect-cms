@@ -610,7 +610,7 @@ class OpacsPlugin extends UserPluginBase
             // 詳細検索
 
             // 検索条件設定
-            $where_querys = null;
+            $where_querys = [];
             if (isset($opac_search_condition['title']) == true && empty($opac_search_condition['title']) == false) {
                 $where_querys[] = array( 'title', 'like', '%' . $opac_search_condition['title'] . '%' );
             }

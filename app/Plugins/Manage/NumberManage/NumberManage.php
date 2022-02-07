@@ -20,6 +20,8 @@ use App\Plugins\Manage\ManagePluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 連番管理
  * @package Contoroller
+ * @plugin_title 連番管理
+ * @plugin_desc 連番管理に関する機能が集まった管理機能です。
  */
 class NumberManage extends ManagePluginBase
 {
@@ -40,6 +42,9 @@ class NumberManage extends ManagePluginBase
      *  ページ初期表示
      *
      * @return view
+     * @method_title 連番一覧
+     * @method_desc システム上で採番されている連番を一覧で確認できます。
+     * @method_detail 連番をクリアすることもできます。
      */
     public function index($request, $page_id = null, $errors = array())
     {

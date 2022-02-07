@@ -42,6 +42,7 @@ class PageManageTest extends DuskTestCase
         $this->store();
         $this->upload();
         $this->movePage();
+        $this->index();  // マニュアル用に再度スクリーンショット
     }
 
     /**
@@ -122,17 +123,39 @@ class PageManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
 
-            // アップロード2 を アップロード の下に移動
-            $upload  = Page::where('page_name', 'アップロード')->first();
-            $upload2 = Page::where('page_name', 'アップロード2')->first();
+            // ブログ を テスト の下に移動
+            $test_page = Page::where('page_name', 'テスト')->first();
+            $sub_page = Page::where('page_name', 'ブログ')->first();
 
             $browser->visit('/manage/page')
-                    ->select('#form_select_page' . $upload2->id . ' .manage-page-selectpage', $upload->id)
+                    ->select('#form_select_page' . $sub_page->id . ' .manage-page-selectpage', $test_page->id)
                     ->screenshot('manage/page/movePage/images/movePage');
         });
 
+        // 他のページも移動
+        $this->movePageNoScreenshot();
+
         // マニュアル用データ出力
         $this->putManualData('manage/page/movePage/images/movePage');
+    }
+
+    /**
+     * ページの移動
+     */
+    private function movePageNoScreenshot()
+    {
+        $this->browse(function (Browser $browser) {
+
+            $page_names = ['カレンダー','スライドショー','開館カレンダー','FAQ','リンクリスト','キャビネット','フォトアルバム','データベース','OPAC','フォーム','課題管理','サイト内検索','データベース検索','掲示板','施設予約','メニュー','タブ'];
+
+            // テスト用の各ページ を テスト の下に移動
+            $test_page = Page::where('page_name', 'テスト')->first();
+            foreach ($page_names as $page_name) {
+                $sub_page = Page::where('page_name', $page_name)->first();
+                $browser->visit('/manage/page')
+                        ->select('#form_select_page' . $sub_page->id . ' .manage-page-selectpage', $test_page->id);
+            }
+        });
     }
 
     /**

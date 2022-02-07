@@ -12,15 +12,17 @@
 @if (isset($frame) && $frame->bucket_id)
     {{-- バケツあり --}}
 @else
+    @can('frames.edit',[[null, null, null, $frame]])
     {{-- バケツなし --}}
     <div class="card border-danger">
         <div class="card-body">
             <p class="text-center cc_margin_bottom_0">フレームの設定画面から、使用するイベントを選択するか、作成してください。</p>
         </div>
     </div>
+    @endcan
 @endif
 
-@if (isset($posts))
+@if ($convention->exists)
 {{-- トラックの表 --}}
 <table class="table table-bordered">
 <thead>

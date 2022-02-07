@@ -21,6 +21,8 @@ use App\Plugins\Manage\ManagePluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 祝日管理
  * @package Contoroller
+ * @plugin_title 祝日管理
+ * @plugin_desc 祝日に関する機能が集まった管理機能です。
  */
 class HolidayManage extends ManagePluginBase
 {
@@ -112,6 +114,9 @@ class HolidayManage extends ManagePluginBase
      *  祝日表示
      *
      * @return view
+     * @method_title 祝日一覧
+     * @method_desc 年毎の祝日を一覧で確認できます。
+     * @method_detail 基本は Yasumiライブラリを使用しています。（ <a href="https://github.com/azuyalabs/yasumi" target="_blank">https://github.com/azuyalabs/yasumi</a> ）<br />祝日の基本を変更する場合はYasumiライブラリをメンテナンスすることで対応します。
      */
     public function index($request)
     {
@@ -195,6 +200,9 @@ class HolidayManage extends ManagePluginBase
      *  祝日設定画面
      *
      * @return view
+     * @method_title 祝日登録
+     * @method_desc 年毎に祝日を追加できます。
+     * @method_detail
      */
     public function edit($request, $date)
     {
@@ -223,6 +231,9 @@ class HolidayManage extends ManagePluginBase
      *  祝日上書き設定画面
      *
      * @return view
+     * @method_title 祝日上書き
+     * @method_desc 年毎に祝日を無効にできます。
+     * @method_detail
      */
     public function overrideEdit($request, $date)
     {

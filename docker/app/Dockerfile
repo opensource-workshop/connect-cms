@@ -13,8 +13,18 @@ vim
 
 RUN apt-get update \
     && apt-get install -y libpq-dev libzip-dev \
+        libfreetype6-dev \
+        libjpeg62-turbo-dev \
+        libwebp-dev \
+        libxpm-dev \
     && docker-php-ext-install pdo_mysql pdo_pgsql \
-    && docker-php-ext-install zip
+    && docker-php-ext-install zip \
+    && docker-php-ext-configure gd \
+        --with-freetype \
+        --with-jpeg \
+        --with-webp \
+        --with-xpm \
+    && docker-php-ext-install -j$(nproc) gd
 
 COPY ./sites-enabled/my.conf /etc/apache2/sites-available
 
@@ -23,7 +33,10 @@ RUN a2dissite 000-default \
   && a2ensite my \
   && a2enmod rewrite
 
-# developmentのiniファイルを有効化
+# Timezone (PHP)
+RUN printf '[PHP]\ndate.timezone = "${TZ}"\n' > /usr/local/etc/php/conf.d/timezone.ini
+
+# APP_ENVのiniファイルを有効化
 RUN mv "$PHP_INI_DIR/php.ini-${APP_ENV}" "$PHP_INI_DIR/php.ini"
 
 WORKDIR /var/www/html

@@ -18,23 +18,26 @@
 </div>
 @endif
 
-{{-- 新規登録 --}}
-@can('posts.create',[[null, 'faqs', $buckets]])
-    @if (isset($frame) && $frame->bucket_id)
+@if (isset($frame) && $frame->bucket_id)
+    {{-- 新規登録 --}}
+    @can('posts.create',[[null, 'faqs', $buckets]])
         <div class="row">
             <p class="text-right col-12">
                 {{-- 新規登録ボタン --}}
                 <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/faqs/create/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'"><i class="far fa-edit"></i> 新規登録</button>
             </p>
         </div>
-    @else
+    @endcan
+@else
+    {{-- 新規登録 --}}
+    @can('frames.edit',[[null, null, null, $frame]])
         <div class="card border-danger">
             <div class="card-body">
                 <p class="text-center cc_margin_bottom_0">フレームの設定画面から、使用するFAQを選択するか、作成してください。</p>
             </div>
         </div>
-    @endif
-@endcan
+    @endcan
+@endif
 
 {{-- FAQ表示 --}}
 @if (isset($faqs_posts))

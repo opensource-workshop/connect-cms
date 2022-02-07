@@ -20,7 +20,10 @@
                     @elseif(count($current_method->getImgArgs()) > 1)
                         【画像：{{$loop->iteration}}】<br />
                     @endif
-                    <img src="./images/{{basename($img_arg["path"])}}.png" class="img-fluid"
+{{-- 別フォルダから画像を持ってくる場合もあるので、ルートまで遡ってのパスにする。
+                    <img src="./images/{{basename($img_arg["path"])}}.png" class="img-fluid img-manual"
+--}}
+                    <img src="../../../{{$img_arg["path"]}}.png" class="img-fluid img-manual"
                         @if ($img_arg["style"]) style="{{$img_arg["style"]}}" @endif
                     >
 
@@ -33,6 +36,7 @@
                     @endif
                 </p>
             @endforeach
+            {!!$current_method->getInsertion($level, 'foot')!!}
         </div>
     </div>
     @endif
