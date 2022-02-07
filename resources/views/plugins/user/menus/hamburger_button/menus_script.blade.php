@@ -53,6 +53,7 @@
     }
     /* メニュー本体のサイズ設定 */
     .hamburger-menu-area {
+        overflow-x: clip;
         position: relative;
         top: 50px;
     }
@@ -82,8 +83,4 @@
             opacity: 0;
         }
     }
-    /* メニューを画面右に隠す為、スクロールバーが出ないようにhmltとbodyタグに指定 */
-    html,body{
-        overflow-x: clip;
-      }
     </style>
