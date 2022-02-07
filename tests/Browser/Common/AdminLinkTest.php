@@ -33,14 +33,14 @@ class AdminLinkTest extends DuskTestCase
     public function testInvoke()
     {
         $this->login(1);
-        $this->adminLink2();
-        $this->addPlugin2();
+        $this->adminLink();
+        $this->addContentsPlugin();
     }
 
     /**
      * 管理機能
      */
-    private function adminLink2()
+    private function adminLink()
     {
         // 管理機能
         $this->browse(function (Browser $browser) {
@@ -90,7 +90,7 @@ class AdminLinkTest extends DuskTestCase
     /**
      * プラグイン追加
      */
-    private function addPlugin2()
+    private function addContentsPlugin()
     {
         // 固定記事をプラグイン追加
         $this->addPluginModal(PluginName::getPluginName(PluginName::contents));

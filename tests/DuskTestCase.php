@@ -255,7 +255,7 @@ abstract class DuskTestCase extends BaseTestCase
     public function addPluginModal($add_plugin, $permanent_link = '/', $area = 0, $screenshot = true)
     {
         $this->browse(function (Browser $browser) use ($add_plugin, $permanent_link, $area, $screenshot) {
-            // 管理機能からプラグイン追加で固定記事を追加する。
+            // 管理機能からプラグイン追加で指定されたプラグインを追加する。
             $browser->visit($permanent_link)
                     ->clickLink('管理機能')
                     ->assertPathBeginsWith('/');
@@ -263,7 +263,7 @@ abstract class DuskTestCase extends BaseTestCase
                 $browser->screenshot('common/admin_link/plugin/images/add_plugin1');
             }
 
-            // ヘッダーエリアにプラグイン追加
+            // 指定されたエリアにプラグイン追加
             // 早すぎると、プラグイン追加ダイアログが表示しきれないので、1秒待つ。
             $browser->clickLink('プラグイン追加')
                     ->assertPathBeginsWith('/')
@@ -348,9 +348,19 @@ abstract class DuskTestCase extends BaseTestCase
     }
 
     /**
+     * マニュアルデータの初期値出力
+     */
+    public function reserveManual(...$methods)
+    {
+        foreach ($methods as $method) {
+            $this->putManualData(null, $method);
+        }
+    }
+
+    /**
      * マニュアルデータ出力
      */
-    public function putManualData($img_args = null)
+    public function putManualData($img_args = null, $method = null)
     {
         // マニュアル用データ出力がOFF の場合は、出力せずに戻る。
         if ($this->no_manual) {
@@ -362,8 +372,12 @@ abstract class DuskTestCase extends BaseTestCase
         $sub_class_array = explode('\\', $sub_class_name);
 
         // 呼び出し元メソッド名
-        $dbg = debug_backtrace();
-        $source_method = $dbg[1]['function'];
+        if (empty($method)) {
+            $dbg = debug_backtrace();
+            $source_method = $dbg[1]['function'];
+        } else {
+            $source_method = $method;
+        }
 
         // クラス名の本体部分の取得
         $class_name_3 = trim($sub_class_array[3], '_');

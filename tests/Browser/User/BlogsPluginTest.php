@@ -8,6 +8,9 @@ use Tests\DuskTestCase;
 
 use App\Enums\PluginName;
 use App\Models\Common\Frame;
+use App\Models\Common\Uploads;
+use App\Models\User\Blogs\Blogs;
+use App\Models\User\Blogs\BlogsPosts;
 
 /**
  * ブログテスト
@@ -36,14 +39,26 @@ class BlogsPluginTest extends DuskTestCase
      */
     public function testBlog()
     {
-        $this->index();
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'show', 'create', 'edit', 'createBuckets', 'settingBlogFrame', 'listCategories');
+
         $this->login(1);
 
-        // プラグインがなければ追加(テストするFrameとページのインスタンス変数への保持も)
-        $this->addPluginFirst('menus', '/test/blog', 2);
+        // プラグインが配置されていなければ追加(テストするFrameとページのインスタンス変数への保持も)
+        $this->addPluginFirst('blogs', '/test/blog', 2);
 
         $this->createBuckets();
         $this->settingBlogFrame();
+        $this->listCategories();
+
+        $this->create("テスト投稿　１件目");  // 記事登録
+        $this->create("テスト投稿　２件目");  // 記事登録 2件目
+        $this->create("テスト投稿　３件目");  // 記事登録 3件目
+        $this->edit();
+
+        $this->logout();
+        $this->index();   // 記事一覧
+        $this->show();    // 記事詳細
     }
 
     /**
@@ -58,23 +73,119 @@ class BlogsPluginTest extends DuskTestCase
                     ->screenshot('user/blogs/index/images/index');
         });
 
+        // 最新の記事を取得
+        $post = BlogsPosts::orderBy('id', 'desc')->first();
+
+        $this->login(1);
+
+        // 実行
+        $this->browse(function (Browser $browser) use ($post) {
+            $browser->visit('/test/blog')
+                    ->click('#button_copy' . $post->id)
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/blogs/index/images/index2');
+        });
+
+        $this->logout();
+
         // マニュアル用データ出力
-        $this->putManualData('user/blogs/index/images/index');
+        $this->putManualData('[
+            {"path": "user/blogs/index/images/index",
+             "comment": "<ul class=\"mb-0\"><li>記事は新しいものから表示されます。</li></ul>"
+            },
+            {"path": "user/blogs/index/images/index2",
+             "name": "記事のコピー",
+             "comment": "<ul class=\"mb-0\"><li>編集権限がある場合、記事の編集ボタンの右にある▼ボタンで、記事のコピーができます。</li></ul>"
+            }
+        ]');
     }
 
     /**
-     * ブログ
+     * 記事記入
+     */
+    private function create($title = null)
+    {
+        // ブログ（バケツ）があって且つ、記事が3件未満の場合に記事作成
+        if (Frame::where('plugin_name', 'blogs')->first() && BlogsPosts::count() < 3) {
+
+            // 記事で使う画像の取得
+            $upload = Uploads::where('client_original_name', 'blobid0000000000001.jpg')->first();
+
+            $body = '<h3>' . $title . 'の本文です。</h3>';
+            if ($upload) {
+                $body .= '<br /><img src="/file/' . $upload->id . '" />';
+            }
+
+            // 実行
+            $this->browse(function (Browser $browser) use ($title, $body) {
+
+                $browser->visit('plugin/blogs/create/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                        ->assertPathBeginsWith('/')
+                        ->type('post_title', $title)
+                        ->driver->executeScript('tinyMCE.get(0).setContent(\'' . $body . '\')');
+
+                $browser->screenshot('user/blogs/create/images/create');
+
+                $browser->scrollIntoView('footer')
+                        ->screenshot('user/blogs/create/images/create2')
+                        ->press('登録確定');
+            });
+        }
+
+        // マニュアル用データ出力(記事の登録はしていなくても、画像データはできているはず。reserveManual() で一旦、内容がクリアされているので、画像の登録は行う)
+        $this->putManualData('user/blogs/create/images/create,user/blogs/create/images/create2');
+    }
+
+    /**
+     * 記事編集
+     */
+    private function edit()
+    {
+        // 最新の記事を取得
+        $post = BlogsPosts::orderBy('id', 'desc')->first();
+
+        // 実行
+        $this->browse(function (Browser $browser) use ($post) {
+
+            $browser->visit('plugin/blogs/edit/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $post->id . '#frame-' . $this->test_frame->id)
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/blogs/edit/images/edit');
+
+            $browser->scrollIntoView('footer')
+                    ->screenshot('user/blogs/edit/images/edit2');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('user/blogs/edit/images/edit,user/blogs/edit/images/edit2');
+    }
+
+    /**
+     * 記事詳細
+     */
+    private function show()
+    {
+        // 最新の記事を取得
+        $post = BlogsPosts::orderBy('id', 'desc')->first();
+
+        // 実行
+        $this->browse(function (Browser $browser) use ($post) {
+
+            $browser->visit('plugin/blogs/show/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $post->id . '#frame-' . $this->test_frame->id)
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/blogs/show/images/show');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('user/blogs/show/images/show');
+    }
+
+    /**
+     * バケツ作成
      */
     private function createBuckets()
     {
-        if (Frame::where('plugin_name', 'blogs')->first()) {
-            // プラグインがなければ追加(テストするFrameとページのインスタンス変数への保持も)
-            $this->addPluginFirst('blogs', '/test/blog', 2);
-
-        } else {
-            // プラグインがなければ追加(テストするFrameとページのインスタンス変数への保持も)
-            $this->addPluginFirst('blogs', '/test/blog', 2);
-
+        // バケツがなければ作成する。（プラグイン＆フレームの配置まではできているはず）
+        if (Blogs::count() == 0) {
             // 実行
             $this->browse(function (Browser $browser) {
                 $browser->visit('/plugin/blogs/createBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
@@ -87,10 +198,10 @@ class BlogsPluginTest extends DuskTestCase
                         ->screenshot('user/blogs/createBuckets/images/createBuckets')
                         ->press('登録確定');
             });
-
-            // マニュアル用データ出力
-            $this->putManualData('user/blogs/createBuckets/images/createBuckets');
         }
+
+        // マニュアル用データ出力(バケツの登録はしていなくても、画像データはできているはず。reserveManual() で一旦、内容がクリアされているので、画像の登録は行う)
+        $this->putManualData('user/blogs/createBuckets/images/createBuckets');
     }
 
     /**
@@ -114,79 +225,19 @@ class BlogsPluginTest extends DuskTestCase
         $this->putManualData('user/blogs/settingBlogFrame/images/settingBlogFrame');
     }
 
-
-
-
-
-
-
-
-
     /**
-     * ブログ設定
+     * カテゴリー
      */
-    private function blogSetting()
+    private function listCategories()
     {
+        // 実行
         $this->browse(function (Browser $browser) {
-
-            // プラグインの（右上）歯車マーク押下
-            // <a href="http://localhost/plugin/blogs/editBuckets/1/1#frame-1" title="ブログ設定"><small><i class="fas fa-cog bg-default cc-font-color"></i></small></a>
-            // @see http://semooh.jp/jquery/api/selectors/ Selectors - jQuery 日本語リファレンス
-            $browser->visit('/')
-                ->click('[title="ブログ設定"]')
-                ->assertSee('新規作成してください。');
-            $this->screenshot($browser);
-
-            // 現在のURL取得
-            // $url = $browser->driver->getCurrentURL();
-
-            // 新規作成リンククリック
-            // <a href="http://localhost/plugin/blogs/createBuckets/1/1#frame-1" class="nav-link">新規作成</a>
-            // $browser->visit('/plugin/blogs/createBuckets/1/1')
-            // $browser->visit($url)
-            $browser->clickLink('新規作成')
-                ->assertSee('登録確定');
-            $this->screenshot($browser);
-
-            // 入力
-            $browser->type('blog_name', 'ブログテスト')
-                ->type('view_count', '10')
-                ->assertSee('登録確定');
-            $this->screenshot($browser);
-
-            // 登録ボタン押下
-            $browser->press('登録確定')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+            $browser->visit('/plugin/blogs/listCategories/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/blogs/listCategories/images/listCategories');
         });
-    }
 
-    /**
-     * ブログの記事作成
-     */
-    private function blogPostCreate()
-    {
-        $this->browse(function (Browser $browser) {
-            // 新規登録ボタン押下
-            $browser->visit('/')
-                ->press('新規登録')
-                ->assertSee('登録確定');
-            $this->screenshot($browser);
-
-            // 入力
-            $browser->type('post_title', 'テスト投稿')
-                ->assertSee('登録確定');
-
-            // ウィジウィグ入力
-            // $browser->driver->executeScript('tinymce.activeEditor.setContent(\'<h1>Test Description</h1>\')');
-            $browser->driver->executeScript('tinyMCE.get(0).setContent(\'<h1>Test Description</h1>\')');
-            $browser->driver->executeScript('tinyMCE.get(1).setContent(\'<h1>Test Description2</h1>\')');
-            $this->screenshot($browser);
-
-            // 登録確定ボタン押下
-            $browser->press('登録確定')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
-        });
+        // マニュアル用データ出力
+        $this->putManualData('user/blogs/listCategories/images/listCategories');
     }
 }
