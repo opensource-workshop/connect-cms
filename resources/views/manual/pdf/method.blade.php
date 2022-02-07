@@ -9,8 +9,17 @@
 @foreach($method->getImgArgs() as $img_arg)
     <table nobr="true">
         <tr>
-            <td style="width: 10%;"></td>
-            <td style="width: 80%;">
+            @php
+                $image_info = getimagesize(\Storage::disk("manual")->path("html/" . $img_arg["path"] . ".png"));
+                $width = $image_info[0];
+                if ($width > 800) {
+                    $td_width = [10, 80];
+                } else {
+                    $td_width = [30, 40];
+                }
+            @endphp
+            <td style="width: {{$td_width[0]}}%;"></td>
+            <td style="width: {{$td_width[1]}}%;">
                 @if($img_arg["name"])
                     【{{$img_arg["name"]}}】
                 @else
@@ -20,7 +29,7 @@
 
                     <img src="{{\Storage::disk('manual')->path('html')}}/{{$img_arg["path"]}}.png">
             </td>
-            <td style="width: 10%;"></td>
+            <td style="width: {{$td_width[0]}}%;"></td>
         </tr>
     </table>
     @if(array_key_exists("comment", $img_arg))
