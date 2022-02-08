@@ -165,11 +165,17 @@
                 modal.find('#reservation_repeat_end').text(data.repeat.reservation_repeat_end_display);
 
                 // ボタン切替
-                modal.find('#reservation_edit_button').hide();
-                modal.find('#reservation_repeat_edit_button').show();
+                @auth
+                    if (button.data('is_edit') == '1') {
+                        modal.find('#reservation_edit_button').hide();
+                        modal.find('#reservation_repeat_edit_button').show();
+                    }
 
-                modal.find('#reservation_destroy_button').hide();
-                modal.find('#reservation_repeat_destroy_button').show();
+                    if (button.data('is_delete') == '1') {
+                        modal.find('#reservation_destroy_button').hide();
+                        modal.find('#reservation_repeat_destroy_button').show();
+                    }
+                @endauth
             }
 
             // 予約項目（可変）
