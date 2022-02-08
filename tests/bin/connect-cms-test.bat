@@ -174,7 +174,7 @@ echo --- カレンダー
 php artisan dusk tests\Browser\User\CalendarsPluginTest.php
 
 echo --- スライドショー
-rem php artisan dusk tests\Browser\User\SlideshowsPluginTest.php
+php artisan dusk tests\Browser\User\SlideshowsPluginTest.php
 
 echo --- フォトアルバム
 rem php artisan dusk tests\Browser\User\PhotoalbumsPluginTest.php
