@@ -12,6 +12,7 @@ use Laravel\Dusk\Browser;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Core\Dusks;
+use App\Models\Core\Plugins;
 use App\User;
 
 use TruncateAllTables;
@@ -241,6 +242,8 @@ abstract class DuskTestCase extends BaseTestCase
      */
     public function addPluginFirst($add_plugin, $permanent_link = '/', $area = 0, $screenshot = true)
     {
+        Plugins::where('plugin_name', ucfirst($add_plugin))->update(['display_flag' => 1]);
+
         if (!Frame::where('plugin_name', $add_plugin)->first()) {
             $this->addPluginModal($add_plugin, $permanent_link, $area, $screenshot);
         }
