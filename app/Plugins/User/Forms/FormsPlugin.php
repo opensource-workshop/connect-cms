@@ -2514,7 +2514,7 @@ ORDER BY forms_inputs_id, forms_columns_id
     {
         $bucket = Buckets::findOrNew($bucket_id);
         $bucket->bucket_name = $form_name;
-        $bucket->plugin_name = PluginName::forms;
+        $bucket->plugin_name = PluginName::getPluginName(PluginName::forms);
         $bucket->save();
         return $bucket;
     }
