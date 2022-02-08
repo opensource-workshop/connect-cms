@@ -1501,10 +1501,7 @@ class FormsPlugin extends UserPluginBase
         // 画面から渡ってくるforms_id が空ならバケツとフォームを新規登録
         if (empty($forms_id)) {
             // バケツの登録
-            $bucket = new Buckets();
-            $bucket->bucket_name = '無題';
-            $bucket->plugin_name = 'forms';
-            $bucket->save();
+            $bucket = $this->saveFormBucket($request->forms_name);
 
             // フォームデータ新規オブジェクト
             $forms = new Forms();
@@ -2463,12 +2460,6 @@ ORDER BY forms_inputs_id, forms_columns_id
      */
     public function copyForm($request, $page_id, $frame_id, $form_id)
     {
-        // バケツの登録
-        $bucket = new Buckets();
-        $bucket->bucket_name = '無題';
-        $bucket->plugin_name = PluginName::forms;
-        $bucket->save();
-
         // formsのコピー
         $form = Forms::find($form_id);
 
@@ -2484,6 +2475,10 @@ ORDER BY forms_inputs_id, forms_columns_id
         if (strlen($forms_name) > self::FORM_NAME_SIZE) {
             $forms_name = mb_strcut($forms_name, 0, self::FORM_NAME_SIZE);
         }
+
+        // バケツの登録
+        $bucket = $this->saveFormBucket($forms_name);
+
         $copy_form->forms_name = $forms_name;
         $copy_form->bucket_id = $bucket->id;
         $copy_form->save();
@@ -2503,5 +2498,20 @@ ORDER BY forms_inputs_id, forms_columns_id
                 $copy_form_column_select->save();
             }
         }
+    }
+
+    /**
+     * フォームのバケツを登録する
+     *
+     * @param string $form_name フォーム名
+     * @return Buckets フォームのバケツ
+     */
+    private function saveFormBucket($form_name)
+    {
+        $bucket = new Buckets();
+        $bucket->bucket_name = $form_name;
+        $bucket->plugin_name = PluginName::forms;
+        $bucket->save();
+        return $bucket;
     }
 }
