@@ -92,7 +92,6 @@ use App\Models\User\Reservations\ReservationsFacility;
             <div class="form-group form-row">
                 <label class="col-md-3 col-form-label text-md-right pt-0">表示</label>
                 <div class="col-md-9">
-                    {{-- 初期値(空入力)は結果的に 0:表示する --}}
                     @foreach (NotShowType::getMembers() as $enum_value => $enum_label)
                         <div class="custom-control custom-radio custom-control-inline">
                             @if (old('hide_flag', $facility->hide_flag) == $enum_value)
@@ -221,6 +220,25 @@ use App\Models\User\Reservations\ReservationsFacility;
                     @endforeach
                     @include('plugins.common.errors_inline', ['name' => 'is_allow_duplicate'])
                     <div><small class="text-muted">※ 「許可する」を設定した場合、予約時間が重なっていても予約可能になります。</small></div>
+                </div>
+            </div>
+
+            <div class="form-group form-row">
+                <label class="col-md-3 col-form-label text-md-right pt-0">権限で予約制限</label>
+                <div class="col-md-9">
+                    {{-- 初期値(空入力)は結果的に 0:権限で予約制限しない --}}
+                    @foreach (ReservationLimitedByRole::getMembers() as $enum_value => $enum_label)
+                        <div class="custom-control custom-radio custom-control-inline">
+                            @if (old('is_limited_by_role', $facility->is_limited_by_role) == $enum_value)
+                                <input type="radio" value="{{$enum_value}}" id="is_limited_by_role_{{$enum_value}}" name="is_limited_by_role" class="custom-control-input" checked="checked">
+                            @else
+                                <input type="radio" value="{{$enum_value}}" id="is_limited_by_role_{{$enum_value}}" name="is_limited_by_role" class="custom-control-input">
+                            @endif
+                            <label class="custom-control-label" for="is_limited_by_role_{{$enum_value}}">{{$enum_label}}</label>
+                        </div>
+                    @endforeach
+                    @include('plugins.common.errors_inline', ['name' => 'is_limited_by_role'])
+                    <div><small class="text-muted">※ 「権限で予約制限する」を設定した場合、当施設は編集者・モデレータは表示のみとなり、予約ができなくなります。コンテンツ管理者は予約の登録・編集ができます。</small></div>
                 </div>
             </div>
 

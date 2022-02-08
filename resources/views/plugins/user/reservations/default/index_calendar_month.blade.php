@@ -44,6 +44,13 @@
             </div>
         </div>
 
+        {{-- posts.createをループ外で判定 --}}
+        @can('posts.create',[[null, $frame->plugin_name, $buckets]])
+            @php $can_posts_create = true; @endphp
+        @else
+            @php $can_posts_create = false; @endphp
+        @endcan
+
         {{-- 登録している施設分ループ --}}
         @foreach ($calendars as $facility_name => $calendar_details)
 
@@ -89,11 +96,14 @@
                                         </div>
                                         {{-- ＋ボタン --}}
                                         <div class="float-right">
-                                            @can('posts.create',[[null, $frame->plugin_name, $buckets]])
-                                                <a href="{{URL::to('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}?facility_id={{$calendar_details['facility']->id}}&target_date={{$cell['date']->format('Y-m-d')}}#frame-{{$frame_id}}">
-                                                    <i class="fas fa-plus"></i>
-                                                </a>
-                                            @endcan
+                                            @if ($can_posts_create)
+                                                {{-- 予約制限なしなら、＋ボタン表示 --}}
+                                                @if (!$calendar_details['facility']->is_limited)
+                                                    <a href="{{URL::to('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}?facility_id={{$calendar_details['facility']->id}}&target_date={{$cell['date']->format('Y-m-d')}}#frame-{{$frame_id}}">
+                                                        <i class="fas fa-plus"></i>
+                                                    </a>
+                                                @endif
+                                            @endif
                                         </div>
                                     </div>
                                     @if (isset($cell['bookings']))

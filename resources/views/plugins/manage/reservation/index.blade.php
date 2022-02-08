@@ -29,6 +29,7 @@
                     <th class="d-block d-sm-table-cell text-break">補足</th>
                     <th class="d-block d-sm-table-cell text-break">表示順</th>
                     <th class="d-block d-sm-table-cell text-break">重複予約</th>
+                    <th class="d-block d-sm-table-cell text-break">権限で予約制限</th>
                     <th class="d-block d-sm-table-cell text-break">表示</th>
                     {{-- <th class="d-block d-sm-table-cell text-break">カテゴリ</th> --}}
                 </tr>
@@ -63,6 +64,7 @@
                         <td class="d-block d-sm-table-cell"><span class="d-sm-none">補足：</span>{{ str_limit(strip_tags($facility->supplement),36,'...') }}</td>
                         <td class="d-block d-sm-table-cell"><span class="d-sm-none">表示順：</span>{{$facility->display_sequence}}</td>
                         <td class="d-block d-sm-table-cell"><span class="d-sm-none">重複予約：</span>{{ PermissionType::getDescription($facility->is_allow_duplicate) }}</td>
+                        <td class="d-block d-sm-table-cell"><span class="d-sm-none">権限で予約制限：</span>{{ ReservationLimitedByRole::getDescription($facility->is_limited_by_role) }}</td>
                         <td class="d-block d-sm-table-cell"><span class="d-sm-none">表示：</span>{{ NotShowType::getDescription($facility->hide_flag) }}</td>
                         {{-- <td class="d-block d-sm-table-cell"><span class="d-sm-none">カテゴリ：</span><span class="badge badge-secondary">{{$facility->category}}</span></td> --}}
                     </tr>

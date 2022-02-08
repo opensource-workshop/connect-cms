@@ -77,6 +77,29 @@ trait ConnectRoleTrait
     }
 
     /**
+     * フレームからさかのぼってページ権限を取得、ユーザーが指定された役割を保持しているかチェックする。
+     */
+    public function checkRoleFromFrame(User $user, string $role, ?Frame $frame) : bool
+    {
+        // ログインしていない場合は権限なし
+        if (empty($user)) {
+            return false;
+        }
+
+        $request = app(Request::class);
+
+        // app\Http\Middleware\ConnectPage.php でセットした値
+        $page = $request->attributes->get('page');
+        $page_tree = $request->attributes->get('page_tree');
+
+        // フレームがあれば、フレームを配置したページから親を遡ってページロールを取得
+        $page_roles = $this->choicePageRolesByGoingBackParentPageOrFramePage($page, $page_tree, $frame);
+
+        // 指定された権限を含むロールをループする。
+        return $this->checkRoleHierarchy($user, $role, $page_roles);
+    }
+
+    /**
      * フレームがあれば、フレームを配置したページから親を遡ってページロールを取得
      */
     public function choicePageRolesByGoingBackParentPageOrFramePage($page, ?Collection $page_tree, ?Frame $frame) : Collection

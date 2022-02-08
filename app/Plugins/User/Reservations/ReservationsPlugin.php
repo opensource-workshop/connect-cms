@@ -166,6 +166,15 @@ class ReservationsPlugin extends UserPluginBase
             })
             ->firstOrNew(['reservations_inputs.id' => $id]);
 
+        if (in_array($action, ['editBooking', 'saveBooking', 'destroyBooking'])) {
+            // コアから呼び出しの場合、権限で予約制限するかチェック
+            $facility = ReservationsFacility::firstOrNew(['id' => $this->post->facility_id]);
+            if ($facility->isLimited(Auth::user(), $this->frame)) {
+                // 制限する場合、空記事にして編集等させない
+                $this->post = new ReservationsInput();
+            }
+        }
+
         return $this->post;
     }
 
@@ -248,15 +257,15 @@ class ReservationsPlugin extends UserPluginBase
         $reservations = Reservation::where('id', $reservations_frame->reservations_id)->first();
 
         // 施設データ
-        $facilities = ReservationsChoiceCategory::
+        $facilities = ReservationsFacility::
             select('reservations_facilities.*')
-            ->join('reservations_facilities', function ($join) {
-                $join->on('reservations_facilities.reservations_categories_id', '=', 'reservations_choice_categories.reservations_categories_id')
-                    ->where('reservations_facilities.hide_flag', NotShowType::show)
-                    ->whereNull('reservations_facilities.deleted_at');
+            ->join('reservations_choice_categories', function ($join) use ($reservations_frame) {
+                $join->on('reservations_choice_categories.reservations_categories_id', '=', 'reservations_facilities.reservations_categories_id')
+                    ->where('reservations_choice_categories.reservations_id', $reservations_frame->reservations_id)
+                    ->where('reservations_choice_categories.view_flag', ShowType::show)
+                    ->whereNull('reservations_choice_categories.deleted_at');
             })
-            ->where('reservations_choice_categories.reservations_id', $reservations_frame->reservations_id)
-            ->where('reservations_choice_categories.view_flag', ShowType::show)
+            ->where('reservations_facilities.hide_flag', NotShowType::show)
             ->orderBy('reservations_choice_categories.display_sequence', 'asc')
             ->orderBy('reservations_facilities.display_sequence', 'asc')
             ->get();
@@ -371,6 +380,10 @@ class ReservationsPlugin extends UserPluginBase
         foreach ($facilities as $facility) {
             $calendar = null;
             $calendar_cells = null;
+
+            // 予約制限するか（一般表示のみ、管理者のみ登録可）
+            $facility->is_limited = $facility->isLimited(Auth::user(), $this->frame) ? true : false;
+
             $calendar['facility'] = $facility;
 
             // カレンダー表示期間内で該当施設に紐づく予約データを抽出
@@ -704,6 +717,12 @@ class ReservationsPlugin extends UserPluginBase
 
             if (empty($facility)) {
                 return $this->view_error("404_inframe", null, 'facilityが空');
+            }
+
+            // 権限で予約制限するかチェック
+            if ($facility->isLimited(Auth::user(), $this->frame)) {
+                // 制限する
+                return $this->view_error("403_inframe", null, 'facilityの権限で予約制限する');
             }
 
             // 予約項目データ

@@ -9,11 +9,19 @@ use Illuminate\Support\Facades\App;
 
 use App\UserableNohistory;
 
+use App\User;
+use App\Models\Common\Frame;
+
 use App\Enums\ConnectLocale;
 use App\Enums\DayOfWeek;
+use App\Enums\ReservationLimitedByRole;
+
+use App\Traits\ConnectRoleTrait;
 
 class ReservationsFacility extends Model
 {
+    use ConnectRoleTrait;
+
     // 平日
     const weekday = DayOfWeek::mon.'|'.DayOfWeek::tue.'|'.DayOfWeek::wed.'|'.DayOfWeek::thu.'|'.DayOfWeek::fri;
     // 全日
@@ -36,6 +44,7 @@ class ReservationsFacility extends Model
         'reservations_categories_id',
         'columns_set_id',
         'is_allow_duplicate',
+        'is_limited_by_role',
         'facility_manager_name',
         'supplement',
         'display_sequence',
@@ -66,5 +75,28 @@ class ReservationsFacility extends Model
         }
 
         return rtrim($display, ',');
+    }
+
+    /**
+     * 権限で予約制限するか
+     */
+    public function isLimited(User $user, ?Frame $frame = null) : bool
+    {
+        if (is_null($this->is_limited_by_role) ||
+            $this->is_limited_by_role == ReservationLimitedByRole::not_limited) {
+
+            // 制限しない
+            return false;
+        }
+
+        // 以下、制限する処理
+        // ------------------------------------
+        // コンテンツ管理者
+        if ($this->checkRoleFromFrame($user, 'role_article_admin', $frame)) {
+            // 制限しない
+            return false;
+        }
+        // 制限する
+        return true;
     }
 }

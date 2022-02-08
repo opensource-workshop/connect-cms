@@ -58,6 +58,14 @@
             </div>
         </div>
         <br>
+
+        {{-- posts.createをループ外で判定 --}}
+        @can('posts.create',[[null, $frame->plugin_name, $buckets]])
+            @php $can_posts_create = true; @endphp
+        @else
+            @php $can_posts_create = false; @endphp
+        @endcan
+
         {{-- 登録している施設分ループ --}}
         @foreach ($calendars as $facility_name => $calendar_details)
 
@@ -99,22 +107,25 @@
 
                                     {{-- ＋ボタン --}}
                                     <div class="float-right">
-                                        @can('posts.create',[[null, $frame->plugin_name, $buckets]])
-                                            {{-- セル毎に予約追加画面呼び出し用のformをセット --}}
-                                            <form action="{{URL::to('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_edit_booking_{{$frame_id}}_{{ $reservations->id }}_{{ $calendar_details['facility']->id }}_{{ $cell['date']->format('Ymd') }}" method="POST" class="form-horizontal">
-                                                {{ csrf_field() }}
-                                                {{-- 施設予約ID --}}
-                                                {{-- <input type="hidden" name="reservations_id" value="{{ $reservations->id }}"> --}}
-                                                {{-- 施設ID --}}
-                                                <input type="hidden" name="facility_id" value="{{ $calendar_details['facility']->id }}">
-                                                {{-- 対象日付 --}}
-                                                <input type="hidden" name="target_date" value="{{ $cell['date']->format('Ymd') }}">
-                                                {{-- ＋ボタンクリックでformサブミット --}}
-                                                <a href="javascript:form_edit_booking_{{$frame_id}}_{{ $reservations->id }}_{{ $calendar_details['facility']->id }}_{{ $cell['date']->format('Ymd') }}.submit()">
-                                                    <i class="fas fa-plus"></i>
-                                                </a>
-                                            </form>
-                                        @endcan
+                                        @if ($can_posts_create)
+                                            {{-- 予約制限なしなら、＋ボタン表示 --}}
+                                            @if (!$calendar_details['facility']->is_limited)
+                                                {{-- セル毎に予約追加画面呼び出し用のformをセット --}}
+                                                <form action="{{URL::to('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_edit_booking_{{$frame_id}}_{{ $reservations->id }}_{{ $calendar_details['facility']->id }}_{{ $cell['date']->format('Ymd') }}" method="POST" class="form-horizontal">
+                                                    {{ csrf_field() }}
+                                                    {{-- 施設予約ID --}}
+                                                    {{-- <input type="hidden" name="reservations_id" value="{{ $reservations->id }}"> --}}
+                                                    {{-- 施設ID --}}
+                                                    <input type="hidden" name="facility_id" value="{{ $calendar_details['facility']->id }}">
+                                                    {{-- 対象日付 --}}
+                                                    <input type="hidden" name="target_date" value="{{ $cell['date']->format('Ymd') }}">
+                                                    {{-- ＋ボタンクリックでformサブミット --}}
+                                                    <a href="javascript:form_edit_booking_{{$frame_id}}_{{ $reservations->id }}_{{ $calendar_details['facility']->id }}_{{ $cell['date']->format('Ymd') }}.submit()">
+                                                        <i class="fas fa-plus"></i>
+                                                    </a>
+                                                </form>
+                                            @endif
+                                        @endif
                                     </div>
                                 </div>
                                 @if (isset($cell['bookings']))

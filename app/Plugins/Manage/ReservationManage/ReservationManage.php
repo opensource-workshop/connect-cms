@@ -17,6 +17,7 @@ use App\Plugins\Manage\ManagePluginBase;
 use App\Enums\Required;
 use App\Enums\NotShowType;
 use App\Enums\PermissionType;
+use App\Enums\ReservationLimitedByRole;
 
 use App\Rules\CustomValiRequiredWithoutAllSupportsArrayInput;
 use App\Rules\CustomValiWysiwygMax;
@@ -167,6 +168,7 @@ class ReservationManage extends ManagePluginBase
 
         if (!$facility->id) {
             // 登録の初期値
+            $facility->hide_flag       = NotShowType::show;
             $facility->is_time_control = 1;
             $facility->start_time      = '09:00:00';
             $facility->end_time        = '18:00:00';
@@ -247,6 +249,7 @@ class ReservationManage extends ManagePluginBase
         $facility->day_of_weeks                 = $day_of_weeks;
         $facility->hide_flag                    = $request->hide_flag ? NotShowType::not_show : NotShowType::show;
         $facility->is_allow_duplicate           = $request->is_allow_duplicate ? PermissionType::allowed : PermissionType::not_allowed;
+        $facility->is_limited_by_role           = $request->is_limited_by_role ? ReservationLimitedByRole::limited : ReservationLimitedByRole::not_limited;
         $facility->facility_manager_name        = $request->facility_manager_name;
         // 管理画面はWysiwygのタグ制限なし
         $facility->supplement                   = $request->supplement;
