@@ -1527,6 +1527,9 @@ class FormsPlugin extends UserPluginBase
             // フォームデータ取得
             $forms = Forms::where('id', $forms_id)->first();
 
+            // バケツ名を入力されたフォーム名で更新
+            $bucket = $this->saveFormBucket($request->forms_name, $forms->bucket_id);
+
             $message = 'フォーム設定を変更しました。';
         }
 
@@ -2504,11 +2507,12 @@ ORDER BY forms_inputs_id, forms_columns_id
      * フォームのバケツを登録する
      *
      * @param string $form_name フォーム名
+     * @param int $bucket_id バケツID
      * @return Buckets フォームのバケツ
      */
-    private function saveFormBucket($form_name)
+    private function saveFormBucket($form_name, $bucket_id = null)
     {
-        $bucket = new Buckets();
+        $bucket = Buckets::findOrNew($bucket_id);
         $bucket->bucket_name = $form_name;
         $bucket->plugin_name = PluginName::forms;
         $bucket->save();
