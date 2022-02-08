@@ -26,6 +26,8 @@ use App\Plugins\User\UserPluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category スライドショー・プラグイン
  * @package Controller
+ * @plugin_title スライドショー
+ * @plugin_desc 画像をアップロードして自動スライド形式で表示することができます。
  */
 class SlideshowsPlugin extends UserPluginBase
 {
@@ -122,6 +124,10 @@ class SlideshowsPlugin extends UserPluginBase
     /**
      *  データ初期表示関数
      *  コアがページ表示の際に呼び出す関数
+     *
+     * @method_title 表示
+     * @method_desc スライド表示
+     * @method_detail 画像がスライドショー表示できます。クリックでリンクできます。
      */
     public function index($request, $page_id, $frame_id, $errors = null)
     {
@@ -169,6 +175,10 @@ class SlideshowsPlugin extends UserPluginBase
 
     /**
      * スライドショー新規作成画面
+     *
+     * @method_title 新規作成
+     * @method_desc スライドショーを新しく作成します。
+     * @method_detail スライドショー名やコントロールの表示など設定して、スライドショーを作成できます。
      */
     public function createBuckets($request, $page_id, $frame_id, $slideshows_id = null, $is_create = false, $message = null, $errors = null)
     {
@@ -346,6 +356,10 @@ class SlideshowsPlugin extends UserPluginBase
 
     /**
      * データ選択表示関数
+     *
+     * @method_title スライドショー選択
+     * @method_desc このフレームに表示するスライドショーを選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -441,8 +455,8 @@ class SlideshowsPlugin extends UserPluginBase
         $request->validate([
             'image_file'  => 'required|image',
             'link_url'    => [new CustomValiUrlMax()],
-            'caption'     => 'max:9',
-            'link_target' => 'max:9',
+            'caption'     => 'max:255',
+            'link_target' => 'max:255',
         ]);
 
         if ($request->hasFile('image_file')) {
@@ -588,6 +602,10 @@ class SlideshowsPlugin extends UserPluginBase
 
     /**
      * 項目編集画面の表示
+     *
+     * @method_title 画像の登録
+     * @method_desc スライドショーの画像を登録します。
+     * @method_detail 画像やリンクURLを登録できます。
      */
     public function editItem($request, $page_id, $frame_id, $id = null, $message = null, $errors = null)
     {

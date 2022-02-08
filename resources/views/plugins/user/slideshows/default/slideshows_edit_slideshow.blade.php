@@ -76,7 +76,7 @@
                                 class="custom-control-input"
                                 {{ $slideshow->control_display_flag == $key ? 'checked' : '' }}
                             >
-                            <label class="custom-control-label" for="{{ "control_display_flag_${key}" }}">
+                            <label class="custom-control-label" for="{{ "control_display_flag_${key}" }}" id="{{ "label_control_display_flag_${key}" }}">
                                 {{ $value }}
                             </label>
                         </div>
@@ -98,7 +98,7 @@
                                 class="custom-control-input"
                                 {{ $slideshow->indicators_display_flag == $key ? 'checked' : '' }}
                             >
-                            <label class="custom-control-label" for="{{ "indicators_display_flag_${key}" }}">
+                            <label class="custom-control-label" for="{{ "indicators_display_flag_${key}" }}" id="{{ "label_indicators_display_flag_${key}" }}">
                                 {{ $value }}
                             </label>
                         </div>
@@ -120,7 +120,7 @@
                                 class="custom-control-input"
                                 {{ $slideshow->fade_use_flag == $key ? 'checked' : '' }}
                             >
-                            <label class="custom-control-label" for="{{ "fade_use_flag_${key}" }}">
+                            <label class="custom-control-label" for="{{ "fade_use_flag_${key}" }}" id="{{ "label_fade_use_flag_${key}" }}">
                                 {{ $value }}
                             </label>
                         </div>
