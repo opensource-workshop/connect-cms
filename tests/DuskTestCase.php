@@ -12,6 +12,7 @@ use Laravel\Dusk\Browser;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Core\Dusks;
+use App\Models\Core\Plugins;
 use App\User;
 
 use TruncateAllTables;
@@ -241,6 +242,8 @@ abstract class DuskTestCase extends BaseTestCase
      */
     public function addPluginFirst($add_plugin, $permanent_link = '/', $area = 0, $screenshot = true)
     {
+        Plugins::where('plugin_name', ucfirst($add_plugin))->update(['display_flag' => 1]);
+
         if (!Frame::where('plugin_name', $add_plugin)->first()) {
             $this->addPluginModal($add_plugin, $permanent_link, $area, $screenshot);
         }
@@ -340,8 +343,10 @@ abstract class DuskTestCase extends BaseTestCase
     {
         if ($method_name == null) {
             $class = new \ReflectionClass($class_name);
-        } else {
+        } elseif (method_exists($class_name, $method_name)) {
             $class = new \ReflectionMethod($class_name, $method_name);
+        } else {
+            return "";
         }
         $class_document = $class->getDocComment();
         return trim($this->getAnnotation($class_document, $annotation_name));
@@ -413,5 +418,58 @@ abstract class DuskTestCase extends BaseTestCase
             $dusk->parent_id = $parent->id;
             $dusk->save();
         }
+    }
+
+    /**
+     * マニュアルデータ（テンプレート変更）出力
+     */
+    public function putManualTemplateData($frame, $category, $test_path, $plugin, $templates)
+    {
+        // 画像関係パス
+        $img_args = "";
+
+        // テンプレートの数だけループしながら、スクリーンショット取得
+        foreach ($templates as $template_name => $template_desc) {
+            // フレームのテンプレート名を修正する。
+            $frame->template = $template_name;
+            $frame->save();
+
+            // 指定のURLを表示し、スクリーンショットを取る。
+            $this->browse(function (Browser $browser) use ($category, $test_path, $plugin, $template_name) {
+                $browser->visit($test_path)
+                        ->assertPathBeginsWith('/')
+                        ->screenshot($category . '/' . $plugin[0] . '/template/images/' . $template_name);
+            });
+
+            $img_args .=<<< EOF
+{"path": "{$category}/{$plugin[0]}/template/images/{$template_name}",
+ "name": "{$template_desc}"
+}
+EOF;
+            if (array_key_last($templates) != $template_name) {
+                $img_args .= ",";
+            }
+        }
+
+        // テンプレートを標準に戻す。
+        $frame->template = "default";
+        $frame->save();
+
+        // マニュアル用データ出力
+        $dusk = Dusks::putManualData(
+            ['html_path' => $category . '/' . $plugin[0] . '/template/index.html'],
+            ['category' => $category,
+             'sort' => 2,
+             'plugin_name' => $plugin[0],
+             'plugin_title' => $plugin[1],
+             'plugin_desc' => '',
+             'method_name' => 'template',
+             'method_title' => 'テンプレート',
+             'method_desc' => 'テンプレート変更時の表示結果を紹介します。',
+             'method_detail' => '',
+             'html_path' => $category . '/' . $plugin[0] . '/template/index.html',
+             'img_args' => '[' . $img_args . ']',
+             'test_result' => 'OK']
+        );
     }
 }

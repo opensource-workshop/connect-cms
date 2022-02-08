@@ -30,6 +30,8 @@ use App\Rules\CustomValiWysiwygMax;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category カレンダー・プラグイン
  * @package Controller
+ * @plugin_title カレンダー
+ * @plugin_desc カレンダーを作成できるプラグインです。<br />予定の配信や共有に使用します。
  */
 class CalendarsPlugin extends UserPluginBase
 {
@@ -251,8 +253,12 @@ class CalendarsPlugin extends UserPluginBase
     /* 画面アクション関数 */
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
+     *
+     * @method_title 予定一覧
+     * @method_desc 予定を表示します。
+     * @method_detail 指定された形式で予定を表示します。
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -318,6 +324,10 @@ class CalendarsPlugin extends UserPluginBase
 
     /**
      *  詳細表示関数
+     *
+     * @method_title 予定詳細
+     * @method_desc 予定の詳細を表示します。
+     * @method_detail 一覧では表示できなかった予定の詳細を表示します。
      */
     public function show($request, $page_id, $frame_id, $post_id)
     {
@@ -335,6 +345,10 @@ class CalendarsPlugin extends UserPluginBase
 
     /**
      * 記事編集画面
+     *
+     * @method_title 予定の登録
+     * @method_desc 予定を登録します。
+     * @method_detail 予定を登録・編集します。
      */
     public function edit($request, $page_id, $frame_id, $post_id = null)
     {
@@ -469,6 +483,10 @@ class CalendarsPlugin extends UserPluginBase
 
     /**
      * プラグインのバケツ選択表示関数
+     *
+     * @method_title カレンダー選択
+     * @method_desc このフレームに表示するカレンダーを選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -480,6 +498,10 @@ class CalendarsPlugin extends UserPluginBase
 
     /**
      * バケツ新規作成画面
+     *
+     * @method_title 新規作成
+     * @method_desc カレンダーを新しく作成します。
+     * @method_detail カレンダー名を入力してカレンダーを作成できます。
      */
     public function createBuckets($request, $page_id, $frame_id)
     {

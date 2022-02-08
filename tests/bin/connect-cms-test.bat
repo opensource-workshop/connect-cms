@@ -170,6 +170,15 @@ php artisan dusk tests\Browser\User\MenusPluginTest.php
 echo --- ブログ
 php artisan dusk tests\Browser\User\BlogsPluginTest.php
 
+echo --- カレンダー
+php artisan dusk tests\Browser\User\CalendarsPluginTest.php
+
+echo --- スライドショー
+php artisan dusk tests\Browser\User\SlideshowsPluginTest.php
+
+echo --- 開館カレンダー
+php artisan dusk tests\Browser\User\OpeningcalendarsPluginTest.php
+
 echo --- フォトアルバム
 rem php artisan dusk tests\Browser\User\PhotoalbumsPluginTest.php
 
