@@ -19,46 +19,38 @@
     <div class="row">
         @foreach($inputs_ids as $input_id)
             <div class="col-12 col-sm-6 col-md-6 col-lg-3 p-2 dbsearch_card">
-                <dl>
-                @foreach($view_columns as $view_column)
-                    @php
-                    // 表示項目
-                    $view_col = $input_cols->where('databases_inputs_id', $input_id->databases_inputs_id)
-                                            ->where('column_name', trim($view_column))
-                                            ->first();
-                    @endphp
+                <div class="dbsearch_data_{{$input_id->databases_inputs_id}}">
+                    <a href="{{url('/')}}/plugin/databases/detail/{{$input_id->page_id}}/{{$input_id->frames_id}}/{{$input_id->databases_inputs_id}}#frame-{{$input_id->frames_id}}" style="text-decoration: none; color: initial;">
+                        @foreach($view_columns as $view_column)
+                            @php
+                            // 表示項目
+                            $view_col = $input_cols->where('databases_inputs_id', $input_id->databases_inputs_id)
+                                                    ->where('column_name', trim($view_column))
+                                                    ->first();
+                            @endphp
 
-                    @if($view_col)
-                        @if($loop->first)
-                            <dt class="dbsearch_col_{{$view_col->databases_columns_id}}">
-                            <a href="{{url('/')}}/plugin/databases/detail/{{$input_id->page_id}}/{{$input_id->frames_id}}/{{$input_id->databases_inputs_id}}#frame-{{$input_id->frames_id}}">
-                                @if($view_col->value)
-                                    {{-- 画像の場合はその画像を表示する --}}
-                                    @if ($view_col->column_type == DatabaseColumnType::image)
-                                        <img class="img-fluid" src="{{url('/')}}/file/{{$view_col->value}}">
-                                    @else
-                                        {{$view_col->value}}
-                                    @endif
-                                @else
-                                    (無題)
-                                @endif
-                            </a>
-                            </dt>
-                        @else
-                            <dd class="dbsearch_col_{{$view_col->databases_columns_id}}" style="display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;">
-                            @if ($view_col->column_type == DatabaseColumnType::wysiwyg)
-                                <span class="column_title">{{$view_column}}：</span><span class="column_value">{!! $view_col->value !!}</span>
-                            @elseif ($view_col->column_type == DatabaseColumnType::image)
-                                <img class="img-fluid" src="{{url('/')}}/file/{{$view_col->value}}">
-                            @else
-                            <span class="column_title">{{$view_column}}：</span><span class="column_value">{{$view_col->value}}</span>
+                            @if($view_col)
+                                <div class="dbsearch_col_{{$view_col->databases_columns_id}}" >
+                                    <p>
+                                        @if ($view_col->column_type == DatabaseColumnType::wysiwyg)
+                                            {{-- wysiwygエディタ項目の場合 --}}
+                                            <span class="column_title">{{$view_column}}：</span><span class="column_value">{!! $view_col->value !!}</span>
+                                        @elseif ($view_col->column_type == DatabaseColumnType::image)
+                                            {{-- 画像項目の場合 --}}
+                                            <img class="img-fluid" src="{{url('/')}}/file/{{$view_col->value}}">
+                                        @elseif ($view_col->column_type == DatabaseColumnType::date)
+                                            {{-- 日付項目の場合 --}}
+                                            <span class="column_title">{{$view_column}}：</span><span class="column_value">@php echo date('Y/m/d', strtotime($view_col->value)) @endphp</span>
+                                        @else
+                                            <span class="column_title">{{$view_column}}：</span><span class="column_value">{{$view_col->value}}</span>
+                                        @endif
+                                    </p>
+                                </div>
                             @endif
-                            </dd>
-                        @endif
-                    @endif
 
-                @endforeach
-                </dl>
+                        @endforeach
+                    </a>
+                </div>
             </div>
         @endforeach
     </div>
