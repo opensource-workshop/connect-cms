@@ -87,9 +87,12 @@
                         @else
                         ({{$date->formatLocalized("%a")}})
                         @endif
-                        <div class="col-12 pl-1 d-inline cc-font-90">
-                            <span class="badge badge-pill badge-danger">{{$date->getHolidayName()}}</span>
-                        </div>
+                        {{-- 祝日 --}}
+                        @if ($date->hasHoliday())
+                            <div class="pl-1 d-inline cc-font-90">
+                                <span class="badge badge-pill badge-danger">{{$date->getHolidayName()}}</span>
+                            </div>
+                        @endif
                     </div>
 
                 </div>
@@ -102,14 +105,6 @@
                 @endcan
                 </div>
             </div>
-            {{-- 祝日 --}}
-            @if ($date->hasHoliday())
-                <div class="row py-1 d-none d-md-block">
-                    <div class="col-12 cc-font-90">
-                        <span class="badge badge-pill badge-danger">{{$date->getHolidayName()}}</span>
-                    </div>
-                </div>
-            @endif
             {{-- 拡張Collection を使用して表示するべき予定を抽出する --}}
             @foreach($posts->wherePostFromDate($date->format('Y-m-d')) as $post)
                 <div class="row py-1">
