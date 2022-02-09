@@ -47,7 +47,7 @@
             <header class="faq-list-title" id="headingFaq{{$post->id}}">
 
                 <div class="d-flex flex-row">
-                    <button class="btn btn-link p-0 text-left" type="button" data-toggle="collapse" data-target="#collapseFaq{{$post->id}}" aria-expanded="true" aria-controls="collapseFaq{{$post->id}}">
+                    <button class="btn btn-link p-0 text-left" type="button" data-toggle="collapse" data-target="#collapseFaq{{$post->id}}" aria-expanded="true" aria-controls="collapseFaq{{$post->id}}" id="button_collapse_faq{{$post->id}}">
                         {{-- タイトル --}}
                         <span class="pr-2"><span class="h5"><span class="badge badge-primary">Q</span></span></span>{{$post->getNobrPostTitle()}}
 
