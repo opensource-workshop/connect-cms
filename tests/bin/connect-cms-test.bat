@@ -185,6 +185,9 @@ php artisan dusk tests\Browser\User\WhatsnewsPluginTest.php
 echo --- FAQ
 php artisan dusk tests\Browser\User\FaqsPluginTest.php
 
+echo --- リンクリスト
+php artisan dusk tests\Browser\User\LinklistsPluginTest.php
+
 echo --- フォトアルバム
 rem php artisan dusk tests\Browser\User\PhotoalbumsPluginTest.php
 
