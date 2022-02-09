@@ -31,7 +31,6 @@
 
                             @if($view_col)
                                 <div class="dbsearch_col_{{$view_col->databases_columns_id}}" >
-                                    <p>
                                         @if ($view_col->column_type == DatabaseColumnType::wysiwyg)
                                             {{-- wysiwygエディタ項目の場合 --}}
                                             <span class="column_title">{{$view_column}}：</span><span class="column_value">{!! $view_col->value !!}</span>
@@ -40,11 +39,10 @@
                                             <img class="img-fluid" src="{{url('/')}}/file/{{$view_col->value}}">
                                         @elseif ($view_col->column_type == DatabaseColumnType::date)
                                             {{-- 日付項目の場合 --}}
-                                            <span class="column_title">{{$view_column}}：</span><span class="column_value">@php echo date('Y/m/d', strtotime($view_col->value)) @endphp</span>
+                                            <p><span class="column_title">{{$view_column}}：</span><span class="column_value">@php echo date('Y/m/d', strtotime($view_col->value)) @endphp</span></p>
                                         @else
-                                            <span class="column_title">{{$view_column}}：</span><span class="column_value">{{$view_col->value}}</span>
+                                            <p><span class="column_title">{{$view_column}}：</span><span class="column_value">{{$view_col->value}}</span></p>
                                         @endif
-                                    </p>
                                 </div>
                             @endif
 
