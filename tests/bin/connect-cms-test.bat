@@ -179,6 +179,9 @@ php artisan dusk tests\Browser\User\SlideshowsPluginTest.php
 echo --- 開館カレンダー
 php artisan dusk tests\Browser\User\OpeningcalendarsPluginTest.php
 
+echo --- 新着情報
+php artisan dusk tests\Browser\User\WhatsnewsPluginTest.php
+
 echo --- フォトアルバム
 rem php artisan dusk tests\Browser\User\PhotoalbumsPluginTest.php
 

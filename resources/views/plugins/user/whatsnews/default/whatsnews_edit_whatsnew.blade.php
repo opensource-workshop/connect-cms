@@ -156,7 +156,9 @@
                         class="custom-control-input"
                         {{ $whatsnew->view_posted_name == $key ? 'checked' : '' }}
                     >
-                    <label class="custom-control-label" for="{{ "view_posted_name_${key}" }}">
+                    <label class="custom-control-label"
+                           for="{{ "view_posted_name_${key}" }}"
+                           id="{{ "label_view_posted_name_${key}" }}">
                         {{ $value }}
                     </label>
                 </div>
@@ -178,7 +180,9 @@
                         class="custom-control-input"
                         {{ $whatsnew->view_posted_at == $key ? 'checked' : '' }}
                     >
-                    <label class="custom-control-label" for="{{ "view_posted_at_${key}" }}">
+                    <label class="custom-control-label"
+                           for="{{ "view_posted_at_${key}" }}"
+                           id="{{ "label_view_posted_at_${key}" }}">
                         {{ $value }}
                     </label>
                 </div>
@@ -186,7 +190,7 @@
         </div>
     </div>
 
-    <h5><span class="badge badge-secondary">重要記事の扱い</span></h5>
+    <h5 id="title_important"><span class="badge badge-secondary">重要記事の扱い</span></h5>
 
     {{-- 重要記事の扱い --}}
     <div class="form-group row">
@@ -244,7 +248,9 @@
                         {{ $whatsnew->read_more_use_flag == $key ? 'checked' : '' }}
                         v-model="read_more_use_flag"
                     >
-                    <label class="custom-control-label" for="{{ "read_more_use_flag_${key}" }}">
+                    <label class="custom-control-label"
+                           for="{{ "read_more_use_flag_${key}" }}"
+                           id="{{ "label_read_more_use_flag_${key}" }}">
                         {{ $value }}
                     </label>
                 </div>
@@ -351,7 +357,7 @@
             @foreach($whatsnew->getTargetPlugins() as $key => $target_plugin)
                 <div class="custom-control custom-checkbox custom-control-inline">
                     <input type="checkbox" name="target_plugin[{{$key}}]" value="{{$key}}" class="custom-control-input" id="target_plugin_{{$key}}" @if(old("target_plugin.$key", $target_plugin['use_flag'])) checked=checked @endif>
-                    <label class="custom-control-label" for="target_plugin_{{$key}}">{{$target_plugin['plugin_name_full']}}</label>
+                    <label class="custom-control-label" for="target_plugin_{{$key}}" id="label_target_plugin_{{$key}}">{{$target_plugin['plugin_name_full']}}</label>
                 </div>
             @endforeach
             @if ($errors && $errors->has('target_plugin')) <div class="text-danger float-none">{{$errors->first('target_plugin')}}</div> @endif
