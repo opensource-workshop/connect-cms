@@ -80,7 +80,7 @@ class ReservationsFacility extends Model
     /**
      * 権限で予約制限するか
      */
-    public function isLimited(User $user, ?Frame $frame = null) : bool
+    public function isLimited(?User $user, ?Frame $frame) : bool
     {
         if (is_null($this->is_limited_by_role) ||
             $this->is_limited_by_role == ReservationLimitedByRole::not_limited) {

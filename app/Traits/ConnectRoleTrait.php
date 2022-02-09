@@ -79,7 +79,7 @@ trait ConnectRoleTrait
     /**
      * フレームからさかのぼってページ権限を取得、ユーザーが指定された役割を保持しているかチェックする。
      */
-    public function checkRoleFromFrame(User $user, string $role, ?Frame $frame) : bool
+    public function checkRoleFromFrame(?User $user, string $role, ?Frame $frame) : bool
     {
         // ログインしていない場合は権限なし
         if (empty($user)) {
