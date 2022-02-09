@@ -869,8 +869,10 @@ trait ConnectCommonTrait
      */
     public function getHolidays($year, $month)
     {
+        $month = sprintf('%02d', $month);
+
         // 独自設定祝日を取得する。
-        return Holiday::where('holiday_date', 'LIKE', $year . '-' .$month . '%')->orderBy('holiday_date')->get();
+        return Holiday::where('holiday_date', 'LIKE', $year . '-' . $month . '%')->orderBy('holiday_date')->get();
     }
 
     /**
@@ -879,6 +881,8 @@ trait ConnectCommonTrait
      */
     protected function addHoliday($year, $month, $dates)
     {
+        $month = sprintf('%02d', $month);
+
         // 年の祝日一覧を取得する。
         $yasumis = $this->getYasumis($year);
 
