@@ -19,7 +19,7 @@
     <div class="row">
         @foreach($inputs_ids as $input_id)
             <div class="col-12 col-sm-6 col-md-6 col-lg-3 p-2 dbsearch_card">
-                <div class="dbsearch_data_{{$input_id->databases_inputs_id}}">
+                <div class="dbsearch_card_data">
                     <a href="{{url('/')}}/plugin/databases/detail/{{$input_id->page_id}}/{{$input_id->frames_id}}/{{$input_id->databases_inputs_id}}#frame-{{$input_id->frames_id}}" style="text-decoration: none; color: initial;">
                         @foreach($view_columns as $view_column)
                             @php
