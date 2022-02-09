@@ -78,10 +78,6 @@
                                 <td class="
                                     {{-- 当月以外ならセル背景をグレーアウト --}}
                                     {{ $cell['date']->month != $carbon_target_date->month ? 'd-none d-md-table-cell bg-light' : '' }}
-                                    {{-- 当月、且つ、日曜なら赤文字 --}}
-                                    {{ $cell['date']->month == $carbon_target_date->month && $cell['date']->dayOfWeek == DayOfWeek::sun ? 'cc-color-sunday' : '' }}
-                                    {{-- 当月、且つ、日曜なら赤文字 --}}
-                                    {{ $cell['date']->month == $carbon_target_date->month && $cell['date']->dayOfWeek == DayOfWeek::sat ? 'cc-color-saturday' : '' }}
                                     "
                                 >
                                     <div class="clearfix">
@@ -89,9 +85,16 @@
                                         <div class="float-left font-weight-bold text-secondary">
                                             @include('plugins.user.reservations.default.include_calendar_day', ['date' => $cell['date']])
 
-                                            {{-- 曜日（767px以下で表示） --}}
+                                            {{-- （767px以下で表示） --}}
                                             <span class="d-md-none">
+                                                {{-- 曜日 --}}
                                                 @include('plugins.user.reservations.default.include_calendar_day_of_week', ['date' => $cell['date']])
+                                                {{-- 祝日 --}}
+                                                @if ($cell['date']->hasHoliday())
+                                                    <div class="pl-1 d-inline cc-font-90">
+                                                        <span class="badge badge-pill badge-danger">{{$cell['date']->getHolidayName()}}</span>
+                                                    </div>
+                                                @endif
                                             </span>
                                         </div>
                                         {{-- ＋ボタン --}}
@@ -106,6 +109,16 @@
                                             @endif
                                         </div>
                                     </div>
+
+                                    {{-- 祝日 --}}
+                                    @if ($cell['date']->hasHoliday())
+                                        <div class="row pb-1 d-none d-md-block">
+                                            <div class="col-12 cc-font-90">
+                                                <span class="badge badge-pill badge-danger">{{$cell['date']->getHolidayName()}}</span>
+                                            </div>
+                                        </div>
+                                    @endif
+
                                     @if (isset($cell['bookings']))
                                         @foreach ($cell['bookings'] as $booking)
                                             <div class="row py-1">

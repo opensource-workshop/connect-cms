@@ -75,18 +75,18 @@
                     <tr>
                         {{-- カレンダーデータ部の表示 --}}
                         @foreach ($calendar_details['calendar_cells'] as $cell)
-                            <td class="
-                                {{-- 日曜なら赤文字 --}}
-                                {{ $cell['date']->dayOfWeek == DayOfWeek::sun ? 'cc-color-sunday' : '' }}
-                                {{-- 土曜なら青文字 --}}
-                                {{ $cell['date']->dayOfWeek == DayOfWeek::sat ? 'cc-color-saturday' : '' }}
-                                "
-                            >
+                            <td>
                                 <div class="clearfix">
                                     {{-- 日付＆曜日（767px以下で表示） --}}
                                     <div class="float-left d-md-none font-weight-bold text-secondary">
                                         @include('plugins.user.reservations.default.include_calendar_day', ['date' => $cell['date']])
                                         @include('plugins.user.reservations.default.include_calendar_day_of_week', ['date' => $cell['date']])
+                                        {{-- 祝日 --}}
+                                        @if ($cell['date']->hasHoliday())
+                                            <div class="pl-1 d-inline cc-font-90">
+                                                <span class="badge badge-pill badge-danger">{{$cell['date']->getHolidayName()}}</span>
+                                            </div>
+                                        @endif
                                     </div>
 
                                     {{-- ＋ボタン --}}
@@ -112,6 +112,16 @@
                                         @endif
                                     </div>
                                 </div>
+
+                                {{-- 祝日 --}}
+                                @if ($cell['date']->hasHoliday())
+                                    <div class="row pb-1 d-none d-md-block">
+                                        <div class="col-12 cc-font-90">
+                                            <span class="badge badge-pill badge-danger">{{$cell['date']->getHolidayName()}}</span>
+                                        </div>
+                                    </div>
+                                @endif
+
                                 @if (isset($cell['bookings']))
                                     @foreach ($cell['bookings'] as $booking)
                                         <div class="row py-1">

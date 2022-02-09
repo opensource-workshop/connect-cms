@@ -79,7 +79,7 @@
                     <tr>
                         @foreach ($calendar_details['calendar_cells'] as $cell)
                             {{-- 日曜なら赤文字、土曜なら青文字 --}}
-                            <th class="text-center bg-light{{ $cell['date']->dayOfWeek == DayOfWeek::sun ? ' text-danger' : '' }}{{ $cell['date']->dayOfWeek == DayOfWeek::sat ? ' text-primary' : '' }}">
+                            <th class="text-center bg-light{{ $cell['date']->dayOfWeek == DayOfWeek::sun || $cell['date']->hasHoliday() ? ' text-danger' : '' }}{{ $cell['date']->dayOfWeek == DayOfWeek::sat ? ' text-primary' : '' }}">
                                 {{ $cell['date']->day . '(' . DayOfWeek::getDescription($cell['date']->dayOfWeek) . ')' }}
                             </th>
                         @endforeach
@@ -91,7 +91,7 @@
                         @foreach ($calendar_details['calendar_cells'] as $cell)
                             <td class="
                                 {{-- 日曜なら赤文字 --}}
-                                {{ $cell['date']->dayOfWeek == DayOfWeek::sun ? 'text-danger' : '' }}
+                                {{ $cell['date']->dayOfWeek == DayOfWeek::sun || $cell['date']->hasHoliday() ? 'text-danger' : '' }}
                                 {{-- 土曜なら青文字 --}}
                                 {{ $cell['date']->dayOfWeek == DayOfWeek::sat ? 'text-primary' : '' }}
 
@@ -103,6 +103,12 @@
                                     {{-- 日付＆曜日（767px以下で表示） --}}
                                     <div class="float-left d-md-none">
                                         {{ $cell['date']->day . ' (' . DayOfWeek::getDescription($cell['date']->dayOfWeek) . ')' }}
+                                        {{-- 祝日 --}}
+                                        @if ($cell['date']->hasHoliday())
+                                            <div class="pl-1 d-inline cc-font-90">
+                                                <span class="badge badge-pill {{ $cell['date']->month == $carbon_target_date->month ? 'badge-danger' : 'badge-secondary' }}">{{$cell['date']->getHolidayName()}}</span>
+                                            </div>
+                                        @endif
                                     </div>
 
                                     {{-- ＋ボタン --}}
@@ -128,6 +134,14 @@
                                         @endif
                                     </div>
                                 </div>
+                                {{-- 祝日 --}}
+                                @if ($cell['date']->hasHoliday())
+                                    <div class="row pb-1 d-none d-md-block">
+                                        <div class="col-12 cc-font-90">
+                                            <span class="badge badge-pill {{ $cell['date']->month == $carbon_target_date->month ? 'badge-danger' : 'badge-secondary' }}">{{$cell['date']->getHolidayName()}}</span>
+                                        </div>
+                                    </div>
+                                @endif
                                 @if (isset($cell['bookings']))
                                     @foreach ($cell['bookings'] as $booking)
 

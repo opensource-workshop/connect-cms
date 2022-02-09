@@ -328,7 +328,7 @@ class ReservationsPlugin extends UserPluginBase
             // dd("addDay：$addDay","カレンダー1日目：$firstDay","カレンダー1日目の曜日：$firstDay->dayOfWeek","count:$count");
 
             for ($i = 0; $i < $count; $i++, $firstDay->addDay()) {
-                $dates[] = $firstDay->copy();
+                $dates[$firstDay->format('Y-m-d')] = $firstDay->copy();
             }
         } else {
 
@@ -338,13 +338,16 @@ class ReservationsPlugin extends UserPluginBase
             // $firstDay = $carbon_target_date->copy();
             $firstDay = new ConnectCarbon($carbon_target_date->format('Y-m-d'));
             for ($i = 0; $i < 7; $i++, $firstDay->addDay()) {
-                $dates[] = $firstDay->copy();
+                $dates[$firstDay->format('Y-m-d')] = $firstDay->copy();
             }
         }
 
         // 予約データを検索する為の条件生成
-        $search_start_date = $dates[0];
+        $search_start_date = current($dates);
         $search_end_date = end($dates)->endOfDay();
+
+        // 祝日
+        $dates = $this->addHolidaysFromTo($search_start_date, $search_end_date, $dates);
 
         /**
          * カレンダー情報は入れ子の連想配列で返却する
