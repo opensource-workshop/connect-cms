@@ -39,6 +39,8 @@
                                             <img class="img-fluid" src="{{url('/')}}/file/{{$view_col->value}}">
                                         @elseif ($view_col->column_type == DatabaseColumnType::date)
                                             {{-- 日付項目の場合 --}}
+                                            {{-- TODO：NC2から移行されてきたデータが「yyyy-mm-dd 00:00:00」で保存されてしまっている
+                                                 移行プログラムが修正されるまでは、データフォーマット処理を入れたままとする。issues:1155 --}}
                                             <p><span class="column_title">{{$view_column}}：</span><span class="column_value">@php echo date('Y/m/d', strtotime($view_col->value)) @endphp</span></p>
                                         @else
                                             <p><span class="column_title">{{$view_column}}：</span><span class="column_value">{{$view_col->value}}</span></p>
