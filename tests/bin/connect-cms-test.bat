@@ -182,6 +182,9 @@ php artisan dusk tests\Browser\User\OpeningcalendarsPluginTest.php
 echo --- 新着情報
 php artisan dusk tests\Browser\User\WhatsnewsPluginTest.php
 
+echo --- FAQ
+php artisan dusk tests\Browser\User\FaqsPluginTest.php
+
 echo --- フォトアルバム
 rem php artisan dusk tests\Browser\User\PhotoalbumsPluginTest.php
 
