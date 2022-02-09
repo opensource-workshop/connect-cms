@@ -460,7 +460,7 @@ class WhatsnewsPlugin extends UserPluginBase
     /**
      * データ選択表示関数
      *
-     * @method_title 新着情報選択
+     * @method_title 選択
      * @method_desc このフレームに表示する新着情報を選択します。
      * @method_detail
      */
@@ -485,7 +485,7 @@ class WhatsnewsPlugin extends UserPluginBase
     /**
      * 新着情報設定の新規作成画面
      *
-     * @method_title 新規作成
+     * @method_title 作成
      * @method_desc 新着情報を新しく作成します。
      * @method_detail 新着情報名や表示条件を入力して新着情報を作成できます。
      */
@@ -689,7 +689,7 @@ class WhatsnewsPlugin extends UserPluginBase
     /**
      * フレーム表示設定画面の表示
      *
-     * @method_title フレーム表示設定
+     * @method_title 表示設定
      * @method_desc このフレームに表示する際の新着をカスタマイズできます。
      * @method_detail 本文の文字の長さやサムネイルなどを設定して、自分のサイトにあった新着情報を表示できます。
      */

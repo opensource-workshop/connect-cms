@@ -7,8 +7,10 @@ use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
 use App\Enums\PluginName;
+use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Uploads;
+use App\Models\Core\Dusks;
 use App\Models\User\Blogs\Blogs;
 use App\Models\User\Blogs\BlogsPosts;
 
@@ -28,7 +30,7 @@ class BlogsPluginTest extends DuskTestCase
     public function testBlog()
     {
         // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'show', 'create', 'edit', 'createBuckets', 'settingBlogFrame', 'listCategories', 'listBuckets');
+        $this->reserveManual('index', 'show', 'create', 'edit', 'template', 'createBuckets', 'settingBlogFrame', 'listCategories', 'listBuckets');
 
         $this->login(1);
 
@@ -46,8 +48,9 @@ class BlogsPluginTest extends DuskTestCase
         $this->edit();
 
         $this->logout();
-        $this->index();   // 記事一覧
-        $this->show();    // 記事詳細
+        $this->index();    // 記事一覧
+        $this->show();     // 記事詳細
+        $this->template(); // テンプレート
     }
 
     /**
@@ -95,34 +98,30 @@ class BlogsPluginTest extends DuskTestCase
      */
     private function create($title = null)
     {
-        // ブログ（バケツ）があって且つ、記事が3件未満の場合に記事作成
-        if (Frame::where('plugin_name', 'blogs')->first() && BlogsPosts::count() < 3) {
+        // 記事で使う画像の取得
+        $upload = Uploads::where('client_original_name', 'blobid0000000000001.jpg')->first();
 
-            // 記事で使う画像の取得
-            $upload = Uploads::where('client_original_name', 'blobid0000000000001.jpg')->first();
-
-            $body = '<h3>' . $title . 'の本文です。</h3>';
-            if ($upload) {
-                $body .= '<br /><img src="/file/' . $upload->id . '" />';
-            }
-
-            // 実行
-            $this->browse(function (Browser $browser) use ($title, $body) {
-
-                $browser->visit('plugin/blogs/create/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                        ->assertPathBeginsWith('/')
-                        ->type('post_title', $title)
-                        ->driver->executeScript('tinyMCE.get(0).setContent(\'' . $body . '\')');
-
-                $browser->screenshot('user/blogs/create/images/create');
-
-                $browser->scrollIntoView('footer')
-                        ->screenshot('user/blogs/create/images/create2')
-                        ->press('登録確定');
-            });
+        $body = '<h3>' . $title . 'の本文です。</h3>';
+        if ($upload) {
+            $body .= '<br /><img src="/file/' . $upload->id . '" />';
         }
 
-        // マニュアル用データ出力(記事の登録はしていなくても、画像データはできているはず。reserveManual() で一旦、内容がクリアされているので、画像の登録は行う)
+        // 実行
+        $this->browse(function (Browser $browser) use ($title, $body) {
+
+            $browser->visit('plugin/blogs/create/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->assertPathBeginsWith('/')
+                    ->type('post_title', $title)
+                    ->driver->executeScript('tinyMCE.get(0).setContent(\'' . $body . '\')');
+
+            $browser->screenshot('user/blogs/create/images/create');
+
+            $browser->scrollIntoView('footer')
+                    ->screenshot('user/blogs/create/images/create2')
+                    ->press('登録確定');
+        });
+
+        // マニュアル用データ出力
         $this->putManualData('[
             {"path": "user/blogs/create/images/create",
              "comment": "<ul class=\"mb-0\"><li>記事は新しいものから表示されます。</li></ul>"
@@ -181,26 +180,45 @@ class BlogsPluginTest extends DuskTestCase
      */
     private function createBuckets()
     {
-        // バケツがなければ作成する。（プラグイン＆フレームの配置まではできているはず）
-        if (Blogs::count() == 0) {
-            // 実行
-            $this->browse(function (Browser $browser) {
-                $browser->visit('/plugin/blogs/createBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                        ->assertPathBeginsWith('/')
-                        ->type('blog_name', 'テストのブログ')
-                        ->click('#label_rss_on')
-                        ->type('rss_count', '20')
-                        ->click('#label_use_like_on')
-                        ->pause(500)
-                        ->screenshot('user/blogs/createBuckets/images/createBuckets')
-                        ->press('登録確定');
-            });
-        }
+        // 実行
+        $this->browse(function (Browser $browser) {
+            Blogs::truncate();
+            Buckets::where('plugin_name', 'blogs')->delete();
+
+            // 新規作成
+            $browser->visit('/plugin/blogs/createBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->assertPathBeginsWith('/')
+                    ->type('blog_name', 'テストのブログ')
+                    ->click('#label_rss_on')
+                    ->type('rss_count', '20')
+                    ->click('#label_use_like_on')
+                    ->pause(500)
+                    ->screenshot('user/blogs/createBuckets/images/createBuckets')
+                    ->press('登録確定');
+
+            // 一度、選択確定させる。
+            $bucket = Buckets::where('plugin_name', 'blogs')->first();
+            $browser->visit('/plugin/blogs/listBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->radio('select_bucket', $bucket->id)
+                    ->assertPathBeginsWith('/')
+                    ->press("表示ブログ変更");
+
+            // 変更
+            $browser->visit("/plugin/blogs/editBuckets/" . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->pause(500)
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/blogs/createBuckets/images/editBuckets');
+        });
 
         // マニュアル用データ出力
         $this->putManualData('[
             {"path": "user/blogs/createBuckets/images/createBuckets",
-             "comment": "<ul class=\"mb-0\"><li>RSSを表示するに設定した場合は、RSSリンクが表示されます。</li><li>いいねボタンを表示する設定にした場合は、いいねボタンが表示されます。</li></ul>"
+             "name": "作成",
+             "comment": "<ul class=\"mb-0\"><li>新しいブログを作成できます。</li></ul>"
+            },
+            {"path": "user/blogs/createBuckets/images/editBuckets",
+             "name": "変更・削除",
+             "comment": "<ul class=\"mb-0\"><li>ブログを変更・削除できます。</li></ul>"
             }
         ]');
     }
@@ -268,5 +286,14 @@ class BlogsPluginTest extends DuskTestCase
              "comment": "<ul class=\"mb-0\"><li>表示ブログを変更できます。</li></ul>"
             }
         ]');
+    }
+
+    /**
+     * テンプレート
+     */
+    private function template()
+    {
+        Dusks::where('plugin_name', 'blogs')->where('method_name', 'template')->delete();
+        $this->putManualTemplateData($this->test_frame, 'user', '/test/blog', ['blogs', 'ブログ'], ['datefirst' => '日付先頭', 'titleindex' => 'タイトルのみ']);
     }
 }

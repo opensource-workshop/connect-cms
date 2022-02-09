@@ -7,6 +7,7 @@ use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
 use App\Enums\PluginName;
+use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Uploads;
 use App\Models\Core\Dusks;
@@ -83,29 +84,41 @@ class FaqsPluginTest extends DuskTestCase
     {
         // 実行
         $this->browse(function (Browser $browser) {
-            // バケツがなければ作成する。（プラグイン＆フレームの配置まではできているはず）
-            if (Faqs::count() == 0) {
-                $path = "/plugin/faqs/createBuckets/";
-                $button = "登録確定";
-            } else {
-                $path = "/plugin/faqs/editBuckets/";
-                $button = "変更確定";
-            }
+            Faqs::truncate();
+            Buckets::where('plugin_name', 'faqs')->delete();
 
-            $browser->visit($path . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+            // 新規作成
+            $browser->visit("/plugin/faqs/createBuckets/" . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                     ->assertPathBeginsWith('/')
                     ->type('faq_name', 'テストのFAQ')
                     ->type('view_count', '10')
                     ->click('#label_rss_on')
                     ->type('rss_count', '10')
                     ->screenshot('user/faqs/createBuckets/images/createBuckets')
-                    ->press($button);
+                    ->press("登録確定");
+
+            // 一度、選択確定させる。
+            $bucket = Buckets::where('plugin_name', 'faqs')->first();
+            $browser->visit('/plugin/faqs/listBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->radio('select_bucket', $bucket->id)
+                    ->assertPathBeginsWith('/')
+                    ->press("表示FAQ変更");
+
+            // 変更
+            $browser->visit("/plugin/faqs/editBuckets/" . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/faqs/createBuckets/images/editBuckets');
         });
 
         // マニュアル用データ出力
         $this->putManualData('[
             {"path": "user/faqs/createBuckets/images/createBuckets",
-             "comment": "<ul class=\"mb-0\"><li>1ページの表示件数やソート順が指定できます。</li></ul>"
+             "name": "作成",
+             "comment": "<ul class=\"mb-0\"><li>新しいFAQを作成できます。</li></ul>"
+            },
+            {"path": "user/faqs/createBuckets/images/editBuckets",
+             "name": "変更・削除",
+             "comment": "<ul class=\"mb-0\"><li>FAQを変更・削除できます。</li></ul>"
             }
         ]');
     }
@@ -172,14 +185,43 @@ class FaqsPluginTest extends DuskTestCase
                     ->type('post_title', 'テストのFAQ記事')
                     ->driver->executeScript('tinyMCE.get(0).setContent(\'' . $body . '\')');
 
-                $browser->screenshot('user/faqs/create/images/create1')
-                        ->scrollIntoView('footer')
-                        ->screenshot('user/faqs/create/images/create2')
-                        ->press('登録確定');
+            $browser->pause(500)
+                    ->screenshot('user/faqs/create/images/create1')
+                    ->scrollIntoView('footer')
+                    ->screenshot('user/faqs/create/images/create2')
+                    ->press('登録確定');
+
+            // 編集リンクを表示
+            $post = FaqsPosts::first();
+            $browser->visit('/test/faq')
+                    ->click('#button_collapse_faq' . $post->id)
+                    ->pause(500)
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/faqs/create/images/edit1');
+
+            $browser->visit('/plugin/faqs/edit/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $post->id . '#frame-' . $this->test_frame->id)
+                    ->pause(500)
+                    ->screenshot('user/faqs/create/images/edit2');
         });
 
         // マニュアル用データ出力
-        $this->putManualData('user/faqs/create/images/create1,user/faqs/create/images/create2');
+        $this->putManualData('[
+            {"path": "user/faqs/create/images/create1",
+             "name": "FAQ記事の登録１"
+            },
+            {"path": "user/faqs/create/images/create2",
+             "name": "FAQ記事の登録２",
+             "comment": "<ul class=\"mb-0\"><li>FAQの記事を登録できます。</li></ul>"
+            },
+            {"path": "user/faqs/create/images/edit1",
+             "name": "変更画面へのボタン",
+             "comment": "<ul class=\"mb-0\"><li>FAQ詳細を表示すると編集ボタンが表示されます。</li></ul>"
+            },
+            {"path": "user/faqs/create/images/edit2",
+             "name": "FAQ記事の変更・削除",
+             "comment": "<ul class=\"mb-0\"><li>FAQ内容を変更・削除できます。</li></ul>"
+            }
+        ]');
     }
 
     /**

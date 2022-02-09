@@ -7,36 +7,13 @@ use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
 use App\Enums\PluginName;
+use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Core\Dusks;
 
 class MenusPluginTest extends DuskTestCase
 {
-    /**
-     * テンプレート一覧
-     */
-    private $templates = [
-       'default' => 'default',
-       'opencurrenttree' => 'ディレクトリ展開式',
-       'opencurrenttree_for_design' => 'ディレクトリ展開式 デザイン用',
-       'tab' => 'タブ',
-       'dropdown' => 'ドロップダウン',
-       'mouseover_dropdown' => 'マウスオーバードロップダウン',
-       'mouseover_dropdown_no_root' => 'マウスオーバードロップダウン（ルートなし）',
-       'mouseover_dropdown_no_rootlink' => 'マウスオーバードロップダウン（ルートのリンクなし）',
-       'mouseover_dropdown_no_rootlink_for_design' => 'マウスオーバードロップダウン（ルートのリンクなし）デザイン用',
-       'mouseover_dropdown_no_rootlink_for_icon' => 'マウスオーバードロップダウン（ルートのリンクなし）アイコン用',
-       'breadcrumbs' => 'パンくず',
-       'sitemap' => 'サイトマップ',
-       'sitemap_no_rootlink' => 'サイトマップ（ルートのリンクなし）',
-       'footersitemap' => 'フッター用サイトマップ',
-       'footersitemap_no_rootrink' => 'フッター用サイトマップ（ルートのリンクなし）',
-       'parentsandchild' => '親子のみ',
-       'tab_flat' => 'タブフラット',
-       'ancestor_descendant_sibling' => '親子兄弟'
-    ];
-
     /**
      * テストする関数の制御
      *
@@ -48,10 +25,9 @@ class MenusPluginTest extends DuskTestCase
         $this->index();
         $this->login(1);
         $this->select();
-        $this->setTemplate();
         $this->logout();
         $this->index();
-        $this->screenshotTemplate();
+        $this->template(); // テンプレート
     }
 
     /**
@@ -97,83 +73,13 @@ class MenusPluginTest extends DuskTestCase
     /**
      * テンプレート
      */
-    private function setTemplate()
+    private function template()
     {
-        foreach ($this->templates as $template_name => $template_desc) {
-            $this->setTemplateImpl($template_name, $template_desc);
-        }
-    }
+        $this->login(1);
+        $this->addPluginFirst('menus', '/test/menu', 2);
+        $this->logout();
 
-    /**
-     * テンプレート
-     */
-    private function setTemplateImpl($template_name, $template_desc)
-    {
-        $page = Page::where('permanent_link', '/test/menu')->first();
-        $frame = Frame::where('page_id', $page->id)->where('template', $template_name)->first();
-
-        if (empty($frame)) {
-            $this->addPlugin('menus', '/test/menu', 2);
-            $this->test_frame->frame_title = $template_desc;
-            $this->test_frame->template = $template_name;
-            $this->test_frame->save();
-        }
-    }
-
-    /**
-     * テンプレート
-     */
-    private function screenshotTemplate()
-    {
-        foreach ($this->templates as $template_name => $template_desc) {
-            $this->screenshotTemplateImpl($template_name, $template_desc);
-        }
-
-        // テンプレートのスクリーンショット
-        $img_args = "";
-        foreach ($this->templates as $template_name => $template_desc) {
-            $img_args .=<<< EOF
-{"path": "user/menus/template/images/{$template_name}",
- "name": "{$template_desc}",
- "comment": "<ul class=\"mb-0\"><li>{$template_desc}</li></ul>"
-}
-EOF;
-            if (array_key_last($this->templates) != $template_name) {
-                $img_args .= ",";
-            }
-        }
-
-        // マニュアル用データ出力
-        $dusk = Dusks::putManualData(
-            ['html_path' => 'user/menus/template/index.html'],
-            ['category' => 'user',
-             'sort' => 2,
-             'plugin_name' => 'menus',
-             'plugin_title' => 'メニュー',
-             'plugin_desc' => '',
-             'method_name' => 'template',
-             'method_title' => 'テンプレート',
-             'method_desc' => 'メニュープラグインで選択できるテンプレートを紹介します。',
-             'method_detail' => '',
-             'html_path' => 'user/menus/template/index.html',
-             'img_args' => '[' . $img_args . ']',
-             'test_result' => 'OK'
-            ]
-        );
-    }
-
-    /**
-     * テンプレート
-     */
-    private function screenshotTemplateImpl($template_name, $template_desc)
-    {
-        $page = Page::where('permanent_link', '/test/menu')->first();
-        $frame = Frame::where('page_id', $page->id)->where('template', $template_name)->first();
-
-        $this->browse(function (Browser $browser) use ($frame, $template_name) {
-            $browser->visit('/test/menu#frame-' . $frame->id)
-                    ->assertPathBeginsWith('/')
-                    ->screenshot('user/menus/template/images/' . $template_name);
-        });
+        Dusks::where('plugin_name', 'menus')->where('method_name', 'template')->delete();
+        $this->putManualTemplateData($this->test_frame, 'user', '/test/menu', ['menus', 'メニュー'], ['opencurrenttree' => 'ディレクトリ展開式', 'tab' => 'タブ']);
     }
 }

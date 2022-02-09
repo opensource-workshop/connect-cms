@@ -7,6 +7,7 @@ use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
 use App\Enums\PluginName;
+use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Uploads;
 use App\Models\Core\Dusks;
@@ -71,48 +72,61 @@ class WhatsnewsPluginTest extends DuskTestCase
     {
         // 実行
         $this->browse(function (Browser $browser) {
-            // バケツがなければ作成する。（プラグイン＆フレームの配置まではできているはず）
-            if (Whatsnews::count() == 0) {
-                $path = "/plugin/whatsnews/createBuckets/";
-                $button = "登録";
-            } else {
-                $path = "/plugin/whatsnews/editBuckets/";
-                $button = "変更";
-            }
+            Whatsnews::truncate();
+            Buckets::where('plugin_name', 'whatsnews')->delete();
 
-            $browser->visit($path . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                    ->assertPathBeginsWith('/')
+            // 新規作成
+            $browser->visit("/plugin/whatsnews/createBuckets/" . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                     ->type('whatsnew_name', 'テストの新着情報')
                     ->type('count', '10')
                     ->click('#label_view_posted_name_1')
                     ->click('#label_view_posted_at_1')
+                    ->pause(500)
+                    ->assertPathBeginsWith('/')
                     ->screenshot('user/whatsnews/createBuckets/images/createBuckets1');
 
-            // 新規作成なら対象プラグインにチェック。変更ならクリックしない（チェックを外すことになるため）
-            if (Whatsnews::count() == 0) {
-                $browser->scrollIntoView('#title_important')
-                        ->click('#label_read_more_use_flag_1')
-                        ->click('#label_target_plugin_blogs')
-                        ->click('#label_target_plugin_bbses')
-                        // ->click('#label_target_plugin_databases')
-                        ->pause(500)
-                        ->screenshot('user/whatsnews/createBuckets/images/createBuckets2');
-            } else {
-                $browser->scrollIntoView('#title_important')
-                        ->screenshot('user/whatsnews/createBuckets/images/createBuckets2');
-            }
+            $browser->scrollIntoView('#title_important')
+                    //->click('#label_read_more_use_flag_1')
+                    ->click('#label_target_plugin_blogs')
+                    ->click('#label_target_plugin_bbses')
+                    ->click('#label_target_plugin_databases')
+                    ->pause(500)
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/whatsnews/createBuckets/images/createBuckets2');
 
             $browser->scrollIntoView('footer')
                     ->screenshot('user/whatsnews/createBuckets/images/createBuckets3')
-                    ->press($button);
+                    ->assertPathBeginsWith('/')
+                    ->press("登録");
+
+            // 一度、選択確定させる。
+            $bucket = Buckets::where('plugin_name', 'whatsnews')->first();
+            $browser->visit('/plugin/whatsnews/listBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->radio('select_bucket', $bucket->id)
+                    ->screenshot('user/whatsnews/createBuckets/images/listBuckets')
+                    ->assertPathBeginsWith('/')
+                    ->press("変更");
+
+            // 変更
+            $browser->visit("/plugin/whatsnews/editBuckets/" . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/whatsnews/createBuckets/images/editBuckets1');
+
+            $browser->scrollIntoView('footer')
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/whatsnews/createBuckets/images/editBuckets2');
         });
 
         // マニュアル用データ出力
         $this->putManualData('[
-            {"path": "user/whatsnews/createBuckets/images/createBuckets1"},
-            {"path": "user/whatsnews/createBuckets/images/createBuckets2"},
-            {"path": "user/whatsnews/createBuckets/images/createBuckets3",
+            {"path": "user/whatsnews/createBuckets/images/createBuckets1", "name": "新規作成１"},
+            {"path": "user/whatsnews/createBuckets/images/createBuckets2", "name": "新規作成２"},
+            {"path": "user/whatsnews/createBuckets/images/createBuckets3", "name": "新規作成３",
              "comment": "<ul class=\"mb-0\"><li>新着の表示方法やRSS、登録者、登録日時の表示条件を設定できます。</li><li>もっと見る機能では、表示件数以上の追加表示やボタンデザインが設定できます。<br />※デフォルトは「ボタンを表示しない」の為、使用する場合は「ボタンを表示する」に設定してください。</li><li>選択したフレームのみ表示することができるので、日本語関係だけの新着、英語関係だけの新着と分けることや、重要記事のみの新着などと意味のある新着を複数作ることができます。</li><li>フレーム側の設定で「新着に表示しない」を設定して、表示するフレームを絞り込むこともできます。</li></ul>"
+            },
+            {"path": "user/whatsnews/createBuckets/images/editBuckets1", "name": "変更・削除１"},
+            {"path": "user/whatsnews/createBuckets/images/editBuckets2", "name": "変更・削除２",
+             "comment": "<ul class=\"mb-0\"><li>新着情報を変更・削除できます。</li></ul>"
             }
         ]');
     }

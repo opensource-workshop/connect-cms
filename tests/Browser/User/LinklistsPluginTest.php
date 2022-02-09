@@ -7,6 +7,7 @@ use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
 use App\Enums\PluginName;
+use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Uploads;
 use App\Models\Core\Dusks;
@@ -71,6 +72,7 @@ class LinklistsPluginTest extends DuskTestCase
         // 実行
         $this->browse(function (Browser $browser) {
             Linklist::truncate();
+            Buckets::where('plugin_name', 'linklists')->delete();
 
             // 新規作成
             $browser->visit("/plugin/linklists/createBuckets/" . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
@@ -78,6 +80,13 @@ class LinklistsPluginTest extends DuskTestCase
                     ->type('name', 'テストのリンクリスト')
                     ->screenshot('user/linklists/createBuckets/images/createBuckets')
                     ->press("登録確定");
+
+            // 一度、選択確定させる。
+            $bucket = Buckets::where('plugin_name', 'linklists')->first();
+            $browser->visit('/plugin/linklists/listBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->radio('select_bucket', $bucket->id)
+                    ->assertPathBeginsWith('/')
+                    ->press("表示リンクリスト変更");
 
             // 変更
             $browser->visit("/plugin/linklists/editBuckets/" . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
@@ -172,14 +181,13 @@ class LinklistsPluginTest extends DuskTestCase
                     ->type('title', 'Connect-CMS公式')
                     ->type('url', 'https://connect-cms.jp/')
                     ->type('description', 'Connect-CMSの情報はこのサイトから。')
-                    ->screenshot('user/linklists/edit/images/create1')
+                    ->screenshot('user/linklists/edit/images/create')
                     ->press('登録確定');
 
             $browser->visit('/plugin/linklists/edit/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                     ->type('title', '株式会社オープンソース・ワークショップ')
                     ->type('url', 'https://opensource-workshop.jp/')
                     ->type('description', 'Connect-CMSのクラウドサービス')
-                    ->screenshot('user/linklists/edit/images/create2')
                     ->press('登録確定');
 
             $browser->visit('/test/linklist')

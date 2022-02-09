@@ -7,6 +7,7 @@ use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
 use App\Enums\PluginName;
+use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Uploads;
 use App\Models\User\Openingcalendars\Openingcalendars;
@@ -127,34 +128,45 @@ class OpeningcalendarsPluginTest extends DuskTestCase
      */
     private function createBuckets()
     {
-        // バケツがなければ作成する。（プラグイン＆フレームの配置まではできているはず）
-        if (Openingcalendars::count() == 0) {
-            // 実行
-            $this->browse(function (Browser $browser) {
-                $browser->visit('/plugin/openingcalendars/createBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                        ->assertPathBeginsWith('/')
-                        ->type('openingcalendar_name', 'テストの開館カレンダー')
-                        ->type('openingcalendar_sub_name', 'テスト')
-                        ->select('month_format', '1')
-                        ->select('week_format', '1')
-                        ->type('view_before_month', '3')
-                        ->type('view_after_month', '3')
-                        ->screenshot('user/openingcalendars/createBuckets/images/createBuckets')
-                        ->press('登録');
-            });
-        } else {
-            // 実行
-            $this->browse(function (Browser $browser) {
-                $browser->visit('/plugin/openingcalendars/editBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                        ->assertPathBeginsWith('/')
-                        ->screenshot('user/openingcalendars/createBuckets/images/createBuckets');
-            });
-        }
+        // 実行
+        $this->browse(function (Browser $browser) {
+            Openingcalendars::truncate();
+            Buckets::where('plugin_name', 'openingcalendars')->delete();
+
+            // 新規作成
+            $browser->visit('/plugin/openingcalendars/createBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->assertPathBeginsWith('/')
+                    ->type('openingcalendar_name', 'テストの開館カレンダー')
+                    ->type('openingcalendar_sub_name', 'テスト')
+                    ->select('month_format', '1')
+                    ->select('week_format', '1')
+                    ->type('view_before_month', '3')
+                    ->type('view_after_month', '3')
+                    ->screenshot('user/openingcalendars/createBuckets/images/createBuckets')
+                    ->press('登録');
+
+            // 一度、選択確定させる。
+            $bucket = Buckets::where('plugin_name', 'openingcalendars')->first();
+            $browser->visit('/plugin/openingcalendars/listBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->radio('select_bucket', $bucket->id)
+                    ->assertPathBeginsWith('/')
+                    ->press("表示開館カレンダー変更");
+
+            // 変更
+            $browser->visit('/plugin/openingcalendars/editBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/openingcalendars/createBuckets/images/editBuckets');
+        });
 
         // マニュアル用データ出力
         $this->putManualData('[
             {"path": "user/openingcalendars/createBuckets/images/createBuckets",
-             "comment": "<ul class=\"mb-0\"><li>開館カレンダー枠を作成して、予定を登録できます。</li></ul>"
+             "name": "作成",
+             "comment": "<ul class=\"mb-0\"><li>新しい開館カレンダーを作成できます。</li></ul>"
+            },
+            {"path": "user/openingcalendars/createBuckets/images/editBuckets",
+             "name": "変更・削除",
+             "comment": "<ul class=\"mb-0\"><li>開館カレンダーを変更・削除できます。</li></ul>"
             }
         ]');
     }
@@ -251,13 +263,20 @@ class OpeningcalendarsPluginTest extends DuskTestCase
                     ->type('yearschedule_link_text', '年間カレンダー')
                     ->assertPathBeginsWith('/')
                     ->press('アップロード')
-                    ->screenshot('user/openingcalendars/editYearschedule/images/editYearschedule');
+                    ->screenshot('user/openingcalendars/editYearschedule/images/editYearschedule1');
+
+            $browser->visit('/test/openingcalendar')
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/openingcalendars/editYearschedule/images/editYearschedule2');
         });
 
         // マニュアル用データ出力(記事の登録はしていなくても、画像データはできているはず。reserveManual() で一旦、内容がクリアされているので、画像の登録は行う)
         $this->putManualData('[
-            {"path": "user/openingcalendars/editYearschedule/images/editYearschedule",
+            {"path": "user/openingcalendars/editYearschedule/images/editYearschedule1",
              "comment": "<ul class=\"mb-0\"><li>年間カレンダーはPDFをアップロードします。</li></ul>"
+            },
+            {"path": "user/openingcalendars/editYearschedule/images/editYearschedule2",
+             "comment": "<ul class=\"mb-0\"><li>年間カレンダーはカレンダーの右上の編集アイコンから登録できます。</li></ul>"
             }
         ]');
     }
