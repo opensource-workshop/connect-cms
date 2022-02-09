@@ -166,8 +166,8 @@ class OpeningcalendarsPlugin extends UserPluginBase
      * データ初期表示関数
      * コアがページ表示の際に呼び出す関数
      *
-     * @method_title 表示
-     * @method_desc 開館カレンダー表示
+     * @method_title 月毎予定表示
+     * @method_desc 月毎の開館カレンダー表示
      * @method_detail 開館時間をパターンとして登録し、各日の設定を行うことで、開館カレンダーを表示することができます。
      */
     public function index($request, $page_id, $frame_id)
@@ -351,8 +351,8 @@ class OpeningcalendarsPlugin extends UserPluginBase
     /**
      * カレンダー編集画面
      *
-     * @method_title 編集
-     * @method_desc 開館カレンダー編集
+     * @method_title 月毎予定編集
+     * @method_desc 月毎の開館カレンダー編集
      * @method_detail 開館時間を月毎に編集します。
      */
     public function edit($request, $page_id, $frame_id, $id = null, $errors = null)
@@ -500,7 +500,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
     /**
      * データ選択表示関数
      *
-     * @method_title 開館カレンダー選択
+     * @method_title 選択
      * @method_desc このフレームに表示する開館カレンダーを選択します。
      * @method_detail
      */
@@ -525,7 +525,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
     /**
      * 開館カレンダー新規作成画面
      *
-     * @method_title 新規作成
+     * @method_title 作成
      * @method_desc 開館カレンダーを新しく作成します。
      * @method_detail 開館カレンダー名や表示内容など設定して、開館カレンダーを作成できます。
      */
@@ -848,7 +848,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
     /**
      * 年間カレンダーの編集画面
      *
-     * @method_title 年間カレンダー
+     * @method_title 年間カレンダー登録
      * @method_desc 年間カレンダーの編集
      * @method_detail 年間カレンダーはPDFをアップロードできます。
      */

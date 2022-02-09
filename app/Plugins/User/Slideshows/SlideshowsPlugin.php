@@ -125,9 +125,9 @@ class SlideshowsPlugin extends UserPluginBase
      *  データ初期表示関数
      *  コアがページ表示の際に呼び出す関数
      *
-     * @method_title 表示
-     * @method_desc スライド表示
-     * @method_detail 画像がスライドショー表示できます。クリックでリンクできます。
+     * @method_title スライドショー表示
+     * @method_desc 画像をスライドショー表示します。
+     * @method_detail 画像がスライドショー表示できます。キャプション表示やリンクの設定ができます。
      */
     public function index($request, $page_id, $frame_id, $errors = null)
     {
@@ -176,7 +176,7 @@ class SlideshowsPlugin extends UserPluginBase
     /**
      * スライドショー新規作成画面
      *
-     * @method_title 新規作成
+     * @method_title 作成
      * @method_desc スライドショーを新しく作成します。
      * @method_detail スライドショー名やコントロールの表示など設定して、スライドショーを作成できます。
      */
@@ -357,7 +357,7 @@ class SlideshowsPlugin extends UserPluginBase
     /**
      * データ選択表示関数
      *
-     * @method_title スライドショー選択
+     * @method_title 選択
      * @method_desc このフレームに表示するスライドショーを選択します。
      * @method_detail
      */

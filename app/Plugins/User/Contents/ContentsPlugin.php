@@ -734,7 +734,7 @@ class ContentsPlugin extends UserPluginBase
     /**
      * データ選択表示関数
      *
-     * @method_title データ選択
+     * @method_title 選択
      * @method_desc このフレームに表示する固定記事を選択できます。
      * @method_detail
      */

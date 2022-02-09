@@ -244,11 +244,11 @@ abstract class DuskTestCase extends BaseTestCase
     {
         Plugins::where('plugin_name', ucfirst($add_plugin))->update(['display_flag' => 1]);
 
-        if (!Frame::where('plugin_name', $add_plugin)->first()) {
+        if (!Frame::where('plugin_name', $add_plugin)->where('area_id', $area)->first()) {
             $this->addPluginModal($add_plugin, $permanent_link, $area, $screenshot);
         }
 
-        $this->test_frame = Frame::where('plugin_name', $add_plugin)->orderBy('id', 'desc')->first();
+        $this->test_frame = Frame::where('plugin_name', $add_plugin)->where('area_id', $area)->orderBy('id', 'desc')->first();
         $this->test_page = Page::where('permanent_link', $permanent_link)->first();
     }
 

@@ -451,7 +451,7 @@ class FaqsPlugin extends UserPluginBase
     /**
      * 新規記事画面
      *
-     * @method_title FAQの登録
+     * @method_title FAQ登録
      * @method_desc FAQを登録します。
      * @method_detail
      */
@@ -797,7 +797,7 @@ class FaqsPlugin extends UserPluginBase
     /**
      * データ選択表示関数
      *
-     * @method_title FAQ選択
+     * @method_title 選択
      * @method_desc このフレームに表示するFAQを選択します。
      * @method_detail
      */
@@ -825,7 +825,7 @@ class FaqsPlugin extends UserPluginBase
     /**
      * FAQ新規作成画面
      *
-     * @method_title 新規作成
+     * @method_title 作成
      * @method_desc FAQを新しく作成します。
      * @method_detail FAQ名を入力してFAQを作成できます。
      */
