@@ -9,16 +9,20 @@ use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Laravel\Dusk\TestCase as BaseTestCase;
 use Laravel\Dusk\Browser;
 
+use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
+use App\Models\Common\Uploads;
 use App\Models\Core\Dusks;
 use App\Models\Core\Plugins;
+use App\Traits\ConnectCommonTrait;
 use App\User;
 
 use TruncateAllTables;
 
 abstract class DuskTestCase extends BaseTestCase
 {
+    use ConnectCommonTrait;
     use CreatesApplication;
 
     /**
@@ -471,5 +475,32 @@ EOF;
              'img_args' => '[' . $img_args . ']',
              'test_result' => 'OK']
         );
+    }
+
+    /**
+     * テスト前データ初期化
+     */
+    public function initPlugin($plugin_name, $url, $area_id = 2)
+    {
+        // バケツの削除
+        Buckets::where('plugin_name', $plugin_name)->delete();
+
+        // Uploads のファイルとレコードの削除
+        $uploads = Uploads::where('plugin_name', $plugin_name)->get();
+        foreach ($uploads as $upload) {
+            \Storage::delete($this->getDirectory($upload->id) . '/' . $upload->id . '.' . $upload->extension);
+            Uploads::destroy($upload->id);
+        }
+
+        // プラグインが配置されていなければ追加(テストするFrameとページのインスタンス変数への保持も)
+        $this->login(1);
+        $this->addPluginFirst($plugin_name, $url, $area_id);
+        $this->logout();
+
+        // フレームのバケツIDのクリア
+        $page = Page::where('permanent_link', $url)->first();
+        $frame = Frame::where('page_id', $page->id)->where('area_id', $area_id)->where('plugin_name', $plugin_name)->first();
+        $frame->bucket_id = null;
+        $frame->save();
     }
 }

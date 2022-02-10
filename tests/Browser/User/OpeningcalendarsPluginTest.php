@@ -30,13 +30,8 @@ class OpeningcalendarsPluginTest extends DuskTestCase
      */
     public function test()
     {
-        // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'edit', 'editYearschedule', 'createBuckets', 'listPatterns', 'listBuckets');
-
+        $this->init();
         $this->login(1);
-
-        // プラグインが配置されていなければ追加(テストするFrameとページのインスタンス変数への保持も)
-        $this->addPluginFirst('openingcalendars', '/test/openingcalendar', 2);
 
         $this->createBuckets();
         $this->listPatterns();
@@ -47,6 +42,22 @@ class OpeningcalendarsPluginTest extends DuskTestCase
 
         $this->logout();
         $this->index();   // 記事一覧
+    }
+
+    /**
+     * 初期処理
+     */
+    private function init()
+    {
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'edit', 'editYearschedule', 'createBuckets', 'listPatterns', 'listBuckets');
+
+        // データクリア
+        Openingcalendars::truncate();
+        OpeningcalendarsDays::truncate();
+        OpeningcalendarsMonths::truncate();
+        OpeningcalendarsPatterns::truncate();
+        $this->initPlugin('openingcalendars', '/test/openingcalendar');
     }
 
     /**
@@ -130,9 +141,6 @@ class OpeningcalendarsPluginTest extends DuskTestCase
     {
         // 実行
         $this->browse(function (Browser $browser) {
-            Openingcalendars::truncate();
-            Buckets::where('plugin_name', 'openingcalendars')->delete();
-
             // 新規作成
             $browser->visit('/plugin/openingcalendars/createBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                     ->assertPathBeginsWith('/')

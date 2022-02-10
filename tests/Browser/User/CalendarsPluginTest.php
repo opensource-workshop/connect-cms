@@ -12,6 +12,7 @@ use App\Models\Common\Frame;
 use App\Models\Common\Uploads;
 use App\Models\Core\Dusks;
 use App\Models\User\Calendars\Calendar;
+use App\Models\User\Calendars\CalendarFrame;
 use App\Models\User\Calendars\CalendarPost;
 
 /**
@@ -27,15 +28,10 @@ class CalendarsPluginTest extends DuskTestCase
      * @group user
      * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests
      */
-    public function testBlog()
+    public function test()
     {
-        // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'show', 'edit', 'template', 'createBuckets', 'listBuckets');
-
+        $this->init();
         $this->login(1);
-
-        // プラグインが配置されていなければ追加(テストするFrameとページのインスタンス変数への保持も)
-        $this->addPluginFirst('calendars', '/test/calendar', 2);
 
         $this->createBuckets();
         $this->listBuckets();
@@ -46,6 +42,21 @@ class CalendarsPluginTest extends DuskTestCase
         $this->index();    // 記事一覧
         $this->show();     // 記事詳細
         $this->template(); // テンプレート
+    }
+
+    /**
+     * 初期処理
+     */
+    private function init()
+    {
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'show', 'edit', 'template', 'createBuckets', 'listBuckets');
+
+        // データクリア
+        Calendar::truncate();
+        CalendarFrame::truncate();
+        CalendarPost::truncate();
+        $this->initPlugin('calendars', '/test/calendar');
     }
 
     /**
@@ -154,9 +165,6 @@ class CalendarsPluginTest extends DuskTestCase
     {
         // 実行
         $this->browse(function (Browser $browser) {
-            Calendar::truncate();
-            Buckets::where('plugin_name', 'calendars')->delete();
-
             // 新規作成
             $browser->visit('/plugin/calendars/createBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                     ->assertPathBeginsWith('/')

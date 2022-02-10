@@ -26,15 +26,10 @@ class SlideshowsPluginTest extends DuskTestCase
      * @group user
      * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests
      */
-    public function testSlideshow()
+    public function test()
     {
-        // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'editItem', 'createBuckets', 'listBuckets');
-
+        $this->init();
         $this->login(1);
-
-        // プラグインが配置されていなければ追加(テストするFrameとページのインスタンス変数への保持も)
-        $this->addPluginFirst('slideshows', '/test/slideshow', 2);
 
         $this->createBuckets();
         $this->listBuckets();
@@ -43,6 +38,20 @@ class SlideshowsPluginTest extends DuskTestCase
 
         $this->logout();
         $this->index();   // 記事一覧
+    }
+
+    /**
+     * 初期処理
+     */
+    private function init()
+    {
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'editItem', 'createBuckets', 'listBuckets');
+
+        // データクリア
+        Slideshows::truncate();
+        SlideshowsItems::truncate();
+        $this->initPlugin('slideshows', '/test/slideshow');
     }
 
     /**
@@ -125,9 +134,6 @@ class SlideshowsPluginTest extends DuskTestCase
     {
         // 実行
         $this->browse(function (Browser $browser) {
-            Slideshows::truncate();
-            Buckets::where('plugin_name', 'slideshows')->delete();
-
             $browser->visit('/plugin/slideshows/createBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                     ->assertPathBeginsWith('/')
                     ->type('slideshows_name', 'テストのスライドショー')

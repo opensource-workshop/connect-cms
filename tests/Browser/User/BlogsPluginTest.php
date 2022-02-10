@@ -8,11 +8,12 @@ use Tests\DuskTestCase;
 
 use App\Enums\PluginName;
 use App\Models\Common\Buckets;
-use App\Models\Common\Frame;
 use App\Models\Common\Uploads;
 use App\Models\Core\Dusks;
 use App\Models\User\Blogs\Blogs;
+use App\Models\User\Blogs\BlogsFrames;
 use App\Models\User\Blogs\BlogsPosts;
+use App\Models\User\Blogs\BlogsPostsTags;
 
 /**
  * ブログテスト
@@ -27,15 +28,10 @@ class BlogsPluginTest extends DuskTestCase
      * @group user
      * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests
      */
-    public function testBlog()
+    public function test()
     {
-        // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'show', 'create', 'edit', 'template', 'createBuckets', 'settingBlogFrame', 'listCategories', 'listBuckets');
-
+        $this->init();
         $this->login(1);
-
-        // プラグインが配置されていなければ追加(テストするFrameとページのインスタンス変数への保持も)
-        $this->addPluginFirst('blogs', '/test/blog', 2);
 
         $this->createBuckets();
         $this->settingBlogFrame();
@@ -51,6 +47,22 @@ class BlogsPluginTest extends DuskTestCase
         $this->index();    // 記事一覧
         $this->show();     // 記事詳細
         $this->template(); // テンプレート
+    }
+
+    /**
+     * 初期処理
+     */
+    private function init()
+    {
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'show', 'create', 'edit', 'template', 'createBuckets', 'settingBlogFrame', 'listCategories', 'listBuckets');
+
+        // データクリア
+        Blogs::truncate();
+        BlogsFrames::truncate();
+        BlogsPosts::truncate();
+        BlogsPostsTags::truncate();
+        $this->initPlugin('blogs', '/test/blog');
     }
 
     /**
@@ -182,9 +194,6 @@ class BlogsPluginTest extends DuskTestCase
     {
         // 実行
         $this->browse(function (Browser $browser) {
-            Blogs::truncate();
-            Buckets::where('plugin_name', 'blogs')->delete();
-
             // 新規作成
             $browser->visit('/plugin/blogs/createBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                     ->assertPathBeginsWith('/')

@@ -28,13 +28,8 @@ class WhatsnewsPluginTest extends DuskTestCase
      */
     public function test()
     {
-        // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'template', 'createBuckets', 'editView', 'listBuckets');
-
+        $this->init();
         $this->login(1);
-
-        // プラグインが配置されていなければ追加(テストするFrameとページのインスタンス変数への保持も)
-        $this->addPluginFirst('whatsnews', '/test', 2);
 
         $this->createBuckets();
         $this->listBuckets();
@@ -43,6 +38,19 @@ class WhatsnewsPluginTest extends DuskTestCase
         $this->logout();
         $this->index();    // 記事一覧
         $this->template(); // テンプレート
+    }
+
+    /**
+     * 初期処理
+     */
+    private function init()
+    {
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'template', 'createBuckets', 'editView', 'listBuckets');
+
+        // データクリア
+        Whatsnews::truncate();
+        $this->initPlugin('whatsnews', '/test');
     }
 
     /**
@@ -72,9 +80,6 @@ class WhatsnewsPluginTest extends DuskTestCase
     {
         // 実行
         $this->browse(function (Browser $browser) {
-            Whatsnews::truncate();
-            Buckets::where('plugin_name', 'whatsnews')->delete();
-
             // 新規作成
             $browser->visit("/plugin/whatsnews/createBuckets/" . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                     ->type('whatsnew_name', 'テストの新着情報')
