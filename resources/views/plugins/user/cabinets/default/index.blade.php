@@ -98,7 +98,7 @@
         </div>
         <div class="text-center">
             <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#collapse_mkdir{{$frame->id}}">キャンセル</button>
-            <button class="btn btn-primary btn-sm" type="submit">作成</button>
+            <button class="btn btn-primary btn-sm" type="submit" id="button_make_folder{{$frame->id}}">作成</button>
         </div>
     </div>
 </form>
@@ -119,7 +119,7 @@
         </div>
         <div class="text-center">
             <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#collapse_upload{{$frame->id}}">キャンセル</button>
-            <button class="btn btn-primary btn-sm" type="submit">追加</button>
+            <button class="btn btn-primary btn-sm" type="submit" id="button_upload_file{{$frame->id}}">追加</button>
             <small id="upload-size-server-help" class="form-text text-muted">アップロードできる最大サイズ&nbsp;<span class="font-weight-bold">{{UploadMaxSize::getDescription($cabinet->upload_max_size)}}</span></small>
         </div>
     </div>
