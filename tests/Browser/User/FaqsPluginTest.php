@@ -30,13 +30,8 @@ class FaqsPluginTest extends DuskTestCase
      */
     public function test()
     {
-        // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'show', 'create', 'createBuckets', 'listCategories', 'listBuckets');
-
+        $this->init();
         $this->login(1);
-
-        // プラグインが配置されていなければ追加(テストするFrameとページのインスタンス変数への保持も)
-        $this->addPluginFirst('faqs', '/test/faq', 2);
 
         $this->createBuckets();
         $this->listBuckets();
@@ -46,6 +41,21 @@ class FaqsPluginTest extends DuskTestCase
         $this->logout();
         $this->index();    // 記事一覧
         $this->show();
+    }
+
+    /**
+     * 初期処理
+     */
+    private function init()
+    {
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'show', 'create', 'createBuckets', 'listCategories', 'listBuckets');
+
+        // データクリア
+        Faqs::truncate();
+        FaqsPosts::truncate();
+        FaqsPostsTags::truncate();
+        $this->initPlugin('faqs', '/test/faq');
     }
 
     /**
@@ -84,9 +94,6 @@ class FaqsPluginTest extends DuskTestCase
     {
         // 実行
         $this->browse(function (Browser $browser) {
-            Faqs::truncate();
-            Buckets::where('plugin_name', 'faqs')->delete();
-
             // 新規作成
             $browser->visit("/plugin/faqs/createBuckets/" . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                     ->assertPathBeginsWith('/')

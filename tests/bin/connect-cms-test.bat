@@ -188,6 +188,9 @@ php artisan dusk tests\Browser\User\FaqsPluginTest.php
 echo --- リンクリスト
 php artisan dusk tests\Browser\User\LinklistsPluginTest.php
 
+echo --- キャビネット
+php artisan dusk tests\Browser\User\CabnitsPluginTest.php
+
 echo --- フォトアルバム
 rem php artisan dusk tests\Browser\User\PhotoalbumsPluginTest.php
 
