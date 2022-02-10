@@ -189,10 +189,10 @@ echo --- リンクリスト
 php artisan dusk tests\Browser\User\LinklistsPluginTest.php
 
 echo --- キャビネット
-php artisan dusk tests\Browser\User\CabnitsPluginTest.php
+php artisan dusk tests\Browser\User\CabinetsPluginTest.php
 
 echo --- フォトアルバム
-rem php artisan dusk tests\Browser\User\PhotoalbumsPluginTest.php
+php artisan dusk tests\Browser\User\PhotoalbumsPluginTest.php
 
 echo ※ スクリーンショットの保存先
 echo tests\Browser\screenshots

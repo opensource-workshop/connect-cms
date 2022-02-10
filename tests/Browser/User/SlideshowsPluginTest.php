@@ -80,42 +80,31 @@ class SlideshowsPluginTest extends DuskTestCase
      */
     private function editItem($title = null)
     {
-        // データがあれば削除してから作成
-        $slideshows_items = SlideshowsItems::get();
-        foreach ($slideshows_items as $slideshows_item) {
-            Uploads::destroy($slideshows_item->uploads_id);
-            \Storage::delete(config('connect.directory_base') . $slideshows_item->image_path);
-        }
-        SlideshowsItems::query()->delete();
+        // 実行
+        $this->browse(function (Browser $browser) {
+            $browser->visit('plugin/slideshows/editItem/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->attach('image_file', __DIR__.'/slideshow/Connect-CMS.png')
+                    ->type('link_url', 'https://connect-cms.jp/')
+                    ->type('caption', 'Connect-CMS公式サイト')
+                    ->type('link_target', '_blank')
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/slideshows/editItem/images/editItem1');
 
-        // ブログ（バケツ）がある場合に記事作成
-        if (Frame::where('plugin_name', 'slideshows')->first()) {
-            // 実行
-            $this->browse(function (Browser $browser) {
-                $browser->visit('plugin/slideshows/editItem/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                        ->attach('image_file', __DIR__.'/slideshow/Connect-CMS.png')
-                        ->type('link_url', 'https://connect-cms.jp/')
-                        ->type('caption', 'Connect-CMS公式サイト')
-                        ->type('link_target', '_blank')
-                        ->assertPathBeginsWith('/')
-                        ->screenshot('user/slideshows/editItem/images/editItem1');
+            $browser->press('追加')
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/slideshows/editItem/images/editItem2');
 
-                $browser->press('追加')
-                        ->assertPathBeginsWith('/')
-                        ->screenshot('user/slideshows/editItem/images/editItem2');
+            $browser->visit('plugin/slideshows/editItem/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->attach('image_file', __DIR__.'/slideshow/NC2toConnect-CMS.png')
+                    ->press('追加')
+                    ->assertPathBeginsWith('/');
 
-                $browser->visit('plugin/slideshows/editItem/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                        ->attach('image_file', __DIR__.'/slideshow/NC2toConnect-CMS.png')
-                        ->press('追加')
-                        ->assertPathBeginsWith('/');
-
-                $browser->visit('plugin/slideshows/editItem/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                        ->attach('image_file', __DIR__.'/slideshow/researchmap.png')
-                        ->press('追加')
-                        ->assertPathBeginsWith('/')
-                        ->screenshot('user/slideshows/editItem/images/editItem3');
-            });
-        }
+            $browser->visit('plugin/slideshows/editItem/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->attach('image_file', __DIR__.'/slideshow/researchmap.png')
+                    ->press('追加')
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/slideshows/editItem/images/editItem3');
+        });
 
         // マニュアル用データ出力(記事の登録はしていなくても、画像データはできているはず。reserveManual() で一旦、内容がクリアされているので、画像の登録は行う)
         $this->putManualData('[
