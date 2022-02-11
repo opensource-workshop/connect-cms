@@ -194,6 +194,9 @@ php artisan dusk tests\Browser\User\CabinetsPluginTest.php
 echo --- フォトアルバム
 php artisan dusk tests\Browser\User\PhotoalbumsPluginTest.php
 
+echo --- データベース
+rem php artisan dusk tests\Browser\User\DatabasesPluginTest.php
+
 echo ※ スクリーンショットの保存先
 echo tests\Browser\screenshots
 

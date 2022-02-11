@@ -29,7 +29,6 @@ class PhotoalbumsPluginTest extends DuskTestCase
      */
     public function test()
     {
-/*
         $this->init();
         $this->login(1);
 
@@ -42,7 +41,6 @@ class PhotoalbumsPluginTest extends DuskTestCase
         $this->deleteContents();
 
         $this->logout();
-*/
         $this->index();
     }
 
