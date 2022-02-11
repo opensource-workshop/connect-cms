@@ -389,7 +389,6 @@ class CabinetsPlugin extends UserPluginBase
      * @param \Illuminate\Http\Request $request リクエスト
      * @param int $page_id ページID
      * @param int $frame_id フレームID
-     *
      * @method_title ファイル削除
      * @method_desc ファイルやフォルダを削除できます。
      * @method_detail

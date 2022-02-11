@@ -192,7 +192,7 @@ class CabinetsPluginTest extends DuskTestCase
     }
 
     /**
-     * ブログ選択
+     * 選択
      */
     private function listBuckets()
     {

@@ -35,11 +35,10 @@ use App\Plugins\User\UserPluginBase;
  * @category フォトアルバム・プラグイン
  * @package Controller
  * @plugin_title フォトアルバム
- * @plugin_desc 写真や動画をアルバム管理できるプラグインです。
+ * @plugin_desc 写真などの画像や動画を管理できる、メディアアルバムです。
  */
 class PhotoalbumsPlugin extends UserPluginBase
 {
-
     /*
         【メモ】
         zip ダウンロード ⇒ 閲覧回数アップ
@@ -118,7 +117,7 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param int $frame_id フレームID
      * @param int $parent_id 表示する階層(ルートはnull)
      * @return mixed $value テンプレートに渡す内容
-     * @method_title 初期画面
+     * @method_title アルバム表示
      * @method_desc アルバムの一覧や表紙に追加した写真・動画の一覧が表示されます。
      * @method_detail
      */
@@ -334,6 +333,9 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param int $page_id ページID
      * @param int $frame_id フレームID
      * @return \Illuminate\Support\Collection リダイレクト先のパス
+     * @method_title アルバム作成
+     * @method_desc アルバムを作成できます。
+     * @method_detail アルバムの中にもアルバムを作成できます。
      */
     public function makeFolder($request, $page_id, $frame_id)
     {
@@ -388,6 +390,9 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param int $page_id ページID
      * @param int $frame_id フレームID
      * @return \Illuminate\Support\Collection リダイレクト先のパス
+     * @method_title アップロード
+     * @method_desc 画像や動画ファイルをアップロードできます。
+     * @method_detail ルート階層にも、フォルダの中にもファイルをアップロードできます。
      */
     public function upload($request, $page_id, $frame_id)
     {
@@ -750,6 +755,9 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param int $page_id ページID
      * @param int $frame_id フレームID
      * @return \Illuminate\Support\Collection リダイレクト先のパス
+     * @method_title ファイル削除
+     * @method_desc ファイルやフォルダを削除できます。
+     * @method_detail
      */
     public function deleteContents($request, $page_id, $frame_id)
     {
@@ -1009,6 +1017,10 @@ class PhotoalbumsPlugin extends UserPluginBase
 
     /**
      * プラグインのバケツ選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示するフォトアルバムを選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -1020,6 +1032,10 @@ class PhotoalbumsPlugin extends UserPluginBase
 
     /**
      * バケツ新規作成画面
+     *
+     * @method_title 作成
+     * @method_desc フォトアルバムを新しく作成します。
+     * @method_detail フォトアルバム名やアップロード最大サイズ等を入力してフォトアルバムを作成できます。
      */
     public function createBuckets($request, $page_id, $frame_id)
     {
@@ -1335,6 +1351,10 @@ class PhotoalbumsPlugin extends UserPluginBase
 
     /**
      * フレーム表示設定画面の表示
+     *
+     * @method_title 表示設定
+     * @method_desc このフレームに表示する際のフォトアルバムをカスタマイズできます。
+     * @method_detail ファイルの並び順を指定できます。
      */
     public function editView($request, $page_id, $frame_id)
     {
