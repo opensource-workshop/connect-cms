@@ -20,6 +20,7 @@ class DatabasesInputs extends Model
         'status',
         'display_sequence',
         'posted_at',
+        'first_committed_at',
         'created_at',
         'updated_at'
     ];

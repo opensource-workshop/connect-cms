@@ -49,14 +49,14 @@ class CalendarsPluginTest extends DuskTestCase
      */
     private function init()
     {
-        // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'show', 'edit', 'template', 'createBuckets', 'listBuckets');
-
         // データクリア
         Calendar::truncate();
         CalendarFrame::truncate();
         CalendarPost::truncate();
         $this->initPlugin('calendars', '/test/calendar');
+
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'show', 'edit', 'template', 'createBuckets', 'listBuckets');
     }
 
     /**

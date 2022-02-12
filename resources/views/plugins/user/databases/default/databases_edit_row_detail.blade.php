@@ -108,7 +108,7 @@
                             <input name="title_flag" value="1" type="checkbox" class="custom-control-input" id="list_detail_hide_role_article"
                                         @if(old('title_flag', $column->title_flag)) checked @endif >
 
-                            <label class="custom-control-label" for="list_detail_hide_role_article">新着情報等のタイトルに指定する</label>
+                            <label class="custom-control-label" for="list_detail_hide_role_article" id="label_list_detail_hide_role_article">新着情報等のタイトルに指定する</label>
                         </div>
                         <small class="text-muted">
                             ※ タイトル指定できる項目は、データベース毎に１つです。既に他項目でタイトル指定している場合、自動的に解除されます。<br>
@@ -152,7 +152,7 @@
 
                 {{-- ボタンエリア --}}
                 <div class="form-group text-center">
-                    <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary database-horizontal">
+                    <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary database-horizontal" id="button_base">
                         <i class="fas fa-check"></i> 更新
                     </button>
                 </div>
@@ -161,7 +161,7 @@
 
         @if ($column->column_type == DatabaseColumnType::radio || $column->column_type == DatabaseColumnType::checkbox || $column->column_type == DatabaseColumnType::select)
             {{-- 選択肢の設定 --}}
-            <div class="card mb-4">
+            <div class="card mb-4" id="div_select">
                 <h5 class="card-header">選択肢の設定</h5>
                 <div class="card-body">
 
@@ -261,7 +261,7 @@
                                 <tr>
                                     {{-- ＋ボタン --}}
                                     <td colspan="4" class="text-center">
-                                        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:return submit_add_pref(this);">
+                                        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:return submit_add_pref(this);" id="button_add_pref">
                                             <i class="fas fa-plus"></i> 都道府県を追加
                                         </button>
                                     </td>
@@ -310,7 +310,7 @@
 
         @if ($column->column_type == DatabaseColumnType::text || $column->column_type == DatabaseColumnType::textarea || $column->column_type == DatabaseColumnType::date)
             {{-- チェック処理の設定 --}}
-            <div class="card mb-4">
+            <div class="card mb-4" id="div_rule">
                 <h5 class="card-header">チェック処理の設定</h5>
                 <div class="card-body">
                     {{-- 1行文字列型／複数行文字列型のチェック群 --}}
@@ -423,7 +423,7 @@
         @endif
 
         {{-- キャプション設定 --}}
-        <div class="card mb-4">
+        <div class="card mb-4" id="div_caption">
             <h5 class="card-header">キャプションの設定</h5>
             <div class="card-body">
                 <div class="form-group row">
@@ -498,7 +498,7 @@
         </div>
 
         {{-- DBカラム設定 --}}
-        <div class="card mb-4">
+        <div class="card mb-4" id="div_column">
             <h5 class="card-header">DBカラム設定</h5>
             <div class="card-body">
 
@@ -679,18 +679,18 @@
                         <div class="{{$frame->getSettingInputClass(true)}}">
                             <div class="custom-control custom-radio custom-control-inline">
                                 <input type="radio" value="0" id="select_flag_0" name="select_flag" class="custom-control-input" @if(old('select_flag', $column->select_flag) == 0) checked="checked" @endif>
-                                <label class="custom-control-label" for="select_flag_0">絞り込み対象にしない</label>
+                                <label class="custom-control-label" for="select_flag_0" id="label_select_flag_0">絞り込み対象にしない</label>
                             </div>
                             <div class="custom-control custom-radio custom-control-inline">
                                 <input type="radio" value="1" id="select_flag_1" name="select_flag" class="custom-control-input" @if(old('select_flag', $column->select_flag) == 1) checked="checked" @endif>
-                                <label class="custom-control-label" for="select_flag_1">絞り込み対象とする</label>
+                                <label class="custom-control-label" for="select_flag_1" id="label_select_flag_1">絞り込み対象とする</label>
                             </div>
                         </div>
                     </div>
                 @endif
 
                 {{-- グループ --}}
-                <div class="form-group row">
+                <div class="form-group row" id="div_group">
                     <label class="{{$frame->getSettingLabelClass(true)}} pt-0">グループ</label>
                     <div class="{{$frame->getSettingInputClass(true)}}">
                         <div class="col pl-0">
@@ -714,7 +714,7 @@
 
                 {{-- ボタンエリア --}}
                 <div class="form-group text-center">
-                    <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary database-horizontal">
+                    <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary database-horizontal" id="button_column">
                         <i class="fas fa-check"></i> 更新
                     </button>
                 </div>
@@ -722,7 +722,7 @@
         </div>
 
         {{-- デザイン設定 --}}
-        <div class="card mb-4">
+        <div class="card mb-4" id="div_design">
             <h5 class="card-header">デザインの設定</h5>
             <div class="card-body">
 

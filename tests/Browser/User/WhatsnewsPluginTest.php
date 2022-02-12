@@ -45,12 +45,12 @@ class WhatsnewsPluginTest extends DuskTestCase
      */
     private function init()
     {
-        // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'template', 'createBuckets', 'editView', 'listBuckets');
-
         // データクリア
         Whatsnews::truncate();
         $this->initPlugin('whatsnews', '/test');
+
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'template', 'createBuckets', 'editView', 'listBuckets');
     }
 
     /**

@@ -350,7 +350,13 @@ abstract class DuskTestCase extends BaseTestCase
         } elseif (method_exists($class_name, $method_name)) {
             $class = new \ReflectionMethod($class_name, $method_name);
         } else {
-            return "";
+            $class = new \ReflectionClass($class_name);
+            $parent = $class->getParentClass();
+            if (method_exists($parent, $method_name)) {
+                $class = $parent;
+            } else {
+                return "";
+            }
         }
         $class_document = $class->getDocComment();
         return trim($this->getAnnotation($class_document, $annotation_name));
@@ -502,5 +508,8 @@ EOF;
         $frame = Frame::where('page_id', $page->id)->where('area_id', $area_id)->where('plugin_name', $plugin_name)->first();
         $frame->bucket_id = null;
         $frame->save();
+
+        // マニュアルデータの削除
+        Dusks::where('plugin_name', $plugin_name)->delete();
     }
 }

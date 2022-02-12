@@ -48,14 +48,14 @@ class LinklistsPluginTest extends DuskTestCase
      */
     private function init()
     {
-        // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'edit', 'createBuckets', 'editView', 'listCategories', 'listBuckets');
-
         // データクリア
         Linklist::truncate();
         LinklistFrame::truncate();
         LinklistPost::truncate();
         $this->initPlugin('linklists', '/test/linklist');
+
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'edit', 'createBuckets', 'editView', 'listCategories', 'listBuckets');
     }
 
     /**
