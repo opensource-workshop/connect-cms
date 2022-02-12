@@ -49,15 +49,15 @@ class OpeningcalendarsPluginTest extends DuskTestCase
      */
     private function init()
     {
-        // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'edit', 'editYearschedule', 'createBuckets', 'listPatterns', 'listBuckets');
-
         // データクリア
         Openingcalendars::truncate();
         OpeningcalendarsDays::truncate();
         OpeningcalendarsMonths::truncate();
         OpeningcalendarsPatterns::truncate();
         $this->initPlugin('openingcalendars', '/test/openingcalendar');
+
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'edit', 'editYearschedule', 'createBuckets', 'listPatterns', 'listBuckets');
     }
 
     /**

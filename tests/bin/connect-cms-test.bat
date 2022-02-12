@@ -194,6 +194,9 @@ php artisan dusk tests\Browser\User\CabinetsPluginTest.php
 echo --- フォトアルバム
 php artisan dusk tests\Browser\User\PhotoalbumsPluginTest.php
 
+echo --- データベース
+php artisan dusk tests\Browser\User\DatabasesPluginTest.php
+
 echo ※ スクリーンショットの保存先
 echo tests\Browser\screenshots
 
@@ -203,7 +206,7 @@ rem ---------------------------------------------
 
 rem 【情報の発信】 固定記事, ブログ, カレンダー, スライドショー, 開館カレンダー, 新着情報
 rem 【情報の蓄積】 FAQ, リンクリスト, キャビネット, フォトアルバム, データベース, OPAC, (researchmap連携), (機関リポジトリ)
-rem 【情報の収集】 フォーム, 課題管理, (データ収集)
+rem 【情報の収集】 フォーム, 課題管理, (データ収集), カウンター
 rem 【情報の検索】 サイト内検索, データベース検索
 rem 【情報の交換】 掲示板, 施設予約
 rem 【情報の整理】 メニュー, タブ

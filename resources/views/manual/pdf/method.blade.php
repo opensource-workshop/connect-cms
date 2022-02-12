@@ -7,6 +7,7 @@
 {!!$method->method_detail!!}<br />
 <br />
 @foreach($method->getImgArgs() as $img_arg)
+@if (\Storage::disk("screenshot")->exists($img_arg["path"] . ".png"))
     <table nobr="true">
         <tr>
             @php
@@ -21,23 +22,25 @@
             @endphp
             <td style="width: {{$td_width[0]}}%;"></td>
             <td style="width: {{$td_width[1]}}%;">
+                @if ($loop->index > 0)
+                    <br /><br />
+                @endif
+
                 @if($img_arg["name"])
                     【{{$img_arg["name"]}}】
                 @else
                     【画像：{{$loop->iteration}}】
                 @endif
                 <br />
-
-                    <img src="{{\Storage::disk('manual')->path('html')}}/{{$img_arg["path"]}}.png">
+                <img src="{{\Storage::disk('manual')->path('html')}}/{{$img_arg["path"]}}.png">
             </td>
             <td style="width: {{$td_width[0]}}%;"></td>
         </tr>
     </table>
     @if(array_key_exists("comment", $img_arg))
-        <div>
-            {!! $img_arg["comment"] !!}
-        </div>
+        {!! $img_arg["comment"] !!}
     @endif
+@endif
 @endforeach
 {{-- 差し込み --}}
 {!!$method->getInsertionPdf('method', 'foot')!!}

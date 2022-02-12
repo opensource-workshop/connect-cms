@@ -77,6 +77,7 @@ class ManualPdf extends DuskTestCase
      */
     private function outputMethod($pdf, $method)
     {
+        $pdf->addPage();
         $pdf->Bookmark($method->method_title, 2, 0, '', '', array(0, 0, 0));
         $pdf->writeHTML(
             view(

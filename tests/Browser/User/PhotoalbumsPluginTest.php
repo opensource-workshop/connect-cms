@@ -29,7 +29,6 @@ class PhotoalbumsPluginTest extends DuskTestCase
      */
     public function test()
     {
-/*
         $this->init();
         $this->login(1);
 
@@ -42,7 +41,6 @@ class PhotoalbumsPluginTest extends DuskTestCase
         $this->deleteContents();
 
         $this->logout();
-*/
         $this->index();
     }
 
@@ -51,13 +49,13 @@ class PhotoalbumsPluginTest extends DuskTestCase
      */
     private function init()
     {
-        // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'makeFolder', 'upload', 'deleteContents', 'createBuckets', 'editView', 'listBuckets');
-
         // データクリア
         Photoalbum::truncate();
         PhotoalbumContent::truncate();
         $this->initPlugin('photoalbums', '/test/photoalbum');
+
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'makeFolder', 'upload', 'deleteContents', 'createBuckets', 'editView', 'listBuckets');
     }
 
     /**

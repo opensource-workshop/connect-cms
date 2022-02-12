@@ -54,15 +54,15 @@ class BlogsPluginTest extends DuskTestCase
      */
     private function init()
     {
-        // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'show', 'create', 'edit', 'template', 'createBuckets', 'settingBlogFrame', 'listCategories', 'listBuckets');
-
         // データクリア
         Blogs::truncate();
         BlogsFrames::truncate();
         BlogsPosts::truncate();
         BlogsPostsTags::truncate();
         $this->initPlugin('blogs', '/test/blog');
+
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'show', 'create', 'edit', 'template', 'createBuckets', 'settingBlogFrame', 'listCategories', 'listBuckets');
     }
 
     /**

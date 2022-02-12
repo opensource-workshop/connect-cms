@@ -45,13 +45,13 @@ class SlideshowsPluginTest extends DuskTestCase
      */
     private function init()
     {
-        // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'editItem', 'createBuckets', 'listBuckets');
-
         // データクリア
         Slideshows::truncate();
         SlideshowsItems::truncate();
         $this->initPlugin('slideshows', '/test/slideshow');
+
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'editItem', 'createBuckets', 'listBuckets');
     }
 
     /**

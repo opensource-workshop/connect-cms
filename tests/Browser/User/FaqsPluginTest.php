@@ -48,14 +48,14 @@ class FaqsPluginTest extends DuskTestCase
      */
     private function init()
     {
-        // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'show', 'create', 'createBuckets', 'listCategories', 'listBuckets');
-
         // データクリア
         Faqs::truncate();
         FaqsPosts::truncate();
         FaqsPostsTags::truncate();
         $this->initPlugin('faqs', '/test/faq');
+
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'show', 'create', 'createBuckets', 'listCategories', 'listBuckets');
     }
 
     /**

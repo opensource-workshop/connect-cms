@@ -1,0 +1,183 @@
+<style>
+.pdf_table th {
+    background-color: #f2f2f2; 
+}
+</style>
+<div class="card" html_only>
+<div class="card-body" html_only>
+    <p>【CSVファイル項目説明】</p>
+    <table class="table table-striped table-sm table-bordered table_css pdf_table">
+    <tbody>
+        <tr>
+        <th style="width: 25%;">項目名</th>
+        <th style="width: 10%;">システム項目</th>
+        <th style="width: 10%;">設定した項目</th>
+        <th style="width: 55%;">説明</th>
+        </tr>
+        <tr>
+        <th>id</th>
+        <td>○</td>
+        <td></td>
+        <td>「id」が空の場合、登録します。<br>「id」がある場合、該当idで更新します。<br>idは「ダウンロード」機能から確認できます。</td>
+        </tr>
+        <tr>
+        <th>「1行文字列型」</th>
+        <td></td>
+        <td>○</td>
+        <td></td>
+        </tr>
+        <tr>
+        <th>「複数行文字列型」</th>
+        <td></td>
+        <td>○</td>
+        <td>Excelであれば、改行を入力する事ができます。<br>（改行を含む文字列は ” （ダブルクォーテーション） で囲みます。Excelでは自動対応されます）</td>
+        </tr>
+        <tr>
+        <th>「単一選択型」</th>
+        <td></td>
+        <td>○</td>
+        <td>選択肢の文字列と一致すると、インポートした後に選択状態になります。</td>
+        </tr>
+        <tr>
+        <th>「複数選択型」</th>
+        <td></td>
+        <td>○</td>
+        <td>選択肢の文字列と一致すると、インポートした後に選択状態になります。<br>複数項目を選択する場合、<code>|</code>（パイプ）区切りで記載します。</td>
+        </tr>
+        <tr>
+        <th>「リストボックス型」</th>
+        <td></td>
+        <td>○</td>
+        <td>選択肢の文字列と一致すると、インポートした後に選択状態になります。</td>
+        </tr>
+        <tr>
+        <th>「メールアドレス型」</th>
+        <td></td>
+        <td>○</td>
+        <td></td>
+        </tr>
+        <tr>
+        <th>「日付型」</th>
+        <td></td>
+        <td>○</td>
+        <td>日付はY/n/j形式（例：2021/6/7）です。</td>
+        </tr>
+        <tr>
+        <th>「複数年月型（テキスト入力）」</th>
+        <td></td>
+        <td>○</td>
+        <td>
+        <p>年月は yyyy/mm形式（例：2021/06）です。<br>複数入力する場合、<code style="font-size: 14px;">,</code>（カンマ）区切りで記載します。</p>
+        </td>
+        </tr>
+        <tr>
+        <th>「時間型」</th>
+        <td></td>
+        <td>○</td>
+        <td>
+        <p>時間はH:i形式（例：13:00）です。</p>
+        </td>
+        </tr>
+        <tr>
+        <th>「リンク型」</th>
+        <td></td>
+        <td>○</td>
+        <td>
+        <p></p>
+        </td>
+        </tr>
+        <tr>
+        <th>「ファイル型」</th>
+        <td></td>
+        <td>○</td>
+        <td>データは無視されます。</td>
+        </tr>
+        <tr>
+        <th>「動画型」</th>
+        <td></td>
+        <td>○</td>
+        <td>データは無視されます。</td>
+        </tr>
+        <tr>
+        <th>「画像型」</th>
+        <td></td>
+        <td>○</td>
+        <td>データは無視されます。</td>
+        </tr>
+        <tr>
+        <th>「ウィジウィグ型」</th>
+        <td></td>
+        <td>○</td>
+        <td></td>
+        </tr>
+        <tr>
+        <th>「登録日型」</th>
+        <td></td>
+        <td>○</td>
+        <td>データは無視されます。</td>
+        </tr>
+        <tr>
+        <th>「更新日型」</th>
+        <td></td>
+        <td>○</td>
+        <td>データは無視されます。</td>
+        </tr>
+        <tr>
+        <th>「公開日型」</th>
+        <td></td>
+        <td>○</td>
+        <td>データは無視されます。</td>
+        </tr>
+        <tr>
+        <th>「表示順型」</th>
+        <td></td>
+        <td>○</td>
+        <td>データは無視されます。</td>
+        </tr>
+        <tr>
+        <th>公開日時</th>
+        <td>○</td>
+        <td></td>
+        <td><span class="badge badge-danger">必須</span><br>日時はY/n/j H:i形式（例：2021/6/7 13:00）です。<br>※ Excelで日時を修正すると自動でこの形式に変換されます。</td>
+        </tr>
+        <tr>
+        <th>表示順</th>
+        <td>○</td>
+        <td></td>
+        <td>空の場合、表示順で最後に表示されるように自動登録します。</td>
+        </tr>
+    </tbody>
+    </table>
+</div html_only>
+</div html_only>
+
+<div class="card my-3" html_only>
+<div class="card-body" html_only>
+    <p>【添付ファイル一括インポートの場合】</p>
+    <ul>
+        <li>ZIPファイルに添付ファイルを含める事で、添付ファイルもあわせてインポートできます。</li>
+        <li>ZIPファイルに対応している場合、CVSファイル選択の下に「※ CSVファイル・ZIPファイルに対応しています。」メッセージが表示されます。<br>メッセージが表示されない場合、添付ファイル一括インポートに対応していません。<br>（phpのZipArchive有効時、ZIPファイルに対応します。）</li>
+    </ul>
+    <p>【添付ファイル一括インポートのZIP内フォルダ構成】</p>
+    <ul>
+        <li class="card-text">
+            ZIP内/<span style="color: #0000ff;">[database_folder]</span>/<span style="color: #008000;">[database_file]</span>.csv<br />
+            ZIP内/<span style="color: #0000ff;">[database_folder]</span>/<span style="color: #ff6600;">uploads</span>/xxxxx_01.jpg<br />
+            ZIP内/<span style="color: #0000ff;">[database_folder]</span>/<span style="color: #ff6600;">uploads</span>/xxxxx_02.jpg<br />
+            ZIP内/<span style="color: #0000ff;">[database_folder]</span>/<span style="color: #ff6600;">uploads</span>/xxxxx_yyyyyy.pdf<br /><br />
+            ※ ZIP内フォルダ名 <span style="color: #0000ff;">[database_folder]</span> は任意の名前（英数字記号）がつけれます。<br />
+            ※ CSVファイル名 <span style="color: #008000;">[database_file]</span>.csv は任意の名前（英数字記号）がつけれます。ZIP内フォルダ&nbsp;<span style="color: #0000ff;">[database_folder]</span> 下に含めるCSVファイルは1ファイルです。<br />
+            ※ <span style="color: #0000ff;">[database_folder]</span>/<span style="color: #ff6600;">uploads</span>/ の <span style="color: #ff6600;">uploads</span> は固定のフォルダ名です。ここに添付ファイルを入れてください。添付ファイル名は任意の名前（英数字記号）がつけれます。<br />
+            ※ ZIP内フォルダ名、CSVファイル名、添付ファイル名には日本語名は使えません。<br />
+            ※ windowsでフォルダをZIP圧縮すると、ZIP内にフォルダが1個作られるため、このフォルダ構成にしています。<br /><br />
+        </li>
+        <li class="card-text">
+            ZIP内/<span style="color: #008000;">[database_file]</span>.csv のファイル書き方<br /><br />
+            "uploads/xxxxx_01.jpg"<br />
+            "uploads/xxxxx_02.jpg"<br />
+            "uploads/xxxxx_yyyyyy.pdf"<br /><br />
+            ※ 対象ファイルが無いと入力チェックでエラーになります。
+        </li>
+    </ul>
+</div html_only>
+</div html_only>
