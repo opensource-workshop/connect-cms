@@ -160,7 +160,6 @@ class PhotoalbumsPluginTest extends DuskTestCase
     private function uploadMovieOne(&$browser, ...$base_filenames)
     {
         foreach ($base_filenames as $base_filename) {
-
             $browser->visit('/plugin/photoalbums/changeDirectory/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/3#frame-' . $this->test_frame->id)
                     ->press('動画ファイル追加')
                     ->pause(500)
@@ -251,7 +250,7 @@ class PhotoalbumsPluginTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/plugin/photoalbums/createBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                     ->type('name', 'テストのフォトアルバム')
-                    ->select('video_upload_max_size', '20480')
+                    ->select('video_upload_max_size', '51200')
                     ->screenshot('user/photoalbums/createBuckets/images/createBuckets')
                     ->press('登録確定');
 
