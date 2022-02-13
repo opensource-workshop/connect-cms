@@ -28,7 +28,7 @@
                 <div class="input-group date">
                     <input type="text" name="keyword" value="{{Session::get('search_keyword.'.$frame_id)}}" class="form-control" placeholder="キーワード検索">
                     <span class="input-group-btn">
-                        <button type="submit" onclick="javascript: document.form_search.opac_search_type.value=1" class="btn btn-primary"><i class="fas fa-search" aria-label="検索" role="presentation"></i></button>
+                        <button type="submit" onclick="javascript: document.form_search.opac_search_type.value=1" class="btn btn-primary" id="button_search"><i class="fas fa-search" aria-label="検索" role="presentation"></i></button>
                     </span>
                 </div>
                 <div class="row ml-0 mt-1">

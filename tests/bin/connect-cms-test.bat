@@ -197,6 +197,9 @@ php artisan dusk tests\Browser\User\PhotoalbumsPluginTest.php
 echo --- データベース
 php artisan dusk tests\Browser\User\DatabasesPluginTest.php
 
+echo --- OPAC
+php artisan dusk tests\Browser\User\OpacsPluginTest.php
+
 echo ※ スクリーンショットの保存先
 echo tests\Browser\screenshots
 
