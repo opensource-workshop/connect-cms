@@ -206,7 +206,6 @@ class OpeningcalendarsPluginTest extends DuskTestCase
     {
         // データがあれば一度消す。最後の1行は画面で登録
         $calendar = Openingcalendars::first();
-        OpeningcalendarsPatterns::truncate();
 
         $pattern = OpeningcalendarsPatterns::create([
             'openingcalendars_id' => $calendar->id,

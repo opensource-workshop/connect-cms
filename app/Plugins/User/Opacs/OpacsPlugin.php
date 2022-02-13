@@ -33,6 +33,8 @@ use App\Plugins\User\UserPluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category Opacプラグイン
  * @package Controller
+ * @plugin_title Opac
+ * @plugin_desc 図書館などの蔵書を管理できるプラグインです。
  */
 class OpacsPlugin extends UserPluginBase
 {
@@ -335,9 +337,12 @@ class OpacsPlugin extends UserPluginBase
      */
 
     /**
-     *  書誌データ取得関数
+     * 書誌データ取得関数
      *
      * @return view
+     * @method_title 書籍一覧
+     * @method_desc 書籍を検索し、一覧表示できます。
+     * @method_detail
      */
     public function index($request, $page_id, $frame_id, $errors = null, $messages = null)
     {
@@ -669,6 +674,10 @@ class OpacsPlugin extends UserPluginBase
 
     /**
      * データ選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示するOPACを選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -690,6 +699,10 @@ class OpacsPlugin extends UserPluginBase
 
     /**
      * OPAC新規作成画面
+     *
+     * @method_title 作成
+     * @method_desc OPACを新しく作成します。
+     * @method_detail OPAC名や表示件数を入力してOPACを作成できます。
      */
     public function createBuckets($request, $page_id, $frame_id, $opacs_id = null, $create_flag = false, $message = null, $errors = null)
     {
@@ -908,7 +921,11 @@ class OpacsPlugin extends UserPluginBase
     }
 
     /**
-     *  新規書誌データ画面
+     * 新規書誌データ画面
+     *
+     * @method_title 書籍登録
+     * @method_desc 書籍を登録します。
+     * @method_detail ISBNで検索して登録することもできます。
      */
     public function create($request, $page_id, $frame_id, $opacs_books_id = null)
     {
@@ -956,6 +973,10 @@ class OpacsPlugin extends UserPluginBase
 
     /**
      * 書誌データ詳細画面
+     *
+     * @method_title 書籍詳細
+     * @method_desc 書籍の詳細情報を表示できます。
+     * @method_detail
      */
     public function show($request, $page_id, $frame_id, $opacs_books_id, $message = null, $message_class = null, $errors = null)
     {
@@ -1701,7 +1722,11 @@ class OpacsPlugin extends UserPluginBase
     }
 
     /**
-     *  Opacフレーム設定表示画面
+     * Opacフレーム設定表示画面
+     *
+     * @method_title 表示設定
+     * @method_desc このフレームに表示する際のOpacをカスタマイズできます。
+     * @method_detail 初期表示する機能を選択できます。
      */
     public function settingOpacFrame($request, $page_id, $frame_id)
     {
