@@ -43,10 +43,6 @@
     })
 </script>
 
-<form method="POST" name="form_bbses_posts{{$frame_id}}">
-    {{csrf_field()}}
-    <input type="hidden" name="redirect_path" value="">
-
 <article>
     <header>
         {{-- タイトル --}}
@@ -76,52 +72,56 @@
             {{$post->getUpdatedAt()}}
         </div>
         <div class="col-12 text-right mb-1">
-        {{-- 一時保存 --}}
-        @if ($post->status == 1)
-            <span class="badge badge-warning align-bottom">一時保存</span>
-        @endif
+            <form method="POST" name="form_bbses_posts{{$frame_id}}">
+                {{csrf_field()}}
+                <input type="hidden" name="redirect_path" value="">
 
-        {{-- 承認待ち --}}
-        @if ($post->status == 2)
-            <span class="badge badge-warning align-bottom">承認待ち</span>
-        @endif
+                {{-- 一時保存 --}}
+                @if ($post->status == 1)
+                    <span class="badge badge-warning align-bottom">一時保存</span>
+                @endif
 
-        {{-- 返信ボタンの表示：一時保存でなく、自分が投稿できる権限の場合 --}}
-        @can('posts.create',[[null, $frame->plugin_name, $buckets]])
-            @if ($post->status == 0)
-                <div class="custom-control custom-checkbox custom-control-inline mr-0 align-bottom">
-                    <input type="checkbox" name="reply" value="1" class="custom-control-input" id="reply{{$frame_id}}">
-                    <label class="custom-control-label" for="reply{{$frame_id}}">引用する</label>
-                </div>
+                {{-- 承認待ち --}}
+                @if ($post->status == 2)
+                    <span class="badge badge-warning align-bottom">承認待ち</span>
+                @endif
 
-                <button type="button" class="btn btn-sm btn-primary mr-1" onclick="javascript:reply_action();">
-                    <i class="fas fa-comment"></i> <span class="hidden-xs">返信</span>
-                </button>
-            @endif
-        @endcan
+                {{-- 返信ボタンの表示：一時保存でなく、自分が投稿できる権限の場合 --}}
+                @can('posts.create',[[null, $frame->plugin_name, $buckets]])
+                    @if ($post->status == 0)
+                        <div class="custom-control custom-checkbox custom-control-inline mr-0 align-bottom">
+                            <input type="checkbox" name="reply" value="1" class="custom-control-input" id="reply{{$frame_id}}">
+                            <label class="custom-control-label" for="reply{{$frame_id}}">引用する</label>
+                        </div>
 
-        {{-- 承認ボタンの表示：自分が承認できる権限の場合 --}}
-        @can('posts.approval',[[$post, $frame->plugin_name, $buckets]])
-            @if ($post->status == 2)
-            <button type="button" class="btn btn-sm btn-primary" onclick="javascript:approval_action();">
-                <i class="far fa-edit"></i> <span class="hidden-xs">承認</span>
-            </button>
-            @endif
-        @endcan
+                        <button type="button" class="btn btn-sm btn-primary mr-1" onclick="javascript:reply_action();">
+                            <i class="fas fa-comment"></i> <span class="hidden-xs">返信</span>
+                        </button>
+                    @endif
+                @endcan
 
-        {{-- 編集ボタンの表示：返信の有無確認 --}}
-        @if ($post->canEdit())
-            {{-- 自分が更新できる権限の場合 --}}
-            @can('posts.update',[[$post, $frame->plugin_name, $buckets]])
-                <button type="button" class="btn btn-sm btn-success" onclick="javascript:edit_action();">
-                    <i class="far fa-edit"></i> <span class="hidden-xs">編集</span>
-                </button>
-            @endcan
-        @endif
+                {{-- 承認ボタンの表示：自分が承認できる権限の場合 --}}
+                @can('posts.approval',[[$post, $frame->plugin_name, $buckets]])
+                    @if ($post->status == 2)
+                    <button type="button" class="btn btn-sm btn-primary" onclick="javascript:approval_action();">
+                        <i class="far fa-edit"></i> <span class="hidden-xs">承認</span>
+                    </button>
+                    @endif
+                @endcan
+
+                {{-- 編集ボタンの表示：返信の有無確認 --}}
+                @if ($post->canEdit())
+                    {{-- 自分が更新できる権限の場合 --}}
+                    @can('posts.update',[[$post, $frame->plugin_name, $buckets]])
+                        <button type="button" class="btn btn-sm btn-success" onclick="javascript:edit_action();">
+                            <i class="far fa-edit"></i> <span class="hidden-xs">編集</span>
+                        </button>
+                    @endcan
+                @endif
+            </form>
         </div>
     </footer>
 </article>
-</form>
 
 {{-- 一覧へ戻る --}}
 <nav class="row" aria-label="ページ移動">
