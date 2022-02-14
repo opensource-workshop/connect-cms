@@ -79,7 +79,6 @@ class MenusPluginTest extends DuskTestCase
         $this->addPluginFirst('menus', '/test/menu', 2);
         $this->logout();
 
-        Dusks::where('plugin_name', 'menus')->where('method_name', 'template')->delete();
         $this->putManualTemplateData($this->test_frame, 'user', '/test/menu', ['menus', 'メニュー'], ['opencurrenttree' => 'ディレクトリ展開式', 'tab' => 'タブ']);
     }
 }

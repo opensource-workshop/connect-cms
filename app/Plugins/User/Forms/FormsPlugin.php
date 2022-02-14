@@ -51,6 +51,8 @@ use App\Enums\Required;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
  * @package Controller
+ * @plugin_title フォーム
+ * @plugin_desc フォームを作成できるプラグインです。項目を自由に作成できます。
  */
 class FormsPlugin extends UserPluginBase
 {
@@ -268,8 +270,12 @@ class FormsPlugin extends UserPluginBase
     /* 画面アクション関数 */
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
+     *
+     * @method_title 入力
+     * @method_desc 設定した項目で入力画面が表示されます。
+     * @method_detail
      */
     public function index($request, $page_id, $frame_id, $errors = null)
     {
@@ -1276,6 +1282,10 @@ class FormsPlugin extends UserPluginBase
 
     /**
      * フォーム選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示するフォームを選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -1352,6 +1362,10 @@ class FormsPlugin extends UserPluginBase
 
     /**
      * フォーム新規作成画面
+     *
+     * @method_title 作成
+     * @method_desc フォームを新しく作成します。
+     * @method_detail フォーム名やデータ保存条件の設定などを行います。
      */
     public function createBuckets($request, $page_id, $frame_id, $forms_id = null, $create_flag = false, $message = null, $errors = null)
     {
@@ -1704,6 +1718,10 @@ class FormsPlugin extends UserPluginBase
 
     /**
      * 項目の詳細画面の表示
+     *
+     * @method_title カラム詳細編集
+     * @method_desc カラムの詳細設定を行います。
+     * @method_detail 入力チェック、キャプションやプレースホルダなどを設定できます。
      */
     public function editColumnDetail($request, $page_id, $frame_id, $column_id, $message = null, $errors = null)
     {
@@ -1744,6 +1762,10 @@ class FormsPlugin extends UserPluginBase
 
     /**
      * カラム編集画面の表示
+     *
+     * @method_title カラム編集
+     * @method_desc カラムの設定を行います。
+     * @method_detail カラム名と型を指定してカラムを作成します。
      */
     public function editColumn($request, $page_id, $frame_id, $id = null, $message = null, $errors = null)
     {
@@ -2348,6 +2370,10 @@ ORDER BY forms_inputs_id, forms_columns_id
 
     /**
      * 登録一覧
+     *
+     * @method_title 登録一覧
+     * @method_desc 入力されたデータを一覧表示できます。
+     * @method_detail 入力されたデータのダウンロードもできます。
      */
     public function listInputs($request, $page_id, $frame_id, $forms_id = null)
     {

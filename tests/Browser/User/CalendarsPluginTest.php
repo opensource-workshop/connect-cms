@@ -223,7 +223,6 @@ class CalendarsPluginTest extends DuskTestCase
      */
     private function template()
     {
-        Dusks::where('plugin_name', 'calendars')->where('method_name', 'template')->delete();
         $this->putManualTemplateData(
             $this->test_frame,
             'user',

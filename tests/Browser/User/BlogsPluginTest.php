@@ -302,7 +302,6 @@ class BlogsPluginTest extends DuskTestCase
      */
     private function template()
     {
-        Dusks::where('plugin_name', 'blogs')->where('method_name', 'template')->delete();
         $this->putManualTemplateData($this->test_frame, 'user', '/test/blog', ['blogs', 'ブログ'], ['datefirst' => '日付先頭', 'titleindex' => 'タイトルのみ']);
     }
 }

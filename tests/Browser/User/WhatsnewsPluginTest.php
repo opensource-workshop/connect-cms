@@ -181,7 +181,6 @@ class WhatsnewsPluginTest extends DuskTestCase
      */
     private function template()
     {
-        Dusks::where('plugin_name', 'whatsnews')->where('method_name', 'template')->delete();
         $this->putManualTemplateData($this->test_frame, 'user', '/test', ['whatsnews', '新着情報'], ['onerow' => 'onerow', 'card_04' => 'card_04']);
     }
 }

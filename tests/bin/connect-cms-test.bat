@@ -201,7 +201,7 @@ echo --- OPAC
 php artisan dusk tests\Browser\User\OpacsPluginTest.php
 
 echo --- フォーム
-rem php artisan dusk tests\Browser\User\FormsPluginTest.php
+php artisan dusk tests\Browser\User\FormsPluginTest.php
 
 echo ※ スクリーンショットの保存先
 echo tests\Browser\screenshots
