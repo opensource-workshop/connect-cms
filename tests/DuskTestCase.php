@@ -9,16 +9,20 @@ use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Laravel\Dusk\TestCase as BaseTestCase;
 use Laravel\Dusk\Browser;
 
+use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
+use App\Models\Common\Uploads;
 use App\Models\Core\Dusks;
 use App\Models\Core\Plugins;
+use App\Traits\ConnectCommonTrait;
 use App\User;
 
 use TruncateAllTables;
 
 abstract class DuskTestCase extends BaseTestCase
 {
+    use ConnectCommonTrait;
     use CreatesApplication;
 
     /**
@@ -244,11 +248,11 @@ abstract class DuskTestCase extends BaseTestCase
     {
         Plugins::where('plugin_name', ucfirst($add_plugin))->update(['display_flag' => 1]);
 
-        if (!Frame::where('plugin_name', $add_plugin)->first()) {
+        if (!Frame::where('plugin_name', $add_plugin)->where('area_id', $area)->first()) {
             $this->addPluginModal($add_plugin, $permanent_link, $area, $screenshot);
         }
 
-        $this->test_frame = Frame::where('plugin_name', $add_plugin)->orderBy('id', 'desc')->first();
+        $this->test_frame = Frame::where('plugin_name', $add_plugin)->where('area_id', $area)->orderBy('id', 'desc')->first();
         $this->test_page = Page::where('permanent_link', $permanent_link)->first();
     }
 
@@ -346,7 +350,13 @@ abstract class DuskTestCase extends BaseTestCase
         } elseif (method_exists($class_name, $method_name)) {
             $class = new \ReflectionMethod($class_name, $method_name);
         } else {
-            return "";
+            $class = new \ReflectionClass($class_name);
+            $parent = $class->getParentClass();
+            if (method_exists($parent, $method_name)) {
+                $class = $parent;
+            } else {
+                return "";
+            }
         }
         $class_document = $class->getDocComment();
         return trim($this->getAnnotation($class_document, $annotation_name));
@@ -471,5 +481,35 @@ EOF;
              'img_args' => '[' . $img_args . ']',
              'test_result' => 'OK']
         );
+    }
+
+    /**
+     * テスト前データ初期化
+     */
+    public function initPlugin($plugin_name, $url, $area_id = 2)
+    {
+        // バケツの削除
+        Buckets::where('plugin_name', $plugin_name)->delete();
+
+        // Uploads のファイルとレコードの削除
+        $uploads = Uploads::where('plugin_name', $plugin_name)->get();
+        foreach ($uploads as $upload) {
+            \Storage::delete($this->getDirectory($upload->id) . '/' . $upload->id . '.' . $upload->extension);
+            Uploads::destroy($upload->id);
+        }
+
+        // プラグインが配置されていなければ追加(テストするFrameとページのインスタンス変数への保持も)
+        $this->login(1);
+        $this->addPluginFirst($plugin_name, $url, $area_id);
+        $this->logout();
+
+        // フレームのバケツIDのクリア
+        $page = Page::where('permanent_link', $url)->first();
+        $frame = Frame::where('page_id', $page->id)->where('area_id', $area_id)->where('plugin_name', $plugin_name)->first();
+        $frame->bucket_id = null;
+        $frame->save();
+
+        // マニュアルデータの削除
+        Dusks::where('plugin_name', $plugin_name)->delete();
     }
 }

@@ -26,6 +26,8 @@ use App\Traits\ConnectCommonTrait;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 新着情報プラグイン
  * @package Controller
+ * @plugin_title 新着情報
+ * @plugin_desc 新着情報を作成できるプラグインです。<br />サイト内のプラグインから新着記事を集めます。
  */
 class WhatsnewsPlugin extends UserPluginBase
 {
@@ -426,8 +428,12 @@ class WhatsnewsPlugin extends UserPluginBase
     /* 画面アクション関数 */
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
+     *
+     * @method_title 新着一覧
+     * @method_desc サイト内の新着を表示します。
+     * @method_detail タイトルのみ、本文やサムネイルも表示など、設定画面で条件を設定できます。。
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -453,6 +459,10 @@ class WhatsnewsPlugin extends UserPluginBase
 
     /**
      * データ選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示する新着情報を選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -474,6 +484,10 @@ class WhatsnewsPlugin extends UserPluginBase
 
     /**
      * 新着情報設定の新規作成画面
+     *
+     * @method_title 作成
+     * @method_desc 新着情報を新しく作成します。
+     * @method_detail 新着情報名や表示条件を入力して新着情報を作成できます。
      */
     public function createBuckets($request, $page_id, $frame_id, $id = null, $create_flag = false, $message = null, $errors = null)
     {
@@ -674,6 +688,10 @@ class WhatsnewsPlugin extends UserPluginBase
 
     /**
      * フレーム表示設定画面の表示
+     *
+     * @method_title 表示設定
+     * @method_desc このフレームに表示する際の新着をカスタマイズできます。
+     * @method_detail 本文の文字の長さやサムネイルなどを設定して、自分のサイトにあった新着情報を表示できます。
      */
     public function editView($request, $page_id, $frame_id)
     {

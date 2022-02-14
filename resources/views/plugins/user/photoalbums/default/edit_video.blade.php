@@ -119,7 +119,7 @@
                 @else
                     <input type="checkbox" name="is_cover[{{$frame_id}}]" value="1" class="custom-control-input" id="is_cover{{$frame_id}}" @if (!$photoalbum_content->poster_upload_id) disabled @endif>
                 @endif
-                <label class="custom-control-label" for="is_cover{{$frame_id}}">チェックすると、ポスター画像がアルバムの表紙に使われます。</label>
+                <label class="custom-control-label" for="is_cover{{$frame_id}}" id="label_is_cover{{$frame_id}}">チェックすると、ポスター画像がアルバムの表紙に使われます。</label>
             </div>
         </div>
     </div>

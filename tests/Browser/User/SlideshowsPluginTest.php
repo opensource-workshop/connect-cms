@@ -7,6 +7,7 @@ use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
 use App\Enums\PluginName;
+use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Uploads;
 use App\Models\User\Slideshows\Slideshows;
@@ -25,15 +26,10 @@ class SlideshowsPluginTest extends DuskTestCase
      * @group user
      * @see https://readouble.com/laravel/6.x/ja/dusk.html#running-tests
      */
-    public function testSlideshow()
+    public function test()
     {
-        // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'createBuckets', 'editItem', 'listBuckets');
-
+        $this->init();
         $this->login(1);
-
-        // プラグインが配置されていなければ追加(テストするFrameとページのインスタンス変数への保持も)
-        $this->addPluginFirst('slideshows', '/test/slideshow', 2);
 
         $this->createBuckets();
         $this->listBuckets();
@@ -42,6 +38,20 @@ class SlideshowsPluginTest extends DuskTestCase
 
         $this->logout();
         $this->index();   // 記事一覧
+    }
+
+    /**
+     * 初期処理
+     */
+    private function init()
+    {
+        // データクリア
+        Slideshows::truncate();
+        SlideshowsItems::truncate();
+        $this->initPlugin('slideshows', '/test/slideshow');
+
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'editItem', 'createBuckets', 'listBuckets');
     }
 
     /**
@@ -70,42 +80,31 @@ class SlideshowsPluginTest extends DuskTestCase
      */
     private function editItem($title = null)
     {
-        // データがあれば削除してから作成
-        $slideshows_items = SlideshowsItems::get();
-        foreach ($slideshows_items as $slideshows_item) {
-            Uploads::destroy($slideshows_item->uploads_id);
-            \Storage::delete(config('connect.directory_base') . $slideshows_item->image_path);
-        }
-        SlideshowsItems::query()->delete();
+        // 実行
+        $this->browse(function (Browser $browser) {
+            $browser->visit('plugin/slideshows/editItem/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->attach('image_file', __DIR__.'/slideshow/Connect-CMS.png')
+                    ->type('link_url', 'https://connect-cms.jp/')
+                    ->type('caption', 'Connect-CMS公式サイト')
+                    ->type('link_target', '_blank')
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/slideshows/editItem/images/editItem1');
 
-        // ブログ（バケツ）がある場合に記事作成
-        if (Frame::where('plugin_name', 'slideshows')->first()) {
-            // 実行
-            $this->browse(function (Browser $browser) {
-                $browser->visit('plugin/slideshows/editItem/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                        ->attach('image_file', __DIR__.'/slideshow/Connect-CMS.png')
-                        ->type('link_url', 'https://connect-cms.jp/')
-                        ->type('caption', 'Connect-CMS公式サイト')
-                        ->type('link_target', '_blank')
-                        ->assertPathBeginsWith('/')
-                        ->screenshot('user/slideshows/editItem/images/editItem1');
+            $browser->press('追加')
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/slideshows/editItem/images/editItem2');
 
-                $browser->press('追加')
-                        ->assertPathBeginsWith('/')
-                        ->screenshot('user/slideshows/editItem/images/editItem2');
+            $browser->visit('plugin/slideshows/editItem/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->attach('image_file', __DIR__.'/slideshow/NC2toConnect-CMS.png')
+                    ->press('追加')
+                    ->assertPathBeginsWith('/');
 
-                $browser->visit('plugin/slideshows/editItem/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                        ->attach('image_file', __DIR__.'/slideshow/NC2toConnect-CMS.png')
-                        ->press('追加')
-                        ->assertPathBeginsWith('/');
-
-                $browser->visit('plugin/slideshows/editItem/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                        ->attach('image_file', __DIR__.'/slideshow/researchmap.png')
-                        ->press('追加')
-                        ->assertPathBeginsWith('/')
-                        ->screenshot('user/slideshows/editItem/images/editItem3');
-            });
-        }
+            $browser->visit('plugin/slideshows/editItem/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->attach('image_file', __DIR__.'/slideshow/researchmap.png')
+                    ->press('追加')
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/slideshows/editItem/images/editItem3');
+        });
 
         // マニュアル用データ出力(記事の登録はしていなくても、画像データはできているはず。reserveManual() で一旦、内容がクリアされているので、画像の登録は行う)
         $this->putManualData('[
@@ -122,33 +121,41 @@ class SlideshowsPluginTest extends DuskTestCase
      */
     private function createBuckets()
     {
-        // バケツがなければ作成する。（プラグイン＆フレームの配置まではできているはず）
-        if (Slideshows::count() == 0) {
-            // 実行
-            $this->browse(function (Browser $browser) {
-                $browser->visit('/plugin/slideshows/createBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                        ->assertPathBeginsWith('/')
-                        ->type('slideshows_name', 'テストのスライドショー')
-                        ->click('#label_control_display_flag_1')
-                        ->click('#label_indicators_display_flag_1')
-                        ->click('#label_fade_use_flag_1')
-                        ->pause(500)
-                        ->screenshot('user/slideshows/createBuckets/images/createBuckets')
-                        ->press('登録確定');
-            });
-        } else {
-            // 実行
-            $this->browse(function (Browser $browser) {
-                $browser->visit('/plugin/slideshows/editBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                        ->assertPathBeginsWith('/')
-                        ->screenshot('user/slideshows/createBuckets/images/createBuckets');
-            });
-        }
+        // 実行
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/plugin/slideshows/createBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->assertPathBeginsWith('/')
+                    ->type('slideshows_name', 'テストのスライドショー')
+                    ->click('#label_control_display_flag_1')
+                    ->click('#label_indicators_display_flag_1')
+                    ->click('#label_fade_use_flag_1')
+                    ->pause(500)
+                    ->screenshot('user/slideshows/createBuckets/images/createBuckets')
+                    ->press('登録確定');
+
+            // 一度、選択確定させる。
+            $bucket = Buckets::where('plugin_name', 'slideshows')->first();
+            $browser->visit('/plugin/slideshows/listBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->radio('select_bucket', $bucket->id)
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/slideshows/listBuckets/images/listBuckets')
+                    ->press("変更確定");
+
+            // 変更
+            $browser->visit("/plugin/slideshows/editBuckets/" . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/slideshows/createBuckets/images/editBuckets');
+        });
 
         // マニュアル用データ出力
         $this->putManualData('[
             {"path": "user/slideshows/createBuckets/images/createBuckets",
-             "comment": "<ul class=\"mb-0\"><li>スライドショー枠を作成して、その枠に画像を登録できます。</li></ul>"
+             "name": "作成",
+             "comment": "<ul class=\"mb-0\"><li>新しいスライドショーを作成できます。</li></ul>"
+            },
+            {"path": "user/slideshows/createBuckets/images/editBuckets",
+             "name": "変更・削除",
+             "comment": "<ul class=\"mb-0\"><li>スライドショーを変更・削除できます。</li></ul>"
             }
         ]');
     }

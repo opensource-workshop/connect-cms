@@ -164,7 +164,7 @@
         </div>
         <div class="text-center">
             <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#collapse_mkdir{{$frame->id}}">キャンセル</button>
-            <button class="btn btn-primary btn-sm" type="submit">作成</button>
+            <button class="btn btn-primary btn-sm" type="submit" id="button_make_folder{{$frame->id}}">作成</button>
         </div>
     </div>
 </form>
@@ -226,13 +226,13 @@
                     @else
                         <input type="checkbox" name="is_cover[{{$frame_id}}]" value="1" class="custom-control-input" id="is_cover{{$frame_id}}">
                     @endif
-                    <label class="custom-control-label" for="is_cover{{$frame_id}}">チェックすると、アルバムの表紙に使われます。</label>
+                    <label class="custom-control-label" for="is_cover{{$frame_id}}" id="label_is_cover{{$frame_id}}">チェックすると、アルバムの表紙に使われます。</label>
                 </div>
             </div>
         </div>
         <div class="text-center">
             <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#collapse_upload{{$frame->id}}">キャンセル</button>
-            <button class="btn btn-primary btn-sm" type="submit">追加</button>
+            <button class="btn btn-primary btn-sm" type="submit" id="button_upload{{$frame->id}}">追加</button>
             <small id="upload-size-server-help" class="form-text text-muted">アップロードできる最大サイズ&nbsp;<span class="font-weight-bold">{{UploadMaxSize::getDescription($photoalbum->image_upload_max_size)}}</span><br />保存時の幅、高さの最大px&nbsp;<span class="font-weight-bold">{{ResizedImageSize::getImageUploadResizeMessage($photoalbum->image_upload_max_px)}}</span></small>
         </div>
     </div>
@@ -320,13 +320,13 @@
                     @else
                         <input type="checkbox" name="is_cover[{{$frame_id}}]" value="1" class="custom-control-input" id="poster_is_cover{{$frame_id}}" disabled>
                     @endif
-                    <label class="custom-control-label" for="poster_is_cover{{$frame_id}}">チェックすると、ポスター画像がアルバムの表紙に使われます。</label>
+                    <label class="custom-control-label" for="poster_is_cover{{$frame_id}}" id="label_poster_is_cover{{$frame_id}}">チェックすると、ポスター画像がアルバムの表紙に使われます。</label>
                 </div>
             </div>
         </div>
         <div class="text-center">
             <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#collapse_video{{$frame->id}}">キャンセル</button>
-            <button class="btn btn-primary btn-sm" type="submit">追加</button>
+            <button class="btn btn-primary btn-sm" type="submit" id="button_upload_video{{$frame->id}}">追加</button>
             <small id="upload-size-server-help" class="form-text text-muted">アップロードできる最大サイズ&nbsp;<span class="font-weight-bold">{{UploadMaxSize::getDescription($photoalbum->video_upload_max_size)}}</span></small>
         </div>
     </div>
@@ -483,7 +483,7 @@
                 @endif
                 @if (($photoalbum_content->isVideo($photoalbum_content->mimetype)) && FrameConfig::getConfigValue($frame_configs, PhotoalbumFrameConfig::embed_code))
                     <div class="card-text">
-                        <a class="embed_code_check" data-name="embed_code{{$photoalbum_content->id}}" style="color: #007bff; cursor: pointer;"><small>埋め込みコード</small> <i class="fas fa-caret-right"></i></a>
+                        <a class="embed_code_check" data-name="embed_code{{$photoalbum_content->id}}" style="color: #007bff; cursor: pointer;" id="a_embed_code_check{{$photoalbum_content->id}}"><small>埋め込みコード</small> <i class="fas fa-caret-right"></i></a>
                         <input type="text" name="embed_code[{{$frame_id}}]" value='<iframe width="400" height="300" src="{{url('/')}}/download/plugin/photoalbums/embed/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}" frameborder="0" scrolling="no" allowfullscreen></iframe>' class="form-control" id="embed_code{{$photoalbum_content->id}}" style="display: none;">
                     </div>
                 @endif

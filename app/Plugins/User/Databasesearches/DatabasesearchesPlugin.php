@@ -14,6 +14,7 @@ use App\Plugins\User\UserPluginBase;
 use App\Plugins\User\Databases\DatabasesTool;
 
 use App\Enums\DatabaseSearcherSortType;
+use App\Enums\StatusType;
 
 /**
  * データベース検索プラグイン
@@ -246,7 +247,8 @@ class DatabasesearchesPlugin extends UserPluginBase
                                 ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
                                 ->join('databases', 'databases.id', '=', 'databases_columns.databases_id')
                                 ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
-                                ->join('databases_inputs', 'databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
+                                ->join('databases_inputs', function($join) { $join->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
+                                                                                  ->where('databases_inputs.status','=', StatusType::active); })
                                 ->whereIn('databases_inputs_id', $inputs_ids_marge)
                                 ->groupBy('databases_inputs_id')
                                 ->groupBy('frames.id')

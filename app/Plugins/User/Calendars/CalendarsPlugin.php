@@ -349,7 +349,7 @@ class CalendarsPlugin extends UserPluginBase
     /**
      * 記事編集画面
      *
-     * @method_title 予定の登録
+     * @method_title 予定登録
      * @method_desc 予定を登録します。
      * @method_detail 予定を登録・編集します。
      */
@@ -487,7 +487,7 @@ class CalendarsPlugin extends UserPluginBase
     /**
      * プラグインのバケツ選択表示関数
      *
-     * @method_title カレンダー選択
+     * @method_title 選択
      * @method_desc このフレームに表示するカレンダーを選択します。
      * @method_detail
      */
@@ -502,7 +502,7 @@ class CalendarsPlugin extends UserPluginBase
     /**
      * バケツ新規作成画面
      *
-     * @method_title 新規作成
+     * @method_title 作成
      * @method_desc カレンダーを新しく作成します。
      * @method_detail カレンダー名を入力してカレンダーを作成できます。
      */

@@ -1003,7 +1003,7 @@ WHERE status = 0
     /**
      * データ選択表示関数
      *
-     * @method_title ブログ選択
+     * @method_title 選択
      * @method_desc このフレームに表示するブログを選択します。
      * @method_detail
      */
@@ -1051,7 +1051,7 @@ WHERE status = 0
     /**
      * ブログ新規作成画面
      *
-     * @method_title 新規作成
+     * @method_title 作成
      * @method_desc ブログを新しく作成します。
      * @method_detail ブログ名などの設定値を入力してブログを作成できます。
      */

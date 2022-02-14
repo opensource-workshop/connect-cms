@@ -77,6 +77,7 @@ class ManualPdf extends DuskTestCase
      */
     private function outputMethod($pdf, $method)
     {
+        $pdf->addPage();
         $pdf->Bookmark($method->method_title, 2, 0, '', '', array(0, 0, 0));
         $pdf->writeHTML(
             view(
@@ -105,7 +106,7 @@ class ManualPdf extends DuskTestCase
         });
 
         // 全データ取得
-        $dusks = Dusks::get();
+        $dusks = Dusks::orderBy("id", "asc")->get();
 
         // 出力するPDF の準備
         $pdf = new CCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
@@ -183,6 +184,6 @@ class ManualPdf extends DuskTestCase
         // 目次 --------------------/
 
         // 出力 ( D：Download, I：Inline )
-        $pdf->output(\Storage::disk('manual')->path('pdf/manual.pdf'), 'F');
+        $pdf->output(\Storage::disk('manual')->path('html/pdf/manual.pdf'), 'F');
     }
 }

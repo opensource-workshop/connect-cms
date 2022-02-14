@@ -43,7 +43,7 @@
                         @else
                             <input type="radio" value="0" id="view_form0" name="view_form" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label" for="view_form0">貸し出し情報＆新規貸し出し</label>
+                        <label class="custom-control-label" for="view_form0" id="label_view_form0">貸し出し情報＆新規貸し出し</label>
                     </div>
                 </div>
                 <div class="mb-0 col-12">
@@ -53,7 +53,7 @@
                         @else
                             <input type="radio" value="1" id="view_form1" name="view_form" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label" for="view_form1">書籍検索</label>
+                        <label class="custom-control-label" for="view_form1" id="label_view_form1">書籍検索</label>
                     </div>
                 </div>
             </div>

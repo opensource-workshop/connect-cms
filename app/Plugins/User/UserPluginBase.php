@@ -620,6 +620,10 @@ class UserPluginBase extends PluginBase
 
     /**
      * メール送信設定 変更画面
+     *
+     * @method_title メール送信設定
+     * @method_desc プラグインのメール送信条件を設定します。
+     * @method_detail 送信タイミングや送信先、件名、本文などを設定します。
      */
     public function editBucketsMails($request, $page_id, $frame_id, $id = null)
     {

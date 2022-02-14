@@ -55,7 +55,7 @@
                 <div class="custom-control custom-checkbox custom-control-inline">
                     <input type="hidden" value="" name="notice_on">
                     <input type="checkbox" value="1" id="notice_on" name="notice_on" class="custom-control-input" data-toggle="collapse" data-target="#collapse_notice" aria-expanded="false" aria-controls="collapse_notice" @if(old('notice_on', $bucket_mail->notice_on) == 1) checked="checked" @endif>
-                    <label class="custom-control-label" for="notice_on">投稿通知を送る。</label>
+                    <label class="custom-control-label" for="notice_on" id="label_notice_on">投稿通知を送る。</label>
                 </div>
             </div>
             <div class="collapse" id="collapse_notice">
@@ -140,7 +140,7 @@
                 <div class="custom-control custom-checkbox custom-control-inline">
                     <input type="hidden" value="" name="relate_on">
                     <input type="checkbox" value="1" id="relate_on" name="relate_on" class="custom-control-input" data-toggle="collapse" data-target="#collapse_relate" aria-expanded="false" aria-controls="collapse_relate" @if(old('relate_on', $bucket_mail->relate_on) == 1) checked="checked" @endif>
-                    <label class="custom-control-label" for="relate_on">関連記事の投稿通知を送る。</label>
+                    <label class="custom-control-label" for="notice_on" id="label_notice_on">関連記事の投稿通知を送る。</label>
                 </div>
             </div>
             <div class="collapse" id="collapse_relate">
@@ -180,7 +180,7 @@
                 <div class="custom-control custom-checkbox custom-control-inline">
                     <input type="hidden" value="" name="approval_on">
                     <input type="checkbox" value="1" id="approval_on" name="approval_on" class="custom-control-input" data-toggle="collapse" data-target="#collapse_approval" aria-expanded="false" aria-controls="collapse_approval" @if(old('approval_on', $bucket_mail->approval_on) == 1) checked="checked" @endif>
-                    <label class="custom-control-label" for="approval_on">承認通知を送る。</label>
+                    <label class="custom-control-label" for="approval_on" id="label_approval_on">承認通知を送る。</label>
                 </div>
             </div>
             <div class="collapse" id="collapse_approval">
@@ -246,7 +246,7 @@
                 <div class="custom-control custom-checkbox custom-control-inline">
                     <input type="hidden" value="" name="approved_on">
                     <input type="checkbox" value="1" id="approved_on" name="approved_on" class="custom-control-input" data-toggle="collapse" data-target="#collapse_approved" aria-expanded="false" aria-controls="collapse_approved" @if(old('approved_on', $bucket_mail->approved_on) == 1) checked="checked" @endif>
-                    <label class="custom-control-label" for="approved_on">承認済み通知を送る。</label>
+                    <label class="custom-control-label" for="approved_on" id="label_approved_on">承認済み通知を送る。</label>
                 </div>
             </div>
             <div class="collapse" id="collapse_approved">

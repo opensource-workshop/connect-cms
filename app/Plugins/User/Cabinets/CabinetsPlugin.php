@@ -32,6 +32,8 @@ use App\Plugins\User\UserPluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category キャビネット・プラグイン
  * @package Controller
+ * @plugin_title キャビネット
+ * @plugin_desc キャビネットを作成できるプラグインです。<br />ファイルの管理に使用します。
  */
 class CabinetsPlugin extends UserPluginBase
 {
@@ -99,6 +101,10 @@ class CabinetsPlugin extends UserPluginBase
     /**
      *  データ初期表示関数
      *  コアがページ表示の際に呼び出す関数
+     *
+     * @method_title ファイル一覧
+     * @method_desc ファイルやフォルダを一覧表示します。
+     * @method_detail ファイルをクリックすることでダウンロードできます。
      */
     public function index($request, $page_id, $frame_id, $parent_id = null)
     {
@@ -242,6 +248,9 @@ class CabinetsPlugin extends UserPluginBase
      * @param \Illuminate\Http\Request $request リクエスト
      * @param int $page_id ページID
      * @param int $frame_id フレームID
+     * @method_title フォルダ作成
+     * @method_desc フォルダを作成できます。
+     * @method_detail フォルダの中にもフォルダを作成できます。
      */
     public function makeFolder($request, $page_id, $frame_id)
     {
@@ -270,6 +279,9 @@ class CabinetsPlugin extends UserPluginBase
      * @param \Illuminate\Http\Request $request リクエスト
      * @param int $page_id ページID
      * @param int $frame_id フレームID
+     * @method_title アップロード
+     * @method_desc ファイルをアップロードできます。
+     * @method_detail ルート階層にも、フォルダの中にもファイルをアップロードできます。
      */
     public function upload($request, $page_id, $frame_id)
     {
@@ -377,6 +389,9 @@ class CabinetsPlugin extends UserPluginBase
      * @param \Illuminate\Http\Request $request リクエスト
      * @param int $page_id ページID
      * @param int $frame_id フレームID
+     * @method_title ファイル削除
+     * @method_desc ファイルやフォルダを削除できます。
+     * @method_detail
      */
     public function deleteContents($request, $page_id, $frame_id)
     {
@@ -627,6 +642,10 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * プラグインのバケツ選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示するキャビネットを選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -638,6 +657,10 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * バケツ新規作成画面
+     *
+     * @method_title 作成
+     * @method_desc キャビネットを新しく作成します。
+     * @method_detail キャビネット名を入力してキャビネットを作成できます。
      */
     public function createBuckets($request, $page_id, $frame_id)
     {
@@ -901,6 +924,10 @@ class CabinetsPlugin extends UserPluginBase
 
     /**
      * フレーム表示設定画面の表示
+     *
+     * @method_title 表示設定
+     * @method_desc このフレームに表示する際のキャビネットをカスタマイズできます。
+     * @method_detail ファイルの並び順を指定できます。
      */
     public function editView($request, $page_id, $frame_id)
     {

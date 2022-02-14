@@ -4,12 +4,23 @@
 <div class="row mt-3">
     <div class="col-sm">
         <div class="card">
-            <div class="card-header text-white bg-primary">Connect-CMS マニュアル</div>
+            <div class="card-header text-white bg-primary">Connect-CMS オンライン・マニュアル</div>
             <div class="card-body">
                 <p>ようこそ、Connect-CMS のマニュアルへ。</p>
                 <p>まずは、バッジ・メニューから、見たいカテゴリをクリックしましょう。</p>
                 {{-- バッジ・メニュー --}}
                 @include('manual.common.badge_menu')
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mt-3">
+    <div class="col-sm">
+        <div class="card">
+            <div class="card-header text-white bg-primary">Connect-CMS ダウンロード・マニュアル</div>
+            <div class="card-body">
+                <p>Connect-CMS のマニュアルをPDF でダウンロードできます。</p>
+                <p><a href="./pdf/manual.pdf" target="_blank">Connect-CMS のマニュアルPDF ダウンロード</a></p>
             </div>
         </div>
     </div>
