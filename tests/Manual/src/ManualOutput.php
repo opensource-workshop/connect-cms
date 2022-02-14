@@ -25,6 +25,61 @@ class ManualOutput extends DuskTestCase
     }
 
     /**
+     * HTMLやCSSなどのファイル出力
+     *
+     * @return void
+     */
+    private function putFile($path, $content)
+    {
+        // env でパスが指定されていなかった場合は、manual ディスクの html フォルダに保存。
+        if (empty(config('connect.manual_put_base'))) {
+            \Storage::disk('manual')->put('html/' . $path, $content);
+        } else {
+            if (!\File::exists(dirname(config('connect.manual_put_base') . $path))) {
+                \File::makeDirectory(dirname(config('connect.manual_put_base') . $path), 0755, true);
+            }
+            \File::put(config('connect.manual_put_base') . $path, $content);
+        }
+    }
+
+    /**
+     * 画像の出力パスを取得
+     *
+     * @return void
+     */
+    private function getImagePath($path)
+    {
+        // env でパスが指定されていなかった場合は、manual ディスクの html フォルダに保存。
+        if (empty(config('connect.manual_put_base'))) {
+            return \Storage::disk('manual')->path('html/' . $path);
+        } else {
+            if (!\File::exists(dirname(config('connect.manual_put_base') . $path))) {
+                \File::makeDirectory(dirname(config('connect.manual_put_base') . $path), 0755, true);
+            }
+            return config('connect.manual_put_base') . $path;
+        }
+    }
+
+    /**
+     * ディレクトリチェックし、なければ作成
+     *
+     * @return void
+     */
+    private function checkDir($path)
+    {
+        // env でパスが指定されていなかった場合は、manual ディスクをチェック
+        if (empty(config('connect.manual_put_base'))) {
+            if (!\Storage::disk('manual')->exists('html/' . dirname($path))) {
+                \Storage::disk('manual')->makeDirectory('html/' . dirname($path));
+            }
+        } else {
+            if (!\File::exists(dirname(config('connect.manual_put_base') . $path))) {
+                \File::makeDirectory(dirname(config('connect.manual_put_base') . $path), 0755, true);
+            }
+        }
+    }
+
+    /**
      * トップページ出力
      *
      * @return void
@@ -33,7 +88,7 @@ class ManualOutput extends DuskTestCase
     {
         // ページ生成
         $html = view($view_path, ['level' => 'home', 'base_path' => './']);
-        \Storage::disk('manual')->put("html/index.html", $html);
+        $this->putFile("index.html", $html);
     }
 
     /**
@@ -44,11 +99,10 @@ class ManualOutput extends DuskTestCase
     private function outputCategory($view_path, $methods)
     {
         // カテゴリをループ
-        //foreach($methods->where('plugin_name', 'index')->where('method_name', 'index') as $method) {
         foreach ($methods->groupBy('category') as $method) {
             // ページ生成
             $html = view($view_path, ['level' => 'category', 'base_path' => '../', 'methods' => $methods, 'current_method' => $method[0]]);
-            \Storage::disk('manual')->put('html/' . $method[0]->category . "/index.html", $html);
+            $this->putFile($method[0]->category . "/index.html", $html);
         }
     }
 
@@ -63,7 +117,7 @@ class ManualOutput extends DuskTestCase
         foreach ($methods->where('method_name', 'index') as $method) {
             // ページ生成
             $html = view($view_path, ['level' => 'plugin', 'base_path' => '../../', 'methods' => $methods, 'current_method' => $method]);
-            \Storage::disk('manual')->put('html/' . $method->category . '/' . $method->plugin_name . "/index.html", $html);
+            $this->putFile($method->category . '/' . $method->plugin_name . "/index.html", $html);
         }
     }
 
@@ -78,7 +132,7 @@ class ManualOutput extends DuskTestCase
         foreach ($methods as $method) {
             // ページ生成
             $html = view($view_path, ['level' => 'method', 'base_path' => '../../../', 'methods' => $methods, 'current_method' => $method]);
-            \Storage::disk('manual')->put('html/' . $method->category . '/' . $method->plugin_name . '/' . $method->method_name . "/index.html", $html);
+            $this->putFile($method->category . '/' . $method->plugin_name . '/' . $method->method_name . "/index.html", $html);
 
             // 画像の出力
             $this->outputImage($method);
@@ -150,10 +204,7 @@ class ManualOutput extends DuskTestCase
 
             if (property_exists($json_path, 'methods')) {
                 foreach ($json_path->methods as $method) {
-
-                    if (!\Storage::disk('manual')->exists('html/' . dirname($json_path->path))) {
-                        \Storage::disk('manual')->makeDirectory('html/' . dirname($json_path->path));
-                    }
+                    $this->checkDir($json_path->path);
 
                     if ($method->method == 'trim_h') {
                         // 画像の外枠を追加するために、X, Yに 2 足し、1 ずらしてコピーする。
@@ -186,19 +237,17 @@ class ManualOutput extends DuskTestCase
                     if ($method->method == 'rounded_rectangle') {
                         $new_image = $this->imgRoundedRectangle($new_image, $src_image, $method->args);
                     }
-                    imagepng($new_image, \Storage::disk('manual')->path('html/' . $json_path->path . '.png'));
+                    imagepng($new_image, $this->getImagePath($json_path->path . '.png'));
                 }
             } else {
                 // 加工なしでコピー
-                if (!\Storage::disk('manual')->exists('html/' . dirname($json_path->path))) {
-                    \Storage::disk('manual')->makeDirectory('html/' . dirname($json_path->path));
-                }
+                $this->checkDir($json_path->path);
 
                 // 画像の外枠を追加するために、X, Yに 2 足し、1 ずらしてコピーする。
                 $src_image = imagecreatefrompng(\Storage::disk('screenshot')->path($json_path->path . '.png'));
                 $new_image = imagecreatetruecolor(imagesx($src_image) + 2, imagesy($src_image) + 2);
                 imagecopyresampled($new_image, $src_image, 1, 1, 0, 0, imagesx($src_image), imagesy($src_image), imagesx($src_image), imagesy($src_image));
-                imagepng($new_image, \Storage::disk('manual')->path('html/' . $json_path->path . '.png'));
+                imagepng($new_image, $this->getImagePath($json_path->path . '.png'));
             }
         }
     }
@@ -218,15 +267,13 @@ class ManualOutput extends DuskTestCase
             } else {
                 // 画像をコピー
                 foreach (explode(',', $method->img_args) as $img_path) {
-                    if (!\Storage::disk('manual')->exists('html/' . dirname($img_path))) {
-                        \Storage::disk('manual')->makeDirectory('html/' . dirname($img_path));
-                    }
+                    $this->checkDir($img_path);
 
                     // 画像の外枠を追加するために、X, Yに 2 足し、1 ずらしてコピーする。
                     $src_image = imagecreatefrompng(\Storage::disk('screenshot')->path($img_path . '.png'));
                     $new_image = imagecreatetruecolor(imagesx($src_image) + 2, imagesy($src_image) + 2);
                     imagecopyresampled($new_image, $src_image, 1, 1, 0, 0, imagesx($src_image), imagesy($src_image), imagesx($src_image), imagesy($src_image));
-                    imagepng($new_image, \Storage::disk('manual')->path('html/' . $img_path . '.png'));
+                    imagepng($new_image, $this->getImagePath($img_path . '.png'));
                 }
             }
         }
@@ -241,7 +288,7 @@ class ManualOutput extends DuskTestCase
     {
         $files = \Storage::disk('manual')->allFiles('html_src');
         foreach ($files as $file) {
-            \Storage::disk('manual')->put(str_replace('html_src/', 'html/', $file), \Storage::disk('manual')->get($file));
+            $this->putFile(str_replace('html_src/', '', $file), \Storage::disk('manual')->get($file));
         }
     }
 

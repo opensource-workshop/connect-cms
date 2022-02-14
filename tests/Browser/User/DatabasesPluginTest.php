@@ -51,6 +51,7 @@ class DatabasesPluginTest extends DuskTestCase
         $this->logout();
         $this->index();
         $this->detail();
+        $this->template();
     }
 
     /**
@@ -70,7 +71,7 @@ class DatabasesPluginTest extends DuskTestCase
         $this->initPlugin('databases', '/test/database');
 
         // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'input', 'detail', 'editColumn', 'editColumnDetail', 'editView', 'createBuckets', 'listBuckets', 'import', 'editBucketsMails');
+        $this->reserveManual('index', 'input', 'detail', 'template', 'editColumn', 'editColumnDetail', 'editView', 'createBuckets', 'listBuckets', 'import', 'editBucketsMails');
     }
 
     /**
@@ -274,7 +275,7 @@ class DatabasesPluginTest extends DuskTestCase
     }
 
     /**
-     * 画像アップロード
+     * 項目の作成
      */
     private function editColumnOne(&$browser, $columns)
     {
@@ -524,5 +525,19 @@ class DatabasesPluginTest extends DuskTestCase
              "comment": "<ul class=\"mb-0\"><li>承認済み通知の設定です。</li></ul>"
             }
         ]');
+    }
+
+    /**
+     * テンプレート
+     */
+    private function template()
+    {
+        $this->putManualTemplateData(
+            $this->test_frame,
+            'user',
+            '/test/database',
+            ['databases', 'データベース'],
+            ['table' => 'table', 'default-left-col-3' => 'default-left-col-3']
+        );
     }
 }

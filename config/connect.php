@@ -14,6 +14,9 @@ return [
     // uploads ディレクトリの1ディレクトリの最大ファイル数
     'directory_file_limit' => 1000,
 
+    // マニュアル生成のベース・ディレクトリ
+    'manual_put_base' => env('MANUAL_PUT_BASE', ''),
+
     // プラグイン管理にも表示しないプラグイン(小文字で指定)
     'PLUGIN_FORCE_HIDDEN' => ['knowledges', 'codestudies'],
 
