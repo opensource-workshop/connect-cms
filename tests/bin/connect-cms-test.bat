@@ -203,6 +203,9 @@ php artisan dusk tests\Browser\User\OpacsPluginTest.php
 echo --- フォーム
 php artisan dusk tests\Browser\User\FormsPluginTest.php
 
+echo --- カウンター
+php artisan dusk tests\Browser\User\CountersPluginTest.php
+
 echo ※ スクリーンショットの保存先
 echo tests\Browser\screenshots
 
