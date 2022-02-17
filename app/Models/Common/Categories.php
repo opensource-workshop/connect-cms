@@ -60,7 +60,7 @@ class Categories extends Model
             })
             ->whereNull('categories.plugin_id')
             ->orWhere('categories.plugin_id', $target_id)
-            ->orderBy('categories.target', 'asc')
+            // ->orderBy('categories.target', 'asc')
             ->orderBy('plugin_categories.display_sequence', 'asc')
             ->get();
 

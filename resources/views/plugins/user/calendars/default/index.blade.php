@@ -89,9 +89,12 @@
                             @else
                             ({{$date->formatLocalized("%a")}})
                             @endif
-                            <div class="col-12 pl-1 d-inline cc-font-90">
-                                <span class="badge badge-pill badge-danger">{{$date->getHolidayName()}}</span>
-                            </div>
+                            {{-- 祝日 --}}
+                            @if ($date->hasHoliday())
+                                <div class="pl-1 d-inline cc-font-90">
+                                    <span class="badge badge-pill badge-danger">{{$date->getHolidayName()}}</span>
+                                </div>
+                            @endif
                         </div>
                     </div>
                     <div class="col-6 text-right">

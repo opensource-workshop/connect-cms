@@ -603,6 +603,14 @@ class UserPluginBase extends PluginBase
         // Buckets の取得
         $buckets = $this->getBuckets($frame_id);
 
+        if ($this->frame->plugin_name == 'contents' || $buckets) {
+            // 固定記事プラグイン(=コンテンツプラグイン)はバケツありなし、どちらでも表示する。
+            // 固定記事プラグイン(=コンテンツプラグイン)以外はバケツありのみ、表示する。
+        } else {
+            // 表示しない。
+            return $this->commonView('empty_bucket_setting');
+        }
+
         return $this->commonView('frame_edit_buckets', [
             'buckets'      => $buckets,
             'plugin_name'  => $this->frame->plugin_name,
@@ -622,12 +630,10 @@ class UserPluginBase extends PluginBase
         // Buckets の取得
         $bucket = $this->getBuckets($frame_id);
 
-        // Backet が取れない場合はエラー。
+        // Backet が取れない場合は表示しない。
         if (empty($bucket)) {
-            return $this->view_error("error_inframe", "存在しないBucket");
+            return $this->commonView('empty_bucket_setting');
         }
-        // [debug]
-        // var_dump(old('notice_on'));
 
         // Buckets のメール設定取得
         $bucket_mail = $this->getBucketMail($bucket);

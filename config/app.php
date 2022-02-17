@@ -254,6 +254,7 @@ $app_array = [
         'WhatsnewsTargetPlugin' => \App\Enums\WhatsnewsTargetPlugin::class,
         'CsvCharacterCode' => \App\Enums\CsvCharacterCode::class,
         'ShowType' => \App\Enums\ShowType::class,
+        'NotShowType' => \App\Enums\NotShowType::class,
         'UseType' => \App\Enums\UseType::class,
         'PermissionType' => \App\Enums\PermissionType::class,
         'StatusType' => \App\Enums\StatusType::class,
@@ -294,6 +295,13 @@ $app_array = [
         'PhotoalbumSort' => \App\Enums\PhotoalbumSort::class,
         'Fineness' => \App\Enums\Fineness::class,
         'ManualCategory' => \App\Enums\ManualCategory::class,
+        'RruleFreq' => \App\Enums\RruleFreq::class,
+        'RruleDayOfWeek' => \App\Enums\RruleDayOfWeek::class,
+        'RruleByMonth' => \App\Enums\RruleByMonth::class,
+        'EditPlanType' => \App\Enums\EditPlanType::class,
+        'ReservationFrameConfig' => \App\Enums\ReservationFrameConfig::class,
+        'FacilityDisplayType' => \App\Enums\FacilityDisplayType::class,
+        'ReservationLimitedByRole' => \App\Enums\ReservationLimitedByRole::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

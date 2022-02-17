@@ -168,7 +168,7 @@
 
     {{-- Submitボタン --}}
     <div class="form-group text-center">
-        <a href="{{URL::to($page->permanent_link)}}" class="btn btn-secondary mr-2">
+        <a href="{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}" class="btn btn-secondary mr-2">
             <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
         </a>
         <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>

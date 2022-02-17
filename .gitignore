@@ -22,6 +22,7 @@ yarn-error.log
 /connect-cms.code-workspace
 .vscode/launch.json
 composer.phar
+migration_config.ini
 
 # Option Plugins (対象外部分はオプションプラグインのサンプル)
 github_copy.bat

@@ -28,6 +28,15 @@ if ($frame->isExpandNarrow()) {
     <dt class="{{$label_class}}">{{__('messages.time_of_use')}}</dt>
     <dd class="{{$value_class}}">{{$inputs->start_datetime->format('H:i')}} ~ {{$inputs->end_datetime->format('H:i')}}</dd>
 
+    @if ($repeat->id)
+        {{-- 繰り返し --}}
+        <dt class="{{$label_class}}">{{__('messages.repetition')}}</dt>
+        <dd class="{{$value_class}}">
+            {{$repeat->showRruleDisplay()}}<br />
+            {{$repeat->showRruleEndDisplay()}}
+        </dd>
+    @endif
+
     @foreach($columns as $column)
         <dt class="{{$label_class}}">{{$column->column_name}}</dt>
         <dd class="{{$value_class}}">
@@ -55,9 +64,29 @@ if ($frame->isExpandNarrow()) {
         @endif
 
         @can('posts.update', [[$inputs, $frame->plugin_name, $buckets]])
-            <a class="btn btn-success btn-sm" href="{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}#frame-{{$frame_id}}">
-                <i class="far fa-edit"></i> 編集
-            </a>
+            @if ($repeat->id)
+                {{-- 繰り返しパターン --}}
+                <div class="btn-group">
+                    <button type="button" class="btn btn-success btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="far fa-edit"></i> {{ __('messages.edit') }}
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <a class="dropdown-item" href="{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}?edit_plan_type={{EditPlanType::only}}#frame-{{$frame_id}}">
+                            {{ __('messages.repeat_edit_plan_only', ['action' => __('messages.change')]) }}
+                        </a>
+                        <a class="dropdown-item" href="{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}?edit_plan_type={{EditPlanType::after}}#frame-{{$frame_id}}">
+                            {{ __('messages.repeat_edit_plan_after', ['action' => __('messages.change')]) }}
+                        </a>
+                        <a class="dropdown-item" href="{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/{{$inputs->inputs_parent_id}}?edit_plan_type={{EditPlanType::all}}#frame-{{$frame_id}}">
+                            {{ __('messages.repeat_edit_plan_all', ['action' => __('messages.change')]) }}
+                        </a>
+                    </div>
+                </div>
+            @else
+                <a class="btn btn-success btn-sm" href="{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}#frame-{{$frame_id}}">
+                    <i class="far fa-edit"></i> {{ __('messages.edit') }}
+                </a>
+            @endif
         @endcan
     </div>
 </div>
