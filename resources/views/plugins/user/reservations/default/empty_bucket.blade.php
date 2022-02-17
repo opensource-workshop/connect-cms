@@ -9,8 +9,7 @@
 
 @section("plugin_contents_$frame->id")
 
-{{-- 未ログイン時は何も表示しない --}}
-@if (Auth::check())
+@can('frames.edit',[[null, null, null, $frame]])
     {{-- フレームに紐づくコンテンツがない場合、データ登録を促すメッセージを表示 --}}
     <div class="card border-danger">
         <div class="card-body">
@@ -32,6 +31,6 @@
             @endif --}}
         </div>
     </div>
-@endif
+@endcan
 
 @endsection
