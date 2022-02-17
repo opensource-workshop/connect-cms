@@ -82,4 +82,5 @@ return [
     'available' => 'Available',
     'not_available' => 'Not Available',
     'researcher_list' => 'Researcher List',
+    'cannot_download_because_no_results_found' => 'You can not download :type because no results found.'
 ];
