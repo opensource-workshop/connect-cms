@@ -24,6 +24,8 @@ use App\Enums\DatabaseSearcherSortType;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース検索プラグイン
  * @package Controller
+ * @plugin_title データベース検索
+ * @plugin_desc データベースプラグインのデータを参照して、異なる画面として表示できる機能です。
  */
 class DatabasesearchesPlugin extends UserPluginBase
 {
@@ -89,6 +91,9 @@ class DatabasesearchesPlugin extends UserPluginBase
      *       3,     To,  0314,                   ：
      *
      * @return view
+     * @method_title データ一覧
+     * @method_desc データベース・プラグインのデータを条件に合わせて表示します。
+     * @method_detail 1列目は自動的にデータベースプラグイン内の該当データ詳細画面へのリンクが設定されます。
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -323,6 +328,10 @@ class DatabasesearchesPlugin extends UserPluginBase
 
     /**
      * 設定変更画面の表示
+     *
+     * @method_title 変更
+     * @method_desc データベース検索の設定を変更します。
+     * @method_detail 表示カラムや表示するデータベースのあるフレームを選択します。
      */
     public function editBuckets($request, $page_id, $frame_id)
     {
