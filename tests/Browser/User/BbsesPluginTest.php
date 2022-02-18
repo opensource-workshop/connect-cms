@@ -70,44 +70,25 @@ class BbsesPluginTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/test/bbs')
                     ->assertPathBeginsWith('/')
-                    ->screenshot('user/bbses/index/images/index');
+                    ->screenshot('user/bbses/index/images/index1');
+
+            BbsFrame::find(1)->update(['list_format' => 2]);
+            $browser->visit('/test/bbs')
+                    ->screenshot('user/bbses/index/images/index2');
+            BbsFrame::find(1)->update(['list_format' => 0]);
         });
 
         // マニュアル用データ出力
         $this->putManualData('[
-            {"path": "user/bbses/index/images/index",
-             "name": "記事の一覧",
-             "comment": "<ul class=\"mb-0\"><li>記事は新しいものから表示されます。</li></ul>"
-            }
-        ]');
-/*
-        // 最新の記事を取得
-        $post = BlogsPosts::orderBy('id', 'desc')->first();
-
-        $this->login(1);
-
-        // 実行
-        $this->browse(function (Browser $browser) use ($post) {
-            $browser->visit('/test/blog')
-                    ->click('#button_copy' . $post->id)
-                    ->assertPathBeginsWith('/')
-                    ->screenshot('user/blogs/index/images/index2');
-        });
-
-        $this->logout();
-
-        // マニュアル用データ出力
-        $this->putManualData('[
-            {"path": "user/blogs/index/images/index",
+            {"path": "user/bbses/index/images/index1",
              "name": "記事の一覧",
              "comment": "<ul class=\"mb-0\"><li>記事は新しいものから表示されます。</li></ul>"
             },
-            {"path": "user/blogs/index/images/index2",
-             "name": "記事のコピー",
-             "comment": "<ul class=\"mb-0\"><li>編集権限がある場合、記事の編集ボタンの右にある▼ボタンで、記事のコピーができます。</li></ul>"
+            {"path": "user/bbses/index/images/index2",
+             "name": "記事の一覧（一覧での展開方法をすべて閉じておく）",
+             "comment": "<ul class=\"mb-0\"><li>一覧ではタイトルのみ表示することもできます。</li></ul>"
             }
         ]');
-*/
     }
 
     /**
@@ -133,12 +114,32 @@ class BbsesPluginTest extends DuskTestCase
             $browser->pause(500)
                     ->screenshot('user/bbses/edit/images/create')
                     ->press('登録確定');
+
+            // 最新の記事を取得
+            $post = BbsPost::orderBy('id', 'desc')->first();
+
+            $browser->visit('plugin/bbses/show/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $post->id . '#frame-' . $this->test_frame->id)
+                    ->click('#label_reply' . $this->test_frame->id)
+                    ->pause(500)
+                    ->screenshot('user/bbses/edit/images/show')
+                    ->press('#button_reply' . $this->test_frame->id)
+                    ->pause(500)
+                    ->screenshot('user/bbses/edit/images/reply');
         });
 
         // マニュアル用データ出力
         $this->putManualData('[
             {"path": "user/bbses/edit/images/create",
+             "name": "記事の編集",
              "comment": "<ul class=\"mb-0\"><li>記事は新しいものから表示されます。</li></ul>"
+            },
+            {"path": "user/bbses/edit/images/show",
+             "name": "記事の詳細",
+             "comment": "<ul class=\"mb-0\"><li>記事の詳細から返信ができます。</li></ul>"
+            },
+            {"path": "user/bbses/edit/images/reply",
+             "name": "記事の返信",
+             "comment": "<ul class=\"mb-0\"><li>引用するをチェックして返信を押した状態</li></ul>"
             }
         ]');
     }
