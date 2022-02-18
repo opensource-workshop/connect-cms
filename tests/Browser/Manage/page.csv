@@ -11,6 +11,7 @@ FAQ,/test/faq,NULL,NULL,NULL,NULL,1
 OPAC,/test/opac,NULL,NULL,NULL,NULL,1
 フォーム,/test/form,NULL,NULL,NULL,NULL,1
 課題管理,/test/learningtask,NULL,NULL,NULL,NULL,1
+カウンター,/test/counter,NULL,NULL,NULL,NULL,1
 サイト内検索,/test/search,NULL,NULL,NULL,NULL,1
 データベース検索,/test/databasesearch,NULL,NULL,NULL,NULL,1
 掲示板,/test/bbs,NULL,NULL,NULL,NULL,1
