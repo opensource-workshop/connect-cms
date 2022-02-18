@@ -91,11 +91,11 @@
             @if ($post->status == 0)
                 <div class="custom-control custom-checkbox custom-control-inline mr-0 align-bottom">
                     <input type="checkbox" name="reply" value="1" class="custom-control-input" id="reply{{$frame_id}}">
-                    <label class="custom-control-label" for="reply{{$frame_id}}">引用する</label>
+                    <label class="custom-control-label" for="reply{{$frame_id}}" id="label_reply{{$frame_id}}">引用する</label>
                 </div>
 
                 <button type="button" class="btn btn-sm btn-primary mr-1" onclick="javascript:reply_action();">
-                    <i class="fas fa-comment"></i> <span class="hidden-xs">返信</span>
+                    <i class="fas fa-comment"></i> <span class="hidden-xs" id="button_reply{{$frame_id}}">返信</span>
                 </button>
             @endif
         @endcan

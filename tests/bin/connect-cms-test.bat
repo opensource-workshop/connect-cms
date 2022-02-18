@@ -210,6 +210,9 @@ php artisan dusk tests\Browser\User\SearchsPluginTest.php
 echo --- データベース検索
 php artisan dusk tests\Browser\User\DatabasesearchesPluginTest.php
 
+echo --- 掲示板
+php artisan dusk tests\Browser\User\BbsesPluginTest.php
+
 echo ※ スクリーンショットの保存先
 echo tests\Browser\screenshots
 

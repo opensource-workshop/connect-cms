@@ -29,6 +29,8 @@ use App\Plugins\User\UserPluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 掲示板・プラグイン
  * @package Controller
+ * @plugin_title 掲示板
+ * @plugin_desc 掲示板を作成できるプラグインです。
  */
 class BbsesPlugin extends UserPluginBase
 {
@@ -308,6 +310,10 @@ class BbsesPlugin extends UserPluginBase
     /**
      * データ初期表示関数
      * コアがページ表示の際に呼び出す関数
+     *
+     * @method_title 記事一覧
+     * @method_desc 投稿された記事の一覧を表示します。
+     * @method_detail 表示設定で根記事の表示順や一覧での展開方法が指定できます。
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -363,6 +369,10 @@ class BbsesPlugin extends UserPluginBase
 
     /**
      * 詳細表示関数
+     *
+     * @method_title 記事詳細
+     * @method_desc 掲示板の記事を表示します。
+     * @method_detail 記事に対する一意なURLが必要な場合は記事詳細画面のURLを使ってください。
      */
     public function show($request, $page_id, $frame_id, $post_id)
     {
@@ -387,6 +397,10 @@ class BbsesPlugin extends UserPluginBase
 
     /**
      * 記事編集画面
+     *
+     * @method_title 記事編集
+     * @method_desc 掲示板の記事を編集します。
+     * @method_detail 編集者権限の場合、返信が付いた記事は変更・削除はできません。
      */
     public function edit($request, $page_id, $frame_id, $post_id = null)
     {
@@ -591,6 +605,10 @@ class BbsesPlugin extends UserPluginBase
 
     /**
      * プラグインのバケツ選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示する掲示板を選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -602,6 +620,10 @@ class BbsesPlugin extends UserPluginBase
 
     /**
      * バケツ新規作成画面
+     *
+     * @method_title 作成
+     * @method_desc 掲示板を新しく作成します。
+     * @method_detail 掲示板名やいいねボタンの表示を入力して掲示板を作成できます。
      */
     public function createBuckets($request, $page_id, $frame_id)
     {
@@ -611,6 +633,10 @@ class BbsesPlugin extends UserPluginBase
 
     /**
      * フレーム表示設定画面の表示
+     *
+     * @method_title 表示設定
+     * @method_desc このフレームに表示する際の掲示板をカスタマイズできます。
+     * @method_detail 表示形式、根記事の表示順、一覧での展開方法などを設定できます。
      */
     public function editView($request, $page_id, $frame_id)
     {
