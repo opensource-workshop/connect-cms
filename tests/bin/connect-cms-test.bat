@@ -204,6 +204,9 @@ php artisan dusk tests\Browser\User\FormsPluginTest.php
 echo --- カウンター
 php artisan dusk tests\Browser\User\CountersPluginTest.php
 
+echo --- サイト内検索
+php artisan dusk tests\Browser\User\SearchsPluginTest.php
+
 echo ※ スクリーンショットの保存先
 echo tests\Browser\screenshots
 
