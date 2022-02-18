@@ -118,7 +118,7 @@
                 @foreach($searchs->getTargetPlugins() as $key => $target_plugin)
                     <div class="custom-control custom-checkbox custom-control-inline">
                         <input type="checkbox" name="target_plugin[{{$key}}]" value="{{$key}}" class="custom-control-input" id="target_plugin_{{$key}}" @if(old("target_plugin.$key", $target_plugin['use_flag'])) checked=checked @endif>
-                        <label class="custom-control-label" for="target_plugin_{{$key}}">{{$target_plugin['plugin_name_full']}}</label>
+                        <label class="custom-control-label" for="target_plugin_{{$key}}" id="label_target_plugin_{{$key}}">{{$target_plugin['plugin_name_full']}}</label>
                     </div>
                 @endforeach
                 </div>
