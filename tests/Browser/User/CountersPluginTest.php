@@ -34,28 +34,12 @@ class CountersPluginTest extends DuskTestCase
         $this->login(1);
 
         $this->createBuckets();
+        $this->insertCounter();
+        $this->editView();
+        $this->listCounters();
+        $this->listBuckets();
 
-        // 左エリアにカウンターを追加（$this->test_frame と$this->test_page は退避して戻す）
-//        $test_frame = $this->test_frame;
-//        $test_page = $this->test_page;
-
-//echo "TEST\n";
-//echo $this->test_frame->bucket_id;
-/*
-        $this->addPluginFirst('counters', '/', 1);
-
-        Frame::where('area_id', 1)->where('plugin_name', 'menus')->update(['display_sequence' => 1]);
-
-        $frame = Frame::where('area_id', 2)->where('plugin_name', 'counters')->first();
-
-        Frame::where('area_id', 1)->where('plugin_name', 'counters')->update(['display_sequence' => 2, 'bucket_id' => $frame->bucket_id]);
-echo "\n" . $frame->bucket_id . "\n";
-*/
-//Frame::where('plugin_name', 'counters')->where->('area_id', 2)
-//echo $this->test_frame->bucket_id;
-
-
-
+        // 左エリアの下にもカウンターを置く。バケツはメインエリアと同じものを参照。順番は、上にメニュー、下にカウンター
         $this->addPluginModal('counters', '/', 1, false);
         Frame::where('area_id', 1)->where('plugin_name', 'menus')->update(['display_sequence' => 1]);
         $frame = Frame::where('area_id', 2)->where('plugin_name', 'counters')->first();
@@ -63,12 +47,6 @@ echo "\n" . $frame->bucket_id . "\n";
         $left_frame = Frame::where('area_id', 1)->where('plugin_name', 'counters')->first();
         $left_counter_frame = CounterFrame::first()->replicate()->fill(['frame_id' => $left_frame->id]);
         $left_counter_frame->save();
-
-
-
-        $this->editView();
-        $this->listCounters();
-        $this->listBuckets();
 
         $this->logout();
         $this->index();    // 記事一覧
@@ -159,15 +137,25 @@ echo "\n" . $frame->bucket_id . "\n";
     }
 
     /**
-     * バケツ作成
+     * カウンターデータの生成
      */
-    private function setLeftBuckets()
+    private function insertCounter()
     {
-        $this->addPluginModal('counters', '/', 1, false);
-
-        Frame::where('area_id', 1)->where('plugin_name', 'menus')->update(['display_sequence' => 1]);
-        $frame = Frame::where('area_id', 2)->where('plugin_name', 'counters')->first();
-        Frame::where('area_id', 1)->where('plugin_name', 'counters')->update(['display_sequence' => 2, 'bucket_id' => $frame->bucket_id]);
+        // 過去31日分を生成する。固定の数（画面キャプチャをテストの度に、全部入れ替えにならないように）。
+        $day_count = [20, 101, 91, 51, 91, 102, 43, 77, 65, 108, 204, 54, 26, 87, 27, 65, 90, 64, 62, 18, 19, 64, 250, 64, 21, 63, 68, 32, 65, 29, 87];
+        $total_count = 0;
+        for ($i = count($day_count) - 1; $i >= 0; $i--) {
+            $total_count = $total_count + $day_count[$i];
+            CounterCount::updateOrCreate(
+                ['counted_at' => date("Y-m-d")],
+                [
+                    "counter_id" => 1,
+                    "counted_at" => date("Y-m-d", strtotime("-" . $i . " day")),
+                    "day_count" => $day_count[$i],
+                    "total_count" => $total_count,
+                ]
+            );
+        }
     }
 
     /**
@@ -179,12 +167,17 @@ echo "\n" . $frame->bucket_id . "\n";
         $this->browse(function (Browser $browser) {
             $browser->visit('/plugin/counters/listCounters/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                     ->assertPathBeginsWith('/')
-                    ->screenshot('user/counters/listCounters/images/listCounters');
+                    ->screenshot('user/counters/listCounters/images/listCounters1');
+
+            // フッタをキャプチャ
+            $browser->scrollIntoView('footer')
+                    ->screenshot('user/counters/listCounters/images/listCounters2');
         });
 
         // マニュアル用データ出力
         $this->putManualData('[
-            {"path": "user/counters/listCounters/images/listCounters",
+            {"path": "user/counters/listCounters/images/listCounters1"},
+            {"path": "user/counters/listCounters/images/listCounters2",
              "comment": "<ul class=\"mb-0\"><li>日ごとのカウントが一覧で確認できます。</li><li>一覧は30件（1ヵ月分を想定）で、ページ送りします。</li></ul>"
             }
         ]');
@@ -200,7 +193,6 @@ echo "\n" . $frame->bucket_id . "\n";
             $browser->visit('/plugin/counters/listBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                     ->assertPathBeginsWith('/')
                     ->screenshot('user/counters/listBuckets/images/listBuckets');
-//                    ->press("表示カウンター変更");
         });
 
         // マニュアル用データ出力
@@ -219,12 +211,17 @@ echo "\n" . $frame->bucket_id . "\n";
         // 実行
         $this->browse(function (Browser $browser) {
             $browser->visit('/plugin/counters/editView/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                    ->screenshot('user/counters/editView/images/editView');
+                    ->screenshot('user/counters/editView/images/editView1');
+
+            // フッタをキャプチャ
+            $browser->scrollIntoView('footer')
+                    ->screenshot('user/counters/editView/images/editView2');
         });
 
         // マニュアル用データ出力
         $this->putManualData('[
-            {"path": "user/counters/editView/images/editView",
+            {"path": "user/counters/editView/images/editView1"},
+            {"path": "user/counters/editView/images/editView2",
              "comment": "<ul class=\"mb-0\"><li>カウンターの表示形式や累計、本日、昨日の表示などを設定できます。</li></ul>"
             }
         ]');

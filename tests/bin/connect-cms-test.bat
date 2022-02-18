@@ -5,6 +5,7 @@ rem ----------------------------------------------
 rem batでまとめてテスト実行
 rem > tests\bin\connect-cms-test.bat
 rem
+rem > tests\bin\connect-cms-test.bat t_all     <<-- データのクリア＆シーダー＆マニュアル作成（HTML＆PDF）
 rem > tests\bin\connect-cms-test.bat trancate  <<-- データのクリア＆シーダー
 rem > tests\bin\connect-cms-test.bat fresh     <<-- テーブルの再構築＆シーダー
 rem
@@ -27,17 +28,14 @@ rem テストコマンド実行時に１度だけ、自動テストDB初期化をするので不要です。
 rem   (see) https://github.com/opensource-workshop/connect-cms/wiki/Dusk#手動でテストdb初期化
 rem @php artisan config:clear
 
+rem ---------------------------------------------
+rem trancate 呼び出し
+rem ---------------------------------------------
+if "%1" == "t_all" (
+    call:trancate
+)
 if "%1" == "trancate" (
-    rem 下記は、自動テストDB初期化で行っていないコマンド
-    rem echo --- キャッシュクリア
-    rem php artisan cache:clear
-    rem php artisan config:clear
-
-    echo --- データベース・クリア
-    php artisan db:seed --env=dusk.local --class=TruncateAllTables
-
-    echo --- データ・初期追加
-    php artisan db:seed --env=dusk.local
+    call:trancate
 )
 
 if "%1" == "fresh" (
@@ -210,6 +208,15 @@ echo ※ スクリーンショットの保存先
 echo tests\Browser\screenshots
 
 rem ---------------------------------------------
+rem - マニュアル出力
+rem ---------------------------------------------
+
+if "%1" == "t_all" (
+    php artisan dusk tests\Manual\src\ManualOutput.php
+    php artisan dusk tests\Manual\src\ManualPdf.php
+)
+
+rem ---------------------------------------------
 rem - マニュアル
 rem ---------------------------------------------
 
@@ -221,4 +228,26 @@ rem 【情報の交換】 掲示板, 施設予約
 rem 【情報の整理】 メニュー, タブ
 rem 【情報の試行】 テーマチェンジャー
 rem 【情報の教育】 (DroneStudy), (CodeStudy)
+
+rem ---------------------------------------------
+rem メイン関数の終了（exit しないと、サブルーチンが動く）
+rem ---------------------------------------------
+
+exit /b
+
+rem ---------------------------------------------
+rem サブルーチン
+rem ---------------------------------------------
+:trancate
+    rem 下記は、自動テストDB初期化で行っていないコマンド
+    rem echo --- キャッシュクリア
+    rem php artisan cache:clear
+    rem php artisan config:clear
+
+    echo --- データベース・クリア
+    php artisan db:seed --env=dusk.local --class=TruncateAllTables
+
+    echo --- データ・初期追加
+    php artisan db:seed --env=dusk.local
+exit /b
 
