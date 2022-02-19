@@ -216,6 +216,9 @@ php artisan dusk tests\Browser\User\DatabasesearchesPluginTest.php
 echo --- 掲示板
 php artisan dusk tests\Browser\User\BbsesPluginTest.php
 
+echo --- タブ
+php artisan dusk tests\Browser\User\TabsPluginTest.php
+
 echo ※ スクリーンショットの保存先
 echo tests\Browser\screenshots
 
@@ -235,12 +238,13 @@ rem ---------------------------------------------
 rem - マニュアル
 rem ---------------------------------------------
 
+rem 【基本機能】 メニュー, 固定記事
 rem 【情報の発信】 固定記事, ブログ, カレンダー, スライドショー, 開館カレンダー, 新着情報
 rem 【情報の蓄積】 FAQ, リンクリスト, キャビネット, フォトアルバム, データベース, OPAC, (researchmap連携), (機関リポジトリ)
 rem 【情報の収集】 フォーム, 課題管理, (データ収集), カウンター
 rem 【情報の検索】 サイト内検索, データベース検索
 rem 【情報の交換】 掲示板, 施設予約
-rem 【情報の整理】 メニュー, タブ
+rem 【情報の整理】 タブ
 rem 【情報の試行】 テーマチェンジャー
 rem 【情報の教育】 (DroneStudy), (CodeStudy)
 
