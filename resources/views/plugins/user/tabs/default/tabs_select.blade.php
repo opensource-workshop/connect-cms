@@ -50,7 +50,7 @@
                         id="frame_select{{$frame_record->id}}" name="frame_select[]" value="{{$frame_record->id}}"
                         @if ($tabs && $tabs->onFrame($frame_record->id)) checked @endif
                     >
-                    <label class="custom-control-label" for="frame_select{{$frame_record->id}}">
+                    <label class="custom-control-label" for="frame_select{{$frame_record->id}}" id="label_frame_select{{$frame_record->id}}">
                         {{$frame_record->frame_title}}({{$frame_record->plugin_name}})
                     </label>
                 </div>
