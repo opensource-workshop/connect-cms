@@ -35,7 +35,7 @@ use App\Rules\CustomValiWysiwygMax;
  * @category ブログプラグイン
  * @package Controller
  * @plugin_title ブログ
- * @plugin_desc ブログを作成できるプラグインです。<br />サイトからのニュース配信などにも使用します。
+ * @plugin_desc ブログを作成できるプラグインです。サイトからのニュース配信などにも使用します。
  */
 class BlogsPlugin extends UserPluginBase
 {

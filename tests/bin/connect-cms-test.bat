@@ -224,7 +224,10 @@ rem - マニュアル出力
 rem ---------------------------------------------
 
 if "%1" == "t_all" (
+    echo --- マニュアルHTML出力
     php artisan dusk tests\Manual\src\ManualOutput.php
+
+    echo --- マニュアルPDF出力
     php artisan dusk tests\Manual\src\ManualPdf.php
 )
 

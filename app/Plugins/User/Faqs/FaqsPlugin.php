@@ -30,7 +30,7 @@ use App\Rules\CustomValiWysiwygMax;
  * @category FAQプラグイン
  * @package Controller
  * @plugin_title FAQ
- * @plugin_desc FAQを作成できるプラグインです。<br />質問と回答をわかりやすく表示できます。
+ * @plugin_desc FAQを作成できるプラグインです。質問と回答をわかりやすく表示できます。
  */
 class FaqsPlugin extends UserPluginBase
 {
