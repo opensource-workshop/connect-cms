@@ -511,6 +511,10 @@ class UserPluginBase extends PluginBase
 
     /**
      * バケツ選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示するプラグインのバケツを選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {

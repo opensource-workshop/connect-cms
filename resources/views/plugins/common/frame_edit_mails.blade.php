@@ -140,7 +140,7 @@
                 <div class="custom-control custom-checkbox custom-control-inline">
                     <input type="hidden" value="" name="relate_on">
                     <input type="checkbox" value="1" id="relate_on" name="relate_on" class="custom-control-input" data-toggle="collapse" data-target="#collapse_relate" aria-expanded="false" aria-controls="collapse_relate" @if(old('relate_on', $bucket_mail->relate_on) == 1) checked="checked" @endif>
-                    <label class="custom-control-label" for="notice_on" id="label_notice_on">関連記事の投稿通知を送る。</label>
+                    <label class="custom-control-label" for="relate_on" id="label_relate_on">関連記事の投稿通知を送る。</label>
                 </div>
             </div>
             <div class="collapse" id="collapse_relate">

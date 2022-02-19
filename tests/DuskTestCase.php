@@ -246,14 +246,11 @@ abstract class DuskTestCase extends BaseTestCase
      */
     public function addPluginFirst($add_plugin, $permanent_link = '/', $area = 0, $screenshot = true)
     {
-//echo "addPluginFirst\n";
         Plugins::where('plugin_name', ucfirst($add_plugin))->update(['display_flag' => 1]);
 
         if (!Frame::where('plugin_name', $add_plugin)->where('area_id', $area)->first()) {
             $this->addPluginModal($add_plugin, $permanent_link, $area, $screenshot);
         }
-//echo "addPluginFirst 2\n";
-//print_r($this->test_frame);
 
         $this->test_frame = Frame::where('plugin_name', $add_plugin)->where('area_id', $area)->orderBy('id', 'desc')->first();
         $this->test_page = Page::where('permanent_link', $permanent_link)->first();
@@ -508,12 +505,6 @@ EOF;
         $this->login(1);
         $this->addPluginFirst($plugin_name, $url, $area_id);
         $this->logout();
-
-        // フレームのバケツIDのクリア
-        //$page = Page::where('permanent_link', $url)->first();
-        //$frame = Frame::where('page_id', $page->id)->where('area_id', $area_id)->where('plugin_name', $plugin_name)->first();
-        //$frame->bucket_id = null;
-        //$frame->save();
 
         // マニュアルデータの削除
         Dusks::where('plugin_name', $plugin_name)->delete();
