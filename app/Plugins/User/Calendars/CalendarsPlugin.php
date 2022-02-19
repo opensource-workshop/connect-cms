@@ -246,7 +246,10 @@ class CalendarsPlugin extends UserPluginBase
             // copyしないと全部同じオブジェクトを入れてしまうことになる
             $dates[$date->format('Y-m-d')] = $date->copy();
         }
-        $dates = $this->addHoliday($year, $month, $dates);
+        $start_date = current($dates);
+        $end_date = end($dates)->endOfDay();
+
+        $dates = $this->addHolidaysFromTo($start_date, $end_date, $dates);
         return $dates;
     }
 

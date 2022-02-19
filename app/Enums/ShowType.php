@@ -13,7 +13,7 @@ final class ShowType extends EnumsBase
 
     // key/valueの連想配列
     const enum = [
-        self::not_show=>'表示しない',
-        self::show=>'表示する',
+        self::not_show => '表示しない',
+        self::show => '表示する',
     ];
 }

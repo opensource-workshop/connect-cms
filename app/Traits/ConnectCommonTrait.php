@@ -3,7 +3,7 @@
 namespace App\Traits;
 
 // use Illuminate\Http\Request;
-// use Illuminate\Support\Collection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
@@ -857,33 +857,45 @@ trait ConnectCommonTrait
     }
 
     /**
+     * 祝日の追加（From-To指定）
+     *
+     * date に holiday 属性を追加する。
+     * 年またぎを考慮。
+     */
+    protected function addHolidaysFromTo(ConnectCarbon $start_date, ConnectCarbon $end_date, array $dates) : array
+    {
+        // 年の祝日一覧を取得する。
+        $yasumis = $this->getYasumis($start_date->year);
+
+        // 独自設定祝日データの取得（From-To指定）
+        $connect_holidays = Holiday::whereBetween('holiday_date', [$start_date, $end_date])->orderBy('holiday_date')->get();
+
+        // 独自設定祝日を加味する。
+        $dates = $this->addConnectHolidays($connect_holidays, $dates, $yasumis);
+
+        // 年またぎ対応（開始と終了で年が違う場合、終了年の祝日もセット）
+        if ($start_date->year != $end_date->year) {
+            $end_yasumis = $this->getYasumis($end_date->year);
+            $dates = $this->addConnectHolidays($connect_holidays, $dates, $end_yasumis);
+        }
+
+        return $dates;
+    }
+
+    /**
      * 年の祝日を取得
      */
-    public function getYasumis($year, $country = 'Japan', $locale = 'ja_JP')
+    private function getYasumis($year, ?string $country = 'Japan', ?string $locale = 'ja_JP') : \Yasumi\Provider\AbstractProvider
     {
         return Yasumi::create($country, (int)$year, $locale);
     }
 
     /**
-     * 独自設定祝日データの呼び出し
+     * 独自設定祝日を加味する。
      */
-    public function getHolidays($year, $month)
+    private function addConnectHolidays(Collection $connect_holidays, array $dates, \Yasumi\Provider\AbstractProvider $yasumis) : array
     {
-        // 独自設定祝日を取得する。
-        return Holiday::where('holiday_date', 'LIKE', $year . '-' .$month . '%')->orderBy('holiday_date')->get();
-    }
-
-    /**
-     * 祝日の追加
-     * date に holiday 属性を追加する。
-     */
-    protected function addHoliday($year, $month, $dates)
-    {
-        // 年の祝日一覧を取得する。
-        $yasumis = $this->getYasumis($year);
-
-        // 独自設定祝日を加味する。
-        foreach ($this->getHolidays($year, $month) as $holiday) {
+        foreach ($connect_holidays as $holiday) {
             // 計算の祝日に同じ日があれば、追加設定を有効にするために、かぶせる。
             // Yasumi のメソッドに日付指定での抜き出しがないので、ループする。
             $found_flag = false;
@@ -905,9 +917,9 @@ trait ConnectCommonTrait
             }
         }
 
-        // 独自祝日を加味した祝日一覧をループ。対象の年月があれば、date オブジェクトに holiday 属性として追加する。
+        // 独自祝日を加味した祝日一覧をループ。対象の年月日があれば、date オブジェクトに holiday 属性として追加する。
         foreach ($yasumis as $yasumi) {
-            if ($yasumi->format('Y-m') == $year . "-" . $month) {
+            if (isset($dates[$yasumi->format('Y-m-d')])) {
                 $dates[$yasumi->format('Y-m-d')]->holiday = $yasumi;
             }
         }

@@ -15,6 +15,13 @@
     <a href="{{url('/')}}/plugin/calendars/index/{{$page->id}}/{{$frame_id}}?year{{$frame_id}}={{date('Y', strtotime('+1 month', $current_ym_first))}}&month{{$frame_id}}={{date('m', strtotime('+1 month', $current_ym_first))}}#frame-{{$frame_id}}"><i class="fas fa-chevron-circle-right"></i></a>
 </div>
 
+{{-- posts.createをループ外で判定 --}}
+@can('posts.create',[[null, $frame->plugin_name, $buckets]])
+    @php $can_posts_create = true; @endphp
+@else
+    @php $can_posts_create = false; @endphp
+@endcan
+
 <table class="table table-bordered table-sm cc-font-80 mb-1">
     <thead>
     <tr class="thead d-table-row">
@@ -134,20 +141,22 @@
                     @endif
 
                     {{-- 祝日 --}}
-                    <div class="col-12 pl-1 d-inline cc-font-90">
-                        <span class="badge badge-pill badge-danger">{{$date->getHolidayName()}}</span>
-                    </div>
+                    @if ($date->hasHoliday())
+                        <div class="pl-1 d-inline cc-font-90">
+                            <span class="badge badge-pill badge-danger">{{$date->getHolidayName()}}</span>
+                        </div>
+                    @endif
                 </div>
 
             </div>
 
             <div class="col-6 text-right">
-                @can('posts.create',[[null, 'calendars', $buckets]])
+                @if ($can_posts_create)
                     @if (isset($frame) && $frame->bucket_id)
                         {{-- 新規登録ボタン --}}
                         <a href="{{url('/')}}/plugin/calendars/edit/{{$page->id}}/{{$frame_id}}?date={{$date->format('Y-m-d')}}#frame-{{$frame_id}}"><i class="fas fa-plus"></i></a>
                     @endif
-                @endcan
+                @endif
             </div>
         </div>
 

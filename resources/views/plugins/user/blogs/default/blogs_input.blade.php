@@ -124,13 +124,13 @@ use App\Models\User\Blogs\BlogsPosts;
 
     <div class="form-group">
         <label class="control-label">カテゴリ</label>
-        <select name="categories_id" class="form-control @if ($errors && $errors->has('category')) border-danger @endif">
+        <select name="categories_id" class="form-control @if ($errors && $errors->has('categories_id')) border-danger @endif">
             <option value=""></option>
-            @foreach($blogs_categories as $category)
-            <option value="{{$category->id}}" @if(old('categories_id', $blogs_posts->categories_id)==$category->id) selected="selected" @endif>{{$category->category}}</option>
+            @foreach ($blogs_categories as $category)
+                <option value="{{$category->id}}" @if (old('categories_id', $blogs_posts->categories_id) == $category->id) selected="selected" @endif>{{$category->category}}</option>
             @endforeach
         </select>
-        @include('plugins.common.errors_inline', ['name' => 'category'])
+        @include('plugins.common.errors_inline', ['name' => 'categories_id'])
     </div>
 
     <div class="form-group">

@@ -5,6 +5,7 @@ namespace App\Plugins\User\Forms;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 // use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -38,6 +39,7 @@ use App\Enums\Bs4TextColor;
 use App\Enums\CsvCharacterCode;
 use App\Enums\FormColumnType;
 use App\Enums\FormStatusType;
+use App\Enums\PluginName;
 use App\Enums\Required;
 
 /**
@@ -55,6 +57,12 @@ use App\Enums\Required;
 class FormsPlugin extends UserPluginBase
 {
     const CHECKBOX_SEPARATOR = '|';
+
+    /**
+     * @var string フォーム名の最大長
+     * @see App\Providers\AppServiceProvider::boot
+     */
+    const FORM_NAME_SIZE = 191;
 
     /* オブジェクト変数 */
 
@@ -86,6 +94,7 @@ class FormsPlugin extends UserPluginBase
             'cancel',
             'copyColumn',
             'storeInput',
+            'copyForm',
         ];
         return $functions;
     }
@@ -105,6 +114,7 @@ class FormsPlugin extends UserPluginBase
         $role_check_table["listInputs"]           = ['frames.edit'];
         $role_check_table["editInput"]            = ['frames.edit'];
         $role_check_table["storeInput"]           = ['frames.create'];
+        $role_check_table["copyForm"]             = ['buckets.create'];
         return $role_check_table;
     }
 
@@ -1505,10 +1515,7 @@ class FormsPlugin extends UserPluginBase
         // 画面から渡ってくるforms_id が空ならバケツとフォームを新規登録
         if (empty($forms_id)) {
             // バケツの登録
-            $bucket = new Buckets();
-            $bucket->bucket_name = '無題';
-            $bucket->plugin_name = 'forms';
-            $bucket->save();
+            $bucket = $this->saveFormBucket($request->forms_name);
 
             // フォームデータ新規オブジェクト
             $forms = new Forms();
@@ -1533,6 +1540,9 @@ class FormsPlugin extends UserPluginBase
 
             // フォームデータ取得
             $forms = Forms::where('id', $forms_id)->first();
+
+            // バケツ名を入力されたフォーム名で更新
+            $bucket = $this->saveFormBucket($request->forms_name, $forms->bucket_id);
 
             $message = 'フォーム設定を変更しました。';
         }
@@ -2472,5 +2482,66 @@ ORDER BY forms_inputs_id, forms_columns_id
         $request->flash_message = '変更しました。';
 
         // redirect_path指定して自動遷移するため、returnで表示viewの指定不要。
+    }
+
+    /**
+     * フォームのコピー機能
+     */
+    public function copyForm($request, $page_id, $frame_id, $form_id)
+    {
+        // formsのコピー
+        $form = Forms::find($form_id);
+
+        // パラメータ不正
+        if (!isset($form)) {
+            Log::debug('forms_id is not found.');
+            return;
+        }
+
+        $copy_form = $form->replicate();
+        $forms_name = $form->forms_name . '_copy';
+        // 桁あふれでエラーにならないようにするため上限で切り捨て
+        if (strlen($forms_name) > self::FORM_NAME_SIZE) {
+            $forms_name = mb_strcut($forms_name, 0, self::FORM_NAME_SIZE);
+        }
+
+        // バケツの登録
+        $bucket = $this->saveFormBucket($forms_name);
+
+        $copy_form->forms_name = $forms_name;
+        $copy_form->bucket_id = $bucket->id;
+        $copy_form->save();
+
+        // forms_columnsのコピー
+        $form_columns = FormsColumns::where('forms_id', $form->id)->get();
+        foreach ($form_columns as $form_column) {
+            $copy_form_column = $form_column->replicate();
+            $copy_form_column->forms_id = $copy_form->id;
+            $copy_form_column->save();
+
+            // forms_columns_selectsのコピー
+            $form_column_selects = FormsColumnsSelects::where('forms_columns_id', $form_column->id)->get();
+            foreach ($form_column_selects as $form_column_select) {
+                $copy_form_column_select = $form_column_select->replicate();
+                $copy_form_column_select->forms_columns_id = $copy_form_column->id;
+                $copy_form_column_select->save();
+            }
+        }
+    }
+
+    /**
+     * フォームのバケツを登録する
+     *
+     * @param string $form_name フォーム名
+     * @param int $bucket_id バケツID
+     * @return Buckets フォームのバケツ
+     */
+    private function saveFormBucket($form_name, $bucket_id = null)
+    {
+        $bucket = Buckets::findOrNew($bucket_id);
+        $bucket->bucket_name = $form_name;
+        $bucket->plugin_name = PluginName::getPluginName(PluginName::forms);
+        $bucket->save();
+        return $bucket;
     }
 }
