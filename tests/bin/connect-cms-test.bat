@@ -105,6 +105,9 @@ rem ---------------------------------------------
 echo --- アップロードファイル
 php artisan dusk tests\Browser\Manage\UploadfileManageTest.php
 
+echo --- 施設管理
+php artisan dusk tests\Browser\Manage\ReservationManageTest.php
+
 echo --- テーマ管理
 php artisan dusk tests\Browser\Manage\ThemeManageTest.php
 
