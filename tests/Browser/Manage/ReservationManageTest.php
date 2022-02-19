@@ -58,7 +58,7 @@ class ReservationManageTest extends DuskTestCase
         ReservationsInputsColumn::truncate();
 
         // 初期データをseeder から登録
-        Artisan::call('db:seed',['--class'=> 'DefaultReservationsTableSeeder']);
+        Artisan::call('db:seed', ['--class'=> 'DefaultReservationsTableSeeder']);
 
         // 最初にマニュアルの順番確定用にメソッドを指定する。
         $this->reserveManual('index', 'regist', 'categories', 'columnSets', 'registColumnSet');
