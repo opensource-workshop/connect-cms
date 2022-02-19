@@ -33,7 +33,7 @@ use App\Plugins\User\UserPluginBase;
  * @category キャビネット・プラグイン
  * @package Controller
  * @plugin_title キャビネット
- * @plugin_desc キャビネットを作成できるプラグインです。<br />ファイルの管理に使用します。
+ * @plugin_desc キャビネットを作成できるプラグインです。ファイルの管理に使用します。
  */
 class CabinetsPlugin extends UserPluginBase
 {

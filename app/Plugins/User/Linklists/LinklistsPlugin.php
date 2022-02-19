@@ -27,7 +27,7 @@ use App\Plugins\User\UserPluginBase;
  * @category リンクリスト・プラグイン
  * @package Controller
  * @plugin_title リンクリスト
- * @plugin_desc リンクリストを作成できるプラグインです。<br />よく使うサイトのURLを登録します。
+ * @plugin_desc リンクリストを作成できるプラグインです。よく使うサイトのURLを登録します。
  */
 class LinklistsPlugin extends UserPluginBase
 {

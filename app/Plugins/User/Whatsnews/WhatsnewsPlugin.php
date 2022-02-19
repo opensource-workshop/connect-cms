@@ -27,7 +27,7 @@ use App\Traits\ConnectCommonTrait;
  * @category 新着情報プラグイン
  * @package Controller
  * @plugin_title 新着情報
- * @plugin_desc 新着情報を作成できるプラグインです。<br />サイト内のプラグインから新着記事を集めます。
+ * @plugin_desc 新着情報を作成できるプラグインです。サイト内のプラグインから新着記事を集めます。
  */
 class WhatsnewsPlugin extends UserPluginBase
 {

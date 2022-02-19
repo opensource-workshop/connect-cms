@@ -31,7 +31,7 @@ use App\Rules\CustomValiWysiwygMax;
  * @category カレンダー・プラグイン
  * @package Controller
  * @plugin_title カレンダー
- * @plugin_desc カレンダーを作成できるプラグインです。<br />予定の配信や共有に使用します。
+ * @plugin_desc カレンダーを作成できるプラグインです。予定の配信や共有に使用します。
  */
 class CalendarsPlugin extends UserPluginBase
 {
