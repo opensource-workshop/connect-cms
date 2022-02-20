@@ -1,4 +1,5 @@
 page_name,permanent_link,background_color,header_color,theme,layout,base_display_flag
+固定記事,/test/content,NULL,NULL,NULL,NULL,1
 ブログ,/test/blog,NULL,NULL,NULL,NULL,1
 カレンダー,/test/calendar,NULL,NULL,NULL,NULL,1
 スライドショー,/test/slideshow,NULL,NULL,NULL,NULL,1

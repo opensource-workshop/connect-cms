@@ -63,7 +63,7 @@
                     </li>
                 </ul>
 
-                {{-- プラグインのリストはカテゴリで表示 --}}
+                {{-- プラグインのリストはカテゴリの場合に表示 --}}
                 @if ($base_path == '../')
                 <ul class="d-md-none">
                     @foreach ($methods->where('category', $current_method->category)->groupBy('plugin_name') as $method_group)
@@ -73,7 +73,7 @@
                             </li>
                         @else
                             <li class="smp-nav-link">
-                                <a href="{{$base_path}}{{$method_group[0]->category}}/{{$method_group[0]->plugin_name}}/{{$method_group[0]->method_name}}/index.html" class="smp-nav-link">
+                                <a href="{{$base_path}}{{$method_group[0]->category}}/{{$method_group[0]->plugin_name}}/index.html" class="smp-nav-link">
                                     {{$method_group[0]->plugin_title}}
                                 </a>
                             </li>

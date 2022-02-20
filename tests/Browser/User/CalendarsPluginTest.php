@@ -228,7 +228,7 @@ class CalendarsPluginTest extends DuskTestCase
             'user',
             '/test/calendar',
             ['calendars', 'カレンダー'],
-            ['day' => '日表示', 'small_month' => '月表示（小）', 'breadcrumbs' => 'パンくず', 'sitemap' => 'サイトマップ']
+            ['day' => '日表示', 'small_month' => '月表示（小）']
         );
     }
 }

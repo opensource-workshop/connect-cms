@@ -45,8 +45,8 @@
                     @endif
                 </p>
             @endforeach
-            {!!$current_method->getInsertion($level, 'foot')!!}
         </div>
     </div>
     @endif
+    {!!$current_method->getInsertion($level, 'foot')!!}
 @endsection
