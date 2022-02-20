@@ -3,7 +3,7 @@
     background-color: #f2f2f2; 
 }
 </style>
-<div class="card" html_only>
+<div class="card mt-3" html_only>
 <div class="card-body" html_only>
     <p>【CSVファイル項目説明】</p>
     <table class="table table-striped table-sm table-bordered table_css pdf_table">

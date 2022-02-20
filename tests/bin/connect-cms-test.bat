@@ -158,6 +158,9 @@ php artisan dusk tests\Browser\Common\LoginLogoutTest.php
 echo --- 管理機能
 php artisan dusk tests\Browser\Common\AdminLinkTest.php
 
+echo --- WYSIWYG
+php artisan dusk tests\Browser\Common\WysiwygTest.php
+
 rem ---------------------------------------------
 rem - 一般プラグイン
 rem ---------------------------------------------
@@ -239,7 +242,7 @@ rem - マニュアル
 rem ---------------------------------------------
 
 rem 【基本機能】 メニュー, 固定記事
-rem 【情報の発信】 固定記事, ブログ, カレンダー, スライドショー, 開館カレンダー, 新着情報
+rem 【情報の発信】 ブログ, カレンダー, スライドショー, 開館カレンダー, 新着情報
 rem 【情報の蓄積】 FAQ, リンクリスト, キャビネット, フォトアルバム, データベース, OPAC, (researchmap連携), (機関リポジトリ)
 rem 【情報の収集】 フォーム, 課題管理, (データ収集), カウンター
 rem 【情報の検索】 サイト内検索, データベース検索
