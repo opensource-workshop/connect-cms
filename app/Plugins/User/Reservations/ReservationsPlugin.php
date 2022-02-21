@@ -1462,13 +1462,9 @@ class ReservationsPlugin extends UserPluginBase
         }
         $reservation = $reservation ?? new Reservation();
 
-        if (!$this->frame->bucket_id) {
+        if (!$reservation->id && !$create_flag) {
             // バケツ空テンプレートを呼び出す。
             return $this->commonView('empty_bucket_setting');
-        }
-
-        if (!$reservation->id && !$create_flag) {
-            return $this->view_error("404_inframe", null, '更新時にreservationが空');
         }
 
         // 表示テンプレートを呼び出す。
