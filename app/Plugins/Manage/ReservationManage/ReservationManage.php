@@ -29,6 +29,8 @@ use App\Rules\CustomValiWysiwygMax;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設管理
  * @package Controller
+ * @plugin_title 施設管理
+ * @plugin_desc 施設予約で使用する施設を登録して管理する管理機能です。
  */
 class ReservationManage extends ManagePluginBase
 {
@@ -83,6 +85,9 @@ class ReservationManage extends ManagePluginBase
      * 初期表示
      *
      * @return view
+     * @method_title 施設一覧
+     * @method_desc 登録されている施設を一覧表示します。
+     * @method_detail 施設の基本情報や項目セットの編集画面へのリンクがあります。
      */
     public function index($request, $id = null)
     {
@@ -139,6 +144,9 @@ class ReservationManage extends ManagePluginBase
      * 施設登録画面表示
      *
      * @return view
+     * @method_title 施設登録
+     * @method_desc 施設を登録できます。
+     * @method_detail 施設名や利用時間、利用曜日、カテゴリや項目セット、重複予約など、施設に関する情報を登録します。
      */
     public function regist($request, $id = null)
     {
@@ -308,6 +316,9 @@ class ReservationManage extends ManagePluginBase
      * 施設カテゴリ表示画面
      *
      * @return view
+     * @method_title 施設カテゴリ設定
+     * @method_desc 施設カテゴリを登録できます。
+     * @method_detail 施設カテゴリは施設に設定します。
      */
     public function categories($request, $id = null)
     {
@@ -406,6 +417,9 @@ class ReservationManage extends ManagePluginBase
      * 項目セット一覧 初期表示
      *
      * @return view
+     * @method_title 項目セット一覧
+     * @method_desc 施設の項目セット一覧を表示、登録します。
+     * @method_detail 施設には、項目セットで設定した項目を割り当てることができます。
      */
     public function columnSets($request, $id = null)
     {
@@ -456,6 +470,9 @@ class ReservationManage extends ManagePluginBase
      * 項目セット 登録画面表示
      *
      * @return view
+     * @method_title 項目設定
+     * @method_desc 施設の項目セットに項目を登録します。
+     * @method_detail 項目名や型、条件などを設定して項目を設定します。
      */
     public function registColumnSet($request)
     {

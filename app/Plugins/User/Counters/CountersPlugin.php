@@ -25,6 +25,8 @@ use App\Utilities\Csv\CsvUtils;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category カウンター・プラグイン
  * @package Controller
+ * @plugin_title カウンター
+ * @plugin_desc カウンターを作成できるプラグインです。日ごとの履歴もダウンロードできます。
  */
 class CountersPlugin extends UserPluginBase
 {
@@ -116,6 +118,10 @@ class CountersPlugin extends UserPluginBase
     /**
      * データ初期表示関数
      * コアがページ表示の際に呼び出す関数
+     *
+     * @method_title カウンター表示
+     * @method_desc カウンターを表示します。
+     * @method_detail 指定された形式でカウンターを表示します。
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -222,6 +228,10 @@ class CountersPlugin extends UserPluginBase
 
     /**
      * プラグインのバケツ選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示するカウンターを選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -258,6 +268,10 @@ class CountersPlugin extends UserPluginBase
 
     /**
      * バケツ新規作成画面
+     *
+     * @method_title 作成
+     * @method_desc カウンターを新しく作成します。
+     * @method_detail カウンター名を入力してカウンターを作成できます。
      */
     public function createBuckets($request, $page_id, $frame_id)
     {
@@ -267,6 +281,10 @@ class CountersPlugin extends UserPluginBase
 
     /**
      * フレーム表示設定画面の表示
+     *
+     * @method_title 表示設定
+     * @method_desc このフレームに表示する際のカウンターをカスタマイズできます。
+     * @method_detail 表示形式、カウント前後の文字などを設定できます。
      */
     public function editView($request, $page_id, $frame_id)
     {
@@ -535,7 +553,11 @@ class CountersPlugin extends UserPluginBase
     }
 
     /**
-     * プラグインのバケツ選択表示関数
+     * カウント一覧
+     *
+     * @method_title カウント一覧
+     * @method_desc 日ごとのカウント一覧を表示します。
+     * @method_detail 日付、日ごとのカウント、累計の一覧です。
      */
     public function listCounters($request, $page_id, $frame_id, $id = null)
     {

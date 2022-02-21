@@ -125,7 +125,7 @@ class PageManageTest extends DuskTestCase
 
             // ブログ を テスト の下に移動
             $test_page = Page::where('page_name', 'テスト')->first();
-            $sub_page = Page::where('page_name', 'ブログ')->first();
+            $sub_page = Page::where('page_name', '固定記事')->first();
 
             $browser->visit('/manage/page')
                     ->select('#form_select_page' . $sub_page->id . ' .manage-page-selectpage', $test_page->id)
@@ -146,7 +146,7 @@ class PageManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
 
-            $page_names = ['カレンダー','スライドショー','開館カレンダー','FAQ','リンクリスト','キャビネット','フォトアルバム','データベース','OPAC','フォーム','課題管理','サイト内検索','データベース検索','掲示板','施設予約','メニュー','タブ'];
+            $page_names = ['ブログ','カレンダー','スライドショー','開館カレンダー','FAQ','リンクリスト','キャビネット','フォトアルバム','データベース','OPAC','フォーム','課題管理','カウンター','サイト内検索','データベース検索','掲示板','施設予約','メニュー','タブ'];
 
             // テスト用の各ページ を テスト の下に移動
             $test_page = Page::where('page_name', 'テスト')->first();

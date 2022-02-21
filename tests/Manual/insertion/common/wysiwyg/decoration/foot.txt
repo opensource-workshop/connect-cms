@@ -1,0 +1,104 @@
+<div class="card mt-3" html_only>
+<div class="card-body" html_only>
+
+    <div class="d-flex flex-row">
+        <div class="p-2">
+            <button aria-label="元に戻す" title="元に戻す" type="button">
+            <svg width="24" height="24">
+                <path d="M6.4 8H12c3.7 0 6.2 2 6.8 5.1.6 2.7-.4 5.6-2.3 6.8a1 1 0 01-1-1.8c1.1-.6 1.8-2.7 1.4-4.6-.5-2.1-2.1-3.5-4.9-3.5H6.4l3.3 3.3a1 1 0 11-1.4 1.4l-5-5a1 1 0 010-1.4l5-5a1 1 0 011.4 1.4L6.4 8z" fill-rule="nonzero"></path>
+            </svg>
+            </button>
+        </div>
+        <div class="p-2">編集した内容を元に戻す「アンドゥ」機能です。保存すると戻すことはできません。</div>
+    </div>
+
+    <div class="d-flex flex-row">
+        <div class="p-2">
+            <button aria-label="やり直し" title="やり直し" type="button">
+            <svg width="24" height="24">
+                <path d="M17.6 10H12c-2.8 0-4.4 1.4-4.9 3.5-.4 2 .3 4 1.4 4.6a1 1 0 11-1 1.8c-2-1.2-2.9-4.1-2.3-6.8.6-3 3-5.1 6.8-5.1h5.6l-3.3-3.3a1 1 0 111.4-1.4l5 5a1 1 0 010 1.4l-5 5a1 1 0 01-1.4-1.4l3.3-3.3z" fill-rule="nonzero"></path>
+            </svg>
+            </button>
+        </div>
+        <div class="p-2">「アンドゥ」したものをやり直す「リドゥ」機能です。</div>
+    </div>
+
+    <div class="d-flex flex-row">
+        <div class="p-2">
+            <button aria-label="太字" title="太字" type="button">
+            <svg width="24" height="24">
+                <path d="M7.8 19c-.3 0-.5 0-.6-.2l-.2-.5V5.7c0-.2 0-.4.2-.5l.6-.2h5c1.5 0 2.7.3 3.5 1 .7.6 1.1 1.4 1.1 2.5a3 3 0 01-.6 1.9c-.4.6-1 1-1.6 1.2.4.1.9.3 1.3.6s.8.7 1 1.2c.4.4.5 1 .5 1.6 0 1.3-.4 2.3-1.3 3-.8.7-2.1 1-3.8 1H7.8zm5-8.3c.6 0 1.2-.1 1.6-.5.4-.3.6-.7.6-1.3 0-1.1-.8-1.7-2.3-1.7H9.3v3.5h3.4zm.5 6c.7 0 1.3-.1 1.7-.4.4-.4.6-.9.6-1.5s-.2-1-.7-1.4c-.4-.3-1-.4-2-.4H9.4v3.8h4z" fill-rule="evenodd"></path>
+            </svg>
+            </button>
+        </div>
+        <div class="p-2">文字を太字にできます。</div>
+    </div>
+
+    <div class="d-flex flex-row">
+        <div class="p-2">
+            <button aria-label="斜体" title="斜体" type="button">
+            <svg width="24" height="24">
+                <path d="M16.7 4.7l-.1.9h-.3c-.6 0-1 0-1.4.3-.3.3-.4.6-.5 1.1l-2.1 9.8v.6c0 .5.4.8 1.4.8h.2l-.2.8H8l.2-.8h.2c1.1 0 1.8-.5 2-1.5l2-9.8.1-.5c0-.6-.4-.8-1.4-.8h-.3l.2-.9h5.8z" fill-rule="evenodd"></path>
+            </svg>
+            </button>
+        </div>
+        <div class="p-2">文字を斜体にできます。日本語フォントの場合は斜体にならない場合があります。</div>
+    </div>
+
+    <div class="d-flex flex-row">
+        <div class="p-2">
+            <button aria-label="下線" title="下線" type="button">
+            <svg width="24" height="24">
+                <path d="M16 5c.6 0 1 .4 1 1v5.5a4 4 0 01-.4 1.8l-1 1.4a5.3 5.3 0 01-5.5 1 5 5 0 01-1.6-1c-.5-.4-.8-.9-1.1-1.4a4 4 0 01-.4-1.8V6c0-.6.4-1 1-1s1 .4 1 1v5.5c0 .3 0 .6.2 1l.6.7a3.3 3.3 0 002.2.8 3.4 3.4 0 002.2-.8c.3-.2.4-.5.6-.8l.2-.9V6c0-.6.4-1 1-1zM8 17h8c.6 0 1 .4 1 1s-.4 1-1 1H8a1 1 0 010-2z" fill-rule="evenodd"></path>
+            </svg>
+            </button>
+        </div>
+        <div class="p-2">文字に下線を設定できます。</div>
+    </div>
+
+    <div class="d-flex flex-row">
+        <div class="p-2">
+            <button aria-label="取消線" title="取消線" type="button">
+            <svg width="24" height="24">
+                <g fill-rule="evenodd"><path d="M15.6 8.5c-.5-.7-1-1.1-1.3-1.3-.6-.4-1.3-.6-2-.6-2.7 0-2.8 1.7-2.8 2.1 0 1.6 1.8 2 3.2 2.3 4.4.9 4.6 2.8 4.6 3.9 0 1.4-.7 4.1-5 4.1A6.2 6.2 0 017 16.4l1.5-1.1c.4.6 1.6 2 3.7 2 1.6 0 2.5-.4 3-1.2.4-.8.3-2-.8-2.6-.7-.4-1.6-.7-2.9-1-1-.2-3.9-.8-3.9-3.6C7.6 6 10.3 5 12.4 5c2.9 0 4.2 1.6 4.7 2.4l-1.5 1.1z"></path><path d="M5 11h14a1 1 0 010 2H5a1 1 0 010-2z" fill-rule="nonzero"></path></g>
+            </svg>
+            </button>
+        </div>
+        <div class="p-2">文字に取り消し線を設定できます。</div>
+    </div>
+
+    <div class="d-flex flex-row">
+        <div class="p-2">
+            <button aria-label="下付き" title="下付き" type="button">
+            <svg width="24" height="24">
+                <path d="M10.4 10l4.6 4.6-1.4 1.4L9 11.4 4.4 16 3 14.6 7.6 10 3 5.4 4.4 4 9 8.6 13.6 4 15 5.4 10.4 10zM21 19h-5v-1l1-.8 1.7-1.6c.3-.4.5-.8.5-1.2 0-.3 0-.6-.2-.7-.2-.2-.5-.3-.9-.3a2 2 0 00-.8.2l-.7.3-.4-1.1 1-.6 1.2-.2c.8 0 1.4.3 1.8.7.4.4.6.9.6 1.5s-.2 1.1-.5 1.6a8 8 0 01-1.3 1.3l-.6.6h2.6V19z" fill-rule="nonzero"></path>
+            </svg>
+            </button>
+        </div>
+        <div class="p-2">文字を下付き設定にできます。</div>
+    </div>
+
+    <div class="d-flex flex-row">
+        <div class="p-2">
+            <button aria-label="上付き" title="上付き" type="button">
+            <svg width="24" height="24">
+                <path d="M15 9.4L10.4 14l4.6 4.6-1.4 1.4L9 15.4 4.4 20 3 18.6 7.6 14 3 9.4 4.4 8 9 12.6 13.6 8 15 9.4zm5.9 1.6h-5v-1l1-.8 1.7-1.6c.3-.5.5-.9.5-1.3 0-.3 0-.5-.2-.7-.2-.2-.5-.3-.9-.3l-.8.2-.7.4-.4-1.2c.2-.2.5-.4 1-.5.3-.2.8-.2 1.2-.2.8 0 1.4.2 1.8.6.4.4.6 1 .6 1.6 0 .5-.2 1-.5 1.5l-1.3 1.4-.6.5h2.6V11z" fill-rule="nonzero"></path>
+            </svg>
+            </button>
+        </div>
+        <div class="p-2">文字を上付き設定にできます。</div>
+    </div>
+
+    <div class="d-flex flex-row">
+        <div class="p-2">
+            <button aria-label="書式をクリア" title="書式をクリア" type="button">
+            <svg width="24" height="24">
+                <path d="M13.2 6a1 1 0 010 .2l-2.6 10a1 1 0 01-1 .8h-.2a.8.8 0 01-.8-1l2.6-10H8a1 1 0 110-2h9a1 1 0 010 2h-3.8zM5 18h7a1 1 0 010 2H5a1 1 0 010-2zm13 1.5L16.5 18 15 19.5a.7.7 0 01-1-1l1.5-1.5-1.5-1.5a.7.7 0 011-1l1.5 1.5 1.5-1.5a.7.7 0 011 1L17.5 17l1.5 1.5a.7.7 0 01-1 1z" fill-rule="evenodd"></path>
+            </svg>
+            </button>
+        </div>
+        <div class="p-2">設定した書式をクリアできます。</div>
+    </div>
+
+</div html_only>
+</div html_only>

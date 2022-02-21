@@ -247,8 +247,9 @@ abstract class DuskTestCase extends BaseTestCase
     public function addPluginFirst($add_plugin, $permanent_link = '/', $area = 0, $screenshot = true)
     {
         Plugins::where('plugin_name', ucfirst($add_plugin))->update(['display_flag' => 1]);
+        $page = Page::where('permanent_link', $permanent_link)->first();
 
-        if (!Frame::where('plugin_name', $add_plugin)->where('area_id', $area)->first()) {
+        if (!Frame::where('plugin_name', $add_plugin)->where('area_id', $area)->where('page_id', $page->id)->first()) {
             $this->addPluginModal($add_plugin, $permanent_link, $area, $screenshot);
         }
 
@@ -345,6 +346,12 @@ abstract class DuskTestCase extends BaseTestCase
      */
     private function getDocument($annotation_name, $class_name, $method_name = null)
     {
+        // 指定されたクラスがない場合は空を返す。（クラスに対応していないテストケースへの対応）
+        if (!class_exists($class_name)) {
+            return "";
+        }
+
+        // メソッド、クラスの内容を読み取り
         if ($method_name == null) {
             $class = new \ReflectionClass($class_name);
         } elseif (method_exists($class_name, $method_name)) {
@@ -498,16 +505,13 @@ EOF;
             Uploads::destroy($upload->id);
         }
 
+        // フレームの削除
+        Frame::where('plugin_name', $plugin_name)->delete();
+
         // プラグインが配置されていなければ追加(テストするFrameとページのインスタンス変数への保持も)
         $this->login(1);
         $this->addPluginFirst($plugin_name, $url, $area_id);
         $this->logout();
-
-        // フレームのバケツIDのクリア
-        $page = Page::where('permanent_link', $url)->first();
-        $frame = Frame::where('page_id', $page->id)->where('area_id', $area_id)->where('plugin_name', $plugin_name)->first();
-        $frame->bucket_id = null;
-        $frame->save();
 
         // マニュアルデータの削除
         Dusks::where('plugin_name', $plugin_name)->delete();

@@ -5,6 +5,7 @@ rem ----------------------------------------------
 rem batでまとめてテスト実行
 rem > tests\bin\connect-cms-test.bat
 rem
+rem > tests\bin\connect-cms-test.bat t_all     <<-- データのクリア＆シーダー＆マニュアル作成（HTML＆PDF）
 rem > tests\bin\connect-cms-test.bat trancate  <<-- データのクリア＆シーダー
 rem > tests\bin\connect-cms-test.bat fresh     <<-- テーブルの再構築＆シーダー
 rem
@@ -27,17 +28,14 @@ rem テストコマンド実行時に１度だけ、自動テストDB初期化をするので不要です。
 rem   (see) https://github.com/opensource-workshop/connect-cms/wiki/Dusk#手動でテストdb初期化
 rem @php artisan config:clear
 
+rem ---------------------------------------------
+rem trancate 呼び出し
+rem ---------------------------------------------
+if "%1" == "t_all" (
+    call:trancate
+)
 if "%1" == "trancate" (
-    rem 下記は、自動テストDB初期化で行っていないコマンド
-    rem echo --- キャッシュクリア
-    rem php artisan cache:clear
-    rem php artisan config:clear
-
-    echo --- データベース・クリア
-    php artisan db:seed --env=dusk.local --class=TruncateAllTables
-
-    echo --- データ・初期追加
-    php artisan db:seed --env=dusk.local
+    call:trancate
 )
 
 if "%1" == "fresh" (
@@ -107,6 +105,9 @@ rem ---------------------------------------------
 echo --- アップロードファイル
 php artisan dusk tests\Browser\Manage\UploadfileManageTest.php
 
+echo --- 施設管理
+php artisan dusk tests\Browser\Manage\ReservationManageTest.php
+
 echo --- テーマ管理
 php artisan dusk tests\Browser\Manage\ThemeManageTest.php
 
@@ -157,6 +158,9 @@ php artisan dusk tests\Browser\Common\LoginLogoutTest.php
 echo --- 管理機能
 php artisan dusk tests\Browser\Common\AdminLinkTest.php
 
+echo --- WYSIWYG
+php artisan dusk tests\Browser\Common\WysiwygTest.php
+
 rem ---------------------------------------------
 rem - 一般プラグイン
 rem ---------------------------------------------
@@ -203,19 +207,69 @@ php artisan dusk tests\Browser\User\OpacsPluginTest.php
 echo --- フォーム
 php artisan dusk tests\Browser\User\FormsPluginTest.php
 
+echo --- カウンター
+php artisan dusk tests\Browser\User\CountersPluginTest.php
+
+echo --- サイト内検索
+php artisan dusk tests\Browser\User\SearchsPluginTest.php
+
+echo --- データベース検索
+php artisan dusk tests\Browser\User\DatabasesearchesPluginTest.php
+
+echo --- 掲示板
+php artisan dusk tests\Browser\User\BbsesPluginTest.php
+
+echo --- タブ
+php artisan dusk tests\Browser\User\TabsPluginTest.php
+
 echo ※ スクリーンショットの保存先
 echo tests\Browser\screenshots
+
+rem ---------------------------------------------
+rem - マニュアル出力
+rem ---------------------------------------------
+
+if "%1" == "t_all" (
+    echo --- マニュアルHTML出力
+    php artisan dusk tests\Manual\src\ManualOutput.php
+
+    echo --- マニュアルPDF出力
+    php artisan dusk tests\Manual\src\ManualPdf.php
+)
 
 rem ---------------------------------------------
 rem - マニュアル
 rem ---------------------------------------------
 
-rem 【情報の発信】 固定記事, ブログ, カレンダー, スライドショー, 開館カレンダー, 新着情報
+rem 【基本機能】 メニュー, 固定記事
+rem 【情報の発信】 ブログ, カレンダー, スライドショー, 開館カレンダー, 新着情報
 rem 【情報の蓄積】 FAQ, リンクリスト, キャビネット, フォトアルバム, データベース, OPAC, (researchmap連携), (機関リポジトリ)
 rem 【情報の収集】 フォーム, 課題管理, (データ収集), カウンター
 rem 【情報の検索】 サイト内検索, データベース検索
 rem 【情報の交換】 掲示板, 施設予約
-rem 【情報の整理】 メニュー, タブ
+rem 【情報の整理】 タブ
 rem 【情報の試行】 テーマチェンジャー
 rem 【情報の教育】 (DroneStudy), (CodeStudy)
+
+rem ---------------------------------------------
+rem メイン関数の終了（exit しないと、サブルーチンが動く）
+rem ---------------------------------------------
+
+exit /b
+
+rem ---------------------------------------------
+rem サブルーチン
+rem ---------------------------------------------
+:trancate
+    rem 下記は、自動テストDB初期化で行っていないコマンド
+    rem echo --- キャッシュクリア
+    rem php artisan cache:clear
+    rem php artisan config:clear
+
+    echo --- データベース・クリア
+    php artisan db:seed --env=dusk.local --class=TruncateAllTables
+
+    echo --- データ・初期追加
+    php artisan db:seed --env=dusk.local
+exit /b
 

@@ -7174,7 +7174,8 @@ trait MigrationTrait
                 $journals_tsv .=                              "\t"; // カテゴリ
                 $journals_tsv .= $nc2_bbs_post->status      . "\t";
                 $journals_tsv .=                              "\t"; // 承認フラグ
-                $journals_tsv .= $nc2_bbs_post->subject     . "\t";
+                // データ中にタブ文字が存在するケースがあったため、タブ文字は消すようにした。
+                $journals_tsv .= str_replace("\t", "", $nc2_bbs_post->subject) . "\t";
                 $journals_tsv .= $content                   . "\t";
                 $journals_tsv .=                              "\t"; // more_content
                 $journals_tsv .=                              "\t"; // more_title
