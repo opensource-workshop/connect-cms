@@ -1,82 +1,42 @@
 <div class="card mt-3" html_only>
 <div class="card-body" html_only>
 
-    <div class="d-flex flex-row">
-        <div class="p-2">
-            <button aria-label="Blockquote" title="Blockquote" type="button">
-            <svg width="24" height="24">
-                <path d="M7.5 17h.9c.4 0 .7-.2.9-.6L11 13V8c0-.6-.4-1-1-1H6a1 1 0 00-1 1v4c0 .6.4 1 1 1h2l-1.3 2.7a1 1 0 00.8 1.3zm8 0h.9c.4 0 .7-.2.9-.6L19 13V8c0-.6-.4-1-1-1h-4a1 1 0 00-1 1v4c0 .6.4 1 1 1h2l-1.3 2.7a1 1 0 00.8 1.3z" fill-rule="nonzero"></path>
-            </svg>
-            </button>
-        </div>
-        <div class="p-2">ブロッククオート。標準のデザインでは文字が少し大きくなります。</div>
-    </div>
-
-    <div class="d-flex flex-row">
-        <div class="p-2">
-            <button aria-label="左揃え" title="左揃え" type="button">
-            <svg width="24" height="24">
-                <path d="M5 5h14c.6 0 1 .4 1 1s-.4 1-1 1H5a1 1 0 110-2zm0 4h8c.6 0 1 .4 1 1s-.4 1-1 1H5a1 1 0 110-2zm0 8h8c.6 0 1 .4 1 1s-.4 1-1 1H5a1 1 0 010-2zm0-4h14c.6 0 1 .4 1 1s-.4 1-1 1H5a1 1 0 010-2z" fill-rule="evenodd"></path>
-            </svg>
-            </button>
-        </div>
-        <div class="p-2">左揃え</div>
-    </div>
-
-    <div class="d-flex flex-row">
-        <div class="p-2">
-            <button aria-label="中央揃え" title="中央揃え" type="button">
-            <svg width="24" height="24">
-                <path d="M5 5h14c.6 0 1 .4 1 1s-.4 1-1 1H5a1 1 0 110-2zm3 4h8c.6 0 1 .4 1 1s-.4 1-1 1H8a1 1 0 110-2zm0 8h8c.6 0 1 .4 1 1s-.4 1-1 1H8a1 1 0 010-2zm-3-4h14c.6 0 1 .4 1 1s-.4 1-1 1H5a1 1 0 010-2z" fill-rule="evenodd"></path>
-            </svg>
-            </button>
-        </div>
-        <div class="p-2">中央揃え</div>
-    </div>
-
-    <div class="d-flex flex-row">
-        <div class="p-2">
-            <button aria-label="右揃え" title="右揃え" type="button">
-            <svg width="24" height="24">
-                <path d="M5 5h14c.6 0 1 .4 1 1s-.4 1-1 1H5a1 1 0 110-2zm6 4h8c.6 0 1 .4 1 1s-.4 1-1 1h-8a1 1 0 010-2zm0 8h8c.6 0 1 .4 1 1s-.4 1-1 1h-8a1 1 0 010-2zm-6-4h14c.6 0 1 .4 1 1s-.4 1-1 1H5a1 1 0 010-2z" fill-rule="evenodd"></path>
-            </svg>
-            </button>
-        </div>
-        <div class="p-2">右揃え</div>
-    </div>
-
-    <div class="d-flex flex-row">
-        <div class="p-2">
-            <button aria-label="両端揃え" title="両端揃え" type="button">
-            <svg width="24" height="24">
-                <path d="M5 5h14c.6 0 1 .4 1 1s-.4 1-1 1H5a1 1 0 110-2zm0 4h14c.6 0 1 .4 1 1s-.4 1-1 1H5a1 1 0 110-2zm0 4h14c.6 0 1 .4 1 1s-.4 1-1 1H5a1 1 0 010-2zm0 4h14c.6 0 1 .4 1 1s-.4 1-1 1H5a1 1 0 010-2z" fill-rule="evenodd"></path>
-            </svg>
-            </button>
-        </div>
-        <div class="p-2">両端揃え</div>
-    </div>
-
-    <div class="d-flex flex-row">
-        <div class="p-2">
-            <button aria-label="インデントを減らす" title="インデントを減らす" type="button">
-            <svg width="24" height="24">
-                <path d="M7 5h12c.6 0 1 .4 1 1s-.4 1-1 1H7a1 1 0 110-2zm5 4h7c.6 0 1 .4 1 1s-.4 1-1 1h-7a1 1 0 010-2zm0 4h7c.6 0 1 .4 1 1s-.4 1-1 1h-7a1 1 0 010-2zm-5 4h12a1 1 0 010 2H7a1 1 0 010-2zm1.6-3.8a1 1 0 01-1.2 1.6l-3-2a1 1 0 010-1.6l3-2a1 1 0 011.2 1.6L6.8 12l1.8 1.2z" fill-rule="evenodd"></path>
-            </svg>
-            </button>
-        </div>
-        <div class="p-2">インデントを減らす</div>
-    </div>
-
-    <div class="d-flex flex-row">
-        <div class="p-2">
-            <button aria-label="インデントを増やす" title="インデントを増やす" type="button">
-                <svg width="24" height="24">
-                    <path d="M7 5h12c.6 0 1 .4 1 1s-.4 1-1 1H7a1 1 0 110-2zm5 4h7c.6 0 1 .4 1 1s-.4 1-1 1h-7a1 1 0 010-2zm0 4h7c.6 0 1 .4 1 1s-.4 1-1 1h-7a1 1 0 010-2zm-5 4h12a1 1 0 010 2H7a1 1 0 010-2zm-2.6-3.8L6.2 12l-1.8-1.2a1 1 0 011.2-1.6l3 2a1 1 0 010 1.6l-3 2a1 1 0 11-1.2-1.6z" fill-rule="evenodd"></path>
-                </svg>
-            </button>
-        </div>
-        <div class="p-2">インデントを増やす</div>
-    </div>
+<table class="table table-sm table-bordered table_css">
+<tbody>
+    <tr>
+        <th class="doc_th" style="width: 15%;vertical-align: middle;">アイコン</th>
+        <th class="doc_th" style="width: 85%;">説明</th>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="Blockquote" title="Blockquote" type="button" html_only><img src="../_images/blockquote.png"></button html_only></td>
+        <td>ブロッククオート。標準のデザインでは文字が少し大きくなります。</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="左揃え" title="左揃え" type="button" html_only><img src="../_images/left.png"></button html_only></td>
+        <td>左揃え</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="中央揃え" title="中央揃え" type="button" html_only><img src="../_images/center.png"></button html_only></td>
+        <td>中央揃え</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="右揃え" title="右揃え" type="button" html_only><img src="../_images/right.png"></button html_only></td>
+        <td>右揃え</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="両端揃え" title="両端揃え" type="button" html_only><img src="../_images/justified.png"></button html_only></td>
+        <td>両端揃え</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="インデントを減らす" title="インデントを減らす" type="button" html_only><img src="../_images/indent.png"></button html_only></td>
+        <td>インデントを減らす</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="インデントを増やす" title="インデントを増やす" type="button" html_only><img src="../_images/outdent.png"></button html_only></td>
+        <td>インデントを増やす</td>
+    </tr>
+</tbody>
+</table>
 
 </div html_only>
 </div html_only>
