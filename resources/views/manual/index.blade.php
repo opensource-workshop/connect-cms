@@ -41,6 +41,23 @@
 <div class="row mt-3">
     <div class="col-sm">
         <div class="card">
+            <div class="card-header text-white bg-primary">ライセンス</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dd class="col-md-2">Connect-CMS のライセンス</dd>
+                    <dd class="col-md-10">ソフトウェアとしての Connect-CMS は MIT ライセンスで公開しています。<br /><a href="https://github.com/opensource-workshop/connect-cms/blob/master/LICENSE" target="_blank">https://github.com/opensource-workshop/connect-cms/blob/master/LICENSE</a></dd>
+                </dl>
+                <dl class="row mb-0">
+                    <dd class="col-md-2">ドキュメントのライセンス</dd>
+                    <dd class="col-md-10">Connect-CMS マニュアルは GFDL ライセンスで公開しています。<br /><a href="./LICENSE.md" target="_blank">LICENSE.md</a></dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mt-3">
+    <div class="col-sm">
+        <div class="card">
             <div class="card-header text-white bg-primary">動作環境</div>
             <div class="card-body">
                 <dl class="row mb-0">

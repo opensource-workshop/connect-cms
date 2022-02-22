@@ -343,7 +343,7 @@ class WysiwygTest extends DuskTestCase
                 'table',
                 '表の挿入・編集',
                 '表の挿入や設定ができます。',
-                '',
+                '※ セルの幅指定など一部機能について、スマホでの自動幅調整を優先しているために機能しないものがあります。',
                 'common/wysiwyg/table/index.html',
                 '[
                      {"path": "common/wysiwyg/table/images/table",

@@ -27,6 +27,42 @@ class ManualPdf extends DuskTestCase
     }
 
     /**
+     * 概要出力
+     *
+     * @return void
+     */
+    private function outputDescription($pdf)
+    {
+        $pdf->addPage();
+        $pdf->Bookmark("概要", 0, 0, '', '', array(0, 0, 0));
+        $pdf->writeHTML(
+            view(
+                'manual.pdf.description'
+            ),
+            false
+        );
+        return $pdf;
+    }
+
+    /**
+     * 裏表紙出力
+     *
+     * @return void
+     */
+    private function outputBackfront($pdf)
+    {
+        $pdf->addPage();
+        $pdf->Bookmark("最後に", 0, 0, '', '', array(0, 0, 0));
+        $pdf->writeHTML(
+            view(
+                'manual.pdf.backfront'
+            ),
+            false
+        );
+        return $pdf;
+    }
+
+    /**
      * カテゴリ出力
      *
      * @return void
@@ -139,9 +175,13 @@ class ManualPdf extends DuskTestCase
 
         // 初期ページを追加
         $pdf->addPage();
+        $pdf->Bookmark("表紙", 0, 0, '', '', array(0, 0, 0));
 
         // マニュアル表紙
         $pdf->writeHTML(view('manual.pdf.cover')->render(), false);
+
+        // 概要
+        $this->outputDescription($pdf);
 
         // マニュアル用データをループ
         // マニュアルHTML と違い、カテゴリ、プラグイン、メソッドの3重ループで処理する。
@@ -163,6 +203,9 @@ class ManualPdf extends DuskTestCase
                 }
             }
         }
+
+        // 裏表紙
+        $this->outputBackfront($pdf);
 
         // 目次ページの追加
         $pdf->addTOCPage();

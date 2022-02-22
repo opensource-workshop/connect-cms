@@ -123,17 +123,37 @@ class Dusks extends Model
      *
      * @return dusks
      */
-    public function getInsertionPdf($level, $position, $front = '', $rear = '')
+    public function getInsertionPdf($level, $position, $front = '', $rear = '', $manual_path = null)
     {
         // HTML用と同じタグを取得
         $insertion = $this->getInsertion($level, $position, $front, $rear);
 
-        // タグを抜き出して、html_only クラスがあれば、そのタグを削除する。
+        // タグをループして処理
         $match_ret = preg_match_all('/<([^>]*)>/', $insertion, $matches);
         if ($match_ret !== false && $match_ret > 0) {
+            // タグを抜き出して、html_only クラスがあれば、そのタグを削除する。
             foreach ($matches[0] as $matche) {
                 if (strpos($matche, 'html_only') !== false) {
                     $insertion = str_replace($matche, '', $insertion);
+                }
+            }
+
+            // タグを抜き出して、img src があれば、画像のパスを実パスに変更する。
+            foreach ($matches[1] as $matche) {
+                if (strpos($matche, 'img src=') === 0) {
+                    $tmp_path = str_replace('img src="', '', $matche);
+                    $tmp_path = str_replace('"', '', $tmp_path);
+                    $img_path = "";
+                    if (empty(config('connect.manual_put_base'))) {
+                        if (\Storage::disk('manual')->exists('html/' . $tmp_path)) {
+                            $img_path = \Storage::disk('manual')->path('html/' . $tmp_path);
+                        }
+                    } else {
+                        if (\File::exists(config('connect.manual_put_base') . $this->category . '/' . $this->plugin_name . '/'. $this->method_name . '/'. $tmp_path)) {
+                            $img_path = config('connect.manual_put_base') . $this->category . '/' . $this->plugin_name . '/'. $this->method_name . '/'. $tmp_path;
+                        }
+                    }
+                    $insertion = str_replace($matche, 'img src="' . $img_path . '"', $insertion);
                 }
             }
         }
