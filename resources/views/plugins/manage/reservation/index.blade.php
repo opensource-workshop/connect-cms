@@ -42,7 +42,7 @@
                 @foreach($facilities as $facility)
                     @if ($facility->reservations_categories_id != $befor_reservations_categories_id)
                         <tr class="bg-white">
-                            <th nowrap colspan="5"><div class="h5 mb-0"><span class="badge badge-secondary">{{$facility->category}}</span></div></th>
+                            <th nowrap colspan="9"><div class="h5 mb-0"><span class="badge badge-secondary">{{$facility->category}}</span></div></th>
                         </tr>
                         @php
                            $befor_reservations_categories_id = $facility->reservations_categories_id;

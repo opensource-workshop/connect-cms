@@ -86,7 +86,7 @@
                                 @else
                                     <input type="radio" value="{{$enum_value}}" id="facility_display_type_{{$enum_value}}" name="{{ReservationFrameConfig::facility_display_type}}" class="custom-control-input">
                                 @endif
-                                <label class="custom-control-label" for="facility_display_type_{{$enum_value}}">{{$enum_label}}</label>
+                                <label class="custom-control-label" for="facility_display_type_{{$enum_value}}" id="label_facility_display_type_{{$enum_value}}">{{$enum_label}}</label>
                             </div>
                         @endforeach
                         @include('plugins.common.errors_inline', ['name' => ReservationFrameConfig::facility_display_type])
