@@ -219,6 +219,9 @@ php artisan dusk tests\Browser\User\DatabasesearchesPluginTest.php
 echo --- Œf¦”Â
 php artisan dusk tests\Browser\User\BbsesPluginTest.php
 
+echo --- {İ—\–ñ
+php artisan dusk tests\Browser\User\ReservationsPluginTest.php
+
 echo --- ƒ^ƒu
 php artisan dusk tests\Browser\User\TabsPluginTest.php
 

@@ -55,6 +55,8 @@ use RRule\RRule;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
  * @package Controller
+ * @plugin_title 施設予約
+ * @plugin_desc 施設予約を作成できるプラグインです。会議室や設備の予約で使用します。
  */
 class ReservationsPlugin extends UserPluginBase
 {
@@ -219,6 +221,10 @@ class ReservationsPlugin extends UserPluginBase
     /**
      * データ初期表示関数
      * コアがページ表示の際に呼び出す関数
+     *
+     * @method_title 予約一覧
+     * @method_desc 予約状況を表示します。
+     * @method_detail 月表示や週表示で予約一覧を表示します。
      */
     public function index($request, $page_id, $frame_id, $view_format = null, $carbon_target_date = null)
     {
@@ -608,6 +614,10 @@ class ReservationsPlugin extends UserPluginBase
 
     /**
      * 予約追加画面の表示
+     *
+     * @method_title 予約の登録
+     * @method_desc 予約内容を登録します。
+     * @method_detail 予約日、時間、繰り返しなどを指定して予約を登録します。
      */
     public function editBooking($request, $page_id, $frame_id, $input_id = null)
     {
@@ -1237,6 +1247,10 @@ class ReservationsPlugin extends UserPluginBase
 
     /**
      * 予約の詳細表示 URL版
+     *
+     * @method_title 予約の詳細表示
+     * @method_desc 予約内容を表示します。
+     * @method_detail 1件の予約を詳細表示します。予約内容をURLで伝える場合は、このページのURLを使用します。
      */
     public function showBooking($request, $page_id, $frame_id, $input_id = null, $is_json = false)
     {
@@ -1397,6 +1411,10 @@ class ReservationsPlugin extends UserPluginBase
 
     /**
      * 施設予約選択画面の表示
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示する施設予約を選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -1437,6 +1455,10 @@ class ReservationsPlugin extends UserPluginBase
 
     /**
      * 施設予約の新規作成画面の表示
+     *
+     * @method_title 作成
+     * @method_desc 施設予約を新しく作成します。
+     * @method_detail 施設予約名を入力して施設予約を作成できます。
      */
     public function createBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -1778,6 +1800,10 @@ class ReservationsPlugin extends UserPluginBase
 
     /**
      * 施設カテゴリ選択の設定画面の表示
+     *
+     * @method_title 施設設定
+     * @method_desc このフレームに表示する施設をカテゴリで指定します。
+     * @method_detail カテゴリと施設は管理者メニューの施設管理で登録します。
      */
     public function choiceFacilities($request, $page_id, $frame_id, $reservations_id = null)
     {
@@ -1900,6 +1926,10 @@ class ReservationsPlugin extends UserPluginBase
 
     /**
      * フレーム表示設定画面の表示
+     *
+     * @method_title 表示設定
+     * @method_desc このフレームに表示する際の施設予約をカスタマイズできます。
+     * @method_detail 表示形式、表示する施設を設定できます。
      */
     public function editView($request, $page_id, $frame_id)
     {

@@ -813,7 +813,7 @@ class WysiwygTest extends DuskTestCase
                 'face',
                 'AI顔認識',
                 'アップロードした写真から顔を判定して、自動的にモザイク処理を施します。',
-                'モザイクの粗さも指定できます。',
+                'AI顔認識を使用するには、外部サービス設定が必要です。<br />モザイクの粗さも指定できます。',
                 'common/wysiwyg/face/index.html',
                 '[
                      {"path": "common/wysiwyg/face/images/face",

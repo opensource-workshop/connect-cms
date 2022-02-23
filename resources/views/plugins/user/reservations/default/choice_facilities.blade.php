@@ -51,7 +51,7 @@
                             <input type="hidden" value="0" name="view_flag[{{$category->id}}]">
 
                             <input type="checkbox" value="1" name="view_flag[{{$category->id}}]" class="custom-control-input" id="view_flag[{{$category->id}}]"@if (old('view_flag.'.$category->id, $category->view_flag)) checked="checked"@endif>
-                            <label class="custom-control-label" for="view_flag[{{$category->id}}]"></label>
+                            <label class="custom-control-label" for="view_flag[{{$category->id}}]" id="label_view_flag_{{$category->id}}"></label>
                         </div>
                     </td>
                     <td nowrap class="align-middle">

@@ -33,9 +33,9 @@ class ReservationManageTest extends DuskTestCase
     {
         $this->init();
         $this->login(1);
+        $this->categories();
         $this->regist();
         $this->registOther("中会議室", "小会議室１", "小会議室２", "プロジェクタ", "ドローンセットＡ", "ドローンセットＢ");
-        $this->categories();
         $this->columnSets();
         $this->registColumnSet();
         $this->index();
@@ -94,6 +94,7 @@ class ReservationManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/reservation/regist')
                     ->type('facility_name', '大会議室')
+                    ->select('reservations_categories_id', '2')
                     ->select('columns_set_id', '1')
                     ->screenshot('manage/reservation/regist/images/regist1');
 
@@ -122,8 +123,15 @@ class ReservationManageTest extends DuskTestCase
         // ブラウザ操作
         $this->browse(function (Browser $browser) use ($names) {
             foreach ($names as $name) {
+
+                $reservations_category = '2';
+                if (strpos($name, 'ドローン') !== false) {
+                    $reservations_category = '3';
+                }
+
                 $browser->visit('/manage/reservation/regist')
                         ->type('facility_name', $name)
+                        ->select('reservations_categories_id', $reservations_category)
                         ->select('columns_set_id', '1')
                         ->press('登録確定');
             }
@@ -137,6 +145,14 @@ class ReservationManageTest extends DuskTestCase
     {
         // ブラウザ操作
         $this->browse(function (Browser $browser) {
+            $browser->visit('/manage/reservation/categories')
+                    ->type('add_display_sequence', '2')
+                    ->type('add_category', '会議室')
+                    ->press('変更')
+                    ->type('add_display_sequence', '3')
+                    ->type('add_category', 'ドローン')
+                    ->press('変更');
+
             $browser->visit('/manage/reservation/categories')
                     ->screenshot('manage/reservation/categories/images/categories');
         });
