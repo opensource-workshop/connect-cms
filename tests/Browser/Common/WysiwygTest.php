@@ -47,6 +47,9 @@ class WysiwygTest extends DuskTestCase
         $this->media();
         $this->preview();
         $this->source();
+        $this->translate();
+        $this->pdf();
+        $this->face();
 
         $this->logout();
     }
@@ -722,6 +725,102 @@ class WysiwygTest extends DuskTestCase
                 '',
                 'common/wysiwyg/source/index.html',
                 '[{"path": "common/wysiwyg/source/images/source", "name": "HTMLソース"}]'
+            )
+        );
+    }
+
+    /**
+     * 翻訳
+     */
+    private function translate()
+    {
+        // 画面
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
+                    ->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(15) button:nth-child(1)')
+                    ->pause(500)
+                    ->screenshot('common/wysiwyg/translate/images/translate');
+        });
+
+        // マニュアル用データ出力
+        $dusk = Dusks::putManualData(
+            ['html_path' => 'common/wysiwyg/translate/index.html'],
+            $this->getDuskBody(
+                'translate',
+                '翻訳',
+                '文章を他の言語に翻訳できます。',
+                '翻訳を使用するには、外部サービス設定が必要です。<br />記載した文章を選択してからボタンをクリックすると、選択したものが初期値で入力されます。',
+                'common/wysiwyg/translate/index.html',
+                '[
+                     {"path": "common/wysiwyg/translate/images/translate",
+                      "name": "翻訳",
+                      "comment": "<ul class=\"mb-0\"><li>2022-02-23時点では、英語、スペイン語、フランス語、ドイツ語、ポルトガル語、中国語（簡体字）、中国語（繁体字）、韓国語、タガログ語、ベトナム語があります。</li><li>翻訳言語は必要に応じて追加します。</li></ul>"
+                     }
+                 ]'
+            )
+        );
+    }
+
+    /**
+     * PDF
+     */
+    private function pdf()
+    {
+        // 画面
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
+                    ->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(15) button:nth-child(2)')
+                    ->pause(500)
+                    ->screenshot('common/wysiwyg/pdf/images/pdf');
+        });
+
+        // マニュアル用データ出力
+        $dusk = Dusks::putManualData(
+            ['html_path' => 'common/wysiwyg/pdf/index.html'],
+            $this->getDuskBody(
+                'pdf',
+                'PDFアップロード',
+                'PDFをアップロードして、自動的にサムネイルを作成します。',
+                'PDFアップロードを使用するには、外部サービス設定が必要です。<br />アップロードしたPDFから、サムネイルを自動で生成し、サムネイルからもリンクします。サムネイルの大きさやサムネイルを生成するページ数も指定できます。',
+                'common/wysiwyg/pdf/index.html',
+                '[
+                     {"path": "common/wysiwyg/pdf/images/pdf",
+                      "name": "PDFアップロード",
+                      "comment": "<ul class=\"mb-0\"><li>パスワード付PDFの場合は、パスワードも入力してください。</li></ul>"
+                     }
+                 ]'
+            )
+        );
+    }
+
+    /**
+     * AI顔認識
+     */
+    private function face()
+    {
+        // 画面
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
+                    ->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(15) button:nth-child(3)')
+                    ->pause(500)
+                    ->screenshot('common/wysiwyg/face/images/face');
+        });
+
+        // マニュアル用データ出力
+        $dusk = Dusks::putManualData(
+            ['html_path' => 'common/wysiwyg/face/index.html'],
+            $this->getDuskBody(
+                'face',
+                'AI顔認識',
+                'アップロードした写真から顔を判定して、自動的にモザイク処理を施します。',
+                'モザイクの粗さも指定できます。',
+                'common/wysiwyg/face/index.html',
+                '[
+                     {"path": "common/wysiwyg/face/images/face",
+                      "name": "AI顔認識",
+                      "comment": "<ul class=\"mb-0\"><li>画像のサイズ変更もこの時、同時に実施できます。</li></ul>"
+                     }
+                 ]'
             )
         );
     }
