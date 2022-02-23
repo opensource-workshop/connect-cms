@@ -33,6 +33,12 @@ class ServiceManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/service')
                     ->assertTitleContains('Connect-CMS')
+                    ->click('#lavel_use_translate_1')
+                    ->click('#label_use_pdf_thumbnail_1')
+                    ->click('#label_use_face_ai_1')
+                    ->press('更新');
+
+            $browser->visit('/manage/service')
                     ->screenshot('manage/service/index/images/index');
         });
 
