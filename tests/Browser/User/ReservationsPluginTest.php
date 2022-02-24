@@ -48,7 +48,7 @@ class ReservationsPluginTest extends DuskTestCase
 
         $this->logout();
         $this->index();
-//        $this->showBooking();
+        $this->showBooking();
     }
 
     /**
@@ -139,17 +139,17 @@ class ReservationsPluginTest extends DuskTestCase
      */
     private function showBooking()
     {
-        // 最新の記事を取得
-        $post = BbsPost::orderBy('id', 'desc')->first();
+        // 最新の予約を取得
+        $post = ReservationsInput::orderBy('id', 'desc')->first();
 
         // ブラウザ
         $this->browse(function (Browser $browser) use ($post) {
-            $browser->visit('plugin/bbses/show/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $post->id . '#frame-' . $this->test_frame->id)
-                    ->screenshot('user/bbses/show/images/show');
+            $browser->visit('plugin/reservations/showBooking/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $post->id . '#frame-' . $this->test_frame->id)
+                    ->screenshot('user/reservations/showBooking/images/showBooking');
         });
 
         // マニュアル用データ出力
-        $this->putManualData('user/bbses/show/images/show');
+        $this->putManualData('user/reservations/showBooking/images/showBooking');
     }
 
     /**
