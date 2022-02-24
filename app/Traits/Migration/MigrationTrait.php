@@ -3770,29 +3770,31 @@ trait MigrationTrait
                         $reservation_post->inputs_parent_id = $reservation_post->id;
                         $reservation_post->save();
 
-                        // 件名
                         $column_title = $columns->firstWhere('column_name', '件名');
-                        $reservations_inputs_columns = ReservationsInputsColumn::create([
-                            'inputs_parent_id' => $reservation_post->inputs_parent_id,
-                            'column_id' => $column_title->id,
-                            'value' => $reservation_tsv_cols[$tsv_idxs['title']],
-                        ]);
-
-                        // 連絡先
-                        $column_description = $columns->firstWhere('column_name', '連絡先');
-                        $reservations_inputs_columns = ReservationsInputsColumn::create([
-                            'inputs_parent_id' => $reservation_post->inputs_parent_id,
-                            'column_id' => $column_description->id,
-                            'value' => $reservation_tsv_cols[$tsv_idxs['contact']],
-                        ]);
-
-                        // 補足
+                        $column_contact = $columns->firstWhere('column_name', '連絡先');
                         $column_description = $columns->firstWhere('column_name', '補足');
-                        $reservations_inputs_columns = ReservationsInputsColumn::create([
-                            'inputs_parent_id' => $reservation_post->inputs_parent_id,
-                            'column_id' => $column_description->id,
-                            'value' => $this->changeWYSIWYG($reservation_tsv_cols[$tsv_idxs['description']]),
-                        ]);
+
+                        // bulk insert
+                        $reservations_inputs_columns = ReservationsInputsColumn::insert(
+                            // 件名
+                            [
+                                'inputs_parent_id' => $reservation_post->inputs_parent_id,
+                                'column_id' => $column_title->id,
+                                'value' => $reservation_tsv_cols[$tsv_idxs['title']],
+                            ],
+                            // 連絡先
+                            [
+                                'inputs_parent_id' => $reservation_post->inputs_parent_id,
+                                'column_id' => $column_contact->id,
+                                'value' => $reservation_tsv_cols[$tsv_idxs['contact']],
+                            ],
+                            // 補足
+                            [
+                                'inputs_parent_id' => $reservation_post->inputs_parent_id,
+                                'column_id' => $column_description->id,
+                                'value' => $this->changeWYSIWYG($reservation_tsv_cols[$tsv_idxs['description']]),
+                            ],
+                        );
 
                         // rruleあれば登録
                         $rrule_setting = $reservation_tsv_cols[$tsv_idxs['rrule']];
