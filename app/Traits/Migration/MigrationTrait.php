@@ -6885,7 +6885,7 @@ trait MigrationTrait
         // 「すべての会員をデフォルトで参加させる」はグループにしないので対象外。'default_entry_flag'== 0
         $nc2_rooms = Nc2Page::where('space_type', 2)
                             ->whereColumn('page_id', 'room_id')
-                            ->where('thread_num', 1)
+                            ->whereIn('thread_num', [1, 2])
                             ->where('default_entry_flag', 0)
                             ->orderBy('thread_num')
                             ->orderBy('display_sequence')
