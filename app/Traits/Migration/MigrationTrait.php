@@ -6358,7 +6358,7 @@ trait MigrationTrait
             }
 
             // NC2 のページデータ
-            $nc2_pages_query = Nc2Page::where('private_flag', 0)
+            $nc2_pages_query = Nc2Page::where('private_flag', 0)        // 0:プライベートルーム以外
                                       ->where('root_id', '<>', 0)
                                       ->where('display_sequence', '<>', 0);
 
@@ -6422,8 +6422,10 @@ trait MigrationTrait
                     if ($nc2_sort_page->default_entry_flag == 1) {
                         $membership_flag = 2;
                     } else {
-                    // 選択した会員のみ
-                        $membership_flag = 1;
+                        // ルームで選択した会員のみ
+                        if ($nc2_sort_page->page_id == $nc2_sort_page->room_id) {
+                            $membership_flag = 1;
+                        }
                     }
                 }
                 /* 多言語化対応 */
