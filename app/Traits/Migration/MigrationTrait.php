@@ -4958,15 +4958,16 @@ trait MigrationTrait
             // オプションで、全バケツで表示する施設カテゴリを指定できる。
 
             // インポート対象の表示施設カテゴリで、全バケツで表示する施設カテゴリを指定する（指定がなければ全施設表示しない）
-            $all_show_reservations_categories_ids = $this->getMigrationConfig('reservations', 'import_all_show_reservations_categories_ids');
-            if ($all_show_reservations_categories_ids) {
-                // 施設カテゴリ
-                $reservations_categories = ReservationsCategory::whereIn('id', $all_show_reservations_categories_ids)
-                    ->orderBy('display_sequence', 'asc')
-                    ->get();
-            } else {
-                $reservations_categories = collect();
-            }
+            // $all_show_reservations_categories_ids = $this->getMigrationConfig('reservations', 'import_all_show_reservations_categories_ids');
+            // if ($all_show_reservations_categories_ids) {
+            //     // 施設カテゴリ
+            //     $reservations_categories = ReservationsCategory::whereIn('id', $all_show_reservations_categories_ids)
+            //         ->orderBy('display_sequence', 'asc')
+            //         ->get();
+            // } else {
+            //     $reservations_categories = collect();
+            // }
+            $reservations_categories = collect();
 
             // インポート対象の表示施設カテゴリで、施設カテゴリ名とルーム名が同じものは表示する
             $is_show_same_name = $this->getMigrationConfig('reservations', 'import_is_show_reservations_category_name_and_room_name_are_the_same');
