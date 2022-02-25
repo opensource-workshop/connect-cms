@@ -264,12 +264,16 @@ class ReservationsPlugin extends UserPluginBase
 
         // 施設データ
         $facilities = ReservationsFacility::
-            select('reservations_facilities.*')
+            select('reservations_facilities.*', 'reservations_categories.category')
             ->join('reservations_choice_categories', function ($join) use ($reservations_frame) {
                 $join->on('reservations_choice_categories.reservations_categories_id', '=', 'reservations_facilities.reservations_categories_id')
                     ->where('reservations_choice_categories.reservations_id', $reservations_frame->reservations_id)
                     ->where('reservations_choice_categories.view_flag', ShowType::show)
                     ->whereNull('reservations_choice_categories.deleted_at');
+            })
+            ->join('reservations_categories', function ($join) {
+                $join->on('reservations_categories.id', '=', 'reservations_facilities.reservations_categories_id')
+                    ->whereNull('reservations_categories.deleted_at');
             })
             ->where('reservations_facilities.hide_flag', NotShowType::show)
             ->orderBy('reservations_choice_categories.display_sequence', 'asc')
