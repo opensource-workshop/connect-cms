@@ -1572,6 +1572,40 @@ trait MigrationTrait
             );
         }
 
+        // ※ 上ループで管理者グループを登録しようと組んだが、なぜかgroup->idがズレるため、上ループ後に管理グループ追加
+        // 管理者グループ追加
+        $admin_group = Group::updateOrCreate(['name' => '管理者グループ'], ['name' => '管理者グループ']);
+
+        // 管理者 group_users 作成
+        $admin_users_roles = UsersRoles::where('target', 'base')->where('role_name', 'role_article_admin')->get();
+        foreach ($admin_users_roles as $users_roles) {
+            $group_user = GroupUser::updateOrCreate(
+                ['group_id' => $admin_group->id, 'user_id' => $users_roles->users_id],
+                ['group_id' => $admin_group->id, 'user_id' => $users_roles->users_id, 'group_role' => 'general']
+            );
+        }
+
+        // グループ定義のループ
+        foreach ($group_ini_paths as $group_ini_path) {
+            // ini_file の解析
+            $group_ini = parse_ini_file($group_ini_path, true);
+
+            // page_roles 作成（元 page_id -> マッピング -> 新フォルダ -> マッピング -> 新 page_id）
+            $source_page = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $group_ini['source_info']['room_id'])->first();
+            if (empty($source_page)) {
+                continue;
+            }
+            $destination_page = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $source_page->destination_key)->first();
+            if (empty($destination_page)) {
+                continue;
+            }
+            // 管理者グループに権限付与
+            $page_role = PageRole::updateOrCreate(
+                ['page_id' => $destination_page->destination_key, 'group_id' => $admin_group->id],
+                ['page_id' => $destination_page->destination_key, 'group_id' => $admin_group->id, 'target' => 'base', 'role_name' => 'role_article_admin', 'role_value' => 1]
+            );
+        }
+
         // アップロード・ファイルのページIDを書き換えるために、アップロード・ファイル定義の読み込み
         if (!Storage::exists($this->getImportPath('uploads/uploads.ini'))) {
             return;
