@@ -1,0 +1,32 @@
+<p>
+WYSIWYGエディタの「翻訳」、「PDFアップロード」、「AI顔認識」は外部サービスです。<br />
+以下に外部サービスのイメージを示します。
+</p>
+<p>
+【Connect-CMSと外部サービス】<br />
+<img src="../../_images/service_desc.png" class="img-fluid" style="width: 100%; max-width: 800px;">
+</p>
+<p>以下に外部サービスの詳細を説明します。</p>
+<p><u>外部サービスとは</u></p>
+<ul>
+    <li>「外部サービス」とは、Connect-CMS 本体には、その機能を持たず、サービス提供会社の方で実装（実現）する機能を指します。</li>
+    <li>例えば、WYSIWYG の「翻訳」機能や「PDFアップロード」、「AI顔認識」機能が外部サービスにあたります。</li>
+    <li>「翻訳」機能や「PDFアップロード・画像変換」機能は、呼び出す側のユーザーインターフェースはConnect-CMS 本体に含んでいます。</li>
+    <li>サービス提供会社側で、各外部サービスの実装を行う必要があります。</li>
+</ul>
+<p><u>外部サービスのインターフェース</u></p>
+<ul>
+    <li>各外部サービスのインターフェースは、Connect-CMS のGithub - Wiki で公開しています。</li>
+    <li><a href="https://github.com/opensource-workshop/connect-cms/wiki/API" target="_blank">https://github.com/opensource-workshop/connect-cms/wiki/API</a></li>
+</ul>
+<p><u>外部サービスの有効化</u></p>
+<ul>
+    <li>外部サービスが用意できたら、機能を有効に設定する必要があります。</li>
+    <li>外部サービスの有効設定はマニュアルの「管理者 - 外部サービス設定 - WYSIWYG設定」を参照してください。</li>
+    <li><a href="../../../manage/service/index/index.html" target="_blank">外部サービス設定 - WYSIWYG設定</a></li>
+</ul>
+<p><u>外部サービスが使えるサービス</u></p>
+<ul>
+    <li>外部サービスが使えるサービスはConnect-CMS公式サイトの以下のページで公開します。</li>
+    <li><a href="https://connect-cms.jp/service" target="_blank">Connect-CMS サービス紹介</a></li>
+</ul>

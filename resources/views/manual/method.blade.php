@@ -6,6 +6,7 @@
         <div class="card-body">
             <p>{!!nl2br($current_method->method_desc)!!}</p>
             <p>{!!$current_method->method_detail!!}</p>
+            {!!$current_method->getInsertion($level, 'desc', '<p>', '</p>')!!}
         </div>
     </div>
 

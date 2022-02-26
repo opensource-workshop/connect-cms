@@ -55,6 +55,7 @@ class MenusPluginTest extends DuskTestCase
         $this->addPluginFirst('menus', '/', 1);
         $this->test_frame->frame_title = null;
         $this->test_frame->frame_design = 'none';
+        $this->test_frame->template = 'opencurrenttree';
         $this->test_frame->save();
 
         $this->browse(function (Browser $browser) {
@@ -63,7 +64,8 @@ class MenusPluginTest extends DuskTestCase
                     ->screenshot('user/menus/select/images/select');
 
             $browser->scrollIntoView('footer')
-                    ->screenshot('user/menus/select/images/select2');
+                    ->screenshot('user/menus/select/images/select2')
+                    ->press('更新');
         });
 
         // マニュアル用データ出力
