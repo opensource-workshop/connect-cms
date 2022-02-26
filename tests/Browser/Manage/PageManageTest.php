@@ -70,7 +70,7 @@ class PageManageTest extends DuskTestCase
         // クリックできるのは、label タグになるため、label タグにセレクタを追加して、ckick() メソッドで値を設定する。
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/page/edit')
-                    ->type('page_name', 'テスト')
+                    ->type('page_name', 'プラグイン・テスト')
                     ->type('permanent_link', '/test')
                     ->click('#label_base_display_flag')
                     ->assertTitleContains('Connect-CMS')
@@ -124,7 +124,7 @@ class PageManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
 
             // ブログ を テスト の下に移動
-            $test_page = Page::where('page_name', 'テスト')->first();
+            $test_page = Page::where('page_name', 'プラグイン・テスト')->first();
             $sub_page = Page::where('page_name', '固定記事')->first();
 
             $browser->visit('/manage/page')
@@ -149,7 +149,7 @@ class PageManageTest extends DuskTestCase
             $page_names = ['ブログ','カレンダー','スライドショー','開館カレンダー','FAQ','リンクリスト','キャビネット','フォトアルバム','データベース','OPAC','フォーム','課題管理','カウンター','サイト内検索','データベース検索','掲示板','施設予約','メニュー','タブ'];
 
             // テスト用の各ページ を テスト の下に移動
-            $test_page = Page::where('page_name', 'テスト')->first();
+            $test_page = Page::where('page_name', 'プラグイン・テスト')->first();
             foreach ($page_names as $page_name) {
                 $sub_page = Page::where('page_name', $page_name)->first();
                 $browser->visit('/manage/page')

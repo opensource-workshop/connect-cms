@@ -19,3 +19,4 @@ OPAC,/test/opac,NULL,NULL,NULL,NULL,1
 施設予約,/test/reservation,NULL,NULL,NULL,NULL,1
 メニュー,/test/menu,NULL,NULL,NULL,NULL,1
 タブ,/test/tab,NULL,NULL,NULL,NULL,1
+パスワード付きページ,/password,NULL,NULL,NULL,NULL,1

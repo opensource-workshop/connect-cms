@@ -59,6 +59,22 @@ echo --- データ準備用 - ログ管理 - マニュアルなし
 php artisan dusk tests\Browser\Manage\LogManageTest.php no_manual
 
 rem ---------------------------------------------
+rem - 設計
+rem ---------------------------------------------
+
+echo --- 設計
+php artisan dusk tests\Browser\Blueprint\IndexBlueprintTest.php
+
+echo --- ページ
+php artisan dusk tests\Browser\Blueprint\PageBlueprintTest.php
+
+echo --- 外部サービス
+php artisan dusk tests\Browser\Blueprint\ServiceBlueprintTest.php
+
+echo --- 権限
+php artisan dusk tests\Browser\Blueprint\RoleBlueprintTest.php
+
+rem ---------------------------------------------
 rem - 管理プラグイン
 rem ---------------------------------------------
 
@@ -160,6 +176,9 @@ php artisan dusk tests\Browser\Common\AdminLinkTest.php
 
 echo --- WYSIWYG
 php artisan dusk tests\Browser\Common\WysiwygTest.php
+
+echo --- パスワード付きページ
+php artisan dusk tests\Browser\Common\PasswordPageTest.php
 
 rem ---------------------------------------------
 rem - 一般プラグイン

@@ -5,6 +5,7 @@
 <br />
 {!!$method->method_desc!!}<br />
 {!!$method->method_detail!!}<br />
+{!!$method->getInsertionPdf('method', 'desc')!!}
 <br />
 @foreach($method->getImgArgs() as $img_arg)
 @php
@@ -14,7 +15,7 @@
             $img_path = \Storage::disk('manual')->path('html/' . $path . ".png");
         }
     } else {
-        if (\File::exists(dirname(config('connect.manual_put_base') . $img_arg["path"] . ".png"))) {
+        if (\File::exists(config('connect.manual_put_base') . $img_arg["path"] . ".png")) {
             $img_path = config('connect.manual_put_base') . $img_arg["path"] . ".png";
         }
     }

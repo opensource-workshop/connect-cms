@@ -20,7 +20,7 @@ class Dusks extends Model
         'category', 'sort',
         'plugin_name', 'plugin_title', 'plugin_desc',
         'method_name', 'method_title', 'method_desc', 'method_detail',
-        'html_path', 'img_args', 'test_result',
+        'html_path', 'img_args', 'test_result', 'parent_id'
     ];
 
     /**
@@ -142,6 +142,13 @@ class Dusks extends Model
             foreach ($matches[1] as $matche) {
                 if (strpos($matche, 'img src=') === 0) {
                     $tmp_path = str_replace('img src="', '', $matche);
+
+                    // class 等の属性があれば、画像ファイルの後ろのスペース以降で切り離して捨てる（TCPDFで極端に小さな画像などになるので）。
+                    if (strpos($tmp_path, ' ')) {
+                        $img_option = mb_strstr($tmp_path, ' '); // 一応、属性以降を変数に入れているが、基本は使わない。（デバック用
+                        $tmp_path = mb_strstr($tmp_path, ' ', true);
+                    }
+
                     $tmp_path = str_replace('"', '', $tmp_path);
                     $img_path = "";
                     if (empty(config('connect.manual_put_base'))) {

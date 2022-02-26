@@ -1,0 +1,14 @@
+<p>
+Connect-CMS では、メニューに出てくる単位のものをページと呼んでいます。<br />
+ページは、一つまたは複数のフレームで構成されます。
+</p>
+
+<ul>
+    <li>以下の図の緑の枠がページです。</li>
+    <li>以下の図の青の枠がフレームです。</li>
+</ul>
+
+<p>
+【ページとフレーム】<br />
+<img src="../../_images/page_frame.png" class="img-fluid" style="width: 100%; max-width: 800px;">
+</p>
