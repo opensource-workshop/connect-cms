@@ -248,6 +248,19 @@ echo ※ スクリーンショットの保存先
 echo tests\Browser\screenshots
 
 rem ---------------------------------------------
+rem - マイページ
+rem ---------------------------------------------
+
+echo --- マイページ
+php artisan dusk tests\Browser\Mypage\IndexMypageTest.php
+
+echo --- プロフィール
+php artisan dusk tests\Browser\Mypage\ProfileMypageTest.php
+
+echo --- ログイン履歴
+php artisan dusk tests\Browser\Mypage\LoginHistoryMypageTest.php
+
+rem ---------------------------------------------
 rem - マニュアル出力
 rem ---------------------------------------------
 
