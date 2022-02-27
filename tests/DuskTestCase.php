@@ -296,8 +296,27 @@ abstract class DuskTestCase extends BaseTestCase
     /**
      *  newするクラス名の取得
      */
-    private function getClassName($plugin_name)
+    private function getClassName($plugin_name, $category)
     {
+        // 管理プラグインとして存在するか確認
+        $class_name = "App\Plugins\\" . ucfirst($category) . "\\" . ucfirst($plugin_name) . "Manage\\" . ucfirst($plugin_name) . "Manage";
+        if (class_exists($class_name)) {
+            return $class_name;
+        }
+
+        // マイページプラグインとして存在するか確認
+        $class_name = "App\Plugins\\" . ucfirst($category) . "\\" . ucfirst($plugin_name) . "Mypage\\" . ucfirst($plugin_name) . "Mypage";
+        if (class_exists($class_name)) {
+            return $class_name;
+        }
+
+        // 標準プラグインとして存在するか確認
+        $class_name = "App\Plugins\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
+        if (class_exists($class_name)) {
+            return $class_name;
+        }
+
+        /*
         // 管理プラグインとして存在するか確認
         $class_name = "App\Plugins\Manage\\" . ucfirst($plugin_name) . "Manage\\" . ucfirst($plugin_name) . "Manage";
         if (class_exists($class_name)) {
@@ -309,12 +328,14 @@ abstract class DuskTestCase extends BaseTestCase
         if (class_exists($class_name)) {
             return $class_name;
         }
+        */
 
         // オプションプラグインとして存在するか確認
         $class_name = "App\PluginsOption\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
         if (class_exists($class_name)) {
             return $class_name;
         }
+
         return false;
     }
 
@@ -404,6 +425,14 @@ abstract class DuskTestCase extends BaseTestCase
         // クラス名の本体部分の取得
         $class_name_3 = trim($sub_class_array[3], '_');
         $class_name_3_array = explode('_', $class_name_3);
+
+        // 配列の要素が 4 あれば、3つに編集しなおす。
+        // LoginHistoryMypageTest など、LoginHistory をプラグイン名で使いたいが、ここにキャメル名があると分解が余計に行われるため。
+        if (count($class_name_3_array) == 4) {
+            $class_name_3_array[0] = $class_name_3_array[0] . ucfirst($class_name_3_array[1]);
+            $class_name_3_array[1] = $class_name_3_array[2];
+            $class_name_3_array[2] = $class_name_3_array[3];
+        }
         $plugin_name = $class_name_3_array[0];
 
         // html パスの生成
@@ -419,7 +448,7 @@ abstract class DuskTestCase extends BaseTestCase
         $dusk->html_path   = $html_path;
 
         // 対象クラスの生成とマニュアル用文章の取得
-        $class_name = $this->getClassName($plugin_name);
+        $class_name = $this->getClassName($plugin_name, $class_name_3_array[1]);
         $dusk->plugin_title = $this->getDocument('plugin_title', $class_name);
         $dusk->plugin_desc = $this->getDocument('plugin_desc', $class_name);
         $dusk->method_title = $this->getDocument('method_title', $class_name, $dusk->method_name);

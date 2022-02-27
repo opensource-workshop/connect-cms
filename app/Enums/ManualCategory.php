@@ -13,7 +13,7 @@ final class ManualCategory extends EnumsBase
     const manage = 'manage';
     const manage_data = 'manage_data';
     const user = 'user';
-    const my = 'my';
+    const mypage = 'mypage';
     const error = 'error';
     const usage = 'usage';
 
@@ -24,7 +24,7 @@ final class ManualCategory extends EnumsBase
         self::manage => '管理者',
         self::manage_data => '管理者(データ管理)',
         self::user => '一般ユーザ',
-        self::my => 'マイページ',
+        self::mypage => 'マイページ',
         self::error => 'エラー説明',
         self::usage => '逆引き',
     ];

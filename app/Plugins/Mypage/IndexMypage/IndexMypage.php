@@ -9,6 +9,9 @@ use App\Plugins\Mypage\MypagePluginBase;
 
 /**
  * マイページ画面インデックスクラス
+ *
+ * @plugin_title マイページ
+ * @plugin_desc マイページの初めに開く画面です。自分の情報を確認できます。
  */
 class IndexMypage extends MypagePluginBase
 {
@@ -27,6 +30,9 @@ class IndexMypage extends MypagePluginBase
      *  ページ初期表示
      *
      * @return view
+     * @method_title マイページ
+     * @method_desc ログインIDやメールアドレスを確認できます。
+     * @method_detail
      */
     public function index($request)
     {
