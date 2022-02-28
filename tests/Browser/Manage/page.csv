@@ -20,3 +20,5 @@ OPAC,/test/opac,NULL,NULL,NULL,NULL,1
 メニュー,/test/menu,NULL,NULL,NULL,NULL,1
 タブ,/test/tab,NULL,NULL,NULL,NULL,1
 パスワード付きページ,/password,NULL,NULL,NULL,NULL,1
+共通機能テスト,/common,NULL,NULL,NULL,NULL,1
+フレーム,/common/frame,NULL,NULL,NULL,NULL,1

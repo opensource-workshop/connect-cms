@@ -275,7 +275,7 @@
         {{-- このページのみ表示するチェック。メインエリアはもともとページ内のみなので対象外 --}}
         @if ($frame->area_id != 2)
         <div class="form-group row">
-            <label class="{{$frame->getSettingLabelClass()}}"></label>
+            <label class="{{$frame->getSettingLabelClass()}}">対象ページ</label>
             <div class="{{$frame->getSettingInputClass()}} d-flex align-items-center row m-0">
 
                 <div class="custom-control custom-radio custom-control-inline">

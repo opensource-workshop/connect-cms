@@ -59,7 +59,7 @@ echo --- データ準備用 - ログ管理 - マニュアルなし
 php artisan dusk tests\Browser\Manage\LogManageTest.php no_manual
 
 rem ---------------------------------------------
-rem - 設計
+rem - 設計 ①
 rem ---------------------------------------------
 
 echo --- 設計
@@ -70,9 +70,6 @@ php artisan dusk tests\Browser\Blueprint\PageBlueprintTest.php
 
 echo --- 外部サービス
 php artisan dusk tests\Browser\Blueprint\ServiceBlueprintTest.php
-
-echo --- 権限
-php artisan dusk tests\Browser\Blueprint\RoleBlueprintTest.php
 
 rem ---------------------------------------------
 rem - 管理プラグイン
@@ -165,7 +162,7 @@ echo --- ログインテスト
 rem php artisan dusk tests\Browser\Core\LoginTest.php
 
 rem ---------------------------------------------
-rem - 共通
+rem - 共通①
 rem ---------------------------------------------
 
 echo --- ログイン・ログアウト
@@ -173,12 +170,6 @@ php artisan dusk tests\Browser\Common\LoginLogoutTest.php
 
 echo --- 管理機能
 php artisan dusk tests\Browser\Common\AdminLinkTest.php
-
-echo --- WYSIWYG
-php artisan dusk tests\Browser\Common\WysiwygTest.php
-
-echo --- パスワード付きページ
-php artisan dusk tests\Browser\Common\PasswordPageTest.php
 
 rem ---------------------------------------------
 rem - 一般プラグイン
@@ -259,6 +250,26 @@ php artisan dusk tests\Browser\Mypage\ProfileMypageTest.php
 
 echo --- ログイン履歴
 php artisan dusk tests\Browser\Mypage\LoginHistoryMypageTest.php
+
+rem ---------------------------------------------
+rem - 設計 ②
+rem ---------------------------------------------
+
+echo --- 権限
+php artisan dusk tests\Browser\Blueprint\RoleBlueprintTest.php
+
+rem ---------------------------------------------
+rem - 共通②
+rem ---------------------------------------------
+
+echo --- フレーム
+php artisan dusk tests\Browser\Common\FrameTest.php
+
+echo --- WYSIWYG
+php artisan dusk tests\Browser\Common\WysiwygTest.php
+
+echo --- パスワード付きページ
+php artisan dusk tests\Browser\Common\PasswordPageTest.php
 
 rem ---------------------------------------------
 rem - マニュアル出力
