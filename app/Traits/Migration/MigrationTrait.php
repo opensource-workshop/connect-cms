@@ -32,6 +32,7 @@ use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
 use App\Models\Core\UsersRoles;
 use App\Models\User\Bbses\Bbs;
+use App\Models\User\Bbses\BbsFrame;
 use App\Models\User\Bbses\BbsPost;
 use App\Models\User\Blogs\Blogs;
 use App\Models\User\Blogs\BlogsPosts;
@@ -337,6 +338,7 @@ trait MigrationTrait
             Page::where('permanent_link', '<>', '/')->delete();
             Frame::truncate();
             FrameConfig::truncate();
+            BbsFrame::truncate();
             Menu::truncate();
             Contents::truncate();
             Buckets::where('plugin_name', 'contents')->delete();
@@ -457,6 +459,7 @@ trait MigrationTrait
             Like::where('target', 'bbses')->delete();
             LikeUser::where('target', 'bbses')->delete();
             Buckets::where('plugin_name', 'bbses')->delete();
+            BbsFrame::truncate();
             MigrationMapping::where('target_source_table', 'bbses')->delete();
             MigrationMapping::where('target_source_table', 'bbs_posts')->delete();
         }
@@ -4601,6 +4604,45 @@ trait MigrationTrait
         }
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+
+        if (!empty($bbs)) {
+            // フレーム設定保存
+            // ---------------------------------------
+
+            $view_format = (int) $this->getArrayValue($frame_ini, 'bbs', 'view_format', 0);
+
+            // 一覧での展開方法 変換
+            // (cc) 0:フラット形式,1:スレッド形式
+            // (cc) 0:すべて展開,1:根記事のみ展開,2:すべて閉じておく
+            // (key:cc)view_format => (value:cc)list_format
+            $convert_list_formats = [
+                0 => 0,
+                1 => 2,
+            ];
+            $list_format = $convert_list_formats[$view_format] ?? 2;
+
+            // 表示設定
+            $bbs_frame = BbsFrame::updateOrCreate(
+                ['bbs_id' => $bbs_id, 'frame_id' => $frame->id],
+                [
+                    // 表示形式 0:フラット形式,1:スレッド形式
+                    'view_format' => $view_format,
+                    // 根記事の表示順 0:スレッド内の新しい更新日時順,1:根記事の新しい日時順
+                    'thread_sort_flag' => 0,
+                    // 一覧での展開方法 0:すべて展開,1:根記事のみ展開,2:すべて閉じておく
+                    'list_format' => $list_format,
+                    // 詳細でのスレッド記事の展開方法 0:すべて展開,1:詳細表示している記事のみ展開,2:すべて閉じておく
+                    'thread_format' => 0,
+                    // スレッド記事の下線 0:表示しない,1:表示する
+                    'list_underline' => 0,
+                    // スレッド記事枠のタイトル
+                    'thread_caption' => null,
+                    // 1ページの表示件数
+                    'view_count' => $this->getArrayValue($frame_ini, 'bbs', 'view_count', null),
+                ]
+            );
+        }
+
     }
 
     /**
@@ -7176,7 +7218,6 @@ trait MigrationTrait
             $journals_ini = "";
             $journals_ini .= "[blog_base]\n";
             $journals_ini .= "blog_name = \"" . $nc2_bbs->bbs_name . "\"\n";
-            $journals_ini .= "view_count = 10\n";
             $journals_ini .= "use_like = " . $nc2_bbs->vote_flag . "\n";
 
             // NC2 情報
@@ -9790,7 +9831,40 @@ trait MigrationTrait
         } elseif ($plugin_name == 'databases') {
             // データベース
             $this->nc2BlockExportDatabases($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
+        } elseif ($plugin_name == 'bbses') {
+            // 掲示板
+            $this->nc2BlockExportBbses($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
         }
+    }
+
+    /**
+     * NC2：固定記事（お知らせ）のエクスポート
+     */
+    private function nc2BlockExportContents($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
+    {
+        // お知らせモジュールのデータの取得
+        // 続きを読むはとりあえず、1つに統合。固定記事の方、対応すること。
+        $announcement = Nc2Announcement::where('block_id', $nc2_block->block_id)->first();
+
+        // 記事
+
+        // 「お知らせモジュール」のデータがなかった場合は、データの不整合としてエラーログを出力
+        $content = "";
+        if (!empty($announcement)) {
+            $content = trim($announcement->content);
+            $content .= trim($announcement->more_content);
+        } else {
+            $this->putError(1, "no announcement record", "block_id = " . $nc2_block->block_id);
+        }
+
+        // WYSIWYG 記事のエクスポート
+        $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
+        $content_filename = "frame_" . $frame_index_str . '.html';
+        $ini_filename = "frame_" . $frame_index_str . '.ini';
+
+        $this->nc2Wysiwyg($nc2_block, $save_folder, $content_filename, $ini_filename, $content, 'announcement', $nc2_page);
+
+        //echo "nc2BlockExportContents";
     }
 
     /**
@@ -9830,33 +9904,39 @@ trait MigrationTrait
     }
 
     /**
-     * NC2：固定記事（お知らせ）のエクスポート
+     * NC2：掲示板のブロック特有部分のエクスポート
      */
-    private function nc2BlockExportContents($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
+    private function nc2BlockExportBbses($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
     {
-        // お知らせモジュールのデータの取得
-        // 続きを読むはとりあえず、1つに統合。固定記事の方、対応すること。
-        $announcement = Nc2Announcement::where('block_id', $nc2_block->block_id)->first();
-
-        // 記事
-
-        // 「お知らせモジュール」のデータがなかった場合は、データの不整合としてエラーログを出力
-        $content = "";
-        if (!empty($announcement)) {
-            $content = trim($announcement->content);
-            $content .= trim($announcement->more_content);
-        } else {
-            $this->putError(1, "no announcement record", "block_id = " . $nc2_block->block_id);
+        // NC2 ブロック設定の取得
+        $nc2_bbs_block = Nc2BbsBlock::where('block_id', $nc2_block->block_id)->first();
+        if (empty($nc2_bbs_block)) {
+            return;
         }
 
-        // WYSIWYG 記事のエクスポート
-        $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
-        $content_filename = "frame_" . $frame_index_str . '.html';
         $ini_filename = "frame_" . $frame_index_str . '.ini';
 
-        $this->nc2Wysiwyg($nc2_block, $save_folder, $content_filename, $ini_filename, $content, 'announcement', $nc2_page);
+        $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
 
-        //echo "nc2BlockExportContents";
+        // 表示形式 変換
+        // (nc) 0:スレッド,1:フラット
+        // (cc) 0:フラット形式,1:スレッド形式
+        // (key:nc2)expand => (value:cc)view_format
+        $convert_view_formats = [
+            0 => 1,
+            1 => 0,
+        ];
+        if (isset($convert_view_formats[$nc2_bbs_block->expand])) {
+            $view_format = $convert_view_formats[$nc2_bbs_block->expand];
+        } else {
+            $view_format = '';
+            $this->putError(3, '掲示板の表示形式が未対応の形式', "nc2_bbs_block = " . $nc2_bbs_block->block_id);
+        }
+
+        $frame_ini = "[bbs]\n";
+        $frame_ini .= "view_count = {$nc2_bbs_block->visible_row}\n";
+        $frame_ini .= "view_format = {$view_format}\n";
+        $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
     }
 
     /**
