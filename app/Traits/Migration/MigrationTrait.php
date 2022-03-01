@@ -779,7 +779,7 @@ trait MigrationTrait
         }
 
         // カラムがない or データが空の場合は、処理時間を入れる。
-        if ($idx != 0 && array_key_exists($idx, $tsv_cols) && !empty($tsv_cols[$idx])) {
+        if (array_key_exists($idx, $tsv_cols) && !empty($tsv_cols[$idx])) {
             $date = $tsv_cols[$idx];
             if (!\DateTime::createFromFormat('Y-m-d H:i:s', $date)) {
                 $this->putError(3, '日付エラー', "{$column_name} = {$date}");
@@ -792,6 +792,26 @@ trait MigrationTrait
         }
 
         return $date;
+    }
+
+    /**
+     * ログインIDからユーザID取得
+     */
+    private function getUserIdFromLoginId($users, $login_id)
+    {
+        $user = $users->firstWhere('userid', $login_id);
+        $user = $user ?? new User();
+        return $user->id;
+    }
+
+    /**
+     * NC2ユーザIDからNC2ログインID取得
+     */
+    private function getNc2LoginIdFromNc2UserId($nc2_users, $nc2_user_id)
+    {
+        $nc2_user = $nc2_users->firstWhere('user_id', $nc2_user_id);
+        $nc2_user = $nc2_user ?? new Nc2User();
+        return $nc2_user->login_id;
     }
 
     /**
@@ -2920,6 +2940,8 @@ trait MigrationTrait
 
         // BBS定義の取り込み
         $ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('bbses/bbs_*.ini'));
+        // ユーザ取得
+        $users = User::get();
 
         // BBS定義のループ
         foreach ($ini_paths as $ini_path) {
@@ -3005,11 +3027,18 @@ trait MigrationTrait
                         'title' => $tsv_cols[4],
                         'body' => $this->changeWYSIWYG($tsv_cols[5]),
                         'thread_root_id' => $tsv_cols[9] === '0' ? 0 : $this->fetchMigratedKey('bbses_post', $tsv_cols[10]),
-                        'thread_updated_at' => $this->convertNc2Datetime($tsv_cols[11]),
-                        'first_committed_at' => $this->convertNc2Datetime($tsv_cols[0]),
+                        'thread_updated_at' => $this->getDatetimeFromTsvAndCheckFormat(11, $tsv_cols, 11),
+                        'first_committed_at' => $this->getDatetimeFromTsvAndCheckFormat(0, $tsv_cols, 0),
                         'parent_id' => $this->fetchMigratedKey('bbses_post', $tsv_cols[9]),
-                        'created_name' => $tsv_cols[12],
                     ]);
+                    $bbs_post->created_id = $this->getUserIdFromLoginId($users, $tsv_cols[15]);
+                    $bbs_post->created_name = $tsv_cols[12];
+                    $bbs_post->created_at = $this->getDatetimeFromTsvAndCheckFormat(0, $tsv_cols, 0);
+                    $bbs_post->updated_id = $this->getUserIdFromLoginId($users, $tsv_cols[18]);
+                    $bbs_post->updated_name = $tsv_cols[17];
+                    $bbs_post->updated_at = $this->getDatetimeFromTsvAndCheckFormat(16, $tsv_cols, 16);
+                    // 登録更新日時を自動更新しない
+                    $bbs_post->timestamps = false;
                     $bbs_post->save();
                     // 根記事の場合、保存後のid をthread_root_id にセットして更新
                     if ($tsv_cols[9] === '0') {
@@ -3785,18 +3814,14 @@ trait MigrationTrait
                         'first_committed_at' => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['insert_time'], $reservation_tsv_cols, 'insert_time'),
                         'status'           => $reservation_tsv_cols[$tsv_idxs['status']],
                     ]);
-
-                    $user = $users->firstWhere('userid', $reservation_tsv_cols[$tsv_idxs['insert_login_id']]);
-                    $user = $user ?? new User();
-                    $reservation_post->created_id = $user->id;
+                    $reservation_post->created_id = $this->getUserIdFromLoginId($users, $reservation_tsv_cols[$tsv_idxs['insert_login_id']]);
                     $reservation_post->created_name = $reservation_tsv_cols[$tsv_idxs['insert_user_name']];
                     $reservation_post->created_at = $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['insert_time'], $reservation_tsv_cols, 'insert_time');
-
-                    $user = $users->firstWhere('userid', $reservation_tsv_cols[$tsv_idxs['update_login_id']]);
-                    $user = $user ?? new User();
-                    $reservation_post->updated_id = $user->id;
+                    $reservation_post->updated_id = $this->getUserIdFromLoginId($users, $reservation_tsv_cols[$tsv_idxs['update_login_id']]);
                     $reservation_post->updated_name = $reservation_tsv_cols[$tsv_idxs['update_user_name']];
                     $reservation_post->updated_at = $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['update_time'], $reservation_tsv_cols, 'update_time');
+                    // 登録更新日時を自動更新しない
+                    $reservation_post->timestamps = false;
                     $reservation_post->save();
 
                     if ($before_nc2_reserve_details_id != $reservation_tsv_cols[$tsv_idxs['reserve_details_id']]) {
@@ -7188,6 +7213,9 @@ trait MigrationTrait
             return;
         }
 
+        // nc2の全ユーザ取得
+        $nc2_users = Nc2User::get();
+
         // NC2掲示板（Bbs）のループ
         foreach ($nc2_bbses as $nc2_bbs) {
             $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
@@ -7228,12 +7256,13 @@ trait MigrationTrait
             $journals_ini .= "module_name = \"bbs\"\n";
 
             // NC2掲示板の記事（bbs_post、bbs_post_body）を移行する。
-            $nc2_bbs_posts = Nc2BbsPost::select('bbs_post.*', 'bbs_post_body.body', 'bbs_topic.newest_time')
-                                       ->join('bbs_post_body', 'bbs_post_body.post_id', '=', 'bbs_post.post_id')
-                                       ->leftJoin('bbs_topic', 'bbs_topic.topic_id', '=', 'bbs_post.post_id')
-                                       ->where('bbs_id', $nc2_bbs->bbs_id)
-                                       ->orderBy('post_id')
-                                       ->get();
+            $nc2_bbs_posts = Nc2BbsPost::
+                select('bbs_post.*', 'bbs_post_body.body', 'bbs_topic.newest_time')
+                ->join('bbs_post_body', 'bbs_post_body.post_id', '=', 'bbs_post.post_id')
+                ->leftJoin('bbs_topic', 'bbs_topic.topic_id', '=', 'bbs_post.topic_id')
+                ->where('bbs_id', $nc2_bbs->bbs_id)
+                ->orderBy('post_id')
+                ->get();
 
             // 記事はTSV でエクスポート
             // 日付{\t}status{\t}タイトル{\t}本文
@@ -7250,7 +7279,7 @@ trait MigrationTrait
 
                 $content       = $this->nc2Wysiwyg(null, null, null, null, $nc2_bbs_post->body, 'bbs', $nc2_page);
 
-                $journals_tsv .= $nc2_bbs_post->insert_time . "\t";
+                $journals_tsv .= $this->getCCDatetime($nc2_bbs_post->insert_time) . "\t"; // 0:投稿日時
                 $journals_tsv .=                              "\t"; // カテゴリ
                 $journals_tsv .= $nc2_bbs_post->status      . "\t";
                 $journals_tsv .=                              "\t"; // 承認フラグ
@@ -7262,10 +7291,14 @@ trait MigrationTrait
                 $journals_tsv .=                              "\t"; // hide_more_title
                 $journals_tsv .= $nc2_bbs_post->parent_id   . "\t"; // 親ID
                 $journals_tsv .= $nc2_bbs_post->topic_id .    "\t"; // トピックID
-                $journals_tsv .= $nc2_bbs_post->newest_time . "\t"; // 最新投稿日時
-                $journals_tsv .= $nc2_bbs_post->insert_user_name . "\t"; // 投稿者名
+                $journals_tsv .= $this->getCCDatetime($nc2_bbs_post->newest_time) . "\t"; // 11:最新投稿日時
+                $journals_tsv .= $nc2_bbs_post->insert_user_name . "\t"; // 12:投稿者名
                 $journals_tsv .= $nc2_bbs_post->vote_num    . "\t"; // いいね数
                 $journals_tsv .=                              "\t"; // いいねのsession_id & nc2 user_id
+                $journals_tsv .= $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_bbs_post->insert_user_id) . "\t";   // 15:投稿者ID
+                $journals_tsv .= $this->getCCDatetime($nc2_bbs_post->update_time) . "\t";                               // 16:更新日時
+                $journals_tsv .= $nc2_bbs_post->update_user_name . "\t";                                                // 17:更新者名
+                $journals_tsv .= $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_bbs_post->update_user_id) . "\t";   // 18:更新者ID
 
                 // 記事のタイトルの一覧
                 // タイトルに " あり
@@ -9105,15 +9138,10 @@ trait MigrationTrait
                 // NC2 reservation_reserve システム項目
                 $tsv_record['insert_time'] = $this->getCCDatetime($reservation_reserve->insert_time);
                 $tsv_record['insert_user_name'] = $reservation_reserve->insert_user_name;
-                $nc2_user = $nc2_users->firstWhere('user_id', $reservation_reserve->insert_user_id);
-                $nc2_user = $nc2_user ?? new Nc2User();
-                $tsv_record['insert_login_id'] = $nc2_user->login_id;
-
+                $tsv_record['insert_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc2_users, $reservation_reserve->insert_user_id);
                 $tsv_record['update_time'] = $this->getCCDatetime($reservation_reserve->update_time);
                 $tsv_record['update_user_name'] = $reservation_reserve->update_user_name;
-                $nc2_user = $nc2_users->firstWhere('user_id', $reservation_reserve->update_user_id);
-                $nc2_user = $nc2_user ?? new Nc2User();
-                $tsv_record['update_login_id'] = $nc2_user->login_id;
+                $tsv_record['update_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc2_users, $reservation_reserve->update_user_id);
 
                 // NC2施設予約予定は公開のみ
                 $tsv_record['status'] = 0;
