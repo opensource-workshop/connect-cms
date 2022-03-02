@@ -9,6 +9,9 @@ use App\Utilities\String\StringUtils;
 
 class CsvUtils
 {
+    // BOMコード
+    const bom = "\xEF\xBB\xBF";
+    
     /**
      * UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
      */

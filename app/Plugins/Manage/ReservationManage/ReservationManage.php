@@ -2,6 +2,8 @@
 
 namespace App\Plugins\Manage\ReservationManage;
 
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -913,17 +915,9 @@ class ReservationManage extends ManagePluginBase
     }
 
     /**
-     * データgetで取得
+     * データクエリ取得
      */
-    private function getReservationsInputs()
-    {
-        return $this->getReservationsInputsPaginate(null, false);
-    }
-
-    /**
-     * データ取得(paginate or get)
-     */
-    private function getReservationsInputsPaginate($page, $is_paginate = true)
+    private function getReservationsInputsQuery()
     {
         // 予約一覧
         $inputs_query = ReservationsInput::
@@ -938,21 +932,23 @@ class ReservationManage extends ManagePluginBase
             ->orderBy('reservations_inputs.facility_id')
             ->orderBy('reservations_inputs.start_datetime', 'desc');
 
-        // データ取得
-        if ($is_paginate) {
-            // ページャーで取得
-            $inputs = $inputs_query->paginate(100, null, 'page', $page);
-        } else {
-            // getで取得
-            $inputs = $inputs_query->get();
-        }
+        return $inputs_query;
+    }
+
+    /**
+     * データ取得(paginate)
+     */
+    private function getReservationsInputsPaginate($page)
+    {
+        // 予約一覧
+        $inputs_query = $this->getReservationsInputsQuery();
+        $inputs = $inputs_query->paginate(100, null, 'page', $page);
 
         $inputs_columns = ReservationsInputsColumn::whereIn('inputs_parent_id', $inputs->pluck('inputs_parent_id'))->get();
         foreach ($inputs as $input) {
             // （シリアライズで参照渡しになり）項目値をセット
             $input->inputs_column_value = $inputs_columns->where('inputs_parent_id', $input->inputs_parent_id)->pluck('value')->implode('|');
         }
-
 
         return $inputs;
     }
@@ -962,71 +958,74 @@ class ReservationManage extends ManagePluginBase
      */
     public function downloadCsv($request, $id = null, $sub_id = null)
     {
-        // User データの取得
-        $inputs = $this->getReservationsInputs();
+        $query = $this->getReservationsInputsQuery();
 
-        // 返却用配列
-        $csv_array = array();
+        $character_code = $request->character_code;
 
-        // データ行用の空配列
-        $copy_base = array();
+        // Symfony の StreamedResponse で出力 ＆ chunk でデータ取得することにより
+        // 大容量の出力に対応
+        return new StreamedResponse(
+            function () use ($query, $character_code) {
+                $stream = fopen('php://output', 'w');
 
-        // インポートカラムの見出し行
-        $import_column['id'] = 'id';
-        $import_column['facility_name'] = '施設名';
-        $import_column['start_datetime'] = '利用日From';
-        $import_column['end_datetime'] = '利用日To';
-        $import_column['created_name'] = '登録者';
-        $import_column['updated_at'] = '更新日';
-        $import_column['status'] = '状態';
-        $import_column['inputs_column_value'] = '項目セット値';
+                // ヘッダの設定
+                $head = [
+                    'id',
+                    '施設名',
+                    '利用日From',
+                    '利用日To',
+                    '登録者',
+                    '更新日',
+                    '状態',
+                    '項目セット値',
+                ];
 
-        // 見出し行
-        foreach ($import_column as $key => $column_name) {
-            $csv_array[0][$key] = $column_name;
-            $copy_base[$key] = '';
-        }
+                // 文字コード変換
+                if ($character_code == CsvCharacterCode::utf_8) {
+                    mb_convert_variables(CsvCharacterCode::utf_8, CsvCharacterCode::utf_8, $head);
+                    // BOM付きにさせる場合にファイルの先頭に書き込む
+                    fwrite($stream, CsvUtils::bom);
+                } else {
+                    mb_convert_variables(CsvCharacterCode::sjis_win, CsvCharacterCode::utf_8, $head);
+                }
+                fputcsv($stream, $head);
 
-        foreach ($inputs as $input) {
-            // ベースをセット
-            $csv_array[$input->id] = $copy_base;
+                // データの処理
+                $query->chunk(1000, function ($inputs) use ($stream, $character_code) { 
+                    foreach ($inputs as $input) {
+                        // コードから名称変換
+                        $input->status_display = StatusType::getDescription($input->status);
 
-            $csv_array[$input->id]['id'] = $input->id;
-            $csv_array[$input->id]['facility_name'] = $input->facility_name;
-            $csv_array[$input->id]['start_datetime'] = $input->start_datetime;
-            $csv_array[$input->id]['end_datetime'] = $input->end_datetime;
-            $csv_array[$input->id]['created_name'] = $input->created_name;
-            $csv_array[$input->id]['updated_at'] = $input->updated_at;
-            $csv_array[$input->id]['status'] = StatusType::getDescription($input->status);
-            $csv_array[$input->id]['inputs_column_value'] = $input->inputs_column_value;
-        }
+                        // 項目セット値
+                        $input->inputs_column_value = ReservationsInputsColumn::where('inputs_parent_id', $input->inputs_parent_id)->pluck('value')->implode('|');
 
-        // レスポンス
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'content-Disposition' => 'attachment; filename="reservation_bookings.csv"',
-        ];
+                        // 文字コード変換
+                        if ($character_code == CsvCharacterCode::utf_8) {
+                            mb_convert_variables(CsvCharacterCode::utf_8, CsvCharacterCode::utf_8, $input);
+                        } else {
+                            mb_convert_variables(CsvCharacterCode::sjis_win, CsvCharacterCode::utf_8, $input);
+                        }
 
-        // データ
-        $csv_data = '';
-        foreach ($csv_array as $csv_line) {
-            foreach ($csv_line as $csv_col) {
-                $csv_data .= '"' . $csv_col . '",';
-            }
-            // 末尾カンマを削除
-            $csv_data = substr($csv_data, 0, -1);
-            $csv_data .= "\n";
-        }
-
-        // 文字コード変換
-        if ($request->character_code == CsvCharacterCode::utf_8) {
-            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::utf_8);
-            // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
-            $csv_data = CsvUtils::addUtf8Bom($csv_data);
-        } else {
-            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::sjis_win);
-        }
-
-        return response()->make($csv_data, 200, $headers);
+                        fputcsv($stream, [
+                            $input->id,
+                            $input->facility_name,
+                            $input->start_datetime,
+                            $input->end_datetime,
+                            $input->created_name,
+                            $input->updated_at,
+                            $input->status_display,
+                            $input->inputs_column_value,
+                        ]);
+                    }
+                });
+                fclose($stream);
+            },
+            200,
+            [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="reservation_bookings.csv"',
+            ]
+        );
+        
     }
 }
