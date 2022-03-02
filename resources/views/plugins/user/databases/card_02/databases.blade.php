@@ -21,6 +21,9 @@
 <div class="row" >
 
     @forelse($inputs as $input)
+        @php
+            $first_column_flag = true;
+        @endphp
         <div class="col-12 col-sm-12 col-md-6 col-lg-6 pb-3">
             <div class="database_data border p-3">
                 <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}" @if ($input->title) title="{{$input->title}}の詳細" @endif  style="text-decoration: none; color: initial;">
@@ -28,36 +31,31 @@
                         {{-- 行グループ ループ --}}
                         @foreach($group_rows_cols_columns as $group_row_cols_columns)
                             <div class="row database_list_index_row_{{$loop->index}}">
+
                             {{-- 列グループ ループ --}}
                             @foreach($group_row_cols_columns as $group_col_columns)
-
-                                @if (isset($is_template_default_left_col_3))
-                                    {{-- default-left-col-3テンプレート --}}
-                                    @if ($loop->first)
-                                        <div class="col-sm-3 database_list_index_col_{{$loop->index}}">
-                                    @else
-                                        <div class="col-sm database_list_index_col_{{$loop->index}}">
-                                    @endif
-
-                                @else
-                                    {{-- defaultテンプレート --}}
-                                    <div class="col-sm database_list_index_col_{{$loop->index}}">
-                                @endif
-
+                                <div class="col-sm database_list_index_col_{{$loop->index}}">
                                 {{-- カラム ループ --}}
                                 @foreach($group_col_columns as $column)
-                                    <div class="row pt-2 pb-2 database_list_col_{{$column->id}}">
-                                        <div class="col">
-                                            @if ($column->label_hide_flag == '0')
-                                                <small><b>{{$column->column_name}}</b></small><br>
-                                            @endif
-
-                                            <div class="{{$column->classname}}">
+                                    @if ($first_column_flag == true)
+                                        {{-- 1列目、且つ、一番最初の項目はタイトル項目とする為、強調表示＆表頭の表示なし --}}
+                                        <div class="database_list_col_{{$column->id}}">
+                                            <h2>
                                                 @include('plugins.user.databases.default.databases_include_value')
-                                            </div>
-                                            <div class="small {{ $column->caption_list_detail_color }}">{!! nl2br($column->caption_list_detail) !!}</div>
+                                            </h2>
                                         </div>
-                                    </div>
+                                        @php $first_column_flag = false; @endphp
+                                    @else
+                                        {{-- 上記以外は通常表示 --}}
+                                        <dl class="database_list_col_{{$column->id}}">
+                                            @if ($column->label_hide_flag == '0')
+                                                <dt>{{$column->column_name}}</dt>
+                                            @endif
+                                            <dd>
+                                                @include('plugins.user.databases.default.databases_include_value')
+                                            </dd>
+                                        </dl>
+                                    @endif
                                 @endforeach
                                 </div>
                             @endforeach
