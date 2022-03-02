@@ -7,18 +7,21 @@ use Illuminate\Support\Facades\Validator;
 use App\Utilities\Csv\SjisToUtf8EncodingFilter;
 use App\Utilities\String\StringUtils;
 
+use App\Enums\CsvCharacterCode;
+
 class CsvUtils
 {
     // BOMコード
     const bom = "\xEF\xBB\xBF";
-    
+
     /**
      * UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
      */
     public static function addUtf8Bom($csv_data)
     {
         //「UTF-8」の「BOM」であるコード「0xEF」「0xBB」「0xBF」をカンマ区切りにされた文字列の先頭に連結
-        $csv_data = pack('C*', 0xEF, 0xBB, 0xBF) . $csv_data;
+        // $csv_data = pack('C*', 0xEF, 0xBB, 0xBF) . $csv_data;
+        $csv_data = self::bom . $csv_data;
         return $csv_data;
     }
 
@@ -30,7 +33,7 @@ class CsvUtils
         if (isset($header_columns[0])) {
             // UTF-8 BOMありなしに関わらず、先頭3バイトのBOMコードを置換して取り除く
             // BOMなしは、置換対象がないのでそのまま値が返る
-            $header_columns[0] = preg_replace('/^\xEF\xBB\xBF/', '', $header_columns[0]);
+            $header_columns[0] = preg_replace('/^' . self::bom . '/', '', $header_columns[0]);
             // UTF-8 BOMありの場合、先頭にBOMコードが邪魔して、両端のダブルクォーテーションが fgetcsv() で外れないため、ここで外す
             $header_columns[0] = trim($header_columns[0], '"');
         }
@@ -46,7 +49,7 @@ class CsvUtils
         $contents = file_get_contents($csv_full_path, null, null, 0, 1024);
 
         // 文字エンコーディングをsjis-win, UTF-8の順番で自動検出. 対象文字コード外の場合、false戻る
-        $character_code = mb_detect_encoding($contents, \CsvCharacterCode::sjis_win.", ".\CsvCharacterCode::utf_8);
+        $character_code = mb_detect_encoding($contents, CsvCharacterCode::sjis_win . ", " . CsvCharacterCode::utf_8);
         // \Log::debug(var_export($character_code, true));
 
         return $character_code;
