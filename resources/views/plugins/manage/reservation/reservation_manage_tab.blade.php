@@ -10,19 +10,19 @@
         <div class="navbar-collapse collapse" id="collapsingNavbarLg">
             <ul class="navbar-nav">
                 <li role="presentation" class="nav-item">
-                @if ($function == "index")
-                    <span class="nav-link"><span class="active">施設一覧</span></span>
-                @else
-                    <a href="{{url('/')}}/manage/reservation" class="nav-link">施設一覧</a>
-                @endif
+                    @if ($function == "index")
+                        <span class="nav-link"><span class="active">施設一覧</span></span>
+                    @else
+                        <a href="{{url('/')}}/manage/reservation" class="nav-link">施設一覧</a>
+                    @endif
                 </li>
 
                 <li role="presentation" class="nav-item">
-                @if ($function == "regist")
-                    <span class="nav-link"><span class="active">施設登録</span></span>
-                @else
-                    <a href="{{url('/')}}/manage/reservation/regist" class="nav-link">施設登録</a>
-                @endif
+                    @if ($function == "regist")
+                        <span class="nav-link"><span class="active">施設登録</span></span>
+                    @else
+                        <a href="{{url('/')}}/manage/reservation/regist" class="nav-link">施設登録</a>
+                    @endif
                 </li>
 
                 @if ($function == "edit")
@@ -32,27 +32,27 @@
                 @endif
 
                 <li role="presentation" class="nav-item">
-                @if ($function == "categories")
-                    <span class="nav-link"><span class="active">施設カテゴリ設定</span></span>
-                @else
-                    <a href="{{url('/')}}/manage/reservation/categories" class="nav-link">施設カテゴリ設定</a>
-                @endif
+                    @if ($function == "categories")
+                        <span class="nav-link"><span class="active">施設カテゴリ設定</span></span>
+                    @else
+                        <a href="{{url('/')}}/manage/reservation/categories" class="nav-link">施設カテゴリ設定</a>
+                    @endif
                 </li>
 
                 <li role="presentation" class="nav-item">
-                @if ($function == "columnSets")
-                    <span class="nav-link"><span class="active">項目セット一覧</span></span>
-                @else
-                    <a href="{{url('/')}}/manage/reservation/columnSets" class="nav-link">項目セット一覧</a>
-                @endif
+                    @if ($function == "columnSets")
+                        <span class="nav-link"><span class="active">項目セット一覧</span></span>
+                    @else
+                        <a href="{{url('/')}}/manage/reservation/columnSets" class="nav-link">項目セット一覧</a>
+                    @endif
                 </li>
 
                 <li role="presentation" class="nav-item">
-                @if ($function == "registColumnSet")
-                    <span class="nav-link"><span class="active">項目セット登録</span></span>
-                @else
-                    <a href="{{url('/')}}/manage/reservation/registColumnSet" class="nav-link">項目セット登録</a>
-                @endif
+                    @if ($function == "registColumnSet")
+                        <span class="nav-link"><span class="active">項目セット登録</span></span>
+                    @else
+                        <a href="{{url('/')}}/manage/reservation/registColumnSet" class="nav-link">項目セット登録</a>
+                    @endif
                 </li>
 
                 @if ($function == "editColumnSet")
@@ -72,6 +72,14 @@
                         <span class="nav-link"><span class="active">項目詳細設定</span></span>
                     </li>
                 @endif
+
+                <li role="presentation" class="nav-item">
+                    @if ($function == "bookings")
+                        <span class="nav-link"><span class="active">予約一覧</span></span>
+                    @else
+                        <a href="{{url('/')}}/manage/reservation/bookings" class="nav-link">予約一覧</a>
+                    @endif
+                </li>
             </ul>
         </div>
     </nav>

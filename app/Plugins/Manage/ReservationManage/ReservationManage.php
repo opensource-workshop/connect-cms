@@ -6,18 +6,24 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
-use App\Models\User\Reservations\ReservationsFacility;
 use App\Models\User\Reservations\ReservationsCategory;
 use App\Models\User\Reservations\ReservationsColumn;
 use App\Models\User\Reservations\ReservationsColumnsSelect;
 use App\Models\User\Reservations\ReservationsColumnsSet;
+use App\Models\User\Reservations\ReservationsFacility;
+use App\Models\User\Reservations\ReservationsInput;
+use App\Models\User\Reservations\ReservationsInputsColumn;
 
 use App\Plugins\Manage\ManagePluginBase;
 
+use App\Utilities\Csv\CsvUtils;
+
+use App\Enums\CsvCharacterCode;
 use App\Enums\Required;
 use App\Enums\NotShowType;
 use App\Enums\PermissionType;
 use App\Enums\ReservationLimitedByRole;
+use App\Enums\StatusType;
 
 use App\Rules\CustomValiRequiredWithoutAllSupportsArrayInput;
 use App\Rules\CustomValiWysiwygMax;
@@ -49,12 +55,10 @@ class ReservationManage extends ManagePluginBase
         $role_check_table["update"]               = ['admin_site'];
         $role_check_table["destroy"]              = ['admin_site'];
         $role_check_table["copy"]                 = ['admin_site'];
-
         // 施設カテゴリ設定
         $role_check_table["categories"]           = ['admin_site'];
         $role_check_table["saveCategories"]       = ['admin_site'];
         $role_check_table["deleteCategories"]     = ['admin_site'];
-
         // 項目セット
         $role_check_table["columnSets"]           = ['admin_site'];
         $role_check_table["registColumnSet"]      = ['admin_site'];
@@ -62,14 +66,12 @@ class ReservationManage extends ManagePluginBase
         $role_check_table["editColumnSet"]        = ['admin_site'];
         $role_check_table["updateColumnSet"]      = ['admin_site'];
         $role_check_table["destroyColumnSet"]     = ['admin_site'];
-
         // 項目設定
         $role_check_table["editColumns"]          = ['admin_site'];
         $role_check_table["addColumn"]            = ['admin_site'];
         $role_check_table["updateColumn"]         = ['admin_site'];
         $role_check_table["updateColumnSequence"] = ['admin_site'];
         $role_check_table["deleteColumn"]         = ['admin_site'];
-
         // 項目詳細設定
         $role_check_table["editColumnDetail"]     = ['admin_site'];
         $role_check_table["updateColumnDetail"]   = ['admin_site'];
@@ -77,6 +79,9 @@ class ReservationManage extends ManagePluginBase
         $role_check_table["updateSelect"]         = ['admin_site'];
         $role_check_table["updateSelectSequence"] = ['admin_site'];
         $role_check_table["deleteSelect"]         = ['admin_site'];
+        // 予約一覧
+        $role_check_table["bookings"]             = ['admin_site'];
+        $role_check_table["downloadCsv"]          = ['admin_site'];
 
         return $role_check_table;
     }
@@ -91,25 +96,7 @@ class ReservationManage extends ManagePluginBase
      */
     public function index($request, $id = null)
     {
-        /* ページの処理（セッション）
-        ----------------------------------------------*/
-
-        // 表示ページ数。詳細で更新して戻ってきたら、元と同じページを表示したい。
-        // セッションにあればページの指定があれば使用。
-        // ただし、リクエストでページ指定があればそれが優先。(ページング操作)
-        $page = 1;
-        if ($request->session()->has('reservation_page_condition.page')) {
-            $page = $request->session()->get('reservation_page_condition.page');
-        }
-        if ($request->filled('page')) {
-            $page = $request->page;
-        }
-
-        // ページがリクエストで指定されている場合は、セッションの検索条件配列のページ番号を更新しておく。
-        // 詳細画面や更新処理から戻ってきた時用
-        if ($request->filled('page')) {
-            session(["reservation_page_condition.page" => $request->page]);
-        }
+        $page = $this->getPaginatePageFromRequestOrSession($request, 'reservation_page_condition.page', 'page');
 
         /* データの取得
         ----------------------------------------------*/
@@ -423,25 +410,7 @@ class ReservationManage extends ManagePluginBase
      */
     public function columnSets($request, $id = null)
     {
-        /* ページの処理（セッション）
-        ----------------------------------------------*/
-
-        // 表示ページ数。詳細で更新して戻ってきたら、元と同じページを表示したい。
-        // セッションにあればページの指定があれば使用。
-        // ただし、リクエストでページ指定があればそれが優先。(ページング操作)
-        $page = 1;
-        if ($request->session()->has('reservation_columns_set_page_condition.page')) {
-            $page = $request->session()->get('reservation_columns_set_page_condition.page');
-        }
-        if ($request->filled('page')) {
-            $page = $request->page;
-        }
-
-        // ページがリクエストで指定されている場合は、セッションの検索条件配列のページ番号を更新しておく。
-        // 詳細画面や更新処理から戻ってきた時用
-        if ($request->filled('page')) {
-            session(["reservation_columns_set_page_condition.page" => $request->page]);
-        }
+        $page = $this->getPaginatePageFromRequestOrSession($request, 'reservation_columns_set_page_condition.page', 'page');
 
         /* データの取得
         ----------------------------------------------*/
@@ -919,5 +888,145 @@ class ReservationManage extends ManagePluginBase
 
         // 編集画面を呼び出す
         return redirect("/manage/reservation/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
+    }
+
+    /**
+     * 予約一覧
+     *
+     * @return view
+     * @method_title 予約一覧
+     * @method_desc 登録されている全予約を一覧表示します。
+     * @method_detail 全予約をダウンロードするボタンがあります。
+     */
+    public function bookings($request, $id = null)
+    {
+        $page = $this->getPaginatePageFromRequestOrSession($request, 'reservation_bookings_page_condition.page', 'page');
+
+        // 予約一覧
+        $inputs = $this->getReservationsInputsPaginate($page);
+
+        return view('plugins.manage.reservation.bookings', [
+            "function" => __FUNCTION__,
+            "plugin_name" => "reservation",
+            "inputs" => $inputs,
+        ]);
+    }
+
+    /**
+     * データgetで取得
+     */
+    private function getReservationsInputs()
+    {
+        return $this->getReservationsInputsPaginate(null, false);
+    }
+
+    /**
+     * データ取得(paginate or get)
+     */
+    private function getReservationsInputsPaginate($page, $is_paginate = true)
+    {
+        // 予約一覧
+        $inputs_query = ReservationsInput::
+            select(
+                'reservations_inputs.*',
+                'reservations_facilities.facility_name'
+            )
+            ->leftJoin('reservations_facilities', function ($join) {
+                $join->on('reservations_inputs.facility_id', '=', 'reservations_facilities.id')
+                    ->whereNull('reservations_facilities.deleted_at');
+            })
+            ->orderBy('reservations_inputs.facility_id')
+            ->orderBy('reservations_inputs.start_datetime', 'desc');
+
+        // データ取得
+        if ($is_paginate) {
+            // ページャーで取得
+            $inputs = $inputs_query->paginate(100, null, 'page', $page);
+        } else {
+            // getで取得
+            $inputs = $inputs_query->get();
+        }
+
+        $inputs_columns = ReservationsInputsColumn::whereIn('inputs_parent_id', $inputs->pluck('inputs_parent_id'))->get();
+        foreach ($inputs as $input) {
+            // （シリアライズで参照渡しになり）項目値をセット
+            $input->inputs_column_value = $inputs_columns->where('inputs_parent_id', $input->inputs_parent_id)->pluck('value')->implode('|');
+        }
+
+
+        return $inputs;
+    }
+
+    /**
+     * 予約データダウンロード
+     */
+    public function downloadCsv($request, $id = null, $sub_id = null)
+    {
+        // User データの取得
+        $inputs = $this->getReservationsInputs();
+
+        // 返却用配列
+        $csv_array = array();
+
+        // データ行用の空配列
+        $copy_base = array();
+
+        // インポートカラムの見出し行
+        $import_column['id'] = 'id';
+        $import_column['facility_name'] = '施設名';
+        $import_column['start_datetime'] = '利用日From';
+        $import_column['end_datetime'] = '利用日To';
+        $import_column['created_name'] = '登録者';
+        $import_column['updated_at'] = '更新日';
+        $import_column['status'] = '状態';
+        $import_column['inputs_column_value'] = '項目セット値';
+
+        // 見出し行
+        foreach ($import_column as $key => $column_name) {
+            $csv_array[0][$key] = $column_name;
+            $copy_base[$key] = '';
+        }
+
+        foreach ($inputs as $input) {
+            // ベースをセット
+            $csv_array[$input->id] = $copy_base;
+
+            $csv_array[$input->id]['id'] = $input->id;
+            $csv_array[$input->id]['facility_name'] = $input->facility_name;
+            $csv_array[$input->id]['start_datetime'] = $input->start_datetime;
+            $csv_array[$input->id]['end_datetime'] = $input->end_datetime;
+            $csv_array[$input->id]['created_name'] = $input->created_name;
+            $csv_array[$input->id]['updated_at'] = $input->updated_at;
+            $csv_array[$input->id]['status'] = StatusType::getDescription($input->status);
+            $csv_array[$input->id]['inputs_column_value'] = $input->inputs_column_value;
+        }
+
+        // レスポンス
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'content-Disposition' => 'attachment; filename="reservation_bookings.csv"',
+        ];
+
+        // データ
+        $csv_data = '';
+        foreach ($csv_array as $csv_line) {
+            foreach ($csv_line as $csv_col) {
+                $csv_data .= '"' . $csv_col . '",';
+            }
+            // 末尾カンマを削除
+            $csv_data = substr($csv_data, 0, -1);
+            $csv_data .= "\n";
+        }
+
+        // 文字コード変換
+        if ($request->character_code == CsvCharacterCode::utf_8) {
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::utf_8);
+            // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
+            $csv_data = CsvUtils::addUtf8Bom($csv_data);
+        } else {
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::sjis_win);
+        }
+
+        return response()->make($csv_data, 200, $headers);
     }
 }
