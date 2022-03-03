@@ -16,6 +16,9 @@ jobs:
           fetch-depth: 1
       - name: Prepare The Environment
         run: cp .env.example .env
+      - name: Appspec
+        run: |
+          sed -i -e "s|DB_PASSWORD=|DB_PASSWORD=root|g" .env        
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
