@@ -19,6 +19,7 @@ jobs:
         run: |
           cp .env.example .env
           sed -i -e "s|DB_PASSWORD=|DB_PASSWORD=root|g" .env
+          sed -i -e "s|APP_URL=http://localhost|APP_URL=http://localhost:8000|g" .env
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -49,11 +50,9 @@ jobs:
         run: ./vendor/laravel/dusk/bin/chromedriver-linux &
 
       - name: Run Laravel Server
-        run: php artisan serve --no-reload &
+        run: php artisan serve &
 
       - name: Run Dusk Tests
-        env:
-          APP_URL: "http://127.0.0.1:8000"
         run: php artisan dusk
 
       - name: Upload Screenshots
