@@ -18,6 +18,7 @@ jobs:
       - name: Prepare The Environment
         run: |
           cp .env.example .env
+          sed -i -e "s|DB_PASSWORD=|DB_PASSWORD=root|g" .env
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
