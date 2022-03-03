@@ -14,7 +14,7 @@ on:
         - '7.4'
         - '8.0'
         - '8.1'
-        default: ${{ env.PHP_VERSION_DEFAULT }}
+        default: '7.4'
 
 env:
   PHP_VERSION_DEFAULT: '7.4'
