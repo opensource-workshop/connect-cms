@@ -48,7 +48,7 @@ jobs:
           PHP_VERSION: ${{ github.event.inputs.php_version }}
         id: php_version_empty_action
 
-      - name: Setup PHP
+      - name: Setup PHP ${{ github.event.inputs.php_version }}
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ steps.php_version_empty_action.outputs.PHP_VERSION }}
