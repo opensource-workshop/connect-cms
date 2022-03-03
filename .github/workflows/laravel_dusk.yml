@@ -38,12 +38,14 @@ jobs:
         run: |
           if [[ -z "$PHP_VERSION" ]]; then
             echo "::set-output name=PHP_VERSION::7.3"
+          else
+            echo "::set-output name=PHP_VERSION::$PHP_VERSION"
           fi
         env: 
           PHP_VERSION: ${{ github.event.inputs.php_version }}
         id: php_version_empty_action
 
-      - name: Setup PHP ${{ steps.php_version_empty_action.outputs.PHP_VERSION }}
+      - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ steps.php_version_empty_action.outputs.PHP_VERSION }}
