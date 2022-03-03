@@ -37,7 +37,7 @@ jobs:
         run: php artisan key:generate
 
       - name: DB migration
-        run: php artisan db:seed
+        run: php artisan migrate
 
       - name: Initial data import with seeder
         run: php artisan db:seed
