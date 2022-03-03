@@ -1,5 +1,8 @@
 name: Laravel Dusk
 
+env:
+  PHP_VERSION_DEFAULT: '7.4'
+
 on: 
   schedule:
     - cron: '0 16 * * *'
@@ -14,10 +17,7 @@ on:
         - '7.4'
         - '8.0'
         - '8.1'
-        default: '7.4'
-
-env:
-  PHP_VERSION_DEFAULT: '7.4'
+        default: ${{ env.PHP_VERSION_DEFAULT }}
 
 jobs:
  
