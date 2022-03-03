@@ -43,18 +43,17 @@ jobs:
         run: php artisan db:seed
 
       - name: Upgrade Chrome Driver
-        run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
+        run: php artisan dusk:chrome-driver
 
       - name: Start Chrome Driver
         run: ./vendor/laravel/dusk/bin/chromedriver-linux &
 
       - name: Run Laravel Server
-        run: php artisan serve --no-reload &
+        run: php artisan serve &
 
       - name: Run Dusk Tests
         env:
           APP_URL: "http://127.0.0.1:8000"
-          DB_PASSWORD: root
         run: php artisan dusk
 
       - name: Upload Screenshots
