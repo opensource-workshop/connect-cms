@@ -35,7 +35,13 @@
     <article class="clearfix">
         <div class="row">
             @foreach($whatsnews as $whatsnew)
+            @if (isset($is_template_col_3))
+            {{-- カードタイプ３の場合 --}}
+            <div class="col-12 col-sm-6 col-md-6 col-lg-4 whatsnew_card mb-2">
+            @else
+            {{-- カードタイプ４の場合 --}}
             <div class="col-12 col-sm-6 col-md-6 col-lg-3 whatsnew_card mb-2">
+            @endif
                 @if ($link_pattern[$whatsnew->plugin_name] == 'show_page_frame_post')
                 <a href="{{url('/')}}{{$link_base[$whatsnew->plugin_name]}}/{{$whatsnew->page_id}}/{{$whatsnew->frame_id}}/{{$whatsnew->post_id}}#frame-{{$whatsnew->frame_id}}" style="text-decoration: none; color: initial;">
                 @endif
