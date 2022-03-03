@@ -1,10 +1,12 @@
 name: Laravel Dusk
 
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+on: 
+  workflow_dispatch:
+    inputs:
+      php_version:
+        description: 'テストするPHPバージョン'
+        required: true
+        default: '7.3'
 
 jobs:
  
@@ -27,7 +29,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '7.3'
+          php-version: ${{ github.event.inputs.php_version }}
 
       - name: Create Database
         run: |
