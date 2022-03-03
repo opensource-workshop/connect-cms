@@ -14,7 +14,10 @@ on:
         - '7.4'
         - '8.0'
         - '8.1'
-        default: '7.3'
+        default: ${{ env.PHP_VERSION_DEFAULT }}
+
+env:
+  PHP_VERSION_DEFAULT: '7.4'
 
 jobs:
  
@@ -37,7 +40,7 @@ jobs:
       - name: Set if input php_version is empty 
         run: |
           if [[ -z "$PHP_VERSION" ]]; then
-            echo "::set-output name=PHP_VERSION::7.3"
+            echo "::set-output name=PHP_VERSION::$PHP_VERSION_DEFAULT"
           else
             echo "::set-output name=PHP_VERSION::$PHP_VERSION"
           fi
