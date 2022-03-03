@@ -15,6 +15,9 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Install Jp font
+        run: sudo apt install fonts-noto
+
       - name: Prepare The Environment
         run: |
           cp .env.example .env
