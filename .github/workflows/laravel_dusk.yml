@@ -1,6 +1,8 @@
 name: Laravel Dusk
 
 on: 
+  schedule:
+    - cron: '0 22 * * *'
   workflow_dispatch:
     inputs:
       php_version:
@@ -12,6 +14,7 @@ on:
         - '7.4'
         - '8.0'
         - '8.1'
+        default: '7.3'
 
 jobs:
  
