@@ -34,17 +34,18 @@ jobs:
           sed -i -e "s|DB_PASSWORD=|DB_PASSWORD=root|g" .env
           sed -i -e "s|APP_URL=http://localhost|APP_URL=http://localhost:8000|g" .env
 
-      - name: input php_version
+      - name: Set if input php_version is empty 
         run: |
-          php_version=${{ github.event.inputs.php_version }}
-          if [[ -z "$php_version" ]]; then
-            php_version='7.3'
+          if [[ -z "$PHP_VERSION" ]]; then
+            echo "PHP_VERSION=7.3" >> $GITHUB_ENV
           fi
+        env: 
+          PHP_VERSION: ${{ github.event.inputs.php_version }}
 
-      - name: Setup PHP ${{ php_version }}
+      - name: Setup PHP ${{ PHP_VERSION }}
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ php_version }}
+          php-version: ${{ PHP_VERSION }}
 
       - name: Create Database
         run: |
