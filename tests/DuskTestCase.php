@@ -550,13 +550,24 @@ EOF;
     /**
      * 固定記事追加
      */
-    public function addContents($permanent_link, $content_text, $area_id = 2)
+    public function addContents($permanent_link, $content_text, $options = [])
     {
+        $area_id = array_key_exists('area_id', $options) ? $options['area_id'] : 2;
         $bucket = Buckets::create(['bucket_name' => '無題', 'plugin_name' => 'contents']);
         Contents::create(['bucket_id' => $bucket->id, 'content_text' => $content_text, 'status' => 0]);
         $page = Page::where('permanent_link', $permanent_link)->first();
         $max_frame = Frame::where('page_id', $page->id)->where('area_id', $area_id)->orderBy('display_sequence', 'desc')->first();
-        $frame = Frame::create(['page_id' => $page->id, 'area_id' => 2, 'frame_title' => '[無題]', 'frame_design' => 'default', 'plugin_name' => 'contents', 'frame_col' => 0, 'template' => 'default', 'bucket_id' => $bucket->id, 'display_sequence' => empty($max_frame) ? 1 : $max_frame->display_sequence + 1]);
+        $frame = Frame::create([
+            'page_id' => $page->id,
+            'area_id' => $area_id,
+            'frame_title' => '[無題]',
+            'frame_design' => 'default',
+            'plugin_name' => 'contents',
+            'frame_col' => array_key_exists('frame_col', $options) ? $options['frame_col'] : 0,
+            'template' => 'default',
+            'bucket_id' => $bucket->id,
+            'display_sequence' => empty($max_frame) ? 1 : $max_frame->display_sequence + 1
+        ]);
         return $frame;
     }
 

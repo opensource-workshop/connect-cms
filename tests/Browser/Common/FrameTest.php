@@ -34,6 +34,7 @@ class FrameTest extends DuskTestCase
         $this->frameButton();
         $this->frameSetting();
         $this->frameDesign();
+        $this->frameCol();
     }
 
     /**
@@ -185,5 +186,16 @@ class FrameTest extends DuskTestCase
              ]',
             'test_result' => 'OK']
         );
+    }
+
+    /**
+     * フレーム幅
+     */
+    private function frameCol()
+    {
+        // 固定記事の配置
+        $this->frame = $this->addContents('/common/frame', '幅6', ['frame_col' => 6]);
+        $this->frame = $this->addContents('/common/frame', '幅4', ['frame_col' => 4]);
+        $this->frame = $this->addContents('/common/frame', '幅2', ['frame_col' => 2]);
     }
 }
