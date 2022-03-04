@@ -11,40 +11,7 @@
 @section("plugin_contents_$frame->id")
 @if ($pages)
 
-    @php
-        // アクティブ・マークを付けるページID の算出
-        // アクティブ・マークを付けるページとは、以下の条件を満たすもの
-        // 選択されているページ＆表示中のページ
-        // 選択されているページが非表示の場合、表示されている中での、最後の上位階層のページ
-
-        // プログラムでの、値の見つけ方
-        // PHP のグローバル変数を宣言し、アクティブ・マークのページIDを保持する。
-        // 再帰関数でページを順に見ていき、条件に合致するページIDでグローバル変数を上書きながら進む
-        // 残ったページIDがアクティブ・マークのページになる
-        global $active_page_id;
-        $active_page_id = 0;
-
-        // アクティブ・マークを付けるページID を探す再帰関数
-        function factorial($page, $ancestors, $page_roles) {
-            global $active_page_id;
-
-            if ($page->isView(Auth::user(), false, true, $page_roles)) {
-                if ($ancestors->contains('id', $page->id)) {
-                    $active_page_id = $page->id;
-                }
-            }
-
-            if (count($page->children) > 0) {
-                foreach ($page->children as $children) {
-                    factorial($children, $ancestors, $page_roles);
-                }
-            }
-            return;
-        }
-        foreach ($pages as $page) {
-            factorial($page, $ancestors, $page_roles);
-        }
-    @endphp
+    @php $active_page_id = \App\Models\Common\Page::getTabFlatActivePageId($pages, $ancestors, $page_roles); @endphp
 
     <nav aria-label="タブメニュー">
     <ul class="nav nav-tabs nav-justified d-none d-md-flex">

@@ -51,7 +51,7 @@
                     <tr class="@if ($facility->hide_flag) table-secondary @endif">
                         <td class="d-block d-sm-table-cell">
                             <a href="{{url('/')}}/manage/reservation/edit/{{$facility->id}}"><i class="far fa-edit"></i></a>
-                            <span class="d-sm-none">注釈名：</span>{{$facility->facility_name}}
+                            <span class="d-sm-none">施設名：</span>{{$facility->facility_name}}
                         </td>
                         <td class="d-block d-sm-table-cell"><span class="d-sm-none">利用曜日・時間：</span>{{ $facility->getDayOfWeeksDisplay() }} @if ($facility->is_time_control) {{ substr($facility->start_time, 0, -3) }} ~ {{ substr($facility->end_time, 0, -3) }} @endif</td>
                         <td class="d-block d-sm-table-cell">

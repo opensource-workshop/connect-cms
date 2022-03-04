@@ -422,19 +422,7 @@ class UserManage extends ManagePluginBase
         // 表示ページ数。詳細で更新して戻ってきたら、元と同じページを表示したい。
         // セッションにあればページの指定があれば使用。
         // ただし、リクエストでページ指定があればそれが優先。(ページング操作)
-        $page = 1;
-        if ($request->session()->has('user_page_condition.page')) {
-            $page = $request->session()->get('user_page_condition.page');
-        }
-        if ($request->filled('page')) {
-            $page = $request->page;
-        }
-
-        // ページがリクエストで指定されている場合は、セッションの検索条件配列のページ番号を更新しておく。
-        // 詳細画面や更新処理から戻ってきた時用
-        if ($request->filled('page')) {
-            session(["user_page_condition.page" => $request->page]);
-        }
+        $page = $this->getPaginatePageFromRequestOrSession($request, 'user_page_condition.page', 'page');
 
         /* データの取得（検索）
         ----------------------------------------------*/

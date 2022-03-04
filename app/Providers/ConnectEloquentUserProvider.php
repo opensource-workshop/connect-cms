@@ -123,12 +123,14 @@ class ConnectEloquentUserProvider extends EloquentUserProvider
             ->where($model->getAuthIdentifierName(), $identifier)
             ->first();
 
-        // user roles を追加
-        $users_roles = new UsersRoles();
-        $ret->user_roles = $users_roles->getUsersRoles($identifier);
+        if ($ret) {
+            // user roles を追加
+            $users_roles = new UsersRoles();
+            $ret->user_roles = $users_roles->getUsersRoles($identifier);
 
-        // guest 権限は自動的に付与する。
-        $ret->user_roles['base']['role_guest'] = 1;
+            // guest 権限は自動的に付与する。
+            $ret->user_roles['base']['role_guest'] = 1;    
+        }
 
         return $ret;
     }

@@ -32,6 +32,7 @@ use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
 use App\Models\Core\UsersRoles;
 use App\Models\User\Bbses\Bbs;
+use App\Models\User\Bbses\BbsFrame;
 use App\Models\User\Bbses\BbsPost;
 use App\Models\User\Blogs\Blogs;
 use App\Models\User\Blogs\BlogsPosts;
@@ -337,6 +338,7 @@ trait MigrationTrait
             Page::where('permanent_link', '<>', '/')->delete();
             Frame::truncate();
             FrameConfig::truncate();
+            BbsFrame::truncate();
             Menu::truncate();
             Contents::truncate();
             Buckets::where('plugin_name', 'contents')->delete();
@@ -457,6 +459,7 @@ trait MigrationTrait
             Like::where('target', 'bbses')->delete();
             LikeUser::where('target', 'bbses')->delete();
             Buckets::where('plugin_name', 'bbses')->delete();
+            BbsFrame::truncate();
             MigrationMapping::where('target_source_table', 'bbses')->delete();
             MigrationMapping::where('target_source_table', 'bbs_posts')->delete();
         }
@@ -776,7 +779,7 @@ trait MigrationTrait
         }
 
         // カラムがない or データが空の場合は、処理時間を入れる。
-        if ($idx != 0 && array_key_exists($idx, $tsv_cols) && !empty($tsv_cols[$idx])) {
+        if (array_key_exists($idx, $tsv_cols) && !empty($tsv_cols[$idx])) {
             $date = $tsv_cols[$idx];
             if (!\DateTime::createFromFormat('Y-m-d H:i:s', $date)) {
                 $this->putError(3, '日付エラー', "{$column_name} = {$date}");
@@ -789,6 +792,26 @@ trait MigrationTrait
         }
 
         return $date;
+    }
+
+    /**
+     * ログインIDからユーザID取得
+     */
+    private function getUserIdFromLoginId($users, $login_id)
+    {
+        $user = $users->firstWhere('userid', $login_id);
+        $user = $user ?? new User();
+        return $user->id;
+    }
+
+    /**
+     * NC2ユーザIDからNC2ログインID取得
+     */
+    private function getNc2LoginIdFromNc2UserId($nc2_users, $nc2_user_id)
+    {
+        $nc2_user = $nc2_users->firstWhere('user_id', $nc2_user_id);
+        $nc2_user = $nc2_user ?? new Nc2User();
+        return $nc2_user->login_id;
     }
 
     /**
@@ -1568,7 +1591,41 @@ trait MigrationTrait
             }
             $page_role = PageRole::updateOrCreate(
                 ['page_id' => $destination_page->destination_key, 'group_id' => $group->id],
-                ['page_id' => $destination_page->destination_key, 'group_id' => $group->id, 'target' => 'base', 'role_name' => 'role_guest', 'role_value' => 1]
+                ['page_id' => $destination_page->destination_key, 'group_id' => $group->id, 'target' => 'base', 'role_name' => 'role_reporter', 'role_value' => 1]
+            );
+        }
+
+        // ※ 上ループで管理者グループを登録しようと組んだが、なぜかgroup->idがズレるため、上ループ後に管理グループ追加
+        // 管理者グループ追加
+        $admin_group = Group::updateOrCreate(['name' => '管理者グループ'], ['name' => '管理者グループ']);
+
+        // 管理者 group_users 作成
+        $admin_users_roles = UsersRoles::where('target', 'base')->where('role_name', 'role_article_admin')->get();
+        foreach ($admin_users_roles as $users_roles) {
+            $group_user = GroupUser::updateOrCreate(
+                ['group_id' => $admin_group->id, 'user_id' => $users_roles->users_id],
+                ['group_id' => $admin_group->id, 'user_id' => $users_roles->users_id, 'group_role' => 'general']
+            );
+        }
+
+        // グループ定義のループ
+        foreach ($group_ini_paths as $group_ini_path) {
+            // ini_file の解析
+            $group_ini = parse_ini_file($group_ini_path, true);
+
+            // page_roles 作成（元 page_id -> マッピング -> 新フォルダ -> マッピング -> 新 page_id）
+            $source_page = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $group_ini['source_info']['room_id'])->first();
+            if (empty($source_page)) {
+                continue;
+            }
+            $destination_page = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $source_page->destination_key)->first();
+            if (empty($destination_page)) {
+                continue;
+            }
+            // 管理者グループに権限付与
+            $page_role = PageRole::updateOrCreate(
+                ['page_id' => $destination_page->destination_key, 'group_id' => $admin_group->id],
+                ['page_id' => $destination_page->destination_key, 'group_id' => $admin_group->id, 'target' => 'base', 'role_name' => 'role_article_admin', 'role_value' => 1]
             );
         }
 
@@ -2883,6 +2940,8 @@ trait MigrationTrait
 
         // BBS定義の取り込み
         $ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('bbses/bbs_*.ini'));
+        // ユーザ取得
+        $users = User::get();
 
         // BBS定義のループ
         foreach ($ini_paths as $ini_path) {
@@ -2968,11 +3027,18 @@ trait MigrationTrait
                         'title' => $tsv_cols[4],
                         'body' => $this->changeWYSIWYG($tsv_cols[5]),
                         'thread_root_id' => $tsv_cols[9] === '0' ? 0 : $this->fetchMigratedKey('bbses_post', $tsv_cols[10]),
-                        'thread_updated_at' => $this->convertNc2Datetime($tsv_cols[11]),
-                        'first_committed_at' => $this->convertNc2Datetime($tsv_cols[0]),
+                        'thread_updated_at' => $this->getDatetimeFromTsvAndCheckFormat(11, $tsv_cols, 11),
+                        'first_committed_at' => $this->getDatetimeFromTsvAndCheckFormat(0, $tsv_cols, 0),
                         'parent_id' => $this->fetchMigratedKey('bbses_post', $tsv_cols[9]),
-                        'created_name' => $tsv_cols[12],
                     ]);
+                    $bbs_post->created_id = $this->getUserIdFromLoginId($users, $tsv_cols[15]);
+                    $bbs_post->created_name = $tsv_cols[12];
+                    $bbs_post->created_at = $this->getDatetimeFromTsvAndCheckFormat(0, $tsv_cols, 0);
+                    $bbs_post->updated_id = $this->getUserIdFromLoginId($users, $tsv_cols[18]);
+                    $bbs_post->updated_name = $tsv_cols[17];
+                    $bbs_post->updated_at = $this->getDatetimeFromTsvAndCheckFormat(16, $tsv_cols, 16);
+                    // 登録更新日時を自動更新しない
+                    $bbs_post->timestamps = false;
                     $bbs_post->save();
                     // 根記事の場合、保存後のid をthread_root_id にセットして更新
                     if ($tsv_cols[9] === '0') {
@@ -3748,18 +3814,14 @@ trait MigrationTrait
                         'first_committed_at' => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['insert_time'], $reservation_tsv_cols, 'insert_time'),
                         'status'           => $reservation_tsv_cols[$tsv_idxs['status']],
                     ]);
-
-                    $user = $users->firstWhere('userid', $reservation_tsv_cols[$tsv_idxs['insert_login_id']]);
-                    $user = $user ?? new User();
-                    $reservation_post->created_id = $user->id;
+                    $reservation_post->created_id = $this->getUserIdFromLoginId($users, $reservation_tsv_cols[$tsv_idxs['insert_login_id']]);
                     $reservation_post->created_name = $reservation_tsv_cols[$tsv_idxs['insert_user_name']];
                     $reservation_post->created_at = $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['insert_time'], $reservation_tsv_cols, 'insert_time');
-
-                    $user = $users->firstWhere('userid', $reservation_tsv_cols[$tsv_idxs['update_login_id']]);
-                    $user = $user ?? new User();
-                    $reservation_post->updated_id = $user->id;
+                    $reservation_post->updated_id = $this->getUserIdFromLoginId($users, $reservation_tsv_cols[$tsv_idxs['update_login_id']]);
                     $reservation_post->updated_name = $reservation_tsv_cols[$tsv_idxs['update_user_name']];
                     $reservation_post->updated_at = $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['update_time'], $reservation_tsv_cols, 'update_time');
+                    // 登録更新日時を自動更新しない
+                    $reservation_post->timestamps = false;
                     $reservation_post->save();
 
                     if ($before_nc2_reserve_details_id != $reservation_tsv_cols[$tsv_idxs['reserve_details_id']]) {
@@ -3770,29 +3832,31 @@ trait MigrationTrait
                         $reservation_post->inputs_parent_id = $reservation_post->id;
                         $reservation_post->save();
 
-                        // 件名
                         $column_title = $columns->firstWhere('column_name', '件名');
-                        $reservations_inputs_columns = ReservationsInputsColumn::create([
-                            'inputs_parent_id' => $reservation_post->inputs_parent_id,
-                            'column_id' => $column_title->id,
-                            'value' => $reservation_tsv_cols[$tsv_idxs['title']],
-                        ]);
-
-                        // 連絡先
-                        $column_description = $columns->firstWhere('column_name', '連絡先');
-                        $reservations_inputs_columns = ReservationsInputsColumn::create([
-                            'inputs_parent_id' => $reservation_post->inputs_parent_id,
-                            'column_id' => $column_description->id,
-                            'value' => $reservation_tsv_cols[$tsv_idxs['contact']],
-                        ]);
-
-                        // 補足
+                        $column_contact = $columns->firstWhere('column_name', '連絡先');
                         $column_description = $columns->firstWhere('column_name', '補足');
-                        $reservations_inputs_columns = ReservationsInputsColumn::create([
-                            'inputs_parent_id' => $reservation_post->inputs_parent_id,
-                            'column_id' => $column_description->id,
-                            'value' => $this->changeWYSIWYG($reservation_tsv_cols[$tsv_idxs['description']]),
-                        ]);
+
+                        // bulk insert
+                        $reservations_inputs_columns = ReservationsInputsColumn::insert(
+                            // 件名
+                            [
+                                'inputs_parent_id' => $reservation_post->inputs_parent_id,
+                                'column_id' => $column_title->id,
+                                'value' => $reservation_tsv_cols[$tsv_idxs['title']],
+                            ],
+                            // 連絡先
+                            [
+                                'inputs_parent_id' => $reservation_post->inputs_parent_id,
+                                'column_id' => $column_contact->id,
+                                'value' => $reservation_tsv_cols[$tsv_idxs['contact']],
+                            ],
+                            // 補足
+                            [
+                                'inputs_parent_id' => $reservation_post->inputs_parent_id,
+                                'column_id' => $column_description->id,
+                                'value' => $this->changeWYSIWYG($reservation_tsv_cols[$tsv_idxs['description']]),
+                            ],
+                        );
 
                         // rruleあれば登録
                         $rrule_setting = $reservation_tsv_cols[$tsv_idxs['rrule']];
@@ -4565,6 +4629,45 @@ trait MigrationTrait
         }
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+
+        if (!empty($bbs)) {
+            // フレーム設定保存
+            // ---------------------------------------
+
+            $view_format = (int) $this->getArrayValue($frame_ini, 'bbs', 'view_format', 0);
+
+            // 一覧での展開方法 変換
+            // (cc) 0:フラット形式,1:スレッド形式
+            // (cc) 0:すべて展開,1:根記事のみ展開,2:すべて閉じておく
+            // (key:cc)view_format => (value:cc)list_format
+            $convert_list_formats = [
+                0 => 0,
+                1 => 2,
+            ];
+            $list_format = $convert_list_formats[$view_format] ?? 2;
+
+            // 表示設定
+            $bbs_frame = BbsFrame::updateOrCreate(
+                ['bbs_id' => $bbs_id, 'frame_id' => $frame->id],
+                [
+                    // 表示形式 0:フラット形式,1:スレッド形式
+                    'view_format' => $view_format,
+                    // 根記事の表示順 0:スレッド内の新しい更新日時順,1:根記事の新しい日時順
+                    'thread_sort_flag' => 0,
+                    // 一覧での展開方法 0:すべて展開,1:根記事のみ展開,2:すべて閉じておく
+                    'list_format' => $list_format,
+                    // 詳細でのスレッド記事の展開方法 0:すべて展開,1:詳細表示している記事のみ展開,2:すべて閉じておく
+                    'thread_format' => 0,
+                    // スレッド記事の下線 0:表示しない,1:表示する
+                    'list_underline' => 0,
+                    // スレッド記事枠のタイトル
+                    'thread_caption' => null,
+                    // 1ページの表示件数
+                    'view_count' => $this->getArrayValue($frame_ini, 'bbs', 'view_count', null),
+                ]
+            );
+        }
+
     }
 
     /**
@@ -4956,15 +5059,16 @@ trait MigrationTrait
             // オプションで、全バケツで表示する施設カテゴリを指定できる。
 
             // インポート対象の表示施設カテゴリで、全バケツで表示する施設カテゴリを指定する（指定がなければ全施設表示しない）
-            $all_show_reservations_categories_ids = $this->getMigrationConfig('reservations', 'import_all_show_reservations_categories_ids');
-            if ($all_show_reservations_categories_ids) {
-                // 施設カテゴリ
-                $reservations_categories = ReservationsCategory::whereIn('id', $all_show_reservations_categories_ids)
-                    ->orderBy('display_sequence', 'asc')
-                    ->get();
-            } else {
-                $reservations_categories = collect();
-            }
+            // $all_show_reservations_categories_ids = $this->getMigrationConfig('reservations', 'import_all_show_reservations_categories_ids');
+            // if ($all_show_reservations_categories_ids) {
+            //     // 施設カテゴリ
+            //     $reservations_categories = ReservationsCategory::whereIn('id', $all_show_reservations_categories_ids)
+            //         ->orderBy('display_sequence', 'asc')
+            //         ->get();
+            // } else {
+            //     $reservations_categories = collect();
+            // }
+            $reservations_categories = collect();
 
             // インポート対象の表示施設カテゴリで、施設カテゴリ名とルーム名が同じものは表示する
             $is_show_same_name = $this->getMigrationConfig('reservations', 'import_is_show_reservations_category_name_and_room_name_are_the_same');
@@ -6356,7 +6460,7 @@ trait MigrationTrait
             }
 
             // NC2 のページデータ
-            $nc2_pages_query = Nc2Page::where('private_flag', 0)
+            $nc2_pages_query = Nc2Page::where('private_flag', 0)        // 0:プライベートルーム以外
                                       ->where('root_id', '<>', 0)
                                       ->where('display_sequence', '<>', 0);
 
@@ -6420,8 +6524,10 @@ trait MigrationTrait
                     if ($nc2_sort_page->default_entry_flag == 1) {
                         $membership_flag = 2;
                     } else {
-                    // 選択した会員のみ
-                        $membership_flag = 1;
+                        // ルームで選択した会員のみ
+                        if ($nc2_sort_page->page_id == $nc2_sort_page->room_id) {
+                            $membership_flag = 1;
+                        }
                     }
                 }
                 /* 多言語化対応 */
@@ -6881,7 +6987,7 @@ trait MigrationTrait
         // 「すべての会員をデフォルトで参加させる」はグループにしないので対象外。'default_entry_flag'== 0
         $nc2_rooms = Nc2Page::where('space_type', 2)
                             ->whereColumn('page_id', 'room_id')
-                            ->where('thread_num', 1)
+                            ->whereIn('thread_num', [1, 2])
                             ->where('default_entry_flag', 0)
                             ->orderBy('thread_num')
                             ->orderBy('display_sequence')
@@ -7107,6 +7213,9 @@ trait MigrationTrait
             return;
         }
 
+        // nc2の全ユーザ取得
+        $nc2_users = Nc2User::get();
+
         // NC2掲示板（Bbs）のループ
         foreach ($nc2_bbses as $nc2_bbs) {
             $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
@@ -7137,7 +7246,6 @@ trait MigrationTrait
             $journals_ini = "";
             $journals_ini .= "[blog_base]\n";
             $journals_ini .= "blog_name = \"" . $nc2_bbs->bbs_name . "\"\n";
-            $journals_ini .= "view_count = 10\n";
             $journals_ini .= "use_like = " . $nc2_bbs->vote_flag . "\n";
 
             // NC2 情報
@@ -7148,12 +7256,13 @@ trait MigrationTrait
             $journals_ini .= "module_name = \"bbs\"\n";
 
             // NC2掲示板の記事（bbs_post、bbs_post_body）を移行する。
-            $nc2_bbs_posts = Nc2BbsPost::select('bbs_post.*', 'bbs_post_body.body', 'bbs_topic.newest_time')
-                                       ->join('bbs_post_body', 'bbs_post_body.post_id', '=', 'bbs_post.post_id')
-                                       ->leftJoin('bbs_topic', 'bbs_topic.topic_id', '=', 'bbs_post.post_id')
-                                       ->where('bbs_id', $nc2_bbs->bbs_id)
-                                       ->orderBy('post_id')
-                                       ->get();
+            $nc2_bbs_posts = Nc2BbsPost::
+                select('bbs_post.*', 'bbs_post_body.body', 'bbs_topic.newest_time')
+                ->join('bbs_post_body', 'bbs_post_body.post_id', '=', 'bbs_post.post_id')
+                ->leftJoin('bbs_topic', 'bbs_topic.topic_id', '=', 'bbs_post.topic_id')
+                ->where('bbs_id', $nc2_bbs->bbs_id)
+                ->orderBy('post_id')
+                ->get();
 
             // 記事はTSV でエクスポート
             // 日付{\t}status{\t}タイトル{\t}本文
@@ -7170,7 +7279,7 @@ trait MigrationTrait
 
                 $content       = $this->nc2Wysiwyg(null, null, null, null, $nc2_bbs_post->body, 'bbs', $nc2_page);
 
-                $journals_tsv .= $nc2_bbs_post->insert_time . "\t";
+                $journals_tsv .= $this->getCCDatetime($nc2_bbs_post->insert_time) . "\t"; // 0:投稿日時
                 $journals_tsv .=                              "\t"; // カテゴリ
                 $journals_tsv .= $nc2_bbs_post->status      . "\t";
                 $journals_tsv .=                              "\t"; // 承認フラグ
@@ -7182,10 +7291,14 @@ trait MigrationTrait
                 $journals_tsv .=                              "\t"; // hide_more_title
                 $journals_tsv .= $nc2_bbs_post->parent_id   . "\t"; // 親ID
                 $journals_tsv .= $nc2_bbs_post->topic_id .    "\t"; // トピックID
-                $journals_tsv .= $nc2_bbs_post->newest_time . "\t"; // 最新投稿日時
-                $journals_tsv .= $nc2_bbs_post->insert_user_name . "\t"; // 投稿者名
+                $journals_tsv .= $this->getCCDatetime($nc2_bbs_post->newest_time) . "\t"; // 11:最新投稿日時
+                $journals_tsv .= $nc2_bbs_post->insert_user_name . "\t"; // 12:投稿者名
                 $journals_tsv .= $nc2_bbs_post->vote_num    . "\t"; // いいね数
                 $journals_tsv .=                              "\t"; // いいねのsession_id & nc2 user_id
+                $journals_tsv .= $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_bbs_post->insert_user_id) . "\t";   // 15:投稿者ID
+                $journals_tsv .= $this->getCCDatetime($nc2_bbs_post->update_time) . "\t";                               // 16:更新日時
+                $journals_tsv .= $nc2_bbs_post->update_user_name . "\t";                                                // 17:更新者名
+                $journals_tsv .= $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_bbs_post->update_user_id) . "\t";   // 18:更新者ID
 
                 // 記事のタイトルの一覧
                 // タイトルに " あり
@@ -9025,15 +9138,10 @@ trait MigrationTrait
                 // NC2 reservation_reserve システム項目
                 $tsv_record['insert_time'] = $this->getCCDatetime($reservation_reserve->insert_time);
                 $tsv_record['insert_user_name'] = $reservation_reserve->insert_user_name;
-                $nc2_user = $nc2_users->firstWhere('user_id', $reservation_reserve->insert_user_id);
-                $nc2_user = $nc2_user ?? new Nc2User();
-                $tsv_record['insert_login_id'] = $nc2_user->login_id;
-
+                $tsv_record['insert_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc2_users, $reservation_reserve->insert_user_id);
                 $tsv_record['update_time'] = $this->getCCDatetime($reservation_reserve->update_time);
                 $tsv_record['update_user_name'] = $reservation_reserve->update_user_name;
-                $nc2_user = $nc2_users->firstWhere('user_id', $reservation_reserve->update_user_id);
-                $nc2_user = $nc2_user ?? new Nc2User();
-                $tsv_record['update_login_id'] = $nc2_user->login_id;
+                $tsv_record['update_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc2_users, $reservation_reserve->update_user_id);
 
                 // NC2施設予約予定は公開のみ
                 $tsv_record['status'] = 0;
@@ -9751,7 +9859,40 @@ trait MigrationTrait
         } elseif ($plugin_name == 'databases') {
             // データベース
             $this->nc2BlockExportDatabases($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
+        } elseif ($plugin_name == 'bbses') {
+            // 掲示板
+            $this->nc2BlockExportBbses($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
         }
+    }
+
+    /**
+     * NC2：固定記事（お知らせ）のエクスポート
+     */
+    private function nc2BlockExportContents($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
+    {
+        // お知らせモジュールのデータの取得
+        // 続きを読むはとりあえず、1つに統合。固定記事の方、対応すること。
+        $announcement = Nc2Announcement::where('block_id', $nc2_block->block_id)->first();
+
+        // 記事
+
+        // 「お知らせモジュール」のデータがなかった場合は、データの不整合としてエラーログを出力
+        $content = "";
+        if (!empty($announcement)) {
+            $content = trim($announcement->content);
+            $content .= trim($announcement->more_content);
+        } else {
+            $this->putError(1, "no announcement record", "block_id = " . $nc2_block->block_id);
+        }
+
+        // WYSIWYG 記事のエクスポート
+        $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
+        $content_filename = "frame_" . $frame_index_str . '.html';
+        $ini_filename = "frame_" . $frame_index_str . '.ini';
+
+        $this->nc2Wysiwyg($nc2_block, $save_folder, $content_filename, $ini_filename, $content, 'announcement', $nc2_page);
+
+        //echo "nc2BlockExportContents";
     }
 
     /**
@@ -9791,33 +9932,39 @@ trait MigrationTrait
     }
 
     /**
-     * NC2：固定記事（お知らせ）のエクスポート
+     * NC2：掲示板のブロック特有部分のエクスポート
      */
-    private function nc2BlockExportContents($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
+    private function nc2BlockExportBbses($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
     {
-        // お知らせモジュールのデータの取得
-        // 続きを読むはとりあえず、1つに統合。固定記事の方、対応すること。
-        $announcement = Nc2Announcement::where('block_id', $nc2_block->block_id)->first();
-
-        // 記事
-
-        // 「お知らせモジュール」のデータがなかった場合は、データの不整合としてエラーログを出力
-        $content = "";
-        if (!empty($announcement)) {
-            $content = trim($announcement->content);
-            $content .= trim($announcement->more_content);
-        } else {
-            $this->putError(1, "no announcement record", "block_id = " . $nc2_block->block_id);
+        // NC2 ブロック設定の取得
+        $nc2_bbs_block = Nc2BbsBlock::where('block_id', $nc2_block->block_id)->first();
+        if (empty($nc2_bbs_block)) {
+            return;
         }
 
-        // WYSIWYG 記事のエクスポート
-        $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
-        $content_filename = "frame_" . $frame_index_str . '.html';
         $ini_filename = "frame_" . $frame_index_str . '.ini';
 
-        $this->nc2Wysiwyg($nc2_block, $save_folder, $content_filename, $ini_filename, $content, 'announcement', $nc2_page);
+        $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
 
-        //echo "nc2BlockExportContents";
+        // 表示形式 変換
+        // (nc) 0:スレッド,1:フラット
+        // (cc) 0:フラット形式,1:スレッド形式
+        // (key:nc2)expand => (value:cc)view_format
+        $convert_view_formats = [
+            0 => 1,
+            1 => 0,
+        ];
+        if (isset($convert_view_formats[$nc2_bbs_block->expand])) {
+            $view_format = $convert_view_formats[$nc2_bbs_block->expand];
+        } else {
+            $view_format = '';
+            $this->putError(3, '掲示板の表示形式が未対応の形式', "nc2_bbs_block = " . $nc2_bbs_block->block_id);
+        }
+
+        $frame_ini = "[bbs]\n";
+        $frame_ini .= "view_count = {$nc2_bbs_block->visible_row}\n";
+        $frame_ini .= "view_format = {$view_format}\n";
+        $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
     }
 
     /**

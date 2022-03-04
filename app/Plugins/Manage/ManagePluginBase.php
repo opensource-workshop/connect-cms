@@ -16,11 +16,10 @@ use App\Plugins\PluginBase;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 管理プラグイン
- * @package Contoroller
+ * @package Controller
  */
 class ManagePluginBase extends PluginBase
 {
-
     /**
      *  設定されているConfig の取得
      */
@@ -41,5 +40,30 @@ class ManagePluginBase extends PluginBase
         }
 
         return $return_configs;
+    }
+
+    /**
+     * ページネートの表示ページを、セッションorリクエストから取得
+     */
+    protected function getPaginatePageFromRequestOrSession(\Illuminate\Http\Request $request, string $session_name, string $page_variable): int
+    {
+        // 表示ページ数。詳細で更新して戻ってきたら、元と同じページを表示したい。
+        // セッションにあればページの指定があれば使用。
+        // ただし、リクエストでページ指定があればそれが優先。(ページング操作)
+        $page = 1;
+        if ($request->session()->has($session_name)) {
+            $page = $request->session()->get($session_name);
+        }
+        if ($request->filled($page_variable)) {
+            $page = $request->$page_variable;
+        }
+
+        // ページがリクエストで指定されている場合は、セッションの検索条件配列のページ番号を更新しておく。
+        // 詳細画面や更新処理から戻ってきた時用
+        if ($request->filled($page_variable)) {
+            session([$session_name => $request->$page_variable]);
+        }
+
+        return $page;
     }
 }

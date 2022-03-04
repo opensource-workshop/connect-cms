@@ -1,0 +1,97 @@
+name: Laravel Dusk
+
+on: 
+  schedule:
+    - cron: '0 16 * * *'
+  workflow_dispatch:
+    inputs:
+      php_version:
+        type: choice
+        description: 'テストするPHPバージョン'
+        required: true
+        options: 
+        - '7.3'
+        - '7.4'
+        - '8.0'
+        - '8.1'
+        default: '7.3'
+
+env:
+  PHP_VERSION_DEFAULT: '7.3'
+
+jobs:
+ 
+  dusk-php:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Install Jp font
+        run: sudo apt install fonts-noto
+
+      - name: Prepare The Environment
+        run: |
+          cp .env.example .env
+          sed -i -e "s|DB_PASSWORD=|DB_PASSWORD=root|g" .env
+          sed -i -e "s|APP_URL=http://localhost|APP_URL=http://localhost:8000|g" .env
+
+      - name: Set if input php_version is empty 
+        run: |
+          if [[ -z "$PHP_VERSION" ]]; then
+            echo "::set-output name=PHP_VERSION::$PHP_VERSION_DEFAULT"
+          else
+            echo "::set-output name=PHP_VERSION::$PHP_VERSION"
+          fi
+        env: 
+          PHP_VERSION: ${{ github.event.inputs.php_version }}
+        id: php_version_empty_action
+
+      - name: Setup PHP ${{ github.event.inputs.php_version }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ steps.php_version_empty_action.outputs.PHP_VERSION }}
+
+      - name: Create Database
+        run: |
+          sudo systemctl start mysql
+          mysql --user="root" --password="root" -e "CREATE DATABASE laravel character set UTF8mb4 collate utf8mb4_general_ci;"
+
+      - name: Install Composer Dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Generate Application Key
+        run: php artisan key:generate
+
+      - name: DB migration
+        run: php artisan migrate
+
+      - name: Initial data import with seeder
+        run: php artisan db:seed
+
+      - name: Upgrade Chrome Driver
+        run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
+
+      - name: Start Chrome Driver
+        run: ./vendor/laravel/dusk/bin/chromedriver-linux &
+
+      - name: Run Laravel Server
+        run: php artisan serve &
+
+      - name: Run Dusk Tests
+        run: php artisan dusk
+
+      - name: Upload Screenshots
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: screenshots
+          path: tests/Browser/screenshots
+
+      - name: Upload Console Logs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: console
+          path: tests/Browser/console

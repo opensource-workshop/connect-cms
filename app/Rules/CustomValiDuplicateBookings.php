@@ -15,11 +15,11 @@ class CustomValiDuplicateBookings implements Rule
 {
     protected $facility_id;
     protected $input_ids;
-
     protected $start_datetime;
     protected $end_datetime;
-
     protected $message;
+
+    protected $error_date;
 
     /**
      * Create a new rule instance.
@@ -58,7 +58,6 @@ class CustomValiDuplicateBookings implements Rule
         // $input_cols = ReservationsInput::whereNotIn('id', [id1, id2, id3, id4])
 
         // 重複予約あるか
-        // $input_cols = ReservationsInput::where('inputs_parent_id', '!=', $this->inputs_parent_id)
         $input_cols = ReservationsInput::whereNotIn('id', $this->input_ids)
             ->where('facility_id', $this->facility_id)
             ->Where(function ($query) {
@@ -92,6 +91,8 @@ class CustomValiDuplicateBookings implements Rule
 
         if ($input_cols) {
             // 値ありは重複
+            // $this->error_date = $input_cols->start_datetime->format('Y-m-d') . ' ' . $input_cols->start_datetime->format('H:i') . '～' . $input_cols->end_datetime->format('H:i');
+            $this->error_date = $input_cols->start_datetime->format('Y-m-d');
             return false;
         }
 
@@ -105,6 +106,6 @@ class CustomValiDuplicateBookings implements Rule
      */
     public function message()
     {
-        return $this->message ?? '既に予約が入っているため、予約できません。';
+        return $this->message ? $this->message . "（{$this->error_date}）" : '既に予約が入っているため、予約できません。（'. $this->error_date . '）';
     }
 }

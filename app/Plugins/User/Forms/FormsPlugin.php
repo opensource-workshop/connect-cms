@@ -4,7 +4,6 @@ namespace App\Plugins\User\Forms;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-// use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -29,7 +28,6 @@ use App\Rules\CustomValiBothRequired;
 use App\Rules\CustomValiTokenExists;
 use App\Rules\CustomValiEmails;
 
-// use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
 
 use App\Utilities\String\StringUtils;
@@ -204,14 +202,15 @@ class FormsPlugin extends UserPluginBase
     private function getFormsColumnsSelects($forms_id)
     {
         // カラムの選択肢用データ
-        $forms_columns_selects = DB::table('forms_columns_selects')
-                                     ->join('forms_columns', 'forms_columns.id', '=', 'forms_columns_selects.forms_columns_id')
-                                     ->join('forms', 'forms.id', '=', 'forms_columns.forms_id')
-                                     ->select('forms_columns_selects.*')
-                                     ->where('forms.id', '=', $forms_id)
-                                     ->orderBy('forms_columns_selects.forms_columns_id', 'asc')
-                                     ->orderBy('forms_columns_selects.display_sequence', 'asc')
-                                     ->get();
+        $forms_columns_selects = FormsColumnsSelects::
+            join('forms_columns', 'forms_columns.id', '=', 'forms_columns_selects.forms_columns_id')
+            ->join('forms', 'forms.id', '=', 'forms_columns.forms_id')
+            ->select('forms_columns_selects.*')
+            ->where('forms.id', '=', $forms_id)
+            ->orderBy('forms_columns_selects.forms_columns_id', 'asc')
+            ->orderBy('forms_columns_selects.display_sequence', 'asc')
+            ->get();
+
         // カラムID毎に詰めなおし
         $forms_columns_id_select = array();
         $index = 1;
@@ -235,11 +234,10 @@ class FormsPlugin extends UserPluginBase
     private function getFormFrame($frame_id)
     {
         // Frame データ
-        $frame = DB::table('frames')
-                 ->select('frames.*', 'forms.id as forms_id')
-                 ->leftJoin('forms', 'forms.bucket_id', '=', 'frames.bucket_id')
-                 ->where('frames.id', $frame_id)
-                 ->first();
+        $frame = Frame::select('frames.*', 'forms.id as forms_id')
+            ->leftJoin('forms', 'forms.bucket_id', '=', 'frames.bucket_id')
+            ->where('frames.id', $frame_id)
+            ->first();
         return $frame;
     }
 
@@ -284,7 +282,6 @@ class FormsPlugin extends UserPluginBase
 
         // Forms、Frame データ
         $form = $this->getForms($frame_id);
-
 
         $setting_error_messages = null;
         $forms_columns = null;
@@ -347,7 +344,7 @@ class FormsPlugin extends UserPluginBase
             ////
             // URLのなかに'/plugin/forms/index'が含まれている場合（getのパラメータを含める時のみindexをURLに含められてる想定）
             // 同一ページに複数フォームある場合、１つのフォームを登録して確認画面を表示するが、他は初期表示のため、リクエストが上書きされてしまうことを防ぐ。
-            if ($request->isMethod('get') && strpos($request->url(), '/plugin/forms/index') !== false) {
+            if ($request->isMethod('post') && strpos($request->url(), '/plugin/forms/index') !== false) {
                 // まとめ行に対応してない素の状態のFormsColumnsが欲しいため、再取得
                 $tmp_forms_columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence')->get();
 
@@ -1398,28 +1395,25 @@ class FormsPlugin extends UserPluginBase
 
         // 仮登録件数
         $tmp_entry_count = FormsInputs::where('forms_id', $form->id)
-                                    ->where('forms_inputs.status', FormStatusType::temporary)
-                                    ->count();
+            ->where('forms_inputs.status', FormStatusType::temporary)
+            ->count();
 
         // 本登録数
         $active_entry_count = FormsInputs::where('forms_id', $form->id)
-                                    ->where('forms_inputs.status', FormStatusType::active)
-                                    ->count();
+            ->where('forms_inputs.status', FormStatusType::active)
+            ->count();
 
         $form->tmp_entry_count = $tmp_entry_count;
         $form->active_entry_count = $active_entry_count;
-        // var_dump($tmp_entry_count, $active_entry_count);
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'forms_edit_form', [
+        return $this->view('forms_edit_form', [
             'form_frame'  => $form_frame,
             'form'        => $form,
             'create_flag' => $create_flag,
             'message'     => $message,
             'errors'      => $errors,
-            ]
-        )->withInput($request->all);
+        ])->withInput($request->all);
     }
 
     /**
@@ -1606,9 +1600,9 @@ class FormsPlugin extends UserPluginBase
 
             // 削除するファイル情報が入っている詳細データの特定
             $del_file_ids = FormsInputCols::whereIn('forms_columns_id', $file_column_type_ids)
-                                                ->whereNotNull('value')
-                                                ->pluck('value')
-                                                ->all();
+                ->whereNotNull('value')
+                ->pluck('value')
+                ->all();
 
             // 削除するファイルデータ (もし重複IDあったとしても、in検索によって排除される)
             $delete_uploads = Uploads::whereIn('id', $del_file_ids)->get();
@@ -1666,7 +1660,7 @@ class FormsPlugin extends UserPluginBase
     {
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)
-               ->update(['bucket_id' => $request->select_bucket]);
+            ->update(['bucket_id' => $request->select_bucket]);
 
         // 関連するセッションクリア
         $request->session()->forget('forms');
