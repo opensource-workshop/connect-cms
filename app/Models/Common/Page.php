@@ -556,4 +556,47 @@ class Page extends Model
         $display_children = $children->where('display_flag', 1);
         return $display_children->isNotEmpty();
     }
+
+    /**
+     * アクティブ・マークを付けるページID の算出
+     * 
+     * アクティブ・マークを付けるページとは、以下の条件を満たすもの
+     * 選択されているページ＆表示中のページ
+     * 選択されているページが非表示の場合、表示されている中での、最後の上位階層のページ
+     * 
+     * プログラムでの、値の見つけ方
+     * PHP の参照変数を宣言し、アクティブ・マークのページIDを保持する。
+     * 再帰関数でページを順に見ていき、条件に合致するページIDで参照変数を上書きながら進む
+     * 残ったページIDがアクティブ・マークのページになる
+     * 
+     * (resources/views/plugins/user/menus/tab_flat/menus.blade.php より移動
+     *  1ページに複数tab_flatを配置すると、function factorial()の重複定義エラーになるため。)
+     */
+    public static function getTabFlatActivePageId($pages, $ancestors, $page_roles): int
+    {
+        $active_page_id = 0;
+        foreach ($pages as $page) {
+            self::factorial($page, $ancestors, $page_roles, $active_page_id);
+        }
+        return $active_page_id;
+    }
+
+    /**
+     * アクティブ・マークを付けるページID を探す再帰関数
+     */
+    private static function factorial($page, $ancestors, $page_roles, int &$active_page_id): void
+    {
+        if ($page->isView(Auth::user(), false, true, $page_roles)) {
+            if ($ancestors->contains('id', $page->id)) {
+                $active_page_id = $page->id;
+            }
+        }
+
+        if (count($page->children) > 0) {
+            foreach ($page->children as $children) {
+                self::factorial($children, $ancestors, $page_roles, $active_page_id);
+            }
+        }
+        return;
+    }
 }
