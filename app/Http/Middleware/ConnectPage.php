@@ -360,16 +360,7 @@ class ConnectPage
      */
     private function checkPageForbidden($page_tree, $router)
     {
-        // プラグイン管理者権限以上ならOK
-        //$user = Auth::user();//ログインしたユーザーを取得
-        //if (isset($user) && $user->can('role_arrangement')) {
-        //    return;
-        //}
-
-        // $router = app(\Illuminate\Routing\Router::class);
-
         // 対象となる処理は、画面を持つルートの処理とする。
-        // $route_name = $this->router->current()->getName();
         $route_name = $router->current()->getName();
         if ($route_name == 'get_plugin'    ||
             $route_name == 'post_plugin'   ||
@@ -393,26 +384,47 @@ class ConnectPage
 
             // 自分のページ＋先祖ページのpage_roles を取得
             $ids = null;
-            // $ids_collection = $this->page_tree->pluck('id');
             $ids_collection = $page_tree->pluck('id');
             if ($ids_collection) {
                 $ids = $ids_collection->all();
             }
-            // $page_roles = $this->getPageRoles($ids);
             $page_roles = PageRole::getPageRoles($ids);
 
             // ページをループして表示可否をチェック
             // 継承関係を加味するために is_view 変数を使用。
             $is_view = true;
             foreach ($page_tree as $page_obj) {
-                $check_page_roles = null;
-                if ($page_roles) {
+
+                // IP アドレス制限　　　　　　　　　　　　　　　　：親子ともに設定あったら、子⇒親に遡って全てチェック
+                // ログインユーザ全員参加やメンバーシップページ設定：親子ともに設定あったら、子だけでチェック
+
+                // ページに直接、ログインユーザ全員参加やメンバーシップページが設定されている場合は、親を見ずに、該当ページ（一番下の子=$page_tree[0]）だけで判断する。
+                if ($page_obj->membership_flag == 2) {
+                    if (empty($user)) {
+                        return $this->doForbidden();
+                    } else {
+                        return;
+                    }
+                } elseif ($page_obj->membership_flag == 1) {
+                    if (empty($page_roles)) {
+                        return $this->doForbidden();
+                    }
                     $check_page_roles = $page_roles->where('page_id', $page_obj->id);
+                    $is_view = $page_obj->isView($user, $check_no_display_flag, $is_view, $check_page_roles);
+                    if (!$is_view) {
+                        // 403 対象
+                        return $this->doForbidden();
+                    } else {
+                        return;
+                    }
                 }
-                $is_view = $page_obj->isView($user, $check_no_display_flag, $is_view, $check_page_roles);
+                // 以降は親を見る処理（IP アドレス制限）
+
+                // IP アドレス制限用。上でmembership_flag=1,2チェック済みのため、ここの isView() のmembership_flag=1,2チェックは実質使われない。
+                $is_view = $page_obj->isView($user, $check_no_display_flag, $is_view);
             }
             if (!$is_view) {
-                // 403 対象
+                // 403 対象（IP アドレス制限）
                 return $this->doForbidden();
             }
         }
