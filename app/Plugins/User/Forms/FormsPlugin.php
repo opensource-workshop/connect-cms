@@ -347,7 +347,7 @@ class FormsPlugin extends UserPluginBase
             ////
             // URLのなかに'/plugin/forms/index'が含まれている場合（getのパラメータを含める時のみindexをURLに含められてる想定）
             // 同一ページに複数フォームある場合、１つのフォームを登録して確認画面を表示するが、他は初期表示のため、リクエストが上書きされてしまうことを防ぐ。
-            if ($request->isMethod('get') && strpos($request->url(), '/plugin/forms/index') !== false) {
+            if ($request->isMethod('post') && strpos($request->url(), '/plugin/forms/index') !== false) {
                 // まとめ行に対応してない素の状態のFormsColumnsが欲しいため、再取得
                 $tmp_forms_columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence')->get();
 
