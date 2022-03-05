@@ -259,6 +259,16 @@ abstract class DuskTestCase extends BaseTestCase
         $this->test_page = Page::where('permanent_link', $permanent_link)->first();
     }
 
+   /**
+     * ページ追加（なければ）
+     */
+    public function addPageFirst($permanent_link = '/')
+    {
+        $page = Page::where('permanent_link', $permanent_link)->first();
+        $page = $page ?? Page::create(['permanent_link' => $permanent_link, 'page_name' => $permanent_link]);
+        return $page;
+    }
+
     /**
      * プラグイン追加
      */
@@ -566,7 +576,9 @@ EOF;
      */
     public function crearContents($permanent_link, $area_id = 2)
     {
-        $page = Page::where('permanent_link', $permanent_link)->first();
+        //$page = Page::where('permanent_link', $permanent_link)->first();
+        $page = $this->addPageFirst($permanent_link);
+
         $frames = Frame::where('page_id', $page->id)->where('area_id', $area_id)->get();
         foreach ($frames as $frame) {
             Contents::where('bucket_id', $frame->bucket_id)->delete();
