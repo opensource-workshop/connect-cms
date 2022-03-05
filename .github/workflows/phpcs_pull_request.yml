@@ -14,11 +14,12 @@ jobs:
       - uses: actions/checkout@v2
 
       # https://github.com/shivammathur/setup-php (community)
-      - name: Setup PHP ${{ env.PHP_VERSION }}
+      - name: Setup PHP ${{ env.PHP_VERSION }} with cs2pr
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ env.PHP_VERSION }}
           coverage: none
+          tools: composer, cs2pr
 
       # Composer
       - name: Validate composer.json and composer.lock
@@ -39,10 +40,6 @@ jobs:
       - name: Install Composer Dependencies
         run: composer install --no-progress --prefer-dist --optimize-autoloader
 
-      # https://github.com/chekalsky/phpcs-action (community)
       - name: PHPCS check
-        uses: chekalsky/phpcs-action@v1.2.0
-        with:
-          enable_warnings: true
-          installed_paths: '${{ github.workspace }}/vendor/squizlabs/php_codesniffer'
-          phpcs_bin_path: './vendor/bin/phpcs'
+        run: composer phpcs -- -q --report=checkstyle | cs2pr --graceful-warnings
+
