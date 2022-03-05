@@ -26,7 +26,7 @@ jobs:
             php-version: ${{ env.PHP_VERSION }}
 
         - name: Install Composer Dependencies
-          run: composer install --dev --no-progress --prefer-dist --optimize-autoloader
+          run: composer install --no-progress --prefer-dist --optimize-autoloader
 
         - name: PHPCS check
           uses: chekalsky/phpcs-action@v1
