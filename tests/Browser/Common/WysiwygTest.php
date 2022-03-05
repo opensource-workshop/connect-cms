@@ -60,8 +60,8 @@ class WysiwygTest extends DuskTestCase
     private function init()
     {
         // データクリア
-        // $page = Page::where('permanent_link', '/test/content')->first();
-        $page = Page::where('permanent_link', '/test/content')->firstOrCreate([]);
+        $page = Page::where('permanent_link', '/test/content')->first();
+        $page = $page ?? Page::create(['permanent_link' => '/test/content', 'page_name' => '/test/content']);
         $frame = Frame::where('page_id', $page->id)->where('plugin_name', 'contents')->first();
         if (!empty($frame)) {
             $bucket = Buckets::find($frame->bucket_id);
