@@ -60,6 +60,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ steps.php_version_empty_action.outputs.PHP_VERSION }}
+          coverage: none
 
       - name: Create Database
         run: |
