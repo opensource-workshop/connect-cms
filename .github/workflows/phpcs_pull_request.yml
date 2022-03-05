@@ -2,6 +2,9 @@ name: PHPCS check Pull Request
 
 on: pull_request
 
+env:
+  PHP_VERSION: '7.3'
+
 jobs:
   phpcs:
     name: PHPCS
@@ -9,6 +12,32 @@ jobs:
     steps:
       # https://github.com/actions/checkout (official)
       - uses: actions/checkout@v2
+
+      # https://github.com/shivammathur/setup-php (community)
+      - name: Setup PHP ${{ env.PHP_VERSION }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+
+      # Composer
+      - name: Validate composer.json and composer.lock
+        run: composer validate
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+        # https://help.github.com/en/actions/configuring-and-managing-workflows/caching-dependencies-to-speed-up-workflows
+      - name: Cache composer dependencies
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Composer Dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
 
       # https://github.com/chekalsky/phpcs-action (community)
       - name: PHPCS check
