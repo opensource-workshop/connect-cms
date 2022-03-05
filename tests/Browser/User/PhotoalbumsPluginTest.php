@@ -165,7 +165,9 @@ class PhotoalbumsPluginTest extends DuskTestCase
                     ->pause(500)
                     ->attach('upload_video[' . $this->test_frame->id . ']', __DIR__.'/photoalbum/' . $base_filename . '.mp4')
                     ->attach('upload_poster[' . $this->test_frame->id . ']', __DIR__.'/photoalbum/' . $base_filename . '.png')
-                    ->press('#button_upload_video' . $this->test_frame->id);
+                    ->screenshot("user/photoalbums/upload/images/upload_video_{$base_filename}_1")
+                    ->press('#button_upload_video' . $this->test_frame->id)
+                    ->screenshot("user/photoalbums/upload/images/upload_video_{$base_filename}_2");
         }
     }
 
@@ -195,9 +197,9 @@ class PhotoalbumsPluginTest extends DuskTestCase
                     ->attach('upload_poster[' . $this->test_frame->id . ']', __DIR__.'/photoalbum/あんず伏せ.jpg')
                     ->click('#label_poster_is_cover' . $this->test_frame->id)
                     ->pause(500)
-                    ->screenshot('user/photoalbums/upload/images/upload_video1')
+                    ->screenshot('user/photoalbums/upload/images/upload_video1_1')
                     ->press('#button_upload_video' . $this->test_frame->id)
-                    ->screenshot('user/photoalbums/upload/images/upload_video2');
+                    ->screenshot('user/photoalbums/upload/images/upload_video1_2');
 
             $this->uploadMovieOne($browser, "たまごふわふわ1", "たまごふわふわ2");
         });
