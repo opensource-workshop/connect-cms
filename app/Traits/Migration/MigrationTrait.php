@@ -532,7 +532,6 @@ trait MigrationTrait
             MigrationMapping::where('target_source_table', 'reservations_location')->delete();
             MigrationMapping::where('target_source_table', 'reservations_block')->delete();
         }
-
     }
 
     /**
@@ -985,7 +984,7 @@ trait MigrationTrait
                     if (!File::exists($path . '/page.ini')) {
                         $page_ini = @parse_ini_file(str_replace('@insert', 'import', $path . '/page.ini'), true);
                     }
-                    if(!$page_ini){
+                    if (!$page_ini) {
                         continue;
                     }
                 }
@@ -3440,7 +3439,7 @@ trait MigrationTrait
                             $upload = Uploads::find($uploads_id);
                             if (empty($upload)) {
                                 $this->putMonitor(1, "No target = uploads", "uploads_id = " . $uploads_id);
-                            }else{
+                            } else {
                                 // 100000
                                 $dir_no = 0;
                                 foreach (range(0, 1000000, 1000) as $number) {
@@ -3534,7 +3533,7 @@ trait MigrationTrait
                         'thumb' => $ini['simplemovie_base']['simplemovie_thumbnail_upload_id'],
             ];
             $uploads_ids = [];
-            foreach($source_upload_ids as $key => $source_key){
+            foreach ($source_upload_ids as $key => $source_key) {
                 if ($source_key) {
                     $upload_mapping = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $source_key)->first();
                     $uploads_id = $upload_mapping ? $upload_mapping->destination_key : null;
@@ -3963,7 +3962,6 @@ trait MigrationTrait
                 'destination_key'      => $reservation->id,
             ]);
         }
-
     }
 
     /**
@@ -4172,7 +4170,7 @@ trait MigrationTrait
 
         // プラグイン振り分け
         if ($plugin_name == 'contents') {
-            if($frame_ini["source_info"]["target_source_table"] == 'simplemovie') {
+            if ($frame_ini["source_info"]["target_source_table"] == 'simplemovie') {
                 // シンプル動画（固定記事登録）
                 $this->importPluginSimplemovie($page, $page_dir, $frame_ini, $display_sequence);
             } else {
@@ -4469,7 +4467,6 @@ trait MigrationTrait
                 'type'              => $type,
             ]);
         }
-
     }
 
     /**
@@ -4667,7 +4664,6 @@ trait MigrationTrait
                 ]
             );
         }
-
     }
 
     /**
@@ -6265,7 +6261,7 @@ trait MigrationTrait
     private function checkLangDirnameJpn($lang_dirname)
     {
         /* 日本語（とgroupルーム等は空）の場合はtrue */
-        if ($lang_dirname == "japanese" || $lang_dirname == "" ) {
+        if ($lang_dirname == "japanese" || $lang_dirname == "") {
             return true;
         }
         return false;
@@ -6275,7 +6271,7 @@ trait MigrationTrait
      */
     private function getRouteBlockLangStr($lang_dirname)
     {
-        if($this->checkLangDirnameJpn($lang_dirname)) {
+        if ($this->checkLangDirnameJpn($lang_dirname)) {
             return 'r';
         }
         return $lang_dirname;
@@ -6533,7 +6529,7 @@ trait MigrationTrait
                 /* 多言語化対応 */
                 if ($this->checkLangDirnameJpn($nc2_sort_page->lang_dirname)) {
                     $lang_link = '';
-                }else{
+                } else {
                     $lang_link = '/'.$nc2_sort_page->lang_dirname;
                 }
                 $permanent_link = ($lang_link != "" && $nc2_sort_page->permalink == "" ) ? $lang_link : $lang_link."/".$nc2_sort_page->permalink;
@@ -7557,7 +7553,7 @@ trait MigrationTrait
                     'linklist_category.category_name'
                 )
                 ->where('linklist_category.linklist_id', $nc2_linklist->linklist_id)
-                ->where('category_name', '!=','カテゴリなし')
+                ->where('category_name', '!=', 'カテゴリなし')
                 ->join('linklist_link', function ($join) {
                     $join->on('linklist_link.category_id', '=', 'linklist_category.category_id')
                          ->whereColumn('linklist_link.linklist_id', 'linklist_category.linklist_id');
