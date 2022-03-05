@@ -1,15 +1,17 @@
 name: Laravel Dusk
 
-on: 
-  schedule:
-    - cron: '0 16 * * *'
+on:
+#  schedule:
+#    # 毎日AM1時実行
+#    - cron: '0 16 * * *'
+  # 手動実行
   workflow_dispatch:
     inputs:
       php_version:
         type: choice
         description: 'テストするPHPバージョン'
         required: true
-        options: 
+        options:
         - '7.3'
         - '7.4'
         - '8.0'
@@ -17,10 +19,11 @@ on:
         default: '7.3'
 
 env:
+  # schedule用
   PHP_VERSION_DEFAULT: '7.3'
 
 jobs:
- 
+
   dusk-php:
     runs-on: ubuntu-latest
     steps:
@@ -28,6 +31,7 @@ jobs:
         with:
           fetch-depth: 1
 
+      # スクリーンショットの日本語表示対応
       - name: Install Jp font
         run: sudo apt install fonts-noto
 
@@ -36,15 +40,19 @@ jobs:
           cp .env.example .env
           sed -i -e "s|DB_PASSWORD=|DB_PASSWORD=root|g" .env
           sed -i -e "s|APP_URL=http://localhost|APP_URL=http://localhost:8000|g" .env
+          sed -i -e "s|TRANSLATE_API_URL=""|TRANSLATE_API_URL="http://localhost:8000"|g" .env
+          sed -i -e "s|PDF_THUMBNAIL_API_URL=""|PDF_THUMBNAIL_API_URL="http://localhost:8000"|g" .env
+          sed -i -e "s|FACE_AI_API_URL=""|FACE_AI_API_URL="http://localhost:8000"|g" .env
 
-      - name: Set if input php_version is empty 
+      # schedule でphpバージョン指定
+      - name: Set if input php_version is empty
         run: |
           if [[ -z "$PHP_VERSION" ]]; then
             echo "::set-output name=PHP_VERSION::$PHP_VERSION_DEFAULT"
           else
             echo "::set-output name=PHP_VERSION::$PHP_VERSION"
           fi
-        env: 
+        env:
           PHP_VERSION: ${{ github.event.inputs.php_version }}
         id: php_version_empty_action
 

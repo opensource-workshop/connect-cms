@@ -61,6 +61,7 @@ class WysiwygTest extends DuskTestCase
     {
         // データクリア
         $page = Page::where('permanent_link', '/test/content')->first();
+        $page = $page ?? Page::create(['permanent_link' => '/test/content', 'page_name' => '/test/content']);
         $frame = Frame::where('page_id', $page->id)->where('plugin_name', 'contents')->first();
         if (!empty($frame)) {
             $bucket = Buckets::find($frame->bucket_id);
@@ -80,6 +81,16 @@ class WysiwygTest extends DuskTestCase
 
         $this->frame = Frame::orderBy('id', 'desc')->first();
         $this->frame->update(['bucket_id' => $bucket->id]);
+
+        // 外部サービス有効化
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/manage/service')
+                    ->assertTitleContains('Connect-CMS')
+                    ->click('#lavel_use_translate_1')
+                    ->click('#label_use_pdf_thumbnail_1')
+                    ->click('#label_use_face_ai_1')
+                    ->press('更新');
+        });
 
         // 最初にマニュアルの順番確定用にメソッドを指定する。
         $this->reserveManual('index', 'decoration', 'paragraph', 'color', 'table', 'hr', 'list', 'indent', 'link', 'image', 'file', 'media', 'preview', 'source');
@@ -734,6 +745,10 @@ class WysiwygTest extends DuskTestCase
      */
     private function translate()
     {
+        if (!config('connect.TRANSLATE_API_URL')) {
+            $this->fail('.env.dusk.localのTRANSLATE_API_URLが空');
+        }
+
         // 画面
         $this->browse(function (Browser $browser) {
             $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
@@ -766,6 +781,10 @@ class WysiwygTest extends DuskTestCase
      */
     private function pdf()
     {
+        if (!config('connect.PDF_THUMBNAIL_API_URL')) {
+            $this->fail('.env.dusk.localのPDF_THUMBNAIL_API_URLが空');
+        }
+
         // 画面
         $this->browse(function (Browser $browser) {
             $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
@@ -798,6 +817,10 @@ class WysiwygTest extends DuskTestCase
      */
     private function face()
     {
+        if (!config('connect.FACE_AI_API_URL')) {
+            $this->fail('.env.dusk.localのFACE_AI_API_URLが空');
+        }
+
         // 画面
         $this->browse(function (Browser $browser) {
             $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)

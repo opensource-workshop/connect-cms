@@ -175,7 +175,9 @@ class BbsesPluginTest extends DuskTestCase
                     ->type('name', 'テストの掲示板')
                     ->click('#label_use_like_on')
                     ->pause(500)
-                    ->type('like_button_name', '👍')
+                    // bugfix: 絵文字はテスト非対応。Facebook\WebDriver\Exception\UnknownErrorException: unknown error: ChromeDriver only supports characters in the BMP
+                    // ->type('like_button_name', '👍')
+                    ->type('like_button_name', 'イイネ！')
                     ->screenshot('user/bbses/createBuckets/images/createBuckets')
                     ->press('登録確定');
 

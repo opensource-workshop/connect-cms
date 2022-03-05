@@ -14,7 +14,6 @@ use App\Enums\PluginName;
 
 /**
  * 権限・テストクラス
- *
  */
 class RoleBlueprintTest extends DuskTestCase
 {
@@ -42,6 +41,9 @@ class RoleBlueprintTest extends DuskTestCase
     {
         // マニュアルデータの削除
         Dusks::where('category', 'blueprint')->where('plugin_name', 'role')->delete();
+
+        // ブログ準備
+        $this->initPlugin('blogs', '/test/blog');
     }
 
     /**

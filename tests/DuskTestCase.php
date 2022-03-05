@@ -243,12 +243,13 @@ abstract class DuskTestCase extends BaseTestCase
     }
 
     /**
-     * プラグイン追加（なければ）
+     * プラグイン追加（なければ）+ ページ追加（なければ）
      */
     public function addPluginFirst($add_plugin, $permanent_link = '/', $area = 0, $screenshot = true)
     {
         Plugins::where('plugin_name', ucfirst($add_plugin))->update(['display_flag' => 1]);
         $page = Page::where('permanent_link', $permanent_link)->first();
+        $page = $page ?? Page::create(['permanent_link' => $permanent_link, 'page_name' => $permanent_link]);
 
         if (!Frame::where('plugin_name', $add_plugin)->where('area_id', $area)->where('page_id', $page->id)->first()) {
             $this->addPluginModal($add_plugin, $permanent_link, $area, $screenshot);
@@ -256,6 +257,16 @@ abstract class DuskTestCase extends BaseTestCase
 
         $this->test_frame = Frame::where('plugin_name', $add_plugin)->where('area_id', $area)->orderBy('id', 'desc')->first();
         $this->test_page = Page::where('permanent_link', $permanent_link)->first();
+    }
+
+   /**
+     * ページ追加（なければ）
+     */
+    public function addPageFirst($permanent_link = '/')
+    {
+        $page = Page::where('permanent_link', $permanent_link)->first();
+        $page = $page ?? Page::create(['permanent_link' => $permanent_link, 'page_name' => $permanent_link]);
+        return $page;
     }
 
     /**
@@ -576,7 +587,9 @@ EOF;
      */
     public function crearContents($permanent_link, $area_id = 2)
     {
-        $page = Page::where('permanent_link', $permanent_link)->first();
+        //$page = Page::where('permanent_link', $permanent_link)->first();
+        $page = $this->addPageFirst($permanent_link);
+
         $frames = Frame::where('page_id', $page->id)->where('area_id', $area_id)->get();
         foreach ($frames as $frame) {
             Contents::where('bucket_id', $frame->bucket_id)->delete();
