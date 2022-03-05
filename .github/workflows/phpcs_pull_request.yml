@@ -41,5 +41,4 @@ jobs:
         run: composer install --no-progress --prefer-dist --optimize-autoloader
 
       - name: PHPCS check
-        run: composer phpcs -- -q --report=checkstyle | cs2pr --graceful-warnings
-
+        run: ./vendor/bin/phpcs --standard=phpcs.xml ./ -q --report=checkstyle | cs2pr --graceful-warnings
