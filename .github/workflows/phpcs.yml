@@ -1,6 +1,8 @@
-name: PHPCS check Manual
+name: PHPCS check
 
-on: workflow_dispatch
+on:
+  pull_request:
+  workflow_dispatch:
 
 env:
   PHP_VERSION: '7.3'
@@ -12,15 +14,14 @@ jobs:
     steps:
       # https://github.com/actions/checkout (official)
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 1
 
       # https://github.com/shivammathur/setup-php (community)
-      - name: Setup PHP ${{ env.PHP_VERSION }}
+      - name: Setup PHP ${{ env.PHP_VERSION }} with cs2pr
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ env.PHP_VERSION }}
           coverage: none
+          tools: composer, cs2pr
 
       # Composer
       - name: Validate composer.json and composer.lock
@@ -41,5 +42,10 @@ jobs:
       - name: Install Composer Dependencies
         run: composer install --no-progress --prefer-dist --optimize-autoloader
 
-      - name: PHPCS check
+      - name: PHPCS check pull_request
+        if: ${{ github.event_name == 'pull_request' }}
+        run: ./vendor/bin/phpcs --standard=phpcs.xml ./ -q --report=checkstyle | cs2pr --graceful-warnings
+
+      - name: PHPCS check workflow_dispatch
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: composer phpcs -- --colors
