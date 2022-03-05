@@ -991,7 +991,7 @@ class ReservationManage extends ManagePluginBase
                 fputcsv($stream, $head);
 
                 // データの処理
-                $query->chunk(1000, function ($inputs) use ($stream, $character_code) { 
+                $query->chunk(1000, function ($inputs) use ($stream, $character_code) {
                     foreach ($inputs as $input) {
                         // コードから名称変換
                         $input->status_display = StatusType::getDescription($input->status);
@@ -1026,6 +1026,5 @@ class ReservationManage extends ManagePluginBase
                 'Content-Disposition' => 'attachment; filename="reservation_bookings.csv"',
             ]
         );
-        
     }
 }
