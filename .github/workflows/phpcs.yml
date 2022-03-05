@@ -1,0 +1,27 @@
+name: PHPCS check
+
+on:
+  pull_request:
+    paths:
+      - "**.php"
+      - "phpcs.xml"
+      - ".github/workflows/phpcs.yml"
+  workflow_dispatch
+
+jobs:
+  phpcs:
+      name: PHPCS
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v2
+          with:
+            fetch-depth: 1
+
+        - name: Install Composer Dependencies
+          run: composer install --dev --no-progress --prefer-dist --optimize-autoloader
+
+        - name: PHPCS check
+          uses: chekalsky/phpcs-action@v1
+          with:
+            phpcs_bin_path: './vendor/bin/phpcs'
+            installed_paths: '${{ github.workspace }}/vendor/phpcompatibility/php-compatibility'
