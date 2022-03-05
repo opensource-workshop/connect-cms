@@ -1,8 +1,10 @@
 name: Laravel Dusk
 
 on: 
-  schedule:
-    - cron: '0 16 * * *'
+#  schedule:
+#    # 毎日AM1時実行
+#    - cron: '0 16 * * *'
+  # 手動実行
   workflow_dispatch:
     inputs:
       php_version:
@@ -17,6 +19,7 @@ on:
         default: '7.3'
 
 env:
+  # schedule用
   PHP_VERSION_DEFAULT: '7.3'
 
 jobs:
@@ -28,6 +31,7 @@ jobs:
         with:
           fetch-depth: 1
 
+      # スクリーンショットの日本語表示対応
       - name: Install Jp font
         run: sudo apt install fonts-noto
 
@@ -37,6 +41,7 @@ jobs:
           sed -i -e "s|DB_PASSWORD=|DB_PASSWORD=root|g" .env
           sed -i -e "s|APP_URL=http://localhost|APP_URL=http://localhost:8000|g" .env
 
+      # schedule でphpバージョン指定
       - name: Set if input php_version is empty 
         run: |
           if [[ -z "$PHP_VERSION" ]]; then
