@@ -224,7 +224,7 @@ class UserPluginBase extends PluginBase
             // Redirect時のエラー対応. リダイレクトせずエラー画面表示する。
             // Redirect時に権限エラー等で403のViewオブジェクトを返しても、リダイレクト処理が走り、エラー画面が表示されないため、ここでエラー時はリダイレクトしない設定をリクエストに入れる。
             $request->merge(['return_mode' => 'asis']);
-            return $this->view_error("403_inframe", null, "存在しないメソッド");
+            return $this->viewError("403_inframe", null, "存在しないメソッド");
         }
 
         // メソッドの可視性チェック
@@ -232,24 +232,24 @@ class UserPluginBase extends PluginBase
         if (!$objReflectionMethod->isPublic()) {
             // Redirect時のエラー対応. リダイレクトせずエラー画面表示する。
             $request->merge(['return_mode' => 'asis']);
-            return $this->view_error("403_inframe", null, "メソッドの可視性チェック");
+            return $this->viewError("403_inframe", null, "メソッドの可視性チェック");
         }
 
         // コアで定義しているHTTPリクエストメソッドチェック
         //if (!$this->checkHttpRequestMethod($request, $action)) {
-        //    return $this->view_error("403_inframe");
+        //    return $this->viewError("403_inframe");
         //}
 
         // プラグイン側の関数定義チェック
         //if (!$this->checkPublicFunctions($obj, $request, $action)) {
-        //    return $this->view_error("403_inframe");
+        //    return $this->viewError("403_inframe");
         //}
 
         // コアで定義しているHTTPリクエストメソッドチェック ＆ プラグイン側の関数定義チェック の両方がエラーの場合、権限エラー
         if (!$this->checkHttpRequestMethod($request, $action) && !$this->checkPublicFunctions($obj, $request, $action)) {
             // Redirect時のエラー対応. リダイレクトせずエラー画面表示する。
             $request->merge(['return_mode' => 'asis']);
-            return $this->view_error("403_inframe", null, "HTTPリクエストメソッドチェック ＆ プラグイン側の関数定義チェック");
+            return $this->viewError("403_inframe", null, "HTTPリクエストメソッドチェック ＆ プラグイン側の関数定義チェック");
         }
 
         // チェック用POST
@@ -729,7 +729,7 @@ class UserPluginBase extends PluginBase
 
         // Backet が取れないとおかしな操作をした可能性があるのでエラーにしておく。
         if (empty($buckets)) {
-            return $this->view_error("error_inframe", "存在しないBucket");
+            return $this->viewError("error_inframe", "存在しないBucket");
         }
 
         // BucketsRoles の更新
@@ -765,7 +765,7 @@ class UserPluginBase extends PluginBase
 
         // buckets がない場合
         if (empty($bucket)) {
-            return $this->view_error("error_inframe", "存在しないBucket");
+            return $this->viewError("error_inframe", "存在しないBucket");
         }
 
         // redirect_path
@@ -910,7 +910,7 @@ class UserPluginBase extends PluginBase
 
         // buckets がない場合
         if (empty($this->buckets)) {
-            return $this->view_error("error_inframe", "存在しないBucket");
+            return $this->viewError("error_inframe", "存在しないBucket");
         }
 
         // Buckets のメール設定取得
@@ -1038,7 +1038,7 @@ class UserPluginBase extends PluginBase
     {
         // buckets がない場合
         if (empty($this->buckets)) {
-            return $this->view_error("error_inframe", "存在しないBucket");
+            return $this->viewError("error_inframe", "存在しないBucket");
         }
 
         // Buckets のメール設定取得
@@ -1096,7 +1096,7 @@ class UserPluginBase extends PluginBase
     {
         // buckets がない場合
         if (empty($this->buckets)) {
-            return $this->view_error("error_inframe", "存在しないBucket");
+            return $this->viewError("error_inframe", "存在しないBucket");
         }
 
         // Buckets のメール設定取得
@@ -1504,39 +1504,4 @@ class UserPluginBase extends PluginBase
 
         return $query;
     }
-
-    /**
-     * 権限チェック
-     * roll_or_auth : 権限 or 役割
-     */
-/*
-
-Trait へ移動（App\Http\Controllers\Core\ConnectController）
-
-    public function can($roll_or_auth, $post = null, $plugin_name = null)
-    {
-        $args = null;
-        if ( $post != null || $plugin_name != null ) {
-            $args = [[$post, $plugin_name]];
-        }
-
-        if (!Auth::check() || !Auth::user()->can($roll_or_auth, $args)) {
-            return $this->view_error(403);
-        }
-    }
-*/
-    /**
-     * エラー画面の表示
-     *
-     */
-/*
-
-Trait へ移動（App\Http\Controllers\Core\ConnectController）
-
-    public function view_error($error_code)
-    {
-        // 表示テンプレートを呼び出す。
-        return view('errors.' . $error_code);
-    }
-*/
 }

@@ -411,7 +411,7 @@ class BbsesPlugin extends UserPluginBase
 
 
 //        if (empty($faqs_post)) {
-//            return $this->view_error("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
+//            return $this->viewError("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
 //        }
 
         // 変更画面を呼び出す。
