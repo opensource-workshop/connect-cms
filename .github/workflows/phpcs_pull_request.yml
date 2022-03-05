@@ -41,7 +41,7 @@ jobs:
 
       # https://github.com/chekalsky/phpcs-action (community)
       - name: PHPCS check
-        uses: chekalsky/phpcs-action@v1
+        uses: chekalsky/phpcs-action@v1.2.0
         with:
           enable_warnings: true
           installed_paths: '${{ github.workspace }}/vendor/squizlabs/php_codesniffer'
