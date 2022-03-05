@@ -27,6 +27,7 @@ jobs:
   dusk-php:
     runs-on: ubuntu-latest
     steps:
+      # https://github.com/actions/checkout (official)
       - uses: actions/checkout@v2
         with:
           fetch-depth: 1
@@ -56,6 +57,7 @@ jobs:
           PHP_VERSION: ${{ github.event.inputs.php_version }}
         id: php_version_empty_action
 
+      # https://github.com/shivammathur/setup-php (community)
       - name: Setup PHP ${{ github.event.inputs.php_version }}
         uses: shivammathur/setup-php@v2
         with:
@@ -67,9 +69,26 @@ jobs:
           sudo systemctl start mysql
           mysql --user="root" --password="root" -e "CREATE DATABASE laravel character set UTF8mb4 collate utf8mb4_general_ci;"
 
+      # Composer
+      - name: Validate composer.json and composer.lock
+        run: composer validate
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+      # https://help.github.com/en/actions/configuring-and-managing-workflows/caching-dependencies-to-speed-up-workflows
+      - name: Cache composer dependencies
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
       - name: Install Composer Dependencies
         run: composer install --no-progress --prefer-dist --optimize-autoloader
 
+      # Laravel
       - name: Generate Application Key
         run: php artisan key:generate
 
@@ -79,6 +98,7 @@ jobs:
       - name: Initial data import with seeder
         run: php artisan db:seed
 
+      # dusk
       - name: Upgrade Chrome Driver
         run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
 
