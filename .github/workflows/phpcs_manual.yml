@@ -1,12 +1,6 @@
-name: PHPCS check
+name: PHPCS check Manual
 
-on:
-  pull_request:
-    paths:
-      - "**.php"
-      - "phpcs.xml"
-      - ".github/workflows/phpcs.yml"
-  workflow_dispatch:
+on: workflow_dispatch
 
 env:
   PHP_VERSION: '7.3'
@@ -24,11 +18,10 @@ jobs:
           uses: shivammathur/setup-php@v2
           with:
             php-version: ${{ env.PHP_VERSION }}
+            coverage: none
 
         - name: Install Composer Dependencies
           run: composer install --no-progress --prefer-dist --optimize-autoloader
 
         - name: PHPCS check
-          uses: chekalsky/phpcs-action@v1
-          with:
-            phpcs_bin_path: './vendor/bin/phpcs'
+          run: composer phpcs-color

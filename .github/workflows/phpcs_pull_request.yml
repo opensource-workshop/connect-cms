@@ -1,0 +1,19 @@
+name: PHPCS check Pull Request
+
+on: pull_request
+
+jobs:
+  phpcs:
+      name: PHPCS
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v2
+          with:
+            fetch-depth: 1
+
+        - name: PHPCS check
+          uses: chekalsky/phpcs-action@v1
+          env:
+            PHP_VERSION: '7.3'
+            COMPOSER_PROCESS_TIMEOUT: 0
+            COMPOSER_NO_INTERACTION: 1
