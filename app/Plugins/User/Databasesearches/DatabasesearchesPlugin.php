@@ -247,23 +247,25 @@ class DatabasesearchesPlugin extends UserPluginBase
         }
 
         // 条件全てに合致した行ID を元に、再度データ取得（ここでページネート指定する）
-        $inputs_ids
-            = DatabasesInputCols::select('databases_inputs_id', 'frames.id as frames_id', 'frames.page_id', 'databases.databases_name')
-                                ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
-                                ->join('databases', 'databases.id', '=', 'databases_columns.databases_id')
-                                ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
-                                ->join('databases_inputs', function($join) { $join->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
-                                                                                  ->where('databases_inputs.status','=', StatusType::active); })
-                                ->whereIn('databases_inputs_id', $inputs_ids_marge)
-                                ->groupBy('databases_inputs_id')
-                                ->groupBy('frames.id')
-                                ->groupBy('frames.page_id')
-                                ->groupBy('databases.databases_name');
-                                // bugfix: 入力データ1件の項目内で更新日がずれると重複を起こすため、updated_atのgroupBy不要。
-                                // ->groupBy('databases_input_cols.updated_at');
-                                // move: 少し下に移動
-                                // ->orderBy('databases_input_cols.updated_at', 'desc')
-                                // ->paginate($databasesearches->view_count, ["*"], "frame_{$frame_id}_page");
+        $inputs_ids = DatabasesInputCols::
+            select('databases_inputs_id', 'frames.id as frames_id', 'frames.page_id', 'databases.databases_name')
+            ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+            ->join('databases', 'databases.id', '=', 'databases_columns.databases_id')
+            ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
+            ->join('databases_inputs', function ($join) {
+                $join->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
+                    ->where('databases_inputs.status', '=', StatusType::active);
+            })
+            ->whereIn('databases_inputs_id', $inputs_ids_marge)
+            ->groupBy('databases_inputs_id')
+            ->groupBy('frames.id')
+            ->groupBy('frames.page_id')
+            ->groupBy('databases.databases_name');
+            // bugfix: 入力データ1件の項目内で更新日がずれると重複を起こすため、updated_atのgroupBy不要。
+            // ->groupBy('databases_input_cols.updated_at');
+            // move: 少し下に移動
+            // ->orderBy('databases_input_cols.updated_at', 'desc')
+            // ->paginate($databasesearches->view_count, ["*"], "frame_{$frame_id}_page");
 
         // bugfix: フレーム指定の場合、同じデータベースを複数フレームで指定した場合の対応漏れ
         // フレーム（データベース指定）
