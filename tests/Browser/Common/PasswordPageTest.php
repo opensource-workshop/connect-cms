@@ -42,8 +42,7 @@ class PasswordPageTest extends DuskTestCase
     {
         // パスワード設定
         $this->browse(function (Browser $browser) {
-            //$page = Page::where('permanent_link', '/password')->first();
-            $page = $this->addPageFirst('/password');
+            $page = $this->firstOrCreatePage('/password');
 
             $browser->visit('/manage/page/edit/' . $page->id)
                     ->assertTitleContains('Connect-CMS')
