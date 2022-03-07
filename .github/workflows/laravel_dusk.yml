@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # https://github.com/actions/checkout (official)
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 1
 
@@ -83,8 +83,9 @@ jobs:
         run: echo "::set-output name=dir::$(composer config cache-files-dir)"
 
       # https://help.github.com/en/actions/configuring-and-managing-workflows/caching-dependencies-to-speed-up-workflows
+      # https://github.com/actions/cache (official)
       - name: Cache composer dependencies
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -116,9 +117,10 @@ jobs:
       - name: Run Dusk Tests
         run: php artisan dusk
 
+      # https://github.com/actions/upload-artifact (official)
       - name: Upload Screenshots
         if: ${{ always() }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: screenshots
           path: tests/Browser/screenshots
@@ -145,14 +147,15 @@ jobs:
 
       - name: Upload Manual
         if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == 'true' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: manual
           path: tests/Manual/html
 
-      - name: Upload Console Logs
+      - name: Upload Logs
         if: failure()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
-          name: console
-          path: tests/Browser/console
+          path: | 
+            tests/Browser/console
+            storage/logs
