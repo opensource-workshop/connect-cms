@@ -774,11 +774,6 @@ class UserPluginBase extends PluginBase
         ];
 
         // 項目のエラーチェック
-        // $validator = Validator::make($request->all(), [
-        //     'notice_addresses' => ['nullable', 'email', Rule::requiredIf($request->notice_on == 1)],
-        //     'approval_addresses' => ['nullable', 'email', Rule::requiredIf($request->approval_on == 1)],
-        //     'approved_addresses' => ['nullable', 'email', Rule::requiredIf($request->approved_on == 1)],
-        // ]);
         $rules = [
             'notice_addresses' => [],
             'approval_addresses' => [],
@@ -831,19 +826,8 @@ class UserPluginBase extends PluginBase
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            // [debug]
-            // セッション初期化などのLaravel 処理。
-            // $request->flash();
-
             // 共通画面のため、redirect_pathが画面に書けないため、ここで設定
             $request->merge($redirect_path_array);
-
-            // [debug]
-            // dd(old('notice_on'), $request->notice_on);
-            // $a = redirect()->back()->withErrors($validator)->withInput();
-            // dd(old('notice_on'), $request->notice_on);
-            // return $a;
-
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
