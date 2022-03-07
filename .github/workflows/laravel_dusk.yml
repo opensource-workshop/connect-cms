@@ -130,11 +130,11 @@ jobs:
 
       - name: 'Run Dusk マニュアルHTML出力'
         if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL }}
-        run: php artisan dusk tests\Manual\src\ManualOutput.php
+        run: php artisan dusk tests/Manual/src/ManualOutput.php
 
       - name: 'Run Dusk マニュアルPDF出力'
         if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL }}
-        run: php artisan dusk tests\Manual\src\ManualPdf.php
+        run: php artisan dusk tests/Manual/src/ManualPdf.php
 
       # Upload
       - name: Upload Screenshots
