@@ -24,7 +24,7 @@ on:
 env:
   # schedule用
   PHP_VERSION_DEFAULT: '7.3'
-  IS_OUTPUT_MANUAL_DEFAULT: false
+  IS_OUTPUT_MANUAL_DEFAULT: 'false'
 
 jobs:
 
@@ -103,7 +103,7 @@ jobs:
       - name: Initial data import with seeder
         run: php artisan db:seed
 
-      # dusk
+      # Dusk test
       - name: Upgrade Chrome Driver
         run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
 
@@ -115,6 +115,12 @@ jobs:
 
       - name: Run Dusk Tests
         run: php artisan dusk
+
+      - name: Upload Screenshots
+        uses: actions/upload-artifact@v2
+        with:
+          name: screenshots
+          path: tests/Browser/screenshots
 
       # Dusk Manual Output
       - name: Set if input is_output_manual is empty
@@ -129,19 +135,19 @@ jobs:
         id: is_output_manual_empty_action
 
       - name: 'Run Dusk マニュアルHTML出力'
-        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == true }}
+        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == 'true' }}
         run: php artisan dusk tests/Manual/src/ManualOutput.php
 
       - name: 'Run Dusk マニュアルPDF出力'
-        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == true }}
+        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == 'true' }}
         run: php artisan dusk tests/Manual/src/ManualPdf.php
 
-      # Upload
-      - name: Upload Screenshots
+      - name: Upload Manual
+        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == 'true' }}
         uses: actions/upload-artifact@v2
         with:
-          name: screenshots
-          path: tests/Browser/screenshots
+          name: manual
+          path: tests/Manual/html
 
       - name: Upload Console Logs
         if: failure()
@@ -149,10 +155,3 @@ jobs:
         with:
           name: console
           path: tests/Browser/console
-
-      - name: Upload Manual
-        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == true }}
-        uses: actions/upload-artifact@v2
-        with:
-          name: manual
-          path: tests/Manual/html
