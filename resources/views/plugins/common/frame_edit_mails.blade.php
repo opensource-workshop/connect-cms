@@ -347,48 +347,48 @@
 </form>
 
 {{-- 初期状態で開くもの --}}
-@if (old('notice_on', $bucket_mail->notice_on))
+@if (isset($use_bucket_mail_methods) && in_array('notice', $use_bucket_mail_methods))
+    @if (old('notice_on', $bucket_mail->notice_on))
+        <script>
+        $('#collapse_notice').collapse({
+            toggle: true
+        })
+        </script>
+    @endif
+
     <script>
-    $('#collapse_notice').collapse({
-        toggle: true
-    })
+        checkbox_notice_everyone();
     </script>
 @endif
 
-<script>
-    checkbox_notice_everyone();
-</script>
-
-@if (old('relate_on', $bucket_mail->relate_on))
-    <script>
-    $('#collapse_relate').collapse({
-        toggle: true
-    })
-    </script>
+@if (isset($use_bucket_mail_methods) && in_array('relate', $use_bucket_mail_methods))
+    @if (old('relate_on', $bucket_mail->relate_on))
+        <script>
+        $('#collapse_relate').collapse({
+            toggle: true
+        })
+        </script>
+    @endif
 @endif
 
-@if (old('approval_on', $bucket_mail->approval_on))
-    <script>
-    $('#collapse_approval').collapse({
-        toggle: true
-    })
-    </script>
+@if (isset($use_bucket_mail_methods) && in_array('approval', $use_bucket_mail_methods))
+    @if (old('approval_on', $bucket_mail->approval_on))
+        <script>
+        $('#collapse_approval').collapse({
+            toggle: true
+        })
+        </script>
+    @endif
 @endif
 
-@if (old('approved_on', $bucket_mail->approved_on))
-    <script>
-    $('#collapse_approved').collapse({
-        toggle: true
-    })
-    </script>
+@if (isset($use_bucket_mail_methods) && in_array('approved', $use_bucket_mail_methods))
+    @if (old('approved_on', $bucket_mail->approved_on))
+        <script>
+        $('#collapse_approved').collapse({
+            toggle: true
+        })
+        </script>
+    @endif
 @endif
 
-{{-- 表示しない。 --}}
-{{--
-<div class="alert alert-warning">
-    <i class="fas fa-exclamation-circle"></i>
-    表示するコンテンツを選択するか、新規作成してください。
-</div>
-@endif
---}}
 @endsection
