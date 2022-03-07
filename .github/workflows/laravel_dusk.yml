@@ -129,11 +129,11 @@ jobs:
         id: is_output_manual_empty_action
 
       - name: 'Run Dusk マニュアルHTML出力'
-        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL }}
+        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == true }}
         run: php artisan dusk tests/Manual/src/ManualOutput.php
 
       - name: 'Run Dusk マニュアルPDF出力'
-        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL }}
+        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == true }}
         run: php artisan dusk tests/Manual/src/ManualPdf.php
 
       # Upload
@@ -151,7 +151,7 @@ jobs:
           path: tests/Browser/console
 
       - name: Upload Manual
-        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL }}
+        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == true }}
         uses: actions/upload-artifact@v2
         with:
           name: manual
