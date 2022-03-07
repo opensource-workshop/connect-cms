@@ -14,6 +14,26 @@
 
 @section("plugin_setting_$frame->id")
 
+<script type="text/javascript">
+    /**
+     * 全ユーザに通知
+     */
+    function checkbox_notice_everyone() {
+        // 前方一致
+        let groups_checkbox_objs = $('input[id^="notice_groups_"]');
+
+        let all_checkbox_obj = document.getElementById('notice_everyone_id');
+
+        for (let i = 0; i < groups_checkbox_objs.length; i++) {
+            if (all_checkbox_obj.checked == true) {
+                groups_checkbox_objs[i].disabled = true;
+            } else {
+                groups_checkbox_objs[i].disabled = false;
+            }
+        }
+    }
+</script>
+
 @include('plugins.common.errors_form_line')
 
 <div class="alert alert-info mt-2"><i class="fas fa-exclamation-circle"></i> メールの送信方法や送信内容を設定します。</div>
@@ -85,7 +105,12 @@
                     </small>
                 </div>
 
-                <span class="badge badge-secondary mt-3 mb-1">送信先グループ</span>
+                <span class="badge badge-secondary mt-3 mb-1">送信先グループ</span><br />
+                <div class="custom-control custom-checkbox @if ($errors && $errors->has('notice_everyone')) border border-danger @endif">
+                    <input type="hidden" value="" name="notice_everyone">
+                    <input name="notice_everyone" value="1" type="checkbox" class="custom-control-input" id="notice_everyone_id" @if(old('notice_everyone', $bucket_mail->notice_everyone)) checked="checked" @endif onclick="checkbox_notice_everyone();">
+                    <label class="custom-control-label" for="notice_everyone_id">全ユーザに通知</label>
+                </div>
                 <div class="form-control cc_scroll_checkboxes @if ($errors && $errors->has('notice_groups')) border-danger @endif">
                     @foreach ($groups as $group)
                         <div class="custom-control custom-checkbox">
@@ -329,6 +354,10 @@
     })
     </script>
 @endif
+
+<script>
+    checkbox_notice_everyone();
+</script>
 
 @if (old('relate_on', $bucket_mail->relate_on))
     <script>

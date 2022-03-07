@@ -798,9 +798,10 @@ class UserPluginBase extends PluginBase
 
         if ($request->notice_on) {
             // 投稿通知onの時、送信先メール or 送信先グループ いずれか必須
-            $name = '送信先メールアドレス, 送信先グループ';
-            $rules['notice_addresses'][]  = new CustomValiRequiredWithoutAllSupportsArrayInput([$request->notice_groups], $name);
-            $rules['notice_groups']       = [new CustomValiRequiredWithoutAllSupportsArrayInput([$request->notice_addresses], $name)];
+            $name = '送信先メールアドレス, 全ユーザに通知, 送信先グループ';
+            $rules['notice_addresses'][]  = new CustomValiRequiredWithoutAllSupportsArrayInput([$request->notice_groups, $request->notice_everyone], $name);
+            $rules['notice_groups']       = [new CustomValiRequiredWithoutAllSupportsArrayInput([$request->notice_addresses, $request->notice_everyone], $name)];
+            $rules['notice_everyone']     = [new CustomValiRequiredWithoutAllSupportsArrayInput([$request->notice_groups, $request->notice_addresses], $name)];
         }
         if ($request->approval_on) {
             // 承認通知onの時、送信先メール or 送信先グループ いずれか必須
@@ -820,6 +821,7 @@ class UserPluginBase extends PluginBase
         $validator->setAttributeNames([
             'notice_addresses' => '送信先メールアドレス',
             'notice_groups' => '送信先グループ',
+            'notice_everyone' => '全ユーザに通知',
             'approval_addresses' => '送信先メールアドレス',
             'approval_groups' => '送信先グループ',
             'approved_author' => '投稿者へ通知する',
@@ -858,6 +860,7 @@ class UserPluginBase extends PluginBase
         $bucket_mail->notice_update      = $this->inputNullToZero($request, "notice_update");
         $bucket_mail->notice_delete      = $this->inputNullToZero($request, "notice_delete");
         $bucket_mail->notice_addresses   = $request->notice_addresses;
+        $bucket_mail->notice_everyone    = $this->inputNullToZero($request, "notice_everyone");
         // array_filter()でarrayの空要素削除, implode()でarrayを文字列化
         $bucket_mail->notice_groups      = $request->notice_groups ? implode(UsersTool::CHECKBOX_SEPARATOR, array_filter($request->notice_groups)) : null;
         $bucket_mail->notice_roles       = $request->notice_roles;

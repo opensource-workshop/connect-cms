@@ -52,7 +52,7 @@ class PostNoticeJob implements ShouldQueue
         $bucket_mail = BucketsMail::firstOrNew(['buckets_id' => $this->bucket->id]);
 
         // 送信者メールとグループから、通知するメールアドレス取得
-        $notice_addresses = $bucket_mail->getEmailFromAddressesAndGroups($bucket_mail->notice_addresses, $bucket_mail->notice_groups);
+        $notice_addresses = $bucket_mail->getEmailFromAddressesAndGroups($bucket_mail->notice_addresses, $bucket_mail->notice_groups, $bucket_mail->notice_everyone);
 
         // エラーチェック（とりあえずデバックログに出力。管理画面で確認できるエラーテーブルに移すこと）
         // if (!$bucket_mail->notice_addresses) {
