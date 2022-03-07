@@ -17,10 +17,14 @@ on:
         - '8.0'
         - '8.1'
         default: '7.3'
-
+      is_output_manual:
+        type: boolean
+        description: 'マニュアル出力'
+        default: false
 env:
   # schedule用
   PHP_VERSION_DEFAULT: '7.3'
+  IS_OUTPUT_MANUAL_DEFAULT: false
 
 jobs:
 
@@ -112,6 +116,27 @@ jobs:
       - name: Run Dusk Tests
         run: php artisan dusk
 
+      # Dusk Manual Output
+      - name: Set if input is_output_manual is empty
+        run: |
+          if [[ -z "$IS_OUTPUT_MANUAL" ]]; then
+            echo "::set-output name=IS_OUTPUT_MANUAL::$IS_OUTPUT_MANUAL_DEFAULT"
+          else
+            echo "::set-output name=IS_OUTPUT_MANUAL::$IS_OUTPUT_MANUAL"
+          fi
+        env:
+          IS_OUTPUT_MANUAL: ${{ github.event.inputs.is_output_manual }}
+        id: is_output_manual_empty_action
+
+      - name: 'Run Dusk マニュアルHTML出力'
+        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL }}
+        run: php artisan dusk tests\Manual\src\ManualOutput.php
+
+      - name: 'Run Dusk マニュアルPDF出力'
+        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL }}
+        run: php artisan dusk tests\Manual\src\ManualPdf.php
+
+      # Upload
       - name: Upload Screenshots
         uses: actions/upload-artifact@v2
         with:
@@ -124,3 +149,10 @@ jobs:
         with:
           name: console
           path: tests/Browser/console
+
+      - name: Upload Manual
+        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: manual
+          path: tests/Manual/html
