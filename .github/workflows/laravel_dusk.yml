@@ -1,9 +1,9 @@
 name: Laravel Dusk
 
 on:
- schedule:
-   # 毎日AM1時実行
-   - cron: '0 16 * * *'
+  schedule:
+    # 毎日AM1時実行
+    - cron: '0 16 * * *'
   # 手動実行
   workflow_dispatch:
     inputs:
