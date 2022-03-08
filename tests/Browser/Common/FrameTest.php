@@ -42,7 +42,7 @@ class FrameTest extends DuskTestCase
      */
     private function init()
     {
-        $this->crearContents('/common/frame');
+        $this->clearContents('/common/frame');
     }
 
     /**

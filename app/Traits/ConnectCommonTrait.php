@@ -50,7 +50,7 @@ trait ConnectCommonTrait
         }
 
         if (!Auth::check() || !Auth::user()->can($roll_or_auth, $args)) {
-            return $this->view_error("403_inframe", null, "canメソッドチェック:{$roll_or_auth}");
+            return $this->viewError("403_inframe", null, "canメソッドチェック:{$roll_or_auth}");
         }
     }
 
@@ -78,7 +78,7 @@ trait ConnectCommonTrait
     /**
      * エラー画面の表示
      */
-    public function view_error($error_code, $message = null, $debug_message = null)
+    public function viewError($error_code, $message = null, $debug_message = null)
     {
         // 表示テンプレートを呼び出す。
         return view('errors.' . $error_code, ['message' => $message, 'debug_message' => $debug_message]);

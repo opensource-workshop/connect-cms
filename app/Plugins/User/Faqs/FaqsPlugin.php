@@ -500,7 +500,7 @@ class FaqsPlugin extends UserPluginBase
         // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $faqs_post = $this->getPost($faqs_posts_id);
         if (empty($faqs_post->id)) {
-            return $this->view_error("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
         }
 
         // タグ取得
@@ -556,7 +556,7 @@ class FaqsPlugin extends UserPluginBase
         // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $faqs_post = $this->getPost($faqs_posts_id);
         if (empty($faqs_post->id)) {
-            return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
         // カテゴリ
@@ -611,7 +611,7 @@ class FaqsPlugin extends UserPluginBase
 
             // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
             if (empty($check_faqs_post->id) || $check_faqs_post->id != $old_faqs_post->id) {
-                return $this->view_error("403_inframe", null, 'saveのユーザー権限に応じたPOST ID チェック');
+                return $this->viewError("403_inframe", null, 'saveのユーザー権限に応じたPOST ID チェック');
             }
         }
 
@@ -716,7 +716,7 @@ class FaqsPlugin extends UserPluginBase
 
             // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
             if (empty($check_faqs_post->id) || $check_faqs_post->id != $id) {
-                return $this->view_error("403_inframe", null, 'temporarysaveのユーザー権限に応じたPOST ID チェック');
+                return $this->viewError("403_inframe", null, 'temporarysaveのユーザー権限に応じたPOST ID チェック');
             }
         }
 
@@ -777,7 +777,7 @@ class FaqsPlugin extends UserPluginBase
 
         // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
         if (empty($check_faqs_post->id) || $check_faqs_post->id != $id) {
-            return $this->view_error("403_inframe", null, 'approvalのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'approvalのユーザー権限に応じたPOST ID チェック');
         }
 
         // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)

@@ -211,7 +211,7 @@ class WhatsnewsPlugin extends UserPluginBase
 
             // ファイルの存在確認
             if (!file_exists($file_path)) {
-                return $this->view_error("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
+                return $this->viewError("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
             }
 
             // 各プラグインのgetWhatsnewArgs() 関数を呼び出し。
@@ -381,7 +381,7 @@ class WhatsnewsPlugin extends UserPluginBase
 
             // ファイルの存在確認
             if (!file_exists($file_path)) {
-                return $this->view_error("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
+                return $this->viewError("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
             }
 
             // 各プラグインのgetWhatsnewArgs() 関数を呼び出し。

@@ -151,7 +151,7 @@ class BucketsMail extends Model
     /**
      * 送信者メールとグループから、通知するメールアドレス取得
      */
-    public function getEmailFromAddressesAndGroups(?string $addresses, ?string $notice_groups) : array
+    public function getEmailFromAddressesAndGroups(?string $addresses, ?string $notice_groups, ?int $notice_everyone = 0) : array
     {
         // 送信メール
         $notice_addresses = explode(',', $addresses);
@@ -175,10 +175,22 @@ class BucketsMail extends Model
                 ->toArray();
         }
 
-        // [debug]
-        // var_dump($notice_addresses, $group_user_emails);
+        // 全ユーザに通知ONの場合、メール取得
+        $all_user_emails = [];
+        if ($notice_everyone) {
+            $all_user_emails = User::select('users.email')
+                ->where('users.status', UserStatus::active)
+                ->whereNotNull('users.email')
+                ->pluck('users.email')
+                ->toArray();
+        }
 
-        $notice_addresses = array_merge($notice_addresses, $group_user_emails);
+        // [debug]
+        // \Log::debug(var_export($notice_addresses, true));
+        // \Log::debug(var_export($group_user_emails, true));
+        // \Log::debug(var_export($all_user_emails, true));
+
+        $notice_addresses = array_merge($notice_addresses, $group_user_emails, $all_user_emails);
         // array_filter()でarrayの空要素削除
         $notice_addresses = array_filter($notice_addresses);
         // 重複メールアドレス削除

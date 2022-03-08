@@ -9,6 +9,8 @@ use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Laravel\Dusk\TestCase as BaseTestCase;
 use Laravel\Dusk\Browser;
 
+use Illuminate\Support\Facades\Storage;
+
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
@@ -248,8 +250,7 @@ abstract class DuskTestCase extends BaseTestCase
     public function addPluginFirst($add_plugin, $permanent_link = '/', $area = 0, $screenshot = true)
     {
         Plugins::where('plugin_name', ucfirst($add_plugin))->update(['display_flag' => 1]);
-        $page = Page::where('permanent_link', $permanent_link)->first();
-        $page = $page ?? Page::create(['permanent_link' => $permanent_link, 'page_name' => $permanent_link]);
+        $page = $this->firstOrCreatePage($permanent_link);
 
         if (!Frame::where('plugin_name', $add_plugin)->where('area_id', $area)->where('page_id', $page->id)->first()) {
             $this->addPluginModal($add_plugin, $permanent_link, $area, $screenshot);
@@ -259,10 +260,10 @@ abstract class DuskTestCase extends BaseTestCase
         $this->test_page = Page::where('permanent_link', $permanent_link)->first();
     }
 
-   /**
-     * ページ追加（なければ）
+    /**
+     * ページ取得 or なければ追加
      */
-    public function addPageFirst($permanent_link = '/')
+    public function firstOrCreatePage(string $permanent_link): Page
     {
         $page = Page::where('permanent_link', $permanent_link)->first();
         $page = $page ?? Page::create(['permanent_link' => $permanent_link, 'page_name' => $permanent_link]);
@@ -542,7 +543,7 @@ EOF;
         // Uploads のファイルとレコードの削除
         $uploads = Uploads::where('plugin_name', $plugin_name)->get();
         foreach ($uploads as $upload) {
-            \Storage::delete($this->getDirectory($upload->id) . '/' . $upload->id . '.' . $upload->extension);
+            Storage::delete($this->getDirectory($upload->id) . '/' . $upload->id . '.' . $upload->extension);
             Uploads::destroy($upload->id);
         }
 
@@ -585,10 +586,9 @@ EOF;
     /**
      * 固定記事削除
      */
-    public function crearContents($permanent_link, $area_id = 2)
+    public function clearContents($permanent_link, $area_id = 2)
     {
-        //$page = Page::where('permanent_link', $permanent_link)->first();
-        $page = $this->addPageFirst($permanent_link);
+        $page = $this->firstOrCreatePage($permanent_link);
 
         $frames = Frame::where('page_id', $page->id)->where('area_id', $area_id)->get();
         foreach ($frames as $frame) {

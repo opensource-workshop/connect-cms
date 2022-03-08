@@ -587,7 +587,7 @@ class ReservationsPlugin extends UserPluginBase
         $month = substr($target_ymd, 4, 2);
         $day = substr($target_ymd, 6, 2);
         if (!checkdate($month, $day, $year)) {
-            return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
+            return $this->viewError("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
         }
         session()->put('target_ymd'. $frame_id, $target_ymd);
         session()->put('view_format'. $frame_id, ReservationCalendarDisplayType::week);
@@ -607,7 +607,7 @@ class ReservationsPlugin extends UserPluginBase
         $day = empty($day) ? '01' : $day;
         // if (!checkdate($month, '01', $year)) {
         if (!checkdate($month, $day, $year)) {
-            return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
+            return $this->viewError("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
         }
         session()->put('target_ymd'. $frame_id, "$year-$month-$day");
         session()->put('view_format'. $frame_id, ReservationCalendarDisplayType::month);
@@ -695,7 +695,7 @@ class ReservationsPlugin extends UserPluginBase
             // $month = (int)substr($target_ymd, 4, 2);
             // $day = (int)substr($target_ymd, 6, 2);
             // if (!checkdate($month, $day, $year)) {
-            //     return $this->view_error("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
+            //     return $this->viewError("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
             // }
 
             // 予約データ
@@ -705,7 +705,7 @@ class ReservationsPlugin extends UserPluginBase
             // 施設予約＆フレームデータ
             $reservations_frame = $this->getReservationsFrame($frame_id);
             if (empty($reservations_frame)) {
-                return $this->view_error("404_inframe", null, 'フレームに紐づいたreservationsが空');
+                return $this->viewError("404_inframe", null, 'フレームに紐づいたreservationsが空');
             }
 
             // 予定編集区分
@@ -733,13 +733,13 @@ class ReservationsPlugin extends UserPluginBase
                 ->first();
 
             if (empty($facility)) {
-                return $this->view_error("404_inframe", null, 'facilityが空');
+                return $this->viewError("404_inframe", null, 'facilityが空');
             }
 
             // 権限で予約制限するかチェック
             if ($facility->isLimited(Auth::user(), $this->frame)) {
                 // 制限する
-                return $this->view_error("403_inframe", null, 'facilityの権限で予約制限する');
+                return $this->viewError("403_inframe", null, 'facilityの権限で予約制限する');
             }
 
             // 予約項目データ

@@ -1,9 +1,9 @@
 name: Laravel Dusk
 
 on:
-#  schedule:
-#    # 毎日AM1時実行
-#    - cron: '0 16 * * *'
+  schedule:
+    # 毎日AM1時実行
+    - cron: '0 16 * * *'
   # 手動実行
   workflow_dispatch:
     inputs:
@@ -15,12 +15,16 @@ on:
         - '7.3'
         - '7.4'
         - '8.0'
-        - '8.1'
+        #- '8.1'
         default: '7.3'
-
+      is_output_manual:
+        type: boolean
+        description: 'マニュアル出力'
+        default: 'false'
 env:
   # schedule用
   PHP_VERSION_DEFAULT: '7.3'
+  IS_OUTPUT_MANUAL_DEFAULT: 'false'
 
 jobs:
 
@@ -28,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # https://github.com/actions/checkout (official)
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 1
 
@@ -63,6 +67,7 @@ jobs:
         with:
           php-version: ${{ steps.php_version_empty_action.outputs.PHP_VERSION }}
           coverage: none
+          ini-values: post_max_size=128M, upload_max_filesize=128M, date.timezone=Asia/Tokyo
 
       - name: Create Database
         run: |
@@ -78,8 +83,9 @@ jobs:
         run: echo "::set-output name=dir::$(composer config cache-files-dir)"
 
       # https://help.github.com/en/actions/configuring-and-managing-workflows/caching-dependencies-to-speed-up-workflows
+      # https://github.com/actions/cache (official)
       - name: Cache composer dependencies
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -98,7 +104,7 @@ jobs:
       - name: Initial data import with seeder
         run: php artisan db:seed
 
-      # dusk
+      # Dusk test
       - name: Upgrade Chrome Driver
         run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
 
@@ -111,16 +117,46 @@ jobs:
       - name: Run Dusk Tests
         run: php artisan dusk
 
+      # https://github.com/actions/upload-artifact (official)
       - name: Upload Screenshots
-        if: failure()
-        uses: actions/upload-artifact@v2
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v3
         with:
           name: screenshots
           path: tests/Browser/screenshots
 
-      - name: Upload Console Logs
-        if: failure()
-        uses: actions/upload-artifact@v2
+      # Dusk Manual Output
+      - name: Set if input is_output_manual is empty
+        run: |
+          if [[ -z "$IS_OUTPUT_MANUAL" ]]; then
+            echo "::set-output name=IS_OUTPUT_MANUAL::$IS_OUTPUT_MANUAL_DEFAULT"
+          else
+            echo "::set-output name=IS_OUTPUT_MANUAL::$IS_OUTPUT_MANUAL"
+          fi
+        env:
+          IS_OUTPUT_MANUAL: ${{ github.event.inputs.is_output_manual }}
+        id: is_output_manual_empty_action
+
+      - name: 'Run Dusk マニュアルHTML出力'
+        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == 'true' }}
+        run: php artisan dusk tests/Manual/src/ManualOutput.php
+
+      - name: 'Run Dusk マニュアルPDF出力'
+        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == 'true' }}
+        run: php artisan dusk tests/Manual/src/ManualPdf.php
+
+      - name: Upload Manual
+        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == 'true' }}
+        uses: actions/upload-artifact@v3
         with:
-          name: console
-          path: tests/Browser/console
+          name: manual
+          path: tests/Manual/html
+
+      - name: Upload Logs
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: console_and_logs
+          path: | 
+            tests/Browser/console
+            storage/logs
