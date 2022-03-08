@@ -18,7 +18,12 @@
 <article class="clearfix">
     <div class="row">
         @foreach($inputs_ids as $input_id)
+            @if (isset($is_template_col_3))
+            <div class="col-12 col-sm-6 col-md-6 col-lg-4 p-2 dbsearch_card">
+            @else
             <div class="col-12 col-sm-6 col-md-6 col-lg-3 p-2 dbsearch_card">
+            @endif
+
                 <div class="dbsearch_card_data">
                     <a href="{{url('/')}}/plugin/databases/detail/{{$input_id->page_id}}/{{$input_id->frames_id}}/{{$input_id->databases_inputs_id}}#frame-{{$input_id->frames_id}}" style="text-decoration: none; color: initial;">
                         @foreach($view_columns as $view_column)
