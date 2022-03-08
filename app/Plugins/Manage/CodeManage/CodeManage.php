@@ -4,6 +4,7 @@ namespace App\Plugins\Manage\CodeManage;
 
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 use App\Models\Common\Codes;
@@ -13,8 +14,6 @@ use App\Models\Core\Configs;
 use App\Models\Core\Plugins;
 
 use App\Plugins\Manage\ManagePluginBase;
-
-use Log;
 
 use App\Utilities\Csv\CsvUtils;
 use App\Utilities\String\StringUtils;
@@ -447,13 +446,11 @@ class CodeManage extends ManagePluginBase
     {
         // 一覧表示設定の取得
         $config = Configs::where('category', 'code_manage')
-                        ->where('name', 'code_list_display_colums')
-                        ->first();
+            ->where('name', 'code_list_display_colums')
+            ->firstOrNew([]);
 
-        if ($config) {
-            // 基本、マイグレーションで初期値を設定するため、データは必ずある想定
-            $config->value_array = explode('|', $config->value);
-        }
+        // 基本、マイグレーションで初期値を設定するため、データは必ずある想定
+        $config->value_array = explode('|', $config->value);
 
         return $config;
     }
