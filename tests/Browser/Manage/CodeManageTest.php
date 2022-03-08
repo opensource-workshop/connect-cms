@@ -226,6 +226,7 @@ class CodeManageTest extends DuskTestCase
 
             $browser->press('インポート')
                     ->acceptDialog()
+                    ->pause(500)
                     ->assertDontSee('500')        // "500" 文字がない事
                     ->screenshot('manage/code/import/images/import2');
         });
