@@ -497,7 +497,7 @@ class ContentsPlugin extends UserPluginBase
         // 権限チェック
         // 固定記事プラグインの特別処理。削除のための表示であり、フレーム画面のため、個別に権限チェックする。
         // if ($this->can('frames.delete')) {
-        //     return $this->view_error(403);
+        //     return $this->viewError(403);
         // }
         $view_error = $this->can('frames.delete');
         if ($view_error) {

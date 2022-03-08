@@ -611,7 +611,7 @@ class SlideshowsPlugin extends UserPluginBase
     {
         // 権限チェック
         if ($this->can('role_article_admin')) {
-            return $this->view_error(403);
+            return $this->viewError(403);
         }
 
         // フレームに紐づくスライドショーを取得

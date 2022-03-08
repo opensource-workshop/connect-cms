@@ -320,7 +320,7 @@ class CodestudiesPlugin extends UserPluginBase
     {
         // 権限チェック（run 関数は標準チェックにないので、独自チェック）
         //if ($this->can('posts.update', $this->getPost($codestudy_id))) {
-        //    return $this->view_error(403);
+        //    return $this->viewError(403);
         //}
 
         // 項目のエラーチェック

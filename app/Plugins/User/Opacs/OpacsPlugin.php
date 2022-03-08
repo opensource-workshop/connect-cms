@@ -1341,7 +1341,7 @@ class OpacsPlugin extends UserPluginBase
     {
         // 認証されているか確認
         if (!Auth::check()) {
-            return $this->view_error(403);
+            return $this->viewError(403);
         }
 
         // 項目のエラーチェック
@@ -1502,7 +1502,7 @@ class OpacsPlugin extends UserPluginBase
     {
         // 認証されているか確認
         if (!Auth::check()) {
-            return $this->view_error(403);
+            return $this->viewError(403);
         }
 
         // 項目のエラーチェック
@@ -1582,7 +1582,7 @@ class OpacsPlugin extends UserPluginBase
     {
         // 認証されているか確認
         if (!Auth::check()) {
-            return $this->view_error(403);
+            return $this->viewError(403);
         }
 
         // 項目のエラーチェック条件設定（バーコード）
@@ -1782,7 +1782,7 @@ class OpacsPlugin extends UserPluginBase
     {
         // 権限チェック
         if ($this->can('role_article')) {
-            return $this->view_error(403);
+            return $this->viewError(403);
         }
 
         // 郵送リクエスト一覧取得
@@ -1852,7 +1852,7 @@ class OpacsPlugin extends UserPluginBase
     {
         // 認証されているか確認
         if (!Auth::check()) {
-            return $this->view_error(403);
+            return $this->viewError(403);
         }
 
         // 権限と学籍番号のチェックして、対象ユーザーIDを取得する
@@ -1860,7 +1860,7 @@ class OpacsPlugin extends UserPluginBase
         if (isset($request->req_student_no) === true) {
             // 学籍番号指定ありなので権限ありであるかどうかチェックする
             if ($this->can('role_article')) {
-                return $this->view_error(403);
+                return $this->viewError(403);
             }
             $user_id = $request->req_student_no;
         } else {
