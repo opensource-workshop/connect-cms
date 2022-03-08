@@ -12,8 +12,7 @@
 @else
     @php $before_categories_id = null; @endphp
 
-    <form action="{{url('/')}}/plugin/reservations/{{$action}}/{{$page->id}}/{{$frame_id}}/{{ $carbon_target_date->format('Ymd') }}#frame-{{$frame_id}}" method="get" role="search" aria-label="{{$reservations->reservation_name}}" class="form-inline pb-2">
-        {{-- onChange="javascript:submit(this.form);" --}}
+    <form action="{{url('/')}}/plugin/reservations/{{$action}}/{{$page->id}}/{{$frame_id}}/{{ $carbon_target_date->format('Ymd') }}#frame-{{$frame_id}}" method="get" role="search" aria-label="{{$reservations->reservation_name}}" class="form-inline pb-2" onchange="javascript:submit(this.form);">
         <select class="form-control" name="initial_facility" title="施設名" aria-describedby="initial_facility{{$frame_id}}">
             @foreach ($facilities as $facility)
                 @if ($facility->reservations_categories_id != $before_categories_id)
@@ -30,7 +29,7 @@
             {{-- 最後の閉じタグ --}}
             </optgroup>
         </select>
-        <button type="submit" class="btn btn-outline-primary ml-1">{{__('messages.switch')}}</button>
+        {{-- <button type="submit" class="btn btn-outline-primary ml-1">{{__('messages.switch')}}</button> --}}
         {{-- <button type="button" class="btn btn-link">詳細</button> --}}
     </form>
 @endif
