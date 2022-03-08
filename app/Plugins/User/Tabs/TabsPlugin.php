@@ -78,7 +78,7 @@ class TabsPlugin extends UserPluginBase
      * @return view
      * @method_title タブ表示
      * @method_desc 画面をリロードすることなく、タブでフレームを切り替えることができます。
-     * @method_detail 固定記事以外にも新着など、異なるプラグインを組み合わせることもできます。
+     * @method_detail 固定記事以外にも新着など、異なるプラグインを組み合わせることもできます。表示するのは各プラグインの初期画面です。
      */
     public function index($request, $page_id, $frame_id)
     {
