@@ -56,6 +56,7 @@
                 @foreach ($children_posts->where("thread_root_id", $post->id) as $children_post)
                     @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => null, 'list_class' => ''])
                 @endforeach
+                <div class="mb-2"></div>
             @else
                 {{-- defaultテンプレート --}}
                 <div class="card mb-3">
