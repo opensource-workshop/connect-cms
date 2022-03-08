@@ -36,6 +36,8 @@ class Menu extends Model
     {
         if ($this->folder_close_font == 1) {
             return '<span class="px-2"></span>';
+        } elseif ($this->folder_open_font == 2) {
+            return '<i class="fas fa-angle-down"></i>';
         } else {
             return '<i class="fas fa-minus"></i>';
         }
@@ -48,6 +50,8 @@ class Menu extends Model
     {
         if ($this->folder_open_font == 1) {
             return '<span class="px-2"></span>';
+        } elseif ($this->folder_open_font == 2) {
+            return '<i class="fas fa-chevron-right"></i>';
         } else {
             return '<i class="fas fa-plus"></i>';
         }
