@@ -62,7 +62,7 @@ jobs:
         id: php_version_empty_action
 
       # https://github.com/shivammathur/setup-php (community)
-      - name: Setup PHP ${{ github.event.inputs.php_version }}
+      - name: Setup PHP ${{ steps.php_version_empty_action.outputs.PHP_VERSION }}
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ steps.php_version_empty_action.outputs.PHP_VERSION }}
@@ -157,6 +157,6 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: console_and_logs
-          path: | 
+          path: |
             tests/Browser/console
             storage/logs
