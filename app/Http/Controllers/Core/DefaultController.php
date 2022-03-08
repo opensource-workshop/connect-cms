@@ -680,7 +680,7 @@ class DefaultController extends ConnectController
 
         // フレームとプラグインの一致をチェック
         if (!$this->checkFrame2Plugin($plugin_name, $frame_id, $frames)) {
-            return $this->view_error("403");
+            return $this->viewError("403");
         }
 
         // インスタンス取得（メインエリアのみ）
@@ -699,7 +699,7 @@ class DefaultController extends ConnectController
         foreach ($layouts_info as $area) {
             if (array_key_exists('frames', $area)) {
                 if (!$this->checkFrame2Plugin($plugin_name, $frame_id, $area['frames'])) {
-                    return $this->view_error("403");
+                    return $this->viewError("403");
                 }
             }
         }
