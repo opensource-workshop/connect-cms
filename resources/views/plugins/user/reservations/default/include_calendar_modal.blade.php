@@ -17,18 +17,18 @@
             {{-- メインコンテンツ --}}
             <div class="modal-body">
                 {{-- 利用日 --}}
-                <div class="row">
+                <div class="form-row">
                     <label for="reservation_date_display" class="col-3 col-form-label">{{ __('messages.day_of_use')}}</label>
                     <div class="col-9 form-control-plaintext" id="reservation_date_display"></div>
                 </div>
                 {{-- 利用時間 --}}
-                <div class="row">
+                <div class="form-row">
                     <label for="reservation_time" class="col-3 col-form-label">{{ __('messages.time_of_use')}}</label>
                     <div class="col-9 form-control-plaintext" id="reservation_time"></div>
                 </div>
 
                 {{-- 繰り返し --}}
-                <div class="row" id="reservation_repeat_div">
+                <div class="form-row" id="reservation_repeat_div">
                     <label class="col-3 col-form-label">{{__('messages.repetition')}}</label>
                     <div class="col-9 form-control-plaintext">
                         <span id="reservation_repeat"></span><br />
@@ -193,7 +193,7 @@
                     $('#bookingDetailModalColumns{{$frame_id}}').append(
                         $('<div></div>')
                         .attr({
-                            class: 'row'
+                            class: 'form-row'
                         })
                         .append(
                             $('<label></label>')
@@ -218,7 +218,7 @@
                     $('#bookingDetailModalColumns{{$frame_id}}').append(
                         $('<div></div>')
                         .attr({
-                            class: 'row'
+                            class: 'form-row'
                         })
                         .append(
                             $('<label></label>')
