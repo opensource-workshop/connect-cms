@@ -6674,6 +6674,7 @@ trait MigrationTrait
      */
     public function nc2GetModuleNames($action_names, $connect_change = true)
     {
+        $available_connect_plugin_names = ['blogs', 'bbses', 'databases'];
         $ret = array();
         foreach ($action_names as $action_name) {
             $action_name_parts = explode('_', $action_name);
@@ -6682,7 +6683,7 @@ trait MigrationTrait
                 $connect_plugin_name = $this->plugin_name[$action_name_parts[0]];
                 if ($connect_plugin_name == 'Development') {
                     $this->putError(3, '新着：未開発プラグイン', "action_names = " . $action_name_parts[0]);
-                } elseif ($connect_plugin_name == 'blogs') {
+                } elseif (in_array($connect_plugin_name, $available_connect_plugin_names)) {
                     $ret[] = $connect_plugin_name;
                 } else {
                     $this->putError(3, '新着：未対応プラグイン', "action_names = " . $action_name_parts[0]);
