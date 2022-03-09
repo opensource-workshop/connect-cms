@@ -502,16 +502,11 @@ class ReservationsPlugin extends UserPluginBase
     /**
      * タイトル取得
      */
-    private function getTitle($input, $columns = null, $inputs_columns = null)
+    private function getTitle(ReservationsInput $input, Collection $columns, ?Collection $inputs_columns = null)
     {
         // 入力行データ
         if (is_null($input)) {
             return '';
-        }
-
-        // カラム
-        if (is_null($columns)) {
-            $columns = $this->getReservationsColumns($input->columns_set_id);
         }
 
         // title_flagのカラム1件に絞る
@@ -781,7 +776,7 @@ class ReservationsPlugin extends UserPluginBase
         // エラーチェック配列
         $validator_array = array('column' => array(), 'message' => array());
 
-        // バリデーション用の配列を生成（可変項目）
+        // 可変項目
         $columns = ReservationsColumn::where('columns_set_id', $request->columns_set_id)
             ->where('hide_flag', NotShowType::show)
             ->get();
@@ -1158,7 +1153,7 @@ class ReservationsPlugin extends UserPluginBase
         session()->flash('flash_message_for_frame' . $frame_id, $flash_message);
 
         // titleカラムが無いため、プラグイン独自でセット
-        $overwrite_notice_embedded_tags = [NoticeEmbeddedTag::title => $this->getTitle($reservations_inputs)];
+        $overwrite_notice_embedded_tags = [NoticeEmbeddedTag::title => $this->getTitle($reservations_inputs, $columns)];
 
         // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド, 上書き埋め込みタグ)
         $this->sendPostNotice($reservations_inputs, $before_reservations_inputs, 'showBooking', $overwrite_notice_embedded_tags);
