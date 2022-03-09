@@ -82,6 +82,7 @@ class ReservationsPlugin extends UserPluginBase
             'choiceFacilities',
             'showBooking',
             'showBookingJson',
+            'showFacilityJson',
             'editBooking',
         ];
         $functions['post'] = [
@@ -1325,6 +1326,51 @@ class ReservationsPlugin extends UserPluginBase
     {
         $is_json = true;
         return $this->showBooking($request, $page_id, $frame_id, $input_id, $is_json);
+    }
+
+    /**
+     * 施設の詳細表示 JSON版
+     */
+    public function showFacilityJson($request, $page_id, $frame_id, $id = null)
+    {
+        // 施設予約＆フレームデータ
+        $reservations_frame = $this->getReservationsFrame($frame_id);
+        if (empty($reservations_frame)) {
+            return;
+        }
+
+        $reservation = Reservation::where('id', $reservations_frame->reservations_id)->first();
+
+        $facility = ReservationsFacility::
+            select(
+                'reservations_facilities.*',
+                'reservations_categories.category',
+            )
+            ->join('reservations_categories', function ($join) {
+                $join->on('reservations_categories.id', '=', 'reservations_facilities.reservations_categories_id')
+                    ->whereNull('reservations_categories.deleted_at');
+            })
+            ->join('reservations_choice_categories', function ($join) use ($reservation) {
+                $join->on('reservations_choice_categories.reservations_categories_id', '=', 'reservations_facilities.reservations_categories_id')
+                    ->where('reservations_choice_categories.reservations_id', $reservation->id)
+                    ->whereNull('reservations_choice_categories.deleted_at');
+            })
+            ->where('reservations_facilities.hide_flag', NotShowType::show)
+            ->where('reservations_facilities.id', $id)
+            ->where('reservations_choice_categories.view_flag', ShowType::show)
+            ->firstOrNew([]);
+
+        // 利用曜日表示
+        if ($facility->is_time_control) {
+            $facility->reservation_time_display = $facility->getDayOfWeeksDisplay() . ' ' . substr($facility->start_time, 0, -3) . ' ~ ' . substr($facility->end_time, 0, -3);
+        } else {
+            $facility->reservation_time_display = $facility->getDayOfWeeksDisplay();
+        }
+
+        // JSON
+        return [
+            'facility' => $facility,
+        ];
     }
 
     /**

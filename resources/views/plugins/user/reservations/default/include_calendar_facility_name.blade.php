@@ -8,7 +8,10 @@
  * @param $action string アクション名
 --}}
 @if ($facility_display_type == FacilityDisplayType::all)
-    <span class="h5">＜{{ $facility_name }}＞</span>{{-- <button type="button" class="btn btn-link pl-0 pr-0">詳細</button> --}}
+    <span class="h5">＜{{ $facility_name }}＞</span>
+    <a href="#facilityDetailModal{{$frame_id}}" role="button" data-toggle="modal" data-facility_id="{{$calendar_details['facility']->id}}">
+        {{__('messages.detail')}}
+    </a>
 @else
     @php $before_categories_id = null; @endphp
 
@@ -30,6 +33,8 @@
             </optgroup>
         </select>
         {{-- <button type="submit" class="btn btn-outline-primary ml-1">{{__('messages.switch')}}</button> --}}
-        {{-- <button type="button" class="btn btn-link">詳細</button> --}}
+        <a href="#facilityDetailModal{{$frame_id}}" role="button" data-toggle="modal" class="btn btn-outline-primary btn-sm ml-1" data-facility_id="{{$initial_facility}}">
+            {{__('messages.detail')}}
+        </a>
     </form>
 @endif

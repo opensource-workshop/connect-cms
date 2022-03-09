@@ -12,7 +12,8 @@
 
     {{-- 予約詳細モーダルウィンドウ --}}
     @include('plugins.user.reservations.default.include_calendar_modal')
-
+    {{-- 施設詳細モーダルウィンドウ --}}
+    @include('plugins.user.reservations.default.include_facility_modal')
     {{-- タブ表示 --}}
     @include('plugins.user.reservations.default.include_calendar_tab')
 

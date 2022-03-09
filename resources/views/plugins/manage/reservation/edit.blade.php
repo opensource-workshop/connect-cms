@@ -247,6 +247,7 @@ use App\Models\User\Reservations\ReservationsFacility;
                 <div class="col-md-9">
                     <input type="text" name="facility_manager_name" id="facility_manager_name" value="{{old('facility_manager_name', $facility->facility_manager_name)}}" class="form-control @if ($errors->has('facility_manager_name')) border-danger @endif">
                     @include('plugins.common.errors_inline', ['name' => 'facility_manager_name'])
+                    <small class="text-muted">※ 空の場合、施設詳細画面で項目も表示しません。</small>
                 </div>
             </div>
 
