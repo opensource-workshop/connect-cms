@@ -51,7 +51,7 @@ class ReservationsFacility extends Model
     ];
 
     /**
-     * 施設更新処理
+     * 曜日表示
      */
     public function getDayOfWeeksDisplay()
     {
