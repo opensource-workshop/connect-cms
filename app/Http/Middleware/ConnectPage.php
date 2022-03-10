@@ -383,12 +383,7 @@ class ConnectPage
             // $page_tree = $this->getAncestorsAndSelf($this->page->id);
 
             // 自分のページ＋先祖ページのpage_roles を取得
-            $ids = null;
-            $ids_collection = $page_tree->pluck('id');
-            if ($ids_collection) {
-                $ids = $ids_collection->all();
-            }
-            $page_roles = PageRole::getPageRoles($ids);
+            $page_roles = PageRole::getPageRoles($page_tree->pluck('id'));
 
             // ページをループして表示可否をチェック
             // 継承関係を加味するために is_view 変数を使用。
