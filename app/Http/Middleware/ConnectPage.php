@@ -374,50 +374,9 @@ class ConnectPage
             return;
         }
 
-        // 参照できない場合
-        $user = Auth::user();  // 権限チェックをpage のisView で行うためにユーザを渡す。
-        $check_no_display_flag = true; // ページ直接の参照可否チェックをしたいので、表示フラグは見ない。表示フラグは隠しページ用。
-
         if ($this->page && get_class($this->page) == 'App\Models\Common\Page') {
-            // 自分のページから親を遡って取得
-            // $page_tree = $this->getAncestorsAndSelf($this->page->id);
-
-            // 自分のページ＋先祖ページのpage_roles を取得
-            $page_roles = PageRole::getPageRoles($page_tree->pluck('id'));
-
-            // ページをループして表示可否をチェック
-            // 継承関係を加味するために is_view 変数を使用。
-            $is_view = true;
-            foreach ($page_tree as $page_obj) {
-
-                // IP アドレス制限　　　　　　　　　　　　　　　　：親子ともに設定あったら、子⇒親に遡って全てチェック
-                // ログインユーザ全員参加やメンバーシップページ設定：親子ともに設定あったら、子だけでチェック
-
-                // ページに直接、ログインユーザ全員参加やメンバーシップページが設定されている場合は、親を見ずに、該当ページ（一番下の子=$page_tree[0]）だけで判断する。
-                if ($page_obj->membership_flag == 2) {
-                    if (empty($user)) {
-                        return $this->doForbidden();
-                    } else {
-                        return;
-                    }
-                } elseif ($page_obj->membership_flag == 1) {
-                    if (empty($page_roles)) {
-                        return $this->doForbidden();
-                    }
-                    $check_page_roles = $page_roles->where('page_id', $page_obj->id);
-                    $is_view = $page_obj->isView($user, $check_no_display_flag, $is_view, $check_page_roles);
-                    if (!$is_view) {
-                        // 403 対象
-                        return $this->doForbidden();
-                    } else {
-                        return;
-                    }
-                }
-                // 以降は親を見る処理（IP アドレス制限）
-
-                // IP アドレス制限用。上でmembership_flag=1,2チェック済みのため、ここの isView() のmembership_flag=1,2チェックは実質使われない。
-                $is_view = $page_obj->isView($user, $check_no_display_flag, $is_view);
-            }
+            // 親子ページを加味してページ表示できるか
+            $is_view = $this->page->isVisibleAncestorsAndSelf($page_tree);
             if (!$is_view) {
                 // 403 対象（IP アドレス制限）
                 return $this->doForbidden();

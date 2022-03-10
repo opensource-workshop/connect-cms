@@ -2,12 +2,16 @@
 
 namespace App\Plugins\User\Whatsnews;
 
+use Illuminate\Http\Request;
+
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
+use App\Models\Common\Page;
 use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
 use App\Models\User\Whatsnews\Whatsnews;
@@ -312,7 +316,6 @@ class WhatsnewsPlugin extends UserPluginBase
 
     private function buildQueryGetWhatsnews($whatsnews_frame, $union_sqls)
     {
-
         // ベースの新着DUAL（ダミーテーブル）
         $whatsnews_sql = DB::table('whatsnews_dual')
             ->select(
@@ -337,6 +340,10 @@ class WhatsnewsPlugin extends UserPluginBase
                 $union_sql->whereIn('frames.id', explode(',', $whatsnews_frame->target_frame_ids));
             }
 
+            // 不要な新着の除外
+            $union_whatsnews = $this->excludeOfUnnecessary($union_sql->get());
+            $union_sql->whereIn('frames.id', $union_whatsnews->pluck('frame_id'));
+
             // UNION
             $whatsnews_sql->unionAll($union_sql);
         }
@@ -349,6 +356,59 @@ class WhatsnewsPlugin extends UserPluginBase
         $whatsnews_sql->orderBy('posted_at', 'desc');
 
         return $whatsnews_sql;
+    }
+
+    /**
+     * 不要な新着の除外（記事重複・見えないページ・フレーム）
+     */
+    private function excludeOfUnnecessary(Collection $whatsnews)
+    {
+        // 削除ページ除外
+        $pages = Page::whereIn('id', $whatsnews->pluck('page_id')->unique())->get();
+        $whatsnews = $whatsnews->whereIn('page_id', $pages->pluck('id'));
+
+        // 見れないページ除外
+        $visible_page_ids = [];
+        $request = app(Request::class);
+        foreach ($pages as $page) {
+            // 自分のページから親を遡って取得
+            $page_tree = Page::reversed()->ancestorsAndSelf($page->id);
+
+            // パスワード認証
+            if ($page->isRequestPassword($request, $page_tree)) {
+                // 見れないページ
+                continue;
+            }
+
+            // 親子ページを加味してページ表示できるか
+            if (!$page->isVisibleAncestorsAndSelf($page_tree)) {
+                continue;
+            }
+
+            // 見れるページ
+            $visible_page_ids[] = $page->id;
+        }
+        $whatsnews = $whatsnews->whereIn('page_id', $visible_page_ids);
+
+        // 非公開フレーム除外
+        $visible_frame_ids = [];
+        $frames = Frame::whereIn('id', $whatsnews->pluck('frame_id')->unique())->get();
+        foreach ($frames as $frame) {
+            // 非公開・限定公開フレームが非表示か
+            if ($frame->isInvisiblePrivateFrame()) {
+                // 見れないフレーム
+                continue;
+            }
+
+            // 見れるフレーム
+            $visible_frame_ids[] = $frame->id;
+        }
+        $whatsnews = $whatsnews->whereIn('frame_id', $visible_frame_ids);
+
+        // 重複排除
+        $whatsnews = $whatsnews->unique('post_id');
+
+        return $whatsnews;
     }
 
     /**
