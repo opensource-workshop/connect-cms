@@ -36,7 +36,7 @@ class PluginBase
     /**
      * エラーハンドラ
      */
-    protected function ccErrorHandler($errno, $errstr, $errfile, $errline, $errcontext)
+    protected function ccErrorHandler($errno, $errstr, $errfile, $errline)
     {
         // 例外を投げる。
         throw new \ErrorException($errstr, $errno, 0, $errfile, $errline);
