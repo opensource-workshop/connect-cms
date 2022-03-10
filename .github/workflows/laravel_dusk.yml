@@ -15,7 +15,7 @@ on:
         - '7.3'
         - '7.4'
         - '8.0'
-        #- '8.1'
+        - '8.1'
         default: '7.3'
       is_output_manual:
         type: boolean
@@ -91,8 +91,15 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
-      - name: Install Composer Dependencies
-        run: composer install --no-progress --prefer-dist --optimize-autoloader
+      - name: Install or Update Composer Dependencies
+        run: |
+          if [[ "$PHP_VERSION" = "8.1" ]]; then
+            composer update --no-progress --optimize-autoloader
+          else
+            composer install --no-progress --optimize-autoloader
+          fi
+        env:
+          PHP_VERSION: ${{ steps.php_version_empty_action.outputs.PHP_VERSION }}
 
       # Laravel
       - name: Generate Application Key
