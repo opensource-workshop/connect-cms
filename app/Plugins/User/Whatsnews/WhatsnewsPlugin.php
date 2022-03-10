@@ -300,6 +300,10 @@ class WhatsnewsPlugin extends UserPluginBase
                 $whatsnew->first_image_path = null;
                 $whatsnew->first_image_alt = null;
             }
+
+            // タイトルのタグを取り除き, データベース、ウィジウィグ型のタイトル指定に対応
+            $whatsnew->post_title_strip_tags = strip_tags($whatsnew->post_title);
+
             // タグを取り除き、指定に応じて文字数制限した本文
             if ($post_detail_length) {
                 $whatsnew->post_detail_strip_tags = mb_substr(strip_tags($whatsnew->post_detail), 0, $post_detail_length);
