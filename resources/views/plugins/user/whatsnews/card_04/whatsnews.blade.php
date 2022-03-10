@@ -51,7 +51,7 @@
                         @if ($link_pattern[$whatsnew->plugin_name] == 'show_page_frame_post')
                             <dt class="text-center whatsnew_title">
                                 @if ($whatsnew->post_title)
-                                    {{$whatsnew->post_title}}
+                                    {{$whatsnew->post_title_strip_tags}}
                                 @else
                                     (無題)
                                 @endif
@@ -127,7 +127,7 @@
                         <dt v-if="link_pattern[whatsnews.plugin_name] == 'show_page_frame_post'" class="text-center whatsnew_title">
                             <a :href="url + link_base[whatsnews.plugin_name] + '/' + whatsnews.page_id + '/' + whatsnews.frame_id + '/' + whatsnews.post_id + '#frame-' + whatsnews.frame_id">
                                 <template v-if="whatsnews.post_title == null || whatsnews.post_title == ''">（無題）</template>
-                                <template v-else>@{{ whatsnews.post_title }}</template>
+                                <template v-else>@{{ whatsnews.post_title_strip_tags }}</template>
                             </a>
                         </dt>
 
