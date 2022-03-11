@@ -1386,7 +1386,7 @@ class UserManage extends ManagePluginBase
                 'required',
                 'file',
                 'mimes:csv,txt', // mimesの都合上text/csvなのでtxtも許可が必要
-                'mimetypes:text/plain',
+                'mimetypes:application/csv,text/plain',
             ],
         ];
 

@@ -1,9 +1,9 @@
-name: Laravel Dusk
+name: Laravel Dusk MariaDB
 
 on:
-  schedule:
+#  schedule:
     # 毎日AM1時実行
-    - cron: '0 16 * * *'
+#    - cron: '0 16 * * *'
   # 手動実行
   workflow_dispatch:
     inputs:
@@ -27,9 +27,25 @@ env:
   IS_OUTPUT_MANUAL_DEFAULT: 'false'
 
 jobs:
-
   dusk-php:
     runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mariadb:latest
+#        image: mariadb:10.4
+        ports:
+#          - 3306
+#          - 3306/tcp
+          - 3306:3306
+        env:
+#          MYSQL_USER: root
+#          MYSQL_PASSWORD: root
+          MYSQL_DATABASE: laravel
+          MYSQL_ROOT_PASSWORD: root
+#        options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=10s --health-retries=10
+
     steps:
       # https://github.com/actions/checkout (official)
       - uses: actions/checkout@v3
@@ -69,11 +85,19 @@ jobs:
           coverage: none
           ini-values: post_max_size=128M, upload_max_filesize=128M, date.timezone=Asia/Tokyo
 
-      - name: Create Database
+#      - name: Create Database
+#        run: |
+#          sudo systemctl start mysql
+#          mysql --user="root" --password="root" -e "CREATE DATABASE laravel character set UTF8mb4 collate utf8mb4_general_ci;"
+#          mysql --version
+
+      - name: Verify MariaDB connection
         run: |
-          sudo systemctl start mysql
-          mysql --user="root" --password="root" -e "CREATE DATABASE laravel character set UTF8mb4 collate utf8mb4_general_ci;"
-          mysql --version
+          while ! mysqladmin ping -h"127.0.0.1" -P"$PORT" --silent; do
+            sleep 1
+          done
+        env:
+          PORT: ${{ job.services.mariadb.ports[3306] }}
 
       # Composer
       - name: Validate composer.json and composer.lock
@@ -108,9 +132,13 @@ jobs:
 
       - name: DB migration
         run: php artisan migrate
+        env:
+          DB_HOST: 127.0.0.1
 
       - name: Initial data import with seeder
         run: php artisan db:seed
+        env:
+          DB_HOST: 127.0.0.1
 
       # Dusk test
       - name: Upgrade Chrome Driver
@@ -124,6 +152,8 @@ jobs:
 
       - name: Run Dusk Tests
         run: php artisan dusk
+        env:
+          DB_HOST: 127.0.0.1
 
       # https://github.com/actions/upload-artifact (official)
       - name: Upload Screenshots

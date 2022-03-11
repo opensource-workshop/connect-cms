@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # https://github.com/actions/checkout (official)
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       # https://github.com/shivammathur/setup-php (community)
       - name: Setup PHP ${{ env.PHP_VERSION }} with cs2pr
@@ -33,14 +33,14 @@ jobs:
 
         # https://help.github.com/en/actions/configuring-and-managing-workflows/caching-dependencies-to-speed-up-workflows
       - name: Cache composer dependencies
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install Composer Dependencies
-        run: composer install --no-progress --prefer-dist --optimize-autoloader
+        run: composer install --no-progress --optimize-autoloader
 
       - name: PHPCS check pull_request
         if: ${{ github.event_name == 'pull_request' }}
