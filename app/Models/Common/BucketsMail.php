@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Log;
 
 use App\User;
 
+use App\Models\Core\Configs;
+
 use App\Enums\NoticeJobType;
 use App\Enums\NoticeEmbeddedTag;
 use App\Enums\UserStatus;
@@ -29,11 +31,18 @@ class BucketsMail extends Model
      */
     public static function getNoticeEmbeddedTags($frame, $bucket, $post, array $overwrite_notice_embedded_tags, string $show_method, $notice_method, $delete_comment = null) : array
     {
+        $configs = Configs::getSharedConfigs();
+
         $default = [
+            NoticeEmbeddedTag::site_name => Configs::getConfigsValue($configs, 'base_site_name'),
             NoticeEmbeddedTag::method => NoticeJobType::getDescription($notice_method),
             NoticeEmbeddedTag::title => $post->title,
             NoticeEmbeddedTag::url => url('/') . '/plugin/' . $bucket->plugin_name . '/' . $show_method . '/' . $frame->page_id . '/' . $frame->id . '/' . $post->id . '#frame-' . $frame->id,
             NoticeEmbeddedTag::delete_comment => $delete_comment,
+            NoticeEmbeddedTag::created_name => $post->created_name,
+            NoticeEmbeddedTag::created_at => $post->created_at,
+            NoticeEmbeddedTag::updated_name => $post->updated_name,
+            NoticeEmbeddedTag::updated_at => $post->updated_at,
         ];
         // post に body が存在すれば、変換対象とする。
         // body が存在するかの判定が、項目を取ってみてのnull かどうかで判定。（他の方法があれば要検討）
@@ -45,6 +54,27 @@ class BucketsMail extends Model
 
         // 同じキーがあったら後勝ちで上書きされる。
         return array_merge($default, $overwrite_notice_embedded_tags);
+    }
+
+    /**
+     * フォーマット済みの件名を取得
+     */
+    public function getFormattedSubject(string $subject, array $notice_embedded_tags)
+    {
+        // 件名で使える埋め込みコード
+        $subject_embedded_tags = array_filter($notice_embedded_tags, function($key) {
+            return in_array($key, [
+                NoticeEmbeddedTag::site_name,
+                NoticeEmbeddedTag::method,
+                NoticeEmbeddedTag::title,
+                NoticeEmbeddedTag::created_name,
+                NoticeEmbeddedTag::created_at,
+                NoticeEmbeddedTag::updated_name,
+                NoticeEmbeddedTag::updated_at,
+            ]);
+        }, ARRAY_FILTER_USE_KEY);
+
+        return $this->replaceEmbeddedTags($subject, $subject_embedded_tags);
     }
 
     /**

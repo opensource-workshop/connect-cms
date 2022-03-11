@@ -34,10 +34,10 @@ class ApprovedNotice extends Mailable
     public function build()
     {
         return $this->text('mail.post.approved_text')
-                    ->subject($this->bucket_mail->approved_subject)
-                    ->with([
-                        'notice_embedded_tags' => $this->notice_embedded_tags,
-                        'bucket_mail'          => $this->bucket_mail,
-                    ]);
+            ->subject($this->bucket_mail->getFormattedSubject($this->bucket_mail->approved_subject, $this->notice_embedded_tags))
+            ->with([
+                'notice_embedded_tags' => $this->notice_embedded_tags,
+                'bucket_mail'          => $this->bucket_mail,
+            ]);
     }
 }
