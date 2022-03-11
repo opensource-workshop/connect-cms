@@ -85,6 +85,9 @@ jobs:
 #          mysql --user="root" --password="root" -e "CREATE DATABASE laravel character set UTF8mb4 collate utf8mb4_general_ci;"
 #          mysql --version
 
+      - name: Show Docker containers
+        run: docker ps -a
+
       - name: Verify MariaDB connection
         run: |
           while ! mysqladmin ping -h"127.0.0.1" -P"$PORT" --silent; do
