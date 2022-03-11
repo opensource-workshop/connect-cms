@@ -1,0 +1,190 @@
+name: Laravel Dusk MariaDB
+
+on:
+#  schedule:
+    # 毎日AM1時実行
+#    - cron: '0 16 * * *'
+  # 手動実行
+  workflow_dispatch:
+    inputs:
+      php_version:
+        type: choice
+        description: 'テストするPHPバージョン'
+        required: true
+        options:
+        - '7.3'
+        - '7.4'
+        - '8.0'
+        - '8.1'
+        default: '7.3'
+      is_output_manual:
+        type: boolean
+        description: 'マニュアル出力'
+        default: 'false'
+env:
+  # schedule用
+  PHP_VERSION_DEFAULT: '7.3'
+  IS_OUTPUT_MANUAL_DEFAULT: 'false'
+
+jobs:
+  dusk-php:
+    runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mariadb:latest
+        ports:
+          - 3306
+        env:
+          MYSQL_USER: root
+          MYSQL_PASSWORD: root
+          MYSQL_DATABASE: laravel
+          MYSQL_ROOT_PASSWORD: root
+        options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
+
+    steps:
+      # https://github.com/actions/checkout (official)
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      # スクリーンショットの日本語表示対応
+      - name: Install Jp font
+        run: sudo apt install fonts-noto
+
+      - name: Prepare The Environment
+        run: |
+          cp .env.example .env
+          sed -i -e "s|DB_PASSWORD=|DB_PASSWORD=root|g" .env
+          sed -i -e "s|APP_URL=http://localhost|APP_URL=http://localhost:8000|g" .env
+          sed -i -e "s|TRANSLATE_API_URL=""|TRANSLATE_API_URL="http://localhost:8000"|g" .env
+          sed -i -e "s|PDF_THUMBNAIL_API_URL=""|PDF_THUMBNAIL_API_URL="http://localhost:8000"|g" .env
+          sed -i -e "s|FACE_AI_API_URL=""|FACE_AI_API_URL="http://localhost:8000"|g" .env
+
+      # schedule でphpバージョン指定
+      - name: Set if input php_version is empty
+        run: |
+          if [[ -z "$PHP_VERSION" ]]; then
+            echo "::set-output name=PHP_VERSION::$PHP_VERSION_DEFAULT"
+          else
+            echo "::set-output name=PHP_VERSION::$PHP_VERSION"
+          fi
+        env:
+          PHP_VERSION: ${{ github.event.inputs.php_version }}
+        id: php_version_empty_action
+
+      # https://github.com/shivammathur/setup-php (community)
+      - name: Setup PHP ${{ steps.php_version_empty_action.outputs.PHP_VERSION }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ steps.php_version_empty_action.outputs.PHP_VERSION }}
+          coverage: none
+          ini-values: post_max_size=128M, upload_max_filesize=128M, date.timezone=Asia/Tokyo
+
+#      - name: Create Database
+#        run: |
+#          sudo systemctl start mysql
+#          mysql --user="root" --password="root" -e "CREATE DATABASE laravel character set UTF8mb4 collate utf8mb4_general_ci;"
+#          mysql --version
+
+      - name: Verify MariaDB connection
+        run: |
+          while ! mysqladmin ping -h"127.0.0.1" -P"$PORT" --silent; do
+            sleep 1
+          done
+        env:
+          PORT: ${{ job.services.mariadb.ports[3306] }}
+
+      # Composer
+      - name: Validate composer.json and composer.lock
+        run: composer validate
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+      # https://help.github.com/en/actions/configuring-and-managing-workflows/caching-dependencies-to-speed-up-workflows
+      # https://github.com/actions/cache (official)
+      - name: Cache composer dependencies
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install or Update Composer Dependencies
+        run: |
+          if [[ "$PHP_VERSION" = "8.1" ]]; then
+            composer update --no-progress --optimize-autoloader
+          else
+            composer install --no-progress --optimize-autoloader
+          fi
+        env:
+          PHP_VERSION: ${{ steps.php_version_empty_action.outputs.PHP_VERSION }}
+
+      # Laravel
+      - name: Generate Application Key
+        run: php artisan key:generate
+
+      - name: DB migration
+        run: php artisan migrate
+
+      - name: Initial data import with seeder
+        run: php artisan db:seed
+
+      # Dusk test
+      - name: Upgrade Chrome Driver
+        run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
+
+      - name: Start Chrome Driver
+        run: ./vendor/laravel/dusk/bin/chromedriver-linux &
+
+      - name: Run Laravel Server
+        run: php artisan serve &
+
+      - name: Run Dusk Tests
+        run: php artisan dusk
+
+      # https://github.com/actions/upload-artifact (official)
+      - name: Upload Screenshots
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: screenshots
+          path: tests/Browser/screenshots
+
+      # Dusk Manual Output
+      - name: Set if input is_output_manual is empty
+        run: |
+          if [[ -z "$IS_OUTPUT_MANUAL" ]]; then
+            echo "::set-output name=IS_OUTPUT_MANUAL::$IS_OUTPUT_MANUAL_DEFAULT"
+          else
+            echo "::set-output name=IS_OUTPUT_MANUAL::$IS_OUTPUT_MANUAL"
+          fi
+        env:
+          IS_OUTPUT_MANUAL: ${{ github.event.inputs.is_output_manual }}
+        id: is_output_manual_empty_action
+
+      - name: 'Run Dusk マニュアルHTML出力'
+        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == 'true' }}
+        run: php artisan dusk tests/Manual/src/ManualOutput.php
+
+      - name: 'Run Dusk マニュアルPDF出力'
+        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == 'true' }}
+        run: php artisan dusk tests/Manual/src/ManualPdf.php
+
+      - name: Upload Manual
+        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == 'true' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: manual
+          path: tests/Manual/html
+
+      - name: Upload Logs
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: console_and_logs
+          path: |
+            tests/Browser/console
+            storage/logs
