@@ -50,7 +50,7 @@ class BucketsMail extends Model
     /**
      * フォーマット済みの投稿通知の本文を取得
      */
-    // public function getFormatedNoticeBody($frame, $bucket, $post, $show_method, $notice_method, $delete_comment = null)
+    // public function getFormattedNoticeBody($frame, $bucket, $post, $show_method, $notice_method, $delete_comment = null)
     // {
     //     $notice_body = $this->notice_body;
 
@@ -69,7 +69,7 @@ class BucketsMail extends Model
 
     //     return $notice_body;
     // }
-    public function getFormatedNoticeBody(array $notice_embedded_tags)
+    public function getFormattedNoticeBody(array $notice_embedded_tags)
     {
         return $this->replaceEmbeddedTags($this->notice_body, $notice_embedded_tags);
     }
@@ -77,7 +77,7 @@ class BucketsMail extends Model
     /**
      * フォーマット済みの関連記事通知の本文を取得
      */
-    // public function getFormatedRelateBody($frame, $bucket, $post, $show_method)
+    // public function getFormattedRelateBody($frame, $bucket, $post, $show_method)
     // {
     //     $relate_body = $this->relate_body;
 
@@ -90,7 +90,7 @@ class BucketsMail extends Model
 
     //     return $relate_body;
     // }
-    public function getFormatedRelateBody(array $notice_embedded_tags)
+    public function getFormattedRelateBody(array $notice_embedded_tags)
     {
         return $this->replaceEmbeddedTags($this->relate_body, $notice_embedded_tags);
     }
@@ -98,7 +98,7 @@ class BucketsMail extends Model
     /**
      * フォーマット済みの承認通知の本文を取得
      */
-    // public function getFormatedApprovalBody($frame, $bucket, $post, $show_method)
+    // public function getFormattedApprovalBody($frame, $bucket, $post, $show_method)
     // {
     //     $approval_body = $this->approval_body;
 
@@ -111,7 +111,7 @@ class BucketsMail extends Model
 
     //     return $approval_body;
     // }
-    public function getFormatedApprovalBody(array $notice_embedded_tags)
+    public function getFormattedApprovalBody(array $notice_embedded_tags)
     {
         return $this->replaceEmbeddedTags($this->approval_body, $notice_embedded_tags);
     }
@@ -119,7 +119,7 @@ class BucketsMail extends Model
     /**
      * フォーマット済みの承認済み通知の本文を取得
      */
-    // public function getFormatedApprovedBody($frame, $bucket, $post, $show_method)
+    // public function getFormattedApprovedBody($frame, $bucket, $post, $show_method)
     // {
     //     $approved_body = $this->approved_body;
 
@@ -132,7 +132,7 @@ class BucketsMail extends Model
 
     //     return $approved_body;
     // }
-    public function getFormatedApprovedBody(array $notice_embedded_tags)
+    public function getFormattedApprovedBody(array $notice_embedded_tags)
     {
         return $this->replaceEmbeddedTags($this->approved_body, $notice_embedded_tags);
     }
