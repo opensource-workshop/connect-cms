@@ -32,11 +32,12 @@ jobs:
 
     services:
       mariadb:
-#        image: mariadb:latest
-        image: mariadb:10.4
+        image: mariadb:latest
+#        image: mariadb:10.4
         ports:
 #          - 3306
-          - 3306/tcp
+#          - 3306/tcp
+          - 3306:3306
         env:
 #          MYSQL_USER: root
 #          MYSQL_PASSWORD: root
@@ -131,9 +132,13 @@ jobs:
 
       - name: DB migration
         run: php artisan migrate
+        env:
+          DB_HOST: 127.0.0.1
 
       - name: Initial data import with seeder
         run: php artisan db:seed
+        env:
+          DB_HOST: 127.0.0.1
 
       # Dusk test
       - name: Upgrade Chrome Driver
@@ -147,6 +152,8 @@ jobs:
 
       - name: Run Dusk Tests
         run: php artisan dusk
+        env:
+          DB_HOST: 127.0.0.1
 
       # https://github.com/actions/upload-artifact (official)
       - name: Upload Screenshots
