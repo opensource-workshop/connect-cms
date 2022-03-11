@@ -32,15 +32,18 @@ jobs:
 
     services:
       mariadb:
-        image: mariadb:latest
+#        image: mariadb:latest
+        image: mariadb:10.4
         ports:
-          - 3306
+#          - 3306
+          - 3306/tcp
         env:
-          MYSQL_USER: root
-          MYSQL_PASSWORD: root
+#          MYSQL_USER: root
+#          MYSQL_PASSWORD: root
           MYSQL_DATABASE: laravel
           MYSQL_ROOT_PASSWORD: root
-        options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
+#        options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=10s --health-retries=10
 
     steps:
       # https://github.com/actions/checkout (official)
