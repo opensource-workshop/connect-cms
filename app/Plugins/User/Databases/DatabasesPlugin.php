@@ -4005,6 +4005,10 @@ AND databases_inputs.posted_at <= NOW()
                    })
                     ->where('databases_inputs.status', StatusType::active)
                     ->where('databases_inputs.posted_at', '<=', Carbon::now())
+                    ->where(function ($query) {
+                        $query->whereNull('databases_inputs.expires_at')
+                            ->orWhere('databases_inputs.expires_at', '>', Carbon::now());
+                    })
                     ->whereIn('pages.id', $page_ids);
 
             // 全データベースの検索キーワードの絞り込み と カラムの絞り込み
