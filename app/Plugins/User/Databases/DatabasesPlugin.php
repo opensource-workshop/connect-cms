@@ -1236,8 +1236,10 @@ class DatabasesPlugin extends UserPluginBase
 
         // 固定項目エリア
         $validator_array['column']['posted_at'] = ['required', 'date_format:Y-m-d H:i'];
+        $validator_array['column']['expires_at'] = ['nullable', 'date_format:Y-m-d H:i', 'after:posted_at'];
         $validator_array['column']['display_sequence'] = ['nullable', 'numeric'];
         $validator_array['message']['posted_at'] = '公開日時';
+        $validator_array['message']['expires_at'] = '公開終了日時';
         $validator_array['message']['display_sequence'] = '表示順';
 
         // --- 入力値変換
@@ -1426,6 +1428,9 @@ class DatabasesPlugin extends UserPluginBase
             $databases_inputs->status = $status;
             $databases_inputs->display_sequence = $display_sequence;
             $databases_inputs->posted_at = $request->posted_at . ':00';
+            if ($request->filled('expires_at')) {
+                $databases_inputs->expires_at = $request->expires_at . ':00';
+            }
             $databases_inputs->save();
         } else {
             $databases_inputs = DatabasesInputs::where('id', $id)->first();
@@ -1438,6 +1443,9 @@ class DatabasesPlugin extends UserPluginBase
             $databases_inputs->status = $status;
             $databases_inputs->display_sequence = $display_sequence;
             $databases_inputs->posted_at = $request->posted_at . ':00';
+            if ($request->filled('expires_at')) {
+                $databases_inputs->expires_at = $request->expires_at . ':00';
+            }
             $databases_inputs->update();
         }
 
