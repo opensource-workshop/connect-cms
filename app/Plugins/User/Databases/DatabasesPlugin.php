@@ -1236,8 +1236,10 @@ class DatabasesPlugin extends UserPluginBase
 
         // 固定項目エリア
         $validator_array['column']['posted_at'] = ['required', 'date_format:Y-m-d H:i'];
+        $validator_array['column']['expires_at'] = ['nullable', 'date_format:Y-m-d H:i', 'after:posted_at'];
         $validator_array['column']['display_sequence'] = ['nullable', 'numeric'];
         $validator_array['message']['posted_at'] = '公開日時';
+        $validator_array['message']['expires_at'] = '公開終了日時';
         $validator_array['message']['display_sequence'] = '表示順';
 
         // --- 入力値変換
@@ -1426,6 +1428,9 @@ class DatabasesPlugin extends UserPluginBase
             $databases_inputs->status = $status;
             $databases_inputs->display_sequence = $display_sequence;
             $databases_inputs->posted_at = $request->posted_at . ':00';
+            if ($request->filled('expires_at')) {
+                $databases_inputs->expires_at = $request->expires_at . ':00';
+            }
             $databases_inputs->save();
         } else {
             $databases_inputs = DatabasesInputs::where('id', $id)->first();
@@ -1438,6 +1443,9 @@ class DatabasesPlugin extends UserPluginBase
             $databases_inputs->status = $status;
             $databases_inputs->display_sequence = $display_sequence;
             $databases_inputs->posted_at = $request->posted_at . ':00';
+            if ($request->filled('expires_at')) {
+                $databases_inputs->expires_at = $request->expires_at . ':00';
+            }
             $databases_inputs->update();
         }
 
@@ -2810,8 +2818,10 @@ class DatabasesPlugin extends UserPluginBase
         // 見出し行-末尾（固定項目）
         $csv_array[0]['posted_at'] = '公開日時';
         $csv_array[0]['display_sequence'] = '表示順';
+        $csv_array[0]['expires_at'] = '公開終了日時';
         $copy_base['posted_at'] = '';
         $copy_base['display_sequence'] = '';
+        $copy_base['expires_at'] = '';
 
         // $data_output_flag = falseは、CSVフォーマットダウンロード処理
         if ($data_output_flag) {
@@ -2822,6 +2832,7 @@ class DatabasesPlugin extends UserPluginBase
                                             'databases_inputs.created_at as inputs_created_at',
                                             'databases_inputs.updated_at as inputs_updated_at',
                                             'databases_inputs.posted_at as inputs_posted_at',
+                                            'databases_inputs.expires_at as inputs_expires_at',
                                             'databases_inputs.display_sequence as inputs_display_sequence'
                                         )
                                         ->join('databases_inputs', 'databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
@@ -2849,6 +2860,9 @@ class DatabasesPlugin extends UserPluginBase
                     $csv_array[$input_col->databases_inputs_id]['posted_at'] = $databases_inputs->posted_at->format('Y/n/j H:i');
 
                     $csv_array[$input_col->databases_inputs_id]['display_sequence'] = $databases_inputs->display_sequence;
+                    if (!empty($databases_inputs->expires_at)) {
+                        $csv_array[$input_col->databases_inputs_id]['expires_at'] = $databases_inputs->expires_at->format('Y/n/j H:i');
+                    }
 
                     // 登録日型、更新日型、公開日型は $input_cols に含まれないので、初回でセット
                     foreach ($columns as $column) {
@@ -3294,8 +3308,11 @@ class DatabasesPlugin extends UserPluginBase
             // Log::debug('$csv_columns:'. var_export($csv_columns, true));
 
             // 配列の末尾から要素を取り除いて取得。CSVのデータ行の末尾は必ず下記固定項目の想定
-            // 配列末尾：表示順
+            // 配列末尾：公開終了日時
+            // 次の末尾：表示順
             // 次の末尾：公開日時
+            $expires_at = array_pop($csv_columns);
+            $expires_at = new Carbon($expires_at);
             $display_sequence = array_pop($csv_columns);
             $display_sequence = $this->getSaveDisplaySequence($display_sequence, $database->id, $databases_inputs_id);
             $posted_at = array_pop($csv_columns);
@@ -3318,6 +3335,8 @@ class DatabasesPlugin extends UserPluginBase
                 // 公開日時
                 // $databases_inputs->posted_at = $posted_at . ':00';
                 $databases_inputs->posted_at = $posted_at;
+                // 公開終了日時
+                $databases_inputs->expires_at = $expires_at;
                 $databases_inputs->save();
             } else {
                 // 更新
@@ -3331,6 +3350,8 @@ class DatabasesPlugin extends UserPluginBase
                 $databases_inputs->display_sequence = $display_sequence;
                 // 公開日時
                 $databases_inputs->posted_at = $posted_at;
+                // 公開終了日時
+                $databases_inputs->expires_at = $expires_at;
                 $databases_inputs->update();
 
                 // databases_inputs_id（行 id）が渡ってきたら、詳細データは一度消す。その後、登録と同じ処理にする。
@@ -3429,6 +3450,7 @@ class DatabasesPlugin extends UserPluginBase
         // ヘッダ行-末尾（固定項目）
         $header_column_format[] = '公開日時';
         $header_column_format[] = '表示順';
+        $header_column_format[] = '公開終了日時';
 
         // 項目の不足チェック
         $shortness = array_diff($header_column_format, $header_columns);
@@ -3520,7 +3542,9 @@ class DatabasesPlugin extends UserPluginBase
         // 行頭（固定項目） の id 分で+1, 行末に追加で+1 = col+2ずらす
         $rules[$col + 2] = ['required', 'date_format:Y/n/j H:i'];
         // 表示順
-        $rules[$col + 3] = ['nullable', 'numeric'];
+        $rules[$col + 3] = ['present', 'nullable', 'numeric'];
+        // 表示終了日時
+        $rules[$col + 4] = ['present', 'nullable', 'date_format:Y/n/j H:i', 'after:' . ($col + 2)];
 
         // ヘッダー行が1行目なので、2行目からデータ始まる
         $line_count = 2;
@@ -3612,6 +3636,7 @@ class DatabasesPlugin extends UserPluginBase
             // 行頭（固定項目）の id 分で+1, 行末に追加で+1 = col+2ずらす
             $attribute_names[$col + 2] = $line_count . '行目の公開日時';
             $attribute_names[$col + 3] = $line_count . '行目の表示順';
+            $attribute_names[$col + 4] = $line_count . '行目の公開終了日時';
 
             $validator->setAttributeNames($attribute_names);
             // Log::debug(var_export($attribute_names, true));
@@ -3911,6 +3936,10 @@ AND databases_inputs.posted_at <= NOW()
             })
 
             ->where('databases_inputs.status', StatusType::active)
+            ->where(function ($query) {
+                $query->whereNull('databases_inputs.expires_at')
+                    ->orWhere('databases_inputs.expires_at', '>', Carbon::now());
+            })
             ->where('databases_inputs.posted_at', '<=', Carbon::now());
 
         // 全データベースの検索キーワードの絞り込み と カラムの絞り込み
@@ -3976,6 +4005,10 @@ AND databases_inputs.posted_at <= NOW()
                    })
                     ->where('databases_inputs.status', StatusType::active)
                     ->where('databases_inputs.posted_at', '<=', Carbon::now())
+                    ->where(function ($query) {
+                        $query->whereNull('databases_inputs.expires_at')
+                            ->orWhere('databases_inputs.expires_at', '>', Carbon::now());
+                    })
                     ->whereIn('pages.id', $page_ids);
 
             // 全データベースの検索キーワードの絞り込み と カラムの絞り込み
