@@ -9994,13 +9994,27 @@ trait MigrationTrait
                 }
 
                 // 属性項目名のみ抜き出し（background-color）
-                $property = substr($match, 1, stripos($match, ':') - 1);
-                $property = mb_strtolower($property);
-                if (in_array($property, $clear_styles)) {
-                    // 値を含めた属性全体の抜き出し（background-color:rgb(255, 0, 0);）
-                    $style_value = substr($match, 1, stripos($match, ';'));
-                    // 値の除去
-                    $content = str_replace($style_value, '', $content);
+                // $property = substr($match, 1, stripos($match, ':') - 1);
+                // $property = mb_strtolower($property);
+                // if (in_array($property, $clear_styles)) {
+                //     // 値を含めた属性全体の抜き出し（background-color:rgb(255, 0, 0);）
+                //     $style_value = substr($match, 1, stripos($match, ';'));
+                //     // 値の除去
+                //     $content = str_replace($style_value, '', $content);
+                // }
+
+                // 1style複数属性に対応（;で分割, "background-color:rgb(255, 0, 0);" のダブルクォート除去）
+                $attributes = explode(';', str_replace('"', '', $match));
+                foreach ($attributes as $attribute) {
+
+                    // 属性項目名のみ抜き出し（background-color）
+                    $property = substr($attribute, 0, stripos($attribute, ':'));
+                    $property = mb_strtolower($property);
+
+                    if (in_array($property, $clear_styles)) {
+                        // 値を含めた属性全体を除去（background-color:rgb(255, 0, 0);）
+                        $content = str_replace($attribute . ';', '', $content);
+                    }
                 }
             }
         }
