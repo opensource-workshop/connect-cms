@@ -66,7 +66,7 @@ return [
     ],
     'not_in'               => ':attributeには:valuesのうちいずれとも異なる値を指定してください。',
     'numeric'              => ':attributeには数値を指定してください。',
-    'present'              => ':attributeには現在時刻を指定してください。',
+    'present'              => ':attributeが存在していません。',
     'regex'                => '正しい形式の:attributeを指定してください。',
     'required'             => ':attributeは必須です。',
     'required_if'          => ':otherが:valueの時、:attributeは必須です。',
