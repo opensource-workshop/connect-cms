@@ -3542,7 +3542,7 @@ class DatabasesPlugin extends UserPluginBase
         // 行頭（固定項目） の id 分で+1, 行末に追加で+1 = col+2ずらす
         $rules[$col + 2] = ['required', 'date_format:Y/n/j H:i'];
         // 表示順
-        $rules[$col + 3] = ['nullable', 'numeric'];
+        $rules[$col + 3] = ['present', 'nullable', 'numeric'];
         // 表示終了日時
         $rules[$col + 4] = ['present', 'nullable', 'date_format:Y/n/j H:i', 'after:' . ($col + 2)];
 
