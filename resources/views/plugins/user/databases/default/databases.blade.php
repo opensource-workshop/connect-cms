@@ -81,6 +81,14 @@
                                 <span class="badge badge-warning align-bottom">一時保存</span>
                             @endif
 
+                            @if (!empty($input->expires_at) && $input->expires_at <= Carbon::now())
+                                <span class="badge badge-secondary align-bottom">公開終了</span>
+                            @endif
+
+                            @if ($input->posted_at > Carbon::now())
+                                <span class="badge badge-info align-bottom">公開前</span>
+                            @endif
+
                             <button type="button" class="btn btn-success btn-sm ml-2" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}'">
                                 <i class="far fa-edit"></i> 編集
                             </button>

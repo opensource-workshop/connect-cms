@@ -178,6 +178,14 @@ use App\Models\User\Databases\DatabasesColumns;
         </div>
     </div>
 
+    <div class="form-group row">
+        <label class="col-sm-3 control-label text-nowrap">公開終了日時</label>
+        <div class="col-sm-9">
+            {{$request->expires_at}}
+            <input name="expires_at" class="form-control" type="hidden" value="{{$request->expires_at}}">
+        </div>
+    </div>
+
     @if ($is_hide_posted)
         <input name="display_sequence" type="hidden" value="{{$request->display_sequence}}">
     @else

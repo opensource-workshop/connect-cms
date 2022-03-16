@@ -4,10 +4,9 @@ namespace App\Providers;
 
 use Illuminate\Auth\EloquentUserProvider;
 use Illuminate\Contracts\Auth\Authenticatable as UserContract;
-//use Illuminate\Http\Request;
 
-// add by nagahara@opensource-workshop.jp
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Request as FacadeRequest;
 
 use App\Traits\ConnectCommonTrait;
 use App\Traits\ConnectRoleTrait;
@@ -52,7 +51,7 @@ class ConnectEloquentUserProvider extends EloquentUserProvider
     private function judgmentLogin($user)
     {
         // IP アドレス取得
-        $remote_ip = \Request::ip();
+        $remote_ip = FacadeRequest::ip();
         //Log::debug("--- IP：" . $remote_ip);
 
         // ログイン可否の基本設定を取得

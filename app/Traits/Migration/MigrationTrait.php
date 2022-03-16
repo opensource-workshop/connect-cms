@@ -6982,13 +6982,15 @@ trait MigrationTrait
 
         // NC2 ルームの取得
         // 「すべての会員をデフォルトで参加させる」はグループにしないので対象外。'default_entry_flag'== 0
-        $nc2_rooms = Nc2Page::where('space_type', 2)
+        $nc2_rooms_query = Nc2Page::where('space_type', 2)
                             ->whereColumn('page_id', 'room_id')
                             ->whereIn('thread_num', [1, 2])
-                            ->where('default_entry_flag', 0)
-                            ->orderBy('thread_num')
-                            ->orderBy('display_sequence')
-                            ->get();
+                            ->where('default_entry_flag', 0);
+        // 対象外ページ指定の有無
+        if ($this->getMigrationConfig('pages', 'nc2_export_ommit_page_ids')) {
+            $nc2_rooms_query->whereNotIn('page_id', $this->getMigrationConfig('pages', 'nc2_export_ommit_page_ids'));
+        }
+        $nc2_rooms = $nc2_rooms_query->orderBy('thread_num')->orderBy('display_sequence')->get();
 
         // 空なら戻る
         if ($nc2_rooms->isEmpty()) {
@@ -9385,6 +9387,10 @@ trait MigrationTrait
                 // ルーム指定あり。指定ルームに合致する。
             } else {
                 // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
+            if (!isset($this->plugin_name[$nc2_abbreviate_url->dir_name])) {
                 continue;
             }
 

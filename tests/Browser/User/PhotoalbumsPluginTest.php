@@ -213,10 +213,10 @@ class PhotoalbumsPluginTest extends DuskTestCase
              "name": "写真のアップロード後",
              "comment": "<ul class=\"mb-0\"><li>写真をアップロードできます。</li></ul>"
             },
-            {"path": "user/photoalbums/upload/images/upload_video1",
+            {"path": "user/photoalbums/upload/images/upload_video1_1",
              "name": "動画のアップロード後"
             },
-            {"path": "user/photoalbums/upload/images/upload_video2",
+            {"path": "user/photoalbums/upload/images/upload_video1_2",
              "name": "動画のアップロード後",
              "comment": "<ul class=\"mb-0\"><li>動画をアップロードできます。</li></ul>"
             }
