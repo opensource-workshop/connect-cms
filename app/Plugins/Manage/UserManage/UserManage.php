@@ -381,7 +381,7 @@ class UserManage extends ManagePluginBase
         if ($group_users) {
             // 処理高速化の為、配列に詰め直す
             $tmp_group = [];
-            foreach ($group_users as $val ) {
+            foreach ($group_users as $val) {
                 $tmp_group[$val->user_id][] = $val;
             }
             foreach ($users as &$user) {
