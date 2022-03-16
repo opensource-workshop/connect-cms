@@ -8,9 +8,11 @@ use App\Models\Common\ConnectCarbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\View;
 use Illuminate\Validation\Rule;
 
 use App\Models\Common\Buckets;
+use App\Models\Common\BucketsMail;
 use App\Models\Common\Frame;
 use App\Models\Common\InputsRepeat;
 use App\Models\Core\FrameConfig;
@@ -39,6 +41,7 @@ use App\Enums\Required;
 use App\Enums\ReservationCalendarDisplayType;
 use App\Enums\ReservationColumnType;
 use App\Enums\ReservationFrameConfig;
+use App\Enums\ReservationNoticeEmbeddedTag;
 use App\Enums\RruleFreq;
 use App\Enums\ShowType;
 use App\Enums\StatusType;
@@ -264,22 +267,7 @@ class ReservationsPlugin extends UserPluginBase
         $reservations = Reservation::where('id', $reservations_frame->reservations_id)->first();
 
         // 施設データ
-        $facilities = ReservationsFacility::
-            select('reservations_facilities.*', 'reservations_categories.category')
-            ->join('reservations_choice_categories', function ($join) use ($reservations_frame) {
-                $join->on('reservations_choice_categories.reservations_categories_id', '=', 'reservations_facilities.reservations_categories_id')
-                    ->where('reservations_choice_categories.reservations_id', $reservations_frame->reservations_id)
-                    ->where('reservations_choice_categories.view_flag', ShowType::show)
-                    ->whereNull('reservations_choice_categories.deleted_at');
-            })
-            ->join('reservations_categories', function ($join) {
-                $join->on('reservations_categories.id', '=', 'reservations_facilities.reservations_categories_id')
-                    ->whereNull('reservations_categories.deleted_at');
-            })
-            ->where('reservations_facilities.hide_flag', NotShowType::show)
-            ->orderBy('reservations_choice_categories.display_sequence', 'asc')
-            ->orderBy('reservations_facilities.display_sequence', 'asc')
-            ->get();
+        $facilities = ReservationsFacility::getShowFacilities($reservations_frame->reservations_id);
         $facilities_all = $facilities;
 
         if ($facility_display_type == FacilityDisplayType::only) {
@@ -1118,8 +1106,7 @@ class ReservationsPlugin extends UserPluginBase
 
         // 項目IDを取得
         $columns_value = $request->columns_value ?? [];
-        $keys = array_keys($columns_value);
-        foreach ($keys as $key) {
+        foreach (array_keys($columns_value) as $key) {
             // 予約明細 更新レコード取得
             // $reservations_inputs_columns = ReservationsInputsColumn::where('reservations_id', $request->reservations_id)
             $reservations_inputs_columns = ReservationsInputsColumn::where('inputs_parent_id', $reservations_inputs->inputs_parent_id)
@@ -1140,7 +1127,8 @@ class ReservationsPlugin extends UserPluginBase
         }
         // $str_mode = $request->booking_id ? '更新' : '登録';
         // $message = '予約を' . $str_mode . 'しました。【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
-        $flash_message = $str_mode . '【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
+        $start_end_datetime_str = date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
+        $flash_message = "{$str_mode}【場所】{$facility->facility_name} 【日時】{$start_end_datetime_str}";
 
         // 繰り返しあり
         if ($request->rrule_freq == RruleFreq::DAILY ||
@@ -1153,8 +1141,27 @@ class ReservationsPlugin extends UserPluginBase
 
         session()->flash('flash_message_for_frame' . $frame_id, $flash_message);
 
-        // titleカラムが無いため、プラグイン独自でセット
-        $overwrite_notice_embedded_tags = [NoticeEmbeddedTag::title => $this->getTitle($reservations_inputs, $columns)];
+        // プラグイン独自の埋め込みタグ
+        $overwrite_notice_embedded_tags = [
+            NoticeEmbeddedTag::title => $this->getTitle($reservations_inputs, $columns),
+            ReservationNoticeEmbeddedTag::facility_name => $facility->facility_name,
+            ReservationNoticeEmbeddedTag::booking_time => $start_end_datetime_str,
+            ReservationNoticeEmbeddedTag::rrule => $rrule ? $inputs_repeat->showRruleDisplay() . ' ' . $inputs_repeat->showRruleEndDisplay() : '',
+        ];
+
+        foreach (array_keys($columns_value) as $key) {
+            $column = $columns->firstWhere('id', $key);
+            // 除外する埋め込みタグはセットしない
+            if ($column->isNotEmbeddedTagsColumnType()) {
+                continue;
+            }
+
+            if ($column->column_type == ReservationColumnType::wysiwyg) {
+                $overwrite_notice_embedded_tags["X-{$column->column_name}"] = BucketsMail::stripTagsWysiwyg($columns_value[$key]);
+            } else {
+                $overwrite_notice_embedded_tags["X-{$column->column_name}"] = $columns_value[$key];
+            }
+        }
 
         // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド, 上書き埋め込みタグ)
         $this->sendPostNotice($reservations_inputs, $before_reservations_inputs, 'showBooking', $overwrite_notice_embedded_tags);
@@ -1987,23 +1994,7 @@ class ReservationsPlugin extends UserPluginBase
         $reservation = Reservation::where('bucket_id', $this->getBucketId())->first();
 
         // 初期表示する施設
-        $facilities = ReservationsFacility::
-            select('reservations_facilities.*')
-            ->join('reservations_categories', function ($join) {
-                $join->on('reservations_categories.id', '=', 'reservations_facilities.reservations_categories_id')
-                    ->whereNull('reservations_categories.deleted_at');
-            })
-            ->join('reservations_choice_categories', function ($join) use ($reservation) {
-                $join->on('reservations_choice_categories.reservations_categories_id', '=', 'reservations_facilities.reservations_categories_id')
-                    ->where('reservations_choice_categories.reservations_id', $reservation->id)
-                    ->whereNull('reservations_choice_categories.deleted_at');
-            })
-            ->where('reservations_facilities.hide_flag', NotShowType::show)
-            ->where('reservations_choice_categories.view_flag', ShowType::show)
-            ->orderBy('reservations_choice_categories.display_sequence', 'asc')
-            ->orderBy('reservations_categories.display_sequence', 'asc')
-            ->orderBy('reservations_facilities.display_sequence', 'asc')
-            ->get();
+        $facilities = ReservationsFacility::getShowFacilities($reservation->id);
 
         return $this->view('frame', [
             'reservation' => $reservation,
@@ -2027,5 +2018,27 @@ class ReservationsPlugin extends UserPluginBase
         $this->refreshFrameConfigs();
 
         session()->flash('flash_message_for_frame' . $frame_id, '変更しました。');
+    }
+
+    /**
+     * メール送信設定 変更画面
+     */
+    public function editBucketsMails($request, $page_id, $frame_id, $id = null)
+    {
+        $view = parent::editBucketsMails($request, $page_id, $frame_id, $id);
+
+        // 可変項目の埋め込みタグ
+        $reservation = Reservation::where('bucket_id', $this->frame->bucket_id)->firstOrNew([]);
+        $facilities = ReservationsFacility::getShowFacilities($reservation->id);
+        $grouped_facilities_columns_set_ids = $facilities->groupBy('columns_set_id');
+        $columns_set_columns = ReservationsColumn::whereIn('columns_set_id', $facilities->pluck('columns_set_id')->unique())
+            ->where('hide_flag', NotShowType::show)
+            ->get();
+
+        // ビューに値を渡す
+        View::share('grouped_facilities_columns_set_ids', $grouped_facilities_columns_set_ids);
+        View::share('columns_set_columns', $columns_set_columns);
+
+        return $view;
     }
 }

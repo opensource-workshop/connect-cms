@@ -290,6 +290,7 @@ $app_array = [
         'LinkOfPdfThumbnail' => \App\Enums\LinkOfPdfThumbnail::class,
         'ResizedImageSize' => \App\Enums\ResizedImageSize::class,
         'NoticeEmbeddedTag' => \App\Enums\NoticeEmbeddedTag::class,
+        'ReservationNoticeEmbeddedTag' => \App\Enums\ReservationNoticeEmbeddedTag::class,
         'WhatsnewFrameConfig' => \App\Enums\WhatsnewFrameConfig::class,
         'PhotoalbumFrameConfig' => \App\Enums\PhotoalbumFrameConfig::class,
         'PhotoalbumSort' => \App\Enums\PhotoalbumSort::class,

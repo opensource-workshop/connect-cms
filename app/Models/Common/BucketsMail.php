@@ -49,7 +49,8 @@ class BucketsMail extends Model
         // その際は、HTML 改行タグを改行コードに変換し、その後にタグを取り除くことで、メールの本文に挿入するテキストにできる。
         // html_entity_decode で、引用の > などをdecode する。（DB上は &gt; 等で格納しているため）
         if (!empty($post->body)) {
-            $default[NoticeEmbeddedTag::body] = strip_tags(preg_replace('/<br[[:space:]]*\/?[[:space:]]*>/i', "\n", html_entity_decode($post->body)));
+            // $default[NoticeEmbeddedTag::body] = strip_tags(preg_replace('/<br[[:space:]]*\/?[[:space:]]*>/i', "\n", html_entity_decode($post->body)));
+            $default[NoticeEmbeddedTag::body] = self::stripTagsWysiwyg($post->body);
         }
 
         // 同じキーがあったら後勝ちで上書きされる。
@@ -57,24 +58,19 @@ class BucketsMail extends Model
     }
 
     /**
+     * wysiwygをstrip_tags
+     */
+    public static function stripTagsWysiwyg(?string $body): string
+    {
+        return strip_tags(preg_replace('/<br[[:space:]]*\/?[[:space:]]*>/i', "\n", html_entity_decode($body)));
+    }
+
+    /**
      * フォーマット済みの件名を取得
      */
     public function getFormattedSubject(string $subject, array $notice_embedded_tags)
     {
-        // 件名で使える埋め込みコード
-        $subject_embedded_tags = array_filter($notice_embedded_tags, function($key) {
-            return in_array($key, [
-                NoticeEmbeddedTag::site_name,
-                NoticeEmbeddedTag::method,
-                NoticeEmbeddedTag::title,
-                NoticeEmbeddedTag::created_name,
-                NoticeEmbeddedTag::created_at,
-                NoticeEmbeddedTag::updated_name,
-                NoticeEmbeddedTag::updated_at,
-            ]);
-        }, ARRAY_FILTER_USE_KEY);
-
-        return $this->replaceEmbeddedTags($subject, $subject_embedded_tags);
+        return $this->replaceEmbeddedTags($subject, $notice_embedded_tags);
     }
 
     /**

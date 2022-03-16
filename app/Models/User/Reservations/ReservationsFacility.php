@@ -5,6 +5,7 @@ namespace App\Models\User\Reservations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 
 use App\UserableNohistory;
@@ -14,7 +15,9 @@ use App\Models\Common\Frame;
 
 use App\Enums\ConnectLocale;
 use App\Enums\DayOfWeek;
+use App\Enums\NotShowType;
 use App\Enums\ReservationLimitedByRole;
+use App\Enums\ShowType;
 
 use App\Traits\ConnectRoleTrait;
 
@@ -98,5 +101,29 @@ class ReservationsFacility extends Model
         }
         // 制限する
         return true;
+    }
+
+    /**
+     * 表示する施設データ取得
+     */
+    public static function getShowFacilities(?string $reservations_id): Collection
+    {
+        $facilities = self::
+            select('reservations_facilities.*', 'reservations_categories.category')
+            ->join('reservations_choice_categories', function ($join) use ($reservations_id) {
+                $join->on('reservations_choice_categories.reservations_categories_id', '=', 'reservations_facilities.reservations_categories_id')
+                    ->where('reservations_choice_categories.reservations_id', $reservations_id)
+                    ->where('reservations_choice_categories.view_flag', ShowType::show)
+                    ->whereNull('reservations_choice_categories.deleted_at');
+            })
+            ->join('reservations_categories', function ($join) {
+                $join->on('reservations_categories.id', '=', 'reservations_facilities.reservations_categories_id')
+                    ->whereNull('reservations_categories.deleted_at');
+            })
+            ->where('reservations_facilities.hide_flag', NotShowType::show)
+            ->orderBy('reservations_choice_categories.display_sequence', 'asc')
+            ->orderBy('reservations_facilities.display_sequence', 'asc')
+            ->get();
+        return $facilities;
     }
 }
