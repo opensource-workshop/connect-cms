@@ -9,7 +9,7 @@
 --}}
 @php
     $use_title = true;
-    $use_body = false;
+    $use_body = true;
 @endphp
 
 @include('plugins.common.description_frame_mails_common', ['embedded_tags' => NoticeEmbeddedTag::getDescriptionEmbeddedTags($use_title, $use_body)])

@@ -13,6 +13,7 @@ use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 
 use App\Models\Common\Buckets;
+use App\Models\Common\BucketsMail;
 use App\Models\Common\BucketsRoles;
 use App\Models\Common\Frame;
 use App\Models\Common\Uploads;
@@ -287,6 +288,7 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.role_display_control_flag',
                 'databases_columns.databases_id',
                 'databases_columns.title_flag',
+                'databases_columns.body_flag',
                 'uploads.client_original_name'
             )
             ->leftJoin('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
@@ -1528,8 +1530,11 @@ class DatabasesPlugin extends UserPluginBase
             }
         }
 
-        // titleカラムが無いため、プラグイン独自でセット
-        $overwrite_notice_embedded_tags = [NoticeEmbeddedTag::title => $this->getTitle($databases_inputs)];
+        // プラグイン独自の埋め込みタグ
+        $overwrite_notice_embedded_tags = [
+            NoticeEmbeddedTag::title => $this->getTitle($databases_inputs),
+            NoticeEmbeddedTag::body => BucketsMail::stripTagsWysiwyg($this->getBody($databases_inputs)),
+        ];
 
         // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド, 上書き埋め込みタグ)
         $this->sendPostNotice($databases_inputs, $before_databases_inputs, 'detail', $overwrite_notice_embedded_tags);
@@ -1594,7 +1599,12 @@ class DatabasesPlugin extends UserPluginBase
 
         // メール送信のために、削除する前に行レコードを退避しておく。
         $deleted_input = DatabasesInputs::firstOrNew(['id' => $id]);
-        $deleted_title = $this->getTitle($deleted_input);
+
+        // プラグイン独自の埋め込みタグ
+        $overwrite_notice_embedded_tags = [
+            NoticeEmbeddedTag::title => $this->getTitle($deleted_input),
+            NoticeEmbeddedTag::body => BucketsMail::stripTagsWysiwyg($this->getBody($deleted_input)),
+        ];
 
         // 詳細カラムデータを削除
         DatabasesInputCols::where('databases_inputs_id', $id)->delete();
@@ -1605,14 +1615,10 @@ class DatabasesPlugin extends UserPluginBase
         // 削除通知に渡すために、項目の編集（最初の公開（権限で制御しない）の項目名と値）
         $notice_cols = $input_cols->where("role_display_control_flag", 0);
         $delete_comment = "";
-        $overwrite_notice_embedded_tags = [];
         if ($notice_cols->isNotEmpty()) {
             $notice_cols_first = $notice_cols->first();
             $delete_comment  = "以下、削除されたデータの最初の公開項目です。\n";
             $delete_comment .= "「" . $notice_cols_first->column_name . "：" . $notice_cols_first->value . "」の行を削除しました。";
-
-            // titleカラムが無いため、プラグイン独自でセット
-            $overwrite_notice_embedded_tags = [NoticeEmbeddedTag::title => $deleted_title];
         }
 
         // メール送信 引数(削除した行, 詳細表示メソッド, 削除データを表すメッセージ, 上書き埋め込みタグ)
@@ -1624,12 +1630,28 @@ class DatabasesPlugin extends UserPluginBase
 
     /**
      * タイトル取得
+     */
+    private function getTitle($input): string
+    {
+        return $this->getColumnValue($input, 'title_flag');
+    }
+
+    /**
+     * 本文取得
+     */
+    private function getBody($input): string
+    {
+        return $this->getColumnValue($input, 'body_flag');
+    }
+
+    /**
+     * カラム値取得
      *
      * [TODO] このメソッドの不具合ではないが、新着等のタイトル取得は不十分になってる臭い。
      *        おそらく input_cols のタイトル取得のみに対応していて、input_cols にデータがない 登録日型 や、
      *        input_cols にデータがあってもファイル型のような、input_cols->value には ファイルID のみ格納していて、別途 client_original_name 等を取得するものは対応してなさそう。
      */
-    private function getTitle($input)
+    private function getColumnValue(?DatabasesInputs $input, string $db_col_name = 'title_flag'): string
     {
         if (is_null($input)) {
             return '';
@@ -1637,7 +1659,7 @@ class DatabasesPlugin extends UserPluginBase
 
         // タイトルカラム
         $column = DatabasesColumns::where('databases_id', $input->databases_id)
-            ->where('title_flag', '1')
+            ->where($db_col_name, '1')
             ->orderBy('display_sequence', 'asc')
             ->first();
 
@@ -1647,7 +1669,7 @@ class DatabasesPlugin extends UserPluginBase
 
         // タイトルカラムの入力値（入力値があるものだけ。例えば 登録日型 は input_cols にデータない）
         $input_cols = $this->getDatabasesInputCols($input->id);
-        $obj = $input_cols->firstWhere('title_flag', '1');
+        $obj = $input_cols->firstWhere($db_col_name, '1');
 
         // 項目の型で処理を分ける。
         if ($column->column_type == DatabaseColumnType::file) {
