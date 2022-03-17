@@ -2,31 +2,27 @@
 
 namespace App\Enums;
 
-use App\Enums\EnumsBase;
+use App\Enums\NoticeEmbeddedTag;
 
 /**
- * 通知の埋め込みタグ
+ * 施設予約の通知の埋め込みタグ
  */
-class NoticeEmbeddedTag extends EnumsBase
+final class ReservationNoticeEmbeddedTag extends NoticeEmbeddedTag
 {
     // 定数メンバ
-    const site_name = 'site_name';
-    const method = 'method';
-    const title = 'title';
-    const body = 'body';
-    const url = 'url';
-    const delete_comment = 'delete_comment';
-    const created_name = 'created_name';
-    const created_at = 'created_at';
-    const updated_name = 'updated_name';
-    const updated_at = 'updated_at';
+    const facility_name = 'facility_name';
+    const booking_time = 'booking_time';
+    const rrule = 'rrule';
 
     // key/valueの連想配列
     const enum = [
         self::site_name => 'サイト名',
         self::method => '処理名',
         self::title => 'タイトル',
-        self::body => 'HTMLを除去した本文',
+        self::body => '本文',
+        self::facility_name => '施設名',
+        self::booking_time => '利用日時',
+        self::rrule => '繰返し',
         self::url => 'URL',
         self::delete_comment => '削除時のコメント',
         self::created_name => '登録者',
@@ -45,12 +41,10 @@ class NoticeEmbeddedTag extends EnumsBase
         // 埋め込みタグ, 内容
         $embedded_tags[] = ['[[' . self::site_name . ']]', self::getDescription(self::site_name)];
         $embedded_tags[] = ['[[' . self::method . ']]', self::getDescription(self::method)];
-        if ($use_title) {
-            $embedded_tags[] = ['[[' . self::title . ']]', self::getDescription(self::title)];
-        }
-        if ($use_body) {
-            $embedded_tags[] = ['[[' . self::body . ']]', self::getDescription(self::body)];
-        }
+        $embedded_tags[] = ['[[' . self::title . ']]', self::getDescription(self::title)];
+        $embedded_tags[] = ['[[' . self::facility_name . ']]', self::getDescription(self::facility_name)];
+        $embedded_tags[] = ['[[' . self::booking_time . ']]', self::getDescription(self::booking_time)];
+        $embedded_tags[] = ['[[' . self::rrule . ']]', self::getDescription(self::rrule)];
         $embedded_tags[] = ['[[' . self::url . ']]', self::getDescription(self::url)];
         $embedded_tags[] = ['[[' . self::delete_comment . ']]', self::getDescription(self::delete_comment)];
         $embedded_tags[] = ['[[' . self::created_name . ']]', self::getDescription(self::created_name)];

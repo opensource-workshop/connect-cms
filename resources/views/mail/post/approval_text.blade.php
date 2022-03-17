@@ -1,1 +1,1 @@
-{!!$bucket_mail->getFormatedApprovalBody($notice_embedded_tags)!!}
+{!!$bucket_mail->getFormattedApprovalBody($notice_embedded_tags)!!}

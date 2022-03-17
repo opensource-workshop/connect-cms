@@ -34,10 +34,10 @@ class RelateNotice extends Mailable
     public function build()
     {
         return $this->text('mail.post.relate_text')
-                    ->subject($this->bucket_mail->relate_subject)
-                    ->with([
-                        'notice_embedded_tags' => $this->notice_embedded_tags,
-                        'bucket_mail'          => $this->bucket_mail,
-                    ]);
+            ->subject($this->bucket_mail->getFormattedSubject($this->bucket_mail->relate_subject, $this->notice_embedded_tags))
+            ->with([
+                'notice_embedded_tags' => $this->notice_embedded_tags,
+                'bucket_mail'          => $this->bucket_mail,
+            ]);
     }
 }
