@@ -29,7 +29,7 @@
             </table>
 
             施設毎に埋め込みタグが利用できます。<br />
-            @foreach($grouped_facilities_columns_set_ids as $columns_set_id => $grouped_facilities)
+            @forelse($grouped_facilities_columns_set_ids as $columns_set_id => $grouped_facilities)
                 施設：{{$grouped_facilities->pluck('facility_name')->implode(',')}}<br />
                 @php
                     $columns = $columns_set_columns->where('columns_set_id', $columns_set_id);
@@ -53,7 +53,9 @@
                         @endforeach
                     </tbody>
                 </table>
-            @endforeach
+            @empty
+                施設：なし<br />
+            @endforelse
         </div>
     </div>
 </div>
