@@ -5140,8 +5140,7 @@ trait MigrationTrait
             if ($reservation_mail_ini['reservation_mail']['notice_all_moderator_group']) {
                 // グループ通知
                 // ※ importGroups()は処理前のため管理者グループなし。そのため仮コード(管理者グループ)を登録してimportGroups()で置換する。
-                $notice_groups = '管理者グループ';
-                $this->putMonitor(3, '施設予約のメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、「モデレータグループ」に追加で通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                $this->putMonitor(3, '施設予約のメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
             }
 
             // 投稿通知
@@ -9208,6 +9207,7 @@ trait MigrationTrait
         } elseif ($mail_authority == 3) {
             // 全モデレータユーザ通知
             $notice_all_moderator_group = 1;
+            $notice_admin_group = 1;
 
         } elseif ($mail_authority == 4) {
             // 管理者グループ通知
