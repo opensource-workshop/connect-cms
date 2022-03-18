@@ -940,13 +940,14 @@ class UserManage extends ManagePluginBase
 
         // グループ取得
         $group_users = Group::select('groups.*', 'group_users.user_id', 'group_users.group_role')
-                            ->leftJoin('group_users', function ($join) use ($id) {
-                                $join->on('groups.id', '=', 'group_users.group_id')
-                                     ->where('group_users.user_id', '=', $id)
-                                     ->whereNull('group_users.deleted_at');
-                            })
-                            ->orderBy('groups.name', 'asc')
-                            ->paginate(10);
+            ->leftJoin('group_users', function ($join) use ($id) {
+                $join->on('groups.id', '=', 'group_users.group_id')
+                    ->where('group_users.user_id', '=', $id)
+                    ->whereNull('group_users.deleted_at');
+            })
+            ->orderBy('groups.name', 'asc')
+            ->get();
+            // ->paginate(10);
 
         // 画面呼び出し
         return view('plugins.manage.user.groups', [
