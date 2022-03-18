@@ -22,9 +22,35 @@ class BucketsMail extends Model
     // 保存時のユーザー関連データの保持（履歴なしUserable）
     use UserableNohistory;
 
-    // firstOrNew で使うためにguarded が必要だった。
-    // ない場合は「Illuminate\Database\Eloquent\MassAssignmentException: bucket_id」でエラーになった。
-    protected $guarded = ['buckets_id'];
+    /**
+     * create()やupdate()で入力を受け付ける ホワイトリスト
+     */
+    protected $fillable = [
+        'buckets_id',
+        'notice_on',
+        'notice_create',
+        'notice_update',
+        'notice_delete',
+        'notice_addresses',
+        'notice_everyone',
+        'notice_groups',
+        'notice_subject',
+        'notice_body',
+        'relate_on',
+        'relate_subject',
+        'relate_body',
+        'approval_on',
+        'approval_addresses',
+        'approval_groups',
+        'approval_subject',
+        'approval_body',
+        'approved_on',
+        'approved_author',
+        'approved_addresses',
+        'approved_groups',
+        'approved_subject',
+        'approved_body',
+    ];
 
     /**
      * 通知の埋め込みタグ値の配列をマージ

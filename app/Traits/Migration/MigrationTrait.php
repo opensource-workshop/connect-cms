@@ -150,6 +150,7 @@ use App\Enums\ReservationCalendarDisplayType;
 use App\Enums\ReservationColumnType;
 use App\Enums\ReservationFrameConfig;
 use App\Enums\ReservationLimitedByRole;
+use App\Enums\ReservationNoticeEmbeddedTag;
 use App\Enums\ShowType;
 
 /**
@@ -5032,7 +5033,7 @@ trait MigrationTrait
         }
 
         // メール設定
-        // $reservation_mail_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('reservations/reservation_mail') . '.ini', true);
+        $reservation_mail_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('reservations/reservation_mail') . '.ini', true);
 
         // マップから新Reservation を取得
         if (!empty($migration_mapping)) {
@@ -5118,57 +5119,32 @@ trait MigrationTrait
                 ]
             );
 
-            // メール設定 [TODO] 一旦、メール移行しない
+            // メール設定
             // ---------------------------------------
-            // // Buckets のメール設定取得
-            // $bucket_mail = BucketsMail::firstOrNew(['buckets_id' => $bucket->id]);
+            // Buckets のメール設定取得
+            $bucket_mail = BucketsMail::firstOrNew(['buckets_id' => $bucket->id]);
 
-            // // 件名：
-            // // [{X-SITE_NAME}]予約の通知
-            // //
-            // // 本文：
-            // // 施設の予約が入りましたのでお知らせします。
-            // //
-            // // 施設:{X-LOCATION_NAME}
-            // // 件名:{X-TITLE}
-            // // 利用グループ:{X-RESERVE_FLAG}
-            // // 利用日時:{X-RESERVE_TIME}
-            // // 連絡先:{X-CONTACT}
-            // // 繰返し:{X-RRULE}
-            // // 登録者:{X-USER}
-            // // 登録時刻:{X-INPUT_TIME}
-            // //
-            // // {X-BODY}
-            // //
-            // // この予約を確認するには、下記アドレスへ
-            // // {X-URL}
+            // 投稿通知
+            $bucket_mail->timing             = 0;       // 0:即時送信
+            $bucket_mail->notice_on          = $reservation_mail_ini['reservation_mail']['mail_send'] ? 1 : 0;
+            $bucket_mail->notice_create      = $reservation_mail_ini['reservation_mail']['mail_send'] ? 1 : 0;
+            $bucket_mail->notice_update      = 0;
+            $bucket_mail->notice_delete      = 0;
+            $bucket_mail->notice_addresses   = null;
+            $bucket_mail->notice_groups      = null;
+            $bucket_mail->notice_roles       = null;    // 画面項目なし
+            $bucket_mail->notice_subject     = $reservation_mail_ini['reservation_mail']['mail_subject'];
+            $bucket_mail->notice_body        = $reservation_mail_ini['reservation_mail']['mail_body'];
 
-            // $notice_subject = $reservation_mail_ini['reservation_mail']['mail_subject'];
-            // $notice_body = $reservation_mail_ini['reservation_mail']['mail_body'];
-
-            // // 投稿通知
-            // $bucket_mail->timing             = 0;   // 0:即時送信
-            // // $bucket_mail->notice_on          = $reservation_mail_ini['reservation_mail']['mail_send'] ? 1 : 0;
-            // // $bucket_mail->notice_create      = $reservation_mail_ini['reservation_mail']['mail_send'] ? 1 : 0;
-            // $bucket_mail->notice_on          = 0;
-            // $bucket_mail->notice_create      = 0;
-            // $bucket_mail->notice_update      = 0;
-            // $bucket_mail->notice_delete      = 0;
-            // $bucket_mail->notice_addresses   = null;
-            // $bucket_mail->notice_groups      = null;
-            // $bucket_mail->notice_roles       = null;    // 画面項目なし
-            // $bucket_mail->notice_subject     = $notice_subject;
-            // $bucket_mail->notice_body        = $notice_body;
-
-            // // 関連記事通知
-            // $bucket_mail->relate_on          = 0;
-            // // 承認通知
-            // $bucket_mail->approval_on        = 0;
-            // // 承認済み通知
-            // $bucket_mail->approved_on        = 0;
-            // $bucket_mail->approved_author    = 0;
-            // // BucketsMails の更新
-            // $bucket_mail->save();
+            // 関連記事通知
+            $bucket_mail->relate_on          = 0;
+            // 承認通知
+            $bucket_mail->approval_on        = 0;
+            // 承認済み通知
+            $bucket_mail->approved_on        = 0;
+            $bucket_mail->approved_author    = 0;
+            // BucketsMails の更新
+            $bucket_mail->save();
         }
 
         // Frames 登録
@@ -9211,6 +9187,28 @@ trait MigrationTrait
             $mail_body = "施設の予約が入りましたのでお知らせします。\n\n施設:{X-LOCATION_NAME}\n件名:{X-TITLE}\n利用グループ:{X-RESERVE_FLAG}\n利用日時:{X-RESERVE_TIME}\n連絡先:{X-CONTACT}\n繰返し:{X-RRULE}\n登録者:{X-USER}\n登録時刻:{X-INPUT_TIME}\n\n{X-BODY}\n\nこの予約を確認するには、下記アドレスへ\n{X-URL}";
         } else {
             $mail_body = $nc2_configmail_body->conf_value;
+        }
+
+        // 変換
+        $convert_embedded_tags = [
+            // nc2埋込タグ, cc埋込タグ
+            ['{X-SITE_NAME}', '[[' . ReservationNoticeEmbeddedTag::site_name . ']]'],
+            ['{X-LOCATION_NAME}', '[[' . ReservationNoticeEmbeddedTag::facility_name . ']]'],
+            ['{X-TITLE}', '[[' . ReservationNoticeEmbeddedTag::title . ']]'],
+            ['{X-RESERVE_TIME}', '[[' . ReservationNoticeEmbeddedTag::booking_time . ']]'],
+            ['{X-CONTACT}', '[[X-連絡先]]'],
+            ['{X-RRULE}', '[[' . ReservationNoticeEmbeddedTag::rrule . ']]'],
+            ['{X-USER}', '[[' . ReservationNoticeEmbeddedTag::created_name . ']]'],
+            ['{X-INPUT_TIME}', '[[' . ReservationNoticeEmbeddedTag::created_at . ']]'],
+            ['{X-BODY}', '[[X-補足]]'],
+            ['{X-URL}', '[[' . ReservationNoticeEmbeddedTag::url . ']]'],
+            // 除外
+            ['利用グループ:{X-RESERVE_FLAG}', ''],
+        ];
+
+        foreach ($convert_embedded_tags as $convert_embedded_tag) {
+            $mail_subject = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_subject);
+            $mail_body = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_body);
         }
 
         // 施設予約のメール設定
