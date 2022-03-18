@@ -1608,6 +1608,12 @@ trait MigrationTrait
             );
         }
 
+        // BucketsMailの管理者グループ仮コード置換
+        foreach (BucketsMail::get() as $bucket_mail) {
+            $bucket_mail->notice_groups = str_ireplace('管理者グループ', $admin_group->id, $bucket_mail->notice_groups);
+            $bucket_mail->save();
+        }
+
         // グループ定義のループ
         foreach ($group_ini_paths as $group_ini_path) {
             // ini_file の解析
@@ -5124,6 +5130,20 @@ trait MigrationTrait
             // Buckets のメール設定取得
             $bucket_mail = BucketsMail::firstOrNew(['buckets_id' => $bucket->id]);
 
+            $notice_groups = null;
+            if ($reservation_mail_ini['reservation_mail']['notice_admin_group']) {
+                // グループ通知
+                // ※ importGroups()は処理前のため管理者グループなし。そのため仮コード(管理者グループ)を登録してimportGroups()で置換する。
+                $notice_groups = '管理者グループ';
+            }
+
+            if ($reservation_mail_ini['reservation_mail']['notice_all_moderator_group']) {
+                // グループ通知
+                // ※ importGroups()は処理前のため管理者グループなし。そのため仮コード(管理者グループ)を登録してimportGroups()で置換する。
+                $notice_groups = '管理者グループ';
+                $this->putMonitor(3, '施設予約のメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、「モデレータグループ」に追加で通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+            }
+
             // 投稿通知
             $bucket_mail->timing             = 0;       // 0:即時送信
             $bucket_mail->notice_on          = $reservation_mail_ini['reservation_mail']['mail_send'] ? 1 : 0;
@@ -5131,7 +5151,8 @@ trait MigrationTrait
             $bucket_mail->notice_update      = 0;
             $bucket_mail->notice_delete      = 0;
             $bucket_mail->notice_addresses   = null;
-            $bucket_mail->notice_groups      = null;
+            $bucket_mail->notice_everyone    = $reservation_mail_ini['reservation_mail']['notice_everyone'] ? 1 : 0;
+            $bucket_mail->notice_groups      = $notice_groups;
             $bucket_mail->notice_roles       = null;    // 画面項目なし
             $bucket_mail->notice_subject     = $reservation_mail_ini['reservation_mail']['mail_subject'];
             $bucket_mail->notice_body        = $reservation_mail_ini['reservation_mail']['mail_body'];
@@ -9167,6 +9188,32 @@ trait MigrationTrait
             $mail_authority = (int) $nc2_config_mail_authority->conf_value;
         }
 
+        // mail_authority
+        // 1: ゲストまで
+        // 2: 一般まで
+        // 3: モデレータまで
+        // 4: 主担のみ
+        $notice_everyone = 0;
+        $notice_admin_group = 0;
+        $notice_all_moderator_group = 0;
+        if ($mail_authority === 1) {
+            // 全ユーザ通知
+            $notice_everyone = 1;
+
+        } elseif ($mail_authority == 2) {
+            // 全一般ユーザ通知（≒全ユーザ通知）
+            $notice_everyone = 1;
+            $this->putMonitor(3, '施設予約のメール設定（一般まで）は、全ユーザ通知で移行します。', 'ini_path=' . $this->getImportPath('reservations/reservation_mail') . '.ini');
+
+        } elseif ($mail_authority == 3) {
+            // 全モデレータユーザ通知
+            $notice_all_moderator_group = 1;
+
+        } elseif ($mail_authority == 4) {
+            // 管理者グループ通知
+            $notice_admin_group = 1;
+        }
+
         // mail_subject（件名）. default=RESERVATION_MAIL_SUBJECT ←多言語により表示言語によって変わる
         $nc2_config_mail_subject = $nc2_configs->firstWhere('conf_name', 'mail_subject');
         $mail_subject = null;
@@ -9204,6 +9251,7 @@ trait MigrationTrait
             ['{X-URL}', '[[' . ReservationNoticeEmbeddedTag::url . ']]'],
             // 除外
             ['利用グループ:{X-RESERVE_FLAG}', ''],
+            ['{X-RESERVE_FLAG}', ''],
         ];
 
         foreach ($convert_embedded_tags as $convert_embedded_tag) {
@@ -9216,8 +9264,12 @@ trait MigrationTrait
         $ini .= "[reservation_mail]\n";
         // メール通知する
         $ini .= "mail_send = " . $mail_send . "\n";
-        // 通知する権限
-        $ini .= "mail_authority = " . $mail_authority . "\n";
+        // 全ユーザ通知
+        $ini .= "notice_everyone = " . $notice_everyone . "\n";
+        // 全モデレータユーザ通知
+        $ini .= "notice_all_moderator_group = " . $notice_all_moderator_group . "\n";
+        // 管理者グループ通知
+        $ini .= "notice_admin_group = " . $notice_admin_group . "\n";
         // 件名
         $ini .= "mail_subject = \"" . $mail_subject . "\"\n";
         // 本文
