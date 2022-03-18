@@ -581,22 +581,22 @@ class UserPluginBase extends PluginBase
      */
     protected function getBuckets($frame_id)
     {
-        $backets = Buckets::select('buckets.*', 'frames.id as frames_id')
+        $buckets = Buckets::select('buckets.*', 'frames.id as frames_id')
                       ->join('frames', 'frames.bucket_id', '=', 'buckets.id')
                       ->where('frames.id', $frame_id)
                       ->first();
-        return $backets;
+        return $buckets;
     }
 
     /**
      * Buckets のメール設定取得
      */
-    protected function getBucketMail($backet)
+    protected function getBucketMail($bucket)
     {
-        if (empty($backet)) {
+        if (empty($bucket)) {
             return new BucketsMail();
         }
-        return BucketsMail::firstOrNew(['buckets_id' => $backet->id]);
+        return BucketsMail::firstOrNew(['buckets_id' => $bucket->id]);
     }
 
     /**
@@ -634,7 +634,7 @@ class UserPluginBase extends PluginBase
         // Buckets の取得
         $bucket = $this->getBuckets($frame_id);
 
-        // Backet が取れない場合は表示しない。
+        // Bucket が取れない場合は表示しない。
         if (empty($bucket)) {
             return $this->commonView('empty_bucket_setting');
         }
