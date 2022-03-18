@@ -4,7 +4,7 @@ namespace App\Plugins\Manage\UserManage;
 
 // use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-// use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -17,7 +17,6 @@ use App\Models\Core\UsersInputCols;
 use App\Models\Core\UsersLoginHistories;
 use App\Models\Common\Group;
 use App\Models\Common\GroupUser;
-// use App\Models\Common\Page;
 use App\User;
 
 use App\Plugins\Manage\ManagePluginBase;
@@ -39,7 +38,7 @@ use App\Enums\UserStatus;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページ管理
- * @package Contoroller
+ * @package Controller
  * @plugin_title ユーザ管理
  * @plugin_desc ユーザの一覧や追加など、ユーザに関する機能が集まった管理機能です。
  */
@@ -51,30 +50,30 @@ class UserManage extends ManagePluginBase
     public function declareRole()
     {
         // 権限チェックテーブル
-        $role_ckeck_table = array();
-        $role_ckeck_table["index"]              = array('admin_user');
-        $role_ckeck_table["search"]             = array('admin_user');
-        $role_ckeck_table["clearSearch"]        = array('admin_user');
-        $role_ckeck_table["regist"]             = array('admin_user');
-        $role_ckeck_table["edit"]               = array('admin_user');
-        $role_ckeck_table["update"]             = array('admin_user');
-        $role_ckeck_table["destroy"]            = array('admin_user');
-        $role_ckeck_table["originalRole"]       = array('admin_user');
-        $role_ckeck_table["saveOriginalRoles"]  = array('admin_user');
-        $role_ckeck_table["deleteOriginalRole"] = array('admin_user');
-        $role_ckeck_table["groups"]             = array('admin_user');
-        $role_ckeck_table["saveGroups"]         = array('admin_user');
-        $role_ckeck_table["autoRegist"]         = array('admin_user');
-        $role_ckeck_table["autoRegistUpdate"]   = array('admin_user');
-        $role_ckeck_table["downloadCsv"] = array('admin_user');
-        $role_ckeck_table["downloadCsvFormat"] = array('admin_user');
-        $role_ckeck_table["import"] = array('admin_site');
-        $role_ckeck_table["uploadCsv"] = array('admin_user');
-        $role_ckeck_table["bulkDelete"] = array('admin_user');
-        $role_ckeck_table["bulkDestroy"] = array('admin_user');
-        $role_ckeck_table["loginHistory"] = array('admin_user');
+        $role_check_table = array();
+        $role_check_table["index"]              = array('admin_user');
+        $role_check_table["search"]             = array('admin_user');
+        $role_check_table["clearSearch"]        = array('admin_user');
+        $role_check_table["regist"]             = array('admin_user');
+        $role_check_table["edit"]               = array('admin_user');
+        $role_check_table["update"]             = array('admin_user');
+        $role_check_table["destroy"]            = array('admin_user');
+        $role_check_table["originalRole"]       = array('admin_user');
+        $role_check_table["saveOriginalRoles"]  = array('admin_user');
+        $role_check_table["deleteOriginalRole"] = array('admin_user');
+        $role_check_table["groups"]             = array('admin_user');
+        $role_check_table["saveGroups"]         = array('admin_user');
+        $role_check_table["autoRegist"]         = array('admin_user');
+        $role_check_table["autoRegistUpdate"]   = array('admin_user');
+        $role_check_table["downloadCsv"] = array('admin_user');
+        $role_check_table["downloadCsvFormat"] = array('admin_user');
+        $role_check_table["import"] = array('admin_site');
+        $role_check_table["uploadCsv"] = array('admin_user');
+        $role_check_table["bulkDelete"] = array('admin_user');
+        $role_check_table["bulkDestroy"] = array('admin_user');
+        $role_check_table["loginHistory"] = array('admin_user');
 
-        return $role_ckeck_table;
+        return $role_check_table;
     }
 
     /**
