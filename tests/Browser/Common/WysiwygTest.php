@@ -751,10 +751,26 @@ class WysiwygTest extends DuskTestCase
 
         // 画面
         $this->browse(function (Browser $browser) {
+            // 編集画面を開き、WYSIWYGエディタのセレクタをターゲットにCTRL＋Aキーを押して、全選択させる。その後に翻訳プラグインを起動することで、翻訳するテキストが選択されている状態。
             $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
+                    ->keys('#mce_0_ifr', ['{control}', 'a'])
                     ->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(15) button:nth-child(1)')
                     ->pause(500)
                     ->screenshot('common/wysiwyg/translate/images/translate');
+
+            // 2022-03-20 翻訳API の許可がIP アドレス指定になっているので、マニュアル用にデータ編集方式で進める。
+            //$browser->press('翻訳')
+            //        ->pause(500)
+            //        ->screenshot('common/wysiwyg/translate/images/translate2');
+
+            // 表に合わせた記事に変更
+            $content_text = '<p>WYSIWYGのテストです。<br />This is a test for WYSIWYG.</p>';
+            $this->content->content_text = $content_text;
+            $this->content->save();
+
+            $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
+                    ->screenshot('common/wysiwyg/translate/images/translate2');
+
         });
 
         // マニュアル用データ出力
@@ -770,6 +786,10 @@ class WysiwygTest extends DuskTestCase
                      {"path": "common/wysiwyg/translate/images/translate",
                       "name": "翻訳",
                       "comment": "<ul class=\"mb-0\"><li>2022-02-23時点では、英語、スペイン語、フランス語、ドイツ語、ポルトガル語、中国語（簡体字）、中国語（繁体字）、韓国語、タガログ語、ベトナム語があります。</li><li>翻訳言語は必要に応じて追加します。</li></ul>"
+                     },
+                     {"path": "common/wysiwyg/translate/images/translate2",
+                      "name": "翻訳結果",
+                      "comment": "<ul class=\"mb-0\"><li>選択した内容が翻訳されて、元のテキストの下に追記されます。</li></ul>"
                      }
                  ]'
             )
