@@ -132,8 +132,8 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        // ユーザ自動登録の場合（認証されていない）は、トップページに遷移する。
-        if (!Auth::user()) {
+        // ユーザ自動登録の場合（認証されていない）、もしくはユーザ管理者以外は、トップページに遷移する。
+        if (!Auth::user() || !Auth::user()->can('admin_user')) {
             $this->redirectTo = '/';
         }
 
