@@ -30,6 +30,8 @@ use App\Models\Common\Permalink;
 use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
+use App\Models\Core\UsersColumns;
+use App\Models\Core\UsersInputCols;
 use App\Models\Core\UsersRoles;
 use App\Models\User\Bbses\Bbs;
 use App\Models\User\Bbses\BbsFrame;
@@ -153,6 +155,7 @@ use App\Enums\ReservationFrameConfig;
 use App\Enums\ReservationLimitedByRole;
 use App\Enums\ReservationNoticeEmbeddedTag;
 use App\Enums\ShowType;
+use App\Enums\UserColumnType;
 
 /**
  * 移行プログラム
@@ -367,6 +370,8 @@ trait MigrationTrait
             $first_user = User::orderBy('id', 'asc')->first();
             UsersRoles::where('users_id', '<>', $first_user->id)->delete();
             User::where('id', '<>', $first_user->id)->delete();
+            UsersColumns::truncate();
+            UsersInputCols::truncate();
             MigrationMapping::where('target_source_table', 'users')->delete();
         }
 
@@ -1398,6 +1403,51 @@ trait MigrationTrait
             $this->clearData('users');
         }
 
+        // ユーザ任意項目の取り込み
+        // ------------------------------------------
+        // UsersColumns のコレクションを保持。後で入力データを移行する際に nc2_item_id でひっぱるため。
+        $create_users_columns = collect();
+
+        $ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('users/users_columns_*.ini'));
+        foreach ($ini_paths as $ini_path) {
+            // ini_file の解析
+            $ini = parse_ini_file($ini_path, true);
+
+            // nc2 の item_id
+            $nc2_item_id = $this->getArrayValue($ini, 'source_info', 'item_id', 0);
+
+            // マッピングテーブルの取得
+            $mapping = MigrationMapping::where('target_source_table', 'users_columns')->where('source_key', $nc2_item_id)->first();
+
+            // マッピングテーブルを確認して、あれば削除
+            if (!empty($mapping)) {
+                // ユーザカラム削除
+                UsersColumns::where('id', $mapping->destination_key)->delete();
+
+                // マッピングテーブル削除
+                $mapping->delete();
+            }
+
+            $users_column = UsersColumns::create([
+                'column_type'      => $this->getArrayValue($ini, 'users_columns_base', 'column_type'),
+                'column_name'      => $this->getArrayValue($ini, 'users_columns_base', 'column_name'),
+                'required'         => intval($this->getArrayValue($ini, 'users_columns_base', 'required', 0)),
+                'caption'          => $this->getArrayValue($ini, 'users_columns_base', 'caption'),
+                'display_sequence' => intval($this->getArrayValue($ini, 'users_columns_base', 'display_sequence')),
+            ]);
+
+            $users_column->nc2_item_id = $nc2_item_id;
+            // コレクションに要素追加
+            $create_users_columns = $create_users_columns->concat([$users_column]);
+
+            // マッピングテーブルの追加
+            $mapping = MigrationMapping::create([
+                'target_source_table'  => 'users_columns',
+                'source_key'           => $nc2_item_id,
+                'destination_key'      => $users_column->id,
+            ]);
+        }
+
         // ユーザ定義・ファイルの存在確認
         if (!Storage::exists($this->getImportPath('users/users.ini'))) {
             return;
@@ -1488,6 +1538,17 @@ trait MigrationTrait
                     $user->status    = $user_item['status'];
                     $user->save();
                 }
+
+                // 任意項目インポート
+                foreach ($create_users_columns as $create_users_column) {
+                    $col = UsersInputCols::updateOrCreate([
+                        'users_id' => $user->id,
+                        'users_columns_id' => $create_users_column->id,
+                    ], [
+                        'value' => $user_item["item_{$create_users_column->nc2_item_id}"]
+                    ]);
+                }
+
                 // ユーザー権限をインポートする。
                 $this->importUsersRoles($user, 'base', $user_item);
                 $this->importUsersRoles($user, 'manage', $user_item);
@@ -7000,16 +7061,39 @@ trait MigrationTrait
                                 ->orderBy('row_num')
                                 ->first();
 
-        // NC2 ユーザデータ取得
-        $nc2_users_query = Nc2User::select('users.*', 'users_items_link.content AS email');
-        if (!empty($nc2_mail_item)) {
-            $nc2_users_query->leftJoin('users_items_link', function ($join) use ($nc2_mail_item) {
-                $join->on('users_items_link.user_id', '=', 'users.user_id')
-                     ->where('users_items_link.item_id', '=', $nc2_mail_item->item_id);
-            });
+        // NC2 ユーザ任意項目
+        $nc2_any_items = collect([]);
+        $nc2_export_user_items = $this->getMigrationConfig('users', 'nc2_export_user_items');
+        if ($nc2_export_user_items) {
+            $nc2_any_items = Nc2Item::select('items.*', 'items_desc.description')
+                ->whereIn('items.item_name', $nc2_export_user_items)
+                ->leftJoin('items_desc', 'items_desc.item_id', '=', 'items.item_id')
+                ->orderBy('items.col_num')
+                ->orderBy('items.row_num')
+                ->get();
         }
-        $nc2_users = $nc2_users_query->orderBy('insert_time')
-                                     ->get();
+
+        // NC2 ユーザデータ取得
+        $nc2_users_query = Nc2User::select('users.*');
+        if (!empty($nc2_mail_item)) {
+            // メール項目
+            $nc2_users_query->addSelect('users_items_link.content AS email')
+                ->leftJoin('users_items_link', function ($join) use ($nc2_mail_item) {
+                    $join->on('users_items_link.user_id', '=', 'users.user_id')
+                        ->where('users_items_link.item_id', $nc2_mail_item->item_id);
+                });
+        }
+        if ($nc2_any_items->isNotEmpty()) {
+            // 任意項目
+            foreach ($nc2_any_items as $nc2_any_item) {
+                $nc2_users_query->addSelect("users_items_link_{$nc2_any_item->item_id}.content AS item_{$nc2_any_item->item_id}")
+                    ->leftJoin("users_items_link as users_items_link_{$nc2_any_item->item_id}", function ($join) use ($nc2_any_item) {
+                        $join->on("users_items_link_{$nc2_any_item->item_id}.user_id", '=', 'users.user_id')
+                            ->where("users_items_link_{$nc2_any_item->item_id}.item_id", $nc2_any_item->item_id);
+                    });
+            }
+        }
+        $nc2_users = $nc2_users_query->orderBy('users.insert_time')->get();
 
         // 空なら戻る
         if ($nc2_users->isEmpty()) {
@@ -7042,6 +7126,13 @@ trait MigrationTrait
             } else {
                 $users_ini .= "status             = 0\n";
             }
+            if ($nc2_any_items->isNotEmpty()) {
+                // 任意項目
+                foreach ($nc2_any_items as $nc2_any_item) {
+                    $item_name = "item_{$nc2_any_item->item_id}";
+                    $users_ini .= "{$item_name}            = \"" . $nc2_user->$item_name . "\"\n";
+                }
+            }
 
             if ($nc2_user->role_authority_id == 1) {
                 $users_ini .= "users_roles_manage = \"admin_system\"\n";
@@ -7058,6 +7149,59 @@ trait MigrationTrait
         // Userデータの出力
         //Storage::put($this->getImportPath('users/users.ini'), $users_ini);
         $this->storagePut($this->getImportPath('users/users.ini'), $users_ini);
+
+        // ユーザ任意項目
+        foreach ($nc2_any_items as $i => $nc2_any_item) {
+            // カラム型 変換
+            $convert_user_column_types = [
+                // nc2, cc
+                'text' => UserColumnType::text,
+                'email' => UserColumnType::mail,
+                'mobile_email' => UserColumnType::mail,
+                // 'radio' => UserColumnType::radio,
+                'textarea' => UserColumnType::textarea,
+                // 'select' => UserColumnType::select,
+            ];
+
+            // 未対応
+            $exclude_user_column_types = [
+                'password',
+                'file',
+                'label',
+                'system',
+                'radio',
+                'select',
+            ];
+
+            $user_column_type = $nc2_any_item->type;
+            if (in_array($user_column_type, $exclude_user_column_types)) {
+                // 未対応
+                $user_column_type = '';
+                $this->putError(3, 'ユーザ任意項目の項目タイプが未対応', "item.type = " . $user_column_type);
+
+            } elseif (array_key_exists($user_column_type, $convert_user_column_types)) {
+                $user_column_type = $convert_user_column_types[$user_column_type];
+
+            } else {
+                // 未対応に未指定
+                $user_column_type = '';
+                $this->putError(3, 'ユーザ任意項目の項目タイプが未対応（未対応に未指定の型）', "item.type = " . $user_column_type);
+            }
+
+            // ini ファイル用変数
+            $users_columns_ini  = "[users_columns_base]\n";
+            $users_columns_ini .= "column_type      = \"" . $user_column_type . "\"\n";
+            $users_columns_ini .= "column_name      = \"" . $nc2_any_item->item_name . "\"\n";
+            $users_columns_ini .= "required         = " . $nc2_any_item->require_flag . "\n";
+            $users_columns_ini .= "caption          = \"" . $nc2_any_item->description . "\"\n";
+            $users_columns_ini .= "display_sequence = " . ($i + 1) . "\n";
+            $users_columns_ini .= "\n";
+            $users_columns_ini .= "[source_info]\n";
+            $users_columns_ini .= "item_id = " . $nc2_any_item->item_id . "\n";
+
+            // Userカラムデータの出力
+            $this->storagePut($this->getImportPath('users/users_columns_') . $this->zeroSuppress($nc2_any_item->item_id) . '.ini', $users_columns_ini);
+        }
     }
 
 
