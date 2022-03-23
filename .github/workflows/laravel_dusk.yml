@@ -154,7 +154,7 @@ jobs:
         run: php artisan dusk tests/Manual/src/ManualPdf.php
 
       - name: Upload Manual
-        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == 'true' }}
+        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == 'true' && always() }}
         uses: actions/upload-artifact@v3
         with:
           name: manual
