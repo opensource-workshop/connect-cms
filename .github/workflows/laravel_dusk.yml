@@ -40,7 +40,7 @@ jobs:
       - name: Install Jp font
         run: sudo apt install fonts-noto
 
-      - name: Prepare The Environment
+      - name: Setup .env
         run: |
           cp .env.example .env
           sed -i -e "s|DB_PASSWORD=|DB_PASSWORD=root|g" .env
