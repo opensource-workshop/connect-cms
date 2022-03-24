@@ -440,7 +440,8 @@ trait ConnectCommonTrait
         // 利用不可・仮登録・仮削除ならfalse
         if ($user->status == UserStatus::not_active ||
                 $user->status == UserStatus::temporary ||
-                $user->status == UserStatus::temporary_delete) {
+                $user->status == UserStatus::temporary_delete ||
+                $user->status == UserStatus::pending_approval) {
 
             $error_msg = UserStatus::getDescription($user->status) . "のため、ログインできません。";
             return false;

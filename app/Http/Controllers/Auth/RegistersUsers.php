@@ -378,7 +378,7 @@ trait RegistersUsers
             ]);
         }
 
-        if ($user->status == \UserStatus::active) {
+        if ($user->status == \UserStatus::active || $user->status == \UserStatus::pending_approval) {
             // session()->flash('flash_message_for_header', '既に認証済みです。登録したログインID、パスワードでログインしてください。');
             // return redirect(RouteServiceProvider::HOME);
             // エラー画面へ
@@ -441,7 +441,7 @@ trait RegistersUsers
             ]);
         }
 
-        if ($user->status == \UserStatus::active) {
+        if ($user->status == \UserStatus::active || $user->status == \UserStatus::pending_approval) {
             // session()->flash('flash_message_for_header', '既に認証済みです。登録したログインID、パスワードでログインしてください。');
             // return redirect(RouteServiceProvider::HOME);
             // エラー画面へ
@@ -451,7 +451,13 @@ trait RegistersUsers
         }
 
         // 登録完了
-        $user->status = \UserStatus::active;
+        if (Configs::getConfigsValue($configs, 'user_registration_require_approval')) {
+            // 承認要のため承認待ち
+            $user->status = \UserStatus::pending_approval;
+        } else {
+            // 承認不要なので利用可能に
+            $user->status = \UserStatus::active;
+        }
         $user->save();
 
         // 本登録時のメール送信

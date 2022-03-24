@@ -45,6 +45,25 @@
                 </div>
             </div>
 
+            {{-- 承認要否 --}}
+            @php
+                $require_approval = Configs::getConfigsValueAndOld($configs, 'user_registration_require_approval', '0');
+            @endphp
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label text-md-right pt-0">管理者の承認</label>
+                <div class="col pt-0">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input type="radio" value="1" id="require_approval_enable" name="user_registration_require_approval" class="custom-control-input" @if ($require_approval === '1') checked="checked" @endif>
+                        <label class="custom-control-label" for="require_approval_enable" id="label_require_approval_enable">必要</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input type="radio" value="0" id="require_approval_disable" name="user_registration_require_approval" class="custom-control-input" @if ($require_approval === '0') checked="checked" @endif>
+                        <label class="custom-control-label" for="require_approval_disable" id="label_require_approval_disable">不要</label>
+                    </div>
+                    <small class="form-text text-muted">ユーザ登録に管理者の承認が必要か選択してください。</small>
+                </div>
+            </div>
+
             {{-- 自動ユーザ登録時に以下のアドレスにメール送信する --}}
             <div class="form-group row">
                 <label class="col-md-3 col-form-label text-md-right pt-0">メール送信先</label>
@@ -152,6 +171,9 @@
                     <small class="text-muted">
                         ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
                     </small>
+                    <small class="text-danger">
+                        ※ 管理者の承認を必要にしている場合は、本登録メールが登録申請メールとなります。
+                    </small>
                 </div>
             </div>
 
@@ -171,7 +193,33 @@
                 <label class="col-md-3 col-form-label text-md-right">本登録後のメッセージ</label>
                 <div class="col">
                     <input type="text" name="user_register_after_message" value="{{Configs::getConfigsValueAndOld($configs, 'user_register_after_message')}}" class="form-control">
-                    <small class="text-muted">※ （例）ユーザ登録が完了しました。登録したログインID、パスワードでログインしてください。</small>
+                    <small class="text-muted">※ （例）ユーザ登録が完了しました。登録したログインID、パスワードでログインしてください。<br></small>
+                    <small class="text-danger">※ 管理者の承認を必要にしている場合は、本登録後のメッセージが登録申請後のメッセージとなります。<br></small>
+                    <small class="text-muted">（例）ユーザの登録申請が完了しました。承認をお待ちください。</small>
+                </div>
+            </div>
+
+            {{-- 承認完了メール --}}
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label text-md-right pt-0">承認完了メール</label>
+                <div class="col">
+                    <label class="control-label">承認完了メール件名</label>
+                    <input type="text" name="user_register_approved_mail_subject" value="{{Configs::getConfigsValueAndOld($configs, 'user_register_approved_mail_subject')}}" class="form-control">
+                    <small class="text-muted">
+                        ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
+                    </small>
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label text-md-right"></label>
+                <div class="col">
+                    <label class="control-label">承認完了メールフォーマット</label>
+                    <textarea name="user_register_approved_mail_format" class="form-control" rows=5 placeholder="（例）ユーザー登録が承認されました。&#13;&#10;登録したログインID、パスワードでログインしてください。&#13;&#10;----------------------------------&#13;&#10;[[body]]&#13;&#10;----------------------------------">{{Configs::getConfigsValueAndOld($configs, 'user_register_approved_mail_format')}}</textarea>
+                    <small class="text-muted">
+                        ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
+                        ※ [[login_id]] を記述すると該当部分に登録内容が入ります。<br>
+                    </small>
                 </div>
             </div>
 
