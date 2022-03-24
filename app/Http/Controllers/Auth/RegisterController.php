@@ -145,7 +145,7 @@ class RegisterController extends Controller
         // ただし、承認待ちより仮登録を優先する（仮登録でメールアドレスの正当性を担保した後に承認待ちにする）
         $status = $data['status'];
         if (Configs::getConfigsValue($configs, 'user_registration_require_approval')
-            && $data['status'] != UserStatus::temporary && (!Auth::user() || !Auth::user()->can('admin_user')) ) {
+            && $data['status'] != UserStatus::temporary && (!Auth::user() || !Auth::user()->can('admin_user'))) {
             $status = UserStatus::pending_approval;
         }
 
