@@ -30,6 +30,8 @@ use App\Models\Common\Permalink;
 use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
+use App\Models\Core\UsersColumns;
+use App\Models\Core\UsersInputCols;
 use App\Models\Core\UsersRoles;
 use App\Models\User\Bbses\Bbs;
 use App\Models\User\Bbses\BbsFrame;
@@ -153,6 +155,7 @@ use App\Enums\ReservationFrameConfig;
 use App\Enums\ReservationLimitedByRole;
 use App\Enums\ReservationNoticeEmbeddedTag;
 use App\Enums\ShowType;
+use App\Enums\UserColumnType;
 
 /**
  * 移行プログラム
@@ -367,6 +370,8 @@ trait MigrationTrait
             $first_user = User::orderBy('id', 'asc')->first();
             UsersRoles::where('users_id', '<>', $first_user->id)->delete();
             User::where('id', '<>', $first_user->id)->delete();
+            UsersColumns::truncate();
+            UsersInputCols::truncate();
             MigrationMapping::where('target_source_table', 'users')->delete();
         }
 
@@ -790,6 +795,28 @@ trait MigrationTrait
         } else {
             // $date = date('Y-m-d H:i:s');
             $date = $default;
+        }
+
+        return $date;
+    }
+
+    /**
+     * インポート時INIから日時取得 ＆ 日時フォーマットチェック
+     */
+    private function getDatetimeFromIniAndCheckFormat($ini, $key1, $key2)
+    {
+        $default = date('Y-m-d H:i:s');
+
+        $date = $this->getArrayValue($ini, $key1, $key2, null);
+
+        // データが空の場合は、処理時間を入れる。
+        if (empty($date)) {
+            return $default;
+        }
+
+        if (!\DateTime::createFromFormat('Y-m-d H:i:s', $date)) {
+            $this->putError(3, '日付エラー', "[{$key1}] $key2 = {$date}");
+            return $default;
         }
 
         return $date;
@@ -1398,6 +1425,51 @@ trait MigrationTrait
             $this->clearData('users');
         }
 
+        // ユーザ任意項目の取り込み
+        // ------------------------------------------
+        // UsersColumns のコレクションを保持。後で入力データを移行する際に nc2_item_id でひっぱるため。
+        $create_users_columns = collect();
+
+        $ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('users/users_columns_*.ini'));
+        foreach ($ini_paths as $ini_path) {
+            // ini_file の解析
+            $ini = parse_ini_file($ini_path, true);
+
+            // nc2 の item_id
+            $nc2_item_id = $this->getArrayValue($ini, 'source_info', 'item_id', 0);
+
+            // マッピングテーブルの取得
+            $mapping = MigrationMapping::where('target_source_table', 'users_columns')->where('source_key', $nc2_item_id)->first();
+
+            // マッピングテーブルを確認して、あれば削除
+            if (!empty($mapping)) {
+                // ユーザカラム削除
+                UsersColumns::where('id', $mapping->destination_key)->delete();
+
+                // マッピングテーブル削除
+                $mapping->delete();
+            }
+
+            $users_column = UsersColumns::create([
+                'column_type'      => $this->getArrayValue($ini, 'users_columns_base', 'column_type'),
+                'column_name'      => $this->getArrayValue($ini, 'users_columns_base', 'column_name'),
+                'required'         => intval($this->getArrayValue($ini, 'users_columns_base', 'required', 0)),
+                'caption'          => $this->getArrayValue($ini, 'users_columns_base', 'caption'),
+                'display_sequence' => intval($this->getArrayValue($ini, 'users_columns_base', 'display_sequence')),
+            ]);
+
+            $users_column->nc2_item_id = $nc2_item_id;
+            // コレクションに要素追加
+            $create_users_columns = $create_users_columns->concat([$users_column]);
+
+            // マッピングテーブルの追加
+            $mapping = MigrationMapping::create([
+                'target_source_table'  => 'users_columns',
+                'source_key'           => $nc2_item_id,
+                'destination_key'      => $users_column->id,
+            ]);
+        }
+
         // ユーザ定義・ファイルの存在確認
         if (!Storage::exists($this->getImportPath('users/users.ini'))) {
             return;
@@ -1488,6 +1560,17 @@ trait MigrationTrait
                     $user->status    = $user_item['status'];
                     $user->save();
                 }
+
+                // 任意項目インポート
+                foreach ($create_users_columns as $create_users_column) {
+                    $col = UsersInputCols::updateOrCreate([
+                        'users_id' => $user->id,
+                        'users_columns_id' => $create_users_column->id,
+                    ], [
+                        'value' => $user_item["item_{$create_users_column->nc2_item_id}"]
+                    ]);
+                }
+
                 // ユーザー権限をインポートする。
                 $this->importUsersRoles($user, 'base', $user_item);
                 $this->importUsersRoles($user, 'manage', $user_item);
@@ -2245,16 +2328,19 @@ trait MigrationTrait
         // ルームの指定（あれば後で使う）
         //$cc_import_databases_room_ids = $this->getMigrationConfig('databases', 'cc_import_databases_room_ids');
 
+        // ユーザ取得
+        $users = User::get();
+
         // データベース定義のループ
         foreach ($databases_ini_paths as $databases_ini_path) {
             // ini_file の解析
             $databases_ini = parse_ini_file($databases_ini_path, true);
 
             // ルーム指定を探しておく。
-            $room_id = null;
-            if (array_key_exists('source_info', $databases_ini) && array_key_exists('room_id', $databases_ini['source_info'])) {
-                $room_id = $databases_ini['source_info']['room_id'];
-            }
+            // $room_id = null;
+            // if (array_key_exists('source_info', $databases_ini) && array_key_exists('room_id', $databases_ini['source_info'])) {
+            //     $room_id = $databases_ini['source_info']['room_id'];
+            // }
 
             //// ルーム指定があれば、指定されたルームのみ処理する。
             //if (empty($cc_import_databases_room_ids)) {
@@ -2266,18 +2352,15 @@ trait MigrationTrait
             //    continue;
             //}
 
+            // nc2 の multidatabase_id
+            $nc2_multidatabase_id = $this->getArrayValue($databases_ini, 'source_info', 'multidatabase_id', 0);
+
             // データベース指定の有無
             $cc_import_where_database_ids = $this->getMigrationConfig('databases', 'cc_import_where_database_ids');
             if (!empty($cc_import_where_database_ids)) {
-                if (!in_array($databases_ini['source_info']['multidatabase_id'], $cc_import_where_database_ids)) {
+                if (!in_array($nc2_multidatabase_id, $cc_import_where_database_ids)) {
                     continue;
                 }
-            }
-
-            // nc2 の multidatabase_id
-            $nc2_multidatabase_id = 0;
-            if (array_key_exists('source_info', $databases_ini) && array_key_exists('multidatabase_id', $databases_ini['source_info'])) {
-                $nc2_multidatabase_id = $databases_ini['source_info']['multidatabase_id'];
             }
 
             // マッピングテーブルの取得
@@ -2286,13 +2369,19 @@ trait MigrationTrait
             // マッピングテーブルを確認して、追加か更新の処理を分岐
             if (empty($mapping)) {
                 // マッピングテーブルがなければ、Buckets テーブルと Database テーブル、マッピングテーブルを追加
-                $database_name = '無題';
-                if (array_key_exists('database_base', $databases_ini) && array_key_exists('database_name', $databases_ini['database_base'])) {
-                    $database_name = $databases_ini['database_base']['database_name'];
-                }
+                $database_name = $this->getArrayValue($databases_ini, 'database_base', 'database_name', '無題');
                 $bucket = Buckets::create(['bucket_name' => $database_name, 'plugin_name' => 'databases']);
 
-                $database = Databases::create(['bucket_id' => $bucket->id, 'databases_name' => $database_name, 'data_save_flag' => 1]);
+                $database = new Databases(['bucket_id' => $bucket->id, 'databases_name' => $database_name, 'data_save_flag' => 1]);
+                $database->created_id = $this->getUserIdFromLoginId($users, $this->getArrayValue($databases_ini, 'source_info', 'insert_login_id', null));
+                $database->created_name = $this->getArrayValue($databases_ini, 'source_info', 'insert_user_name', null);
+                $database->created_at = $this->getDatetimeFromIniAndCheckFormat($databases_ini, 'source_info', 'insert_time');
+                $database->updated_id = $this->getUserIdFromLoginId($users, $this->getArrayValue($databases_ini, 'source_info', 'update_login_id', null));
+                $database->updated_name = $this->getArrayValue($databases_ini, 'source_info', 'update_user_name', null);
+                $database->updated_at = $this->getDatetimeFromIniAndCheckFormat($databases_ini, 'source_info', 'update_time');
+                // 登録更新日時を自動更新しない
+                $database->timestamps = false;
+                $database->save();
 
                 // マッピングテーブルの追加
                 $mapping = MigrationMapping::create([
@@ -3004,22 +3093,23 @@ trait MigrationTrait
             }
 
             // Buckets テーブルと Cabinets テーブル、マッピングテーブルを追加
-            $bbs_name = '無題';
-            if (array_key_exists('blog_base', $ini) && array_key_exists('blog_name', $ini['blog_base'])) {
-                $bbs_name = $ini['blog_base']['blog_name'];
-            }
+            $bbs_name = $this->getArrayValue($ini, 'blog_base', 'blog_name', '無題');
             $bucket = Buckets::create(['bucket_name' => $bbs_name, 'plugin_name' => 'bbses']);
 
-            $use_like = 0;
-            if (array_key_exists('blog_base', $ini) && array_key_exists('use_like', $ini['blog_base'])) {
-                $use_like = $ini['blog_base']['use_like'];
-            }
-
-            $bbs = Bbs::create([
+            $bbs = new Bbs([
                 'bucket_id' => $bucket->id,
                 'name' => $bbs_name,
-                'use_like' => $use_like,
+                'use_like' => $this->getArrayValue($ini, 'blog_base', 'use_like', 0),
             ]);
+            $bbs->created_id = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'insert_login_id', null));
+            $bbs->created_name = $this->getArrayValue($ini, 'source_info', 'insert_user_name', null);
+            $bbs->created_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'insert_time');
+            $bbs->updated_id = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'update_login_id', null));
+            $bbs->updated_name = $this->getArrayValue($ini, 'source_info', 'update_user_name', null);
+            $bbs->updated_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'update_time');
+            // 登録更新日時を自動更新しない
+            $bbs->timestamps = false;
+            $bbs->save();
 
             // マッピングテーブルの追加
             $mapping = MigrationMapping::create([
@@ -5516,9 +5606,16 @@ trait MigrationTrait
 
         // Contents 登録
         // echo "Contents 登録\n";
-        $content = Contents::create(['bucket_id' => $bucket->id,
-                                     'content_text' => $content_html,
-                                     'status' => 0]);
+        $content = new Contents([
+            'bucket_id' => $bucket->id,
+            'content_text' => $content_html,
+            'status' => 0
+        ]);
+        $content->created_at = $this->getDatetimeFromIniAndCheckFormat($frame_ini, 'source_info', 'insert_time');
+        $content->updated_at = $this->getDatetimeFromIniAndCheckFormat($frame_ini, 'source_info', 'update_time');
+        // 登録更新日時を自動更新しない
+        $content->timestamps = false;
+        $content->save();
     }
 
     /**
@@ -7000,16 +7097,39 @@ trait MigrationTrait
                                 ->orderBy('row_num')
                                 ->first();
 
-        // NC2 ユーザデータ取得
-        $nc2_users_query = Nc2User::select('users.*', 'users_items_link.content AS email');
-        if (!empty($nc2_mail_item)) {
-            $nc2_users_query->leftJoin('users_items_link', function ($join) use ($nc2_mail_item) {
-                $join->on('users_items_link.user_id', '=', 'users.user_id')
-                     ->where('users_items_link.item_id', '=', $nc2_mail_item->item_id);
-            });
+        // NC2 ユーザ任意項目
+        $nc2_any_items = collect([]);
+        $nc2_export_user_items = $this->getMigrationConfig('users', 'nc2_export_user_items');
+        if ($nc2_export_user_items) {
+            $nc2_any_items = Nc2Item::select('items.*', 'items_desc.description')
+                ->whereIn('items.item_name', $nc2_export_user_items)
+                ->leftJoin('items_desc', 'items_desc.item_id', '=', 'items.item_id')
+                ->orderBy('items.col_num')
+                ->orderBy('items.row_num')
+                ->get();
         }
-        $nc2_users = $nc2_users_query->orderBy('insert_time')
-                                     ->get();
+
+        // NC2 ユーザデータ取得
+        $nc2_users_query = Nc2User::select('users.*');
+        if (!empty($nc2_mail_item)) {
+            // メール項目
+            $nc2_users_query->addSelect('users_items_link.content AS email')
+                ->leftJoin('users_items_link', function ($join) use ($nc2_mail_item) {
+                    $join->on('users_items_link.user_id', '=', 'users.user_id')
+                        ->where('users_items_link.item_id', $nc2_mail_item->item_id);
+                });
+        }
+        if ($nc2_any_items->isNotEmpty()) {
+            // 任意項目
+            foreach ($nc2_any_items as $nc2_any_item) {
+                $nc2_users_query->addSelect("users_items_link_{$nc2_any_item->item_id}.content AS item_{$nc2_any_item->item_id}")
+                    ->leftJoin("users_items_link as users_items_link_{$nc2_any_item->item_id}", function ($join) use ($nc2_any_item) {
+                        $join->on("users_items_link_{$nc2_any_item->item_id}.user_id", '=', 'users.user_id')
+                            ->where("users_items_link_{$nc2_any_item->item_id}.item_id", $nc2_any_item->item_id);
+                    });
+            }
+        }
+        $nc2_users = $nc2_users_query->orderBy('users.insert_time')->get();
 
         // 空なら戻る
         if ($nc2_users->isEmpty()) {
@@ -7042,6 +7162,13 @@ trait MigrationTrait
             } else {
                 $users_ini .= "status             = 0\n";
             }
+            if ($nc2_any_items->isNotEmpty()) {
+                // 任意項目
+                foreach ($nc2_any_items as $nc2_any_item) {
+                    $item_name = "item_{$nc2_any_item->item_id}";
+                    $users_ini .= "{$item_name}            = \"" . $nc2_user->$item_name . "\"\n";
+                }
+            }
 
             if ($nc2_user->role_authority_id == 1) {
                 $users_ini .= "users_roles_manage = \"admin_system\"\n";
@@ -7058,6 +7185,59 @@ trait MigrationTrait
         // Userデータの出力
         //Storage::put($this->getImportPath('users/users.ini'), $users_ini);
         $this->storagePut($this->getImportPath('users/users.ini'), $users_ini);
+
+        // ユーザ任意項目
+        foreach ($nc2_any_items as $i => $nc2_any_item) {
+            // カラム型 変換
+            $convert_user_column_types = [
+                // nc2, cc
+                'text' => UserColumnType::text,
+                'email' => UserColumnType::mail,
+                'mobile_email' => UserColumnType::mail,
+                // 'radio' => UserColumnType::radio,
+                'textarea' => UserColumnType::textarea,
+                // 'select' => UserColumnType::select,
+            ];
+
+            // 未対応
+            $exclude_user_column_types = [
+                'password',
+                'file',
+                'label',
+                'system',
+                'radio',
+                'select',
+            ];
+
+            $user_column_type = $nc2_any_item->type;
+            if (in_array($user_column_type, $exclude_user_column_types)) {
+                // 未対応
+                $user_column_type = '';
+                $this->putError(3, 'ユーザ任意項目の項目タイプが未対応', "item.type = " . $user_column_type);
+
+            } elseif (array_key_exists($user_column_type, $convert_user_column_types)) {
+                $user_column_type = $convert_user_column_types[$user_column_type];
+
+            } else {
+                // 未対応に未指定
+                $user_column_type = '';
+                $this->putError(3, 'ユーザ任意項目の項目タイプが未対応（未対応に未指定の型）', "item.type = " . $user_column_type);
+            }
+
+            // ini ファイル用変数
+            $users_columns_ini  = "[users_columns_base]\n";
+            $users_columns_ini .= "column_type      = \"" . $user_column_type . "\"\n";
+            $users_columns_ini .= "column_name      = \"" . $nc2_any_item->item_name . "\"\n";
+            $users_columns_ini .= "required         = " . $nc2_any_item->require_flag . "\n";
+            $users_columns_ini .= "caption          = \"" . $nc2_any_item->description . "\"\n";
+            $users_columns_ini .= "display_sequence = " . ($i + 1) . "\n";
+            $users_columns_ini .= "\n";
+            $users_columns_ini .= "[source_info]\n";
+            $users_columns_ini .= "item_id = " . $nc2_any_item->item_id . "\n";
+
+            // Userカラムデータの出力
+            $this->storagePut($this->getImportPath('users/users_columns_') . $this->zeroSuppress($nc2_any_item->item_id) . '.ini', $users_columns_ini);
+        }
     }
 
 
@@ -7495,6 +7675,12 @@ trait MigrationTrait
             $journals_ini .= "room_id = " . $nc2_bbs->room_id . "\n";
             $journals_ini .= "space_type = " . $nc2_bbs->space_type . "\n";   // スペースタイプ, 1:パブリックスペース, 2:グループスペース
             $journals_ini .= "module_name = \"bbs\"\n";
+            $journals_ini .= "insert_time = \"" . $this->getCCDatetime($nc2_bbs->insert_time) . "\"\n";
+            $journals_ini .= "insert_user_name = \"" . $nc2_bbs->insert_user_name . "\"\n";
+            $journals_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_bbs->insert_user_id) . "\"\n";
+            $journals_ini .= "update_time = \"" . $this->getCCDatetime($nc2_bbs->update_time) . "\"\n";
+            $journals_ini .= "update_user_name = \"" . $nc2_bbs->update_user_name . "\"\n";
+            $journals_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_bbs->update_user_id) . "\"\n";
 
             // NC2掲示板の記事（bbs_post、bbs_post_body）を移行する。
             $nc2_bbs_posts = Nc2BbsPost::
@@ -7889,6 +8075,9 @@ trait MigrationTrait
             return;
         }
 
+        // nc2の全ユーザ取得
+        $nc2_users = Nc2User::get();
+
         // NC2汎用データベース（Multidatabase）のループ
         foreach ($nc2_multidatabases as $nc2_multidatabase) {
             $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
@@ -7934,6 +8123,12 @@ trait MigrationTrait
             $multidatabase_ini .= "multidatabase_id = " . $nc2_multidatabase->multidatabase_id . "\n";
             $multidatabase_ini .= "room_id = " . $nc2_multidatabase->room_id . "\n";
             $multidatabase_ini .= "module_name = \"multidatabase\"\n";
+            $multidatabase_ini .= "insert_time = \"" . $this->getCCDatetime($nc2_multidatabase->insert_time) . "\"\n";
+            $multidatabase_ini .= "insert_user_name = \"" . $nc2_multidatabase->insert_user_name . "\"\n";
+            $multidatabase_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_multidatabase->insert_user_id) . "\"\n";
+            $multidatabase_ini .= "update_time = \"" . $this->getCCDatetime($nc2_multidatabase->update_time) . "\"\n";
+            $multidatabase_ini .= "update_user_name = \"" . $nc2_multidatabase->update_user_name . "\"\n";
+            $multidatabase_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_multidatabase->update_user_id) . "\"\n";
 
             // 汎用データベースのカラム情報
             $multidatabase_metadatas = Nc2MultidatabaseMetadata::where('multidatabase_id', $multidatabase_id)
@@ -9916,6 +10111,8 @@ trait MigrationTrait
             $frame_nc2 .= "[source_info]\n";
             $frame_nc2 .= "source_key = \"" . $nc2_block->block_id . "\"\n";
             $frame_nc2 .= "target_source_table = \"" . $nc2_block->getModuleName() . "\"\n";
+            $frame_nc2 .= "insert_time = \"" . $this->getCCDatetime($nc2_block->insert_time) . "\"\n";
+            $frame_nc2 .= "update_time = \"" . $this->getCCDatetime($nc2_block->update_time) . "\"\n";
             $frame_ini .= $frame_nc2;
 
             // フレーム設定ファイルの出力

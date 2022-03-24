@@ -19,5 +19,4 @@ class Nc2Page extends Model
     // 定数メンバ
     const space_type_public = 1;
     const space_type_group = 2;
-
 }
