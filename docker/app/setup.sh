@@ -16,7 +16,7 @@ sed -i 's/DB_PASSWORD=/DB_PASSWORD=$DB_PASSWORD/g' .env
 
 ## mailhog設定
 sed -i 's/MAIL_HOST=smtp.mailtrap.io/MAIL_HOST=mailhog/g' .env
-sed -i 's/MAIL_PORT=2525/MAIL_PORY=1025/g' .env
+sed -i 's/MAIL_PORT=2525/MAIL_PORT=1025/g' .env
 sed -i 's/MAIL_FROM_ADDRESS=null/MAIL_FROM_ADDRESS=mailhog@mailhog.com/g' .env
 
 # アプリケーションキーの初期化
