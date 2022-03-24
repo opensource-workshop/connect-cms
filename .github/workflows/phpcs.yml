@@ -3,7 +3,7 @@ name: PHPCS check
 on:
   push:
     branches:
-      - main
+      - master
     paths:
       - '**.php'
       - '!bootstrap/**'
