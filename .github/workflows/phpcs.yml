@@ -1,6 +1,22 @@
 name: PHPCS check
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**.php'
+      - '!bootstrap/**'
+      - '!config/**'
+      - '!database/**'
+      - '!node_modules/**'
+      - '!routes/**'
+      - '!resources/**'
+      - '!storage/**'
+      - '!vendor/**'
+      - '!server.php'
+      - '!app/Console/Kernel.php'
+      - '!tests/CreatesApplication.php'
   pull_request:
   workflow_dispatch:
 
