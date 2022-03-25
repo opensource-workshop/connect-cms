@@ -7,13 +7,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use DB;
 
-use App\Models\Core\Configs;
 use App\Models\Common\Group;
 use App\Models\Common\GroupUser;
-use App\Models\Common\Page;
-use App\User;
 
 use App\Plugins\Manage\ManagePluginBase;
 
@@ -41,7 +37,7 @@ class GroupManage extends ManagePluginBase
         $role_ckeck_table["edit"]               = array('admin_user');
         $role_ckeck_table["update"]             = array('admin_user');
         $role_ckeck_table["delete"]             = array('admin_user');
-        $role_ckeck_table["list"]               = array('admin_user');
+        // $role_ckeck_table["list"]               = array('admin_user');
         return $role_ckeck_table;
     }
 
@@ -163,20 +159,21 @@ class GroupManage extends ManagePluginBase
         return redirect('manage/group');
     }
 
+    // delete: どこからも呼ばれてない
     /**
      *  グループ内ユーザー表示
      *
      * @return view
      */
-    public function list($request, $id)
-    {
-        // グループデータの取得
-        $group_users = $this->getGroupUsers($id);
+    // public function list($request, $id)
+    // {
+    //     // グループデータの取得
+    //     $group_users = $this->getGroupUsers($id);
 
-        return view('plugins.manage.group.list', [
-            "function"    => __FUNCTION__,
-            "plugin_name" => "group",
-            "group_users" => $group_users,
-        ]);
-    }
+    //     return view('plugins.manage.group.list', [
+    //         "function"    => __FUNCTION__,
+    //         "plugin_name" => "group",
+    //         "group_users" => $group_users,
+    //     ]);
+    // }
 }
