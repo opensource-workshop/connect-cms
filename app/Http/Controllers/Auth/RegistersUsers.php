@@ -141,8 +141,14 @@ trait RegistersUsers
         }
 
         // ユーザー自動登録（未ログイン）の場合、.env のSELF_REGISTER_ROLE を元に権限登録する。
+        // envの設定がなければ、自動ユーザ登録設定をもとに権限を登録する
         if (!Auth::user()) {
+            $self_register_base_roles_env = '';
+            if (config('connect.SELF_REGISTER_BASE_ROLES') !== null) {
             $self_register_base_roles_env = config('connect.SELF_REGISTER_BASE_ROLES');
+            } else {
+                $self_register_base_roles_env = Configs::getConfigsValue($configs, 'user_register_base_roles');
+            }
             $self_register_base_roles = array();
             if (!empty($self_register_base_roles_env)) {
                 $self_register_base_roles = explode(',', $self_register_base_roles_env);

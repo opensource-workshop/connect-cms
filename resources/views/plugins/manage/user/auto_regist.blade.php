@@ -212,6 +212,69 @@
                 </div>
             </div>
 
+            {{-- 初期コンテンツ権限 --}}
+            @php
+                $base_roles = [];
+                $use_base_role_env = false;
+
+                // envの設定を優先して利用する
+                if (config('connect.SELF_REGISTER_BASE_ROLES') !== null) {
+                    $base_roles = explode(',', config('connect.SELF_REGISTER_BASE_ROLES'));
+                    $use_base_role_env = true;
+                } else {
+                    $base_roles = explode(',', Configs::getConfigsValue($configs, "user_register_base_roles"));
+                    if (old('base_roles') !== null && is_array(old('base_roles'))) {
+                        $base_roles = old('base_roles');
+                    }
+                }
+            @endphp
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label text-md-right pt-0">初期コンテンツ権限</label>
+                <div class="col-md-9">
+                    <input type="hidden" name="base_roles[]" value="">
+                    <div class="custom-control custom-checkbox">
+                        <input name="base_roles[]" value="role_article_admin" type="checkbox" class="custom-control-input" id="role_article_admin"
+                            @if (in_array('role_article_admin', $base_roles)) checked="checked" @endif
+                            @if ($use_base_role_env) disabled="disabled" @endif
+                        >
+                        <label class="custom-control-label" for="role_article_admin" id="label_role_article_admin">コンテンツ管理者</label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input name="base_roles[]" value="role_arrangement" type="checkbox" class="custom-control-input" id="role_arrangement"
+                            @if (in_array('role_arrangement', $base_roles))  checked="checked" @endif
+                            @if ($use_base_role_env) disabled="disabled" @endif
+                        >
+                        <label class="custom-control-label" for="role_arrangement" id="label_role_arrangement">プラグイン管理者</label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input name="base_roles[]" value="role_article" type="checkbox" class="custom-control-input" id="role_article"
+                            @if (in_array('role_article', $base_roles))  checked="checked" @endif
+                            @if ($use_base_role_env) disabled="disabled" @endif
+                        >
+                        <label class="custom-control-label" for="role_article" id="label_role_article">モデレータ（他ユーザの記事も更新）</label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input name="base_roles[]" value="role_approval" type="checkbox" class="custom-control-input" id="role_approval"
+                            @if (in_array('role_approval', $base_roles))  checked="checked" @endif
+                            @if ($use_base_role_env) disabled="disabled" @endif
+                        >
+                        <label class="custom-control-label" for="role_approval" id="label_role_approval">承認者</label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input name="base_roles[]" value="role_reporter" type="checkbox" class="custom-control-input" id="role_reporter"
+                            @if (in_array('role_reporter', $base_roles))  checked="checked" @endif
+                            @if ($use_base_role_env) disabled="disabled" @endif
+                        >
+                        <label class="custom-control-label" for="role_reporter" id="label_role_reporter">編集者</label>
+                    </div>
+                    <small class="text-muted">
+                        ※「編集者」、「モデレータ」の記事投稿については、各プラグイン側の権限設定も必要です。<br />
+                        ※「コンテンツ管理者」は、「コンテンツ管理者」権限と同時に「プラグイン管理者」「モデレータ」「承認者」「編集者」権限も併せて持ちます。<br />
+                        ※ 全てのユーザは、「ゲスト」権限も併せて持ちます。<br />
+                    </small>
+                </div>
+            </div>
+
             {{-- Submitボタン --}}
             <div class="form-group text-center">
                 <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>

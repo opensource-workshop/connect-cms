@@ -1183,6 +1183,17 @@ class UserManage extends ManagePluginBase
             ]
         );
 
+        // 初期コンテンツ権限
+        // 空要素の削除
+        $base_roles = array_filter($request->base_roles, 'strlen');
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_base_roles'],
+            [
+                'category' => 'user_register',
+                'value' => $base_roles ? implode(',', $base_roles) : '',
+            ]
+        );
+
         // ページ管理画面に戻る
         return redirect("/manage/user/autoRegist");
     }
