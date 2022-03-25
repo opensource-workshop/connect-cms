@@ -63,5 +63,5 @@ jobs:
         run: ./vendor/bin/phpcs --standard=phpcs.xml ./ -q --report=checkstyle | cs2pr --graceful-warnings
 
       - name: PHPCS check workflow_dispatch
-        if: ${{ github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' }}
         run: composer phpcs -- --colors
