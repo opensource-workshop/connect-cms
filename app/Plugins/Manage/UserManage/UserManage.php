@@ -19,6 +19,8 @@ use App\Models\Common\Group;
 use App\Models\Common\GroupUser;
 use App\User;
 
+use App\Traits\ConnectMailTrait;
+
 use App\Plugins\Manage\ManagePluginBase;
 
 use App\Rules\CustomValiUserEmailUnique;
@@ -30,6 +32,7 @@ use App\Utilities\String\StringUtils;
 
 use App\Enums\CsvCharacterCode;
 use App\Enums\UserColumnType;
+use App\Enums\UserRegisterNoticeEmbeddedTag;
 use App\Enums\UserStatus;
 
 /**
@@ -37,41 +40,45 @@ use App\Enums\UserStatus;
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category ページ管理
+ * @category ユーザ管理
  * @package Controller
  * @plugin_title ユーザ管理
  * @plugin_desc ユーザの一覧や追加など、ユーザに関する機能が集まった管理機能です。
  */
 class UserManage extends ManagePluginBase
 {
+    use ConnectMailTrait;
+
     /**
      *  権限定義
      */
     public function declareRole()
     {
         // 権限チェックテーブル
-        $role_check_table = array();
-        $role_check_table["index"]              = array('admin_user');
-        $role_check_table["search"]             = array('admin_user');
-        $role_check_table["clearSearch"]        = array('admin_user');
-        $role_check_table["regist"]             = array('admin_user');
-        $role_check_table["edit"]               = array('admin_user');
-        $role_check_table["update"]             = array('admin_user');
-        $role_check_table["destroy"]            = array('admin_user');
-        $role_check_table["originalRole"]       = array('admin_user');
-        $role_check_table["saveOriginalRoles"]  = array('admin_user');
-        $role_check_table["deleteOriginalRole"] = array('admin_user');
-        $role_check_table["groups"]             = array('admin_user');
-        $role_check_table["saveGroups"]         = array('admin_user');
-        $role_check_table["autoRegist"]         = array('admin_user');
-        $role_check_table["autoRegistUpdate"]   = array('admin_user');
-        $role_check_table["downloadCsv"] = array('admin_user');
-        $role_check_table["downloadCsvFormat"] = array('admin_user');
-        $role_check_table["import"] = array('admin_site');
-        $role_check_table["uploadCsv"] = array('admin_user');
-        $role_check_table["bulkDelete"] = array('admin_user');
-        $role_check_table["bulkDestroy"] = array('admin_user');
-        $role_check_table["loginHistory"] = array('admin_user');
+        $role_check_table = [];
+        $role_check_table["index"]              = ['admin_user'];
+        $role_check_table["search"]             = ['admin_user'];
+        $role_check_table["clearSearch"]        = ['admin_user'];
+        $role_check_table["regist"]             = ['admin_user'];
+        $role_check_table["edit"]               = ['admin_user'];
+        $role_check_table["update"]             = ['admin_user'];
+        $role_check_table["destroy"]            = ['admin_user'];
+        $role_check_table["originalRole"]       = ['admin_user'];
+        $role_check_table["saveOriginalRoles"]  = ['admin_user'];
+        $role_check_table["deleteOriginalRole"] = ['admin_user'];
+        $role_check_table["groups"]             = ['admin_user'];
+        $role_check_table["saveGroups"]         = ['admin_user'];
+        $role_check_table["autoRegist"]         = ['admin_user'];
+        $role_check_table["autoRegistUpdate"]   = ['admin_user'];
+        $role_check_table["downloadCsv"]        = ['admin_user'];
+        $role_check_table["downloadCsvFormat"]  = ['admin_user'];
+        $role_check_table["import"]             = ['admin_site'];
+        $role_check_table["uploadCsv"]          = ['admin_user'];
+        $role_check_table["bulkDelete"]         = ['admin_user'];
+        $role_check_table["bulkDestroy"]        = ['admin_user'];
+        $role_check_table["loginHistory"]       = ['admin_user'];
+        $role_check_table["mail"]               = ['admin_user'];
+        $role_check_table["mailSend"]           = ['admin_user'];
 
         return $role_check_table;
     }
@@ -1220,7 +1227,7 @@ class UserManage extends ManagePluginBase
             ]
         );
 
-        // ページ管理画面に戻る
+        // 自動ユーザ登録設定画面に戻る
         return redirect("/manage/user/autoRegist");
     }
 
@@ -1980,5 +1987,51 @@ class UserManage extends ManagePluginBase
 
             $this->sendMail($user->email, $mail_options, ['content' => $mail_text], 'RegistersUsers');
         }
+
+    /**
+     * メール送信画面
+     */
+    public function mail($request, $id = null)
+    {
+        // ユーザデータ取得
+        $user = User::where('id', $id)->first();
+
+        // 本登録メール設定取得
+        $configs = Configs::where('category', 'user_register')->get();
+        $subject = Configs::getConfigsValue($configs, 'user_register_mail_subject', '');
+        $body = Configs::getConfigsValue($configs, 'user_register_mail_format', '');
+
+        // 埋め込みタグ
+        $notice_embedded_tags = UsersTool::getNoticeEmbeddedTags($user);
+
+        $subject = UserRegisterNoticeEmbeddedTag::replaceEmbeddedTags($subject, $notice_embedded_tags);
+        $body = UserRegisterNoticeEmbeddedTag::replaceEmbeddedTags($body, $notice_embedded_tags);
+
+        // 管理画面プラグインの戻り値の返し方
+        return view('plugins.manage.user.mail', [
+            "function" => __FUNCTION__,
+            "plugin_name" => "user",
+            "user" => $user,
+            "subject" => $subject,
+            "body" => $body,
+        ]);
+    }
+
+    /**
+     * メール送信
+     */
+    public function mailSend($request, $id = null)
+    {
+        // ユーザデータ取得
+        $user = User::where('id', $id)->first();
+
+        // メールオプション
+        $mail_options = ['subject' => $request->subject, 'template' => 'mail.send'];
+
+        // メール送信（Trait のメソッド）
+        $this->sendMail($user->email, $mail_options, ['content' => $request->body], 'UserManage');
+
+        // ユーザ管理画面に戻る
+        return redirect("/manage/user");
     }
 }

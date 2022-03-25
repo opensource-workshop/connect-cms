@@ -9,7 +9,5 @@
         $value = $value_obj->value;
     }
 @endphp
-<input name="users_columns_value[{{$user_obj->id}}]" class="form-control" type="{{$user_obj->column_type}}" value="{{old('users_columns_value.'.$user_obj->id, $value)}}" placeholder="{{$user_obj->place_holder}}" id="{{$label_id}}" @if($user_obj->required) required @endif>
-@if ($errors && $errors->has("users_columns_value.$user_obj->id"))
-    <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("users_columns_value.$user_obj->id")}}</div>
-@endif
+<input name="users_columns_value[{{$user_obj->id}}]" class="form-control @if ($errors->has("users_columns_value.$user_obj->id")) border-danger @endif" type="{{$user_obj->column_type}}" value="{{old('users_columns_value.'.$user_obj->id, $value)}}" placeholder="{{$user_obj->place_holder}}" id="{{$label_id}}" @if($user_obj->required) required @endif>
+@include('plugins.common.errors_inline', ['name' => "users_columns_value.$user_obj->id"])

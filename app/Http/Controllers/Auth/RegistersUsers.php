@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-// use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\RedirectsUsers;
 use Illuminate\Support\Facades\Validator;
@@ -13,14 +13,18 @@ use Illuminate\Support\Facades\Validator;
 use App\User;
 use App\Models\Core\Configs;
 use App\Models\Core\UsersRoles;
-use App\Models\Core\UsersInputCols;
 use App\Traits\ConnectCommonTrait;
 use App\Traits\ConnectMailTrait;
+
+use Carbon\Carbon;
 
 use App\Plugins\Manage\UserManage\UsersTool;
 use App\Utilities\Token\TokenUtils;
 use App\Rules\CustomValiTokenExists;
 use App\Providers\RouteServiceProvider;
+
+use App\Enums\UserRegisterNoticeEmbeddedTag;
+use App\Enums\UserStatus;
 
 trait RegistersUsers
 {
@@ -176,7 +180,7 @@ trait RegistersUsers
                 $record_token = TokenUtils::makeHashToken($user_token);
 
                 $user->add_token = $record_token;
-                $user->add_token_created_at = new \Carbon();
+                $user->add_token_created_at = new Carbon();
                 $user->save();
 
                 // *** メール送信
@@ -234,47 +238,11 @@ trait RegistersUsers
     }
 
     /**
-     * トークンを使った本登録の確定画面表示
+     * メール本文取得
      */
     private function getMailContentsText($configs, $user)
     {
-        // メールの内容
-        $contents_text = '';
-        $contents_text .= "ユーザ名： " . $user->name . "\n";
-        $contents_text .= "ログインID： " . $user->userid . "\n";
-        $contents_text .= "eメールアドレス： " . $user->email . "\n";
-
-        // ユーザーのカラム
-        $users_columns = UsersTool::getUsersColumns();
-
-        // ユーザーカラムの登録データ
-        $users_input_cols = UsersInputCols::where('users_id', $user->id)
-                                            ->get()
-                                            // keyをusers_input_colsにした結果をセット
-                                            ->mapWithKeys(function ($item) {
-                                                return [$item['users_columns_id'] => $item];
-                                            });
-
-        foreach ($users_columns as $users_column) {
-            $value = "";
-            if (is_array($users_input_cols[$users_column->id])) {
-                $value = implode(UsersTool::CHECKBOX_SEPARATOR, $users_input_cols[$users_column->id]->value);
-            } else {
-                $value = $users_input_cols[$users_column->id]->value;
-            }
-
-            // メールの内容
-            $contents_text .= $users_column->column_name . "：" . $value . "\n";
-        }
-
-        if (Configs::getConfigsValue($configs, 'user_register_requre_privacy')) {
-            // 同意設定ONの場合、同意は必須のため、必ず文字列をセットする。
-            $contents_text .= "個人情報保護方針への同意 ： 以下の内容に同意します。\n";
-        }
-
-        // 最後の改行を除去
-        $contents_text = trim($contents_text);
-        return $contents_text;
+        return UsersTool::getMailContentsText($configs, $user);
     }
 
     /**
@@ -289,24 +257,16 @@ trait RegistersUsers
 
         // メール送信
         if ($user_register_mail_send_flag || $user_register_user_mail_send_flag) {
-            // メール件名の組み立て
+            // メール件名
             $subject = Configs::getConfigsValue($configs, 'user_register_mail_subject');
-
-            // メール件名内のサイト名文字列を置換
-            $subject = str_replace('[[site_name]]', Configs::getConfigsValue($configs, 'base_site_name'), $subject);
-            // メール件名内の登録日時を置換
-            $todatetime = date("Y/m/d H:i:s");
-            $subject = str_replace('[[to_datetime]]', $todatetime, $subject);
-
-            // メール本文の組み立て
+            // メール本文
             $mail_format = Configs::getConfigsValue($configs, 'user_register_mail_format');
-            $contents_text = $this->getMailContentsText($configs, $user);
-            $mail_text = str_replace('[[body]]', $contents_text, $mail_format);
 
-            // メール本文内のサイト名文字列を置換
-            $mail_text = str_replace('[[site_name]]', Configs::getConfigsValue($configs, 'base_site_name'), $mail_text);
-            // メール本文内の登録日時を置換
-            $mail_text = str_replace('[[to_datetime]]', $todatetime, $mail_text);
+            // 埋め込みタグ
+            $notice_embedded_tags = UsersTool::getNoticeEmbeddedTags($user);
+
+            $subject = UserRegisterNoticeEmbeddedTag::replaceEmbeddedTags($subject, $notice_embedded_tags);
+            $mail_text = UserRegisterNoticeEmbeddedTag::replaceEmbeddedTags($mail_format, $notice_embedded_tags);
 
             // メールオプション
             $mail_options = ['subject' => $subject, 'template' => 'mail.send'];
@@ -371,14 +331,14 @@ trait RegistersUsers
         }
 
         // ユーザが利用不可の場合、エラー画面へ
-        if ($user->status == \UserStatus::not_active) {
+        if ($user->status == UserStatus::not_active) {
             // エラー画面へ
             return view('auth.register_error_messages', [
                 'error_messages' => ['有効期限切れのため、そのURLはご利用できません。'],
             ]);
         }
 
-        if ($user->status == \UserStatus::active || $user->status == \UserStatus::pending_approval) {
+        if ($user->status == UserStatus::active || $user->status == UserStatus::pending_approval) {
             // session()->flash('flash_message_for_header', '既に認証済みです。登録したログインID、パスワードでログインしてください。');
             // return redirect(RouteServiceProvider::HOME);
             // エラー画面へ
@@ -434,14 +394,14 @@ trait RegistersUsers
         }
 
         // ユーザが利用不可の場合、エラー画面へ
-        if ($user->status == \UserStatus::not_active) {
+        if ($user->status == UserStatus::not_active) {
             // エラー画面へ
             return view('auth.register_error_messages', [
                 'error_messages' => ['有効期限切れのため、そのURLはご利用できません。'],
             ]);
         }
 
-        if ($user->status == \UserStatus::active || $user->status == \UserStatus::pending_approval) {
+        if ($user->status == UserStatus::active || $user->status == UserStatus::pending_approval) {
             // session()->flash('flash_message_for_header', '既に認証済みです。登録したログインID、パスワードでログインしてください。');
             // return redirect(RouteServiceProvider::HOME);
             // エラー画面へ
@@ -453,10 +413,10 @@ trait RegistersUsers
         // 登録完了
         if (Configs::getConfigsValue($configs, 'user_registration_require_approval')) {
             // 承認要のため承認待ち
-            $user->status = \UserStatus::pending_approval;
+            $user->status = UserStatus::pending_approval;
         } else {
             // 承認不要なので利用可能に
-            $user->status = \UserStatus::active;
+            $user->status = UserStatus::active;
         }
         $user->save();
 

@@ -37,8 +37,6 @@ class NoticeEmbeddedTag extends EnumsBase
 
     /**
      * 埋め込みタグの説明を取得
-     *
-     * @see \App\Models\Common\BucketsMail 件名で使えないタグは BucketsMail::getFormattedSubject() 参照
      */
     public static function getDescriptionEmbeddedTags(bool $use_title = false, bool $use_body = false): array
     {
@@ -58,5 +56,16 @@ class NoticeEmbeddedTag extends EnumsBase
         $embedded_tags[] = ['[[' . self::updated_name . ']]', self::getDescription(self::updated_name)];
         $embedded_tags[] = ['[[' . self::updated_at . ']]', self::getDescription(self::updated_at)];
         return $embedded_tags;
+    }
+
+    /**
+     * 本文の埋め込みタグを置換
+     */
+    public static function replaceEmbeddedTags($body, array $notice_embedded_tags)
+    {
+        foreach ($notice_embedded_tags as $tag => $value) {
+            $body = str_ireplace("[[{$tag}]]", $value, $body);
+        }
+        return $body;
     }
 }

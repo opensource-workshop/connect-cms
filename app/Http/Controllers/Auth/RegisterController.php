@@ -149,6 +149,7 @@ class RegisterController extends Controller
             $status = UserStatus::pending_approval;
         }
 
+        // ユーザ登録
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
@@ -159,7 +160,8 @@ class RegisterController extends Controller
             'status' => $status,
         ]);
 
-        //// ユーザーの追加項目の登録.
+        // ユーザーの追加項目の登録.
+        // ----------------------------------
         // ユーザーのカラム
         $users_columns = UsersTool::getUsersColumns();
 
@@ -181,6 +183,13 @@ class RegisterController extends Controller
             $users_input_cols->users_columns_id = $users_column->id;
             $users_input_cols->value = $value;
             $users_input_cols->save();
+        }
+
+        if ($this->isCan('admin_user')) {
+            // メールアドレス入力ありなら、メール送信画面へ
+            if ($data['email']) {
+                $this->redirectTo = '/manage/user/mail/' . $user->id;
+            }
         }
 
         return $user;
