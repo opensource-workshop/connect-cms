@@ -30,6 +30,8 @@ use App\Models\Common\Permalink;
 use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
+use App\Models\Core\UsersColumns;
+use App\Models\Core\UsersInputCols;
 use App\Models\Core\UsersRoles;
 use App\Models\User\Bbses\Bbs;
 use App\Models\User\Bbses\BbsFrame;
@@ -143,6 +145,7 @@ use App\Enums\CounterDesignType;
 use App\Enums\DayOfWeek;
 use App\Enums\FacilityDisplayType;
 use App\Enums\LinklistType;
+use App\Enums\NoticeEmbeddedTag;
 use App\Enums\NotShowType;
 use App\Enums\PermissionType;
 use App\Enums\Required;
@@ -150,7 +153,9 @@ use App\Enums\ReservationCalendarDisplayType;
 use App\Enums\ReservationColumnType;
 use App\Enums\ReservationFrameConfig;
 use App\Enums\ReservationLimitedByRole;
+use App\Enums\ReservationNoticeEmbeddedTag;
 use App\Enums\ShowType;
+use App\Enums\UserColumnType;
 
 /**
  * 移行プログラム
@@ -365,6 +370,8 @@ trait MigrationTrait
             $first_user = User::orderBy('id', 'asc')->first();
             UsersRoles::where('users_id', '<>', $first_user->id)->delete();
             User::where('id', '<>', $first_user->id)->delete();
+            UsersColumns::truncate();
+            UsersInputCols::truncate();
             MigrationMapping::where('target_source_table', 'users')->delete();
         }
 
@@ -788,6 +795,28 @@ trait MigrationTrait
         } else {
             // $date = date('Y-m-d H:i:s');
             $date = $default;
+        }
+
+        return $date;
+    }
+
+    /**
+     * インポート時INIから日時取得 ＆ 日時フォーマットチェック
+     */
+    private function getDatetimeFromIniAndCheckFormat($ini, $key1, $key2)
+    {
+        $default = date('Y-m-d H:i:s');
+
+        $date = $this->getArrayValue($ini, $key1, $key2, null);
+
+        // データが空の場合は、処理時間を入れる。
+        if (empty($date)) {
+            return $default;
+        }
+
+        if (!\DateTime::createFromFormat('Y-m-d H:i:s', $date)) {
+            $this->putError(3, '日付エラー', "[{$key1}] $key2 = {$date}");
+            return $default;
         }
 
         return $date;
@@ -1396,6 +1425,51 @@ trait MigrationTrait
             $this->clearData('users');
         }
 
+        // ユーザ任意項目の取り込み
+        // ------------------------------------------
+        // UsersColumns のコレクションを保持。後で入力データを移行する際に nc2_item_id でひっぱるため。
+        $create_users_columns = collect();
+
+        $ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('users/users_columns_*.ini'));
+        foreach ($ini_paths as $ini_path) {
+            // ini_file の解析
+            $ini = parse_ini_file($ini_path, true);
+
+            // nc2 の item_id
+            $nc2_item_id = $this->getArrayValue($ini, 'source_info', 'item_id', 0);
+
+            // マッピングテーブルの取得
+            $mapping = MigrationMapping::where('target_source_table', 'users_columns')->where('source_key', $nc2_item_id)->first();
+
+            // マッピングテーブルを確認して、あれば削除
+            if (!empty($mapping)) {
+                // ユーザカラム削除
+                UsersColumns::where('id', $mapping->destination_key)->delete();
+
+                // マッピングテーブル削除
+                $mapping->delete();
+            }
+
+            $users_column = UsersColumns::create([
+                'column_type'      => $this->getArrayValue($ini, 'users_columns_base', 'column_type'),
+                'column_name'      => $this->getArrayValue($ini, 'users_columns_base', 'column_name'),
+                'required'         => intval($this->getArrayValue($ini, 'users_columns_base', 'required', 0)),
+                'caption'          => $this->getArrayValue($ini, 'users_columns_base', 'caption'),
+                'display_sequence' => intval($this->getArrayValue($ini, 'users_columns_base', 'display_sequence')),
+            ]);
+
+            $users_column->nc2_item_id = $nc2_item_id;
+            // コレクションに要素追加
+            $create_users_columns = $create_users_columns->concat([$users_column]);
+
+            // マッピングテーブルの追加
+            $mapping = MigrationMapping::create([
+                'target_source_table'  => 'users_columns',
+                'source_key'           => $nc2_item_id,
+                'destination_key'      => $users_column->id,
+            ]);
+        }
+
         // ユーザ定義・ファイルの存在確認
         if (!Storage::exists($this->getImportPath('users/users.ini'))) {
             return;
@@ -1486,6 +1560,17 @@ trait MigrationTrait
                     $user->status    = $user_item['status'];
                     $user->save();
                 }
+
+                // 任意項目インポート
+                foreach ($create_users_columns as $create_users_column) {
+                    $col = UsersInputCols::updateOrCreate([
+                        'users_id' => $user->id,
+                        'users_columns_id' => $create_users_column->id,
+                    ], [
+                        'value' => $user_item["item_{$create_users_column->nc2_item_id}"]
+                    ]);
+                }
+
                 // ユーザー権限をインポートする。
                 $this->importUsersRoles($user, 'base', $user_item);
                 $this->importUsersRoles($user, 'manage', $user_item);
@@ -1605,6 +1690,34 @@ trait MigrationTrait
                 ['group_id' => $admin_group->id, 'user_id' => $users_roles->users_id],
                 ['group_id' => $admin_group->id, 'user_id' => $users_roles->users_id, 'group_role' => 'general']
             );
+        }
+
+        $groups_mappings = MigrationMapping::where('target_source_table', 'groups')->get();
+
+        // BucketsMailの管理者グループ仮コード, 仮nc2ルームID置換
+        foreach (BucketsMail::get() as $bucket_mail) {
+            $notice_groups = explode('|', $bucket_mail->notice_groups);
+            foreach ($notice_groups as &$notice_group) {
+                // 先頭X-ありは置換
+                if (strpos($notice_group, 'X-') === 0) {
+                    if ($notice_group == 'X-管理者グループ') {
+                        // 管理者グループ仮コード置換
+                        $notice_group = str_ireplace('X-管理者グループ', $admin_group->id, $notice_group);
+                    } else {
+                        // 仮nc2ルームID -> nc2ルームID
+                        $nc2_room_id = str_ireplace('X-', '', $notice_group);
+                        // nc2ルームID -> グループID置換
+                        $mapping = $groups_mappings->where('source_key', $nc2_room_id)->first();
+                        $notice_group = $mapping ? $mapping->destination_key : null;
+                    }
+
+                }
+            }
+            // array_filter()でarrayの空要素削除
+            $notice_groups = array_filter($notice_groups);
+
+            $bucket_mail->notice_groups = implode('|', $notice_groups);
+            $bucket_mail->save();
         }
 
         // グループ定義のループ
@@ -2215,16 +2328,19 @@ trait MigrationTrait
         // ルームの指定（あれば後で使う）
         //$cc_import_databases_room_ids = $this->getMigrationConfig('databases', 'cc_import_databases_room_ids');
 
+        // ユーザ取得
+        $users = User::get();
+
         // データベース定義のループ
         foreach ($databases_ini_paths as $databases_ini_path) {
             // ini_file の解析
             $databases_ini = parse_ini_file($databases_ini_path, true);
 
             // ルーム指定を探しておく。
-            $room_id = null;
-            if (array_key_exists('source_info', $databases_ini) && array_key_exists('room_id', $databases_ini['source_info'])) {
-                $room_id = $databases_ini['source_info']['room_id'];
-            }
+            // $room_id = null;
+            // if (array_key_exists('source_info', $databases_ini) && array_key_exists('room_id', $databases_ini['source_info'])) {
+            //     $room_id = $databases_ini['source_info']['room_id'];
+            // }
 
             //// ルーム指定があれば、指定されたルームのみ処理する。
             //if (empty($cc_import_databases_room_ids)) {
@@ -2236,18 +2352,15 @@ trait MigrationTrait
             //    continue;
             //}
 
+            // nc2 の multidatabase_id
+            $nc2_multidatabase_id = $this->getArrayValue($databases_ini, 'source_info', 'multidatabase_id', 0);
+
             // データベース指定の有無
             $cc_import_where_database_ids = $this->getMigrationConfig('databases', 'cc_import_where_database_ids');
             if (!empty($cc_import_where_database_ids)) {
-                if (!in_array($databases_ini['source_info']['multidatabase_id'], $cc_import_where_database_ids)) {
+                if (!in_array($nc2_multidatabase_id, $cc_import_where_database_ids)) {
                     continue;
                 }
-            }
-
-            // nc2 の multidatabase_id
-            $nc2_multidatabase_id = 0;
-            if (array_key_exists('source_info', $databases_ini) && array_key_exists('multidatabase_id', $databases_ini['source_info'])) {
-                $nc2_multidatabase_id = $databases_ini['source_info']['multidatabase_id'];
             }
 
             // マッピングテーブルの取得
@@ -2256,13 +2369,19 @@ trait MigrationTrait
             // マッピングテーブルを確認して、追加か更新の処理を分岐
             if (empty($mapping)) {
                 // マッピングテーブルがなければ、Buckets テーブルと Database テーブル、マッピングテーブルを追加
-                $database_name = '無題';
-                if (array_key_exists('database_base', $databases_ini) && array_key_exists('database_name', $databases_ini['database_base'])) {
-                    $database_name = $databases_ini['database_base']['database_name'];
-                }
+                $database_name = $this->getArrayValue($databases_ini, 'database_base', 'database_name', '無題');
                 $bucket = Buckets::create(['bucket_name' => $database_name, 'plugin_name' => 'databases']);
 
-                $database = Databases::create(['bucket_id' => $bucket->id, 'databases_name' => $database_name, 'data_save_flag' => 1]);
+                $database = new Databases(['bucket_id' => $bucket->id, 'databases_name' => $database_name, 'data_save_flag' => 1]);
+                $database->created_id = $this->getUserIdFromLoginId($users, $this->getArrayValue($databases_ini, 'source_info', 'insert_login_id', null));
+                $database->created_name = $this->getArrayValue($databases_ini, 'source_info', 'insert_user_name', null);
+                $database->created_at = $this->getDatetimeFromIniAndCheckFormat($databases_ini, 'source_info', 'insert_time');
+                $database->updated_id = $this->getUserIdFromLoginId($users, $this->getArrayValue($databases_ini, 'source_info', 'update_login_id', null));
+                $database->updated_name = $this->getArrayValue($databases_ini, 'source_info', 'update_user_name', null);
+                $database->updated_at = $this->getDatetimeFromIniAndCheckFormat($databases_ini, 'source_info', 'update_time');
+                // 登録更新日時を自動更新しない
+                $database->timestamps = false;
+                $database->save();
 
                 // マッピングテーブルの追加
                 $mapping = MigrationMapping::create([
@@ -2974,22 +3093,23 @@ trait MigrationTrait
             }
 
             // Buckets テーブルと Cabinets テーブル、マッピングテーブルを追加
-            $bbs_name = '無題';
-            if (array_key_exists('blog_base', $ini) && array_key_exists('blog_name', $ini['blog_base'])) {
-                $bbs_name = $ini['blog_base']['blog_name'];
-            }
+            $bbs_name = $this->getArrayValue($ini, 'blog_base', 'blog_name', '無題');
             $bucket = Buckets::create(['bucket_name' => $bbs_name, 'plugin_name' => 'bbses']);
 
-            $use_like = 0;
-            if (array_key_exists('blog_base', $ini) && array_key_exists('use_like', $ini['blog_base'])) {
-                $use_like = $ini['blog_base']['use_like'];
-            }
-
-            $bbs = Bbs::create([
+            $bbs = new Bbs([
                 'bucket_id' => $bucket->id,
                 'name' => $bbs_name,
-                'use_like' => $use_like,
+                'use_like' => $this->getArrayValue($ini, 'blog_base', 'use_like', 0),
             ]);
+            $bbs->created_id = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'insert_login_id', null));
+            $bbs->created_name = $this->getArrayValue($ini, 'source_info', 'insert_user_name', null);
+            $bbs->created_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'insert_time');
+            $bbs->updated_id = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'update_login_id', null));
+            $bbs->updated_name = $this->getArrayValue($ini, 'source_info', 'update_user_name', null);
+            $bbs->updated_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'update_time');
+            // 登録更新日時を自動更新しない
+            $bbs->timestamps = false;
+            $bbs->save();
 
             // マッピングテーブルの追加
             $mapping = MigrationMapping::create([
@@ -4664,6 +4784,91 @@ trait MigrationTrait
                 ]
             );
         }
+
+        // bucketあり
+        if (!empty($bucket)) {
+            // 権限設定
+            // ---------------------------------------
+            // 投稿権限：(nc2) 掲示板単位であり、(cc) バケツ単位であり
+            // 承認権限：(nc2) なし、(cc) あり => buckets_roles.approval_flag = 0固定
+            BucketsRoles::updateOrCreate(
+                [
+                    'buckets_id' => $bucket->id,
+                    'role' => 'role_article',   // モデレータ
+                ], [
+                    'post_flag' => $this->getArrayValue($bbs_ini, 'blog_base', 'article_post_flag', 0),
+                    'approval_flag' => 0,
+                ]
+            );
+            BucketsRoles::updateOrCreate(
+                [
+                    'buckets_id' => $bucket->id,
+                    'role' => 'role_reporter',  // 編集者
+                ], [
+                    'post_flag' => $this->getArrayValue($bbs_ini, 'blog_base', 'reporter_post_flag', 0),
+                    'approval_flag' => 0,
+                ]
+            );
+
+            // メール設定
+            // ---------------------------------------
+            // Buckets のメール設定取得
+            $bucket_mail = BucketsMail::firstOrNew(['buckets_id' => $bucket->id]);
+
+            $notice_groups = [];
+            if ($this->getArrayValue($bbs_ini, 'blog_base', 'notice_admin_group')) {
+                // グループ通知
+                // ※ importGroups()は処理前のため管理者グループなし。そのため仮コードを登録してimportGroups()で置換する。
+                $notice_groups[] = 'X-管理者グループ';
+            }
+
+            if ($this->getArrayValue($bbs_ini, 'blog_base', 'notice_group')) {
+                // グループ通知
+                // ※ importGroups()は処理前のためnc2ルームグループなし。そのため仮コード(nc2ルームID)を登録してimportGroups()で置換する。
+                $notice_groups[] = $this->getArrayValue($bbs_ini, 'source_info', 'room_id') ? 'X-' . $this->getArrayValue($bbs_ini, 'source_info', 'room_id') : '';
+            }
+
+            $mail_send = $this->getArrayValue($bbs_ini, 'blog_base', 'mail_send') ? 1 : 0;
+
+            if ($mail_send && $this->getArrayValue($bbs_ini, 'blog_base', 'notice_moderator_group')) {
+                // グループ通知
+                $this->putMonitor(3, '掲示板のメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+            }
+            if ($mail_send && $this->getArrayValue($bbs_ini, 'blog_base', 'notice_public_general_group')) {
+                // パブリック一般通知
+                $this->putMonitor(3, '公開エリアの掲示板のメール設定（一般まで）は、手動で「一般グループ」を作成して、追加で「一般グループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+            }
+            if ($mail_send && $this->getArrayValue($bbs_ini, 'blog_base', 'notice_public_moderator_group')) {
+                // パブリックモデレーター通知
+                $this->putMonitor(3, '公開エリアの掲示板のメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+            }
+
+            // array_filter()でarrayの空要素削除
+            $notice_groups = array_filter($notice_groups);
+
+            // 投稿通知
+            $bucket_mail->timing             = 0;       // 0:即時送信
+            $bucket_mail->notice_on          = $mail_send ? 1 : 0;
+            $bucket_mail->notice_create      = $mail_send ? 1 : 0;
+            $bucket_mail->notice_update      = 0;
+            $bucket_mail->notice_delete      = 0;
+            $bucket_mail->notice_addresses   = null;
+            $bucket_mail->notice_everyone    = $this->getArrayValue($bbs_ini, 'blog_base', 'notice_everyone') ? 1 : 0;
+            $bucket_mail->notice_groups      = implode('|', $notice_groups) == "" ? null : implode('|', $notice_groups);
+            $bucket_mail->notice_roles       = null;    // 画面項目なし
+            $bucket_mail->notice_subject     = $this->getArrayValue($bbs_ini, 'blog_base', 'mail_subject');
+            $bucket_mail->notice_body        = $this->getArrayValue($bbs_ini, 'blog_base', 'mail_body');
+
+            // 関連記事通知
+            $bucket_mail->relate_on          = 0;
+            // 承認通知
+            $bucket_mail->approval_on        = 0;
+            // 承認済み通知
+            $bucket_mail->approved_on        = 0;
+            $bucket_mail->approved_author    = 0;
+            // BucketsMails の更新
+            $bucket_mail->save();
+        }
     }
 
     /**
@@ -5032,7 +5237,7 @@ trait MigrationTrait
         }
 
         // メール設定
-        // $reservation_mail_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('reservations/reservation_mail') . '.ini', true);
+        $reservation_mail_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('reservations/reservation_mail') . '.ini', true);
 
         // マップから新Reservation を取得
         if (!empty($migration_mapping)) {
@@ -5118,57 +5323,47 @@ trait MigrationTrait
                 ]
             );
 
-            // メール設定 [TODO] 一旦、メール移行しない
+            // メール設定
             // ---------------------------------------
-            // // Buckets のメール設定取得
-            // $bucket_mail = BucketsMail::firstOrNew(['buckets_id' => $bucket->id]);
+            // Buckets のメール設定取得
+            $bucket_mail = BucketsMail::firstOrNew(['buckets_id' => $bucket->id]);
 
-            // // 件名：
-            // // [{X-SITE_NAME}]予約の通知
-            // //
-            // // 本文：
-            // // 施設の予約が入りましたのでお知らせします。
-            // //
-            // // 施設:{X-LOCATION_NAME}
-            // // 件名:{X-TITLE}
-            // // 利用グループ:{X-RESERVE_FLAG}
-            // // 利用日時:{X-RESERVE_TIME}
-            // // 連絡先:{X-CONTACT}
-            // // 繰返し:{X-RRULE}
-            // // 登録者:{X-USER}
-            // // 登録時刻:{X-INPUT_TIME}
-            // //
-            // // {X-BODY}
-            // //
-            // // この予約を確認するには、下記アドレスへ
-            // // {X-URL}
+            $notice_groups = null;
+            if ($this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'notice_admin_group')) {
+                // グループ通知
+                // ※ importGroups()は処理前のため管理者グループなし。そのため仮コードを登録してimportGroups()で置換する。
+                $notice_groups = 'X-管理者グループ';
+            }
 
-            // $notice_subject = $reservation_mail_ini['reservation_mail']['mail_subject'];
-            // $notice_body = $reservation_mail_ini['reservation_mail']['mail_body'];
+            $mail_send = $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'mail_send') ? 1 : 0;
 
-            // // 投稿通知
-            // $bucket_mail->timing             = 0;   // 0:即時送信
-            // // $bucket_mail->notice_on          = $reservation_mail_ini['reservation_mail']['mail_send'] ? 1 : 0;
-            // // $bucket_mail->notice_create      = $reservation_mail_ini['reservation_mail']['mail_send'] ? 1 : 0;
-            // $bucket_mail->notice_on          = 0;
-            // $bucket_mail->notice_create      = 0;
-            // $bucket_mail->notice_update      = 0;
-            // $bucket_mail->notice_delete      = 0;
-            // $bucket_mail->notice_addresses   = null;
-            // $bucket_mail->notice_groups      = null;
-            // $bucket_mail->notice_roles       = null;    // 画面項目なし
-            // $bucket_mail->notice_subject     = $notice_subject;
-            // $bucket_mail->notice_body        = $notice_body;
+            if ($mail_send && $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'notice_all_moderator_group')) {
+                // グループ通知
+                $this->putMonitor(3, '施設予約のメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+            }
 
-            // // 関連記事通知
-            // $bucket_mail->relate_on          = 0;
-            // // 承認通知
-            // $bucket_mail->approval_on        = 0;
-            // // 承認済み通知
-            // $bucket_mail->approved_on        = 0;
-            // $bucket_mail->approved_author    = 0;
-            // // BucketsMails の更新
-            // $bucket_mail->save();
+            // 投稿通知
+            $bucket_mail->timing             = 0;       // 0:即時送信
+            $bucket_mail->notice_on          = $mail_send ? 1 : 0;
+            $bucket_mail->notice_create      = $mail_send ? 1 : 0;
+            $bucket_mail->notice_update      = 0;
+            $bucket_mail->notice_delete      = 0;
+            $bucket_mail->notice_addresses   = null;
+            $bucket_mail->notice_everyone    = $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'notice_everyone') ? 1 : 0;
+            $bucket_mail->notice_groups      = $notice_groups;
+            $bucket_mail->notice_roles       = null;    // 画面項目なし
+            $bucket_mail->notice_subject     = $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'mail_subject');
+            $bucket_mail->notice_body        = $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'mail_body');
+
+            // 関連記事通知
+            $bucket_mail->relate_on          = 0;
+            // 承認通知
+            $bucket_mail->approval_on        = 0;
+            // 承認済み通知
+            $bucket_mail->approved_on        = 0;
+            $bucket_mail->approved_author    = 0;
+            // BucketsMails の更新
+            $bucket_mail->save();
         }
 
         // Frames 登録
@@ -5182,7 +5377,7 @@ trait MigrationTrait
             // 1: 月表示(施設別)
             // 2: 週表示(施設別)
             // 3: 日表示(カテゴリ別)
-            $display_type = $reservation_block_ini['reservation_block']['display_type'];
+            $display_type = $this->getArrayValue($reservation_block_ini, 'reservation_block', 'display_type');
 
             // モデレータの投稿権限 変換 (key:nc2)display_type => (value:cc) calendar_initial_display_type
             $calendar_initial_display_types = [
@@ -5199,7 +5394,7 @@ trait MigrationTrait
 
             // nc2最初に表示する施設
             // ※ 表示方法=月・週表示のみ設定される. 日表示の場合 0 になる
-            $location_id = $reservation_block_ini['reservation_block']['location_id'];
+            $location_id = $this->getArrayValue($reservation_block_ini, 'reservation_block', 'location_id');
 
             $migration_mapping_location = MigrationMapping::where('target_source_table', 'reservations_location')->where('source_key', $location_id)->first();
 
@@ -5411,9 +5606,16 @@ trait MigrationTrait
 
         // Contents 登録
         // echo "Contents 登録\n";
-        $content = Contents::create(['bucket_id' => $bucket->id,
-                                     'content_text' => $content_html,
-                                     'status' => 0]);
+        $content = new Contents([
+            'bucket_id' => $bucket->id,
+            'content_text' => $content_html,
+            'status' => 0
+        ]);
+        $content->created_at = $this->getDatetimeFromIniAndCheckFormat($frame_ini, 'source_info', 'insert_time');
+        $content->updated_at = $this->getDatetimeFromIniAndCheckFormat($frame_ini, 'source_info', 'update_time');
+        // 登録更新日時を自動更新しない
+        $content->timestamps = false;
+        $content->save();
     }
 
     /**
@@ -6895,16 +7097,39 @@ trait MigrationTrait
                                 ->orderBy('row_num')
                                 ->first();
 
-        // NC2 ユーザデータ取得
-        $nc2_users_query = Nc2User::select('users.*', 'users_items_link.content AS email');
-        if (!empty($nc2_mail_item)) {
-            $nc2_users_query->leftJoin('users_items_link', function ($join) use ($nc2_mail_item) {
-                $join->on('users_items_link.user_id', '=', 'users.user_id')
-                     ->where('users_items_link.item_id', '=', $nc2_mail_item->item_id);
-            });
+        // NC2 ユーザ任意項目
+        $nc2_any_items = collect([]);
+        $nc2_export_user_items = $this->getMigrationConfig('users', 'nc2_export_user_items');
+        if ($nc2_export_user_items) {
+            $nc2_any_items = Nc2Item::select('items.*', 'items_desc.description')
+                ->whereIn('items.item_name', $nc2_export_user_items)
+                ->leftJoin('items_desc', 'items_desc.item_id', '=', 'items.item_id')
+                ->orderBy('items.col_num')
+                ->orderBy('items.row_num')
+                ->get();
         }
-        $nc2_users = $nc2_users_query->orderBy('insert_time')
-                                     ->get();
+
+        // NC2 ユーザデータ取得
+        $nc2_users_query = Nc2User::select('users.*');
+        if (!empty($nc2_mail_item)) {
+            // メール項目
+            $nc2_users_query->addSelect('users_items_link.content AS email')
+                ->leftJoin('users_items_link', function ($join) use ($nc2_mail_item) {
+                    $join->on('users_items_link.user_id', '=', 'users.user_id')
+                        ->where('users_items_link.item_id', $nc2_mail_item->item_id);
+                });
+        }
+        if ($nc2_any_items->isNotEmpty()) {
+            // 任意項目
+            foreach ($nc2_any_items as $nc2_any_item) {
+                $nc2_users_query->addSelect("users_items_link_{$nc2_any_item->item_id}.content AS item_{$nc2_any_item->item_id}")
+                    ->leftJoin("users_items_link as users_items_link_{$nc2_any_item->item_id}", function ($join) use ($nc2_any_item) {
+                        $join->on("users_items_link_{$nc2_any_item->item_id}.user_id", '=', 'users.user_id')
+                            ->where("users_items_link_{$nc2_any_item->item_id}.item_id", $nc2_any_item->item_id);
+                    });
+            }
+        }
+        $nc2_users = $nc2_users_query->orderBy('users.insert_time')->get();
 
         // 空なら戻る
         if ($nc2_users->isEmpty()) {
@@ -6937,6 +7162,13 @@ trait MigrationTrait
             } else {
                 $users_ini .= "status             = 0\n";
             }
+            if ($nc2_any_items->isNotEmpty()) {
+                // 任意項目
+                foreach ($nc2_any_items as $nc2_any_item) {
+                    $item_name = "item_{$nc2_any_item->item_id}";
+                    $users_ini .= "{$item_name}            = \"" . $nc2_user->$item_name . "\"\n";
+                }
+            }
 
             if ($nc2_user->role_authority_id == 1) {
                 $users_ini .= "users_roles_manage = \"admin_system\"\n";
@@ -6953,6 +7185,59 @@ trait MigrationTrait
         // Userデータの出力
         //Storage::put($this->getImportPath('users/users.ini'), $users_ini);
         $this->storagePut($this->getImportPath('users/users.ini'), $users_ini);
+
+        // ユーザ任意項目
+        foreach ($nc2_any_items as $i => $nc2_any_item) {
+            // カラム型 変換
+            $convert_user_column_types = [
+                // nc2, cc
+                'text' => UserColumnType::text,
+                'email' => UserColumnType::mail,
+                'mobile_email' => UserColumnType::mail,
+                // 'radio' => UserColumnType::radio,
+                'textarea' => UserColumnType::textarea,
+                // 'select' => UserColumnType::select,
+            ];
+
+            // 未対応
+            $exclude_user_column_types = [
+                'password',
+                'file',
+                'label',
+                'system',
+                'radio',
+                'select',
+            ];
+
+            $user_column_type = $nc2_any_item->type;
+            if (in_array($user_column_type, $exclude_user_column_types)) {
+                // 未対応
+                $user_column_type = '';
+                $this->putError(3, 'ユーザ任意項目の項目タイプが未対応', "item.type = " . $user_column_type);
+
+            } elseif (array_key_exists($user_column_type, $convert_user_column_types)) {
+                $user_column_type = $convert_user_column_types[$user_column_type];
+
+            } else {
+                // 未対応に未指定
+                $user_column_type = '';
+                $this->putError(3, 'ユーザ任意項目の項目タイプが未対応（未対応に未指定の型）', "item.type = " . $user_column_type);
+            }
+
+            // ini ファイル用変数
+            $users_columns_ini  = "[users_columns_base]\n";
+            $users_columns_ini .= "column_type      = \"" . $user_column_type . "\"\n";
+            $users_columns_ini .= "column_name      = \"" . $nc2_any_item->item_name . "\"\n";
+            $users_columns_ini .= "required         = " . $nc2_any_item->require_flag . "\n";
+            $users_columns_ini .= "caption          = \"" . $nc2_any_item->description . "\"\n";
+            $users_columns_ini .= "display_sequence = " . ($i + 1) . "\n";
+            $users_columns_ini .= "\n";
+            $users_columns_ini .= "[source_info]\n";
+            $users_columns_ini .= "item_id = " . $nc2_any_item->item_id . "\n";
+
+            // Userカラムデータの出力
+            $this->storagePut($this->getImportPath('users/users_columns_') . $this->zeroSuppress($nc2_any_item->item_id) . '.ini', $users_columns_ini);
+        }
     }
 
 
@@ -6982,13 +7267,15 @@ trait MigrationTrait
 
         // NC2 ルームの取得
         // 「すべての会員をデフォルトで参加させる」はグループにしないので対象外。'default_entry_flag'== 0
-        $nc2_rooms = Nc2Page::where('space_type', 2)
+        $nc2_rooms_query = Nc2Page::where('space_type', 2)
                             ->whereColumn('page_id', 'room_id')
                             ->whereIn('thread_num', [1, 2])
-                            ->where('default_entry_flag', 0)
-                            ->orderBy('thread_num')
-                            ->orderBy('display_sequence')
-                            ->get();
+                            ->where('default_entry_flag', 0);
+        // 対象外ページ指定の有無
+        if ($this->getMigrationConfig('pages', 'nc2_export_ommit_page_ids')) {
+            $nc2_rooms_query->whereNotIn('page_id', $this->getMigrationConfig('pages', 'nc2_export_ommit_page_ids'));
+        }
+        $nc2_rooms = $nc2_rooms_query->orderBy('thread_num')->orderBy('display_sequence')->get();
 
         // 空なら戻る
         if ($nc2_rooms->isEmpty()) {
@@ -7205,6 +7492,17 @@ trait MigrationTrait
         // NC2掲示板（Bbs）を移行する。
         $nc2_bbses = Nc2Bbs::orderBy('bbs_id')->get();
 
+        $nc2_bbses = Nc2Bbs::select('bbs.*', 'page_rooms.space_type')
+            ->join('pages as page_rooms', function ($join) {
+                $join->on('page_rooms.page_id', '=', 'bbs.room_id')
+                    ->whereColumn('page_rooms.page_id', 'page_rooms.room_id')
+                    ->whereIn('page_rooms.space_type', [Nc2Page::space_type_public, Nc2Page::space_type_group])
+                    ->where('page_rooms.room_id', '!=', 2);        // 2:グループスペースを除外（枠だけでグループルームじゃないので除外）
+                    // ->where('page_rooms.private_flag', 0);         // 0:プライベートルーム以外
+            })
+            ->orderBy('bbs.bbs_id')
+            ->get();
+
         // 空なら戻る
         if ($nc2_bbses->isEmpty()) {
             return;
@@ -7237,6 +7535,120 @@ trait MigrationTrait
                 $nc2_page = Nc2Page::where('page_id', $nc2_block->page_id)->first();
             }
 
+            // 権限設定
+            // ----------------------------------------------------
+            // topic_authority
+            // 2: 一般まで
+            // 3: モデレータまで
+            // 4: 主担のみ
+            $article_post_flag = 0;
+            $reporter_post_flag = 0;
+            if ($nc2_bbs->topic_authority == 2) {
+                $article_post_flag = 1;
+                $reporter_post_flag = 1;
+
+            } elseif ($nc2_bbs->topic_authority == 3) {
+                $article_post_flag = 1;
+
+            } elseif ($nc2_bbs->topic_authority == 4) {
+                // 一般,モデレータ=0でccでは主担=コンテンツ管理者は投稿可のため、なにもしない
+            }
+
+            // メール設定
+            // ----------------------------------------------------
+            // mail_authority
+            // 1: ゲストまで 　　→ パブ通知は、「全ユーザに通知」
+            // 　※ 掲示板-パブリック（パブサブも同様）： ⇒ 「全ユーザに通知」
+            // 　※ 掲示板-グループ：　　　　　　　　　　 ⇒ ルームグループに、グループ通知
+            // 2: 一般まで 　　　→ グループは、グループ通知
+            // 　※ 掲示板-パブリック（パブサブも同様）： ⇒ (手動)でグループ作って、グループ通知　⇒ 移行で警告表示
+            // 　※ 掲示板-グループ：　 　　　　　　　　　⇒ ルームグループに、グループ通知
+            // 3: モデレータまで → (手動)でグループ作って、グループ通知　⇒ 移行で警告表示
+            // 4: 主担のみ 　　　→グループ管理者は、「管理者グループ」通知
+            $notice_everyone = 0;
+            $notice_admin_group = 0;
+            $notice_moderator_group = 0;
+            $notice_group = 0;
+            $notice_public_general_group = 0;
+            $notice_public_moderator_group = 0;
+
+            if ($nc2_bbs->mail_authority === 1) {
+                if ($nc2_bbs->space_type == Nc2Page::space_type_public) {
+                    // 全ユーザ通知
+                    $notice_everyone = 1;
+
+                } elseif ($nc2_bbs->space_type == Nc2Page::space_type_group) {
+                    // グループ通知
+                    $notice_group = 1;
+                }
+
+            } elseif ($nc2_bbs->mail_authority == 2) {
+                if ($nc2_bbs->space_type == Nc2Page::space_type_public) {
+                    // パブリック一般通知
+                    $notice_public_general_group = 1;
+                    $notice_admin_group = 1;
+
+                } elseif ($nc2_bbs->space_type == Nc2Page::space_type_group) {
+                    // グループ通知
+                    $notice_group = 1;
+                }
+
+            } elseif ($nc2_bbs->mail_authority == 3) {
+                if ($nc2_bbs->space_type == Nc2Page::space_type_public) {
+                    // パブリックモデレーター通知
+                    $notice_public_moderator_group = 1;
+                    $notice_admin_group = 1;
+                } elseif ($nc2_bbs->space_type == Nc2Page::space_type_group) {
+                    // モデレータユーザ通知
+                    $notice_moderator_group = 1;
+                    $notice_admin_group = 1;
+                }
+
+            } elseif ($nc2_bbs->mail_authority == 4) {
+                // 管理者グループ通知
+                $notice_admin_group = 1;
+            }
+
+            $mail_subject = $nc2_bbs->mail_subject;
+            $mail_body = $nc2_bbs->mail_body;
+
+            // [{X-SITE_NAME}]掲示板投稿({X-ROOM} {X-BBS_NAME} {X-SUBJECT})
+            //
+            // 掲示板に投稿されたのでお知らせします。
+            // ルーム名称:{X-ROOM}
+            // 掲示板タイトル:{X-BBS_NAME}
+            // 記事タイトル:{X-SUBJECT}
+            // 投稿者:{X-USER}
+            // 投稿日時:{X-TO_DATE}
+            //
+            //
+            // {X-BODY}
+            //
+            // この記事に返信するには、下記アドレスへ
+            // {X-URL}
+
+            // 変換
+            $convert_embedded_tags = [
+                // nc2埋込タグ, cc埋込タグ
+                ['{X-SITE_NAME}', '[[' . NoticeEmbeddedTag::site_name . ']]'],
+                ['{X-SUBJECT}', '[[' . NoticeEmbeddedTag::title . ']]'],
+                ['{X-USER}', '[[' . NoticeEmbeddedTag::created_name . ']]'],
+                ['{X-TO_DATE}', '[[' . NoticeEmbeddedTag::created_at . ']]'],
+                ['{X-BODY}', '[[' . NoticeEmbeddedTag::body . ']]'],
+                ['{X-URL}', '[[' . NoticeEmbeddedTag::url . ']]'],
+                // 除外
+                ['掲示板タイトル:{X-BBS_NAME}', ''],
+                ['ルーム名称:{X-ROOM}', ''],
+                ['{X-BBS_NAME} ', ''],
+                ['{X-BBS_NAME}', ''],
+                ['{X-ROOM} ', ''],
+                ['{X-ROOM}', ''],
+            ];
+            foreach ($convert_embedded_tags as $convert_embedded_tag) {
+                $mail_subject = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_subject);
+                $mail_body = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_body);
+            }
+
             // 掲示板を日誌に移行する。
             // Connect-CMS に掲示板ができたら、掲示板 to 掲示板の移行機能も追加する。
 
@@ -7244,13 +7656,31 @@ trait MigrationTrait
             $journals_ini .= "[blog_base]\n";
             $journals_ini .= "blog_name = \"" . $nc2_bbs->bbs_name . "\"\n";
             $journals_ini .= "use_like = " . $nc2_bbs->vote_flag . "\n";
+            $journals_ini .= "article_post_flag = " . $article_post_flag . "\n";
+            $journals_ini .= "reporter_post_flag = " . $reporter_post_flag . "\n";
+            $journals_ini .= "mail_send = " . $nc2_bbs->mail_send . "\n";
+            $journals_ini .= "notice_everyone = " . $notice_everyone . "\n";
+            $journals_ini .= "notice_group = " . $notice_group . "\n";
+            $journals_ini .= "notice_moderator_group = " . $notice_moderator_group . "\n";
+            $journals_ini .= "notice_admin_group = " . $notice_admin_group . "\n";
+            $journals_ini .= "notice_public_general_group = " . $notice_public_general_group . "\n";
+            $journals_ini .= "notice_public_moderator_group = " . $notice_public_moderator_group . "\n";
+            $journals_ini .= "mail_subject = \"" . $mail_subject . "\"\n";
+            $journals_ini .= "mail_body = \"" . $mail_body . "\"\n";
 
             // NC2 情報
             $journals_ini .= "\n";
             $journals_ini .= "[source_info]\n";
             $journals_ini .= "journal_id = " . 'BBS_' . $nc2_bbs->bbs_id . "\n";
             $journals_ini .= "room_id = " . $nc2_bbs->room_id . "\n";
+            $journals_ini .= "space_type = " . $nc2_bbs->space_type . "\n";   // スペースタイプ, 1:パブリックスペース, 2:グループスペース
             $journals_ini .= "module_name = \"bbs\"\n";
+            $journals_ini .= "insert_time = \"" . $this->getCCDatetime($nc2_bbs->insert_time) . "\"\n";
+            $journals_ini .= "insert_user_name = \"" . $nc2_bbs->insert_user_name . "\"\n";
+            $journals_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_bbs->insert_user_id) . "\"\n";
+            $journals_ini .= "update_time = \"" . $this->getCCDatetime($nc2_bbs->update_time) . "\"\n";
+            $journals_ini .= "update_user_name = \"" . $nc2_bbs->update_user_name . "\"\n";
+            $journals_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_bbs->update_user_id) . "\"\n";
 
             // NC2掲示板の記事（bbs_post、bbs_post_body）を移行する。
             $nc2_bbs_posts = Nc2BbsPost::
@@ -7645,6 +8075,9 @@ trait MigrationTrait
             return;
         }
 
+        // nc2の全ユーザ取得
+        $nc2_users = Nc2User::get();
+
         // NC2汎用データベース（Multidatabase）のループ
         foreach ($nc2_multidatabases as $nc2_multidatabase) {
             $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
@@ -7690,6 +8123,12 @@ trait MigrationTrait
             $multidatabase_ini .= "multidatabase_id = " . $nc2_multidatabase->multidatabase_id . "\n";
             $multidatabase_ini .= "room_id = " . $nc2_multidatabase->room_id . "\n";
             $multidatabase_ini .= "module_name = \"multidatabase\"\n";
+            $multidatabase_ini .= "insert_time = \"" . $this->getCCDatetime($nc2_multidatabase->insert_time) . "\"\n";
+            $multidatabase_ini .= "insert_user_name = \"" . $nc2_multidatabase->insert_user_name . "\"\n";
+            $multidatabase_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_multidatabase->insert_user_id) . "\"\n";
+            $multidatabase_ini .= "update_time = \"" . $this->getCCDatetime($nc2_multidatabase->update_time) . "\"\n";
+            $multidatabase_ini .= "update_user_name = \"" . $nc2_multidatabase->update_user_name . "\"\n";
+            $multidatabase_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_multidatabase->update_user_id) . "\"\n";
 
             // 汎用データベースのカラム情報
             $multidatabase_metadatas = Nc2MultidatabaseMetadata::where('multidatabase_id', $multidatabase_id)
@@ -9189,6 +9628,33 @@ trait MigrationTrait
             $mail_authority = (int) $nc2_config_mail_authority->conf_value;
         }
 
+        // mail_authority
+        // 1: ゲストまで
+        // 2: 一般まで
+        // 3: モデレータまで
+        // 4: 主担のみ
+        $notice_everyone = 0;
+        $notice_admin_group = 0;
+        $notice_all_moderator_group = 0;
+        if ($mail_authority === 1) {
+            // 全ユーザ通知
+            $notice_everyone = 1;
+
+        } elseif ($mail_authority == 2) {
+            // 全一般ユーザ通知（≒全ユーザ通知）
+            $notice_everyone = 1;
+            $this->putMonitor(3, '施設予約のメール設定（一般まで）は、全ユーザ通知で移行します。', 'ini_path=' . $this->getImportPath('reservations/reservation_mail') . '.ini');
+
+        } elseif ($mail_authority == 3) {
+            // 全モデレータユーザ通知
+            $notice_all_moderator_group = 1;
+            $notice_admin_group = 1;
+
+        } elseif ($mail_authority == 4) {
+            // 管理者グループ通知
+            $notice_admin_group = 1;
+        }
+
         // mail_subject（件名）. default=RESERVATION_MAIL_SUBJECT ←多言語により表示言語によって変わる
         $nc2_config_mail_subject = $nc2_configs->firstWhere('conf_name', 'mail_subject');
         $mail_subject = null;
@@ -9211,13 +9677,40 @@ trait MigrationTrait
             $mail_body = $nc2_configmail_body->conf_value;
         }
 
+        // 変換
+        $convert_embedded_tags = [
+            // nc2埋込タグ, cc埋込タグ
+            ['{X-SITE_NAME}', '[[' . ReservationNoticeEmbeddedTag::site_name . ']]'],
+            ['{X-LOCATION_NAME}', '[[' . ReservationNoticeEmbeddedTag::facility_name . ']]'],
+            ['{X-TITLE}', '[[' . ReservationNoticeEmbeddedTag::title . ']]'],
+            ['{X-RESERVE_TIME}', '[[' . ReservationNoticeEmbeddedTag::booking_time . ']]'],
+            ['{X-CONTACT}', '[[X-連絡先]]'],
+            ['{X-RRULE}', '[[' . ReservationNoticeEmbeddedTag::rrule . ']]'],
+            ['{X-USER}', '[[' . ReservationNoticeEmbeddedTag::created_name . ']]'],
+            ['{X-INPUT_TIME}', '[[' . ReservationNoticeEmbeddedTag::created_at . ']]'],
+            ['{X-BODY}', '[[X-補足]]'],
+            ['{X-URL}', '[[' . ReservationNoticeEmbeddedTag::url . ']]'],
+            // 除外
+            ['利用グループ:{X-RESERVE_FLAG}', ''],
+            ['{X-RESERVE_FLAG}', ''],
+        ];
+
+        foreach ($convert_embedded_tags as $convert_embedded_tag) {
+            $mail_subject = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_subject);
+            $mail_body = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_body);
+        }
+
         // 施設予約のメール設定
         $ini = "";
         $ini .= "[reservation_mail]\n";
         // メール通知する
         $ini .= "mail_send = " . $mail_send . "\n";
-        // 通知する権限
-        $ini .= "mail_authority = " . $mail_authority . "\n";
+        // 全ユーザ通知
+        $ini .= "notice_everyone = " . $notice_everyone . "\n";
+        // 全モデレータユーザ通知
+        $ini .= "notice_all_moderator_group = " . $notice_all_moderator_group . "\n";
+        // 管理者グループ通知
+        $ini .= "notice_admin_group = " . $notice_admin_group . "\n";
         // 件名
         $ini .= "mail_subject = \"" . $mail_subject . "\"\n";
         // 本文
@@ -9385,6 +9878,10 @@ trait MigrationTrait
                 // ルーム指定あり。指定ルームに合致する。
             } else {
                 // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
+            if (!isset($this->plugin_name[$nc2_abbreviate_url->dir_name])) {
                 continue;
             }
 
@@ -9614,6 +10111,8 @@ trait MigrationTrait
             $frame_nc2 .= "[source_info]\n";
             $frame_nc2 .= "source_key = \"" . $nc2_block->block_id . "\"\n";
             $frame_nc2 .= "target_source_table = \"" . $nc2_block->getModuleName() . "\"\n";
+            $frame_nc2 .= "insert_time = \"" . $this->getCCDatetime($nc2_block->insert_time) . "\"\n";
+            $frame_nc2 .= "update_time = \"" . $this->getCCDatetime($nc2_block->update_time) . "\"\n";
             $frame_ini .= $frame_nc2;
 
             // フレーム設定ファイルの出力

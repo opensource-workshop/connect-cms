@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Request as FacadeRequest;
 
 use Kalnoy\Nestedset\NodeTrait;
 
@@ -261,7 +262,7 @@ class Page extends Model
                 $ip_address_check = false;
                 $ip_addresses = explode(',', $this->ip_address);
                 foreach ($ip_addresses as $ip_address) {
-                    if ($this->isRangeIp(Request::ip(), trim($ip_address))) {
+                    if ($this->isRangeIp(FacadeRequest::ip(), trim($ip_address))) {
                         $ip_address_check = true;
                     }
                 }

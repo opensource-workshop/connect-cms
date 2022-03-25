@@ -41,4 +41,21 @@ class ReservationsColumn extends Model
         }
         return false;
     }
+
+    /**
+     * 埋め込みタグから除外するカラム型か
+     */
+    public function isNotEmbeddedTagsColumnType()
+    {
+        // 登録日型・更新日型等は入力しない
+        if ($this->column_type == ReservationColumnType::created ||
+                $this->column_type == ReservationColumnType::updated ||
+                $this->column_type == ReservationColumnType::created_name ||
+                $this->column_type == ReservationColumnType::updated_name ||
+                // [TODO] 選択肢未対応
+                $this->column_type == ReservationColumnType::radio) {
+            return true;
+        }
+        return false;
+    }
 }

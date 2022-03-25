@@ -40,7 +40,7 @@ jobs:
       - name: Install Jp font
         run: sudo apt install fonts-noto
 
-      - name: Prepare The Environment
+      - name: Setup .env
         run: |
           cp .env.example .env
           sed -i -e "s|DB_PASSWORD=|DB_PASSWORD=root|g" .env
@@ -48,6 +48,7 @@ jobs:
           sed -i -e "s|TRANSLATE_API_URL=""|TRANSLATE_API_URL="http://localhost:8000"|g" .env
           sed -i -e "s|PDF_THUMBNAIL_API_URL=""|PDF_THUMBNAIL_API_URL="http://localhost:8000"|g" .env
           sed -i -e "s|FACE_AI_API_URL=""|FACE_AI_API_URL="http://localhost:8000"|g" .env
+          sed -e "$ a MANUAL_PUT_BASE=\"$GITHUB_WORKSPACE/tests/Manual/html/\"" .env
 
       # schedule でphpバージョン指定
       - name: Set if input php_version is empty
@@ -122,6 +123,9 @@ jobs:
       - name: Run Laravel Server
         run: php artisan serve &
 
+      # - name: 'Run Dusk データ準備用 - ログ管理 - マニュアルなし'
+      #  run: php artisan dusk tests/Browser/Manage/LogManageTest.php no_manual
+
       - name: Run Dusk Tests
         run: php artisan dusk
 
@@ -154,7 +158,7 @@ jobs:
         run: php artisan dusk tests/Manual/src/ManualPdf.php
 
       - name: Upload Manual
-        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == 'true' }}
+        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == 'true' && always() }}
         uses: actions/upload-artifact@v3
         with:
           name: manual

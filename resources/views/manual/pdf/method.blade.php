@@ -12,7 +12,7 @@
     $img_path = "";
     if (empty(config('connect.manual_put_base'))) {
         if (\Storage::disk('manual')->exists('html/' . $img_arg["path"] . ".png")) {
-            $img_path = \Storage::disk('manual')->path('html/' . $path . ".png");
+            $img_path = \Storage::disk('manual')->path('html/' . $img_arg["path"] . ".png");
         }
     } else {
         if (\File::exists(config('connect.manual_put_base') . $img_arg["path"] . ".png")) {

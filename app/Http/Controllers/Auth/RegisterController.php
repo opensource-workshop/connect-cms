@@ -132,20 +132,12 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        // ユーザ自動登録の場合（認証されていない）は、トップページに遷移する。
-        if (!Auth::user()) {
+        // ユーザ自動登録の場合（認証されていない）、もしくはユーザ管理者以外は、トップページに遷移する。
+        if (!Auth::user() || !Auth::user()->can('admin_user')) {
             $this->redirectTo = '/';
         }
 
         // ユーザ登録
-        // change: ユーザーの追加項目に対応
-        // return User::create([
-        //     'name' => $data['name'],
-        //     'email' => $data['email'],
-        //     'userid' => $data['userid'],
-        //     'password' => bcrypt($data['password']),
-        //     'status' => $data['status'],
-        // ]);
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
@@ -156,7 +148,8 @@ class RegisterController extends Controller
             'status' => $data['status'],
         ]);
 
-        //// ユーザーの追加項目の登録.
+        // ユーザーの追加項目の登録.
+        // ----------------------------------
         // ユーザーのカラム
         $users_columns = UsersTool::getUsersColumns();
 
@@ -178,6 +171,13 @@ class RegisterController extends Controller
             $users_input_cols->users_columns_id = $users_column->id;
             $users_input_cols->value = $value;
             $users_input_cols->save();
+        }
+
+        if ($this->isCan('admin_user')) {
+            // メールアドレス入力ありなら、メール送信画面へ
+            if ($data['email']) {
+                $this->redirectTo = '/manage/user/mail/' . $user->id;
+            }
         }
 
         return $user;
