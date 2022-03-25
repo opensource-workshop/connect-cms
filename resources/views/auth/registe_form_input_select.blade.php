@@ -10,7 +10,7 @@
     }
 @endphp
 @if (array_key_exists($user_obj->id, $users_columns_id_select))
-    <select id="{{$label_id}}" name="users_columns_value[{{$user_obj->id}}]" class="custom-select" @if($user_obj->required) required @endif>
+    <select id="{{$label_id}}" name="users_columns_value[{{$user_obj->id}}]" class="custom-select @if ($errors->has("users_columns_value.$user_obj->id")) border-danger @endif" @if($user_obj->required) required @endif>
         <option value=""></option>
         @foreach($users_columns_id_select[$user_obj->id] as $select)
 
@@ -28,7 +28,7 @@
     </select>
     @if ($errors && $errors->has("users_columns_value.$user_obj->id"))
         <div class="d-block text-danger">
-            <i class="fas fa-exclamation-circle"></i> {{$errors->first("users_columns_value.$user_obj->id")}}
+            <i class="fas fa-exclamation-triangle"></i> {{$errors->first("users_columns_value.$user_obj->id")}}
         </div>
     @endif
 @endif

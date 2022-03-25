@@ -55,11 +55,8 @@ use App\Models\Core\UsersColumns;
         <label for="name" class="col-md-4 col-form-label text-md-right">ユーザ名 <label class="badge badge-danger">必須</label></label>
 
         <div class="col-md-8">
-            <input id="name" type="text" class="form-control" name="name" value="{{ old('name', $user->name) }}" placeholder="{{ __('messages.input_user_name') }}" required autofocus>
-
-            @if ($errors->has('name'))
-                <div class="text-danger">{{ $errors->first('name') }}</div>
-            @endif
+            <input id="name" type="text" class="form-control @if ($errors->has('name')) border-danger @endif" name="name" value="{{ old('name', $user->name) }}" placeholder="{{ __('messages.input_user_name') }}" required autofocus>
+            @include('plugins.common.errors_inline', ['name' => 'name'])
         </div>
     </div>
 
@@ -67,11 +64,8 @@ use App\Models\Core\UsersColumns;
         <label for="userid" class="col-md-4 col-form-label text-md-right">ログインID <label class="badge badge-danger">必須</label></label>
 
         <div class="col-md-8">
-            <input id="userid" type="text" class="form-control" name="userid" value="{{ old('userid', $user->userid) }}" placeholder="{{ __('messages.input_login_id') }}" required autofocus>
-
-            @if ($errors->has('userid'))
-                <div class="text-danger">{{ $errors->first('userid') }}</div>
-            @endif
+            <input id="userid" type="text" class="form-control @if ($errors->has('userid')) border-danger @endif" name="userid" value="{{ old('userid', $user->userid) }}" placeholder="{{ __('messages.input_login_id') }}" required autofocus>
+            @include('plugins.common.errors_inline', ['name' => 'userid'])
         </div>
     </div>
 
@@ -81,10 +75,12 @@ use App\Models\Core\UsersColumns;
             <label for="email" class="col-md-4 col-form-label text-md-right">eメールアドレス</label>
 
             <div class="col-md-8">
-                <input id="email" type="text" class="form-control" name="email" value="{{ old('email', $user->email) }}" placeholder="{{ __('messages.input_email') }}">
-
-                @if ($errors->has('email'))
-                    <div class="text-danger">{{ $errors->first('email') }}</div>
+                <input id="email" type="text" class="form-control @if ($errors->has('email')) border-danger @endif" name="email" value="{{ old('email', $user->email) }}" placeholder="{{ __('messages.input_email') }}">
+                @include('plugins.common.errors_inline', ['name' => 'email'])
+                @if (!$is_function_edit)
+                    <small class="text-muted">
+                        ※ 登録時にeメールアドレスがある場合、登録メール送信画面に移動します。<br />
+                    </small>
                 @endif
             </div>
         </div>
@@ -94,11 +90,8 @@ use App\Models\Core\UsersColumns;
             <label for="email" class="col-md-4 col-form-label text-md-right">eメールアドレス <label class="badge badge-danger">必須</label></label>
 
             <div class="col-md-8">
-                <input id="email" type="text" class="form-control" name="email" value="{{ old('email', $user->email) }}" placeholder="{{ __('messages.input_email') }}" required autofocus>
-
-                @if ($errors->has('email'))
-                    <div class="text-danger">{{ $errors->first('email') }}</div>
-                @endif
+                <input id="email" type="text" class="form-control @if ($errors->has('email')) border-danger @endif" name="email" value="{{ old('email', $user->email) }}" placeholder="{{ __('messages.input_email') }}" required autofocus>
+                @include('plugins.common.errors_inline', ['name' => 'email'])
             </div>
         </div>
     @endif
@@ -112,14 +105,14 @@ use App\Models\Core\UsersColumns;
 
         <div class="col-md-8">
             @if ($is_function_edit)
-                <input id="password" type="password" class="form-control" name="password" autocomplete="new-password" placeholder="{{ __('messages.input_password') }}">
+                <input id="password" type="password" class="form-control @if ($errors->has('password')) border-danger @endif" name="password" autocomplete="new-password" placeholder="{{ __('messages.input_password') }}">
             @else
-                <input id="password" type="password" class="form-control" name="password" autocomplete="new-password" required placeholder="{{ __('messages.input_password') }}">
+                <input id="password" type="password" class="form-control @if ($errors->has('password')) border-danger @endif" name="password" autocomplete="new-password" required placeholder="{{ __('messages.input_password') }}">
             @endif
 
             @if ($errors->has('password'))
                 @foreach ($errors->get('password') as $error)
-                    <div class="text-danger">{{$error}}</div>
+                    <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$error}}</div>
                 @endforeach
             @endif
         </div>
@@ -171,12 +164,10 @@ use App\Models\Core\UsersColumns;
 
                 <div class="col-md-8">
                     <div class="custom-control custom-checkbox custom-control-inline">
-                        <input name="user_register_requre_privacy" value="以下の内容に同意します。" type="checkbox" class="custom-control-input" id="user_register_requre_privacy">
+                        <input name="user_register_requre_privacy" value="以下の内容に同意します。" type="checkbox" class="custom-control-input @if ($errors->has('user_register_requre_privacy')) is-invalid @endif" id="user_register_requre_privacy">
                         <label class="custom-control-label" for="user_register_requre_privacy"> 以下の内容に同意します。</label>
                     </div>
-                    @if ($errors->has('user_register_requre_privacy'))
-                        <div class="text-danger">{{ $errors->first('user_register_requre_privacy') }}</div>
-                    @endif
+                    @include('plugins.common.errors_inline', ['name' => 'user_register_requre_privacy'])
                     @if (isset($configs['user_register_privacy_description']))
                         {!!$configs['user_register_privacy_description']!!}
                     @endif
