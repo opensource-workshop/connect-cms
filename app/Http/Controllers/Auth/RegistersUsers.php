@@ -140,12 +140,12 @@ trait RegistersUsers
             }
         }
 
-        // ユーザー自動登録（未ログイン）の場合、.env のSELF_REGISTER_ROLE を元に権限登録する。
+        // ユーザー自動登録（未ログイン、ユーザ管理者以外）の場合、.env のSELF_REGISTER_ROLE を元に権限登録する。
         // envの設定がなければ、自動ユーザ登録設定をもとに権限を登録する
-        if (!Auth::user()) {
+        if (!Auth::user() || !$this->isCan('admin_user')) {
             $self_register_base_roles_env = '';
             if (config('connect.SELF_REGISTER_BASE_ROLES') !== null) {
-            $self_register_base_roles_env = config('connect.SELF_REGISTER_BASE_ROLES');
+                $self_register_base_roles_env = config('connect.SELF_REGISTER_BASE_ROLES');
             } else {
                 $self_register_base_roles_env = Configs::getConfigsValue($configs, 'user_register_base_roles');
             }
@@ -165,8 +165,8 @@ trait RegistersUsers
             }
         }
 
-        // ユーザー自動登録（未ログイン）
-        if (!Auth::user()) {
+        // ユーザー自動登録（未ログイン、ユーザ管理者以外）
+        if (!Auth::user() || !$this->isCan('admin_user')) {
             // session()->flash('flash_message_for_header', 'ユーザ登録が完了しました。登録したログインID、パスワードでログインしてください。');
 
 
