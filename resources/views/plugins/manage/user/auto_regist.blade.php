@@ -168,12 +168,6 @@
                 <div class="col">
                     <label class="control-label">本登録メール件名</label>
                     <input type="text" name="user_register_mail_subject" value="{{Configs::getConfigsValueAndOld($configs, 'user_register_mail_subject')}}" class="form-control">
-                    <small class="text-muted">
-                        ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
-                    </small>
-                    <small class="text-danger">
-                        ※ 管理者の承認を必要にしている場合は、本登録メールが登録申請メールとなります。
-                    </small>
                 </div>
             </div>
 
@@ -183,6 +177,9 @@
                     <label class="control-label">本登録メールフォーマット</label>
                     <textarea name="user_register_mail_format" class="form-control" rows=5 placeholder="（例）登録内容をお知らせいたします。&#13;&#10;----------------------------------&#13;&#10;[[body]]&#13;&#10;----------------------------------">{{Configs::getConfigsValueAndOld($configs, 'user_register_mail_format')}}</textarea>
                     @include('plugins.common.description_frame_mails_common', ['embedded_tags' => UserRegisterNoticeEmbeddedTag::getDescriptionEmbeddedTags()])
+                    <small class="text-danger">
+                        ※ 管理者の承認を必要にしている場合は、本登録メールが登録申請メールとなります。
+                    </small>
                 </div>
             </div>
 
