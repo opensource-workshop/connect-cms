@@ -9,7 +9,5 @@
         $value = $value_obj->value;
     }
 @endphp
-<textarea name="users_columns_value[{{$user_obj->id}}]" class="form-control" placeholder="{{$user_obj->place_holder}}" id="{{$label_id}}" @if($user_obj->required) required @endif>{{old('users_columns_value.'.$user_obj->id, $value)}}</textarea>
-@if ($errors && $errors->has("users_columns_value.$user_obj->id"))
-    <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("users_columns_value.$user_obj->id")}}</div>
-@endif
+<textarea name="users_columns_value[{{$user_obj->id}}]" class="form-control @if ($errors->has("users_columns_value.$user_obj->id")) border-danger @endif" placeholder="{{$user_obj->place_holder}}" id="{{$label_id}}" @if($user_obj->required) required @endif>{{old('users_columns_value.'.$user_obj->id, $value)}}</textarea>
+@include('plugins.common.errors_inline', ['name' => "users_columns_value.$user_obj->id"])
