@@ -40,7 +40,7 @@ jobs:
       - name: Install Jp font
         run: sudo apt install fonts-noto
 
-      - name: Prepare The Environment
+      - name: Setup .env
         run: |
           cp .env.example .env
           sed -i -e "s|DB_PASSWORD=|DB_PASSWORD=root|g" .env
@@ -48,7 +48,7 @@ jobs:
           sed -i -e "s|TRANSLATE_API_URL=""|TRANSLATE_API_URL="http://localhost:8000"|g" .env
           sed -i -e "s|PDF_THUMBNAIL_API_URL=""|PDF_THUMBNAIL_API_URL="http://localhost:8000"|g" .env
           sed -i -e "s|FACE_AI_API_URL=""|FACE_AI_API_URL="http://localhost:8000"|g" .env
-          # sed -e '$ a MANUAL_PUT_BASE="${{ github.action_path }}/tests/Manual/html"' .env
+          sed -e "$ a MANUAL_PUT_BASE=\"$GITHUB_WORKSPACE/tests/Manual/html/\"" .env
 
       # schedule でphpバージョン指定
       - name: Set if input php_version is empty
