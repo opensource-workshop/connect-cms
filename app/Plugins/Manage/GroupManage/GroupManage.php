@@ -13,13 +13,15 @@ use App\Models\Common\GroupUser;
 
 use App\Plugins\Manage\ManagePluginBase;
 
+use App\Utilities\String\StringUtils;
+
 /**
  * グループ管理クラス
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category グループ管理
- * @package Contoroller
+ * @package Controller
  * @plugin_title グループ管理
  * @plugin_desc ユーザをグループとして設定できます。<br />
                 このグループにページ毎の権限を付与することができます。
@@ -47,7 +49,7 @@ class GroupManage extends ManagePluginBase
     private function getGroups()
     {
         // グループデータ取得
-        $groups = Group::orderBy('id', 'asc')->paginate(10);
+        $groups = Group::orderBy('display_sequence', 'asc')->paginate(10);
 
         return $groups;
     }
@@ -124,10 +126,17 @@ class GroupManage extends ManagePluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'name'     => 'required|string|max:255',
+            'name'             => 'required|string|max:255',
+            'display_sequence' => ['nullable', 'numeric'],
         ]);
         $validator->setAttributeNames([
-            'name'     => 'グループ名',
+            'name'             => 'グループ名',
+            'display_sequence' => '表示順',
+        ]);
+
+        $request->merge([
+            // 表示順:  全角→半角変換
+            "display_sequence" => StringUtils::convertNumericAndMinusZenkakuToHankaku($request->display_sequence),
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -137,14 +146,35 @@ class GroupManage extends ManagePluginBase
                        ->withInput();
         }
 
+        // 表示順が空なら、自分を省いた最後の番号+1 をセット
+        $display_sequence = $this->getSaveDisplaySequence($request->display_sequence, $id);
+
         // 登録 or 更新
         $group = Group::updateOrCreate(
-            ['id'   => $id],
-            ['name' => $request->name]
+            ['id' => $id],
+            [
+                'name' => $request->name,
+                'display_sequence' => $display_sequence,
+            ]
         );
 
         // 登録・更新後は一覧画面へ
         return redirect('manage/group');
+    }
+
+    /**
+     * 登録する表示順を取得
+     */
+    private function getSaveDisplaySequence($display_sequence, $id)
+    {
+        // 表示順が空なら、自分を省いた最後の番号+1 をセット
+        if (!is_null($display_sequence)) {
+            $display_sequence = intval($display_sequence);
+        } else {
+            $max_display_sequence = Group::where('id', '<>', $id)->max('display_sequence');
+            $display_sequence = empty($max_display_sequence) ? 1 : $max_display_sequence + 1;
+        }
+        return $display_sequence;
     }
 
     /**

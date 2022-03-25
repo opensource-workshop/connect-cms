@@ -25,12 +25,20 @@
         @endif
             {{ csrf_field() }}
 
-            <div class="form-group row{{ $errors->has('name') ? ' has-error' : '' }}">
-                <label for="name" class="col-md-4 col-form-label text-md-right">グループ名</label>
+            <div class="form-group row">
+                <label for="name" class="col-md-3 col-form-label text-md-right">グループ名</label>
+                <div class="col-md-9">
+                    <input id="name" type="text" class="form-control @if ($errors->has('name')) border-danger @endif" name="name" value="{{ old('name', $group->name) }}" placeholder="グループ名を入力します。" required autofocus>
+                    @include('plugins.common.errors_inline', ['name' => 'name'])
+                </div>
+            </div>
 
-                <div class="col-md-8">
-                    <input id="name" type="text" class="form-control" name="name" value="{{ old('name', $group->name) }}" placeholder="グループ名を入力します。" required autofocus>
-                    @if ($errors->has('name')) <div class="text-danger">{{$errors->first('name')}}</div> @endif
+            <div class="form-group row">
+                <label for="display_sequence" class="col-md-3 col-form-label text-md-right">表示順</label>
+                <div class="col-md-9">
+                    <input type="text" name="display_sequence" id="display_sequence" value="{{old('display_sequence', $group->display_sequence)}}" class="form-control @if ($errors->has('display_sequence')) border-danger @endif">
+                    @include('plugins.common.errors_inline', ['name' => 'display_sequence'])
+                    <small class="text-muted">※ 未指定時は最後に表示されるように自動登録します。</small>
                 </div>
             </div>
 
@@ -58,63 +66,63 @@
                 @endif
             </div>
         </form>
+
     </div>
 </div>
 
 @if (isset($id) && $id)
-<div id="collapse{{$id}}" class="collapse" style="margin-top: 8px;">
-    <div class="card border-danger">
-        <div class="card-body">
-            <span class="text-danger">グループを削除します。<br>元に戻すことはできないため、よく確認して実行してください。</span>
+    <div id="collapse{{$id}}" class="collapse" style="margin-top: 8px;">
+        <div class="card border-danger">
+            <div class="card-body">
+                <span class="text-danger">グループを削除します。<br>元に戻すことはできないため、よく確認して実行してください。</span>
 
-            <div class="text-center">
-                {{-- 削除ボタン --}}
-                <form action="{{url('/manage/group/delete/')}}/{{$id}}" method="POST">
-                    {{csrf_field()}}
-                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('グループを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
-                </form>
+                <div class="text-center">
+                    {{-- 削除ボタン --}}
+                    <form action="{{url('/manage/group/delete/')}}/{{$id}}" method="POST">
+                        {{csrf_field()}}
+                        <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('グループを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
+                    </form>
+                </div>
             </div>
-
         </div>
     </div>
-</div>
 @endif
 
 @if (isset($id) && $id)
-<div class="card mt-3">
-    <div class="card-header">【{{$group->name}}】グループ参加ユーザ一覧</div>
-    <div class="card-body">
+    <div class="card mt-3">
+        <div class="card-header">【{{$group->name}}】グループ参加ユーザ一覧</div>
+        <div class="card-body">
 
-        <div class="table-responsive">
-            <table class="table table-hover cc-font-90">
-            <thead>
-                <tr>
-                    <th nowrap>ユーザ名</th>
-                    {{-- <th nowrap>グループ権限</th> --}}
-                    <th nowrap>作成日</th>
-                    <th nowrap>更新日</th>
-                </tr>
-            </thead>
-            <tbody>
-            @foreach($group_users as $group_user)
-                <tr>
-                    <td>{{$group_user->user_name}}</td>
-                    {{-- <td>{{GroupType::getDescription($group_user->group_role)}}</td> --}}
-                    <td>{{$group_user->created_at->format('Y/m/d')}}</td>
-                    <td>{{$group_user->updated_at->format('Y/m/d')}}</td>
-                </tr>
-            @endforeach
-            </tbody>
-            </table>
-        </div>
+            <div class="table-responsive">
+                <table class="table table-hover cc-font-90">
+                    <thead>
+                        <tr>
+                            <th nowrap>ユーザ名</th>
+                            {{-- <th nowrap>グループ権限</th> --}}
+                            <th nowrap>作成日</th>
+                            <th nowrap>更新日</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($group_users as $group_user)
+                            <tr>
+                                <td>{{$group_user->user_name}}</td>
+                                {{-- <td>{{GroupType::getDescription($group_user->group_role)}}</td> --}}
+                                <td>{{$group_user->created_at->format('Y/m/d')}}</td>
+                                <td>{{$group_user->updated_at->format('Y/m/d')}}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
 
-        {{-- ページング処理 --}}
-        @if($group_users)
-        <div class="text-center">
-            {{$group_users->links()}}
+            {{-- ページング処理 --}}
+            @if($group_users)
+                <div class="text-center">
+                    {{$group_users->links()}}
+                </div>
+            @endif
         </div>
-        @endif
     </div>
-</div>
 @endif
 @endsection
