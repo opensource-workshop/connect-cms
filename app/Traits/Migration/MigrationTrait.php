@@ -1629,7 +1629,7 @@ trait MigrationTrait
         $group_ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('groups/group_*.ini'));
 
         // グループ定義のループ
-        foreach ($group_ini_paths as $group_ini_path) {
+        foreach ($group_ini_paths as $i => $group_ini_path) {
             // ini_file の解析
             $group_ini = parse_ini_file($group_ini_path, true);
 
@@ -1639,7 +1639,10 @@ trait MigrationTrait
             // マッピングテーブルを確認して、追加か更新の処理を分岐
             if (empty($mapping)) {
                 // 追加
-                $group = Group::create(['name' => $group_ini['group_base']['name']]);
+                $group = Group::create([
+                    'name' => $group_ini['group_base']['name'],
+                    'display_sequence' => $i + 1,
+                ]);
 
                 // マッピングテーブルの追加
                 $mapping = MigrationMapping::create([
@@ -1649,7 +1652,12 @@ trait MigrationTrait
                 ]);
             } else {
                 // 更新
-                $group = Group::updateOrCreate(['id' => $mapping->destination_key], ['name' => $group_ini['group_base']['name']]);
+                $group = Group::updateOrCreate([
+                    'id' => $mapping->destination_key
+                ], [
+                    'name' => $group_ini['group_base']['name'],
+                    'display_sequence' => $i + 1,
+                ]);
             }
 
             // group_users 作成
@@ -1681,7 +1689,13 @@ trait MigrationTrait
 
         // ※ 上ループで管理者グループを登録しようと組んだが、なぜかgroup->idがズレるため、上ループ後に管理グループ追加
         // 管理者グループ追加
-        $admin_group = Group::updateOrCreate(['name' => '管理者グループ'], ['name' => '管理者グループ']);
+        $display_sequence = Group::where('name', '<>', '管理者グループ')->max('display_sequence') + 1;
+        $admin_group = Group::updateOrCreate([
+            'name' => '管理者グループ'
+        ], [
+            'name' => '管理者グループ',
+            'display_sequence' => $display_sequence,
+        ]);
 
         // 管理者 group_users 作成
         $admin_users_roles = UsersRoles::where('target', 'base')->where('role_name', 'role_article_admin')->get();
