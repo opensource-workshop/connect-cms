@@ -1987,6 +1987,7 @@ class UserManage extends ManagePluginBase
 
             $this->sendMail($user->email, $mail_options, ['content' => $mail_text], 'RegistersUsers');
         }
+    }
 
     /**
      * メール送信画面
