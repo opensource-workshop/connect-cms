@@ -35,11 +35,11 @@
                     @endif
                 </li>
 
-                {{-- <li role="presentation" class="nav-item">
+                <li role="presentation" class="nav-item">
                     @if ($function == "list")
                         <span class="nav-link"><span class="active">グループ参加者</span></span>
                     @endif
-                </li> --}}
+                </li>
             </ul>
         </div>
     </nav>

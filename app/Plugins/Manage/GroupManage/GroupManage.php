@@ -189,21 +189,20 @@ class GroupManage extends ManagePluginBase
         return redirect('manage/group');
     }
 
-    // delete: どこからも呼ばれてない
     /**
      *  グループ内ユーザー表示
      *
      * @return view
      */
-    // public function list($request, $id)
-    // {
-    //     // グループデータの取得
-    //     $group_users = $this->getGroupUsers($id);
+    public function list($request, $id)
+    {
+        // グループデータの取得
+        $group_users = $this->getGroupUsers($id);
 
-    //     return view('plugins.manage.group.list', [
-    //         "function"    => __FUNCTION__,
-    //         "plugin_name" => "group",
-    //         "group_users" => $group_users,
-    //     ]);
-    // }
+        return view('plugins.manage.group.list', [
+            "function"    => __FUNCTION__,
+            "plugin_name" => "group",
+            "group_users" => $group_users,
+        ]);
+    }
 }
