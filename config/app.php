@@ -291,6 +291,7 @@ $app_array = [
         'ResizedImageSize' => \App\Enums\ResizedImageSize::class,
         'NoticeEmbeddedTag' => \App\Enums\NoticeEmbeddedTag::class,
         'ReservationNoticeEmbeddedTag' => \App\Enums\ReservationNoticeEmbeddedTag::class,
+        'UserRegisterNoticeEmbeddedTag' => \App\Enums\UserRegisterNoticeEmbeddedTag::class,
         'WhatsnewFrameConfig' => \App\Enums\WhatsnewFrameConfig::class,
         'PhotoalbumFrameConfig' => \App\Enums\PhotoalbumFrameConfig::class,
         'PhotoalbumSort' => \App\Enums\PhotoalbumSort::class,

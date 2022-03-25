@@ -57,4 +57,15 @@ class NoticeEmbeddedTag extends EnumsBase
         $embedded_tags[] = ['[[' . self::updated_at . ']]', self::getDescription(self::updated_at)];
         return $embedded_tags;
     }
+
+    /**
+     * 本文の埋め込みタグを置換
+     */
+    public static function replaceEmbeddedTags($body, array $notice_embedded_tags)
+    {
+        foreach ($notice_embedded_tags as $tag => $value) {
+            $body = str_ireplace("[[{$tag}]]", $value, $body);
+        }
+        return $body;
+    }
 }

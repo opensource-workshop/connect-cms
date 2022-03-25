@@ -194,10 +194,7 @@ class BucketsMail extends Model
      */
     private function replaceEmbeddedTags($body, array $notice_embedded_tags)
     {
-        foreach ($notice_embedded_tags as $tag => $value) {
-            $body = str_ireplace("[[{$tag}]]", $value, $body);
-        }
-        return $body;
+        return NoticeEmbeddedTag::replaceEmbeddedTags($body, $notice_embedded_tags);
     }
 
     /**
