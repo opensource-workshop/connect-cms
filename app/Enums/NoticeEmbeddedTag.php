@@ -37,8 +37,6 @@ class NoticeEmbeddedTag extends EnumsBase
 
     /**
      * 埋め込みタグの説明を取得
-     *
-     * @see \App\Models\Common\BucketsMail 件名で使えないタグは BucketsMail::getFormattedSubject() 参照
      */
     public static function getDescriptionEmbeddedTags(bool $use_title = false, bool $use_body = false): array
     {
