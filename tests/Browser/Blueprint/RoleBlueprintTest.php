@@ -83,6 +83,12 @@ class RoleBlueprintTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             // ブログページの情報取得
             $blog_page = Page::where('permanent_link', '/test/blog')->first();
+            if (is_null($blog_page)) {
+                // テスト実行順により /test/blog がまだ無い場合は作成して取得
+                $this->initPlugin('blogs', '/test/blog');
+                $blog_page = Page::where('permanent_link', '/test/blog')->first();
+            }
+
             $blog_frame = Frame::where('page_id', $blog_page->id)->where('plugin_name', 'blogs')->first();
 
             $browser->visit('/plugin/blogs/editBucketsRoles/' . $blog_page->id . '/' . $blog_frame->id . '#frame-' . $blog_frame->id)
