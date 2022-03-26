@@ -561,24 +561,32 @@ EOF;
 
     /**
      * 固定記事追加
+     * options = [title, area_id, frame_col]
      */
     public function addContents($permanent_link, $content_text, $options = [])
     {
+        // 準備
         $area_id = array_key_exists('area_id', $options) ? $options['area_id'] : 2;
-        $bucket = Buckets::create(['bucket_name' => '無題', 'plugin_name' => 'contents']);
-        Contents::create(['bucket_id' => $bucket->id, 'content_text' => $content_text, 'status' => 0]);
         $page = Page::where('permanent_link', $permanent_link)->first();
-        $max_frame = Frame::where('page_id', $page->id)->where('area_id', $area_id)->orderBy('display_sequence', 'desc')->first();
+
+        // 元のフレームの順番を1ずつ、下にずらす。
+        Frame::where('page_id', $page->id)->where('area_id', $area_id)->increment('display_sequence');
+
+        // 新しい固定記事の作成
+        $bucket = Buckets::create(['bucket_name' => array_key_exists('title', $options) ? $options['title'] : '無題', 'plugin_name' => 'contents']);
+        Contents::create(['bucket_id' => $bucket->id, 'content_text' => $content_text, 'status' => 0]);
+        //$max_frame = Frame::where('page_id', $page->id)->where('area_id', $area_id)->orderBy('display_sequence', 'desc')->first();
         $frame = Frame::create([
             'page_id' => $page->id,
             'area_id' => $area_id,
-            'frame_title' => '[無題]',
+            'frame_title' => array_key_exists('title', $options) ? $options['title'] : '[無題]',
             'frame_design' => 'default',
             'plugin_name' => 'contents',
             'frame_col' => array_key_exists('frame_col', $options) ? $options['frame_col'] : 0,
             'template' => 'default',
             'bucket_id' => $bucket->id,
-            'display_sequence' => empty($max_frame) ? 1 : $max_frame->display_sequence + 1
+            //'display_sequence' => empty($max_frame) ? 1 : $max_frame->display_sequence + 1
+            'display_sequence' => 1
         ]);
         return $frame;
     }
@@ -596,5 +604,44 @@ EOF;
             Buckets::where('id', $frame->bucket_id)->delete();
             $frame->delete();
         }
+    }
+
+    /**
+     * アップロードを登録する
+     */
+    public function fileUpload($file_path, $client_original_name, $mimetype, $extension, $plugin_name, $page_id, $thumbnail_path = null)
+    {
+        // uploads 追加
+        $upload = Uploads::create([
+            "client_original_name" => $client_original_name,
+            "mimetype" => $mimetype,
+            "extension" => $extension,
+            "size" => filesize($file_path),
+            "plugin_name" => $plugin_name,
+            "page_id" => $page_id
+        ]);
+
+        // ファイルコピー
+        \Storage::put($this->getDirectory($upload->id) . '/' . $upload->id . "." . $extension, file_get_contents($file_path));
+
+        // thumbnail_path がある場合は、サムネイル画像もアップロード。PDF＆サムネイルを想定。
+        if ($thumbnail_path) {
+            $thumbail = Uploads::create([
+                "client_original_name" => basename($thumbnail_path),
+                "mimetype" => 'image/png',
+                "extension" => 'png',
+                "size" => filesize($thumbnail_path),
+                "plugin_name" => $plugin_name,
+                "page_id" => $page_id
+            ]);
+
+            // ファイルコピー
+            \Storage::put($this->getDirectory($thumbail->id) . '/' . $thumbail->id . '.png', file_get_contents($thumbnail_path));
+
+            // サムネイル付きの場合は、戻り値は配列
+            return [$upload, $thumbail];
+        }
+        // アップロードのみ。（サムネイル無し）
+        return $upload;
     }
 }
