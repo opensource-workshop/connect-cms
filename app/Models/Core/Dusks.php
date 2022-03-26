@@ -152,8 +152,8 @@ class Dusks extends Model
                     $tmp_path = str_replace('"', '', $tmp_path);
                     $img_path = "";
                     if (empty(config('connect.manual_put_base'))) {
-                        if (\Storage::disk('manual')->exists('html/' . $tmp_path)) {
-                            $img_path = \Storage::disk('manual')->path('html/' . $tmp_path);
+                        if (\Storage::disk('manual')->exists('html/' . $this->category . '/' . $this->plugin_name . '/'. $this->method_name . '/'. $tmp_path)) {
+                            $img_path = \Storage::disk('manual')->path('html/' . $this->category . '/' . $this->plugin_name . '/'. $this->method_name . '/'. $tmp_path);
                         }
                     } else {
                         if (\File::exists(config('connect.manual_put_base') . $this->category . '/' . $this->plugin_name . '/'. $this->method_name . '/'. $tmp_path)) {
