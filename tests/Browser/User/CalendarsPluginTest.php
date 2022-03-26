@@ -102,7 +102,7 @@ class CalendarsPluginTest extends DuskTestCase
         // bugfix: (mysql5.7のみ) Invalid datetime format: 1292 Incorrect date value: '2022-03%' for column 'start_date'
         // CalendarPost::where('start_date', 'like', $ym . '%')->delete();
         CalendarPost::whereYear('start_date', date("Y"))
-            ->whereMonth ('start_date', date("m"))
+            ->whereMonth('start_date', date("m"))
             ->delete();
 
         // 実行
