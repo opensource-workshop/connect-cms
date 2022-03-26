@@ -187,7 +187,7 @@ jobs:
 
       - name: Database Version
         run: |
-          run: mysql -h"127.0.0.1" -uroot -proot -e "select version();"
+          mysql -h"127.0.0.1" -uroot -proot -e "select version();"
 
       # Composer
       - name: Validate composer.json and composer.lock
@@ -328,7 +328,7 @@ jobs:
 
       - name: Database Version
         run: |
-          run: mysql -h"127.0.0.1" -uroot -proot -e "select version();"
+          mysql -h"127.0.0.1" -uroot -proot -e "select version();"
 
       # Composer
       - name: Validate composer.json and composer.lock
