@@ -99,7 +99,11 @@ class CalendarsPluginTest extends DuskTestCase
     {
         // ブログ（バケツ）があって且つ、その月に記事が3件未満の場合に記事作成
         $ym = date("Y-m");
-        CalendarPost::where('start_date', 'like', $ym . '%')->delete();
+        // bugfix: (mysql5.7のみ) Invalid datetime format: 1292 Incorrect date value: '2022-03%' for column 'start_date'
+        // CalendarPost::where('start_date', 'like', $ym . '%')->delete();
+        CalendarPost::whereYear('start_date', date("Y"))
+            ->whereMonth ('start_date', date("m"))
+            ->delete();
 
         // 実行
         $this->browse(function (Browser $browser) use ($ym) {
