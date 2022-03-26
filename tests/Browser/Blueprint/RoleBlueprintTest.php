@@ -43,7 +43,8 @@ class RoleBlueprintTest extends DuskTestCase
         Dusks::where('category', 'blueprint')->where('plugin_name', 'role')->delete();
 
         // ブログ準備
-        $this->initPlugin('blogs', '/test/blog');
+        // 順番に実行されれば、ブログプラグインはできているため、初期化の必要はない。
+        // $this->initPlugin('blogs', '/test/blog');
     }
 
     /**

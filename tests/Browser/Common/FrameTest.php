@@ -194,8 +194,48 @@ class FrameTest extends DuskTestCase
     private function frameCol()
     {
         // 固定記事の配置
-        $this->frame = $this->addContents('/common/frame', '幅6', ['frame_col' => 6]);
-        $this->frame = $this->addContents('/common/frame', '幅4', ['frame_col' => 4]);
         $this->frame = $this->addContents('/common/frame', '幅2', ['frame_col' => 2]);
+        $this->frame = $this->addContents('/common/frame', '幅4', ['frame_col' => 4]);
+        $this->frame = $this->addContents('/common/frame', '幅6', ['frame_col' => 6]);
+
+        $this->logout();
+
+        // ブラウザ操作
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/common/frame')
+                    ->screenshot('common/frame/frameCol/images/frameCol1');
+
+            $browser->resize(400, 800);
+
+            $browser->screenshot('common/frame/frameCol/images/frameCol2');
+
+            $browser->resize(1280, 800);
+        });
+
+        // マニュアル用データ出力
+        $dusk = Dusks::putManualData(
+            ['html_path' => 'common/frame/frameCol/index.html'],
+            ['category' => 'common',
+             'sort' => 2,
+             'plugin_name' => 'frame',
+             'plugin_title' => 'フレーム',
+             'plugin_desc' => 'フレームに関する操作ができます。',
+             'method_name' => 'frameCol',
+             'method_title' => 'フレーム幅',
+             'method_desc' => 'フレーム幅を変更できます。',
+             'method_detail' => 'Connect-CMSでは、画面の各エリアを12等分し、フレーム毎に使用する数を指定できます。<br />例えば、3つのフレームの幅をそれぞれ、6、4、2で指定すると、合計12となり、PCで閲覧している場合にフレームが横並びになります。<br />横並びになったフレームは、スマートフォンで閲覧する際は、自動的に縦並びになります。',
+             'html_path' => 'common/frame/frameCol/index.html',
+             'img_args' => '[
+                 {"path": "common/frame/frameCol/images/frameCol1",
+                  "name": "フレーム幅の使用例",
+                  "comment": "<ul class=\"mb-0\"><li>3つのフレームの幅をそれぞれ、6、4、2で指定した例です。</li></ul>"
+                 },
+                 {"path": "common/frame/frameCol/images/frameCol2",
+                  "name": "スマートフォンでのフレーム幅の使用例",
+                  "comment": "<ul class=\"mb-0\"><li>3つのフレームの幅をそれぞれ、6、4、2で指定した場合でも、スマートフォンでは縦に並ぶ例です。</li></ul>"
+                 }
+             ]',
+            'test_result' => 'OK']
+        );
     }
 }

@@ -21,6 +21,7 @@ class WysiwygTest extends DuskTestCase
 {
     private $content = null;
     private $frame = null;
+    private $main_frame = null;
 
     /**
      * テストする関数の制御
@@ -62,8 +63,8 @@ class WysiwygTest extends DuskTestCase
         // データクリア
         $page = $this->firstOrCreatePage('/test/content');
 
-        $frame = Frame::where('page_id', $page->id)->where('plugin_name', 'contents')->first();
-        if (!empty($frame)) {
+        $frames = Frame::where('page_id', $page->id)->where('plugin_name', 'contents')->get();
+        foreach ($frames as $frame) {
             $bucket = Buckets::find($frame->bucket_id);
             if (!empty($bucket)) {
                 Contents::where('bucket_id', $bucket->id)->forceDelete();
@@ -74,13 +75,14 @@ class WysiwygTest extends DuskTestCase
 
         // 固定記事を作成
         $this->addPluginModal('contents', '/test/content', 2, false);
-        $bucket = Buckets::create(['bucket_name' => 'WYSIWYGテスト', 'plugin_name' => 'contents']);
+        $bucket = Buckets::create(['bucket_name' => 'WYSIWYGエディタ', 'plugin_name' => 'contents']);
 
         // 初めは記事は文字のみ。
         $this->content = Contents::create(['bucket_id' => $bucket->id, 'content_text' => '<p>WYSIWYGのテストです。</p>', 'status' => 0]);
 
         $this->frame = Frame::orderBy('id', 'desc')->first();
-        $this->frame->update(['bucket_id' => $bucket->id]);
+        $this->frame->update(['bucket_id' => $bucket->id, 'frame_title' => 'WYSIWYGエディタ']);
+        $this->main_frame = $this->frame;  // 後で入れ替えて使うために一時保存
 
         // 外部サービス有効化
         $this->browse(function (Browser $browser) {
@@ -261,19 +263,25 @@ class WysiwygTest extends DuskTestCase
      */
     private function table()
     {
+        // 固定記事の配置
+        $this->frame = $this->addContents('/test/content', '', ['title' => '表']);
+
         // 画面
         $this->browse(function (Browser $browser) {
+            // 表で使うContents を取得
+            $content = Contents::where('bucket_id', $this->frame->bucket_id)->first();
+
             // 表に合わせた記事に変更
             $content_text = '<table border="1" class="table"><tbody>';
             for ($i = 0; $i < 2; $i++) {
                 $content_text .= '<tr><td>A</td><td>B</td><td>C</td></tr>';
             }
             $content_text .= '</tbody></table>';
-            $this->content->content_text = $content_text;
-            $this->content->save();
+            $content->content_text = $content_text;
+            $content->save();
 
             // 記事をデータベースから変更したので、一度開きなおす。
-            $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id);
+            $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $content->id . '#frame-' . $this->frame->id);
 
             // 表のドロップダウン
             $browser->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(6) button:nth-child(1) div')
@@ -302,7 +310,7 @@ class WysiwygTest extends DuskTestCase
                     ->screenshot('common/wysiwyg/table/images/table_cell_detail_detail');
 
             // 一度開きなおす。
-            $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id);
+            $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $content->id . '#frame-' . $this->frame->id);
 
             // 表のドロップダウン
             $browser->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(6) button:nth-child(1) div')
@@ -324,7 +332,7 @@ class WysiwygTest extends DuskTestCase
                     ->screenshot('common/wysiwyg/table/images/table_row_detail_detail');
 
             // 一度開きなおす。
-            $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id);
+            $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $content->id . '#frame-' . $this->frame->id);
 
             // 表のドロップダウン
             $browser->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(6) button:nth-child(1) div')
@@ -418,6 +426,9 @@ class WysiwygTest extends DuskTestCase
      */
     private function hr()
     {
+        // 使用する固定記事の入れ替え
+        $this->frame = $this->main_frame;
+
         // 画面
         $this->browse(function (Browser $browser) {
             // WYSIWYG 記事のクリア
@@ -751,10 +762,25 @@ class WysiwygTest extends DuskTestCase
 
         // 画面
         $this->browse(function (Browser $browser) {
+            // 編集画面を開き、WYSIWYGエディタのセレクタをターゲットにCTRL＋Aキーを押して、全選択させる。その後に翻訳プラグインを起動することで、翻訳するテキストが選択されている状態。
             $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
+                    ->keys('#mce_0_ifr', ['{control}', 'a'])
                     ->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(15) button:nth-child(1)')
                     ->pause(500)
                     ->screenshot('common/wysiwyg/translate/images/translate');
+
+            // 2022-03-20 翻訳API の許可がIP アドレス指定になっているので、マニュアル用にデータ編集方式で進める。
+            //$browser->press('翻訳')
+            //        ->pause(500)
+            //        ->screenshot('common/wysiwyg/translate/images/translate2');
+
+            // 表に合わせた記事に変更
+            $content_text = '<p>WYSIWYGのテストです。<br />This is a test for WYSIWYG.</p>';
+            $this->content->content_text = $content_text;
+            $this->content->save();
+
+            $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
+                    ->screenshot('common/wysiwyg/translate/images/translate2');
         });
 
         // マニュアル用データ出力
@@ -770,6 +796,10 @@ class WysiwygTest extends DuskTestCase
                      {"path": "common/wysiwyg/translate/images/translate",
                       "name": "翻訳",
                       "comment": "<ul class=\"mb-0\"><li>2022-02-23時点では、英語、スペイン語、フランス語、ドイツ語、ポルトガル語、中国語（簡体字）、中国語（繁体字）、韓国語、タガログ語、ベトナム語があります。</li><li>翻訳言語は必要に応じて追加します。</li></ul>"
+                     },
+                     {"path": "common/wysiwyg/translate/images/translate2",
+                      "name": "翻訳結果",
+                      "comment": "<ul class=\"mb-0\"><li>選択した内容が翻訳されて、元のテキストの下に追記されます。</li></ul>"
                      }
                  ]'
             )
@@ -790,7 +820,54 @@ class WysiwygTest extends DuskTestCase
             $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
                     ->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(15) button:nth-child(2)')
                     ->pause(500)
-                    ->screenshot('common/wysiwyg/pdf/images/pdf');
+                    ->screenshot('common/wysiwyg/pdf/images/pdf1');
+
+            // PDFアップロード後に合わせた記事に変更
+            list($upload, $thumbnail1) = $this->fileUpload(__DIR__.'/wysiwyg/Upload_PDF.pdf', 'Upload_PDF.pdf', 'application/pdf', 'pdf', 'contents', $this->frame->page_id, __DIR__.'/wysiwyg/Upload_PDF_thumbnail1.png');
+            $thumbnail2 = $this->fileUpload(__DIR__.'/wysiwyg/Upload_PDF_thumbnail2.png', 'Upload_PDF_thumbnail2.png', 'image/png', 'png', 'contents', $this->frame->page_id);
+
+            $content_text  = '<p>WYSIWYGのテストです。<br />This is a test for WYSIWYG.</p>';
+            $content_text .= '<p><a href="/file/' . $upload->id . '" target="_blank" rel="noopener">Upload_PDF.pdf</a><br /><a href="/file/' . $upload->id . '" target="_blank" rel="noopener"><img src="/file/' . $thumbnail1->id . '" width="150" class="img-fluid img-thumbnail" alt="Upload_PDF.pdfの1ページ目のサムネイル" /></a> <a href="/file/' . $upload->id . '" target="_blank" rel="noopener"><img src="/file/' . $thumbnail2->id . '" width="150" class="img-fluid img-thumbnail" alt="Upload_PDF.pdfの2ページ目のサムネイル" /></a></p>';
+            $this->content->content_text = $content_text;
+            $this->content->save();
+
+            // 編集画面開きなおし
+            $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
+                    ->pause(500)
+                    ->screenshot('common/wysiwyg/pdf/images/pdf2');
+
+            // 表示画面
+            $this->logout();
+            $browser->visit('/test/content'. '#frame-' . $this->frame->id)
+                    ->screenshot('common/wysiwyg/pdf/images/pdf3');
+            $this->login(1);
+
+            // TINYMCE のファイルアップロードにうまくファイル指定できない。
+            // 以下で見た目は設定できてそうだが、うまく動かなかった。
+            //$browser->screenshot('common/wysiwyg/pdf/images/pdf2')
+            //        ->type('.tox-textfield:nth-child(1)', 'Upload_PDF.pdf')
+            //        ->attach('#cc-pdf-upload-' . $this->frame->id , __DIR__.'/wysiwyg/Upload_PDF.pdf')
+            //        ->pause(500)
+            //        ->press('サムネイル作成')
+            //        ->pause(500)
+            //        ->screenshot('common/wysiwyg/pdf/images/pdf3');
+
+            //$browser->press('サムネイル作成')
+            //        ->pause(500)
+            //        ->screenshot('common/wysiwyg/pdf/images/pdf2');
+
+            // press('サムネイル作成') はうまく行かなかったが、'.tox-dialog__footer button:nth-child(2)' はclink できた。
+            // attach すれば、ボタンも動かなくなる。
+            //$browser->attach('#cc-pdf-upload-' . $this->frame->id , __DIR__.'/wysiwyg/Upload_PDF.pdf')
+            //        ->click('.tox-dialog__footer button:nth-child(2)')
+            //        ->pause(500)
+            //        ->screenshot('common/wysiwyg/pdf/images/pdf2');
+
+            //$browser->script('your js');
+            //$browser->value('#cc-pdf-upload-' . $this->frame->id , __DIR__.'/wysiwyg/Upload_PDF.pdf')
+            //        ->click('.tox-dialog__footer button:nth-child(2)')
+            //        ->pause(500)
+            //        ->screenshot('common/wysiwyg/pdf/images/pdf2');
         });
 
         // マニュアル用データ出力
@@ -803,9 +880,17 @@ class WysiwygTest extends DuskTestCase
                 'PDFアップロードを使用するには、外部サービス設定が必要です。<br />アップロードしたPDFから、サムネイルを自動で生成し、サムネイルからもリンクします。サムネイルの大きさやサムネイルを生成するページ数も指定できます。',
                 'common/wysiwyg/pdf/index.html',
                 '[
-                     {"path": "common/wysiwyg/pdf/images/pdf",
+                     {"path": "common/wysiwyg/pdf/images/pdf1",
                       "name": "PDFアップロード",
                       "comment": "<ul class=\"mb-0\"><li>パスワード付PDFの場合は、パスワードも入力してください。</li></ul>"
+                     },
+                     {"path": "common/wysiwyg/pdf/images/pdf2",
+                      "name": "PDFアップロード後",
+                      "comment": "<ul class=\"mb-0\"><li>サムネイルを作成するページ数も指定できます。ここでは、全2ページで全て作成した例です。</li></ul>"
+                     },
+                     {"path": "common/wysiwyg/pdf/images/pdf3",
+                      "name": "表示画面",
+                      "comment": "<ul class=\"mb-0\"><li>PDFファイルへのファイル名でのリンク、サムネイルからのリンクが表示されます。</li></ul>"
                      }
                  ]'
             )
@@ -821,12 +906,61 @@ class WysiwygTest extends DuskTestCase
             $this->fail('.env.dusk.localのFACE_AI_API_URLが空');
         }
 
+        // 固定記事の配置
+        $this->frame = $this->addContents('/test/content', '', ['title' => 'AI顔認証']);
+        $content = Contents::where('bucket_id', $this->frame->bucket_id)->first();
+
+        // Dusk で操作できないので、マニュアル用にデータ生成
+        $upload = $this->fileUpload(__DIR__.'/wysiwyg/face_and_dog.jpg', 'face_and_dog.jpg', 'image/jpeg', 'jpg', 'contents', $this->frame->page_id);
+        $content->content_text = '<p><img src="/file/' . $upload->id . '" class="img-fluid" alt="" /></p>';
+        $content->save();
+
         // 画面
-        $this->browse(function (Browser $browser) {
-            $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
+        $this->browse(function (Browser $browser) use ($content) {
+            // 変換前の画像（正面：人＆犬）
+            $this->logout();
+            $browser->visit('/test/content'. '#frame-' . $this->frame->id)
+                    ->screenshot('common/wysiwyg/face/images/face1');
+            $this->login(1);
+
+            // AI顔認識のダイアログ起動
+            $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $content->id . '#frame-' . $this->frame->id)
                     ->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(15) button:nth-child(3)')
                     ->pause(500)
-                    ->screenshot('common/wysiwyg/face/images/face');
+                    ->screenshot('common/wysiwyg/face/images/face2');
+
+            // Dusk で操作できないので、マニュアル用にデータ生成
+            $upload2 = $this->fileUpload(__DIR__.'/wysiwyg/face_and_dog_mosaic.jpg', 'face_and_dog_mosaic.jpg', 'image/jpeg', 'jpg', 'contents', $this->frame->page_id);
+            $content->content_text = '<p><img src="/file/' . $upload2->id . '" class="img-fluid" alt="" /></p>' . "\n" . $content->content_text;
+            $content->save();
+
+            // 変換後の画像（正面：人＆犬）
+            $this->logout();
+            $browser->visit('/test/content'. '#frame-' . $this->frame->id)
+                    ->screenshot('common/wysiwyg/face/images/face3');
+            $this->login(1);
+
+            // Dusk で操作できないので、マニュアル用にデータ生成
+            $upload3 = $this->fileUpload(__DIR__.'/wysiwyg/face_profile.jpg', 'face_profile.jpg', 'image/jpeg', 'jpg', 'contents', $this->frame->page_id);
+            $content->content_text = '<p><img src="/file/' . $upload3->id . '" class="img-fluid" alt="" /></p>' . "\n" . $content->content_text;
+            $content->save();
+
+            // 変換前の画像（横：人）
+            $this->logout();
+            $browser->visit('/test/content'. '#frame-' . $this->frame->id)
+                    ->screenshot('common/wysiwyg/face/images/face4');
+            $this->login(1);
+
+            // Dusk で操作できないので、マニュアル用にデータ生成
+            $upload4 = $this->fileUpload(__DIR__.'/wysiwyg/face_profile_mosaic.jpg', 'face_profile_mosaic.jpg', 'image/jpeg', 'jpg', 'contents', $this->frame->page_id);
+            $content->content_text = '<p><img src="/file/' . $upload4->id . '" class="img-fluid" alt="" /></p>' . "\n" . $content->content_text;
+            $content->save();
+
+            // 変換後の画像（横：人）
+            $this->logout();
+            $browser->visit('/test/content'. '#frame-' . $this->frame->id)
+                    ->screenshot('common/wysiwyg/face/images/face5');
+            $this->login(1);
         });
 
         // マニュアル用データ出力
@@ -839,9 +973,25 @@ class WysiwygTest extends DuskTestCase
                 'AI顔認識を使用するには、外部サービス設定が必要です。<br />モザイクの粗さも指定できます。',
                 'common/wysiwyg/face/index.html',
                 '[
-                     {"path": "common/wysiwyg/face/images/face",
-                      "name": "AI顔認識",
-                      "comment": "<ul class=\"mb-0\"><li>画像のサイズ変更もこの時、同時に実施できます。</li></ul>"
+                     {"path": "common/wysiwyg/face/images/face1",
+                      "name": "AI顔認識（AI顔認識処理前の画像）",
+                      "comment": "<ul class=\"mb-0\"><li>人と犬の正面からの画像です。</li></ul>"
+                     },
+                     {"path": "common/wysiwyg/face/images/face2",
+                      "name": "AI顔認識のダイアログ",
+                      "comment": "<ul class=\"mb-0\"><li>AI顔認識用のダイアログ画面です。画像のサイズ変更もこの時、同時に実施できます。</li></ul>"
+                     },
+                     {"path": "common/wysiwyg/face/images/face3",
+                      "name": "AI顔認識（AI顔認識処理後の画像）",
+                      "comment": "<ul class=\"mb-0\"><li>人の顔のみ判定して、顔をモザイク処理しています。</li></ul>"
+                     },
+                     {"path": "common/wysiwyg/face/images/face4",
+                      "name": "AI顔認識（横顔のAI顔認識処理前の画像）",
+                      "comment": "<ul class=\"mb-0\"><li>横顔も判定できます。</li></ul>"
+                     },
+                     {"path": "common/wysiwyg/face/images/face5",
+                      "name": "AI顔認識（横顔のAI顔認識処理後の画像）",
+                      "comment": "<ul class=\"mb-0\"><li>横顔の判定、処理結果です。</li></ul>"
                      }
                  ]'
             )
