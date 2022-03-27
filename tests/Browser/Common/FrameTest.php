@@ -8,6 +8,8 @@ use Tests\DuskTestCase;
 
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
+use App\Models\Common\Uploads;
+use App\Models\Core\Configs;
 use App\Models\Core\Dusks;
 
 use App\Enums\PluginName;
@@ -36,6 +38,8 @@ class FrameTest extends DuskTestCase
         $this->frameSetting();
         $this->frameDesign();
         $this->frameCol();
+        $this->frame100Percent();
+        $this->framePageOnly();
         $this->frameDelete();
         $this->frameMail();
     }
@@ -296,6 +300,154 @@ class FrameTest extends DuskTestCase
                  {"path": "common/frame/frameCol/images/frameCol2",
                   "name": "スマートフォンでのフレーム幅の使用例",
                   "comment": "<ul class=\"mb-0\"><li>3つのフレームの幅をそれぞれ、6、4、2で指定した場合でも、スマートフォンでは縦に並ぶ例です。</li></ul>"
+                 }
+             ]',
+            'test_result' => 'OK']
+        );
+    }
+
+    /**
+     * フレーム幅100%の設定
+     */
+    private function frame100Percent()
+    {
+        // ブラウザ操作
+        $this->browse(function (Browser $browser) {
+            // サイト管理のレイアウトでも、ヘッダーもフレーム幅100%にする。
+            Configs::where('name', 'browser_width_header')->update(['value' => '100%']);
+
+            // ヘッダーに固定記事を用意して、画像をアップロード。フレーム幅100%に設定する。
+            $page = Page::where('permanent_link', '/')->first();
+            Frame::where('page_id', $page->id)->where('area_id', 0)->where('browser_width', '100%')->delete();
+            $upload = $this->fileUpload(__DIR__.'/frame/header100percent.png', 'header100percent.png', 'image/png', 'png', 'contents', $page->id);
+            $frame = $this->addContents('/', '<p><img src="/file/'  . $upload->id . '" class="img-fluid"></p>', ['title' => '', 'area_id' => 0]);
+            $frame->frame_design = 'none';
+            $frame->browser_width = '100%';
+            $frame->save();
+
+            // フッターに固定記事を用意して、サイトフッターを作成
+            Frame::where('page_id', $page->id)->where('area_id', 4)->delete();
+            $upload = Uploads::where('client_original_name', 'blobid0000000000001.png')->first();
+            $footer_content  = '<div class="row mt-3"><div class="col-md"><p class="mb-0"><img src="/file/' . $upload->id . '" width="300" /></p></div>';
+            $footer_content .= '<div class="col-md">';
+            $footer_content .= '<p class="mt-3 mb-0 color-white"><a href="/" class="mr-3">Home</a> <a href="/test" class="mr-3">プラグイン・テスト</a> <a href="/common" class="mr-3">共通機能テスト</a></p>';
+            $footer_content .= '</div></div><div class="row"><p class="w-100 text-right">&copy;2019 OpenSource-WorkShop Co.,Ltd.</p></div>';
+            $frame = $this->addContents('/', $footer_content, ['title' => '', 'area_id' => 4]);
+            $frame->frame_design = 'none';
+            $frame->save();
+
+            // テーマをtheme1にする。
+            Configs::where('name', 'base_theme')->update(['value' => 'Users/theme1']);
+
+            // キャプチャ
+            $this->logout();
+            $browser->visit('/')
+                    ->screenshot('common/frame/frame100Percent/images/frame100Percent1');
+                    //->scrollIntoView('footer')
+                    //->screenshot('common/frame/frame100Percent/images/frame100Percent2');
+            $this->login(1);
+        });
+
+        $this->login(1);
+
+        // マニュアル用データ出力
+        $dusk = Dusks::putManualData(
+            ['html_path' => 'common/frame/frame100Percent/index.html'],
+            ['category' => 'common',
+             'sort' => 2,
+             'plugin_name' => 'frame',
+             'plugin_title' => 'フレーム',
+             'plugin_desc' => 'フレームに関する操作ができます。',
+             'method_name' => 'frame100Percent',
+             'method_title' => 'ブラウザ幅100％にする',
+             'method_desc' => 'フレーム幅をブラウザ幅100％にできます。',
+             'method_detail' => 'ヘッダーやフッターでよくある、ブラウザ幅100％のエリアを作成できます。',
+             'html_path' => 'common/frame/frame100Percent/index.html',
+             'img_args' => '[
+                 {"path": "common/frame/frame100Percent/images/frame100Percent1",
+                  "name": "ヘッダー、フッターにフレーム幅100％の使用例",
+                  "comment": "<ul class=\"mb-0\"><li>サイト管理 ＞ レイアウト設定 の「ヘッダーエリア」「フッターエリア」の100％で表示するチェックを付けておきます。</li><li>ヘッダーの固定記事はフレームの方もブラウザ幅100％にするをチェック。フッターはフレームの方はブラウザ幅100％をチェックしない。</li><li>フッターの背景色や文字色はテーマで設定しています。ここでは、#ccFooterArea セレクタで色を指定する方法を取っています。</li></ul>"
+                 }
+             ]',
+            'test_result' => 'OK']
+        );
+
+        /*
+                 {"path": "common/frame/frame100Percent/images/frame100Percent2",
+                  "name": "フッターの使用例",
+                  "comment": "<ul class=\"mb-0\"><li>サイト管理 ＞ レイアウト設定 の「フッターエリア」の100％で表示するチェックを付けて、フレームの方は幅100%のチェックは付けない。</li><li>フッターの背景色や文字色はテーマで設定しています。ここでは、#ccFooterArea セレクタで色を指定する方法を取っています。</li></ul>"
+                 }
+        */
+    }
+
+    /**
+     * このフレームのみ表示する、しない。
+     */
+    private function framePageOnly()
+    {
+        // ブラウザ操作
+        $this->browse(function (Browser $browser) {
+            // ヘッダーのフレーム幅100%のフレームを「このページのみ表示する。」に設定する。
+            $page = Page::where('permanent_link', '/')->first();
+            $frame1 = Frame::where('page_id', $page->id)->where('area_id', 0)->where('browser_width', '100%')->first();
+            $frame1->page_only = 1;
+            $frame1->save();
+
+            // ヘッダーに固定記事を追加して、画像をアップロード。フレーム幅100%に設定する。
+            $page = Page::where('permanent_link', '/')->first();
+            $upload = $this->fileUpload(__DIR__.'/frame/page_only.png', 'page_only.png', 'image/png', 'png', 'contents', $page->id);
+            $frame2 = $this->addContents('/', '<p><img src="/file/'  . $upload->id . '" class="img-fluid"></p>', ['title' => '', 'area_id' => 0, 'display_sequence' => 2]);
+            $frame2->frame_design = 'none';
+            $frame2->browser_width = '100%';
+            $frame2->page_only = 2;
+            $frame2->save();
+
+            // キャプチャ（一度、ページを変えてから戻ることで、リロードされる）
+            $browser->visit('/test')
+                    ->visit('/')
+                    ->screenshot('common/frame/framePageOnly/images/framePageOnly1');
+
+            $this->logout();
+            $browser->visit('/')
+                    ->screenshot('common/frame/framePageOnly/images/framePageOnly2')
+                    ->visit('/test')
+                    ->screenshot('common/frame/framePageOnly/images/framePageOnly3');
+            $this->login(1);
+
+            // ヘッダーの幅100%の固定記事を削除する。（後のテストでは不要なため）
+            Frame::where('page_id', $page->id)->where('area_id', 0)->where('browser_width', '100%')->delete();
+
+            // フッターの固定記事を削除する。（後のテストでは不要なため）
+            Frame::where('page_id', $page->id)->where('area_id', 4)->delete();
+        });
+
+        $this->login(1);
+
+        // マニュアル用データ出力
+        $dusk = Dusks::putManualData(
+            ['html_path' => 'common/frame/framePageOnly/index.html'],
+            ['category' => 'common',
+             'sort' => 2,
+             'plugin_name' => 'frame',
+             'plugin_title' => 'フレーム',
+             'plugin_desc' => 'フレームに関する操作ができます。',
+             'method_name' => 'framePageOnly',
+             'method_title' => 'このページのみ表示/非表示',
+             'method_desc' => 'フレームを配置したページのみ表示、配置したページのみ非表示にできます。',
+             'method_detail' => 'トップページと中ページの表示を変えたい場合に使用できます。<br />この設定はフレーム共通の設定のため、全てのプラグインで有効です。',
+             'html_path' => 'common/frame/framePageOnly/index.html',
+             'img_args' => '[
+                 {"path": "common/frame/framePageOnly/images/framePageOnly1",
+                  "name": "権限のある状態でログインしている場合",
+                  "comment": "<ul class=\"mb-0\"><li>編集操作が必要なために、両方のフレームが見えます。</li></ul>"
+                 },
+                 {"path": "common/frame/framePageOnly/images/framePageOnly2",
+                  "name": "このページのみ表示の例",
+                  "comment": "<ul class=\"mb-0\"><li>トップページのみ、このヘッダーが見えます。</li></ul>"
+                 },
+                 {"path": "common/frame/framePageOnly/images/framePageOnly3",
+                  "name": "このページのみ非表示の例",
+                  "comment": "<ul class=\"mb-0\"><li>トップページ以外で、このヘッダーが見えます。</li></ul>"
                  }
              ]',
             'test_result' => 'OK']

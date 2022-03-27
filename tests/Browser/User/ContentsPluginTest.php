@@ -47,12 +47,12 @@ class ContentsPluginTest extends DuskTestCase
     {
         // マニュアル用にデータ作成
         // ロゴがなければ、uploads を1行作成する。
-        $upload_check = Uploads::where("client_original_name", "blobid0000000000001.jpg")->first();
+        $upload_check = Uploads::where("client_original_name", "blobid0000000000001.png")->first();
 
         $upload = Uploads::firstOrCreate(
-            ["client_original_name" => "blobid0000000000001.jpg"],
+            ["client_original_name" => "blobid0000000000001.png"],
             [
-                "client_original_name" => "blobid0000000000001.jpg",
+                "client_original_name" => "blobid0000000000001.png",
                 "mimetype" => "image/jpeg",
                 "extension" => "jpg",
                 "size" => 34008,
@@ -66,7 +66,7 @@ class ContentsPluginTest extends DuskTestCase
 
         // 実ファイルコピー（$upload_check がnull だった場合に、uploads レコードをcreate しているので、ファイルもコピー。）
         if (empty($upload_check)) {
-            \Storage::put($this->getDirectory($upload->id) . '/' . $upload->id . ".jpg", \Storage::disk('manual')->get('copy_data/image/blobid0000000000001.jpg'));
+            \Storage::put($this->getDirectory($upload->id) . '/' . $upload->id . ".jpg", \Storage::disk('manual')->get('copy_data/image/blobid0000000000001.png'));
         }
 
         // ヘッダーに作ってあった固定記事を取得
