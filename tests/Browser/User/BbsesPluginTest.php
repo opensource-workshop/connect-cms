@@ -35,7 +35,6 @@ class BbsesPluginTest extends DuskTestCase
         $this->createBuckets();
         $this->editView();
         $this->listBuckets();
-        $this->editBucketsMails();
 
         $this->edit("テスト投稿　１件目");  // 記事登録
         $this->edit("テスト投稿　２件目");  // 記事登録 2件目
@@ -58,7 +57,7 @@ class BbsesPluginTest extends DuskTestCase
         $this->initPlugin('bbses', '/test/bbs');
 
         // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'show', 'edit', 'createBuckets', 'editView', 'listBuckets', 'editBucketsMails');
+        $this->reserveManual('index', 'show', 'edit', 'createBuckets', 'editView', 'listBuckets');
     }
 
     /**
@@ -241,58 +240,6 @@ class BbsesPluginTest extends DuskTestCase
         $this->putManualData('[
             {"path": "user/bbses/editView/images/editView",
              "comment": "<ul class=\"mb-0\"><li>掲示板の表示形式を設定できます。</li></ul>"
-            }
-        ]');
-    }
-
-    /**
-     * メール設定
-     */
-    private function editBucketsMails()
-    {
-        // 実行
-        $this->browse(function (Browser $browser) {
-            $browser->visit('/plugin/bbses/editBucketsMails/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                    ->screenshot('user/bbses/editBucketsMails/images/editBucketsMails')
-                    ->click('#label_notice_on')
-                    ->pause(500)
-                    ->scrollIntoView('#label_notice_on')
-                    ->screenshot('user/bbses/editBucketsMails/images/editBucketsMailsNotice')
-                    ->click('#label_relate_on')
-                    ->pause(500)
-                    ->scrollIntoView('#label_relate_on')
-                    ->screenshot('user/bbses/editBucketsMails/images/editBucketsMailsRelate')
-                    ->click('#label_approval_on')
-                    ->pause(500)
-                    ->scrollIntoView('#label_approval_on')
-                    ->screenshot('user/bbses/editBucketsMails/images/editBucketsMailsApproval')
-                    ->click('#label_approved_on')
-                    ->pause(500)
-                    ->scrollIntoView('#label_approved_on')
-                    ->screenshot('user/bbses/editBucketsMails/images/editBucketsMailsApproved');
-        });
-
-        // マニュアル用データ出力
-        $this->putManualData('[
-            {"path": "user/bbses/editBucketsMails/images/editBucketsMails",
-             "name": "送信タイミング設定",
-             "comment": "<ul class=\"mb-0\"><li>タイミング毎にメールの送信を設定できます。</li></ul>"
-            },
-            {"path": "user/bbses/editBucketsMails/images/editBucketsMailsNotice",
-             "name": "投稿通知",
-             "comment": "<ul class=\"mb-0\"><li>投稿通知の設定です。</li></ul>"
-            },
-            {"path": "user/bbses/editBucketsMails/images/editBucketsMailsRelate",
-             "name": "関連記事通知",
-             "comment": "<ul class=\"mb-0\"><li>関連記事の投稿通知の設定です。</li></ul>"
-            },
-            {"path": "user/bbses/editBucketsMails/images/editBucketsMailsApproval",
-             "name": "承認通知",
-             "comment": "<ul class=\"mb-0\"><li>承認通知の設定です。</li></ul>"
-            },
-            {"path": "user/bbses/editBucketsMails/images/editBucketsMailsApproved",
-             "name": "承認済み通知",
-             "comment": "<ul class=\"mb-0\"><li>承認済み通知の設定です。</li></ul>"
             }
         ]');
     }

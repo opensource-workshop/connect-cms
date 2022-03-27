@@ -45,7 +45,6 @@ class DatabasesPluginTest extends DuskTestCase
         $this->editView();
         $this->listBuckets();
         $this->import();
-        $this->editBucketsMails();
         $this->input();
 
         $this->logout();
@@ -71,7 +70,7 @@ class DatabasesPluginTest extends DuskTestCase
         $this->initPlugin('databases', '/test/database');
 
         // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'input', 'detail', 'template', 'editColumn', 'editColumnDetail', 'editView', 'createBuckets', 'listBuckets', 'import', 'editBucketsMails');
+        $this->reserveManual('index', 'input', 'detail', 'template', 'editColumn', 'editColumnDetail', 'editView', 'createBuckets', 'listBuckets', 'import');
     }
 
     /**
@@ -477,52 +476,6 @@ class DatabasesPluginTest extends DuskTestCase
             {"path": "user/databases/editView/images/editView1"},
             {"path": "user/databases/editView/images/editView2",
              "comment": "<ul class=\"mb-0\"><li>データベースの表示設定を設定できます。</li></ul>"
-            }
-        ]');
-    }
-
-    /**
-     * メール設定
-     */
-    private function editBucketsMails()
-    {
-        // 実行
-        $this->browse(function (Browser $browser) {
-            $browser->visit('/plugin/databases/editBucketsMails/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                    ->screenshot('user/databases/editBucketsMails/images/editBucketsMails1')
-                    ->click('#label_notice_on')
-                    ->scrollIntoView('#label_notice_on')
-                    ->pause(500)
-                    ->screenshot('user/databases/editBucketsMails/images/editBucketsMails2')
-                    ->click('#label_approval_on')
-                    ->pause(500)
-                    ->scrollIntoView('#label_approval_on')
-                    ->pause(500)
-                    ->screenshot('user/databases/editBucketsMails/images/editBucketsMails3')
-                    ->click('#label_approved_on')
-                    ->pause(500)
-                    ->scrollIntoView('#label_approved_on')
-                    ->pause(500)
-                    ->screenshot('user/databases/editBucketsMails/images/editBucketsMails4');
-        });
-
-        // マニュアル用データ出力
-        $this->putManualData('[
-            {"path": "user/databases/editBucketsMails/images/editBucketsMails1",
-             "name": "送信タイミング設定",
-             "comment": "<ul class=\"mb-0\"><li>タイミング毎にメールの送信を設定できます。</li></ul>"
-            },
-            {"path": "user/databases/editBucketsMails/images/editBucketsMails2",
-             "name": "投稿通知",
-             "comment": "<ul class=\"mb-0\"><li>投稿通知の設定です。</li></ul>"
-            },
-            {"path": "user/databases/editBucketsMails/images/editBucketsMails3",
-             "name": "承認通知",
-             "comment": "<ul class=\"mb-0\"><li>承認通知の設定です。</li></ul>"
-            },
-            {"path": "user/databases/editBucketsMails/images/editBucketsMails4",
-             "name": "承認済み通知",
-             "comment": "<ul class=\"mb-0\"><li>承認済み通知の設定です。</li></ul>"
             }
         ]');
     }

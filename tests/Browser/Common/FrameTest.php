@@ -32,9 +32,12 @@ class FrameTest extends DuskTestCase
         $this->init();
         $this->login(1);
         $this->frameButton();
+        $this->frameEdit();
         $this->frameSetting();
         $this->frameDesign();
         $this->frameCol();
+        $this->frameDelete();
+        $this->frameMail();
     }
 
     /**
@@ -67,7 +70,7 @@ class FrameTest extends DuskTestCase
              'sort' => 2,
              'plugin_name' => 'frame',
              'plugin_title' => 'フレーム',
-             'plugin_desc' => 'フレームに関する操作ができます。',
+             'plugin_desc' => 'フレームに関する操作ができます。<br />ここでは、各プラグインに共通的なフレーム操作を説明します。<br />プラグイン毎に固有の設定はプラグインの説明に記載します。',
              'method_name' => 'index',
              'method_title' => 'フレーム操作ボタン',
              'method_desc' => 'フレームを操作するためにいくつかのボタンがあります。',
@@ -77,6 +80,64 @@ class FrameTest extends DuskTestCase
                  {"path": "common/frame/index/images/frameButton",
                   "name": "権限のある状態のフレーム",
                   "comment": "<ul class=\"mb-0\"><li>権限のあるユーザでログインしている場合、フレームヘッダーの右側に、フレームを操作するリンクが表示されます。</li><li>フレームの操作に関係するアイコンを以下で説明します。</li></ul>"
+                 }
+             ]',
+            'test_result' => 'OK']
+        );
+    }
+
+    /**
+     * フレーム設定系画面全般の説明
+     */
+    private function frameEdit()
+    {
+        // ブラウザ操作
+        $this->browse(function (Browser $browser) {
+            $page = Page::where('permanent_link', '/test')->first();
+            $frame = Frame::where('page_id', $page->id)->where('plugin_name', 'whatsnews')->first();
+
+            $browser->visit('/plugin/whatsnews/frame_setting/' . $page->id . '/' . $frame->id . '#frame-' . $frame->id)
+                    ->screenshot('common/frame/frameEdit/images/frameEdit1');
+
+            $browser->scrollIntoView('#default_hidden')
+                    ->screenshot('common/frame/frameEdit/images/frameEdit2');
+
+            // スマホ画面で開きなおす。（同じURLだと、リロードしないので、一度トップへ戻っている）
+            $browser->resize(400, 800);
+            $browser->visit('/');
+            $browser->visit('/plugin/whatsnews/frame_setting/' . $page->id . '/' . $frame->id . '#frame-' . $frame->id)
+                    ->click('#button_collapsing_navbar_lg')
+                    ->pause(500)
+                    ->screenshot('common/frame/frameEdit/images/frameEdit3');
+
+            // PC画面に戻す。
+            $browser->resize(1280, 800);
+        });
+
+        // マニュアル用データ出力
+        $dusk = Dusks::putManualData(
+            ['html_path' => 'common/frame/frameEdit/index.html'],
+            ['category' => 'common',
+             'sort' => 2,
+             'plugin_name' => 'frame',
+             'plugin_title' => 'フレーム',
+             'plugin_desc' => 'フレームに関する操作ができます。',
+             'method_name' => 'frameEdit',
+             'method_title' => 'フレーム設定系メニュー',
+             'method_desc' => 'フレームの設定メニュー全般を説明します。',
+             'method_detail' => '設定系のメニューは、プラグイン、表示エリアや設定幅、ブラウザ幅によって表示方法が異なります。<br />ここでは設定系メニューの表示方法を説明します。',
+             'html_path' => 'common/frame/frameEdit/index.html',
+             'img_args' => '[
+                 {"path": "common/frame/frameEdit/images/frameEdit1",
+                  "name": "フレーム設定系メニュー（PC及び幅の広いフレームの場合）-1"
+                 },
+                 {"path": "common/frame/frameEdit/images/frameEdit2",
+                  "name": "フレーム設定系メニュー（PC及び幅の広いフレームの場合）-2",
+                  "comment": "<ul class=\"mb-0\"><li>ここでは、例として新着情報プラグインの設定系メニューを示します。</li><li>設定系メニューはフレームヘッダーの下にプラグインで設定可能なメニューが並びます。</li><li>設定できる内容は、プラグインによって異なります。</li></ul>"
+                 },
+                 {"path": "common/frame/frameEdit/images/frameEdit3",
+                  "name": "フレーム設定系メニュー（スマートフォン及び左・右エリアや幅を狭く表示している場合のフレームの場合）",
+                  "comment": "<ul class=\"mb-0\"><li>フレームヘッダーの下にハンバーガーアイコンが表示され、それをクリックすると、設定系のメニューが表示されます。</li></ul>"
                  }
              ]',
             'test_result' => 'OK']
@@ -212,6 +273,8 @@ class FrameTest extends DuskTestCase
             $browser->resize(1280, 800);
         });
 
+        $this->login(1);
+
         // マニュアル用データ出力
         $dusk = Dusks::putManualData(
             ['html_path' => 'common/frame/frameCol/index.html'],
@@ -234,6 +297,112 @@ class FrameTest extends DuskTestCase
                   "name": "スマートフォンでのフレーム幅の使用例",
                   "comment": "<ul class=\"mb-0\"><li>3つのフレームの幅をそれぞれ、6、4、2で指定した場合でも、スマートフォンでは縦に並ぶ例です。</li></ul>"
                  }
+             ]',
+            'test_result' => 'OK']
+        );
+    }
+
+    /**
+     * フレーム削除
+     */
+    private function frameDelete()
+    {
+        // ブラウザ操作
+        $this->browse(function (Browser $browser) {
+            $page = Page::where('permanent_link', '/test')->first();
+            $frame = Frame::where('page_id', $page->id)->where('plugin_name', 'whatsnews')->first();
+
+            $browser->visit('/plugin/whatsnews/frame_delete/' . $page->id . '/' . $frame->id . '#frame-' . $frame->id)
+                    ->screenshot('common/frame/frameDelete/images/frameDelete');
+        });
+
+        // マニュアル用データ出力
+        $dusk = Dusks::putManualData(
+            ['html_path' => 'common/frame/frameDelete/index.html'],
+            ['category' => 'common',
+             'sort' => 2,
+             'plugin_name' => 'frame',
+             'plugin_title' => 'フレーム',
+             'plugin_desc' => 'フレームに関する操作ができます。',
+             'method_name' => 'frameDelete',
+             'method_title' => 'フレーム削除',
+             'method_desc' => 'フレームを削除できます。',
+             'method_detail' => 'ここでは、画面上のフレームを削除できます。フレームが削除されても、バケツの中のデータは削除されません。<br />フレームとバケツの関係は、マニュアルの「設計」から、「構造」および「ページ」の各説明を参照してください。',
+             'html_path' => 'common/frame/frameDelete/index.html',
+             'img_args' => '[
+                 {"path": "common/frame/frameDelete/images/frameDelete",
+                  "name": "フレーム削除",
+                  "comment": "<ul class=\"mb-0\"><li>フレームを削除できます。</li></ul>"
+                 }
+             ]',
+            'test_result' => 'OK']
+        );
+    }
+
+    /**
+     * メール設定
+     */
+    private function frameMail()
+    {
+        // 実行
+        $this->browse(function (Browser $browser) {
+            // 掲示板のメール設定を例にする。
+            $page = Page::where('permanent_link', '/test/bbs')->first();
+            $frame = Frame::where('page_id', $page->id)->where('plugin_name', 'bbses')->first();
+            $browser->visit('/plugin/bbses/editBucketsMails/' . $frame->page_id . '/' . $frame->id . '#frame-' . $frame->id)
+                    ->screenshot('common/frame/frameMail/images/editBucketsMails')
+                    ->click('#label_notice_on')
+                    ->pause(500)
+                    ->scrollIntoView('#label_notice_on')
+                    ->screenshot('common/frame/frameMail/images/editBucketsMailsNotice')
+                    ->click('#label_relate_on')
+                    ->pause(500)
+                    ->scrollIntoView('#label_relate_on')
+                    ->screenshot('common/frame/frameMail/images/editBucketsMailsRelate')
+                    ->click('#label_approval_on')
+                    ->pause(500)
+                    ->scrollIntoView('#label_approval_on')
+                    ->screenshot('common/frame/frameMail/images/editBucketsMailsApproval')
+                    ->click('#label_approved_on')
+                    ->pause(500)
+                    ->scrollIntoView('#label_approved_on')
+                    ->screenshot('common/frame/frameMail/images/editBucketsMailsApproved');
+        });
+
+        // マニュアル用データ出力
+        $dusk = Dusks::putManualData(
+            ['html_path' => 'common/frame/frameMail/index.html'],
+            ['category' => 'common',
+             'sort' => 2,
+             'plugin_name' => 'frame',
+             'plugin_title' => 'フレーム',
+             'plugin_desc' => 'フレームに関する操作ができます。',
+             'method_name' => 'frameMail',
+             'method_title' => 'メール設定',
+             'method_desc' => 'プラグインのメール送信条件を設定します。。',
+             'method_detail' => '送信タイミングや送信先、件名、本文などを設定します。<br />設定できる送信通知はプラグインによって異なります。<br />ここでは、掲示板プラグインを例にして説明します。',
+             'html_path' => 'common/frame/frameMail/index.html',
+             'img_args' => '[
+                {"path": "common/frame/frameMail/images/editBucketsMails",
+                 "name": "送信タイミング設定",
+                 "comment": "<ul class=\"mb-0\"><li>タイミング毎にメールの送信を設定できます。</li></ul>"
+                },
+                {"path": "common/frame/frameMail/images/editBucketsMailsNotice",
+                 "name": "投稿通知",
+                 "comment": "<ul class=\"mb-0\"><li>投稿通知の設定です。</li></ul>"
+                },
+                {"path": "common/frame/frameMail/images/editBucketsMailsRelate",
+                 "name": "関連記事通知",
+                 "comment": "<ul class=\"mb-0\"><li>関連記事の投稿通知の設定です。</li></ul>"
+                },
+                {"path": "common/frame/frameMail/images/editBucketsMailsApproval",
+                 "name": "承認通知",
+                 "comment": "<ul class=\"mb-0\"><li>承認通知の設定です。</li></ul>"
+                },
+                {"path": "common/frame/frameMail/images/editBucketsMailsApproved",
+                 "name": "承認済み通知",
+                 "comment": "<ul class=\"mb-0\"><li>承認済み通知の設定です。</li></ul>"
+                }
              ]',
             'test_result' => 'OK']
         );
