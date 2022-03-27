@@ -34,9 +34,9 @@ class UploadfileManageTest extends DuskTestCase
     {
         // uploads を1行作成する。
         $upload = Uploads::firstOrCreate(
-            ["client_original_name" => "blobid0000000000001.jpg"],
+            ["client_original_name" => "blobid0000000000001.png"],
             [
-                "client_original_name" => "blobid0000000000001.jpg",
+                "client_original_name" => "blobid0000000000001.png",
                 "mimetype" => "image/jpeg",
                 "extension" => "jpg",
                 "size" => 34008,
@@ -49,7 +49,7 @@ class UploadfileManageTest extends DuskTestCase
         );
 
         // 実ファイルのコピー
-        \Storage::put($this->getDirectory($upload->id) . '/' . $upload->id . ".jpg", \Storage::disk('manual')->get('copy_data/image/blobid0000000000001.jpg'));
+        \Storage::put($this->getDirectory($upload->id) . '/' . $upload->id . ".jpg", \Storage::disk('manual')->get('copy_data/image/blobid0000000000001.png'));
 
         // 実行
         $this->browse(function (Browser $browser) {

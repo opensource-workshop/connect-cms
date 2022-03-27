@@ -96,7 +96,7 @@ class BbsesPluginTest extends DuskTestCase
     private function edit($title = null)
     {
         // 記事で使う画像の取得
-        $upload = Uploads::where('client_original_name', 'blobid0000000000001.jpg')->first();
+        $upload = Uploads::where('client_original_name', 'blobid0000000000001.png')->first();
 
         $body = $title . 'の本文です。';
         if ($upload) {

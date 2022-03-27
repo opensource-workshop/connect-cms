@@ -182,7 +182,7 @@ class FaqsPluginTest extends DuskTestCase
             FaqsPosts::truncate();
 
             // 記事で使う画像の取得
-            $upload = Uploads::where('client_original_name', 'blobid0000000000001.jpg')->first();
+            $upload = Uploads::where('client_original_name', 'blobid0000000000001.png')->first();
             $body = '<p>FAQの本文です。</p>';
             if ($upload) {
                 $body .= '<br /><img src="/file/' . $upload->id . '" />';
