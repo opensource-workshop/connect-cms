@@ -19,7 +19,7 @@ jobs:
       matrix:
         php: [7.3, 7.4, '8.0']
 
-    name: PHP ${{ matrix.php }}
+    name: ubuntu-latest-mysql PHP ${{ matrix.php }}
 
     steps:
       # https://github.com/actions/checkout (official)
