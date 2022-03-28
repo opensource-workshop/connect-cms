@@ -599,12 +599,12 @@ class ReservationManage extends ManagePluginBase
     {
         // エラーチェック
         $validator = Validator::make($request->all(), [
-            'column_name'  => ['required'],
-            'column_type'  => ['required'],
+            'column_name' => ['required'],
+            'column_type' => ['required'],
         ]);
         $validator->setAttributeNames([
-            'column_name'  => '予約項目名',
-            'column_type'  => '型',
+            'column_name' => '予約項目名',
+            'column_type' => '型',
         ]);
 
         if ($validator->fails()) {
