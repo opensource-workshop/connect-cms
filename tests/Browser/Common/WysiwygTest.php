@@ -907,7 +907,7 @@ class WysiwygTest extends DuskTestCase
         }
 
         // 固定記事の配置
-        $this->frame = $this->addContents('/test/content', '', ['title' => 'AI顔認証']);
+        $this->frame = $this->addContents('/test/content', '', ['title' => 'AI顔認識']);
         $content = Contents::where('bucket_id', $this->frame->bucket_id)->first();
 
         // Dusk で操作できないので、マニュアル用にデータ生成
