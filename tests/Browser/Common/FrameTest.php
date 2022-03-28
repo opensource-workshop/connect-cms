@@ -98,6 +98,12 @@ class FrameTest extends DuskTestCase
         // ブラウザ操作
         $this->browse(function (Browser $browser) {
             $page = Page::where('permanent_link', '/test')->first();
+            if (is_null($page)) {
+                // テスト実行順により /test がまだ無い場合は作成して取得
+                $this->initPlugin('whatsnews', '/test');
+                $page = Page::where('permanent_link', '/test')->first();
+            }
+
             $frame = Frame::where('page_id', $page->id)->where('plugin_name', 'whatsnews')->first();
 
             $browser->visit('/plugin/whatsnews/frame_setting/' . $page->id . '/' . $frame->id . '#frame-' . $frame->id)
