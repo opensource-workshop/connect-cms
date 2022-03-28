@@ -1430,9 +1430,7 @@ class DatabasesPlugin extends UserPluginBase
             $databases_inputs->status = $status;
             $databases_inputs->display_sequence = $display_sequence;
             $databases_inputs->posted_at = $request->posted_at . ':00';
-            if ($request->filled('expires_at')) {
-                $databases_inputs->expires_at = $request->expires_at . ':00';
-            }
+            $databases_inputs->expires_at = $request->filled('expires_at') ? $request->expires_at . ':00' : null;
             $databases_inputs->save();
         } else {
             $databases_inputs = DatabasesInputs::where('id', $id)->first();
@@ -1445,9 +1443,7 @@ class DatabasesPlugin extends UserPluginBase
             $databases_inputs->status = $status;
             $databases_inputs->display_sequence = $display_sequence;
             $databases_inputs->posted_at = $request->posted_at . ':00';
-            if ($request->filled('expires_at')) {
-                $databases_inputs->expires_at = $request->expires_at . ':00';
-            }
+            $databases_inputs->expires_at = $request->filled('expires_at') ? $request->expires_at . ':00' : null;
             $databases_inputs->update();
         }
 
