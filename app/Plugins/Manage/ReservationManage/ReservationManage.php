@@ -533,6 +533,9 @@ class ReservationManage extends ManagePluginBase
      * 項目設定 初期表示
      *
      * @return view
+     * @method_title 項目設定
+     * @method_desc 予約項目の設定を行います。
+     * @method_detail 項目名と型を指定して予約項目を作成します。
      */
     public function editColumns($request, $id)
     {
@@ -724,6 +727,10 @@ class ReservationManage extends ManagePluginBase
 
     /**
      * 予約項目の設定画面の表示
+     *
+     * @method_title 項目の詳細編集
+     * @method_desc 予約項目の詳細設定を行います。
+     * @method_detail タイトル指定や選択肢の追加などを設定できます。
      */
     public function editColumnDetail($request, $id)
     {
