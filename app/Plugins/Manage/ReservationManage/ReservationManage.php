@@ -633,7 +633,7 @@ class ReservationManage extends ManagePluginBase
     /**
      * 予約項目の更新
      */
-    public function updateColumn($request, $page_id, $frame_id)
+    public function updateColumn($request, $id)
     {
         // 明細行から更新対象を抽出する為のnameを取得
         $str_column_name = "column_name_"."$request->column_id";
