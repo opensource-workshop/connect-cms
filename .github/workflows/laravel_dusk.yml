@@ -1,9 +1,9 @@
 name: Laravel Dusk
 
 on:
-  schedule:
-    # 毎日AM1時実行
-    - cron: '0 16 * * *'
+  # schedule:
+  #   # 毎日AM1時実行
+  #   - cron: '0 16 * * *'
   # 手動実行
   workflow_dispatch:
     inputs:
@@ -48,7 +48,7 @@ jobs:
           sed -i -e "s|TRANSLATE_API_URL=""|TRANSLATE_API_URL="http://localhost:8000"|g" .env
           sed -i -e "s|PDF_THUMBNAIL_API_URL=""|PDF_THUMBNAIL_API_URL="http://localhost:8000"|g" .env
           sed -i -e "s|FACE_AI_API_URL=""|FACE_AI_API_URL="http://localhost:8000"|g" .env
-          sed -e "$ a MANUAL_PUT_BASE=\"$GITHUB_WORKSPACE/tests/Manual/html/\"" .env
+          # sed -e "$ a MANUAL_PUT_BASE=\"$GITHUB_WORKSPACE/tests/Manual/html/\"" .env
 
       # schedule でphpバージョン指定
       - name: Set if input php_version is empty
@@ -122,9 +122,6 @@ jobs:
 
       - name: Run Laravel Server
         run: php artisan serve &
-
-      # - name: 'Run Dusk データ準備用 - ログ管理 - マニュアルなし'
-      #  run: php artisan dusk tests/Browser/Manage/LogManageTest.php no_manual
 
       - name: Run Dusk Tests
         run: php artisan dusk

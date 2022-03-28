@@ -952,7 +952,7 @@ class UserManage extends ManagePluginBase
                     ->where('group_users.user_id', '=', $id)
                     ->whereNull('group_users.deleted_at');
             })
-            ->orderBy('groups.name', 'asc')
+            ->orderBy('groups.display_sequence', 'asc')
             ->get();
             // ->paginate(10);
 

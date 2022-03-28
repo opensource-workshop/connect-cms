@@ -229,6 +229,9 @@ class ManualPdf extends DuskTestCase
         // 出力 ( D：Download, I：Inline )
         // env でパスが指定されていなかった場合は、manual ディスクの html フォルダに保存。
         if (empty(config('connect.manual_put_base'))) {
+            if (!\File::exists(\Storage::disk('manual')->path('html/pdf'))) {
+                \File::makeDirectory(\Storage::disk('manual')->path('html/pdf'), 0755, true);
+            }
             $pdf->output(\Storage::disk('manual')->path('html/pdf/manual.pdf'), 'F');
         } else {
             if (!\File::exists(config('connect.manual_put_base') . 'pdf')) {
