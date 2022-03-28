@@ -42,7 +42,6 @@ class ReservationsPluginTest extends DuskTestCase
         $this->choiceFacilities();
         $this->editView();
         $this->listBuckets();
-        $this->editBucketsMails();
 
         $this->editBooking();
 
@@ -64,7 +63,7 @@ class ReservationsPluginTest extends DuskTestCase
         $this->initPlugin('reservations', '/test/reservation');
 
         // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'showBooking', 'editBooking', 'createBuckets', 'editView', 'choiceFacilities', 'listBuckets', 'editBucketsMails');
+        $this->reserveManual('index', 'showBooking', 'editBooking', 'createBuckets', 'editView', 'choiceFacilities', 'listBuckets');
     }
 
     /**
@@ -262,50 +261,6 @@ class ReservationsPluginTest extends DuskTestCase
             {"path": "user/reservations/editView/images/display_type_only",
              "name": "１つの施設を選んで表示",
              "comment": "<ul class=\"mb-0\"><li>施設を選択できます。<br />この形式の場合は、予約一覧の表示画面では、施設の選択肢が出てきます。</li></ul>"
-            }
-        ]');
-    }
-
-    /**
-     * メール設定
-     */
-    private function editBucketsMails()
-    {
-        // ブラウザ
-        $this->browse(function (Browser $browser) {
-            $browser->visit('/plugin/reservations/editBucketsMails/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                    ->screenshot('user/reservations/editBucketsMails/images/editBucketsMails')
-                    ->click('#label_notice_on')
-                    ->pause(500)
-                    ->scrollIntoView('#label_notice_on')
-                    ->screenshot('user/reservations/editBucketsMails/images/editBucketsMailsNotice')
-                    ->click('#label_approval_on')
-                    ->pause(500)
-                    ->scrollIntoView('#label_approval_on')
-                    ->screenshot('user/reservations/editBucketsMails/images/editBucketsMailsApproval')
-                    ->click('#label_approved_on')
-                    ->pause(500)
-                    ->scrollIntoView('#label_approved_on')
-                    ->screenshot('user/reservations/editBucketsMails/images/editBucketsMailsApproved');
-        });
-
-        // マニュアル用データ出力
-        $this->putManualData('[
-            {"path": "user/reservations/editBucketsMails/images/editBucketsMails",
-             "name": "送信タイミング設定",
-             "comment": "<ul class=\"mb-0\"><li>タイミング毎にメールの送信を設定できます。</li></ul>"
-            },
-            {"path": "user/reservations/editBucketsMails/images/editBucketsMailsNotice",
-             "name": "投稿通知",
-             "comment": "<ul class=\"mb-0\"><li>投稿通知の設定です。</li></ul>"
-            },
-            {"path": "user/reservations/editBucketsMails/images/editBucketsMailsApproval",
-             "name": "承認通知",
-             "comment": "<ul class=\"mb-0\"><li>承認通知の設定です。</li></ul>"
-            },
-            {"path": "user/reservations/editBucketsMails/images/editBucketsMailsApproved",
-             "name": "承認済み通知",
-             "comment": "<ul class=\"mb-0\"><li>承認済み通知の設定です。</li></ul>"
             }
         ]');
     }

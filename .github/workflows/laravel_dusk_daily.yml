@@ -19,7 +19,7 @@ jobs:
       matrix:
         php: [7.3, 7.4, '8.0']
 
-    name: PHP ${{ matrix.php }}
+    name: ubuntu-latest-mysql PHP ${{ matrix.php }}
 
     steps:
       # https://github.com/actions/checkout (official)
@@ -48,11 +48,14 @@ jobs:
           coverage: none
           ini-values: post_max_size=128M, upload_max_filesize=128M, date.timezone=Asia/Tokyo
 
+      - name: Database Version
+        run: |
+          mysql --version
+
       - name: Create Database
         run: |
           sudo systemctl start mysql
           mysql --user="root" --password="root" -e "CREATE DATABASE laravel character set UTF8mb4 collate utf8mb4_general_ci;"
-          mysql --version
 
       # Composer
       - name: Validate composer.json and composer.lock
@@ -396,3 +399,20 @@ jobs:
           path: |
             tests/Browser/console
             storage/logs
+
+  slack-workflow-status:
+    if: always()
+    name: Post Workflow Status To Slack
+    needs:
+      - job-with-ubuntu-latest-mysql
+      - job-with-mysql-5_7
+      - job-with-mariadb-latest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slack Workflow Notification
+        # https://github.com/Gamesight/slack-workflow-status (community)
+        uses: Gamesight/slack-workflow-status@v1.0.1
+        with:
+          # Required Input
+          repo_token: ${{secrets.GITHUB_TOKEN}}
+          slack_webhook_url: ${{secrets.DUSK_DAILY_SLACK_WEBHOOK_URL}}

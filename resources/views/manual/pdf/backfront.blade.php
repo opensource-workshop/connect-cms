@@ -13,5 +13,5 @@
 <br /><br /><br />
 <ul>
 <li>株式会社オープンソース・ワークショップ ( https://opensource-workshop.jp/ )</li>
-<li>永原　篤（ nagahara@opensource-workshop.jp ）</li>
+<li>永原　篤（ <a href="https://twitter.com/nagasheep" target="_blank">twitter</a>/<a href="https://github.com/nagasheep" target="_blank">github</a> @nagasheep ）</li>
 </ul>

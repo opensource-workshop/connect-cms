@@ -50,7 +50,7 @@
 <div class="frame-setting-menu">
     <nav class="navbar {{$frame->getNavbarExpand()}} navbar-light bg-light">
         <span class="{{$frame->getNavbarBrand()}}">設定メニュー</span>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsingNavbarLg">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsingNavbarLg" id="button_collapsing_navbar_lg">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="navbar-collapse collapse" id="collapsingNavbarLg">

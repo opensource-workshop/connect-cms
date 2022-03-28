@@ -64,6 +64,10 @@ if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null
         <small><span class="badge badge-warning">データがない場合は非表示</span></small>
     @endif
 
+    @if (Auth::check() && $frame->page_only == 1 && $page->id == $frame->page_id)
+        <small><span class="badge badge-warning">このページのみ表示する。</span></small>
+    @endif
+
     @if (Auth::check() && $frame->page_only == 2 && $page->id == $frame->page_id)
         <small><span class="badge badge-warning">このページのみ表示しない。</span></small>
     @endif

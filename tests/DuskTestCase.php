@@ -586,7 +586,7 @@ EOF;
             'template' => 'default',
             'bucket_id' => $bucket->id,
             //'display_sequence' => empty($max_frame) ? 1 : $max_frame->display_sequence + 1
-            'display_sequence' => 1
+            'display_sequence' => array_key_exists('display_sequence', $options) ? $options['display_sequence'] : 1
         ]);
         return $frame;
     }
