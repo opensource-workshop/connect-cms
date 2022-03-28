@@ -615,7 +615,7 @@ class ReservationManage extends ManagePluginBase
         $max_display_sequence = ReservationsColumn::where('columns_set_id', $request->columns_set_id)->max('display_sequence');
         $max_display_sequence = $max_display_sequence ? $max_display_sequence + 1 : 1;
 
-        // 施設の登録処理
+        // 予約項目の登録処理
         $column = new ReservationsColumn();
         $column->columns_set_id = $request->columns_set_id;
         $column->column_name = $request->column_name;
