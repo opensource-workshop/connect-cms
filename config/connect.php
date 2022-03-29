@@ -75,7 +75,7 @@ return [
     'LOGIN_PATH' => env('LOGIN_PATH', 'login'),
 
     // Self register base role.(comma separator. Not set is guest)
-    'SELF_REGISTER_BASE_ROLES' => env('SELF_REGISTER_BASE_ROLES', ''),
+    'SELF_REGISTER_BASE_ROLES' => env('SELF_REGISTER_BASE_ROLES', null),
 
     // Custom message.
     'cc_lang_ja_messages_search_results_empty' => env('cc_lang_ja_messages_search_results_empty'),
