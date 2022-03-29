@@ -3330,7 +3330,7 @@ class DatabasesPlugin extends UserPluginBase
             // 次の末尾：表示順
             // 次の末尾：公開日時
             $expires_at = array_pop($csv_columns);
-            $expires_at = new Carbon($expires_at);
+            $expires_at = $expires_at ? new Carbon($expires_at) : null;
             $display_sequence = array_pop($csv_columns);
             $display_sequence = $this->getSaveDisplaySequence($display_sequence, $database->id, $databases_inputs_id);
             $posted_at = array_pop($csv_columns);
