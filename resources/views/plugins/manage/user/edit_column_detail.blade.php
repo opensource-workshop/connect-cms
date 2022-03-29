@@ -42,6 +42,15 @@
     }
 
     /**
+     * 同意内容の更新ボタン押下
+     */
+     function submit_update_agree(select_id) {
+        form_selects.action = "{{url('/')}}/manage/user/updateAgree";
+        form_selects.select_id.value = select_id;
+        form_selects.submit();
+    }
+
+    /**
      * その他の設定の更新ボタン押下
      */
     function submit_update_column_detail() {
@@ -191,6 +200,42 @@
                 </div>
             @endif
 
+            @if ($column->column_type == UserColumnType::agree)
+                {{-- 同意内容の設定 --}}
+                <div class="card mb-4">
+                    <h5 class="card-header">同意内容の設定</h5>
+                    <div class="card-body">
+
+                        {{-- 指定桁数（数値）以下を許容 --}}
+                        <div class="form-group row">
+                            <label class="col-md-3 col-form-label text-md-right">チェックボックスの名称 <span class="badge badge-danger">必須</span></label>
+                            <div class="col-md-9 align-items-center">
+                                <input type="text" name="value" value="{{old('value', $select_agree->value)}}" class="form-control" placeholder="（例）以下の内容に同意します。">
+                                @include('plugins.common.errors_inline', ['name' => 'value'])
+                            </div>
+                        </div>
+
+                        {{-- 同意内容 --}}
+                        <div class="form-group row">
+                            <label class="col-md-3 col-form-label text-md-right pt-0">同意内容 </label>
+                            <div class="col-md-9 align-items-center">
+                                <textarea name="agree_description" class="form-control" rows="3">{{old('agree_description', $select_agree->agree_description)}}</textarea>
+                                <small class="text-muted">
+                                    ※ 自動ユーザ登録時に求める同意の説明文<br />
+                                </small>
+                            </div>
+                            @include('plugins.common.errors_inline', ['name' => 'agree_description'])
+                        </div>
+
+                        {{-- ボタンエリア --}}
+                        <div class="form-group text-center">
+                            <button onclick="javascript:submit_update_agree({{ $select_agree->id }});" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
+                        </div>
+                    </div>
+                </div>
+                <br>
+            @endif
+
             @if ($column->column_type == UserColumnType::text || $column->column_type == UserColumnType::textarea || $column->column_type == UserColumnType::mail)
                 {{-- チェック処理の設定 --}}
                 <div class="card mb-4" id="div_rule">
@@ -225,7 +270,7 @@
 
                             {{-- 指定桁数（数値）以下を許容 --}}
                             <div class="form-group row">
-                                <label class="col-md-3 col-form-label text-md-right pt-0">入力桁数</label>
+                                <label class="col-md-3 col-form-label text-md-right">入力桁数</label>
                                 <div class="col-md-9 align-items-center">
                                     <input type="text" name="rule_digits_or_less" value="{{old('rule_digits_or_less', $column->rule_digits_or_less)}}" class="form-control">
                                     <small class="text-muted">
@@ -240,7 +285,7 @@
 
                             {{-- 指定文字数以下を許容 --}}
                             <div class="form-group row">
-                                <label class="col-md-3 col-form-label text-md-right pt-0">入力最大文字数</label>
+                                <label class="col-md-3 col-form-label text-md-right">入力最大文字数</label>
                                 <div class="col-md-9 align-items-center">
                                     <input type="text" name="rule_word_count" value="{{old('rule_word_count', $column->rule_word_count)}}" class="form-control">
                                     <small class="text-muted">
@@ -255,7 +300,7 @@
 
                             {{-- 最大値設定 --}}
                             <div class="form-group row">
-                                <label class="col-md-3 col-form-label text-md-right pt-0">最大値</label>
+                                <label class="col-md-3 col-form-label text-md-right">最大値</label>
                                 <div class="col-md-9 align-items-center">
                                     <input type="text" name="rule_max" value="{{old('rule_max', $column->rule_max)}}" class="form-control">
                                     <small class="text-muted">※ 数値で入力します。</small>
@@ -267,7 +312,7 @@
 
                             {{-- 最小値設定 --}}
                             <div class="form-group row">
-                                <label class="col-md-3 col-form-label text-md-right pt-0">最小値</label>
+                                <label class="col-md-3 col-form-label text-md-right">最小値</label>
                                 <div class="col-md-9 align-items-center">
                                     <input type="text" name="rule_min" value="{{old('rule_min', $column->rule_min)}}" class="form-control">
                                     <small class="text-muted">※ 数値で入力します。</small>
@@ -281,7 +326,7 @@
                         @if ($column->column_type == UserColumnType::text || $column->column_type == UserColumnType::textarea || $column->column_type == UserColumnType::mail)
                             {{-- 正規表現設定 --}}
                             <div class="form-group row">
-                                <label class="col-md-3 col-form-label text-md-right pt-0">正規表現</label>
+                                <label class="col-md-3 col-form-label text-md-right">正規表現</label>
                                 <div class="col-md-9 align-items-center">
                                     <input type="text" name="rule_regex" value="{{old('rule_regex', $column->rule_regex)}}" class="form-control">
                                     <small class="text-muted">
@@ -320,7 +365,7 @@
 
                     {{-- キャプション文字色 --}}
                     <div class="form-group row">
-                        <label class="col-md-3 col-form-label text-md-right pt-0">文字色 </label>
+                        <label class="col-md-3 col-form-label text-md-right">文字色 </label>
                         <div class="col-md-9 align-items-center">
                             <select class="form-control" name="caption_color">
                                 @foreach (Bs4TextColor::getMembers() as $key=>$value)
@@ -341,7 +386,6 @@
                 </div>
             </div>
 
-
             @if (
                 $column->column_type == UserColumnType::text ||
                 $column->column_type == UserColumnType::textarea ||
@@ -354,7 +398,7 @@
 
                         {{-- プレースホルダ内容 --}}
                         <div class="form-group row">
-                            <label class="col-md-3 col-form-label text-md-right pt-0">内容 </label>
+                            <label class="col-md-3 col-form-label text-md-right">内容 </label>
                             <div class="col-md-9 align-items-center">
                                 <input type="text" name="place_holder" class="form-control" value="{{old('place_holder', $column->place_holder)}}">
                             </div>

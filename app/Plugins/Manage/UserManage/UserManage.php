@@ -94,6 +94,7 @@ class UserManage extends ManagePluginBase
         $role_check_table["addSelect"]            = ['admin_site'];
         $role_check_table["updateSelect"]         = ['admin_site'];
         $role_check_table["updateSelectSequence"] = ['admin_site'];
+        $role_check_table["updateAgree"]          = ['admin_site'];
         $role_check_table["deleteSelect"]         = ['admin_site'];
 
         return $role_check_table;
@@ -2162,12 +2163,14 @@ class UserManage extends ManagePluginBase
         }
 
         $selects = UsersColumnsSelects::where('users_columns_id', $column->id)->orderby('display_sequence')->get();
+        $select_agree = $selects->first() ?? new UsersColumnsSelects();
 
         return view('plugins.manage.user.edit_column_detail', [
             "function"       => __FUNCTION__,
             "plugin_name"    => "user",
-            'column'          => $column,
-            'selects'         => $selects,
+            'column'         => $column,
+            'selects'        => $selects,
+            'select_agree'   => $select_agree,
         ]);
     }
 
@@ -2337,6 +2340,36 @@ class UserManage extends ManagePluginBase
         $pair_select->save();
 
         $message = '選択肢【 '. $target_select->select_name .' 】の表示順を更新しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/user/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
+    }
+
+    /**
+     * 同意内容の更新
+     */
+    public function updateAgree($request, $id)
+    {
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            'value' => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'value' => 'チェックボックスの名称',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // 項目の更新処理
+        $select = UsersColumnsSelects::where('id', $request->select_id)->firstOrNew([]);
+        $select->users_columns_id = $request->column_id;
+        $select->value = $request->value;
+        $select->agree_description = $request->agree_description;
+        $select->display_sequence = 1;
+        $select->save();
+        $message = '同意内容を更新しました。';
 
         // 編集画面を呼び出す
         return redirect("/manage/user/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
