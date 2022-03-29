@@ -99,7 +99,11 @@
                 </div>
             @endif
 
-            @if ($column->column_type == UserColumnType::radio)
+            @if (
+                $column->column_type == UserColumnType::radio ||
+                $column->column_type == UserColumnType::select ||
+                $column->column_type == UserColumnType::checkbox
+                )
                 {{-- 選択肢の設定 --}}
                 <div class="card mb-4">
                     <h5 class="card-header">選択肢の設定</h5>
