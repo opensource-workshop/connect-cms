@@ -38,6 +38,20 @@
                 </li>
 
                 <li role="presentation" class="nav-item">
+                    @if ($function == "editColumns")
+                        <span class="nav-link"><span class="active">項目設定</span></span>
+                    @else
+                        <a href="{{url('/manage/user/editColumns')}}" class="nav-link">項目設定</a></li>
+                    @endif
+                </li>
+
+                @if ($function == 'editColumnDetail')
+                    <li role="presentation" class="nav-item">
+                        <span class="nav-link"><span class="active">項目詳細設定</span></span>
+                    </li>
+                @endif
+
+                <li role="presentation" class="nav-item">
                 @if ($function == "autoRegist")
                     <span class="nav-link"><span class="active">自動ユーザ登録設定</span></span>
                 @else

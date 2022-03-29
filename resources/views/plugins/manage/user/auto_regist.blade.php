@@ -45,6 +45,25 @@
                 </div>
             </div>
 
+            {{-- 承認要否 --}}
+            @php
+                $require_approval = Configs::getConfigsValueAndOld($configs, 'user_registration_require_approval', '0');
+            @endphp
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label text-md-right pt-0">管理者の承認</label>
+                <div class="col pt-0">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input type="radio" value="1" id="require_approval_enable" name="user_registration_require_approval" class="custom-control-input" @if ($require_approval === '1') checked="checked" @endif>
+                        <label class="custom-control-label" for="require_approval_enable" id="label_require_approval_enable">必要</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input type="radio" value="0" id="require_approval_disable" name="user_registration_require_approval" class="custom-control-input" @if ($require_approval === '0') checked="checked" @endif>
+                        <label class="custom-control-label" for="require_approval_disable" id="label_require_approval_disable">不要</label>
+                    </div>
+                    <small class="form-text text-muted">ユーザ登録に管理者の承認が必要か選択してください。</small>
+                </div>
+            </div>
+
             {{-- 自動ユーザ登録時に以下のアドレスにメール送信する --}}
             <div class="form-group row">
                 <label class="col-md-3 col-form-label text-md-right pt-0">メール送信先</label>
@@ -158,6 +177,9 @@
                     <label class="control-label">本登録メールフォーマット</label>
                     <textarea name="user_register_mail_format" class="form-control" rows=5 placeholder="（例）登録内容をお知らせいたします。&#13;&#10;----------------------------------&#13;&#10;[[body]]&#13;&#10;----------------------------------">{{Configs::getConfigsValueAndOld($configs, 'user_register_mail_format')}}</textarea>
                     @include('plugins.common.description_frame_mails_common', ['embedded_tags' => UserRegisterNoticeEmbeddedTag::getDescriptionEmbeddedTags()])
+                    <small class="text-danger">
+                        ※ 管理者の承認を必要にしている場合は、本登録メールが登録申請メールとなります。
+                    </small>
                 </div>
             </div>
 
@@ -165,7 +187,33 @@
                 <label class="col-md-3 col-form-label text-md-right">本登録後のメッセージ</label>
                 <div class="col">
                     <input type="text" name="user_register_after_message" value="{{Configs::getConfigsValueAndOld($configs, 'user_register_after_message')}}" class="form-control">
-                    <small class="text-muted">※ （例）ユーザ登録が完了しました。登録したログインID、パスワードでログインしてください。</small>
+                    <small class="text-muted">※ （例）ユーザ登録が完了しました。登録したログインID、パスワードでログインしてください。<br></small>
+                    <small class="text-danger">※ 管理者の承認を必要にしている場合は、本登録後のメッセージが登録申請後のメッセージとなります。<br></small>
+                    <small class="text-muted">（例）ユーザの登録申請が完了しました。承認をお待ちください。</small>
+                </div>
+            </div>
+
+            {{-- 承認完了メール --}}
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label text-md-right pt-0">承認完了メール</label>
+                <div class="col">
+                    <label class="control-label">承認完了メール件名</label>
+                    <input type="text" name="user_register_approved_mail_subject" value="{{Configs::getConfigsValueAndOld($configs, 'user_register_approved_mail_subject')}}" class="form-control">
+                    <small class="text-muted">
+                        ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
+                    </small>
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label text-md-right"></label>
+                <div class="col">
+                    <label class="control-label">承認完了メールフォーマット</label>
+                    <textarea name="user_register_approved_mail_format" class="form-control" rows=5 placeholder="（例）ユーザー登録が承認されました。&#13;&#10;登録したログインID、パスワードでログインしてください。&#13;&#10;----------------------------------&#13;&#10;[[body]]&#13;&#10;----------------------------------">{{Configs::getConfigsValueAndOld($configs, 'user_register_approved_mail_format')}}</textarea>
+                    <small class="text-muted">
+                        ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
+                        ※ [[login_id]] を記述すると該当部分に登録内容が入ります。<br>
+                    </small>
                 </div>
             </div>
 
@@ -203,6 +251,69 @@
                 <div class="col-md-9">
                     <textarea name="user_register_description" class="form-control" rows=3>{!!Configs::getConfigsValueAndOld($configs, "user_register_description")!!}</textarea>
                     <small class="form-text text-muted">自動ユーザ登録時に求めるユーザ登録についての説明文</small>
+                </div>
+            </div>
+
+            {{-- 初期コンテンツ権限 --}}
+            @php
+                $base_roles = [];
+                $use_base_role_env = false;
+
+                // envの設定を優先して利用する
+                if (config('connect.SELF_REGISTER_BASE_ROLES') !== null) {
+                    $base_roles = explode(',', config('connect.SELF_REGISTER_BASE_ROLES'));
+                    $use_base_role_env = true;
+                } else {
+                    $base_roles = explode(',', Configs::getConfigsValue($configs, "user_register_base_roles"));
+                    if (old('base_roles') !== null && is_array(old('base_roles'))) {
+                        $base_roles = old('base_roles');
+                    }
+                }
+            @endphp
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label text-md-right pt-0">初期コンテンツ権限</label>
+                <div class="col-md-9">
+                    <input type="hidden" name="base_roles[]" value="">
+                    <div class="custom-control custom-checkbox">
+                        <input name="base_roles[]" value="role_article_admin" type="checkbox" class="custom-control-input" id="role_article_admin"
+                            @if (in_array('role_article_admin', $base_roles)) checked="checked" @endif
+                            @if ($use_base_role_env) disabled="disabled" @endif
+                        >
+                        <label class="custom-control-label" for="role_article_admin" id="label_role_article_admin">コンテンツ管理者</label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input name="base_roles[]" value="role_arrangement" type="checkbox" class="custom-control-input" id="role_arrangement"
+                            @if (in_array('role_arrangement', $base_roles))  checked="checked" @endif
+                            @if ($use_base_role_env) disabled="disabled" @endif
+                        >
+                        <label class="custom-control-label" for="role_arrangement" id="label_role_arrangement">プラグイン管理者</label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input name="base_roles[]" value="role_article" type="checkbox" class="custom-control-input" id="role_article"
+                            @if (in_array('role_article', $base_roles))  checked="checked" @endif
+                            @if ($use_base_role_env) disabled="disabled" @endif
+                        >
+                        <label class="custom-control-label" for="role_article" id="label_role_article">モデレータ（他ユーザの記事も更新）</label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input name="base_roles[]" value="role_approval" type="checkbox" class="custom-control-input" id="role_approval"
+                            @if (in_array('role_approval', $base_roles))  checked="checked" @endif
+                            @if ($use_base_role_env) disabled="disabled" @endif
+                        >
+                        <label class="custom-control-label" for="role_approval" id="label_role_approval">承認者</label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input name="base_roles[]" value="role_reporter" type="checkbox" class="custom-control-input" id="role_reporter"
+                            @if (in_array('role_reporter', $base_roles))  checked="checked" @endif
+                            @if ($use_base_role_env) disabled="disabled" @endif
+                        >
+                        <label class="custom-control-label" for="role_reporter" id="label_role_reporter">編集者</label>
+                    </div>
+                    <small class="text-muted">
+                        ※「編集者」、「モデレータ」の記事投稿については、各プラグイン側の権限設定も必要です。<br />
+                        ※「コンテンツ管理者」は、「コンテンツ管理者」権限と同時に「プラグイン管理者」「モデレータ」「承認者」「編集者」権限も併せて持ちます。<br />
+                        ※ 全てのユーザは、「ゲスト」権限も併せて持ちます。<br />
+                    </small>
                 </div>
             </div>
 

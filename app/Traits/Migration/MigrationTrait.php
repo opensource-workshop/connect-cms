@@ -458,6 +458,7 @@ trait MigrationTrait
             CabinetContent::truncate();
             Buckets::where('plugin_name', 'cabinets')->delete();
             MigrationMapping::where('target_source_table', 'cabinets')->delete();
+            MigrationMapping::where('target_source_table', 'cabinet_contents')->delete();
         }
 
         if ($target == 'bbses' || $target == 'all') {

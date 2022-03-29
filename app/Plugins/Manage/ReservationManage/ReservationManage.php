@@ -533,6 +533,9 @@ class ReservationManage extends ManagePluginBase
      * 項目設定 初期表示
      *
      * @return view
+     * @method_title 項目設定
+     * @method_desc 予約項目の設定を行います。
+     * @method_detail 項目名と型を指定して予約項目を作成します。
      */
     public function editColumns($request, $id)
     {
@@ -599,12 +602,12 @@ class ReservationManage extends ManagePluginBase
     {
         // エラーチェック
         $validator = Validator::make($request->all(), [
-            'column_name'  => ['required'],
-            'column_type'  => ['required'],
+            'column_name' => ['required'],
+            'column_type' => ['required'],
         ]);
         $validator->setAttributeNames([
-            'column_name'  => '予約項目名',
-            'column_type'  => '型',
+            'column_name' => '予約項目名',
+            'column_type' => '型',
         ]);
 
         if ($validator->fails()) {
@@ -615,7 +618,7 @@ class ReservationManage extends ManagePluginBase
         $max_display_sequence = ReservationsColumn::where('columns_set_id', $request->columns_set_id)->max('display_sequence');
         $max_display_sequence = $max_display_sequence ? $max_display_sequence + 1 : 1;
 
-        // 施設の登録処理
+        // 予約項目の登録処理
         $column = new ReservationsColumn();
         $column->columns_set_id = $request->columns_set_id;
         $column->column_name = $request->column_name;
@@ -633,7 +636,7 @@ class ReservationManage extends ManagePluginBase
     /**
      * 予約項目の更新
      */
-    public function updateColumn($request, $page_id, $frame_id)
+    public function updateColumn($request, $id)
     {
         // 明細行から更新対象を抽出する為のnameを取得
         $str_column_name = "column_name_"."$request->column_id";
@@ -724,6 +727,10 @@ class ReservationManage extends ManagePluginBase
 
     /**
      * 予約項目の設定画面の表示
+     *
+     * @method_title 項目の詳細編集
+     * @method_desc 予約項目の詳細設定を行います。
+     * @method_detail タイトル指定や選択肢の追加などを設定できます。
      */
     public function editColumnDetail($request, $id)
     {

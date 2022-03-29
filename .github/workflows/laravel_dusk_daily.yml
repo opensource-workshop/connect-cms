@@ -399,3 +399,20 @@ jobs:
           path: |
             tests/Browser/console
             storage/logs
+
+  slack-workflow-status:
+    if: always()
+    name: Post Workflow Status To Slack
+    needs:
+      - job-with-ubuntu-latest-mysql
+      - job-with-mysql-5_7
+      - job-with-mariadb-latest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slack Workflow Notification
+        # https://github.com/Gamesight/slack-workflow-status (community)
+        uses: Gamesight/slack-workflow-status@v1.0.1
+        with:
+          # Required Input
+          repo_token: ${{secrets.GITHUB_TOKEN}}
+          slack_webhook_url: ${{secrets.DUSK_DAILY_SLACK_WEBHOOK_URL}}

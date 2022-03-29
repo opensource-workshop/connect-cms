@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 //use App\Providers\RouteServiceProvider;
 use App\User;
@@ -137,6 +138,17 @@ class RegisterController extends Controller
             $this->redirectTo = '/';
         }
 
+        // 設定の取得
+        $configs = Configs::get();
+
+        // ユーザー登録に承認が必要な場合は、強制的にステータスを承認待ちにする
+        // ただし、承認待ちより仮登録を優先する（仮登録でメールアドレスの正当性を担保した後に承認待ちにする）
+        $status = $data['status'];
+        if (Configs::getConfigsValue($configs, 'user_registration_require_approval')
+            && $data['status'] != UserStatus::temporary && (!Auth::user() || !Auth::user()->can('admin_user'))) {
+            $status = UserStatus::pending_approval;
+        }
+
         // ユーザ登録
         $user = User::create([
             'name' => $data['name'],
@@ -145,7 +157,7 @@ class RegisterController extends Controller
             // change to laravel6.
             // 'password' => bcrypt($data['password']),
             'password' => Hash::make($data['password']),
-            'status' => $data['status'],
+            'status' => $status,
         ]);
 
         // ユーザーの追加項目の登録.
