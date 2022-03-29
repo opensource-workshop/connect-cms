@@ -683,6 +683,10 @@ class UserManage extends ManagePluginBase
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
+        // 更新前のステータス（承認完了判定用）
+        $user = User::find($id);
+        $before_status = $user ? $user->status : null;
+
         // 更新内容の配列
         $update_array = [
             'name'     => $request->name,
@@ -762,6 +766,12 @@ class UserManage extends ManagePluginBase
                     'role_value' => 1
                 ]);
             }
+        }
+
+        // 承認完了メール送信
+        if ($before_status === UserStatus::pending_approval
+            && (int)$request->status === UserStatus::active) {
+            $this->sendMailApproved($user);
         }
 
         // 変更画面に戻る
@@ -1072,6 +1082,15 @@ class UserManage extends ManagePluginBase
             ]
         );
 
+        // 管理者の承認
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_registration_require_approval'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_registration_require_approval
+            ]
+        );
+
         // 以下のアドレスにメール送信する
         $configs = Configs::updateOrCreate(
             ['name' => 'user_register_mail_send_flag'],
@@ -1159,6 +1178,24 @@ class UserManage extends ManagePluginBase
             [
                 'category' => 'user_register',
                 'value' => $request->user_register_after_message
+            ]
+        );
+
+        // 承認完了メール件名
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_approved_mail_subject'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_approved_mail_subject
+            ]
+        );
+
+        // 承認完了メールフォーマット
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_approved_mail_format'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_approved_mail_format
             ]
         );
 
@@ -1918,6 +1955,38 @@ class UserManage extends ManagePluginBase
             "user" => $user,
             "users_login_histories" => $users_login_histories,
         ]);
+    }
+
+    /**
+     * 承認完了メールを送信する
+     *
+     * @param User $user 承認したユーザ
+     */
+    private function sendMailApproved($user)
+    {
+        $configs = Configs::get();
+        // 登録者にメール送信する
+        $user_register_user_mail_send_flag = Configs::getConfigsValue($configs, 'user_register_user_mail_send_flag');
+
+        // メール送信
+        if ($user_register_user_mail_send_flag && $user->email) {
+            // メール件名の組み立て
+            $subject = Configs::getConfigsValue($configs, 'user_register_approved_mail_subject');
+
+            // メール件名内のサイト名文字列を置換
+            $subject = str_replace('[[site_name]]', Configs::getConfigsValue($configs, 'base_site_name'), $subject);
+
+            // メール本文の組み立て
+            $mail_text = Configs::getConfigsValue($configs, 'user_register_approved_mail_format');
+            // メール本文内のサイト名文字列を置換
+            $mail_text = str_replace('[[site_name]]', Configs::getConfigsValue($configs, 'base_site_name'), $mail_text);
+            $mail_text = str_replace('[[login_id]]', $user->userid, $mail_text);
+
+            // メールオプション
+            $mail_options = ['subject' => $subject, 'template' => 'mail.send'];
+
+            $this->sendMail($user->email, $mail_options, ['content' => $mail_text], 'RegistersUsers');
+        }
     }
 
     /**
