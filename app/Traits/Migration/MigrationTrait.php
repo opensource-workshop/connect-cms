@@ -971,9 +971,12 @@ trait MigrationTrait
             $this->importReservations($redo);
         }
 
-
         // 固定URLの取り込み
-        $this->importPermalinks($redo);
+        if ($this->isTarget('cc_import', 'plugins', 'blogs') ||
+            $this->isTarget('cc_import', 'plugins', 'databases') ||
+            $this->isTarget('cc_import', 'plugins', 'bbses')) {
+            $this->importPermalinks($redo);
+        }
 
         // 新ページの取り込み
         if ($this->isTarget('cc_import', 'pages')) {
@@ -6686,7 +6689,11 @@ trait MigrationTrait
         }
 
         // NC2 固定リンク（abbreviate_url）データのエクスポート
-        $this->nc2ExportAbbreviateUrl($redo);
+        if ($this->isTarget('nc2_export', 'plugins', 'blogs') ||
+            $this->isTarget('nc2_export', 'plugins', 'databases') ||
+            $this->isTarget('nc2_export', 'plugins', 'bbses')) {
+            $this->nc2ExportAbbreviateUrl($redo);
+        }
 
         // pages データとファイルのエクスポート
         if ($this->isTarget('nc2_export', 'pages')) {
