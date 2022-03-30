@@ -804,9 +804,11 @@ trait MigrationTrait
     /**
      * インポート時INIから日時取得 ＆ 日時フォーマットチェック
      */
-    private function getDatetimeFromIniAndCheckFormat($ini, $key1, $key2)
+    private function getDatetimeFromIniAndCheckFormat($ini, $key1, $key2, $default = null)
     {
-        $default = date('Y-m-d H:i:s');
+        if (is_null($default)) {
+            $default = date('Y-m-d H:i:s');
+        }
 
         $date = $this->getArrayValue($ini, $key1, $key2, null);
 
@@ -2731,6 +2733,26 @@ trait MigrationTrait
             }
             $bucket = Buckets::create(['bucket_name' => $form_name, 'plugin_name' => 'forms']);
 
+            // 登録期間で制御する
+            $regist_control_flag = 0;
+            $regist_to = null;
+
+            // nc2 の active_flag (動作／停止)
+            $nc2_active_flag = $this->getArrayValue($form_ini, 'source_info', 'active_flag', 1);
+            if ($nc2_active_flag == 0) {
+                // 停止
+                // 停止フォームなら、登録期間外で代用してフォーム登録を停止する。
+                $regist_control_flag = 1;
+                $regist_to = Carbon::now()->setTime(0, 0, 0);
+                $this->putMonitor(3, '停止フォームのため、登録期間外で代用してフォーム登録を停止します。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+
+            } else {
+                // 動作
+                $regist_control_flag = $form_ini['form_base']['regist_control_flag'];
+                $regist_to = $this->getDatetimeFromIniAndCheckFormat($form_ini, 'form_base', 'regist_to', '');
+                $regist_to = $regist_to ? $regist_to : null;
+            }
+
             // メールフォーマットの置換処理
             $mail_format = str_replace('\n', "\n", $form_ini['form_base']['mail_format']);
             // 登録日時、ルームの出力は未実装機能
@@ -2755,6 +2777,8 @@ trait MigrationTrait
                 'after_message'       => str_replace('\n', "\n", $form_ini['form_base']['after_message']),
                 'numbering_use_flag'  => $form_ini['form_base']['numbering_use_flag'],
                 'numbering_prefix'    => $form_ini['form_base']['numbering_prefix'],
+                'regist_control_flag' => $regist_control_flag,
+                'regist_to'           => $regist_to,
             ]);
 
             // マッピングテーブルの追加
@@ -8446,6 +8470,8 @@ trait MigrationTrait
             }
 
             $registration_id = $nc2_registration->registration_id;
+            $regist_control_flag = $nc2_registration->period ? 1 : 0;
+            $regist_to =  $nc2_registration->period ? $this->getCCDatetime($nc2_registration->period) : '';
 
             // 登録フォーム設定
             $registration_ini = "";
@@ -8460,11 +8486,14 @@ trait MigrationTrait
             $registration_ini .= "after_message = \""     . str_replace("\n", '\n', $nc2_registration->accept_message) . "\"\n";
             $registration_ini .= "numbering_use_flag = 0\n";
             $registration_ini .= "numbering_prefix = null\n";
+            $registration_ini .= "regist_control_flag = " . $regist_control_flag. "\n";
+            $registration_ini .= "regist_to = \""         . $regist_to . "\"\n";
 
             // NC2 情報
             $registration_ini .= "\n";
             $registration_ini .= "[source_info]\n";
             $registration_ini .= "registration_id = " . $nc2_registration->registration_id . "\n";
+            $registration_ini .= "active_flag = "     . $nc2_registration->active_flag . "\n";
             $registration_ini .= "room_id = "         . $nc2_registration->room_id . "\n";
             $registration_ini .= "module_name = \"registration\"\n";
 
