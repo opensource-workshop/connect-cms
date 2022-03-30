@@ -2741,6 +2741,7 @@ trait MigrationTrait
                 '{X-TO_DATE}'=>'[[to_datetime]]',
                 '{X-DATA}'=>'[[body]]',
             ];
+            $mail_subject = str_replace(array_keys($replace_tags), array_values($replace_tags), $form_ini['form_base']['mail_subject']);
             $mail_format = str_replace(array_keys($replace_tags), array_values($replace_tags), $mail_format);
             $form = Forms::create([
                 'bucket_id'           => $bucket->id,
@@ -2748,7 +2749,7 @@ trait MigrationTrait
                 'mail_send_flag'      => $form_ini['form_base']['mail_send_flag'],
                 'mail_send_address'   => $form_ini['form_base']['mail_send_address'],
                 'user_mail_send_flag' => $form_ini['form_base']['user_mail_send_flag'],
-                'mail_subject'        => $form_ini['form_base']['mail_subject'],
+                'mail_subject'        => $mail_subject,
                 'mail_format'         => $mail_format,
                 'data_save_flag'      => $form_ini['form_base']['data_save_flag'],
                 'after_message'       => str_replace('\n', "\n", $form_ini['form_base']['after_message']),
