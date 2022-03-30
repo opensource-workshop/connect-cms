@@ -8469,6 +8469,27 @@ trait MigrationTrait
                 continue;
             }
 
+            // (nc2) mail_send = (1)登録をメールで通知する          => 通知メールアドレスありなら (cc) mail_send_flag = 以下のアドレスにメール送信するON
+            //     (nc2) regist_user_send = 登録者本人にメールする  => (cc) user_mail_send_flag = 登録者にメール送信する
+            // (nc2) mail_send = (0)登録をメールで通知しない        => (cc) mail_send_flag      = (0 固定) 以下のアドレスにメール送信しない
+            //                                                    => (cc) user_mail_send_flag = (0 固定) 登録者にメール送信しない
+            // (nc2) rcpt_to = 主担以外で通知するメールアドレス      => (cc) mail_send_address   = 送信するメールアドレス（複数ある場合はカンマで区切る）
+
+            $mail_send_address = $nc2_registration->rcpt_to;
+
+            // (nc2) mail_send = 登録をメールで通知する
+            if ($nc2_registration->mail_send) {
+                // メール通知ON
+                $user_mail_send_flag = $nc2_registration->regist_user_send;
+                // 通知メールアドレスありなら (cc) mail_send_flag = 以下のアドレスにメール送信するON
+                $mail_send_flag = $mail_send_address ? 1 : 0;
+
+            } else {
+                // メール通知OFF
+                $user_mail_send_flag = 0;
+                $mail_send_flag = 0;
+            }
+
             $registration_id = $nc2_registration->registration_id;
             $regist_control_flag = $nc2_registration->period ? 1 : 0;
             $regist_to =  $nc2_registration->period ? $this->getCCDatetime($nc2_registration->period) : '';
@@ -8477,9 +8498,9 @@ trait MigrationTrait
             $registration_ini = "";
             $registration_ini .= "[form_base]\n";
             $registration_ini .= "forms_name = \""        . $nc2_registration->registration_name . "\"\n";
-            $registration_ini .= "mail_send_flag = "      . $nc2_registration->mail_send . "\n";
-            $registration_ini .= "mail_send_address = \"" . $nc2_registration->rcpt_to . "\"\n";
-            $registration_ini .= "user_mail_send_flag = " . $nc2_registration->regist_user_send . "\n";
+            $registration_ini .= "mail_send_flag = "      . $mail_send_flag . "\n";
+            $registration_ini .= "mail_send_address = \"" . $mail_send_address . "\"\n";
+            $registration_ini .= "user_mail_send_flag = " . $user_mail_send_flag . "\n";
             $registration_ini .= "mail_subject = \""      . $nc2_registration->mail_subject . "\"\n";
             $registration_ini .= "mail_format = \""       . str_replace("\n", '\n', $nc2_registration->mail_body) . "\"\n";
             $registration_ini .= "data_save_flag = 1\n";
