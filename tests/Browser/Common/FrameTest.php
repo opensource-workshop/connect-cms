@@ -101,6 +101,8 @@ class FrameTest extends DuskTestCase
             if (is_null($page)) {
                 // テスト実行順により /test がまだ無い場合は作成して取得
                 $this->initPlugin('whatsnews', '/test');
+                // initPlugin()でログアウトしているため、再度ログイン
+                $this->login(1);
                 $page = Page::where('permanent_link', '/test')->first();
             }
 

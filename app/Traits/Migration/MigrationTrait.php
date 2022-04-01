@@ -804,9 +804,11 @@ trait MigrationTrait
     /**
      * インポート時INIから日時取得 ＆ 日時フォーマットチェック
      */
-    private function getDatetimeFromIniAndCheckFormat($ini, $key1, $key2)
+    private function getDatetimeFromIniAndCheckFormat($ini, $key1, $key2, $default = null)
     {
-        $default = date('Y-m-d H:i:s');
+        if (is_null($default)) {
+            $default = date('Y-m-d H:i:s');
+        }
 
         $date = $this->getArrayValue($ini, $key1, $key2, null);
 
@@ -969,9 +971,12 @@ trait MigrationTrait
             $this->importReservations($redo);
         }
 
-
         // 固定URLの取り込み
-        $this->importPermalinks($redo);
+        if ($this->isTarget('cc_import', 'plugins', 'blogs') ||
+            $this->isTarget('cc_import', 'plugins', 'databases') ||
+            $this->isTarget('cc_import', 'plugins', 'bbses')) {
+            $this->importPermalinks($redo);
+        }
 
         // 新ページの取り込み
         if ($this->isTarget('cc_import', 'pages')) {
@@ -2731,6 +2736,26 @@ trait MigrationTrait
             }
             $bucket = Buckets::create(['bucket_name' => $form_name, 'plugin_name' => 'forms']);
 
+            // 登録期間で制御する
+            $regist_control_flag = 0;
+            $regist_to = null;
+
+            // nc2 の active_flag (動作／停止)
+            $nc2_active_flag = $this->getArrayValue($form_ini, 'source_info', 'active_flag', 1);
+            if ($nc2_active_flag == 0) {
+                // 停止
+                // 停止フォームなら、登録期間外で代用してフォーム登録を停止する。
+                $regist_control_flag = 1;
+                $regist_to = Carbon::now()->setTime(0, 0, 0);
+                $this->putMonitor(3, '停止フォームのため、登録期間外で代用してフォーム登録を停止します。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+
+            } else {
+                // 動作
+                $regist_control_flag = $form_ini['form_base']['regist_control_flag'];
+                $regist_to = $this->getDatetimeFromIniAndCheckFormat($form_ini, 'form_base', 'regist_to', '');
+                $regist_to = $regist_to ? $regist_to : null;
+            }
+
             // メールフォーマットの置換処理
             $mail_format = str_replace('\n', "\n", $form_ini['form_base']['mail_format']);
             // 登録日時、ルームの出力は未実装機能
@@ -2741,6 +2766,7 @@ trait MigrationTrait
                 '{X-TO_DATE}'=>'[[to_datetime]]',
                 '{X-DATA}'=>'[[body]]',
             ];
+            $mail_subject = str_replace(array_keys($replace_tags), array_values($replace_tags), $form_ini['form_base']['mail_subject']);
             $mail_format = str_replace(array_keys($replace_tags), array_values($replace_tags), $mail_format);
             $form = Forms::create([
                 'bucket_id'           => $bucket->id,
@@ -2748,12 +2774,14 @@ trait MigrationTrait
                 'mail_send_flag'      => $form_ini['form_base']['mail_send_flag'],
                 'mail_send_address'   => $form_ini['form_base']['mail_send_address'],
                 'user_mail_send_flag' => $form_ini['form_base']['user_mail_send_flag'],
-                'mail_subject'        => $form_ini['form_base']['mail_subject'],
+                'mail_subject'        => $mail_subject,
                 'mail_format'         => $mail_format,
                 'data_save_flag'      => $form_ini['form_base']['data_save_flag'],
                 'after_message'       => str_replace('\n', "\n", $form_ini['form_base']['after_message']),
                 'numbering_use_flag'  => $form_ini['form_base']['numbering_use_flag'],
                 'numbering_prefix'    => $form_ini['form_base']['numbering_prefix'],
+                'regist_control_flag' => $regist_control_flag,
+                'regist_to'           => $regist_to,
             ]);
 
             // マッピングテーブルの追加
@@ -6661,7 +6689,11 @@ trait MigrationTrait
         }
 
         // NC2 固定リンク（abbreviate_url）データのエクスポート
-        $this->nc2ExportAbbreviateUrl($redo);
+        if ($this->isTarget('nc2_export', 'plugins', 'blogs') ||
+            $this->isTarget('nc2_export', 'plugins', 'databases') ||
+            $this->isTarget('nc2_export', 'plugins', 'bbses')) {
+            $this->nc2ExportAbbreviateUrl($redo);
+        }
 
         // pages データとファイルのエクスポート
         if ($this->isTarget('nc2_export', 'pages')) {
@@ -8444,26 +8476,52 @@ trait MigrationTrait
                 continue;
             }
 
+            // (nc2) mail_send = (1)登録をメールで通知する          => 通知メールアドレスありなら (cc) mail_send_flag = 以下のアドレスにメール送信するON
+            //     (nc2) regist_user_send = 登録者本人にメールする  => (cc) user_mail_send_flag = 登録者にメール送信する
+            // (nc2) mail_send = (0)登録をメールで通知しない        => (cc) mail_send_flag      = (0 固定) 以下のアドレスにメール送信しない
+            //                                                    => (cc) user_mail_send_flag = (0 固定) 登録者にメール送信しない
+            // (nc2) rcpt_to = 主担以外で通知するメールアドレス      => (cc) mail_send_address   = 送信するメールアドレス（複数ある場合はカンマで区切る）
+
+            $mail_send_address = $nc2_registration->rcpt_to;
+
+            // (nc2) mail_send = 登録をメールで通知する
+            if ($nc2_registration->mail_send) {
+                // メール通知ON
+                $user_mail_send_flag = $nc2_registration->regist_user_send;
+                // 通知メールアドレスありなら (cc) mail_send_flag = 以下のアドレスにメール送信するON
+                $mail_send_flag = $mail_send_address ? 1 : 0;
+
+            } else {
+                // メール通知OFF
+                $user_mail_send_flag = 0;
+                $mail_send_flag = 0;
+            }
+
             $registration_id = $nc2_registration->registration_id;
+            $regist_control_flag = $nc2_registration->period ? 1 : 0;
+            $regist_to =  $nc2_registration->period ? $this->getCCDatetime($nc2_registration->period) : '';
 
             // 登録フォーム設定
             $registration_ini = "";
             $registration_ini .= "[form_base]\n";
             $registration_ini .= "forms_name = \""        . $nc2_registration->registration_name . "\"\n";
-            $registration_ini .= "mail_send_flag = "      . $nc2_registration->mail_send . "\n";
-            $registration_ini .= "mail_send_address = \"" . $nc2_registration->rcpt_to . "\"\n";
-            $registration_ini .= "user_mail_send_flag = " . $nc2_registration->regist_user_send . "\n";
+            $registration_ini .= "mail_send_flag = "      . $mail_send_flag . "\n";
+            $registration_ini .= "mail_send_address = \"" . $mail_send_address . "\"\n";
+            $registration_ini .= "user_mail_send_flag = " . $user_mail_send_flag . "\n";
             $registration_ini .= "mail_subject = \""      . $nc2_registration->mail_subject . "\"\n";
             $registration_ini .= "mail_format = \""       . str_replace("\n", '\n', $nc2_registration->mail_body) . "\"\n";
             $registration_ini .= "data_save_flag = 1\n";
             $registration_ini .= "after_message = \""     . str_replace("\n", '\n', $nc2_registration->accept_message) . "\"\n";
             $registration_ini .= "numbering_use_flag = 0\n";
             $registration_ini .= "numbering_prefix = null\n";
+            $registration_ini .= "regist_control_flag = " . $regist_control_flag. "\n";
+            $registration_ini .= "regist_to = \""         . $regist_to . "\"\n";
 
             // NC2 情報
             $registration_ini .= "\n";
             $registration_ini .= "[source_info]\n";
             $registration_ini .= "registration_id = " . $nc2_registration->registration_id . "\n";
+            $registration_ini .= "active_flag = "     . $nc2_registration->active_flag . "\n";
             $registration_ini .= "room_id = "         . $nc2_registration->room_id . "\n";
             $registration_ini .= "module_name = \"registration\"\n";
 
