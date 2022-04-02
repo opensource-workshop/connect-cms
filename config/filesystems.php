@@ -85,6 +85,10 @@ return [
             'driver' => 'local',
             'root' => base_path('tests/Browser/screenshots'),
         ],
+        'tests_tmp' => [
+            'driver' => 'local',
+            'root' => base_path('tests/tmp'),
+        ],
 
     ],
 
