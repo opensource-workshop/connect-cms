@@ -12,6 +12,7 @@ rem
 rem マニュアル出力
 rem > php artisan dusk tests\Manual\src\ManualOutput.php
 rem > php artisan dusk tests\Manual\src\ManualPdf.php
+rem > php artisan dusk tests\Manual\src\ManualVideo.php
 rem
 rem [How to test]
 rem https://github.com/opensource-workshop/connect-cms/wiki/Dusk

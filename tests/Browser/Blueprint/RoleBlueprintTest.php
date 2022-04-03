@@ -86,6 +86,8 @@ class RoleBlueprintTest extends DuskTestCase
             if (is_null($blog_page)) {
                 // テスト実行順により /test/blog がまだ無い場合は作成して取得
                 $this->initPlugin('blogs', '/test/blog');
+                // initPlugin()でログアウトしているため、再度ログイン
+                $this->login(1);
                 $blog_page = Page::where('permanent_link', '/test/blog')->first();
             }
 

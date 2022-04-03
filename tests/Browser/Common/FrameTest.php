@@ -6,6 +6,7 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
+use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Common\Uploads;
@@ -97,16 +98,10 @@ class FrameTest extends DuskTestCase
     {
         // ブラウザ操作
         $this->browse(function (Browser $browser) {
-            $page = Page::where('permanent_link', '/test')->first();
-            if (is_null($page)) {
-                // テスト実行順により /test がまだ無い場合は作成して取得
-                $this->initPlugin('whatsnews', '/test');
-                $page = Page::where('permanent_link', '/test')->first();
-            }
+            $page = Page::where('permanent_link', '/common/frame')->first();
+            $frame = Frame::where('page_id', $page->id)->where('plugin_name', 'contents')->first();
 
-            $frame = Frame::where('page_id', $page->id)->where('plugin_name', 'whatsnews')->first();
-
-            $browser->visit('/plugin/whatsnews/frame_setting/' . $page->id . '/' . $frame->id . '#frame-' . $frame->id)
+            $browser->visit('/plugin/contents/frame_setting/' . $page->id . '/' . $frame->id . '#frame-' . $frame->id)
                     ->screenshot('common/frame/frameEdit/images/frameEdit1');
 
             $browser->scrollIntoView('#default_hidden')
@@ -115,7 +110,7 @@ class FrameTest extends DuskTestCase
             // スマホ画面で開きなおす。（同じURLだと、リロードしないので、一度トップへ戻っている）
             $browser->resize(400, 800);
             $browser->visit('/');
-            $browser->visit('/plugin/whatsnews/frame_setting/' . $page->id . '/' . $frame->id . '#frame-' . $frame->id)
+            $browser->visit('/plugin/contents/frame_setting/' . $page->id . '/' . $frame->id . '#frame-' . $frame->id)
                     ->click('#button_collapsing_navbar_lg')
                     ->pause(500)
                     ->screenshot('common/frame/frameEdit/images/frameEdit3');
@@ -163,8 +158,8 @@ class FrameTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->resize(1280, 850);
 
-            $page = Page::where('permanent_link', '/')->first();
-            $frame = Frame::where('page_id', $page->id)->where('plugin_name', 'contents')->where('area_id', 0)->orderBy('display_sequence', 'asc')->first();
+            $page = Page::where('permanent_link', '/common/frame')->first();
+            $frame = Frame::where('page_id', $page->id)->where('plugin_name', 'contents')->where('area_id', 2)->orderBy('display_sequence', 'asc')->first();
 
             $browser->visit('/plugin/contents/frame_setting/' . $page->id . '/' . $frame->id . '#frame-' . $frame->id)
                     ->screenshot('common/frame/frameSetting/images/frameSetting');
@@ -333,7 +328,7 @@ class FrameTest extends DuskTestCase
 
             // フッターに固定記事を用意して、サイトフッターを作成
             Frame::where('page_id', $page->id)->where('area_id', 4)->delete();
-            $upload = Uploads::where('client_original_name', 'blobid0000000000001.png')->first();
+            $upload = $this->firstOrCreateFileUpload('manual', 'copy_data/image/blobid0000000000001.png', 'blobid0000000000001.png', 'image/png', 'png', 'contents', $page->id);
             $footer_content  = '<div class="row mt-3"><div class="col-md"><p class="mb-0"><img src="/file/' . $upload->id . '" width="300" /></p></div>';
             $footer_content .= '<div class="col-md">';
             $footer_content .= '<p class="mt-3 mb-0 color-white"><a href="/" class="mr-3">Home</a> <a href="/test" class="mr-3">プラグイン・テスト</a> <a href="/common" class="mr-3">共通機能テスト</a></p>';
@@ -467,10 +462,10 @@ class FrameTest extends DuskTestCase
     {
         // ブラウザ操作
         $this->browse(function (Browser $browser) {
-            $page = Page::where('permanent_link', '/test')->first();
-            $frame = Frame::where('page_id', $page->id)->where('plugin_name', 'whatsnews')->first();
+            $page = Page::where('permanent_link', '/common/frame')->first();
+            $frame = Frame::where('page_id', $page->id)->where('plugin_name', 'contents')->first();
 
-            $browser->visit('/plugin/whatsnews/frame_delete/' . $page->id . '/' . $frame->id . '#frame-' . $frame->id)
+            $browser->visit('/plugin/contents/frame_delete/' . $page->id . '/' . $frame->id . '#frame-' . $frame->id)
                     ->screenshot('common/frame/frameDelete/images/frameDelete');
         });
 
@@ -504,9 +499,30 @@ class FrameTest extends DuskTestCase
     {
         // 実行
         $this->browse(function (Browser $browser) {
+            // プラグインがなければ追加(テストするFrameとページのインスタンス変数への保持も)
+            $this->addPluginFirst('bbses', '/test/bbs', 2);
+
             // 掲示板のメール設定を例にする。
             $page = Page::where('permanent_link', '/test/bbs')->first();
             $frame = Frame::where('page_id', $page->id)->where('plugin_name', 'bbses')->first();
+            if (is_null($frame->bucket_id)) {
+                // テスト実行順により バケツ がまだ無い場合は作成
+                // 新規作成
+                $browser->visit('/plugin/bbses/createBuckets/' . $page->id . '/' . $frame->id . '#frame-' . $frame->id)
+                        ->type('name', 'テストの掲示板')
+                        ->click('#label_use_like_on')
+                        ->pause(500)
+                        ->type('like_button_name', 'イイネ！')
+                        ->screenshot('user/bbses/createBuckets/images/createBuckets')
+                        ->press('登録確定');
+
+                // 一度、選択確定させる。
+                $bucket = Buckets::where('plugin_name', 'bbses')->first();
+                $browser->visit('/plugin/bbses/listBuckets/' . $page->id . '/' . $frame->id . '#frame-' . $frame->id)
+                        ->radio('select_bucket', $bucket->id)
+                        ->press("表示掲示板変更");
+            }
+
             $browser->visit('/plugin/bbses/editBucketsMails/' . $frame->page_id . '/' . $frame->id . '#frame-' . $frame->id)
                     ->screenshot('common/frame/frameMail/images/editBucketsMails')
                     ->click('#label_notice_on')
