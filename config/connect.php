@@ -126,4 +126,17 @@ return [
 
     // キャッシュ保持時間（分）10080 は1週間（7日）
     'CACHE_MINUTS' => 10080,
+
+    // AWS SDK
+    'AWS' => [
+        'key' => env('AWS_ACCESS_KEY_ID'),
+        'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        'region' => env('AWS_DEFAULT_REGION', 'ap-northeast-1'),
+    ],
+
+    // FFMpeg path
+    'FFMPEG_PATH' => env('FFMPEG_PATH'),
+
+    // AWS SDK
+    'REQUIRE_AWS_SDK_PATH' => env('REQUIRE_AWS_SDK_PATH'),
 ];

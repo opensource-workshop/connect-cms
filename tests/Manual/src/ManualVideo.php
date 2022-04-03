@@ -81,6 +81,16 @@ use App\Models\Core\Dusks;
 class ManualVideo extends DuskTestCase
 {
     /**
+     * AWS SDK
+     */
+    private $sdk;
+
+    /**
+     * AWS polly
+     */
+    private $polly;
+
+    /**
      * スクリーンショット保存ルートパス
      */
     private $screenshots_root;
@@ -106,6 +116,57 @@ class ManualVideo extends DuskTestCase
     }
 
     /**
+     * AWS SDK
+     *
+     * @return void
+     */
+    private function createSdk()
+    {
+        if (empty($this->sdk)) {
+            $this->sdk = new \Aws\Sdk([
+                'region'   => config('connect.AWS')['region'],
+                'version'  => 'latest',
+                'credentials' => [
+                  'key' => config('connect.AWS')['key'],
+                  'secret' => config('connect.AWS')['secret'],
+                ],
+            ]);
+        }
+        return $this->sdk;
+    }
+
+    /**
+     * AWS Polly
+     *
+     * @return void
+     */
+    private function createPolly()
+    {
+        if (empty($this->polly)) {
+            $this->polly = $this->sdk->createPolly();
+        }
+        return $this->polly;
+    }
+
+    /**
+     * MP3 生成
+     *
+     * @return void
+     */
+    private function createMp3($text)
+    {
+        $response = $this->polly->synthesizeSpeech([
+            'OutputFormat'  => 'mp3',
+            'Text'          => $text,
+            'VoiceId'       => 'Mizuki',
+            //'VoiceId'       => 'Takumi',
+            'TextType'      => 'ssml',
+            //'TextType'      => 'string',
+        ]);
+        return $response['AudioStream'];
+    }
+
+    /**
      * ナレーション用に文章のクリーニング
      *
      * @return void
@@ -126,16 +187,53 @@ class ManualVideo extends DuskTestCase
     }
 
     /**
+     * 文章
+     *
+     * @return void
+     */
+    private function getComments($method)
+    {
+/*
+        [
+            {"path": "user/blogs/index/images/index",
+             "name": "記事の一覧",
+             "comment": "<ul class=\"mb-0\"><li>記事は新しいものから表示されます。</li></ul>"
+            },
+            {"path": "user/blogs/index/images/index2",
+             "name": "記事のコピー",
+             "comment": "<ul class=\"mb-0\"><li>編集権限がある場合、記事の編集ボタンの右にある▼ボタンで、記事のコピーができます。</li></ul>"
+            }
+        ]
+*/
+        $comments = array();
+
+        // img_args が json か。
+        if (json_decode($method->img_args)) {
+            $json_paths = json_decode($method->img_args);
+            foreach ($json_paths as $json_path) {
+                // ナレーション文章を組み立て
+                $comments[] = [
+                    'img_path' => $json_path->path,
+                    'mp3_path' => str_replace('images/', '', $json_path->path),
+                    'comment'  => $this->cleaningText($json_path->comment),
+                ];
+
+//                \Storage::disk('tests_tmp')->put(str_replace('images/', '', $json_path->path) . '.txt', $content);
+
+                //$video_params[$method->plugin_name] = ['img_path' => $json_path->path, 'narration' => $this->cleaningText($method->method_desc . $method->method_detail)];
+
+            }
+        }
+        return $comments;
+    }
+
+    /**
      * カテゴリ出力
      *
      * @return void
      */
     private function outputCategory($dusks, $category)
     {
-        if ($category->category != 'manage') {
-            return;
-        }
-
         // ビデオ用のナレーションと画像
         $video_params = array();
 
@@ -184,6 +282,59 @@ class ManualVideo extends DuskTestCase
     private function outputMethod($method)
     {
         // メソッドの出力
+        echo $method->plugin_name;
+
+        $comments = $this->getComments($method);
+print_r($comments);
+
+        // 動画結合リスト
+        $mp4list = '';
+
+        // 画像とコメントのループ
+        foreach ($comments as $index => $comment) {
+            if (!\Storage::disk('tests_tmp')->exists($comment['mp3_path'] . '.mp3')){ 
+                \Storage::disk('tests_tmp')->put($comment['mp3_path'] . '.mp3', $this->createMp3('<speak>' . $comment['comment'] . '</speak>'));
+            }
+//            if (!\Storage::disk('tests_tmp')->exists($comment['mp3_path'] . '.mp4')){ 
+                $png_path = \Storage::disk('screenshot')->path($comment['img_path'] . '.png');
+                $mp3_path = \Storage::disk('tests_tmp')->path($comment['mp3_path'] . '.mp3');
+                $mp4_tmp_path = \Storage::disk('tests_tmp')->path($comment['mp3_path'] . '_tmp.mp4');
+                $mp4_path = \Storage::disk('tests_tmp')->path($comment['mp3_path'] . '.mp4');
+
+                $ffmpg_cmd = config('connect.FFMPEG_PATH') . ' -y -loop 1 -i ' . $png_path . ' -i ' . $mp3_path . ' -vcodec libx264 -acodec aac -ab 160k -ac 2 -ar 48000 -pix_fmt yuv420p -shortest ' . $mp4_tmp_path;
+                system($ffmpg_cmd);
+
+                // 動画にフェードの処理。最初、最後、真ん中でフェードを変える。
+                if ($index === array_key_first($comments)) {
+                    // 最初(始端処理)
+                    $ffmpg_cmd = config('connect.FFMPEG_PATH') . ' -y -i ' . $mp4_tmp_path . ' -vf reverse,fade=d=1.0,reverse -c:a copy ' . $mp4_path;
+                } elseif ($index === array_key_last($comments)) {
+                    $ffmpg_cmd = config('connect.FFMPEG_PATH') . ' -y -i ' . $mp4_tmp_path . ' -vf fade=d=1.0 -c:a copy ' . $mp4_path;
+                } else {
+                    $ffmpg_cmd = config('connect.FFMPEG_PATH') . ' -y -i ' . $mp4_tmp_path . ' -vf fade=d=1.0,reverse,fade=d=0.5,reverse -c:a copy ' . $mp4_path;
+                }
+                system($ffmpg_cmd);
+
+                $mp4list .= 'file ' . str_replace('/', '\\\\', str_replace('\\', '\\\\', $mp4_path)) . "\n";
+//            }
+        }
+        $mp4_list_path = \Storage::disk('tests_tmp')->path(dirname($comments[0]['mp3_path']) . '/_mp4list.txt');
+        $mp4_marge_path = \Storage::disk('tests_tmp')->path(dirname($comments[0]['mp3_path']) . '/output.mp4');
+        \Storage::disk('tests_tmp')->put(dirname($comments[0]['mp3_path']) . '/_mp4list.txt', $mp4list);
+
+echo "\n";
+echo "【mp4_list_path】\n";
+echo $mp4_list_path . "\n";
+echo "\n";
+echo "【mp4_marge_path】\n";
+echo $mp4_marge_path . "\n";
+echo \Storage::disk('tests_tmp')->get(dirname($comments[0]['mp3_path']) . '/_mp4list.txt');
+
+        $ffmpg_cmd = config('connect.FFMPEG_PATH') . ' -y -f concat -safe 0 -i ' . str_replace('/', '\\', $mp4_list_path) . ' -c copy ' . $mp4_marge_path;
+        system($ffmpg_cmd);
+
+//        $ffmpg_cmd = config('connect.FFMPEG_PATH') . ' -y -f concat -safe 0 -i ' . $mp4_list_path . ' -c copy ' . $mp4_marge_path;
+//        system($ffmpg_cmd);
     }
 
     /**
@@ -193,6 +344,11 @@ class ManualVideo extends DuskTestCase
      */
     public function testVideo()
     {
+        require config('connect.REQUIRE_AWS_SDK_PATH');
+
+        $this->createSdk();
+        $this->createPolly();
+
         // Laravel がコンストラクタでbase_path など使えないので、ここで。
         $this->screenshots_root = base_path('tests/Browser/screenshots/');
 
@@ -203,7 +359,8 @@ class ManualVideo extends DuskTestCase
         });
 
         // 全データ取得
-        $dusks = Dusks::orderBy("id", "asc")->get();
+//        $dusks = Dusks::orderBy("id", "asc")->get();
+        $dusks = Dusks::where('plugin_name', 'blogs')->where('method_name', 'index')->orderBy("id", "asc")->get();
 
         // マニュアル表紙
         //$pdf->writeHTML(view('manual.pdf.cover')->render(), false);
@@ -218,17 +375,21 @@ class ManualVideo extends DuskTestCase
         // カテゴリのループ
         // echo "\n";
         foreach ($dusks->groupBy('category') as $category) {
-            $this->outputCategory($dusks, $category[0]);
+            //$this->outputCategory($dusks, $category[0]);
 
             // プラグインのループ
             foreach ($dusks->where('category', $category[0]->category)->where('method_name', 'index') as $plugin) {
-//                $this->outputPlugin($dusks, $category[0], $plugin);
+                //$this->outputPlugin($dusks, $category[0], $plugin);
 
                 // メソッドのループ
                 foreach ($dusks->where('category', $category[0]->category)->where('plugin_name', $plugin->plugin_name) as $method) {
-//                    $this->outputMethod($method);
+                    $this->outputMethod($method);
                 }
             }
         }
+
+//        $ffmpg_cmd = config('connect.FFMPEG_PATH') . ' -y -f concat -safe 0 -i ' . 'C:\SitesLaravel\connect-cms\htdocs\test.localhost\tests\tmp\user\blogs\index\_mp4list.txt' . ' -c copy ' . 'C:\SitesLaravel\connect-cms\htdocs\test.localhost\tests\tmp\user\blogs\index\output.mp4';
+//        system($ffmpg_cmd);
+
     }
 }
