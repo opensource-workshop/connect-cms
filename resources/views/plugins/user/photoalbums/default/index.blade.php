@@ -187,7 +187,7 @@
         <div class="row">
             <label class="{{$frame->getSettingLabelClass()}} p-0"></label>
             <div class="{{$frame->getSettingInputClass()}}">
-                <small class="my-0 form-text text-muted">jpg, png, gif, zip を許可します。zip の場合は展開されて登録されます。(zip は予定)</small>
+                <small class="my-0 form-text text-muted">jpg, png, gif, zip を許可します。<br />zip の場合は展開され、フォルダがアルバム（サブアルバム）となり、登録されます。</small>
             </div>
         </div>
         @if ($errors && $errors->has("upload_file.$frame_id")) 
@@ -202,7 +202,7 @@
             <label class="{{$frame->getSettingLabelClass()}}" for="title">タイトル</label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <input type="text" name="title[{{$frame_id}}]" value="{{old("title.$frame_id")}}" class="form-control @if ($errors && $errors->has("title.$frame_id")) border-danger @endif" id="title{{$frame_id}}">
-                <small class="form-text text-muted">空の場合、ファイル名をタイトルとして登録します。</small>
+                <small class="form-text text-muted">空の場合、ファイル名をタイトルとして登録します。(zipの場合はファイル名が入ります)</small>
                 @if ($errors && $errors->has("title.$frame_id")) 
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("title.*")}}</div>
                 @endif
@@ -212,6 +212,7 @@
             <label class="{{$frame->getSettingLabelClass()}}" for="description">説明</label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <textarea name="description[{{$frame_id}}]" class="form-control @if ($errors->has('description.$frame_id')) border-danger @endif" rows=2>{!!old("description.$frame_id")!!}</textarea>
+                <small class="form-text text-muted">zipの場合は空になります。</small>
                 @if ($errors && $errors->has("description.$frame_id")) 
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("description.*")}}</div>
                 @endif
@@ -256,7 +257,7 @@
         <div class="row">
             <label class="{{$frame->getSettingLabelClass()}} p-0"></label>
             <div class="{{$frame->getSettingInputClass()}}">
-                <small class="my-0 form-text text-muted">mp4, zip を許可します。zip の場合は展開されて登録されます。</small>
+                <small class="my-0 form-text text-muted">mp4, zip を許可します。zip の場合は展開されて登録されます。(zip は予定)</small>
             </div>
         </div>
         @if ($errors && $errors->has("upload_video.$frame_id")) 

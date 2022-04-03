@@ -3491,6 +3491,7 @@ class DatabasesPlugin extends UserPluginBase
      */
     private function checkCvslines($fp, $databases_columns, $databases_id, $file_extension, $unzip_dir_full_path)
     {
+        $messages = [];
         $rules = [];
         // $rules = [
         //     0 => [],
@@ -3558,11 +3559,14 @@ class DatabasesPlugin extends UserPluginBase
         // excelでは 2020-07-01 のハイフンや 2020/07/01 と頭ゼロが付けられないため、インポート時は修正できる日付形式に見直し
         // $rules[$col + 1] = ['required', 'date_format:Y-m-d H:i'];
         // 行頭（固定項目） の id 分で+1, 行末に追加で+1 = col+2ずらす
-        $rules[$col + 2] = ['required', 'date_format:Y/n/j H:i'];
+        $rules[$col + 2] = ['required', 'date_format:Y/n/j G:i'];
         // 表示順
         $rules[$col + 3] = ['present', 'nullable', 'numeric'];
         // 表示終了日時
-        $rules[$col + 4] = ['present', 'nullable', 'date_format:Y/n/j H:i', 'after:' . ($col + 2)];
+        $rules[$col + 4] = ['present', 'nullable', 'date_format:Y/n/j G:i', 'after:' . ($col + 2)];
+
+        $messages[($col + 2) . '.date_format'] = ':attributeには対応した日付形式（例：2021/6/7 1:00）を指定してください。';
+        $messages[($col + 4) . '.date_format'] = ':attributeには対応した日付形式（例：2021/6/7 1:00）を指定してください。';
 
         // ヘッダー行が1行目なので、2行目からデータ始まる
         $line_count = 2;
@@ -3637,7 +3641,7 @@ class DatabasesPlugin extends UserPluginBase
             array_unshift($csv_columns, $databases_inputs_id);
 
             // バリデーション
-            $validator = Validator::make($csv_columns, $rules);
+            $validator = Validator::make($csv_columns, $rules, $messages);
             // Log::debug($line_count . '行目の$csv_columns:' . var_export($csv_columns, true));
             // Log::debug(var_export($rules, true));
 
