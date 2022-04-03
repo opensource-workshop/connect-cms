@@ -95,4 +95,61 @@ class UnzipUtils
 
         rmdir($dir);
     }
+
+    /**
+     * ZIP解凍（ファイルを連番変換）
+     */
+    public static function unzipSerialNumber($zip_path, $plugin_name)
+    {
+        // zipを展開するフォルダ
+        $tmp_dir = UnzipUtils::getTmpDir();
+        $unzip_dir_full_path = storage_path('app/') . "tmp/{$plugin_name}/{$tmp_dir}/";
+
+        // 連番ファイル用フォルダ
+        $tmp_seq_dir = UnzipUtils::getTmpDir();
+        \Storage::makeDirectory("tmp/{$plugin_name}/{$tmp_seq_dir}/");
+
+        // zip展開とパスの保持
+        $album_paths = array(); // ファイル階層とアルバム内の階層
+        $za = new \ZipArchive();
+        $za->open(storage_path('app/') . $zip_path);
+        for( $i = 0; $i < $za->numFiles; $i++ ){
+            $zip_entry = $za->statIndex($i);
+            $default_name = $zip_entry['name']; // statIndexで変換しない名前（これでファイル検索しないと見つけられない）
+
+            // ファイルを指定してzipから展開
+            $za->extractTo($unzip_dir_full_path, $default_name);
+
+            // 展開ディレクトリから、連番ディレクトリへファイルを移動（ディレクトリの場合は処理しない）
+            if (substr($default_name, -1) != '/') {
+                \Storage::move("tmp/{$plugin_name}/{$tmp_dir}/" . $default_name, "tmp/{$plugin_name}/{$tmp_seq_dir}/" . $i . '.' . pathinfo($zip_entry['name'], PATHINFO_EXTENSION));
+
+                // UTF-8 でファイルパスを取得
+                $raw_infos = $za->statIndex($i, \ZipArchive::FL_ENC_RAW); // FL_ENC_RAW を付けなければ、後でUTF-8 に変換できない。
+                $path_utf8 = mb_convert_encoding($raw_infos['name'], \CsvCharacterCode::utf_8, \CsvCharacterCode::sjis_win.", ".\CsvCharacterCode::utf_8);
+
+                $album_paths[$i]['album_path'] = $path_utf8;
+                $album_paths[$i]['is_folder'] = (substr($default_name, -1) != '/') ? false : true;
+            }
+        }
+        $za->close();
+
+        // ファイル一覧
+        $tmp_files = \Storage::allFiles("tmp/{$plugin_name}/{$tmp_seq_dir}/");
+        foreach ($tmp_files as $tmp_file) {
+            $album_paths[pathinfo($tmp_file, PATHINFO_FILENAME)]['src_path'] = $tmp_file;
+        }
+
+        return [$album_paths, ["tmp/{$plugin_name}/{$tmp_dir}/", "tmp/{$plugin_name}/{$tmp_seq_dir}/"]];
+    }
+
+    /**
+     * ZIP解凍（ファイルを連番変換）のテンポラリ・ファイル＆ディレクトリの削除
+     */
+    public static function deleteUnzipTmp($tmp_dirs, $delete_path)
+    {
+        \Storage::deleteDirectory($tmp_dirs[0]);
+        \Storage::deleteDirectory($tmp_dirs[1]);
+        \Storage::delete($delete_path);
+    }
 }
