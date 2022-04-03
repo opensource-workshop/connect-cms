@@ -113,7 +113,7 @@ class UnzipUtils
         $album_paths = array(); // ファイル階層とアルバム内の階層
         $za = new \ZipArchive();
         $za->open(storage_path('app/') . $zip_path);
-        for( $i = 0; $i < $za->numFiles; $i++ ){
+        for ($i = 0; $i < $za->numFiles; $i++) {
             $zip_entry = $za->statIndex($i);
             $default_name = $zip_entry['name']; // statIndexで変換しない名前（これでファイル検索しないと見つけられない）
 
