@@ -207,11 +207,11 @@ class PhotoalbumsPluginTest extends DuskTestCase
         // マニュアル用データ出力
         $this->putManualData('[
             {"path": "user/photoalbums/upload/images/upload1",
-             "name": "写真のアップロード画面"
+             "name": "写真のアップロード画面",
+             "comment": "<ul class=\"mb-0\"><li>写真をアップロードできます。</li><li>アップロードできるファイルの拡張子はjpg, png, gif, zipです。</li><li>zipの場合は、zipファイル内のフォルダ構成が、アルバム、サブアルバムとして再現されます。すでに存在するアルバム名がある場合は存在するアルバム内に写真が格納されます。</li></ul>"
             },
             {"path": "user/photoalbums/upload/images/upload2",
-             "name": "写真のアップロード後",
-             "comment": "<ul class=\"mb-0\"><li>写真をアップロードできます。</li></ul>"
+             "name": "写真のアップロード後"
             },
             {"path": "user/photoalbums/upload/images/upload_video1_1",
              "name": "動画のアップロード後"

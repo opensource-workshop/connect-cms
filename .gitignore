@@ -56,5 +56,8 @@ sync_option_private_2_dev.sh
 /resources/views/plugins_option/*
 !/resources/views/plugins_option/user/optionsamples/*
 
+# Dusk
+/tests/tmp/*
+
 # Docker
 /docker/db

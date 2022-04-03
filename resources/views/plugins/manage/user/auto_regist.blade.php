@@ -163,7 +163,7 @@
                 </div>
             </div>
 
-            <div class="form-group row">
+            <div class="form-group row" id="div_user_register_mail_subject">
                 <label class="col-md-3 col-form-label text-md-right pt-0">本登録メール</label>
                 <div class="col">
                     <label class="control-label">本登録メール件名</label>
@@ -194,7 +194,7 @@
             </div>
 
             {{-- 承認完了メール --}}
-            <div class="form-group row">
+            <div class="form-group row" id="div_user_register_approved_mail_subject">
                 <label class="col-md-3 col-form-label text-md-right pt-0">承認完了メール</label>
                 <div class="col">
                     <label class="control-label">承認完了メール件名</label>
@@ -219,7 +219,7 @@
 
 
             {{-- 自動ユーザ登録時に個人情報保護方針への同意を求めるか --}}
-            <div class="form-group row">
+            <div class="form-group row" id="div_user_register_requre_privacy">
                 <label class="col-md-3 col-form-label text-md-right pt-0">個人情報保護方針への同意</label>
                 <div class="col-md-9">
                     <div class="custom-control custom-checkbox">
