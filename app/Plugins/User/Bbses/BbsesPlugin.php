@@ -612,9 +612,19 @@ class BbsesPlugin extends UserPluginBase
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
+        $plugin_buckets = Bbs::
+            select('bbses.*')
+            ->leftJoin('frames', function ($leftJoin) use ($frame_id) {
+                $leftJoin->on('bbses.bucket_id', '=', 'frames.bucket_id')
+                    ->where('frames.id', $frame_id);
+            })
+            ->orderBy('frames.bucket_id', 'desc')
+            ->orderBy('bbses.created_at', 'desc')
+            ->paginate(10, ["*"], "frame_{$frame_id}_page");
+
         // 表示テンプレートを呼び出す。
         return $this->view('list_buckets', [
-            'plugin_buckets' => Bbs::orderBy('created_at', 'desc')->paginate(10, ["*"], "frame_{$frame_id}_page"),
+            'plugin_buckets' => $plugin_buckets,
         ]);
     }
 
