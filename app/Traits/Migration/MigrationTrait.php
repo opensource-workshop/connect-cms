@@ -7203,7 +7203,7 @@ trait MigrationTrait
             $users_ini .= "\n";
             $users_ini .= "[\"" . $nc2_user->user_id . "\"]\n";
             $users_ini .= "name               = \"" . $nc2_user->handle . "\"\n";
-            $users_ini .= "email              = \"" . $nc2_user->email . "\"\n";
+            $users_ini .= "email              = \"" . trim($nc2_user->email) . "\"\n";
             $users_ini .= "userid             = \"" . $nc2_user->login_id . "\"\n";
             $users_ini .= "password           = \"" . $nc2_user->password . "\"\n";
             if ($nc2_user->active_flag == 0) {
