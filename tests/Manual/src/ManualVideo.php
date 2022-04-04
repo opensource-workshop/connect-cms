@@ -277,7 +277,7 @@ class ManualVideo extends DuskTestCase
         // 画像とコメントのループ
         foreach ($materials as $index => $material) {
             // mp3 生成（ない場合のみ）
-            if (!\Storage::disk('tests_tmp')->exists($material['mp3_file_disk'])){ 
+            if (!\Storage::disk('tests_tmp')->exists($material['mp3_file_disk'])) {
                 \Storage::disk('tests_tmp')->put($material['mp3_file_disk'], $this->createMp3('<speak>' . $material['comment'] . '</speak>'));
             }
             // mp4 生成（完成した mp4 がない場合）
