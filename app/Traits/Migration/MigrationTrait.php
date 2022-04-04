@@ -1850,11 +1850,30 @@ trait MigrationTrait
                     continue;
                 }
 
+                $plugin_name = $this->getArrayValue($permalinks_ini, $short_url, 'plugin_name');
+                if (empty($plugin_name)) {
+                    $this->putError(3, '固定URLの plugin_name なし', "short_url = " . $short_url);
+                    continue;
+                }
+
+                $unique_id = $this->getArrayValue($permalinks_ini, $short_url, 'unique_id');
+                if (empty($unique_id)) {
+                    $this->putError(3, '固定URLの nc2 unique_id なし', "short_url = " . $short_url);
+                    continue;
+                }
+
+                // 新 unique_id
+                $unique_migration_mappings = MigrationMapping::where('target_source_table', $plugin_name . '_post')->where('source_key', $unique_id)->first();
+                if (empty($unique_migration_mappings)) {
+                    $this->putError(3, '固定URLのリンク先移行後記事なし', "short_url = " . $short_url . " target_source_table = '" . $plugin_name . "_post' and source_key = " . $unique_id);
+                    continue;
+                }
+
                 // Permalinks 登録 or 更新
                 $bulks[] = ['short_url' => $short_url,
-                    'plugin_name'    => $this->getArrayValue($permalinks_ini, $short_url, 'plugin_name'),
+                    'plugin_name'    => $plugin_name,
                     'action'         => $this->getArrayValue($permalinks_ini, $short_url, 'action'),
-                    'unique_id'      => $this->getArrayValue($permalinks_ini, $short_url, 'unique_id'),
+                    'unique_id'      => $unique_migration_mappings->destination_key,
                     'migrate_source' => $this->getArrayValue($permalinks_ini, $short_url, 'migrate_source')];
                 /*
                 $permalink = Permalink::updateOrCreate(
@@ -9974,7 +9993,7 @@ trait MigrationTrait
             $permalink  = "\n";
             $permalink .= "[\"" . $nc2_abbreviate_url->short_url . "\"]\n";
 
-            $plugin_name     = $this->plugin_name[$nc2_abbreviate_url->dir_name];
+            $plugin_name = $this->plugin_name[$nc2_abbreviate_url->dir_name];
             $permalink .= "plugin_name    = \"" . $plugin_name . "\"\n";
 
             if ($plugin_name == 'blogs') {
@@ -9985,15 +10004,17 @@ trait MigrationTrait
                 $permalink .= "action         = \"show\"\n";
             }
 
-            // 新 unique_id
-            if (!empty($plugin_name)) {
-                $unique_id = 0;
-                $migration_mappings = MigrationMapping::where('target_source_table', $plugin_name . '_post')->where('source_key', $nc2_abbreviate_url->unique_id)->first();
-                if (empty($migration_mappings)) {
-                    continue;
-                }
-                $permalink .= "unique_id      = " . $migration_mappings->destination_key .  "\n";
-            }
+            // change: 新 unique_id は、エクスポート時に取得不可能のため、インポート時にセットする
+            // if (!empty($plugin_name)) {
+            //     $unique_id = 0;
+            //     $migration_mappings = MigrationMapping::where('target_source_table', $plugin_name . '_post')->where('source_key', $nc2_abbreviate_url->unique_id)->first();
+            //     if (empty($migration_mappings)) {
+            //         continue;
+            //     }
+            //     $permalink .= "unique_id      = " . $migration_mappings->destination_key .  "\n";
+            // }
+            // nc2 unique_id
+            $permalink .= "unique_id      = " . $nc2_abbreviate_url->unique_id .  "\n";
 
             $permalink .= "migrate_source = \"NetCommons2\"\n";
             $permalinks_ini .= $permalink;
