@@ -1015,8 +1015,6 @@ WHERE status = 0
             ->where('frames.id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
-        // $blogs = Blogs::orderBy('created_at', 'desc')
-        //                ->paginate(10, ["*"], "frame_{$frame_id}_page");
         $blogs = Blogs::
             select(
                 'blogs.id',
@@ -1031,6 +1029,10 @@ WHERE status = 0
                         ->where('blogs_posts.status', StatusType::active)
                         ->whereNull('blogs_posts.deleted_at');
             })
+            ->leftJoin('frames', function ($leftJoin) use ($frame_id) {
+                $leftJoin->on('blogs.bucket_id', '=', 'frames.bucket_id')
+                    ->where('frames.id', $frame_id);
+            })
             ->groupBy(
                 'blogs.id',
                 'blogs.bucket_id',
@@ -1038,6 +1040,7 @@ WHERE status = 0
                 'blogs.blog_name',
                 'blogs_posts.blogs_id'
             )
+            ->orderBy('frames.bucket_id', 'desc')
             ->orderBy('blogs.created_at', 'desc')
             ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
