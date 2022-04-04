@@ -693,6 +693,8 @@ trait MigrationTrait
         } elseif (File::exists(storage_path('app/migration/oneclick/migration_config.oneclick.ini'))) {
             // NetCommons2 からのワンクリック移行用の migration config がある場合
             $this->migration_config = parse_ini_file(storage_path('app/migration/oneclick/migration_config.oneclick.ini'), true);
+        } else {
+            $this->putError(3, 'migration configのiniが見つかりません。');
         }
 
         // uploads のini ファイルの読み込み
