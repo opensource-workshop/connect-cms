@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 use Carbon\Carbon;
 use RRule\RRule;
@@ -1524,6 +1525,14 @@ trait MigrationTrait
                 $email = $user_item['email'];
                 if ($this->getMigrationConfig('users', 'cc_import_user_test_mail')) {
                     $email = str_replace('@', '＠', $user_item['email']);
+                } else {
+                    // emailのRFC違反チェック
+                    // 違反メールアドレスはメール送信時にエラーでこけるため。
+                    try {
+                        Validator::validate(['email' => $email], ['email' => ['email', 'nullable']]);
+                    } catch (\Exception $e) {
+                        $this->putError(3, 'ユーザーのメールアドレスがRFC違反。', " userid = " . $user_item['userid'] . " name = " . $user_item['name'] . " email='" . $email . "' error = " . $e->getMessage());
+                    }
                 }
                 // Duplicate entry 制約があるので、空文字ならnull に変換
                 if ($email == "") {
