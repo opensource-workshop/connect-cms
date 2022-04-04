@@ -1290,38 +1290,39 @@ class FormsPlugin extends UserPluginBase
         $plugin_name = $this->frame->plugin_name;
 
         // Frame データ
-        $plugin_frame = DB::table('frames')
-                            ->select('frames.*')
-                            ->where('frames.id', $frame_id)->first();
-
-        // $frame_page = "frame_{$frame_id}_buckets_page";
+        $plugin_frame = Frame::where('id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
         $plugins = DB::table($plugin_name)
-                        ->select(
-                            $plugin_name . '.id',
-                            $plugin_name . '.bucket_id',
-                            $plugin_name . '.data_save_flag',
-                            $plugin_name . '.created_at',
-                            $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name',
-                            // 本登録数
-                            DB::raw('count(forms_inputs.forms_id) as active_entry_count')
-                        )
-                        ->leftJoin('forms_inputs', function ($leftJoin) use ($plugin_name) {
-                            $leftJoin->on($plugin_name . '.id', '=', 'forms_inputs.forms_id')
-                                        ->where('forms_inputs.status', FormStatusType::active);
-                        })
-                        ->groupBy(
-                            $plugin_name . '.id',
-                            $plugin_name . '.bucket_id',
-                            $plugin_name . '.data_save_flag',
-                            $plugin_name . '.created_at',
-                            $plugin_name . '.' . $plugin_name . '_name',
-                            'forms_inputs.forms_id'
-                        )
-                        ->orderBy($plugin_name. '.id', 'desc')
-                        ->orderBy($plugin_name . '.created_at', 'desc')
-                        ->paginate(10, ["*"], "frame_{$frame_id}_page");
+            ->select(
+                $plugin_name . '.id',
+                $plugin_name . '.bucket_id',
+                $plugin_name . '.data_save_flag',
+                $plugin_name . '.created_at',
+                $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name',
+                // 本登録数
+                DB::raw('count(forms_inputs.forms_id) as active_entry_count')
+            )
+            ->leftJoin('forms_inputs', function ($leftJoin) use ($plugin_name) {
+                $leftJoin->on($plugin_name . '.id', '=', 'forms_inputs.forms_id')
+                    ->where('forms_inputs.status', FormStatusType::active);
+            })
+            ->leftJoin('frames', function ($leftJoin) use ($plugin_name, $frame_id) {
+                $leftJoin->on($plugin_name . '.bucket_id', '=', 'frames.bucket_id')
+                    ->where('frames.id', $frame_id);
+            })
+            ->groupBy(
+                $plugin_name . '.id',
+                $plugin_name . '.bucket_id',
+                $plugin_name . '.data_save_flag',
+                $plugin_name . '.created_at',
+                $plugin_name . '.' . $plugin_name . '_name',
+                'forms_inputs.forms_id'
+            )
+            // ->orderBy($plugin_name. '.id', 'desc')
+            ->orderBy('frames.bucket_id', 'desc')
+            ->orderBy($plugin_name . '.created_at', 'desc')
+            ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 仮登録件数
         $forms_tmp_entry = Forms::
@@ -1353,7 +1354,6 @@ class FormsPlugin extends UserPluginBase
         return $this->view('forms_list_buckets', [
             'plugin_frame' => $plugin_frame,
             'plugins' => $plugins,
-            // 'frame_page' => $request->input($frame_page, 1),
         ]);
     }
 
