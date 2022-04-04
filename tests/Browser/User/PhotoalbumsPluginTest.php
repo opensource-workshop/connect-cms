@@ -117,7 +117,7 @@ class PhotoalbumsPluginTest extends DuskTestCase
                     ->press('アルバム作成')
                     ->pause(500)
                     ->type('folder_name[' . $this->test_frame->id . ']', '写真用アルバム')
-                    ->screenshot('user/photoalbums/upload/images/makeFolder1')
+                    ->screenshot('user/photoalbums/makeFolder/images/makeFolder1')
                     ->press('#button_make_folder' . $this->test_frame->id);
 
             $browser->visit('/test/photoalbum')
@@ -125,15 +125,15 @@ class PhotoalbumsPluginTest extends DuskTestCase
                     ->pause(500)
                     ->type('folder_name[' . $this->test_frame->id . ']', '動画用アルバム')
                     ->press('#button_make_folder' . $this->test_frame->id)
-                    ->screenshot('user/photoalbums/upload/images/makeFolder2');
+                    ->screenshot('user/photoalbums/makeFolder/images/makeFolder2');
         });
 
         // マニュアル用データ出力
         $this->putManualData('[
-            {"path": "user/photoalbums/upload/images/makeFolder1",
+            {"path": "user/photoalbums/makeFolder/images/makeFolder1",
              "name": "アルバムの作成画面"
             },
-            {"path": "user/photoalbums/upload/images/makeFolder2",
+            {"path": "user/photoalbums/makeFolder/images/makeFolder2",
              "name": "アルバムの作成結果",
              "comment": "<ul class=\"mb-0\"><li>ここでは、写真用アルバムと動画用アルバムとして作成しましたが、写真と動画を混在することもできます。</li></ul>"
             }
@@ -260,7 +260,7 @@ class PhotoalbumsPluginTest extends DuskTestCase
             $bucket = Buckets::where('plugin_name', 'photoalbums')->first();
             $browser->visit('/plugin/photoalbums/listBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                     ->radio('select_bucket', $bucket->id)
-                    ->screenshot('user/photoalbums/listBuckets/images/listBuckets')
+                    ->screenshot('user/photoalbums/createBuckets/images/listBuckets')
                     ->press("表示フォトアルバム変更");
 
             // 変更
