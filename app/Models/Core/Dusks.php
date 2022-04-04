@@ -166,4 +166,27 @@ class Dusks extends Model
         }
         return $insertion;
     }
+
+    /**
+     * マニュアル用 mp4 データがあるか確認する。
+     *
+     * @return boolean
+     */
+    public function hasMp4()
+    {
+        if (\File::exists(config('connect.manual_put_base') . dirname($this->html_path) . '/mp4/mizuki/_video.mp4')) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * mp4 パスの返却
+     *
+     * @return boolean
+     */
+    public function getMp4Path()
+    {
+        return dirname($this->html_path) . '/mp4/mizuki/_video.mp4';
+    }
 }
