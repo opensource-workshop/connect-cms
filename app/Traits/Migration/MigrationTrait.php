@@ -9755,7 +9755,9 @@ trait MigrationTrait
             // nc2埋込タグ, cc埋込タグ
             ['{X-SITE_NAME}', '[[' . ReservationNoticeEmbeddedTag::site_name . ']]'],
             ['{X-LOCATION_NAME}', '[[' . ReservationNoticeEmbeddedTag::facility_name . ']]'],
-            ['{X-TITLE}', '[[' . ReservationNoticeEmbeddedTag::title . ']]'],
+            // change: [[title]]は、施設管理の項目「タイトルの設定」で変わるため、タイトルの埋め込みタグは[[X-件名]]に変換する。
+            // ['{X-TITLE}', '[[' . ReservationNoticeEmbeddedTag::title . ']]'],
+            ['{X-TITLE}', '[[X-件名]]'],
             ['{X-RESERVE_TIME}', '[[' . ReservationNoticeEmbeddedTag::booking_time . ']]'],
             ['{X-CONTACT}', '[[X-連絡先]]'],
             ['{X-RRULE}', '[[' . ReservationNoticeEmbeddedTag::rrule . ']]'],
