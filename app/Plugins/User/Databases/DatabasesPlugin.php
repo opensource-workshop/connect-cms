@@ -1743,28 +1743,32 @@ class DatabasesPlugin extends UserPluginBase
         $plugin_name = $this->frame->plugin_name;
 
         // Frame データ
-        $plugin_frame = Frame::select('frames.*')
-                ->where('frames.id', $frame_id)->first();
+        $plugin_frame = Frame::where('id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
         $plugins = Databases::
-                select(
-                    $plugin_name . '.id',
-                    $plugin_name . '.bucket_id',
-                    $plugin_name . '.created_at',
-                    $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name',
-                    DB::raw('count(databases_inputs.databases_id) as entry_count')
-                )
-                ->leftJoin('databases_inputs', $plugin_name . '.id', '=', 'databases_inputs.databases_id')
-                ->groupBy(
-                    $plugin_name . '.id',
-                    $plugin_name . '.bucket_id',
-                    $plugin_name . '.created_at',
-                    $plugin_name . '.' . $plugin_name . '_name',
-                    'databases_inputs.databases_id'
-                )
-                ->orderBy($plugin_name . '.created_at', 'desc')
-                ->paginate(10, ["*"], "frame_{$frame_id}_page");
+            select(
+                $plugin_name . '.id',
+                $plugin_name . '.bucket_id',
+                $plugin_name . '.created_at',
+                $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name',
+                DB::raw('count(databases_inputs.databases_id) as entry_count')
+            )
+            ->leftJoin('databases_inputs', $plugin_name . '.id', '=', 'databases_inputs.databases_id')
+            ->leftJoin('frames', function ($leftJoin) use ($plugin_name, $frame_id) {
+                $leftJoin->on($plugin_name . '.bucket_id', '=', 'frames.bucket_id')
+                    ->where('frames.id', $frame_id);
+            })
+            ->groupBy(
+                $plugin_name . '.id',
+                $plugin_name . '.bucket_id',
+                $plugin_name . '.created_at',
+                $plugin_name . '.' . $plugin_name . '_name',
+                'databases_inputs.databases_id'
+            )
+            ->orderBy('frames.bucket_id', 'desc')
+            ->orderBy($plugin_name . '.created_at', 'desc')
+            ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view('databases_list_buckets', [
