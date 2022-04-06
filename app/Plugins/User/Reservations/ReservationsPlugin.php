@@ -491,7 +491,7 @@ class ReservationsPlugin extends UserPluginBase
     /**
      * タイトル取得
      */
-    private function getTitle(ReservationsInput $input, Collection $columns, ?Collection $inputs_columns = null): string
+    private function getTitle(ReservationsInput $input, Collection $columns, ?Collection $inputs_columns = null): ?string
     {
         // 入力行データ
         if (is_null($input)) {
