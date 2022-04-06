@@ -1869,12 +1869,17 @@ trait MigrationTrait
                     continue;
                 }
 
+                $nc2_block_id = $this->getArrayValue($permalinks_ini, $short_url, 'block_id');
+
                 // Permalinks 登録 or 更新
-                $bulks[] = ['short_url' => $short_url,
+                $bulks[] = [
+                    'short_url'      => $short_url,
                     'plugin_name'    => $plugin_name,
                     'action'         => $this->getArrayValue($permalinks_ini, $short_url, 'action'),
                     'unique_id'      => $unique_migration_mappings->destination_key,
-                    'migrate_source' => $this->getArrayValue($permalinks_ini, $short_url, 'migrate_source')];
+                    'nc2_block_id'   => !empty($nc2_block_id) ? $nc2_block_id : null,
+                    'migrate_source' => $this->getArrayValue($permalinks_ini, $short_url, 'migrate_source'),
+                ];
                 /*
                 $permalink = Permalink::updateOrCreate(
                     ['short_url'     => $short_url],
@@ -9973,6 +9978,74 @@ trait MigrationTrait
             $index++;
         }
 
+        // [journal]
+        // select
+        //     nc2_blocks.block_id
+        // from
+        //     nc2_blocks,
+        //     nc2_journal_block,
+        //     nc2_journal_post,
+        //     nc2_abbreviate_url
+        // where
+        //     nc2_blocks.block_id = nc2_journal_block.block_id
+        //     and nc2_journal_block.journal_id = nc2_journal_post.journal_id
+        //     and nc2_journal_post.journal_id = nc2_abbreviate_url.contents_id
+        //     and nc2_journal_post.post_id = nc2_abbreviate_url.unique_id
+        //     and nc2_abbreviate_url.short_url = "muwoibbvq"
+        //
+        // [multidatabase]
+        // select
+        //  nc2_blocks.block_id
+        // from
+        //  nc2_blocks,
+        //  nc2_multidatabase_block,
+        //  nc2_multidatabase_content,
+        //  nc2_abbreviate_url
+        // where
+        //  nc2_blocks.block_id = nc2_multidatabase_block.block_id
+        //  and nc2_multidatabase_block.multidatabase_id = nc2_multidatabase_content.multidatabase_id
+        //  and nc2_multidatabase_content.multidatabase_id = nc2_abbreviate_url.contents_id
+        //  and nc2_multidatabase_content.content_id = nc2_abbreviate_url.unique_id
+        //  and nc2_abbreviate_url.short_url = "muwoibbvq"
+        //
+        // [bbs]
+        // select
+        //  nc2_blocks.block_id
+        // from
+        //  nc2_blocks,
+        //  nc2_bbs_block,
+        //  nc2_bbs_post,
+        //  nc2_abbreviate_url
+        // where
+        //  nc2_blocks.block_id = nc2_bbs_block.block_id
+        //  and nc2_bbs_block.bbs_id = nc2_bbs_post.bbs_id
+        //  and nc2_bbs_post.bbs_id = nc2_abbreviate_url.contents_id
+        //  and nc2_bbs_post.post_id = nc2_abbreviate_url.unique_id
+        //  and nc2_abbreviate_url.short_url = "muwoibbvq"
+
+        // 最新block_ids
+        $journal_block_ids = Nc2AbbreviateUrl::select('blocks.block_id', 'abbreviate_url.short_url')
+            ->join('journal_post', function ($join) {
+                $join->on('journal_post.post_id', '=', 'abbreviate_url.unique_id')
+                    ->whereColumn('journal_post.journal_id', 'abbreviate_url.contents_id');
+            })
+            ->join('journal_block', 'journal_block.journal_id', '=', 'journal_post.journal_id')
+            ->join('blocks', 'blocks.block_id', '=', 'journal_block.block_id')
+            ->get(['block_id', 'short_url']);
+        $multidatabase_block_ids = Nc2AbbreviateUrl::select('blocks.block_id', 'abbreviate_url.short_url')
+            ->join('multidatabase_content', 'multidatabase_content.content_id', '=', 'abbreviate_url.unique_id')
+            ->join('multidatabase_block', 'multidatabase_block.multidatabase_id', '=', 'multidatabase_content.multidatabase_id')
+            ->join('blocks', 'blocks.block_id', '=', 'multidatabase_block.block_id')
+            ->get(['block_id', 'short_url']);
+        $bbs_block_ids = Nc2AbbreviateUrl::select('blocks.block_id', 'abbreviate_url.short_url')
+            ->join('bbs_post', function ($join) {
+                $join->on('bbs_post.post_id', '=', 'abbreviate_url.unique_id')
+                    ->whereColumn('bbs_post.bbs_id', 'abbreviate_url.contents_id');
+            })
+            ->join('bbs_block', 'bbs_block.bbs_id', '=', 'bbs_post.bbs_id')
+            ->join('blocks', 'blocks.block_id', '=', 'bbs_block.block_id')
+            ->get(['block_id', 'short_url']);
+
         // NC2固定リンクのループ（データ用）
         foreach ($nc2_abbreviate_urls as $nc2_abbreviate_url) {
             $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
@@ -9987,6 +10060,7 @@ trait MigrationTrait
             }
 
             if (!isset($this->plugin_name[$nc2_abbreviate_url->dir_name])) {
+                $this->putError(3, '固定URLの未対応モジュール', "nc2_abbreviate_url.dir_name = " . $nc2_abbreviate_url->dir_name);
                 continue;
             }
 
@@ -10015,6 +10089,22 @@ trait MigrationTrait
             // }
             // nc2 unique_id
             $permalink .= "unique_id      = " . $nc2_abbreviate_url->unique_id .  "\n";
+
+            // 最新block_id取得
+            $block_id = null;
+            if ($plugin_name == 'blogs') {
+                $journal_block_id = $journal_block_ids->firstWhere('short_url', $nc2_abbreviate_url->short_url);
+                $block_id = $journal_block_id->block_id ?? null;
+
+            } elseif ($plugin_name == 'databases') {
+                $multidatabase_block_id = $multidatabase_block_ids->firstWhere('short_url', $nc2_abbreviate_url->short_url);
+                $block_id = $multidatabase_block_id->block_id ?? null;
+
+            } elseif ($plugin_name == 'bbses') {
+                $bbs_block_id = $bbs_block_ids->firstWhere('short_url', $nc2_abbreviate_url->short_url);
+                $block_id = $bbs_block_id->block_id ?? null;
+            }
+            $permalink .= "block_id       = " . $block_id .  "\n";
 
             $permalink .= "migrate_source = \"NetCommons2\"\n";
             $permalinks_ini .= $permalink;
