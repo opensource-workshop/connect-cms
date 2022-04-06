@@ -9995,33 +9995,33 @@ trait MigrationTrait
         //
         // [multidatabase]
         // select
-        // 	nc2_blocks.block_id
+        //  nc2_blocks.block_id
         // from
-        // 	nc2_blocks,
-        // 	nc2_multidatabase_block,
-        // 	nc2_multidatabase_content,
-        // 	nc2_abbreviate_url
+        //  nc2_blocks,
+        //  nc2_multidatabase_block,
+        //  nc2_multidatabase_content,
+        //  nc2_abbreviate_url
         // where
-        // 	nc2_blocks.block_id = nc2_multidatabase_block.block_id
-        // 	and nc2_multidatabase_block.multidatabase_id = nc2_multidatabase_content.multidatabase_id
-        // 	and nc2_multidatabase_content.multidatabase_id = nc2_abbreviate_url.contents_id
-        // 	and nc2_multidatabase_content.content_id = nc2_abbreviate_url.unique_id
-        // 	and nc2_abbreviate_url.short_url = "muwoibbvq"
+        //  nc2_blocks.block_id = nc2_multidatabase_block.block_id
+        //  and nc2_multidatabase_block.multidatabase_id = nc2_multidatabase_content.multidatabase_id
+        //  and nc2_multidatabase_content.multidatabase_id = nc2_abbreviate_url.contents_id
+        //  and nc2_multidatabase_content.content_id = nc2_abbreviate_url.unique_id
+        //  and nc2_abbreviate_url.short_url = "muwoibbvq"
         //
         // [bbs]
         // select
-        // 	nc2_blocks.block_id
+        //  nc2_blocks.block_id
         // from
-        // 	nc2_blocks,
-        // 	nc2_bbs_block,
-        // 	nc2_bbs_post,
-        // 	nc2_abbreviate_url
+        //  nc2_blocks,
+        //  nc2_bbs_block,
+        //  nc2_bbs_post,
+        //  nc2_abbreviate_url
         // where
-        // 	nc2_blocks.block_id = nc2_bbs_block.block_id
-        // 	and nc2_bbs_block.bbs_id = nc2_bbs_post.bbs_id
-        // 	and nc2_bbs_post.bbs_id = nc2_abbreviate_url.contents_id
-        // 	and nc2_bbs_post.post_id = nc2_abbreviate_url.unique_id
-        // 	and nc2_abbreviate_url.short_url = "muwoibbvq"
+        //  nc2_blocks.block_id = nc2_bbs_block.block_id
+        //  and nc2_bbs_block.bbs_id = nc2_bbs_post.bbs_id
+        //  and nc2_bbs_post.bbs_id = nc2_abbreviate_url.contents_id
+        //  and nc2_bbs_post.post_id = nc2_abbreviate_url.unique_id
+        //  and nc2_abbreviate_url.short_url = "muwoibbvq"
 
         // 最新block_ids
         $journal_block_ids = Nc2AbbreviateUrl::select('blocks.block_id', 'abbreviate_url.short_url')
