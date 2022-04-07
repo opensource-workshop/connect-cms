@@ -904,6 +904,11 @@ class CabinetsPlugin extends UserPluginBase
             'upload_file.*' => 'ファイル',
         ]);
 
+        // ZIPを展開する際はZIP形式のファイルのみ許可する
+        $validator->sometimes('upload_file.*', 'required|mimes:zip', function ($input) {
+            return !empty($input->zip_deploy);
+        });
+
         return $validator;
     }
 
