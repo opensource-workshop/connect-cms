@@ -527,7 +527,7 @@ class CabinetsPlugin extends UserPluginBase
         foreach ($request->cabinet_content_id as $cabinet_content_id) {
             $contents = CabinetContent::descendantsAndSelf($cabinet_content_id);
             if (!$this->canDelete($request, $contents)) {
-                throw RuntimeException();
+                abort(403, '権限がありません。');
             };
 
             $this->deleteCabinetContents($cabinet_content_id, $contents);
