@@ -3048,11 +3048,7 @@ class DatabasesPlugin extends UserPluginBase
                 }
 
                 // パターンにマッチするパス名を探す。 csvは１つの想定
-                // winの標準機能でzip圧縮すると、zip内にフォルダが１つでき、その中にファイルが格納されているため、
-                // zip内１つ下のフォルダを検索
-                // $csv_full_path = $unzip_dir_full_path . "database/database.csv";
-                // $csv_full_paths = glob($unzip_dir_full_path . "database/*.csv");
-                $csv_full_paths = glob($unzip_dir_full_path . "*/*.csv");
+                $csv_full_paths = glob($unzip_dir_full_path . "*.csv");
                 // Log::debug(var_export($csv_full_paths, true));
 
                 if (empty($csv_full_paths)) {
