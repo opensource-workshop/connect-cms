@@ -304,6 +304,9 @@ class CabinetsPlugin extends UserPluginBase
                 return $this->viewError('500_inframe', null, 'unzip error');
             }
             $this->saveCabinetContentsRecursive($parent, $unzip_path);
+            // 一時ファイルを削除する
+            Storage::delete($zip_path);
+            Storage::deleteDirectory($unzip_path);
         } else {
             // そのままアップロード
             $upload_file = $request->file('upload_file')[$frame_id];
