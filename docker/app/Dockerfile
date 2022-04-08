@@ -17,6 +17,7 @@ RUN apt-get update \
         libjpeg62-turbo-dev \
         libwebp-dev \
         libxpm-dev \
+        locales \
     && docker-php-ext-install pdo_mysql pdo_pgsql \
     && docker-php-ext-install zip \
     && docker-php-ext-configure gd \
@@ -36,7 +37,10 @@ RUN a2dissite 000-default \
 # Timezone (PHP)
 RUN printf '[PHP]\ndate.timezone = "${TZ}"\n' > /usr/local/etc/php/conf.d/timezone.ini
 
-# APP_ENVのiniファイルを有効化
-RUN mv "$PHP_INI_DIR/php.ini-${APP_ENV}" "$PHP_INI_DIR/php.ini"
+
+# 日本語設定
+RUN sed -i -E 's/# (ja_JP.UTF-8)/\1/' /etc/locale.gen \
+  && locale-gen
+ENV LANG ja_JP.UTF-8
 
 WORKDIR /var/www/html
