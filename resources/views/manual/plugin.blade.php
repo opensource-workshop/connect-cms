@@ -13,11 +13,11 @@
                     </div>
 
                     <div class="col-lg-8">
-                        <p>ここでは、Connect-CMS の【{{$current_method->plugin_title}}】メニューについて説明します。</p>
+                        <p>ここでは、Connect-CMS の【{{$current_method->plugin_title}}】プラグインについて説明します。</p>
                     </div>
                 </div>
             @else
-                <p>ここでは、Connect-CMS の【{{$current_method->plugin_title}}】メニューについて説明します。</p>
+                <p>ここでは、Connect-CMS の【{{$current_method->plugin_title}}】プラグインについて説明します。</p>
             @endif
         </div>
     </div>
