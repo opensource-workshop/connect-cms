@@ -441,6 +441,8 @@ class Dusks extends Model
                 $img_args = explode(',', $plugin->img_args);
                 $json_path = new \stdClass();
                 $json_path->path = $img_args[0];
+            } else {
+                $json_path = new \stdClass();
             }
             $json_path->comment  = '　' . $plugin->plugin_title . "を紹介します。　";
             $json_path->comment .= $plugin->plugin_title . 'は、' . $plugin->plugin_desc;

@@ -289,8 +289,8 @@ class ManualVideo extends DuskTestCase
         $this->assertTrue(true);
 
         // 全データ取得
-//        $dusks = Dusks::orderBy("id", "asc")->get();
-        $dusks = Dusks::where('category', 'user')->orderBy("id", "asc")->get();
+        $dusks = Dusks::where('category', '!=', 'blueprint')->orderBy("id", "asc")->get();
+//        $dusks = Dusks::where('category', 'manage')->orderBy("id", "asc")->get();
 //        $dusks = Dusks::where('plugin_name', 'blogs')->where('method_name', 'index')->orderBy("id", "asc")->get();
 //        $dusks = Dusks::where('plugin_name', 'blogs')->orderBy("id", "asc")->get();
 //        $dusks = Dusks::whereIn('plugin_name', ['blogs', 'photoalbums'])->orderBy("id", "asc")->get();
