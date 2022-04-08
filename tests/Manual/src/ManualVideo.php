@@ -232,34 +232,13 @@ class ManualVideo extends DuskTestCase
      *
      * @return void
      */
-    private function outputCategory($dusks, $category)
+    private function outputCategory($plugins)
     {
-        // ビデオ用のナレーションと画像
-        $video_params = array();
+        // 動画生成に必要な内容を編集
+        $materials = Dusks::getCategoryMaterials($plugins);
 
-        // カテゴリの出力
-        $plugins_index = $dusks->where('category', $category->category)->where('method_name', 'index');
-        foreach ($plugins_index as $method) {
-            // img_args が json か。
-            if (json_decode($method->img_args)) {
-                $json_paths = json_decode($method->img_args);
-                foreach ($json_paths as $json_path) {
-                    // ナレーション文章を組み立て
-                    $video_params[$method->plugin_name] = ['img_path' => $json_path->path, 'narration' => $this->cleaningText($method->method_desc . $method->method_detail)];
-
-                    // 1つ目の画像と説明でOK
-                    continue;
-                }
-            } else {
-                foreach (explode(',', $method->img_args) as $img_path) {
-                    // ナレーション文章を組み立て
-                    $video_params[$method->plugin_name] = ['img_path' => $img_path, 'narration' => $this->cleaningText($method->method_desc . $method->method_detail)];
-
-                    // 1つ目の画像と説明でOK
-                    continue;
-                }
-            }
-        }
+        // 動画生成
+        $this->createMovie($materials);
     }
 
     /**
@@ -267,7 +246,6 @@ class ManualVideo extends DuskTestCase
      *
      * @return void
      */
-//    private function outputPlugin($dusks, $category, $plugin)
     private function outputPlugin($methods)
     {
         // 動画生成に必要な内容を編集
@@ -331,11 +309,10 @@ class ManualVideo extends DuskTestCase
         // カテゴリのループ
         // echo "\n";
         foreach ($dusks->groupBy('category') as $category) {
-            //$this->outputCategory($dusks, $category[0]);
+            $this->outputCategory($dusks->where('category', $category[0]->category)->where('method_name', 'index'));
 
             // プラグインのループ
             foreach ($dusks->where('category', $category[0]->category)->where('method_name', 'index') as $plugin) {
-                //$this->outputPlugin($dusks, $category[0], $plugin);
                 $this->outputPlugin($dusks->where('plugin_name', $plugin->plugin_name));
 
                 // メソッドのループ
