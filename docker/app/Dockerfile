@@ -1,7 +1,7 @@
 FROM php:7-apache
 
-# APPLICATION ENVIROMENT: production or development
-ENV APP_ENV development
+# PHP ENVIROMENT: production or development
+ENV PHP_INI_ENV development
 
 RUN cd /usr/bin && curl -s http://getcomposer.org/installer | php && ln -s /usr/bin/composer.phar /usr/bin/composer
 RUN apt-get update \
@@ -37,6 +37,8 @@ RUN a2dissite 000-default \
 # Timezone (PHP)
 RUN printf '[PHP]\ndate.timezone = "${TZ}"\n' > /usr/local/etc/php/conf.d/timezone.ini
 
+# PHP_INI_ENVのiniファイルを有効化
+RUN mv "$PHP_INI_DIR/php.ini-${PHP_INI_ENV}" "$PHP_INI_DIR/php.ini"
 
 # 日本語設定
 RUN sed -i -E 's/# (ja_JP.UTF-8)/\1/' /etc/locale.gen \
