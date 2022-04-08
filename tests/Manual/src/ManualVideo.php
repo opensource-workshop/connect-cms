@@ -55,6 +55,26 @@ use App\Models\Core\Dusks;
  *                 +---mizuki
  *                     +---create.mp4 (create.png & create2.png に対応したmp4)
  *
+ * --- 処理シーケンス
+ * testVideo  // 起点
+ * foreach -> outputCategory
+ *     foreach -> outputPlugin
+ *         foreach -> outputMethod
+ *
+ * outputMethod
+ *     getMethodMaterials($method = dusk)           // 動画素材のまとめ（メソッド用）
+ *         getMaterial($json_path, $first_comment)  // 画像１つから、動画素材のまとめ
+ *     createMovie($materials)                      // 動画生成
+ *
+ * outputPlugin
+ *     getPluginMaterials($method = dusk)           // 動画素材のまとめ（プラグイン用）
+ *         getMaterial($json_path, $first_comment)  // 画像１つから、動画素材のまとめ
+ *     createMovie($materials)                      // 動画生成
+ *
+ * outputCategory
+ *     getCategoryMaterials($method = dusk)         // 動画素材のまとめ（カテゴリ用）
+ *         getMaterial($json_path, $first_comment)  // 画像１つから、動画素材のまとめ
+ *     createMovie($materials)                      // 動画生成
  */
 class ManualVideo extends DuskTestCase
 {
@@ -145,147 +165,35 @@ class ManualVideo extends DuskTestCase
     }
 
     /**
-     * ナレーション用に文章のクリーニング
-     *
-     * @return void
-     */
-    private function cleaningText($text)
-    {
-        // HTML タグの除去
-        $text = strip_tags($text);
-
-        // （）の中身も含めた除去
-        if (mb_strpos($text, '（') !== false && mb_strpos($text, '）') !== false) {
-            $trim_start = mb_strpos($text, '（');
-            $trim_end = mb_strpos($text, '）');
-            $text = mb_substr($text, 0, $trim_start) . mb_substr($text, $trim_end + 1);
-        }
-
-        return $text;
-    }
-
-    /**
-     * 実際のパスの取得
-     */
-    private function getRealPath($disk, $path)
-    {
-        // リアルパスに変換
-        $path = \Storage::disk($disk)->path($path);
-
-        // Windows のffmpeg が / だとディレクトリを認識してくれない部分があるので、/ を \ に変換
-        // エラーになっていたのは動画結合時の mp4_list のパス
-        return str_replace('/', '\\', $path);
-    }
-
-    /**
-     * 動画編集に必要なファイルパスや文章などを組み立てる。
-     */
-    private function getMaterials($method)
-    {
-        /* 戻り値の例
-        (
-            [0] => Array
-                (
-                    [mp3_file_disk]   => user/blogs/index/mp3/mizuki/index.mp3
-                    [mp4_dir_disk]    => user/blogs/index/mp4/mizuki
-                    [mp4_list_disk]   => user/blogs/index/mp4/mizuki/_mp4list.txt
-                    [mp4_fade_disk]   => user/blogs/index/mp4/mizuki/fade_index.mp4
-                    [mp4_final_disk]  => user/blogs/index/mp4/mizuki/_video.mp4
-                    [img_file_real]   => C:\***\tests\Browser\screenshots\user\blogs\index\images\index.png
-                    [mp3_file_real]   => C:\***\tests\tmp\user\blogs\index\mp3\mizuki\index.mp3
-                    [mp4_nofade_real] => C:\***\tests\tmp\user\blogs\index\mp4\mizuki\nofade_index.mp4
-                    [mp4_fade_real]   => C:\***\tests\tmp\user\blogs\index\mp4\mizuki\fade_index.mp4
-                    [mp4_fade_real2]  => C:\\SitesLaravel\\connect-cms\\htdocs\\test.localhost\\tests\\tmp\\user\\blogs\\index\\mp4\\mizuki\\fade_index.mp4
-                    [mp4_list_real]   => C:\***\tests\tmp\user\blogs\index\mp4\mizuki\_mp4list.txt
-                    [mp4_final_real]  => C:\***\tests\tmp\user\blogs\index\mp4\mizuki\_video.mp4
-                    [mp4_manual_real] => C:\SitesLaravel\connect-cms-manual\user/blogs/index/mp4/mizuki/_video.mp4
-                    [comment]         => 記事は新しいものから表示されます。
-                )
-            [1] => Array
-        )
-        */
-
-        /* img_args の例
-        [
-            {"path": "user/blogs/index/images/index",
-             "name": "記事の一覧",
-             "comment": "<ul class=\"mb-0\"><li>記事は新しいものから表示されます。</li></ul>"
-            },
-            {"path": "user/blogs/index/images/index2",
-             "name": "記事のコピー",
-             "comment": "<ul class=\"mb-0\"><li>編集権限がある場合、記事の編集ボタンの右にある▼ボタンで、記事のコピーができます。</li></ul>"
-            }
-        ]
-        */
-
-        $materials = array();
-
-        // 最初の動画の説明
-        $first_comment  = 'ここでは、' . $method->plugin_title . '　プラグインの　' . $method->method_title . '　機能を紹介します。';
-        $first_comment .= empty($method->method_desc) ? '' : '機能概要、' . $method->method_desc;
-        $first_comment .= empty($method->method_detail) ? '' : '機能詳細、' . $method->method_detail;
-        $first_comment .= '　続いて、画面を説明します。';
-
-        // img_args が json か。
-        if (json_decode($method->img_args)) {
-            $json_paths = json_decode($method->img_args);
-            foreach ($json_paths as $json_path) {
-                // 画像にコメントがない場合は、動画を生成しない。
-                if (property_exists($json_path, 'comment') && !empty($json_path->comment)) {
-                    // 処理を続ける。
-                } else {
-                    continue;
-                }
-
-                // mp4 パスの組み立て（ファイル名にfade_, nofade_ を付けたい）
-                $mp4_path_array = explode('/', str_replace('images/', 'mp4/mizuki/', $json_path->path));
-                $mp4_path_array[array_key_last($mp4_path_array)] = 'nofade_' . $mp4_path_array[array_key_last($mp4_path_array)];
-                $mp4_nofade_path = implode('/', $mp4_path_array) . '.mp4';
-                $mp4_fade_path = str_replace('nofade_', 'fade_', $mp4_nofade_path);
-
-                // 画面毎のナレーション文章
-                $image_comment = property_exists($json_path, 'name') ? '画像　' . $json_path->name . 'を説明します。' : '';
-
-                // ナレーション文章や必要なファイルパスを組み立て
-                $materials[] = [
-                    'mp3_file_disk'   => str_replace('images/', 'mp3/mizuki/', $json_path->path) . '.mp3',
-                    'mp4_dir_disk'    => dirname($mp4_fade_path),
-                    'mp4_list_disk'   => substr($mp4_fade_path, 0, strrpos($mp4_fade_path, '/')) . '/_mp4list.txt',
-                    'mp4_fade_disk'   => $mp4_fade_path,
-                    'mp4_final_disk'  => substr($mp4_fade_path, 0, strrpos($mp4_fade_path, '/')) . '/_video.mp4',
-                    'img_file_real'   => $this->getRealPath('screenshot', $json_path->path . '.png'),
-                    'mp3_file_real'   => $this->getRealPath('tests_tmp', str_replace('images/', 'mp3/mizuki/', $json_path->path) . '.mp3'),
-                    'mp4_nofade_real' => $this->getRealPath('tests_tmp', $mp4_nofade_path),
-                    'mp4_fade_real'   => $this->getRealPath('tests_tmp', $mp4_fade_path),
-                    'mp4_fade_real2'  => str_replace('\\', '\\\\', $this->getRealPath('tests_tmp', $mp4_fade_path)), // ffmpeg concatは2重\が必要
-                    'mp4_list_real'   => $this->getRealPath('tests_tmp', substr($mp4_fade_path, 0, strrpos($mp4_fade_path, '/')) . '/_mp4list.txt'),
-                    'mp4_final_real'  => $this->getRealPath('tests_tmp', substr($mp4_fade_path, 0, strrpos($mp4_fade_path, '/')) . '/_video.mp4'),
-                    'mp4_manual_real' => config('connect.manual_put_base') . substr($mp4_fade_path, 0, strrpos($mp4_fade_path, '/')) . '/_video.mp4',
-                    'comment'         => $first_comment . $image_comment . $this->cleaningText($json_path->comment),
-                ];
-                $first_comment = '';
-            }
-        }
-        return $materials;
-    }
-
-    /**
      * 動画生成
      */
     private function createMovie($materials)
     {
+        // 素材がない場合は動画を生成しない。
+        if (empty($materials)) {
+            return;
+        }
+
         // 画像とコメントのループ
         foreach ($materials as $index => $material) {
             // mp3 生成（ない場合のみ）
             if (!\Storage::disk('tests_tmp')->exists($material['mp3_file_disk'])) {
                 \Storage::disk('tests_tmp')->put($material['mp3_file_disk'], $this->createMp3('<speak>' . $material['comment'] . '</speak>'));
             }
-            // mp4 生成（完成した mp4 がない場合）
+            // mp4 生成（mp4 がない場合）
             if (!\Storage::disk('tests_tmp')->exists($material['mp4_final_disk'])) {
                 \Storage::disk('tests_tmp')->makeDirectory(dirname($material['mp4_fade_disk']));
 
                 // mp3 と画像を合成してmp4 を生成
-                $ffmpg_cmd = config('connect.FFMPEG_PATH') . ' -y -loop 1 -i ' . $material['img_file_real'] . ' -i ' . $material['mp3_file_real'] . ' -vcodec libx264 -acodec aac -ab 160k -ac 2 -ar 48000 -pix_fmt yuv420p -shortest ' . $material['mp4_nofade_real'];
+                // この方法だと、音ズレ（絵ズレ？）が起こったので、Webを参考に、別形式に変換後、MP4 を生成する。
+                //$ffmpg_cmd = config('connect.FFMPEG_PATH') . ' -y -loop 1 -i ' . $material['img_file_real'] . ' -i ' . $material['mp3_file_real'] . ' -vcodec libx264 -acodec aac -ab 160k -ac 2 -ar 48000 -pix_fmt yuv420p -shortest ' . $material['mp4_nofade_real'];
+                //system($ffmpg_cmd);
+
+                // 一旦、mpeg2
+                $ffmpg_cmd = config('connect.FFMPEG_PATH') . ' -y -loop 1 -i ' . $material['img_file_real'] . ' -i ' . $material['mp3_file_real'] . ' -vcodec mpeg2video -b:v 12000k -acodec pcm_s16le -shortest ' . str_replace('.mp4', '.avi', $material['mp4_nofade_real']);
+                system($ffmpg_cmd);
+
+                $ffmpg_cmd = config('connect.FFMPEG_PATH') . ' -y -i ' . str_replace('.mp4', '.avi', $material['mp4_nofade_real']) . ' -vcodec libx264 -acodec aac -pix_fmt yuv420p ' . $material['mp4_nofade_real'];
                 system($ffmpg_cmd);
 
                 // 動画にフェードの処理。最初、最後、真ん中でフェードを変える。
@@ -303,15 +211,20 @@ class ManualVideo extends DuskTestCase
                 \Storage::disk('tests_tmp')->append($material['mp4_list_disk'], 'file ' . $material['mp4_fade_real2']);
             }
         }
-        // 動画の結合
-        $ffmpg_cmd = config('connect.FFMPEG_PATH') . ' -y -f concat -safe 0 -i ' . $materials[0]['mp4_list_real'] . ' -c copy ' . $materials[0]['mp4_final_real'];
-        system($ffmpg_cmd);
 
-        // 動画のマニュアルディレクトリへのコピー
-        if (!\File::exists(dirname($materials[0]['mp4_manual_real']))) {
-            \File::makeDirectory(dirname($materials[0]['mp4_manual_real']), 0755, true);
+        // mp4 生成（完成したmp4 がない場合）
+        if (!\Storage::disk('tests_tmp')->exists($material['mp4_final_disk'])) {
+            // 動画の結合
+            $ffmpg_cmd = config('connect.FFMPEG_PATH') . ' -y -f concat -safe 0 -i ' . $materials[0]['mp4_list_real'] . ' -c copy ' . $materials[0]['mp4_final_real'];
+            //$ffmpg_cmd = config('connect.FFMPEG_PATH') . ' -y -f concat -safe 0 -i ' . $materials[0]['mp4_list_real'] . ' -c:v libx264 -c:a aac -map 0:v -map 0:a ' . $materials[0]['mp4_final_real'];
+            system($ffmpg_cmd);
+
+            // 動画のマニュアルディレクトリへのコピー
+            if (!\File::exists(dirname($materials[0]['mp4_manual_real']))) {
+                \File::makeDirectory(dirname($materials[0]['mp4_manual_real']), 0755, true);
+            }
+            \File::copy($materials[0]['mp4_final_real'], $materials[0]['mp4_manual_real']);
         }
-        \File::copy($materials[0]['mp4_final_real'], $materials[0]['mp4_manual_real']);
     }
 
     /**
@@ -354,9 +267,14 @@ class ManualVideo extends DuskTestCase
      *
      * @return void
      */
-    private function outputPlugin($dusks, $category, $plugin)
+//    private function outputPlugin($dusks, $category, $plugin)
+    private function outputPlugin($methods)
     {
-        // プラグインの出力
+        // 動画生成に必要な内容を編集
+        $materials = Dusks::getPluginMaterials($methods);
+
+        // 動画生成
+        $this->createMovie($materials);
     }
 
     /**
@@ -367,15 +285,11 @@ class ManualVideo extends DuskTestCase
     private function outputMethod($method)
     {
         // 動画生成に必要な内容を編集
-        $materials = $this->getMaterials($method);
+        $materials = $method->getMethodMaterials();
         //print_r($materials);
-//\Log::debug($method->method_title);
-//\Log::debug($materials);
 
-        // 動画生成(音声がない場合は動画も生成しない)
-        if (!empty($materials)) {
-            $this->createMovie($materials);
-        }
+        // 動画生成
+        $this->createMovie($materials);
     }
 
     /**
@@ -394,17 +308,14 @@ class ManualVideo extends DuskTestCase
         $this->screenshots_root = base_path('tests/Browser/screenshots/');
 
         // マニュアル出力のために、dusk データベースなど利用するので、アサーションは無条件にOKとしたい。
-        $this->browse(function (Browser $browser) {
-            $browser->visit('/')
-                    ->assertTitleContains('Connect-CMS');
-        });
+        $this->assertTrue(true);
 
         // 全データ取得
 //        $dusks = Dusks::orderBy("id", "asc")->get();
+        $dusks = Dusks::where('category', 'user')->orderBy("id", "asc")->get();
 //        $dusks = Dusks::where('plugin_name', 'blogs')->where('method_name', 'index')->orderBy("id", "asc")->get();
 //        $dusks = Dusks::where('plugin_name', 'blogs')->orderBy("id", "asc")->get();
 //        $dusks = Dusks::whereIn('plugin_name', ['blogs', 'photoalbums'])->orderBy("id", "asc")->get();
-        $dusks = Dusks::whereIn('plugin_name', ['photoalbums'])->orderBy("id", "asc")->get();
 //        $dusks = Dusks::whereIn('plugin_name', ['photoalbums'])->whereIn('method_name', ['index', 'makeFolder'])->orderBy("id", "asc")->get();
 
         // マニュアル表紙
@@ -425,6 +336,7 @@ class ManualVideo extends DuskTestCase
             // プラグインのループ
             foreach ($dusks->where('category', $category[0]->category)->where('method_name', 'index') as $plugin) {
                 //$this->outputPlugin($dusks, $category[0], $plugin);
+                $this->outputPlugin($dusks->where('plugin_name', $plugin->plugin_name));
 
                 // メソッドのループ
                 foreach ($dusks->where('category', $category[0]->category)->where('plugin_name', $plugin->plugin_name) as $method) {
