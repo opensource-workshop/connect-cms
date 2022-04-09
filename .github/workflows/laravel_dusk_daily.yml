@@ -61,6 +61,15 @@ jobs:
         run: |
           mysql --user="root" --password="root" -e "SELECT user, host, plugin FROM mysql.user;"
 
+      - name: PHP 7.3 changes database user authentication method
+        run: |
+          if [[ "$PHP_VERSION" = "7.3" ]]; then
+            mysql --user="root" --password="root" -e "alter user 'root'@'localhost' identified with mysql_native_password by 'root';"          
+            mysql --user="root" --password="root" -e "SELECT user, host, plugin FROM mysql.user;"
+          fi
+        env:
+          PHP_VERSION: ${{ matrix.php }}
+
       # Composer
       - name: Validate composer.json and composer.lock
         run: composer validate
