@@ -23,6 +23,7 @@ use App\Plugins\User\UserPluginBase;
 
 use App\Enums\StatusType;
 use App\Enums\BlogFrameConfig;
+use App\Enums\BlogFrameScope;
 
 use App\Rules\CustomValiWysiwygMax;
 
@@ -242,11 +243,11 @@ class BlogsPlugin extends UserPluginBase
         // 全件表示
         if (empty($blog_frame->scope)) {
             // 全件取得のため、追加条件なしで戻る。
-        } elseif ($blog_frame->scope == 'year') {
+        } elseif ($blog_frame->scope == BlogFrameScope::year) {
             // 年
             $query->Where('posted_at', '>=', $blog_frame->scope_value . '-01-01')
                   ->Where('posted_at', '<=', $blog_frame->scope_value . '-12-31 23:59:59');
-        } elseif ($blog_frame->scope == 'fiscal') {
+        } elseif ($blog_frame->scope == BlogFrameScope::fiscal) {
             // 年度
             $fiscal_next = intval($blog_frame->scope_value) + 1;
             $query->Where('posted_at', '>=', $blog_frame->scope_value . '-04-01')
@@ -605,12 +606,11 @@ WHERE status = 0
         }
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'blogs', [
+        return $this->view('blogs', [
             'blogs_posts' => $blogs_posts,
             'blog_frame'  => $blog_frame,
-            ]
-        );
+            'blog_frame_setting' => BlogsFrames::where('frames_id', $frame_id)->firstOrNew([]),
+        ]);
     }
 
     /**
@@ -1426,7 +1426,7 @@ EOD;
         // 項目のエラーチェック
         $validator_values['scope_value'] = ['nullable', 'digits:4'];
         $validator_values[BlogFrameConfig::blog_view_count] = ['required', 'numeric', 'min:1', 'max:100'];
-        if ($request->scope == 'year' || $request->scope == 'fiscal') {
+        if ($request->scope == BlogFrameScope::year || $request->scope == BlogFrameScope::fiscal) {
             $validator_values['scope_value'][] = ['required'];
         }
         $validator_attributes['scope_value'] = '指定年';

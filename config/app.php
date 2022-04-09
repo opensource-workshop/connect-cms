@@ -276,6 +276,7 @@ $app_array = [
         'BaseLoginRedirectPage' => \App\Enums\BaseLoginRedirectPage::class,
         'BlogFrameConfig' => \App\Enums\BlogFrameConfig::class,
         'BlogDisplayCreatedName' => \App\Enums\BlogDisplayCreatedName::class,
+        'BlogFrameScope' => \App\Enums\BlogFrameScope::class,
         'BaseHeaderFontColorClass' => \App\Enums\BaseHeaderFontColorClass::class,
         'UploadMaxSize' => \App\Enums\UploadMaxSize::class,
         'SearchsTargetPlugin' => \App\Enums\SearchsTargetPlugin::class,
