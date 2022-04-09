@@ -817,6 +817,8 @@ WHERE status = 0
 
             // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
             if (empty($check_blogs_post->id) || $check_blogs_post->id != $old_blogs_post->id) {
+                // Redirect時のエラー対応. リダイレクトせずエラー画面表示する。
+                $request->merge(['return_mode' => 'asis']);
                 return $this->viewError("403_inframe", null, 'saveのユーザー権限に応じたPOST ID チェック');
             }
         }
