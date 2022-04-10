@@ -51,19 +51,19 @@ use App\Models\User\Contents\Contents;
         <div class="form-group col-md">
             <label class="control-label">続き</label>
             <div class="custom-control custom-checkbox">
-                <input type="checkbox" name="read_more_flag" value="1" class="custom-control-input" id="read_more_flag{{$frame_id}}" @if(old('read_more_flag', $contents->read_more_flag)) checked=checked @endif>
+                <input type="checkbox" name="read_more_flag" value="1" class="custom-control-input" id="read_more_flag{{$frame_id}}" data-toggle="collapse" data-target="#read_more_button-{{$frame->id}}, #close_more_button-{{$frame->id}}, #content2_text-{{$frame->id}}" aria-expanded="false" aria-controls="read_more_button-{{$frame->id}} close_more_button-{{$frame->id}} content2_text-{{$frame->id}}" @if(old('read_more_flag', $contents->read_more_flag)) checked=checked @endif>
                 <label class="custom-control-label" for="read_more_flag{{$frame_id}}">続きを表示する</label>
             </div>
         </div>
 
-        <div class="form-group col-md">
+        <div class="form-group col-md collapse" id="read_more_button-{{$frame->id}}">
             <label class="control-label">続きを読むボタン名</label>
             <input type="text" name="read_more_button" value="{{old('read_more_button', $contents->read_more_button)}}" class="form-control @if ($errors && $errors->has('read_more_button')) border-danger @endif">
             @include('plugins.common.errors_inline', ['name' => 'read_more_button'])
             <small class="form-text text-muted">空の場合「{{Contents::read_more_button_default}}」を表示します。</small>
         </div>
 
-        <div class="form-group col-md">
+        <div class="form-group col-md collapse" id="close_more_button-{{$frame->id}}">
             <label class="control-label">続きを閉じるボタン名</label>
             <input type="text" name="close_more_button" value="{{old('close_more_button', $contents->close_more_button)}}" class="form-control @if ($errors && $errors->has('close_more_button')) border-danger @endif">
             @include('plugins.common.errors_inline', ['name' => 'close_more_button'])
@@ -71,7 +71,7 @@ use App\Models\User\Contents\Contents;
         </div>
     </div>
 
-    <div class="form-group">
+    <div class="form-group collapse" id="content2_text-{{$frame->id}}">
         <label class="control-label">続き内容</label>
         <div @if ($errors && $errors->has('content2_text')) class="border border-danger" @endif>
             <textarea name="content2_text" class="wysiwyg{{$frame->id}}">{!!old('content2_text', $contents->content2_text)!!}</textarea>
@@ -116,4 +116,13 @@ use App\Models\User\Contents\Contents;
         @endif
     </div>
 </form>
+
+{{-- 初期状態で開くもの --}}
+@if(old('read_more_flag', $contents->read_more_flag))
+    <script>
+        $('#read_more_button-{{$frame->id}}').collapse('show')
+        $('#close_more_button-{{$frame->id}}').collapse('show')
+        $('#content2_text-{{$frame->id}}').collapse('show')
+    </script>
+@endif
 @endsection
