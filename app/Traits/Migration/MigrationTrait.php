@@ -2062,8 +2062,8 @@ trait MigrationTrait
                     $close_more_button = null;
                     if (!empty($post_text2)) {
                         $read_more_flag = 1;
-                        $read_more_button = '続きを読む';
-                        $close_more_button = '閉じる';
+                        $read_more_button = BlogsPosts::read_more_button_default;
+                        $close_more_button = BlogsPosts::close_more_button_default;
                     }
 
                     // ブログ記事テーブル追加
