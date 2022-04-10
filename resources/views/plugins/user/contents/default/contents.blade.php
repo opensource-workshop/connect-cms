@@ -2,7 +2,7 @@
  * 表示画面テンプレート。データのみ。HTMLは解釈する。
  *
  * フレームが作られた直後の状態では、$contents が存在せずにnull の場合があるので、チェックして切り替えている。
- * 
+ *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
@@ -12,6 +12,23 @@
 @section("plugin_contents_$frame->id")
 @if ($contents)
     {!! $contents->content_text !!}
+
+    {{-- 続きを読む --}}
+    @if ($contents->read_more_flag)
+        {{-- 続きを読む & タグありなら、続きを読むとタグの間に余白追加 --}}
+        <div id="content2_text_button_{{$frame->id}}_{{$contents->id}}" @isset($post_tags) class="mb-2" @endisset>
+            <button type="button" class="btn btn-light btn-sm border" onclick="$('#content2_text_{{$frame->id}}_{{$contents->id}}').show(); $('#content2_text_button_{{$frame->id}}_{{$contents->id}}').hide();">
+                <i class="fas fa-angle-down"></i> {{$contents->read_more_button}}
+            </button>
+        </div>
+        <div id="content2_text_{{$frame->id}}_{{$contents->id}}" style="display: none;" @isset($post_tags) class="mb-2" @endisset>
+            {!! $contents->content2_text !!}
+            <button type="button" class="btn btn-light btn-sm border" onclick="$('#content2_text_button_{{$frame->id}}_{{$contents->id}}').show(); $('#content2_text_{{$frame->id}}_{{$contents->id}}').hide();">
+                <i class="fas fa-angle-up"></i> {{$contents->close_more_button}}
+            </button>
+        </div>
+    @endif
+
     @can('role_update_or_approval',[[$contents, 'contents', $buckets]])
     <div class="row">
         <div class="col-12 text-right mb-1">

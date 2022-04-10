@@ -5,6 +5,10 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
 --}}
+@php
+use App\Models\User\Contents\Contents;
+@endphp
+
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
@@ -41,6 +45,38 @@
             <textarea name="contents" class="wysiwyg{{$frame->id}}">{!! old('contents', $contents->content_text) !!}</textarea>
         </div>
         @include('plugins.common.errors_inline_wysiwyg', ['name' => 'contents'])
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md">
+            <label class="control-label">続き</label>
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" name="read_more_flag" value="1" class="custom-control-input" id="read_more_flag{{$frame_id}}" @if(old('read_more_flag', $contents->read_more_flag)) checked=checked @endif>
+                <label class="custom-control-label" for="read_more_flag{{$frame_id}}">続きを表示する</label>
+            </div>
+        </div>
+
+        <div class="form-group col-md">
+            <label class="control-label">続きを読むボタン名</label>
+            <input type="text" name="read_more_button" value="{{old('read_more_button', $contents->read_more_button)}}" class="form-control @if ($errors && $errors->has('read_more_button')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'read_more_button'])
+            <small class="form-text text-muted">空の場合「{{Contents::read_more_button_default}}」を表示します。</small>
+        </div>
+
+        <div class="form-group col-md">
+            <label class="control-label">続きを閉じるボタン名</label>
+            <input type="text" name="close_more_button" value="{{old('close_more_button', $contents->close_more_button)}}" class="form-control @if ($errors && $errors->has('close_more_button')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'close_more_button'])
+            <small class="form-text text-muted">空の場合「{{Contents::close_more_button_default}}」を表示します。</small>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label">続き内容</label>
+        <div @if ($errors && $errors->has('content2_text')) class="border border-danger" @endif>
+            <textarea name="content2_text" class="wysiwyg{{$frame->id}}">{!!old('content2_text', $contents->content2_text)!!}</textarea>
+        </div>
+        @include('plugins.common.errors_inline_wysiwyg', ['name' => 'content2_text'])
     </div>
 
     <div class="form-group">
