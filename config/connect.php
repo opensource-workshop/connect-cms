@@ -104,6 +104,7 @@ return [
     'PROXYPORT' => env('PROXYPORT', ''),
     'PROXY' => env('PROXY', ''),
     'PROXYUSERPWD' => env('PROXYUSERPWD', ''),
+    'CURL_TIMEOUT' => env('CURL_TIMEOUT', ),
 
     // WYSIWYG のバイト数チェックの数値（MySQLのtext型）
     'WYSIWYG_MAX_BYTE' => 65535,

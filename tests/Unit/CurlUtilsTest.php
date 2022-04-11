@@ -2,11 +2,11 @@
 
 namespace Tests\Unit;
 
-use App\Traits\ExeceutesWebApi;
+use App\Utilities\Curl\CurlUtils;
 use RuntimeException;
 use Tests\TestCase;
 
-class ExeceutesWebApiTest extends TestCase
+class CurlUtilsTest extends TestCase
 {
 
     private $trait;
@@ -18,22 +18,6 @@ class ExeceutesWebApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        // Traitをテストするため、モックを用意する
-        $this->trait = $this->getMockForTrait(ExeceutesWebApi::class);
-    }
-
-    /**
-     * プロパティ：タイムアウト秒数のテスト
-     */
-    public function testTimeoutAttribute()
-    {
-        $timeout = $this->trait->getTimeout();
-        $this->assertEquals(120, $timeout);
-
-        $this->trait->setTimeout(180);
-        $timeout = $this->trait->getTimeout();
-        $this->assertEquals(180, $timeout);
     }
 
     /**
@@ -50,7 +34,7 @@ class ExeceutesWebApiTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('cURL [GET] https://aqwsderftgyhujiko : failed. [Error:6] Could not resolve host: aqwsderftgyhujiko');
-        $this->trait->executeCurl($url);
+        CurlUtils::execute($url);
     }
 
     /**
@@ -64,10 +48,10 @@ class ExeceutesWebApiTest extends TestCase
         config(['connect.HTTPPROXYTUNNEL' => false]);
 
         $url = $this->mock_url . '/delay/10';
-        $this->trait->setTimeout(5);
+        config(['connect.CURL_TIMEOUT' => 5]);
         $this->expectException(RuntimeException::class);
         // Exceptionのメッセージはテスト済みなので省略
-        $this->trait->executeCurl($url);
+        CurlUtils::execute($url);
     }
 
     /**
@@ -86,7 +70,7 @@ class ExeceutesWebApiTest extends TestCase
         ];
 
         // パラメーターなし
-        $return = $this->trait->executeCurl($url, 'GET');
+        $return = CurlUtils::execute($url, 'GET');
         $body = $return['body'];
         $json = json_decode($body, true);
         $this->assertEquals([], $json['args']);
@@ -94,7 +78,7 @@ class ExeceutesWebApiTest extends TestCase
         $this->assertEquals(200, $info['http_code']);
 
         // パラメーターあり
-        $return = $this->trait->executeCurl($url, 'GET', $params);
+        $return = CurlUtils::execute($url, 'GET', $params);
         $body = $return['body'];
         $json = json_decode($body, true);
         $this->assertEquals($params, $json['args']);
@@ -119,7 +103,7 @@ class ExeceutesWebApiTest extends TestCase
             'Authorization: Bearer 1234567890abcdefg',
         ];
 
-        $return = $this->trait->executeCurl($url, 'GET', [], $headers);
+        $return = CurlUtils::execute($url, 'GET', [], $headers);
 
         $body = $return['body'];
         $json = json_decode($body, true);
@@ -146,7 +130,7 @@ class ExeceutesWebApiTest extends TestCase
         ];
 
         // パラメーターなし
-        $return = $this->trait->executeCurl($url, 'POST');
+        $return = CurlUtils::execute($url, 'POST');
         $body = $return['body'];
         $json = json_decode($body, true);
         $this->assertEquals([], $json['form']);
@@ -154,7 +138,7 @@ class ExeceutesWebApiTest extends TestCase
         $this->assertEquals(200, $info['http_code']);
 
         // パラメーターあり
-        $return = $this->trait->executeCurl($url, 'POST', $params);
+        $return = CurlUtils::execute($url, 'POST', $params);
         $body = $return['body'];
         $json = json_decode($body, true);
         $this->assertEquals($params, $json['form']);
@@ -174,13 +158,13 @@ class ExeceutesWebApiTest extends TestCase
         $url = $this->mock_url . '/status/404';
 
         // GET
-        $return = $this->trait->executeCurl($url);
+        $return = CurlUtils::execute($url);
 
         $info = $return['info'];
         $this->assertEquals(404, $info['http_code']);
 
         // POST
-        $return = $this->trait->executeCurl($url, 'POST');
+        $return = CurlUtils::execute($url, 'POST');
 
         $info = $return['info'];
         $this->assertEquals(404, $info['http_code']);
@@ -197,7 +181,7 @@ class ExeceutesWebApiTest extends TestCase
         config(['connect.HTTPPROXYTUNNEL' => true]);
 
         $url = $this->mock_url . '/get';
-        $return = $this->trait->executeCurl($url);
+        $return = CurlUtils::execute($url);
 
         $body = $return['body'];
         $json = json_decode($body, true);

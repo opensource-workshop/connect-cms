@@ -1,18 +1,11 @@
 <?php
 
-namespace App\Traits;
+namespace App\Utilities\Curl;
 
 use Illuminate\Support\Facades\Log;
 
-trait ExeceutesWebApi
+class CurlUtils
 {
-
-    /**
-     * タイムアウト（秒） ※変更可能
-     * @var int
-     */
-    protected $timeout = 120;
-
     /**
      * cURLを実行する。
      *
@@ -23,9 +16,9 @@ trait ExeceutesWebApi
      * @return array 返り値 ['info' => array, 'body' => string]
      * @see https://www.php.net/manual/ja/function.curl-getinfo.php
      */
-    public function executeCurl(string $url, string $method = 'GET', array $params = [], array $header = []): array
+    public static function execute(string $url, string $method = 'GET', array $params = [], array $header = []): array
     {
-        return $this->execute($this->buildOptions($url, $method, $params, $header));
+        return self::executeCurl(self::buildOptions($url, $method, $params, $header));
     }
 
     /**
@@ -34,7 +27,7 @@ trait ExeceutesWebApi
      * @param array cURLのオプション
      * @return array 返り値
      */
-    private function execute(array $options): array
+    private static function executeCurl(array $options): array
     {
         $ch = curl_init();
         curl_setopt_array($ch, $options);
@@ -76,13 +69,13 @@ trait ExeceutesWebApi
      * @param array $header ヘッダー
      * @return array cURLのオプション
      */
-    private function buildOptions(string $url, string $method, array $params, array $header): array
+    private static function buildOptions(string $url, string $method, array $params, array $header): array
     {
         $options = [
             CURLOPT_URL => $url,
             CURLOPT_CUSTOMREQUEST => $method,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => $this->timeout,
+            CURLOPT_TIMEOUT => config('connect.CURL_TIMEOUT'),
         ];
 
         // ヘッダー設定
@@ -92,11 +85,11 @@ trait ExeceutesWebApi
 
         // Proxy設定
         if (config('connect.HTTPPROXYTUNNEL')) {
-            $options = $this->addProxyOptions($options);
+            $options = self::addProxyOptions($options);
         }
 
         // パラメータ設定
-        $options = $this->addParams($options, $params);
+        $options = self::addParams($options, $params);
 
         return $options;
     }
@@ -108,7 +101,7 @@ trait ExeceutesWebApi
      * @param array $params パラメータ
      * @return array パラメータ設定済みのcURLオプション
      */
-    private function addParams(array $options, array $params): array
+    private static function addParams(array $options, array $params): array
     {
 
         if (empty($params)) {
@@ -130,7 +123,7 @@ trait ExeceutesWebApi
      * @param array $options cURLオプション
      * @return array プロキシ設定追加済みのcURLオプション
      */
-    private function addProxyOptions(array $options)
+    private static function addProxyOptions(array $options)
     {
         $options[CURLOPT_HTTPPROXYTUNNEL] = config('connect.HTTPPROXYTUNNEL');
         $options[CURLOPT_PROXYPORT] = config('connect.PROXYPORT');
@@ -138,25 +131,5 @@ trait ExeceutesWebApi
         $options[CURLOPT_PROXYUSERPWD] = config('connect.PROXYUSERPWD');
 
         return $options;
-    }
-
-    /**
-     * タイムアウト秒数を設定する。
-     *
-     * @param int $timeout 秒数
-     */
-    public function setTimeout(int $timeout)
-    {
-        $this->timeout = $timeout;
-    }
-
-    /**
-     * タイムアウト秒数を取得する。
-     *
-     * @return int 秒数
-     */
-    public function getTimeout(): int
-    {
-        return $this->timeout;
     }
 }
