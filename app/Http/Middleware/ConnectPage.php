@@ -259,14 +259,13 @@ class ConnectPage
             if (!empty($permalink) && $permalink->migrate_source == 'NetCommons2') {
                 // ページとフレームを探す。
                 $block_id = substr($route_param_all, stripos($route_param_all, '-') + 1);
-                if (!empty($block_id)) {
-                    $frame_mapping = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $block_id)->first();
-                    if (!empty($frame_mapping)) {
-                        $frame = Frame::find($frame_mapping->destination_key);
-                        if (!empty($frame)) {
-                            // 見つけた詳細にリダイレクトする。
-                            Redirect::to('/plugin/' . $permalink->plugin_name . '/' . $permalink->action . '/' . $frame->page_id . '/' . $frame->id. '/' . $permalink->unique_id . "#frame-" . $frame->id)->send();
-                        }
+                // block_id から frames の MigrationMapping 取得
+                $frame_mapping = $this->getFrameMappingFromBlockId($block_id, $permalink->nc2_block_id);
+                if (!empty($frame_mapping)) {
+                    $frame = Frame::find($frame_mapping->destination_key);
+                    if (!empty($frame)) {
+                        // 見つけた詳細にリダイレクトする。
+                        Redirect::to('/plugin/' . $permalink->plugin_name . '/' . $permalink->action . '/' . $frame->page_id . '/' . $frame->id. '/' . $permalink->unique_id . "#frame-" . $frame->id)->send();
                     }
                 }
             }
@@ -304,6 +303,25 @@ class ConnectPage
         }
         // return;
         return $http_status_code;
+    }
+
+    /**
+     * block_id から frames の MigrationMapping 取得
+     */
+    private function getFrameMappingFromBlockId(?int $block_id, ?int $permalink_nc2_block_id): ?MigrationMapping
+    {
+        if (empty($block_id)) {
+            // 空なら permalinks.nc2_block_id で取得
+            $frame_mapping = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $permalink_nc2_block_id)->first();
+
+        } else {
+            $frame_mapping = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $block_id)->first();
+            if (empty($frame_mapping)) {
+                // 空なら permalinks.nc2_block_id で再取得
+                $frame_mapping = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $permalink_nc2_block_id)->first();
+            }
+        }
+        return $frame_mapping;
     }
 
     /**
@@ -360,16 +378,7 @@ class ConnectPage
      */
     private function checkPageForbidden($page_tree, $router)
     {
-        // プラグイン管理者権限以上ならOK
-        //$user = Auth::user();//ログインしたユーザーを取得
-        //if (isset($user) && $user->can('role_arrangement')) {
-        //    return;
-        //}
-
-        // $router = app(\Illuminate\Routing\Router::class);
-
         // 対象となる処理は、画面を持つルートの処理とする。
-        // $route_name = $this->router->current()->getName();
         $route_name = $router->current()->getName();
         if ($route_name == 'get_plugin'    ||
             $route_name == 'post_plugin'   ||
@@ -383,36 +392,11 @@ class ConnectPage
             return;
         }
 
-        // 参照できない場合
-        $user = Auth::user();  // 権限チェックをpage のisView で行うためにユーザを渡す。
-        $check_no_display_flag = true; // ページ直接の参照可否チェックをしたいので、表示フラグは見ない。表示フラグは隠しページ用。
-
         if ($this->page && get_class($this->page) == 'App\Models\Common\Page') {
-            // 自分のページから親を遡って取得
-            // $page_tree = $this->getAncestorsAndSelf($this->page->id);
-
-            // 自分のページ＋先祖ページのpage_roles を取得
-            $ids = null;
-            // $ids_collection = $this->page_tree->pluck('id');
-            $ids_collection = $page_tree->pluck('id');
-            if ($ids_collection) {
-                $ids = $ids_collection->all();
-            }
-            // $page_roles = $this->getPageRoles($ids);
-            $page_roles = PageRole::getPageRoles($ids);
-
-            // ページをループして表示可否をチェック
-            // 継承関係を加味するために is_view 変数を使用。
-            $is_view = true;
-            foreach ($page_tree as $page_obj) {
-                $check_page_roles = null;
-                if ($page_roles) {
-                    $check_page_roles = $page_roles->where('page_id', $page_obj->id);
-                }
-                $is_view = $page_obj->isView($user, $check_no_display_flag, $is_view, $check_page_roles);
-            }
+            // 親子ページを加味してページ表示できるか
+            $is_view = $this->page->isVisibleAncestorsAndSelf($page_tree);
             if (!$is_view) {
-                // 403 対象
+                // 403 対象（IP アドレス制限）
                 return $this->doForbidden();
             }
         }

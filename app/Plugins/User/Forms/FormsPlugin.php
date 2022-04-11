@@ -4,7 +4,6 @@ namespace App\Plugins\User\Forms;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-// use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -29,7 +28,6 @@ use App\Rules\CustomValiBothRequired;
 use App\Rules\CustomValiTokenExists;
 use App\Rules\CustomValiEmails;
 
-// use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
 
 use App\Utilities\String\StringUtils;
@@ -51,6 +49,8 @@ use App\Enums\Required;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
  * @package Controller
+ * @plugin_title フォーム
+ * @plugin_desc フォームを作成できるプラグインです。項目を自由に作成できます。
  */
 class FormsPlugin extends UserPluginBase
 {
@@ -202,14 +202,15 @@ class FormsPlugin extends UserPluginBase
     private function getFormsColumnsSelects($forms_id)
     {
         // カラムの選択肢用データ
-        $forms_columns_selects = DB::table('forms_columns_selects')
-                                     ->join('forms_columns', 'forms_columns.id', '=', 'forms_columns_selects.forms_columns_id')
-                                     ->join('forms', 'forms.id', '=', 'forms_columns.forms_id')
-                                     ->select('forms_columns_selects.*')
-                                     ->where('forms.id', '=', $forms_id)
-                                     ->orderBy('forms_columns_selects.forms_columns_id', 'asc')
-                                     ->orderBy('forms_columns_selects.display_sequence', 'asc')
-                                     ->get();
+        $forms_columns_selects = FormsColumnsSelects::
+            join('forms_columns', 'forms_columns.id', '=', 'forms_columns_selects.forms_columns_id')
+            ->join('forms', 'forms.id', '=', 'forms_columns.forms_id')
+            ->select('forms_columns_selects.*')
+            ->where('forms.id', '=', $forms_id)
+            ->orderBy('forms_columns_selects.forms_columns_id', 'asc')
+            ->orderBy('forms_columns_selects.display_sequence', 'asc')
+            ->get();
+
         // カラムID毎に詰めなおし
         $forms_columns_id_select = array();
         $index = 1;
@@ -233,11 +234,10 @@ class FormsPlugin extends UserPluginBase
     private function getFormFrame($frame_id)
     {
         // Frame データ
-        $frame = DB::table('frames')
-                 ->select('frames.*', 'forms.id as forms_id')
-                 ->leftJoin('forms', 'forms.bucket_id', '=', 'frames.bucket_id')
-                 ->where('frames.id', $frame_id)
-                 ->first();
+        $frame = Frame::select('frames.*', 'forms.id as forms_id')
+            ->leftJoin('forms', 'forms.bucket_id', '=', 'frames.bucket_id')
+            ->where('frames.id', $frame_id)
+            ->first();
         return $frame;
     }
 
@@ -268,8 +268,12 @@ class FormsPlugin extends UserPluginBase
     /* 画面アクション関数 */
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
+     *
+     * @method_title 入力
+     * @method_desc 設定した項目で入力画面が表示されます。
+     * @method_detail
      */
     public function index($request, $page_id, $frame_id, $errors = null)
     {
@@ -278,7 +282,6 @@ class FormsPlugin extends UserPluginBase
 
         // Forms、Frame データ
         $form = $this->getForms($frame_id);
-
 
         $setting_error_messages = null;
         $forms_columns = null;
@@ -341,7 +344,7 @@ class FormsPlugin extends UserPluginBase
             ////
             // URLのなかに'/plugin/forms/index'が含まれている場合（getのパラメータを含める時のみindexをURLに含められてる想定）
             // 同一ページに複数フォームある場合、１つのフォームを登録して確認画面を表示するが、他は初期表示のため、リクエストが上書きされてしまうことを防ぐ。
-            if ($request->isMethod('get') && strpos($request->url(), '/plugin/forms/index') !== false) {
+            if ($request->isMethod('post') && strpos($request->url(), '/plugin/forms/index') !== false) {
                 // まとめ行に対応してない素の状態のFormsColumnsが欲しいため、再取得
                 $tmp_forms_columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence')->get();
 
@@ -1276,6 +1279,10 @@ class FormsPlugin extends UserPluginBase
 
     /**
      * フォーム選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示するフォームを選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -1283,38 +1290,39 @@ class FormsPlugin extends UserPluginBase
         $plugin_name = $this->frame->plugin_name;
 
         // Frame データ
-        $plugin_frame = DB::table('frames')
-                            ->select('frames.*')
-                            ->where('frames.id', $frame_id)->first();
-
-        // $frame_page = "frame_{$frame_id}_buckets_page";
+        $plugin_frame = Frame::where('id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
         $plugins = DB::table($plugin_name)
-                        ->select(
-                            $plugin_name . '.id',
-                            $plugin_name . '.bucket_id',
-                            $plugin_name . '.data_save_flag',
-                            $plugin_name . '.created_at',
-                            $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name',
-                            // 本登録数
-                            DB::raw('count(forms_inputs.forms_id) as active_entry_count')
-                        )
-                        ->leftJoin('forms_inputs', function ($leftJoin) use ($plugin_name) {
-                            $leftJoin->on($plugin_name . '.id', '=', 'forms_inputs.forms_id')
-                                        ->where('forms_inputs.status', FormStatusType::active);
-                        })
-                        ->groupBy(
-                            $plugin_name . '.id',
-                            $plugin_name . '.bucket_id',
-                            $plugin_name . '.data_save_flag',
-                            $plugin_name . '.created_at',
-                            $plugin_name . '.' . $plugin_name . '_name',
-                            'forms_inputs.forms_id'
-                        )
-                        ->orderBy($plugin_name. '.id', 'desc')
-                        ->orderBy($plugin_name . '.created_at', 'desc')
-                        ->paginate(10, ["*"], "frame_{$frame_id}_page");
+            ->select(
+                $plugin_name . '.id',
+                $plugin_name . '.bucket_id',
+                $plugin_name . '.data_save_flag',
+                $plugin_name . '.created_at',
+                $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name',
+                // 本登録数
+                DB::raw('count(forms_inputs.forms_id) as active_entry_count')
+            )
+            ->leftJoin('forms_inputs', function ($leftJoin) use ($plugin_name) {
+                $leftJoin->on($plugin_name . '.id', '=', 'forms_inputs.forms_id')
+                    ->where('forms_inputs.status', FormStatusType::active);
+            })
+            ->leftJoin('frames', function ($leftJoin) use ($plugin_name, $frame_id) {
+                $leftJoin->on($plugin_name . '.bucket_id', '=', 'frames.bucket_id')
+                    ->where('frames.id', $frame_id);
+            })
+            ->groupBy(
+                $plugin_name . '.id',
+                $plugin_name . '.bucket_id',
+                $plugin_name . '.data_save_flag',
+                $plugin_name . '.created_at',
+                $plugin_name . '.' . $plugin_name . '_name',
+                'forms_inputs.forms_id'
+            )
+            // ->orderBy($plugin_name. '.id', 'desc')
+            ->orderBy('frames.bucket_id', 'desc')
+            ->orderBy($plugin_name . '.created_at', 'desc')
+            ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 仮登録件数
         $forms_tmp_entry = Forms::
@@ -1346,12 +1354,15 @@ class FormsPlugin extends UserPluginBase
         return $this->view('forms_list_buckets', [
             'plugin_frame' => $plugin_frame,
             'plugins' => $plugins,
-            // 'frame_page' => $request->input($frame_page, 1),
         ]);
     }
 
     /**
      * フォーム新規作成画面
+     *
+     * @method_title 作成
+     * @method_desc フォームを新しく作成します。
+     * @method_detail フォーム名やデータ保存条件の設定などを行います。
      */
     public function createBuckets($request, $page_id, $frame_id, $forms_id = null, $create_flag = false, $message = null, $errors = null)
     {
@@ -1384,28 +1395,25 @@ class FormsPlugin extends UserPluginBase
 
         // 仮登録件数
         $tmp_entry_count = FormsInputs::where('forms_id', $form->id)
-                                    ->where('forms_inputs.status', FormStatusType::temporary)
-                                    ->count();
+            ->where('forms_inputs.status', FormStatusType::temporary)
+            ->count();
 
         // 本登録数
         $active_entry_count = FormsInputs::where('forms_id', $form->id)
-                                    ->where('forms_inputs.status', FormStatusType::active)
-                                    ->count();
+            ->where('forms_inputs.status', FormStatusType::active)
+            ->count();
 
         $form->tmp_entry_count = $tmp_entry_count;
         $form->active_entry_count = $active_entry_count;
-        // var_dump($tmp_entry_count, $active_entry_count);
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'forms_edit_form', [
+        return $this->view('forms_edit_form', [
             'form_frame'  => $form_frame,
             'form'        => $form,
             'create_flag' => $create_flag,
             'message'     => $message,
             'errors'      => $errors,
-            ]
-        )->withInput($request->all);
+        ])->withInput($request->all);
     }
 
     /**
@@ -1592,9 +1600,9 @@ class FormsPlugin extends UserPluginBase
 
             // 削除するファイル情報が入っている詳細データの特定
             $del_file_ids = FormsInputCols::whereIn('forms_columns_id', $file_column_type_ids)
-                                                ->whereNotNull('value')
-                                                ->pluck('value')
-                                                ->all();
+                ->whereNotNull('value')
+                ->pluck('value')
+                ->all();
 
             // 削除するファイルデータ (もし重複IDあったとしても、in検索によって排除される)
             $delete_uploads = Uploads::whereIn('id', $del_file_ids)->get();
@@ -1652,7 +1660,7 @@ class FormsPlugin extends UserPluginBase
     {
         // FrameのバケツIDの更新
         Frame::where('id', $frame_id)
-               ->update(['bucket_id' => $request->select_bucket]);
+            ->update(['bucket_id' => $request->select_bucket]);
 
         // 関連するセッションクリア
         $request->session()->forget('forms');
@@ -1704,6 +1712,10 @@ class FormsPlugin extends UserPluginBase
 
     /**
      * 項目の詳細画面の表示
+     *
+     * @method_title カラム詳細編集
+     * @method_desc カラムの詳細設定を行います。
+     * @method_detail 入力チェック、キャプションやプレースホルダなどを設定できます。
      */
     public function editColumnDetail($request, $page_id, $frame_id, $column_id, $message = null, $errors = null)
     {
@@ -1744,6 +1756,10 @@ class FormsPlugin extends UserPluginBase
 
     /**
      * カラム編集画面の表示
+     *
+     * @method_title カラム編集
+     * @method_desc カラムの設定を行います。
+     * @method_detail カラム名と型を指定してカラムを作成します。
      */
     public function editColumn($request, $page_id, $frame_id, $id = null, $message = null, $errors = null)
     {
@@ -2348,6 +2364,10 @@ ORDER BY forms_inputs_id, forms_columns_id
 
     /**
      * 登録一覧
+     *
+     * @method_title 登録一覧
+     * @method_desc 入力されたデータを一覧表示できます。
+     * @method_detail 入力されたデータのダウンロードもできます。
      */
     public function listInputs($request, $page_id, $frame_id, $forms_id = null)
     {

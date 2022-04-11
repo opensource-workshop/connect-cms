@@ -104,7 +104,7 @@ class MenusPlugin extends UserPluginBase
         //Log::debug(json_encode( $pages, JSON_UNESCAPED_UNICODE));
 
         // 上位階層のカレント表現用に自分と上位階層のページを取得
-        $ancestors = Page::ancestorsAndSelf($page_id);
+        $ancestors = Page::defaultOrder()->ancestorsAndSelf($page_id);
 
         // パンくずリスト用に複製
         $ancestors_breadcrumbs = clone $ancestors;

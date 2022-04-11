@@ -5,7 +5,7 @@ namespace App\Plugins;
 use Illuminate\Support\Facades\View;
 use Illuminate\View\FileViewFinder;
 
-use File;
+use Illuminate\Support\Facades\File;
 
 use App\Models\Common\Numbers;
 use App\Traits\ConnectMailTrait;
@@ -24,54 +24,54 @@ class PluginBase
 {
     use ConnectMailTrait;
 
-    /*
-        コンストラクタ
+    /**
+     * コンストラクタ
      */
     public function __construct()
     {
-
         // PHP エラー捕捉のためのエラーハンドラを設定する。
-        set_error_handler(array($this, 'cc_error_handler'));
+        set_error_handler(array($this, 'ccErrorHandler'));
     }
 
-    /*
-        エラーハンドラ
+    /**
+     * エラーハンドラ
      */
-    protected function cc_error_handler($errno, $errstr, $errfile, $errline, $errcontext)
+    protected function ccErrorHandler($errno, $errstr, $errfile, $errline)
     {
-
         // 例外を投げる。
         throw new \ErrorException($errstr, $errno, 0, $errfile, $errline);
     }
 
     // プラグインの対象者（User or Manager）：view ファイルの呼び出しでディレクトリ判定に使用するため。
-//    var $plugin_target = null;
+    // var $plugin_target = null;
 
     // プラグイン名：view ファイルの呼び出しでディレクトリ判定に使用するため。
-//    var $plugin_name = null;
+    // var $plugin_name = null;
 
     /**
      * コンストラクタ（プラグインの対象者とプラグイン名を受け取る）
      *
      */
-//    public function __construct($plugin_target = null, $plugin_name = null)
-//    {
-//        $this->plugin_target = $plugin_target;
-//        $this->plugin_name = $plugin_name;
-//    }
+/*
+    public function __construct($plugin_target = null, $plugin_name = null)
+    {
+        $this->plugin_target = $plugin_target;
+        $this->plugin_name = $plugin_name;
+    }
+*/
 
     /**
      * 関数の有無
-     *
      */
+/*
     public function function_exists($function_name)
     {
         return method_exists($this, $function_name);
     }
+*/
 
     /**
      * 連番取得
-     *
      */
     public function getNo($plugin_name = null, $buckets_id = null, $prefix = null)
     {
@@ -80,12 +80,12 @@ class PluginBase
         // firstOrCreate で最初の連番に 0 を指定して、取得した値をインクリメント
         $numbers = Numbers::firstOrCreate(
             [
-                               'plugin_name'   => $plugin_name,
-                               'buckets_id'    => $buckets_id,
-                               'prefix'        => $prefix
-                            ],
+                'plugin_name'   => $plugin_name,
+                'buckets_id'    => $buckets_id,
+                'prefix'        => $prefix
+            ],
             [
-                               'serial_number' => 0,
+                'serial_number' => 0,
             ]
         );
 
@@ -96,7 +96,7 @@ class PluginBase
     }
 
     /**
-     *  テーマ名取得
+     * テーマ名取得
      */
     private function getThemeName($dir, $theme_inis = null, $parent_dir = null)
     {
@@ -114,7 +114,7 @@ class PluginBase
     }
 
     /**
-     *  テーマ取得
+     * テーマ取得
      */
     protected function getThemes()
     {
@@ -164,7 +164,6 @@ class PluginBase
 
     /**
      * invoke（プラグインのフレーム用メソッドをコア（cms_frame.blade.php）から呼ぶ）
-     *
      */
 /*
     public function invoke($request, $page_id, $frame_id)
@@ -175,7 +174,6 @@ class PluginBase
 
     /**
      * レンダリングエンジンのう回路  (※ 保留 2019-03-15 @include で見に行くパスが変更できなかった)
-     *
      */
 /*
     public function view($dir, $arg = null)

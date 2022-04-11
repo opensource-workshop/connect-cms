@@ -22,6 +22,7 @@ yarn-error.log
 /connect-cms.code-workspace
 .vscode/launch.json
 composer.phar
+migration_config.ini
 
 # Option Plugins (対象外部分はオプションプラグインのサンプル)
 github_copy.bat
@@ -47,11 +48,16 @@ sync_option_private_2_dev.sh
 !/app/PluginsOption/Api/ApiPluginOptionBase.php
 /app/EnumsOption/*
 /app/Console/CommandsOption/*
+/app/RulesOption/*
 /database/migrations_option/*
 !/database/migrations_option/_readme.txt
 !/database/migrations_option/2020_06_03_163936_optionsamples_table.php
+/database/seeds/options/*
 /resources/views/plugins_option/*
 !/resources/views/plugins_option/user/optionsamples/*
+
+# Dusk
+/tests/tmp/*
 
 # Docker
 /docker/db

@@ -14,31 +14,31 @@
         <div class="navbar-collapse collapse" id="collapsingNavbarLg">
             <ul class="navbar-nav">
                 <li role="presentation" class="nav-item">
-                @if ($function == "index")
-                    <span class="nav-link"><span class="active">グループ一覧</span></span>
-                @else
-                    <a href="{{url('/manage/group')}}" class="nav-link">グループ一覧</a></li>
-                @endif
+                    @if ($function == "index")
+                        <span class="nav-link"><span class="active">グループ一覧</span></span>
+                    @else
+                        <a href="{{url('/manage/group')}}" class="nav-link">グループ一覧</a></li>
+                    @endif
                 </li>
 
                 <li role="presentation" class="nav-item">
-                @if ($function == "edit" && empty($id))
-                    <span class="nav-link"><span class="active">グループ登録</span></span>
-                @else
-                    <a href="{{url('/manage/group/edit')}}" class="nav-link">グループ登録</a></li>
-                @endif
+                    @if ($function == "edit" && empty($id))
+                        <span class="nav-link"><span class="active">グループ登録</span></span>
+                    @else
+                        <a href="{{url('/manage/group/edit')}}" class="nav-link">グループ登録</a></li>
+                    @endif
                 </li>
 
-               <li role="presentation" class="nav-item">
-                @if ($function == "edit" && $id)
-                    <span class="nav-link"><span class="active">グループ変更</span></span>
-                @endif
+                <li role="presentation" class="nav-item">
+                    @if ($function == "edit" && $id)
+                        <span class="nav-link"><span class="active">グループ変更</span></span>
+                    @endif
                 </li>
 
-               <li role="presentation" class="nav-item">
-                @if ($function == "list")
-                    <span class="nav-link"><span class="active">グループ参加者</span></span>
-                @endif
+                <li role="presentation" class="nav-item">
+                    @if ($function == "list")
+                        <span class="nav-link"><span class="active">グループ参加者</span></span>
+                    @endif
                 </li>
             </ul>
         </div>

@@ -24,7 +24,7 @@ use App\Models\User\Databases\DatabasesColumns;
          * 公開日時のカレンダーボタン押下
          */
         $(function () {
-            $('#posted_at{{$frame_id}}').datetimepicker({
+            $('#posted_at{{$frame_id}}, #expires_at{{$frame_id}}').datetimepicker({
                 @if (App::getLocale() == ConnectLocale::ja)
                     dayViewHeaderFormat: 'YYYY年 M月',
                 @endif
@@ -79,6 +79,19 @@ use App\Models\User\Databases\DatabasesColumns;
                     </div>
                 </div>
                 @include('plugins.common.errors_inline', ['name' => 'posted_at'])
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label class="col-sm-3 control-label">公開終了日時</label>
+            <div class="col-sm-9">
+                <div class="input-group date" id="expires_at{{$frame_id}}" data-target-input="nearest">
+                    <input type="text" name="expires_at" value="{{old('expires_at', $inputs->expires_at)}}" class="form-control datetimepicker-input @if ($errors && $errors->has('expires_at')) border-danger @endif" data-target="#expires_at{{$frame_id}}">
+                    <div class="input-group-append" data-target="#expires_at{{$frame_id}}" data-toggle="datetimepicker">
+                        <div class="input-group-text @if ($errors && $errors->has('expires_at')) border-danger @endif"><i class="far fa-clock"></i></div>
+                    </div>
+                </div>
+                @include('plugins.common.errors_inline', ['name' => 'expires_at'])
             </div>
         </div>
 

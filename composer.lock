@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "bcf9983700e92d428f4844a647f244a5",
+    "content-hash": "0750cd4e1861d01f4ebbb8bab17b4c74",
     "packages": [
         {
             "name": "azuyalabs/yasumi",
@@ -898,16 +898,16 @@
         },
         {
             "name": "guzzlehttp/psr7",
-            "version": "2.1.0",
+            "version": "2.2.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/psr7.git",
-                "reference": "089edd38f5b8abba6cb01567c2a8aaa47cec4c72"
+                "reference": "c94a94f120803a18554c1805ef2e539f8285f9a2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/psr7/zipball/089edd38f5b8abba6cb01567c2a8aaa47cec4c72",
-                "reference": "089edd38f5b8abba6cb01567c2a8aaa47cec4c72",
+                "url": "https://api.github.com/repos/guzzle/psr7/zipball/c94a94f120803a18554c1805ef2e539f8285f9a2",
+                "reference": "c94a94f120803a18554c1805ef2e539f8285f9a2",
                 "shasum": ""
             },
             "require": {
@@ -931,7 +931,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.1-dev"
+                    "dev-master": "2.2-dev"
                 }
             },
             "autoload": {
@@ -993,7 +993,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/psr7/issues",
-                "source": "https://github.com/guzzle/psr7/tree/2.1.0"
+                "source": "https://github.com/guzzle/psr7/tree/2.2.1"
             },
             "funding": [
                 {
@@ -1009,7 +1009,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2021-10-06T17:43:30+00:00"
+            "time": "2022-03-20T21:55:58+00:00"
         },
         {
             "name": "intervention/image",
@@ -2742,6 +2742,55 @@
                 }
             ],
             "time": "2021-09-25T23:07:42+00:00"
+        },
+        {
+            "name": "rlanvin/php-rrule",
+            "version": "v2.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/rlanvin/php-rrule.git",
+                "reference": "a7d7f993e6a5b0940d861d9e3d9f52cec709345e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/rlanvin/php-rrule/zipball/a7d7f993e6a5b0940d861d9e3d9f52cec709345e",
+                "reference": "a7d7f993e6a5b0940d861d9e3d9f52cec709345e",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.6.0"
+            },
+            "require-dev": {
+                "phpmd/phpmd": "@stable",
+                "phpunit/phpunit": "^5.7|^6.5|^8.0"
+            },
+            "suggest": {
+                "ext-intl": "Intl extension is needed for humanReadable()"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "RRule\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Lightweight and fast recurrence rules for PHP (RFC 5545)",
+            "homepage": "https://github.com/rlanvin/php-rrule",
+            "keywords": [
+                "date",
+                "ical",
+                "recurrence",
+                "recurring",
+                "rrule"
+            ],
+            "support": {
+                "issues": "https://github.com/rlanvin/php-rrule/issues",
+                "source": "https://github.com/rlanvin/php-rrule/tree/v2.3.0"
+            },
+            "time": "2021-10-25T14:31:52+00:00"
         },
         {
             "name": "setasign/fpdi",
@@ -7904,5 +7953,5 @@
         "php": ">=7.2.5"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.1.0"
+    "plugin-api-version": "2.2.0"
 }

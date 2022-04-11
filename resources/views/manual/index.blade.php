@@ -4,7 +4,7 @@
 <div class="row mt-3">
     <div class="col-sm">
         <div class="card">
-            <div class="card-header text-white bg-primary">Connect-CMS マニュアル</div>
+            <div class="card-header text-white bg-primary">Connect-CMS オンライン・マニュアル</div>
             <div class="card-body">
                 <p>ようこそ、Connect-CMS のマニュアルへ。</p>
                 <p>まずは、バッジ・メニューから、見たいカテゴリをクリックしましょう。</p>
@@ -17,11 +17,39 @@
 <div class="row mt-3">
     <div class="col-sm">
         <div class="card">
+            <div class="card-header text-white bg-primary">Connect-CMS ダウンロード・マニュアル</div>
+            <div class="card-body">
+                <p>Connect-CMS のマニュアルをPDF でダウンロードできます。</p>
+                <p><a href="./pdf/manual.pdf" target="_blank">Connect-CMS のマニュアルPDF ダウンロード</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mt-3">
+    <div class="col-sm">
+        <div class="card">
             <div class="card-header text-white bg-primary">Connect-CMS 情報源</div>
             <div class="card-body">
                 <dl class="row mb-0">
                     <dd class="col-md-2"><a href="https://connect-cms.jp/" target="_blank">Connect-CMS公式サイト</a></dd>
                     <dd class="col-md-10">フォーラム掲示板や基本的な情報はこちらを参照してください。</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mt-3">
+    <div class="col-sm">
+        <div class="card">
+            <div class="card-header text-white bg-primary">ライセンス</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dd class="col-md-2">Connect-CMS のライセンス</dd>
+                    <dd class="col-md-10">ソフトウェアとしての Connect-CMS は MIT ライセンスで公開しています。<br /><a href="https://github.com/opensource-workshop/connect-cms/blob/master/LICENSE" target="_blank">https://github.com/opensource-workshop/connect-cms/blob/master/LICENSE</a></dd>
+                </dl>
+                <dl class="row mb-0">
+                    <dd class="col-md-2">ドキュメントのライセンス</dd>
+                    <dd class="col-md-10">Connect-CMS マニュアルは GFDL ライセンスで公開しています。<br /><a href="./LICENSE.md" target="_blank">LICENSE.md</a></dd>
                 </dl>
             </div>
         </div>

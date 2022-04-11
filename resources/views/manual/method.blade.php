@@ -4,8 +4,25 @@
     <div class="card">
         <div class="card-header text-white bg-primary">{{$current_method->plugin_title}} - {{$current_method->method_title}}</div>
         <div class="card-body">
-            <p>{!!nl2br($current_method->method_desc)!!}</p>
-            <p>{!!$current_method->method_detail!!}</p>
+            @if ($current_method->hasMp4())
+                <div class="row">
+                    <div class="col-lg-4 p-0">
+                        <div class="embed-responsive embed-responsive-16by9">
+                            <video src="../../../{{$current_method->getMp4Path()}}" class="embed-responsive-item" controls></video>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-8">
+                        <p>{!!nl2br($current_method->method_desc)!!}</p>
+                        <p>{!!$current_method->method_detail!!}</p>
+                        {!!$current_method->getInsertion($level, 'desc', '<p>', '</p>')!!}
+                    </div>
+                </div>
+            @else
+                <p>{!!nl2br($current_method->method_desc)!!}</p>
+                <p>{!!$current_method->method_detail!!}</p>
+                {!!$current_method->getInsertion($level, 'desc', '<p>', '</p>')!!}
+            @endif
         </div>
     </div>
 
@@ -45,8 +62,8 @@
                     @endif
                 </p>
             @endforeach
-            {!!$current_method->getInsertion($level, 'foot')!!}
         </div>
     </div>
     @endif
+    {!!$current_method->getInsertion($level, 'foot')!!}
 @endsection

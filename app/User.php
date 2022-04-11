@@ -75,6 +75,9 @@ class User extends Authenticatable
         } elseif ($this->status == UserStatus::temporary_delete) {
             // 仮削除
             return "cc-bg-red";
+        } elseif ($this->status == UserStatus::pending_approval) {
+            // 承認待ち
+            return "bg-info";
         }
         return "";
     }
@@ -167,6 +170,12 @@ class User extends Authenticatable
 
         // 登録の時は 仮削除 を選択させない
         if (!$is_function_edit && $enum_value == UserStatus::temporary_delete) {
+            return "disabled";
+        }
+
+        // 承認待ち以外のステータスから承認待ちへできないようにする
+        if ($enum_value ===  UserStatus::pending_approval
+            && $this->status !== UserStatus::pending_approval) {
             return "disabled";
         }
 

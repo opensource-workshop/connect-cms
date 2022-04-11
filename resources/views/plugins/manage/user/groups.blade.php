@@ -91,10 +91,11 @@
             </div>
         </form>
 
-        {{-- ページング処理 --}}
+        {{-- ページング処理
         <div class="text-center">
             {{ $group_users->links() }}
         </div>
+        --}}
     </div>
 </div>
 

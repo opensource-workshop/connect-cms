@@ -18,5 +18,12 @@ class Permalink extends Model
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['short_url', 'plugin_name', 'action', 'unique_id', 'migrate_source'];
+    protected $fillable = [
+        'short_url',
+        'plugin_name',
+        'action',
+        'unique_id',
+        'nc2_block_id',
+        'migrate_source',
+    ];
 }

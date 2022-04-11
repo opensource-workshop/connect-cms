@@ -17,7 +17,7 @@ use App\Traits\ConnectCommonTrait;
 use App\Enums\SearchsTargetPlugin;
 
 /**
- * 検索プラグイン
+ * サイト内検索プラグイン
  *
  * サイト内の情報を検索するプラグイン。
  *
@@ -25,6 +25,8 @@ use App\Enums\SearchsTargetPlugin;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 検索プラグイン
  * @package Controller
+ * @plugin_title サイト内検索
+ * @plugin_desc サイト内のコンテンツを検索できるプラグインです。
  */
 class SearchsPlugin extends UserPluginBase
 {
@@ -142,7 +144,7 @@ class SearchsPlugin extends UserPluginBase
 
             // ファイルの存在確認
             if (!file_exists($file_path)) {
-                return $this->view_error("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
+                return $this->viewError("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
             }
 
             // 各プラグインのgetSearchArgs() 関数を呼び出し。
@@ -192,6 +194,10 @@ class SearchsPlugin extends UserPluginBase
     /**
      * データ初期表示関数
      * コアがページ表示の際に呼び出す関数
+     *
+     * @method_title サイト内検索
+     * @method_desc 指定したキーワードがあるコンテンツの一覧が表示されます。
+     * @method_detail
      */
     public function index($request, $page_id, $frame_id, $errors = null)
     {
@@ -259,6 +265,10 @@ class SearchsPlugin extends UserPluginBase
 
     /**
      * 設定データ選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示するサイト内検索を選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -280,6 +290,10 @@ class SearchsPlugin extends UserPluginBase
 
     /**
      * 設定データの新規作成画面
+     *
+     * @method_title 作成
+     * @method_desc サイト内検索を新しく作成します。
+     * @method_detail サイト内検索の名称や検索条件などを入力してサイト内検索を作成できます。
      */
     public function createBuckets($request, $page_id, $frame_id, $id = null, $create_flag = false, $message = null, $errors = null)
     {

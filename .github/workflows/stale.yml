@@ -2,7 +2,8 @@ name: Close stale issues
 
 on:
   schedule:
-  - cron: "00 16 * * *"
+    # 毎日AM1時実行
+    - cron: "00 16 * * *"
 
 jobs:
   stale:
@@ -12,11 +13,12 @@ jobs:
       issues: write
 
     steps:
-    - uses: actions/stale@v3
-      with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        stale-issue-message: 'このissueは1年間更新がないため１か月後にcloseします。closeしたくない場合は【自動close除外】ラベルを付けるか【close予定】ラベルを外してください。'
-        days-before-stale: 365
-        days-before-close: 30
-        exempt-issue-labels: "自動close除外"
-        stale-issue-label: "close予定"
+      # https://github.com/actions/stale (official)
+      - uses: actions/stale@v4
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          stale-issue-message: 'このissueは1年間更新がないため１か月後にcloseします。closeしたくない場合は【自動close除外】ラベルを付けるか【close予定】ラベルを外してください。'
+          days-before-stale: 365
+          days-before-close: 30
+          exempt-issue-labels: "自動close除外"
+          stale-issue-label: "close予定"

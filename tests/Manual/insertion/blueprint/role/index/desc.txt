@@ -1,0 +1,78 @@
+<p>ここでは、Connect-CMS の権限について説明します。</p>
+<p>
+Connect-CMS の権限には、コンテンツ権限と管理権限の2種類があります。<br />
+以下、それぞれの役割について、説明します。
+</p>
+
+<p>
+    <u><b>コンテンツ権限</b></u><br />
+    フレームの操作や記事に対する権限です。
+</p>
+
+<table class="table table-sm table-bordered table_css">
+<thead>
+<tr class="bg-light">
+    <th class="doc_th" style="width: 20%;">権限名</th>
+    <th class="doc_th" style="width: 80%;">できること</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+    <td style="width: 20%;" nowrap="nowrap">コンテンツ管理者</td>
+    <td style="width: 80%;">以下、すべての権限を含めた記事の管理者権限</td>
+</tr>
+<tr>
+    <td style="width: 20%;" nowrap="nowrap">プラグイン管理者</td>
+    <td style="width: 80%;">ページにプラグインを配置し、プラグインの設定画面を操作できる権限</td>
+</tr>
+<tr>
+    <td style="width: 20%;">モデレータ</td>
+    <td style="width: 80%;">記事の投稿が可能。他者の記事の変更も可能。</td>
+</tr>
+<tr>
+    <td style="width: 20%;">承認者</td>
+    <td style="width: 80%;">記事の承認が可能</td>
+</tr>
+<tr>
+    <td style="width: 20%;">編集者</td>
+    <td style="width: 80%;">記事の投稿が可能</td>
+</tr>
+<tr>
+    <td style="width: 20%;">ゲスト</td>
+    <td style="width: 80%;"><p class="mb-0">ユーザIDはあるが、権限は付与していない状態。<br>記事に関しては操作できない。<br>投稿はさせないが、「メンバーシップページ」や「ログインユーザ全員参加」ページを参照させたい場合などに使用します。</p>
+</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+    <u><b>管理権限</b></u><br />
+    管理画面の操作権限です。
+</p>
+
+<table class="table table-sm table-bordered table_css">
+<thead>
+<tr class="bg-light">
+    <th class="doc_th" style="width: 20%;">権限名</th>
+    <th class="doc_th" style="width: 80%;">できること</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+    <td style="width: 20%;" nowrap="nowrap">システム管理者</td>
+    <td style="width: 80%;">管理機能をすべて操作できる権限</td>
+</tr>
+<tr>
+    <td style="width: 20%;">サイト管理者</td>
+    <td style="width: 80%;">サイト管理を中心にWebサイトの設定を行うメニューが操作できる権限</td>
+</tr>
+<tr>
+    <td style="width: 20%;">ページ管理者</td>
+    <td style="width: 80%;">ページ管理が操作できる権限</td>
+</tr>
+<tr>
+    <td style="width: 20%;">ユーザ管理者</td>
+    <td style="width: 80%;">ユーザ管理が操作できる権限</td>
+</tr>
+</tbody>
+</table>

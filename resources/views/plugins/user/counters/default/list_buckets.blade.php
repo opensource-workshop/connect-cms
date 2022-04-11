@@ -89,7 +89,7 @@
     @include('plugins.common.user_paginate', ['posts' => $plugin_buckets, 'frame' => $frame, 'aria_label_name' => $frame->plugin_name_full . '選択', 'class' => 'form-group'])
 
     <div class="text-center">
-        <a href="{{URL::to($page->permanent_link)}}" class="btn btn-secondary mr-2">
+        <a href="{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}" class="btn btn-secondary mr-2">
             <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
         </a>
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示カウンター変更</button>

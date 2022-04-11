@@ -1069,7 +1069,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 記事取得
         $post = $this->getPost($post_id);
         if (empty($post->id)) {
-            return $this->view_error("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
         }
 
         // 課題の添付ファイル（学習指導書など）を取得
@@ -1133,7 +1133,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 記事取得
         $learningtasks_post = $this->getPost($learningtasks_posts_id);
         if (empty($learningtasks_post->id)) {
-            return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
         // カテゴリ
@@ -1171,7 +1171,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 記事取得
         $learningtasks_posts = $this->getPost($post_id);
         if (empty($learningtasks_posts->id)) {
-            return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
         // ツールクラス
@@ -1290,7 +1290,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 記事取得
         $learningtasks_posts = $this->getPost($post_id);
         if (empty($learningtasks_posts->id)) {
-            return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
         // ツールクラス
@@ -1381,7 +1381,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $learningtasks_post = $this->getPost($post_id);
         if (empty($learningtasks_post->id)) {
-            return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
         // タグ取得
@@ -1577,7 +1577,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         //    // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
         //    if (empty($check_learningtasks_post) || $check_learningtasks_post->id != $old_learningtasks_post->id) {
-        //        return $this->view_error("403_inframe", null, 'saveのユーザー権限に応じたPOST ID チェック');
+        //        return $this->viewError("403_inframe", null, 'saveのユーザー権限に応じたPOST ID チェック');
         //    }
         //}
 
@@ -2605,7 +2605,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 記事取得
         $learningtasks_post = $this->getPost($learningtasks_posts_id);
         if (empty($learningtasks_post->id)) {
-            return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
         // 表示テンプレートを呼び出す。
@@ -2625,7 +2625,7 @@ class LearningtasksPlugin extends UserPluginBase
                 'required',
                 'file',
                 'mimes:csv,txt', // mimesの都合上text/csvなのでtxtも許可が必要
-                'mimetypes:text/plain',
+                'mimetypes:application/csv,text/plain',
             ],
         ];
 
@@ -2966,7 +2966,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 権限チェック（deleteCategories 関数は標準チェックにないので、独自チェック）
         $user = Auth::user();
         if (empty($user)) {
-            return $this->view_error("403_inframe", null, "ログインしないとできない処理です。");
+            return $this->viewError("403_inframe", null, "ログインしないとできない処理です。");
         }
 
         // 課題管理＆フレームデータ
@@ -3245,7 +3245,7 @@ class LearningtasksPlugin extends UserPluginBase
     //    // 権限チェック（deleteCategories 関数は標準チェックにないので、独自チェック）
     //    $user = Auth::user();
     //    if (empty($user)) {
-    //        return $this->view_error("403_inframe", null, "ログインしないとできない処理です。");
+    //        return $this->viewError("403_inframe", null, "ログインしないとできない処理です。");
     //    }
 
     //    // upload 用変数

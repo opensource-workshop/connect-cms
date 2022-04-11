@@ -54,15 +54,15 @@ class BlogsPluginTest extends DuskTestCase
      */
     private function init()
     {
-        // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'show', 'create', 'edit', 'template', 'createBuckets', 'settingBlogFrame', 'listCategories', 'listBuckets');
-
         // データクリア
         Blogs::truncate();
         BlogsFrames::truncate();
         BlogsPosts::truncate();
         BlogsPostsTags::truncate();
         $this->initPlugin('blogs', '/test/blog');
+
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'show', 'create', 'edit', 'template', 'createBuckets', 'settingBlogFrame', 'listCategories', 'listBuckets');
     }
 
     /**
@@ -111,7 +111,7 @@ class BlogsPluginTest extends DuskTestCase
     private function create($title = null)
     {
         // 記事で使う画像の取得
-        $upload = Uploads::where('client_original_name', 'blobid0000000000001.jpg')->first();
+        $upload = $this->firstOrCreateFileUpload('manual', 'copy_data/image/blobid0000000000001.png', 'blobid0000000000001.png', 'image/png', 'png', 'blogs', $this->test_frame->page_id);
 
         $body = '<h3>' . $title . 'の本文です。</h3>';
         if ($upload) {
@@ -302,7 +302,6 @@ class BlogsPluginTest extends DuskTestCase
      */
     private function template()
     {
-        Dusks::where('plugin_name', 'blogs')->where('method_name', 'template')->delete();
         $this->putManualTemplateData($this->test_frame, 'user', '/test/blog', ['blogs', 'ブログ'], ['datefirst' => '日付先頭', 'titleindex' => 'タイトルのみ']);
     }
 }

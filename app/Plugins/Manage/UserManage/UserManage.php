@@ -4,7 +4,7 @@ namespace App\Plugins\Manage\UserManage;
 
 // use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-// use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -12,13 +12,16 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 use App\Models\Core\Configs;
+use App\Models\Core\UsersColumns;
+use App\Models\Core\UsersColumnsSelects;
 use App\Models\Core\UsersRoles;
 use App\Models\Core\UsersInputCols;
 use App\Models\Core\UsersLoginHistories;
 use App\Models\Common\Group;
 use App\Models\Common\GroupUser;
-// use App\Models\Common\Page;
 use App\User;
+
+use App\Traits\ConnectMailTrait;
 
 use App\Plugins\Manage\ManagePluginBase;
 
@@ -30,7 +33,9 @@ use App\Utilities\Csv\CsvUtils;
 use App\Utilities\String\StringUtils;
 
 use App\Enums\CsvCharacterCode;
+use App\Enums\Required;
 use App\Enums\UserColumnType;
+use App\Enums\UserRegisterNoticeEmbeddedTag;
 use App\Enums\UserStatus;
 
 /**
@@ -38,43 +43,61 @@ use App\Enums\UserStatus;
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category ページ管理
- * @package Contoroller
+ * @category ユーザ管理
+ * @package Controller
  * @plugin_title ユーザ管理
  * @plugin_desc ユーザの一覧や追加など、ユーザに関する機能が集まった管理機能です。
  */
 class UserManage extends ManagePluginBase
 {
+    use ConnectMailTrait;
+
     /**
      *  権限定義
      */
     public function declareRole()
     {
         // 権限チェックテーブル
-        $role_ckeck_table = array();
-        $role_ckeck_table["index"]              = array('admin_user');
-        $role_ckeck_table["search"]             = array('admin_user');
-        $role_ckeck_table["clearSearch"]        = array('admin_user');
-        $role_ckeck_table["regist"]             = array('admin_user');
-        $role_ckeck_table["edit"]               = array('admin_user');
-        $role_ckeck_table["update"]             = array('admin_user');
-        $role_ckeck_table["destroy"]            = array('admin_user');
-        $role_ckeck_table["originalRole"]       = array('admin_user');
-        $role_ckeck_table["saveOriginalRoles"]  = array('admin_user');
-        $role_ckeck_table["deleteOriginalRole"] = array('admin_user');
-        $role_ckeck_table["groups"]             = array('admin_user');
-        $role_ckeck_table["saveGroups"]         = array('admin_user');
-        $role_ckeck_table["autoRegist"]         = array('admin_user');
-        $role_ckeck_table["autoRegistUpdate"]   = array('admin_user');
-        $role_ckeck_table["downloadCsv"] = array('admin_user');
-        $role_ckeck_table["downloadCsvFormat"] = array('admin_user');
-        $role_ckeck_table["import"] = array('admin_site');
-        $role_ckeck_table["uploadCsv"] = array('admin_user');
-        $role_ckeck_table["bulkDelete"] = array('admin_user');
-        $role_ckeck_table["bulkDestroy"] = array('admin_user');
-        $role_ckeck_table["loginHistory"] = array('admin_user');
+        $role_check_table = [];
+        $role_check_table["index"]              = ['admin_user'];
+        $role_check_table["search"]             = ['admin_user'];
+        $role_check_table["clearSearch"]        = ['admin_user'];
+        $role_check_table["regist"]             = ['admin_user'];
+        $role_check_table["edit"]               = ['admin_user'];
+        $role_check_table["update"]             = ['admin_user'];
+        $role_check_table["destroy"]            = ['admin_user'];
+        $role_check_table["originalRole"]       = ['admin_user'];
+        $role_check_table["saveOriginalRoles"]  = ['admin_user'];
+        $role_check_table["deleteOriginalRole"] = ['admin_user'];
+        $role_check_table["groups"]             = ['admin_user'];
+        $role_check_table["saveGroups"]         = ['admin_user'];
+        $role_check_table["autoRegist"]         = ['admin_user'];
+        $role_check_table["autoRegistUpdate"]   = ['admin_user'];
+        $role_check_table["downloadCsv"]        = ['admin_user'];
+        $role_check_table["downloadCsvFormat"]  = ['admin_user'];
+        $role_check_table["import"]             = ['admin_site'];
+        $role_check_table["uploadCsv"]          = ['admin_user'];
+        $role_check_table["bulkDelete"]         = ['admin_user'];
+        $role_check_table["bulkDestroy"]        = ['admin_user'];
+        $role_check_table["loginHistory"]       = ['admin_user'];
+        $role_check_table["mail"]               = ['admin_user'];
+        $role_check_table["mailSend"]           = ['admin_user'];
+        // 項目設定
+        $role_check_table["editColumns"]          = ['admin_site'];
+        $role_check_table["addColumn"]            = ['admin_site'];
+        $role_check_table["updateColumn"]         = ['admin_site'];
+        $role_check_table["updateColumnSequence"] = ['admin_site'];
+        $role_check_table["deleteColumn"]         = ['admin_site'];
+        // 項目詳細設定
+        $role_check_table["editColumnDetail"]     = ['admin_site'];
+        $role_check_table["updateColumnDetail"]   = ['admin_site'];
+        $role_check_table["addSelect"]            = ['admin_site'];
+        $role_check_table["updateSelect"]         = ['admin_site'];
+        $role_check_table["updateSelectSequence"] = ['admin_site'];
+        $role_check_table["updateAgree"]          = ['admin_site'];
+        $role_check_table["deleteSelect"]         = ['admin_site'];
 
-        return $role_ckeck_table;
+        return $role_check_table;
     }
 
     /**
@@ -379,8 +402,15 @@ class UserManage extends ManagePluginBase
         }
 
         if ($group_users) {
+            // 処理高速化の為、配列に詰め直す
+            $tmp_group = [];
+            foreach ($group_users as $val) {
+                $tmp_group[$val->user_id][] = $val;
+            }
             foreach ($users as &$user) {
-                $user->group_users = $group_users->where('user_id', $user->id);
+//                $user->group_users = $group_users->where('user_id', $user->id);
+                // 取得方法を変更
+                $user->group_users = (isset($tmp_group[$user->id])) ? $tmp_group[$user->id] : [];
             }
         }
 
@@ -422,19 +452,7 @@ class UserManage extends ManagePluginBase
         // 表示ページ数。詳細で更新して戻ってきたら、元と同じページを表示したい。
         // セッションにあればページの指定があれば使用。
         // ただし、リクエストでページ指定があればそれが優先。(ページング操作)
-        $page = 1;
-        if ($request->session()->has('user_page_condition.page')) {
-            $page = $request->session()->get('user_page_condition.page');
-        }
-        if ($request->filled('page')) {
-            $page = $request->page;
-        }
-
-        // ページがリクエストで指定されている場合は、セッションの検索条件配列のページ番号を更新しておく。
-        // 詳細画面や更新処理から戻ってきた時用
-        if ($request->filled('page')) {
-            session(["user_page_condition.page" => $request->page]);
-        }
+        $page = $this->getPaginatePageFromRequestOrSession($request, 'user_page_condition.page', 'page');
 
         /* データの取得（検索）
         ----------------------------------------------*/
@@ -682,6 +700,10 @@ class UserManage extends ManagePluginBase
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
+        // 更新前のステータス（承認完了判定用）
+        $user = User::find($id);
+        $before_status = $user ? $user->status : null;
+
         // 更新内容の配列
         $update_array = [
             'name'     => $request->name,
@@ -761,6 +783,12 @@ class UserManage extends ManagePluginBase
                     'role_value' => 1
                 ]);
             }
+        }
+
+        // 承認完了メール送信
+        if ($before_status === UserStatus::pending_approval
+            && (int)$request->status === UserStatus::active) {
+            $this->sendMailApproved($user);
         }
 
         // 変更画面に戻る
@@ -946,13 +974,14 @@ class UserManage extends ManagePluginBase
 
         // グループ取得
         $group_users = Group::select('groups.*', 'group_users.user_id', 'group_users.group_role')
-                            ->leftJoin('group_users', function ($join) use ($id) {
-                                $join->on('groups.id', '=', 'group_users.group_id')
-                                     ->where('group_users.user_id', '=', $id)
-                                     ->whereNull('group_users.deleted_at');
-                            })
-                            ->orderBy('groups.name', 'asc')
-                            ->paginate(10);
+            ->leftJoin('group_users', function ($join) use ($id) {
+                $join->on('groups.id', '=', 'group_users.group_id')
+                    ->where('group_users.user_id', '=', $id)
+                    ->whereNull('group_users.deleted_at');
+            })
+            ->orderBy('groups.display_sequence', 'asc')
+            ->get();
+            // ->paginate(10);
 
         // 画面呼び出し
         return view('plugins.manage.user.groups', [
@@ -1070,6 +1099,15 @@ class UserManage extends ManagePluginBase
             ]
         );
 
+        // 管理者の承認
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_registration_require_approval'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_registration_require_approval
+            ]
+        );
+
         // 以下のアドレスにメール送信する
         $configs = Configs::updateOrCreate(
             ['name' => 'user_register_mail_send_flag'],
@@ -1160,6 +1198,24 @@ class UserManage extends ManagePluginBase
             ]
         );
 
+        // 承認完了メール件名
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_approved_mail_subject'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_approved_mail_subject
+            ]
+        );
+
+        // 承認完了メールフォーマット
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_approved_mail_format'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_approved_mail_format
+            ]
+        );
+
         // *** ユーザ登録画面
         // 自動ユーザ登録時に個人情報保護方針への同意を求めるか
         $configs = Configs::updateOrCreate(
@@ -1188,7 +1244,19 @@ class UserManage extends ManagePluginBase
             ]
         );
 
+        // 初期コンテンツ権限
+        // 空要素の削除
+        $base_roles = array_filter($request->base_roles, 'strlen');
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_base_roles'],
+            [
+                'category' => 'user_register',
+                'value' => $base_roles ? implode(',', $base_roles) : '',
+            ]
+        );
+
         // ページ管理画面に戻る
+        // 自動ユーザ登録設定画面に戻る
         return redirect("/manage/user/autoRegist");
     }
 
@@ -1398,7 +1466,7 @@ class UserManage extends ManagePluginBase
                 'required',
                 'file',
                 'mimes:csv,txt', // mimesの都合上text/csvなのでtxtも許可が必要
-                'mimetypes:text/plain',
+                'mimetypes:application/csv,text/plain',
             ],
         ];
 
@@ -1898,6 +1966,10 @@ class UserManage extends ManagePluginBase
 
     /**
      * ログイン履歴画面
+     *
+     * @method_title ログイン履歴
+     * @method_desc 今までのログイン日時を確認できます。
+     * @method_detail ログインしてきたIPアドレスやユーザエージェントも確認できます。
      */
     public function loginHistory($request, $id = null)
     {
@@ -1916,5 +1988,487 @@ class UserManage extends ManagePluginBase
             "user" => $user,
             "users_login_histories" => $users_login_histories,
         ]);
+    }
+
+    /**
+     * 承認完了メールを送信する
+     *
+     * @param User $user 承認したユーザ
+     */
+    private function sendMailApproved($user)
+    {
+        $configs = Configs::get();
+        // 登録者にメール送信する
+        $user_register_user_mail_send_flag = Configs::getConfigsValue($configs, 'user_register_user_mail_send_flag');
+
+        // メール送信
+        if ($user_register_user_mail_send_flag && $user->email) {
+            // メール件名の組み立て
+            $subject = Configs::getConfigsValue($configs, 'user_register_approved_mail_subject');
+
+            // メール件名内のサイト名文字列を置換
+            $subject = str_replace('[[site_name]]', Configs::getConfigsValue($configs, 'base_site_name'), $subject);
+
+            // メール本文の組み立て
+            $mail_text = Configs::getConfigsValue($configs, 'user_register_approved_mail_format');
+            // メール本文内のサイト名文字列を置換
+            $mail_text = str_replace('[[site_name]]', Configs::getConfigsValue($configs, 'base_site_name'), $mail_text);
+            $mail_text = str_replace('[[login_id]]', $user->userid, $mail_text);
+
+            // メールオプション
+            $mail_options = ['subject' => $subject, 'template' => 'mail.send'];
+
+            $this->sendMail($user->email, $mail_options, ['content' => $mail_text], 'RegistersUsers');
+        }
+    }
+
+    /**
+     * メール送信画面
+     *
+     * @method_title メール送信
+     * @method_desc ユーザ登録後に登録内容のメールを送信できます。
+     * @method_detail メールアドレスがあった場合のみ当画面を開きます。
+     */
+    public function mail($request, $id = null)
+    {
+        // ユーザデータ取得
+        $user = User::where('id', $id)->first();
+
+        // 本登録メール設定取得
+        $configs = Configs::where('category', 'user_register')->get();
+        $subject = Configs::getConfigsValue($configs, 'user_register_mail_subject', '');
+        $body = Configs::getConfigsValue($configs, 'user_register_mail_format', '');
+
+        // 埋め込みタグ
+        $notice_embedded_tags = UsersTool::getNoticeEmbeddedTags($user);
+
+        $subject = UserRegisterNoticeEmbeddedTag::replaceEmbeddedTags($subject, $notice_embedded_tags);
+        $body = UserRegisterNoticeEmbeddedTag::replaceEmbeddedTags($body, $notice_embedded_tags);
+
+        // 管理画面プラグインの戻り値の返し方
+        return view('plugins.manage.user.mail', [
+            "function" => __FUNCTION__,
+            "plugin_name" => "user",
+            "user" => $user,
+            "subject" => $subject,
+            "body" => $body,
+        ]);
+    }
+
+    /**
+     * メール送信
+     */
+    public function mailSend($request, $id = null)
+    {
+        // ユーザデータ取得
+        $user = User::where('id', $id)->first();
+
+        // メールオプション
+        $mail_options = ['subject' => $request->subject, 'template' => 'mail.send'];
+
+        // メール送信（Trait のメソッド）
+        $this->sendMail($user->email, $mail_options, ['content' => $request->body], 'UserManage');
+
+        // ユーザ管理画面に戻る
+        return redirect("/manage/user");
+    }
+
+    /**
+     * 項目設定 初期表示
+     *
+     * @method_title 項目編集
+     * @method_desc ユーザ項目の設定を行います。
+     * @method_detail カラム名と型を指定してカラムを作成します。
+     */
+    public function editColumns($request, $id)
+    {
+        // ユーザーのカラム
+        $columns = UsersTool::getUsersColumns();
+
+        // カラムの選択肢
+        $users_columns_selects = UsersColumnsSelects::select('users_columns_selects.*')
+                ->orderBy('users_columns_selects.users_columns_id', 'asc')
+                ->orderBy('users_columns_selects.display_sequence', 'asc')
+                ->get();
+
+        foreach ($columns as &$column) {
+            $column->select_count = $users_columns_selects->where('users_columns_id', $column->id)->count();
+            $column->select_names = $users_columns_selects->where('users_columns_id', $column->id)->pluck('value')->implode(',');
+        }
+
+        return view('plugins.manage.user.edit_columns', [
+            "function"       => __FUNCTION__,
+            "plugin_name"    => "user",
+            'columns'        => $columns,
+        ]);
+    }
+
+    /**
+     * 項目の登録
+     */
+    public function addColumn($request, $id)
+    {
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            'column_name' => ['required'],
+            'column_type' => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'column_name' => '項目名',
+            'column_type' => '型',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // 新規登録時の表示順を設定
+        $max_display_sequence = UsersColumns::max('display_sequence');
+        $max_display_sequence = $max_display_sequence ? $max_display_sequence + 1 : 1;
+
+        // 項目の登録処理
+        $column = new UsersColumns();
+        $column->column_name = $request->column_name;
+        $column->column_type = $request->column_type;
+        $column->required = $request->required ? Required::on : Required::off;
+        $column->display_sequence = $max_display_sequence;
+        $column->save();
+        $message = '項目【 '. $request->column_name .' 】を追加しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/user/editColumns")->with('flash_message', $message);
+    }
+
+    /**
+     * 項目の更新
+     */
+    public function updateColumn($request, $id)
+    {
+        // 明細行から更新対象を抽出する為のnameを取得
+        $str_column_name = "column_name_"."$request->column_id";
+        $str_column_type = "column_type_"."$request->column_id";
+        $str_required = "required_"."$request->column_id";
+
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            $str_column_name => ['required'],
+            $str_column_type => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            $str_column_name => '項目名',
+            $str_column_type => '型',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // 項目の更新処理
+        $column = UsersColumns::where('id', $request->column_id)->first();
+        $column->column_name = $request->$str_column_name;
+        $column->column_type = $request->$str_column_type;
+        $column->required = $request->$str_required ? Required::on : Required::off;
+        $column->save();
+        $message = '項目【 '. $request->$str_column_name .' 】を更新しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/user/editColumns")->with('flash_message', $message);
+    }
+
+    /**
+     * 項目の表示順の更新
+     */
+    public function updateColumnSequence($request, $id)
+    {
+        // ボタンが押された行の施設データ
+        $target_column = UsersColumns::where('id', $request->column_id)
+            ->first();
+
+        // ボタンが押された前（後）の施設データ
+        $query = UsersColumns::query();
+        $pair_column = $request->display_sequence_operation == 'up' ?
+            $query->where('display_sequence', '<', $request->display_sequence)->orderby('display_sequence', 'desc')->limit(1)->first() :
+            $query->where('display_sequence', '>', $request->display_sequence)->orderby('display_sequence', 'asc')->limit(1)->first();
+
+        // それぞれの表示順を退避
+        $target_column_display_sequence = $target_column->display_sequence;
+        $pair_column_display_sequence = $pair_column->display_sequence;
+
+        // 入れ替えて更新
+        $target_column->display_sequence = $pair_column_display_sequence;
+        $target_column->save();
+        $pair_column->display_sequence = $target_column_display_sequence;
+        $pair_column->save();
+
+        $message = '項目【 '. $target_column->column_name .' 】の表示順を更新しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/user/editColumns")->with('flash_message', $message);
+    }
+
+    /**
+     * 項目の削除
+     */
+    public function deleteColumn($request, $id)
+    {
+        // 明細行から削除対象の項目名を抽出
+        $str_column_name = "column_name_"."$request->column_id";
+
+        // 項目の削除
+        UsersColumns::destroy('id', $request->column_id);
+
+        // 項目に紐づく選択肢の削除
+        // deleted_id, deleted_nameを自動セットするため、複数件削除する時は collectionのpluck('id')でid配列を取得して destroy()で消す。
+        $select_ids = UsersColumnsSelects::where('users_columns_id', $request->column_id)->pluck('id');
+        UsersColumnsSelects::destroy($select_ids);
+
+        $message = '項目【 '. $request->$str_column_name .' 】を削除しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/user/editColumns")->with('flash_message', $message);
+    }
+
+    /**
+     * 項目の設定画面の表示
+     *
+     * @method_title 項目の詳細編集
+     * @method_desc ユーザ項目の詳細設定を行います。
+     * @method_detail 入力チェック、キャプションやプレースホルダなどを設定できます。
+     */
+    public function editColumnDetail($request, $id)
+    {
+        // --- 画面に値を渡す準備
+        $column = UsersColumns::where('id', $id)->first();
+        if (!$column) {
+            abort(404, 'カラムデータがありません。');
+        }
+
+        $selects = UsersColumnsSelects::where('users_columns_id', $column->id)->orderby('display_sequence')->get();
+        $select_agree = $selects->first() ?? new UsersColumnsSelects();
+
+        return view('plugins.manage.user.edit_column_detail', [
+            "function"       => __FUNCTION__,
+            "plugin_name"    => "user",
+            'column'         => $column,
+            'selects'        => $selects,
+            'select_agree'   => $select_agree,
+        ]);
+    }
+
+    /**
+     * 項目に紐づく詳細設定の更新
+     */
+    public function updateColumnDetail($request, $id)
+    {
+
+        $validator_values = null;
+        $validator_attributes = null;
+
+        // 桁数チェックの指定時、入力値が数値であるかチェック
+        if ($request->rule_digits_or_less) {
+            $validator_values['rule_digits_or_less'] = [
+                'numeric',
+            ];
+            $validator_attributes['rule_digits_or_less'] = '入力桁数';
+        }
+        // 最大値の指定時、入力値が数値であるかチェック
+        if ($request->rule_max) {
+            $validator_values['rule_max'] = [
+                'numeric',
+            ];
+            $validator_attributes['rule_max'] = '最大値';
+        }
+        // 最小値の指定時、入力値が数値であるかチェック
+        if ($request->rule_min) {
+            $validator_values['rule_min'] = [
+                'numeric',
+            ];
+            $validator_attributes['rule_min'] = '最小値';
+        }
+        // 入力文字数の指定時、入力値が数値であるかチェック
+        if ($request->rule_word_count) {
+            $validator_values['rule_word_count'] = [
+                'numeric',
+            ];
+            $validator_attributes['rule_word_count'] = '入力最大文字数';
+        }
+
+        // エラーチェック
+        if ($validator_values) {
+            $validator = Validator::make($request->all(), $validator_values);
+            $validator->setAttributeNames($validator_attributes);
+
+            if ($validator->fails()) {
+                return redirect()->back()->withErrors($validator)->withInput();
+            }
+        }
+
+
+        $column = UsersColumns::where('id', $request->column_id)->first();
+
+        // 項目の更新処理
+        $column->caption = $request->caption;
+        $column->caption_color = $request->caption_color;
+        $column->place_holder = $request->place_holder;
+        // 数値のみ許容
+        $column->rule_allowed_numeric = (empty($request->rule_allowed_numeric)) ? 0 : $request->rule_allowed_numeric;
+        // 英数値のみ許容
+        $column->rule_allowed_alpha_numeric = (empty($request->rule_allowed_alpha_numeric)) ? 0 : $request->rule_allowed_alpha_numeric;
+        // 入力桁数
+        $column->rule_digits_or_less = $request->rule_digits_or_less;
+        // 入力文字数
+        $column->rule_word_count = $request->rule_word_count;
+        // 最大値
+        $column->rule_max = $request->rule_max;
+        // 最小値
+        $column->rule_min = $request->rule_min;
+        // 正規表現
+        $column->rule_regex = $request->rule_regex;
+
+        // 保存
+        $column->save();
+
+        $message = '項目【 '. $column->column_name .' 】の詳細設定を更新しました。';
+
+        return redirect("/manage/user/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
+    }
+
+    /**
+     * 予約詳細項目（選択肢）の登録
+     */
+    public function addSelect($request, $id)
+    {
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            'select_name'  => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'select_name'  => '選択肢名',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // 新規登録時の表示順を設定
+        $max_display_sequence = UsersColumnsSelects::where('users_columns_id', $request->column_id)->max('display_sequence');
+        $max_display_sequence = $max_display_sequence ? $max_display_sequence + 1 : 1;
+
+        // 施設の登録処理
+        $select = new UsersColumnsSelects();
+        $select->users_columns_id = $request->column_id;
+        $select->value = $request->select_name;
+        $select->display_sequence = $max_display_sequence;
+        $select->save();
+        $message = '選択肢【 '. $request->select_name .' 】を追加しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/user/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
+    }
+
+    /**
+     * 選択肢の更新
+     */
+    public function updateSelect($request, $id)
+    {
+        // 明細行から更新対象を抽出する為のnameを取得
+        $str_select_name = "select_name_"."$request->select_id";
+
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            $str_select_name => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            $str_select_name => '選択肢名',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // 項目の更新処理
+        $select = UsersColumnsSelects::where('id', $request->select_id)->first();
+        $select->value = $request->$str_select_name;
+        $select->save();
+        $message = '選択肢【 '. $request->$str_select_name .' 】を更新しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/user/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
+    }
+
+    /**
+     * 選択肢の表示順の更新
+     */
+    public function updateSelectSequence($request, $id)
+    {
+        // ボタンが押された行の施設データ
+        $target_select = UsersColumnsSelects::where('id', $request->select_id)->first();
+
+        // ボタンが押された前（後）の施設データ
+        $query = UsersColumnsSelects::where('users_columns_id', $request->column_id);
+        $pair_select = $request->display_sequence_operation == 'up' ?
+            $query->where('display_sequence', '<', $request->display_sequence)->orderby('display_sequence', 'desc')->limit(1)->first() :
+            $query->where('display_sequence', '>', $request->display_sequence)->orderby('display_sequence', 'asc')->limit(1)->first();
+
+        // それぞれの表示順を退避
+        $target_select_display_sequence = $target_select->display_sequence;
+        $pair_select_display_sequence = $pair_select->display_sequence;
+
+        // 入れ替えて更新
+        $target_select->display_sequence = $pair_select_display_sequence;
+        $target_select->save();
+        $pair_select->display_sequence = $target_select_display_sequence;
+        $pair_select->save();
+
+        $message = '選択肢【 '. $target_select->select_name .' 】の表示順を更新しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/user/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
+    }
+
+    /**
+     * 同意内容の更新
+     */
+    public function updateAgree($request, $id)
+    {
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            'value' => ['required'],
+        ]);
+        $validator->setAttributeNames([
+            'value' => 'チェックボックスの名称',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // 項目の更新処理
+        $select = UsersColumnsSelects::where('id', $request->select_id)->firstOrNew([]);
+        $select->users_columns_id = $request->column_id;
+        $select->value = $request->value;
+        $select->agree_description = $request->agree_description;
+        $select->display_sequence = 1;
+        $select->save();
+        $message = '同意内容を更新しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/user/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
+    }
+
+    /**
+     * 項目に紐づく選択肢の削除
+     */
+    public function deleteSelect($request, $id)
+    {
+        // 削除
+        UsersColumnsSelects::destroy('id', $request->select_id);
+
+        // 明細行から削除対象の選択肢名を抽出
+        $str_select_name = "select_name_"."$request->select_id";
+        $message = '選択肢【 '. $request->$str_select_name .' 】を削除しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/user/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
     }
 }

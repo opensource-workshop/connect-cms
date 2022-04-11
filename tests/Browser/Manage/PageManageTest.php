@@ -70,7 +70,7 @@ class PageManageTest extends DuskTestCase
         // クリックできるのは、label タグになるため、label タグにセレクタを追加して、ckick() メソッドで値を設定する。
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/page/edit')
-                    ->type('page_name', 'テスト')
+                    ->type('page_name', 'プラグイン・テスト')
                     ->type('permanent_link', '/test')
                     ->click('#label_base_display_flag')
                     ->assertTitleContains('Connect-CMS')
@@ -124,8 +124,8 @@ class PageManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
 
             // ブログ を テスト の下に移動
-            $test_page = Page::where('page_name', 'テスト')->first();
-            $sub_page = Page::where('page_name', 'ブログ')->first();
+            $test_page = Page::where('page_name', 'プラグイン・テスト')->first();
+            $sub_page = Page::where('page_name', '固定記事')->first();
 
             $browser->visit('/manage/page')
                     ->select('#form_select_page' . $sub_page->id . ' .manage-page-selectpage', $test_page->id)
@@ -144,14 +144,23 @@ class PageManageTest extends DuskTestCase
      */
     private function movePageNoScreenshot()
     {
-        $this->browse(function (Browser $browser) {
+        $children_names = ['ブログ','カレンダー','スライドショー','開館カレンダー','FAQ','リンクリスト','キャビネット','フォトアルバム','データベース','OPAC','フォーム','課題管理','カウンター','サイト内検索','データベース検索','掲示板','施設予約','メニュー','タブ'];
+        $this->movePageChildren('プラグイン・テスト', $children_names);
 
-            $page_names = ['カレンダー','スライドショー','開館カレンダー','FAQ','リンクリスト','キャビネット','フォトアルバム','データベース','OPAC','フォーム','課題管理','サイト内検索','データベース検索','掲示板','施設予約','メニュー','タブ'];
+        $children_names = ['フレーム'];
+        $this->movePageChildren('共通機能テスト', $children_names);
+    }
 
+    /**
+     * ページの移動（親子）
+     */
+    private function movePageChildren($parent_name, $children_names)
+    {
+        $this->browse(function (Browser $browser) use ($parent_name, $children_names) {
             // テスト用の各ページ を テスト の下に移動
-            $test_page = Page::where('page_name', 'テスト')->first();
-            foreach ($page_names as $page_name) {
-                $sub_page = Page::where('page_name', $page_name)->first();
+            $test_page = Page::where('page_name', $parent_name)->first();
+            foreach ($children_names as $children_name) {
+                $sub_page = Page::where('page_name', $children_name)->first();
                 $browser->visit('/manage/page')
                         ->select('#form_select_page' . $sub_page->id . ' .manage-page-selectpage', $test_page->id);
             }

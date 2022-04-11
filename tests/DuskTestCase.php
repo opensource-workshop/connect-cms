@@ -9,12 +9,15 @@ use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Laravel\Dusk\TestCase as BaseTestCase;
 use Laravel\Dusk\Browser;
 
+use Illuminate\Support\Facades\Storage;
+
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Common\Uploads;
 use App\Models\Core\Dusks;
 use App\Models\Core\Plugins;
+use App\Models\User\Contents\Contents;
 use App\Traits\ConnectCommonTrait;
 use App\User;
 
@@ -242,18 +245,29 @@ abstract class DuskTestCase extends BaseTestCase
     }
 
     /**
-     * プラグイン追加（なければ）
+     * プラグイン追加（なければ）+ ページ追加（なければ）
      */
     public function addPluginFirst($add_plugin, $permanent_link = '/', $area = 0, $screenshot = true)
     {
         Plugins::where('plugin_name', ucfirst($add_plugin))->update(['display_flag' => 1]);
+        $page = $this->firstOrCreatePage($permanent_link);
 
-        if (!Frame::where('plugin_name', $add_plugin)->where('area_id', $area)->first()) {
+        if (!Frame::where('plugin_name', $add_plugin)->where('area_id', $area)->where('page_id', $page->id)->first()) {
             $this->addPluginModal($add_plugin, $permanent_link, $area, $screenshot);
         }
 
         $this->test_frame = Frame::where('plugin_name', $add_plugin)->where('area_id', $area)->orderBy('id', 'desc')->first();
         $this->test_page = Page::where('permanent_link', $permanent_link)->first();
+    }
+
+    /**
+     * ページ取得 or なければ追加
+     */
+    public function firstOrCreatePage(string $permanent_link): Page
+    {
+        $page = Page::where('permanent_link', $permanent_link)->first();
+        $page = $page ?? Page::create(['permanent_link' => $permanent_link, 'page_name' => $permanent_link]);
+        return $page;
     }
 
     /**
@@ -295,8 +309,27 @@ abstract class DuskTestCase extends BaseTestCase
     /**
      *  newするクラス名の取得
      */
-    private function getClassName($plugin_name)
+    private function getClassName($plugin_name, $category)
     {
+        // 管理プラグインとして存在するか確認
+        $class_name = "App\Plugins\\" . ucfirst($category) . "\\" . ucfirst($plugin_name) . "Manage\\" . ucfirst($plugin_name) . "Manage";
+        if (class_exists($class_name)) {
+            return $class_name;
+        }
+
+        // マイページプラグインとして存在するか確認
+        $class_name = "App\Plugins\\" . ucfirst($category) . "\\" . ucfirst($plugin_name) . "Mypage\\" . ucfirst($plugin_name) . "Mypage";
+        if (class_exists($class_name)) {
+            return $class_name;
+        }
+
+        // 標準プラグインとして存在するか確認
+        $class_name = "App\Plugins\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
+        if (class_exists($class_name)) {
+            return $class_name;
+        }
+
+        /*
         // 管理プラグインとして存在するか確認
         $class_name = "App\Plugins\Manage\\" . ucfirst($plugin_name) . "Manage\\" . ucfirst($plugin_name) . "Manage";
         if (class_exists($class_name)) {
@@ -308,12 +341,14 @@ abstract class DuskTestCase extends BaseTestCase
         if (class_exists($class_name)) {
             return $class_name;
         }
+        */
 
         // オプションプラグインとして存在するか確認
         $class_name = "App\PluginsOption\User\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name) . "Plugin";
         if (class_exists($class_name)) {
             return $class_name;
         }
+
         return false;
     }
 
@@ -345,12 +380,24 @@ abstract class DuskTestCase extends BaseTestCase
      */
     private function getDocument($annotation_name, $class_name, $method_name = null)
     {
+        // 指定されたクラスがない場合は空を返す。（クラスに対応していないテストケースへの対応）
+        if (!class_exists($class_name)) {
+            return "";
+        }
+
+        // メソッド、クラスの内容を読み取り
         if ($method_name == null) {
             $class = new \ReflectionClass($class_name);
         } elseif (method_exists($class_name, $method_name)) {
             $class = new \ReflectionMethod($class_name, $method_name);
         } else {
-            return "";
+            $class = new \ReflectionClass($class_name);
+            $parent = $class->getParentClass();
+            if (method_exists($parent, $method_name)) {
+                $class = $parent;
+            } else {
+                return "";
+            }
         }
         $class_document = $class->getDocComment();
         return trim($this->getAnnotation($class_document, $annotation_name));
@@ -391,6 +438,14 @@ abstract class DuskTestCase extends BaseTestCase
         // クラス名の本体部分の取得
         $class_name_3 = trim($sub_class_array[3], '_');
         $class_name_3_array = explode('_', $class_name_3);
+
+        // 配列の要素が 4 あれば、3つに編集しなおす。
+        // LoginHistoryMypageTest など、LoginHistory をプラグイン名で使いたいが、ここにキャメル名があると分解が余計に行われるため。
+        if (count($class_name_3_array) == 4) {
+            $class_name_3_array[0] = $class_name_3_array[0] . ucfirst($class_name_3_array[1]);
+            $class_name_3_array[1] = $class_name_3_array[2];
+            $class_name_3_array[2] = $class_name_3_array[3];
+        }
         $plugin_name = $class_name_3_array[0];
 
         // html パスの生成
@@ -406,7 +461,7 @@ abstract class DuskTestCase extends BaseTestCase
         $dusk->html_path   = $html_path;
 
         // 対象クラスの生成とマニュアル用文章の取得
-        $class_name = $this->getClassName($plugin_name);
+        $class_name = $this->getClassName($plugin_name, $class_name_3_array[1]);
         $dusk->plugin_title = $this->getDocument('plugin_title', $class_name);
         $dusk->plugin_desc = $this->getDocument('plugin_desc', $class_name);
         $dusk->method_title = $this->getDocument('method_title', $class_name, $dusk->method_name);
@@ -488,19 +543,133 @@ EOF;
         // Uploads のファイルとレコードの削除
         $uploads = Uploads::where('plugin_name', $plugin_name)->get();
         foreach ($uploads as $upload) {
-            \Storage::delete($this->getDirectory($upload->id) . '/' . $upload->id . '.' . $upload->extension);
+            Storage::delete($this->getDirectory($upload->id) . '/' . $upload->id . '.' . $upload->extension);
             Uploads::destroy($upload->id);
         }
+
+        // フレームの削除
+        Frame::where('plugin_name', $plugin_name)->delete();
 
         // プラグインが配置されていなければ追加(テストするFrameとページのインスタンス変数への保持も)
         $this->login(1);
         $this->addPluginFirst($plugin_name, $url, $area_id);
         $this->logout();
 
-        // フレームのバケツIDのクリア
-        $page = Page::where('permanent_link', $url)->first();
-        $frame = Frame::where('page_id', $page->id)->where('area_id', $area_id)->where('plugin_name', $plugin_name)->first();
-        $frame->bucket_id = null;
-        $frame->save();
+        // マニュアルデータの削除
+        Dusks::where('plugin_name', $plugin_name)->delete();
+    }
+
+    /**
+     * 固定記事追加
+     * options = [title, area_id, frame_col]
+     */
+    public function addContents($permanent_link, $content_text, $options = [])
+    {
+        // 準備
+        $area_id = array_key_exists('area_id', $options) ? $options['area_id'] : 2;
+        $page = Page::where('permanent_link', $permanent_link)->first();
+
+        // 元のフレームの順番を1ずつ、下にずらす。
+        Frame::where('page_id', $page->id)->where('area_id', $area_id)->increment('display_sequence');
+
+        // 新しい固定記事の作成
+        $bucket = Buckets::create(['bucket_name' => array_key_exists('title', $options) ? $options['title'] : '無題', 'plugin_name' => 'contents']);
+        Contents::create(['bucket_id' => $bucket->id, 'content_text' => $content_text, 'status' => 0]);
+        //$max_frame = Frame::where('page_id', $page->id)->where('area_id', $area_id)->orderBy('display_sequence', 'desc')->first();
+        $frame = Frame::create([
+            'page_id' => $page->id,
+            'area_id' => $area_id,
+            'frame_title' => array_key_exists('title', $options) ? $options['title'] : '[無題]',
+            'frame_design' => 'default',
+            'plugin_name' => 'contents',
+            'frame_col' => array_key_exists('frame_col', $options) ? $options['frame_col'] : 0,
+            'template' => 'default',
+            'bucket_id' => $bucket->id,
+            //'display_sequence' => empty($max_frame) ? 1 : $max_frame->display_sequence + 1
+            'display_sequence' => array_key_exists('display_sequence', $options) ? $options['display_sequence'] : 1
+        ]);
+        return $frame;
+    }
+
+    /**
+     * 固定記事削除
+     */
+    public function clearContents($permanent_link, $area_id = 2)
+    {
+        $page = $this->firstOrCreatePage($permanent_link);
+
+        $frames = Frame::where('page_id', $page->id)->where('area_id', $area_id)->get();
+        foreach ($frames as $frame) {
+            Contents::where('bucket_id', $frame->bucket_id)->delete();
+            Buckets::where('id', $frame->bucket_id)->delete();
+            $frame->delete();
+        }
+    }
+
+    /**
+     * アップロードを登録する
+     */
+    public function fileUpload($file_path, $client_original_name, $mimetype, $extension, $plugin_name, $page_id, $thumbnail_path = null)
+    {
+        // uploads 追加
+        $upload = Uploads::create([
+            "client_original_name" => $client_original_name,
+            "mimetype" => $mimetype,
+            "extension" => $extension,
+            "size" => filesize($file_path),
+            "plugin_name" => $plugin_name,
+            "page_id" => $page_id
+        ]);
+
+        // ファイルコピー
+        Storage::put($this->getDirectory($upload->id) . '/' . $upload->id . "." . $extension, file_get_contents($file_path));
+
+        // thumbnail_path がある場合は、サムネイル画像もアップロード。PDF＆サムネイルを想定。
+        if ($thumbnail_path) {
+            $thumbail = Uploads::create([
+                "client_original_name" => basename($thumbnail_path),
+                "mimetype" => 'image/png',
+                "extension" => 'png',
+                "size" => filesize($thumbnail_path),
+                "plugin_name" => $plugin_name,
+                "page_id" => $page_id
+            ]);
+
+            // ファイルコピー
+            Storage::put($this->getDirectory($thumbail->id) . '/' . $thumbail->id . '.png', file_get_contents($thumbnail_path));
+
+            // サムネイル付きの場合は、戻り値は配列
+            return [$upload, $thumbail];
+        }
+        // アップロードのみ。（サムネイル無し）
+        return $upload;
+    }
+
+    /**
+     * アップロード取得か、なければ登録する
+     */
+    public function firstOrCreateFileUpload($disk_name, $disk_file_path, $client_original_name, $mimetype, $extension, $plugin_name, $page_id)
+    {
+        $upload_check = Uploads::where("client_original_name", $client_original_name)->first();
+
+        // uploads 追加
+        $upload = Uploads::firstOrCreate(
+            ["client_original_name" => $client_original_name],
+            [
+                "client_original_name" => $client_original_name,
+                "mimetype" => $mimetype,
+                "extension" => $extension,
+                "size" => Storage::disk($disk_name)->size($disk_file_path),
+                "plugin_name" => $plugin_name,
+                "page_id" => $page_id
+            ]
+        );
+
+        // 実ファイルコピー（$upload_check がnull だった場合に、uploads レコードをcreate しているので、ファイルもコピー。）
+        if (empty($upload_check)) {
+            Storage::put($this->getDirectory($upload->id) . "/{$upload->id}.{$extension}", Storage::disk($disk_name)->get($disk_file_path));
+        }
+
+        return $upload;
     }
 }

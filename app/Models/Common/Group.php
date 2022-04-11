@@ -19,7 +19,7 @@ class Group extends Model
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'display_sequence'];
 
     /**
      * 日付型の場合、$dates にカラムを指定しておく。

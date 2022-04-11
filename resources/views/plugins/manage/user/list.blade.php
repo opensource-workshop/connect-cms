@@ -83,7 +83,7 @@ use App\Models\Core\UsersColumns;
                                 <label class="col-md-3 col-form-label text-md-right pt-0">グループ</label>
                                 <div class="col-md-9">
                                     @php
-                                        $values = Session::get('user_search_condition.groups');
+                                        $values = (array) Session::get('user_search_condition.groups');
                                     @endphp
                                     <div class="container-fluid row">
                                         @forelse($groups_select as $group_select)

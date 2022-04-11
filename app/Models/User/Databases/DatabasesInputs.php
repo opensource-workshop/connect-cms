@@ -12,7 +12,7 @@ class DatabasesInputs extends Model
     use UserableNohistory;
 
     // Carbonインスタンス（日付）に自動的に変換
-    protected $dates = ['posted_at'];
+    protected $dates = ['posted_at', 'expires_at'];
 
     // 更新する項目の定義
     protected $fillable = [
@@ -20,6 +20,8 @@ class DatabasesInputs extends Model
         'status',
         'display_sequence',
         'posted_at',
+        'expires_at',
+        'first_committed_at',
         'created_at',
         'updated_at'
     ];

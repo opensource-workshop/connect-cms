@@ -120,7 +120,9 @@
                             class="custom-control-input"
                             {{ FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::embed_code, 0) == $key ? 'checked' : '' }}
                         >
-                        <label class="custom-control-label" for="{{ "embed_code_${key}" }}">
+                        <label class="custom-control-label"
+                               for="{{ "embed_code_${key}" }}"
+                               id="{{ "label_embed_code_${key}" }}">
                             {{ $value }}
                         </label>
                     </div>

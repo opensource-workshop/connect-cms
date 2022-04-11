@@ -1,0 +1,50 @@
+<div class="card mt-3" html_only>
+<div class="card-body" html_only>
+
+<table class="table table-sm table-bordered table_css">
+<tbody>
+    <tr>
+        <th class="doc_th" style="width: 15%; text-align: center;">アイコン</th>
+        <th class="doc_th" style="width: 85%;">説明</th>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="元に戻す" title="元に戻す" type="button" html_only><img src="../_images/undo.png"></button html_only></td>
+        <td>編集した内容を元に戻す「アンドゥ」機能です。保存すると戻すことはできません。</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="やり直し" title="やり直し" type="button" html_only><img src="../_images/redo.png"></button html_only></td>
+        <td>「アンドゥ」したものをやり直す「リドゥ」機能です。</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="太字" title="太字" type="button" html_only><img src="../_images/bold.png"></button html_only></td>
+        <td>文字を太字にできます。</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="斜体" title="斜体" type="button" html_only><img src="../_images/italic.png"></button html_only></td>
+        <td>文字を斜体にできます。日本語フォントの場合は斜体にならない場合があります。</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="下線" title="下線" type="button" html_only><img src="../_images/underline.png"></button html_only></td>
+        <td>文字に下線を設定できます。</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="取消線" title="取消線" type="button" html_only><img src="../_images/line-through.png"></button html_only></td>
+        <td>文字に取り消し線を設定できます。</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="下付き" title="下付き" type="button" html_only><img src="../_images/sub.png"></button html_only></td>
+        <td>文字を下付き設定にできます。</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="上付き" title="上付き" type="button" html_only><img src="../_images/sup.png"></button html_only></td>
+        <td>文字を上付き設定にできます。</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="書式をクリア" title="書式をクリア" type="button" html_only><img src="../_images/clear.png"></button html_only></td>
+        <td>設定した書式をクリアできます。</td>
+    </tr>
+</tbody>
+</table>
+
+</div html_only>
+</div html_only>

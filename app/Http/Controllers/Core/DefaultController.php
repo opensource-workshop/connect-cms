@@ -562,7 +562,11 @@ class DefaultController extends ConnectController
                 }
                 // テンプレートディレクトリを探す
                 //if (is_dir(($finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name . '/' . $file))) {
-                $template_dir = $finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name . '/' . $file;
+                if (strpos($plugin_view_path, 'plugins_option') === false) {
+                    $template_dir = $finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name . '/' . $file;
+                } else {
+                    $template_dir = $finder->getPaths()[0].'/plugins_option/user/' . $action_core_frame->plugin_name . '/' . $file;
+                }
                 if (is_dir($template_dir)) {
                     if (File::exists($template_dir."/template.ini")) {
                         // テンプレート設定ファイルがある場合、テンプレート設定ファイルからテンプレート名を探す。設定がなければディレクトリ名をテンプレート名とする。
@@ -680,7 +684,7 @@ class DefaultController extends ConnectController
 
         // フレームとプラグインの一致をチェック
         if (!$this->checkFrame2Plugin($plugin_name, $frame_id, $frames)) {
-            return $this->view_error("403");
+            return $this->viewError("403");
         }
 
         // インスタンス取得（メインエリアのみ）
@@ -699,7 +703,7 @@ class DefaultController extends ConnectController
         foreach ($layouts_info as $area) {
             if (array_key_exists('frames', $area)) {
                 if (!$this->checkFrame2Plugin($plugin_name, $frame_id, $area['frames'])) {
-                    return $this->view_error("403");
+                    return $this->viewError("403");
                 }
             }
         }

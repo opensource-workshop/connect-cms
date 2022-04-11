@@ -31,7 +31,7 @@ use App\Rules\CustomValiWysiwygMax;
  * @category カレンダー・プラグイン
  * @package Controller
  * @plugin_title カレンダー
- * @plugin_desc カレンダーを作成できるプラグインです。<br />予定の配信や共有に使用します。
+ * @plugin_desc カレンダーを作成できるプラグインです。予定の配信や共有に使用します。
  */
 class CalendarsPlugin extends UserPluginBase
 {
@@ -246,7 +246,10 @@ class CalendarsPlugin extends UserPluginBase
             // copyしないと全部同じオブジェクトを入れてしまうことになる
             $dates[$date->format('Y-m-d')] = $date->copy();
         }
-        $dates = $this->addHoliday($year, $month, $dates);
+        $start_date = current($dates);
+        $end_date = end($dates)->endOfDay();
+
+        $dates = $this->addHolidaysFromTo($start_date, $end_date, $dates);
         return $dates;
     }
 

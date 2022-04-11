@@ -95,6 +95,7 @@
         <select class="form-control" name="folder_close_font" class="form-control">
             <option value="0" @if(old('folder_close_font') == 0 || (isset($menu) && $menu->folder_close_font == 0)) selected="selected" @endif>－（初期値）</option>
             <option value="1" @if(old('folder_close_font') == 1 || (isset($menu) && $menu->folder_close_font == 1)) selected="selected" @endif>なし</option>
+            <option value="2" @if(old('folder_close_font') == 2 || (isset($menu) && $menu->folder_close_font == 2)) selected="selected" @endif>V</option>
         </select>
         @if ($errors && $errors->has('folder_close_font')) <div class="text-danger">{{$errors->first('folder_close_font')}}</div> @endif
     </div>
@@ -104,6 +105,7 @@
         <select class="form-control" name="folder_open_font" class="form-control">
             <option value="0" @if(old('folder_open_font') == 0 || (isset($menu) && $menu->folder_open_font == 0)) selected="selected" @endif>＋（初期値）</option>
             <option value="1" @if(old('folder_open_font') == 1 || (isset($menu) && $menu->folder_open_font == 1)) selected="selected" @endif>なし</option>
+            <option value="2" @if(old('folder_open_font') == 2 || (isset($menu) && $menu->folder_open_font == 2)) selected="selected" @endif>＞</option>
         </select>
         @if ($errors && $errors->has('folder_open_font')) <div class="text-danger">{{$errors->first('folder_open_font')}}</div> @endif
     </div>

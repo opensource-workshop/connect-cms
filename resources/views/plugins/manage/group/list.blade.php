@@ -23,7 +23,7 @@
             <thead>
                 <tr>
                     <th nowrap>ユーザ名</th>
-                    <th nowrap>グループ権限</th>
+                    {{-- <th nowrap>グループ権限</th> --}}
                     <th nowrap>作成日</th>
                     <th nowrap>更新日</th>
                 </tr>
@@ -32,7 +32,7 @@
             @foreach($group_users as $group_user)
                 <tr>
                     <td>{{$group_user->user_name}}</td>
-                    <td>{{GroupType::getDescription($group_user->group_role)}}</td>
+                    {{-- <td>{{GroupType::getDescription($group_user->group_role)}}</td> --}}
                     <td>{{$group_user->created_at->format('Y/m/d')}}</td>
                     <td>{{$group_user->updated_at->format('Y/m/d')}}</td>
                 </tr>

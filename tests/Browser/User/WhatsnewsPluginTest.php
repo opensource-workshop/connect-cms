@@ -45,12 +45,12 @@ class WhatsnewsPluginTest extends DuskTestCase
      */
     private function init()
     {
-        // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'template', 'createBuckets', 'editView', 'listBuckets');
-
         // データクリア
         Whatsnews::truncate();
         $this->initPlugin('whatsnews', '/test');
+
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'template', 'createBuckets', 'editView', 'listBuckets');
     }
 
     /**
@@ -181,7 +181,6 @@ class WhatsnewsPluginTest extends DuskTestCase
      */
     private function template()
     {
-        Dusks::where('plugin_name', 'whatsnews')->where('method_name', 'template')->delete();
         $this->putManualTemplateData($this->test_frame, 'user', '/test', ['whatsnews', '新着情報'], ['onerow' => 'onerow', 'card_04' => 'card_04']);
     }
 }

@@ -8,3 +8,9 @@
     width: 100%;
     max-width: 980px;
 }
+.smp-nav-link {
+    color: #007bff;
+}
+.smp-nav-nolink {
+    color: #ffffff;
+}

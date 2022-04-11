@@ -1,0 +1,13 @@
+<p>
+Connect-CMS では、フレームにプラグインが紐づいています。
+</p>
+
+<ul>
+    <li>以下の図の赤の枠がプラグインです。</li>
+    <li>以下の図の青の枠がフレームです。</li>
+</ul>
+
+<p>
+【フレームとプラグイン】<br />
+<img src="../../_images/frame_plugin.png" class="img-fluid" style="width: 100%; max-width: 800px;">
+</p>

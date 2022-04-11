@@ -45,32 +45,12 @@ class ContentsPluginTest extends DuskTestCase
      */
     private function index()
     {
-        // マニュアル用にデータ作成
-        // ロゴがなければ、uploads を1行作成する。
-        $upload_check = Uploads::where("client_original_name", "blobid0000000000001.jpg")->first();
-
-        $upload = Uploads::firstOrCreate(
-            ["client_original_name" => "blobid0000000000001.jpg"],
-            [
-                "client_original_name" => "blobid0000000000001.jpg",
-                "mimetype" => "image/jpeg",
-                "extension" => "jpg",
-                "size" => 34008,
-                "plugin_name" => "contents",
-                "download_count" => 0,
-                "page_id" => 1,
-                "private" => 0,
-                "temporary_flag" => 0
-            ]
-        );
-
-        // 実ファイルコピー（$upload_check がnull だった場合に、uploads レコードをcreate しているので、ファイルもコピー。）
-        if (empty($upload_check)) {
-            \Storage::put($this->getDirectory($upload->id) . '/' . $upload->id . ".jpg", \Storage::disk('manual')->get('copy_data/image/blobid0000000000001.jpg'));
-        }
 
         // ヘッダーに作ってあった固定記事を取得
         $this->frame = Frame::where('area_id', 0)->where('plugin_name', 'contents')->first();
+        // マニュアル用にデータ作成
+        // ロゴがなければ、uploads を1行作成する。
+        $upload = $this->firstOrCreateFileUpload('manual', 'copy_data/image/blobid0000000000001.png', 'blobid0000000000001.png', 'image/png', 'png', 'contents', $this->frame->page_id);
         $this->content = Contents::where('bucket_id', $this->frame->bucket_id)->where('status', 0)->first();
         $this->content->content_text =<<< EOF
 <div class="d-flex flex-row">

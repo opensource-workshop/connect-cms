@@ -49,13 +49,13 @@ class CabinetsPluginTest extends DuskTestCase
      */
     private function init()
     {
-        // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'makeFolder', 'upload', 'deleteContents', 'createBuckets', 'editView', 'listBuckets');
-
         // データクリア
         Cabinet::truncate();
         CabinetContent::truncate();
         $this->initPlugin('cabinets', '/test/cabinet');
+
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'makeFolder', 'upload', 'deleteContents', 'createBuckets', 'editView', 'listBuckets');
     }
 
     /**
@@ -192,7 +192,7 @@ class CabinetsPluginTest extends DuskTestCase
     }
 
     /**
-     * ブログ選択
+     * 選択
      */
     private function listBuckets()
     {

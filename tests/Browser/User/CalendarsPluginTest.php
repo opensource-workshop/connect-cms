@@ -49,14 +49,14 @@ class CalendarsPluginTest extends DuskTestCase
      */
     private function init()
     {
-        // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'show', 'edit', 'template', 'createBuckets', 'listBuckets');
-
         // データクリア
         Calendar::truncate();
         CalendarFrame::truncate();
         CalendarPost::truncate();
         $this->initPlugin('calendars', '/test/calendar');
+
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'show', 'edit', 'template', 'createBuckets', 'listBuckets');
     }
 
     /**
@@ -99,7 +99,11 @@ class CalendarsPluginTest extends DuskTestCase
     {
         // ブログ（バケツ）があって且つ、その月に記事が3件未満の場合に記事作成
         $ym = date("Y-m");
-        CalendarPost::where('start_date', 'like', $ym . '%')->delete();
+        // bugfix: (mysql5.7のみ) Invalid datetime format: 1292 Incorrect date value: '2022-03%' for column 'start_date'
+        // CalendarPost::where('start_date', 'like', $ym . '%')->delete();
+        CalendarPost::whereYear('start_date', date("Y"))
+            ->whereMonth('start_date', date("m"))
+            ->delete();
 
         // 実行
         $this->browse(function (Browser $browser) use ($ym) {
@@ -223,13 +227,12 @@ class CalendarsPluginTest extends DuskTestCase
      */
     private function template()
     {
-        Dusks::where('plugin_name', 'calendars')->where('method_name', 'template')->delete();
         $this->putManualTemplateData(
             $this->test_frame,
             'user',
             '/test/calendar',
             ['calendars', 'カレンダー'],
-            ['day' => '日表示', 'small_month' => '月表示（小）', 'breadcrumbs' => 'パンくず', 'sitemap' => 'サイトマップ']
+            ['day' => '日表示', 'small_month' => '月表示（小）']
         );
     }
 }

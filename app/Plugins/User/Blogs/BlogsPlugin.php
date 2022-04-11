@@ -35,7 +35,7 @@ use App\Rules\CustomValiWysiwygMax;
  * @category ブログプラグイン
  * @package Controller
  * @plugin_title ブログ
- * @plugin_desc ブログを作成できるプラグインです。<br />サイトからのニュース配信などにも使用します。
+ * @plugin_desc ブログを作成できるプラグインです。サイトからのニュース配信などにも使用します。
  */
 class BlogsPlugin extends UserPluginBase
 {
@@ -662,7 +662,7 @@ WHERE status = 0
         // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $blogs_post = $this->getPost($blogs_posts_id);
         if (empty($blogs_post->id)) {
-            return $this->view_error("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
         }
 
         // タグ取得
@@ -763,7 +763,7 @@ WHERE status = 0
         // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $blogs_post = $this->getPost($blogs_posts_id);
         if (empty($blogs_post->id)) {
-            return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
         // 記事コピーの場合は、id消して新規登録画面へ & 投稿日時を今に変更
@@ -817,7 +817,7 @@ WHERE status = 0
 
             // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
             if (empty($check_blogs_post->id) || $check_blogs_post->id != $old_blogs_post->id) {
-                return $this->view_error("403_inframe", null, 'saveのユーザー権限に応じたPOST ID チェック');
+                return $this->viewError("403_inframe", null, 'saveのユーザー権限に応じたPOST ID チェック');
             }
         }
 
@@ -906,7 +906,7 @@ WHERE status = 0
 
             // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
             if (empty($check_blogs_post->id) || $check_blogs_post->id != $id) {
-                return $this->view_error("403_inframe", null, 'temporarysaveのユーザー権限に応じたPOST ID チェック');
+                return $this->viewError("403_inframe", null, 'temporarysaveのユーザー権限に応じたPOST ID チェック');
             }
         }
 
@@ -945,7 +945,7 @@ WHERE status = 0
             // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
             $check_blogs_post = $this->getPost($blogs_posts_id);
             if (empty($check_blogs_post->id)) {
-                return $this->view_error("403_inframe", null, 'deleteのユーザー権限に応じたPOST ID チェック');
+                return $this->viewError("403_inframe", null, 'deleteのユーザー権限に応じたPOST ID チェック');
             }
 
             // 同じcontents_id のデータを削除するため、一旦、対象データを取得
@@ -974,7 +974,7 @@ WHERE status = 0
 
         // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
         if (empty($check_blogs_post->id) || $check_blogs_post->id != $id) {
-            return $this->view_error("403_inframe", null, 'approvalのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'approvalのユーザー権限に応じたPOST ID チェック');
         }
 
         // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)
@@ -1015,8 +1015,6 @@ WHERE status = 0
             ->where('frames.id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
-        // $blogs = Blogs::orderBy('created_at', 'desc')
-        //                ->paginate(10, ["*"], "frame_{$frame_id}_page");
         $blogs = Blogs::
             select(
                 'blogs.id',
@@ -1031,6 +1029,10 @@ WHERE status = 0
                         ->where('blogs_posts.status', StatusType::active)
                         ->whereNull('blogs_posts.deleted_at');
             })
+            ->leftJoin('frames', function ($leftJoin) use ($frame_id) {
+                $leftJoin->on('blogs.bucket_id', '=', 'frames.bucket_id')
+                    ->where('frames.id', $frame_id);
+            })
             ->groupBy(
                 'blogs.id',
                 'blogs.bucket_id',
@@ -1038,6 +1040,7 @@ WHERE status = 0
                 'blogs.blog_name',
                 'blogs_posts.blogs_id'
             )
+            ->orderBy('frames.bucket_id', 'desc')
             ->orderBy('blogs.created_at', 'desc')
             ->paginate(10, ["*"], "frame_{$frame_id}_page");
 

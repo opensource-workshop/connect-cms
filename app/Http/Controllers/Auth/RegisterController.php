@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 //use App\Providers\RouteServiceProvider;
 use App\User;
@@ -132,20 +133,23 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        // ユーザ自動登録の場合（認証されていない）は、トップページに遷移する。
-        if (!Auth::user()) {
+        // ユーザ自動登録の場合（認証されていない）、もしくはユーザ管理者以外は、トップページに遷移する。
+        if (!Auth::user() || !Auth::user()->can('admin_user')) {
             $this->redirectTo = '/';
         }
 
+        // 設定の取得
+        $configs = Configs::get();
+
+        // ユーザー登録に承認が必要な場合は、強制的にステータスを承認待ちにする
+        // ただし、承認待ちより仮登録を優先する（仮登録でメールアドレスの正当性を担保した後に承認待ちにする）
+        $status = $data['status'];
+        if (Configs::getConfigsValue($configs, 'user_registration_require_approval')
+            && $data['status'] != UserStatus::temporary && (!Auth::user() || !Auth::user()->can('admin_user'))) {
+            $status = UserStatus::pending_approval;
+        }
+
         // ユーザ登録
-        // change: ユーザーの追加項目に対応
-        // return User::create([
-        //     'name' => $data['name'],
-        //     'email' => $data['email'],
-        //     'userid' => $data['userid'],
-        //     'password' => bcrypt($data['password']),
-        //     'status' => $data['status'],
-        // ]);
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
@@ -153,10 +157,11 @@ class RegisterController extends Controller
             // change to laravel6.
             // 'password' => bcrypt($data['password']),
             'password' => Hash::make($data['password']),
-            'status' => $data['status'],
+            'status' => $status,
         ]);
 
-        //// ユーザーの追加項目の登録.
+        // ユーザーの追加項目の登録.
+        // ----------------------------------
         // ユーザーのカラム
         $users_columns = UsersTool::getUsersColumns();
 
@@ -178,6 +183,13 @@ class RegisterController extends Controller
             $users_input_cols->users_columns_id = $users_column->id;
             $users_input_cols->value = $value;
             $users_input_cols->save();
+        }
+
+        if ($this->isCan('admin_user')) {
+            // メールアドレス入力ありなら、メール送信画面へ
+            if ($data['email']) {
+                $this->redirectTo = '/manage/user/mail/' . $user->id;
+            }
         }
 
         return $user;

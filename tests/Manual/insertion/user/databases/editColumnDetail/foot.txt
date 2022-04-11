@@ -1,0 +1,384 @@
+<div class="card" html_only>
+<div class="card-body" html_only>
+
+<style>
+.font_small {
+    font-size: 90%;
+}
+.pdf_table th {
+    background-color: #f2f2f2; 
+}
+</style>
+
+<p>【詳細画面で設定できる内容】※ 設定項目の詳細は表の下で説明します。</p>
+<div class="table-responsive" html_only>
+<table class="table table-sm table-bordered table-striped table_css font_small pdf_table">
+<tbody>
+    <tr>
+    <th style="width: 15%;">設定項目</th>
+    <th style="width: 5%;">１行文字</th>
+    <th style="width: 5%;">複数文字</th>
+    <th style="width: 5%;">単一 選択</th>
+    <th style="width: 5%;">複数 選択</th>
+    <th style="width: 5%;">リスト</th>
+    <th style="width: 5%;">メール</th>
+    <th style="width: 5%;">日付</th>
+    <th style="width: 5%;">時間</th>
+    <th style="width: 5%;">複数年限</th>
+    <th style="width: 5%;">リンク</th>
+    <th style="width: 5%;">ファイル</th>
+    <th style="width: 5%;">画像</th>
+    <th style="width: 5%;">動画</th>
+    <th style="width: 5%;">ウィジウィグ</th>
+    <th style="width: 5%;">登録日</th>
+    <th style="width: 5%;">更新日</th>
+    <th style="width: 5%;">公開日</th>
+    </tr>
+    <tr>
+    <th style="min-width: 5em;">タイトルの設定</th>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    </tr>
+    <tr>
+    <th style="min-width: 5em;">本文の設定</th>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    </tr>
+    <tr>
+    <th style="min-width: 5em;">イメージの設定</th>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    </tr>
+    <tr>
+    <th>選択肢の設定</th>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    </tr>
+    <tr>
+    <th>チェック処理の設定</th>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    </tr>
+    <tr>
+    <th>項目毎の固有設定</th>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    </tr>
+    <tr>
+    <th>キャプションの設定</th>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    </tr>
+    <tr>
+    <th>DBカラム設定</th>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    </tr>
+    <tr>
+    <th>デザインの設定</th>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    </tr>
+</tbody>
+</table>
+
+</div html_only><!-- table-responsive -->
+
+    <p><b>タイトルの設定</b></p>
+    <ul>
+        <li class="card-text">新着情報等のタイトル表示に使う項目を、データベース毎に１つ指定できます。</li>
+    </ul>
+    <p><b>本文の設定</b></p>
+    <ul>
+        <li class="card-text">新着情報等の本文表示に使う項目を、データベース毎に１つ指定できます</li>
+    </ul>
+    <p><b>イメージの設定</b></p>
+    <ul>
+        <li class="card-text">新着情報等のイメージ表示に使う項目を、データベース毎に１つ指定できます</li>
+    </ul>
+    <p><b>選択肢の設定</b></p>
+    <ul>
+        <li class="card-text">選択肢の追加、削除、表示順の変更ができます。</li>
+    </ul>
+    <p><b>チェック処理の設定</b></p>
+    <p>「１行文字列型」、「複数行文字列型」について、下記の設定ができます。</p>
+    <ul>
+        <li class="card-text">数値のみ許容</li>
+        <li class="card-text">英数値のみ許容</li>
+        <li class="card-text">入力最大桁数 ※数値用</li>
+        <li class="card-text">入力最大文字数</li>
+        <li class="card-text">最大値</li>
+        <li class="card-text">最小値</li>
+    </ul>
+    <p>「日付型」について、下記の設定ができます。</p>
+    <ul>
+        <li class="card-text">指定日数以降の日付のみ許容</li>
+    </ul>
+    <p><b>項目毎の固有設定</b></p>
+    <ul>
+        <li class="card-text">「時間型」で、分刻みの設定ができます。</li>
+    </ul>
+    <p><b>キャプションの設定</b></p>
+    <ul>
+        <li class="card-text">キャプション内容の追加、キャプション文字色の変更ができます。</li>
+    </ul>
+    <p><b>DBカラム設定</b></p>
+    <ul>
+        <li class="card-text">一覧・詳細画面への表示・非表示を設定できます。</li>
+        <li class="card-text">権限毎に一覧・詳細画面または、登録・編集画面で表示カラムの表示・非表示を設定できます。</li>
+        <li class="card-text">並べ替え項目・検索対象項目として指定できます。</li>
+        <li class="card-text">行グループ・列グループを設定して、表示カラムを横並びに表示する事ができます。</li>
+        <li class="card-text">【行グループ・列グループ設定例】<br>
+        <div class="table-responsive" html_only>
+            <table class="table table-sm table-bordered table-striped table_css font_small pdf_table">
+                <colgroup>
+                    <col width="73" style="width: 55pt;">
+                    <col width="84" span="2" style="mso-width-source: userset; mso-width-alt: 2688; width: 63pt;">
+                </colgroup>
+                <tbody>
+                    <tr>
+                    <th width="73">項目名</th>
+                    <th width="84" align="center" style="text-align: center;">行グループ</th>
+                    <th width="84" align="center" style="text-align: center;">列グループ</th>
+                    </tr>
+                    <tr>
+                    <td>画像</td>
+                    <td align="center">1</td>
+                    <td align="center">1</td>
+                    </tr>
+                    <tr>
+                    <td>カラム1</td>
+                    <td align="center">1</td>
+                    <td align="center">2</td>
+                    </tr>
+                    <tr>
+                    <td>カラム2</td>
+                    <td align="center">1</td>
+                    <td align="center">2</td>
+                    </tr>
+                    <tr>
+                    <td>メール3</td>
+                    <td align="center">1</td>
+                    <td align="center">2</td>
+                    </tr>
+                    <tr>
+                    <td>カラム4</td>
+                    <td align="center">2</td>
+                    <td align="center">1</td>
+                    </tr>
+                    <tr>
+                    <td>カラム5</td>
+                    <td align="center">3</td>
+                    <td align="center">1</td>
+                    </tr>
+                    <tr>
+                    <td>カラム6</td>
+                    <td align="center">3</td>
+                    <td align="center">2</td>
+                    </tr>
+                    <tr>
+                    <td>カラム7</td>
+                    <td align="center">4</td>
+                    <td align="center">1</td>
+                    </tr>
+                    <tr>
+                    <td>カラム8</td>
+                    <td align="center">4</td>
+                    <td align="center">2</td>
+                    </tr>
+                    <tr>
+                    <td>カラム9</td>
+                    <td align="center">4</td>
+                    <td align="center">3</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div html_only>
+        <li class="card-text">【表示例】<br>
+        <div class="table-responsive" html_only>
+            <table class="table table-sm table-bordered table-striped table_css font_small pdf_table">
+                <colgroup>
+                    <col width="73" span="2" style="width: 55pt;">
+                    <col width="84" span="2" style="mso-width-source: userset; mso-width-alt: 2688; width: 63pt;">
+                </colgroup>
+                <tbody>
+                    <tr>
+                    <th></th>
+                    <th>1列</th>
+                    <th>2列</th>
+                    <th>3列</th>
+                    </tr>
+                    <tr>
+                    <td>1行</td>
+                    <td class="xl66">画像</td>
+                    <td colspan="2" class="xl69" style="border-right: 0.5pt solid black; border-left: none;">カラム1</td>
+                    </tr>
+                    <tr>
+                    <td></td>
+                    <td class="xl67">　</td>
+                    <td colspan="2" class="xl69" style="border-right: 0.5pt solid black; border-left: none;">カラム2</td>
+                    </tr>
+                    <tr>
+                    <td></td>
+                    <td class="xl68">　</td>
+                    <td colspan="2" class="xl69" style="border-right: 0.5pt solid black; border-left: none;">メール3</td>
+                    </tr>
+                    <tr>
+                    <td>2行</td>
+                    <td colspan="3" class="xl69" style="border-right: 0.5pt solid black;">カラム4</td>
+                    </tr>
+                    <tr>
+                    <td>3行</td>
+                    <td>カラム5</td>
+                    <td colspan="2" class="xl69" style="border-right: 0.5pt solid black; border-left: none;">カラム6</td>
+                    </tr>
+                    <tr>
+                    <td>4行</td>
+                    <td>カラム7</td>
+                    <td style="border-top: none; border-left: none;">カラム8</td>
+                    <td style="border-top: none; border-left: none;">カラム9</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div html_only>
+    </ul>
+    <p><b>デザインの設定</b></p>
+    <ul>
+        <li class="card-text">CSSのクラス名を設定できます。</li>
+    </ul>
+</div html_only><!-- card-body -->

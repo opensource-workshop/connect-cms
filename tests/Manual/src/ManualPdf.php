@@ -27,6 +27,42 @@ class ManualPdf extends DuskTestCase
     }
 
     /**
+     * 概要出力
+     *
+     * @return void
+     */
+    private function outputDescription($pdf)
+    {
+        $pdf->addPage();
+        $pdf->Bookmark("概要", 0, 0, '', '', array(0, 0, 0));
+        $pdf->writeHTML(
+            view(
+                'manual.pdf.description'
+            ),
+            false
+        );
+        return $pdf;
+    }
+
+    /**
+     * 裏表紙出力
+     *
+     * @return void
+     */
+    private function outputBackfront($pdf)
+    {
+        $pdf->addPage();
+        $pdf->Bookmark("最後に", 0, 0, '', '', array(0, 0, 0));
+        $pdf->writeHTML(
+            view(
+                'manual.pdf.backfront'
+            ),
+            false
+        );
+        return $pdf;
+    }
+
+    /**
      * カテゴリ出力
      *
      * @return void
@@ -77,6 +113,7 @@ class ManualPdf extends DuskTestCase
      */
     private function outputMethod($pdf, $method)
     {
+        $pdf->addPage();
         $pdf->Bookmark($method->method_title, 2, 0, '', '', array(0, 0, 0));
         $pdf->writeHTML(
             view(
@@ -105,7 +142,7 @@ class ManualPdf extends DuskTestCase
         });
 
         // 全データ取得
-        $dusks = Dusks::get();
+        $dusks = Dusks::orderBy("id", "asc")->get();
 
         // 出力するPDF の準備
         $pdf = new CCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
@@ -138,9 +175,13 @@ class ManualPdf extends DuskTestCase
 
         // 初期ページを追加
         $pdf->addPage();
+        $pdf->Bookmark("表紙", 0, 0, '', '', array(0, 0, 0));
 
         // マニュアル表紙
         $pdf->writeHTML(view('manual.pdf.cover')->render(), false);
+
+        // 概要
+        $this->outputDescription($pdf);
 
         // マニュアル用データをループ
         // マニュアルHTML と違い、カテゴリ、プラグイン、メソッドの3重ループで処理する。
@@ -163,6 +204,9 @@ class ManualPdf extends DuskTestCase
             }
         }
 
+        // 裏表紙
+        $this->outputBackfront($pdf);
+
         // 目次ページの追加
         $pdf->addTOCPage();
 
@@ -183,6 +227,17 @@ class ManualPdf extends DuskTestCase
         // 目次 --------------------/
 
         // 出力 ( D：Download, I：Inline )
-        $pdf->output(\Storage::disk('manual')->path('pdf/manual.pdf'), 'F');
+        // env でパスが指定されていなかった場合は、manual ディスクの html フォルダに保存。
+        if (empty(config('connect.manual_put_base'))) {
+            if (!\File::exists(\Storage::disk('manual')->path('html/pdf'))) {
+                \File::makeDirectory(\Storage::disk('manual')->path('html/pdf'), 0755, true);
+            }
+            $pdf->output(\Storage::disk('manual')->path('html/pdf/manual.pdf'), 'F');
+        } else {
+            if (!\File::exists(config('connect.manual_put_base') . 'pdf')) {
+                \File::makeDirectory(config('connect.manual_put_base') . 'pdf', 0755, true);
+            }
+            $pdf->output(config('connect.manual_put_base') . 'pdf/manual.pdf', 'F');
+        }
     }
 }

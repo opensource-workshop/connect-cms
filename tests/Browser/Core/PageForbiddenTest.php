@@ -7,6 +7,7 @@ use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
 use App\Models\Core\Configs;
+use App\Models\Common\Frame;
 use App\Models\Common\Page;
 
 use App\Enums\PluginName;
@@ -48,7 +49,9 @@ class PageForbiddenTest extends DuskTestCase
         $this->logout();
 
         $this->browse(function (Browser $browser) {
-            $browser->visit('/plugin/contents/frame_setting/1/1#frame-1')
+            $frame = Frame::where('page_id', 1)->where('plugin_name', 'contents')->first();
+            // $browser->visit('/plugin/contents/frame_setting/1/1#frame-1')
+            $browser->visit("/plugin/contents/frame_setting/1/{$frame->id}#frame-{$frame->id}")
                     ->assertSee('403 Forbidden');
             parent::screenshot($browser);
         });

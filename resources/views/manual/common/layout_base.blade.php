@@ -31,23 +31,79 @@
 
         <div class="collapse navbar-collapse" id="navbarsExampleDefault">
             <ul class="navbar-nav mr-auto"></ul>
-            <ul class="navbar-nav d-md-none">
-                <li class="nav-item">
-                    <a href="https://connect-cms.jp/" class="nav-link">
-                        Home
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="https://connect-cms.jp/forum" class="nav-link">
-                        フォーラム<i class="fas fa-plus"></i>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="https://connect-cms.jp/about" class="nav-link">
-                        Connect-CMSとは<i class="fas fa-plus"></i>
-                    </a>
-                </li>
-            </ul>
+            @if (isset($current_method))
+                <ul class="navbar-nav d-md-none">
+                    <li class="nav-item smp-nav-link">
+                        {{-- カテゴリのリンクは常に表示 --}}
+                        @if ($base_path == '../' || $base_path == '../../' || $base_path == '../../../')
+                            @if ($base_path == '../')
+                                <span class="smp-nav-nolink">{{ManualCategory::getDescription($current_method->category)}}</span>
+                            @else
+                                <a href="{{$base_path}}{{$current_method->category}}/index.html">
+                                    {{ManualCategory::getDescription($current_method->category)}}
+                                </a>
+                            @endif
+                        @endif
+                        {{-- プラグインのリンクはプラグイン、メソッドで表示 --}}
+                        @if ($base_path == '../../' || $base_path == '../../../')
+                            &gt;
+                            @if ($base_path == '../../')
+                                <span class="smp-nav-nolink">{{$current_method->plugin_title}}</span>
+                            @else
+                                <a href="{{$base_path}}{{$current_method->category}}/{{$current_method->plugin_name}}/index.html">
+                                    {{$current_method->plugin_title}}
+                                </a>
+                            @endif
+                        @endif
+                        {{-- メソッドの表示はメソッドでのみ表示 --}}
+                        @if ($base_path == '../../../')
+                            &gt;
+                            <span class="smp-nav-nolink">{{$current_method->method_title}}</span>
+                        @endif
+                    </li>
+                </ul>
+
+                {{-- プラグインのリストはカテゴリの場合に表示 --}}
+                @if ($base_path == '../')
+                <ul class="d-md-none">
+                    @foreach ($methods->where('category', $current_method->category)->groupBy('plugin_name') as $method_group)
+                        @if ($method_group[0]->id == $current_method->id && $base_path == '../../../')
+                            <li class="smp-nav-nolink">
+                                {{$method_group[0]->plugin_title}}
+                            </li>
+                        @else
+                            <li class="smp-nav-link">
+                                <a href="{{$base_path}}{{$method_group[0]->category}}/{{$method_group[0]->plugin_name}}/index.html" class="smp-nav-link">
+                                    {{$method_group[0]->plugin_title}}
+                                </a>
+                            </li>
+                        @endif
+                    @endforeach
+                </ul>
+                @endif
+
+                {{-- メソッドのリストはプラグイン、メソッドで表示 --}}
+                @if ($base_path == '../../' || $base_path == '../../../')
+                <ul class="d-md-none">
+                    @foreach ($methods->where('plugin_name', $current_method->plugin_name) as $method)
+                        @if ($method->id == $current_method->id && $base_path == '../../../')
+                            <li class="smp-nav-nolink">
+                                {{$method->method_title}}
+                            </li>
+                        @else
+                            <li class="smp-nav-link">
+                                <a href="{{$base_path}}{{$method->category}}/{{$method->plugin_name}}/{{$method->method_name}}/index.html" class="smp-nav-link">
+                                    {{$method->method_title}}
+                                </a>
+                            </li>
+                        @endif
+                    @endforeach
+                </ul>
+                @endif
+            @endif
+            <div class="d-md-none">
+                @include('manual.common.badge_menu')
+            </div>
         </div>
     </nav>
 

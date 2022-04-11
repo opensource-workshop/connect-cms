@@ -164,7 +164,7 @@
         </div>
         <div class="text-center">
             <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#collapse_mkdir{{$frame->id}}">キャンセル</button>
-            <button class="btn btn-primary btn-sm" type="submit">作成</button>
+            <button class="btn btn-primary btn-sm" type="submit" id="button_make_folder{{$frame->id}}">作成</button>
         </div>
     </div>
 </form>
@@ -187,7 +187,7 @@
         <div class="row">
             <label class="{{$frame->getSettingLabelClass()}} p-0"></label>
             <div class="{{$frame->getSettingInputClass()}}">
-                <small class="my-0 form-text text-muted">jpg, png, gif, zip を許可します。zip の場合は展開されて登録されます。(zip は予定)</small>
+                <small class="my-0 form-text text-muted">jpg, png, gif, zip を許可します。<br />zip の場合は展開され、フォルダがアルバム（サブアルバム）となり、登録されます。</small>
             </div>
         </div>
         @if ($errors && $errors->has("upload_file.$frame_id")) 
@@ -202,7 +202,7 @@
             <label class="{{$frame->getSettingLabelClass()}}" for="title">タイトル</label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <input type="text" name="title[{{$frame_id}}]" value="{{old("title.$frame_id")}}" class="form-control @if ($errors && $errors->has("title.$frame_id")) border-danger @endif" id="title{{$frame_id}}">
-                <small class="form-text text-muted">空の場合、ファイル名をタイトルとして登録します。</small>
+                <small class="form-text text-muted">空の場合、ファイル名をタイトルとして登録します。(zipの場合はファイル名が入ります)</small>
                 @if ($errors && $errors->has("title.$frame_id")) 
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("title.*")}}</div>
                 @endif
@@ -212,6 +212,7 @@
             <label class="{{$frame->getSettingLabelClass()}}" for="description">説明</label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <textarea name="description[{{$frame_id}}]" class="form-control @if ($errors->has('description.$frame_id')) border-danger @endif" rows=2>{!!old("description.$frame_id")!!}</textarea>
+                <small class="form-text text-muted">zipの場合は空になります。</small>
                 @if ($errors && $errors->has("description.$frame_id")) 
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("description.*")}}</div>
                 @endif
@@ -226,13 +227,13 @@
                     @else
                         <input type="checkbox" name="is_cover[{{$frame_id}}]" value="1" class="custom-control-input" id="is_cover{{$frame_id}}">
                     @endif
-                    <label class="custom-control-label" for="is_cover{{$frame_id}}">チェックすると、アルバムの表紙に使われます。</label>
+                    <label class="custom-control-label" for="is_cover{{$frame_id}}" id="label_is_cover{{$frame_id}}">チェックすると、アルバムの表紙に使われます。</label>
                 </div>
             </div>
         </div>
         <div class="text-center">
             <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#collapse_upload{{$frame->id}}">キャンセル</button>
-            <button class="btn btn-primary btn-sm" type="submit">追加</button>
+            <button class="btn btn-primary btn-sm" type="submit" id="button_upload{{$frame->id}}">追加</button>
             <small id="upload-size-server-help" class="form-text text-muted">アップロードできる最大サイズ&nbsp;<span class="font-weight-bold">{{UploadMaxSize::getDescription($photoalbum->image_upload_max_size)}}</span><br />保存時の幅、高さの最大px&nbsp;<span class="font-weight-bold">{{ResizedImageSize::getImageUploadResizeMessage($photoalbum->image_upload_max_px)}}</span></small>
         </div>
     </div>
@@ -256,7 +257,7 @@
         <div class="row">
             <label class="{{$frame->getSettingLabelClass()}} p-0"></label>
             <div class="{{$frame->getSettingInputClass()}}">
-                <small class="my-0 form-text text-muted">mp4, zip を許可します。zip の場合は展開されて登録されます。</small>
+                <small class="my-0 form-text text-muted">mp4, zip を許可します。zip の場合は展開されて登録されます。(zip は予定)</small>
             </div>
         </div>
         @if ($errors && $errors->has("upload_video.$frame_id")) 
@@ -320,13 +321,13 @@
                     @else
                         <input type="checkbox" name="is_cover[{{$frame_id}}]" value="1" class="custom-control-input" id="poster_is_cover{{$frame_id}}" disabled>
                     @endif
-                    <label class="custom-control-label" for="poster_is_cover{{$frame_id}}">チェックすると、ポスター画像がアルバムの表紙に使われます。</label>
+                    <label class="custom-control-label" for="poster_is_cover{{$frame_id}}" id="label_poster_is_cover{{$frame_id}}">チェックすると、ポスター画像がアルバムの表紙に使われます。</label>
                 </div>
             </div>
         </div>
         <div class="text-center">
             <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#collapse_video{{$frame->id}}">キャンセル</button>
-            <button class="btn btn-primary btn-sm" type="submit">追加</button>
+            <button class="btn btn-primary btn-sm" type="submit" id="button_upload_video{{$frame->id}}">追加</button>
             <small id="upload-size-server-help" class="form-text text-muted">アップロードできる最大サイズ&nbsp;<span class="font-weight-bold">{{UploadMaxSize::getDescription($photoalbum->video_upload_max_size)}}</span></small>
         </div>
     </div>
@@ -483,7 +484,7 @@
                 @endif
                 @if (($photoalbum_content->isVideo($photoalbum_content->mimetype)) && FrameConfig::getConfigValue($frame_configs, PhotoalbumFrameConfig::embed_code))
                     <div class="card-text">
-                        <a class="embed_code_check" data-name="embed_code{{$photoalbum_content->id}}" style="color: #007bff; cursor: pointer;"><small>埋め込みコード</small> <i class="fas fa-caret-right"></i></a>
+                        <a class="embed_code_check" data-name="embed_code{{$photoalbum_content->id}}" style="color: #007bff; cursor: pointer;" id="a_embed_code_check{{$photoalbum_content->id}}"><small>埋め込みコード</small> <i class="fas fa-caret-right"></i></a>
                         <input type="text" name="embed_code[{{$frame_id}}]" value='<iframe width="400" height="300" src="{{url('/')}}/download/plugin/photoalbums/embed/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}" frameborder="0" scrolling="no" allowfullscreen></iframe>' class="form-control" id="embed_code{{$photoalbum_content->id}}" style="display: none;">
                     </div>
                 @endif

@@ -20,7 +20,7 @@ class Dusks extends Model
         'category', 'sort',
         'plugin_name', 'plugin_title', 'plugin_desc',
         'method_name', 'method_title', 'method_desc', 'method_detail',
-        'html_path', 'img_args', 'test_result',
+        'html_path', 'img_args', 'test_result', 'parent_id'
     ];
 
     /**
@@ -123,20 +123,70 @@ class Dusks extends Model
      *
      * @return dusks
      */
-    public function getInsertionPdf($level, $position, $front = '', $rear = '')
+    public function getInsertionPdf($level, $position, $front = '', $rear = '', $manual_path = null)
     {
         // HTML用と同じタグを取得
         $insertion = $this->getInsertion($level, $position, $front, $rear);
 
-        // タグを抜き出して、html_only クラスがあれば、そのタグを削除する。
+        // タグをループして処理
         $match_ret = preg_match_all('/<([^>]*)>/', $insertion, $matches);
         if ($match_ret !== false && $match_ret > 0) {
+            // タグを抜き出して、html_only クラスがあれば、そのタグを削除する。
             foreach ($matches[0] as $matche) {
                 if (strpos($matche, 'html_only') !== false) {
                     $insertion = str_replace($matche, '', $insertion);
                 }
             }
+
+            // タグを抜き出して、img src があれば、画像のパスを実パスに変更する。
+            foreach ($matches[1] as $matche) {
+                if (strpos($matche, 'img src=') === 0) {
+                    $tmp_path = str_replace('img src="', '', $matche);
+
+                    // class 等の属性があれば、画像ファイルの後ろのスペース以降で切り離して捨てる（TCPDFで極端に小さな画像などになるので）。
+                    if (strpos($tmp_path, ' ')) {
+                        $img_option = mb_strstr($tmp_path, ' '); // 一応、属性以降を変数に入れているが、基本は使わない。（デバック用
+                        $tmp_path = mb_strstr($tmp_path, ' ', true);
+                    }
+
+                    $tmp_path = str_replace('"', '', $tmp_path);
+                    $img_path = "";
+                    if (empty(config('connect.manual_put_base'))) {
+                        if (\Storage::disk('manual')->exists('html/' . $this->category . '/' . $this->plugin_name . '/'. $this->method_name . '/'. $tmp_path)) {
+                            $img_path = \Storage::disk('manual')->path('html/' . $this->category . '/' . $this->plugin_name . '/'. $this->method_name . '/'. $tmp_path);
+                        }
+                    } else {
+                        if (\File::exists(config('connect.manual_put_base') . $this->category . '/' . $this->plugin_name . '/'. $this->method_name . '/'. $tmp_path)) {
+                            $img_path = config('connect.manual_put_base') . $this->category . '/' . $this->plugin_name . '/'. $this->method_name . '/'. $tmp_path;
+                        }
+                    }
+                    $insertion = str_replace($matche, 'img src="' . $img_path . '"', $insertion);
+                }
+            }
         }
         return $insertion;
+    }
+
+    /**
+     * マニュアル用 mp4 データがあるか確認する。
+     *
+     * @return boolean
+     */
+    public function hasMp4()
+    {
+        if (\File::exists(config('connect.manual_put_base') . dirname($this->html_path) . '/mp4/mizuki/_video.mp4')) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * mp4 パスの返却
+     *
+     * @return boolean
+     */
+    public function getMp4Path()
+    {
+        return dirname($this->html_path) . '/mp4/mizuki/_video.mp4';
     }
 }

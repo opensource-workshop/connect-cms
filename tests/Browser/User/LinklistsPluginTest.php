@@ -48,14 +48,14 @@ class LinklistsPluginTest extends DuskTestCase
      */
     private function init()
     {
-        // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'edit', 'createBuckets', 'editView', 'listCategories', 'listBuckets');
-
         // データクリア
         Linklist::truncate();
         LinklistFrame::truncate();
         LinklistPost::truncate();
         $this->initPlugin('linklists', '/test/linklist');
+
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'edit', 'createBuckets', 'editView', 'listCategories', 'listBuckets');
     }
 
     /**
@@ -168,7 +168,7 @@ class LinklistsPluginTest extends DuskTestCase
 
         // マニュアル用データ出力
         $this->putManualData('[
-            {"path": "user/whatsnews/editView/images/editView",
+            {"path": "user/linklists/editView/images/editView",
              "comment": "<ul class=\"mb-0\"><li>リンクリストの表示形式や1ページの表示件数を設定できます。</li></ul>"
             }
         ]');
@@ -181,9 +181,6 @@ class LinklistsPluginTest extends DuskTestCase
     {
         // 実行
         $this->browse(function (Browser $browser) {
-            // 一度クリア
-            LinklistPost::truncate();
-
             $browser->visit('/plugin/linklists/edit/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                     ->type('title', 'Connect-CMS公式')
                     ->type('url', 'https://connect-cms.jp/')

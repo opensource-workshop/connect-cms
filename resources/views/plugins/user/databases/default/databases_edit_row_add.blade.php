@@ -40,7 +40,7 @@
 
     {{-- ＋ボタン --}}
     <td class="text-center p-1">
-        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_column();">
+        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_column();" id="button_submit_add_column">
             <i class="fas fa-plus"></i>
         </button>
     </td>

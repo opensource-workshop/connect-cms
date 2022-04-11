@@ -202,7 +202,7 @@ class UploadController extends ConnectController
         }
 
         // ../ or ..\ が含まれる場合は空を返す。
-        if (strpos($filename, '../') !== false || strpos($filename, "..\\") !== false){
+        if (strpos($filename, '../') !== false || strpos($filename, "..\\") !== false) {
             return;
         }
 

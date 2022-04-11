@@ -205,6 +205,7 @@ class UserManageTest extends DuskTestCase
                     ->attach('users_csv', __DIR__.'/users.csv')
                     ->press('インポート')
                     ->acceptDialog()
+                    ->pause(500)
                     ->assertDontSee('500')        // "500" 文字がない事
                     ->screenshot('manage/user/import/images/submitImport');
         });
@@ -218,6 +219,7 @@ class UserManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/user?page=2')
                 ->assertSee('ユーザ一覧')
+                ->pause(500)
                 ->assertDontSee('500')        // "500" 文字がない事
                 ->screenshot('manage/user/import/images/import2');
         });
@@ -231,11 +233,40 @@ class UserManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/user/autoRegist')
                 ->assertTitleContains('Connect-CMS')
-                ->screenshot('manage/user/autoRegist/images/autoRegist');
+                ->screenshot('manage/user/autoRegist/images/autoRegist1')
+                ->scrollIntoView('#user_register_temporary_regist_mail_flag')
+                ->screenshot('manage/user/autoRegist/images/autoRegist2')
+                ->scrollIntoView('#div_user_register_mail_subject')
+                ->screenshot('manage/user/autoRegist/images/autoRegist3')
+                ->scrollIntoView('#div_user_register_approved_mail_subject')
+                ->screenshot('manage/user/autoRegist/images/autoRegist4')
+                ->scrollIntoView('#div_user_register_requre_privacy')
+                ->screenshot('manage/user/autoRegist/images/autoRegist5');
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/user/autoRegist/images/autoRegist');
+        $this->putManualData('[
+            {"path": "manage/user/autoRegist/images/autoRegist1",
+             "name": "自動ユーザ登録",
+             "comment": "<ul class=\"mb-0\"><li>自動ユーザ登録の使用の許可、自動ユーザ登録時の管理者の承認の要不要、自動ユーザ登録時の通知先メールアドレスを設定できます。</li></ul>"
+            },
+            {"path": "manage/user/autoRegist/images/autoRegist2",
+             "name": "仮登録メール",
+             "comment": "<ul class=\"mb-0\"><li>仮登録機能を使用することができます。仮登録機能とは、自動ユーザ登録時に、ユーザ自身がメールアドレスをクリックして、本登録に進む機能です。</li></ul>"
+            },
+            {"path": "manage/user/autoRegist/images/autoRegist3",
+             "name": "本登録メール",
+             "comment": "<ul class=\"mb-0\"><li>ユーザが登録できた際に送信するメールのフォーマットを設定できます。承認が必要な場合は登録申請メールになります。</li></ul>"
+            },
+            {"path": "manage/user/autoRegist/images/autoRegist4",
+             "name": "承認完了メール",
+             "comment": "<ul class=\"mb-0\"><li>ユーザが承認された際に送信するメールのフォーマットを設定できます。</li></ul>"
+            },
+            {"path": "manage/user/autoRegist/images/autoRegist5",
+             "name": "個人情報保護への同意や追記文章、初期コンテンツ権限",
+             "comment": "<ul class=\"mb-0\"><li>ユーザ登録する際に規約など文章に同意を求めることができます。また、登録時のコンテンツ権限も設定できます。</li></ul>"
+            }
+        ]');
     }
 
     /**

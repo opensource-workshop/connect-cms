@@ -171,7 +171,7 @@
                             </td>
                             <td class="text-center">
                                 {{-- ＋ボタン --}}
-                                <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_select(this);"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
+                                <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_select(this);" id="button_add_select"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
                             </td>
                             <td>
                                 {{-- 余白 --}}
@@ -242,7 +242,7 @@
                     <div class="form-group row">
                         <label class="{{$frame->getSettingLabelClass()}}">まとめ数 <label class="badge badge-danger">必須</label></label>
                         <div class="{{$frame->getSettingInputClass()}}">
-                            <select class="form-control" name="frame_col">
+                            <select class="form-control" name="frame_col" id="select_frame_col">
                                 <option value=""></option>
                                 @for ($i = 1; $i < 5; $i++)
                                     <option value="{{$i}}"  @if(old('frame_col', $column->frame_col) == $i) selected @endif>{{$i}}</option>
@@ -255,7 +255,7 @@
 
                 {{-- ボタンエリア --}}
                 <div class="form-group text-center">
-                    <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
+                    <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary form-horizontal" id="button_col_original"><i class="fas fa-check"></i> 更新</button>
                 </div>
             </div>
         </div>
@@ -325,7 +325,7 @@
                         </div>
                     </div>
                     {{-- 最小値設定 --}}
-                    <div class="form-group row">
+                    <div class="form-group row" id="div_rule_min">
                         <label class="{{$frame->getSettingLabelClass()}}">最小値</label>
                         <div class="{{$frame->getSettingInputClass()}}">
                             <input type="text" name="rule_min" value="{{old('rule_min', $column->rule_min)}}" class="form-control">
@@ -377,7 +377,7 @@
 
 
     {{-- キャプション設定 --}}
-    <div class="card">
+    <div class="card" id="div_caption">
         <h5 class="card-header">キャプションの設定</h5>
         <div class="card-body">
 
@@ -416,7 +416,7 @@
 
             {{-- ボタンエリア --}}
             <div class="form-group text-center">
-                <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
+                <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary form-horizontal" id="button_caption"><i class="fas fa-check"></i> 更新</button>
             </div>
         </div>
     </div>

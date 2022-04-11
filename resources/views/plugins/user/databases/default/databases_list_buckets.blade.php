@@ -85,7 +85,7 @@
                             <button class="btn btn-success btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/databases/editBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}'">
                                 <i class="far fa-edit"></i> 設定<span class="{{$frame->getSettingButtonCaptionClass()}}">変更</span>
                             </button>
-                            <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="button_setting_dropdown">
                                 <span class="sr-only">ドロップダウンボタン</span>
                             </button>
                             <div class="dropdown-menu dropdown-menu-right">

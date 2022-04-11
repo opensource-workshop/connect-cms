@@ -57,4 +57,26 @@ class FrameConfig extends Model
         $value = old($name, $value);
         return $value;
     }
+
+    /**
+     * フレーム設定を保存する。
+     *
+     * @param Illuminate\Http\Request $request リクエスト
+     * @param int $frame_id フレームID
+     * @param array $frame_config_names フレーム設定のname配列
+     */
+    public static function saveFrameConfigs(\Illuminate\Http\Request $request, int $frame_id, array $frame_config_names) : void
+    {
+        foreach ($frame_config_names as $key => $name) {
+
+            if ($request->$name != '0' && empty($request->$name)) {
+                continue;
+            }
+
+            self::updateOrCreate(
+                ['frame_id' => $frame_id, 'name' => $name],
+                ['value' => $request->$name]
+            );
+        }
+    }
 }

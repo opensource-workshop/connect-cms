@@ -16,7 +16,7 @@ class DateUtils
     public static function formatDateJp($value)
     {
         $ret = '';
-        if($value){
+        if ($value) {
             // ハイフンを空文字に置換
             $value = str_replace('-', '', $value);
             // 全角→半角変換

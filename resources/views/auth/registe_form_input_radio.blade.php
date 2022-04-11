@@ -30,7 +30,7 @@
     </div>
     @if ($errors && $errors->has("users_columns_value.$user_obj->id"))
         <div class="d-block text-danger">
-            <i class="fas fa-exclamation-circle"></i> {{$errors->first("users_columns_value.$user_obj->id")}}
+            <i class="fas fa-exclamation-triangle"></i> {{$errors->first("users_columns_value.$user_obj->id")}}
         </div>
     @endif
 @endif

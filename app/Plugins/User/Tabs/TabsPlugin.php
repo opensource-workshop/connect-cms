@@ -18,6 +18,8 @@ use App\Plugins\User\UserPluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category タブ・プラグイン
  * @package Controller
+ * @plugin_title タブ
+ * @plugin_desc 複数のフレームをタブで切り替えることができるようにするプラグインです。
  */
 class TabsPlugin extends UserPluginBase
 {
@@ -74,6 +76,9 @@ class TabsPlugin extends UserPluginBase
      *  初期表示取得関数
      *
      * @return view
+     * @method_title タブ表示
+     * @method_desc 画面をリロードすることなく、タブでフレームを切り替えることができます。
+     * @method_detail 固定記事以外にも新着など、異なるプラグインを組み合わせることもできます。表示するのは各プラグインの初期画面です。
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -103,7 +108,11 @@ class TabsPlugin extends UserPluginBase
     }
 
     /**
-     *  フレーム選択画面
+     * フレーム選択画面
+     *
+     * @method_title フレーム選択
+     * @method_desc タブで切り替えるフレームを選択します。
+     * @method_detail 初期表示するフレームを選択できます。
      */
     public function select($request, $page_id, $frame_id)
     {

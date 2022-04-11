@@ -35,19 +35,26 @@
     <article class="clearfix">
         <div class="row">
             @foreach($whatsnews as $whatsnew)
+            @if (isset($is_template_col_3))
+            {{-- カードタイプ３の場合 --}}
+            <div class="col-12 col-sm-6 col-md-6 col-lg-4 whatsnew_card mb-2">
+            @else
+            {{-- カードタイプ４の場合 --}}
             <div class="col-12 col-sm-6 col-md-6 col-lg-3 whatsnew_card mb-2">
+            @endif
+                @if ($link_pattern[$whatsnew->plugin_name] == 'show_page_frame_post')
+                <a href="{{url('/')}}{{$link_base[$whatsnew->plugin_name]}}/{{$whatsnew->page_id}}/{{$whatsnew->frame_id}}/{{$whatsnew->post_id}}#frame-{{$whatsnew->frame_id}}" style="text-decoration: none; color: initial;">
+                @endif
                 <div class="p-2 @if (FrameConfig::getConfigValue($frame_configs, WhatsnewFrameConfig::border))border @endif" style="height: 100%;">
                     <dl>
                         {{-- タイトル --}}
                         @if ($link_pattern[$whatsnew->plugin_name] == 'show_page_frame_post')
                             <dt class="text-center whatsnew_title">
-                                <a href="{{url('/')}}{{$link_base[$whatsnew->plugin_name]}}/{{$whatsnew->page_id}}/{{$whatsnew->frame_id}}/{{$whatsnew->post_id}}#frame-{{$whatsnew->frame_id}}">
-                                    @if ($whatsnew->post_title)
-                                        {{$whatsnew->post_title}}
-                                    @else
-                                        (無題)
-                                    @endif
-                                </a>
+                                @if ($whatsnew->post_title)
+                                    {{$whatsnew->post_title_strip_tags}}
+                                @else
+                                    (無題)
+                                @endif
                             </dt>
                         @endif
 
@@ -98,6 +105,9 @@
                         @endif
                     </dl>
                 </div>
+                @if ($link_pattern[$whatsnew->plugin_name] == 'show_page_frame_post')
+                </a>
+                @endif
             </div>
             @endforeach
         </div>
@@ -117,7 +127,7 @@
                         <dt v-if="link_pattern[whatsnews.plugin_name] == 'show_page_frame_post'" class="text-center whatsnew_title">
                             <a :href="url + link_base[whatsnews.plugin_name] + '/' + whatsnews.page_id + '/' + whatsnews.frame_id + '/' + whatsnews.post_id + '#frame-' + whatsnews.frame_id">
                                 <template v-if="whatsnews.post_title == null || whatsnews.post_title == ''">（無題）</template>
-                                <template v-else>@{{ whatsnews.post_title }}</template>
+                                <template v-else>@{{ whatsnews.post_title_strip_tags }}</template>
                             </a>
                         </dt>
 

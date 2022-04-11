@@ -58,7 +58,7 @@
         <table class="table table-bordered table_border_radius table-hover cc-font-90">
             <tbody>
                 <tr class="bg-light d-none d-sm-table-row">
-                    <th class="d-block d-sm-table-cell text-break">プラグイン</th>_
+                    <th class="d-block d-sm-table-cell text-break">プラグイン</th>
                     @foreach(CodeColumn::getIndexColumn() as $column_key => $column_value)
                         @if(in_array($column_key, $config->value_array) == $column_key)
                             <th class="d-block d-sm-table-cell text-break">{{$column_value}}</th>

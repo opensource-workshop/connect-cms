@@ -2,6 +2,7 @@
 
 namespace App\Plugins\User\Photoalbums;
 
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -21,6 +22,8 @@ use App\Enums\UploadMaxSize;
 use App\Enums\PhotoalbumFrameConfig;
 use App\Enums\PhotoalbumSort;
 
+use App\Utilities\Zip\UnzipUtils;
+
 use App\Traits\ConnectCommonTrait;
 
 use Intervention\Image\Facades\Image;
@@ -35,11 +38,10 @@ use App\Plugins\User\UserPluginBase;
  * @category フォトアルバム・プラグイン
  * @package Controller
  * @plugin_title フォトアルバム
- * @plugin_desc 写真や動画をアルバム管理できるプラグインです。
+ * @plugin_desc 写真などの画像や動画を管理できる、メディアアルバムです。
  */
 class PhotoalbumsPlugin extends UserPluginBase
 {
-
     /*
         【メモ】
         zip ダウンロード ⇒ 閲覧回数アップ
@@ -118,7 +120,7 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param int $frame_id フレームID
      * @param int $parent_id 表示する階層(ルートはnull)
      * @return mixed $value テンプレートに渡す内容
-     * @method_title 初期画面
+     * @method_title アルバム表示
      * @method_desc アルバムの一覧や表紙に追加した写真・動画の一覧が表示されます。
      * @method_detail
      */
@@ -250,6 +252,10 @@ class PhotoalbumsPlugin extends UserPluginBase
      */
     public function changeDirectory($request, $page_id, $frame_id, $parent_id)
     {
+        if (UnzipUtils::useZipArchive()) {
+
+        }
+
         return $this->index($request, $page_id, $frame_id, $parent_id);
     }
 
@@ -334,6 +340,9 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param int $page_id ページID
      * @param int $frame_id フレームID
      * @return \Illuminate\Support\Collection リダイレクト先のパス
+     * @method_title アルバム作成
+     * @method_desc アルバムを作成できます。
+     * @method_detail アルバムの中にもアルバムを作成できます。
      */
     public function makeFolder($request, $page_id, $frame_id)
     {
@@ -388,11 +397,14 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param int $page_id ページID
      * @param int $frame_id フレームID
      * @return \Illuminate\Support\Collection リダイレクト先のパス
+     * @method_title アップロード
+     * @method_desc 画像や動画ファイルをアップロードできます。
+     * @method_detail ルート階層にも、フォルダの中にもファイルをアップロードできます。
      */
     public function upload($request, $page_id, $frame_id)
     {
         $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
-        $validator = $this->getUploadValidator($request, $photoalbum); // バリデータ
+        $validator = $this->getUploadValidator($request, $photoalbum, ',zip'); // バリデータ
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
@@ -448,18 +460,114 @@ class PhotoalbumsPlugin extends UserPluginBase
      */
     private function writeFile($request, $page_id, $frame_id, $photoalbum, $parent)
     {
+        // zip ファイルの判定
+        $file_extension = $request->file('upload_file')[$frame_id]->extension();
+
+        if ($file_extension == 'zip') {
+            // 展開、連番で保存、キャビネットに格納するときに名前を復元の順で処理。
+            // UTF-8変換＆展開方式では、「写真テスト」フォルダと「写真テスト/ロゴ」フォルダに格納した画像で、「写真テスト」フォルダの画像がルート階層になる現象があったため。
+
+            // zip ファイルの展開
+            $path = $request->file('upload_file')[$frame_id]->store('tmp/photoalbum');
+
+            // zip ファイルを連番で展開して、配列で返す。
+            list($album_paths, $tmp_dirs) = UnzipUtils::unzipSerialNumber($path, 'photoalbum');
+
+            // フォトアルバム・プラグインにファイル追加
+            foreach ($album_paths as $album_path) {
+                // フォトアルバム内のアルバムレコードがあるか探す必要があるが、SQL発行回数を減らすため、バケツのレコードをここで読み込んでおく。
+                // ここで読む意味は、データを追加するたびに、新しい状態で親を探す必要があるため。
+                $photoalbum_contents = PhotoalbumContent::where('photoalbum_id', $photoalbum->id)->get();
+
+                // ループしながら、フォルダの検索。起点になるフォルダidをここで初期化（画面でアップロードしたフォルダに）する。
+                $parent_id = $parent->id;
+                $create_parent = clone $parent; // フォルダを作成するときのための、ループ内で変更されていく親
+
+                // アルバム有無の確認
+                $album_dir_paths = explode('/', dirname($album_path['album_path']));
+                foreach ($album_dir_paths as $album_dir_path) {
+                    $folder = $photoalbum_contents->where('is_folder', 1)->where('parent_id', $parent_id)->where('name', $album_dir_path)->first();
+                    if (empty($folder)) {
+                        // アルバムがないので作成する。（作成したら、それをルーム内の親に設定する）
+                        $create_parent = $create_parent->children()->create([
+                            'photoalbum_id' => $photoalbum->id,
+                            'upload_id' => null,
+                            'name' => $album_dir_path,
+                            'description' => null,
+                            'is_folder' => PhotoalbumContent::is_folder_on,
+                            'is_cover' => PhotoalbumContent::is_cover_off,
+                        ]);
+                    } else {
+                        $create_parent = $folder;
+                    }
+                }
+
+                // ファイル追加
+                $filesystem = new Filesystem();
+                $file_params = [
+                    'path' => storage_path('app/') . $album_path['src_path'],
+                    'client_original_name' => basename($album_path['album_path']),
+                    'mimetype' => $filesystem->mimeType(storage_path('app/') . $album_path['src_path']),
+                    'extension' => $filesystem->extension(storage_path('app/') . $album_path['src_path']),
+                    'size' => $filesystem->size(storage_path('app/') . $album_path['src_path']),
+                    'name' => basename($album_path['album_path']),
+                    'description' => null,
+                    'is_cover' => PhotoalbumContent::is_cover_off,
+                ];
+                $new_content = $this->writeFileImpl($file_params, $page_id, $frame_id, $photoalbum, $create_parent);
+            }
+
+            // 一時フォルダ、ファイルの削除
+            UnzipUtils::deleteUnzipTmp($tmp_dirs, $path);
+
+        } else {
+            // zip 以外の処理
+            $file = $request->file('upload_file')[$frame_id];
+            $file_params = [
+                'path' => $file->path(),
+                'client_original_name' => $file->getClientOriginalName(),
+                'mimetype' => $file->getClientMimeType(),
+                'extension' => $file->getClientOriginalExtension(),
+                'size' => $file->getSize(),
+                'name' => empty($request->title[$frame_id]) ? $file->getClientOriginalName() : $request->title[$frame_id],
+                'description' => $request->description[$frame_id],
+                'is_cover' => ($request->has('is_cover') && $request->is_cover[$frame_id]) ? PhotoalbumContent::is_cover_on : PhotoalbumContent::is_cover_off,
+            ];
+            $this->writeFileImpl($file_params, $page_id, $frame_id, $photoalbum, $parent);
+        }
+    }
+
+    /**
+     * ファイル新規保存処理
+     *
+     * @param array $file_params リクエストから必要なものを詰めたオブジェクト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     * @param \App\Models\User\Photoalbums\Photoalbum $photoalbum バケツレコード
+     * @param \App\Models\User\Photoalbums\PhotoalbumContent $parent アルバムレコード
+     */
+    private function writeFileImpl($file_params, $page_id, $frame_id, $photoalbum, $parent)
+    {
         // 画像ファイル
-        $file = $request->file('upload_file')[$frame_id];
+//        $file = $file_params['upload_file'];
 
         // 必要なら縮小して、\Intervention\Image\Image オブジェクトを受け取る。
-        $image = Uploads::shrinkImage($file, $photoalbum->image_upload_max_px);
+//        $image = Uploads::shrinkImage($file, $photoalbum->image_upload_max_px);
+        $image = Uploads::shrinkImage($file_params['path'], $photoalbum->image_upload_max_px);
 
         // uploads テーブルに情報追加、ファイルのid を取得する
         $upload = Uploads::create([
+/*
             'client_original_name' => $file->getClientOriginalName(),
             'mimetype'             => $file->getClientMimeType(),
             'extension'            => $file->getClientOriginalExtension(),
             'size'                 => $file->getSize(),
+*/
+            'client_original_name' => $file_params['client_original_name'],
+            'mimetype'             => $file_params['mimetype'],
+            'extension'            => $file_params['extension'],
+            'size'                 => $file_params['size'],
+
             'plugin_name'          => 'photoalbums',
             'page_id'              => $page_id,
             'temporary_flag'       => 0,
@@ -468,17 +576,17 @@ class PhotoalbumsPlugin extends UserPluginBase
 
         // ファイル保存
         $directory = $this->makeDirectory($upload->id);
-        $image->save(storage_path('app/') . $directory . '/' . $upload->id . '.' . $file->getClientOriginalExtension());
+        $image->save(storage_path('app/') . $directory . '/' . $upload->id . '.' . $file_params['extension']);
 
-        $parent->children()->create([
+        return $parent->children()->create([
             'photoalbum_id' => $parent->photoalbum_id,
             'upload_id' => $upload->id,
-            'name' => empty($request->title[$frame_id]) ? $file->getClientOriginalName() : $request->title[$frame_id],
+            'name' => $file_params['name'],
             'width' => $image->width(),
             'height' => $image->height(),
-            'description' => $request->description[$frame_id],
+            'description' => $file_params['description'],
             'is_folder' => PhotoalbumContent::is_folder_off,
-            'is_cover' => ($request->has('is_cover') && $request->is_cover[$frame_id]) ? PhotoalbumContent::is_cover_on : PhotoalbumContent::is_cover_off,
+            'is_cover' => $file_params['is_cover'],
             'mimetype' => $upload->mimetype,
         ]);
     }
@@ -750,6 +858,9 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param int $page_id ページID
      * @param int $frame_id フレームID
      * @return \Illuminate\Support\Collection リダイレクト先のパス
+     * @method_title ファイル削除
+     * @method_desc ファイルやフォルダを削除できます。
+     * @method_detail
      */
     public function deleteContents($request, $page_id, $frame_id)
     {
@@ -1009,6 +1120,10 @@ class PhotoalbumsPlugin extends UserPluginBase
 
     /**
      * プラグインのバケツ選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示するフォトアルバムを選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -1020,6 +1135,10 @@ class PhotoalbumsPlugin extends UserPluginBase
 
     /**
      * バケツ新規作成画面
+     *
+     * @method_title 作成
+     * @method_desc フォトアルバムを新しく作成します。
+     * @method_detail フォトアルバム名やアップロード最大サイズ等を入力してフォトアルバムを作成できます。
      */
     public function createBuckets($request, $page_id, $frame_id)
     {
@@ -1128,7 +1247,7 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param  App\Models\User\Photoalbums\Photoalbum フォトアルバム
      * @return \Illuminate\Contracts\Validation\Validator バリデーター
      */
-    private function getUploadValidator($request, $photoalbum)
+    private function getUploadValidator($request, $photoalbum, $add_mimes = '')
     {
         // ファイルの存在チェック
         $rules['upload_file.*'] = [
@@ -1138,7 +1257,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         // ファイルサイズと形式チェック
         if ($photoalbum->image_upload_max_size !== UploadMaxSize::infinity) {
             $rules['upload_file.*'][] = 'max:' . $photoalbum->image_upload_max_size;
-            $rules['upload_file.*'][] = 'mimes:jpg,jpe,jpeg,png,gif';
+            $rules['upload_file.*'][] = 'mimes:jpg,jpe,jpeg,png,gif' . $add_mimes;
         }
 
         // 項目名設定
@@ -1335,6 +1454,10 @@ class PhotoalbumsPlugin extends UserPluginBase
 
     /**
      * フレーム表示設定画面の表示
+     *
+     * @method_title 表示設定
+     * @method_desc このフレームに表示する際のフォトアルバムをカスタマイズできます。
+     * @method_detail ファイルの並び順を指定できます。
      */
     public function editView($request, $page_id, $frame_id)
     {

@@ -33,7 +33,7 @@ use App\Plugins\User\UserPluginBase;
  * @category キャビネット・プラグイン
  * @package Controller
  * @plugin_title キャビネット
- * @plugin_desc キャビネットを作成できるプラグインです。<br />ファイルの管理に使用します。
+ * @plugin_desc キャビネットを作成できるプラグインです。ファイルの管理に使用します。
  */
 class CabinetsPlugin extends UserPluginBase
 {
@@ -389,7 +389,6 @@ class CabinetsPlugin extends UserPluginBase
      * @param \Illuminate\Http\Request $request リクエスト
      * @param int $page_id ページID
      * @param int $frame_id フレームID
-     *
      * @method_title ファイル削除
      * @method_desc ファイルやフォルダを削除できます。
      * @method_detail
