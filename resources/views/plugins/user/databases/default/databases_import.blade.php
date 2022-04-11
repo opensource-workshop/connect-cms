@@ -22,7 +22,7 @@ use App\Utilities\Zip\UnzipUtils;
 @include('plugins.common.flash_message')
 
 <div class="alert alert-info" role="alert">
-    <i class="fas fa-exclamation-circle"></i> CSVファイルを使って、データベースへ一括登録できます。詳細は<a href="https://connect-cms.jp/manual/user/database#frame-178" target="_blank">オンラインマニュアルのデータベースページ <i class="fas fa-external-link-alt"></i></a>を参照してください。
+    <i class="fas fa-exclamation-circle"></i> CSVファイルを使って、データベースへ一括登録できます。詳細は<a href="https://manual.connect-cms.jp/user/databases/import/index.html" target="_blank">オンラインマニュアルのデータベースページ <i class="fas fa-external-link-alt"></i></a>を参照してください。
 </div>
 
 {{-- ダウンロード用フォーム --}}
@@ -92,10 +92,15 @@ use App\Utilities\Zip\UnzipUtils;
                     <div class="text-danger">{{$message}}</div>
                 @endforeach
             @endif
+            <small class="text-muted">※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}</small><br />
             @if (UnzipUtils::useZipArchive())
                 <small class="text-muted">※ CSVファイル・ZIPファイルに対応しています。</small><br />
+                <small class="text-muted">
+                    ※ ZIPファイルを選択することで、添付ファイルを同時にインポートすることができます。<br />
+                    ※ ZIPファイルのフォルダ構成には指定があります。<br />
+                    　 マニュアルの「添付ファイル一括インポートのZIP内フォルダ構成」をご確認ください。
+                </small><br />
             @endif
-            <small class="text-muted">※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}</small><br />
         </div>
     </div>
 
