@@ -3060,7 +3060,7 @@ class DatabasesPlugin extends UserPluginBase
                     // 一時ファイルの削除
                     $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
 
-                    $error_msg = "ZIPファイルにCSVを含めてください。";
+                    $error_msg = "ZIPファイルにCSVが含まれていないか、CSVの配置場所が誤っています。CSVは「ZIP内/[database_folder]/[database_file].csv」に配置してください。";
                     return redirect()->back()->withErrors(['databases_csv' => $error_msg])->withInput();
                 }
                 if (count($csv_full_paths) >= 2) {
