@@ -142,7 +142,7 @@ class ManualPdf extends DuskTestCase
         });
 
         // 全データ取得
-        $dusks = Dusks::orderBy("id", "asc")->get();
+        $dusks = Dusks::where('category', '!=', 'top')->orderBy("id", "asc")->get();
 
         // 出力するPDF の準備
         $pdf = new CCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
