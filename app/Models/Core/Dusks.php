@@ -181,6 +181,19 @@ class Dusks extends Model
     }
 
     /**
+     * マニュアル用 mp4 データがあるか確認する。
+     *
+     * @return boolean
+     */
+    public static function hasMp4File($mp4_path)
+    {
+        if (\File::exists(config('connect.manual_put_base') . $mp4_path)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * mp4 パスの返却
      *
      * @return boolean
@@ -226,7 +239,7 @@ class Dusks extends Model
     /**
      * 動画編集に必要なファイルパスや文章などを組み立てる。（メソッド用）
      */
-    public function getMethodMaterials()
+    public function getMethodMaterials($first_comment = null)
     {
         // img_args が json でない場合は動画を作成しない。
         if (!json_decode($this->img_args)) {
@@ -272,10 +285,12 @@ class Dusks extends Model
         $materials = array();
 
         // 最初の動画の説明
-        $first_comment  = 'ここでは、' . $this->plugin_title . '　プラグインの　' . $this->method_title . '　機能について説明します。';
-        $first_comment .= empty($this->method_desc) ? '' : '機能概要、' . $this->method_desc;
-        $first_comment .= empty($this->method_detail) ? '' : '機能詳細、' . $this->method_detail;
-        $first_comment .= '　続いて、画面を説明します。';
+        if (empty($first_comment)) {
+            $first_comment  = 'ここでは、' . $this->plugin_title . '　プラグインの　' . $this->method_title . '　機能について説明します。';
+            $first_comment .= empty($this->method_desc) ? '' : '機能概要、' . $this->method_desc;
+            $first_comment .= empty($this->method_detail) ? '' : '機能詳細、' . $this->method_detail;
+            $first_comment .= '　続いて、画面を説明します。';
+        }
 
         $json_paths = json_decode($this->img_args);
         foreach ($json_paths as $json_path) {
@@ -286,8 +301,13 @@ class Dusks extends Model
                 continue;
             }
 
+            // 画面毎のナレーション文章
+            if (property_exists($json_path, 'name')) {
+                $first_comment .= $json_path->name . 'を説明します。';
+            }
+
             // 動画の生成に必要な情報の組み立て（画像一つ分）
-            $materials[] = self::getMaterial($json_path, $first_comment);
+            $materials[] = self::getMaterial($this->html_path, $json_path, $first_comment);
 
             $first_comment = '';
         }
@@ -297,25 +317,30 @@ class Dusks extends Model
     /**
      * 動画編集に必要なファイルパスや文章などを組み立てる。（画像一つ分）
      */
-    private static function getMaterial($json_path, $first_comment)
+    private static function getMaterial($html_path, $json_path, $first_comment, $dir_lebel = 1, $dir_under = '', $basename = null)
     {
         // 基本に使う内容を変数に。
-        $base_dir = dirname($json_path->path, 2);  // ベースのディレクトリ
-        $basename = basename($json_path->path);    // 画像の基本名
-
+//        $base_dir = dirname($json_path->path, 2);  // ベースのディレクトリ
+        $base_dir = dirname($html_path, $dir_lebel);  // ベースのディレクトリ
+        if (empty($basename)) {
+            $basename = basename($json_path->path);       // 画像の基本名
+        } else {
+            $basename = $basename;       // カテゴリ名
+        }
+/*
         // 画面毎のナレーション文章
         $image_comment = $first_comment;
         if (property_exists($json_path, 'name')) {
             $image_comment .= $json_path->name . 'を説明します。';
         }
-
+*/
         // ナレーション文章や必要なファイルパスを組み立て
         $material = [
-            'mp3_file_disk'   => $base_dir . '/mp3/mizuki/' . $basename . '.mp3',
-            'mp4_list_disk'   => $base_dir . '/mp4/mizuki/' . '_mp4list.txt',
-            'mp4_fade_disk'   => $base_dir . '/mp4/mizuki/' . 'fade_'. $basename . '.mp4',
-            'mp4_nofade_disk' => $base_dir . '/mp4/mizuki/' . 'nofade_' . $basename . '.mp4',
-            'mp4_final_disk'  => $base_dir . '/mp4/mizuki/' . '_video.mp4',
+            'mp3_file_disk'   => $base_dir . '/' . $dir_under . 'mp3/mizuki/' . $basename . '.mp3',
+            'mp4_list_disk'   => $base_dir . '/' . $dir_under . 'mp4/mizuki/' . '_mp4list.txt',
+            'mp4_fade_disk'   => $base_dir . '/' . $dir_under . 'mp4/mizuki/' . 'fade_'. $basename . '.mp4',
+            'mp4_nofade_disk' => $base_dir . '/' . $dir_under . 'mp4/mizuki/' . 'nofade_' . $basename . '.mp4',
+            'mp4_final_disk'  => $base_dir . '/' . $dir_under . 'mp4/mizuki/' . '_video.mp4',
         ];
         $material = array_merge($material, [
             'img_file_real'   => self::getRealPath('screenshot', $json_path->path . '.png'),
@@ -330,9 +355,11 @@ class Dusks extends Model
             'mp4_manual_real' => config('connect.manual_put_base') . $material['mp4_final_disk'],
         ]);
         if (property_exists($json_path, 'comment') && !empty($json_path->comment)) {
-            $material['comment'] = self::cleaningText($image_comment . $json_path->comment);
+//            $material['comment'] = self::cleaningText($image_comment . $json_path->comment);
+            $material['comment'] = self::cleaningText($first_comment . $json_path->comment);
         } else {
-            $material['comment'] = self::cleaningText($image_comment);
+//            $material['comment'] = self::cleaningText($image_comment);
+            $material['comment'] = self::cleaningText($first_comment);
         }
         return $material;
     }
@@ -371,7 +398,8 @@ class Dusks extends Model
             $json_path->comment .= $method->method_title . 'では、' . $method->method_desc;
 
             // 動画の生成に必要な情報の組み立て（画像一つ分）
-            $materials[] = self::getPluginMaterial($json_path, $first_comment);
+            //$materials[] = self::getPluginMaterial($json_path, $first_comment);
+            $materials[] = self::getMaterial($method->html_path, $json_path, $first_comment, 2, '_');
             $first_comment = '';
         }
         return $materials;
@@ -380,6 +408,7 @@ class Dusks extends Model
     /**
      * 動画編集に必要なファイルパスや文章などを組み立てる。（画像一つ分）
      */
+/*
     private static function getPluginMaterial($json_path, $first_comment)
     {
         // 基本に使う内容を変数に。
@@ -413,7 +442,7 @@ class Dusks extends Model
         }
         return $material;
     }
-
+*/
     /**
      * 動画編集に必要なファイルパスや文章などを組み立てる。（Category用）
      */
@@ -448,7 +477,8 @@ class Dusks extends Model
             $json_path->comment .= $plugin->plugin_title . 'は、' . $plugin->plugin_desc;
 
             // 動画の生成に必要な情報の組み立て（画像一つ分）
-            $materials[] = self::getCategoryMaterial($json_path, $first_comment, $plugin);
+            //$materials[] = self::getCategoryMaterial($json_path, $first_comment, $plugin);
+            $materials[] = self::getMaterial($plugin->html_path, $json_path, $first_comment, 3, '_', $plugin->plugin_name);
             $first_comment = '';
         }
         return $materials;
@@ -457,6 +487,7 @@ class Dusks extends Model
     /**
      * 動画編集に必要なファイルパスや文章などを組み立てる。（各カテゴリの最初）
      */
+/*
     private static function getCategoryMaterial($json_path, $first_comment, $plugin)
     {
         // 基本に使う内容を変数に。
@@ -490,4 +521,5 @@ class Dusks extends Model
         }
         return $material;
     }
+*/
 }

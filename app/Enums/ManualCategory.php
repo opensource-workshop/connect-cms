@@ -8,6 +8,7 @@ namespace App\Enums;
 final class ManualCategory extends EnumsBase
 {
     // 定数メンバ
+    const top = 'top';
     const blueprint = 'blueprint';
     const common = 'common';
     const manage = 'manage';
@@ -19,6 +20,7 @@ final class ManualCategory extends EnumsBase
 
     // key/valueの連想配列
     const enum = [
+        self::top => 'トップ',
         self::blueprint => '設計',
         self::common => '共通機能',
         self::manage => '管理者',

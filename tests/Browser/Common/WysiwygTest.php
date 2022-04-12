@@ -161,7 +161,13 @@ class WysiwygTest extends DuskTestCase
     {
         // 画面
         $this->browse(function (Browser $browser) {
-            // index と同じ画像を使用する。挿入HTML でボタンを説明する。
+            $frame = Frame::orderBy('id', 'desc')->first();
+
+            // 固定記事のページを開く
+            $browser->visit('/plugin/contents/edit/' . $frame->page_id . '/' . $frame->id . '/' . $this->content->id . '#frame-' . $frame->id)
+                    ->pause(500)
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('common/wysiwyg/decoration/images/decoration');
         });
 
         // マニュアル用データ出力
@@ -174,7 +180,7 @@ class WysiwygTest extends DuskTestCase
                 '',
                 'common/wysiwyg/decoration/index.html',
                 '[
-                     {"path": "common/wysiwyg/index/images/index",
+                     {"path": "common/wysiwyg/decoration/images/decoration",
                       "name": "文字の装飾",
                       "comment": "<ul class=\"mb-0\"><li>文字の装飾に関係する機能を以下で説明します。</li></ul>"
                      }
