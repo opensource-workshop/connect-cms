@@ -259,14 +259,13 @@ class ConnectPage
             if (!empty($permalink) && $permalink->migrate_source == 'NetCommons2') {
                 // ページとフレームを探す。
                 $block_id = substr($route_param_all, stripos($route_param_all, '-') + 1);
-                if (!empty($block_id)) {
-                    $frame_mapping = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $block_id)->first();
-                    if (!empty($frame_mapping)) {
-                        $frame = Frame::find($frame_mapping->destination_key);
-                        if (!empty($frame)) {
-                            // 見つけた詳細にリダイレクトする。
-                            Redirect::to('/plugin/' . $permalink->plugin_name . '/' . $permalink->action . '/' . $frame->page_id . '/' . $frame->id. '/' . $permalink->unique_id . "#frame-" . $frame->id)->send();
-                        }
+                // block_id から frames の MigrationMapping 取得
+                $frame_mapping = $this->getFrameMappingFromBlockId($block_id, $permalink->nc2_block_id);
+                if (!empty($frame_mapping)) {
+                    $frame = Frame::find($frame_mapping->destination_key);
+                    if (!empty($frame)) {
+                        // 見つけた詳細にリダイレクトする。
+                        Redirect::to('/plugin/' . $permalink->plugin_name . '/' . $permalink->action . '/' . $frame->page_id . '/' . $frame->id. '/' . $permalink->unique_id . "#frame-" . $frame->id)->send();
                     }
                 }
             }
@@ -304,6 +303,25 @@ class ConnectPage
         }
         // return;
         return $http_status_code;
+    }
+
+    /**
+     * block_id から frames の MigrationMapping 取得
+     */
+    private function getFrameMappingFromBlockId(?int $block_id, ?int $permalink_nc2_block_id): ?MigrationMapping
+    {
+        if (empty($block_id)) {
+            // 空なら permalinks.nc2_block_id で取得
+            $frame_mapping = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $permalink_nc2_block_id)->first();
+
+        } else {
+            $frame_mapping = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $block_id)->first();
+            if (empty($frame_mapping)) {
+                // 空なら permalinks.nc2_block_id で再取得
+                $frame_mapping = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $permalink_nc2_block_id)->first();
+            }
+        }
+        return $frame_mapping;
     }
 
     /**

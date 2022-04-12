@@ -1850,12 +1850,36 @@ trait MigrationTrait
                     continue;
                 }
 
+                $plugin_name = $this->getArrayValue($permalinks_ini, $short_url, 'plugin_name');
+                if (empty($plugin_name)) {
+                    $this->putError(3, '固定URLの plugin_name なし', "short_url = " . $short_url);
+                    continue;
+                }
+
+                $unique_id = $this->getArrayValue($permalinks_ini, $short_url, 'unique_id');
+                if (empty($unique_id)) {
+                    $this->putError(3, '固定URLの nc2 unique_id なし', "short_url = " . $short_url);
+                    continue;
+                }
+
+                // 新 unique_id
+                $unique_migration_mappings = MigrationMapping::where('target_source_table', $plugin_name . '_post')->where('source_key', $unique_id)->first();
+                if (empty($unique_migration_mappings)) {
+                    $this->putError(3, '固定URLのリンク先移行後記事なし', "short_url = " . $short_url . " target_source_table = '" . $plugin_name . "_post' and source_key = " . $unique_id);
+                    continue;
+                }
+
+                $nc2_block_id = $this->getArrayValue($permalinks_ini, $short_url, 'block_id');
+
                 // Permalinks 登録 or 更新
-                $bulks[] = ['short_url' => $short_url,
-                    'plugin_name'    => $this->getArrayValue($permalinks_ini, $short_url, 'plugin_name'),
+                $bulks[] = [
+                    'short_url'      => $short_url,
+                    'plugin_name'    => $plugin_name,
                     'action'         => $this->getArrayValue($permalinks_ini, $short_url, 'action'),
-                    'unique_id'      => $this->getArrayValue($permalinks_ini, $short_url, 'unique_id'),
-                    'migrate_source' => $this->getArrayValue($permalinks_ini, $short_url, 'migrate_source')];
+                    'unique_id'      => $unique_migration_mappings->destination_key,
+                    'nc2_block_id'   => !empty($nc2_block_id) ? $nc2_block_id : null,
+                    'migrate_source' => $this->getArrayValue($permalinks_ini, $short_url, 'migrate_source'),
+                ];
                 /*
                 $permalink = Permalink::updateOrCreate(
                     ['short_url'     => $short_url],
@@ -2038,8 +2062,8 @@ trait MigrationTrait
                     $close_more_button = null;
                     if (!empty($post_text2)) {
                         $read_more_flag = 1;
-                        $read_more_button = '続きを読む';
-                        $close_more_button = '閉じる';
+                        $read_more_button = BlogsPosts::read_more_button_default;
+                        $close_more_button = BlogsPosts::close_more_button_default;
                     }
 
                     // ブログ記事テーブル追加
@@ -9954,6 +9978,74 @@ trait MigrationTrait
             $index++;
         }
 
+        // [journal]
+        // select
+        //     nc2_blocks.block_id
+        // from
+        //     nc2_blocks,
+        //     nc2_journal_block,
+        //     nc2_journal_post,
+        //     nc2_abbreviate_url
+        // where
+        //     nc2_blocks.block_id = nc2_journal_block.block_id
+        //     and nc2_journal_block.journal_id = nc2_journal_post.journal_id
+        //     and nc2_journal_post.journal_id = nc2_abbreviate_url.contents_id
+        //     and nc2_journal_post.post_id = nc2_abbreviate_url.unique_id
+        //     and nc2_abbreviate_url.short_url = "muwoibbvq"
+        //
+        // [multidatabase]
+        // select
+        //  nc2_blocks.block_id
+        // from
+        //  nc2_blocks,
+        //  nc2_multidatabase_block,
+        //  nc2_multidatabase_content,
+        //  nc2_abbreviate_url
+        // where
+        //  nc2_blocks.block_id = nc2_multidatabase_block.block_id
+        //  and nc2_multidatabase_block.multidatabase_id = nc2_multidatabase_content.multidatabase_id
+        //  and nc2_multidatabase_content.multidatabase_id = nc2_abbreviate_url.contents_id
+        //  and nc2_multidatabase_content.content_id = nc2_abbreviate_url.unique_id
+        //  and nc2_abbreviate_url.short_url = "muwoibbvq"
+        //
+        // [bbs]
+        // select
+        //  nc2_blocks.block_id
+        // from
+        //  nc2_blocks,
+        //  nc2_bbs_block,
+        //  nc2_bbs_post,
+        //  nc2_abbreviate_url
+        // where
+        //  nc2_blocks.block_id = nc2_bbs_block.block_id
+        //  and nc2_bbs_block.bbs_id = nc2_bbs_post.bbs_id
+        //  and nc2_bbs_post.bbs_id = nc2_abbreviate_url.contents_id
+        //  and nc2_bbs_post.post_id = nc2_abbreviate_url.unique_id
+        //  and nc2_abbreviate_url.short_url = "muwoibbvq"
+
+        // 最新block_ids
+        $journal_block_ids = Nc2AbbreviateUrl::select('blocks.block_id', 'abbreviate_url.short_url')
+            ->join('journal_post', function ($join) {
+                $join->on('journal_post.post_id', '=', 'abbreviate_url.unique_id')
+                    ->whereColumn('journal_post.journal_id', 'abbreviate_url.contents_id');
+            })
+            ->join('journal_block', 'journal_block.journal_id', '=', 'journal_post.journal_id')
+            ->join('blocks', 'blocks.block_id', '=', 'journal_block.block_id')
+            ->get(['block_id', 'short_url']);
+        $multidatabase_block_ids = Nc2AbbreviateUrl::select('blocks.block_id', 'abbreviate_url.short_url')
+            ->join('multidatabase_content', 'multidatabase_content.content_id', '=', 'abbreviate_url.unique_id')
+            ->join('multidatabase_block', 'multidatabase_block.multidatabase_id', '=', 'multidatabase_content.multidatabase_id')
+            ->join('blocks', 'blocks.block_id', '=', 'multidatabase_block.block_id')
+            ->get(['block_id', 'short_url']);
+        $bbs_block_ids = Nc2AbbreviateUrl::select('blocks.block_id', 'abbreviate_url.short_url')
+            ->join('bbs_post', function ($join) {
+                $join->on('bbs_post.post_id', '=', 'abbreviate_url.unique_id')
+                    ->whereColumn('bbs_post.bbs_id', 'abbreviate_url.contents_id');
+            })
+            ->join('bbs_block', 'bbs_block.bbs_id', '=', 'bbs_post.bbs_id')
+            ->join('blocks', 'blocks.block_id', '=', 'bbs_block.block_id')
+            ->get(['block_id', 'short_url']);
+
         // NC2固定リンクのループ（データ用）
         foreach ($nc2_abbreviate_urls as $nc2_abbreviate_url) {
             $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
@@ -9968,13 +10060,14 @@ trait MigrationTrait
             }
 
             if (!isset($this->plugin_name[$nc2_abbreviate_url->dir_name])) {
+                $this->putError(3, '固定URLの未対応モジュール', "nc2_abbreviate_url.dir_name = " . $nc2_abbreviate_url->dir_name);
                 continue;
             }
 
             $permalink  = "\n";
             $permalink .= "[\"" . $nc2_abbreviate_url->short_url . "\"]\n";
 
-            $plugin_name     = $this->plugin_name[$nc2_abbreviate_url->dir_name];
+            $plugin_name = $this->plugin_name[$nc2_abbreviate_url->dir_name];
             $permalink .= "plugin_name    = \"" . $plugin_name . "\"\n";
 
             if ($plugin_name == 'blogs') {
@@ -9985,15 +10078,33 @@ trait MigrationTrait
                 $permalink .= "action         = \"show\"\n";
             }
 
-            // 新 unique_id
-            if (!empty($plugin_name)) {
-                $unique_id = 0;
-                $migration_mappings = MigrationMapping::where('target_source_table', $plugin_name . '_post')->where('source_key', $nc2_abbreviate_url->unique_id)->first();
-                if (empty($migration_mappings)) {
-                    continue;
-                }
-                $permalink .= "unique_id      = " . $migration_mappings->destination_key .  "\n";
+            // change: 新 unique_id は、エクスポート時に取得不可能のため、インポート時にセットする
+            // if (!empty($plugin_name)) {
+            //     $unique_id = 0;
+            //     $migration_mappings = MigrationMapping::where('target_source_table', $plugin_name . '_post')->where('source_key', $nc2_abbreviate_url->unique_id)->first();
+            //     if (empty($migration_mappings)) {
+            //         continue;
+            //     }
+            //     $permalink .= "unique_id      = " . $migration_mappings->destination_key .  "\n";
+            // }
+            // nc2 unique_id
+            $permalink .= "unique_id      = " . $nc2_abbreviate_url->unique_id .  "\n";
+
+            // 最新block_id取得
+            $block_id = null;
+            if ($plugin_name == 'blogs') {
+                $journal_block_id = $journal_block_ids->firstWhere('short_url', $nc2_abbreviate_url->short_url);
+                $block_id = $journal_block_id->block_id ?? null;
+
+            } elseif ($plugin_name == 'databases') {
+                $multidatabase_block_id = $multidatabase_block_ids->firstWhere('short_url', $nc2_abbreviate_url->short_url);
+                $block_id = $multidatabase_block_id->block_id ?? null;
+
+            } elseif ($plugin_name == 'bbses') {
+                $bbs_block_id = $bbs_block_ids->firstWhere('short_url', $nc2_abbreviate_url->short_url);
+                $block_id = $bbs_block_id->block_id ?? null;
             }
+            $permalink .= "block_id       = " . $block_id .  "\n";
 
             $permalink .= "migrate_source = \"NetCommons2\"\n";
             $permalinks_ini .= $permalink;

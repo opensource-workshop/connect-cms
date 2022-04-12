@@ -43,7 +43,7 @@
                     <span class="badge badge-danger">必須</span>
                 </label>
                 <div class="{{$frame->getSettingInputClass()}}">
-                    <input 
+                    <input
                         type="number"
                         min="1"
                         max="100"
@@ -60,18 +60,12 @@
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass()}}">表示条件</label>
                 <div class="{{$frame->getSettingInputClass(true)}}">
-                    <div class="custom-control custom-radio custom-control-inline">
-                        <input type="radio" value="" id="scope_all" name="scope" class="custom-control-input" @if (old('scope', $blog_frame_setting->scope) == '') checked @endif v-model="v_scope_radio">
-                        <label class="custom-control-label" for="scope_all">全て</label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline">
-                        <input type="radio" value="year" id="scope_year" name="scope" class="custom-control-input" @if (old('scope', $blog_frame_setting->scope) == 'year') checked @endif v-model="v_scope_radio">
-                        <label class="custom-control-label" for="scope_year">年</label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline">
-                        <input type="radio" value="fiscal" id="scope_fiscal" name="scope" class="custom-control-input" @if (old('scope', $blog_frame_setting->scope) == 'fiscal') checked @endif v-model="v_scope_radio">
-                        <label class="custom-control-label" for="scope_fiscal">年度</label>
-                    </div>
+                    @foreach (BlogFrameScope::getMembers() as $enum_value => $enum_label)
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="{{$enum_value}}" id="scope_{{$enum_value ? $enum_value : 'all'}}" name="scope" class="custom-control-input" @if (old('scope', $blog_frame_setting->scope) == $enum_value) checked @endif v-model="v_scope_radio">
+                            <label class="custom-control-label" for="scope_{{$enum_value ? $enum_value : 'all'}}">{{$enum_label}}</label>
+                        </div>
+                    @endforeach
                 </div>
             </div>
 

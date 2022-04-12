@@ -10,6 +10,11 @@
 
 @section("plugin_contents_$frame->id")
 
+{{-- 権限があれば表示条件表示 --}}
+@can('frames.edit',[[null, null, null, $frame]])
+    @include('plugins.user.blogs.default.include_scope')
+@endcan
+
 @if (isset($buckets) && isset($frame) && $frame->bucket_id)
     <div class="row">
         <p class="text-left col-4">

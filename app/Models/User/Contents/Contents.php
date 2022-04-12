@@ -15,6 +15,10 @@ class Contents extends Model
     // 保存時のユーザー関連データの保持
     use Userable;
 
+    // 定数メンバ
+    const read_more_button_default = '続きを読む';
+    const close_more_button_default = '閉じる';
+
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
@@ -22,8 +26,9 @@ class Contents extends Model
         'bucket_id',
         'content_text',
         'content2_text',
-        'view_more',
-        'hide_more',
+        'read_more_flag',
+        'read_more_button',
+        'close_more_button',
         'status',
     ];
 
