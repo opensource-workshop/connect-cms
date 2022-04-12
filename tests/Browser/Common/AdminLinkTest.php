@@ -157,7 +157,9 @@ class AdminLinkTest extends DuskTestCase
                     ->screenshot('common/plugin/edit_content1');
 
             // $browser->driver->executeScript('tinyMCE.get(\'contents\').setContent(\'<h1>Test Description</h1>\')');
-            $browser->driver->executeScript('tinyMCE.activeEditor.setContent(\'<h1>Test Description</h1>\')');
+            // change: もっと見る対応で、固定記事編集画面のtinyMCEが2つになったため修正
+            // $browser->driver->executeScript('tinyMCE.activeEditor.setContent(\'<h1>Test Description</h1>\')');
+            $browser->driver->executeScript('tinyMCE.editors[0].setContent(\'<h1>Test Description</h1>\')');
             $browser->screenshot('common/plugin/edit_content2');
             //$browser->wysiwyg('tinymce', '#contents-5-form', '<h2>value</h2>');
             //$browser->keys('#contents', 'Text');
