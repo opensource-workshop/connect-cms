@@ -22,6 +22,7 @@ use App\Enums\CabinetFrameConfig;
 use App\Enums\CabinetSort;
 
 use App\Plugins\User\UserPluginBase;
+use App\Utilities\Zip\UnzipUtils;
 
 // use function PHPUnit\Framework\isEmpty;
 
@@ -292,15 +293,71 @@ class CabinetsPlugin extends UserPluginBase
         }
 
         $parent = $this->fetchCabinetContent($request->parent_id);
-        $upload_file = $request->file('upload_file')[$frame_id];
-        if ($this->shouldOverwriteFile($parent, $upload_file->getClientOriginalName())) {
-            $this->overwriteFile($upload_file, $page_id, $parent);
+
+        if ($request->has('zip_deploy') && $request->zip_deploy) {
+            // Zip展開
+            $zip_path = $request->file('upload_file')[$frame_id]->storeAs('tmp/cabinet', uniqid('', true) . '.zip');
+            $unzip_path = 'tmp/cabinet/' . uniqid('', true);
+            if (!UnzipUtils::unzip(storage_path('app/') . $zip_path, storage_path('app/') . $unzip_path)) {
+                // Redirect時のエラー対応. リダイレクトせずエラー画面表示する。
+                $request->merge(['return_mode' => 'asis']);
+                return $this->viewError('500_inframe', null, 'unzip error');
+            }
+            $this->saveCabinetContentsRecursive($parent, $unzip_path);
+            // 一時ファイルを削除する
+            Storage::delete($zip_path);
+            Storage::deleteDirectory($unzip_path);
         } else {
-            $this->writeFile($upload_file, $page_id, $parent);
+            // そのままアップロード
+            $upload_file = $request->file('upload_file')[$frame_id];
+            if ($this->shouldOverwriteFile($parent, $upload_file->getClientOriginalName())) {
+                $this->overwriteUploadedFile($upload_file, $page_id, $parent);
+            } else {
+                $this->writeUploadedFile($upload_file, $page_id, $parent);
+            }
         }
 
         // 登録後はリダイレクトして初期表示。
         return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/changeDirectory/" . $page_id . "/" . $frame_id . "/" . $parent->id . "/#frame-" . $frame_id ]);
+    }
+
+    /**
+     * 指定ディレクト配下の中身をキャビネットに登録する。
+     *
+     * @param CabinetContent $parent 親ディレクトリ
+     * @param string $source_directory ディレクトリパス
+     */
+    private function saveCabinetContentsRecursive(CabinetContent $parent, string $source_directory)
+    {
+        // ディレクトリをキャビネットに登録する
+        $directories = Storage::directories($source_directory);
+        foreach ($directories as $directory) {
+            // 同名フォルダがすでに登録されていれば新たに登録せず既存のデータを利用する
+            $created_parent = CabinetContent::where('parent_id', $parent->id)
+                ->where('name', basename($directory))
+                ->where('is_folder', CabinetContent::is_folder_on)
+                ->first();
+
+            if ($created_parent === null) {
+                $created_parent = $parent->children()->create([
+                    'cabinet_id' => $parent->cabinet_id,
+                    'upload_id' => null,
+                    'name' => basename($directory),
+                    'is_folder' => CabinetContent::is_folder_on,
+                ]);
+            }
+            $this->saveCabinetContentsRecursive($created_parent, $directory);
+        }
+
+        // ファイルをキャビネットに登録する
+        $files = Storage::files($source_directory);
+        foreach ($files as $file) {
+            if ($this->shouldOverwriteFile($parent, basename($file))) {
+                $this->overwriteFile($file, $parent);
+            } else {
+                $this->writeFile($file, $parent);
+            }
+        }
     }
 
     /**
@@ -319,13 +376,13 @@ class CabinetsPlugin extends UserPluginBase
     }
 
     /**
-     * ファイル新規保存処理
+     * ファイル新規保存処理（UploadedFileを保存する）
      *
      * @param \Illuminate\Http\UploadedFile $file file
      * @param int $page_id ページID
      * @param int $frame_id フレームID
      */
-    private function writeFile($file, $page_id, $parent)
+    private function writeUploadedFile($file, $page_id, $parent)
     {
         // uploads テーブルに情報追加、ファイルのid を取得する
         $upload = Uploads::create([
@@ -351,13 +408,13 @@ class CabinetsPlugin extends UserPluginBase
     }
 
     /**
-     * ファイル上書き保存処理
+     * ファイル上書き保存処理（UploadedFileを保存する）
      *
      * @param \Illuminate\Http\UploadedFile $file file
      * @param int $page_id ページID
      * @param int $frame_id フレームID
      */
-    private function overwriteFile($file, $page_id, $parent)
+    private function overwriteUploadedFile($file, $page_id, $parent)
     {
         $content = CabinetContent::where('parent_id', $parent->id)
             ->where('name', $file->getClientOriginalName())
@@ -378,6 +435,73 @@ class CabinetsPlugin extends UserPluginBase
 
         // ファイル保存
         $file->storeAs($this->getDirectory($content->upload_id), $this->getContentsFileName($content->upload));
+
+        // 画面表示される更新日を更新する
+        $content->touch();
+    }
+
+    /**
+     * ファイル新規保存処理
+     *
+     * @param string $file ファイルパス
+     * @param CabinetContent $parent 保存先のフォルダ
+     */
+    private function writeFile(string $file, CabinetContent $parent)
+    {
+        // uploads テーブルに情報追加、ファイルのid を取得する
+        $upload = Uploads::create([
+            'client_original_name' => basename($file),
+            'mimetype'             => Storage::mimeType($file),
+            'extension'            => pathinfo($file, PATHINFO_EXTENSION),
+            'size'                 => Storage::size($file),
+            'plugin_name'          => 'cabinets',
+            'page_id'              => $this->page->id,
+            'temporary_flag'       => 0,
+            'created_id'           => empty(Auth::user()) ? null : Auth::user()->id,
+        ]);
+
+        // ファイル保存
+        Storage::move($file, $this->getDirectory($upload->id) . '/' . $this->getContentsFileName($upload));
+
+        $parent->children()->create([
+            'cabinet_id' => $upload->id,
+            'upload_id' => $upload->id,
+            'name' => basename($file),
+            'is_folder' => CabinetContent::is_folder_off,
+        ]);
+    }
+
+    /**
+     * ファイル上書き保存処理
+     *
+     * @param string $file ファイルパス
+     * @param CabinetContent $parent 保存先のフォルダ
+     */
+    private function overwriteFile(string $file, CabinetContent $parent)
+    {
+        $content = CabinetContent::where('parent_id', $parent->id)
+                    ->where('name', basename($file))
+                    ->where('is_folder', CabinetContent::is_folder_off)
+                    ->first();
+
+        // uploads テーブルに情報追加、ファイルのid を取得する
+        Uploads::find($content->upload_id)->update([
+            'client_original_name' => basename($file),
+            'mimetype'             => Storage::mimeType($file),
+            'extension'            => pathinfo($file, PATHINFO_EXTENSION),
+            'size'                 => Storage::size($file),
+            'plugin_name'          => 'cabinets',
+            'page_id'              => $this->page->id,
+            'temporary_flag'       => 0,
+            'updated_id'           => empty(Auth::user()) ? null : Auth::user()->id,
+        ]);
+
+        // ファイル保存
+        $move_to = $this->getDirectory($content->upload_id) . '/' . $this->getContentsFileName($content->upload);
+        if (Storage::exists($move_to)) {
+            Storage::delete($move_to);
+        }
+        Storage::move($file, $move_to);
 
         // 画面表示される更新日を更新する
         $content->touch();
@@ -779,6 +903,11 @@ class CabinetsPlugin extends UserPluginBase
         $validator->setAttributeNames([
             'upload_file.*' => 'ファイル',
         ]);
+
+        // ZIPを展開する際はZIP形式のファイルのみ許可する
+        $validator->sometimes('upload_file.*', 'required|mimes:zip', function ($input) {
+            return !empty($input->zip_deploy);
+        });
 
         return $validator;
     }
