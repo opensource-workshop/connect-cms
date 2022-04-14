@@ -136,6 +136,11 @@ class PhotoalbumsPlugin extends UserPluginBase
         $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
         $parent = $this->fetchPhotoalbumContent($parent_id, $photoalbum->id);
 
+        // photoalbum_idが配置バケツと違う場合、表示させない
+        if (empty($parent) || $parent->photoalbum_id != $photoalbum->id) {
+            return;
+        }
+
         // フォルダ、ファイルの比較条件の取得
         $sort_folder = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_folder);
         $sort_file = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_file);
@@ -764,8 +769,8 @@ class PhotoalbumsPlugin extends UserPluginBase
             // ファイルの入れ替え
             $this->overwriteFile($file, $photoalbum_content, $page_id);
 
-            // 写真レコードのタイトル（空ならファイル名）
-            $photoalbum_content->name = empty($request->title[$frame_id]) ? $file->getClientOriginalName() : $request->title[$frame_id];
+            // 写真レコードのタイトル
+            $photoalbum_content->name = empty($request->title[$frame_id]) ? '' : $request->title[$frame_id];
 
             // 写真の幅、高さ（幅、高さを取得するためにImage オブジェクトを生成しておく）
             $img = Image::make($file->path());
@@ -773,8 +778,8 @@ class PhotoalbumsPlugin extends UserPluginBase
             $photoalbum_content->height = $img->height();
             $photoalbum_content->mimetype = $file->getClientMimeType();
         } else {
-            // 写真レコードのタイトル（空ならもともと設定されていた内容＝ファイル名）
-            $photoalbum_content->name = empty($request->title[$frame_id]) ? $photoalbum_content->name() : $request->title[$frame_id];
+            // 写真レコードのタイトル
+            $photoalbum_content->name = empty($request->title[$frame_id]) ? '' : $request->title[$frame_id];
         }
         $this->setIsCover($request, $frame_id, $photoalbum_content); // カバー写真かどうかのフラグ
         $photoalbum_content->description = $request->description[$frame_id]; // 説明欄

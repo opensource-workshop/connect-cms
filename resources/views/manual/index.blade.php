@@ -1,19 +1,33 @@
 @extends("manual.common.main_full_norow")
 
 @section('content_main')
-<div class="row mt-3">
-    <div class="col-sm">
-        <div class="card">
-            <div class="card-header text-white bg-primary">Connect-CMS オンライン・マニュアル</div>
-            <div class="card-body">
-                <p>ようこそ、Connect-CMS のマニュアルへ。</p>
-                <p>まずは、バッジ・メニューから、見たいカテゴリをクリックしましょう。</p>
-                {{-- バッジ・メニュー --}}
-                @include('manual.common.badge_menu')
+<div class="card mt-3">
+    <div class="card-header text-white bg-primary">Connect-CMS オンライン・マニュアル</div>
+    <div class="card-body">
+        @if (\App\Models\Core\Dusks::hasMp4File('top/index/index/mp4/mizuki/_video.mp4'))
+            <div class="row">
+                <div class="col-lg-4 p-0">
+                    <div class="embed-responsive embed-responsive-16by9">
+                        <video src="./top/index/index/mp4/mizuki/_video.mp4" class="embed-responsive-item" controls></video>
+                    </div>
+                </div>
+
+                <div class="col-lg-8">
+                    <p>ようこそ、Connect-CMS のマニュアルへ。</p>
+                    <p>まずは、バッジ・メニューから、見たいカテゴリをクリックしましょう。</p>
+                    {{-- バッジ・メニュー --}}
+                    @include('manual.common.badge_menu')
+                </div>
             </div>
-        </div>
+        @else
+            <p>ようこそ、Connect-CMS のマニュアルへ。</p>
+            <p>まずは、バッジ・メニューから、見たいカテゴリをクリックしましょう。</p>
+            {{-- バッジ・メニュー --}}
+            @include('manual.common.badge_menu')
+        @endif
     </div>
 </div>
+
 <div class="row mt-3">
     <div class="col-sm">
         <div class="card">

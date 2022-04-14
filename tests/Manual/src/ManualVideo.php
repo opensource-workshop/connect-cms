@@ -94,6 +94,11 @@ class ManualVideo extends DuskTestCase
     private $screenshots_root;
 
     /**
+     * 動画強制生成
+     */
+    private $force_create_mp4 = false;
+
+    /**
      * コンストラクタ
      *
      * @return void
@@ -174,15 +179,24 @@ class ManualVideo extends DuskTestCase
             return;
         }
 
+        // 強制的に動画生成する際は、リストを削除しておく。
+        if ($this->force_create_mp4) {
+            \Storage::disk('tests_tmp')->delete($materials[0]['mp4_list_disk']);
+        }
+
         // 画像とコメントのループ
         foreach ($materials as $index => $material) {
             // mp3 生成（ない場合のみ）
             if (!\Storage::disk('tests_tmp')->exists($material['mp3_file_disk'])) {
                 \Storage::disk('tests_tmp')->put($material['mp3_file_disk'], $this->createMp3('<speak>' . $material['comment'] . '</speak>'));
             }
+
             // mp4 生成（mp4 がない場合）
-            if (!\Storage::disk('tests_tmp')->exists($material['mp4_final_disk'])) {
+            if (!\Storage::disk('tests_tmp')->exists($material['mp4_final_disk']) || $this->force_create_mp4) {
+
                 \Storage::disk('tests_tmp')->makeDirectory(dirname($material['mp4_fade_disk']));
+
+                // \Log::debug('mp4_final_disk = ' . $material['mp4_final_disk']);
 
                 // mp3 と画像を合成してmp4 を生成
                 // この方法だと、音ズレ（絵ズレ？）が起こったので、Webを参考に、別形式に変換後、MP4 を生成する。
@@ -213,7 +227,7 @@ class ManualVideo extends DuskTestCase
         }
 
         // mp4 生成（完成したmp4 がない場合）
-        if (!\Storage::disk('tests_tmp')->exists($material['mp4_final_disk'])) {
+        if (!\Storage::disk('tests_tmp')->exists($materials[0]['mp4_final_disk']) || $this->force_create_mp4) {
             // 動画の結合
             $ffmpg_cmd = config('connect.FFMPEG_PATH') . ' -y -f concat -safe 0 -i ' . $materials[0]['mp4_list_real'] . ' -c copy ' . $materials[0]['mp4_final_real'];
             //$ffmpg_cmd = config('connect.FFMPEG_PATH') . ' -y -f concat -safe 0 -i ' . $materials[0]['mp4_list_real'] . ' -c:v libx264 -c:a aac -map 0:v -map 0:a ' . $materials[0]['mp4_final_real'];
@@ -260,10 +274,10 @@ class ManualVideo extends DuskTestCase
      *
      * @return void
      */
-    private function outputMethod($method)
+    private function outputMethod($method, $first_comment = null)
     {
         // 動画生成に必要な内容を編集
-        $materials = $method->getMethodMaterials();
+        $materials = $method->getMethodMaterials($first_comment);
         //print_r($materials);
 
         // 動画生成
@@ -289,8 +303,8 @@ class ManualVideo extends DuskTestCase
         $this->assertTrue(true);
 
         // 全データ取得
-        $dusks = Dusks::where('category', '!=', 'blueprint')->orderBy("id", "asc")->get();
-//        $dusks = Dusks::where('category', 'manage')->orderBy("id", "asc")->get();
+        $dusks = Dusks::whereNotIn('category', ['top', 'blueprint'])->orderBy("id", "asc")->get();
+//        $dusks = Dusks::where('category', 'common')->orderBy("id", "asc")->get();
 //        $dusks = Dusks::where('plugin_name', 'blogs')->where('method_name', 'index')->orderBy("id", "asc")->get();
 //        $dusks = Dusks::where('plugin_name', 'blogs')->orderBy("id", "asc")->get();
 //        $dusks = Dusks::whereIn('plugin_name', ['blogs', 'photoalbums'])->orderBy("id", "asc")->get();
@@ -313,13 +327,22 @@ class ManualVideo extends DuskTestCase
 
             // プラグインのループ
             foreach ($dusks->where('category', $category[0]->category)->where('method_name', 'index') as $plugin) {
-                $this->outputPlugin($dusks->where('plugin_name', $plugin->plugin_name));
+//echo $plugin->category . '/' . $plugin->plugin_name . '/' . $plugin->method_name . "\n";
+                $this->outputPlugin($dusks->where('category', $plugin->category)->where('plugin_name', $plugin->plugin_name));
 
                 // メソッドのループ
                 foreach ($dusks->where('category', $category[0]->category)->where('plugin_name', $plugin->plugin_name) as $method) {
+//echo $method->category . '/' . $method->plugin_name . '/' . $method->method_name . "\n";
                     $this->outputMethod($method);
                 }
             }
+        }
+
+        // トップページ用の動画生成（dsuk レコードは1件の想定）
+        $top_method = Dusks::where('category', 'top')->orderBy("id", "asc")->first();
+        if (!empty($top_method)) {
+            $first_comment = $top_method->plugin_desc;
+            $this->outputMethod($top_method, $first_comment);
         }
     }
 }
