@@ -119,6 +119,11 @@ class CabinetsPlugin extends UserPluginBase
 
         $parent = $this->fetchCabinetContent($parent_id, $cabinet->id);
 
+        // cabinet_idが配置バケツと違う場合、表示させない
+        if (empty($parent) || $parent->cabinet_id != $cabinet->id) {
+            return;
+        }
+
         // 表示テンプレートを呼び出す。
         return $this->view('index', [
             'cabinet' => $cabinet,

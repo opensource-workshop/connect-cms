@@ -136,6 +136,11 @@ class PhotoalbumsPlugin extends UserPluginBase
         $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
         $parent = $this->fetchPhotoalbumContent($parent_id, $photoalbum->id);
 
+        // photoalbum_idが配置バケツと違う場合、表示させない
+        if (empty($parent) || $parent->photoalbum_id != $photoalbum->id) {
+            return;
+        }
+
         // フォルダ、ファイルの比較条件の取得
         $sort_folder = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_folder);
         $sort_file = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_file);
