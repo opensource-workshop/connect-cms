@@ -13,6 +13,8 @@ use Illuminate\Queue\Events\JobFailed;
 
 use App\Traits\ConnectRoleTrait;
 
+use App\Models\Common\Buckets;
+
 use App\Enums\PluginName;
 
 //class AppServiceProvider extends ServiceProvider
@@ -573,9 +575,50 @@ class AppServiceProvider extends AuthServiceProvider
         $page = $request->attributes->get('page');
         $page_tree = $request->attributes->get('page_tree');
 
+        // 1. バケツ未指定の空フレームは、編集OK
+        // 2. フレームがあれば、フレームを配置したページから親を遡ってコンテナページを取得
+        //   - コンテナページなしなら、3へ
+        //   - コンテナページありなら、バケツの container_page_id と比較。
+        //      - 同じ: 3へ
+        //      - 違う: false (編集させない)
+        // 3. フレームがあれば、フレームを配置したページから親を遡ってページロールを取得
+        //   - 指定された権限を含むロールをループする。
+        // var_dump($frame->bucket_id, $frame->plugin_name);
+
+        // このページはコンテナページ
+        if ($page->container_flag) {
+            // フレームがあれば、フレームを配置したページから親を遡ってコンテナページを取得
+            $container_page = $this->choiceContainerPageByGoingBackParentPageOrFramePage($page, $page_tree, $frame);
+            if ($container_page) {
+                // コンテナページあり
+
+                if ($frame->bucket_id) {
+                    // フレームにバケツ指定あり
+
+                    $bucket = Buckets::firstOrNew(['id' => $frame->bucket_id]);
+                    if ($container_page->id != $bucket->container_page_id) {
+                        return false;
+                    }
+                } else {
+                    // フレームにバケツ指定なし = 基本編集OK
+
+                    // バケツないプラグイン
+                    if (in_array($frame->plugin_name, ['menus', 'tabs'])) {
+                        // バケツがないプラグインは、自ページ（コンテナページ）と、フレーム配置したページから遡ったコンテナページで比較する。
+                        if ($container_page->id != $page->id) {
+                            return false;
+                        }
+                    }
+                }
+
+            } else {
+                // コンテナページなし
+                return false;
+            }
+        }
+
         // フレームがあれば、フレームを配置したページから親を遡ってページロールを取得
         $page_roles = $this->choicePageRolesByGoingBackParentPageOrFramePage($page, $page_tree, $frame);
-
 
         // 指定された権限を含むロールをループする。
         return $this->checkRoleHierarchy($user, $role, $page_roles);
