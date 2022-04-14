@@ -148,7 +148,7 @@
             <label class="{{$frame->getSettingLabelClass()}}" for="folder_name">アルバム名 <label class="badge badge-danger">必須</label></label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <input type="text" name="folder_name[{{$frame_id}}]" value="{{old("folder_name.$frame_id")}}" class="form-control @if ($errors && $errors->has("folder_name.$frame_id")) border-danger @endif" id="folder_name{{$frame_id}}">
-                @if ($errors && $errors->has("folder_name.$frame_id")) 
+                @if ($errors && $errors->has("folder_name.$frame_id"))
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("folder_name.*")}}</div>
                 @endif
             </div>
@@ -157,7 +157,7 @@
             <label class="{{$frame->getSettingLabelClass()}}" for="description">説明</label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <textarea name="description[{{$frame_id}}]" class="form-control @if ($errors->has('description.$frame_id')) border-danger @endif" rows=2>{!!old("description.$frame_id")!!}</textarea>
-                @if ($errors && $errors->has("description.$frame_id")) 
+                @if ($errors && $errors->has("description.$frame_id"))
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("description.*")}}</div>
                 @endif
             </div>
@@ -190,7 +190,7 @@
                 <small class="my-0 form-text text-muted">jpg, png, gif, zip を許可します。<br />zip の場合は展開され、フォルダがアルバム（サブアルバム）となり、登録されます。</small>
             </div>
         </div>
-        @if ($errors && $errors->has("upload_file.$frame_id")) 
+        @if ($errors && $errors->has("upload_file.$frame_id"))
         <div class="form-group row mb-0">
             <label class="{{$frame->getSettingLabelClass()}}"></label>
             <div class="{{$frame->getSettingInputClass()}}">
@@ -203,7 +203,7 @@
             <div class="{{$frame->getSettingInputClass()}}">
                 <input type="text" name="title[{{$frame_id}}]" value="{{old("title.$frame_id")}}" class="form-control @if ($errors && $errors->has("title.$frame_id")) border-danger @endif" id="title{{$frame_id}}">
                 <small class="form-text text-muted">空の場合、ファイル名をタイトルとして登録します。(zipの場合はファイル名が入ります)</small>
-                @if ($errors && $errors->has("title.$frame_id")) 
+                @if ($errors && $errors->has("title.$frame_id"))
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("title.*")}}</div>
                 @endif
             </div>
@@ -213,7 +213,7 @@
             <div class="{{$frame->getSettingInputClass()}}">
                 <textarea name="description[{{$frame_id}}]" class="form-control @if ($errors->has('description.$frame_id')) border-danger @endif" rows=2>{!!old("description.$frame_id")!!}</textarea>
                 <small class="form-text text-muted">zipの場合は空になります。</small>
-                @if ($errors && $errors->has("description.$frame_id")) 
+                @if ($errors && $errors->has("description.$frame_id"))
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("description.*")}}</div>
                 @endif
             </div>
@@ -260,7 +260,7 @@
                 <small class="my-0 form-text text-muted">mp4, zip を許可します。zip の場合は展開されて登録されます。(zip は予定)</small>
             </div>
         </div>
-        @if ($errors && $errors->has("upload_video.$frame_id")) 
+        @if ($errors && $errors->has("upload_video.$frame_id"))
         <div class="form-group row mb-0">
             <label class="{{$frame->getSettingLabelClass()}}"></label>
             <div class="{{$frame->getSettingInputClass()}}">
@@ -284,7 +284,7 @@
                 <small class="my-0 form-text text-muted">jpg, png, gif を許可します。</small>
             </div>
         </div>
-        @if ($errors && $errors->has("upload_poster.$frame_id")) 
+        @if ($errors && $errors->has("upload_poster.$frame_id"))
         <div class="form-group row mb-0">
             <label class="{{$frame->getSettingLabelClass()}}"></label>
             <div class="{{$frame->getSettingInputClass()}}">
@@ -298,7 +298,7 @@
             <div class="{{$frame->getSettingInputClass()}}">
                 <input type="text" name="title[{{$frame_id}}]" value="{{old("title.$frame_id")}}" class="form-control @if ($errors && $errors->has("title.$frame_id")) border-danger @endif" id="title{{$frame_id}}">
                 <small class="form-text text-muted">空の場合、ファイル名をタイトルとして登録します。</small>
-                @if ($errors && $errors->has("title.$frame_id")) 
+                @if ($errors && $errors->has("title.$frame_id"))
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("title.*")}}</div>
                 @endif
             </div>
@@ -307,7 +307,7 @@
             <label class="{{$frame->getSettingLabelClass()}}" for="description">説明</label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <textarea name="description[{{$frame_id}}]" class="form-control @if ($errors->has('description.$frame_id')) border-danger @endif" rows=2>{!!old("description.$frame_id")!!}</textarea>
-                @if ($errors && $errors->has("description.$frame_id")) 
+                @if ($errors && $errors->has("description.$frame_id"))
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("description.*")}}</div>
                 @endif
             </div>
@@ -472,12 +472,14 @@
             <div class="card-body">
                 <div class="d-flex">
                     @if ($download_check)
-                    <div class="custom-control custom-checkbox d-inline">
-                        <input type="checkbox" class="custom-control-input" id="customCheck_{{$photoalbum_content->id}}" name="photoalbum_content_id[]" value="{{$photoalbum_content->id}}" data-name="{{$photoalbum_content->name}}">
-                        <label class="custom-control-label" for="customCheck_{{$photoalbum_content->id}}"></label>
-                    </div>
+                        <div class="custom-control custom-checkbox d-inline">
+                            <input type="checkbox" class="custom-control-input" id="customCheck_{{$photoalbum_content->id}}" name="photoalbum_content_id[]" value="{{$photoalbum_content->id}}" data-name="{{$photoalbum_content->name}}">
+                            <label class="custom-control-label" for="customCheck_{{$photoalbum_content->id}}"></label>
+                        </div>
                     @endif
-                    <h5 class="card-title d-flex">{{$photoalbum_content->name}}</h5>
+                    @if ($photoalbum_content->name)
+                        <h5 class="card-title d-flex text-break">{{$photoalbum_content->name}}</h5>
+                    @endif
                 </div>
                 @if ($photoalbum_content->description)
                     <div class="card-text">{!!nl2br(e($photoalbum_content->description))!!}</div>
