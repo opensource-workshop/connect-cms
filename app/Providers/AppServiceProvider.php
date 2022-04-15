@@ -585,34 +585,35 @@ class AppServiceProvider extends AuthServiceProvider
         //   - 指定された権限を含むロールをループする。
         // var_dump($frame->bucket_id, $frame->plugin_name);
 
-        // このページはコンテナページ
-        if ($page->container_flag) {
-            // フレームがあれば、フレームを配置したページから親を遡ってコンテナページを取得
-            $container_page = $this->choiceContainerPageByGoingBackParentPageOrFramePage($page, $page_tree, $frame);
-            if ($container_page) {
-                // コンテナページあり
+        // フレームがあれば、フレームを配置したページから親を遡ってコンテナページを取得
+        $container_page = $this->choiceContainerPageByGoingBackParentPageOrFramePage($page, $page_tree, $frame);
+        if ($container_page) {
+            // コンテナページあり
 
-                if ($frame->bucket_id) {
-                    // フレームにバケツ指定あり
+            if ($frame->bucket_id) {
+                // フレームにバケツ指定あり
 
-                    $bucket = Buckets::firstOrNew(['id' => $frame->bucket_id]);
-                    if ($container_page->id != $bucket->container_page_id) {
+                $bucket = Buckets::firstOrNew(['id' => $frame->bucket_id]);
+                if ($container_page->id != $bucket->container_page_id) {
+                    return false;
+                }
+            } else {
+                // フレームにバケツ指定なし = 基本編集OK
+
+                // バケツないプラグイン
+                if (in_array($frame->plugin_name, ['menus', 'tabs'])) {
+                    // バケツがないプラグインは、自ページ（コンテナページ）と、フレーム配置したページから遡ったコンテナページで比較する。
+                    if ($container_page->id != $page->id) {
                         return false;
                     }
-                } else {
-                    // フレームにバケツ指定なし = 基本編集OK
-
-                    // バケツないプラグイン
-                    if (in_array($frame->plugin_name, ['menus', 'tabs'])) {
-                        // バケツがないプラグインは、自ページ（コンテナページ）と、フレーム配置したページから遡ったコンテナページで比較する。
-                        if ($container_page->id != $page->id) {
-                            return false;
-                        }
-                    }
                 }
+            }
 
-            } else {
-                // コンテナページなし
+        } else {
+            // コンテナページなし
+
+            // このページはコンテナページだけど、コンテナページなしなら、編集NG
+            if ($page->container_flag) {
                 return false;
             }
         }

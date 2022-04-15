@@ -49,6 +49,7 @@ use App\Rules\CustomValiEmails;
 use App\Rules\CustomValiRequiredWithoutAllSupportsArrayInput;
 
 use App\Traits\ConnectCommonTrait;
+use App\Traits\ConnectRoleTrait;
 
 /**
  * ユーザープラグイン
@@ -62,8 +63,7 @@ use App\Traits\ConnectCommonTrait;
  */
 class UserPluginBase extends PluginBase
 {
-
-    use ConnectCommonTrait;
+    use ConnectCommonTrait, ConnectRoleTrait;
 
     /**
      * ページオブジェクト

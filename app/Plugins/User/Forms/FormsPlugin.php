@@ -2,6 +2,7 @@
 
 namespace App\Plugins\User\Forms;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -1290,7 +1291,7 @@ class FormsPlugin extends UserPluginBase
         $plugin_frame = Frame::where('id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
-        $plugins = Forms::
+        $query = Forms::
             select(
                 'forms.id',
                 'forms.bucket_id',
@@ -1308,6 +1309,10 @@ class FormsPlugin extends UserPluginBase
                 $leftJoin->on('forms.bucket_id', '=', 'frames.bucket_id')
                     ->where('frames.id', $frame_id);
             })
+            ->join('buckets', function ($leftJoin) {
+                $leftJoin->on('forms.bucket_id', '=', 'buckets.id')
+                    ->where('buckets.plugin_name', 'forms');
+            })
             ->groupBy(
                 'forms.id',
                 'forms.bucket_id',
@@ -1317,8 +1322,17 @@ class FormsPlugin extends UserPluginBase
                 'forms_inputs.forms_id'
             )
             ->orderBy('frames.bucket_id', 'desc')
-            ->orderBy('forms.created_at', 'desc')
-            ->paginate(10, ["*"], "frame_{$frame_id}_page");
+            ->orderBy('forms.created_at', 'desc');
+
+        // フレームを配置したページから親を遡ってコンテナページを取得
+        $container_page = $this->choiceContainerPageByGoingBackParentPageOrFramePage($this->page, $request->attributes->get('page_tree'), $this->frame);
+        if ($container_page) {
+            $query->where('buckets.container_page_id', $container_page->id);
+        } else {
+            $query->whereNull('buckets.container_page_id');
+        }
+
+        $plugins = $query->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 仮登録件数
         $forms_tmp_entry = Forms::
@@ -1505,7 +1519,7 @@ class FormsPlugin extends UserPluginBase
         // 画面から渡ってくるforms_id が空ならバケツとフォームを新規登録
         if (empty($forms_id)) {
             // バケツの登録
-            $bucket = $this->saveFormBucket($request->forms_name);
+            $bucket = $this->saveFormBucket($request->forms_name, $request->attributes->get('page_tree'));
 
             // フォームデータ新規オブジェクト
             $forms = new Forms();
@@ -1532,7 +1546,7 @@ class FormsPlugin extends UserPluginBase
             $forms = Forms::where('id', $forms_id)->first();
 
             // バケツ名を入力されたフォーム名で更新
-            $bucket = $this->saveFormBucket($request->forms_name, $forms->bucket_id);
+            $bucket = $this->saveFormBucket($request->forms_name, $request->attributes->get('page_tree'), $forms->bucket_id);
 
             $message = 'フォーム設定を変更しました。';
         }
@@ -2496,7 +2510,7 @@ ORDER BY forms_inputs_id, forms_columns_id
         }
 
         // バケツの登録
-        $bucket = $this->saveFormBucket($forms_name);
+        $bucket = $this->saveFormBucket($forms_name, $request->attributes->get('page_tree'));
 
         $copy_form->forms_name = $forms_name;
         $copy_form->bucket_id = $bucket->id;
@@ -2523,14 +2537,24 @@ ORDER BY forms_inputs_id, forms_columns_id
      * フォームのバケツを登録する
      *
      * @param string $form_name フォーム名
+     * @param Collection $page_tree フォーム名
      * @param int $bucket_id バケツID
      * @return Buckets フォームのバケツ
      */
-    private function saveFormBucket($form_name, $bucket_id = null)
+    private function saveFormBucket($form_name, ?Collection $page_tree, $bucket_id = null): Buckets
     {
         $bucket = Buckets::findOrNew($bucket_id);
         $bucket->bucket_name = $form_name;
         $bucket->plugin_name = PluginName::getPluginName(PluginName::forms);
+
+        // フレームを配置したページから親を遡ってコンテナページを取得
+        $container_page = $this->choiceContainerPageByGoingBackParentPageOrFramePage($this->page, $page_tree, $this->frame);
+        if ($container_page) {
+            $bucket->container_page_id = $container_page->id;
+        } else {
+            $bucket->container_page_id = null;
+        }
+
         $bucket->save();
         return $bucket;
     }
