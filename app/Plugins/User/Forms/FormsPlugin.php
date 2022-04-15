@@ -1286,42 +1286,38 @@ class FormsPlugin extends UserPluginBase
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
-        // 対象のプラグイン
-        $plugin_name = $this->frame->plugin_name;
-
         // Frame データ
         $plugin_frame = Frame::where('id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
-        $plugins = DB::table($plugin_name)
-            ->select(
-                $plugin_name . '.id',
-                $plugin_name . '.bucket_id',
-                $plugin_name . '.data_save_flag',
-                $plugin_name . '.created_at',
-                $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name',
+        $plugins = Forms::
+            select(
+                'forms.id',
+                'forms.bucket_id',
+                'forms.data_save_flag',
+                'forms.created_at',
+                'forms.forms_name as plugin_bucket_name',
                 // 本登録数
                 DB::raw('count(forms_inputs.forms_id) as active_entry_count')
             )
-            ->leftJoin('forms_inputs', function ($leftJoin) use ($plugin_name) {
-                $leftJoin->on($plugin_name . '.id', '=', 'forms_inputs.forms_id')
+            ->leftJoin('forms_inputs', function ($leftJoin) {
+                $leftJoin->on('forms.id', '=', 'forms_inputs.forms_id')
                     ->where('forms_inputs.status', FormStatusType::active);
             })
-            ->leftJoin('frames', function ($leftJoin) use ($plugin_name, $frame_id) {
-                $leftJoin->on($plugin_name . '.bucket_id', '=', 'frames.bucket_id')
+            ->leftJoin('frames', function ($leftJoin) use ($frame_id) {
+                $leftJoin->on('forms.bucket_id', '=', 'frames.bucket_id')
                     ->where('frames.id', $frame_id);
             })
             ->groupBy(
-                $plugin_name . '.id',
-                $plugin_name . '.bucket_id',
-                $plugin_name . '.data_save_flag',
-                $plugin_name . '.created_at',
-                $plugin_name . '.' . $plugin_name . '_name',
+                'forms.id',
+                'forms.bucket_id',
+                'forms.data_save_flag',
+                'forms.created_at',
+                'forms.forms_name',
                 'forms_inputs.forms_id'
             )
-            // ->orderBy($plugin_name. '.id', 'desc')
             ->orderBy('frames.bucket_id', 'desc')
-            ->orderBy($plugin_name . '.created_at', 'desc')
+            ->orderBy('forms.created_at', 'desc')
             ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 仮登録件数
