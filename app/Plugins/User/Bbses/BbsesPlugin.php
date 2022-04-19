@@ -688,14 +688,17 @@ class BbsesPlugin extends UserPluginBase
 
         // フレームごとの表示設定の更新
         $bbs_frame = BbsFrame::updateOrCreate(
-            ['bbs_id' => $bbs_id, 'frame_id' => $frame_id],
-            ['view_format'      => $request->view_format,
-             'thread_sort_flag' => $request->thread_sort_flag,
-             'view_count'       => $request->view_count,
-             'list_format'      => $request->list_format,
-             'thread_format'    => $request->thread_format,
-             'list_underline'   => $request->list_underline,
-             'thread_caption'   => $request->thread_caption],
+            ['frame_id' => $frame_id],
+            [
+                'bbs_id'           => $bbs_id,
+                'view_format'      => $request->view_format,
+                'thread_sort_flag' => $request->thread_sort_flag,
+                'view_count'       => $request->view_count,
+                'list_format'      => $request->list_format,
+                'thread_format'    => $request->thread_format,
+                'list_underline'   => $request->list_underline,
+                'thread_caption'   => $request->thread_caption
+            ],
         );
 
         return;
