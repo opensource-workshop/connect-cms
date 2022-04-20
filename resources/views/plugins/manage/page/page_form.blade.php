@@ -84,33 +84,35 @@
     </div>
     --}}
 
-    <div class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right pt-0">コンテナ</label>
-        <div class="col-md-9 d-sm-flex align-items-center">
+    @if (config('connect.USE_CONTAINER_BETA'))
+        <div class="form-group row">
+            <label class="col-md-3 col-form-label text-md-right pt-0">コンテナ</label>
+            <div class="col-md-9 d-sm-flex align-items-center">
 
-            <div class="custom-control custom-checkbox">
-                @if(isset($page->container_flag) && $page->container_flag == 1)
-                    <input name="container_flag" value="1" type="checkbox" class="custom-control-input" id="container_flag" checked="checked">
-                @else
-                    <input name="container_flag" value="1" type="checkbox" class="custom-control-input" id="container_flag">
-                @endif
-                <label class="custom-control-label" for="container_flag">ページをコンテナとして使う</label>
-                <small class="form-text text-muted">
-                    ※ コンテナページにした場合、各プラグインの設定＞選択画面で、コンテナページで作成したバケツのみ表示します。<br />
-                    ※ コンテナページの下層のページもコンテナページになります。<br />
-                </small>
-                <div class="alert alert-warning small mb-0">
-                    【注意】<br />
-                    以下のコンテナに対する注意点を理解して設定してください。<br />
-                    <br />
-                    コンテナページは、これから追加するページのみに設定してください。<br />
-                    下記の場合、「既に作成していたデータは 各プラグインの設定＞選択画面 で選択できなくなる」「既に配置していたフレームは設定変更できなくなる」事を理解し、設定してください。<br />
-                    ・既存ページをコンテナページにする。<br />
-                    ・コンテナページにしたページを途中から「ページをコンテナとして使わない」設定にする。<br />
+                <div class="custom-control custom-checkbox">
+                    @if(isset($page->container_flag) && $page->container_flag == 1)
+                        <input name="container_flag" value="1" type="checkbox" class="custom-control-input" id="container_flag" checked="checked">
+                    @else
+                        <input name="container_flag" value="1" type="checkbox" class="custom-control-input" id="container_flag">
+                    @endif
+                    <label class="custom-control-label" for="container_flag">ページをコンテナとして使う</label>
+                    <small class="form-text text-muted">
+                        ※ コンテナページにした場合、各プラグインの設定＞選択画面で、コンテナページで作成したバケツのみ表示します。<br />
+                        ※ コンテナページの下層のページもコンテナページになります。<br />
+                    </small>
+                    <div class="alert alert-warning small mb-0">
+                        【注意】<br />
+                        以下のコンテナに対する注意点を理解して設定してください。<br />
+                        <br />
+                        コンテナページは、これから追加するページのみに設定してください。<br />
+                        下記の場合、「既に作成していたデータは 各プラグインの設定＞選択画面 で選択できなくなる」「既に配置していたフレームは設定変更できなくなる」事を理解し、設定してください。<br />
+                        ・既存ページをコンテナページにする。<br />
+                        ・コンテナページにしたページを途中から「ページをコンテナとして使わない」設定にする。<br />
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    @endif
 
     <div class="form-group row">
         <label for="password" class="col-md-3 col-form-label text-md-right">パスワード</label>
