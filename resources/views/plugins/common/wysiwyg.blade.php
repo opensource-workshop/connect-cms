@@ -332,7 +332,8 @@
                 // callback('mypage.html', {text: 'My text'});
 
                 // file plugin. フィールド名の先頭がfileであれば. file1～5
-                if (meta.fieldname.startsWith('file')) {
+                if (meta.fieldname.indexOf('file') === 0) {
+                //if (meta.fieldname.startsWith('file')) {
                     // see) public\js\tinymce\plugins\file\plugin.min.js
                     var input = document.getElementById('cc-file-upload-' + meta.fieldname + '-{{$frame_id}}');
 
@@ -344,7 +345,8 @@
                     input.click();
                 }
                 // pdf plugin. フィールド名の先頭がpdf
-                else if (meta.fieldname.startsWith('pdf')) {
+                else if (meta.fieldname.indexOf('pdf') === 0) {
+                //else if (meta.fieldname.startsWith('pdf')) {
                     // see) public\js\tinymce\plugins\pdf\plugin.min.js
                     var input = document.getElementById('cc-pdf-upload-{{$frame_id}}');
                     input.setAttribute('accept', '.pdf');
@@ -357,7 +359,8 @@
                     input.click();
                 }
                 // face plugin. フィールド名の先頭がface
-                else if (meta.fieldname.startsWith('photo')) {
+                else if (meta.fieldname.indexOf('photo') === 0) {
+                //else if (meta.fieldname.startsWith('photo')) {
                     // see) public\js\tinymce\plugins\face\plugin.min.js
                     var input = document.getElementById('cc-face-upload-{{$frame_id}}');
                     input.setAttribute('accept', '.jpg,.png');
