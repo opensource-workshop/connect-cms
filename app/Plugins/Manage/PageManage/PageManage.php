@@ -215,6 +215,7 @@ class PageManage extends ManagePluginBase
         $page->layout               = $request->layout;
         $page->base_display_flag    = (isset($request->base_display_flag) ? $request->base_display_flag : 0);
         $page->membership_flag      = (isset($request->membership_flag) ? $request->membership_flag : 0);
+        $page->container_flag       = (isset($request->container_flag) ? $request->container_flag : 0);
         $page->ip_address           = $request->ip_address;
         $page->othersite_url        = $request->othersite_url;
         $page->othersite_url_target = (isset($request->othersite_url_target) ? $request->othersite_url_target : 0);
@@ -256,6 +257,7 @@ class PageManage extends ManagePluginBase
                 'layout'               => $request->layout,
                 'base_display_flag'    => (isset($request->base_display_flag) ? $request->base_display_flag : 0),
                 'membership_flag'      => (isset($request->membership_flag) ? $request->membership_flag : 0),
+                'container_flag'       => (isset($request->container_flag) ? $request->container_flag : 0),
                 'ip_address'           => $request->ip_address,
                 'othersite_url'        => $request->othersite_url,
                 'othersite_url_target' => (isset($request->othersite_url_target) ? $request->othersite_url_target : 0),

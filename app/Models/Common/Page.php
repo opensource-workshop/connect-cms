@@ -19,13 +19,28 @@ use App\Traits\ConnectCommonTrait;
 
 class Page extends Model
 {
+    use NodeTrait;
+    use ConnectCommonTrait;
+
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['page_name', 'permanent_link', 'background_color', 'header_color', 'theme',  'layout', 'base_display_flag', 'membership_flag', 'ip_address', 'othersite_url', 'othersite_url_target', 'class', 'password'];
-
-    use NodeTrait;
-    use ConnectCommonTrait;
+    protected $fillable = [
+        'page_name',
+        'permanent_link',
+        'background_color',
+        'header_color',
+        'theme',
+        'layout',
+        'base_display_flag',
+        'membership_flag',
+        'container_flag',
+        'ip_address',
+        'othersite_url',
+        'othersite_url_target',
+        'class',
+        'password',
+    ];
 
     /**
      * hasMany 設定
