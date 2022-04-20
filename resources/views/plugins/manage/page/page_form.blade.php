@@ -35,7 +35,7 @@
     </div>
 
     <div class="form-group row mb-0">
-        <label for="permanent_link" class="col-md-3 col-form-label text-md-right">公開設定</label>
+        <label class="col-md-3 col-form-label text-md-right">公開設定</label>
         <div class="col-md-9 d-sm-flex align-items-center">
 
             <div class="custom-control custom-radio custom-control-inline">
@@ -85,7 +85,7 @@
     --}}
 
     <div class="form-group row">
-        <label for="permanent_link" class="col-md-3 col-form-label text-md-right pt-0">コンテナ</label>
+        <label class="col-md-3 col-form-label text-md-right pt-0">コンテナ</label>
         <div class="col-md-9 d-sm-flex align-items-center">
 
             <div class="custom-control custom-checkbox">
@@ -104,7 +104,7 @@
     </div>
 
     <div class="form-group row">
-        <label for="permanent_link" class="col-md-3 col-form-label text-md-right">パスワード</label>
+        <label for="password" class="col-md-3 col-form-label text-md-right">パスワード</label>
         <div class="col-md-9">
             <input type="text" name="password" id="password" value="{{old('password', $page->password)}}" class="form-control">
             @include('common.errors_inline', ['name' => 'password'])
@@ -122,7 +122,7 @@
             }
         @endphp
         <div class="form-group row">
-            <label for="permanent_link" class="col-md-3 col-form-label text-md-right">背景色</label>
+            <label for="background_color" class="col-md-3 col-form-label text-md-right">背景色</label>
             <div class="col-md-9">
                 <input type="text" name="background_color" id="background_color" value="{{old('background_color', $page->background_color)}}" class="form-control" v-model="v_background_color" placeholder="{{ $placeholder_message }}">
                 @include('common.errors_inline', ['name' => 'background_color'])
@@ -134,7 +134,7 @@
             </div>
         </div>
         <div class="form-group row">
-            <label for="permanent_link" class="col-md-3 col-form-label text-md-right">ヘッダーバーの背景色</label>
+            <label for="header_color" class="col-md-3 col-form-label text-md-right">ヘッダーバーの背景色</label>
             <div class="col-md-9">
                 <input type="text" name="header_color" id="header_color" value="{{old('header_color', $page->header_color)}}" class="form-control" v-model="v_header_color" placeholder="{{ $placeholder_message }}">
                 @include('common.errors_inline', ['name' => 'header_color'])
@@ -149,7 +149,7 @@
 
     {{-- テーマ --}}
     <div class="form-group row">
-        <label for="permanent_link" class="col-md-3 col-form-label text-md-right">テーマ</label>
+        <label class="col-md-3 col-form-label text-md-right">テーマ</label>
         <div class="col-md-9">
             <select name="theme" class="form-control">
                 <option value="">設定なし</option>
@@ -169,7 +169,7 @@
     </div>
 
     <div class="form-group row">
-        <label for="permanent_link" class="col-md-3 col-form-label text-md-right">レイアウト</label>
+        <label class="col-md-3 col-form-label text-md-right">レイアウト</label>
         <div class="col-md-9">
 
             <div class="custom-control custom-radio custom-control-inline mb-2">
@@ -311,7 +311,7 @@
         </div>
     </div>
     <div class="form-group row">
-        <label for="permanent_link" class="col-md-3 col-form-label text-md-right">メニュー表示</label>
+        <label class="col-md-3 col-form-label text-md-right">メニュー表示</label>
         <div class="col-md-9 d-sm-flex align-items-center">
 
             <div class="custom-control custom-checkbox">
@@ -325,7 +325,7 @@
         </div>
     </div>
     <div class="form-group row">
-        <label for="permanent_link" class="col-md-3 col-form-label text-md-right">ウィンドウ</label>
+        <label class="col-md-3 col-form-label text-md-right">ウィンドウ</label>
         <div class="col-md-9 d-sm-flex align-items-center">
 
             <div class="custom-control custom-checkbox">
@@ -339,7 +339,7 @@
         </div>
     </div>
     <div class="form-group row">
-        <label for="permanent_link" class="col-md-3 col-form-label text-md-right pt-0">自動転送</label>
+        <label class="col-md-3 col-form-label text-md-right pt-0">自動転送</label>
         <div class="col-md-9 d-sm-flex align-items-center">
 
             <div class="custom-control custom-checkbox">
@@ -355,7 +355,7 @@
         </div>
     </div>
     <div class="form-group row">
-        <label for="permanent_link" class="col-md-3 col-form-label text-md-right">IPアドレス制限</label>
+        <label for="ip_address" class="col-md-3 col-form-label text-md-right">IPアドレス制限</label>
         <div class="col-md-9">
             <input type="text" name="ip_address" id="ip_address" value="{{old('ip_address', $page->ip_address)}}" class="form-control">
             @include('common.errors_inline', ['name' => 'ip_address'])
@@ -363,7 +363,7 @@
         </div>
     </div>
     <div class="form-group row">
-        <label for="permanent_link" class="col-md-3 col-form-label text-md-right">外部サイトURL</label>
+        <label for="othersite_url" class="col-md-3 col-form-label text-md-right">外部サイトURL</label>
         <div class="col-md-9">
             <input type="text" name="othersite_url" id="othersite_url" value="{{old('othersite_url', $page->othersite_url)}}" class="form-control @if ($errors->has('othersite_url')) border-danger @endif">
             @include('common.errors_inline', ['name' => 'othersite_url'])
@@ -371,7 +371,7 @@
         </div>
     </div>
     <div class="form-group row">
-        <label for="permanent_link" class="col-md-3 col-form-label text-md-right">クラス名</label>
+        <label for="class" class="col-md-3 col-form-label text-md-right">クラス名</label>
         <div class="col-md-9">
             <input type="text" name="class" id="class" value="{{old('class', $page->class)}}" class="form-control">
             @include('common.errors_inline', ['name' => 'class'])
