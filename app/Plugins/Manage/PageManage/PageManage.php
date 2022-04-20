@@ -171,7 +171,6 @@ class PageManage extends ManagePluginBase
             'ip_address'       => ['nullable', new CustomValiTextMax()],
             'othersite_url'    => ['nullable', new CustomValiUrlMax()],
             'class'            => ['nullable', 'max:255'],
-            'confirm_container' => ['required'],
         ]);
         $validator->setAttributeNames([
             'page_name'        => 'ページ名',
@@ -182,7 +181,6 @@ class PageManage extends ManagePluginBase
             'ip_address'       => 'IPアドレス制限',
             'othersite_url'    => '外部サイトURL',
             'class'            => 'クラス名',
-            'confirm_container' => 'コンテナに対する注意点',
         ]);
         return $validator;
     }

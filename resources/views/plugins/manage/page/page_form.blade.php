@@ -99,6 +99,15 @@
                     ※ コンテナページにした場合、各プラグインの設定＞選択画面で、コンテナページで作成したバケツのみ表示します。<br />
                     ※ コンテナページの下層のページもコンテナページになります。<br />
                 </small>
+                <div class="alert alert-warning small mb-0">
+                    【注意】<br />
+                    以下のコンテナに対する注意点を理解して実行します。<br />
+                    <br />
+                    コンテナページは、これから追加するページのみに設定してください。<br />
+                    下記の場合、既に作成していたデータは「各プラグインの設定に入れなくなる」「各プラグインの設定＞選択画面 で選択できなくなる」事を理解し、実行してください。<br />
+                    ・既存ページをコンテナページにする。<br />
+                    ・コンテナページにしたページを途中から「ページをコンテナとして使わない」設定にする。<br />
+                </div>
             </div>
         </div>
     </div>
@@ -376,34 +385,6 @@
             <input type="text" name="class" id="class" value="{{old('class', $page->class)}}" class="form-control">
             @include('common.errors_inline', ['name' => 'class'])
             <small class="form-text text-muted">※ デザインで使用するためのclass名</small>
-        </div>
-    </div>
-
-    <div class="form-group row">
-        <div class="col-md-3 text-md-right">注意 <label class="badge badge-danger">必須</label></div>
-        <div class="col-md-9">
-            <div class="form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" type="checkbox" name="confirm_container" value="1">以下のコンテナに対する注意点を理解して実行します。
-                </label>
-            </div>
-            @if ($errors->has('confirm_container'))
-                <div class="alert alert-danger mb-0">
-                    <i class="fas fa-exclamation-triangle"></i> コンテナに対する注意点の確認を行ってください。
-                </div>
-            @endif
-        </div>
-    </div>
-
-    <div class="form-group row">
-        <div class="col-md-3 text-md-right"></div>
-        <div class="col-md-9">
-            <div class="alert alert-warning">
-                コンテナページは、これから追加するページのみに設定してください。<br />
-                下記の場合、既に作成していたデータは 各プラグインの設定＞選択画面 で選択できなくなる事を理解し、実行してください。<br />
-                ・既存ページをコンテナページにする。<br />
-                ・コンテナページにしたページを途中から「ページをコンテナとして使わない」設定にする。<br />
-            </div>
         </div>
     </div>
 
