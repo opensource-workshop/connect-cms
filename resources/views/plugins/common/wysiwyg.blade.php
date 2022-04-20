@@ -636,7 +636,8 @@
             {title: 'None', value: 'none'},
         ],
         invalid_styles: {
-            'table': 'height width border-collapse',
+            // 'table': 'height width border-collapse',
+            'table': 'height width',
             'tr': 'height width',
             'th': 'height width',
             'td': 'height width',
