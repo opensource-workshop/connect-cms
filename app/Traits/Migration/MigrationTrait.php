@@ -1941,6 +1941,9 @@ trait MigrationTrait
         // ルームの指定（あれば後で使う）
         //$cc_import_blogs_room_ids = $this->getMigrationConfig('blogs', 'cc_import_blogs_room_ids');
 
+        // ユーザ取得
+        $users = User::get();
+
         // ブログ定義のループ
         foreach ($blogs_ini_paths as $blogs_ini_path) {
             // ini_file の解析
@@ -1980,17 +1983,27 @@ trait MigrationTrait
             // マッピングテーブルを確認して、追加か更新の処理を分岐
             if (empty($mapping)) {
                 // マッピングテーブルがなければ、Buckets テーブルと Blogs テーブル、マッピングテーブルを追加
-                $blog_name = '無題';
-                if (array_key_exists('blog_base', $blog_ini) && array_key_exists('blog_name', $blog_ini['blog_base'])) {
-                    $blog_name = $blog_ini['blog_base']['blog_name'];
-                }
-                $bucket = Buckets::create(['bucket_name' => $blog_name, 'plugin_name' => 'blogs']);
+                $blog_name = $this->getArrayValue($blog_ini, 'blog_base', 'blog_name', '無題');
 
-                $use_like = 0;
-                if (array_key_exists('blog_base', $blog_ini) && array_key_exists('use_like', $blog_ini['blog_base'])) {
-                    $use_like = $blog_ini['blog_base']['use_like'];
-                }
-                $blog = Blogs::create(['bucket_id' => $bucket->id, 'blog_name' => $blog_name, 'use_like' => $use_like]);
+                $bucket = new Buckets(['bucket_name' => $blog_name, 'plugin_name' => 'blogs']);
+                $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($blog_ini, 'source_info', 'created_at');
+                $bucket->updated_at = $this->getDatetimeFromIniAndCheckFormat($blog_ini, 'source_info', 'updated_at');
+                // 登録更新日時を自動更新しない
+                $bucket->timestamps = false;
+                $bucket->save();
+
+                $use_like = $this->getArrayValue($blog_ini, 'blog_base', 'use_like', 0);
+
+                $blog = new Blogs(['bucket_id' => $bucket->id, 'blog_name' => $blog_name, 'use_like' => $use_like]);
+                $blog->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($blog_ini, 'source_info', 'insert_login_id', null));
+                $blog->created_name = $this->getArrayValue($blog_ini, 'source_info', 'created_name', null);
+                $blog->created_at   = $this->getDatetimeFromIniAndCheckFormat($blog_ini, 'source_info', 'created_at');
+                $blog->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($blog_ini, 'source_info', 'update_login_id', null));
+                $blog->updated_name = $this->getArrayValue($blog_ini, 'source_info', 'updated_name', null);
+                $blog->updated_at   = $this->getDatetimeFromIniAndCheckFormat($blog_ini, 'source_info', 'updated_at');
+                // 登録更新日時を自動更新しない
+                $blog->timestamps = false;
+                $blog->save();
 
                 // マッピングテーブルの追加
                 $mapping = MigrationMapping::create([
@@ -7403,6 +7416,9 @@ trait MigrationTrait
             return;
         }
 
+        // nc2の全ユーザ取得
+        $nc2_users = Nc2User::get();
+
         // NC2日誌（Journal）のループ
         foreach ($nc2_journals as $nc2_journal) {
             $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
@@ -7440,6 +7456,12 @@ trait MigrationTrait
             $journals_ini .= "journal_id = " . $nc2_journal->journal_id . "\n";
             $journals_ini .= "room_id = " . $nc2_journal->room_id . "\n";
             $journals_ini .= "module_name = \"journal\"\n";
+            $journals_ini .= "created_at      = \"" . $this->getCCDatetime($nc2_journal->insert_time) . "\"\n";
+            $journals_ini .= "created_name    = \"" . $nc2_journal->insert_user_name . "\"\n";
+            $journals_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_journal->insert_user_id) . "\"\n";
+            $journals_ini .= "updated_at      = \"" . $this->getCCDatetime($nc2_journal->update_time) . "\"\n";
+            $journals_ini .= "updated_name    = \"" . $nc2_journal->update_user_name . "\"\n";
+            $journals_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_journal->update_user_id) . "\"\n";
 
             // NC2日誌で使ってるカテゴリ（journal_category）のみ移行する。
             $journals_ini .= "\n";
