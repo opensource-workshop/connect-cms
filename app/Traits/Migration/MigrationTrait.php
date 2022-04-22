@@ -3155,7 +3155,13 @@ trait MigrationTrait
 
             // Buckets テーブルと Cabinets テーブル、マッピングテーブルを追加
             $bbs_name = $this->getArrayValue($ini, 'blog_base', 'blog_name', '無題');
-            $bucket = Buckets::create(['bucket_name' => $bbs_name, 'plugin_name' => 'bbses']);
+
+            $bucket = new Buckets(['bucket_name' => $bbs_name, 'plugin_name' => 'bbses']);
+            $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'insert_time');
+            $bucket->updated_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'update_time');
+            // 登録更新日時を自動更新しない
+            $bucket->timestamps = false;
+            $bucket->save();
 
             $bbs = new Bbs([
                 'bucket_id' => $bucket->id,
