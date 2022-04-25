@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<main class="container" role="main">
+<main class="container login" role="main">
     <div class="row">
         <div class="col-md-8 offset-md-2 mt-3">
             <div class="card">
