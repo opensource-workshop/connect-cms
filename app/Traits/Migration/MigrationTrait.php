@@ -2053,10 +2053,6 @@ trait MigrationTrait
                     // タブで項目に分割
                     $blog_tsv_cols = explode("\t", $blog_tsv_line);
 
-                    // 投稿日時の変換(NC2 の投稿日時はGMT のため、9時間プラスする) NC2=20151020122600
-                    $posted_at_ts = mktime(substr($blog_tsv_cols[0], 8, 2), substr($blog_tsv_cols[0], 10, 2), substr($blog_tsv_cols[0], 12, 2), substr($blog_tsv_cols[0], 4, 2), substr($blog_tsv_cols[0], 6, 2), substr($blog_tsv_cols[0], 0, 4));
-                    $posted_at = date('Y-m-d H:i:s', $posted_at_ts + (60 * 60 * 9));
-
                     // 記事のカテゴリID
                     // 記事のカテゴリID = original_categories にキーがあれば、original_categories の文言でブログ単位のカテゴリを探してID 特定。
                     $categories_id = null;
@@ -2089,7 +2085,7 @@ trait MigrationTrait
                     }
 
                     // ブログ記事テーブル追加
-                    $blogs_posts = BlogsPosts::create([
+                    $blogs_posts = new BlogsPosts([
                         'blogs_id' => $blog->id,
                         'post_title' => $blog_tsv_cols[4],
                         'post_text' => $post_text,
@@ -2100,8 +2096,17 @@ trait MigrationTrait
                         'categories_id' => $categories_id,
                         'important' => null,
                         'status' => 0,
-                        'posted_at' => $posted_at
+                        'posted_at' => $this->getDatetimeFromTsvAndCheckFormat(0, $blog_tsv_cols, '0'),
                     ]);
+                    $blogs_posts->created_id = $this->getUserIdFromLoginId($users, $blog_tsv_cols[13]);
+                    $blogs_posts->created_name = $blog_tsv_cols[12];
+                    $blogs_posts->created_at = $this->getDatetimeFromTsvAndCheckFormat(11, $blog_tsv_cols, '11');
+                    $blogs_posts->updated_id = $this->getUserIdFromLoginId($users, $blog_tsv_cols[16]);
+                    $blogs_posts->updated_name = $blog_tsv_cols[15];
+                    $blogs_posts->updated_at = $this->getDatetimeFromTsvAndCheckFormat(14, $blog_tsv_cols, '14');
+                    // 登録更新日時を自動更新しない
+                    $blogs_posts->timestamps = false;
+                    $blogs_posts->save();
 
                     // contents_id を初回はid と同じものを入れて、更新
                     $blogs_posts->contents_id = $blogs_posts->id;
@@ -7533,7 +7538,7 @@ trait MigrationTrait
 
                 $like_count = empty($nc2_journal_post->vote) ? 0 : count(explode('|', $nc2_journal_post->vote));
 
-                $journals_tsv .= $nc2_journal_post->journal_date    . "\t";
+                $journals_tsv .= $this->getCCDatetime($nc2_journal_post->journal_date) . "\t";  // [0] 投稿日時
                 // $journals_tsv .= $nc2_journal_post->category_id     . "\t";
                 $journals_tsv .= $category                          . "\t";
                 $journals_tsv .= $nc2_journal_post->status          . "\t";
@@ -7543,8 +7548,14 @@ trait MigrationTrait
                 $journals_tsv .= $more_content                      . "\t";
                 $journals_tsv .= $nc2_journal_post->more_title      . "\t";
                 $journals_tsv .= $nc2_journal_post->hide_more_title . "\t";
-                $journals_tsv .= $like_count                        . "\t";   // いいね数
-                $journals_tsv .= $nc2_journal_post->vote            . "\t";   // いいねのsession_id & nc2 user_id
+                $journals_tsv .= $like_count                        . "\t";     // [9] いいね数
+                $journals_tsv .= $nc2_journal_post->vote            . "\t";     // [10]いいねのsession_id & nc2 user_id
+                $journals_tsv .= $this->getCCDatetime($nc2_journal_post->insert_time)                             . "\t";   // [11]
+                $journals_tsv .= $nc2_journal_post->insert_user_name                                              . "\t";   // [12]
+                $journals_tsv .= $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_journal_post->insert_user_id) . "\t";   // [13]
+                $journals_tsv .= $this->getCCDatetime($nc2_journal_post->update_time)                             . "\t";   // [14]
+                $journals_tsv .= $nc2_journal_post->update_user_name                                              . "\t";   // [15]
+                $journals_tsv .= $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_journal_post->update_user_id) . "\t";   // [16]
 
                 // 記事のタイトルの一覧
                 // タイトルに " あり
