@@ -3383,6 +3383,8 @@ trait MigrationTrait
 
         // カレンダー定義の取り込み
         $ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('calendars/calendar_room_*.ini'));
+        // ユーザ取得
+        $users = User::get();
 
         // カレンダー定義のループ
         foreach ($ini_paths as $ini_path) {
@@ -3443,22 +3445,14 @@ trait MigrationTrait
                 // NC2 calendar_plan
                 $tsv_idxs['calendar_id'] = 0;
                 $tsv_idxs['plan_id'] = 0;
-                $tsv_idxs['room_id'] = 0;
                 $tsv_idxs['user_id'] = 0;
                 $tsv_idxs['user_name'] = 0;
                 $tsv_idxs['title'] = 0;
-                $tsv_idxs['title_icon'] = 0;
                 $tsv_idxs['allday_flag'] = 0;
                 $tsv_idxs['start_date'] = 0;
                 $tsv_idxs['start_time'] = 0;
-                $tsv_idxs['start_time_full'] = 0;
                 $tsv_idxs['end_date'] = 0;
                 $tsv_idxs['end_time'] = 0;
-                $tsv_idxs['end_time_full'] = 0;
-                $tsv_idxs['timezone_offset'] = 0;
-                $tsv_idxs['link_module'] = 0;
-                $tsv_idxs['link_id'] = 0;
-                $tsv_idxs['link_action_name'] = 0;
 
                 // NC2 calendar_plan_details
                 // 場所
@@ -3466,13 +3460,17 @@ trait MigrationTrait
                 // 連絡先
                 $tsv_idxs['contact'] = 0;
                 // 内容
-                $tsv_idxs['description'] = 0;
+                $tsv_idxs['body'] = 0;
                 // 繰り返し条件
                 $tsv_idxs['rrule'] = 0;
 
-                // NC2 calendar_plan 登録日・更新日
-                $tsv_idxs['insert_time'] = 0;
-                $tsv_idxs['update_time'] = 0;
+                // NC2 calendar_plan 登録日・更新日等
+                $tsv_idxs['created_at'] = 0;
+                $tsv_idxs['created_name'] = 0;
+                $tsv_idxs['insert_login_id'] = 0;
+                $tsv_idxs['updated_at'] = 0;
+                $tsv_idxs['updated_name'] = 0;
+                $tsv_idxs['update_login_id'] = 0;
 
                 // CC 状態
                 $tsv_idxs['status'] = 0;
@@ -3507,7 +3505,7 @@ trait MigrationTrait
                     }
 
                     // カレンダー予定の追加
-                    $calendar_post = CalendarPost::create([
+                    $calendar_post = new CalendarPost([
                         'calendar_id'      => $calendar->id,
                         'allday_flag'      => $calendar_tsv_cols[$tsv_idxs['allday_flag']],
                         'start_date'       => $calendar_tsv_cols[$tsv_idxs['start_date']],
@@ -3515,13 +3513,20 @@ trait MigrationTrait
                         'end_date'         => $calendar_tsv_cols[$tsv_idxs['end_date']],
                         'end_time'         => $calendar_tsv_cols[$tsv_idxs['end_time']],
                         'title'            => $calendar_tsv_cols[$tsv_idxs['title']],
-                        'body'             => $this->changeWYSIWYG($calendar_tsv_cols[$tsv_idxs['description']]),
+                        'body'             => $this->changeWYSIWYG($calendar_tsv_cols[$tsv_idxs['body']]),
                         'location'         => $calendar_tsv_cols[$tsv_idxs['location']],
                         'contact'          => $calendar_tsv_cols[$tsv_idxs['contact']],
                         'status'           => $calendar_tsv_cols[$tsv_idxs['status']],
-                        'created_at'       => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['insert_time'], $calendar_tsv_cols, 'insert_time'),
-                        'updated_at'       => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['update_time'], $calendar_tsv_cols, 'update_time'),
                     ]);
+                    $calendar_post->created_id   = $this->getUserIdFromLoginId($users, $calendar_tsv_cols[$tsv_idxs['insert_login_id']]);
+                    $calendar_post->created_name = $calendar_tsv_cols[$tsv_idxs['created_name']];
+                    $calendar_post->created_at   = $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['created_at'], $calendar_tsv_cols, 'created_at');
+                    $calendar_post->updated_id   = $this->getUserIdFromLoginId($users, $calendar_tsv_cols[$tsv_idxs['update_login_id']]);
+                    $calendar_post->updated_name = $calendar_tsv_cols[$tsv_idxs['updated_name']];
+                    $calendar_post->updated_at   = $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['updated_at'], $calendar_tsv_cols, 'updated_at');
+                    // 登録更新日時を自動更新しない
+                    $calendar_post->timestamps = false;
+                    $calendar_post->save();
 
                     // 記事のマッピングテーブルの追加
                     $mapping = MigrationMapping::create([
@@ -9016,6 +9021,9 @@ trait MigrationTrait
 
         $nc2_export_room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
 
+        // nc2の全ユーザ取得
+        $nc2_users = Nc2User::get();
+
         // ルームでループ（NC2カレンダーはルーム単位でエクスポート）
         foreach ($nc2_page_rooms as $nc2_page_room) {
 
@@ -9059,35 +9067,26 @@ trait MigrationTrait
 
 
             // カラムのヘッダー及びTSV 行毎の枠準備
-            $tsv_header = "calendar_id" . "\t" . "plan_id" . "\t" . "room_id" . "\t" . "user_id" . "\t" . "user_name" . "\t" . "title" . "\t" ."title_icon" . "\t" .
-                "allday_flag" . "\t" . "start_date" . "\t" . "start_time" . "\t" . "start_time_full" . "\t" . "end_date" . "\t" . "end_time" . "\t" .
-                "end_time_full" . "\t" . "timezone_offset" . "\t" . "link_module" . "\t" . "link_id" . "\t" . "link_action_name" . "\t" .
+            $tsv_header = "calendar_id" . "\t" . "plan_id" . "\t" . "user_id" . "\t" . "user_name" . "\t" . "title" . "\t" .
+                "allday_flag" . "\t" . "start_date" . "\t" . "start_time" . "\t" . "end_date" . "\t" . "end_time" . "\t" .
                 // NC2 calendar_plan_details
-                "location" . "\t" . "contact" . "\t" . "description" . "\t" . "rrule" . "\t" .
-                // NC2 calendar_plan 登録日・更新日
-                "insert_time" . "\t" . "update_time" . "\t" .
+                "location" . "\t" . "contact" . "\t" . "body" . "\t" . "rrule" . "\t" .
+                // NC2 calendar_plan 登録日・更新日等
+                "created_at" . "\t" . "created_name" . "\t" . "insert_login_id" . "\t" . "updated_at" . "\t" . "updated_name" . "\t" . "update_login_id" . "\t" .
                 // CC 状態
                 "status";
 
             // NC2 calendar_plan
             $tsv_cols['calendar_id'] = "";
             $tsv_cols['plan_id'] = "";
-            $tsv_cols['room_id'] = "";
             $tsv_cols['user_id'] = "";
             $tsv_cols['user_name'] = "";
             $tsv_cols['title'] = "";
-            $tsv_cols['title_icon'] = "";
             $tsv_cols['allday_flag'] = "";
             $tsv_cols['start_date'] = "";
             $tsv_cols['start_time'] = "";
-            $tsv_cols['start_time_full'] = "";
             $tsv_cols['end_date'] = "";
             $tsv_cols['end_time'] = "";
-            $tsv_cols['end_time_full'] = "";
-            $tsv_cols['timezone_offset'] = "";
-            $tsv_cols['link_module'] = "";
-            $tsv_cols['link_id'] = "";
-            $tsv_cols['link_action_name'] = "";
 
             // NC2 calendar_plan_details
             // 場所
@@ -9095,13 +9094,17 @@ trait MigrationTrait
             // 連絡先
             $tsv_cols['contact'] = "";
             // 内容
-            $tsv_cols['description'] = "";
+            $tsv_cols['body'] = "";
             // 繰り返し条件
             $tsv_cols['rrule'] = "";
 
-            // NC2 calendar_plan 登録日・更新日
-            $tsv_cols['insert_time'] = "";
-            $tsv_cols['update_time'] = "";
+            // NC2 calendar_plan 登録日・更新日等
+            $tsv_cols['created_at'] = "";
+            $tsv_cols['created_name'] = "";
+            $tsv_cols['insert_login_id'] = "";
+            $tsv_cols['updated_at'] = "";
+            $tsv_cols['updated_name'] = "";
+            $tsv_cols['update_login_id'] = "";
 
             // CC 状態
             $tsv_cols['status'] = "";
@@ -9130,21 +9133,16 @@ trait MigrationTrait
                 // NC2 calendar_plan
                 $tsv_record['calendar_id'] = $calendar_plan->calendar_id;
                 $tsv_record['plan_id'] = $calendar_plan->plan_id;
-                $tsv_record['room_id'] = $calendar_plan->room_id;
                 $tsv_record['user_id'] = $calendar_plan->user_id;
                 $tsv_record['user_name'] = $calendar_plan->user_name;
                 $tsv_record['title'] = $calendar_plan->title;
-                $tsv_record['title_icon'] = $calendar_plan->title_icon;
                 $tsv_record['allday_flag'] = $calendar_plan->allday_flag;
 
                 // 予定開始日時
                 // Carbon()で処理。必須値のため基本値がある想定で、timezone_offset で時間加算して予定時間を算出
                 $start_time_full = (new Carbon($calendar_plan->start_time_full))->addHour($calendar_plan->timezone_offset);
-                // $tsv_record['start_date'] = $calendar_plan->start_date;
-                // $tsv_record['start_time'] = $calendar_plan->start_time;
                 $tsv_record['start_date'] = $start_time_full->format('Y-m-d');
                 $tsv_record['start_time'] = $start_time_full->format('H:i:s');
-                $tsv_record['start_time_full'] = $start_time_full;
 
                 // 予定終了日時
                 // Carbon()で処理。必須値のため基本値がある想定で、timezone_offset で時間加算して予定時間を算出
@@ -9170,16 +9168,8 @@ trait MigrationTrait
                     // -1分
                     $end_time_full = $end_time_full->subMinute();
                 }
-                // $tsv_record['end_date'] = $calendar_plan->end_date;
-                // $tsv_record['end_time'] = $calendar_plan->end_time;
                 $tsv_record['end_date'] = $end_time_full->format('Y-m-d');
                 $tsv_record['end_time'] = $end_time_full->format('H:i:s');
-                $tsv_record['end_time_full'] = $end_time_full;
-
-                $tsv_record['timezone_offset'] = $calendar_plan->timezone_offset;
-                $tsv_record['link_module'] = $calendar_plan->link_module;
-                $tsv_record['link_id'] = $calendar_plan->link_id;
-                $tsv_record['link_action_name'] = $calendar_plan->link_action_name;
 
                 // NC2 calendar_plan_details（plan_id, room_idあり）
                 // 場所
@@ -9187,14 +9177,18 @@ trait MigrationTrait
                 // 連絡先
                 $tsv_record['contact'] = $calendar_plan->contact;
                 // 内容 [WYSIWYG]
-                $tsv_record['description'] = $this->nc2Wysiwyg(null, null, null, null, $calendar_plan->description, 'calendar');
+                $tsv_record['body'] = $this->nc2Wysiwyg(null, null, null, null, $calendar_plan->description, 'calendar');
 
                 // 繰り返し条件
                 $tsv_record['rrule'] = $calendar_plan->rrule;
 
-                // NC2 calendar_plan 登録日・更新日
-                $tsv_record['insert_time'] = $this->getCCDatetime($calendar_plan->insert_time);
-                $tsv_record['update_time'] = $this->getCCDatetime($calendar_plan->update_time);
+                // NC2 calendar_plan 登録日・更新日等
+                $tsv_record['created_at']      = $this->getCCDatetime($calendar_plan->insert_time);
+                $tsv_record['created_name']    = $calendar_plan->insert_user_name;
+                $tsv_record['insert_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc2_users, $calendar_plan->insert_user_id);
+                $tsv_record['updated_at']      = $this->getCCDatetime($calendar_plan->update_time);
+                $tsv_record['updated_name']    = $calendar_plan->update_user_name;
+                $tsv_record['update_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc2_users, $calendar_plan->update_user_id);
 
                 // NC2カレンダー予定は公開のみ
                 $tsv_record['status'] = 0;
