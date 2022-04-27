@@ -150,6 +150,12 @@ class BlogsPlugin extends UserPluginBase
             // ->orderBy('id', 'desc')
             // ->first();
 
+        // 他バケツの参照禁止
+        $blogs_query = $blogs_query->join('blogs', function ($join) {
+            $join->on('blogs.id', '=', 'blogs_posts.blogs_id')
+                ->where('blogs.bucket_id', '=', $this->frame->bucket_id);
+        });
+
         // カテゴリのleftJoin
         $blogs_query =  Categories::appendCategoriesLeftJoin($blogs_query, $this->frame->plugin_name, 'blogs_posts.categories_id', 'blogs_posts.blogs_id');
 

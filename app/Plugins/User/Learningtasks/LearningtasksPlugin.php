@@ -234,6 +234,9 @@ class LearningtasksPlugin extends UserPluginBase
             // ->orderBy('id', 'desc')
             // ->first();
 
+        // 他バケツの参照禁止
+        $learningtasks_query = $learningtasks_query->where('learningtasks.bucket_id', $this->frame->bucket_id);
+
         // カテゴリのleftJoin
         $learningtasks_query = Categories::appendCategoriesLeftJoin($learningtasks_query, $this->frame->plugin_name, 'learningtasks_posts.categories_id', 'learningtasks.id');
 

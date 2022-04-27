@@ -118,6 +118,12 @@ class BbsesPlugin extends UserPluginBase
             });
             // ->firstOrNew(['id' => $id]);
 
+        // 他バケツの参照禁止
+        $bbses_query = $bbses_query->join('bbses', function ($join) {
+            $join->on('bbses.id', '=', 'bbs_posts.bbs_id')
+                ->where('bbses.bucket_id', '=', $this->frame->bucket_id);
+        });
+
         // いいねのleftJoin
         $bbses_query = Like::appendLikeLeftJoin($bbses_query, $this->frame->plugin_name, 'bbs_posts.id', 'bbs_posts.bbs_id');
 

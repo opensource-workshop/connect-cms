@@ -107,6 +107,12 @@ class CalendarsPlugin extends UserPluginBase
             where(function ($query) {
                 $query = $this->appendAuthWhereBase($query, 'calendar_posts');
             })
+            ->whereExists(function ($query) {
+                $query->select(DB::raw(1))
+                      ->from('calendars')
+                      ->whereRaw('calendar_posts.calendar_id = calendars.id')
+                      ->where('calendars.bucket_id', $this->frame->bucket_id);
+            })
             ->firstOrNew(['id' => $id]);
 
         return $this->post;

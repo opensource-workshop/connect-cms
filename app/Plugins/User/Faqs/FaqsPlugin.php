@@ -126,6 +126,12 @@ class FaqsPlugin extends UserPluginBase
             // ->orderBy('faqs_posts.id', 'desc')
             // ->first();
 
+        // 他バケツの参照禁止
+        $faq_query = $faq_query->join('faqs', function ($join) {
+            $join->on('faqs.id', '=', 'faqs_posts.faqs_id')
+                ->where('faqs.bucket_id', '=', $this->frame->bucket_id);
+        });
+
         // カテゴリのleftJoin
         $faq_query = Categories::appendCategoriesLeftJoin($faq_query, $this->frame->plugin_name, 'faqs_posts.categories_id', 'faqs_posts.faqs_id');
 
