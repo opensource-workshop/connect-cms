@@ -351,7 +351,7 @@ class SearchsPlugin extends UserPluginBase
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'search_name'     => ['required'],
-            'count'           => ['nullable', 'numeric'],
+            'count'           => ['required', 'numeric'],
             'target_plugin'   => ['required'],
         ]);
         $validator->setAttributeNames([
