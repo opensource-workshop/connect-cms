@@ -376,13 +376,17 @@ class CalendarsPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'title'      => ['required', 'max:255'],
+            'title'      => ['required', 'max:191'],
             'body'       => ['nullable', new CustomValiWysiwygMax()],
+            'location'   => ['nullable', 'max:191'],
+            'contact'    => ['nullable', 'max:191'],
             'start_date' => ['required', 'date'],
         ]);
         $validator->setAttributeNames([
             'title'      => 'タイトル',
-            'body'      => '本文',
+            'body'       => '本文',
+            'location'   => '場所',
+            'contact'    => '連絡先',
             'start_date' => '開始日時',
         ]);
         // エラーがあった場合は入力画面に戻る。
@@ -421,6 +425,8 @@ class CalendarsPlugin extends UserPluginBase
         $post->end_time    = $request->end_time;
         $post->title       = $request->title;
         $post->body        = $this->clean($request->body);   // wysiwygのXSS対応のJavaScript等の制限
+        $post->location    = $request->location;
+        $post->contact     = $request->contact;
 
         // bugfix: 【カレンダー】承認機能ONで一般が書き込んだ内容を、管理者が編集すると、以後その予定が一般で編集できなくなるバグ修正. created_idは UserableNohistory で自動セットするよう修正
         // 投稿者をセット

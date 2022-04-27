@@ -3516,6 +3516,8 @@ trait MigrationTrait
                         'end_time'         => $calendar_tsv_cols[$tsv_idxs['end_time']],
                         'title'            => $calendar_tsv_cols[$tsv_idxs['title']],
                         'body'             => $this->changeWYSIWYG($calendar_tsv_cols[$tsv_idxs['description']]),
+                        'location'         => $calendar_tsv_cols[$tsv_idxs['location']],
+                        'contact'          => $calendar_tsv_cols[$tsv_idxs['contact']],
                         'status'           => $calendar_tsv_cols[$tsv_idxs['status']],
                         'created_at'       => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['insert_time'], $calendar_tsv_cols, 'insert_time'),
                         'updated_at'       => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['update_time'], $calendar_tsv_cols, 'update_time'),

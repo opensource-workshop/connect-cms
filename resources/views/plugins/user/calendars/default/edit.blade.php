@@ -203,6 +203,22 @@
     </div>
 
     <div class="form-group form-row">
+        <label class="{{$label_class}}">場所</label>
+        <div class="{{$input_area_class}}">
+            <input type="text" name="location" value="{{old('location', $post->location)}}" class="form-control @if ($errors && $errors->has('location')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'location'])
+        </div>
+    </div>
+
+    <div class="form-group form-row">
+        <label class="{{$label_class}}">連絡先</label>
+        <div class="{{$input_area_class}}">
+            <input type="text" name="contact" value="{{old('contact', $post->contact)}}" class="form-control @if ($errors && $errors->has('contact')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'contact'])
+        </div>
+    </div>
+
+    <div class="form-group form-row">
         <label class="{{$label_class}}">本文</label>
         <div class="{{$input_area_class}}">
             <div @if ($errors && $errors->has('body')) class="border border-danger" @endif>
