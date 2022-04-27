@@ -132,7 +132,11 @@ class OpacsPlugin extends UserPluginBase
         }
 
         // POST を取得する。（statusカラムなしのため、appendAuthWhereBase 使わない）
-        $this->post = OpacsBooks::firstOrNew(['id' => $id]);
+        $this->post = OpacsBooks::join('opacs', function ($join) {
+            $join->on('opacs.id', '=', 'opacs_books.opacs_id')
+                ->where('opacs.bucket_id', '=', $this->frame->bucket_id);
+        })
+        ->firstOrNew(['opacs.id' => $id]);
         return $this->post;
     }
 
@@ -987,9 +991,14 @@ class OpacsPlugin extends UserPluginBase
         $opac_frame = $this->getOpacFrame($frame_id);
 
         // 書籍情報取得
-        $opacs_book = OpacsBooks::where('opacs_books.id', $opacs_books_id)->first();
+        $opacs_book = OpacsBooks::where('opacs_books.id', $opacs_books_id)
+            ->join('opacs', function ($join) {
+                $join->on('opacs.id', '=', 'opacs_books.opacs_id')
+                    ->where('opacs.bucket_id', '=', $this->frame->bucket_id);
+            })
+            ->first();
         if (empty($opacs_book)) {
-            return;
+            return $this->viewError("403_inframe", null, '詳細取得NG');
         }
 
         // 書籍貸出情報取得

@@ -170,6 +170,15 @@ class ReservationsPlugin extends UserPluginBase
                 // 権限によって表示する記事を絞る
                 $query = $this->appendAuthWhereBase($query, 'reservations_inputs');
             })
+            ->join('reservations_choice_categories', function ($join) {
+                $join->on('reservations_choice_categories.reservations_categories_id', '=', 'reservations_facilities.reservations_categories_id')
+                    ->where('reservations_choice_categories.view_flag', ShowType::show)
+                    ->whereNull('reservations_choice_categories.deleted_at');
+            })
+            ->join('reservations', function ($join) {
+                $join->on('reservations.id', '=', 'reservations_choice_categories.reservations_id')
+                    ->where('reservations.bucket_id', '=', $this->frame->bucket_id);
+            })
             ->firstOrNew(['reservations_inputs.id' => $id]);
 
         if (in_array($action, ['editBooking', 'saveBooking', 'destroyBooking'])) {
@@ -1261,7 +1270,7 @@ class ReservationsPlugin extends UserPluginBase
         $inputs = $this->getReservationsInput($input_id);
         // データがあることを確認
         if (empty($inputs->id)) {
-            return;
+            return $this->viewError("403_inframe", null, '詳細取得NG');
         }
 
         // カラムの取得

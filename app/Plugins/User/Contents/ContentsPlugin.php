@@ -107,6 +107,7 @@ class ContentsPlugin extends UserPluginBase
             where(function ($query) {
                 $query = $this->appendAuthWhere($query, 'contents');
             })
+            ->where('bucket_id', $this->frame->bucket_id)
             ->firstOrNew(['id' => $id]);
 
         // 続きを読むボタン名・続きを閉じるボタン名が空なら、初期値セットする

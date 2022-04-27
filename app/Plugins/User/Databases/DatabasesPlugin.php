@@ -168,6 +168,12 @@ class DatabasesPlugin extends UserPluginBase
                 // 権限によって表示する記事を絞る
                 $query = $this->appendAuthWhereBase($query, 'databases_inputs');
             })
+            ->whereExists(function ($query) {
+                $query->select(DB::raw(1))
+                      ->from('databases')
+                      ->whereRaw('databases_inputs.databases_id = databases.id')
+                      ->where('databases.bucket_id', $this->frame->bucket_id);
+            })
             ->firstOrNew(['id' => $id]);
 
         return $this->post;
@@ -967,7 +973,7 @@ class DatabasesPlugin extends UserPluginBase
 
         // データがあることを確認
         if (empty($inputs->id)) {
-            return;
+            return $this->viewError("403_inframe", null, '詳細取得NG');
         }
 
         // カラムの取得
