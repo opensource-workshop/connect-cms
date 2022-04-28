@@ -1087,7 +1087,7 @@ class DatabasesPlugin extends UserPluginBase
     private function getValidatorRule($validator_array, $databases_column)
     {
         // 入力しないカラム型は、バリデータチェックしない
-        if (DatabasesColumns::isNotInputColumnType($databases_column->column_type)) {
+        if ($databases_column->isNotInputColumnType()) {
             return $validator_array;
         }
 
@@ -1259,7 +1259,7 @@ class DatabasesPlugin extends UserPluginBase
 
         foreach ($databases_columns as $databases_column) {
             // ファイルタイプ以外の入力値をトリム
-            if (! DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+            if (! $databases_column->isFileColumnType()) {
                 if (isset($request->databases_columns_value[$databases_column->id])) {
                     // 一度配列にして、trim後、また文字列に戻す。
                     $tmp_columns_value = StringUtils::trimInput($request->databases_columns_value[$databases_column->id]);
@@ -1336,7 +1336,7 @@ class DatabasesPlugin extends UserPluginBase
 
         // ファイル項目を探して保存
         foreach ($databases_columns as $databases_column) {
-            if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+            if ($databases_column->isFileColumnType()) {
                 // ファイル系の処理パターン
                 // 新規登録   ＞ アップロードされたことを hasFile で検知
                 // 変更の削除 ＞ databases_columns_delete_ids に削除するdatabases_input_cols の id を溜める。項目値も一旦クリア。
@@ -1504,7 +1504,7 @@ class DatabasesPlugin extends UserPluginBase
         // databases_input_cols 登録
         foreach ($databases_columns as $databases_column) {
             // 登録日型・更新日型・公開日型・表示順は、databases_inputsテーブルの登録日・更新日・公開日・表示順を利用するため、登録しない
-            if (DatabasesColumns::isNotInputColumnType($databases_column->column_type)) {
+            if ($databases_column->isNotInputColumnType()) {
                 continue;
             }
 
@@ -1526,7 +1526,7 @@ class DatabasesPlugin extends UserPluginBase
                 $databases_input_cols->save();
 
                 // ファイルタイプがファイル系の場合は、uploads テーブルの一時フラグを更新
-                if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+                if ($databases_column->isFileColumnType()) {
                     $uploads_count = Uploads::where('id', $value)->update(['temporary_flag' => 0]);
                 }
             }
@@ -1584,7 +1584,7 @@ class DatabasesPlugin extends UserPluginBase
 
         // ファイル型のファイル、uploads テーブルを削除
         foreach ($input_cols as $input_col) {
-            if (DatabasesColumns::isFileColumnType($input_col->column_type)) {
+            if ($input_col->isFileColumnType()) {
                 // 削除するファイルデータ
                 $delete_upload = Uploads::find($input_col->value);
 
@@ -2037,7 +2037,7 @@ class DatabasesPlugin extends UserPluginBase
             $file_column_type_ids = [];
             foreach ($databases_columns as $databases_column) {
                 // ファイルタイプ
-                if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+                if ($databases_column->isFileColumnType()) {
                     $file_column_type_ids[] = $databases_column->id;
                 }
             }
@@ -3271,7 +3271,7 @@ class DatabasesPlugin extends UserPluginBase
                     if ($csv_column) {
                         if ($file_extension == 'zip') {
                             // ファイルタイプ
-                            if (DatabasesColumns::isFileColumnType($databases_columns[$col]->column_type)) {
+                            if ($databases_columns[$col]->isFileColumnType()) {
                                 // パスをアップロードIDに書き換える。
                                 $csv_column = array_search($csv_column, $unzip_uploadeds);
                                 $csv_column = $csv_column === false ? null : $csv_column;
@@ -3386,7 +3386,7 @@ class DatabasesPlugin extends UserPluginBase
                 $file_columns_ids = [];
                 foreach ($databases_columns as $databases_column) {
                     // ファイルタイプ
-                    if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+                    if ($databases_column->isFileColumnType()) {
                         $file_columns_ids[] = $databases_column->id;
                     }
                 }
@@ -3403,12 +3403,12 @@ class DatabasesPlugin extends UserPluginBase
                 // よってこの２つの配列数は同じになる想定。issetでチェックしているが基本ある想定。
                 if (isset($databases_columns[$col])) {
                     // 登録日型・更新日型・公開日型・表示順は、databases_inputsテーブルの登録日・更新日・公開日・表示順を利用するため、登録しない
-                    if (DatabasesColumns::isNotInputColumnType($databases_columns[$col]->column_type)) {
+                    if ($databases_columns[$col]->isNotInputColumnType()) {
                         continue;
                     }
 
                     // ファイルタイプ
-                    if (DatabasesColumns::isFileColumnType($databases_columns[$col]->column_type)) {
+                    if ($databases_columns[$col]->isFileColumnType()) {
                         if ($file_extension == 'csv') {
                             if (empty($databases_inputs_id)) {
                                 // 登録: ファイルなしは既に$csv_columnにnullをセット済みのため、何もしない.（nullだとno_image画像が表示される）
@@ -3532,7 +3532,7 @@ class DatabasesPlugin extends UserPluginBase
 
                 if ($file_extension == 'csv') {
                     // ファイルタイプ
-                    if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+                    if ($databases_column->isFileColumnType()) {
                         // csv単体のインポートでは、ファイルタイプはインポートできないため、バリデーションルールをチェックなしで上書き。
                         // 登録時の値は別途 null に変換してる。
                         $rules[$col + 1] = [];
@@ -3624,7 +3624,7 @@ class DatabasesPlugin extends UserPluginBase
                     if ($csv_column) {
                         if ($file_extension == 'zip') {
                             // ファイルタイプ
-                            if (DatabasesColumns::isFileColumnType($databases_columns[$col]->column_type)) {
+                            if ($databases_columns[$col]->isFileColumnType()) {
                                 // バリデーションのためだけに、一時的にパスをフルパスに書き換える。
                                 if (isset($unzip_uploads_full_paths2[$csv_column])) {
                                     $csv_column = $unzip_uploads_full_paths2[$csv_column];
