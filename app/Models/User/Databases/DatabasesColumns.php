@@ -59,12 +59,12 @@ class DatabasesColumns extends Model
     /**
      * ファイルタイプのカラム型か
      */
-    public function isFileColumnType()
+    public static function isFileColumnType($column_type)
     {
         // ファイルタイプ
-        if ($this->column_type == DatabaseColumnType::file ||
-                $this->column_type == DatabaseColumnType::image ||
-                $this->column_type == DatabaseColumnType::video) {
+        if ($column_type == DatabaseColumnType::file ||
+                $column_type == DatabaseColumnType::image ||
+                $column_type == DatabaseColumnType::video) {
             return true;
         }
         return false;
@@ -73,13 +73,13 @@ class DatabasesColumns extends Model
     /**
      * 埋め込みタグから除外するカラム型か
      */
-    public function isNotEmbeddedTagsColumnType()
+    public static function isNotEmbeddedTagsColumnType($column_type)
     {
         // 登録日型・更新日型・公開日型・表示順型は入力しない
-        if ($this->column_type == DatabaseColumnType::created ||
-                $this->column_type == DatabaseColumnType::updated ||
-                $this->column_type == DatabaseColumnType::posted ||
-                $this->column_type == DatabaseColumnType::display) {
+        if ($column_type == DatabaseColumnType::created ||
+                $column_type == DatabaseColumnType::updated ||
+                $column_type == DatabaseColumnType::posted ||
+                $column_type == DatabaseColumnType::display) {
             return true;
         }
         return false;

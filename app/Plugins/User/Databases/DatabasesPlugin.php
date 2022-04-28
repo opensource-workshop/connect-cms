@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Validation\Rule;
@@ -1243,11 +1244,11 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // 固定項目エリア
-        $validator_array['column']['posted_at'] = ['required', 'date_format:Y-m-d H:i'];
-        $validator_array['column']['expires_at'] = ['nullable', 'date_format:Y-m-d H:i', 'after:posted_at'];
-        $validator_array['column']['display_sequence'] = ['nullable', 'numeric'];
-        $validator_array['message']['posted_at'] = '公開日時';
-        $validator_array['message']['expires_at'] = '公開終了日時';
+        $validator_array['column']['posted_at']         = ['required', 'date_format:Y-m-d H:i'];
+        $validator_array['column']['expires_at']        = ['nullable', 'date_format:Y-m-d H:i', 'after:posted_at'];
+        $validator_array['column']['display_sequence']  = ['nullable', 'numeric'];
+        $validator_array['message']['posted_at']        = '公開日時';
+        $validator_array['message']['expires_at']       = '公開終了日時';
         $validator_array['message']['display_sequence'] = '表示順';
 
         // --- 入力値変換
@@ -1259,7 +1260,7 @@ class DatabasesPlugin extends UserPluginBase
 
         foreach ($databases_columns as $databases_column) {
             // ファイルタイプ以外の入力値をトリム
-            if (! $databases_column->isFileColumnType()) {
+            if (! DatabasesColumns::isFileColumnType($databases_column->column_type)) {
                 if (isset($request->databases_columns_value[$databases_column->id])) {
                     // 一度配列にして、trim後、また文字列に戻す。
                     $tmp_columns_value = StringUtils::trimInput($request->databases_columns_value[$databases_column->id]);
@@ -1336,7 +1337,7 @@ class DatabasesPlugin extends UserPluginBase
 
         // ファイル項目を探して保存
         foreach ($databases_columns as $databases_column) {
-            if ($databases_column->isFileColumnType()) {
+            if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
                 // ファイル系の処理パターン
                 // 新規登録   ＞ アップロードされたことを hasFile で検知
                 // 変更の削除 ＞ databases_columns_delete_ids に削除するdatabases_input_cols の id を溜める。項目値も一旦クリア。
@@ -1526,7 +1527,7 @@ class DatabasesPlugin extends UserPluginBase
                 $databases_input_cols->save();
 
                 // ファイルタイプがファイル系の場合は、uploads テーブルの一時フラグを更新
-                if ($databases_column->isFileColumnType()) {
+                if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
                     $uploads_count = Uploads::where('id', $value)->update(['temporary_flag' => 0]);
                 }
             }
@@ -1537,6 +1538,36 @@ class DatabasesPlugin extends UserPluginBase
             NoticeEmbeddedTag::title => $this->getTitle($databases_inputs),
             NoticeEmbeddedTag::body => BucketsMail::stripTagsWysiwyg($this->getBody($databases_inputs)),
         ];
+
+        foreach ($databases_columns as $databases_column) {
+            // 除外する埋め込みタグはセットしない
+            if (DatabasesColumns::isNotEmbeddedTagsColumnType($databases_column->column_type)) {
+                continue;
+            }
+
+            $value = "";
+            if (is_array($request->databases_columns_value[$databases_column->id])) {
+                $value = implode(self::CHECKBOX_SEPARATOR, $request->databases_columns_value[$databases_column->id]);
+            } else {
+                $value = $request->databases_columns_value[$databases_column->id];
+            }
+
+            if ($databases_column->column_type == DatabaseColumnType::wysiwyg) {
+                $overwrite_notice_embedded_tags["X-{$databases_column->column_name}"] = BucketsMail::stripTagsWysiwyg($value);
+            } elseif (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+
+                if ($value) {
+                    $upload = Uploads::find($value);
+                    $upload = $upload ?? new Uploads();
+                    $overwrite_notice_embedded_tags["X-{$databases_column->column_name}"] = $upload->client_original_name;
+                } else {
+                    $overwrite_notice_embedded_tags["X-{$databases_column->column_name}"] = '';
+                }
+
+            } else {
+                $overwrite_notice_embedded_tags["X-{$databases_column->column_name}"] = $value;
+            }
+        }
 
         // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド, 上書き埋め込みタグ)
         $this->sendPostNotice($databases_inputs, $before_databases_inputs, 'detail', $overwrite_notice_embedded_tags);
@@ -1582,9 +1613,41 @@ class DatabasesPlugin extends UserPluginBase
         // ファイル型の調査のため、詳細カラムデータを取得（削除通知でも使用）
         $input_cols = $this->getDatabasesInputCols($id);
 
+        // メール送信のために、削除する前に行レコードを退避しておく。
+        $deleted_input = DatabasesInputs::firstOrNew(['id' => $id]);
+
+        // プラグイン独自の埋め込みタグ
+        $overwrite_notice_embedded_tags = [
+            NoticeEmbeddedTag::title => $this->getTitle($deleted_input),
+            NoticeEmbeddedTag::body => BucketsMail::stripTagsWysiwyg($this->getBody($deleted_input)),
+        ];
+
+        foreach ($input_cols as $input_col) {
+            // 除外する埋め込みタグはセットしない
+            if (DatabasesColumns::isNotEmbeddedTagsColumnType($input_col->column_type)) {
+                continue;
+            }
+
+            if ($input_col->column_type == DatabaseColumnType::wysiwyg) {
+                $overwrite_notice_embedded_tags["X-{$input_col->column_name}"] = BucketsMail::stripTagsWysiwyg($input_col->value);
+
+            } elseif (DatabasesColumns::isFileColumnType($input_col->column_type)) {
+                if ($input_col->value) {
+                    $upload = Uploads::find($input_col->value);
+                    $upload = $upload ?? new Uploads();
+                    $overwrite_notice_embedded_tags["X-{$input_col->column_name}"] = $upload->client_original_name;
+                } else {
+                    $overwrite_notice_embedded_tags["X-{$input_col->column_name}"] = '';
+                }
+
+            } else {
+                $overwrite_notice_embedded_tags["X-{$input_col->column_name}"] = $input_col->value;;
+            }
+        }
+
         // ファイル型のファイル、uploads テーブルを削除
         foreach ($input_cols as $input_col) {
-            if ($input_col->isFileColumnType()) {
+            if (DatabasesColumns::isFileColumnType($input_col->column_type)) {
                 // 削除するファイルデータ
                 $delete_upload = Uploads::find($input_col->value);
 
@@ -1598,15 +1661,6 @@ class DatabasesPlugin extends UserPluginBase
                 }
             }
         }
-
-        // メール送信のために、削除する前に行レコードを退避しておく。
-        $deleted_input = DatabasesInputs::firstOrNew(['id' => $id]);
-
-        // プラグイン独自の埋め込みタグ
-        $overwrite_notice_embedded_tags = [
-            NoticeEmbeddedTag::title => $this->getTitle($deleted_input),
-            NoticeEmbeddedTag::body => BucketsMail::stripTagsWysiwyg($this->getBody($deleted_input)),
-        ];
 
         // 詳細カラムデータを削除
         DatabasesInputCols::where('databases_inputs_id', $id)->delete();
@@ -2037,7 +2091,7 @@ class DatabasesPlugin extends UserPluginBase
             $file_column_type_ids = [];
             foreach ($databases_columns as $databases_column) {
                 // ファイルタイプ
-                if ($databases_column->isFileColumnType()) {
+                if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
                     $file_column_type_ids[] = $databases_column->id;
                 }
             }
@@ -3271,7 +3325,7 @@ class DatabasesPlugin extends UserPluginBase
                     if ($csv_column) {
                         if ($file_extension == 'zip') {
                             // ファイルタイプ
-                            if ($databases_columns[$col]->isFileColumnType()) {
+                            if (DatabasesColumns::isFileColumnType($databases_columns[$col]->column_type)) {
                                 // パスをアップロードIDに書き換える。
                                 $csv_column = array_search($csv_column, $unzip_uploadeds);
                                 $csv_column = $csv_column === false ? null : $csv_column;
@@ -3386,7 +3440,7 @@ class DatabasesPlugin extends UserPluginBase
                 $file_columns_ids = [];
                 foreach ($databases_columns as $databases_column) {
                     // ファイルタイプ
-                    if ($databases_column->isFileColumnType()) {
+                    if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
                         $file_columns_ids[] = $databases_column->id;
                     }
                 }
@@ -3408,7 +3462,7 @@ class DatabasesPlugin extends UserPluginBase
                     }
 
                     // ファイルタイプ
-                    if ($databases_columns[$col]->isFileColumnType()) {
+                    if (DatabasesColumns::isFileColumnType($databases_columns[$col]->column_type)) {
                         if ($file_extension == 'csv') {
                             if (empty($databases_inputs_id)) {
                                 // 登録: ファイルなしは既に$csv_columnにnullをセット済みのため、何もしない.（nullだとno_image画像が表示される）
@@ -3532,7 +3586,7 @@ class DatabasesPlugin extends UserPluginBase
 
                 if ($file_extension == 'csv') {
                     // ファイルタイプ
-                    if ($databases_column->isFileColumnType()) {
+                    if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
                         // csv単体のインポートでは、ファイルタイプはインポートできないため、バリデーションルールをチェックなしで上書き。
                         // 登録時の値は別途 null に変換してる。
                         $rules[$col + 1] = [];
@@ -3624,7 +3678,7 @@ class DatabasesPlugin extends UserPluginBase
                     if ($csv_column) {
                         if ($file_extension == 'zip') {
                             // ファイルタイプ
-                            if ($databases_columns[$col]->isFileColumnType()) {
+                            if (DatabasesColumns::isFileColumnType($databases_columns[$col]->column_type)) {
                                 // バリデーションのためだけに、一時的にパスをフルパスに書き換える。
                                 if (isset($unzip_uploads_full_paths2[$csv_column])) {
                                     $csv_column = $unzip_uploads_full_paths2[$csv_column];
@@ -4065,5 +4119,27 @@ AND databases_inputs.posted_at <= NOW()
         $return[] = '/plugin/databases/detail';
 
         return $return;
+    }
+
+    /**
+     * メール送信設定 変更画面
+     */
+    public function editBucketsMails($request, $page_id, $frame_id, $id = null)
+    {
+        $view = parent::editBucketsMails($request, $page_id, $frame_id, $id);
+
+        // 可変項目の埋め込みタグ
+        $database = $this->getDatabases($frame_id);
+        if ($database) {
+            $columns = DatabasesColumns::where('databases_id', $database->id)->orderBy('display_sequence')->get();
+        } else {
+            $columns = collect();
+        }
+
+        // ビューに値を渡す
+        View::share('database', $database);
+        View::share('columns', $columns);
+
+        return $view;
     }
 }
