@@ -47,7 +47,7 @@ use App\Enums\DatabaseColumnRoleName;
 use App\Enums\DatabaseRoleName;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\Required;
-use App\Enums\NoticeEmbeddedTag;
+use App\Enums\DatabaseNoticeEmbeddedTag;
 use App\Enums\StatusType;
 
 /**
@@ -1535,8 +1535,11 @@ class DatabasesPlugin extends UserPluginBase
 
         // プラグイン独自の埋め込みタグ
         $overwrite_notice_embedded_tags = [
-            NoticeEmbeddedTag::title => $this->getTitle($databases_inputs),
-            NoticeEmbeddedTag::body => BucketsMail::stripTagsWysiwyg($this->getBody($databases_inputs)),
+            DatabaseNoticeEmbeddedTag::title =>            $this->getTitle($databases_inputs),
+            DatabaseNoticeEmbeddedTag::body =>             BucketsMail::stripTagsWysiwyg($this->getBody($databases_inputs)),
+            DatabaseNoticeEmbeddedTag::posted_at =>        $databases_inputs->posted_at,
+            DatabaseNoticeEmbeddedTag::expires_at =>       $databases_inputs->expires_at,
+            DatabaseNoticeEmbeddedTag::display_sequence => $databases_inputs->display_sequence,
         ];
 
         foreach ($databases_columns as $databases_column) {
@@ -1618,8 +1621,11 @@ class DatabasesPlugin extends UserPluginBase
 
         // プラグイン独自の埋め込みタグ
         $overwrite_notice_embedded_tags = [
-            NoticeEmbeddedTag::title => $this->getTitle($deleted_input),
-            NoticeEmbeddedTag::body => BucketsMail::stripTagsWysiwyg($this->getBody($deleted_input)),
+            DatabaseNoticeEmbeddedTag::title =>            $this->getTitle($deleted_input),
+            DatabaseNoticeEmbeddedTag::body =>             BucketsMail::stripTagsWysiwyg($this->getBody($deleted_input)),
+            DatabaseNoticeEmbeddedTag::posted_at =>        $deleted_input->posted_at,
+            DatabaseNoticeEmbeddedTag::expires_at =>       $deleted_input->expires_at,
+            DatabaseNoticeEmbeddedTag::display_sequence => $deleted_input->display_sequence,
         ];
 
         foreach ($input_cols as $input_col) {

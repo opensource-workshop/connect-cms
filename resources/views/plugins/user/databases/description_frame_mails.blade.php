@@ -23,7 +23,7 @@ use App\Models\User\Databases\DatabasesColumns;
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach(NoticeEmbeddedTag::getDescriptionEmbeddedTags() as $embedded_tag)
+                    @foreach(DatabaseNoticeEmbeddedTag::getDescriptionEmbeddedTags() as $embedded_tag)
                         <tr>
                             <td><code>{{$embedded_tag[0]}}</code></td>
                             <td>{{$embedded_tag[1]}}</td>
