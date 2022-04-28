@@ -1647,7 +1647,7 @@ class DatabasesPlugin extends UserPluginBase
                 }
 
             } else {
-                $overwrite_notice_embedded_tags["X-{$input_col->column_name}"] = $input_col->value;;
+                $overwrite_notice_embedded_tags["X-{$input_col->column_name}"] = $input_col->value;
             }
         }
 
