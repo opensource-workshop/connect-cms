@@ -7,10 +7,6 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
 --}}
-@php
-use App\Models\User\Databases\DatabasesColumns;
-@endphp
-
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
@@ -53,7 +49,7 @@ use App\Models\User\Databases\DatabasesColumns;
     @foreach($databases_columns as $database_column)
 
         {{-- 入力しないカラム型は表示しない --}}
-        @if (DatabasesColumns::isNotInputColumnType($database_column->column_type))
+        @if ($database_column->isNotInputColumnType())
             @continue
         @endif
 

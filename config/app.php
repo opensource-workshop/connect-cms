@@ -293,6 +293,7 @@ $app_array = [
         'NoticeEmbeddedTag' => \App\Enums\NoticeEmbeddedTag::class,
         'ReservationNoticeEmbeddedTag' => \App\Enums\ReservationNoticeEmbeddedTag::class,
         'UserRegisterNoticeEmbeddedTag' => \App\Enums\UserRegisterNoticeEmbeddedTag::class,
+        'DatabaseNoticeEmbeddedTag' => \App\Enums\DatabaseNoticeEmbeddedTag::class,
         'WhatsnewFrameConfig' => \App\Enums\WhatsnewFrameConfig::class,
         'PhotoalbumFrameConfig' => \App\Enums\PhotoalbumFrameConfig::class,
         'PhotoalbumSort' => \App\Enums\PhotoalbumSort::class,
