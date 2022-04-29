@@ -553,7 +553,7 @@ class FrameTest extends DuskTestCase
              'plugin_desc' => 'フレームに関する操作ができます。',
              'method_name' => 'frameMail',
              'method_title' => 'メール設定',
-             'method_desc' => 'プラグインのメール送信条件を設定します。。',
+             'method_desc' => 'プラグインのメール送信条件を設定します。',
              'method_detail' => '送信タイミングや送信先、件名、本文などを設定します。<br />設定できる送信通知はプラグインによって異なります。<br />ここでは、掲示板プラグインを例にして説明します。',
              'html_path' => 'common/frame/frameMail/index.html',
              'img_args' => '[
