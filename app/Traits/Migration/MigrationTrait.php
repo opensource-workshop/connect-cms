@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 use Carbon\Carbon;
 use RRule\RRule;
@@ -679,6 +680,15 @@ trait MigrationTrait
     }
 
     /**
+     * 配列からtsvの値取得
+     */
+    private function getTsvValue($tsv_cols, $idx, $default = null)
+    {
+        $value = $this->getArrayValue($tsv_cols, $idx, null, $default);
+        return empty($value) ? $default : $value;
+    }
+
+    /**
      * インポートの初期処理
      */
     private function migrationInit()
@@ -693,6 +703,8 @@ trait MigrationTrait
         } elseif (File::exists(storage_path('app/migration/oneclick/migration_config.oneclick.ini'))) {
             // NetCommons2 からのワンクリック移行用の migration config がある場合
             $this->migration_config = parse_ini_file(storage_path('app/migration/oneclick/migration_config.oneclick.ini'), true);
+        } else {
+            $this->putError(3, 'migration configのiniが見つかりません。');
         }
 
         // uploads のini ファイルの読み込み
@@ -1522,6 +1534,14 @@ trait MigrationTrait
                 $email = $user_item['email'];
                 if ($this->getMigrationConfig('users', 'cc_import_user_test_mail')) {
                     $email = str_replace('@', '＠', $user_item['email']);
+                } else {
+                    // emailのRFC違反チェック
+                    // 違反メールアドレスはメール送信時にエラーでこけるため。
+                    try {
+                        Validator::validate(['email' => $email], ['email' => ['email', 'nullable']]);
+                    } catch (\Exception $e) {
+                        $this->putError(3, 'ユーザーのメールアドレスがRFC違反。', " userid = " . $user_item['userid'] . " name = " . $user_item['name'] . " email='" . $email . "' error = " . $e->getMessage());
+                    }
                 }
                 // Duplicate entry 制約があるので、空文字ならnull に変換
                 if ($email == "") {
@@ -1839,12 +1859,36 @@ trait MigrationTrait
                     continue;
                 }
 
+                $plugin_name = $this->getArrayValue($permalinks_ini, $short_url, 'plugin_name');
+                if (empty($plugin_name)) {
+                    $this->putError(3, '固定URLの plugin_name なし', "short_url = " . $short_url);
+                    continue;
+                }
+
+                $unique_id = $this->getArrayValue($permalinks_ini, $short_url, 'unique_id');
+                if (empty($unique_id)) {
+                    $this->putError(3, '固定URLの nc2 unique_id なし', "short_url = " . $short_url);
+                    continue;
+                }
+
+                // 新 unique_id
+                $unique_migration_mappings = MigrationMapping::where('target_source_table', $plugin_name . '_post')->where('source_key', $unique_id)->first();
+                if (empty($unique_migration_mappings)) {
+                    $this->putError(3, '固定URLのリンク先移行後記事なし', "short_url = " . $short_url . " target_source_table = '" . $plugin_name . "_post' and source_key = " . $unique_id);
+                    continue;
+                }
+
+                $nc2_block_id = $this->getArrayValue($permalinks_ini, $short_url, 'block_id');
+
                 // Permalinks 登録 or 更新
-                $bulks[] = ['short_url' => $short_url,
-                    'plugin_name'    => $this->getArrayValue($permalinks_ini, $short_url, 'plugin_name'),
+                $bulks[] = [
+                    'short_url'      => $short_url,
+                    'plugin_name'    => $plugin_name,
                     'action'         => $this->getArrayValue($permalinks_ini, $short_url, 'action'),
-                    'unique_id'      => $this->getArrayValue($permalinks_ini, $short_url, 'unique_id'),
-                    'migrate_source' => $this->getArrayValue($permalinks_ini, $short_url, 'migrate_source')];
+                    'unique_id'      => $unique_migration_mappings->destination_key,
+                    'nc2_block_id'   => !empty($nc2_block_id) ? $nc2_block_id : null,
+                    'migrate_source' => $this->getArrayValue($permalinks_ini, $short_url, 'migrate_source'),
+                ];
                 /*
                 $permalink = Permalink::updateOrCreate(
                     ['short_url'     => $short_url],
@@ -1897,6 +1941,9 @@ trait MigrationTrait
         // ルームの指定（あれば後で使う）
         //$cc_import_blogs_room_ids = $this->getMigrationConfig('blogs', 'cc_import_blogs_room_ids');
 
+        // ユーザ取得
+        $users = User::get();
+
         // ブログ定義のループ
         foreach ($blogs_ini_paths as $blogs_ini_path) {
             // ini_file の解析
@@ -1936,17 +1983,27 @@ trait MigrationTrait
             // マッピングテーブルを確認して、追加か更新の処理を分岐
             if (empty($mapping)) {
                 // マッピングテーブルがなければ、Buckets テーブルと Blogs テーブル、マッピングテーブルを追加
-                $blog_name = '無題';
-                if (array_key_exists('blog_base', $blog_ini) && array_key_exists('blog_name', $blog_ini['blog_base'])) {
-                    $blog_name = $blog_ini['blog_base']['blog_name'];
-                }
-                $bucket = Buckets::create(['bucket_name' => $blog_name, 'plugin_name' => 'blogs']);
+                $blog_name = $this->getArrayValue($blog_ini, 'blog_base', 'blog_name', '無題');
 
-                $use_like = 0;
-                if (array_key_exists('blog_base', $blog_ini) && array_key_exists('use_like', $blog_ini['blog_base'])) {
-                    $use_like = $blog_ini['blog_base']['use_like'];
-                }
-                $blog = Blogs::create(['bucket_id' => $bucket->id, 'blog_name' => $blog_name, 'use_like' => $use_like]);
+                $bucket = new Buckets(['bucket_name' => $blog_name, 'plugin_name' => 'blogs']);
+                $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($blog_ini, 'source_info', 'created_at');
+                $bucket->updated_at = $this->getDatetimeFromIniAndCheckFormat($blog_ini, 'source_info', 'updated_at');
+                // 登録更新日時を自動更新しない
+                $bucket->timestamps = false;
+                $bucket->save();
+
+                $use_like = $this->getArrayValue($blog_ini, 'blog_base', 'use_like', 0);
+
+                $blog = new Blogs(['bucket_id' => $bucket->id, 'blog_name' => $blog_name, 'use_like' => $use_like]);
+                $blog->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($blog_ini, 'source_info', 'insert_login_id', null));
+                $blog->created_name = $this->getArrayValue($blog_ini, 'source_info', 'created_name', null);
+                $blog->created_at   = $this->getDatetimeFromIniAndCheckFormat($blog_ini, 'source_info', 'created_at');
+                $blog->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($blog_ini, 'source_info', 'update_login_id', null));
+                $blog->updated_name = $this->getArrayValue($blog_ini, 'source_info', 'updated_name', null);
+                $blog->updated_at   = $this->getDatetimeFromIniAndCheckFormat($blog_ini, 'source_info', 'updated_at');
+                // 登録更新日時を自動更新しない
+                $blog->timestamps = false;
+                $blog->save();
 
                 // マッピングテーブルの追加
                 $mapping = MigrationMapping::create([
@@ -1996,10 +2053,6 @@ trait MigrationTrait
                     // タブで項目に分割
                     $blog_tsv_cols = explode("\t", $blog_tsv_line);
 
-                    // 投稿日時の変換(NC2 の投稿日時はGMT のため、9時間プラスする) NC2=20151020122600
-                    $posted_at_ts = mktime(substr($blog_tsv_cols[0], 8, 2), substr($blog_tsv_cols[0], 10, 2), substr($blog_tsv_cols[0], 12, 2), substr($blog_tsv_cols[0], 4, 2), substr($blog_tsv_cols[0], 6, 2), substr($blog_tsv_cols[0], 0, 4));
-                    $posted_at = date('Y-m-d H:i:s', $posted_at_ts + (60 * 60 * 9));
-
                     // 記事のカテゴリID
                     // 記事のカテゴリID = original_categories にキーがあれば、original_categories の文言でブログ単位のカテゴリを探してID 特定。
                     $categories_id = null;
@@ -2027,12 +2080,12 @@ trait MigrationTrait
                     $close_more_button = null;
                     if (!empty($post_text2)) {
                         $read_more_flag = 1;
-                        $read_more_button = '続きを読む';
-                        $close_more_button = '閉じる';
+                        $read_more_button = BlogsPosts::read_more_button_default;
+                        $close_more_button = BlogsPosts::close_more_button_default;
                     }
 
                     // ブログ記事テーブル追加
-                    $blogs_posts = BlogsPosts::create([
+                    $blogs_posts = new BlogsPosts([
                         'blogs_id' => $blog->id,
                         'post_title' => $blog_tsv_cols[4],
                         'post_text' => $post_text,
@@ -2043,8 +2096,17 @@ trait MigrationTrait
                         'categories_id' => $categories_id,
                         'important' => null,
                         'status' => 0,
-                        'posted_at' => $posted_at
+                        'posted_at' => $this->getDatetimeFromTsvAndCheckFormat(0, $blog_tsv_cols, '0'),
                     ]);
+                    $blogs_posts->created_id = $this->getUserIdFromLoginId($users, $blog_tsv_cols[13]);
+                    $blogs_posts->created_name = $blog_tsv_cols[12];
+                    $blogs_posts->created_at = $this->getDatetimeFromTsvAndCheckFormat(11, $blog_tsv_cols, '11');
+                    $blogs_posts->updated_id = $this->getUserIdFromLoginId($users, $blog_tsv_cols[16]);
+                    $blogs_posts->updated_name = $blog_tsv_cols[15];
+                    $blogs_posts->updated_at = $this->getDatetimeFromTsvAndCheckFormat(14, $blog_tsv_cols, '14');
+                    // 登録更新日時を自動更新しない
+                    $blogs_posts->timestamps = false;
+                    $blogs_posts->save();
 
                     // contents_id を初回はid と同じものを入れて、更新
                     $blogs_posts->contents_id = $blogs_posts->id;
@@ -2390,15 +2452,21 @@ trait MigrationTrait
             if (empty($mapping)) {
                 // マッピングテーブルがなければ、Buckets テーブルと Database テーブル、マッピングテーブルを追加
                 $database_name = $this->getArrayValue($databases_ini, 'database_base', 'database_name', '無題');
-                $bucket = Buckets::create(['bucket_name' => $database_name, 'plugin_name' => 'databases']);
+
+                $bucket = new Buckets(['bucket_name' => $database_name, 'plugin_name' => 'databases']);
+                $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($databases_ini, 'source_info', 'insert_time');
+                $bucket->updated_at = $this->getDatetimeFromIniAndCheckFormat($databases_ini, 'source_info', 'update_time');
+                // 登録更新日時を自動更新しない
+                $bucket->timestamps = false;
+                $bucket->save();
 
                 $database = new Databases(['bucket_id' => $bucket->id, 'databases_name' => $database_name, 'data_save_flag' => 1]);
-                $database->created_id = $this->getUserIdFromLoginId($users, $this->getArrayValue($databases_ini, 'source_info', 'insert_login_id', null));
+                $database->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($databases_ini, 'source_info', 'insert_login_id', null));
                 $database->created_name = $this->getArrayValue($databases_ini, 'source_info', 'insert_user_name', null);
-                $database->created_at = $this->getDatetimeFromIniAndCheckFormat($databases_ini, 'source_info', 'insert_time');
-                $database->updated_id = $this->getUserIdFromLoginId($users, $this->getArrayValue($databases_ini, 'source_info', 'update_login_id', null));
+                $database->created_at   = $this->getDatetimeFromIniAndCheckFormat($databases_ini, 'source_info', 'insert_time');
+                $database->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($databases_ini, 'source_info', 'update_login_id', null));
                 $database->updated_name = $this->getArrayValue($databases_ini, 'source_info', 'update_user_name', null);
-                $database->updated_at = $this->getDatetimeFromIniAndCheckFormat($databases_ini, 'source_info', 'update_time');
+                $database->updated_at   = $this->getDatetimeFromIniAndCheckFormat($databases_ini, 'source_info', 'update_time');
                 // 登録更新日時を自動更新しない
                 $database->timestamps = false;
                 $database->save();
@@ -2482,18 +2550,16 @@ trait MigrationTrait
 
                 // 行ループで使用する各種変数
                 $header_skip = true;       // ヘッダースキップフラグ（1行目はカラム名の行）
-                $status_idx = 0;           // status のカラムインデックス（0 の場合は無効）
-                $status = '';              // status の内容
-                $display_sequence_idx = 0; // display_sequence のカラムインデックス（0 の場合は無効）
-                $display_sequence = '';    // display_sequence の内容
-                $posted_at_idx = 0;        // posted_at のカラムインデックス（0 の場合は無効）
-                $posted_at = '';           // posted_at の内容（日時）
-                $created_at_idx = 0;       // created_at のカラムインデックス（0 の場合は無効）
-                $created_at = '';          // created_at の内容（日時）
-                $updated_at_idx = 0;       // updated_at のカラムインデックス（0 の場合は無効）
-                $updated_at = '';          // updated_at の内容（日時）
-                $content_id_idx = 0;       // content_id のカラムインデックス（0 の場合は無効）
-                $content_id = '';          // content_id の内容（日時）
+                $tsv_idxs['status'] = 0;
+                $tsv_idxs['display_sequence'] = 0;
+                $tsv_idxs['posted_at'] = 0;
+                $tsv_idxs['created_at'] = 0;
+                $tsv_idxs['created_name'] = 0;
+                $tsv_idxs['insert_login_id'] = 0;
+                $tsv_idxs['updated_at'] = 0;
+                $tsv_idxs['updated_name'] = 0;
+                $tsv_idxs['update_login_id'] = 0;
+                $tsv_idxs['content_id'] = 0;
 
                 // 改行で記事毎に分割（行の処理）
                 $database_tsv_lines = explode("\n", $database_tsv);
@@ -2503,98 +2569,53 @@ trait MigrationTrait
                         $header_skip = false;
 
                         // created_atを探す。タブで項目に分割
-                        $loop_idx = 0;
                         $database_tsv_cols = explode("\t", trim($database_tsv_line, "\n\r"));
 
-                        foreach ($database_tsv_cols as $database_tsv_col) {
-                            if ($database_tsv_col == 'posted_at') {
-                                $posted_at_idx = $loop_idx;
-                            } elseif ($database_tsv_col == 'created_at') {
-                                $created_at_idx = $loop_idx;
-                            } elseif ($database_tsv_col == 'updated_at') {
-                                $updated_at_idx = $loop_idx;
-                            } elseif ($database_tsv_col == 'status') {
-                                $status_idx = $loop_idx;
-                            } elseif ($database_tsv_col == 'display_sequence') {
-                                $display_sequence_idx = $loop_idx;
-                            } elseif ($database_tsv_col == 'content_id') {
-                                $content_id_idx = $loop_idx;
+                        foreach ($database_tsv_cols as $loop_idx => $database_tsv_col) {
+                            if (isset($tsv_idxs[$database_tsv_col])) {
+                                $tsv_idxs[$database_tsv_col] = $loop_idx;
                             }
-                            $loop_idx++;
                         }
                         continue;
                     }
                     // 行データをタブで項目に分割
                     $database_tsv_cols = explode("\t", trim($database_tsv_line, "\n\r"));
 
-                    // posted_at、created_at、updated_at の設定
-                    // posted_at、created_at、updated_at のカラムがない or データが空の場合は、処理時間を入れる。
-                    if ($posted_at_idx != 0 && array_key_exists($posted_at_idx, $database_tsv_cols) && !empty($database_tsv_cols[$posted_at_idx])) {
-                        $posted_at = $database_tsv_cols[$posted_at_idx];
-                        if (!\DateTime::createFromFormat('Y-m-d H:i:s', $posted_at)) {
-                            $this->putError(3, '日付エラー', "posted_at = " . $posted_at);
-                            $posted_at = date('Y-m-d H:i:s');
-                        }
-                    } else {
-                        $posted_at = date('Y-m-d H:i:s');
-                    }
-                    if ($created_at_idx != 0 && array_key_exists($created_at_idx, $database_tsv_cols) && !empty($database_tsv_cols[$created_at_idx])) {
-                        $created_at = $database_tsv_cols[$created_at_idx];
-                        if (!\DateTime::createFromFormat('Y-m-d H:i:s', $created_at)) {
-                            $this->putError(3, '日付エラー', "created_at = " . $created_at);
-                            $created_at = date('Y-m-d H:i:s');
-                        }
-                    } else {
-                        $created_at = date('Y-m-d H:i:s');
-                    }
-                    if ($updated_at_idx != 0 && array_key_exists($updated_at_idx, $database_tsv_cols) && !empty($database_tsv_cols[$updated_at_idx])) {
-                        $updated_at = $database_tsv_cols[$updated_at_idx];
-                        if (!\DateTime::createFromFormat('Y-m-d H:i:s', $updated_at)) {
-                            $this->putError(3, '日付エラー', "updated_at = " . $updated_at);
-                            $updated_at = date('Y-m-d H:i:s');
-                        }
-                    } else {
-                        $updated_at = date('Y-m-d H:i:s');
-                    }
-
-                    // status
-                    if ($status_idx != 0 && array_key_exists($status_idx, $database_tsv_cols) && !empty($database_tsv_cols[$status_idx])) {
-                        $status = $database_tsv_cols[$status_idx];
-                    } else {
-                        $status = 0;
-                    }
-
-                    // display_sequence
-                    if ($display_sequence_idx != 0 && array_key_exists($display_sequence_idx, $database_tsv_cols) && !empty($database_tsv_cols[$display_sequence_idx])) {
-                        $display_sequence = $database_tsv_cols[$display_sequence_idx];
-                    } else {
-                        $display_sequence = 0;
-                    }
+                    $created_id   = $this->getUserIdFromLoginId($users, $database_tsv_cols[$tsv_idxs['insert_login_id']]);
+                    $created_name = $database_tsv_cols[$tsv_idxs['created_name']];
+                    $created_at   = $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['created_at'], $database_tsv_cols, 'created_at');
+                    $updated_id   = $this->getUserIdFromLoginId($users, $database_tsv_cols[$tsv_idxs['update_login_id']]);
+                    $updated_name = $database_tsv_cols[$tsv_idxs['updated_name']];
+                    $updated_at   = $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['updated_at'], $database_tsv_cols, 'updated_at');
 
                     // 行データの追加
-                    $databases_input = DatabasesInputs::create([
-                        'databases_id'     => $database->id,
-                        'status'           => $status,
-                        'display_sequence' => $display_sequence,
-                        'posted_at'        => $posted_at,
-                        'created_at'       => $created_at,
-                        'updated_at'       => $updated_at,
+                    $databases_input = new DatabasesInputs([
+                        'databases_id'       => $database->id,
+                        'status'             => $this->getTsvValue($database_tsv_cols, $tsv_idxs['status'], 0),
+                        'display_sequence'   => $this->getTsvValue($database_tsv_cols, $tsv_idxs['display_sequence'], 0),
+                        'posted_at'          => $created_at,
+                        'first_committed_at' => $created_at,
                     ]);
+                    $databases_input->created_id   = $created_id;
+                    $databases_input->created_name = $created_name;
+                    $databases_input->created_at   = $created_at;
+                    $databases_input->updated_id   = $updated_id;
+                    $databases_input->updated_name = $updated_name;
+                    $databases_input->updated_at   = $updated_at;
+                    // 登録更新日時を自動更新しない
+                    $databases_input->timestamps = false;
+                    $databases_input->save();
 
-                    // content_id
-                    if ($content_id_idx != 0 && array_key_exists($content_id_idx, $database_tsv_cols) && !empty($database_tsv_cols[$content_id_idx])) {
-                        $content_id = $database_tsv_cols[$content_id_idx];
-                    } else {
-                        $content_id = 0;
-                    }
-
-                    // 記事のマッピングテーブルの追加
-                    if ($content_id_idx) {
+                    $content_id = $this->getTsvValue($database_tsv_cols, $tsv_idxs['content_id'], 0);
+                    if ($content_id) {
+                        // 記事のマッピングテーブルの追加
                         $mapping = MigrationMapping::create([
                             'target_source_table'  => 'databases_post',
                             'source_key'           => $content_id,
                             'destination_key'      => $databases_input->id,
                         ]);
+                    } else {
+                        $this->putError(3, 'インポートで content_id なしエラー', "{$database_tsv_line}, ini_path={$databases_ini_path}");
                     }
 
                     $databases_columns_id_idx = 0; // 処理カラムのloop index
@@ -2602,13 +2623,22 @@ trait MigrationTrait
                     // データベースのバルクINSERT対応
                     $bulks = array();
 
+                    // 読み飛ばすカラムのインデックス
+                    $exclude_idxs = [
+                        $tsv_idxs['status'],
+                        $tsv_idxs['display_sequence'],
+                        $tsv_idxs['posted_at'],
+                        $tsv_idxs['created_at'],
+                        $tsv_idxs['created_name'],
+                        $tsv_idxs['insert_login_id'],
+                        $tsv_idxs['updated_at'],
+                        $tsv_idxs['updated_name'],
+                        $tsv_idxs['update_login_id'],
+                    ];
+
                     foreach ($database_tsv_cols as $database_tsv_col) {
-                        // posted_at、created_at、updated_at はカラムとしては読み飛ばす
-                        if ($databases_columns_id_idx == $posted_at_idx ||
-                            $databases_columns_id_idx == $created_at_idx ||
-                            $databases_columns_id_idx == $updated_at_idx ||
-                            $databases_columns_id_idx == $status_idx ||
-                            $databases_columns_id_idx == $display_sequence_idx) {
+                        // posted_at、created_at、updated_at 等はカラムとしては読み飛ばす
+                        if (in_array($databases_columns_id_idx, $exclude_idxs)) {
                             continue;
                         }
 
@@ -2640,11 +2670,17 @@ trait MigrationTrait
                             }
 
                             // セルデータの追加
-                            $bulks[] = ['databases_inputs_id'  => $databases_input->id,
+                            $bulks[] = [
+                                'databases_inputs_id'  => $databases_input->id,
                                 'databases_columns_id' => $column_ids[$databases_columns_id_idx],
                                 'value'                => $database_tsv_col,
+                                'created_id'           => $created_id,
+                                'created_name'         => $created_name,
                                 'created_at'           => $created_at,
-                                'updated_at'           => $updated_at];
+                                'updated_id'           => $updated_id,
+                                'updated_name'         => $updated_name,
+                                'updated_at'           => $updated_at,
+                            ];
                             /*
                             $databases_input_cols = DatabasesInputCols::create([
                                 'databases_inputs_id'  => $databases_input->id,
@@ -3137,7 +3173,13 @@ trait MigrationTrait
 
             // Buckets テーブルと Cabinets テーブル、マッピングテーブルを追加
             $bbs_name = $this->getArrayValue($ini, 'blog_base', 'blog_name', '無題');
-            $bucket = Buckets::create(['bucket_name' => $bbs_name, 'plugin_name' => 'bbses']);
+
+            $bucket = new Buckets(['bucket_name' => $bbs_name, 'plugin_name' => 'bbses']);
+            $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'insert_time');
+            $bucket->updated_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'update_time');
+            // 登録更新日時を自動更新しない
+            $bucket->timestamps = false;
+            $bucket->save();
 
             $bbs = new Bbs([
                 'bucket_id' => $bucket->id,
@@ -3341,6 +3383,8 @@ trait MigrationTrait
 
         // カレンダー定義の取り込み
         $ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('calendars/calendar_room_*.ini'));
+        // ユーザ取得
+        $users = User::get();
 
         // カレンダー定義のループ
         foreach ($ini_paths as $ini_path) {
@@ -3401,22 +3445,14 @@ trait MigrationTrait
                 // NC2 calendar_plan
                 $tsv_idxs['calendar_id'] = 0;
                 $tsv_idxs['plan_id'] = 0;
-                $tsv_idxs['room_id'] = 0;
                 $tsv_idxs['user_id'] = 0;
                 $tsv_idxs['user_name'] = 0;
                 $tsv_idxs['title'] = 0;
-                $tsv_idxs['title_icon'] = 0;
                 $tsv_idxs['allday_flag'] = 0;
                 $tsv_idxs['start_date'] = 0;
                 $tsv_idxs['start_time'] = 0;
-                $tsv_idxs['start_time_full'] = 0;
                 $tsv_idxs['end_date'] = 0;
                 $tsv_idxs['end_time'] = 0;
-                $tsv_idxs['end_time_full'] = 0;
-                $tsv_idxs['timezone_offset'] = 0;
-                $tsv_idxs['link_module'] = 0;
-                $tsv_idxs['link_id'] = 0;
-                $tsv_idxs['link_action_name'] = 0;
 
                 // NC2 calendar_plan_details
                 // 場所
@@ -3424,13 +3460,17 @@ trait MigrationTrait
                 // 連絡先
                 $tsv_idxs['contact'] = 0;
                 // 内容
-                $tsv_idxs['description'] = 0;
+                $tsv_idxs['body'] = 0;
                 // 繰り返し条件
                 $tsv_idxs['rrule'] = 0;
 
-                // NC2 calendar_plan 登録日・更新日
-                $tsv_idxs['insert_time'] = 0;
-                $tsv_idxs['update_time'] = 0;
+                // NC2 calendar_plan 登録日・更新日等
+                $tsv_idxs['created_at'] = 0;
+                $tsv_idxs['created_name'] = 0;
+                $tsv_idxs['insert_login_id'] = 0;
+                $tsv_idxs['updated_at'] = 0;
+                $tsv_idxs['updated_name'] = 0;
+                $tsv_idxs['update_login_id'] = 0;
 
                 // CC 状態
                 $tsv_idxs['status'] = 0;
@@ -3465,7 +3505,7 @@ trait MigrationTrait
                     }
 
                     // カレンダー予定の追加
-                    $calendar_post = CalendarPost::create([
+                    $calendar_post = new CalendarPost([
                         'calendar_id'      => $calendar->id,
                         'allday_flag'      => $calendar_tsv_cols[$tsv_idxs['allday_flag']],
                         'start_date'       => $calendar_tsv_cols[$tsv_idxs['start_date']],
@@ -3473,11 +3513,20 @@ trait MigrationTrait
                         'end_date'         => $calendar_tsv_cols[$tsv_idxs['end_date']],
                         'end_time'         => $calendar_tsv_cols[$tsv_idxs['end_time']],
                         'title'            => $calendar_tsv_cols[$tsv_idxs['title']],
-                        'body'             => $this->changeWYSIWYG($calendar_tsv_cols[$tsv_idxs['description']]),
+                        'body'             => $this->changeWYSIWYG($calendar_tsv_cols[$tsv_idxs['body']]),
+                        'location'         => $calendar_tsv_cols[$tsv_idxs['location']],
+                        'contact'          => $calendar_tsv_cols[$tsv_idxs['contact']],
                         'status'           => $calendar_tsv_cols[$tsv_idxs['status']],
-                        'created_at'       => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['insert_time'], $calendar_tsv_cols, 'insert_time'),
-                        'updated_at'       => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['update_time'], $calendar_tsv_cols, 'update_time'),
                     ]);
+                    $calendar_post->created_id   = $this->getUserIdFromLoginId($users, $calendar_tsv_cols[$tsv_idxs['insert_login_id']]);
+                    $calendar_post->created_name = $calendar_tsv_cols[$tsv_idxs['created_name']];
+                    $calendar_post->created_at   = $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['created_at'], $calendar_tsv_cols, 'created_at');
+                    $calendar_post->updated_id   = $this->getUserIdFromLoginId($users, $calendar_tsv_cols[$tsv_idxs['update_login_id']]);
+                    $calendar_post->updated_name = $calendar_tsv_cols[$tsv_idxs['updated_name']];
+                    $calendar_post->updated_at   = $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['updated_at'], $calendar_tsv_cols, 'updated_at');
+                    // 登録更新日時を自動更新しない
+                    $calendar_post->timestamps = false;
+                    $calendar_post->save();
 
                     // 記事のマッピングテーブルの追加
                     $mapping = MigrationMapping::create([
@@ -7201,7 +7250,7 @@ trait MigrationTrait
             $users_ini .= "\n";
             $users_ini .= "[\"" . $nc2_user->user_id . "\"]\n";
             $users_ini .= "name               = \"" . $nc2_user->handle . "\"\n";
-            $users_ini .= "email              = \"" . $nc2_user->email . "\"\n";
+            $users_ini .= "email              = \"" . trim($nc2_user->email) . "\"\n";
             $users_ini .= "userid             = \"" . $nc2_user->login_id . "\"\n";
             $users_ini .= "password           = \"" . $nc2_user->password . "\"\n";
             if ($nc2_user->active_flag == 0) {
@@ -7379,6 +7428,9 @@ trait MigrationTrait
             return;
         }
 
+        // nc2の全ユーザ取得
+        $nc2_users = Nc2User::get();
+
         // NC2日誌（Journal）のループ
         foreach ($nc2_journals as $nc2_journal) {
             $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
@@ -7416,6 +7468,12 @@ trait MigrationTrait
             $journals_ini .= "journal_id = " . $nc2_journal->journal_id . "\n";
             $journals_ini .= "room_id = " . $nc2_journal->room_id . "\n";
             $journals_ini .= "module_name = \"journal\"\n";
+            $journals_ini .= "created_at      = \"" . $this->getCCDatetime($nc2_journal->insert_time) . "\"\n";
+            $journals_ini .= "created_name    = \"" . $nc2_journal->insert_user_name . "\"\n";
+            $journals_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_journal->insert_user_id) . "\"\n";
+            $journals_ini .= "updated_at      = \"" . $this->getCCDatetime($nc2_journal->update_time) . "\"\n";
+            $journals_ini .= "updated_name    = \"" . $nc2_journal->update_user_name . "\"\n";
+            $journals_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_journal->update_user_id) . "\"\n";
 
             // NC2日誌で使ってるカテゴリ（journal_category）のみ移行する。
             $journals_ini .= "\n";
@@ -7487,7 +7545,7 @@ trait MigrationTrait
 
                 $like_count = empty($nc2_journal_post->vote) ? 0 : count(explode('|', $nc2_journal_post->vote));
 
-                $journals_tsv .= $nc2_journal_post->journal_date    . "\t";
+                $journals_tsv .= $this->getCCDatetime($nc2_journal_post->journal_date) . "\t";  // [0] 投稿日時
                 // $journals_tsv .= $nc2_journal_post->category_id     . "\t";
                 $journals_tsv .= $category                          . "\t";
                 $journals_tsv .= $nc2_journal_post->status          . "\t";
@@ -7497,8 +7555,14 @@ trait MigrationTrait
                 $journals_tsv .= $more_content                      . "\t";
                 $journals_tsv .= $nc2_journal_post->more_title      . "\t";
                 $journals_tsv .= $nc2_journal_post->hide_more_title . "\t";
-                $journals_tsv .= $like_count                        . "\t";   // いいね数
-                $journals_tsv .= $nc2_journal_post->vote            . "\t";   // いいねのsession_id & nc2 user_id
+                $journals_tsv .= $like_count                        . "\t";     // [9] いいね数
+                $journals_tsv .= $nc2_journal_post->vote            . "\t";     // [10]いいねのsession_id & nc2 user_id
+                $journals_tsv .= $this->getCCDatetime($nc2_journal_post->insert_time)                             . "\t";   // [11]
+                $journals_tsv .= $nc2_journal_post->insert_user_name                                              . "\t";   // [12]
+                $journals_tsv .= $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_journal_post->insert_user_id) . "\t";   // [13]
+                $journals_tsv .= $this->getCCDatetime($nc2_journal_post->update_time)                             . "\t";   // [14]
+                $journals_tsv .= $nc2_journal_post->update_user_name                                              . "\t";   // [15]
+                $journals_tsv .= $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_journal_post->update_user_id) . "\t";   // [16]
 
                 // 記事のタイトルの一覧
                 // タイトルに " あり
@@ -8298,31 +8362,44 @@ trait MigrationTrait
                 $tsv_cols[$metadata_id] = "";
             }
 
-            $tsv_header .= "status" . "\t" . "display_sequence" . "\t" . "posted_at" . "\t" . "created_at" . "\t" . "updated_at" . "\t" . "content_id";
+            $tsv_header .= "status" . "\t" . "display_sequence" . "\t" . "posted_at" . "\t" .
+                "created_at" . "\t" . "created_name" . "\t" . "insert_login_id" . "\t" . "updated_at" . "\t" . "updated_name" . "\t" . "update_login_id" . "\t" .
+                "content_id";
+
             $tsv_cols['status'] = "";
             $tsv_cols['display_sequence'] = "";
             $tsv_cols['posted_at'] = "";
-            $tsv_cols['insert_time'] = "";
-            $tsv_cols['update_time'] = "";
+            $tsv_cols['created_at'] = "";
+            $tsv_cols['created_name'] = "";
+            $tsv_cols['insert_login_id'] = "";
+            $tsv_cols['updated_at'] = "";
+            $tsv_cols['updated_name'] = "";
+            $tsv_cols['update_login_id'] = "";
             $tsv_cols['content_id'] = "";
 
             // データベースの記事
-            $multidatabase_metadata_contents = Nc2MultidatabaseMetadataContent::select(
-                'multidatabase_metadata_content.*',
-                'multidatabase_metadata.type',
-                'multidatabase_content.agree_flag',
-                'multidatabase_content.temporary_flag',
-                'multidatabase_content.display_sequence as content_display_sequence',
-                'multidatabase_content.insert_time as multidatabase_content_insert_time',
-                'multidatabase_content.update_time as multidatabase_content_update_time'
-            )->join('multidatabase_metadata', 'multidatabase_metadata.metadata_id', '=', 'multidatabase_metadata_content.metadata_id')
-             ->join('multidatabase_content', 'multidatabase_content.content_id', '=', 'multidatabase_metadata_content.content_id')
-             ->join('multidatabase', 'multidatabase.multidatabase_id', '=', 'multidatabase_metadata.multidatabase_id')
-             ->where('multidatabase.multidatabase_id', $multidatabase_id)
-             ->orderBy('multidatabase_metadata_content.content_id', 'asc')
-             ->orderBy('multidatabase_metadata.display_pos', 'asc')
-             ->orderBy('multidatabase_metadata.display_sequence', 'asc')
-             ->get();
+            $multidatabase_metadata_contents = Nc2MultidatabaseMetadataContent::
+                select(
+                    'multidatabase_metadata_content.*',
+                    'multidatabase_metadata.type',
+                    'multidatabase_content.agree_flag',
+                    'multidatabase_content.temporary_flag',
+                    'multidatabase_content.display_sequence as content_display_sequence',
+                    'multidatabase_content.insert_time as multidatabase_content_insert_time',
+                    'multidatabase_content.insert_user_name as multidatabase_content_insert_user_name',
+                    'multidatabase_content.insert_user_id as multidatabase_content_insert_user_id',
+                    'multidatabase_content.update_time as multidatabase_content_update_time',
+                    'multidatabase_content.update_user_name as multidatabase_content_update_user_name',
+                    'multidatabase_content.update_user_id as multidatabase_content_update_user_id'
+                )
+                ->join('multidatabase_metadata', 'multidatabase_metadata.metadata_id', '=', 'multidatabase_metadata_content.metadata_id')
+                ->join('multidatabase_content', 'multidatabase_content.content_id', '=', 'multidatabase_metadata_content.content_id')
+                ->join('multidatabase', 'multidatabase.multidatabase_id', '=', 'multidatabase_metadata.multidatabase_id')
+                ->where('multidatabase.multidatabase_id', $multidatabase_id)
+                ->orderBy('multidatabase_metadata_content.content_id', 'asc')
+                ->orderBy('multidatabase_metadata.display_pos', 'asc')
+                ->orderBy('multidatabase_metadata.display_sequence', 'asc')
+                ->get();
 
             // カラムデータのループ
             $content_id = 0;
@@ -8350,10 +8427,14 @@ trait MigrationTrait
                         // 表示順
                         $tsv_record['display_sequence'] = $old_metadata_content->content_display_sequence;
                         // 投稿日
-                        $tsv_record['posted_at'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
-                        // 登録日時、更新日時
-                        $tsv_record['insert_time'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
-                        $tsv_record['update_time'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_update_time);
+                        $tsv_record['posted_at']       = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
+                        // 登録日時、更新日時等
+                        $tsv_record['created_at']      = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
+                        $tsv_record['created_name']    = $old_metadata_content->multidatabase_content_insert_user_name;
+                        $tsv_record['insert_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc2_users, $old_metadata_content->multidatabase_content_insert_user_id);
+                        $tsv_record['updated_at']      = $this->getCCDatetime($old_metadata_content->multidatabase_content_update_time);
+                        $tsv_record['updated_name']    = $old_metadata_content->multidatabase_content_update_user_name;
+                        $tsv_record['update_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc2_users, $old_metadata_content->multidatabase_content_update_user_id);
                         // NC2 レコードを示すID
                         $tsv_record['content_id'] = $old_metadata_content->content_id;
                         // データ行の書き出し
@@ -8411,10 +8492,14 @@ trait MigrationTrait
                 // 表示順
                 $tsv_record['display_sequence'] = $old_metadata_content->content_display_sequence;
                 // 投稿日
-                $tsv_record['posted_at'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
-                // 登録日時、更新日時
-                $tsv_record['insert_time'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
-                $tsv_record['update_time'] = $this->getCCDatetime($old_metadata_content->multidatabase_content_update_time);
+                $tsv_record['posted_at']       = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
+                // 登録日時、更新日時等
+                $tsv_record['created_at']      = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
+                $tsv_record['created_name']    = $old_metadata_content->multidatabase_content_insert_user_name;
+                $tsv_record['insert_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc2_users, $old_metadata_content->multidatabase_content_insert_user_id);
+                $tsv_record['updated_at']      = $this->getCCDatetime($old_metadata_content->multidatabase_content_update_time);
+                $tsv_record['updated_name']    = $old_metadata_content->multidatabase_content_update_user_name;
+                $tsv_record['update_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc2_users, $old_metadata_content->multidatabase_content_update_user_id);
                 $tsv_record['content_id'] = $old_metadata_content->content_id;
                 $tsv .= implode("\t", $tsv_record);
             }
@@ -8936,6 +9021,9 @@ trait MigrationTrait
 
         $nc2_export_room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
 
+        // nc2の全ユーザ取得
+        $nc2_users = Nc2User::get();
+
         // ルームでループ（NC2カレンダーはルーム単位でエクスポート）
         foreach ($nc2_page_rooms as $nc2_page_room) {
 
@@ -8979,35 +9067,26 @@ trait MigrationTrait
 
 
             // カラムのヘッダー及びTSV 行毎の枠準備
-            $tsv_header = "calendar_id" . "\t" . "plan_id" . "\t" . "room_id" . "\t" . "user_id" . "\t" . "user_name" . "\t" . "title" . "\t" ."title_icon" . "\t" .
-                "allday_flag" . "\t" . "start_date" . "\t" . "start_time" . "\t" . "start_time_full" . "\t" . "end_date" . "\t" . "end_time" . "\t" .
-                "end_time_full" . "\t" . "timezone_offset" . "\t" . "link_module" . "\t" . "link_id" . "\t" . "link_action_name" . "\t" .
+            $tsv_header = "calendar_id" . "\t" . "plan_id" . "\t" . "user_id" . "\t" . "user_name" . "\t" . "title" . "\t" .
+                "allday_flag" . "\t" . "start_date" . "\t" . "start_time" . "\t" . "end_date" . "\t" . "end_time" . "\t" .
                 // NC2 calendar_plan_details
-                "location" . "\t" . "contact" . "\t" . "description" . "\t" . "rrule" . "\t" .
-                // NC2 calendar_plan 登録日・更新日
-                "insert_time" . "\t" . "update_time" . "\t" .
+                "location" . "\t" . "contact" . "\t" . "body" . "\t" . "rrule" . "\t" .
+                // NC2 calendar_plan 登録日・更新日等
+                "created_at" . "\t" . "created_name" . "\t" . "insert_login_id" . "\t" . "updated_at" . "\t" . "updated_name" . "\t" . "update_login_id" . "\t" .
                 // CC 状態
                 "status";
 
             // NC2 calendar_plan
             $tsv_cols['calendar_id'] = "";
             $tsv_cols['plan_id'] = "";
-            $tsv_cols['room_id'] = "";
             $tsv_cols['user_id'] = "";
             $tsv_cols['user_name'] = "";
             $tsv_cols['title'] = "";
-            $tsv_cols['title_icon'] = "";
             $tsv_cols['allday_flag'] = "";
             $tsv_cols['start_date'] = "";
             $tsv_cols['start_time'] = "";
-            $tsv_cols['start_time_full'] = "";
             $tsv_cols['end_date'] = "";
             $tsv_cols['end_time'] = "";
-            $tsv_cols['end_time_full'] = "";
-            $tsv_cols['timezone_offset'] = "";
-            $tsv_cols['link_module'] = "";
-            $tsv_cols['link_id'] = "";
-            $tsv_cols['link_action_name'] = "";
 
             // NC2 calendar_plan_details
             // 場所
@@ -9015,13 +9094,17 @@ trait MigrationTrait
             // 連絡先
             $tsv_cols['contact'] = "";
             // 内容
-            $tsv_cols['description'] = "";
+            $tsv_cols['body'] = "";
             // 繰り返し条件
             $tsv_cols['rrule'] = "";
 
-            // NC2 calendar_plan 登録日・更新日
-            $tsv_cols['insert_time'] = "";
-            $tsv_cols['update_time'] = "";
+            // NC2 calendar_plan 登録日・更新日等
+            $tsv_cols['created_at'] = "";
+            $tsv_cols['created_name'] = "";
+            $tsv_cols['insert_login_id'] = "";
+            $tsv_cols['updated_at'] = "";
+            $tsv_cols['updated_name'] = "";
+            $tsv_cols['update_login_id'] = "";
 
             // CC 状態
             $tsv_cols['status'] = "";
@@ -9050,21 +9133,16 @@ trait MigrationTrait
                 // NC2 calendar_plan
                 $tsv_record['calendar_id'] = $calendar_plan->calendar_id;
                 $tsv_record['plan_id'] = $calendar_plan->plan_id;
-                $tsv_record['room_id'] = $calendar_plan->room_id;
                 $tsv_record['user_id'] = $calendar_plan->user_id;
                 $tsv_record['user_name'] = $calendar_plan->user_name;
                 $tsv_record['title'] = $calendar_plan->title;
-                $tsv_record['title_icon'] = $calendar_plan->title_icon;
                 $tsv_record['allday_flag'] = $calendar_plan->allday_flag;
 
                 // 予定開始日時
                 // Carbon()で処理。必須値のため基本値がある想定で、timezone_offset で時間加算して予定時間を算出
                 $start_time_full = (new Carbon($calendar_plan->start_time_full))->addHour($calendar_plan->timezone_offset);
-                // $tsv_record['start_date'] = $calendar_plan->start_date;
-                // $tsv_record['start_time'] = $calendar_plan->start_time;
                 $tsv_record['start_date'] = $start_time_full->format('Y-m-d');
                 $tsv_record['start_time'] = $start_time_full->format('H:i:s');
-                $tsv_record['start_time_full'] = $start_time_full;
 
                 // 予定終了日時
                 // Carbon()で処理。必須値のため基本値がある想定で、timezone_offset で時間加算して予定時間を算出
@@ -9090,16 +9168,8 @@ trait MigrationTrait
                     // -1分
                     $end_time_full = $end_time_full->subMinute();
                 }
-                // $tsv_record['end_date'] = $calendar_plan->end_date;
-                // $tsv_record['end_time'] = $calendar_plan->end_time;
                 $tsv_record['end_date'] = $end_time_full->format('Y-m-d');
                 $tsv_record['end_time'] = $end_time_full->format('H:i:s');
-                $tsv_record['end_time_full'] = $end_time_full;
-
-                $tsv_record['timezone_offset'] = $calendar_plan->timezone_offset;
-                $tsv_record['link_module'] = $calendar_plan->link_module;
-                $tsv_record['link_id'] = $calendar_plan->link_id;
-                $tsv_record['link_action_name'] = $calendar_plan->link_action_name;
 
                 // NC2 calendar_plan_details（plan_id, room_idあり）
                 // 場所
@@ -9107,14 +9177,18 @@ trait MigrationTrait
                 // 連絡先
                 $tsv_record['contact'] = $calendar_plan->contact;
                 // 内容 [WYSIWYG]
-                $tsv_record['description'] = $this->nc2Wysiwyg(null, null, null, null, $calendar_plan->description, 'calendar');
+                $tsv_record['body'] = $this->nc2Wysiwyg(null, null, null, null, $calendar_plan->description, 'calendar');
 
                 // 繰り返し条件
                 $tsv_record['rrule'] = $calendar_plan->rrule;
 
-                // NC2 calendar_plan 登録日・更新日
-                $tsv_record['insert_time'] = $this->getCCDatetime($calendar_plan->insert_time);
-                $tsv_record['update_time'] = $this->getCCDatetime($calendar_plan->update_time);
+                // NC2 calendar_plan 登録日・更新日等
+                $tsv_record['created_at']      = $this->getCCDatetime($calendar_plan->insert_time);
+                $tsv_record['created_name']    = $calendar_plan->insert_user_name;
+                $tsv_record['insert_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc2_users, $calendar_plan->insert_user_id);
+                $tsv_record['updated_at']      = $this->getCCDatetime($calendar_plan->update_time);
+                $tsv_record['updated_name']    = $calendar_plan->update_user_name;
+                $tsv_record['update_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc2_users, $calendar_plan->update_user_id);
 
                 // NC2カレンダー予定は公開のみ
                 $tsv_record['status'] = 0;
@@ -9755,7 +9829,9 @@ trait MigrationTrait
             // nc2埋込タグ, cc埋込タグ
             ['{X-SITE_NAME}', '[[' . ReservationNoticeEmbeddedTag::site_name . ']]'],
             ['{X-LOCATION_NAME}', '[[' . ReservationNoticeEmbeddedTag::facility_name . ']]'],
-            ['{X-TITLE}', '[[' . ReservationNoticeEmbeddedTag::title . ']]'],
+            // change: [[title]]は、施設管理の項目「タイトルの設定」で変わるため、タイトルの埋め込みタグは[[X-件名]]に変換する。
+            // ['{X-TITLE}', '[[' . ReservationNoticeEmbeddedTag::title . ']]'],
+            ['{X-TITLE}', '[[X-件名]]'],
             ['{X-RESERVE_TIME}', '[[' . ReservationNoticeEmbeddedTag::booking_time . ']]'],
             ['{X-CONTACT}', '[[X-連絡先]]'],
             ['{X-RRULE}', '[[' . ReservationNoticeEmbeddedTag::rrule . ']]'],
@@ -9941,6 +10017,74 @@ trait MigrationTrait
             $index++;
         }
 
+        // [journal]
+        // select
+        //     nc2_blocks.block_id
+        // from
+        //     nc2_blocks,
+        //     nc2_journal_block,
+        //     nc2_journal_post,
+        //     nc2_abbreviate_url
+        // where
+        //     nc2_blocks.block_id = nc2_journal_block.block_id
+        //     and nc2_journal_block.journal_id = nc2_journal_post.journal_id
+        //     and nc2_journal_post.journal_id = nc2_abbreviate_url.contents_id
+        //     and nc2_journal_post.post_id = nc2_abbreviate_url.unique_id
+        //     and nc2_abbreviate_url.short_url = "muwoibbvq"
+        //
+        // [multidatabase]
+        // select
+        //  nc2_blocks.block_id
+        // from
+        //  nc2_blocks,
+        //  nc2_multidatabase_block,
+        //  nc2_multidatabase_content,
+        //  nc2_abbreviate_url
+        // where
+        //  nc2_blocks.block_id = nc2_multidatabase_block.block_id
+        //  and nc2_multidatabase_block.multidatabase_id = nc2_multidatabase_content.multidatabase_id
+        //  and nc2_multidatabase_content.multidatabase_id = nc2_abbreviate_url.contents_id
+        //  and nc2_multidatabase_content.content_id = nc2_abbreviate_url.unique_id
+        //  and nc2_abbreviate_url.short_url = "muwoibbvq"
+        //
+        // [bbs]
+        // select
+        //  nc2_blocks.block_id
+        // from
+        //  nc2_blocks,
+        //  nc2_bbs_block,
+        //  nc2_bbs_post,
+        //  nc2_abbreviate_url
+        // where
+        //  nc2_blocks.block_id = nc2_bbs_block.block_id
+        //  and nc2_bbs_block.bbs_id = nc2_bbs_post.bbs_id
+        //  and nc2_bbs_post.bbs_id = nc2_abbreviate_url.contents_id
+        //  and nc2_bbs_post.post_id = nc2_abbreviate_url.unique_id
+        //  and nc2_abbreviate_url.short_url = "muwoibbvq"
+
+        // 最新block_ids
+        $journal_block_ids = Nc2AbbreviateUrl::select('blocks.block_id', 'abbreviate_url.short_url')
+            ->join('journal_post', function ($join) {
+                $join->on('journal_post.post_id', '=', 'abbreviate_url.unique_id')
+                    ->whereColumn('journal_post.journal_id', 'abbreviate_url.contents_id');
+            })
+            ->join('journal_block', 'journal_block.journal_id', '=', 'journal_post.journal_id')
+            ->join('blocks', 'blocks.block_id', '=', 'journal_block.block_id')
+            ->get(['block_id', 'short_url']);
+        $multidatabase_block_ids = Nc2AbbreviateUrl::select('blocks.block_id', 'abbreviate_url.short_url')
+            ->join('multidatabase_content', 'multidatabase_content.content_id', '=', 'abbreviate_url.unique_id')
+            ->join('multidatabase_block', 'multidatabase_block.multidatabase_id', '=', 'multidatabase_content.multidatabase_id')
+            ->join('blocks', 'blocks.block_id', '=', 'multidatabase_block.block_id')
+            ->get(['block_id', 'short_url']);
+        $bbs_block_ids = Nc2AbbreviateUrl::select('blocks.block_id', 'abbreviate_url.short_url')
+            ->join('bbs_post', function ($join) {
+                $join->on('bbs_post.post_id', '=', 'abbreviate_url.unique_id')
+                    ->whereColumn('bbs_post.bbs_id', 'abbreviate_url.contents_id');
+            })
+            ->join('bbs_block', 'bbs_block.bbs_id', '=', 'bbs_post.bbs_id')
+            ->join('blocks', 'blocks.block_id', '=', 'bbs_block.block_id')
+            ->get(['block_id', 'short_url']);
+
         // NC2固定リンクのループ（データ用）
         foreach ($nc2_abbreviate_urls as $nc2_abbreviate_url) {
             $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
@@ -9955,13 +10099,14 @@ trait MigrationTrait
             }
 
             if (!isset($this->plugin_name[$nc2_abbreviate_url->dir_name])) {
+                $this->putError(3, '固定URLの未対応モジュール', "nc2_abbreviate_url.dir_name = " . $nc2_abbreviate_url->dir_name);
                 continue;
             }
 
             $permalink  = "\n";
             $permalink .= "[\"" . $nc2_abbreviate_url->short_url . "\"]\n";
 
-            $plugin_name     = $this->plugin_name[$nc2_abbreviate_url->dir_name];
+            $plugin_name = $this->plugin_name[$nc2_abbreviate_url->dir_name];
             $permalink .= "plugin_name    = \"" . $plugin_name . "\"\n";
 
             if ($plugin_name == 'blogs') {
@@ -9972,15 +10117,33 @@ trait MigrationTrait
                 $permalink .= "action         = \"show\"\n";
             }
 
-            // 新 unique_id
-            if (!empty($plugin_name)) {
-                $unique_id = 0;
-                $migration_mappings = MigrationMapping::where('target_source_table', $plugin_name . '_post')->where('source_key', $nc2_abbreviate_url->unique_id)->first();
-                if (empty($migration_mappings)) {
-                    continue;
-                }
-                $permalink .= "unique_id      = " . $migration_mappings->destination_key .  "\n";
+            // change: 新 unique_id は、エクスポート時に取得不可能のため、インポート時にセットする
+            // if (!empty($plugin_name)) {
+            //     $unique_id = 0;
+            //     $migration_mappings = MigrationMapping::where('target_source_table', $plugin_name . '_post')->where('source_key', $nc2_abbreviate_url->unique_id)->first();
+            //     if (empty($migration_mappings)) {
+            //         continue;
+            //     }
+            //     $permalink .= "unique_id      = " . $migration_mappings->destination_key .  "\n";
+            // }
+            // nc2 unique_id
+            $permalink .= "unique_id      = " . $nc2_abbreviate_url->unique_id .  "\n";
+
+            // 最新block_id取得
+            $block_id = null;
+            if ($plugin_name == 'blogs') {
+                $journal_block_id = $journal_block_ids->firstWhere('short_url', $nc2_abbreviate_url->short_url);
+                $block_id = $journal_block_id->block_id ?? null;
+
+            } elseif ($plugin_name == 'databases') {
+                $multidatabase_block_id = $multidatabase_block_ids->firstWhere('short_url', $nc2_abbreviate_url->short_url);
+                $block_id = $multidatabase_block_id->block_id ?? null;
+
+            } elseif ($plugin_name == 'bbses') {
+                $bbs_block_id = $bbs_block_ids->firstWhere('short_url', $nc2_abbreviate_url->short_url);
+                $block_id = $bbs_block_id->block_id ?? null;
             }
+            $permalink .= "block_id       = " . $block_id .  "\n";
 
             $permalink .= "migrate_source = \"NetCommons2\"\n";
             $permalinks_ini .= $permalink;

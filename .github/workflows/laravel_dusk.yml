@@ -70,11 +70,27 @@ jobs:
           coverage: none
           ini-values: post_max_size=128M, upload_max_filesize=128M, date.timezone=Asia/Tokyo
 
+      - name: Database Version
+        run: |
+          mysql --version
+
       - name: Create Database
         run: |
           sudo systemctl start mysql
           mysql --user="root" --password="root" -e "CREATE DATABASE laravel character set UTF8mb4 collate utf8mb4_general_ci;"
-          mysql --version
+
+      - name: Confirmation of database user authentication method
+        run: |
+          mysql --user="root" --password="root" -e "SELECT user, host, plugin FROM mysql.user;"
+
+      - name: PHP 7.3 changes database user authentication method
+        run: |
+          if [[ "$PHP_VERSION" = "7.3" ]]; then
+            mysql --user="root" --password="root" -e "alter user 'root'@'localhost' identified with mysql_native_password by 'root';"          
+            mysql --user="root" --password="root" -e "SELECT user, host, plugin FROM mysql.user;"
+          fi
+        env:
+          PHP_VERSION: ${{ steps.php_version_empty_action.outputs.PHP_VERSION }}
 
       # Composer
       - name: Validate composer.json and composer.lock

@@ -20,6 +20,7 @@ class Buckets extends Model
         'id',
         'bucket_name',
         'plugin_name',
+        'container_page_id',
     ];
 
     // Buckets のrole

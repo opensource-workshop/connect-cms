@@ -123,6 +123,19 @@ use App\Models\User\Reservations\ReservationsFacility;
                 $('#repeat_rule_yearly_id').collapse('hide');
         }
     }
+
+    /**
+     * 終日ボタン押下
+     */
+     function all_day() {
+        @if ($facility->is_time_control)
+            form_save_booking{{$frame_id}}.start_datetime.value = '{{ substr($facility->start_time, 0, -3) }}';
+            form_save_booking{{$frame_id}}.end_datetime.value = '{{ substr($facility->end_time, 0, -3) }}';
+        @else
+            form_save_booking{{$frame_id}}.start_datetime.value = '00:00';
+            form_save_booking{{$frame_id}}.end_datetime.value = '23:55';
+        @endif
+    }
 </script>
 
 @if ($booking->id)
@@ -195,7 +208,7 @@ use App\Models\User\Reservations\ReservationsFacility;
         <div class="col-md-2">予約時間 <span class="badge badge-danger">必須</span></div>
         <div class="col-md-10">
 
-            <div class="row">
+            <div class="form-row">
                 {{-- 予約開始時間 --}}
                 <div class="col-md-4">
                     <div class="input-group date" id="start_datetime" data-target-input="nearest">
@@ -223,6 +236,11 @@ use App\Models\User\Reservations\ReservationsFacility;
                             <div class="input-group-text"><i class="fas fa-clock"></i></div>
                         </div>
                     </div>
+                </div>
+                <div class="col-md-4 pt-1">
+                    <button type="button" class="btn btn-outline-primary btn-sm " onclick="all_day()">
+                        終日(利用時間帯で)
+                    </button>
                 </div>
             </div>
 

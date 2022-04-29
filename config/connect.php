@@ -107,6 +107,7 @@ return [
     'PROXYPORT' => env('PROXYPORT', ''),
     'PROXY' => env('PROXY', ''),
     'PROXYUSERPWD' => env('PROXYUSERPWD', ''),
+    'CURL_TIMEOUT' => env('CURL_TIMEOUT', ),
 
     // WYSIWYG のバイト数チェックの数値（MySQLのtext型）
     'WYSIWYG_MAX_BYTE' => 65535,
@@ -139,4 +140,7 @@ return [
 
     // AWS SDK
     'REQUIRE_AWS_SDK_PATH' => env('REQUIRE_AWS_SDK_PATH'),
+
+    // Use the container (beta)
+    'USE_CONTAINER_BETA' => env('USE_CONTAINER_BETA', false),
 ];

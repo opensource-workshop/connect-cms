@@ -107,7 +107,16 @@ class ContentsPlugin extends UserPluginBase
             where(function ($query) {
                 $query = $this->appendAuthWhere($query, 'contents');
             })
+            ->where('bucket_id', $this->frame->bucket_id)
             ->firstOrNew(['id' => $id]);
+
+        // 続きを読むボタン名・続きを閉じるボタン名が空なら、初期値セットする
+        if (empty($this->post->read_more_button)) {
+            $this->post->read_more_button = Contents::read_more_button_default;
+        }
+        if (empty($this->post->close_more_button)) {
+            $this->post->close_more_button = Contents::close_more_button_default;
+        }
 
         return $this->post;
     }
@@ -143,6 +152,14 @@ class ContentsPlugin extends UserPluginBase
             })
             ->orderBy('id', 'desc')
             ->first();
+
+        // 続きを読むボタン名・続きを閉じるボタン名が空なら、初期値セットする
+        if ($contents && empty($contents->read_more_button)) {
+            $contents->read_more_button = Contents::read_more_button_default;
+        }
+        if ($contents && empty($contents->close_more_button)) {
+            $contents->close_more_button = Contents::close_more_button_default;
+        }
 
 //        // 管理者権限の場合は、一時保存も対象
 //        //if (!empty($user) && $this->isCan('admin_system')$user->role == config('cc_role.ROLE_SYSTEM_MANAGER')) {
@@ -551,9 +568,13 @@ class ContentsPlugin extends UserPluginBase
 
         // コンテンツデータの登録
         $contents = new Contents;
-        $contents->created_id   = Auth::user()->id;
-        $contents->bucket_id    = $bucket_id;
-        $contents->content_text = $this->clean($request->contents);
+        $contents->created_id        = Auth::user()->id;
+        $contents->bucket_id         = $bucket_id;
+        $contents->content_text      = $this->clean($request->contents);
+        $contents->content2_text     = $this->clean($request->content2_text);
+        $contents->read_more_flag    = $request->read_more_flag ?? 0;
+        $contents->read_more_button  = $request->read_more_button;
+        $contents->close_more_button = $request->close_more_button;
 
         // 一時保存(status が 1 になる。)
         if ($status == 1) {
@@ -594,7 +615,11 @@ class ContentsPlugin extends UserPluginBase
 
         // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
         $newrow = $oldrow->replicate();
-        $newrow->content_text = $this->clean($request->contents);
+        $newrow->content_text      = $this->clean($request->contents);
+        $newrow->content2_text     = $this->clean($request->content2_text);
+        $newrow->read_more_flag    = $request->read_more_flag ?? 0;
+        $newrow->read_more_button  = $request->read_more_button;
+        $newrow->close_more_button = $request->close_more_button;
 
         // 承認フラグ(要承認の場合はstatus が2 になる。)
         if ($this->isApproval()) {
@@ -651,7 +676,11 @@ class ContentsPlugin extends UserPluginBase
 
             // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
             $newrow = $oldrow->replicate();
-            $newrow->content_text = $this->clean($request->contents);
+            $newrow->content_text      = $this->clean($request->contents);
+            $newrow->content2_text     = $this->clean($request->content2_text);
+            $newrow->read_more_flag    = $request->read_more_flag ?? 0;
+            $newrow->read_more_button  = $request->read_more_button;
+            $newrow->close_more_button = $request->close_more_button;
             $newrow->status = 1; //（一時保存）
             $newrow->save();
 

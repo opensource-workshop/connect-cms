@@ -622,7 +622,7 @@ EOF;
         ]);
 
         // ファイルコピー
-        \Storage::put($this->getDirectory($upload->id) . '/' . $upload->id . "." . $extension, file_get_contents($file_path));
+        Storage::put($this->getDirectory($upload->id) . '/' . $upload->id . "." . $extension, file_get_contents($file_path));
 
         // thumbnail_path がある場合は、サムネイル画像もアップロード。PDF＆サムネイルを想定。
         if ($thumbnail_path) {
@@ -636,12 +636,40 @@ EOF;
             ]);
 
             // ファイルコピー
-            \Storage::put($this->getDirectory($thumbail->id) . '/' . $thumbail->id . '.png', file_get_contents($thumbnail_path));
+            Storage::put($this->getDirectory($thumbail->id) . '/' . $thumbail->id . '.png', file_get_contents($thumbnail_path));
 
             // サムネイル付きの場合は、戻り値は配列
             return [$upload, $thumbail];
         }
         // アップロードのみ。（サムネイル無し）
+        return $upload;
+    }
+
+    /**
+     * アップロード取得か、なければ登録する
+     */
+    public function firstOrCreateFileUpload($disk_name, $disk_file_path, $client_original_name, $mimetype, $extension, $plugin_name, $page_id)
+    {
+        $upload_check = Uploads::where("client_original_name", $client_original_name)->first();
+
+        // uploads 追加
+        $upload = Uploads::firstOrCreate(
+            ["client_original_name" => $client_original_name],
+            [
+                "client_original_name" => $client_original_name,
+                "mimetype" => $mimetype,
+                "extension" => $extension,
+                "size" => Storage::disk($disk_name)->size($disk_file_path),
+                "plugin_name" => $plugin_name,
+                "page_id" => $page_id
+            ]
+        );
+
+        // 実ファイルコピー（$upload_check がnull だった場合に、uploads レコードをcreate しているので、ファイルもコピー。）
+        if (empty($upload_check)) {
+            Storage::put($this->getDirectory($upload->id) . "/{$upload->id}.{$extension}", Storage::disk($disk_name)->get($disk_file_path));
+        }
+
         return $upload;
     }
 }

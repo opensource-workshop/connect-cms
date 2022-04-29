@@ -96,7 +96,11 @@ class ConventionsPlugin extends UserPluginBase
         }
 
         // POST を取得する。（statusカラムなしのため、appendAuthWhereBase 使わない）
-        $this->post = ConventionPost::firstOrNew(['id' => $id]);
+        $this->post = ConventionPost::join('conventions', function ($join) {
+            $join->on('conventions.id', '=', 'convention_posts.convention_id')
+                ->where('conventions.bucket_id', '=', $this->frame->bucket_id);
+        })
+        ->firstOrNew(['conventions.id' => $id]);
         return $this->post;
     }
 

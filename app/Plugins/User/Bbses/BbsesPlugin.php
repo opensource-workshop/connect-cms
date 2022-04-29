@@ -118,6 +118,12 @@ class BbsesPlugin extends UserPluginBase
             });
             // ->firstOrNew(['id' => $id]);
 
+        // 他バケツの参照禁止
+        $bbses_query = $bbses_query->join('bbses', function ($join) {
+            $join->on('bbses.id', '=', 'bbs_posts.bbs_id')
+                ->where('bbses.bucket_id', '=', $this->frame->bucket_id);
+        });
+
         // いいねのleftJoin
         $bbses_query = Like::appendLikeLeftJoin($bbses_query, $this->frame->plugin_name, 'bbs_posts.id', 'bbs_posts.bbs_id');
 
@@ -612,9 +618,19 @@ class BbsesPlugin extends UserPluginBase
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
+        $plugin_buckets = Bbs::
+            select('bbses.*')
+            ->leftJoin('frames', function ($leftJoin) use ($frame_id) {
+                $leftJoin->on('bbses.bucket_id', '=', 'frames.bucket_id')
+                    ->where('frames.id', $frame_id);
+            })
+            ->orderBy('frames.bucket_id', 'desc')
+            ->orderBy('bbses.created_at', 'desc')
+            ->paginate(10, ["*"], "frame_{$frame_id}_page");
+
         // 表示テンプレートを呼び出す。
         return $this->view('list_buckets', [
-            'plugin_buckets' => Bbs::orderBy('created_at', 'desc')->paginate(10, ["*"], "frame_{$frame_id}_page"),
+            'plugin_buckets' => $plugin_buckets,
         ]);
     }
 
@@ -678,14 +694,17 @@ class BbsesPlugin extends UserPluginBase
 
         // フレームごとの表示設定の更新
         $bbs_frame = BbsFrame::updateOrCreate(
-            ['bbs_id' => $bbs_id, 'frame_id' => $frame_id],
-            ['view_format'      => $request->view_format,
-             'thread_sort_flag' => $request->thread_sort_flag,
-             'view_count'       => $request->view_count,
-             'list_format'      => $request->list_format,
-             'thread_format'    => $request->thread_format,
-             'list_underline'   => $request->list_underline,
-             'thread_caption'   => $request->thread_caption],
+            ['frame_id' => $frame_id],
+            [
+                'bbs_id'           => $bbs_id,
+                'view_format'      => $request->view_format,
+                'thread_sort_flag' => $request->thread_sort_flag,
+                'view_count'       => $request->view_count,
+                'list_format'      => $request->list_format,
+                'thread_format'    => $request->thread_format,
+                'list_underline'   => $request->list_underline,
+                'thread_caption'   => $request->thread_caption
+            ],
         );
 
         return;

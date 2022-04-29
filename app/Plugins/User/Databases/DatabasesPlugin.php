@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Validation\Rule;
@@ -46,7 +47,7 @@ use App\Enums\DatabaseColumnRoleName;
 use App\Enums\DatabaseRoleName;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\Required;
-use App\Enums\NoticeEmbeddedTag;
+use App\Enums\DatabaseNoticeEmbeddedTag;
 use App\Enums\StatusType;
 
 /**
@@ -167,6 +168,12 @@ class DatabasesPlugin extends UserPluginBase
             where(function ($query) {
                 // 権限によって表示する記事を絞る
                 $query = $this->appendAuthWhereBase($query, 'databases_inputs');
+            })
+            ->whereExists(function ($query) {
+                $query->select(DB::raw(1))
+                      ->from('databases')
+                      ->whereRaw('databases_inputs.databases_id = databases.id')
+                      ->where('databases.bucket_id', $this->frame->bucket_id);
             })
             ->firstOrNew(['id' => $id]);
 
@@ -967,7 +974,7 @@ class DatabasesPlugin extends UserPluginBase
 
         // データがあることを確認
         if (empty($inputs->id)) {
-            return;
+            return $this->viewError("403_inframe", null, '詳細取得NG');
         }
 
         // カラムの取得
@@ -1081,7 +1088,7 @@ class DatabasesPlugin extends UserPluginBase
     private function getValidatorRule($validator_array, $databases_column)
     {
         // 入力しないカラム型は、バリデータチェックしない
-        if (DatabasesColumns::isNotInputColumnType($databases_column->column_type)) {
+        if ($databases_column->isNotInputColumnType()) {
             return $validator_array;
         }
 
@@ -1237,11 +1244,11 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // 固定項目エリア
-        $validator_array['column']['posted_at'] = ['required', 'date_format:Y-m-d H:i'];
-        $validator_array['column']['expires_at'] = ['nullable', 'date_format:Y-m-d H:i', 'after:posted_at'];
-        $validator_array['column']['display_sequence'] = ['nullable', 'numeric'];
-        $validator_array['message']['posted_at'] = '公開日時';
-        $validator_array['message']['expires_at'] = '公開終了日時';
+        $validator_array['column']['posted_at']         = ['required', 'date_format:Y-m-d H:i'];
+        $validator_array['column']['expires_at']        = ['nullable', 'date_format:Y-m-d H:i', 'after:posted_at'];
+        $validator_array['column']['display_sequence']  = ['nullable', 'numeric'];
+        $validator_array['message']['posted_at']        = '公開日時';
+        $validator_array['message']['expires_at']       = '公開終了日時';
         $validator_array['message']['display_sequence'] = '表示順';
 
         // --- 入力値変換
@@ -1498,7 +1505,7 @@ class DatabasesPlugin extends UserPluginBase
         // databases_input_cols 登録
         foreach ($databases_columns as $databases_column) {
             // 登録日型・更新日型・公開日型・表示順は、databases_inputsテーブルの登録日・更新日・公開日・表示順を利用するため、登録しない
-            if (DatabasesColumns::isNotInputColumnType($databases_column->column_type)) {
+            if ($databases_column->isNotInputColumnType()) {
                 continue;
             }
 
@@ -1528,9 +1535,42 @@ class DatabasesPlugin extends UserPluginBase
 
         // プラグイン独自の埋め込みタグ
         $overwrite_notice_embedded_tags = [
-            NoticeEmbeddedTag::title => $this->getTitle($databases_inputs),
-            NoticeEmbeddedTag::body => BucketsMail::stripTagsWysiwyg($this->getBody($databases_inputs)),
+            DatabaseNoticeEmbeddedTag::title =>            $this->getTitle($databases_inputs),
+            DatabaseNoticeEmbeddedTag::body =>             BucketsMail::stripTagsWysiwyg($this->getBody($databases_inputs)),
+            DatabaseNoticeEmbeddedTag::posted_at =>        $databases_inputs->posted_at,
+            DatabaseNoticeEmbeddedTag::expires_at =>       $databases_inputs->expires_at,
+            DatabaseNoticeEmbeddedTag::display_sequence => $databases_inputs->display_sequence,
         ];
+
+        foreach ($databases_columns as $databases_column) {
+            // 除外する埋め込みタグはセットしない
+            if (DatabasesColumns::isNotEmbeddedTagsColumnType($databases_column->column_type)) {
+                continue;
+            }
+
+            $value = "";
+            if (is_array($request->databases_columns_value[$databases_column->id])) {
+                $value = implode(self::CHECKBOX_SEPARATOR, $request->databases_columns_value[$databases_column->id]);
+            } else {
+                $value = $request->databases_columns_value[$databases_column->id];
+            }
+
+            if ($databases_column->column_type == DatabaseColumnType::wysiwyg) {
+                $overwrite_notice_embedded_tags["X-{$databases_column->column_name}"] = BucketsMail::stripTagsWysiwyg($value);
+            } elseif (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+
+                if ($value) {
+                    $upload = Uploads::find($value);
+                    $upload = $upload ?? new Uploads();
+                    $overwrite_notice_embedded_tags["X-{$databases_column->column_name}"] = $upload->client_original_name;
+                } else {
+                    $overwrite_notice_embedded_tags["X-{$databases_column->column_name}"] = '';
+                }
+
+            } else {
+                $overwrite_notice_embedded_tags["X-{$databases_column->column_name}"] = $value;
+            }
+        }
 
         // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド, 上書き埋め込みタグ)
         $this->sendPostNotice($databases_inputs, $before_databases_inputs, 'detail', $overwrite_notice_embedded_tags);
@@ -1576,6 +1616,41 @@ class DatabasesPlugin extends UserPluginBase
         // ファイル型の調査のため、詳細カラムデータを取得（削除通知でも使用）
         $input_cols = $this->getDatabasesInputCols($id);
 
+        // メール送信のために、削除する前に行レコードを退避しておく。
+        $deleted_input = DatabasesInputs::firstOrNew(['id' => $id]);
+
+        // プラグイン独自の埋め込みタグ
+        $overwrite_notice_embedded_tags = [
+            DatabaseNoticeEmbeddedTag::title =>            $this->getTitle($deleted_input),
+            DatabaseNoticeEmbeddedTag::body =>             BucketsMail::stripTagsWysiwyg($this->getBody($deleted_input)),
+            DatabaseNoticeEmbeddedTag::posted_at =>        $deleted_input->posted_at,
+            DatabaseNoticeEmbeddedTag::expires_at =>       $deleted_input->expires_at,
+            DatabaseNoticeEmbeddedTag::display_sequence => $deleted_input->display_sequence,
+        ];
+
+        foreach ($input_cols as $input_col) {
+            // 除外する埋め込みタグはセットしない
+            if (DatabasesColumns::isNotEmbeddedTagsColumnType($input_col->column_type)) {
+                continue;
+            }
+
+            if ($input_col->column_type == DatabaseColumnType::wysiwyg) {
+                $overwrite_notice_embedded_tags["X-{$input_col->column_name}"] = BucketsMail::stripTagsWysiwyg($input_col->value);
+
+            } elseif (DatabasesColumns::isFileColumnType($input_col->column_type)) {
+                if ($input_col->value) {
+                    $upload = Uploads::find($input_col->value);
+                    $upload = $upload ?? new Uploads();
+                    $overwrite_notice_embedded_tags["X-{$input_col->column_name}"] = $upload->client_original_name;
+                } else {
+                    $overwrite_notice_embedded_tags["X-{$input_col->column_name}"] = '';
+                }
+
+            } else {
+                $overwrite_notice_embedded_tags["X-{$input_col->column_name}"] = $input_col->value;
+            }
+        }
+
         // ファイル型のファイル、uploads テーブルを削除
         foreach ($input_cols as $input_col) {
             if (DatabasesColumns::isFileColumnType($input_col->column_type)) {
@@ -1592,15 +1667,6 @@ class DatabasesPlugin extends UserPluginBase
                 }
             }
         }
-
-        // メール送信のために、削除する前に行レコードを退避しておく。
-        $deleted_input = DatabasesInputs::firstOrNew(['id' => $id]);
-
-        // プラグイン独自の埋め込みタグ
-        $overwrite_notice_embedded_tags = [
-            NoticeEmbeddedTag::title => $this->getTitle($deleted_input),
-            NoticeEmbeddedTag::body => BucketsMail::stripTagsWysiwyg($this->getBody($deleted_input)),
-        ];
 
         // 詳細カラムデータを削除
         DatabasesInputCols::where('databases_inputs_id', $id)->delete();
@@ -1743,28 +1809,32 @@ class DatabasesPlugin extends UserPluginBase
         $plugin_name = $this->frame->plugin_name;
 
         // Frame データ
-        $plugin_frame = Frame::select('frames.*')
-                ->where('frames.id', $frame_id)->first();
+        $plugin_frame = Frame::where('id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
         $plugins = Databases::
-                select(
-                    $plugin_name . '.id',
-                    $plugin_name . '.bucket_id',
-                    $plugin_name . '.created_at',
-                    $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name',
-                    DB::raw('count(databases_inputs.databases_id) as entry_count')
-                )
-                ->leftJoin('databases_inputs', $plugin_name . '.id', '=', 'databases_inputs.databases_id')
-                ->groupBy(
-                    $plugin_name . '.id',
-                    $plugin_name . '.bucket_id',
-                    $plugin_name . '.created_at',
-                    $plugin_name . '.' . $plugin_name . '_name',
-                    'databases_inputs.databases_id'
-                )
-                ->orderBy($plugin_name . '.created_at', 'desc')
-                ->paginate(10, ["*"], "frame_{$frame_id}_page");
+            select(
+                $plugin_name . '.id',
+                $plugin_name . '.bucket_id',
+                $plugin_name . '.created_at',
+                $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name',
+                DB::raw('count(databases_inputs.databases_id) as entry_count')
+            )
+            ->leftJoin('databases_inputs', $plugin_name . '.id', '=', 'databases_inputs.databases_id')
+            ->leftJoin('frames', function ($leftJoin) use ($plugin_name, $frame_id) {
+                $leftJoin->on($plugin_name . '.bucket_id', '=', 'frames.bucket_id')
+                    ->where('frames.id', $frame_id);
+            })
+            ->groupBy(
+                $plugin_name . '.id',
+                $plugin_name . '.bucket_id',
+                $plugin_name . '.created_at',
+                $plugin_name . '.' . $plugin_name . '_name',
+                'databases_inputs.databases_id'
+            )
+            ->orderBy('frames.bucket_id', 'desc')
+            ->orderBy($plugin_name . '.created_at', 'desc')
+            ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view('databases_list_buckets', [
@@ -3056,7 +3126,7 @@ class DatabasesPlugin extends UserPluginBase
                     // 一時ファイルの削除
                     $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
 
-                    $error_msg = "ZIPファイルにCSVを含めてください。";
+                    $error_msg = "ZIPファイルにCSVが含まれていないか、CSVの配置場所が誤っています。CSVは「ZIP内/[database_folder]/[database_file].csv」に配置してください。";
                     return redirect()->back()->withErrors(['databases_csv' => $error_msg])->withInput();
                 }
                 if (count($csv_full_paths) >= 2) {
@@ -3393,7 +3463,7 @@ class DatabasesPlugin extends UserPluginBase
                 // よってこの２つの配列数は同じになる想定。issetでチェックしているが基本ある想定。
                 if (isset($databases_columns[$col])) {
                     // 登録日型・更新日型・公開日型・表示順は、databases_inputsテーブルの登録日・更新日・公開日・表示順を利用するため、登録しない
-                    if (DatabasesColumns::isNotInputColumnType($databases_columns[$col]->column_type)) {
+                    if ($databases_columns[$col]->isNotInputColumnType()) {
                         continue;
                     }
 
@@ -4055,5 +4125,27 @@ AND databases_inputs.posted_at <= NOW()
         $return[] = '/plugin/databases/detail';
 
         return $return;
+    }
+
+    /**
+     * メール送信設定 変更画面
+     */
+    public function editBucketsMails($request, $page_id, $frame_id, $id = null)
+    {
+        $view = parent::editBucketsMails($request, $page_id, $frame_id, $id);
+
+        // 可変項目の埋め込みタグ
+        $database = $this->getDatabases($frame_id);
+        if ($database) {
+            $columns = DatabasesColumns::where('databases_id', $database->id)->orderBy('display_sequence')->get();
+        } else {
+            $columns = collect();
+        }
+
+        // ビューに値を渡す
+        View::share('database', $database);
+        View::share('columns', $columns);
+
+        return $view;
     }
 }

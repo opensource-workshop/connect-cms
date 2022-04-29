@@ -23,6 +23,7 @@ use App\Plugins\User\UserPluginBase;
 
 use App\Enums\StatusType;
 use App\Enums\BlogFrameConfig;
+use App\Enums\BlogFrameScope;
 
 use App\Rules\CustomValiWysiwygMax;
 
@@ -149,6 +150,12 @@ class BlogsPlugin extends UserPluginBase
             // ->orderBy('id', 'desc')
             // ->first();
 
+        // 他バケツの参照禁止
+        $blogs_query = $blogs_query->join('blogs', function ($join) {
+            $join->on('blogs.id', '=', 'blogs_posts.blogs_id')
+                ->where('blogs.bucket_id', '=', $this->frame->bucket_id);
+        });
+
         // カテゴリのleftJoin
         $blogs_query =  Categories::appendCategoriesLeftJoin($blogs_query, $this->frame->plugin_name, 'blogs_posts.categories_id', 'blogs_posts.blogs_id');
 
@@ -242,11 +249,11 @@ class BlogsPlugin extends UserPluginBase
         // 全件表示
         if (empty($blog_frame->scope)) {
             // 全件取得のため、追加条件なしで戻る。
-        } elseif ($blog_frame->scope == 'year') {
+        } elseif ($blog_frame->scope == BlogFrameScope::year) {
             // 年
             $query->Where('posted_at', '>=', $blog_frame->scope_value . '-01-01')
                   ->Where('posted_at', '<=', $blog_frame->scope_value . '-12-31 23:59:59');
-        } elseif ($blog_frame->scope == 'fiscal') {
+        } elseif ($blog_frame->scope == BlogFrameScope::fiscal) {
             // 年度
             $fiscal_next = intval($blog_frame->scope_value) + 1;
             $query->Where('posted_at', '>=', $blog_frame->scope_value . '-04-01')
@@ -605,12 +612,11 @@ WHERE status = 0
         }
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'blogs', [
+        return $this->view('blogs', [
             'blogs_posts' => $blogs_posts,
             'blog_frame'  => $blog_frame,
-            ]
-        );
+            'blog_frame_setting' => BlogsFrames::where('frames_id', $frame_id)->firstOrNew([]),
+        ]);
     }
 
     /**
@@ -817,6 +823,8 @@ WHERE status = 0
 
             // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
             if (empty($check_blogs_post->id) || $check_blogs_post->id != $old_blogs_post->id) {
+                // Redirect時のエラー対応. リダイレクトせずエラー画面表示する。
+                $request->merge(['return_mode' => 'asis']);
                 return $this->viewError("403_inframe", null, 'saveのユーザー権限に応じたPOST ID チェック');
             }
         }
@@ -1015,8 +1023,6 @@ WHERE status = 0
             ->where('frames.id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
-        // $blogs = Blogs::orderBy('created_at', 'desc')
-        //                ->paginate(10, ["*"], "frame_{$frame_id}_page");
         $blogs = Blogs::
             select(
                 'blogs.id',
@@ -1031,6 +1037,10 @@ WHERE status = 0
                         ->where('blogs_posts.status', StatusType::active)
                         ->whereNull('blogs_posts.deleted_at');
             })
+            ->leftJoin('frames', function ($leftJoin) use ($frame_id) {
+                $leftJoin->on('blogs.bucket_id', '=', 'frames.bucket_id')
+                    ->where('frames.id', $frame_id);
+            })
             ->groupBy(
                 'blogs.id',
                 'blogs.bucket_id',
@@ -1038,6 +1048,7 @@ WHERE status = 0
                 'blogs.blog_name',
                 'blogs_posts.blogs_id'
             )
+            ->orderBy('frames.bucket_id', 'desc')
             ->orderBy('blogs.created_at', 'desc')
             ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
@@ -1421,7 +1432,7 @@ EOD;
         // 項目のエラーチェック
         $validator_values['scope_value'] = ['nullable', 'digits:4'];
         $validator_values[BlogFrameConfig::blog_view_count] = ['required', 'numeric', 'min:1', 'max:100'];
-        if ($request->scope == 'year' || $request->scope == 'fiscal') {
+        if ($request->scope == BlogFrameScope::year || $request->scope == BlogFrameScope::fiscal) {
             $validator_values['scope_value'][] = ['required'];
         }
         $validator_attributes['scope_value'] = '指定年';

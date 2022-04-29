@@ -44,13 +44,13 @@ class DatabasesColumns extends Model
     /**
      * 入力しないカラム型か
      */
-    public static function isNotInputColumnType($column_type)
+    public function isNotInputColumnType()
     {
         // 登録日型・更新日型・公開日型・表示順型は入力しない
-        if ($column_type == DatabaseColumnType::created ||
-                $column_type == DatabaseColumnType::updated ||
-                $column_type == DatabaseColumnType::posted ||
-                $column_type == DatabaseColumnType::display) {
+        if ($this->column_type == DatabaseColumnType::created ||
+                $this->column_type == DatabaseColumnType::updated ||
+                $this->column_type == DatabaseColumnType::posted ||
+                $this->column_type == DatabaseColumnType::display) {
             return true;
         }
         return false;
@@ -65,6 +65,21 @@ class DatabasesColumns extends Model
         if ($column_type == DatabaseColumnType::file ||
                 $column_type == DatabaseColumnType::image ||
                 $column_type == DatabaseColumnType::video) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 埋め込みタグから除外するカラム型か
+     */
+    public static function isNotEmbeddedTagsColumnType($column_type)
+    {
+        // 登録日型・更新日型・公開日型・表示順型は入力しない
+        if ($column_type == DatabaseColumnType::created ||
+                $column_type == DatabaseColumnType::updated ||
+                $column_type == DatabaseColumnType::posted ||
+                $column_type == DatabaseColumnType::display) {
             return true;
         }
         return false;

@@ -27,10 +27,21 @@
         $('#collapse_upload{{$frame->id}}').on('hidden.bs.collapse', function () {
             $('#upload_file{{$frame_id}}').val('');
             $('#upload_file{{$frame_id}}').next('.custom-file-label').html('ファイル選択...');
+            $('#checkbox_zip_deploy').addClass('d-none');
+            $('#zip_deploy').prop('checked', false);
         });
 
         $('.custom-file-input').on('change',function(){
-            $(this).next('.custom-file-label').html($(this)[0].files[0].name);
+            let filename = $(this)[0].files[0].name;
+            let extension = filename.split('.').pop();
+            $(this).next('.custom-file-label').html(filename);
+            // ZIPファイルが選択されたら、ZIP展開のオプションを表示する
+            if (extension === 'zip') {
+                $('#checkbox_zip_deploy').removeClass('d-none');
+            } else {
+                $('#checkbox_zip_deploy').addClass('d-none');
+                $('#zip_deploy').prop('checked', false);
+            }
         });
 
 
@@ -91,7 +102,7 @@
             <label class="{{$frame->getSettingLabelClass()}}" for="folder_name">フォルダ名</label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <input type="text" name="folder_name[{{$frame_id}}]" value="{{old("folder_name.$frame_id")}}" class="form-control @if ($errors && $errors->has("folder_name.$frame_id")) border-danger @endif" id="folder_name{{$frame_id}}">
-                @if ($errors && $errors->has("folder_name.$frame_id")) 
+                @if ($errors && $errors->has("folder_name.$frame_id"))
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("folder_name.*")}}</div>
                 @endif
             </div>
@@ -113,9 +124,15 @@
                 <input type="file" name="upload_file[{{$frame_id}}]" value="{{old("upload_file.$frame_id")}}" class="custom-file-input @if ($errors && $errors->has("upload_file.$frame_id")) border-danger @endif" id="upload_file{{$frame_id}}">
                 <label class="custom-file-label" for="upload_file" data-browse="参照">ファイル選択...</label>
             </div>
-            @if ($errors && $errors->has("upload_file.$frame_id")) 
+            @if ($errors && $errors->has("upload_file.$frame_id"))
                 <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("upload_file.*")}}</div>
             @endif
+        </div>
+        <div class="form-group d-none" id="checkbox_zip_deploy">
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" class="custom-control-input" id="zip_deploy" name="zip_deploy" value="true">
+                <label class="custom-control-label" for="zip_deploy">ZIPを展開する</label>
+            </div>
         </div>
         <div class="text-center">
             <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#collapse_upload{{$frame->id}}">キャンセル</button>

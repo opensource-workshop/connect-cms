@@ -58,6 +58,12 @@
         <dt class="{{$label_class}}">終了日時</dt>
         <dd class="{{$value_class}}">{{$post->getEndDateTime()}}</dd>
 
+        <dt class="{{$label_class}}">場所</dt>
+        <dd class="{{$value_class}}">{{$post->location}}</dd>
+
+        <dt class="{{$label_class}}">連絡先</dt>
+        <dd class="{{$value_class}}">{{$post->contact}}</dd>
+
         <dt class="{{$label_class}}">本文</dt>
         <dd class="{{$value_class}}">{!!$post->body!!}</dd>
     </dl>
