@@ -79,11 +79,11 @@
                     <td class="d-table-cell"><input type="radio" value="{{$plugin->bucket_id}}" name="select_bucket"@if ($plugin_frame->bucket_id == $plugin->bucket_id) checked @endif></td>
                     <td><span class="{{$frame->getSettingCaptionClass()}}">{{$frame->plugin_name_full}}名：</span>{{$plugin->plugin_bucket_name}}</td>
                     <td><span class="{{$frame->getSettingCaptionClass()}}">件数：</span>{{$plugin->entry_count}}</td>
-                    <td nowrap>
+                    <td>
                         <span class="{{$frame->getSettingCaptionClass()}}">詳細：</span>
-                        <div class="btn-group mr-1">
+                        <div class="btn-group mr-1 mb-1">
                             <button class="btn btn-success btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/databases/editBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}'">
-                                <i class="far fa-edit"></i> 設定<span class="{{$frame->getSettingButtonCaptionClass()}}">変更</span>
+                                <i class="far fa-edit"></i> 設定変更
                             </button>
                             <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="button_setting_dropdown">
                                 <span class="sr-only">ドロップダウンボタン</span>
@@ -93,9 +93,9 @@
                             </div>
                         </div>
 
-                        <div class="btn-group mr-1">
+                        <div class="btn-group mr-1 mb-1">
                             <button type="button" class="btn btn-primary btn-sm" onclick="submit_download_shift_jis({{$plugin->id}});">
-                                <i class="fas fa-file-download"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> ダウンロード</span>
+                                <i class="fas fa-file-download"></i> ダウンロード
                             </button>
                             <button type="button" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="sr-only">ドロップダウンボタン</span>
@@ -106,11 +106,11 @@
                             </div>
                         </div>
 
-                        <button type="button" class="btn btn-success btn-sm" onclick="location.href='{{url('/')}}/plugin/databases/import/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}'">
-                            <i class="fas fa-file-upload"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> インポート</span>
+                        <button type="button" class="btn btn-success btn-sm mb-1" onclick="location.href='{{url('/')}}/plugin/databases/import/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}'">
+                            <i class="fas fa-file-upload"></i> インポート
                         </button>
                     </td>
-                    <td nowrap><span class="{{$frame->getSettingCaptionClass()}}">作成日：</span>{{$plugin->created_at->format('Y/m/d H:i')}}</td>
+                    <td><span class="{{$frame->getSettingCaptionClass()}}">作成日：</span>{{$plugin->created_at->format('Y/m/d H:i')}}</td>
                 </tr>
             @endforeach
             </tbody>
