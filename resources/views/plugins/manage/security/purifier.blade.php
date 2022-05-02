@@ -164,7 +164,7 @@
                 </div>
                 @if ($errors->has('confirm_purifier'))
                     <div class="alert alert-danger mb-0">
-                        <i class="fas fa-exclamation-circle"></i> XSSに対する注意点の確認を行ってください。
+                        <i class="fas fa-exclamation-triangle"></i> XSSに対する注意点の確認を行ってください。
                     </div>
                 @endif
             </div>

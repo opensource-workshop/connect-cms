@@ -25,7 +25,18 @@ class CalendarPost extends Model
     use UserableNohistory;
 
     // 更新する項目の定義
-    protected $fillable = ['calendar_id', 'allday_flag', 'start_date', 'start_time', 'end_date', 'end_time', 'title', 'body'];
+    protected $fillable = [
+        'calendar_id',
+        'allday_flag',
+        'start_date',
+        'start_time',
+        'end_date',
+        'end_time',
+        'title',
+        'body',
+        'location',
+        'contact',
+    ];
 
     // 日付型の場合、$dates にカラムを指定しておく。
     protected $dates = ['start_date', 'end_date'];

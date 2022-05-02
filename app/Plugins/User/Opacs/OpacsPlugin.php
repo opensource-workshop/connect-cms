@@ -33,6 +33,8 @@ use App\Plugins\User\UserPluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category Opacプラグイン
  * @package Controller
+ * @plugin_title Opac
+ * @plugin_desc 図書館などの蔵書を管理できるプラグインです。
  */
 class OpacsPlugin extends UserPluginBase
 {
@@ -130,7 +132,11 @@ class OpacsPlugin extends UserPluginBase
         }
 
         // POST を取得する。（statusカラムなしのため、appendAuthWhereBase 使わない）
-        $this->post = OpacsBooks::firstOrNew(['id' => $id]);
+        $this->post = OpacsBooks::join('opacs', function ($join) {
+            $join->on('opacs.id', '=', 'opacs_books.opacs_id')
+                ->where('opacs.bucket_id', '=', $this->frame->bucket_id);
+        })
+        ->firstOrNew(['opacs.id' => $id]);
         return $this->post;
     }
 
@@ -335,9 +341,12 @@ class OpacsPlugin extends UserPluginBase
      */
 
     /**
-     *  書誌データ取得関数
+     * 書誌データ取得関数
      *
      * @return view
+     * @method_title 書籍一覧
+     * @method_desc 書籍を検索し、一覧表示できます。
+     * @method_detail
      */
     public function index($request, $page_id, $frame_id, $errors = null, $messages = null)
     {
@@ -610,7 +619,7 @@ class OpacsPlugin extends UserPluginBase
             // 詳細検索
 
             // 検索条件設定
-            $where_querys = null;
+            $where_querys = [];
             if (isset($opac_search_condition['title']) == true && empty($opac_search_condition['title']) == false) {
                 $where_querys[] = array( 'title', 'like', '%' . $opac_search_condition['title'] . '%' );
             }
@@ -669,6 +678,10 @@ class OpacsPlugin extends UserPluginBase
 
     /**
      * データ選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示するOPACを選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -690,6 +703,10 @@ class OpacsPlugin extends UserPluginBase
 
     /**
      * OPAC新規作成画面
+     *
+     * @method_title 作成
+     * @method_desc OPACを新しく作成します。
+     * @method_detail OPAC名や表示件数を入力してOPACを作成できます。
      */
     public function createBuckets($request, $page_id, $frame_id, $opacs_id = null, $create_flag = false, $message = null, $errors = null)
     {
@@ -908,7 +925,11 @@ class OpacsPlugin extends UserPluginBase
     }
 
     /**
-     *  新規書誌データ画面
+     * 新規書誌データ画面
+     *
+     * @method_title 書籍登録
+     * @method_desc 書籍を登録します。
+     * @method_detail ISBNで検索して登録することもできます。
      */
     public function create($request, $page_id, $frame_id, $opacs_books_id = null)
     {
@@ -956,6 +977,10 @@ class OpacsPlugin extends UserPluginBase
 
     /**
      * 書誌データ詳細画面
+     *
+     * @method_title 書籍詳細
+     * @method_desc 書籍の詳細情報を表示できます。
+     * @method_detail
      */
     public function show($request, $page_id, $frame_id, $opacs_books_id, $message = null, $message_class = null, $errors = null)
     {
@@ -966,9 +991,14 @@ class OpacsPlugin extends UserPluginBase
         $opac_frame = $this->getOpacFrame($frame_id);
 
         // 書籍情報取得
-        $opacs_book = OpacsBooks::where('opacs_books.id', $opacs_books_id)->first();
+        $opacs_book = OpacsBooks::where('opacs_books.id', $opacs_books_id)
+            ->join('opacs', function ($join) {
+                $join->on('opacs.id', '=', 'opacs_books.opacs_id')
+                    ->where('opacs.bucket_id', '=', $this->frame->bucket_id);
+            })
+            ->first();
         if (empty($opacs_book)) {
-            return;
+            return $this->viewError("403_inframe", null, '詳細取得NG');
         }
 
         // 書籍貸出情報取得
@@ -1320,7 +1350,7 @@ class OpacsPlugin extends UserPluginBase
     {
         // 認証されているか確認
         if (!Auth::check()) {
-            return $this->view_error(403);
+            return $this->viewError(403);
         }
 
         // 項目のエラーチェック
@@ -1481,7 +1511,7 @@ class OpacsPlugin extends UserPluginBase
     {
         // 認証されているか確認
         if (!Auth::check()) {
-            return $this->view_error(403);
+            return $this->viewError(403);
         }
 
         // 項目のエラーチェック
@@ -1561,7 +1591,7 @@ class OpacsPlugin extends UserPluginBase
     {
         // 認証されているか確認
         if (!Auth::check()) {
-            return $this->view_error(403);
+            return $this->viewError(403);
         }
 
         // 項目のエラーチェック条件設定（バーコード）
@@ -1701,7 +1731,11 @@ class OpacsPlugin extends UserPluginBase
     }
 
     /**
-     *  Opacフレーム設定表示画面
+     * Opacフレーム設定表示画面
+     *
+     * @method_title 表示設定
+     * @method_desc このフレームに表示する際のOpacをカスタマイズできます。
+     * @method_detail 初期表示する機能を選択できます。
      */
     public function settingOpacFrame($request, $page_id, $frame_id)
     {
@@ -1757,7 +1791,7 @@ class OpacsPlugin extends UserPluginBase
     {
         // 権限チェック
         if ($this->can('role_article')) {
-            return $this->view_error(403);
+            return $this->viewError(403);
         }
 
         // 郵送リクエスト一覧取得
@@ -1827,7 +1861,7 @@ class OpacsPlugin extends UserPluginBase
     {
         // 認証されているか確認
         if (!Auth::check()) {
-            return $this->view_error(403);
+            return $this->viewError(403);
         }
 
         // 権限と学籍番号のチェックして、対象ユーザーIDを取得する
@@ -1835,7 +1869,7 @@ class OpacsPlugin extends UserPluginBase
         if (isset($request->req_student_no) === true) {
             // 学籍番号指定ありなので権限ありであるかどうかチェックする
             if ($this->can('role_article')) {
-                return $this->view_error(403);
+                return $this->viewError(403);
             }
             $user_id = $request->req_student_no;
         } else {

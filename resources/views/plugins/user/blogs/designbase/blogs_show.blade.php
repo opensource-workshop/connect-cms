@@ -62,6 +62,15 @@
         'like_users_id' => $post->like_users_id,
     ])
 
+    {{-- Twitterボタン --}}
+    @include('plugins.common.twitter', [
+        'post_title' => $post->post_title,
+    ])
+
+    {{-- Facebookボタン --}}
+    @include('plugins.common.facebook', [
+        'post_title' => $post->post_title,
+    ])
     {{-- タグ --}}
     @isset($post_tags)
         @foreach($post_tags as $tags)

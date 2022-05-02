@@ -21,6 +21,13 @@
                 @endif
                 </li>
                 <li role="presentation" class="nav-item">
+                @if ($function == "userdir")
+                    <span class="nav-link"><span class="active">ユーザディレクトリ一覧</span></span>
+                @else
+                    <a href="{{url('/manage/uploadfile/userdir')}}" class="nav-link">ユーザディレクトリ一覧</a></li>
+                @endif
+                </li>
+                <li role="presentation" class="nav-item">
                 @if ($function == "edit")
                     <span class="nav-link"><span class="active">アップロードファイル編集</span></span>
                 @endif

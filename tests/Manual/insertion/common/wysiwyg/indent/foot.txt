@@ -1,0 +1,42 @@
+<div class="card mt-3" html_only>
+<div class="card-body" html_only>
+
+<table class="table table-sm table-bordered table_css">
+<tbody>
+    <tr>
+        <th class="doc_th" style="width: 15%; text-align: center;">アイコン</th>
+        <th class="doc_th" style="width: 85%;">説明</th>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="Blockquote" title="Blockquote" type="button" html_only><img src="../_images/blockquote.png"></button html_only></td>
+        <td>ブロッククオート。標準のデザインでは文字が少し大きくなります。</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="左揃え" title="左揃え" type="button" html_only><img src="../_images/left.png"></button html_only></td>
+        <td>左揃え</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="中央揃え" title="中央揃え" type="button" html_only><img src="../_images/center.png"></button html_only></td>
+        <td>中央揃え</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="右揃え" title="右揃え" type="button" html_only><img src="../_images/right.png"></button html_only></td>
+        <td>右揃え</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="両端揃え" title="両端揃え" type="button" html_only><img src="../_images/justified.png"></button html_only></td>
+        <td>両端揃え</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="インデントを減らす" title="インデントを減らす" type="button" html_only><img src="../_images/indent.png"></button html_only></td>
+        <td>インデントを減らす</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="インデントを増やす" title="インデントを増やす" type="button" html_only><img src="../_images/outdent.png"></button html_only></td>
+        <td>インデントを増やす</td>
+    </tr>
+</tbody>
+</table>
+
+</div html_only>
+</div html_only>

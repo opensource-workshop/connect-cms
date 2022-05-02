@@ -18,6 +18,22 @@
     <div class="card">
         <div class="card-body">
             {!! $contents->content_text !!}
+
+            {{-- 続きを読む --}}
+            @if ($contents->read_more_flag)
+                {{-- 続きを読む & タグありなら、続きを読むとタグの間に余白追加 --}}
+                <div id="content2_text_button_{{$frame->id}}_{{$contents->id}}" @isset($post_tags) class="mb-2" @endisset>
+                    <button type="button" class="btn btn-light btn-sm border" onclick="$('#content2_text_{{$frame->id}}_{{$contents->id}}').show(); $('#content2_text_button_{{$frame->id}}_{{$contents->id}}').hide();">
+                        <i class="fas fa-angle-down"></i> {{$contents->read_more_button}}
+                    </button>
+                </div>
+                <div id="content2_text_{{$frame->id}}_{{$contents->id}}" style="display: none;" @isset($post_tags) class="mb-2" @endisset>
+                    {!! $contents->content2_text !!}
+                    <button type="button" class="btn btn-light btn-sm border" onclick="$('#content2_text_button_{{$frame->id}}_{{$contents->id}}').show(); $('#content2_text_{{$frame->id}}_{{$contents->id}}').hide();">
+                        <i class="fas fa-angle-up"></i> {{$contents->close_more_button}}
+                    </button>
+                </div>
+            @endif
         </div>
     </div>
 </p>

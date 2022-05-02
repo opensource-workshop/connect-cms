@@ -46,7 +46,6 @@
                     </a>
                 @else
                     @if ($view_col->column_type == DatabaseColumnType::wysiwyg)
-                        {{-- 一旦、WYSIWYGのみHTMLエスケープ除外。resources\views\plugins\user\databases\default\databases_include_value.blade.phpと同様にするかは次の機会に検討する --}}
                         {!! $view_col->value !!}
                     @else
                         {{ $view_col->value }}
@@ -64,9 +63,11 @@
 @include('plugins.common.user_paginate', ['posts' => $inputs_ids, 'frame' => $frame, 'aria_label_name' => $databasesearches->databasesearches_name])
 
 @else
+    @can('frames.edit',[[null, null, null, $frame]])
     <div class="alert alert-danger" style="margin-top: 10px;">
         <i class="fas fa-exclamation-circle"></i>
         編集画面から、データベース検索の設定を作成してください。
     </div>
+    @endcan
 @endif
 @endsection

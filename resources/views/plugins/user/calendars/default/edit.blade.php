@@ -104,7 +104,7 @@
         <div class="{{$input_area_class}}">
             <div class="custom-control custom-checkbox">
                 <input type="checkbox" name="allday_flag" value="1" class="custom-control-input" id="allday_flag{{$frame_id}}" onclick="check_allday();"@if(old('allday_flag', $post->allday_flag)) checked=checked @endif>
-                <label class="custom-control-label" for="allday_flag{{$frame_id}}">チェックすると、全日予定として扱います。</label>
+                <label class="custom-control-label" for="allday_flag{{$frame_id}}" id="label_allday_flag">チェックすると、全日予定として扱います。</label>
             </div>
         </div>
     </div>
@@ -200,6 +200,22 @@
 
     <div class="form-group form-row">
         @include('plugins.common.errors_inline', ['name' => 'end_date', 'class' => $errors_div_class])
+    </div>
+
+    <div class="form-group form-row">
+        <label class="{{$label_class}}">場所</label>
+        <div class="{{$input_area_class}}">
+            <input type="text" name="location" value="{{old('location', $post->location)}}" class="form-control @if ($errors && $errors->has('location')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'location'])
+        </div>
+    </div>
+
+    <div class="form-group form-row">
+        <label class="{{$label_class}}">連絡先</label>
+        <div class="{{$input_area_class}}">
+            <input type="text" name="contact" value="{{old('contact', $post->contact)}}" class="form-control @if ($errors && $errors->has('contact')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'contact'])
+        </div>
     </div>
 
     <div class="form-group form-row">

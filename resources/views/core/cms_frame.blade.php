@@ -21,36 +21,22 @@ if ($frame_id == $frame->frame_id) {
 
 $plugin_name = ' plugin-' . $frame->plugin_name . ' ';
 
+// 初期状態を非表示
 $default_hidden = '';
 if ($frame->default_hidden && (!Auth::check() || !Auth::user()->can('role_arrangement'))) {
     $default_hidden = ' d-none';
 }
 // フレーム非表示の判定
+// see) DefaultController::setHiddenFrame()
 $hidden_flag = '';
 if ($default_hidden == '' & isset($frame->hidden_flag) && $frame->hidden_flag == true && (!Auth::check() || !Auth::user()->can('role_arrangement'))) {
     $hidden_flag = ' d-none';
 }
-
+// 非ログインまたはフレーム編集権限を持たない、且つ、非表示条件（非公開、又は、限定公開）にマッチした場合はフレームを非表示にする
+if ($frame->isInvisiblePrivateFrame()) {
+    $hidden_flag = ' d-none';
+}
 @endphp
-
-{{-- 非ログインまたはフレーム編集権限を持たない、且つ、非表示条件（非公開、又は、限定公開）にマッチした場合はフレームを非表示にする --}}
-@if (
-{{--
-        !Auth::check() &&
---}}
-        ( !Auth::check() || !(Auth::user()->can('role_arrangement')) ) &&
-        (
-            $frame->content_open_type == ContentOpenType::always_close ||
-            (
-                $frame->content_open_type == ContentOpenType::limited_open && 
-                !Carbon::now()->between($frame->content_open_date_from, $frame->content_open_date_to)
-            )
-        )
-    )
-    @php
-        $hidden_flag = ' d-none';
-    @endphp
-@endif
 
 @if($frame->frame_col==0)
 <div class="p-0 col-12 @if ($frame->area_id==2 && !$loop->last) @endif {{$frame_classname}}{{$plugin_name}}{{$default_hidden}}{{$hidden_flag}}{{" $frame->plugin_name-$frame->template"}}" id="frame-{{ $frame->frame_id }}">
@@ -135,7 +121,16 @@ if ($default_hidden == '' & isset($frame->hidden_flag) && $frame->hidden_flag ==
                         } catch (\Throwable $e) {
                             $plugin_instances[$frame->frame_id]->putLog($e);
                     @endphp
-                        @include('errors.500_inframe' ,['debug_message' => $e->getMessage()])
+                    {{-- debug_message は互換性のために残している。有効な活用方法は今後、検討 --}}
+                    @if ($e->getStatusCode() == 403)
+                        @include('errors.403_inframe' ,['message' => $e->getMessage(), 'debug_message' => $e->getMessage()])
+                    @elseif ($e->getStatusCode() == 404)
+                        @include('errors.404_inframe' ,['message' => $e->getMessage(), 'debug_message' => $e->getMessage()])
+                    @elseif ($e->getStatusCode() == 500)
+                        @include('errors.500_inframe' ,['message' => $e->getMessage(), 'debug_message' => $e->getMessage()])
+                    @else
+                        @include('errors.error_inframe' ,['message' => $e->getMessage(), 'debug_message' => $e->getMessage()])
+                    @endif
                     @php
                         }
                     @endphp

@@ -15,6 +15,5 @@ class Reservation extends Model
     protected $fillable = [
         'bucket_id',
         'reservation_name',
-        'calendar_initial_display_type',
     ];
 }

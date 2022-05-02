@@ -10,14 +10,10 @@
 
 @section("core.cms_frame_edit_tab_$frame->id")
     {{-- プラグイン側のフレームメニュー --}}
-    @include('plugins.user.' . $frame->plugin_name . '.' . $frame->plugin_name . '_frame_edit_tab')
+    {{$frame->includeFrameTab($page, $frame, $action)}}
 @endsection
 
 @section("plugin_setting_$frame->id")
-
-@if($plugin_name == 'contents' || $buckets)
-{{-- 固定記事プラグイン(=コンテンツプラグイン)はバケツありなし、どちらでも表示する。 --}}
-{{-- 固定記事プラグイン(=コンテンツプラグイン)以外はバケツありのみ、表示する。 --}}
 
 <form action="{{url('/')}}/plugin/{{$frame->plugin_name}}/saveBucketsRoles/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame_id}}" name="{{$frame->plugin_name}}_buckets_form" method="POST">
     {{ csrf_field() }}
@@ -61,7 +57,7 @@
                 @endif
             </tr>
             <tr>
-                <th>編集者権限</th>
+                <th>編集者</th>
                 <td>
                     <div class="custom-control custom-checkbox custom-control-inline">
                         @if($buckets && $buckets->canPost("role_reporter"))
@@ -95,13 +91,5 @@
         <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 更新</button>
     </div>
 </form>
-
-@else
-{{-- 表示しない。 --}}
-<div class="alert alert-warning">
-    <i class="fas fa-exclamation-circle"></i>
-    表示するコンテンツを選択するか、新規作成してください。
-</div>
-@endif
 
 @endsection

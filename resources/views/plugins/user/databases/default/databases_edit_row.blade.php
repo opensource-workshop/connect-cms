@@ -98,7 +98,9 @@
     $column->column_type == DatabaseColumnType::select ||
     $column->caption ||
     $column->caption_list_detail ||
-    $column->title_flag
+    $column->title_flag ||
+    $column->body_flag ||
+    $column->image_flag
     )
     <tr>
         <td class="pt-2 border border-0"></td>
@@ -109,7 +111,7 @@
                     <i class="far fa-list-alt"></i>
                     {{ $column->select_names }}
                 </div>
-            @elseif(!$column->caption && !$column->title_flag && $column->select_count == 0)
+            @elseif(!$column->caption && !$column->title_flag && !$column->body_flag && !$column->image_flag && $column->select_count == 0)
                 {{-- 選択肢データがなく、キャプションの設定・タイトル指定もない場合はツールチップ分、余白として改行する --}}
                 <br>
             @endif
@@ -134,6 +136,20 @@
                 {{-- タイトル指定が設定されている場合、タイトル指定を表示する --}}
                 <div class="small text-primary">
                     <i class="fas fa-toggle-on"></i> タイトル指定
+                </div>
+            @endif
+
+            @if ($column->body_flag)
+                {{-- 本文指定が設定されている場合、本文指定を表示する --}}
+                <div class="small text-primary">
+                    <i class="fas fa-toggle-on"></i> 本文指定
+                </div>
+            @endif
+
+            @if ($column->image_flag)
+                {{-- イメージ指定が設定されている場合、イメージ指定を表示する --}}
+                <div class="small text-primary">
+                    <i class="fas fa-toggle-on"></i> イメージ指定
                 </div>
             @endif
         </td>

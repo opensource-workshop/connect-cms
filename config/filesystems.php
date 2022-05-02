@@ -55,6 +55,11 @@ return [
             'visibility' => 'public',
         ],
 
+        'public_real' => [
+            'driver' => 'local',
+            'root' => public_path()
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
@@ -63,6 +68,26 @@ return [
             'bucket' => env('AWS_BUCKET'),
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
+        ],
+
+        // ユーザのアップロードファイル用ストレージの追加
+        'user' => [
+            'driver' => 'local',
+            'root' => storage_path('user'),
+        ],
+
+        // マニュアルデータ用ストレージの追加
+        'manual' => [
+            'driver' => 'local',
+            'root' => base_path('tests/Manual'),
+        ],
+        'screenshot' => [
+            'driver' => 'local',
+            'root' => base_path('tests/Browser/screenshots'),
+        ],
+        'tests_tmp' => [
+            'driver' => 'local',
+            'root' => base_path('tests/tmp'),
         ],
 
     ],

@@ -26,6 +26,8 @@ use App\Plugins\User\UserPluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category リンクリスト・プラグイン
  * @package Controller
+ * @plugin_title リンクリスト
+ * @plugin_desc リンクリストを作成できるプラグインです。よく使うサイトのURLを登録します。
  */
 class LinklistsPlugin extends UserPluginBase
 {
@@ -225,8 +227,12 @@ class LinklistsPlugin extends UserPluginBase
     /* 画面アクション関数 */
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
+     *
+     * @method_title リンク一覧
+     * @method_desc リンクを表示します。
+     * @method_detail 指定された形式でリンクの一覧を表示します。
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -266,6 +272,10 @@ class LinklistsPlugin extends UserPluginBase
 
     /**
      * 記事編集画面
+     *
+     * @method_title リンク登録
+     * @method_desc リンクを登録します。
+     * @method_detail リンクを登録・編集します。
      */
     public function edit($request, $page_id, $frame_id, $post_id = null)
     {
@@ -356,6 +366,10 @@ class LinklistsPlugin extends UserPluginBase
 
     /**
      * プラグインのバケツ選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示するリンクリストを選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -367,6 +381,10 @@ class LinklistsPlugin extends UserPluginBase
 
     /**
      * バケツ新規作成画面
+     *
+     * @method_title 作成
+     * @method_desc リンクリストを新しく作成します。
+     * @method_detail リンクリスト名を入力してリンクリストを作成できます。
      */
     public function createBuckets($request, $page_id, $frame_id)
     {
@@ -376,6 +394,10 @@ class LinklistsPlugin extends UserPluginBase
 
     /**
      * フレーム表示設定画面の表示
+     *
+     * @method_title 表示設定
+     * @method_desc このフレームに表示する際のリンクリストをカスタマイズできます。
+     * @method_detail 表示形式、1ページの表示件数を設定できます。
      */
     public function editView($request, $page_id, $frame_id)
     {
@@ -541,6 +563,10 @@ class LinklistsPlugin extends UserPluginBase
 
     /**
      * カテゴリ表示関数
+     *
+     * @method_title カテゴリ
+     * @method_desc リンクリストで使用するカテゴリを設定します。
+     * @method_detail 共通カテゴリの選択、もしくはリンクリスト独自のカテゴリを登録します。
      */
     public function listCategories($request, $page_id, $frame_id, $id = null)
     {

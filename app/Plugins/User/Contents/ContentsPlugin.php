@@ -25,6 +25,8 @@ use App\Rules\CustomValiWysiwygMax;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
  * @package Controller
+ * @plugin_title 固定記事
+ * @plugin_desc サイト上に文字や画像を配置できるプラグインです。
  */
 class ContentsPlugin extends UserPluginBase
 {
@@ -105,7 +107,16 @@ class ContentsPlugin extends UserPluginBase
             where(function ($query) {
                 $query = $this->appendAuthWhere($query, 'contents');
             })
+            ->where('bucket_id', $this->frame->bucket_id)
             ->firstOrNew(['id' => $id]);
+
+        // 続きを読むボタン名・続きを閉じるボタン名が空なら、初期値セットする
+        if (empty($this->post->read_more_button)) {
+            $this->post->read_more_button = Contents::read_more_button_default;
+        }
+        if (empty($this->post->close_more_button)) {
+            $this->post->close_more_button = Contents::close_more_button_default;
+        }
 
         return $this->post;
     }
@@ -141,6 +152,14 @@ class ContentsPlugin extends UserPluginBase
             })
             ->orderBy('id', 'desc')
             ->first();
+
+        // 続きを読むボタン名・続きを閉じるボタン名が空なら、初期値セットする
+        if ($contents && empty($contents->read_more_button)) {
+            $contents->read_more_button = Contents::read_more_button_default;
+        }
+        if ($contents && empty($contents->close_more_button)) {
+            $contents->close_more_button = Contents::close_more_button_default;
+        }
 
 //        // 管理者権限の場合は、一時保存も対象
 //        //if (!empty($user) && $this->isCan('admin_system')$user->role == config('cc_role.ROLE_SYSTEM_MANAGER')) {
@@ -242,17 +261,14 @@ class ContentsPlugin extends UserPluginBase
                    ->join('frames', 'frames.bucket_id', '=', 'contents.bucket_id')
                    ->join('pages', 'pages.id', '=', 'frames.page_id')
                    ->whereIn('pages.id', $page_ids)
-                   ->where('status', '?')
+                   ->where('status', StatusType::active)
                    ->where(function ($plugin_query) use ($search_keyword) {
-                       $plugin_query->where('contents.content_text', 'like', '?')
-                                    ->orWhere('frames.frame_title', 'like', '?');
+                       $plugin_query->where('contents.content_text', 'like', '%'.$search_keyword.'%')
+                                    ->orWhere('frames.frame_title', 'like', '%'.$search_keyword.'%');
                    })
                    ->whereNull('contents.deleted_at');
 
-        $bind = array($page_ids, 0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
-
         $return[] = $query;
-        $return[] = $bind;
         $return[] = 'show_page';
         $return[] = '/page';
 
@@ -294,8 +310,12 @@ class ContentsPlugin extends UserPluginBase
     /* 画面アクション関数 */
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
+     *
+     * @method_title 表示
+     * @method_desc サイト上に記載した文字や画像を表示できる基本となるプラグインです。
+     * @method_detail
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -457,6 +477,10 @@ class ContentsPlugin extends UserPluginBase
     /**
      * データ編集用表示関数
      * コアが編集画面表示の際に呼び出す関数
+     *
+     * @method_title 編集
+     * @method_desc 表示する内容を編集できます。
+     * @method_detail WYSIWYG の機能を使って、ワープロのように文章を編集できます。また、画像やPDF の挿入もできます。
      */
     public function edit($request, $page_id, $frame_id, $id = null)
     {
@@ -480,13 +504,17 @@ class ContentsPlugin extends UserPluginBase
     /**
      *  データ詳細表示関数
      *  コアがデータ削除の確認用に呼び出す関数
+     *
+     * @method_title 削除
+     * @method_desc 固定記事を削除できます。
+     * @method_detail フレームも同時に削除することで、画面上の枠も消えます。
      */
     public function show($request, $page_id, $frame_id, $id = null)
     {
         // 権限チェック
         // 固定記事プラグインの特別処理。削除のための表示であり、フレーム画面のため、個別に権限チェックする。
         // if ($this->can('frames.delete')) {
-        //     return $this->view_error(403);
+        //     return $this->viewError(403);
         // }
         $view_error = $this->can('frames.delete');
         if ($view_error) {
@@ -540,9 +568,13 @@ class ContentsPlugin extends UserPluginBase
 
         // コンテンツデータの登録
         $contents = new Contents;
-        $contents->created_id   = Auth::user()->id;
-        $contents->bucket_id    = $bucket_id;
-        $contents->content_text = $this->clean($request->contents);
+        $contents->created_id        = Auth::user()->id;
+        $contents->bucket_id         = $bucket_id;
+        $contents->content_text      = $this->clean($request->contents);
+        $contents->content2_text     = $this->clean($request->content2_text);
+        $contents->read_more_flag    = $request->read_more_flag ?? 0;
+        $contents->read_more_button  = $request->read_more_button;
+        $contents->close_more_button = $request->close_more_button;
 
         // 一時保存(status が 1 になる。)
         if ($status == 1) {
@@ -583,7 +615,11 @@ class ContentsPlugin extends UserPluginBase
 
         // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
         $newrow = $oldrow->replicate();
-        $newrow->content_text = $this->clean($request->contents);
+        $newrow->content_text      = $this->clean($request->contents);
+        $newrow->content2_text     = $this->clean($request->content2_text);
+        $newrow->read_more_flag    = $request->read_more_flag ?? 0;
+        $newrow->read_more_button  = $request->read_more_button;
+        $newrow->close_more_button = $request->close_more_button;
 
         // 承認フラグ(要承認の場合はstatus が2 になる。)
         if ($this->isApproval()) {
@@ -640,7 +676,11 @@ class ContentsPlugin extends UserPluginBase
 
             // 新しいレコードの登録（旧レコードのコピー＆内容の入れ替え）
             $newrow = $oldrow->replicate();
-            $newrow->content_text = $this->clean($request->contents);
+            $newrow->content_text      = $this->clean($request->contents);
+            $newrow->content2_text     = $this->clean($request->content2_text);
+            $newrow->read_more_flag    = $request->read_more_flag ?? 0;
+            $newrow->read_more_button  = $request->read_more_button;
+            $newrow->close_more_button = $request->close_more_button;
             $newrow->status = 1; //（一時保存）
             $newrow->save();
 
@@ -722,6 +762,10 @@ class ContentsPlugin extends UserPluginBase
 
     /**
      * データ選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示する固定記事を選択できます。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {

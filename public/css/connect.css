@@ -363,6 +363,84 @@ a.cc-cursor-text:hover {
     /* bootstrap4 デフォルトのままだとヘッダーの画像の後ろに回り込むため  */
     z-index: 9999;
 }
+/* ハンバーガーメニュー用 */
+.hamburger-menu .navbar-light .navbar-toggler {
+    border-color: rgba(0,0,0, .5);
+    border-radius: 0;
+}
+.hamburger-menu .navbar-light .navbar-toggler {
+    color: rgba(0, 0, 0, .5);
+    border: none;
+    padding: 0px;
+    width: 30px;
+    height: 30px;
+    box-sizing: border-box;
+    position: relative;
+    margin: 0 0 0 auto;/* 右寄せ */
+}
+.hamburger-menu .navbar-light .navbar-toggler-icon {
+    background-image:none;
+    background-color: rgba(0,0,0, .5);
+    width: 30px;
+    display: block;
+    position: absolute;
+    transition: ease .5s;
+}
+.hamburger-menu .navbar-toggler-icon:nth-of-type(1) {top:7px;height: 2.5px;}
+.hamburger-menu .navbar-toggler-icon:nth-of-type(2) {top:14px;height: 3px;}
+.hamburger-menu .navbar-toggler-icon:nth-of-type(3) {top:21px;height: 2px;}
+.hamburger-menu .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon:nth-of-type(1) {
+    top:13px;
+    height: 2px;
+    transform: rotate(45deg);
+}
+.hamburger-menu .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon:nth-of-type(2) {
+    opacity: 0;
+    height: 2px;
+}
+.hamburger-menu .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon:nth-of-type(3) {
+    top:13px;
+    height: 2px;
+    transform: rotate(-45deg);
+}
+.hamburger-menu li.nav-item {
+    position: relative;
+    width: 100%;
+}
+.hamburger-menu .hamburger-accordion-block {
+    width: 100%;
+    display: inline-block;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    color: rgba(0, 0, 0, 0.5);
+}
+.hamburger-menu .hamburger-accordion:hover,
+.hamburger-menu .hamburger-accordion-block:hover {
+    text-decoration: none;
+}
+.hamburger-menu .hamburger-accordion[aria-expanded="false"]:after,
+.hamburger-menu .hamburger-accordion-block[aria-expanded="false"]:after {
+    font-family: 'Font Awesome 5 Free';
+    content: '\2b';
+    font-weight: 600;
+    font-size: 1.2rem;
+    position: absolute;
+    top: 0.2rem;
+    right: 0;
+    color: rgba(0, 0, 0, 0.5);
+}
+.hamburger-menu .hamburger-accordion[aria-expanded="true"]:after,
+.hamburger-menu .hamburger-accordion-block[aria-expanded="true"]:after {
+    font-family: 'Font Awesome 5 Free';
+    content: '\f068';
+    font-weight: 600;
+    margin-top: 1px;
+    margin-right: 1px;
+    position: absolute;
+    top: 0.2rem;
+    right: 0;
+    color: rgba(0, 0, 0, 0.5);
+}
 
 /* FAQ
 ------------------------------------- */
@@ -568,3 +646,17 @@ a.cc-cursor-text:hover {
     margin-bottom: 16px;
 }
 
+/* 点滅
+------------------------------------- */
+.blink {
+    -webkit-animation: blink 1s ease-in-out infinite alternate;
+    animation: blink 1s ease-in-out infinite alternate;
+}
+@-webkit-keyframes blink {
+    0% {opacity: 0;}
+    100% {opacity: 1;}
+}
+@keyframes blink {
+    0% {opacity: 0;}
+    100% {opacity: 1;}
+}

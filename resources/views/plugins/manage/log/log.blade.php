@@ -20,7 +20,7 @@
     <div class="card-body">
         <div class="accordion" id="search_accordion">
             <div class="card">
-                <button class="btn btn-link p-0 text-left collapsed" type="button" data-toggle="collapse" data-target="#search_collapse" aria-expanded="false" aria-controls="search_collapse">
+                <button class="btn btn-link p-0 text-left collapsed" type="button" data-toggle="collapse" data-target="#search_collapse" aria-expanded="false" aria-controls="search_collapse" id="app_log_search_condition_button">
                     <div class="card-header" id="app_log_search_condition">
                         絞り込み条件 <i class="fas fa-angle-down"></i>@if (Session::has('app_log_search_condition'))<span class="badge badge-pill badge-primary ml-2">条件設定中</span>@endif
                    </div>

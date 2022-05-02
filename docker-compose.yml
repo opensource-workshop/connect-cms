@@ -1,0 +1,35 @@
+version: '3'
+services:
+    app:
+        container_name: app
+        build: ./docker/app
+        volumes: 
+            - .:/var/www/html/connect-cms
+        ports: 
+            - 80:80
+        environment:
+            DB_USERNAME: JohnDoe
+            DB_PASSWORD: foobar
+            DB_DATABASE: connect
+            TZ: 'Asia/Tokyo'
+    db:
+        container_name: db
+        image: mysql:5.7
+        ports:
+            - 3306:3306
+        command: --default-authentication-plugin=mysql_native_password
+        restart: always
+        volumes:
+            # 永続化
+            - ./docker/db/mysql_data:/var/lib/mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: hogehoge
+            MYSQL_USER: JohnDoe
+            MYSQL_PASSWORD: foobar
+            MYSQL_DATABASE: connect
+            TZ: 'Asia/Tokyo'
+    mailhog:
+        container_name: mailhog
+        image: mailhog/mailhog
+        ports:
+            - "8025:8025"

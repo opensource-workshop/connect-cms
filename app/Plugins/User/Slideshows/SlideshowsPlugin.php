@@ -26,6 +26,8 @@ use App\Plugins\User\UserPluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category スライドショー・プラグイン
  * @package Controller
+ * @plugin_title スライドショー
+ * @plugin_desc 画像をアップロードして自動スライド形式で表示することができます。
  */
 class SlideshowsPlugin extends UserPluginBase
 {
@@ -122,6 +124,10 @@ class SlideshowsPlugin extends UserPluginBase
     /**
      *  データ初期表示関数
      *  コアがページ表示の際に呼び出す関数
+     *
+     * @method_title スライドショー表示
+     * @method_desc 画像をスライドショー表示します。
+     * @method_detail 画像がスライドショー表示できます。キャプション表示やリンクの設定ができます。
      */
     public function index($request, $page_id, $frame_id, $errors = null)
     {
@@ -169,6 +175,10 @@ class SlideshowsPlugin extends UserPluginBase
 
     /**
      * スライドショー新規作成画面
+     *
+     * @method_title 作成
+     * @method_desc スライドショーを新しく作成します。
+     * @method_detail スライドショー名やコントロールの表示など設定して、スライドショーを作成できます。
      */
     public function createBuckets($request, $page_id, $frame_id, $slideshows_id = null, $is_create = false, $message = null, $errors = null)
     {
@@ -182,11 +192,6 @@ class SlideshowsPlugin extends UserPluginBase
      */
     public function editBuckets($request, $page_id, $frame_id, $slideshows_id = null, $is_create = false, $message = null, $errors = null)
     {
-        // 権限チェック
-        if ($this->can('role_article_admin')) {
-            return $this->view_error(403);
-        }
-
         // セッション初期化などのLaravel 処理。
         $request->flash();
 
@@ -227,6 +232,8 @@ class SlideshowsPlugin extends UserPluginBase
         $validator_attributes['slideshows_name'] = 'スライドショー名';
         $validator_values['image_interval'] = ['required', 'numeric', 'integer', 'min:1', 'max:60000'];
         $validator_attributes['image_interval'] = '画像の静止時間';
+        $validator_values['height'] = ['nullable', 'numeric', 'min:1', 'max:65535'];
+        $validator_attributes['height'] = '高さ';
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $validator_values);
@@ -287,6 +294,7 @@ class SlideshowsPlugin extends UserPluginBase
         $slideshows->indicators_display_flag = $request->indicators_display_flag;
         $slideshows->fade_use_flag = $request->fade_use_flag;
         $slideshows->image_interval = $request->image_interval;
+        $slideshows->height = $request->height;
         $slideshows->save();
 
         // 新規作成フラグを更新モードにセットして設定変更画面へ遷移
@@ -323,7 +331,7 @@ class SlideshowsPlugin extends UserPluginBase
              * 明細データの削除
              */
             foreach ($slideshows_items as $slideshows_item) {
-                SlideshowsItems::where('slideshows_items_id', $slideshows_item->id)->delete();
+                SlideshowsItems::where('id', $slideshows_item->id)->delete();
             }
 
             $slideshows = Slideshows::find($slideshows_id);
@@ -348,6 +356,10 @@ class SlideshowsPlugin extends UserPluginBase
 
     /**
      * データ選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示するスライドショーを選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -443,8 +455,8 @@ class SlideshowsPlugin extends UserPluginBase
         $request->validate([
             'image_file'  => 'required|image',
             'link_url'    => [new CustomValiUrlMax()],
-            'caption'     => 'max:9',
-            'link_target' => 'max:9',
+            'caption'     => 'max:255',
+            'link_target' => 'max:255',
         ]);
 
         if ($request->hasFile('image_file')) {
@@ -590,12 +602,16 @@ class SlideshowsPlugin extends UserPluginBase
 
     /**
      * 項目編集画面の表示
+     *
+     * @method_title 画像の登録
+     * @method_desc スライドショーの画像を登録します。
+     * @method_detail 画像やリンクURLを登録できます。
      */
     public function editItem($request, $page_id, $frame_id, $id = null, $message = null, $errors = null)
     {
         // 権限チェック
         if ($this->can('role_article_admin')) {
-            return $this->view_error(403);
+            return $this->viewError(403);
         }
 
         // フレームに紐づくスライドショーを取得

@@ -29,6 +29,8 @@ use App\Rules\CustomValiWysiwygMax;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category FAQプラグイン
  * @package Controller
+ * @plugin_title FAQ
+ * @plugin_desc FAQを作成できるプラグインです。質問と回答をわかりやすく表示できます。
  */
 class FaqsPlugin extends UserPluginBase
 {
@@ -123,6 +125,12 @@ class FaqsPlugin extends UserPluginBase
             });
             // ->orderBy('faqs_posts.id', 'desc')
             // ->first();
+
+        // 他バケツの参照禁止
+        $faq_query = $faq_query->join('faqs', function ($join) {
+            $join->on('faqs.id', '=', 'faqs_posts.faqs_id')
+                ->where('faqs.bucket_id', '=', $this->frame->bucket_id);
+        });
 
         // カテゴリのleftJoin
         $faq_query = Categories::appendCategoriesLeftJoin($faq_query, $this->frame->plugin_name, 'faqs_posts.categories_id', 'faqs_posts.faqs_id');
@@ -393,8 +401,12 @@ class FaqsPlugin extends UserPluginBase
     /* 画面アクション関数 */
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
+     *
+     * @method_title FAQ一覧
+     * @method_desc FAQを表示します。
+     * @method_detail 質問をクリックすると回答部分が表示されます。
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -443,7 +455,11 @@ class FaqsPlugin extends UserPluginBase
     }
 
     /**
-     *  新規記事画面
+     * 新規記事画面
+     *
+     * @method_title FAQ登録
+     * @method_desc FAQを登録します。
+     * @method_detail
      */
     public function create($request, $page_id, $frame_id, $faqs_posts_id = null, $errors = null)
     {
@@ -477,6 +493,10 @@ class FaqsPlugin extends UserPluginBase
 
     /**
      *  詳細表示関数
+     *
+     * @method_title FAQ詳細
+     * @method_desc FAQの詳細を表示します。
+     * @method_detail 記事に対する一意なURLが必要な場合は記事詳細画面のURLを使ってください。
      */
     public function show($request, $page_id, $frame_id, $faqs_posts_id = null)
     {
@@ -486,7 +506,7 @@ class FaqsPlugin extends UserPluginBase
         // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $faqs_post = $this->getPost($faqs_posts_id);
         if (empty($faqs_post->id)) {
-            return $this->view_error("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
         }
 
         // タグ取得
@@ -542,7 +562,7 @@ class FaqsPlugin extends UserPluginBase
         // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $faqs_post = $this->getPost($faqs_posts_id);
         if (empty($faqs_post->id)) {
-            return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
         // カテゴリ
@@ -597,7 +617,7 @@ class FaqsPlugin extends UserPluginBase
 
             // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
             if (empty($check_faqs_post->id) || $check_faqs_post->id != $old_faqs_post->id) {
-                return $this->view_error("403_inframe", null, 'saveのユーザー権限に応じたPOST ID チェック');
+                return $this->viewError("403_inframe", null, 'saveのユーザー権限に応じたPOST ID チェック');
             }
         }
 
@@ -702,7 +722,7 @@ class FaqsPlugin extends UserPluginBase
 
             // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
             if (empty($check_faqs_post->id) || $check_faqs_post->id != $id) {
-                return $this->view_error("403_inframe", null, 'temporarysaveのユーザー権限に応じたPOST ID チェック');
+                return $this->viewError("403_inframe", null, 'temporarysaveのユーザー権限に応じたPOST ID チェック');
             }
         }
 
@@ -763,7 +783,7 @@ class FaqsPlugin extends UserPluginBase
 
         // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
         if (empty($check_faqs_post->id) || $check_faqs_post->id != $id) {
-            return $this->view_error("403_inframe", null, 'approvalのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'approvalのユーザー権限に応じたPOST ID チェック');
         }
 
         // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)
@@ -782,6 +802,10 @@ class FaqsPlugin extends UserPluginBase
 
     /**
      * データ選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示するFAQを選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -806,6 +830,10 @@ class FaqsPlugin extends UserPluginBase
 
     /**
      * FAQ新規作成画面
+     *
+     * @method_title 作成
+     * @method_desc FAQを新しく作成します。
+     * @method_detail FAQ名を入力してFAQを作成できます。
      */
     public function createBuckets($request, $page_id, $frame_id, $faqs_id = null, $create_flag = false, $message = null, $errors = null)
     {
@@ -983,6 +1011,10 @@ class FaqsPlugin extends UserPluginBase
 
     /**
      * カテゴリ表示関数
+     *
+     * @method_title カテゴリ
+     * @method_desc FAQで使用するカテゴリを設定します。
+     * @method_detail 共通カテゴリの選択、もしくはFAQ独自のカテゴリを登録します。
      */
     public function listCategories($request, $page_id, $frame_id, $id = null)
     {

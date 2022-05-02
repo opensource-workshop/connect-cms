@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<main class="container" role="main">
+<main class="container login" role="main">
     <div class="row">
         <div class="col-md-8 offset-md-2 mt-3">
             <div class="card">
@@ -49,7 +49,7 @@
 
                         <div class="form-group row">
                             <div class="col-md-8 offset-md-4">
-                                <button type="submit" class="btn btn-primary">
+                                <button type="submit" class="btn btn-primary" dusk="login-button">
                                     <i class="fas fa-check"></i> ログイン
                                 </button>
 
@@ -60,7 +60,7 @@
                                     $base_login_password_reset = Configs::where('name', 'base_login_password_reset')->first();
                                 @endphp
                                 @if (isset($base_login_password_reset) && $base_login_password_reset->value == '1')
-                                    <a class="btn btn-link" href="{{ route('password.request') }}">
+                                    <a class="btn btn-link" href="{{ route('password.request') }}" dusk="login_password_reset">
                                         パスワードを忘れた場合。
                                     </a>
                                 @endif

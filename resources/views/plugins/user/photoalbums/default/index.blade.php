@@ -148,7 +148,7 @@
             <label class="{{$frame->getSettingLabelClass()}}" for="folder_name">アルバム名 <label class="badge badge-danger">必須</label></label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <input type="text" name="folder_name[{{$frame_id}}]" value="{{old("folder_name.$frame_id")}}" class="form-control @if ($errors && $errors->has("folder_name.$frame_id")) border-danger @endif" id="folder_name{{$frame_id}}">
-                @if ($errors && $errors->has("folder_name.$frame_id")) 
+                @if ($errors && $errors->has("folder_name.$frame_id"))
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("folder_name.*")}}</div>
                 @endif
             </div>
@@ -157,14 +157,14 @@
             <label class="{{$frame->getSettingLabelClass()}}" for="description">説明</label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <textarea name="description[{{$frame_id}}]" class="form-control @if ($errors->has('description.$frame_id')) border-danger @endif" rows=2>{!!old("description.$frame_id")!!}</textarea>
-                @if ($errors && $errors->has("description.$frame_id")) 
+                @if ($errors && $errors->has("description.$frame_id"))
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("description.*")}}</div>
                 @endif
             </div>
         </div>
         <div class="text-center">
             <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#collapse_mkdir{{$frame->id}}">キャンセル</button>
-            <button class="btn btn-primary btn-sm" type="submit">作成</button>
+            <button class="btn btn-primary btn-sm" type="submit" id="button_make_folder{{$frame->id}}">作成</button>
         </div>
     </div>
 </form>
@@ -187,10 +187,10 @@
         <div class="row">
             <label class="{{$frame->getSettingLabelClass()}} p-0"></label>
             <div class="{{$frame->getSettingInputClass()}}">
-                <small class="my-0 form-text text-muted">jpg, png, gif, zip を許可します。zip の場合は展開されて登録されます。</small>
+                <small class="my-0 form-text text-muted">jpg, png, gif, zip を許可します。<br />zip の場合は展開され、フォルダがアルバム（サブアルバム）となり、登録されます。</small>
             </div>
         </div>
-        @if ($errors && $errors->has("upload_file.$frame_id")) 
+        @if ($errors && $errors->has("upload_file.$frame_id"))
         <div class="form-group row mb-0">
             <label class="{{$frame->getSettingLabelClass()}}"></label>
             <div class="{{$frame->getSettingInputClass()}}">
@@ -202,8 +202,8 @@
             <label class="{{$frame->getSettingLabelClass()}}" for="title">タイトル</label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <input type="text" name="title[{{$frame_id}}]" value="{{old("title.$frame_id")}}" class="form-control @if ($errors && $errors->has("title.$frame_id")) border-danger @endif" id="title{{$frame_id}}">
-                <small class="form-text text-muted">空の場合、ファイル名をタイトルとして登録します。</small>
-                @if ($errors && $errors->has("title.$frame_id")) 
+                <small class="form-text text-muted">空の場合、ファイル名をタイトルとして登録します。(zipの場合はファイル名が入ります)</small>
+                @if ($errors && $errors->has("title.$frame_id"))
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("title.*")}}</div>
                 @endif
             </div>
@@ -212,7 +212,8 @@
             <label class="{{$frame->getSettingLabelClass()}}" for="description">説明</label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <textarea name="description[{{$frame_id}}]" class="form-control @if ($errors->has('description.$frame_id')) border-danger @endif" rows=2>{!!old("description.$frame_id")!!}</textarea>
-                @if ($errors && $errors->has("description.$frame_id")) 
+                <small class="form-text text-muted">zipの場合は空になります。</small>
+                @if ($errors && $errors->has("description.$frame_id"))
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("description.*")}}</div>
                 @endif
             </div>
@@ -226,13 +227,13 @@
                     @else
                         <input type="checkbox" name="is_cover[{{$frame_id}}]" value="1" class="custom-control-input" id="is_cover{{$frame_id}}">
                     @endif
-                    <label class="custom-control-label" for="is_cover{{$frame_id}}">チェックすると、アルバムの表紙に使われます。</label>
+                    <label class="custom-control-label" for="is_cover{{$frame_id}}" id="label_is_cover{{$frame_id}}">チェックすると、アルバムの表紙に使われます。</label>
                 </div>
             </div>
         </div>
         <div class="text-center">
             <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#collapse_upload{{$frame->id}}">キャンセル</button>
-            <button class="btn btn-primary btn-sm" type="submit">追加</button>
+            <button class="btn btn-primary btn-sm" type="submit" id="button_upload{{$frame->id}}">追加</button>
             <small id="upload-size-server-help" class="form-text text-muted">アップロードできる最大サイズ&nbsp;<span class="font-weight-bold">{{UploadMaxSize::getDescription($photoalbum->image_upload_max_size)}}</span><br />保存時の幅、高さの最大px&nbsp;<span class="font-weight-bold">{{ResizedImageSize::getImageUploadResizeMessage($photoalbum->image_upload_max_px)}}</span></small>
         </div>
     </div>
@@ -256,10 +257,10 @@
         <div class="row">
             <label class="{{$frame->getSettingLabelClass()}} p-0"></label>
             <div class="{{$frame->getSettingInputClass()}}">
-                <small class="my-0 form-text text-muted">mp4, zip を許可します。zip の場合は展開されて登録されます。</small>
+                <small class="my-0 form-text text-muted">mp4, zip を許可します。zip の場合は展開されて登録されます。(zip は予定)</small>
             </div>
         </div>
-        @if ($errors && $errors->has("upload_video.$frame_id")) 
+        @if ($errors && $errors->has("upload_video.$frame_id"))
         <div class="form-group row mb-0">
             <label class="{{$frame->getSettingLabelClass()}}"></label>
             <div class="{{$frame->getSettingInputClass()}}">
@@ -283,7 +284,7 @@
                 <small class="my-0 form-text text-muted">jpg, png, gif を許可します。</small>
             </div>
         </div>
-        @if ($errors && $errors->has("upload_poster.$frame_id")) 
+        @if ($errors && $errors->has("upload_poster.$frame_id"))
         <div class="form-group row mb-0">
             <label class="{{$frame->getSettingLabelClass()}}"></label>
             <div class="{{$frame->getSettingInputClass()}}">
@@ -297,7 +298,7 @@
             <div class="{{$frame->getSettingInputClass()}}">
                 <input type="text" name="title[{{$frame_id}}]" value="{{old("title.$frame_id")}}" class="form-control @if ($errors && $errors->has("title.$frame_id")) border-danger @endif" id="title{{$frame_id}}">
                 <small class="form-text text-muted">空の場合、ファイル名をタイトルとして登録します。</small>
-                @if ($errors && $errors->has("title.$frame_id")) 
+                @if ($errors && $errors->has("title.$frame_id"))
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("title.*")}}</div>
                 @endif
             </div>
@@ -306,7 +307,7 @@
             <label class="{{$frame->getSettingLabelClass()}}" for="description">説明</label>
             <div class="{{$frame->getSettingInputClass()}}">
                 <textarea name="description[{{$frame_id}}]" class="form-control @if ($errors->has('description.$frame_id')) border-danger @endif" rows=2>{!!old("description.$frame_id")!!}</textarea>
-                @if ($errors && $errors->has("description.$frame_id")) 
+                @if ($errors && $errors->has("description.$frame_id"))
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("description.*")}}</div>
                 @endif
             </div>
@@ -320,13 +321,13 @@
                     @else
                         <input type="checkbox" name="is_cover[{{$frame_id}}]" value="1" class="custom-control-input" id="poster_is_cover{{$frame_id}}" disabled>
                     @endif
-                    <label class="custom-control-label" for="poster_is_cover{{$frame_id}}">チェックすると、ポスター画像がアルバムの表紙に使われます。</label>
+                    <label class="custom-control-label" for="poster_is_cover{{$frame_id}}" id="label_poster_is_cover{{$frame_id}}">チェックすると、ポスター画像がアルバムの表紙に使われます。</label>
                 </div>
             </div>
         </div>
         <div class="text-center">
             <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#collapse_video{{$frame->id}}">キャンセル</button>
-            <button class="btn btn-primary btn-sm" type="submit">追加</button>
+            <button class="btn btn-primary btn-sm" type="submit" id="button_upload_video{{$frame->id}}">追加</button>
             <small id="upload-size-server-help" class="form-text text-muted">アップロードできる最大サイズ&nbsp;<span class="font-weight-bold">{{UploadMaxSize::getDescription($photoalbum->video_upload_max_size)}}</span></small>
         </div>
     </div>
@@ -384,7 +385,7 @@
             <a href="{{url('/')}}/plugin/photoalbums/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}/#frame-{{$frame->id}}" class="text-center">
                 {{-- カバー画像が指定されていれば使用し、指定されていなければ、グレーのカバーを使用 --}}
                 @if ($covers->where('parent_id', $photoalbum_content->id)->first())
-                    <img src="/file/{{$covers->where('parent_id', $photoalbum_content->id)->first()->getCoverFileId()}}?size=small"
+                    <img src="{{url('/')}}/file/{{$covers->where('parent_id', $photoalbum_content->id)->first()->getCoverFileId()}}?size=small"
                          id="cover_{{$loop->iteration}}"
                          style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
                          class="img-fluid"
@@ -429,7 +430,7 @@
     <div class="col-md-4">
         <div class="card mt-3 shadow-sm">
         @if ($photoalbum_content->isImage($photoalbum_content->mimetype))
-            <img src="/file/{{$photoalbum_content->upload_id}}?size=small"
+            <img src="{{url('/')}}/file/{{$photoalbum_content->upload_id}}?size=small"
                  id="photo_{{$loop->iteration}}"
                  style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
                  class="img-fluid" data-toggle="modal" data-target="#image_Modal_{{$loop->iteration}}"
@@ -439,7 +440,7 @@
                     <div class="modal-content pb-3">
                         <div class="modal-body mx-auto" style="{{$photoalbum_content->getModalMinSize()}}">
                             {{-- 拡大表示ウィンドウにも、初期設定でサムネイルを設定しておき、クリック時に実寸画像を読み込みなおす --}}
-                            <img src="/file/{{$photoalbum_content->upload_id}}?size=small"
+                            <img src="{{url('/')}}/file/{{$photoalbum_content->upload_id}}?size=small"
                                  style="object-fit: scale-down; cursor:pointer;"
                                  id="popup_photo_{{$loop->iteration}}"
                                  class="img-fluid"/>
@@ -455,35 +456,37 @@
             <script>
             {{-- サムネイル枠のクリックで、実寸画像を読み込む。一覧表示時のネットワーク通信量の軽減対応 --}}
             $("#photo_{{$loop->iteration}}").on("click", function() {
-               $("#popup_photo_{{$loop->iteration}}").attr('src', "/file/{{$photoalbum_content->upload_id}}");
+               $("#popup_photo_{{$loop->iteration}}").attr('src', "{{url('/')}}/file/{{$photoalbum_content->upload_id}}");
             });
             </script>
         @elseif ($photoalbum_content->isVideo($photoalbum_content->mimetype))
             <video controls controlsList="nodownload"
-                 src="/file/{{$photoalbum_content->upload_id}}"
+                 src="{{url('/')}}/file/{{$photoalbum_content->upload_id}}"
                  id="video_{{$loop->iteration}}"
                  style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
                  class="img-fluid"
-                 @if ($photoalbum_content->poster_upload_id) poster="/file/{{$photoalbum_content->poster_upload_id}}" @endif
+                 @if ($photoalbum_content->poster_upload_id) poster="{{url('/')}}/file/{{$photoalbum_content->poster_upload_id}}" @endif
                  oncontextmenu="return false;"
             ></video>
         @endif
             <div class="card-body">
                 <div class="d-flex">
                     @if ($download_check)
-                    <div class="custom-control custom-checkbox d-inline">
-                        <input type="checkbox" class="custom-control-input" id="customCheck_{{$photoalbum_content->id}}" name="photoalbum_content_id[]" value="{{$photoalbum_content->id}}" data-name="{{$photoalbum_content->name}}">
-                        <label class="custom-control-label" for="customCheck_{{$photoalbum_content->id}}"></label>
-                    </div>
+                        <div class="custom-control custom-checkbox d-inline">
+                            <input type="checkbox" class="custom-control-input" id="customCheck_{{$photoalbum_content->id}}" name="photoalbum_content_id[]" value="{{$photoalbum_content->id}}" data-name="{{$photoalbum_content->name}}">
+                            <label class="custom-control-label" for="customCheck_{{$photoalbum_content->id}}"></label>
+                        </div>
                     @endif
-                    <h5 class="card-title d-flex">{{$photoalbum_content->name}}</h5>
+                    @if ($photoalbum_content->name)
+                        <h5 class="card-title d-flex text-break">{{$photoalbum_content->name}}</h5>
+                    @endif
                 </div>
                 @if ($photoalbum_content->description)
                     <div class="card-text">{!!nl2br(e($photoalbum_content->description))!!}</div>
                 @endif
                 @if (($photoalbum_content->isVideo($photoalbum_content->mimetype)) && FrameConfig::getConfigValue($frame_configs, PhotoalbumFrameConfig::embed_code))
                     <div class="card-text">
-                        <a class="embed_code_check" data-name="embed_code{{$photoalbum_content->id}}" style="color: #007bff; cursor: pointer;"><small>埋め込みコード</small> <i class="fas fa-caret-right"></i></a>
+                        <a class="embed_code_check" data-name="embed_code{{$photoalbum_content->id}}" style="color: #007bff; cursor: pointer;" id="a_embed_code_check{{$photoalbum_content->id}}"><small>埋め込みコード</small> <i class="fas fa-caret-right"></i></a>
                         <input type="text" name="embed_code[{{$frame_id}}]" value='<iframe width="400" height="300" src="{{url('/')}}/download/plugin/photoalbums/embed/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}" frameborder="0" scrolling="no" allowfullscreen></iframe>' class="form-control" id="embed_code{{$photoalbum_content->id}}" style="display: none;">
                     </div>
                 @endif

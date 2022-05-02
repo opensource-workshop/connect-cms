@@ -17,7 +17,7 @@ use App\Traits\ConnectCommonTrait;
 use App\Enums\SearchsTargetPlugin;
 
 /**
- * 検索プラグイン
+ * サイト内検索プラグイン
  *
  * サイト内の情報を検索するプラグイン。
  *
@@ -25,6 +25,8 @@ use App\Enums\SearchsTargetPlugin;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 検索プラグイン
  * @package Controller
+ * @plugin_title サイト内検索
+ * @plugin_desc サイト内のコンテンツを検索できるプラグインです。
  */
 class SearchsPlugin extends UserPluginBase
 {
@@ -142,12 +144,12 @@ class SearchsPlugin extends UserPluginBase
 
             // ファイルの存在確認
             if (!file_exists($file_path)) {
-                return $this->view_error("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
+                return $this->viewError("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
             }
 
             // 各プラグインのgetSearchArgs() 関数を呼び出し。
             $class_name = "App\Plugins\User\\" . ucfirst($target_plugin) . "\\" . ucfirst($target_plugin) . "Plugin";
-            list($union_sqls[$target_plugin], $sql_binds[$target_plugin], $link_pattern[$target_plugin], $link_base[$target_plugin]) = $class_name::getSearchArgs($search_keyword, $page_ids);
+            list($union_sqls[$target_plugin], $link_pattern[$target_plugin], $link_base[$target_plugin]) = $class_name::getSearchArgs($search_keyword, $page_ids);
         }
 
         // ベースの新着DUAL（ダミーテーブル）
@@ -168,43 +170,20 @@ class SearchsPlugin extends UserPluginBase
                  )
                  ->leftJoin('categories', 'categories.id', '=', 'searchs_dual.categories_id');
 
-        // フレームの選択が有効な場場合のため、フレームID を取っておく。
-        $frame_ids = explode(',', $searchs_frame->target_frame_ids);
-
         // 各プラグインのSQL をUNION
         foreach ($union_sqls as $union_sql) {
             // フレームの選択が行われる場合
             if ($searchs_frame->frame_select == 1) {
                 $union_sql->whereIn('frames.id', explode(',', $searchs_frame->target_frame_ids));
             }
-
             $searchs_sql->unionAll($union_sql);
         }
 
         // UNION 後をソート
         $searchs_sql->orderBy('posted_at', 'desc');
 
-        // UNION 後をページネーションしたいので、UNION で構築したSQL をサブクエリにする。
-        $searchs_query = DB::table(DB::raw('('.$searchs_sql->toSql().') AS searchs_result'));
-
-        // 各プラグインから受け取ったSQL Bind 用変数をまとめる。
-        $bind = array();
-        foreach ($sql_binds as $plugin_bind) {
-            $bind = array_merge($bind, $plugin_bind);
-
-            // フレームの選択が行われる場合はフレームID もBind する。
-            if ($searchs_frame->frame_select == 1) {
-                foreach ($frame_ids as $frame_id) {
-                    $bind[] = $frame_id;
-                }
-            }
-        }
-
-        // SQL に引数をBind する。
-        $searchs_query->setBindings($bind);
-
         // ページングしてデータ取得
-        $searchs_results = $searchs_query->paginate($searchs_frame->count, ["*"], "frame_{$searchs_frame->id}_page");
+        $searchs_results = $searchs_sql->paginate($searchs_frame->count, ["*"], "frame_{$searchs_frame->id}_page");
 
         return array($searchs_results, $link_pattern, $link_base);
     }
@@ -215,6 +194,10 @@ class SearchsPlugin extends UserPluginBase
     /**
      * データ初期表示関数
      * コアがページ表示の際に呼び出す関数
+     *
+     * @method_title サイト内検索
+     * @method_desc 指定したキーワードがあるコンテンツの一覧が表示されます。
+     * @method_detail
      */
     public function index($request, $page_id, $frame_id, $errors = null)
     {
@@ -282,6 +265,10 @@ class SearchsPlugin extends UserPluginBase
 
     /**
      * 設定データ選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示するサイト内検索を選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -303,6 +290,10 @@ class SearchsPlugin extends UserPluginBase
 
     /**
      * 設定データの新規作成画面
+     *
+     * @method_title 作成
+     * @method_desc サイト内検索を新しく作成します。
+     * @method_detail サイト内検索の名称や検索条件などを入力してサイト内検索を作成できます。
      */
     public function createBuckets($request, $page_id, $frame_id, $id = null, $create_flag = false, $message = null, $errors = null)
     {
@@ -360,7 +351,7 @@ class SearchsPlugin extends UserPluginBase
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'search_name'     => ['required'],
-            'count'           => ['nullable', 'numeric'],
+            'count'           => ['required', 'numeric'],
             'target_plugin'   => ['required'],
         ]);
         $validator->setAttributeNames([

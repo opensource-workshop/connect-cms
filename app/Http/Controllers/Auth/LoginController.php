@@ -208,6 +208,19 @@ class LoginController extends Controller
             session(['url.intended' => $base_login_redirect_select_page]);
         }
 
-        return view('auth.login');
+        // サイトテーマ詰込
+        $configs = Configs::getSharedConfigs();
+        $base_theme = Configs::getConfigsValue($configs, 'base_theme', null);
+        $additional_theme = Configs::getConfigsValue($configs, 'additional_theme', null);
+        $themes = [
+                    'css' => $base_theme,
+                    'js' => $base_theme,
+                    'additional_css' => $additional_theme,
+                    'additional_js' => $additional_theme,
+        ];
+
+        return view('auth.login', [
+            'themes' => $themes,
+        ]);
     }
 }

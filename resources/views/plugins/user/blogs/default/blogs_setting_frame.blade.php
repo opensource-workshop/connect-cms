@@ -36,21 +36,36 @@
             <input type="hidden" name="blogs_id" value="{{$blog_frame->blogs_id}}">
             <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/blogs/settingBlogFrame/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 
+            {{-- 表示件数 --}}
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">
+                    {{BlogFrameConfig::getDescription('blog_view_count')}}
+                    <span class="badge badge-danger">必須</span>
+                </label>
+                <div class="{{$frame->getSettingInputClass()}}">
+                    <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        class="form-control col-sm-3 @if ($errors->has(BlogFrameConfig::blog_view_count)) border-danger @endif"
+                        value="{{FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::blog_view_count)}}"
+                        id="{{BlogFrameConfig::blog_view_count}}" name="{{BlogFrameConfig::blog_view_count}}"
+                        required
+                    >
+                    @include('plugins.common.errors_inline', ['name' => BlogFrameConfig::blog_view_count])
+                    <small class="text-muted">※ 初期値は15件です。</small>
+                </div>
+            </div>
+
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass()}}">表示条件</label>
                 <div class="{{$frame->getSettingInputClass(true)}}">
-                    <div class="custom-control custom-radio custom-control-inline">
-                        <input type="radio" value="" id="scope_all" name="scope" class="custom-control-input" @if (old('scope', $blog_frame_setting->scope) == '') checked @endif v-model="v_scope_radio">
-                        <label class="custom-control-label" for="scope_all">全て</label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline">
-                        <input type="radio" value="year" id="scope_year" name="scope" class="custom-control-input" @if (old('scope', $blog_frame_setting->scope) == 'year') checked @endif v-model="v_scope_radio">
-                        <label class="custom-control-label" for="scope_year">年</label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline">
-                        <input type="radio" value="fiscal" id="scope_fiscal" name="scope" class="custom-control-input" @if (old('scope', $blog_frame_setting->scope) == 'fiscal') checked @endif v-model="v_scope_radio">
-                        <label class="custom-control-label" for="scope_fiscal">年度</label>
-                    </div>
+                    @foreach (BlogFrameScope::getMembers() as $enum_value => $enum_label)
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="{{$enum_value}}" id="scope_{{$enum_value ? $enum_value : 'all'}}" name="scope" class="custom-control-input" @if (old('scope', $blog_frame_setting->scope) == $enum_value) checked @endif v-model="v_scope_radio">
+                            <label class="custom-control-label" for="scope_{{$enum_value ? $enum_value : 'all'}}">{{$enum_label}}</label>
+                        </div>
+                    @endforeach
                 </div>
             </div>
 
@@ -102,6 +117,7 @@
                 </div>
             </div>
 
+            {{-- 投稿者名 --}}
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass()}}">{{BlogFrameConfig::getDescription('blog_display_created_name')}}</label>
                 <div class="{{$frame->getSettingInputClass(true)}}">
@@ -112,7 +128,7 @@
                         @else
                             <input type="radio" value="{{BlogDisplayCreatedName::none}}" id="{{BlogFrameConfig::blog_display_created_name}}_0" name="{{BlogFrameConfig::blog_display_created_name}}" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_created_name}}_0">{{BlogDisplayCreatedName::getDescription('none')}}</label>
+                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_created_name}}_0" id="label_{{BlogFrameConfig::blog_display_created_name}}_0">{{BlogDisplayCreatedName::getDescription('none')}}</label>
                     </div>
                     <div class="custom-control custom-radio custom-control-inline">
                         @if (FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)
@@ -120,7 +136,55 @@
                         @else
                             <input type="radio" value="{{BlogDisplayCreatedName::display}}" id="{{BlogFrameConfig::blog_display_created_name}}_1" name="{{BlogFrameConfig::blog_display_created_name}}" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_created_name}}_1">{{BlogDisplayCreatedName::getDescription('display')}}</label>
+                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_created_name}}_1" id="label_{{BlogFrameConfig::blog_display_created_name}}_1">{{BlogDisplayCreatedName::getDescription('display')}}</label>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Twitterアイコン表示 --}}
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">{{BlogFrameConfig::getDescription('blog_display_twitter_button')}}</label>
+                <div class="{{$frame->getSettingInputClass(true)}}">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if (FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::blog_display_twitter_button) == '' ||
+                            FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::blog_display_twitter_button) == ShowType::not_show)
+                            <input type="radio" value="{{ShowType::not_show}}" id="{{BlogFrameConfig::blog_display_twitter_button}}_0" name="{{BlogFrameConfig::blog_display_twitter_button}}" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="{{ShowType::not_show}}" id="{{BlogFrameConfig::blog_display_twitter_button}}_0" name="{{BlogFrameConfig::blog_display_twitter_button}}" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_twitter_button}}_0" id="label_{{BlogFrameConfig::blog_display_twitter_button}}_0">{{ShowType::getDescription(ShowType::not_show)}}</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if (FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::blog_display_twitter_button) == ShowType::show)
+                            <input type="radio" value="{{ShowType::show}}" id="{{BlogFrameConfig::blog_display_twitter_button}}_1" name="{{BlogFrameConfig::blog_display_twitter_button}}" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="{{ShowType::show}}" id="{{BlogFrameConfig::blog_display_twitter_button}}_1" name="{{BlogFrameConfig::blog_display_twitter_button}}" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_twitter_button}}_1" id="label_{{BlogFrameConfig::blog_display_twitter_button}}_1">{{ShowType::getDescription(ShowType::show)}}</label>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Facebookアイコン表示 --}}
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">{{BlogFrameConfig::getDescription('blog_display_facebook_button')}}</label>
+                <div class="{{$frame->getSettingInputClass(true)}}">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if (FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::blog_display_facebook_button) == '' ||
+                            FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::blog_display_facebook_button) == ShowType::not_show)
+                            <input type="radio" value="{{ShowType::not_show}}" id="{{BlogFrameConfig::blog_display_facebook_button}}_0" name="{{BlogFrameConfig::blog_display_facebook_button}}" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="{{ShowType::not_show}}" id="{{BlogFrameConfig::blog_display_facebook_button}}_0" name="{{BlogFrameConfig::blog_display_facebook_button}}" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_facebook_button}}_0" id="label_{{BlogFrameConfig::blog_display_facebook_button}}_0">{{ShowType::getDescription(ShowType::not_show)}}</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if (FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::blog_display_facebook_button) == ShowType::show)
+                            <input type="radio" value="{{ShowType::show}}" id="{{BlogFrameConfig::blog_display_facebook_button}}_1" name="{{BlogFrameConfig::blog_display_facebook_button}}" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="{{ShowType::show}}" id="{{BlogFrameConfig::blog_display_facebook_button}}_1" name="{{BlogFrameConfig::blog_display_facebook_button}}" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_facebook_button}}_1" id="label_{{BlogFrameConfig::blog_display_facebook_button}}_1">{{ShowType::getDescription(ShowType::show)}}</label>
                     </div>
                 </div>
             </div>

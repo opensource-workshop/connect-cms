@@ -40,6 +40,12 @@
         <input type="hidden" name="character_code" value="">
     </form>
 
+    {{-- コピー用フォーム --}}
+    <form action="" method="POST" name="form_copy" class="d-inline">
+        {{ csrf_field() }}
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/forms/listBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
+    </form>
+
     <script type="text/javascript">
         {{-- ダウンロードのsubmit JavaScript --}}
         function submit_download_shift_jis(id) {
@@ -57,6 +63,14 @@
             form_download.action = "{{url('/')}}/download/plugin/forms/downloadCsv/{{$page->id}}/{{$frame_id}}/" + id;
             form_download.character_code.value = '{{CsvCharacterCode::utf_8}}';
             form_download.submit();
+        }
+
+        function copy_form(form_id) {
+            if( !confirm('フォーム設定と項目設定をコピーして新しいフォームを作成します。\nよろしいですか？') ) {
+                return;
+            }
+            form_copy.action = "{{url('/')}}/redirect/plugin/forms/copyForm/{{$page->id}}/{{$frame_id}}/" + form_id;
+            form_copy.submit();
         }
 
         /**
@@ -103,6 +117,10 @@
                             <i class="fas fa-list"></i> 登録一覧
                         </a>
 
+                        <button type="button" class="btn btn-primary btn-sm mr-1" onclick="copy_form({{$plugin->id}});">
+                            <i class="fas fa-copy"></i> コピーして新規
+                        </button>
+
                         <div class="btn-group">
                             <button type="button" class="btn btn-primary btn-sm" onclick="submit_download_shift_jis({{$plugin->id}});">
                                 <i class="fas fa-file-download"></i> ダウンロード
@@ -128,7 +146,7 @@
 
         <div class="text-center">
             <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span></button>
-            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 表示{{$frame->plugin_name_full}}変更</button>
+            <button type="submit" class="btn btn-primary" id="button_list_buckets"><i class="fas fa-check"></i> 表示{{$frame->plugin_name_full}}変更</button>
         </div>
     </form>
 @endauth

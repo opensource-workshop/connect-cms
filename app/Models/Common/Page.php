@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-// use DB;
+use Illuminate\Support\Facades\Request as FacadeRequest;
 
 use Kalnoy\Nestedset\NodeTrait;
 
@@ -19,13 +19,28 @@ use App\Traits\ConnectCommonTrait;
 
 class Page extends Model
 {
+    use NodeTrait;
+    use ConnectCommonTrait;
+
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['page_name', 'permanent_link', 'background_color', 'header_color', 'theme',  'layout', 'base_display_flag', 'membership_flag', 'ip_address', 'othersite_url', 'othersite_url_target', 'class', 'password'];
-
-    use NodeTrait;
-    use ConnectCommonTrait;
+    protected $fillable = [
+        'page_name',
+        'permanent_link',
+        'background_color',
+        'header_color',
+        'theme',
+        'layout',
+        'base_display_flag',
+        'membership_flag',
+        'container_flag',
+        'ip_address',
+        'othersite_url',
+        'othersite_url_target',
+        'class',
+        'password',
+    ];
 
     /**
      * hasMany 設定
@@ -262,7 +277,7 @@ class Page extends Model
                 $ip_address_check = false;
                 $ip_addresses = explode(',', $this->ip_address);
                 foreach ($ip_addresses as $ip_address) {
-                    if ($this->isRangeIp(\Request::ip(), trim($ip_address))) {
+                    if ($this->isRangeIp(FacadeRequest::ip(), trim($ip_address))) {
                         $ip_address_check = true;
                     }
                 }
@@ -305,6 +320,52 @@ class Page extends Model
 
         // 制限にかからなっかったのでOK
         return true;
+    }
+
+    /**
+     * 親子ページを加味して 表示可否の判断
+     */
+    public function isVisibleAncestorsAndSelf(Collection $page_tree) : bool
+    {
+        // 権限チェックをpage のisView で行うためにユーザを渡す。
+        $user = Auth::user();
+        // ページ直接の参照可否チェックをしたいので、表示フラグは見ない。表示フラグは隠しページ用。
+        $check_no_display_flag = true;
+        // 自分のページ＋先祖ページのpage_roles を取得
+        $page_roles = PageRole::getPageRoles($page_tree->pluck('id'));
+
+        // ページをループして表示可否をチェック
+        // 継承関係を加味するために is_view 変数を使用。
+        $is_view = true;
+        foreach ($page_tree as $page_obj) {
+
+            // IP アドレス制限　　　　　　　　　　　　　　　　：親子ともに設定あったら、子⇒親に遡って全てチェック
+            // ログインユーザ全員参加やメンバーシップページ設定：親子ともに設定あったら、子だけでチェック
+
+            // ページに直接、ログインユーザ全員参加やメンバーシップページが設定されている場合は、親を見ずに、該当ページ（一番下の子=$page_tree[0]）だけで判断する。
+            if ($page_obj->membership_flag == 2) {
+                if (empty($user)) {
+                    // 403 対象. 見えないページ
+                    return false;
+                } else {
+                    // 見えるページ
+                    return true;
+                }
+            } elseif ($page_obj->membership_flag == 1) {
+                if (empty($page_roles)) {
+                    return false;
+                }
+                $check_page_roles = $page_roles->where('page_id', $page_obj->id);
+                $is_view = $page_obj->isView($user, $check_no_display_flag, $is_view, $check_page_roles);
+                return $is_view;
+            }
+            // 以降は親を見る処理（IP アドレス制限）
+
+            // IP アドレス制限用。上でmembership_flag=1,2チェック済みのため、ここの isView() のmembership_flag=1,2チェックは実質使われない。
+            $is_view = $page_obj->isView($user, $check_no_display_flag, $is_view);
+        }
+
+        return $is_view;
     }
 
     /**
@@ -555,5 +616,48 @@ class Page extends Model
     {
         $display_children = $children->where('display_flag', 1);
         return $display_children->isNotEmpty();
+    }
+
+    /**
+     * アクティブ・マークを付けるページID の算出
+     *
+     * アクティブ・マークを付けるページとは、以下の条件を満たすもの
+     * 選択されているページ＆表示中のページ
+     * 選択されているページが非表示の場合、表示されている中での、最後の上位階層のページ
+     *
+     * プログラムでの、値の見つけ方
+     * PHP の参照変数を宣言し、アクティブ・マークのページIDを保持する。
+     * 再帰関数でページを順に見ていき、条件に合致するページIDで参照変数を上書きながら進む
+     * 残ったページIDがアクティブ・マークのページになる
+     *
+     * (resources/views/plugins/user/menus/tab_flat/menus.blade.php より移動
+     *  1ページに複数tab_flatを配置すると、function factorial()の重複定義エラーになるため。)
+     */
+    public static function getTabFlatActivePageId($pages, $ancestors, $page_roles): int
+    {
+        $active_page_id = 0;
+        foreach ($pages as $page) {
+            self::factorial($page, $ancestors, $page_roles, $active_page_id);
+        }
+        return $active_page_id;
+    }
+
+    /**
+     * アクティブ・マークを付けるページID を探す再帰関数
+     */
+    private static function factorial($page, $ancestors, $page_roles, int &$active_page_id): void
+    {
+        if ($page->isView(Auth::user(), false, true, $page_roles)) {
+            if ($ancestors->contains('id', $page->id)) {
+                $active_page_id = $page->id;
+            }
+        }
+
+        if (count($page->children) > 0) {
+            foreach ($page->children as $children) {
+                self::factorial($children, $ancestors, $page_roles, $active_page_id);
+            }
+        }
+        return;
     }
 }

@@ -10,11 +10,18 @@ use App\Plugins\Mypage\MypagePluginBase;
 
 /**
  * ログイン履歴マイページクラス
+ *
+ * @plugin_title ログイン履歴
+ * @plugin_desc 自分のログイン履歴を確認できます。
  */
 class LoginHistoryMypage extends MypagePluginBase
 {
     /**
      * ページ初期表示(ログイン履歴画面表示)
+     *
+     * @method_title ログイン履歴
+     * @method_desc 自分のログイン履歴を確認できます。
+     * @method_detail ログイン日時、IPアドレス、ユーザエージェントを確認できます。
      */
     public function index($request, $id = null)
     {
@@ -28,6 +35,7 @@ class LoginHistoryMypage extends MypagePluginBase
 
         // 画面呼び出し
         return view('plugins.mypage.loginhistory.list', [
+            'themes'          => $request->themes,
             "function" => __FUNCTION__,
             "plugin_name" => "loginhistory",
             "users_login_histories" => $users_login_histories,

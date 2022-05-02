@@ -22,6 +22,13 @@
     </div>
 </div>
 
+{{-- posts.createをループ外で判定 --}}
+@can('posts.create',[[null, $frame->plugin_name, $buckets]])
+    @php $can_posts_create = true; @endphp
+@else
+    @php $can_posts_create = false; @endphp
+@endcan
+
 <table class="table table-bordered">
     <thead>
     <tr class="thead d-none d-md-table-row">
@@ -82,18 +89,21 @@
                             @else
                             ({{$date->formatLocalized("%a")}})
                             @endif
-                            <div class="col-12 pl-1 d-inline cc-font-90">
-                                <span class="badge badge-pill badge-danger">{{$date->getHolidayName()}}</span>
-                            </div>
+                            {{-- 祝日 --}}
+                            @if ($date->hasHoliday())
+                                <div class="pl-1 d-inline cc-font-90">
+                                    <span class="badge badge-pill badge-danger">{{$date->getHolidayName()}}</span>
+                                </div>
+                            @endif
                         </div>
                     </div>
                     <div class="col-6 text-right">
-                    @can('posts.create',[[null, 'calendars', $buckets]])
+                    @if ($can_posts_create)
                         @if (isset($frame) && $frame->bucket_id)
                             {{-- 新規登録ボタン --}}
                             <a href="{{url('/')}}/plugin/calendars/edit/{{$page->id}}/{{$frame_id}}?date={{$date->format('Y-m-d')}}#frame-{{$frame_id}}"><i class="fas fa-plus"></i></a>
                         @endif
-                    @endcan
+                    @endif
                     </div>
                 </div>
                 {{-- 祝日 --}}

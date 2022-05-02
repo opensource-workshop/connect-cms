@@ -38,7 +38,9 @@ class SiteManageTest extends DuskTestCase
         $this->analytics();
         $this->saveAnalytics();
         $this->favicon();
-        $this->saveFavicon();
+        $this->wysiwyg();
+        $this->document();
+        //$this->saveFavicon();
     }
 
     /**
@@ -46,11 +48,29 @@ class SiteManageTest extends DuskTestCase
      */
     private function index()
     {
+        // サイト管理画面
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/site')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/index/images/index');
         });
+
+        // ページスクロール
+        $this->browse(function (Browser $browser) {
+            $browser->scrollIntoView('#base_header_color')
+                    ->screenshot('manage/site/index/images/index2');
+        });
+        $this->browse(function (Browser $browser) {
+            $browser->scrollIntoView('#footer_area_optional_class')
+                    ->screenshot('manage/site/index/images/index3');
+        });
+        $this->browse(function (Browser $browser) {
+            $browser->scrollIntoView('footer')
+                    ->screenshot('manage/site/index/images/index4');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('manage/site/index/images/index,manage/site/index/images/index2,manage/site/index/images/index3,manage/site/index/images/index4');
     }
 
     /**
@@ -59,12 +79,14 @@ class SiteManageTest extends DuskTestCase
     private function edit()
     {
         // パスワードリセットの使用を「許可しない」にする。
+/*
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/site')
                     ->click('label[for="base_login_password_reset_off"]')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/edit/images/edit');
         });
+*/
     }
 
     /**
@@ -74,8 +96,8 @@ class SiteManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/update/images/update');
         });
     }
 
@@ -87,9 +109,12 @@ class SiteManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/site/meta')
                     ->type('description', 'Connect-CMSのテストサイトです。')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/meta/images/meta');
         });
+
+        // マニュアル用データ出力
+        $this->putManualData('manage/site/meta/images/meta');
     }
 
     /**
@@ -99,8 +124,8 @@ class SiteManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/meta/images/saveMeta');
         });
     }
 
@@ -112,9 +137,12 @@ class SiteManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/site/layout')
                     ->click('#label_browser_width_footer')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/layout/images/layout');
         });
+
+        // マニュアル用データ出力
+        $this->putManualData('manage/site/layout/images/layout');
     }
 
     /**
@@ -124,8 +152,8 @@ class SiteManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('変更')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/layout/images/saveLayout');
         });
     }
 
@@ -141,9 +169,12 @@ class SiteManageTest extends DuskTestCase
                     ->type('add_category', 'ニュース')
                     ->type('add_color', '#ffffff')
                     ->type('add_background_color', '#0000c0')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/categories/images/categories');
         });
+
+        // マニュアル用データ出力
+        $this->putManualData('manage/site/categories/images/categories');
     }
 
     /**
@@ -153,8 +184,8 @@ class SiteManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('変更')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/categories/images/saveCategories');
         });
     }
 
@@ -168,9 +199,12 @@ class SiteManageTest extends DuskTestCase
                     ->click('#label_language_multi_on_on')
                     ->type('add_language', $add_language)
                     ->type('add_url', $add_url)
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/languages/images/languages');
         });
+
+        // マニュアル用データ出力
+        $this->putManualData('manage/site/languages/images/languages');
     }
 
     /**
@@ -180,13 +214,13 @@ class SiteManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('変更')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/languages/images/saveLanguages');
         });
     }
 
     /**
-     * 他言語設定
+     * エラー画面設定
      */
     private function pageError()
     {
@@ -194,20 +228,23 @@ class SiteManageTest extends DuskTestCase
             $browser->visit('/manage/site/pageError')
                     ->type('page_permanent_link_403', "/403")
                     ->type('page_permanent_link_404', "/404")
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/pageError/images/pageError');
         });
+
+        // マニュアル用データ出力
+        $this->putManualData('manage/site/pageError/images/pageError');
     }
 
     /**
-     * 他言語設定更新処理
+     * エラー画面設定更新処理
      */
     private function savePageError()
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/pageError/images/savePageError');
         });
     }
 
@@ -219,9 +256,12 @@ class SiteManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/site/analytics')
                     ->type('tracking_code', "<!-- Global site tag (gtag.js) - Google Analytics -->")
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/analytics/images/analytics');
         });
+
+        // マニュアル用データ出力
+        $this->putManualData('manage/site/analytics/images/analytics');
     }
 
     /**
@@ -231,8 +271,8 @@ class SiteManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/analytics/images/saveAnalytics');
         });
     }
 
@@ -244,9 +284,12 @@ class SiteManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/site/favicon')
                     ->attach('favicon', __DIR__.'/favicon.ico')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/favicon/images/favicon');
         });
+
+        // マニュアル用データ出力
+        $this->putManualData('manage/site/favicon/images/favicon');
     }
 
     /**
@@ -257,8 +300,38 @@ class SiteManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             // $browser->click("button[type='submit']")
             $browser->press('ファビコン追加')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/saveFavicon/images/saveFavicon');
         });
+    }
+
+    /**
+     * WYSIWYG
+     */
+    private function wysiwyg()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/manage/site/wysiwyg')
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/wysiwyg/images/wysiwyg');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('manage/site/wysiwyg/images/wysiwyg');
+    }
+
+    /**
+     * サイト設計書
+     */
+    private function document()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/manage/site/document')
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/site/document/images/document');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('manage/site/document/images/document');
     }
 }

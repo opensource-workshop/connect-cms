@@ -20,6 +20,8 @@ use App\Plugins\Manage\ManagePluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ログ管理
  * @package Contoroller
+ * @plugin_title ログ管理
+ * @plugin_desc ログに関する機能が集まった管理機能です。
  */
 class LogManage extends ManagePluginBase
 {
@@ -168,6 +170,9 @@ class LogManage extends ManagePluginBase
      *  ログ表示
      *
      * @return view
+     * @method_title ログ一覧
+     * @method_desc 保存したログを一覧で確認できます。
+     * @method_detail ログの絞り込みやダウンロードができます。
      */
     public function index($request)
     {
@@ -219,6 +224,9 @@ class LogManage extends ManagePluginBase
      *  ログ設定画面
      *
      * @return view
+     * @method_title ログ設定
+     * @method_desc 保存するログの種類を指定できます。
+     * @method_detail ログイン関係や処理の種別、HTTPメソッドなど複数の切り口で設定が可能です。
      */
     public function edit($request)
     {

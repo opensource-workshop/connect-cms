@@ -50,7 +50,7 @@
 <div class="frame-setting-menu">
     <nav class="navbar {{$frame->getNavbarExpand()}} navbar-light bg-light">
         <span class="{{$frame->getNavbarBrand()}}">設定メニュー</span>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsingNavbarLg">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsingNavbarLg" id="button_collapsing_navbar_lg">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="navbar-collapse collapse" id="collapsingNavbarLg">
@@ -275,7 +275,7 @@
         {{-- このページのみ表示するチェック。メインエリアはもともとページ内のみなので対象外 --}}
         @if ($frame->area_id != 2)
         <div class="form-group row">
-            <label class="{{$frame->getSettingLabelClass()}}"></label>
+            <label class="{{$frame->getSettingLabelClass()}}">対象ページ</label>
             <div class="{{$frame->getSettingInputClass()}} d-flex align-items-center row m-0">
 
                 <div class="custom-control custom-radio custom-control-inline">

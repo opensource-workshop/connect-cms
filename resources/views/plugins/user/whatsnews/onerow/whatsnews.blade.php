@@ -8,6 +8,20 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
+
+@if (isset($frame) && $frame->bucket_id)
+    {{-- バケツあり --}}
+@else
+@can('frames.edit',[[null, null, null, $frame]])
+    {{-- バケツなし --}}
+    <div class="card border-danger">
+        <div class="card-body">
+            <p class="text-center cc_margin_bottom_0">{{ __('messages.empty_bucket', ['plugin_name' => '新着情報']) }}</p>
+        </div>
+    </div>
+    @endcan
+@endif
+
 @if ($whatsnews)
 
 @if (isset($whatsnews_frame->rss) && $whatsnews_frame->rss == 1)
@@ -27,7 +41,7 @@
                 <span class="mr-2">{{(new Carbon($whatsnew->posted_at))->format('Y/m/d')}}</span>
             </div>
             @endif
-            
+
             {{-- カテゴリ --}}
             @if( $whatsnew->category )
             <div class="p-0 col-md-2 col-lg" style="display: contents;">
@@ -36,20 +50,20 @@
                 </div>
             </div>
             @endif
-            
+
             {{-- タイトル --}}
             <div class="p-0 col-12 col-sm-12 col-md col-lg mr-2 text-truncate">
                 @if ($link_pattern[$whatsnew->plugin_name] == 'show_page_frame_post')
                 <a href="{{url('/')}}{{$link_base[$whatsnew->plugin_name]}}/{{$whatsnew->page_id}}/{{$whatsnew->frame_id}}/{{$whatsnew->post_id}}#frame-{{$whatsnew->frame_id}}">
                     @if ($whatsnew->post_title)
-                        {{$whatsnew->post_title}}
+                        {{$whatsnew->post_title_strip_tags}}
                     @else
                         (無題)
                     @endif
                 </a>
                 @endif
             </div>
-            
+
             {{-- 投稿者 --}}
             @if( $whatsnews_frame->view_posted_name )
             <div class="p-0 col-12 col-sm-12 col-md-3 col-lg-2 text-right text-nowrap">
@@ -64,9 +78,9 @@
             @if ($whatsnew->first_image_path && FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail))
             <div class="p-0 text-right">
                 @if (empty(FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size)))
-                    <img src="{{$whatsnew->first_image_path}}" class="float-right pb-1" style="max-width: 200px; max-height: 200px;">
+                    <img src="{{$whatsnew->first_image_path}}?size=small" class="float-right pb-1" style="max-width: 200px; max-height: 200px;">
                 @else
-                    <img src="{{$whatsnew->first_image_path}}" class="float-right pb-1" style="max-width: {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}px; max-height: {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}px;">
+                    <img src="{{$whatsnew->first_image_path}}?size=small" class="float-right pb-1" style="max-width: {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}px; max-height: {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}px;">
                 @endif
             </div>
             @endif
@@ -106,7 +120,7 @@
                 <div v-if="link_pattern[whatsnews.plugin_name] == 'show_page_frame_post'" class="p-0 col-12 col-sm-12 col-md col-lg mr-2 text-truncate">
                     <a :href="url + link_base[whatsnews.plugin_name] + '/' + whatsnews.page_id + '/' + whatsnews.frame_id + '/' + whatsnews.post_id + '#frame-' + whatsnews.frame_id">
                         <template v-if="whatsnews.post_title == null || whatsnews.post_title == ''">（無題）</template>
-                        <template v-else>@{{ whatsnews.post_title }}</template>
+                        <template v-else>@{{ whatsnews.post_title_strip_tags }}</template>
                     </a>
                 </div>
                 {{-- 投稿者 --}}
@@ -128,7 +142,7 @@
             </div>
         </article>
     @endif
-    
+
     {{-- ページング処理 --}}
     {{-- @if ($whatsnews_frame->page_method == 1)
         <div class="text-center">

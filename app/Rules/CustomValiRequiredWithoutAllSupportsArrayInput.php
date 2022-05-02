@@ -7,7 +7,7 @@ use Illuminate\Contracts\Validation\Rule;
 /**
  * いずれか必須. 配列入力にも対応
  */
-class CustomValiRequiredWithoutAllSupportsArrayInput  implements Rule
+class CustomValiRequiredWithoutAllSupportsArrayInput implements Rule
 {
     protected $values = null;
     protected $name = null;

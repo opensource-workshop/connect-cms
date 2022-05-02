@@ -9,10 +9,13 @@ return [
     'forbidden_image_path' => 'app/public/forbidden.png',
 
     // uploads ディレクトリのベース・ディレクトリ
-    'directory_base' => "uploads/",
+    'directory_base' => env('UPLOADS_DIRECTORY_BASE', "uploads/"),
 
     // uploads ディレクトリの1ディレクトリの最大ファイル数
     'directory_file_limit' => 1000,
+
+    // マニュアル生成のベース・ディレクトリ
+    'manual_put_base' => env('MANUAL_PUT_BASE', ''),
 
     // プラグイン管理にも表示しないプラグイン(小文字で指定)
     'PLUGIN_FORCE_HIDDEN' => ['knowledges', 'codestudies'],
@@ -72,7 +75,7 @@ return [
     'LOGIN_PATH' => env('LOGIN_PATH', 'login'),
 
     // Self register base role.(comma separator. Not set is guest)
-    'SELF_REGISTER_BASE_ROLES' => env('SELF_REGISTER_BASE_ROLES', ''),
+    'SELF_REGISTER_BASE_ROLES' => env('SELF_REGISTER_BASE_ROLES', null),
 
     // Custom message.
     'cc_lang_ja_messages_search_results_empty' => env('cc_lang_ja_messages_search_results_empty'),
@@ -99,6 +102,13 @@ return [
     'FACE_AI_API_KEY' => env('FACE_AI_API_KEY', ''),
     'FACE_AI_DEFAULT_SIZE' => '1200',
 
+    // cURL オプション
+    'HTTPPROXYTUNNEL' => env('HTTPPROXYTUNNEL', false),
+    'PROXYPORT' => env('PROXYPORT', ''),
+    'PROXY' => env('PROXY', ''),
+    'PROXYUSERPWD' => env('PROXYUSERPWD', ''),
+    'CURL_TIMEOUT' => env('CURL_TIMEOUT', ),
+
     // WYSIWYG のバイト数チェックの数値（MySQLのtext型）
     'WYSIWYG_MAX_BYTE' => 65535,
 
@@ -117,4 +127,20 @@ return [
 
     // キャッシュ保持時間（分）10080 は1週間（7日）
     'CACHE_MINUTS' => 10080,
+
+    // AWS SDK
+    'AWS' => [
+        'key' => env('AWS_ACCESS_KEY_ID'),
+        'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        'region' => env('AWS_DEFAULT_REGION', 'ap-northeast-1'),
+    ],
+
+    // FFMpeg path
+    'FFMPEG_PATH' => env('FFMPEG_PATH'),
+
+    // AWS SDK
+    'REQUIRE_AWS_SDK_PATH' => env('REQUIRE_AWS_SDK_PATH'),
+
+    // Use the container (beta)
+    'USE_CONTAINER_BETA' => env('USE_CONTAINER_BETA', false),
 ];

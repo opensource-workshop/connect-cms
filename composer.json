@@ -14,6 +14,7 @@
         "doctrine/dbal": "^2.10",
         "ezyang/htmlpurifier": "^4.13",
         "fideloper/proxy": "^4.4",
+        "firebase/php-jwt": "^5.5",
         "intervention/image": "^2.5",
         "intervention/imagecache": "^2.5",
         "kalnoy/nestedset": "5.0.3",
@@ -21,6 +22,7 @@
         "laravel/helpers": "^1.4",
         "laravel/tinker": "^2.5",
         "laravelcollective/html": "^6.0",
+        "rlanvin/php-rrule": "^2.3",
         "setasign/fpdi": "^2.3",
         "tecnickcom/tcpdf": "^6.3"
     },
@@ -82,12 +84,16 @@
         ],
         "phpcbf-any": [
             "phpcbf --standard=phpcs.xml"
+        ],
+        "phpunit": [
+            "phpunit"
         ]
     },
     "scripts-descriptions": {
         "phpcs": "Run all phpcs (Dev Only, require ./vendor/bin/phpcs).",
-        "phpcs-any": "Phpcs without check PATH, Use -- specify the PATH to check (Dev Only, require ./vendor/bin/phpcs).",
+        "phpcs-any": "Phpcs without check PATH, Use '--' specify the PATH to check (Dev Only, require ./vendor/bin/phpcs).",
         "phpcbf": "Run all phpcbf (Dev Only, require ./vendor/bin/phpcbf).",
-        "phpcbf-any": "Phpcbf without check PATH, Use -- specify the PATH to check (Dev Only, require ./vendor/bin/phpcbf)."
+        "phpcbf-any": "Phpcbf without check PATH, Use '--' specify the PATH to check (Dev Only, require ./vendor/bin/phpcbf).",
+        "phpunit": "Run all phpunit, Use '--' spec the option to check (Dev Only, require ./vendor/bin/phpunit)."
     }
 }

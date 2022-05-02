@@ -40,15 +40,9 @@
     }
 @endphp
 
-{{--
 @if ($column->column_type == ReservationColumnType::wysiwyg)
     {!!$value!!}
 @else
---}}
-
-{{-- 改行だけして他はエスケープ --}}
-{!!nl2br(e($value))!!}
-
-{{--
+    {{-- 改行だけして他はエスケープ --}}
+    {!!nl2br(e($value))!!}
 @endif
---}}

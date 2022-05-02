@@ -192,6 +192,87 @@ class UploadController extends ConnectController
     }
 
     /**
+     * ユーザファイル送出
+     */
+    public function getUserFile(Request $request, $dir, $filename)
+    {
+        // dir、filename がない場合は空を返す。
+        if (empty($dir) || empty($filename)) {
+            return;
+        }
+
+        // ../ or ..\ が含まれる場合は空を返す。
+        if (strpos($filename, '../') !== false || strpos($filename, "..\\") !== false) {
+            return;
+        }
+
+        // ファイルの実体がない場合は空を返す。
+        if (!Storage::disk('user')->exists($dir . '/' . $filename)) {
+            return;
+        }
+
+        // ファイルの制限確認
+        $userdir_allow = Configs::where('category', 'userdir_allow')->where('name', $dir)->first();
+
+        // NGチェック
+        if (empty($userdir_allow)) {
+            // 該当ディレクトリの制限設定がされていないとき。
+            return;
+        }
+        if (empty($userdir_allow->value)) {
+            // 該当ディレクトリの制限設定が閲覧させない場合
+            return;
+        }
+
+        // OKチェック
+        if ($userdir_allow->value == 'allow_login') {
+            // 該当ディレクトリの制限設定がログインユーザのみ閲覧許可の場合
+            if (Auth::user()) {
+                // ログイン中なのでOK
+            } else {
+                // ログインしてないのでNG
+                return;
+            }
+        } elseif ($userdir_allow->value = 'allow_all') {
+            // 該当ディレクトリの制限設定が誰でも閲覧許可の場合
+        } else {
+            // OK条件に合致しない場合はNG
+            return;
+        }
+
+        // ファイルを返す
+        $fullpath = storage_path('user/') . $dir . '/' . $filename;
+
+        // httpヘッダー
+        $content_disposition = 'inline; filename="'. $filename .'"' . "; filename*=UTF-8''" . rawurlencode($filename);
+
+        // インライン表示する拡張子
+        $inline_extensions = [
+            'pdf',
+            'png',
+            'jpg',
+            'jpe',
+            'jpeg',
+            'gif',
+        ];
+
+        if (in_array(strtolower(pathinfo($filename, PATHINFO_EXTENSION)), $inline_extensions) && $request->response != 'download') {
+            return response()
+                    ->file(
+                        $fullpath,
+                        ['Content-Disposition' => $content_disposition]
+                    );
+        } else {
+            return response()
+                    ->download(
+                        $fullpath,
+                        $filename,
+                        ['Content-Disposition' => $content_disposition]
+                    );
+        }
+    }
+
+    /**
      * ファイルチェックメソッドの呼び出し
      */
     private function callCheckMethod($request, $upload)
@@ -344,8 +425,10 @@ EOD;
         // ファイルアップロードには、記事の追加、変更の権限が必要
         //if (!$this->isCan('posts.create') || !$this->isCan('posts.update')) {
 
-        // ファイルアップロードには、編集者権限が必要
-        if (!$this->isCan('role_reporter')) {
+        // ファイルアップロードには、編集者 or モデレータ権限が必要
+        if ($this->isCan('role_reporter') || $this->isCan('role_article')) {
+            // 処理を続ける
+        } else {
             // change: LaravelはArrayを返すだけで JSON形式になる
             // echo json_encode(array('location' => 'error'));
             // return;
@@ -492,7 +575,6 @@ EOD;
         // image pluginの画像アップロードの場合
         if ($request->hasFile('image')) {
             if ($request->file('image')->isValid()) {
-
                 $image_file = $request->file('image');
                 $is_resize = false;
 
@@ -513,17 +595,17 @@ EOD;
                 if ($is_resize) {
                     // リサイズ
 
+                    // GDのリサイズでメモリを多く使うため、memory_limitセット
+                    $configs = Configs::getSharedConfigs();
+                    $memory_limit_for_image_resize = Configs::getConfigsValue($configs, 'memory_limit_for_image_resize', '256M');
+                    ini_set('memory_limit', $memory_limit_for_image_resize);
+
                     // GDが無いとここで GD Library extension not available with this PHP installation. エラーになる
                     // $image = Image::make($image_file)->resize($request->width, $request->height);
                     $image = Image::make($image_file);
 
                     $resize_width = $request->resize;
                     $resize_height = null;
-
-                    // GDのリサイズでメモリを多く使うため、memory_limitセット
-                    $configs = Configs::getSharedConfigs();
-                    $memory_limit_for_image_resize = Configs::getConfigsValue($configs, 'memory_limit_for_image_resize', '256M');
-                    ini_set('memory_limit', $memory_limit_for_image_resize);
 
                     // ※ [注意] リサイズ時メモリ多めに使った。8MB画像＋memory_limit=128Mでエラー。memory_limit=256Mで解消。
                     //           エラーメッセージ：ERROR: Allowed memory size of 134217728 bytes exhausted (tried to allocate 48771073 bytes) {"userId":1,"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Allowed memory size of 134217728 bytes exhausted (tried to allocate 48771073 bytes) at /path_to_connect-cms/vendor/intervention/image/src/Intervention/Image/Gd/Commands/ResizeCommand.php:58)

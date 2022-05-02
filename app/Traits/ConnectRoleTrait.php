@@ -77,6 +77,57 @@ trait ConnectRoleTrait
     }
 
     /**
+     * 自分のページから親を遡ってコンテナページを取得
+     */
+    private function getContainerPageByGoingBackParent($page, ?Collection $page_tree) : ?Page
+    {
+        if (!$page && is_null($page_tree)) {
+            // ログインのPOST時（http://localhost/login）に どちらもnullなので 空コレクションを返す
+            // 管理画面(http://localhost/manage)で $page=false & $page_tree=null になるので 空コレクションを返す
+            return collect();
+        }
+
+        $page = $page ?? new Page();
+
+        // 自分のページから親を遡って取得
+        $page_tree = $page->getPageTreeByGoingBackParent($page_tree);
+
+        // 自分及び先祖ページにグループ権限が設定されていなければ戻る
+        $container_page = null;
+        foreach ($page_tree as $page) {
+            if ($page->container_flag) {
+                $container_page = $page;
+                break;
+            }
+        }
+
+        return $container_page;
+    }
+
+    /**
+     * フレームからさかのぼってページ権限を取得、ユーザーが指定された役割を保持しているかチェックする。
+     */
+    public function checkRoleFromFrame(?User $user, string $role, ?Frame $frame) : bool
+    {
+        // ログインしていない場合は権限なし
+        if (empty($user)) {
+            return false;
+        }
+
+        $request = app(Request::class);
+
+        // app\Http\Middleware\ConnectPage.php でセットした値
+        $page = $request->attributes->get('page');
+        $page_tree = $request->attributes->get('page_tree');
+
+        // フレームがあれば、フレームを配置したページから親を遡ってページロールを取得
+        $page_roles = $this->choicePageRolesByGoingBackParentPageOrFramePage($page, $page_tree, $frame);
+
+        // 指定された権限を含むロールをループする。
+        return $this->checkRoleHierarchy($user, $role, $page_roles);
+    }
+
+    /**
      * フレームがあれば、フレームを配置したページから親を遡ってページロールを取得
      */
     public function choicePageRolesByGoingBackParentPageOrFramePage($page, ?Collection $page_tree, ?Frame $frame) : Collection
@@ -111,6 +162,34 @@ trait ConnectRoleTrait
         $page_roles = $this->getPageRolesByGoingBackParent($page, $page_tree);
 
         return $page_roles;
+    }
+
+    /**
+     * フレームがあれば、フレームを配置したページから親を遡ってコンテナページを取得
+     */
+    public function choiceContainerPageByGoingBackParentPageOrFramePage($page, ?Collection $page_tree, ?Frame $frame) : ?Page
+    {
+        if (empty($frame)) {
+            // フレームがセットされてないため、なにも変更しない
+
+        } elseif ($page->id === $frame->page_id) {
+            // フレームを配置したページと同じ（メインエリア等）
+            // 自ページのため、なにも変更しない
+
+        } else {
+            // フレームを配置したページと違う（ヘッダーエリアや左エリア等）
+            // フレームの配置ページIDから、親を遡らせる。
+            $page = new Page();
+            $page->id = $frame->page_id;
+
+            // nullを指定する事で、フレームの配置ページから親を遡ってページツリーを再取得する。
+            $page_tree = null;
+        }
+
+        // ページから親を遡ってコンテナページを取得
+        $container_page = $this->getContainerPageByGoingBackParent($page, $page_tree);
+
+        return $container_page;
     }
 
     /**

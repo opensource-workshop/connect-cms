@@ -15,4 +15,8 @@ class Nc2Page extends Model
      * テーブル名の指定
      */
     protected $table = 'pages';
+
+    // 定数メンバ
+    const space_type_public = 1;
+    const space_type_group = 2;
 }

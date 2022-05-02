@@ -13,6 +13,9 @@ use App\Models\User\Databasesearches\Databasesearches;
 use App\Plugins\User\UserPluginBase;
 use App\Plugins\User\Databases\DatabasesTool;
 
+use App\Enums\DatabaseSearcherSortType;
+use App\Enums\StatusType;
+
 /**
  * データベース検索プラグイン
  *
@@ -22,6 +25,8 @@ use App\Plugins\User\Databases\DatabasesTool;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース検索プラグイン
  * @package Controller
+ * @plugin_title データベース検索
+ * @plugin_desc データベースプラグインのデータを参照して、異なる画面として表示できる機能です。
  */
 class DatabasesearchesPlugin extends UserPluginBase
 {
@@ -87,6 +92,9 @@ class DatabasesearchesPlugin extends UserPluginBase
      *       3,     To,  0314,                   ：
      *
      * @return view
+     * @method_title データ一覧
+     * @method_desc データベース・プラグインのデータを条件に合わせて表示します。
+     * @method_detail 1列目は自動的にデータベースプラグイン内の該当データ詳細画面へのリンクが設定されます。
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -239,27 +247,63 @@ class DatabasesearchesPlugin extends UserPluginBase
         }
 
         // 条件全てに合致した行ID を元に、再度データ取得（ここでページネート指定する）
-        $inputs_ids
-            = DatabasesInputCols::select('databases_inputs_id', 'frames.id as frames_id', 'frames.page_id', 'databases.databases_name')
-                                ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
-                                ->join('databases', 'databases.id', '=', 'databases_columns.databases_id')
-                                ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
-                                ->whereIn('databases_inputs_id', $inputs_ids_marge)
-                                ->groupBy('databases_inputs_id')
-                                ->groupBy('frames.id')
-                                ->groupBy('frames.page_id')
-                                ->groupBy('databases.databases_name');
-                                // bugfix: 入力データ1件の項目内で更新日がずれると重複を起こすため、updated_atのgroupBy不要。
-                                // ->groupBy('databases_input_cols.updated_at');
-                                // move: 少し下に移動
-                                // ->orderBy('databases_input_cols.updated_at', 'desc')
-                                // ->paginate($databasesearches->view_count, ["*"], "frame_{$frame_id}_page");
+        $inputs_ids = DatabasesInputCols::
+            select('databases_inputs_id', 'frames.id as frames_id', 'frames.page_id', 'databases.databases_name')
+            ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+            ->join('databases', 'databases.id', '=', 'databases_columns.databases_id')
+            ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
+            ->join('databases_inputs', function ($join) {
+                $join->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
+                    ->where('databases_inputs.status', '=', StatusType::active);
+            })
+            ->whereIn('databases_inputs_id', $inputs_ids_marge)
+            ->groupBy('databases_inputs_id')
+            ->groupBy('frames.id')
+            ->groupBy('frames.page_id')
+            ->groupBy('databases.databases_name');
+            // bugfix: 入力データ1件の項目内で更新日がずれると重複を起こすため、updated_atのgroupBy不要。
+            // ->groupBy('databases_input_cols.updated_at');
+            // move: 少し下に移動
+            // ->orderBy('databases_input_cols.updated_at', 'desc')
+            // ->paginate($databasesearches->view_count, ["*"], "frame_{$frame_id}_page");
 
         // bugfix: フレーム指定の場合、同じデータベースを複数フレームで指定した場合の対応漏れ
         // フレーム（データベース指定）
         if ($databasesearches->frame_select == 1 && $databasesearches->target_frame_ids) {
             $inputs_ids->whereIn('frames.id', explode(',', $databasesearches->target_frame_ids));
         }
+
+        // 並び替え条件指定
+        switch ($databasesearches->sort_type) {
+            case DatabaseSearcherSortType::created_asc:
+                $inputs_ids->orderBy('databases_inputs.created_at', 'asc');
+                break;
+            case DatabaseSearcherSortType::created_desc:
+                $inputs_ids->orderBy('databases_inputs.created_at', 'desc');
+                break;
+            case DatabaseSearcherSortType::updated_asc:
+                $inputs_ids->orderBy('databases_inputs.updated_at', 'asc');
+                break;
+            case DatabaseSearcherSortType::updated_desc:
+                $inputs_ids->orderBy('databases_inputs.updated_at', 'desc');
+                break;
+            case DatabaseSearcherSortType::posted_asc:
+                $inputs_ids->orderBy('databases_inputs.posted_at', 'asc');
+                break;
+            case DatabaseSearcherSortType::posted_desc:
+                $inputs_ids->orderBy('databases_inputs.posted_at', 'desc');
+                break;
+            case DatabaseSearcherSortType::display_asc:
+                $inputs_ids->orderBy('databases_inputs.display_sequence', 'asc');
+                break;
+            case DatabaseSearcherSortType::display_desc:
+                $inputs_ids->orderBy('databases_inputs.display_sequence', 'desc');
+                break;
+            default:
+                $inputs_ids->orderBy('databases_inputs.created_at', 'asc');
+                break;
+        }
+
         $inputs_ids = $inputs_ids->paginate($databasesearches->view_count, ["*"], "frame_{$frame_id}_page");
         // Log::debug(var_export($inputs_ids->toArray(), true));
         // Log::debug(var_export($inputs_ids_marge, true));
@@ -288,6 +332,10 @@ class DatabasesearchesPlugin extends UserPluginBase
 
     /**
      * 設定変更画面の表示
+     *
+     * @method_title 変更
+     * @method_desc データベース検索の設定を変更します。
+     * @method_detail 表示カラムや表示するデータベースのあるフレームを選択します。
      */
     public function editBuckets($request, $page_id, $frame_id)
     {
@@ -364,6 +412,7 @@ class DatabasesearchesPlugin extends UserPluginBase
              'view_count'            => intval($request->view_count),
              'view_columns'          => $request->view_columns,
              'condition'             => $request->condition,
+             'sort_type'             => $request->sort_type,
              'frame_select'          => intval($request->frame_select),
              'target_frame_ids'      => empty($request->target_frame_ids) ? "": implode(',', $request->target_frame_ids),
             ]

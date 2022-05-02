@@ -58,7 +58,7 @@
                                     type="radio" value="{{$value}}" class="custom-control-input" id="use_translate_{{$value}}"
                                     name="use_translate" @if(Configs::getConfigsValueAndOld($configs, "use_translate") == $value) checked @endif
                                     {{$translate_api_disabled_label}}>
-                                <label class="custom-control-label" for="use_translate_{{$value}}">
+                                <label class="custom-control-label" for="use_translate_{{$value}}" id="lavel_use_translate_{{$value}}">
                                     {{$display}}
                                 </label>
                             </div>
@@ -93,7 +93,7 @@
                                     type="radio" value="{{$value}}" class="custom-control-input" id="use_pdf_thumbnail_{{$value}}"
                                     name="use_pdf_thumbnail" @if(Configs::getConfigsValueAndOld($configs, "use_pdf_thumbnail") == $value) checked @endif
                                     {{$pdf_api_disabled_label}}>
-                                <label class="custom-control-label" for="use_pdf_thumbnail_{{$value}}">
+                                <label class="custom-control-label" for="use_pdf_thumbnail_{{$value}}" id="label_use_pdf_thumbnail_{{$value}}">
                                     {{$display}}
                                 </label>
                             </div>
@@ -129,7 +129,7 @@
                                     type="radio" value="{{$value}}" class="custom-control-input" id="use_face_ai_{{$value}}"
                                     name="use_face_ai" @if(Configs::getConfigsValueAndOld($configs, "use_face_ai") == $value) checked @endif
                                     {{$face_api_disabled_label}}>
-                                <label class="custom-control-label" for="use_face_ai_{{$value}}">
+                                <label class="custom-control-label" for="use_face_ai_{{$value}}" id="label_use_face_ai_{{$value}}">
                                     {{$display}}
                                 </label>
                             </div>

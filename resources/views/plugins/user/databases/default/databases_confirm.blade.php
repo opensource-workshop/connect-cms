@@ -7,10 +7,6 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
 --}}
-@php
-use App\Models\User\Databases\DatabasesColumns;
-@endphp
-
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
@@ -44,12 +40,16 @@ use App\Models\User\Databases\DatabasesColumns;
     }
 </script>
 
+<div class="alert alert-secondary" role="alert">
+    <i class="fas fa-exclamation-circle"></i> 以下の内容でよろしいですか？
+</div>
+
 <form action="" name="databases_store{{$frame_id}}" method="POST">
     {{ csrf_field() }}
     @foreach($databases_columns as $database_column)
 
         {{-- 入力しないカラム型は表示しない --}}
-        @if (DatabasesColumns::isNotInputColumnType($database_column->column_type))
+        @if ($database_column->isNotInputColumnType())
             @continue
         @endif
 
@@ -175,6 +175,14 @@ use App\Models\User\Databases\DatabasesColumns;
         <div class="col-sm-9">
             {{$request->posted_at}}
             <input name="posted_at" class="form-control" type="hidden" value="{{$request->posted_at}}">
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="col-sm-3 control-label text-nowrap">公開終了日時</label>
+        <div class="col-sm-9">
+            {{$request->expires_at}}
+            <input name="expires_at" class="form-control" type="hidden" value="{{$request->expires_at}}">
         </div>
     </div>
 

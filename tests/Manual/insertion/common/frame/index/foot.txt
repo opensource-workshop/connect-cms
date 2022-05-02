@@ -1,0 +1,30 @@
+<div class="card mt-3" html_only>
+<div class="card-body" html_only>
+
+<table class="table table-sm table-bordered table_css">
+<tbody>
+    <tr>
+        <th class="doc_th" style="width: 15%; text-align: center;">アイコン</th>
+        <th class="doc_th" style="width: 85%;">説明</th>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="ページ内リンク" title="ページ内リンク" type="button" html_only><img src="../_images/link.png"></button html_only></td>
+        <td>このフレームに対するページ内リンクです。ページ内の特定の場所を示したい時にこのアイコンのリンク先のURLを使用してください。</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="上移動" title="上移動" type="button" html_only><img src="../_images/up.png"></button html_only></td>
+        <td>エリア内でのフレームの順番をひとつ上げます。フレームを横に並べているときは、左に移動します。</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="下移動" title="下移動" type="button" html_only><img src="../_images/down.png"></button html_only></td>
+        <td>エリア内でのフレームの順番をひとつ下げます。フレームを横に並べているときは、右に移動します。</td>
+    </tr>
+    <tr>
+        <td style="text-align: center; vertical-align: middle;"><button aria-label="設定" title="設定" type="button" html_only><img src="../_images/setting.png"></button html_only></td>
+        <td>プラグインの設定画面を開きます。</td>
+    </tr>
+</tbody>
+</table>
+
+</div html_only>
+</div html_only>

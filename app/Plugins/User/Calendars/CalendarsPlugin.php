@@ -30,6 +30,8 @@ use App\Rules\CustomValiWysiwygMax;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category カレンダー・プラグイン
  * @package Controller
+ * @plugin_title カレンダー
+ * @plugin_desc カレンダーを作成できるプラグインです。予定の配信や共有に使用します。
  */
 class CalendarsPlugin extends UserPluginBase
 {
@@ -104,6 +106,12 @@ class CalendarsPlugin extends UserPluginBase
         $this->post = CalendarPost::
             where(function ($query) {
                 $query = $this->appendAuthWhereBase($query, 'calendar_posts');
+            })
+            ->whereExists(function ($query) {
+                $query->select(DB::raw(1))
+                      ->from('calendars')
+                      ->whereRaw('calendar_posts.calendar_id = calendars.id')
+                      ->where('calendars.bucket_id', $this->frame->bucket_id);
             })
             ->firstOrNew(['id' => $id]);
 
@@ -244,15 +252,22 @@ class CalendarsPlugin extends UserPluginBase
             // copyしないと全部同じオブジェクトを入れてしまうことになる
             $dates[$date->format('Y-m-d')] = $date->copy();
         }
-        $dates = $this->addHoliday($year, $month, $dates);
+        $start_date = current($dates);
+        $end_date = end($dates)->endOfDay();
+
+        $dates = $this->addHolidaysFromTo($start_date, $end_date, $dates);
         return $dates;
     }
 
     /* 画面アクション関数 */
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
+     *
+     * @method_title 予定一覧
+     * @method_desc 予定を表示します。
+     * @method_detail 指定された形式で予定を表示します。
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -318,6 +333,10 @@ class CalendarsPlugin extends UserPluginBase
 
     /**
      *  詳細表示関数
+     *
+     * @method_title 予定詳細
+     * @method_desc 予定の詳細を表示します。
+     * @method_detail 一覧では表示できなかった予定の詳細を表示します。
      */
     public function show($request, $page_id, $frame_id, $post_id)
     {
@@ -335,6 +354,10 @@ class CalendarsPlugin extends UserPluginBase
 
     /**
      * 記事編集画面
+     *
+     * @method_title 予定登録
+     * @method_desc 予定を登録します。
+     * @method_detail 予定を登録・編集します。
      */
     public function edit($request, $page_id, $frame_id, $post_id = null)
     {
@@ -359,13 +382,17 @@ class CalendarsPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'title'      => ['required', 'max:255'],
+            'title'      => ['required', 'max:191'],
             'body'       => ['nullable', new CustomValiWysiwygMax()],
+            'location'   => ['nullable', 'max:191'],
+            'contact'    => ['nullable', 'max:191'],
             'start_date' => ['required', 'date'],
         ]);
         $validator->setAttributeNames([
             'title'      => 'タイトル',
-            'body'      => '本文',
+            'body'       => '本文',
+            'location'   => '場所',
+            'contact'    => '連絡先',
             'start_date' => '開始日時',
         ]);
         // エラーがあった場合は入力画面に戻る。
@@ -404,6 +431,8 @@ class CalendarsPlugin extends UserPluginBase
         $post->end_time    = $request->end_time;
         $post->title       = $request->title;
         $post->body        = $this->clean($request->body);   // wysiwygのXSS対応のJavaScript等の制限
+        $post->location    = $request->location;
+        $post->contact     = $request->contact;
 
         // bugfix: 【カレンダー】承認機能ONで一般が書き込んだ内容を、管理者が編集すると、以後その予定が一般で編集できなくなるバグ修正. created_idは UserableNohistory で自動セットするよう修正
         // 投稿者をセット
@@ -469,6 +498,10 @@ class CalendarsPlugin extends UserPluginBase
 
     /**
      * プラグインのバケツ選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示するカレンダーを選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -480,6 +513,10 @@ class CalendarsPlugin extends UserPluginBase
 
     /**
      * バケツ新規作成画面
+     *
+     * @method_title 作成
+     * @method_desc カレンダーを新しく作成します。
+     * @method_detail カレンダー名を入力してカレンダーを作成できます。
      */
     public function createBuckets($request, $page_id, $frame_id)
     {

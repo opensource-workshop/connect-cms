@@ -3,21 +3,20 @@
 namespace App\Models\User\Reservations;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\App;
 
-use App\UserableNohistory;
+use App\Userable;
 
-use App\Enums\ConnectLocale;
 use App\Enums\DayOfWeek;
 
 class ReservationsInput extends Model
 {
-    // 保存時のユーザー関連データの保持（履歴なしUserable）
-    use UserableNohistory;
+    // 保存時のユーザー関連データの保持
+    // 履歴保持として使わず、繰り返し予定修正時の delete->insert する時に created_idを保持するために使う。
+    use Userable;
 
     // 更新する項目の定義
     protected $fillable = [
-        'reservations_id',
+        'inputs_parent_id',
         'facility_id',
         'start_datetime',
         'end_datetime',
@@ -33,11 +32,7 @@ class ReservationsInput extends Model
      */
     public function displayDate()
     {
-        if (App::getLocale() == ConnectLocale::en) {
-            $display = $this->start_datetime->format('j M Y');
-        } else {
-            $display = $this->start_datetime->format('Y年n月j日');
-        }
+        $display = $this->start_datetime->format(__('messages.format_date'));
         $display .= ' (' . DayOfWeek::getDescription($this->start_datetime->dayOfWeek) . ')';
 
         return $display;

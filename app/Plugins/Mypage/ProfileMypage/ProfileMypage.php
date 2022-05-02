@@ -14,11 +14,18 @@ use App\Plugins\Mypage\MypagePluginBase;
 /**
  * プロフィールマイページクラス
  * @see \app\Plugins\Manage\UserManage\UserManage to copy
+ *
+ * @plugin_title プロフィール
+ * @plugin_desc 自分の情報を変更できます。
  */
 class ProfileMypage extends MypagePluginBase
 {
     /**
      * ページ初期表示(ユーザ変更画面表示)
+     *
+     * @method_title プロフィール変更
+     * @method_desc パスワードやメールアドレスを変更できます。
+     * @method_detail
      */
     public function index($request, $id = null)
     {
@@ -30,6 +37,7 @@ class ProfileMypage extends MypagePluginBase
 
         // 画面呼び出し
         return view('plugins.mypage.profile.edit', [
+            'themes'                => $request->themes,
             "function"              => __FUNCTION__,
             "plugin_name"           => "profile",
             "id"                    => $user->id,

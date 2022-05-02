@@ -46,12 +46,10 @@
         }
     @endphp
     <div class="custom-control custom-checkbox custom-control-inline">
-        <input name="users_columns_value[{{$user_obj->id}}][]" value="{{$select['value']}}" type="checkbox" class="custom-control-input" id="users_columns_value[{{$user_obj->id}}]"{{$column_checkbox_checked}}>
+        <input name="users_columns_value[{{$user_obj->id}}][]" value="{{$select['value']}}" type="checkbox" class="custom-control-input @if ($errors->has("users_columns_value.$user_obj->id")) is-invalid @endif" id="users_columns_value[{{$user_obj->id}}]"{{$column_checkbox_checked}}>
         <label class="custom-control-label" for="users_columns_value[{{$user_obj->id}}]"> {{$select['value']}}</label>
     </div>
-    @if ($errors && $errors->has("users_columns_value.$user_obj->id"))
-        <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("users_columns_value.$user_obj->id")}}</div>
-    @endif
+    @include('plugins.common.errors_inline', ['name' => "users_columns_value.$user_obj->id"])
 
     {!!$select['agree_description']!!}
 @endif

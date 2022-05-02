@@ -172,6 +172,15 @@
                 </div>
             </div>
 
+            <div class="row mb-3">
+                <div class="col-md-12">カラーパレット（文字色、背景色）</div>
+                <div class="row color-palette col-md-12">
+                    @foreach($colors as $color_name => $code)
+                        <a style="display:block; cursor: pointer; background-color:{{$code}}@if($color_name == 'white') border : solid gray 1px; @endif " class="col-md" title="{{$color_name}}">&nbsp;</a>
+                    @endforeach
+                </div>
+            </div>
+
             <div class="row">
             <div class="form-group row menu_horizon col-md-4">
                     <div class="col-md-12">横型メニュー</div>

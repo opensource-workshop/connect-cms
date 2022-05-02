@@ -4,8 +4,12 @@ namespace App\Models\Common;
 
 use Illuminate\Database\Eloquent\Model;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\View;
+
+use App\Enums\ContentOpenType;
+
+use Carbon\Carbon;
 
 class Frame extends Model
 {
@@ -221,5 +225,31 @@ class Frame extends Model
 
         // 上記以外の条件（非表示対象ページではない or プラグイン管理者権限を持つ）
         return true;
+    }
+
+    /**
+     * 非公開・限定公開フレームが非表示か
+     */
+    public function isInvisiblePrivateFrame()
+    {
+        // 非ログインまたはフレーム編集権限を持たない、且つ、非表示条件（非公開、又は、限定公開）にマッチした場合はフレームを非表示にする
+
+        if (
+            // !Auth::check() &&
+            (!Auth::check() || !Auth::user()->can('role_arrangement')) &&
+            (
+                $this->content_open_type == ContentOpenType::always_close ||
+                (
+                    $this->content_open_type == ContentOpenType::limited_open &&
+                    !Carbon::now()->between($this->content_open_date_from, $this->content_open_date_to)
+                )
+            )
+        ) {
+            // 非表示
+            return true;
+        }
+
+        // 表示
+        return false;
     }
 }

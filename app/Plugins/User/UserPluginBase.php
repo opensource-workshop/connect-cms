@@ -49,6 +49,7 @@ use App\Rules\CustomValiEmails;
 use App\Rules\CustomValiRequiredWithoutAllSupportsArrayInput;
 
 use App\Traits\ConnectCommonTrait;
+use App\Traits\ConnectRoleTrait;
 
 /**
  * ユーザープラグイン
@@ -62,8 +63,7 @@ use App\Traits\ConnectCommonTrait;
  */
 class UserPluginBase extends PluginBase
 {
-
-    use ConnectCommonTrait;
+    use ConnectCommonTrait, ConnectRoleTrait;
 
     /**
      * ページオブジェクト
@@ -224,7 +224,7 @@ class UserPluginBase extends PluginBase
             // Redirect時のエラー対応. リダイレクトせずエラー画面表示する。
             // Redirect時に権限エラー等で403のViewオブジェクトを返しても、リダイレクト処理が走り、エラー画面が表示されないため、ここでエラー時はリダイレクトしない設定をリクエストに入れる。
             $request->merge(['return_mode' => 'asis']);
-            return $this->view_error("403_inframe", null, "存在しないメソッド");
+            return $this->viewError("403_inframe", null, "存在しないメソッド");
         }
 
         // メソッドの可視性チェック
@@ -232,24 +232,24 @@ class UserPluginBase extends PluginBase
         if (!$objReflectionMethod->isPublic()) {
             // Redirect時のエラー対応. リダイレクトせずエラー画面表示する。
             $request->merge(['return_mode' => 'asis']);
-            return $this->view_error("403_inframe", null, "メソッドの可視性チェック");
+            return $this->viewError("403_inframe", null, "メソッドの可視性チェック");
         }
 
         // コアで定義しているHTTPリクエストメソッドチェック
         //if (!$this->checkHttpRequestMethod($request, $action)) {
-        //    return $this->view_error("403_inframe");
+        //    return $this->viewError("403_inframe");
         //}
 
         // プラグイン側の関数定義チェック
         //if (!$this->checkPublicFunctions($obj, $request, $action)) {
-        //    return $this->view_error("403_inframe");
+        //    return $this->viewError("403_inframe");
         //}
 
         // コアで定義しているHTTPリクエストメソッドチェック ＆ プラグイン側の関数定義チェック の両方がエラーの場合、権限エラー
         if (!$this->checkHttpRequestMethod($request, $action) && !$this->checkPublicFunctions($obj, $request, $action)) {
             // Redirect時のエラー対応. リダイレクトせずエラー画面表示する。
             $request->merge(['return_mode' => 'asis']);
-            return $this->view_error("403_inframe", null, "HTTPリクエストメソッドチェック ＆ プラグイン側の関数定義チェック");
+            return $this->viewError("403_inframe", null, "HTTPリクエストメソッドチェック ＆ プラグイン側の関数定義チェック");
         }
 
         // チェック用POST
@@ -511,6 +511,10 @@ class UserPluginBase extends PluginBase
 
     /**
      * バケツ選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示するプラグインのバケツを選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -577,22 +581,22 @@ class UserPluginBase extends PluginBase
      */
     protected function getBuckets($frame_id)
     {
-        $backets = Buckets::select('buckets.*', 'frames.id as frames_id')
+        $buckets = Buckets::select('buckets.*', 'frames.id as frames_id')
                       ->join('frames', 'frames.bucket_id', '=', 'buckets.id')
                       ->where('frames.id', $frame_id)
                       ->first();
-        return $backets;
+        return $buckets;
     }
 
     /**
      * Buckets のメール設定取得
      */
-    protected function getBucketMail($backet)
+    protected function getBucketMail($bucket)
     {
-        if (empty($backet)) {
+        if (empty($bucket)) {
             return new BucketsMail();
         }
-        return BucketsMail::firstOrNew(['buckets_id' => $backet->id]);
+        return BucketsMail::firstOrNew(['buckets_id' => $bucket->id]);
     }
 
     /**
@@ -603,6 +607,14 @@ class UserPluginBase extends PluginBase
         // Buckets の取得
         $buckets = $this->getBuckets($frame_id);
 
+        if ($this->frame->plugin_name == 'contents' || $buckets) {
+            // 固定記事プラグイン(=コンテンツプラグイン)はバケツありなし、どちらでも表示する。
+            // 固定記事プラグイン(=コンテンツプラグイン)以外はバケツありのみ、表示する。
+        } else {
+            // 表示しない。
+            return $this->commonView('empty_bucket_setting');
+        }
+
         return $this->commonView('frame_edit_buckets', [
             'buckets'      => $buckets,
             'plugin_name'  => $this->frame->plugin_name,
@@ -612,18 +624,20 @@ class UserPluginBase extends PluginBase
 
     /**
      * メール送信設定 変更画面
+     *
+     * @method_title メール送信設定
+     * @method_desc プラグインのメール送信条件を設定します。
+     * @method_detail 送信タイミングや送信先、件名、本文などを設定します。
      */
     public function editBucketsMails($request, $page_id, $frame_id, $id = null)
     {
         // Buckets の取得
         $bucket = $this->getBuckets($frame_id);
 
-        // Backet が取れない場合はエラー。
+        // Bucket が取れない場合は表示しない。
         if (empty($bucket)) {
-            return $this->view_error("error_inframe", "存在しないBucket");
+            return $this->commonView('empty_bucket_setting');
         }
-        // [debug]
-        // var_dump(old('notice_on'));
 
         // Buckets のメール設定取得
         $bucket_mail = $this->getBucketMail($bucket);
@@ -715,7 +729,7 @@ class UserPluginBase extends PluginBase
 
         // Backet が取れないとおかしな操作をした可能性があるのでエラーにしておく。
         if (empty($buckets)) {
-            return $this->view_error("error_inframe", "存在しないBucket");
+            return $this->viewError("error_inframe", "存在しないBucket");
         }
 
         // BucketsRoles の更新
@@ -751,7 +765,7 @@ class UserPluginBase extends PluginBase
 
         // buckets がない場合
         if (empty($bucket)) {
-            return $this->view_error("error_inframe", "存在しないBucket");
+            return $this->viewError("error_inframe", "存在しないBucket");
         }
 
         // redirect_path
@@ -760,11 +774,6 @@ class UserPluginBase extends PluginBase
         ];
 
         // 項目のエラーチェック
-        // $validator = Validator::make($request->all(), [
-        //     'notice_addresses' => ['nullable', 'email', Rule::requiredIf($request->notice_on == 1)],
-        //     'approval_addresses' => ['nullable', 'email', Rule::requiredIf($request->approval_on == 1)],
-        //     'approved_addresses' => ['nullable', 'email', Rule::requiredIf($request->approved_on == 1)],
-        // ]);
         $rules = [
             'notice_addresses' => [],
             'approval_addresses' => [],
@@ -784,9 +793,10 @@ class UserPluginBase extends PluginBase
 
         if ($request->notice_on) {
             // 投稿通知onの時、送信先メール or 送信先グループ いずれか必須
-            $name = '送信先メールアドレス, 送信先グループ';
-            $rules['notice_addresses'][]  = new CustomValiRequiredWithoutAllSupportsArrayInput([$request->notice_groups], $name);
-            $rules['notice_groups']       = [new CustomValiRequiredWithoutAllSupportsArrayInput([$request->notice_addresses], $name)];
+            $name = '送信先メールアドレス, 全ユーザに通知, 送信先グループ';
+            $rules['notice_addresses'][]  = new CustomValiRequiredWithoutAllSupportsArrayInput([$request->notice_groups, $request->notice_everyone], $name);
+            $rules['notice_groups']       = [new CustomValiRequiredWithoutAllSupportsArrayInput([$request->notice_addresses, $request->notice_everyone], $name)];
+            $rules['notice_everyone']     = [new CustomValiRequiredWithoutAllSupportsArrayInput([$request->notice_groups, $request->notice_addresses], $name)];
         }
         if ($request->approval_on) {
             // 承認通知onの時、送信先メール or 送信先グループ いずれか必須
@@ -806,6 +816,7 @@ class UserPluginBase extends PluginBase
         $validator->setAttributeNames([
             'notice_addresses' => '送信先メールアドレス',
             'notice_groups' => '送信先グループ',
+            'notice_everyone' => '全ユーザに通知',
             'approval_addresses' => '送信先メールアドレス',
             'approval_groups' => '送信先グループ',
             'approved_author' => '投稿者へ通知する',
@@ -815,19 +826,8 @@ class UserPluginBase extends PluginBase
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            // [debug]
-            // セッション初期化などのLaravel 処理。
-            // $request->flash();
-
             // 共通画面のため、redirect_pathが画面に書けないため、ここで設定
             $request->merge($redirect_path_array);
-
-            // [debug]
-            // dd(old('notice_on'), $request->notice_on);
-            // $a = redirect()->back()->withErrors($validator)->withInput();
-            // dd(old('notice_on'), $request->notice_on);
-            // return $a;
-
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
@@ -844,6 +844,7 @@ class UserPluginBase extends PluginBase
         $bucket_mail->notice_update      = $this->inputNullToZero($request, "notice_update");
         $bucket_mail->notice_delete      = $this->inputNullToZero($request, "notice_delete");
         $bucket_mail->notice_addresses   = $request->notice_addresses;
+        $bucket_mail->notice_everyone    = $this->inputNullToZero($request, "notice_everyone");
         // array_filter()でarrayの空要素削除, implode()でarrayを文字列化
         $bucket_mail->notice_groups      = $request->notice_groups ? implode(UsersTool::CHECKBOX_SEPARATOR, array_filter($request->notice_groups)) : null;
         $bucket_mail->notice_roles       = $request->notice_roles;
@@ -896,7 +897,7 @@ class UserPluginBase extends PluginBase
 
         // buckets がない場合
         if (empty($this->buckets)) {
-            return $this->view_error("error_inframe", "存在しないBucket");
+            return $this->viewError("error_inframe", "存在しないBucket");
         }
 
         // Buckets のメール設定取得
@@ -1024,7 +1025,7 @@ class UserPluginBase extends PluginBase
     {
         // buckets がない場合
         if (empty($this->buckets)) {
-            return $this->view_error("error_inframe", "存在しないBucket");
+            return $this->viewError("error_inframe", "存在しないBucket");
         }
 
         // Buckets のメール設定取得
@@ -1082,7 +1083,7 @@ class UserPluginBase extends PluginBase
     {
         // buckets がない場合
         if (empty($this->buckets)) {
-            return $this->view_error("error_inframe", "存在しないBucket");
+            return $this->viewError("error_inframe", "存在しないBucket");
         }
 
         // Buckets のメール設定取得
@@ -1486,43 +1487,16 @@ class UserPluginBase extends PluginBase
             if (Schema::hasColumn($table_name, 'posted_at')) {
                 $query->where($table_name . '.posted_at', '<=', Carbon::now());
             }
+
+            // DBカラム expires_at(終了日時) 存在するか
+            if (Schema::hasColumn($table_name, 'expires_at')) {
+                $query->where(function ($query) {
+                    $query->whereNull('expires_at')
+                        ->orWhere('expires_at', '>', Carbon::now());
+                });
+            }
         }
 
         return $query;
     }
-
-    /**
-     * 権限チェック
-     * roll_or_auth : 権限 or 役割
-     */
-/*
-
-Trait へ移動（App\Http\Controllers\Core\ConnectController）
-
-    public function can($roll_or_auth, $post = null, $plugin_name = null)
-    {
-        $args = null;
-        if ( $post != null || $plugin_name != null ) {
-            $args = [[$post, $plugin_name]];
-        }
-
-        if (!Auth::check() || !Auth::user()->can($roll_or_auth, $args)) {
-            return $this->view_error(403);
-        }
-    }
-*/
-    /**
-     * エラー画面の表示
-     *
-     */
-/*
-
-Trait へ移動（App\Http\Controllers\Core\ConnectController）
-
-    public function view_error($error_code)
-    {
-        // 表示テンプレートを呼び出す。
-        return view('errors.' . $error_code);
-    }
-*/
 }

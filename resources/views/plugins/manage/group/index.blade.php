@@ -25,6 +25,7 @@
                     <th nowrap>グループ名</th>
                     {{-- <th nowrap>編集</th> --}}
                     <th nowrap><i class="fas fa-users" title="ユーザ数"></i></th>
+                    <th nowrap>表示順</th>
                     <th nowrap>作成日</th>
                     <th nowrap>更新日</th>
                 </tr>
@@ -40,6 +41,7 @@
                     </td>
                     {{-- <th nowrap><a href="{{url('/')}}/manage/group/list/{{$group->id}}" class="badge badge-secondary">編集</a></th> --}}
                     <td><a href="{{url('/')}}/manage/group/edit/{{$group->id}}">{{$group->group_user->count()}}</a></td>
+                    <td>{{$group->display_sequence}}</td>
                     <td>{{$group->created_at->format('Y/m/d')}}</td>
                     <td>{{$group->updated_at->format('Y/m/d')}}</td>
                 </tr>

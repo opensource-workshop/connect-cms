@@ -45,9 +45,17 @@ class PluginManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/plugin')
                     ->type('plugins[1][display_sequence]', '1')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/plugin/index/images/index');
         });
+
+        // マニュアル用データ出力
+        $this->putManualData('[
+            {"path": "manage/plugin/index/images/index",
+             "name": "プラグイン管理",
+             "comment": "<ul class=\"mb-0\"><li>プラグイン管理で使用するプラグインをチェックし、プラグイン追加ダイアログで表示される順番を設定します。</li></ul>"
+            }
+        ]');
     }
 
     /**
@@ -57,8 +65,8 @@ class PluginManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
-                    ->assertTitleContains('Connect-CMS');
-            $this->screenshot($browser);
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/plugin/update/images/update');
         });
     }
 }

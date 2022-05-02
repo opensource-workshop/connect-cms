@@ -1,0 +1,14 @@
+<p>
+Connect-CMS では、フレームに表示するバケツを指定します。<br />
+フレームは、一つのバケツに紐づけされます。
+</p>
+
+<ul>
+    <li>以下の図の青の枠がフレームです。</li>
+    <li>以下の図の赤の枠がバケツです。</li>
+</ul>
+
+<p>
+【フレームとバケツ】<br />
+<img src="../../_images/frame_backet.png" class="img-fluid" style="width: 100%; max-width: 800px;">
+</p>

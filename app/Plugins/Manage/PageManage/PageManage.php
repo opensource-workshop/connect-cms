@@ -29,6 +29,8 @@ use App\Plugins\Manage\ManagePluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページ管理
  * @package Contoroller
+ * @plugin_title ページ管理
+ * @plugin_desc ページの作成や設定など、ページに関する機能が集まった管理機能です。
  */
 class PageManage extends ManagePluginBase
 {
@@ -47,17 +49,17 @@ class PageManage extends ManagePluginBase
         $role_ckeck_table["store"]           = array('admin_page');
         $role_ckeck_table["update"]          = array('admin_page');
         $role_ckeck_table["destroy"]         = array('admin_page');
-        $role_ckeck_table["sequence_up"]     = array('admin_page');
-        $role_ckeck_table["sequence_down"]   = array('admin_page');
-        $role_ckeck_table["move_page"]       = array('admin_page');
+        $role_ckeck_table["sequenceUp"]      = array('admin_page');
+        $role_ckeck_table["sequenceDown"]    = array('admin_page');
+        $role_ckeck_table["movePage"]        = array('admin_page');
         $role_ckeck_table["import"]          = array('admin_page');
         $role_ckeck_table["upload"]          = array('admin_page');
         $role_ckeck_table["role"]            = array('admin_page');
         $role_ckeck_table["saveRole"]        = array('admin_page');
-        $role_ckeck_table["migration_order"] = array('admin_page');
-        $role_ckeck_table["migration_get"]   = array('admin_page');
-        $role_ckeck_table["migration_imort"] = array('admin_page');
-        $role_ckeck_table["migration_file_delete"] = array('admin_page');
+        $role_ckeck_table["migrationOrder"]  = array('admin_page');
+        $role_ckeck_table["migrationGet"]    = array('admin_page');
+        $role_ckeck_table["migrationImort"]  = array('admin_page');
+        $role_ckeck_table["migrationFileDelete"] = array('admin_page');
 
 /*
         $role_ckeck_table = array();
@@ -77,6 +79,9 @@ class PageManage extends ManagePluginBase
      * ページ初期表示
      *
      * @return view
+     * @method_title ページ一覧
+     * @method_desc ページの一覧が表示されます。<br />ページに関する設定などが俯瞰できる画面です。
+     * @method_detail ページの内容を編集するときは、ページ名の左にある編集ボタンをクリックしてください。
      */
     public function index($request, $page_id = null, $errors = array())
     {
@@ -119,6 +124,11 @@ class PageManage extends ManagePluginBase
      * ページ編集画面表示
      *
      * @return view
+     * @method_title ページ編集
+     * @method_desc ページの登録や編集を行う画面です。
+     * @method_detail <ul><li>ページに関する各項目を設定してページの作成ができます。</li>
+                          <li>IPアドレス制限は、学内や社内などの特定のIPアドレスから参照されている時だけ、表示を許可したい。という使い方です。IPアドレス制限した場合は、URLを直接指定しても、制限が有効になり指定したIPアドレス以外からは参照できません。</li>
+                          <li>ページを削除した場合でも、コンテンツは削除されていません。コンテンツを削除したい場合は、各コンテンツの設定画面にて削除を行ってください。</li></ul>
      */
     public function edit($request, $page_id = null)
     {
@@ -205,6 +215,7 @@ class PageManage extends ManagePluginBase
         $page->layout               = $request->layout;
         $page->base_display_flag    = (isset($request->base_display_flag) ? $request->base_display_flag : 0);
         $page->membership_flag      = (isset($request->membership_flag) ? $request->membership_flag : 0);
+        $page->container_flag       = (isset($request->container_flag) ? $request->container_flag : 0);
         $page->ip_address           = $request->ip_address;
         $page->othersite_url        = $request->othersite_url;
         $page->othersite_url_target = (isset($request->othersite_url_target) ? $request->othersite_url_target : 0);
@@ -246,6 +257,7 @@ class PageManage extends ManagePluginBase
                 'layout'               => $request->layout,
                 'base_display_flag'    => (isset($request->base_display_flag) ? $request->base_display_flag : 0),
                 'membership_flag'      => (isset($request->membership_flag) ? $request->membership_flag : 0),
+                'container_flag'       => (isset($request->container_flag) ? $request->container_flag : 0),
                 'ip_address'           => $request->ip_address,
                 'othersite_url'        => $request->othersite_url,
                 'othersite_url_target' => (isset($request->othersite_url_target) ? $request->othersite_url_target : 0),
@@ -272,7 +284,7 @@ class PageManage extends ManagePluginBase
     /**
      * ページ上移動
      */
-    public function sequence_up($request, $page_id)
+    public function sequenceUp($request, $page_id)
     {
         // 移動元のオブジェクトを取得して、up
         $pages = Page::find($page_id);
@@ -285,7 +297,7 @@ class PageManage extends ManagePluginBase
     /**
      * ページ下移動
      */
-    public function sequence_down($request, $page_id)
+    public function sequenceDown($request, $page_id)
     {
         // 移動元のオブジェクトを取得して、down
         $pages = Page::find($page_id);
@@ -297,8 +309,11 @@ class PageManage extends ManagePluginBase
 
     /**
      * ページ指定場所移動
+     *
+     * @method_title ページ移動
+     * @method_desc ページは移動先を指定することで、階層を変更することができます。また、上下矢印でメニューへの表示順番を変更することもできます。
      */
-    public function move_page($request, $page_id)
+    public function movePage($request, $page_id)
     {
         // ルートへ移動
         if ($request->destination_id == "0") {
@@ -448,6 +463,9 @@ class PageManage extends ManagePluginBase
      * ページインポート処理
      *
      * @return view
+     * @method_title CSVインポート
+     * @method_desc CSVファイルをアップロードして、ページの登録ができます。
+     * @method_detail 画面のCSVフォーマットをコピーして使用してください。
      */
     public function upload($request, $page_id)
     {
@@ -458,7 +476,6 @@ class PageManage extends ManagePluginBase
                 'required',
                 'file',
                 'mimes:csv,txt', // mimesの都合上text/csvなのでtxtも許可が必要
-                'mimetypes:text/plain',
             ],
         ]);
         $validator->setAttributeNames([
@@ -630,7 +647,7 @@ class PageManage extends ManagePluginBase
      *
      * @return view
      */
-    public function migration_order($request, $page_id)
+    public function migrationOrder($request, $page_id)
     {
         // ページID で1件取得
         $current_page = Page::find($page_id);
@@ -679,19 +696,19 @@ class PageManage extends ManagePluginBase
      *
      * @return view
      */
-    public function migration_file_delete($request, $page_id)
+    public function migrationFileDelete($request, $page_id)
     {
         // 削除対象のディレクトリが指定されていること。
         if (!$request->has("delete_file_page_id") && !empty($request->delete_file_page_id)) {
             // 指示された画面に戻る。
-            return $this->migration_order($request, $page_id);
+            return $this->migrationOrder($request, $page_id);
         }
 
         // 指定されたディレクトリを削除
         Storage::deleteDirectory("migration/import/pages/" . $request->delete_file_page_id);
 
         // 指示された画面に戻る。
-        return $this->migration_order($request, $page_id);
+        return $this->migrationOrder($request, $page_id);
     }
 
     /**
@@ -699,7 +716,7 @@ class PageManage extends ManagePluginBase
      *
      * @return view
      */
-    public function migration_get($request, $page_id)
+    public function migrationGet($request, $page_id)
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
@@ -715,7 +732,7 @@ class PageManage extends ManagePluginBase
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            return redirect('manage/page/migration_order/' . $page_id)
+            return redirect('manage/page/migrationOrder/' . $page_id)
                        ->withErrors($validator)
                        ->withInput();
         }
@@ -724,7 +741,7 @@ class PageManage extends ManagePluginBase
         $this->migrationNC3Page($request->url, $request->destination_page_id);
 
         // 指示された画面に戻る。
-        return $this->migration_order($request, $page_id);
+        return $this->migrationOrder($request, $page_id);
     }
 
     /**
@@ -732,7 +749,7 @@ class PageManage extends ManagePluginBase
      *
      * @return view
      */
-    public function migration_imort($request, $page_id)
+    public function migrationImort($request, $page_id)
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
@@ -744,7 +761,7 @@ class PageManage extends ManagePluginBase
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            return redirect('manage/page/migration_order/' . $page_id)
+            return redirect('manage/page/migrationOrder/' . $page_id)
                        ->withErrors($validator)
                        ->withInput();
         }
@@ -757,6 +774,6 @@ class PageManage extends ManagePluginBase
         $this->importHtml($request->migration_page_id, storage_path() . '/app/migration/import/pages/' . $page_id);
 
         // 指示された画面に戻る。
-        return $this->migration_order($request, $page_id);
+        return $this->migrationOrder($request, $page_id);
     }
 }

@@ -63,14 +63,6 @@
     </div>
 
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">表示件数 <span class="badge badge-danger">必須</span></label>
-        <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="view_count" value="{{old('view_count', $blog->view_count)}}" class="form-control col-sm-3 @if ($errors->has('view_count')) border-danger @endif">
-            @include('plugins.common.errors_inline', ['name' => 'view_count'])
-        </div>
-    </div>
-
-    <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass(true)}}">RSSの表示</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
@@ -79,7 +71,7 @@
                 @else
                     <input type="radio" value="1" id="rss_on" name="rss" class="custom-control-input">
                 @endif
-                <label class="custom-control-label" for="rss_on">表示する</label>
+                <label class="custom-control-label" for="rss_on" id="label_rss_on">表示する</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
                 @if (old('rss', $blog->rss) == 0)
@@ -87,7 +79,7 @@
                 @else
                     <input type="radio" value="0" id="rss_off" name="rss" class="custom-control-input">
                 @endif
-                <label class="custom-control-label" for="rss_off">表示しない</label>
+                <label class="custom-control-label" for="rss_off" id="label_rss_off">表示しない</label>
             </div>
         </div>
     </div>
@@ -105,11 +97,11 @@
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
                 <input type="radio" value="1" id="use_like_on" name="use_like" class="custom-control-input" data-toggle="collapse" data-target="#collapse_like_button_name:not(.show)" aria-expanded="false" aria-controls="collapse_like_button_name" @if (old('use_like', $blog->use_like) == 1) checked="checked" @endif>
-                <label class="custom-control-label" for="use_like_on">表示する</label>
+                <label class="custom-control-label" for="use_like_on" id="label_use_like_on">表示する</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
                 <input type="radio" value="0" id="use_like_off" name="use_like" class="custom-control-input" data-toggle="collapse" data-target="#collapse_like_button_name.show" aria-expanded="false" aria-controls="collapse_like_button_name"  @if (old('use_like', $blog->use_like) == 0) checked="checked" @endif>
-                <label class="custom-control-label" for="use_like_off">表示しない</label>
+                <label class="custom-control-label" for="use_like_off" id="label_use_like_off">表示しない</label>
             </div>
         </div>
     </div>

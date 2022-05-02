@@ -20,12 +20,14 @@
 @if (isset($frame) && $frame->bucket_id)
     {{-- バケツあり --}}
 @else
+    @can('frames.edit',[[null, null, null, $frame]])
     {{-- バケツなし --}}
     <div class="card border-danger">
         <div class="card-body">
             <p class="text-center cc_margin_bottom_0">フレームの設定画面から、使用する掲示板を選択するか、作成してください。</p>
         </div>
     </div>
+    @endcan
 @endif
 
 {{-- 新規登録 --}}
@@ -46,24 +48,36 @@
         {{-- 一覧での展開方法の判定 --}}
         @if ($plugin_frame->list_format == 2)
             {{-- 一覧での展開方法：すべて閉じる --}}
-            <div class="card mb-3">
-                {{-- 一覧での展開方法：すべて閉じるの場合は、card のヘッダに根記事のタイトルを表示 --}}
-                <div class="card-header">
-                    {{$post->title}}
-                    @if ($post->status == 1) <span class="badge badge-warning align-bottom">一時保存</span>
-                    @elseif ($post->status == 2) <span class="badge badge-warning align-bottom">承認待ち</span>
-                    @endif
+            @if (isset($is_template_no_frame))
+                {{-- no_frameテンプレート --}}
+                {{-- 根記事（スレッドの記事は古い順なので、根記事は最初） --}}
+                @include('plugins.user.bbses.default.post_title_div', ['view_post' => $post, 'current_post' => null, 'list_class' => $loop->first ? '' : 'mt-2'])
+                {{-- スレッド記事 --}}
+                @foreach ($children_posts->where("thread_root_id", $post->id) as $children_post)
+                    @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => null, 'list_class' => ''])
+                @endforeach
+                <div class="mb-2"></div>
+            @else
+                {{-- defaultテンプレート --}}
+                <div class="card mb-3">
+                    {{-- 一覧での展開方法：すべて閉じるの場合は、card のヘッダに根記事のタイトルを表示 --}}
+                    <div class="card-header">
+                        {{$post->title}}
+                        @if ($post->status == 1) <span class="badge badge-warning align-bottom">一時保存</span>
+                        @elseif ($post->status == 2) <span class="badge badge-warning align-bottom">承認待ち</span>
+                        @endif
+                    </div>
+                    {{-- 一覧での展開方法：すべて閉じるの場合は、card のボディに根記事を含めた記事のタイトル一覧を表示 --}}
+                    <div class="card-body">
+                        {{-- 根記事（スレッドの記事は古い順なので、根記事は最初） --}}
+                        @include('plugins.user.bbses.default.post_title_div', ['view_post' => $post, 'current_post' => null, 'list_class' => 'mb-2'])
+                        {{-- スレッド記事 --}}
+                        @foreach ($children_posts->where("thread_root_id", $post->id) as $children_post)
+                            @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => null, 'list_class' => 'mb-2'])
+                        @endforeach
+                    </div>
                 </div>
-                {{-- 一覧での展開方法：すべて閉じるの場合は、card のボディに根記事を含めた記事のタイトル一覧を表示 --}}
-                <div class="card-body">
-                    {{-- 根記事（スレッドの記事は古い順なので、根記事は最初） --}}
-                    @include('plugins.user.bbses.default.post_title_div', ['view_post' => $post, 'current_post' => null, 'list_class' => 'mb-2'])
-                    {{-- スレッド記事 --}}
-                    @foreach ($children_posts->where("thread_root_id", $post->id) as $children_post)
-                        @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => null, 'list_class' => 'mb-2'])
-                    @endforeach
-                </div>
-            </div>
+            @endif
         @else
             {{-- 一覧での展開方法：すべて展開 or すべて閉じておく --}}
             <div class="card mb-3">

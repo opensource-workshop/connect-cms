@@ -234,11 +234,15 @@ class LearningtasksPlugin extends UserPluginBase
             // ->orderBy('id', 'desc')
             // ->first();
 
+        // 他バケツの参照禁止
+        $learningtasks_query = $learningtasks_query->where('learningtasks.bucket_id', $this->frame->bucket_id);
+
         // カテゴリのleftJoin
         $learningtasks_query = Categories::appendCategoriesLeftJoin($learningtasks_query, $this->frame->plugin_name, 'learningtasks_posts.categories_id', 'learningtasks.id');
 
         // 履歴最新を取得するために、idをdesc指定（履歴を廃止しても過去データのため必要かも）
-        $this->post = $learningtasks_query->orderBy('id', 'desc')->firstOrNew(['learningtasks_posts.id' => $id]);
+        $this->post = $learningtasks_query->orderBy('id', 'desc')->first();
+        $this->post = $this->post ?? new LearningtasksPosts();
 
         return $this->post;
     }
@@ -1069,7 +1073,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 記事取得
         $post = $this->getPost($post_id);
         if (empty($post->id)) {
-            return $this->view_error("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
         }
 
         // 課題の添付ファイル（学習指導書など）を取得
@@ -1133,7 +1137,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 記事取得
         $learningtasks_post = $this->getPost($learningtasks_posts_id);
         if (empty($learningtasks_post->id)) {
-            return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
         // カテゴリ
@@ -1171,7 +1175,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 記事取得
         $learningtasks_posts = $this->getPost($post_id);
         if (empty($learningtasks_posts->id)) {
-            return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
         // ツールクラス
@@ -1194,7 +1198,7 @@ class LearningtasksPlugin extends UserPluginBase
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'post_settings.report_end_at' => ['nullable', 'date_format:"Y-m-d H:i"', Rule::requiredIf($request->input('post_settings.use_report_end'))],
+            'post_settings.report_end_at' => ['nullable', 'date_format:"Y-m-d H:i"', Rule::requiredIf($request->input('post_settings.use_report_end') == 'on')],
         ]);
         $validator->setAttributeNames([
             'post_settings.use_report_end' => '以下の提出終了日時で制御する',
@@ -1290,7 +1294,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 記事取得
         $learningtasks_posts = $this->getPost($post_id);
         if (empty($learningtasks_posts->id)) {
-            return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
         // ツールクラス
@@ -1381,7 +1385,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $learningtasks_post = $this->getPost($post_id);
         if (empty($learningtasks_post->id)) {
-            return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
         // タグ取得
@@ -1577,7 +1581,7 @@ class LearningtasksPlugin extends UserPluginBase
 
         //    // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
         //    if (empty($check_learningtasks_post) || $check_learningtasks_post->id != $old_learningtasks_post->id) {
-        //        return $this->view_error("403_inframe", null, 'saveのユーザー権限に応じたPOST ID チェック');
+        //        return $this->viewError("403_inframe", null, 'saveのユーザー権限に応じたPOST ID チェック');
         //    }
         //}
 
@@ -1820,7 +1824,7 @@ class LearningtasksPlugin extends UserPluginBase
             'learningtasks_name' => ['required'],
             'view_count' => ['required', 'numeric'],
             'sequence_conditions' => ['nullable', 'numeric'],
-            'base_settings.report_end_at' => ['nullable', 'date_format:"Y-m-d H:i"', Rule::requiredIf($request->input('base_settings.use_report_end'))],
+            'base_settings.report_end_at' => ['nullable', 'date_format:"Y-m-d H:i"', Rule::requiredIf($request->input('base_settings.use_report_end') == 'on')],
         ]);
         $validator->setAttributeNames([
             'learningtasks_name' => '課題管理名',
@@ -2605,7 +2609,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 記事取得
         $learningtasks_post = $this->getPost($learningtasks_posts_id);
         if (empty($learningtasks_post->id)) {
-            return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
         // 表示テンプレートを呼び出す。
@@ -2625,7 +2629,7 @@ class LearningtasksPlugin extends UserPluginBase
                 'required',
                 'file',
                 'mimes:csv,txt', // mimesの都合上text/csvなのでtxtも許可が必要
-                'mimetypes:text/plain',
+                'mimetypes:application/csv,text/plain',
             ],
         ];
 
@@ -2966,7 +2970,7 @@ class LearningtasksPlugin extends UserPluginBase
         // 権限チェック（deleteCategories 関数は標準チェックにないので、独自チェック）
         $user = Auth::user();
         if (empty($user)) {
-            return $this->view_error("403_inframe", null, "ログインしないとできない処理です。");
+            return $this->viewError("403_inframe", null, "ログインしないとできない処理です。");
         }
 
         // 課題管理＆フレームデータ
@@ -3072,8 +3076,8 @@ class LearningtasksPlugin extends UserPluginBase
         // レポートの評価(2)、レポートのコメント(3)、試験の評価(6)、試験のコメント(7)、総合評価(8)の場合は、教員によるログイン操作のため、セッションから
         $student_user_id = $user->id;
 
-        // 課題管理者のみ、代理のレポート提出(1), 試験申し込み(4)させる
-        if ($tool->isLearningtaskAdmin() && ($task_status == 1 || $task_status == 4)) {
+        // 課題管理者のみ、代理のレポート提出(1), 試験申し込み(4), 試験提出(5)させる
+        if ($tool->isLearningtaskAdmin() && ($task_status == 1 || $task_status == 4 || $task_status == 5)) {
             $student_user_id = $tool->getStudentId();
         }
 
@@ -3245,7 +3249,7 @@ class LearningtasksPlugin extends UserPluginBase
     //    // 権限チェック（deleteCategories 関数は標準チェックにないので、独自チェック）
     //    $user = Auth::user();
     //    if (empty($user)) {
-    //        return $this->view_error("403_inframe", null, "ログインしないとできない処理です。");
+    //        return $this->viewError("403_inframe", null, "ログインしないとできない処理です。");
     //    }
 
     //    // upload 用変数

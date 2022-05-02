@@ -2,12 +2,16 @@
 
 namespace App\Plugins\User\Whatsnews;
 
+use Illuminate\Http\Request;
+
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
+use App\Models\Common\Page;
 use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
 use App\Models\User\Whatsnews\Whatsnews;
@@ -26,6 +30,8 @@ use App\Traits\ConnectCommonTrait;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 新着情報プラグイン
  * @package Controller
+ * @plugin_title 新着情報
+ * @plugin_desc 新着情報を作成できるプラグインです。サイト内のプラグインから新着記事を集めます。
  */
 class WhatsnewsPlugin extends UserPluginBase
 {
@@ -209,7 +215,7 @@ class WhatsnewsPlugin extends UserPluginBase
 
             // ファイルの存在確認
             if (!file_exists($file_path)) {
-                return $this->view_error("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
+                return $this->viewError("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
             }
 
             // 各プラグインのgetWhatsnewArgs() 関数を呼び出し。
@@ -294,6 +300,10 @@ class WhatsnewsPlugin extends UserPluginBase
                 $whatsnew->first_image_path = null;
                 $whatsnew->first_image_alt = null;
             }
+
+            // タイトルのタグを取り除き, データベース、ウィジウィグ型のタイトル指定に対応
+            $whatsnew->post_title_strip_tags = strip_tags($whatsnew->post_title);
+
             // タグを取り除き、指定に応じて文字数制限した本文
             if ($post_detail_length) {
                 $whatsnew->post_detail_strip_tags = mb_substr(strip_tags($whatsnew->post_detail), 0, $post_detail_length);
@@ -310,7 +320,6 @@ class WhatsnewsPlugin extends UserPluginBase
 
     private function buildQueryGetWhatsnews($whatsnews_frame, $union_sqls)
     {
-
         // ベースの新着DUAL（ダミーテーブル）
         $whatsnews_sql = DB::table('whatsnews_dual')
             ->select(
@@ -328,23 +337,16 @@ class WhatsnewsPlugin extends UserPluginBase
             )
             ->leftJoin('categories', 'categories.id', '=', 'whatsnews_dual.categories_id');
 
-        // 新着の取得方式が「日数で表示する」の場合用の条件日付を生成
-        $where_date = null;
-        if ($whatsnews_frame->view_pattern == 1) {
-            $where_date = date("Y-m-d", strtotime("-" . $whatsnews_frame->days ." day"));
-        }
-
         // 各プラグインのSQLにwhere条件を付加してUNION
         foreach ($union_sqls as $union_sql) {
-            // （where条件）日付
-            if ($where_date) {
-                $union_sql->where('posted_at', '>=', $where_date);
-            }
-
             // （where条件）フレーム選択
             if ($whatsnews_frame->frame_select == 1) {
                 $union_sql->whereIn('frames.id', explode(',', $whatsnews_frame->target_frame_ids));
             }
+
+            // 不要な新着の除外
+            $union_whatsnews = $this->excludeOfUnnecessary($union_sql->get());
+            $union_sql->whereIn('frames.id', $union_whatsnews->pluck('frame_id'));
 
             // UNION
             $whatsnews_sql->unionAll($union_sql);
@@ -358,6 +360,59 @@ class WhatsnewsPlugin extends UserPluginBase
         $whatsnews_sql->orderBy('posted_at', 'desc');
 
         return $whatsnews_sql;
+    }
+
+    /**
+     * 不要な新着の除外（記事重複・見えないページ・フレーム）
+     */
+    private function excludeOfUnnecessary(Collection $whatsnews)
+    {
+        // 削除ページ除外
+        $pages = Page::whereIn('id', $whatsnews->pluck('page_id')->unique())->get();
+        $whatsnews = $whatsnews->whereIn('page_id', $pages->pluck('id'));
+
+        // 見れないページ除外
+        $visible_page_ids = [];
+        $request = app(Request::class);
+        foreach ($pages as $page) {
+            // 自分のページから親を遡って取得
+            $page_tree = Page::reversed()->ancestorsAndSelf($page->id);
+
+            // パスワード認証
+            if ($page->isRequestPassword($request, $page_tree)) {
+                // 見れないページ
+                continue;
+            }
+
+            // 親子ページを加味してページ表示できるか
+            if (!$page->isVisibleAncestorsAndSelf($page_tree)) {
+                continue;
+            }
+
+            // 見れるページ
+            $visible_page_ids[] = $page->id;
+        }
+        $whatsnews = $whatsnews->whereIn('page_id', $visible_page_ids);
+
+        // 非公開フレーム除外
+        $visible_frame_ids = [];
+        $frames = Frame::whereIn('id', $whatsnews->pluck('frame_id')->unique())->get();
+        foreach ($frames as $frame) {
+            // 非公開・限定公開フレームが非表示か
+            if ($frame->isInvisiblePrivateFrame()) {
+                // 見れないフレーム
+                continue;
+            }
+
+            // 見れるフレーム
+            $visible_frame_ids[] = $frame->id;
+        }
+        $whatsnews = $whatsnews->whereIn('frame_id', $visible_frame_ids);
+
+        // 重複排除
+        $whatsnews = $whatsnews->unique('post_id');
+
+        return $whatsnews;
     }
 
     /**
@@ -390,7 +445,7 @@ class WhatsnewsPlugin extends UserPluginBase
 
             // ファイルの存在確認
             if (!file_exists($file_path)) {
-                return $this->view_error("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
+                return $this->viewError("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
             }
 
             // 各プラグインのgetWhatsnewArgs() 関数を呼び出し。
@@ -412,6 +467,12 @@ class WhatsnewsPlugin extends UserPluginBase
         // データ抽出
         $whatsnewses = $whatsnews_query->get();
 
+        // bugfix: 新着タイトルにウィジウィグが入る事がある（databaseのウィジウィグ型をタイトルに指定）ため、タグ除去する。
+        $whatsnewses->transform(function ($whatsnew, $key) {
+            $whatsnew->post_title = strip_tags($whatsnew->post_title);
+            return $whatsnew;
+        });
+
         // 記事詳細から、最初の画像を抜き出して設定する。
         $whatsnewses = $this->addWhatsnewsValue($whatsnewses, $request->post_detail_length);
 
@@ -431,8 +492,12 @@ class WhatsnewsPlugin extends UserPluginBase
     /* 画面アクション関数 */
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
+     *
+     * @method_title 新着一覧
+     * @method_desc サイト内の新着を表示します。
+     * @method_detail タイトルのみ、本文やサムネイルも表示など、設定画面で条件を設定できます。。
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -458,6 +523,10 @@ class WhatsnewsPlugin extends UserPluginBase
 
     /**
      * データ選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示する新着情報を選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -479,6 +548,10 @@ class WhatsnewsPlugin extends UserPluginBase
 
     /**
      * 新着情報設定の新規作成画面
+     *
+     * @method_title 作成
+     * @method_desc 新着情報を新しく作成します。
+     * @method_detail 新着情報名や表示条件を入力して新着情報を作成できます。
      */
     public function createBuckets($request, $page_id, $frame_id, $id = null, $create_flag = false, $message = null, $errors = null)
     {
@@ -679,6 +752,10 @@ class WhatsnewsPlugin extends UserPluginBase
 
     /**
      * フレーム表示設定画面の表示
+     *
+     * @method_title 表示設定
+     * @method_desc このフレームに表示する際の新着をカスタマイズできます。
+     * @method_detail 本文の文字の長さやサムネイルなどを設定して、自分のサイトにあった新着情報を表示できます。
      */
     public function editView($request, $page_id, $frame_id)
     {

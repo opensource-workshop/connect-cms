@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Validation\Rule;
@@ -13,6 +14,7 @@ use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 
 use App\Models\Common\Buckets;
+use App\Models\Common\BucketsMail;
 use App\Models\Common\BucketsRoles;
 use App\Models\Common\Frame;
 use App\Models\Common\Uploads;
@@ -45,7 +47,7 @@ use App\Enums\DatabaseColumnRoleName;
 use App\Enums\DatabaseRoleName;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\Required;
-use App\Enums\NoticeEmbeddedTag;
+use App\Enums\DatabaseNoticeEmbeddedTag;
 use App\Enums\StatusType;
 
 /**
@@ -59,6 +61,8 @@ use App\Enums\StatusType;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
  * @package Controller
+ * @plugin_title データベース
+ * @plugin_desc 自由に項目を設定して、データベースを作成できる機能です。
  */
 class DatabasesPlugin extends UserPluginBase
 {
@@ -164,6 +168,12 @@ class DatabasesPlugin extends UserPluginBase
             where(function ($query) {
                 // 権限によって表示する記事を絞る
                 $query = $this->appendAuthWhereBase($query, 'databases_inputs');
+            })
+            ->whereExists(function ($query) {
+                $query->select(DB::raw(1))
+                      ->from('databases')
+                      ->whereRaw('databases_inputs.databases_id = databases.id')
+                      ->where('databases.bucket_id', $this->frame->bucket_id);
             })
             ->firstOrNew(['id' => $id]);
 
@@ -285,6 +295,7 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.role_display_control_flag',
                 'databases_columns.databases_id',
                 'databases_columns.title_flag',
+                'databases_columns.body_flag',
                 'uploads.client_original_name'
             )
             ->leftJoin('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
@@ -323,8 +334,12 @@ class DatabasesPlugin extends UserPluginBase
     /* 画面アクション関数 */
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
+     *
+     * @method_title コンテンツ一覧
+     * @method_desc 登録したコンテンツの一覧が表示されます。
+     * @method_detail 一覧に表示する、と設定した項目で一覧が表示されます。
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -943,7 +958,11 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
-     *  データ詳細表示関数
+     * データ詳細表示関数
+     *
+     * @method_title コンテンツ詳細
+     * @method_desc 登録したコンテンツの詳細が表示されます。
+     * @method_detail 詳細に表示する、と設定した項目で詳細が表示されます。
      */
     public function detail($request, $page_id, $frame_id, $id, $mode = null)
     {
@@ -955,7 +974,7 @@ class DatabasesPlugin extends UserPluginBase
 
         // データがあることを確認
         if (empty($inputs->id)) {
-            return;
+            return $this->viewError("403_inframe", null, '詳細取得NG');
         }
 
         // カラムの取得
@@ -996,6 +1015,10 @@ class DatabasesPlugin extends UserPluginBase
 
     /**
      * 新規記事画面
+     *
+     * @method_title コンテンツ登録
+     * @method_desc 設定した項目でコンテンツを作成します。
+     * @method_detail
      */
     public function input($request, $page_id, $frame_id, $id = null, $errors = null)
     {
@@ -1065,7 +1088,7 @@ class DatabasesPlugin extends UserPluginBase
     private function getValidatorRule($validator_array, $databases_column)
     {
         // 入力しないカラム型は、バリデータチェックしない
-        if (DatabasesColumns::isNotInputColumnType($databases_column->column_type)) {
+        if ($databases_column->isNotInputColumnType()) {
             return $validator_array;
         }
 
@@ -1221,9 +1244,11 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // 固定項目エリア
-        $validator_array['column']['posted_at'] = ['required', 'date_format:Y-m-d H:i'];
-        $validator_array['column']['display_sequence'] = ['nullable', 'numeric'];
-        $validator_array['message']['posted_at'] = '公開日時';
+        $validator_array['column']['posted_at']         = ['required', 'date_format:Y-m-d H:i'];
+        $validator_array['column']['expires_at']        = ['nullable', 'date_format:Y-m-d H:i', 'after:posted_at'];
+        $validator_array['column']['display_sequence']  = ['nullable', 'numeric'];
+        $validator_array['message']['posted_at']        = '公開日時';
+        $validator_array['message']['expires_at']       = '公開終了日時';
         $validator_array['message']['display_sequence'] = '表示順';
 
         // --- 入力値変換
@@ -1412,6 +1437,7 @@ class DatabasesPlugin extends UserPluginBase
             $databases_inputs->status = $status;
             $databases_inputs->display_sequence = $display_sequence;
             $databases_inputs->posted_at = $request->posted_at . ':00';
+            $databases_inputs->expires_at = $request->filled('expires_at') ? $request->expires_at . ':00' : null;
             $databases_inputs->save();
         } else {
             $databases_inputs = DatabasesInputs::where('id', $id)->first();
@@ -1424,6 +1450,7 @@ class DatabasesPlugin extends UserPluginBase
             $databases_inputs->status = $status;
             $databases_inputs->display_sequence = $display_sequence;
             $databases_inputs->posted_at = $request->posted_at . ':00';
+            $databases_inputs->expires_at = $request->filled('expires_at') ? $request->expires_at . ':00' : null;
             $databases_inputs->update();
         }
 
@@ -1478,7 +1505,7 @@ class DatabasesPlugin extends UserPluginBase
         // databases_input_cols 登録
         foreach ($databases_columns as $databases_column) {
             // 登録日型・更新日型・公開日型・表示順は、databases_inputsテーブルの登録日・更新日・公開日・表示順を利用するため、登録しない
-            if (DatabasesColumns::isNotInputColumnType($databases_column->column_type)) {
+            if ($databases_column->isNotInputColumnType()) {
                 continue;
             }
 
@@ -1506,8 +1533,44 @@ class DatabasesPlugin extends UserPluginBase
             }
         }
 
-        // titleカラムが無いため、プラグイン独自でセット
-        $overwrite_notice_embedded_tags = [NoticeEmbeddedTag::title => $this->getTitle($databases_inputs)];
+        // プラグイン独自の埋め込みタグ
+        $overwrite_notice_embedded_tags = [
+            DatabaseNoticeEmbeddedTag::title =>            $this->getTitle($databases_inputs),
+            DatabaseNoticeEmbeddedTag::body =>             BucketsMail::stripTagsWysiwyg($this->getBody($databases_inputs)),
+            DatabaseNoticeEmbeddedTag::posted_at =>        $databases_inputs->posted_at,
+            DatabaseNoticeEmbeddedTag::expires_at =>       $databases_inputs->expires_at,
+            DatabaseNoticeEmbeddedTag::display_sequence => $databases_inputs->display_sequence,
+        ];
+
+        foreach ($databases_columns as $databases_column) {
+            // 除外する埋め込みタグはセットしない
+            if (DatabasesColumns::isNotEmbeddedTagsColumnType($databases_column->column_type)) {
+                continue;
+            }
+
+            $value = "";
+            if (is_array($request->databases_columns_value[$databases_column->id])) {
+                $value = implode(self::CHECKBOX_SEPARATOR, $request->databases_columns_value[$databases_column->id]);
+            } else {
+                $value = $request->databases_columns_value[$databases_column->id];
+            }
+
+            if ($databases_column->column_type == DatabaseColumnType::wysiwyg) {
+                $overwrite_notice_embedded_tags["X-{$databases_column->column_name}"] = BucketsMail::stripTagsWysiwyg($value);
+            } elseif (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+
+                if ($value) {
+                    $upload = Uploads::find($value);
+                    $upload = $upload ?? new Uploads();
+                    $overwrite_notice_embedded_tags["X-{$databases_column->column_name}"] = $upload->client_original_name;
+                } else {
+                    $overwrite_notice_embedded_tags["X-{$databases_column->column_name}"] = '';
+                }
+
+            } else {
+                $overwrite_notice_embedded_tags["X-{$databases_column->column_name}"] = $value;
+            }
+        }
 
         // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド, 上書き埋め込みタグ)
         $this->sendPostNotice($databases_inputs, $before_databases_inputs, 'detail', $overwrite_notice_embedded_tags);
@@ -1553,6 +1616,41 @@ class DatabasesPlugin extends UserPluginBase
         // ファイル型の調査のため、詳細カラムデータを取得（削除通知でも使用）
         $input_cols = $this->getDatabasesInputCols($id);
 
+        // メール送信のために、削除する前に行レコードを退避しておく。
+        $deleted_input = DatabasesInputs::firstOrNew(['id' => $id]);
+
+        // プラグイン独自の埋め込みタグ
+        $overwrite_notice_embedded_tags = [
+            DatabaseNoticeEmbeddedTag::title =>            $this->getTitle($deleted_input),
+            DatabaseNoticeEmbeddedTag::body =>             BucketsMail::stripTagsWysiwyg($this->getBody($deleted_input)),
+            DatabaseNoticeEmbeddedTag::posted_at =>        $deleted_input->posted_at,
+            DatabaseNoticeEmbeddedTag::expires_at =>       $deleted_input->expires_at,
+            DatabaseNoticeEmbeddedTag::display_sequence => $deleted_input->display_sequence,
+        ];
+
+        foreach ($input_cols as $input_col) {
+            // 除外する埋め込みタグはセットしない
+            if (DatabasesColumns::isNotEmbeddedTagsColumnType($input_col->column_type)) {
+                continue;
+            }
+
+            if ($input_col->column_type == DatabaseColumnType::wysiwyg) {
+                $overwrite_notice_embedded_tags["X-{$input_col->column_name}"] = BucketsMail::stripTagsWysiwyg($input_col->value);
+
+            } elseif (DatabasesColumns::isFileColumnType($input_col->column_type)) {
+                if ($input_col->value) {
+                    $upload = Uploads::find($input_col->value);
+                    $upload = $upload ?? new Uploads();
+                    $overwrite_notice_embedded_tags["X-{$input_col->column_name}"] = $upload->client_original_name;
+                } else {
+                    $overwrite_notice_embedded_tags["X-{$input_col->column_name}"] = '';
+                }
+
+            } else {
+                $overwrite_notice_embedded_tags["X-{$input_col->column_name}"] = $input_col->value;
+            }
+        }
+
         // ファイル型のファイル、uploads テーブルを削除
         foreach ($input_cols as $input_col) {
             if (DatabasesColumns::isFileColumnType($input_col->column_type)) {
@@ -1570,10 +1668,6 @@ class DatabasesPlugin extends UserPluginBase
             }
         }
 
-        // メール送信のために、削除する前に行レコードを退避しておく。
-        $deleted_input = DatabasesInputs::firstOrNew(['id' => $id]);
-        $deleted_title = $this->getTitle($deleted_input);
-
         // 詳細カラムデータを削除
         DatabasesInputCols::where('databases_inputs_id', $id)->delete();
 
@@ -1583,14 +1677,10 @@ class DatabasesPlugin extends UserPluginBase
         // 削除通知に渡すために、項目の編集（最初の公開（権限で制御しない）の項目名と値）
         $notice_cols = $input_cols->where("role_display_control_flag", 0);
         $delete_comment = "";
-        $overwrite_notice_embedded_tags = [];
         if ($notice_cols->isNotEmpty()) {
             $notice_cols_first = $notice_cols->first();
             $delete_comment  = "以下、削除されたデータの最初の公開項目です。\n";
             $delete_comment .= "「" . $notice_cols_first->column_name . "：" . $notice_cols_first->value . "」の行を削除しました。";
-
-            // titleカラムが無いため、プラグイン独自でセット
-            $overwrite_notice_embedded_tags = [NoticeEmbeddedTag::title => $deleted_title];
         }
 
         // メール送信 引数(削除した行, 詳細表示メソッド, 削除データを表すメッセージ, 上書き埋め込みタグ)
@@ -1602,12 +1692,28 @@ class DatabasesPlugin extends UserPluginBase
 
     /**
      * タイトル取得
+     */
+    private function getTitle($input): string
+    {
+        return $this->getColumnValue($input, 'title_flag');
+    }
+
+    /**
+     * 本文取得
+     */
+    private function getBody($input): string
+    {
+        return $this->getColumnValue($input, 'body_flag');
+    }
+
+    /**
+     * カラム値取得
      *
      * [TODO] このメソッドの不具合ではないが、新着等のタイトル取得は不十分になってる臭い。
      *        おそらく input_cols のタイトル取得のみに対応していて、input_cols にデータがない 登録日型 や、
      *        input_cols にデータがあってもファイル型のような、input_cols->value には ファイルID のみ格納していて、別途 client_original_name 等を取得するものは対応してなさそう。
      */
-    private function getTitle($input)
+    private function getColumnValue(?DatabasesInputs $input, string $db_col_name = 'title_flag'): string
     {
         if (is_null($input)) {
             return '';
@@ -1615,7 +1721,7 @@ class DatabasesPlugin extends UserPluginBase
 
         // タイトルカラム
         $column = DatabasesColumns::where('databases_id', $input->databases_id)
-            ->where('title_flag', '1')
+            ->where($db_col_name, '1')
             ->orderBy('display_sequence', 'asc')
             ->first();
 
@@ -1625,7 +1731,7 @@ class DatabasesPlugin extends UserPluginBase
 
         // タイトルカラムの入力値（入力値があるものだけ。例えば 登録日型 は input_cols にデータない）
         $input_cols = $this->getDatabasesInputCols($input->id);
-        $obj = $input_cols->firstWhere('title_flag', '1');
+        $obj = $input_cols->firstWhere($db_col_name, '1');
 
         // 項目の型で処理を分ける。
         if ($column->column_type == DatabaseColumnType::file) {
@@ -1692,6 +1798,10 @@ class DatabasesPlugin extends UserPluginBase
 
     /**
      * データベース選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示するデータベースを選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
@@ -1699,28 +1809,32 @@ class DatabasesPlugin extends UserPluginBase
         $plugin_name = $this->frame->plugin_name;
 
         // Frame データ
-        $plugin_frame = Frame::select('frames.*')
-                ->where('frames.id', $frame_id)->first();
+        $plugin_frame = Frame::where('id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
         $plugins = Databases::
-                select(
-                    $plugin_name . '.id',
-                    $plugin_name . '.bucket_id',
-                    $plugin_name . '.created_at',
-                    $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name',
-                    DB::raw('count(databases_inputs.databases_id) as entry_count')
-                )
-                ->leftJoin('databases_inputs', $plugin_name . '.id', '=', 'databases_inputs.databases_id')
-                ->groupBy(
-                    $plugin_name . '.id',
-                    $plugin_name . '.bucket_id',
-                    $plugin_name . '.created_at',
-                    $plugin_name . '.' . $plugin_name . '_name',
-                    'databases_inputs.databases_id'
-                )
-                ->orderBy($plugin_name . '.created_at', 'desc')
-                ->paginate(10, ["*"], "frame_{$frame_id}_page");
+            select(
+                $plugin_name . '.id',
+                $plugin_name . '.bucket_id',
+                $plugin_name . '.created_at',
+                $plugin_name . '.' . $plugin_name . '_name as plugin_bucket_name',
+                DB::raw('count(databases_inputs.databases_id) as entry_count')
+            )
+            ->leftJoin('databases_inputs', $plugin_name . '.id', '=', 'databases_inputs.databases_id')
+            ->leftJoin('frames', function ($leftJoin) use ($plugin_name, $frame_id) {
+                $leftJoin->on($plugin_name . '.bucket_id', '=', 'frames.bucket_id')
+                    ->where('frames.id', $frame_id);
+            })
+            ->groupBy(
+                $plugin_name . '.id',
+                $plugin_name . '.bucket_id',
+                $plugin_name . '.created_at',
+                $plugin_name . '.' . $plugin_name . '_name',
+                'databases_inputs.databases_id'
+            )
+            ->orderBy('frames.bucket_id', 'desc')
+            ->orderBy($plugin_name . '.created_at', 'desc')
+            ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
         return $this->view('databases_list_buckets', [
@@ -1731,6 +1845,10 @@ class DatabasesPlugin extends UserPluginBase
 
     /**
      * データベース新規作成画面
+     *
+     * @method_title 作成
+     * @method_desc データベースを新しく作成します。
+     * @method_detail データベース名や表示順カラムの権限設定などを行います。
      */
     public function createBuckets($request, $page_id, $frame_id, $databases_id = null, $create_flag = false, $message = null, $errors = null)
     {
@@ -2110,6 +2228,10 @@ class DatabasesPlugin extends UserPluginBase
 
     /**
      * 項目の詳細画面の表示
+     *
+     * @method_title カラム詳細編集
+     * @method_desc カラムの詳細設定を行います。
+     * @method_detail 表示の条件や入力チェック、キャプションやデザイン用クラス名などを設定できます。
      */
     public function editColumnDetail($request, $page_id, $frame_id, $column_id, $message = null, $errors = null)
     {
@@ -2157,6 +2279,10 @@ class DatabasesPlugin extends UserPluginBase
 
     /**
      * カラム編集画面の表示
+     *
+     * @method_title カラム編集
+     * @method_desc カラムの設定を行います。
+     * @method_detail カラム名と型を指定してカラムを作成します。
      */
     public function editColumn($request, $page_id, $frame_id, $id = null, $message = null, $errors = null)
     {
@@ -2188,6 +2314,8 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.required',
                 'databases_columns.frame_col',
                 'databases_columns.title_flag',
+                'databases_columns.body_flag',
+                'databases_columns.image_flag',
                 'databases_columns.caption',
                 'databases_columns.caption_color',
                 'databases_columns.caption_list_detail',
@@ -2212,6 +2340,8 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.required',
                 'databases_columns.frame_col',
                 'databases_columns.title_flag',
+                'databases_columns.body_flag',
+                'databases_columns.image_flag',
                 'databases_columns.caption',
                 'databases_columns.caption_color',
                 'databases_columns.caption_list_detail',
@@ -2430,11 +2560,35 @@ class DatabasesPlugin extends UserPluginBase
                     ->update(['title_flag' => 0]);
         }
 
+        // 本文指定
+        $body_flag = (empty($request->body_flag)) ? 0 : $request->body_flag;
+        if ($body_flag) {
+            // body_flagはデータベース内で１つだけ ON にする項目
+            // そのため body_flag = 1 なら データベース内の body_flag = 1 を一度 0 に更新する。
+            DatabasesColumns::where('databases_id', $request->databases_id)
+                    ->where('body_flag', 1)
+                    ->update(['body_flag' => 0]);
+        }
+
+        // イメージ指定
+        $image_flag = (empty($request->image_flag)) ? 0 : $request->image_flag;
+        if ($image_flag) {
+            // image_flag ON にする項目
+            // そのため image_flag = 1 なら データベース内の image_flag = 1 を一度 0 に更新する。
+            DatabasesColumns::where('databases_id', $request->databases_id)
+                    ->where('image_flag', 1)
+                    ->update(['image_flag' => 0]);
+        }
+
         // bugfix: 更新データは上記update後に取得しないと、title_flagが更新されない不具合対応
         $column = DatabasesColumns::where('id', $request->column_id)->first();
 
         // タイトル指定
         $column->title_flag = $title_flag;
+        // 本文指定
+        $column->body_flag = $body_flag;
+        // イメージ指定
+        $column->image_flag = $image_flag;
 
         // 項目の更新処理
         $column->caption = $request->caption;
@@ -2752,8 +2906,10 @@ class DatabasesPlugin extends UserPluginBase
         // 見出し行-末尾（固定項目）
         $csv_array[0]['posted_at'] = '公開日時';
         $csv_array[0]['display_sequence'] = '表示順';
+        $csv_array[0]['expires_at'] = '公開終了日時';
         $copy_base['posted_at'] = '';
         $copy_base['display_sequence'] = '';
+        $copy_base['expires_at'] = '';
 
         // $data_output_flag = falseは、CSVフォーマットダウンロード処理
         if ($data_output_flag) {
@@ -2764,6 +2920,7 @@ class DatabasesPlugin extends UserPluginBase
                                             'databases_inputs.created_at as inputs_created_at',
                                             'databases_inputs.updated_at as inputs_updated_at',
                                             'databases_inputs.posted_at as inputs_posted_at',
+                                            'databases_inputs.expires_at as inputs_expires_at',
                                             'databases_inputs.display_sequence as inputs_display_sequence'
                                         )
                                         ->join('databases_inputs', 'databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
@@ -2791,6 +2948,9 @@ class DatabasesPlugin extends UserPluginBase
                     $csv_array[$input_col->databases_inputs_id]['posted_at'] = $databases_inputs->posted_at->format('Y/n/j H:i');
 
                     $csv_array[$input_col->databases_inputs_id]['display_sequence'] = $databases_inputs->display_sequence;
+                    if (!empty($databases_inputs->expires_at)) {
+                        $csv_array[$input_col->databases_inputs_id]['expires_at'] = $databases_inputs->expires_at->format('Y/n/j H:i');
+                    }
 
                     // 登録日型、更新日型、公開日型は $input_cols に含まれないので、初回でセット
                     foreach ($columns as $column) {
@@ -2850,6 +3010,10 @@ class DatabasesPlugin extends UserPluginBase
 
     /**
      * インポート画面表示
+     *
+     * @method_title インポート
+     * @method_desc データをCSVでインポートできます。
+     * @method_detail 追加、更新に対応しています。
      */
     public function import($request, $page_id, $frame_id, $id)
     {
@@ -2880,7 +3044,7 @@ class DatabasesPlugin extends UserPluginBase
                     'required',
                     'file',
                     'mimes:csv,txt,zip,html', // mimesの都合上text/csvなのでtxtも許可が必要. ウィジウィグのHTMLがcsvに含まれているとhtmlと判定されるため、ファイル拡張子チェックでhtmlを許可
-                    'mimetypes:text/plain,application/zip,text/html',
+                    'mimetypes:application/csv,text/plain,application/zip,text/html',
                 ],
             ];
             // csvを通すため、txt,htmlを追加しているため、メッセージをカスタマイズする。
@@ -2895,7 +3059,7 @@ class DatabasesPlugin extends UserPluginBase
                     'required',
                     'file',
                     'mimes:csv,txt,html', // mimesの都合上text/csvなのでtxtも許可が必要. ウィジウィグのHTMLがcsvに含まれているとhtmlと判定されるため、ファイル拡張子チェックでhtmlを許可
-                    'mimetypes:text/plain,text/html',
+                    'mimetypes:application/csv,text/plain,text/html',
                 ],
             ];
             // csvを通すため、txt,htmlを追加しているため、メッセージをカスタマイズする。
@@ -2962,7 +3126,7 @@ class DatabasesPlugin extends UserPluginBase
                     // 一時ファイルの削除
                     $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
 
-                    $error_msg = "ZIPファイルにCSVを含めてください。";
+                    $error_msg = "ZIPファイルにCSVが含まれていないか、CSVの配置場所が誤っています。CSVは「ZIP内/[database_folder]/[database_file].csv」に配置してください。";
                     return redirect()->back()->withErrors(['databases_csv' => $error_msg])->withInput();
                 }
                 if (count($csv_full_paths) >= 2) {
@@ -3232,8 +3396,11 @@ class DatabasesPlugin extends UserPluginBase
             // Log::debug('$csv_columns:'. var_export($csv_columns, true));
 
             // 配列の末尾から要素を取り除いて取得。CSVのデータ行の末尾は必ず下記固定項目の想定
-            // 配列末尾：表示順
+            // 配列末尾：公開終了日時
+            // 次の末尾：表示順
             // 次の末尾：公開日時
+            $expires_at = array_pop($csv_columns);
+            $expires_at = $expires_at ? new Carbon($expires_at) : null;
             $display_sequence = array_pop($csv_columns);
             $display_sequence = $this->getSaveDisplaySequence($display_sequence, $database->id, $databases_inputs_id);
             $posted_at = array_pop($csv_columns);
@@ -3256,6 +3423,8 @@ class DatabasesPlugin extends UserPluginBase
                 // 公開日時
                 // $databases_inputs->posted_at = $posted_at . ':00';
                 $databases_inputs->posted_at = $posted_at;
+                // 公開終了日時
+                $databases_inputs->expires_at = $expires_at;
                 $databases_inputs->save();
             } else {
                 // 更新
@@ -3269,6 +3438,8 @@ class DatabasesPlugin extends UserPluginBase
                 $databases_inputs->display_sequence = $display_sequence;
                 // 公開日時
                 $databases_inputs->posted_at = $posted_at;
+                // 公開終了日時
+                $databases_inputs->expires_at = $expires_at;
                 $databases_inputs->update();
 
                 // databases_inputs_id（行 id）が渡ってきたら、詳細データは一度消す。その後、登録と同じ処理にする。
@@ -3292,7 +3463,7 @@ class DatabasesPlugin extends UserPluginBase
                 // よってこの２つの配列数は同じになる想定。issetでチェックしているが基本ある想定。
                 if (isset($databases_columns[$col])) {
                     // 登録日型・更新日型・公開日型・表示順は、databases_inputsテーブルの登録日・更新日・公開日・表示順を利用するため、登録しない
-                    if (DatabasesColumns::isNotInputColumnType($databases_columns[$col]->column_type)) {
+                    if ($databases_columns[$col]->isNotInputColumnType()) {
                         continue;
                     }
 
@@ -3367,6 +3538,7 @@ class DatabasesPlugin extends UserPluginBase
         // ヘッダ行-末尾（固定項目）
         $header_column_format[] = '公開日時';
         $header_column_format[] = '表示順';
+        $header_column_format[] = '公開終了日時';
 
         // 項目の不足チェック
         $shortness = array_diff($header_column_format, $header_columns);
@@ -3389,6 +3561,7 @@ class DatabasesPlugin extends UserPluginBase
      */
     private function checkCvslines($fp, $databases_columns, $databases_id, $file_extension, $unzip_dir_full_path)
     {
+        $messages = [];
         $rules = [];
         // $rules = [
         //     0 => [],
@@ -3456,9 +3629,14 @@ class DatabasesPlugin extends UserPluginBase
         // excelでは 2020-07-01 のハイフンや 2020/07/01 と頭ゼロが付けられないため、インポート時は修正できる日付形式に見直し
         // $rules[$col + 1] = ['required', 'date_format:Y-m-d H:i'];
         // 行頭（固定項目） の id 分で+1, 行末に追加で+1 = col+2ずらす
-        $rules[$col + 2] = ['required', 'date_format:Y/n/j H:i'];
+        $rules[$col + 2] = ['required', 'date_format:Y/n/j G:i'];
         // 表示順
-        $rules[$col + 3] = ['nullable', 'numeric'];
+        $rules[$col + 3] = ['present', 'nullable', 'numeric'];
+        // 表示終了日時
+        $rules[$col + 4] = ['present', 'nullable', 'date_format:Y/n/j G:i', 'after:' . ($col + 2)];
+
+        $messages[($col + 2) . '.date_format'] = ':attributeには対応した日付形式（例：2021/6/7 1:00）を指定してください。';
+        $messages[($col + 4) . '.date_format'] = ':attributeには対応した日付形式（例：2021/6/7 1:00）を指定してください。';
 
         // ヘッダー行が1行目なので、2行目からデータ始まる
         $line_count = 2;
@@ -3533,7 +3711,7 @@ class DatabasesPlugin extends UserPluginBase
             array_unshift($csv_columns, $databases_inputs_id);
 
             // バリデーション
-            $validator = Validator::make($csv_columns, $rules);
+            $validator = Validator::make($csv_columns, $rules, $messages);
             // Log::debug($line_count . '行目の$csv_columns:' . var_export($csv_columns, true));
             // Log::debug(var_export($rules, true));
 
@@ -3550,6 +3728,7 @@ class DatabasesPlugin extends UserPluginBase
             // 行頭（固定項目）の id 分で+1, 行末に追加で+1 = col+2ずらす
             $attribute_names[$col + 2] = $line_count . '行目の公開日時';
             $attribute_names[$col + 3] = $line_count . '行目の表示順';
+            $attribute_names[$col + 4] = $line_count . '行目の公開終了日時';
 
             $validator->setAttributeNames($attribute_names);
             // Log::debug(var_export($attribute_names, true));
@@ -3591,6 +3770,10 @@ class DatabasesPlugin extends UserPluginBase
 
     /**
      * 表示設定変更画面の表示
+     *
+     * @method_title 表示設定
+     * @method_desc このフレームに表示する際のデータベースをカスタマイズできます。
+     * @method_detail 検索機能の表示有無や初期表示の条件など、一覧画面での表示設定を行います。
      */
     public function editView($request, $page_id, $frame_id)
     {
@@ -3795,7 +3978,13 @@ AND databases_inputs.posted_at <= NOW()
                 'frames.id                     as frame_id',
                 'databases_inputs.id           as post_id,',
                 'databases_input_cols.value    as post_title,',
-                DB::raw('null                  as post_detail'),
+                DB::raw(
+                    'IF(
+                        `input_cols_image`.`value` IS NULL,
+                        `input_cols_body`.`value`,
+                        CONCAT(`input_cols_body`.`value`, \'<img src="'. url('/') . '/file/' . '\', `input_cols_image`.`value`, '. '\'" />\')
+                    )                          as post_detail'
+                ),
                 DB::raw('null                  as important'),
                 'databases_inputs.posted_at    as posted_at',
                 'databases_inputs.created_name as posted_name',
@@ -3815,7 +4004,34 @@ AND databases_inputs.posted_at <= NOW()
                 $leftJoin->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
                             ->on('databases_columns.id', '=', 'databases_input_cols.databases_columns_id');
             })
+            // 本文
+            ->leftJoin('databases_columns as columns_body', function ($leftJoin) use ($hide_columns_ids) {
+                $leftJoin->on('databases_inputs.databases_id', '=', 'columns_body.databases_id')
+                            ->where('columns_body.body_flag', 1)
+                            // タイトル指定しても、権限によって非表示columだったらvalue表示しない（基本的に、タイトル指定したけど権限で非表示は、設定ミスと思う。その時は(無題)で表示される）
+                            ->whereNotIn('columns_body.id', $hide_columns_ids);
+            })
+            ->leftJoin('databases_input_cols as input_cols_body', function ($leftJoin) {
+                $leftJoin->on('databases_inputs.id', '=', 'input_cols_body.databases_inputs_id')
+                            ->on('columns_body.id', '=', 'input_cols_body.databases_columns_id');
+            })
+            // イメージ
+            ->leftJoin('databases_columns as columns_image', function ($leftJoin) use ($hide_columns_ids) {
+                $leftJoin->on('databases_inputs.databases_id', '=', 'columns_image.databases_id')
+                            ->where('columns_image.image_flag', 1)
+                            // タイトル指定しても、権限によって非表示columだったらvalue表示しない（基本的に、タイトル指定したけど権限で非表示は、設定ミスと思う。その時は(無題)で表示される）
+                            ->whereNotIn('columns_image.id', $hide_columns_ids);
+            })
+            ->leftJoin('databases_input_cols as input_cols_image', function ($leftJoin) {
+                $leftJoin->on('databases_inputs.id', '=', 'input_cols_image.databases_inputs_id')
+                            ->on('columns_image.id', '=', 'input_cols_image.databases_columns_id');
+            })
+
             ->where('databases_inputs.status', StatusType::active)
+            ->where(function ($query) {
+                $query->whereNull('databases_inputs.expires_at')
+                    ->orWhere('databases_inputs.expires_at', '>', Carbon::now());
+            })
             ->where('databases_inputs.posted_at', '<=', Carbon::now());
 
         // 全データベースの検索キーワードの絞り込み と カラムの絞り込み
@@ -3838,6 +4054,16 @@ AND databases_inputs.posted_at <= NOW()
      */
     public static function getSearchArgs($search_keyword, $page_ids = null)
     {
+
+        // 全ての「カラム」と「表示設定の絞り込み条件」の取得
+        $columns = DatabasesTool::getDatabasesColumnsAndFilterSearchAll();
+        $columns = $columns->get();
+
+        // 権限によって非表示columのdatabases_columns_id配列を取得する（各データベースの項目毎で権限によって非表示）
+        $hide_columns_ids = (new DatabasesTool())->getHideColumnsIds($columns, 'list_detail_display_flag');
+
+        // 各データベースのフレームの表示設定
+        $databases_frames_settings = DatabasesTool::getDatabasesFramesSettings($columns);
         // Query Builder のバグ？
         // whereIn で指定した引数が展開されずに、引数の変数分だけ、setBindings の引数を要求される。
         // そのため、whereIn とsetBindings 用の変数に同じ $page_ids を設定している。
@@ -3847,7 +4073,7 @@ AND databases_inputs.posted_at <= NOW()
                        'frames.id                   as frame_id',
                        'frames.page_id              as page_id',
                        'pages.permanent_link        as permanent_link',
-                       'databases_inputs.id         as post_title',
+                       'databases_input_cols.value  as post_title',
                        DB::raw('0 as important'),
                        'databases_inputs.created_at as posted_at',
                        DB::raw('null as posted_name'),
@@ -3859,16 +4085,67 @@ AND databases_inputs.posted_at <= NOW()
                    ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
                    ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
                    ->join('pages', 'pages.id', '=', 'frames.page_id')
-                   ->whereIn('pages.id', $page_ids);
+                   ->leftJoin('databases_columns', function ($leftJoin) use ($hide_columns_ids) {
+                        $leftJoin->on('databases_inputs.databases_id', '=', 'databases_columns.databases_id')
+                                    ->where('databases_columns.title_flag', 1)
+                                    // タイトル指定しても、権限によって非表示columだったらvalue表示しない（基本的に、タイトル指定したけど権限で非表示は、設定ミスと思う。その時は(無題)で表示される）
+                                    ->whereNotIn('databases_columns.id', $hide_columns_ids);
+                   })
+                   ->leftJoin('databases_input_cols', function ($leftJoin) {
+                        $leftJoin->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
+                                    ->on('databases_columns.id', '=', 'databases_input_cols.databases_columns_id');
+                   })
+                    ->where('databases_inputs.status', StatusType::active)
+                    ->where('databases_inputs.posted_at', '<=', Carbon::now())
+                    ->where(function ($query) {
+                        $query->whereNull('databases_inputs.expires_at')
+                            ->orWhere('databases_inputs.expires_at', '>', Carbon::now());
+                    })
+                    ->whereIn('pages.id', $page_ids);
 
-        //$bind = array($page_ids, 0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
-        $bind = array($page_ids);
+            // 全データベースの検索キーワードの絞り込み と カラムの絞り込み
+            $query = DatabasesTool::appendSearchKeywordAndSearchColumnsAllDb(
+                'databases_inputs.id',
+                $query,
+                $databases_frames_settings,
+                $hide_columns_ids
+            );
+
+            // キーワード検索
+            $query = DatabasesTool::appendSearchKeyword(
+                'databases_inputs.id',
+                $query,
+                $columns->pluck('id'),
+                $hide_columns_ids,
+                $search_keyword
+            );
 
         $return[] = $query;
-        $return[] = $bind;
-        $return[] = 'show_page';
-        $return[] = '/page';
+        $return[] = 'show_page_frame_post';
+        $return[] = '/plugin/databases/detail';
 
         return $return;
+    }
+
+    /**
+     * メール送信設定 変更画面
+     */
+    public function editBucketsMails($request, $page_id, $frame_id, $id = null)
+    {
+        $view = parent::editBucketsMails($request, $page_id, $frame_id, $id);
+
+        // 可変項目の埋め込みタグ
+        $database = $this->getDatabases($frame_id);
+        if ($database) {
+            $columns = DatabasesColumns::where('databases_id', $database->id)->orderBy('display_sequence')->get();
+        } else {
+            $columns = collect();
+        }
+
+        // ビューに値を渡す
+        View::share('database', $database);
+        View::share('columns', $columns);
+
+        return $view;
     }
 }

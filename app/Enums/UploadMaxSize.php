@@ -17,7 +17,7 @@ final class UploadMaxSize extends EnumsBase
     const fifty_mega_byte = '51200';
     const hundred_mega_byte = '102400';
     const two_hundred_mega_byte = '204800';
-    const one_giga_byte = '1024000';
+    const one_giga_byte = '1048576';
     const infinity = 'infinity';
 
     // key/valueの連想配列

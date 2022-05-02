@@ -43,7 +43,7 @@
         <div class="col-md-10">
 
             <div class="mb-1">
-                <img src="/file/{{$photoalbum_content->upload_id}}?size=small"
+                <img src="{{url('/')}}/file/{{$photoalbum_content->upload_id}}?size=small"
                      id="photo"
                      style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
                      class="img-fluid" data-toggle="modal" data-target="#image_Modal"
@@ -52,7 +52,7 @@
                     <div class="modal-dialog modal-lg modal-middle">{{-- モーダルウィンドウの縦表示位置を調整・画像を大きく見せる --}}
                         <div class="modal-content pb-3">
                             <div class="modal-body mx-auto">
-                                <img src="/file/{{$photoalbum_content->upload_id}}"
+                                <img src="{{url('/')}}/file/{{$photoalbum_content->upload_id}}"
                                      style="max-height: 800px; object-fit: scale-down; cursor:pointer;"
                                      class="img-fluid" />
                             </div>
@@ -70,7 +70,7 @@
                 <input type="file" name="upload_file[{{$frame_id}}]" value="{{old("upload_file.$frame_id")}}" class="custom-file-input @if ($errors && $errors->has("upload_file.$frame_id")) border-danger @endif" id="upload_file{{$frame_id}}">
                 <label class="custom-file-label" for="upload_file" data-browse="参照">画像ファイル選択...</label>
                 <small class="form-text text-muted">ファイルを入れ替える際は指定します。</small>
-                @if ($errors && $errors->has("upload_file.$frame_id")) 
+                @if ($errors && $errors->has("upload_file.$frame_id"))
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("upload_file.*")}}</div>
                 @endif
             </div>
@@ -81,8 +81,8 @@
         <label class="col-md-2 control-label text-md-right" for="title">タイトル</label>
         <div class="col-md-10">
             <input type="text" name="title[{{$frame_id}}]" value="{{old("title.$frame_id", $photoalbum_content->name)}}" class="form-control @if ($errors->has("title.$frame_id")) border-danger @endif" id="title{{$frame_id}}">
-            <small class="form-text text-muted">空の場合、ファイル名をタイトルとして登録します。</small>
-            @if ($errors && $errors->has("title.$frame_id")) 
+            <small class="form-text text-muted">登録時に空の場合、ファイル名をタイトルとして登録します。</small>
+            @if ($errors && $errors->has("title.$frame_id"))
                 <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("title.*")}}</div>
             @endif
         </div>
@@ -92,7 +92,7 @@
         <label class="col-md-2 control-label text-md-right">説明</label>
         <div class="col-md-10">
             <textarea name="description[{{$frame_id}}]" class="form-control @if ($errors->has("description.$frame_id")) border-danger @endif" id="description{{$frame_id}}" rows=2>{!!old("description.$frame_id", $photoalbum_content->description)!!}</textarea>
-            @if ($errors && $errors->has("description.$frame_id")) 
+            @if ($errors && $errors->has("description.$frame_id"))
                 <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("description.*")}}</div>
             @endif
         </div>
@@ -107,7 +107,7 @@
                 @else
                     <input type="checkbox" name="is_cover[{{$frame_id}}]" value="1" class="custom-control-input" id="is_cover{{$frame_id}}">
                 @endif
-                <label class="custom-control-label" for="is_cover{{$frame_id}}">チェックすると、アルバムの表紙に使われます。</label>
+                <label class="custom-control-label" for="is_cover{{$frame_id}}" id="label_is_cover{{$frame_id}}">チェックすると、アルバムの表紙に使われます。</label>
             </div>
         </div>
     </div>

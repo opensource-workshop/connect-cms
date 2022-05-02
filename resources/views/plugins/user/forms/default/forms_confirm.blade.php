@@ -21,6 +21,10 @@
     }
 </script>
 
+<div class="alert alert-secondary" role="alert">
+    <i class="fas fa-exclamation-circle"></i> 以下の内容でよろしいですか？
+</div>
+
 <form action="" name="forms_store{{$frame_id}}" method="POST">
     {{ csrf_field() }}
     @foreach($forms_columns as $form_column)

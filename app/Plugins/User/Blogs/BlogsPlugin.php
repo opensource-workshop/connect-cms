@@ -23,6 +23,7 @@ use App\Plugins\User\UserPluginBase;
 
 use App\Enums\StatusType;
 use App\Enums\BlogFrameConfig;
+use App\Enums\BlogFrameScope;
 
 use App\Rules\CustomValiWysiwygMax;
 
@@ -34,6 +35,8 @@ use App\Rules\CustomValiWysiwygMax;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ブログプラグイン
  * @package Controller
+ * @plugin_title ブログ
+ * @plugin_desc ブログを作成できるプラグインです。サイトからのニュース配信などにも使用します。
  */
 class BlogsPlugin extends UserPluginBase
 {
@@ -147,6 +150,12 @@ class BlogsPlugin extends UserPluginBase
             // ->orderBy('id', 'desc')
             // ->first();
 
+        // 他バケツの参照禁止
+        $blogs_query = $blogs_query->join('blogs', function ($join) {
+            $join->on('blogs.id', '=', 'blogs_posts.blogs_id')
+                ->where('blogs.bucket_id', '=', $this->frame->bucket_id);
+        });
+
         // カテゴリのleftJoin
         $blogs_query =  Categories::appendCategoriesLeftJoin($blogs_query, $this->frame->plugin_name, 'blogs_posts.categories_id', 'blogs_posts.blogs_id');
 
@@ -182,7 +191,6 @@ class BlogsPlugin extends UserPluginBase
                 'frames.*',
                 'blogs.id as blogs_id',
                 'blogs.blog_name',
-                'blogs.view_count',
                 'blogs.rss',
                 'blogs.rss_count',
                 'blogs.use_like',
@@ -241,11 +249,11 @@ class BlogsPlugin extends UserPluginBase
         // 全件表示
         if (empty($blog_frame->scope)) {
             // 全件取得のため、追加条件なしで戻る。
-        } elseif ($blog_frame->scope == 'year') {
+        } elseif ($blog_frame->scope == BlogFrameScope::year) {
             // 年
             $query->Where('posted_at', '>=', $blog_frame->scope_value . '-01-01')
                   ->Where('posted_at', '<=', $blog_frame->scope_value . '-12-31 23:59:59');
-        } elseif ($blog_frame->scope == 'fiscal') {
+        } elseif ($blog_frame->scope == BlogFrameScope::fiscal) {
             // 年度
             $fiscal_next = intval($blog_frame->scope_value) + 1;
             $query->Where('posted_at', '>=', $blog_frame->scope_value . '-04-01')
@@ -263,7 +271,7 @@ class BlogsPlugin extends UserPluginBase
         //$blogs_posts = null;
 
         // 件数
-        $count = $blog_frame->view_count;
+        $count = FrameConfig::getConfigValue($this->frame_configs, BlogFrameConfig::blog_view_count);
         if ($option_count != null) {
             $count = $option_count;
         }
@@ -521,12 +529,12 @@ WHERE status = 0
                       ->leftJoin('categories', 'categories.id', '=', 'blogs_posts.categories_id')
                       ->join('pages', 'pages.id', '=', 'frames.page_id')
                       ->whereIn('pages.id', $page_ids)
-                      ->where('status', '?')
+                      ->where('status', StatusType::active)
                       ->where('posted_at', '<=', Carbon::now())
                       ->where(function ($plugin_query) use ($search_keyword) {
-                          $plugin_query->where('blogs_posts.post_title', 'like', '?')
-                                       ->orWhere('blogs_posts.post_text', 'like', '?')
-                                       ->orWhere('blogs_posts.post_text2', 'like', '?');
+                          $plugin_query->where('blogs_posts.post_title', 'like', '%'.$search_keyword.'%')
+                                       ->orWhere('blogs_posts.post_text', 'like', '%'.$search_keyword.'%')
+                                       ->orWhere('blogs_posts.post_text2', 'like', '%'.$search_keyword.'%');
                       })
                       ->whereRaw('CASE
                                   WHEN blogs_frames.scope IS NULL
@@ -554,9 +562,6 @@ WHERE status = 0
 
                       ->whereNull('blogs_posts.deleted_at');
 
-        //$bind = array($page_ids, 0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
-        $bind = array($page_ids, 0, Carbon::now(), '%'.$search_keyword.'%', '%'.$search_keyword.'%', '%'.$search_keyword.'%', '', 'top', 'not_important', 'important_only', 1);
-        $return[] = $bind;
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/blogs/show';
 
@@ -566,8 +571,12 @@ WHERE status = 0
     /* 画面アクション関数 */
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
+     *
+     * @method_title 記事一覧
+     * @method_desc ブログを表示します。
+     * @method_detail 日付が新しいものから、表示されます。
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -603,16 +612,19 @@ WHERE status = 0
         }
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'blogs', [
+        return $this->view('blogs', [
             'blogs_posts' => $blogs_posts,
             'blog_frame'  => $blog_frame,
-            ]
-        );
+            'blog_frame_setting' => BlogsFrames::where('frames_id', $frame_id)->firstOrNew([]),
+        ]);
     }
 
     /**
      * 新規記事画面
+     *
+     * @method_title 記事登録
+     * @method_desc 記事を登録できます。
+     * @method_detail
      */
     public function create($request, $page_id, $frame_id, $blogs_posts_id = null)
     {
@@ -643,6 +655,10 @@ WHERE status = 0
 
     /**
      *  詳細表示関数
+     *
+     * @method_title 記事詳細
+     * @method_desc ブログの記事を表示します。
+     * @method_detail 記事に対する一意なURLが必要な場合は記事詳細画面のURLを使ってください。
      */
     public function show($request, $page_id, $frame_id, $blogs_posts_id = null)
     {
@@ -652,7 +668,7 @@ WHERE status = 0
         // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $blogs_post = $this->getPost($blogs_posts_id);
         if (empty($blogs_post->id)) {
-            return $this->view_error("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
         }
 
         // タグ取得
@@ -737,6 +753,10 @@ WHERE status = 0
 
     /**
      * 記事編集画面
+     *
+     * @method_title 記事編集
+     * @method_desc ブログの記事を編集します。
+     * @method_detail 記事の削除もこの画面から行います。
      */
     public function edit($request, $page_id, $frame_id, $blogs_posts_id = null, $is_copy = false)
     {
@@ -749,7 +769,7 @@ WHERE status = 0
         // 記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $blogs_post = $this->getPost($blogs_posts_id);
         if (empty($blogs_post->id)) {
-            return $this->view_error("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'editのユーザー権限に応じたPOST ID チェック');
         }
 
         // 記事コピーの場合は、id消して新規登録画面へ & 投稿日時を今に変更
@@ -803,7 +823,9 @@ WHERE status = 0
 
             // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
             if (empty($check_blogs_post->id) || $check_blogs_post->id != $old_blogs_post->id) {
-                return $this->view_error("403_inframe", null, 'saveのユーザー権限に応じたPOST ID チェック');
+                // Redirect時のエラー対応. リダイレクトせずエラー画面表示する。
+                $request->merge(['return_mode' => 'asis']);
+                return $this->viewError("403_inframe", null, 'saveのユーザー権限に応じたPOST ID チェック');
             }
         }
 
@@ -892,7 +914,7 @@ WHERE status = 0
 
             // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
             if (empty($check_blogs_post->id) || $check_blogs_post->id != $id) {
-                return $this->view_error("403_inframe", null, 'temporarysaveのユーザー権限に応じたPOST ID チェック');
+                return $this->viewError("403_inframe", null, 'temporarysaveのユーザー権限に応じたPOST ID チェック');
             }
         }
 
@@ -931,7 +953,7 @@ WHERE status = 0
             // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
             $check_blogs_post = $this->getPost($blogs_posts_id);
             if (empty($check_blogs_post->id)) {
-                return $this->view_error("403_inframe", null, 'deleteのユーザー権限に応じたPOST ID チェック');
+                return $this->viewError("403_inframe", null, 'deleteのユーザー権限に応じたPOST ID チェック');
             }
 
             // 同じcontents_id のデータを削除するため、一旦、対象データを取得
@@ -960,7 +982,7 @@ WHERE status = 0
 
         // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
         if (empty($check_blogs_post->id) || $check_blogs_post->id != $id) {
-            return $this->view_error("403_inframe", null, 'approvalのユーザー権限に応じたPOST ID チェック');
+            return $this->viewError("403_inframe", null, 'approvalのユーザー権限に応じたPOST ID チェック');
         }
 
         // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)
@@ -988,17 +1010,19 @@ WHERE status = 0
 
     /**
      * データ選択表示関数
+     *
+     * @method_title 選択
+     * @method_desc このフレームに表示するブログを選択します。
+     * @method_detail
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
         // Frame データ
-        $blog_frame = Frame::select('frames.*', 'blogs.id as blogs_id', 'blogs.view_count')
+        $blog_frame = Frame::select('frames.*', 'blogs.id as blogs_id')
             ->leftJoin('blogs', 'blogs.bucket_id', '=', 'frames.bucket_id')
             ->where('frames.id', $frame_id)->first();
 
         // データ取得（1ページの表示件数指定）
-        // $blogs = Blogs::orderBy('created_at', 'desc')
-        //                ->paginate(10, ["*"], "frame_{$frame_id}_page");
         $blogs = Blogs::
             select(
                 'blogs.id',
@@ -1013,6 +1037,10 @@ WHERE status = 0
                         ->where('blogs_posts.status', StatusType::active)
                         ->whereNull('blogs_posts.deleted_at');
             })
+            ->leftJoin('frames', function ($leftJoin) use ($frame_id) {
+                $leftJoin->on('blogs.bucket_id', '=', 'frames.bucket_id')
+                    ->where('frames.id', $frame_id);
+            })
             ->groupBy(
                 'blogs.id',
                 'blogs.bucket_id',
@@ -1020,6 +1048,7 @@ WHERE status = 0
                 'blogs.blog_name',
                 'blogs_posts.blogs_id'
             )
+            ->orderBy('frames.bucket_id', 'desc')
             ->orderBy('blogs.created_at', 'desc')
             ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
@@ -1032,6 +1061,10 @@ WHERE status = 0
 
     /**
      * ブログ新規作成画面
+     *
+     * @method_title 作成
+     * @method_desc ブログを新しく作成します。
+     * @method_detail ブログ名などの設定値を入力してブログを作成できます。
      */
     public function createBuckets($request, $page_id, $frame_id, $blogs_id = null, $create_flag = false, $message = null)
     {
@@ -1078,11 +1111,9 @@ WHERE status = 0
     {
         // デフォルトでチェック
         $validator_values['blog_name'] = ['required'];
-        $validator_values['view_count'] = ['required', 'numeric'];
         $validator_values['rss_count'] = ['required', 'numeric'];
 
         $validator_attributes['blog_name'] = 'ブログ名';
-        $validator_attributes['view_count'] = '表示件数';
         $validator_attributes['rss_count'] = 'RSS件数';
 
         // 項目のエラーチェック
@@ -1131,7 +1162,6 @@ WHERE status = 0
 
         // ブログ設定
         $blogs->blog_name     = $request->blog_name;
-        $blogs->view_count    = (intval($request->view_count) < 0) ? 0 : intval($request->view_count);
         $blogs->rss           = $request->rss;
         $blogs->rss_count     = $request->rss_count;
         $blogs->use_like      = $request->use_like;
@@ -1221,6 +1251,10 @@ WHERE status = 0
 
     /**
      * カテゴリ表示関数
+     *
+     * @method_title カテゴリ
+     * @method_desc ブログで使用するカテゴリを設定します。
+     * @method_detail 共通カテゴリの選択、もしくはブログ独自のカテゴリを登録します。
      */
     public function listCategories($request, $page_id, $frame_id, $id = null)
     {
@@ -1358,6 +1392,10 @@ EOD;
 
     /**
      *  Blogフレーム設定表示画面
+     *
+     * @method_title 表示設定
+     * @method_desc フレーム毎の表示方法を設定します。
+     * @method_detail
      */
     public function settingBlogFrame($request, $page_id, $frame_id)
     {
@@ -1393,10 +1431,12 @@ EOD;
 
         // 項目のエラーチェック
         $validator_values['scope_value'] = ['nullable', 'digits:4'];
-        if ($request->scope == 'year' || $request->scope == 'fiscal') {
+        $validator_values[BlogFrameConfig::blog_view_count] = ['required', 'numeric', 'min:1', 'max:100'];
+        if ($request->scope == BlogFrameScope::year || $request->scope == BlogFrameScope::fiscal) {
             $validator_values['scope_value'][] = ['required'];
         }
         $validator_attributes['scope_value'] = '指定年';
+        $validator_attributes[BlogFrameConfig::blog_view_count] = BlogFrameConfig::getDescription('blog_view_count');
 
         $validator = Validator::make($request->all(), $validator_values);
         $validator->setAttributeNames($validator_attributes);
@@ -1438,7 +1478,7 @@ EOD;
         $configs = BlogFrameConfig::getMemberKeys();
         foreach ($configs as $key => $value) {
 
-            if (empty($request->$value)) {
+            if (!$request->$value == '0' && empty($request->$value)) {
                 return;
             }
 

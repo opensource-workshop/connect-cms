@@ -22,6 +22,8 @@ use App\Plugins\User\UserPluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページプラグイン
  * @package Controller
+ * @plugin_title メニュー
+ * @plugin_desc ページ設定を元にメニューを表示できるプラグインです。
  */
 class MenusPlugin extends UserPluginBase
 {
@@ -76,10 +78,12 @@ class MenusPlugin extends UserPluginBase
 
     /**
      * ページデータ取得関数
-     *
      * ページデータを取得し、深さを追加して画面に。
      *
      * @return view
+     * @method_title 表示
+     * @method_desc メニューを表示します。
+     * @method_detail
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -100,7 +104,7 @@ class MenusPlugin extends UserPluginBase
         //Log::debug(json_encode( $pages, JSON_UNESCAPED_UNICODE));
 
         // 上位階層のカレント表現用に自分と上位階層のページを取得
-        $ancestors = Page::ancestorsAndSelf($page_id);
+        $ancestors = Page::defaultOrder()->ancestorsAndSelf($page_id);
 
         // パンくずリスト用に複製
         $ancestors_breadcrumbs = clone $ancestors;
@@ -133,6 +137,10 @@ class MenusPlugin extends UserPluginBase
 
     /**
      * ページ選択画面
+     *
+     * @method_title ページ選択
+     * @method_desc 表示するページを選択します。
+     * @method_detail ページ管理の条件通りに表示する方法と個別に表示するページを選択する方法があります。
      */
     public function select($request, $page_id, $frame_id)
     {

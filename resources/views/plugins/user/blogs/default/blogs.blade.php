@@ -10,6 +10,11 @@
 
 @section("plugin_contents_$frame->id")
 
+{{-- 権限があれば表示条件表示 --}}
+@can('frames.edit',[[null, null, null, $frame]])
+    @include('plugins.user.blogs.default.include_scope')
+@endcan
+
 @if (isset($buckets) && isset($frame) && $frame->bucket_id)
     <div class="row">
         <p class="text-left col-4">
@@ -28,7 +33,7 @@
     </div>
 @else
     {{-- 新規登録 --}}
-    @can('posts.create',[[null, $frame->plugin_name, $buckets]])
+    @can('frames.edit',[[null, null, null, $frame]])
         <div class="card border-danger">
             <div class="card-body">
                 <p class="text-center cc_margin_bottom_0">フレームの設定画面から、使用するブログを選択するか、作成してください。</p>
@@ -165,6 +170,16 @@
                         'like_users_id' => $post->like_users_id,
                     ])
 
+                    {{-- Twitterボタン --}}
+                    @include('plugins.common.twitter', [
+                        'post_title' => $post->post_title,
+                    ])
+
+                    {{-- Facebookボタン --}}
+                    @include('plugins.common.facebook', [
+                        'post_title' => $post->post_title,
+                    ])
+
                     {{-- タグ --}}
                     @isset($post->tags)
                         @foreach($post->tags as $tag)
@@ -200,7 +215,7 @@
                         <a href="{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" class="btn btn-success btn-sm">
                             <i class="far fa-edit"></i> <span class="hidden-xs">編集</span>
                         </a>
-                        <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="button_copy{{$post->id}}">
                             <span class="sr-only">ドロップダウンボタン</span>
                         </button>
                         <div class="dropdown-menu dropdown-menu-right">

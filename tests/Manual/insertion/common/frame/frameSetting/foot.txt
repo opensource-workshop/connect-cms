@@ -1,0 +1,49 @@
+<div class="card mt-3" html_only>
+<div class="card-body" html_only>
+
+<table class="table table-sm table-bordered table_css">
+<tbody>
+    <tr>
+        <th class="doc_th" style="width: 20%; background-color: #f2f2f2;">項目</th>
+        <th class="doc_th" style="width: 80%; background-color: #f2f2f2;">説明</th>
+    </tr>
+    <tr>
+        <td style="width: 20%;">フレームタイトル</td>
+        <td style="width: 80%;">フレームのヘッダー内に表示されるフレームのタイトルです。</td>
+    </tr>
+    <tr>
+        <td style="width: 20%;">フレームデザイン</td>
+        <td style="width: 80%;">複数のフレームデザインを選択できます。<br />詳しくは「フレームデザイン」のマニュアルページを参照してください。</td>
+    </tr>
+    <tr>
+        <td style="width: 20%;">フレーム幅</td>
+        <td style="width: 80%;">フレームの幅を指定できます。この機能を使ってフレームを横並びにすることもできます。<br />詳しくは「フレーム幅」のマニュアルページを参照してください。</td>
+    </tr>
+    <tr>
+        <td style="width: 20%;">テンプレート</td>
+        <td style="width: 80%;">プラグインによっては、複数のテンプレートを選択できます。<br />データのレイアウトを定義したものがテンプレートです。</td>
+    </tr>
+    <tr>
+        <td style="background-color: #f2f2f2;" colspan="2">フレーム表示設定</td>
+    </tr>
+    <tr>
+        <td style="width: 20%;">フレームをブラウザ幅100％にする。</td>
+        <td style="width: 80%;">ヘッダーやフッターをブラウザ幅いっぱいまで広げたい場合に使用します。<br />詳しくは<a href="../frame100Percent/index.html">「ブラウザ幅100％にする」</a>のマニュアルページを参照してください。</td>
+    </tr>
+    <tr>
+        <td style="width: 20%;">初期状態を非表示とする。</td>
+        <td style="width: 80%;"><a href="../../../user/tabs/index.html">タブプラグイン</a>と組み合わせて使用します。</td>
+    </tr>
+    <tr>
+        <td style="width: 20%;">公開設定</td>
+        <td style="width: 80%;">フレームの公開設定を「公開」「非公開」「限定公開」から選べます。限定公開の場合は、「公開日時From」と「公開日時To」を指定することができます。</td>
+    </tr>
+    <tr>
+        <td style="width: 20%;">対象ページ</td>
+        <td style="width: 80%;">メインエリア以外のヘッダー、フッター、左、右の共通エリアに配置した場合にのみ使用できます。</td>
+    </tr>
+</tbody>
+</table>
+
+</div html_only>
+</div html_only>
