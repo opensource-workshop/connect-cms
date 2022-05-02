@@ -95,7 +95,7 @@
                     <th>{{$frame->plugin_name_full}}名</th>
                     <th>仮<a href="#frame-{{$frame_id}}" data-toggle="tooltip" data-placement="top" title="仮登録数">...</a></th>
                     <th>本<a href="#frame-{{$frame_id}}" data-toggle="tooltip" data-placement="top" title="本登録数">...</a></th>
-                    <th>データ保存</th>
+                    <th>保存<a href="#frame-{{$frame_id}}" data-toggle="tooltip" data-placement="top" title="データ保存">...</a></th>
                     <th>詳細</th>
                     <th>作成日</th>
                 </tr>
