@@ -128,7 +128,7 @@ class PTASeeder extends Seeder
         // 校外パトロールにカレンダーフレームの追加
         $patrol_page = Page::where('permanent_link', '/patrol')->first();
         $calendar = Calendar::where('name', '行事予定')->first();
-        $frame_row = $this->genFrameRows($patrol_page->id, 2, "行事予定", "primary", "calendars", "default", $calendar->bucket_id, 1);
+        $frame_row = $this->genFrameRows($patrol_page->id, 2, "行事予定", "primary", "calendars", "default", $calendar->bucket_id, 2);
         $frame_id = $this->insertGetFrameId($frame_row);
     }
 
@@ -200,6 +200,11 @@ class PTASeeder extends Seeder
             "/",
             0, NULL, "none", "default", 1,
             '<div class="d-sm-flex flex-row-reverse"><form action="' . url('/') . '/search" method="get" role="search" aria-label="サイト内検索"><div class="input-group mt-2"><input type="text" name="search_keyword" class="form-control" value="" placeholder="キーワードでサイト内検索" title="サイト内検索" /><div class="input-group-append"><button type="submit" class="btn btn-primary" title="検索"> <i class="fas fa-search"></i> </button></div></div></form></div>'
+        ];
+        $contens_arr[] = [
+            "/patrol",
+            2, "校外パトロールについて", "primary", "default", 1,
+            '<p>校外パトロールの説明を記載します。</p><p>以下に予定を記載します。</p>'
         ];
 
         foreach($contens_arr as $val){
