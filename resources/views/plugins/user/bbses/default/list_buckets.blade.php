@@ -34,12 +34,11 @@
             <tbody>
             @foreach($plugin_buckets as $plugin_bucket)
                 <tr @if ($plugin_bucket->bucket_id == $frame->bucket_id) class="cc-active-tr"@endif>
-                    <td>
+                    <td class="d-table-cell">
                         <input type="radio" value="{{$plugin_bucket->bucket_id}}" name="select_bucket"@if ($plugin_bucket->bucket_id == $frame->bucket_id) checked @endif>
-                        <span class="{{$frame->getSettingCaptionClass()}}">{{$plugin_bucket->name}}</span>
                     </td>
-                    <td>{{$plugin_bucket->name}}</td>
-                    <td>{{$plugin_bucket->created_at}}</td>
+                    <td><span class="{{$frame->getSettingCaptionClass()}}">掲示板名：</span>{{$plugin_bucket->name}}</td>
+                    <td><span class="{{$frame->getSettingCaptionClass()}}">作成日：</span>{{$plugin_bucket->created_at->format('Y/m/d H:i')}}</td>
                 </tr>
             @endforeach
             </tbody>
