@@ -16,25 +16,25 @@
 <form action="{{url('/')}}/plugin/whatsnews/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
     {{ csrf_field() }}
 
-    <div class="form-group table-responsive">
+    <div class="form-group {{$frame->getSettingTableClass()}}">
         <table class="table table-hover mb-0">
         <thead>
             <tr>
                 <th></th>
-                <th nowrap>新着情報名</th>
-{{--                <th nowrap>詳細</th> --}}
-                <th nowrap>作成日</th>
+                <th>新着情報名</th>
+{{--                <th>詳細</th> --}}
+                <th>作成日</th>
             </tr>
         </thead>
         <tbody>
         @foreach($whatsnews as $whatsnew)
             <tr @if ($whatsnew_frame->whatsnews_id == $whatsnew->id) class="active"@endif>
-                <td nowrap><input type="radio" value="{{$whatsnew->bucket_id}}" name="select_bucket"@if ($whatsnew_frame->bucket_id == $whatsnew->bucket_id) checked @endif></td>
-                <td nowrap>{{$whatsnew->whatsnew_name}}</td>
+                <td class="d-table-cell"><input type="radio" value="{{$whatsnew->bucket_id}}" name="select_bucket"@if ($whatsnew_frame->bucket_id == $whatsnew->bucket_id) checked @endif></td>
+                <td><span class="{{$frame->getSettingCaptionClass()}}">新着情報名：</span>{{$whatsnew->whatsnew_name}}</td>
 {{--
-                <td nowrap><button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/whatsnews/editBuckets/{{$page->id}}/{{$frame_id}}/{{$whatsnew->id}}'"><i class="far fa-edit"></i><span class="d-none d-xl-inline"> 設定変更</span></button></td>
+                <td><button class="btn btn-primary btn-sm" type="button" onclick="location.href='{{url('/')}}/plugin/whatsnews/editBuckets/{{$page->id}}/{{$frame_id}}/{{$whatsnew->id}}'"><i class="far fa-edit"></i><span class="d-none d-xl-inline"> 設定変更</span></button></td>
 --}}
-                <td nowrap>{{$whatsnew->created_at}}</td>
+                <td><span class="{{$frame->getSettingCaptionClass()}}">作成日：</span>{{$whatsnew->created_at->format('Y/m/d H:i')}}</td>
             </tr>
         @endforeach
         </tbody>
