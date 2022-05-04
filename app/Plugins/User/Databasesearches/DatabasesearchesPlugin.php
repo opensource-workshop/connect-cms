@@ -107,6 +107,7 @@ class DatabasesearchesPlugin extends UserPluginBase
         } else {
             $databasesearches = new Databasesearches();
         }
+        $databasesearches = $databasesearches ?? new Databasesearches();
 
         // データベース検索設定がまだの場合の対応
         if (empty($databasesearches->condition)) {
@@ -310,24 +311,29 @@ class DatabasesearchesPlugin extends UserPluginBase
 
         // 登録データ詳細の取得
         $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'databases_columns.column_name', 'uploads.client_original_name', 'databases_columns.column_type')
-                                        ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
-                                        ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
-                                        ->whereIn('databases_inputs_id', $inputs_ids->pluck('databases_inputs_id'))
-                                        // 画面は input_cols をモトに表示している。ここで hide_columns_ids でNotInしてるため、権限によって非表示columは表示されない
-                                        ->whereNotIn('databases_columns_id', $hide_columns_ids)
-                                        ->orderBy('databases_inputs_id', 'asc')
-                                        ->orderBy('databases_columns_id', 'asc')
-                                        ->get();
+            ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+            ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
+            ->whereIn('databases_inputs_id', $inputs_ids->pluck('databases_inputs_id'))
+            // 画面は input_cols をモトに表示している。ここで hide_columns_ids でNotInしてるため、権限によって非表示columは表示されない
+            ->whereNotIn('databases_columns_id', $hide_columns_ids)
+            ->orderBy('databases_inputs_id', 'asc')
+            ->orderBy('databases_columns_id', 'asc')
+            ->get();
         // Log::debug(var_export($input_cols->toArray(), true));
         // var_dump($hide_columns_ids);
 
-        // 画面へ
-        return $this->view('databasesearches', [
-            'page_id'          => $page_id,
-            'databasesearches' => $databasesearches,
-            'inputs_ids'       => $inputs_ids,
-            'input_cols'       => $input_cols,
-        ]);
+        if ($databasesearches->id) {
+            // 画面へ
+            return $this->view('databasesearches', [
+                'page_id'          => $page_id,
+                'databasesearches' => $databasesearches,
+                'inputs_ids'       => $inputs_ids,
+                'input_cols'       => $input_cols,
+            ]);
+        } else {
+            // バケツ空テンプレートを呼び出す。
+            return $this->commonView('empty_bucket');
+        }
     }
 
     /**
