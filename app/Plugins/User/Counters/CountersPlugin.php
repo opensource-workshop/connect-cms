@@ -257,7 +257,7 @@ class CountersPlugin extends UserPluginBase
 
         if ($plugin_buckets->isEmpty()) {
             // バケツ空テンプレートを呼び出す。
-            return $this->view('empty_bucket_setting');
+            return $this->commonView('empty_bucket_setting');
         }
 
         // 表示テンプレートを呼び出す。
@@ -293,7 +293,7 @@ class CountersPlugin extends UserPluginBase
 
         if (empty($counter->id)) {
             // バケツ空テンプレートを呼び出す。
-            return $this->view('empty_bucket_setting');
+            return $this->commonView('empty_bucket_setting');
         }
 
         // 表示テンプレートを呼び出す。
@@ -347,7 +347,7 @@ class CountersPlugin extends UserPluginBase
 
         if (empty($counter->id) && $this->action != 'createBuckets') {
             // バケツ空テンプレートを呼び出す。
-            return $this->view('empty_bucket_setting');
+            return $this->commonView('empty_bucket_setting');
         }
 
         // 表示テンプレートを呼び出す。
@@ -575,7 +575,7 @@ class CountersPlugin extends UserPluginBase
 
         if (empty($counter->id)) {
             // バケツ空テンプレートを呼び出す。
-            return $this->view('empty_bucket_setting');
+            return $this->commonView('empty_bucket_setting');
         }
 
 
