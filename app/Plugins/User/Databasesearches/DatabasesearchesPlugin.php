@@ -351,6 +351,7 @@ class DatabasesearchesPlugin extends UserPluginBase
         } else {
             $databasesearches = new Databasesearches();
         }
+        $databasesearches = $databasesearches ?? new Databasesearches();
 
         // 選択可能なFrame データ
         $target_frames = Frame::select('frames.*', 'pages._lft', 'pages.page_name', 'buckets.bucket_name')
@@ -362,13 +363,11 @@ class DatabasesearchesPlugin extends UserPluginBase
                        ->get();
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'databasesearches_edit_buckets', [
+        return $this->view('databasesearches_edit_buckets', [
             'frames'                     => $frames,
             'databasesearches'           => $databasesearches,
             'target_frames'              => $target_frames,
-            ]
-        )->withInput($request->all);
+        ])->withInput($request->all);
     }
 
     /**

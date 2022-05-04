@@ -530,6 +530,11 @@ class UserPluginBase extends PluginBase
             ->orderBy('created_at', 'desc')
             ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
+        if ($plugins->isEmpty()) {
+            // バケツ空テンプレートを呼び出す。
+            return $this->commonView('empty_bucket_setting');
+        }
+
         // 表示テンプレートを呼び出す。
         return $this->commonView('edit_datalist', [
             'plugin_frame' => $plugin_frame,
