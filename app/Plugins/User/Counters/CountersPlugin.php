@@ -222,7 +222,7 @@ class CountersPlugin extends UserPluginBase
             ]);
         } else {
             // バケツ空テンプレートを呼び出す。
-            return $this->view('empty_bucket');
+            return $this->commonView('empty_bucket');
         }
     }
 
