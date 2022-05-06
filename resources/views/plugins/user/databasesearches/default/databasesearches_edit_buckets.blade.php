@@ -146,13 +146,12 @@
                 </div>
 
                 {{-- 既存のデータベース検索の場合は削除処理のボタンも表示 --}}
-                @if ($databasesearches)
-                @else
-                <div class="col-3 text-right">
-                    <a data-toggle="collapse" href="#collapse{{$frame->id}}">
-                        <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 削除</span></span>
-                    </a>
-                </div>
+                @if ($databasesearches->id)
+                    <div class="col-3 text-right">
+                        <a data-toggle="collapse" href="#collapse{{$frame->id}}">
+                            <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 削除</span></span>
+                        </a>
+                    </div>
                 @endif
             </div>
         </div>

@@ -441,6 +441,29 @@ class DatabasesearchesPlugin extends UserPluginBase
     }
 
     /**
+     * 削除処理
+     */
+    public function destroyBuckets($request, $page_id, $frame_id, $id)
+    {
+        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
+
+        // プラグインバケツの取得
+        $databasesearches = Databasesearches::find($id);
+        if (empty($databasesearches)) {
+            return;
+        }
+
+        // FrameのバケツIDの更新
+        Frame::where('bucket_id', $databasesearches->bucket_id)->update(['bucket_id' => null]);
+
+        // バケツ削除
+        Buckets::destroy($databasesearches->bucket_id);
+
+        // プラグインデータ削除
+        $databasesearches->delete();
+    }
+
+    /**
      * データ紐づけ変更関数
      *
      * changeBuckets と同等. resources\views\plugins\common\edit_datalist.blade.php からPOSTされる。
