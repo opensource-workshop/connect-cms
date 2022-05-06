@@ -37,7 +37,7 @@
                                 <i class="far fa-edit"></i> 設定変更
                             </a>
                         </td>
-                        <td><span class="{{$frame->getSettingCaptionClass()}}">作成日：</span>{{$plugin->created_at}}</td>
+                        <td><span class="{{$frame->getSettingCaptionClass()}}">作成日：</span>{{(new Carbon($plugin->created_at))->format('Y/m/d H:i')}}</td>
                     </tr>
                 @endforeach
             </tbody>
