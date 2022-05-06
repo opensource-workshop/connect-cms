@@ -5,6 +5,7 @@ namespace App\Plugins\User\Databasesearches;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
+use Carbon\Carbon;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\User\Databases\DatabasesInputCols;
@@ -255,7 +256,12 @@ class DatabasesearchesPlugin extends UserPluginBase
             ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
             ->join('databases_inputs', function ($join) {
                 $join->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
-                    ->where('databases_inputs.status', '=', StatusType::active);
+                    ->where('databases_inputs.status', '=', StatusType::active)
+                    ->where('databases_inputs.posted_at', '<=', Carbon::now())
+                    ->where(function ($query) {
+                        $query->whereNull('databases_inputs.expires_at')
+                            ->orWhere('databases_inputs.expires_at', '>', Carbon::now());
+                    });
             })
             ->whereIn('databases_inputs_id', $inputs_ids_marge)
             ->groupBy('databases_inputs_id')
