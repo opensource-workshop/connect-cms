@@ -1495,9 +1495,9 @@ class UserPluginBase extends PluginBase
 
             // DBカラム expires_at(終了日時) 存在するか
             if (Schema::hasColumn($table_name, 'expires_at')) {
-                $query->where(function ($query) {
-                    $query->whereNull('expires_at')
-                        ->orWhere('expires_at', '>', Carbon::now());
+                $query->where(function ($query) use ($table_name) {
+                    $query->whereNull($table_name . '.expires_at')
+                        ->orWhere($table_name . '.expires_at', '>', Carbon::now());
                 });
             }
         }
