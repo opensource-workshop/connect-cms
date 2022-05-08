@@ -37,4 +37,17 @@ class ReservationsInput extends Model
 
         return $display;
     }
+
+    /**
+     * 表示する予約終了時間
+     * end_datetime は not nullのため、空にならない想定
+     */
+    public function displayEndtime()
+    {
+        $endtime = $this->end_datetime->format('H:i');
+        if ($endtime == '00:00') {
+            $endtime = '24:00';
+        }
+        return $endtime;
+    }
 }

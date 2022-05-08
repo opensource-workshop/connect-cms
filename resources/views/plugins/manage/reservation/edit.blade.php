@@ -52,7 +52,20 @@ use App\Models\User\Reservations\ReservationsFacility;
         $('#start_time').datetimepicker(time_setting);
         // 利用終了時間ボタン押下
         $('#end_time').datetimepicker(time_setting);
+
+        $('#end_time').on('change.datetimepicker', function(e) {
+            convert_endtime_0h_to_24h();
+        });
     });
+
+    /**
+     * 終了時間を0時から24時に変換
+     */
+     function convert_endtime_0h_to_24h() {
+        if (form_reservation.end_time.value == '00:00') {
+            form_reservation.end_time.value = '24:00';
+        }
+    }
 </script>
 
 <div class="card">
@@ -154,6 +167,7 @@ use App\Models\User\Reservations\ReservationsFacility;
                                 </div>
                             </div>
                             @include('plugins.common.errors_inline', ['name' => 'end_time'])
+                            <small class="text-muted">※ 00:00 は 24:00 に自動変換します。</small>
                         </div>
                     </div>
                 </div>
@@ -320,5 +334,13 @@ use App\Models\User\Reservations\ReservationsFacility;
 
     </div>
 </div>
+
+{{-- 初期状態で開くもの --}}
+<script>
+    // ページの読み込みが完了したとき
+    window.addEventListener('load', function(){
+        convert_endtime_0h_to_24h();
+    });
+</script>
 
 @endsection
