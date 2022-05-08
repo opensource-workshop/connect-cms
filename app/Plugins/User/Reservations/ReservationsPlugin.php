@@ -1014,8 +1014,9 @@ class ReservationsPlugin extends UserPluginBase
 
         // 新規登録時のみの登録項目
         if (!$booking_id) {
-            $reservations_inputs->facility_id = $request->facility_id;
-            $reservations_inputs->created_id  = Auth::user()->id;            // 登録ユーザ
+            $reservations_inputs->facility_id        = $request->facility_id;
+            $reservations_inputs->first_committed_at = now();               // 初回確定日時
+            $reservations_inputs->created_id         = Auth::user()->id;    // 登録ユーザ
         }
         $reservations_inputs->start_datetime = new ConnectCarbon($request->target_date . ' ' . $request->start_datetime . ':00');
         $reservations_inputs->end_datetime = new ConnectCarbon($request->target_date . ' ' . $request->end_datetime . ':00');
@@ -1102,9 +1103,10 @@ class ReservationsPlugin extends UserPluginBase
 
                 // コピー
                 $reservations_inputs_tmp = $reservations_inputs->replicate();
-                $reservations_inputs_tmp->start_datetime = new ConnectCarbon($occurrence->format('Y-m-d') . ' ' . $request->start_datetime . ':00');
-                $reservations_inputs_tmp->end_datetime = new ConnectCarbon($occurrence->format('Y-m-d') . ' ' . $request->end_datetime . ':00');
-                $reservations_inputs_tmp->created_id  = $reservations_inputs->created_id;    // 登録ユーザをコピー元からコピー
+                $reservations_inputs_tmp->start_datetime     = new ConnectCarbon($occurrence->format('Y-m-d') . ' ' . $request->start_datetime . ':00');
+                $reservations_inputs_tmp->end_datetime       = new ConnectCarbon($occurrence->format('Y-m-d') . ' ' . $request->end_datetime . ':00');
+                $reservations_inputs_tmp->first_committed_at = $reservations_inputs->first_committed_at;    // 初回確定日時
+                $reservations_inputs_tmp->created_id         = $reservations_inputs->created_id;            // 登録ユーザをコピー元からコピー
                 $reservations_inputs_tmp->save();
             }
         }
