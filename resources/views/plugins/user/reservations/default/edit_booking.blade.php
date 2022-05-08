@@ -68,7 +68,33 @@ use App\Models\User\Reservations\ReservationsFacility;
         $('#start_datetime').datetimepicker(time_setting);
         // 予約終了時間ボタン押下
         $('#end_datetime').datetimepicker(time_setting);
+
+        $('#end_datetime').on('change.datetimepicker', function(e) {
+            convert_endtime_0h_to_24h();
+        });
     });
+
+    /**
+     * 終了時間を0時から24時に変換
+     */
+    function convert_endtime_0h_to_24h() {
+        if (form_save_booking{{$frame_id}}.end_datetime.value == '00:00') {
+            form_save_booking{{$frame_id}}.end_datetime.value = '24:00';
+        }
+    }
+
+    /**
+     * 終日ボタン押下
+     */
+     function all_day() {
+        @if ($facility->is_time_control)
+            form_save_booking{{$frame_id}}.start_datetime.value = '{{ substr($facility->start_time, 0, -3) }}';
+            form_save_booking{{$frame_id}}.end_datetime.value = '{{ substr($facility->end_time, 0, -3) }}';
+        @else
+            form_save_booking{{$frame_id}}.start_datetime.value = '00:00';
+            form_save_booking{{$frame_id}}.end_datetime.value = '24:00';
+        @endif
+    }
 
     /**
      * 繰り返しselect.change
@@ -122,19 +148,6 @@ use App\Models\User\Reservations\ReservationsFacility;
                 $('#repeat_rule_monthly_id').collapse('hide');
                 $('#repeat_rule_yearly_id').collapse('hide');
         }
-    }
-
-    /**
-     * 終日ボタン押下
-     */
-     function all_day() {
-        @if ($facility->is_time_control)
-            form_save_booking{{$frame_id}}.start_datetime.value = '{{ substr($facility->start_time, 0, -3) }}';
-            form_save_booking{{$frame_id}}.end_datetime.value = '{{ substr($facility->end_time, 0, -3) }}';
-        @else
-            form_save_booking{{$frame_id}}.start_datetime.value = '00:00';
-            form_save_booking{{$frame_id}}.end_datetime.value = '23:55';
-        @endif
     }
 </script>
 
@@ -248,7 +261,8 @@ use App\Models\User\Reservations\ReservationsFacility;
                 <div class="col">
                     @include('plugins.common.errors_inline', ['name' => 'start_datetime'])
                     @include('plugins.common.errors_inline', ['name' => 'end_datetime'])
-                    @if ($facility->is_time_control) <small class="text-muted">【利用時間】 {{ substr($facility->start_time, 0, -3) }} ~ {{ substr($facility->end_time, 0, -3) }}</small> @endif
+                    @if ($facility->is_time_control) <small class="text-muted">【利用時間】 {{ substr($facility->start_time, 0, -3) }} ~ {{ substr($facility->end_time, 0, -3) }}<br /></small> @endif
+                    <small class="text-muted">※ 予約終了時間の 00:00 は 24:00 に自動変換します。</small>
                 </div>
             </div>
 
@@ -609,6 +623,11 @@ use App\Models\User\Reservations\ReservationsFacility;
 <script>
     // 繰り返しルールの表示・非表示
     change_repeat_rule('{{old('rrule_freq', $repeat->getRruleFreq())}}');
+
+    // ページの読み込みが完了したとき
+    window.addEventListener('load', function(){
+        convert_endtime_0h_to_24h();
+    });
 </script>
 
 @endsection

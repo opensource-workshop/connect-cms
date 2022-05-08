@@ -9542,11 +9542,12 @@ trait MigrationTrait
             $start_time->addHour($nc2_reservation_location->timezone_offset); // 例）9.0 = 9時間後
             $end_time = new Carbon($nc2_reservation_location->end_time);
             $end_time->addHour($nc2_reservation_location->timezone_offset);
+            $end_time_str = $end_time->format('H:i:s');
 
             // 開始～終了 の差が 24h なら「利用時間の制限なし」
             if ($start_time->diffInHours($end_time) == 24) {
-                // 24:00 は0:00表示になってしまうため、23:55に修正
-                $end_time = new Carbon($end_time->format('Ymd') . '235500');
+                // 24:00 は0:00表示になってしまうため、文字列をセット
+                $end_time_str = '24:00:00';
                 // 制限なし
                 $ini .= "is_time_control = 0\n";
             } else {
@@ -9557,7 +9558,7 @@ trait MigrationTrait
             // 利用時間-開始 例）20220203150000 = yyyyMMddhhiiss = 15(+9) = 24:00
             $ini .= "start_time = " . $start_time->format('H:i:s') . "\n";
             // 利用時間-終了 例）20220204150000 = yyyyMMddhhiiss = 15(+9) = 翌日24:00
-            $ini .= "end_time = " . $end_time->format('H:i:s') . "\n";
+            $ini .= "end_time = " . $end_time_str . "\n";
             // （画面に対象となる項目なし）duplication_flag、例) 0、※ DBから直接 1 にすると予約重複可能になるが、知られてない
             // $ini .= "duplication_flag = " . $nc2_reservation_location->duplication_flag . "\n";
             // 個人的な予約を受け付ける
@@ -9695,15 +9696,13 @@ trait MigrationTrait
                 //     // -1日
                 //     $end_time_full = $end_time_full->subDay();
                 // } elseif ($end_time_full->format('H:i:s') == '00:00:00') {
-                if ($end_time_full->format('H:i:s') == '00:00:00') {
-                    // 全日以外で終了日時が0:00の変換対応. -5分する。
-                    // ※ 例えばNC2の「時間指定」で10:00～24:00という予定に対応して、10:00～23:55に終了時間を変換する
+                // if ($end_time_full->format('H:i:s') == '00:00:00') {
+                //     // 全日以外で終了日時が0:00の変換対応. -5分する。
+                //     // ※ 例えばNC2の「時間指定」で10:00～24:00という予定に対応して、10:00～23:55に終了時間を変換する
 
-                    // -5分
-                    $end_time_full = $end_time_full->subMinute(5);
-                }
-                // $tsv_record['end_date'] = $reservation_reserve->end_date;
-                // $tsv_record['end_time'] = $reservation_reserve->end_time;
+                //     // -5分
+                //     $end_time_full = $end_time_full->subMinute(5);
+                // }
                 $tsv_record['end_date'] = $end_time_full->format('Y-m-d');
                 $tsv_record['end_time'] = $end_time_full->format('H:i:s');
                 $tsv_record['end_time_full'] = $end_time_full;
