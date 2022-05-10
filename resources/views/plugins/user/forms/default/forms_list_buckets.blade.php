@@ -92,7 +92,7 @@
             <thead>
                 <tr>
                     <th></th>
-                    <th>{{$frame->plugin_name_full}}名</th>
+                    <th nowrap>{{$frame->plugin_name_full}}名</th>
                     <th>仮<a href="#frame-{{$frame_id}}" data-toggle="tooltip" data-placement="top" title="仮登録数">...</a></th>
                     <th>本<a href="#frame-{{$frame_id}}" data-toggle="tooltip" data-placement="top" title="本登録数">...</a></th>
                     <th>保存<a href="#frame-{{$frame_id}}" data-toggle="tooltip" data-placement="top" title="データ保存">...</a></th>
