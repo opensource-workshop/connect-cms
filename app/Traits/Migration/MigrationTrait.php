@@ -5696,6 +5696,9 @@ trait MigrationTrait
 
         //Log::debug($content_html);
 
+        // ユーザ取得
+        $users = User::get();
+
         // Contents 登録
         // echo "Contents 登録\n";
         $content = new Contents([
@@ -5703,8 +5706,12 @@ trait MigrationTrait
             'content_text' => $content_html,
             'status' => 0
         ]);
-        $content->created_at = $this->getDatetimeFromIniAndCheckFormat($frame_ini, 'source_info', 'insert_time');
-        $content->updated_at = $this->getDatetimeFromIniAndCheckFormat($frame_ini, 'source_info', 'update_time');
+        $content->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($frame_ini, 'contents', 'insert_login_id', null));
+        $content->created_name = $this->getArrayValue($frame_ini, 'contents', 'created_name', null);
+        $content->created_at   = $this->getDatetimeFromIniAndCheckFormat($frame_ini, 'contents', 'created_at');
+        $content->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($frame_ini, 'contents', 'update_login_id', null));
+        $content->updated_name = $this->getArrayValue($frame_ini, 'contents', 'updated_name', null);
+        $content->updated_at   = $this->getDatetimeFromIniAndCheckFormat($frame_ini, 'contents', 'updated_at');
         // 登録更新日時を自動更新しない
         $content->timestamps = false;
         $content->save();
@@ -10623,6 +10630,20 @@ trait MigrationTrait
 
         $this->nc2Wysiwyg($nc2_block, $save_folder, $content_filename, $ini_filename, $content, 'announcement', $nc2_page);
 
+        // nc2の全ユーザ取得
+        $nc2_users = Nc2User::get();
+
+        // フレーム設定ファイルの追記
+        $contents_ini = "[contents]\n";
+        $contents_ini .= "contents_file   = \"" . $content_filename . "\"\n";
+        $contents_ini .= "created_at      = \"" . $this->getCCDatetime($announcement->insert_time) . "\"\n";
+        $contents_ini .= "created_name    = \"" . $announcement->insert_user_name . "\"\n";
+        $contents_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $announcement->insert_user_id) . "\"\n";
+        $contents_ini .= "updated_at      = \"" . $this->getCCDatetime($announcement->update_time) . "\"\n";
+        $contents_ini .= "updated_name    = \"" . $announcement->update_user_name . "\"\n";
+        $contents_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $announcement->update_user_id) . "\"\n";
+        $this->storageAppend($save_folder . "/" . $ini_filename, $contents_ini);
+
         //echo "nc2BlockExportContents";
     }
 
@@ -10851,14 +10872,6 @@ trait MigrationTrait
         if ($save_folder) {
             //Storage::put($save_folder . "/" . $content_filename, $content);
             $this->storagePut($save_folder . "/" . $content_filename, $content);
-        }
-
-        // フレーム設定ファイルの追記
-        if ($ini_filename) {
-            $contents_ini = "[contents]\n";
-            $contents_ini .= "contents_file = \"" . $content_filename . "\"\n";
-            //Storage::append($save_folder . "/" . $ini_filename, $contents_ini);
-            $this->storageAppend($save_folder . "/" . $ini_filename, $contents_ini);
         }
 
         return $content;
