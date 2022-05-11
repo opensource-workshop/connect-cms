@@ -29,9 +29,6 @@ class ProfileMypage extends MypagePluginBase
      */
     public function index($request, $id = null)
     {
-        // セッション初期化などのLaravel 処理。
-        $request->flash();
-
         // ログインしているユーザー情報を取得
         $user = Auth::user();
 
