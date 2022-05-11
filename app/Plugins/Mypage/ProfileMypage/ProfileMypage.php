@@ -57,7 +57,11 @@ class ProfileMypage extends MypagePluginBase
             'now_password' => [
                 'nullable',
                 function ($attribute, $value, $fail) {
-                    if (!\Hash::check($value, Auth::user()->password)) {
+                    $is_pass = Hash::check($value, Auth::user()->password);
+                    // nc2移行ユーザログイン対応
+                    $is_nc2_pass = Hash::check(md5($value), Auth::user()->password);
+                    // どちらもNGなら現在パスワード間違い
+                    if ($is_pass == false && $is_nc2_pass == false) {
                         $fail(':attributeが違います。');
                     }
                 },
@@ -100,8 +104,9 @@ class ProfileMypage extends MypagePluginBase
         // ユーザデータの更新
         User::where('id', $id)
             ->update($update_array);
+        $message = '更新しました。';
 
         // 更新後は初期画面へ
-        return redirect('mypage/profile');
+        return redirect('mypage/profile')->with('flash_message', $message);
     }
 }
