@@ -412,7 +412,8 @@
             <input type="text" id="numbering_prefix" name="numbering_prefix" value="{{old('numbering_prefix', $form->numbering_prefix)}}" class="form-control" v-model="v_numbering_prefix">
             <small class="text-muted">
                 ※ 採番イメージ：@{{ v_numbering_prefix + '000001' }}<br>
-                ※ 初回採番後のデータは<a href="{{ url('/manage/number') }}" target="_blank">管理画面</a>から確認できます。
+                ※ 初回採番後のデータは<a href="{{ url('/manage/number') }}" target="_blank">管理画面</a>から確認できます。<br>
+                ※ 採番機能の使用時は<a href="{{ url("/plugin/forms/listInputs/{$page->id}/{$frame_id}#frame-{$frame_id}") }}" target="_blank">登録一覧</a>からも採番値が確認できます。
             </small>
         </div>
     </div>

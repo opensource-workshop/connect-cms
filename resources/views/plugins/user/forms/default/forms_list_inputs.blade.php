@@ -63,6 +63,9 @@
             @foreach($columns as $column)
                 <th>{{$column->column_name}}</th>
             @endforeach
+            @if ($form->numbering_use_flag)
+                <th nowrap>採番</th>
+            @endif
             <th nowrap>登録日時</th>
         </tr>
     </thead>
@@ -92,6 +95,12 @@
                     @include('plugins.user.forms.default.forms_include_value')
                 </td>
             @endforeach
+
+            @if ($form->numbering_use_flag)
+                <td>
+                    {{$input->number_with_prefix}}
+                </td>
+            @endif
 
             <td nowrap>
                 {{$input->created_at}}
