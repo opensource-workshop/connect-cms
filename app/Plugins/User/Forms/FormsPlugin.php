@@ -2268,6 +2268,7 @@ class FormsPlugin extends UserPluginBase
                 select(
                     'forms_inputs.id as inputs_id',
                     'forms_inputs.status as inputs_status',
+                    'forms_inputs.number_with_prefix as number_with_prefix',
                     'forms_inputs.created_at as inputs_created_at',
                     'forms_input_cols.*'
                 )
@@ -2326,6 +2327,11 @@ ORDER BY forms_inputs_id, forms_columns_id
             $csv_array[0][$column->id] = $column->column_name;
             $copy_base[$column->id] = '';
         }
+        if ($form->numbering_use_flag) {
+            // 見出し行-行末１つ手前（採番項目）
+            $csv_array[0]['number_with_prefix'] = '採番';
+            $copy_base['number_with_prefix'] = '';
+        }
         // 見出し行-行末（固定項目）
         $csv_array[0]['created_at'] = '登録日時';
         $copy_base['created_at'] = '';
@@ -2338,6 +2344,10 @@ ORDER BY forms_inputs_id, forms_columns_id
 
                 // 初回で固定項目をセット
                 $csv_array[$input_col->inputs_id]['status'] = $input_col->inputs_status;
+                if ($form->numbering_use_flag) {
+                    // 採番項目
+                    $csv_array[$input_col->inputs_id]['number_with_prefix'] = $input_col->number_with_prefix;
+                }
                 $csv_array[$input_col->inputs_id]['created_at'] = $input_col->inputs_created_at;
             }
             $csv_array[$input_col->inputs_id][$input_col->forms_columns_id] = $input_col->value;
