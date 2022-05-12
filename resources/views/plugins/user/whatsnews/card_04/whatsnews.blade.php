@@ -117,7 +117,13 @@
         {{-- 「もっと見る」ボタン押下時、非同期で新着一覧をレンダリング --}}
         <article class="clearfix">
             <div class="row">
+                @if (isset($is_template_col_3))
+                {{-- カードタイプ３の場合 --}}
+                <div v-for="whatsnews in whatsnewses" class="col-12 col-sm-6 col-lg-4 whatsnew_card mb-2">
+                @else
+                {{-- カードタイプ４の場合 --}}
                 <div v-for="whatsnews in whatsnewses" class="col-12 col-sm-6 col-lg-3 whatsnew_card mb-2">
+                @endif
                     <div  class="p-2" style="height: 100%;"
                         v-bind:class="{ 'border': border == show }"
                     >
