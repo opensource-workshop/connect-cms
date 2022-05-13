@@ -1148,6 +1148,12 @@ class FormsPlugin extends UserPluginBase
         // forms_inputs 更新
         // 本登録
         $forms_inputs->status = FormStatusType::active;
+        $number = null;
+        if ($form->numbering_use_flag) {
+            // 採番は本登録の時のみする ※[採番プレフィックス文字列] + [ゼロ埋め採番6桁]
+            $number = $form->numbering_prefix . sprintf('%06d', $this->getNo('forms', $form->bucket_id, $form->numbering_prefix));
+            $forms_inputs->number_with_prefix = $number;
+        }
         $forms_inputs->save();
 
         // フォームのカラムデータ
@@ -1211,10 +1217,6 @@ class FormsPlugin extends UserPluginBase
         // dd($user_mailaddresses);
 
         // 本登録
-        // 採番は本登録の時のみする
-
-        // 採番 ※[採番プレフィックス文字列] + [ゼロ埋め採番6桁]
-        $number = $form->numbering_use_flag ? $form->numbering_prefix . sprintf('%06d', $this->getNo('forms', $form->bucket_id, $form->numbering_prefix)) : null;
 
         // 登録後メッセージ内の採番文字列を置換
         $after_message = str_replace('[[number]]', $number, $form->after_message);
