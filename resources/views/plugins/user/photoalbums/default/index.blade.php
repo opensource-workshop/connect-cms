@@ -257,7 +257,8 @@
         <div class="row">
             <label class="{{$frame->getSettingLabelClass()}} p-0"></label>
             <div class="{{$frame->getSettingInputClass()}}">
-                <small class="my-0 form-text text-muted">mp4, zip を許可します。zip の場合は展開されて登録されます。(zip は予定)</small>
+                {{-- <small class="my-0 form-text text-muted">mp4, zip を許可します。zip の場合は展開されて登録されます。(zip は予定)</small> --}}
+                <small class="my-0 form-text text-muted">mp4 を許可します。</small>
             </div>
         </div>
         @if ($errors && $errors->has("upload_video.$frame_id"))
