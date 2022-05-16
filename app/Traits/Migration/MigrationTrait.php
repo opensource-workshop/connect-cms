@@ -2717,6 +2717,9 @@ trait MigrationTrait
         // フォーム定義の取り込み
         $form_ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('forms/form_*.ini'));
 
+        // ユーザ取得
+        $users = User::get();
+
         // フォーム定義のループ
         foreach ($form_ini_paths as $form_ini_path) {
             // ini_file の解析
@@ -2804,7 +2807,7 @@ trait MigrationTrait
             ];
             $mail_subject = str_replace(array_keys($replace_tags), array_values($replace_tags), $form_ini['form_base']['mail_subject']);
             $mail_format = str_replace(array_keys($replace_tags), array_values($replace_tags), $mail_format);
-            $form = Forms::create([
+            $form = new Forms([
                 'bucket_id'           => $bucket->id,
                 'forms_name'          => $form_name,
                 'mail_send_flag'      => $form_ini['form_base']['mail_send_flag'],
@@ -2819,6 +2822,15 @@ trait MigrationTrait
                 'regist_control_flag' => $regist_control_flag,
                 'regist_to'           => $regist_to,
             ]);
+            $form->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($form_ini, 'source_info', 'insert_login_id', null));
+            $form->created_name = $this->getArrayValue($form_ini, 'source_info', 'created_name', null);
+            $form->created_at   = $this->getDatetimeFromIniAndCheckFormat($form_ini, 'source_info', 'created_at');
+            $form->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($form_ini, 'source_info', 'update_login_id', null));
+            $form->updated_name = $this->getArrayValue($form_ini, 'source_info', 'updated_name', null);
+            $form->updated_at   = $this->getDatetimeFromIniAndCheckFormat($form_ini, 'source_info', 'updated_at');
+            // 登録更新日時を自動更新しない
+            $form->timestamps = false;
+            $form->save();
 
             // マッピングテーブルの追加
             $mapping = MigrationMapping::create([
@@ -2890,18 +2902,40 @@ trait MigrationTrait
 
             // 行のループ
             foreach ($data_txt_ini['form_inputs']['input'] as $data_id => $null) {
-                $forms_inputs = FormsInputs::create([
+                $forms_inputs = new FormsInputs([
                     'forms_id' => $form->id,
                 ]);
+                $forms_inputs->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($data_txt_ini, $data_id, 'insert_login_id', null));
+                $forms_inputs->created_name = $this->getArrayValue($data_txt_ini, $data_id, 'created_name', null);
+                $forms_inputs->created_at   = $this->getDatetimeFromIniAndCheckFormat($data_txt_ini, $data_id, 'created_at');
+                $forms_inputs->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($data_txt_ini, $data_id, 'update_login_id', null));
+                $forms_inputs->updated_name = $this->getArrayValue($data_txt_ini, $data_id, 'updated_name', null);
+                $forms_inputs->updated_at   = $this->getDatetimeFromIniAndCheckFormat($data_txt_ini, $data_id, 'updated_at');
+                // 登録更新日時を自動更新しない
+                $forms_inputs->timestamps = false;
+                $forms_inputs->save();
 
                 // データベースのバルクINSERT対応
                 $bulks = array();
 
                 // 項目データのループ
                 foreach ($data_txt_ini[$data_id] as $item_id => $data) {
-                    $bulks[] = ['forms_inputs_id'  => $forms_inputs->id,
+                    if (!isset($column_ids[$item_id])) {
+                        // column_ids 以外のカラムは登録しない
+                        continue;
+                    }
+
+                    $bulks[] = [
+                        'forms_inputs_id'  => $forms_inputs->id,
                         'forms_columns_id' => $column_ids[$item_id],
-                        'value'            => $data];
+                        'value'            => $data,
+                        'created_id'       => $this->getUserIdFromLoginId($users, $this->getArrayValue($data_txt_ini, $data_id, 'insert_login_id', null)),
+                        'created_name'     => $this->getArrayValue($data_txt_ini, $data_id, 'created_name', null),
+                        'created_at'       => $this->getDatetimeFromIniAndCheckFormat($data_txt_ini, $data_id, 'created_at'),
+                        'updated_id'       => $this->getUserIdFromLoginId($users, $this->getArrayValue($data_txt_ini, $data_id, 'update_login_id', null)),
+                        'updated_name'     => $this->getArrayValue($data_txt_ini, $data_id, 'updated_name', null),
+                        'updated_at'       => $this->getDatetimeFromIniAndCheckFormat($data_txt_ini, $data_id, 'updated_at'),
+                    ];
                     /*
                     $forms_inputs_cols = FormsInputCols::create([
                         'forms_inputs_id'  => $forms_inputs->id,
@@ -8550,6 +8584,9 @@ trait MigrationTrait
             return;
         }
 
+        // nc2の全ユーザ取得
+        $nc2_users = Nc2User::get();
+
         // NC2登録フォーム（Registration）のループ
         foreach ($nc2_registrations as $nc2_registration) {
             $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
@@ -8616,11 +8653,18 @@ trait MigrationTrait
             $registration_ini .= "active_flag = "     . $nc2_registration->active_flag . "\n";
             $registration_ini .= "room_id = "         . $nc2_registration->room_id . "\n";
             $registration_ini .= "module_name = \"registration\"\n";
+            $registration_ini .= "created_at      = \"" . $this->getCCDatetime($nc2_registration->insert_time) . "\"\n";
+            $registration_ini .= "created_name    = \"" . $nc2_registration->insert_user_name . "\"\n";
+            $registration_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_registration->insert_user_id) . "\"\n";
+            $registration_ini .= "updated_at      = \"" . $this->getCCDatetime($nc2_registration->update_time) . "\"\n";
+            $registration_ini .= "updated_name    = \"" . $nc2_registration->update_user_name . "\"\n";
+            $registration_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_registration->update_user_id) . "\"\n";
 
             // 登録フォームのカラム情報
             $registration_items = Nc2RegistrationItem::where('registration_id', $registration_id)
-                                                               ->orderBy('item_sequence', 'asc')
-                                                               ->get();
+                ->orderBy('item_sequence', 'asc')
+                ->get();
+
             if (empty($registration_items)) {
                 continue;
             }
@@ -8694,21 +8738,40 @@ trait MigrationTrait
                 // データ部
                 $registration_data_header = "[form_inputs]\n";
                 $registration_data = "";
-                $registration_item_datas = Nc2RegistrationItemData::select('registration_item_data.*')
-                                                                 ->join('registration_item', function ($join) {
-                                                                     $join->on('registration_item.registration_id', '=', 'registration_item_data.registration_id')
-                                                                          ->on('registration_item.item_id', '=', 'registration_item_data.item_id');
-                                                                 })
-                                                                 ->where('registration_item_data.registration_id', $registration_id)
-                                                                 ->orderBy('registration_item_data.data_id', 'asc')
-                                                                 ->orderBy('registration_item.item_sequence', 'asc')
-                                                                 ->get();
+                $registration_item_datas = Nc2RegistrationItemData::
+                    select(
+                        'registration_item_data.*',
+                        'registration_data.insert_time AS data_insert_time',
+                        'registration_data.insert_user_name AS data_insert_user_name',
+                        'registration_data.insert_user_id AS data_insert_user_id',
+                        'registration_data.update_time AS data_update_time',
+                        'registration_data.update_user_name AS data_update_user_name',
+                        'registration_data.update_user_id AS data_update_user_id'
+                    )
+                    ->join('registration_item', function ($join) {
+                        $join->on('registration_item.registration_id', '=', 'registration_item_data.registration_id')
+                            ->on('registration_item.item_id', '=', 'registration_item_data.item_id');
+                    })
+                    ->join('registration_data', function ($join) {
+                        $join->on('registration_data.registration_id', '=', 'registration_item_data.registration_id')
+                            ->on('registration_data.data_id', '=', 'registration_item_data.data_id');
+                    })
+                    ->where('registration_item_data.registration_id', $registration_id)
+                    ->orderBy('registration_item_data.data_id', 'asc')
+                    ->orderBy('registration_item.item_sequence', 'asc')
+                    ->get();
 
                 $data_id = null;
                 foreach ($registration_item_datas as $registration_item_data) {
                     if ($registration_item_data->data_id != $data_id) {
                         $registration_data_header .= "input[" . $registration_item_data->data_id . "] = \"\"\n";
                         $registration_data .= "\n[" . $registration_item_data->data_id . "]\n";
+                        $registration_data .= "created_at      = \"" . $this->getCCDatetime($registration_item_data->data_insert_time) . "\"\n";
+                        $registration_data .= "created_name    = \"" . $registration_item_data->data_insert_user_name . "\"\n";
+                        $registration_data .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $registration_item_data->data_insert_user_id) . "\"\n";
+                        $registration_data .= "updated_at      = \"" . $this->getCCDatetime($registration_item_data->data_update_time) . "\"\n";
+                        $registration_data .= "updated_name    = \"" . $registration_item_data->data_update_user_name . "\"\n";
+                        $registration_data .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $registration_item_data->data_update_user_id) . "\"\n";
                         $data_id = $registration_item_data->data_id;
                     }
                     $registration_data .= $registration_item_data->item_id . " = \"" . str_replace("\n", '\n', $registration_item_data->item_data_value) . "\"\n";
