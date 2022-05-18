@@ -32,6 +32,7 @@ use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
 use App\Models\Core\UsersColumns;
+use App\Models\Core\UsersColumnsSelects;
 use App\Models\Core\UsersInputCols;
 use App\Models\Core\UsersRoles;
 use App\Models\User\Bbses\Bbs;
@@ -372,6 +373,7 @@ trait MigrationTrait
             UsersRoles::where('users_id', '<>', $first_user->id)->delete();
             User::where('id', '<>', $first_user->id)->delete();
             UsersColumns::truncate();
+            UsersColumnsSelects::truncate();
             UsersInputCols::truncate();
             MigrationMapping::where('target_source_table', 'users')->delete();
         }
@@ -1468,8 +1470,9 @@ trait MigrationTrait
                 $mapping->delete();
             }
 
+            $column_type = $this->getArrayValue($ini, 'users_columns_base', 'column_type');
             $users_column = UsersColumns::create([
-                'column_type'      => $this->getArrayValue($ini, 'users_columns_base', 'column_type'),
+                'column_type'      => $column_type,
                 'column_name'      => $this->getArrayValue($ini, 'users_columns_base', 'column_name'),
                 'required'         => intval($this->getArrayValue($ini, 'users_columns_base', 'required', 0)),
                 'caption'          => $this->getArrayValue($ini, 'users_columns_base', 'caption'),
@@ -1486,6 +1489,35 @@ trait MigrationTrait
                 'source_key'           => $nc2_item_id,
                 'destination_key'      => $users_column->id,
             ]);
+
+            // 選択肢型の追加
+            if (in_array($column_type, ['radio','select','checkbox'])){
+                // マッピングテーブルの取得
+                $mapping = MigrationMapping::where('target_source_table', 'users_columns_selects')->where('source_key', $nc2_item_id)->first();
+                // マッピングテーブルを確認して、あれば削除
+                if (!empty($mapping)) {
+                    // ユーザセレクトカラム削除
+                    UsersColumnsSelects::where('id', $mapping->destination_key)->delete();
+                    // マッピングテーブル削除
+                    $mapping->delete();
+                }
+                $select_values = explode('|', $this->getArrayValue($ini, 'users_columns_selects_base', 'value'));
+                foreach($select_values as $i => $value) {
+                    $display_sequence = $i;
+                    $display_sequence++;
+                    $users_column_select = UsersColumnsSelects::create([
+                        'users_columns_id' => $users_column->id,
+                        'value'            => $value,
+                        'display_sequence' => $display_sequence,
+                    ]);
+                }
+                // マッピングテーブルの追加
+                $mapping = MigrationMapping::create([
+                    'target_source_table'  => 'users_columns_selects',
+                    'source_key'           => $nc2_item_id,
+                    'destination_key'      => $users_column->id,
+                ]);
+            }
         }
 
         // ユーザ定義・ファイルの存在確認
@@ -7238,9 +7270,10 @@ trait MigrationTrait
         $nc2_any_items = collect([]);
         $nc2_export_user_items = $this->getMigrationConfig('users', 'nc2_export_user_items');
         if ($nc2_export_user_items) {
-            $nc2_any_items = Nc2Item::select('items.*', 'items_desc.description')
+            $nc2_any_items = Nc2Item::select('items.*', 'items_desc.description', 'items_options.options')
                 ->whereIn('items.item_name', $nc2_export_user_items)
                 ->leftJoin('items_desc', 'items_desc.item_id', '=', 'items.item_id')
+                ->leftJoin('items_options', 'items_options.item_id', '=', 'items.item_id')
                 ->orderBy('items.col_num')
                 ->orderBy('items.row_num')
                 ->get();
@@ -7303,7 +7336,8 @@ trait MigrationTrait
                 // 任意項目
                 foreach ($nc2_any_items as $nc2_any_item) {
                     $item_name = "item_{$nc2_any_item->item_id}";
-                    $users_ini .= "{$item_name}            = \"" . $nc2_user->$item_name . "\"\n";
+                    $item_value = rtrim($nc2_user->$item_name, '|');// 最後のパイプは削除する
+                    $users_ini .= "{$item_name}            = \"" . $item_value . "\"\n";
                 }
             }
 
@@ -7331,9 +7365,10 @@ trait MigrationTrait
                 'text' => UserColumnType::text,
                 'email' => UserColumnType::mail,
                 'mobile_email' => UserColumnType::mail,
-                // 'radio' => UserColumnType::radio,
+                'radio' => UserColumnType::radio,
                 'textarea' => UserColumnType::textarea,
-                // 'select' => UserColumnType::select,
+                'select' => UserColumnType::select,
+                'checkbox' => UserColumnType::checkbox,
             ];
 
             // 未対応
@@ -7342,8 +7377,6 @@ trait MigrationTrait
                 'file',
                 'label',
                 'system',
-                'radio',
-                'select',
             ];
 
             $user_column_type = $nc2_any_item->type;
@@ -7354,6 +7387,19 @@ trait MigrationTrait
 
             } elseif (array_key_exists($user_column_type, $convert_user_column_types)) {
                 $user_column_type = $convert_user_column_types[$user_column_type];
+                $users_columns_selects_ini  = "[users_columns_selects_base]\n";
+                switch($user_column_type) {
+                    case 'radio':
+                    case 'select':
+                    case 'checkbox':
+                        $options = rtrim($nc2_any_item->options, '|');// 最後のパイプは削除する
+                        $users_columns_selects_ini .= "value      = \"" . $options . "\"\n";
+                        $users_columns_selects_ini .= "\n";
+                    break;
+                    default:
+                        $users_columns_selects_ini = "\n";
+                    break;
+                }
 
             } else {
                 // 未対応に未指定
@@ -7369,6 +7415,7 @@ trait MigrationTrait
             $users_columns_ini .= "caption          = \"" . $nc2_any_item->description . "\"\n";
             $users_columns_ini .= "display_sequence = " . ($i + 1) . "\n";
             $users_columns_ini .= "\n";
+            $users_columns_ini .= $users_columns_selects_ini;
             $users_columns_ini .= "[source_info]\n";
             $users_columns_ini .= "item_id = " . $nc2_any_item->item_id . "\n";
 
