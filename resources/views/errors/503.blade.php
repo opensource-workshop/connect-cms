@@ -31,7 +31,7 @@
     @php
         $default_html = '
 <div class="text-center mt-4">
-    <h1>サイトメンテナンス</h1>
+    <h1>ただいまサイトメンテナンス中です。</h1>
     <p>作業終了までしばらくお待ちください。</p>
 </div>
 ';
