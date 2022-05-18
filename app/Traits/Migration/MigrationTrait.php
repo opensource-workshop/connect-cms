@@ -1491,7 +1491,7 @@ trait MigrationTrait
             ]);
 
             // 選択肢型の追加
-            if (in_array($column_type, ['radio','select','checkbox'])){
+            if (in_array($column_type, ['radio','select','checkbox'])) {
                 // マッピングテーブルの取得
                 $mapping = MigrationMapping::where('target_source_table', 'users_columns_selects')->where('source_key', $nc2_item_id)->first();
                 // マッピングテーブルを確認して、あれば削除
@@ -1502,7 +1502,7 @@ trait MigrationTrait
                     $mapping->delete();
                 }
                 $select_values = explode('|', $this->getArrayValue($ini, 'users_columns_selects_base', 'value'));
-                foreach($select_values as $i => $value) {
+                foreach ($select_values as $i => $value) {
                     $display_sequence = $i;
                     $display_sequence++;
                     $users_column_select = UsersColumnsSelects::create([
@@ -7388,17 +7388,17 @@ trait MigrationTrait
             } elseif (array_key_exists($user_column_type, $convert_user_column_types)) {
                 $user_column_type = $convert_user_column_types[$user_column_type];
                 $users_columns_selects_ini  = "[users_columns_selects_base]\n";
-                switch($user_column_type) {
+                switch ($user_column_type) {
                     case 'radio':
                     case 'select':
                     case 'checkbox':
                         $options = rtrim($nc2_any_item->options, '|');// 最後のパイプは削除する
                         $users_columns_selects_ini .= "value      = \"" . $options . "\"\n";
                         $users_columns_selects_ini .= "\n";
-                    break;
+                        break;
                     default:
                         $users_columns_selects_ini = "\n";
-                    break;
+                        break;
                 }
 
             } else {
