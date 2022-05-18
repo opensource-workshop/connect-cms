@@ -126,9 +126,8 @@
                 @endif
 
                     @if ($link_pattern[$whatsnew->plugin_name] == 'show_page_frame_post')
-                    <a href="{{url('/')}}{{$link_base[$whatsnew->plugin_name]}}/{{$whatsnew->page_id}}/{{$whatsnew->frame_id}}/{{$whatsnew->post_id}}#frame-{{$whatsnew->frame_id}}" style="text-decoration: none; color: initial;">
+                    <a :href="url + link_base[whatsnews.plugin_name] + '/' + whatsnews.page_id + '/' + whatsnews.frame_id + '/' + whatsnews.post_id + '#frame-' + whatsnews.frame_id" style="text-decoration: none; color: initial;">
                     @endif
-
 
                     <div  class="p-2" style="height: 100%;"
                         v-bind:class="{ 'border': border == show }"
@@ -137,13 +136,10 @@
 
                         {{-- タイトル＋リンク --}}
                         <dt v-if="link_pattern[whatsnews.plugin_name] == 'show_page_frame_post'" class="text-center whatsnew_title">
-                            @if ($whatsnew->post_title)
-                                {{$whatsnew->post_title_strip_tags}}
-                            @else
-                                (無題)
-                            @endif
+                            @{{ whatsnews.post_title_strip_tags }}
                         </dt>
 
+                        
                         {{-- カテゴリ --}}
                         <dd v-if="whatsnews.category != null && whatsnews.category != ''" class="text-center whatsnew_category">
                             <div>
