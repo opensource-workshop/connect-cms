@@ -5685,7 +5685,12 @@ trait MigrationTrait
 
         // Buckets 登録
         // echo "Buckets 登録\n";
-        $bucket = Buckets::create(['bucket_name' => '無題', 'plugin_name' => 'contents']);
+        $bucket = new Buckets(['bucket_name' => '無題', 'plugin_name' => 'contents']);
+        $bucket->created_at   = $this->getDatetimeFromIniAndCheckFormat($frame_ini, 'contents', 'created_at');
+        $bucket->updated_at   = $this->getDatetimeFromIniAndCheckFormat($frame_ini, 'contents', 'updated_at');
+        // 登録更新日時を自動更新しない
+        $bucket->timestamps = false;
+        $bucket->save();
 
         // Frames 登録
         $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
