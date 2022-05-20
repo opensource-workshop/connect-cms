@@ -62,7 +62,9 @@ class ThemeTest extends DuskTestCase
      */
     private function createModel($models)
     {
+/*
         foreach($models as $model_info) {
         }
+*/
     }
 }
