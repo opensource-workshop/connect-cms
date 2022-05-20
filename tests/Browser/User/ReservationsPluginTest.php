@@ -114,8 +114,11 @@ class ReservationsPluginTest extends DuskTestCase
             $browser->visit('/test/reservation')
                     ->screenshot('user/reservations/editBooking/images/index');
 
+            // 実行日の第一月曜日(施設管理で平日のみ予約許可にしているので)
+            $monday_1 = new \DateTime('first Monday of ' . date('Y-m'));
+
             $browser->visit('plugin/reservations/editBooking/' . $this->test_frame->page_id . '/' . $this->test_frame->id .
-                            '?facility_id=1&target_date=' . date('Y-m-01') . '#frame-' . $this->test_frame->id)
+                            '?facility_id=1&target_date=' . $monday_1->format('Y-m-d') . '#frame-' . $this->test_frame->id)
                     ->type('start_datetime', '10:00')
                     ->type('end_datetime', '12:00')
                     ->type('columns_value[1]', 'テストの予約①')
