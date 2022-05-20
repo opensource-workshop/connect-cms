@@ -204,6 +204,42 @@ class Dusks extends Model
     }
 
     /**
+     * マニュアル用 ポスター画像があるか確認する。
+     *
+     * @return boolean
+     */
+    public function hasPoster($level = 1, $mp4dir = 'mp4')
+    {
+        if (\File::exists(config('connect.manual_put_base') . dirname($this->html_path, $level) . '/' . $mp4dir . '/mizuki/_poster.png')) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * マニュアル用 ポスター画像があるか確認する。
+     *
+     * @return boolean
+     */
+    public static function hasPosterFile($poster_path)
+    {
+        if (\File::exists(config('connect.manual_put_base') . $poster_path)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * ポスターパスの返却
+     *
+     * @return boolean
+     */
+    public function getPosterPath($level = 1, $mp4dir = 'mp4')
+    {
+        return dirname($this->html_path, $level) . '/' . $mp4dir . '/mizuki/_poster.mp4';
+    }
+
+    /**
      * ナレーション用に文章のクリーニング
      *
      * @return void
@@ -336,11 +372,12 @@ class Dusks extends Model
 */
         // ナレーション文章や必要なファイルパスを組み立て
         $material = [
-            'mp3_file_disk'   => $base_dir . '/' . $dir_under . 'mp3/mizuki/' . $basename . '.mp3',
-            'mp4_list_disk'   => $base_dir . '/' . $dir_under . 'mp4/mizuki/' . '_mp4list.txt',
-            'mp4_fade_disk'   => $base_dir . '/' . $dir_under . 'mp4/mizuki/' . 'fade_'. $basename . '.mp4',
-            'mp4_nofade_disk' => $base_dir . '/' . $dir_under . 'mp4/mizuki/' . 'nofade_' . $basename . '.mp4',
-            'mp4_final_disk'  => $base_dir . '/' . $dir_under . 'mp4/mizuki/' . '_video.mp4',
+            'mp3_file_disk'    => $base_dir . '/' . $dir_under . 'mp3/mizuki/' . $basename . '.mp3',
+            'mp4_list_disk'    => $base_dir . '/' . $dir_under . 'mp4/mizuki/' . '_mp4list.txt',
+            'mp4_fade_disk'    => $base_dir . '/' . $dir_under . 'mp4/mizuki/' . 'fade_'. $basename . '.mp4',
+            'mp4_nofade_disk'  => $base_dir . '/' . $dir_under . 'mp4/mizuki/' . 'nofade_' . $basename . '.mp4',
+            'mp4_final_poster' => $base_dir . '/' . $dir_under . 'mp4/mizuki/' . '_poster.png',
+            'mp4_final_disk'   => $base_dir . '/' . $dir_under . 'mp4/mizuki/' . '_video.mp4',
         ];
         $material = array_merge($material, [
             'img_file_real'   => self::getRealPath('screenshot', $json_path->path . '.png'),
@@ -351,8 +388,9 @@ class Dusks extends Model
             'mp4_final_real'  => self::getRealPath('tests_tmp', $material['mp4_final_disk']),
         ]);
         $material = array_merge($material, [
-            'mp4_fade_real2'  => str_replace('\\', '\\\\', $material['mp4_fade_real']), // ffmpeg concatは2重\が必要
-            'mp4_manual_real' => config('connect.manual_put_base') . $material['mp4_final_disk'],
+            'mp4_fade_real2'    => str_replace('\\', '\\\\', $material['mp4_fade_real']), // ffmpeg concatは2重\が必要
+            'mp4_manual_poster' => config('connect.manual_put_base') . $material['mp4_final_poster'],
+            'mp4_manual_real'   => config('connect.manual_put_base') . $material['mp4_final_disk'],
         ]);
         if (property_exists($json_path, 'comment') && !empty($json_path->comment)) {
 //            $material['comment'] = self::cleaningText($image_comment . $json_path->comment);

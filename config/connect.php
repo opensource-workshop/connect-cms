@@ -141,6 +141,9 @@ return [
     // AWS SDK
     'REQUIRE_AWS_SDK_PATH' => env('REQUIRE_AWS_SDK_PATH'),
 
+    // add theme dir
+    'ADD_THEME_DIR' => env('ADD_THEME_DIR'),
+
     // Use the container (beta)
     'USE_CONTAINER_BETA' => env('USE_CONTAINER_BETA', false),
 ];
