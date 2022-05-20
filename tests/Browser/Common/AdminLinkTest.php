@@ -83,6 +83,7 @@ class AdminLinkTest extends DuskTestCase
                   ],
                   "comment": "<ul class=\"mb-0\"><li>権限がある項目が表示されます。</li><li>プレビューモードは編集用のリンクなどが消えて、ゲストが見ている状態の画面を確認することができます。</li></ul>"
                  }]',
+            'level' => 'basic',
             'test_result' => 'OK']
         );
     }
@@ -132,6 +133,7 @@ class AdminLinkTest extends DuskTestCase
                   "methods": [
                      {"method": "trim_h", "args": [0,300]}
                  ]}]',
+             'level' => 'basic',
              'test_result' => 'OK']
         );
 

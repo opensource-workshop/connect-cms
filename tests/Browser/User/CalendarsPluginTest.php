@@ -89,7 +89,7 @@ class CalendarsPluginTest extends DuskTestCase
              "name": "月表示（スマホ表示）",
              "comment": "<ul class=\"mb-0\"><li>スマートフォンの場合は縦長のカレンダーに予定が表示されます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -141,7 +141,7 @@ class CalendarsPluginTest extends DuskTestCase
             {"path": "user/calendars/edit/images/edit1",
              "comment": "<ul class=\"mb-0\"><li>カレンダーに予定を登録できます。</li><li>タイトル、開始日時、終了日時、本文が登録できます。</li><li>全日予定にすると、時間のない予定として登録できます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -159,7 +159,7 @@ class CalendarsPluginTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('user/calendars/show/images/show');
+        $this->putManualData('user/calendars/show/images/show', null, 4);
     }
 
     /**
@@ -199,11 +199,11 @@ class CalendarsPluginTest extends DuskTestCase
              "name": "変更・削除",
              "comment": "<ul class=\"mb-0\"><li>カレンダーを変更・削除できます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
-     * ブログ選択
+     * カレンダー選択
      */
     private function listBuckets()
     {
@@ -219,7 +219,7 @@ class CalendarsPluginTest extends DuskTestCase
             {"path": "user/calendars/listBuckets/images/listBuckets",
              "comment": "<ul class=\"mb-0\"><li>表示するカレンダーを変更できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**

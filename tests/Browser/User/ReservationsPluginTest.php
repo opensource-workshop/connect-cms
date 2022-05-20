@@ -94,7 +94,7 @@ class ReservationsPluginTest extends DuskTestCase
              "name": "予約の一覧（週表示）",
              "comment": "<ul class=\"mb-0\"><li>週形式で予約を表示します。</li></ul>"
             }
-        ]');
+        ]', null, 4);
 /*
 ,
             {"path": "user/reservations/index/images/bookingDetailModal",
@@ -114,8 +114,11 @@ class ReservationsPluginTest extends DuskTestCase
             $browser->visit('/test/reservation')
                     ->screenshot('user/reservations/editBooking/images/index');
 
+            // 実行日の第一月曜日(施設管理で平日のみ予約許可にしているので)
+            $monday_1 = new \DateTime('first Monday of ' . date('Y-m'));
+
             $browser->visit('plugin/reservations/editBooking/' . $this->test_frame->page_id . '/' . $this->test_frame->id .
-                            '?facility_id=1&target_date=' . date('Y-m-01') . '#frame-' . $this->test_frame->id)
+                            '?facility_id=1&target_date=' . $monday_1->format('Y-m-d') . '#frame-' . $this->test_frame->id)
                     ->type('start_datetime', '10:00')
                     ->type('end_datetime', '12:00')
                     ->type('columns_value[1]', 'テストの予約①')
@@ -130,7 +133,7 @@ class ReservationsPluginTest extends DuskTestCase
              "name": "施設予約の登録",
              "comment": "<ul class=\"mb-0\"><li>予約日、時間、繰り返し、件名を入力して登録します。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -148,7 +151,7 @@ class ReservationsPluginTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('user/reservations/showBooking/images/showBooking');
+        $this->putManualData('user/reservations/showBooking/images/showBooking', null, 4);
     }
 
     /**
@@ -187,7 +190,7 @@ class ReservationsPluginTest extends DuskTestCase
              "name": "変更・削除",
              "comment": "<ul class=\"mb-0\"><li>施設予約を変更・削除できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
 
@@ -215,11 +218,11 @@ class ReservationsPluginTest extends DuskTestCase
              "name": "施設設定",
              "comment": "<ul class=\"mb-0\"><li>表示する施設を選択します。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
-     * ブログ選択
+     * 施設予約選択
      */
     private function listBuckets()
     {
@@ -235,7 +238,7 @@ class ReservationsPluginTest extends DuskTestCase
             {"path": "user/reservations/listBuckets/images/listBuckets",
              "comment": "<ul class=\"mb-0\"><li>表示する施設予約を変更できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -262,6 +265,6 @@ class ReservationsPluginTest extends DuskTestCase
              "name": "１つの施設を選んで表示",
              "comment": "<ul class=\"mb-0\"><li>施設を選択できます。<br />この形式の場合は、予約一覧の表示画面では、施設の選択肢が出てきます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 }

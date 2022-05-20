@@ -37,7 +37,7 @@ class ServiceBlueprintTest extends DuskTestCase
         // マニュアル用データ出力（ページとフレーム）
         $dusk_index = Dusks::create([
             'category' => 'blueprint',
-            'sort' => 2,
+            'sort' => 1,
             'plugin_name' => 'service',
             'plugin_title' => '外部サービス',
             'plugin_desc' => 'Connect-CMSの外部サービスについて説明します。',
@@ -46,6 +46,7 @@ class ServiceBlueprintTest extends DuskTestCase
             'method_desc' => '外部サービスとは、Connect-CMSから呼び出すAPIサービスです。',
             'method_detail' => '翻訳やPDFサムネイル自動生成、AI顔認識などは、Connect-CMSとしては、呼び出しを行うユーザインタフェースのみを提供し、実際の処理は別のサービスを使用していただくものです。<br />APIの仕様は公開しているため、個人が自作することも、会社等が提供しているサービスを使用することも可能です。',
             'html_path' => 'blueprint/service/index/index.html',
+            'level' => null,
             'test_result' => 'OK',
         ]);
     }

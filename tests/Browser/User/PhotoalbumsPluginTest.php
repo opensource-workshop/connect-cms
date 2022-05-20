@@ -103,7 +103,7 @@ class PhotoalbumsPluginTest extends DuskTestCase
              "name": "動画の表示",
              "comment": "<ul class=\"mb-0\"><li>動画は再生、最大化再生などが可能です。表示設定で埋め込みコードを表示するにしている場合は、埋め込みコードも表示されます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -137,7 +137,7 @@ class PhotoalbumsPluginTest extends DuskTestCase
              "name": "アルバムの作成結果",
              "comment": "<ul class=\"mb-0\"><li>ここでは、写真用アルバムと動画用アルバムとして作成しましたが、写真と動画を混在することもできます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -220,7 +220,7 @@ class PhotoalbumsPluginTest extends DuskTestCase
              "name": "動画のアップロード後",
              "comment": "<ul class=\"mb-0\"><li>動画をアップロードできます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -240,7 +240,7 @@ class PhotoalbumsPluginTest extends DuskTestCase
              "name": "ファイル削除",
              "comment": "<ul class=\"mb-0\"><li>ファイルやアルバムの横のチェックボックスをチェックして、削除することができます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -278,7 +278,7 @@ class PhotoalbumsPluginTest extends DuskTestCase
              "name": "変更・削除",
              "comment": "<ul class=\"mb-0\"><li>フォトアルバムを変更・削除できます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -297,7 +297,7 @@ class PhotoalbumsPluginTest extends DuskTestCase
             {"path": "user/photoalbums/listBuckets/images/listBuckets",
              "comment": "<ul class=\"mb-0\"><li>表示するフォトアルバムを変更できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -319,6 +319,6 @@ class PhotoalbumsPluginTest extends DuskTestCase
             {"path": "user/photoalbums/editView/images/editView",
              "comment": "<ul class=\"mb-0\"><li>フォトアルバムの表示設定を設定できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 }

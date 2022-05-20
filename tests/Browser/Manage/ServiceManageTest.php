@@ -63,7 +63,7 @@ class ServiceManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/service/pdf/images/pdf');
+        $this->putManualData('manage/service/pdf/images/pdf', null, 3);
     }
 
     /**
@@ -78,6 +78,6 @@ class ServiceManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/service/face/images/face');
+        $this->putManualData('manage/service/face/images/face', null, 3);
     }
 }

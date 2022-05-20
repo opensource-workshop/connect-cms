@@ -48,6 +48,7 @@ class IndexCommonTest extends DuskTestCase
             'html_path' => 'common/plugin/addPlugin/index.html',
             // 'img_args' => 'common/plugin/add_plugin1,common/plugin/add_plugin2,common/plugin/add_plugin3',
             'img_args' => 'common/plugin/edit_content1,common/plugin/edit_content2,common/plugin/edit_content3',
+            'level' => 'basic',
             'test_result' => 'OK',
         ]);
     }

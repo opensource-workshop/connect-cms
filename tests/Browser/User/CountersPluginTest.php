@@ -93,7 +93,7 @@ class CountersPluginTest extends DuskTestCase
              "name": "カウンター２",
              "comment": "<ul class=\"mb-0\"><li>左エリアに置いたところ。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -133,7 +133,7 @@ class CountersPluginTest extends DuskTestCase
              "name": "変更・削除",
              "comment": "<ul class=\"mb-0\"><li>カウンターを変更・削除できます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -180,7 +180,7 @@ class CountersPluginTest extends DuskTestCase
             {"path": "user/counters/listCounters/images/listCounters2",
              "comment": "<ul class=\"mb-0\"><li>日ごとのカウントが一覧で確認できます。</li><li>一覧は30件（1ヵ月分を想定）で、ページ送りします。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -200,7 +200,7 @@ class CountersPluginTest extends DuskTestCase
             {"path": "user/counters/listBuckets/images/listBuckets",
              "comment": "<ul class=\"mb-0\"><li>表示するカウンターを変更できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -224,6 +224,6 @@ class CountersPluginTest extends DuskTestCase
             {"path": "user/counters/editView/images/editView2",
              "comment": "<ul class=\"mb-0\"><li>カウンターの表示形式や累計、本日、昨日の表示などを設定できます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 }

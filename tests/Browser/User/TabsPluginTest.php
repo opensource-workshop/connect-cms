@@ -104,7 +104,7 @@ class TabsPluginTest extends DuskTestCase
              "name": "タブ表示（管理者でログインしている場合）",
              "comment": "<ul class=\"mb-0\"><li>管理者でログインしている場合は、すべてのフレームが見えます。</li><li>最初に表示するフレーム以外は、フレームの編集で「初期状態を非表示とする。」をチェックしておきます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -143,6 +143,6 @@ class TabsPluginTest extends DuskTestCase
              "name": "フレーム選択",
              "comment": "<ul class=\"mb-0\"><li>タブで制御するフレームを選択します。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 }

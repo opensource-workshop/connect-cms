@@ -82,7 +82,7 @@ class ReservationManageTest extends DuskTestCase
              "name": "施設一覧",
              "comment": "<ul class=\"mb-0\"><li>登録されている施設を一覧表示できます。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -112,7 +112,7 @@ class ReservationManageTest extends DuskTestCase
              "name": "施設登録２",
              "comment": "<ul class=\"mb-0\"><li>施設を登録します。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -163,7 +163,7 @@ class ReservationManageTest extends DuskTestCase
              "name": "施設カテゴリ設定",
              "comment": "<ul class=\"mb-0\"><li>施設に紐づけるカテゴリを登録できます。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -190,7 +190,7 @@ class ReservationManageTest extends DuskTestCase
              "name": "項目設定",
              "comment": "<ul class=\"mb-0\"><li>項目セットの項目を設定します。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -210,6 +210,6 @@ class ReservationManageTest extends DuskTestCase
              "name": "項目セット登録",
              "comment": "<ul class=\"mb-0\"><li>項目セットを登録します。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 }

@@ -43,7 +43,7 @@ class MenusPluginTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('user/menus/index/images/index');
+        $this->putManualData('user/menus/index/images/index', null, 4, 'basic');
     }
 
     /**
@@ -69,7 +69,7 @@ class MenusPluginTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('user/menus/select/images/select,user/menus/select/images/select2');
+        $this->putManualData('user/menus/select/images/select,user/menus/select/images/select2', null, 4, 'basic');
     }
 
     /**

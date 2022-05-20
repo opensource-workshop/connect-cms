@@ -91,7 +91,7 @@ class FormsPluginTest extends DuskTestCase
              "name": "入力画面２",
              "comment": "<ul class=\"mb-0\"><li>設定した項目の入力フォームが完成です。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -140,7 +140,7 @@ class FormsPluginTest extends DuskTestCase
              "name": "変更・削除２",
              "comment": "<ul class=\"mb-0\"><li>フォームを変更・削除できます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -201,7 +201,7 @@ class FormsPluginTest extends DuskTestCase
              "name": "複数の項目を設定した状態",
              "comment": "<ul class=\"mb-0\"><li>お問い合わせフォームを想定した項目を作りました。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -316,7 +316,7 @@ class FormsPluginTest extends DuskTestCase
              "name": "項目詳細設定（単一選択型）２",
              "comment": "<ul class=\"mb-0\"><li>単一選択型の詳細設定です。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -336,7 +336,7 @@ class FormsPluginTest extends DuskTestCase
              "name": "フォーム一覧",
              "comment": "<ul class=\"mb-0\"><li>登録されたデータが一覧表示されます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -356,7 +356,7 @@ class FormsPluginTest extends DuskTestCase
              "name": "フォーム一覧",
              "comment": "<ul class=\"mb-0\"><li>表示するフォームを変更できます。</li><li>各フォームの登録データの「ダウンロード」ができます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**

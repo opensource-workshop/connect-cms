@@ -61,7 +61,7 @@ class ThemeManageTest extends DuskTestCase
              "name": "ユーザ・テーマ一覧",
              "comment": "<ul class=\"mb-0\"><li>ユーザ・テーマを一覧表示できます。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -83,7 +83,7 @@ class ThemeManageTest extends DuskTestCase
              "name": "ユーザ・テーマのCSS編集",
              "comment": "<ul class=\"mb-0\"><li>ユーザ・テーマ毎のCSSを編集できます。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -105,7 +105,7 @@ class ThemeManageTest extends DuskTestCase
              "name": "ユーザ・テーマのJavaScript編集",
              "comment": "<ul class=\"mb-0\"><li>ユーザ・テーマ毎のJavaScriptを編集できます。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -127,7 +127,7 @@ class ThemeManageTest extends DuskTestCase
              "name": "ユーザ・テーマの画像管理",
              "comment": "<ul class=\"mb-0\"><li>ユーザ・テーマ毎の画像を追加・削除できます。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -149,7 +149,7 @@ class ThemeManageTest extends DuskTestCase
              "name": "ユーザ・テーマの名前の編集",
              "comment": "<ul class=\"mb-0\"><li>ユーザ・テーマの名前を変更できます。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -177,6 +177,6 @@ class ThemeManageTest extends DuskTestCase
              "name": "カスタムテーマ生成２",
              "comment": "<ul class=\"mb-0\"><li>ディレクトリ名とテーマ名を決めて、テーマを生成します。</li><li>テーマセットから選ぶことで、楽にテーマを作ることができます。</li><li>メニューの形式や書体をそれぞれ選択して、テーマを生成することもできます。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 }

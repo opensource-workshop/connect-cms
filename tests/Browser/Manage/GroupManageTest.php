@@ -38,7 +38,7 @@ class GroupManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/group/index/images/index');
+        $this->putManualData('manage/group/index/images/index', null, 3);
     }
 
     /**
@@ -54,7 +54,7 @@ class GroupManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/group/edit/images/edit');
+        $this->putManualData('manage/group/edit/images/edit', null, 3);
     }
 
     /**

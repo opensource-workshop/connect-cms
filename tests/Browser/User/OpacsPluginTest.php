@@ -89,7 +89,7 @@ class OpacsPluginTest extends DuskTestCase
              "name": "書籍検索結果",
              "comment": "<ul class=\"mb-0\"><li>書籍を検索した状態。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -109,7 +109,7 @@ class OpacsPluginTest extends DuskTestCase
              "name": "書籍詳細",
              "comment": "<ul class=\"mb-0\"><li>書籍の詳細情報を見ることができます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -150,7 +150,7 @@ class OpacsPluginTest extends DuskTestCase
              "name": "変更・削除",
              "comment": "<ul class=\"mb-0\"><li>OPACを変更・削除できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -171,7 +171,7 @@ class OpacsPluginTest extends DuskTestCase
             {"path": "user/opacs/listBuckets/images/listBuckets",
              "comment": "<ul class=\"mb-0\"><li>表示するOPACを変更できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -192,7 +192,7 @@ class OpacsPluginTest extends DuskTestCase
             {"path": "user/opacs/settingOpacFrame/images/settingOpacFrame",
              "comment": "<ul class=\"mb-0\"><li>OPACの表示形式を設定できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -222,6 +222,6 @@ class OpacsPluginTest extends DuskTestCase
              "name": "ログイン時の一覧表示",
              "comment": "<ul class=\"mb-0\"><li>書籍の登録</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 }

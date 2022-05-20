@@ -78,7 +78,7 @@ class SearchsPluginTest extends DuskTestCase
              "name": "検索結果",
              "comment": "<ul class=\"mb-0\"><li>指定したキーワードがあるコンテンツの一覧が表示されます。</li><li>クリックすることで、そのページに遷移します。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -130,7 +130,7 @@ class SearchsPluginTest extends DuskTestCase
             {"path": "user/searchs/createBuckets/images/editBuckets2", "name": "変更・削除２",
              "comment": "<ul class=\"mb-0\"><li>サイト内検索を変更・削除できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -151,6 +151,6 @@ class SearchsPluginTest extends DuskTestCase
             {"path": "user/searchs/listBuckets/images/listBuckets",
              "comment": "<ul class=\"mb-0\"><li>表示するサイト内検索を変更できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 }

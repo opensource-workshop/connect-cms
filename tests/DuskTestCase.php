@@ -416,7 +416,7 @@ abstract class DuskTestCase extends BaseTestCase
     /**
      * マニュアルデータ出力
      */
-    public function putManualData($img_args = null, $method = null)
+    public function putManualData($img_args = null, $method = null, $sort = 0, $level = null)
     {
         // マニュアル用データ出力がOFF の場合は、出力せずに戻る。
         if ($this->no_manual) {
@@ -454,10 +454,11 @@ abstract class DuskTestCase extends BaseTestCase
         // 結果の保存
         $dusk = Dusks::firstOrNew(['html_path' => $html_path]);
         $dusk->category = trim($sub_class_array[2], '_');
-        $dusk->sort = 2;
+        $dusk->sort = $sort;
         $dusk->plugin_name = $plugin_name;
         $dusk->method_name = $source_method;
         $dusk->test_result = 'OK';
+        $dusk->level = $level;
         $dusk->html_path   = $html_path;
 
         // 対象クラスの生成とマニュアル用文章の取得
@@ -528,6 +529,7 @@ EOF;
              'method_detail' => '',
              'html_path' => $category . '/' . $plugin[0] . '/template/index.html',
              'img_args' => '[' . $img_args . ']',
+             'level' => null,
              'test_result' => 'OK']
         );
     }

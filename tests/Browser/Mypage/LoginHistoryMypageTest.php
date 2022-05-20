@@ -37,6 +37,6 @@ class LoginHistoryMypageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('mypage/loginHistory/index/images/index');
+        $this->putManualData('mypage/loginHistory/index/images/index', null, 5);
     }
 }

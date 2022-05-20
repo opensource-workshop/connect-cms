@@ -73,7 +73,7 @@ class UserManageTest extends DuskTestCase
              "name": "絞り込み画面２",
              "comment": "<ul class=\"mb-0\"><li>様々な条件でユーザを絞り込むことができます。</li><li>絞り込んだ内容でダウンロードすることができます。</li></ul>"
             }
-        ]');
+        ]', null, 3, 'basic');
     }
 
     /**
@@ -104,7 +104,7 @@ class UserManageTest extends DuskTestCase
                  "name": "役割設定",
                  "comment": "<ul class=\"mb-0\"><li>ユーザに付与する役割を設定できます。</li><li>ここで設定する役割の意味は、各プラグインの機能に依存します。</li><li>例えばOpac（蔵書管理・蔵書貸し出し）プラグインでは、貸し出し日数を学生は〇日、教員は〇日、という設定が可能になっています。</li><li>課題管理プラグインで利用できる「定義名」は、 student, teacher です。</li></ul>"
                 }
-            ]');
+            ]', null, 3);
         }
     }
 
@@ -159,7 +159,7 @@ class UserManageTest extends DuskTestCase
              "name": "ユーザ登録２",
              "comment": "<ul class=\"mb-0\"><li>ユーザを登録・変更することができます。また、編集画面ではユーザの削除もできます。</li><li>権限については、権限・役割のページで説明します。</li><li>ユーザ情報に任意項目を追加できます。<ul class=\"mb-0\"><li>任意項目を追加・編集する画面はありません。今後追加する予定です。</li><li>直接DBにデータ投入を行う事で任意項目を追加できます。詳しくはGithub wikiのUserページを参照してください。<br /><a href=\"https://github.com/opensource-workshop/connect-cms/wiki/User\" target=\"_blank\" rel=\"noopener\" class=\"cc-icon-external\">https://github.com/opensource-workshop/connect-cms/wiki/User</a></li></ul></li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -192,7 +192,7 @@ class UserManageTest extends DuskTestCase
              "name": "CSVインポート",
              "comment": "<ul class=\"mb-0\"><li>CSVファイルを使って、ユーザを一括登録できます。</li><li>「id」に値がある行はユーザ更新します。</li><li>「id」が空の行はユーザを登録します。</li><li>１つの項目に複数値を登録する場合は、|（パイプ）文字で区切ってCSVに登録します。<br />例えば、「権限」「グループ」「役割設定」項目が対象です。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -266,7 +266,7 @@ class UserManageTest extends DuskTestCase
              "name": "個人情報保護への同意や追記文章、初期コンテンツ権限",
              "comment": "<ul class=\"mb-0\"><li>ユーザ登録する際に規約など文章に同意を求めることができます。また、登録時のコンテンツ権限も設定できます。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -286,6 +286,6 @@ class UserManageTest extends DuskTestCase
              "name": "一括削除",
              "comment": "<ul class=\"mb-0\"><li>状態が「仮削除」のユーザを一括削除します。</li><li>削除対象ユーザは、[ ユーザ一覧 ] の絞り込み条件で状態「仮削除」で絞り込む事で確認できます。</li><li>ユーザを「仮削除」に一括更新したい場合は、[ CSVインポート ] で状態を 3 (仮削除) に更新してください。<br />１人づつ変更するのであれば、ユーザ変更画面から状態を「仮削除」に変更できます。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 }

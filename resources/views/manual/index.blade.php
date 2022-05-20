@@ -34,7 +34,10 @@
             <div class="card-header text-white bg-primary">Connect-CMS ダウンロード・マニュアル</div>
             <div class="card-body">
                 <p>Connect-CMS のマニュアルをPDF でダウンロードできます。</p>
-                <p><a href="./pdf/manual.pdf" target="_blank">Connect-CMS のマニュアルPDF ダウンロード</a></p>
+                <ul>
+                    <li><a href="./pdf/manual.pdf" target="_blank">Connect-CMS 全機能版マニュアルPDF ダウンロード</a>
+                    <li><a href="./pdf/basic.pdf" target="_blank">Connect-CMS 基本機能版マニュアルPDF ダウンロード</a>
+                </ul>
             </div>
         </div>
     </div>

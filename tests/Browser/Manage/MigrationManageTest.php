@@ -36,6 +36,6 @@ class MigrationManageTest extends DuskTestCase
             {"path": "manage/migration/index/images/index",
              "name": "NetCommons2移行"
             }
-        ]');
+        ]', null, 3);
     }
 }
