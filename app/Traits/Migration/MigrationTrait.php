@@ -3418,6 +3418,9 @@ trait MigrationTrait
         // カウンター定義の取り込み
         $ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('counters/counter_*.ini'));
 
+        // ユーザ取得
+        $users = User::get();
+
         // カウンター定義のループ
         foreach ($ini_paths as $ini_path) {
             // ini_file の解析
@@ -3450,12 +3453,26 @@ trait MigrationTrait
 
             // Buckets テーブルと Counters テーブル、マッピングテーブルを追加
             $counter_name = '無題';
-            $bucket = Buckets::create(['bucket_name' => $counter_name, 'plugin_name' => 'counters']);
+            $bucket = new Buckets(['bucket_name' => $counter_name, 'plugin_name' => 'counters']);
+            $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'created_at');
+            $bucket->updated_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'updated_at');
+            // 登録更新日時を自動更新しない
+            $bucket->timestamps = false;
+            $bucket->save();
 
-            $counter = Counter::create([
+            $counter = new Counter([
                 'bucket_id' => $bucket->id,
                 'name' => $counter_name,
             ]);
+            $counter->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'insert_login_id', null));
+            $counter->created_name = $this->getArrayValue($ini, 'source_info', 'created_name', null);
+            $counter->created_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'created_at');
+            $counter->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'update_login_id', null));
+            $counter->updated_name = $this->getArrayValue($ini, 'source_info', 'updated_name', null);
+            $counter->updated_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'updated_at');
+            // 登録更新日時を自動更新しない
+            $counter->timestamps = false;
+            $counter->save();
 
             // カウントを作成する
             $counter_count = CounterCount::create([
@@ -9087,6 +9104,9 @@ trait MigrationTrait
             return;
         }
 
+        // nc2の全ユーザ取得
+        $nc2_users = Nc2User::get();
+
         // NC2カウンター（Counter）のループ
         foreach ($nc2_counters as $nc2_counter) {
             $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
@@ -9148,6 +9168,12 @@ trait MigrationTrait
             $ini .= "counter_block_id = " . $nc2_counter->block_id . "\n";
             $ini .= "room_id = " . $nc2_counter->room_id . "\n";
             $ini .= "module_name = \"counter\"\n";
+            $ini .= "created_at      = \"" . $this->getCCDatetime($nc2_counter->insert_time) . "\"\n";
+            $ini .= "created_name    = \"" . $nc2_counter->insert_user_name . "\"\n";
+            $ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_counter->insert_user_id) . "\"\n";
+            $ini .= "updated_at      = \"" . $this->getCCDatetime($nc2_counter->update_time) . "\"\n";
+            $ini .= "updated_name    = \"" . $nc2_counter->update_user_name . "\"\n";
+            $ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_counter->update_user_id) . "\"\n";
 
             // カウンターの設定を出力
             $this->storagePut($this->getImportPath('counters/counter_') . $this->zeroSuppress($nc2_counter->block_id) . '.ini', $ini);
