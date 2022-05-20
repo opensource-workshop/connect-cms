@@ -71,7 +71,7 @@ EOF;
         $dusk = Dusks::putManualData(
             ['html_path' => 'user/contents/index/index.html'],
             ['category' => 'user',
-             'sort' => 2,
+             'sort' => 4,
              'plugin_name' => 'contents',
              'plugin_title' => '固定記事',
              'plugin_desc' => 'サイト上に文字や画像を配置できるプラグインです。',
@@ -85,6 +85,7 @@ EOF;
                   "name": "固定記事",
                   "comment": "<ul class=\"mb-0\"><li>WYSIWYG の各機能は共通機能で説明します。</li></ul>"
                  }]',
+             'level' => 'basic',
              'test_result' => 'OK']
         );
     }
@@ -102,7 +103,7 @@ EOF;
         });
 
         // マニュアル用データ出力
-        $this->putManualData('user/contents/edit/images/edit');
+        $this->putManualData('user/contents/edit/images/edit', null, 4, 'basic');
     }
 
     /**
@@ -117,7 +118,7 @@ EOF;
         });
 
         // マニュアル用データ出力
-        $this->putManualData('user/contents/show/images/show');
+        $this->putManualData('user/contents/show/images/show', null, 4, 'basic');
     }
 
     /**
@@ -132,7 +133,7 @@ EOF;
         });
 
         // マニュアル用データ出力
-        $this->putManualData('user/contents/listBuckets/images/listBuckets');
+        $this->putManualData('user/contents/listBuckets/images/listBuckets', null, 4);
     }
 
     /**

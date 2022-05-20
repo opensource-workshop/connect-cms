@@ -57,7 +57,7 @@ class PageManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/page/index/images/index');
+        $this->putManualData('manage/page/index/images/index', null, 3, 'basic');
     }
 
     /**
@@ -83,7 +83,7 @@ class PageManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/page/edit/images/edit,manage/page/edit/images/edit2');
+        $this->putManualData('manage/page/edit/images/edit,manage/page/edit/images/edit2', null, 3, 'basic');
     }
 
     /**
@@ -113,7 +113,7 @@ class PageManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/page/upload/images/upload');
+        $this->putManualData('manage/page/upload/images/upload', null, 3);
     }
 
     /**
@@ -136,7 +136,7 @@ class PageManageTest extends DuskTestCase
         $this->movePageNoScreenshot();
 
         // マニュアル用データ出力
-        $this->putManualData('manage/page/movePage/images/movePage');
+        $this->putManualData('manage/page/movePage/images/movePage', null, 3, 'basic');
     }
 
     /**

@@ -70,7 +70,7 @@ class WhatsnewsPluginTest extends DuskTestCase
             {"path": "user/whatsnews/index/images/index",
              "comment": "<ul class=\"mb-0\"><li>サイト上の記事を新着表示できます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -133,7 +133,7 @@ class WhatsnewsPluginTest extends DuskTestCase
             {"path": "user/whatsnews/createBuckets/images/editBuckets2", "name": "変更・削除２",
              "comment": "<ul class=\"mb-0\"><li>新着情報を変更・削除できます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -154,7 +154,7 @@ class WhatsnewsPluginTest extends DuskTestCase
             {"path": "user/whatsnews/listBuckets/images/listBuckets",
              "comment": "<ul class=\"mb-0\"><li>表示する新着情報を変更できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -173,7 +173,7 @@ class WhatsnewsPluginTest extends DuskTestCase
             {"path": "user/whatsnews/editView/images/editView",
              "comment": "<ul class=\"mb-0\"><li>本文・サムネイル・罫線の表示・非表示を設定できます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**

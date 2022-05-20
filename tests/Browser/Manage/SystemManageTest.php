@@ -57,7 +57,7 @@ class SystemManageTest extends DuskTestCase
              "name": "セッションのデバックモードをONにしてシステムエラーが発生した場合",
              "comment": "<ul class=\"mb-0\"><li>上記のような場合に、セッション内のデバックモードをONにすることで、トラブルの調査が行えます。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -100,7 +100,7 @@ class SystemManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/system/log/images/log');
+        $this->putManualData('manage/system/log/images/log', null, 3);
     }
 
     /**
@@ -127,6 +127,6 @@ class SystemManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/system/server/images/server');
+        $this->putManualData('manage/system/server/images/server', null, 3);
     }
 }

@@ -128,6 +128,7 @@ class IndexTopTest extends DuskTestCase
                   "comment": "<ul class=\"mb-0\"><li>施設を登録して、予約管理できる機能です。</li></ul>"
                  }
              ]',
+            'level' => 'basic',
             'test_result' => 'OK']
         );
     }

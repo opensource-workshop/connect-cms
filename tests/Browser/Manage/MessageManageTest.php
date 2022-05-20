@@ -50,7 +50,7 @@ class MessageManageTest extends DuskTestCase
              "name": "初回確認メッセージ２",
              "comment": "<ul class=\"mb-0\"><li>サイトの利用確認など、初回にアクセスした際に確認したいメッセージを表示することができる設定です。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**

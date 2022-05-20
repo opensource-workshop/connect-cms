@@ -17,6 +17,11 @@ class ManualPdf extends DuskTestCase
     private $screenshots_root;
 
     /**
+     * 出力レベル
+     */
+    private $level = null;
+
+    /**
      * コンストラクタ
      *
      * @return void
@@ -76,7 +81,8 @@ class ManualPdf extends DuskTestCase
                 'manual.pdf.category',
                 [
                     'category' => $category,
-                    'plugins' => $dusks->where('category', $category->category)->where('method_name', 'index')
+                    'plugins' => $dusks->where('category', $category->category)->where('method_name', 'index'),
+                    'level' => $this->level,
                 ]
             ),
             false
@@ -91,6 +97,11 @@ class ManualPdf extends DuskTestCase
      */
     private function outputPlugin($pdf, $dusks, $category, $plugin)
     {
+        // レベル指定されている場合に、指定のレベルでないものは出力しない。
+        if (!empty($this->level) && $this->level != $plugin->level) {
+            return $pdf;
+        }
+
         $pdf->addPage();
         $pdf->Bookmark($plugin->plugin_title, 1, 0, '', '', array(0, 0, 0));
         $pdf->writeHTML(
@@ -98,7 +109,8 @@ class ManualPdf extends DuskTestCase
                 'manual.pdf.plugin',
                 [
                     'plugin' => $plugin,
-                    'methods' => $dusks->where('category', $category->category)->where('plugin_name', $plugin->plugin_name)
+                    'methods' => $dusks->where('category', $category->category)->where('plugin_name', $plugin->plugin_name),
+                    'level' => $this->level,
                 ]
             ),
             false
@@ -113,6 +125,11 @@ class ManualPdf extends DuskTestCase
      */
     private function outputMethod($pdf, $method)
     {
+        // レベル指定されている場合に、指定のレベルでないものは出力しない。
+        if (!empty($this->level) && $this->level != $method->level) {
+            return $pdf;
+        }
+
         $pdf->addPage();
         $pdf->Bookmark($method->method_title, 2, 0, '', '', array(0, 0, 0));
         $pdf->writeHTML(
@@ -126,12 +143,32 @@ class ManualPdf extends DuskTestCase
     }
 
     /**
+     * 出力するPDFファイル名の生成
+     *
+     * @return void
+     */
+    private function getPdfName()
+    {
+        if (empty($this->level)) {
+            return 'manual.pdf';
+        } else {
+            return $this->level . '.pdf';
+        }
+    }
+
+    /**
      * マニュアル出力用クラス
      *
      * @return void
      */
     public function testInvoke()
     {
+        // 引数の受け取り用
+        global $argv;
+        if (count($argv) > 4 && strpos($argv[4], 'level=') === 0) {
+            $this->level = str_replace('level=', '', $argv[4]);
+        }
+
         // Laravel がコンストラクタでbase_path など使えないので、ここで。
         $this->screenshots_root = base_path('tests/Browser/screenshots/');
 
@@ -178,7 +215,14 @@ class ManualPdf extends DuskTestCase
         $pdf->Bookmark("表紙", 0, 0, '', '', array(0, 0, 0));
 
         // マニュアル表紙
-        $pdf->writeHTML(view('manual.pdf.cover')->render(), false);
+        $pdf->writeHTML(
+            view(
+                'manual.pdf.cover',
+                [
+                    'level' => $this->level,
+                ]
+            )->render(), false
+        );
 
         // 概要
         $this->outputDescription($pdf);
@@ -226,18 +270,17 @@ class ManualPdf extends DuskTestCase
 
         // 目次 --------------------/
 
-        // 出力 ( D：Download, I：Inline )
         // env でパスが指定されていなかった場合は、manual ディスクの html フォルダに保存。
         if (empty(config('connect.manual_put_base'))) {
             if (!\File::exists(\Storage::disk('manual')->path('html/pdf'))) {
                 \File::makeDirectory(\Storage::disk('manual')->path('html/pdf'), 0755, true);
             }
-            $pdf->output(\Storage::disk('manual')->path('html/pdf/manual.pdf'), 'F');
+            $pdf->output(\Storage::disk('manual')->path('html/pdf/' . $this->getPdfName()), 'F');
         } else {
             if (!\File::exists(config('connect.manual_put_base') . 'pdf')) {
                 \File::makeDirectory(config('connect.manual_put_base') . 'pdf', 0755, true);
             }
-            $pdf->output(config('connect.manual_put_base') . 'pdf/manual.pdf', 'F');
+            $pdf->output(config('connect.manual_put_base') . 'pdf/' . $this->getPdfName(), 'F');
         }
     }
 }

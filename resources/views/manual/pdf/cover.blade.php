@@ -14,8 +14,14 @@
 <h4 style="text-align: center; font-size: 12px;">{{date('Y年m月d日')}}</h4>
 <h1></h1>
 <h1></h1>
-<h1></h1>
-<h1></h1>
+@if ($level == 'basic')
+    <h1 style="text-align: center; font-size: 32px;">基本編マニュアル</h1>
+    <div style="text-align: center;">全機能の掲載されたマニュアルは以下のConnect-CMSマニュアルサイトよりダウンロードしてください。<br />
+    https://manual.connect-cms.jp/</div>
+@else
+    <h1></h1>
+    <h1></h1>
+@endif
 <h1></h1>
 <h1></h1>
 <h1></h1>

@@ -37,7 +37,7 @@ class IndexBlueprintTest extends DuskTestCase
         // マニュアル用データ出力
         $dusk = Dusks::create([
             'category' => 'blueprint',
-            'sort' => 2,
+            'sort' => 1,
             'plugin_name' => 'index',
             'plugin_title' => '構造',
             'plugin_desc' => 'Connect-CMSの構造について説明します。',
@@ -46,7 +46,8 @@ class IndexBlueprintTest extends DuskTestCase
             'method_desc' => 'Connect-CMSでは、記事はバケツに入っていると考えます。',
             'method_detail' => '以下にバケツとは何かを説明します。',
             'html_path' => 'blueprint/index/index/index.html',
-          'test_result' => 'OK',
+            'level' => null,
+            'test_result' => 'OK',
         ]);
     }
 }

@@ -99,6 +99,7 @@ class LoginLogoutTest extends DuskTestCase
                   "comment": "<ul class=\"mb-0\"><li>ログインできると、画面右上にログインユーザ名が表示されます。</li></ul>"
                  }
              ]',
+             'level' => 'basic',
              'test_result' => 'OK']
         );
     }
@@ -159,6 +160,7 @@ class LoginLogoutTest extends DuskTestCase
                      {"method": "arc", "args": [1225,30,100,50,6]}
                  ]}
              ]',
+             'level' => null,
              'test_result' => 'OK']
         );
     }
@@ -226,7 +228,8 @@ class LoginLogoutTest extends DuskTestCase
                   "comment": "<ul class=\"mb-0\"><li>パスワード変更するユーザの eメールと新しいパスワードを入力してパスワードリセットをクリックします。</li></ul>"
                  }
              ]',
-            'test_result' => 'OK']
+             'level' => 'basic',
+             'test_result' => 'OK']
         );
     }
 }

@@ -37,6 +37,6 @@ class ProfileMypageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('mypage/profile/index/images/index');
+        $this->putManualData('mypage/profile/index/images/index', null, 5);
     }
 }

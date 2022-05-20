@@ -48,7 +48,7 @@ class CodeManageTest extends DuskTestCase
              "name": "コード一覧",
              "comment": "<ul class=\"mb-0\"><li>コード一覧に表示する項目は、「表示設定」から設定できます。</li><li>「ｘ」ボタンを押下すると、検索条件をクリアして再検索します。</li><li>「？」ボタンを押下すると、このオンラインマニュアルで下記の[ 検索条件の詳細 ]が確認できます。</li><li>「虫眼鏡 学校」ボタンは「検索条件登録」から登録した検索条件です。ボタンを押すと、指定した検索条件でコード一覧を表示します。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -75,7 +75,7 @@ class CodeManageTest extends DuskTestCase
              "name": "コード登録２",
              "comment": "<ul class=\"mb-0\"><li>注釈名を選択すると、表示している各項目の注釈が切り替わります。注釈は「注釈登録」から登録できます。</li><li>各項目の注釈は設定なしの場合、なにも表示しません。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -102,7 +102,7 @@ class CodeManageTest extends DuskTestCase
              "name": "コード変更２",
              "comment": "<ul class=\"mb-0\"><li>登録内容をコピーして、再登録できます。</li><li>注釈名を選択すると、表示している各項目の注釈が切り替わります。注釈は「注釈登録」から登録できます。</li><li>各項目の注釈は設定なしの場合、なにも表示しません。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -130,7 +130,7 @@ class CodeManageTest extends DuskTestCase
         });
 
         // 表示設定
-        $this->putManualData("manage/code/display/images/display,manage/code/display/images/display2");
+        $this->putManualData("manage/code/display/images/display,manage/code/display/images/display2", null, 3);
     }
 
     /**
@@ -153,7 +153,7 @@ class CodeManageTest extends DuskTestCase
         });
 
         // 検索条件登録
-        $this->putManualData("manage/code/searchRegist/images/searchRegist");
+        $this->putManualData("manage/code/searchRegist/images/searchRegist", null, 3);
     }
 
     /**
@@ -169,7 +169,7 @@ class CodeManageTest extends DuskTestCase
         });
 
         // 検索条件一覧
-        $this->putManualData("manage/code/searches/images/searches");
+        $this->putManualData("manage/code/searches/images/searches", null, 3);
     }
 
     /**
@@ -194,7 +194,7 @@ class CodeManageTest extends DuskTestCase
         });
 
         // 注釈登録
-        $this->putManualData("manage/code/helpMessageRegist/images/helpMessageRegist,manage/code/helpMessageRegist/images/helpMessageRegist2");
+        $this->putManualData("manage/code/helpMessageRegist/images/helpMessageRegist,manage/code/helpMessageRegist/images/helpMessageRegist2", null, 3);
     }
 
     /**
@@ -210,7 +210,7 @@ class CodeManageTest extends DuskTestCase
         });
 
         // 注釈一覧
-        $this->putManualData("manage/code/helpMessages/images/helpMessages");
+        $this->putManualData("manage/code/helpMessages/images/helpMessages", null, 3);
     }
 
     /**
@@ -237,7 +237,7 @@ class CodeManageTest extends DuskTestCase
              "name": "CSVインポート",
              "comment": "<ul class=\"mb-0\"><li>CSV ファイルのフォーマットはコード管理マニュアルのトップで確認してください。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -257,6 +257,6 @@ class CodeManageTest extends DuskTestCase
              "name": "CSVダウンロード",
              "comment": "<ul class=\"mb-0\"><li>登録されているコード一覧をCSVでダウンロードできます。</li><li>ダウンロードする文字コードはShift-JISとUTF-8形式から選択できます。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 }

@@ -87,7 +87,7 @@ class BbsesPluginTest extends DuskTestCase
              "name": "記事の一覧（一覧での展開方法をすべて閉じておく）",
              "comment": "<ul class=\"mb-0\"><li>一覧ではタイトルのみ表示することもできます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -140,7 +140,7 @@ class BbsesPluginTest extends DuskTestCase
              "name": "記事の返信",
              "comment": "<ul class=\"mb-0\"><li>引用するをチェックして返信を押した状態</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -159,7 +159,7 @@ class BbsesPluginTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('user/bbses/show/images/show');
+        $this->putManualData('user/bbses/show/images/show', null, 4);
     }
 
     /**
@@ -202,7 +202,7 @@ class BbsesPluginTest extends DuskTestCase
              "name": "変更・削除",
              "comment": "<ul class=\"mb-0\"><li>掲示板を変更・削除できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -222,7 +222,7 @@ class BbsesPluginTest extends DuskTestCase
             {"path": "user/bbses/listBuckets/images/listBuckets",
              "comment": "<ul class=\"mb-0\"><li>表示ブログを変更できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -241,7 +241,7 @@ class BbsesPluginTest extends DuskTestCase
             {"path": "user/bbses/editView/images/editView",
              "comment": "<ul class=\"mb-0\"><li>掲示板の表示形式を設定できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**

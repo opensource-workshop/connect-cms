@@ -70,7 +70,7 @@ class SiteManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/index/images/index,manage/site/index/images/index2,manage/site/index/images/index3,manage/site/index/images/index4');
+        $this->putManualData('manage/site/index/images/index,manage/site/index/images/index2,manage/site/index/images/index3,manage/site/index/images/index4', null, 3, 'basic');
     }
 
     /**
@@ -114,7 +114,7 @@ class SiteManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/meta/images/meta');
+        $this->putManualData('manage/site/meta/images/meta', null, 3);
     }
 
     /**
@@ -142,7 +142,7 @@ class SiteManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/layout/images/layout');
+        $this->putManualData('manage/site/layout/images/layout', null, 3);
     }
 
     /**
@@ -174,7 +174,7 @@ class SiteManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/categories/images/categories');
+        $this->putManualData('manage/site/categories/images/categories', null, 3, 'basic');
     }
 
     /**
@@ -204,7 +204,7 @@ class SiteManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/languages/images/languages');
+        $this->putManualData('manage/site/languages/images/languages', null, 3);
     }
 
     /**
@@ -233,7 +233,7 @@ class SiteManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/pageError/images/pageError');
+        $this->putManualData('manage/site/pageError/images/pageError', null, 3);
     }
 
     /**
@@ -261,7 +261,7 @@ class SiteManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/analytics/images/analytics');
+        $this->putManualData('manage/site/analytics/images/analytics', null, 3);
     }
 
     /**
@@ -289,7 +289,7 @@ class SiteManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/favicon/images/favicon');
+        $this->putManualData('manage/site/favicon/images/favicon', null, 3);
     }
 
     /**
@@ -317,7 +317,7 @@ class SiteManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/wysiwyg/images/wysiwyg');
+        $this->putManualData('manage/site/wysiwyg/images/wysiwyg', null, 3, 'basic');
     }
 
     /**
@@ -332,6 +332,6 @@ class SiteManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/document/images/document');
+        $this->putManualData('manage/site/document/images/document', null, 3);
     }
 }

@@ -237,7 +237,10 @@ class ManualVideo extends DuskTestCase
             if (!\File::exists(dirname($materials[0]['mp4_manual_real']))) {
                 \File::makeDirectory(dirname($materials[0]['mp4_manual_real']), 0755, true);
             }
+            // mp4
             \File::copy($materials[0]['mp4_final_real'], $materials[0]['mp4_manual_real']);
+            // poster画像
+            \File::copy($materials[0]['img_file_real'], $materials[0]['mp4_manual_poster']);
         }
     }
 
@@ -304,6 +307,8 @@ class ManualVideo extends DuskTestCase
 
         // 全データ取得
         $dusks = Dusks::whereNotIn('category', ['top', 'blueprint'])->orderBy("id", "asc")->get();
+
+        // テスト用データ取得
 //        $dusks = Dusks::where('category', 'common')->orderBy("id", "asc")->get();
 //        $dusks = Dusks::where('plugin_name', 'blogs')->where('method_name', 'index')->orderBy("id", "asc")->get();
 //        $dusks = Dusks::where('plugin_name', 'blogs')->orderBy("id", "asc")->get();
@@ -327,12 +332,10 @@ class ManualVideo extends DuskTestCase
 
             // プラグインのループ
             foreach ($dusks->where('category', $category[0]->category)->where('method_name', 'index') as $plugin) {
-//echo $plugin->category . '/' . $plugin->plugin_name . '/' . $plugin->method_name . "\n";
                 $this->outputPlugin($dusks->where('category', $plugin->category)->where('plugin_name', $plugin->plugin_name));
 
                 // メソッドのループ
                 foreach ($dusks->where('category', $category[0]->category)->where('plugin_name', $plugin->plugin_name) as $method) {
-//echo $method->category . '/' . $method->plugin_name . '/' . $method->method_name . "\n";
                     $this->outputMethod($method);
                 }
             }

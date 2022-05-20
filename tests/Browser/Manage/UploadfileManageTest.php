@@ -48,7 +48,7 @@ class UploadfileManageTest extends DuskTestCase
              "name": "アップロードファイル一覧",
              "comment": "<ul class=\"mb-0\"><li>アップロードファイルを一覧表示できます。</li></ul>"
             }
-        ]');
+        ]', null, 3, 'basic');
     }
 
     /**
@@ -70,7 +70,7 @@ class UploadfileManageTest extends DuskTestCase
              "name": "アップロードファイル編集",
              "comment": "<ul class=\"mb-0\"><li>ファイル名の変更が可能です。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -91,6 +91,6 @@ class UploadfileManageTest extends DuskTestCase
              "name": "ユーザディレクトリ一覧",
              "comment": "<ul class=\"mb-0\"><li>サーバ上のファイルを操作できる環境用の設定です。</li><li>storage/user 配下のディレクトリをConnect-CMS で閲覧制御できます。</li><li>ファイル参照時は /file/user/ディレクトリ名/ファイル名 となります。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 }

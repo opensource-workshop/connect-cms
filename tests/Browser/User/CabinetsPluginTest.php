@@ -75,7 +75,7 @@ class CabinetsPluginTest extends DuskTestCase
              "name": "フォルダ、ファイルの一覧",
              "comment": "<ul class=\"mb-0\"><li>ファイルをクリックすることで、ファイルをダウンロードすることができます。</li><li>ファイルやフォルダのチェックボックスをクリックすると、圧縮して一括でダウンロードできます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -103,7 +103,7 @@ class CabinetsPluginTest extends DuskTestCase
              "name": "フォルダの作成結果",
              "comment": "<ul class=\"mb-0\"><li>フォルダを作成できます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -131,7 +131,7 @@ class CabinetsPluginTest extends DuskTestCase
              "name": "ファイルのアップロード後",
              "comment": "<ul class=\"mb-0\"><li>ファイルをアップロードできます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -151,7 +151,7 @@ class CabinetsPluginTest extends DuskTestCase
              "name": "ファイル削除",
              "comment": "<ul class=\"mb-0\"><li>ファイルやフォルダの横のチェックボックスをチェックして、削除することができます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -188,7 +188,7 @@ class CabinetsPluginTest extends DuskTestCase
              "name": "変更・削除",
              "comment": "<ul class=\"mb-0\"><li>キャビネットを変更・削除できます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -207,7 +207,7 @@ class CabinetsPluginTest extends DuskTestCase
             {"path": "user/cabinets/listBuckets/images/listBuckets",
              "comment": "<ul class=\"mb-0\"><li>表示するキャビネットを変更できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -226,6 +226,6 @@ class CabinetsPluginTest extends DuskTestCase
             {"path": "user/cabinets/editView/images/editView",
              "comment": "<ul class=\"mb-0\"><li>キャビネットのファイルの並び順を設定できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 }

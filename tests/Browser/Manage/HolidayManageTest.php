@@ -39,7 +39,7 @@ class HolidayManageTest extends DuskTestCase
              "name": "祝日一覧",
              "comment": "<ul class=\"mb-0\"><li>表示年で必要な年を選択してください。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -60,7 +60,7 @@ class HolidayManageTest extends DuskTestCase
              "name": "祝日登録",
              "comment": "<ul class=\"mb-0\"><li>新たな祝日を登録できます。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -81,6 +81,6 @@ class HolidayManageTest extends DuskTestCase
              "name": "祝日上書き",
              "comment": "<ul class=\"mb-0\"><li>既存の祝日を無効にすることができます。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 }

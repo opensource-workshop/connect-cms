@@ -58,7 +58,7 @@ class LogManageTest extends DuskTestCase
              "name": "絞り込み条件",
              "comment": "<ul class=\"mb-0\"><li>保存されているログを絞り込むことができます。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -84,6 +84,6 @@ class LogManageTest extends DuskTestCase
              "name": "ユーザディレクトリ一覧",
              "comment": "<ul class=\"mb-0\"><li>記録するログ種別を設定できます。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 }

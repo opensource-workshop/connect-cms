@@ -37,6 +37,6 @@ class IndexMypageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('mypage/index/index/images/index');
+        $this->putManualData('mypage/index/index/images/index', null, 5);
     }
 }

@@ -61,7 +61,7 @@ class RoleBlueprintTest extends DuskTestCase
         // マニュアル用データ出力（権限）
         $this->dusk_index = Dusks::create([
             'category' => 'blueprint',
-            'sort' => 2,
+            'sort' => 1,
             'plugin_name' => 'role',
             'plugin_title' => '権限',
             'plugin_desc' => 'Connect-CMSの権限について説明します。',
@@ -70,6 +70,7 @@ class RoleBlueprintTest extends DuskTestCase
             'method_desc' => '権限とは、管理機能やプラグインの配置ができる権限や記事の投稿ができる権限などのように、各操作を許可するものを指します。',
             'method_detail' => '',
             'html_path' => 'blueprint/role/index/index.html',
+            'level' => 'basic',
             'test_result' => 'OK',
         ]);
     }
@@ -100,7 +101,7 @@ class RoleBlueprintTest extends DuskTestCase
         // マニュアル用データ出力（権限）
         $dusk_index = Dusks::create([
             'category' => 'blueprint',
-            'sort' => 2,
+            'sort' => 1,
             'plugin_name' => 'role',
             'plugin_title' => '権限',
             'plugin_desc' => 'Connect-CMSの権限について説明します。',
@@ -110,6 +111,7 @@ class RoleBlueprintTest extends DuskTestCase
             'method_detail' => 'プラグインによっては権限設定のないものや、承認機能がないものもあります。',
             'html_path' => 'blueprint/role/editBucketsRoles/index.html',
             'img_args' => 'blueprint/role/editBucketsRoles/images/editBucketsRoles',
+            'level' => 'basic',
             'test_result' => 'OK',
             'parent_id' => $this->dusk_index->id,
         ]);

@@ -14,6 +14,9 @@ rem > php artisan dusk tests\Manual\src\ManualOutput.php
 rem > php artisan dusk tests\Manual\src\ManualPdf.php
 rem > php artisan dusk tests\Manual\src\ManualVideo.php
 rem
+rem テーマのテスト
+rem > php artisan dusk tests\Browser\Theme\ThemeTest.php
+rem
 rem [How to test]
 rem https://github.com/opensource-workshop/connect-cms/wiki/Dusk
 rem ----------------------------------------------
@@ -289,6 +292,9 @@ if "%1" == "t_all" (
 
     echo --- マニュアルPDF出力
     php artisan dusk tests\Manual\src\ManualPdf.php
+
+    echo --- マニュアルPDF（基礎編）出力
+    php artisan dusk tests\Manual\src\ManualPdf.php level=basic
 )
 
 rem ---------------------------------------------

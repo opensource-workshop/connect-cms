@@ -71,7 +71,7 @@ class LinklistsPluginTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('user/linklists/index/images/index');
+        $this->putManualData('user/linklists/index/images/index', null, 4, 'basic');
     }
 
     /**
@@ -111,7 +111,7 @@ class LinklistsPluginTest extends DuskTestCase
              "name": "変更・削除",
              "comment": "<ul class=\"mb-0\"><li>リンクリストを変更・削除できます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -131,7 +131,7 @@ class LinklistsPluginTest extends DuskTestCase
             {"path": "user/linklists/listCategories/images/listCategories",
              "comment": "<ul class=\"mb-0\"><li>カテゴリ設定は共通カテゴリとこのブログ独自のカテゴリ設定があります。</li><li>上の表が共通カテゴリで、表示のON/OFFと順番が指定できます。</li><li>下の表でこのブログ独自のカテゴリを設定できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -152,7 +152,7 @@ class LinklistsPluginTest extends DuskTestCase
             {"path": "user/linklists/listBuckets/images/listBuckets",
              "comment": "<ul class=\"mb-0\"><li>表示するリンクリストを変更できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -171,7 +171,7 @@ class LinklistsPluginTest extends DuskTestCase
             {"path": "user/linklists/editView/images/editView",
              "comment": "<ul class=\"mb-0\"><li>リンクリストの表示形式や1ページの表示件数を設定できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -215,6 +215,6 @@ class LinklistsPluginTest extends DuskTestCase
              "name": "リンクリスト記事の変更・削除",
              "comment": "<ul class=\"mb-0\"><li>タイトルやURLなどを変更・削除できます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 }

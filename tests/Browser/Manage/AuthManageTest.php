@@ -54,7 +54,7 @@ class AuthManageTest extends DuskTestCase
              "name": "認証設定２",
              "comment": "<ul class=\"mb-0\"><li>外部認証に加えて、通常ログインも使用できる設定があります。</li><li>LDAP認証またはNetCommons2認証で通常ログインも「使用する」場合、外部認証でログインできなかったら、連続して通常ログインを行います。</li><li>Shibboleth認証で通常ログインも「使用する」場合、ログインURL を直接入力して通常ログインを行います。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -99,7 +99,7 @@ class AuthManageTest extends DuskTestCase
              "name": "LDAP認証",
              "comment": "<ul class=\"mb-0\"><li>phpモジュールの <span style=\"color:#e83e8c;\">php_ldap</span> を使い、LDAP認証を行います。</li><li><span style=\"color:#e83e8c;\">php_ldap</span> が有効かどうか、当画面で確認できます。</li><li>Ldap形式のDN（例：<span style=\"color:#e83e8c;\">uid=test001,ou=People,dc=example,dc=com</span>）とActive Directory形式のDN（例：<span style=\"color:#e83e8c;\">testuser001@example.com</span>）に対応しています。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**
@@ -119,7 +119,7 @@ class AuthManageTest extends DuskTestCase
              "name": "Shibboleth認証",
              "comment": "<ul class=\"mb-0\"><li>Apacheモジュールの <span style=\"color:#e83e8c;\">mod_shib</span> を使い、Shibboleth認証します。</li><li>Shibboleth認証の設定を確認できます。</li><li>Shibboleth認証の設定は、設定ファイル <span style=\"color:#e83e8c;\">config/cc_shibboleth_config.sample.php</span> をコピーして <span style=\"color:#e83e8c;\">config/cc_shibboleth_config.php</span> を作成して設定します。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**

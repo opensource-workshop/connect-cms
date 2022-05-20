@@ -46,7 +46,7 @@ class ApiManageTest extends DuskTestCase
              "name": "Secret Code 一覧",
              "comment": "<ul class=\"mb-0\"><li>Connect-CMSでは、APIでの通信機能があります。</li><li>API管理では、秘密コードを設定し、秘密コード単位にIPアドレスでの制限や使用APIを選択することができます。</li><li>API毎の設定などは、マニュアルのAPIページを参照してください。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**

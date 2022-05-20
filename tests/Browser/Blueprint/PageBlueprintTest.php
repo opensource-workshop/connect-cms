@@ -37,7 +37,7 @@ class PageBlueprintTest extends DuskTestCase
         // マニュアル用データ出力（ページとフレーム）
         $dusk_index = Dusks::create([
             'category' => 'blueprint',
-            'sort' => 2,
+            'sort' => 1,
             'plugin_name' => 'page',
             'plugin_title' => 'ページ',
             'plugin_desc' => 'Connect-CMSのページについて説明します。',
@@ -46,13 +46,14 @@ class PageBlueprintTest extends DuskTestCase
             'method_desc' => 'Connect-CMS のページについて説明します。',
             'method_detail' => '以下にページとフレームの例を示します。',
             'html_path' => 'blueprint/page/index/index.html',
+            'level' => 'basic',
             'test_result' => 'OK',
         ]);
 
         // マニュアル用データ出力（フレームとバケツ）
         $dusk = Dusks::create([
             'category' => 'blueprint',
-            'sort' => 2,
+            'sort' => 1,
             'plugin_name' => 'page',
             'plugin_title' => 'ページ',
             'plugin_desc' => 'Connect-CMSのページについて説明します。',
@@ -61,6 +62,7 @@ class PageBlueprintTest extends DuskTestCase
             'method_desc' => 'Connect-CMS のフレームとバケツの関係について説明します。',
             'method_detail' => '以下にフレームとバケツの例を示します。',
             'html_path' => 'blueprint/page/backet/index.html',
+            'level' => 'basic',
             'test_result' => 'OK',
             'parent_id' => $dusk_index->id,
         ]);
@@ -68,7 +70,7 @@ class PageBlueprintTest extends DuskTestCase
         // マニュアル用データ出力（フレームとプラグイン）
         $dusk = Dusks::create([
             'category' => 'blueprint',
-            'sort' => 2,
+            'sort' => 1,
             'plugin_name' => 'page',
             'plugin_title' => 'ページ',
             'plugin_desc' => 'Connect-CMSのページについて説明します。',
@@ -77,6 +79,7 @@ class PageBlueprintTest extends DuskTestCase
             'method_desc' => 'Connect-CMS のフレームとプラグインの関係について説明します。',
             'method_detail' => '以下にフレームとプラグインの例を示します。',
             'html_path' => 'blueprint/page/plugin/index.html',
+            'level' => 'basic',
             'test_result' => 'OK',
             'parent_id' => $dusk_index->id,
         ]);
