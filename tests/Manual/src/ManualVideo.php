@@ -306,12 +306,14 @@ class ManualVideo extends DuskTestCase
         $this->assertTrue(true);
 
         // 全データ取得
-//        $dusks = Dusks::whereNotIn('category', ['top', 'blueprint'])->orderBy("id", "asc")->get();
+        $dusks = Dusks::whereNotIn('category', ['top', 'blueprint'])->orderBy("id", "asc")->get();
+
+        // テスト用データ取得
 //        $dusks = Dusks::where('category', 'common')->orderBy("id", "asc")->get();
 //        $dusks = Dusks::where('plugin_name', 'blogs')->where('method_name', 'index')->orderBy("id", "asc")->get();
 //        $dusks = Dusks::where('plugin_name', 'blogs')->orderBy("id", "asc")->get();
 //        $dusks = Dusks::whereIn('plugin_name', ['blogs', 'photoalbums'])->orderBy("id", "asc")->get();
-        $dusks = Dusks::whereIn('plugin_name', ['photoalbums'])->whereIn('method_name', ['index', 'makeFolder'])->orderBy("id", "asc")->get();
+//        $dusks = Dusks::whereIn('plugin_name', ['photoalbums'])->whereIn('method_name', ['index', 'makeFolder'])->orderBy("id", "asc")->get();
 
         // マニュアル表紙
         //$pdf->writeHTML(view('manual.pdf.cover')->render(), false);
