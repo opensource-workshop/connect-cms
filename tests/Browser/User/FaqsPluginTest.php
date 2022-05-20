@@ -84,7 +84,7 @@ class FaqsPluginTest extends DuskTestCase
             {"path": "user/faqs/index/images/index2",
              "comment": "<ul class=\"mb-0\"><li>質問の詳細をアコーディオン方式で表示します。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -127,7 +127,7 @@ class FaqsPluginTest extends DuskTestCase
              "name": "変更・削除",
              "comment": "<ul class=\"mb-0\"><li>FAQを変更・削除できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -147,7 +147,7 @@ class FaqsPluginTest extends DuskTestCase
             {"path": "user/faqs/listCategories/images/listCategories",
              "comment": "<ul class=\"mb-0\"><li>カテゴリ設定は共通カテゴリとこのブログ独自のカテゴリ設定があります。</li><li>上の表が共通カテゴリで、表示のON/OFFと順番が指定できます。</li><li>下の表でこのブログ独自のカテゴリを設定できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -168,7 +168,7 @@ class FaqsPluginTest extends DuskTestCase
             {"path": "user/faqs/listBuckets/images/listBuckets",
              "comment": "<ul class=\"mb-0\"><li>表示するFAQを変更できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -228,7 +228,7 @@ class FaqsPluginTest extends DuskTestCase
              "name": "FAQ記事の変更・削除",
              "comment": "<ul class=\"mb-0\"><li>FAQ内容を変更・削除できます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -245,6 +245,6 @@ class FaqsPluginTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('user/faqs/show/images/show');
+        $this->putManualData('user/faqs/show/images/show', null, 4);
     }
 }

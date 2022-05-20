@@ -70,7 +70,7 @@ class DatabasesearchesPluginTest extends DuskTestCase
              "name": "データベース検索",
              "comment": "<ul class=\"mb-0\"><li>指定した条件でデータベース・プラグインのデータを検索し、表示できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -104,7 +104,7 @@ class DatabasesearchesPluginTest extends DuskTestCase
             {"path": "user/databasesearches/editBuckets/images/editBuckets2", "name": "設定変更２",
              "comment": "<ul class=\"mb-0\"><li>表示列はデータベースプラグインで定義している項目名をカンマ区切りで定義します。</li><li>SQLライクに抽出条件を設定することも可能です。</li><li>表示させる情報を、データベースの設定とは別でソートさせて表示することも可能です。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -123,7 +123,7 @@ class DatabasesearchesPluginTest extends DuskTestCase
             {"path": "user/databasesearches/listBuckets/images/listBuckets",
              "comment": "<ul class=\"mb-0\"><li>表示するデータベース検索を変更できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**

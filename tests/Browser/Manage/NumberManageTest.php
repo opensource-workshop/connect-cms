@@ -38,6 +38,6 @@ class NumberManageTest extends DuskTestCase
              "name": "連番設定",
              "comment": "<ul class=\"mb-0\"><li>連番とは、問い合わせフォームなどの連番のことです。</li><li>プラグイン中で採番した番号を見ることができます。</li><li>連番をクリアすることもできます。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 }

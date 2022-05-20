@@ -70,6 +70,7 @@ class PasswordPageTest extends DuskTestCase
                   "name": "パスワード設定"
                  }
              ]',
+             'level' => 'basic',
              'test_result' => 'OK']
         );
     }
@@ -142,6 +143,7 @@ class PasswordPageTest extends DuskTestCase
                   "comment": "<ul class=\"mb-0\"><li>パスワード付きページを閲覧できます。</li></ul>"
                  }
              ]',
+             'level' => 'basic',
              'test_result' => 'OK']
         );
     }

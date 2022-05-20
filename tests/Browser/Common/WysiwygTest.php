@@ -115,6 +115,7 @@ class WysiwygTest extends DuskTestCase
             'method_detail' => $method_detail,
             'html_path' => $html_path,
             'img_args' => $img_args,
+            'level' => 'basic',
             'test_result' => 'OK'
         ];
     }

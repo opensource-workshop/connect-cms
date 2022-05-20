@@ -20,7 +20,7 @@ class Dusks extends Model
         'category', 'sort',
         'plugin_name', 'plugin_title', 'plugin_desc',
         'method_name', 'method_title', 'method_desc', 'method_detail',
-        'html_path', 'img_args', 'test_result', 'parent_id'
+        'html_path', 'img_args', 'level', 'test_result', 'parent_id'
     ];
 
     /**

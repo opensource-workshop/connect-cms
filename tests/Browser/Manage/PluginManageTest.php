@@ -55,7 +55,7 @@ class PluginManageTest extends DuskTestCase
              "name": "プラグイン管理",
              "comment": "<ul class=\"mb-0\"><li>プラグイン管理で使用するプラグインをチェックし、プラグイン追加ダイアログで表示される順番を設定します。</li></ul>"
             }
-        ]');
+        ]', null, 3);
     }
 
     /**

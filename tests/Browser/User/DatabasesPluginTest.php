@@ -114,7 +114,7 @@ class DatabasesPluginTest extends DuskTestCase
              "name": "絞り込み",
              "comment": "<ul class=\"mb-0\"><li>データの並べ替えができます。</li><li>並び替えできる項目は選択肢の項目で且つ、並び替えの対象としたものになります。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -134,7 +134,7 @@ class DatabasesPluginTest extends DuskTestCase
              "name": "詳細表示",
              "comment": "<ul class=\"mb-0\"><li>１件ずつのデータが詳細表示できます。</li><li>表再画面に表示する項目は選べます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -233,7 +233,7 @@ class DatabasesPluginTest extends DuskTestCase
              "name": "新規登録画面",
              "comment": "<ul class=\"mb-0\"><li>項目設定した内容の登録画面が表示されます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -270,7 +270,7 @@ class DatabasesPluginTest extends DuskTestCase
              "name": "変更・削除",
              "comment": "<ul class=\"mb-0\"><li>データベースを変更・削除できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -319,7 +319,7 @@ class DatabasesPluginTest extends DuskTestCase
              "name": "複数の項目を設定した状態",
              "comment": "<ul class=\"mb-0\"><li>都道府県一覧を想定した項目を作りました。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -396,7 +396,7 @@ class DatabasesPluginTest extends DuskTestCase
              "name": "DBカラム設定の後半、デザインの設定",
              "comment": "<ul class=\"mb-0\"><li>項目の詳細内容（DBカラム設定の後半、及びデザインの設定）を設定します。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -422,7 +422,7 @@ class DatabasesPluginTest extends DuskTestCase
              "name": "データベースのコピー機能",
              "comment": "<ul class=\"mb-0\"><li>「設定変更」ボタンの▼から、「コピーしてDB作成へ」機能が利用できます。<br />「コピーしてDB作成へ」は、登録データはコピーせず設定のみコピーしてDB作成します。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -442,7 +442,7 @@ class DatabasesPluginTest extends DuskTestCase
              "name": "インポート",
              "comment": "<ul class=\"mb-0\"><li>インポート機能は、管理者用の機能です。<br />CSVファイルを使って、データベースへ一括登録できます。</li><li>CSVファイルの文字コードは<span style=\"color:#e83e8c;\">Shift_JIS</span>, 又は<span style=\"color:#e83e8c;\">UTF-8</span>です。<br />文字コードの自動検出は、<span style=\"color:#e83e8c;\">Shift_JIS</span>, <span style=\"color:#e83e8c;\">UTF-8</span>のいずれかを自動検出します。</li><li>CSVインポートは登録・更新・添付ファイルに対応しています。<br />添付ファイルは、下記「添付ファイル一括インポートの場合」を参照してください。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -477,7 +477,7 @@ class DatabasesPluginTest extends DuskTestCase
             {"path": "user/databases/editView/images/editView2",
              "comment": "<ul class=\"mb-0\"><li>データベースの表示設定を設定できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**

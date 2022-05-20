@@ -87,6 +87,7 @@ class FrameTest extends DuskTestCase
                   "comment": "<ul class=\"mb-0\"><li>権限のあるユーザでログインしている場合、フレームヘッダーの右側に、フレームを操作するリンクが表示されます。</li><li>フレームの操作に関係するアイコンを以下で説明します。</li></ul>"
                  }
              ]',
+            'level' => 'basic',
             'test_result' => 'OK']
         );
     }
@@ -145,6 +146,7 @@ class FrameTest extends DuskTestCase
                   "comment": "<ul class=\"mb-0\"><li>フレームヘッダーの下にハンバーガーアイコンが表示され、それをクリックすると、設定系のメニューが表示されます。</li></ul>"
                  }
              ]',
+            'level' => 'basic',
             'test_result' => 'OK']
         );
     }
@@ -186,6 +188,7 @@ class FrameTest extends DuskTestCase
                   "comment": "<ul class=\"mb-0\"><li>各項目の説明は以下を参照してください。</li></ul>"
                  }
              ]',
+            'level' => 'basic',
             'test_result' => 'OK']
         );
     }
@@ -250,6 +253,7 @@ class FrameTest extends DuskTestCase
                  {"path": "common/frame/frameDesign/images/warning", "name": "warning"},
                  {"path": "common/frame/frameDesign/images/danger", "name": "danger"}
              ]',
+            'level' => 'basic',
             'test_result' => 'OK']
         );
     }
@@ -303,6 +307,7 @@ class FrameTest extends DuskTestCase
                   "comment": "<ul class=\"mb-0\"><li>3つのフレームの幅をそれぞれ、6、4、2で指定した場合でも、スマートフォンでは縦に並ぶ例です。</li></ul>"
                  }
              ]',
+            'level' => null,
             'test_result' => 'OK']
         );
     }
@@ -370,6 +375,7 @@ class FrameTest extends DuskTestCase
                   "comment": "<ul class=\"mb-0\"><li>サイト管理 ＞ レイアウト設定 の「ヘッダーエリア」「フッターエリア」の100％で表示するチェックを付けておきます。</li><li>ヘッダーの固定記事はフレームの方もブラウザ幅100％にするをチェック。フッターはフレームの方はブラウザ幅100％をチェックしない。</li><li>フッターの背景色や文字色はテーマで設定しています。ここでは、#ccFooterArea セレクタで色を指定する方法を取っています。</li></ul>"
                  }
              ]',
+            'level' => null,
             'test_result' => 'OK']
         );
 
@@ -451,6 +457,7 @@ class FrameTest extends DuskTestCase
                   "comment": "<ul class=\"mb-0\"><li>トップページ以外で、このヘッダーが見えます。</li></ul>"
                  }
              ]',
+            'level' => null,
             'test_result' => 'OK']
         );
     }
@@ -488,6 +495,7 @@ class FrameTest extends DuskTestCase
                   "comment": "<ul class=\"mb-0\"><li>フレームを削除できます。</li></ul>"
                  }
              ]',
+            'level' => 'basic',
             'test_result' => 'OK']
         );
     }
@@ -578,7 +586,8 @@ class FrameTest extends DuskTestCase
                  "comment": "<ul class=\"mb-0\"><li>承認済み通知の設定です。</li></ul>"
                 }
              ]',
-            'test_result' => 'OK']
+             'level' => 'basic',
+             'test_result' => 'OK']
         );
     }
 }

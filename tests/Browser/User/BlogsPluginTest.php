@@ -102,7 +102,7 @@ class BlogsPluginTest extends DuskTestCase
              "name": "記事のコピー",
              "comment": "<ul class=\"mb-0\"><li>編集権限がある場合、記事の編集ボタンの右にある▼ボタンで、記事のコピーができます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -141,7 +141,7 @@ class BlogsPluginTest extends DuskTestCase
             {"path": "user/blogs/create/images/create2",
              "comment": "<ul class=\"mb-0\"><li>投稿日時に未来の日時を指定した場合、その日時になったら表示されます。</li><li>「重要記事」チェックは新着で上に出し続けるなど、新着での表示方法を変更できる機能です。<br />表示形式は新着情報プラグインの設定を参照してください。</li><li>また、「重要記事」タグも表示されます。</li><li>カテゴリを設定できます。カテゴリはサイト共通のものと、このブログ特有のものを設定できます。</li><li>タグを設定できます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -164,7 +164,7 @@ class BlogsPluginTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('user/blogs/edit/images/edit,user/blogs/edit/images/edit2');
+        $this->putManualData('user/blogs/edit/images/edit,user/blogs/edit/images/edit2', null, 4);
     }
 
     /**
@@ -184,7 +184,7 @@ class BlogsPluginTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('user/blogs/show/images/show');
+        $this->putManualData('user/blogs/show/images/show', null, 4);
     }
 
     /**
@@ -229,7 +229,7 @@ class BlogsPluginTest extends DuskTestCase
              "name": "変更・削除",
              "comment": "<ul class=\"mb-0\"><li>ブログを変更・削除できます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -254,7 +254,7 @@ class BlogsPluginTest extends DuskTestCase
             {"path": "user/blogs/settingBlogFrame/images/settingBlogFrame",
              "comment": "<ul class=\"mb-0\"><li>表示条件には全て、年、年度があります。年と年度を選んだ場合は、年もしくは年度を指定します。これは、年や年度が替わった際、前年度の内容を別ページでアーカイブ表示したい場合に使用する機能です。</li><li>同じブログをフレーム毎に違う条件で絞り込みできます。</li><li>投稿者名の表示する・表示しないが選択できます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -274,7 +274,7 @@ class BlogsPluginTest extends DuskTestCase
             {"path": "user/blogs/listCategories/images/listCategories",
              "comment": "<ul class=\"mb-0\"><li>カテゴリ設定は共通カテゴリとこのブログ独自のカテゴリ設定があります。</li><li>上の表が共通カテゴリで、表示のON/OFFと順番が指定できます。</li><li>下の表でこのブログ独自のカテゴリを設定できます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -294,7 +294,7 @@ class BlogsPluginTest extends DuskTestCase
             {"path": "user/blogs/listBuckets/images/listBuckets",
              "comment": "<ul class=\"mb-0\"><li>表示ブログを変更できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**

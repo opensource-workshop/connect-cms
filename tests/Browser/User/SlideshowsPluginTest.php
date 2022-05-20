@@ -72,7 +72,7 @@ class SlideshowsPluginTest extends DuskTestCase
              "name": "スライドショー",
              "comment": "<ul class=\"mb-0\"><li>画像は画面の幅に合わせて自動で大きさが変化します。（レスポンシブします。）</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -113,7 +113,7 @@ class SlideshowsPluginTest extends DuskTestCase
             },
             {"path": "user/slideshows/editItem/images/editItem2"},
             {"path": "user/slideshows/editItem/images/editItem3"}
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -157,7 +157,7 @@ class SlideshowsPluginTest extends DuskTestCase
              "name": "変更・削除",
              "comment": "<ul class=\"mb-0\"><li>スライドショーを変更・削除できます。</li></ul>"
             }
-        ]');
+        ]', null, 4, 'basic');
     }
 
     /**
@@ -177,6 +177,6 @@ class SlideshowsPluginTest extends DuskTestCase
             {"path": "user/slideshows/listBuckets/images/listBuckets",
              "comment": "<ul class=\"mb-0\"><li>表示するスライドショーを変更できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 }

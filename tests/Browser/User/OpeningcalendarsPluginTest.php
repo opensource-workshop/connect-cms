@@ -78,7 +78,7 @@ class OpeningcalendarsPluginTest extends DuskTestCase
              "name": "開館カレンダー",
              "comment": "<ul class=\"mb-0\"><li>共通的に表示される左エリアにも収まるサイズでカレンダー表示できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -131,7 +131,7 @@ class OpeningcalendarsPluginTest extends DuskTestCase
             {"path": "user/openingcalendars/edit/images/edit2",
              "comment": "<ul class=\"mb-0\"><li>月単位に登録します。最上部のすべて反映機能があるので、入力は容易です。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -176,7 +176,7 @@ class OpeningcalendarsPluginTest extends DuskTestCase
              "name": "変更・削除",
              "comment": "<ul class=\"mb-0\"><li>開館カレンダーを変更・削除できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -196,7 +196,7 @@ class OpeningcalendarsPluginTest extends DuskTestCase
             {"path": "user/openingcalendars/listBuckets/images/listBuckets",
              "comment": "<ul class=\"mb-0\"><li>表示する開館カレンダーを変更できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -253,7 +253,7 @@ class OpeningcalendarsPluginTest extends DuskTestCase
             {"path": "user/openingcalendars/listPatterns/images/listPatterns",
              "comment": "<ul class=\"mb-0\"><li>開館パターンを自由に設定できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 
     /**
@@ -285,6 +285,6 @@ class OpeningcalendarsPluginTest extends DuskTestCase
             {"path": "user/openingcalendars/editYearschedule/images/editYearschedule2",
              "comment": "<ul class=\"mb-0\"><li>年間カレンダーはカレンダーの右上の編集アイコンから登録できます。</li></ul>"
             }
-        ]');
+        ]', null, 4);
     }
 }

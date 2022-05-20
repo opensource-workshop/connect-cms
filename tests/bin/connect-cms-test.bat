@@ -292,6 +292,9 @@ if "%1" == "t_all" (
 
     echo --- マニュアルPDF出力
     php artisan dusk tests\Manual\src\ManualPdf.php
+
+    echo --- マニュアルPDF（基礎編）出力
+    php artisan dusk tests\Manual\src\ManualPdf.php level=basic
 )
 
 rem ---------------------------------------------
