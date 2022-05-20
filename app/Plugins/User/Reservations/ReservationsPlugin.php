@@ -959,7 +959,9 @@ class ReservationsPlugin extends UserPluginBase
             $validator_array['column']['rrule_repeat_end'][] = new CustomValiAvailableDayOfTheWeekBookings($request->facility_id, $occurrence_dates, '利用できない曜日が含まれています。繰り返し内容を見直してください。');
         }
 
-        $validator_array['column']['end_datetime'] = ['required', 'date_format:H:i', 'after:start_datetime'];
+        // 24h登録対応
+        // $validator_array['column']['end_datetime'] = ['required', 'date_format:H:i', 'after:start_datetime'];
+        $validator_array['column']['end_datetime'] = ['required', 'regex:/^([0-1][0-9]|[2][0-4]):[0-5][0-9]$/', 'after:start_datetime'];
         $validator_array['message']['target_date']    = '予約日';
         $validator_array['message']['start_datetime'] = '予約開始時間';
         $validator_array['message']['end_datetime']   = '予約終了時間';
@@ -1012,9 +1014,9 @@ class ReservationsPlugin extends UserPluginBase
 
         // 新規登録時のみの登録項目
         if (!$booking_id) {
-            // $reservations_inputs->reservations_id = $request->reservations_id;
-            $reservations_inputs->facility_id = $request->facility_id;
-            $reservations_inputs->created_id  = Auth::user()->id;            // 登録ユーザ
+            $reservations_inputs->facility_id        = $request->facility_id;
+            $reservations_inputs->first_committed_at = now();               // 初回確定日時
+            $reservations_inputs->created_id         = Auth::user()->id;    // 登録ユーザ
         }
         $reservations_inputs->start_datetime = new ConnectCarbon($request->target_date . ' ' . $request->start_datetime . ':00');
         $reservations_inputs->end_datetime = new ConnectCarbon($request->target_date . ' ' . $request->end_datetime . ':00');
@@ -1101,9 +1103,10 @@ class ReservationsPlugin extends UserPluginBase
 
                 // コピー
                 $reservations_inputs_tmp = $reservations_inputs->replicate();
-                $reservations_inputs_tmp->start_datetime = new ConnectCarbon($occurrence->format('Y-m-d') . ' ' . $request->start_datetime . ':00');
-                $reservations_inputs_tmp->end_datetime = new ConnectCarbon($occurrence->format('Y-m-d') . ' ' . $request->end_datetime . ':00');
-                $reservations_inputs_tmp->created_id  = $reservations_inputs->created_id;    // 登録ユーザをコピー元からコピー
+                $reservations_inputs_tmp->start_datetime     = new ConnectCarbon($occurrence->format('Y-m-d') . ' ' . $request->start_datetime . ':00');
+                $reservations_inputs_tmp->end_datetime       = new ConnectCarbon($occurrence->format('Y-m-d') . ' ' . $request->end_datetime . ':00');
+                $reservations_inputs_tmp->first_committed_at = $reservations_inputs->first_committed_at;    // 初回確定日時
+                $reservations_inputs_tmp->created_id         = $reservations_inputs->created_id;            // 登録ユーザをコピー元からコピー
                 $reservations_inputs_tmp->save();
             }
         }
@@ -1113,7 +1116,6 @@ class ReservationsPlugin extends UserPluginBase
         $columns_value = $request->columns_value ?? [];
         foreach (array_keys($columns_value) as $key) {
             // 予約明細 更新レコード取得
-            // $reservations_inputs_columns = ReservationsInputsColumn::where('reservations_id', $request->reservations_id)
             $reservations_inputs_columns = ReservationsInputsColumn::where('inputs_parent_id', $reservations_inputs->inputs_parent_id)
                 ->where('column_id', $key)
                 ->first();
@@ -1122,7 +1124,6 @@ class ReservationsPlugin extends UserPluginBase
             if (!$reservations_inputs_columns) {
                 $reservations_inputs_columns = new ReservationsInputsColumn();
                 // 新規登録時のみの登録項目
-                // $reservations_inputs_columns->reservations_id = $request->reservations_id;
                 $reservations_inputs_columns->inputs_parent_id = $reservations_inputs->id;
                 $reservations_inputs_columns->column_id = $key;
             }
@@ -1130,9 +1131,13 @@ class ReservationsPlugin extends UserPluginBase
 
             $reservations_inputs_columns->save();
         }
-        // $str_mode = $request->booking_id ? '更新' : '登録';
-        // $message = '予約を' . $str_mode . 'しました。【場所】' . $facility->facility_name . ' 【日時】' . date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
-        $start_end_datetime_str = date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . date_format($reservations_inputs->end_datetime, 'H時i分');
+
+        $end_datetime_str = date_format($reservations_inputs->end_datetime, 'H時i分');
+        if ($end_datetime_str == '00時00分') {
+            $end_datetime_str = '24時00分';
+        }
+
+        $start_end_datetime_str = date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . $end_datetime_str;
         $flash_message = "{$str_mode}【場所】{$facility->facility_name} 【日時】{$start_end_datetime_str}";
 
         // 繰り返しあり
@@ -1298,7 +1303,7 @@ class ReservationsPlugin extends UserPluginBase
 
             // 表示値をセット
             $inputs->reservation_date_display = $inputs->displayDate();
-            $inputs->reservation_time_display = $inputs->start_datetime->format('H:i') . ' ~ ' . $inputs->end_datetime->format('H:i');
+            $inputs->reservation_time_display = $inputs->start_datetime->format('H:i') . ' ~ ' . $inputs->displayEndtime();
             $repeat->reservation_repeat_display = $repeat->showRruleDisplay();
             $repeat->reservation_repeat_end_display = $repeat->showRruleEndDisplay();
 

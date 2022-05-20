@@ -789,6 +789,7 @@ class FormsPlugin extends UserPluginBase
         $forms_inputs->forms_id = $form->id;
 
         $user_token = null;
+        $number = null;
         if ($form->use_temporary_regist_mail_flag) {
             // 仮登録
             // トークン生成 (メール送信用でユーザのみ知る. DB保存しない)
@@ -802,6 +803,11 @@ class FormsPlugin extends UserPluginBase
         } else {
             // 本登録
             $forms_inputs->status = FormStatusType::active;
+            if ($form->numbering_use_flag) {
+                // 採番は本登録の時のみする ※[採番プレフィックス文字列] + [ゼロ埋め採番6桁]
+                $number = $form->numbering_prefix . sprintf('%06d', $this->getNo('forms', $form->bucket_id, $form->numbering_prefix));
+                $forms_inputs->number_with_prefix = $number;
+            }
         }
 
         $forms_inputs->save();
@@ -914,10 +920,6 @@ class FormsPlugin extends UserPluginBase
             }
         } else {
             // 本登録
-            // 採番は本登録の時のみする
-
-            // 採番 ※[採番プレフィックス文字列] + [ゼロ埋め採番6桁]
-            $number = $form->numbering_use_flag ? $form->numbering_prefix . sprintf('%06d', $this->getNo('forms', $form->bucket_id, $form->numbering_prefix)) : null;
 
             // 登録後メッセージ内の採番文字列を置換
             $after_message = str_replace('[[number]]', $number, $form->after_message);
@@ -1146,6 +1148,12 @@ class FormsPlugin extends UserPluginBase
         // forms_inputs 更新
         // 本登録
         $forms_inputs->status = FormStatusType::active;
+        $number = null;
+        if ($form->numbering_use_flag) {
+            // 採番は本登録の時のみする ※[採番プレフィックス文字列] + [ゼロ埋め採番6桁]
+            $number = $form->numbering_prefix . sprintf('%06d', $this->getNo('forms', $form->bucket_id, $form->numbering_prefix));
+            $forms_inputs->number_with_prefix = $number;
+        }
         $forms_inputs->save();
 
         // フォームのカラムデータ
@@ -1209,10 +1217,6 @@ class FormsPlugin extends UserPluginBase
         // dd($user_mailaddresses);
 
         // 本登録
-        // 採番は本登録の時のみする
-
-        // 採番 ※[採番プレフィックス文字列] + [ゼロ埋め採番6桁]
-        $number = $form->numbering_use_flag ? $form->numbering_prefix . sprintf('%06d', $this->getNo('forms', $form->bucket_id, $form->numbering_prefix)) : null;
 
         // 登録後メッセージ内の採番文字列を置換
         $after_message = str_replace('[[number]]', $number, $form->after_message);
@@ -2266,6 +2270,7 @@ class FormsPlugin extends UserPluginBase
                 select(
                     'forms_inputs.id as inputs_id',
                     'forms_inputs.status as inputs_status',
+                    'forms_inputs.number_with_prefix as number_with_prefix',
                     'forms_inputs.created_at as inputs_created_at',
                     'forms_input_cols.*'
                 )
@@ -2324,6 +2329,11 @@ ORDER BY forms_inputs_id, forms_columns_id
             $csv_array[0][$column->id] = $column->column_name;
             $copy_base[$column->id] = '';
         }
+        if ($form->numbering_use_flag) {
+            // 見出し行-行末１つ手前（採番項目）
+            $csv_array[0]['number_with_prefix'] = '採番';
+            $copy_base['number_with_prefix'] = '';
+        }
         // 見出し行-行末（固定項目）
         $csv_array[0]['created_at'] = '登録日時';
         $copy_base['created_at'] = '';
@@ -2336,6 +2346,10 @@ ORDER BY forms_inputs_id, forms_columns_id
 
                 // 初回で固定項目をセット
                 $csv_array[$input_col->inputs_id]['status'] = $input_col->inputs_status;
+                if ($form->numbering_use_flag) {
+                    // 採番項目
+                    $csv_array[$input_col->inputs_id]['number_with_prefix'] = $input_col->number_with_prefix;
+                }
                 $csv_array[$input_col->inputs_id]['created_at'] = $input_col->inputs_created_at;
             }
             $csv_array[$input_col->inputs_id][$input_col->forms_columns_id] = $input_col->value;

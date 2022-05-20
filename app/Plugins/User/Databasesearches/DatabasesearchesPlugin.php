@@ -5,6 +5,7 @@ namespace App\Plugins\User\Databasesearches;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
+use Carbon\Carbon;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\User\Databases\DatabasesInputCols;
@@ -107,6 +108,7 @@ class DatabasesearchesPlugin extends UserPluginBase
         } else {
             $databasesearches = new Databasesearches();
         }
+        $databasesearches = $databasesearches ?? new Databasesearches();
 
         // データベース検索設定がまだの場合の対応
         if (empty($databasesearches->condition)) {
@@ -254,7 +256,12 @@ class DatabasesearchesPlugin extends UserPluginBase
             ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
             ->join('databases_inputs', function ($join) {
                 $join->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
-                    ->where('databases_inputs.status', '=', StatusType::active);
+                    ->where('databases_inputs.status', '=', StatusType::active)
+                    ->where('databases_inputs.posted_at', '<=', Carbon::now())
+                    ->where(function ($query) {
+                        $query->whereNull('databases_inputs.expires_at')
+                            ->orWhere('databases_inputs.expires_at', '>', Carbon::now());
+                    });
             })
             ->whereIn('databases_inputs_id', $inputs_ids_marge)
             ->groupBy('databases_inputs_id')
@@ -310,24 +317,29 @@ class DatabasesearchesPlugin extends UserPluginBase
 
         // 登録データ詳細の取得
         $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'databases_columns.column_name', 'uploads.client_original_name', 'databases_columns.column_type')
-                                        ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
-                                        ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
-                                        ->whereIn('databases_inputs_id', $inputs_ids->pluck('databases_inputs_id'))
-                                        // 画面は input_cols をモトに表示している。ここで hide_columns_ids でNotInしてるため、権限によって非表示columは表示されない
-                                        ->whereNotIn('databases_columns_id', $hide_columns_ids)
-                                        ->orderBy('databases_inputs_id', 'asc')
-                                        ->orderBy('databases_columns_id', 'asc')
-                                        ->get();
+            ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+            ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
+            ->whereIn('databases_inputs_id', $inputs_ids->pluck('databases_inputs_id'))
+            // 画面は input_cols をモトに表示している。ここで hide_columns_ids でNotInしてるため、権限によって非表示columは表示されない
+            ->whereNotIn('databases_columns_id', $hide_columns_ids)
+            ->orderBy('databases_inputs_id', 'asc')
+            ->orderBy('databases_columns_id', 'asc')
+            ->get();
         // Log::debug(var_export($input_cols->toArray(), true));
         // var_dump($hide_columns_ids);
 
-        // 画面へ
-        return $this->view('databasesearches', [
-            'page_id'          => $page_id,
-            'databasesearches' => $databasesearches,
-            'inputs_ids'       => $inputs_ids,
-            'input_cols'       => $input_cols,
-        ]);
+        if ($databasesearches->id) {
+            // 画面へ
+            return $this->view('databasesearches', [
+                'page_id'          => $page_id,
+                'databasesearches' => $databasesearches,
+                'inputs_ids'       => $inputs_ids,
+                'input_cols'       => $input_cols,
+            ]);
+        } else {
+            // バケツ空テンプレートを呼び出す。
+            return $this->commonView('empty_bucket');
+        }
     }
 
     /**
@@ -351,6 +363,7 @@ class DatabasesearchesPlugin extends UserPluginBase
         } else {
             $databasesearches = new Databasesearches();
         }
+        $databasesearches = $databasesearches ?? new Databasesearches();
 
         // 選択可能なFrame データ
         $target_frames = Frame::select('frames.*', 'pages._lft', 'pages.page_name', 'buckets.bucket_name')
@@ -362,13 +375,11 @@ class DatabasesearchesPlugin extends UserPluginBase
                        ->get();
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'databasesearches_edit_buckets', [
+        return $this->view('databasesearches_edit_buckets', [
             'frames'                     => $frames,
             'databasesearches'           => $databasesearches,
             'target_frames'              => $target_frames,
-            ]
-        )->withInput($request->all);
+        ])->withInput($request->all);
     }
 
     /**
@@ -427,6 +438,29 @@ class DatabasesearchesPlugin extends UserPluginBase
         );
 
         return $this->editBuckets($request, $page_id, $frame_id, $id);
+    }
+
+    /**
+     * 削除処理
+     */
+    public function destroyBuckets($request, $page_id, $frame_id, $id)
+    {
+        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
+
+        // プラグインバケツの取得
+        $databasesearches = Databasesearches::find($id);
+        if (empty($databasesearches)) {
+            return;
+        }
+
+        // FrameのバケツIDの更新
+        Frame::where('bucket_id', $databasesearches->bucket_id)->update(['bucket_id' => null]);
+
+        // バケツ削除
+        Buckets::destroy($databasesearches->bucket_id);
+
+        // プラグインデータ削除
+        $databasesearches->delete();
     }
 
     /**

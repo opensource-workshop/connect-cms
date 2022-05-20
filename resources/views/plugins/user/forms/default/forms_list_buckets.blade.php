@@ -88,14 +88,14 @@
     <form action="{{url('/')}}/plugin/{{$frame->plugin_name}}/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
         {{ csrf_field() }}
         <div class="form-group">
-            <table class="table table-hover table-responsive">
+            <table class="table table-hover {{$frame->getSettingTableClass()}}">
             <thead>
                 <tr>
                     <th></th>
-                    <th>{{$frame->plugin_name_full}}名</th>
+                    <th nowrap>{{$frame->plugin_name_full}}名</th>
                     <th>仮<a href="#frame-{{$frame_id}}" data-toggle="tooltip" data-placement="top" title="仮登録数">...</a></th>
                     <th>本<a href="#frame-{{$frame_id}}" data-toggle="tooltip" data-placement="top" title="本登録数">...</a></th>
-                    <th>データ保存</th>
+                    <th>保存<a href="#frame-{{$frame_id}}" data-toggle="tooltip" data-placement="top" title="データ保存">...</a></th>
                     <th>詳細</th>
                     <th>作成日</th>
                 </tr>
@@ -103,25 +103,26 @@
             <tbody>
             @foreach($plugins as $plugin)
                 <tr @if ($plugin->id == $plugin_frame->id) class="active"@endif>
-                    <td nowrap><input type="radio" value="{{$plugin->bucket_id}}" name="select_bucket"@if ($plugin_frame->bucket_id == $plugin->bucket_id) checked @endif></td>
-                    <td nowrap>{{$plugin->plugin_bucket_name}}</td>
-                    <td nowrap class="text-right">{{$plugin->tmp_entry_count}}</td>
-                    <td nowrap class="text-right">{{$plugin->active_entry_count}}</td>
-                    <td nowrap>@if ($plugin->data_save_flag) 保存する @else 保存しない @endif</td>
-                    <td nowrap>
-                        <a class="btn btn-success btn-sm mr-1" href="{{url('/')}}/plugin/forms/editBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}">
+                    <td class="d-table-cell"><input type="radio" value="{{$plugin->bucket_id}}" name="select_bucket"@if ($plugin_frame->bucket_id == $plugin->bucket_id) checked @endif></td>
+                    <td><span class="{{$frame->getSettingCaptionClass()}}">{{$frame->plugin_name_full}}名：</span>{{$plugin->plugin_bucket_name}}</td>
+                    <td><span class="{{$frame->getSettingCaptionClass()}}">仮登録数：</span>{{$plugin->tmp_entry_count}}</td>
+                    <td><span class="{{$frame->getSettingCaptionClass()}}">本登録数：</span>{{$plugin->active_entry_count}}</td>
+                    <td nowrap><span class="{{$frame->getSettingCaptionClass()}}">データ保存：</span>@if ($plugin->data_save_flag) 保存する @else 保存しない @endif</td>
+                    <td>
+                        <span class="{{$frame->getSettingCaptionClass()}}">詳細：</span>
+                        <a class="btn btn-success btn-sm mr-1 mb-1" href="{{url('/')}}/plugin/forms/editBuckets/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}">
                             <i class="far fa-edit"></i> 設定変更
                         </a>
 
-                        <a class="btn btn-success btn-sm mr-1" href="{{url('/')}}/plugin/forms/listInputs/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}">
+                        <a class="btn btn-success btn-sm mr-1 mb-1" href="{{url('/')}}/plugin/forms/listInputs/{{$page->id}}/{{$frame_id}}/{{$plugin->id}}#frame-{{$frame_id}}">
                             <i class="fas fa-list"></i> 登録一覧
                         </a>
 
-                        <button type="button" class="btn btn-primary btn-sm mr-1" onclick="copy_form({{$plugin->id}});">
+                        <button type="button" class="btn btn-primary btn-sm mr-1 mb-1" onclick="copy_form({{$plugin->id}});">
                             <i class="fas fa-copy"></i> コピーして新規
                         </button>
 
-                        <div class="btn-group">
+                        <div class="btn-group mb-1">
                             <button type="button" class="btn btn-primary btn-sm" onclick="submit_download_shift_jis({{$plugin->id}});">
                                 <i class="fas fa-file-download"></i> ダウンロード
                             </button>
@@ -134,7 +135,7 @@
                             </div>
                         </div>
                     </td>
-                    <td nowrap>{{$plugin->created_at}}</td>
+                    <td><span class="{{$frame->getSettingCaptionClass()}}">作成日：</span>{{$plugin->created_at->format('Y/m/d H:i')}}</td>
                 </tr>
             @endforeach
             </tbody>

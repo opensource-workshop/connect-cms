@@ -21,7 +21,7 @@
         >
             {{-- 表示用の予約時間 --}}
             <div class="small">
-                {{ $booking['booking_header']->start_datetime->format('H:i')}}~{{$booking['booking_header']->end_datetime->format('H:i') . ' ' . $booking['booking_header']->title }}
+                {{ $booking['booking_header']->start_datetime->format('H:i')}}~{{$booking['booking_header']->displayEndtime() . ' ' . $booking['booking_header']->title }}
                 <span class="badge badge-warning align-bottom">承認待ち</span>
             </div>
         </a>
@@ -30,7 +30,7 @@
         {{-- 承認待ち：リンクなし＆タイトル表示しない --}}
 
         <div class="small">
-            {{ $booking['booking_header']->start_datetime->format('H:i')}}~{{$booking['booking_header']->end_datetime->format('H:i') }}
+            {{ $booking['booking_header']->start_datetime->format('H:i')}}~{{$booking['booking_header']->displayEndtime() }}
             <span class="badge badge-warning align-bottom">承認待ち</span>
         </div>
     @endcan
@@ -50,7 +50,7 @@
     >
         {{-- 表示用の予約時間 --}}
         <div class="small">
-            {{ $booking['booking_header']->start_datetime->format('H:i')}}~{{$booking['booking_header']->end_datetime->format('H:i') . ' ' . $booking['booking_header']->title }}
+            {{ $booking['booking_header']->start_datetime->format('H:i')}}~{{$booking['booking_header']->displayEndtime() . ' ' . $booking['booking_header']->title }}
         </div>
     </a>
 

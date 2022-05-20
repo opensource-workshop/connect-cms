@@ -86,7 +86,7 @@ jobs:
       - name: PHP 7.3 changes database user authentication method
         run: |
           if [[ "$PHP_VERSION" = "7.3" ]]; then
-            mysql --user="root" --password="root" -e "alter user 'root'@'localhost' identified with mysql_native_password by 'root';"          
+            mysql --user="root" --password="root" -e "alter user 'root'@'localhost' identified with mysql_native_password by 'root';"
             mysql --user="root" --password="root" -e "SELECT user, host, plugin FROM mysql.user;"
           fi
         env:
@@ -94,7 +94,7 @@ jobs:
 
       # Composer
       - name: Validate composer.json and composer.lock
-        run: composer validate
+        run: COMPOSER=composer-dev.json composer validate
 
       - name: Get composer cache directory
         id: composer-cache
@@ -112,9 +112,9 @@ jobs:
       - name: Install or Update Composer Dependencies
         run: |
           if [[ "$PHP_VERSION" = "8.1" ]]; then
-            composer update --no-progress --optimize-autoloader
+            COMPOSER=composer-dev.json composer update --no-progress --optimize-autoloader
           else
-            composer install --no-progress --optimize-autoloader
+            COMPOSER=composer-dev.json composer install --no-progress --optimize-autoloader
           fi
         env:
           PHP_VERSION: ${{ steps.php_version_empty_action.outputs.PHP_VERSION }}

@@ -530,6 +530,11 @@ class UserPluginBase extends PluginBase
             ->orderBy('created_at', 'desc')
             ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
+        if ($plugins->isEmpty()) {
+            // バケツ空テンプレートを呼び出す。
+            return $this->commonView('empty_bucket_setting');
+        }
+
         // 表示テンプレートを呼び出す。
         return $this->commonView('edit_datalist', [
             'plugin_frame' => $plugin_frame,
@@ -1490,9 +1495,9 @@ class UserPluginBase extends PluginBase
 
             // DBカラム expires_at(終了日時) 存在するか
             if (Schema::hasColumn($table_name, 'expires_at')) {
-                $query->where(function ($query) {
-                    $query->whereNull('expires_at')
-                        ->orWhere('expires_at', '>', Carbon::now());
+                $query->where(function ($query) use ($table_name) {
+                    $query->whereNull($table_name . '.expires_at')
+                        ->orWhere($table_name . '.expires_at', '>', Carbon::now());
                 });
             }
         }

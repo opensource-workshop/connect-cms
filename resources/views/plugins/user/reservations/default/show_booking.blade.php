@@ -26,7 +26,7 @@ if ($frame->isExpandNarrow()) {
     <dd class="{{$value_class}}">{{$inputs->displayDate()}}</dd>
     {{-- 利用時間 --}}
     <dt class="{{$label_class}}">{{__('messages.time_of_use')}}</dt>
-    <dd class="{{$value_class}}">{{$inputs->start_datetime->format('H:i')}} ~ {{$inputs->end_datetime->format('H:i')}}</dd>
+    <dd class="{{$value_class}}">{{$inputs->start_datetime->format('H:i')}} ~ {{$inputs->displayEndtime()}}</dd>
 
     @if ($repeat->id)
         {{-- 繰り返し --}}

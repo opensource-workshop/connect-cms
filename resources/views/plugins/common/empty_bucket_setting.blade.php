@@ -1,5 +1,9 @@
 {{--
  * 設定画面のバケツなしテンプレート。
+ *
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category プラグイン共通
 --}}
 @extends('core.cms_frame_base_setting')
 

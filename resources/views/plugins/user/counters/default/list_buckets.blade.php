@@ -57,16 +57,16 @@
                     </td>
                     <td><span class="{{$frame->getSettingCaptionClass()}}">カウンター名：</span>{{$plugin_bucket->name}}</td>
                     <td><span class="{{$frame->getSettingCaptionClass()}}">累計：</span>{{$plugin_bucket->total_count}}</td>
-                    <td nowrap>
+                    <td>
                         <span class="{{$frame->getSettingCaptionClass()}}">詳細：</span>
 
-                        <a class="btn btn-success btn-sm mr-1" href="{{url('/')}}/plugin/counters/listCounters/{{$page->id}}/{{$frame_id}}/{{$plugin_bucket->id}}#frame-{{$frame_id}}">
-                            <i class="fas fa-list"></i> <span class="{{$frame->getSettingButtonCaptionClass()}}">カウント</span>一覧
+                        <a class="btn btn-success btn-sm mr-1 mb-1" href="{{url('/')}}/plugin/counters/listCounters/{{$page->id}}/{{$frame_id}}/{{$plugin_bucket->id}}#frame-{{$frame_id}}">
+                            <i class="fas fa-list"></i> カウント一覧
                         </a>
 
-                        <div class="btn-group">
+                        <div class="btn-group mb-1">
                             <button type="button" class="btn btn-primary btn-sm" onclick="submit_download_shift_jis({{$plugin_bucket->id}});">
-                                <i class="fas fa-file-download"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> ダウンロード</span>
+                                <i class="fas fa-file-download"></i> ダウンロード
                             </button>
                             <button type="button" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="sr-only">ドロップダウンボタン</span>
@@ -78,7 +78,7 @@
                         </div>
 
                     </td>
-                    <td><span class="{{$frame->getSettingCaptionClass()}}">作成日：</span>{{$plugin_bucket->created_at}}</td>
+                    <td><span class="{{$frame->getSettingCaptionClass()}}">作成日：</span>{{$plugin_bucket->created_at->format('Y/m/d H:i')}}</td>
                 </tr>
             @endforeach
             </tbody>
