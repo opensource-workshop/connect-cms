@@ -3020,6 +3020,9 @@ trait MigrationTrait
         // 新着情報定義の取り込み
         $whatsnew_ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('whatsnews/whatsnew_*.ini'));
 
+        // ユーザ取得
+        $users = User::get();
+
         // 新着情報定義のループ
         foreach ($whatsnew_ini_paths as $whatsnew_ini_paths) {
             // ini_file の解析
@@ -3060,9 +3063,14 @@ trait MigrationTrait
             if (array_key_exists('whatsnew_base', $whatsnew_ini) && array_key_exists('whatsnew_name', $whatsnew_ini['whatsnew_base'])) {
                 $whatsnew_name = $whatsnew_ini['whatsnew_base']['whatsnew_name'];
             }
-            $bucket = Buckets::create(['bucket_name' => $whatsnew_name, 'plugin_name' => 'whatsnews']);
+            $bucket = new Buckets(['bucket_name' => $whatsnew_name, 'plugin_name' => 'whatsnews']);
+            $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($whatsnew_ini, 'source_info', 'created_at');
+            $bucket->updated_at = $this->getDatetimeFromIniAndCheckFormat($whatsnew_ini, 'source_info', 'updated_at');
+            // 登録更新日時を自動更新しない
+            $bucket->timestamps = false;
+            $bucket->save();
 
-            $whatsnew = Whatsnews::create([
+            $whatsnew = new Whatsnews([
                 'bucket_id'        => $bucket->id,
                 'whatsnew_name'    => $whatsnew_name,
                 'view_pattern'     => $whatsnew_ini['whatsnew_base']['view_pattern'],
@@ -3075,6 +3083,15 @@ trait MigrationTrait
                 'target_plugins'   => $whatsnew_ini['whatsnew_base']['target_plugins'],
                 'frame_select'     => $whatsnew_ini['whatsnew_base']['frame_select'],
             ]);
+            $whatsnew->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($whatsnew_ini, 'source_info', 'insert_login_id', null));
+            $whatsnew->created_name = $this->getArrayValue($whatsnew_ini, 'source_info', 'created_name', null);
+            $whatsnew->created_at   = $this->getDatetimeFromIniAndCheckFormat($whatsnew_ini, 'source_info', 'created_at');
+            $whatsnew->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($whatsnew_ini, 'source_info', 'update_login_id', null));
+            $whatsnew->updated_name = $this->getArrayValue($whatsnew_ini, 'source_info', 'updated_name', null);
+            $whatsnew->updated_at   = $this->getDatetimeFromIniAndCheckFormat($whatsnew_ini, 'source_info', 'updated_at');
+            // 登録更新日時を自動更新しない
+            $whatsnew->timestamps = false;
+            $whatsnew->save();
 
             // マッピングテーブルの追加
             $mapping = MigrationMapping::create([
@@ -8888,6 +8905,9 @@ trait MigrationTrait
             return;
         }
 
+        // nc2の全ユーザ取得
+        $nc2_users = Nc2User::get();
+
         // NC2新着情報（Whatsnew）のループ
         foreach ($nc2_whatsnew_blocks as $nc2_whatsnew_block) {
             $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
@@ -8938,6 +8958,12 @@ trait MigrationTrait
             $whatsnew_ini .= "whatsnew_block_id = " . $whatsnew_block_id . "\n";
             $whatsnew_ini .= "room_id = "           . $nc2_whatsnew_block->room_id . "\n";
             $whatsnew_ini .= "module_name = \"whatsnew\"\n";
+            $whatsnew_ini .= "created_at      = \"" . $this->getCCDatetime($nc2_whatsnew_block->insert_time) . "\"\n";
+            $whatsnew_ini .= "created_name    = \"" . $nc2_whatsnew_block->insert_user_name . "\"\n";
+            $whatsnew_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_whatsnew_block->insert_user_id) . "\"\n";
+            $whatsnew_ini .= "updated_at      = \"" . $this->getCCDatetime($nc2_whatsnew_block->update_time) . "\"\n";
+            $whatsnew_ini .= "updated_name    = \"" . $nc2_whatsnew_block->update_user_name . "\"\n";
+            $whatsnew_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_whatsnew_block->update_user_id) . "\"\n";
 
             // 新着情報の設定を出力
             //Storage::put($this->getImportPath('whatsnews/whatsnew_') . $this->zeroSuppress($whatsnew_block_id) . '.ini', $whatsnew_ini);
