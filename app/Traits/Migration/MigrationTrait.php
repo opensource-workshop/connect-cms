@@ -2327,6 +2327,9 @@ trait MigrationTrait
         // リンクリスト定義の取り込み
         $linklists_ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('linklists/linklist_*.ini'));
 
+        // ユーザ取得
+        $users = User::get();
+
         // リンクリスト定義のループ
         foreach ($linklists_ini_paths as $linklists_ini_path) {
             // ini_file の解析
@@ -2360,10 +2363,24 @@ trait MigrationTrait
                 if (array_key_exists('linklist_base', $linklist_ini) && array_key_exists('linklist_name', $linklist_ini['linklist_base'])) {
                     $linklist_name = $linklist_ini['linklist_base']['linklist_name'];
                 }
-                $bucket = Buckets::create(['bucket_name' => $linklist_name, 'plugin_name' => 'linklists']);
+                $bucket = new Buckets(['bucket_name' => $linklist_name, 'plugin_name' => 'linklists']);
+                $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($linklist_ini, 'source_info', 'created_at');
+                $bucket->updated_at = $this->getDatetimeFromIniAndCheckFormat($linklist_ini, 'source_info', 'updated_at');
+                // 登録更新日時を自動更新しない
+                $bucket->timestamps = false;
+                $bucket->save();
 
                 $view_count = 10;
                 $linklist = Linklist::create(['bucket_id' => $bucket->id, 'name' => $linklist_name, 'view_count' => $view_count]);
+                $linklist->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($linklist_ini, 'source_info', 'insert_login_id', null));
+                $linklist->created_name = $this->getArrayValue($linklist_ini, 'source_info', 'created_name', null);
+                $linklist->created_at   = $this->getDatetimeFromIniAndCheckFormat($linklist_ini, 'source_info', 'created_at');
+                $linklist->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($linklist_ini, 'source_info', 'update_login_id', null));
+                $linklist->updated_name = $this->getArrayValue($linklist_ini, 'source_info', 'updated_name', null);
+                $linklist->updated_at   = $this->getDatetimeFromIniAndCheckFormat($linklist_ini, 'source_info', 'updated_at');
+                // 登録更新日時を自動更新しない
+                $linklist->timestamps = false;
+                $linklist->save();
 
                 // マッピングテーブルの追加
                 $mapping = MigrationMapping::create([
@@ -2805,7 +2822,12 @@ trait MigrationTrait
             if (array_key_exists('form_base', $form_ini) && array_key_exists('forms_name', $form_ini['form_base'])) {
                 $form_name = $form_ini['form_base']['forms_name'];
             }
-            $bucket = Buckets::create(['bucket_name' => $form_name, 'plugin_name' => 'forms']);
+            $bucket = new Buckets(['bucket_name' => $form_name, 'plugin_name' => 'forms']);
+            $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($form_ini, 'source_info', 'created_at');
+            $bucket->updated_at = $this->getDatetimeFromIniAndCheckFormat($form_ini, 'source_info', 'updated_at');
+            // 登録更新日時を自動更新しない
+            $bucket->timestamps = false;
+            $bucket->save();
 
             // 登録期間で制御する
             $regist_control_flag = 0;
@@ -8105,6 +8127,9 @@ trait MigrationTrait
             return;
         }
 
+        // nc2の全ユーザ取得
+        $nc2_users = Nc2User::get();
+
         // NC2リンクリスト（Linklist）のループ
         foreach ($nc2_linklists as $nc2_linklist) {
             $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
@@ -8170,6 +8195,12 @@ trait MigrationTrait
             $linklists_ini .= "linklist_id = " . $nc2_linklist->linklist_id . "\n";
             $linklists_ini .= "room_id = " . $nc2_linklist->room_id . "\n";
             $linklists_ini .= "module_name = \"linklist\"\n";
+            $linklists_ini .= "created_at      = \"" . $this->getCCDatetime($nc2_linklist->insert_time) . "\"\n";
+            $linklists_ini .= "created_name    = \"" . $nc2_linklist->insert_user_name . "\"\n";
+            $linklists_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_linklist->insert_user_id) . "\"\n";
+            $linklists_ini .= "updated_at      = \"" . $this->getCCDatetime($nc2_linklist->update_time) . "\"\n";
+            $linklists_ini .= "updated_name    = \"" . $nc2_linklist->update_user_name . "\"\n";
+            $linklists_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_linklist->update_user_id) . "\"\n";
 
             // NC2リンクリストで使っているカテゴリ（linklist_category）のみ移行する。
             $linklists_ini .= "\n";
