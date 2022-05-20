@@ -3117,6 +3117,9 @@ trait MigrationTrait
         // キャビネット定義の取り込み
         $ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('cabinets/cabinet_*.ini'));
 
+        // ユーザ取得
+        $users = User::get();
+
         // キャビネット定義のループ
         foreach ($ini_paths as $ini_path) {
             // ini_file の解析
@@ -3152,20 +3155,43 @@ trait MigrationTrait
             if (array_key_exists('cabinet_base', $ini) && array_key_exists('cabinet_name', $ini['cabinet_base'])) {
                 $cabinet_name = $ini['cabinet_base']['cabinet_name'];
             }
-            $bucket = Buckets::create(['bucket_name' => $cabinet_name, 'plugin_name' => 'cabinets']);
+            $bucket = new Buckets(['bucket_name' => $cabinet_name, 'plugin_name' => 'cabinets']);
+            $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'created_at');
+            $bucket->updated_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'updated_at');
+            // 登録更新日時を自動更新しない
+            $bucket->timestamps = false;
+            $bucket->save();
 
-            $cabinet = Cabinet::create([
+            $cabinet = new Cabinet([
                 'bucket_id' => $bucket->id,
                 'name' => $cabinet_name,
                 'upload_max_size' => intval($ini['cabinet_base']['upload_max_size']) / 1024,
             ]);
+            $cabinet->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'insert_login_id', null));
+            $cabinet->created_name = $this->getArrayValue($ini, 'source_info', 'created_name', null);
+            $cabinet->created_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'created_at');
+            $cabinet->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'update_login_id', null));
+            $cabinet->updated_name = $this->getArrayValue($ini, 'source_info', 'updated_name', null);
+            $cabinet->updated_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'updated_at');
+            // 登録更新日時を自動更新しない
+            $cabinet->timestamps = false;
+            $cabinet->save();
 
             // ルートディレクトを作成する
-            $root_cabinet_content = CabinetContent::create([
+            $root_cabinet_content = new CabinetContent([
                 'cabinet_id' => $cabinet->id,
                 'name' => $cabinet_name,
                 'is_folder' => CabinetContent::is_folder_on,
             ]);
+            $root_cabinet_content->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'insert_login_id', null));
+            $root_cabinet_content->created_name = $this->getArrayValue($ini, 'source_info', 'created_name', null);
+            $root_cabinet_content->created_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'created_at');
+            $root_cabinet_content->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'update_login_id', null));
+            $root_cabinet_content->updated_name = $this->getArrayValue($ini, 'source_info', 'updated_name', null);
+            $root_cabinet_content->updated_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'updated_at');
+            // 登録更新日時を自動更新しない
+            $root_cabinet_content->timestamps = false;
+            $root_cabinet_content->save();
 
             // マッピングテーブルの追加
             $mapping = MigrationMapping::create([
@@ -3194,13 +3220,23 @@ trait MigrationTrait
                     $upload_mapping = MigrationMapping::where('target_source_table', 'uploads')
                                         ->where('source_key', $tsv_cols[2])->first();
 
-                    $cabinet_content = CabinetContent::create([
+                    $cabinet_content = new CabinetContent([
                         'cabinet_id' => $cabinet->id,
                         'upload_id' => $upload_mapping ? $upload_mapping->destination_key : null,
                         'name' => empty($tsv_cols[5]) ? $tsv_cols[4] : $tsv_cols[4] . '.' . $tsv_cols[5],
                         'is_folder' => $tsv_cols[9],
                         'comment' => $tsv_cols[12],
                     ]);
+                    $cabinet_content->created_id = $this->getUserIdFromLoginId($users, $tsv_cols[15]);
+                    $cabinet_content->created_name = $tsv_cols[14];
+                    $cabinet_content->created_at = $this->getDatetimeFromTsvAndCheckFormat(13, $tsv_cols, '13');
+                    $cabinet_content->updated_id = $this->getUserIdFromLoginId($users, $tsv_cols[18]);
+                    $cabinet_content->updated_name = $tsv_cols[17];
+                    $cabinet_content->updated_at = $this->getDatetimeFromTsvAndCheckFormat(16, $tsv_cols, '16');
+                    // 登録更新日時を自動更新しない
+                    $cabinet_content->timestamps = false;
+                    $cabinet_content->save();
+
                     $cabinet_content->migrate_parent_id = $tsv_cols[3];
                     $migrated_contents->push($cabinet_content);
                     $mapping = MigrationMapping::create([
@@ -3221,6 +3257,8 @@ trait MigrationTrait
                         $cabinet_content->parent_id = $mapping_migrated->where('source_key', $cabinet_content->migrate_parent_id)
                                                         ->first()->destination_key;
                     }
+                    // 登録更新日時を自動更新しない
+                    $cabinet_content->timestamps = false;
                     $cabinet_content->save();
                 }
                 CabinetContent::fixTree();
@@ -7711,7 +7749,7 @@ trait MigrationTrait
                 $journals_tsv .= $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_journal_post->insert_user_id) . "\t";   // [13]
                 $journals_tsv .= $this->getCCDatetime($nc2_journal_post->update_time)                             . "\t";   // [14]
                 $journals_tsv .= $nc2_journal_post->update_user_name                                              . "\t";   // [15]
-                $journals_tsv .= $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_journal_post->update_user_id) . "\t";   // [16]
+                $journals_tsv .= $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_journal_post->update_user_id);          // [16]
 
                 // 記事のタイトルの一覧
                 // タイトルに " あり
@@ -9019,6 +9057,9 @@ trait MigrationTrait
             return;
         }
 
+        // nc2の全ユーザ取得
+        $nc2_users = Nc2User::get();
+
         // NC2キャビネット（Cabinet）のループ
         foreach ($cabinet_manages as $cabinet_manage) {
             $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
@@ -9043,6 +9084,12 @@ trait MigrationTrait
             $ini .= "cabinet_id = " . $cabinet_manage->cabinet_id . "\n";
             $ini .= "room_id = " . $cabinet_manage->room_id . "\n";
             $ini .= "module_name = \"cabinet\"\n";
+            $ini .= "created_at      = \"" . $this->getCCDatetime($cabinet_manage->insert_time) . "\"\n";
+            $ini .= "created_name    = \"" . $cabinet_manage->insert_user_name . "\"\n";
+            $ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $cabinet_manage->insert_user_id) . "\"\n";
+            $ini .= "updated_at      = \"" . $this->getCCDatetime($cabinet_manage->update_time) . "\"\n";
+            $ini .= "updated_name    = \"" . $cabinet_manage->update_user_name . "\"\n";
+            $ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $cabinet_manage->update_user_id) . "\"\n";
 
             // ファイル情報
             $cabinet_files = Nc2CabinetFile::select('cabinet_file.*', 'cabinet_comment.comment')
@@ -9069,7 +9116,13 @@ trait MigrationTrait
                 $tsv .= $cabinet_file['file_type'] . "\t";
                 $tsv .= $cabinet_file['display_sequence'] . "\t";
                 $tsv .= $cabinet_file['room_id'] . "\t";
-                $tsv .= $cabinet_file['comment'];
+                $tsv .= $cabinet_file['comment'] . "\t";
+                $tsv .= $this->getCCDatetime($cabinet_file->insert_time)                             . "\t";    // [13]
+                $tsv .= $cabinet_file->insert_user_name                                              . "\t";    // [14]
+                $tsv .= $this->getNc2LoginIdFromNc2UserId($nc2_users, $cabinet_file->insert_user_id) . "\t";    // [15]
+                $tsv .= $this->getCCDatetime($cabinet_file->update_time)                             . "\t";    // [16]
+                $tsv .= $cabinet_file->update_user_name                                              . "\t";    // [17]
+                $tsv .= $this->getNc2LoginIdFromNc2UserId($nc2_users, $cabinet_file->update_user_id);           // [18]
 
                 // 最終行は改行コード不要
                 if ($index !== ($cabinet_files->count() - 1)) {
