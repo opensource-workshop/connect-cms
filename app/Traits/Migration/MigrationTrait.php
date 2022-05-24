@@ -8356,7 +8356,7 @@ trait MigrationTrait
     }
 
     /**
-     * NC2：汎用データベース（Databases）の移行
+     * NC2：汎用データベース（Multidatabase）の移行
      */
     private function nc2ExportMultidatabase($redo)
     {
