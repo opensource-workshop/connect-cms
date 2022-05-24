@@ -596,7 +596,7 @@ trait MigrationTrait
     }
 
     /**
-     * モニターログ出力
+     * エラーログ出力
      */
     private function putError($destination, $message, $detail = null, $nc2_block = null)
     {
