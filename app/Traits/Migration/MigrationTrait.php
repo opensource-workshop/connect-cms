@@ -532,7 +532,7 @@ trait MigrationTrait
 
             // 消してしまった初期登録のカテゴリなし、基本項目セットの再登録
             // php artisan db:seed --class=DefaultReservationsTableSeeder
-            Artisan::call('db:seed --class=DefaultReservationsTableSeeder');
+            Artisan::call('db:seed --class=DefaultReservationsTableSeeder --force');
 
             $buckets_ids = Buckets::where('plugin_name', 'reservations')->pluck('id');
             BucketsRoles::whereIn('buckets_id', $buckets_ids)->delete();
