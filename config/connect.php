@@ -102,6 +102,10 @@ return [
     'FACE_AI_API_KEY' => env('FACE_AI_API_KEY', ''),
     'FACE_AI_DEFAULT_SIZE' => '1200',
 
+    // 外部APIを使って音声合成処理
+    'SPEECH_API_URL' => env('SPEECH_API_URL', ''),
+    'SPEECH_API_KEY' => env('SPEECH_API_KEY', ''),
+
     // cURL オプション
     'HTTPPROXYTUNNEL' => env('HTTPPROXYTUNNEL', false),
     'PROXYPORT' => env('PROXYPORT', ''),
