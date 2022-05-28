@@ -11,12 +11,12 @@
                             @if ($current_method->hasPoster())
                             <video src="../../../{{$current_method->getMp4Path()}}"
                                    class="embed-responsive-item"
+                                   poster="../../../{{$current_method->getPosterPath()}}"
                                    controls>
                             </video>
                             @else
                             <video src="../../../{{$current_method->getMp4Path()}}"
                                    class="embed-responsive-item"
-                                   poster="../../../{{$current_method->getPosterPath()}}"
                                    controls>
                             </video>
                             @endif

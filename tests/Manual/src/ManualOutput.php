@@ -313,6 +313,7 @@ class ManualOutput extends DuskTestCase
 
         // 全データ取得
         $methods = Dusks::get();
+        //$methods = Dusks::where('plugin_name', 'contents')->get();
 
         // トップページ(トップページは Dusk レコードがないので、空の Dusks を使用する)
         $this->outputHome('manual/index');
