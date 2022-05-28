@@ -8,7 +8,18 @@
             <div class="row">
                 <div class="col-lg-4 p-0">
                     <div class="embed-responsive embed-responsive-16by9">
-                        <video src="./top/index/index/mp4/mizuki/_video.mp4" class="embed-responsive-item" controls></video>
+                        @if (\App\Models\Core\Dusks::hasPosterFile('top/index/index/mp4/mizuki/_poster.png'))
+                        <video src="./top/index/index/mp4/mizuki/_video.mp4"
+                               class="embed-responsive-item"
+                               poster="./top/index/index/mp4/mizuki/_poster.png"
+                               controls>
+                        </video>
+                        @else
+                        <video src="./top/index/index/mp4/mizuki/_video.mp4"
+                               class="embed-responsive-item"
+                               controls>
+                        </video>
+                        @endif
                     </div>
                 </div>
 

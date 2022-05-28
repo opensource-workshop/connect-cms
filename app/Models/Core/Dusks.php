@@ -236,7 +236,7 @@ class Dusks extends Model
      */
     public function getPosterPath($level = 1, $mp4dir = 'mp4')
     {
-        return dirname($this->html_path, $level) . '/' . $mp4dir . '/mizuki/_poster.mp4';
+        return dirname($this->html_path, $level) . '/' . $mp4dir . '/mizuki/_poster.png';
     }
 
     /**

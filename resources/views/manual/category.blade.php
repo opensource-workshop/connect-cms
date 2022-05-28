@@ -8,7 +8,18 @@
                 <div class="row">
                     <div class="col-lg-4 p-0">
                         <div class="embed-responsive embed-responsive-16by9">
-                            <video src="../{{$current_method->getMp4Path(3, '_mp4')}}" class="embed-responsive-item" controls></video>
+                            @if ($current_method->hasPoster(3, '_mp4'))
+                            <video src="../{{$current_method->getMp4Path(3, '_mp4')}}"
+                                   class="embed-responsive-item"
+                                   poster="../{{$current_method->getPosterPath(3, '_mp4')}}"
+                                   controls>
+                            </video>
+                            @else
+                            <video src="../{{$current_method->getMp4Path(3, '_mp4')}}"
+                                   class="embed-responsive-item"
+                                   controls>
+                            </video>
+                            @endif
                         </div>
                     </div>
 
