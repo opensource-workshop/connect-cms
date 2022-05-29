@@ -51,6 +51,11 @@ abstract class DuskTestCase extends BaseTestCase
     protected $test_page = null;
 
     /**
+     * カテゴリ（一時的なもの）
+     */
+    protected $category = null;
+
+    /**
      * Prepare for Dusk test execution.
      *
      * @beforeClass
@@ -404,19 +409,42 @@ abstract class DuskTestCase extends BaseTestCase
     }
 
     /**
+     * マニュアルデータの初期値出力（最小限）
+     */
+    public function reserveManualMin($category, $plugin_name, $methods)
+    {
+        foreach ($methods as $method) {
+
+            $dusk = Dusks::create([
+                "category" => $category,
+                "plugin_name" => $plugin_name,
+                "method_name" => $method,
+            ]);
+
+            // 結果の親子関係の紐づけ
+            if ($method != 'index') {
+                // 親を取得して、子のparent をセットして保存する。（_lft, _rgt は自動的に変更される）
+                $parent = Dusks::where('category', $category)->where('plugin_name', $plugin_name)->where('method_name', 'index')->first();
+                $dusk->parent_id = $parent->id;
+                $dusk->save();
+            }
+        }
+    }
+
+    /**
      * マニュアルデータの初期値出力
      */
     public function reserveManual(...$methods)
     {
         foreach ($methods as $method) {
-            $this->putManualData(null, $method);
+            $this->putManualData(null, $method, 0, null, $this->category);
         }
     }
 
     /**
      * マニュアルデータ出力
      */
-    public function putManualData($img_args = null, $method = null, $sort = 0, $level = null)
+    public function putManualData($img_args = null, $method = null, $sort = 0, $level = null, $category = null)
     {
         // マニュアル用データ出力がOFF の場合は、出力せずに戻る。
         if ($this->no_manual) {
@@ -453,7 +481,11 @@ abstract class DuskTestCase extends BaseTestCase
 
         // 結果の保存
         $dusk = Dusks::firstOrNew(['html_path' => $html_path]);
-        $dusk->category = trim($sub_class_array[2], '_');
+        if (empty($category)) {
+            $dusk->category = trim($sub_class_array[2], '_');
+        } else {
+            $dusk->category = $category;
+        }
         $dusk->sort = $sort;
         $dusk->plugin_name = $plugin_name;
         $dusk->method_name = $source_method;
@@ -673,5 +705,21 @@ EOF;
         }
 
         return $upload;
+    }
+
+    /**
+     * ページの移動（親子）
+     */
+    protected function movePageChildren($parent_name, $children_names)
+    {
+        $this->browse(function (Browser $browser) use ($parent_name, $children_names) {
+            // 子ども各ページ を 親ページの下に移動
+            $parent_page = Page::where('page_name', $parent_name)->first();
+            foreach ($children_names as $children_name) {
+                $sub_page = Page::where('page_name', $children_name)->first();
+                $browser->visit('/manage/page')
+                        ->select('#form_select_page' . $sub_page->id . ' .manage-page-selectpage', $parent_page->id);
+            }
+        });
     }
 }
