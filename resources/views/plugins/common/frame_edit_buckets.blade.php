@@ -39,7 +39,7 @@
                         @else
                             <input name="role_article[post]" value="1" type="checkbox" class="custom-control-input" id="role_article_post">
                         @endif
-                        <label class="custom-control-label" for="role_article_post">投稿できる</label>
+                        <label class="custom-control-label" for="role_article_post" id="label_role_article_post">投稿できる</label>
                     </div>
                 </td>
 
@@ -51,7 +51,7 @@
                         @else
                             <input name="role_article[approval]" value="1" type="checkbox" class="custom-control-input" id="role_article_approval">
                         @endif
-                        <label class="custom-control-label" for="role_article_approval">承認が必要</label>
+                        <label class="custom-control-label" for="role_article_approval" id="label_role_article_approval">承認が必要</label>
                     </div>
                 </td>
                 @endif
@@ -65,7 +65,7 @@
                         @else
                             <input name="role_reporter[post]" value="1" type="checkbox" class="custom-control-input" id="role_reporter_post">
                         @endif
-                        <label class="custom-control-label" for="role_reporter_post">投稿できる</label>
+                        <label class="custom-control-label" for="role_reporter_post" id="label_role_reporter_post">投稿できる</label>
                     </div>
                 </td>
 
@@ -77,7 +77,7 @@
                         @else
                             <input name="role_reporter[approval]" value="1" type="checkbox" class="custom-control-input" id="role_reporter_approval">
                         @endif
-                        <label class="custom-control-label" for="role_reporter_approval">承認が必要</label>
+                        <label class="custom-control-label" for="role_reporter_approval" id="label_role_reporter_approval">承認が必要</label>
                     </div>
                 </td>
                 @endif
