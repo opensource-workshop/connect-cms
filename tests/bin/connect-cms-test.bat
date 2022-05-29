@@ -288,10 +288,10 @@ echo --- DroneStudy
 php artisan dusk tests\Browser\ConnectStudy\DroneStudyTest.php
 
 echo --- FaceStudy
-rem php artisan dusk tests\Browser\ConnectStudy\FaceStudyTest.php
+php artisan dusk tests\Browser\ConnectStudy\FaceStudyTest.php
 
 echo --- SpeechStudy
-rem php artisan dusk tests\Browser\ConnectStudy\SpeechStudyTest.php
+php artisan dusk tests\Browser\ConnectStudy\SpeechStudyTest.php
 
 rem ---------------------------------------------
 rem - トップページの動画

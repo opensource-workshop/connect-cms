@@ -252,9 +252,19 @@ abstract class DuskTestCase extends BaseTestCase
     /**
      * プラグイン追加（なければ）+ ページ追加（なければ）
      */
-    public function addPluginFirst($add_plugin, $permanent_link = '/', $area = 0, $screenshot = true)
+    public function addPluginFirst($add_plugin, $permanent_link = '/', $area = 0, $screenshot = true, $plugin_name_full = null)
     {
-        Plugins::where('plugin_name', ucfirst($add_plugin))->update(['display_flag' => 1]);
+        $plugin = Plugins::where('plugin_name', ucfirst($add_plugin))->first();
+        if (empty($plugin)) {
+            Plugins::create([
+                'plugin_name' => ucfirst($add_plugin),
+                'plugin_name_full' => empty($plugin_name_full) ? ucfirst($add_plugin) : $plugin_name_full,
+                'display_flag' => 1,
+            ]);
+        } else {
+            $plugin->display_flag = 1;
+            $plugin->update();
+        }
         $page = $this->firstOrCreatePage($permanent_link);
 
         if (!Frame::where('plugin_name', $add_plugin)->where('area_id', $area)->where('page_id', $page->id)->first()) {

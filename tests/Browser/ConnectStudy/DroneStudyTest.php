@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Browser\User;
+namespace Tests\Browser\ConnectStudy;
 
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
