@@ -51,6 +51,7 @@ if "%1" == "fresh" (
 
     echo --- テーブルの再構築
     php artisan migrate:fresh --env=dusk.local
+    php artisan migrate --env=dusk.local --path=database/migrations_option
 
     echo --- データ・初期追加
     php artisan db:seed --env=dusk.local
@@ -275,6 +276,22 @@ php artisan dusk tests\Browser\Common\WysiwygTest.php
 
 echo --- パスワード付きページ
 php artisan dusk tests\Browser\Common\PasswordPageTest.php
+
+rem ---------------------------------------------
+rem - Connect-Study
+rem ---------------------------------------------
+
+echo --- Connect-Study 共通
+php artisan dusk tests\Browser\ConnectStudy\ConnectStudyCommon.php
+
+echo --- DroneStudy
+php artisan dusk tests\Browser\ConnectStudy\DroneStudyTest.php
+
+echo --- FaceStudy
+php artisan dusk tests\Browser\ConnectStudy\FaceStudyTest.php
+
+echo --- SpeechStudy
+php artisan dusk tests\Browser\ConnectStudy\SpeechStudyTest.php
 
 rem ---------------------------------------------
 rem - トップページの動画

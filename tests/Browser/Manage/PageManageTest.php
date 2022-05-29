@@ -152,22 +152,6 @@ class PageManageTest extends DuskTestCase
     }
 
     /**
-     * ページの移動（親子）
-     */
-    private function movePageChildren($parent_name, $children_names)
-    {
-        $this->browse(function (Browser $browser) use ($parent_name, $children_names) {
-            // テスト用の各ページ を テスト の下に移動
-            $test_page = Page::where('page_name', $parent_name)->first();
-            foreach ($children_names as $children_name) {
-                $sub_page = Page::where('page_name', $children_name)->first();
-                $browser->visit('/manage/page')
-                        ->select('#form_select_page' . $sub_page->id . ' .manage-page-selectpage', $test_page->id);
-            }
-        });
-    }
-
-    /**
      * テストする関数の制御
      *
      * @group manage
