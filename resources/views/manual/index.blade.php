@@ -62,6 +62,10 @@
                     <dd class="col-md-2"><a href="https://connect-cms.jp/" target="_blank">Connect-CMS公式サイト</a></dd>
                     <dd class="col-md-10">フォーラム掲示板や基本的な情報はこちらを参照してください。</dd>
                 </dl>
+                <dl class="row mb-0">
+                    <dd class="col-md-2"><a href="https://market.connect-cms.jp/" target="_blank">Connect-CMSマーケット</a></dd>
+                    <dd class="col-md-10">Connect-CMSのテーマや役立つデータの配布や販売、個別の講習や教育を受け付けするサイトです。</dd>
+                </dl>
             </div>
         </div>
     </div>
