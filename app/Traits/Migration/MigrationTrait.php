@@ -3340,8 +3340,8 @@ trait MigrationTrait
             $bbs_name = $this->getArrayValue($ini, 'blog_base', 'blog_name', '無題');
 
             $bucket = new Buckets(['bucket_name' => $bbs_name, 'plugin_name' => 'bbses']);
-            $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'insert_time');
-            $bucket->updated_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'update_time');
+            $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'created_at');
+            $bucket->updated_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'updated_at');
             // 登録更新日時を自動更新しない
             $bucket->timestamps = false;
             $bucket->save();
@@ -3351,12 +3351,12 @@ trait MigrationTrait
                 'name' => $bbs_name,
                 'use_like' => $this->getArrayValue($ini, 'blog_base', 'use_like', 0),
             ]);
-            $bbs->created_id = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'insert_login_id', null));
-            $bbs->created_name = $this->getArrayValue($ini, 'source_info', 'insert_user_name', null);
-            $bbs->created_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'insert_time');
-            $bbs->updated_id = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'update_login_id', null));
-            $bbs->updated_name = $this->getArrayValue($ini, 'source_info', 'update_user_name', null);
-            $bbs->updated_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'update_time');
+            $bbs->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'insert_login_id', null));
+            $bbs->created_name = $this->getArrayValue($ini, 'source_info', 'created_name', null);
+            $bbs->created_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'created_at');
+            $bbs->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'update_login_id', null));
+            $bbs->updated_name = $this->getArrayValue($ini, 'source_info', 'updated_name', null);
+            $bbs->updated_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'updated_at');
             // 登録更新日時を自動更新しない
             $bbs->timestamps = false;
             $bbs->save();
@@ -3400,12 +3400,12 @@ trait MigrationTrait
                         'first_committed_at' => $this->getDatetimeFromTsvAndCheckFormat(0, $tsv_cols, 0),
                         'parent_id' => $this->fetchMigratedKey('bbses_post', $tsv_cols[9]),
                     ]);
-                    $bbs_post->created_id = $this->getUserIdFromLoginId($users, $tsv_cols[15]);
+                    $bbs_post->created_id   = $this->getUserIdFromLoginId($users, $tsv_cols[15]);
                     $bbs_post->created_name = $tsv_cols[12];
-                    $bbs_post->created_at = $this->getDatetimeFromTsvAndCheckFormat(0, $tsv_cols, 0);
-                    $bbs_post->updated_id = $this->getUserIdFromLoginId($users, $tsv_cols[18]);
+                    $bbs_post->created_at   = $this->getDatetimeFromTsvAndCheckFormat(0, $tsv_cols, 0);
+                    $bbs_post->updated_id   = $this->getUserIdFromLoginId($users, $tsv_cols[18]);
                     $bbs_post->updated_name = $tsv_cols[17];
-                    $bbs_post->updated_at = $this->getDatetimeFromTsvAndCheckFormat(16, $tsv_cols, 16);
+                    $bbs_post->updated_at   = $this->getDatetimeFromTsvAndCheckFormat(16, $tsv_cols, 16);
                     // 登録更新日時を自動更新しない
                     $bbs_post->timestamps = false;
                     $bbs_post->save();
@@ -8344,11 +8344,11 @@ trait MigrationTrait
             $journals_ini .= "room_id = " . $nc2_bbs->room_id . "\n";
             $journals_ini .= "space_type = " . $nc2_bbs->space_type . "\n";   // スペースタイプ, 1:パブリックスペース, 2:グループスペース
             $journals_ini .= "module_name = \"bbs\"\n";
-            $journals_ini .= "insert_time = \"" . $this->getCCDatetime($nc2_bbs->insert_time) . "\"\n";
-            $journals_ini .= "insert_user_name = \"" . $nc2_bbs->insert_user_name . "\"\n";
+            $journals_ini .= "created_at      = \"" . $this->getCCDatetime($nc2_bbs->insert_time) . "\"\n";
+            $journals_ini .= "created_name    = \"" . $nc2_bbs->insert_user_name . "\"\n";
             $journals_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_bbs->insert_user_id) . "\"\n";
-            $journals_ini .= "update_time = \"" . $this->getCCDatetime($nc2_bbs->update_time) . "\"\n";
-            $journals_ini .= "update_user_name = \"" . $nc2_bbs->update_user_name . "\"\n";
+            $journals_ini .= "updated_at      = \"" . $this->getCCDatetime($nc2_bbs->update_time) . "\"\n";
+            $journals_ini .= "updated_name    = \"" . $nc2_bbs->update_user_name . "\"\n";
             $journals_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_bbs->update_user_id) . "\"\n";
 
             // NC2掲示板の記事（bbs_post、bbs_post_body）を移行する。
