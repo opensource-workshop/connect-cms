@@ -11176,8 +11176,8 @@ trait MigrationTrait
             $frame_nc2 .= "[source_info]\n";
             $frame_nc2 .= "source_key = \"" . $nc2_block->block_id . "\"\n";
             $frame_nc2 .= "target_source_table = \"" . $nc2_block->getModuleName() . "\"\n";
-            $frame_nc2 .= "insert_time = \"" . $this->getCCDatetime($nc2_block->insert_time) . "\"\n";
-            $frame_nc2 .= "update_time = \"" . $this->getCCDatetime($nc2_block->update_time) . "\"\n";
+            $frame_nc2 .= "created_at = \"" . $this->getCCDatetime($nc2_block->insert_time) . "\"\n";
+            $frame_nc2 .= "updated_at = \"" . $this->getCCDatetime($nc2_block->update_time) . "\"\n";
             $frame_ini .= $frame_nc2;
 
             // フレーム設定ファイルの出力
