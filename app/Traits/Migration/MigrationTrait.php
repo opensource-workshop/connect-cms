@@ -3770,103 +3770,92 @@ trait MigrationTrait
             // マッピングテーブルの取得
             $mapping = MigrationMapping::where('target_source_table', 'slideshows')->where('source_key', $nc2_slideshows_block_id)->first();
 
-            // マッピングテーブルを確認して、あれば削除
-            if (!empty($mapping)) {
-                // slideshows 取得。この情報から紐づけて、消すものを消してゆく。
-                $slideshows = slideshows::where('id', $mapping->destination_key)->first();
-                // コンテンツ削除
-                slideshowsItems::where('slideshows_id', $mapping->destination_key)->delete();
-                if (!empty($slideshows)) {
-                    // Buckets 削除
-                    Buckets::where('id', $slideshows->bucket_id)->delete();
-                    // 削除
-                    $slideshows->delete();
-                }
-                // マッピングテーブル削除
-                $mapping->delete();
-            }
-            // Buckets テーブルと slideshows テーブル、マッピングテーブルを追加
-            $slideshows_name = '無題';
-            $bucket = Buckets::create(['bucket_name' => $slideshows_name, 'plugin_name' => 'slideshows']);
-            $control_display_flag = 1;
-            $indicators_display_flag = 1;
-            $fade_use_flag = 1;
-            $image_interval = 3000;
-            $slideshows = Slideshows::create([
-                'bucket_id' => $bucket->id,
-                'slideshows_name' => $slideshows_name,
-                'control_display_flag' => $control_display_flag,
-                'indicators_display_flag' => $indicators_display_flag,
-                'fade_use_flag' => $fade_use_flag,
-                'image_interval' => $image_interval,
-            ]);
+            // マッピングテーブルを確認して、追加か取得の処理を分岐
+            if (empty($mapping)) {
+                // Buckets テーブルと slideshows テーブル、マッピングテーブルを追加
+                $slideshows_name = '無題';
+                $bucket = Buckets::create(['bucket_name' => $slideshows_name, 'plugin_name' => 'slideshows']);
+                $control_display_flag = 1;
+                $indicators_display_flag = 1;
+                $fade_use_flag = 1;
+                $image_interval = 3000;
+                $slideshows = Slideshows::create([
+                    'bucket_id' => $bucket->id,
+                    'slideshows_name' => $slideshows_name,
+                    'control_display_flag' => $control_display_flag,
+                    'indicators_display_flag' => $indicators_display_flag,
+                    'fade_use_flag' => $fade_use_flag,
+                    'image_interval' => $image_interval,
+                ]);
 
-            // スライダーのデータを取得（TSV）
-            $slideshows_tsv_filename = str_replace('ini', 'tsv', basename($ini_path));
-            if (Storage::exists($this->getImportPath('slideshows/') . $slideshows_tsv_filename)) {
-                // TSV ファイル取得（1つのTSV で1つのスライダー）
-                $slideshows_tsv = Storage::get($this->getImportPath('slideshows/') . $slideshows_tsv_filename);
-                // 無いものは対象外
-                if (empty($slideshows_tsv)) {
-                    continue;
-                }
-                // 改行で記事毎に分割
-                $slideshows_tsv_lines = explode("\n", $slideshows_tsv);
-                foreach ($slideshows_tsv_lines as $slideshows_tsv_line) {
-                    // タブで項目に分割
-                    $slideshows_tsv_cols = explode("\t", $slideshows_tsv_line);
-                    // image_path{\t}uploads_id{\t}link_url{\t}link_target{\t}caption{\t}display_flag{\t}display_sequence
-                    $image_path = isset($slideshows_tsv_cols[0]) ? $slideshows_tsv_cols[0] : null;
-                    $source_key = isset($slideshows_tsv_cols[1]) ? $slideshows_tsv_cols[1] : null;
-                    $link_url = isset($slideshows_tsv_cols[2]) ? $slideshows_tsv_cols[2] : null;
-                    $link_target = isset($slideshows_tsv_cols[3]) ? $slideshows_tsv_cols[3] : null;
-                    $caption = isset($slideshows_tsv_cols[4]) ? $slideshows_tsv_cols[4] : null;
-                    $display_flag = isset($slideshows_tsv_cols[5]) ? $slideshows_tsv_cols[5] : null;
-                    $display_sequence = isset($slideshows_tsv_cols[6]) ? $slideshows_tsv_cols[6] : null;
+                // スライダーのデータを取得（TSV）
+                $slideshows_tsv_filename = str_replace('ini', 'tsv', basename($ini_path));
+                if (Storage::exists($this->getImportPath('slideshows/') . $slideshows_tsv_filename)) {
+                    // TSV ファイル取得（1つのTSV で1つのスライダー）
+                    $slideshows_tsv = Storage::get($this->getImportPath('slideshows/') . $slideshows_tsv_filename);
+                    // 無いものは対象外
+                    if (empty($slideshows_tsv)) {
+                        continue;
+                    }
+                    // 改行で記事毎に分割
+                    $slideshows_tsv_lines = explode("\n", $slideshows_tsv);
+                    foreach ($slideshows_tsv_lines as $slideshows_tsv_line) {
+                        // タブで項目に分割
+                        $slideshows_tsv_cols = explode("\t", $slideshows_tsv_line);
+                        // image_path{\t}uploads_id{\t}link_url{\t}link_target{\t}caption{\t}display_flag{\t}display_sequence
+                        $image_path = isset($slideshows_tsv_cols[0]) ? $slideshows_tsv_cols[0] : null;
+                        $source_key = isset($slideshows_tsv_cols[1]) ? $slideshows_tsv_cols[1] : null;
+                        $link_url = isset($slideshows_tsv_cols[2]) ? $slideshows_tsv_cols[2] : null;
+                        $link_target = isset($slideshows_tsv_cols[3]) ? $slideshows_tsv_cols[3] : null;
+                        $caption = isset($slideshows_tsv_cols[4]) ? $slideshows_tsv_cols[4] : null;
+                        $display_flag = isset($slideshows_tsv_cols[5]) ? $slideshows_tsv_cols[5] : null;
+                        $display_sequence = isset($slideshows_tsv_cols[6]) ? $slideshows_tsv_cols[6] : null;
 
-                    /* uploads_idの取得 */
-                    $uploads_id = null;
-                    if ($source_key) {
-                        $upload_mapping = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $source_key)->first();
-                        $uploads_id = $upload_mapping ? $upload_mapping->destination_key : null;
-                        if ($uploads_id) {
-                            $upload = Uploads::find($uploads_id);
-                            if (empty($upload)) {
-                                $this->putMonitor(1, "No target = uploads", "uploads_id = " . $uploads_id);
-                            } else {
-                                // 100000
-                                $dir_no = 0;
-                                foreach (range(0, 1000000, 1000) as $number) {
-                                    $dir_no++;
-                                    if ($uploads_id <= $number) {
-                                        break;
+                        /* uploads_idの取得 */
+                        $uploads_id = null;
+                        if ($source_key) {
+                            $upload_mapping = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $source_key)->first();
+                            $uploads_id = $upload_mapping ? $upload_mapping->destination_key : null;
+                            if ($uploads_id) {
+                                $upload = Uploads::find($uploads_id);
+                                if (empty($upload)) {
+                                    $this->putMonitor(1, "No target = uploads", "uploads_id = " . $uploads_id);
+                                } else {
+                                    // 100000
+                                    $dir_no = 0;
+                                    foreach (range(0, 1000000, 1000) as $number) {
+                                        $dir_no++;
+                                        if ($uploads_id <= $number) {
+                                            break;
+                                        }
                                     }
+                                    $image_path = 'uploads/'.$dir_no.'/'.$uploads_id.'.'.$upload->extension;
                                 }
-                                $image_path = 'uploads/'.$dir_no.'/'.$uploads_id.'.'.$upload->extension;
                             }
                         }
+
+
+                        // 付与テーブルデータを作成する
+                        $slideshows_count = SlideshowsItems::create([
+                            'slideshows_id' => $slideshows->id,
+                            'image_path' => $image_path,
+                            'uploads_id' => $uploads_id,
+                            'link_url' => $link_url,
+                            'link_target' => $link_target,
+                            'caption' => $caption,
+                            'display_flag' => $display_flag,
+                            'display_sequence' => $display_sequence,
+                        ]);
                     }
-
-
-                    // 付与テーブルデータを作成する
-                    $slideshows_count = SlideshowsItems::create([
-                        'slideshows_id' => $slideshows->id,
-                        'image_path' => $image_path,
-                        'uploads_id' => $uploads_id,
-                        'link_url' => $link_url,
-                        'link_target' => $link_target,
-                        'caption' => $caption,
-                        'display_flag' => $display_flag,
-                        'display_sequence' => $display_sequence,
-                    ]);
                 }
+                // マッピングテーブルの追加
+                $mapping = MigrationMapping::create([
+                    'target_source_table'  => 'slideshows',
+                    'source_key'           => $nc2_slideshows_block_id,
+                    'destination_key'      => $slideshows->id,
+                ]);
             }
-            // マッピングテーブルの追加
-            $mapping = MigrationMapping::create([
-                'target_source_table'  => 'slideshows',
-                'source_key'           => $nc2_slideshows_block_id,
-                'destination_key'      => $slideshows->id,
-            ]);
+
         }
     }
 
