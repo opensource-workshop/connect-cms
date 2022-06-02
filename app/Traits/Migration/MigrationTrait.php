@@ -2525,19 +2525,19 @@ trait MigrationTrait
                 $database_name = $this->getArrayValue($databases_ini, 'database_base', 'database_name', '無題');
 
                 $bucket = new Buckets(['bucket_name' => $database_name, 'plugin_name' => 'databases']);
-                $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($databases_ini, 'source_info', 'insert_time');
-                $bucket->updated_at = $this->getDatetimeFromIniAndCheckFormat($databases_ini, 'source_info', 'update_time');
+                $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($databases_ini, 'source_info', 'created_at');
+                $bucket->updated_at = $this->getDatetimeFromIniAndCheckFormat($databases_ini, 'source_info', 'updated_at');
                 // 登録更新日時を自動更新しない
                 $bucket->timestamps = false;
                 $bucket->save();
 
                 $database = new Databases(['bucket_id' => $bucket->id, 'databases_name' => $database_name, 'data_save_flag' => 1]);
                 $database->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($databases_ini, 'source_info', 'insert_login_id', null));
-                $database->created_name = $this->getArrayValue($databases_ini, 'source_info', 'insert_user_name', null);
-                $database->created_at   = $this->getDatetimeFromIniAndCheckFormat($databases_ini, 'source_info', 'insert_time');
+                $database->created_name = $this->getArrayValue($databases_ini, 'source_info', 'created_name', null);
+                $database->created_at   = $this->getDatetimeFromIniAndCheckFormat($databases_ini, 'source_info', 'created_at');
                 $database->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($databases_ini, 'source_info', 'update_login_id', null));
-                $database->updated_name = $this->getArrayValue($databases_ini, 'source_info', 'update_user_name', null);
-                $database->updated_at   = $this->getDatetimeFromIniAndCheckFormat($databases_ini, 'source_info', 'update_time');
+                $database->updated_name = $this->getArrayValue($databases_ini, 'source_info', 'updated_name', null);
+                $database->updated_at   = $this->getDatetimeFromIniAndCheckFormat($databases_ini, 'source_info', 'updated_at');
                 // 登録更新日時を自動更新しない
                 $database->timestamps = false;
                 $database->save();
@@ -8801,11 +8801,11 @@ trait MigrationTrait
             $multidatabase_ini .= "multidatabase_id = " . $nc2_multidatabase->multidatabase_id . "\n";
             $multidatabase_ini .= "room_id = " . $nc2_multidatabase->room_id . "\n";
             $multidatabase_ini .= "module_name = \"multidatabase\"\n";
-            $multidatabase_ini .= "insert_time = \"" . $this->getCCDatetime($nc2_multidatabase->insert_time) . "\"\n";
-            $multidatabase_ini .= "insert_user_name = \"" . $nc2_multidatabase->insert_user_name . "\"\n";
+            $multidatabase_ini .= "created_at      = \"" . $this->getCCDatetime($nc2_multidatabase->insert_time) . "\"\n";
+            $multidatabase_ini .= "created_name    = \"" . $nc2_multidatabase->insert_user_name . "\"\n";
             $multidatabase_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_multidatabase->insert_user_id) . "\"\n";
-            $multidatabase_ini .= "update_time = \"" . $this->getCCDatetime($nc2_multidatabase->update_time) . "\"\n";
-            $multidatabase_ini .= "update_user_name = \"" . $nc2_multidatabase->update_user_name . "\"\n";
+            $multidatabase_ini .= "updated_at      = \"" . $this->getCCDatetime($nc2_multidatabase->update_time) . "\"\n";
+            $multidatabase_ini .= "updated_name    = \"" . $nc2_multidatabase->update_user_name . "\"\n";
             $multidatabase_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_multidatabase->update_user_id) . "\"\n";
 
             // 汎用データベースのカラム情報
