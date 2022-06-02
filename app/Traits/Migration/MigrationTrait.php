@@ -3756,6 +3756,8 @@ trait MigrationTrait
 
         // 定義の取り込み
         $ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('slideshows/slideshows_*.ini'));
+        // ユーザ取得
+        $users = User::get();
         // 定義のループ
         foreach ($ini_paths as $ini_path) {
             // ini_file の解析
@@ -3773,20 +3775,38 @@ trait MigrationTrait
             // マッピングテーブルを確認して、追加か取得の処理を分岐
             if (empty($mapping)) {
                 // Buckets テーブルと slideshows テーブル、マッピングテーブルを追加
-                $slideshows_name = '無題';
-                $bucket = Buckets::create(['bucket_name' => $slideshows_name, 'plugin_name' => 'slideshows']);
+                $slideshows_name = $this->getArrayValue($ini, 'slideshow_base', 'slideshows_name', '無題');
+
+                $bucket = new Buckets(['bucket_name' => $slideshows_name, 'plugin_name' => 'slideshows']);
+                $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'created_at');
+                $bucket->updated_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'updated_at');
+                // 登録更新日時を自動更新しない
+                $bucket->timestamps = false;
+                $bucket->save();
+
                 $control_display_flag = 1;
                 $indicators_display_flag = 1;
                 $fade_use_flag = 1;
-                $image_interval = 3000;
-                $slideshows = Slideshows::create([
+                $image_interval = $this->getArrayValue($ini, 'slideshow_base', 'image_interval', 3000);
+                $height = $this->getArrayValue($ini, 'slideshow_base', 'height', null);
+                $slideshows = new Slideshows([
                     'bucket_id' => $bucket->id,
                     'slideshows_name' => $slideshows_name,
                     'control_display_flag' => $control_display_flag,
                     'indicators_display_flag' => $indicators_display_flag,
-                    'fade_use_flag' => $fade_use_flag,
+                    'fade_use_flag'  => $fade_use_flag,
                     'image_interval' => $image_interval,
+                    'height'         => $height,
                 ]);
+                $slideshows->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'insert_login_id', null));
+                $slideshows->created_name = $this->getArrayValue($ini, 'source_info', 'created_name', null);
+                $slideshows->created_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'created_at');
+                $slideshows->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'update_login_id', null));
+                $slideshows->updated_name = $this->getArrayValue($ini, 'source_info', 'updated_name', null);
+                $slideshows->updated_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'updated_at');
+                // 登録更新日時を自動更新しない
+                $slideshows->timestamps = false;
+                $slideshows->save();
 
                 // スライダーのデータを取得（TSV）
                 $slideshows_tsv_filename = str_replace('ini', 'tsv', basename($ini_path));
@@ -9965,6 +9985,9 @@ trait MigrationTrait
             return;
         }
 
+        // nc2の全ユーザ取得
+        $nc2_users = Nc2User::get();
+
         // NC2スライダー（Slideshow）のループ
         foreach ($nc2_slideshows as $nc2_slideshow) {
             $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
@@ -9974,17 +9997,26 @@ trait MigrationTrait
                 continue;
             }
 
+            // (nc2初期値) 5500
+            $image_interval = $nc2_slideshow->pause ? $nc2_slideshow->pause : 5500;
+
             // スライダー設定
             $ini = "";
             $ini .= "[slideshow_base]\n";
-            $ini .= "slideshow_speed = " . $nc2_slideshow->speed . "\n";
-            $ini .= "slideshow_pause = " . $nc2_slideshow->pause . "\n";
+            $ini .= "image_interval = " . $image_interval . "\n";
+
             // NC2 情報
             $ini .= "\n";
             $ini .= "[source_info]\n";
             $ini .= "slideshows_block_id = " . $nc2_slideshow->block_id . "\n";
             $ini .= "room_id = " . $nc2_slideshow->room_id . "\n";
             $ini .= "module_name = \"slides\"\n";
+            $ini .= "created_at      = \"" . $this->getCCDatetime($nc2_slideshow->insert_time) . "\"\n";
+            $ini .= "created_name    = \"" . $nc2_slideshow->insert_user_name . "\"\n";
+            $ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_slideshow->insert_user_id) . "\"\n";
+            $ini .= "updated_at      = \"" . $this->getCCDatetime($nc2_slideshow->update_time) . "\"\n";
+            $ini .= "updated_name    = \"" . $nc2_slideshow->update_user_name . "\"\n";
+            $ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_slideshow->update_user_id) . "\"\n";
 
             // 付与情報を移行する。
             $nc2_slides_urls = Nc2SlidesUrl::where('slides_id', $nc2_slideshow->slides_id)->orderBy('slides_url_id')->get();
@@ -9996,13 +10028,13 @@ trait MigrationTrait
                 if (!empty($slides_tsv)) {
                     $slides_tsv .= "\n";
                 }
-                $slides_tsv .= "\t"; //image_path
-                $slides_tsv .= $nc2_slides_url->image_file_id. "\t";                        //uploads_id
-                $slides_tsv .= $nc2_slides_url->url. "\t";                                  //link_url
-                $slides_tsv .= ($nc2_slides_url->target_new == 0 ) ? "\t" : '_blank' . "\t";  //link_target
-                $slides_tsv .= $nc2_slides_url->linkstr. "\t";                              //caption
-                $slides_tsv .= $nc2_slides_url->view. "\t";                                 //display_flag
-                $slides_tsv .= $nc2_slides_url->display_sequence. "\t";                     //display_sequence
+                $slides_tsv .= "\t";                                                            // image_path
+                $slides_tsv .= $nc2_slides_url->image_file_id . "\t";                           // uploads_id
+                $slides_tsv .= $nc2_slides_url->url . "\t";                                     // link_url
+                $slides_tsv .= ($nc2_slides_url->target_new == 0) ? "\t" : '_blank' . "\t";     // link_target
+                $slides_tsv .= $nc2_slides_url->linkstr . "\t";                                 // caption
+                $slides_tsv .= $nc2_slides_url->view . "\t";                                    // display_flag
+                $slides_tsv .= $nc2_slides_url->display_sequence . "\t";                        // display_sequence
             }
             // スライダーの設定を出力
             $this->storagePut($this->getImportPath('slideshows/slideshows_') . $this->zeroSuppress($nc2_slideshow->block_id) . '.ini', $ini);
@@ -10723,14 +10755,21 @@ trait MigrationTrait
 
             // NC2スライダー（Slideshow）のループ
             foreach ($nc2_photoalbum_blocks as $nc2_photoalbum_block) {
+                // アルバム
+                $nc2_photoalbum_alubum = $nc2_photoalbum_alubums_all->firstWhere('album_id', $nc2_photoalbum_block->display_album_id);
+                $nc2_photoalbum_alubum = $nc2_photoalbum_alubum ?? new Nc2PhotoalbumAlbum();
+
                 // (nc)秒 => (cc)ミリ秒
-                $slideshow_speed = $nc2_photoalbum_block->slide_time * 1000;
+                $image_interval = $nc2_photoalbum_block->slide_time * 1000;
+
+                $height = $nc2_photoalbum_block->size_flag ? $nc2_photoalbum_block->height : null;
 
                 // スライダー設定
                 $slide_ini = "";
                 $slide_ini .= "[slideshow_base]\n";
-                $slide_ini .= "slideshow_speed = {$slideshow_speed}\n";
-                // $ini .= "slideshow_pause = " . $nc2_slideshow->pause . "\n";
+                $slide_ini .= "slideshows_name = \"{$nc2_photoalbum_alubum->album_name}\"\n";
+                $slide_ini .= "image_interval = {$image_interval}\n";
+                $slide_ini .= "height = {$height}\n";
 
                 // NC2 情報
                 $slide_ini .= "\n";

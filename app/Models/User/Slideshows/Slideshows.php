@@ -14,5 +14,6 @@ class Slideshows extends Model
         'indicators_display_flag',
         'fade_use_flag',
         'image_interval',
+        'height',
     ];
 }
