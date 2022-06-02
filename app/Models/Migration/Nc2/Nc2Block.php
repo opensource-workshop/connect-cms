@@ -125,7 +125,7 @@ class Nc2Block extends Model
         'menu'          => 'menus',        // メニュー
         'multidatabase' => 'databases',    // データベース
         'online'        => 'Development',  // オンライン状況
-        'photoalbum'    => 'Development',  // フォトアルバム
+        'photoalbum'    => 'photoalbums',  // フォトアルバム
         'pm'            => 'Abolition',    // プライベートメッセージ
         'questionnaire' => 'Development',  // アンケート
         'quiz'          => 'Development',  // 小テスト
