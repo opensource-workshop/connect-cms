@@ -6086,7 +6086,6 @@ trait MigrationTrait
      */
     private function importPluginContents($page, $page_dir, $frame_ini, $display_sequence)
     {
-//print_r($frame_ini);
         // コンテンツが指定されていない場合は戻る
         if (!array_key_exists('contents', $frame_ini) || !array_key_exists('contents_file', $frame_ini['contents'])) {
             return;
@@ -6139,8 +6138,6 @@ trait MigrationTrait
         if (array_key_exists('upload_images', $frame_ini) && array_key_exists('upload', $frame_ini['upload_images'])) {
             // アップロードファイル定義のループ
             foreach ($frame_ini['upload_images']['upload'] as $nc2_upload_id => $image_path) {
-//print_r($frame_ini);
-//echo $nc2_upload_id . "\n";
                 // 画像のパスの修正
                 // ini ファイルのID はNC2 のアップロードID が入っている。
                 // マッピングテーブルから新ID を取得して、変換する。
