@@ -4125,21 +4125,10 @@ trait MigrationTrait
                 // NC2 reservation_reserve
                 $tsv_idxs['reserve_id'] = 0;
                 $tsv_idxs['reserve_details_id'] = 0;
-                $tsv_idxs['location_id'] = 0;
-                $tsv_idxs['room_id'] = 0;
-                $tsv_idxs['user_id'] = 0;
-                $tsv_idxs['user_name'] = 0;
-                $tsv_idxs['calendar_id'] = 0;
                 $tsv_idxs['title'] = 0;
-                $tsv_idxs['title_icon'] = 0;
                 $tsv_idxs['allday_flag'] = 0;
-                $tsv_idxs['start_date'] = 0;
-                $tsv_idxs['start_time'] = 0;
                 $tsv_idxs['start_time_full'] = 0;
-                $tsv_idxs['end_date'] = 0;
-                $tsv_idxs['end_time'] = 0;
                 $tsv_idxs['end_time_full'] = 0;
-                $tsv_idxs['timezone_offset'] = 0;
 
                 // NC2 reservation_reserve_details
                 // 連絡先
@@ -4149,13 +4138,13 @@ trait MigrationTrait
                 // 繰り返し条件
                 $tsv_idxs['rrule'] = 0;
 
-                // NC2 reservation_reserve システム項目
-                $tsv_idxs['insert_time']  = 0;
-                $tsv_idxs['insert_user_name']  = 0;
-                $tsv_idxs['insert_login_id']  = 0;
-                $tsv_idxs['update_time']  = 0;
-                $tsv_idxs['update_user_name']  = 0;
-                $tsv_idxs['update_login_id']  = 0;
+                // NC2 reservation_reserve 登録日・更新日等
+                $tsv_idxs['created_at'] = 0;
+                $tsv_idxs['created_name'] = 0;
+                $tsv_idxs['insert_login_id'] = 0;
+                $tsv_idxs['updated_at'] = 0;
+                $tsv_idxs['updated_name'] = 0;
+                $tsv_idxs['update_login_id'] = 0;
 
                 // CC 状態
                 $tsv_idxs['status'] = 0;
@@ -4193,15 +4182,15 @@ trait MigrationTrait
                         'allday_flag'      => $reservation_tsv_cols[$tsv_idxs['allday_flag']],
                         'start_datetime'   => $reservation_tsv_cols[$tsv_idxs['start_time_full']],
                         'end_datetime'     => $reservation_tsv_cols[$tsv_idxs['end_time_full']],
-                        'first_committed_at' => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['insert_time'], $reservation_tsv_cols, 'insert_time'),
+                        'first_committed_at' => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['created_at'], $reservation_tsv_cols, 'created_at'),
                         'status'           => $reservation_tsv_cols[$tsv_idxs['status']],
                     ]);
                     $reservation_post->created_id = $this->getUserIdFromLoginId($users, $reservation_tsv_cols[$tsv_idxs['insert_login_id']]);
-                    $reservation_post->created_name = $reservation_tsv_cols[$tsv_idxs['insert_user_name']];
-                    $reservation_post->created_at = $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['insert_time'], $reservation_tsv_cols, 'insert_time');
+                    $reservation_post->created_name = $reservation_tsv_cols[$tsv_idxs['created_name']];
+                    $reservation_post->created_at = $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['created_at'], $reservation_tsv_cols, 'created_at');
                     $reservation_post->updated_id = $this->getUserIdFromLoginId($users, $reservation_tsv_cols[$tsv_idxs['update_login_id']]);
-                    $reservation_post->updated_name = $reservation_tsv_cols[$tsv_idxs['update_user_name']];
-                    $reservation_post->updated_at = $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['update_time'], $reservation_tsv_cols, 'update_time');
+                    $reservation_post->updated_name = $reservation_tsv_cols[$tsv_idxs['updated_name']];
+                    $reservation_post->updated_at = $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['updated_at'], $reservation_tsv_cols, 'updated_at');
                     // 登録更新日時を自動更新しない
                     $reservation_post->timestamps = false;
                     $reservation_post->save();
@@ -10227,34 +10216,22 @@ trait MigrationTrait
             // 施設予約の予約
             // ----------------------------------------------------
             // カラムのヘッダー及びTSV 行毎の枠準備
-            $tsv_header = "reserve_id" . "\t" . "reserve_details_id" . "\t" . "location_id" . "\t" . "room_id" . "\t" ."user_id" . "\t" . "user_name" . "\t" . "calendar_id" . "\t" . "title" . "\t" ."title_icon" . "\t" .
-                "allday_flag" . "\t" . "start_date" . "\t" . "start_time" . "\t" . "start_time_full" . "\t" . "end_date" . "\t" . "end_time" . "\t" .
-                "end_time_full" . "\t" . "timezone_offset" . "\t" .
+            $tsv_header = "reserve_id" . "\t" . "reserve_details_id" . "\t" . "title" . "\t" .
+                "allday_flag" . "\t" . "start_time_full" . "\t" . "end_time_full" . "\t" .
                 // NC2 reservation_reserve_details
                 "contact" . "\t" . "description" . "\t" . "rrule" . "\t" .
-                // NC2 reservation_reserve システム項目
-                "insert_time" . "\t" . "insert_user_name" . "\t" . "insert_login_id" . "\t" . "update_time" . "\t" . "update_user_name" . "\t" . "update_login_id" . "\t" .
+                // NC2 reservation_reserve 登録日・更新日等
+                "created_at" . "\t" . "created_name" . "\t" . "insert_login_id" . "\t" . "updated_at" . "\t" . "updated_name" . "\t" . "update_login_id" . "\t" .
                 // CC 状態
                 "status";
 
             // NC2 reservation_reserve
             $tsv_cols['reserve_id'] = "";
             $tsv_cols['reserve_details_id'] = "";
-            $tsv_cols['location_id'] = "";
-            $tsv_cols['room_id'] = "";
-            $tsv_cols['user_id'] = "";
-            $tsv_cols['user_name'] = "";
-            $tsv_cols['calendar_id'] = "";
             $tsv_cols['title'] = "";
-            $tsv_cols['title_icon'] = "";
             $tsv_cols['allday_flag'] = "";
-            $tsv_cols['start_date'] = "";
-            $tsv_cols['start_time'] = "";
             $tsv_cols['start_time_full'] = "";
-            $tsv_cols['end_date'] = "";
-            $tsv_cols['end_time'] = "";
             $tsv_cols['end_time_full'] = "";
-            $tsv_cols['timezone_offset'] = "";
 
             // NC2 reservation_reserve_details
             // 連絡先
@@ -10264,12 +10241,12 @@ trait MigrationTrait
             // 繰り返し条件
             $tsv_cols['rrule'] = "";
 
-            // NC2 reservation_reserve システム項目
-            $tsv_cols['insert_time'] = "";
-            $tsv_cols['insert_user_name'] = "";
+            // NC2 reservation_reserve 登録日・更新日等
+            $tsv_cols['created_at'] = "";
+            $tsv_cols['created_name'] = "";
             $tsv_cols['insert_login_id'] = "";
-            $tsv_cols['update_time'] = "";
-            $tsv_cols['update_user_name'] = "";
+            $tsv_cols['updated_at'] = "";
+            $tsv_cols['updated_name'] = "";
             $tsv_cols['update_login_id'] = "";
 
             // CC 状態
@@ -10300,22 +10277,12 @@ trait MigrationTrait
                 // NC2 reservation_reserve
                 $tsv_record['reserve_id'] = $reservation_reserve->reserve_id;
                 $tsv_record['reserve_details_id'] = $reservation_reserve->reserve_details_id;
-                $tsv_record['location_id'] = $reservation_reserve->location_id;
-                $tsv_record['room_id'] = $reservation_reserve->room_id;
-                $tsv_record['user_id'] = $reservation_reserve->user_id;
-                $tsv_record['user_name'] = $reservation_reserve->user_name;
-                $tsv_record['calendar_id'] = $reservation_reserve->calendar_id;
                 $tsv_record['title'] = $reservation_reserve->title;
-                $tsv_record['title_icon'] = $reservation_reserve->title_icon;
                 $tsv_record['allday_flag'] = $reservation_reserve->allday_flag;
 
                 // 予定開始日時
                 // Carbon()で処理。必須値のため基本値がある想定で、timezone_offset で時間加算して予定時間を算出
                 $start_time_full = (new Carbon($reservation_reserve->start_time_full))->addHour($reservation_reserve->timezone_offset);
-                // $tsv_record['start_date'] = $reservation_reserve->start_date;
-                // $tsv_record['start_time'] = $reservation_reserve->start_time;
-                $tsv_record['start_date'] = $start_time_full->format('Y-m-d');
-                $tsv_record['start_time'] = $start_time_full->format('H:i:s');
                 $tsv_record['start_time_full'] = $start_time_full;
 
                 // 予定終了日時
@@ -10343,11 +10310,7 @@ trait MigrationTrait
                 //     // -5分
                 //     $end_time_full = $end_time_full->subMinute(5);
                 // }
-                $tsv_record['end_date'] = $end_time_full->format('Y-m-d');
-                $tsv_record['end_time'] = $end_time_full->format('H:i:s');
                 $tsv_record['end_time_full'] = $end_time_full;
-
-                $tsv_record['timezone_offset'] = $reservation_reserve->timezone_offset;
 
                 // NC2 reservation_reserve_details
                 // 連絡先
@@ -10358,11 +10321,11 @@ trait MigrationTrait
                 $tsv_record['rrule'] = $reservation_reserve->rrule;
 
                 // NC2 reservation_reserve システム項目
-                $tsv_record['insert_time'] = $this->getCCDatetime($reservation_reserve->insert_time);
-                $tsv_record['insert_user_name'] = $reservation_reserve->insert_user_name;
+                $tsv_record['created_at'] = $this->getCCDatetime($reservation_reserve->insert_time);
+                $tsv_record['created_name'] = $reservation_reserve->insert_user_name;
                 $tsv_record['insert_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc2_users, $reservation_reserve->insert_user_id);
-                $tsv_record['update_time'] = $this->getCCDatetime($reservation_reserve->update_time);
-                $tsv_record['update_user_name'] = $reservation_reserve->update_user_name;
+                $tsv_record['updated_at'] = $this->getCCDatetime($reservation_reserve->update_time);
+                $tsv_record['updated_name'] = $reservation_reserve->update_user_name;
                 $tsv_record['update_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc2_users, $reservation_reserve->update_user_id);
 
                 // NC2施設予約予定は公開のみ
