@@ -10646,9 +10646,6 @@ trait MigrationTrait
         $nc2_photoalbum_alubums_all = Nc2PhotoalbumAlbum::orderBy('photoalbum_id')->orderBy('album_sequence')->get();
         $nc2_photoalbum_photos_all = Nc2PhotoalbumPhoto::orderBy('photoalbum_id')->orderBy('album_id')->orderBy('photo_sequence')->get();
 
-        // nc2の全ユーザ取得
-        $nc2_users = Nc2User::get();
-
         // NC2フォトアルバム（Photoalbum）のループ
         foreach ($nc2_photoalbums as $nc2_photoalbum) {
             $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
@@ -10762,6 +10759,69 @@ trait MigrationTrait
                 // データ行の書き出し
                 $tsv = $this->exportStrReplace($tsv, 'photoalbums');
                 $this->storageAppend($this->getImportPath('photoalbums/photoalbum_') . $this->zeroSuppress($nc2_photoalbum->photoalbum_id) . '_' . $this->zeroSuppress($nc2_photoalbum_alubum->album_id) . '.tsv', $tsv);
+            }
+
+            // スライド表示はスライダーにも移行
+
+            // photoalbum_block の取得
+            // 1DB で複数ブロックがあるので、Join せずに、個別に読む
+            $nc2_photoalbum_blocks = Nc2PhotoalbumBlock::where('photoalbum_id', $nc2_photoalbum->photoalbum_id)
+                ->where('display', Nc2PhotoalbumBlock::DISPLAY_SLIDESHOW)
+                ->orderBy('block_id', 'asc')->get();
+
+            // NC2スライダー（Slideshow）のループ
+            foreach ($nc2_photoalbum_blocks as $nc2_photoalbum_block) {
+                // (nc)秒 => (cc)ミリ秒
+                $slideshow_speed = $nc2_photoalbum_block->slide_time * 1000;
+
+                // スライダー設定
+                $slide_ini = "";
+                $slide_ini .= "[slideshow_base]\n";
+                $slide_ini .= "slideshow_speed = {$slideshow_speed}\n";
+                // $ini .= "slideshow_pause = " . $nc2_slideshow->pause . "\n";
+
+                // NC2 情報
+                $slide_ini .= "\n";
+                $slide_ini .= "[source_info]\n";
+                $slide_ini .= "slideshows_block_id = " . $nc2_photoalbum_block->block_id . "\n";
+                $slide_ini .= "photoalbum_id = " . $nc2_photoalbum->photoalbum_id . "\n";
+                $slide_ini .= "photoalbum_name = \"" . $nc2_photoalbum->photoalbum_name . "\"\n";
+                $slide_ini .= "room_id = " . $nc2_photoalbum_block->room_id . "\n";
+                $slide_ini .= "module_name = \"photoalbum\"\n";
+                $slide_ini .= "created_at      = \"" . $this->getCCDatetime($nc2_photoalbum_block->insert_time) . "\"\n";
+                $slide_ini .= "created_name    = \"" . $nc2_photoalbum_block->insert_user_name . "\"\n";
+                $slide_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_photoalbum_block->insert_user_id) . "\"\n";
+                $slide_ini .= "updated_at      = \"" . $this->getCCDatetime($nc2_photoalbum_block->update_time) . "\"\n";
+                $slide_ini .= "updated_name    = \"" . $nc2_photoalbum_block->update_user_name . "\"\n";
+                $slide_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_photoalbum_block->update_user_id) . "\"\n";
+
+                // 写真
+                $nc2_photoalbum_photos = $nc2_photoalbum_photos_all->where('album_id', $nc2_photoalbum_block->display_album_id);
+
+                // TSV でエクスポート
+                // image_path{\t}uploads_id{\t}link_url{\t}link_target{\t}caption{\t}display_flag{\t}display_sequence
+                $slides_tsv = "";
+                foreach ($nc2_photoalbum_photos as $i => $nc2_photoalbum_photo) {
+
+                    $display_sequence = $i + 1;
+
+                    // TSV 形式でエクスポート
+                    if (!empty($slides_tsv)) {
+                        $slides_tsv .= "\n";
+                    }
+                    $slides_tsv .= "\t";                                        // image_path
+                    $slides_tsv .= $nc2_photoalbum_photo->upload_id . "\t";     // uploads_id
+                    $slides_tsv .= "\t";                                        // link_url
+                    $slides_tsv .= "\t";                                        // link_target
+                    $slides_tsv .= "\t";                                        // caption
+                    $slides_tsv .= "1\t";                                       // display_flag
+                    $slides_tsv .= $display_sequence . "\t";                    // display_sequence
+                }
+
+                // スライダーの設定を出力
+                $this->storagePut($this->getImportPath('slideshows/slideshows_') . $this->zeroSuppress($nc2_photoalbum_block->block_id) . '.ini', $slide_ini);
+                // スライダーの付与情報を出力
+                $this->storagePut($this->getImportPath('slideshows/slideshows_') . $this->zeroSuppress($nc2_photoalbum_block->block_id) . '.tsv', $slides_tsv);
             }
         }
     }
@@ -11073,7 +11133,20 @@ trait MigrationTrait
             } else {
                 $frame_ini .= "frame_design = \"" . $nc2_block->getFrameDesign($this->getMigrationConfig('frames', 'export_frame_default_design', 'default')) . "\"\n";
             }
-            $frame_ini .= "plugin_name = \"" . $nc2_block->getPluginName() . "\"\n";
+
+            if ($nc2_block->getModuleName() == 'photoalbum') {
+                // フォトアルバムでスライド表示は、スライドプラグインに移行
+                $nc2_photoalbum_block = Nc2PhotoalbumBlock::where('block_id', $nc2_block->block_id)
+                    ->where('display', Nc2PhotoalbumBlock::DISPLAY_SLIDESHOW)
+                    ->first();
+                if ($nc2_photoalbum_block) {
+                    $frame_ini .= "plugin_name = \"slideshows\"\n";
+                } else {
+                    $frame_ini .= "plugin_name = \"" . $nc2_block->getPluginName() . "\"\n";
+                }
+            } else {
+                $frame_ini .= "plugin_name = \"" . $nc2_block->getPluginName() . "\"\n";
+            }
 
             // グルーピングされているブロックの考慮
             // 同じ親で同じ行（row_num）に配置されているブロックの数を12で計算する。
@@ -11331,7 +11404,12 @@ trait MigrationTrait
             $nc2_photoalbum_block = Nc2PhotoalbumBlock::where('block_id', $nc2_block->block_id)->first();
             // ブロックがあり、フォトアルバムがない場合は対象外
             if (!empty($nc2_photoalbum_block)) {
-                $ret = "photoalbum_id = \"" . $this->zeroSuppress($nc2_photoalbum_block->photoalbum_id) . "\"\n";
+                // フォトアルバムでスライド表示は、スライドプラグインに移行
+                if ($nc2_photoalbum_block->display == Nc2PhotoalbumBlock::DISPLAY_SLIDESHOW) {
+                    $ret = "slideshows_block_id = \"" . $this->zeroSuppress($nc2_photoalbum_block->block_id) . "\"\n";
+                } else {
+                    $ret = "photoalbum_id = \"" . $this->zeroSuppress($nc2_photoalbum_block->photoalbum_id) . "\"\n";
+                }
             }
         }
         return $ret;
