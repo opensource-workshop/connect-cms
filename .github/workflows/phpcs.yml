@@ -60,7 +60,7 @@ jobs:
 
       - name: PHPCS check pull_request
         if: ${{ github.event_name == 'pull_request' }}
-        run: ./vendor/bin/phpcs --standard=phpcs.xml ./ -q --report=checkstyle | cs2pr --graceful-warnings
+        run: ./vendor/bin/phpcs --standard=phpcs.xml ./ -q --report=checkstyle | cs2pr
 
       - name: PHPCS check workflow_dispatch
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' }}
