@@ -3976,8 +3976,8 @@ AND databases_inputs.posted_at <= NOW()
             select(
                 'frames.page_id                as page_id',
                 'frames.id                     as frame_id',
-                'databases_inputs.id           as post_id,',
-                'databases_input_cols.value    as post_title,',
+                'databases_inputs.id           as post_id',
+                'databases_input_cols.value    as post_title',
                 DB::raw(
                     'IF(
                         `input_cols_image`.`value` IS NULL,
