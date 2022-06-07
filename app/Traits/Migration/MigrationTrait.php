@@ -690,8 +690,8 @@ trait MigrationTrait
     /**
      * NC2のリンク切れチェック
      */
-    private function checkDeadLinkNc2($url, $nc2_module_name = null, $nc2_block = null) {
-
+    private function checkDeadLinkNc2($url, $nc2_module_name = null, $nc2_block = null)
+    {
         $scheme = parse_url($url, PHP_URL_SCHEME);
 
         if (in_array($scheme, ['http', 'https'])) {
@@ -754,7 +754,8 @@ trait MigrationTrait
     /**
      * 内部URL(nc2)のリンク切れチェック
      */
-    private function checkDeadLinkInsideNc2($url, $nc2_module_name = null, $nc2_block = null) {
+    private function checkDeadLinkInsideNc2($url, $nc2_module_name = null, $nc2_block = null)
+    {
 
         // >>> parse_url("http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=42&page_id=0&display_type=2#_active_center_42")
         // => [
@@ -1002,7 +1003,7 @@ trait MigrationTrait
         //   (キャビネット)   http://localhost:8080/index.php?action=pages_view_main&active_action=cabinet_view_main_init&cabinet_id=2&folder_id=&block_id=699999#_69
         //
         //   (pages_view_main 内での active_action処理の調査)
-        //   $blocks[$count]['full_path'] = BASE_URL.INDEX_FILE_NAME."?action=".$block['action_name']."&block_id=".$block['block_id']."&page_id=".$block['page_id'];	//絶対座標に変換
+        //   $blocks[$count]['full_path'] = BASE_URL.INDEX_FILE_NAME."?action=".$block['action_name']."&block_id=".$block['block_id']."&page_id=".$block['page_id'];    //絶対座標に変換
         //   (掲示板ページ表示)       http://localhost:8080/index.php?action=pages_view_main&active_action=bbs_view_main_post&post_id=9&block_id=56#_56
         //                           ↓
         //   (掲示板ブロックだけ表示)  http://localhost:8080/index.php?action=bbs_view_main_post&post_id=9&block_id=56&page_id=33#_56
@@ -1609,7 +1610,6 @@ trait MigrationTrait
             $header = get_headers($url, true);
             $this->putLinkCheck(3, $nc2_module_name . '|内部リンク＋外部リンクチェックNG|未対応URL|' . $header[0], $url, $nc2_block);
         }
-
     }
 
     /**
