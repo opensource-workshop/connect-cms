@@ -3723,7 +3723,7 @@ trait MigrationTrait
             if (CalendarPost::where('calendar_id', $calendar->id)->count() == 0) {
                 // カレンダー予定の移行なし
 
-                $this->putError(3, 'カレンダー予定なし', "カレンダー名={$calendar->name}, ini_path={$ini_path}");
+                $this->putMonitor(3, 'カレンダー予定なし', "カレンダー名={$calendar->name}, ini_path={$ini_path}");
 
                 // 予定空のカレンダーは移行せず、ログ出力する。
                 Calendar::destroy($calendar->id);
