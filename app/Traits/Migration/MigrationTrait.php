@@ -711,6 +711,7 @@ trait MigrationTrait
             } else {
                 // 外部リンク
                 if (!$this->checkDeadLinkOutside($url, $nc2_module_name, $nc2_block)) {
+                    // NG
                     $header = get_headers($url, true);
                     $this->putLinkCheck(3, $nc2_module_name . '|外部リンク|' . $header[0], $url, $nc2_block);
                 }
@@ -721,7 +722,7 @@ trait MigrationTrait
             $this->checkDeadLinkInsideNc2($url, $nc2_module_name, $nc2_block);
         } else {
             // 対象外
-            $this->putLinkCheck(3, $nc2_module_name . '|チェック対象外リンク|', $url, $nc2_block);
+            $this->putLinkCheck(3, $nc2_module_name . '|リンク切れチェック対象外|', $url, $nc2_block);
         }
     }
 
@@ -9665,6 +9666,8 @@ trait MigrationTrait
             // タイトル{\t}URL{\t}説明{\t}新規ウィンドウflag{\t}表示順
             $linklists_tsv = "";
 
+            $nc2_block = Nc2Block::where('block_id', $nc2_linklist_block->block_id)->first();
+
             // NC2リンクリストの記事をループ
             // $linklists_ini .= "\n";
             // $linklists_ini .= "[linklist_link]\n";
@@ -9686,6 +9689,9 @@ trait MigrationTrait
                 $linklists_tsv .= $nc2_linklist_block->target_blank_flag                        . "\t";
                 $linklists_tsv .= $nc2_linklist_link->link_sequence                             . "\t";
                 $linklists_tsv .= $category;
+
+                // NC2のリンク切れチェック
+                $this->checkDeadLinkNc2($nc2_linklist_link->url, 'linklist', $nc2_block);
 
                 // $linklists_ini .= "post_title[" . $nc2_linklist_link->link_id . "] = \"" . str_replace('"', '', $nc2_linklist_link->title) . "\"\n";
             }
@@ -10014,6 +10020,9 @@ trait MigrationTrait
                     if (!empty($content) && strlen($content) == 14) {
                         $content = $this->getCCDatetime($content);
                     }
+                } elseif ($multidatabase_metadata_content->type == 3) {
+                    // リンク. NC2のリンク切れチェック
+                    $this->checkDeadLinkNc2($content, 'multidatabase', $nc2_block);
                 }
                 // データ中にタブ文字が存在するケースがあったため、タブ文字は半角スペースに置き換えるようにした。
                 $tsv_record[$multidatabase_metadata_content->metadata_id] = str_replace("\t", " ", $content);
