@@ -11,8 +11,8 @@ rem > tests\bin\connect-cms-test.bat fresh     <<-- テーブルの再構築＆シーダー
 rem
 rem マニュアル出力
 rem > php artisan dusk tests\Manual\src\ManualOutput.php
-rem > php artisan dusk tests\Manual\src\ManualPdf.php             ※ 全機能版
-rem > php artisan dusk tests\Manual\src\ManualPdf.php level=basic ※ 基本機能版
+rem > php artisan dusk tests\Manual\src\ManualPdf.php contact_page=on ※ 全機能版
+rem > php artisan dusk tests\Manual\src\ManualPdf.php contact_page=on level=basic ※ 基本機能版
 rem > php artisan dusk tests\Manual\src\ManualVideo.php
 rem
 rem テーマのテスト
