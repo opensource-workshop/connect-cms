@@ -17,6 +17,9 @@ return [
     // マニュアル生成のベース・ディレクトリ
     'manual_put_base' => env('MANUAL_PUT_BASE', ''),
 
+    // マニュアルの問合せ先ページ内容
+    'manual_contact_page' => env('MANUAL_CONTACT_PAGE', ''),
+
     // プラグイン管理にも表示しないプラグイン(小文字で指定)
     'PLUGIN_FORCE_HIDDEN' => ['knowledges', 'codestudies'],
 

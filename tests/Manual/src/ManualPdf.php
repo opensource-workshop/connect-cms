@@ -17,6 +17,11 @@ class ManualPdf extends DuskTestCase
     private $screenshots_root;
 
     /**
+     * 問合せ先ページの有無
+     */
+    private $contact_page_on = null;
+
+    /**
      * 出力レベル
      */
     private $level = null;
@@ -57,10 +62,34 @@ class ManualPdf extends DuskTestCase
     private function outputBackfront($pdf)
     {
         $pdf->addPage();
-        $pdf->Bookmark("最後に", 0, 0, '', '', array(0, 0, 0));
+        $pdf->Bookmark("協力者", 0, 0, '', '', array(0, 0, 0));
         $pdf->writeHTML(
             view(
                 'manual.pdf.backfront'
+            ),
+            false
+        );
+        return $pdf;
+    }
+
+    /**
+     * 問合せ先ページ出力
+     *
+     * @return void
+     */
+    private function outputContact($pdf)
+    {
+        if ($this->contact_page_on != 'on') {
+            return;
+        }
+        $pdf->addPage();
+        $pdf->Bookmark("お問い合わせ", 0, 0, '', '', array(0, 0, 0));
+        $pdf->writeHTML(
+            view(
+                'manual.pdf.contact',
+                [
+                    'contact' => mb_convert_encoding(config('connect.manual_contact_page'), "UTF-8", "SJIS"),
+                ]
             ),
             false
         );
@@ -74,6 +103,13 @@ class ManualPdf extends DuskTestCase
      */
     private function outputCategory($pdf, $dusks, $category)
     {
+        // レベル指定されている場合に、指定のレベルが含まれない場合は出力しない。
+        if (!empty($this->level)) {
+            if ($dusks->where('category', $category->category)->where('level', $this->level)->isEmpty()) {
+                return $pdf;
+            }
+        }
+
         $pdf->addPage();
         $pdf->Bookmark(ManualCategory::getDescription($category->category), 0, 0, '', '', array(0, 0, 0));
         $pdf->writeHTML(
@@ -165,8 +201,16 @@ class ManualPdf extends DuskTestCase
     {
         // 引数の受け取り用
         global $argv;
-        if (count($argv) > 4 && strpos($argv[4], 'level=') === 0) {
-            $this->level = str_replace('level=', '', $argv[4]);
+        if (count($argv) > 4) {
+            for ($i = 4; $i < count($argv); $i++) {
+                $argv_array = explode('=', $argv[$i]);
+                if ($argv_array[0] == 'contact_page') {
+                    $this->contact_page_on = $argv_array[1];
+                }
+                if ($argv_array[0] == 'level') {
+                    $this->level = $argv_array[1];
+                }
+            }
         }
 
         // Laravel がコンストラクタでbase_path など使えないので、ここで。
@@ -250,6 +294,9 @@ class ManualPdf extends DuskTestCase
 
         // 裏表紙
         $this->outputBackfront($pdf);
+
+        // 問合せ先ページ
+        $this->outputContact($pdf);
 
         // 目次ページの追加
         $pdf->addTOCPage();

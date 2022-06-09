@@ -309,10 +309,10 @@ if "%1" == "t_all" (
     php artisan dusk tests\Manual\src\ManualOutput.php
 
     echo --- マニュアルPDF出力
-    php artisan dusk tests\Manual\src\ManualPdf.php
+    php artisan dusk tests\Manual\src\ManualPdf.php contact_page=on
 
     echo --- マニュアルPDF（基礎編）出力
-    php artisan dusk tests\Manual\src\ManualPdf.php level=basic
+    php artisan dusk tests\Manual\src\ManualPdf.php contact_page=on level=basic
 )
 
 rem ---------------------------------------------
