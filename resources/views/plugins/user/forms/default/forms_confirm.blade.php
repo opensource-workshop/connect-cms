@@ -19,6 +19,12 @@
         forms_store{{$frame_id}}.action = "{{URL::to('/')}}/plugin/forms/index/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         forms_store{{$frame_id}}.submit();
     }
+    {{-- 二重クリック防止 JavaScript --}}
+    $(function () {
+        $('form').submit(function () {
+            $(this).find(':submit').prop('disabled', true);
+        });
+    });
 </script>
 
 <div class="alert alert-secondary" role="alert">
