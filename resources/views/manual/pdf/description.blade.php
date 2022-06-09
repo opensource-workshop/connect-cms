@@ -40,7 +40,7 @@ Free Documentation License".<br />
 <h4 style="text-align: center; font-size: 12px;">【GFDL不変セクション】</h4>
 <p style=" font-size: 9px;">
 このマニュアルを出版や印刷する場合には、表紙テキストはGFDLライセンスに従い、マニュアルの外装に印刷されることを要求します。<br />
-裏表紙としての最終ページの人々はGFDLライセンスに従い、マニュアルの中に印刷されることを要求します。<br />
+裏表紙としての協力者ページの人々はGFDLライセンスに従い、マニュアルの中に印刷されることを要求します。<br />
 </p>
 <h4 style="text-align: center; font-size: 12px;">【表紙テキスト】</h4>
 <p style=" font-size: 9px;">
