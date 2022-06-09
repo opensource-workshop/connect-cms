@@ -22,7 +22,7 @@
     {{-- 二重クリック防止 JavaScript --}}
     $(function () {
         $('form').submit(function () {
-            $(this).find(':submit').prop('disabled', 'true');
+            $(this).find(':submit').prop('disabled', true);
         });
     });
 </script>
