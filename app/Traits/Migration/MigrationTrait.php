@@ -710,28 +710,27 @@ trait MigrationTrait
                 $this->checkDeadLinkInsideNc2($url, $nc2_module_name, $nc2_block);
             } else {
                 // 外部リンク
-                if (!$this->checkDeadLinkOutside($url, $nc2_module_name, $nc2_block)) {
-                    // NG
-                    $header = get_headers($url, true);
-                    $this->putLinkCheck(3, $nc2_module_name . '|外部リンク|' . $header[0], $url, $nc2_block);
-                }
+                $this->checkDeadLinkOutside($url, $nc2_module_name, $nc2_block);
             }
 
         } elseif (is_null($scheme)) {
+            // "{{CORE_BASE_URL}}/images/comp/textarea/titleicon/icon-weather9.gif" 等はここで処理
+
             // 内部リンク
             $this->checkDeadLinkInsideNc2($url, $nc2_module_name, $nc2_block);
         } else {
             // 対象外
-            $this->putLinkCheck(3, $nc2_module_name . '|リンク切れチェック対象外|', $url, $nc2_block);
+            $this->putLinkCheck(3, $nc2_module_name . '|リンク切れチェック対象外', $url, $nc2_block);
         }
     }
 
     /**
      * 外部URLのリンク切れチェック
      */
-    private function checkDeadLinkOutside($url): bool
+    private function checkDeadLinkOutside($url, $nc2_module_name, $nc2_block): bool
     {
-        $header = get_headers($url, true);
+        // タイムアウト(秒)を変更
+        ini_set('default_socket_timeout', 3);
 
         stream_context_set_default([
             'ssl' => [
@@ -740,16 +739,48 @@ trait MigrationTrait
             ],
         ]);
 
-        if (stripos($header[0], "200") !== false) {
-            // OK
-            return true;
-        } elseif (stripos($header[0], "302") !== false) {
-            // OK
-            return true;
-        } else {
+        // 独自でエラーをcatchする
+        set_error_handler(function($severity, $message) {
+            throw new \Exception($message);
+        });
+
+        try {
+            $headers = get_headers($url, true);
+        } catch (\Exception $e) {
             // NG
+            $this->putLinkCheck(3, $nc2_module_name . '|外部リンク|リンク切れ|' . $e->getMessage(), $url, $nc2_block);
             return false;
+
+        } finally {
+            // エラーハンドリングを元に戻す
+            restore_error_handler();
+
+            // タイムアウト(秒)を元に戻す
+            ini_restore('default_socket_timeout');
         }
+
+
+        $i = 0;
+        while (!isset($headers[$i])) {
+            if (stripos($headers[$i], "200") !== false) {
+                // OK
+                return true;
+            } elseif (stripos($headers[$i], "301") !== false) {
+                // 301リダイレクトのため、次要素の $header でチェック
+            } elseif (stripos($headers[$i], "302") !== false) {
+                // OK
+                return true;
+            } else {
+                // NG
+                $this->putLinkCheck(3, $nc2_module_name . '|外部リンク|リンク切れ|' . $headers[$i], $url, $nc2_block);
+                return false;
+            }
+            $i++;
+        }
+
+        // NG. 基本ここには到達しない想定
+        $this->putLinkCheck(3, $nc2_module_name . '|外部リンク|リンク切れ', $url, $nc2_block);
+        return false;
     }
 
     /**
@@ -776,8 +807,12 @@ trait MigrationTrait
         //      "path" => "/新規カテゴリ2/新規カテゴリ2-1/新規カテゴリ2-1-1/",
         //    ]
 
+        $nc2_base_url = $this->getMigrationConfig('basic', 'check_deadlink_nc2_base_url', '');
+
         // &amp; => & 等のデコード
         $check_url = htmlspecialchars_decode($url);
+        // {{CORE_BASE_URL}} 置換
+        $check_url = str_replace("{{CORE_BASE_URL}}", $nc2_base_url, $check_url);
 
         $check_url_path = parse_url($check_url, PHP_URL_PATH);
         $check_url_query = parse_url($check_url, PHP_URL_QUERY);
@@ -826,9 +861,17 @@ trait MigrationTrait
         // (掲示板) http://localhost:8080/bb7flt02n-57/#_57
         // (汎用DB) http://localhost:8080/muwoibbvq-51/#_51
         // (日誌)   http://localhost:8080/jojo6xnz5-34/#_34
+        // (日誌)   http://localhost:8080/index.php?key=jojo6xnz5-34#_34
         // ---------------------------------
         $short_url_array = explode('-', $check_url_array[0]);
-        $nc2_abbreviate_url = Nc2AbbreviateUrl::where('short_url', $short_url_array[0])->first();
+        $key = $this->getArrayValue($check_url_query_array, 'key', null, null);
+        $key_array = explode('-', $key);
+
+        $nc2_abbreviate_url = Nc2AbbreviateUrl::
+            where(function ($query) use ($short_url_array, $key_array) {
+                $query->where('short_url', $short_url_array[0])
+                    ->orWhere('short_url', $key_array[0]);
+            })->first();
 
         if ($nc2_abbreviate_url) {
             if ($nc2_abbreviate_url->dir_name == 'multidatabase') {
@@ -1603,14 +1646,17 @@ trait MigrationTrait
 
         // 外部リンク
         // 内部リンクの直ファイル指定の存在チェック。例）http://localhost:8080/htdocs/install/logo.gif
-        if ($this->checkDeadLinkOutside($url, $nc2_module_name, $nc2_block)) {
-            // 外部OK=移行対象外 (link_checkログには吐かない)
-            $this->putMonitor(3, $nc2_module_name . '|内部リンク＋外部リンクチェックOK|移行対象外URL', $url, $nc2_block);
-        } else {
-            // 外部NG
-            $header = get_headers($url, true);
-            $this->putLinkCheck(3, $nc2_module_name . '|内部リンク＋外部リンクチェックNG|未対応URL|' . $header[0], $url, $nc2_block);
-        }
+        // if ($this->checkDeadLinkOutside($check_url, $nc2_module_name, $nc2_block)) {
+        //     // 外部OK=移行対象外 (link_checkログには吐かない)
+        //     $this->putMonitor(3, $nc2_module_name . '|内部リンク＋外部リンクチェックOK|移行対象外URL', $url, $nc2_block);
+        // } else {
+        //     // 外部NG
+        //     $header = get_headers($check_url, true);
+        //     $this->putLinkCheck(3, $nc2_module_name . '|内部リンク＋外部リンクチェックNG|未対応URL|' . $header[0], $url, $nc2_block);
+        // }
+
+        // 移行対象外 (link_checkログには吐かない)
+        $this->putMonitor(3, $nc2_module_name . '|内部リンク|移行対象外URL', $url, $nc2_block);
     }
 
     /**
@@ -1740,6 +1786,10 @@ trait MigrationTrait
      */
     private function getCCDatetime($gmt_datetime)
     {
+        if (empty($gmt_datetime)) {
+            return null;
+        }
+
         $gmt_datetime_ts = mktime(substr($gmt_datetime, 8, 2), substr($gmt_datetime, 10, 2), substr($gmt_datetime, 12, 2), substr($gmt_datetime, 4, 2), substr($gmt_datetime, 6, 2), substr($gmt_datetime, 0, 4));
         // 9時間足す
         $gmt_datetime_ts = $gmt_datetime_ts + (60 * 60 * 9);
@@ -4950,7 +5000,7 @@ trait MigrationTrait
             // カテゴリなし(id=1)以外を移行
             if ($ini['source_info']['category_id'] == 1) {
                 $reservation_categories = ReservationsCategory::find(1);
-                $this->putMonitor(3, '施設予約のカテゴリなしは移行しない', "施設カテゴリ名={$ini['reservation_category']['category_name']}, ini_path={$ini_path}");
+                $this->putMonitor(1, '施設予約のカテゴリなしは移行しない', "施設カテゴリ名={$ini['reservation_category']['category_name']}, ini_path={$ini_path}");
 
             } else {
                 $reservation_categories = ReservationsCategory::create([
@@ -12446,13 +12496,13 @@ trait MigrationTrait
     {
         // お知らせモジュールのデータの取得
         // 続きを読むはとりあえず、1つに統合。固定記事の方、対応すること。
-        $announcement = Nc2Announcement::where('block_id', $nc2_block->block_id)->first();
+        $announcement = Nc2Announcement::where('block_id', $nc2_block->block_id)->firstOrNew([]);
 
         // 記事
 
         // 「お知らせモジュール」のデータがなかった場合は、データの不整合としてエラーログを出力
         $content = "";
-        if (!empty($announcement)) {
+        if ($announcement->id) {
             $content = trim($announcement->content);
             $content .= trim($announcement->more_content);
         } else {
