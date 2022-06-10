@@ -740,7 +740,7 @@ trait MigrationTrait
         ]);
 
         // 独自でエラーをcatchする
-        set_error_handler(function($severity, $message) {
+        set_error_handler(function ($severity, $message) {
             throw new \Exception($message);
         });
 
