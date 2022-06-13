@@ -69,9 +69,9 @@ trait RegistersUsers
         $input_cols = null;
 
         // サイトテーマ詰込
-        $configs = Configs::getSharedConfigs();
-        $base_theme = Configs::getConfigsValue($configs, 'base_theme', null);
-        $additional_theme = Configs::getConfigsValue($configs, 'additional_theme', null);
+        $tmp_configs = Configs::getSharedConfigs();
+        $base_theme = Configs::getConfigsValue($tmp_configs, 'base_theme', null);
+        $additional_theme = Configs::getConfigsValue($tmp_configs, 'additional_theme', null);
         $themes = [
                     'css' => $base_theme,
                     'js' => $base_theme,
