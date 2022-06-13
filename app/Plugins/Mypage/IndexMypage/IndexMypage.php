@@ -4,7 +4,7 @@ namespace app\Plugins\Mypage\IndexMypage;
 
 use Illuminate\Support\Facades\Auth;
 use App\User;
-use App\Plugins\Manage\UserManage\UsersTool;
+use App\Models\Core\UsersInputCols;
 use App\Plugins\Mypage\MypagePluginBase;
 
 /**
@@ -38,7 +38,13 @@ class IndexMypage extends MypagePluginBase
     {
         // ログインしているユーザー情報を取得
         $user = Auth::user();
-        $user_input_cols = UsersTool::getUsersInputCols($user);
+        $user_input_cols = UsersInputCols::select('users_input_cols.*', 'users_columns.column_type', 'users_columns.column_name', 'uploads.client_original_name')
+            ->leftJoin('users_columns', 'users_columns.id', '=', 'users_input_cols.users_columns_id')
+            ->leftJoin('uploads', 'uploads.id', '=', 'users_input_cols.value')
+            ->where('users_id', $user->id)
+            ->orderBy('users_id', 'asc')
+            ->orderBy('users_columns_id', 'asc')
+            ->get();
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
         return view('plugins.mypage.index.index', [
