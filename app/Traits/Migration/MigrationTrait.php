@@ -12502,7 +12502,7 @@ trait MigrationTrait
 
         // 「お知らせモジュール」のデータがなかった場合は、データの不整合としてエラーログを出力
         $content = "";
-        if ($announcement->id) {
+        if ($announcement->block_id) {
             $content = trim($announcement->content);
             $content .= trim($announcement->more_content);
         } else {
