@@ -34,7 +34,7 @@
                 <table class="table table-hover cc-font-90">
                     <tbody>
                         <tr>
-                            <th style="width:15%;" nowrap="nowrap">ユーザID</th>
+                            <th style="width:20%;" nowrap="nowrap">ユーザID</th>
                             <td nowrap="nowrap">{{ $user->id }}</td>
                         </tr>
                         <tr>
@@ -42,7 +42,7 @@
                             <td nowrap="nowrap">{{ $user->userid }}</td>
                         </tr>
                         <tr>
-                            <th nowrap="nowrap">氏名</th>
+                            <th nowrap="nowrap">ユーザ名</th>
                             <td nowrap="nowrap">{{ $user->name }}</td>
                         </tr>
                         <tr>
