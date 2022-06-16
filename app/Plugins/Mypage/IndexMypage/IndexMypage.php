@@ -38,7 +38,7 @@ class IndexMypage extends MypagePluginBase
     {
         // ログインしているユーザー情報を取得
         $user = Auth::user();
-        $user_input_cols = UsersInputCols::select('users_input_cols.*', 'users_columns.column_type', 'users_columns.column_name','users_columns.display_sequence', 'uploads.client_original_name')
+        $user_input_cols = UsersInputCols::select('users_input_cols.*', 'users_columns.column_type', 'users_columns.column_name', 'users_columns.display_sequence', 'uploads.client_original_name')
             ->leftJoin('users_columns', 'users_columns.id', '=', 'users_input_cols.users_columns_id')
             ->leftJoin('uploads', 'uploads.id', '=', 'users_input_cols.value')
             ->where('users_id', $user->id)
