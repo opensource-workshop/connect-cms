@@ -532,8 +532,9 @@ class PageManage extends ManagePluginBase
                 $csv_columns[1] = '/' . $csv_columns[1];
             }
 
-            // ページ名をUTF-8 に変換
+            // ページ名, 固定リンクをUTF-8 に変換
             $csv_columns[0] = mb_convert_encoding($csv_columns[0], "UTF-8", "SJIS-WIN, Shift_JIS");
+            $csv_columns[1] = mb_convert_encoding($csv_columns[1], "UTF-8", "SJIS-WIN, Shift_JIS");
 
             // ページ作成
             $page = Page::create([
