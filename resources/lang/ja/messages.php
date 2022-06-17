@@ -106,7 +106,8 @@ $messages = [
     'available' => '有',
     'not_available' => '無',
     'researcher_list' => '研究者一覧',
-    'cannot_download_because_no_results_found' => '検索結果が0件のため、:typeダウンロードできません。'
+    'cannot_download_because_no_results_found' => '検索結果が0件のため、:typeダウンロードできません。',
+    'this_table_can_be_scrolled_horizontally' => '表は横スクロールできます',
 ];
 
 foreach ($messages as $key => $message) {
