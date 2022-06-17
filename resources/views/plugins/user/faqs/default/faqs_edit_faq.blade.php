@@ -154,6 +154,30 @@
         </div>
     </div>
 
+    {{-- 投稿者名 --}}
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">{{FaqFrameConfig::getDescription('faq_display_created_name')}}</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-radio custom-control-inline">
+                @if (FrameConfig::getConfigValueAndOld($frame_configs, FaqFrameConfig::faq_display_created_name) == ShowType::show)
+                    <input type="radio" value="{{ShowType::show}}" id="{{FaqFrameConfig::faq_display_created_name}}_1" name="{{FaqFrameConfig::faq_display_created_name}}" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="{{ShowType::show}}" id="{{FaqFrameConfig::faq_display_created_name}}_1" name="{{FaqFrameConfig::faq_display_created_name}}" class="custom-control-input">
+                @endif
+                <label class="custom-control-label text-nowrap" for="{{FaqFrameConfig::faq_display_created_name}}_1" id="label_{{FaqFrameConfig::faq_display_created_name}}_1">{{ShowType::getDescription(ShowType::show)}}</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                @if (FrameConfig::getConfigValueAndOld($frame_configs, FaqFrameConfig::faq_display_created_name) === '' ||
+                    FrameConfig::getConfigValueAndOld($frame_configs, FaqFrameConfig::faq_display_created_name) == ShowType::not_show)
+                    <input type="radio" value="{{ShowType::not_show}}" id="{{FaqFrameConfig::faq_display_created_name}}_0" name="{{FaqFrameConfig::faq_display_created_name}}" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="{{ShowType::not_show}}" id="{{FaqFrameConfig::faq_display_created_name}}_0" name="{{FaqFrameConfig::faq_display_created_name}}" class="custom-control-input">
+                @endif
+                <label class="custom-control-label text-nowrap" for="{{FaqFrameConfig::faq_display_created_name}}_0" id="label_{{FaqFrameConfig::faq_display_created_name}}_0">{{ShowType::getDescription(ShowType::not_show)}}</label>
+            </div>
+        </div>
+    </div>
+
     {{-- Submitボタン --}}
     <div class="form-group text-center">
         <div class="row">

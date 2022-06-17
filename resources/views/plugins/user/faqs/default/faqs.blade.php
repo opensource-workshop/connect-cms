@@ -90,6 +90,11 @@
                                 公開日時：{{$post->posted_at->format('Y年n月j日 H時i分')}}
                             @endif
 
+                            @if (FrameConfig::getConfigValueAndOld($frame_configs, FaqFrameConfig::faq_display_created_name) == ShowType::show)
+                                {{-- 投稿者 --}}
+                                [{{$post->created_name}}]
+                            @endif
+
                             {{-- 重要記事 --}}
                             @if ($post->important == 1)
                                 <span class="badge badge-danger">重要</span>
