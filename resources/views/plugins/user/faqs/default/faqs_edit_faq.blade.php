@@ -70,20 +70,20 @@
         <label class="{{$frame->getSettingLabelClass(true)}}">RSSの表示</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
-                @if(old('rss', $faq->rss) == 1)
-                    <input type="radio" value="1" id="rss_on" name="rss" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="1" id="rss_on" name="rss" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="rss_on" id="label_rss_on">表示する</label>
-            </div>
-            <div class="custom-control custom-radio custom-control-inline">
                 @if(old('rss', $faq->rss) == 0)
                     <input type="radio" value="0" id="rss_off" name="rss" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="0" id="rss_off" name="rss" class="custom-control-input">
                 @endif
                 <label class="custom-control-label" for="rss_off" id="label_rss_off">表示しない</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                @if(old('rss', $faq->rss) == 1)
+                    <input type="radio" value="1" id="rss_on" name="rss" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="1" id="rss_on" name="rss" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="rss_on" id="label_rss_on">表示する</label>
             </div>
         </div>
     </div>
