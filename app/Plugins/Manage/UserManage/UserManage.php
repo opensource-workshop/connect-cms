@@ -793,7 +793,7 @@ class UserManage extends ManagePluginBase
 
         // 変更画面に戻る
         // return $this->edit($request, $id);
-        return redirect("/manage/user/edit/$id");
+        return redirect("/manage/user/edit/$id")->with('flash_message', 'ユーザ変更しました。');
     }
 
     /**
@@ -1255,9 +1255,8 @@ class UserManage extends ManagePluginBase
             ]
         );
 
-        // ページ管理画面に戻る
         // 自動ユーザ登録設定画面に戻る
-        return redirect("/manage/user/autoRegist");
+        return redirect("/manage/user/autoRegist")->with('flash_message', '更新しました。');
     }
 
     /**

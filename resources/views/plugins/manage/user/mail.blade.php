@@ -20,6 +20,15 @@
 
         @include('plugins.common.errors_form_line')
 
+        {{-- 登録後メッセージ表示 --}}
+        @include('plugins.common.flash_message')
+
+        {{-- メッセージエリア --}}
+        <div class="alert alert-info">
+            <i class="fas fa-exclamation-circle"></i> メールで登録内容を通知する場合、「送信」ボタンを押してください。<br />
+            　件名・本文のフォーマットは、[ <a href="{{url('/')}}/manage/user/autoRegist" target="_blank">自動ユーザ登録設定 <i class="fas fa-external-link-alt"></i></a> ] の「本登録メール件名」「本登録メールフォーマット」から設定できます。
+        </div>
+
         <form action="{{url('/')}}/manage/user/mailSend/{{$user->id}}" method="POST">
             {{csrf_field()}}
 

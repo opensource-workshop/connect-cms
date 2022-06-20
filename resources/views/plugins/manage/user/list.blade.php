@@ -45,6 +45,10 @@ use App\Models\Core\UsersColumns;
         @include('plugins.manage.user.user_manage_tab')
     </div>
     <div class="card-body">
+
+        {{-- 登録後メッセージ表示 --}}
+        @include('plugins.common.flash_message')
+
         <div class="accordion" id="search_accordion">
             <div class="card">
                 <button class="btn btn-link p-0 text-left collapsed" type="button" data-toggle="collapse" data-target="#search_collapse" aria-expanded="false" aria-controls="search_collapse">
