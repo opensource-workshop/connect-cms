@@ -793,7 +793,7 @@ class UserManage extends ManagePluginBase
 
         // 変更画面に戻る
         // return $this->edit($request, $id);
-        return redirect("/manage/user/edit/$id");
+        return redirect("/manage/user/edit/$id")->with('flash_message', 'ユーザ変更しました。');
     }
 
     /**

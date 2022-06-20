@@ -20,6 +20,9 @@
 </div>
 <div class="card-body">
 
+    {{-- 登録後メッセージ表示 --}}
+    @include('plugins.common.flash_message')
+
     {{-- フォームをincude --}}
     @include('auth.registe_form')
 

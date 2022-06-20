@@ -252,7 +252,7 @@ trait RegistersUsers
 
         //Log::debug("register end brfore.");
         return $this->registered($request, $user)
-                        ?: redirect($this->redirectPath());
+                        ?: redirect($this->redirectPath())->with('flash_message', 'ユーザ登録しました。');;
     }
 
     /**
