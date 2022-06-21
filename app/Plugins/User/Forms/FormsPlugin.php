@@ -591,7 +591,7 @@ class FormsPlugin extends UserPluginBase
             $tmp_array = $request->forms_columns_value;
             $tmp_array[$forms_column->id] = null;
             if ($time_from && $time_to) {
-                if (strtotime('1970-01-01 '. $time_from . ':00') && strtotime('1970-01-01 '. $time_to . ':00')) {
+                if (strtotime('1970-01-01 '. $time_from . ':00') !== false && strtotime('1970-01-01 '. $time_to . ':00') !== false) {
                     // 両方入力時、且つ、正常時間の場合、時間の前後チェック
                     $validator_rule[] = new CustomValiTimeFromTo(
                         Carbon::createFromTimeString($time_from . ':00'),
