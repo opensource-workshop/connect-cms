@@ -208,7 +208,7 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
 @if (Auth::check() || Configs::getConfigsValue($cc_configs, 'base_header_hidden') != '1')
 <nav class="navbar navbar-expand-md bg-dark {{$base_header_font_color_class}} @if (Configs::getConfigsValue($cc_configs, 'base_header_fix') == '1') sticky-top @endif {{ $base_header_optional_class }}" aria-label="ヘッダー">
     <!-- Branding Image -->
-    <a class="navbar-brand" href="{{ url('/') }}">
+    <a class="navbar-brand cc-custom-brand" href="{{ url('/') }}">
         {{ Configs::getConfigsValue($cc_configs, 'base_site_name', config('app.name', 'Connect-CMS')) }}
     </a>
 
