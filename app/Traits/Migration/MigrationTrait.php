@@ -863,6 +863,9 @@ trait MigrationTrait
         // (日誌)   http://localhost:8080/jojo6xnz5-34/#_34
         // (日誌)   http://localhost:8080/index.php?key=jojo6xnz5-34#_34
         // ---------------------------------
+        if (!isset($check_url_array[0])) {
+            return;
+        }
         $short_url_array = explode('-', $check_url_array[0]);
         $key = $this->getArrayValue($check_url_query_array, 'key', null, null);
         $key_array = explode('-', $key);
@@ -6345,6 +6348,11 @@ trait MigrationTrait
                 1 => 2,
             ];
             $list_format = $convert_list_formats[$view_format] ?? 2;
+
+            if ( isset($bucket->id) ) {
+                $bbstmp = bbs::where('bucket_id', $bucket->id)->first();
+                $bbs_id = $bbstmp->id;
+            }
 
             // 表示設定
             $bbs_frame = BbsFrame::updateOrCreate(
