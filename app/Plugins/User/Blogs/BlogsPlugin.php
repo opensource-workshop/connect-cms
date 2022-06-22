@@ -63,6 +63,14 @@ class BlogsPlugin extends UserPluginBase
     }
 
     /**
+     * メール送信で使用するメソッド
+     */
+    public function useBucketMailMethods()
+    {
+        return ['notice', 'approval', 'approved'];
+    }
+
+    /**
      * 追加の権限定義（コアから呼び出す）
      */
     public function declareRole()
@@ -813,7 +821,7 @@ WHERE status = 0
         }
 
         // id があれば旧データを取得＆権限を加味して更新可能データかどうかのチェック
-        $old_blogs_post = null;
+        $old_blogs_post = new BlogsPosts();
         if (!empty($blogs_posts_id)) {
             // 指定されたID のデータ
             $old_blogs_post = BlogsPosts::where('id', $blogs_posts_id)->first();
@@ -846,13 +854,20 @@ WHERE status = 0
 
         // 承認の要否確認とステータス処理
         if ($this->isApproval()) {
-            $blogs_post->status = 2;
+            $blogs_post->status = StatusType::approval_pending;
+        } else {
+            $blogs_post->status = StatusType::active;
         }
 
         // 新規
         if (empty($blogs_posts_id)) {
             // 登録ユーザ
             $blogs_post->created_id  = Auth::user()->id;
+
+            // status = 0(公開) の場合、現在日付を入れる。
+            if ($blogs_post->status === StatusType::active) {
+                $blogs_post->first_committed_at = date('Y-m-d H:i:s');
+            }
 
             // データ保存
             $blogs_post->save();
@@ -869,6 +884,13 @@ WHERE status = 0
             $blogs_post->created_name = $old_blogs_post->created_name;
             $blogs_post->created_at   = $old_blogs_post->created_at;
 
+            // 初回確定日時
+            $blogs_post->first_committed_at = $old_blogs_post->first_committed_at;
+            // status = 0(公開) の場合、現在日付を入れる。
+            if (empty($blogs_post->first_committed_at) && $blogs_post->status === StatusType::active) {
+                $blogs_post->first_committed_at = date('Y-m-d H:i:s');
+            }
+
             // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)ただし、承認待ちレコード作成時は対象外
             if ($blogs_post->status != 2) {
                 BlogsPosts::where('contents_id', $old_blogs_post->contents_id)->where('status', 0)->update(['status' => 9]);
@@ -880,6 +902,9 @@ WHERE status = 0
 
         // タグの保存
         $this->saveTag($request, $blogs_post);
+
+        // メール送信
+        $this->sendPostNotice($blogs_post, $old_blogs_post, 'show');
 
         // 登録後はリダイレクトして表示用の初期処理を呼ぶ。
         // return $this->index($request, $page_id, $frame_id);
@@ -959,11 +984,20 @@ WHERE status = 0
             // 同じcontents_id のデータを削除するため、一旦、対象データを取得
             $post = BlogsPosts::where('id', $blogs_posts_id)->first();
 
+            $delete_comment = "";
+            if ($post) {
+                $delete_comment  = "以下、削除されたデータのタイトルです。\n";
+                $delete_comment .= "「" . $post->post_title . "」を削除しました。";
+            }
+
             // 削除ユーザ、削除日を設定する。（複数レコード更新のため、自動的には入らない）
             BlogsPosts::where('contents_id', $post->contents_id)->update(['deleted_id' => Auth::user()->id, 'deleted_name' => Auth::user()->name]);
 
             // データを削除する。
             BlogsPosts::where('contents_id', $post->contents_id)->delete();
+
+            // メール送信 引数(削除した行, 詳細表示メソッド, 削除データを表すメッセージ)
+            $this->sendDeleteNotice($post, 'show', $delete_comment);
         }
         // 削除後は表示用の初期処理を呼ぶ。
         // return $this->index($request, $page_id, $frame_id);
@@ -980,6 +1014,9 @@ WHERE status = 0
         // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $check_blogs_post = $this->getPost($id);
 
+        // 承認済みの判定のために、保存する前にpost を退避しておく。
+        $before_post = clone $check_blogs_post;
+
         // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
         if (empty($check_blogs_post->id) || $check_blogs_post->id != $id) {
             return $this->viewError("403_inframe", null, 'approvalのユーザー権限に応じたPOST ID チェック');
@@ -989,11 +1026,18 @@ WHERE status = 0
         BlogsPosts::where('contents_id', $blogs_post->contents_id)->where('status', 0)->update(['status' => 9]);
 
         // ブログ記事設定
-        $blogs_post->status = 0;
+        $blogs_post->status = StatusType::active;
+        // status = 0 (公開) の場合、現在日付を入れる。
+        if (empty($blogs_post->first_committed_at)) {
+            $blogs_post->first_committed_at = date('Y-m-d H:i:s');
+        }
         $blogs_post->save();
 
         // タグもコピー
         $this->copyTag($check_blogs_post, $blogs_post);
+
+        // メール送信
+        $this->sendPostNotice($blogs_post, $before_post, 'show');
 
         // 登録後は表示用の初期処理を呼ぶ。
         // return $this->index($request, $page_id, $frame_id);

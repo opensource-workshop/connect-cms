@@ -25,11 +25,11 @@
 @endif
 @if ($action == 'settingBlogFrame')
     <li role="presentation" class="nav-item">
-        <span class="nav-link"><span class="active">表示条件設定</span></span>
+        <span class="nav-link"><span class="active">表示条件</span></span>
     </li>
 @else
     <li role="presentation" class="nav-item">
-        <a href="{{url('/')}}/plugin/blogs/settingBlogFrame/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">表示条件設定</a>
+        <a href="{{url('/')}}/plugin/blogs/settingBlogFrame/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">表示条件</a>
     </li>
 @endif
 @if ($action == 'listCategories')
@@ -43,11 +43,11 @@
 @endif
 @if ($action == 'listBuckets')
     <li role="presentation" class="nav-item">
-        <span class="nav-link"><span class="active">表示ブログ選択</span></span>
+        <span class="nav-link"><span class="active">選択</span></span>
     </li>
 @else
     <li role="presentation" class="nav-item">
-        <a href="{{url('/')}}/plugin/blogs/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">表示ブログ選択</a>
+        <a href="{{url('/')}}/plugin/blogs/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">選択</a>
     </li>
 @endif
 @if ($action == 'editBucketsRoles' || $action == '')
@@ -59,3 +59,6 @@
         <a href="{{url('/')}}/plugin/blogs/editBucketsRoles/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">権限設定</a>
     </li>
 @endif
+<li role="presentation" class="nav-item">
+    <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/editBucketsMails/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link {{ $action == 'editBucketsMails' ? 'active' : '' }}">メール設定</a>
+</li>
