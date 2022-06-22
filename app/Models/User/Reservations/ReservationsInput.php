@@ -50,4 +50,17 @@ class ReservationsInput extends Model
         }
         return $endtime;
     }
+
+    /**
+     * 利用日時のFrom～To 取得
+     */
+    public function getStartEndDatetimeStr(): string
+    {
+        $endtime = $this->end_datetime->format('H時i分');
+        if ($endtime == '00時00分') {
+            $endtime = '24時00分';
+        }
+
+        return $this->start_datetime->format('Y年m月d日 H時i分') . ' ～ ' . $endtime;
+    }
 }
