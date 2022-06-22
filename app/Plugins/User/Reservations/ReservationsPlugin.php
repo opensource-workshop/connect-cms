@@ -1132,12 +1132,8 @@ class ReservationsPlugin extends UserPluginBase
             $reservations_inputs_columns->save();
         }
 
-        $end_datetime_str = date_format($reservations_inputs->end_datetime, 'H時i分');
-        if ($end_datetime_str == '00時00分') {
-            $end_datetime_str = '24時00分';
-        }
-
-        $start_end_datetime_str = date_format($reservations_inputs->start_datetime, 'Y年m月d日 H時i分') . ' ～ ' . $end_datetime_str;
+        // 利用日時のFrom～To 取得
+        $start_end_datetime_str = $reservations_inputs->getStartEndDatetimeStr();
         $flash_message = "{$str_mode}【場所】{$facility->facility_name} 【日時】{$start_end_datetime_str}";
 
         // 繰り返しあり
@@ -1462,8 +1458,45 @@ class ReservationsPlugin extends UserPluginBase
             $input->update();
         }
 
+        // 施設データ
+        $facility = ReservationsFacility::firstOrNew(['id' => $reservations_input->facility_id]);
+        // 可変項目
+        $columns = ReservationsColumn::where('columns_set_id', $facility->columns_set_id)
+            ->where('hide_flag', NotShowType::show)
+            ->get();
+        // 予約繰り返しルール
+        $inputs_repeat = InputsRepeat::firstOrNew([
+            'target' => $this->frame->plugin_name,
+            'target_id' => $reservations_input->facility_id,   // 施設予約は、施設IDをtarget_idにセット
+            'parent_id' => $reservations_input->inputs_parent_id
+        ]);
+
+        // プラグイン独自の埋め込みタグ
+        $overwrite_notice_embedded_tags = [
+            NoticeEmbeddedTag::title => $this->getTitle($reservations_input, $columns),
+            ReservationNoticeEmbeddedTag::facility_name => $facility->facility_name,
+            ReservationNoticeEmbeddedTag::booking_time => $reservations_input->getStartEndDatetimeStr(),
+            ReservationNoticeEmbeddedTag::rrule => $inputs_repeat->id ? $inputs_repeat->showRruleDisplay() . ' ' . $inputs_repeat->showRruleEndDisplay() : '',
+        ];
+
+        // データ詳細の取得
+        $inputs_columns = $this->getReservationsInputsColumns($reservations_input->inputs_parent_id);
+        foreach ($inputs_columns as $inputs_column) {
+            $column = $columns->firstWhere('id', $inputs_column->column_id);
+            // 除外する埋め込みタグはセットしない
+            if ($column->isNotEmbeddedTagsColumnType()) {
+                continue;
+            }
+
+            if ($column->column_type == ReservationColumnType::wysiwyg) {
+                $overwrite_notice_embedded_tags["X-{$column->column_name}"] = BucketsMail::stripTagsWysiwyg($inputs_column->value);
+            } else {
+                $overwrite_notice_embedded_tags["X-{$column->column_name}"] = $inputs_column->value;
+            }
+        }
+
         // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド)
-        $this->sendPostNotice($reservations_input, $before_reservations_input, 'showBooking');
+        $this->sendPostNotice($reservations_input, $before_reservations_input, 'showBooking', $overwrite_notice_embedded_tags);
 
         session()->flash('flash_message_for_frame' . $frame_id, ' 予約を承認しました。');
 
