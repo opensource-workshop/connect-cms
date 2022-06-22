@@ -6349,7 +6349,7 @@ trait MigrationTrait
             ];
             $list_format = $convert_list_formats[$view_format] ?? 2;
 
-            if ( isset($bucket->id) ) {
+            if (isset($bucket->id)) {
                 $bbstmp = bbs::where('bucket_id', $bucket->id)->first();
                 $bbs_id = $bbstmp->id;
             }
