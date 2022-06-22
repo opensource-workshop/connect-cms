@@ -3,7 +3,7 @@
  *
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category プラグイン共通
+ * @category 施設予約プラグイン
  *
  * copy by resources\views\plugins\common\description_frame_mails_common.blade.php
 --}}
