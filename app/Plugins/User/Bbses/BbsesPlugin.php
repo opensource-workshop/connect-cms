@@ -486,11 +486,10 @@ class BbsesPlugin extends UserPluginBase
             return back()->withErrors($validator)->withInput();
         }
 
-        // フレームから bbs_id 取得
-        $bbs_frame = $this->getPluginFrame($frame_id);
+        $bbs = $this->getPluginBucket($this->getBucketId());
 
         // 値のセット
-        $post->bbs_id            = $bbs_frame->bbs_id;
+        $post->bbs_id            = $bbs->id;
         $post->title             = $request->title;
         $post->body              = $this->clean($request->body);
 

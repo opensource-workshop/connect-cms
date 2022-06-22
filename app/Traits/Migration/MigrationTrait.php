@@ -863,6 +863,9 @@ trait MigrationTrait
         // (日誌)   http://localhost:8080/jojo6xnz5-34/#_34
         // (日誌)   http://localhost:8080/index.php?key=jojo6xnz5-34#_34
         // ---------------------------------
+        if (!isset($check_url_array[0])) {
+            return;
+        }
         $short_url_array = explode('-', $check_url_array[0]);
         $key = $this->getArrayValue($check_url_query_array, 'key', null, null);
         $key_array = explode('-', $key);
@@ -6346,6 +6349,11 @@ trait MigrationTrait
             ];
             $list_format = $convert_list_formats[$view_format] ?? 2;
 
+            if ( isset($bucket->id) ) {
+                $bbstmp = bbs::where('bucket_id', $bucket->id)->first();
+                $bbs_id = $bbstmp->id;
+            }
+
             // 表示設定
             $bbs_frame = BbsFrame::updateOrCreate(
                 ['bbs_id' => $bbs_id, 'frame_id' => $frame->id],
@@ -7085,6 +7093,10 @@ trait MigrationTrait
         $html_file_path = $page_dir . '/' . $frame_ini['contents']['contents_file'];
         $content_html = File::get($html_file_path);
 
+        // more_content取得
+        $html_file_path2 = $page_dir . '/' . $frame_ini['contents']['contents2_file'];
+        $content2_html = File::get($html_file_path2);
+
         // 対象外の条件を確認
         $import_ommit_keywords = $this->getMigrationConfig('contents', 'import_ommit_keyword', array());
         foreach ($import_ommit_keywords as $import_ommit_keyword) {
@@ -7095,6 +7107,7 @@ trait MigrationTrait
 
         // Google Analytics タグ部分を削除
         $content_html = $this->deleteGATag($content_html);
+        $content2_html = $this->deleteGATag($content2_html);
 
         // Buckets 登録
         // echo "Buckets 登録\n";
@@ -7136,6 +7149,7 @@ trait MigrationTrait
                 // コンテンツ中のアップロード画像のパスの修正
                 if (!empty($migration_mapping)) {
                     $content_html = str_replace($image_path, $this->getImportSrcDir() . $migration_mapping->destination_key, $content_html);
+                    $content2_html = str_replace($image_path, $this->getImportSrcDir() . $migration_mapping->destination_key, $content2_html);
                 } else {
                     // $this->putError(1, 'image path not found mapping', "コンテンツ中のアップロード画像のパスがマッピングテーブルに見つからない。nc2_upload_id = " . $nc2_upload_id);
                 }
@@ -7153,6 +7167,7 @@ trait MigrationTrait
                 // コンテンツ中のアップロードファイルのパスの修正
                 if (!empty($migration_mapping)) {
                     $content_html = str_replace($file_path, $this->getImportSrcDir() . $migration_mapping->destination_key, $content_html);
+                    $content2_html = str_replace($file_path, $this->getImportSrcDir() . $migration_mapping->destination_key, $content2_html);
                 } else {
                     // $this->putError(1, 'file path not found mapping', "コンテンツ中のアップロードファイルのパスがマッピングテーブルに見つからない。nc2_upload_id = " . $nc2_upload_id);
                 }
@@ -7193,6 +7208,7 @@ trait MigrationTrait
 
                 // 画像のパスの修正
                 $content_html = str_replace($filename, $this->getImportSrcDir() . $upload->id, $content_html);
+                $content2_html = str_replace($filename, $this->getImportSrcDir() . $upload->id, $content2_html);
             }
         }
 
@@ -7229,10 +7245,16 @@ trait MigrationTrait
 
                 // ファイルのパスの修正
                 $content_html = str_replace($filename, $this->getImportSrcDir() . $upload->id, $content_html);
+                $content2_html = str_replace($filename, $this->getImportSrcDir() . $upload->id, $content2_html);
             }
         }
 
         //Log::debug($content_html);
+        $read_more_flag = 1;
+        if ($content2_html == '') {
+            $read_more_flag = 0;
+            $content2_html = null;
+        }
 
         // ユーザ取得
         $users = User::get();
@@ -7242,6 +7264,8 @@ trait MigrationTrait
         $content = new Contents([
             'bucket_id' => $bucket->id,
             'content_text' => $content_html,
+            'content2_text' => $content2_html,
+            'read_more_flag' => $read_more_flag,
             'status' => 0
         ]);
         $content->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($frame_ini, 'contents', 'insert_login_id', null));
@@ -12502,9 +12526,12 @@ trait MigrationTrait
 
         // 「お知らせモジュール」のデータがなかった場合は、データの不整合としてエラーログを出力
         $content = "";
+        $content2 = "";
         if ($announcement->block_id) {
             $content = trim($announcement->content);
-            $content .= trim($announcement->more_content);
+            if ($announcement->more_content) {
+                $content2 = trim($announcement->more_content);
+            }
         } else {
             $this->putError(1, "no announcement record", "block_id = " . $nc2_block->block_id);
         }
@@ -12512,9 +12539,11 @@ trait MigrationTrait
         // WYSIWYG 記事のエクスポート
         $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
         $content_filename = "frame_" . $frame_index_str . '.html';
+        $content2_filename = "frame_" . $frame_index_str . '.html2';
         $ini_filename = "frame_" . $frame_index_str . '.ini';
 
         $this->nc2Wysiwyg($nc2_block, $save_folder, $content_filename, $ini_filename, $content, 'announcement', $nc2_page);
+        $this->nc2Wysiwyg($nc2_block, $save_folder, $content2_filename, $ini_filename, $content2, 'announcement', $nc2_page);
 
         // nc2の全ユーザ取得
         $nc2_users = Nc2User::get();
@@ -12522,6 +12551,7 @@ trait MigrationTrait
         // フレーム設定ファイルの追記
         $contents_ini = "[contents]\n";
         $contents_ini .= "contents_file   = \"" . $content_filename . "\"\n";
+        $contents_ini .= "contents2_file   = \"" . $content2_filename . "\"\n";
         $contents_ini .= "created_at      = \"" . $this->getCCDatetime($announcement->insert_time) . "\"\n";
         $contents_ini .= "created_name    = \"" . $announcement->insert_user_name . "\"\n";
         $contents_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $announcement->insert_user_id) . "\"\n";
