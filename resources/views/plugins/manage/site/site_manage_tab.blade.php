@@ -45,6 +45,14 @@
                 @endif
                 </li>
 
+                <li role="presentation" class="nav-item">
+                @if ($function == "wysiwyg")
+                    <span class="nav-link"><span class="active">WYSIWYG設定</span></span>
+                @else
+                    <a href="{{url('/manage/site/wysiwyg')}}" class="nav-link">WYSIWYG設定</a>
+                @endif
+                </li>
+
                 <li class="nav-item dropdown">
                     <a href="#" class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         その他設定
@@ -73,12 +81,6 @@
                             <a href="{{url('/manage/site/favicon')}}" class="dropdown-item active bg-light">ファビコン</a>
                         @else
                             <a href="{{url('/manage/site/favicon')}}" class="dropdown-item">ファビコン</a>
-                        @endif
-
-                        @if ($function == "wysiwyg")
-                            <a href="{{url('/manage/site/wysiwyg')}}" class="dropdown-item active bg-light">WYSIWYG設定</a>
-                        @else
-                            <a href="{{url('/manage/site/wysiwyg')}}" class="dropdown-item">WYSIWYG設定</a>
                         @endif
 
                         @if ($function == "document")

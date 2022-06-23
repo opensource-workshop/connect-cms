@@ -267,7 +267,7 @@
         {!!$toolbar!!}
 
         // fontsize_formats: '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt',
-        fontsize_formats: '0.65rem 0.85rem 1rem 1.15rem 1.3rem 1.5rem 2rem 3rem',
+        fontsize_formats: '65%=0.65rem 85%=0.85rem 100%=1rem 115%=1.15rem 130%=1.3rem 150%=1.5rem 200%=2rem 300%=3rem',
 
         {{-- テーマ固有書式 --}}
         {!!$style_formats_file!!}
