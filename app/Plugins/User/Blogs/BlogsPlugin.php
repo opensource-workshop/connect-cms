@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
 use App\Models\Common\Buckets;
+use App\Models\Common\BucketsMail;
 use App\Models\Common\BucketsRoles;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
@@ -21,9 +22,11 @@ use App\Models\User\Blogs\BlogsPostsTags;
 
 use App\Plugins\User\UserPluginBase;
 
-use App\Enums\StatusType;
 use App\Enums\BlogFrameConfig;
 use App\Enums\BlogFrameScope;
+use App\Enums\BlogNoticeEmbeddedTag;
+use App\Enums\NoticeEmbeddedTag;
+use App\Enums\StatusType;
 
 use App\Rules\CustomValiWysiwygMax;
 
@@ -904,11 +907,31 @@ WHERE status = 0
         $this->saveTag($request, $blogs_post);
 
         // メール送信
-        $this->sendPostNotice($blogs_post, $old_blogs_post, 'show');
+        $this->sendPostNotice($blogs_post, $old_blogs_post, 'show', $this->getOverwriteNoticeEmbeddedTags($blogs_post));
 
         // 登録後はリダイレクトして表示用の初期処理を呼ぶ。
         // return $this->index($request, $page_id, $frame_id);
         return collect(['redirect_path' => url($this->page->permanent_link)]);
+    }
+
+    /**
+     * プラグイン独自の埋め込みタグ
+     */
+    private function getOverwriteNoticeEmbeddedTags(BlogsPosts $blogs_post): array
+    {
+        $category = Categories::firstOrNew(['id' => $blogs_post->categories_id]);
+
+        // プラグイン独自の埋め込みタグ
+        $overwrite_notice_embedded_tags = [
+            NoticeEmbeddedTag::title         => $blogs_post->post_title,
+            NoticeEmbeddedTag::body          => BucketsMail::stripTagsWysiwyg($blogs_post->post_text),
+            BlogNoticeEmbeddedTag::body2     => BucketsMail::stripTagsWysiwyg($blogs_post->post_text2),
+            BlogNoticeEmbeddedTag::posted_at => $blogs_post->posted_at,
+            BlogNoticeEmbeddedTag::important => $blogs_post->important ? '重要記事' : '',
+            BlogNoticeEmbeddedTag::tag       => BlogsPostsTags::where('blogs_posts_id', $blogs_post->id)->pluck('tags')->implode(','),
+            BlogNoticeEmbeddedTag::category  => $category->category,
+        ];
+        return $overwrite_notice_embedded_tags;
     }
 
     /**
@@ -983,12 +1006,12 @@ WHERE status = 0
 
             // 同じcontents_id のデータを削除するため、一旦、対象データを取得
             $post = BlogsPosts::where('id', $blogs_posts_id)->first();
-
-            $delete_comment = "";
-            if ($post) {
-                $delete_comment  = "以下、削除されたデータのタイトルです。\n";
-                $delete_comment .= "「" . $post->post_title . "」を削除しました。";
+            if (empty($post)) {
+                return $this->viewError("403_inframe", null, 'BlogsPosts ID でデータなし');
             }
+
+            $delete_comment  = "以下、削除されたデータのタイトルです。\n";
+            $delete_comment .= "「" . $post->post_title . "」を削除しました。";
 
             // 削除ユーザ、削除日を設定する。（複数レコード更新のため、自動的には入らない）
             BlogsPosts::where('contents_id', $post->contents_id)->update(['deleted_id' => Auth::user()->id, 'deleted_name' => Auth::user()->name]);
@@ -996,8 +1019,8 @@ WHERE status = 0
             // データを削除する。
             BlogsPosts::where('contents_id', $post->contents_id)->delete();
 
-            // メール送信 引数(削除した行, 詳細表示メソッド, 削除データを表すメッセージ)
-            $this->sendDeleteNotice($post, 'show', $delete_comment);
+            // メール送信
+            $this->sendDeleteNotice($post, 'show', $delete_comment, $this->getOverwriteNoticeEmbeddedTags($post));
         }
         // 削除後は表示用の初期処理を呼ぶ。
         // return $this->index($request, $page_id, $frame_id);
@@ -1037,7 +1060,7 @@ WHERE status = 0
         $this->copyTag($check_blogs_post, $blogs_post);
 
         // メール送信
-        $this->sendPostNotice($blogs_post, $before_post, 'show');
+        $this->sendPostNotice($blogs_post, $before_post, 'show', $this->getOverwriteNoticeEmbeddedTags($blogs_post));
 
         // 登録後は表示用の初期処理を呼ぶ。
         // return $this->index($request, $page_id, $frame_id);
