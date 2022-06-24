@@ -4350,10 +4350,17 @@ trait MigrationTrait
             $bucket->timestamps = false;
             $bucket->save();
 
+            // 掲示板のいいねを全てOFF
+            if ($this->getMigrationConfig('bbses', 'import_bbs_all_like_not_use')) {
+                $use_like = 0;
+            } else {
+                $use_like = $this->getArrayValue($ini, 'blog_base', 'use_like', 0);
+            }
+
             $bbs = new Bbs([
                 'bucket_id' => $bucket->id,
                 'name' => $bbs_name,
-                'use_like' => $this->getArrayValue($ini, 'blog_base', 'use_like', 0),
+                'use_like' => $use_like,
             ]);
             $bbs->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'insert_login_id', null));
             $bbs->created_name = $this->getArrayValue($ini, 'source_info', 'created_name', null);
