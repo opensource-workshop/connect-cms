@@ -29,16 +29,15 @@
                 $view_pages[] = $page->id;
             @endphp
 
+            {{-- 子供のページがある場合 --}}
+            @if (count($page->children) > 0)
+                {{-- 子要素を再帰的に表示するため、別ファイルに分けてinclude --}}
+                @foreach($page->children as $children)
+                    @include('plugins.user.menus.tab_flat.menu_children',['children' => $children, 'page_id' => $page_id, 'active_page_id' => $active_page_id])
+                @endforeach
+            @endif
         @endif
 
-        {{-- 子供のページがある場合 --}}
-        @if (count($page->children) > 0)
-            {{-- 子要素を再帰的に表示するため、別ファイルに分けてinclude --}}
-            @foreach($page->children as $children)
-                @include('plugins.user.menus.tab_flat.menu_children',['children' => $children, 'page_id' => $page_id, 'active_page_id' => $active_page_id])
-            @endforeach
-
-        @endif
     @endforeach
     </ul>
     </nav>

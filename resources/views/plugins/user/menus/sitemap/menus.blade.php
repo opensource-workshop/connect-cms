@@ -32,15 +32,11 @@
                     @endfor
                     {{$page->page_name}}
                 </a>
-            @endif
 
-            {{-- 子要素を再帰的に表示するため、別ファイルに分けてinclude --}}
-            @foreach($page->children as $children)
-                @include('plugins.user.menus.sitemap.menu_children',['children' => $children, 'page_id' => $page_id])
-            @endforeach
-
-            {{-- 表示のページのみ閉じタグを表示 --}}
-            @if ($page->isView(Auth::user(), false, true, $page_roles))
+                {{-- 子要素を再帰的に表示するため、別ファイルに分けてinclude --}}
+                @foreach($page->children as $children)
+                    @include('plugins.user.menus.sitemap.menu_children',['children' => $children, 'page_id' => $page_id])
+                @endforeach
 </li>
             @endif
 </ul>

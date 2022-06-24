@@ -32,12 +32,12 @@
                     @endfor
                     {{$page->page_name}}
                 </a>
-            @endif
 
-            {{-- 子要素を再帰的に表示するため、別ファイルに分けてinclude --}}
-            @foreach($page->children as $children)
-                @include('plugins.user.menus.default.menu_children',['children' => $children, 'page_id' => $page_id])
-            @endforeach
+                {{-- 子要素を再帰的に表示するため、別ファイルに分けてinclude --}}
+                @foreach($page->children as $children)
+                    @include('plugins.user.menus.default.menu_children',['children' => $children, 'page_id' => $page_id])
+                @endforeach
+            @endif
 
         @else
 

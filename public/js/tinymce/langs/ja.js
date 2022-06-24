@@ -418,4 +418,9 @@ tinymce.addI18n('ja',{
 "Insert template": "\u30c6\u30f3\u30d7\u30ec\u30fc\u30c8\u306e\u633f\u5165",
 // add: 画像プラグイン＞Alternative description
 "Alternative description": "代替テキスト",
+// add: 表＞列＞
+"Cut column": "列の切り取り",
+"Copy column": "列のコピー",
+"Paste column before": "左側に列を貼り付け",
+"Paste column after": "右側に列を貼り付け",
 });

@@ -26,7 +26,7 @@
 
         <div class="alert alert-info">
             <i class="fas fa-exclamation-circle"></i> 外部サービスを利用するWYSIWYG設定です。<br />
-            他のWYSIWYG設定は [ サイト管理＞その他設定＞<a href="{{url('/')}}/manage/site/wysiwyg">WYSIWYG設定</a> ] から行えます。
+            他のWYSIWYG設定は [ サイト管理＞<a href="{{url('/')}}/manage/site/wysiwyg">WYSIWYG設定</a> ] から行えます。
         </div>
 
         <div class="form-group">
