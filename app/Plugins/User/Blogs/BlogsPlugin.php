@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
 use App\Models\Common\Buckets;
+use App\Models\Common\BucketsMail;
 use App\Models\Common\BucketsRoles;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
@@ -21,9 +22,11 @@ use App\Models\User\Blogs\BlogsPostsTags;
 
 use App\Plugins\User\UserPluginBase;
 
-use App\Enums\StatusType;
 use App\Enums\BlogFrameConfig;
 use App\Enums\BlogFrameScope;
+use App\Enums\BlogNoticeEmbeddedTag;
+use App\Enums\NoticeEmbeddedTag;
+use App\Enums\StatusType;
 
 use App\Rules\CustomValiWysiwygMax;
 
@@ -60,6 +63,14 @@ class BlogsPlugin extends UserPluginBase
         $functions['get']  = ['settingBlogFrame', 'saveLikeJson', 'copy'];
         $functions['post'] = ['saveBlogFrame'];
         return $functions;
+    }
+
+    /**
+     * メール送信で使用するメソッド
+     */
+    public function useBucketMailMethods()
+    {
+        return ['notice', 'approval', 'approved'];
     }
 
     /**
@@ -813,7 +824,7 @@ WHERE status = 0
         }
 
         // id があれば旧データを取得＆権限を加味して更新可能データかどうかのチェック
-        $old_blogs_post = null;
+        $old_blogs_post = new BlogsPosts();
         if (!empty($blogs_posts_id)) {
             // 指定されたID のデータ
             $old_blogs_post = BlogsPosts::where('id', $blogs_posts_id)->first();
@@ -846,13 +857,20 @@ WHERE status = 0
 
         // 承認の要否確認とステータス処理
         if ($this->isApproval()) {
-            $blogs_post->status = 2;
+            $blogs_post->status = StatusType::approval_pending;
+        } else {
+            $blogs_post->status = StatusType::active;
         }
 
         // 新規
         if (empty($blogs_posts_id)) {
             // 登録ユーザ
             $blogs_post->created_id  = Auth::user()->id;
+
+            // status = 0(公開) の場合、現在日付を入れる。
+            if ($blogs_post->status === StatusType::active) {
+                $blogs_post->first_committed_at = date('Y-m-d H:i:s');
+            }
 
             // データ保存
             $blogs_post->save();
@@ -869,6 +887,13 @@ WHERE status = 0
             $blogs_post->created_name = $old_blogs_post->created_name;
             $blogs_post->created_at   = $old_blogs_post->created_at;
 
+            // 初回確定日時
+            $blogs_post->first_committed_at = $old_blogs_post->first_committed_at;
+            // status = 0(公開) の場合、現在日付を入れる。
+            if (empty($blogs_post->first_committed_at) && $blogs_post->status === StatusType::active) {
+                $blogs_post->first_committed_at = date('Y-m-d H:i:s');
+            }
+
             // 旧レコードのstatus 更新(Activeなもの(status:0)は、status:9 に更新。他はそのまま。)ただし、承認待ちレコード作成時は対象外
             if ($blogs_post->status != 2) {
                 BlogsPosts::where('contents_id', $old_blogs_post->contents_id)->where('status', 0)->update(['status' => 9]);
@@ -881,9 +906,32 @@ WHERE status = 0
         // タグの保存
         $this->saveTag($request, $blogs_post);
 
+        // メール送信
+        $this->sendPostNotice($blogs_post, $old_blogs_post, 'show', $this->getOverwriteNoticeEmbeddedTags($blogs_post));
+
         // 登録後はリダイレクトして表示用の初期処理を呼ぶ。
         // return $this->index($request, $page_id, $frame_id);
         return collect(['redirect_path' => url($this->page->permanent_link)]);
+    }
+
+    /**
+     * プラグイン独自の埋め込みタグ
+     */
+    private function getOverwriteNoticeEmbeddedTags(BlogsPosts $blogs_post): array
+    {
+        $category = Categories::firstOrNew(['id' => $blogs_post->categories_id]);
+
+        // プラグイン独自の埋め込みタグ
+        $overwrite_notice_embedded_tags = [
+            NoticeEmbeddedTag::title         => $blogs_post->post_title,
+            NoticeEmbeddedTag::body          => BucketsMail::stripTagsWysiwyg($blogs_post->post_text),
+            BlogNoticeEmbeddedTag::body2     => BucketsMail::stripTagsWysiwyg($blogs_post->post_text2),
+            BlogNoticeEmbeddedTag::posted_at => $blogs_post->posted_at,
+            BlogNoticeEmbeddedTag::important => $blogs_post->important ? '重要記事' : '',
+            BlogNoticeEmbeddedTag::tag       => BlogsPostsTags::where('blogs_posts_id', $blogs_post->id)->pluck('tags')->implode(','),
+            BlogNoticeEmbeddedTag::category  => $category->category,
+        ];
+        return $overwrite_notice_embedded_tags;
     }
 
     /**
@@ -958,12 +1006,21 @@ WHERE status = 0
 
             // 同じcontents_id のデータを削除するため、一旦、対象データを取得
             $post = BlogsPosts::where('id', $blogs_posts_id)->first();
+            if (empty($post)) {
+                return $this->viewError("403_inframe", null, 'BlogsPosts ID でデータなし');
+            }
+
+            $delete_comment  = "以下、削除されたデータのタイトルです。\n";
+            $delete_comment .= "「" . $post->post_title . "」を削除しました。";
 
             // 削除ユーザ、削除日を設定する。（複数レコード更新のため、自動的には入らない）
             BlogsPosts::where('contents_id', $post->contents_id)->update(['deleted_id' => Auth::user()->id, 'deleted_name' => Auth::user()->name]);
 
             // データを削除する。
             BlogsPosts::where('contents_id', $post->contents_id)->delete();
+
+            // メール送信
+            $this->sendDeleteNotice($post, 'show', $delete_comment, $this->getOverwriteNoticeEmbeddedTags($post));
         }
         // 削除後は表示用の初期処理を呼ぶ。
         // return $this->index($request, $page_id, $frame_id);
@@ -980,6 +1037,9 @@ WHERE status = 0
         // チェック用に記事取得（指定されたPOST ID そのままではなく、権限に応じたPOST を取得する。）
         $check_blogs_post = $this->getPost($id);
 
+        // 承認済みの判定のために、保存する前にpost を退避しておく。
+        $before_post = clone $check_blogs_post;
+
         // 指定されたID と権限に応じたPOST のID が異なる場合は、キーを捏造したPOST と考えられるため、エラー
         if (empty($check_blogs_post->id) || $check_blogs_post->id != $id) {
             return $this->viewError("403_inframe", null, 'approvalのユーザー権限に応じたPOST ID チェック');
@@ -989,11 +1049,18 @@ WHERE status = 0
         BlogsPosts::where('contents_id', $blogs_post->contents_id)->where('status', 0)->update(['status' => 9]);
 
         // ブログ記事設定
-        $blogs_post->status = 0;
+        $blogs_post->status = StatusType::active;
+        // status = 0 (公開) の場合、現在日付を入れる。
+        if (empty($blogs_post->first_committed_at)) {
+            $blogs_post->first_committed_at = date('Y-m-d H:i:s');
+        }
         $blogs_post->save();
 
         // タグもコピー
         $this->copyTag($check_blogs_post, $blogs_post);
+
+        // メール送信
+        $this->sendPostNotice($blogs_post, $before_post, 'show', $this->getOverwriteNoticeEmbeddedTags($blogs_post));
 
         // 登録後は表示用の初期処理を呼ぶ。
         // return $this->index($request, $page_id, $frame_id);

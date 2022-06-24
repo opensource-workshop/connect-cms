@@ -23,5 +23,19 @@ class BlogsPosts extends Model
     protected $dates = ['posted_at'];
 
     // 更新する項目の定義
-    protected $fillable = ['contents_id', 'blogs_id', 'post_title', 'post_text', 'post_text2', 'read_more_flag', 'read_more_button', 'close_more_button', 'categories_id', 'important', 'status', 'posted_at'];
+    protected $fillable = [
+        'contents_id',
+        'blogs_id',
+        'post_title',
+        'post_text',
+        'post_text2',
+        'read_more_flag',
+        'read_more_button',
+        'close_more_button',
+        'categories_id',
+        'important',
+        'status',
+        'posted_at',
+        'first_committed_at',
+    ];
 }
