@@ -344,6 +344,7 @@ trait MigrationTrait
         if ($target == 'all' && $initial == true) {
             // 全クリア
             Buckets::truncate();
+            BucketsMail::truncate();
             BucketsRoles::truncate();
             Categories::truncate();
             PluginCategory::truncate();
@@ -2783,27 +2784,9 @@ trait MigrationTrait
 
         // BucketsMailの管理者グループ仮コード, 仮nc2ルームID置換
         foreach (BucketsMail::get() as $bucket_mail) {
-            $notice_groups = explode('|', $bucket_mail->notice_groups);
-            foreach ($notice_groups as &$notice_group) {
-                // 先頭X-ありは置換
-                if (strpos($notice_group, 'X-') === 0) {
-                    if ($notice_group == 'X-管理者グループ') {
-                        // 管理者グループ仮コード置換
-                        $notice_group = str_ireplace('X-管理者グループ', $admin_group->id, $notice_group);
-                    } else {
-                        // 仮nc2ルームID -> nc2ルームID
-                        $nc2_room_id = str_ireplace('X-', '', $notice_group);
-                        // nc2ルームID -> グループID置換
-                        $mapping = $groups_mappings->where('source_key', $nc2_room_id)->first();
-                        $notice_group = $mapping ? $mapping->destination_key : null;
-                    }
-
-                }
-            }
-            // array_filter()でarrayの空要素削除
-            $notice_groups = array_filter($notice_groups);
-
-            $bucket_mail->notice_groups = implode('|', $notice_groups);
+            $bucket_mail->notice_groups   = $this->replaceRoomIdToGroupId($bucket_mail->notice_groups, $admin_group->id, $groups_mappings);
+            $bucket_mail->approval_groups = $this->replaceRoomIdToGroupId($bucket_mail->approval_groups, $admin_group->id, $groups_mappings);
+            $bucket_mail->approved_groups = $this->replaceRoomIdToGroupId($bucket_mail->approved_groups, $admin_group->id, $groups_mappings);
             $bucket_mail->save();
         }
 
@@ -2869,6 +2852,34 @@ trait MigrationTrait
                 $upload->save();
             }
         }
+    }
+
+    /**
+     * BucketsMailの管理者グループ仮コード, 仮nc2ルームIDからccグループID置換
+     */
+    private function replaceRoomIdToGroupId(?string $groups, int $admin_group_id, Collection $groups_mappings): string
+    {
+        $groups = explode('|', $groups);
+        foreach ($groups as &$group) {
+            // 先頭X-ありは置換
+            if (strpos($group, 'X-') === 0) {
+                if ($group == 'X-管理者グループ') {
+                    // 管理者グループ仮コード置換
+                    $group = str_ireplace('X-管理者グループ', $admin_group_id, $group);
+                } else {
+                    // 仮nc2ルームID -> nc2ルームID
+                    $nc2_room_id = str_ireplace('X-', '', $group);
+                    // nc2ルームID -> グループID置換
+                    $mapping = $groups_mappings->where('source_key', $nc2_room_id)->first();
+                    $group = $mapping ? $mapping->destination_key : null;
+                }
+
+            }
+        }
+        // array_filter()でarrayの空要素削除
+        $groups = array_filter($groups);
+
+        return implode('|', $groups);
     }
 
     /**
@@ -6068,6 +6079,111 @@ trait MigrationTrait
                 ['value' => $view_count]
             );
         }
+
+        // bucketあり
+        if (!empty($bucket)) {
+            // 権限設定
+            // ---------------------------------------
+            // 投稿権限：(nc2) 日誌単位であり、(cc) バケツ単位であり
+            // 承認権限：(nc2) あり、(cc) あり
+            BucketsRoles::updateOrCreate(
+                [
+                    'buckets_id' => $bucket->id,
+                    'role' => 'role_article',   // モデレータ
+                ], [
+                    'post_flag'     => $this->getArrayValue($blog_ini, 'blog_base', 'article_post_flag', 0),
+                    'approval_flag' => $this->getArrayValue($blog_ini, 'blog_base', 'article_approval_flag', 0),
+                ]
+            );
+            BucketsRoles::updateOrCreate(
+                [
+                    'buckets_id' => $bucket->id,
+                    'role' => 'role_reporter',  // 編集者
+                ], [
+                    'post_flag'     => $this->getArrayValue($blog_ini, 'blog_base', 'reporter_post_flag', 0),
+                    'approval_flag' => $this->getArrayValue($blog_ini, 'blog_base', 'reporter_approval_flag', 0),
+                ]
+            );
+
+            // メール設定
+            // ---------------------------------------
+            // Buckets のメール設定取得
+            $bucket_mail = BucketsMail::firstOrNew(['buckets_id' => $bucket->id]);
+
+            $notice_groups = [];
+            if ($this->getArrayValue($blog_ini, 'blog_base', 'notice_admin_group')) {
+                // グループ通知
+                // ※ importGroups()は処理前のため管理者グループなし。そのため仮コードを登録してimportGroups()で置換する。
+                $notice_groups[] = 'X-管理者グループ';
+            }
+
+            if ($this->getArrayValue($blog_ini, 'blog_base', 'notice_group')) {
+                // グループ通知
+                // ※ importGroups()は処理前のためnc2ルームグループなし。そのため仮コード(nc2ルームID)を登録してimportGroups()で置換する。
+                $notice_groups[] = $this->getArrayValue($blog_ini, 'source_info', 'room_id') ? 'X-' . $this->getArrayValue($blog_ini, 'source_info', 'room_id') : '';
+            }
+
+            $notice_on = $this->getArrayValue($blog_ini, 'blog_base', 'notice_on') ? 1 : 0;
+
+            if ($notice_on && $this->getArrayValue($blog_ini, 'blog_base', 'notice_moderator_group')) {
+                // グループ通知
+                $this->putMonitor(3, 'ブログのメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+            }
+            if ($notice_on && $this->getArrayValue($blog_ini, 'blog_base', 'notice_public_general_group')) {
+                // パブリック一般通知
+                $this->putMonitor(3, '公開エリアのブログのメール設定（一般まで）は、手動で「一般グループ」を作成して、追加で「一般グループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+            }
+            if ($notice_on && $this->getArrayValue($blog_ini, 'blog_base', 'notice_public_moderator_group')) {
+                // パブリックモデレーター通知
+                $this->putMonitor(3, '公開エリアのブログのメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+            }
+
+            $approval_groups = [];
+            if ($this->getArrayValue($blog_ini, 'blog_base', 'approval_admin_group')) {
+                // グループ通知
+                // ※ importGroups()は処理前のため管理者グループなし。そのため仮コードを登録してimportGroups()で置換する。
+                $approval_groups[] = 'X-管理者グループ';
+            }
+
+            $approved_groups = [];
+            if ($this->getArrayValue($blog_ini, 'blog_base', 'approved_admin_group')) {
+                // グループ通知
+                // ※ importGroups()は処理前のため管理者グループなし。そのため仮コードを登録してimportGroups()で置換する。
+                $approved_groups[] = 'X-管理者グループ';
+            }
+
+            // array_filter()でarrayの空要素削除
+            $notice_groups = array_filter($notice_groups);
+
+            // 投稿通知
+            $bucket_mail->timing             = 0;       // 0:即時送信
+            $bucket_mail->notice_on          = $notice_on;
+            $bucket_mail->notice_create      = $notice_on;
+            $bucket_mail->notice_update      = 0;
+            $bucket_mail->notice_delete      = 0;
+            $bucket_mail->notice_addresses   = null;
+            $bucket_mail->notice_everyone    = $this->getArrayValue($blog_ini, 'blog_base', 'notice_everyone') ? 1 : 0;
+            $bucket_mail->notice_groups      = implode('|', $notice_groups) == "" ? null : implode('|', $notice_groups);
+            $bucket_mail->notice_roles       = null;    // 画面項目なし
+            $bucket_mail->notice_subject     = $this->getArrayValue($blog_ini, 'blog_base', 'mail_subject');
+            $bucket_mail->notice_body        = $this->getArrayValue($blog_ini, 'blog_base', 'mail_body');
+            // 関連記事通知
+            $bucket_mail->relate_on          = 0;
+            // 承認通知
+            $bucket_mail->approval_on        = $this->getArrayValue($blog_ini, 'blog_base', 'approval_on') ? 1 : 0;
+            $bucket_mail->approval_groups    = implode('|', $approval_groups) == "" ? null : implode('|', $approval_groups);
+            $bucket_mail->approval_subject   = $this->getArrayValue($blog_ini, 'blog_base', 'approval_subject');
+            $bucket_mail->approval_body      = $this->getArrayValue($blog_ini, 'blog_base', 'approval_body');
+            // 承認済み通知
+            $bucket_mail->approved_on        = $this->getArrayValue($blog_ini, 'blog_base', 'approved_on') ? 1 : 0;
+            $bucket_mail->approved_author    = $this->getArrayValue($blog_ini, 'blog_base', 'approved_author') ? 1 : 0;
+            $bucket_mail->approved_groups    = implode('|', $approved_groups) == "" ? null : implode('|', $approved_groups);
+            $bucket_mail->approved_subject   = $this->getArrayValue($blog_ini, 'blog_base', 'approved_subject');
+            $bucket_mail->approved_body      = $this->getArrayValue($blog_ini, 'blog_base', 'approved_body');
+
+            // BucketsMails の更新
+            $bucket_mail->save();
+        }
     }
 
     /**
@@ -6419,17 +6535,17 @@ trait MigrationTrait
                 $notice_groups[] = $this->getArrayValue($bbs_ini, 'source_info', 'room_id') ? 'X-' . $this->getArrayValue($bbs_ini, 'source_info', 'room_id') : '';
             }
 
-            $mail_send = $this->getArrayValue($bbs_ini, 'blog_base', 'mail_send') ? 1 : 0;
+            $notice_on = $this->getArrayValue($bbs_ini, 'blog_base', 'notice_on') ? 1 : 0;
 
-            if ($mail_send && $this->getArrayValue($bbs_ini, 'blog_base', 'notice_moderator_group')) {
+            if ($notice_on && $this->getArrayValue($bbs_ini, 'blog_base', 'notice_moderator_group')) {
                 // グループ通知
                 $this->putMonitor(3, '掲示板のメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
             }
-            if ($mail_send && $this->getArrayValue($bbs_ini, 'blog_base', 'notice_public_general_group')) {
+            if ($notice_on && $this->getArrayValue($bbs_ini, 'blog_base', 'notice_public_general_group')) {
                 // パブリック一般通知
                 $this->putMonitor(3, '公開エリアの掲示板のメール設定（一般まで）は、手動で「一般グループ」を作成して、追加で「一般グループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
             }
-            if ($mail_send && $this->getArrayValue($bbs_ini, 'blog_base', 'notice_public_moderator_group')) {
+            if ($notice_on && $this->getArrayValue($bbs_ini, 'blog_base', 'notice_public_moderator_group')) {
                 // パブリックモデレーター通知
                 $this->putMonitor(3, '公開エリアの掲示板のメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
             }
@@ -6439,8 +6555,8 @@ trait MigrationTrait
 
             // 投稿通知
             $bucket_mail->timing             = 0;       // 0:即時送信
-            $bucket_mail->notice_on          = $mail_send ? 1 : 0;
-            $bucket_mail->notice_create      = $mail_send ? 1 : 0;
+            $bucket_mail->notice_on          = $notice_on;
+            $bucket_mail->notice_create      = $notice_on;
             $bucket_mail->notice_update      = 0;
             $bucket_mail->notice_delete      = 0;
             $bucket_mail->notice_addresses   = null;
@@ -9028,7 +9144,17 @@ trait MigrationTrait
         }
 
         // NC2日誌（Journal）を移行する。
-        $nc2_journals = Nc2Journal::orderBy('journal_id')->get();
+        // $nc2_journals = Nc2Journal::orderBy('journal_id')->get();
+        $nc2_journals = Nc2Journal::select('journal.*', 'page_rooms.space_type')
+            ->join('pages as page_rooms', function ($join) {
+                $join->on('page_rooms.page_id', '=', 'journal.room_id')
+                    ->whereColumn('page_rooms.page_id', 'page_rooms.room_id')
+                    ->whereIn('page_rooms.space_type', [Nc2Page::space_type_public, Nc2Page::space_type_group])
+                    ->where('page_rooms.room_id', '!=', 2);        // 2:グループスペースを除外（枠だけでグループルームじゃないので除外）
+                    // ->where('page_rooms.private_flag', 0);         // 0:プライベートルーム以外
+            })
+            ->orderBy('journal.journal_id')
+            ->get();
 
         // 空なら戻る
         if ($nc2_journals->isEmpty()) {
@@ -9062,12 +9188,170 @@ trait MigrationTrait
                 $nc2_page = Nc2Page::where('page_id', $nc2_block->page_id)->first();
             }
 
+            // 権限設定
+            // ----------------------------------------------------
+            // post_authority
+            // 2: 一般まで
+            // 3: モデレータまで
+            // 4: 主担のみ
+            $article_post_flag = 0;
+            $reporter_post_flag = 0;
+            if ($nc2_journal->post_authority == 2) {
+                $article_post_flag = 1;
+                $reporter_post_flag = 1;
+
+            } elseif ($nc2_journal->post_authority == 3) {
+                $article_post_flag = 1;
+
+            } elseif ($nc2_journal->post_authority == 4) {
+                // 一般,モデレータ=0でccでは主担=コンテンツ管理者は投稿可のため、なにもしない
+            }
+
+            // メール設定
+            // ----------------------------------------------------
+            // mail_authority
+            // 1: ゲストまで 　　→ パブ通知は、「全ユーザに通知」
+            // 　※ 掲示板-パブリック（パブサブも同様）： ⇒ 「全ユーザに通知」
+            // 　※ 掲示板-グループ：　　　　　　　　　　 ⇒ ルームグループに、グループ通知
+            // 2: 一般まで 　　　→ グループは、グループ通知
+            // 　※ 掲示板-パブリック（パブサブも同様）： ⇒ (手動)でグループ作って、グループ通知　⇒ 移行で警告表示
+            // 　※ 掲示板-グループ：　 　　　　　　　　　⇒ ルームグループに、グループ通知
+            // 3: モデレータまで → (手動)でグループ作って、グループ通知　⇒ 移行で警告表示
+            // 4: 主担のみ 　　　→グループ管理者は、「管理者グループ」通知
+            $notice_everyone = 0;
+            $notice_admin_group = 0;
+            $notice_moderator_group = 0;
+            $notice_group = 0;
+            $notice_public_general_group = 0;
+            $notice_public_moderator_group = 0;
+
+            if ($nc2_journal->mail_authority === 1) {
+                if ($nc2_journal->space_type == Nc2Page::space_type_public) {
+                    // 全ユーザ通知
+                    $notice_everyone = 1;
+
+                } elseif ($nc2_journal->space_type == Nc2Page::space_type_group) {
+                    // グループ通知
+                    $notice_group = 1;
+                }
+
+            } elseif ($nc2_journal->mail_authority == 2) {
+                if ($nc2_journal->space_type == Nc2Page::space_type_public) {
+                    // パブリック一般通知
+                    $notice_public_general_group = 1;
+                    $notice_admin_group = 1;
+
+                } elseif ($nc2_journal->space_type == Nc2Page::space_type_group) {
+                    // グループ通知
+                    $notice_group = 1;
+                }
+
+            } elseif ($nc2_journal->mail_authority == 3) {
+                if ($nc2_journal->space_type == Nc2Page::space_type_public) {
+                    // パブリックモデレーター通知
+                    $notice_public_moderator_group = 1;
+                    $notice_admin_group = 1;
+                } elseif ($nc2_journal->space_type == Nc2Page::space_type_group) {
+                    // モデレータユーザ通知
+                    $notice_moderator_group = 1;
+                    $notice_admin_group = 1;
+                }
+
+            } elseif ($nc2_journal->mail_authority == 4) {
+                // 管理者グループ通知
+                $notice_admin_group = 1;
+            }
+
+            $mail_subject = $nc2_journal->mail_subject;
+            $mail_body = $nc2_journal->mail_body;
+            $approved_subject = $nc2_journal->agree_mail_subject;
+            $approved_body = $nc2_journal->agree_mail_body;
+
+            // --- メール配信設定
+            // [{X-SITE_NAME}]日誌投稿({X-ROOM} {X-JOURNAL_NAME} {X-SUBJECT})
+            //
+            // 日誌に投稿されたのでお知らせします。
+            // ルーム名称:{X-ROOM}
+            // 日誌タイトル:{X-JOURNAL_NAME}
+            // 記事タイトル:{X-SUBJECT}
+            // 投稿者:{X-USER}
+            // 投稿日時:{X-TO_DATE}
+            //
+            //
+            // {X-BODY}
+            //
+            // この記事に返信するには、下記アドレスへ
+            // {X-URL}
+
+            // ※ {X-BODY}は「続きを読む」内容は含んでいなかった。
+
+            // --- 日誌投稿承認完了通知設定
+            // [{X-SITE_NAME}]日誌投稿承認完了通知
+            //
+            // {X-SITE_NAME}における日誌投稿の承認が完了しました。
+            // もし{X-SITE_NAME}での日誌投稿に覚えがない場合はこのメールを破棄してください。
+            //
+            // 日誌の内容を確認するには下記のリンクをクリックして下さい。
+            // {X-URL}
+
+            // 変換
+            $convert_embedded_tags = [
+                // nc2埋込タグ, cc埋込タグ
+                ['{X-SITE_NAME}', '[[' . NoticeEmbeddedTag::site_name . ']]'],
+                ['{X-SUBJECT}', '[[' . NoticeEmbeddedTag::title . ']]'],
+                ['{X-USER}', '[[' . NoticeEmbeddedTag::created_name . ']]'],
+                ['{X-TO_DATE}', '[[' . NoticeEmbeddedTag::created_at . ']]'],
+                ['{X-BODY}', '[[' . NoticeEmbeddedTag::body . ']]'],
+                ['{X-URL}', '[[' . NoticeEmbeddedTag::url . ']]'],
+                // 除外
+                ['日誌タイトル:{X-JOURNAL_NAME}', ''],
+                ['ルーム名称:{X-ROOM}', ''],
+                ['{X-JOURNAL_NAME} ', ''],
+                ['{X-JOURNAL_NAME}', ''],
+                ['{X-ROOM} ', ''],
+                ['{X-ROOM}', ''],
+            ];
+            foreach ($convert_embedded_tags as $convert_embedded_tag) {
+                $mail_subject = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_subject);
+                $mail_body = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_body);
+                $approved_subject = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $approved_subject);
+                $approved_body = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $approved_body);
+            }
+
+            // （NC2）承認メールは、承認あり＋メール通知ON（～ゲストまで通知）でも、メール通知フォーマットで「主担」のみに飛ぶ。
+            //        ⇒ （CC）NC2メール通知フォーマットを、CC承認メールフォーマットにセット
+            // （NC2）承認完了メールは、承認完了通知ONで、承認完了通知フォーマットで「投稿者」のみに飛ぶ。
+            //        他ユーザには、メール通知ON（～ゲストまで通知）でメール通知フォーマットで全員にメール飛ぶ。
+            //        ⇒ （CC）NC2承認完了通知フォーマットを、CC承認完了通知フォーマットにセット。通知先は、投稿者＋管理グループ。
+
             // ブログ設定
             $journals_ini = "";
             $journals_ini .= "[blog_base]\n";
             $journals_ini .= "blog_name = \"" . $nc2_journal->journal_name . "\"\n";
             $journals_ini .= "view_count = 10\n";
             $journals_ini .= "use_like = " . $nc2_journal->vote_flag . "\n";
+            $journals_ini .= "article_post_flag = " . $article_post_flag . "\n";
+            $journals_ini .= "article_approval_flag = " . $nc2_journal->agree_flag . "\n";      // agree_flag 1:承認あり 0:承認なし
+            $journals_ini .= "reporter_post_flag = " . $reporter_post_flag . "\n";
+            $journals_ini .= "reporter_approval_flag = " . $nc2_journal->agree_flag . "\n";     // agree_flag 1:承認あり 0:承認なし
+            $journals_ini .= "notice_on = " . $nc2_journal->mail_flag . "\n";
+            $journals_ini .= "notice_everyone = " . $notice_everyone . "\n";
+            $journals_ini .= "notice_group = " . $notice_group . "\n";
+            $journals_ini .= "notice_moderator_group = " . $notice_moderator_group . "\n";
+            $journals_ini .= "notice_admin_group = " . $notice_admin_group . "\n";
+            $journals_ini .= "notice_public_general_group = " . $notice_public_general_group . "\n";
+            $journals_ini .= "notice_public_moderator_group = " . $notice_public_moderator_group . "\n";
+            $journals_ini .= "mail_subject = \"" . $mail_subject . "\"\n";
+            $journals_ini .= "mail_body = \"" . $mail_body . "\"\n";
+            $journals_ini .= "approval_on = " . $nc2_journal->agree_flag . "\n";                // 承認ありなら 1: 承認通知
+            $journals_ini .= "approval_admin_group = " . $nc2_journal->agree_flag . "\n";       // 1:「管理者グループ」通知
+            $journals_ini .= "approval_subject = \"" . $mail_subject . "\"\n";                  // 承認通知はメール通知フォーマットと同じ
+            $journals_ini .= "approval_body = \"" . $mail_body . "\"\n";
+            $journals_ini .= "approved_on = " . $nc2_journal->agree_mail_flag . "\n";           // agree_mail_flag 1:承認完了通知する 0:通知しない
+            $journals_ini .= "approved_author = " . $nc2_journal->agree_mail_flag . "\n";       // 1:投稿者へ通知する
+            $journals_ini .= "approved_admin_group = " . $nc2_journal->agree_mail_flag . "\n";  // 1:「管理者グループ」通知
+            $journals_ini .= "approved_subject = \"" . $approved_subject . "\"\n";
+            $journals_ini .= "approved_body = \"" . $approved_body . "\"\n";
 
             // NC2 情報
             $journals_ini .= "\n";
@@ -9208,8 +9492,7 @@ trait MigrationTrait
         }
 
         // NC2掲示板（Bbs）を移行する。
-        $nc2_bbses = Nc2Bbs::orderBy('bbs_id')->get();
-
+        // $nc2_bbses = Nc2Bbs::orderBy('bbs_id')->get();
         $nc2_bbses = Nc2Bbs::select('bbs.*', 'page_rooms.space_type')
             ->join('pages as page_rooms', function ($join) {
                 $join->on('page_rooms.page_id', '=', 'bbs.room_id')
@@ -9376,7 +9659,7 @@ trait MigrationTrait
             $journals_ini .= "use_like = " . $nc2_bbs->vote_flag . "\n";
             $journals_ini .= "article_post_flag = " . $article_post_flag . "\n";
             $journals_ini .= "reporter_post_flag = " . $reporter_post_flag . "\n";
-            $journals_ini .= "mail_send = " . $nc2_bbs->mail_send . "\n";
+            $journals_ini .= "notice_on = " . $nc2_bbs->mail_send . "\n";
             $journals_ini .= "notice_everyone = " . $notice_everyone . "\n";
             $journals_ini .= "notice_group = " . $notice_group . "\n";
             $journals_ini .= "notice_moderator_group = " . $notice_moderator_group . "\n";
