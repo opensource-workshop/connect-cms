@@ -82,7 +82,7 @@ class ConnectPage
 
         // *** 全ビュー間のデータ共有
         // ハンバーガーメニューで使用するページの一覧（ConnectController::view から移動してきた）
-        View::share('page_list', Page::defaultOrderWithDepth('flat', $this->page));
+        View::share('page_list', Page::defaultOrderWithDepth(null, $this->page));
         // ページに対する権限
         View::share('page_roles', PageRole::getPageRoles());
 
@@ -135,7 +135,7 @@ class ConnectPage
 
             // *** 全ビュー間のデータ共有
             // ハンバーガーメニューで使用するページの一覧（ConnectController::view から移動してきた）
-            View::share('page_list', Page::defaultOrderWithDepth('flat', $this->page));
+            View::share('page_list', Page::defaultOrderWithDepth(null, $this->page));
 
             return $next($request);
         }
@@ -157,7 +157,7 @@ class ConnectPage
 
             // *** 全ビュー間のデータ共有
             // ハンバーガーメニューで使用するページの一覧（ConnectController::view から移動してきた）
-            View::share('page_list', Page::defaultOrderWithDepth('flat', $this->page));
+            View::share('page_list', Page::defaultOrderWithDepth(null, $this->page));
         }
 
         return $next($request);

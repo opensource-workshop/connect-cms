@@ -236,61 +236,12 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                         )
                     --}}
                     @if (Configs::getConfigsValue($cc_configs, 'smartphone_menu_template', '') == '')
-                        {{-- 非表示のページは対象外 --}}
-                        @if ($page_obj->isView(Auth::user(), false, true, $page_roles))
-
-                            <li class="nav-item">
-                            {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
-                            @if (isset($page_obj) && isset($page) && $page_obj->id == $page->id)
-                                <a href="{{ $page_obj->getUrl() }}" {!!$page_obj->getUrlTargetTag()!!} class="nav-link active">
-                            @else
-                                <a href="{{ $page_obj->getUrl() }}" {!!$page_obj->getUrlTargetTag()!!} class="nav-link">
-                            @endif
-
-                            {{-- 各ページの深さをもとにインデントの表現 --}}
-                            @for ($i = 0; $i < $page_obj->depth; $i++)
-                                @if ($i+1==$page_obj->depth) <i class="fas fa-chevron-right"></i> @else <span class="px-2"></span>@endif
-                            @endfor
-                                {{$page_obj->page_name}}
-                                </a>
-                            </li>
-                        @endif
+                        {{-- default メニュー --}}
+                        @include('layouts.default_menu')
                     {{-- @elseif (isset($configs) && isset($configs['smartphone_menu_template']) && ($configs['smartphone_menu_template'] == 'opencurrenttree')) --}}
                     @elseif (Configs::getConfigsValue($cc_configs, 'smartphone_menu_template') == 'opencurrenttree')
-
-                        {{-- 非表示のページは対象外 --}}
-                        @if ($page_obj->isView(Auth::user(), false, true, $page_roles))
-
-                            {{-- カレント or 自分のルート筋 or 第1階層 or 子のページ or 同階層のページ なら表示する --}}
-                            @if (isset($page) && ($page_obj->isAncestorOf($page) || $page->id == $page_obj->id || $page_obj->isChildOf($page) || $page_obj->isSiblingOf($page)) || $page_obj->depth == 0)
-
-                                <li class="nav-item">
-                                {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
-                                @if (isset($page_obj) && isset($page) && $page_obj->id == $page->id)
-                                    <a href="{{ $page_obj->getUrl() }}" {!!$page_obj->getUrlTargetTag()!!} class="nav-link active">
-                                @else
-                                    <a href="{{ $page_obj->getUrl() }}" {!!$page_obj->getUrlTargetTag()!!} class="nav-link">
-                                @endif
-
-                                {{-- 各ページの深さをもとにインデントの表現 --}}
-                                @for ($i = 0; $i < $page_obj->depth; $i++)
-                                    @if ($i+1==$page_obj->depth) <i class="fas fa-chevron-right"></i> @else <span class="px-2"></span>@endif
-                                @endfor
-                                {{$page_obj->page_name}}
-
-                                {{-- カレントもしくは自分のルート筋なら＋、違えば－を表示する --}}
-                                @if (count($page_obj->children) > 0)
-                                    @if (isset($page) && ($page_obj->isAncestorOf($page) || $page_obj->id == $page->id))
-                                        <i class="fas fa-minus"></i>
-                                    @else
-                                        <i class="fas fa-plus"></i>
-                                    @endif
-                                @endif
-
-                                </a>
-                            </li>
-                            @endif
-                        @endif
+                        {{-- opencurrenttree メニュー --}}
+                        @include('layouts.opencurrenttree_menu')
                     @endif
                 @endforeach
             @endif
