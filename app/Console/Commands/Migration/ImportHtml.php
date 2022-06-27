@@ -23,7 +23,7 @@ class ImportHtml extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Connect-CMS ç§»è¡Œå½¢å¼ã®HTML ã‚’ã‚¤ãƒ³ãƒãƒ¼ãƒˆã™ã‚‹';
 
     /**
      * Create a new command instance.
@@ -42,7 +42,7 @@ class ImportHtml extends Command
      */
     public function handle()
     {
-        // Connect-CMS ˆÚsŒ`®‚ÌHTML ‚ğƒCƒ“ƒ|[ƒg‚·‚é
+        // Connect-CMS ç§»è¡Œå½¢å¼ã®HTML ã‚’ã‚¤ãƒ³ãƒãƒ¼ãƒˆã™ã‚‹
         $this->importHtml($this->argument("page_id"));
     }
 }

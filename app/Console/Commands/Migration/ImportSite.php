@@ -23,7 +23,7 @@ class ImportSite extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Connect-CMS 移行形式のHTML(Site全部) をインポートする';
 
     /**
      * Create a new command instance.

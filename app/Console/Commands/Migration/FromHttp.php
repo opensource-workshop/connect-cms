@@ -23,7 +23,7 @@ class FromHttp extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'NC3 の１つのウェブページからConnect-CMS 移行形式のHTMLにエクスポートする';
 
     /**
      * Create a new command instance.
@@ -42,7 +42,7 @@ class FromHttp extends Command
      */
     public function handle()
     {
-        // NC3 ����ʂ���ڍs����
+        // NC3 の１つのウェブページからデータをエクスポート
         $this->migrationNC3Page($this->argument("url"), $this->argument("page_id"));
     }
 }
