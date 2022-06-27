@@ -170,6 +170,7 @@ use App\Enums\ReservationFrameConfig;
 use App\Enums\ReservationLimitedByRole;
 use App\Enums\ReservationNoticeEmbeddedTag;
 use App\Enums\ShowType;
+use App\Enums\StatusType;
 use App\Enums\UserColumnType;
 
 /**
@@ -3153,7 +3154,7 @@ trait MigrationTrait
                         'close_more_button' => $close_more_button,
                         'categories_id' => $categories_id,
                         'important' => null,
-                        'status' => 0,
+                        'status' => $blog_tsv_cols[2],
                         'posted_at' => $this->getDatetimeFromTsvAndCheckFormat(0, $blog_tsv_cols, '0'),
                     ]);
                     $blogs_posts->created_id = $this->getUserIdFromLoginId($users, $blog_tsv_cols[13]);
@@ -9443,11 +9444,19 @@ trait MigrationTrait
 
                 $like_count = empty($nc2_journal_post->vote) ? 0 : count(explode('|', $nc2_journal_post->vote));
 
+                $status = StatusType::active;
+                if ($nc2_journal_post->status == 1) {
+                    $status = StatusType::temporary;
+                }
+                if ($nc2_journal_post->agree_flag == 1) {
+                    $status = StatusType::approval_pending;
+                }
+
                 $journals_tsv .= $this->getCCDatetime($nc2_journal_post->journal_date) . "\t";  // [0] 投稿日時
                 // $journals_tsv .= $nc2_journal_post->category_id     . "\t";
                 $journals_tsv .= $category                          . "\t";
-                $journals_tsv .= $nc2_journal_post->status          . "\t";
-                $journals_tsv .= $nc2_journal_post->agree_flag      . "\t";
+                $journals_tsv .= $status                            . "\t";     // [2] ccステータス
+                $journals_tsv .= $nc2_journal_post->agree_flag      . "\t";     // [3] 使ってない
                 $journals_tsv .= $nc2_journal_post->title           . "\t";
                 $journals_tsv .= $content                           . "\t";
                 $journals_tsv .= $more_content                      . "\t";
