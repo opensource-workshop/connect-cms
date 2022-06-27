@@ -7218,8 +7218,12 @@ trait MigrationTrait
         $content_html = File::get($html_file_path);
 
         // more_content取得
-        $html_file_path2 = $page_dir . '/' . $frame_ini['contents']['contents2_file'];
-        $content2_html = File::get($html_file_path2);
+        if (isset($frame_ini['contents']['contents2_file'])) {
+            $html_file_path2 = $page_dir . '/' . $frame_ini['contents']['contents2_file'];
+            $content2_html = File::get($html_file_path2);
+        } else {
+            $content2_html = null;
+        }
 
         // 対象外の条件を確認
         $import_ommit_keywords = $this->getMigrationConfig('contents', 'import_ommit_keyword', array());
