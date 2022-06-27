@@ -122,6 +122,23 @@ use App\Models\Common\Page;
                         <input name="container_flag" value="1" type="checkbox" class="custom-control-input" id="container_flag">
                     @endif
                     <label class="custom-control-label" for="container_flag">ページをコンテナとして使う</label>
+
+                    @php
+                    // 自分及び先祖ページを遡る
+                    $container_page_parent = new Page();
+                    foreach ($page_tree as $page_tmp) {
+                        if ($page_tmp->container_flag) {
+                            $container_page_parent = $page_tmp;
+                            break;
+                        }
+                    }
+                    @endphp
+                    @if (!$page->container_flag && $container_page_parent->id)
+                        <div class="alert alert-warning small mb-0">
+                            親ページ「<a href="{{url('/manage/page/edit')}}/{{$container_page_parent->id}}" target="_blank">{{$container_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のコンテナ「ページをコンテナとして使う」を継承しています。<br />
+                        </div>
+                    @endif
+
                     <small class="form-text text-muted">
                         ※ コンテナページにした場合、各プラグインの設定＞選択画面で、コンテナページで作成したバケツのみ表示します。<br />
                         ※ コンテナページの下層のページもコンテナページになります。<br />

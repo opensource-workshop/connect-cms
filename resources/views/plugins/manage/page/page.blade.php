@@ -208,6 +208,20 @@ use App\Models\Common\Page;
                         <td class="table-text p-1">
                             @if($page_item->container_flag == 1)
                                 <i class="fas fa-box" title="コンテナページ"></i>
+                            @else
+                                @php
+                                $container_flag_parent = 0;
+                                // 自分及び先祖ページを遡る
+                                foreach ($page_tree as $page_tmp) {
+                                    if ($page_tmp->container_flag) {
+                                        $container_flag_parent = $page_tmp->container_flag;
+                                        break;
+                                    }
+                                }
+                                @endphp
+                                @if($container_flag_parent == 1)
+                                    <i class="fas fa-box text-warning" title="コンテナページ(親ページを継承)"></i>
+                                @endif
                             @endif
                         </td>
                     @endif
