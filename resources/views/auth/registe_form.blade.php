@@ -42,13 +42,10 @@ use App\Models\Core\UsersColumns;
             </div>
         </div>
     @else
-        {{-- 自動登録が許可されている場合の状態は利用可能とする --}}
-        {{-- ユーザ仮登録ON --}}
-        @if (isset($configs['user_register_temporary_regist_mail_flag']) && $configs['user_register_temporary_regist_mail_flag'] == 1)
-            <input type="hidden" value="{{UserStatus::temporary}}" name="status">
-        @else
-            <input type="hidden" value="{{UserStatus::active}}" name="status">
-        @endif
+        {{-- 画面として必須項目なので、ステータスを固定のパラメータとして配置する --}}
+        {{-- この値はUserを登録する際に使われず、サーバーサイドでシステム設定値をもとにステータスを決定する --}}
+        {{-- see also : App\Http\Controllers\Auth userStatus() --}}
+        <input type="hidden" value="{{UserStatus::active}}" name="status">
     @endif
 
     <div class="form-group row">
