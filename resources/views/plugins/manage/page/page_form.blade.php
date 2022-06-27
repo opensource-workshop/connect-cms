@@ -236,6 +236,31 @@ use App\Models\Common\Page;
                     @endisset
                 @endforeach
             </select>
+
+            @php
+            // 自分及び先祖ページを遡る
+            $theme_page_parent = new Page();
+            $base_theme = Configs::getSharedConfigsValue("base_theme", null);
+            // 自分及び先祖ページを遡る
+            foreach ($page_tree as $page_tmp) {
+                if ($page_tmp->theme) {
+                    $theme_page_parent = $page_tmp;
+                    break;
+                }
+            }
+            @endphp
+            {{-- 公開設定が公開以外＆親ページありなら --}}
+            @if (!$page->theme)
+                @if ($theme_page_parent->theme)
+                    <div class="alert alert-warning small mb-0">
+                        親ページ「<a href="{{url('/manage/page/edit')}}/{{$theme_page_parent->id}}" target="_blank">{{$theme_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のテーマ「{{$theme_page_parent->theme}}」を継承しています。<br />
+                    </div>
+                @elseif ($base_theme)
+                    <div class="alert alert-warning small mb-0">
+                        「サイト管理＞<a href="{{url('/manage/site')}}" target="_blank">サイト基本設定 <i class="fas fa-external-link-alt"></i></a>」の基本テーマ「{{$base_theme}}」を継承しています。<br />
+                    </div>
+                @endif
+            @endif
         </div>
     </div>
 
@@ -385,7 +410,6 @@ use App\Models\Common\Page;
     <div class="form-group row">
         <div class="col-md-3"></div>
         <div class="col mx-0">
-
             @php
             // 自分及び先祖ページを遡る
             $layout_page_parent = new Page();
@@ -403,7 +427,6 @@ use App\Models\Common\Page;
                     親ページ「<a href="{{url('/manage/page/edit')}}/{{$layout_page_parent->id}}" target="_blank">{{$layout_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のレイアウト <img src="{{asset('/images/core/layout/' . $layout_page_parent->getSimpleLayout() . '.png')}}" class="cc-page-layout-icon" title="{{$layout_page_parent->getLayoutTitle()}}"> を継承しています。<br />
                 </div>
             @endif
-
         </div>
     </div>
 
