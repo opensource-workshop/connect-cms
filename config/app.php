@@ -307,6 +307,7 @@ $app_array = [
         'ReservationFrameConfig' => \App\Enums\ReservationFrameConfig::class,
         'FacilityDisplayType' => \App\Enums\FacilityDisplayType::class,
         'ReservationLimitedByRole' => \App\Enums\ReservationLimitedByRole::class,
+        'FaqFrameConfig' => \App\Enums\FaqFrameConfig::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

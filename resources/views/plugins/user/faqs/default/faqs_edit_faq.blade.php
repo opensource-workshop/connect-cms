@@ -70,20 +70,20 @@
         <label class="{{$frame->getSettingLabelClass(true)}}">RSSの表示</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
-                @if(old('rss', $faq->rss) == 1)
-                    <input type="radio" value="1" id="rss_on" name="rss" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="1" id="rss_on" name="rss" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="rss_on" id="label_rss_on">表示する</label>
-            </div>
-            <div class="custom-control custom-radio custom-control-inline">
                 @if(old('rss', $faq->rss) == 0)
                     <input type="radio" value="0" id="rss_off" name="rss" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="0" id="rss_off" name="rss" class="custom-control-input">
                 @endif
                 <label class="custom-control-label" for="rss_off" id="label_rss_off">表示しない</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                @if(old('rss', $faq->rss) == 1)
+                    <input type="radio" value="1" id="rss_on" name="rss" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="1" id="rss_on" name="rss" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="rss_on" id="label_rss_on">表示する</label>
             </div>
         </div>
     </div>
@@ -130,6 +130,14 @@
         <label class="{{$frame->getSettingLabelClass(true)}}">公開日時の表示</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
+                @if(old('display_posted_at_flag', $faq->display_posted_at_flag) == 0)
+                    <input type="radio" value="0" id="display_posted_at_flag_on" name="display_posted_at_flag" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="0" id="display_posted_at_flag_on" name="display_posted_at_flag" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="display_posted_at_flag_on">表示しない</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
                 @php
                     // 新規作成時は表示する
                     if ($create_flag) {
@@ -143,13 +151,29 @@
                 @endif
                 <label class="custom-control-label" for="display_posted_at_flag_off">表示する</label>
             </div>
+        </div>
+    </div>
+
+    {{-- 投稿者名 --}}
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">{{FaqFrameConfig::getDescription('faq_display_created_name')}}</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
-                @if(old('display_posted_at_flag', $faq->display_posted_at_flag) == 0)
-                    <input type="radio" value="0" id="display_posted_at_flag_on" name="display_posted_at_flag" class="custom-control-input" checked="checked">
+                @if (FrameConfig::getConfigValueAndOld($frame_configs, FaqFrameConfig::faq_display_created_name) === '' ||
+                    FrameConfig::getConfigValueAndOld($frame_configs, FaqFrameConfig::faq_display_created_name) == ShowType::not_show)
+                    <input type="radio" value="{{ShowType::not_show}}" id="{{FaqFrameConfig::faq_display_created_name}}_0" name="{{FaqFrameConfig::faq_display_created_name}}" class="custom-control-input" checked="checked">
                 @else
-                    <input type="radio" value="0" id="display_posted_at_flag_on" name="display_posted_at_flag" class="custom-control-input">
+                    <input type="radio" value="{{ShowType::not_show}}" id="{{FaqFrameConfig::faq_display_created_name}}_0" name="{{FaqFrameConfig::faq_display_created_name}}" class="custom-control-input">
                 @endif
-                <label class="custom-control-label" for="display_posted_at_flag_on">表示しない</label>
+                <label class="custom-control-label text-nowrap" for="{{FaqFrameConfig::faq_display_created_name}}_0" id="label_{{FaqFrameConfig::faq_display_created_name}}_0">{{ShowType::getDescription(ShowType::not_show)}}</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                @if (FrameConfig::getConfigValueAndOld($frame_configs, FaqFrameConfig::faq_display_created_name) == ShowType::show)
+                    <input type="radio" value="{{ShowType::show}}" id="{{FaqFrameConfig::faq_display_created_name}}_1" name="{{FaqFrameConfig::faq_display_created_name}}" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="{{ShowType::show}}" id="{{FaqFrameConfig::faq_display_created_name}}_1" name="{{FaqFrameConfig::faq_display_created_name}}" class="custom-control-input">
+                @endif
+                <label class="custom-control-label text-nowrap" for="{{FaqFrameConfig::faq_display_created_name}}_1" id="label_{{FaqFrameConfig::faq_display_created_name}}_1">{{ShowType::getDescription(ShowType::show)}}</label>
             </div>
         </div>
     </div>

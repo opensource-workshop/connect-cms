@@ -8,10 +8,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
+use App\Enums\FaqFrameConfig;
 use App\Models\Core\Configs;
 use App\Models\Common\Buckets;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
+use App\Models\Core\FrameConfig;
 use App\Models\User\Faqs\Faqs;
 use App\Models\User\Faqs\FaqsPosts;
 use App\Models\User\Faqs\FaqsPostsTags;
@@ -451,6 +453,7 @@ class FaqsPlugin extends UserPluginBase
         return $this->view('faqs', [
             'faqs_posts' => $faqs_posts,
             'faq_frame'  => $faq_frame,
+            'frame_configs' => $this->frame_configs,
         ]);
     }
 
@@ -544,6 +547,7 @@ class FaqsPlugin extends UserPluginBase
             'post_tags'   => $faqs_post_tags,
             'before_post' => $before_post,
             'after_post'  => $after_post,
+            'frame_configs' => $this->frame_configs,
             ]
         );
     }
@@ -872,6 +876,7 @@ class FaqsPlugin extends UserPluginBase
             'create_flag' => $create_flag,
             'message'     => $message,
             'errors'      => $errors,
+            'frame_configs' => $this->frame_configs,
             ]
         )->withInput($request->all);
     }
@@ -959,6 +964,10 @@ class FaqsPlugin extends UserPluginBase
         // FAQ名で、Buckets名も更新する
         //Log::debug($faqs->bucket_id);
         //Log::debug($request->faq_name);
+
+        FrameConfig::saveFrameConfigs($request, $frame_id, FaqFrameConfig::getMemberKeys());
+        // 更新したので、frame_configsを設定しなおす
+        $this->refreshFrameConfigs();
 
         // 新規作成フラグを付けてFAQ設定変更画面を呼ぶ
         $create_flag = false;
