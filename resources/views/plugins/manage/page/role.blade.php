@@ -18,9 +18,15 @@
     </div>
     <div class="card-body">
 
-        <div class="alert alert-info" style="margin-top: 10px;">
+        <div class="alert alert-info">
             ページ名：{{$page->page_name}}
         </div>
+
+        @if ($page_roles->isEmpty() && !$page_parent->page_roles->isEmpty())
+            <div class="alert alert-warning">
+                ページ権限なしのため、親ページ「<a href="{{url('/manage/page/role')}}/{{$page_parent->id}}" target="_blank">{{$page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のページ権限を継承しています。<br />
+            </div>
+        @endif
 
         <div class="accordion" id="accordion" role="tablist" aria-multiselectable="true">
             @foreach($groups as $group)

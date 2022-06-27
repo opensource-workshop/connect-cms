@@ -7,6 +7,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページ管理
 --}}
+@php
+use App\Models\Common\Page;
+@endphp
 
 {{-- 共通エラーメッセージ 呼び出し --}}
 @include('plugins.common.errors_form_line')
@@ -17,6 +20,11 @@
 <form action="{{url('/manage/page/store')}}" method="POST" class="form-horizontal">
 @endif
     {{ csrf_field() }}
+
+    @php
+    // 自分のページから親を遡って取得
+    $page_tree = $page->getPageTreeByGoingBackParent(null);
+    @endphp
 
     <!-- Page form  -->
     <div class="form-group row @if ($errors && $errors->has('page_name')) has-error @endif">
@@ -68,6 +76,24 @@
     <div class="form-group row">
         <div class="col-md-3"></div>
         <div class="col mx-0">
+
+            @php
+            // 自分及び先祖ページを遡る
+            $membership_page_parent = new Page();
+            foreach ($page_tree as $page_tmp) {
+                if ($page_tmp->membership_flag) {
+                    $membership_page_parent = $page_tmp;
+                    break;
+                }
+            }
+            @endphp
+            {{-- 公開設定が公開以外＆親ページありなら --}}
+            @if (!$page->membership_flag && $membership_page_parent->id)
+                <div class="alert alert-warning small mb-0">
+                    親ページ「<a href="{{url('/manage/page/edit')}}/{{$membership_page_parent->id}}" target="_blank">{{$membership_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」の公開設定「{{MembershipFlag::getDescription($membership_page_parent->membership_flag)}}」を継承しています。<br />
+                </div>
+            @endif
+
             <small class="form-text text-muted">
                 ※ メンバーシップページの下層のページもメンバーシップページになります。<br />
                 ※ ページ及び、メンバーシップページの権限設定は「<a href="{{url('/manage/page/role')}}/{{$page->id}}" target="_blank">ページ変更＞ページ権限設定 <i class="fas fa-external-link-alt"></i></a>」で設定できます。
@@ -119,6 +145,23 @@
         <div class="col-md-9">
             <input type="text" name="password" id="password" value="{{old('password', $page->password)}}" class="form-control">
             @include('common.errors_inline', ['name' => 'password'])
+
+            @php
+            // 自分及び先祖ページを遡る
+            $password_page_parent = new Page();
+            foreach ($page_tree as $page_tmp) {
+                if ($page_tmp->password) {
+                    $password_page_parent = $page_tmp;
+                    break;
+                }
+            }
+            @endphp
+            @if (!$page->password && $password_page_parent->id)
+                <div class="alert alert-warning small mb-0">
+                    親ページ「<a href="{{url('/manage/page/edit')}}/{{$password_page_parent->id}}" target="_blank">{{$password_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のパスワード「{{$password_page_parent->password}}」を継承しています。<br />
+                </div>
+            @endif
+
             <small class="form-text text-muted">※ ページにパスワードで閲覧制限を設ける場合に使用します。</small>
         </div>
     </div>
@@ -321,6 +364,32 @@
             </div>
         </div>
     </div>
+
+    <div class="form-group row">
+        <div class="col-md-3"></div>
+        <div class="col mx-0">
+
+            @php
+            // 自分及び先祖ページを遡る
+            $layout_page_parent = new Page();
+            // 自分及び先祖ページを遡る
+            foreach ($page_tree as $page_tmp) {
+                if ($page_tmp->getSimpleLayout()) {
+                    $layout_page_parent = $page_tmp;
+                    break;
+                }
+            }
+            @endphp
+            {{-- 公開設定が公開以外＆親ページありなら --}}
+            @if (!$page->getSimpleLayout() && $layout_page_parent->getSimpleLayout())
+                <div class="alert alert-warning small mb-0">
+                    親ページ「<a href="{{url('/manage/page/edit')}}/{{$layout_page_parent->id}}" target="_blank">{{$layout_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のレイアウト <img src="{{asset('/images/core/layout/' . $layout_page_parent->getSimpleLayout() . '.png')}}" class="cc-page-layout-icon" title="{{$layout_page_parent->getLayoutTitle()}}"> を継承しています。<br />
+                </div>
+            @endif
+
+        </div>
+    </div>
+
     <div class="form-group row">
         <label class="col-md-3 col-form-label text-md-right">メニュー表示</label>
         <div class="col-md-9 d-sm-flex align-items-center">

@@ -5,6 +5,10 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページ管理
 --}}
+@php
+use App\Models\Common\Page;
+@endphp
+
 {{-- 管理画面ベース画面 --}}
 @extends('plugins.manage.manage')
 
@@ -91,7 +95,10 @@
             <tbody>
                 @foreach($pages as $page_item)
                 <tr>
-                    <!-- Task Name -->
+                    @php
+                    // 自分のページから親を遡って取得
+                    $page_tree = $page_item->getPageTreeByGoingBackParent(null);
+                    @endphp
                     <td class="table-text p-1" nowrap>
                         <div class="btn-group">
                             <a href="{{url('/manage/page/edit')}}/{{$page_item->id}}" class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span>編集</span></a>
@@ -152,6 +159,22 @@
                     <td class="table-text p-1">
                         @if($page_item->password)
                             <i class="fas fa-key" title="閲覧パスワードあり"></i>
+                        @else
+
+                            @php
+                            $password_parent = null;
+                            // 自分及び先祖ページを遡る
+                            foreach ($page_tree as $page_tmp) {
+                                if ($page_tmp->password) {
+                                    $password_parent = $page_tmp->password;
+                                    break;
+                                }
+                            }
+                            @endphp
+                            @if ($password_parent)
+                                <i class="fas fa-key text-warning" title="閲覧パスワードあり(親ページを継承)"></i>
+                            @endif
+
                         @endif
                     </td>
                     <td class="table-text p-1">
@@ -160,7 +183,25 @@
                         @elseif($page_item->membership_flag == 2)
                             <i class="fas fa-sign-out-alt text-danger" title="ログインユーザ全員参加"></i>
                         @else
-                            <i class="fas fa-lock-open" title="公開ページ"></i>
+
+                            @php
+                            $membership_flag_parent = 0;
+                            // 自分及び先祖ページを遡る
+                            foreach ($page_tree as $page_tmp) {
+                                if ($page_tmp->membership_flag) {
+                                    $membership_flag_parent = $page_tmp->membership_flag;
+                                    break;
+                                }
+                            }
+                            @endphp
+                            @if($membership_flag_parent == 1)
+                                <i class="fas fa-lock text-warning" title="メンバーシップページ(親ページを継承)"></i>
+                            @elseif($membership_flag_parent == 2)
+                                <i class="fas fa-sign-out-alt text-warning" title="ログインユーザ全員参加(親ページを継承)"></i>
+                            @else
+                                <i class="fas fa-lock-open" title="公開ページ"></i>
+                            @endif
+
                         @endif
                     </td>
                     @if (config('connect.USE_CONTAINER_BETA'))
@@ -172,9 +213,27 @@
                     @endif
                     <td class="table-text p-1 text-center" nowrap>
                         @if ($page_item->page_roles->isEmpty())
-                            <a href="{{url('/manage/page/role')}}/{{$page_item->id}}" class="btn btn-outline-success btn-sm">
-                                <i class="fas fa-users" title="ページ権限設定"></i> <span class="badge badge-light">権限なし</span>
-                            </a>
+
+                            @php
+                            // 自分及び先祖ページを遡る
+                            $page_roles_parent = collect();
+                            foreach ($page_tree as $page_tmp) {
+                                if (! $page_tmp->page_roles->isEmpty()) {
+                                    $page_roles_parent = $page_tmp->page_roles;
+                                    break;
+                                }
+                            }
+                            @endphp
+                            @if ($page_roles_parent->isEmpty())
+                                <a href="{{url('/manage/page/role')}}/{{$page_item->id}}" class="btn btn-outline-success btn-sm">
+                                    <i class="fas fa-users" title="ページ権限設定"></i> <span class="badge badge-light">権限なし</span>
+                                </a>
+                            @else
+                                <a href="{{url('/manage/page/role')}}/{{$page_item->id}}" class="btn btn-outline-warning btn-sm">
+                                    <i class="fas fa-users" title="ページ権限設定"></i> <span class="badge badge-light">親を継承</span>
+                                </a>
+                            @endif
+
                         @else
                             <a href="{{url('/manage/page/role')}}/{{$page_item->id}}" class="btn btn-success btn-sm">
                                 <i class="fas fa-users" title="ページ権限設定"></i> <span class="badge badge-light">権限あり</span>
@@ -193,9 +252,25 @@
                     </td>
                     <td class="table-text p-1 text-center">
                         @if ($page_item->getSimpleLayout())
-                            <div><img src="{{asset('/images/core/layout/' . $page_item->getSimpleLayout() . '.png')}}" class="cc-page-layout-icon" title="{{$page_item->getLayoutTitle()}}" alt="{{$page_item->getLayoutTitle()}}"></div>
+                            <div><img src="{{asset('/images/core/layout/' . $page_item->getSimpleLayout() . '.png')}}" class="cc-page-layout-icon" title="{{$page_item->getLayoutTitle()}}"></div>
                         @else
-                            <div></div>
+
+                            @php
+                            $layout_page_parent = new Page();
+                            // 自分及び先祖ページを遡る
+                            foreach ($page_tree as $page_tmp) {
+                                if ($page_tmp->getSimpleLayout()) {
+                                    $layout_page_parent = $page_tmp;
+                                    break;
+                                }
+                            }
+                            @endphp
+                            @if ($layout_page_parent->getSimpleLayout())
+                                <div class="border border-warning"><img src="{{asset('/images/core/layout/' . $layout_page_parent->getSimpleLayout() . '.png')}}" class="cc-page-layout-icon" title="{{$layout_page_parent->getLayoutTitle()}}（親ページを継承）"></div>
+                            @else
+                                <div></div>
+                            @endif
+
                         @endif
                     </td>
                     <td class="table-text p-1 text-center">
