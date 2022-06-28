@@ -87,61 +87,66 @@
             <a href="{{url('/')}}/manage/service" class="list-group-item">外部サービス設定</a>
         @endif
     @endif
-    <div class="list-group-item text-secondary bg-light">データ管理系</div>
-    @if (Auth::user()->can('admin_site'))
-        @if (isset($plugin_name) && $plugin_name == 'uploadfile')
-            <a href="{{url('/')}}/manage/uploadfile" class="list-group-item active">アップロードファイル</a>
-        @else
-            <a href="{{url('/')}}/manage/uploadfile" class="list-group-item">アップロードファイル</a>
-        @endif
-    @endif
-    @if (Auth::user()->can('admin_site'))
-        @if (isset($plugin_name) && $plugin_name == 'reservation')
-            <a href="{{url('/')}}/manage/reservation" class="list-group-item active">施設管理</a>
-        @else
-            <a href="{{url('/')}}/manage/reservation" class="list-group-item">施設管理</a>
-        @endif
-    @endif
-    @if (Auth::user()->can('admin_site'))
-        @if (isset($plugin_name) && $plugin_name == 'theme')
-            <a href="{{url('/')}}/manage/theme" class="list-group-item active">テーマ管理</a>
-        @else
-            <a href="{{url('/')}}/manage/theme" class="list-group-item">テーマ管理</a>
-        @endif
-    @endif
-    @if (Auth::user()->can('admin_site'))
-        @if (isset($plugin_name) && $plugin_name == 'number')
-            <a href="{{url('/')}}/manage/number" class="list-group-item active">連番管理</a>
-        @else
-            <a href="{{url('/')}}/manage/number" class="list-group-item">連番管理</a>
-        @endif
-    @endif
-    @if (Auth::user()->can('admin_site'))
-        @if (isset($plugin_name) && $plugin_name == 'code')
-            <a href="{{url('/')}}/manage/code" class="list-group-item active">コード管理</a>
-        @else
-            <a href="{{url('/')}}/manage/code" class="list-group-item">コード管理</a>
-        @endif
-    @endif
-    @if (Auth::user()->can('admin_system'))
-        @if (isset($plugin_name) && $plugin_name == 'log')
-            <a href="{{url('/')}}/manage/log" class="list-group-item active">ログ管理</a>
-        @else
-            <a href="{{url('/')}}/manage/log" class="list-group-item">ログ管理</a>
-        @endif
-    @endif
-    @if (Auth::user()->can('admin_site'))
-        @if (isset($plugin_name) && $plugin_name == 'holiday')
-            <a href="{{url('/')}}/manage/holiday" class="list-group-item active">祝日管理</a>
-        @else
-            <a href="{{url('/')}}/manage/holiday" class="list-group-item">祝日管理</a>
-        @endif
-    @endif
-    @if (Auth::user()->can('admin_system'))
-        @if (isset($plugin_name) && $plugin_name == 'migration')
-            <a href="{{url('/')}}/manage/migration" class="list-group-item active">他システム移行</a>
-        @else
-            <a href="{{url('/')}}/manage/migration" class="list-group-item">他システム移行</a>
-        @endif
-    @endif
 </div>
+
+@if (Auth::user()->can('admin_site') || Auth::user()->can('admin_system'))
+    <div class="list-group mt-2">
+        <div class="list-group-item bg-light">データ管理系</div>
+        @if (Auth::user()->can('admin_site'))
+            @if (isset($plugin_name) && $plugin_name == 'uploadfile')
+                <a href="{{url('/')}}/manage/uploadfile" class="list-group-item active">アップロードファイル</a>
+            @else
+                <a href="{{url('/')}}/manage/uploadfile" class="list-group-item">アップロードファイル</a>
+            @endif
+        @endif
+        @if (Auth::user()->can('admin_site'))
+            @if (isset($plugin_name) && $plugin_name == 'reservation')
+                <a href="{{url('/')}}/manage/reservation" class="list-group-item active">施設管理</a>
+            @else
+                <a href="{{url('/')}}/manage/reservation" class="list-group-item">施設管理</a>
+            @endif
+        @endif
+        @if (Auth::user()->can('admin_site'))
+            @if (isset($plugin_name) && $plugin_name == 'theme')
+                <a href="{{url('/')}}/manage/theme" class="list-group-item active">テーマ管理</a>
+            @else
+                <a href="{{url('/')}}/manage/theme" class="list-group-item">テーマ管理</a>
+            @endif
+        @endif
+        @if (Auth::user()->can('admin_site'))
+            @if (isset($plugin_name) && $plugin_name == 'number')
+                <a href="{{url('/')}}/manage/number" class="list-group-item active">連番管理</a>
+            @else
+                <a href="{{url('/')}}/manage/number" class="list-group-item">連番管理</a>
+            @endif
+        @endif
+        @if (Auth::user()->can('admin_site'))
+            @if (isset($plugin_name) && $plugin_name == 'code')
+                <a href="{{url('/')}}/manage/code" class="list-group-item active">コード管理</a>
+            @else
+                <a href="{{url('/')}}/manage/code" class="list-group-item">コード管理</a>
+            @endif
+        @endif
+        @if (Auth::user()->can('admin_system'))
+            @if (isset($plugin_name) && $plugin_name == 'log')
+                <a href="{{url('/')}}/manage/log" class="list-group-item active">ログ管理</a>
+            @else
+                <a href="{{url('/')}}/manage/log" class="list-group-item">ログ管理</a>
+            @endif
+        @endif
+        @if (Auth::user()->can('admin_site'))
+            @if (isset($plugin_name) && $plugin_name == 'holiday')
+                <a href="{{url('/')}}/manage/holiday" class="list-group-item active">祝日管理</a>
+            @else
+                <a href="{{url('/')}}/manage/holiday" class="list-group-item">祝日管理</a>
+            @endif
+        @endif
+        @if (Auth::user()->can('admin_system'))
+            @if (isset($plugin_name) && $plugin_name == 'migration')
+                <a href="{{url('/')}}/manage/migration" class="list-group-item active">他システム移行</a>
+            @else
+                <a href="{{url('/')}}/manage/migration" class="list-group-item">他システム移行</a>
+            @endif
+        @endif
+    </div>
+@endif
