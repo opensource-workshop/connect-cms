@@ -143,7 +143,7 @@ class ConnectPage
         // 自分のページツリーの最後（root）にトップが入っていなければ、トップページをページツリーの最後に追加する
         // ※ 403判定にトップページも含める
         // copy by app\Models\Common\Page::getPageTreeByGoingBackParent()
-        if ($page_tree[count($page_tree)-1]->id != $top_page->id) {
+        if (!is_null($page_tree) && $page_tree[count($page_tree)-1]->id != $top_page->id) {
             $page_tree->push($top_page);
         }
 
