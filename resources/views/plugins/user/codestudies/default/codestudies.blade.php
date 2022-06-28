@@ -141,7 +141,7 @@
             <div class="col-sm-2">
                 @if (!empty($codestudy->id))
                     <a data-toggle="collapse" href="#collapse{{$codestudy->id}}">
-                        <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="hidden-xs">削除</span></span>
+                        <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="d-none d-sm-inline">削除</span></span>
                     </a>
                 @endif
             </div>

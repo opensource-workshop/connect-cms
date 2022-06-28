@@ -202,7 +202,7 @@
                                         <label class="col-sm-3 text-right"></label>
                                         <div class="col-sm-9">
                                             <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('レポートを提出します。\nよろしいですか？');">
-                                                <i class="fas fa-check"></i> <span class="hidden-xs">レポート提出</span>
+                                                <i class="fas fa-check"></i> <span class="d-none d-sm-inline">レポート提出</span>
                                             </button>
                                         </div>
                                     </div>
@@ -267,7 +267,7 @@
                                     <label class="col-sm-3 text-right"></label>
                                     <div class="col-sm-9">
                                         <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('評価を登録します。\nよろしいですか？');">
-                                            <i class="fas fa-check"></i> <span class="hidden-xs">評価・添削確定</span>
+                                            <i class="fas fa-check"></i> <span class="d-none d-sm-inline">評価・添削確定</span>
                                         </button>
                                     </div>
                                 </div>
@@ -314,7 +314,7 @@
                                         <label class="col-sm-3 text-right"></label>
                                         <div class="col-sm-9">
                                             <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('コメントを登録します。\nよろしいですか？');">
-                                                <i class="fas fa-check"></i> <span class="hidden-xs">コメントを登録する</span>
+                                                <i class="fas fa-check"></i> <span class="d-none d-sm-inline">コメントを登録する</span>
                                             </button>
                                         </div>
                                     </div>
@@ -403,7 +403,7 @@
                                                 </table>
 
                                                 <button type="submit" class="btn btn-primary btn-sm mt-2" onclick="javascript:return confirm('試験日を登録します。\nよろしいですか？');">
-                                                    <i class="fas fa-check"></i> <span class="hidden-xs">試験申し込み</span>
+                                                    <i class="fas fa-check"></i> <span class="d-none d-sm-inline">試験申し込み</span>
                                                 </button>
                                             @else
                                                 <div class="card border-danger mb-3">
@@ -568,7 +568,7 @@
                                     <label class="col-sm-3 text-right"></label>
                                     <div class="col-sm-9">
                                         <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('試験の解答を提出します。\nよろしいですか？');">
-                                            <i class="fas fa-check"></i> <span class="hidden-xs">試験の解答提出</span>
+                                            <i class="fas fa-check"></i> <span class="d-none d-sm-inline">試験の解答提出</span>
                                         </button>
                                     </div>
                                 </div>
@@ -634,7 +634,7 @@
                                     <label class="col-sm-3 text-right"></label>
                                     <div class="col-sm-9">
                                         <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('評価を登録します。\nよろしいですか？');">
-                                            <i class="fas fa-check"></i> <span class="hidden-xs">評価・添削確定</span>
+                                            <i class="fas fa-check"></i> <span class="d-none d-sm-inline">評価・添削確定</span>
                                         </button>
                                     </div>
                                 </div>
@@ -681,7 +681,7 @@
                                     <label class="col-sm-3 text-right"></label>
                                     <div class="col-sm-9">
                                         <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('コメントを登録します。\nよろしいですか？');">
-                                            <i class="fas fa-check"></i> <span class="hidden-xs">コメントを登録する</span>
+                                            <i class="fas fa-check"></i> <span class="d-none d-sm-inline">コメントを登録する</span>
                                         </button>
                                     </div>
                                 </div>
@@ -796,7 +796,7 @@
                                     <label class="col-sm-3 text-right"></label>
                                     <div class="col-sm-9">
                                         <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('評価を登録します。\nよろしいですか？');">
-                                            <i class="fas fa-check"></i> <span class="hidden-xs">評価確定</span>
+                                            <i class="fas fa-check"></i> <span class="d-none d-sm-inline">評価確定</span>
                                         </button>
                                     </div>
                                 </div>
@@ -844,7 +844,7 @@
                 @can('posts.update',[[$post, 'learningtasks', 'preview_off']])
                     <div class="btn-group">
                         <a href="{{url('/')}}/plugin/learningtasks/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" class="btn btn-success btn-sm">
-                            <i class="far fa-edit"></i> <span class="hidden-xs">編集</span>
+                            <i class="far fa-edit"></i> <span class="d-none d-sm-inline">編集</span>
                         </a>
                         <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <span class="sr-only">ドロップダウンボタン</span>
@@ -870,17 +870,17 @@
             {{--
             @if (isset($before_post))
             <a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$before_post->id}}#frame-{{$frame->id}}" class="mr-1">
-                <span class="btn btn-info"><i class="fas fa-chevron-left"></i> <span class="hidden-xs">前へ</span></span>
+                <span class="btn btn-info"><i class="fas fa-chevron-left"></i> <span class="d-none d-sm-inline">前へ</span></span>
             </a>
             @endif
             --}}
             <a href="{{url('/')}}{{$page->getLinkUrl()}}#frame-{{$frame->id}}">
-                <span class="btn btn-info"><i class="fas fa-list"></i> <span class="hidden-xs">一覧へ</span></span>
+                <span class="btn btn-info"><i class="fas fa-list"></i> <span class="d-none d-sm-inline">一覧へ</span></span>
             </a>
             {{--
             @if (isset($after_post))
             <a href="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$after_post->id}}#frame-{{$frame->id}}" class="mr-1">
-                <span class="btn btn-info"><i class="fas fa-chevron-right"></i> <span class="hidden-xs">次へ</span></span>
+                <span class="btn btn-info"><i class="fas fa-chevron-right"></i> <span class="d-none d-sm-inline">次へ</span></span>
             </a>
             @endif
             --}}

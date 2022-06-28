@@ -202,7 +202,7 @@
                             {{ csrf_field() }}
                             <input type="hidden" name="redirect_path" value="{{URL::to($page->permanent_link)}}">
                             <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
-                                <i class="fas fa-check"></i> <span class="hidden-xs">承認</span>
+                                <i class="fas fa-check"></i> <span class="d-none d-sm-inline">承認</span>
                             </button>
                         </form>
                     @endcan
@@ -213,7 +213,7 @@
                     @endif
                     <div class="btn-group">
                         <a href="{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" class="btn btn-success btn-sm">
-                            <i class="far fa-edit"></i> <span class="hidden-xs">編集</span>
+                            <i class="far fa-edit"></i> <span class="d-none d-sm-inline">編集</span>
                         </a>
                         <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="button_copy{{$post->id}}">
                             <span class="sr-only">ドロップダウンボタン</span>

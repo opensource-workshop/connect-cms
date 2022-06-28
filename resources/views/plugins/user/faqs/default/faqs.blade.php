@@ -124,7 +124,7 @@
                                         <form action="{{url('/')}}/plugin/faqs/approval/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" method="post" name="form_approval" class="d-inline">
                                             {{ csrf_field() }}
                                             <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
-                                                <i class="fas fa-check"></i> <span class="hidden-xs">承認</span>
+                                                <i class="fas fa-check"></i> <span class="d-none d-sm-inline">承認</span>
                                             </button>
                                         </form>
                                     @endcan
@@ -134,7 +134,7 @@
                                         <span class="badge badge-warning align-bottom">一時保存</span>
                                     @endif
                                     <a class="btn btn-success btn-sm" href="{{url('/')}}/plugin/faqs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
-                                        <i class="far fa-edit"></i> <span class="hidden-xs">編集</span>
+                                        <i class="far fa-edit"></i> <span class="d-none d-sm-inline">編集</span>
                                     </a>
                                 @endcan
 

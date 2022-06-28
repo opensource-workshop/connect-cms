@@ -33,7 +33,7 @@
     {{-- 既存ユーザの場合は削除処理のボタンも表示(自分自身の場合は表示しない) --}}
     <div class="form-group text-center">
         <a data-toggle="collapse" href="#collapse{{$id}}">
-            <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="hidden-xs">一括削除</span></span>
+            <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="d-none d-sm-inline">一括削除</span></span>
         </a>
     </div>
 

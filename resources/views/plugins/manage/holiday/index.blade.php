@@ -70,7 +70,7 @@
                         @else
                         <a href="{{url('/')}}/manage/holiday/overrideEdit/{{$holiday->format('Y-m-d')}}">
                         @endif
-                            <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
+                            <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="d-none d-sm-inline">編集</span></span>
                         </a>
                     </td>
                 </tr>

@@ -76,7 +76,7 @@
                                     <form action="{{url('/')}}/plugin/databases/approval/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}" method="post" name="form_approval" class="d-inline">
                                         {{ csrf_field() }}
                                         <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
-                                            <i class="fas fa-check"></i> <span class="hidden-xs">承認</span>
+                                            <i class="fas fa-check"></i> <span class="d-none d-sm-inline">承認</span>
                                         </button>
                                     </form>
                                 @endcan

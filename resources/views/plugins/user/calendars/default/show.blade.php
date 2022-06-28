@@ -80,7 +80,7 @@
                 @can('posts.approval',[[$post, $frame->plugin_name, $buckets]])
                     @if ($post->status == 2)
                     <button type="button" class="btn btn-sm btn-primary" onclick="javascript:approval_action();">
-                        <i class="far fa-edit"></i> <span class="hidden-xs">承認</span>
+                        <i class="far fa-edit"></i> <span class="d-none d-sm-inline">承認</span>
                     </button>
                     @endif
                 @endcan
@@ -88,7 +88,7 @@
                 {{-- 自分が更新できる権限の場合 --}}
                 @can('posts.update',[[$post, $frame->plugin_name, $buckets]])
                     <button type="button" class="btn btn-sm btn-success" onclick="javascript:edit_action();">
-                        <i class="far fa-edit"></i> <span class="hidden-xs">編集</span>
+                        <i class="far fa-edit"></i> <span class="d-none d-sm-inline">編集</span>
                     </button>
                 @endcan
             </form>
@@ -99,7 +99,7 @@
     <nav class="row" aria-label="ページ移動">
         <div class="col-12 text-center my-3">
             <a href="{{url('/')}}{{$page->getLinkUrl()}}#frame-{{$frame->id}}">
-                <span class="btn btn-info"><i class="fas fa-list"></i> <span class="hidden-xs">{{__('messages.to_list')}}</span></span>
+                <span class="btn btn-info"><i class="fas fa-list"></i> <span class="d-none d-sm-inline">{{__('messages.to_list')}}</span></span>
             </a>
         </div>
     </nav>

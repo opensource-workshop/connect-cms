@@ -45,7 +45,7 @@
                             {{ csrf_field() }}
                             {{-- 承認ボタン --}}
                             <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
-                                <i class="fas fa-check"></i> <span class="hidden-xs">承認</span>
+                                <i class="fas fa-check"></i> <span class="d-none d-sm-inline">承認</span>
                             </button>
                         </form>
                     @endcan
@@ -58,7 +58,7 @@
                     @endif
                     {{-- 編集ボタン --}}
                     <a href="{{url('/')}}/plugin/contents/edit/{{$page->id}}/{{$frame_id}}/{{$contents->id}}#frame-{{$frame_id}}">
-                        <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs" id="{{$frame->plugin_name}}-{{$frame->id}}-edit-button">編集</span></span>
+                        <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="d-none d-sm-inline" id="{{$frame->plugin_name}}-{{$frame->id}}-edit-button">編集</span></span>
                     </a>
                 @endcan
             @endif
@@ -70,7 +70,7 @@
     <p class="text-right">
         {{-- 編集ボタン --}}
         <a href="{{url('/')}}/plugin/contents/edit/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
-            <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs" id="{{$frame->plugin_name}}-{{$frame->id}}-edit-button">編集</span></span>
+            <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="d-none d-sm-inline" id="{{$frame->plugin_name}}-{{$frame->id}}-edit-button">編集</span></span>
         </a>
     </p>
     @endcan

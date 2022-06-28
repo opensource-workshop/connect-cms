@@ -63,7 +63,7 @@
                     <form action="{{url('/')}}/plugin/faqs/approval/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" method="post" name="form_approval" class="d-inline">
                         {{ csrf_field() }}
                         <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
-                            <i class="fas fa-check"></i> <span class="hidden-xs">承認</span>
+                            <i class="fas fa-check"></i> <span class="d-none d-sm-inline">承認</span>
                         </button>
                     </form>
                 @endcan
@@ -73,7 +73,7 @@
                     <span class="badge badge-warning align-bottom">一時保存</span>
                 @endif
                 <a href="{{url('/')}}/plugin/faqs/edit/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">
-                    <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="hidden-xs">編集</span></span>
+                    <span class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span class="d-none d-sm-inline">編集</span></span>
                 </a>
             @endcan
             </div>
@@ -87,15 +87,15 @@
     <div class="col-12 text-center mt-3">
         @if (isset($before_post))
         <a href="{{url('/')}}/plugin/faqs/show/{{$page->id}}/{{$frame_id}}/{{$before_post->id}}#frame-{{$frame->id}}" class="mr-1">
-            <span class="btn btn-info"><i class="fas fa-chevron-left"></i> <span class="hidden-xs">前へ</span></span>
+            <span class="btn btn-info"><i class="fas fa-chevron-left"></i> <span class="d-none d-sm-inline">前へ</span></span>
         </a>
         @endif
         <a href="{{url('/')}}{{$page->getLinkUrl()}}#frame-{{$frame->id}}">
-            <span class="btn btn-info"><i class="fas fa-list"></i> <span class="hidden-xs">一覧へ</span></span>
+            <span class="btn btn-info"><i class="fas fa-list"></i> <span class="d-none d-sm-inline">一覧へ</span></span>
         </a>
         @if (isset($after_post))
         <a href="{{url('/')}}/plugin/faqs/show/{{$page->id}}/{{$frame_id}}/{{$after_post->id}}#frame-{{$frame->id}}" class="mr-1">
-            <span class="btn btn-info"><i class="fas fa-chevron-right"></i> <span class="hidden-xs">次へ</span></span>
+            <span class="btn btn-info"><i class="fas fa-chevron-right"></i> <span class="d-none d-sm-inline">次へ</span></span>
         </a>
         @endif
     </div>
