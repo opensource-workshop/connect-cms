@@ -140,6 +140,13 @@ class ConnectPage
             return $next($request);
         }
 
+        // 自分のページツリーの最後（root）にトップが入っていなければ、トップページをページツリーの最後に追加する
+        // ※ 403判定にトップページも含める
+        // copy by app\Models\Common\Page::getPageTreeByGoingBackParent()
+        if ($page_tree[count($page_tree)-1]->id != $top_page->id) {
+            $page_tree->push($top_page);
+        }
+
         // 現在のページが参照可能か判定して、NG なら403 ページを振り向ける。
         // （ページがある（管理画面ではページがない）＆IP制限がかかっていない場合は参照OK）
         // HTTP ステータスコード（null なら200）
@@ -396,7 +403,7 @@ class ConnectPage
             // 親子ページを加味してページ表示できるか
             $is_view = $this->page->isVisibleAncestorsAndSelf($page_tree);
             if (!$is_view) {
-                // 403 対象（IP アドレス制限）
+                // 403 対象
                 return $this->doForbidden();
             }
         }
