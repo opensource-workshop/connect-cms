@@ -16,6 +16,7 @@ use App\Models\Core\Configs;
 use App\Models\Core\UsersInputCols;
 use App\Plugins\Manage\UserManage\UsersTool;
 use App\Rules\CustomValiUserEmailUnique;
+use Illuminate\Database\Eloquent\Collection;
 
 class RegisterController extends Controller
 {
@@ -141,13 +142,7 @@ class RegisterController extends Controller
         // 設定の取得
         $configs = Configs::get();
 
-        // ユーザー登録に承認が必要な場合は、強制的にステータスを承認待ちにする
-        // ただし、承認待ちより仮登録を優先する（仮登録でメールアドレスの正当性を担保した後に承認待ちにする）
-        $status = $data['status'];
-        if (Configs::getConfigsValue($configs, 'user_registration_require_approval')
-            && $data['status'] != UserStatus::temporary && (!Auth::user() || !Auth::user()->can('admin_user'))) {
-            $status = UserStatus::pending_approval;
-        }
+        $status = $this->userStatus($data, $configs);
 
         // ユーザ登録
         $user = User::create([
@@ -193,5 +188,34 @@ class RegisterController extends Controller
         }
 
         return $user;
+    }
+
+    /**
+     * 登録するユーザーステータスを取得する
+     *
+     * @param array $data
+     * @param Conllection　$configs 設定値
+     * @return ユーザステータス
+     */
+    private function userStatus(array $data, Collection $configs) : int
+    {
+        // ユーザ管理権限があれば、画面からの値をそのまま使う
+        if (Auth::user() && Auth::user()->can('admin_user')) {
+            return $data['status'];
+        }
+
+        // ユーザ仮登録ON
+        if (Configs::getConfigsValue($configs, 'user_register_temporary_regist_mail_flag') == 1) {
+            return UserStatus::temporary;
+        }
+
+        // ユーザー登録に承認が必要な場合は、強制的にステータスを承認待ちにする
+        // ただし、承認待ちより仮登録を優先する（仮登録でメールアドレスの正当性を担保した後に承認待ちにする）
+        if (Configs::getConfigsValue($configs, 'user_registration_require_approval')) {
+            return UserStatus::pending_approval;
+        }
+
+        // 自動登録が許可されている場合の状態は利用可能とする
+        return UserStatus::active;
     }
 }
