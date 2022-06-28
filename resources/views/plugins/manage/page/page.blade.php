@@ -96,7 +96,7 @@ use App\Models\Common\Page;
                 @foreach($pages as $page_item)
                 <tr>
                     @php
-                    // 自分のページから親を遡って取得
+                    // 自分のページから親を遡って取得（＋トップページ）
                     $page_tree = $page_item->getPageTreeByGoingBackParent(null);
                     @endphp
                     <td class="table-text p-1" nowrap>
@@ -291,7 +291,25 @@ use App\Models\Common\Page;
                         <div>@if($page_item->othersite_url_target)<i class="fas fa-window-restore" title="新ウィンドウ"></i>@endif</div>
                     </td>
                     <td class="table-text p-1 text-center">
-                        <div>@if($page_item->ip_address)<i class="fas fa-network-wired" title="{{$page_item->ip_address}}"></i>@endif</div>
+                        @if ($page_item->ip_address)
+                            <div><i class="fas fa-network-wired" title="{{$page_item->ip_address}}"></i></div>
+                        @else
+                            @php
+                            $ip_address_page_parent = new Page();
+                            // 自分及び先祖ページを遡る
+                            foreach ($page_tree as $page_tmp) {
+                                if ($page_tmp->ip_address) {
+                                    $ip_address_page_parent = $page_tmp;
+                                    break;
+                                }
+                            }
+                            @endphp
+                            @if ($ip_address_page_parent->ip_address)
+                                <div><i class="fas fa-network-wired text-warning" title="{{$ip_address_page_parent->ip_address}}(親ページを継承)"></i></div>
+                            @else
+                                <div></div>
+                            @endif
+                        @endif
                     </td>
                     <td class="table-text p-1 text-center">
                         <div>@if($page_item->othersite_url)<i class="fas fa-external-link-alt" title="{{$page_item->othersite_url}}"></i>@endif</div>

@@ -22,7 +22,7 @@ use App\Models\Common\Page;
     {{ csrf_field() }}
 
     @php
-    // 自分のページから親を遡って取得
+    // 自分のページから親を遡って取得（＋トップページ）
     $page_tree = $page->getPageTreeByGoingBackParent(null);
     @endphp
 
@@ -479,6 +479,25 @@ use App\Models\Common\Page;
         <div class="col-md-9">
             <input type="text" name="ip_address" id="ip_address" value="{{old('ip_address', $page->ip_address)}}" class="form-control">
             @include('common.errors_inline', ['name' => 'ip_address'])
+
+            @php
+            // 自分及び先祖ページを遡る
+            $ip_address_page_parent = new Page();
+            // 自分及び先祖ページを遡る
+            foreach ($page_tree as $page_tmp) {
+                if ($page_tmp->ip_address) {
+                    $ip_address_page_parent = $page_tmp;
+                    break;
+                }
+            }
+            @endphp
+            {{-- 公開設定が公開以外＆親ページありなら --}}
+            @if (!$page->ip_address && $ip_address_page_parent->ip_address)
+                <div class="alert alert-warning small mb-0">
+                    設定なしのため、親ページ「<a href="{{url('/manage/page/edit')}}/{{$ip_address_page_parent->id}}" target="_blank">{{$ip_address_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のIPアドレス制限「{{$ip_address_page_parent->ip_address}}」を継承しています。<br />
+                </div>
+            @endif
+
             <small class="form-text text-muted">※ カンマで複数、CIDR形式での指定可能、*での指定は不可</small>
         </div>
     </div>
