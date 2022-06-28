@@ -4410,6 +4410,7 @@ trait MigrationTrait
                         'thread_root_id' => $tsv_cols[9] === '0' ? 0 : $this->fetchMigratedKey('bbses_post', $tsv_cols[10]),
                         'thread_updated_at' => $this->getDatetimeFromTsvAndCheckFormat(11, $tsv_cols, 11),
                         'first_committed_at' => $this->getDatetimeFromTsvAndCheckFormat(0, $tsv_cols, 0),
+                        'status' => $tsv_cols[2],
                         'parent_id' => $this->fetchMigratedKey('bbses_post', $tsv_cols[9]),
                     ]);
                     $bbs_post->created_id   = $this->getUserIdFromLoginId($users, $tsv_cols[15]);
