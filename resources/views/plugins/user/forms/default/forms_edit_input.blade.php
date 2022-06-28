@@ -72,7 +72,7 @@
     {{-- ボタンエリア --}}
     <div class="form-group text-center">
         <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/listInputs/{{$page->id}}/{{$frame->id}}/{{$form->id}}#frame-{{$frame->id}}" class="mr-2">
-            <span class="btn btn-info"><i class="fas fa-list"></i> <span class="hidden-xs">登録一覧へ</span></span>
+            <span class="btn btn-info"><i class="fas fa-list"></i> <span class="d-none d-sm-inline">登録一覧へ</span></span>
         </a>
 
         <button type="submit" class="btn btn-primary" onclick="return confirm('変更を確定します。\nよろしいですか？')"><i class="fas fa-check"></i> 変更確定</button>

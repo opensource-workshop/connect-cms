@@ -325,7 +325,7 @@ use App\Models\Core\UsersColumns;
         @if (isset($id) && $id && $id != Auth::user()->id)
             <div class="col-sm-3 pull-right text-right">
                 <a data-toggle="collapse" href="#collapse{{$id}}">
-                    <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="hidden-xs">削除</span></span>
+                    <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="d-none d-sm-inline">削除</span></span>
                 </a>
             </div>
         @endif

@@ -54,7 +54,7 @@
                 <form action="{{url('/')}}/plugin/databases/approval/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}#frame-{{$frame_id}}" method="post" name="form_approval" class="d-inline">
                     {{ csrf_field() }}
                     <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
-                        <i class="fas fa-check"></i> <span class="hidden-xs">承認</span>
+                        <i class="fas fa-check"></i> <span class="d-none d-sm-inline">承認</span>
                     </button>
                 </form>
             @endcan
@@ -80,7 +80,7 @@
         @else
         <a href="{{url('/')}}{{$page->getLinkUrl()}}#frame-{{$frame_id}}">
         @endif
-            <span class="btn btn-info"><i class="fas fa-list"></i> <span class="hidden-xs">{{__('messages.to_list')}}</span></span>
+            <span class="btn btn-info"><i class="fas fa-list"></i> <span class="d-none d-sm-inline">{{__('messages.to_list')}}</span></span>
         </a>
     </div>
 </div>

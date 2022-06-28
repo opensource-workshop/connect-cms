@@ -57,7 +57,7 @@ if ($frame->isExpandNarrow()) {
                     {{ csrf_field() }}
                     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/reservations/showBooking/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}#frame-{{$frame_id}}">
                     <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
-                        <i class="fas fa-check"></i> <span class="hidden-xs">承認</span>
+                        <i class="fas fa-check"></i> <span class="d-none d-sm-inline">承認</span>
                     </button>
                 </form>
             @endcan
@@ -96,7 +96,7 @@ if ($frame->isExpandNarrow()) {
 <nav class="row" aria-label="ページ移動">
     <div class="col-12 text-center my-3">
         <a href="{{url('/')}}{{$page->getLinkUrl()}}#frame-{{$frame->id}}">
-            <span class="btn btn-info"><i class="fas fa-list"></i> <span class="hidden-xs">{{__('messages.to_list')}}</span></span>
+            <span class="btn btn-info"><i class="fas fa-list"></i> <span class="d-none d-sm-inline">{{__('messages.to_list')}}</span></span>
         </a>
     </div>
 </nav>

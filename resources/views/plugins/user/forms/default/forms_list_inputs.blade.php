@@ -129,7 +129,7 @@
     <div class="row">
         <div class="col">
             <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}">
-                <span class="btn btn-info"><i class="fas fa-list"></i> <span class="hidden-xs">フォーム選択へ</span></span>
+                <span class="btn btn-info"><i class="fas fa-list"></i> <span class="d-none d-sm-inline">フォーム選択へ</span></span>
             </a>
         </div>
     </div>
