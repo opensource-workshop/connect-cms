@@ -43,7 +43,7 @@ use App\Models\Common\Page;
     </div>
 
     <div class="form-group row mb-0">
-        <label class="col-md-3 col-form-label text-md-right">公開設定</label>
+        <label class="col-md-3 col-form-label text-md-right">限定公開設定</label>
         <div class="col-md-9 d-sm-flex align-items-center">
 
             <div class="custom-control custom-radio custom-control-inline">
@@ -52,7 +52,7 @@ use App\Models\Common\Page;
                 @else
                     <input type="radio" value="0" id="membership_flag_0" name="membership_flag" class="custom-control-input">
                 @endif
-                <label class="custom-control-label" for="membership_flag_0">公開</label>
+                <label class="custom-control-label" for="membership_flag_0">設定なし</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
                 @if ($page->membership_flag == 1)
@@ -90,7 +90,7 @@ use App\Models\Common\Page;
             {{-- 公開設定が公開以外＆親ページありなら --}}
             @if (!$page->membership_flag && $membership_page_parent->id)
                 <div class="alert alert-warning small mb-0">
-                    親ページ「<a href="{{url('/manage/page/edit')}}/{{$membership_page_parent->id}}" target="_blank">{{$membership_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」の公開設定「{{MembershipFlag::getDescription($membership_page_parent->membership_flag)}}」を継承しています。<br />
+                    設定なしのため、親ページ「<a href="{{url('/manage/page/edit')}}/{{$membership_page_parent->id}}" target="_blank">{{$membership_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」の公開設定「{{MembershipFlag::getDescription($membership_page_parent->membership_flag)}}」を継承しています。<br />
                 </div>
             @endif
 
@@ -135,7 +135,7 @@ use App\Models\Common\Page;
                     @endphp
                     @if (!$page->container_flag && $container_page_parent->id)
                         <div class="alert alert-warning small mb-0">
-                            親ページ「<a href="{{url('/manage/page/edit')}}/{{$container_page_parent->id}}" target="_blank">{{$container_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のコンテナ「ページをコンテナとして使う」を継承しています。<br />
+                            未設定のため、親ページ「<a href="{{url('/manage/page/edit')}}/{{$container_page_parent->id}}" target="_blank">{{$container_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のコンテナ「ページをコンテナとして使う」を継承しています。<br />
                         </div>
                     @endif
 
@@ -175,7 +175,7 @@ use App\Models\Common\Page;
             @endphp
             @if (!$page->password && $password_page_parent->id)
                 <div class="alert alert-warning small mb-0">
-                    親ページ「<a href="{{url('/manage/page/edit')}}/{{$password_page_parent->id}}" target="_blank">{{$password_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のパスワード「{{$password_page_parent->password}}」を継承しています。<br />
+                    設定なしのため、親ページ「<a href="{{url('/manage/page/edit')}}/{{$password_page_parent->id}}" target="_blank">{{$password_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のパスワード「{{$password_page_parent->password}}」を継承しています。<br />
                 </div>
             @endif
 
@@ -253,11 +253,11 @@ use App\Models\Common\Page;
             @if (!$page->theme)
                 @if ($theme_page_parent->theme)
                     <div class="alert alert-warning small mb-0">
-                        親ページ「<a href="{{url('/manage/page/edit')}}/{{$theme_page_parent->id}}" target="_blank">{{$theme_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のテーマ「{{$theme_page_parent->theme}}」を継承しています。<br />
+                        設定なしのため、親ページ「<a href="{{url('/manage/page/edit')}}/{{$theme_page_parent->id}}" target="_blank">{{$theme_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のテーマ「{{$theme_page_parent->theme}}」を継承しています。<br />
                     </div>
                 @elseif ($base_theme)
                     <div class="alert alert-warning small mb-0">
-                        「サイト管理＞<a href="{{url('/manage/site')}}" target="_blank">サイト基本設定 <i class="fas fa-external-link-alt"></i></a>」の基本テーマ「{{$base_theme}}」を継承しています。<br />
+                        設定なしのため、「サイト管理＞<a href="{{url('/manage/site')}}" target="_blank">サイト基本設定 <i class="fas fa-external-link-alt"></i></a>」の基本テーマ「{{$base_theme}}」を継承しています。<br />
                     </div>
                 @endif
             @endif
@@ -424,7 +424,7 @@ use App\Models\Common\Page;
             {{-- 公開設定が公開以外＆親ページありなら --}}
             @if (!$page->getSimpleLayout() && $layout_page_parent->getSimpleLayout())
                 <div class="alert alert-warning small mb-0">
-                    親ページ「<a href="{{url('/manage/page/edit')}}/{{$layout_page_parent->id}}" target="_blank">{{$layout_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のレイアウト <img src="{{asset('/images/core/layout/' . $layout_page_parent->getSimpleLayout() . '.png')}}" class="cc-page-layout-icon" title="{{$layout_page_parent->getLayoutTitle()}}"> を継承しています。<br />
+                    未設定 <img src="{{asset('/images/core/layout/null.png')}}" title="未設定"> のため、親ページ「<a href="{{url('/manage/page/edit')}}/{{$layout_page_parent->id}}" target="_blank">{{$layout_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のレイアウト <img src="{{asset('/images/core/layout/' . $layout_page_parent->getSimpleLayout() . '.png')}}" class="cc-page-layout-icon" title="{{$layout_page_parent->getLayoutTitle()}}"> を継承しています。<br />
                 </div>
             @endif
         </div>
