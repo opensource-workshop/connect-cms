@@ -89,7 +89,7 @@ trait ConnectRoleTrait
 
         $page = $page ?? new Page();
 
-        // 自分のページから親を遡って取得
+        // 自分のページから親を遡って取得（＋トップページ）
         $page_tree = $page->getPageTreeByGoingBackParent($page_tree);
 
         // 自分及び先祖ページにグループ権限が設定されていなければ戻る
