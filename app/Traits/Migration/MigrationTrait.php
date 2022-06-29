@@ -8236,20 +8236,14 @@ trait MigrationTrait
      * 【実行コマンド】
      * php artisan command:ExportNc2
      *
-     * 【ブロック・ツリーのCSV】
-     * exportNc2() 関数の最後で echo $this->frame_tree; しています。
-     * これをコマンドでファイルに出力すればCSV になります。
-     *
      * 【移行データ】
      * storage\app\migration にNC2 をエクスポートしたデータが入ります。
      *
      * 【ログ】
-     * migration/exportNc2{His}.log
+     * storage\app\migration\logs\*.log
      *
      * 【画像】
      * src にhttp 指定などで、移行しなかった画像はログに出力
-     *
-     *
      */
     private function exportNc2($target, $target_plugin, $redo = null)
     {
