@@ -18,6 +18,7 @@ use App\User;
 use App\Traits\ConnectCommonTrait;
 use App\Plugins\User\Opacs\OpacsPlugin;
 use App\Plugins\Api\ApiPluginBase;
+use App\Utilities\User\UserUtils;
 
 /**
  * Opac関係APIクラス
@@ -126,7 +127,8 @@ class OpacApi extends ApiPluginBase
         $user = User::where('userid', $userid)->first();
         if (empty($user)) {
             // ユーザがいない場合は、外部認証ユーザを探しに行く。
-            $user_info = $this->getOtherAuthUser($request, $userid);
+            $user_info = UserUtils::getOtherAuthUser($request, $userid);
+
             if ($user_info['code'] == 200) {
                 // 外部認証でユーザ確認。OK
             } else {
