@@ -20,7 +20,7 @@ final class UserRegisterNoticeEmbeddedTag extends NoticeEmbeddedTag
     // key/valueの連想配列
     const enum = [
         self::site_name => 'サイト名',
-        self::body => '本文（ユーザ名, ログインID, eメールアドレス, 項目設定で追加した項目, 個人情報保護方針への同意 の全てを含む）',
+        self::body => '本文（ユーザ名, ログインID, eメールアドレス, 項目設定の追加項目, 個人情報保護方針への同意 の全てを含む）',
         self::user_name => 'ユーザ名',
         self::login_id => 'ログインID',
         self::initial_password => '初期パスワード',
