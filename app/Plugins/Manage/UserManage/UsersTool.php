@@ -212,6 +212,10 @@ class UsersTool
         $contents_text = '';
         $contents_text .= "ユーザ名： " . $user->name . "\n";
         $contents_text .= "ログインID： " . $user->userid . "\n";
+        // [TODO] 仮登録⇒本登録時にちゃんと動作する？
+        if (session('initial_password')) {
+            $contents_text .= "初期パスワード： " . session('initial_password') . "\n";
+        }
         $contents_text .= "eメールアドレス： " . $user->email . "\n";
 
         // ユーザーのカラム

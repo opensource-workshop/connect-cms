@@ -2069,7 +2069,7 @@ class UserManage extends ManagePluginBase
         $this->sendMail($user->email, $mail_options, ['content' => $request->body], 'UserManage');
 
         // ユーザ管理画面に戻る
-        return redirect("/manage/user");
+        return redirect("/manage/user")->with('flash_message', 'メール送信しました。');
     }
 
     /**
