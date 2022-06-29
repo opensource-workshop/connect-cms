@@ -79,6 +79,21 @@ return [
             'engine' => null,
         ],
 
+        'nc3' => [
+            'driver' => env('NC3_DB_CONNECTION', 'mysql'),
+            'host' => env('NC3_DB_HOST', '127.0.0.1'),
+            'port' => env('NC3_DB_PORT', '3306'),
+            'database' => env('NC3_DB_DATABASE', 'forge'),
+            'username' => env('NC3_DB_USERNAME', 'forge'),
+            'password' => env('NC3_DB_PASSWORD', ''),
+            'unix_socket' => env('NC3_DB_SOCKET', ''),
+            'charset' => 'utf8',
+            'collation' => 'utf8_general_ci',
+            'prefix' => env('NC3_DB_PREFIX', ''),
+            'strict' => true,
+            'engine' => null,
+        ],
+
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DATABASE_URL'),
