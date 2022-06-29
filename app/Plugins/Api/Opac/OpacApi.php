@@ -134,7 +134,7 @@ class OpacApi extends ApiPluginBase
             } else {
                 // ローカルにも外部認証にもユーザがいない。NG
                 $ret = array('code' => 403, 'message' => '指定されたログインID が見つかりません。');
-                return $this->encodeJson($ret, $request);
+                return [$ret, $user];
             }
         } else {
             // ローカルユーザ確認。OK
