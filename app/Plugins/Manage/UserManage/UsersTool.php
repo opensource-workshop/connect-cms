@@ -198,7 +198,40 @@ class UsersTool
             UserRegisterNoticeEmbeddedTag::site_name => Configs::getConfigsValue($configs, 'base_site_name'),
             UserRegisterNoticeEmbeddedTag::to_datetime => date("Y/m/d H:i:s"),
             UserRegisterNoticeEmbeddedTag::body => self::getMailContentsText($configs, $user),
+            UserRegisterNoticeEmbeddedTag::user_name => $user->name,
+            UserRegisterNoticeEmbeddedTag::login_id => $user->userid,
+            // [TODO] 仮登録⇒本登録時にちゃんと動作する？
+            UserRegisterNoticeEmbeddedTag::initial_password => session('initial_password'),
+            UserRegisterNoticeEmbeddedTag::email => $user->email,
+            UserRegisterNoticeEmbeddedTag::user_register_requre_privacy => Configs::getConfigsValue($configs, 'user_register_requre_privacy') ? '以下の内容に同意します。' : '',
         ];
+
+        // ユーザーのカラム
+        $users_columns = self::getUsersColumns();
+        // ユーザーカラムの登録データ
+        $users_input_cols = UsersInputCols::where('users_id', $user->id)
+            ->get()
+            // keyをusers_input_colsにした結果をセット
+            ->mapWithKeys(function ($item) {
+                return [$item['users_columns_id'] => $item];
+            });
+
+        foreach ($users_columns as $users_column) {
+            // [TODO] 同意型対応する方向かなぁ。
+            // 除外する埋め込みタグはセットしない
+            // if (DatabasesColumns::isNotEmbeddedTagsColumnType($databases_column->column_type)) {
+            //     continue;
+            // }
+
+            $value = "";
+            if (is_array($users_input_cols[$users_column->id])) {
+                $value = implode(self::CHECKBOX_SEPARATOR, $users_input_cols[$users_column->id]->value);
+            } else {
+                $value = $users_input_cols[$users_column->id]->value;
+            }
+
+            $default["X-{$users_column->column_name}"] = $value;
+        }
 
         return $default;
     }
@@ -212,10 +245,6 @@ class UsersTool
         $contents_text = '';
         $contents_text .= "ユーザ名： " . $user->name . "\n";
         $contents_text .= "ログインID： " . $user->userid . "\n";
-        // [TODO] 仮登録⇒本登録時にちゃんと動作する？
-        if (session('initial_password')) {
-            $contents_text .= "初期パスワード： " . session('initial_password') . "\n";
-        }
         $contents_text .= "eメールアドレス： " . $user->email . "\n";
 
         // ユーザーのカラム

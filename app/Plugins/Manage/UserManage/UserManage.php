@@ -1042,6 +1042,7 @@ class UserManage extends ManagePluginBase
             "function" => __FUNCTION__,
             "plugin_name" => "user",
             "configs" => $configs,
+            "users_columns" => UsersTool::getUsersColumns(),
         ]);
     }
 
