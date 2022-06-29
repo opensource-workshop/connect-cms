@@ -593,6 +593,18 @@ class PageManage extends ManagePluginBase
             $group->page_roles = $page_roles->where('group_id', $group->id);
         }
 
+        // 自分のページから親を遡って取得
+        $page_tree = $page->getPageTreeByGoingBackParent(null);
+
+        // 自分及び先祖ページにグループ権限が設定されていなければ戻る
+        $page_parent = new Page();
+        foreach ($page_tree as $page_tmp) {
+            if (! $page_tmp->page_roles->isEmpty()) {
+                $page_parent = $page_tmp;
+                break;
+            }
+        }
+
         // 画面呼び出し
         return view('plugins.manage.page.role', [
             "function"     => __FUNCTION__,
@@ -600,6 +612,8 @@ class PageManage extends ManagePluginBase
             "page"         => $page,
             "group_id"     => $group_id,
             "groups"       => $groups,
+            "page_roles"   => $page_roles,
+            "page_parent"  => $page_parent,
         ]);
     }
 

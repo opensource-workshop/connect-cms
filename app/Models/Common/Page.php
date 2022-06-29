@@ -538,7 +538,7 @@ class Page extends Model
     }
 
     /**
-     * 自分のページから親を遡ってページツリーを取得
+     * 自分のページから親を遡ってページツリーを取得（＋トップページ）
      */
     public function getPageTreeByGoingBackParent(?Collection $page_tree): Collection
     {

@@ -7,6 +7,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページ管理
 --}}
+@php
+use App\Models\Common\Page;
+@endphp
 
 {{-- 共通エラーメッセージ 呼び出し --}}
 @include('plugins.common.errors_form_line')
@@ -17,6 +20,11 @@
 <form action="{{url('/manage/page/store')}}" method="POST" class="form-horizontal">
 @endif
     {{ csrf_field() }}
+
+    @php
+    // 自分のページから親を遡って取得（＋トップページ）
+    $page_tree = $page->getPageTreeByGoingBackParent(null);
+    @endphp
 
     <!-- Page form  -->
     <div class="form-group row @if ($errors && $errors->has('page_name')) has-error @endif">
@@ -35,7 +43,7 @@
     </div>
 
     <div class="form-group row mb-0">
-        <label class="col-md-3 col-form-label text-md-right">公開設定</label>
+        <label class="col-md-3 col-form-label text-md-right">限定公開設定</label>
         <div class="col-md-9 d-sm-flex align-items-center">
 
             <div class="custom-control custom-radio custom-control-inline">
@@ -44,7 +52,7 @@
                 @else
                     <input type="radio" value="0" id="membership_flag_0" name="membership_flag" class="custom-control-input">
                 @endif
-                <label class="custom-control-label" for="membership_flag_0">公開</label>
+                <label class="custom-control-label" for="membership_flag_0">設定なし</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
                 @if ($page->membership_flag == 1)
@@ -68,6 +76,24 @@
     <div class="form-group row">
         <div class="col-md-3"></div>
         <div class="col mx-0">
+
+            @php
+            // 自分及び先祖ページを遡る
+            $membership_page_parent = new Page();
+            foreach ($page_tree as $page_tmp) {
+                if ($page_tmp->membership_flag) {
+                    $membership_page_parent = $page_tmp;
+                    break;
+                }
+            }
+            @endphp
+            {{-- 公開設定が公開以外＆親ページありなら --}}
+            @if (!$page->membership_flag && $membership_page_parent->id)
+                <div class="alert alert-warning small mb-0">
+                    設定なしのため、親ページ「<a href="{{url('/manage/page/edit')}}/{{$membership_page_parent->id}}" target="_blank">{{$membership_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」の公開設定「{{MembershipFlag::getDescription($membership_page_parent->membership_flag)}}」を継承しています。<br />
+                </div>
+            @endif
+
             <small class="form-text text-muted">
                 ※ メンバーシップページの下層のページもメンバーシップページになります。<br />
                 ※ ページ及び、メンバーシップページの権限設定は「<a href="{{url('/manage/page/role')}}/{{$page->id}}" target="_blank">ページ変更＞ページ権限設定 <i class="fas fa-external-link-alt"></i></a>」で設定できます。
@@ -96,6 +122,23 @@
                         <input name="container_flag" value="1" type="checkbox" class="custom-control-input" id="container_flag">
                     @endif
                     <label class="custom-control-label" for="container_flag">ページをコンテナとして使う</label>
+
+                    @php
+                    // 自分及び先祖ページを遡る
+                    $container_page_parent = new Page();
+                    foreach ($page_tree as $page_tmp) {
+                        if ($page_tmp->container_flag) {
+                            $container_page_parent = $page_tmp;
+                            break;
+                        }
+                    }
+                    @endphp
+                    @if (!$page->container_flag && $container_page_parent->id)
+                        <div class="alert alert-warning small mb-0">
+                            未設定のため、親ページ「<a href="{{url('/manage/page/edit')}}/{{$container_page_parent->id}}" target="_blank">{{$container_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のコンテナ「ページをコンテナとして使う」を継承しています。<br />
+                        </div>
+                    @endif
+
                     <small class="form-text text-muted">
                         ※ コンテナページにした場合、各プラグインの設定＞選択画面で、コンテナページで作成したバケツのみ表示します。<br />
                         ※ コンテナページの下層のページもコンテナページになります。<br />
@@ -119,6 +162,23 @@
         <div class="col-md-9">
             <input type="text" name="password" id="password" value="{{old('password', $page->password)}}" class="form-control">
             @include('common.errors_inline', ['name' => 'password'])
+
+            @php
+            // 自分及び先祖ページを遡る
+            $password_page_parent = new Page();
+            foreach ($page_tree as $page_tmp) {
+                if ($page_tmp->password) {
+                    $password_page_parent = $page_tmp;
+                    break;
+                }
+            }
+            @endphp
+            @if (!$page->password && $password_page_parent->id)
+                <div class="alert alert-warning small mb-0">
+                    設定なしのため、親ページ「<a href="{{url('/manage/page/edit')}}/{{$password_page_parent->id}}" target="_blank">{{$password_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のパスワード「{{$password_page_parent->password}}」を継承しています。<br />
+                </div>
+            @endif
+
             <small class="form-text text-muted">※ ページにパスワードで閲覧制限を設ける場合に使用します。</small>
         </div>
     </div>
@@ -176,6 +236,31 @@
                     @endisset
                 @endforeach
             </select>
+
+            @php
+            // 自分及び先祖ページを遡る
+            $theme_page_parent = new Page();
+            $base_theme = Configs::getSharedConfigsValue("base_theme", null);
+            // 自分及び先祖ページを遡る
+            foreach ($page_tree as $page_tmp) {
+                if ($page_tmp->theme) {
+                    $theme_page_parent = $page_tmp;
+                    break;
+                }
+            }
+            @endphp
+            {{-- 公開設定が公開以外＆親ページありなら --}}
+            @if (!$page->theme)
+                @if ($theme_page_parent->theme)
+                    <div class="alert alert-warning small mb-0">
+                        設定なしのため、親ページ「<a href="{{url('/manage/page/edit')}}/{{$theme_page_parent->id}}" target="_blank">{{$theme_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のテーマ「{{$theme_page_parent->theme}}」を継承しています。<br />
+                    </div>
+                @elseif ($base_theme)
+                    <div class="alert alert-warning small mb-0">
+                        設定なしのため、「サイト管理＞<a href="{{url('/manage/site')}}" target="_blank">サイト基本設定 <i class="fas fa-external-link-alt"></i></a>」の基本テーマ「{{$base_theme}}」を継承しています。<br />
+                    </div>
+                @endif
+            @endif
         </div>
     </div>
 
@@ -321,6 +406,30 @@
             </div>
         </div>
     </div>
+
+    <div class="form-group row">
+        <div class="col-md-3"></div>
+        <div class="col mx-0">
+            @php
+            // 自分及び先祖ページを遡る
+            $layout_page_parent = new Page();
+            // 自分及び先祖ページを遡る
+            foreach ($page_tree as $page_tmp) {
+                if ($page_tmp->getSimpleLayout()) {
+                    $layout_page_parent = $page_tmp;
+                    break;
+                }
+            }
+            @endphp
+            {{-- 公開設定が公開以外＆親ページありなら --}}
+            @if (!$page->getSimpleLayout() && $layout_page_parent->getSimpleLayout())
+                <div class="alert alert-warning small mb-0">
+                    未設定 <img src="{{asset('/images/core/layout/null.png')}}" title="未設定"> のため、親ページ「<a href="{{url('/manage/page/edit')}}/{{$layout_page_parent->id}}" target="_blank">{{$layout_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のレイアウト <img src="{{asset('/images/core/layout/' . $layout_page_parent->getSimpleLayout() . '.png')}}" class="cc-page-layout-icon" title="{{$layout_page_parent->getLayoutTitle()}}"> を継承しています。<br />
+                </div>
+            @endif
+        </div>
+    </div>
+
     <div class="form-group row">
         <label class="col-md-3 col-form-label text-md-right">メニュー表示</label>
         <div class="col-md-9 d-sm-flex align-items-center">
@@ -370,6 +479,25 @@
         <div class="col-md-9">
             <input type="text" name="ip_address" id="ip_address" value="{{old('ip_address', $page->ip_address)}}" class="form-control">
             @include('common.errors_inline', ['name' => 'ip_address'])
+
+            @php
+            // 自分及び先祖ページを遡る
+            $ip_address_page_parent = new Page();
+            // 自分及び先祖ページを遡る
+            foreach ($page_tree as $page_tmp) {
+                if ($page_tmp->ip_address) {
+                    $ip_address_page_parent = $page_tmp;
+                    break;
+                }
+            }
+            @endphp
+            {{-- 公開設定が公開以外＆親ページありなら --}}
+            @if (!$page->ip_address && $ip_address_page_parent->ip_address)
+                <div class="alert alert-warning small mb-0">
+                    設定なしのため、親ページ「<a href="{{url('/manage/page/edit')}}/{{$ip_address_page_parent->id}}" target="_blank">{{$ip_address_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のIPアドレス制限「{{$ip_address_page_parent->ip_address}}」を継承しています。<br />
+                </div>
+            @endif
+
             <small class="form-text text-muted">※ カンマで複数、CIDR形式での指定可能、*での指定は不可</small>
         </div>
     </div>
