@@ -304,6 +304,7 @@
 
         relative_urls : false,
         height: {{ isset($height) ? $height : 300 }},
+        resize: 'both',
         branding: false,
         //forced_root_block : false,
         valid_children : "+body[style|input],+a[div|p],",
