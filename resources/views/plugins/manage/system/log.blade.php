@@ -3,7 +3,7 @@
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category ログ設定
+ * @category システム管理
  --}}
 {{-- 管理画面ベース画面 --}}
 @extends('plugins.manage.manage')

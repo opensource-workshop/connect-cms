@@ -1,5 +1,9 @@
 {{--
  * システム管理のサーバ設定テンプレート
+ *
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category システム管理
  --}}
 {{-- 管理画面ベース画面 --}}
 @extends('plugins.manage.manage')
