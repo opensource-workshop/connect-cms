@@ -582,7 +582,7 @@ class PageManage extends ManagePluginBase
         }
 
         // グループの取得
-        $groups = Group::orderBy('name', 'asc')->get();
+        $groups = Group::orderBy('display_sequence', 'asc')->get();
 
         // ページ権限を取得してGroup オブジェクトに保持する。
         $page_roles = PageRole::where('page_id', $page->id)
