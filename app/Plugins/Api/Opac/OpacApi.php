@@ -66,6 +66,12 @@ class OpacApi extends ApiPluginBase
      */
     public function bookImpl($request, $opac_id, $key_column, $key_value)
     {
+        // API 共通チェック
+        $ret = $this->apiCallCheck($request, 'Opac');
+        if (!empty($ret['code'])) {
+            return $this->encodeJson($ret, $request);
+        }
+
         // パラメータチェック（キー項目）
         if ($key_column == 'barcode' || $key_column == 'isbn') {
             // キーに指定してもOKな項目。続きへ。
@@ -145,6 +151,12 @@ class OpacApi extends ApiPluginBase
      */
     public function rent($request, $opac_id, $key_column, $key_value, $userid)
     {
+        // API 共通チェック
+        $ret = $this->apiCallCheck($request, 'Opac');
+        if (!empty($ret['code'])) {
+            return $this->encodeJson($ret, $request);
+        }
+
         // ユーザの確認
         list($ret, $user) = $this->getUser($request, $userid);
         if ($ret['code'] != 200) {
@@ -254,6 +266,12 @@ class OpacApi extends ApiPluginBase
      */
     public function returnbook($request, $opac_id, $key_column, $key_value, $userid = null)
     {
+        // API 共通チェック
+        $ret = $this->apiCallCheck($request, 'Opac');
+        if (!empty($ret['code'])) {
+            return $this->encodeJson($ret, $request);
+        }
+
         // ユーザの確認
         //list($ret, $user) = $this->getUser($request, $userid);
         //if ($ret['code'] != 200) {
@@ -292,6 +310,12 @@ class OpacApi extends ApiPluginBase
      */
     public function rentinfo($request, $opac_id, $userid)
     {
+        // API 共通チェック
+        $ret = $this->apiCallCheck($request, 'Opac');
+        if (!empty($ret['code'])) {
+            return $this->encodeJson($ret, $request);
+        }
+
         // 貸し出し中書籍
         $lents = OpacsBooksLents::select('opacs_books.title', 'opacs_books.subtitle', 'opacs_books.creator', 'opacs_books.publisher', 'opacs_books.publication_year', 'opacs_books_lents.lent_flag', 'opacs_books_lents.return_scheduled')
                                 ->leftJoin('opacs_books', 'opacs_books.id', '=', 'opacs_books_lents.opacs_books_id')
