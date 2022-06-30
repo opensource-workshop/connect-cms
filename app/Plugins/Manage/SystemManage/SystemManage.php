@@ -232,7 +232,7 @@ class SystemManage extends ManagePluginBase
             file_put_contents($path, str_replace('MAIL_FROM_ADDRESS=' . config('mail.from.address'), "MAIL_FROM_ADDRESS={$request->mail_from_address}", file_get_contents($path)));
 
             // ${APP_NAME} は一度取り除いてから置換
-            file_put_contents($path, str_replace('MAIL_FROM_NAME="${APP_NAME}"',                      "MAIL_FROM_NAME=\"{$request->mail_from_name}\"", file_get_contents($path)));
+            file_put_contents($path, str_replace('MAIL_FROM_NAME="${APP_NAME}"', "MAIL_FROM_NAME=\"{$request->mail_from_name}\"", file_get_contents($path)));
             file_put_contents($path, str_replace('MAIL_FROM_NAME="' . config('mail.from.name') . '"', "MAIL_FROM_NAME=\"{$request->mail_from_name}\"", file_get_contents($path)));
 
             file_put_contents($path, str_replace('MAIL_HOST=' . config('mail.host'), "MAIL_HOST={$request->mail_host}", file_get_contents($path)));
