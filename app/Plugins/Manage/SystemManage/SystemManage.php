@@ -3,6 +3,7 @@
 namespace App\Plugins\Manage\SystemManage;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Session;
@@ -17,7 +18,7 @@ use App\Plugins\Manage\ManagePluginBase;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category システム管理
- * @package Contoroller
+ * @package Controller
  * @plugin_title システム管理
  * @plugin_desc デバッグモードや使用メモリ、ログなどシステムの基本に関する機能が集まった管理機能です。
  */
@@ -36,6 +37,10 @@ class SystemManage extends ManagePluginBase
         $role_ckeck_table["updateLog"]       = array('admin_system');
         $role_ckeck_table["server"]          = array('admin_system');
         $role_ckeck_table["updateServer"]    = array('admin_system');
+        $role_ckeck_table["mail"]            = ['admin_system'];
+        $role_ckeck_table["updateMail"]      = ['admin_system'];
+        $role_ckeck_table["mailTest"]        = ['admin_system'];
+        $role_ckeck_table["sendMailTest"]    = ['admin_system'];
         return $role_ckeck_table;
     }
 
@@ -160,7 +165,7 @@ class SystemManage extends ManagePluginBase
      * @return view
      * @method_title サーバ設定
      * @method_desc 画像リサイズ時のPHPメモリ数を設定できます。
-     * @method_detail 画像リサイズでエラーになるような場合は増やしてください。。
+     * @method_detail 画像リサイズでエラーになるような場合は増やしてください。
      */
     public function server($request, $page_id = null)
     {
@@ -192,5 +197,87 @@ class SystemManage extends ManagePluginBase
         );
 
         return redirect("/manage/system/server")->with('flash_message', '更新しました。');
+    }
+
+    /**
+     * メール設定画面表示
+     *
+     * @return view
+     * @method_title メール設定
+     * @method_desc SMTPサーバ等のメール送信設定ができます。
+     * @method_detail メール送信機能を使う場合は設定してください。
+     */
+    public function mail($request, $id = null)
+    {
+        return view('plugins.manage.system.mail', [
+            "function"           => __FUNCTION__,
+            "plugin_name"        => "system",
+        ]);
+    }
+
+    /**
+     * メール設定更新
+     */
+    public function updateMail($request, $id = null)
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        // envファイルを書き換える
+        $path = base_path('.env');
+
+        if (file_exists($path)) {
+            file_put_contents($path, str_replace('MAIL_FROM_ADDRESS=' . config('mail.from.address'), "MAIL_FROM_ADDRESS={$request->mail_from_address}", file_get_contents($path)));
+
+            // ${APP_NAME} は一度取り除いてから置換
+            file_put_contents($path, str_replace('MAIL_FROM_NAME="${APP_NAME}"',                      "MAIL_FROM_NAME=\"{$request->mail_from_name}\"", file_get_contents($path)));
+            file_put_contents($path, str_replace('MAIL_FROM_NAME="' . config('mail.from.name') . '"', "MAIL_FROM_NAME=\"{$request->mail_from_name}\"", file_get_contents($path)));
+
+            file_put_contents($path, str_replace('MAIL_HOST=' . config('mail.host'), "MAIL_HOST={$request->mail_host}", file_get_contents($path)));
+            file_put_contents($path, str_replace('MAIL_PORT=' . config('mail.port'), "MAIL_PORT={$request->mail_port}", file_get_contents($path)));
+            file_put_contents($path, str_replace('MAIL_USERNAME=' . config('mail.username'), "MAIL_USERNAME={$request->mail_username}", file_get_contents($path)));
+            file_put_contents($path, str_replace('MAIL_PASSWORD=' . config('mail.password'), "MAIL_PASSWORD={$request->mail_password}", file_get_contents($path)));
+            file_put_contents($path, str_replace('MAIL_ENCRYPTION=' . config('mail.encryption'), "MAIL_ENCRYPTION={$request->mail_encryption}", file_get_contents($path)));
+        }
+
+        // .envファイルを変更したらキャッシュクリア
+        // php artisan config:clear
+        Artisan::call('config:clear');
+
+        return redirect("/manage/system/mail")->with('flash_message', '更新しました。');
+    }
+
+    /**
+     * メール送信テスト画面
+     *
+     * @method_title メール送信テスト
+     * @method_desc メールの動作確認ができます。
+     * @method_detail メールの動作確認する場合、「送信」ボタンを押してください。
+     */
+    public function mailTest($request, $id = null)
+    {
+        return view('plugins.manage.system.mail_test', [
+            "function"           => __FUNCTION__,
+            "plugin_name"        => "system",
+        ]);
+    }
+
+    /**
+     * メール送信
+     */
+    public function sendMailTest($request, $id = null)
+    {
+        // [TODO] toメールの必須validate, メールアドレス形式チェック
+
+        // メールオプション
+        $mail_options = ['subject' => $request->subject, 'template' => 'mail.send'];
+
+        // [TODO] メール設定不備だと例外が発生する。キャッチして、エラー表示できるか。
+        // メール送信（Trait のメソッド）
+        $this->sendMail($request->email, $mail_options, ['content' => $request->body], 'SystemManage');
+
+        return redirect("/manage/system/mailTest")->with('flash_message', 'メール送信しました。');
     }
 }

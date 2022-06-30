@@ -22,6 +22,22 @@
                 </li>
 
                 <li role="presentation" class="nav-item">
+                @if ($function == "mail")
+                    <span class="nav-link"><span class="active">メール設定</span></span>
+                @else
+                    <a href="{{url('/manage/system/mail')}}" class="nav-link">メール設定</a></li>
+                @endif
+                </li>
+
+                <li role="presentation" class="nav-item">
+                @if ($function == "mailTest")
+                    <span class="nav-link"><span class="active">メール送信テスト</span></span>
+                @else
+                    <a href="{{url('/manage/system/mailTest')}}" class="nav-link">メール送信テスト</a></li>
+                @endif
+                </li>
+
+                <li role="presentation" class="nav-item">
                 @if ($function == "server")
                     <span class="nav-link"><span class="active">サーバ設定</span></span>
                 @else
