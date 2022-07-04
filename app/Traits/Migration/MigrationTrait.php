@@ -316,14 +316,6 @@ trait MigrationTrait
     private $import_base = 'import/';
 
     /**
-     * テストメソッド
-     */
-    private function getTestStr()
-    {
-        return "This is MigrationTrait test.";
-    }
-
-    /**
      * migration 各データのパス取得
      */
     private function getImportPath($target, $import_base = null)
