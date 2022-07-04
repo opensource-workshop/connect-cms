@@ -8671,11 +8671,11 @@ trait MigrationTrait
      * uploads_ini の形式
      *
      * [uploads]
-     * upload[upload_00001] = upload_00001.jpg
-     * upload[upload_00002] = upload_00002.png
-     * upload[upload_00003] = upload_00003.pdf
+     * upload[1] = upload_00001.jpg
+     * upload[2] = upload_00002.png
+     * upload[3] = upload_00003.pdf
      *
-     * [upload_00001]
+     * [1]
      * file_name =
      * mimetype =
      * extension =
