@@ -172,6 +172,7 @@ use App\Enums\ReservationNoticeEmbeddedTag;
 use App\Enums\ShowType;
 use App\Enums\StatusType;
 use App\Enums\UserColumnType;
+use App\Enums\UserStatus;
 
 /**
  * 移行プログラム
@@ -8893,9 +8894,9 @@ trait MigrationTrait
             $users_ini .= "userid             = \"" . $nc2_user->login_id . "\"\n";
             $users_ini .= "password           = \"" . $nc2_user->password . "\"\n";
             if ($nc2_user->active_flag == 0) {
-                $users_ini .= "status             = 1\n";
+                $users_ini .= "status             = " . UserStatus::not_active . "\n";
             } else {
-                $users_ini .= "status             = 0\n";
+                $users_ini .= "status             = " . UserStatus::active . "\n";
             }
             if ($nc2_any_items->isNotEmpty()) {
                 // 任意項目
