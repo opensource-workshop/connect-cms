@@ -10,9 +10,9 @@
 {{-- 自階層で非表示のページは対象外 --}}
 @if ($children->isView(Auth::user(), false, true, $page_roles))
     @if ($active_page_id == $children->id)
-        <li role="presentation" class="nav-item {{'depth-' . $page->depth}} {{$page->getClass()}}"><a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="nav-link active">{{$children->page_name}}</a></li>
+        <li role="presentation" class="nav-item text-nowrap {{'depth-' . $page->depth}} {{$page->getClass()}}"><a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="nav-link active">{{$children->page_name}}</a></li>
     @else
-        <li role="presentation" class="nav-item {{'depth-' . $page->depth}} {{$page->getClass()}}"><a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="nav-link">{{$children->page_name}}</a></li>
+        <li role="presentation" class="nav-item text-nowrap {{'depth-' . $page->depth}} {{$page->getClass()}}"><a href="{{$children->getUrl()}}" {!!$children->getUrlTargetTag()!!} class="nav-link">{{$children->page_name}}</a></li>
     @endif
 @endif
 
