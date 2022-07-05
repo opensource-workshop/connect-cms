@@ -104,7 +104,7 @@ use App\Models\Common\Page;
             </thead>
             <tbody>
                 @foreach($pages as $page_item)
-                <tr>
+                <tr id="{{$page_item->id}}">
                     @php
                     // 自分のページから親を遡って取得（＋トップページ）
                     $page_tree = $page_item->getPageTreeByGoingBackParent(null);
@@ -158,9 +158,9 @@ use App\Models\Common\Page;
                     </td>
                     <td class="table-text p-1">
                         @if ($page_item->base_display_flag == 1)
-                            <div><a href="javascript:void(0);" onclick="submit_toggle_display({{$page_item->id}});"><i class="far fa-eye" title="メニューに表示する"></i></a></div>
+                            <div class="mr-1"><a href="javascript:void(0);" class="btn btn-primary btn-sm" onclick="submit_toggle_display({{$page_item->id}});"><i class="far fa-eye" title="メニューに表示する"></i></a></div>
                         @else
-                            <div><a href="javascript:void(0);" onclick="submit_toggle_display({{$page_item->id}});"><i class="far fa-eye-slash" title="メニューから隠す"></i></a></div>
+                            <div class="mr-1"><a href="javascript:void(0);" class="btn btn-outline-primary btn-sm" onclick="submit_toggle_display({{$page_item->id}});"><i class="far fa-eye-slash" title="メニューから隠す"></i></a></div>
                         @endif
                     </td>
                     <td class="table-text p-1" nowrap>

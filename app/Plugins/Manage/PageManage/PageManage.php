@@ -819,6 +819,6 @@ class PageManage extends ManagePluginBase
         $page->save();
 
         // ページ管理画面に戻る
-        return redirect("/manage/page");
+        return redirect("/manage/page#$page_id");
     }
 }
