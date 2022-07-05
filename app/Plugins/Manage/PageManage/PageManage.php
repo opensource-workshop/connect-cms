@@ -801,9 +801,8 @@ class PageManage extends ManagePluginBase
         // ページID で1件取得
         $page = Page::find($page_id);
 
-        // ページデータ取得
+        // 指定ページがなければエラー
         if (empty($page)) {
-            // 画面呼び出し
             return view('plugins.manage.page.error', [
                 "function"     => __FUNCTION__,
                 "plugin_name"  => "page",
