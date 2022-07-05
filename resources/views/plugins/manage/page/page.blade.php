@@ -48,6 +48,11 @@ use App\Models\Common\Page;
                     form_move_page.submit();
                 }
             }
+            {{-- 表示切り替え用フォームのsubmit JavaScript --}}
+            function submit_toggle_display( source_id ) {
+                form_toggle_display.action = form_toggle_display.action + "/" + source_id;
+                form_toggle_display.submit();
+            }
         </script>
 
         {{-- ページの上移動用フォーム(POSTのためのフォーム。一つ用意して一覧からJavascriptで呼び出し) --}}
@@ -68,6 +73,11 @@ use App\Models\Common\Page;
         <form action="{{url('/manage/page/movePage')}}" method="POST" name="form_move_page" id="form_move_page" class="form-horizontal">
             {{ csrf_field() }}
             <input type="hidden" name="destination_id" value="">
+        </form>
+
+        {{-- 表示切り替え用フォーム(POSTのためのフォーム。一つ用意して一覧からJavascriptで呼び出し) --}}
+        <form action="{{url('/manage/page/toggleDisplay')}}" method="POST" name="form_toggle_display" id="form_toggle_display" class="form-horizontal">
+            {{ csrf_field() }}
         </form>
 
         <div class="table-responsive">
@@ -148,9 +158,9 @@ use App\Models\Common\Page;
                     </td>
                     <td class="table-text p-1">
                         @if ($page_item->base_display_flag == 1)
-                            <div><i class="far fa-eye" title="メニューに表示する"></i></div>
+                            <div><a href="javascript:void(0);" onclick="submit_toggle_display({{$page_item->id}});"><i class="far fa-eye" title="メニューに表示する"></i></a></div>
                         @else
-                            <div><i class="far fa-eye-slash" title="メニューから隠す"></i></div>
+                            <div><a href="javascript:void(0);" onclick="submit_toggle_display({{$page_item->id}});"><i class="far fa-eye-slash" title="メニューから隠す"></i></a></div>
                         @endif
                     </td>
                     <td class="table-text p-1" nowrap>
