@@ -60,6 +60,7 @@ class PageManage extends ManagePluginBase
         $role_ckeck_table["migrationGet"]    = array('admin_page');
         $role_ckeck_table["migrationImort"]  = array('admin_page');
         $role_ckeck_table["migrationFileDelete"] = array('admin_page');
+        $role_ckeck_table["toggleDisplay"] = array('admin_page');
 
 /*
         $role_ckeck_table = array();
@@ -790,5 +791,34 @@ class PageManage extends ManagePluginBase
 
         // 指示された画面に戻る。
         return $this->migrationOrder($request, $page_id);
+    }
+
+    /**
+     * 表示フラグを切り替える
+     */
+    public function toggleDisplay($request, $page_id)
+    {
+        // ページID で1件取得
+        $page = Page::find($page_id);
+
+        // 指定ページがなければエラー
+        if (empty($page)) {
+            return view('plugins.manage.page.error', [
+                "function"     => __FUNCTION__,
+                "plugin_name"  => "page",
+                "message"      => "指定されたページID が存在しません。",
+            ]);
+        }
+
+        // 表示フラグを切り替える
+        if ($page->base_display_flag) {
+            $page->base_display_flag = 0;
+        } else {
+            $page->base_display_flag = 1;
+        }
+        $page->save();
+
+        // ページ管理画面に戻る
+        return redirect("/manage/page#$page_id");
     }
 }
