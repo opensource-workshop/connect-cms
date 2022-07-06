@@ -88,6 +88,10 @@ use App\Models\Migration\MigrationMapping;
 use App\Models\Migration\Nc3\Nc3Room;
 use App\Models\Migration\Nc3\Nc3SiteSetting;
 use App\Models\Migration\Nc3\Nc3UploadFile;
+use App\Models\Migration\Nc3\Nc3User;
+use App\Models\Migration\Nc3\Nc3UserAttribute;
+use App\Models\Migration\Nc3\Nc3UserAttributeChoice;
+use App\Models\Migration\Nc3\Nc3UsersLanguage;
 // use App\Models\Migration\Nc2\Nc2AbbreviateUrl;
 // use App\Models\Migration\Nc2\Nc2Announcement;
 // use App\Models\Migration\Nc2\Nc2Assignment;
@@ -175,27 +179,10 @@ use App\Enums\ReservationNoticeEmbeddedTag;
 use App\Enums\ShowType;
 use App\Enums\StatusType;
 use App\Enums\UserColumnType;
+use App\Enums\UserStatus;
 
 /**
- * 移行プログラム
- * データは storage/app/migration に保持し、そこからインポートする。
- * 数値のフォルダはインポート先のページ指定で実行したもの。
- * _付のフォルダは新規ページを作るもの。
- * @付のフォルダは共通データ（uploadsなど）
- *
- * [MigrationMapping]テーブルの target_source_table の説明
- * --- エクスポート
- * nc3_pages    : source_key にNC3 のpage_id、destination_key にエクスポート用ページフォルダID（連番）：ページの階層調査用
- * --- インポート
- * connect_page : source_key にインポート用ディレクトリ、destination_key に新ページID。ページ移行時、親を探すのに使用。
- * frames       : source_key にNC3 のblock_id、destination_key に新 frame_id
- * menus        : source_key にNC3 のblock_id or 追加キー、destination_key に新 menu_id
- * uploads      : source_key に共通部分は新たに採番したキー、オリジナル部分はNC3 のjournal_category のcategory_id
- * categories   : source_key にNC3 のuploads_id、destination_key に新Upload のid。WYSIWYG 移行時に使用。
- * users        : source_key にNC3 のuserid、destination_key にも同じuserid。インポートの判断はUsers テーブルで行うので、これは履歴のみ。
- * blogs        : source_key にNC3 のblogs_id、destination_key に新Blog のid。新旧のつなぎ＆2回目の実行用。
- * databases    : source_key にNC3 のdatabases_id、destination_key に新Database のid。新旧のつなぎ＆2回目の実行用。
- *
+ * NC3移行プログラム
  */
 trait MigrationNc3Trait
 {
@@ -1789,9 +1776,8 @@ trait MigrationNc3Trait
      */
     private function getNc2LoginIdFromNc2UserId($nc3_users, $nc3_user_id)
     {
-        $nc3_user = $nc3_users->firstWhere('user_id', $nc3_user_id);
-        $nc3_user = $nc3_user ?? new Nc2User();
-        return $nc3_user->login_id;
+        $nc3_user = $nc3_users->firstWhere('user_id', $nc3_user_id) ?? new Nc3User();
+        return $nc3_user->username;
     }
 
     /**
@@ -8220,6 +8206,9 @@ trait MigrationNc3Trait
             $this->nc3ExportUsers($redo);
         }
 
+//////////////////
+// [TODO] 以下まだ
+//////////////////
         // ルームデータのエクスポート
         if ($this->isTarget('nc3_export', 'groups')) {
             $this->nc3ExportRooms($redo);
@@ -8621,11 +8610,6 @@ trait MigrationNc3Trait
 
         // アップロード・ファイルのループ
         foreach ($nc3_uploads as $nc3_upload) {
-            // NC3 バックアップは対象外
-            // if ($nc3_upload->file_path == 'backup/') {
-            //     continue;
-            // }
-
             // アップロードファイルのルームを無視する指定があれば全部を移行、なければルーム設定を参照
             if (!$this->hasMigrationConfig('uploads', 'nc3_export_uploads_force_room', true)) {
                 $room_ids = $this->getMigrationConfig('basic', 'nc3_export_room_ids');
@@ -8678,6 +8662,7 @@ trait MigrationNc3Trait
 
     /**
      * 半角 @ を全角 ＠ に変換する。
+     * 「TODO」エクスポート共通
      */
     private function replaceFullwidthAt($str)
     {
@@ -8697,82 +8682,42 @@ trait MigrationNc3Trait
             Storage::deleteDirectory($this->getImportPath('users/'));
         }
 
-        /*
-            移行項目：login_id、password、handle、role_authority_id、system_flag
-                      role_authority_id：1 => 管理権限は全てON、コンテンツ権限はコンテンツ管理者
-                                       ：2 => 主担権限。管理権限は全てOFF、コンテンツ権限はコンテンツ管理者
-                                       ：3 => モデレータ権限。管理権限は全てOFF、コンテンツ権限はモデレータ＆編集者
-                                       ：4 => 一般権限。管理権限は全てOFF、コンテンツ権限は編集者
-                                       ：5 => ゲスト権限。管理権限は全てOFF、コンテンツ権限はなし
-                      system_flag：
-            Connect-CMS に機能追加するもの：active_flag
-        */
-
-        /*
-        [users]
-        user[0] = "admin"
-        user[1] = "test_user"
-
-        [admin]
-        name        = "システム管理者"
-        email       = "system@example.com"
-        userid      = systemAdmin6152
-        password    = $2y$10$Zy7krF.Kcq43qMWC2ZKjqFXLt44urVgh3argR41E6qhmQAZ5e6WKi
-        users_roles = "role_article_admin|admin_system"
-        */
-
-        // NC3 ユーザの最初のメアド項目取得
-        $nc3_mail_item = Nc2Item::where('type', 'email')
-                                ->orderBy('col_num')
-                                ->orderBy('row_num')
-                                ->first();
-
         // NC3 ユーザ任意項目
         $nc3_any_items = collect([]);
         $nc3_export_user_items = $this->getMigrationConfig('users', 'nc3_export_user_items');
         if ($nc3_export_user_items) {
-            $nc3_any_items = Nc2Item::select('items.*', 'items_desc.description', 'items_options.options')
-                ->whereIn('items.item_name', $nc3_export_user_items)
-                ->leftJoin('items_desc', 'items_desc.item_id', '=', 'items.item_id')
-                ->leftJoin('items_options', 'items_options.item_id', '=', 'items.item_id')
-                ->orderBy('items.col_num')
-                ->orderBy('items.row_num')
+            $nc3_any_items = Nc3UserAttribute::
+                select('user_attributes.*', 'user_attribute_settings.data_type_key', 'user_attribute_settings.required')
+                ->whereIn('user_attributes.name', $nc3_export_user_items)
+                ->leftJoin('user_attribute_settings', 'user_attribute_settings.user_attribute_key', '=', 'user_attributes.key')
+                ->where('user_attributes.is_origin', 1)
+                ->orderBy('user_attribute_settings.col')
+                ->orderBy('user_attribute_settings.row')
                 ->get();
+            // var_dump($nc3_any_items);
         }
 
         // NC3 ユーザデータ取得
-        $nc3_users_query = Nc2User::select('users.*');
-        if (!empty($nc3_mail_item)) {
-            // メール項目
-            $nc3_users_query->addSelect('users_items_link.content AS email')
-                ->leftJoin('users_items_link', function ($join) use ($nc3_mail_item) {
-                    $join->on('users_items_link.user_id', '=', 'users.user_id')
-                        ->where('users_items_link.item_id', $nc3_mail_item->item_id);
-                });
-        }
-        if ($nc3_any_items->isNotEmpty()) {
-            // 任意項目
-            foreach ($nc3_any_items as $nc3_any_item) {
-                $nc3_users_query->addSelect("users_items_link_{$nc3_any_item->item_id}.content AS item_{$nc3_any_item->item_id}")
-                    ->leftJoin("users_items_link as users_items_link_{$nc3_any_item->item_id}", function ($join) use ($nc3_any_item) {
-                        $join->on("users_items_link_{$nc3_any_item->item_id}.user_id", '=', 'users.user_id')
-                            ->where("users_items_link_{$nc3_any_item->item_id}.item_id", $nc3_any_item->item_id);
-                    });
-            }
-        }
-        $nc3_users = $nc3_users_query->orderBy('users.insert_time')->get();
+        $nc3_users_query = Nc3User::where('username', '<>', '');
+        $nc3_users = $nc3_users_query->orderBy('users.created')->get();
 
         // 空なら戻る
         if ($nc3_users->isEmpty()) {
             return;
         }
 
+        // 氏名・プロフィール等の日本語
+        $nc3_users_languages = Nc3UsersLanguage::where('language_id', 2)->whereIn('user_id', $nc3_users->pluck('id'))->get();
+
+        // オプション項目
+        $nc3_user_item_options = Nc3UserAttributeChoice::where('is_origin', 1)->get();
+
         // ini ファイル用変数
         $users_ini = "[users]\n";
 
         // NC3ユーザ（User）のループ（ユーザインデックス用）
         foreach ($nc3_users as $nc3_user) {
-            $users_ini .= "user[\"" . $nc3_user->user_id . "\"] = \"" . $nc3_user->handle . "\"\n";
+            $users_ini .= "user[\"" . $nc3_user->id . "\"] = \"" . $nc3_user->handlename . "\"\n";
         }
 
         // NC3ユーザ（User）のループ（ユーザデータ用）
@@ -8780,42 +8725,55 @@ trait MigrationNc3Trait
             // テスト用データ変換
             if ($this->hasMigrationConfig('user', 'nc3_export_test_mail', true)) {
                 $nc3_user->email = $this->replaceFullwidthAt($nc3_user->email);
-                $nc3_user->login_id = $this->replaceFullwidthAt($nc3_user->login_id);
+                $nc3_user->username = $this->replaceFullwidthAt($nc3_user->username);   // ログインID
             }
             $users_ini .= "\n";
-            $users_ini .= "[\"" . $nc3_user->user_id . "\"]\n";
-            $users_ini .= "name               = \"" . $nc3_user->handle . "\"\n";
+            $users_ini .= "[\"" . $nc3_user->id . "\"]\n";
+            $users_ini .= "name               = \"" . $nc3_user->handlename . "\"\n";
             $users_ini .= "email              = \"" . trim($nc3_user->email) . "\"\n";
-            $users_ini .= "userid             = \"" . $nc3_user->login_id . "\"\n";
-            $users_ini .= "password           = \"" . $nc3_user->password . "\"\n";
-            if ($nc3_user->active_flag == 0) {
-                $users_ini .= "status             = 1\n";
+            $users_ini .= "userid             = \"" . $nc3_user->username . "\"\n";
+            $users_ini .= "password           = \"" . $nc3_user->password . "\"\n";     // [TODO] Connectログイン検討
+            if ($nc3_user->status == Nc3User::status_not_active) {
+                $users_ini .= "status             = " . UserStatus::not_active . "\n";
             } else {
-                $users_ini .= "status             = 0\n";
+                $users_ini .= "status             = " . UserStatus::active . "\n";
             }
             if ($nc3_any_items->isNotEmpty()) {
                 // 任意項目
                 foreach ($nc3_any_items as $nc3_any_item) {
-                    $item_name = "item_{$nc3_any_item->item_id}";
-                    $item_value = rtrim($nc3_user->$item_name, '|');// 最後のパイプは削除する
+                    // [TODO] とりあえず下記で様子見
+                    // $item_name = "item_{$nc3_any_item->id}";
+                    // $item_value = rtrim($nc3_user->$item_name, '|');// 最後のパイプは削除する
+                    // $users_ini .= "{$item_name}            = \"" . $item_value . "\"\n";
+                    $item_name = "item_{$nc3_any_item->id}";
+                    $item_key = $nc3_any_item->key;
+
+                    if (in_array($item_key, ['name', 'profile', 'search_keywords'])) {
+                        // name, profile等が nc3_users_languages にあるんで、そっちから取る。
+                        $nc3_users_language = $nc3_users_languages->firstWhere('user_id', $nc3_user->id) ?? new Nc3UsersLanguage();
+                        $item_value = $nc3_users_language->$item_key;
+                    } elseif (in_array($nc3_any_item->data_type_key, ['radio', 'select', 'checkbox'])) {
+                        // 選択肢はコード⇒値に変換
+                        $option = $nc3_user_item_options->where('user_attribute_id', $nc3_any_item->id)->where('code', $nc3_user->$item_key)->first() ?? new Nc3UserAttributeChoice();
+                        $item_value = $option->name;
+                    } else {
+                        $item_value = $nc3_user->$item_key;
+                    }
                     $users_ini .= "{$item_name}            = \"" . $item_value . "\"\n";
                 }
             }
 
-            if ($nc3_user->role_authority_id == 1) {
+            if ($nc3_user->role_key == Nc3User::role_system_administrator) {
                 $users_ini .= "users_roles_manage = \"admin_system\"\n";
                 $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
-            } elseif ($nc3_user->role_authority_id == 2) {
+            } elseif ($nc3_user->role_key == Nc3User::role_administrator) {
                 $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
-            } elseif ($nc3_user->role_authority_id == 3) {
-                $users_ini .= "users_roles_base   = \"role_article\"\n";
-            } elseif ($nc3_user->role_authority_id == 4) {
+            } elseif ($nc3_user->role_key == Nc3User::role_common_user) {
                 $users_ini .= "users_roles_base   = \"role_reporter\"\n";
             }
         }
 
         // Userデータの出力
-        //Storage::put($this->getImportPath('users/users.ini'), $users_ini);
         $this->storagePut($this->getImportPath('users/users.ini'), $users_ini);
 
         // ユーザ任意項目
@@ -8825,7 +8783,6 @@ trait MigrationNc3Trait
                 // nc3, cc
                 'text' => UserColumnType::text,
                 'email' => UserColumnType::mail,
-                'mobile_email' => UserColumnType::mail,
                 'radio' => UserColumnType::radio,
                 'textarea' => UserColumnType::textarea,
                 'select' => UserColumnType::select,
@@ -8835,16 +8792,16 @@ trait MigrationNc3Trait
             // 未対応
             $exclude_user_column_types = [
                 'password',
-                'file',
                 'label',
-                'system',
+                'timezone',
+                'img',
             ];
 
-            $user_column_type = $nc3_any_item->type;
+            $user_column_type = $nc3_any_item->data_type_key;
             if (in_array($user_column_type, $exclude_user_column_types)) {
                 // 未対応
                 $user_column_type = '';
-                $this->putError(3, 'ユーザ任意項目の項目タイプが未対応', "item.type = " . $user_column_type);
+                $this->putError(3, 'ユーザ任意項目の項目タイプが未対応', "user_attribute_settings.data_type_key = " . $user_column_type);
 
             } elseif (array_key_exists($user_column_type, $convert_user_column_types)) {
                 $user_column_type = $convert_user_column_types[$user_column_type];
@@ -8853,7 +8810,7 @@ trait MigrationNc3Trait
                     case 'radio':
                     case 'select':
                     case 'checkbox':
-                        $options = rtrim($nc3_any_item->options, '|');// 最後のパイプは削除する
+                        $options = $nc3_user_item_options->where('user_attribute_id', $nc3_any_item->id)->pluck('name')->implode('|');
                         $users_columns_selects_ini .= "value      = \"" . $options . "\"\n";
                         $users_columns_selects_ini .= "\n";
                         break;
@@ -8871,17 +8828,17 @@ trait MigrationNc3Trait
             // ini ファイル用変数
             $users_columns_ini  = "[users_columns_base]\n";
             $users_columns_ini .= "column_type      = \"" . $user_column_type . "\"\n";
-            $users_columns_ini .= "column_name      = \"" . $nc3_any_item->item_name . "\"\n";
-            $users_columns_ini .= "required         = " . $nc3_any_item->require_flag . "\n";
+            $users_columns_ini .= "column_name      = \"" . $nc3_any_item->name . "\"\n";
+            $users_columns_ini .= "required         = " . $nc3_any_item->required . "\n";
             $users_columns_ini .= "caption          = \"" . $nc3_any_item->description . "\"\n";
             $users_columns_ini .= "display_sequence = " . ($i + 1) . "\n";
             $users_columns_ini .= "\n";
             $users_columns_ini .= $users_columns_selects_ini;
             $users_columns_ini .= "[source_info]\n";
-            $users_columns_ini .= "item_id = " . $nc3_any_item->item_id . "\n";
+            $users_columns_ini .= "item_id = " . $nc3_any_item->id . "\n";
 
             // Userカラムデータの出力
-            $this->storagePut($this->getImportPath('users/users_columns_') . $this->zeroSuppress($nc3_any_item->item_id) . '.ini', $users_columns_ini);
+            $this->storagePut($this->getImportPath('users/users_columns_') . $this->zeroSuppress($nc3_any_item->id) . '.ini', $users_columns_ini);
         }
     }
 
