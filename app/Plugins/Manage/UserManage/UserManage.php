@@ -824,6 +824,10 @@ class UserManage extends ManagePluginBase
             $users_input_cols_ids = UsersInputCols::where('users_id', $id)->pluck('id');
             UsersInputCols::destroy($users_input_cols_ids);
 
+            // 参加グループ削除
+            $group_user_ids = GroupUser::where('user_id', $id)->pluck('id');
+            GroupUser::destroy($group_user_ids);
+
             // データを削除する。
             User::destroy($id);
         }
