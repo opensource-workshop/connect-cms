@@ -12382,8 +12382,6 @@ trait MigrationTrait
 
             if ($nc2_block->getModuleName() == 'menu') {
                 $frame_ini .= "frame_design = \"none\"\n";
-            } elseif (!empty($nc2_block->frame_design)) {
-                $frame_ini .= "frame_design = \"" . $nc2_block->frame_design . "\"\n";
             } else {
                 $frame_ini .= "frame_design = \"" . $nc2_block->getFrameDesign($this->getMigrationConfig('frames', 'export_frame_default_design', 'default')) . "\"\n";
             }
