@@ -8,6 +8,30 @@
 {{-- 管理画面メイン部分のコンテンツ section:manage_content で作ること --}}
 @section('manage_content')
 
+{{-- ダウンロード用フォーム --}}
+<form method="post" name="user_download" action="{{url('/')}}/manage/user/downloadCsv">
+    {{ csrf_field() }}
+    <input type="hidden" name="character_code" value="">
+</form>
+
+<script type="text/javascript">
+    {{-- ダウンロードのsubmit JavaScript --}}
+    function submit_download_shift_jis() {
+        if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}で現在の絞り込み条件のユーザをダウンロードします。\nよろしいですか？') ) {
+            return;
+        }
+        user_download.character_code.value = '{{CsvCharacterCode::sjis_win}}';
+        user_download.submit();
+    }
+    function submit_download_utf_8() {
+        if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}で現在の絞り込み条件のユーザをダウンロードします。\nよろしいですか？') ) {
+            return;
+        }
+        user_download.character_code.value = '{{CsvCharacterCode::utf_8}}';
+        user_download.submit();
+    }
+</script>
+
 <div class="card">
     <div class="card-header p-0">
         {{-- 機能選択タブ --}}
@@ -22,7 +46,7 @@
         @include('plugins.common.flash_message')
 
         <div class="alert alert-info" role="alert">
-            <i class="fas fa-exclamation-circle"></i> CSVファイルを使って、ユーザを一括登録できます。詳細は<a href="https://connect-cms.jp/manual/manager/user" target="_blank">オンラインマニュアルのユーザ管理ページ <i class="fas fa-external-link-alt"></i></a>を参照してください。
+            <i class="fas fa-exclamation-circle"></i> CSVファイルを使って、ユーザを一括登録できます。詳細は<a href="https://manual.connect-cms.jp/manage/user/import/index.html" target="_blank">オンラインマニュアルのユーザ管理ページ <i class="fas fa-external-link-alt"></i></a>を参照してください。
         </div>
 
         {{-- ダウンロード用フォーム --}}
@@ -77,6 +101,29 @@
                         @endforeach
                     @endif
                     <small class="text-muted">※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}</small><br />
+                    <small class="text-muted">※ ログインユーザ（自分）の更新はできません。ログインユーザの更新はユーザ一覧より更新してください。</small><br />
+                    <small class="text-muted">※ ユーザを新規登録するする場合、「id」列には「""(空)」を設定してください。</small><br />
+                    <small class="text-muted">
+                        ※ 既存のユーザを更新する場合、「id」列には既存ユーザのidを設定してください。既存ユーザのidは下部のダウンロードファイルで確認できます。
+                        <div class="col text-left">
+                            {{-- (右側)ダウンロードボタン --}}
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-link" onclick="submit_download_shift_jis();">
+                                    <i class="fas fa-file-download"></i> ダウンロード
+                                </button>
+                                <button type="button" class="btn btn-link dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <span class="sr-only">ドロップダウンボタン</span>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-right">
+                                    <a class="dropdown-item" href="#" onclick="submit_download_shift_jis(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
+                                    <a class="dropdown-item" href="#" onclick="submit_download_utf_8(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
+                                    <a class="dropdown-item" href="https://connect-cms.jp/manual/manager/user#download-csv-help" target="_brank">
+                                        <span class="btn btn-link"><i class="fas fa-question-circle"></i> オンラインマニュアル</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </small>
                 </div>
             </div>
 
@@ -91,7 +138,7 @@
                     <small class="text-muted">
                         ※ UTF-8はBOM付・BOMなしどちらにも対応しています。
                     </small>
-                    @include('plugins.common.errors_inline', ['name' => 'character_code'])
+                    @include('common.errors_inline', ['name' => 'character_code'])
                 </div>
             </div>
 
