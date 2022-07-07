@@ -85,6 +85,7 @@ use App\Models\User\Slideshows\SlideshowsItems;
 use App\User;
 
 use App\Models\Migration\MigrationMapping;
+use App\Models\Migration\Nc3\Nc3Page;
 use App\Models\Migration\Nc3\Nc3Room;
 use App\Models\Migration\Nc3\Nc3SiteSetting;
 use App\Models\Migration\Nc3\Nc3UploadFile;
@@ -8041,7 +8042,7 @@ trait MigrationNc3Trait
     /**
      * 経路探索キーの取得（作成）
      */
-    private function getRouteStr($nc3_page, $nc3_sort_pages, $get_display_sequence = false)
+    private function getRouteStr(Nc3Page $nc3_page, array $nc3_sort_pages, ?bool $get_display_sequence = false)
     {
         // 経路探索パス(配列の route_path )
         // r{root_id}_{parent_id}_{parent_id}_{...}_{page_id}
@@ -8053,22 +8054,23 @@ trait MigrationNc3Trait
         // ページデータを経路探索をキーに設定済みの配列から、親を探して、自分の経路探索キーを生成する。
         // 経路探索キーは 0021_0026 のように、{第1階層ページID}_{第2階層ページID}_{...} のように生成する。
         foreach ($nc3_sort_pages as $nc3_sort_page_key => $nc3_sort_page) {
-            if ($nc3_sort_page->page_id == $nc3_page->parent_id) {
+            if ($nc3_sort_page->id == $nc3_page->parent_id) {
                 if ($get_display_sequence) {
                     // ソート用の配列のキーを取得
                     return $nc3_sort_page_key . '_' . $this->zeroSuppress($nc3_page->display_sequence);
                 } else {
                     // 経路探索パス
-                    return $nc3_sort_page->route_path . '_' . $this->zeroSuppress($nc3_page->page_id);
+                    return $nc3_sort_page->route_path . '_' . $this->zeroSuppress($nc3_page->id);
                 }
             }
         }
 
         // まだ配列になかった場合（各スペースのルートページ）
         if ($get_display_sequence) {
+            // [TODO] lang_dirname NC3ない。まだ未修正
             return $this->getRouteBlockLangStr($nc3_page->lang_dirname) . $this->zeroSuppress($nc3_page->root_id) . '_' . $this->zeroSuppress($nc3_page->display_sequence);
         } else {
-            return $this->getRouteBlockLangStr($nc3_page->lang_dirname) . $this->zeroSuppress($nc3_page->root_id) . '_' . $this->zeroSuppress($nc3_page->page_id);
+            return $this->getRouteBlockLangStr($nc3_page->lang_dirname) . $this->zeroSuppress($nc3_page->root_id) . '_' . $this->zeroSuppress($nc3_page->id);
         }
     }
 
@@ -8099,6 +8101,7 @@ trait MigrationNc3Trait
 
     /**
      * 多言語化判定（日本語）
+     * 「TODO」NC3用
      */
     private function checkLangDirnameJpn($lang_dirname)
     {
@@ -8110,6 +8113,7 @@ trait MigrationNc3Trait
     }
     /**
      * 多言語化対応文字列返却
+     * 「TODO」共通そう
      */
     private function getRouteBlockLangStr($lang_dirname)
     {
@@ -8206,90 +8210,90 @@ trait MigrationNc3Trait
             $this->nc3ExportUsers($redo);
         }
 
-//////////////////
-// [TODO] 以下まだ
-//////////////////
-        // ルームデータのエクスポート
-        if ($this->isTarget('nc3_export', 'groups')) {
-            $this->nc3ExportRooms($redo);
-        }
+        //////////////////
+        // [TODO] まだ
+        //////////////////
+        // // ルームデータのエクスポート
+        // if ($this->isTarget('nc3_export', 'groups')) {
+        //     $this->nc3ExportRooms($redo);
+        // }
 
-        // NC3 日誌（journal）データのエクスポート
-        if ($this->isTarget('nc3_export', 'plugins', 'blogs')) {
-            $this->nc3ExportJournal($redo);
-        }
+        // // NC3 日誌（journal）データのエクスポート
+        // if ($this->isTarget('nc3_export', 'plugins', 'blogs')) {
+        //     $this->nc3ExportJournal($redo);
+        // }
 
-        // NC3 掲示板（bbs）データのエクスポート
-        if ($this->isTarget('nc3_export', 'plugins', 'bbses')) {
-            $this->nc3ExportBbs($redo);
-        }
+        // // NC3 掲示板（bbs）データのエクスポート
+        // if ($this->isTarget('nc3_export', 'plugins', 'bbses')) {
+        //     $this->nc3ExportBbs($redo);
+        // }
 
-        // NC3 汎用データベース（multidatabase）データのエクスポート
-        if ($this->isTarget('nc3_export', 'plugins', 'databases')) {
-            $this->nc3ExportMultidatabase($redo);
-        }
+        // // NC3 汎用データベース（multidatabase）データのエクスポート
+        // if ($this->isTarget('nc3_export', 'plugins', 'databases')) {
+        //     $this->nc3ExportMultidatabase($redo);
+        // }
 
-        // NC3 登録フォーム（registration）データのエクスポート
-        if ($this->isTarget('nc3_export', 'plugins', 'forms')) {
-            $this->nc3ExportRegistration($redo);
-        }
+        // // NC3 登録フォーム（registration）データのエクスポート
+        // if ($this->isTarget('nc3_export', 'plugins', 'forms')) {
+        //     $this->nc3ExportRegistration($redo);
+        // }
 
-        // NC3 FAQ（faq）データのエクスポート
-        if ($this->isTarget('nc3_export', 'plugins', 'faqs')) {
-            $this->nc3ExportFaq($redo);
-        }
+        // // NC3 FAQ（faq）データのエクスポート
+        // if ($this->isTarget('nc3_export', 'plugins', 'faqs')) {
+        //     $this->nc3ExportFaq($redo);
+        // }
 
-        // NC3 リンクリスト（linklist）データのエクスポート
-        if ($this->isTarget('nc3_export', 'plugins', 'linklists')) {
-            $this->nc3ExportLinklist($redo);
-        }
+        // // NC3 リンクリスト（linklist）データのエクスポート
+        // if ($this->isTarget('nc3_export', 'plugins', 'linklists')) {
+        //     $this->nc3ExportLinklist($redo);
+        // }
 
-        // NC3 新着情報（whatsnew）データのエクスポート
-        if ($this->isTarget('nc3_export', 'plugins', 'whatsnews')) {
-            $this->nc3ExportWhatsnew($redo);
-        }
+        // // NC3 新着情報（whatsnew）データのエクスポート
+        // if ($this->isTarget('nc3_export', 'plugins', 'whatsnews')) {
+        //     $this->nc3ExportWhatsnew($redo);
+        // }
 
-        // NC3 キャビネット（cabinet）データのエクスポート
-        if ($this->isTarget('nc3_export', 'plugins', 'cabinets')) {
-            $this->nc3ExportCabinet($redo);
-        }
+        // // NC3 キャビネット（cabinet）データのエクスポート
+        // if ($this->isTarget('nc3_export', 'plugins', 'cabinets')) {
+        //     $this->nc3ExportCabinet($redo);
+        // }
 
-        // NC3 カウンター（counter）データのエクスポート
-        if ($this->isTarget('nc3_export', 'plugins', 'counters')) {
-            $this->nc3ExportCounter($redo);
-        }
+        // // NC3 カウンター（counter）データのエクスポート
+        // if ($this->isTarget('nc3_export', 'plugins', 'counters')) {
+        //     $this->nc3ExportCounter($redo);
+        // }
 
-        // NC3 カレンダー（calendar）データのエクスポート
-        if ($this->isTarget('nc3_export', 'plugins', 'calendars')) {
-            $this->nc3ExportCalendar($redo);
-        }
+        // // NC3 カレンダー（calendar）データのエクスポート
+        // if ($this->isTarget('nc3_export', 'plugins', 'calendars')) {
+        //     $this->nc3ExportCalendar($redo);
+        // }
 
-        // NC3 スライダー（slides）データのエクスポート
-        if ($this->isTarget('nc3_export', 'plugins', 'slideshows')) {
-            $this->nc3ExportSlides($redo);
-        }
+        // // NC3 スライダー（slides）データのエクスポート
+        // if ($this->isTarget('nc3_export', 'plugins', 'slideshows')) {
+        //     $this->nc3ExportSlides($redo);
+        // }
 
-        // NC3 シンプル動画（simplemovie）データのエクスポート
-        if ($this->isTarget('nc3_export', 'plugins', 'simplemovie')) {
-            $this->nc3ExportSimplemovie($redo);
-        }
+        // // NC3 シンプル動画（simplemovie）データのエクスポート
+        // if ($this->isTarget('nc3_export', 'plugins', 'simplemovie')) {
+        //     $this->nc3ExportSimplemovie($redo);
+        // }
 
-        // NC3 施設予約（reservation）データのエクスポート
-        if ($this->isTarget('nc3_export', 'plugins', 'reservations')) {
-            $this->nc3ExportReservation($redo);
-        }
+        // // NC3 施設予約（reservation）データのエクスポート
+        // if ($this->isTarget('nc3_export', 'plugins', 'reservations')) {
+        //     $this->nc3ExportReservation($redo);
+        // }
 
-        // NC3 フォトアルバム（photoalbum）データのエクスポート
-        if ($this->isTarget('nc3_export', 'plugins', 'photoalbums')) {
-            $this->nc3ExportPhotoalbum($redo);
-        }
+        // // NC3 フォトアルバム（photoalbum）データのエクスポート
+        // if ($this->isTarget('nc3_export', 'plugins', 'photoalbums')) {
+        //     $this->nc3ExportPhotoalbum($redo);
+        // }
 
-        // NC3 固定リンク（abbreviate_url）データのエクスポート
-        if ($this->isTarget('nc3_export', 'plugins', 'blogs') ||
-            $this->isTarget('nc3_export', 'plugins', 'databases') ||
-            $this->isTarget('nc3_export', 'plugins', 'bbses')) {
-            $this->nc3ExportAbbreviateUrl($redo);
-        }
+        // // NC3 固定リンク（abbreviate_url）データのエクスポート
+        // if ($this->isTarget('nc3_export', 'plugins', 'blogs') ||
+        //     $this->isTarget('nc3_export', 'plugins', 'databases') ||
+        //     $this->isTarget('nc3_export', 'plugins', 'bbses')) {
+        //     $this->nc3ExportAbbreviateUrl($redo);
+        // }
 
         // pages データとファイルのエクスポート
         if ($this->isTarget('nc3_export', 'pages')) {
@@ -8301,38 +8305,49 @@ trait MigrationNc3Trait
             }
 
             // NC3 のページデータ
-            $nc3_pages_query = Nc2Page::where('private_flag', 0)        // 0:プライベートルーム以外
-                                      ->where('root_id', '<>', 0)
-                                      ->where('display_sequence', '<>', 0);
+            $nc3_pages_query = Nc3Page::
+                select('pages.*', 'rooms.space_id', 'rooms.page_id_top', 'pages_languages.name as page_name', 'pages_languages.language_id')
+                ->join('rooms', function ($join) {
+                    $join->on('rooms.id', '=', 'pages.room_id')
+                        ->where('rooms.space_id', '!=', Nc3Room::PRIVATE_SPACE_ID); // プライベートルーム以外
+                })
+                ->join('pages_languages', function ($join) {
+                    $join->on('pages_languages.page_id', '=', 'pages.id')
+                        ->where('pages_languages.language_id', 2); // 日本語
+                })
+                ->whereNotNull('pages.root_id');
 
             // ページ指定の有無
             if ($this->getMigrationConfig('pages', 'nc3_export_where_page_ids')) {
-                $nc3_pages_query->whereIn('page_id', $this->getMigrationConfig('pages', 'nc3_export_where_page_ids'));
+                $nc3_pages_query->whereIn('id', $this->getMigrationConfig('pages', 'nc3_export_where_page_ids'));
             }
 
             // 対象外ページ指定の有無
             if ($this->getMigrationConfig('pages', 'nc3_export_ommit_page_ids')) {
-                $nc3_pages_query->whereNotIn('page_id', $this->getMigrationConfig('pages', 'nc3_export_ommit_page_ids'));
+                $nc3_pages_query->whereNotIn('id', $this->getMigrationConfig('pages', 'nc3_export_ommit_page_ids'));
             }
 
-            $nc3_pages = $nc3_pages_query->orderBy('space_type')
-                                         ->orderBy('thread_num')
-                                         ->orderBy('display_sequence')
-                                         ->get();
+            $nc3_pages = $nc3_pages_query
+                ->orderBy('rooms.space_id')
+                ->orderBy('rooms.sort_key')
+                ->orderBy('rooms.id')
+                ->orderBy('pages.sort_key')
+                ->get();
 
-            // NC3 のページデータは隣接モデルのため、ページ一覧を一発でソートできない。
-            // そのため、取得したページデータを一度、経路探索モデルに変換する。
-            $nc3_sort_pages = array();
+            // [TODO] ??? nc3はどうだろう？
+            // // NC3 のページデータは隣接モデルのため、ページ一覧を一発でソートできない。
+            // // そのため、取得したページデータを一度、経路探索モデルに変換する。
+            // $nc3_sort_pages = array();
 
-            // 経路探索の文字列をキーにしたページ配列の作成
-            foreach ($nc3_pages as $nc3_page) {
-                $nc3_page->route_path = $this->getRouteStr($nc3_page, $nc3_sort_pages);
-                $nc3_sort_pages[$this->getRouteStr($nc3_page, $nc3_sort_pages, true)] = $nc3_page;
-            }
+            // // 経路探索の文字列をキーにしたページ配列の作成
+            // foreach ($nc3_pages as $nc3_page) {
+            //     $nc3_page->route_path = $this->getRouteStr($nc3_page, $nc3_sort_pages);
+            //     $nc3_sort_pages[$this->getRouteStr($nc3_page, $nc3_sort_pages, true)] = $nc3_page;
+            // }
 
-            // 経路探索の文字列（キー）でソート
-            ksort($nc3_sort_pages);
-            //Log::debug($nc3_sort_pages);
+            // // 経路探索の文字列（キー）でソート
+            // ksort($nc3_sort_pages);
+            // //Log::debug($nc3_sort_pages);
 
             // NC3 のページID を使うことにした。
             //// 新規ページ用のインデックス
@@ -8344,8 +8359,9 @@ trait MigrationNc3Trait
 
             // ページのループ
             $this->putMonitor(1, "Page loop.");
-            foreach ($nc3_sort_pages as $nc3_sort_page_key => $nc3_sort_page) {
-                $this->putMonitor(3, "Page", "page_id = " . $nc3_sort_page->page_id);
+            // foreach ($nc3_sort_pages as $nc3_sort_page_key => $nc3_sort_page) {
+            foreach ($nc3_pages as $nc3_sort_page) {
+                $this->putMonitor(3, "Page", "page_id = " . $nc3_sort_page->id);
 
                 $room_ids = $this->getMigrationConfig('basic', 'nc3_export_room_ids');
                 // ルーム指定があれば、指定されたルームのみ処理する。
@@ -8360,37 +8376,41 @@ trait MigrationNc3Trait
 
                 // ページ設定の保存用変数
                 $membership_flag = null;
-                if ($nc3_sort_page->space_type == 2) {
+                if ($nc3_sort_page->space_id == Nc3Room::COMMUNITY_SPACE_ID) {
                     // 「すべての会員をデフォルトで参加させる」
-                    if ($nc3_sort_page->default_entry_flag == 1) {
+                    if ($nc3_sort_page->default_participation == 1) {
                         $membership_flag = 2;
                     } else {
                         // ルームで選択した会員のみ
-                        if ($nc3_sort_page->page_id == $nc3_sort_page->room_id) {
+                        if ($nc3_sort_page->id == $nc3_sort_page->page_id_top) {
                             $membership_flag = 1;
                         }
                     }
                 }
+                $lang_link = '';
+
+                // [TODO] 対応まだ
                 /* 多言語化対応 */
-                if ($this->checkLangDirnameJpn($nc3_sort_page->lang_dirname)) {
-                    $lang_link = '';
-                } else {
-                    $lang_link = '/'.$nc3_sort_page->lang_dirname;
-                }
+                // if ($this->checkLangDirnameJpn($nc3_sort_page->lang_dirname)) {
+                //     $lang_link = '';
+                // } else {
+                //     $lang_link = '/'.$nc3_sort_page->lang_dirname;
+                // }
                 $permanent_link = ($lang_link != "" && $nc3_sort_page->permalink == "" ) ? $lang_link : $lang_link."/".$nc3_sort_page->permalink;
                 $page_ini = "[page_base]\n";
                 $page_ini .= "page_name = \"" . $nc3_sort_page->page_name . "\"\n";
                 $page_ini .= "permanent_link = \"". $permanent_link . "\"\n";
                 $page_ini .= "base_display_flag = 1\n";
                 $page_ini .= "membership_flag = " . $membership_flag . "\n";
-                $page_ini .= "nc3_page_id = \"" . $nc3_sort_page->page_id . "\"\n";
+                $page_ini .= "nc3_page_id = \"" . $nc3_sort_page->id . "\"\n";
                 $page_ini .= "nc3_room_id = \"" . $nc3_sort_page->room_id . "\"\n";
 
+                // [TODO] これなんだろ？
                 // 親ページの検索（parent_id = 1 はパブリックのトップレベルなので、1 より大きいものを探す）
                 if ($nc3_sort_page->parent_id > 1) {
                     // マッピングテーブルから親のページのディレクトリを探す
                     $parent_page_mapping = MigrationMapping::where('target_source_table', 'nc3_pages')->where('source_key', $nc3_sort_page->parent_id)->first();
-                    //1ルームのみの移行の場合を考慮
+                    // 1ルームのみの移行の場合を考慮
                     $parent_room_flg = true;
                     $room_ids = $this->getMigrationConfig('basic', 'nc3_export_room_ids');
                     if (!empty($room_ids) && count($room_ids) == 1 && isset($room_ids[0])) {
@@ -8404,18 +8424,21 @@ trait MigrationNc3Trait
                 }
 
                 // ページディレクトリの作成
-                //$new_page_index = $nc3_sort_page->page_id;
+                //$new_page_index = $nc3_sort_page->id;
                 $new_page_index++;
                 Storage::makeDirectory($this->getImportPath('pages/') . $this->zeroSuppress($new_page_index));
 
                 // ページ設定ファイルの出力
                 Storage::put($this->getImportPath('pages/') . $this->zeroSuppress($new_page_index) . '/' . "/page.ini", $page_ini);
 
+                /////////
+                // [TODO] これだと再移行に支障ある？⇒なさそうな。一時テーブルとして使ってそう。
+                /////////
                 // マッピングテーブルの追加
                 $mapping = MigrationMapping::updateOrCreate(
-                    ['target_source_table' => 'nc3_pages', 'source_key' => $nc3_sort_page->page_id],
+                    ['target_source_table' => 'nc3_pages', 'source_key' => $nc3_sort_page->id],
                     ['target_source_table' => 'nc3_pages',
-                     'source_key'          => $nc3_sort_page->page_id,
+                     'source_key'          => $nc3_sort_page->id,
                      'destination_key'     => $this->zeroSuppress($new_page_index)]
                 );
 
@@ -8435,6 +8458,7 @@ trait MigrationNc3Trait
 
     /**
      *  ページ入れ替え
+     * 「TODO」エクスポートNC2・NC3共通
      */
     private function changePageSequence()
     {
