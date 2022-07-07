@@ -309,6 +309,7 @@ $app_array = [
         'ReservationLimitedByRole' => \App\Enums\ReservationLimitedByRole::class,
         'FaqFrameConfig' => \App\Enums\FaqFrameConfig::class,
         'MembershipFlag' => \App\Enums\MembershipFlag::class,
+        'AreaType' => \App\Enums\AreaType::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

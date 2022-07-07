@@ -85,9 +85,15 @@ use App\Models\User\Slideshows\SlideshowsItems;
 use App\User;
 
 use App\Models\Migration\MigrationMapping;
+
+use App\Models\Migration\Nc3\Nc3Box;
+use App\Models\Migration\Nc3\Nc3Frame;
+use App\Models\Migration\Nc3\Nc3MenuFrameSetting;
 use App\Models\Migration\Nc3\Nc3Page;
 use App\Models\Migration\Nc3\Nc3Room;
+use App\Models\Migration\Nc3\Nc3PhotoAlbumFrameSetting;
 use App\Models\Migration\Nc3\Nc3SiteSetting;
+use App\Models\Migration\Nc3\Nc3Space;
 use App\Models\Migration\Nc3\Nc3UploadFile;
 use App\Models\Migration\Nc3\Nc3User;
 use App\Models\Migration\Nc3\Nc3UserAttribute;
@@ -163,6 +169,7 @@ use App\Models\Migration\Nc3\Nc3UsersLanguage;
 
 use App\Traits\ConnectCommonTrait;
 
+use App\Enums\AreaType;
 use App\Enums\BlogFrameConfig;
 use App\Enums\CounterDesignType;
 use App\Enums\DayOfWeek;
@@ -8309,7 +8316,7 @@ trait MigrationNc3Trait
                 select('pages.*', 'rooms.space_id', 'rooms.page_id_top', 'pages_languages.name as page_name', 'pages_languages.language_id')
                 ->join('rooms', function ($join) {
                     $join->on('rooms.id', '=', 'pages.room_id')
-                        ->where('rooms.space_id', '!=', Nc3Room::PRIVATE_SPACE_ID); // プライベートルーム以外
+                        ->where('rooms.space_id', '!=', Nc3Space::PRIVATE_SPACE_ID); // プライベートルーム以外
                 })
                 ->join('pages_languages', function ($join) {
                     $join->on('pages_languages.page_id', '=', 'pages.id')
@@ -8376,7 +8383,7 @@ trait MigrationNc3Trait
 
                 // ページ設定の保存用変数
                 $membership_flag = null;
-                if ($nc3_sort_page->space_id == Nc3Room::COMMUNITY_SPACE_ID) {
+                if ($nc3_sort_page->space_id == Nc3Space::COMMUNITY_SPACE_ID) {
                     // 「すべての会員をデフォルトで参加させる」
                     if ($nc3_sort_page->default_participation == 1) {
                         $membership_flag = 2;
@@ -8527,7 +8534,7 @@ trait MigrationNc3Trait
     /**
      *  プラグインの変換
      */
-    public function nc3GetPluginName($nc3_plugin_key)
+    private function nc3GetPluginName($nc3_plugin_key)
     {
         // NC3 テンプレート変換配列にあれば、その値。
         // 定義のないものは 'NotFound' にする。
@@ -8581,8 +8588,8 @@ trait MigrationNc3Trait
         $basic_ini .= "base_site_name = \"" . $sitename . "\"\n";
 
         // 基本デザイン（パブリック）
-        $whole_site_room = Nc3Room::where('space_id', Nc3Room::WHOLE_SITE_ID)->first();   // 必ずある想定
-        $public_room = Nc3Room::where('parent_id', $whole_site_room->id)->where('space_id', Nc3Room::PUBLIC_SPACE_ID)->first();   // 必ずある想定
+        $whole_site_room = Nc3Room::where('space_id', Nc3Space::WHOLE_SITE_ID)->first();   // 必ずある想定
+        $public_room = Nc3Room::where('parent_id', $whole_site_room->id)->where('space_id', Nc3Space::PUBLIC_SPACE_ID)->first();   // 必ずある想定
         $public_room = $public_room ?? new Nc3Room();
         $basic_ini .= "default_theme_public = \"" . $public_room->theme . "\"\n";
 
@@ -12147,216 +12154,229 @@ trait MigrationNc3Trait
     /**
      * NC3：ページ内のブロックをループ
      */
-    private function nc3Block($nc3_page, $new_page_index)
+    private function nc3Block(Nc3Page $nc3_page, int $new_page_index)
     {
         // 指定されたページ内のブロックを取得
-        $nc3_blocks_query = Nc2Block::where('page_id', $nc3_page->page_id);
+        // $nc3_frames_query = Nc2Block::where('page_id', $nc3_page->page_id);
+        $nc3_frames_query = Nc3Frame::
+            select('frames.*', 'frames_languages.name as frame_name')
+            ->join('boxes', 'boxes.id', '=', 'frames.box_id')
+            ->join('frames_languages', function ($join) {
+                $join->on('frames_languages.frame_id', '=', 'frames.id')
+                    ->where('frames_languages.language_id', 2); // 日本語
+            })
+            ->where('boxes.page_id', $nc3_page->page_id)
+            ->where('frames.is_deleted', 0);
 
         // 対象外のブロックがあれば加味する。
         $export_ommit_blocks = $this->getMigrationConfig('frames', 'export_ommit_blocks');
         if (!empty($export_ommit_blocks)) {
-            $nc3_blocks_query->whereNotIn('block_id', $export_ommit_blocks);
+            $nc3_frames_query->whereNotIn('frames.id', $export_ommit_blocks);
         }
 
+        // migration_config.sample.iniにも設定値が存在しないため、コメントアウト
         // メニューが対象外なら除外する。
-        $export_ommit_menu = $this->getMigrationConfig('menus', 'export_ommit_menu');
-        if ($export_ommit_menu) {
-            $nc3_blocks_query->where('action_name', '<>', 'menu_view_main_init');
-        }
+        // $export_ommit_menu = $this->getMigrationConfig('menus', 'export_ommit_menu');
+        // if ($export_ommit_menu) {
+        //     $nc3_frames_query->where('action_name', '<>', 'menu_view_main_init');
+        // }
 
-        $nc3_blocks = $nc3_blocks_query->orderBy('thread_num')
-                                       ->orderBy('row_num')
-                                       ->orderBy('col_num')
-                                       ->get();
+        $nc3_frames = $nc3_frames_query
+            ->orderBy('boxes.space_id')
+            ->orderBy('boxes.room_id')
+            ->orderBy('boxes.page_id')
+            ->orderBy('boxes.weight')
+            ->get();
 
         // ブロックをループ
         $frame_index = 0; // フレームの連番
 
         // トップページの場合のみ、ヘッダ、左、右のブロックを取得して、トップページに設置する。
+        // [TODO] NC3違ってるため、要見直し
         // NC3 では、ヘッダ、左、右が一つずつで共通のため、ここで処理する。
-        $nc3_toppage_display_sequence = $this->getMigrationConfig('basic', 'nc3_toppage_display_sequence', 1);
-        if ($nc3_page->permalink == '' && $nc3_page->display_sequence == 1 && $nc3_page->space_type == 1 && $nc3_page->private_flag == 0 ||
-            // トップページが削除されている場合も考慮
-            $nc3_page->room_id == 1 && $nc3_page->root_id == 1 && $nc3_page->parent_id == 1 && $nc3_page->thread_num == 1 && $nc3_page->display_sequence == $nc3_toppage_display_sequence && $nc3_page->space_type == 1 && $nc3_page->private_flag == 0
-        ) {
-            // 指定されたページ内のブロックを取得
-            $nc3_common_blocks_query = Nc2Block::select('blocks.*', 'pages.page_name')
-                                               ->join('pages', 'pages.page_id', '=', 'blocks.page_id')
-                                               ->whereIn('pages.page_name', ['Header Column', 'Left Column', 'Right Column']);
+        // $nc3_toppage_display_sequence = $this->getMigrationConfig('basic', 'nc3_toppage_display_sequence', 1);
+        // if ($nc3_page->permalink == '' && $nc3_page->display_sequence == 1 && $nc3_page->space_type == 1 && $nc3_page->private_flag == 0 ||
+        //     // トップページが削除されている場合も考慮
+        //     $nc3_page->room_id == 1 && $nc3_page->root_id == 1 && $nc3_page->parent_id == 1 && $nc3_page->thread_num == 1 && $nc3_page->display_sequence == $nc3_toppage_display_sequence && $nc3_page->space_type == 1 && $nc3_page->private_flag == 0
+        // ) {
+        //     // 指定されたページ内のブロックを取得
+        //     $nc3_common_blocks_query = Nc2Block::select('blocks.*', 'pages.page_name')
+        //                                        ->join('pages', 'pages.page_id', '=', 'blocks.page_id')
+        //                                        ->whereIn('pages.page_name', ['Header Column', 'Left Column', 'Right Column']);
 
-            if (!empty($export_ommit_blocks)) {
-                $nc3_common_blocks_query->whereNotIn('block_id', $export_ommit_blocks);
-            }
+        //     if (!empty($export_ommit_blocks)) {
+        //         $nc3_common_blocks_query->whereNotIn('block_id', $export_ommit_blocks);
+        //     }
 
-            $nc3_common_blocks = $nc3_common_blocks_query->orderBy('page_id', 'desc')
-                                                         ->orderBy('col_num', 'desc')
-                                                         ->get();
+        //     $nc3_common_blocks = $nc3_common_blocks_query->orderBy('page_id', 'desc')
+        //                                                  ->orderBy('col_num', 'desc')
+        //                                                  ->get();
 
-            // 共通部分をBlock 設定に追加する。
-            foreach ($nc3_common_blocks as $nc3_common_block) {
-                // ヘッダーは無条件にフレームデザインをnone にしておく
-                if ($nc3_common_block->page_name == 'Header Column') {
-                    $nc3_common_block->theme_name = 'noneframe';
-                }
+        //     // 共通部分をBlock 設定に追加する。
+        //     foreach ($nc3_common_blocks as $nc3_common_block) {
+        //         // ヘッダーは無条件にフレームデザインをnone にしておく
+        //         if ($nc3_common_block->page_name == 'Header Column') {
+        //             $nc3_common_block->theme_name = 'noneframe';
+        //         }
 
-                // Block 設定に追加
-                $nc3_blocks->prepend($nc3_common_block);
-            }
-            // Log::debug($nc3_blocks);
-        }
+        //         // Block 設定に追加
+        //         $nc3_frames->prepend($nc3_common_block);
+        //     }
+        //     // Log::debug($nc3_frames);
+        // }
 
-        // 経路探索の文字列をキーにしたページ配列の作成
-        $nc3_sort_blocks = array();
-        foreach ($nc3_blocks as $nc3_block) {
-            $nc3_block->route_path = $this->getRouteBlockStr($nc3_block, $nc3_sort_blocks, $nc3_page, false);
-            $nc3_sort_blocks[$this->getRouteBlockStr($nc3_block, $nc3_sort_blocks, $nc3_page, true)] = $nc3_block;
-        }
-        // Log::debug($nc3_sort_blocks);
+        // [TODO] 経路探索まだ
+        // // 経路探索の文字列をキーにしたページ配列の作成
+        // $nc3_sort_blocks = array();
+        // foreach ($nc3_frames as $nc3_frame) {
+        //     $nc3_frame->route_path = $this->getRouteBlockStr($nc3_frame, $nc3_sort_blocks, $nc3_page, false);
+        //     $nc3_sort_blocks[$this->getRouteBlockStr($nc3_frame, $nc3_sort_blocks, $nc3_page, true)] = $nc3_frame;
+        // }
+        // // Log::debug($nc3_sort_blocks);
 
-        // 経路探索の文字列（キー）でソート
-        ksort($nc3_sort_blocks);
-        // Log::debug($nc3_sort_blocks);
+        // // 経路探索の文字列（キー）でソート
+        // ksort($nc3_sort_blocks);
+        // // Log::debug($nc3_sort_blocks);
 
-        // ソート結果でCollection 詰めなおし
-        $nc3_blocks = collect();
-        foreach ($nc3_sort_blocks as $nc3_sort_block) {
-            $nc3_blocks[] = $nc3_sort_block;
-        }
+        // // ソート結果でCollection 詰めなおし
+        // $nc3_frames = collect();
+        // foreach ($nc3_sort_blocks as $nc3_sort_block) {
+        //     $nc3_frames[] = $nc3_sort_block;
+        // }
 
         // ページ内のブロック
-        foreach ($nc3_blocks as $nc3_block) {
-            $this->putMonitor(1, "Block", "block_id = " . $nc3_block->block_id);
+        foreach ($nc3_frames as $nc3_frame) {
+            $this->putMonitor(1, "Frame", "frame_id = " . $nc3_frame->id);
 
-            // グループは対象外（frame_col で対応）
-            if ($nc3_block->action_name == 'pages_view_grouping') {
-                // ページ、ブロック構成を最後に出力するために保持
-                $this->nc3BlockTree($nc3_page, $nc3_block);
-
-                continue;
-            }
-
+            // [TODO] 未対応
             // NC3 ブロック強制上書き設定があれば反映
-            $nc3_block = $this->overrideNc2Block($nc3_block);
+            // $nc3_frame = $this->overrideNc2Block($nc3_frame);
 
             $frame_index++;
             $frame_index_str = sprintf("%'.04d", $frame_index);
 
+            // (nc3)container_type 1:Header, 2:Major(Left), 3:Main, 4:Minor(Right), 5:Footer
+            // (key:nc3)container_type => (value:cc)area_id
+            $convert_area_ids = [
+                Nc3Box::container_type_header => AreaType::header,
+                Nc3Box::container_type_left   => AreaType::left,
+                Nc3Box::container_type_right  => AreaType::right,
+                Nc3Box::container_type_footer => AreaType::footer,
+            ];
+            $area_id = $convert_area_ids[$nc3_frame->container_type] ?? AreaType::main;
+
             // フレーム設定の保存用変数
             $frame_ini = "[frame_base]\n";
-            $frame_ini .= "area_id = " . $this->nc3BlockArea($nc3_block) . "\n";
+            $frame_ini .= "area_id = " . $area_id . "\n";
 
             // フレームタイトル＆メニューの特別処理
-            if ($nc3_block->getModuleName() == 'menu') {
+            if ($nc3_frame->plugin_key == 'menus') {
                 $frame_ini .= "frame_title = \"\"\n";
             } else {
-                $frame_ini .= "frame_title = \"" . $nc3_block->block_name . "\"\n";
+                $frame_ini .= "frame_title = \"" . $nc3_frame->frame_name . "\"\n";
             }
 
-            if ($nc3_block->getModuleName() == 'menu') {
+            if ($nc3_frame->plugin_key == 'menus') {
                 $frame_ini .= "frame_design = \"none\"\n";
-            } elseif (!empty($nc3_block->frame_design)) {
-                $frame_ini .= "frame_design = \"" . $nc3_block->frame_design . "\"\n";
             } else {
-                $frame_ini .= "frame_design = \"" . $nc3_block->getFrameDesign($this->getMigrationConfig('frames', 'export_frame_default_design', 'default')) . "\"\n";
+                $frame_ini .= "frame_design = \"" . $nc3_frame->header_type . "\"\n";
+                // $frame_ini .= "frame_design = \"" . $nc3_frame->getFrameDesign($this->getMigrationConfig('frames', 'export_frame_default_design', 'default')) . "\"\n";
             }
 
-            if ($nc3_block->getModuleName() == 'photoalbum') {
+            if ($nc3_frame->plugin_key == 'photo_albums') {
                 // フォトアルバムでスライド表示は、スライドプラグインに移行
-                $nc3_photoalbum_block = Nc2PhotoalbumBlock::where('block_id', $nc3_block->block_id)
-                    ->where('display', Nc2PhotoalbumBlock::DISPLAY_SLIDESHOW)
+                $nc3_photoalbum_frame_setting = Nc3PhotoAlbumFrameSetting::where('frame_key', $nc3_frame->key)
+                    ->where('display_type', Nc3PhotoAlbumFrameSetting::DISPLAY_SLIDESHOW)
                     ->first();
-                if ($nc3_photoalbum_block) {
+                if ($nc3_photoalbum_frame_setting) {
                     $frame_ini .= "plugin_name = \"slideshows\"\n";
                 } else {
-                    $frame_ini .= "plugin_name = \"" . $nc3_block->getPluginName() . "\"\n";
+                    $frame_ini .= "plugin_name = \"" . $this->nc3GetPluginName($nc3_frame->plugin_key) . "\"\n";
                 }
             } else {
-                $frame_ini .= "plugin_name = \"" . $nc3_block->getPluginName() . "\"\n";
-            }
-
-            // グルーピングされているブロックの考慮
-            // 同じ親で同じ行（row_num）に配置されているブロックの数を12で計算する。
-            // 親（parent_id）= 0 でcol_num があるデータがある。NC3 の場合は、親にグループが居るはず。
-            $row_block_count = $nc3_blocks->where('parent_id', $nc3_block->parent_id)->where('row_num', $nc3_block->row_num)->count();
-            $row_block_parent = $nc3_blocks->where('block_id', $nc3_block->parent_id)->first();
-
-            if (!empty($nc3_block->frame_col)) {
-                $frame_ini .= "frame_col = " . $nc3_block['frame_col'] . "\n";
-            } elseif ($row_block_count > 1 && $row_block_count <= 12 && $row_block_parent && $row_block_parent->action_name == 'pages_view_grouping') {
-                $frame_ini .= "frame_col = " . floor(12 / $row_block_count) . "\n";
+                $frame_ini .= "plugin_name = \"" . $this->nc3GetPluginName($nc3_frame->plugin_key) . "\"\n";
             }
 
             // 各項目
-            if ($nc3_block->getModuleName() == 'calendar') {
-                $calendar_block_ini = null;
-                $calendar_display_type = null;
+            // [TODO] 未対応
+            // if ($nc3_frame->plugin_key == 'calendars') {
+            //     $calendar_block_ini = null;
+            //     $calendar_display_type = null;
 
-                // カレンダーブロックの情報取得
-                if (Storage::exists($this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc3_block->block_id) . '.ini')) {
-                    $calendar_block_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc3_block->block_id) . '.ini', true);
-                }
+            //     // カレンダーブロックの情報取得
+            //     if (Storage::exists($this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc3_frame->block_id) . '.ini')) {
+            //         $calendar_block_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc3_frame->block_id) . '.ini', true);
+            //     }
 
-                if (!empty($calendar_block_ini) && array_key_exists('calendar_block', $calendar_block_ini) && array_key_exists('display_type', $calendar_block_ini['calendar_block'])) {
-                    // NC3 のcalendar の display_type
-                    $calendar_display_type = $this->getArrayValue($calendar_block_ini, 'calendar_block', 'display_type', null);
-                }
+            //     if (!empty($calendar_block_ini) && array_key_exists('calendar_block', $calendar_block_ini) && array_key_exists('display_type', $calendar_block_ini['calendar_block'])) {
+            //         // NC3 のcalendar の display_type
+            //         $calendar_display_type = $this->getArrayValue($calendar_block_ini, 'calendar_block', 'display_type', null);
+            //     }
 
-                // frame_design 変換 (key:nc3)display_type => (value:cc)template
-                // (NC3)初期値 = 月表示（縮小）= 2
-                // (CC) 初期値 = 月表示（大）= default
-                $display_type_to_frame_designs = [
-                    1 => 'default',     // 1:年間表示
-                    2 => 'small_month', // 2:月表示（縮小）
-                    3 => 'default',     // 3:月表示（拡大）
-                    4 => 'default',     // 4:週表示
-                    5 => 'day',         // 5:日表示
-                    6 => 'day',         // 6:スケジュール（時間順）
-                    7 => 'day',         // 7:スケジュール（会員順）
+            //     // frame_design 変換 (key:nc3)display_type => (value:cc)template
+            //     // (NC3)初期値 = 月表示（縮小）= 2
+            //     // (CC) 初期値 = 月表示（大）= default
+            //     $display_type_to_frame_designs = [
+            //         1 => 'default',     // 1:年間表示
+            //         2 => 'small_month', // 2:月表示（縮小）
+            //         3 => 'default',     // 3:月表示（拡大）
+            //         4 => 'default',     // 4:週表示
+            //         5 => 'day',         // 5:日表示
+            //         6 => 'day',         // 6:スケジュール（時間順）
+            //         7 => 'day',         // 7:スケジュール（会員順）
+            //     ];
+            //     $frame_design = $display_type_to_frame_designs[$calendar_display_type] ?? 'default';
+            //     $frame_ini .= "template = \"" . $frame_design . "\"\n";
+            // }
+            if ($nc3_frame->plugin_name == 'menus') {
+                $nc3_menu_frame_setting = Nc3MenuFrameSetting::where('frame_key', $nc3_frame->key)->first() ?? new Nc3MenuFrameSetting();
+
+                // メニューの横長系のテンプレートの場合、Connect-CMS では「ドロップダウン」に変更する。
+                // (key:nc3)display_type => (value:cc)template
+                $convert_templates = [
+                    Nc3MenuFrameSetting::display_list                     => 'opencurrenttree', // (cc)ディレクトリ展開式
+                    Nc3MenuFrameSetting::display_nav_pills                => 'dropdown',
+                    Nc3MenuFrameSetting::display_nav_tabs                 => 'dropdown',
+                    Nc3MenuFrameSetting::display_minor                    => 'parentsandchild', // (nc3)下層のみ -> (cc)親子のみ [TODO]今後バグ修正で ancestor_descendant_sibling 親子兄弟 に直すかも
+                    Nc3MenuFrameSetting::display_topic_path               => 'breadcrumbs',
+                    Nc3MenuFrameSetting::display_header_flat              => 'tab_flat',
+                    Nc3MenuFrameSetting::display_header_ids               => 'dropdown',
+                    Nc3MenuFrameSetting::display_header_minor             => 'dropdown',        // (nc3) ヘッダー下層のみ
+                    Nc3MenuFrameSetting::display_header_minor_noroot      => 'dropdown',
+                    Nc3MenuFrameSetting::display_header_minor_noroot_room => 'dropdown',
+                    Nc3MenuFrameSetting::display_minor_and_first          => 'opencurrenttree',
                 ];
-                $frame_design = $display_type_to_frame_designs[$calendar_display_type] ?? 'default';
-                $frame_ini .= "template = \"" . $frame_design . "\"\n";
-            } elseif (!empty($nc3_block->template)) {
-                $frame_ini .= "template = \"" . $nc3_block->template . "\"\n";
+                $template = $convert_templates[$nc3_menu_frame_setting->display_type] ?? 'default';
+                $frame_ini .= "template = \"{$template}\"\n";
             } else {
-                $frame_ini .= "template = \"" . $this->nc3BlockTemp($nc3_block) . "\"\n";
+                $frame_ini .= "template = \"default\"\n";
             }
-            if (!empty($nc3_block->browser_width)) {
-                $frame_ini .= "browser_width = \"" . $nc3_block->browser_width . "\"\n";
-            }
-            if (!empty($nc3_block->disable_whatsnews)) {
-                $frame_ini .= "disable_whatsnews = " . $nc3_block->disable_whatsnews . "\n";
-            }
-            if (!empty($nc3_block->page_only)) {
-                $frame_ini .= "page_only = " . $nc3_block->page_only . "\n";
-            }
-            if (!empty($nc3_block->default_hidden)) {
-                $frame_ini .= "default_hidden = " . $nc3_block->default_hidden . "\n";
-            }
-            if (!empty($nc3_block->classname)) {
-                $frame_ini .= "classname = \"" . $nc3_block->classname . "\"\n";
-            }
-            if (!empty($nc3_block->none_hidden)) {
-                $frame_ini .= "none_hidden = " . $nc3_block->none_hidden . "\n";
-            }
-            if (!empty($nc3_block->display_sequence)) {
-                $frame_ini .= "display_sequence = " . $nc3_block->display_sequence . "\n";
-            }
+            // $frame_ini .= "browser_width = \"" . $nc3_frame->xxx . "\"\n";
+            // $frame_ini .= "disable_whatsnews = " . $nc3_frame->xxx . "\n";
+            // $frame_ini .= "page_only = " . $nc3_frame->xxx . "\n";
+            // $frame_ini .= "default_hidden = " . $nc3_frame->xxx . "\n";
+            // $frame_ini .= "classname = \"" . $nc3_frame->xxx . "\"\n";
+            // $frame_ini .= "none_hidden = " . $nc3_frame->xxx . "\n";
+            // $frame_ini .= "display_sequence = " . $nc3_frame->xxx . "\n";
 
+/////////////////////////////
+// 以下まだ
+/////////////////////////////
             // モジュールに紐づくメインのデータのID
-            $frame_ini .= $this->nc3BlockMainDataId($nc3_block);
+            $frame_ini .= $this->nc3BlockMainDataId($nc3_frame);
 
             // NC3 情報
             $frame_nc3 = "\n";
             $frame_nc3 .= "[source_info]\n";
-            $frame_nc3 .= "source_key = \"" . $nc3_block->block_id . "\"\n";
-            $frame_nc3 .= "target_source_table = \"" . $nc3_block->getModuleName() . "\"\n";
-            $frame_nc3 .= "created_at = \"" . $this->getCCDatetime($nc3_block->insert_time) . "\"\n";
-            $frame_nc3 .= "updated_at = \"" . $this->getCCDatetime($nc3_block->update_time) . "\"\n";
+            $frame_nc3 .= "source_key = \"" . $nc3_frame->id . "\"\n";
+            $frame_nc3 .= "target_source_table = \"" . $nc3_frame->plugin_key . "\"\n";
+            $frame_nc3 .= "created_at = \"" . $this->getCCDatetime($nc3_frame->insert_time) . "\"\n";
+            $frame_nc3 .= "updated_at = \"" . $this->getCCDatetime($nc3_frame->update_time) . "\"\n";
             $frame_ini .= $frame_nc3;
 
             // フレーム設定ファイルの出力
             // メニューの場合は、移行完了したページデータを参照してインポートしたいので、insert 側に出力する。
-            if ($nc3_block->getModuleName() == 'menu') {
+            if ($nc3_frame->plugin_key == 'menus') {
                 //Storage::put($this->getImportPath('pages/', '@insert/') . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $frame_ini);
                 $this->storagePut($this->getImportPath('pages/', '@insert/') . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $frame_ini);
             } else {
@@ -12364,25 +12384,26 @@ trait MigrationNc3Trait
                 $this->storagePut($this->getImportPath('pages/') . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $frame_ini);
             }
 
-            //echo $nc3_block->block_name . "\n";
+            //echo $nc3_frame->block_name . "\n";
 
             // ブロックのモジュールデータをエクスポート
-            $this->nc3BlockExport($nc3_page, $nc3_block, $new_page_index, $frame_index_str);
+            $this->nc3BlockExport($nc3_page, $nc3_frame, $new_page_index, $frame_index_str);
 
             // ページ、ブロック構成を最後に出力するために保持
-            $this->nc3BlockTree($nc3_page, $nc3_block);
+            $this->nc3BlockTree($nc3_page, $nc3_frame);
 
             // Connect-CMS のプラグイン名の取得
-            $plugin_name = $nc3_block->getPluginName();
+            $plugin_name = $this->nc3GetPluginName($nc3_frame->plugin_key);
             if ($plugin_name == 'Development' || $plugin_name == 'Abolition' || $plugin_name == 'searchs') {
                 // 移行できなかったモジュール
-                $this->putError(3, "no migrate module", "モジュール = " . $nc3_block->getModuleName(), $nc3_block);
+                $this->putError(3, "no migrate nc3-plugin", "プラグイン = " . $nc3_frame->plugin_key, $nc3_frame);
             }
         }
     }
 
     /**
      * NC3：NC3 のブロックの上書き
+     * [TODO] 未対応。エクスポート専用
      */
     private function overrideNc2Block($nc3_block)
     {
@@ -12412,7 +12433,7 @@ trait MigrationNc3Trait
     private function nc3BlockMainDataId($nc3_block)
     {
         $ret = "";
-        $module_name = $nc3_block->getModuleName();
+        $module_name = $nc3_block->plugin_name;
         if ($module_name == 'journal') {
             $nc3_journal_block = Nc2JournalBlock::where('block_id', $nc3_block->block_id)->first();
             // ブロックがあり、ブログがない場合は対象外
@@ -12456,7 +12477,7 @@ trait MigrationNc3Trait
             if (!empty($nc3_cabinet_block)) {
                 $ret = "cabinet_id = \"" . $this->zeroSuppress($nc3_cabinet_block->cabinet_id) . "\"\n";
             }
-        } elseif ($module_name == 'menu') {
+        } elseif ($module_name == 'menus') {
             // メニューの詳細設定（非表示設定が入っている）があれば、設定を加味する。
             $nc3_menu_details = Nc2MenuDetail::select('menu_detail.*', 'pages.permalink')
                                              ->join('pages', 'pages.page_id', '=', 'menu_detail.page_id')
@@ -12502,7 +12523,7 @@ trait MigrationNc3Trait
             if (!empty($nc3_counter)) {
                 $ret = "counter_block_id = \"" . $this->zeroSuppress($nc3_counter->block_id) . "\"\n";
             }
-        } elseif ($module_name == 'calendar') {
+        } elseif ($module_name == 'calendars') {
             $nc3_calendar_block = Nc2CalendarBlock::where('block_id', $nc3_block->block_id)->first();
             // ブロックがあり、カレンダーがない場合は対象外
             if (!empty($nc3_calendar_block)) {
@@ -12526,7 +12547,7 @@ trait MigrationNc3Trait
             if (!empty($nc3_reservation_block)) {
                 $ret = "reservation_block_id = \"" . $this->zeroSuppress($nc3_reservation_block->block_id) . "\"\n";
             }
-        } elseif ($module_name == 'photoalbum') {
+        } elseif ($module_name == 'photo_albums') {
             $nc3_photoalbum_block = Nc2PhotoalbumBlock::where('block_id', $nc3_block->block_id)->first();
             // ブロックがあり、フォトアルバムがない場合は対象外
             if (!empty($nc3_photoalbum_block)) {
@@ -12542,56 +12563,13 @@ trait MigrationNc3Trait
     }
 
     /**
-     * NC3：ブロックのテンプレート
-     */
-    private function nc3BlockTemp($nc3_block)
-    {
-        $module_name = $nc3_block->getModuleName();
-        if ($module_name == 'menu') {
-            // メニューのテンプレートの判定
-            if ($nc3_block->temp_name == 'default') {
-                // メニューのdefault テンプレートの場合、Connect-CMS では「ディレクトリ展開式」に変更する。
-                return 'opencurrenttree';
-            } elseif (strpos($nc3_block->temp_name, 'side') !== false) {
-                // メニューの横長系のテンプレートの場合、Connect-CMS では「ドロップダウン」に変更する。
-                return 'opencurrenttree';
-            } elseif (strpos($nc3_block->temp_name, 'header') !== false) {
-                // メニューの横長系のテンプレートの場合、Connect-CMS では「ドロップダウン」に変更する。
-                return 'dropdown';
-            } elseif (strpos($nc3_block->temp_name, 'jq_gnavi') !== false) {
-                // メニューの横長系のテンプレートの場合、Connect-CMS では「ドロップダウン」に変更する。
-                return 'dropdown';
-            } elseif ($nc3_block->temp_name == 'topic_path') {
-                // パンくず。
-                return 'breadcrumbs';
-            }
-        }
-        return 'default';
-    }
-
-    /**
-     * NC3：ブロックのエリア
-     */
-    private function nc3BlockArea($nc3_block)
-    {
-        if ($nc3_block->page_name == 'Header Column') {
-            return '0';
-        } elseif ($nc3_block->page_name == 'Left Column') {
-            return '1';
-        } elseif ($nc3_block->page_name == 'Right Column') {
-            return '3';
-        }
-        return '2';
-    }
-
-    /**
      * NC3：ページ内のブロックに配置されているモジュールのエクスポート。
      * モジュールごとのエクスポート処理に振り分け。
      */
     private function nc3BlockExport($nc3_page, $nc3_block, $new_page_index, $frame_index_str)
     {
         // Connect-CMS のプラグイン名の取得
-        $plugin_name = $nc3_block->getPluginName();
+        $plugin_name = $this->nc3GetPluginName($nc3_block->plugin_key);
 
         // モジュールごとに振り分け
 
