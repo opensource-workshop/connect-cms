@@ -8593,7 +8593,7 @@ trait MigrationTrait
     /**
      *  プラグインの変換
      */
-    public function nc2GetPluginName($module_name)
+    private function nc2GetPluginName($module_name)
     {
         // uploads の file_path にも対応するため、/ をトル。
         $module_name = trim($module_name, '/');
@@ -12396,10 +12396,10 @@ trait MigrationTrait
                 if ($nc2_photoalbum_block) {
                     $frame_ini .= "plugin_name = \"slideshows\"\n";
                 } else {
-                    $frame_ini .= "plugin_name = \"" . $nc2_block->getPluginName() . "\"\n";
+                    $frame_ini .= "plugin_name = \"" . $this->nc2GetPluginName($nc2_block->getModuleName()) . "\"\n";
                 }
             } else {
-                $frame_ini .= "plugin_name = \"" . $nc2_block->getPluginName() . "\"\n";
+                $frame_ini .= "plugin_name = \"" . $this->nc2GetPluginName($nc2_block->getModuleName()) . "\"\n";
             }
 
             // グルーピングされているブロックの考慮
@@ -12501,7 +12501,7 @@ trait MigrationTrait
             $this->nc2BlockTree($nc2_page, $nc2_block);
 
             // Connect-CMS のプラグイン名の取得
-            $plugin_name = $nc2_block->getPluginName();
+            $plugin_name = $this->nc2GetPluginName($nc2_block->getModuleName());
             if ($plugin_name == 'Development' || $plugin_name == 'Abolition' || $plugin_name == 'searchs') {
                 // 移行できなかったモジュール
                 $this->putError(3, "no migrate module", "モジュール = " . $nc2_block->getModuleName(), $nc2_block);
@@ -12719,7 +12719,7 @@ trait MigrationTrait
     private function nc2BlockExport($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
     {
         // Connect-CMS のプラグイン名の取得
-        $plugin_name = $nc2_block->getPluginName();
+        $plugin_name = $this->nc2GetPluginName($nc2_block->getModuleName());
 
         // モジュールごとに振り分け
 
