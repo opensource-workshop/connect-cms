@@ -8,9 +8,11 @@ use Illuminate\Support\Facades\Validator;
 
 use DB;
 
+use App\User;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Group;
+use App\Models\Common\GroupUser;
 use App\Models\Common\Page;
 use App\Models\Common\PageRole;
 use App\Models\User\Contents\Contents;
@@ -587,11 +589,16 @@ class PageManage extends ManagePluginBase
 
         // ページ権限を取得してGroup オブジェクトに保持する。
         $page_roles = PageRole::where('page_id', $page->id)
-                              ->where('role_value', 1)
-                              ->orderBy('group_id', 'asc')
-                              ->get();
+            ->where('role_value', 1)
+            ->orderBy('group_id', 'asc')
+            ->get();
+
+        // グループ参加ユーザ
+        $users = User::whereIn('id', GroupUser::pluck('user_id')->unique())->get();
+
         foreach ($groups as $group) {
             $group->page_roles = $page_roles->where('group_id', $group->id);
+            $group->group_user_names = $users->whereIn('id', $group->group_user->pluck('user_id'))->pluck('name')->implode(', ');
         }
 
         // 自分のページから親を遡って取得
