@@ -8985,15 +8985,19 @@ trait MigrationTrait
                 }
             }
 
-            if ($nc2_user->role_authority_id == 1) {
+            if ($nc2_user->role_authority_id == 1) { // 1:システム管理者
                 $users_ini .= "users_roles_manage = \"admin_system\"\n";
                 $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
-            } elseif ($nc2_user->role_authority_id == 2) {
+            } elseif ($nc2_user->role_authority_id == 2) { // 2:主担
                 $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
-            } elseif ($nc2_user->role_authority_id == 3) {
+            } elseif ($nc2_user->role_authority_id == 3) { // 3:モデレータ
                 $users_ini .= "users_roles_base   = \"role_article\"\n";
-            } elseif ($nc2_user->role_authority_id == 4) {
+            } elseif ($nc2_user->role_authority_id == 4) { // 4:一般
                 $users_ini .= "users_roles_base   = \"role_reporter\"\n";
+            } elseif ($nc2_user->role_authority_id == 6) { // 6:事務局（デフォルト）
+                $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
+            } elseif ($nc2_user->role_authority_id == 7) { // 7:管理者（デフォルト）
+                $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
             }
         }
 
