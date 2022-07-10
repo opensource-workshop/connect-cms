@@ -11131,7 +11131,7 @@ trait MigrationTrait
                 $tsv_record['plan_id'] = $calendar_plan->plan_id;
                 $tsv_record['user_id'] = $calendar_plan->user_id;
                 $tsv_record['user_name'] = $calendar_plan->user_name;
-                $tsv_record['title'] = $calendar_plan->title;
+                $tsv_record['title'] = trim($calendar_plan->title);
                 $tsv_record['allday_flag'] = $calendar_plan->allday_flag;
 
                 // 予定開始日時
