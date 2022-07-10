@@ -10952,9 +10952,9 @@ trait MigrationTrait
             $ini .= "design_type = " . $design_type . "\n";
 
             // 文字(前)
-            $ini .= "show_char_before = " . $nc2_counter->show_char_before . "\n";
+            $ini .= "show_char_before = '" . $nc2_counter->show_char_before . "'\n";
             // 文字(後)
-            $ini .= "show_char_after = " . $nc2_counter->show_char_after . "\n";
+            $ini .= "show_char_after = '" . $nc2_counter->show_char_after . "'\n";
             // 上記以外に表示したい文字
             // $ini .= "comment = " . $nc2_counter->comment . "\n";
 
