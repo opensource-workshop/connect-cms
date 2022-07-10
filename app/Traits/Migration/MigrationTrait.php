@@ -694,6 +694,12 @@ trait MigrationTrait
      */
     private function checkDeadLinkNc2($url, $nc2_module_name = null, $nc2_block = null)
     {
+        // リンクチェックしない場合は返却
+        $check_deadlink_nc2 = $this->getMigrationConfig('basic', 'check_deadlink_nc2', '');
+        if (empty($check_deadlink_nc2)) {
+            return;
+        }
+
         $scheme = parse_url($url, PHP_URL_SCHEME);
 
         if (in_array($scheme, ['http', 'https'])) {
