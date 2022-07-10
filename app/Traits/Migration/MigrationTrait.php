@@ -7781,10 +7781,10 @@ trait MigrationTrait
                     fclose($fp);
                     //echo $this->content_disposition;
 
-                    //getimagesize関数で画像情報を取得する
-                    list($img_width, $img_height, $mime_type, $attr) = getimagesize($saveStragePath);
+                    //@getimagesize関数で画像情報を取得する
+                    list($img_width, $img_height, $mime_type, $attr) = @getimagesize($saveStragePath);
 
-                    //list関数の第3引数にはgetimagesize関数で取得した画像のMIMEタイプが格納されているので条件分岐で拡張子を決定する
+                    //list関数の第3引数には@getimagesize関数で取得した画像のMIMEタイプが格納されているので条件分岐で拡張子を決定する
                     switch ($mime_type) {
                         case IMAGETYPE_JPEG:    // jpegの場合
                             //拡張子の設定
@@ -13046,7 +13046,7 @@ trait MigrationTrait
                     $file_path = storage_path() . '/app/' . $this->getImportPath('uploads' . $file_name);
                     // 画像が存在し、img_fluid_min_width で指定された大きさ以上なら、img-fluid クラスをつける。
                     if (File::exists($file_path)) {
-                        $imagesize = getimagesize($file_path);
+                        $imagesize = @getimagesize($file_path);
                         if (is_array($imagesize) && $imagesize[0] >= $img_fluid_min_width) {
                             $new_img_src = str_replace('<img ', '<img class="img-fluid" ', $img_src);
                             $content = str_replace($img_src, $new_img_src, $content);
