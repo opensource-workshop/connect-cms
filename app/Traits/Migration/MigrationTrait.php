@@ -12103,7 +12103,7 @@ trait MigrationTrait
                 // (nc)秒 => (cc)ミリ秒
                 $image_interval = $nc2_photoalbum_block->slide_time * 1000;
 
-                $height = $nc2_photoalbum_block->size_flag ? $nc2_photoalbum_block->height : null;
+                $height = $nc2_photoalbum_block->size_flag ? $nc2_photoalbum_block->height : 0;
 
                 // スライダー設定
                 $slide_ini = "";
