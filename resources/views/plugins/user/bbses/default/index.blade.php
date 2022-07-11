@@ -72,9 +72,22 @@
                         {{-- 根記事（スレッドの記事は古い順なので、根記事は最初） --}}
                         @include('plugins.user.bbses.default.post_title_div', ['view_post' => $post, 'current_post' => null, 'list_class' => 'mb-2'])
                         {{-- スレッド記事 --}}
-                        @foreach ($children_posts->where("thread_root_id", $post->id) as $children_post)
-                            @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => null, 'list_class' => 'mb-2'])
-                        @endforeach
+
+                        @if (!isset($plugin_frame->view_format) || $plugin_frame->view_format == 0)
+                            {{-- フラット形式 --}}
+                            @foreach ($children_posts->where("thread_root_id", $post->id) as $children_post)
+                                @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => null, 'list_class' => 'mb-2'])
+                            @endforeach
+                        
+                        @else
+                            {{-- スレッド形式 --}}
+                            @php
+                                $tree_posts = App\Models\User\Bbses\BbsPost::setDepth($children_posts->where("thread_root_id", $post->id));
+                            @endphp
+                            @foreach ($tree_posts as $post)
+                                @include('plugins.user.bbses.default.post_title_div_thread', ['view_post' => $post, 'current_post' => null, 'list_class' => 'mb-2'])
+                            @endforeach
+                        @endif
                     </div>
                 </div>
             @endif
@@ -109,36 +122,59 @@
                                     <div class="card-header">{{$plugin_frame->thread_caption}}</div>
                                 @endif
                                 <div class="card-body">
-                                    @foreach ($children_posts->where("thread_root_id", $post->id) as $children_post)
-                                        @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => null, 'list_class' => 'mb-2'])
-                                    @endforeach
+                                    @if (!isset($plugin_frame->view_format) || $plugin_frame->view_format == 0)
+                                        {{-- フラット形式 --}}
+                                        @foreach ($children_posts->where("thread_root_id", $post->id) as $children_post)
+                                            @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => null, 'list_class' => 'mb-2'])
+                                        @endforeach
+                                    
+                                    @else
+                                        {{-- スレッド形式 --}}
+                                        @php
+                                            $tree_posts = App\Models\User\Bbses\BbsPost::setDepth($children_posts->where("thread_root_id", $post->id));
+                                        @endphp
+                                        @foreach ($tree_posts as $post)
+                                            @include('plugins.user.bbses.default.post_title_div_thread', ['view_post' => $tree_post, 'current_post' => null, 'list_class' => 'mb-2'])
+                                        @endforeach
+                                    @endif
                                 </div>
                             </div>
                         @else
                             {{-- 一覧での返信記事の展開方法が開く場合 --}}
-                            @foreach ($children_posts->where("thread_root_id", $post->id) as $children_post)
-                                <div class="card mt-3">
-                                    <div class="card-header">
-                                        @include('plugins.user.bbses.default.post_title', ['view_post' => $children_post, 'current_post' => null, 'list_class' => ''])
-                                        <span class="float-right">
-                                            @include('plugins.user.bbses.default.post_created_at_and_name', ['post' => $children_post])
-                                        </span>
-                                    </div>
-                                    <div class="card-body">
-                                        {!!$children_post->body!!}
+                            @if (!isset($plugin_frame->view_format) || $plugin_frame->view_format == 0)
+                                {{-- フラット形式 --}}
+                                @foreach ($children_posts->where("thread_root_id", $post->id) as $children_post)
+                                    <div class="card mt-3">
+                                        <div class="card-header">
+                                            @include('plugins.user.bbses.default.post_title', ['view_post' => $children_post, 'current_post' => null, 'list_class' => ''])
+                                            <span class="float-right">
+                                                @include('plugins.user.bbses.default.post_created_at_and_name', ['post' => $children_post])
+                                            </span>
+                                        </div>
+                                        <div class="card-body">
+                                            {!!$children_post->body!!}
 
-                                        {{-- いいねボタン --}}
-                                        @include('plugins.common.like', [
-                                            'use_like' => $bbs->use_like,
-                                            'like_button_name' => $bbs->like_button_name,
-                                            'contents_id' => $children_post->id,
-                                            'like_id' => $children_post->like_id,
-                                            'like_count' => $children_post->like_count,
-                                            'like_users_id' => $children_post->like_users_id,
-                                        ])
+                                            {{-- いいねボタン --}}
+                                            @include('plugins.common.like', [
+                                                'use_like' => $bbs->use_like,
+                                                'like_button_name' => $bbs->like_button_name,
+                                                'contents_id' => $children_post->id,
+                                                'like_id' => $children_post->like_id,
+                                                'like_count' => $children_post->like_count,
+                                                'like_users_id' => $children_post->like_users_id,
+                                            ])
+                                        </div>
                                     </div>
-                                </div>
-                            @endforeach
+                                @endforeach
+                            @else
+                                {{-- スレッド形式 --}}
+                                @php
+                                    $tree_posts = App\Models\User\Bbses\BbsPost::setDepth($children_posts->where("thread_root_id", $post->id));
+                                @endphp
+                                @foreach ($tree_posts as $tree_post)
+                                    @include('plugins.user.bbses.default.post_thread', ['view_post' => $tree_post, 'bbs' => $bbs])
+                                @endforeach
+                            @endif
                         @endif
                     @endif
                 </div>
