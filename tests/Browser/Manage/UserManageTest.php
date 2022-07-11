@@ -190,7 +190,7 @@ class UserManageTest extends DuskTestCase
         $this->putManualData('[
             {"path": "manage/user/import/images/import",
              "name": "CSVインポート",
-             "comment": "<ul class=\"mb-0\"><li>CSVファイルを使って、ユーザを一括登録できます。</li><li>「id」に値がある行はユーザ更新します。</li><li>「id」が空の行はユーザを登録します。</li><li>１つの項目に複数値を登録する場合は、|（パイプ）文字で区切ってCSVに登録します。<br />例えば、「権限」「グループ」「役割設定」項目が対象です。</li></ul>"
+             "comment": "<ul class=\"mb-0\"><li>CSVファイルを使って、ユーザを一括登録できます。</li><li>「id」に値がある行はユーザ更新します。</li><li>「id」が空の行はユーザを登録します。</li><li>ログインユーザ（自分）の更新はできません。ログインユーザの更新はユーザ一覧より更新してください。</li><li>１つの項目に複数値を登録する場合は、|（パイプ）文字で区切ってCSVに登録します。<br />例えば、「権限」「グループ」「役割設定」項目が対象です。</li></ul>"
             }
         ]', null, 3);
     }
