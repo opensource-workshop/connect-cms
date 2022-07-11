@@ -10348,12 +10348,12 @@ trait MigrationTrait
                         $tsv .= $tsv_header . "\n";
                     } else {
                         // 承認待ち、一時保存
-                        $tsv_record['status'] = 0;
+                        $tsv_record['status'] = StatusType::active;
                         if ($old_metadata_content->agree_flag == 1) {
-                            $tsv_record['status'] = 1;
+                            $tsv_record['status'] = StatusType::approval_pending;
                         }
                         if ($old_metadata_content->temporary_flag == 1) {
-                            $tsv_record['status'] = 2;
+                            $tsv_record['status'] = StatusType::temporary;
                         }
                         // 表示順
                         $tsv_record['display_sequence'] = $old_metadata_content->content_display_sequence;
@@ -10416,12 +10416,12 @@ trait MigrationTrait
             // レコードがない場合もあり得る。
             if (!empty($old_metadata_content)) {
                 // 承認待ち、一時保存
-                $tsv_record['status'] = 0;
+                $tsv_record['status'] = StatusType::active;
                 if ($old_metadata_content->agree_flag == 1) {
-                    $tsv_record['status'] = 1;
+                    $tsv_record['status'] = StatusType::approval_pending;
                 }
                 if ($old_metadata_content->temporary_flag == 1) {
-                    $tsv_record['status'] = 2;
+                    $tsv_record['status'] = StatusType::temporary;
                 }
                 // 表示順
                 $tsv_record['display_sequence'] = $old_metadata_content->content_display_sequence;
