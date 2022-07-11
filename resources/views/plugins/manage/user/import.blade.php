@@ -17,14 +17,14 @@
 <script type="text/javascript">
     {{-- ダウンロードのsubmit JavaScript --}}
     function submit_download_shift_jis() {
-        if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}で現在の絞り込み条件のユーザをダウンロードします。\nよろしいですか？') ) {
+        if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}でユーザをダウンロードします。\nよろしいですか？\n※ 抽出条件はユーザ一覧の絞り込み条件が適用されます。') ) {
             return;
         }
         user_download.character_code.value = '{{CsvCharacterCode::sjis_win}}';
         user_download.submit();
     }
     function submit_download_utf_8() {
-        if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}で現在の絞り込み条件のユーザをダウンロードします。\nよろしいですか？') ) {
+        if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}でユーザをダウンロードします。\nよろしいですか？\n※ 抽出条件はユーザ一覧の絞り込み条件が適用されます。') ) {
             return;
         }
         user_download.character_code.value = '{{CsvCharacterCode::utf_8}}';
@@ -138,7 +138,7 @@
                     <small class="text-muted">
                         ※ UTF-8はBOM付・BOMなしどちらにも対応しています。
                     </small>
-                    @include('common.errors_inline', ['name' => 'character_code'])
+                    @include('plugins.common.errors_inline', ['name' => 'character_code'])
                 </div>
             </div>
 
