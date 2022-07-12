@@ -107,6 +107,12 @@
                                 <label class="custom-control-label" for="role_guest{{$group->id}}">ゲスト</label>
                             </div>
 
+                            <div class="mt-1 mb-1">
+                                <small>
+                                    <b>参加ユーザ</b>：{{$group->group_user_names}}
+                                </small>
+                            </div>
+
                             <small class="text-muted">
                                 ※ 権限設定してページを表示すると、ユーザ権限はこの権限で上書きされます。<br />
                                 　例）「コンテンツ管理者」ユーザがグループ1, 2に所属していて、ページのグループ権限でグループ1（編集者）, 所属グループ2（モデレータ）の場合、そのページでの権限は「編集者」「モデレータ」に上書きされます。<br />

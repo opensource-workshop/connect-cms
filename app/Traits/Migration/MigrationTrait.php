@@ -694,6 +694,12 @@ trait MigrationTrait
      */
     private function checkDeadLinkNc2($url, $nc2_module_name = null, $nc2_block = null)
     {
+        // リンクチェックしない場合は返却
+        $check_deadlink_nc2 = $this->getMigrationConfig('basic', 'check_deadlink_nc2', '');
+        if (empty($check_deadlink_nc2)) {
+            return;
+        }
+
         $scheme = parse_url($url, PHP_URL_SCHEME);
 
         if (in_array($scheme, ['http', 'https'])) {
@@ -7781,10 +7787,10 @@ trait MigrationTrait
                     fclose($fp);
                     //echo $this->content_disposition;
 
-                    //getimagesize関数で画像情報を取得する
-                    list($img_width, $img_height, $mime_type, $attr) = getimagesize($saveStragePath);
+                    //@getimagesize関数で画像情報を取得する
+                    list($img_width, $img_height, $mime_type, $attr) = @getimagesize($saveStragePath);
 
-                    //list関数の第3引数にはgetimagesize関数で取得した画像のMIMEタイプが格納されているので条件分岐で拡張子を決定する
+                    //list関数の第3引数には@getimagesize関数で取得した画像のMIMEタイプが格納されているので条件分岐で拡張子を決定する
                     switch ($mime_type) {
                         case IMAGETYPE_JPEG:    // jpegの場合
                             //拡張子の設定
@@ -8985,15 +8991,19 @@ trait MigrationTrait
                 }
             }
 
-            if ($nc2_user->role_authority_id == 1) {
+            if ($nc2_user->role_authority_id == 1) { // 1:システム管理者
                 $users_ini .= "users_roles_manage = \"admin_system\"\n";
                 $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
-            } elseif ($nc2_user->role_authority_id == 2) {
+            } elseif ($nc2_user->role_authority_id == 2) { // 2:主担
                 $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
-            } elseif ($nc2_user->role_authority_id == 3) {
+            } elseif ($nc2_user->role_authority_id == 3) { // 3:モデレータ
                 $users_ini .= "users_roles_base   = \"role_article\"\n";
-            } elseif ($nc2_user->role_authority_id == 4) {
+            } elseif ($nc2_user->role_authority_id == 4) { // 4:一般
                 $users_ini .= "users_roles_base   = \"role_reporter\"\n";
+            } elseif ($nc2_user->role_authority_id == 6) { // 6:事務局（デフォルト）
+                $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
+            } elseif ($nc2_user->role_authority_id == 7) { // 7:管理者（デフォルト）
+                $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
             }
         }
 
@@ -10338,12 +10348,12 @@ trait MigrationTrait
                         $tsv .= $tsv_header . "\n";
                     } else {
                         // 承認待ち、一時保存
-                        $tsv_record['status'] = 0;
+                        $tsv_record['status'] = StatusType::active;
                         if ($old_metadata_content->agree_flag == 1) {
-                            $tsv_record['status'] = 1;
+                            $tsv_record['status'] = StatusType::approval_pending;
                         }
                         if ($old_metadata_content->temporary_flag == 1) {
-                            $tsv_record['status'] = 2;
+                            $tsv_record['status'] = StatusType::temporary;
                         }
                         // 表示順
                         $tsv_record['display_sequence'] = $old_metadata_content->content_display_sequence;
@@ -10406,12 +10416,12 @@ trait MigrationTrait
             // レコードがない場合もあり得る。
             if (!empty($old_metadata_content)) {
                 // 承認待ち、一時保存
-                $tsv_record['status'] = 0;
+                $tsv_record['status'] = StatusType::active;
                 if ($old_metadata_content->agree_flag == 1) {
-                    $tsv_record['status'] = 1;
+                    $tsv_record['status'] = StatusType::approval_pending;
                 }
                 if ($old_metadata_content->temporary_flag == 1) {
-                    $tsv_record['status'] = 2;
+                    $tsv_record['status'] = StatusType::temporary;
                 }
                 // 表示順
                 $tsv_record['display_sequence'] = $old_metadata_content->content_display_sequence;
@@ -10942,9 +10952,9 @@ trait MigrationTrait
             $ini .= "design_type = " . $design_type . "\n";
 
             // 文字(前)
-            $ini .= "show_char_before = " . $nc2_counter->show_char_before . "\n";
+            $ini .= "show_char_before = '" . $nc2_counter->show_char_before . "'\n";
             // 文字(後)
-            $ini .= "show_char_after = " . $nc2_counter->show_char_after . "\n";
+            $ini .= "show_char_after = '" . $nc2_counter->show_char_after . "'\n";
             // 上記以外に表示したい文字
             // $ini .= "comment = " . $nc2_counter->comment . "\n";
 
@@ -11121,7 +11131,7 @@ trait MigrationTrait
                 $tsv_record['plan_id'] = $calendar_plan->plan_id;
                 $tsv_record['user_id'] = $calendar_plan->user_id;
                 $tsv_record['user_name'] = $calendar_plan->user_name;
-                $tsv_record['title'] = $calendar_plan->title;
+                $tsv_record['title'] = trim($calendar_plan->title);
                 $tsv_record['allday_flag'] = $calendar_plan->allday_flag;
 
                 // 予定開始日時
@@ -12099,7 +12109,7 @@ trait MigrationTrait
                 // (nc)秒 => (cc)ミリ秒
                 $image_interval = $nc2_photoalbum_block->slide_time * 1000;
 
-                $height = $nc2_photoalbum_block->size_flag ? $nc2_photoalbum_block->height : null;
+                $height = $nc2_photoalbum_block->size_flag ? $nc2_photoalbum_block->height : 0;
 
                 // スライダー設定
                 $slide_ini = "";
@@ -13042,7 +13052,7 @@ trait MigrationTrait
                     $file_path = storage_path() . '/app/' . $this->getImportPath('uploads' . $file_name);
                     // 画像が存在し、img_fluid_min_width で指定された大きさ以上なら、img-fluid クラスをつける。
                     if (File::exists($file_path)) {
-                        $imagesize = getimagesize($file_path);
+                        $imagesize = @getimagesize($file_path);
                         if (is_array($imagesize) && $imagesize[0] >= $img_fluid_min_width) {
                             $new_img_src = str_replace('<img ', '<img class="img-fluid" ', $img_src);
                             $content = str_replace($img_src, $new_img_src, $content);
