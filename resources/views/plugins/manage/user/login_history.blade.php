@@ -13,6 +13,10 @@
         {{-- 機能選択タブ --}}
         @include('plugins.manage.user.user_manage_tab')
     </div>
+
+    {{-- ユーザ変更関連タブ --}}
+    @include('plugins.manage.user.user_edit_tab')
+
     <div class="card-body">
 
         <div class="form-group table-responsive">
