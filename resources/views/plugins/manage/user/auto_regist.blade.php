@@ -181,10 +181,17 @@
                 <div class="col">
                     <label class="control-label">本登録メールフォーマット</label>
                     <textarea name="user_register_mail_format" class="form-control" rows=5 placeholder="（例）登録内容をお知らせいたします。&#13;&#10;----------------------------------&#13;&#10;[[body]]&#13;&#10;----------------------------------">{{Configs::getConfigsValueAndOld($configs, 'user_register_mail_format')}}</textarea>
-                    @include('plugins.common.description_frame_mails_common', ['embedded_tags' => UserRegisterNoticeEmbeddedTag::getDescriptionEmbeddedTags()])
+                    @include('plugins.manage.user.description_frame_mails', ['users_columns' => $users_columns])
                     <small class="text-danger">
                         ※ 管理者の承認を必要にしている場合は、本登録メールが登録申請メールとなります。
                     </small>
+                    <div class="alert alert-warning small mb-0">
+                        【注意】<br />
+                        以下のメールフォーマットに対する注意点を理解して設定してください。<br />
+                        <br />
+                        「パスワード」をメールフォーマットに含めることで、送信したメールが漏洩した場合、記載されたパスワードが流出する危険性があります。<br />
+                        「パスワード」をメールフォーマットに含める場合は、リスクを許容し実行してください。<br />
+                    </div>
                 </div>
             </div>
 

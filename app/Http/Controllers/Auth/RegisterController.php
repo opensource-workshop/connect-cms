@@ -184,6 +184,8 @@ class RegisterController extends Controller
             // メールアドレス入力ありなら、メール送信画面へ
             if ($data['email']) {
                 $this->redirectTo = '/manage/user/mail/' . $user->id;
+                // 通知の埋め込みタグ-パスワード
+                session()->flash('password', $data['password']);
             }
         }
 

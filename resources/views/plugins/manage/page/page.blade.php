@@ -59,14 +59,12 @@ use App\Models\Common\Page;
         <form action="{{url('/manage/page/sequenceUp')}}" method="POST" name="form_sequence_up" id="form_sequence_up" class="form-horizontal">
             {{ csrf_field() }}
             <input type="hidden" name="seq_method" value="sequence_up">
-            <!input type="hidden" name="id" value="">
         </form>
 
         {{-- ページの下移動用フォーム(POSTのためのフォーム。一つ用意して一覧からJavascriptで呼び出し) --}}
         <form action="{{url('/manage/page/sequenceDown')}}" method="POST" name="form_sequence_down" id="form_sequence_down" class="form-horizontal">
             {{ csrf_field() }}
             <input type="hidden" name="seq_method" value="sequence_down">
-            <!input type="hidden" name="id" value="">
         </form>
 
         {{-- ページの指定場所移動用フォーム(POSTのためのフォーム。一つ用意して一覧からJavascriptで呼び出し) --}}

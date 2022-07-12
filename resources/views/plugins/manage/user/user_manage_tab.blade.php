@@ -75,34 +75,6 @@
                     @endif
                 </li>
 
-                @if (($function == "edit" || $function == "groups" || $function == "loginHistory") && $user->id)
-                    <li class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            ユーザ変更
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-
-                            @if ($function == "edit")
-                                <a href="{{url('/manage/user/edit')}}/{{$user->id}}" class="dropdown-item active bg-light">ユーザ変更</a>
-                            @else
-                                <a href="{{url('/manage/user/edit')}}/{{$user->id}}" class="dropdown-item">ユーザ変更</a>
-                            @endif
-
-                            @if ($function == "groups")
-                                <a href="{{url('/manage/user/groups')}}/{{$user->id}}" class="dropdown-item active bg-light">グループ参加</a>
-                            @else
-                                <a href="{{url('/manage/user/groups')}}/{{$user->id}}" class="dropdown-item">グループ参加</a>
-                            @endif
-
-                            @if ($function == "loginHistory")
-                                <a href="{{url('/manage/user/loginHistory')}}/{{$user->id}}" class="dropdown-item active bg-light">ログイン履歴</a>
-                            @else
-                                <a href="{{url('/manage/user/loginHistory')}}/{{$user->id}}" class="dropdown-item">ログイン履歴</a>
-                            @endif
-                        </div>
-                    </li>
-                @endif
-
             </ul>
         </div>
     </nav>
