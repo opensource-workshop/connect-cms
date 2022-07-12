@@ -1759,11 +1759,12 @@ class UserManage extends ManagePluginBase
     {
         // 行頭（固定項目）
         $rules = [
-            // id
+            // id ※ログインユーザは一括処理の対象外
             0 => [
                 'nullable',
                 'numeric',
-                'exists:users,id'
+                'exists:users,id',
+                Rule::notIn([Auth::user()->id])
             ],
             // ログインID. 後でセット
             1 => [],
