@@ -1046,6 +1046,7 @@ class UserManage extends ManagePluginBase
             "function" => __FUNCTION__,
             "plugin_name" => "user",
             "configs" => $configs,
+            "users_columns" => UsersTool::getUsersColumns(),
         ]);
     }
 
@@ -2035,6 +2036,9 @@ class UserManage extends ManagePluginBase
      */
     public function mail($request, $id = null)
     {
+        // 画面再表示してもパスワード保持
+        $request->session()->keep(['password']);
+
         // ユーザデータ取得
         $user = User::where('id', $id)->first();
 
@@ -2074,7 +2078,7 @@ class UserManage extends ManagePluginBase
         $this->sendMail($user->email, $mail_options, ['content' => $request->body], 'UserManage');
 
         // ユーザ管理画面に戻る
-        return redirect("/manage/user");
+        return redirect("/manage/user")->with('flash_message', 'メール送信しました。');
     }
 
     /**
