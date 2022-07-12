@@ -200,8 +200,7 @@ class UsersTool
             UserRegisterNoticeEmbeddedTag::body => self::getMailContentsText($configs, $user),
             UserRegisterNoticeEmbeddedTag::user_name => $user->name,
             UserRegisterNoticeEmbeddedTag::login_id => $user->userid,
-            // [TODO] 仮登録⇒本登録時にちゃんと動作する？
-            UserRegisterNoticeEmbeddedTag::initial_password => session('initial_password'),
+            UserRegisterNoticeEmbeddedTag::password => session('password'),
             UserRegisterNoticeEmbeddedTag::email => $user->email,
             UserRegisterNoticeEmbeddedTag::user_register_requre_privacy => Configs::getConfigsValue($configs, 'user_register_requre_privacy') ? '以下の内容に同意します。' : '',
         ];
