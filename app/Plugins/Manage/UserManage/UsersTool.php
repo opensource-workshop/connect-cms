@@ -216,12 +216,6 @@ class UsersTool
             });
 
         foreach ($users_columns as $users_column) {
-            // [TODO] 同意型対応する方向かなぁ。
-            // 除外する埋め込みタグはセットしない
-            // if (DatabasesColumns::isNotEmbeddedTagsColumnType($databases_column->column_type)) {
-            //     continue;
-            // }
-
             $value = "";
             if (is_array($users_input_cols[$users_column->id])) {
                 $value = implode(self::CHECKBOX_SEPARATOR, $users_input_cols[$users_column->id]->value);
