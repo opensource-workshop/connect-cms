@@ -2035,6 +2035,9 @@ class UserManage extends ManagePluginBase
      */
     public function mail($request, $id = null)
     {
+        // 画面再表示してもパスワード保持
+        $request->session()->keep(['password']);
+
         // ユーザデータ取得
         $user = User::where('id', $id)->first();
 
