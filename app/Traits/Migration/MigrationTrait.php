@@ -2714,8 +2714,9 @@ trait MigrationTrait
             // ini_file の解析
             $group_ini = parse_ini_file($group_ini_path, true);
 
+            $source_key = $group_ini['source_info']['room_id'] . '_' . $group_ini['group_base']['role_name'];
             // マッピングテーブルの取得
-            $mapping = MigrationMapping::where('target_source_table', 'groups')->where('source_key', $group_ini['source_info']['room_id'])->first();
+            $mapping = MigrationMapping::where('target_source_table', 'groups')->where('source_key', $source_key)->first();
 
             // マッピングテーブルを確認して、追加か更新の処理を分岐
             if (empty($mapping)) {
@@ -2728,7 +2729,7 @@ trait MigrationTrait
                 // マッピングテーブルの追加
                 $mapping = MigrationMapping::create([
                     'target_source_table'  => 'groups',
-                    'source_key'           => $group_ini['source_info']['room_id'],
+                    'source_key'           => $source_key,
                     'destination_key'      => $group->id,
                 ]);
             } else {
@@ -2753,19 +2754,30 @@ trait MigrationTrait
                 );
             }
 
-            // page_roles 作成（元 page_id -> マッピング -> 新フォルダ -> マッピング -> 新 page_id）
-            $source_page = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $group_ini['source_info']['room_id'])->first();
-            if (empty($source_page)) {
-                continue;
+            $base_group_flag = $this->getArrayValue($group_ini, 'group_base', 'base_group_flag', 0);
+            if ($base_group_flag == 1) {
+                // パブリックスペース的なpageは、nc2にないので直でページ指定
+                $top_page = Page::orderBy('_lft', 'asc')->first();
+
+                $page_role = PageRole::updateOrCreate(
+                    ['page_id' => $top_page->id, 'group_id' => $group->id],
+                    ['page_id' => $top_page->id, 'group_id' => $group->id, 'target' => 'base', 'role_name' => $group_ini['group_base']['role_name'], 'role_value' => 1]
+                );
+            } else {
+                // page_roles 作成（元 page_id -> マッピング -> 新フォルダ -> マッピング -> 新 page_id）
+                $source_page = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $group_ini['source_info']['room_id'])->first();
+                if (empty($source_page)) {
+                    continue;
+                }
+                $destination_page = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $source_page->destination_key)->first();
+                if (empty($destination_page)) {
+                    continue;
+                }
+                $page_role = PageRole::updateOrCreate(
+                    ['page_id' => $destination_page->destination_key, 'group_id' => $group->id],
+                    ['page_id' => $destination_page->destination_key, 'group_id' => $group->id, 'target' => 'base', 'role_name' => $group_ini['group_base']['role_name'], 'role_value' => 1]
+                );
             }
-            $destination_page = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $source_page->destination_key)->first();
-            if (empty($destination_page)) {
-                continue;
-            }
-            $page_role = PageRole::updateOrCreate(
-                ['page_id' => $destination_page->destination_key, 'group_id' => $group->id],
-                ['page_id' => $destination_page->destination_key, 'group_id' => $group->id, 'target' => 'base', 'role_name' => 'role_reporter', 'role_value' => 1]
-            );
         }
 
         // ※ 上ループで管理者グループを登録しようと組んだが、なぜかgroup->idがズレるため、上ループ後に管理グループ追加
@@ -9104,11 +9116,14 @@ trait MigrationTrait
         */
 
         // NC2 ルームの取得
-        // 「すべての会員をデフォルトで参加させる」はグループにしないので対象外。'default_entry_flag'== 0
-        $nc2_rooms_query = Nc2Page::where('space_type', 2)
-                            ->whereColumn('page_id', 'room_id')
-                            ->whereIn('thread_num', [1, 2])
-                            ->where('default_entry_flag', 0);
+        $nc2_rooms_query = Nc2Page::whereIn('space_type', [Nc2Page::space_type_group, Nc2Page::space_type_public])
+            ->whereColumn('page_id', 'room_id')
+            ->whereIn('thread_num', [1, 2])
+            ->orWhere(function ($query) {
+                $query->whereColumn('page_id', 'room_id')
+                    ->Where('room_id', 1);   // パブリックスペース
+            });
+
         // 対象外ページ指定の有無
         if ($this->getMigrationConfig('pages', 'nc2_export_ommit_page_ids')) {
             $nc2_rooms_query->whereNotIn('page_id', $this->getMigrationConfig('pages', 'nc2_export_ommit_page_ids'));
@@ -9122,30 +9137,71 @@ trait MigrationTrait
 
         // グループをループ
         foreach ($nc2_rooms as $nc2_room) {
-            // ini ファイル用変数
-            $groups_ini  = "[group_base]\n";
-            $groups_ini .= "name = \"" . $nc2_room->page_name . "\"\n";
-            $groups_ini .= "\n";
-            $groups_ini .= "[source_info]\n";
-            $groups_ini .= "room_id = " . $nc2_room->room_id . "\n";
-            $groups_ini .= "\n";
-            $groups_ini .= "[users]\n";
-
-            // NC2 参加ユーザの取得
-            $nc2_pages_users_links = Nc2PageUserLink::select('pages_users_link.*', 'users.login_id')
-                                                    ->join('users', 'users.user_id', 'pages_users_link.user_id')
-                                                    ->where('room_id', $nc2_room->room_id)
-                                                    ->orderBy('room_id')
-                                                    ->orderBy('users.role_authority_id')
-                                                    ->orderBy('users.insert_time')
-                                                    ->get();
-
-            foreach ($nc2_pages_users_links as $nc2_pages_users_link) {
-                $groups_ini .= "user[\"" . $nc2_pages_users_link->login_id . "\"] = " . $nc2_pages_users_link->role_authority_id . "\n";
+            if ($nc2_room->space_type == Nc2Page::space_type_group && $nc2_room->default_entry_flag == 1) {
+                //「すべての会員をデフォルトで参加させる」はグループにしないので対象外。'default_entry_flag'== 0
+                continue;
             }
 
-            // グループデータの出力
-            $this->storagePut($this->getImportPath('groups/group_') . $this->zeroSuppress($nc2_room->room_id) . '.ini', $groups_ini);
+            //             (public)role_authority_id, (group)role_authority_id
+            // _主担      = 2,    2
+            // _モデレータ = 3,   3
+            // _一般      = 4,    4
+            // _ゲスト    = null, 5
+            // 不参加     = なし, null
+
+            // NC2 参加ユーザの取得（puglicのゲストはデータが存在しないため、pages_users_linkは外部結合で取得）
+            $nc2_pages_users_links = Nc2User::select('pages_users_link.*', 'users.login_id')
+                ->leftJoin('pages_users_link', function ($join) use ($nc2_room) {
+                    $join->on('pages_users_link.user_id', 'users.user_id')
+                        ->where('pages_users_link.room_id', $nc2_room->room_id);
+                })
+                ->orderBy('pages_users_link.room_id')
+                ->orderBy('users.role_authority_id')
+                ->orderBy('users.insert_time')
+                ->get();
+
+            $role_authority_ids = [
+                2 => ['name' =>'_コンテンツ管理者', 'role_name' =>'role_article_admin'],
+                3 => ['name' =>'_モデレータ',      'role_name' =>'role_article'],
+                4 => ['name' =>'_編集者',          'role_name' =>'role_reporter'],
+                5 => ['name' =>'_ゲスト',          'role_name' =>'role_guest'],
+            ];
+
+            foreach ($role_authority_ids as $role_authority_id => $names) {
+
+                if ($nc2_room->space_type == Nc2Page::space_type_public && $role_authority_id == 5) {
+                    // puglicのゲストはデータが存在しないため、nullで検索（グループのゲストはデータ存在する）
+                    $where_role_authority_id = null;
+                } else {
+                    $where_role_authority_id = $role_authority_id;
+                }
+
+                $nc2_pages_users_links_subgroup = $nc2_pages_users_links->where('role_authority_id', $where_role_authority_id);
+                if ($nc2_pages_users_links_subgroup->isEmpty()) {
+                    // ユーザいないグループは作らない。
+                    continue;
+                }
+
+                // ini ファイル用変数
+                $groups_ini  = "[group_base]\n";
+                $groups_ini .= "name = \"" . $nc2_room->page_name . $names['name'] . "\"\n";
+                $groups_ini .= "role_name = \"" . $names['role_name'] . "\"\n";
+                if ($nc2_room->room_id == 1) {
+                    $groups_ini .= "base_group_flag = 1\n";
+                }
+                $groups_ini .= "\n";
+                $groups_ini .= "[source_info]\n";
+                $groups_ini .= "room_id = " . $nc2_room->room_id . "\n";
+                $groups_ini .= "\n";
+                $groups_ini .= "[users]\n";
+
+                foreach ($nc2_pages_users_links_subgroup as $nc2_pages_users_link) {
+                    $groups_ini .= "user[\"" . $nc2_pages_users_link->login_id . "\"] = " . $nc2_pages_users_link->role_authority_id . "\n";
+                }
+
+                // グループデータの出力
+                $this->storagePut($this->getImportPath('groups/group_') . $this->zeroSuppress($nc2_room->room_id) . '_' . $role_authority_id . '.ini', $groups_ini);
+            }
         }
     }
 
