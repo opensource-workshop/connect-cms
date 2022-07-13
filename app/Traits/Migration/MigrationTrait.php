@@ -212,13 +212,6 @@ trait MigrationTrait
     private $frame_tree = "page_id,ページタイトル,固定リンク,モジュール,block_id,ブロックタイトル\n";
 
     /**
-     * ログのパス
-     * ログ自体はプログラムが途中でコケても残るように、append する。
-     * ここは、ログファイルの名前を時分秒を付けて保存したいため、シングルトンでファイル名を保持するためのもの。
-     */
-    private $log_path = array();
-
-    /**
      * uploads.ini
      */
     private $uploads_ini = null;
