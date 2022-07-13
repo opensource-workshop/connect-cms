@@ -7,12 +7,23 @@
  * @category 掲示板プラグイン
 --}}
 {{-- スレッドの投稿一覧 --}}
+
+{{-- 表示形式の名称 --}}
+@php
+    $view_format_name = "";
+    if (!isset($plugin_frame->view_format) || $plugin_frame->view_format == 0) {
+        $view_format_name = BbsViewFormat::flat;
+    } else {
+        $view_format_name = BbsViewFormat::tree;
+    }
+@endphp
+
 @if ($thread_root_post)
 
     {{-- 詳細でのスレッド記事の展開方法の判定 --}}
     @if ($plugin_frame->thread_format == 2)
         {{-- 詳細でのスレッド記事の展開方法：すべて閉じる --}}
-        <div class="card mb-3">
+        <div class="card mb-3 {{$view_format_name}}">
             {{-- 詳細でのスレッド記事の展開方法：すべて閉じるの場合は、card のヘッダに根記事のタイトルを表示 --}}
             <div class="card-header">
                 {{$thread_root_post->title}}
@@ -34,14 +45,14 @@
                     @foreach ($children_posts->where("thread_root_id", $thread_root_post->id) as $children_post)
                         @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => $post, 'list_class' => ''])
                     @endforeach
-            
+
                 @else
-                    {{-- スレッド形式 --}}
+                    {{-- ツリー形式 --}}
                     @php
-                        $tree_posts = App\Models\User\Bbses\BbsPost::setDepth($children_posts->where("thread_root_id", $thread_root_post->id));
+                        $tree_posts = App\Models\User\Bbses\BbsPost::setDepth($children_posts);
                     @endphp
                     @foreach ($tree_posts as $tree_post)
-                        @include('plugins.user.bbses.default.post_title_div_thread', ['view_post' => $tree_post, 'current_post' => null, 'list_class' => ''])
+                        @include('plugins.user.bbses.default.post_title_div_tree', ['view_post' => $tree_post, 'current_post' => null, 'list_class' => ''])
                     @endforeach
                 @endif
             </div>
@@ -49,7 +60,7 @@
     @else
         {{-- 詳細でのスレッド記事の展開方法：すべて展開 or 詳細表示している記事のみ展開 --}}
         <span class="badge badge-primary mb-1">スレッドの記事一覧</span>
-        <div class="card mb-3">
+        <div class="card mb-3 {{$view_format_name}}">
             {{-- 詳細でのスレッド記事の展開方法の判定 --}}
             @if ($plugin_frame->thread_format != 0)
                 {{-- 詳細でのスレッド記事の展開方法が詳細表示している記事のみ展開の場合 --}}
@@ -94,12 +105,12 @@
                             @endif
                         @endforeach
                     @else
-                        {{-- スレッド形式 --}}
+                        {{-- ツリー形式 --}}
                         @php
-                            $tree_posts = App\Models\User\Bbses\BbsPost::setDepth($children_posts->where("thread_root_id", $thread_root_post->id));
+                            $tree_posts = App\Models\User\Bbses\BbsPost::setDepth($children_posts);
                         @endphp
                         @foreach ($tree_posts as $tree_post)
-                            @include('plugins.user.bbses.default.thread_show_thread', ['tree_post' => $tree_post, 'current_post' => $post, 'list_class' => ''])
+                            @include('plugins.user.bbses.default.post_tree_current_open', ['view_post' => $tree_post, 'current_post' => $post, 'list_class' => ''])
                         @endforeach
                     @endif
                 </div>
@@ -152,13 +163,12 @@
                             </div>
                         @endforeach
                     @else
-                        {{-- スレッド形式 --}}
-                        {{-- スレッド形式 --}}
+                        {{-- ツリー形式 --}}
                         @php
                             $tree_posts = App\Models\User\Bbses\BbsPost::setDepth($children_posts);
                         @endphp
-                        @foreach ($children_posts as $children_post)
-                            @include('plugins.user.bbses.default.post_thread', ['view_post' => $children_post, 'bbs' => $bbs, 'current_post' => $post])
+                        @foreach ($tree_posts as $tree_post)
+                            @include('plugins.user.bbses.default.post_tree', ['view_post' => $tree_post, 'bbs' => $bbs, 'current_post' => $post])
                         @endforeach
                     @endif
                 </div>

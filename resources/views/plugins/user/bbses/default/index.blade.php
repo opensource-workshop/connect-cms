@@ -17,6 +17,21 @@
     })
 </script>
 
+{{-- ツリー形式のスタイル --}}
+@if ($plugin_frame->view_format == 1)
+    @include('plugins.user.bbses.default.tree_style')
+@endif
+
+{{-- 表示形式の名称 --}}
+@php
+    $view_format_name = "";
+    if (!isset($plugin_frame->view_format) || $plugin_frame->view_format == 0) {
+        $view_format_name = BbsViewFormat::flat;
+    } else {
+        $view_format_name = BbsViewFormat::tree;
+    }
+@endphp
+
 @if (isset($frame) && $frame->bucket_id)
     {{-- バケツあり --}}
 @else
@@ -59,7 +74,7 @@
                 <div class="mb-2"></div>
             @else
                 {{-- defaultテンプレート --}}
-                <div class="card mb-3">
+                <div class="card mb-3 {{$view_format_name}}">
                     {{-- 一覧での展開方法：すべて閉じるの場合は、card のヘッダに根記事のタイトルを表示 --}}
                     <div class="card-header">
                         {{$post->title}}
@@ -78,14 +93,14 @@
                             @foreach ($children_posts->where("thread_root_id", $post->id) as $children_post)
                                 @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => null, 'list_class' => 'mb-2'])
                             @endforeach
-                        
+
                         @else
-                            {{-- スレッド形式 --}}
+                            {{-- ツリー形式 --}}
                             @php
                                 $tree_posts = App\Models\User\Bbses\BbsPost::setDepth($children_posts->where("thread_root_id", $post->id));
                             @endphp
-                            @foreach ($tree_posts as $post)
-                                @include('plugins.user.bbses.default.post_title_div_thread', ['view_post' => $post, 'current_post' => null, 'list_class' => 'mb-2'])
+                            @foreach ($tree_posts as $tree_post)
+                                @include('plugins.user.bbses.default.post_title_div_tree', ['view_post' => $tree_post, 'current_post' => null, 'list_class' => 'mb-2'])
                             @endforeach
                         @endif
                     </div>
@@ -93,7 +108,7 @@
             @endif
         @else
             {{-- 一覧での展開方法：すべて展開 or すべて閉じておく --}}
-            <div class="card mb-3">
+            <div class="card mb-3 {{$view_format_name}}">
                 <div class="card-header">
                     @include('plugins.user.bbses.default.post_title', ['view_post' => $post, 'current_post' => null, 'list_class' => ''])
                     <span class="float-right">
@@ -127,14 +142,14 @@
                                         @foreach ($children_posts->where("thread_root_id", $post->id) as $children_post)
                                             @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => null, 'list_class' => 'mb-2'])
                                         @endforeach
-                                    
+
                                     @else
-                                        {{-- スレッド形式 --}}
+                                        {{-- ツリー形式 --}}
                                         @php
                                             $tree_posts = App\Models\User\Bbses\BbsPost::setDepth($children_posts->where("thread_root_id", $post->id));
                                         @endphp
-                                        @foreach ($tree_posts as $post)
-                                            @include('plugins.user.bbses.default.post_title_div_thread', ['view_post' => $tree_post, 'current_post' => null, 'list_class' => 'mb-2'])
+                                        @foreach ($tree_posts as $tree_post)
+                                            @include('plugins.user.bbses.default.post_title_div_tree', ['view_post' => $tree_post, 'current_post' => null, 'list_class' => 'mb-2'])
                                         @endforeach
                                     @endif
                                 </div>
@@ -167,12 +182,12 @@
                                     </div>
                                 @endforeach
                             @else
-                                {{-- スレッド形式 --}}
+                                {{-- ツリー形式 --}}
                                 @php
                                     $tree_posts = App\Models\User\Bbses\BbsPost::setDepth($children_posts->where("thread_root_id", $post->id));
                                 @endphp
                                 @foreach ($tree_posts as $tree_post)
-                                    @include('plugins.user.bbses.default.post_thread', ['view_post' => $tree_post, 'bbs' => $bbs])
+                                    @include('plugins.user.bbses.default.post_tree', ['view_post' => $tree_post, 'bbs' => $bbs])
                                 @endforeach
                             @endif
                         @endif

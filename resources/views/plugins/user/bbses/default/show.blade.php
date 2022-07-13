@@ -18,7 +18,10 @@
     </div>
 @else
     {{-- 以下、post がある想定の処理 --}}
-
+{{-- ツリー形式のスタイル --}}
+@if ($plugin_frame->view_format == 1)
+    @include('plugins.user.bbses.default.tree_style')
+@endif
 <script type="text/javascript">
     // 編集、返信、承認ボタンのアクション
     function edit_action() {
