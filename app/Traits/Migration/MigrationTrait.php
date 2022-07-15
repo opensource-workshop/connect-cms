@@ -10066,12 +10066,11 @@ trait MigrationTrait
                 if (!empty($category_obj)) {
                     $category  = $category_obj->category_name;
                 }
-
-                $linklists_tsv .= str_replace(array("\r", "\n", "\t"), "", $nc2_linklist_link->title)              . "\t";
-                $linklists_tsv .= str_replace(array("\r", "\n", "\t"), "", $nc2_linklist_link->url)                . "\t";
-                $linklists_tsv .= str_replace(array("\r", "\n", "\t"), " ", $nc2_linklist_link->description)       . "\t";
-                $linklists_tsv .= $nc2_linklist_block->target_blank_flag                        . "\t";
-                $linklists_tsv .= $nc2_linklist_link->link_sequence                             . "\t";
+                $linklists_tsv .= str_replace(array("\r", "\n", "\t"), "", $nc2_linklist_link->title)                                           . "\t";
+                $linklists_tsv .= str_replace(array("\r", "\n", "\t"), "", $this->nc2MigrationPageIdToPermalink($nc2_linklist_link->url, false)). "\t";
+                $linklists_tsv .= str_replace(array("\r", "\n", "\t"), " ", $nc2_linklist_link->description)                                    . "\t";
+                $linklists_tsv .= $nc2_linklist_block->target_blank_flag                                                                        . "\t";
+                $linklists_tsv .= $nc2_linklist_link->link_sequence                                                                             . "\t";
                 $linklists_tsv .= $category;
 
                 // NC2のリンク切れチェック
@@ -13101,6 +13100,8 @@ trait MigrationTrait
         // HTML からa タグの 相対パスリンクを絶対パスに修正
         //$content = $this->changeFullPath($content, $nc2_page);
 
+        // ?page_id=XX置換
+        $content = $this->nc2MigrationPageIdToPermalink($content);
 
         // HTML content の保存
         if ($save_folder) {
@@ -13224,6 +13225,37 @@ trait MigrationTrait
 
         // パスを変更した記事を返す。
         return array($content, $export_paths);
+    }
+
+    /**
+     * NC2：?page_id=XXをpermalinkに置換
+     */
+    private function nc2MigrationPageIdToPermalink($content, $links = true)
+    {
+        // wysiwygのパターン
+        $pattern = '/\?page_id=(.*?)"/is';
+        $endstring = '"';
+        if (!$links) {
+            // リンクリスト等のパターン
+            $pattern = '/\?page_id=(.*?)$/is';
+            $endstring = '';
+        } 
+        if (preg_match_all($pattern, $content, $m)) {
+            $replace_key_vals = [];
+            $page_ids = $m[1];
+            foreach ($page_ids as $page_id) {
+                $nc2_page = Nc2Page::where('page_id', $page_id)->first();
+                if ($nc2_page) {
+                    $key = '?page_id='. $page_id. $endstring;
+                    $replace_key_vals[$key] = $nc2_page["permalink"]. $endstring;
+                }
+            }
+            $search = array_keys($replace_key_vals);
+            $replace = array_values($replace_key_vals);
+            $content = str_replace($search, $replace, $content);
+        }
+
+        return $content;
     }
 
     /**
