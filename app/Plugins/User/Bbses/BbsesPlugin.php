@@ -8,12 +8,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
+use App\Enums\BbsFrameConfig;
 use App\Enums\StatusType;
 use App\Enums\UserStatus;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Like;
+use App\Models\Core\FrameConfig;
 use App\Models\User\Bbses\Bbs;
 use App\Models\User\Bbses\BbsFrame;
 use App\Models\User\Bbses\BbsPost;
@@ -39,6 +41,11 @@ class BbsesPlugin extends UserPluginBase
        php artisan make:migration create_bbs_posts --create=bbs_posts
        php artisan make:migration create_bbs_frames --create=bbs_frames
     */
+
+    /**
+     * @var int 最大のツリー階層数
+     */
+    const max_tree_indents = 20;
 
     /* オブジェクト変数 */
 
@@ -671,6 +678,7 @@ class BbsesPlugin extends UserPluginBase
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'view_format'      => ['nullable', 'numeric'],
+            'tree_indents'      => ['nullable', 'numeric', 'max:' . self::max_tree_indents],
             'thread_sort_flag' => ['nullable', 'numeric'],
             'view_count'       => ['nullable', 'numeric'],
             'list_format'      => ['nullable', 'numeric'],
@@ -679,6 +687,7 @@ class BbsesPlugin extends UserPluginBase
         ]);
         $validator->setAttributeNames([
             'view_format'      => '表示形式',
+            'tree_indents'      => 'ツリー形式の階層数',
             'thread_sort_flag' => '根記事の表示順',
             'view_count'       => '表示件数',
             'list_format'      => '一覧での展開方法',
@@ -705,6 +714,11 @@ class BbsesPlugin extends UserPluginBase
                 'thread_caption'   => $request->thread_caption
             ],
         );
+
+        // フレーム設定保存
+        FrameConfig::saveFrameConfigs($request, $frame_id, BbsFrameConfig::getMemberKeys());
+        // 更新したので、frame_configsを設定しなおす
+        $this->refreshFrameConfigs();
 
         return;
     }
