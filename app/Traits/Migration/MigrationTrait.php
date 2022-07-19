@@ -4195,10 +4195,15 @@ trait MigrationTrait
             $bucket->timestamps = false;
             $bucket->save();
 
+            if ($ini['cabinet_base']['upload_max_size'] == "infinity") {
+                $upload_max_size = $ini['cabinet_base']['upload_max_size'];
+            } else {
+                $upload_max_size = intval($ini['cabinet_base']['upload_max_size']) / 1024;
+            }
             $cabinet = new Cabinet([
                 'bucket_id' => $bucket->id,
                 'name' => $cabinet_name,
-                'upload_max_size' => intval($ini['cabinet_base']['upload_max_size']) / 1024,
+                'upload_max_size' => $upload_max_size,
             ]);
             $cabinet->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'insert_login_id', null));
             $cabinet->created_name = $this->getArrayValue($ini, 'source_info', 'created_name', null);
@@ -10807,13 +10812,14 @@ trait MigrationTrait
             }
 
             // キャビネット設定
+            $upload_max_size = ($cabinet_manage->upload_max_size == "0") ? '"infinity"' : $cabinet_manage->upload_max_size;
             $ini = "";
             $ini .= "[cabinet_base]\n";
             $ini .= "cabinet_name = \"" . $cabinet_manage->cabinet_name . "\"\n";
             $ini .= "active_flag = " .  $cabinet_manage->active_flag . "\n";
             $ini .= "add_authority_id = " . $cabinet_manage->add_authority_id . "\n";
             $ini .= "cabinet_max_size = " . $cabinet_manage->cabinet_max_size . "\n";
-            $ini .= "upload_max_size = " . $cabinet_manage->upload_max_size . "\n";
+            $ini .= "upload_max_size = " . $upload_max_size . "\n";
 
             // NC2 情報
             $ini .= "\n";
@@ -13035,6 +13041,11 @@ trait MigrationTrait
         // 画像の中のcommon_download_main をエクスポートしたパスに変換する。
         $content = $this->nc2MigrationCommonDownloadMain($nc2_block, $save_folder, $ini_filename, $content, $img_srcs, '[upload_images]');
 
+        // cabinet_action_main_download をエクスポート形式に変換
+        // [upload_images]に追記したいので、nc2MigrationCommonDownloadMainの直後に実行
+        $content = $this->nc2MigrationCabinetActionMainDownload($save_folder, $ini_filename, $content, 'src');
+
+
         // CSS の img-fluid を自動で付ける最小の画像幅
         $img_fluid_min_width = $this->getMigrationConfig('wysiwyg', 'img_fluid_min_width', 0);
 
@@ -13096,6 +13107,10 @@ trait MigrationTrait
 
         // 添付ファイルの中のcommon_download_main をエクスポートしたパスに変換する。
         $content = $this->nc2MigrationCommonDownloadMain($nc2_block, $save_folder, $ini_filename, $content, $anchors, '[upload_files]');
+
+        // cabinet_action_main_download をエクスポート形式に変換
+        // [upload_files]に追記したいので、nc2MigrationCommonDownloadMainの直後に実行
+        $content = $this->nc2MigrationCabinetActionMainDownload($save_folder, $ini_filename, $content, 'href');
 
         // HTML からa タグの 相対パスリンクを絶対パスに修正
         //$content = $this->changeFullPath($content, $nc2_page);
@@ -13255,6 +13270,43 @@ trait MigrationTrait
             $content = str_replace($search, $replace, $content);
         }
 
+        return $content;
+    }
+
+    /**
+     * NC2：cabinet_action_main_download をエクスポート形式に変換
+     */
+    private function nc2MigrationCabinetActionMainDownload($save_folder, $ini_filename, $content, $attr='href')
+    {
+        //?action=cabinet_action_main_download&block_id=778&room_id=1&cabinet_id=9&file_id=2020&upload_id=5688
+        $pattern = '/'. $attr.'=".*?\?action=cabinet_action_main_download&.*?upload_id=([0-9]+)"/i';
+        if (preg_match_all($pattern, $content, $cabinet_downloads)) {
+            $cabinet_file_ids = $cabinet_downloads[1];
+            $replace_key_vals = [];
+            foreach ($cabinet_file_ids as $key => $file_id) {
+                // 移行したアップロードファイルをini ファイルから探す
+                if ($this->uploads_ini && array_key_exists('uploads', $this->uploads_ini) && array_key_exists($file_id, $this->uploads_ini['uploads']['upload'])) {
+                    $path = '../../uploads/' . $this->uploads_ini[$file_id]['temp_file_name'];
+                    $replace_href_pattern = '/'. $attr.'="(.*?\?action=cabinet_action_main_download&.*?upload_id='. $file_id.')"/i';
+                    if (preg_match_all($replace_href_pattern, $content, $m)) {
+                        $match_href = $m[1][0];
+                        $replace_key_vals[$key] = [ 'upload_id' => $file_id,
+                                                    'match_href' => $match_href,
+                                                    'path' => $path,
+                        ];
+                    }
+                }
+            }
+            // 既にnc2MigrationCommonDownloadMainでiniファイルに追記されているので、[upload_files]は空にする
+            $ini_text = '';
+            foreach ($replace_key_vals as $vals) {
+                $content = str_replace($vals['match_href'], $vals['path'], $content);
+                $ini_text .= 'upload[' . $vals['upload_id'] . "] = \"" . $vals['path'] . "\"\n";
+            }
+            if ($ini_filename) {
+                $this->storageAppend($save_folder . "/" . $ini_filename, $ini_text);
+            }
+        }
         return $content;
     }
 
