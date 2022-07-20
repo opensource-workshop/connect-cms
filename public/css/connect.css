@@ -178,14 +178,11 @@ a.cc-icon-external:after {
 }
 
 /* サイト名が長い場合に途切れないようにする */
-@media (max-width: 767px){
-    .cc-custom-brand{
-        overflow: hidden;
-        text-align: left;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        width: 240px;
-    }
+.cc-custom-brand{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
 }
 
 /*  Active
