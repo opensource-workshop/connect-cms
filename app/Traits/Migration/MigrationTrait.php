@@ -13310,7 +13310,7 @@ trait MigrationTrait
             // リンクリスト等のパターン
             $pattern = '/\?page_id=(.*?)$/is';
             $endstring = '';
-        } 
+        }
         if (preg_match_all($pattern, $content, $m)) {
             $replace_key_vals = [];
             $page_ids = $m[1];
@@ -13332,7 +13332,7 @@ trait MigrationTrait
     /**
      * NC2：cabinet_action_main_download をエクスポート形式に変換
      */
-    private function nc2MigrationCabinetActionMainDownload($save_folder, $ini_filename, $content, $attr='href')
+    private function nc2MigrationCabinetActionMainDownload($save_folder, $ini_filename, $content, $attr = 'href')
     {
         //?action=cabinet_action_main_download&block_id=778&room_id=1&cabinet_id=9&file_id=2020&upload_id=5688
         $pattern = '/'. $attr.'=".*?\?action=cabinet_action_main_download&.*?upload_id=([0-9]+)"/i';
