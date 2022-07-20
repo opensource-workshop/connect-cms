@@ -2874,7 +2874,7 @@ trait MigrationTrait
     }
 
     /**
-     * BucketsMailの管理者グループ仮コード, 仮nc2ルームIDからccグループID置換
+     * BucketsMailの管理者グループ仮コード, 仮nc2ルームID_role_nameからccグループID置換
      */
     private function replaceRoomIdToGroupId(?string $groups, int $admin_group_id, Collection $groups_mappings): string
     {
@@ -2886,10 +2886,10 @@ trait MigrationTrait
                     // 管理者グループ仮コード置換
                     $group = str_ireplace('X-管理者グループ', $admin_group_id, $group);
                 } else {
-                    // 仮nc2ルームID -> nc2ルームID
-                    $nc2_room_id = str_ireplace('X-', '', $group);
+                    // 仮nc2ルームID_role_name -> nc2ルームID_role_name
+                    $nc2_room_id_and_role_name = str_ireplace('X-', '', $group);
                     // nc2ルームID -> グループID置換
-                    $mapping = $groups_mappings->where('source_key', $nc2_room_id)->first();
+                    $mapping = $groups_mappings->where('source_key', $nc2_room_id_and_role_name)->first();
                     $group = $mapping ? $mapping->destination_key : null;
                 }
 
@@ -6149,25 +6149,45 @@ trait MigrationTrait
                 $notice_groups[] = 'X-管理者グループ';
             }
 
+            $room_id = $this->getArrayValue($blog_ini, 'source_info', 'room_id');
+
             if ($this->getArrayValue($blog_ini, 'blog_base', 'notice_group')) {
-                // グループ通知
+                // ルームグループ全てに、グループ通知
                 // ※ importGroups()は処理前のためnc2ルームグループなし。そのため仮コード(nc2ルームID)を登録してimportGroups()で置換する。
-                $notice_groups[] = $this->getArrayValue($blog_ini, 'source_info', 'room_id') ? 'X-' . $this->getArrayValue($blog_ini, 'source_info', 'room_id') : '';
+                if ($room_id) {
+                    $notice_groups[] = "X-{$room_id}_role_article_admin";
+                    $notice_groups[] = "X-{$room_id}_role_article";
+                    $notice_groups[] = "X-{$room_id}_role_reporter";
+                    $notice_groups[] = "X-{$room_id}_role_role_guest";
+                }
             }
 
             $notice_on = $this->getArrayValue($blog_ini, 'blog_base', 'notice_on') ? 1 : 0;
 
             if ($notice_on && $this->getArrayValue($blog_ini, 'blog_base', 'notice_moderator_group')) {
-                // グループ通知
-                $this->putMonitor(3, 'ブログのメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                // モデグループまで通知
+                // $this->putMonitor(3, 'ブログのメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                if ($room_id) {
+                    $notice_groups[] = "X-{$room_id}_role_article_admin";
+                    $notice_groups[] = "X-{$room_id}_role_article";
+                }
             }
             if ($notice_on && $this->getArrayValue($blog_ini, 'blog_base', 'notice_public_general_group')) {
                 // パブリック一般通知
-                $this->putMonitor(3, '公開エリアのブログのメール設定（一般まで）は、手動で「一般グループ」を作成して、追加で「一般グループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                // $this->putMonitor(3, '公開エリアのブログのメール設定（一般まで）は、手動で「一般グループ」を作成して、追加で「一般グループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                if ($room_id) {
+                    $notice_groups[] = "X-{$room_id}_role_article_admin";
+                    $notice_groups[] = "X-{$room_id}_role_article";
+                    $notice_groups[] = "X-{$room_id}_role_reporter";
+                }
             }
             if ($notice_on && $this->getArrayValue($blog_ini, 'blog_base', 'notice_public_moderator_group')) {
                 // パブリックモデレーター通知
-                $this->putMonitor(3, '公開エリアのブログのメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                // $this->putMonitor(3, '公開エリアのブログのメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                if ($room_id) {
+                    $notice_groups[] = "X-{$room_id}_role_article_admin";
+                    $notice_groups[] = "X-{$room_id}_role_article";
+                }
             }
 
             $approval_groups = [];
@@ -6561,25 +6581,45 @@ trait MigrationTrait
                 $notice_groups[] = 'X-管理者グループ';
             }
 
+            $room_id = $this->getArrayValue($bbs_ini, 'source_info', 'room_id');
+
             if ($this->getArrayValue($bbs_ini, 'blog_base', 'notice_group')) {
-                // グループ通知
+                // ルームグループ全てに、グループ通知
                 // ※ importGroups()は処理前のためnc2ルームグループなし。そのため仮コード(nc2ルームID)を登録してimportGroups()で置換する。
-                $notice_groups[] = $this->getArrayValue($bbs_ini, 'source_info', 'room_id') ? 'X-' . $this->getArrayValue($bbs_ini, 'source_info', 'room_id') : '';
+                if ($room_id) {
+                    $notice_groups[] = "X-{$room_id}_role_article_admin";
+                    $notice_groups[] = "X-{$room_id}_role_article";
+                    $notice_groups[] = "X-{$room_id}_role_reporter";
+                    $notice_groups[] = "X-{$room_id}_role_role_guest";
+                }
             }
 
             $notice_on = $this->getArrayValue($bbs_ini, 'blog_base', 'notice_on') ? 1 : 0;
 
             if ($notice_on && $this->getArrayValue($bbs_ini, 'blog_base', 'notice_moderator_group')) {
-                // グループ通知
-                $this->putMonitor(3, '掲示板のメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                // モデグループまで通知
+                // $this->putMonitor(3, '掲示板のメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                if ($room_id) {
+                    $notice_groups[] = "X-{$room_id}_role_article_admin";
+                    $notice_groups[] = "X-{$room_id}_role_article";
+                }
             }
             if ($notice_on && $this->getArrayValue($bbs_ini, 'blog_base', 'notice_public_general_group')) {
                 // パブリック一般通知
-                $this->putMonitor(3, '公開エリアの掲示板のメール設定（一般まで）は、手動で「一般グループ」を作成して、追加で「一般グループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                // $this->putMonitor(3, '公開エリアの掲示板のメール設定（一般まで）は、手動で「一般グループ」を作成して、追加で「一般グループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                if ($room_id) {
+                    $notice_groups[] = "X-{$room_id}_role_article_admin";
+                    $notice_groups[] = "X-{$room_id}_role_article";
+                    $notice_groups[] = "X-{$room_id}_role_reporter";
+                }
             }
             if ($notice_on && $this->getArrayValue($bbs_ini, 'blog_base', 'notice_public_moderator_group')) {
                 // パブリックモデレーター通知
-                $this->putMonitor(3, '公開エリアの掲示板のメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                // $this->putMonitor(3, '公開エリアの掲示板のメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                if ($room_id) {
+                    $notice_groups[] = "X-{$room_id}_role_article_admin";
+                    $notice_groups[] = "X-{$room_id}_role_article";
+                }
             }
 
             // array_filter()でarrayの空要素削除
@@ -7077,8 +7117,8 @@ trait MigrationTrait
             $mail_send = $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'mail_send') ? 1 : 0;
 
             if ($mail_send && $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'notice_all_moderator_group')) {
-                // グループ通知
-                $this->putMonitor(3, '施設予約のメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                // 全モデレータユーザ通知
+                $this->putMonitor(3, '施設予約のメール設定（モデレータまで）は、手動で「全モデレータグループ」を作成して、追加で「全モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
             }
 
             // 投稿通知
@@ -9292,12 +9332,12 @@ trait MigrationTrait
             // mail_authority
             // 1: ゲストまで 　　→ パブ通知は、「全ユーザに通知」
             // 　※ 掲示板-パブリック（パブサブも同様）： ⇒ 「全ユーザに通知」
-            // 　※ 掲示板-グループ：　　　　　　　　　　 ⇒ ルームグループに、グループ通知
+            // 　※ 掲示板-グループ：　　　　　　　　　　 ⇒ ルームグループ全てに、グループ通知
             // 2: 一般まで 　　　→ グループは、グループ通知
-            // 　※ 掲示板-パブリック（パブサブも同様）： ⇒ (手動)でグループ作って、グループ通知　⇒ 移行で警告表示
-            // 　※ 掲示板-グループ：　 　　　　　　　　　⇒ ルームグループに、グループ通知
-            // 3: モデレータまで → (手動)でグループ作って、グループ通知　⇒ 移行で警告表示
-            // 4: 主担のみ 　　　→グループ管理者は、「管理者グループ」通知
+            // 　※ 掲示板-パブリック（パブサブも同様）： ⇒ パブグループ_編集者まで、グループ通知
+            // 　※ 掲示板-グループ：　 　　　　　　　　　⇒ ルームグループ全てに、グループ通知
+            // 3: モデレータまで → モデグループまで、グループ通知
+            // 4: 主担のみ 　　　→ グループ管理者は、「管理者グループ」通知
             $notice_everyone = 0;
             $notice_admin_group = 0;
             $notice_moderator_group = 0;
