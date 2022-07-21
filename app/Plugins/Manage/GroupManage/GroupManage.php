@@ -230,7 +230,7 @@ class GroupManage extends ManagePluginBase
     {
         // グループユーザー参加
         $group_user = GroupUser::updateOrCreate(
-            ['group_id' => $id, 'user_id' => $id],
+            ['group_id' => $id, 'user_id' => $request->user_id],
             [
                 'group_id' => $id,
                 'user_id' => $request->user_id,
