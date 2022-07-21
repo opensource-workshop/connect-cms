@@ -89,6 +89,46 @@
 @endif
 
 @if (isset($id) && $id)
+
+    {{-- ユーザーのグループ脱退 --}}
+    <form id="remove-user" name="removeuser" method="POST" action="{{url('/manage/group/removeUser/')}}/{{$id}}">
+        {{csrf_field()}}
+        <input type="hidden" id="user_id" name="user_id" value="">
+    </form>
+    <script>
+        function removeUser(user_id, user_name) {
+            if (window.confirm(user_name + "がグループ不参加になります。よろしいですか？")) {
+                document.getElementById("user_id").value = user_id;
+                document.removeuser.action = document.removeuser.action;
+                document.removeuser.submit();
+            }
+        }
+    </script>
+
+    {{-- ユーザーのグループ参加 --}}
+    <form id="join-user" name="joinuser" method="POST" action="{{url('/manage/group/joinUser/')}}/{{$id}}">
+        {{csrf_field()}}
+        <input type="hidden" id="user_id" name="user_id" value="">
+    </form>
+
+    <div class="card mt-3" id="list">
+        <div class="card-header">ユーザ参加</div>
+        <div class="card-body">
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <button class="btn btn-primary" type="button" v-on:click="getUsers()">ユーザ検索</button>
+                </div>
+                <input type="text" class="form-control" placeholder="ユーザ名で検索できます" v-model="keyword">
+            </div>
+            <ul class="list-group" id="users">
+                <li class="list-group-item" v-for="user in users">
+                    <button class="btn btn-primary btn-sm" v-on:click="joinUser(user.id, user.name)">参加</button>
+                    <span>@{{ user.name }}</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
     <div class="card mt-3">
         <div class="card-header">【{{$group->name}}】グループ参加ユーザ一覧</div>
         <div class="card-body">
@@ -101,6 +141,7 @@
                             {{-- <th nowrap>グループ権限</th> --}}
                             <th nowrap>作成日</th>
                             <th nowrap>更新日</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -110,6 +151,11 @@
                                 {{-- <td>{{GroupType::getDescription($group_user->group_role)}}</td> --}}
                                 <td>{{$group_user->created_at->format('Y/m/d')}}</td>
                                 <td>{{$group_user->updated_at->format('Y/m/d')}}</td>
+                                <td>
+                                    <button type="button" class="btn btn-danger btn-sm" onclick="removeUser({{$group_user->user_id}}, '{{$group_user->user_name}}');">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -124,5 +170,44 @@
             @endif
         </div>
     </div>
+
+    <script>
+        new Vue({
+            el: '#list',
+            data: {
+                keyword: '',
+                users: [],
+            },
+            methods: {
+                // ユーザーを取得する
+                getUsers: function() {
+                    let self = this;
+
+                    if (self.keyword === '') {
+                        self.users = [];
+                        return;
+                    }
+
+                    //  非同期通信でユーザ取得
+                    axios.get(
+                            "{{ url('/') }}/manage/group/notJoinedUsers?user_name=" + self.keyword + '&group_id=' + {{$id}})
+                        .then(function(res) {
+                            self.users = res.data;
+                        })
+                        .catch(function(error) {
+                            console.log(error)
+                        });
+                },
+                // ユーザーをグループ参加させる
+                joinUser: function(user_id, user_name) {
+                    if (window.confirm(user_name + "がグループに参加します。よろしいですか？")) {
+                        document.getElementById("user_id").value = user_id;
+                        document.removeuser.action = document.joinuser.action;
+                        document.removeuser.submit();
+                    }
+                }
+            }
+        })
+    </script>
 @endif
 @endsection
