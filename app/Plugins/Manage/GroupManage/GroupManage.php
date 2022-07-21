@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Plugins\Manage\GroupManage;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
