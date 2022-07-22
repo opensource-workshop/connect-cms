@@ -153,7 +153,7 @@
                                 <td>{{$group_user->updated_at->format('Y/m/d')}}</td>
                                 <td>
                                     <button type="button" class="btn btn-danger btn-sm" onclick="removeUser({{$group_user->user_id}}, '{{$group_user->user_name}}');">
-                                        <i class="fas fa-minus"></i>
+                                        <i class="fas fa-trash-alt"></i>
                                     </button>
                                 </td>
                             </tr>
