@@ -16,6 +16,10 @@
         {{-- 機能選択タブ --}}
         @include('plugins.manage.page.page_manage_tab')
     </div>
+
+    {{-- ページ変更関連タブ --}}
+    @include('plugins.manage.page.page_edit_tab')
+
     <div class="card-body">
 
         {{-- 編集画面(入力フォーム) --}}
