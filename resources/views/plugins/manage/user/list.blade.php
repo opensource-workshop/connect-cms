@@ -198,9 +198,9 @@ use App\Models\Core\UsersColumns;
                             <div class="form-group row">
                                 <label class="col-md-3 text-md-right">ゲスト</label>
                                 <div class="col-md-9">
-                                    <div class="custom-control custom-checkbox">
+                                    <div class="custom-control custom-control-inline custom-checkbox">
                                         <input name="user_search_condition[guest]" value="1" type="checkbox" class="custom-control-input" id="guest"@if(Session::get('user_search_condition.guest') == "1") checked @endif>
-                                        <label class="custom-control-label" for="guest">ゲスト</label>
+                                        <label class="custom-control-label" for="guest">ゲスト</label><h6><span class="badge badge-secondary ml-1">ゲ</span></h6>
                                     </div>
                                     <small class="form-text text-muted">
                                         ※ 「コンテンツ権限」「管理権限」「ゲスト」の中から複数チェックを付けると、いずれかに該当する内容で絞り込みます。（OR検索）<br />
@@ -326,20 +326,7 @@ use App\Models\Core\UsersColumns;
                         <td>@include('plugins.manage.user.list_include_value')</td>
                     @endforeach
                     <td nowrap>
-                        @isset($user->view_user_roles)
-                        <h6>
-                            {!!$user->getRoleStringTag()!!}
-{{--
-                        @foreach($user->view_user_roles as $view_user_role)
-                            @if ($view_user_role->role_name == 'role_article_admin')<span class="badge badge-danger">コ</span> @endif
-                            @if ($view_user_role->role_name == 'role_arrangement')<span class="badge badge-primary">プ</span> @endif
-                            @if ($view_user_role->role_name == 'role_article')<span class="badge badge-success">モ</span> @endif
-                            @if ($view_user_role->role_name == 'role_approval')<span class="badge badge-warning">承</span> @endif
-                            @if ($view_user_role->role_name == 'role_reporter')<span class="badge badge-info">編</span> @endif
-                        @endforeach
---}}
-                        </h6>
-                        @endif
+                        <h6>{!!$user->getRoleStringTag()!!}</h6>
                     </td>
                     <td>
                         {{$user->convertLoopValue('user_original_roles', 'value')}}
