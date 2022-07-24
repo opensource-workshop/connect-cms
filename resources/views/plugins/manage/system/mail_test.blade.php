@@ -21,6 +21,17 @@
         {{-- 共通エラーメッセージ 呼び出し --}}
         @include('plugins.common.errors_form_line')
 
+        @if ($errors && $errors->has('mail-setting'))
+            <div class="card border-danger">
+                <div class="card-body">
+                    <div class="text-danger">
+                        <i class="fas fa-exclamation-triangle"></i> メール設定エラーのため、メール設定を見直してください。<br />
+                        {{$errors->first('mail-setting')}}
+                    </div>
+                </div>
+            </div>
+        @endif
+
         {{-- 登録後メッセージ表示 --}}
         @include('plugins.common.flash_message')
 
@@ -42,21 +53,26 @@
             <div class="form-group row">
                 <label class="col-md-3 col-form-label text-md-right">宛先メールアドレス</label>
                 <div class="col">
-                    <input type="text" name="email" value="{{Auth::user()->email}}" class="form-control">
+                    <input type="text" name="email" value="{{old('email', Auth::user()->email)}}" class="form-control @if ($errors->has('email')) border-danger @endif">
+                    @include('common.errors_inline', ['name' => 'email'])
                 </div>
             </div>
 
             <div class="form-group row">
                 <label class="col-md-3 col-form-label text-md-right">件名</label>
                 <div class="col">
-                    <input type="text" name="subject" value="件名" class="form-control">
+                    <input type="text" name="subject" value="{{old('subject', '件名')}}" class="form-control @if ($errors->has('subject')) border-danger @endif">
+                    @include('common.errors_inline', ['name' => 'subject'])
                 </div>
             </div>
 
             <div class="form-group row">
                 <label class="col-md-3 col-form-label text-md-right pt-0">本文</label>
                 <div class="col-md-9">
-                    <textarea name="body" class="form-control" rows=8>本文</textarea>
+                    <div @if ($errors->has("body")) class="border border-danger" @endif>
+                        <textarea name="body" class="form-control" rows=8>{{old('body', '本文')}}</textarea>
+                    </div>
+                    @include('common.errors_inline', ['name' => 'body'])
                 </div>
             </div>
 

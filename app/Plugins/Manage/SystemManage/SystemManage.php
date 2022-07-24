@@ -269,14 +269,34 @@ class SystemManage extends ManagePluginBase
      */
     public function sendMailTest($request, $id = null)
     {
-        // [TODO] toメールの必須validate, メールアドレス形式チェック
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'email'        => ['required', 'email'],
+        ]);
+        $validator->setAttributeNames([
+            'email'        => '宛先メールアドレス',
+        ]);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
 
         // メールオプション
         $mail_options = ['subject' => $request->subject, 'template' => 'mail.send'];
 
-        // [TODO] メール設定不備だと例外が発生する。キャッチして、エラー表示できるか。
-        // メール送信（Trait のメソッド）
-        $this->sendMail($request->email, $mail_options, ['content' => $request->body], 'SystemManage');
+        try {
+            // メール送信（Trait のメソッド）
+            $this->sendMail($request->email, $mail_options, ['content' => $request->body], 'SystemManage');
+        } catch (\Swift_TransportException $e) {
+            // メール設定エラー
+            $validator->errors()->add('mail-setting', $e->getMessage());
+            return redirect()->back()->withErrors($validator)->withInput();
+        } catch (\Swift_RfcComplianceException $e) {
+            // emailエラー. 基本ここには入らない想定
+            $validator->errors()->add('email', $e->getMessage());
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
 
         return redirect("/manage/system/mailTest")->with('flash_message', 'メール送信しました。');
     }
