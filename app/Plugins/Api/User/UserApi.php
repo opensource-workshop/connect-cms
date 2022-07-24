@@ -12,6 +12,7 @@ use App\Models\Core\UsersRoles;
 
 use App\Traits\ConnectCommonTrait;
 use App\Plugins\Api\ApiPluginBase;
+use App\Utilities\User\UserUtils;
 
 /**
  * ユーザ関係APIクラス
@@ -40,7 +41,7 @@ class UserApi extends ApiPluginBase
         $user = User::where('userid', $userid)->first();
         if (empty($user)) {
             // ユーザがいない場合は、外部認証ユーザを探しに行く。
-            $user_info = $this->getOtherAuthUser($request, $userid);
+            $user_info = UserUtils::getOtherAuthUser($request, $userid);
             if ($user_info['code'] == 200) {
                 $ret = array('code' => 200, 'message' => '', 'userid' => $userid, 'name' => $user_info['name']);
                 return $this->encodeJson($ret, $request);

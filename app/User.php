@@ -89,7 +89,7 @@ class User extends Authenticatable
     {
         // 権限データがあるか確認
         if (empty($this->view_user_roles)) {
-            return "";
+            return '<span class="badge badge-secondary">ゲ</span> ';
         }
 
         // コンテンツ権限

@@ -694,6 +694,12 @@ trait MigrationTrait
      */
     private function checkDeadLinkNc2($url, $nc2_module_name = null, $nc2_block = null)
     {
+        // リンクチェックしない場合は返却
+        $check_deadlink_nc2 = $this->getMigrationConfig('basic', 'check_deadlink_nc2', '');
+        if (empty($check_deadlink_nc2)) {
+            return;
+        }
+
         $scheme = parse_url($url, PHP_URL_SCHEME);
 
         if (in_array($scheme, ['http', 'https'])) {
@@ -2708,8 +2714,9 @@ trait MigrationTrait
             // ini_file の解析
             $group_ini = parse_ini_file($group_ini_path, true);
 
+            $source_key = $group_ini['source_info']['room_id'] . '_' . $group_ini['group_base']['role_name'];
             // マッピングテーブルの取得
-            $mapping = MigrationMapping::where('target_source_table', 'groups')->where('source_key', $group_ini['source_info']['room_id'])->first();
+            $mapping = MigrationMapping::where('target_source_table', 'groups')->where('source_key', $source_key)->first();
 
             // マッピングテーブルを確認して、追加か更新の処理を分岐
             if (empty($mapping)) {
@@ -2722,7 +2729,7 @@ trait MigrationTrait
                 // マッピングテーブルの追加
                 $mapping = MigrationMapping::create([
                     'target_source_table'  => 'groups',
-                    'source_key'           => $group_ini['source_info']['room_id'],
+                    'source_key'           => $source_key,
                     'destination_key'      => $group->id,
                 ]);
             } else {
@@ -2747,19 +2754,30 @@ trait MigrationTrait
                 );
             }
 
-            // page_roles 作成（元 page_id -> マッピング -> 新フォルダ -> マッピング -> 新 page_id）
-            $source_page = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $group_ini['source_info']['room_id'])->first();
-            if (empty($source_page)) {
-                continue;
+            $base_group_flag = $this->getArrayValue($group_ini, 'group_base', 'base_group_flag', 0);
+            if ($base_group_flag == 1) {
+                // パブリックスペース的なpageは、nc2にないので直でページ指定
+                $top_page = Page::orderBy('_lft', 'asc')->first();
+
+                $page_role = PageRole::updateOrCreate(
+                    ['page_id' => $top_page->id, 'group_id' => $group->id],
+                    ['page_id' => $top_page->id, 'group_id' => $group->id, 'target' => 'base', 'role_name' => $group_ini['group_base']['role_name'], 'role_value' => 1]
+                );
+            } else {
+                // page_roles 作成（元 page_id -> マッピング -> 新フォルダ -> マッピング -> 新 page_id）
+                $source_page = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $group_ini['source_info']['room_id'])->first();
+                if (empty($source_page)) {
+                    continue;
+                }
+                $destination_page = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $source_page->destination_key)->first();
+                if (empty($destination_page)) {
+                    continue;
+                }
+                $page_role = PageRole::updateOrCreate(
+                    ['page_id' => $destination_page->destination_key, 'group_id' => $group->id],
+                    ['page_id' => $destination_page->destination_key, 'group_id' => $group->id, 'target' => 'base', 'role_name' => $group_ini['group_base']['role_name'], 'role_value' => 1]
+                );
             }
-            $destination_page = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $source_page->destination_key)->first();
-            if (empty($destination_page)) {
-                continue;
-            }
-            $page_role = PageRole::updateOrCreate(
-                ['page_id' => $destination_page->destination_key, 'group_id' => $group->id],
-                ['page_id' => $destination_page->destination_key, 'group_id' => $group->id, 'target' => 'base', 'role_name' => 'role_reporter', 'role_value' => 1]
-            );
         }
 
         // ※ 上ループで管理者グループを登録しようと組んだが、なぜかgroup->idがズレるため、上ループ後に管理グループ追加
@@ -2856,7 +2874,7 @@ trait MigrationTrait
     }
 
     /**
-     * BucketsMailの管理者グループ仮コード, 仮nc2ルームIDからccグループID置換
+     * BucketsMailの管理者グループ仮コード, 仮nc2ルームID_role_nameからccグループID置換
      */
     private function replaceRoomIdToGroupId(?string $groups, int $admin_group_id, Collection $groups_mappings): string
     {
@@ -2868,10 +2886,10 @@ trait MigrationTrait
                     // 管理者グループ仮コード置換
                     $group = str_ireplace('X-管理者グループ', $admin_group_id, $group);
                 } else {
-                    // 仮nc2ルームID -> nc2ルームID
-                    $nc2_room_id = str_ireplace('X-', '', $group);
+                    // 仮nc2ルームID_role_name -> nc2ルームID_role_name
+                    $nc2_room_id_and_role_name = str_ireplace('X-', '', $group);
                     // nc2ルームID -> グループID置換
-                    $mapping = $groups_mappings->where('source_key', $nc2_room_id)->first();
+                    $mapping = $groups_mappings->where('source_key', $nc2_room_id_and_role_name)->first();
                     $group = $mapping ? $mapping->destination_key : null;
                 }
 
@@ -4189,10 +4207,15 @@ trait MigrationTrait
             $bucket->timestamps = false;
             $bucket->save();
 
+            if ($ini['cabinet_base']['upload_max_size'] == "infinity") {
+                $upload_max_size = $ini['cabinet_base']['upload_max_size'];
+            } else {
+                $upload_max_size = intval($ini['cabinet_base']['upload_max_size']) / 1024;
+            }
             $cabinet = new Cabinet([
                 'bucket_id' => $bucket->id,
                 'name' => $cabinet_name,
-                'upload_max_size' => intval($ini['cabinet_base']['upload_max_size']) / 1024,
+                'upload_max_size' => $upload_max_size,
             ]);
             $cabinet->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'insert_login_id', null));
             $cabinet->created_name = $this->getArrayValue($ini, 'source_info', 'created_name', null);
@@ -6126,25 +6149,45 @@ trait MigrationTrait
                 $notice_groups[] = 'X-管理者グループ';
             }
 
+            $room_id = $this->getArrayValue($blog_ini, 'source_info', 'room_id');
+
             if ($this->getArrayValue($blog_ini, 'blog_base', 'notice_group')) {
-                // グループ通知
+                // ルームグループ全てに、グループ通知
                 // ※ importGroups()は処理前のためnc2ルームグループなし。そのため仮コード(nc2ルームID)を登録してimportGroups()で置換する。
-                $notice_groups[] = $this->getArrayValue($blog_ini, 'source_info', 'room_id') ? 'X-' . $this->getArrayValue($blog_ini, 'source_info', 'room_id') : '';
+                if ($room_id) {
+                    $notice_groups[] = "X-{$room_id}_role_article_admin";
+                    $notice_groups[] = "X-{$room_id}_role_article";
+                    $notice_groups[] = "X-{$room_id}_role_reporter";
+                    $notice_groups[] = "X-{$room_id}_role_role_guest";
+                }
             }
 
             $notice_on = $this->getArrayValue($blog_ini, 'blog_base', 'notice_on') ? 1 : 0;
 
             if ($notice_on && $this->getArrayValue($blog_ini, 'blog_base', 'notice_moderator_group')) {
-                // グループ通知
-                $this->putMonitor(3, 'ブログのメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                // モデグループまで通知
+                // $this->putMonitor(3, 'ブログのメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                if ($room_id) {
+                    $notice_groups[] = "X-{$room_id}_role_article_admin";
+                    $notice_groups[] = "X-{$room_id}_role_article";
+                }
             }
             if ($notice_on && $this->getArrayValue($blog_ini, 'blog_base', 'notice_public_general_group')) {
                 // パブリック一般通知
-                $this->putMonitor(3, '公開エリアのブログのメール設定（一般まで）は、手動で「一般グループ」を作成して、追加で「一般グループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                // $this->putMonitor(3, '公開エリアのブログのメール設定（一般まで）は、手動で「一般グループ」を作成して、追加で「一般グループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                if ($room_id) {
+                    $notice_groups[] = "X-{$room_id}_role_article_admin";
+                    $notice_groups[] = "X-{$room_id}_role_article";
+                    $notice_groups[] = "X-{$room_id}_role_reporter";
+                }
             }
             if ($notice_on && $this->getArrayValue($blog_ini, 'blog_base', 'notice_public_moderator_group')) {
                 // パブリックモデレーター通知
-                $this->putMonitor(3, '公開エリアのブログのメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                // $this->putMonitor(3, '公開エリアのブログのメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                if ($room_id) {
+                    $notice_groups[] = "X-{$room_id}_role_article_admin";
+                    $notice_groups[] = "X-{$room_id}_role_article";
+                }
             }
 
             $approval_groups = [];
@@ -6538,25 +6581,45 @@ trait MigrationTrait
                 $notice_groups[] = 'X-管理者グループ';
             }
 
+            $room_id = $this->getArrayValue($bbs_ini, 'source_info', 'room_id');
+
             if ($this->getArrayValue($bbs_ini, 'blog_base', 'notice_group')) {
-                // グループ通知
+                // ルームグループ全てに、グループ通知
                 // ※ importGroups()は処理前のためnc2ルームグループなし。そのため仮コード(nc2ルームID)を登録してimportGroups()で置換する。
-                $notice_groups[] = $this->getArrayValue($bbs_ini, 'source_info', 'room_id') ? 'X-' . $this->getArrayValue($bbs_ini, 'source_info', 'room_id') : '';
+                if ($room_id) {
+                    $notice_groups[] = "X-{$room_id}_role_article_admin";
+                    $notice_groups[] = "X-{$room_id}_role_article";
+                    $notice_groups[] = "X-{$room_id}_role_reporter";
+                    $notice_groups[] = "X-{$room_id}_role_role_guest";
+                }
             }
 
             $notice_on = $this->getArrayValue($bbs_ini, 'blog_base', 'notice_on') ? 1 : 0;
 
             if ($notice_on && $this->getArrayValue($bbs_ini, 'blog_base', 'notice_moderator_group')) {
-                // グループ通知
-                $this->putMonitor(3, '掲示板のメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                // モデグループまで通知
+                // $this->putMonitor(3, '掲示板のメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                if ($room_id) {
+                    $notice_groups[] = "X-{$room_id}_role_article_admin";
+                    $notice_groups[] = "X-{$room_id}_role_article";
+                }
             }
             if ($notice_on && $this->getArrayValue($bbs_ini, 'blog_base', 'notice_public_general_group')) {
                 // パブリック一般通知
-                $this->putMonitor(3, '公開エリアの掲示板のメール設定（一般まで）は、手動で「一般グループ」を作成して、追加で「一般グループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                // $this->putMonitor(3, '公開エリアの掲示板のメール設定（一般まで）は、手動で「一般グループ」を作成して、追加で「一般グループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                if ($room_id) {
+                    $notice_groups[] = "X-{$room_id}_role_article_admin";
+                    $notice_groups[] = "X-{$room_id}_role_article";
+                    $notice_groups[] = "X-{$room_id}_role_reporter";
+                }
             }
             if ($notice_on && $this->getArrayValue($bbs_ini, 'blog_base', 'notice_public_moderator_group')) {
                 // パブリックモデレーター通知
-                $this->putMonitor(3, '公開エリアの掲示板のメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                // $this->putMonitor(3, '公開エリアの掲示板のメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                if ($room_id) {
+                    $notice_groups[] = "X-{$room_id}_role_article_admin";
+                    $notice_groups[] = "X-{$room_id}_role_article";
+                }
             }
 
             // array_filter()でarrayの空要素削除
@@ -7054,8 +7117,8 @@ trait MigrationTrait
             $mail_send = $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'mail_send') ? 1 : 0;
 
             if ($mail_send && $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'notice_all_moderator_group')) {
-                // グループ通知
-                $this->putMonitor(3, '施設予約のメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                // 全モデレータユーザ通知
+                $this->putMonitor(3, '施設予約のメール設定（モデレータまで）は、手動で「全モデレータグループ」を作成して、追加で「全モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
             }
 
             // 投稿通知
@@ -7781,10 +7844,10 @@ trait MigrationTrait
                     fclose($fp);
                     //echo $this->content_disposition;
 
-                    //getimagesize関数で画像情報を取得する
-                    list($img_width, $img_height, $mime_type, $attr) = getimagesize($saveStragePath);
+                    //@getimagesize関数で画像情報を取得する
+                    list($img_width, $img_height, $mime_type, $attr) = @getimagesize($saveStragePath);
 
-                    //list関数の第3引数にはgetimagesize関数で取得した画像のMIMEタイプが格納されているので条件分岐で拡張子を決定する
+                    //list関数の第3引数には@getimagesize関数で取得した画像のMIMEタイプが格納されているので条件分岐で拡張子を決定する
                     switch ($mime_type) {
                         case IMAGETYPE_JPEG:    // jpegの場合
                             //拡張子の設定
@@ -8985,15 +9048,20 @@ trait MigrationTrait
                 }
             }
 
-            if ($nc2_user->role_authority_id == 1) {
+            if ($nc2_user->role_authority_id == 1) { // 1:システム管理者
                 $users_ini .= "users_roles_manage = \"admin_system\"\n";
                 $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
-            } elseif ($nc2_user->role_authority_id == 2) {
+            } elseif ($nc2_user->role_authority_id == 2) { // 2:主担
                 $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
-            } elseif ($nc2_user->role_authority_id == 3) {
+            } elseif ($nc2_user->role_authority_id == 3) { // 3:モデレータ
                 $users_ini .= "users_roles_base   = \"role_article\"\n";
-            } elseif ($nc2_user->role_authority_id == 4) {
+            } elseif ($nc2_user->role_authority_id == 4) { // 4:一般
                 $users_ini .= "users_roles_base   = \"role_reporter\"\n";
+            } elseif ($nc2_user->role_authority_id == 6) { // 6:事務局（デフォルト）
+                $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
+            } elseif ($nc2_user->role_authority_id == 7) { // 7:管理者（デフォルト）
+                $users_ini .= "users_roles_manage = \"admin_system\"\n";
+                $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
             }
         }
 
@@ -9094,11 +9162,14 @@ trait MigrationTrait
         */
 
         // NC2 ルームの取得
-        // 「すべての会員をデフォルトで参加させる」はグループにしないので対象外。'default_entry_flag'== 0
-        $nc2_rooms_query = Nc2Page::where('space_type', 2)
-                            ->whereColumn('page_id', 'room_id')
-                            ->whereIn('thread_num', [1, 2])
-                            ->where('default_entry_flag', 0);
+        $nc2_rooms_query = Nc2Page::whereIn('space_type', [Nc2Page::space_type_group, Nc2Page::space_type_public])
+            ->whereColumn('page_id', 'room_id')
+            ->whereIn('thread_num', [1, 2])
+            ->orWhere(function ($query) {
+                $query->whereColumn('page_id', 'room_id')
+                    ->Where('room_id', 1);   // パブリックスペース
+            });
+
         // 対象外ページ指定の有無
         if ($this->getMigrationConfig('pages', 'nc2_export_ommit_page_ids')) {
             $nc2_rooms_query->whereNotIn('page_id', $this->getMigrationConfig('pages', 'nc2_export_ommit_page_ids'));
@@ -9112,30 +9183,71 @@ trait MigrationTrait
 
         // グループをループ
         foreach ($nc2_rooms as $nc2_room) {
-            // ini ファイル用変数
-            $groups_ini  = "[group_base]\n";
-            $groups_ini .= "name = \"" . $nc2_room->page_name . "\"\n";
-            $groups_ini .= "\n";
-            $groups_ini .= "[source_info]\n";
-            $groups_ini .= "room_id = " . $nc2_room->room_id . "\n";
-            $groups_ini .= "\n";
-            $groups_ini .= "[users]\n";
-
-            // NC2 参加ユーザの取得
-            $nc2_pages_users_links = Nc2PageUserLink::select('pages_users_link.*', 'users.login_id')
-                                                    ->join('users', 'users.user_id', 'pages_users_link.user_id')
-                                                    ->where('room_id', $nc2_room->room_id)
-                                                    ->orderBy('room_id')
-                                                    ->orderBy('users.role_authority_id')
-                                                    ->orderBy('users.insert_time')
-                                                    ->get();
-
-            foreach ($nc2_pages_users_links as $nc2_pages_users_link) {
-                $groups_ini .= "user[\"" . $nc2_pages_users_link->login_id . "\"] = " . $nc2_pages_users_link->role_authority_id . "\n";
+            if ($nc2_room->space_type == Nc2Page::space_type_group && $nc2_room->default_entry_flag == 1) {
+                //「すべての会員をデフォルトで参加させる」はグループにしないので対象外。'default_entry_flag'== 0
+                continue;
             }
 
-            // グループデータの出力
-            $this->storagePut($this->getImportPath('groups/group_') . $this->zeroSuppress($nc2_room->room_id) . '.ini', $groups_ini);
+            //             (public)role_authority_id, (group)role_authority_id
+            // _主担      = 2,    2
+            // _モデレータ = 3,   3
+            // _一般      = 4,    4
+            // _ゲスト    = null, 5
+            // 不参加     = なし, null
+
+            // NC2 参加ユーザの取得（puglicのゲストはデータが存在しないため、pages_users_linkは外部結合で取得）
+            $nc2_pages_users_links = Nc2User::select('pages_users_link.*', 'users.login_id')
+                ->leftJoin('pages_users_link', function ($join) use ($nc2_room) {
+                    $join->on('pages_users_link.user_id', 'users.user_id')
+                        ->where('pages_users_link.room_id', $nc2_room->room_id);
+                })
+                ->orderBy('pages_users_link.room_id')
+                ->orderBy('users.role_authority_id')
+                ->orderBy('users.insert_time')
+                ->get();
+
+            $role_authority_ids = [
+                2 => ['name' =>'_コンテンツ管理者', 'role_name' =>'role_article_admin'],
+                3 => ['name' =>'_モデレータ',      'role_name' =>'role_article'],
+                4 => ['name' =>'_編集者',          'role_name' =>'role_reporter'],
+                5 => ['name' =>'_ゲスト',          'role_name' =>'role_guest'],
+            ];
+
+            foreach ($role_authority_ids as $role_authority_id => $names) {
+
+                if ($nc2_room->space_type == Nc2Page::space_type_public && $role_authority_id == 5) {
+                    // puglicのゲストはデータが存在しないため、nullで検索（グループのゲストはデータ存在する）
+                    $where_role_authority_id = null;
+                } else {
+                    $where_role_authority_id = $role_authority_id;
+                }
+
+                $nc2_pages_users_links_subgroup = $nc2_pages_users_links->where('role_authority_id', $where_role_authority_id);
+                if ($nc2_pages_users_links_subgroup->isEmpty()) {
+                    // ユーザいないグループは作らない。
+                    continue;
+                }
+
+                // ini ファイル用変数
+                $groups_ini  = "[group_base]\n";
+                $groups_ini .= "name = \"" . $nc2_room->page_name . $names['name'] . "\"\n";
+                $groups_ini .= "role_name = \"" . $names['role_name'] . "\"\n";
+                if ($nc2_room->room_id == 1) {
+                    $groups_ini .= "base_group_flag = 1\n";
+                }
+                $groups_ini .= "\n";
+                $groups_ini .= "[source_info]\n";
+                $groups_ini .= "room_id = " . $nc2_room->room_id . "\n";
+                $groups_ini .= "\n";
+                $groups_ini .= "[users]\n";
+
+                foreach ($nc2_pages_users_links_subgroup as $nc2_pages_users_link) {
+                    $groups_ini .= "user[\"" . $nc2_pages_users_link->login_id . "\"] = " . $nc2_pages_users_link->role_authority_id . "\n";
+                }
+
+                // グループデータの出力
+                $this->storagePut($this->getImportPath('groups/group_') . $this->zeroSuppress($nc2_room->room_id) . '_' . $role_authority_id . '.ini', $groups_ini);
+            }
         }
     }
 
@@ -9221,12 +9333,12 @@ trait MigrationTrait
             // mail_authority
             // 1: ゲストまで 　　→ パブ通知は、「全ユーザに通知」
             // 　※ 掲示板-パブリック（パブサブも同様）： ⇒ 「全ユーザに通知」
-            // 　※ 掲示板-グループ：　　　　　　　　　　 ⇒ ルームグループに、グループ通知
+            // 　※ 掲示板-グループ：　　　　　　　　　　 ⇒ ルームグループ全てに、グループ通知
             // 2: 一般まで 　　　→ グループは、グループ通知
-            // 　※ 掲示板-パブリック（パブサブも同様）： ⇒ (手動)でグループ作って、グループ通知　⇒ 移行で警告表示
-            // 　※ 掲示板-グループ：　 　　　　　　　　　⇒ ルームグループに、グループ通知
-            // 3: モデレータまで → (手動)でグループ作って、グループ通知　⇒ 移行で警告表示
-            // 4: 主担のみ 　　　→グループ管理者は、「管理者グループ」通知
+            // 　※ 掲示板-パブリック（パブサブも同様）： ⇒ パブグループ_編集者まで、グループ通知
+            // 　※ 掲示板-グループ：　 　　　　　　　　　⇒ ルームグループ全てに、グループ通知
+            // 3: モデレータまで → モデグループまで、グループ通知
+            // 4: 主担のみ 　　　→ グループ管理者は、「管理者グループ」通知
             $notice_everyone = 0;
             $notice_admin_group = 0;
             $notice_moderator_group = 0;
@@ -10056,12 +10168,11 @@ trait MigrationTrait
                 if (!empty($category_obj)) {
                     $category  = $category_obj->category_name;
                 }
-
-                $linklists_tsv .= str_replace(array("\r", "\n", "\t"), "", $nc2_linklist_link->title)              . "\t";
-                $linklists_tsv .= str_replace(array("\r", "\n", "\t"), "", $nc2_linklist_link->url)                . "\t";
-                $linklists_tsv .= str_replace(array("\r", "\n", "\t"), " ", $nc2_linklist_link->description)       . "\t";
-                $linklists_tsv .= $nc2_linklist_block->target_blank_flag                        . "\t";
-                $linklists_tsv .= $nc2_linklist_link->link_sequence                             . "\t";
+                $linklists_tsv .= str_replace(array("\r", "\n", "\t"), "", $nc2_linklist_link->title)                                           . "\t";
+                $linklists_tsv .= str_replace(array("\r", "\n", "\t"), "", $this->nc2MigrationPageIdToPermalink($nc2_linklist_link->url, false)). "\t";
+                $linklists_tsv .= str_replace(array("\r", "\n", "\t"), " ", $nc2_linklist_link->description)                                    . "\t";
+                $linklists_tsv .= $nc2_linklist_block->target_blank_flag                                                                        . "\t";
+                $linklists_tsv .= $nc2_linklist_link->link_sequence                                                                             . "\t";
                 $linklists_tsv .= $category;
 
                 // NC2のリンク切れチェック
@@ -10338,12 +10449,12 @@ trait MigrationTrait
                         $tsv .= $tsv_header . "\n";
                     } else {
                         // 承認待ち、一時保存
-                        $tsv_record['status'] = 0;
+                        $tsv_record['status'] = StatusType::active;
                         if ($old_metadata_content->agree_flag == 1) {
-                            $tsv_record['status'] = 1;
+                            $tsv_record['status'] = StatusType::approval_pending;
                         }
                         if ($old_metadata_content->temporary_flag == 1) {
-                            $tsv_record['status'] = 2;
+                            $tsv_record['status'] = StatusType::temporary;
                         }
                         // 表示順
                         $tsv_record['display_sequence'] = $old_metadata_content->content_display_sequence;
@@ -10406,12 +10517,12 @@ trait MigrationTrait
             // レコードがない場合もあり得る。
             if (!empty($old_metadata_content)) {
                 // 承認待ち、一時保存
-                $tsv_record['status'] = 0;
+                $tsv_record['status'] = StatusType::active;
                 if ($old_metadata_content->agree_flag == 1) {
-                    $tsv_record['status'] = 1;
+                    $tsv_record['status'] = StatusType::approval_pending;
                 }
                 if ($old_metadata_content->temporary_flag == 1) {
-                    $tsv_record['status'] = 2;
+                    $tsv_record['status'] = StatusType::temporary;
                 }
                 // 表示順
                 $tsv_record['display_sequence'] = $old_metadata_content->content_display_sequence;
@@ -10798,13 +10909,14 @@ trait MigrationTrait
             }
 
             // キャビネット設定
+            $upload_max_size = ($cabinet_manage->upload_max_size == "0") ? '"infinity"' : $cabinet_manage->upload_max_size;
             $ini = "";
             $ini .= "[cabinet_base]\n";
             $ini .= "cabinet_name = \"" . $cabinet_manage->cabinet_name . "\"\n";
             $ini .= "active_flag = " .  $cabinet_manage->active_flag . "\n";
             $ini .= "add_authority_id = " . $cabinet_manage->add_authority_id . "\n";
             $ini .= "cabinet_max_size = " . $cabinet_manage->cabinet_max_size . "\n";
-            $ini .= "upload_max_size = " . $cabinet_manage->upload_max_size . "\n";
+            $ini .= "upload_max_size = " . $upload_max_size . "\n";
 
             // NC2 情報
             $ini .= "\n";
@@ -10942,9 +11054,9 @@ trait MigrationTrait
             $ini .= "design_type = " . $design_type . "\n";
 
             // 文字(前)
-            $ini .= "show_char_before = " . $nc2_counter->show_char_before . "\n";
+            $ini .= "show_char_before = '" . $nc2_counter->show_char_before . "'\n";
             // 文字(後)
-            $ini .= "show_char_after = " . $nc2_counter->show_char_after . "\n";
+            $ini .= "show_char_after = '" . $nc2_counter->show_char_after . "'\n";
             // 上記以外に表示したい文字
             // $ini .= "comment = " . $nc2_counter->comment . "\n";
 
@@ -11121,7 +11233,7 @@ trait MigrationTrait
                 $tsv_record['plan_id'] = $calendar_plan->plan_id;
                 $tsv_record['user_id'] = $calendar_plan->user_id;
                 $tsv_record['user_name'] = $calendar_plan->user_name;
-                $tsv_record['title'] = $calendar_plan->title;
+                $tsv_record['title'] = trim($calendar_plan->title);
                 $tsv_record['allday_flag'] = $calendar_plan->allday_flag;
 
                 // 予定開始日時
@@ -12099,7 +12211,7 @@ trait MigrationTrait
                 // (nc)秒 => (cc)ミリ秒
                 $image_interval = $nc2_photoalbum_block->slide_time * 1000;
 
-                $height = $nc2_photoalbum_block->size_flag ? $nc2_photoalbum_block->height : null;
+                $height = $nc2_photoalbum_block->size_flag ? $nc2_photoalbum_block->height : 0;
 
                 // スライダー設定
                 $slide_ini = "";
@@ -13026,6 +13138,11 @@ trait MigrationTrait
         // 画像の中のcommon_download_main をエクスポートしたパスに変換する。
         $content = $this->nc2MigrationCommonDownloadMain($nc2_block, $save_folder, $ini_filename, $content, $img_srcs, '[upload_images]');
 
+        // cabinet_action_main_download をエクスポート形式に変換
+        // [upload_images]に追記したいので、nc2MigrationCommonDownloadMainの直後に実行
+        $content = $this->nc2MigrationCabinetActionMainDownload($save_folder, $ini_filename, $content, 'src');
+
+
         // CSS の img-fluid を自動で付ける最小の画像幅
         $img_fluid_min_width = $this->getMigrationConfig('wysiwyg', 'img_fluid_min_width', 0);
 
@@ -13042,7 +13159,7 @@ trait MigrationTrait
                     $file_path = storage_path() . '/app/' . $this->getImportPath('uploads' . $file_name);
                     // 画像が存在し、img_fluid_min_width で指定された大きさ以上なら、img-fluid クラスをつける。
                     if (File::exists($file_path)) {
-                        $imagesize = getimagesize($file_path);
+                        $imagesize = @getimagesize($file_path);
                         if (is_array($imagesize) && $imagesize[0] >= $img_fluid_min_width) {
                             $new_img_src = str_replace('<img ', '<img class="img-fluid" ', $img_src);
                             $content = str_replace($img_src, $new_img_src, $content);
@@ -13088,9 +13205,15 @@ trait MigrationTrait
         // 添付ファイルの中のcommon_download_main をエクスポートしたパスに変換する。
         $content = $this->nc2MigrationCommonDownloadMain($nc2_block, $save_folder, $ini_filename, $content, $anchors, '[upload_files]');
 
+        // cabinet_action_main_download をエクスポート形式に変換
+        // [upload_files]に追記したいので、nc2MigrationCommonDownloadMainの直後に実行
+        $content = $this->nc2MigrationCabinetActionMainDownload($save_folder, $ini_filename, $content, 'href');
+
         // HTML からa タグの 相対パスリンクを絶対パスに修正
         //$content = $this->changeFullPath($content, $nc2_page);
 
+        // ?page_id=XX置換
+        $content = $this->nc2MigrationPageIdToPermalink($content);
 
         // HTML content の保存
         if ($save_folder) {
@@ -13214,6 +13337,74 @@ trait MigrationTrait
 
         // パスを変更した記事を返す。
         return array($content, $export_paths);
+    }
+
+    /**
+     * NC2：?page_id=XXをpermalinkに置換
+     */
+    private function nc2MigrationPageIdToPermalink($content, $links = true)
+    {
+        // wysiwygのパターン
+        $pattern = '/\?page_id=(.*?)"/is';
+        $endstring = '"';
+        if (!$links) {
+            // リンクリスト等のパターン
+            $pattern = '/\?page_id=(.*?)$/is';
+            $endstring = '';
+        }
+        if (preg_match_all($pattern, $content, $m)) {
+            $replace_key_vals = [];
+            $page_ids = $m[1];
+            foreach ($page_ids as $page_id) {
+                $nc2_page = Nc2Page::where('page_id', $page_id)->first();
+                if ($nc2_page) {
+                    $key = '?page_id='. $page_id. $endstring;
+                    $replace_key_vals[$key] = $nc2_page["permalink"]. $endstring;
+                }
+            }
+            $search = array_keys($replace_key_vals);
+            $replace = array_values($replace_key_vals);
+            $content = str_replace($search, $replace, $content);
+        }
+
+        return $content;
+    }
+
+    /**
+     * NC2：cabinet_action_main_download をエクスポート形式に変換
+     */
+    private function nc2MigrationCabinetActionMainDownload($save_folder, $ini_filename, $content, $attr = 'href')
+    {
+        //?action=cabinet_action_main_download&block_id=778&room_id=1&cabinet_id=9&file_id=2020&upload_id=5688
+        $pattern = '/'. $attr.'=".*?\?action=cabinet_action_main_download&.*?upload_id=([0-9]+)"/i';
+        if (preg_match_all($pattern, $content, $cabinet_downloads)) {
+            $cabinet_file_ids = $cabinet_downloads[1];
+            $replace_key_vals = [];
+            foreach ($cabinet_file_ids as $key => $file_id) {
+                // 移行したアップロードファイルをini ファイルから探す
+                if ($this->uploads_ini && array_key_exists('uploads', $this->uploads_ini) && array_key_exists($file_id, $this->uploads_ini['uploads']['upload'])) {
+                    $path = '../../uploads/' . $this->uploads_ini[$file_id]['temp_file_name'];
+                    $replace_href_pattern = '/'. $attr.'="(.*?\?action=cabinet_action_main_download&.*?upload_id='. $file_id.')"/i';
+                    if (preg_match_all($replace_href_pattern, $content, $m)) {
+                        $match_href = $m[1][0];
+                        $replace_key_vals[$key] = [ 'upload_id' => $file_id,
+                                                    'match_href' => $match_href,
+                                                    'path' => $path,
+                        ];
+                    }
+                }
+            }
+            // 既にnc2MigrationCommonDownloadMainでiniファイルに追記されているので、[upload_files]は空にする
+            $ini_text = '';
+            foreach ($replace_key_vals as $vals) {
+                $content = str_replace($vals['match_href'], $vals['path'], $content);
+                $ini_text .= 'upload[' . $vals['upload_id'] . "] = \"" . $vals['path'] . "\"\n";
+            }
+            if ($ini_filename) {
+                $this->storageAppend($save_folder . "/" . $ini_filename, $ini_text);
+            }
+        }
+        return $content;
     }
 
     /**

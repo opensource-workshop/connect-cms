@@ -824,6 +824,10 @@ class UserManage extends ManagePluginBase
             $users_input_cols_ids = UsersInputCols::where('users_id', $id)->pluck('id');
             UsersInputCols::destroy($users_input_cols_ids);
 
+            // 参加グループ削除
+            $group_user_ids = GroupUser::where('user_id', $id)->pluck('id');
+            GroupUser::destroy($group_user_ids);
+
             // データを削除する。
             User::destroy($id);
         }
@@ -1042,6 +1046,7 @@ class UserManage extends ManagePluginBase
             "function" => __FUNCTION__,
             "plugin_name" => "user",
             "configs" => $configs,
+            "users_columns" => UsersTool::getUsersColumns(),
         ]);
     }
 
@@ -1754,11 +1759,12 @@ class UserManage extends ManagePluginBase
     {
         // 行頭（固定項目）
         $rules = [
-            // id
+            // id ※ログインユーザは一括処理の対象外
             0 => [
                 'nullable',
                 'numeric',
-                'exists:users,id'
+                'exists:users,id',
+                Rule::notIn([Auth::user()->id])
             ],
             // ログインID. 後でセット
             1 => [],
@@ -2030,6 +2036,9 @@ class UserManage extends ManagePluginBase
      */
     public function mail($request, $id = null)
     {
+        // 画面再表示してもパスワード保持
+        $request->session()->keep(['password']);
+
         // ユーザデータ取得
         $user = User::where('id', $id)->first();
 
@@ -2069,7 +2078,7 @@ class UserManage extends ManagePluginBase
         $this->sendMail($user->email, $mail_options, ['content' => $request->body], 'UserManage');
 
         // ユーザ管理画面に戻る
-        return redirect("/manage/user");
+        return redirect("/manage/user")->with('flash_message', 'メール送信しました。');
     }
 
     /**

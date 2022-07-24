@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Kalnoy\Nestedset\NodeTrait;
 
 use App\UserableNohistory;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * 掲示板・記事
@@ -109,5 +110,21 @@ class BbsPost extends Model
         if ($this->updated_at && $this->created_at != $this->updated_at) {
             return "（更新：" . $this->updated_at->format('Y年n月j日 H時i分') . "）";
         }
+    }
+
+    public static function setDepth(Collection $bbs_posts)
+    {
+        $tree = $bbs_posts->toTree();
+        $traverse = function ($posts, $depth = 0) use (&$traverse) {
+            $depth = $depth + 1;
+            foreach ($posts as $post) {
+                $post->depth = $depth;
+                // 再帰呼び出し(表示フラグはメニュー設定の反映されていないページ情報のものを渡す)
+                $traverse($post->children, $depth);
+            }
+        };
+        $traverse($tree);
+
+        return $tree;
     }
 }

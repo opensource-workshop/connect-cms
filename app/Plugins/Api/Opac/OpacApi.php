@@ -18,6 +18,7 @@ use App\User;
 use App\Traits\ConnectCommonTrait;
 use App\Plugins\User\Opacs\OpacsPlugin;
 use App\Plugins\Api\ApiPluginBase;
+use App\Utilities\User\UserUtils;
 
 /**
  * Opac関係APIクラス
@@ -66,6 +67,12 @@ class OpacApi extends ApiPluginBase
      */
     public function bookImpl($request, $opac_id, $key_column, $key_value)
     {
+        // API 共通チェック
+        $ret = $this->apiCallCheck($request, 'Opac');
+        if (!empty($ret['code'])) {
+            return $this->encodeJson($ret, $request);
+        }
+
         // パラメータチェック（キー項目）
         if ($key_column == 'barcode' || $key_column == 'isbn') {
             // キーに指定してもOKな項目。続きへ。
@@ -126,13 +133,14 @@ class OpacApi extends ApiPluginBase
         $user = User::where('userid', $userid)->first();
         if (empty($user)) {
             // ユーザがいない場合は、外部認証ユーザを探しに行く。
-            $user_info = $this->getOtherAuthUser($request, $userid);
+            $user_info = UserUtils::getOtherAuthUser($request, $userid);
+
             if ($user_info['code'] == 200) {
                 // 外部認証でユーザ確認。OK
             } else {
                 // ローカルにも外部認証にもユーザがいない。NG
                 $ret = array('code' => 403, 'message' => '指定されたログインID が見つかりません。');
-                return $this->encodeJson($ret, $request);
+                return [$ret, $user];
             }
         } else {
             // ローカルユーザ確認。OK
@@ -145,6 +153,12 @@ class OpacApi extends ApiPluginBase
      */
     public function rent($request, $opac_id, $key_column, $key_value, $userid)
     {
+        // API 共通チェック
+        $ret = $this->apiCallCheck($request, 'Opac');
+        if (!empty($ret['code'])) {
+            return $this->encodeJson($ret, $request);
+        }
+
         // ユーザの確認
         list($ret, $user) = $this->getUser($request, $userid);
         if ($ret['code'] != 200) {
@@ -254,6 +268,12 @@ class OpacApi extends ApiPluginBase
      */
     public function returnbook($request, $opac_id, $key_column, $key_value, $userid = null)
     {
+        // API 共通チェック
+        $ret = $this->apiCallCheck($request, 'Opac');
+        if (!empty($ret['code'])) {
+            return $this->encodeJson($ret, $request);
+        }
+
         // ユーザの確認
         //list($ret, $user) = $this->getUser($request, $userid);
         //if ($ret['code'] != 200) {
@@ -292,6 +312,12 @@ class OpacApi extends ApiPluginBase
      */
     public function rentinfo($request, $opac_id, $userid)
     {
+        // API 共通チェック
+        $ret = $this->apiCallCheck($request, 'Opac');
+        if (!empty($ret['code'])) {
+            return $this->encodeJson($ret, $request);
+        }
+
         // 貸し出し中書籍
         $lents = OpacsBooksLents::select('opacs_books.title', 'opacs_books.subtitle', 'opacs_books.creator', 'opacs_books.publisher', 'opacs_books.publication_year', 'opacs_books_lents.lent_flag', 'opacs_books_lents.return_scheduled')
                                 ->leftJoin('opacs_books', 'opacs_books.id', '=', 'opacs_books_lents.opacs_books_id')

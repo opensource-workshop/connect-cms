@@ -4,15 +4,18 @@ namespace App\Plugins\Manage\GroupManage;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+
+use App\Enums\UserStatus;
 
 use App\Models\Common\Group;
 use App\Models\Common\GroupUser;
 
 use App\Plugins\Manage\ManagePluginBase;
-
+use App\User;
 use App\Utilities\String\StringUtils;
 
 /**
@@ -39,6 +42,9 @@ class GroupManage extends ManagePluginBase
         $role_ckeck_table["edit"]               = array('admin_user');
         $role_ckeck_table["update"]             = array('admin_user');
         $role_ckeck_table["delete"]             = array('admin_user');
+        $role_ckeck_table["removeUser"] = array('admin_user');
+        $role_ckeck_table["joinUser"] = array('admin_user');
+        $role_ckeck_table["notJoinedUsers"] = array('admin_user');
         // $role_ckeck_table["list"]               = array('admin_user');
         return $role_ckeck_table;
     }
@@ -204,5 +210,53 @@ class GroupManage extends ManagePluginBase
             "plugin_name" => "group",
             "group_users" => $group_users,
         ]);
+    }
+
+    /**
+     *  グループユーザー削除
+     */
+    public function removeUser($request, $id)
+    {
+        // グループユーザーから削除
+        GroupUser::where('group_id', $id)->where('user_id', $request->user_id)->delete();
+
+        return redirect('manage/group/edit/' . $id);
+    }
+
+    /**
+     *  グループユーザー参加
+     */
+    public function joinUser($request, $id)
+    {
+        // グループユーザー参加
+        $group_user = GroupUser::updateOrCreate(
+            ['group_id' => $id, 'user_id' => $request->user_id],
+            [
+                'group_id' => $id,
+                'user_id' => $request->user_id,
+                'group_role' => 'general',
+            ]
+        );
+
+        return redirect('manage/group/edit/' . $id);
+    }
+
+    /**
+     * グループ不参加のユーザー取得
+     */
+    public function notJoinedUsers($request)
+    {
+        $users = User::where('name', 'LIKE', $request->user_name . '%')
+            ->where('status', UserStatus::active)
+            ->whereNotExists(function ($query) use ($request) {
+                $query->select(DB::raw(1))
+                      ->from('group_users')
+                      ->where('group_id', $request->group_id)
+                      ->whereNull('deleted_at')
+                      ->whereRaw('group_users.user_id = users.id');
+            })
+            ->orderBy('id')
+            ->get();
+        return $users;
     }
 }

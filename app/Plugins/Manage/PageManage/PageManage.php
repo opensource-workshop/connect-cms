@@ -8,9 +8,11 @@ use Illuminate\Support\Facades\Validator;
 
 use DB;
 
+use App\User;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Group;
+use App\Models\Common\GroupUser;
 use App\Models\Common\Page;
 use App\Models\Common\PageRole;
 use App\Models\User\Contents\Contents;
@@ -60,6 +62,7 @@ class PageManage extends ManagePluginBase
         $role_ckeck_table["migrationGet"]    = array('admin_page');
         $role_ckeck_table["migrationImort"]  = array('admin_page');
         $role_ckeck_table["migrationFileDelete"] = array('admin_page');
+        $role_ckeck_table["toggleDisplay"] = array('admin_page');
 
 /*
         $role_ckeck_table = array();
@@ -586,11 +589,16 @@ class PageManage extends ManagePluginBase
 
         // ページ権限を取得してGroup オブジェクトに保持する。
         $page_roles = PageRole::where('page_id', $page->id)
-                              ->where('role_value', 1)
-                              ->orderBy('group_id', 'asc')
-                              ->get();
+            ->where('role_value', 1)
+            ->orderBy('group_id', 'asc')
+            ->get();
+
+        // グループ参加ユーザ
+        $users = User::whereIn('id', GroupUser::pluck('user_id')->unique())->get();
+
         foreach ($groups as $group) {
             $group->page_roles = $page_roles->where('group_id', $group->id);
+            $group->group_user_names = $users->whereIn('id', $group->group_user->pluck('user_id'))->pluck('name')->implode(', ');
         }
 
         // 自分のページから親を遡って取得
@@ -790,5 +798,34 @@ class PageManage extends ManagePluginBase
 
         // 指示された画面に戻る。
         return $this->migrationOrder($request, $page_id);
+    }
+
+    /**
+     * 表示フラグを切り替える
+     */
+    public function toggleDisplay($request, $page_id)
+    {
+        // ページID で1件取得
+        $page = Page::find($page_id);
+
+        // 指定ページがなければエラー
+        if (empty($page)) {
+            return view('plugins.manage.page.error', [
+                "function"     => __FUNCTION__,
+                "plugin_name"  => "page",
+                "message"      => "指定されたページID が存在しません。",
+            ]);
+        }
+
+        // 表示フラグを切り替える
+        if ($page->base_display_flag) {
+            $page->base_display_flag = 0;
+        } else {
+            $page->base_display_flag = 1;
+        }
+        $page->save();
+
+        // ページ管理画面に戻る
+        return redirect("/manage/page#$page_id");
     }
 }

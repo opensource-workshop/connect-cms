@@ -18,6 +18,10 @@
 @include('plugins.manage.user.user_manage_tab')
 
 </div>
+
+{{-- ユーザ変更関連タブ --}}
+@include('plugins.manage.user.user_edit_tab')
+
 <div class="card-body">
 
     {{-- 登録後メッセージ表示 --}}

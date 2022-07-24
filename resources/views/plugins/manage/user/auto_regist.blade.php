@@ -181,10 +181,17 @@
                 <div class="col">
                     <label class="control-label">本登録メールフォーマット</label>
                     <textarea name="user_register_mail_format" class="form-control" rows=5 placeholder="（例）登録内容をお知らせいたします。&#13;&#10;----------------------------------&#13;&#10;[[body]]&#13;&#10;----------------------------------">{{Configs::getConfigsValueAndOld($configs, 'user_register_mail_format')}}</textarea>
-                    @include('plugins.common.description_frame_mails_common', ['embedded_tags' => UserRegisterNoticeEmbeddedTag::getDescriptionEmbeddedTags()])
+                    @include('plugins.manage.user.description_frame_mails', ['users_columns' => $users_columns])
                     <small class="text-danger">
                         ※ 管理者の承認を必要にしている場合は、本登録メールが登録申請メールとなります。
                     </small>
+                    <div class="alert alert-warning small mb-0">
+                        【注意】<br />
+                        以下のメールフォーマットに対する注意点を理解して設定してください。<br />
+                        <br />
+                        「パスワード」をメールフォーマットに含めることで、送信したメールが漏洩した場合、記載されたパスワードが流出する危険性があります。<br />
+                        「パスワード」をメールフォーマットに含める場合は、リスクを許容し実行してください。<br />
+                    </div>
                 </div>
             </div>
 
@@ -317,7 +324,8 @@
                     <small class="text-muted">
                         ※「編集者」、「モデレータ」の記事投稿については、各プラグイン側の権限設定も必要です。<br />
                         ※「コンテンツ管理者」は、「コンテンツ管理者」権限と同時に「プラグイン管理者」「モデレータ」「承認者」「編集者」権限も併せて持ちます。<br />
-                        ※ 全てのユーザは、「ゲスト」権限も併せて持ちます。<br />
+                        {{-- ※ 全てのユーザは、「ゲスト」権限も併せて持ちます。<br /> --}}
+                        ※「ゲスト」にする場合、「コンテンツ権限」「管理権限」のすべてのチェックを外します。<br />
                     </small>
                 </div>
             </div>
