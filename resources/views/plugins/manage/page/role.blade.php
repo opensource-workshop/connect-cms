@@ -109,7 +109,7 @@
 
                             <div class="mt-1 mb-1">
                                 <small>
-                                    <b>参加ユーザ</b>：{{$group->group_user_names}}
+                                    <b><a href="{{url('/manage/group/edit')}}/{{$group->id}}" target="_blank">参加ユーザ <i class="fas fa-external-link-alt"></i></a></b>：{{$group->group_user_names}}
                                 </small>
                             </div>
 
