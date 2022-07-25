@@ -960,6 +960,11 @@ class PhotoalbumsPlugin extends UserPluginBase
                         ->leftJoin('uploads', 'photoalbum_contents.upload_id', '=', 'uploads.id')
                         ->descendantsAndSelf($photoalbum_content_id);
             if (!$this->canDownload($request, $contents)) {
+                // zipファイル後始末
+                $zip->close();
+                if (file_exists($save_path)) {
+                    unlink($save_path);
+                }
                 abort(403, 'ファイル参照権限がありません。');
             }
             // フォルダがないとzipファイルを作れない
@@ -972,6 +977,11 @@ class PhotoalbumsPlugin extends UserPluginBase
 
         // 空のZIPファイルが出来たら404
         if ($zip->count() === 0) {
+            // zipファイル後始末
+            $zip->close();
+            if (file_exists($save_path)) {
+                unlink($save_path);
+            }
             abort(404, 'ファイルがありません。');
         }
         $zip->close();

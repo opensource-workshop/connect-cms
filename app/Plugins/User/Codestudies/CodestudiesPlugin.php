@@ -520,6 +520,11 @@ class CodestudiesPlugin extends UserPluginBase
 
         // 空のZIPファイルが出来たら404
         if ($zip->count() === 0) {
+            // zipファイル後始末
+            $zip->close();
+            if (file_exists($save_path)) {
+                unlink($save_path);
+            }
             abort(404, 'ファイルがありません。');
         }
         $zip->close();
