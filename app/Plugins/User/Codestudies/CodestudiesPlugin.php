@@ -433,7 +433,7 @@ class CodestudiesPlugin extends UserPluginBase
     }
 
     /**
-     *  成績ダウンロード指示画面
+     *  学習結果ダウンロード指示画面
      */
     public function viewDownload($request, $page_id, $frame_id)
     {
@@ -444,7 +444,7 @@ class CodestudiesPlugin extends UserPluginBase
     }
 
     /**
-     *  成績ダウンロード実行
+     *  学習結果ダウンロード実行
      */
     public function download($request, $page_id, $frame_id)
     {
