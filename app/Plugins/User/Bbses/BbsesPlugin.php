@@ -422,6 +422,8 @@ class BbsesPlugin extends UserPluginBase
 
         // モデレータ以上の権限がなく、記事にすでに返信が付いている場合は、編集できない。
 
+        // プラグインのフレームデータ
+        $plugin_frame = $this->getPluginFrame($frame_id);
 
 //        if (empty($faqs_post)) {
 //            return $this->viewError("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
@@ -429,7 +431,8 @@ class BbsesPlugin extends UserPluginBase
 
         // 変更画面を呼び出す。
         return $this->view('edit', [
-            'post' => $post,
+            'post'         => $post,
+            'plugin_frame' => $plugin_frame,
         ]);
     }
 
