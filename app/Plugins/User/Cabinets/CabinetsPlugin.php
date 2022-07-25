@@ -582,12 +582,15 @@ class CabinetsPlugin extends UserPluginBase
         $save_path = $this->getTmpDirectory() . uniqid('', true) . '.zip';
         $this->makeZip($save_path, $request);
 
-        // 一時ファイルは削除して、ダウンロードレスポンスを返す
-        return response()->download(
+        // 一時ファイルは削除して、ダウンロードレスポンスを返す. download()でAllowed memory sizeエラー時にtmpファイル削除対応
+        $response = response()->download(
             $save_path,
             'Files.zip',
             ['Content-Disposition' => 'filename=Files.zip']
-        )->deleteFileAfterSend(true);
+        );
+        // )->deleteFileAfterSend(true);
+        register_shutdown_function('unlink', $save_path);
+        return $response;
     }
 
     /**
@@ -604,6 +607,11 @@ class CabinetsPlugin extends UserPluginBase
         foreach ($request->cabinet_content_id as $cabinet_content_id) {
             $contents = CabinetContent::descendantsAndSelf($cabinet_content_id);
             if (!$this->canDownload($request, $contents)) {
+                // zipファイル後始末
+                $zip->close();
+                if (file_exists($save_path)) {
+                    unlink($save_path);
+                }
                 abort(403, 'ファイル参照権限がありません。');
             }
             // フォルダがないとzipファイルを作れない
@@ -616,6 +624,13 @@ class CabinetsPlugin extends UserPluginBase
 
         // 空のZIPファイルが出来たら404
         if ($zip->count() === 0) {
+            // zipファイル後始末
+            $zip->close();
+            // Storage::delete() & xamppの場合、以下のパスになり、ファイルがあっても、ファイルなしとして扱われたため、unlink()を使う
+            // $save_path = "C:\projects\connect-cms\htdocs\connect-cms\storage\app/tmp/cabinet/62da6ae9d8a013.24929254.zip"
+            if (file_exists($save_path)) {
+                unlink($save_path);
+            }
             abort(404, 'ファイルがありません。');
         }
         $zip->close();
