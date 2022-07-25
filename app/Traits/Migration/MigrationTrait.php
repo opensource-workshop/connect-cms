@@ -10948,7 +10948,7 @@ trait MigrationTrait
                 $tsv .= $cabinet_file['cabinet_id'] . "\t";
                 $tsv .= $cabinet_file['upload_id'] . "\t";
                 $tsv .= $cabinet_file['parent_id'] . "\t";
-                $tsv .= $cabinet_file['file_name'] . "\t";
+                $tsv .= str_replace("\t", '', $cabinet_file['file_name']) . "\t";
                 $tsv .= $cabinet_file['extension'] . "\t";
                 $tsv .= $cabinet_file['depth'] . "\t";
                 $tsv .= $cabinet_file['size'] . "\t";
@@ -10956,7 +10956,7 @@ trait MigrationTrait
                 $tsv .= $cabinet_file['file_type'] . "\t";
                 $tsv .= $cabinet_file['display_sequence'] . "\t";
                 $tsv .= $cabinet_file['room_id'] . "\t";
-                $tsv .= $cabinet_file['comment'] . "\t";
+                $tsv .= str_replace("\t", '', $cabinet_file['comment']) . "\t";
                 $tsv .= $this->getCCDatetime($cabinet_file->insert_time)                             . "\t";    // [13]
                 $tsv .= $cabinet_file->insert_user_name                                              . "\t";    // [14]
                 $tsv .= $this->getNc2LoginIdFromNc2UserId($nc2_users, $cabinet_file->insert_user_id) . "\t";    // [15]
