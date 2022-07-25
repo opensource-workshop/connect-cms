@@ -452,12 +452,15 @@ class CodestudiesPlugin extends UserPluginBase
         $save_path = $this->getTmpDirectory() . uniqid('', true) . '.zip';
         $this->makeZip($save_path, $request);
 
-        // 一時ファイルは削除して、ダウンロードレスポンスを返す
-        return response()->download(
+        // 一時ファイルは削除して、ダウンロードレスポンスを返す. download()でAllowed memory sizeエラー時にtmpファイル削除対応
+        $response = response()->download(
             $save_path,
             'StudyCodes.zip',
             ['Content-Disposition' => 'filename=StudyCodes.zip']
-        )->deleteFileAfterSend(true);
+        );
+        // )->deleteFileAfterSend(true);
+        register_shutdown_function('unlink', $save_path);
+        return $response;
     }
 
     /**
