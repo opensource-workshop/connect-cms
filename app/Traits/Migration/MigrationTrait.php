@@ -397,6 +397,7 @@ trait MigrationTrait
             PageRole::truncate();
             Group::truncate();
             GroupUser::truncate();
+            MigrationMapping::where('target_source_table', 'groups')->delete();
         }
 
         if ($target == 'permalinks' || $target == 'all') {
@@ -8594,8 +8595,8 @@ trait MigrationTrait
                 // ページ設定の保存用変数
                 $membership_flag = null;
                 if ($nc2_sort_page->space_type == 2) {
-                    // 「すべての会員をデフォルトで参加させる」
-                    if ($nc2_sort_page->default_entry_flag == 1) {
+                    // 「すべての会員をデフォルトで参加させる」 & 「すべての会員をデフォルトで参加させる」ルームはグループ作成しない
+                    if ($nc2_sort_page->default_entry_flag == 1 && !$this->getMigrationConfig('groups', 'nc2_export_make_group_of_default_entry_room')) {
                         $membership_flag = 2;
                     } else {
                         // ルームで選択した会員のみ
@@ -9181,22 +9182,43 @@ trait MigrationTrait
             return;
         }
 
+        // config テーブルの取得
+        $configs = Nc2Config::get();
+
+        // システム設定＞一般設定
+        // 　会員のデフォルト設定
+        // 　　パブリックスペースでの役割：ゲスト:5（デフォ）or 一般:4 only, default_entry_role_auth_public
+        // 　　所属グループルームでの役割：ゲスト:5 or 一般:4（デフォ）only, default_entry_role_auth_group
+        $default_entry_role_auth_public = $configs->where('conf_name', 'default_entry_role_auth_public')->first() ?? new Nc2Config();
+        $default_entry_role_auth_group = $configs->where('conf_name', 'default_entry_role_auth_group')->first() ?? new Nc2Config();
+
         // グループをループ
         foreach ($nc2_rooms as $nc2_room) {
             if ($nc2_room->space_type == Nc2Page::space_type_group && $nc2_room->default_entry_flag == 1) {
-                //「すべての会員をデフォルトで参加させる」はグループにしないので対象外。'default_entry_flag'== 0
-                continue;
+                if ($this->getMigrationConfig('groups', 'nc2_export_make_group_of_default_entry_room')) {
+                    // 「すべての会員をデフォルトで参加させる」ルームをグループ作成する
+                    $this->putMonitor(3, '「すべての会員をデフォルトで参加させる」ルームをグループ作成する', "ルーム名={$nc2_room->page_name}");
+                } else {
+                    //「すべての会員をデフォルトで参加させる」ルームはグループ作成しない
+                    $this->putMonitor(3, '「すべての会員をデフォルトで参加させる」ルームはグループ作成しない', "ルーム名={$nc2_room->page_name}");
+                    continue;
+                }
             }
 
-            //             (public)role_authority_id, (group)role_authority_id
-            // _主担      = 2,    2
-            // _モデレータ = 3,   3
-            // _一般      = 4,    4
-            // _ゲスト    = null, 5
-            // 不参加     = なし, null
+            //                           (public)role_authority_id, (group)role_authority_id
+            // _主担                     = 2,                        2
+            // _モデレータ                = 3,                        3
+            // _一般                     = 4,                        4
+            // _ゲスト                   = null,                     5
+            // 不参加(デフォルトで参加OFF) = 選択肢なし,                null
+            // 参加(デフォルトで参加ON)    = データなしだけど参加(※1), データなしだけど参加(※2)
+            //
+            // ※1 config.default_entry_role_auth_publicの権限（ゲストor一般）で参加
+            // ※2 config.default_entry_role_auth_groupの権限（ゲストor一般）で参加
 
             // NC2 参加ユーザの取得（puglicのゲストはデータが存在しないため、pages_users_linkは外部結合で取得）
-            $nc2_pages_users_links = Nc2User::select('pages_users_link.*', 'users.login_id')
+            // ※ デフォルトで参加ユーザは、pages_users_linkにデータ存在しない。
+            $nc2_pages_users_links = Nc2User::select('pages_users_link.*', 'users.login_id', 'users.role_authority_id as users_role_authority_id')
                 ->leftJoin('pages_users_link', function ($join) use ($nc2_room) {
                     $join->on('pages_users_link.user_id', 'users.user_id')
                         ->where('pages_users_link.room_id', $nc2_room->room_id);
@@ -9215,14 +9237,43 @@ trait MigrationTrait
 
             foreach ($role_authority_ids as $role_authority_id => $names) {
 
-                if ($nc2_room->space_type == Nc2Page::space_type_public && $role_authority_id == 5) {
-                    // puglicのゲストはデータが存在しないため、nullで検索（グループのゲストはデータ存在する）
-                    $where_role_authority_id = null;
-                } else {
-                    $where_role_authority_id = $role_authority_id;
+                // 通常
+                $nc2_pages_users_links_subgroup1 = $nc2_pages_users_links->where('role_authority_id', $role_authority_id);
+                $nc2_pages_users_links_subgroup_default_entry = collect();
+
+                if (($nc2_room->space_type == Nc2Page::space_type_public) && $nc2_room->default_entry_flag == 1) {
+                    // puglicのデフォルト参加ユーザ
+                    if ($default_entry_role_auth_public->conf_value == 4 && ($role_authority_id == 4 || $role_authority_id == 5)) {
+                        // デフォルト参加ユーザの権限が一般の場合、ゲストと一般を検索
+                        // デフォルト参加ユーザ. デフォルト参加ユーザの権限が一般でも、ゲストユーザはゲスト権限になる
+                        if ($role_authority_id == 4) {
+                            // デフォルト参加ユーザはデータが存在しないは、nullで検索。
+                            $nc2_pages_users_links_subgroup_default_entry = $nc2_pages_users_links->where('role_authority_id', null)->where('users_role_authority_id', '!=', 5);
+                        } elseif ($role_authority_id == 5) {
+                            $nc2_pages_users_links_subgroup_default_entry = $nc2_pages_users_links->where('role_authority_id', null)->where('users_role_authority_id', 5);
+                        }
+                    } elseif ($default_entry_role_auth_public->conf_value == 5 && $role_authority_id == 5) {
+                        // デフォルト参加ユーザ（ゲストで全員登録）
+                        $nc2_pages_users_links_subgroup_default_entry = $nc2_pages_users_links->where('role_authority_id', null);
+                    }
+                } elseif ($nc2_room->space_type == Nc2Page::space_type_group && $nc2_room->default_entry_flag == 1) {
+                    // groupのデフォルト参加ユーザ
+                    if ($default_entry_role_auth_group->conf_value == 4 && ($role_authority_id == 4 || $role_authority_id == 5)) {
+                        // デフォルト参加ユーザの権限が一般の場合、ゲストと一般を検索
+                        if ($role_authority_id == 4) {
+                            $nc2_pages_users_links_subgroup_default_entry = $nc2_pages_users_links->where('role_authority_id', null)->where('users_role_authority_id', '!=', 5);
+
+                        } elseif ($role_authority_id == 5) {
+                            $nc2_pages_users_links_subgroup_default_entry = $nc2_pages_users_links->where('role_authority_id', null)->where('users_role_authority_id', 5);
+                        }
+                    } elseif ($default_entry_role_auth_group->conf_value == 5 && $role_authority_id == 5) {
+                        // デフォルト参加ユーザ（ゲストで全員登録,）
+                        $nc2_pages_users_links_subgroup_default_entry = $nc2_pages_users_links->where('role_authority_id', null);
+                    }
                 }
 
-                $nc2_pages_users_links_subgroup = $nc2_pages_users_links->where('role_authority_id', $where_role_authority_id);
+                // デフォルト参加ユーザ設定でも、データが存在するユーザがいるため、データ結合
+                $nc2_pages_users_links_subgroup = $nc2_pages_users_links_subgroup1->union($nc2_pages_users_links_subgroup_default_entry);
                 if ($nc2_pages_users_links_subgroup->isEmpty()) {
                     // ユーザいないグループは作らない。
                     continue;
