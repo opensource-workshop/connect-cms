@@ -348,8 +348,8 @@ trait RegistersUsers
             ]);
         }
 
-        // ユーザが利用不可の場合、エラー画面へ
-        if ($user->status == UserStatus::not_active) {
+        // ユーザが利用不可、仮削除の場合、エラー画面へ
+        if ($user->status == UserStatus::not_active || $user->status == UserStatus::temporary_delete) {
             // エラー画面へ
             return view('auth.register_error_messages', [
                 'error_messages' => ['有効期限切れのため、そのURLはご利用できません。'],
@@ -411,8 +411,8 @@ trait RegistersUsers
             ]);
         }
 
-        // ユーザが利用不可の場合、エラー画面へ
-        if ($user->status == UserStatus::not_active) {
+        // ユーザが利用不可、仮削除の場合、エラー画面へ
+        if ($user->status == UserStatus::not_active || $user->status == UserStatus::temporary_delete) {
             // エラー画面へ
             return view('auth.register_error_messages', [
                 'error_messages' => ['有効期限切れのため、そのURLはご利用できません。'],

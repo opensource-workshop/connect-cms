@@ -11,6 +11,16 @@
 {{-- 管理画面メイン部分のコンテンツ section:manage_content で作ること --}}
 @section('manage_content')
 
+{{-- バージョン情報 --}}
+@if (config('version.show_cc_version'))
+<div class="card mb-2">
+    <div class="card-header">Connect-CMS について</div>
+    <div class="card-body">
+        バージョン: {{config('version.cc_version')}}
+    </div>
+</div>
+@endif
+
 @if($rss_xml)
 <div class="card">
     <div class="card-header">Connect-CMS 更新情報等</div>

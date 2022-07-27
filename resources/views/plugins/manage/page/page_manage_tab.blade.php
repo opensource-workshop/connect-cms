@@ -30,35 +30,6 @@
             @else
                 <li class="nav-item"><a href="{{url('/manage/page/import')}}" class="nav-link">CSVインポート</a></li>
             @endif
-
-            @if (($function == "edit" || $function == "role" || $function == "migrationOrder") && $page->id)
-                <li class="nav-item dropdown">
-                    <a href="#" class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        ページ変更
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-
-                        @if ($function == "edit")
-                            <a href="{{url('/manage/page/edit')}}/{{$page->id}}" class="dropdown-item active bg-light">ページ変更</a>
-                        @else
-                            <a href="{{url('/manage/page/edit')}}/{{$page->id}}" class="dropdown-item">ページ変更</a>
-                        @endif
-
-                        @if ($function == "role")
-                            <a href="{{url('/manage/page/role')}}/{{$page->id}}" class="dropdown-item active bg-light">ページ権限設定</a>
-                        @else
-                            <a href="{{url('/manage/page/role')}}/{{$page->id}}" class="dropdown-item">ページ権限設定</a>
-                        @endif
-
-                        @if ($function == "migrationOrder")
-                            <a href="{{url('/manage/page/migrationOrder')}}/{{$page->id}}" class="dropdown-item active bg-light">外部ページインポート</a>
-                        @else
-                            <a href="{{url('/manage/page/migrationOrder')}}/{{$page->id}}" class="dropdown-item">外部ページインポート</a>
-                        @endif
-                    </div>
-                </li>
-            @endif
-
             </ul>
         </div>
     </nav>
