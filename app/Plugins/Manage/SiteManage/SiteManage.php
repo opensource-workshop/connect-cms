@@ -1405,24 +1405,24 @@ class SiteManage extends ManagePluginBase
 
             // NC2 の日誌データ
             $nc2_journals = Nc2Journal::select('journal.*', 'page_rooms.space_type')
-            ->join('pages as page_rooms', function ($join) {
-                $join->on('page_rooms.page_id', '=', 'journal.room_id')
-                    ->whereColumn('page_rooms.page_id', 'page_rooms.room_id')
-                    ->whereIn('page_rooms.space_type', [Nc2Page::space_type_public, Nc2Page::space_type_group])
-                    ->where('page_rooms.room_id', '!=', 2);        // 2:グループスペースを除外（枠だけでグループルームじゃないので除外）
-            })
-            ->orderBy('journal.journal_id')
-            ->get();
+                ->join('pages as page_rooms', function ($join) {
+                    $join->on('page_rooms.page_id', '=', 'journal.room_id')
+                        ->whereColumn('page_rooms.page_id', 'page_rooms.room_id')
+                        ->whereIn('page_rooms.space_type', [Nc2Page::space_type_public, Nc2Page::space_type_group])
+                        ->where('page_rooms.room_id', '!=', 2);        // 2:グループスペースを除外（枠だけでグループルームじゃないので除外）
+                })
+                ->orderBy('journal.journal_id')
+                ->get();
             foreach ($nc2_journals as &$nc2_journal) {
                 $nc2_journal_posts = Nc2JournalPost::where('journal_id', $nc2_journal->journal_id)->orderBy('post_id')->get();
                 $nc2_journal->count = $nc2_journal_posts->count();
             }
 
             // NC2 汎用DBデータ
-            $nc2_multidatabases = Nc2Multidatabase::select('multidatabase.multidatabase_id', 'multidatabase.multidatabase_name', 'multidatabase_content.content_id',)
-            ->leftJoin('multidatabase_content', 'multidatabase_content.multidatabase_id', '=', 'multidatabase.multidatabase_id')
-            ->orderBy('multidatabase.multidatabase_id')
-            ->get();
+            $nc2_multidatabases = Nc2Multidatabase::select('multidatabase.multidatabase_id', 'multidatabase.multidatabase_name', 'multidatabase_content.content_id')
+                ->leftJoin('multidatabase_content', 'multidatabase_content.multidatabase_id', '=', 'multidatabase.multidatabase_id')
+                ->orderBy('multidatabase.multidatabase_id')
+                ->get();
             $tmp_multidatabase = [];
             foreach ($nc2_multidatabases as $nc2_multidatabase) {
                 $tmp_multidatabase[$nc2_multidatabase->multidatabase_id]['multidatabase_name'] = $nc2_multidatabase->multidatabase_name;
@@ -1467,21 +1467,21 @@ class SiteManage extends ManagePluginBase
 
             // Connect-CMSの会員データ
             $users = User::select('users.id', 'users.userid', 'users.name')
-            ->orderBy('users.id')
-            ->get();
+                ->orderBy('users.id')
+                ->get();
             $users_roles = [];
             foreach ($users as &$user) {
                 $users_roles = UsersRoles::select('users_roles.role_name')
-                ->where('users_roles.users_id', '=', $user->id)
-                ->where('users_roles.target', '=', 'base')
-                ->orderBy('users_roles.id')
-                ->get();
+                    ->where('users_roles.users_id', '=', $user->id)
+                    ->where('users_roles.target', '=', 'base')
+                    ->orderBy('users_roles.id')
+                    ->get();
                 $tmp_user_role = [];
                 foreach ($users_roles as $users_role) {
                     $tmp_user_role[] = $users_role->role_name;
                 }
                 $role_data = config('cc_role.CC_ROLE_LIST');
-                $str_role_names = implode('<br/>',$tmp_user_role);
+                $str_role_names = implode('<br/>', $tmp_user_role);
                 if ($str_role_names != '') {
                     $user->str_role_name = str_replace(array_keys($role_data), array_values($role_data), $str_role_names);
                 } else {
@@ -1490,16 +1490,16 @@ class SiteManage extends ManagePluginBase
             }
             // Connect-CMSのデータベースデータ
             $databases = Databases::select('databases.databases_name', DB::raw("count(databases_inputs.id) as databases_inputs_count"))
-            ->leftJoin('databases_inputs', 'databases_inputs.databases_id', '=', 'databases.id')
-            ->groupBy('databases.id', 'databases.databases_name')
-            ->orderBy('databases.id')
-            ->get();
+                ->leftJoin('databases_inputs', 'databases_inputs.databases_id', '=', 'databases.id')
+                ->groupBy('databases.id', 'databases.databases_name')
+                ->orderBy('databases.id')
+                ->get();
             // Connect-CMSのブログデータ
             $blogs = Blogs::select('blogs.blog_name', DB::raw("count(blogs_posts.id) as blogs_posts_count"))
-            ->leftJoin('blogs_posts', 'blogs_posts.blogs_id', '=', 'blogs.id')
-            ->groupBy('blogs.id', 'blogs.blog_name')
-            ->orderBy('blogs.id')
-            ->get();
+                ->leftJoin('blogs_posts', 'blogs_posts.blogs_id', '=', 'blogs.id')
+                ->groupBy('blogs.id', 'blogs.blog_name')
+                ->orderBy('blogs.id')
+                ->get();
             // Connect-CMSのページデータ
             // ページデータの取得(laravel-nestedset 使用)
             $return_obj = 'flat';
@@ -1521,15 +1521,15 @@ class SiteManage extends ManagePluginBase
 
         /* リンク切れチェック */
         /* 固定記事の表示設定されているリンクのみをチェックする */
-        $contents = Contents::select('contents.content_text', 'contents.content2_text','pages.page_name','frames.frame_title')
-        ->join('frames', 'contents.bucket_id', '=', 'frames.bucket_id')
-        ->join('pages', 'pages.id', '=', 'frames.page_id')
-        ->orderBy('pages._lft')
-        ->get();
+        $contents = Contents::select('contents.content_text', 'contents.content2_text', 'pages.page_name', 'frames.frame_title')
+            ->join('frames', 'contents.bucket_id', '=', 'frames.bucket_id')
+            ->join('pages', 'pages.id', '=', 'frames.page_id')
+            ->orderBy('pages._lft')
+            ->get();
         $link_error_list_href = [];
         $link_error_list_src = [];
         foreach ($contents as $content) {
-            $checked_list = $this->checkLink($content->content_text, $content->page_name, $content->frame_title );
+            $checked_list = $this->checkLink($content->content_text, $content->page_name, $content->frame_title);
             if ($checked_list) {
                 $link_error_list_href = array_merge($link_error_list_href, $checked_list);
             }
@@ -1537,7 +1537,7 @@ class SiteManage extends ManagePluginBase
             if ($checked_list) {
                 $link_error_list_src = array_merge($link_error_list_src, $checked_list);
             }
-            $checked_list = $this->checkLink($content->content2_text, $content->page_name, $content->frame_title );
+            $checked_list = $this->checkLink($content->content2_text, $content->page_name, $content->frame_title);
             if ($checked_list) {
                 $link_error_list_href = array_merge($link_error_list_href, $checked_list);
             }
@@ -1597,14 +1597,13 @@ class SiteManage extends ManagePluginBase
         return redirect()->back();
     }
 
-
-    private function checkLink($html, $page_name, $frame_title, $attr='href')
+    private function checkLink($html, $page_name, $frame_title, $attr = 'href')
     {
         $ret = [];
-        if (preg_match_all('/'. $attr.'="(.*?)"/', $html, $m)){
-            foreach($m[1] as $url) {
+        if (preg_match_all('/'. $attr.'="(.*?)"/', $html, $m)) {
+            foreach ($m[1] as $url) {
                 // 内部リンクを想定 基本はあるから返却する？
-                if (preg_match('#^/#',$url)) {
+                if (preg_match('#^/#', $url)) {
                     continue;
                     $base_url = url('/');
                     $arr_url = explode('/', $url);
@@ -1632,6 +1631,7 @@ class SiteManage extends ManagePluginBase
         }
         return $ret;
     }
+
     /**
      * 経路探索キーの取得（作成）
      */
@@ -1652,6 +1652,7 @@ class SiteManage extends ManagePluginBase
             return $this->getRouteBlockLangStr($nc2_page->lang_dirname) . $this->zeroSuppress($nc2_page->root_id) . '_' . $this->zeroSuppress($nc2_page->page_id);
         }
     }
+
     /**
      * 多言語化判定（日本語）
      */
@@ -1663,6 +1664,7 @@ class SiteManage extends ManagePluginBase
         }
         return false;
     }
+
     /**
      * 多言語化対応文字列返却
      */
@@ -1673,6 +1675,7 @@ class SiteManage extends ManagePluginBase
         }
         return $lang_dirname;
     }
+
     /**
      * ID のゼロ埋め
      */
@@ -1684,5 +1687,4 @@ class SiteManage extends ManagePluginBase
 
         return sprintf("%'." . $size_str . "d", $id);
     }
-
 }
