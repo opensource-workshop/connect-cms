@@ -317,9 +317,31 @@ use App\Models\Core\UsersColumns;
                         {{$user->userid}}
                     </td>
                     <td>{{$user->name}}</td>
-                    <td>
-                        <a href="{{url('/')}}/manage/user/groups/{{$user->id}}" title="グループ参加"><i class="far fa-edit"></i></a>
-                        {{$user->convertLoopValue('group_users', 'name')}}
+                    <td nowrap>
+                        {{-- <a href="{{url('/')}}/manage/user/groups/{{$user->id}}" title="グループ参加"><i class="far fa-edit"></i></a> --}}
+                        {{-- {{$user->convertLoopValue('group_users', 'name')}} --}}
+                        @if (count($user->group_users) > 0)
+                            <div class="btn-group">
+                                <a href="{{url('/')}}/manage/user/groups/{{$user->id}}" class="btn btn-success btn-sm" title="グループ参加">
+                                    <i class="fas fa-users"></i> <span class="badge badge-light">{{count($user->group_users)}}</span>
+                                    {{-- <small>グループ <span class="badge badge-light">{{count($user->group_users)}}</span></small> --}}
+                                </a>
+                                <button type="button" class="btn btn-success btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <span class="sr-only">下三角ボタン</span>
+                                </button>
+                                <div class="dropdown-menu">
+                                    <h6 class="dropdown-header">参加グループ</h6>
+                                    @foreach($user->group_users as $group_user)
+                                        <span class="dropdown-item-text small">{{$group_user->name}}</span>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @else
+                            <a href="{{url('/')}}/manage/user/groups/{{$user->id}}" class="btn btn-outline-success btn-sm" title="グループ参加">
+                                <i class="fas fa-users"></i> <span class="badge badge-light">{{count($user->group_users)}}</span>
+                                {{-- <small>グループ <span class="badge badge-light">{{count($user->group_users)}}</span></small> --}}
+                            </a>
+                        @endif
                     </td>
                     <td>{{$user->email}}</td>
                     @foreach($users_columns as $users_column)
