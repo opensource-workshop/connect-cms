@@ -22,12 +22,12 @@
 
     <div class="card-body">
 
+        {{-- 登録後メッセージ表示 --}}
+        @include('plugins.common.flash_message')
+
         <div class="alert alert-info">
             <i class="fas fa-exclamation-circle"></i> ユーザのグループに対する参加を設定します。<br />
-            グループ作成は [ <a href="{{url('/')}}/manage/group">グループ管理</a> ] から行えます。
-{{--
-            <i class="fas fa-exclamation-circle"></i> ユーザのグループに対する権限を設定します。
---}}
+            グループ作成は [ <a href="{{url('/')}}/manage/group" target="_blank">グループ管理 <i class="fas fa-external-link-alt"></i></a> ] から行えます。
         </div>
 
         <form action="{{url('/')}}/manage/user/saveGroups/{{$user->id}}" method="POST" class="">

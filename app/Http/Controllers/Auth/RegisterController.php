@@ -181,12 +181,18 @@ class RegisterController extends Controller
         }
 
         if ($this->isCan('admin_user')) {
-            // メールアドレス入力ありなら、メール送信画面へ
+            // メールアドレス入力ありなら、メール送信画面も表示する
             if ($data['email']) {
-                $this->redirectTo = '/manage/user/mail/' . $user->id;
+                // ユーザ登録＞グループ参加「決定」後、メール送信へ遷移
+                session()->flash('register_redirectTo', '/manage/user/mail/' . $user->id);
                 // 通知の埋め込みタグ-パスワード
                 session()->flash('password', $data['password']);
+            } else {
+                // ユーザ登録＞グループ参加「決定」後、ユーザ一覧へ遷移
+                session()->flash('register_redirectTo', '/manage/user/');
             }
+
+            $this->redirectTo = '/manage/user/groups/' . $user->id;
         }
 
         return $user;
