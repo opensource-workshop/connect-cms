@@ -973,6 +973,11 @@ class UserManage extends ManagePluginBase
      */
     public function groups($request, $id)
     {
+        // ユーザ新規登録＞グループ参加で、画面再表示してもセッション保持
+        $request->session()->keep(['password']);
+        // グループ参加＞メール送信 遷移先
+        $request->session()->keep(['register_redirectTo']);
+
         // ユーザデータ取得
         $user = User::find($id);
 
@@ -1001,6 +1006,9 @@ class UserManage extends ManagePluginBase
      */
     public function saveGroups($request, $id)
     {
+        // ユーザ新規登録＞グループ参加＞メール送信でもセッション保持
+        $request->session()->keep(['password']);
+
         // 画面項目のチェック
         if ($request->has('group_roles')) {
             foreach ($request->group_roles as $group_id => $group_role) {
@@ -1026,8 +1034,13 @@ class UserManage extends ManagePluginBase
             }
         }
 
-        // 削除後は一覧画面へ
-        return redirect('manage/user/groups/' . $id);
+        if (session('register_redirectTo')) {
+            // ユーザ新規登録＞グループ参加＞メール送信 の メール送信画面へ
+            return redirect(session('register_redirectTo'))->with('flash_message', '参加グループを変更しました。');
+        } else {
+            // 参加グループ編集画面へ
+            return redirect('manage/user/groups/' . $id)->with('flash_message', '参加グループを変更しました。');
+        }
     }
 
     /**
@@ -2036,7 +2049,7 @@ class UserManage extends ManagePluginBase
      */
     public function mail($request, $id = null)
     {
-        // 画面再表示してもパスワード保持
+        // 画面再表示してもセッション保持
         $request->session()->keep(['password']);
 
         // ユーザデータ取得

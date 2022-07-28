@@ -12,25 +12,21 @@
 @section('manage_content')
 
 <div class="card">
-<div class="card-header p-0">
+    <div class="card-header p-0">
+        {{-- 機能選択タブ --}}
+        @include('plugins.manage.user.user_manage_tab')
+    </div>
 
-{{-- 機能選択タブ --}}
-@include('plugins.manage.user.user_manage_tab')
+    {{-- ユーザ変更関連タブ --}}
+    @include('plugins.manage.user.user_edit_tab')
 
-</div>
+    <div class="card-body">
+        {{-- 登録後メッセージ表示 --}}
+        @include('plugins.common.flash_message')
 
-{{-- ユーザ変更関連タブ --}}
-@include('plugins.manage.user.user_edit_tab')
-
-<div class="card-body">
-
-    {{-- 登録後メッセージ表示 --}}
-    @include('plugins.common.flash_message')
-
-    {{-- フォームをincude --}}
-    @include('auth.registe_form')
-
-</div>
+        {{-- フォームをincude --}}
+        @include('auth.registe_form')
+    </div>
 </div>
 
 @endsection
