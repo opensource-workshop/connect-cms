@@ -3601,6 +3601,7 @@ trait MigrationTrait
                         'column_name'      => $databases_ini[$column_id]['column_name'],
                         'required'         => $databases_ini[$column_id]['required'],
                         'frame_col'        => 0,
+                        'title_flag'       => $databases_ini[$column_id]['title_flag'],
                         'list_hide_flag'   => $databases_ini[$column_id]['list_hide_flag'],
                         'detail_hide_flag' => $databases_ini[$column_id]['detail_hide_flag'],
                         'sort_flag'        => $databases_ini[$column_id]['sort_flag'],
@@ -10376,6 +10377,7 @@ trait MigrationTrait
                 $multidatabase_cols_rows[$metadata_id]["column_name"]      = $multidatabase_metadata->name;
                 $multidatabase_cols_rows[$metadata_id]["required"]         = $multidatabase_metadata->require_flag;
                 $multidatabase_cols_rows[$metadata_id]["frame_col"]        = null;
+                $multidatabase_cols_rows[$metadata_id]["title_flag"]       = $nc2_multidatabase->title_metadata_id == $metadata_id ? 1 : 0;
                 $multidatabase_cols_rows[$metadata_id]["list_hide_flag"]   = ($multidatabase_metadata->list_flag == 0) ? 1 : 0;
                 $multidatabase_cols_rows[$metadata_id]["detail_hide_flag"] = ($multidatabase_metadata->detail_flag == 0) ? 1 : 0;
                 $multidatabase_cols_rows[$metadata_id]["sort_flag"]        = $multidatabase_metadata->sort_flag;
@@ -10426,6 +10428,7 @@ trait MigrationTrait
                 $multidatabase_ini .= "column_name      = \"" . $multidatabase_cols["column_name"]      . "\"\n";
                 $multidatabase_ini .= "required         = "   . $multidatabase_cols["required"]         . "\n";
                 $multidatabase_ini .= "frame_col        = "   . $multidatabase_cols["frame_col"]        . "\n";
+                $multidatabase_ini .= "title_flag       = "   . $multidatabase_cols["title_flag"]       . "\n";
                 $multidatabase_ini .= "list_hide_flag   = "   . $multidatabase_cols["list_hide_flag"]   . "\n";
                 $multidatabase_ini .= "detail_hide_flag = "   . $multidatabase_cols["detail_hide_flag"] . "\n";
                 $multidatabase_ini .= "sort_flag        = "   . $multidatabase_cols["sort_flag"]        . "\n";
