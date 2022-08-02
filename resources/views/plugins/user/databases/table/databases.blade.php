@@ -17,13 +17,14 @@
     @if ($default_hide_list)
     @else
         {{-- データのループ --}}
+        <div class="table-responsive">
         <table class="table table-bordered">
             <caption class="sr-only">{{$database_frame->databases_name}}</caption>
             <thead class="thead-light">
             <tr>
             @foreach($columns as $column)
                 @if($column->list_hide_flag == 0)
-                <th>{{$column->column_name}}</th>
+                <th nowrap>{{$column->column_name}}</th>
                 @endif
             @endforeach
             </tr>
@@ -59,6 +60,7 @@
             @endforeach
             </tbody>
         </table>
+        </div>
 
         {{-- ページング処理 --}}
         @include('plugins.common.user_paginate', ['posts' => $inputs, 'frame' => $frame, 'aria_label_name' => $database_frame->databases_name])
