@@ -24,7 +24,7 @@
             <tr>
             @foreach($columns as $column)
                 @if($column->list_hide_flag == 0)
-                <th nowrap>{{$column->column_name}}</th>
+                <th class="text-nowrap">{{$column->column_name}}</th>
                 @endif
             @endforeach
             </tr>
