@@ -17,9 +17,6 @@ changelog:
     - title: Bug Fixes 🐛
       labels:
         - bug
-    - title: Security Fixes 🐛
-      labels:
-        -  security fix
     - title: developer update 👷
       labels:
         - developer update
