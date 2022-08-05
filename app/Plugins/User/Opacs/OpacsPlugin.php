@@ -136,7 +136,7 @@ class OpacsPlugin extends UserPluginBase
             $join->on('opacs.id', '=', 'opacs_books.opacs_id')
                 ->where('opacs.bucket_id', '=', $this->frame->bucket_id);
         })
-        ->firstOrNew(['opacs.id' => $id]);
+        ->firstOrNew(['opacs_books.id' => $id]);
         return $this->post;
     }
 

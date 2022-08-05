@@ -70,7 +70,7 @@
                     <form action="{{url('/')}}/plugin/opacs/roleLent/{{$page->id}}/{{$frame_id}}/{{$books_request->opacs_books_id}}" method="GET">
                         <input type="hidden" name="req_lent_id" value="{{old('req_lent_id', $books_request->id)}}" class="form-control">
                         <input type="hidden" name="req_student_no" value="{{old('req_student_no', $books_request->student_no)}}" class="form-control">
-                        <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 
+                        <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>
                             貸出
                         </button>
                     </form>
@@ -91,7 +91,7 @@
     </tbody>
     </table>
     </div>
-    
+
 </div>
 
 <div class="card mb-3">
@@ -113,7 +113,11 @@
         <tr>
             <td>@php echo date('Y-n-j', strtotime($books_lent->updated_at)); @endphp</td>
             <td>{!!$books_lent->getFormatRreturnScheduled()!!}</td>
-            <td>{{$books_lent->title}}</td>
+            <td>
+                <a href="{{url('/')}}/plugin/opacs/roleLent/{{$page->id}}/{{$frame_id}}/{{$books_lent->opacs_books_id}}?req_lent_id={{$books_lent->id}}#frame-{{$frame->id}}">
+                    {{$books_lent->title}}
+                </a>
+            </td>
             <td>{{$books_lent->barcode}}</td>
             <td>{{$books_lent->student_no}}</td>
         </tr>
@@ -137,7 +141,7 @@
 
         <!-- 返却ボタン -->
         <div class="col-12">
-            <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 
+            <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>
                 返却
             </button>
         </div>
@@ -155,7 +159,7 @@
 
         <!-- 返却ボタン -->
         <div class="col-12 col-sm-4 col-md-3 col-lg-2 text-center">
-            <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 
+            <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>
                 返却
             </button>
         </div>
