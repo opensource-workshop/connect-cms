@@ -135,6 +135,7 @@ class UploadController extends ConnectController
             'jpe',
             'jpeg',
             'gif',
+            'html',
         ];
 
         // サムネイル指定の場合は、キャッシュを使ってファイルを返す。
@@ -254,6 +255,7 @@ class UploadController extends ConnectController
             'jpe',
             'jpeg',
             'gif',
+            'html',
         ];
 
         if (in_array(strtolower(pathinfo($filename, PATHINFO_EXTENSION)), $inline_extensions) && $request->response != 'download') {
