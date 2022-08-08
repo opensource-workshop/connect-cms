@@ -17,18 +17,17 @@
     <ul class="nav nav-tabs nav-justified d-none d-md-flex">
     @foreach($pages as $page)
 
-        {{-- 自階層で非表示のページは対象外 --}}
+        {{-- 自階層ページの表示非表示 --}}
         @if ($page->isView(Auth::user(), false, true, $page_roles))
             @if ($active_page_id == $page->id)
                 <li role="presentation" class="nav-item text-nowrap {{'depth-' . $page->depth}} {{$page->getClass()}}"><a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="nav-link active">{{$page->page_name}}</a></li>
             @else
                 <li role="presentation" class="nav-item text-nowrap {{'depth-' . $page->depth}} {{$page->getClass()}}"><a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="nav-link">{{$page->page_name}}</a></li>
             @endif
+        @endif
 
-            @php
-                $view_pages[] = $page->id;
-            @endphp
-
+        {{-- 下階層の表示非表示処理のため、自階層の表示非表示は display_flag を考慮せずチェック --}}
+        @if ($page->isView(Auth::user(), true, true, $page_roles))
             {{-- 子供のページがある場合 --}}
             @if (count($page->children) > 0)
                 {{-- 子要素を再帰的に表示するため、別ファイルに分けてinclude --}}
