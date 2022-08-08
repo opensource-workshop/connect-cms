@@ -37,6 +37,10 @@ use App\Models\Core\UsersColumns;
         user_download.character_code.value = '{{CsvCharacterCode::utf_8}}';
         user_download.submit();
     }
+
+    $(function () {
+        $('[data-toggle="popover"]').popover()
+    })
 </script>
 
 <div class="card">
@@ -317,9 +321,23 @@ use App\Models\Core\UsersColumns;
                         {{$user->userid}}
                     </td>
                     <td>{{$user->name}}</td>
-                    <td>
-                        <a href="{{url('/')}}/manage/user/groups/{{$user->id}}" title="グループ参加"><i class="far fa-edit"></i></a>
-                        {{$user->convertLoopValue('group_users', 'name')}}
+                    <td nowrap>
+                        {{-- <a href="{{url('/')}}/manage/user/groups/{{$user->id}}" title="グループ参加"><i class="far fa-edit"></i></a> --}}
+                        {{-- {{$user->convertLoopValue('group_users', 'name')}} --}}
+                        <a href="{{url('/')}}/manage/user/groups/{{$user->id}}" class="btn btn-success btn-sm" title="グループ参加">
+                            <i class="fas fa-users"></i>
+                        </a>
+
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-container="body" data-toggle="popover" data-placement="right"
+                            title="参加グループ"
+                            data-html="true"
+                            data-content='
+                            @foreach($user->group_users as $group_user)
+                                <div class="small">{{$group_user->name}}</div>
+                            @endforeach
+                            '>
+                            <span class="badge badge-light">{{count($user->group_users)}}</span>
+                        </button>
                     </td>
                     <td>{{$user->email}}</td>
                     @foreach($users_columns as $users_column)
