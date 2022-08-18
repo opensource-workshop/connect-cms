@@ -47,11 +47,14 @@ if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null
 
     {{-- 認証していてフレームタイトルが空の場合は、パネルヘッダーの中央にアイコンを配置したいので、高さ指定する。 --}}
     @if (Auth::check() && empty($frame->frame_title) && app('request')->input('mode') == 'preview')
-        <h1 class="card-header bg-transparent border-0" style="padding-top: 0px;padding-bottom: 0px;">
+        @php $class_header_bg = "bg-transparent"; @endphp
+        <h1 class="card-header {{$class_header_bg}} border-0" style="padding-top: 0px;padding-bottom: 0px;">
     @elseif (Auth::check() && empty($frame->frame_title))
-        <h1 class="card-header bg-transparent border-0" style="padding-top: 0px;padding-bottom: 0px;height: 24px;">
+        @php $class_header_bg = "bg-transparent"; @endphp
+        <h1 class="card-header {{$class_header_bg}} border-0" style="padding-top: 0px;padding-bottom: 0px;height: 24px;">
     @else
-        <h1 class="card-header bg-{{$frame->frame_design}} cc-{{$frame->frame_design}}-font-color">
+        @php $class_header_bg = "bg-{$frame->frame_design}"; @endphp
+        <h1 class="card-header {{$class_header_bg}} cc-{{$frame->frame_design}}-font-color">
     @endif
 
     {{-- フレームタイトル --}}
@@ -124,27 +127,27 @@ if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null
             </span>
 
             {{-- ページ内リンク --}}
-            <a href="{{URL::to($page->permanent_link)}}#frame-{{ $frame->frame_id }}" title="ページ内リンク"><small><i class="fas fa-link bg-{{$frame->frame_design}} cc-font-color"></i></small></a>
+            <a href="{{URL::to($page->permanent_link)}}#frame-{{ $frame->frame_id }}" title="ページ内リンク"><small><i class="fas fa-link {{$class_header_bg}} cc-font-color"></i></small></a>
 
             {{-- 上移動。POSTのためのフォーム --}}
             <form action="{{url('/')}}/core/frame/sequenceUp/{{$page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}#frame-{{$frame->frame_id}}" name="form_{{ $frame->frame_id }}_up" method="POST" class="form-inline d-inline">
                 {{ csrf_field() }}
-                <a href="javascript:form_{{ $frame->frame_id }}_up.submit();" title="上移動"><i class="fas fa-angle-up bg-{{$frame->frame_design}} align-bottom cc-font-color"></i></a>
+                <a href="javascript:form_{{ $frame->frame_id }}_up.submit();" title="上移動"><i class="fas fa-angle-up {{$class_header_bg}} align-bottom cc-font-color"></i></a>
             </form>
 
             {{-- 下移動。POSTのためのフォーム --}}
             <form action="{{url('/')}}/core/frame/sequenceDown/{{$page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}#frame-{{$frame->frame_id}}" name="form_{{ $frame->frame_id }}_down" method="POST" class="form-inline d-inline">
                 {{ csrf_field() }}
-                <a href="javascript:form_{{ $frame->frame_id }}_down.submit();" title="下移動"><i class="fas fa-angle-down bg-{{$frame->frame_design}} align-bottom cc-font-color"></i></a>
+                <a href="javascript:form_{{ $frame->frame_id }}_down.submit();" title="下移動"><i class="fas fa-angle-down {{$class_header_bg}} align-bottom cc-font-color"></i></a>
             </form>
 
             {{-- 変更画面へのリンク --}}
-            <a href="{{url('/')}}/plugin/{{$plugin_instances[$frame->frame_id]->frame->plugin_name}}/{{$plugin_instances[$frame->frame_id]->getFirstFrameEditAction()}}/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame->frame_id}}" title="{{$plugin_name_full}}設定"><small><i class="fas fa-cog bg-{{$frame->frame_design}} cc-font-color"></i></small></a>
+            <a href="{{url('/')}}/plugin/{{$plugin_instances[$frame->frame_id]->frame->plugin_name}}/{{$plugin_instances[$frame->frame_id]->getFirstFrameEditAction()}}/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame->frame_id}}" title="{{$plugin_name_full}}設定"><small><i class="fas fa-cog {{$class_header_bg}} cc-font-color"></i></small></a>
 
 {{-- モーダル実装 --}}
             {{-- 変更画面へのリンク --}}
 {{--
-            <a href="#" data-href="{{URL::to('/')}}/core/frame/edit/{{$page->id}}/{{ $frame->frame_id }}" data-toggle="modal" data-target="#modalDetails"><span class="glyphicon glyphicon-edit bg-{{$frame->frame_design}}"></a>
+            <a href="#" data-href="{{URL::to('/')}}/core/frame/edit/{{$page->id}}/{{ $frame->frame_id }}" data-toggle="modal" data-target="#modalDetails"><span class="glyphicon glyphicon-edit {{$class_header_bg}}"></a>
 --}}
 
             {{-- 削除。POSTのためのフォーム --}}
@@ -152,9 +155,9 @@ if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null
 {{--
         @else
         <div class="float-right">
-            <i class="fas fa-angle-up bg-{{$frame->frame_design}} align-bottom text-secondary cc-font-color"></i>
-            <i class="fas fa-angle-down bg-{{$frame->frame_design}} align-bottom text-secondary cc-font-color"></i>
-            <small><i class="fas fa-cog bg-{{$frame->frame_design}} text-secondary cc-font-color"></i></small>
+            <i class="fas fa-angle-up {{$class_header_bg}} align-bottom text-secondary cc-font-color"></i>
+            <i class="fas fa-angle-down {{$class_header_bg}} align-bottom text-secondary cc-font-color"></i>
+            <small><i class="fas fa-cog {{$class_header_bg}} text-secondary cc-font-color"></i></small>
         </div>
         @endif
 --}}
