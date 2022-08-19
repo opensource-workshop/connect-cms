@@ -30,7 +30,7 @@ use App\Plugins\Manage\ManagePluginBase;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページ管理
- * @package Contoroller
+ * @package Controller
  * @plugin_title ページ管理
  * @plugin_desc ページの作成や設定など、ページに関する機能が集まった管理機能です。
  */
@@ -58,6 +58,7 @@ class PageManage extends ManagePluginBase
         $role_ckeck_table["upload"]          = array('admin_page');
         $role_ckeck_table["role"]            = array('admin_page');
         $role_ckeck_table["saveRole"]        = array('admin_page');
+        $role_ckeck_table["roleList"]        = ['admin_page'];
         $role_ckeck_table["migrationOrder"]  = array('admin_page');
         $role_ckeck_table["migrationGet"]    = array('admin_page');
         $role_ckeck_table["migrationImort"]  = array('admin_page');
@@ -827,5 +828,49 @@ class PageManage extends ManagePluginBase
 
         // ページ管理画面に戻る
         return redirect("/manage/page#$page_id");
+    }
+
+    /**
+     * ページ権限一覧
+     *
+     * @return view
+     * @method_title ページ権限一覧
+     * @method_desc ページ権限の一覧が表示されます。<br />ページ権限に関する設定などが俯瞰できる画面です。
+     * @method_detail ページ権限を編集するときは、編集ボタンをクリックしてください。
+     */
+    public function roleList($request, $id)
+    {
+        // ページデータの取得(laravel-nestedset 使用)
+        $return_obj = 'flat';
+        $pages = Page::defaultOrderWithDepth($return_obj);
+
+        // ページ権限を取得してGroup オブジェクトに保持する。
+        $page_roles = PageRole::join('groups', 'groups.id', '=', 'page_roles.group_id')
+                ->whereNull('groups.deleted_at')
+                ->where('page_roles.role_value', 1)
+                ->get();
+
+        foreach ($pages as &$page) {
+            $page->page_roles = $page_roles->where('page_id', $page->id);
+        }
+
+        // グループの取得
+        $groups = Group::orderBy('display_sequence', 'asc')->get();
+
+        // グループ参加ユーザ
+        $users = User::whereIn('id', GroupUser::pluck('user_id')->unique())->get();
+
+        foreach ($groups as $group) {
+            $group->group_user_names = $users->whereIn('id', $group->group_user->pluck('user_id'))->pluck('name')->implode('<br />');
+        }
+
+        // 管理画面プラグインの戻り値の返し方
+        // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
+        return view('plugins.manage.page.role_list', [
+            "function"     => __FUNCTION__,
+            "plugin_name"  => "page",
+            "pages"        => $pages,
+            "groups"       => $groups,
+        ]);
     }
 }
