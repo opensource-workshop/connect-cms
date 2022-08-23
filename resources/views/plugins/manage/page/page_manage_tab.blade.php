@@ -25,6 +25,12 @@
                 <li class="nav-item"><a href="{{url('/manage/page/edit')}}" class="nav-link">ページ登録</a></li>
             @endif
 
+            @if ($function == "roleList")
+                <li class="nav-item"><span class="nav-link"><span class="active">ページ権限一覧</span></span></li>
+            @else
+                <li class="nav-item"><a href="{{url('/manage/page/roleList')}}" class="nav-link">ページ権限一覧</a></li>
+            @endif
+
             @if ($function == "import")
                 <li class="nav-item"><span class="nav-link"><span class="active">CSVインポート</span></span></li>
             @else
