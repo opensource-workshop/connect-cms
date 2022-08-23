@@ -149,7 +149,7 @@
                                         @else
                                             @php $group->page_roles = $page_roles_parent->where('group_id', $group->id); @endphp
                                             @foreach($group->getRoleNames() as $role_name)
-                                                <span class="badge badge-warning" title="{{$role_name}}(親を継承)">{{$role_name}}</span>
+                                                <span class="badge badge-secondary" title="{{$role_name}}(親を継承)">{{$role_name}}</span>
                                             @endforeach
                                         @endif
                                     @else
