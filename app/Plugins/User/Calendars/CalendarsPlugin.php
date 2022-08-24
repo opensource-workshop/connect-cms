@@ -367,6 +367,7 @@ class CalendarsPlugin extends UserPluginBase
         // id が空なら、新規オブジェクトとみなして、デフォルトの日付を設定して画面を表示する。
         if (empty($post->id) && $request->filled("date")) {
             $post->start_date = $request->date;
+            $post->end_date = $request->date;
         }
 
         // 変更画面を呼び出す。
