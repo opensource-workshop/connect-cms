@@ -738,8 +738,15 @@ trait ConnectCommonTrait
         if (Hash::check(md5($request->password), $user->password)) {
             // ログイン
             Auth::login($user, true);
+
+            $url = '/';
+            // ログイン後の返却ページ対応
+            if ($request->session()->get('url') && isset($request->session()->get('url')["intended"])) {
+                $url = $request->session()->get('url')["intended"];
+            }
+
             // トップページへ
-            return redirect("/");
+            return redirect($url);
         }
     }
 
