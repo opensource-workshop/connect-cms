@@ -22,7 +22,7 @@
 
 // 認証系アクション
 // Auth::routes();
-Route::get(config('connect.LOGIN_PATH'), 'Auth\LoginController@showLoginForm')->name('login');
+Route::get(config('connect.LOGIN_PATH'), 'Auth\LoginController@showLoginForm')->name('show_login_form');
 Route::post(config('connect.LOGIN_PATH'), 'Auth\LoginController@login')->name('login');
 Route::post('logout', 'Auth\LoginController@logout')->name('logout');
 // shibbolth認証
@@ -34,7 +34,7 @@ Route::get('/password/reset/{token}', 'Auth\ResetPasswordController@showResetFor
 Route::post('/password/reset', 'Auth\ResetPasswordController@reset')->name('password.resetpost');
 
 //ユーザー登録
-Route::get('register', 'Auth\RegisterController@showRegistrationForm')->name('register');
+Route::get('register', 'Auth\RegisterController@showRegistrationForm')->name('show_register_form');
 
 // システム管理者 or ユーザ管理者の場合、OK
 //Route::group(['middleware' => ['auth', 'can:system_user-admin']], function () {
@@ -58,7 +58,7 @@ Route::post('/core/{action_type}/{action}/{page_id?}/{frame_id?}/{arg?}', 'Core\
 
 // コアのAPI処理
 Route::get('/api/{plugin_name}/{action}/{arg1?}/{arg2?}/{arg3?}/{arg4?}/{arg5?}', 'Core\ApiController@invokeApi')->name('get_api');
-Route::post('/api/{plugin_name}/{action}/{arg1?}/{arg2?}/{arg3?}/{arg4?}/{arg5?}', 'Core\ApiController@invokeApi')->name('get_api');
+Route::post('/api/{plugin_name}/{action}/{arg1?}/{arg2?}/{arg3?}/{arg4?}/{arg5?}', 'Core\ApiController@invokeApi')->name('post_api');
 
 // 管理画面getアクション：管理画面用のクラスをURL をもとに、ClassController で呼び出す。
 Route::get('/manage/{plugin_name}/{action?}/{id?}/{sub_id?}', 'Core\ClassController@invokeGetManage')->name('get_manage');
