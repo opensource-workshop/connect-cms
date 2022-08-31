@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Queue;
 // use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Queue\Events\JobFailed;
 
 use App\Traits\ConnectRoleTrait;
@@ -42,6 +43,11 @@ class AppServiceProvider extends AuthServiceProvider
      */
     public function boot()
     {
+
+        // ペジネーションでBootstrapのスタイルを利用する
+        // Laravel 8からデフォルトがTailwind CSSフレームワークに変わったが、以前のままで行く
+        Paginator::useBootstrap();
+
         // varcharのデフォルト文字長は、191バイトにする対応を入れる。ただし、2024年6月30日以降はこの対応を消す可能性がある。
         // これは、MySQL5.7.7 以上では必要ない対応であるが、Redhat7 デフォルトのMariaDB では必要なもののため、Redhat7 のセキュリティアップデートが終わる2024年6月30日を考慮したものである。
         // see) https://readouble.com/laravel/6.x/ja/migrations.html#creating-indexes
