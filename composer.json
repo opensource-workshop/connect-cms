@@ -9,7 +9,7 @@
     ],
     "license": "MIT",
     "require": {
-        "php": ">=7.2.5",
+        "php": ">=7.3.0",
         "azuyalabs/yasumi": "^2.3",
         "doctrine/dbal": "^2.10",
         "ezyang/htmlpurifier": "^4.13",
@@ -18,10 +18,10 @@
         "intervention/image": "^2.5",
         "intervention/imagecache": "^2.5",
         "kalnoy/nestedset": "5.0.3",
-        "laravel/framework": "^7.0",
+        "laravel/framework": "^8.0",
         "laravel/helpers": "^1.4",
         "laravel/tinker": "^2.5",
-        "laravel/ui": "^2.0",
+        "laravel/ui": "^3.0",
         "laravelcollective/html": "^6.0",
         "rlanvin/php-rrule": "^2.3",
         "setasign/fpdi": "^2.3",
@@ -39,12 +39,10 @@
     },
     "autoload": {
         "psr-4": {
-            "App\\": "app/"
-        },
-        "classmap": [
-            "database/seeds",
-            "database/factories"
-        ]
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/"
+	}
     },
     "autoload-dev": {
         "psr-4": {
