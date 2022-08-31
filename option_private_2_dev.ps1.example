@@ -45,7 +45,7 @@ robocopy "${src_root_dir}${option_plugin}\resources\views\mail_option\${option_p
 robocopy "${src_root_dir}${option_plugin}\app\Console\CommandsOption\${option_plugin_command_dir}" "${dist_root_dir}app\Console\CommandsOption\${option_plugin_command_dir}" /s
 
 robocopy "${src_root_dir}${option_plugin}\database\migrations_option" "${dist_root_dir}database\migrations_option" /s
-robocopy "${src_root_dir}${option_plugin}\database\seeds\options\${option_plugin}" "${dist_root_dir}database\seeds\options\${option_plugin}" /s /MIR
+robocopy "${src_root_dir}${option_plugin}\database\seeders\Options\${option_plugin^}" "${dist_root_dir}database\seeds\options\${option_plugin}" /s /MIR
 robocopy "${src_root_dir}${option_plugin}\app\EnumsOption" "${dist_root_dir}app\EnumsOption" /s
 robocopy "${src_root_dir}${option_plugin}\public\images\plugins\${option_plugin}" "${dist_root_dir}public\images\plugins\${option_plugin}" /s /MIR
 
