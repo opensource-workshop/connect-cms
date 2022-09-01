@@ -25,7 +25,8 @@ RUN apt-get update \
         --with-jpeg \
         --with-webp \
         --with-xpm \
-    && docker-php-ext-install -j$(nproc) gd
+    && docker-php-ext-configure pcntl --enable-pcntl \
+    && docker-php-ext-install -j$(nproc) gd pcntl
 
 COPY ./sites-enabled/my.conf /etc/apache2/sites-available
 
