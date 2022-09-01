@@ -309,12 +309,12 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                     @if ($auth_method_event->value == AuthMethodType::shibboleth)
                         <li><a class="nav-link" href="{{ route('shibboleth.login') }}">ログイン</a></li>
                     @else
-                        <li><a class="nav-link" href="{{ route('login') }}">ログイン</a></li>
+                        <li><a class="nav-link" href="{{ route('show_login_form') }}">ログイン</a></li>
                     @endif
                 @endif
                 {{-- @if (isset($configs['user_register_enable']) && ($configs['user_register_enable'] == '1')) --}}
                 @if (Configs::getConfigsValue($cc_configs, 'user_register_enable') == '1')
-                    <li><a class="nav-link" href="{{ route('register') }}">ユーザ登録</a></li>
+                    <li><a class="nav-link" href="{{ route('show_register_form') }}">ユーザ登録</a></li>
                 @endif
             @else
                 <li class="nav-item dropdown">

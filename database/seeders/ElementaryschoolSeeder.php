@@ -1,6 +1,9 @@
 <?php
 
+namespace Database\Seeders;
+
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User\Contents\Contents;
 use App\Models\User\Menus\Menu;
@@ -110,13 +113,13 @@ class ElementaryschoolSeeder extends Seeder
 
         }
     }
-    
+
     private function getPagesData()
     {
         /*
-            SELECT 
-                P.page_name, P.permanent_link, P.layout, P._lft, P._rgt, P.parent_id 
-            FROM `pages` P 
+            SELECT
+                P.page_name, P.permanent_link, P.layout, P._lft, P._rgt, P.parent_id
+            FROM `pages` P
             ORDER BY P.id ASC
         */
         $pages_arr = [];
@@ -146,12 +149,12 @@ class ElementaryschoolSeeder extends Seeder
     {
         // 初期配置する固定記事データを記載する
         /*
-            SELECT 
-                P.permanent_link, F.area_id, F.frame_title, F.frame_design, F.template, F.display_sequence, C.content_text 
-            FROM `contents` C 
-            INNER JOIN buckets B ON B.id = C.bucket_id 
-            INNER JOIN frames F ON B.id = F.bucket_id 
-            INNER JOIN pages P ON P.id = F.page_id 
+            SELECT
+                P.permanent_link, F.area_id, F.frame_title, F.frame_design, F.template, F.display_sequence, C.content_text
+            FROM `contents` C
+            INNER JOIN buckets B ON B.id = C.bucket_id
+            INNER JOIN frames F ON B.id = F.bucket_id
+            INNER JOIN pages P ON P.id = F.page_id
             WHERE C.status = '0' ORDER BY C.id DESC
         */
         // 1ページに複数個配置されることを想定する
@@ -174,7 +177,7 @@ class ElementaryschoolSeeder extends Seeder
         $contents_data = [];
         foreach($contens_arr as $val){
             $contents_data[$val[0]][] = ["area_id" => $val[1], "frame_title" => $val[2], "frame_design" => $val[3], "template" => $val[4], "display_sequence" => $val[5], "content_text" => $val[6],];
-        }        
+        }
 
         return $contents_data;
     }
@@ -201,15 +204,15 @@ class ElementaryschoolSeeder extends Seeder
     {
         // 初期配置するブログデータを記載する
         /*
-            SELECT 
-                P.permanent_link, F.area_id, F.frame_title, F.frame_design, F.template, F.display_sequence, 
-                BL.blog_name, BP.contents_id, BP.blogs_id, BP.post_title, BP.post_text, BP.post_text2, BP.read_more_flag, 
+            SELECT
+                P.permanent_link, F.area_id, F.frame_title, F.frame_design, F.template, F.display_sequence,
+                BL.blog_name, BP.contents_id, BP.blogs_id, BP.post_title, BP.post_text, BP.post_text2, BP.read_more_flag,
                 BP.read_more_button, BP.close_more_button, BP.posted_at
-            FROM `blogs` BL 
-            INNER JOIN `blogs_posts` BP ON BP.blogs_id = BL.id 
-            INNER JOIN buckets B ON B.id = BL.bucket_id 
-            INNER JOIN frames F ON B.id = F.bucket_id 
-            INNER JOIN pages P ON P.id = F.page_id 
+            FROM `blogs` BL
+            INNER JOIN `blogs_posts` BP ON BP.blogs_id = BL.id
+            INNER JOIN buckets B ON B.id = BL.bucket_id
+            INNER JOIN frames F ON B.id = F.bucket_id
+            INNER JOIN pages P ON P.id = F.page_id
             WHERE BP.status = '0'
             ORDER BY BL.id DESC
         */
@@ -238,15 +241,15 @@ class ElementaryschoolSeeder extends Seeder
     {
         // 初期配置する固定記事データを記載する
         /*
-            SELECT 
-                P.permanent_link, F.area_id, F.frame_title, F.frame_design, F.template, F.display_sequence, 
+            SELECT
+                P.permanent_link, F.area_id, F.frame_title, F.frame_design, F.template, F.display_sequence,
                 W.whatsnew_name ,W.view_pattern ,W.count ,W.days ,W.rss ,W.rss_count ,W.page_method ,W.page_count,
                 W.view_posted_name ,W.view_posted_at ,W.important ,W.read_more_use_flag ,W.read_more_name ,W.read_more_fetch_count,
                 W.read_more_btn_color_type ,W.read_more_btn_type ,W.read_more_btn_transparent_flag ,W.target_plugins ,W.frame_select ,W.target_frame_ids
-            FROM `whatsnews` W 
-            INNER JOIN buckets B ON B.id = W.bucket_id 
-            INNER JOIN frames F ON B.id = F.bucket_id 
-            INNER JOIN pages P ON P.id = F.page_id 
+            FROM `whatsnews` W
+            INNER JOIN buckets B ON B.id = W.bucket_id
+            INNER JOIN frames F ON B.id = F.bucket_id
+            INNER JOIN pages P ON P.id = F.page_id
             ORDER BY W.id ASC
         */
         // target_frame_ids は指定が難しいので、SQLとは別にフレーム名を取得する
@@ -268,26 +271,26 @@ class ElementaryschoolSeeder extends Seeder
                 $target_frame_ids = implode(",", $frame_ids);
             }
             $whatsnews_data[$val[0]][] = [
-                "area_id" => $val[1], "frame_title" => $val[2], "frame_design" => $val[3], "template" => $val[4], "display_sequence" => $val[5], 
+                "area_id" => $val[1], "frame_title" => $val[2], "frame_design" => $val[3], "template" => $val[4], "display_sequence" => $val[5],
                 "whatsnew_name" => $val[6], "view_pattern" => $val[7], "count" => $val[8], "days" => $val[9], "rss" => $val[10], "rss_count" => $val[11],
                 "page_method" => $val[12], "page_count" => $val[13], "view_posted_name" => $val[14], "view_posted_at" => $val[15], "important" => $val[16],
                 "read_more_use_flag" => $val[17], "read_more_name" => $val[18], "read_more_fetch_count" => $val[19], "read_more_btn_color_type" => $val[20],
                 "read_more_btn_type" => $val[21], "read_more_btn_transparent_flag" => $val[22], "target_plugins" => $val[23], "frame_select" => $val[24], "target_frame_ids" => $target_frame_ids,
             ];
-        }        
+        }
         return $whatsnews_data;
     }
     private function getCabinetsData()
     {
         // 初期配置するキャビネットデータを記載する
         /*
-            SELECT 
-                P.permanent_link, F.area_id, F.frame_title, F.frame_design, F.template, F.display_sequence, 
+            SELECT
+                P.permanent_link, F.area_id, F.frame_title, F.frame_design, F.template, F.display_sequence,
                 C.name, C.upload_max_size, C.approval_flag, C.comment
-            FROM `cabinets` C 
-            INNER JOIN buckets B ON B.id = C.bucket_id 
-            INNER JOIN frames F ON B.id = F.bucket_id 
-            INNER JOIN pages P ON P.id = F.page_id 
+            FROM `cabinets` C
+            INNER JOIN buckets B ON B.id = C.bucket_id
+            INNER JOIN frames F ON B.id = F.bucket_id
+            INNER JOIN pages P ON P.id = F.page_id
             ORDER BY C.id ASC
         */
         $cabinets_arr = [];
@@ -299,20 +302,20 @@ class ElementaryschoolSeeder extends Seeder
             $cabinets_data[$val[0]][$val[5]] = ["area_id" => $val[1], "frame_title" => $val[2], "frame_design" => $val[3], "template" => $val[4], "display_sequence" => $val[5],
              "name" => $val[6], "upload_max_size" => $val[7], "approval_flag" => $val[8], "comment" => $val[9],
             ];
-        }        
+        }
         return $cabinets_data;
     }
     private function getCalendarsData()
     {
         // 初期配置するキャビネットデータを記載する
         /*
-            SELECT 
-                P.permanent_link, F.area_id, F.frame_title, F.frame_design, F.template, F.display_sequence, 
+            SELECT
+                P.permanent_link, F.area_id, F.frame_title, F.frame_design, F.template, F.display_sequence,
                 C.name
-            FROM `calendars` C 
-            INNER JOIN buckets B ON B.id = C.bucket_id 
-            INNER JOIN frames F ON B.id = F.bucket_id 
-            INNER JOIN pages P ON P.id = F.page_id 
+            FROM `calendars` C
+            INNER JOIN buckets B ON B.id = C.bucket_id
+            INNER JOIN frames F ON B.id = F.bucket_id
+            INNER JOIN pages P ON P.id = F.page_id
             ORDER BY C.id ASC
         */
         $calendars_arr = [];
@@ -322,7 +325,7 @@ class ElementaryschoolSeeder extends Seeder
             $calendars_data[$val[0]][$val[5]] = ["area_id" => $val[1], "frame_title" => $val[2], "frame_design" => $val[3], "template" => $val[4], "display_sequence" => $val[5],
              "name" => $val[6]
             ];
-        }        
+        }
         return $calendars_data;
     }
     private function getCountersData()
@@ -347,11 +350,11 @@ class ElementaryschoolSeeder extends Seeder
     {
         // 初期登録する会員データを記載する
         /*
-            SELECT 
+            SELECT
                 U.name, U.email, U.email_verified_at, U.userid, U.password, U.status,
                 UR.target, UR.role_name, UR.role_value
             FROM `users` U
-            LEFT JOIN users_roles UR ON U.id = UR.users_id 
+            LEFT JOIN users_roles UR ON U.id = UR.users_id
             WHERE U.status = '0' AND U.id != 1
             ORDER BY U.id ASC
         */
@@ -373,7 +376,7 @@ class ElementaryschoolSeeder extends Seeder
         foreach($users_arr as $val){
             $users_data[] = ["name" => $val[0], "email" => $val[1], "email_verified_at" => $val[2], "userid" => $val[3], "password" => $val[4], "status" => $val[5],
                                 "target" => $val[6], "role_name" => $val[7], "role_value" => $val[8],];
-        }        
+        }
         return $users_data;
     }
 
@@ -441,9 +444,9 @@ class ElementaryschoolSeeder extends Seeder
             $this->insertConfigs($row);
         }
     }
-    
-    
-    
+
+
+
 
     /* 固定記事を1レコードづつ登録する */
     private function insertContents($page_id ,$row, $plugin_name = "contents")
@@ -605,7 +608,7 @@ class ElementaryschoolSeeder extends Seeder
         );
     }
 
-    
+
     /* サイト情報を登録する */
     private function insertConfigs($row)
     {
@@ -639,8 +642,8 @@ class ElementaryschoolSeeder extends Seeder
             ]);
         }
     }
-    
-    
+
+
 
     /* Framesの行データとして返却 */
     private function genFrameRows($page_id, $area_id, $frame_title, $frame_design, $plugin_name, $template, $bucket_id, $display_sequence)
@@ -774,5 +777,5 @@ class ElementaryschoolSeeder extends Seeder
         $sql = "ALTER TABLE `users` AUTO_INCREMENT=1";
         DB::statement($sql);
     }
-    
+
 }
