@@ -30,7 +30,7 @@ rsync -arvz --delete "${src_root_dir}app/Console/CommandsOption/${option_plugin_
 # マイグレーション
 rsync -arvz --delete --exclude '2020_06_03_163936_optionsamples_table.php' --exclude '_readme.txt' "${src_root_dir}database/migrations_option" "${dist_root_dir}${option_plugin}/database/"
 # シーダー
-rsync -arvz --delete "${src_root_dir}database/seeders/Options/${option_plugin^}" "${dist_root_dir}${option_plugin}/database/seeds/options/"
+rsync -arvz --delete "${src_root_dir}database/seeders/Options/${option_plugin^}" "${dist_root_dir}${option_plugin}/database/seeders/Options/"
 # Enum
 rsync -arvz --delete "${src_root_dir}app/EnumsOption" "${dist_root_dir}${option_plugin}/app/"
 # 画像
