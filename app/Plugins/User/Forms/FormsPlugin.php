@@ -721,7 +721,7 @@ class FormsPlugin extends UserPluginBase
                         'client_original_name' => $request->file($req_filename)->getClientOriginalName(),
                         'mimetype'             => $request->file($req_filename)->getClientMimeType(),
                         'extension'            => $request->file($req_filename)->getClientOriginalExtension(),
-                        'size'                 => $request->file($req_filename)->getClientSize(),
+                        'size'                 => $request->file($req_filename)->getSize(),
                         'plugin_name'          => 'forms',
                         'page_id'              => $page_id,
                         'temporary_flag'       => 1,
