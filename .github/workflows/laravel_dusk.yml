@@ -44,6 +44,7 @@ jobs:
         run: |
           cp .env.example .env
           sed -i -e "s|DB_PASSWORD=|DB_PASSWORD=root|g" .env
+          sed -i -e "s|APP_ENV=production|APP_ENV=local|g" .env
           sed -i -e "s|APP_URL=http://localhost|APP_URL=http://localhost:8000|g" .env
           sed -i -e "s|TRANSLATE_API_URL=""|TRANSLATE_API_URL="http://localhost:8000"|g" .env
           sed -i -e "s|PDF_THUMBNAIL_API_URL=""|PDF_THUMBNAIL_API_URL="http://localhost:8000"|g" .env
@@ -124,10 +125,10 @@ jobs:
         run: php artisan key:generate
 
       - name: DB migration
-        run: php artisan migrate
+        run: php artisan migrate --force
 
       - name: Initial data import with seeder
-        run: php artisan db:seed
+        run: php artisan db:seed --force
 
       # Dusk test
       - name: Upgrade Chrome Driver
