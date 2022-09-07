@@ -25,7 +25,7 @@
         @include('plugins.common.flash_message')
 
         <div class="alert alert-info" role="alert">
-            <i class="fas fa-exclamation-circle"></i> CSVファイルを使って、ページを一括登録できます。詳細は<a href="https://connect-cms.jp/manual/manager/page#frame-377" target="_blank">オンラインマニュアルのページ管理ページ <i class="fas fa-external-link-alt"></i></a>を参照してください。
+            <i class="fas fa-exclamation-circle"></i> CSVファイルを使って、ページを一括登録できます。詳細は<a href="https://manual.connect-cms.jp/manage/page/upload/index.html" target="_blank">オンラインマニュアルのページ管理ページ <i class="fas fa-external-link-alt"></i></a>を参照してください。
         </div>
 
         {{-- インポート画面(入力フォーム) --}}
