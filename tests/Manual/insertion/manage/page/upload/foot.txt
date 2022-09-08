@@ -1,0 +1,66 @@
+<div class="card mt-3">
+    <div class="card-header text-white bg-primary">CSVファイル項目説明</div>
+    <div class="card-body">
+        <table class="table table-striped table-sm table-bordered">
+        <tbody>
+            <tr>
+                <th>項目名</th>
+                <th>必須</th>
+                <th>説明</th>
+            </tr>
+            <tr>
+                <th><pre>page_name</pre></th>
+                <td><span class="badge badge-danger">必須</span></td>
+                <td>ページ名</td>
+            </tr>
+            <tr>
+                <th><pre>permanent_link</pre></th>
+                <td><span class="badge badge-danger">必須</span></td>
+                <td>固定リンク</td>
+            </tr>
+            <tr>
+                <th><pre>background_color</pre></th>
+                <td><span class="badge badge-danger">必須</span></td>
+                <td>
+                <p>背景色<br>・HTMLで指定できる色キーワード（例：<code>red</code>,&nbsp;<code>blue</code>）やRGB色（例：<code>#000000</code>,&nbsp;<code>#111</code>）等を設定できます。<br>・空の場合、<code>NULL</code>&nbsp;と入力します。</p>
+                </td>
+            </tr>
+            <tr>
+                <th><pre>header_color</pre></th>
+                <td><span class="badge badge-danger">必須</span></td>
+                <td>
+                <p>ヘッダーバーの背景色<br>・HTMLで指定できる色キーワード（例：<code>red</code>,&nbsp; <code>blue</code>）やRGB色（例：<code>#000000</code>,&nbsp; <code>#111</code>）等を設定できます。<br>・空の場合、<code>NULL</code>&nbsp;と入力します。</p>
+                </td>
+            </tr>
+            <tr>
+                <th><pre>theme</pre></th>
+                <td><span class="badge badge-danger">必須</span></td>
+                <td>テーマ<br>・Connect-CMSの public\themes ディレクトリ配下のテーマ名を入力します。（例：<code>Defaults/Blue</code>）<br>　標準のテーマ名は、<a href="https://web.archive.org/web/20211026030706/https://github.com/opensource-workshop/connect-cms/tree/master/public/themes" target="_blank" rel="noopener" class="cc-icon-external">githubのpublic\themes ディレクトリ</a> で確認できます。<br>・設定なしの場合、<code>NULL</code>&nbsp;と入力します。</td>
+            </tr>
+            <tr>
+                <th><pre>layout</pre></th>
+                <td><span class="badge badge-danger">必須</span></td>
+                <td>
+                <p>レイアウト<br><code>NULL</code> :&nbsp;未設定<br><code>0|0|0|0</code> : メインのみ<br><code>0|0|0|1</code> : フッター<br><code>0|0|1|0</code> : 右<br><code>0|0|1|1</code> : 右、フッター<br><code>0|1|0|0</code> : 左<br><code>0|1|0|1</code> : 左、フッター<br><code>0|1|1|0</code> : 左、右<br><code>0|1|1|1</code> : 左、右、フッター<br><code>1|0|0|0</code> : ヘッダー<br><code>1|0|0|1</code> : ヘッダー、フッター<br><code>1|0|1|0</code> : ヘッダー、右<br><code>1|0|1|1</code> : ヘッダー、右、フッター<br><code>1|1|0|0</code> : ヘッダー、左<br><code>1|1|0|1</code> : ヘッダー、左、フッター<br><code>1|1|1|0</code> : ヘッダー、左、右<br><code>1|1|1|1</code> : ヘッダー、左、右、フッター</p>
+                </td>
+            </tr>
+            <tr>
+                <th><pre>base_display_flag</pre></th>
+                <td><span class="badge badge-danger">必須</span></td>
+                <td>
+                <p>メニュー表示<br><code>1</code> : 表示する<br><code>0</code>&nbsp;: 表示しない</p>
+                </td>
+            </tr>
+        </tbody>
+        </table>
+        <p>※1 インポートすると、「公開設定」は 公開 で登録します。</p>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header text-white bg-primary">CSVファイル例</div>
+    <div class="card-body">
+        <p>"page_name","permanent_link","background_color","header_color","theme","layout","base_display_flag"<br>"アップロード","/upload","NULL","NULL","NULL","NULL","1"<br>"アップロード2","/upload/2","NULL","NULL","NULL","NULL","1"</p>
+        <p>※ 文字コードは <code>Shift_JIS</code>&nbsp;</p>
+    </div>
+</div>
