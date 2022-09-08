@@ -1,0 +1,71 @@
+<div class="card mt-3">
+    <div class="card-header text-white bg-primary">CSVファイル項目説明</div>
+    <div class="card-body">
+        <p>インポートで登録する値には、コードのまま登録する項目があります。<br />コードのまま出力される項目と内容は以下の通りです。</p>
+        <table class="table table-striped table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td style="width: 20%;">権限</td>
+                <td style="width: 40%;">role_article_admin</td>
+                <td style="width: 40%;">コンテンツ権限-コンテンツ管理者</td>
+            </tr>
+            <tr>
+                <td style="width: 20%;"></td>
+                <td style="width: 40%;">role_arrangement</td>
+                <td style="width: 40%;">コンテンツ権限-プラグイン管理者</td>
+            </tr>
+            <tr>
+                <td style="width: 20%;"></td>
+                <td style="width: 40%;">role_article</td>
+                <td style="width: 40%;">コンテンツ権限-モデレータ</td>
+            </tr>
+            <tr>
+                <td style="width: 20%;"></td>
+                <td style="width: 40%;">role_approval</td>
+                <td style="width: 40%;">コンテンツ権限-承認者</td>
+            </tr>
+            <tr>
+                <td style="width: 20%;"></td>
+                <td style="width: 40%;">role_reporter</td>
+                <td style="width: 40%;">コンテンツ権限-編集者</td>
+            </tr>
+            <tr>
+                <td style="width: 20%;"></td>
+                <td style="width: 40%;">admin_system</td>
+                <td style="width: 40%;">管理権限-システム管理者</td>
+            </tr>
+            <tr>
+                <td style="width: 20%;"></td>
+                <td style="width: 40%;">admin_site</td>
+                <td style="width: 40%;">管理権限-サイト管理者</td>
+            </tr>
+            <tr>
+                <td style="width: 20%;"></td>
+                <td style="width: 40%;">admin_page</td>
+                <td style="width: 40%;">管理権限-ページ管理者</td>
+            </tr>
+            <tr>
+                <td style="width: 20%;"></td>
+                <td style="width: 40%;">admin_user</td>
+                <td style="width: 40%;">管理権限-ユーザ管理者</td>
+            </tr>
+            <tr>
+                <td style="width: 20%;">状態</td>
+                <td style="width: 40%;">0</td>
+                <td style="width: 40%;">利用可能</td>
+            </tr>
+            <tr>
+                <td style="width: 20%;"></td>
+                <td style="width: 40%;">1</td>
+                <td style="width: 40%;">利用不可</td>
+            </tr>
+            <tr>
+                <td style="width: 20%;"></td>
+                <td style="width: 40%;">3</td>
+                <td style="width: 40%;">仮削除</td>
+            </tr>
+        </tbody>
+        </table>
+        <p>※1 インポートすると、「公開設定」は 公開 で登録します。</p>
+    </div>
+</div>

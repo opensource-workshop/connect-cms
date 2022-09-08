@@ -117,7 +117,7 @@
                                 <div class="dropdown-menu dropdown-menu-right">
                                     <a class="dropdown-item" href="#" onclick="submit_download_shift_jis(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
                                     <a class="dropdown-item" href="#" onclick="submit_download_utf_8(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
-                                    <a class="dropdown-item" href="https://connect-cms.jp/manual/manager/user#download-csv-help" target="_brank">
+                                    <a class="dropdown-item" href="https://manual.connect-cms.jp/manage/user/index.html" target="_brank">
                                         <span class="btn btn-link"><i class="fas fa-question-circle"></i> オンラインマニュアル</span>
                                     </a>
                                 </div>
