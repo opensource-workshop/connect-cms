@@ -236,6 +236,10 @@ class CodeManage extends ManagePluginBase
         //     ・重複ワードはそのまま, 全角空白はそのまま, %はそのまま
         //     ・null, "" でもarray空が戻ってきてくれる
         //     ・日本語OK
+        if ($search_words === null) {
+            return [];
+        }
+
         $search_words_array = preg_split(
             "/[\s,]*\\\"([^\\\"]+)\\\"[\s,]*|" . "[\s,]*'([^']+)'[\s,]*|" . "[\s,]+/",
             $search_words,
@@ -449,8 +453,8 @@ class CodeManage extends ManagePluginBase
             ->where('name', 'code_list_display_colums')
             ->firstOrNew([]);
 
-        // 基本、マイグレーションで初期値を設定するため、データは必ずある想定
-        $config->value_array = explode('|', $config->value);
+        // 表示設定がされていない場合を考慮
+        $config->value_array = explode('|', $config->value ?? '');
 
         return $config;
     }
@@ -490,7 +494,7 @@ class CodeManage extends ManagePluginBase
             // Configsから一覧表示設定の取得
             $config = $this->getConfigCodeListDisplayColums();
 
-            if ($config) {
+            if ($config->value) {
                 // 登録時にデータありは、基本ありえない
                 Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . '):登録時にデータありは、基本ありえない');
                 // 一覧画面に戻る
