@@ -49,7 +49,7 @@
                 <div class="form-row">
 
                     {{-- 学籍番号/教職員番号　通常ユーザーは自ログインID固定 --}}
-                    <div class="form-group col-12 col-sm-12 col-md-6">
+                    <div class="form-group col-md-6">
                         @can("role_article")
                             {{-- 権限ありの場合 --}}
                             <label class="control-label">学籍番号/教職員番号</label> <label class="badge badge-danger">必須</label>
@@ -60,10 +60,9 @@
                             <input type="hidden" name="req_student_no" value="{{old('req_student_no', Auth::user()->userid)}}">
                             <br /><div class="card p-2" style="background-color: lightgray">{{Auth::user()->userid}}</div>
                         @endcan
-
                     </div>
 
-                    <div class="form-group col-12 col-sm-12 col-md-6">
+                    <div class="form-group col-md-6">
                         <label class="control-label">連絡先電話番号</label> <label class="badge badge-danger">必須</label>
                         <input type="text" name="req_phone_no" value="{{old('req_phone_no')}}" class="form-control" placeholder="ハイフンなしで半角数値">
                         @if ($errors && $errors->has('req_phone_no')) <div class="text-danger">{{$errors->first('req_phone_no')}}</div> @endif
@@ -75,12 +74,12 @@
                     @if ($errors && $errors->has('req_email')) <div class="text-danger">{{$errors->first('req_email')}}</div> @endif
                 </div>
                 <div class="form-row">
-                    <div class="form-group col-12 col-md-4">
+                    <div class="form-group col-md-4">
                         <label class="control-label">郵送先郵便番号</label> <label class="badge badge-danger">必須</label>
                         <input type="text" name="req_postal_code" value="{{old('req_postal_code')}}" class="form-control" placeholder="ハイフンなしで半角数値">
                         @if ($errors && $errors->has('req_postal_code')) <div class="text-danger">{{$errors->first('req_postal_code')}}</div> @endif
                     </div>
-                    <div class="form-group col-12 col-md-8">
+                    <div class="form-group col-md-8">
                         <label class="control-label">郵送先住所</label> <label class="badge badge-danger">必須</label>
                         <input type="text" name="req_address" value="{{old('req_address')}}" class="form-control">
                         @if ($errors && $errors->has('req_address')) <div class="text-danger">{{$errors->first('req_address')}}</div> @endif
