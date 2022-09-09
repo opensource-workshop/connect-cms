@@ -95,6 +95,7 @@ class Dusks extends Model
             $dusk->parent_id = $parent->id;
             $dusk->save();
         }
+        return $dusk;
     }
 
     /**
