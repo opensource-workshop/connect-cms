@@ -1088,7 +1088,7 @@ class OpacsPlugin extends UserPluginBase
         $opacs_books_lent = OpacsBooksLents::where('id', $request->req_lent_id)->first();
 
         // ユーザー名取得
-        $user = User::where('userid', $opacs_books_lent->student_no)->first();
+        $user = User::where('userid', $opacs_books_lent->student_no)->firstOrNew([]);
 
         // 画面を呼び出す。
         return $this->view(
