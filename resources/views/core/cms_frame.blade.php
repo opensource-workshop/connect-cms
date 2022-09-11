@@ -122,15 +122,7 @@ if ($frame->isInvisiblePrivateFrame()) {
                             $plugin_instances[$frame->frame_id]->putLog($e);
                     @endphp
                     {{-- debug_message は互換性のために残している。有効な活用方法は今後、検討 --}}
-                    @if ($e->getStatusCode() == 403)
-                        @include('errors.403_inframe' ,['message' => $e->getMessage(), 'debug_message' => $e->getMessage()])
-                    @elseif ($e->getStatusCode() == 404)
-                        @include('errors.404_inframe' ,['message' => $e->getMessage(), 'debug_message' => $e->getMessage()])
-                    @elseif ($e->getStatusCode() == 500)
-                        @include('errors.500_inframe' ,['message' => $e->getMessage(), 'debug_message' => $e->getMessage()])
-                    @else
-                        @include('errors.error_inframe' ,['message' => $e->getMessage(), 'debug_message' => $e->getMessage()])
-                    @endif
+                        @include('errors.500_inframe' ,['debug_message' => $e->getMessage()])
                     @php
                         }
                     @endphp
