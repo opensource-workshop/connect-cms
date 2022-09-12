@@ -121,8 +121,8 @@ if ($frame->isInvisiblePrivateFrame()) {
                         } catch (\Throwable $e) {
                             $plugin_instances[$frame->frame_id]->putLog($e);
                     @endphp
-                    {{-- debug_message は互換性のために残している。有効な活用方法は今後、検討 --}}
-                        @include('errors.500_inframe' ,['debug_message' => $e->getMessage()])
+                            {{-- debug_message は互換性のために残している。有効な活用方法は今後、検討 --}}
+                            @include('errors.500_inframe' ,['debug_message' => $e->getMessage()])
                     @php
                         }
                     @endphp
@@ -136,7 +136,7 @@ if ($frame->isInvisiblePrivateFrame()) {
                         } catch (\Throwable $e) {
                             $plugin_instances[$frame->frame_id]->putLog($e);
                     @endphp
-                        @include('errors.500_inframe' ,['debug_message' => $e->getMessage()])
+                            @include('errors.500_inframe' ,['debug_message' => $e->getMessage()])
                     @php
                         }
                     @endphp
