@@ -10,7 +10,7 @@
         <div class="alert alert-danger">
             <small>
                 <i class="fas fa-exclamation-triangle"></i> WYSIWYG のバイト数エラーの詳細については、Connect-CMS公式サイトを参照してください。<br />
-                <a href="https://connect-cms.jp/manual/error" target="_blank">https://connect-cms.jp/manual/error</a>
+                <a href="https://manual.connect-cms.jp/common/wysiwyg/error/index.html" target="_blank">https://manual.connect-cms.jp/common/wysiwyg/error/index.html</a>
             </small>
         </div>
     @endif
