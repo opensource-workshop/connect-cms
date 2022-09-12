@@ -732,7 +732,7 @@ class UserPluginBase extends PluginBase
                  ->update(['bucket_id' => $buckets->id]);
         }
 
-        // Backet が取れないとおかしな操作をした可能性があるのでエラーにしておく。
+        // Bucket が取れないとおかしな操作をした可能性があるのでエラーにしておく。
         if (empty($buckets)) {
             return $this->viewError("error_inframe", "存在しないBucket");
         }
