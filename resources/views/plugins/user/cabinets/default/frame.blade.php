@@ -44,6 +44,54 @@
             </div>
         </div>
 
+        {{-- ダウンロード件数の表示 --}}
+        @php
+            $show_download_count = FrameConfig::getConfigValueAndOld($frame_configs, CabinetFrameConfig::show_download_count, ShowType::not_show);
+        @endphp
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">{{CabinetFrameConfig::getDescription(CabinetFrameConfig::show_download_count)}}</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                @foreach (ShowType::getMembers() as $sort_key => $sort_view)
+                <div class="custom-control custom-radio custom-control-inline">
+                        <input type="radio" value="{{$sort_key}}" id="show_download_count_{{$sort_key}}" name="show_download_count" class="custom-control-input" @if ($show_download_count == $sort_key) checked="checked" @endif>
+                        <label class="custom-control-label" for="show_download_count_{{$sort_key}}">{{$sort_view}}</label>
+                </div>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- 作成者の表示 --}}
+        @php
+            $show_created_name = FrameConfig::getConfigValueAndOld($frame_configs, CabinetFrameConfig::show_created_name, ShowType::not_show);
+        @endphp
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">{{CabinetFrameConfig::getDescription(CabinetFrameConfig::show_created_name)}}</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                @foreach (ShowType::getMembers() as $sort_key => $sort_view)
+                <div class="custom-control custom-radio custom-control-inline">
+                        <input type="radio" value="{{$sort_key}}" id="show_created_name_{{$sort_key}}" name="show_created_name" class="custom-control-input" @if ($show_created_name == $sort_key) checked="checked" @endif>
+                        <label class="custom-control-label" for="show_created_name_{{$sort_key}}">{{$sort_view}}</label>
+                </div>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- 更新者の表示 --}}
+        @php
+            $show_updated_name = FrameConfig::getConfigValueAndOld($frame_configs, CabinetFrameConfig::show_updated_name, ShowType::not_show);
+        @endphp
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">{{CabinetFrameConfig::getDescription(CabinetFrameConfig::show_updated_name)}}</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                @foreach (ShowType::getMembers() as $sort_key => $sort_view)
+                <div class="custom-control custom-radio custom-control-inline">
+                        <input type="radio" value="{{$sort_key}}" id="show_updated_name_{{$sort_key}}" name="show_updated_name" class="custom-control-input" @if ($show_updated_name == $sort_key) checked="checked" @endif>
+                        <label class="custom-control-label" for="show_updated_name_{{$sort_key}}">{{$sort_view}}</label>
+                </div>
+                @endforeach
+            </div>
+        </div>
+
         {{-- Submitボタン --}}
         <div class="text-center">
             <a class="btn btn-secondary mr-2" href="{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}">
