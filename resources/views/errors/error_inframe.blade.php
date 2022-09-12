@@ -10,11 +10,11 @@
         <i class="fas fa-exclamation-triangle"></i>
         <span class="sr-only">Error:</span>
         @if ($e)
-            {{$e->getStatusCode()}}. 
+            {{$e->getCode()}}.
         @endif
         @if (isset($message))
             {{$message}}
-        @endif 
+        @endif
         <br />
         @if (Config::get('app.debug'))
             <div class="card mt-3">
