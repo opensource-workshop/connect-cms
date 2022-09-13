@@ -161,6 +161,14 @@
     @endcan
     <button class="btn btn-primary btn-sm btn-download" type="button" disabled><i class="fas fa-download"></i><span class="d-none d-sm-inline"> ダウンロード</span></button>
 </div>
+
+@php
+    //　表示設定
+    $show_download_count = FrameConfig::getConfigValueAndOld($frame_configs, CabinetFrameConfig::show_download_count, ShowType::not_show) == ShowType::show;
+    $show_created_name = FrameConfig::getConfigValueAndOld($frame_configs, CabinetFrameConfig::show_created_name, ShowType::not_show) == ShowType::show;
+    $show_updated_name = FrameConfig::getConfigValueAndOld($frame_configs, CabinetFrameConfig::show_updated_name, ShowType::not_show) == ShowType::show;
+@endphp
+
 <table class="table text-break">
     <thead>
         <tr class="d-none d-md-table-row">
@@ -168,6 +176,8 @@
             <th>名前</th>
             <th>サイズ</th>
             <th>更新日</th>
+            @if ($show_created_name)<th>作成者</th>@endif
+            @if ($show_updated_name)<th>更新者</th>@endif
         </tr>
     </thead>
     <tbody>
@@ -197,18 +207,30 @@
                             <small class="form-text text-muted d-block d-md-none">
                                 - | {{$cabinet_content->created_at}}
                             </small>
+                            <small class="form-text text-muted d-block d-md-none">
+                                @if ($show_created_name)作成者 : {{$cabinet_content->created_name}}@endif
+                            </small>
                         </td>
                         <td class="d-none d-md-table-cell">-</td>
                         <td class="d-none d-md-table-cell">{{$cabinet_content->created_at}}</td>
+                        @if ($show_created_name)<td class="d-none d-md-table-cell">{{$cabinet_content->created_name}}</td>@endif
+                        @if ($show_updated_name)<td class="d-none d-md-table-cell">{{$cabinet_content->updated_name}}</td>@endif
                     @else
                         <td>
                             <i class="far fa-file mr-1 text-secondary"></i><a href="{{url('/')}}/file/{{$cabinet_content->upload_id}}" target="_blank">{{$cabinet_content->displayName}}</a>
+                            @if ($show_download_count)<span class="badge badge-pill badge-secondary" title="ダウンロード数">{{$cabinet_content->upload->download_count}}</span>@endif
                             <small class="form-text text-muted d-block d-md-none">
                                 {{$cabinet_content->upload->getFormatSize()}} | {{$cabinet_content->created_at}}
+                            </small>
+                            <small class="form-text text-muted d-block d-md-none">
+                                @if ($show_created_name)作成者 : {{$cabinet_content->created_name}}@endif
+                                @if ($show_updated_name) @if ($show_created_name && $show_updated_name) |  @endif 更新者 : {{$cabinet_content->updated_name}} @endif
                             </small>
                         </td>
                         <td class="d-none d-md-table-cell">{{$cabinet_content->upload->getFormatSize()}}</td>
                         <td class="d-none d-md-table-cell">{{$cabinet_content->updated_at}}</td>
+                        @if ($show_created_name)<td class="d-none d-md-table-cell">{{$cabinet_content->created_name}}</td>@endif
+                        @if ($show_updated_name)<td class="d-none d-md-table-cell">{{$cabinet_content->updated_name}}</td>@endif
                     @endif
                 </tr>
             @endforeach
