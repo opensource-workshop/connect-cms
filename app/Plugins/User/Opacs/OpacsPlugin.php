@@ -22,9 +22,12 @@ use App\Models\User\Opacs\OpacsBooks;
 use App\Models\User\Opacs\OpacsBooksLents;
 use App\Models\User\Opacs\OpacsFrames;
 use App\Models\User\Opacs\OpacsConfigs;
+use App\Models\User\Opacs\OpacsConfigsSelect;
 
 use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
+
+use App\Enums\OpacConfigSelectType;
 
 /**
  * Opacプラグイン
@@ -54,9 +57,9 @@ class OpacsPlugin extends UserPluginBase
     public function getPublicFunctions()
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
-        $functions = array();
-        $functions['get']  = ['settingOpacFrame', 'lentlist', 'searchClear', 'searchDetailClear', 'roleLent'];
-        $functions['post'] = ['lent', 'requestLent', 'returnLent', 'search', 'saveOpacFrame', 'getBookInfo', 'destroyRequest'];
+        $functions = [];
+        $functions['get']  = ['settingOpacFrame', 'lentlist', 'searchClear', 'searchDetailClear', 'roleLent', 'editDeliveryRequest'];
+        $functions['post'] = ['lent', 'requestLent', 'returnLent', 'search', 'saveOpacFrame', 'getBookInfo', 'destroyRequest', 'saveDeliveryRequest'];
         return $functions;
     }
 
@@ -96,6 +99,8 @@ class OpacsPlugin extends UserPluginBase
         $role_check_table["save"]              = ['role_article_admin'];
         $role_check_table["destroy"]           = ['role_article_admin'];
 
+        $role_check_table["editDeliveryRequest"] = ['role_article_admin'];
+        $role_check_table["saveDeliveryRequest"] = ['role_article_admin'];
         return $role_check_table;
     }
 
@@ -1929,5 +1934,213 @@ class OpacsPlugin extends UserPluginBase
 
         // MyOpac画面へ遷移
         return $this->index($request, $page_id, $frame_id, null, ['貸し出しリクエストを削除しました。']);
+    }
+
+    /**
+     * 配送希望設定の表示
+     *
+     * @method_title 配送希望設定
+     * @method_desc 貸出時の配送希望を設定できます。
+     * @method_detail 配送日の入力チェックや、配送時間の設定ができます。
+     */
+    public function editDeliveryRequest($request, $page_id, $frame_id, $opacs_id = null)
+    {
+        // OPAC＆フレームデータ
+        $opac_frame = $this->getOpacFrame($frame_id);
+
+        // OPACデータ
+        $opac = new Opacs();
+
+        if (!empty($opacs_id)) {
+            // opacs_id が渡ってくればopacs_id が対象
+            $opac = Opacs::where('id', $opacs_id)->first();
+        } elseif (!empty($opac_frame->bucket_id)) {
+            // Frame のbucket_id があれば、bucket_id からOPACデータ取得、なければ、新規作成か選択へ誘導
+            $opac = Opacs::where('bucket_id', $opac_frame->bucket_id)->first();
+        }
+
+        if (empty($opac)) {
+            // バケツ空テンプレートを呼び出す。
+            return $this->commonView('empty_bucket_setting');
+        }
+
+        // 役割設定の情報取得
+        $original_roles = Configs::where('category', 'original_role')->orderBy('additional1', 'asc')->get();
+
+        // Opac の設定情報
+        $opacs_configs = OpacsConfigs::getConfigs($opac->id, $original_roles);
+
+        $opacs_configs_selects = OpacsConfigsSelect::where('opacs_id', $opac->id)
+            ->where('name', OpacConfigSelectType::delivery_request_time)
+            ->orderBy('display_sequence', 'asc')
+            ->get();
+
+        return $this->view('delivery_request', [
+            'opac_frame'            => $opac_frame,
+            'opac'                  => $opac,
+            'opacs_configs'         => $opacs_configs,
+            'opacs_configs_selects' => $opacs_configs_selects,
+        ]);
+    }
+
+    /**
+     * 配送希望設定の登録
+     */
+    public function saveDeliveryRequest($request, $page_id, $frame_id, $opacs_id = null)
+    {
+        // 項目のエラーチェック
+        $validator_columns = array(
+            'opacs_configs.rule_date_after_equal'         => ['nullable', 'numeric'],
+            'opacs_configs.rule_date_before_equal'        => ['nullable', 'numeric'],
+            'opacs_configs.delivery_request_date_caption' => ['nullable', 'max:191'],
+        );
+        $validator_attribute = array(
+            'opacs_configs.rule_date_after_equal'         => '指定日数以降を許容（From）',
+            'opacs_configs.rule_date_before_equal'        => '指定日数までを許容（To）',
+            'opacs_configs.delivery_request_date_caption' => '内容',
+        );
+
+        $validator = Validator::make($request->all(), $validator_columns);
+        $validator->setAttributeNames($validator_attribute);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        // 保存
+        foreach ($request->opacs_configs as $config_name => $config_value) {
+            OpacsConfigs::updateOrCreate(
+                ['opacs_id' => $request->opacs_id, 'name' => $config_name],
+                ['value' => $config_value],
+            );
+        }
+
+        session()->flash('flash_message_for_frame' . $frame_id, '更新しました。');
+
+        // redirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+    }
+
+    /**
+     * 配送希望時間：選択肢の登録
+     */
+    public function addSelect($request, $page_id, $frame_id)
+    {
+        $messages = [
+            'select_name.regex' => ':attributeに | を含める事はできないため、取り除いてください。',
+        ];
+
+        // エラーチェック  regex（|を含まない）
+        $validator = Validator::make($request->all(), [
+            'select_name'  => ['required', 'regex:/^(?!.*\|).*$/'],
+        ], $messages);
+        $validator->setAttributeNames([
+            'select_name'  => '選択肢名',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        // 新規登録時の表示順を設定
+        $max_display_sequence = OpacsConfigsSelect::where('opacs_id', $request->opacs_id)
+            ->where('name', OpacConfigSelectType::delivery_request_time)
+            ->max('display_sequence');
+        $max_display_sequence = $max_display_sequence ? $max_display_sequence + 1 : 1;
+
+        $select = new OpacsConfigsSelect();
+        $select->opacs_id = $request->opacs_id;
+        $select->name = OpacConfigSelectType::delivery_request_time;
+        $select->value = $request->select_name;
+        $select->display_sequence = $max_display_sequence;
+        $select->save();
+        session()->flash('flash_message_for_frame' . $frame_id, '選択肢【 '. $request->select_name .' 】を追加しました。');
+
+        // redirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+    }
+
+    /**
+     * 配送希望時間：選択肢の更新
+     */
+    public function updateSelect($request, $page_id, $frame_id)
+    {
+        // 明細行から更新対象を抽出する為のnameを取得
+        $str_select_name = "select_name_{$request->select_id}";
+
+        // エラーチェック用に値を詰める
+        $request->merge([
+            "select_name" => $request->$str_select_name,
+        ]);
+
+        $messages = [
+            'select_name.regex' => ':attributeに | を含める事はできないため、取り除いてください。',
+        ];
+
+        // エラーチェック  regex（|を含まない）
+        $validator = Validator::make($request->all(), [
+            'select_name'  => ['required', 'regex:/^(?!.*\|).*$/'],
+        ], $messages);
+        $validator->setAttributeNames([
+            'select_name'  => '選択肢名',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $select = OpacsConfigsSelect::where('id', $request->select_id)->first();
+        $select->opacs_id = $request->opacs_id;
+        $select->name = OpacConfigSelectType::delivery_request_time;
+        $select->value = $request->select_name;
+        $select->save();
+        $message = '選択肢【 '. $request->select_name .' 】を更新しました。';
+        session()->flash('flash_message_for_frame' . $frame_id, $message);
+
+        // redirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+    }
+
+    /**
+     * 配送希望時間：選択肢の表示順の更新
+     */
+    public function updateSelectSequence($request, $page_id, $frame_id)
+    {
+        // ボタンが押された行の選択肢
+        $target_select = OpacsConfigsSelect::where('id', $request->select_id)->first();
+
+        // ボタンが押された前（後）の選択肢
+        $query = OpacsConfigsSelect::where('opacs_id', $request->opacs_id)
+            ->where('name', OpacConfigSelectType::delivery_request_time);
+        $pair_select = $request->display_sequence_operation == 'up' ?
+            $query->where('display_sequence', '<', $request->display_sequence)->orderby('display_sequence', 'desc')->limit(1)->first() :
+            $query->where('display_sequence', '>', $request->display_sequence)->orderby('display_sequence', 'asc')->limit(1)->first();
+
+        // それぞれの表示順を退避
+        $target_select_display_sequence = $target_select->display_sequence;
+        $pair_select_display_sequence = $pair_select->display_sequence;
+
+        // 入れ替えて更新
+        $target_select->display_sequence = $pair_select_display_sequence;
+        $target_select->save();
+        $pair_select->display_sequence = $target_select_display_sequence;
+        $pair_select->save();
+
+        $message = '選択肢【 '. $target_select->value .' 】の表示順を更新しました。';
+        session()->flash('flash_message_for_frame' . $frame_id, $message);
+
+        // redirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+    }
+
+    /**
+     * 配送希望時間：選択肢の削除
+     */
+    public function deleteSelect($request, $page_id, $frame_id)
+    {
+        // 削除
+        OpacsConfigsSelect::where('id', $request->select_id)->delete();
+
+        $str_select_name = "select_name_{$request->select_id}";
+        $message = '選択肢【 '. $request->$str_select_name .' 】を削除しました。';
+        session()->flash('flash_message_for_frame' . $frame_id, $message);
+
+        // redirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 }
