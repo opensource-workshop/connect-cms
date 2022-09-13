@@ -20,4 +20,4 @@
 <!-- （オンラインマニュアルの更新が可能な方で、画面変更があった場合。なければ下記は消す） -->
 - [ ] オンラインマニュアルの更新 https://connect-cms.jp/manual
 - [ ] (DB変更有りの場合) 移行プログラムに影響がない事を確認しました。https://github.com/opensource-workshop/connect-cms/wiki/Pull-requests-check-list---Migration
-- [ ] プルリクエストにラベルをつけました。
+- [ ] プルリクエストにわかりやすいタイトルとラベルを付けました。https://github.com/opensource-workshop/connect-cms/wiki/Pull-requests-Rule

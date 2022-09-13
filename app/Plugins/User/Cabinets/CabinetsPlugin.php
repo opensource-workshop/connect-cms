@@ -1092,32 +1092,10 @@ class CabinetsPlugin extends UserPluginBase
     public function saveView($request, $page_id, $frame_id, $cabinet_id)
     {
         // フレーム設定保存
-        $this->saveFrameConfigs($request, $frame_id, CabinetFrameConfig::getMemberKeys());
+        FrameConfig::saveFrameConfigs($request, $frame_id, CabinetFrameConfig::getMemberKeys());
         // 更新したので、frame_configsを設定しなおす
         $this->refreshFrameConfigs();
 
         return;
-    }
-
-    /**
-     * フレーム設定を保存する。
-     *
-     * @param Illuminate\Http\Request $request リクエスト
-     * @param int $frame_id フレームID
-     * @param array $frame_config_names フレーム設定のname配列
-     */
-    protected function saveFrameConfigs(\Illuminate\Http\Request $request, int $frame_id, array $frame_config_names)
-    {
-        foreach ($frame_config_names as $key => $value) {
-
-            if (empty($request->$value)) {
-                return;
-            }
-
-            FrameConfig::updateOrCreate(
-                ['frame_id' => $frame_id, 'name' => $value],
-                ['value' => $request->$value]
-            );
-        }
     }
 }
