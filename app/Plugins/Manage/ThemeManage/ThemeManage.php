@@ -781,6 +781,7 @@ class ThemeManage extends ManagePluginBase
             "fontfamilys" => $fontfamilys,
             "dirs"        => $dirs,
             "errors"      => $errors,
+            "theme_generate_disabled_label" => is_writable(public_path() . '/themes/Users/') ? '' : 'disabled',
         ]);
     }
 
@@ -943,7 +944,7 @@ EOM;
         }
 
         foreach ($styles as $style => $val) {
-            
+
             $tmp_style = '';
             switch ($style) {
                 case 'color':
@@ -1284,7 +1285,7 @@ EOM;
     text-decoration: none;
     font-size:3rem;
     opacity:1;
-} 
+}
 #page-top a:hover {
     background: $gnav_bk_color;
     text-decoration: none;
@@ -1424,7 +1425,7 @@ EOM;
 
 EOM;
 
-                        
+
                         break;
                     }
                     if ($styles['background'] == 'none') {
@@ -1454,7 +1455,7 @@ EOM;
                     if ($styles['background'] == 'none') {
                         break;
                     }
-    
+
                     $bk_param = $this->getVerticalBkimageParam($val, $background_color);
                     $tmp_style = <<<EOM
 /* 縦型（サイド）メニュー background-image */
@@ -1939,7 +1940,7 @@ EOM;
 
 EOM;
                     }
-                    
+
 
                     break;
             }
