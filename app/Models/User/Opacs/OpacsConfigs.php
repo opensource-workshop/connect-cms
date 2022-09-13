@@ -10,8 +10,7 @@ class OpacsConfigs extends Model
     protected $fillable = ['opacs_id', 'name', 'value'];
 
     /**
-     *  Opac設定のためのデータ取得
-     *
+     * Opac設定のためのデータ取得
      */
     public static function getConfigs($opac_id, $original_roles)
     {
