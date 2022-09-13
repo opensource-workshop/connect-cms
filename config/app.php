@@ -311,6 +311,7 @@ $app_array = [
         'MembershipFlag' => \App\Enums\MembershipFlag::class,
         'BbsFrameConfig' => \App\Enums\BbsFrameConfig::class,
         'BbsViewFormat' => \App\Enums\BbsViewFormat::class,
+        'OpacConfigSelectType' => \App\Enums\OpacConfigSelectType::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
