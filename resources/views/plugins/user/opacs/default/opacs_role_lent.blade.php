@@ -88,7 +88,7 @@
 <tr>
     <th nowrap>郵送貸し出しリクエストユーザー</th>
     <td>
-        @if (isset($opacs_books_lents)) 
+        @if (isset($opacs_books_lents))
             {{$opacs_books_lents->student_no}}　（　{{$user_name}}　）
         @endif
     </td>
@@ -96,7 +96,7 @@
 <tr>
     <th nowrap>郵送貸し出しリクエスト日</th>
     <td>
-        @if (isset($opacs_books_lents)) 
+        @if (isset($opacs_books_lents))
             {{$opacs_books_lents->created_at}}
         @endif
     </td>
@@ -104,7 +104,7 @@
 <tr>
     <th nowrap>連絡先電話番号</th>
     <td>
-        @if (isset($opacs_books_lents)) 
+        @if (isset($opacs_books_lents))
             {{$opacs_books_lents->phone_no}}
         @endif
     </td>
@@ -112,7 +112,7 @@
 <tr>
     <th nowrap>連絡先メールアドレス</th>
     <td>
-        @if (isset($opacs_books_lents)) 
+        @if (isset($opacs_books_lents))
             {{$opacs_books_lents->email}}
         @endif
     </td>
@@ -120,7 +120,7 @@
 <tr>
     <th nowrap>送付先郵便番号</th>
     <td>
-        @if (isset($opacs_books_lents)) 
+        @if (isset($opacs_books_lents))
             {{$opacs_books_lents->postal_code}}
         @endif
     </td>
@@ -128,7 +128,7 @@
 <tr>
     <th nowrap>送付先住所</th>
     <td>
-        @if (isset($opacs_books_lents)) 
+        @if (isset($opacs_books_lents))
             {{$opacs_books_lents->address}}
         @endif
     </td>
@@ -136,93 +136,91 @@
 <tr>
     <th nowrap>送付先宛て名</th>
     <td>
-        @if (isset($opacs_books_lents)) 
+        @if (isset($opacs_books_lents))
             {{$opacs_books_lents->mailing_name}}
         @endif
     </td>
 </tr>
 </table>
 
-@auth
-    <h4><span class="badge badge-primary">貸し出し</span></h4>
-    <div class="form-group">
-        @if ($opacs_books->lend_flag == '9:禁帯出') 
-            <div class="alert alert-warning" style="margin-top: 10px;">
-                <i class="fas fa-exclamation-circle"></i>
-                この書籍は「禁帯出」のため、貸し出しはできません。
-            </div>
-        @elseif ($done_lent == false )
-            <div class="alert alert-warning" style="margin-top: 10px;">
-                <i class="fas fa-exclamation-circle"></i>
-                この書籍は既に貸し出し済みです。
-            </div>
-        @else
-            <form action="{{url('/')}}/plugin/opacs/lent/{{$page->id}}/{{$frame_id}}/{{$opacs_books_id}}#frame-{{$frame_id}}" id="form_lent" name="form_lent" method="POST">
-                {{ csrf_field() }}
+<h4><span class="badge badge-primary">貸し出し</span></h4>
+<div class="form-group">
+    @if ($opacs_books->lend_flag == '9:禁帯出')
+        <div class="alert alert-warning" style="margin-top: 10px;">
+            <i class="fas fa-exclamation-circle"></i>
+            この書籍は「禁帯出」のため、貸し出しはできません。
+        </div>
+    @elseif ($done_lent == false )
+        <div class="alert alert-warning" style="margin-top: 10px;">
+            <i class="fas fa-exclamation-circle"></i>
+            この書籍は既に貸し出し済みです。
+        </div>
+    @else
+        <form action="{{url('/')}}/plugin/opacs/lent/{{$page->id}}/{{$frame_id}}/{{$opacs_books_id}}#frame-{{$frame_id}}" id="form_lent" name="form_lent" method="POST">
+            {{ csrf_field() }}
 
-                @if (isset($opacs_books_lents))
-                    <input type="hidden" name="req_lent_id" value="{{old('req_lent_id', $opacs_books_lents->id)}}" class="form-control">
-                    <input type="hidden" name="req_student_no" value="{{old('req_student_no', $opacs_books_lents->student_no)}}" class="form-control">
-                @else
-                    <input type="hidden" name="req_lent_id" value="" class="form-control">
-                @endif
+            @if (isset($opacs_books_lents))
+                <input type="hidden" name="req_lent_id" value="{{old('req_lent_id', $opacs_books_lents->id)}}" class="form-control">
+                <input type="hidden" name="req_student_no" value="{{old('req_student_no', $opacs_books_lents->student_no)}}" class="form-control">
+            @else
+                <input type="hidden" name="req_lent_id" value="" class="form-control">
+            @endif
 
-                <div class="row">
-                    <div class="col-12 col-md-6 col-lg-4">
-                        <label class="col-12 col-form-label">確認用バーコード <label class="badge badge-danger">必須</label></label>
-                        <div class="input-group">
-                            <input class="col-12 form-control" type="text" name="barcode" value="{{old('barcode')}}" placeholder="バーコードエリア">
-                            @if ($errors && $errors->has('barcode')) <div class="col-12 text-danger">{{$errors->first('barcode')}}</div> @endif
-                            <small class="col-12 text-muted">バーコードリーダーで読み込んでください。</small>
+            <div class="row">
+                <div class="col-12 col-md-6 col-lg-4">
+                    <label class="col-12 col-form-label">確認用バーコード <label class="badge badge-danger">必須</label></label>
+                    <div class="input-group">
+                        <input class="col-12 form-control" type="text" name="barcode" value="{{old('barcode')}}" placeholder="バーコードエリア">
+                        @if ($errors && $errors->has('barcode')) <div class="col-12 text-danger">{{$errors->first('barcode')}}</div> @endif
+                        <small class="col-12 text-muted">バーコードリーダーで読み込んでください。</small>
+                    </div>
+                </div>
+
+                <!-- 返却日 -->
+                <div class="col-12 col-md-6 col-lg-4">
+                    <label class="col-form-label">返却期限 <label class="badge badge-danger">必須</label></label>
+                    <div class="input-group date" id="return_scheduled" data-target-input="nearest">
+                        <input type="text" name="return_scheduled" value="{{old('return_scheduled')}}" class="form-control datetimepicker-input" data-target="#return_scheduled"/>
+                        <div class="input-group-append" data-target="#return_scheduled" data-toggle="datetimepicker">
+                            <div class="input-group-text"><i class="fa fa-clock"></i></div>
                         </div>
                     </div>
-                
-                    <!-- 返却日 -->
-                    <div class="col-12 col-md-6 col-lg-4">
-                        <label class="col-form-label">返却期限 <label class="badge badge-danger">必須</label></label>
-                        <div class="input-group date" id="return_scheduled" data-target-input="nearest">
-                            <input type="text" name="return_scheduled" value="{{old('return_scheduled')}}" class="form-control datetimepicker-input" data-target="#return_scheduled"/>
-                            <div class="input-group-append" data-target="#return_scheduled" data-toggle="datetimepicker">
-                                <div class="input-group-text"><i class="fa fa-clock"></i></div>
-                            </div>
-                        </div>
-                        @if ($errors && $errors->has('return_scheduled')) <div class="text-danger">{{$errors->first('return_scheduled')}}</div> @endif
-                        <script type="text/javascript">
-                            $(function () {
-                                $('#return_scheduled').datetimepicker({
-                                    locale: 'ja',
-                                    dayViewHeaderFormat: 'YYYY年 M月',
-                                    format: 'YYYY/MM/DD'
-                                });
+                    @if ($errors && $errors->has('return_scheduled')) <div class="text-danger">{{$errors->first('return_scheduled')}}</div> @endif
+                    <script type="text/javascript">
+                        $(function () {
+                            $('#return_scheduled').datetimepicker({
+                                locale: 'ja',
+                                dayViewHeaderFormat: 'YYYY年 M月',
+                                format: 'YYYY/MM/DD'
                             });
-                        </script>
-                    </div>
-                    
-                    <!-- 学籍番号/教職員番号 -->
-                    @if (!isset($opacs_books_lents))
-                    <div class="col-12 col-lg-4">
-                        <label class="col-12 col-form-label">学籍番号/教職員番号 <label class="badge badge-danger">必須</label></label>
-                        <div class="input-group">
-                            <input class="col-12 form-control" type="text" name="req_student_no" value="{{old('req_student_no')}}">
-                            @if ($errors && $errors->has('req_student_no')) <div class="col-12 text-danger">{{$errors->first('req_student_no')}}</div> @endif
-                        </div>
-                    </div>
-                    @endif
+                        });
+                    </script>
                 </div>
-                
-                <!-- 貸し出しボタン -->
-                <div class="row">
-                    <div class="col-12 text-center">
-                        <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 貸出</button>
+
+                <!-- 学籍番号/教職員番号 -->
+                @if (!isset($opacs_books_lents))
+                <div class="col-12 col-lg-4">
+                    <label class="col-12 col-form-label">学籍番号/教職員番号 <label class="badge badge-danger">必須</label></label>
+                    <div class="input-group">
+                        <input class="col-12 form-control" type="text" name="req_student_no" value="{{old('req_student_no')}}">
+                        @if ($errors && $errors->has('req_student_no')) <div class="col-12 text-danger">{{$errors->first('req_student_no')}}</div> @endif
                     </div>
                 </div>
-            </form>
-        @endif
-    </div>
-@endauth
+                @endif
+            </div>
+
+            <!-- 貸し出しボタン -->
+            <div class="row">
+                <div class="col-12 text-center">
+                    <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 貸出</button>
+                </div>
+            </div>
+        </form>
+    @endif
+</div>
 
 {{-- 一覧へ戻る --}}
-<p class="text-center" style="margin-top: 16px;">
+<p class="text-center">
     <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/opacs/lentlist/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}'"><i class="fas fa-list"></i> 一覧へ戻る</button>
 </p>
 @endsection
