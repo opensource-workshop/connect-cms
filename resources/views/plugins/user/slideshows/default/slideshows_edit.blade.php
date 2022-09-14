@@ -40,7 +40,7 @@
                     {{-- メッセージエリア --}}
                     <div class="alert alert-info mt-2">
                         <i class="fas fa-exclamation-circle"></i> {{ session('flash_message') ? session('flash_message') : 'スライドショーに表示させる画像やリンクを設定します。' }}
-                        <a href="https://connect-cms.jp/manual/user/slideshow" target="_brank"><i class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></i></a>
+                        <a href="https://manual.connect-cms.jp/user/slideshows/index.html" target="_brank"><i class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></i></a>
                     </div>
 
                     {{-- 項目一覧 --}}
@@ -84,9 +84,9 @@
                         </button>
                         @if ($items->count() > 0)
                             {{-- 更新ボタン --}}
-                            <button 
-                                type="button" 
-                                class="btn btn-primary mr-2" 
+                            <button
+                                type="button"
+                                class="btn btn-primary mr-2"
                                 onclick="javascript:return submit_update_items();"
                             >
                                 <i class="fas fa-check"></i> 更新
