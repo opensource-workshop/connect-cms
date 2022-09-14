@@ -22,9 +22,15 @@ use App\Models\User\Opacs\OpacsBooks;
 use App\Models\User\Opacs\OpacsBooksLents;
 use App\Models\User\Opacs\OpacsFrames;
 use App\Models\User\Opacs\OpacsConfigs;
+use App\Models\User\Opacs\OpacsConfigsSelect;
+
+use Carbon\Carbon;
 
 use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
+
+use App\Enums\DeliveryRequestFlag;
+use App\Enums\OpacConfigSelectType;
 
 /**
  * Opacプラグイン
@@ -54,9 +60,9 @@ class OpacsPlugin extends UserPluginBase
     public function getPublicFunctions()
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
-        $functions = array();
-        $functions['get']  = ['settingOpacFrame', 'lentlist', 'searchClear', 'searchDetailClear', 'roleLent'];
-        $functions['post'] = ['lent', 'requestLent', 'returnLent', 'search', 'saveOpacFrame', 'getBookInfo', 'destroyRequest'];
+        $functions = [];
+        $functions['get']  = ['settingOpacFrame', 'lentlist', 'searchClear', 'searchDetailClear', 'roleLent', 'editDeliveryRequest'];
+        $functions['post'] = ['lent', 'requestLent', 'returnLent', 'search', 'saveOpacFrame', 'getBookInfo', 'destroyRequest', 'saveDeliveryRequest'];
         return $functions;
     }
 
@@ -96,6 +102,8 @@ class OpacsPlugin extends UserPluginBase
         $role_check_table["save"]              = ['role_article_admin'];
         $role_check_table["destroy"]           = ['role_article_admin'];
 
+        $role_check_table["editDeliveryRequest"] = ['role_article_admin'];
+        $role_check_table["saveDeliveryRequest"] = ['role_article_admin'];
         return $role_check_table;
     }
 
@@ -1003,11 +1011,11 @@ class OpacsPlugin extends UserPluginBase
 
         // 書籍貸出情報取得
         $opacs_book_lents = OpacsBooksLents::where('opacs_books_id', $opacs_books_id)
-                                           ->where('lent_flag', [1])->first();
+            ->where('lent_flag', [1])->first();
 
         // 書籍郵送リクエスト情報件数取得
         $opacs_book_lents_count = OpacsBooksLents::where('opacs_books_id', $opacs_books_id)
-                                                 ->where('lent_flag', [2])->count();
+            ->where('lent_flag', [2])->count();
 
         // ログインチェック
         $user = Auth::user();
@@ -1018,6 +1026,8 @@ class OpacsPlugin extends UserPluginBase
         $lent_error_message = "";
         $done_lent = 0;
         $done_requests = 0;
+        $opacs_configs = [];
+        $opacs_configs_selects = collect();
 
         if (!empty($user)) {
             // 冊数による貸し出し制限
@@ -1027,34 +1037,41 @@ class OpacsPlugin extends UserPluginBase
             $original_roles = Configs::where('category', 'original_role')->orderBy('additional1', 'asc')->get();
 
             // Opac の設定情報
-            $opac_configs = OpacsConfigs::getConfigs($opac_frame->opacs_id, $original_roles);
+            $opacs_configs = OpacsConfigs::getConfigs($opac_frame->opacs_id, $original_roles);
 
             // 返却期限、貸出最大冊数を取得のため、ユーザのroleを取得
             $users_roles = UsersRoles::where('users_id', $user->id)
-                                     ->where('target', 'original_role')
-                                     ->get();
+                ->where('target', 'original_role')
+                ->get();
 
             // 返却期限
-            $lent_max_ts = self::getReturnMaxDate($opac_frame, $users_roles, $opac_configs);
+            $lent_max_ts = self::getReturnMaxDate($opac_frame, $users_roles, $opacs_configs);
             $lent_max_date = date('Y年m月d日', $lent_max_ts);
 
             // 借り済みかどうかチェック
             $done_lent = OpacsBooksLents::where('opacs_books_id', $opacs_books_id)
-                                        ->where('student_no', $user->userid)
-                                        ->where('lent_flag', [1])->count();
+                ->where('student_no', $user->userid)
+                ->where('lent_flag', [1])->count();
 
             // 貸出リクエスト済みかチェック
             $done_requests = $this->lentRequestCheck($opacs_books_id, $user->userid);
+
+            // 配送希望時間-選択肢
+            $opacs_configs_selects = OpacsConfigsSelect::where('opacs_id', $opac_frame->opacs_id)
+                ->where('name', OpacConfigSelectType::delivery_request_time)
+                ->orderBy('display_sequence', 'asc')
+                ->get();
         }
 
         // 変更画面を呼び出す。
-        return $this->view(
-            'opacs_show', [
+        return $this->view('opacs_show', [
             'opac_frame'             => $opac_frame,
             'opacs_books'            => $opacs_book,
             'opacs_book_lents'       => $opacs_book_lents,
             'opacs_book_lents_count' => $opacs_book_lents_count,
             'opacs_books_id'         => $opacs_books_id,
+            'opacs_configs'          => $opacs_configs,
+            'opacs_configs_selects'  => $opacs_configs_selects,
             'lent_limit_check'       => $lent_limit_check,
             'lent_max_date'          => $lent_max_date,
             'done_lent'              => $done_lent,
@@ -1063,18 +1080,14 @@ class OpacsPlugin extends UserPluginBase
             'message_class'          => $message_class,
             'lent_error_message'     => $lent_error_message,
             'errors'                 => $errors,
-            ]
-        );
+        ]);
     }
 
     /**
      * 書籍貸出画面表示（権限あり）
      */
-    public function roleLent($request, $page_id, $frame_id, $opacs_books_id, $message = null, $message_class = null, $errors = null)
+    public function roleLent($request, $page_id, $frame_id, $opacs_books_id)
     {
-        // セッション初期化などのLaravel 処理。
-        $request->flash();
-
         // Frame データ
         $opac_frame = $this->getOpacFrame($frame_id);
 
@@ -1085,25 +1098,22 @@ class OpacsPlugin extends UserPluginBase
         $done_lent = $this->lentCheck($opacs_books_id);
 
         // 既に郵送リクエストされているようだったらその情報を取得する
-        $opacs_books_lent = OpacsBooksLents::where('id', $request->req_lent_id)->first();
+        $opacs_books_lents = OpacsBooksLents::where('id', $request->req_lent_id)->firstOrNew([]);
 
         // ユーザー名取得
-        $user = User::where('userid', $opacs_books_lent->student_no)->firstOrNew([]);
+        $user = User::where('userid', $opacs_books_lents->student_no)->firstOrNew([]);
 
         // 画面を呼び出す。
-        return $this->view(
-            'opacs_role_lent', [
+        return $this->view('opacs_role_lent', [
             'opac_frame'             => $opac_frame,
             'opacs_books'            => $opacs_book,
-            'opacs_books_lents'      => $opacs_books_lent,
+            'opacs_books_lents'      => $opacs_books_lents,
             'opacs_books_id'         => $opacs_books_id,
             'user_name'              => $user->name,
             'done_lent'              => $done_lent,
-            'message'                => $message,
-            'message_class'          => $message_class,
-            'errors'                 => $errors,
-            ]
-        );
+            'req_lent_id'            => $request->req_lent_id,
+            'req_student_no'         => $request->req_student_no,
+        ]);
     }
 
     /**
@@ -1364,9 +1374,8 @@ class OpacsPlugin extends UserPluginBase
             'barcode'          => '確認用バーコード',
             'return_scheduled' => '返却予定日',
         ]);
-        $message = null;
         if ($validator->fails()) {
-            return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id, $message, null, $validator->errors());
+            return back()->withErrors($validator)->withInput();
         }
 
         // lent_idがある場合、郵送リクエストからの貸出処理なのでデータ整合性チェックを行う
@@ -1374,18 +1383,20 @@ class OpacsPlugin extends UserPluginBase
         if (empty($request->req_lent_id) == false) {
             // 郵送リクエスト情報取得
             $opacs_books_lent = OpacsBooksLents::where('id', $request->req_lent_id)
-                                               ->where('opacs_books_id', $opacs_books_id)
-                                               ->where('student_no', $request->req_student_no)
-                                               ->where('lent_flag', [2])->first();
+                ->where('opacs_books_id', $opacs_books_id)
+                ->where('student_no', $request->req_student_no)
+                ->where('lent_flag', [2])
+                ->first();
             if (empty($opacs_books_lent) == true) {
                 $messages = new MessageBag;
                 $messages->add('barcode', '該当する郵送リクエスト情報がありませんでした。');
-                return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id, null, null, $messages);
+                return back()->withErrors($messages)->withInput();
             }
         } else {
             $opacs_books_lent = OpacsBooksLents::where('opacs_books_id', $opacs_books_id)
-                                               ->where('student_no', $request->req_student_no)
-                                               ->where('lent_flag', [2])->first();
+                ->where('student_no', $request->req_student_no)
+                ->where('lent_flag', [2])
+                ->first();
         }
 
         // 書籍情報取得
@@ -1393,21 +1404,21 @@ class OpacsPlugin extends UserPluginBase
         if ($opacs_books->barcode != $request->barcode) {
             $messages = new MessageBag;
             $messages->add('barcode', '確認用バーコードと一致しませんでした。');
-            return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id, null, null, $messages);
+            return back()->withErrors($messages)->withInput();
         }
 
         // 貸出中でないかのチェック
         if (!$this->lentCheck($opacs_books_id)) {
             $messages = new MessageBag;
             $messages->add('barcode', 'この書籍は貸出中です。');
-            return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id, null, null, $messages);
+            return back()->withErrors($messages)->withInput();
         }
 
         // 禁帯出でないかのチェック
         if ($opacs_books->lend_flag == '9:禁帯出') {
             $messages = new MessageBag;
             $messages->add('barcode', 'この書籍は「禁帯出」のため、貸し出しはできません。');
-            return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id, null, null, $messages);
+            return back()->withErrors($messages)->withInput();
         }
 
         // Opac設定取得
@@ -1424,13 +1435,15 @@ class OpacsPlugin extends UserPluginBase
         if (!checkdate(date('n', $return_scheduled_ts), date('j', $return_scheduled_ts), date('Y', $return_scheduled_ts))) {
             $messages = new MessageBag;
             $messages->add('return_scheduled', '貸し出し期限が正しい日付になっていません。');
-            return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id, null, null, $messages);
+            return back()->withErrors($messages)->withInput();
         }
         // ログインID
         $student = User::where('userid', $request->req_student_no)->first();
         if (empty($student)) {
-            session()->flash('lent_error', '存在しないログインIDです。');
-            return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id);
+            // session()->flash('lent_error', '存在しないログインIDです。');
+            $messages = new MessageBag;
+            $messages->add('not_exist_student_no', '存在しないログインIDです。');
+            return back()->withErrors($messages)->withInput();
         }
 
         // 役割設定の情報取得
@@ -1441,8 +1454,8 @@ class OpacsPlugin extends UserPluginBase
 
         // 返却期限、貸出最大冊数を取得のため、ユーザのroleを取得
         $users_roles = UsersRoles::where('users_id', $student->id)
-                                 ->where('target', 'original_role')
-                                 ->get();
+            ->where('target', 'original_role')
+            ->get();
 
         // 最大貸出数をオーバーしていないかどうかチェックする
         $mex_lent_count = $this->getReturnMaxLentCount($opac_frame, $users_roles, $opac_configs);
@@ -1461,7 +1474,7 @@ class OpacsPlugin extends UserPluginBase
         }
         if ($mex_lent_count <= $lent_count) {
             session()->flash('lent_error', '対象ユーザーの最大貸出数をオーバーしています。');
-            return $this->roleLent($request, $page_id, $frame_id, $opacs_books_id);
+            return back()->withInput();
         }
 
         if (empty($opacs_books_lent)) {
@@ -1477,8 +1490,6 @@ class OpacsPlugin extends UserPluginBase
         }
         // データ保存
         $opacs_books_lent->save();
-
-        $message = '貸し出し登録しました。';
 
         // メール送信
         $subject = '図書を貸し出し登録しました。';
@@ -1501,7 +1512,8 @@ class OpacsPlugin extends UserPluginBase
         self::sendMailOpacUser($opacs, $user_subject, $user_content, $opacs_books_lent->email);
 
         // モデレータの一覧画面へ戻る
-        return $this->lentlist($request, $page_id, $frame_id, '貸し出し処理が完了しました。');
+        session()->flash("flash_message_for_frame{$frame_id}", '貸し出し処理が完了しました。');
+        return collect(['redirect_path' => url('/') . "/plugin/opacs/lentlist/{$page_id}/{$frame_id}/#frame-{$frame_id}"]);
     }
 
     /**
@@ -1514,21 +1526,61 @@ class OpacsPlugin extends UserPluginBase
             return $this->viewError(403);
         }
 
+        // opac＆フレームデータ
+        $opac_frame = $this->getOpacFrame($frame_id);
+        if (empty($opac_frame) || empty($opac_frame->bucket_id)) {
+            return;
+        }
+
         // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
+        $validator_rules = [
             'req_student_no'       => ['required'],
             'req_phone_no'         => ['required'],
             'req_email'            => ['required'],
             'req_postal_code'      => ['required'],
             'req_address'          => ['required'],
-        ]);
-        $validator->setAttributeNames([
+        ];
+        $validator_attributes = [
             'req_student_no'       => '学籍番号/教職員番号',
             'req_phone_no'         => '連絡先電話番号',
             'req_email'            => '連絡先メールアドレス',
             'req_postal_code'      => '郵送先郵便番号',
             'req_address'          => '郵送先住所',
-        ]);
+            'delivery_request_date' => '配送希望日',
+            'delivery_request_time' => '配送希望時間',
+        ];
+
+        $validator = Validator::make($request->all(), $validator_rules);
+        $validator->setAttributeNames($validator_attributes);
+
+        $validator->sometimes("delivery_request_date", 'required', function ($input) {
+            // 配送希望ありなら、上記の 配送希望日 必須であること
+            return $input->delivery_request_flag;
+        });
+
+        $original_roles = Configs::where('category', 'original_role')->orderBy('additional1', 'asc')->get();
+        $opacs_configs = OpacsConfigs::getConfigs($opac_frame->opacs_id, $original_roles);
+
+        if (!is_null($opacs_configs['rule_date_after_equal'])) {
+            $comparison_date = Carbon::now()->addDay($opacs_configs['rule_date_after_equal'])->format('Y/m/d');
+            $validator->sometimes("delivery_request_date", 'after_or_equal:' . $comparison_date, function ($input) {
+                // 配送希望ありなら、上記の 配送希望日 は～日以降を許容
+                return $input->delivery_request_flag;
+            });
+        }
+
+        if (!is_null($opacs_configs['rule_date_before_equal'])) {
+            $comparison_date = Carbon::now()->addDay($opacs_configs['rule_date_before_equal'])->format('Y/m/d');
+            $validator->sometimes("delivery_request_date", 'before_or_equal:' . $comparison_date, function ($input) {
+                // 配送希望ありなら、上記の 配送希望日 は～日まで許容
+                return $input->delivery_request_flag;
+            });
+        }
+
+        $validator->sometimes("delivery_request_time", 'required', function ($input) {
+            // 配送希望ありなら、上記の 配送希望時間 必須であること
+            return $input->delivery_request_flag;
+        });
 
         // エラーがあった場合は詳細画面に戻る。
         $message = null;
@@ -1560,6 +1612,9 @@ class OpacsPlugin extends UserPluginBase
         $opacs_books_lents->postal_code      = $request->req_postal_code;
         $opacs_books_lents->address          = $request->req_address;
         $opacs_books_lents->mailing_name     = $request->req_mailing_name;
+        $opacs_books_lents->delivery_request_flag = $request->delivery_request_flag ? DeliveryRequestFlag::yes : DeliveryRequestFlag::no;
+        $opacs_books_lents->delivery_request_date = $request->delivery_request_flag ? $request->delivery_request_date : null;
+        $opacs_books_lents->delivery_request_time = $request->delivery_request_flag ? $request->delivery_request_time : null;
 
         // データ保存
         $opacs_books_lents->save();
@@ -1796,31 +1851,29 @@ class OpacsPlugin extends UserPluginBase
 
         // 郵送リクエスト一覧取得
         $books_requests = OpacsBooksLents::select('opacs_books_lents.*', 'users.name', 'opacs_books.title', 'opacs_books.barcode', 'opacs_books.isbn')
-                                      ->leftJoin('opacs_books', 'opacs_books.id', '=', 'opacs_books_lents.opacs_books_id')
-                                      ->leftJoin('users', 'users.userid', '=', 'opacs_books_lents.student_no')
-                                      ->where('lent_flag', [2])
-                                      ->orderBy('opacs_books_lents.created_at', 'asc')
-                                      ->get();
+            ->leftJoin('opacs_books', 'opacs_books.id', '=', 'opacs_books_lents.opacs_books_id')
+            ->leftJoin('users', 'users.userid', '=', 'opacs_books_lents.student_no')
+            ->where('lent_flag', [2])
+            ->orderBy('opacs_books_lents.created_at', 'asc')
+            ->get();
 
 
         // 貸し出し中一覧取得
         $books_lents = OpacsBooksLents::select('opacs_books_lents.*', 'users.name', 'opacs_books.title', 'opacs_books.barcode', 'opacs_books.isbn')
-                                      ->leftJoin('opacs_books', 'opacs_books.id', '=', 'opacs_books_lents.opacs_books_id')
-                                      ->leftJoin('users', 'users.userid', '=', 'opacs_books_lents.student_no')
-                                      ->where('lent_flag', '<>', [2])
-                                      ->whereNull('opacs_books_lents.return_date')
-                                      ->orderBy('opacs_books_lents.return_scheduled', 'asc')
-                                      ->get();
+            ->leftJoin('opacs_books', 'opacs_books.id', '=', 'opacs_books_lents.opacs_books_id')
+            ->leftJoin('users', 'users.userid', '=', 'opacs_books_lents.student_no')
+            ->where('lent_flag', '<>', [2])
+            ->whereNull('opacs_books_lents.return_date')
+            ->orderBy('opacs_books_lents.return_scheduled', 'asc')
+            ->get();
 
         // Opacフレーム設定画面を呼び出す。
-        return $this->view(
-            'opacs_lentlist', [
+        return $this->view('opacs_lentlist', [
             'books_lents'    => $books_lents,
             'books_requests' => $books_requests,
             'message'        => $message,
             'errors'         => $errors,
-            ]
-        );
+        ]);
     }
 
     /**
@@ -1929,5 +1982,212 @@ class OpacsPlugin extends UserPluginBase
 
         // MyOpac画面へ遷移
         return $this->index($request, $page_id, $frame_id, null, ['貸し出しリクエストを削除しました。']);
+    }
+
+    /**
+     * 配送希望設定の表示
+     *
+     * @method_title 配送希望設定
+     * @method_desc 貸出時の配送希望を設定できます。
+     * @method_detail 配送日の入力チェックや、配送時間の設定ができます。
+     */
+    public function editDeliveryRequest($request, $page_id, $frame_id, $opacs_id = null)
+    {
+        // OPAC＆フレームデータ
+        $opac_frame = $this->getOpacFrame($frame_id);
+
+        // OPACデータ
+        $opac = new Opacs();
+
+        if (!empty($opacs_id)) {
+            // opacs_id が渡ってくればopacs_id が対象
+            $opac = Opacs::where('id', $opacs_id)->first();
+        } elseif (!empty($opac_frame->bucket_id)) {
+            // Frame のbucket_id があれば、bucket_id からOPACデータ取得、なければ、新規作成か選択へ誘導
+            $opac = Opacs::where('bucket_id', $opac_frame->bucket_id)->first();
+        }
+
+        if (empty($opac)) {
+            // バケツ空テンプレートを呼び出す。
+            return $this->commonView('empty_bucket_setting');
+        }
+
+        // 役割設定の情報取得
+        $original_roles = Configs::where('category', 'original_role')->orderBy('additional1', 'asc')->get();
+
+        // Opac の設定情報
+        $opacs_configs = OpacsConfigs::getConfigs($opac->id, $original_roles);
+
+        $opacs_configs_selects = OpacsConfigsSelect::where('opacs_id', $opac->id)
+            ->where('name', OpacConfigSelectType::delivery_request_time)
+            ->orderBy('display_sequence', 'asc')
+            ->get();
+
+        return $this->view('delivery_request', [
+            'opac_frame'            => $opac_frame,
+            'opac'                  => $opac,
+            'opacs_configs'         => $opacs_configs,
+            'opacs_configs_selects' => $opacs_configs_selects,
+        ]);
+    }
+
+    /**
+     * 配送希望設定の登録
+     */
+    public function saveDeliveryRequest($request, $page_id, $frame_id, $opacs_id = null)
+    {
+        // 項目のエラーチェック
+        $validator_rules = [
+            'opacs_configs.rule_date_after_equal'         => ['nullable', 'numeric'],
+            'opacs_configs.rule_date_before_equal'        => ['nullable', 'numeric'],
+            'opacs_configs.delivery_request_date_caption' => ['nullable', 'max:191'],
+        ];
+        $validator_attributes = [
+            'opacs_configs.rule_date_after_equal'         => '指定日数以降を許容（From）',
+            'opacs_configs.rule_date_before_equal'        => '指定日数までを許容（To）',
+            'opacs_configs.delivery_request_date_caption' => '内容',
+        ];
+        $validator = Validator::make($request->all(), $validator_rules);
+        $validator->setAttributeNames($validator_attributes);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        // 保存
+        foreach ($request->opacs_configs as $config_name => $config_value) {
+            OpacsConfigs::updateOrCreate(
+                ['opacs_id' => $request->opacs_id, 'name' => $config_name],
+                ['value' => $config_value],
+            );
+        }
+
+        session()->flash('flash_message_for_frame' . $frame_id, '更新しました。');
+
+        // redirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+    }
+
+    /**
+     * 配送希望時間：選択肢の登録
+     */
+    public function addSelect($request, $page_id, $frame_id)
+    {
+        $messages = [
+            'select_name.regex' => ':attributeに | を含める事はできないため、取り除いてください。',
+        ];
+
+        // エラーチェック  regex（|を含まない）
+        $validator = Validator::make($request->all(), [
+            'select_name'  => ['required', 'regex:/^(?!.*\|).*$/'],
+        ], $messages);
+        $validator->setAttributeNames([
+            'select_name'  => '選択肢名',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        // 新規登録時の表示順を設定
+        $max_display_sequence = OpacsConfigsSelect::where('opacs_id', $request->opacs_id)
+            ->where('name', OpacConfigSelectType::delivery_request_time)
+            ->max('display_sequence');
+        $max_display_sequence = $max_display_sequence ? $max_display_sequence + 1 : 1;
+
+        $select = new OpacsConfigsSelect();
+        $select->opacs_id = $request->opacs_id;
+        $select->name = OpacConfigSelectType::delivery_request_time;
+        $select->value = $request->select_name;
+        $select->display_sequence = $max_display_sequence;
+        $select->save();
+        session()->flash('flash_message_for_frame' . $frame_id, '選択肢【 '. $request->select_name .' 】を追加しました。');
+
+        // redirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+    }
+
+    /**
+     * 配送希望時間：選択肢の更新
+     */
+    public function updateSelect($request, $page_id, $frame_id)
+    {
+        // 明細行から更新対象を抽出する為のnameを取得
+        $str_select_name = "select_name_{$request->select_id}";
+
+        // エラーチェック用に値を詰める
+        $request->merge([
+            "select_name" => $request->$str_select_name,
+        ]);
+
+        $messages = [
+            'select_name.regex' => ':attributeに | を含める事はできないため、取り除いてください。',
+        ];
+
+        // エラーチェック  regex（|を含まない）
+        $validator = Validator::make($request->all(), [
+            'select_name'  => ['required', 'regex:/^(?!.*\|).*$/'],
+        ], $messages);
+        $validator->setAttributeNames([
+            'select_name'  => '選択肢名',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $select = OpacsConfigsSelect::where('id', $request->select_id)->first();
+        $select->opacs_id = $request->opacs_id;
+        $select->name = OpacConfigSelectType::delivery_request_time;
+        $select->value = $request->select_name;
+        $select->save();
+        $message = '選択肢【 '. $request->select_name .' 】を更新しました。';
+        session()->flash('flash_message_for_frame' . $frame_id, $message);
+
+        // redirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+    }
+
+    /**
+     * 配送希望時間：選択肢の表示順の更新
+     */
+    public function updateSelectSequence($request, $page_id, $frame_id)
+    {
+        // ボタンが押された行の選択肢
+        $target_select = OpacsConfigsSelect::where('id', $request->select_id)->first();
+
+        // ボタンが押された前（後）の選択肢
+        $query = OpacsConfigsSelect::where('opacs_id', $request->opacs_id)
+            ->where('name', OpacConfigSelectType::delivery_request_time);
+        $pair_select = $request->display_sequence_operation == 'up' ?
+            $query->where('display_sequence', '<', $request->display_sequence)->orderby('display_sequence', 'desc')->limit(1)->first() :
+            $query->where('display_sequence', '>', $request->display_sequence)->orderby('display_sequence', 'asc')->limit(1)->first();
+
+        // それぞれの表示順を退避
+        $target_select_display_sequence = $target_select->display_sequence;
+        $pair_select_display_sequence = $pair_select->display_sequence;
+
+        // 入れ替えて更新
+        $target_select->display_sequence = $pair_select_display_sequence;
+        $target_select->save();
+        $pair_select->display_sequence = $target_select_display_sequence;
+        $pair_select->save();
+
+        $message = '選択肢【 '. $target_select->value .' 】の表示順を更新しました。';
+        session()->flash('flash_message_for_frame' . $frame_id, $message);
+
+        // redirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+    }
+
+    /**
+     * 配送希望時間：選択肢の削除
+     */
+    public function deleteSelect($request, $page_id, $frame_id)
+    {
+        // 削除
+        OpacsConfigsSelect::where('id', $request->select_id)->delete();
+
+        $str_select_name = "select_name_{$request->select_id}";
+        $message = '選択肢【 '. $request->$str_select_name .' 】を削除しました。';
+        session()->flash('flash_message_for_frame' . $frame_id, $message);
+
+        // redirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 }
