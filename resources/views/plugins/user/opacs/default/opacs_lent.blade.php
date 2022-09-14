@@ -44,6 +44,19 @@
                 {{$lent_error_message}}
             </div>
         @else
+            <script>
+                $(function () {
+                    /**
+                     * カレンダーボタン押下
+                     */
+                    $('#delivery_request_date{{$frame_id}}').datetimepicker({
+                        format: 'YYYY-MM-DD',
+                        timepicker:false,
+                        dayViewHeaderFormat: 'YYYY MMM',
+                    });
+                });
+            </script>
+
             <form action="{{url('/')}}/plugin/opacs/requestLent/{{$page->id}}/{{$frame_id}}/{{$opacs_books_id}}#frame-{{$frame_id}}" id="form_requestLent" name="form_requestLent" method="POST">
                 {{ csrf_field() }}
                 <div class="form-row">
@@ -91,7 +104,52 @@
                     <input type="text" name="req_mailing_name" value="{{old('req_mailing_name')}}" class="form-control @if ($errors && $errors->has("req_mailing_name")) border-danger @endif" placeholder="郵送先の宛名がユーザー名と異なる場合は入力してください。">
                     @include('plugins.common.errors_inline', ['name' => 'req_mailing_name'])
                 </div>
+
+                <div class="form-row">
+                    <div class="col-12">
+                        <label class="control-label">配送希望</label>
+                    </div>
+                    <div class="form-group col-12">
+                        @foreach (DeliveryRequestFlag::getMembers() as $enum_value => $enum_label)
+                            <div class="custom-control custom-radio custom-control-inline">
+                                @if ($enum_value === DeliveryRequestFlag::no)
+                                    <input type="radio" value="{{$enum_value}}" id="delivery_request_flag_{{$enum_value}}" name="delivery_request_flag" class="custom-control-input" data-toggle="collapse" data-target="#collapse_delivery_request_on.show" aria-expanded="false" aria-controls="collapse_delivery_request_on" @if (old('delivery_request_flag') == $enum_value) checked="checked" @endif>
+                                @else
+                                    <input type="radio" value="{{$enum_value}}" id="delivery_request_flag_{{$enum_value}}" name="delivery_request_flag" class="custom-control-input" data-toggle="collapse" data-target="#collapse_delivery_request_on:not(.show)" aria-expanded="false" aria-controls="collapse_delivery_request_on" @if (old('delivery_request_flag') == $enum_value) checked="checked" @endif>
+                                @endif
+                                <label class="custom-control-label" for="delivery_request_flag_{{$enum_value}}">{{$enum_label}}</label>
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
+
+                {{-- 配送希望ありの場合のみ表示、他は隠す --}}
+                <div class="collapse" id="collapse_delivery_request_on">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label class="control-label">配送希望日</label> <label class="badge badge-danger">必須</label>
+                            <div class="input-group" id="delivery_request_date{{$frame_id}}" data-target-input="nearest">
+                                <input class="form-control datetimepicker-input @if ($errors && $errors->has('delivery_request_date')) border-danger @endif" type="text" name="delivery_request_date" value="{{old('delivery_request_date')}}" data-target="#delivery_request_date{{$frame_id}}">
+                                <div class="input-group-append" data-target="#delivery_request_date{{$frame_id}}" data-toggle="datetimepicker">
+                                    <div class="input-group-text"><i class="far fa-clock"></i></div>
+                                </div>
+                            </div>
+                            @include('plugins.common.errors_inline', ['name' => 'delivery_request_date'])
+                            <small class="text-muted">{{$opacs_configs['delivery_request_date_caption']}}</small>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label class="control-label">配送希望時間</label> <label class="badge badge-danger">必須</label>
+                            <select name="delivery_request_time" class="custom-select @if ($errors && $errors->has("delivery_request_time")) border-danger @endif">
+                                <option value=""></option>
+                                @foreach($opacs_configs_selects as $select)
+                                    <option value="{{$select->value}}" @if (old('delivery_request_time') == $select->value) selected="selected" @endif>{{$select->value}}</option>
+                                @endforeach
+                            </select>
+                            @include('plugins.common.errors_inline', ['name' => 'delivery_request_time'])
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-group form-row">
                     <div class="col-12 text-center">
                         <button type="button" class="btn btn-success mr-3" onclick="location.href='{{url('/')}}{{$page->getLinkUrl()}}'"><i class="fas fa-list"></i> 一覧へ戻る</button>
@@ -101,6 +159,13 @@
             </form>
         @endif
     </div>
+
+    {{-- 初期状態で開くもの --}}
+    @if(old("delivery_request_flag") == 1)
+        <script>
+            $('#collapse_delivery_request_on').collapse('show')
+        </script>
+    @endif
 @else
     <div class="alert alert-warning text-center">
         <i class="fas fa-exclamation-circle"></i>

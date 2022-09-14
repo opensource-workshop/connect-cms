@@ -14,26 +14,23 @@
     モデレータ用管理画面
 </div>
 
-{{-- メッセージ画面 --}}
-@if ($errors && $errors->any())
+{{-- 共通エラーメッセージ 呼び出し --}}
+@include('plugins.common.errors_form_line')
+
+{{-- 登録後メッセージ表示 --}}
+@include('plugins.common.flash_message_for_frame')
+
+@if (session('lent_error'))
     <div class="alert alert-danger">
-        <i class="fas fa-exclamation-triangle"></i>
-        入力内容にエラーがあります。詳しくは各項目を確認してください。
+        <i class="fas fa-exclamation-triangle"></i> {{ session('lent_error') }}
     </div>
-@elseif(session('lent_error'))
-<div class="alert alert-danger">
-    <i class="fas fa-exclamation-triangle"></i>
-    {{ session('lent_error') }}
-</div>
 @endif
 
 @if ($message)
-        <div class="alert alert-primary">
-        <i class="fas fa-exclamation-circle"></i>
-        {{$message}}
+    <div class="alert alert-primary">
+        <i class="fas fa-exclamation-circle"></i> {{$message}}
     </div>
 @endif
-
 
 <div class="card mb-3">
     <div class="card-header" id="frame-{{$frame->id}}-requestlist">郵送貸し出しリクエスト中一覧</div>
