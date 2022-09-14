@@ -53,7 +53,8 @@
                         @can("role_article")
                             {{-- 権限ありの場合 --}}
                             <label class="control-label">学籍番号/教職員番号</label> <label class="badge badge-danger">必須</label>
-                            <input type="text" name="req_student_no" value="{{old('req_student_no')}}" class="form-control">
+                            <input type="text" name="req_student_no" value="{{old('req_student_no')}}" class="form-control @if ($errors && $errors->has("req_student_no")) border-danger @endif">
+                            @include('plugins.common.errors_inline', ['name' => 'req_student_no'])
                         @else
                             {{-- 権限なしの場合 --}}
                             <label class="control-label">学籍番号/教職員番号</label>
@@ -64,31 +65,32 @@
 
                     <div class="form-group col-md-6">
                         <label class="control-label">連絡先電話番号</label> <label class="badge badge-danger">必須</label>
-                        <input type="text" name="req_phone_no" value="{{old('req_phone_no')}}" class="form-control" placeholder="ハイフンなしで半角数値">
-                        @if ($errors && $errors->has('req_phone_no')) <div class="text-danger">{{$errors->first('req_phone_no')}}</div> @endif
+                        <input type="text" name="req_phone_no" value="{{old('req_phone_no')}}" class="form-control @if ($errors && $errors->has("req_phone_no")) border-danger @endif" placeholder="ハイフンなしで半角数値">
+                        @include('plugins.common.errors_inline', ['name' => 'req_phone_no'])
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="control-label">連絡先メールアドレス</label> <label class="badge badge-danger">必須</label>
-                    <input type="text" name="req_email" value="{{old('req_email')}}" class="form-control">
-                    @if ($errors && $errors->has('req_email')) <div class="text-danger">{{$errors->first('req_email')}}</div> @endif
+                    <input type="text" name="req_email" value="{{old('req_email')}}" class="form-control @if ($errors && $errors->has("req_email")) border-danger @endif">
+                    @include('plugins.common.errors_inline', ['name' => 'req_email'])
                 </div>
                 <div class="form-row">
                     <div class="form-group col-md-4">
                         <label class="control-label">郵送先郵便番号</label> <label class="badge badge-danger">必須</label>
-                        <input type="text" name="req_postal_code" value="{{old('req_postal_code')}}" class="form-control" placeholder="ハイフンなしで半角数値">
-                        @if ($errors && $errors->has('req_postal_code')) <div class="text-danger">{{$errors->first('req_postal_code')}}</div> @endif
+                        <input type="text" name="req_postal_code" value="{{old('req_postal_code')}}" class="form-control @if ($errors && $errors->has("req_postal_code")) border-danger @endif" placeholder="ハイフンなしで半角数値">
+                        @include('plugins.common.errors_inline', ['name' => 'req_postal_code'])
                     </div>
                     <div class="form-group col-md-8">
                         <label class="control-label">郵送先住所</label> <label class="badge badge-danger">必須</label>
-                        <input type="text" name="req_address" value="{{old('req_address')}}" class="form-control">
-                        @if ($errors && $errors->has('req_address')) <div class="text-danger">{{$errors->first('req_address')}}</div> @endif
+                        <input type="text" name="req_address" value="{{old('req_address')}}" class="form-control @if ($errors && $errors->has("req_address")) border-danger @endif">
+                        @include('plugins.common.errors_inline', ['name' => 'req_address'])
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="control-label">郵送先宛名</label>
-                    <input type="text" name="req_mailing_name" value="{{old('req_mailing_name')}}" class="form-control" placeholder="郵送先の宛名がユーザー名と異なる場合は入力してください。">
-                    @if ($errors && $errors->has('req_mailing_name')) <div class="text-danger">{{$errors->first('req_mailing_name')}}</div> @endif
+                    <input type="text" name="req_mailing_name" value="{{old('req_mailing_name')}}" class="form-control @if ($errors && $errors->has("req_mailing_name")) border-danger @endif" placeholder="郵送先の宛名がユーザー名と異なる場合は入力してください。">
+                    @include('plugins.common.errors_inline', ['name' => 'req_mailing_name'])
+                </div>
                 </div>
                 <div class="form-group form-row">
                     <div class="col-12 text-center">
