@@ -67,7 +67,7 @@
             <div class="form-group text-center mb-0 row">
                 <!-- 貸出ボタン -->
                 <div class="col-4 col-sm-3 col-md-2" style="margin-left: auto;">
-                    <form action="{{url('/')}}/plugin/opacs/roleLent/{{$page->id}}/{{$frame_id}}/{{$books_request->opacs_books_id}}" method="GET">
+                    <form action="{{url('/')}}/plugin/opacs/roleLent/{{$page->id}}/{{$frame_id}}/{{$books_request->opacs_books_id}}#frame-{{$frame_id}}" method="GET">
                         <input type="hidden" name="req_lent_id" value="{{old('req_lent_id', $books_request->id)}}" class="form-control">
                         <input type="hidden" name="req_student_no" value="{{old('req_student_no', $books_request->student_no)}}" class="form-control">
                         <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>
