@@ -9,6 +9,7 @@
 
 {{-- メッセージ画面 --}}
 @section("plugin_contents_$frame->id")
+
 @if ($errors && $errors->any())
     <div class="alert alert-danger">
         <i class="fas fa-exclamation-triangle"></i>
@@ -35,112 +36,112 @@
 {{-- 貸し出し画面 --}}
 
 <table class="table table-bordered cc_responsive_table">
-<thead>
-<tr class="active">
-    <th colspan="2">貸し出し書籍情報</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-    <th nowrap>ISBN等</th>
-    <td>{{$opacs_books->isbn}}</td>
-</tr>
-<tr>
-    <th nowrap>タイトル</th>
-    <td>{{$opacs_books->title}}</td>
-</tr>
-<tr>
-    <th nowrap>サブタイトル</th>
-    <td>{{$opacs_books->subtitle}}</td>
-</tr>
-<tr>
-    <th nowrap>シリーズ</th>
-    <td>{{$opacs_books->series}}</td>
-</tr>
-<tr>
-    <th nowrap>著者</th>
-    <td>{{$opacs_books->creator}}</td>
-</tr>
-<tr>
-    <th nowrap>出版者</th>
-    <td>{{$opacs_books->publisher}}</td>
-</tr>
-<tr>
-    <th nowrap>出版年</th>
-    <td>{{$opacs_books->publication_year}}</td>
-</tr>
-<tr>
-    <th nowrap>頁数</th>
-    <td>{{$opacs_books->page_number}}</td>
-</tr>
-<tr>
-    <th nowrap>請求記号</th>
-    <td>{{$opacs_books->ndc}}</td>
-</tr>
-<tr>
-    <th nowrap>配架場所</th>
-    <td>{{$opacs_books->shelf}}</td>
-</tr>
-<tr>
-    <th nowrap>バーコード</th>
-    <td>{{$opacs_books->barcode}}</td>
-</tr>
-<tr>
-    <th nowrap>郵送貸し出しリクエストユーザー</th>
-    <td>
-        @if (isset($opacs_books_lents))
-            {{$opacs_books_lents->student_no}}　（　{{$user_name}}　）
-        @endif
-    </td>
-</tr>
-<tr>
-    <th nowrap>郵送貸し出しリクエスト日</th>
-    <td>
-        @if (isset($opacs_books_lents))
-            {{$opacs_books_lents->created_at}}
-        @endif
-    </td>
-</tr>
-<tr>
-    <th nowrap>連絡先電話番号</th>
-    <td>
-        @if (isset($opacs_books_lents))
-            {{$opacs_books_lents->phone_no}}
-        @endif
-    </td>
-</tr>
-<tr>
-    <th nowrap>連絡先メールアドレス</th>
-    <td>
-        @if (isset($opacs_books_lents))
-            {{$opacs_books_lents->email}}
-        @endif
-    </td>
-</tr>
-<tr>
-    <th nowrap>送付先郵便番号</th>
-    <td>
-        @if (isset($opacs_books_lents))
-            {{$opacs_books_lents->postal_code}}
-        @endif
-    </td>
-</tr>
-<tr>
-    <th nowrap>送付先住所</th>
-    <td>
-        @if (isset($opacs_books_lents))
-            {{$opacs_books_lents->address}}
-        @endif
-    </td>
-</tr>
-<tr>
-    <th nowrap>送付先宛て名</th>
-    <td>
-        @if (isset($opacs_books_lents))
-            {{$opacs_books_lents->mailing_name}}
-        @endif
-    </td>
-</tr>
+    <thead>
+    <tr class="active">
+        <th colspan="2">貸し出し書籍情報</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <th nowrap>ISBN等</th>
+        <td>{{$opacs_books->isbn}}</td>
+    </tr>
+    <tr>
+        <th nowrap>タイトル</th>
+        <td>{{$opacs_books->title}}</td>
+    </tr>
+    <tr>
+        <th nowrap>サブタイトル</th>
+        <td>{{$opacs_books->subtitle}}</td>
+    </tr>
+    <tr>
+        <th nowrap>シリーズ</th>
+        <td>{{$opacs_books->series}}</td>
+    </tr>
+    <tr>
+        <th nowrap>著者</th>
+        <td>{{$opacs_books->creator}}</td>
+    </tr>
+    <tr>
+        <th nowrap>出版者</th>
+        <td>{{$opacs_books->publisher}}</td>
+    </tr>
+    <tr>
+        <th nowrap>出版年</th>
+        <td>{{$opacs_books->publication_year}}</td>
+    </tr>
+    <tr>
+        <th nowrap>頁数</th>
+        <td>{{$opacs_books->page_number}}</td>
+    </tr>
+    <tr>
+        <th nowrap>請求記号</th>
+        <td>{{$opacs_books->ndc}}</td>
+    </tr>
+    <tr>
+        <th nowrap>配架場所</th>
+        <td>{{$opacs_books->shelf}}</td>
+    </tr>
+    <tr>
+        <th nowrap>バーコード</th>
+        <td>{{$opacs_books->barcode}}</td>
+    </tr>
+    <tr>
+        <th nowrap>郵送貸し出しリクエストユーザー</th>
+        <td>
+            @if (isset($opacs_books_lents))
+                {{$opacs_books_lents->student_no}}　（　{{$user_name}}　）
+            @endif
+        </td>
+    </tr>
+    <tr>
+        <th nowrap>郵送貸し出しリクエスト日</th>
+        <td>
+            @if (isset($opacs_books_lents))
+                {{$opacs_books_lents->created_at}}
+            @endif
+        </td>
+    </tr>
+    <tr>
+        <th nowrap>連絡先電話番号</th>
+        <td>
+            @if (isset($opacs_books_lents))
+                {{$opacs_books_lents->phone_no}}
+            @endif
+        </td>
+    </tr>
+    <tr>
+        <th nowrap>連絡先メールアドレス</th>
+        <td>
+            @if (isset($opacs_books_lents))
+                {{$opacs_books_lents->email}}
+            @endif
+        </td>
+    </tr>
+    <tr>
+        <th nowrap>送付先郵便番号</th>
+        <td>
+            @if (isset($opacs_books_lents))
+                {{$opacs_books_lents->postal_code}}
+            @endif
+        </td>
+    </tr>
+    <tr>
+        <th nowrap>送付先住所</th>
+        <td>
+            @if (isset($opacs_books_lents))
+                {{$opacs_books_lents->address}}
+            @endif
+        </td>
+    </tr>
+    <tr>
+        <th nowrap>送付先宛て名</th>
+        <td>
+            @if (isset($opacs_books_lents))
+                {{$opacs_books_lents->mailing_name}}
+            @endif
+        </td>
+    </tr>
 </table>
 
 <h4><span class="badge badge-primary">貸し出し</span></h4>
