@@ -313,6 +313,7 @@ $app_array = [
         'BbsViewFormat' => \App\Enums\BbsViewFormat::class,
         'OpacConfigSelectType' => \App\Enums\OpacConfigSelectType::class,
         'DeliveryRequestFlag' => \App\Enums\DeliveryRequestFlag::class,
+        'LentFlag' => \App\Enums\LentFlag::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
