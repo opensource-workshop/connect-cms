@@ -41,7 +41,7 @@
     </style>
 
     <div class="book-list table-responsive">
-        <table class="table mb-2">
+        <table class="table mb-0">
             <thead>
                 <tr class="active">
                     <th nowrap>タイトル</th>
