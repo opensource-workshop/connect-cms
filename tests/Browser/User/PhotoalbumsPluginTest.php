@@ -42,6 +42,7 @@ class PhotoalbumsPluginTest extends DuskTestCase
 
         $this->logout();
         $this->index();
+        $this->template(); // テンプレート
     }
 
     /**
@@ -55,7 +56,7 @@ class PhotoalbumsPluginTest extends DuskTestCase
         $this->initPlugin('photoalbums', '/test/photoalbum');
 
         // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'makeFolder', 'upload', 'deleteContents', 'createBuckets', 'editView', 'listBuckets');
+        $this->reserveManual('index', 'makeFolder', 'upload', 'deleteContents', 'template', 'createBuckets', 'editView', 'listBuckets');
     }
 
     /**
@@ -320,5 +321,13 @@ class PhotoalbumsPluginTest extends DuskTestCase
              "comment": "<ul class=\"mb-0\"><li>フォトアルバムの表示設定を設定できます。</li></ul>"
             }
         ]', null, 4);
+    }
+
+    /**
+     * テンプレート
+     */
+    private function template()
+    {
+        $this->putManualTemplateData($this->test_frame, 'user', '/test/photoalbum', ['photoalbums', 'フォトアルバム'], ['default' => 'アルバムはリスト表示', 'card' => 'アルバムもカード表示']);
     }
 }
