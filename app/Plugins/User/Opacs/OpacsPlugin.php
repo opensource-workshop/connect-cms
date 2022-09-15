@@ -2038,6 +2038,7 @@ class OpacsPlugin extends UserPluginBase
         // カラム
         $columns = [
             'title' => 'タイトル',
+            'barcode' => 'バーコード',
             'lent_count' => '貸出数',
         ];
 
@@ -2050,13 +2051,14 @@ class OpacsPlugin extends UserPluginBase
         }
 
         // 貸出中・貸出終了の累計
-        $lents_query = OpacsBooksLents::select('opacs_books.title', DB::raw("count(opacs_books_lents.id) as lent_count"))
+        $lents_query = OpacsBooksLents::select('opacs_books.title', 'opacs_books.barcode', DB::raw("count(opacs_books_lents.id) as lent_count"))
             ->leftJoin('opacs_books', function ($join) use ($opac_frame) {
                 $join->on('opacs_books.id', '=', 'opacs_books_lents.opacs_books_id')
                         ->where('opacs_books.opacs_id', '=', $opac_frame->opacs_id);
             })
             ->whereIn('opacs_books_lents.lent_flag', [LentFlag::rented, LentFlag::finished])
-            ->groupBy('opacs_books.title');
+            ->groupBy('opacs_books.title')
+            ->groupBy('opacs_books.barcode');
 
         if ($request->lent_term_from) {
             $lents_query = $lents_query->whereDate('opacs_books_lents.created_at', '>=', $request->lent_term_from . ' 00:00:00');
