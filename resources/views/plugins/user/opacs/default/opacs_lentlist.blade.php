@@ -263,8 +263,8 @@
 </div>
 
 <!-- 一覧へ戻る -->
-<p class="text-center">
+<div class="text-center">
     <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}{{$page->getLinkUrl()}}'"><i class="fas fa-list"></i> 戻る</button>
-</p>
+</div>
 
 @endsection
