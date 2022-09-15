@@ -25,12 +25,15 @@ use App\Models\User\Opacs\OpacsConfigs;
 use App\Models\User\Opacs\OpacsConfigsSelect;
 
 use Carbon\Carbon;
-
 use App\Mail\ConnectMail;
 use App\Plugins\User\UserPluginBase;
 
 use App\Enums\DeliveryRequestFlag;
+use App\Enums\LentFlag;
 use App\Enums\OpacConfigSelectType;
+use App\Enums\CsvCharacterCode;
+
+use App\Utilities\Csv\CsvUtils;
 
 /**
  * Opacプラグイン
@@ -61,8 +64,25 @@ class OpacsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = [];
-        $functions['get']  = ['settingOpacFrame', 'lentlist', 'searchClear', 'searchDetailClear', 'roleLent', 'editDeliveryRequest'];
-        $functions['post'] = ['lent', 'requestLent', 'returnLent', 'search', 'saveOpacFrame', 'getBookInfo', 'destroyRequest', 'saveDeliveryRequest'];
+        $functions['get']  = [
+            'settingOpacFrame',
+            'lentlist',
+            'searchClear',
+            'searchDetailClear',
+            'roleLent',
+            'editDeliveryRequest'
+        ];
+        $functions['post'] = [
+            'lent',
+            'requestLent',
+            'returnLent',
+            'search',
+            'saveOpacFrame',
+            'getBookInfo',
+            'destroyRequest',
+            'saveDeliveryRequest',
+            'downloadCsvLent'
+        ];
         return $functions;
     }
 
@@ -87,6 +107,7 @@ class OpacsPlugin extends UserPluginBase
 
         $role_check_table["lentlist"]          = ['role_article'];
         $role_check_table["roleLent"]          = ['role_article'];
+        $role_check_table["downloadCsvLent"]   = ['role_article'];
 
         // change: getBookInfoの呼び出しは create,edit のみ. create,edit の権限を設定する
         // $role_check_table["getBookInfo"]       = ['role_article'];
@@ -1849,6 +1870,12 @@ class OpacsPlugin extends UserPluginBase
             return $this->viewError(403);
         }
 
+        // OPAC＆フレームデータ
+        $opac_frame = $this->getOpacFrame($frame_id);
+        if (empty($opac_frame) || empty($opac_frame->bucket_id)) {
+            return;
+        }
+
         // 郵送リクエスト一覧取得
         $books_requests = OpacsBooksLents::select('opacs_books_lents.*', 'users.name', 'opacs_books.title', 'opacs_books.barcode', 'opacs_books.isbn')
             ->leftJoin('opacs_books', 'opacs_books.id', '=', 'opacs_books_lents.opacs_books_id')
@@ -1871,6 +1898,7 @@ class OpacsPlugin extends UserPluginBase
         return $this->view('opacs_lentlist', [
             'books_lents'    => $books_lents,
             'books_requests' => $books_requests,
+            'opac_frame'     => $opac_frame,
             'message'        => $message,
             'errors'         => $errors,
         ]);
@@ -1982,6 +2010,107 @@ class OpacsPlugin extends UserPluginBase
 
         // MyOpac画面へ遷移
         return $this->index($request, $page_id, $frame_id, null, ['貸し出しリクエストを削除しました。']);
+    }
+
+    /**
+     * 貸出数ダウンロード
+     */
+    public function downloadCsvLent($request, $page_id, $frame_id, $id)
+    {
+        // opac＆フレームデータ
+        $opac_frame = $this->getOpacFrame($frame_id);
+        if (empty($opac_frame) || empty($opac_frame->bucket_id)) {
+            return;
+        }
+
+        $validator = Validator::make($request->all(), [
+            'lent_term_from' => ['nullable', 'date'],
+            'lent_term_to'   => ['nullable', 'date'],
+        ]);
+        $validator->setAttributeNames([
+            'lent_term_from' => '期間（From）',
+            'lent_term_to'   => '期間（To）',
+        ]);
+        if ($validator->fails()) {
+            return $this->lentList($request, $page_id, $frame_id, null, $validator->errors());
+        }
+
+        // カラム
+        $columns = [
+            'title' => 'タイトル',
+            'barcode' => 'バーコード',
+            'lent_count' => '貸出数',
+        ];
+
+        // 返却用配列
+        $csv_array = [];
+
+        // 見出し行
+        foreach ($columns as $columnKey => $column) {
+            $csv_array[0][$columnKey] = $column;
+        }
+
+        // 貸出中・貸出終了の累計
+        $lents_query = OpacsBooksLents::select('opacs_books.title', 'opacs_books.barcode', DB::raw("count(opacs_books_lents.id) as lent_count"))
+            ->leftJoin('opacs_books', function ($join) use ($opac_frame) {
+                $join->on('opacs_books.id', '=', 'opacs_books_lents.opacs_books_id')
+                        ->where('opacs_books.opacs_id', '=', $opac_frame->opacs_id);
+            })
+            ->whereIn('opacs_books_lents.lent_flag', [LentFlag::rented, LentFlag::finished])
+            ->groupBy('opacs_books.title')
+            ->groupBy('opacs_books.barcode');
+
+        if ($request->lent_term_from) {
+            $lents_query = $lents_query->whereDate('opacs_books_lents.created_at', '>=', $request->lent_term_from . ' 00:00:00');
+        }
+        if ($request->lent_term_to) {
+            $lents_query = $lents_query->whereDate('opacs_books_lents.created_at', '<=', $request->lent_term_to . ' 23:59:59');
+        }
+
+        $lents = $lents_query->get();
+
+        // 行数
+        $csv_line_no = 1;
+
+        // データ
+        foreach ($lents as $counter_count) {
+            $csv_line = [];
+            foreach ($columns as $columnKey => $column) {
+                $csv_line[$columnKey] = $counter_count->$columnKey;
+            }
+
+            $csv_array[$csv_line_no] = $csv_line;
+            $csv_line_no++;
+        }
+
+        // レスポンス版
+        $filename = 'lent_counts.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+
+        // データ
+        $csv_data = '';
+        foreach ($csv_array as $csv_line) {
+            foreach ($csv_line as $csv_col) {
+                $csv_data .= '"' . $csv_col . '",';
+            }
+            // 末尾カンマを削除
+            $csv_data = substr($csv_data, 0, -1);
+            $csv_data .= "\n";
+        }
+
+        // 文字コード変換
+        if ($request->character_code == CsvCharacterCode::utf_8) {
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::utf_8);
+            // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
+            $csv_data = CsvUtils::addUtf8Bom($csv_data);
+        } else {
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::sjis_win);
+        }
+
+        return response()->make($csv_data, 200, $headers);
     }
 
     /**
