@@ -9,6 +9,44 @@
 
 @section("plugin_contents_$frame->id")
 
+{{-- ダウンロード用フォーム --}}
+<script type="text/javascript">
+    {{-- ダウンロードのsubmit JavaScript --}}
+    function submit_download_shift_jis() {
+        if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}で貸出累計をダウンロードします。\nよろしいですか？') ) {
+            return;
+        }
+        lent_download.character_code.value = '{{CsvCharacterCode::sjis_win}}';
+        lent_download.submit();
+    }
+    function submit_download_utf_8() {
+        if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}で貸出累計をダウンロードします。\nよろしいですか？') ) {
+            return;
+        }
+        lent_download.character_code.value = '{{CsvCharacterCode::utf_8}}';
+        lent_download.submit();
+    }
+
+    /**
+     * 貸出期間（From）・貸出期間（To）ボタン押下
+     */
+    $(function () {
+        let calendar_setting = {
+            @if (App::getLocale() == ConnectLocale::ja)
+                dayViewHeaderFormat: 'YYYY年 M月',
+            @endif
+            locale: '{{ App::getLocale() }}',
+            format: 'YYYY-MM-DD',
+            timepicker:false
+        };
+
+        // 貸出期間（From）ボタン押下
+        $('#lent_term_from').datetimepicker(calendar_setting);
+        // 貸出期間（To）ボタン押下
+        $('#lent_term_to').datetimepicker(calendar_setting);
+    });
+</script>
+
 <div class="alert alert-info">
     <i class="fas fa-exclamation-circle"></i> モデレータ用管理画面
 </div>
@@ -31,8 +69,8 @@
     </div>
 @endif
 
-<div class="card mb-3">
-    <div class="card-header" id="frame-{{$frame->id}}-requestlist">郵送貸し出しリクエスト中一覧</div>
+<div class="card form-group">
+    <div class="card-header" id="frame-{{$frame->id}}-requestlist">郵送貸出リクエスト中一覧</div>
 
     <style type="text/css">
     <!--
@@ -72,12 +110,12 @@
                                 </form>
                             </div>
 
-                            <!-- 郵送貸し出しリクエスト取り消しボタン -->
+                            <!-- 郵送貸出リクエスト取り消しボタン -->
                             <div class="col-4 col-sm-3 col-md-2">
                                 <form action="{{url('/')}}/plugin/opacs/destroyRequest/{{$page->id}}/{{$frame_id}}/{{$books_request->opacs_books_id}}#frame-{{$frame->id}}-lentlist" method="POST">
                                     <input type="hidden" name="req_student_no" value="{{old('req_student_no', $books_request->student_no)}}" class="form-control">
                                     {{csrf_field()}}
-                                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('貸し出しリクエストを取り消します。\nよろしいですか？')"><span class="glyphicon glyphicon-ok"></span><i class="fas fa-trash-alt"></i> 取消</button>
+                                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('貸出リクエストを取り消します。\nよろしいですか？')"><span class="glyphicon glyphicon-ok"></span><i class="fas fa-trash-alt"></i> 取消</button>
                                 </form>
                             </div>
                         </div>
@@ -89,8 +127,8 @@
     </div>
 </div>
 
-<div class="card mb-3">
-    <div class="card-header" id="frame-{{$frame->id}}-requestlist">貸し出し一覧</div>
+<div class="card form-group">
+    <div class="card-header" id="frame-{{$frame->id}}-requestlist">貸出一覧</div>
 
     <div class="book-list table-responsive">
         <table class="table">
@@ -147,8 +185,8 @@
             <!-- 返却用バーコード -->
             <label class="col-md-4 col-lg-3 text-md-right col-form-label " style="float: left;">返却用バーコード <label class="badge badge-danger">必須</label></label>
             <div class="col-sm-8 col-md-5 col-lg-7">
-                <input class="form-control" type="text" name="return_barcode" value="{{old('return_barcode')}}" placeholder="バーコードエリア">
-                @if ($errors && $errors->has('return_barcode')) <div class="text-danger col-12">{{$errors->first('return_barcode')}}</div> @endif
+                <input class="form-control @if ($errors && $errors->has("return_barcode")) border-danger @endif" type="text" name="return_barcode" value="{{old('return_barcode')}}" placeholder="バーコードエリア">
+                @include('plugins.common.errors_inline', ['name' => 'return_barcode'])
                 <small class=" text-muted">バーコードリーダーで読み込んでください。</small>
             </div>
 
@@ -157,6 +195,67 @@
                 <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>
                     返却
                 </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<div class="card form-group">
+    <div class="card-header" id="frame-{{$frame->id}}-requestlist">貸出累計</div>
+    <div class="card-body">
+
+        <form action="{{url('/')}}/download/plugin/opacs/downloadCsvLent/{{$page->id}}/{{$frame_id}}/{$opac_frame->opacs_id}" method="post" name="lent_download">
+            {{ csrf_field() }}
+            <input type="hidden" name="character_code" value="">
+
+            <div class="row">
+
+                <div class="col-md-2 col-form-label">期間</div>
+                <div class="col-md-10">
+
+                    <div class="form-row">
+                        <div class="col-md-4 col-sm-5">
+                            <div class="input-group date" id="lent_term_from" data-target-input="nearest">
+                                <input type="text" name="lent_term_from" value="{{ old('lent_term_from') }}" class="form-control datetimepicker-input @if ($errors && $errors->has('lent_term_from')) border-danger @endif" data-target="#lent_term_from">
+                                <div class="input-group-append" data-target="#lent_term_from" data-toggle="datetimepicker">
+                                    <div class="input-group-text"><i class="fas fa-clock"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center">~</div>
+                        <div class="col-md-4 col-sm-5">
+                            <div class="input-group date" id="lent_term_to" data-target-input="nearest">
+                                <input type="text" name="lent_term_to" value="{{ old('lent_term_to') }}" class="form-control datetimepicker-input @if ($errors && $errors->has('lent_term_to')) border-danger @endif" data-target="#lent_term_to">
+                                <div class="input-group-append" data-target="#lent_term_to" data-toggle="datetimepicker">
+                                    <div class="input-group-text"><i class="fas fa-clock"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 pt-1">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-primary btn-sm" onclick="submit_download_shift_jis();">
+                                    <i class="fas fa-file-download"></i> ダウンロード
+                                </button>
+                                <button type="button" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <span class="sr-only">ドロップダウンボタン</span>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-right">
+                                    <a class="dropdown-item" href="#" onclick="submit_download_shift_jis(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
+                                    <a class="dropdown-item" href="#" onclick="submit_download_utf_8(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col">
+                            @include('plugins.common.errors_inline', ['name' => 'lent_term_from'])
+                            @include('plugins.common.errors_inline', ['name' => 'lent_term_to'])
+                            <small class="text-muted">期間は貸出データの作成日で絞ります。</small>
+                        </div>
+                    </div>
+                </div>
             </div>
         </form>
 
