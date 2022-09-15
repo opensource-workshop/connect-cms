@@ -1,0 +1,136 @@
+<div class="card mt-3">
+    <div class="card-header text-white bg-primary">セットアップ方法</div>
+    <div class="card-body">
+        <h5>セットアップ</h5>
+        <p>基本的にメンバーシップページに課題管理を配置して使用します。</p>
+        <ul>
+            <li>役割設定
+                <ul>
+                    <li>まず<a href="https://manual.connect-cms.jp/manage/user/originalRole/index.html">管理画面の役割設定</a>をして、受講生と教員の役割を作成します。</li>
+                    <li>作成した役割を、<a href="https://manual.connect-cms.jp/manage/user/regist/index.html" style="background-color: #ffffff;">ユーザ変更</a>の「役割設定」から割り当てます。</li>
+                    <li>役割毎にできる事は、[※1 役割][※2 役割設定と権限設定] を参照してください。</li>
+                </ul>
+            </li>
+            <li>メンバーシップページを設定
+                <ul>
+                    <li>メンバーシップページ（グループ参加した人しか見れないページ）を設定するため、まずは<a href="https://manual.connect-cms.jp/manage/group/index.html">管理画面からグループを作成</a>します。（例：2020年度○○科試験グループ を作成）</li>
+                    <li>作成したグループに、受講生・教員ユーザをグループ参加させます。ユーザ管理からグループ参加画面を開けます。</li>
+                    <li>ページ管理からページを選び、<a href="https://manual.connect-cms.jp/manage/page/edit/index.html">ページ編集</a>の「公開設定」をメンバーシップページに変更します。<br>ページがなければページを追加してください。</li>
+                    <li>選んだページのページ権限設定画面から、グループの権限を設定すると、メンバーシップページの設定完了です。</li>
+                </ul>
+            </li>
+            <li>メンバーシップページに移動し、課題管理プラグインを<a href="https://manual.connect-cms.jp/common/admin_link/plugin/index.html">配置</a>します。</li>
+        </ul>
+        <p></p>
+
+        <h5>※1 役割</h5>
+        <table class="table table-striped ">
+            <thead>
+                <tr>
+                    <th scope="col">役割</th>
+                    <th scope="col">内容</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th><span style="color: #169179;"><i class="fas fa-user fa-4x"></i></span><br><span style="color: #169179;">受講生</span></th>
+                    <td>
+                        <ul>
+                            <li>科目毎にレポート提出や試験を受講します。</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <th><span style="color: #236fa1;"><i class="fas fa-user fa-4x"></i></span><br><span style="color: #236fa1;">教員</span></th>
+                    <td>
+                        <ul>
+                            <li>科目毎にレポートや試験の評価をします。</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <th><span style="color: #e67e23;"><i class="fas fa-user-cog fa-4x"></i></span><br><span style="color: #e67e23;">事務局（コンテンツ管理者）</span></th>
+                    <td>
+                        <ul>
+                            <li>課題管理を含むサイト全体の管理者です。</li>
+                            <li>課題管理の設置します。
+                                <ul>
+                                    <li>ユーザへの役割設定（この人は受講生・この人は教員）</li>
+                                    <li>メンバーシップページの設定</li>
+                                    <li>メンバーシップページに課題管理プラグインを配置</li>
+                                </ul>
+                            </li>
+                            <li>科目の作成して下記を設定します。
+                                <ul>
+                                    <li>レポート課題ファイルのアップロード</li>
+                                    <li>参加者の設定（受講生・教員）</li>
+                                    <li>試験の日時設定、試験問題のアップロード</li>
+                                    <li>誤って評価してしまった場合の評価削除</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <p></p>
+
+        <h5>※2 役割設定と権限設定</h5>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th nowrap="nowrap">役割設定</th>
+                        <th nowrap="nowrap">コンテンツ権限</th>
+                        <th nowrap="nowrap">内容</th>
+                        <th nowrap="nowrap">科目の見え方</th>
+                        <th nowrap="nowrap">科目の追加・編集</th>
+                        <th nowrap="nowrap">科目の評価取消<br>(履歴削除)</th>
+                        <th nowrap="nowrap">課題管理設定</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>受講生</td>
+                        <td></td>
+                        <td nowrap="nowrap">科目を受講できる。</td>
+                        <td>受講対象のみ科目見える。</td>
+                        <td>×:不可</td>
+                        <td>×:不可</td>
+                        <td>×:不可</td>
+                    </tr>
+                    <tr>
+                        <td>教員</td>
+                        <td></td>
+                        <td>科目を評価できる。</td>
+                        <td>評価対象のみ科目見える。</td>
+                        <td>×:不可</td>
+                        <td>×:不可</td>
+                        <td>×:不可</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td nowrap="nowrap">プラグイン管理者</td>
+                        <td>課題管理プラグインを設置できる</td>
+                        <td>見えない。</td>
+                        <td>×:不可</td>
+                        <td>×:不可</td>
+                        <td>○:可</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td nowrap="nowrap">コンテンツ管理者</td>
+                        <td>管理者</td>
+                        <td>全ての科目が見える。</td>
+                        <td>○:可</td>
+                        <td>○:可</td>
+                        <td>
+                            <p>○:可</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p><small class="text-muted">※ 表は横スクロールできます。</small></p>
+    </div>
+</div>
