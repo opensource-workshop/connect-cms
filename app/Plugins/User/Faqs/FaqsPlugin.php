@@ -230,7 +230,7 @@ class FaqsPlugin extends UserPluginBase
                 'categories.background_color as category_background_color',
                 'categories.category as category',
                 'plugin_categories.view_flag as category_view_flag',
-                'categories.display_sequence as category_display_sequence',
+                'plugin_categories.display_sequence as category_display_sequence',
             )
             ->whereIn('faqs_posts.id', function ($query) use ($faq_frame) {
                 $query->select(DB::raw('MAX(id) As id'))
