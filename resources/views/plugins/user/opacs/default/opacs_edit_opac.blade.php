@@ -15,12 +15,12 @@
 @section("plugin_setting_$frame->id")
 {{-- opac オブジェクトがない or idがない --}}
 @if (!$opac || !$opac->id)
-    <div class="alert alert-warning" style="margin-top: 10px;">
+    <div class="alert alert-warning">
         <i class="fas fa-exclamation-circle"></i>
         設定画面から、使用するOPACを選択するか、作成してください。
     </div>
 @else
-    <div class="alert alert-info" style="margin-top: 10px;">
+    <div class="alert alert-info">
         <i class="fas fa-exclamation-circle"></i>
 
         @if ($message)

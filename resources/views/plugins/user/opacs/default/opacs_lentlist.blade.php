@@ -14,26 +14,23 @@
     モデレータ用管理画面
 </div>
 
-{{-- メッセージ画面 --}}
-@if ($errors && $errors->any())
+{{-- 共通エラーメッセージ 呼び出し --}}
+@include('plugins.common.errors_form_line')
+
+{{-- 登録後メッセージ表示 --}}
+@include('plugins.common.flash_message_for_frame')
+
+@if (session('lent_error'))
     <div class="alert alert-danger">
-        <i class="fas fa-exclamation-triangle"></i>
-        入力内容にエラーがあります。詳しくは各項目を確認してください。
+        <i class="fas fa-exclamation-triangle"></i> {{ session('lent_error') }}
     </div>
-@elseif(session('lent_error'))
-<div class="alert alert-danger">
-    <i class="fas fa-exclamation-triangle"></i>
-    {{ session('lent_error') }}
-</div>
 @endif
 
 @if ($message)
-        <div class="alert alert-primary">
-        <i class="fas fa-exclamation-circle"></i>
-        {{$message}}
+    <div class="alert alert-primary">
+        <i class="fas fa-exclamation-circle"></i> {{$message}}
     </div>
 @endif
-
 
 <div class="card mb-3">
     <div class="card-header" id="frame-{{$frame->id}}-requestlist">郵送貸し出しリクエスト中一覧</div>
@@ -67,7 +64,7 @@
             <div class="form-group text-center mb-0 row">
                 <!-- 貸出ボタン -->
                 <div class="col-4 col-sm-3 col-md-2" style="margin-left: auto;">
-                    <form action="{{url('/')}}/plugin/opacs/roleLent/{{$page->id}}/{{$frame_id}}/{{$books_request->opacs_books_id}}" method="GET">
+                    <form action="{{url('/')}}/plugin/opacs/roleLent/{{$page->id}}/{{$frame_id}}/{{$books_request->opacs_books_id}}#frame-{{$frame_id}}" method="GET">
                         <input type="hidden" name="req_lent_id" value="{{old('req_lent_id', $books_request->id)}}" class="form-control">
                         <input type="hidden" name="req_student_no" value="{{old('req_student_no', $books_request->student_no)}}" class="form-control">
                         <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i>

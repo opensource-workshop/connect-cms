@@ -9,7 +9,6 @@
     <li role="presentation" class="nav-item">
         <span class="nav-link"><span class="active">設定変更</span></span>
     </li>
-</li>
 @else
     <li role="presentation" class="nav-item">
         <a href="{{url('/')}}/plugin/opacs/editBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">設定変更</a>
@@ -22,6 +21,15 @@
 @else
     <li role="presentation" class="nav-item">
         <a href="{{url('/')}}/plugin/opacs/createBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">新規作成</a>
+    </li>
+@endif
+@if ($action == 'editDeliveryRequest')
+    <li role="presentation" class="nav-item">
+        <span class="nav-link"><span class="active">配送希望設定</span></span>
+    </li>
+@else
+    <li role="presentation" class="nav-item">
+        <a href="{{url('/')}}/plugin/opacs/editDeliveryRequest/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">配送希望設定</a>
     </li>
 @endif
 @if ($action == 'settingOpacFrame')

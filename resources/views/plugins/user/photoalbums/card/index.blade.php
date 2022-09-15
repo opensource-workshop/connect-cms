@@ -26,7 +26,7 @@
 @include('plugins.user.photoalbums.default.index_head')
 
 {{-- フォルダ --}}
-@include('plugins.user.photoalbums.default.index_folder')
+@include('plugins.user.photoalbums.card.index_folder')
 
 {{-- 画像・動画 --}}
 @include('plugins.user.photoalbums.default.index_image')
