@@ -123,6 +123,14 @@
                 @endif
                 <label class="custom-control-label" for="sequence_conditions_2">指定順</label>
             </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                @if(old('sequence_conditions', $faq->sequence_conditions) == 3)
+                    <input type="radio" value="3" id="sequence_conditions_3" name="sequence_conditions" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="3" id="sequence_conditions_3" name="sequence_conditions" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="sequence_conditions_3">カテゴリ順</label>
+            </div>
         </div>
     </div>
 

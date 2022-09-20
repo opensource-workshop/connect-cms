@@ -229,7 +229,8 @@ class FaqsPlugin extends UserPluginBase
                 'categories.color as category_color',
                 'categories.background_color as category_background_color',
                 'categories.category as category',
-                'plugin_categories.view_flag as category_view_flag'
+                'plugin_categories.view_flag as category_view_flag',
+                'plugin_categories.display_sequence as category_display_sequence',
             )
             ->whereIn('faqs_posts.id', function ($query) use ($faq_frame) {
                 $query->select(DB::raw('MAX(id) As id'))
@@ -257,6 +258,10 @@ class FaqsPlugin extends UserPluginBase
         } elseif ($faq_frame->sequence_conditions == 2) {
             // 指定順
             $faqs_posts->orderBy('display_sequence', 'asc');
+        } elseif ($faq_frame->sequence_conditions == 3) {
+            // カテゴリ順
+            $faqs_posts->orderBy('category_display_sequence', 'asc');
+            $faqs_posts->orderBy('categories_id', 'asc');
         }
 
        // 取得
