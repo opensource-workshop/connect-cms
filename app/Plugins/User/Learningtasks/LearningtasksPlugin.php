@@ -50,6 +50,8 @@ use App\Rules\CustomValiWysiwygMax;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 課題管理プラグイン
  * @package Controller
+ * @plugin_title 課題管理
+ * @plugin_desc 科目を一覧表示でき、ログインしたユーザは科目毎にレポート提出や試験の受講ができるプラグインです。<br />課題管理プラグインは、大学向けレポート試験を想定して作成しています。
  */
 class LearningtasksPlugin extends UserPluginBase
 {

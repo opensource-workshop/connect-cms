@@ -32,7 +32,7 @@
                     <button class="btn btn-primary" type="submit"><i class="fas fa-search" aria-label="検索" role="presentation"></i></button>
                 </div>
                 <div class="ml-2">
-                    <a href="https://connect-cms.jp/manual/manager/code#collapse-search-help" target="_brank">
+                    <a href="https://manual.connect-cms.jp/manage/code/index/index.html" target="_brank">
                         <span class="btn btn-link"><i class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></i></span>
                     </a>
                 </div>

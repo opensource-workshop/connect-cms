@@ -71,6 +71,11 @@
         <td style="width: 40%;">2</td>
         <td style="width: 40%;">仮登録</td>
     </tr>
+    <tr>
+        <td style="width: 20%;"></td>
+        <td style="width: 40%;">3</td>
+        <td style="width: 40%;">仮削除</td>
+    </tr>
 </tbody>
 </table>
 </div html_only>

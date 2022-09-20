@@ -1,0 +1,134 @@
+<div class="card" html_only>
+<div class="card-body" html_only>
+
+<style>
+.font_small {
+    font-size: 90%;
+}
+.pdf_table th {
+    background-color: #f2f2f2;
+}
+</style>
+
+<p>【詳細画面で設定できる内容】※ 設定項目の詳細は表の下で説明します。</p>
+<div class="table-responsive" html_only>
+<table class="table table-sm table-bordered table-striped table_css font_small pdf_table">
+<tbody>
+    <tr>
+    <th style="width: 15%;">設定項目</th>
+    <th style="width: 5%;">１行文字</th>
+    <th style="width: 5%;">複数文字</th>
+    <th style="width: 5%;">単一 選択</th>
+    <th style="width: 5%;">複数 選択</th>
+    <th style="width: 5%;">リスト</th>
+    <th style="width: 5%;">メール</th>
+    <th style="width: 5%;">日付</th>
+    <th style="width: 5%;">時間</th>
+    <th style="width: 5%;">時間(FromTo)</th>
+    <th style="width: 5%;">まとめ</th>
+    </tr>
+    <tr>
+    <th>選択肢の設定</th>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    </tr>
+    <tr>
+    <th>キャプションの設定</th>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    </tr>
+    <th>プレースホルダーの設定</th>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    </tr>
+    <tr>
+    <th>チェック処理の設定</th>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    </tr>
+    <tr>
+    <th>項目毎の固有設定</th>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;">〇</td>
+    <td style="text-align: center;"></td>
+    <td style="text-align: center;"></td>
+    </tr>
+</tbody>
+</table>
+
+</div html_only><!-- table-responsive -->
+
+    <p><b>選択肢の設定</b></p>
+    <ul>
+        <li class="card-text">選択肢の追加、削除、表示順の変更ができます。</li>
+    </ul>
+    <p><b>キャプションの設定</b></p>
+    <ul>
+        <li class="card-text">キャプション内容の追加、キャプション文字色の変更ができます。</li>
+    </ul>
+    <p><b>プレースホルダーの設定</b></p>
+    <ul>
+        <li class="card-text">プレースホルダー内容の追加、変更ができます。</li>
+    </ul>
+    <p><b>チェック処理の設定</b></p>
+    <p>「１行文字列型」、「複数行文字列型」について、下記の設定ができます。</p>
+    <ul>
+        <li class="card-text">数値のみ許容</li>
+        <li class="card-text">英数値のみ許容</li>
+        <li class="card-text">入力最大桁数 ※数値用</li>
+        <li class="card-text">入力最大文字数</li>
+        <li class="card-text">最大値</li>
+        <li class="card-text">最小値</li>
+    </ul>
+    <p>「日付型」について、下記の設定ができます。</p>
+    <ul>
+        <li class="card-text">指定日数以降の日付のみ許容</li>
+    </ul>
+    <p>「メールアドレス型」について、以下の設定ができます。</p>
+    <ul>
+        <li class="card-text">正規表現（指定ドメインのメールアドレスのみ、などが設定可能）</li>
+    </ul>
+    <p><b>項目毎の固有設定</b></p>
+    <ul>
+        <li class="card-text">「まとめ行」で、後続の項目をいくつまでまとめるか、の設定ができます。</li>
+        <li class="card-text">「時間型」で、分刻みの設定ができます。</li>
+    </ul>
+</div html_only><!-- card-body -->
