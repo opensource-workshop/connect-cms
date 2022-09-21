@@ -391,14 +391,10 @@ class FaqsPlugin extends UserPluginBase
                       ->leftjoin('pages', 'pages.id', '=', 'frames.page_id')
                       ->where('status', '?')
                       ->where(function ($plugin_query) use ($search_keyword) {
-                          $plugin_query->where('faqs_posts.post_title', 'like', '?')
-                                       ->orWhere('faqs_posts.post_text', 'like', '?');
+                          $plugin_query->where('faqs_posts.post_title', 'like', "%$search_keyword%")
+                                       ->orWhere('faqs_posts.post_text', 'like', "%$search_keyword%");
                       })
                       ->whereNull('faqs_posts.deleted_at');
-
-
-        $bind = array(0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
-        $return[] = $bind;
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/faqs/show';
 

@@ -14,6 +14,7 @@ final class SearchsTargetPlugin extends EnumsBase
     const blogs = 'blogs';
     const bbses = 'bbses';
     const databases = 'databases';
+    const faq = 'faqs';
 
     // key/valueの連想配列
     const enum = [
@@ -21,6 +22,7 @@ final class SearchsTargetPlugin extends EnumsBase
         self::blogs => 'ブログ',
         self::bbses => '掲示板',
         self::databases => 'データベース',
+        self::faq => 'FAQ',
     ];
 
     /**
