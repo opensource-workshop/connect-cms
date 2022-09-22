@@ -2,6 +2,7 @@
 
 namespace App\Models\Common;
 
+use App\Enums\ColorName;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Validator;
@@ -308,5 +309,75 @@ class Categories extends Model
 
         // プラグインカテゴリ削除
         PluginCategory::destroy($plugin_categories_ids);
+    }
+
+    /**
+     * hoverのbackgroud-colorを取得する
+     *
+     * @return string カラーコード
+     */
+    public function getHoverBackgroundColorAttribute(): string
+    {
+        $background_color = $this->background_color;
+        if (strpos($background_color, '#') !== 0) {
+            $background_color = self::toColorCode($background_color);
+        }
+
+        // カラーネームからカラーコードに変換できない場合は、そのまま返却する
+        if ($background_color === false) {
+            return $background_color;
+        }
+
+        return self::adjustBrightness($background_color, -20);
+    }
+
+    /**
+     * カラーネームをカラーコードに変換する
+     *
+     * @param string $color_name カラーネーム
+     * @return string|boolean 変換できない場合はfalse
+     */
+    private function toColorCode(string $color_name)
+    {
+        $color_name = strtolower($color_name);
+        // 対応しないカラーネーム
+        if (!in_array($color_name, ColorName::getMemberKeys())) {
+            return false;
+        }
+        $hex = ColorName::getDescription($color_name);
+
+        return $hex;
+    }
+    /**
+     * 色の明度を調節する
+     *
+     * @param string $hex 16進のカラーコード
+     * @param string $steps -255から255 負数は暗くなり、正数は明るくなる
+     * @return string 調節した16進のカラーコード
+     * @author Torkil Johnsen https://stackoverflow.com/users/1034002/torkil-johnsen
+     * @see https://stackoverflow.com/questions/3512311/how-to-generate-lighter-darker-color-with-php/11951022#11951022
+     */
+    public static function adjustBrightness($hex, $steps)
+    {
+        // Steps should be between -255 and 255. Negative = darker, positive = lighter
+        $steps = max(-255, min(255, $steps));
+
+        // Normalize into a six character long hex string
+        $hex = str_replace('#', '', $hex);
+        if (strlen($hex) == 3) {
+            $hex = str_repeat(substr($hex,0,1), 2).str_repeat(substr($hex,1,1), 2).str_repeat(substr($hex,2,1), 2);
+        }
+
+        // Split into three parts: R, G and B
+        $color_parts = str_split($hex, 2);
+        $return = '#';
+
+        foreach ($color_parts as $color) {
+            $color   = hexdec($color); // Convert to decimal
+            $color   = max(0, min(255, $color + $steps)); // Adjust color
+            $return .= str_pad(dechex($color), 2, '0', STR_PAD_LEFT); // Make two char hex code
+        }
+
+        return $return;
     }
 }

@@ -185,6 +185,22 @@
             </div>
         </div>
     </div>
+    {{-- 絞り込み機能の表示 --}}
+    @php
+        $narrowing_down_type = FrameConfig::getConfigValueAndOld($frame_configs, FaqFrameConfig::faq_narrowing_down_type, FaqNarrowingDownType::none);
+    @endphp
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">{{FaqFrameConfig::getDescription('faq_narrowing_down_type')}}</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            @foreach (FaqNarrowingDownType::getMembers() as $key => $type)
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" value="{{$key}}" id="narrowing_down_type_{{$key}}" name="faq_narrowing_down_type" class="custom-control-input" @if ($narrowing_down_type == $key) checked="checked" @endif>
+                <label class="custom-control-label" for="narrowing_down_type_{{$key}}">{{$type}}</label>
+            </div>
+            @endforeach
+        </div>
+    </div>
+
 
     {{-- Submitボタン --}}
     <div class="form-group text-center">

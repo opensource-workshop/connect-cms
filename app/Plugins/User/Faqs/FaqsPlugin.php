@@ -53,7 +53,7 @@ class FaqsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = [];
+        $functions['get']  = ['search'];
         $functions['post'] = [];
         return $functions;
     }
@@ -247,6 +247,11 @@ class FaqsPlugin extends UserPluginBase
         // カテゴリのleftJoin
         $faqs_posts = Categories::appendCategoriesLeftJoin($faqs_posts, $this->frame->plugin_name, 'faqs_posts.categories_id', 'faqs_posts.faqs_id');
 
+        // カテゴリ検索
+        if (session('categories_id_'. $this->frame->id)) {
+            $faqs_posts->where('faqs_posts.categories_id', session('categories_id_'. $this->frame->id));
+        }
+
         // 表示条件に対するソート条件追加
 
         if ($faq_frame->sequence_conditions == 0) {
@@ -417,6 +422,11 @@ class FaqsPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id)
     {
+        // 絞り込み条件をクリア
+        if ($this->action !== 'search') {
+            $this->forgetParams();
+        }
+
         // FAQ＆フレームデータ
         $faq_frame = $this->getFaqFrame($frame_id);
         if (empty($faq_frame)) {
@@ -456,6 +466,7 @@ class FaqsPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->view('faqs', [
+            'faqs_categories' => Categories::getInputCategories($this->frame->plugin_name, $faq_frame->faqs_id),
             'faqs_posts' => $faqs_posts,
             'faq_frame'  => $faq_frame,
             'frame_configs' => $this->frame_configs,
@@ -1159,5 +1170,30 @@ EOD;
 EOD;
 
         exit;
+    }
+
+    /**
+     * FAQの絞り込み
+     */
+    public function search($request, $page_id, $frame_id)
+    {
+        if ($request->filled('categories_id') && session('categories_id_'. $frame_id) != $request->categories_id) {
+            // 絞り込み条件あり
+            session(['categories_id_'. $frame_id => (int)$request->categories_id]);
+        } else {
+            // 絞り込み条件で空白を選択したとき、
+            // 選択中のものを再選択したときは絞り込みを解除する
+            session()->forget('categories_id_'. $this->frame->id);
+        }
+
+        return $this->index($request, $page_id, $frame_id);
+    }
+
+    /**
+     * セッションに登録したパラメータをクリアする
+     */
+    private function forgetParams()
+    {
+        session()->forget('categories_id_'. $this->frame->id);
     }
 }
