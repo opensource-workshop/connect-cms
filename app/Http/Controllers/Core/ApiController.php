@@ -74,15 +74,16 @@ class ApiController extends ConnectController
                 'file_path' => base_path() . "/app/Plugins/Api/" . ucfirst($plugin_name) . "/" . ucfirst($plugin_name) . "Api.php",
                 'class_path' => "app\Plugins\Api\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name . 'Api'),
             ],
-            // '2' => [
-            //     'file_path' => base_path() . "/app/PluginsOption/Api/" . ucfirst($plugin_name) . "/" . ucfirst($plugin_name) . ".php",
-            //     'class_path' => "app\PluginsOption\Api\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name),
-            // ],
+             '2' => [
+                 'file_path' => base_path() . "/app/PluginsOption/Api/" . ucfirst($plugin_name) . "/" . ucfirst($plugin_name) . ".php",
+                 'class_path' => "app\PluginsOption\Api\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name),
+             ],
             '3' => [
                 'file_path' => base_path() . "/app/PluginsOption/Api/" . ucfirst($plugin_name) . "/" . ucfirst($plugin_name) . "Api.php",
                 'class_path' => "app\PluginsOption\Api\\" . ucfirst($plugin_name) . "\\" . ucfirst($plugin_name . 'Api'),
             ],
         ];
+
         foreach ($apis as $api) {
             if (File::exists($api['file_path'])) {
                 $file_path = $api['file_path'];
