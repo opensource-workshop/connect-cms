@@ -20,6 +20,7 @@ class FrameConfig extends Model
     protected $fillable = [
         'frame_id',
         'name',
+        'record_no',
         'value'
     ];
 
