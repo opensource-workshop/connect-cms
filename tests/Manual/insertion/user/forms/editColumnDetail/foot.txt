@@ -15,17 +15,17 @@
 <table class="table table-sm table-bordered table-striped table_css font_small pdf_table">
 <tbody>
     <tr>
-    <th style="width: 15%;">設定項目</th>
-    <th style="width: 5%;">１行文字</th>
-    <th style="width: 5%;">複数文字</th>
-    <th style="width: 5%;">単一 選択</th>
-    <th style="width: 5%;">複数 選択</th>
-    <th style="width: 5%;">リスト</th>
-    <th style="width: 5%;">メール</th>
-    <th style="width: 5%;">日付</th>
-    <th style="width: 5%;">時間</th>
-    <th style="width: 5%;">時間(FromTo)</th>
-    <th style="width: 5%;">まとめ</th>
+    <th style="width: 20%;">設定項目</th>
+    <th style="width: 8%;">１行文字</th>
+    <th style="width: 8%;">複数文字</th>
+    <th style="width: 8%;">単一 選択</th>
+    <th style="width: 8%;">複数 選択</th>
+    <th style="width: 8%;">リスト</th>
+    <th style="width: 8%;">メール</th>
+    <th style="width: 8%;">日付</th>
+    <th style="width: 8%;">時間</th>
+    <th style="width: 8%;">時間(FromTo)</th>
+    <th style="width: 8%;">まとめ</th>
     </tr>
     <tr>
     <th>選択肢の設定</th>
@@ -53,6 +53,7 @@
     <td style="text-align: center;">〇</td>
     <td style="text-align: center;">〇</td>
     </tr>
+    <tr>
     <th>プレースホルダーの設定</th>
     <td style="text-align: center;">〇</td>
     <td style="text-align: center;">〇</td>
