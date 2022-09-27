@@ -12,11 +12,11 @@ $narrowing_down_type = FrameConfig::getConfigValueAndOld($frame_configs, FaqFram
 
 <style>
 @foreach($faqs_categories as $category)
-a.{{$category->classname}} {
+.faq-narrowing-down-button a.{{$category->classname}} {
     color:{{$category->color}};
     background-color:{{$category->background_color}};
 }
-a.{{$category->classname}}:hover {
+.faq-narrowing-down-button a.{{$category->classname}}:hover {
     background-color:{{$category->hover_background_color}};
 }
 @endforeach
@@ -37,7 +37,7 @@ a.{{$category->classname}}:hover {
 
 {{-- ボタン形式 --}}
 @elseif ($narrowing_down_type === FaqNarrowingDownType::button)
-<div class="mb-2">
+<div class="mb-2 faq-narrowing-down-button">
 @foreach($faqs_categories as $category)
     <a href="{{url('/')}}/plugin/faqs/search/{{$page->id}}/{{$frame_id}}/?categories_id={{$category->id}}#frame-{{$frame_id}}"
         class="badge badge-pill
