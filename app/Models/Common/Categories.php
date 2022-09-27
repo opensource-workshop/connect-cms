@@ -354,11 +354,13 @@ class Categories extends Model
      * @param string $hex 16進のカラーコード
      * @param string $steps -255から255 負数は暗くなり、正数は明るくなる
      * @return string 調節した16進のカラーコード
-     * @author Torkil Johnsen https://stackoverflow.com/users/1034002/torkil-johnsen
-     * @see https://stackoverflow.com/questions/3512311/how-to-generate-lighter-darker-color-with-php/11951022#11951022
      */
     public static function adjustBrightness($hex, $steps)
     {
+        // This code is written by Torkil Johnsen. https://stackoverflow.com/users/1034002/torkil-johnsen
+        // From https://stackoverflow.com/questions/3512311/how-to-generate-lighter-darker-color-with-php/11951022#11951022
+        // License CC BY-SA 3.0 https://creativecommons.org/licenses/by-sa/3.0/deed.ja
+
         // Steps should be between -255 and 255. Negative = darker, positive = lighter
         $steps = max(-255, min(255, $steps));
 
