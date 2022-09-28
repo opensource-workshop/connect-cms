@@ -41,6 +41,9 @@
 
 {{-- FAQ表示 --}}
 @if (isset($faqs_posts))
+    {{-- 絞り込み機能 --}}
+    @include('plugins.user.faqs.default.faqs_narrowing_down')
+
     <div class="accordion" id="accordionFaq{{$frame_id}}">
     @foreach($faqs_posts as $post)
         {{-- FAQの要素呼び出し --}}
