@@ -107,6 +107,14 @@
             }
 
             /**
+             * PDF選択の追加ボタン押下
+             */
+            function submit_add_pdf() {
+                slideshow_items.action = "{{url('/')}}/redirect/plugin/slideshows/addPdf/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+                slideshow_items.submit();
+            }
+
+            /**
              * 項目の削除ボタン押下
              */
             function submit_delete_item(item_id) {
