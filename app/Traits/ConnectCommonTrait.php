@@ -734,18 +734,18 @@ trait ConnectCommonTrait
             return false;
         }
 
-        // ログイン後の遷移先
-        $url = '/';
-        // ログイン後の返却ページ対応
-        if ($request->session()->get('url') && isset($request->session()->get('url')["intended"])) {
-            $url = $request->session()->get('url')["intended"];
-        }
-
         // パスワードチェック
         if (Hash::check(md5($request->password), $user->password) || // v1.0.0以前
             md5($request->password) === $user->password) { // v1.0.0より後
             // ログイン
             Auth::login($user, true);
+
+            $url = '/';
+            // ログイン後の返却ページ対応
+            if ($request->session()->get('url') && isset($request->session()->get('url')["intended"])) {
+                $url = $request->session()->get('url')["intended"];
+            }
+
             // パスワードを強化
             // 初回ログイン以降は通常のログインルートに入るようにする
             $user->password = Hash::make($request->password);
