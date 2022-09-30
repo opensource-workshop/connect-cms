@@ -2623,7 +2623,7 @@ trait MigrationTrait
                         'name'     => $user_item['name'],
                         'email'    => $email,
                         'userid'   => $user_item['userid'],
-                        'password' => Hash::make($user_item['password']),
+                        'password' => $user_item['password'],
                         'status'   => $user_item['status'],
                     ]);
 
@@ -2638,7 +2638,7 @@ trait MigrationTrait
                     $user->name      = $user_item['name'];
                     $user->email     = $email;
                     $user->userid    = $user_item['userid'];
-                    $user->password  = Hash::make($user_item['password']);
+                    $user->password  = $user_item['password'];
                     $user->status    = $user_item['status'];
                     $user->save();
                 }
@@ -10561,7 +10561,7 @@ trait MigrationTrait
                     }
                 } elseif ($multidatabase_metadata_content->type == 3) {
                     // リンク. NC2のリンク切れチェック
-                    $this->checkDeadLinkNc2($content, 'multidatabase', $nc2_block);
+                    // $this->checkDeadLinkNc2($content, 'multidatabase', $nc2_block);
                 }
                 // データ中にタブ文字が存在するケースがあったため、タブ文字は半角スペースに置き換えるようにした。
                 $tsv_record[$multidatabase_metadata_content->metadata_id] = str_replace("\t", " ", $content);
