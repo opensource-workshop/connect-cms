@@ -742,17 +742,8 @@ trait ConnectCommonTrait
         }
 
         // パスワードチェック
-        // v1.0.0以前
-        if (Hash::check(md5($request->password), $user->password)) {
-            // ログイン
-            Auth::login($user, true);
-            // トップページへ
-            return redirect($url);
-        }
-
-        // パスワードチェック
-        // v1.0.0より後
-        if (md5($request->password) === $user->password) {
+        if (Hash::check(md5($request->password), $user->password) || // v1.0.0以前
+            md5($request->password) === $user->password) { // v1.0.0より後
             // ログイン
             Auth::login($user, true);
             // パスワードを強化
