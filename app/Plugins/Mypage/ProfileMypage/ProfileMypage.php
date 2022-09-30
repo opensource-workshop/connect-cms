@@ -55,8 +55,12 @@ class ProfileMypage extends MypagePluginBase
                 'nullable',
                 function ($attribute, $value, $fail) {
                     $is_pass = Hash::check($value, Auth::user()->password);
-                    // nc2移行ユーザログイン対応
+                    // nc2移行ユーザログイン対応 v1.0.0以前
                     $is_nc2_pass = Hash::check(md5($value), Auth::user()->password);
+                    if (!$is_nc2_pass) {
+                        // nc2移行ユーザログイン対応 v1.0.0よりあと
+                        $is_nc2_pass = md5($value) === Auth::user()->password;
+                    }
                     // どちらもNGなら現在パスワード間違い
                     if ($is_pass == false && $is_nc2_pass == false) {
                         $fail(':attributeが違います。');
