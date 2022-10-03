@@ -88,8 +88,8 @@ return [
         'string'  => ':attributeには:max文字以下の文字列を指定してください。',
         'array'   => ':attributeには:max個以下の要素を持つ配列を指定してください。',
     ],
-    'mimes'                => ':attributeには:valuesのうちいずれかの形式のファイルを指定してください。',
-    'mimetypes'            => ':attributeには:valuesのうちいずれかの形式のファイルを指定してください。',
+    'mimes'                => ':attributeには:values形式のファイルを指定してください。',
+    'mimetypes'            => ':attributeには:values形式のファイルを指定してください。',
     'min'                  => [
         'numeric' => ':attributeには:min以上の数値を指定してください。',
         'file'    => ':attributeには:min KB以上のファイルを指定してください。',
