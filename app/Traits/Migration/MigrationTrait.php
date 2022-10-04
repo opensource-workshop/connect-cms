@@ -2623,7 +2623,7 @@ trait MigrationTrait
                         'name'     => $user_item['name'],
                         'email'    => $email,
                         'userid'   => $user_item['userid'],
-                        'password' => Hash::make($user_item['password']),
+                        'password' => $user_item['password'],
                         'status'   => $user_item['status'],
                     ]);
 
@@ -2638,7 +2638,7 @@ trait MigrationTrait
                     $user->name      = $user_item['name'];
                     $user->email     = $email;
                     $user->userid    = $user_item['userid'];
-                    $user->password  = Hash::make($user_item['password']);
+                    $user->password  = $user_item['password'];
                     $user->status    = $user_item['status'];
                     $user->save();
                 }

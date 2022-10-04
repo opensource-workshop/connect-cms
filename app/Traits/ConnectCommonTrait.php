@@ -735,7 +735,8 @@ trait ConnectCommonTrait
         }
 
         // パスワードチェック
-        if (Hash::check(md5($request->password), $user->password)) {
+        if (Hash::check(md5($request->password), $user->password) || // v1.0.0以前
+            md5($request->password) === $user->password) { // v1.0.0より後
             // ログイン
             Auth::login($user, true);
 
@@ -745,6 +746,10 @@ trait ConnectCommonTrait
                 $url = $request->session()->get('url')["intended"];
             }
 
+            // パスワードを強化
+            // 初回ログイン以降は通常のログインルートに入るようにする
+            $user->password = Hash::make($request->password);
+            $user->save();
             // トップページへ
             return redirect($url);
         }
