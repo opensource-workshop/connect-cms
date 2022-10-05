@@ -90,7 +90,7 @@ class BbsPost extends Model
         if (empty($user)) {
             return false;
         }
-        if (!$user->can('role_article') && $this->descendants->count() > 0) {
+        if (!$user->can('role_article') && BbsPost::where(['id' => '!='.$this->id, 'thread_root_id' => $this->id])->count() > 0) {
             return false;
         }
         return true;

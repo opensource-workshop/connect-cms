@@ -490,7 +490,7 @@ class BbsesPlugin extends UserPluginBase
         $before_post = clone $post;
 
         // モデレータ以上の権限を持たずに、記事にすでに返信が付いている場合は、保存できない。
-        if (!$this->isCan('role_article') && $post->descendants->count() > 0) {
+        if (!$user->can('role_article') && BbsPost::where(['id' => '!='.$this->id, 'thread_root_id' => $this->id])->count() > 0) {
             $validator = Validator::make($request->all(), []);
             $validator->errors()->add('reply_role_error', '返信のある記事の編集はできません。');
             return back()->withErrors($validator)->withInput();
