@@ -852,7 +852,7 @@ EOD;
             $link = url($link_base[$whatsnew->plugin_name] . '/' . $whatsnew->page_id . '/' . $whatsnew->frame_id . '/' . $whatsnew->post_id);
 //            $description = strip_tags(mb_substr($blogs_post->post_text, 0, 20));
             $pub_date = date(DATE_RSS, strtotime($whatsnew->posted_at));
-            $content = htmlspecialchars(strip_tags(html_entity_decode($whatsnew->post_title)), ENT_QUOTES | ENT_SUBSTITUTE | ENT_XML1);;
+            $content = htmlspecialchars(strip_tags(html_entity_decode($whatsnew->post_title)), ENT_QUOTES | ENT_SUBSTITUTE | ENT_XML1);
             echo <<<EOD
 
 <item>
