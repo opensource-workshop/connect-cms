@@ -1577,7 +1577,7 @@ class FormsPlugin extends UserPluginBase
         $forms->mail_subject        = $request->mail_subject;
         $forms->mail_format         = $request->mail_format;
         $forms->data_save_flag      = empty($request->data_save_flag) ? 0 : $request->data_save_flag;
-        $forms->after_message       = $request->after_message;
+        $forms->after_message       = $this->clean($request->after_message);
         $forms->numbering_use_flag  = empty($request->numbering_use_flag) ? 0 : $request->numbering_use_flag;
         $forms->numbering_prefix    = $request->numbering_prefix;
 
