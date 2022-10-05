@@ -242,8 +242,9 @@ class LearningtasksPlugin extends UserPluginBase
         // カテゴリのleftJoin
         $learningtasks_query = Categories::appendCategoriesLeftJoin($learningtasks_query, $this->frame->plugin_name, 'learningtasks_posts.categories_id', 'learningtasks.id');
 
-        // 履歴最新を取得するために、idをdesc指定（履歴を廃止しても過去データのため必要かも）
-        $this->post = $learningtasks_query->orderBy('id', 'desc')->first();
+        // 履歴の廃止による変更
+        // $this->post = $learningtasks_query->orderBy('id', 'desc')->firstOrNew(['learningtasks_posts.id' => $id]);
+        $this->post = $learningtasks_query->where('learningtasks_posts.id', $id)->first();
         $this->post = $this->post ?? new LearningtasksPosts();
 
         return $this->post;
