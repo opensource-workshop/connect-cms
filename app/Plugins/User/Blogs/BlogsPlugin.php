@@ -29,6 +29,7 @@ use App\Enums\NoticeEmbeddedTag;
 use App\Enums\StatusType;
 
 use App\Rules\CustomValiWysiwygMax;
+use App\Utilities\String\StringUtils;
 
 /**
  * ブログプラグイン
@@ -1415,7 +1416,7 @@ EOD;
 
         $blogs_posts = $this->getPosts($blog_frame, $blog_frame->rss_count);
         foreach ($blogs_posts as $blogs_post) {
-            $title = htmlspecialchars($blogs_post->post_title, ENT_QUOTES | ENT_SUBSTITUTE | ENT_XML1);
+            $title = StringUtils::xmlspecialchars($blogs_post->post_title);
             $link = url("/plugin/blogs/show/" . $page_id . "/" . $frame_id . "/" . $blogs_post->id);
             if (mb_strlen(strip_tags($blogs_post->post_text)) > 100) {
                 $description = mb_substr(strip_tags($blogs_post->post_text), 0, 100) . "...";
@@ -1427,7 +1428,7 @@ EOD;
                 $description = str_replace($replaceTarget, '', $description);
             }
             $pub_date = date(DATE_RSS, strtotime($blogs_post->posted_at));
-            $content = htmlspecialchars(strip_tags(html_entity_decode($blogs_post->post_text)), ENT_QUOTES | ENT_SUBSTITUTE | ENT_XML1);
+            $content = StringUtils::xmlspecialchars(strip_tags(html_entity_decode($blogs_post->post_text)));
             echo <<<EOD
 
 <item>
