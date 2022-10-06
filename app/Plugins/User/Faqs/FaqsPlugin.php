@@ -1126,7 +1126,7 @@ EOD;
 
         $faqs_posts = $this->getPosts($faq_frame, $faq_frame->rss_count);
         foreach ($faqs_posts as $faqs_post) {
-            $title = $faqs_post->post_title;
+            $title = StringUtils::xmlspecialchars($faqs_post->post_title);
             $link = url("/plugin/faqs/show/" . $page_id . "/" . $frame_id . "/" . $faqs_post->id);
             if (mb_strlen(strip_tags($faqs_post->post_text)) > 100) {
                 $description = mb_substr(strip_tags($faqs_post->post_text), 0, 100) . "...";
@@ -1138,7 +1138,7 @@ EOD;
                 $description = str_replace($replaceTarget, '', $description);
             }
             $pub_date = date(DATE_RSS, strtotime($faqs_post->posted_at));
-            $content = strip_tags(html_entity_decode($faqs_post->post_text));
+            $content = StringUtils::xmlspecialchars(strip_tags(html_entity_decode($faqs_post->post_text)));
             echo <<<EOD
 
 <item>
