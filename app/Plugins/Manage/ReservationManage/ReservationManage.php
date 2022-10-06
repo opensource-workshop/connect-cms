@@ -84,6 +84,8 @@ class ReservationManage extends ManagePluginBase
         // 予約一覧
         $role_check_table["bookings"]             = ['admin_site'];
         $role_check_table["downloadCsv"]          = ['admin_site'];
+        $role_check_table["search"]               = ['admin_site'];
+        $role_check_table["clearSearch"]          = ['admin_site'];
 
         return $role_check_table;
     }
@@ -935,9 +937,32 @@ class ReservationManage extends ManagePluginBase
             ->leftJoin('reservations_facilities', function ($join) {
                 $join->on('reservations_inputs.facility_id', '=', 'reservations_facilities.id')
                     ->whereNull('reservations_facilities.deleted_at');
-            })
-            ->orderBy('reservations_inputs.facility_id')
-            ->orderBy('reservations_inputs.start_datetime', 'desc');
+            });
+
+        // 施設名
+        if (session()->has('app_reservation_search_condition.facility_name')) {
+            $inputs_query->where('reservations_facilities.facility_name', 'like', '%' . session()->get('app_reservation_search_condition.facility_name') . '%');
+        }
+
+        // 登録者名
+        if (session()->has('app_reservation_search_condition.created_name')) {
+            $inputs_query->where('reservations_inputs.created_name', 'like', '%' . session()->get('app_reservation_search_condition.created_name') . '%');
+        }
+
+        // 表示順
+        $sort = session('app_reservation_search_condition.sort', 'default');
+        if ($sort == 'default') {
+            $inputs_query->orderBy('reservations_inputs.facility_id')
+                ->orderBy('reservations_inputs.start_datetime', 'desc');
+        } elseif ($sort == 'id_asc') {
+            $inputs_query->orderBy('reservations_inputs.id', 'asc');
+        } elseif ($sort == 'id_desc') {
+            $inputs_query->orderBy('reservations_inputs.id', 'desc');
+        } elseif ($sort == 'updated_at_asc') {
+            $inputs_query->orderBy('reservations_inputs.updated_at', 'asc');
+        } elseif ($sort == 'updated_at_desc') {
+            $inputs_query->orderBy('reservations_inputs.updated_at', 'desc');
+        }
 
         return $inputs_query;
     }
@@ -1033,5 +1058,25 @@ class ReservationManage extends ManagePluginBase
                 'Content-Disposition' => 'attachment; filename="reservation_bookings.csv"',
             ]
         );
+    }
+
+    /**
+     * 検索条件設定
+     */
+    public function search($request, $id)
+    {
+        // 画面上、検索条件は app_reservation_search_condition という名前で配列になっているので、
+        // app_reservation_search_condition をセッションに持つことで、条件の持ち回りが可能。
+        session(["app_reservation_search_condition" => $request->input('app_reservation_search_condition')]);
+        return redirect("/manage/reservation/bookings");
+    }
+
+    /**
+     * 検索条件クリア
+     */
+    public function clearSearch($request, $id)
+    {
+        $request->session()->forget('app_reservation_search_condition');
+        return redirect("/manage/reservation/bookings");
     }
 }
