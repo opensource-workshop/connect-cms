@@ -22,6 +22,7 @@ class WysiwygTest extends DuskTestCase
     private $content = null;
     private $frame = null;
     private $main_frame = null;
+    private $dusk_index = null;
 
     /**
      * テストする関数の制御
@@ -51,6 +52,7 @@ class WysiwygTest extends DuskTestCase
         $this->translate();
         $this->pdf();
         $this->face();
+        $this->error();
 
         $this->logout();
     }
@@ -136,8 +138,8 @@ class WysiwygTest extends DuskTestCase
                     ->screenshot('common/wysiwyg/index/images/index');
         });
 
-        // マニュアル用データ出力
-        $dusk = Dusks::putManualData(
+        // マニュアル用データ出力(this->dusk_index は後で画面のないエラー説明などで、親オブジェクトとして使います。)
+        $this->dusk_index = Dusks::putManualData(
             ['html_path' => 'common/wysiwyg/index/index.html'],
             $this->getDuskBody(
                 'index',
@@ -1003,5 +1005,34 @@ class WysiwygTest extends DuskTestCase
                  ]'
             )
         );
+    }
+
+    /**
+     * エラー
+     */
+    private function error()
+    {
+        // マニュアル出力のために、dusk データベースなど利用するので、アサーションは無条件にOKとしたい。
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/')
+                    ->assertPathBeginsWith('/');
+        });
+
+        // マニュアル用データ出力（権限）
+        Dusks::create([
+            'category' => 'common',
+            'sort' => 1,
+            'plugin_name' => 'wysiwyg',
+            'plugin_title' => 'WYSIWYG',
+            'plugin_desc' => 'WYSIWYG機能で記事を編集できます。',
+            'method_name' => 'error',
+            'method_title' => 'エラー',
+            'method_desc' => 'WYSIWYGでのエラーについて。',
+            'method_detail' => 'WYSIWYGで表示されるエラーのうち、画面だけではわかりにくいものなどを説明します。',
+            'html_path' => 'common/wysiwyg/error/index.html',
+            'level' => 'basic',
+            'test_result' => 'OK',
+            'parent_id' => $this->dusk_index->id,
+        ]);
     }
 }

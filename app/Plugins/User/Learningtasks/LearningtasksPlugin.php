@@ -50,6 +50,8 @@ use App\Rules\CustomValiWysiwygMax;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 課題管理プラグイン
  * @package Controller
+ * @plugin_title 課題管理
+ * @plugin_desc 科目を一覧表示でき、ログインしたユーザは科目毎にレポート提出や試験の受講ができるプラグインです。<br />課題管理プラグインは、大学向けレポート試験を想定して作成しています。
  */
 class LearningtasksPlugin extends UserPluginBase
 {
@@ -240,8 +242,9 @@ class LearningtasksPlugin extends UserPluginBase
         // カテゴリのleftJoin
         $learningtasks_query = Categories::appendCategoriesLeftJoin($learningtasks_query, $this->frame->plugin_name, 'learningtasks_posts.categories_id', 'learningtasks.id');
 
-        // 履歴最新を取得するために、idをdesc指定（履歴を廃止しても過去データのため必要かも）
-        $this->post = $learningtasks_query->orderBy('id', 'desc')->first();
+        // 履歴の廃止による変更
+        // $this->post = $learningtasks_query->orderBy('id', 'desc')->firstOrNew(['learningtasks_posts.id' => $id]);
+        $this->post = $learningtasks_query->where('learningtasks_posts.id', $id)->first();
         $this->post = $this->post ?? new LearningtasksPosts();
 
         return $this->post;
@@ -543,7 +546,7 @@ class LearningtasksPlugin extends UserPluginBase
                 'client_original_name' => $request->file('add_task_file')->getClientOriginalName(),
                 'mimetype'             => $request->file('add_task_file')->getClientMimeType(),
                 'extension'            => $request->file('add_task_file')->getClientOriginalExtension(),
-                'size'                 => $request->file('add_task_file')->getClientSize(),
+                'size'                 => $request->file('add_task_file')->getSize(),
                 'plugin_name'          => 'learningtasks',
                 'check_method'         => 'checkUploadPost',
                 'page_id'              => $page_id,
@@ -3057,7 +3060,7 @@ class LearningtasksPlugin extends UserPluginBase
                 'client_original_name' => $request->file('upload_file')->getClientOriginalName(),
                 'mimetype'             => $request->file('upload_file')->getClientMimeType(),
                 'extension'            => $request->file('upload_file')->getClientOriginalExtension(),
-                'size'                 => $request->file('upload_file')->getClientSize(),
+                'size'                 => $request->file('upload_file')->getSize(),
                 'plugin_name'          => 'learningtasks',
                 'check_method'         => 'checkUploadUsersStatus',
                 'page_id'              => $page_id,

@@ -49,8 +49,17 @@
                     @else
                         <input type="radio" value="1" id="view_format_1" name="view_format" class="custom-control-input">
                     @endif
-                    <label class="custom-control-label" for="view_format_1">スレッド形式</label>（※ 準備中）
+                    <label class="custom-control-label" for="view_format_1">ツリー形式</label>
                 </div>
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">ツリー形式の階層数</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <input type="number" min="1" max="{{App\Plugins\User\Bbses\BbsesPlugin::max_tree_indents}}" name="tree_indents" class="form-control"
+                    value="{{ FrameConfig::getConfigValueAndOld($frame_configs, BbsFrameConfig::tree_indents, App\Plugins\User\Bbses\BbsesPlugin::max_tree_indents) }}">
+                @include('plugins.common.errors_inline', ['name' => "tree_indents"])
             </div>
         </div>
 

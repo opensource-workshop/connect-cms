@@ -99,6 +99,17 @@ class StringUtils
         return str_replace("\r\n", "", $value);
     }
 
+    /**
+     * XMLの特殊文字をエスケープする
+     *
+     * @param string $string
+     * @return string エスケープ済み文字列
+     */
+    public static function xmlspecialchars(string $string) :string
+    {
+        return htmlspecialchars($string, ENT_QUOTES | ENT_SUBSTITUTE | ENT_XML1);
+    }
+
     // /**
     //  * 検索ワードのパース
     //  */

@@ -37,6 +37,10 @@ use App\Models\Core\UsersColumns;
         user_download.character_code.value = '{{CsvCharacterCode::utf_8}}';
         user_download.submit();
     }
+
+    $(function () {
+        $('[data-toggle="popover"]').popover()
+    })
 </script>
 
 <div class="card">
@@ -198,9 +202,9 @@ use App\Models\Core\UsersColumns;
                             <div class="form-group row">
                                 <label class="col-md-3 text-md-right">ゲスト</label>
                                 <div class="col-md-9">
-                                    <div class="custom-control custom-checkbox">
+                                    <div class="custom-control custom-control-inline custom-checkbox">
                                         <input name="user_search_condition[guest]" value="1" type="checkbox" class="custom-control-input" id="guest"@if(Session::get('user_search_condition.guest') == "1") checked @endif>
-                                        <label class="custom-control-label" for="guest">ゲスト</label>
+                                        <label class="custom-control-label" for="guest">ゲスト</label><h6><span class="badge badge-secondary ml-1">ゲ</span></h6>
                                     </div>
                                     <small class="form-text text-muted">
                                         ※ 「コンテンツ権限」「管理権限」「ゲスト」の中から複数チェックを付けると、いずれかに該当する内容で絞り込みます。（OR検索）<br />
@@ -282,7 +286,7 @@ use App\Models\Core\UsersColumns;
                     <div class="dropdown-menu dropdown-menu-right">
                         <a class="dropdown-item" href="#" onclick="submit_download_shift_jis(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
                         <a class="dropdown-item" href="#" onclick="submit_download_utf_8(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
-                        <a class="dropdown-item" href="https://connect-cms.jp/manual/manager/user#download-csv-help" target="_brank">
+                        <a class="dropdown-item" href="https://manual.connect-cms.jp/manage/user/index.html" target="_brank">
                             <span class="btn btn-link"><i class="fas fa-question-circle"></i> オンラインマニュアル</span>
                         </a>
                     </div>
@@ -317,29 +321,30 @@ use App\Models\Core\UsersColumns;
                         {{$user->userid}}
                     </td>
                     <td>{{$user->name}}</td>
-                    <td>
-                        <a href="{{url('/')}}/manage/user/groups/{{$user->id}}" title="グループ参加"><i class="far fa-edit"></i></a>
-                        {{$user->convertLoopValue('group_users', 'name')}}
+                    <td nowrap>
+                        {{-- <a href="{{url('/')}}/manage/user/groups/{{$user->id}}" title="グループ参加"><i class="far fa-edit"></i></a> --}}
+                        {{-- {{$user->convertLoopValue('group_users', 'name')}} --}}
+                        <a href="{{url('/')}}/manage/user/groups/{{$user->id}}" class="btn btn-success btn-sm" title="グループ参加">
+                            <i class="fas fa-users"></i>
+                        </a>
+
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-container="body" data-toggle="popover" data-placement="right"
+                            title="参加グループ"
+                            data-html="true"
+                            data-content='
+                            @foreach($user->group_users as $group_user)
+                                <div class="small">{{$group_user->name}}</div>
+                            @endforeach
+                            '>
+                            <span class="badge badge-light">{{count($user->group_users)}}</span>
+                        </button>
                     </td>
                     <td>{{$user->email}}</td>
                     @foreach($users_columns as $users_column)
                         <td>@include('plugins.manage.user.list_include_value')</td>
                     @endforeach
                     <td nowrap>
-                        @isset($user->view_user_roles)
-                        <h6>
-                            {!!$user->getRoleStringTag()!!}
-{{--
-                        @foreach($user->view_user_roles as $view_user_role)
-                            @if ($view_user_role->role_name == 'role_article_admin')<span class="badge badge-danger">コ</span> @endif
-                            @if ($view_user_role->role_name == 'role_arrangement')<span class="badge badge-primary">プ</span> @endif
-                            @if ($view_user_role->role_name == 'role_article')<span class="badge badge-success">モ</span> @endif
-                            @if ($view_user_role->role_name == 'role_approval')<span class="badge badge-warning">承</span> @endif
-                            @if ($view_user_role->role_name == 'role_reporter')<span class="badge badge-info">編</span> @endif
-                        @endforeach
---}}
-                        </h6>
-                        @endif
+                        <h6>{!!$user->getRoleStringTag()!!}</h6>
                     </td>
                     <td>
                         {{$user->convertLoopValue('user_original_roles', 'value')}}

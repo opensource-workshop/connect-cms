@@ -138,7 +138,7 @@
                                         class="btn btn-primary cc-font-90 text-nowrap"
                                         onclick="javascript:submit_update_select({{ $select->id }});"
                                     >
-                                        <i class="fas fa-check"></i> <span class="d-sm-none">更新</span>
+                                        <i class="fas fa-check"></i>
                                     </button>
                                 </td>
                                 {{-- 削除ボタン --}}
@@ -147,7 +147,7 @@
                                         class="btn btn-danger cc-font-90 text-nowrap"
                                         onclick="javascript:return submit_delete_select({{ $select->id }});"
                                     >
-                                        <i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span>
+                                        <i class="fas fa-trash-alt"></i>
                                     </button>
                                 </td>
                             </tr>
@@ -171,7 +171,7 @@
                             </td>
                             <td class="text-center">
                                 {{-- ＋ボタン --}}
-                                <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_select(this);" id="button_add_select"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
+                                <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_select(this);" id="button_add_select"><i class="fas fa-plus"></i> </button>
                             </td>
                             <td>
                                 {{-- 余白 --}}

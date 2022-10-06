@@ -19,7 +19,7 @@
     @include('plugins.common.flash_message')
 
     <div class="alert alert-info" role="alert">
-        <i class="fas fa-exclamation-circle"></i> CSVファイルを使って、コード管理へ一括登録できます。詳細は<a href="https://connect-cms.jp/manual/manager/code#frame-273" target="_blank">オンラインマニュアルのコード管理ページ <i class="fas fa-external-link-alt"></i></a>を参照してください。
+        <i class="fas fa-exclamation-circle"></i> CSVファイルを使って、コード管理へ一括登録できます。詳細は<a href="https://manual.connect-cms.jp/manage/code/index.html" target="_blank">オンラインマニュアルのコード管理ページ <i class="fas fa-external-link-alt"></i></a>を参照してください。
     </div>
 
     {{-- ダウンロード用フォーム --}}

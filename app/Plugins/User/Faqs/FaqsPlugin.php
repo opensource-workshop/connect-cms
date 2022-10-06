@@ -53,7 +53,7 @@ class FaqsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = [];
+        $functions['get']  = ['search'];
         $functions['post'] = [];
         return $functions;
     }
@@ -229,7 +229,8 @@ class FaqsPlugin extends UserPluginBase
                 'categories.color as category_color',
                 'categories.background_color as category_background_color',
                 'categories.category as category',
-                'plugin_categories.view_flag as category_view_flag'
+                'plugin_categories.view_flag as category_view_flag',
+                'plugin_categories.display_sequence as category_display_sequence',
             )
             ->whereIn('faqs_posts.id', function ($query) use ($faq_frame) {
                 $query->select(DB::raw('MAX(id) As id'))
@@ -246,6 +247,11 @@ class FaqsPlugin extends UserPluginBase
         // カテゴリのleftJoin
         $faqs_posts = Categories::appendCategoriesLeftJoin($faqs_posts, $this->frame->plugin_name, 'faqs_posts.categories_id', 'faqs_posts.faqs_id');
 
+        // カテゴリ検索
+        if (session('categories_id_'. $this->frame->id)) {
+            $faqs_posts->where('faqs_posts.categories_id', session('categories_id_'. $this->frame->id));
+        }
+
         // 表示条件に対するソート条件追加
 
         if ($faq_frame->sequence_conditions == 0) {
@@ -257,6 +263,10 @@ class FaqsPlugin extends UserPluginBase
         } elseif ($faq_frame->sequence_conditions == 2) {
             // 指定順
             $faqs_posts->orderBy('display_sequence', 'asc');
+        } elseif ($faq_frame->sequence_conditions == 3) {
+            // カテゴリ順
+            $faqs_posts->orderBy('category_display_sequence', 'asc');
+            $faqs_posts->orderBy('categories_id', 'asc');
         }
 
        // 取得
@@ -386,14 +396,10 @@ class FaqsPlugin extends UserPluginBase
                       ->leftjoin('pages', 'pages.id', '=', 'frames.page_id')
                       ->where('status', '?')
                       ->where(function ($plugin_query) use ($search_keyword) {
-                          $plugin_query->where('faqs_posts.post_title', 'like', '?')
-                                       ->orWhere('faqs_posts.post_text', 'like', '?');
+                          $plugin_query->where('faqs_posts.post_title', 'like', "%$search_keyword%")
+                                       ->orWhere('faqs_posts.post_text', 'like', "%$search_keyword%");
                       })
                       ->whereNull('faqs_posts.deleted_at');
-
-
-        $bind = array(0, '%'.$search_keyword.'%', '%'.$search_keyword.'%');
-        $return[] = $bind;
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/faqs/show';
 
@@ -412,6 +418,11 @@ class FaqsPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id)
     {
+        // 絞り込み条件をクリア
+        if ($this->action !== 'search') {
+            $this->forgetParams();
+        }
+
         // FAQ＆フレームデータ
         $faq_frame = $this->getFaqFrame($frame_id);
         if (empty($faq_frame)) {
@@ -451,6 +462,7 @@ class FaqsPlugin extends UserPluginBase
 
         // 表示テンプレートを呼び出す。
         return $this->view('faqs', [
+            'faqs_categories' => Categories::getInputCategories($this->frame->plugin_name, $faq_frame->faqs_id),
             'faqs_posts' => $faqs_posts,
             'faq_frame'  => $faq_frame,
             'frame_configs' => $this->frame_configs,
@@ -1114,7 +1126,7 @@ EOD;
 
         $faqs_posts = $this->getPosts($faq_frame, $faq_frame->rss_count);
         foreach ($faqs_posts as $faqs_post) {
-            $title = $faqs_post->post_title;
+            $title = StringUtils::xmlspecialchars($faqs_post->post_title);
             $link = url("/plugin/faqs/show/" . $page_id . "/" . $frame_id . "/" . $faqs_post->id);
             if (mb_strlen(strip_tags($faqs_post->post_text)) > 100) {
                 $description = mb_substr(strip_tags($faqs_post->post_text), 0, 100) . "...";
@@ -1126,7 +1138,7 @@ EOD;
                 $description = str_replace($replaceTarget, '', $description);
             }
             $pub_date = date(DATE_RSS, strtotime($faqs_post->posted_at));
-            $content = strip_tags(html_entity_decode($faqs_post->post_text));
+            $content = StringUtils::xmlspecialchars(strip_tags(html_entity_decode($faqs_post->post_text)));
             echo <<<EOD
 
 <item>
@@ -1154,5 +1166,30 @@ EOD;
 EOD;
 
         exit;
+    }
+
+    /**
+     * FAQの絞り込み
+     */
+    public function search($request, $page_id, $frame_id)
+    {
+        if ($request->filled('categories_id') && session('categories_id_'. $frame_id) != $request->categories_id) {
+            // 絞り込み条件あり
+            session(['categories_id_'. $frame_id => (int)$request->categories_id]);
+        } else {
+            // 絞り込み条件で空白を選択したとき、
+            // 選択中のものを再選択したときは絞り込みを解除する
+            session()->forget('categories_id_'. $this->frame->id);
+        }
+
+        return $this->index($request, $page_id, $frame_id);
+    }
+
+    /**
+     * セッションに登録したパラメータをクリアする
+     */
+    private function forgetParams()
+    {
+        session()->forget('categories_id_'. $this->frame->id);
     }
 }

@@ -21,10 +21,85 @@ use App\Models\Common\Group;
 use App\Models\Common\Holiday;
 use App\Models\Common\Page;
 use App\Models\Common\PageRole;
-
 use App\Plugins\Manage\ManagePluginBase;
 use App\Plugins\Manage\SiteManage\CCPDF;
 use App\Enums\BaseLoginRedirectPage;
+
+/* 移行データ用 */
+use App\Models\User\Contents\Contents;
+use App\Models\User\Blogs\Blogs;
+use App\Models\User\Databases\Databases;
+use App\User;
+use App\Models\Core\UsersRoles;
+
+use App\Models\Migration\MigrationMapping;
+use App\Models\Migration\Nc2\Nc2AbbreviateUrl;
+use App\Models\Migration\Nc2\Nc2Announcement;
+use App\Models\Migration\Nc2\Nc2Assignment;
+use App\Models\Migration\Nc2\Nc2Bbs;
+use App\Models\Migration\Nc2\Nc2BbsBlock;
+use App\Models\Migration\Nc2\Nc2BbsPost;
+use App\Models\Migration\Nc2\Nc2BbsPostBody;
+use App\Models\Migration\Nc2\Nc2Block;
+use App\Models\Migration\Nc2\Nc2CabinetBlock;
+use App\Models\Migration\Nc2\Nc2CabinetFile;
+use App\Models\Migration\Nc2\Nc2CabinetManage;
+use App\Models\Migration\Nc2\Nc2CalendarBlock;
+use App\Models\Migration\Nc2\Nc2CalendarManage;
+use App\Models\Migration\Nc2\Nc2CalendarPlan;
+use App\Models\Migration\Nc2\Nc2CalendarPlanDetails;
+use App\Models\Migration\Nc2\Nc2CalendarSelectRoom;
+use App\Models\Migration\Nc2\Nc2Circular;
+use App\Models\Migration\Nc2\Nc2Config;
+use App\Models\Migration\Nc2\Nc2Counter;
+use App\Models\Migration\Nc2\Nc2Faq;
+use App\Models\Migration\Nc2\Nc2FaqBlock;
+use App\Models\Migration\Nc2\Nc2FaqCategory;
+use App\Models\Migration\Nc2\Nc2FaqQuestion;
+use App\Models\Migration\Nc2\Nc2Item;
+use App\Models\Migration\Nc2\Nc2Journal;
+use App\Models\Migration\Nc2\Nc2JournalBlock;
+use App\Models\Migration\Nc2\Nc2JournalCategory;
+use App\Models\Migration\Nc2\Nc2JournalPost;
+use App\Models\Migration\Nc2\Nc2Linklist;
+use App\Models\Migration\Nc2\Nc2LinklistBlock;
+use App\Models\Migration\Nc2\Nc2LinklistLink;
+use App\Models\Migration\Nc2\Nc2LinklistCategory;
+use App\Models\Migration\Nc2\Nc2MenuDetail;
+use App\Models\Migration\Nc2\Nc2Modules;
+use App\Models\Migration\Nc2\Nc2Multidatabase;
+use App\Models\Migration\Nc2\Nc2MultidatabaseBlock;
+use App\Models\Migration\Nc2\Nc2MultidatabaseContent;
+use App\Models\Migration\Nc2\Nc2MultidatabaseMetadata;
+use App\Models\Migration\Nc2\Nc2MultidatabaseMetadataContent;
+use App\Models\Migration\Nc2\Nc2Page;
+use App\Models\Migration\Nc2\Nc2PageUserLink;
+use App\Models\Migration\Nc2\Nc2Photoalbum;
+use App\Models\Migration\Nc2\Nc2PhotoalbumAlbum;
+use App\Models\Migration\Nc2\Nc2PhotoalbumBlock;
+use App\Models\Migration\Nc2\Nc2PhotoalbumPhoto;
+use App\Models\Migration\Nc2\Nc2Questionnaire;
+use App\Models\Migration\Nc2\Nc2Quiz;
+use App\Models\Migration\Nc2\Nc2Registration;
+use App\Models\Migration\Nc2\Nc2RegistrationBlock;
+use App\Models\Migration\Nc2\Nc2RegistrationData;
+use App\Models\Migration\Nc2\Nc2RegistrationItem;
+use App\Models\Migration\Nc2\Nc2RegistrationItemData;
+use App\Models\Migration\Nc2\Nc2ReservationBlock;
+use App\Models\Migration\Nc2\Nc2ReservationCategory;
+use App\Models\Migration\Nc2\Nc2ReservationLocation;
+use App\Models\Migration\Nc2\Nc2ReservationLocationDetail;
+use App\Models\Migration\Nc2\Nc2ReservationLocationRoom;
+use App\Models\Migration\Nc2\Nc2ReservationReserve;
+use App\Models\Migration\Nc2\Nc2ReservationReserveDetail;
+use App\Models\Migration\Nc2\Nc2ReservationTimeframe;
+use App\Models\Migration\Nc2\Nc2Todo;
+use App\Models\Migration\Nc2\Nc2Upload;
+use App\Models\Migration\Nc2\Nc2User;
+use App\Models\Migration\Nc2\Nc2WhatsnewBlock;
+use App\Models\Migration\Nc2\Nc2Slides;
+use App\Models\Migration\Nc2\Nc2SlidesUrl;
+use App\Models\Migration\Nc2\Nc2Simplemovie;
 
 /**
  * サイト管理クラス
@@ -1306,6 +1381,187 @@ class SiteManage extends ManagePluginBase
         ];
         $this->outputSection($pdf, $sections);
 
+
+
+        // --- 移行データチェック出力
+        $MigrationMapping = MigrationMapping::count();
+        if ($MigrationMapping) {
+
+            // NC2 のページデータ
+            $nc2_pages_query = Nc2Page::where('private_flag', 0)        // 0:プライベートルーム以外
+                                      ->where('root_id', '<>', 0)
+                                      ->where('display_sequence', '<>', 0);
+            $nc2_pages = $nc2_pages_query->orderBy('space_type')
+                                         ->orderBy('thread_num')
+                                         ->orderBy('display_sequence')
+                                         ->get();
+            $nc2_sort_pages = array();
+            foreach ($nc2_pages as $nc2_page) {
+                $nc2_page->route_path = $this->getRouteStr($nc2_page, $nc2_sort_pages);
+                $nc2_sort_pages[$this->getRouteStr($nc2_page, $nc2_sort_pages, true)] = $nc2_page;
+            }
+            // 経路探索の文字列（キー）でソート
+            ksort($nc2_sort_pages);
+
+            // NC2 の日誌データ
+            $nc2_journals = Nc2Journal::select('journal.*', 'page_rooms.space_type')
+                ->join('pages as page_rooms', function ($join) {
+                    $join->on('page_rooms.page_id', '=', 'journal.room_id')
+                        ->whereColumn('page_rooms.page_id', 'page_rooms.room_id')
+                        ->whereIn('page_rooms.space_type', [Nc2Page::space_type_public, Nc2Page::space_type_group])
+                        ->where('page_rooms.room_id', '!=', 2);        // 2:グループスペースを除外（枠だけでグループルームじゃないので除外）
+                })
+                ->orderBy('journal.journal_id')
+                ->get();
+            foreach ($nc2_journals as &$nc2_journal) {
+                $nc2_journal_posts = Nc2JournalPost::where('journal_id', $nc2_journal->journal_id)->orderBy('post_id')->get();
+                $nc2_journal->count = $nc2_journal_posts->count();
+            }
+
+            // NC2 汎用DBデータ
+            $nc2_multidatabases = Nc2Multidatabase::select('multidatabase.multidatabase_id', 'multidatabase.multidatabase_name', 'multidatabase_content.content_id')
+                ->leftJoin('multidatabase_content', 'multidatabase_content.multidatabase_id', '=', 'multidatabase.multidatabase_id')
+                ->orderBy('multidatabase.multidatabase_id')
+                ->get();
+            $tmp_multidatabase = [];
+            foreach ($nc2_multidatabases as $nc2_multidatabase) {
+                $tmp_multidatabase[$nc2_multidatabase->multidatabase_id]['multidatabase_name'] = $nc2_multidatabase->multidatabase_name;
+                $tmp_multidatabase[$nc2_multidatabase->multidatabase_id]['content'][] = $nc2_multidatabase->content_id;
+            }
+            $ret_multidatabase = [];
+            foreach ($tmp_multidatabase as $multidatabase_id => $nc2_multidatabase) {
+                $tmp_obj = collect();
+                $tmp_obj->multidatabase_id = $multidatabase_id;
+                $tmp_obj->multidatabase_name = $nc2_multidatabase['multidatabase_name'];
+                $tmp_obj->multidatabase_content_count = count($nc2_multidatabase['content']);
+                $ret_multidatabase[] = $tmp_obj;
+            }
+            $nc2_multidatabases = collect($ret_multidatabase);
+
+
+            // NC2 の会員データ
+            $nc2_users = Nc2User::select('users.login_id', 'users.handle', 'authorities.role_authority_name')
+            ->Join('authorities', 'authorities.role_authority_id', '=', 'users.role_authority_id')
+            ->orderBy('users.insert_time')
+            ->get();
+            foreach ($nc2_users as &$nc2_user) {
+                switch ($nc2_user->role_authority_name) {
+                    case '_AUTH_SYSADMIN_NAME':
+                        $nc2_user->role_authority_name = 'システム管理者';
+                        break;
+                    case '_AUTH_CHIEF_NAME':
+                        $nc2_user->role_authority_name = '主担';
+                        break;
+                    case '_AUTH_MODERATE_NAME':
+                        $nc2_user->role_authority_name = 'モデレータ';
+                        break;
+                    case '_AUTH_GENERAL_NAME':
+                        $nc2_user->role_authority_name = '一般';
+                        break;
+                    case '_AUTH_GUEST_NAME':
+                        $nc2_user->role_authority_name = 'ゲスト';
+                        break;
+                }
+            }
+
+
+            // Connect-CMSの会員データ
+            $users = User::select('users.id', 'users.userid', 'users.name')
+                ->orderBy('users.id')
+                ->get();
+            $users_roles = [];
+            foreach ($users as &$user) {
+                $users_roles = UsersRoles::select('users_roles.role_name')
+                    ->where('users_roles.users_id', '=', $user->id)
+                    ->where('users_roles.target', '=', 'base')
+                    ->orderBy('users_roles.id')
+                    ->get();
+                $tmp_user_role = [];
+                foreach ($users_roles as $users_role) {
+                    $tmp_user_role[] = $users_role->role_name;
+                }
+                $role_data = config('cc_role.CC_ROLE_LIST');
+                $str_role_names = implode('<br/>', $tmp_user_role);
+                if ($str_role_names != '') {
+                    $user->str_role_name = str_replace(array_keys($role_data), array_values($role_data), $str_role_names);
+                } else {
+                    $user->str_role_name = 'ゲスト';
+                }
+            }
+            // Connect-CMSのデータベースデータ
+            $databases = Databases::select('databases.databases_name', DB::raw("count(databases_inputs.id) as databases_inputs_count"))
+                ->leftJoin('databases_inputs', 'databases_inputs.databases_id', '=', 'databases.id')
+                ->groupBy('databases.id', 'databases.databases_name')
+                ->orderBy('databases.id')
+                ->get();
+            // Connect-CMSのブログデータ
+            $blogs = Blogs::select('blogs.blog_name', DB::raw("count(blogs_posts.id) as blogs_posts_count"))
+                ->leftJoin('blogs_posts', 'blogs_posts.blogs_id', '=', 'blogs.id')
+                ->groupBy('blogs.id', 'blogs.blog_name')
+                ->orderBy('blogs.id')
+                ->get();
+            // Connect-CMSのページデータ
+            // ページデータの取得(laravel-nestedset 使用)
+            $return_obj = 'flat';
+            $pages = Page::defaultOrderWithDepth($return_obj);
+
+            // 移行データ
+            $pdf->addPage();
+            $pdf->Bookmark('移行データ', 0, 0, '', '', array(0, 0, 0));
+            $sections = [
+                ['migrate_main', compact(
+                    'nc2_sort_pages', 'pages',
+                    'nc2_journals', 'blogs',
+                    'nc2_multidatabases', 'databases',
+                    'nc2_users', 'users',
+                ), '移行データ一覧'],
+            ];
+            $this->outputSection($pdf, $sections);
+        }
+
+        /* リンク切れチェック */
+        /* 固定記事の表示設定されているリンクのみをチェックする */
+        $contents = Contents::select('contents.content_text', 'contents.content2_text', 'pages.page_name', 'frames.frame_title')
+            ->join('frames', 'contents.bucket_id', '=', 'frames.bucket_id')
+            ->join('pages', 'pages.id', '=', 'frames.page_id')
+            ->orderBy('pages._lft')
+            ->get();
+        $link_error_list_href = [];
+        $link_error_list_src = [];
+        foreach ($contents as $content) {
+            $checked_list = $this->checkLink($content->content_text, $content->page_name, $content->frame_title);
+            if ($checked_list) {
+                $link_error_list_href = array_merge($link_error_list_href, $checked_list);
+            }
+            $checked_list = $this->checkLink($content->content_text, $content->page_name, $content->frame_title, 'src');
+            if ($checked_list) {
+                $link_error_list_src = array_merge($link_error_list_src, $checked_list);
+            }
+            $checked_list = $this->checkLink($content->content2_text, $content->page_name, $content->frame_title);
+            if ($checked_list) {
+                $link_error_list_href = array_merge($link_error_list_href, $checked_list);
+            }
+            $checked_list = $this->checkLink($content->content2_text, $content->page_name, $content->frame_title, 'src');
+            if ($checked_list) {
+                $link_error_list_src = array_merge($link_error_list_src, $checked_list);
+            }
+        }
+
+        // リンク切れチェック
+        $pdf->addPage();
+        $pdf->Bookmark('リンク切れチェック', 0, 0, '', '', array(0, 0, 0));
+        // リンク切れチェック
+        $sections = [
+            ['check_link', compact(
+                'link_error_list_src',
+                'link_error_list_href',
+            ), 'リンク切れチェック一覧'],
+        ];
+        $this->outputSection($pdf, $sections);
+
+
+
+
         // --- 問い合わせ先
 
         // 問い合わせ先ページを追加
@@ -1339,5 +1595,96 @@ class SiteManage extends ManagePluginBase
         // 出力 ( D：Download, I：Inline )
         $pdf->output('SiteDocument-' . $output->get('base_site_name') . '.pdf', $disposition);
         return redirect()->back();
+    }
+
+    private function checkLink($html, $page_name, $frame_title, $attr = 'href')
+    {
+        $ret = [];
+        if (preg_match_all('/'. $attr.'="(.*?)"/', $html, $m)) {
+            foreach ($m[1] as $url) {
+                // 内部リンクを想定 基本はあるから返却する？
+                if (preg_match('#^/#', $url)) {
+                    continue;
+                    $base_url = url('/');
+                    $arr_url = explode('/', $url);
+                    $url = $base_url. '/'. $arr_url[2]. '/'. $arr_url[3];
+                }
+                $ch = curl_init($url);
+                curl_setopt_array($ch, array(
+                    CURLOPT_HEADER => true,
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_TIMEOUT => 10,
+                    CURLOPT_USERAGENT => $_SERVER['HTTP_USER_AGENT'],
+                    CURLOPT_NOBODY => true,
+                ));
+                $data = curl_exec($ch);
+                $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+                if ($status != '200') {
+                    $ret[] = [
+                        'page_name' => $page_name,
+                        'frame_title' => $frame_title,
+                        'url' => $url,
+                    ];
+                }
+            }
+        }
+        return $ret;
+    }
+
+    /**
+     * 経路探索キーの取得（作成）
+     */
+    private function getRouteStr($nc2_page, $nc2_sort_pages, $get_display_sequence = false)
+    {
+        foreach ($nc2_sort_pages as $nc2_sort_page_key => $nc2_sort_page) {
+            if ($nc2_sort_page->page_id == $nc2_page->parent_id) {
+                if ($get_display_sequence) {
+                    return $nc2_sort_page_key . '_' . $this->zeroSuppress($nc2_page->display_sequence);
+                } else {
+                    return $nc2_sort_page->route_path . '_' . $this->zeroSuppress($nc2_page->page_id);
+                }
+            }
+        }
+        if ($get_display_sequence) {
+            return $this->getRouteBlockLangStr($nc2_page->lang_dirname) . $this->zeroSuppress($nc2_page->root_id) . '_' . $this->zeroSuppress($nc2_page->display_sequence);
+        } else {
+            return $this->getRouteBlockLangStr($nc2_page->lang_dirname) . $this->zeroSuppress($nc2_page->root_id) . '_' . $this->zeroSuppress($nc2_page->page_id);
+        }
+    }
+
+    /**
+     * 多言語化判定（日本語）
+     */
+    private function checkLangDirnameJpn($lang_dirname)
+    {
+        /* 日本語（とgroupルーム等は空）の場合はtrue */
+        if ($lang_dirname == "japanese" || $lang_dirname == "") {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 多言語化対応文字列返却
+     */
+    private function getRouteBlockLangStr($lang_dirname)
+    {
+        if ($this->checkLangDirnameJpn($lang_dirname)) {
+            return 'r';
+        }
+        return $lang_dirname;
+    }
+
+    /**
+     * ID のゼロ埋め
+     */
+    private function zeroSuppress($id, $size = 4)
+    {
+        // ページID がとりあえず、1万ページ未満で想定。
+        // ここの桁数を上げれば、さらに大きなページ数でも処理可能
+        $size_str = sprintf("%'.02d", $size);
+
+        return sprintf("%'." . $size_str . "d", $id);
     }
 }

@@ -433,7 +433,7 @@ class CodestudiesPlugin extends UserPluginBase
     }
 
     /**
-     *  成績ダウンロード指示画面
+     *  学習結果ダウンロード指示画面
      */
     public function viewDownload($request, $page_id, $frame_id)
     {
@@ -444,7 +444,7 @@ class CodestudiesPlugin extends UserPluginBase
     }
 
     /**
-     *  成績ダウンロード実行
+     *  学習結果ダウンロード実行
      */
     public function download($request, $page_id, $frame_id)
     {
@@ -452,12 +452,15 @@ class CodestudiesPlugin extends UserPluginBase
         $save_path = $this->getTmpDirectory() . uniqid('', true) . '.zip';
         $this->makeZip($save_path, $request);
 
-        // 一時ファイルは削除して、ダウンロードレスポンスを返す
-        return response()->download(
+        // 一時ファイルは削除して、ダウンロードレスポンスを返す. download()でAllowed memory sizeエラー時にtmpファイル削除対応
+        $response = response()->download(
             $save_path,
             'StudyCodes.zip',
             ['Content-Disposition' => 'filename=StudyCodes.zip']
-        )->deleteFileAfterSend(true);
+        );
+        // )->deleteFileAfterSend(true);
+        register_shutdown_function('unlink', $save_path);
+        return $response;
     }
 
     /**
@@ -517,6 +520,11 @@ class CodestudiesPlugin extends UserPluginBase
 
         // 空のZIPファイルが出来たら404
         if ($zip->count() === 0) {
+            // zipファイル後始末
+            $zip->close();
+            if (file_exists($save_path)) {
+                unlink($save_path);
+            }
             abort(404, 'ファイルがありません。');
         }
         $zip->close();

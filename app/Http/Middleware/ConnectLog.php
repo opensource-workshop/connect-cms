@@ -52,6 +52,8 @@ class ConnectLog
         $type = 'PAGE';
         if ($route_name == 'login') {
             $type = 'Login';
+        } elseif ($route_name == 'show_login_form') {
+            $type = 'Login';
         } elseif ($route_name == 'logout') {
             $type = 'logout';
         } elseif ($route_name == 'password.request') {
@@ -64,11 +66,15 @@ class ConnectLog
             $type = 'Password';
         } elseif ($route_name == 'register') {
             $type = 'Register';
+        } elseif ($route_name == 'show_register_form') {
+            $type = 'Register';
         } elseif ($route_name == 'get_core') {
             $type = 'Core';
         } elseif ($route_name == 'post_core') {
             $type = 'Core';
         } elseif ($route_name == 'get_api') {
+            $type = 'API';
+        } elseif ($route_name == 'post_api') {
             $type = 'API';
         } elseif ($route_name == 'get_manage') {
             $type = 'Manage';
@@ -113,7 +119,7 @@ class ConnectLog
         } else {
             // 選択したもののみ
             // ログイン
-            if ($configs->where('name', 'save_log_type_login')->where('value', '1')->isNotEmpty() && $route_name == 'login') {
+            if ($configs->where('name', 'save_log_type_login')->where('value', '1')->isNotEmpty() && $type == 'Login') {
                 $value = $request->input("userid");
                 $log_record_flag = true;
                 $type = 'Login';

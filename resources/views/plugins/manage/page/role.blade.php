@@ -16,6 +16,10 @@
         {{-- 機能選択タブ --}}
         @include('plugins.manage.page.page_manage_tab')
     </div>
+
+    {{-- ページ変更関連タブ --}}
+    @include('plugins.manage.page.page_edit_tab')
+
     <div class="card-body">
 
         <div class="alert alert-info">
@@ -109,7 +113,7 @@
 
                             <div class="mt-1 mb-1">
                                 <small>
-                                    <b>参加ユーザ</b>：{{$group->group_user_names}}
+                                    <b><a href="{{url('/manage/group/edit')}}/{{$group->id}}" target="_blank">参加ユーザ <i class="fas fa-external-link-alt"></i></a></b>：{{$group->group_user_names}}
                                 </small>
                             </div>
 

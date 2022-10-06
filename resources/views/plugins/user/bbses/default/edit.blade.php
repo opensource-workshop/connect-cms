@@ -15,6 +15,11 @@
 {{-- WYSIWYG 呼び出し --}}
 @include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame->id])
 
+{{-- ツリー形式のスタイル --}}
+@if ($plugin_frame->view_format == 1)
+    @include('plugins.user.bbses.default.tree_style')
+@endif
+
 {{-- 一時保存ボタンのアクション --}}
 <script type="text/javascript">
     function save_action() {

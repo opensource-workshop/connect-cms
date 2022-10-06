@@ -582,12 +582,15 @@ class CabinetsPlugin extends UserPluginBase
         $save_path = $this->getTmpDirectory() . uniqid('', true) . '.zip';
         $this->makeZip($save_path, $request);
 
-        // 一時ファイルは削除して、ダウンロードレスポンスを返す
-        return response()->download(
+        // 一時ファイルは削除して、ダウンロードレスポンスを返す. download()でAllowed memory sizeエラー時にtmpファイル削除対応
+        $response = response()->download(
             $save_path,
             'Files.zip',
             ['Content-Disposition' => 'filename=Files.zip']
-        )->deleteFileAfterSend(true);
+        );
+        // )->deleteFileAfterSend(true);
+        register_shutdown_function('unlink', $save_path);
+        return $response;
     }
 
     /**
@@ -604,6 +607,11 @@ class CabinetsPlugin extends UserPluginBase
         foreach ($request->cabinet_content_id as $cabinet_content_id) {
             $contents = CabinetContent::descendantsAndSelf($cabinet_content_id);
             if (!$this->canDownload($request, $contents)) {
+                // zipファイル後始末
+                $zip->close();
+                if (file_exists($save_path)) {
+                    unlink($save_path);
+                }
                 abort(403, 'ファイル参照権限がありません。');
             }
             // フォルダがないとzipファイルを作れない
@@ -616,6 +624,13 @@ class CabinetsPlugin extends UserPluginBase
 
         // 空のZIPファイルが出来たら404
         if ($zip->count() === 0) {
+            // zipファイル後始末
+            $zip->close();
+            // Storage::delete() & xamppの場合、以下のパスになり、ファイルがあっても、ファイルなしとして扱われたため、unlink()を使う
+            // $save_path = "C:\projects\connect-cms\htdocs\connect-cms\storage\app/tmp/cabinet/62da6ae9d8a013.24929254.zip"
+            if (file_exists($save_path)) {
+                unlink($save_path);
+            }
             abort(404, 'ファイルがありません。');
         }
         $zip->close();
@@ -1077,32 +1092,10 @@ class CabinetsPlugin extends UserPluginBase
     public function saveView($request, $page_id, $frame_id, $cabinet_id)
     {
         // フレーム設定保存
-        $this->saveFrameConfigs($request, $frame_id, CabinetFrameConfig::getMemberKeys());
+        FrameConfig::saveFrameConfigs($request, $frame_id, CabinetFrameConfig::getMemberKeys());
         // 更新したので、frame_configsを設定しなおす
         $this->refreshFrameConfigs();
 
         return;
-    }
-
-    /**
-     * フレーム設定を保存する。
-     *
-     * @param Illuminate\Http\Request $request リクエスト
-     * @param int $frame_id フレームID
-     * @param array $frame_config_names フレーム設定のname配列
-     */
-    protected function saveFrameConfigs(\Illuminate\Http\Request $request, int $frame_id, array $frame_config_names)
-    {
-        foreach ($frame_config_names as $key => $value) {
-
-            if (empty($request->$value)) {
-                return;
-            }
-
-            FrameConfig::updateOrCreate(
-                ['frame_id' => $frame_id, 'name' => $value],
-                ['value' => $request->$value]
-            );
-        }
     }
 }

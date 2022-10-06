@@ -61,6 +61,13 @@
         });
     });
 </script>
+
+@if ($theme_generate_disabled_label)
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-circle"></i> 新規作成するには、サーバの対象ディレクトリに書込権限が必要です。対象ディレクトリ：<code>public/themes/Users</code><br />
+    </div>
+@endif
+
 <div class="card">
     <div class="card-header">カスタムテーマ生成</div>
     <div class="card-body">
@@ -223,7 +230,7 @@
                     </select>
                     </div>
                 </div>
-                
+
                 <div class="form-group row menu_vertical col-md-4">
                     <div class="col-md-12">縦型メニュー</div>
                     <label for="menu_vertical_color" class="col-md-4 col-form-label text-md-right">文字色</label>
@@ -327,8 +334,8 @@
 
             <div class="form-group row">
                 <div class="offset-sm-3 col-sm-6">
-　　                <button id="btn-confirm" type="submit" name="confirm" class="btn btn-success form-horizontal"><i class="far fa-edit"></i>確認</button>
-                    <button type="submit" name="done" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 新規作成</button>
+                    <button id="btn-confirm" type="submit" name="confirm" class="btn btn-success form-horizontal {{$theme_generate_disabled_label}}"><i class="far fa-edit"></i>確認</button>
+                    <button type="submit" name="done" class="btn btn-primary form-horizontal {{$theme_generate_disabled_label}}"><i class="fas fa-check"></i> 新規作成</button>
                 </div>
             </div>
         </form>

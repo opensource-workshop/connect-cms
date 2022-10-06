@@ -310,6 +310,13 @@ $app_array = [
         'FaqFrameConfig' => \App\Enums\FaqFrameConfig::class,
         'MembershipFlag' => \App\Enums\MembershipFlag::class,
         'AreaType' => \App\Enums\AreaType::class,
+        'BbsFrameConfig' => \App\Enums\BbsFrameConfig::class,
+        'BbsViewFormat' => \App\Enums\BbsViewFormat::class,
+        'OpacConfigSelectType' => \App\Enums\OpacConfigSelectType::class,
+        'DeliveryRequestFlag' => \App\Enums\DeliveryRequestFlag::class,
+        'LentFlag' => \App\Enums\LentFlag::class,
+        'FaqNarrowingDownType' => \App\Enums\FaqNarrowingDownType::class,
+        'ColorName' => \App\Enums\ColorName::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

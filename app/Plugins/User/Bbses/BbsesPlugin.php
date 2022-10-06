@@ -8,12 +8,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
+use App\Enums\BbsFrameConfig;
 use App\Enums\StatusType;
 use App\Enums\UserStatus;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Like;
+use App\Models\Core\FrameConfig;
 use App\Models\User\Bbses\Bbs;
 use App\Models\User\Bbses\BbsFrame;
 use App\Models\User\Bbses\BbsPost;
@@ -39,6 +41,11 @@ class BbsesPlugin extends UserPluginBase
        php artisan make:migration create_bbs_posts --create=bbs_posts
        php artisan make:migration create_bbs_frames --create=bbs_frames
     */
+
+    /**
+     * @var int 最大のツリー階層数
+     */
+    const max_tree_indents = 20;
 
     /* オブジェクト変数 */
 
@@ -415,6 +422,8 @@ class BbsesPlugin extends UserPluginBase
 
         // モデレータ以上の権限がなく、記事にすでに返信が付いている場合は、編集できない。
 
+        // プラグインのフレームデータ
+        $plugin_frame = $this->getPluginFrame($frame_id);
 
 //        if (empty($faqs_post)) {
 //            return $this->viewError("403_inframe", null, 'showのユーザー権限に応じたPOST ID チェック');
@@ -422,7 +431,8 @@ class BbsesPlugin extends UserPluginBase
 
         // 変更画面を呼び出す。
         return $this->view('edit', [
-            'post' => $post,
+            'post'         => $post,
+            'plugin_frame' => $plugin_frame,
         ]);
     }
 
@@ -480,7 +490,7 @@ class BbsesPlugin extends UserPluginBase
         $before_post = clone $post;
 
         // モデレータ以上の権限を持たずに、記事にすでに返信が付いている場合は、保存できない。
-        if (!$this->isCan('role_article') && $post->descendants->count() > 0) {
+        if (!$user->can('role_article') && BbsPost::where(['id' => '!='.$this->id, 'thread_root_id' => $this->id])->count() > 0) {
             $validator = Validator::make($request->all(), []);
             $validator->errors()->add('reply_role_error', '返信のある記事の編集はできません。');
             return back()->withErrors($validator)->withInput();
@@ -671,6 +681,7 @@ class BbsesPlugin extends UserPluginBase
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'view_format'      => ['nullable', 'numeric'],
+            'tree_indents'      => ['nullable', 'numeric', 'max:' . self::max_tree_indents],
             'thread_sort_flag' => ['nullable', 'numeric'],
             'view_count'       => ['nullable', 'numeric'],
             'list_format'      => ['nullable', 'numeric'],
@@ -679,6 +690,7 @@ class BbsesPlugin extends UserPluginBase
         ]);
         $validator->setAttributeNames([
             'view_format'      => '表示形式',
+            'tree_indents'      => 'ツリー形式の階層数',
             'thread_sort_flag' => '根記事の表示順',
             'view_count'       => '表示件数',
             'list_format'      => '一覧での展開方法',
@@ -705,6 +717,11 @@ class BbsesPlugin extends UserPluginBase
                 'thread_caption'   => $request->thread_caption
             ],
         );
+
+        // フレーム設定保存
+        FrameConfig::saveFrameConfigs($request, $frame_id, BbsFrameConfig::getMemberKeys());
+        // 更新したので、frame_configsを設定しなおす
+        $this->refreshFrameConfigs();
 
         return;
     }

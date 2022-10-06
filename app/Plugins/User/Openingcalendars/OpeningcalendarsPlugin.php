@@ -900,7 +900,7 @@ class OpeningcalendarsPlugin extends UserPluginBase
                 'client_original_name' => $request->file('yearschedule_pdf')->getClientOriginalName(),
                 'mimetype'             => $request->file('yearschedule_pdf')->getClientMimeType(),
                 'extension'            => $request->file('yearschedule_pdf')->getClientOriginalExtension(),
-                'size'                 => $request->file('yearschedule_pdf')->getClientSize(),
+                'size'                 => $request->file('yearschedule_pdf')->getSize(),
                 'plugin_name'          => 'openingcalendars',
              ]);
 

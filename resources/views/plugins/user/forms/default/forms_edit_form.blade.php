@@ -388,7 +388,10 @@
         <label class="{{$frame->getSettingLabelClass()}}">本登録後のメッセージ</label>
         <div class="{{$frame->getSettingInputClass()}}">
             <textarea name="after_message" class="form-control" rows=5 placeholder="（例）お申込みありがとうございます。&#13;&#10;受付番号は[[number]]になります。">{{old('after_message', $form->after_message)}}</textarea>
-            <small class="text-muted">※ [[number]] を記述すると該当部分に採番した番号が入ります。（採番機能の使用時）</small>
+            <small class="text-muted">
+                ※ HTMLでも記述できます。<br />
+                ※ [[number]] を記述すると該当部分に採番した番号が入ります。（採番機能の使用時）
+            </small>
         </div>
     </div>
 
