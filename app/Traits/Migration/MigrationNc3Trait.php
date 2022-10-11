@@ -8631,7 +8631,7 @@ trait MigrationNc3Trait
      */
     private function nc3ExportBasic()
     {
-        $this->putMonitor(3, "Start this->nc3ExportBasic.");
+        $this->putMonitor(3, "Start nc3ExportBasic.");
 
         // config テーブルの取得
         $site_settings = Nc3SiteSetting::get();
@@ -8682,7 +8682,7 @@ trait MigrationNc3Trait
      */
     private function nc3ExportUploads($uploads_path, $redo)
     {
-        $this->putMonitor(3, "Start this->nc3ExportUploads.");
+        $this->putMonitor(3, "Start nc3ExportUploads.");
 
         // データクリア
         if ($redo === true) {
