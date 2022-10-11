@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Validator;
 
 use Carbon\Carbon;
 use RRule\RRule;
+use Symfony\Component\Yaml\Yaml;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\BucketsMail;
@@ -608,6 +609,7 @@ trait MigrationNc3Trait
             if ($this->getMigrationConfig($target, $command . '_' . $target)) {
                 // 対象の処理が実行するように指定されているので、続き
             } else {
+                $this->putLinkCheck(2, 'migration_config.ini(nc3)未設定', "migration_config.iniの [{$target}] " . $command . '_' . $target . " を設定してください。");
                 return false;
             }
         }
@@ -1696,21 +1698,16 @@ trait MigrationNc3Trait
 
     /**
      * インポートの初期処理
-     * [TODO] インポート・エクスポート両方で使ってる。nc3とnc3で若干違う。
      */
     private function migrationInit()
     {
         if (File::exists(config('migration.MIGRATION_CONFIG_PATH'))) {
             // 手動で設置のmigration config がある場合
             $this->migration_config = parse_ini_file(config('migration.MIGRATION_CONFIG_PATH'), true);
-        // } elseif (File::exists(storage_path('app/migration/oneclick/migration_config.oneclick.ini'))) {
-        //     // NetCommons2 からのワンクリック移行用の migration config がある場合
-        //     $this->migration_config = parse_ini_file(storage_path('app/migration/oneclick/migration_config.oneclick.ini'), true);
         } else {
             $this->putError(3, 'migration configのiniが見つかりません。');
         }
 
-        // [TODO] インポート用. NC3対応してる？後で確認
         // uploads のini ファイルの読み込み
         if (Storage::exists($this->getImportPath('uploads/uploads.ini'))) {
             $this->uploads_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('uploads/uploads.ini'), true);
@@ -8249,19 +8246,6 @@ trait MigrationNc3Trait
         $this->target        = $target;
         $this->target_plugin = $target_plugin;
 
-        // NetCommons3 のページデータの取得
-
-        // [TODO] 要確認
-        // 【対象】
-        // パブリックのみ（グループルームは今後、要考慮）
-        // root_id = 0 は 'グループスペース' などの「くくり」なので不要
-        // display_sequence = 0 はヘッダーカラムなどの共通部分
-
-        // [TODO] 要確認
-        // 【ソート】
-        // space_type でソートする。（パブリック、グループ）
-        // thread_num, display_sequence でソートする。
-
         $this->putMonitor(3, "Start exportNc3.");
 
         // 移行の初期処理
@@ -8269,11 +8253,6 @@ trait MigrationNc3Trait
 
         // uploads_path の取得
         $uploads_path = config('migration.NC3_EXPORT_UPLOADS_PATH');
-
-        // NC3_EXPORT_UPLOADS_PATH にない場合は、NetCommons3 ワンクリックディレクトリを確認する。
-        // if (!File::exists($uploads_path)) {
-        //     $uploads_path = storage_path('app/migration/oneclick/htdocs/app/Uploads/');
-        // }
 
         // uploads_path の最後に / がなければ追加
         if (!empty($uploads_path) && mb_substr($uploads_path, -1) != '/') {
@@ -8671,7 +8650,13 @@ trait MigrationNc3Trait
         $public_room = $public_room ?? new Nc3Room();
         $basic_ini .= "default_theme_public = \"" . $public_room->theme . "\"\n";
 
-        // basic,ini ファイル保存
+        // salt
+        $nc3_application_yml_path = config('migration.NC3_APPLICATION_YML_PATH');
+        $yaml = Yaml::parse(file_get_contents($nc3_application_yml_path));
+        $salt = str_replace(array("\r\n", "\r", "\n"), "", $yaml['Security']['salt']);  // salt末尾に改行あり。改行削除
+        $basic_ini .= "nc3_security_salt = \"" . $salt . "\"\n";
+
+        // basic.ini ファイル保存
         $this->storagePut($this->getImportPath('basic/basic.ini'), $basic_ini);
     }
 
@@ -8792,9 +8777,10 @@ trait MigrationNc3Trait
         }
 
         // NC3 ユーザ任意項目
-        $nc3_any_items = collect([]);
+        $nc3_any_items = collect();
         $nc3_export_user_items = $this->getMigrationConfig('users', 'nc3_export_user_items');
         if ($nc3_export_user_items) {
+
             $nc3_any_items = Nc3UserAttribute::
                 select('user_attributes.*', 'user_attribute_settings.data_type_key', 'user_attribute_settings.required')
                 ->whereIn('user_attributes.name', $nc3_export_user_items)
@@ -8803,7 +8789,6 @@ trait MigrationNc3Trait
                 ->orderBy('user_attribute_settings.col')
                 ->orderBy('user_attribute_settings.row')
                 ->get();
-            // var_dump($nc3_any_items);
         }
 
         // NC3 ユーザデータ取得
@@ -8850,10 +8835,6 @@ trait MigrationNc3Trait
             if ($nc3_any_items->isNotEmpty()) {
                 // 任意項目
                 foreach ($nc3_any_items as $nc3_any_item) {
-                    // [TODO] とりあえず下記で様子見
-                    // $item_name = "item_{$nc3_any_item->id}";
-                    // $item_value = rtrim($nc3_user->$item_name, '|');// 最後のパイプは削除する
-                    // $users_ini .= "{$item_name}            = \"" . $item_value . "\"\n";
                     $item_name = "item_{$nc3_any_item->id}";
                     $item_key = $nc3_any_item->key;
 
@@ -8890,11 +8871,11 @@ trait MigrationNc3Trait
             // カラム型 変換
             $convert_user_column_types = [
                 // nc3, cc
-                'text' => UserColumnType::text,
-                'email' => UserColumnType::mail,
-                'radio' => UserColumnType::radio,
+                'text'     => UserColumnType::text,
+                'email'    => UserColumnType::mail,
+                'radio'    => UserColumnType::radio,
                 'textarea' => UserColumnType::textarea,
-                'select' => UserColumnType::select,
+                'select'   => UserColumnType::select,
                 'checkbox' => UserColumnType::checkbox,
             ];
 
@@ -8909,8 +8890,8 @@ trait MigrationNc3Trait
             $user_column_type = $nc3_any_item->data_type_key;
             if (in_array($user_column_type, $exclude_user_column_types)) {
                 // 未対応
+                $this->putError(3, 'ユーザ任意項目の項目タイプが未対応', "user_attribute_settings.data_type_key = {$user_column_type}|user_attributes.name = {$nc3_any_item->name}");
                 $user_column_type = '';
-                $this->putError(3, 'ユーザ任意項目の項目タイプが未対応', "user_attribute_settings.data_type_key = " . $user_column_type);
 
             } elseif (array_key_exists($user_column_type, $convert_user_column_types)) {
                 $user_column_type = $convert_user_column_types[$user_column_type];
@@ -8930,8 +8911,8 @@ trait MigrationNc3Trait
 
             } else {
                 // 未対応に未指定
+                $this->putError(3, 'ユーザ任意項目の項目タイプが未対応（未対応に未指定の型）', "user_attribute_settings.data_type_key = {$user_column_type}|user_attributes.name = {$nc3_any_item->name}");
                 $user_column_type = '';
-                $this->putError(3, 'ユーザ任意項目の項目タイプが未対応（未対応に未指定の型）', "item.type = " . $user_column_type);
             }
 
             // ini ファイル用変数
