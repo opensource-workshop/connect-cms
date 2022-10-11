@@ -8826,7 +8826,7 @@ trait MigrationNc3Trait
             $users_ini .= "name               = \"" . $nc3_user->handlename . "\"\n";
             $users_ini .= "email              = \"" . trim($nc3_user->email) . "\"\n";
             $users_ini .= "userid             = \"" . $nc3_user->username . "\"\n";
-            $users_ini .= "password           = \"" . $nc3_user->password . "\"\n";     // [TODO] Connectログイン検討
+            $users_ini .= "password           = \"" . $nc3_user->password . "\"\n";
             if ($nc3_user->status == Nc3User::status_not_active) {
                 $users_ini .= "status             = " . UserStatus::not_active . "\n";
             } else {
