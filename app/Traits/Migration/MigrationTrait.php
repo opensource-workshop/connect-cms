@@ -9087,8 +9087,8 @@ trait MigrationTrait
             $user_column_type = $nc2_any_item->type;
             if (in_array($user_column_type, $exclude_user_column_types)) {
                 // 未対応
-                $user_column_type = '';
                 $this->putError(3, 'ユーザ任意項目の項目タイプが未対応', "item.type = " . $user_column_type);
+                $user_column_type = '';
 
             } elseif (array_key_exists($user_column_type, $convert_user_column_types)) {
                 $user_column_type = $convert_user_column_types[$user_column_type];
@@ -9108,8 +9108,8 @@ trait MigrationTrait
 
             } else {
                 // 未対応に未指定
-                $user_column_type = '';
                 $this->putError(3, 'ユーザ任意項目の項目タイプが未対応（未対応に未指定の型）', "item.type = " . $user_column_type);
+                $user_column_type = '';
             }
 
             // ini ファイル用変数
