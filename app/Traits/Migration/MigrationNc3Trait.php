@@ -88,6 +88,7 @@ use App\User;
 use App\Models\Migration\MigrationMapping;
 
 use App\Models\Migration\Nc3\Nc3AccessCounter;
+use App\Models\Migration\Nc3\Nc3Announcement;
 use App\Models\Migration\Nc3\Nc3Box;
 use App\Models\Migration\Nc3\Nc3Bbs;
 use App\Models\Migration\Nc3\Nc3Block;
@@ -1670,6 +1671,7 @@ trait MigrationNc3Trait
 
     /**
      * 配列の値の取得
+     * [TODO] 共通
      */
     private function getArrayValue($array, $key1, $key2 = null, $default = "")
     {
@@ -1722,7 +1724,7 @@ trait MigrationNc3Trait
 
     /**
      * 移行設定の取得
-     * [TODO] 共通っぽい
+     * [TODO] 共通っぽいが、$this->migration_config 指定のため、外だししずらい。
      */
     private function getMigrationConfig($section, $key, $default = false)
     {
@@ -1786,19 +1788,16 @@ trait MigrationNc3Trait
     }
 
     /**
-     * 日時の関数
+     * 日時の関数(NC3)
      */
-    private function getCCDatetime($gmt_datetime)
+    private function getCCDatetime(?Carbon $utc_datetime): ?Carbon
     {
-        if (empty($gmt_datetime)) {
+        if (empty($utc_datetime)) {
             return null;
         }
 
-        $gmt_datetime_ts = mktime(substr($gmt_datetime, 8, 2), substr($gmt_datetime, 10, 2), substr($gmt_datetime, 12, 2), substr($gmt_datetime, 4, 2), substr($gmt_datetime, 6, 2), substr($gmt_datetime, 0, 4));
         // 9時間足す
-        $gmt_datetime_ts = $gmt_datetime_ts + (60 * 60 * 9);
-        // Connect-CMS の形式で返す
-        return date('Y-m-d H:i:s', $gmt_datetime_ts);
+        return $utc_datetime->addHours(9);
     }
 
     /**
@@ -1863,10 +1862,19 @@ trait MigrationNc3Trait
     /**
      * NC3ユーザIDからNC3ログインID取得
      */
-    private function getNc2LoginIdFromNc2UserId($nc3_users, $nc3_user_id)
+    private function getNc3LoginIdFromNc3UserId(Collection $nc3_users, ?int $nc3_user_id): ?string
     {
-        $nc3_user = $nc3_users->firstWhere('user_id', $nc3_user_id) ?? new Nc3User();
+        $nc3_user = $nc3_users->firstWhere('id', $nc3_user_id) ?? new Nc3User();
         return $nc3_user->username;
+    }
+
+    /**
+     * NC3ユーザIDからNC3ハンドル取得
+     */
+    private function getNc3HandleFromNc3UserId(Collection $nc3_users, ?int $nc3_user_id): ?string
+    {
+        $nc3_user = $nc3_users->firstWhere('id', $nc3_user_id) ?? new Nc3User();
+        return $nc3_user->handlename;
     }
 
     /**
@@ -7982,6 +7990,7 @@ trait MigrationNc3Trait
 
     /**
      * HTML から href,src 属性を取得
+     * [TODO] 共通、エクスポート時
      */
     private function getContentHrefOrSrc($content)
     {
@@ -9226,12 +9235,12 @@ trait MigrationNc3Trait
             $journals_ini .= "journal_id = " . $nc3_journal->journal_id . "\n";
             $journals_ini .= "room_id = " . $nc3_journal->room_id . "\n";
             $journals_ini .= "module_name = \"journal\"\n";
-            $journals_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_journal->insert_time) . "\"\n";
+            $journals_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_journal->created) . "\"\n";
             $journals_ini .= "created_name    = \"" . $nc3_journal->insert_user_name . "\"\n";
-            $journals_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_journal->insert_user_id) . "\"\n";
-            $journals_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_journal->update_time) . "\"\n";
+            $journals_ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_journal->created_user) . "\"\n";
+            $journals_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_journal->modified) . "\"\n";
             $journals_ini .= "updated_name    = \"" . $nc3_journal->update_user_name . "\"\n";
-            $journals_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_journal->update_user_id) . "\"\n";
+            $journals_ini .= "update_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_journal->modified_user) . "\"\n";
 
             // NC3日誌で使ってるカテゴリ（journal_category）のみ移行する。
             $journals_ini .= "\n";
@@ -9323,12 +9332,12 @@ trait MigrationNc3Trait
                 $journals_tsv .= $nc3_journal_post->hide_more_title . "\t";
                 $journals_tsv .= $like_count                        . "\t";     // [9] いいね数
                 $journals_tsv .= $nc3_journal_post->vote            . "\t";     // [10]いいねのsession_id & nc3 user_id
-                $journals_tsv .= $this->getCCDatetime($nc3_journal_post->insert_time)                             . "\t";   // [11]
+                $journals_tsv .= $this->getCCDatetime($nc3_journal_post->created)                             . "\t";   // [11]
                 $journals_tsv .= $nc3_journal_post->insert_user_name                                              . "\t";   // [12]
-                $journals_tsv .= $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_journal_post->insert_user_id) . "\t";   // [13]
-                $journals_tsv .= $this->getCCDatetime($nc3_journal_post->update_time)                             . "\t";   // [14]
+                $journals_tsv .= $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_journal_post->created_user) . "\t";   // [13]
+                $journals_tsv .= $this->getCCDatetime($nc3_journal_post->modified)                             . "\t";   // [14]
                 $journals_tsv .= $nc3_journal_post->update_user_name                                              . "\t";   // [15]
-                $journals_tsv .= $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_journal_post->update_user_id);          // [16]
+                $journals_tsv .= $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_journal_post->modified_user);          // [16]
 
                 // 記事のタイトルの一覧
                 // タイトルに " あり
@@ -9551,12 +9560,12 @@ trait MigrationNc3Trait
             $journals_ini .= "room_id = " . $nc3_bbs->room_id . "\n";
             $journals_ini .= "space_type = " . $nc3_bbs->space_type . "\n";   // スペースタイプ, 1:パブリックスペース, 2:グループスペース
             $journals_ini .= "module_name = \"bbs\"\n";
-            $journals_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_bbs->insert_time) . "\"\n";
+            $journals_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_bbs->created) . "\"\n";
             $journals_ini .= "created_name    = \"" . $nc3_bbs->insert_user_name . "\"\n";
-            $journals_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_bbs->insert_user_id) . "\"\n";
-            $journals_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_bbs->update_time) . "\"\n";
+            $journals_ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_bbs->created_user) . "\"\n";
+            $journals_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_bbs->modified) . "\"\n";
             $journals_ini .= "updated_name    = \"" . $nc3_bbs->update_user_name . "\"\n";
-            $journals_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_bbs->update_user_id) . "\"\n";
+            $journals_ini .= "update_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_bbs->modified_user) . "\"\n";
 
             // NC3掲示板の記事（bbs_post、bbs_post_body）を移行する。
             $nc3_bbs_posts = Nc2BbsPost::
@@ -9582,7 +9591,7 @@ trait MigrationNc3Trait
 
                 $content       = $this->nc3Wysiwyg(null, null, null, null, $nc3_bbs_post->body, 'bbs', $nc3_page);
 
-                $journals_tsv .= $this->getCCDatetime($nc3_bbs_post->insert_time) . "\t"; // 0:投稿日時
+                $journals_tsv .= $this->getCCDatetime($nc3_bbs_post->created) . "\t"; // 0:投稿日時
                 $journals_tsv .=                              "\t"; // カテゴリ
                 $journals_tsv .= $nc3_bbs_post->status      . "\t";
                 $journals_tsv .=                              "\t"; // 承認フラグ
@@ -9598,10 +9607,10 @@ trait MigrationNc3Trait
                 $journals_tsv .= $nc3_bbs_post->insert_user_name . "\t"; // 12:投稿者名
                 $journals_tsv .= $nc3_bbs_post->vote_num    . "\t"; // いいね数
                 $journals_tsv .=                              "\t"; // いいねのsession_id & nc3 user_id
-                $journals_tsv .= $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_bbs_post->insert_user_id) . "\t";   // 15:投稿者ID
-                $journals_tsv .= $this->getCCDatetime($nc3_bbs_post->update_time) . "\t";                               // 16:更新日時
+                $journals_tsv .= $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_bbs_post->created_user) . "\t";   // 15:投稿者ID
+                $journals_tsv .= $this->getCCDatetime($nc3_bbs_post->modified) . "\t";                               // 16:更新日時
                 $journals_tsv .= $nc3_bbs_post->update_user_name . "\t";                                                // 17:更新者名
-                $journals_tsv .= $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_bbs_post->update_user_id) . "\t";   // 18:更新者ID
+                $journals_tsv .= $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_bbs_post->modified_user) . "\t";   // 18:更新者ID
 
                 // 記事のタイトルの一覧
                 // タイトルに " あり
@@ -9743,7 +9752,7 @@ trait MigrationNc3Trait
 
                 $faqs_tsv .= $category                       . "\t";
                 $faqs_tsv .= $nc3_faq_question->display_sequence . "\t";
-                $faqs_tsv .= $nc3_faq_question->insert_time      . "\t";
+                $faqs_tsv .= $this->getCCDatetime($nc3_faq_question->created)      . "\t";
                 $faqs_tsv .= $nc3_faq_question->question_name    . "\t";
                 $faqs_tsv .= $question_answer                . "\t";
 
@@ -9850,12 +9859,12 @@ trait MigrationNc3Trait
             $linklists_ini .= "linklist_id = " . $nc3_linklist->linklist_id . "\n";
             $linklists_ini .= "room_id = " . $nc3_linklist->room_id . "\n";
             $linklists_ini .= "module_name = \"linklist\"\n";
-            $linklists_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_linklist->insert_time) . "\"\n";
+            $linklists_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_linklist->created) . "\"\n";
             $linklists_ini .= "created_name    = \"" . $nc3_linklist->insert_user_name . "\"\n";
-            $linklists_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_linklist->insert_user_id) . "\"\n";
-            $linklists_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_linklist->update_time) . "\"\n";
+            $linklists_ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_linklist->created_user) . "\"\n";
+            $linklists_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_linklist->modified) . "\"\n";
             $linklists_ini .= "updated_name    = \"" . $nc3_linklist->update_user_name . "\"\n";
-            $linklists_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_linklist->update_user_id) . "\"\n";
+            $linklists_ini .= "update_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_linklist->modified_user) . "\"\n";
 
             // NC3リンクリストで使っているカテゴリ（linklist_category）のみ移行する。
             $linklists_ini .= "\n";
@@ -10013,12 +10022,12 @@ trait MigrationNc3Trait
             $multidatabase_ini .= "multidatabase_id = " . $nc3_multidatabase->multidatabase_id . "\n";
             $multidatabase_ini .= "room_id = " . $nc3_multidatabase->room_id . "\n";
             $multidatabase_ini .= "module_name = \"multidatabase\"\n";
-            $multidatabase_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_multidatabase->insert_time) . "\"\n";
+            $multidatabase_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_multidatabase->created) . "\"\n";
             $multidatabase_ini .= "created_name    = \"" . $nc3_multidatabase->insert_user_name . "\"\n";
-            $multidatabase_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_multidatabase->insert_user_id) . "\"\n";
-            $multidatabase_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_multidatabase->update_time) . "\"\n";
+            $multidatabase_ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_multidatabase->created_user) . "\"\n";
+            $multidatabase_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_multidatabase->modified) . "\"\n";
             $multidatabase_ini .= "updated_name    = \"" . $nc3_multidatabase->update_user_name . "\"\n";
-            $multidatabase_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_multidatabase->update_user_id) . "\"\n";
+            $multidatabase_ini .= "update_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_multidatabase->modified_user) . "\"\n";
 
             // 汎用データベースのカラム情報
             $multidatabase_metadatas = Nc2MultidatabaseMetadata::where('multidatabase_id', $multidatabase_id)
@@ -10210,10 +10219,10 @@ trait MigrationNc3Trait
                         // 登録日時、更新日時等
                         $tsv_record['created_at']      = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
                         $tsv_record['created_name']    = $old_metadata_content->multidatabase_content_insert_user_name;
-                        $tsv_record['insert_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc3_users, $old_metadata_content->multidatabase_content_insert_user_id);
+                        $tsv_record['insert_login_id'] = $this->getNc3LoginIdFromNc3UserId($nc3_users, $old_metadata_content->multidatabase_content_insert_user_id);
                         $tsv_record['updated_at']      = $this->getCCDatetime($old_metadata_content->multidatabase_content_update_time);
                         $tsv_record['updated_name']    = $old_metadata_content->multidatabase_content_update_user_name;
-                        $tsv_record['update_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc3_users, $old_metadata_content->multidatabase_content_update_user_id);
+                        $tsv_record['update_login_id'] = $this->getNc3LoginIdFromNc3UserId($nc3_users, $old_metadata_content->multidatabase_content_update_user_id);
                         // NC3 レコードを示すID
                         $tsv_record['content_id'] = $old_metadata_content->content_id;
                         // データ行の書き出し
@@ -10278,10 +10287,10 @@ trait MigrationNc3Trait
                 // 登録日時、更新日時等
                 $tsv_record['created_at']      = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
                 $tsv_record['created_name']    = $old_metadata_content->multidatabase_content_insert_user_name;
-                $tsv_record['insert_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc3_users, $old_metadata_content->multidatabase_content_insert_user_id);
+                $tsv_record['insert_login_id'] = $this->getNc3LoginIdFromNc3UserId($nc3_users, $old_metadata_content->multidatabase_content_insert_user_id);
                 $tsv_record['updated_at']      = $this->getCCDatetime($old_metadata_content->multidatabase_content_update_time);
                 $tsv_record['updated_name']    = $old_metadata_content->multidatabase_content_update_user_name;
-                $tsv_record['update_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc3_users, $old_metadata_content->multidatabase_content_update_user_id);
+                $tsv_record['update_login_id'] = $this->getNc3LoginIdFromNc3UserId($nc3_users, $old_metadata_content->multidatabase_content_update_user_id);
                 $tsv_record['content_id'] = $old_metadata_content->content_id;
                 $tsv .= implode("\t", $tsv_record);
             }
@@ -10394,12 +10403,12 @@ trait MigrationNc3Trait
             $registration_ini .= "active_flag = "     . $nc3_registration->active_flag . "\n";
             $registration_ini .= "room_id = "         . $nc3_registration->room_id . "\n";
             $registration_ini .= "module_name = \"registration\"\n";
-            $registration_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_registration->insert_time) . "\"\n";
+            $registration_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_registration->created) . "\"\n";
             $registration_ini .= "created_name    = \"" . $nc3_registration->insert_user_name . "\"\n";
-            $registration_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_registration->insert_user_id) . "\"\n";
-            $registration_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_registration->update_time) . "\"\n";
+            $registration_ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_registration->created_user) . "\"\n";
+            $registration_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_registration->modified) . "\"\n";
             $registration_ini .= "updated_name    = \"" . $nc3_registration->update_user_name . "\"\n";
-            $registration_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_registration->update_user_id) . "\"\n";
+            $registration_ini .= "update_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_registration->modified_user) . "\"\n";
 
             // 登録フォームのカラム情報
             $registration_items = Nc2RegistrationItem::where('registration_id', $registration_id)
@@ -10509,10 +10518,10 @@ trait MigrationNc3Trait
                         $registration_data .= "\n[" . $registration_item_data->data_id . "]\n";
                         $registration_data .= "created_at      = \"" . $this->getCCDatetime($registration_item_data->data_insert_time) . "\"\n";
                         $registration_data .= "created_name    = \"" . $registration_item_data->data_insert_user_name . "\"\n";
-                        $registration_data .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $registration_item_data->data_insert_user_id) . "\"\n";
+                        $registration_data .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $registration_item_data->data_insert_user_id) . "\"\n";
                         $registration_data .= "updated_at      = \"" . $this->getCCDatetime($registration_item_data->data_update_time) . "\"\n";
                         $registration_data .= "updated_name    = \"" . $registration_item_data->data_update_user_name . "\"\n";
-                        $registration_data .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $registration_item_data->data_update_user_id) . "\"\n";
+                        $registration_data .= "update_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $registration_item_data->data_update_user_id) . "\"\n";
                         $data_id = $registration_item_data->data_id;
                     }
                     $registration_data .= $registration_item_data->item_id . " = \"" . str_replace("\n", '\n', $registration_item_data->item_data_value) . "\"\n";
@@ -10604,12 +10613,12 @@ trait MigrationNc3Trait
             $whatsnew_ini .= "whatsnew_block_id = " . $whatsnew_block_id . "\n";
             $whatsnew_ini .= "room_id = "           . $nc3_whatsnew_block->room_id . "\n";
             $whatsnew_ini .= "module_name = \"whatsnew\"\n";
-            $whatsnew_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_whatsnew_block->insert_time) . "\"\n";
+            $whatsnew_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_whatsnew_block->created) . "\"\n";
             $whatsnew_ini .= "created_name    = \"" . $nc3_whatsnew_block->insert_user_name . "\"\n";
-            $whatsnew_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_whatsnew_block->insert_user_id) . "\"\n";
-            $whatsnew_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_whatsnew_block->update_time) . "\"\n";
+            $whatsnew_ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_whatsnew_block->created_user) . "\"\n";
+            $whatsnew_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_whatsnew_block->modified) . "\"\n";
             $whatsnew_ini .= "updated_name    = \"" . $nc3_whatsnew_block->update_user_name . "\"\n";
-            $whatsnew_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_whatsnew_block->update_user_id) . "\"\n";
+            $whatsnew_ini .= "update_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_whatsnew_block->modified_user) . "\"\n";
 
             // 新着情報の設定を出力
             //Storage::put($this->getImportPath('whatsnews/whatsnew_') . $this->zeroSuppress($whatsnew_block_id) . '.ini', $whatsnew_ini);
@@ -10670,12 +10679,12 @@ trait MigrationNc3Trait
             $ini .= "cabinet_id = " . $cabinet_manage->cabinet_id . "\n";
             $ini .= "room_id = " . $cabinet_manage->room_id . "\n";
             $ini .= "module_name = \"cabinet\"\n";
-            $ini .= "created_at      = \"" . $this->getCCDatetime($cabinet_manage->insert_time) . "\"\n";
+            $ini .= "created_at      = \"" . $this->getCCDatetime($cabinet_manage->created) . "\"\n";
             $ini .= "created_name    = \"" . $cabinet_manage->insert_user_name . "\"\n";
-            $ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $cabinet_manage->insert_user_id) . "\"\n";
-            $ini .= "updated_at      = \"" . $this->getCCDatetime($cabinet_manage->update_time) . "\"\n";
+            $ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $cabinet_manage->created_user) . "\"\n";
+            $ini .= "updated_at      = \"" . $this->getCCDatetime($cabinet_manage->modified) . "\"\n";
             $ini .= "updated_name    = \"" . $cabinet_manage->update_user_name . "\"\n";
-            $ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $cabinet_manage->update_user_id) . "\"\n";
+            $ini .= "update_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $cabinet_manage->modified_user) . "\"\n";
 
             // ファイル情報
             $cabinet_files = Nc2CabinetFile::select('cabinet_file.*', 'cabinet_comment.comment')
@@ -10703,12 +10712,12 @@ trait MigrationNc3Trait
                 $tsv .= $cabinet_file['display_sequence'] . "\t";
                 $tsv .= $cabinet_file['room_id'] . "\t";
                 $tsv .= $cabinet_file['comment'] . "\t";
-                $tsv .= $this->getCCDatetime($cabinet_file->insert_time)                             . "\t";    // [13]
+                $tsv .= $this->getCCDatetime($cabinet_file->created)                             . "\t";    // [13]
                 $tsv .= $cabinet_file->insert_user_name                                              . "\t";    // [14]
-                $tsv .= $this->getNc2LoginIdFromNc2UserId($nc3_users, $cabinet_file->insert_user_id) . "\t";    // [15]
-                $tsv .= $this->getCCDatetime($cabinet_file->update_time)                             . "\t";    // [16]
+                $tsv .= $this->getNc3LoginIdFromNc3UserId($nc3_users, $cabinet_file->created_user) . "\t";    // [15]
+                $tsv .= $this->getCCDatetime($cabinet_file->modified)                             . "\t";    // [16]
                 $tsv .= $cabinet_file->update_user_name                                              . "\t";    // [17]
-                $tsv .= $this->getNc2LoginIdFromNc2UserId($nc3_users, $cabinet_file->update_user_id);           // [18]
+                $tsv .= $this->getNc3LoginIdFromNc3UserId($nc3_users, $cabinet_file->modified_user);           // [18]
 
                 // 最終行は改行コード不要
                 if ($index !== ($cabinet_files->count() - 1)) {
@@ -10812,12 +10821,12 @@ trait MigrationNc3Trait
             $ini .= "counter_block_id = " . $nc3_counter->block_id . "\n";
             $ini .= "room_id = " . $nc3_counter->room_id . "\n";
             $ini .= "module_name = \"counter\"\n";
-            $ini .= "created_at      = \"" . $this->getCCDatetime($nc3_counter->insert_time) . "\"\n";
+            $ini .= "created_at      = \"" . $this->getCCDatetime($nc3_counter->created) . "\"\n";
             $ini .= "created_name    = \"" . $nc3_counter->insert_user_name . "\"\n";
-            $ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_counter->insert_user_id) . "\"\n";
-            $ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_counter->update_time) . "\"\n";
+            $ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_counter->created_user) . "\"\n";
+            $ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_counter->modified) . "\"\n";
             $ini .= "updated_name    = \"" . $nc3_counter->update_user_name . "\"\n";
-            $ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_counter->update_user_id) . "\"\n";
+            $ini .= "update_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_counter->modified_user) . "\"\n";
 
             // カウンターの設定を出力
             $this->storagePut($this->getImportPath('counters/counter_') . $this->zeroSuppress($nc3_counter->block_id) . '.ini', $ini);
@@ -11027,12 +11036,12 @@ trait MigrationNc3Trait
                 $tsv_record['rrule'] = $calendar_plan->rrule;
 
                 // NC3 calendar_plan 登録日・更新日等
-                $tsv_record['created_at']      = $this->getCCDatetime($calendar_plan->insert_time);
+                $tsv_record['created_at']      = $this->getCCDatetime($calendar_plan->created);
                 $tsv_record['created_name']    = $calendar_plan->insert_user_name;
-                $tsv_record['insert_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc3_users, $calendar_plan->insert_user_id);
-                $tsv_record['updated_at']      = $this->getCCDatetime($calendar_plan->update_time);
+                $tsv_record['insert_login_id'] = $this->getNc3LoginIdFromNc3UserId($nc3_users, $calendar_plan->created_user);
+                $tsv_record['updated_at']      = $this->getCCDatetime($calendar_plan->modified);
                 $tsv_record['updated_name']    = $calendar_plan->update_user_name;
-                $tsv_record['update_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc3_users, $calendar_plan->update_user_id);
+                $tsv_record['update_login_id'] = $this->getNc3LoginIdFromNc3UserId($nc3_users, $calendar_plan->modified_user);
 
                 // NC3カレンダー予定は公開のみ
                 $tsv_record['status'] = 0;
@@ -11206,12 +11215,12 @@ trait MigrationNc3Trait
             $ini .= "slideshows_block_id = " . $nc3_slideshow->block_id . "\n";
             $ini .= "room_id = " . $nc3_slideshow->room_id . "\n";
             $ini .= "module_name = \"slides\"\n";
-            $ini .= "created_at      = \"" . $this->getCCDatetime($nc3_slideshow->insert_time) . "\"\n";
+            $ini .= "created_at      = \"" . $this->getCCDatetime($nc3_slideshow->created) . "\"\n";
             $ini .= "created_name    = \"" . $nc3_slideshow->insert_user_name . "\"\n";
-            $ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_slideshow->insert_user_id) . "\"\n";
-            $ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_slideshow->update_time) . "\"\n";
+            $ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_slideshow->created_user) . "\"\n";
+            $ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_slideshow->modified) . "\"\n";
             $ini .= "updated_name    = \"" . $nc3_slideshow->update_user_name . "\"\n";
-            $ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_slideshow->update_user_id) . "\"\n";
+            $ini .= "update_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_slideshow->modified_user) . "\"\n";
 
             // 付与情報を移行する。
             $nc3_slides_urls = Nc2SlidesUrl::where('slides_id', $nc3_slideshow->slides_id)->orderBy('slides_url_id')->get();
@@ -11548,12 +11557,12 @@ trait MigrationNc3Trait
                 $tsv_record['rrule'] = $reservation_reserve->rrule;
 
                 // NC3 reservation_reserve システム項目
-                $tsv_record['created_at'] = $this->getCCDatetime($reservation_reserve->insert_time);
+                $tsv_record['created_at'] = $this->getCCDatetime($reservation_reserve->created);
                 $tsv_record['created_name'] = $reservation_reserve->insert_user_name;
-                $tsv_record['insert_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc3_users, $reservation_reserve->insert_user_id);
-                $tsv_record['updated_at'] = $this->getCCDatetime($reservation_reserve->update_time);
+                $tsv_record['insert_login_id'] = $this->getNc3LoginIdFromNc3UserId($nc3_users, $reservation_reserve->created_user);
+                $tsv_record['updated_at'] = $this->getCCDatetime($reservation_reserve->modified);
                 $tsv_record['updated_name'] = $reservation_reserve->update_user_name;
-                $tsv_record['update_login_id'] = $this->getNc2LoginIdFromNc2UserId($nc3_users, $reservation_reserve->update_user_id);
+                $tsv_record['update_login_id'] = $this->getNc3LoginIdFromNc3UserId($nc3_users, $reservation_reserve->modified_user);
 
                 // NC3施設予約予定は公開のみ
                 $tsv_record['status'] = 0;
@@ -11849,12 +11858,12 @@ trait MigrationNc3Trait
             $photoalbum_ini .= "photoalbum_id = " . $nc3_photoalbum->photoalbum_id . "\n";
             $photoalbum_ini .= "room_id = " . $nc3_photoalbum->room_id . "\n";
             $photoalbum_ini .= "module_name = \"photoalbum\"\n";
-            $photoalbum_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_photoalbum->insert_time) . "\"\n";
+            $photoalbum_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_photoalbum->created) . "\"\n";
             $photoalbum_ini .= "created_name    = \"" . $nc3_photoalbum->insert_user_name . "\"\n";
-            $photoalbum_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_photoalbum->insert_user_id) . "\"\n";
-            $photoalbum_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_photoalbum->update_time) . "\"\n";
+            $photoalbum_ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_photoalbum->created_user) . "\"\n";
+            $photoalbum_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_photoalbum->modified) . "\"\n";
             $photoalbum_ini .= "updated_name    = \"" . $nc3_photoalbum->update_user_name . "\"\n";
-            $photoalbum_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_photoalbum->update_user_id) . "\"\n";
+            $photoalbum_ini .= "update_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_photoalbum->modified_user) . "\"\n";
 
             // アルバム 情報
             $photoalbum_ini .= "\n";
@@ -11876,12 +11885,12 @@ trait MigrationNc3Trait
                 $photoalbum_ini .= "nc3_upload_id              = "   . $nc3_photoalbum_alubum->upload_id . "\n";
                 $photoalbum_ini .= "width                      = "   . $nc3_photoalbum_alubum->width . "\n";
                 $photoalbum_ini .= "height                     = "   . $nc3_photoalbum_alubum->height . "\n";
-                $photoalbum_ini .= "created_at                 = \"" . $this->getCCDatetime($nc3_photoalbum_alubum->insert_time) . "\"\n";
+                $photoalbum_ini .= "created_at                 = \"" . $this->getCCDatetime($nc3_photoalbum_alubum->created) . "\"\n";
                 $photoalbum_ini .= "created_name               = \"" . $nc3_photoalbum_alubum->insert_user_name . "\"\n";
-                $photoalbum_ini .= "insert_login_id            = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_photoalbum_alubum->insert_user_id) . "\"\n";
-                $photoalbum_ini .= "updated_at                 = \"" . $this->getCCDatetime($nc3_photoalbum_alubum->update_time) . "\"\n";
+                $photoalbum_ini .= "insert_login_id            = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_photoalbum_alubum->created_user) . "\"\n";
+                $photoalbum_ini .= "updated_at                 = \"" . $this->getCCDatetime($nc3_photoalbum_alubum->modified) . "\"\n";
                 $photoalbum_ini .= "updated_name               = \"" . $nc3_photoalbum_alubum->update_user_name . "\"\n";
-                $photoalbum_ini .= "update_login_id            = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_photoalbum_alubum->update_user_id) . "\"\n";
+                $photoalbum_ini .= "update_login_id            = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_photoalbum_alubum->modified_user) . "\"\n";
                 $photoalbum_ini .= "\n";
             }
 
@@ -11925,12 +11934,12 @@ trait MigrationNc3Trait
                     $tsv_record['photo_description'] = $nc3_photoalbum_photo->photo_description;
                     $tsv_record['width']             = $nc3_photoalbum_photo->width;
                     $tsv_record['height']            = $nc3_photoalbum_photo->height;
-                    $tsv_record['created_at']        = $this->getCCDatetime($nc3_photoalbum_photo->insert_time);
+                    $tsv_record['created_at']        = $this->getCCDatetime($nc3_photoalbum_photo->created);
                     $tsv_record['created_name']      = $nc3_photoalbum_photo->insert_user_name;
-                    $tsv_record['insert_login_id']   = $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_photoalbum_photo->insert_user_id);
-                    $tsv_record['updated_at']        = $this->getCCDatetime($nc3_photoalbum_photo->update_time);
+                    $tsv_record['insert_login_id']   = $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_photoalbum_photo->created_user);
+                    $tsv_record['updated_at']        = $this->getCCDatetime($nc3_photoalbum_photo->modified);
                     $tsv_record['updated_name']      = $nc3_photoalbum_photo->update_user_name;
-                    $tsv_record['update_login_id']   = $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_photoalbum_photo->update_user_id);
+                    $tsv_record['update_login_id']   = $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_photoalbum_photo->modified_user);
 
                     $tsv .= implode("\t", $tsv_record) . "\n";
                 }
@@ -11974,12 +11983,12 @@ trait MigrationNc3Trait
                 $slide_ini .= "photoalbum_name = \"" . $nc3_photoalbum->photoalbum_name . "\"\n";
                 $slide_ini .= "room_id = " . $nc3_photoalbum_block->room_id . "\n";
                 $slide_ini .= "module_name = \"photoalbum\"\n";
-                $slide_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_photoalbum_block->insert_time) . "\"\n";
+                $slide_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_photoalbum_block->created) . "\"\n";
                 $slide_ini .= "created_name    = \"" . $nc3_photoalbum_block->insert_user_name . "\"\n";
-                $slide_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_photoalbum_block->insert_user_id) . "\"\n";
-                $slide_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_photoalbum_block->update_time) . "\"\n";
+                $slide_ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_photoalbum_block->created_user) . "\"\n";
+                $slide_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_photoalbum_block->modified) . "\"\n";
                 $slide_ini .= "updated_name    = \"" . $nc3_photoalbum_block->update_user_name . "\"\n";
-                $slide_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $nc3_photoalbum_block->update_user_id) . "\"\n";
+                $slide_ini .= "update_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_photoalbum_block->modified_user) . "\"\n";
 
                 // 写真
                 $nc3_photoalbum_photos = $nc3_photoalbum_photos_all->where('album_id', $nc3_photoalbum_block->display_album_id);
@@ -12421,33 +12430,29 @@ trait MigrationNc3Trait
 
             // モジュールに紐づくメインのデータのID
             $frame_ini .= $this->nc3BlockMainDataId($nc3_frame);
-/////////////////////////////
-// 以下まだ
-/////////////////////////////
 
             // NC3 情報
             $frame_nc3 = "\n";
             $frame_nc3 .= "[source_info]\n";
             $frame_nc3 .= "source_key = \"" . $nc3_frame->id . "\"\n";
             $frame_nc3 .= "target_source_table = \"" . $nc3_frame->plugin_key . "\"\n";
-            $frame_nc3 .= "created_at = \"" . $this->getCCDatetime($nc3_frame->insert_time) . "\"\n";
-            $frame_nc3 .= "updated_at = \"" . $this->getCCDatetime($nc3_frame->update_time) . "\"\n";
+            $frame_nc3 .= "created_at = \"" . $this->getCCDatetime($nc3_frame->created) . "\"\n";
+            $frame_nc3 .= "updated_at = \"" . $this->getCCDatetime($nc3_frame->modified) . "\"\n";
             $frame_ini .= $frame_nc3;
 
             // フレーム設定ファイルの出力
             // メニューの場合は、移行完了したページデータを参照してインポートしたいので、insert 側に出力する。
             if ($nc3_frame->plugin_key == 'menus') {
-                //Storage::put($this->getImportPath('pages/', '@insert/') . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $frame_ini);
                 $this->storagePut($this->getImportPath('pages/', '@insert/') . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $frame_ini);
             } else {
-                //Storage::put($this->getImportPath('pages/') . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $frame_ini);
                 $this->storagePut($this->getImportPath('pages/') . $this->zeroSuppress($new_page_index) . "/frame_" . $frame_index_str . '.ini', $frame_ini);
             }
 
-            //echo $nc3_frame->block_name . "\n";
-
             // ブロックのモジュールデータをエクスポート
             $this->nc3BlockExport($nc3_page, $nc3_frame, $new_page_index, $frame_index_str);
+/////////////////////////////
+// 以下まだ
+/////////////////////////////
 
             // ページ、ブロック構成を最後に出力するために保持
             $this->nc3BlockTree($nc3_page, $nc3_frame);
@@ -12634,86 +12639,79 @@ trait MigrationNc3Trait
      * NC3：ページ内のブロックに配置されているモジュールのエクスポート。
      * モジュールごとのエクスポート処理に振り分け。
      */
-    private function nc3BlockExport($nc3_page, $nc3_block, $new_page_index, $frame_index_str)
+    private function nc3BlockExport(Nc3Page $nc3_page, Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
     {
         // Connect-CMS のプラグイン名の取得
-        $plugin_name = $this->nc3GetPluginName($nc3_block->plugin_key);
+        $plugin_name = $this->nc3GetPluginName($nc3_frame->plugin_key);
 
         // モジュールごとに振り分け
 
         // プラグインで振り分け
         if ($plugin_name == 'contents') {
             // 固定記事（お知らせ）
-            $this->nc3BlockExportContents($nc3_page, $nc3_block, $new_page_index, $frame_index_str);
+            $this->nc3BlockExportContents($nc3_page, $nc3_frame, $new_page_index, $frame_index_str);
         } elseif ($plugin_name == 'menus') {
             // メニュー
             // 今のところ、メニューの追加設定はなし。
         } elseif ($plugin_name == 'databases') {
             // データベース
-            $this->nc3BlockExportDatabases($nc3_page, $nc3_block, $new_page_index, $frame_index_str);
+            // [TODO] 以下まだ
+            $this->nc3BlockExportDatabases($nc3_page, $nc3_frame, $new_page_index, $frame_index_str);
         } elseif ($plugin_name == 'bbses') {
             // 掲示板
-            $this->nc3BlockExportBbses($nc3_page, $nc3_block, $new_page_index, $frame_index_str);
+            // [TODO] 以下まだ
+            $this->nc3BlockExportBbses($nc3_page, $nc3_frame, $new_page_index, $frame_index_str);
         }
     }
 
     /**
      * NC3：固定記事（お知らせ）のエクスポート
      */
-    private function nc3BlockExportContents($nc3_page, $nc3_block, $new_page_index, $frame_index_str)
+    private function nc3BlockExportContents(Nc3Page $nc3_page, Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
     {
         // お知らせモジュールのデータの取得
-        // 続きを読むはとりあえず、1つに統合。固定記事の方、対応すること。
-        $announcement = Nc2Announcement::where('block_id', $nc3_block->block_id)->firstOrNew([]);
+        // （NC3になって「続きを読む」機能なくなった。）
+        $announcement = Nc3Announcement::where('block_id', $nc3_frame->block_id)->where('is_active', 1)->firstOrNew([]);
 
         // 記事
 
         // 「お知らせモジュール」のデータがなかった場合は、データの不整合としてエラーログを出力
         $content = "";
-        $content2 = "";
         if ($announcement->block_id) {
             $content = trim($announcement->content);
-            if ($announcement->more_content) {
-                $content2 = trim($announcement->more_content);
-            }
         } else {
-            $this->putError(1, "no announcement record", "block_id = " . $nc3_block->block_id);
+            $this->putError(1, "no announcement record", "block_id = " . $nc3_frame->block_id);
         }
 
         // WYSIWYG 記事のエクスポート
         $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
         $content_filename = "frame_" . $frame_index_str . '.html';
-        $content2_filename = "frame_" . $frame_index_str . '.html2';
         $ini_filename = "frame_" . $frame_index_str . '.ini';
 
-        $this->nc3Wysiwyg($nc3_block, $save_folder, $content_filename, $ini_filename, $content, 'announcement', $nc3_page);
-        $this->nc3Wysiwyg($nc3_block, $save_folder, $content2_filename, $ini_filename, $content2, 'announcement', $nc3_page);
+        $this->nc3Wysiwyg($nc3_frame, $save_folder, $content_filename, $ini_filename, $content, 'announcement', $nc3_page);
 
         // nc3の全ユーザ取得
-        $nc3_users = Nc2User::get();
+        $nc3_users = Nc3User::get();
 
         // フレーム設定ファイルの追記
         $contents_ini = "[contents]\n";
         $contents_ini .= "contents_file   = \"" . $content_filename . "\"\n";
-        $contents_ini .= "contents2_file   = \"" . $content2_filename . "\"\n";
-        $contents_ini .= "created_at      = \"" . $this->getCCDatetime($announcement->insert_time) . "\"\n";
-        $contents_ini .= "created_name    = \"" . $announcement->insert_user_name . "\"\n";
-        $contents_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $announcement->insert_user_id) . "\"\n";
-        $contents_ini .= "updated_at      = \"" . $this->getCCDatetime($announcement->update_time) . "\"\n";
-        $contents_ini .= "updated_name    = \"" . $announcement->update_user_name . "\"\n";
-        $contents_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc3_users, $announcement->update_user_id) . "\"\n";
+        $contents_ini .= "created_at      = \"" . $this->getCCDatetime($announcement->created) . "\"\n";
+        $contents_ini .= "created_name    = \"" . $this->getNc3HandleFromNc3UserId($nc3_users, $announcement->created_user) . "\"\n";
+        $contents_ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $announcement->created_user) . "\"\n";
+        $contents_ini .= "updated_at      = \"" . $this->getCCDatetime($announcement->modified) . "\"\n";
+        $contents_ini .= "updated_name    = \"" . $this->getNc3HandleFromNc3UserId($nc3_users, $announcement->modified_user) . "\"\n";
+        $contents_ini .= "update_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $announcement->modified_user) . "\"\n";
         $this->storageAppend($save_folder . "/" . $ini_filename, $contents_ini);
-
-        //echo "nc3BlockExportContents";
     }
 
     /**
      * NC3：汎用データベースのブロック特有部分のエクスポート
      */
-    private function nc3BlockExportDatabases($nc3_page, $nc3_block, $new_page_index, $frame_index_str)
+    private function nc3BlockExportDatabases($nc3_page, $nc3_frame, $new_page_index, $frame_index_str)
     {
         // NC3 ブロック設定の取得
-        $nc3_multidatabase_block = Nc2MultidatabaseBlock::where('block_id', $nc3_block->block_id)->first();
+        $nc3_multidatabase_block = Nc2MultidatabaseBlock::where('block_id', $nc3_frame->block_id)->first();
         if (empty($nc3_multidatabase_block)) {
             return;
         }
@@ -12746,10 +12744,10 @@ trait MigrationNc3Trait
     /**
      * NC3：掲示板のブロック特有部分のエクスポート
      */
-    private function nc3BlockExportBbses($nc3_page, $nc3_block, $new_page_index, $frame_index_str)
+    private function nc3BlockExportBbses($nc3_page, $nc3_frame, $new_page_index, $frame_index_str)
     {
         // NC3 ブロック設定の取得
-        $nc3_bbs_block = Nc2BbsBlock::where('block_id', $nc3_block->block_id)->first();
+        $nc3_bbs_block = Nc2BbsBlock::where('block_id', $nc3_frame->block_id)->first();
         if (empty($nc3_bbs_block)) {
             return;
         }
@@ -12845,31 +12843,29 @@ trait MigrationNc3Trait
 
     /**
      * NC3：WYSIWYG の記事の保持
-     *
-     * 保存するディレクトリ：migration の下を指定
-     * コンテンツファイル名
-     * iniファイル名
      */
-    private function nc3Wysiwyg($nc3_block, $save_folder, $content_filename, $ini_filename, $content, $nc3_module_name = null, $nc3_page = null)
+    private function nc3Wysiwyg(?Nc3Frame $nc3_frame, ?string $save_folder, ?string $content_filename, ?string $ini_filename, ?string $content, ?string $nc3_module_name = null, ?Nc3Page $nc3_page = null)
     {
+        // [TODO] 後で対応する
         // nc3リンク切れチェック
-        $nc3_links = $this->getContentHrefOrSrc($content);
-        if (is_array($nc3_links)) {
-            foreach ($nc3_links as $nc3_link) {
-                $this->checkDeadLinkNc2($nc3_link, $nc3_module_name . '(wysiwyg)', $nc3_block);
-            }
-        }
+        // $nc3_links = $this->getContentHrefOrSrc($content);
+        // if (is_array($nc3_links)) {
+        //     foreach ($nc3_links as $nc3_link) {
+        //         // $this->checkDeadLinkNc2($nc3_link, $nc3_module_name . '(wysiwyg)', $nc3_frame);
+        //     }
+        // }
 
         // コンテンツのクリーニング
         $content = $this->cleaningContent($content, $nc3_module_name);
 
         // 画像を探す
         $img_srcs = $this->getContentImage($content);
-        // var_dump($img_srcs);
 
         // 画像の中のcommon_download_main をエクスポートしたパスに変換する。
-        $content = $this->nc3MigrationCommonDownloadMain($nc3_block, $save_folder, $ini_filename, $content, $img_srcs, '[upload_images]');
-
+        $content = $this->nc3MigrationCommonDownloadMain($nc3_frame, $save_folder, $ini_filename, $content, $img_srcs, '[upload_images]');
+//
+// 以下まだ
+//
         // CSS の img-fluid を自動で付ける最小の画像幅
         $img_fluid_min_width = $this->getMigrationConfig('wysiwyg', 'img_fluid_min_width', 0);
 
@@ -12927,18 +12923,12 @@ trait MigrationNc3Trait
 
         // 添付ファイルを探す
         $anchors = $this->getContentAnchor($content);
-        //var_dump($anchors);
 
         // 添付ファイルの中のcommon_download_main をエクスポートしたパスに変換する。
-        $content = $this->nc3MigrationCommonDownloadMain($nc3_block, $save_folder, $ini_filename, $content, $anchors, '[upload_files]');
-
-        // HTML からa タグの 相対パスリンクを絶対パスに修正
-        //$content = $this->changeFullPath($content, $nc3_page);
-
+        $content = $this->nc3MigrationCommonDownloadMain($nc3_frame, $save_folder, $ini_filename, $content, $anchors, '[upload_files]');
 
         // HTML content の保存
         if ($save_folder) {
-            //Storage::put($save_folder . "/" . $content_filename, $content);
             $this->storagePut($save_folder . "/" . $content_filename, $content);
         }
 
@@ -12948,14 +12938,14 @@ trait MigrationNc3Trait
     /**
      * NC3：common_download_main をエクスポート形式に変換
      */
-    private function nc3MigrationCommonDownloadMain($nc3_block, $save_folder, $ini_filename, $content, $paths, $section_name)
+    private function nc3MigrationCommonDownloadMain(?Nc3Frame $nc3_frame, ?string $save_folder, ?string $ini_filename, ?string $content, $paths, string $section_name): ?string
     {
         if (empty($paths)) {
             return $content;
         }
 
         // 変換処理
-        list($content, $export_paths) = $this->nc3MigrationCommonDownloadMainImple($content, $paths, $section_name, $nc3_block = null);
+        list($content, $export_paths) = $this->nc3MigrationCommonDownloadMainImple($content, $paths, $nc3_frame);
 
         // フレーム設定ファイルの追記
         $ini_text = $section_name . "\n";
@@ -12965,48 +12955,8 @@ trait MigrationNc3Trait
 
         // 記事ごとにini ファイルが必要な場合のみ出力する。
         if ($ini_filename) {
-            //Storage::append($save_folder . "/" . $ini_filename, $ini_text);
             $this->storageAppend($save_folder . "/" . $ini_filename, $ini_text);
         }
-
-
-//        // フレーム設定ファイルの追記
-//        $ini_text = $section_name . "\n";
-//
-//        foreach ($paths as $path) {
-//            // common_download_main があれば、NC3 の画像として移行する。
-//            if (stripos($path, 'common_download_main') !== false) {
-//                // &amp; があれば、& に変換
-//                $path_tmp = str_replace('&amp;', '&', $path);
-//                // &で分割
-//                $src_params = explode('&', $path_tmp);
-//                foreach ($src_params as $src_param) {
-//                    $param_split = explode('=', $src_param);
-//                    if ($param_split[0] == 'upload_id') {
-//                        // フレーム設定ファイルの追記
-//                        // 移行したアップロードファイルをini ファイルから探す
-//                        if ($this->uploads_ini && array_key_exists('uploads', $this->uploads_ini) && array_key_exists('upload', $this->uploads_ini['uploads']) && array_key_exists($param_split[1], $this->uploads_ini['uploads']['upload'])) {
-//                            // コンテンツ及び[upload_images] or [upload_files]セクション内のimg src or a href を作る。
-//                            $export_path = '../../uploads/' . $this->uploads_ini[$param_split[1]]['temp_file_name'];
-//
-//                            // [upload_images] or [upload_files] 内の画像情報の追記
-//                            $ini_text .= $param_split[1] . " = \"" . $export_path . "\"\n";
-//
-//                            // ファイルのパスの修正
-//                            $content = str_replace($path, $export_path, $content);
-//                        } else {
-//                            // 移行しなかったファイルのimg or a タグとしてログに記録
-//                            $this->putError(1, "no migrate img", "src = " . $path, $nc3_block);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//
-//        // 記事ごとにini ファイルが必要な場合のみ出力する。
-//        if ($ini_filename) {
-//            Storage::append('migration/' . $save_folder . "/" . $ini_filename, $ini_text);
-//        }
 
         // パスを変更した記事を返す。
         return $content;
@@ -13015,43 +12965,48 @@ trait MigrationNc3Trait
     /**
      * NC3：common_download_main をエクスポート形式に変換
      */
-    private function nc3MigrationCommonDownloadMainImple($content, $paths, $section_name, $nc3_block = null)
+    private function nc3MigrationCommonDownloadMainImple(?string $content, array $paths, ?Nc3Frame $nc3_frame): array
     {
-        if (empty($paths)) {
-            return $content;
-        }
-
         // 修正したパスの配列
         $export_paths = array();
 
         foreach ($paths as $path) {
+            // 画像URL例）
+            // 　(標準サイズ) http://localhost/wysiwyg/image/download/1/172/big
+            // 　(原寸大)     http://localhost/wysiwyg/image/download/1/174
+            // ファイルURL例）
+            // 　http://localhost/wysiwyg/file/download/1/173
+
             // common_download_main があれば、NC3 の画像として移行する。
-            if (stripos($path, 'common_download_main') !== false) {
-                // &amp; があれば、& に変換
-                $path_tmp = str_replace('&amp;', '&', $path);
-                // &で分割
-                $src_params = explode('&', $path_tmp);
-                foreach ($src_params as $src_param) {
-                    $param_split = explode('=', $src_param);
-                    if ($param_split[0] == 'upload_id') {
-                        // フレーム設定ファイルの追記
-                        // 移行したアップロードファイルをini ファイルから探す
-                        if ($this->uploads_ini && array_key_exists('uploads', $this->uploads_ini) && array_key_exists('upload', $this->uploads_ini['uploads']) && array_key_exists($param_split[1], $this->uploads_ini['uploads']['upload'])) {
-                            // コンテンツ及び[upload_images] or [upload_files]セクション内のimg src or a href を作る。
-                            $export_path = '../../uploads/' . $this->uploads_ini[$param_split[1]]['temp_file_name'];
+            if (stripos($path, 'wysiwyg/image/download') !== false || stripos($path, 'wysiwyg/file/download') !== false) {
+                // pathのみに置換
+                $path_tmp = parse_url($path, PHP_URL_PATH);
+                // 不要文字を取り除き
+                $path_tmp = str_replace('/wysiwyg/image/download/', '', $path_tmp);
+                $path_tmp = str_replace('/wysiwyg/file/download/', '', $path_tmp);
+                // /で分割
+                $src_params = explode('/', $path_tmp);
 
-                            // [upload_images] or [upload_files] 内の画像情報の追記
-                            $export_paths[$param_split[1]] = $export_path;
+                // [TODO] image_size を参照していないため、今後見直しそう
+                $room_id = $src_params[0];
+                $upload_id = $src_params[1];
+                $image_size = isset($src_params[2]) ? $src_params[2] : null;
 
-                            // ファイルのパスの修正
-                            // ファイル指定の前後の " も含めないと、upload_id=1 を変換した際、 upload_id=14 も含まれる。
-                            //$content = str_replace($path, $export_path, $content);
-                            $content = str_replace('"' . $path . '"', '"' .$export_path . '"', $content);
-                        } else {
-                            // 移行しなかったファイルのimg or a タグとしてログに記録
-                            $this->putError(1, "no migrate img", "src = " . $path, $nc3_block);
-                        }
-                    }
+                // フレーム設定ファイルの追記
+                // 移行したアップロードファイルをini ファイルから探す
+                if ($this->uploads_ini && array_key_exists('uploads', $this->uploads_ini) && array_key_exists('upload', $this->uploads_ini['uploads']) && array_key_exists($upload_id, $this->uploads_ini['uploads']['upload'])) {
+                    // コンテンツ及び[upload_images] or [upload_files]セクション内のimg src or a href を作る。
+                    $export_path = '../../uploads/' . $this->uploads_ini[$upload_id]['temp_file_name'];
+
+                    // [upload_images] or [upload_files] 内の画像情報の追記
+                    $export_paths[$upload_id] = $export_path;
+
+                    // ファイルのパスの修正
+                    // ファイル指定の前後の " も含めて置換
+                    $content = str_replace('"' . $path . '"', '"' . $export_path . '"', $content);
+                } else {
+                    // 移行しなかったファイルのimg or a タグとしてログに記録
+                    $this->putError(1, "no migrate img", "src = " . $path, $nc3_frame);
                 }
             }
         }
