@@ -87,20 +87,26 @@ use App\User;
 
 use App\Models\Migration\MigrationMapping;
 
+use App\Models\Migration\Nc3\Nc3AccessCounter;
 use App\Models\Migration\Nc3\Nc3Box;
 use App\Models\Migration\Nc3\Nc3Bbs;
+use App\Models\Migration\Nc3\Nc3Block;
 use App\Models\Migration\Nc3\Nc3Blog;
 use App\Models\Migration\Nc3\Nc3Cabinet;
+use App\Models\Migration\Nc3\Nc3CalendarFrameSetting;
 use App\Models\Migration\Nc3\Nc3Faq;
 use App\Models\Migration\Nc3\Nc3Frame;
-use App\Models\Migration\Nc3\Nc3Link;
+// use App\Models\Migration\Nc3\Nc3Link;
+use App\Models\Migration\Nc3\Nc3MenuFramePage;
 use App\Models\Migration\Nc3\Nc3MenuFrameSetting;
 use App\Models\Migration\Nc3\Nc3Multidatabase;
-use App\Models\Migration\Nc3\Nc3Topic;
+// use App\Models\Migration\Nc3\Nc3Topic;
 use App\Models\Migration\Nc3\Nc3TopicFrameSetting;
 use App\Models\Migration\Nc3\Nc3Page;
 use App\Models\Migration\Nc3\Nc3Registration;
+use App\Models\Migration\Nc3\Nc3ReservationFrameSetting;
 use App\Models\Migration\Nc3\Nc3Room;
+use App\Models\Migration\Nc3\Nc3PhotoAlbum;
 use App\Models\Migration\Nc3\Nc3PhotoAlbumFrameSetting;
 use App\Models\Migration\Nc3\Nc3SiteSetting;
 use App\Models\Migration\Nc3\Nc3Space;
@@ -8398,7 +8404,7 @@ trait MigrationNc3Trait
                 ->orderBy('pages.sort_key')
                 ->get();
 
-            // [TODO] ??? nc3はどうだろう？
+            // [TODO] ??? nc3はどうだろう？⇒ 不要そう
             // // NC3 のページデータは隣接モデルのため、ページ一覧を一発でソートできない。
             // // そのため、取得したページデータを一度、経路探索モデルに変換する。
             // $nc3_sort_pages = array();
@@ -8418,12 +8424,10 @@ trait MigrationNc3Trait
             //// 新規ページは _99 のように _ 付でページを作っておく。（_ 付はデータ作成時に既存page_id の続きで採番する）
 
             // エクスポートしたページフォルダは連番にした。
-            // NC3 のページID を使うと、順番がおかしくなるため。
             $new_page_index = 0;
 
             // ページのループ
             $this->putMonitor(1, "Page loop.");
-            // foreach ($nc3_sort_pages as $nc3_sort_page_key => $nc3_sort_page) {
             foreach ($nc3_pages as $nc3_sort_page) {
                 $this->putMonitor(3, "Page", "page_id = " . $nc3_sort_page->id);
 
@@ -8469,7 +8473,6 @@ trait MigrationNc3Trait
                 $page_ini .= "nc3_page_id = \"" . $nc3_sort_page->id . "\"\n";
                 $page_ini .= "nc3_room_id = \"" . $nc3_sort_page->room_id . "\"\n";
 
-                // [TODO] これなんだろ？
                 // 親ページの検索（parent_id = 1 はパブリックのトップレベルなので、1 より大きいものを探す）
                 if ($nc3_sort_page->parent_id > 1) {
                     // マッピングテーブルから親のページのディレクトリを探す
@@ -8488,16 +8491,12 @@ trait MigrationNc3Trait
                 }
 
                 // ページディレクトリの作成
-                //$new_page_index = $nc3_sort_page->id;
                 $new_page_index++;
                 Storage::makeDirectory($this->getImportPath('pages/') . $this->zeroSuppress($new_page_index));
 
                 // ページ設定ファイルの出力
                 Storage::put($this->getImportPath('pages/') . $this->zeroSuppress($new_page_index) . '/' . "/page.ini", $page_ini);
 
-                /////////
-                // [TODO] これだと再移行に支障ある？⇒なさそうな。一時テーブルとして使ってそう。
-                /////////
                 // マッピングテーブルの追加
                 $mapping = MigrationMapping::updateOrCreate(
                     ['target_source_table' => 'nc3_pages', 'source_key' => $nc3_sort_page->id],
@@ -8506,8 +8505,6 @@ trait MigrationNc3Trait
                      'destination_key'     => $this->zeroSuppress($new_page_index)]
                 );
 
-                // echo $nc3_sort_page_key . ':' . $nc3_sort_page->page_name . "\n";
-
                 // ブロック処理
                 $this->nc3Block($nc3_sort_page, $new_page_index);
             }
@@ -8515,9 +8512,6 @@ trait MigrationNc3Trait
             // ページ入れ替え
             $this->changePageSequence();
         }
-
-        // ページ、ブロックの関係をCSV 形式で出力。ファイルにしたい場合はコマンドラインでファイルに出力
-        // echo $this->frame_tree;
     }
 
     /**
@@ -12218,12 +12212,19 @@ trait MigrationNc3Trait
         // 指定されたページ内のブロックを取得
         // boxes.page_id : ログ出力用
         $nc3_frames_query = Nc3Frame::
-            select('frames.*', 'frames_languages.name as frame_name', 'boxes.page_id')
+            select(
+                'frames.*',
+                'frames_languages.name as frame_name',
+                'frames_languages.language_id as language_id',
+                'boxes.page_id',
+                'blocks.key as block_key'
+            )
             ->join('boxes', 'boxes.id', '=', 'frames.box_id')
             ->join('frames_languages', function ($join) {
                 $join->on('frames_languages.frame_id', '=', 'frames.id')
                     ->where('frames_languages.language_id', 2); // 日本語
             })
+            ->leftJoin('blocks', 'blocks.id', '=', 'frames.block_id')
             ->where('boxes.page_id', $nc3_page->page_id)
             ->where('frames.is_deleted', 0);
 
@@ -12489,8 +12490,11 @@ trait MigrationNc3Trait
     /**
      * NC3：フレームに紐づくモジュールのメインデータのID 取得
      */
-    private function nc3BlockMainDataId(Nc3Frame $nc3_frame)
+    private function nc3BlockMainDataId(Nc3Frame $nc3_frame): string
     {
+        // 各プラグインテーブル（例：blogs）のlanguage_idは、データ作成時のlanguage_id。language_id = 1(英語)で表示してるページは日本語ページとかありえるため、
+        // language_idで絞り込まない。
+
         $ret = "";
         if ($nc3_frame->plugin_key == 'blogs') {
             $nc3_blog = Nc3Blog::where('block_id', $nc3_frame->block_id)->first();
@@ -12508,10 +12512,14 @@ trait MigrationNc3Trait
             $nc3_faq = Nc3Faq::where('block_id', $nc3_frame->block_id)->first();
             $ret = "faq_id = \"" . $this->zeroSuppress($nc3_faq->id) . "\"\n";
         } elseif ($nc3_frame->plugin_key == 'links') {
-            $nc3_link = Nc3Link::where('block_id', $nc3_frame->block_id)->where('is_active', 1)->first();
+            // $nc3_link = Nc3Link::where('block_id', $nc3_frame->block_id)->where('language_id', $nc3_frame->language_id)->where('is_active', 1)->first();
+            // リンクリストはNC2と違い、プラグイン固有のデータまとめテーブルがないため、ブロックテーブル参照
+            $nc3_block = Nc3Block::find($nc3_frame->block_id);
             // ブロックがあり、リンクリストがない場合は対象外
-            if (!empty($nc3_link)) {
-                $ret = "linklist_id = \"" . $this->zeroSuppress($nc3_link->id) . "\"\n";
+            if (!empty($nc3_block)) {
+                // NC3カウンターにプラグイン固有のデータまとめテーブルがないため、block_idをセット
+                // [TODO] id名と値ズレ
+                $ret = "linklist_id = \"" . $this->zeroSuppress($nc3_block->id) . "\"\n";
             }
         } elseif ($nc3_frame->plugin_key == 'multidatabases') {
             $nc3_multidatabase = Nc3Multidatabase::where('block_id', $nc3_frame->block_id)->first();
@@ -12527,11 +12535,11 @@ trait MigrationNc3Trait
                 $ret = "form_id = \"" . $this->zeroSuppress($nc3_registration->id) . "\"\n";
             }
         } elseif ($nc3_frame->plugin_key == 'topics') {
-            // [TODO] 新着の詳細設定があれば、設定を加味する。
-            $nc3_topics = Nc3TopicFrameSetting::where('frame_key', $nc3_frame->key)->first();
-            if (!empty($nc3_topics)) {
-                // NC3の新着にblock_idはないため、topic_idをセット
-                $ret = "whatsnew_block_id = \"" . $this->zeroSuppress($nc3_topics->id) . "\"\n";
+            $nc3_topic_frame_setting = Nc3TopicFrameSetting::where('frame_key', $nc3_frame->key)->first();
+            if (!empty($nc3_topic_frame_setting)) {
+                // block_idはないため、frame_keyをセット
+                // [TODO] id名と値ズレ
+                $ret = "whatsnew_block_id = \"" . $this->zeroSuppress($nc3_topic_frame_setting->frame_key) . "\"\n";
             }
         } elseif ($nc3_frame->plugin_key == 'cabinets') {
             $nc3_cabinet = Nc3Cabinet::where('block_id', $nc3_frame->block_id)->first();
@@ -12540,16 +12548,14 @@ trait MigrationNc3Trait
                 $ret = "cabinet_id = \"" . $this->zeroSuppress($nc3_cabinet->id) . "\"\n";
             }
         } elseif ($nc3_frame->plugin_key == 'menus') {
-//
-// 以下まだ
-//
             // メニューの詳細設定（非表示設定が入っている）があれば、設定を加味する。
-            $nc3_menu_details = Nc2MenuDetail::select('menu_detail.*', 'pages.permalink')
-                                             ->join('pages', 'pages.page_id', '=', 'menu_detail.page_id')
-                                             ->where("block_id", $nc3_frame->block_id)
-                                             ->orderBy('page_id', 'asc')
-                                             ->get();
-            if (empty($nc3_menu_details)) {
+            // ルームの表示・非表示もmenu_frames_pagesに含まれてる
+            $nc3_menu_frame_pages = Nc3MenuFramePage::select('menu_frames_pages.*', 'pages.sort_key')
+                ->join('pages', 'pages.id', '=', 'menu_frames_pages.page_id')
+                ->where("frame_key", $nc3_frame->key)
+                ->orderBy('page_id', 'asc')
+                ->get();
+            if (empty($nc3_menu_frame_pages)) {
                 $ret .= "\n";
                 $ret .= "[menu]\n";
                 $ret .= "select_flag       = \"0\"\n";
@@ -12563,11 +12569,11 @@ trait MigrationNc3Trait
 
                 // 選択しないページを除外
                 $ommit_nc3_pages = array();
-                foreach ($nc3_menu_details as $nc3_menu_detail) {
+                foreach ($nc3_menu_frame_pages as $nc3_menu_frame_page) {
                     // 下層ページを含めて取得
-                    $ommit_pages = Nc2Page::where('permalink', 'like', $nc3_menu_detail->permalink . '%')->get();
+                    $ommit_pages = Nc3Page::where('sort_key', 'like', $nc3_menu_frame_page->sort_key . '%')->get();
                     if ($ommit_pages->isNotEmpty()) {
-                        $ommit_nc3_pages = $ommit_nc3_pages + $ommit_pages->pluck('page_id')->toArray();
+                        $ommit_nc3_pages = $ommit_nc3_pages + $ommit_pages->pluck('id')->toArray();
                     }
                 }
                 $ret .= "\n";
@@ -12583,32 +12589,41 @@ trait MigrationNc3Trait
                 }
             }
         } elseif ($nc3_frame->plugin_key == 'access_counters') {
-            $nc3_counter = Nc2Counter::where('block_id', $nc3_frame->block_id)->first();
+            $nc3_counter = Nc3AccessCounter::where('block_key', $nc3_frame->block_key)->first();
             // ブロックがあり、カウンターがない場合は対象外
             if (!empty($nc3_counter)) {
-                $ret = "counter_block_id = \"" . $this->zeroSuppress($nc3_counter->block_id) . "\"\n";
+                // NC3カウンターにblock_idはないため、counter_idをセット
+                // [TODO] id名と値ズレ
+                $ret = "counter_block_id = \"" . $this->zeroSuppress($nc3_counter->id) . "\"\n";
             }
         } elseif ($nc3_frame->plugin_key == 'calendars') {
-            $nc3_calendar_block = Nc2CalendarBlock::where('block_id', $nc3_frame->block_id)->first();
-            // ブロックがあり、カレンダーがない場合は対象外
-            if (!empty($nc3_calendar_block)) {
-                $ret = "calendar_block_id = \"" . $this->zeroSuppress($nc3_calendar_block->block_id) . "\"\n";
+            $nc3_calendar_frame_setting = Nc3CalendarFrameSetting::where('frame_key', $nc3_frame->key)->first();
+            // 設定があり、カレンダーがない場合は対象外
+            if (!empty($nc3_calendar_frame_setting)) {
+                // block_idはないため、frame_keyをセット
+                // [TODO] id名と値ズレ
+                $ret = "calendar_block_id = \"" . $this->zeroSuppress($nc3_calendar_frame_setting->frame_key) . "\"\n";
             }
         } elseif ($nc3_frame->plugin_key == 'reservations') {
-            $nc3_reservation_block = Nc2ReservationBlock::where('block_id', $nc3_frame->block_id)->first();
+            $nc3_reservation_frame_setting = Nc3ReservationFrameSetting::where('frame_key', $nc3_frame->key)->first();
             // ブロックがあり、施設予約がない場合は対象外
-            if (!empty($nc3_reservation_block)) {
-                $ret = "reservation_block_id = \"" . $this->zeroSuppress($nc3_reservation_block->block_id) . "\"\n";
+            if (!empty($nc3_reservation_frame_setting)) {
+                // block_idはないため、frame_keyをセット
+                // [TODO] id名と値ズレ
+                $ret = "reservation_block_id = \"" . $this->zeroSuppress($nc3_reservation_frame_setting->frame_key) . "\"\n";
             }
         } elseif ($nc3_frame->plugin_key == 'photo_albums') {
-            $nc3_photoalbum_block = Nc2PhotoalbumBlock::where('block_id', $nc3_frame->block_id)->first();
+            $nc3_photoalbum = Nc3PhotoAlbum::where('block_id', $nc3_frame->block_id)->where('is_active', 1)->first();
             // ブロックがあり、フォトアルバムがない場合は対象外
-            if (!empty($nc3_photoalbum_block)) {
+            if (!empty($nc3_photoalbum)) {
                 // フォトアルバムでスライド表示は、スライドプラグインに移行
-                if ($nc3_photoalbum_block->display == Nc2PhotoalbumBlock::DISPLAY_SLIDESHOW) {
-                    $ret = "slideshows_block_id = \"" . $this->zeroSuppress($nc3_photoalbum_block->block_id) . "\"\n";
+                $nc3_photoalbum_frame_setting = Nc3PhotoAlbumFrameSetting::where('frame_key', $nc3_frame->key)
+                    ->where('display_type', Nc3PhotoAlbumFrameSetting::DISPLAY_SLIDESHOW)
+                    ->first();
+                if ($nc3_photoalbum_frame_setting) {
+                    $ret = "slideshows_block_id = \"" . $this->zeroSuppress($nc3_photoalbum->block_id) . "\"\n";
                 } else {
-                    $ret = "photoalbum_id = \"" . $this->zeroSuppress($nc3_photoalbum_block->photoalbum_id) . "\"\n";
+                    $ret = "photoalbum_id = \"" . $this->zeroSuppress($nc3_photoalbum->id) . "\"\n";
                 }
             }
         }
