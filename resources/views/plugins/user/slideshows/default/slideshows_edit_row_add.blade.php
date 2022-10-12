@@ -139,13 +139,13 @@
                             <label for="pdf_image_size">画像の大きさ</label>
                             <select id="pdf_image_size" class="form-control" name="pdf_image_size">
                                 @foreach (WidthOfPdfThumbnail::getMembers() as $enum_value => $enum_label)
-                                    <option value="{{$enum_value}}">{{$enum_label}}</option>
+                                    <option value="{{$enum_value}}" @if (old('pdf_image_size') == $enum_value) selected @endif>{{$enum_label}}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="form-group">
                             <label for="pdf_password">PDFパスワード</label>
-                            <input type="text" class="form-control" id="pdf_password" name="pdf_password">
+                            <input type="text" class="form-control" id="pdf_password" name="pdf_password" value="{{ old('pdf_password') }}">
                             <small class="form-text text-muted">PDFにパスワードが設定されている場合に入力してください。</small>
                         </div>
                     </div>
