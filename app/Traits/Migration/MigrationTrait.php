@@ -12958,7 +12958,6 @@ trait MigrationTrait
     private function nc2BlockExportContents($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
     {
         // お知らせモジュールのデータの取得
-        // 続きを読むはとりあえず、1つに統合。固定記事の方、対応すること。
         $announcement = Nc2Announcement::where('block_id', $nc2_block->block_id)->firstOrNew([]);
 
         // 記事
