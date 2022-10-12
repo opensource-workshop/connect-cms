@@ -170,7 +170,8 @@
                         @endforeach
                         // 新規追加行用の変数
                         image_url_add:"",
-                        file_name_add:""
+                        file_name_add:"",
+                        selected_pdf:""
                     }
                 },
                 methods: {
@@ -180,6 +181,14 @@
                         // console.log(file);
                         eval("this.image_url_" + items_id + " = URL.createObjectURL(file);");
                         eval("this.file_name_" + items_id + " = file.name;");
+                    },
+                    // 選択中のPDFを表示する
+                    setPdfFile(event){
+                        let file = event.target.files[0];
+                        if (file === undefined) {
+                            this.selected_pdf = "";
+                        }
+                        this.selected_pdf = file.name;
                     }
                 }
             });

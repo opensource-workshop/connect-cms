@@ -21,6 +21,8 @@ use App\Enums\ShowType;
 use App\Enums\WidthOfPdfThumbnail;
 use App\Plugins\User\UserPluginBase;
 use App\Utilities\Curl\CurlUtils;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 /**
  * スライドショー・プラグイン
@@ -521,82 +523,25 @@ class SlideshowsPlugin extends UserPluginBase
      */
     public function addPdf($request, $page_id, $frame_id, $id = null)
     {
-        // TODO: 異常系の処理　UploadController::postFile() の "if ($request->hasFile('pdf')) {" 以降を参考に
-        // TODO: 関数が長いのでリファクタリング
-        // TODO: addItem()と被っている処理を共通化
-        // TODO: PDFファイルサイズの上限チェック
-
         // エラーチェック
         $request->validate([
-            'pdf_file'  => 'required|mimes:pdf',
+            'pdf_file'  => 'required|mimes:pdf|file',
+            'pdf_image_size' => ['required',Rule::in(WidthOfPdfThumbnail::getMemberKeys())],
+            'pdf_password' => 'max:255',
             'pdf_link_url'    => [new CustomValiUrlMax()],
             'pdf_caption'     => 'max:255',
             'pdf_link_target' => 'max:255',
         ]);
 
-        if ($request->hasFile('pdf_file')) {
-            // API URL取得
-            $api_url = config('connect.PDF_THUMBNAIL_API_URL');
-
-            // 送信データを指定
-            $data = [
-                'api_key' => config('connect.PDF_THUMBNAIL_API_KEY'),
-                'pdf' => base64_encode($request->file('pdf_file')->get()),
-                'pdf_password' => '',
-                'scale_of_pdf_thumbnails' => WidthOfPdfThumbnail::getScale(WidthOfPdfThumbnail::middle),
-                'number_of_pdf_thumbnails' => NumberOfPdfThumbnail::all,
-            ];
-
-            $res = CurlUtils::execute($api_url, 'POST', $data);
-
-            $base64_thumbnails = json_decode($res['body'], true);
-
-            // エラーメッセージが有ったら、メッセージを出力して終了
-            if (isset($base64_thumbnails['errors']['message'])) {
-                // $msg_array['link_text'] .= '</a></p>';
-                // $msg_array['link_text'] .= '<p>サムネイル作成エラー：' . $base64_thumbnails['errors']['message'] . '</p>';
-                // return $msg_array;
-            }
-
-            $thumbnail_no = 1;
-            foreach ($base64_thumbnails as $base64_thumbnail) {
-
-                $thumbnail_name = $request->file('pdf_file')->getClientOriginalName() . '_' . $thumbnail_no;
-
-                $thumbnail_upload = Uploads::create([
-                    'client_original_name' => $thumbnail_name . '.png',
-                    'mimetype'             => 'image/png',
-                    'extension'            => 'png',
-                    'size'                 => 0,
-                    'page_id'              => $request->page_id,
-                    'plugin_name'          => $request->plugin_name,
-                ]);
-
-                $directory = $this->getDirectory($thumbnail_upload->id);
-                $thumbnail_path = storage_path('app/') . $directory . '/' . $thumbnail_upload->id . '.png';
-                File::put($thumbnail_path, base64_decode($base64_thumbnail));
-
-                // sizeはファイルにしてから取得する
-                $thumbnail_upload->size = File::size($thumbnail_path);
-                $thumbnail_upload->save();
-
-                // 新規登録時の表示順を設定
-                $max_display_sequence = SlideshowsItems::query()->where('slideshows_id', $request->slideshows_id)->max('display_sequence');
-                $max_display_sequence = $max_display_sequence ? $max_display_sequence + 1 : 1;
-
-                // 項目の登録処理
-                $slideshows_item = new SlideshowsItems();
-                $slideshows_item->slideshows_id = $request->slideshows_id;
-                $slideshows_item->image_path = $thumbnail_path;
-                $slideshows_item->uploads_id = $thumbnail_upload->id;
-                $slideshows_item->link_url = $request->pdf_link_url;
-                $slideshows_item->link_target = $request->pdf_link_target;
-                $slideshows_item->caption = $request->pdf_caption;
-                $slideshows_item->display_flag = ShowType::show;
-                $slideshows_item->display_sequence = $max_display_sequence;
-                $slideshows_item->save();
-            }
+        $base64_images = $this->pdfToImage($request->file('pdf_file')->get(), $request->pdf_image_size, $request->pdf_password);
+        // 変換失敗
+        if (empty($base64_images)) {
+            // フラッシュメッセージ設定
+            $request->merge(['flash_message' => 'PDFの追加に失敗しました。']);
+            return;
         }
+
+        $this->savePdfImages($request, $base64_images);
 
         // フラッシュメッセージ設定
         $request->merge([
@@ -604,6 +549,98 @@ class SlideshowsPlugin extends UserPluginBase
         ]);
 
         // リダイレクト設定はフォーム側で設定している為、return処理は省略
+    }
+
+    /**
+     * PDFファイルを画像に変換する
+     *
+     * @param string $pdf_file PDFファイル
+     * @param string $password PDFパスワード
+     * @param string $scale 変換後の画像サイズ
+     * @return array 画像(base64)
+     */
+    private function pdfToImage(string $pdf_file, string $scale, ?string $password) :array
+    {
+        // API URL取得
+        $api_url = config('connect.PDF_THUMBNAIL_API_URL');
+        if (empty($api_url)) {
+            // API URLを設定しないとこの処理は通らないため、通常ここに入らない想定。そのためシステム的なメッセージを表示
+            $error_message = 'error: 設定ファイル.envにPDF_THUMBNAIL_API_URLが設定されていません。';
+            Log::error($error_message);
+            return [];
+        }
+
+        // 送信データを指定
+        $data = [
+            'api_key' => config('connect.PDF_THUMBNAIL_API_KEY'),
+            'pdf' => base64_encode($pdf_file),
+            'pdf_password' => $password,
+            'scale_of_pdf_thumbnails' => $scale,
+            'number_of_pdf_thumbnails' => NumberOfPdfThumbnail::all,
+        ];
+
+        $res = CurlUtils::execute($api_url, 'POST', $data);
+        $base64_images = json_decode($res['body'], true);
+
+        // エラーメッセージが有ったら、メッセージを出力して終了
+        if (isset($base64_images['errors']['message'])) {
+            $error_message = '画像変換エラー：' . $base64_images['errors']['message'];
+            Log::error($error_message);
+            return [];
+        }
+
+        return $base64_images;
+    }
+
+    /**
+     * PDFの画像ファイルをスライドショーに登録する。
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param array $base64_images 画像(base64)
+     */
+    private function savePdfImages(\Illuminate\Http\Request $request, array $base64_images)
+    {
+        $index = 1;
+        foreach ($base64_images as $base64_image) {
+
+            // 画像をUploadsへ登録する
+            $image_name = $request->file('pdf_file')->getClientOriginalName() . '_' . $index;
+            $image_upload = Uploads::create([
+                'client_original_name' => $image_name . '.png',
+                'mimetype'             => 'image/png',
+                'extension'            => 'png',
+                'size'                 => 0,
+                'page_id'              => $request->page_id,
+                'plugin_name'          => $request->plugin_name,
+            ]);
+
+            // 画像をファイルとして保存する
+            $directory = $this->getDirectory($image_upload->id);
+            $image_path = storage_path('app/') . $directory . '/' . $image_upload->id . '.png';
+            File::put($image_path, base64_decode($base64_image));
+
+            // sizeはファイルにしてから取得する
+            $image_upload->size = File::size($image_path);
+            $image_upload->save();
+
+            // 新規登録時の表示順を設定
+            $max_display_sequence = SlideshowsItems::query()->where('slideshows_id', $request->slideshows_id)->max('display_sequence');
+            $max_display_sequence = $max_display_sequence ? $max_display_sequence + 1 : 1;
+
+            // 項目の登録処理
+            $slideshows_item = new SlideshowsItems();
+            $slideshows_item->slideshows_id = $request->slideshows_id;
+            $slideshows_item->image_path = $image_path;
+            $slideshows_item->uploads_id = $image_upload->id;
+            $slideshows_item->link_url = $request->pdf_link_url;
+            $slideshows_item->link_target = $request->pdf_link_target;
+            $slideshows_item->caption = $request->pdf_caption;
+            $slideshows_item->display_flag = ShowType::show;
+            $slideshows_item->display_sequence = $max_display_sequence;
+            $slideshows_item->save();
+
+            $index++;
+        }
     }
 
     /**
