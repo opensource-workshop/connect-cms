@@ -3,6 +3,7 @@
 namespace App\Traits\Migration;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -154,6 +155,7 @@ use App\Models\Migration\Nc2\Nc2SlidesUrl;
 use App\Models\Migration\Nc2\Nc2Simplemovie;
 
 use App\Traits\ConnectCommonTrait;
+use App\Utilities\Migration\MigrationUtils;
 
 use App\Enums\BlogFrameConfig;
 use App\Enums\CounterDesignType;
@@ -1669,24 +1671,7 @@ trait MigrationTrait
      */
     private function getArrayValue($array, $key1, $key2 = null, $default = "")
     {
-        if (empty($array)) {
-            return $default;
-        }
-
-        $value1 = $default;
-        if (array_key_exists($key1, $array)) {
-            $value1 = $array[$key1];
-        } else {
-            return $default;
-        }
-        if (empty($key2)) {
-            return $value1;
-        }
-        $value2 = $default;
-        if (array_key_exists($key2, $value1)) {
-            $value2 = $value1[$key2];
-        }
-        return $value2;
+        return MigrationUtils::getArrayValue($array, $key1, $key2, $default);
     }
 
     /**
@@ -13341,7 +13326,7 @@ trait MigrationTrait
                     if ($param_split[0] == 'upload_id') {
                         // フレーム設定ファイルの追記
                         // 移行したアップロードファイルをini ファイルから探す
-                        if ($this->uploads_ini && array_key_exists('uploads', $this->uploads_ini) && array_key_exists('upload', $this->uploads_ini['uploads']) && array_key_exists($param_split[1], $this->uploads_ini['uploads']['upload'])) {
+                        if (Arr::has($this->uploads_ini, "uploads.upload.{$param_split[1]}")) {
                             // コンテンツ及び[upload_images] or [upload_files]セクション内のimg src or a href を作る。
                             $export_path = '../../uploads/' . $this->uploads_ini[$param_split[1]]['temp_file_name'];
 

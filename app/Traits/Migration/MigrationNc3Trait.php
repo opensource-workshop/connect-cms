@@ -3,6 +3,7 @@
 namespace App\Traits\Migration;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -185,6 +186,7 @@ use App\Models\Migration\Nc3\Nc3UsersLanguage;
 // use App\Models\Migration\Nc2\Nc2Simplemovie;
 
 use App\Traits\ConnectCommonTrait;
+use App\Utilities\Migration\MigrationUtils;
 
 use App\Enums\AreaType;
 use App\Enums\BlogFrameConfig;
@@ -846,7 +848,7 @@ trait MigrationNc3Trait
         // queryあり＋pathがトップページに該当するもの＋queryはlang１つだけ、はOK扱いにする
         parse_str($check_url_query, $check_url_query_array);
         if ($check_url_query_array) {
-            $lang = $this->getArrayValue($check_url_query_array, 'lang', null, null);
+            $lang = MigrationUtils::getArrayValue($check_url_query_array, 'lang', null, null);
             if (in_array($check_url_path, ['/', './', '/index.php', './index.php']) && count($check_url_query_array) === 1 && $lang) {
                 if (in_array($lang, ['japanese', 'english', 'chinese'])) {
                     // OK
@@ -874,7 +876,7 @@ trait MigrationNc3Trait
             return;
         }
         $short_url_array = explode('-', $check_url_array[0]);
-        $key = $this->getArrayValue($check_url_query_array, 'key', null, null);
+        $key = MigrationUtils::getArrayValue($check_url_query_array, 'key', null, null);
         $key_array = explode('-', $key);
 
         $nc3_abbreviate_url = Nc2AbbreviateUrl::
@@ -985,7 +987,7 @@ trait MigrationNc3Trait
             //      "page_id" => "0",
             //      "display_type" => "2",
             //    ]
-            $page_id = $this->getArrayValue($check_url_query_array, 'page_id', null, null);
+            $page_id = MigrationUtils::getArrayValue($check_url_query_array, 'page_id', null, null);
             if ($page_id) {
                 $nc3_page = Nc2Page::where('page_id', $page_id)->first();
                 if ($nc3_page) {
@@ -1004,9 +1006,9 @@ trait MigrationNc3Trait
         // (添付) ./?action=common_download_main&upload_id=11
         // ---------------------------------
         if ($check_url_query_array) {
-            $action = $this->getArrayValue($check_url_query_array, 'action', null, null);
+            $action = MigrationUtils::getArrayValue($check_url_query_array, 'action', null, null);
             if ($action == 'common_download_main') {
-                $upload_id = $this->getArrayValue($check_url_query_array, 'upload_id', null, null);
+                $upload_id = MigrationUtils::getArrayValue($check_url_query_array, 'upload_id', null, null);
                 if ($upload_id) {
                     $nc3_upload = Nc2Upload::where('upload_id', $upload_id)->first();
                     if ($nc3_upload) {
@@ -1091,19 +1093,19 @@ trait MigrationNc3Trait
 
         if ($check_url_query_array) {
 
-            $action = $this->getArrayValue($check_url_query_array, 'action', null, null);
+            $action = MigrationUtils::getArrayValue($check_url_query_array, 'action', null, null);
             if ($action == 'pages_view_main') {
 
                 // (通常モジュール)
                 //   (action)active_action & block_id(必須)         例：掲示板, お知らせ, キャビネット等
                 // (中央エリアに表示)
                 //   (action)active_center & active_block_id(任意)  例：カレンダー, 施設予約, 検索
-                $active_action = $this->getArrayValue($check_url_query_array, 'active_action', null, null);
-                $active_center = $this->getArrayValue($check_url_query_array, 'active_center', null, null);
+                $active_action = MigrationUtils::getArrayValue($check_url_query_array, 'active_action', null, null);
+                $active_center = MigrationUtils::getArrayValue($check_url_query_array, 'active_center', null, null);
 
                 if ($active_action) {
                     // block存在チェック(必須)
-                    $block_id = $this->getArrayValue($check_url_query_array, 'block_id', null, null);
+                    $block_id = MigrationUtils::getArrayValue($check_url_query_array, 'block_id', null, null);
                     $check_nc3_block = Nc2Block::where('block_id', $block_id)->first();
                     if ($check_nc3_block) {
                         // OK
@@ -1116,7 +1118,7 @@ trait MigrationNc3Trait
 
                 if ($active_action || $active_center) {
                     // page_id存在チェック(任意)
-                    $page_id = $this->getArrayValue($check_url_query_array, 'page_id', null, null);
+                    $page_id = MigrationUtils::getArrayValue($check_url_query_array, 'page_id', null, null);
                     if ($page_id) {
                         $check_nc3_page = Nc2Page::where('page_id', $page_id)->first();
                         if ($check_nc3_page) {
@@ -1158,7 +1160,7 @@ trait MigrationNc3Trait
                     //   http://localhost:8080/index.php?action=pages_view_main&active_center=bbs_view_main_post&bbs_id=3&post_id=9#_56
 
                     // bbs_post存在チェック
-                    $post_id = $this->getArrayValue($check_url_query_array, 'post_id', null, null);
+                    $post_id = MigrationUtils::getArrayValue($check_url_query_array, 'post_id', null, null);
                     $check_nc3_bbs_post = Nc2BbsPost::where('post_id', $post_id)->first();
                     if ($check_nc3_bbs_post) {
                         // OK
@@ -1169,7 +1171,7 @@ trait MigrationNc3Trait
                     }
 
                     // bbs_id存在チェック(任意)
-                    $bbs_id = $this->getArrayValue($check_url_query_array, 'bbs_id', null, null);
+                    $bbs_id = MigrationUtils::getArrayValue($check_url_query_array, 'bbs_id', null, null);
                     if ($bbs_id) {
                         $check_nc3_bbs = Nc2Bbs::where('bbs_id', $bbs_id)->first();
                         if ($check_nc3_bbs) {
@@ -1224,7 +1226,7 @@ trait MigrationNc3Trait
                     //   http://localhost:8080/index.php?action=pages_view_main&block_id=34&active_action=journal_view_main_detail&post_id=4#_34
 
                     // journal_post存在チェック
-                    $post_id = $this->getArrayValue($check_url_query_array, 'post_id', null, null);
+                    $post_id = MigrationUtils::getArrayValue($check_url_query_array, 'post_id', null, null);
                     $check_nc3_journal_post = Nc2JournalPost::where('post_id', $post_id)->first();
                     if ($check_nc3_journal_post) {
                         // OK
@@ -1256,7 +1258,7 @@ trait MigrationNc3Trait
                     //   http://localhost:8080/index.php?action=pages_view_main&block_id=51&active_action=multidatabase_view_main_detail&content_id=4&multidatabase_id=1&block_id=51#_51
 
                     // multidatabase存在チェック
-                    $multidatabase_id = $this->getArrayValue($check_url_query_array, 'multidatabase_id', null, null);
+                    $multidatabase_id = MigrationUtils::getArrayValue($check_url_query_array, 'multidatabase_id', null, null);
                     $check_nc3_multidatabase = Nc2Multidatabase::where('multidatabase_id', $multidatabase_id)->first();
                     if ($check_nc3_multidatabase) {
                         // OK
@@ -1267,7 +1269,7 @@ trait MigrationNc3Trait
                     }
 
                     // multidatabase_content存在チェック
-                    $content_id = $this->getArrayValue($check_url_query_array, 'content_id', null, null);
+                    $content_id = MigrationUtils::getArrayValue($check_url_query_array, 'content_id', null, null);
                     $check_nc3_multidatabase_content = Nc2MultidatabaseContent::where('content_id', $content_id)->first();
                     if ($check_nc3_multidatabase_content) {
                         // OK
@@ -1302,7 +1304,7 @@ trait MigrationNc3Trait
                     //   http://localhost:8080/index.php?action=pages_view_main&block_id=69&active_action=cabinet_view_main_init&cabinet_id=2&folder_id=0#_69
 
                     // cabinet_manage存在チェック(任意)
-                    $cabinet_id = $this->getArrayValue($check_url_query_array, 'cabinet_id', null, null);
+                    $cabinet_id = MigrationUtils::getArrayValue($check_url_query_array, 'cabinet_id', null, null);
                     if ($cabinet_id) {
                         $check_nc3_cabinet_manage = Nc2CabinetManage::where('cabinet_id', $cabinet_id)->first();
                         if ($check_nc3_cabinet_manage) {
@@ -1315,7 +1317,7 @@ trait MigrationNc3Trait
                     }
 
                     // folder_id(=file_id)のcabinet_file存在チェック(任意)
-                    $folder_id = $this->getArrayValue($check_url_query_array, 'folder_id', null, null);
+                    $folder_id = MigrationUtils::getArrayValue($check_url_query_array, 'folder_id', null, null);
                     if ($folder_id) {
                         $check_nc3_cabinet_file = Nc2CabinetFile::where('file_id', $folder_id)->first();
                         if ($check_nc3_cabinet_file) {
@@ -1381,7 +1383,7 @@ trait MigrationNc3Trait
                     if ($active_action == 'assignment_view_main_whatsnew') {
                         // (レポート-新着)
                         // assignment存在チェック（必須）
-                        $assignment_id = $this->getArrayValue($check_url_query_array, 'assignment_id', null, null);
+                        $assignment_id = MigrationUtils::getArrayValue($check_url_query_array, 'assignment_id', null, null);
                         $check_nc3_assignment = Nc2Assignment::where('assignment_id', $assignment_id)->first();
                         if ($check_nc3_assignment) {
                             // OK
@@ -1394,7 +1396,7 @@ trait MigrationNc3Trait
                     } elseif ($active_action == 'assignment_view_main_init') {
                         // (レポート-検索)
                         // assignment存在チェック（任意）
-                        $assignment_id = $this->getArrayValue($check_url_query_array, 'assignment_id', null, null);
+                        $assignment_id = MigrationUtils::getArrayValue($check_url_query_array, 'assignment_id', null, null);
                         if ($assignment_id) {
                             $check_nc3_assignment = Nc2Assignment::where('assignment_id', $assignment_id)->first();
                             if ($check_nc3_assignment) {
@@ -1422,7 +1424,7 @@ trait MigrationNc3Trait
                     //   http://localhost:8080/index.php?action=pages_view_main&active_action=questionnaire_view_main_whatsnew&questionnaire_id=19999999&block_id=75#_75
 
                     // questionnaire存在チェック
-                    $questionnaire_id = $this->getArrayValue($check_url_query_array, 'questionnaire_id', null, null);
+                    $questionnaire_id = MigrationUtils::getArrayValue($check_url_query_array, 'questionnaire_id', null, null);
                     $check_nc3_questionnaire = Nc2Questionnaire::where('questionnaire_id', $questionnaire_id)->first();
                     if ($check_nc3_questionnaire) {
                         // OK
@@ -1447,7 +1449,7 @@ trait MigrationNc3Trait
                     //   http://localhost:8080/index.php?action=pages_view_main&active_action=quiz_view_main_whatsnew&quiz_id=1999999&block_id=77#_77
 
                     // quiz存在チェック
-                    $quiz_id = $this->getArrayValue($check_url_query_array, 'quiz_id', null, null);
+                    $quiz_id = MigrationUtils::getArrayValue($check_url_query_array, 'quiz_id', null, null);
                     $check_nc3_quiz = Nc2Quiz::where('quiz_id', $quiz_id)->first();
                     if ($check_nc3_quiz) {
                         // OK
@@ -1477,7 +1479,7 @@ trait MigrationNc3Trait
                     //   http://localhost:8080/index.php?action=pages_view_main&block_id=76&page_id=55&active_action=todo_view_main_init#_76
 
                     // todo存在チェック（任意）
-                    $todo_id = $this->getArrayValue($check_url_query_array, 'todo_id', null, null);
+                    $todo_id = MigrationUtils::getArrayValue($check_url_query_array, 'todo_id', null, null);
                     if ($todo_id) {
                         $check_nc3_todo = Nc2Todo::where('todo_id', $todo_id)->first();
                         if ($check_nc3_todo) {
@@ -1512,7 +1514,7 @@ trait MigrationNc3Trait
                     //   http://localhost:8080/index.php?action=pages_view_main&active_action=circular_view_main_detail&block_id=78&room_id=19999&circular_id=2#_78
 
                     // circular存在チェック
-                    $circular_id = $this->getArrayValue($check_url_query_array, 'circular_id', null, null);
+                    $circular_id = MigrationUtils::getArrayValue($check_url_query_array, 'circular_id', null, null);
                     $check_nc3_circular = Nc2Circular::where('circular_id', $circular_id)->first();
                     if ($check_nc3_circular) {
                         // OK
@@ -1583,7 +1585,7 @@ trait MigrationNc3Trait
                     //   http://localhost:8080/index.php?action=pages_view_main&page_id=13&active_center=reservation_view_main_init&reserve_id=74999999
 
                     // display_typeの有効値チェック(任意)
-                    $display_type = $this->getArrayValue($check_url_query_array, 'display_type', null, null);
+                    $display_type = MigrationUtils::getArrayValue($check_url_query_array, 'display_type', null, null);
                     if ($display_type) {
                         if ((int)$display_type <= 3) {
                             // OK 1|2|3, ※ イレギュラーだけど0,-1,-2...でも表示可
@@ -1636,7 +1638,7 @@ trait MigrationNc3Trait
                     //   o display_type=5       任意. あれば値チェック=1～8
 
                     // display_typeの有効値チェック(任意)
-                    $display_type = $this->getArrayValue($check_url_query_array, 'display_type', null, null);
+                    $display_type = MigrationUtils::getArrayValue($check_url_query_array, 'display_type', null, null);
                     if ($display_type) {
                         if ((int)$display_type <= 8) {
                             // OK ※イレギュラーだけど0,-1,-2...でも表示可
@@ -1670,37 +1672,11 @@ trait MigrationNc3Trait
     }
 
     /**
-     * 配列の値の取得
-     * [TODO] 共通
-     */
-    private function getArrayValue($array, $key1, $key2 = null, $default = "")
-    {
-        if (empty($array)) {
-            return $default;
-        }
-
-        $value1 = $default;
-        if (array_key_exists($key1, $array)) {
-            $value1 = $array[$key1];
-        } else {
-            return $default;
-        }
-        if (empty($key2)) {
-            return $value1;
-        }
-        $value2 = $default;
-        if (array_key_exists($key2, $value1)) {
-            $value2 = $value1[$key2];
-        }
-        return $value2;
-    }
-
-    /**
      * 配列からtsvの値取得
      */
     private function getTsvValue($tsv_cols, $idx, $default = null)
     {
-        $value = $this->getArrayValue($tsv_cols, $idx, null, $default);
+        $value = MigrationUtils::getArrayValue($tsv_cols, $idx, null, $default);
         return empty($value) ? $default : $value;
     }
 
@@ -1834,7 +1810,7 @@ trait MigrationNc3Trait
             $default = date('Y-m-d H:i:s');
         }
 
-        $date = $this->getArrayValue($ini, $key1, $key2, null);
+        $date = MigrationUtils::getArrayValue($ini, $key1, $key2, null);
 
         // データが空の場合は、処理時間を入れる。
         if (empty($date)) {
@@ -2455,7 +2431,7 @@ trait MigrationNc3Trait
             $ini = parse_ini_file($ini_path, true);
 
             // nc3 の item_id
-            $nc3_item_id = $this->getArrayValue($ini, 'source_info', 'item_id', 0);
+            $nc3_item_id = MigrationUtils::getArrayValue($ini, 'source_info', 'item_id', 0);
 
             // マッピングテーブルの取得
             $mapping = MigrationMapping::where('target_source_table', 'users_columns')->where('source_key', $nc3_item_id)->first();
@@ -2469,13 +2445,13 @@ trait MigrationNc3Trait
                 $mapping->delete();
             }
 
-            $column_type = $this->getArrayValue($ini, 'users_columns_base', 'column_type');
+            $column_type = MigrationUtils::getArrayValue($ini, 'users_columns_base', 'column_type');
             $users_column = UsersColumns::create([
                 'column_type'      => $column_type,
-                'column_name'      => $this->getArrayValue($ini, 'users_columns_base', 'column_name'),
-                'required'         => intval($this->getArrayValue($ini, 'users_columns_base', 'required', 0)),
-                'caption'          => $this->getArrayValue($ini, 'users_columns_base', 'caption'),
-                'display_sequence' => intval($this->getArrayValue($ini, 'users_columns_base', 'display_sequence')),
+                'column_name'      => MigrationUtils::getArrayValue($ini, 'users_columns_base', 'column_name'),
+                'required'         => intval(MigrationUtils::getArrayValue($ini, 'users_columns_base', 'required', 0)),
+                'caption'          => MigrationUtils::getArrayValue($ini, 'users_columns_base', 'caption'),
+                'display_sequence' => intval(MigrationUtils::getArrayValue($ini, 'users_columns_base', 'display_sequence')),
             ]);
 
             $users_column->nc3_item_id = $nc3_item_id;
@@ -2500,7 +2476,7 @@ trait MigrationNc3Trait
                     // マッピングテーブル削除
                     $mapping->delete();
                 }
-                $select_values = explode('|', $this->getArrayValue($ini, 'users_columns_selects_base', 'value'));
+                $select_values = explode('|', MigrationUtils::getArrayValue($ini, 'users_columns_selects_base', 'value'));
                 foreach ($select_values as $i => $value) {
                     $display_sequence = $i;
                     $display_sequence++;
@@ -2900,13 +2876,13 @@ trait MigrationNc3Trait
                     continue;
                 }
 
-                $plugin_name = $this->getArrayValue($permalinks_ini, $short_url, 'plugin_name');
+                $plugin_name = MigrationUtils::getArrayValue($permalinks_ini, $short_url, 'plugin_name');
                 if (empty($plugin_name)) {
                     $this->putError(3, '固定URLの plugin_name なし', "short_url = " . $short_url);
                     continue;
                 }
 
-                $unique_id = $this->getArrayValue($permalinks_ini, $short_url, 'unique_id');
+                $unique_id = MigrationUtils::getArrayValue($permalinks_ini, $short_url, 'unique_id');
                 if (empty($unique_id)) {
                     $this->putError(3, '固定URLの nc3 unique_id なし', "short_url = " . $short_url);
                     continue;
@@ -2919,25 +2895,25 @@ trait MigrationNc3Trait
                     continue;
                 }
 
-                $nc3_block_id = $this->getArrayValue($permalinks_ini, $short_url, 'block_id');
+                $nc3_block_id = MigrationUtils::getArrayValue($permalinks_ini, $short_url, 'block_id');
 
                 // Permalinks 登録 or 更新
                 $bulks[] = [
                     'short_url'      => $short_url,
                     'plugin_name'    => $plugin_name,
-                    'action'         => $this->getArrayValue($permalinks_ini, $short_url, 'action'),
+                    'action'         => MigrationUtils::getArrayValue($permalinks_ini, $short_url, 'action'),
                     'unique_id'      => $unique_migration_mappings->destination_key,
                     'nc3_block_id'   => !empty($nc3_block_id) ? $nc3_block_id : null,
-                    'migrate_source' => $this->getArrayValue($permalinks_ini, $short_url, 'migrate_source'),
+                    'migrate_source' => MigrationUtils::getArrayValue($permalinks_ini, $short_url, 'migrate_source'),
                 ];
                 /*
                 $permalink = Permalink::updateOrCreate(
                     ['short_url'     => $short_url],
                     ['short_url'     => $short_url,
-                    'plugin_name'    => $this->getArrayValue($permalinks_ini, $short_url, 'plugin_name'),
-                    'action'         => $this->getArrayValue($permalinks_ini, $short_url, 'action'),
-                    'unique_id'      => $this->getArrayValue($permalinks_ini, $short_url, 'unique_id'),
-                    'migrate_source' => $this->getArrayValue($permalinks_ini, $short_url, 'migrate_source')]
+                    'plugin_name'    => MigrationUtils::getArrayValue($permalinks_ini, $short_url, 'plugin_name'),
+                    'action'         => MigrationUtils::getArrayValue($permalinks_ini, $short_url, 'action'),
+                    'unique_id'      => MigrationUtils::getArrayValue($permalinks_ini, $short_url, 'unique_id'),
+                    'migrate_source' => MigrationUtils::getArrayValue($permalinks_ini, $short_url, 'migrate_source')]
                 );
                 */
 
@@ -3024,7 +3000,7 @@ trait MigrationNc3Trait
             // マッピングテーブルを確認して、追加か更新の処理を分岐
             if (empty($mapping)) {
                 // マッピングテーブルがなければ、Buckets テーブルと Blogs テーブル、マッピングテーブルを追加
-                $blog_name = $this->getArrayValue($blog_ini, 'blog_base', 'blog_name', '無題');
+                $blog_name = MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'blog_name', '無題');
 
                 $bucket = new Buckets(['bucket_name' => $blog_name, 'plugin_name' => 'blogs']);
                 $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($blog_ini, 'source_info', 'created_at');
@@ -3033,14 +3009,14 @@ trait MigrationNc3Trait
                 $bucket->timestamps = false;
                 $bucket->save();
 
-                $use_like = $this->getArrayValue($blog_ini, 'blog_base', 'use_like', 0);
+                $use_like = MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'use_like', 0);
 
                 $blog = new Blogs(['bucket_id' => $bucket->id, 'blog_name' => $blog_name, 'use_like' => $use_like]);
-                $blog->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($blog_ini, 'source_info', 'insert_login_id', null));
-                $blog->created_name = $this->getArrayValue($blog_ini, 'source_info', 'created_name', null);
+                $blog->created_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($blog_ini, 'source_info', 'insert_login_id', null));
+                $blog->created_name = MigrationUtils::getArrayValue($blog_ini, 'source_info', 'created_name', null);
                 $blog->created_at   = $this->getDatetimeFromIniAndCheckFormat($blog_ini, 'source_info', 'created_at');
-                $blog->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($blog_ini, 'source_info', 'update_login_id', null));
-                $blog->updated_name = $this->getArrayValue($blog_ini, 'source_info', 'updated_name', null);
+                $blog->updated_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($blog_ini, 'source_info', 'update_login_id', null));
+                $blog->updated_name = MigrationUtils::getArrayValue($blog_ini, 'source_info', 'updated_name', null);
                 $blog->updated_at   = $this->getDatetimeFromIniAndCheckFormat($blog_ini, 'source_info', 'updated_at');
                 // 登録更新日時を自動更新しない
                 $blog->timestamps = false;
@@ -3381,11 +3357,11 @@ trait MigrationNc3Trait
 
                 $view_count = 10;
                 $linklist = Linklist::create(['bucket_id' => $bucket->id, 'name' => $linklist_name, 'view_count' => $view_count]);
-                $linklist->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($linklist_ini, 'source_info', 'insert_login_id', null));
-                $linklist->created_name = $this->getArrayValue($linklist_ini, 'source_info', 'created_name', null);
+                $linklist->created_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($linklist_ini, 'source_info', 'insert_login_id', null));
+                $linklist->created_name = MigrationUtils::getArrayValue($linklist_ini, 'source_info', 'created_name', null);
                 $linklist->created_at   = $this->getDatetimeFromIniAndCheckFormat($linklist_ini, 'source_info', 'created_at');
-                $linklist->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($linklist_ini, 'source_info', 'update_login_id', null));
-                $linklist->updated_name = $this->getArrayValue($linklist_ini, 'source_info', 'updated_name', null);
+                $linklist->updated_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($linklist_ini, 'source_info', 'update_login_id', null));
+                $linklist->updated_name = MigrationUtils::getArrayValue($linklist_ini, 'source_info', 'updated_name', null);
                 $linklist->updated_at   = $this->getDatetimeFromIniAndCheckFormat($linklist_ini, 'source_info', 'updated_at');
                 // 登録更新日時を自動更新しない
                 $linklist->timestamps = false;
@@ -3493,7 +3469,7 @@ trait MigrationNc3Trait
             //}
 
             // nc3 の multidatabase_id
-            $nc3_multidatabase_id = $this->getArrayValue($databases_ini, 'source_info', 'multidatabase_id', 0);
+            $nc3_multidatabase_id = MigrationUtils::getArrayValue($databases_ini, 'source_info', 'multidatabase_id', 0);
 
             // データベース指定の有無
             $cc_import_where_database_ids = $this->getMigrationConfig('databases', 'cc_import_where_database_ids');
@@ -3509,7 +3485,7 @@ trait MigrationNc3Trait
             // マッピングテーブルを確認して、追加か更新の処理を分岐
             if (empty($mapping)) {
                 // マッピングテーブルがなければ、Buckets テーブルと Database テーブル、マッピングテーブルを追加
-                $database_name = $this->getArrayValue($databases_ini, 'database_base', 'database_name', '無題');
+                $database_name = MigrationUtils::getArrayValue($databases_ini, 'database_base', 'database_name', '無題');
 
                 $bucket = new Buckets(['bucket_name' => $database_name, 'plugin_name' => 'databases']);
                 $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($databases_ini, 'source_info', 'created_at');
@@ -3519,11 +3495,11 @@ trait MigrationNc3Trait
                 $bucket->save();
 
                 $database = new Databases(['bucket_id' => $bucket->id, 'databases_name' => $database_name, 'data_save_flag' => 1]);
-                $database->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($databases_ini, 'source_info', 'insert_login_id', null));
-                $database->created_name = $this->getArrayValue($databases_ini, 'source_info', 'created_name', null);
+                $database->created_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($databases_ini, 'source_info', 'insert_login_id', null));
+                $database->created_name = MigrationUtils::getArrayValue($databases_ini, 'source_info', 'created_name', null);
                 $database->created_at   = $this->getDatetimeFromIniAndCheckFormat($databases_ini, 'source_info', 'created_at');
-                $database->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($databases_ini, 'source_info', 'update_login_id', null));
-                $database->updated_name = $this->getArrayValue($databases_ini, 'source_info', 'updated_name', null);
+                $database->updated_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($databases_ini, 'source_info', 'update_login_id', null));
+                $database->updated_name = MigrationUtils::getArrayValue($databases_ini, 'source_info', 'updated_name', null);
                 $database->updated_at   = $this->getDatetimeFromIniAndCheckFormat($databases_ini, 'source_info', 'updated_at');
                 // 登録更新日時を自動更新しない
                 $database->timestamps = false;
@@ -3843,7 +3819,7 @@ trait MigrationNc3Trait
             $regist_to = null;
 
             // nc3 の active_flag (動作／停止)
-            $nc3_active_flag = $this->getArrayValue($form_ini, 'source_info', 'active_flag', 1);
+            $nc3_active_flag = MigrationUtils::getArrayValue($form_ini, 'source_info', 'active_flag', 1);
             if ($nc3_active_flag == 0) {
                 // 停止
                 // 停止フォームなら、登録期間外で代用してフォーム登録を停止する。
@@ -3885,11 +3861,11 @@ trait MigrationNc3Trait
                 'regist_control_flag' => $regist_control_flag,
                 'regist_to'           => $regist_to,
             ]);
-            $form->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($form_ini, 'source_info', 'insert_login_id', null));
-            $form->created_name = $this->getArrayValue($form_ini, 'source_info', 'created_name', null);
+            $form->created_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($form_ini, 'source_info', 'insert_login_id', null));
+            $form->created_name = MigrationUtils::getArrayValue($form_ini, 'source_info', 'created_name', null);
             $form->created_at   = $this->getDatetimeFromIniAndCheckFormat($form_ini, 'source_info', 'created_at');
-            $form->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($form_ini, 'source_info', 'update_login_id', null));
-            $form->updated_name = $this->getArrayValue($form_ini, 'source_info', 'updated_name', null);
+            $form->updated_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($form_ini, 'source_info', 'update_login_id', null));
+            $form->updated_name = MigrationUtils::getArrayValue($form_ini, 'source_info', 'updated_name', null);
             $form->updated_at   = $this->getDatetimeFromIniAndCheckFormat($form_ini, 'source_info', 'updated_at');
             // 登録更新日時を自動更新しない
             $form->timestamps = false;
@@ -3968,11 +3944,11 @@ trait MigrationNc3Trait
                 $forms_inputs = new FormsInputs([
                     'forms_id' => $form->id,
                 ]);
-                $forms_inputs->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($data_txt_ini, $data_id, 'insert_login_id', null));
-                $forms_inputs->created_name = $this->getArrayValue($data_txt_ini, $data_id, 'created_name', null);
+                $forms_inputs->created_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($data_txt_ini, $data_id, 'insert_login_id', null));
+                $forms_inputs->created_name = MigrationUtils::getArrayValue($data_txt_ini, $data_id, 'created_name', null);
                 $forms_inputs->created_at   = $this->getDatetimeFromIniAndCheckFormat($data_txt_ini, $data_id, 'created_at');
-                $forms_inputs->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($data_txt_ini, $data_id, 'update_login_id', null));
-                $forms_inputs->updated_name = $this->getArrayValue($data_txt_ini, $data_id, 'updated_name', null);
+                $forms_inputs->updated_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($data_txt_ini, $data_id, 'update_login_id', null));
+                $forms_inputs->updated_name = MigrationUtils::getArrayValue($data_txt_ini, $data_id, 'updated_name', null);
                 $forms_inputs->updated_at   = $this->getDatetimeFromIniAndCheckFormat($data_txt_ini, $data_id, 'updated_at');
                 // 登録更新日時を自動更新しない
                 $forms_inputs->timestamps = false;
@@ -3992,11 +3968,11 @@ trait MigrationNc3Trait
                         'forms_inputs_id'  => $forms_inputs->id,
                         'forms_columns_id' => $column_ids[$item_id],
                         'value'            => $data,
-                        'created_id'       => $this->getUserIdFromLoginId($users, $this->getArrayValue($data_txt_ini, $data_id, 'insert_login_id', null)),
-                        'created_name'     => $this->getArrayValue($data_txt_ini, $data_id, 'created_name', null),
+                        'created_id'       => $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($data_txt_ini, $data_id, 'insert_login_id', null)),
+                        'created_name'     => MigrationUtils::getArrayValue($data_txt_ini, $data_id, 'created_name', null),
                         'created_at'       => $this->getDatetimeFromIniAndCheckFormat($data_txt_ini, $data_id, 'created_at'),
-                        'updated_id'       => $this->getUserIdFromLoginId($users, $this->getArrayValue($data_txt_ini, $data_id, 'update_login_id', null)),
-                        'updated_name'     => $this->getArrayValue($data_txt_ini, $data_id, 'updated_name', null),
+                        'updated_id'       => $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($data_txt_ini, $data_id, 'update_login_id', null)),
+                        'updated_name'     => MigrationUtils::getArrayValue($data_txt_ini, $data_id, 'updated_name', null),
                         'updated_at'       => $this->getDatetimeFromIniAndCheckFormat($data_txt_ini, $data_id, 'updated_at'),
                     ];
                     /*
@@ -4092,11 +4068,11 @@ trait MigrationNc3Trait
                 'target_plugins'   => $whatsnew_ini['whatsnew_base']['target_plugins'],
                 'frame_select'     => $whatsnew_ini['whatsnew_base']['frame_select'],
             ]);
-            $whatsnew->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($whatsnew_ini, 'source_info', 'insert_login_id', null));
-            $whatsnew->created_name = $this->getArrayValue($whatsnew_ini, 'source_info', 'created_name', null);
+            $whatsnew->created_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($whatsnew_ini, 'source_info', 'insert_login_id', null));
+            $whatsnew->created_name = MigrationUtils::getArrayValue($whatsnew_ini, 'source_info', 'created_name', null);
             $whatsnew->created_at   = $this->getDatetimeFromIniAndCheckFormat($whatsnew_ini, 'source_info', 'created_at');
-            $whatsnew->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($whatsnew_ini, 'source_info', 'update_login_id', null));
-            $whatsnew->updated_name = $this->getArrayValue($whatsnew_ini, 'source_info', 'updated_name', null);
+            $whatsnew->updated_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($whatsnew_ini, 'source_info', 'update_login_id', null));
+            $whatsnew->updated_name = MigrationUtils::getArrayValue($whatsnew_ini, 'source_info', 'updated_name', null);
             $whatsnew->updated_at   = $this->getDatetimeFromIniAndCheckFormat($whatsnew_ini, 'source_info', 'updated_at');
             // 登録更新日時を自動更新しない
             $whatsnew->timestamps = false;
@@ -4176,11 +4152,11 @@ trait MigrationNc3Trait
                 'name' => $cabinet_name,
                 'upload_max_size' => intval($ini['cabinet_base']['upload_max_size']) / 1024,
             ]);
-            $cabinet->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'insert_login_id', null));
-            $cabinet->created_name = $this->getArrayValue($ini, 'source_info', 'created_name', null);
+            $cabinet->created_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($ini, 'source_info', 'insert_login_id', null));
+            $cabinet->created_name = MigrationUtils::getArrayValue($ini, 'source_info', 'created_name', null);
             $cabinet->created_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'created_at');
-            $cabinet->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'update_login_id', null));
-            $cabinet->updated_name = $this->getArrayValue($ini, 'source_info', 'updated_name', null);
+            $cabinet->updated_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($ini, 'source_info', 'update_login_id', null));
+            $cabinet->updated_name = MigrationUtils::getArrayValue($ini, 'source_info', 'updated_name', null);
             $cabinet->updated_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'updated_at');
             // 登録更新日時を自動更新しない
             $cabinet->timestamps = false;
@@ -4192,11 +4168,11 @@ trait MigrationNc3Trait
                 'name' => $cabinet_name,
                 'is_folder' => CabinetContent::is_folder_on,
             ]);
-            $root_cabinet_content->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'insert_login_id', null));
-            $root_cabinet_content->created_name = $this->getArrayValue($ini, 'source_info', 'created_name', null);
+            $root_cabinet_content->created_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($ini, 'source_info', 'insert_login_id', null));
+            $root_cabinet_content->created_name = MigrationUtils::getArrayValue($ini, 'source_info', 'created_name', null);
             $root_cabinet_content->created_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'created_at');
-            $root_cabinet_content->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'update_login_id', null));
-            $root_cabinet_content->updated_name = $this->getArrayValue($ini, 'source_info', 'updated_name', null);
+            $root_cabinet_content->updated_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($ini, 'source_info', 'update_login_id', null));
+            $root_cabinet_content->updated_name = MigrationUtils::getArrayValue($ini, 'source_info', 'updated_name', null);
             $root_cabinet_content->updated_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'updated_at');
             // 登録更新日時を自動更新しない
             $root_cabinet_content->timestamps = false;
@@ -4324,7 +4300,7 @@ trait MigrationNc3Trait
             }
 
             // Buckets テーブルと Cabinets テーブル、マッピングテーブルを追加
-            $bbs_name = $this->getArrayValue($ini, 'blog_base', 'blog_name', '無題');
+            $bbs_name = MigrationUtils::getArrayValue($ini, 'blog_base', 'blog_name', '無題');
 
             $bucket = new Buckets(['bucket_name' => $bbs_name, 'plugin_name' => 'bbses']);
             $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'created_at');
@@ -4337,7 +4313,7 @@ trait MigrationNc3Trait
             if ($this->getMigrationConfig('bbses', 'import_bbs_all_like_not_use')) {
                 $use_like = 0;
             } else {
-                $use_like = $this->getArrayValue($ini, 'blog_base', 'use_like', 0);
+                $use_like = MigrationUtils::getArrayValue($ini, 'blog_base', 'use_like', 0);
             }
 
             $bbs = new Bbs([
@@ -4345,11 +4321,11 @@ trait MigrationNc3Trait
                 'name' => $bbs_name,
                 'use_like' => $use_like,
             ]);
-            $bbs->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'insert_login_id', null));
-            $bbs->created_name = $this->getArrayValue($ini, 'source_info', 'created_name', null);
+            $bbs->created_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($ini, 'source_info', 'insert_login_id', null));
+            $bbs->created_name = MigrationUtils::getArrayValue($ini, 'source_info', 'created_name', null);
             $bbs->created_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'created_at');
-            $bbs->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'update_login_id', null));
-            $bbs->updated_name = $this->getArrayValue($ini, 'source_info', 'updated_name', null);
+            $bbs->updated_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($ini, 'source_info', 'update_login_id', null));
+            $bbs->updated_name = MigrationUtils::getArrayValue($ini, 'source_info', 'updated_name', null);
             $bbs->updated_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'updated_at');
             // 登録更新日時を自動更新しない
             $bbs->timestamps = false;
@@ -4518,11 +4494,11 @@ trait MigrationNc3Trait
                 'bucket_id' => $bucket->id,
                 'name' => $counter_name,
             ]);
-            $counter->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'insert_login_id', null));
-            $counter->created_name = $this->getArrayValue($ini, 'source_info', 'created_name', null);
+            $counter->created_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($ini, 'source_info', 'insert_login_id', null));
+            $counter->created_name = MigrationUtils::getArrayValue($ini, 'source_info', 'created_name', null);
             $counter->created_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'created_at');
-            $counter->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'update_login_id', null));
-            $counter->updated_name = $this->getArrayValue($ini, 'source_info', 'updated_name', null);
+            $counter->updated_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($ini, 'source_info', 'update_login_id', null));
+            $counter->updated_name = MigrationUtils::getArrayValue($ini, 'source_info', 'updated_name', null);
             $counter->updated_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'updated_at');
             // 登録更新日時を自動更新しない
             $counter->timestamps = false;
@@ -4769,7 +4745,7 @@ trait MigrationNc3Trait
             // マッピングテーブルを確認して、追加か取得の処理を分岐
             if (empty($mapping)) {
                 // Buckets テーブルと slideshows テーブル、マッピングテーブルを追加
-                $slideshows_name = $this->getArrayValue($ini, 'slideshow_base', 'slideshows_name', '無題');
+                $slideshows_name = MigrationUtils::getArrayValue($ini, 'slideshow_base', 'slideshows_name', '無題');
 
                 $bucket = new Buckets(['bucket_name' => $slideshows_name, 'plugin_name' => 'slideshows']);
                 $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'created_at');
@@ -4781,8 +4757,8 @@ trait MigrationNc3Trait
                 $control_display_flag = 1;
                 $indicators_display_flag = 1;
                 $fade_use_flag = 1;
-                $image_interval = $this->getArrayValue($ini, 'slideshow_base', 'image_interval', 3000);
-                $height = $this->getArrayValue($ini, 'slideshow_base', 'height', null);
+                $image_interval = MigrationUtils::getArrayValue($ini, 'slideshow_base', 'image_interval', 3000);
+                $height = MigrationUtils::getArrayValue($ini, 'slideshow_base', 'height', null);
                 $slideshows = new Slideshows([
                     'bucket_id' => $bucket->id,
                     'slideshows_name' => $slideshows_name,
@@ -4792,11 +4768,11 @@ trait MigrationNc3Trait
                     'image_interval' => $image_interval,
                     'height'         => $height,
                 ]);
-                $slideshows->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'insert_login_id', null));
-                $slideshows->created_name = $this->getArrayValue($ini, 'source_info', 'created_name', null);
+                $slideshows->created_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($ini, 'source_info', 'insert_login_id', null));
+                $slideshows->created_name = MigrationUtils::getArrayValue($ini, 'source_info', 'created_name', null);
                 $slideshows->created_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'created_at');
-                $slideshows->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'update_login_id', null));
-                $slideshows->updated_name = $this->getArrayValue($ini, 'source_info', 'updated_name', null);
+                $slideshows->updated_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($ini, 'source_info', 'update_login_id', null));
+                $slideshows->updated_name = MigrationUtils::getArrayValue($ini, 'source_info', 'updated_name', null);
                 $slideshows->updated_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'updated_at');
                 // 登録更新日時を自動更新しない
                 $slideshows->timestamps = false;
@@ -5377,7 +5353,7 @@ trait MigrationNc3Trait
             $photoalbums_ini = parse_ini_file($photoalbums_ini_path, true);
 
             // nc3 の photoalbum_id
-            $nc3_photoalbum_id = $this->getArrayValue($photoalbums_ini, 'source_info', 'photoalbum_id', 0);
+            $nc3_photoalbum_id = MigrationUtils::getArrayValue($photoalbums_ini, 'source_info', 'photoalbum_id', 0);
 
             // フォトアルバム指定の有無
             $cc_import_where_photoalbum_ids = $this->getMigrationConfig('photoalbums', 'cc_import_where_photoalbum_ids');
@@ -5393,7 +5369,7 @@ trait MigrationNc3Trait
             // マッピングテーブルを確認して、追加か取得の処理を分岐
             if (empty($mapping)) {
                 // マッピングテーブルがなければ、Buckets テーブルと Photoalbum テーブル、マッピングテーブルを追加
-                $photoalbum_name = $this->getArrayValue($photoalbums_ini, 'photoalbum_base', 'photoalbum_name', '無題');
+                $photoalbum_name = MigrationUtils::getArrayValue($photoalbums_ini, 'photoalbum_base', 'photoalbum_name', '無題');
 
                 $bucket = new Buckets(['bucket_name' => $photoalbum_name, 'plugin_name' => 'photoalbums']);
                 $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($photoalbums_ini, 'source_info', 'created_at');
@@ -5409,11 +5385,11 @@ trait MigrationNc3Trait
                     'image_upload_max_px' => 'asis',    // asis:原寸
                     'video_upload_max_size' => 2048,
                 ]);
-                $photoalbum->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($photoalbums_ini, 'source_info', 'insert_login_id', null));
-                $photoalbum->created_name = $this->getArrayValue($photoalbums_ini, 'source_info', 'created_name', null);
+                $photoalbum->created_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($photoalbums_ini, 'source_info', 'insert_login_id', null));
+                $photoalbum->created_name = MigrationUtils::getArrayValue($photoalbums_ini, 'source_info', 'created_name', null);
                 $photoalbum->created_at   = $this->getDatetimeFromIniAndCheckFormat($photoalbums_ini, 'source_info', 'created_at');
-                $photoalbum->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($photoalbums_ini, 'source_info', 'update_login_id', null));
-                $photoalbum->updated_name = $this->getArrayValue($photoalbums_ini, 'source_info', 'updated_name', null);
+                $photoalbum->updated_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($photoalbums_ini, 'source_info', 'update_login_id', null));
+                $photoalbum->updated_name = MigrationUtils::getArrayValue($photoalbums_ini, 'source_info', 'updated_name', null);
                 $photoalbum->updated_at   = $this->getDatetimeFromIniAndCheckFormat($photoalbums_ini, 'source_info', 'updated_at');
                 // 登録更新日時を自動更新しない
                 $photoalbum->timestamps = false;
@@ -5424,11 +5400,11 @@ trait MigrationNc3Trait
                 $parent->parent_id = null;
                 $parent->is_folder = PhotoalbumContent::is_folder_on;
                 $parent->name = $photoalbum->name;
-                $parent->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($photoalbums_ini, 'source_info', 'insert_login_id', null));
-                $parent->created_name = $this->getArrayValue($photoalbums_ini, 'source_info', 'created_name', null);
+                $parent->created_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($photoalbums_ini, 'source_info', 'insert_login_id', null));
+                $parent->created_name = MigrationUtils::getArrayValue($photoalbums_ini, 'source_info', 'created_name', null);
                 $parent->created_at   = $this->getDatetimeFromIniAndCheckFormat($photoalbums_ini, 'source_info', 'created_at');
-                $parent->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($photoalbums_ini, 'source_info', 'update_login_id', null));
-                $parent->updated_name = $this->getArrayValue($photoalbums_ini, 'source_info', 'updated_name', null);
+                $parent->updated_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($photoalbums_ini, 'source_info', 'update_login_id', null));
+                $parent->updated_name = MigrationUtils::getArrayValue($photoalbums_ini, 'source_info', 'updated_name', null);
                 $parent->updated_at   = $this->getDatetimeFromIniAndCheckFormat($photoalbums_ini, 'source_info', 'updated_at');
                 // 登録更新日時を自動更新しない
                 $parent->timestamps = false;
@@ -5447,7 +5423,7 @@ trait MigrationNc3Trait
                 $parent = PhotoalbumContent::firstOrNew(['photoalbum_id' => $photoalbum->id]);
             }
 
-            foreach ($this->getArrayValue($photoalbums_ini, 'albums', 'album', []) as $album_id => $album_name) {
+            foreach (MigrationUtils::getArrayValue($photoalbums_ini, 'albums', 'album', []) as $album_id => $album_name) {
 
                 $is_empty_album = true;
 
@@ -5731,7 +5707,7 @@ trait MigrationNc3Trait
         $overwrite_ini_path = str_replace('@insert', '@update', $overwrite_ini_path);
 
         // NC3 用の上書き設定があるか確認
-        //$source_key = $this->getArrayValue($ini, 'source_info', 'source_key');
+        //$source_key = MigrationUtils::getArrayValue($ini, 'source_info', 'source_key');
         //if (empty($source_key)) {
         //    return $ini;
         //}
@@ -5899,20 +5875,20 @@ trait MigrationNc3Trait
 
         // migration_mapping 確認
         // if (array_key_exists('addition', $frame_ini)) {
-        //     $source_key = $this->getArrayValue($frame_ini, 'addition', 'source_key');
+        //     $source_key = MigrationUtils::getArrayValue($frame_ini, 'addition', 'source_key');
         // } else {
-        //     $source_key = $this->getArrayValue($frame_ini, 'source_info', 'source_key');
+        //     $source_key = MigrationUtils::getArrayValue($frame_ini, 'source_info', 'source_key');
         // }
 
         // migration_mapping 確認
-        $source_key = $this->getArrayValue($frame_ini, 'source_info', 'source_key');
+        $source_key = MigrationUtils::getArrayValue($frame_ini, 'source_info', 'source_key');
         $migration_mappings = MigrationMapping::where('target_source_table', 'menus')->where('source_key', $source_key)->first();
 
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence);
 
         // NC3 からの移行時の非表示設定の反映
-        $ommit_page_ids_nc3 = $this->getArrayValue($frame_ini, 'menu', 'ommit_page_ids_nc3');
+        $ommit_page_ids_nc3 = MigrationUtils::getArrayValue($frame_ini, 'menu', 'ommit_page_ids_nc3');
         $ommit_page_ids = array();
         if (!empty($ommit_page_ids_nc3)) {
             foreach (explode(",", $ommit_page_ids_nc3) as $ommit_page_id_nc3) {
@@ -5939,11 +5915,11 @@ trait MigrationNc3Trait
         $menus = Menu::updateOrCreate(
             ['frame_id' => $frame->id],
             ['frame_id'         => $frame->id,
-            'select_flag'       => $this->getArrayValue($frame_ini, 'menu', 'select_flag'),
+            'select_flag'       => MigrationUtils::getArrayValue($frame_ini, 'menu', 'select_flag'),
             'page_ids'          => $view_page_ids_str,
-            'folder_close_font' => intval($this->getArrayValue($frame_ini, 'menu', 'folder_close_font')),
-            'folder_open_font'  => intval($this->getArrayValue($frame_ini, 'menu', 'folder_open_font')),
-            'indent_font'       => intval($this->getArrayValue($frame_ini, 'menu', 'indent_font'))]
+            'folder_close_font' => intval(MigrationUtils::getArrayValue($frame_ini, 'menu', 'folder_close_font')),
+            'folder_open_font'  => intval(MigrationUtils::getArrayValue($frame_ini, 'menu', 'folder_open_font')),
+            'indent_font'       => intval(MigrationUtils::getArrayValue($frame_ini, 'menu', 'indent_font'))]
         );
 
         // マップ 登録 or 更新
@@ -6029,8 +6005,8 @@ trait MigrationNc3Trait
                     'buckets_id' => $bucket->id,
                     'role' => 'role_article',   // モデレータ
                 ], [
-                    'post_flag'     => $this->getArrayValue($blog_ini, 'blog_base', 'article_post_flag', 0),
-                    'approval_flag' => $this->getArrayValue($blog_ini, 'blog_base', 'article_approval_flag', 0),
+                    'post_flag'     => MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'article_post_flag', 0),
+                    'approval_flag' => MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'article_approval_flag', 0),
                 ]
             );
             BucketsRoles::updateOrCreate(
@@ -6038,8 +6014,8 @@ trait MigrationNc3Trait
                     'buckets_id' => $bucket->id,
                     'role' => 'role_reporter',  // 編集者
                 ], [
-                    'post_flag'     => $this->getArrayValue($blog_ini, 'blog_base', 'reporter_post_flag', 0),
-                    'approval_flag' => $this->getArrayValue($blog_ini, 'blog_base', 'reporter_approval_flag', 0),
+                    'post_flag'     => MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'reporter_post_flag', 0),
+                    'approval_flag' => MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'reporter_approval_flag', 0),
                 ]
             );
 
@@ -6049,42 +6025,42 @@ trait MigrationNc3Trait
             $bucket_mail = BucketsMail::firstOrNew(['buckets_id' => $bucket->id]);
 
             $notice_groups = [];
-            if ($this->getArrayValue($blog_ini, 'blog_base', 'notice_admin_group')) {
+            if (MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'notice_admin_group')) {
                 // グループ通知
                 // ※ importGroups()は処理前のため管理者グループなし。そのため仮コードを登録してimportGroups()で置換する。
                 $notice_groups[] = 'X-管理者グループ';
             }
 
-            if ($this->getArrayValue($blog_ini, 'blog_base', 'notice_group')) {
+            if (MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'notice_group')) {
                 // グループ通知
                 // ※ importGroups()は処理前のためnc3ルームグループなし。そのため仮コード(nc3ルームID)を登録してimportGroups()で置換する。
-                $notice_groups[] = $this->getArrayValue($blog_ini, 'source_info', 'room_id') ? 'X-' . $this->getArrayValue($blog_ini, 'source_info', 'room_id') : '';
+                $notice_groups[] = MigrationUtils::getArrayValue($blog_ini, 'source_info', 'room_id') ? 'X-' . MigrationUtils::getArrayValue($blog_ini, 'source_info', 'room_id') : '';
             }
 
-            $notice_on = $this->getArrayValue($blog_ini, 'blog_base', 'notice_on') ? 1 : 0;
+            $notice_on = MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'notice_on') ? 1 : 0;
 
-            if ($notice_on && $this->getArrayValue($blog_ini, 'blog_base', 'notice_moderator_group')) {
+            if ($notice_on && MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'notice_moderator_group')) {
                 // グループ通知
                 $this->putMonitor(3, 'ブログのメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
             }
-            if ($notice_on && $this->getArrayValue($blog_ini, 'blog_base', 'notice_public_general_group')) {
+            if ($notice_on && MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'notice_public_general_group')) {
                 // パブリック一般通知
                 $this->putMonitor(3, '公開エリアのブログのメール設定（一般まで）は、手動で「一般グループ」を作成して、追加で「一般グループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
             }
-            if ($notice_on && $this->getArrayValue($blog_ini, 'blog_base', 'notice_public_moderator_group')) {
+            if ($notice_on && MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'notice_public_moderator_group')) {
                 // パブリックモデレーター通知
                 $this->putMonitor(3, '公開エリアのブログのメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
             }
 
             $approval_groups = [];
-            if ($this->getArrayValue($blog_ini, 'blog_base', 'approval_admin_group')) {
+            if (MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'approval_admin_group')) {
                 // グループ通知
                 // ※ importGroups()は処理前のため管理者グループなし。そのため仮コードを登録してimportGroups()で置換する。
                 $approval_groups[] = 'X-管理者グループ';
             }
 
             $approved_groups = [];
-            if ($this->getArrayValue($blog_ini, 'blog_base', 'approved_admin_group')) {
+            if (MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'approved_admin_group')) {
                 // グループ通知
                 // ※ importGroups()は処理前のため管理者グループなし。そのため仮コードを登録してimportGroups()で置換する。
                 $approved_groups[] = 'X-管理者グループ';
@@ -6100,24 +6076,24 @@ trait MigrationNc3Trait
             $bucket_mail->notice_update      = 0;
             $bucket_mail->notice_delete      = 0;
             $bucket_mail->notice_addresses   = null;
-            $bucket_mail->notice_everyone    = $this->getArrayValue($blog_ini, 'blog_base', 'notice_everyone') ? 1 : 0;
+            $bucket_mail->notice_everyone    = MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'notice_everyone') ? 1 : 0;
             $bucket_mail->notice_groups      = implode('|', $notice_groups) == "" ? null : implode('|', $notice_groups);
             $bucket_mail->notice_roles       = null;    // 画面項目なし
-            $bucket_mail->notice_subject     = $this->getArrayValue($blog_ini, 'blog_base', 'mail_subject');
-            $bucket_mail->notice_body        = $this->getArrayValue($blog_ini, 'blog_base', 'mail_body');
+            $bucket_mail->notice_subject     = MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'mail_subject');
+            $bucket_mail->notice_body        = MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'mail_body');
             // 関連記事通知
             $bucket_mail->relate_on          = 0;
             // 承認通知
-            $bucket_mail->approval_on        = $this->getArrayValue($blog_ini, 'blog_base', 'approval_on') ? 1 : 0;
+            $bucket_mail->approval_on        = MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'approval_on') ? 1 : 0;
             $bucket_mail->approval_groups    = implode('|', $approval_groups) == "" ? null : implode('|', $approval_groups);
-            $bucket_mail->approval_subject   = $this->getArrayValue($blog_ini, 'blog_base', 'approval_subject');
-            $bucket_mail->approval_body      = $this->getArrayValue($blog_ini, 'blog_base', 'approval_body');
+            $bucket_mail->approval_subject   = MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'approval_subject');
+            $bucket_mail->approval_body      = MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'approval_body');
             // 承認済み通知
-            $bucket_mail->approved_on        = $this->getArrayValue($blog_ini, 'blog_base', 'approved_on') ? 1 : 0;
-            $bucket_mail->approved_author    = $this->getArrayValue($blog_ini, 'blog_base', 'approved_author') ? 1 : 0;
+            $bucket_mail->approved_on        = MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'approved_on') ? 1 : 0;
+            $bucket_mail->approved_author    = MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'approved_author') ? 1 : 0;
             $bucket_mail->approved_groups    = implode('|', $approved_groups) == "" ? null : implode('|', $approved_groups);
-            $bucket_mail->approved_subject   = $this->getArrayValue($blog_ini, 'blog_base', 'approved_subject');
-            $bucket_mail->approved_body      = $this->getArrayValue($blog_ini, 'blog_base', 'approved_body');
+            $bucket_mail->approved_subject   = MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'approved_subject');
+            $bucket_mail->approved_body      = MigrationUtils::getArrayValue($blog_ini, 'blog_base', 'approved_body');
 
             // BucketsMails の更新
             $bucket_mail->save();
@@ -6285,11 +6261,11 @@ trait MigrationNc3Trait
             DatabasesFrames::create([
                 'databases_id'      => $databases->id,
                 'frames_id'         => $frame->id,
-                'use_search_flag'   => $this->getArrayValue($frame_ini, 'database', 'use_search_flag', 1),
-                'use_select_flag'   => $this->getArrayValue($frame_ini, 'database', 'use_select_flag', 1),
-                'use_sort_flag'     => $this->getArrayValue($frame_ini, 'database', 'use_sort_flag', null),
-                'default_sort_flag' => $this->getArrayValue($frame_ini, 'database', 'default_sort_flag', null),
-                'use_filter_flag'   => $this->getArrayValue($frame_ini, 'database', 'use_filter_flag', 0),
+                'use_search_flag'   => MigrationUtils::getArrayValue($frame_ini, 'database', 'use_search_flag', 1),
+                'use_select_flag'   => MigrationUtils::getArrayValue($frame_ini, 'database', 'use_select_flag', 1),
+                'use_sort_flag'     => MigrationUtils::getArrayValue($frame_ini, 'database', 'use_sort_flag', null),
+                'default_sort_flag' => MigrationUtils::getArrayValue($frame_ini, 'database', 'default_sort_flag', null),
+                'use_filter_flag'   => MigrationUtils::getArrayValue($frame_ini, 'database', 'use_filter_flag', 0),
                 'view_count'        => $view_count,
                 'default_hide'      => 0,
             ]);
@@ -6391,7 +6367,7 @@ trait MigrationNc3Trait
             // フレーム設定保存
             // ---------------------------------------
 
-            $view_format = (int) $this->getArrayValue($frame_ini, 'bbs', 'view_format', 0);
+            $view_format = (int) MigrationUtils::getArrayValue($frame_ini, 'bbs', 'view_format', 0);
 
             // 一覧での展開方法 変換
             // (cc) 0:フラット形式,1:スレッド形式
@@ -6425,7 +6401,7 @@ trait MigrationNc3Trait
                     // スレッド記事枠のタイトル
                     'thread_caption' => null,
                     // 1ページの表示件数
-                    'view_count' => $this->getArrayValue($frame_ini, 'bbs', 'view_count', null),
+                    'view_count' => MigrationUtils::getArrayValue($frame_ini, 'bbs', 'view_count', null),
                 ]
             );
         }
@@ -6441,7 +6417,7 @@ trait MigrationNc3Trait
                     'buckets_id' => $bucket->id,
                     'role' => 'role_article',   // モデレータ
                 ], [
-                    'post_flag' => $this->getArrayValue($bbs_ini, 'blog_base', 'article_post_flag', 0),
+                    'post_flag' => MigrationUtils::getArrayValue($bbs_ini, 'blog_base', 'article_post_flag', 0),
                     'approval_flag' => 0,
                 ]
             );
@@ -6450,7 +6426,7 @@ trait MigrationNc3Trait
                     'buckets_id' => $bucket->id,
                     'role' => 'role_reporter',  // 編集者
                 ], [
-                    'post_flag' => $this->getArrayValue($bbs_ini, 'blog_base', 'reporter_post_flag', 0),
+                    'post_flag' => MigrationUtils::getArrayValue($bbs_ini, 'blog_base', 'reporter_post_flag', 0),
                     'approval_flag' => 0,
                 ]
             );
@@ -6461,29 +6437,29 @@ trait MigrationNc3Trait
             $bucket_mail = BucketsMail::firstOrNew(['buckets_id' => $bucket->id]);
 
             $notice_groups = [];
-            if ($this->getArrayValue($bbs_ini, 'blog_base', 'notice_admin_group')) {
+            if (MigrationUtils::getArrayValue($bbs_ini, 'blog_base', 'notice_admin_group')) {
                 // グループ通知
                 // ※ importGroups()は処理前のため管理者グループなし。そのため仮コードを登録してimportGroups()で置換する。
                 $notice_groups[] = 'X-管理者グループ';
             }
 
-            if ($this->getArrayValue($bbs_ini, 'blog_base', 'notice_group')) {
+            if (MigrationUtils::getArrayValue($bbs_ini, 'blog_base', 'notice_group')) {
                 // グループ通知
                 // ※ importGroups()は処理前のためnc3ルームグループなし。そのため仮コード(nc3ルームID)を登録してimportGroups()で置換する。
-                $notice_groups[] = $this->getArrayValue($bbs_ini, 'source_info', 'room_id') ? 'X-' . $this->getArrayValue($bbs_ini, 'source_info', 'room_id') : '';
+                $notice_groups[] = MigrationUtils::getArrayValue($bbs_ini, 'source_info', 'room_id') ? 'X-' . MigrationUtils::getArrayValue($bbs_ini, 'source_info', 'room_id') : '';
             }
 
-            $notice_on = $this->getArrayValue($bbs_ini, 'blog_base', 'notice_on') ? 1 : 0;
+            $notice_on = MigrationUtils::getArrayValue($bbs_ini, 'blog_base', 'notice_on') ? 1 : 0;
 
-            if ($notice_on && $this->getArrayValue($bbs_ini, 'blog_base', 'notice_moderator_group')) {
+            if ($notice_on && MigrationUtils::getArrayValue($bbs_ini, 'blog_base', 'notice_moderator_group')) {
                 // グループ通知
                 $this->putMonitor(3, '掲示板のメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
             }
-            if ($notice_on && $this->getArrayValue($bbs_ini, 'blog_base', 'notice_public_general_group')) {
+            if ($notice_on && MigrationUtils::getArrayValue($bbs_ini, 'blog_base', 'notice_public_general_group')) {
                 // パブリック一般通知
                 $this->putMonitor(3, '公開エリアの掲示板のメール設定（一般まで）は、手動で「一般グループ」を作成して、追加で「一般グループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
             }
-            if ($notice_on && $this->getArrayValue($bbs_ini, 'blog_base', 'notice_public_moderator_group')) {
+            if ($notice_on && MigrationUtils::getArrayValue($bbs_ini, 'blog_base', 'notice_public_moderator_group')) {
                 // パブリックモデレーター通知
                 $this->putMonitor(3, '公開エリアの掲示板のメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
             }
@@ -6498,11 +6474,11 @@ trait MigrationNc3Trait
             $bucket_mail->notice_update      = 0;
             $bucket_mail->notice_delete      = 0;
             $bucket_mail->notice_addresses   = null;
-            $bucket_mail->notice_everyone    = $this->getArrayValue($bbs_ini, 'blog_base', 'notice_everyone') ? 1 : 0;
+            $bucket_mail->notice_everyone    = MigrationUtils::getArrayValue($bbs_ini, 'blog_base', 'notice_everyone') ? 1 : 0;
             $bucket_mail->notice_groups      = implode('|', $notice_groups) == "" ? null : implode('|', $notice_groups);
             $bucket_mail->notice_roles       = null;    // 画面項目なし
-            $bucket_mail->notice_subject     = $this->getArrayValue($bbs_ini, 'blog_base', 'mail_subject');
-            $bucket_mail->notice_body        = $this->getArrayValue($bbs_ini, 'blog_base', 'mail_body');
+            $bucket_mail->notice_subject     = MigrationUtils::getArrayValue($bbs_ini, 'blog_base', 'mail_subject');
+            $bucket_mail->notice_body        = MigrationUtils::getArrayValue($bbs_ini, 'blog_base', 'mail_body');
 
             // 関連記事通知
             $bucket_mail->relate_on          = 0;
@@ -6617,14 +6593,14 @@ trait MigrationNc3Trait
         $bucket = null;
 
         // エクスポートファイルの counter_block_id 取得（エクスポート時の連番）
-        $counter_block_id = $this->getArrayValue($frame_ini, 'frame_base', 'counter_block_id', null);
+        $counter_block_id = MigrationUtils::getArrayValue($frame_ini, 'frame_base', 'counter_block_id', null);
 
         // カウンターの情報取得
         if (!empty($counter_block_id) && Storage::exists($this->getImportPath('counters/counter_') . $counter_block_id . '.ini')) {
             $counter_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('counters/counter_') . $counter_block_id . '.ini', true);
         }
         // NC3 のcounter_block_id
-        $nc3_counter_block_id = $this->getArrayValue($counter_ini, 'source_info', 'counter_block_id', null);
+        $nc3_counter_block_id = MigrationUtils::getArrayValue($counter_ini, 'source_info', 'counter_block_id', null);
 
         // NC3 のcounter_block_id でマップ確認
         if (!empty($counter_ini) && array_key_exists('source_info', $counter_ini) && array_key_exists('counter_block_id', $counter_ini['source_info'])) {
@@ -6649,14 +6625,14 @@ trait MigrationNc3Trait
         if (!empty($counter)) {
             CounterFrame::create([
                 'frame_id' => $frame->id,
-                'design_type' => $this->getArrayValue($counter_ini, 'counter_base', 'design_type', CounterDesignType::numeric),
+                'design_type' => MigrationUtils::getArrayValue($counter_ini, 'counter_base', 'design_type', CounterDesignType::numeric),
                 'use_total_count' => 1,
                 'use_today_count' => 1,
                 'use_yesterday_count' => 1,
-                'total_count_title' => $this->getArrayValue($counter_ini, 'counter_base', 'show_char_before', '累計'),
+                'total_count_title' => MigrationUtils::getArrayValue($counter_ini, 'counter_base', 'show_char_before', '累計'),
                 'today_count_title' => '今日',
                 'yesterday_count_title' => '昨日',
-                'total_count_after' => $this->getArrayValue($counter_ini, 'counter_base', 'show_char_after', null),
+                'total_count_after' => MigrationUtils::getArrayValue($counter_ini, 'counter_base', 'show_char_after', null),
                 'today_count_after' => null,
                 'yesterday_count_after' => null,
             ]);
@@ -6678,7 +6654,7 @@ trait MigrationNc3Trait
         $bucket = null;
 
         // エクスポートファイルの calendar_block_id 取得（エクスポート時の連番）
-        $calendar_block_id = $this->getArrayValue($frame_ini, 'frame_base', 'calendar_block_id', null);
+        $calendar_block_id = MigrationUtils::getArrayValue($frame_ini, 'frame_base', 'calendar_block_id', null);
 
         // カレンダーブロックの情報取得
         if (!empty($calendar_block_id) && Storage::exists($this->getImportPath('calendars/calendar_block_') . $calendar_block_id . '.ini')) {
@@ -6688,7 +6664,7 @@ trait MigrationNc3Trait
         // NC3 のcalendar_block_id でマップ確認
         if (!empty($calendar_block_ini) && array_key_exists('source_info', $calendar_block_ini) && array_key_exists('room_id', $calendar_block_ini['source_info'])) {
             // NC3 のcalendar の room_id
-            $nc3_calendar_room_id = $this->getArrayValue($calendar_block_ini, 'source_info', 'room_id', null);
+            $nc3_calendar_room_id = MigrationUtils::getArrayValue($calendar_block_ini, 'source_info', 'room_id', null);
 
             $migration_mapping = MigrationMapping::where('target_source_table', 'calendars')->where('source_key', $nc3_calendar_room_id)->first();
         }
@@ -6720,7 +6696,7 @@ trait MigrationNc3Trait
             if (!empty($calendar_room_ini) && array_key_exists('calendar_manage', $calendar_room_ini) && array_key_exists('add_authority_id', $calendar_room_ini['calendar_manage'])) {
 
                 // NC3 のcalendar の add_authority_id
-                $add_authority_id = $this->getArrayValue($calendar_room_ini, 'calendar_manage', 'add_authority_id', null);
+                $add_authority_id = MigrationUtils::getArrayValue($calendar_room_ini, 'calendar_manage', 'add_authority_id', null);
 
                 // 権限設定
                 // 投稿権限：(nc3) あり、(cc) あり
@@ -6785,14 +6761,14 @@ trait MigrationNc3Trait
         $bucket = null;
 
         // エクスポートファイルの slideshows_block_id 取得（エクスポート時の連番）
-        $slideshows_block_id = $this->getArrayValue($frame_ini, 'frame_base', 'slideshows_block_id', null);
+        $slideshows_block_id = MigrationUtils::getArrayValue($frame_ini, 'frame_base', 'slideshows_block_id', null);
 
         // スライダーの情報取得
         if (!empty($slideshows_block_id) && Storage::exists($this->getImportPath('slideshows/slideshows_') . $slideshows_block_id . '.ini')) {
             $slideshow_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('slideshows/slideshows_') . $slideshows_block_id . '.ini', true);
         }
         // NC3 のslideshow_block_id
-        $nc3_slideshows_block_id = $this->getArrayValue($slideshow_ini, 'source_info', 'slideshows_block_id', null);
+        $nc3_slideshows_block_id = MigrationUtils::getArrayValue($slideshow_ini, 'source_info', 'slideshows_block_id', null);
 
         // NC3 のslideshow_block_id でマップ確認
         if (!empty($slideshow_ini) && array_key_exists('source_info', $slideshow_ini) && array_key_exists('slideshows_block_id', $slideshow_ini['source_info'])) {
@@ -6829,14 +6805,14 @@ trait MigrationNc3Trait
         $bucket = null;
 
         // エクスポートファイルの simplemovie_block_id 取得（エクスポート時の連番）
-        $simplemovie_block_id = $this->getArrayValue($frame_ini, 'frame_base', 'simplemovie_block_id', null);
+        $simplemovie_block_id = MigrationUtils::getArrayValue($frame_ini, 'frame_base', 'simplemovie_block_id', null);
 
         // シンプル動画の情報取得
         if (!empty($simplemovie_block_id) && Storage::exists($this->getImportPath('simplemovie/simplemovie_') . $simplemovie_block_id . '.ini')) {
             $simplemovie_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('simplemovie/simplemovie_') . $simplemovie_block_id . '.ini', true);
         }
         // NC3 のsimplemovie_block_id
-        $nc3_simplemovie_block_id = $this->getArrayValue($simplemovie_ini, 'source_info', 'simplemovie_block_id', null);
+        $nc3_simplemovie_block_id = MigrationUtils::getArrayValue($simplemovie_ini, 'source_info', 'simplemovie_block_id', null);
 
         // NC3 のsimplemovie_block_id でマップ確認
         if (!empty($simplemovie_ini) && array_key_exists('source_info', $simplemovie_ini) && array_key_exists('simplemovie_block_id', $simplemovie_ini['source_info'])) {
@@ -6872,7 +6848,7 @@ trait MigrationNc3Trait
         $bucket = null;
 
         // エクスポートファイルの reservation_block_id 取得（エクスポート時の連番）
-        $reservation_block_id = $this->getArrayValue($frame_ini, 'frame_base', 'reservation_block_id', null);
+        $reservation_block_id = MigrationUtils::getArrayValue($frame_ini, 'frame_base', 'reservation_block_id', null);
 
         // 施設予約ブロックの情報取得
         if (!empty($reservation_block_id) && Storage::exists($this->getImportPath('reservations/reservation_block_') . $reservation_block_id . '.ini')) {
@@ -6974,15 +6950,15 @@ trait MigrationNc3Trait
             $bucket_mail = BucketsMail::firstOrNew(['buckets_id' => $bucket->id]);
 
             $notice_groups = null;
-            if ($this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'notice_admin_group')) {
+            if (MigrationUtils::getArrayValue($reservation_mail_ini, 'reservation_mail', 'notice_admin_group')) {
                 // グループ通知
                 // ※ importGroups()は処理前のため管理者グループなし。そのため仮コードを登録してimportGroups()で置換する。
                 $notice_groups = 'X-管理者グループ';
             }
 
-            $mail_send = $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'mail_send') ? 1 : 0;
+            $mail_send = MigrationUtils::getArrayValue($reservation_mail_ini, 'reservation_mail', 'mail_send') ? 1 : 0;
 
-            if ($mail_send && $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'notice_all_moderator_group')) {
+            if ($mail_send && MigrationUtils::getArrayValue($reservation_mail_ini, 'reservation_mail', 'notice_all_moderator_group')) {
                 // グループ通知
                 $this->putMonitor(3, '施設予約のメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
             }
@@ -6994,11 +6970,11 @@ trait MigrationNc3Trait
             $bucket_mail->notice_update      = 0;
             $bucket_mail->notice_delete      = 0;
             $bucket_mail->notice_addresses   = null;
-            $bucket_mail->notice_everyone    = $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'notice_everyone') ? 1 : 0;
+            $bucket_mail->notice_everyone    = MigrationUtils::getArrayValue($reservation_mail_ini, 'reservation_mail', 'notice_everyone') ? 1 : 0;
             $bucket_mail->notice_groups      = $notice_groups;
             $bucket_mail->notice_roles       = null;    // 画面項目なし
-            $bucket_mail->notice_subject     = $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'mail_subject');
-            $bucket_mail->notice_body        = $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'mail_body');
+            $bucket_mail->notice_subject     = MigrationUtils::getArrayValue($reservation_mail_ini, 'reservation_mail', 'mail_subject');
+            $bucket_mail->notice_body        = MigrationUtils::getArrayValue($reservation_mail_ini, 'reservation_mail', 'mail_body');
 
             // 関連記事通知
             $bucket_mail->relate_on          = 0;
@@ -7022,7 +6998,7 @@ trait MigrationNc3Trait
             // 1: 月表示(施設別)
             // 2: 週表示(施設別)
             // 3: 日表示(カテゴリ別)
-            $display_type = $this->getArrayValue($reservation_block_ini, 'reservation_block', 'display_type');
+            $display_type = MigrationUtils::getArrayValue($reservation_block_ini, 'reservation_block', 'display_type');
 
             // モデレータの投稿権限 変換 (key:nc3)display_type => (value:cc) calendar_initial_display_type
             $calendar_initial_display_types = [
@@ -7039,7 +7015,7 @@ trait MigrationNc3Trait
 
             // nc3最初に表示する施設
             // ※ 表示方法=月・週表示のみ設定される. 日表示の場合 0 になる
-            $location_id = $this->getArrayValue($reservation_block_ini, 'reservation_block', 'location_id');
+            $location_id = MigrationUtils::getArrayValue($reservation_block_ini, 'reservation_block', 'location_id');
 
             $migration_mapping_location = MigrationMapping::where('target_source_table', 'reservations_location')->where('source_key', $location_id)->first();
 
@@ -7326,11 +7302,11 @@ trait MigrationNc3Trait
             'read_more_flag' => $read_more_flag,
             'status' => 0
         ]);
-        $content->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($frame_ini, 'contents', 'insert_login_id', null));
-        $content->created_name = $this->getArrayValue($frame_ini, 'contents', 'created_name', null);
+        $content->created_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($frame_ini, 'contents', 'insert_login_id', null));
+        $content->created_name = MigrationUtils::getArrayValue($frame_ini, 'contents', 'created_name', null);
         $content->created_at   = $this->getDatetimeFromIniAndCheckFormat($frame_ini, 'contents', 'created_at');
-        $content->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($frame_ini, 'contents', 'update_login_id', null));
-        $content->updated_name = $this->getArrayValue($frame_ini, 'contents', 'updated_name', null);
+        $content->updated_id   = $this->getUserIdFromLoginId($users, MigrationUtils::getArrayValue($frame_ini, 'contents', 'update_login_id', null));
+        $content->updated_name = MigrationUtils::getArrayValue($frame_ini, 'contents', 'updated_name', null);
         $content->updated_at   = $this->getDatetimeFromIniAndCheckFormat($frame_ini, 'contents', 'updated_at');
         // 登録更新日時を自動更新しない
         $content->timestamps = false;
@@ -7433,14 +7409,14 @@ trait MigrationNc3Trait
 
         // migration_mapping 取得
         if (array_key_exists('addition', $frame_ini)) {
-            $source_key = $this->getArrayValue($frame_ini, 'addition', 'source_key');
+            $source_key = MigrationUtils::getArrayValue($frame_ini, 'addition', 'source_key');
         } else {
-            $source_key = $this->getArrayValue($frame_ini, 'source_info', 'source_key');
+            $source_key = MigrationUtils::getArrayValue($frame_ini, 'source_info', 'source_key');
         }
 
         // display_sequence（順番）確定
         // オプションの display_sequence が指定されている場合は、それ以降のフレームを +1 してから追加する。
-        $option_display_sequence = $this->getArrayValue($frame_ini, 'frame_option', 'display_sequence');
+        $option_display_sequence = MigrationUtils::getArrayValue($frame_ini, 'frame_option', 'display_sequence');
         if (!empty($option_display_sequence)) {
             Frame::where('page_id', $page->id)->where('display_sequence', '>=', $option_display_sequence)->increment('display_sequence');
             $display_sequence = $option_display_sequence;
@@ -12379,7 +12355,7 @@ trait MigrationNc3Trait
 
             //     if (!empty($calendar_block_ini) && array_key_exists('calendar_block', $calendar_block_ini) && array_key_exists('display_type', $calendar_block_ini['calendar_block'])) {
             //         // NC3 のcalendar の display_type
-            //         $calendar_display_type = $this->getArrayValue($calendar_block_ini, 'calendar_block', 'display_type', null);
+            //         $calendar_display_type = MigrationUtils::getArrayValue($calendar_block_ini, 'calendar_block', 'display_type', null);
             //     }
 
             //     // frame_design 変換 (key:nc3)display_type => (value:cc)template
@@ -12655,11 +12631,11 @@ trait MigrationNc3Trait
             // 今のところ、メニューの追加設定はなし。
         } elseif ($plugin_name == 'databases') {
             // データベース
-            // [TODO] 以下まだ
+            // [TODO] 未対応
             $this->nc3BlockExportDatabases($nc3_page, $nc3_frame, $new_page_index, $frame_index_str);
         } elseif ($plugin_name == 'bbses') {
             // 掲示板
-            // [TODO] 以下まだ
+            // [TODO] 未対応
             $this->nc3BlockExportBbses($nc3_page, $nc3_frame, $new_page_index, $frame_index_str);
         }
     }
@@ -12846,7 +12822,7 @@ trait MigrationNc3Trait
      */
     private function nc3Wysiwyg(?Nc3Frame $nc3_frame, ?string $save_folder, ?string $content_filename, ?string $ini_filename, ?string $content, ?string $nc3_module_name = null, ?Nc3Page $nc3_page = null)
     {
-        // [TODO] 後で対応する
+        // [TODO] 未対応
         // nc3リンク切れチェック
         // $nc3_links = $this->getContentHrefOrSrc($content);
         // if (is_array($nc3_links)) {
@@ -12863,9 +12839,7 @@ trait MigrationNc3Trait
 
         // 画像の中のcommon_download_main をエクスポートしたパスに変換する。
         $content = $this->nc3MigrationCommonDownloadMain($nc3_frame, $save_folder, $ini_filename, $content, $img_srcs, '[upload_images]');
-//
-// 以下まだ
-//
+
         // CSS の img-fluid を自動で付ける最小の画像幅
         $img_fluid_min_width = $this->getMigrationConfig('wysiwyg', 'img_fluid_min_width', 0);
 
@@ -12994,7 +12968,7 @@ trait MigrationNc3Trait
 
                 // フレーム設定ファイルの追記
                 // 移行したアップロードファイルをini ファイルから探す
-                if ($this->uploads_ini && array_key_exists('uploads', $this->uploads_ini) && array_key_exists('upload', $this->uploads_ini['uploads']) && array_key_exists($upload_id, $this->uploads_ini['uploads']['upload'])) {
+                if (Arr::has($this->uploads_ini, "uploads.upload.{$upload_id}")) {
                     // コンテンツ及び[upload_images] or [upload_files]セクション内のimg src or a href を作る。
                     $export_path = '../../uploads/' . $this->uploads_ini[$upload_id]['temp_file_name'];
 
