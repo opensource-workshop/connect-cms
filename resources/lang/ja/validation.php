@@ -164,12 +164,6 @@ return [
         'link_url'       => 'リンクURL',
         'caption'        => 'キャプション',
         'link_target'    => 'リンクターゲット',
-        'pdf_file' => 'PDF',
-        'pdf_image_size' => '画像の大きさ',
-        'pdf_password' => 'PDFパスワード',
-        'pdf_link_url' => 'リンクURL',
-        'pdf_caption' => 'キャプション',
-        'pdf_link_target' => 'リンクターゲット',
     ],
 
 ];

@@ -524,14 +524,10 @@ class SlideshowsPlugin extends UserPluginBase
     public function addPdf($request, $page_id, $frame_id, $id = null)
     {
         // エラーチェック
-        $request->validate([
-            'pdf_file'  => 'required|mimes:pdf|file',
-            'pdf_image_size' => ['required',Rule::in(WidthOfPdfThumbnail::getMemberKeys())],
-            'pdf_password' => 'max:255',
-            'pdf_link_url'    => [new CustomValiUrlMax()],
-            'pdf_caption'     => 'max:255',
-            'pdf_link_target' => 'max:255',
-        ]);
+        $validator = $this->makePdfAddValidator($request);
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
 
         $base64_images = $this->pdfToImage($request->file('pdf_file')->get(), $request->pdf_image_size, $request->pdf_password);
         // 変換失敗
@@ -549,6 +545,31 @@ class SlideshowsPlugin extends UserPluginBase
         ]);
 
         // リダイレクト設定はフォーム側で設定している為、return処理は省略
+    }
+
+
+    /**
+     * PDF追加のバリデーター
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Contracts\Validation\Validator
+     */
+    private function makePdfAddValidator(\Illuminate\Http\Request $request) :\Illuminate\Contracts\Validation\Validator
+    {
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            'pdf_file'  => ['required', 'mimes:pdf', 'file'],
+            'pdf_image_size' => ['required',Rule::in(WidthOfPdfThumbnail::getMemberKeys())],
+            'pdf_password' => ['max:191'],
+        ]);
+
+        $validator->setAttributeNames([
+            'pdf_file'  => 'PDF',
+            'pdf_image_size' => '画像の大きさ',
+            'pdf_password' => 'PDFパスワード',
+        ]);
+
+        return $validator;
     }
 
     /**
