@@ -632,9 +632,6 @@ class SlideshowsPlugin extends UserPluginBase
             $slideshows_item->slideshows_id = $request->slideshows_id;
             $slideshows_item->image_path = $image_path;
             $slideshows_item->uploads_id = $image_upload->id;
-            $slideshows_item->link_url = $request->pdf_link_url;
-            $slideshows_item->link_target = $request->pdf_link_target;
-            $slideshows_item->caption = $request->pdf_caption;
             $slideshows_item->display_flag = ShowType::show;
             $slideshows_item->display_sequence = $max_display_sequence;
             $slideshows_item->save();

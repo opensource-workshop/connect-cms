@@ -158,40 +158,11 @@
         </div>
     </td>
     {{-- リンクURL --}}
-    <td class="d-block d-xl-table-cell align-middle">
-        <strong class="d-xl-none">リンクURL：</strong>
-        <input
-            type="text"
-            name="pdf_link_url"
-            class="form-control @if ($errors && $errors->has('pdf_link_url')) border-danger @endif"
-            value="{{ old('pdf_link_url') }}"
-            placeholder="例：https://connect-cms.jp/"
-        >
-        @include('common.errors_inline', ['name' => 'pdf_link_url'])
-    </td>
+    <td class="d-block d-xl-table-cell align-middle"></td>
     {{-- キャプション --}}
-    <td class="d-block d-xl-table-cell align-middle">
-        <strong class="d-xl-none">キャプション：</strong>
-        <input
-            type="text"
-            name="pdf_caption"
-            class="form-control @if ($errors && $errors->has('pdf_caption')) border-danger @endif"
-            value="{{ old('pdf_caption') }}"
-        >
-        @include('common.errors_inline', ['name' => 'pdf_caption'])
-    </td>
+    <td class="d-block d-xl-table-cell align-middle"></td>
     {{-- リンクターゲット --}}
-    <td class="d-block d-xl-table-cell align-middle">
-        <strong class="d-xl-none">リンクターゲット：</strong>
-        <input
-            type="text"
-            name="pdf_link_target"
-            class="form-control @if ($errors && $errors->has('pdf_link_target')) border-danger @endif"
-            value="{{ old('pdf_link_target') }}"
-            placeholder="例：_blank、_self等"
-        >
-        @include('common.errors_inline', ['name' => 'pdf_link_target'])
-    </td>
+    <td class="d-block d-xl-table-cell align-middle"></td>
     {{-- ＋ボタン --}}
     <td class="d-block d-xl-table-cell align-middle d-flex align-items-center justify-content-center">
         <button
