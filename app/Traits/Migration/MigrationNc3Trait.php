@@ -12713,6 +12713,10 @@ trait MigrationNc3Trait
 
         // 画像の中のcommon_download_main をエクスポートしたパスに変換する。
         $content = $this->nc3MigrationCommonDownloadMain($nc3_frame, $save_folder, $ini_filename, $content, $img_srcs, '[upload_images]');
+        // [TODO] 未対応
+        // cabinet_action_main_download をエクスポート形式に変換
+        // [upload_images]に追記したいので、nc2MigrationCommonDownloadMainの直後に実行
+        // $content = $this->nc3MigrationCabinetActionMainDownload($save_folder, $ini_filename, $content, 'src');
 
         // CSS の img-fluid を自動で付ける最小の画像幅
         $img_fluid_min_width = $this->getMigrationConfig('wysiwyg', 'img_fluid_min_width', 0);
@@ -12727,9 +12731,16 @@ trait MigrationNc3Trait
 
         // 添付ファイルを探す
         $anchors = MigrationUtils::getContentAnchor($content);
-
         // 添付ファイルの中のcommon_download_main をエクスポートしたパスに変換する。
         $content = $this->nc3MigrationCommonDownloadMain($nc3_frame, $save_folder, $ini_filename, $content, $anchors, '[upload_files]');
+        // [TODO] 未対応
+        // cabinet_action_main_download をエクスポート形式に変換
+        // [upload_files]に追記したいので、nc2MigrationCommonDownloadMainの直後に実行
+        // $content = $this->nc3MigrationCabinetActionMainDownload($save_folder, $ini_filename, $content, 'href');
+
+        // [TODO] 未対応
+        // ?page_id=XX置換
+        // $content = $this->nc3MigrationPageIdToPermalink($content);
 
         // HTML content の保存
         if ($save_folder) {
@@ -12817,6 +12828,74 @@ trait MigrationNc3Trait
 
         // パスを変更した記事を返す。
         return array($content, $export_paths);
+    }
+
+    /**
+     * NC3：?page_id=XXをpermalinkに置換
+     */
+    private function nc3MigrationPageIdToPermalink($content, $links = true)
+    {
+        // wysiwygのパターン
+        $pattern = '/\?page_id=(.*?)"/is';
+        $endstring = '"';
+        if (!$links) {
+            // リンクリスト等のパターン
+            $pattern = '/\?page_id=(.*?)$/is';
+            $endstring = '';
+        }
+        if (preg_match_all($pattern, $content, $m)) {
+            $replace_key_vals = [];
+            $page_ids = $m[1];
+            foreach ($page_ids as $page_id) {
+                $nc2_page = Nc2Page::where('page_id', $page_id)->first();
+                if ($nc2_page) {
+                    $key = '?page_id='. $page_id. $endstring;
+                    $replace_key_vals[$key] = $nc2_page["permalink"]. $endstring;
+                }
+            }
+            $search = array_keys($replace_key_vals);
+            $replace = array_values($replace_key_vals);
+            $content = str_replace($search, $replace, $content);
+        }
+
+        return $content;
+    }
+
+    /**
+     * NC3：cabinet_action_main_download をエクスポート形式に変換
+     */
+    private function nc3MigrationCabinetActionMainDownload($save_folder, $ini_filename, $content, $attr = 'href')
+    {
+        //?action=cabinet_action_main_download&block_id=778&room_id=1&cabinet_id=9&file_id=2020&upload_id=5688
+        $pattern = '/'. $attr.'=".*?\?action=cabinet_action_main_download&.*?upload_id=([0-9]+)"/i';
+        if (preg_match_all($pattern, $content, $cabinet_downloads)) {
+            $cabinet_file_ids = $cabinet_downloads[1];
+            $replace_key_vals = [];
+            foreach ($cabinet_file_ids as $key => $file_id) {
+                // 移行したアップロードファイルをini ファイルから探す
+                if ($this->uploads_ini && array_key_exists('uploads', $this->uploads_ini) && array_key_exists($file_id, $this->uploads_ini['uploads']['upload'])) {
+                    $path = '../../uploads/' . $this->uploads_ini[$file_id]['temp_file_name'];
+                    $replace_href_pattern = '/'. $attr.'="(.*?\?action=cabinet_action_main_download&.*?upload_id='. $file_id.')"/i';
+                    if (preg_match_all($replace_href_pattern, $content, $m)) {
+                        $match_href = $m[1][0];
+                        $replace_key_vals[$key] = [ 'upload_id' => $file_id,
+                                                    'match_href' => $match_href,
+                                                    'path' => $path,
+                        ];
+                    }
+                }
+            }
+            // 既にnc2MigrationCommonDownloadMainでiniファイルに追記されているので、[upload_files]は空にする
+            $ini_text = '';
+            foreach ($replace_key_vals as $vals) {
+                $content = str_replace($vals['match_href'], $vals['path'], $content);
+                $ini_text .= 'upload[' . $vals['upload_id'] . "] = \"" . $vals['path'] . "\"\n";
+            }
+            if ($ini_filename) {
+                $this->storageAppend($save_folder . "/" . $ini_filename, $ini_text);
+            }
+        }
+        return $content;
     }
 
     /**
