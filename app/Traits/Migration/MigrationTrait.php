@@ -8000,17 +8000,7 @@ trait MigrationTrait
      */
     private function getContentImage($content)
     {
-        $pattern = '/<img.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
-
-        if (preg_match_all($pattern, $content, $images)) {
-            if (is_array($images) && isset($images[1])) {
-                return $images[1];
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
+        return MigrationUtils::getContentImage($content);
     }
 
     /**
@@ -8018,17 +8008,7 @@ trait MigrationTrait
      */
     private function getContentImageTag($content)
     {
-        $pattern = '/<img.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
-
-        if (preg_match_all($pattern, $content, $images)) {
-            if (is_array($images) && isset($images[0])) {
-                return $images;
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
+        return MigrationUtils::getContentImageTag($content);
     }
 
     /**
@@ -8036,17 +8016,7 @@ trait MigrationTrait
      */
     private function getImageStyle($content)
     {
-        $pattern = '/<img.*?style\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
-
-        if (preg_match_all($pattern, $content, $images)) {
-            if (is_array($images) && isset($images[1])) {
-                return $images[1];
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
+        return MigrationUtils::getImageStyle($content);
     }
 
     /**
@@ -8054,17 +8024,7 @@ trait MigrationTrait
      */
     private function getIframeStyle($content)
     {
-        $pattern = '/<iframe.*?style\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
-
-        if (preg_match_all($pattern, $content, $images)) {
-            if (is_array($images) && isset($images[1])) {
-                return $images[1];
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
+        return MigrationUtils::getIframeStyle($content);
     }
 
     /**
@@ -8072,17 +8032,7 @@ trait MigrationTrait
      */
     private function getIframeSrc($content)
     {
-        $pattern = '/<iframe.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
-
-        if (preg_match_all($pattern, $content, $matches)) {
-            if (is_array($matches) && isset($matches[1])) {
-                return $matches[1];
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
+        return MigrationUtils::getIframeSrc($content);
     }
 
     /**
@@ -8090,16 +8040,7 @@ trait MigrationTrait
      */
     private function getContentAnchor($content)
     {
-        $pattern = "|<a.*?href=\"(.*?)\".*?>(.*?)</a>|mis";
-        if (preg_match_all($pattern, $content, $anchors)) {
-            if (is_array($anchors) && isset($anchors[1])) {
-                return $anchors[1];
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
+        return MigrationUtils::getContentAnchor($content);
     }
 
     /**
@@ -8107,17 +8048,7 @@ trait MigrationTrait
      */
     private function getContentHrefOrSrc($content)
     {
-        $pattern = '/(?<=href=").*?(?=")|(?<=src=").*?(?=")/i';
-        if (preg_match_all($pattern, $content, $anchors)) {
-            // var_dump($anchors);
-            if (is_array($anchors) && isset($anchors[0])) {
-                return $anchors[0];
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
+        return MigrationUtils::getContentHrefOrSrc($content);
     }
 
     /**

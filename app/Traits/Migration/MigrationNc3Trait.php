@@ -2157,7 +2157,7 @@ trait MigrationNc3Trait
         $contents = Contents::where('content_text', 'like', '%#_%')->get();
         foreach ($contents as $content) {
             // a タグの href 抜き出し
-            $hrefs = $this->getContentAnchor($content->content_text);
+            $hrefs = MigrationUtils::getContentAnchor($content->content_text);
             if ($hrefs === false) {
                 continue;
             }
@@ -2186,7 +2186,7 @@ trait MigrationNc3Trait
      */
     private function changePageInLinkImpl($text)
     {
-        $hrefs = $this->getContentAnchor($text);
+        $hrefs = MigrationUtils::getContentAnchor($text);
         foreach ($hrefs as $href) {
             // 対象判断（自URLで始まっている(フルパスのページ内リンク) or #_(NC3のページ内リンク)で始まっている）
             if (mb_stripos($href, config('app.url')) === 0 || mb_stripos($href, '#_') === 0) {
@@ -5650,10 +5650,10 @@ trait MigrationNc3Trait
     private function changeWYSIWYG($content)
     {
         // 画像を探す
-        $images = $this->getContentImage($content);
+        $images = MigrationUtils::getContentImage($content);
 
         // 添付ファイルを探す
-        $anchors = $this->getContentAnchor($content);
+        $anchors = MigrationUtils::getContentAnchor($content);
 
         // 画像、添付ファイルをマージ（変換が必要なパスしてマージ）
         $change_list = array();
@@ -7657,7 +7657,7 @@ trait MigrationNc3Trait
     //         $content_html = $this->getInnerHtml($content);
 
     //         // 本文から画像(img src)を抜き出す
-    //         $images = $this->getContentImage($content_html);
+    //         $images = MigrationUtils::getContentImage($content_html);
     //         //var_dump($images);
 
     //         // 画像の取得と保存
@@ -7726,7 +7726,7 @@ trait MigrationNc3Trait
     //         }
 
     //         // 本文からアンカー(a href)を抜き出す
-    //         $anchors = $this->getContentAnchor($content_html);
+    //         $anchors = MigrationUtils::getContentAnchor($content_html);
     //         //var_dump($anchors);
 
     //         // 添付ファイルの取得と保存
@@ -7855,132 +7855,6 @@ trait MigrationNc3Trait
         }
 
         return strlen($header_line);
-    }
-
-    /**
-     * HTML からimg タグの src 属性を取得
-     */
-    private function getContentImage($content)
-    {
-        $pattern = '/<img.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
-
-        if (preg_match_all($pattern, $content, $images)) {
-            if (is_array($images) && isset($images[1])) {
-                return $images[1];
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * HTML からimg タグ全体を取得
-     */
-    private function getContentImageTag($content)
-    {
-        $pattern = '/<img.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
-
-        if (preg_match_all($pattern, $content, $images)) {
-            if (is_array($images) && isset($images[0])) {
-                return $images;
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * HTML からimg タグの style 属性を取得
-     */
-    private function getImageStyle($content)
-    {
-        $pattern = '/<img.*?style\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
-
-        if (preg_match_all($pattern, $content, $images)) {
-            if (is_array($images) && isset($images[1])) {
-                return $images[1];
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * HTML からiframe タグの style 属性を取得
-     */
-    private function getIframeStyle($content)
-    {
-        $pattern = '/<iframe.*?style\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
-
-        if (preg_match_all($pattern, $content, $images)) {
-            if (is_array($images) && isset($images[1])) {
-                return $images[1];
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * HTML からiframe タグの src 属性を取得
-     */
-    private function getIframeSrc($content)
-    {
-        $pattern = '/<iframe.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
-
-        if (preg_match_all($pattern, $content, $matches)) {
-            if (is_array($matches) && isset($matches[1])) {
-                return $matches[1];
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * HTML からa タグの href 属性を取得
-     */
-    private function getContentAnchor($content)
-    {
-        $pattern = "|<a.*?href=\"(.*?)\".*?>(.*?)</a>|mis";
-        if (preg_match_all($pattern, $content, $anchors)) {
-            if (is_array($anchors) && isset($anchors[1])) {
-                return $anchors[1];
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * HTML から href,src 属性を取得
-     * [TODO] 共通、エクスポート時
-     */
-    private function getContentHrefOrSrc($content)
-    {
-        $pattern = '/(?<=href=").*?(?=")|(?<=src=").*?(?=")/i';
-        if (preg_match_all($pattern, $content, $anchors)) {
-            // var_dump($anchors);
-            if (is_array($anchors) && isset($anchors[0])) {
-                return $anchors[0];
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
     }
 
     /**
@@ -12824,7 +12698,7 @@ trait MigrationNc3Trait
     {
         // [TODO] 未対応
         // nc3リンク切れチェック
-        // $nc3_links = $this->getContentHrefOrSrc($content);
+        // $nc3_links = MigrationUtils::getContentHrefOrSrc($content);
         // if (is_array($nc3_links)) {
         //     foreach ($nc3_links as $nc3_link) {
         //         // $this->checkDeadLinkNc2($nc3_link, $nc3_module_name . '(wysiwyg)', $nc3_frame);
@@ -12835,7 +12709,7 @@ trait MigrationNc3Trait
         $content = $this->cleaningContent($content, $nc3_module_name);
 
         // 画像を探す
-        $img_srcs = $this->getContentImage($content);
+        $img_srcs = MigrationUtils::getContentImage($content);
 
         // 画像の中のcommon_download_main をエクスポートしたパスに変換する。
         $content = $this->nc3MigrationCommonDownloadMain($nc3_frame, $save_folder, $ini_filename, $content, $img_srcs, '[upload_images]');
@@ -12844,7 +12718,7 @@ trait MigrationNc3Trait
         $img_fluid_min_width = $this->getMigrationConfig('wysiwyg', 'img_fluid_min_width', 0);
 
         // 画像全体にレスポンシブCSS を適用する。
-        $img_srcs = $this->getContentImageTag($content);
+        $img_srcs = MigrationUtils::getContentImageTag($content);
 
         if (!empty($img_srcs)) {
             $img_srcs_0 = array_unique($img_srcs[0]);
@@ -12867,7 +12741,7 @@ trait MigrationNc3Trait
         }
 
         // 画像のstyle設定を探し、height をmax-height に変換する。
-        $img_styles = $this->getImageStyle($content);
+        $img_styles = MigrationUtils::getImageStyle($content);
         if (!empty($img_styles)) {
             $img_styles = array_unique($img_styles);
             //Log::debug($img_styles);
@@ -12879,10 +12753,10 @@ trait MigrationNc3Trait
         }
 
         // Google Map 埋め込み時のスマホ用対応。widthを 100% に変更
-        $iframe_srces = $this->getIframeSrc($content);
+        $iframe_srces = MigrationUtils::getIframeSrc($content);
         if (!empty($iframe_srces)) {
             // iFrame のsrc を取得（複数の可能性もあり）
-            $iframe_styles = $this->getIframeStyle($content);
+            $iframe_styles = MigrationUtils::getIframeStyle($content);
             if (!empty($iframe_styles)) {
                 foreach ($iframe_styles as $iframe_style) {
                     $width_pos = strpos($iframe_style, 'width');
@@ -12896,7 +12770,7 @@ trait MigrationNc3Trait
         }
 
         // 添付ファイルを探す
-        $anchors = $this->getContentAnchor($content);
+        $anchors = MigrationUtils::getContentAnchor($content);
 
         // 添付ファイルの中のcommon_download_main をエクスポートしたパスに変換する。
         $content = $this->nc3MigrationCommonDownloadMain($nc3_frame, $save_folder, $ini_filename, $content, $anchors, '[upload_files]');
@@ -12962,9 +12836,9 @@ trait MigrationNc3Trait
                 $src_params = explode('/', $path_tmp);
 
                 // [TODO] image_size を参照していないため、今後見直しそう
-                $room_id = $src_params[0];
+                // $room_id = $src_params[0];
                 $upload_id = $src_params[1];
-                $image_size = isset($src_params[2]) ? $src_params[2] : null;
+                // $image_size = isset($src_params[2]) ? $src_params[2] : null;
 
                 // フレーム設定ファイルの追記
                 // 移行したアップロードファイルをini ファイルから探す
