@@ -223,11 +223,6 @@ trait MigrationNc3Trait
     private $content_disposition = "";
 
     /**
-     * ページ、フレームのCSV出力
-     */
-    private $frame_tree = "page_id,ページタイトル,固定リンク,モジュール,block_id,ブロックタイトル\n";
-
-    /**
      * ログのパス
      * ログ自体はプログラムが途中でコケても残るように、append する。
      * ここは、ログファイルの名前を時分秒を付けて保存したいため、シングルトンでファイル名を保持するためのもの。
@@ -12300,12 +12295,6 @@ trait MigrationNc3Trait
 
             // ブロックのモジュールデータをエクスポート
             $this->nc3BlockExport($nc3_page, $nc3_frame, $new_page_index, $frame_index_str);
-/////////////////////////////
-// 以下まだ
-/////////////////////////////
-
-            // ページ、ブロック構成を最後に出力するために保持
-            $this->nc3BlockTree($nc3_page, $nc3_frame);
 
             // Connect-CMS のプラグイン名の取得
             $plugin_name = $this->nc3GetPluginName($nc3_frame->plugin_key);
@@ -12896,15 +12885,6 @@ trait MigrationNc3Trait
             }
         }
         return $content;
-    }
-
-    /**
-     * NC3：ページ内のブロックをCSV用に溜める
-     */
-    private function nc3BlockTree($nc3_page, $nc3_block)
-    {
-        // ページ、ブロック構成を最後に出力するために保持
-        $this->frame_tree .= $nc3_page->page_id . ',' . $nc3_page->page_name . ',' . $nc3_page->permalink . ',' . $nc3_block->action_name . ',' . $nc3_block->block_id . ',' . $nc3_block->block_name . "\n";
     }
 
     /**
