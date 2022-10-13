@@ -98,7 +98,7 @@ class MigrationUtils
     }
 
     /**
-     * HTML から preg_match_all を使って特定項目を取得
+     * HTML から preg_match_all を使ってタグや属性等を取得
      */
     private static function getContentPregMatchAll($content, string $pattern, int $get_matches_idx)
     {
