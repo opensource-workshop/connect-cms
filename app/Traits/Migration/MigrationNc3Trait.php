@@ -12741,33 +12741,10 @@ trait MigrationNc3Trait
         }
 
         // 画像のstyle設定を探し、height をmax-height に変換する。
-        $img_styles = MigrationUtils::getImageStyle($content);
-        if (!empty($img_styles)) {
-            $img_styles = array_unique($img_styles);
-            //Log::debug($img_styles);
-            foreach ($img_styles as $img_style) {
-                $new_img_style = str_replace('height', 'max-height', $img_style);
-                $new_img_style = str_replace('max-max-height', 'max-height', $new_img_style);
-                $content = str_replace($img_style, $new_img_style, $content);
-            }
-        }
+        $content = MigrationUtils::convertContentImageHeightToMaxHeight($content);
 
         // Google Map 埋め込み時のスマホ用対応。widthを 100% に変更
-        $iframe_srces = MigrationUtils::getIframeSrc($content);
-        if (!empty($iframe_srces)) {
-            // iFrame のsrc を取得（複数の可能性もあり）
-            $iframe_styles = MigrationUtils::getIframeStyle($content);
-            if (!empty($iframe_styles)) {
-                foreach ($iframe_styles as $iframe_style) {
-                    $width_pos = strpos($iframe_style, 'width');
-                    $width_length = strpos($iframe_style, ";", $width_pos) - $width_pos + 1;
-                    $iframe_style_width = substr($iframe_style, $width_pos, $width_length);
-                    if (!empty($iframe_style_width)) {
-                        $content = str_replace($iframe_style_width, "width:100%;", $content);
-                    }
-                }
-            }
-        }
+        $content = MigrationUtils::convertContentIframeWidthTo100percent($content);
 
         // 添付ファイルを探す
         $anchors = MigrationUtils::getContentAnchor($content);

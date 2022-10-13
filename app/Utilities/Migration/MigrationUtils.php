@@ -55,7 +55,7 @@ class MigrationUtils
     /**
      * HTML からimg タグの style 属性を取得
      */
-    public static function getImageStyle($content)
+    private static function getImageStyle($content)
     {
         $pattern = '/<img.*?style\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
         return self::getContentPregMatchAll($content, $pattern, 1);
@@ -64,7 +64,7 @@ class MigrationUtils
     /**
      * HTML からiframe タグの style 属性を取得
      */
-    public static function getIframeStyle($content)
+    private static function getIframeStyle($content)
     {
         $pattern = '/<iframe.*?style\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
         return self::getContentPregMatchAll($content, $pattern, 1);
@@ -73,7 +73,7 @@ class MigrationUtils
     /**
      * HTML からiframe タグの src 属性を取得
      */
-    public static function getIframeSrc($content)
+    private static function getIframeSrc($content)
     {
         $pattern = '/<iframe.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
         return self::getContentPregMatchAll($content, $pattern, 1);
@@ -111,5 +111,46 @@ class MigrationUtils
         } else {
             return false;
         }
+    }
+
+    /**
+     * 画像のstyle設定を探し、height をmax-height に変換する。
+     */
+    public static function convertContentImageHeightToMaxHeight(?string $content): ?string
+    {
+        $img_styles = self::getImageStyle($content);
+        if (!empty($img_styles)) {
+            $img_styles = array_unique($img_styles);
+            foreach ($img_styles as $img_style) {
+                $new_img_style = str_replace('height', 'max-height', $img_style);
+                $new_img_style = str_replace('max-max-height', 'max-height', $new_img_style);
+                $content = str_replace($img_style, $new_img_style, $content);
+            }
+        }
+        return $content;
+    }
+
+    /**
+     * Iframeのstyle設定を探し、width を 100% に変換する。
+     */
+    public static function convertContentIframeWidthTo100percent(?string $content): ?string
+    {
+        // Google Map 埋め込み時のスマホ用対応。widthを 100% に変更
+        $iframe_srces = self::getIframeSrc($content);
+        if (!empty($iframe_srces)) {
+            // iFrame のsrc を取得（複数の可能性もあり）
+            $iframe_styles = self::getIframeStyle($content);
+            if (!empty($iframe_styles)) {
+                foreach ($iframe_styles as $iframe_style) {
+                    $width_pos = strpos($iframe_style, 'width');
+                    $width_length = strpos($iframe_style, ";", $width_pos) - $width_pos + 1;
+                    $iframe_style_width = substr($iframe_style, $width_pos, $width_length);
+                    if (!empty($iframe_style_width)) {
+                        $content = str_replace($iframe_style_width, "width:100%;", $content);
+                    }
+                }
+            }
+        }
+        return $content;
     }
 }
