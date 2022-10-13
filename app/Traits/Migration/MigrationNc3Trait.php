@@ -8567,16 +8567,49 @@ trait MigrationNc3Trait
             }
 
             // ファイルのコピー
-            $source_file_path = $uploads_path . $nc3_upload->path . $nc3_upload->real_file_name;
             $destination_file_dir = storage_path() . "/app/" . $this->getImportPath('uploads');
             $destination_file_name = "upload_" . $this->zeroSuppress($nc3_upload->id, 5);
             $destination_file_path = $destination_file_dir . '/' . $destination_file_name . '.' . $nc3_upload->extension;
 
-            if (File::exists($source_file_path)) {
-                if (!File::isDirectory($destination_file_dir)) {
-                    File::makeDirectory($destination_file_dir, 0775, true);
+            // 画像か？
+            // nc3 Wysiwygでは、右記画像のみアップ許可。 'image/gif', 'image/png', 'image/jpg', 'image/jpeg';
+            // see) https://github.com/NetCommons3/Wysiwyg/blob/master/Controller/WysiwygImageController.php#L30
+            $is_image = false;
+            if (in_array($nc3_upload->mimetype, ['image/gif', 'image/png', 'image/jpg', 'image/jpeg'])) {
+                $is_image = true;
+            }
+
+            if ($is_image) {
+                // 画像
+                // 原寸からサイズの大きい順に調べて、あったらその画像で移行する
+                $image_sizes = ['', 'biggest_', 'big_', 'medium_', 'small_', 'thumb_'];
+                $is_image_not_exists = true;
+                foreach ($image_sizes as $image_size) {
+                    $image_file_path = $uploads_path . $nc3_upload->path . $nc3_upload->id . '/' . $image_size . $nc3_upload->real_file_name;
+                    if (File::exists($image_file_path)) {
+                        if (!File::isDirectory($destination_file_dir)) {
+                            File::makeDirectory($destination_file_dir, 0775, true);
+                        }
+                        File::copy($image_file_path, $destination_file_path);
+                        $is_image_not_exists = false;
+                        break;
+                    }
                 }
-                File::copy($source_file_path, $destination_file_path);
+                if ($is_image_not_exists) {
+                    $this->putMonitor(3, "Image file not exists: " . $uploads_path . $nc3_upload->path . $nc3_upload->id . '/');
+                }
+
+            } else {
+                // ファイル
+                $source_file_path = $uploads_path . $nc3_upload->path . $nc3_upload->id . '/' . $nc3_upload->real_file_name;
+                if (File::exists($source_file_path)) {
+                    if (!File::isDirectory($destination_file_dir)) {
+                        File::makeDirectory($destination_file_dir, 0775, true);
+                    }
+                    File::copy($source_file_path, $destination_file_path);
+                } else {
+                    $this->putMonitor(3, "File not exists: {$source_file_path}");
+                }
             }
 
             $uploads_ini .= "upload[" . $nc3_upload->id . "] = \"" . $destination_file_name . '.' . $nc3_upload->extension . "\"\n";
