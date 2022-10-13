@@ -537,7 +537,7 @@ class SlideshowsPlugin extends UserPluginBase
         // 変換失敗
         if (empty($base64_images)) {
             // フラッシュメッセージ設定
-            $request->merge(['flash_message' => 'PDFの追加に失敗しました。']);
+            session()->flash('slideshows_error_message', 'PDFの追加に失敗しました。PDFにパスワードが設定されている場合は、PDFパスワードを入力してください。PDFにパスワードが設定されていない、もしくは正しいPDFパスワードを入力しても変換に失敗する場合は、システム管理者に問い合わせてください。');
             return;
         }
 

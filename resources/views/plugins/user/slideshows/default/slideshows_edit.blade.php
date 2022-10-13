@@ -37,6 +37,13 @@
                     {{-- エラーメッセージエリア ※共通blade呼び出し --}}
                     @include('plugins.common.errors_form_line')
 
+                    {{-- エラーメッセージ --}}
+                    @if (session('slideshows_error_message'))
+                    <div class="alert alert-danger mt-2">
+                        <i class="fas fa-exclamation-circle"></i> {{ session('slideshows_error_message') }}
+                    </div>
+                    @endif
+
                     {{-- メッセージエリア --}}
                     <div class="alert alert-info mt-2">
                         <i class="fas fa-exclamation-circle"></i> {{ session('flash_message') ? session('flash_message') : 'スライドショーに表示させる画像やリンクを設定します。' }}
