@@ -12716,29 +12716,8 @@ trait MigrationNc3Trait
 
         // CSS の img-fluid を自動で付ける最小の画像幅
         $img_fluid_min_width = $this->getMigrationConfig('wysiwyg', 'img_fluid_min_width', 0);
-
         // 画像全体にレスポンシブCSS を適用する。
-        $img_srcs = MigrationUtils::getContentImageTag($content);
-
-        if (!empty($img_srcs)) {
-            $img_srcs_0 = array_unique($img_srcs[0]);
-            foreach ($img_srcs_0 as $key => $img_src) {
-                if (stripos($img_src, '../../uploads') !== false && stripos($img_src, 'class=') === false) {
-                    // 画像のファイル名。$file_name には、最初に "/" がつく。
-                    $last_slash_pos = mb_strripos($img_srcs[1][$key], '/');
-                    $file_name = mb_substr($img_srcs[1][$key], $last_slash_pos);
-                    $file_path = storage_path() . '/app/' . $this->getImportPath('uploads' . $file_name);
-                    // 画像が存在し、img_fluid_min_width で指定された大きさ以上なら、img-fluid クラスをつける。
-                    if (File::exists($file_path)) {
-                        $imagesize = getimagesize($file_path);
-                        if (is_array($imagesize) && $imagesize[0] >= $img_fluid_min_width) {
-                            $new_img_src = str_replace('<img ', '<img class="img-fluid" ', $img_src);
-                            $content = str_replace($img_src, $new_img_src, $content);
-                        }
-                    }
-                }
-            }
-        }
+        $content = MigrationUtils::convertContentImageClassToImgFluid($content, $this->getImportPath(''), $img_fluid_min_width);
 
         // 画像のstyle設定を探し、height をmax-height に変換する。
         $content = MigrationUtils::convertContentImageHeightToMaxHeight($content);
