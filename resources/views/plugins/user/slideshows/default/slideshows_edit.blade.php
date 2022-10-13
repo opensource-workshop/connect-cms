@@ -46,8 +46,18 @@
 
                     {{-- メッセージエリア --}}
                     <div class="alert alert-info mt-2">
-                        <i class="fas fa-exclamation-circle"></i> {{ session('flash_message') ? session('flash_message') : 'スライドショーに表示させる画像やリンクを設定します。' }}
-                        <a href="https://manual.connect-cms.jp/user/slideshows/index.html" target="_brank"><i class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></i></a>
+                        @if (session('flash_message'))
+                            <i class="fas fa-exclamation-circle"></i>{{ session('flash_message') }}
+                            <a href="https://manual.connect-cms.jp/user/slideshows/index.html" target="_brank"><i class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></i></a>
+                        @else
+                            <ul>
+                                <li>
+                                    スライドショーに表示させる画像やリンクを設定します。
+                                    <a href="https://manual.connect-cms.jp/user/slideshows/index.html" target="_brank"><i class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></i></a>
+                                </li>
+                                <li>PDFを選択して追加することで、PDFの内容を画像に変換して登録できます。</li>
+                            </ul>
+                        @endif
                     </div>
 
                     {{-- 項目一覧 --}}
