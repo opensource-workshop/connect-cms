@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 
 use App\Traits\Migration\MigrationTrait;
 
-class ExportNc3FromHttp extends Command
+class ExportNc3PageFromHttp extends Command
 {
     use MigrationTrait;
 
