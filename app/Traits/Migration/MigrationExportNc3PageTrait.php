@@ -199,7 +199,7 @@ trait MigrationExportNc3PageTrait
                         $downloadPath = $anchor_href;
 
                         $file_name = "frame_" . $frame_index_str . '_file_' . $file_index;
-                        $savePath = 'migration/' . $page_id . "/" . $file_name;
+                        $savePath = 'migration/import/pages/' . $page_id . "/" . $file_name;
                         $saveStragePath = storage_path() . '/app/' . $savePath;
 
                         // CURL 設定、ファイル取得
