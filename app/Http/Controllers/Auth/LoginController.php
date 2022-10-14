@@ -4,18 +4,26 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
-use App\Traits\ConnectCommonTrait;
 
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 //use App\Traits\ConnectAuthenticatesUsers;
 use Illuminate\Http\Request;
-//use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 // ログインエラーをCatch するために追加。
 use Illuminate\Validation\ValidationException;
 
+use App\User;
 use App\Models\Core\Configs;
+use App\Models\Core\UsersRoles;
+
+use App\Enums\AuthMethodType;
+use App\Enums\AuthLdapDnType;
 use App\Enums\BaseLoginRedirectPage;
+use App\Enums\UserStatus;
 
 class LoginController extends Controller
 {
@@ -33,7 +41,6 @@ class LoginController extends Controller
     //use AuthenticatesUsers;
     use AuthenticatesUsers { login as laravelLogin;
     }
-    use ConnectCommonTrait;
 
     /**
      * Where to redirect users after login.
@@ -71,22 +78,11 @@ class LoginController extends Controller
      */
     public function login(Request $request)
     {
-// 外部認証を行う場合、先に利用可能かチェックをするとまだユーザー登録されていない場合エラーになる為、チェック処理は後にもっていく
-//        // 利用可能かチェック
-//        if (!$this->checkUserStstus($request, $error_msg)) {
-//            throw ValidationException::withMessages([
-//                $this->username() => [$error_msg],
-//            ]);
-//        }
-
         // 外部認証を使用
         $use_auth_method = Configs::where('name', 'use_auth_method')->first();
 
         if (empty($use_auth_method) || $use_auth_method->value == '0') {
             // 外部認証を使用しない(通常)
-            //
-            // 以下はもともとのAuthenticatesUsers@login 処理
-            //return $this->laravelLogin($request);
 
             // 利用可能かチェック
             if (!$this->checkUserStatus($request, $error_msg)) {
@@ -96,11 +92,10 @@ class LoginController extends Controller
             }
 
             try {
+                // 以下はもともとのAuthenticatesUsers@login 処理
                 return $this->laravelLogin($request);
             } catch (ValidationException $e) {
                 // ログインエラーの場合、NetCommons2 からの移行ユーザとして再度認証する。
-                // bugfix
-                // $this->authNetCommons2Password($request);
                 $redirectNc2 = $this->authNetCommons2Password($request);
                 if (!empty($redirectNc2)) {
                     return $redirectNc2;
@@ -213,14 +208,351 @@ class LoginController extends Controller
         $base_theme = Configs::getConfigsValue($configs, 'base_theme', null);
         $additional_theme = Configs::getConfigsValue($configs, 'additional_theme', null);
         $themes = [
-                    'css' => $base_theme,
-                    'js' => $base_theme,
-                    'additional_css' => $additional_theme,
-                    'additional_js' => $additional_theme,
+            'css' => $base_theme,
+            'js' => $base_theme,
+            'additional_css' => $additional_theme,
+            'additional_js' => $additional_theme,
         ];
 
         return view('auth.login', [
             'themes' => $themes,
         ]);
+    }
+
+    /**
+     * 利用可能かチェック
+     * 戻り値：true なら
+     */
+    private function checkUserStatus($request, &$error_msg = "")
+    {
+        // userid は必要
+        if (!$request->filled('userid')) {
+            $error_msg = "ログインできません。";
+            return false;
+        }
+
+        // ユーザが存在しなければfalse
+        $user = User::where('userid', $request->userid)->first();
+        if (empty($user)) {
+            $error_msg = "ログインできません。";
+            return false;
+        }
+
+        // 利用不可・仮登録・仮削除ならfalse
+        if ($user->status == UserStatus::not_active ||
+                $user->status == UserStatus::temporary ||
+                $user->status == UserStatus::temporary_delete ||
+                $user->status == UserStatus::pending_approval) {
+
+            $error_msg = UserStatus::getDescription($user->status) . "のため、ログインできません。";
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 外部認証
+     */
+    public function authMethod($request)
+    {
+        // 使用する外部認証 取得
+        $auth_method_event = Configs::getAuthMethodEvent();
+
+        // 外部認証がない場合は戻る
+        if (empty($auth_method_event->value)) {
+            return;
+        }
+
+        // NetCommons2 認証
+        if ($auth_method_event->value == AuthMethodType::netcommons2) {
+            // 外部認証設定 取得
+            $auth_method = Configs::where('name', 'auth_method')->where('value', AuthMethodType::netcommons2)->first();
+
+            // リクエストURLの組み立て
+            $request_url = $auth_method['additional1'] . '?action=connectauthapi_view_main_init&login_id=' . $request["userid"] . '&site_key=' . $auth_method['additional2'] . '&check_value=' . md5(md5($request['password']) . $auth_method['additional3']);
+            // Log::debug($request['password']);
+            // Log::debug($auth_method['additional3']);
+            // Log::debug(md5($request['password']));
+            // Log::debug(md5(md5($request['password']) . $auth_method['additional3']));
+            // Log::debug($request_url);
+
+            // NC2 をCall
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $request_url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $return_json = curl_exec($ch);
+
+            // JSON データを複合化
+            $check_result = json_decode($return_json, true);
+
+            // 戻り値のチェック
+            if (is_array($check_result) && array_key_exists('check', $check_result) && array_key_exists('ret_value', $check_result)) {
+                if ($check_result['check'] == true && $check_result['ret_value'] == md5($request['userid'] . $auth_method['additional3'])) {
+                    // ログインするユーザの存在を確認
+                    $user = User::where('userid', $request['userid'])->first();
+
+                    // ユーザが存在しない
+                    if (empty($user)) {
+                        // ユーザが存在しない場合、ログインのみ権限でユーザを作成して、自動ログイン
+                        $user = new User;
+                        $user->name = empty($check_result['handle']) ? $request['userid'] : $check_result['handle'];
+                        $user->userid = $request['userid'];
+                        $user->password = Hash::make($request['password']);
+                        $user->created_event = AuthMethodType::netcommons2;
+                        $user->save();
+
+                        // 追加権限設定があれば作成
+                        if (!empty($auth_method['additional4'])) {
+
+                            // NC2側権限値取得
+                            $nc2_auth = "";
+                            if (array_key_exists('auth', $check_result) == true) {
+                                $nc2_auth = $check_result['auth'];
+                            }
+
+                            // |で区切る（|は複数権限の設定がある場合に区切り文字として利用される）
+                            $set_rols = "";
+                            $rols_options_list = explode('|', $auth_method['additional4']);
+                            foreach ($rols_options_list as $value) {
+                                // :で区切る（:は、NC2側権限とConnectCMS側権限の区切り文字として利用される）
+                                $original_rols_options = explode(':', $value);
+
+                                // 一致した権限を設定する
+                                if ($original_rols_options[0] == $nc2_auth) {
+                                    $set_rols = $original_rols_options[1];
+                                    break;
+                                }
+                            }
+
+                            UsersRoles::create([
+                                'users_id'   => $user->id,
+                                'target'     => 'original_role',
+                                'role_name'  => $set_rols,
+                                'role_value' => 1
+                            ]);
+                        }
+                    } else {
+                        // ユーザ登録が既にある場合、そのユーザが利用可能になっているかどうかをチェックし、利用不可になっている場合は処理を戻す
+                        if ($user->status != UserStatus::active) {
+                            return;
+                        }
+                    }
+
+                    // ログイン
+                    Auth::login($user, true);
+                    // トップページへ
+                    return redirect("/");
+                }
+            }
+
+        } elseif ($auth_method_event->value == AuthMethodType::ldap) {
+            // LDAP 認証
+
+            // php-ldapが有効でなければ、ここで戻す. 戻さないと、Call to undefined function App\\Traits\\ldap_connect()エラーでログインできなくなる。
+            if (! function_exists('ldap_connect')) {
+                $this->errorLogAndFlashMessageForHeader('LDAP認証ONですがphp_ldapが無効なため、LDAP認証できませんでした。');
+                return;
+            }
+
+            // 外部認証設定 取得
+            $auth_method = Configs::firstOrNew(['name' => 'auth_method', 'value' => AuthMethodType::ldap]);
+
+            // ldap バインドを使用する
+            if ($auth_method->additional2 == AuthLdapDnType::active_directory) {
+                // Active Directoryタイプ例：test001@example.com
+                $ldaprdn = $request->userid . "@" . $auth_method->additional3;     // ldap rdn あるいは dn
+            } else {
+                // DNタイプ例：uid=test001,ou=People,dc=example,dc=com
+                $ldaprdn = "uid=" . $request->userid . "," . $auth_method->additional3;
+            }
+
+            // ldap サーバーに接続する
+            // $ldapconn = ldap_connect("ldap://localhost:389") or die("Could not connect to LDAP server.");
+            $ldapconn = ldap_connect($auth_method->additional1);
+
+            if ($ldapconn) {
+
+                if (! ldap_set_option($ldapconn, LDAP_OPT_PROTOCOL_VERSION, 3)) {
+                    ldap_close($ldapconn);
+                    $this->errorLogAndFlashMessageForHeader('LDAPのプロトコルバージョンを 3 に設定できませんでした。');
+                    return;
+                }
+
+                // ldap サーバーにバインドする
+                //   システム管理者等、LDAPにいないユーザだと ldap_bind(): Unable to bind to server: Invalid credentialsエラーが出るため @ でエラー抑止する。
+                //   LDAPサーバに繋げないエラー     Warning: ldap_bind(): Unable to bind to server: Can't contact LDAP server も @ で抑止され,falseが返ってくる。
+                $ldapbind = @ldap_bind($ldapconn, $ldaprdn, $request->password);
+
+                // バインド結果を検証する
+                if ($ldapbind) {
+                    // LDAP認証OK
+
+                    // 以降でldap操作しないため、ここでクローズする。
+                    ldap_close($ldapconn);
+
+                    // ログインするユーザの存在を確認
+                    $user = User::where('userid', $request->userid)->first();
+
+                    // ユーザが存在しない
+                    if (empty($user)) {
+                        // パスワードは自動設定, 設定して教えない, 20文字 大文字小文字英数字ランダム
+                        $password = Hash::make(Str::random(20));
+
+                        // ユーザが存在しない場合、ログインのみ権限でユーザを作成して、自動ログイン
+                        $user = new User;
+                        $user->name = $request->userid;
+                        $user->userid = $request->userid;
+                        $user->password = $password;
+                        $user->created_event = AuthMethodType::ldap;
+                        $user->save();
+
+                    } else {
+                        // ユーザ登録が既にある場合、そのユーザが利用可能になっているかどうかをチェックし、利用不可になっている場合は処理を戻す
+                        if ($user->status != UserStatus::active) {
+                            return;
+                        }
+                    }
+
+                    // ログイン
+                    Auth::login($user, true);
+
+                    // トップページへ
+                    return redirect("/");
+                } else {
+                    // Error 49: Invalid credentials（パスワード間違い）以外はログを出力する。
+                    if (ldap_errno($ldapconn) != 49) {
+                        $this->errorLogAndFlashMessageForHeader("LDAP-Error " . ldap_errno($ldapconn) . ": " . ldap_error($ldapconn));
+                    }
+                    ldap_close($ldapconn);
+                }
+
+            } else {
+                $this->errorLogAndFlashMessageForHeader("LDAPサーバに接続できませんでした。");
+                return;
+            }
+        }
+        return;
+    }
+
+    /**
+     * エラーメッセージを画面ヘッダー部分とログに出力
+     */
+    private function errorLogAndFlashMessageForHeader($message)
+    {
+        session()->flash('flash_message_for_header', $message);
+        session()->flash('flash_message_for_header_class', 'alert-danger');
+        Log::error($message);
+    }
+
+    /**
+     * 外部認証: shibboleth 認証
+     */
+    private function authMethodShibboleth($request)
+    {
+        // 使用する外部認証 取得
+        $auth_method_event = Configs::getAuthMethodEvent();
+
+        // 外部認証がない場合は戻る
+        if (empty($auth_method_event->value)) {
+            return;
+        }
+
+        if ($auth_method_event->value == AuthMethodType::shibboleth) {
+            // shibboleth 認証
+            //
+            // 必須
+            // $userid = $request->server('REDIRECT_mail');
+            $userid = $request->server(config('cc_shibboleth_config.userid'));
+
+            // ログインするユーザの存在を確認
+            $user = User::where('userid', $userid)->first();
+
+            if (empty($user)) {
+                // ユーザが存在しない
+                //
+                // 必須
+                // $user_name = $request->server('REDIRECT_employeeNumber');
+                $user_name = $request->server(config('cc_shibboleth_config.user_name'));
+
+                // パスワードは自動設定, 設定して教えない, 20文字 大文字小文字英数字ランダム
+                $password = Hash::make(Str::random(20));
+
+                // 任意, $request->server()は値がなければnullになる
+                // $email = $request->server('REDIRECT_mail');
+                $email = $request->server(config('cc_shibboleth_config.user_email'));
+
+                // ユーザが存在しない場合、ログインのみ権限でユーザを作成して、自動ログイン
+                $user = new User;
+                $user->name = $user_name;
+                $user->userid = $userid;
+                $user->email = $email;
+                $user->password = $password;
+                $user->created_event = AuthMethodType::shibboleth;
+                $user->save();
+
+                // [TODO] 区分 (unscoped-affiliation),    faculty (教員)，staff (職員), student (学生)
+                //        によって、シボレス認証初回時の自動アカウント設定、何か設定する？
+                // echo "<tr><td>区分</td><td>".$_SERVER['REDIRECT_unscoped-affiliation']."</td></tr>";
+
+                // 追加権限設定があれば作成
+                // if (!empty($auth_method['additional4'])) {
+                //     $original_rols_options = explode(':', $auth_method['additional4']);
+                //     UsersRoles::create([
+                //         'users_id'   => $user->id,
+                //         'target'     => 'original_role',
+                //         'role_name'  => $original_rols_options[1],
+                //         'role_value' => 1
+                //     ]);
+                // }
+            } else {
+                // ユーザが存在する
+                //
+                // 利用可能かチェック
+                if ($user->status != 0) {
+                    abort(403, "利用不可のため、ログインできません。");
+                }
+            }
+
+            // ログイン
+            Auth::login($user, true);
+            // トップページへ
+            return redirect("/");
+        }
+        return;
+    }
+
+    /**
+     * NetCommons2 からの移行パスワードでの認証
+     */
+    private function authNetCommons2Password($request)
+    {
+        // ログインするユーザの存在を確認
+        $user = User::where('userid', $request['userid'])->first();
+
+        // ユーザが存在しない
+        if (empty($user)) {
+            return false;
+        }
+
+        // パスワードチェック
+        if (Hash::check(md5($request->password), $user->password) || // v1.0.0以前
+            md5($request->password) === $user->password) { // v1.0.0より後
+            // ログイン
+            Auth::login($user, true);
+
+            $url = '/';
+            // ログイン後の返却ページ対応
+            if ($request->session()->get('url') && isset($request->session()->get('url')["intended"])) {
+                $url = $request->session()->get('url')["intended"];
+            }
+
+            // パスワードを強化
+            // 初回ログイン以降は通常のログインルートに入るようにする
+            $user->password = Hash::make($request->password);
+            $user->save();
+            // トップページへ
+            return redirect($url);
+        }
     }
 }
