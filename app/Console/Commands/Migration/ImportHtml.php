@@ -23,7 +23,7 @@ class ImportHtml extends Command
      *
      * @var string
      */
-    protected $description = 'Connect-CMS 移行形式のHTML をインポートする';
+    protected $description = 'ページ指定で Connect-CMS 移行形式のHTML をインポートする';
 
     /**
      * Create a new command instance.
