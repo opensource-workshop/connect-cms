@@ -5,6 +5,8 @@ namespace App\Utilities\Migration;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\File;
 
+use App\Models\Core\Configs;
+
 /**
  * 移行関連Utils
  *
@@ -182,5 +184,24 @@ class MigrationUtils
             }
         }
         return $content;
+    }
+
+    /**
+     * サイト基本設定をインポート
+     */
+    public static function updateConfig($name, $ini, $category = 'general')
+    {
+        if (!array_key_exists('basic', $ini)) {
+            return;
+        }
+
+        if (array_key_exists($name, $ini['basic'])) {
+            $config = Configs::updateOrCreate(
+                ['name'     => $name],
+                ['name'     => $name,
+                 'value'    => $ini['basic'][$name],
+                 'category' => $category]
+            );
+        }
     }
 }

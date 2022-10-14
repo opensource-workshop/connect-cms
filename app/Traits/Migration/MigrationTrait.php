@@ -31,7 +31,6 @@ use App\Models\Common\Page;
 use App\Models\Common\PageRole;
 use App\Models\Common\Permalink;
 use App\Models\Common\Uploads;
-use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
 use App\Models\Core\UsersColumns;
 use App\Models\Core\UsersColumnsSelects;
@@ -2221,25 +2220,6 @@ trait MigrationTrait
     /**
      * サイト基本設定をインポート
      */
-    private function updateConfig($name, $ini, $category = 'general')
-    {
-        if (!array_key_exists('basic', $ini)) {
-            return;
-        }
-
-        if (array_key_exists($name, $ini['basic'])) {
-            $config = Configs::updateOrCreate(
-                ['name'     => $name],
-                ['name'     => $name,
-                 'value'    => $ini['basic'][$name],
-                 'category' => $category]
-            );
-        }
-    }
-
-    /**
-     * サイト基本設定をインポート
-     */
     private function importBasic($redo)
     {
         $this->putMonitor(3, "Basic import Start.");
@@ -2250,11 +2230,14 @@ trait MigrationTrait
             $basic_ini = parse_ini_file(storage_path() . '/app/' . $basic_file_path, true);
 
             // サイト名
-            $this->updateConfig('base_site_name', $basic_ini);
+            MigrationUtils::updateConfig('base_site_name', $basic_ini);
 
             // 使って無いためコメントアウト
             // フッター幅
             // $this->updateConfig('browser_width_footer', $basic_ini);
+
+            // nc3_security_salt
+            MigrationUtils::updateConfig('nc3_security_salt', $basic_ini, 'migration');
         }
     }
 

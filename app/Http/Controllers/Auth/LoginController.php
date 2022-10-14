@@ -101,6 +101,12 @@ class LoginController extends Controller
                     return $redirectNc2;
                 }
 
+                // NetCommons3 移行ユーザ認証
+                $redirectNc3 = $this->authNetCommons3Password($request);
+                if (!empty($redirectNc3)) {
+                    return $redirectNc3;
+                }
+
                 // ここに来るということは、NetCommons2 からの移行パスワードでの認証もNG
                 throw $e;
             }
@@ -538,6 +544,41 @@ class LoginController extends Controller
         // パスワードチェック
         if (Hash::check(md5($request->password), $user->password) || // v1.0.0以前
             md5($request->password) === $user->password) { // v1.0.0より後
+            // ログイン
+            Auth::login($user, true);
+
+            $url = '/';
+            // ログイン後の返却ページ対応
+            if ($request->session()->get('url') && isset($request->session()->get('url')["intended"])) {
+                $url = $request->session()->get('url')["intended"];
+            }
+
+            // パスワードを強化
+            // 初回ログイン以降は通常のログインルートに入るようにする
+            $user->password = Hash::make($request->password);
+            $user->save();
+            // トップページへ
+            return redirect($url);
+        }
+    }
+
+    /**
+     * NetCommons3 からの移行パスワードでの認証
+     */
+    private function authNetCommons3Password($request)
+    {
+        // ログインするユーザの存在を確認
+        $user = User::where('userid', $request['userid'])->first();
+
+        // ユーザが存在しない
+        if (empty($user)) {
+            return false;
+        }
+
+        $nc3_security_salt = Configs::where('name', 'nc3_security_salt')->firstOrNew([]);
+
+        // パスワードチェック
+        if (hash("sha512", $nc3_security_salt->value . $request->password) === $user->password) {
             // ログイン
             Auth::login($user, true);
 
