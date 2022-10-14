@@ -222,4 +222,16 @@ class MigrationUtils
             );
         }
     }
+
+    /**
+     * ID のゼロ埋め
+     */
+    public static function zeroSuppress($id, ?int $size = 4): string
+    {
+        // ページID がとりあえず、1万ページ未満で想定。
+        // ここの桁数を上げれば、さらに大きなページ数でも処理可能
+        $size_str = sprintf("%'.02d", $size);
+
+        return sprintf("%'." . $size_str . "d", $id);
+    }
 }

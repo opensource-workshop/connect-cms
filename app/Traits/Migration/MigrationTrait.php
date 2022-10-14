@@ -8040,11 +8040,7 @@ trait MigrationTrait
      */
     private function zeroSuppress($id, $size = 4)
     {
-        // ページID がとりあえず、1万ページ未満で想定。
-        // ここの桁数を上げれば、さらに大きなページ数でも処理可能
-        $size_str = sprintf("%'.02d", $size);
-
-        return sprintf("%'." . $size_str . "d", $id);
+        return MigrationUtils::zeroSuppress($id, $size);
     }
 
     /**
