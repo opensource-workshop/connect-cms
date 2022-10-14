@@ -2,6 +2,7 @@
 
 namespace App\Traits\Migration;
 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 use App\Utilities\Migration\MigrationUtils;
@@ -100,6 +101,14 @@ trait MigrationExportNc3PageTrait
             // 元のNC3情報
             $frame_ini .= "\n";
             $frame_ini .= "[source_info]\n";
+
+            // フレームID
+            $expression = './/@id';
+            $frame_id = $xpath->query($expression, $section)->item(0);
+            $nc3_frame_id = ltrim($frame_id->value, 'frame-');
+            $frame_ini .= "source_key = \"" . $nc3_frame_id . "\"\n";
+            // Log::debug(var_export($frame_id->value, true));
+
             $frame_ini .= "target_source_table = \"announcement\"\n";
 
             // 本文を抜き出します。
