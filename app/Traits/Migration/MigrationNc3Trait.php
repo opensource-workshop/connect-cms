@@ -64,7 +64,7 @@ use App\Enums\UserStatus;
  */
 trait MigrationNc3Trait
 {
-    use ConnectCommonTrait;
+    use ConnectCommonTrait, MigrationLogTrait;
 
     /**
      * ファイル取得時のHTTPヘッダーからcontent_disposition
@@ -74,11 +74,11 @@ trait MigrationNc3Trait
     private $content_disposition = "";
 
     /**
-     * ログのパス
-     * ログ自体はプログラムが途中でコケても残るように、append する。
-     * ここは、ログファイルの名前を時分秒を付けて保存したいため、シングルトンでファイル名を保持するためのもの。
+     * ログのヘッダー出力
+     * use する側で定義する
+     * @see \App\Traits\Migration\MigrationLogTrait
      */
-    private $log_path = array();
+    private $log_header = "page_id,frame_id,category,message";
 
     /**
      * uploads.ini
@@ -237,75 +237,6 @@ trait MigrationNc3Trait
 
         // 対象
         return true;
-    }
-
-    /**
-     * エラーログ出力
-     */
-    private function putError($destination, $message, $detail = null, $nc3_frame = null)
-    {
-        $this->putLog($destination, $message, $detail, $nc3_frame, 'error');
-    }
-
-    /**
-     * モニターログ出力
-     */
-    private function putMonitor($destination, $message, $detail = null, $nc3_frame = null)
-    {
-        $this->putLog($destination, $message, $detail, $nc3_frame, 'monitor');
-    }
-
-    /**
-     * リンクチェックのログ出力
-     */
-    private function putLinkCheck($destination, $message, $detail = null, $nc3_frame = null)
-    {
-        $this->putLog($destination, $message, $detail, $nc3_frame, 'link_check');
-    }
-
-    /**
-     * ログ出力
-     * destination = 0 : 出力なし、1 : ログ、2 : 標準出力、3 : ログ＆標準出力
-     */
-    private function putLog($destination, $message, $detail, $nc3_frame = null, $filename = 'migration')
-    {
-        // 最初のみ。
-        // ログのファイル名の設定
-        if (!array_key_exists($filename, $this->log_path)) {
-            $this->log_path[$filename] = "migration/logs/" . $filename . "_" . date('His') . '.log';
-
-            // ログにヘッダー出力
-            if (config('migration.MIGRATION_JOB_LOG')) {
-                Storage::append($this->log_path[$filename], "page_id,frame_id,category,message");
-            }
-
-            // 標準出力にヘッダー出力
-            if (config('migration.MIGRATION_JOB_MONITOR')) {
-                echo "page_id,frame_id,category,message" . "\n";
-            }
-        }
-
-        // メッセージ組み立て
-        $log_str = "";
-        if (empty($nc3_frame)) {
-            $log_str .= ",,";
-        } else {
-            $log_str .= $nc3_frame->page_id . ",";
-            $log_str .= $nc3_frame->id . ",";
-        }
-        $log_str .= $message . ",";
-        $log_str .= $detail;
-
-
-        // ログ出力
-        if (config('migration.MIGRATION_JOB_LOG') && ($destination == 1 || $destination == 3)) {
-            Storage::append($this->log_path[$filename], $log_str);
-        }
-
-        // 標準出力
-        if (config('migration.MIGRATION_JOB_MONITOR') && ($destination == 2 || $destination == 3)) {
-            echo $log_str . "\n";
-        }
     }
 
     /**
