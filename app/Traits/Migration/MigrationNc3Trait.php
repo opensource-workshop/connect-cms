@@ -67,13 +67,6 @@ trait MigrationNc3Trait
     use ConnectCommonTrait, MigrationLogTrait;
 
     /**
-     * ファイル取得時のHTTPヘッダーからcontent_disposition
-     * CURL でクロージャで取得するため、値の移送用いインスタンス変数を用意
-     * ここから日本語ファイル名を取得する。
-     */
-    private $content_disposition = "";
-
-    /**
      * ログのヘッダー出力
      * use する側で定義する
      * @see \App\Traits\Migration\MigrationLogTrait
@@ -1683,40 +1676,6 @@ trait MigrationNc3Trait
         }
 
         return "application/octet-stream";
-    }
-
-    /**
-     * フレームデザインの取得
-     */
-    private function getFrameDesign($classes)
-    {
-        // none
-        if (stripos($classes, 'panel-none') !== false) {
-            return 'none';
-        }
-        // primary
-        if (stripos($classes, 'panel-primary') !== false) {
-            return 'primary';
-        }
-        // info
-        if (stripos($classes, 'panel-info') !== false) {
-            return 'info';
-        }
-        // success
-        if (stripos($classes, 'panel-success') !== false) {
-            return 'success';
-        }
-        // warning
-        if (stripos($classes, 'panel-warning') !== false) {
-            return 'warning';
-        }
-        // danger
-        if (stripos($classes, 'panel-danger') !== false) {
-            return 'danger';
-        }
-
-        // default
-        return 'default';
     }
 
     /**

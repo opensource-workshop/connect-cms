@@ -4,11 +4,11 @@ namespace App\Console\Commands\Migration;
 
 use Illuminate\Console\Command;
 
-use App\Traits\Migration\MigrationTrait;
+use App\Traits\Migration\MigrationExportNc3PageTrait;
 
 class ExportNc3PageFromHttp extends Command
 {
-    use MigrationTrait;
+    use MigrationExportNc3PageTrait;
 
     /**
      * The name and signature of the console command.

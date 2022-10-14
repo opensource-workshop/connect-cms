@@ -234,4 +234,13 @@ class MigrationUtils
 
         return sprintf("%'." . $size_str . "d", $id);
     }
+
+    /**
+     * ファイル名から拡張子を取得
+     */
+    public static function getExtension($filename)
+    {
+        $filepath = pathinfo($filename);
+        return $filepath['extension'];
+    }
 }
