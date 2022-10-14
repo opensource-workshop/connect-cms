@@ -7635,8 +7635,12 @@ trait MigrationTrait
         Storage::makeDirectory('migration/import/pages/' . $page_id);
 
         // 指定されたページのHTML を取得
-        $html = $this->getHTMLPage($url);
-        //var_dump($url);
+        // $html = $this->getHTMLPage($url);
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $html =  curl_exec($ch);
+        curl_close($ch);
 
         // HTMLドキュメントの解析準備
         $dom = new \DOMDocument;
@@ -7662,13 +7666,13 @@ trait MigrationTrait
             // フレームタイトル(panel-heading)を抜き出します。
             $expression = './/div[contains(@class, "panel-heading")]/span';
             $frame_title = $xpath->query($expression, $section)->item(0);
-            //var_dump($this->getInnerHtml($frame_title));
-            //Log::debug($this->getInnerHtml($frame_title));
+            //var_dump($this->getInnerHtmlNc3($frame_title));
+            //Log::debug($this->getInnerHtmlNc3($frame_title));
 
             // フレーム設定の保存用変数
             $frame_ini = "[frame_base]\n";
             $frame_ini .= "area_id = 2\n";
-            $frame_ini .= "frame_title = \"" . $this->getInnerHtml($frame_title) . "\"\n";
+            $frame_ini .= "frame_title = \"" . $this->getInnerHtmlNc3($frame_title) . "\"\n";
 
             // フレームデザイン
             $expression = './/@class';
@@ -7687,14 +7691,14 @@ trait MigrationTrait
             // 本文を抜き出します。
             $expression = './/div[contains(@class, "panel-body")]/article';
             $content = $xpath->query($expression, $section)->item(0);
-            //var_dump($this->getInnerHtml($content));
-            //Log::debug($this->getInnerHtml($content));
+            //var_dump($this->getInnerHtmlNc3($content));
+            //Log::debug($this->getInnerHtmlNc3($content));
 
             // HTML の保存用変数
-            $content_html = $this->getInnerHtml($content);
+            $content_html = $this->getInnerHtmlNc3($content);
 
             // 本文から画像(img src)を抜き出す
-            $images = $this->getContentImage($content_html);
+            $images = MigrationUtils::getContentImage($content_html);
             //var_dump($images);
 
             // 画像の取得と保存
@@ -7751,7 +7755,7 @@ trait MigrationTrait
                     Storage::move($savePath, $savePath . '.' . $img_extension);
 
                     // 画像の設定情報の記載
-                    $frame_ini .= $file_name . '.' . $img_extension . ' = "' . $this->searchFileName($this->content_disposition) . "\"\n";
+                    $frame_ini .= $file_name . '.' . $img_extension . ' = "' . $this->searchNc3FileName($this->content_disposition) . "\"\n";
 
                     // content 内の保存した画像のパスを修正
                     $content_html = str_replace($image_url, $file_name . '.' . $img_extension, $content_html);
@@ -7763,7 +7767,7 @@ trait MigrationTrait
             }
 
             // 本文からアンカー(a href)を抜き出す
-            $anchors = $this->getContentAnchor($content_html);
+            $anchors = MigrationUtils::getContentAnchor($content_html);
             //var_dump($anchors);
 
             // 添付ファイルの取得と保存
@@ -7797,14 +7801,14 @@ trait MigrationTrait
                         //echo $this->content_disposition;
 
                         // ファイルの拡張子の取得
-                        $file_extension = $this->getExtension($this->searchFileName($this->content_disposition));
+                        $file_extension = $this->getExtension($this->searchNc3FileName($this->content_disposition));
 
                         // 拡張子の変更
                         Storage::delete($savePath . '.' . $file_extension);
                         Storage::move($savePath, $savePath . '.' . $file_extension);
 
                         // ファイルの設定情報の記載
-                        $frame_ini .= $file_name . '.' . $file_extension . ' = "' . $this->searchFileName($this->content_disposition) . "\"\n";
+                        $frame_ini .= $file_name . '.' . $file_extension . ' = "' . $this->searchNc3FileName($this->content_disposition) . "\"\n";
 
                         // content 内の保存したファイルのパスを修正
                         $content_html = str_replace($anchor_href, $file_name . '.' . $file_extension, $content_html);
@@ -7825,7 +7829,7 @@ trait MigrationTrait
             Storage::put('migration/import/pages/' . $page_id . "/frame_" . $frame_index_str . '.ini', $frame_ini);
 
             // Contents 変換
-            $content_html = $this->migrationHtml($content_html);
+            $content_html = $this->migrationNc3Html($content_html);
 
             // HTML content の保存
             Storage::put('migration/import/pages/' . $page_id . "/frame_" . $frame_index_str . '.html', trim($content_html));
@@ -7835,15 +7839,15 @@ trait MigrationTrait
     /**
      * NC3 からConnect-CMS へタグ変換
      */
-    private function migrationHtml($content_html)
+    private function migrationNc3Html($content_html)
     {
         // 画像のレスポンスCSS
-        $content_html = $this->replaceCss('img-responsive', 'img-fluid', $content_html);
+        $content_html = $this->replaceNc3Css('img-responsive', 'img-fluid', $content_html);
 
         // NC3 用画像CSS（削除）
-        $content_html = $this->replaceCss('nc3-img-block', '', $content_html);
-        $content_html = $this->replaceCss('nc3-img', '', $content_html);
-        $content_html = $this->replaceCss('thumbnail', 'img-thumbnail', $content_html);
+        $content_html = $this->replaceNc3Css('nc3-img-block', '', $content_html);
+        $content_html = $this->replaceNc3Css('nc3-img', '', $content_html);
+        $content_html = $this->replaceNc3Css('thumbnail', 'img-thumbnail', $content_html);
 
         return $content_html;
     }
@@ -7851,7 +7855,7 @@ trait MigrationTrait
     /**
      * CSS 中のクラス名の変換
      */
-    private function replaceCss($search, $replace, $subject)
+    private function replaceNc3Css($search, $replace, $subject)
     {
         $pattern = '/class=((?:\s|")?)(.*?)((?:\s|")+)' . $search . '((?:\s|")+)(.*?)((?:\s|")?)/';
         $replacement = 'class=$1$2$3' . $replace . '$4$5$6';
@@ -7862,7 +7866,7 @@ trait MigrationTrait
     /**
      * content_disposition からファイル名の抜き出し
      */
-    private function searchFileName($content_disposition)
+    private function searchNc3FileName($content_disposition)
     {
         // attachment ＆ filename*=UTF-8 形式
         if (stripos($content_disposition, "Content-Disposition: attachment;filename*=UTF-8''") !== false) {
@@ -7949,28 +7953,9 @@ trait MigrationTrait
     }
 
     /**
-     * ページのHTML取得
-     */
-    private function getHTMLPage($url)
-    {
-        // curl Open
-        $ch = curl_init();
-
-        //オプション
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $html =  curl_exec($ch);
-
-        // curl Close
-        curl_close($ch);
-
-        return $html;
-    }
-
-    /**
      * nodeをHTMLとして取り出す
      */
-    private function getInnerHtml($node)
+    private function getInnerHtmlNc3($node)
     {
         // node が空の場合
         if (empty($node)) {
