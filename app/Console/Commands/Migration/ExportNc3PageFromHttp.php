@@ -15,7 +15,7 @@ class ExportNc3PageFromHttp extends Command
      *
      * @var string
      */
-    protected $signature = 'command:MigrationFromHttp {url} {page_id}';
+    protected $signature = 'command:ExportNc3PageFromHttp {url} {page_id}';
 
     /**
      * The console command description.
