@@ -1207,16 +1207,7 @@ trait MigrationNc3Trait
     }
 
     /**
-     * 配列からtsvの値取得
-     */
-    private function getTsvValue($tsv_cols, $idx, $default = null)
-    {
-        $value = MigrationUtils::getArrayValue($tsv_cols, $idx, null, $default);
-        return empty($value) ? $default : $value;
-    }
-
-    /**
-     * インポートの初期処理
+     * エクスポート・インポートの初期処理
      */
     private function migrationInit()
     {
@@ -1235,7 +1226,6 @@ trait MigrationNc3Trait
 
     /**
      * 移行設定の取得
-     * [TODO] 共通っぽいが、$this->migration_config 指定のため、外だししずらい。
      */
     private function getMigrationConfig($section, $key, $default = false)
     {
@@ -1248,7 +1238,6 @@ trait MigrationNc3Trait
 
     /**
      * 移行設定の取得
-     * [TODO] common 共通
      */
     private function hasMigrationConfig($section, $key, $value = null)
     {
@@ -1275,30 +1264,6 @@ trait MigrationNc3Trait
     }
 
     /**
-     * 記事内に p タグがなければ、p タグで囲む
-     */
-    private function addParagraph($target, $value)
-    {
-        $return_value = $value;
-        if ($this->hasMigrationConfig($target, 'cc_import_add_if_not_p', true)) {
-            $pattern = '/<p.*?>/i';
-            if (!empty(trim($return_value)) && !preg_match($pattern, $value, $matches)) {
-                $return_value = '<p>' . $return_value . '</p>';
-            }
-        }
-        return $return_value;
-    }
-
-    /**
-     * インポートする際の参照コンテンツ（画像、ファイル）の追加ディレクトリ取得
-     */
-    private function getImportSrcDir($default = '/file/')
-    {
-        $cc_import_add_src_dir = $this->getMigrationConfig('pages', 'cc_import_add_src_dir', '');
-        return $cc_import_add_src_dir . $default ;
-    }
-
-    /**
      * 日時の関数(NC3)
      */
     private function getCCDatetime(?Carbon $utc_datetime): ?Carbon
@@ -1309,65 +1274,6 @@ trait MigrationNc3Trait
 
         // 9時間足す
         return $utc_datetime->addHours(9);
-    }
-
-    /**
-     * インポート時TSVから日時取得 ＆ 日時フォーマットチェック
-     */
-    private function getDatetimeFromTsvAndCheckFormat($idx, $tsv_cols, $column_name, $default = null)
-    {
-        if (is_null($default)) {
-            $default = date('Y-m-d H:i:s');
-        }
-
-        // カラムがない or データが空の場合は、処理時間を入れる。
-        if (array_key_exists($idx, $tsv_cols) && !empty($tsv_cols[$idx])) {
-            $date = $tsv_cols[$idx];
-            if (!\DateTime::createFromFormat('Y-m-d H:i:s', $date)) {
-                $this->putError(3, '日付エラー', "{$column_name} = {$date}");
-                // $date = date('Y-m-d H:i:s');
-                $date = $default;
-            }
-        } else {
-            // $date = date('Y-m-d H:i:s');
-            $date = $default;
-        }
-
-        return $date;
-    }
-
-    /**
-     * インポート時INIから日時取得 ＆ 日時フォーマットチェック
-     */
-    private function getDatetimeFromIniAndCheckFormat($ini, $key1, $key2, $default = null)
-    {
-        if (is_null($default)) {
-            $default = date('Y-m-d H:i:s');
-        }
-
-        $date = MigrationUtils::getArrayValue($ini, $key1, $key2, null);
-
-        // データが空の場合は、処理時間を入れる。
-        if (empty($date)) {
-            return $default;
-        }
-
-        if (!\DateTime::createFromFormat('Y-m-d H:i:s', $date)) {
-            $this->putError(3, '日付エラー', "[{$key1}] $key2 = {$date}");
-            return $default;
-        }
-
-        return $date;
-    }
-
-    /**
-     * ログインIDからユーザID取得
-     */
-    private function getUserIdFromLoginId($users, $login_id)
-    {
-        $user = $users->firstWhere('userid', $login_id);
-        $user = $user ?? new User();
-        return $user->id;
     }
 
     /**
@@ -1399,283 +1305,6 @@ trait MigrationNc3Trait
             return true;
         }
         return false;
-    }
-
-    /**
-     * HTML からGoogle Analytics タグ部分を削除
-     */
-    private function deleteGATag($content)
-    {
-        preg_match_all('/<script(.*?)script>/is', $content, $matches);
-
-        foreach ($matches[0] as $matche) {
-            if (stripos($matche, 'www.google-analytics.com/analytics.js')) {
-                $content = str_replace($matche, '', $content);
-            }
-            if (stripos($matche, 'GoogleAnalyticsObject')) {
-                $content = str_replace($matche, '', $content);
-            }
-        }
-        return $content;
-    }
-
-    /**
-     * フレームの登録処理
-     */
-    private function importPluginFrame($page, $frame_ini, $display_sequence, $bucket = null)
-    {
-        // Frames 登録
-        // echo "Frames 登録\n";
-
-        // Frame タイトル
-        $frame_title = '[無題]';
-        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('frame_title', $frame_ini['frame_base'])) {
-            $frame_title = $frame_ini['frame_base']['frame_title'];
-        }
-
-        // Frame デザイン
-        $frame_design = 'default';
-        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('frame_design', $frame_ini['frame_base'])) {
-            $frame_design = $frame_ini['frame_base']['frame_design'];
-        }
-
-        // 強制的にフレームデザインを適用する指定があれば上書きする。
-        if ($frame_design != 'none') {
-            $cc_import_force_frame_design = $this->getMigrationConfig('frames', 'cc_import_force_frame_design', null);
-            if (!empty($cc_import_force_frame_design)) {
-                $frame_design = $cc_import_force_frame_design;
-            }
-        }
-
-        // Frame エリアID
-        $frame_area_id = 2; // メイン
-        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('area_id', $frame_ini['frame_base'])) {
-            $frame_area_id = $frame_ini['frame_base']['area_id'];
-        }
-
-        // Frame col
-        $frame_col = 0;
-        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('frame_col', $frame_ini['frame_base'])) {
-            $frame_col = $frame_ini['frame_base']['frame_col'];
-        }
-
-        // テンプレート
-        $template = 'default';
-        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('template', $frame_ini['frame_base'])) {
-            $template = $frame_ini['frame_base']['template'];
-        }
-
-        // browser_width
-        $browser_width = null;
-        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('browser_width', $frame_ini['frame_base'])) {
-            $browser_width = $frame_ini['frame_base']['browser_width'];
-        }
-
-        // disable_whatsnews
-        $disable_whatsnews = 0;
-        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('disable_whatsnews', $frame_ini['frame_base'])) {
-            $disable_whatsnews = $frame_ini['frame_base']['disable_whatsnews'];
-        }
-
-        // page_only
-        $page_only = 0;
-        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('page_only', $frame_ini['frame_base'])) {
-            $page_only = $frame_ini['frame_base']['page_only'];
-        }
-
-        // default_hidden
-        $default_hidden = 0;
-        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('default_hidden', $frame_ini['frame_base'])) {
-            $default_hidden = $frame_ini['frame_base']['default_hidden'];
-        }
-
-        // plugin_name
-        $plugin_name = '';
-        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('plugin_name', $frame_ini['frame_base'])) {
-            $plugin_name = $frame_ini['frame_base']['plugin_name'];
-        }
-
-        // classname
-        $classname = '';
-        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('classname', $frame_ini['frame_base'])) {
-            $classname = $frame_ini['frame_base']['classname'];
-        }
-
-        // none_hidden
-        $none_hidden = 0;
-        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('none_hidden', $frame_ini['frame_base'])) {
-            $none_hidden = $frame_ini['frame_base']['none_hidden'];
-        }
-
-        // bucket_id
-        $bucket_id = null;
-        if ($bucket) {
-            $bucket_id = $bucket->id;
-        }
-
-        // migration_mapping 取得
-        if (array_key_exists('addition', $frame_ini)) {
-            $source_key = MigrationUtils::getArrayValue($frame_ini, 'addition', 'source_key');
-        } else {
-            $source_key = MigrationUtils::getArrayValue($frame_ini, 'source_info', 'source_key');
-        }
-
-        // display_sequence（順番）確定
-        // オプションの display_sequence が指定されている場合は、それ以降のフレームを +1 してから追加する。
-        $option_display_sequence = MigrationUtils::getArrayValue($frame_ini, 'frame_option', 'display_sequence');
-        if (!empty($option_display_sequence)) {
-            Frame::where('page_id', $page->id)->where('display_sequence', '>=', $option_display_sequence)->increment('display_sequence');
-            $display_sequence = $option_display_sequence;
-        }
-
-        // map 確認
-        $migration_mappings = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $source_key)->first();
-        if (empty($migration_mappings)) {
-            $frame = Frame::create([
-                'page_id'           => $page->id,
-                'area_id'           => $frame_area_id,
-                'frame_title'       => $frame_title,
-                'frame_design'      => $frame_design,
-                'plugin_name'       => $plugin_name,
-                'frame_col'         => $frame_col,
-                'template'          => $template,
-                'browser_width'     => $browser_width,
-                'disable_whatsnews' => $disable_whatsnews,
-                'page_only'         => $page_only,
-                'default_hidden'    => $default_hidden,
-                'classname'         => $classname,
-                'none_hidden'       => $none_hidden,
-                'bucket_id'         => $bucket_id,
-                'display_sequence'  => $display_sequence,
-            ]);
-            $migration_mappings = MigrationMapping::create([
-                'target_source_table' => 'frames',
-                'source_key' => $source_key,
-                'destination_key' => $frame->id,
-            ]);
-        } else {
-            $frame = Frame::find($migration_mappings->destination_key);
-            $frame->page_id           = $page->id;
-            $frame->area_id           = $frame_area_id;
-            $frame->frame_title       = $frame_title;
-            $frame->frame_design      = $frame_design;
-            $frame->plugin_name       = $plugin_name;
-            $frame->frame_col         = $frame_col;
-            $frame->template          = $template;
-            $frame->browser_width     = $browser_width;
-            $frame->disable_whatsnews = $disable_whatsnews;
-            $frame->page_only         = $page_only;
-            $frame->default_hidden    = $default_hidden;
-            $frame->classname         = $classname;
-            $frame->none_hidden       = $none_hidden;
-            $frame->bucket_id         = $bucket_id;
-            $frame->display_sequence  = $display_sequence;
-            $frame->save();
-        }
-
-        // firstOrNew しておき、後でframe_id を追加してsave
-        /*
-        $migration_mappings = MigrationMapping::firstOrNew(
-            ['target_source_table' => 'frames', 'source_key' => $source_key],
-            ['target_source_table' => 'frames', 'source_key' => $source_key]
-        );
-        */
-
-        // frame の追加 or 更新
-        // $frame = Frame::create(
-        // 追加のみの方式から、あれば更新へ変更
-        // ※ destination_key が空の場合がある。空で作って、次のフレームで上書きになっている。
-        /*
-        $frame = Frame::updateOrCreate(
-            ['id'               => $migration_mappings->destination_key],
-            ['page_id'          => $page->id,
-             'area_id'          => $frame_area_id,
-             'frame_title'      => $frame_title,
-             'frame_design'     => $frame_design,
-             'plugin_name'      => $plugin_name,
-             'frame_col'        => $frame_col,
-             'template'         => $template,
-             'bucket_id'        => $bucket_id,
-             'display_sequence' => $display_sequence]
-        );
-        $migration_mappings->destination_key = $frame->id;
-        $migration_mappings->save();
-        */
-
-        return $frame;
-    }
-
-    /**
-     * 拡張子からMIMETYPE 取得
-     */
-    private function getMimetypeFromExtension($extension)
-    {
-        // 拡張子の確認
-        if ($extension == 'jpg') {            // jpeg の場合
-            return IMAGETYPE_JPEG;
-        } elseif ($extension == 'png') {      // png の場合
-            return IMAGETYPE_PNG;
-        } elseif ($extension == 'gif') {      // gif の場合
-            return IMAGETYPE_GIF;
-        }
-        return "";
-    }
-
-    /**
-     * ファイル名から拡張子を取得
-     */
-    private function getExtension($filename)
-    {
-        $filepath = pathinfo($filename);
-        return $filepath['extension'];
-    }
-
-    /**
-     * ファイル名からMIMETYPE 取得
-     */
-    private function getMimetypeFromFilename($filename)
-    {
-        $extension = $this->getExtension($filename);
-
-        // 拡張子の確認
-        if ($extension == 'jpg') {    // jpg
-            return IMAGETYPE_JPEG;
-        }
-        if ($extension == 'png') {    // png
-            return IMAGETYPE_PNG;
-        }
-        if ($extension == 'gif') {    // gif
-            return IMAGETYPE_GIF;
-        }
-        if ($extension == 'pdf') {    // pdf
-            return 'application/pdf';
-        }
-        if ($extension == 'xls') {    // excel
-            return 'application/vnd.ms-excel';
-        }
-        if ($extension == 'xlsx') {   // excel
-            return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-        }
-        if ($extension == 'doc') {    // word
-            return 'application/msword';
-        }
-        if ($extension == 'docx') {   // word
-            return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-        }
-        if ($extension == 'ppt') {    // power point
-            return 'application/vnd.ms-powerpoint';
-        }
-        if ($extension == 'pptx') {   // power point
-            return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
-        }
-        if ($extension == 'mp3') {    // mp3
-            return 'audio/mpeg';
-        }
-        if ($extension == 'mp4') {    // mp4
-            return 'video/mp4';
-        }
-
-        return "application/octet-stream";
     }
 
     /**
@@ -1748,7 +1377,6 @@ trait MigrationNc3Trait
 
     /**
      * 多言語化判定（日本語）
-     * 「TODO」NC3用
      */
     private function checkLangDirnameJpn($lang_dirname)
     {
@@ -1760,7 +1388,6 @@ trait MigrationNc3Trait
     }
     /**
      * 多言語化対応文字列返却
-     * 「TODO」共通そう
      */
     private function getRouteBlockLangStr($lang_dirname)
     {
@@ -2095,8 +1722,7 @@ trait MigrationNc3Trait
     }
 
     /**
-     *  ページ入れ替え
-     * 「TODO」エクスポートNC2・NC3共通
+     * ページ入れ替え
      */
     private function changePageSequence()
     {
@@ -2125,7 +1751,6 @@ trait MigrationNc3Trait
 
     /**
      *  ファイル出力
-     * 「TODO」エクスポート用っぽい
      */
     private function storageAppend($path, $value)
     {
@@ -2137,7 +1762,6 @@ trait MigrationNc3Trait
 
     /**
      *  ファイル出力
-     * 「TODO」エクスポート用っぽい
      */
     private function storagePut($path, $value)
     {
@@ -2363,15 +1987,6 @@ trait MigrationNc3Trait
     }
 
     /**
-     * 半角 @ を全角 ＠ に変換する。
-     * 「TODO」エクスポート共通
-     */
-    private function replaceFullwidthAt($str)
-    {
-        return str_replace('@', '＠', $str);
-    }
-
-    /**
      * NC3：ユーザの移行
      */
     private function nc3ExportUsers($redo)
@@ -2426,8 +2041,8 @@ trait MigrationNc3Trait
         foreach ($nc3_users as $nc3_user) {
             // テスト用データ変換
             if ($this->hasMigrationConfig('user', 'nc3_export_test_mail', true)) {
-                $nc3_user->email = $this->replaceFullwidthAt($nc3_user->email);
-                $nc3_user->username = $this->replaceFullwidthAt($nc3_user->username);   // ログインID
+                $nc3_user->email = MigrationUtils::replaceFullwidthAt($nc3_user->email);
+                $nc3_user->username = MigrationUtils::replaceFullwidthAt($nc3_user->username);   // ログインID
             }
             $users_ini .= "\n";
             $users_ini .= "[\"" . $nc3_user->id . "\"]\n";
