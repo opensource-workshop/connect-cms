@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 
 use App\Traits\Migration\MigrationTrait;
 
-class ImportHtml extends Command
+class ImportPageHtml extends Command
 {
 
     use MigrationTrait;
@@ -16,7 +16,7 @@ class ImportHtml extends Command
      *
      * @var string
      */
-    protected $signature = 'command:ImportHtml {page_id}';
+    protected $signature = 'command:ImportPageHtml {page_id}';
 
     /**
      * The console command description.
