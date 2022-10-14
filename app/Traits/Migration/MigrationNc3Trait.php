@@ -1860,6 +1860,7 @@ trait MigrationNc3Trait
 
     /**
      * Connect-CMS 移行形式のHTML をインポート
+     * [TODO] インポートは１本化するため、廃止予定
      */
     private function importSiteImpl($target, $target_plugin, $added, $redo = null)
     {
@@ -1888,9 +1889,9 @@ trait MigrationNc3Trait
         $this->migrationInit();
 
         // サイト基本設定ファイルの取り込み
-        if ($this->isTarget('cc_import', 'basic')) {
-            $this->importBasic($redo);
-        }
+        // if ($this->isTarget('cc_import', 'basic')) {
+        //     $this->importBasic($redo);
+        // }
 
         // アップロード・ファイルの取り込み
         if ($this->isTarget('cc_import', 'uploads')) {
@@ -2226,26 +2227,6 @@ trait MigrationNc3Trait
                  'value'    => $ini['basic'][$name],
                  'category' => $category]
             );
-        }
-    }
-
-    /**
-     * サイト基本設定をインポート
-     */
-    private function importBasic($redo)
-    {
-        $this->putMonitor(3, "Basic import Start.");
-
-        // サイト基本設定ファイル読み込み
-        $basic_file_path = $this->getImportPath('basic/basic.ini');
-        if (Storage::exists($basic_file_path)) {
-            $basic_ini = parse_ini_file(storage_path() . '/app/' . $basic_file_path, true);
-
-            // サイト名
-            $this->updateConfig('base_site_name', $basic_ini);
-
-            // フッター幅
-            $this->updateConfig('browser_width_footer', $basic_ini);
         }
     }
 
@@ -8492,11 +8473,12 @@ trait MigrationNc3Trait
         $sitename = empty($sitename) ? '' : $sitename->value;
         $basic_ini .= "base_site_name = \"" . $sitename . "\"\n";
 
+        // 使ってないためコメントアウト
         // 基本デザイン（パブリック）
-        $whole_site_room = Nc3Room::where('space_id', Nc3Space::WHOLE_SITE_ID)->first();   // 必ずある想定
-        $public_room = Nc3Room::where('parent_id', $whole_site_room->id)->where('space_id', Nc3Space::PUBLIC_SPACE_ID)->first();   // 必ずある想定
-        $public_room = $public_room ?? new Nc3Room();
-        $basic_ini .= "default_theme_public = \"" . $public_room->theme . "\"\n";
+        // $whole_site_room = Nc3Room::where('space_id', Nc3Space::WHOLE_SITE_ID)->first();   // 必ずある想定
+        // $public_room = Nc3Room::where('parent_id', $whole_site_room->id)->where('space_id', Nc3Space::PUBLIC_SPACE_ID)->first();   // 必ずある想定
+        // $public_room = $public_room ?? new Nc3Room();
+        // $basic_ini .= "default_theme_public = \"" . $public_room->theme . "\"\n";
 
         // salt
         $nc3_application_yml_path = config('migration.NC3_APPLICATION_YML_PATH');

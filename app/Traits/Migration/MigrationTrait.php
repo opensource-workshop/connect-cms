@@ -2252,8 +2252,9 @@ trait MigrationTrait
             // サイト名
             $this->updateConfig('base_site_name', $basic_ini);
 
+            // 使って無いためコメントアウト
             // フッター幅
-            $this->updateConfig('browser_width_footer', $basic_ini);
+            // $this->updateConfig('browser_width_footer', $basic_ini);
         }
     }
 
@@ -8666,10 +8667,11 @@ trait MigrationTrait
         $sitename = empty($sitename) ? '' : $sitename->conf_value;
         $basic_ini .= "base_site_name = \"" . $sitename . "\"\n";
 
+        // 使ってないためコメントアウト
         // 基本デザイン（パブリック）
-        $default_theme_public = $configs->where('conf_name', 'default_theme_public')->first();
-        $default_theme_public = empty($default_theme_public) ? '' : $default_theme_public->conf_value;
-        $basic_ini .= "default_theme_public = \"" . $default_theme_public . "\"\n";
+        // $default_theme_public = $configs->where('conf_name', 'default_theme_public')->first();
+        // $default_theme_public = empty($default_theme_public) ? '' : $default_theme_public->conf_value;
+        // $basic_ini .= "default_theme_public = \"" . $default_theme_public . "\"\n";
 
         // basic,ini ファイル保存
         //Storage::put($this->getImportPath('basic/basic.ini'), $basic_ini);
