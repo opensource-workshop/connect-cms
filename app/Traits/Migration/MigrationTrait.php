@@ -7879,22 +7879,6 @@ trait MigrationTrait
     }
 
     /**
-     * CURL のhttp ヘッダー処理コールバック関数
-     */
-    private function callbackHeader($ch, $header_line)
-    {
-        // Content-Disposition の場合に処理する。
-        // （この関数はhttp ヘッダーの行数分、呼び出される）
-        if (strpos($header_line, "Content-Disposition") !== false) {
-            //Log::debug($header_line);
-            //echo urldecode($header_line);
-            $this->content_disposition = urldecode($header_line);
-        }
-
-        return strlen($header_line);
-    }
-
-    /**
      * HTML からimg タグの src 属性を取得
      */
     private function getContentImage($content)
