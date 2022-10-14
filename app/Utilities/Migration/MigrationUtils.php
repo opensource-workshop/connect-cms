@@ -187,6 +187,24 @@ class MigrationUtils
     }
 
     /**
+     * HTML からGoogle Analytics タグ部分を削除
+     */
+    public static function deleteGATag($content)
+    {
+        preg_match_all('/<script(.*?)script>/is', $content, $matches);
+
+        foreach ($matches[0] as $matche) {
+            if (stripos($matche, 'www.google-analytics.com/analytics.js')) {
+                $content = str_replace($matche, '', $content);
+            }
+            if (stripos($matche, 'GoogleAnalyticsObject')) {
+                $content = str_replace($matche, '', $content);
+            }
+        }
+        return $content;
+    }
+
+    /**
      * サイト基本設定をインポート
      */
     public static function updateConfig($name, $ini, $category = 'general')

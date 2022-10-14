@@ -7214,24 +7214,6 @@ trait MigrationTrait
     }
 
     /**
-     * HTML からGoogle Analytics タグ部分を削除
-     */
-    private function deleteGATag($content)
-    {
-        preg_match_all('/<script(.*?)script>/is', $content, $matches);
-
-        foreach ($matches[0] as $matche) {
-            if (stripos($matche, 'www.google-analytics.com/analytics.js')) {
-                $content = str_replace($matche, '', $content);
-            }
-            if (stripos($matche, 'GoogleAnalyticsObject')) {
-                $content = str_replace($matche, '', $content);
-            }
-        }
-        return $content;
-    }
-
-    /**
      * 固定記事プラグインの登録処理
      */
     private function importPluginContents($page, $page_dir, $frame_ini, $display_sequence)
@@ -7261,9 +7243,10 @@ trait MigrationTrait
             }
         }
 
+        // move: インポート時削除で移動
         // Google Analytics タグ部分を削除
-        $content_html = $this->deleteGATag($content_html);
-        $content2_html = $this->deleteGATag($content2_html);
+        // $content_html = $this->deleteGATag($content_html);
+        // $content2_html = $this->deleteGATag($content2_html);
 
         // Buckets 登録
         // echo "Buckets 登録\n";
@@ -13065,6 +13048,9 @@ trait MigrationTrait
 
         // ?page_id=XX置換
         $content = $this->nc2MigrationPageIdToPermalink($content);
+
+        // Google Analytics タグ部分を削除
+        $content = MigrationUtils::deleteGATag($content);
 
         // HTML content の保存
         if ($save_folder) {
