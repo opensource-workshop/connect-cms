@@ -230,7 +230,7 @@ trait MigrationNc3Trait
             if ($this->getMigrationConfig($target, $command . '_' . $target)) {
                 // 対象の処理が実行するように指定されているので、続き
             } else {
-                $this->putLinkCheck(2, 'migration_config.ini(nc3)未設定', "migration_config.iniの [{$target}] " . $command . '_' . $target . " を設定してください。");
+                $this->putMonitor(2, 'migration_config.ini(nc3)未設定', "migration_config.iniの [{$target}] " . $command . '_' . $target . " を設定してください。");
                 return false;
             }
         }
