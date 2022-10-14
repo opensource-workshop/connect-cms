@@ -1608,7 +1608,7 @@ trait MigrationTrait
     }
 
     /**
-     * インポートの初期処理
+     * エクスポート・インポートの初期処理
      */
     private function migrationInit()
     {
