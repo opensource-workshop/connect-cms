@@ -243,4 +243,12 @@ class MigrationUtils
         $filepath = pathinfo($filename);
         return $filepath['extension'];
     }
+
+    /**
+     * 半角 @ を全角 ＠ に変換する。
+     */
+    public static function replaceFullwidthAt($str)
+    {
+        return str_replace('@', '＠', $str);
+    }
 }

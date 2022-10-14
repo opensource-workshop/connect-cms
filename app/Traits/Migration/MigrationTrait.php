@@ -8333,14 +8333,6 @@ trait MigrationTrait
     // }
 
     /**
-     * 半角 @ を全角 ＠ に変換する。
-     */
-    private function replaceFullwidthAt($str)
-    {
-        return str_replace('@', '＠', $str);
-    }
-
-    /**
      * NC2：ユーザの移行
      */
     private function nc2ExportUsers($redo)
@@ -8435,8 +8427,8 @@ trait MigrationTrait
         foreach ($nc2_users as $nc2_user) {
             // テスト用データ変換
             if ($this->hasMigrationConfig('user', 'nc2_export_test_mail', true)) {
-                $nc2_user->email = $this->replaceFullwidthAt($nc2_user->email);
-                $nc2_user->login_id = $this->replaceFullwidthAt($nc2_user->login_id);
+                $nc2_user->email = MigrationUtils::replaceFullwidthAt($nc2_user->email);
+                $nc2_user->login_id = MigrationUtils::replaceFullwidthAt($nc2_user->login_id);
             }
             $users_ini .= "\n";
             $users_ini .= "[\"" . $nc2_user->user_id . "\"]\n";
