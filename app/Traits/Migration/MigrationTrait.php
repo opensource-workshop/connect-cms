@@ -12217,7 +12217,7 @@ trait MigrationTrait
                 $ret .= "\n";
                 $ret .= "[menu]\n";
                 $ret .= "select_flag       = \"0\"\n";
-                $ret .= "page_ids          = \"\"\n";
+                // $ret .= "page_ids          = \"\"\n";
                 $ret .= "folder_close_font = \"0\"\n";
                 $ret .= "folder_open_font  = \"0\"\n";
                 $ret .= "indent_font       = \"0\"\n";
@@ -12237,7 +12237,7 @@ trait MigrationTrait
                 $ret .= "\n";
                 $ret .= "[menu]\n";
                 $ret .= "select_flag        = \"1\"\n";
-                $ret .= "page_ids           = \"\"\n";
+                // $ret .= "page_ids           = \"\"\n";
                 $ret .= "folder_close_font  = \"0\"\n";
                 $ret .= "folder_open_font   = \"0\"\n";
                 $ret .= "indent_font        = \"0\"\n";
