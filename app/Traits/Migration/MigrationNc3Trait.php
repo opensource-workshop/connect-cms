@@ -1340,10 +1340,9 @@ trait MigrationNc3Trait
 
         // まだ配列になかった場合（各スペースのルートページ）
         if ($get_display_sequence) {
-            // [TODO] lang_dirname NC3ない。まだ未修正
-            return $this->getRouteBlockLangStr($nc3_page->lang_dirname) . $this->zeroSuppress($nc3_page->root_id) . '_' . $this->zeroSuppress($nc3_page->display_sequence);
+            return $this->getRouteBlockLangStr($nc3_page->language_id) . $this->zeroSuppress($nc3_page->root_id) . '_' . $this->zeroSuppress($nc3_page->display_sequence);
         } else {
-            return $this->getRouteBlockLangStr($nc3_page->lang_dirname) . $this->zeroSuppress($nc3_page->root_id) . '_' . $this->zeroSuppress($nc3_page->id);
+            return $this->getRouteBlockLangStr($nc3_page->language_id) . $this->zeroSuppress($nc3_page->root_id) . '_' . $this->zeroSuppress($nc3_page->id);
         }
     }
 
@@ -1366,32 +1365,33 @@ trait MigrationNc3Trait
 
         // まだ配列になかった場合（各スペースのルートページ）
         if ($get_display_sequence) {
-            return $this->getRouteBlockLangStr($nc3_page->lang_dirname) . $this->zeroSuppress($nc3_block->root_id) . '_' . $this->zeroSuppress($nc3_block->row_num . $nc3_block->col_num . $nc3_block->thread_num) . '_' . $nc3_block->block_id;
+            return $this->getRouteBlockLangStr($nc3_page->language_id) . $this->zeroSuppress($nc3_block->root_id) . '_' . $this->zeroSuppress($nc3_block->row_num . $nc3_block->col_num . $nc3_block->thread_num) . '_' . $nc3_block->block_id;
         } else {
-            return $this->getRouteBlockLangStr($nc3_page->lang_dirname) . $this->zeroSuppress($nc3_block->root_id) . '_' . $this->zeroSuppress($nc3_block->block_id);
+            return $this->getRouteBlockLangStr($nc3_page->language_id) . $this->zeroSuppress($nc3_block->root_id) . '_' . $this->zeroSuppress($nc3_block->block_id);
         }
     }
 
     /**
-     * 多言語化判定（日本語）
+     * 多言語化判定（日本語）NC3
      */
-    private function checkLangDirnameJpn($lang_dirname)
+    private function checkLangDirnameJpn($language_id)
     {
-        /* 日本語（とgroupルーム等は空）の場合はtrue */
-        if ($lang_dirname == "japanese" || $lang_dirname == "") {
+        /* 日本語 */
+        if ($language_id == 2) {
             return true;
         }
         return false;
     }
+
     /**
      * 多言語化対応文字列返却
      */
-    private function getRouteBlockLangStr($lang_dirname)
+    private function getRouteBlockLangStr($language_id)
     {
-        if ($this->checkLangDirnameJpn($lang_dirname)) {
+        if ($this->checkLangDirnameJpn($language_id)) {
             return 'r';
         }
-        return $lang_dirname;
+        return 'en';
     }
 
     /**
@@ -1586,8 +1586,11 @@ trait MigrationNc3Trait
                         ->where('rooms.space_id', '!=', Nc3Space::PRIVATE_SPACE_ID); // プライベートルーム以外
                 })
                 ->join('pages_languages', function ($join) {
-                    $join->on('pages_languages.page_id', '=', 'pages.id')
-                        ->where('pages_languages.language_id', 2); // 日本語
+                    $join->on('pages_languages.page_id', '=', 'pages.id');
+                })
+                ->join('languages', function ($join) {
+                    $join->on('languages.id', '=', 'pages_languages.language_id')
+                        ->where('languages.is_active', 1);  // 使用言語（日本語・英語）で有効な言語を取得
                 })
                 ->whereNotNull('pages.root_id');
 
@@ -1602,6 +1605,7 @@ trait MigrationNc3Trait
             }
 
             $nc3_pages = $nc3_pages_query
+                ->orderBy('pages_languages.language_id')
                 ->orderBy('rooms.space_id')
                 ->orderBy('rooms.sort_key')
                 ->orderBy('rooms.id')
@@ -1622,6 +1626,7 @@ trait MigrationNc3Trait
             // // 経路探索の文字列（キー）でソート
             // ksort($nc3_sort_pages);
             // //Log::debug($nc3_sort_pages);
+
 
             // NC3 のページID を使うことにした。
             //// 新規ページ用のインデックス
@@ -1659,16 +1664,24 @@ trait MigrationNc3Trait
                         }
                     }
                 }
-                $lang_link = '';
 
-                // [TODO] 対応まだ
                 /* 多言語化対応 */
-                // if ($this->checkLangDirnameJpn($nc3_sort_page->lang_dirname)) {
-                //     $lang_link = '';
-                // } else {
-                //     $lang_link = '/'.$nc3_sort_page->lang_dirname;
-                // }
-                $permanent_link = ($lang_link != "" && $nc3_sort_page->permalink == "" ) ? $lang_link : $lang_link."/".$nc3_sort_page->permalink;
+                $permanent_link = '/';
+                if ($nc3_sort_page->id == $nc3_top_page->id) {
+                    // トップページ
+                    if ($this->checkLangDirnameJpn($nc3_sort_page->language_id)) {
+                        $permanent_link = '/';
+                    } else {
+                        $permanent_link = '/en';
+                    }
+                } else {
+                    if ($this->checkLangDirnameJpn($nc3_sort_page->language_id)) {
+                        $permanent_link = '/' . $nc3_sort_page->permalink;;
+                    } else {
+                        $permanent_link = '/en/' . $nc3_sort_page->permalink;;
+                    }
+                }
+
                 $page_ini = "[page_base]\n";
                 $page_ini .= "page_name = \"" . $nc3_sort_page->page_name . "\"\n";
                 $page_ini .= "permanent_link = \"". $permanent_link . "\"\n";
@@ -5447,8 +5460,7 @@ trait MigrationNc3Trait
             )
             ->join('boxes', 'boxes.id', '=', 'frames.box_id')
             ->join('frames_languages', function ($join) {
-                $join->on('frames_languages.frame_id', '=', 'frames.id')
-                    ->where('frames_languages.language_id', 2); // 日本語
+                $join->on('frames_languages.frame_id', '=', 'frames.id');
             })
             ->leftJoin('blocks', 'blocks.id', '=', 'frames.block_id')
             ->where('boxes.page_id', $nc3_page->page_id)
