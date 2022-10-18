@@ -1606,27 +1606,9 @@ trait MigrationNc3Trait
 
             $nc3_pages = $nc3_pages_query
                 ->orderBy('pages_languages.language_id')
-                ->orderBy('rooms.space_id')
-                ->orderBy('rooms.sort_key')
-                ->orderBy('rooms.id')
                 ->orderBy('pages.sort_key')
+                ->orderBy('rooms.sort_key')
                 ->get();
-
-            // [TODO] ??? nc3はどうだろう？⇒ 不要そう
-            // // NC3 のページデータは隣接モデルのため、ページ一覧を一発でソートできない。
-            // // そのため、取得したページデータを一度、経路探索モデルに変換する。
-            // $nc3_sort_pages = array();
-
-            // // 経路探索の文字列をキーにしたページ配列の作成
-            // foreach ($nc3_pages as $nc3_page) {
-            //     $nc3_page->route_path = $this->getRouteStr($nc3_page, $nc3_sort_pages);
-            //     $nc3_sort_pages[$this->getRouteStr($nc3_page, $nc3_sort_pages, true)] = $nc3_page;
-            // }
-
-            // // 経路探索の文字列（キー）でソート
-            // ksort($nc3_sort_pages);
-            // //Log::debug($nc3_sort_pages);
-
 
             // NC3 のページID を使うことにした。
             //// 新規ページ用のインデックス
