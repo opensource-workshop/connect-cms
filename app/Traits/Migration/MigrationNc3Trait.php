@@ -68,7 +68,7 @@ trait MigrationNc3Trait
      * use する側で定義する
      * @see \App\Traits\Migration\MigrationLogTrait
      */
-    private $log_header = "page_id,frame_id,category,message";
+    private $log_header = "frame_id,,category,message";
 
     /**
      * uploads.ini
@@ -5431,13 +5431,12 @@ trait MigrationNc3Trait
     private function nc3Block(Nc3Page $nc3_page, int $new_page_index)
     {
         // 指定されたページ内のブロックを取得
-        // boxes.page_id : ログ出力用
         $nc3_frames_query = Nc3Frame::
             select(
                 'frames.*',
                 'frames_languages.name as frame_name',
                 'frames_languages.language_id as language_id',
-                'boxes.page_id',
+                'boxes.container_type as container_type',
                 'blocks.key as block_key'
             )
             ->join('boxes', 'boxes.id', '=', 'frames.box_id')

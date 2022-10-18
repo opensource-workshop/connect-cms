@@ -90,8 +90,8 @@ trait MigrationLogTrait
                 $log_str .= $block->block_id . ",";
             } elseif ($block && get_class($block) === 'App\Models\Migration\Nc3\Nc3Frame') {
                 // nc3
-                $log_str .= $block->page_id . ",";
-                $log_str .= $block->id . ",";
+                // $log_str .= $block->box_id . ",";
+                $log_str .= $block->id . ",,";
             } else {
                 $log_str .= ",,";
             }
