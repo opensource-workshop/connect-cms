@@ -5448,9 +5448,9 @@ trait MigrationNc3Trait
             ->where('frames.is_deleted', 0);
 
         // 対象外のブロックがあれば加味する。
-        $export_ommit_blocks = $this->getMigrationConfig('frames', 'export_ommit_blocks');
-        if (!empty($export_ommit_blocks)) {
-            $nc3_frames_query->whereNotIn('frames.id', $export_ommit_blocks);
+        $export_ommit_frames = $this->getMigrationConfig('frames', 'export_ommit_frames');
+        if (!empty($export_ommit_frames)) {
+            $nc3_frames_query->whereNotIn('frames.id', $export_ommit_frames);
         }
 
         // migration_config.sample.iniにも設定値が存在しないため、コメントアウト
@@ -5483,8 +5483,8 @@ trait MigrationNc3Trait
         //                                        ->join('pages', 'pages.page_id', '=', 'blocks.page_id')
         //                                        ->whereIn('pages.page_name', ['Header Column', 'Left Column', 'Right Column']);
 
-        //     if (!empty($export_ommit_blocks)) {
-        //         $nc3_common_blocks_query->whereNotIn('block_id', $export_ommit_blocks);
+        //     if (!empty($export_ommit_frames)) {
+        //         $nc3_common_blocks_query->whereNotIn('block_id', $export_ommit_frames);
         //     }
 
         //     $nc3_common_blocks = $nc3_common_blocks_query->orderBy('page_id', 'desc')
