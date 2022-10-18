@@ -2513,8 +2513,8 @@ trait MigrationNc3Trait
                     $journals_tsv .= "\n";
                 }
 
-                $content       = $this->nc3Wysiwyg(null, null, null, null, $nc3_journal_post->content, 'journal', $nc3_page);
-                $more_content  = $this->nc3Wysiwyg(null, null, null, null, $nc3_journal_post->more_content, 'journal', $nc3_page);
+                $content       = $this->nc3Wysiwyg(null, null, null, null, $nc3_journal_post->content, 'journal');
+                $more_content  = $this->nc3Wysiwyg(null, null, null, null, $nc3_journal_post->more_content, 'journal');
 
                 $category_obj  = $nc3_journal_categories->firstWhere('category_id', $nc3_journal_post->category_id);
                 $category      = "";
@@ -2801,7 +2801,7 @@ trait MigrationNc3Trait
                     $journals_tsv .= "\n";
                 }
 
-                $content       = $this->nc3Wysiwyg(null, null, null, null, $nc3_bbs_post->body, 'bbs', $nc3_page);
+                $content       = $this->nc3Wysiwyg(null, null, null, null, $nc3_bbs_post->body, 'bbs');
 
                 $journals_tsv .= $this->getCCDatetime($nc3_bbs_post->created) . "\t"; // 0:投稿日時
                 $journals_tsv .=                              "\t"; // カテゴリ
@@ -2960,7 +2960,7 @@ trait MigrationNc3Trait
                     $category  = $category_obj->category_name;
                 }
 
-                $question_answer = $this->nc3Wysiwyg(null, null, null, null, $nc3_faq_question->question_answer, 'faq', $nc3_page);
+                $question_answer = $this->nc3Wysiwyg(null, null, null, null, $nc3_faq_question->question_answer, 'faq');
 
                 $faqs_tsv .= $category                       . "\t";
                 $faqs_tsv .= $nc3_faq_question->display_sequence . "\t";
@@ -3467,7 +3467,7 @@ trait MigrationNc3Trait
                     }
                 } elseif ($multidatabase_metadata_content->type == 6) {
                     // WYSIWYG
-                    $content = $this->nc3Wysiwyg(null, null, null, null, $content, 'multidatabase', $nc3_page);
+                    $content = $this->nc3Wysiwyg(null, null, null, null, $content, 'multidatabase');
                 } elseif ($multidatabase_metadata_content->type == 9) {
                     // 日付型
                     if (!empty($content) && strlen($content) == 14) {
@@ -5444,7 +5444,7 @@ trait MigrationNc3Trait
                 $join->on('frames_languages.frame_id', '=', 'frames.id');
             })
             ->leftJoin('blocks', 'blocks.id', '=', 'frames.block_id')
-            ->where('boxes.page_id', $nc3_page->page_id)
+            ->where('boxes.page_id', $nc3_page->id)
             ->where('frames.is_deleted', 0);
 
         // 対象外のブロックがあれば加味する。
@@ -5471,8 +5471,14 @@ trait MigrationNc3Trait
         $frame_index = 0; // フレームの連番
 
         // トップページの場合のみ、ヘッダ、左、右のブロックを取得して、トップページに設置する。
-        // [TODO] NC3違ってるため、要見直し
-        // NC3 では、ヘッダ、左、右が一つずつで共通のため、ここで処理する。
+        //
+        // NC3 では、ヘッダ、フッタが下記いずれかで別れてる。
+        // ・サイト全体で共通のエリア = 切り替えると、ルーム単位で反映（サイトで１回だけエクスポート）
+        // ・パブリック共通のエリア   = 切り替えると、ルーム単位で反映（パブリック系ルームで１回だけエクスポート）
+        // ・ルーム共通のエリア       = 切り替えると、ルーム単位で反映（同ルームで１回だけエクスポート）
+        // ・当ページのみのエリア     = 切り替えると、このページのみ反映（ページ毎にエクスポート）
+        // 左、右は、上記をON・OFF設定（全体＋当ページのみ等）できる。
+
         // $nc3_toppage_display_sequence = $this->getMigrationConfig('basic', 'nc3_toppage_display_sequence', 1);
         // if ($nc3_page->permalink == '' && $nc3_page->display_sequence == 1 && $nc3_page->space_type == 1 && $nc3_page->private_flag == 0 ||
         //     // トップページが削除されている場合も考慮
@@ -5501,7 +5507,6 @@ trait MigrationNc3Trait
         //         // Block 設定に追加
         //         $nc3_frames->prepend($nc3_common_block);
         //     }
-        //     // Log::debug($nc3_frames);
         // }
 
         // [TODO] 経路探索まだ
@@ -5659,7 +5664,7 @@ trait MigrationNc3Trait
             }
 
             // ブロックのモジュールデータをエクスポート
-            $this->nc3BlockExport($nc3_page, $nc3_frame, $new_page_index, $frame_index_str);
+            $this->nc3BlockExport($nc3_frame, $new_page_index, $frame_index_str);
 
             // Connect-CMS のプラグイン名の取得
             $plugin_name = $this->nc3GetPluginName($nc3_frame->plugin_key);
@@ -5843,7 +5848,7 @@ trait MigrationNc3Trait
      * NC3：ページ内のブロックに配置されているモジュールのエクスポート。
      * モジュールごとのエクスポート処理に振り分け。
      */
-    private function nc3BlockExport(Nc3Page $nc3_page, Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
+    private function nc3BlockExport(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
     {
         // Connect-CMS のプラグイン名の取得
         $plugin_name = $this->nc3GetPluginName($nc3_frame->plugin_key);
@@ -5853,25 +5858,25 @@ trait MigrationNc3Trait
         // プラグインで振り分け
         if ($plugin_name == 'contents') {
             // 固定記事（お知らせ）
-            $this->nc3BlockExportContents($nc3_page, $nc3_frame, $new_page_index, $frame_index_str);
+            $this->nc3BlockExportContents($nc3_frame, $new_page_index, $frame_index_str);
         } elseif ($plugin_name == 'menus') {
             // メニュー
             // 今のところ、メニューの追加設定はなし。
         } elseif ($plugin_name == 'databases') {
             // データベース
             // [TODO] 未対応
-            $this->nc3BlockExportDatabases($nc3_page, $nc3_frame, $new_page_index, $frame_index_str);
+            $this->nc3BlockExportDatabases($nc3_frame, $new_page_index, $frame_index_str);
         } elseif ($plugin_name == 'bbses') {
             // 掲示板
             // [TODO] 未対応
-            $this->nc3BlockExportBbses($nc3_page, $nc3_frame, $new_page_index, $frame_index_str);
+            $this->nc3BlockExportBbses($nc3_frame, $new_page_index, $frame_index_str);
         }
     }
 
     /**
      * NC3：固定記事（お知らせ）のエクスポート
      */
-    private function nc3BlockExportContents(Nc3Page $nc3_page, Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
+    private function nc3BlockExportContents(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
     {
         // お知らせモジュールのデータの取得
         // （NC3になって「続きを読む」機能なくなった。）
@@ -5892,7 +5897,7 @@ trait MigrationNc3Trait
         $content_filename = "frame_" . $frame_index_str . '.html';
         $ini_filename = "frame_" . $frame_index_str . '.ini';
 
-        $this->nc3Wysiwyg($nc3_frame, $save_folder, $content_filename, $ini_filename, $content, 'announcement', $nc3_page);
+        $this->nc3Wysiwyg($nc3_frame, $save_folder, $content_filename, $ini_filename, $content, 'announcement');
 
         // nc3の全ユーザ取得
         $nc3_users = Nc3User::get();
@@ -5912,7 +5917,7 @@ trait MigrationNc3Trait
     /**
      * NC3：汎用データベースのブロック特有部分のエクスポート
      */
-    private function nc3BlockExportDatabases($nc3_page, $nc3_frame, $new_page_index, $frame_index_str)
+    private function nc3BlockExportDatabases($nc3_frame, $new_page_index, $frame_index_str)
     {
         // NC3 ブロック設定の取得
         $nc3_multidatabase_block = Nc2MultidatabaseBlock::where('block_id', $nc3_frame->block_id)->first();
@@ -5948,7 +5953,7 @@ trait MigrationNc3Trait
     /**
      * NC3：掲示板のブロック特有部分のエクスポート
      */
-    private function nc3BlockExportBbses($nc3_page, $nc3_frame, $new_page_index, $frame_index_str)
+    private function nc3BlockExportBbses($nc3_frame, $new_page_index, $frame_index_str)
     {
         // NC3 ブロック設定の取得
         $nc3_bbs_block = Nc2BbsBlock::where('block_id', $nc3_frame->block_id)->first();
@@ -6048,7 +6053,7 @@ trait MigrationNc3Trait
     /**
      * NC3：WYSIWYG の記事の保持
      */
-    private function nc3Wysiwyg(?Nc3Frame $nc3_frame, ?string $save_folder, ?string $content_filename, ?string $ini_filename, ?string $content, ?string $nc3_module_name = null, ?Nc3Page $nc3_page = null)
+    private function nc3Wysiwyg(?Nc3Frame $nc3_frame, ?string $save_folder, ?string $content_filename, ?string $ini_filename, ?string $content, ?string $nc3_module_name = null)
     {
         // [TODO] 未対応
         // nc3リンク切れチェック
