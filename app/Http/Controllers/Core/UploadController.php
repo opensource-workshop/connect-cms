@@ -258,6 +258,7 @@ class UploadController extends ConnectController
             'html',
             'js',
             'xml',
+            'txt',
         ];
 
         if (in_array(strtolower(pathinfo($filename, PATHINFO_EXTENSION)), $inline_extensions) && $request->response != 'download') {
