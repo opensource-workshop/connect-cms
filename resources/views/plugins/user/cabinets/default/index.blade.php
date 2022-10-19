@@ -48,23 +48,14 @@
         @endcan
 
         $('#app_{{$frame_id}} input[type="checkbox"][name="cabinet_content_id[]"]').on('change', function(){
+            controlSelectedContentsAndButtons{{$frame_id}}();
+        });
 
-            $('#selected-contents{{$frame_id}}').html('');
-
-            if ($('#app_{{$frame_id}} input[type="checkbox"][name="cabinet_content_id[]"]:checked').length > 0){
-                $('#app_{{$frame_id}} .btn-download').prop('disabled', false);
-                $('#app_{{$frame_id}} input[type="checkbox"][name="cabinet_content_id[]"]:checked').each(function(){
-                    $('#selected-contents{{$frame_id}}').append('<li>' + $(this).data('name') + '</li>');
-                })
-                @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
-                $('#app_{{$frame_id}} .btn-delete').prop('disabled', false);
-                @endcan
-            } else {
-                $('#app_{{$frame_id}} .btn-download').prop('disabled', true);
-                @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
-                $('#app_{{$frame_id}} .btn-delete').prop('disabled', true);
-                @endcan
-            }
+        // 全選択チェックボックスの押下時
+        $('#app_{{$frame_id}} #select_all_{{$frame_id}}').on("click",function(){
+            // フレーム配下のチェックボックスすべてON/OFF
+            $('#app_{{$frame_id}} input[type=checkbox][id^=customCheck]').prop("checked", $(this).prop("checked"));
+            controlSelectedContentsAndButtons{{$frame_id}}();
         });
 
         $('#app_{{$frame_id}} .btn-download').on('click', function(){
@@ -85,6 +76,29 @@
         }
     }
     @endcan
+
+    // 選択リスト（selected-contents）の更新＆ボタンの活性化制御
+    function controlSelectedContentsAndButtons{{$frame_id}}() {
+        // 選択リストを初期化
+        $('#selected-contents{{$frame_id}}').html('');
+
+        if ($('#app_{{$frame_id}} input[type="checkbox"][name="cabinet_content_id[]"]:checked').length > 0){
+            // 選択済みコンテンツが1件以上ある場合：ボタン活性化＆選択リストにコンテンツを詰める
+            $('#app_{{$frame_id}} .btn-download').prop('disabled', false);
+            $('#app_{{$frame_id}} input[type="checkbox"][name="cabinet_content_id[]"]:checked').each(function(){
+                $('#selected-contents{{$frame_id}}').append('<li>' + $(this).data('name') + '</li>');
+            })
+            @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
+            $('#app_{{$frame_id}} .btn-delete').prop('disabled', false);
+            @endcan
+        } else {
+            // 選択済みコンテンツが0件の場合：ボタンdisable化
+            $('#app_{{$frame_id}} .btn-download').prop('disabled', true);
+            @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
+            $('#app_{{$frame_id}} .btn-delete').prop('disabled', true);
+            @endcan
+        }
+    }
 </script>
 <div id="app_{{$frame_id}}">
 @can('posts.create', [[null, $frame->plugin_name, $buckets]])
@@ -172,7 +186,13 @@
 <table class="table text-break">
     <thead>
         <tr class="d-none d-md-table-row">
-            <th>&nbsp;</th>
+            <th>
+                {{-- 全選択チェック --}}
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="select_all_{{$frame_id}}">
+                    <label class="custom-control-label" for="select_all_{{$frame_id}}"></label>
+                </div>
+            </th>
             <th>名前</th>
             <th>サイズ</th>
             <th>更新日</th>
