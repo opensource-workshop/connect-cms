@@ -1555,6 +1555,8 @@ trait MigrationNc3Trait
                 MigrationMapping::where('target_source_table', 'nc3_pages')->delete();
                 // 移行用ファイルの削除
                 Storage::deleteDirectory($this->getImportPath('pages/'));
+                // pagesエクスポート関連のnc3Block()でmenuのエクスポートで@insert配下ディレクトリに出力しているため、同ディレクトリを削除
+                Storage::deleteDirectory($this->getImportPath('pages/', '@insert/'));
             }
 
             // NC3 トップページ
@@ -5478,6 +5480,9 @@ trait MigrationNc3Trait
         // ・ルーム共通のエリア       = 切り替えると、ルーム単位で反映（同ルームで１回だけエクスポート）
         // ・当ページのみのエリア     = 切り替えると、このページのみ反映（ページ毎にエクスポート）
         // 左、右は、上記をON・OFF設定（全体＋当ページのみ等）できる。
+
+        // [TODO] nc3で、ヘッダ、左、右、フッタはどう出してるか、NC3のソース見て調査
+        //    nc3_boxes_page_containers    page_id = 4 and is_published = 1
 
         // $nc3_toppage_display_sequence = $this->getMigrationConfig('basic', 'nc3_toppage_display_sequence', 1);
         // if ($nc3_page->permalink == '' && $nc3_page->display_sequence == 1 && $nc3_page->space_type == 1 && $nc3_page->private_flag == 0 ||

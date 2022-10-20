@@ -7940,6 +7940,8 @@ trait MigrationTrait
                 MigrationMapping::where('target_source_table', 'nc2_pages')->delete();
                 // 移行用ファイルの削除
                 Storage::deleteDirectory($this->getImportPath('pages/'));
+                // pagesエクスポート関連のnc2Block()でmenuのエクスポートで@insert配下ディレクトリに出力しているため、同ディレクトリを削除
+                Storage::deleteDirectory($this->getImportPath('pages/', '@insert/'));
             }
 
             // NC2 のページデータ
