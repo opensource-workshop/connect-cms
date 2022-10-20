@@ -29,6 +29,7 @@ use App\Models\Migration\Nc3\Nc3Multidatabase;
 // use App\Models\Migration\Nc3\Nc3Topic;
 use App\Models\Migration\Nc3\Nc3TopicFrameSetting;
 use App\Models\Migration\Nc3\Nc3Page;
+use App\Models\Migration\Nc3\Nc3PageContainer;
 use App\Models\Migration\Nc3\Nc3Registration;
 use App\Models\Migration\Nc3\Nc3ReservationFrameSetting;
 // use App\Models\Migration\Nc3\Nc3Room;
@@ -1313,65 +1314,6 @@ trait MigrationNc3Trait
     }
 
     /**
-     * 経路探索キーの取得（作成）
-     */
-    private function getRouteStr(Nc3Page $nc3_page, array $nc3_sort_pages, ?bool $get_display_sequence = false)
-    {
-        // 経路探索パス(配列の route_path )
-        // r{root_id}_{parent_id}_{parent_id}_{...}_{page_id}
-
-        // ソート用の配列のキー(root_id を最初に持ってきて、display_sequence でつなぐ)
-        // r{root_id}_{display_sequence}_{display_sequence}_{...}_{display_sequence}
-
-        // 前提として、最低限のソートとして、同一階層でのソートができている。
-        // ページデータを経路探索をキーに設定済みの配列から、親を探して、自分の経路探索キーを生成する。
-        // 経路探索キーは 0021_0026 のように、{第1階層ページID}_{第2階層ページID}_{...} のように生成する。
-        foreach ($nc3_sort_pages as $nc3_sort_page_key => $nc3_sort_page) {
-            if ($nc3_sort_page->id == $nc3_page->parent_id) {
-                if ($get_display_sequence) {
-                    // ソート用の配列のキーを取得
-                    return $nc3_sort_page_key . '_' . $this->zeroSuppress($nc3_page->display_sequence);
-                } else {
-                    // 経路探索パス
-                    return $nc3_sort_page->route_path . '_' . $this->zeroSuppress($nc3_page->id);
-                }
-            }
-        }
-
-        // まだ配列になかった場合（各スペースのルートページ）
-        if ($get_display_sequence) {
-            return $this->getRouteBlockLangStr($nc3_page->language_id) . $this->zeroSuppress($nc3_page->root_id) . '_' . $this->zeroSuppress($nc3_page->display_sequence);
-        } else {
-            return $this->getRouteBlockLangStr($nc3_page->language_id) . $this->zeroSuppress($nc3_page->root_id) . '_' . $this->zeroSuppress($nc3_page->id);
-        }
-    }
-
-    /**
-     * 経路探索キーの取得（Block）
-     */
-    private function getRouteBlockStr($nc3_block, $nc3_sort_blocks, $nc3_page, $get_display_sequence = false)
-    {
-        foreach ($nc3_sort_blocks as $nc3_sort_block_key => $nc3_sort_block) {
-            if ($nc3_sort_block->block_id == $nc3_block->parent_id) {
-                if ($get_display_sequence) {
-                    // ソート用の配列のキーを取得
-                    return $nc3_sort_block_key . '_' . $this->zeroSuppress($nc3_block->row_num . $nc3_block->col_num . $nc3_block->thread_num) . '_' . $nc3_block->block_id;
-                } else {
-                    // 経路探索パス
-                    return $nc3_sort_block->route_path . '_' . $this->zeroSuppress($nc3_block->block_id);
-                }
-            }
-        }
-
-        // まだ配列になかった場合（各スペースのルートページ）
-        if ($get_display_sequence) {
-            return $this->getRouteBlockLangStr($nc3_page->language_id) . $this->zeroSuppress($nc3_block->root_id) . '_' . $this->zeroSuppress($nc3_block->row_num . $nc3_block->col_num . $nc3_block->thread_num) . '_' . $nc3_block->block_id;
-        } else {
-            return $this->getRouteBlockLangStr($nc3_page->language_id) . $this->zeroSuppress($nc3_block->root_id) . '_' . $this->zeroSuppress($nc3_block->block_id);
-        }
-    }
-
-    /**
      * 多言語化判定（日本語）NC3
      */
     private function checkLangDirnameJpn($language_id)
@@ -1381,17 +1323,6 @@ trait MigrationNc3Trait
             return true;
         }
         return false;
-    }
-
-    /**
-     * 多言語化対応文字列返却
-     */
-    private function getRouteBlockLangStr($language_id)
-    {
-        if ($this->checkLangDirnameJpn($language_id)) {
-            return 'r';
-        }
-        return 'en';
     }
 
     /**
@@ -1707,7 +1638,7 @@ trait MigrationNc3Trait
                 );
 
                 // ブロック処理
-                $this->nc3Block($nc3_sort_page, $new_page_index);
+                $this->nc3Block($nc3_sort_page, $new_page_index, $nc3_top_page);
             }
 
             // ページ入れ替え
@@ -5430,7 +5361,7 @@ trait MigrationNc3Trait
     /**
      * NC3：ページ内のブロックをループ
      */
-    private function nc3Block(Nc3Page $nc3_page, int $new_page_index)
+    private function nc3Block(Nc3Page $nc3_page, int $new_page_index, Nc3Page $nc3_top_page)
     {
         // 指定されたページ内のブロックを取得
         $nc3_frames_query = Nc3Frame::
@@ -5481,57 +5412,59 @@ trait MigrationNc3Trait
         // ・当ページのみのエリア     = 切り替えると、このページのみ反映（ページ毎にエクスポート）
         // 左、右は、上記をON・OFF設定（全体＋当ページのみ等）できる。
 
-        // [TODO] nc3で、ヘッダ、左、右、フッタはどう出してるか、NC3のソース見て調査
-        //    nc3_boxes_page_containers    page_id = 4 and is_published = 1
+        // --- nc3でのヘッダ、左、右、フッタ取得方法
+        // page -> nc3_page_containers(どのエリアが見えてる・見えてないか) -> nc3_boxes_page_containers(全エリアのbox特定) -> box -> frame の順で取得してる。
+        //
+        // ・nc3_page_containers  is_published = 1 が使ってるエリア。page_idで取得できる。
+        //   コンテナータイプ.  1:Header, 2:Major, 3:Main, 4:Minor, 5:Footer
+        // ・使ってるbox（boxを基にframe取れる）は、nc3_boxes_page_containers で page_id in (4) and  is_published = 1 で（使ってないエリアも含めて）全エリア取得できる。
+        // 　その後、データは取ってくるけど、使ってないエリアは表示しない。がNC3の処理。
 
-        // $nc3_toppage_display_sequence = $this->getMigrationConfig('basic', 'nc3_toppage_display_sequence', 1);
-        // if ($nc3_page->permalink == '' && $nc3_page->display_sequence == 1 && $nc3_page->space_type == 1 && $nc3_page->private_flag == 0 ||
-        //     // トップページが削除されている場合も考慮
-        //     $nc3_page->room_id == 1 && $nc3_page->root_id == 1 && $nc3_page->parent_id == 1 && $nc3_page->thread_num == 1 && $nc3_page->display_sequence == $nc3_toppage_display_sequence && $nc3_page->space_type == 1 && $nc3_page->private_flag == 0
-        // ) {
-        //     // 指定されたページ内のブロックを取得
-        //     $nc3_common_blocks_query = Nc2Block::select('blocks.*', 'pages.page_name')
-        //                                        ->join('pages', 'pages.page_id', '=', 'blocks.page_id')
-        //                                        ->whereIn('pages.page_name', ['Header Column', 'Left Column', 'Right Column']);
+        // トップページ
+        if ($nc3_page->id == $nc3_top_page->id) {
 
-        //     if (!empty($export_ommit_frames)) {
-        //         $nc3_common_blocks_query->whereNotIn('block_id', $export_ommit_frames);
-        //     }
+            // 開いてるレイアウトのエリアのbox_id
+            $nc3_box_ids = Nc3PageContainer::select('boxes.*')
+                ->where('page_containers.page_id', $nc3_page->id)
+                ->join('boxes_page_containers', 'boxes_page_containers.page_container_id', '=', 'page_containers.id')
+                ->join('boxes', 'boxes.id', '=', 'boxes_page_containers.box_id')
+                ->where('page_containers.is_published', 1)      // 見えてるエリア
+                ->pluck('id');
 
-        //     $nc3_common_blocks = $nc3_common_blocks_query->orderBy('page_id', 'desc')
-        //                                                  ->orderBy('col_num', 'desc')
-        //                                                  ->get();
+            // 指定されたページ内のブロックを取得
+            $nc3_common_frames_query = Nc3Frame::
+                select(
+                    'frames.*',
+                    'frames_languages.name as frame_name',
+                    'frames_languages.language_id as language_id',
+                    'boxes.container_type as container_type',
+                    'blocks.key as block_key'
+                )
+                ->join('boxes', 'boxes.id', '=', 'frames.box_id')
+                ->join('frames_languages', function ($join) {
+                    $join->on('frames_languages.frame_id', '=', 'frames.id');
+                })
+                ->leftJoin('blocks', 'blocks.id', '=', 'frames.block_id')
+                ->whereIn('boxes.id', $nc3_box_ids)
+                ->where('frames.is_deleted', 0);
 
-        //     // 共通部分をBlock 設定に追加する。
-        //     foreach ($nc3_common_blocks as $nc3_common_block) {
-        //         // ヘッダーは無条件にフレームデザインをnone にしておく
-        //         if ($nc3_common_block->page_name == 'Header Column') {
-        //             $nc3_common_block->theme_name = 'noneframe';
-        //         }
+            if (!empty($export_ommit_frames)) {
+                $nc3_common_frames_query->whereNotIn('frames.id', $export_ommit_frames);
+            }
 
-        //         // Block 設定に追加
-        //         $nc3_frames->prepend($nc3_common_block);
-        //     }
-        // }
+            $nc3_common_frames = $nc3_common_frames_query
+                ->orderBy('boxes.space_id')
+                ->orderBy('boxes.room_id')
+                ->orderBy('boxes.page_id')
+                ->orderBy('boxes.weight')
+                ->get();
 
-        // [TODO] 経路探索まだ
-        // // 経路探索の文字列をキーにしたページ配列の作成
-        // $nc3_sort_blocks = array();
-        // foreach ($nc3_frames as $nc3_frame) {
-        //     $nc3_frame->route_path = $this->getRouteBlockStr($nc3_frame, $nc3_sort_blocks, $nc3_page, false);
-        //     $nc3_sort_blocks[$this->getRouteBlockStr($nc3_frame, $nc3_sort_blocks, $nc3_page, true)] = $nc3_frame;
-        // }
-        // // Log::debug($nc3_sort_blocks);
-
-        // // 経路探索の文字列（キー）でソート
-        // ksort($nc3_sort_blocks);
-        // // Log::debug($nc3_sort_blocks);
-
-        // // ソート結果でCollection 詰めなおし
-        // $nc3_frames = collect();
-        // foreach ($nc3_sort_blocks as $nc3_sort_block) {
-        //     $nc3_frames[] = $nc3_sort_block;
-        // }
+            // 共通部分を frame 設定に追加する。
+            foreach ($nc3_common_frames as $nc3_common_frame) {
+                // frame 設定に追加
+                $nc3_frames->prepend($nc3_common_frame);
+            }
+        }
 
         // ページ内のブロック
         foreach ($nc3_frames as $nc3_frame) {
@@ -5565,11 +5498,17 @@ trait MigrationNc3Trait
                 $frame_ini .= "frame_title = \"" . $nc3_frame->frame_name . "\"\n";
             }
 
-            if ($nc3_frame->plugin_key == 'menus') {
+            // ヘッダーは無条件にフレームデザインをnone にしておく
+            if ($nc3_frame->container_type == Nc3Box::container_type_header) {
                 $frame_ini .= "frame_design = \"none\"\n";
             } else {
-                $frame_ini .= "frame_design = \"" . $nc3_frame->header_type . "\"\n";
-                // $frame_ini .= "frame_design = \"" . $nc3_frame->getFrameDesign($this->getMigrationConfig('frames', 'export_frame_default_design', 'default')) . "\"\n";
+
+                if ($nc3_frame->plugin_key == 'menus') {
+                    $frame_ini .= "frame_design = \"none\"\n";
+                } else {
+                    $frame_ini .= "frame_design = \"" . $nc3_frame->header_type . "\"\n";
+                    // $frame_ini .= "frame_design = \"" . $nc3_frame->getFrameDesign($this->getMigrationConfig('frames', 'export_frame_default_design', 'default')) . "\"\n";
+                }
             }
 
             if ($nc3_frame->plugin_key == 'photo_albums') {
