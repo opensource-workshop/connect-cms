@@ -5557,16 +5557,16 @@ trait MigrationNc3Trait
                 $frame_ini .= "frame_title = \"" . $nc3_frame->frame_name . "\"\n";
             }
 
-            // ヘッダーは無条件にフレームデザインをnone にしておく
-            if ($nc3_frame->container_type == Nc3Box::container_type_header) {
+            if (!empty($nc3_frame->frame_design)) {
+                // overrideNc3Frame()関連設定
+                $frame_ini .= "frame_design = \"{$nc3_frame->frame_design}\"\n";
+            } elseif ($nc3_frame->container_type == Nc3Box::container_type_header) {
+                // ヘッダーは無条件にフレームデザインをnone にしておく
+                $frame_ini .= "frame_design = \"none\"\n";
+            } elseif ($nc3_frame->plugin_key == 'menus') {
                 $frame_ini .= "frame_design = \"none\"\n";
             } else {
-
-                if ($nc3_frame->plugin_key == 'menus') {
-                    $frame_ini .= "frame_design = \"none\"\n";
-                } else {
-                    $frame_ini .= "frame_design = \"" . $nc3_frame->getFrameDesign($this->getMigrationConfig('frames', 'export_frame_default_design', 'default')) . "\"\n";
-                }
+                $frame_ini .= "frame_design = \"" . $nc3_frame->getFrameDesign($this->getMigrationConfig('frames', 'export_frame_default_design', 'default')) . "\"\n";
             }
 
             if ($nc3_frame->plugin_key == 'photo_albums') {
@@ -5581,6 +5581,11 @@ trait MigrationNc3Trait
                 }
             } else {
                 $frame_ini .= "plugin_name = \"" . $this->nc3GetPluginName($nc3_frame->plugin_key) . "\"\n";
+            }
+
+            // overrideNc3Frame()関連設定
+            if (!empty($nc3_frame->frame_col)) {
+                $frame_ini .= "frame_col = " . $nc3_frame->frame_col . "\n";
             }
 
             // 各項目
@@ -5614,7 +5619,10 @@ trait MigrationNc3Trait
             //     $frame_design = $display_type_to_frame_designs[$calendar_display_type] ?? 'default';
             //     $frame_ini .= "template = \"" . $frame_design . "\"\n";
             // }
-            if ($nc3_frame->plugin_key == 'menus') {
+            if (!empty($nc3_frame->template)) {
+                // overrideNc3Frame()関連設定 があれば最優先で設定
+                $frame_ini .= "template = \"" . $nc3_frame->template . "\"\n";
+            } elseif ($nc3_frame->plugin_key == 'menus') {
                 $nc3_menu_frame_setting = Nc3MenuFrameSetting::where('frame_key', $nc3_frame->key)->first() ?? new Nc3MenuFrameSetting();
 
                 // メニューの横長系のテンプレートの場合、Connect-CMS では「ドロップダウン」に変更する。
@@ -5637,13 +5645,29 @@ trait MigrationNc3Trait
             } else {
                 $frame_ini .= "template = \"default\"\n";
             }
-            // $frame_ini .= "browser_width = \"" . $nc3_frame->xxx . "\"\n";
-            // $frame_ini .= "disable_whatsnews = " . $nc3_frame->xxx . "\n";
-            // $frame_ini .= "page_only = " . $nc3_frame->xxx . "\n";
-            // $frame_ini .= "default_hidden = " . $nc3_frame->xxx . "\n";
-            // $frame_ini .= "classname = \"" . $nc3_frame->xxx . "\"\n";
-            // $frame_ini .= "none_hidden = " . $nc3_frame->xxx . "\n";
-            // $frame_ini .= "display_sequence = " . $nc3_frame->xxx . "\n";
+
+            // overrideNc3Frame()関連設定
+            if (!empty($nc3_frame->browser_width)) {
+                $frame_ini .= "browser_width = \"" . $nc3_frame->browser_width . "\"\n";
+            }
+            if (!empty($nc3_frame->disable_whatsnews)) {
+                $frame_ini .= "disable_whatsnews = " . $nc3_frame->disable_whatsnews . "\n";
+            }
+            if (!empty($nc3_frame->page_only)) {
+                $frame_ini .= "page_only = " . $nc3_frame->page_only . "\n";
+            }
+            if (!empty($nc3_frame->default_hidden)) {
+                $frame_ini .= "default_hidden = " . $nc3_frame->default_hidden . "\n";
+            }
+            if (!empty($nc3_frame->classname)) {
+                $frame_ini .= "classname = \"" . $nc3_frame->classname . "\"\n";
+            }
+            if (!empty($nc3_frame->none_hidden)) {
+                $frame_ini .= "none_hidden = " . $nc3_frame->none_hidden . "\n";
+            }
+            if (!empty($nc3_frame->display_sequence)) {
+                $frame_ini .= "display_sequence = " . $nc3_frame->display_sequence . "\n";
+            }
 
             // モジュールに紐づくメインのデータのID
             $frame_ini .= $this->nc3BlockMainDataId($nc3_frame);
