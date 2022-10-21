@@ -12084,16 +12084,32 @@ trait MigrationTrait
                 ];
                 $frame_design = $display_type_to_frame_designs[$calendar_display_type] ?? 'default';
                 $frame_ini .= "template = \"" . $frame_design . "\"\n";
+            } elseif (!empty($nc2_block->template)) {
+                $frame_ini .= "template = \"" . $nc2_block->template . "\"\n";
             } else {
                 $frame_ini .= "template = \"" . $this->nc2BlockTemp($nc2_block) . "\"\n";
             }
-            // $frame_ini .= "browser_width = \"" . $nc3_frame->xxx . "\"\n";
-            // $frame_ini .= "disable_whatsnews = " . $nc3_frame->xxx . "\n";
-            // $frame_ini .= "page_only = " . $nc3_frame->xxx . "\n";
-            // $frame_ini .= "default_hidden = " . $nc3_frame->xxx . "\n";
-            // $frame_ini .= "classname = \"" . $nc3_frame->xxx . "\"\n";
-            // $frame_ini .= "none_hidden = " . $nc3_frame->xxx . "\n";
-            // $frame_ini .= "display_sequence = " . $nc3_frame->xxx . "\n";
+            if (!empty($nc2_block->browser_width)) {
+                $frame_ini .= "browser_width = \"" . $nc2_block->browser_width . "\"\n";
+            }
+            if (!empty($nc2_block->disable_whatsnews)) {
+                $frame_ini .= "disable_whatsnews = " . $nc2_block->disable_whatsnews . "\n";
+            }
+            if (!empty($nc2_block->page_only)) {
+                $frame_ini .= "page_only = " . $nc2_block->page_only . "\n";
+            }
+            if (!empty($nc2_block->default_hidden)) {
+                $frame_ini .= "default_hidden = " . $nc2_block->default_hidden . "\n";
+            }
+            if (!empty($nc2_block->classname)) {
+                $frame_ini .= "classname = \"" . $nc2_block->classname . "\"\n";
+            }
+            if (!empty($nc2_block->none_hidden)) {
+                $frame_ini .= "none_hidden = " . $nc2_block->none_hidden . "\n";
+            }
+            if (!empty($nc2_block->display_sequence)) {
+                $frame_ini .= "display_sequence = " . $nc2_block->display_sequence . "\n";
+            }
 
             // モジュールに紐づくメインのデータのID
             $frame_ini .= $this->nc2BlockMainDataId($nc2_block);
