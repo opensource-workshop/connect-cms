@@ -5530,9 +5530,8 @@ trait MigrationNc3Trait
         foreach ($nc3_frames as $nc3_frame) {
             $this->putMonitor(1, "Frame", "frame_id = " . $nc3_frame->id);
 
-            // [TODO] 未対応
-            // NC3 ブロック強制上書き設定があれば反映
-            // $nc3_frame = $this->overrideNc2Block($nc3_frame);
+            // NC3 フレーム強制上書き設定があれば反映
+            $nc3_frame = $this->overrideNc3Frame($nc3_frame);
 
             $frame_index++;
             $frame_index_str = sprintf("%'.04d", $frame_index);
@@ -5694,29 +5693,23 @@ trait MigrationNc3Trait
     }
 
     /**
-     * NC3：NC3 のブロックの上書き
-     * [TODO] 未対応。エクスポート専用
+     * NC3：NC3フレームの上書き
      */
-    private function overrideNc2Block($nc3_block)
+    private function overrideNc3Frame(Nc3Frame $nc3_frame): Nc3Frame
     {
-        // @nc3_override/blocks/{block_id}.ini があれば処理
-        $nc3_override_block_path = $this->migration_base . '@nc3_override/blocks/' . $nc3_block->block_id . '.ini';
-        if (Storage::exists($nc3_override_block_path)) {
-            $nc3_override_block = parse_ini_file(storage_path() . '/app/' . $nc3_override_block_path, true);
+        // @nc3_override/frames/{frame_id}.ini があれば処理
+        $nc3_override_frame_path = $this->migration_base . '@nc3_override/frames/' . $nc3_frame->id . '.ini';
+        if (Storage::exists($nc3_override_frame_path)) {
+            $nc3_override_frame = parse_ini_file(storage_path() . '/app/' . $nc3_override_frame_path, true);
 
-            // ブロックタイトル
-            //if (array_key_exists('block', $nc3_override_block) && array_key_exists('block_name', $nc3_override_block['block'])) {
-            //    $nc3_block->block_name = $nc3_override_block['block']['block_name'];
-            //}
-
-            // ブロック属性（@nc3_override/blocks の中の属性で上書き）
-            if (array_key_exists('block', $nc3_override_block)) {
-                foreach ($nc3_override_block['block'] as $column_name => $column_value) {
-                    $nc3_block->$column_name = $column_value;
+            // ブロック属性（@nc3_override/frames の中の属性で上書き）
+            if (array_key_exists('frame', $nc3_override_frame)) {
+                foreach ($nc3_override_frame['frame'] as $column_name => $column_value) {
+                    $nc3_frame->$column_name = $column_value;
                 }
             }
         }
-        return $nc3_block;
+        return $nc3_frame;
     }
 
     /**
