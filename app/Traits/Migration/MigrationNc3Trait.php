@@ -5566,8 +5566,7 @@ trait MigrationNc3Trait
                 if ($nc3_frame->plugin_key == 'menus') {
                     $frame_ini .= "frame_design = \"none\"\n";
                 } else {
-                    $frame_ini .= "frame_design = \"" . $nc3_frame->header_type . "\"\n";
-                    // $frame_ini .= "frame_design = \"" . $nc3_frame->getFrameDesign($this->getMigrationConfig('frames', 'export_frame_default_design', 'default')) . "\"\n";
+                    $frame_ini .= "frame_design = \"" . $nc3_frame->getFrameDesign($this->getMigrationConfig('frames', 'export_frame_default_design', 'default')) . "\"\n";
                 }
             }
 
