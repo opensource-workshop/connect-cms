@@ -1502,7 +1502,7 @@ trait MigrationNc3Trait
                 MigrationMapping::where('target_source_table', 'nc3_pages')->delete();
                 // 移行用ファイルの削除
                 Storage::deleteDirectory($this->getImportPath('pages/'));
-                // pagesエクスポート関連のnc3Block()でmenuのエクスポートで@insert配下ディレクトリに出力しているため、同ディレクトリを削除
+                // pagesエクスポート関連のnc3Frame()でmenuのエクスポートで@insert配下ディレクトリに出力しているため、同ディレクトリを削除
                 // ⇒ 移行後用の新ページを作成したのを置いておき、移行後にinsertするような使い方だから削除されると微妙なため、コメントアウト
                 // Storage::deleteDirectory($this->getImportPath('pages/', '@insert/'));
             }
@@ -1655,7 +1655,7 @@ trait MigrationNc3Trait
                 );
 
                 // ブロック処理
-                $this->nc3Block($nc3_sort_page, $new_page_index, $nc3_top_page);
+                $this->nc3Frame($nc3_sort_page, $new_page_index, $nc3_top_page);
             }
 
             // ページ入れ替え
@@ -5376,9 +5376,9 @@ trait MigrationNc3Trait
     }
 
     /**
-     * NC3：ページ内のブロックをループ
+     * NC3：ページ内のフレームをループ
      */
-    private function nc3Block(Nc3Page $nc3_page, int $new_page_index, Nc3Page $nc3_top_page)
+    private function nc3Frame(Nc3Page $nc3_page, int $new_page_index, Nc3Page $nc3_top_page)
     {
         // 指定されたページ内のブロックを取得
         $nc3_frames_query = Nc3Frame::
