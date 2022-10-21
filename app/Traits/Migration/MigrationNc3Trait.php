@@ -82,6 +82,22 @@ trait MigrationNc3Trait
     private $migration_config = array();
 
     /**
+     * エクスポート済みトップページのbox_id保持
+     */
+    private $exported_common_top_page_box_ids = [
+        Nc3Box::container_type_header => [],
+        Nc3Box::container_type_left   => [],
+        Nc3Box::container_type_main   => [],
+        Nc3Box::container_type_right  => [],
+        Nc3Box::container_type_footer => []
+    ];
+
+    /**
+     * エクスポート済みframe_id保持
+     */
+    private $exported_frame_ids = [];
+
+    /**
      * NC3 plugin_key -> Connect-CMS plugin_name 変換用テーブル
      * 開発中 or 開発予定のものは 'Development' にする。
      * 廃止のものは 'Abolition' にする。
@@ -5381,7 +5397,7 @@ trait MigrationNc3Trait
             ->where('boxes.page_id', $nc3_page->id)
             ->where('frames.is_deleted', 0);
 
-        // 対象外のブロックがあれば加味する。
+        // 対象外のフレームがあれば加味する。
         $export_ommit_frames = $this->getMigrationConfig('frames', 'export_ommit_frames');
         if (!empty($export_ommit_frames)) {
             $nc3_frames_query->whereNotIn('frames.id', $export_ommit_frames);
@@ -5404,35 +5420,66 @@ trait MigrationNc3Trait
         // ブロックをループ
         $frame_index = 0; // フレームの連番
 
-        // トップページの場合のみ、ヘッダ、左、右のブロックを取得して、トップページに設置する。
+        // [Connect出力] 割り切り実装
+        // ・サイトトップページ　　　：ヘッダ・フッタ・左・右は、（サイト全体・パブ共通・ルーム共通・当ページのみ）であっても、Connectでは結果として、サイト全体設定として扱われる。
+        // ・ルームのトップページ　　：（サイト全体・パブ共通・ルーム共通）ヘッダ・フッタ・左・右を出力
+        //  　　　 ・（ヘッダ・フッタ）サイトトップとbox_idが違ければ出力
+        //   　　　・（左・右）　　　　サイトトップとbox_id（複数）が違ければframe_idが同じでも出力
+        // ・全ページ共通　　　　　　：メインエリア出力,（当ページのみ）ヘッダ・フッタ・左・右を出力.
         //
+        // [NC3]
         // NC3 では、ヘッダ、フッタが下記いずれかで別れてる。
-        // ・サイト全体で共通のエリア = 切り替えると、ルーム単位で反映（サイトで１回だけエクスポート）
-        // ・パブリック共通のエリア   = 切り替えると、ルーム単位で反映（パブリック系ルームで１回だけエクスポート）
-        // ・ルーム共通のエリア       = 切り替えると、ルーム単位で反映（同ルームで１回だけエクスポート）
-        // ・当ページのみのエリア     = 切り替えると、このページのみ反映（ページ毎にエクスポート）
-        // 左、右は、上記をON・OFF設定（全体＋当ページのみ等）できる。
-
-        // --- nc3でのヘッダ、左、右、フッタ取得方法
-        // page -> nc3_page_containers(どのエリアが見えてる・見えてないか) -> nc3_boxes_page_containers(全エリアのbox特定) -> box -> frame の順で取得してる。
+        // ・サイト全体で共通のエリア = 切り替えると、ルーム単位で反映。中身はサイト共通
+        // ・パブリック共通のエリア   = 切り替えると、ルーム単位で反映。中身はパブ共通
+        // ・ルーム共通のエリア       = 切り替えると、ルーム単位で反映。中身はルーム共通
+        // ・当ページのみのエリア     = 切り替えると、このページのみ反映。中身はページ単位
         //
-        // ・nc3_page_containers  is_published = 1 が使ってるエリア。page_idで取得できる。
-        //   コンテナータイプ.  1:Header, 2:Major, 3:Main, 4:Minor, 5:Footer
-        // ・使ってるbox（boxを基にframe取れる）は、nc3_boxes_page_containers で page_id in (4) and  is_published = 1 で（使ってないエリアも含めて）全エリア取得できる。
-        // 　その後、データは取ってくるけど、使ってないエリアは表示しない。がNC3の処理。
+        // 左、右は、ON・OFF設定（全体＋当ページのみ等）できる。
+        // ・サイト全体で共通のエリア = ON・OFF設定、このページのみ反映。中身はサイト共通
+        // ・パブリック共通のエリア   = ON・OFF設定、このページのみ反映。中身はパブ共通
+        // ・ルーム共通のエリア       = ON・OFF設定、このページのみ反映。中身はルーム共通
+        // ・当ページのみのエリア     = ON・OFF設定、このページのみ反映。中身はページ単位
+        //
+        // --- nc3でのヘッダ、左、右、フッタ取得順
+        // page ->
+        //  nc3_page_containers(どのエリアが見えてる(is_published = 1)・見えてないか) ->
+        //    nc3_boxes_page_containers(全エリア(page_id = 999 and is_published = 1)のbox特定) ->
+        //      box ->
+        //        frame
 
-        // トップページ
-        if ($nc3_page->id == $nc3_top_page->id) {
+        // ルームのトップページ
+        if ($nc3_page->id == $nc3_page->page_id_top) {
 
-            // 開いてるレイアウトのエリアのbox_id
-            $nc3_box_ids = Nc3PageContainer::select('boxes.*')
+            // 開いてるページのbox_id
+            $nc3_boxes = Nc3PageContainer::select('boxes.*')
                 ->where('page_containers.page_id', $nc3_page->id)
-                ->join('boxes_page_containers', 'boxes_page_containers.page_container_id', '=', 'page_containers.id')
+                ->join('boxes_page_containers', function ($join) {
+                    $join->on('boxes_page_containers.page_container_id', '=', 'page_containers.id')
+                        ->where('boxes_page_containers.is_published', 1);      // 有効なデータ
+                })
                 ->join('boxes', 'boxes.id', '=', 'boxes_page_containers.box_id')
                 ->where('page_containers.is_published', 1)      // 見えてるエリア
-                ->pluck('id');
+                ->where('boxes.page_id', null)                  // page_id = nullは共通エリア（サイト全体・パブ共通・ルーム共通）
+                ->get();
 
-            // 指定されたページ内のブロックを取得
+            $container_types = [
+                Nc3Box::container_type_header,
+                Nc3Box::container_type_left,
+                Nc3Box::container_type_main,
+                Nc3Box::container_type_right,
+                Nc3Box::container_type_footer
+            ];
+            $common_box_ids = [];
+            foreach ($container_types as $container_type) {
+                // 差があれば、元のnc3_boxesをセット
+                $nc3_boxes_arr = $nc3_boxes->where('container_type', $container_type)->pluck('id')->toArray();
+                $nc3_boxes_diff = array_diff($nc3_boxes_arr, $this->exported_common_top_page_box_ids[$container_type]);
+                if (!empty($nc3_boxes_diff)) {
+                    $common_box_ids = array_merge_recursive($common_box_ids, $nc3_boxes_arr);
+                }
+            }
+
+            // box_idを使って指定されたページ内のフレーム取得
             $nc3_common_frames_query = Nc3Frame::
                 select(
                     'frames.*',
@@ -5446,9 +5493,10 @@ trait MigrationNc3Trait
                     $join->on('frames_languages.frame_id', '=', 'frames.id');
                 })
                 ->leftJoin('blocks', 'blocks.id', '=', 'frames.block_id')
-                ->whereIn('boxes.id', $nc3_box_ids)
+                ->whereIn('boxes.id', $common_box_ids)
                 ->where('frames.is_deleted', 0);
 
+            // 対象外のフレームがあれば加味する。
             if (!empty($export_ommit_frames)) {
                 $nc3_common_frames_query->whereNotIn('frames.id', $export_ommit_frames);
             }
@@ -5464,6 +5512,17 @@ trait MigrationNc3Trait
             foreach ($nc3_common_frames as $nc3_common_frame) {
                 // frame 設定に追加
                 $nc3_frames->prepend($nc3_common_frame);
+            }
+
+            // サイトトップページのみbox_idを保持
+            if ($nc3_page->id == $nc3_top_page->id) {
+                $this->exported_common_top_page_box_ids = [
+                    Nc3Box::container_type_header => $nc3_boxes->where('container_type', Nc3Box::container_type_header)->pluck('id')->toArray(),
+                    Nc3Box::container_type_left   => $nc3_boxes->where('container_type', Nc3Box::container_type_left)->pluck('id')->toArray(),
+                    Nc3Box::container_type_main   => $nc3_boxes->where('container_type', Nc3Box::container_type_main)->pluck('id')->toArray(),
+                    Nc3Box::container_type_right  => $nc3_boxes->where('container_type', Nc3Box::container_type_right)->pluck('id')->toArray(),
+                    Nc3Box::container_type_footer => $nc3_boxes->where('container_type', Nc3Box::container_type_footer)->pluck('id')->toArray(),
+                ];
             }
         }
 
@@ -5599,6 +5658,21 @@ trait MigrationNc3Trait
             $frame_nc3 .= "created_at = \"" . $this->getCCDatetime($nc3_frame->created) . "\"\n";
             $frame_nc3 .= "updated_at = \"" . $this->getCCDatetime($nc3_frame->modified) . "\"\n";
             $frame_ini .= $frame_nc3;
+
+            // frame_id重複すると、インポート時に登録されない（アップデートになる）ため、登録するよう対応
+            // NC3は（ヘッダ・フッタ・左右）のルーム共通等で、同じフレームが別ページに表示される事がありえるため、同じフレームIDでも登録する。
+            if (in_array($nc3_frame->id, $this->exported_frame_ids)) {
+                $counts = array_count_values($this->exported_frame_ids);
+                $count = $counts[$nc3_frame->id] + 1;
+
+                $frame_nc3_add = "\n";
+                $frame_nc3_add .= "[addition]\n";
+                $frame_nc3_add .= "source_key = \"{$nc3_frame->id}-{$count}\"\n";
+                $frame_ini .= $frame_nc3_add;
+            }
+
+            // エクスポート済みframe_id（重複したframe_idはカウントで使うため取り除かない）
+            $this->exported_frame_ids[] = $nc3_frame->id;
 
             // フレーム設定ファイルの出力
             // メニューの場合は、移行完了したページデータを参照してインポートしたいので、insert 側に出力する。
