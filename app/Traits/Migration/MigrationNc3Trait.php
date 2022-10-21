@@ -5670,7 +5670,7 @@ trait MigrationNc3Trait
             }
 
             // モジュールに紐づくメインのデータのID
-            $frame_ini .= $this->nc3BlockMainDataId($nc3_frame);
+            $frame_ini .= $this->nc3FrameMainDataId($nc3_frame);
 
             // NC3 情報
             $frame_nc3 = "\n";
@@ -5739,7 +5739,7 @@ trait MigrationNc3Trait
     /**
      * NC3：フレームに紐づくモジュールのメインデータのID 取得
      */
-    private function nc3BlockMainDataId(Nc3Frame $nc3_frame): string
+    private function nc3FrameMainDataId(Nc3Frame $nc3_frame): string
     {
         // 各プラグインテーブル（例：blogs）のlanguage_idは、データ作成時のlanguage_id。language_id = 1(英語)で表示してるページは日本語ページとかありえるため、
         // language_idで絞り込まない。
