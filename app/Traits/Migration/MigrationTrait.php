@@ -12085,10 +12085,13 @@ trait MigrationTrait
                 $frame_design = $display_type_to_frame_designs[$calendar_display_type] ?? 'default';
                 $frame_ini .= "template = \"" . $frame_design . "\"\n";
             } elseif (!empty($nc2_block->template)) {
+                // overrideNc2Block()関連設定
                 $frame_ini .= "template = \"" . $nc2_block->template . "\"\n";
             } else {
                 $frame_ini .= "template = \"" . $this->nc2BlockTemp($nc2_block) . "\"\n";
             }
+
+            // overrideNc2Block()関連設定
             if (!empty($nc2_block->browser_width)) {
                 $frame_ini .= "browser_width = \"" . $nc2_block->browser_width . "\"\n";
             }
