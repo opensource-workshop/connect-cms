@@ -12023,7 +12023,10 @@ trait MigrationTrait
                 $frame_ini .= "frame_title = \"" . $nc2_block->block_name . "\"\n";
             }
 
-            if ($nc2_block->getModuleName() == 'menu') {
+            if (!empty($nc2_block->frame_design)) {
+                // overrideNc2Block()関連設定
+                $frame_ini .= "frame_design = \"{$nc2_block->frame_design}\"\n";
+            } elseif ($nc2_block->getModuleName() == 'menu') {
                 $frame_ini .= "frame_design = \"none\"\n";
             } else {
                 $frame_ini .= "frame_design = \"" . $nc2_block->getFrameDesign($this->getMigrationConfig('frames', 'export_frame_default_design', 'default')) . "\"\n";
@@ -12050,13 +12053,16 @@ trait MigrationTrait
             $row_block_parent = $nc2_blocks->where('block_id', $nc2_block->parent_id)->first();
 
             if (!empty($nc2_block->frame_col)) {
+                // overrideNc2Block()関連設定
                 $frame_ini .= "frame_col = " . $nc2_block['frame_col'] . "\n";
             } elseif ($row_block_count > 1 && $row_block_count <= 12 && $row_block_parent && $row_block_parent->action_name == 'pages_view_grouping') {
                 $frame_ini .= "frame_col = " . floor(12 / $row_block_count) . "\n";
             }
 
-            // 各項目
-            if ($nc2_block->getModuleName() == 'calendar') {
+            if (!empty($nc2_block->template)) {
+                // overrideNc2Block()関連設定 があれば最優先で設定
+                $frame_ini .= "template = \"" . $nc2_block->template . "\"\n";
+            } elseif ($nc2_block->getModuleName() == 'calendar') {
                 $calendar_block_ini = null;
                 $calendar_display_type = null;
 
@@ -12084,9 +12090,6 @@ trait MigrationTrait
                 ];
                 $frame_design = $display_type_to_frame_designs[$calendar_display_type] ?? 'default';
                 $frame_ini .= "template = \"" . $frame_design . "\"\n";
-            } elseif (!empty($nc2_block->template)) {
-                // overrideNc2Block()関連設定
-                $frame_ini .= "template = \"" . $nc2_block->template . "\"\n";
             } else {
                 $frame_ini .= "template = \"" . $this->nc2BlockTemp($nc2_block) . "\"\n";
             }
