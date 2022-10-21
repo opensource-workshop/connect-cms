@@ -65,17 +65,18 @@
                 </form>
             @endcan
         @endif
-        @can('posts.update',[[$inputs, $frame->plugin_name, $buckets]])
-            @if ($inputs->status == 1)
-                <span class="badge badge-warning align-bottom">一時保存</span>
-            @endif
-
+        @can('role_update_or_approval',[[$inputs, $frame->plugin_name, $buckets]])
             @if (!empty($inputs->expires_at) && $inputs->expires_at <= Carbon::now())
                 <span class="badge badge-secondary align-bottom">公開終了</span>
             @endif
 
             @if ($inputs->posted_at > Carbon::now())
                 <span class="badge badge-info align-bottom">公開前</span>
+            @endif
+        @endcan
+        @can('posts.update',[[$inputs, $frame->plugin_name, $buckets]])
+            @if ($inputs->status == 1)
+                <span class="badge badge-warning align-bottom">一時保存</span>
             @endif
 
             <button type="button" class="btn btn-success btn-sm ml-2" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}#frame-{{$frame_id}}'">

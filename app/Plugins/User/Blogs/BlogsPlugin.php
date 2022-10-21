@@ -945,7 +945,6 @@ WHERE status = 0
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            // return ( $this->create($request, $page_id, $frame_id, $id, $validator->errors()) );
             return back()->withErrors($validator)->withInput();
         }
 
@@ -968,7 +967,7 @@ WHERE status = 0
         }
 
         // ブログ記事設定
-        $blogs_post->status = 1;
+        $blogs_post->status = StatusType::temporary;
         $blogs_post->blogs_id   = $request->blogs_id;
         $blogs_post->post_title = $request->post_title;
         $blogs_post->categories_id = $request->categories_id;
@@ -976,6 +975,9 @@ WHERE status = 0
         $blogs_post->posted_at  = $request->posted_at . ':00';
         $blogs_post->post_text  = $this->clean($request->post_text);
         $blogs_post->post_text2 = $this->clean($request->post_text2);
+        $blogs_post->read_more_flag = $request->read_more_flag ?? 0;
+        $blogs_post->read_more_button = $request->read_more_button;
+        $blogs_post->close_more_button = $request->close_more_button;
 
         $blogs_post->save();
 
@@ -988,7 +990,6 @@ WHERE status = 0
         $this->saveTag($request, $blogs_post);
 
         // 登録後は表示用の初期処理を呼ぶ。
-        // return $this->index($request, $page_id, $frame_id);
         return collect(['redirect_path' => url($this->page->permanent_link)]);
     }
 
