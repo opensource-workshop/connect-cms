@@ -1608,9 +1608,9 @@ trait MigrationNc3Trait
                     }
                 } else {
                     if ($this->checkLangDirnameJpn($nc3_sort_page->language_id)) {
-                        $permanent_link = '/' . $nc3_sort_page->permalink;;
+                        $permanent_link = '/' . $nc3_sort_page->permalink;
                     } else {
-                        $permanent_link = '/en/' . $nc3_sort_page->permalink;;
+                        $permanent_link = '/en/' . $nc3_sort_page->permalink;
                     }
                 }
 
