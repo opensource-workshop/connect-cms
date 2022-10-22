@@ -5403,12 +5403,11 @@ trait MigrationNc3Trait
             $nc3_frames_query->whereNotIn('frames.id', $export_ommit_frames);
         }
 
-        // migration_config.sample.iniにも設定値が存在しないため、コメントアウト
         // メニューが対象外なら除外する。
-        // $export_ommit_menu = $this->getMigrationConfig('menus', 'export_ommit_menu');
-        // if ($export_ommit_menu) {
-        //     $nc3_frames_query->where('action_name', '<>', 'menu_view_main_init');
-        // }
+        $export_ommit_menu = $this->getMigrationConfig('menus', 'export_ommit_menu');
+        if ($export_ommit_menu) {
+            $nc3_frames_query->where('frames.plugin_key', '<>', 'menus');
+        }
 
         $nc3_frames = $nc3_frames_query
             ->orderBy('boxes.space_id')
@@ -5709,6 +5708,7 @@ trait MigrationNc3Trait
 
             // Connect-CMS のプラグイン名の取得
             $plugin_name = $this->nc3GetPluginName($nc3_frame->plugin_key);
+            // [?] ここにsearchsのみプラグイン指定されてる理由はなんだろ？
             if ($plugin_name == 'Development' || $plugin_name == 'Abolition' || $plugin_name == 'searchs') {
                 // 移行できなかったモジュール
                 $this->putError(3, "no migrate nc3-plugin", "プラグイン = " . $nc3_frame->plugin_key, $nc3_frame);
