@@ -8,6 +8,7 @@
  * @see resources\views\layouts\app.blade.php
  * @see vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\views\503.blade.php
  * @see vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\views\minimal.blade.php
+ * @see \App\Http\Middleware\CheckForMaintenanceMode::class
 --}}
 <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}">
@@ -36,6 +37,7 @@
 </div>
 ';
     @endphp
-    {!! __($exception->getMessage() ?: $default_html) !!}
+    {{-- {!! __($exception->getMessage() ?: $default_html) !!} --}}
+    {!! $default_html !!}
 </body>
 </html>
