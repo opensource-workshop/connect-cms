@@ -12240,7 +12240,7 @@ trait MigrationTrait
                                              ->where("block_id", $nc2_block->block_id)
                                              ->orderBy('page_id', 'asc')
                                              ->get();
-            if (empty($nc2_menu_details)) {
+            if ($nc2_menu_details->isEmpty()) {
                 $ret .= "\n";
                 $ret .= "[menu]\n";
                 $ret .= "select_flag       = \"0\"\n";
