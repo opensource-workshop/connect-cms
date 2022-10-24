@@ -5854,14 +5854,14 @@ trait MigrationNc3Trait
                 $ret = "cabinet_id = \"" . $this->zeroSuppress($nc3_cabinet->id) . "\"\n";
             }
         } elseif ($nc3_frame->plugin_key == 'menus') {
-            // メニューの詳細設定（非表示設定が入っている）があれば、設定を加味する。
-            // ルームの表示・非表示もmenu_frames_pagesに含まれてる
-            $nc3_menu_frame_pages = Nc3MenuFramePage::select('menu_frames_pages.*', 'pages.sort_key')
+            // メニューの非表示設定を加味する。
+            $nc3_menu_frame_pages_hidden = Nc3MenuFramePage::select('menu_frames_pages.*', 'pages.sort_key')
                 ->join('pages', 'pages.id', '=', 'menu_frames_pages.page_id')
-                ->where("frame_key", $nc3_frame->key)
-                ->orderBy('page_id', 'asc')
+                ->where("menu_frames_pages.frame_key", $nc3_frame->key)
+                ->where("menu_frames_pages.is_hidden", 1)   // 1:非表示
+                ->orderBy('menu_frames_pages.page_id', 'asc')
                 ->get();
-            if (empty($nc3_menu_frame_pages)) {
+            if ($nc3_menu_frame_pages_hidden->isEmpty()) {
                 $ret .= "\n";
                 $ret .= "[menu]\n";
                 $ret .= "select_flag       = \"0\"\n";
@@ -5874,9 +5874,9 @@ trait MigrationNc3Trait
 
                 // 選択しないページを除外
                 $ommit_nc3_pages = array();
-                foreach ($nc3_menu_frame_pages as $nc3_menu_frame_page) {
+                foreach ($nc3_menu_frame_pages_hidden as $nc3_menu_frame_page_hidden) {
                     // 下層ページを含めて取得
-                    $ommit_pages = Nc3Page::where('sort_key', 'like', $nc3_menu_frame_page->sort_key . '%')->get();
+                    $ommit_pages = Nc3Page::where('sort_key', 'like', $nc3_menu_frame_page_hidden->sort_key . '%')->get();
                     if ($ommit_pages->isNotEmpty()) {
                         $ommit_nc3_pages = $ommit_nc3_pages + $ommit_pages->pluck('id')->toArray();
                     }
