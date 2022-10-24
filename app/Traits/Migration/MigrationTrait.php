@@ -1965,10 +1965,10 @@ trait MigrationTrait
                 }
 
                 // ルーム指定を探しておく。
-                $room_id = null;
-                if (array_key_exists('page_base', $page_ini) && array_key_exists('nc2_room_id', $page_ini['page_base'])) {
-                    $room_id = $page_ini['page_base']['nc2_room_id'];
-                }
+                // $room_id = null;
+                // if (array_key_exists('page_base', $page_ini) && array_key_exists('nc2_room_id', $page_ini['page_base'])) {
+                //     $room_id = $page_ini['page_base']['nc2_room_id'];
+                // }
 
                 // ルーム指定があれば、指定されたルームのみ処理する。
                 //if (empty($cc_import_page_room_ids)) {
