@@ -5894,13 +5894,13 @@ trait MigrationTrait
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence);
 
-        // NC2 からの移行時の非表示設定の反映
-        $ommit_page_ids_nc2 = $this->getArrayValue($frame_ini, 'menu', 'ommit_page_ids_nc2');
+        // 移行元(NC2等) からの移行時の非表示設定の反映
+        $ommit_page_ids_source = $this->getArrayValue($frame_ini, 'menu', 'ommit_page_ids_source');
         $ommit_page_ids = array();
-        if (!empty($ommit_page_ids_nc2)) {
-            foreach (explode(",", $ommit_page_ids_nc2) as $ommit_page_id_nc2) {
+        if (!empty($ommit_page_ids_source)) {
+            foreach (explode(",", $ommit_page_ids_source) as $ommit_page_id_source) {
                 $nc2_page = MigrationMapping::where('target_source_table', 'source_pages')
-                                            ->where('source_key', $ommit_page_id_nc2)
+                                            ->where('source_key', $ommit_page_id_source)
                                             ->first();
                 if (!empty($nc2_page)) {
                     $connect_page = MigrationMapping::where('target_source_table', 'connect_page')
@@ -12270,7 +12270,7 @@ trait MigrationTrait
                 $ret .= "indent_font        = \"0\"\n";
                 if (!empty($ommit_nc2_pages)) {
                     asort($ommit_nc2_pages);
-                    $ret .= "ommit_page_ids_nc2 = \"" . implode(",", $ommit_nc2_pages) . "\"\n";
+                    $ret .= "ommit_page_ids_source = \"" . implode(",", $ommit_nc2_pages) . "\"\n";
                 }
             }
         } elseif ($module_name == 'counter') {

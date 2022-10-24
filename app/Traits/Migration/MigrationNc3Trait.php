@@ -5889,7 +5889,7 @@ trait MigrationNc3Trait
                 $ret .= "indent_font        = \"0\"\n";
                 if (!empty($ommit_nc3_pages)) {
                     asort($ommit_nc3_pages);
-                    $ret .= "ommit_page_ids_nc3 = \"" . implode(",", $ommit_nc3_pages) . "\"\n";
+                    $ret .= "ommit_page_ids_source = \"" . implode(",", $ommit_nc3_pages) . "\"\n";
                 }
             }
         } elseif ($nc3_frame->plugin_key == 'access_counters') {
