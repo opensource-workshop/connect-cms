@@ -32,7 +32,7 @@ use App\Models\Migration\Nc3\Nc3Page;
 use App\Models\Migration\Nc3\Nc3PageContainer;
 use App\Models\Migration\Nc3\Nc3Registration;
 use App\Models\Migration\Nc3\Nc3ReservationFrameSetting;
-// use App\Models\Migration\Nc3\Nc3Room;
+use App\Models\Migration\Nc3\Nc3Room;
 use App\Models\Migration\Nc3\Nc3PhotoAlbum;
 use App\Models\Migration\Nc3\Nc3PhotoAlbumFrameSetting;
 use App\Models\Migration\Nc3\Nc3SiteSetting;
@@ -1410,14 +1410,14 @@ trait MigrationNc3Trait
             $this->nc3ExportUsers($redo);
         }
 
+        // ルームデータのエクスポート
+        if ($this->isTarget('nc3_export', 'groups')) {
+            $this->nc3ExportRooms($redo);
+        }
+
         //////////////////
         // [TODO] まだ
         //////////////////
-        // // ルームデータのエクスポート
-        // if ($this->isTarget('nc3_export', 'groups')) {
-        //     $this->nc3ExportRooms($redo);
-        // }
-
         // // NC3 日誌（journal）データのエクスポート
         // if ($this->isTarget('nc3_export', 'plugins', 'blogs')) {
         //     $this->nc3ExportJournal($redo);
@@ -1499,7 +1499,7 @@ trait MigrationNc3Trait
         if ($this->isTarget('nc3_export', 'pages')) {
             // データクリア
             if ($redo === true) {
-                MigrationMapping::where('target_source_table', 'nc3_pages')->delete();
+                MigrationMapping::where('target_source_table', 'source_pages')->delete();
                 // 移行用ファイルの削除
                 Storage::deleteDirectory($this->getImportPath('pages/'));
                 // pagesエクスポート関連のnc3Frame()でmenuのエクスポートで@insert配下ディレクトリに出力しているため、同ディレクトリを削除
@@ -1586,8 +1586,8 @@ trait MigrationNc3Trait
                 // ページ設定の保存用変数
                 $membership_flag = null;
                 if ($nc3_sort_page->space_id == Nc3Space::COMMUNITY_SPACE_ID) {
-                    // 「すべての会員をデフォルトで参加させる」
-                    if ($nc3_sort_page->default_participation == 1) {
+                    // 「すべての会員をデフォルトで参加させる」 & 「すべての会員をデフォルトで参加させる」ルームはグループ作成しない
+                    if ($nc3_sort_page->default_participation == 1 && !$this->getMigrationConfig('groups', 'nc3_export_make_group_of_default_entry_room')) {
                         $membership_flag = 2;
                     } else {
                         // ルームで選択した会員のみ
@@ -1625,7 +1625,7 @@ trait MigrationNc3Trait
                 // 親ページの検索（parent_id = 1 はパブリックのトップレベルなので、1 より大きいものを探す）
                 if ($nc3_sort_page->parent_id > 1) {
                     // マッピングテーブルから親のページのディレクトリを探す
-                    $parent_page_mapping = MigrationMapping::where('target_source_table', 'nc3_pages')->where('source_key', $nc3_sort_page->parent_id)->first();
+                    $parent_page_mapping = MigrationMapping::where('target_source_table', 'source_pages')->where('source_key', $nc3_sort_page->parent_id)->first();
                     // 1ルームのみの移行の場合を考慮
                     $parent_room_flg = true;
                     $room_ids = $this->getMigrationConfig('basic', 'nc3_export_room_ids');
@@ -1648,8 +1648,8 @@ trait MigrationNc3Trait
 
                 // マッピングテーブルの追加
                 $mapping = MigrationMapping::updateOrCreate(
-                    ['target_source_table' => 'nc3_pages', 'source_key' => $nc3_sort_page->id],
-                    ['target_source_table' => 'nc3_pages',
+                    ['target_source_table' => 'source_pages', 'source_key' => $nc3_sort_page->id],
+                    ['target_source_table' => 'source_pages',
                      'source_key'          => $nc3_sort_page->id,
                      'destination_key'     => $this->zeroSuppress($new_page_index)]
                 );
@@ -1677,8 +1677,8 @@ trait MigrationNc3Trait
         // パラメータのループと入れ替え処理
         foreach ($nc3_export_change_pages as $source_page_id => $destination_page_id) {
             // マッピングテーブルを見て、移行後のフォルダ名を取得
-            $source_page = MigrationMapping::where('target_source_table', 'nc3_pages')->where('source_key', $source_page_id)->first();
-            $destination_page = MigrationMapping::where('target_source_table', 'nc3_pages')->where('source_key', $destination_page_id)->first();
+            $source_page = MigrationMapping::where('target_source_table', 'source_pages')->where('source_key', $source_page_id)->first();
+            $destination_page = MigrationMapping::where('target_source_table', 'source_pages')->where('source_key', $destination_page_id)->first();
 
             if (empty($source_page) || empty($destination_page)) {
                 continue;
@@ -1773,7 +1773,6 @@ trait MigrationNc3Trait
     {
         $this->putMonitor(3, "Start nc3ExportBasic.");
 
-        // config テーブルの取得
         $site_settings = Nc3SiteSetting::get();
 
         // site,ini ファイル編集
@@ -1834,7 +1833,12 @@ trait MigrationNc3Trait
         }
 
         // NC3 アップロードテーブルを移行する。
-        $nc3_uploads = Nc3UploadFile::orderBy('id')->get();
+        $nc3_uploads = Nc3UploadFile::select('upload_files.*', 'rooms.page_id_top as room_page_id_top')
+            ->leftJoin('rooms', function ($join) {
+                $join->on('rooms.id', 'upload_files.room_id');
+            })
+            ->orderBy('upload_files.id')
+            ->get();
 
         // uploads,ini ファイル
         $this->storagePut($this->getImportPath('uploads/uploads.ini'), "[uploads]");
@@ -1917,6 +1921,7 @@ trait MigrationNc3Trait
             $uploads_ini_detail .= "plugin_name = \"" . $this->nc3GetPluginName($nc3_upload->plugin_key) . "\"\n";
             $uploads_ini_detail .= "page_id = \"0\"\n";
             $uploads_ini_detail .= "nc3_room_id = \"" . $nc3_upload->room_id . "\"\n";
+            $uploads_ini_detail .= "room_page_id_top = " . $nc3_upload->room_page_id_top . "\n";
         }
 
         // アップロード一覧の出力
@@ -2097,7 +2102,6 @@ trait MigrationNc3Trait
         }
     }
 
-
     /**
      * NC3：グループの移行
      */
@@ -2119,52 +2123,105 @@ trait MigrationNc3Trait
         user["admin"] = 2
         user["user"] = 4
 
-        ※ user["ユーザID"] = "role_authority_id"
+        ※ user["ユーザID"] = "room_role_key"
         */
 
-        // NC3 ルームの取得
-        // 「すべての会員をデフォルトで参加させる」はグループにしないので対象外。'default_entry_flag'== 0
-        $nc3_rooms_query = Nc2Page::where('space_type', 2)
-                            ->whereColumn('page_id', 'room_id')
-                            ->whereIn('thread_num', [1, 2])
-                            ->where('default_entry_flag', 0);
+        // NC3 ルームの取得. ルーム名はConnectが多言語してないので日本語固定で取る
+        $nc3_rooms_query = Nc3Room::select('rooms.*', 'rooms_languages.name as room_name')
+            ->whereIn('space_id', [Nc3Space::COMMUNITY_SPACE_ID, Nc3Space::PUBLIC_SPACE_ID])
+            ->join('rooms_languages', function ($join) {
+                $join->on('rooms_languages.room_id', 'rooms.id')
+                    ->where('rooms_languages.language_id', 2);  // 2:日本語
+            });
+
         // 対象外ページ指定の有無
-        if ($this->getMigrationConfig('pages', 'nc3_export_ommit_page_ids')) {
-            $nc3_rooms_query->whereNotIn('page_id', $this->getMigrationConfig('pages', 'nc3_export_ommit_page_ids'));
-        }
-        $nc3_rooms = $nc3_rooms_query->orderBy('thread_num')->orderBy('display_sequence')->get();
+        // if ($this->getMigrationConfig('pages', 'nc3_export_ommit_page_ids')) {
+        //     $nc3_rooms_query->whereNotIn('page_id', $this->getMigrationConfig('pages', 'nc3_export_ommit_page_ids'));
+        // }
+        $nc3_rooms = $nc3_rooms_query->orderBy('rooms.sort_key')->get();
 
         // 空なら戻る
         if ($nc3_rooms->isEmpty()) {
             return;
         }
 
+        // [NC3]
+        // ルーム管理＞（タブ）パブリック＞各ルームの[編集]ボタン
+        //  「ルーム内の役割」のデフォルト値: ゲスト:visitor, 一般:general_user（デフォ）,編集者:editor
+        //   ※ パブリックは各ルームで、「ルーム内の役割」のデフォルト値を設定できる。
+        // ルーム管理＞（タブ）コミュニティ＞[編集]ボタン
+        //  「ルーム内の役割」のデフォルト値: ゲスト:visitor, 一般:general_user（デフォ）,編集者:editor
+        //   ※ コミュニティはサイトで１個の「ルーム内の役割」のデフォルト値のみ。各ルームで設定できない。
+
         // グループをループ
         foreach ($nc3_rooms as $nc3_room) {
-            // ini ファイル用変数
-            $groups_ini  = "[group_base]\n";
-            $groups_ini .= "name = \"" . $nc3_room->page_name . "\"\n";
-            $groups_ini .= "\n";
-            $groups_ini .= "[source_info]\n";
-            $groups_ini .= "room_id = " . $nc3_room->room_id . "\n";
-            $groups_ini .= "\n";
-            $groups_ini .= "[users]\n";
-
-            // NC3 参加ユーザの取得
-            $nc3_pages_users_links = Nc2PageUserLink::select('pages_users_link.*', 'users.login_id')
-                                                    ->join('users', 'users.user_id', 'pages_users_link.user_id')
-                                                    ->where('room_id', $nc3_room->room_id)
-                                                    ->orderBy('room_id')
-                                                    ->orderBy('users.role_authority_id')
-                                                    ->orderBy('users.insert_time')
-                                                    ->get();
-
-            foreach ($nc3_pages_users_links as $nc3_pages_users_link) {
-                $groups_ini .= "user[\"" . $nc3_pages_users_link->login_id . "\"] = " . $nc3_pages_users_link->role_authority_id . "\n";
+            if ($nc3_room->space_id == Nc3Space::COMMUNITY_SPACE_ID && $nc3_room->default_participation == 1) {
+                if ($this->getMigrationConfig('groups', 'nc3_export_make_group_of_default_entry_room')) {
+                    // 「すべての会員をデフォルトで参加させる」ルームをグループ作成する
+                    $this->putMonitor(3, '「すべての会員をデフォルトで参加させる」ルームをグループ作成する', "ルーム名={$nc3_room->room_name}");
+                } else {
+                    //「すべての会員をデフォルトで参加させる」ルームはグループ作成しない
+                    $this->putMonitor(3, '「すべての会員をデフォルトで参加させる」ルームはグループ作成しない', "ルーム名={$nc3_room->room_name}");
+                    continue;
+                }
             }
 
-            // グループデータの出力
-            $this->storagePut($this->getImportPath('groups/group_') . $this->zeroSuppress($nc3_room->room_id) . '.ini', $groups_ini);
+            //                           (public)role_key,           (コミュ)role_key
+            // _ルーム管理者              = room_administrator,       room_administrator
+            // _編集長                   = chief_editor,              chief_editor
+            // _編集者                   = editor,                    editor
+            // _一般                     = general_user,              general_user
+            // _ゲスト                   = visitor,                   visitor
+            // 不参加(デフォルトで参加OFF) = 選択肢なし,                null
+
+            $nc3_roles_rooms_users = Nc3User::select('roles_rooms_users.*', 'users.username as login_id', 'roles_rooms.role_key as room_role_key')
+                ->leftJoin('roles_rooms_users', function ($join) use ($nc3_room) {
+                    $join->on('roles_rooms_users.user_id', 'users.id')
+                        ->where('roles_rooms_users.room_id', $nc3_room->id);
+                })
+                ->leftJoin('roles_rooms', function ($join) {
+                    $join->on('roles_rooms.id', 'roles_rooms_users.roles_room_id');
+                })
+                ->where('users.is_deleted', 0)
+                ->orderBy('roles_rooms_users.room_id')
+                ->orderBy('roles_rooms.role_key')
+                ->orderBy('users.created')
+                ->get();
+
+            $role_keys = [
+                1 => ['nc3_role_key' => Nc3Room::role_key_room_administrator, 'cc_name' =>'_コンテンツ管理者', 'cc_role_name' =>'role_article_admin'],
+                2 => ['nc3_role_key' => Nc3Room::role_key_chief_editor,       'cc_name' =>'_コンテンツ管理者', 'cc_role_name' =>'role_article_admin'],
+                3 => ['nc3_role_key' => Nc3Room::role_key_editor,             'cc_name' =>'_モデレータ',      'cc_role_name' =>'role_article'],
+                4 => ['nc3_role_key' => Nc3Room::role_key_general_user,       'cc_name' =>'_編集者',          'cc_role_name' =>'role_reporter'],
+                5 => ['nc3_role_key' => Nc3Room::role_key_visitor,            'cc_name' =>'_ゲスト',          'cc_role_name' =>'role_guest'],
+            ];
+
+            foreach ($role_keys as $no => $names) {
+
+                $nc3_roles_rooms_users_subgroup = $nc3_roles_rooms_users->where('room_role_key', $names['nc3_role_key']);
+                if ($nc3_roles_rooms_users_subgroup->isEmpty()) {
+                    // ユーザいないグループは作らない。
+                    continue;
+                }
+
+                // ini ファイル用変数
+                $groups_ini  = "[group_base]\n";
+                $groups_ini .= "name = \"" . $nc3_room->room_name . $names['cc_name'] . "\"\n";
+                $groups_ini .= "role_name = \"" . $names['cc_role_name'] . "\"\n";
+                $groups_ini .= "\n";
+                $groups_ini .= "[source_info]\n";
+                $groups_ini .= "room_id = " . $nc3_room->id . "\n";
+                $groups_ini .= "room_page_id_top = " . $nc3_room->page_id_top . "\n";
+                $groups_ini .= "\n";
+                $groups_ini .= "[users]\n";
+
+                foreach ($nc3_roles_rooms_users_subgroup as $nc3_roles_rooms_user) {
+                    $groups_ini .= "user[\"" . $nc3_roles_rooms_user->login_id . "\"] = " . $nc3_roles_rooms_user->room_role_key . "\n";
+                }
+
+                // グループデータの出力
+                $this->storagePut($this->getImportPath('groups/group_') . $this->zeroSuppress($nc3_room->id) . '_' . $no . '.ini', $groups_ini);
+            }
         }
     }
 
@@ -2183,11 +2240,11 @@ trait MigrationNc3Trait
 
         // NC3日誌（Journal）を移行する。
         // $nc3_journals = Nc2Journal::orderBy('journal_id')->get();
-        $nc3_journals = Nc2Journal::select('journal.*', 'page_rooms.space_type')
+        $nc3_journals = Nc2Journal::select('journal.*', 'page_rooms.space_id')
             ->join('pages as page_rooms', function ($join) {
                 $join->on('page_rooms.page_id', '=', 'journal.room_id')
                     ->whereColumn('page_rooms.page_id', 'page_rooms.room_id')
-                    ->whereIn('page_rooms.space_type', [Nc2Page::space_type_public, Nc2Page::space_type_group])
+                    ->whereIn('page_rooms.space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID])
                     ->where('page_rooms.room_id', '!=', 2);        // 2:グループスペースを除外（枠だけでグループルームじゃないので除外）
                     // ->where('page_rooms.private_flag', 0);         // 0:プライベートルーム以外
             })
@@ -2264,32 +2321,32 @@ trait MigrationNc3Trait
             $notice_public_moderator_group = 0;
 
             if ($nc3_journal->mail_authority === 1) {
-                if ($nc3_journal->space_type == Nc2Page::space_type_public) {
+                if ($nc3_journal->space_id == Nc3Space::PUBLIC_SPACE_ID) {
                     // 全ユーザ通知
                     $notice_everyone = 1;
 
-                } elseif ($nc3_journal->space_type == Nc2Page::space_type_group) {
+                } elseif ($nc3_journal->space_id == Nc3Space::COMMUNITY_SPACE_ID) {
                     // グループ通知
                     $notice_group = 1;
                 }
 
             } elseif ($nc3_journal->mail_authority == 2) {
-                if ($nc3_journal->space_type == Nc2Page::space_type_public) {
+                if ($nc3_journal->space_id == Nc3Space::PUBLIC_SPACE_ID) {
                     // パブリック一般通知
                     $notice_public_general_group = 1;
                     $notice_admin_group = 1;
 
-                } elseif ($nc3_journal->space_type == Nc2Page::space_type_group) {
+                } elseif ($nc3_journal->space_id == Nc3Space::COMMUNITY_SPACE_ID) {
                     // グループ通知
                     $notice_group = 1;
                 }
 
             } elseif ($nc3_journal->mail_authority == 3) {
-                if ($nc3_journal->space_type == Nc2Page::space_type_public) {
+                if ($nc3_journal->space_id == Nc3Space::PUBLIC_SPACE_ID) {
                     // パブリックモデレーター通知
                     $notice_public_moderator_group = 1;
                     $notice_admin_group = 1;
-                } elseif ($nc3_journal->space_type == Nc2Page::space_type_group) {
+                } elseif ($nc3_journal->space_id == Nc3Space::COMMUNITY_SPACE_ID) {
                     // モデレータユーザ通知
                     $notice_moderator_group = 1;
                     $notice_admin_group = 1;
@@ -2539,11 +2596,11 @@ trait MigrationNc3Trait
 
         // NC3掲示板（Bbs）を移行する。
         // $nc3_bbses = Nc2Bbs::orderBy('bbs_id')->get();
-        $nc3_bbses = Nc2Bbs::select('bbs.*', 'page_rooms.space_type')
+        $nc3_bbses = Nc2Bbs::select('bbs.*', 'page_rooms.space_id')
             ->join('pages as page_rooms', function ($join) {
                 $join->on('page_rooms.page_id', '=', 'bbs.room_id')
                     ->whereColumn('page_rooms.page_id', 'page_rooms.room_id')
-                    ->whereIn('page_rooms.space_type', [Nc2Page::space_type_public, Nc2Page::space_type_group])
+                    ->whereIn('page_rooms.space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID])
                     ->where('page_rooms.room_id', '!=', 2);        // 2:グループスペースを除外（枠だけでグループルームじゃないので除外）
                     // ->where('page_rooms.private_flag', 0);         // 0:プライベートルーム以外
             })
@@ -2620,32 +2677,32 @@ trait MigrationNc3Trait
             $notice_public_moderator_group = 0;
 
             if ($nc3_bbs->mail_authority === 1) {
-                if ($nc3_bbs->space_type == Nc2Page::space_type_public) {
+                if ($nc3_bbs->space_id == Nc3Space::PUBLIC_SPACE_ID) {
                     // 全ユーザ通知
                     $notice_everyone = 1;
 
-                } elseif ($nc3_bbs->space_type == Nc2Page::space_type_group) {
+                } elseif ($nc3_bbs->space_id == Nc3Space::COMMUNITY_SPACE_ID) {
                     // グループ通知
                     $notice_group = 1;
                 }
 
             } elseif ($nc3_bbs->mail_authority == 2) {
-                if ($nc3_bbs->space_type == Nc2Page::space_type_public) {
+                if ($nc3_bbs->space_id == Nc3Space::PUBLIC_SPACE_ID) {
                     // パブリック一般通知
                     $notice_public_general_group = 1;
                     $notice_admin_group = 1;
 
-                } elseif ($nc3_bbs->space_type == Nc2Page::space_type_group) {
+                } elseif ($nc3_bbs->space_id == Nc3Space::COMMUNITY_SPACE_ID) {
                     // グループ通知
                     $notice_group = 1;
                 }
 
             } elseif ($nc3_bbs->mail_authority == 3) {
-                if ($nc3_bbs->space_type == Nc2Page::space_type_public) {
+                if ($nc3_bbs->space_id == Nc3Space::PUBLIC_SPACE_ID) {
                     // パブリックモデレーター通知
                     $notice_public_moderator_group = 1;
                     $notice_admin_group = 1;
-                } elseif ($nc3_bbs->space_type == Nc2Page::space_type_group) {
+                } elseif ($nc3_bbs->space_id == Nc3Space::COMMUNITY_SPACE_ID) {
                     // モデレータユーザ通知
                     $notice_moderator_group = 1;
                     $notice_admin_group = 1;
@@ -2720,7 +2777,7 @@ trait MigrationNc3Trait
             $journals_ini .= "[source_info]\n";
             $journals_ini .= "journal_id = " . 'BBS_' . $nc3_bbs->bbs_id . "\n";
             $journals_ini .= "room_id = " . $nc3_bbs->room_id . "\n";
-            $journals_ini .= "space_type = " . $nc3_bbs->space_type . "\n";   // スペースタイプ, 1:パブリックスペース, 2:グループスペース
+            $journals_ini .= "space_type = " . $nc3_bbs->space_id . "\n";   // [TODO] nc3にspace_typeなし。 スペースタイプ, 1:パブリックスペース, 2:グループスペース
             $journals_ini .= "module_name = \"bbs\"\n";
             $journals_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_bbs->created) . "\"\n";
             $journals_ini .= "created_name    = \"" . $nc3_bbs->insert_user_name . "\"\n";
@@ -4076,8 +4133,8 @@ trait MigrationNc3Trait
             $ini .= "room_name = '" . $nc3_page_room->page_name . "'\n";
             // プライベートフラグ, 1:プライベートルーム, 0:プライベートルーム以外
             $ini .= "private_flag = " . $nc3_page_room->private_flag . "\n";
-            // スペースタイプ, 1:パブリックスペース, 2:グループスペース
-            $ini .= "space_type = " . $nc3_page_room->space_type . "\n";
+            // [TODO] nc3にspace_typeなし。 スペースタイプ, 1:パブリックスペース, 2:グループスペース
+            $ini .= "space_type = " . $nc3_page_room->space_id . "\n";
             $ini .= "module_name = \"calendar\"\n";
 
 
