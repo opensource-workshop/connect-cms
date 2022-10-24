@@ -2653,7 +2653,7 @@ trait MigrationTrait
                 );
             } else {
                 // page_roles 作成（元 page_id -> マッピング -> 新フォルダ -> マッピング -> 新 page_id）
-                $source_page = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $group_ini['source_info']['room_id'])->first();
+                $source_page = MigrationMapping::where('target_source_table', 'source_pages')->where('source_key', $group_ini['source_info']['room_page_id_top'])->first();
                 if (empty($source_page)) {
                     continue;
                 }
@@ -2703,7 +2703,7 @@ trait MigrationTrait
             $group_ini = parse_ini_file($group_ini_path, true);
 
             // page_roles 作成（元 page_id -> マッピング -> 新フォルダ -> マッピング -> 新 page_id）
-            $source_page = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $group_ini['source_info']['room_id'])->first();
+            $source_page = MigrationMapping::where('target_source_table', 'source_pages')->where('source_key', $group_ini['source_info']['room_page_id_top'])->first();
             if (empty($source_page)) {
                 continue;
             }
@@ -2728,16 +2728,16 @@ trait MigrationTrait
         // アップロード・ファイルのループ
         if (array_key_exists('uploads', $uploads_ini) && array_key_exists('upload', $uploads_ini['uploads'])) {
             foreach ($uploads_ini['uploads']['upload'] as $upload_key => $upload_item) {
-                // ルーム指定を探しておく。
-                $room_id = null;
-                if (array_key_exists('nc2_room_id', $uploads_ini[$upload_key])) {
-                    $room_id = $uploads_ini[$upload_key]['nc2_room_id'];
+                // ルームのトップページを探しておく。
+                $room_page_id_top = null;
+                if (array_key_exists('room_page_id_top', $uploads_ini[$upload_key])) {
+                    $room_page_id_top = $uploads_ini[$upload_key]['room_page_id_top'];
                 }
-                if (empty($room_id)) {
+                if (empty($room_page_id_top)) {
                     continue;
                 }
                 // アップロードファイルに対応するConnect-CMS のページを探す
-                $nc2_page = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $room_id)->first();
+                $nc2_page = MigrationMapping::where('target_source_table', 'source_pages')->where('source_key', $room_page_id_top)->first();
                 if (empty($nc2_page)) {
                     continue;
                 }
@@ -5899,7 +5899,7 @@ trait MigrationTrait
         $ommit_page_ids = array();
         if (!empty($ommit_page_ids_nc2)) {
             foreach (explode(",", $ommit_page_ids_nc2) as $ommit_page_id_nc2) {
-                $nc2_page = MigrationMapping::where('target_source_table', 'nc2_pages')
+                $nc2_page = MigrationMapping::where('target_source_table', 'source_pages')
                                             ->where('source_key', $ommit_page_id_nc2)
                                             ->first();
                 if (!empty($nc2_page)) {
@@ -7937,7 +7937,7 @@ trait MigrationTrait
         if ($this->isTarget('nc2_export', 'pages')) {
             // データクリア
             if ($redo === true) {
-                MigrationMapping::where('target_source_table', 'nc2_pages')->delete();
+                MigrationMapping::where('target_source_table', 'source_pages')->delete();
                 // 移行用ファイルの削除
                 Storage::deleteDirectory($this->getImportPath('pages/'));
                 // pagesエクスポート関連のnc2Block()でmenuのエクスポートで@insert配下ディレクトリに出力しているため、同ディレクトリを削除
@@ -8034,7 +8034,7 @@ trait MigrationTrait
                 // 親ページの検索（parent_id = 1 はパブリックのトップレベルなので、1 より大きいものを探す）
                 if ($nc2_sort_page->parent_id > 1) {
                     // マッピングテーブルから親のページのディレクトリを探す
-                    $parent_page_mapping = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $nc2_sort_page->parent_id)->first();
+                    $parent_page_mapping = MigrationMapping::where('target_source_table', 'source_pages')->where('source_key', $nc2_sort_page->parent_id)->first();
                     //1ルームのみの移行の場合を考慮
                     $parent_room_flg = true;
                     $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
@@ -8058,8 +8058,8 @@ trait MigrationTrait
 
                 // マッピングテーブルの追加
                 $mapping = MigrationMapping::updateOrCreate(
-                    ['target_source_table' => 'nc2_pages', 'source_key' => $nc2_sort_page->page_id],
-                    ['target_source_table' => 'nc2_pages',
+                    ['target_source_table' => 'source_pages', 'source_key' => $nc2_sort_page->page_id],
+                    ['target_source_table' => 'source_pages',
                      'source_key'          => $nc2_sort_page->page_id,
                      'destination_key'     => $this->zeroSuppress($new_page_index)]
                 );
@@ -8092,8 +8092,8 @@ trait MigrationTrait
         // パラメータのループと入れ替え処理
         foreach ($nc2_export_change_pages as $source_page_id => $destination_page_id) {
             // マッピングテーブルを見て、移行後のフォルダ名を取得
-            $source_page = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $source_page_id)->first();
-            $destination_page = MigrationMapping::where('target_source_table', 'nc2_pages')->where('source_key', $destination_page_id)->first();
+            $source_page = MigrationMapping::where('target_source_table', 'source_pages')->where('source_key', $source_page_id)->first();
+            $destination_page = MigrationMapping::where('target_source_table', 'source_pages')->where('source_key', $destination_page_id)->first();
 
             if (empty($source_page) || empty($destination_page)) {
                 continue;
@@ -8301,6 +8301,7 @@ trait MigrationTrait
             $uploads_ini_detail .= "plugin_name = \"" . $this->nc2GetPluginName($nc2_upload->file_path) . "\"\n";
             $uploads_ini_detail .= "page_id = \"0\"\n";
             $uploads_ini_detail .= "nc2_room_id = \"" . $nc2_upload->room_id . "\"\n";
+            $uploads_ini_detail .= "room_page_id_top = " . $nc2_upload->room_id . "\n";
         }
 
         // アップロード一覧の出力
@@ -8693,6 +8694,7 @@ trait MigrationTrait
                 $groups_ini .= "\n";
                 $groups_ini .= "[source_info]\n";
                 $groups_ini .= "room_id = " . $nc2_room->room_id . "\n";
+                $groups_ini .= "room_page_id_top = " . $nc2_room->room_id . "\n";
                 $groups_ini .= "\n";
                 $groups_ini .= "[users]\n";
 
