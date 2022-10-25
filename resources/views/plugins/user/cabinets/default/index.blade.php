@@ -48,7 +48,16 @@
         @endcan
 
         $('#app_{{$frame_id}} input[type="checkbox"][name="cabinet_content_id[]"]').on('change', function(){
+            // 選択リスト（selected-contents）の更新＆ボタンの活性化制御
             controlSelectedContentsAndButtons{{$frame_id}}();
+            // 全選択チェックボックスの制御
+            if ($('#app_{{$frame_id}} input[type="checkbox"][name="cabinet_content_id[]"]:checked').length == $('#app_{{$frame_id}} input[type="checkbox"][name="cabinet_content_id[]"]:input').length) {
+                // （コンテンツチェックボックスのチェック済み = チェックボックス全件の場合）全選択のチェックをONにする
+                $('#app_{{$frame_id}} #select_all_{{$frame_id}}').prop('checked', true);
+            } else {
+                // （コンテンツチェックボックスのチェック済み ≠ チェックボックス全件の場合）全選択のチェックをOFFにする
+                $('#app_{{$frame_id}} #select_all_{{$frame_id}}').prop('checked', false);
+            }
         });
 
         // 全選択チェックボックスの押下時
