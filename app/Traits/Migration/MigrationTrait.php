@@ -12115,12 +12115,16 @@ trait MigrationTrait
             if (!empty($nc2_block->none_hidden)) {
                 $frame_ini .= "none_hidden = " . $nc2_block->none_hidden . "\n";
             }
-            if (!empty($nc2_block->display_sequence)) {
-                $frame_ini .= "display_sequence = " . $nc2_block->display_sequence . "\n";
-            }
 
             // モジュールに紐づくメインのデータのID
             $frame_ini .= $this->nc2BlockMainDataId($nc2_block);
+
+            // overrideNc2Block()関連設定
+            if (!empty($nc2_block->display_sequence)) {
+                $frame_ini .= "\n";
+                $frame_ini .= "[frame_option]\n";
+                $frame_ini .= "display_sequence = " . $nc2_block->display_sequence . "\n";
+            }
 
             // NC2 情報
             $frame_nc2 = "\n";
