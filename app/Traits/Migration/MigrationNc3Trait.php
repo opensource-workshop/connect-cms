@@ -5725,12 +5725,16 @@ trait MigrationNc3Trait
             if (!empty($nc3_frame->none_hidden)) {
                 $frame_ini .= "none_hidden = " . $nc3_frame->none_hidden . "\n";
             }
-            if (!empty($nc3_frame->display_sequence)) {
-                $frame_ini .= "display_sequence = " . $nc3_frame->display_sequence . "\n";
-            }
 
             // モジュールに紐づくメインのデータのID
             $frame_ini .= $this->nc3FrameMainDataId($nc3_frame);
+
+            // overrideNc3Frame()関連設定
+            if (!empty($nc3_frame->display_sequence)) {
+                $frame_ini .= "\n";
+                $frame_ini .= "[frame_option]\n";
+                $frame_ini .= "display_sequence = " . $nc3_frame->display_sequence . "\n";
+            }
 
             // NC3 情報
             $frame_nc3 = "\n";
