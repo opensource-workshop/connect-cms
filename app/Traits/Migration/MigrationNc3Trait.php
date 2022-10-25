@@ -48,6 +48,7 @@ use App\Utilities\Migration\MigrationUtils;
 
 use App\Enums\AreaType;
 use App\Enums\CounterDesignType;
+use App\Enums\ContentOpenType;
 use App\Enums\DayOfWeek;
 use App\Enums\LinklistType;
 use App\Enums\NoticeEmbeddedTag;
@@ -1280,10 +1281,13 @@ trait MigrationNc3Trait
     /**
      * 日時の関数(NC3)
      */
-    private function getCCDatetime(?Carbon $utc_datetime): ?Carbon
+    private function getCCDatetime($utc_datetime): ?Carbon
     {
         if (empty($utc_datetime)) {
             return null;
+        }
+        if (is_string($utc_datetime)) {
+            $utc_datetime = new Carbon($utc_datetime);
         }
 
         // 9時間足す
@@ -5442,9 +5446,12 @@ trait MigrationNc3Trait
             select(
                 'frames.*',
                 'frames_languages.name as frame_name',
-                'frames_languages.language_id as language_id',
-                'boxes.container_type as container_type',
-                'blocks.key as block_key'
+                'frames_languages.language_id',
+                'boxes.container_type',
+                'blocks.key as block_key',
+                'blocks.public_type',
+                'blocks.publish_start',
+                'blocks.publish_end'
             )
             ->join('boxes', 'boxes.id', '=', 'frames.box_id')
             ->join('frames_languages', function ($join) {
@@ -5704,6 +5711,21 @@ trait MigrationNc3Trait
                 $frame_ini .= "template = \"{$template}\"\n";
             } else {
                 $frame_ini .= "template = \"default\"\n";
+            }
+
+            // 公開設定
+            // (key:nc3)public_type => (value:cc)content_open_type
+            $convert_content_open_types = [
+                Nc3Block::public_type_open    => ContentOpenType::always_open,
+                Nc3Block::public_type_close   => ContentOpenType::always_close,
+                Nc3Block::public_type_limited => ContentOpenType::limited_open,
+            ];
+            $content_open_type = $convert_content_open_types[$nc3_frame->public_type] ?? ContentOpenType::always_open;
+            $frame_ini .= "content_open_type = \"{$content_open_type}\"\n";
+
+            if ($content_open_type == ContentOpenType::limited_open) {
+                $frame_ini .= "content_open_date_from = \"" . $this->getCCDatetime($nc3_frame->publish_start) . "\"\n";
+                $frame_ini .= "content_open_date_to = \"" . $this->getCCDatetime($nc3_frame->publish_end) . "\"\n";
             }
 
             // overrideNc3Frame()関連設定

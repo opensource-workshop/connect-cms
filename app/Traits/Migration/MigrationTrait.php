@@ -158,6 +158,7 @@ use App\Utilities\Migration\MigrationUtils;
 
 use App\Enums\BlogFrameConfig;
 use App\Enums\CounterDesignType;
+use App\Enums\ContentOpenType;
 use App\Enums\DayOfWeek;
 use App\Enums\FacilityDisplayType;
 use App\Enums\LinklistType;
@@ -7389,6 +7390,13 @@ trait MigrationTrait
             $template = $frame_ini['frame_base']['template'];
         }
 
+        // 公開設定
+        $content_open_type = Arr::get($frame_ini, 'frame_base.content_open_type', ContentOpenType::always_open);
+        // 公開日時From
+        $content_open_date_from = Arr::get($frame_ini, 'frame_base.content_open_date_from');
+        // 公開日時To
+        $content_open_date_to = Arr::get($frame_ini, 'frame_base.content_open_date_to');
+
         // browser_width
         $browser_width = null;
         if (array_key_exists('frame_base', $frame_ini) && array_key_exists('browser_width', $frame_ini['frame_base'])) {
@@ -7471,6 +7479,9 @@ trait MigrationTrait
                 'none_hidden'       => $none_hidden,
                 'bucket_id'         => $bucket_id,
                 'display_sequence'  => $display_sequence,
+                'content_open_type' => $content_open_type,
+                'content_open_date_from' => $content_open_date_from,
+                'content_open_date_to'   => $content_open_date_to,
             ]);
             $migration_mappings = MigrationMapping::create([
                 'target_source_table' => 'frames',
@@ -7494,6 +7505,9 @@ trait MigrationTrait
             $frame->none_hidden       = $none_hidden;
             $frame->bucket_id         = $bucket_id;
             $frame->display_sequence  = $display_sequence;
+            $frame->content_open_type = $content_open_type;
+            $frame->content_open_date_from = $content_open_date_from;
+            $frame->content_open_date_to   = $content_open_date_to;
             $frame->save();
         }
 

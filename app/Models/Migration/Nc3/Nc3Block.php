@@ -15,4 +15,10 @@ class Nc3Block extends Model
      * テーブル名の指定
      */
     protected $table = 'blocks';
+
+    // 公開状態
+    const
+        public_type_open = '1',     // 公開
+        public_type_close = '0',    // 非公開
+        public_type_limited = '2';  // 期限付き公開
 }
