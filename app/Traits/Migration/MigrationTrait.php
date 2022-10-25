@@ -2619,14 +2619,15 @@ trait MigrationTrait
                 // ユーザがあるかの確認
                 if (empty($user)) {
                     // ユーザテーブルがなければ、追加
-                    $user = User::create([
-                        'name'     => $user_item['name'],
-                        'email'    => $email,
-                        'userid'   => $user_item['userid'],
-                        'password' => $user_item['password'],
-                        'status'   => $user_item['status'],
-                    ]);
-
+                    $user = new User();
+                    $user->name       = $user_item['name'];
+                    $user->email      = $email;
+                    $user->userid     = $user_item['userid'];
+                    $user->password   = $user_item['password'];
+                    $user->status     = $user_item['status'];
+                    $user->created_at = $user_item['created_at'];
+                    $user->updated_at = $user_item['updated_at'];
+                    $user->save();
                     // マッピングテーブルの追加
                     $mapping = MigrationMapping::create([
                         'target_source_table'  => 'users',
@@ -9015,6 +9016,19 @@ trait MigrationTrait
             return;
         }
 
+        // NC2でのシステム固定値
+        $nc2_static_user_item_names = [
+            "USER_ITEM_USER_NAME" => '氏名',
+            "USER_ITEM_MOBILE_EMAIL" => '携帯メールアドレス',
+            "USER_ITEM_GENDER" => '性別',
+            "USER_ITEM_PROFILE" => 'プロフィール'
+        ];
+        $nc2_static_user_item_value = [
+            "USER_ITEM_GENDER_MAN" => '男',
+            "USER_ITEM_GENDER_WOMAN" => '女',
+        ];
+
+
         // ini ファイル用変数
         $users_ini = "[users]\n";
 
@@ -9036,6 +9050,8 @@ trait MigrationTrait
             $users_ini .= "email              = \"" . trim($nc2_user->email) . "\"\n";
             $users_ini .= "userid             = \"" . $nc2_user->login_id . "\"\n";
             $users_ini .= "password           = \"" . $nc2_user->password . "\"\n";
+            $users_ini .= "created_at      = \"" . $this->getCCDatetime($nc2_user->insert_time) . "\"\n";
+            $users_ini .= "updated_at      = \"" . $this->getCCDatetime($nc2_user->update_time) . "\"\n";
             if ($nc2_user->active_flag == 0) {
                 $users_ini .= "status             = 1\n";
             } else {
@@ -9045,7 +9061,8 @@ trait MigrationTrait
                 // 任意項目
                 foreach ($nc2_any_items as $nc2_any_item) {
                     $item_name = "item_{$nc2_any_item->item_id}";
-                    $item_value = rtrim($nc2_user->$item_name, '|');// 最後のパイプは削除する
+                    // NC2システム固定値の置換
+                    $item_value = rtrim(str_replace(array_keys($nc2_static_user_item_value), array_values($nc2_static_user_item_value), $nc2_user->$item_name), '|');// 最後のパイプは削除する
                     $users_ini .= "{$item_name}            = \"" . $item_value . "\"\n";
                 }
             }
@@ -9073,6 +9090,12 @@ trait MigrationTrait
 
         // ユーザ任意項目
         foreach ($nc2_any_items as $i => $nc2_any_item) {
+
+            // NC2固定値の変換
+            $nc2_any_item->item_name = str_replace(array_keys($nc2_static_user_item_names), array_values($nc2_static_user_item_names), $nc2_any_item->item_name);
+            $nc2_any_item->options = str_replace(array_keys($nc2_static_user_item_value), array_values($nc2_static_user_item_value), $nc2_any_item->options);
+
+
             // カラム型 変換
             $convert_user_column_types = [
                 // nc2, cc
