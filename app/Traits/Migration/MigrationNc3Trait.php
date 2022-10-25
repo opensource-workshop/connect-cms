@@ -5450,6 +5450,10 @@ trait MigrationNc3Trait
             ->join('frames_languages', function ($join) {
                 $join->on('frames_languages.frame_id', '=', 'frames.id');
             })
+            ->join('languages', function ($join) {
+                $join->on('languages.id', '=', 'frames_languages.language_id')
+                    ->where('languages.is_active', 1);  // 使用言語（日本語・英語）で有効な言語を取得
+            })
             ->leftJoin('blocks', 'blocks.id', '=', 'frames.block_id')
             ->where('boxes.page_id', $nc3_page->id)
             ->where('frames.is_deleted', 0);
