@@ -7169,7 +7169,7 @@ trait MigrationTrait
             }
         }
 
-        // move: インポート時削除で移動
+        // move: エクスポート時にタグ削除のため移動
         // Google Analytics タグ部分を削除
         // $content_html = $this->deleteGATag($content_html);
         // $content2_html = $this->deleteGATag($content2_html);
