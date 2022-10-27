@@ -59,9 +59,9 @@ use App\Enums\UserColumnType;
 use App\Enums\UserStatus;
 
 /**
- * NC3移行プログラム
+ * NC3移行エクスポートプログラム
  */
-trait MigrationNc3Trait
+trait MigrationNc3ExportTrait
 {
     use ConnectCommonTrait, MigrationLogTrait;
 

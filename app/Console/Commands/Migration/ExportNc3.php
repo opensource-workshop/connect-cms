@@ -4,11 +4,11 @@ namespace App\Console\Commands\Migration;
 
 use Illuminate\Console\Command;
 
-use App\Traits\Migration\MigrationNc3Trait;
+use App\Traits\Migration\MigrationNc3ExportTrait;
 
 class ExportNc3 extends Command
 {
-    use MigrationNc3Trait;
+    use MigrationNc3ExportTrait;
 
     /**
      * The name and signature of the console command.
