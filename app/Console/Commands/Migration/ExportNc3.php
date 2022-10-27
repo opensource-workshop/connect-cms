@@ -4,26 +4,25 @@ namespace App\Console\Commands\Migration;
 
 use Illuminate\Console\Command;
 
-use App\Traits\Migration\MigrationTrait;
+use App\Traits\Migration\MigrationNc3Trait;
 
-class ExportNc2 extends Command
+class ExportNc3 extends Command
 {
-
-    use MigrationTrait;
+    use MigrationNc3Trait;
 
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'command:ExportNc2 {target?} {second_param?} {third_param?}';
+    protected $signature = 'command:ExportNc3 {target?} {second_param?} {third_param?}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'NC2 をDBからConnect-CMS 移行形式のHTMLにエクスポートする';
+    protected $description = 'NC3 をDBからConnect-CMS 移行形式のHTMLにエクスポートする';
 
     /**
      * Create a new command instance.
@@ -56,7 +55,7 @@ class ExportNc2 extends Command
             $redo = $this->argument("second_param") == 'redo' ? true : false;
         }
 
-        // NC2 からデータをエクスポート
-        $this->exportNc2($target, $target_plugin, $redo);
+        // NC3 からデータをエクスポート
+        $this->exportNc3($target, $target_plugin, $redo);
     }
 }

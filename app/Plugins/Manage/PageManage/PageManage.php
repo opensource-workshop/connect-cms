@@ -21,6 +21,7 @@ use App\Rules\CustomValiTextMax;
 use App\Rules\CustomValiUrlMax;
 
 use App\Traits\Migration\MigrationTrait;
+use App\Traits\Migration\MigrationExportNc3PageTrait;
 
 use App\Plugins\Manage\ManagePluginBase;
 
@@ -37,7 +38,7 @@ use App\Plugins\Manage\ManagePluginBase;
 class PageManage extends ManagePluginBase
 {
     // 移行用ライブラリ
-    use MigrationTrait;
+    use MigrationTrait, MigrationExportNc3PageTrait;
 
     /**
      * 権限定義

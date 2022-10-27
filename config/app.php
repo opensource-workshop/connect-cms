@@ -309,6 +309,7 @@ $app_array = [
         'ReservationLimitedByRole' => \App\Enums\ReservationLimitedByRole::class,
         'FaqFrameConfig' => \App\Enums\FaqFrameConfig::class,
         'MembershipFlag' => \App\Enums\MembershipFlag::class,
+        'AreaType' => \App\Enums\AreaType::class,
         'BbsFrameConfig' => \App\Enums\BbsFrameConfig::class,
         'BbsViewFormat' => \App\Enums\BbsViewFormat::class,
         'OpacConfigSelectType' => \App\Enums\OpacConfigSelectType::class,
