@@ -6,6 +6,8 @@
  |-----------------------------------------------------------------
  */
 $messages = [
+    'enter_keyword' => 'キーワードを入力',
+    'select_achievement_type' => '業績タイプを選択',
     'confirm' => '確定',
     'subject' => '対象',
     'kinds' => '種別',
@@ -81,6 +83,7 @@ $messages = [
     'affiliation' => '所属',
     'department' => '部署',
     'job_title' => '職名',
+    'achievements_plus_keywords' => '業績タイプ＋キーワード',
     'search_for_information_on_achievements' => '論文名、書籍名、著者名等の業績情報をあいまい検索可能です',
     'search' => '検索',
     'photo' => '写真',
