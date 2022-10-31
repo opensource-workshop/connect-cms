@@ -6,6 +6,8 @@
  |-----------------------------------------------------------------
  */
 return [
+    'enter_keyword' => 'Enter Keyword',
+    'select_achievement_type' => 'Select holding achievement type',
     'confirm' => 'Confirm',
     'subject' => 'Subject',
     'kinds' => 'Kinds',
@@ -81,6 +83,7 @@ return [
     'affiliation' => 'Affiliation',
     'department' => 'Department',
     'job_title' => 'Job Title',
+    'achievements_plus_keywords' => 'Holding Achievements + Keywords',
     'search_for_information_on_achievements' => 'Search for information on achievements such as the names of papers, books, and authors.',
     'search' => 'search',
     'photo' => 'Photo',
