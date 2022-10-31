@@ -5509,10 +5509,11 @@ trait MigrationNc3ExportTrait
         //
         // --- nc3でのヘッダ、左、右、フッタ取得順
         // page ->
-        //  nc3_page_containers(どのエリアが見えてる(is_published = 1)・見えてないか) ->
-        //    nc3_boxes_page_containers(全エリア(page_id = 999 and is_published = 1)のbox特定) ->
+        //  page_containers(どのエリアが見えてる(is_published = 1)・見えてないか) ->
+        //    boxes_page_containers(全エリア(page_id = 999 and is_published = 1)のbox特定) ->
         //      box ->
-        //        frame
+        //        frame ->
+        //          block
 
         // ルームのトップページ
         if ($nc3_page->id == $nc3_page->page_id_top) {
@@ -6217,10 +6218,6 @@ trait MigrationNc3ExportTrait
         // [upload_files]に追記したいので、nc2MigrationCommonDownloadMainの直後に実行
         // $content = $this->nc3MigrationCabinetActionMainDownload($save_folder, $ini_filename, $content, 'href');
 
-        // [TODO] 未対応
-        // ?page_id=XX置換
-        // $content = $this->nc3MigrationPageIdToPermalink($content);
-
         // Google Analytics タグ部分を削除
         $content = MigrationUtils::deleteGATag($content);
 
@@ -6310,37 +6307,6 @@ trait MigrationNc3ExportTrait
 
         // パスを変更した記事を返す。
         return array($content, $export_paths);
-    }
-
-    /**
-     * NC3：?page_id=XXをpermalinkに置換
-     */
-    private function nc3MigrationPageIdToPermalink($content, $links = true)
-    {
-        // wysiwygのパターン
-        $pattern = '/\?page_id=(.*?)"/is';
-        $endstring = '"';
-        if (!$links) {
-            // リンクリスト等のパターン
-            $pattern = '/\?page_id=(.*?)$/is';
-            $endstring = '';
-        }
-        if (preg_match_all($pattern, $content, $m)) {
-            $replace_key_vals = [];
-            $page_ids = $m[1];
-            foreach ($page_ids as $page_id) {
-                $nc2_page = Nc2Page::where('page_id', $page_id)->first();
-                if ($nc2_page) {
-                    $key = '?page_id='. $page_id. $endstring;
-                    $replace_key_vals[$key] = $nc2_page["permalink"]. $endstring;
-                }
-            }
-            $search = array_keys($replace_key_vals);
-            $replace = array_values($replace_key_vals);
-            $content = str_replace($search, $replace, $content);
-        }
-
-        return $content;
     }
 
     /**
