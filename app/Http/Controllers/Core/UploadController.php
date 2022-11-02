@@ -171,7 +171,7 @@ class UploadController extends ConnectController
             }, config('connect.CACHE_MINUTS'), true); // 第3引数のtrue は戻り値にImage オブジェクトを返す意味。（false の場合は画像データ）
 
             $headers['Content-Disposition'] = 'inline; ' . $content_disposition;
-            return $this->setCachePrivate($img->response()->withHeaders($headers));
+            return $this->setCacheControlPrivate($img->response()->withHeaders($headers)->setEtag(md5($img->response()->getContent())));
         }
 
         if (in_array(strtolower($uploads->extension), $inline_extensions) && $request->response != 'download') {
@@ -181,7 +181,7 @@ class UploadController extends ConnectController
                 return response()->file($fullpath, $no_cache_headers);
             } else {
                 $headers['Content-Disposition'] = 'inline; ' . $content_disposition;
-                return $this->setCachePrivate(response()->file($fullpath, $headers));
+                return $this->setCacheControlPrivate(response()->file($fullpath, $headers)->setEtag(md5_file($fullpath)));
             }
         } else {
             $no_cache_headers['Content-Disposition'] = 'attachment; ' . $content_disposition;
@@ -190,12 +190,13 @@ class UploadController extends ConnectController
     }
 
     /**
-     * CACHE_CONTROLにprivateを含むならsetCache()でprivateをセット
+     * Cache-Controlにprivateを含むならprivateをセット
+     * @see \Symfony\Component\HttpFoundation\Response setPrivate()
      */
-    private function setCachePrivate($response)
+    private function setCacheControlPrivate($response)
     {
         if (strpos(config('connect.CACHE_CONTROL'), 'private') !== false) {
-            return $response->setCache(['private' => true]);
+            return $response->setPrivate();
         }
         return $response;
     }
