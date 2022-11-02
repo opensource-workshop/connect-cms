@@ -19,7 +19,10 @@ class ResponseHeader
     {
         $response = $next($request);
 
-        if (Route::currentRouteName() != 'get_file') {
+        // 除外ルート名
+        $exclude_route_names = ['get_file', 'get_userfile'];
+
+        if (!in_array(Route::currentRouteName(), $exclude_route_names)) {
             // セキュリティ設定でHTTP ヘッダを指定する。
             $response->headers->set('Cache-Control', 'no-store');
             $response->headers->set('Expires', 'Thu, 01 Dec 1994 16:00:00 GMT');
