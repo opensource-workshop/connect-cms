@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use Illuminate\Support\Facades\Route;
+
 use Closure;
 
 class ResponseHeader
@@ -17,9 +19,11 @@ class ResponseHeader
     {
         $response = $next($request);
 
-        // セキュリティ設定でHTTP ヘッダを指定する。
-        $response->headers->set('Cache-Control', config('connect.CACHE_CONTROL'));
-        $response->headers->set('Expires', config('connect.EXPIRES'));
+        if (Route::currentRouteName() != 'get_file') {
+            // セキュリティ設定でHTTP ヘッダを指定する。
+            $response->headers->set('Cache-Control', 'no-store');
+            $response->headers->set('Expires', 'Thu, 01 Dec 1994 16:00:00 GMT');
+        }
 
         return $response;
     }

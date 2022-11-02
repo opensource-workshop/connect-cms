@@ -73,6 +73,14 @@ class UploadController extends ConnectController
             return;
         }
 
+        $no_cache_headers = [
+            'Cache-Control' => 'no-store',
+            'Expires' => 'Thu, 01 Dec 1994 16:00:00 GMT'
+        ];
+        $headers = [
+            'Cache-Control' => config('connect.CACHE_CONTROL'),
+        ];
+
         // 一時保存ファイルの場合は所有者を確認して、所有者ならOK
         // 一時保存ファイルは、登録時の確認画面を表示している際を想定している。
         if ($uploads->temporary_flag == 1) {
@@ -80,6 +88,9 @@ class UploadController extends ConnectController
             if ($uploads->created_id != $user_id) {
                 return response()->download(storage_path(config('connect.no_image_path')));
             }
+
+            // キャッシュしない
+            $headers = $no_cache_headers;
         }
 
         // ファイルにページ情報がある場合
@@ -101,6 +112,9 @@ class UploadController extends ConnectController
             if (!$page->isView(Auth::user(), true, true, $page_roles)) {
                 return response()->download(storage_path(config('connect.forbidden_image_path')));
             }
+
+            // キャッシュしない
+            $headers = $no_cache_headers;
         }
 
         // ファイルに固有のチェック関数が設定されている場合は、チェック関数を呼ぶ
@@ -111,6 +125,9 @@ class UploadController extends ConnectController
                 //Log::debug($return_message);
                 return response()->download(storage_path(config('connect.forbidden_image_path')));
             }
+
+            // キャッシュしない
+            $headers = $no_cache_headers;
         }
 
         // カウントアップの対象拡張子ならカウントアップ
@@ -119,13 +136,8 @@ class UploadController extends ConnectController
             $uploads->increment('download_count', 1);
         }
 
-        // ファイルを返す
-        //$content = '';
         $fullpath = storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension;
-
-        // $content_disposition = '';
-        $content_disposition = 'inline; filename="'. $uploads['client_original_name'] .'"' .
-            "; filename*=UTF-8''" . rawurlencode($uploads['client_original_name']);
+        $content_disposition = "filename*=UTF-8''" . rawurlencode($uploads['client_original_name']);
 
         // インライン表示する拡張子
         $inline_extensions = [
@@ -147,7 +159,7 @@ class UploadController extends ConnectController
                 $size = config('connect.THUMBNAIL_SIZE')['LARGE'];
             }
 
-            $img = \Image::cache(function ($image) use ($fullpath, $size) {
+            $img = Image::cache(function ($image) use ($fullpath, $size) {
                 return $image->make($fullpath)->resize(
                     $size,
                     $size,
@@ -157,39 +169,35 @@ class UploadController extends ConnectController
                     }
                 );
             }, config('connect.CACHE_MINUTS'), true); // 第3引数のtrue は戻り値にImage オブジェクトを返す意味。（false の場合は画像データ）
-            return $img->response();
+
+            $headers['Content-Disposition'] = 'inline; ' . $content_disposition;
+            return $this->setCachePrivate($img->response()->withHeaders($headers));
         }
 
-        // if (isset($uploads['extension']) && strtolower($uploads['extension']) == 'pdf') {
-        // if (strtolower($uploads->extension) == 'pdf') {
-        // if (in_array(strtolower($uploads->extension), $inline_extensions)) {
         if (in_array(strtolower($uploads->extension), $inline_extensions) && $request->response != 'download') {
-            return response()
-                    ->file(
-                        // storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
-                        // [
-                        //     'Content-Disposition' =>
-                        //         'inline; filename="'. $uploads['client_original_name'] .'"' .
-                        //         "; filename*=UTF-8''" . rawurlencode($uploads['client_original_name'])
-                        // ]
-                        $fullpath,
-                        ['Content-Disposition' => $content_disposition]
-                    );
+            if (strtolower($uploads->extension) == 'pdf') {
+                // pdfはキャッシュしない
+                $no_cache_headers['Content-Disposition'] = 'inline; ' . $content_disposition;
+                return response()->file($fullpath, $no_cache_headers);
+            } else {
+                $headers['Content-Disposition'] = 'inline; ' . $content_disposition;
+                return $this->setCachePrivate(response()->file($fullpath, $headers));
+            }
         } else {
-            return response()
-                    ->download(
-                        // storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
-                        // $uploads['client_original_name'],
-                        // [
-                        //     'Content-Disposition' =>
-                        //         'inline; filename="'. $uploads['client_original_name'] .'"' .
-                        //         "; filename*=UTF-8''" . rawurlencode($uploads['client_original_name'])
-                        // ]
-                        $fullpath,
-                        $uploads['client_original_name'],
-                        ['Content-Disposition' => $content_disposition]
-                    );
+            $no_cache_headers['Content-Disposition'] = 'attachment; ' . $content_disposition;
+            return response()->download($fullpath, $uploads['client_original_name'], $no_cache_headers);
         }
+    }
+
+    /**
+     * CACHE_CONTROLにprivateを含むならsetCache()でprivateをセット
+     */
+    private function setCachePrivate($response)
+    {
+        if (strpos(config('connect.CACHE_CONTROL'), 'private') !== false) {
+            return $response->setCache(['private' => true]);
+        }
+        return $response;
     }
 
     /**
