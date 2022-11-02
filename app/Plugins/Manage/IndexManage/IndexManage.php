@@ -86,6 +86,7 @@ class IndexManage extends ManagePluginBase
             "plugin_name"  => "index",
             "rss_xml"      => $rss_xml,
             "errors"       => $errors,
+            "is_writable_storage" => is_writable(storage_path()),
         ]);
     }
 
