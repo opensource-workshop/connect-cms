@@ -86,7 +86,7 @@ class IndexManage extends ManagePluginBase
             "plugin_name"  => "index",
             "rss_xml"      => $rss_xml,
             "errors"       => $errors,
-            "storage_disabled_label" => is_writable(storage_path()) ? '' : 'disabled',
+            "is_writable_storage" => is_writable(storage_path()),
         ]);
     }
 

@@ -11,7 +11,7 @@
 {{-- 管理画面メイン部分のコンテンツ section:manage_content で作ること --}}
 @section('manage_content')
 
-@if ($storage_disabled_label)
+@if (!$is_writable_storage)
     <div class="alert alert-danger">
         <i class="fas fa-exclamation-circle"></i> アップロードするディレクトリに書込権限がありません。対象ディレクトリ：<code>storage</code><br />
     </div>
