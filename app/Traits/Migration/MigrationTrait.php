@@ -9064,11 +9064,11 @@ trait MigrationTrait
                 $journals_tsv .= $category                          . "\t";
                 $journals_tsv .= $status                            . "\t";     // [2] ccステータス
                 $journals_tsv .= $nc2_journal_post->agree_flag      . "\t";     // [3] 使ってない
-                $journals_tsv .= $nc2_journal_post->title           . "\t";
+                $journals_tsv .= str_replace("\t", '', $nc2_journal_post->title)           . "\t";
                 $journals_tsv .= $content                           . "\t";
                 $journals_tsv .= $more_content                      . "\t";
-                $journals_tsv .= $nc2_journal_post->more_title      . "\t";
-                $journals_tsv .= $nc2_journal_post->hide_more_title . "\t";
+                $journals_tsv .= str_replace("\t", '', $nc2_journal_post->more_title)      . "\t";
+                $journals_tsv .= str_replace("\t", '', $nc2_journal_post->hide_more_title) . "\t";
                 $journals_tsv .= $like_count                        . "\t";     // [9] いいね数
                 $journals_tsv .= $nc2_journal_post->vote            . "\t";     // [10]いいねのsession_id & nc2 user_id
                 $journals_tsv .= $this->getCCDatetime($nc2_journal_post->insert_time)                             . "\t";   // [11]
