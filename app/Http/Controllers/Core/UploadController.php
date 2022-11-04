@@ -191,6 +191,8 @@ class UploadController extends ConnectController
 
     /**
      * Cache-Controlにprivateを含むならprivateをセット
+     * - Laravel特有対応
+     *   - headerでCache-Control にprivateを指定しても、Laravelだと自動的にpublicが付き２重定義になったため、setPrivate()で対応
      * @see \Symfony\Component\HttpFoundation\Response setPrivate()
      */
     private function setCacheControlPrivate($response)
