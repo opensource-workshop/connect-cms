@@ -2001,6 +2001,8 @@ trait MigrationNc3ExportTrait
             $users_ini .= "email              = \"" . trim($nc3_user->email) . "\"\n";
             $users_ini .= "userid             = \"" . $nc3_user->username . "\"\n";
             $users_ini .= "password           = \"" . $nc3_user->password . "\"\n";
+            $users_ini .= "created_at         = \"" . $this->getCCDatetime($nc3_user->created) . "\"\n";
+            $users_ini .= "updated_at         = \"" . $this->getCCDatetime($nc3_user->modified) . "\"\n";
             if ($nc3_user->status == Nc3User::status_not_active) {
                 $users_ini .= "status             = " . UserStatus::not_active . "\n";
             } else {
