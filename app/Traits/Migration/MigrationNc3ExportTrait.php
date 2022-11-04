@@ -2033,6 +2033,7 @@ trait MigrationNc3ExportTrait
                 $users_ini .= "users_roles_manage = \"admin_system\"\n";
                 $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
             } elseif ($nc3_user->role_key == Nc3User::role_administrator) {
+                $users_ini .= "users_roles_manage = \"admin_site|admin_page|admin_user\"\n";
                 $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
             } elseif ($nc3_user->role_key == Nc3User::role_common_user) {
                 $users_ini .= "users_roles_base   = \"role_reporter\"\n";
