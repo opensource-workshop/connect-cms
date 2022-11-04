@@ -20,7 +20,7 @@ class ResponseHeader
         $response = $next($request);
 
         // 除外ルート名
-        $exclude_route_names = ['get_file', 'get_userfile'];
+        $exclude_route_names = ['get_file', 'get_userfile', 'get_css'];
 
         if (!in_array(Route::currentRouteName(), $exclude_route_names)) {
             // セキュリティ設定でHTTP ヘッダを指定する。

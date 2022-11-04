@@ -341,16 +341,6 @@ class UploadController extends ConnectController
      */
     public function getCss(Request $request, $page_id = null)
     {
-        // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
-
-        // config のgeneral カテゴリーを読み込んでおく。
-        // id のファイルを読んでhttp request に返す。
-        // $config_generals = array();
-        // $config_generals_rs = Configs::where('category', 'general')->get();
-        // foreach ($config_generals_rs as $config_general) {
-        //     $config_generals[$config_general['name']]['value'] = $config_general['value'];
-        //     $config_generals[$config_general['name']]['category'] = $config_general['category'];
-        // }
         $configs = Configs::getSharedConfigs();
 
         // 自分のページと親ページを遡って取得し、ページの背景色を探す。
@@ -380,15 +370,11 @@ class UploadController extends ConnectController
 
         // 背景色
         if (empty($background_color)) {
-            // $base_background_color = Configs::where('name', '=', 'base_background_color')->first();
-            // $background_color = $base_background_color->value;
             $background_color = Configs::getConfigsValue($configs, 'base_background_color', null);
         }
 
         // ヘッダーの背景色
         if (empty($header_color)) {
-            // $base_header_color = Configs::where('name', '=', 'base_header_color')->first();
-            // $header_color = $base_header_color->value;
             $header_color = Configs::getConfigsValue($configs, 'base_header_color', null);
         }
 
@@ -398,6 +384,8 @@ class UploadController extends ConnectController
         }
 
         header('Content-Type: text/css');
+        header("Content-Disposition: inline; filename={$page_id}.css");
+        header('Cache-Control: ' . config('connect.CACHE_CONTROL'));
 
         // 背景色
         if ($background_color) {
@@ -410,7 +398,6 @@ class UploadController extends ConnectController
         }
 
         // 画像の保存機能の無効化(スマホ長押し禁止)
-        // if ($config_generals['base_touch_callout']['value'] == '1') {
         if (Configs::getConfigsValue($configs, 'base_touch_callout') == '1') {
             echo <<<EOD
 img {
