@@ -2470,11 +2470,10 @@ trait MigrationNc3ExportTrait
                 ['{X-TAGS}',      '[[' . BlogNoticeEmbeddedTag::tag . ']]'],
                 ['{X-PLUGIN_NAME}', 'ブログ'],
                 // 除外
+                ['({X-ROOM} {X-BLOCK_NAME})', ''],
                 ['ブロック名:{X-BLOCK_NAME}', ''],
                 ['ルーム名:{X-ROOM}', ''],
-                ['{X-BLOCK_NAME} ', ''],
                 ['{X-BLOCK_NAME}', ''],
-                ['{X-ROOM} ', ''],
                 ['{X-ROOM}', ''],
                 ['{X-WORKFLOW_COMMENT}', ''],
             ];
