@@ -17,12 +17,19 @@ use App\Models\Migration\Nc3\Nc3Announcement;
 use App\Models\Migration\Nc3\Nc3Box;
 use App\Models\Migration\Nc3\Nc3Bbs;
 use App\Models\Migration\Nc3\Nc3Block;
+use App\Models\Migration\Nc3\Nc3BlockRolePermission;
+use App\Models\Migration\Nc3\Nc3BlockSetting;
 use App\Models\Migration\Nc3\Nc3Blog;
+use App\Models\Migration\Nc3\Nc3BlogEntry;
 use App\Models\Migration\Nc3\Nc3Cabinet;
 use App\Models\Migration\Nc3\Nc3CalendarFrameSetting;
+use App\Models\Migration\Nc3\Nc3Category;
 use App\Models\Migration\Nc3\Nc3Faq;
 use App\Models\Migration\Nc3\Nc3Frame;
+use App\Models\Migration\Nc3\Nc3Like;
 // use App\Models\Migration\Nc3\Nc3Link;
+use App\Models\Migration\Nc3\Nc3Language;
+use App\Models\Migration\Nc3\Nc3MailSetting;
 use App\Models\Migration\Nc3\Nc3MenuFramePage;
 use App\Models\Migration\Nc3\Nc3MenuFrameSetting;
 use App\Models\Migration\Nc3\Nc3Multidatabase;
@@ -47,6 +54,7 @@ use App\Traits\ConnectCommonTrait;
 use App\Utilities\Migration\MigrationUtils;
 
 use App\Enums\AreaType;
+use App\Enums\BlogNoticeEmbeddedTag;
 use App\Enums\CounterDesignType;
 use App\Enums\ContentOpenType;
 use App\Enums\DayOfWeek;
@@ -105,16 +113,13 @@ trait MigrationNc3ExportTrait
      */
     protected $plugin_name = [
         // 'access_counters'  => 'counters',     // カウンター
-        // 'announcements'    => 'contents',     // お知らせ
         // 'bbses'            => 'bbses',        // 掲示板
-        // 'blogs'            => 'blogs',        // ブログ
         // 'cabinets'         => 'cabinets',     // キャビネット
         // 'calendars'        => 'calendars',    // カレンダー
         // 'circular_notices' => 'Development',  // 回覧板
         // 'faqs'             => 'faqs',         // FAQ
         // 'iframes'          => 'Development',  // iFrame
         // 'links'            => 'linklists',    // リンクリスト
-        // 'menus'            => 'menus',        // メニュー
         // 'multidatabases'   => 'databases',    // データベース
         // 'photo_albums'     => 'photoalbums',  // フォトアルバム
         // 'questionnaires'   => 'Development',  // アンケート
@@ -129,7 +134,7 @@ trait MigrationNc3ExportTrait
         'access_counters'  => 'Development',  // カウンター
         'announcements'    => 'contents',     // お知らせ
         'bbses'            => 'Development',  // 掲示板
-        'blogs'            => 'Development',  // ブログ
+        'blogs'            => 'blogs',        // ブログ
         'cabinets'         => 'Development',  // キャビネット
         'calendars'        => 'Development',  // カレンダー
         'circular_notices' => 'Development',  // 回覧板
@@ -249,7 +254,7 @@ trait MigrationNc3ExportTrait
     /**
      * NC3のリンク切れチェック
      */
-    private function checkDeadLinkNc2($url, $nc3_module_name = null, $nc3_block = null)
+    private function checkDeadLinkNc2($url, $nc3_plugin_key = null, $nc3_block = null)
     {
         $scheme = parse_url($url, PHP_URL_SCHEME);
 
@@ -266,27 +271,27 @@ trait MigrationNc3ExportTrait
             // 先頭がNC3のベースURL
             if (preg_match("/^http:\/\/{$domain}|^https:\/\/{$domain}/", $url)) {
                 // 内部リンク
-                $this->checkDeadLinkInsideNc2($url, $nc3_module_name, $nc3_block);
+                $this->checkDeadLinkInsideNc2($url, $nc3_plugin_key, $nc3_block);
             } else {
                 // 外部リンク
-                $this->checkDeadLinkOutside($url, $nc3_module_name, $nc3_block);
+                $this->checkDeadLinkOutside($url, $nc3_plugin_key, $nc3_block);
             }
 
         } elseif (is_null($scheme)) {
             // "{{CORE_BASE_URL}}/images/comp/textarea/titleicon/icon-weather9.gif" 等はここで処理
 
             // 内部リンク
-            $this->checkDeadLinkInsideNc2($url, $nc3_module_name, $nc3_block);
+            $this->checkDeadLinkInsideNc2($url, $nc3_plugin_key, $nc3_block);
         } else {
             // 対象外
-            $this->putLinkCheck(3, $nc3_module_name . '|リンク切れチェック対象外', $url, $nc3_block);
+            $this->putLinkCheck(3, $nc3_plugin_key . '|リンク切れチェック対象外', $url, $nc3_block);
         }
     }
 
     /**
      * 外部URLのリンク切れチェック
      */
-    private function checkDeadLinkOutside($url, $nc3_module_name, $nc3_block): bool
+    private function checkDeadLinkOutside($url, $nc3_plugin_key, $nc3_block): bool
     {
         // タイムアウト(秒)を変更
         ini_set('default_socket_timeout', 3);
@@ -307,7 +312,7 @@ trait MigrationNc3ExportTrait
             $headers = get_headers($url, true);
         } catch (\Exception $e) {
             // NG
-            $this->putLinkCheck(3, $nc3_module_name . '|外部リンク|リンク切れ|' . $e->getMessage(), $url, $nc3_block);
+            $this->putLinkCheck(3, $nc3_plugin_key . '|外部リンク|リンク切れ|' . $e->getMessage(), $url, $nc3_block);
             return false;
 
         } finally {
@@ -331,21 +336,21 @@ trait MigrationNc3ExportTrait
                 return true;
             } else {
                 // NG
-                $this->putLinkCheck(3, $nc3_module_name . '|外部リンク|リンク切れ|' . $headers[$i], $url, $nc3_block);
+                $this->putLinkCheck(3, $nc3_plugin_key . '|外部リンク|リンク切れ|' . $headers[$i], $url, $nc3_block);
                 return false;
             }
             $i++;
         }
 
         // NG. 基本ここには到達しない想定
-        $this->putLinkCheck(3, $nc3_module_name . '|外部リンク|リンク切れ', $url, $nc3_block);
+        $this->putLinkCheck(3, $nc3_plugin_key . '|外部リンク|リンク切れ', $url, $nc3_block);
         return false;
     }
 
     /**
      * 内部URL(nc3)のリンク切れチェック
      */
-    private function checkDeadLinkInsideNc2($url, $nc3_module_name = null, $nc3_block = null)
+    private function checkDeadLinkInsideNc2($url, $nc3_plugin_key = null, $nc3_block = null)
     {
 
         // >>> parse_url("http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=42&page_id=0&display_type=2#_active_center_42")
@@ -404,7 +409,7 @@ trait MigrationNc3ExportTrait
                     // OK
                 } else {
                     // NG
-                    $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|lang値の間違い', $url, $nc3_block);
+                    $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|lang値の間違い', $url, $nc3_block);
                 }
                 return;
             }
@@ -452,7 +457,7 @@ trait MigrationNc3ExportTrait
                 // var_dump($abbreviate_block);
                 if (!$abbreviate_block) {
                     // NG
-                    $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|DBデータなし', $url, $nc3_block);
+                    $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|DBデータなし', $url, $nc3_block);
                 }
 
             } elseif ($nc3_abbreviate_url->dir_name == 'bbs') {
@@ -471,7 +476,7 @@ trait MigrationNc3ExportTrait
                 // var_dump($abbreviate_block);
                 if (!$abbreviate_block) {
                     // NG
-                    $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|DBデータなし', $url, $nc3_block);
+                    $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|DBデータなし', $url, $nc3_block);
                 }
 
             } elseif ($nc3_abbreviate_url->dir_name == 'journal') {
@@ -490,7 +495,7 @@ trait MigrationNc3ExportTrait
                 // var_dump($abbreviate_block);
                 if (!$abbreviate_block) {
                     // NG
-                    $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|DBデータなし', $url, $nc3_block);
+                    $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|DBデータなし', $url, $nc3_block);
                 }
 
             } else {
@@ -544,7 +549,7 @@ trait MigrationNc3ExportTrait
                     // ページデータあり. チェックOK
                 } else {
                     // NG
-                    $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|ページデータなし', $url, $nc3_block);
+                    $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|ページデータなし', $url, $nc3_block);
                 }
                 return;
             }
@@ -565,11 +570,11 @@ trait MigrationNc3ExportTrait
                         // アップロードデータあり. チェックOK
                     } else {
                         // NG
-                        $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|アップロードデータなし', $url, $nc3_block);
+                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|アップロードデータなし', $url, $nc3_block);
                     }
                 } else {
                     // NG
-                    $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|common_download_mainでアップロードIDなし', $url, $nc3_block);
+                    $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|common_download_mainでアップロードIDなし', $url, $nc3_block);
                 }
                 return;
             }
@@ -661,7 +666,7 @@ trait MigrationNc3ExportTrait
                         // OK
                     } else {
                         // NG
-                        $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|blockデータなし', $url, $nc3_block);
+                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|blockデータなし', $url, $nc3_block);
                         return;
                     }
                 }
@@ -675,7 +680,7 @@ trait MigrationNc3ExportTrait
                             // OK
                         } else {
                             // NG
-                            $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|pageデータなし', $url, $nc3_block);
+                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|pageデータなし', $url, $nc3_block);
                             return;
                         }
                     }
@@ -716,7 +721,7 @@ trait MigrationNc3ExportTrait
                         // OK
                     } else {
                         // NG
-                        $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|bbs_postデータなし', $url, $nc3_block);
+                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|bbs_postデータなし', $url, $nc3_block);
                         return;
                     }
 
@@ -728,7 +733,7 @@ trait MigrationNc3ExportTrait
                             // OK
                         } else {
                             // NG
-                            $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|bbsデータなし', $url, $nc3_block);
+                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|bbsデータなし', $url, $nc3_block);
                             return;
                         }
                     }
@@ -782,7 +787,7 @@ trait MigrationNc3ExportTrait
                         // OK
                     } else {
                         // NG
-                        $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|journal_postデータなし', $url, $nc3_block);
+                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|journal_postデータなし', $url, $nc3_block);
                         return;
                     }
 
@@ -814,7 +819,7 @@ trait MigrationNc3ExportTrait
                         // OK
                     } else {
                         // NG
-                        $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|multidatabaseデータなし', $url, $nc3_block);
+                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|multidatabaseデータなし', $url, $nc3_block);
                         return;
                     }
 
@@ -825,7 +830,7 @@ trait MigrationNc3ExportTrait
                         // OK
                     } else {
                         // NG
-                        $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|multidatabase_contentデータなし', $url, $nc3_block);
+                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|multidatabase_contentデータなし', $url, $nc3_block);
                         return;
                     }
 
@@ -861,7 +866,7 @@ trait MigrationNc3ExportTrait
                             // OK
                         } else {
                             // NG
-                            $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|cabinet_manageデータなし', $url, $nc3_block);
+                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|cabinet_manageデータなし', $url, $nc3_block);
                             return;
                         }
                     }
@@ -874,7 +879,7 @@ trait MigrationNc3ExportTrait
                             // OK
                         } else {
                             // NG
-                            $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|cabinet_fileデータなし.folder_id=file_id', $url, $nc3_block);
+                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|cabinet_fileデータなし.folder_id=file_id', $url, $nc3_block);
                             return;
                         }
                     }
@@ -939,7 +944,7 @@ trait MigrationNc3ExportTrait
                             // OK
                         } else {
                             // NG
-                            $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|assignmentデータなし', $url, $nc3_block);
+                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|assignmentデータなし', $url, $nc3_block);
                             return;
                         }
 
@@ -953,7 +958,7 @@ trait MigrationNc3ExportTrait
                                 // OK
                             } else {
                                 // NG
-                                $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|assignmentデータなし', $url, $nc3_block);
+                                $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|assignmentデータなし', $url, $nc3_block);
                                 return;
                             }
                         }
@@ -980,7 +985,7 @@ trait MigrationNc3ExportTrait
                         // OK
                     } else {
                         // NG
-                        $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|questionnaireデータなし', $url, $nc3_block);
+                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|questionnaireデータなし', $url, $nc3_block);
                         return;
                     }
 
@@ -1005,7 +1010,7 @@ trait MigrationNc3ExportTrait
                         // OK
                     } else {
                         // NG
-                        $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|quizデータなし', $url, $nc3_block);
+                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|quizデータなし', $url, $nc3_block);
                         return;
                     }
 
@@ -1036,7 +1041,7 @@ trait MigrationNc3ExportTrait
                             // OK
                         } else {
                             // NG
-                            $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|todoデータなし', $url, $nc3_block);
+                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|todoデータなし', $url, $nc3_block);
                             return;
                         }
                     }
@@ -1070,7 +1075,7 @@ trait MigrationNc3ExportTrait
                         // OK
                     } else {
                         // NG
-                        $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|circularデータなし', $url, $nc3_block);
+                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|circularデータなし', $url, $nc3_block);
                         return;
                     }
 
@@ -1141,7 +1146,7 @@ trait MigrationNc3ExportTrait
                             // OK 1|2|3, ※ イレギュラーだけど0,-1,-2...でも表示可
                         } else {
                             // NG
-                            $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|display_type対象外', $url, $nc3_block);
+                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|display_type対象外', $url, $nc3_block);
                             return;
                         }
                     }
@@ -1194,7 +1199,7 @@ trait MigrationNc3ExportTrait
                             // OK ※イレギュラーだけど0,-1,-2...でも表示可
                         } else {
                             // NG
-                            $this->putLinkCheck(3, $nc3_module_name . '|内部リンク|display_type対象外', $url, $nc3_block);
+                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|display_type対象外', $url, $nc3_block);
                             return;
                         }
                     }
@@ -1208,17 +1213,17 @@ trait MigrationNc3ExportTrait
 
         // 外部リンク
         // 内部リンクの直ファイル指定の存在チェック。例）http://localhost:8080/htdocs/install/logo.gif
-        // if ($this->checkDeadLinkOutside($check_url, $nc3_module_name, $nc3_block)) {
+        // if ($this->checkDeadLinkOutside($check_url, $nc3_plugin_key, $nc3_block)) {
         //     // 外部OK=移行対象外 (link_checkログには吐かない)
-        //     $this->putMonitor(3, $nc3_module_name . '|内部リンク＋外部リンクチェックOK|移行対象外URL', $url, $nc3_block);
+        //     $this->putMonitor(3, $nc3_plugin_key . '|内部リンク＋外部リンクチェックOK|移行対象外URL', $url, $nc3_block);
         // } else {
         //     // 外部NG
         //     $header = get_headers($check_url, true);
-        //     $this->putLinkCheck(3, $nc3_module_name . '|内部リンク＋外部リンクチェックNG|未対応URL|' . $header[0], $url, $nc3_block);
+        //     $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク＋外部リンクチェックNG|未対応URL|' . $header[0], $url, $nc3_block);
         // }
 
         // 移行対象外 (link_checkログには吐かない)
-        $this->putMonitor(3, $nc3_module_name . '|内部リンク|移行対象外URL', $url, $nc3_block);
+        $this->putMonitor(3, $nc3_plugin_key . '|内部リンク|移行対象外URL', $url, $nc3_block);
     }
 
     /**
@@ -1339,7 +1344,7 @@ trait MigrationNc3ExportTrait
     private function checkLangDirnameJpn($language_id)
     {
         /* 日本語 */
-        if ($language_id == 2) {
+        if ($language_id == Nc3Language::language_id_ja) {
             return true;
         }
         return false;
@@ -1359,6 +1364,8 @@ trait MigrationNc3ExportTrait
      * NC3_DB_USERNAME=xxxxxx
      * NC3_DB_PASSWORD=xxxxxx
      * NC3_DB_PREFIX=nc3_ (例)
+     * NC3_EXPORT_UPLOADS_PATH=/path_to_nc3/app/Uploads/
+     * NC3_APPLICATION_YML_PATH=/path_to_nc3/app/Config/application.yml
      *
      * 【実行コマンド】
      * php artisan command:exportNc3
@@ -1419,14 +1426,14 @@ trait MigrationNc3ExportTrait
             $this->nc3ExportRooms($redo);
         }
 
+        // NC3 ブログ（Blog）データのエクスポート
+        if ($this->isTarget('nc3_export', 'plugins', 'blogs')) {
+            $this->nc3ExportBlog($redo);
+        }
+
         //////////////////
         // [TODO] まだ
         //////////////////
-        // // NC3 日誌（journal）データのエクスポート
-        // if ($this->isTarget('nc3_export', 'plugins', 'blogs')) {
-        //     $this->nc3ExportJournal($redo);
-        // }
-
         // // NC3 掲示板（bbs）データのエクスポート
         // if ($this->isTarget('nc3_export', 'plugins', 'bbses')) {
         //     $this->nc3ExportBbs($redo);
@@ -1777,15 +1784,13 @@ trait MigrationNc3ExportTrait
     {
         $this->putMonitor(3, "Start nc3ExportBasic.");
 
-        $site_settings = Nc3SiteSetting::get();
+        $site_settings = Nc3SiteSetting::where('language_id', Nc3Language::language_id_ja)->get();
 
         // site,ini ファイル編集
         $basic_ini = "[basic]\n";
 
         // サイト名
-        $sitename = $site_settings->where('key', 'App.site_name')->where('is_origin', 1)->first();
-        $sitename = empty($sitename) ? '' : $sitename->value;
-        $basic_ini .= "base_site_name = \"" . $sitename . "\"\n";
+        $basic_ini .= "base_site_name = \"" . $this->getNc3SiteSettingValueByKey($site_settings, 'App.site_name') . "\"\n";
 
         // 使ってないためコメントアウト
         // 基本デザイン（パブリック）
@@ -1975,7 +1980,7 @@ trait MigrationNc3ExportTrait
         }
 
         // 氏名・プロフィール等の日本語
-        $nc3_users_languages = Nc3UsersLanguage::where('language_id', 2)->whereIn('user_id', $nc3_users->pluck('id'))->get();
+        $nc3_users_languages = Nc3UsersLanguage::where('language_id', Nc3Language::language_id_ja)->whereIn('user_id', $nc3_users->pluck('id'))->get();
 
         // オプション項目
         $nc3_user_item_options = Nc3UserAttributeChoice::where('is_origin', 1)->get();
@@ -2001,6 +2006,8 @@ trait MigrationNc3ExportTrait
             $users_ini .= "email              = \"" . trim($nc3_user->email) . "\"\n";
             $users_ini .= "userid             = \"" . $nc3_user->username . "\"\n";
             $users_ini .= "password           = \"" . $nc3_user->password . "\"\n";
+            $users_ini .= "created_at         = \"" . $this->getCCDatetime($nc3_user->created) . "\"\n";
+            $users_ini .= "updated_at         = \"" . $this->getCCDatetime($nc3_user->modified) . "\"\n";
             if ($nc3_user->status == Nc3User::status_not_active) {
                 $users_ini .= "status             = " . UserStatus::not_active . "\n";
             } else {
@@ -2031,6 +2038,7 @@ trait MigrationNc3ExportTrait
                 $users_ini .= "users_roles_manage = \"admin_system\"\n";
                 $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
             } elseif ($nc3_user->role_key == Nc3User::role_administrator) {
+                $users_ini .= "users_roles_manage = \"admin_site|admin_page|admin_user\"\n";
                 $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
             } elseif ($nc3_user->role_key == Nc3User::role_common_user) {
                 $users_ini .= "users_roles_base   = \"role_reporter\"\n";
@@ -2135,7 +2143,7 @@ trait MigrationNc3ExportTrait
             ->whereIn('space_id', [Nc3Space::COMMUNITY_SPACE_ID, Nc3Space::PUBLIC_SPACE_ID])
             ->join('rooms_languages', function ($join) {
                 $join->on('rooms_languages.room_id', 'rooms.id')
-                    ->where('rooms_languages.language_id', 2);  // 2:日本語
+                    ->where('rooms_languages.language_id', Nc3Language::language_id_ja);
             });
 
         // 対象外ページ指定の有無
@@ -2230,11 +2238,11 @@ trait MigrationNc3ExportTrait
     }
 
     /**
-     * NC3：日誌（Journal）の移行
+     * NC3：ブログ（Blog）の移行
      */
-    private function nc3ExportJournal($redo)
+    private function nc3ExportBlog($redo)
     {
-        $this->putMonitor(3, "Start nc3ExportJournal.");
+        $this->putMonitor(3, "Start nc3ExportBlog.");
 
         // データクリア
         if ($redo === true) {
@@ -2242,68 +2250,91 @@ trait MigrationNc3ExportTrait
             Storage::deleteDirectory($this->getImportPath('blogs/'));
         }
 
-        // NC3日誌（Journal）を移行する。
-        // $nc3_journals = Nc2Journal::orderBy('journal_id')->get();
-        $nc3_journals = Nc2Journal::select('journal.*', 'page_rooms.space_id')
-            ->join('pages as page_rooms', function ($join) {
-                $join->on('page_rooms.page_id', '=', 'journal.room_id')
-                    ->whereColumn('page_rooms.page_id', 'page_rooms.room_id')
-                    ->whereIn('page_rooms.space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID])
-                    ->where('page_rooms.room_id', '!=', 2);        // 2:グループスペースを除外（枠だけでグループルームじゃないので除外）
-                    // ->where('page_rooms.private_flag', 0);         // 0:プライベートルーム以外
+        // NC3ブログを移行する。
+        $nc3_blogs = Nc3Blog::select('blogs.*', 'blocks.key as block_key', 'blocks.room_id', 'rooms.space_id')
+            ->join('blocks', function ($join) {
+                $join->on('blocks.id', '=', 'blogs.block_id')
+                    ->where('blocks.plugin_key', 'blogs');
             })
-            ->orderBy('journal.journal_id')
+            ->join('rooms', function ($join) {
+                $join->on('rooms.id', '=', 'blocks.room_id')
+                    ->whereIn('rooms.space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID]);
+            })
+            ->orderBy('blogs.id')
             ->get();
 
         // 空なら戻る
-        if ($nc3_journals->isEmpty()) {
+        if ($nc3_blogs->isEmpty()) {
             return;
         }
 
         // nc3の全ユーザ取得
-        $nc3_users = Nc2User::get();
+        $nc3_users = Nc3User::get();
 
-        // NC3日誌（Journal）のループ
-        foreach ($nc3_journals as $nc3_journal) {
+        // 記事を投稿できる権限, メール通知を受け取る権限
+        $block_role_permissions = Nc3BlockRolePermission::select('block_role_permissions.*', 'roles_rooms.role_key')
+            ->join('roles_rooms', function ($join) {
+                $join->on('roles_rooms.id', '=', 'block_role_permissions.roles_room_id');
+            })
+            ->whereIn('block_role_permissions.block_key', $nc3_blogs->pluck('block_key'))
+            ->get();
+
+        // メール設定
+        $mail_settings = Nc3MailSetting::select('mail_settings.*', 'mail_setting_fixed_phrases.mail_fixed_phrase_subject', 'mail_setting_fixed_phrases.mail_fixed_phrase_body')
+            ->join('mail_setting_fixed_phrases', function ($join) {
+                $join->on('mail_setting_fixed_phrases.mail_setting_id', '=', 'mail_settings.id')
+                    ->where('mail_setting_fixed_phrases.language_id', Nc3Language::language_id_ja);
+            })
+            ->whereIn('mail_settings.block_key', $nc3_blogs->pluck('block_key'))
+            ->get();
+
+        // サイト設定
+        $site_settings = Nc3SiteSetting::where('language_id', Nc3Language::language_id_ja)->get();
+
+        // カテゴリ
+        $categories = Nc3Category::select('categories.*', 'categories_languages.name')
+            ->join('categories_languages', function ($join) {
+                // (nc3)block_id結合は言語特定されているため、language_idの指定不要
+                $join->on('categories_languages.category_id', '=', 'categories.id');
+            })
+            ->whereIn('categories.block_id', $nc3_blogs->pluck('block_id'))
+            ->get();
+
+        // ブロック設定
+        $block_settings = Nc3BlockSetting::whereIn('block_key', $nc3_blogs->pluck('block_key'))->get();
+
+        // 使用言語（日本語・英語）で有効な言語を取得
+        $language_ids = Nc3Language::where('is_active', 1)->pluck('id');
+
+        // いいね
+        $likes = Nc3Like::whereIn('block_key', $nc3_blogs->pluck('block_key'))->get();
+
+        // NC3ブログのループ
+        foreach ($nc3_blogs as $nc3_blog) {
             $room_ids = $this->getMigrationConfig('basic', 'nc3_export_room_ids');
             // ルーム指定があれば、指定されたルームのみ処理する。
             if (empty($room_ids)) {
                 // ルーム指定なし。全データの移行
-            } elseif (!empty($room_ids) && in_array($nc3_journal->room_id, $room_ids)) {
+            } elseif (!empty($room_ids) && in_array($nc3_blog->room_id, $room_ids)) {
                 // ルーム指定あり。指定ルームに合致する。
             } else {
                 // ルーム指定あり。条件に合致せず。移行しない。
                 continue;
             }
 
-            // この日誌が配置されている最初のページオブジェクトを取得しておく
-            // WYSIWYG で相対パスを絶対パスに変換する際に、ページの固定URL が必要になるため。
-            $nc3_page = null;
-            $nc3_journal_block = Nc2JournalBlock::where('journal_id', $nc3_journal->journal_id)->orderBy('block_id', 'asc')->first();
-            if (!empty($nc3_journal_block)) {
-                $nc3_block = Nc2Block::where('block_id', $nc3_journal_block->block_id)->first();
-            }
-            if (!empty($nc3_block)) {
-                $nc3_page = Nc2Page::where('page_id', $nc3_block->page_id)->first();
-            }
+            // (nc3)投稿権限は１件のみ 投稿権限, 一般
+            $post_permission_general_user = $this->getNc3BlockRolePermissionValue($block_role_permissions, $nc3_blog->block_key, 'content_creatable', 'general_user');
 
             // 権限設定
             // ----------------------------------------------------
-            // post_authority
-            // 2: 一般まで
-            // 3: モデレータまで
-            // 4: 主担のみ
-            $article_post_flag = 0;
+            // ※ユーザ (nc3)一般 => (cc)編集者
+
+            $article_post_flag = 1;     // 投稿権限はnc3編集者まで常時チェックON
             $reporter_post_flag = 0;
-            if ($nc3_journal->post_authority == 2) {
-                $article_post_flag = 1;
+
+            // 一般まで
+            if ($post_permission_general_user) {
                 $reporter_post_flag = 1;
-
-            } elseif ($nc3_journal->post_authority == 3) {
-                $article_post_flag = 1;
-
-            } elseif ($nc3_journal->post_authority == 4) {
-                // 一般,モデレータ=0でccでは主担=コンテンツ管理者は投稿可のため、なにもしない
             }
 
             // メール設定
@@ -2317,6 +2348,15 @@ trait MigrationNc3ExportTrait
             // 　※ 掲示板-グループ：　 　　　　　　　　　⇒ ルームグループに、グループ通知
             // 3: モデレータまで → (手動)でグループ作って、グループ通知　⇒ 移行で警告表示
             // 4: 主担のみ 　　　→グループ管理者は、「管理者グループ」通知
+
+            // (nc3)メール通知を受け取る権限
+            // ゲスト
+            $mail_permission_visitor = $this->getNc3BlockRolePermissionValue($block_role_permissions, $nc3_blog->block_key, 'mail_content_receivable', 'visitor');
+            // 一般
+            $mail_permission_general_user = $this->getNc3BlockRolePermissionValue($block_role_permissions, $nc3_blog->block_key, 'mail_content_receivable', 'general_user');
+            // 編集者
+            $mail_permission_editor = $this->getNc3BlockRolePermissionValue($block_role_permissions, $nc3_blog->block_key, 'mail_content_receivable', 'editor');
+
             $notice_everyone = 0;
             $notice_admin_group = 0;
             $notice_moderator_group = 0;
@@ -2324,116 +2364,148 @@ trait MigrationNc3ExportTrait
             $notice_public_general_group = 0;
             $notice_public_moderator_group = 0;
 
-            if ($nc3_journal->mail_authority === 1) {
-                if ($nc3_journal->space_id == Nc3Space::PUBLIC_SPACE_ID) {
+            // ゲストまで
+            if ($mail_permission_visitor) {
+                if ($nc3_blog->space_id == Nc3Space::PUBLIC_SPACE_ID) {
                     // 全ユーザ通知
                     $notice_everyone = 1;
 
-                } elseif ($nc3_journal->space_id == Nc3Space::COMMUNITY_SPACE_ID) {
+                } elseif ($nc3_blog->space_id == Nc3Space::COMMUNITY_SPACE_ID) {
                     // グループ通知
                     $notice_group = 1;
                 }
 
-            } elseif ($nc3_journal->mail_authority == 2) {
-                if ($nc3_journal->space_id == Nc3Space::PUBLIC_SPACE_ID) {
+            // 一般まで
+            } elseif ($mail_permission_general_user) {
+                if ($nc3_blog->space_id == Nc3Space::PUBLIC_SPACE_ID) {
                     // パブリック一般通知
                     $notice_public_general_group = 1;
                     $notice_admin_group = 1;
 
-                } elseif ($nc3_journal->space_id == Nc3Space::COMMUNITY_SPACE_ID) {
+                } elseif ($nc3_blog->space_id == Nc3Space::COMMUNITY_SPACE_ID) {
                     // グループ通知
                     $notice_group = 1;
                 }
 
-            } elseif ($nc3_journal->mail_authority == 3) {
-                if ($nc3_journal->space_id == Nc3Space::PUBLIC_SPACE_ID) {
+            // 編集者まで
+            } elseif ($mail_permission_editor) {
+                if ($nc3_blog->space_id == Nc3Space::PUBLIC_SPACE_ID) {
                     // パブリックモデレーター通知
                     $notice_public_moderator_group = 1;
                     $notice_admin_group = 1;
-                } elseif ($nc3_journal->space_id == Nc3Space::COMMUNITY_SPACE_ID) {
+                } elseif ($nc3_blog->space_id == Nc3Space::COMMUNITY_SPACE_ID) {
                     // モデレータユーザ通知
                     $notice_moderator_group = 1;
                     $notice_admin_group = 1;
                 }
 
-            } elseif ($nc3_journal->mail_authority == 4) {
+            // 編集者OFF=編集長までON
+            } elseif ($mail_permission_editor == 0) {
                 // 管理者グループ通知
                 $notice_admin_group = 1;
             }
 
-            $mail_subject = $nc3_journal->mail_subject;
-            $mail_body = $nc3_journal->mail_body;
-            $approved_subject = $nc3_journal->agree_mail_subject;
-            $approved_body = $nc3_journal->agree_mail_body;
+            // 通知メール
+            $mail_setting = $mail_settings->firstWhere('block_key', $nc3_blog->block_key) ?? new Nc3MailSetting();
+            $mail_subject = $mail_setting->mail_fixed_phrase_subject;
+            $mail_body = $mail_setting->mail_fixed_phrase_body;
+
+            // 承認メール
+            $approval_subject = $this->getNc3SiteSettingValueByKey($site_settings, 'Workflow.approval_mail_subject');
+            $approval_body = $this->getNc3SiteSettingValueByKey($site_settings, 'Workflow.approval_mail_body');
+
+            // 承認完了メール
+            $approved_subject = $this->getNc3SiteSettingValueByKey($site_settings, 'Workflow.approval_completion_mail_subject');
+            $approved_body = $this->getNc3SiteSettingValueByKey($site_settings, 'Workflow.approval_completion_mail_body');
 
             // --- メール配信設定
-            // [{X-SITE_NAME}]日誌投稿({X-ROOM} {X-JOURNAL_NAME} {X-SUBJECT})
+            // [{X-SITE_NAME}-{X-PLUGIN_NAME}]{X-SUBJECT}({X-ROOM} {X-BLOCK_NAME})
             //
-            // 日誌に投稿されたのでお知らせします。
-            // ルーム名称:{X-ROOM}
-            // 日誌タイトル:{X-JOURNAL_NAME}
-            // 記事タイトル:{X-SUBJECT}
+            // {X-PLUGIN_NAME}にコンテンツが投稿されたのでお知らせします。
+            // ルーム名:{X-ROOM}
+            // ブロック名:{X-BLOCK_NAME}
+            // タイトル:{X-SUBJECT}
             // 投稿者:{X-USER}
             // 投稿日時:{X-TO_DATE}
             //
-            //
             // {X-BODY}
             //
-            // この記事に返信するには、下記アドレスへ
+            // この投稿内容を確認するには下記のリンクをクリックしてください。
             // {X-URL}
 
             // ※ {X-BODY}は「続きを読む」内容は含んでいなかった。
 
-            // --- 日誌投稿承認完了通知設定
-            // [{X-SITE_NAME}]日誌投稿承認完了通知
+            // --- 承認申請メール
+            // (承認依頼){X-PLUGIN_MAIL_SUBJECT}
             //
-            // {X-SITE_NAME}における日誌投稿の承認が完了しました。
-            // もし{X-SITE_NAME}での日誌投稿に覚えがない場合はこのメールを破棄してください。
+            // {X-USER}さんから{X-PLUGIN_NAME}の承認依頼があったことをお知らせします。
             //
-            // 日誌の内容を確認するには下記のリンクをクリックして下さい。
-            // {X-URL}
+            // {X-WORKFLOW_COMMENT}
+            //
+            //
+            // {X-PLUGIN_MAIL_BODY}
+
+            // --- 承認完了メール
+            // (承認完了){X-PLUGIN_MAIL_SUBJECT}
+            //
+            // {X-USER}さんの{X-PLUGIN_NAME}の承認が完了されたことをお知らせします。
+            // もし{X-USER}さんの{X-PLUGIN_NAME}に覚えがない場合はこのメールを破棄してください。
+            //
+            // {X-WORKFLOW_COMMENT}
+            //
+            //
+            // {X-PLUGIN_MAIL_BODY}
 
             // 変換
             $convert_embedded_tags = [
                 // nc3埋込タグ, cc埋込タグ
+                ['{X-PLUGIN_MAIL_SUBJECT}', $mail_subject],
+                ['{X-PLUGIN_MAIL_BODY}', $mail_body],
                 ['{X-SITE_NAME}', '[[' . NoticeEmbeddedTag::site_name . ']]'],
-                ['{X-SUBJECT}', '[[' . NoticeEmbeddedTag::title . ']]'],
-                ['{X-USER}', '[[' . NoticeEmbeddedTag::created_name . ']]'],
-                ['{X-TO_DATE}', '[[' . NoticeEmbeddedTag::created_at . ']]'],
-                ['{X-BODY}', '[[' . NoticeEmbeddedTag::body . ']]'],
-                ['{X-URL}', '[[' . NoticeEmbeddedTag::url . ']]'],
+                ['{X-SUBJECT}',   '[[' . NoticeEmbeddedTag::title . ']]'],
+                ['{X-USER}',      '[[' . NoticeEmbeddedTag::created_name . ']]'],
+                ['{X-TO_DATE}',   '[[' . NoticeEmbeddedTag::created_at . ']]'],
+                ['{X-BODY}',      '[[' . NoticeEmbeddedTag::body . ']]'],
+                ['{X-URL}',       '[[' . NoticeEmbeddedTag::url . ']]'],
+                ['{X-TAGS}',      '[[' . BlogNoticeEmbeddedTag::tag . ']]'],
+                ['{X-PLUGIN_NAME}', 'ブログ'],
                 // 除外
-                ['日誌タイトル:{X-JOURNAL_NAME}', ''],
-                ['ルーム名称:{X-ROOM}', ''],
-                ['{X-JOURNAL_NAME} ', ''],
-                ['{X-JOURNAL_NAME}', ''],
-                ['{X-ROOM} ', ''],
+                ['({X-ROOM} {X-BLOCK_NAME})', ''],
+                ['ブロック名:{X-BLOCK_NAME}', ''],
+                ['ルーム名:{X-ROOM}', ''],
+                ['{X-BLOCK_NAME}', ''],
                 ['{X-ROOM}', ''],
+                ['{X-WORKFLOW_COMMENT}', ''],
             ];
             foreach ($convert_embedded_tags as $convert_embedded_tag) {
-                $mail_subject = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_subject);
-                $mail_body = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_body);
+                $mail_subject =     str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_subject);
+                $mail_body =        str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_body);
+                $approval_subject = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $approval_subject);
+                $approval_body =    str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $approval_body);
                 $approved_subject = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $approved_subject);
-                $approved_body = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $approved_body);
+                $approved_body =    str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $approved_body);
             }
 
-            // （NC3）承認メールは、承認あり＋メール通知ON（～ゲストまで通知）でも、メール通知フォーマットで「主担」のみに飛ぶ。
-            //        ⇒ （CC）NC3メール通知フォーマットを、CC承認メールフォーマットにセット
-            // （NC3）承認完了メールは、承認完了通知ONで、承認完了通知フォーマットで「投稿者」のみに飛ぶ。
-            //        他ユーザには、メール通知ON（～ゲストまで通知）でメール通知フォーマットで全員にメール飛ぶ。
-            //        ⇒ （CC）NC3承認完了通知フォーマットを、CC承認完了通知フォーマットにセット。通知先は、投稿者＋管理グループ。
+            // （NC3）承認メールは、承認必要＋承認メール通知ONで、承認権限（～編集者まで設定可）に飛ぶ。
+            // （NC3）承認完了メールは、サイトセッティングにあるけどメール飛ばなかった。
+            //        承認完了時、メール通知ON（～ゲストまで通知）でメール通知フォーマットでメール飛ぶ。
+            //        ⇒ （CC）NC3承認完了通知フォーマットを、CC承認完了通知フォーマットにセット。けど通知しない。
+
+            // 記事承認（content_publishable）はルーム管理者・編集長固定. 編集者は承認必要
+
+            $use_workflow = $this->getNc3BlockSettingValue($block_settings, $nc3_blog->block_key, 'use_workflow');
 
             // ブログ設定
             $journals_ini = "";
             $journals_ini .= "[blog_base]\n";
-            $journals_ini .= "blog_name = \"" . $nc3_journal->journal_name . "\"\n";
+            $journals_ini .= "blog_name = \"" . $nc3_blog->name . "\"\n";
             $journals_ini .= "view_count = 10\n";
-            $journals_ini .= "use_like = " . $nc3_journal->vote_flag . "\n";
+            $journals_ini .= "use_like = " . $this->getNc3BlockSettingValue($block_settings, $nc3_blog->block_key, 'use_like') . "\n";
             $journals_ini .= "article_post_flag = " . $article_post_flag . "\n";
-            $journals_ini .= "article_approval_flag = " . $nc3_journal->agree_flag . "\n";      // agree_flag 1:承認あり 0:承認なし
+            $journals_ini .= "article_approval_flag = 0\n";                                 // 編集長=モデは承認不要
             $journals_ini .= "reporter_post_flag = " . $reporter_post_flag . "\n";
-            $journals_ini .= "reporter_approval_flag = " . $nc3_journal->agree_flag . "\n";     // agree_flag 1:承認あり 0:承認なし
-            $journals_ini .= "notice_on = " . $nc3_journal->mail_flag . "\n";
+            $journals_ini .= "reporter_approval_flag = " . $use_workflow . "\n";            // 承認ありなら編集者承認ON
+            $journals_ini .= "notice_on = " . $mail_setting->is_mail_send . "\n";
             $journals_ini .= "notice_everyone = " . $notice_everyone . "\n";
             $journals_ini .= "notice_group = " . $notice_group . "\n";
             $journals_ini .= "notice_moderator_group = " . $notice_moderator_group . "\n";
@@ -2442,146 +2514,117 @@ trait MigrationNc3ExportTrait
             $journals_ini .= "notice_public_moderator_group = " . $notice_public_moderator_group . "\n";
             $journals_ini .= "mail_subject = \"" . $mail_subject . "\"\n";
             $journals_ini .= "mail_body = \"" . $mail_body . "\"\n";
-            $journals_ini .= "approval_on = " . $nc3_journal->agree_flag . "\n";                // 承認ありなら 1: 承認通知
-            $journals_ini .= "approval_admin_group = " . $nc3_journal->agree_flag . "\n";       // 1:「管理者グループ」通知
-            $journals_ini .= "approval_subject = \"" . $mail_subject . "\"\n";                  // 承認通知はメール通知フォーマットと同じ
-            $journals_ini .= "approval_body = \"" . $mail_body . "\"\n";
-            $journals_ini .= "approved_on = " . $nc3_journal->agree_mail_flag . "\n";           // agree_mail_flag 1:承認完了通知する 0:通知しない
-            $journals_ini .= "approved_author = " . $nc3_journal->agree_mail_flag . "\n";       // 1:投稿者へ通知する
-            $journals_ini .= "approved_admin_group = " . $nc3_journal->agree_mail_flag . "\n";  // 1:「管理者グループ」通知
+            $journals_ini .= "approval_on = " . $mail_setting->is_mail_send_approval . "\n";
+            $journals_ini .= "approval_admin_group = " . $use_workflow . "\n";              // 1:「管理者グループ」通知
+            $journals_ini .= "approval_subject = \"" . $approval_subject . "\"\n";
+            $journals_ini .= "approval_body = \"" . $approval_body . "\"\n";
+            $journals_ini .= "approved_on = 0\n";                                           // 承認完了通知はメール飛ばなかった
+            $journals_ini .= "approved_author = 0\n";                                       // 1:投稿者へ通知する
+            $journals_ini .= "approved_admin_group = 0\n";                                  // 1:「管理者グループ」通知
             $journals_ini .= "approved_subject = \"" . $approved_subject . "\"\n";
             $journals_ini .= "approved_body = \"" . $approved_body . "\"\n";
 
             // NC3 情報
             $journals_ini .= "\n";
             $journals_ini .= "[source_info]\n";
-            $journals_ini .= "journal_id = " . $nc3_journal->journal_id . "\n";
-            $journals_ini .= "room_id = " . $nc3_journal->room_id . "\n";
-            $journals_ini .= "module_name = \"journal\"\n";
-            $journals_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_journal->created) . "\"\n";
-            $journals_ini .= "created_name    = \"" . $nc3_journal->insert_user_name . "\"\n";
-            $journals_ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_journal->created_user) . "\"\n";
-            $journals_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_journal->modified) . "\"\n";
-            $journals_ini .= "updated_name    = \"" . $nc3_journal->update_user_name . "\"\n";
-            $journals_ini .= "update_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_journal->modified_user) . "\"\n";
+            $journals_ini .= "journal_id = " . $nc3_blog->id . "\n";
+            $journals_ini .= "room_id = " . $nc3_blog->room_id . "\n";
+            $journals_ini .= "plugin_key = \"blogs\"\n";
+            $journals_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_blog->created) . "\"\n";
+            $journals_ini .= "created_name    = \"" . $this->getNc3HandleFromNc3UserId($nc3_users, $nc3_blog->created_user) . "\"\n";
+            $journals_ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_blog->created_user) . "\"\n";
+            $journals_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_blog->modified) . "\"\n";
+            $journals_ini .= "updated_name    = \"" . $this->getNc3HandleFromNc3UserId($nc3_users, $nc3_blog->modified_user) . "\"\n";
+            $journals_ini .= "update_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_blog->modified_user) . "\"\n";
 
-            // NC3日誌で使ってるカテゴリ（journal_category）のみ移行する。
+            // NC3日誌で使ってるカテゴリのみ移行する。
             $journals_ini .= "\n";
             $journals_ini .= "[categories]\n";
-            $nc3_journal_categories = Nc2JournalCategory::
-                select(
-                    'journal_category.category_id',
-                    'journal_category.category_name'
-                )
-                ->where('journal_category.journal_id', $nc3_journal->journal_id)
-                ->join('journal_post', function ($join) {
-                    $join->on('journal_post.category_id', '=', 'journal_category.category_id')
-                         ->whereColumn('journal_post.journal_id', 'journal_category.journal_id');
-                })
-                ->groupBy(
-                    'journal_category.category_id',
-                    'journal_category.category_name',
-                    'journal_category.display_sequence'
-                )
-                ->orderBy('journal_category.display_sequence')
-                ->get();
-            //Log::debug($nc3_journal_categories);
-            // $journals_ini_commons = "";
+            $blog_categories = $categories->where('block_id', $nc3_blog->block_id);
+
             $journals_ini_originals = "";
 
-            foreach ($nc3_journal_categories as $nc3_journal_category) {
-                // if (in_array($nc3_journal_category->category_name, $this->nc3_default_categories)) {
-                //     // 共通カテゴリにあるものは個別に作成しない。
-                //     $journals_ini_commons .= "common_categories[" . array_search($nc3_journal_category->category_name, $this->nc3_default_categories) . "] = \"" . $nc3_journal_category->category_name . "\"\n";
-                // } else {
-                //     $journals_ini_originals .= "original_categories[" . $nc3_journal_category->category_id . "] = \"" . $nc3_journal_category->category_name . "\"\n";
-                // }
-                $journals_ini_originals .= "original_categories[" . $nc3_journal_category->category_id . "] = \"" . $nc3_journal_category->category_name . "\"\n";
+            foreach ($blog_categories as $blog_category) {
+                $journals_ini_originals .= "original_categories[" . $blog_category->id . "] = \"" . $blog_category->name . "\"\n";
             }
-            // if (!empty($journals_ini_commons)) {
-            //     $journals_ini .= $journals_ini_commons;
-            // }
             if (!empty($journals_ini_originals)) {
                 $journals_ini .= $journals_ini_originals;
             }
 
-            // NC3日誌の記事（journal_post）を移行する。
-            $nc3_journal_posts = Nc2JournalPost::where('journal_id', $nc3_journal->journal_id)->orderBy('post_id')->get();
-
-            // journals_ini ファイルの詳細（変数に保持、後でappend。[blog_post] セクションを切れないため。）
-            // $blog_post_ini_detail = "";
+            // NC3日誌の記事を移行する。
+            $nc3_blog_posts = Nc3BlogEntry::where('block_id', $nc3_blog->block_id)
+                ->where('is_latest', 1)
+                ->whereIn('language_id', $language_ids)
+                ->orderBy('id')
+                ->get();
 
             // 日誌の記事はTSV でエクスポート
-            // 日付{\t}status{\t}承認フラグ{\t}タイトル{\t}本文1{\t}本文2{\t}続き表示文言{\t}続き隠し文言
             $journals_tsv = "";
 
             // NC3日誌の記事をループ
             $journals_ini .= "\n";
             $journals_ini .= "[blog_post]\n";
-            foreach ($nc3_journal_posts as $nc3_journal_post) {
+            foreach ($nc3_blog_posts as $nc3_blog_post) {
                 // TSV 形式でエクスポート
                 if (!empty($journals_tsv)) {
                     $journals_tsv .= "\n";
                 }
 
-                $content       = $this->nc3Wysiwyg(null, null, null, null, $nc3_journal_post->content, 'journal');
-                $more_content  = $this->nc3Wysiwyg(null, null, null, null, $nc3_journal_post->more_content, 'journal');
+                $content       = $this->nc3Wysiwyg(null, null, null, null, $nc3_blog_post->body1, 'blogs');
+                $more_content  = $this->nc3Wysiwyg(null, null, null, null, $nc3_blog_post->body2, 'blogs');
 
-                $category_obj  = $nc3_journal_categories->firstWhere('category_id', $nc3_journal_post->category_id);
-                $category      = "";
-                if (!empty($category_obj)) {
-                    $category  = $category_obj->category_name;
-                }
+                $blog_category = $blog_categories->firstWhere('id', $nc3_blog_post->category_id) ?? new Nc3Category();
 
-                $like_count = empty($nc3_journal_post->vote) ? 0 : count(explode('|', $nc3_journal_post->vote));
+                $like = $likes->firstWhere('content_key', $nc3_blog_post->key) ?? new Nc3Like();
 
-                $status = StatusType::active;
-                if ($nc3_journal_post->status == 1) {
-                    $status = StatusType::temporary;
-                }
-                if ($nc3_journal_post->agree_flag == 1) {
-                    $status = StatusType::approval_pending;
-                }
+                // (nc3)
+                // const STATUS_PUBLISHED = '1';
+                // const STATUS_APPROVAL_WAITING = '2';
+                // const STATUS_IN_DRAFT = '3';
+                // const STATUS_DISAPPROVED = '4';
 
-                $journals_tsv .= $this->getCCDatetime($nc3_journal_post->journal_date) . "\t";  // [0] 投稿日時
-                // $journals_tsv .= $nc3_journal_post->category_id     . "\t";
-                $journals_tsv .= $category                          . "\t";
-                $journals_tsv .= $status                            . "\t";     // [2] ccステータス
-                $journals_tsv .= $nc3_journal_post->agree_flag      . "\t";     // [3] 使ってない
-                $journals_tsv .= $nc3_journal_post->title           . "\t";
-                $journals_tsv .= $content                           . "\t";
-                $journals_tsv .= $more_content                      . "\t";
-                $journals_tsv .= $nc3_journal_post->more_title      . "\t";
-                $journals_tsv .= $nc3_journal_post->hide_more_title . "\t";
-                $journals_tsv .= $like_count                        . "\t";     // [9] いいね数
-                $journals_tsv .= $nc3_journal_post->vote            . "\t";     // [10]いいねのsession_id & nc3 user_id
-                $journals_tsv .= $this->getCCDatetime($nc3_journal_post->created)                             . "\t";   // [11]
-                $journals_tsv .= $nc3_journal_post->insert_user_name                                              . "\t";   // [12]
-                $journals_tsv .= $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_journal_post->created_user) . "\t";   // [13]
-                $journals_tsv .= $this->getCCDatetime($nc3_journal_post->modified)                             . "\t";   // [14]
-                $journals_tsv .= $nc3_journal_post->update_user_name                                              . "\t";   // [15]
-                $journals_tsv .= $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_journal_post->modified_user);          // [16]
+                // (NC3)status -> (Connect)status
+                $convert_statuses = [
+                    1 => StatusType::active,
+                    2 => StatusType::approval_pending,
+                    3 => StatusType::temporary,
+                    4 => StatusType::approval_pending,  // 差し戻しは承認待ちへ
+                ];
+                $status = $convert_statuses[$nc3_blog_post->status] ?? StatusType::active;
+
+                $journals_tsv .= $this->getCCDatetime($nc3_blog_post->publish_start)    . "\t";     // [0] 投稿日時
+                $journals_tsv .= $blog_category->name                                   . "\t";
+                $journals_tsv .= $status                                                . "\t";     // [2] ccステータス
+                $journals_tsv .= '0'                                                    . "\t";     // [3] agree 使ってない
+                $journals_tsv .= str_replace("\t", '', $nc3_blog_post->title)           . "\t";
+                $journals_tsv .= $content                                               . "\t";
+                $journals_tsv .= $more_content                                          . "\t";
+                $journals_tsv .=                                                          "\t";     // [7] 続きを読む
+                $journals_tsv .=                                                          "\t";     // [8] 閉じる
+                $journals_tsv .= $like->like_count                                      . "\t";     // [9] いいね数
+                $journals_tsv .=                                                          "\t";     // [10]いいねのsession_id & user_id. nc3ない
+                $journals_tsv .= $this->getCCDatetime($nc3_blog_post->created)                                  . "\t";   // [11]
+                $journals_tsv .= $this->getNc3HandleFromNc3UserId($nc3_users, $nc3_blog->created_user)          . "\t";   // [12]
+                $journals_tsv .= $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_blog_post->created_user)    . "\t";   // [13]
+                $journals_tsv .= $this->getCCDatetime($nc3_blog_post->modified)                                 . "\t";   // [14]
+                $journals_tsv .= $this->getNc3HandleFromNc3UserId($nc3_users, $nc3_blog->modified_user)         . "\t";   // [15]
+                $journals_tsv .= $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_blog_post->modified_user);            // [16]
 
                 // 記事のタイトルの一覧
                 // タイトルに " あり
-                if (strpos($nc3_journal_post->title, '"')) {
+                if (strpos($nc3_blog_post->title, '"')) {
                     // ログ出力
-                    $this->putError(1, 'Blog title in double-quotation', "タイトル = " . $nc3_journal_post->title);
+                    $this->putError(1, 'Blog title in double-quotation', "タイトル = " . $nc3_blog_post->title);
                 }
-                $journals_ini .= "post_title[" . $nc3_journal_post->post_id . "] = \"" . str_replace('"', '', $nc3_journal_post->title) . "\"\n";
+                $journals_ini .= "post_title[" . $nc3_blog_post->id . "] = \"" . str_replace('"', '', $nc3_blog_post->title) . "\"\n";
             }
 
-            // blog の記事毎設定
-            // $journals_ini .= $blog_post_ini_detail;
-
             // blog の設定
-            //Storage::put($this->getImportPath('blogs/blog_') . $this->zeroSuppress($nc3_journal->journal_id) . '.ini', $journals_ini);
-            $this->storagePut($this->getImportPath('blogs/blog_') . $this->zeroSuppress($nc3_journal->journal_id) . '.ini', $journals_ini);
+            $this->storagePut($this->getImportPath('blogs/blog_') . $this->zeroSuppress($nc3_blog->id) . '.ini', $journals_ini);
 
             // blog の記事
-            //Storage::put($this->getImportPath('blogs/blog_') . $this->zeroSuppress($nc3_journal->journal_id) . '.tsv', $journals_tsv);
             $journals_tsv = $this->exportStrReplace($journals_tsv, 'blogs');
-            $this->storagePut($this->getImportPath('blogs/blog_') . $this->zeroSuppress($nc3_journal->journal_id) . '.tsv', $journals_tsv);
+            $this->storagePut($this->getImportPath('blogs/blog_') . $this->zeroSuppress($nc3_blog->id) . '.tsv', $journals_tsv);
         }
     }
 
@@ -2782,7 +2825,7 @@ trait MigrationNc3ExportTrait
             $journals_ini .= "journal_id = " . 'BBS_' . $nc3_bbs->bbs_id . "\n";
             $journals_ini .= "room_id = " . $nc3_bbs->room_id . "\n";
             $journals_ini .= "space_type = " . $nc3_bbs->space_id . "\n";   // [TODO] nc3にspace_typeなし。 スペースタイプ, 1:パブリックスペース, 2:グループスペース
-            $journals_ini .= "module_name = \"bbs\"\n";
+            $journals_ini .= "plugin_key = \"bbs\"\n";
             $journals_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_bbs->created) . "\"\n";
             $journals_ini .= "created_name    = \"" . $nc3_bbs->insert_user_name . "\"\n";
             $journals_ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_bbs->created_user) . "\"\n";
@@ -2916,7 +2959,7 @@ trait MigrationNc3ExportTrait
             $faqs_ini .= "[source_info]\n";
             $faqs_ini .= "faq_id = " . $nc3_faq->faq_id . "\n";
             $faqs_ini .= "room_id = " . $nc3_faq->room_id . "\n";
-            $faqs_ini .= "module_name = \"faq\"\n";
+            $faqs_ini .= "plugin_key = \"faq\"\n";
 
             // NC3FAQで使ってるカテゴリ（faq_category）のみ移行する。
             $faqs_ini .= "\n";
@@ -3081,7 +3124,7 @@ trait MigrationNc3ExportTrait
             $linklists_ini .= "[source_info]\n";
             $linklists_ini .= "linklist_id = " . $nc3_linklist->linklist_id . "\n";
             $linklists_ini .= "room_id = " . $nc3_linklist->room_id . "\n";
-            $linklists_ini .= "module_name = \"linklist\"\n";
+            $linklists_ini .= "plugin_key = \"linklist\"\n";
             $linklists_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_linklist->created) . "\"\n";
             $linklists_ini .= "created_name    = \"" . $nc3_linklist->insert_user_name . "\"\n";
             $linklists_ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_linklist->created_user) . "\"\n";
@@ -3244,7 +3287,7 @@ trait MigrationNc3ExportTrait
             $multidatabase_ini .= "[source_info]\n";
             $multidatabase_ini .= "multidatabase_id = " . $nc3_multidatabase->multidatabase_id . "\n";
             $multidatabase_ini .= "room_id = " . $nc3_multidatabase->room_id . "\n";
-            $multidatabase_ini .= "module_name = \"multidatabase\"\n";
+            $multidatabase_ini .= "plugin_key = \"multidatabase\"\n";
             $multidatabase_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_multidatabase->created) . "\"\n";
             $multidatabase_ini .= "created_name    = \"" . $nc3_multidatabase->insert_user_name . "\"\n";
             $multidatabase_ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_multidatabase->created_user) . "\"\n";
@@ -3625,7 +3668,7 @@ trait MigrationNc3ExportTrait
             $registration_ini .= "registration_id = " . $nc3_registration->registration_id . "\n";
             $registration_ini .= "active_flag = "     . $nc3_registration->active_flag . "\n";
             $registration_ini .= "room_id = "         . $nc3_registration->room_id . "\n";
-            $registration_ini .= "module_name = \"registration\"\n";
+            $registration_ini .= "plugin_key = \"registration\"\n";
             $registration_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_registration->created) . "\"\n";
             $registration_ini .= "created_name    = \"" . $nc3_registration->insert_user_name . "\"\n";
             $registration_ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_registration->created_user) . "\"\n";
@@ -3835,7 +3878,7 @@ trait MigrationNc3ExportTrait
             $whatsnew_ini .= "[source_info]\n";
             $whatsnew_ini .= "whatsnew_block_id = " . $whatsnew_block_id . "\n";
             $whatsnew_ini .= "room_id = "           . $nc3_whatsnew_block->room_id . "\n";
-            $whatsnew_ini .= "module_name = \"whatsnew\"\n";
+            $whatsnew_ini .= "plugin_key = \"whatsnew\"\n";
             $whatsnew_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_whatsnew_block->created) . "\"\n";
             $whatsnew_ini .= "created_name    = \"" . $nc3_whatsnew_block->insert_user_name . "\"\n";
             $whatsnew_ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_whatsnew_block->created_user) . "\"\n";
@@ -3901,7 +3944,7 @@ trait MigrationNc3ExportTrait
             $ini .= "[source_info]\n";
             $ini .= "cabinet_id = " . $cabinet_manage->cabinet_id . "\n";
             $ini .= "room_id = " . $cabinet_manage->room_id . "\n";
-            $ini .= "module_name = \"cabinet\"\n";
+            $ini .= "plugin_key = \"cabinet\"\n";
             $ini .= "created_at      = \"" . $this->getCCDatetime($cabinet_manage->created) . "\"\n";
             $ini .= "created_name    = \"" . $cabinet_manage->insert_user_name . "\"\n";
             $ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $cabinet_manage->created_user) . "\"\n";
@@ -4043,7 +4086,7 @@ trait MigrationNc3ExportTrait
             $ini .= "[source_info]\n";
             $ini .= "counter_block_id = " . $nc3_counter->block_id . "\n";
             $ini .= "room_id = " . $nc3_counter->room_id . "\n";
-            $ini .= "module_name = \"counter\"\n";
+            $ini .= "plugin_key = \"counter\"\n";
             $ini .= "created_at      = \"" . $this->getCCDatetime($nc3_counter->created) . "\"\n";
             $ini .= "created_name    = \"" . $nc3_counter->insert_user_name . "\"\n";
             $ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_counter->created_user) . "\"\n";
@@ -4139,7 +4182,7 @@ trait MigrationNc3ExportTrait
             $ini .= "private_flag = " . $nc3_page_room->private_flag . "\n";
             // [TODO] nc3にspace_typeなし。 スペースタイプ, 1:パブリックスペース, 2:グループスペース
             $ini .= "space_type = " . $nc3_page_room->space_id . "\n";
-            $ini .= "module_name = \"calendar\"\n";
+            $ini .= "plugin_key = \"calendar\"\n";
 
 
             // カラムのヘッダー及びTSV 行毎の枠準備
@@ -4317,7 +4360,7 @@ trait MigrationNc3ExportTrait
             $ini .= "private_flag = 0\n";
             // スペースタイプ, 1:パブリックスペース, 2:グループスペース
             $ini .= "space_type =\n";
-            $ini .= "module_name = \"calendar\"\n";
+            $ini .= "plugin_key = \"calendar\"\n";
 
             // カレンダーの設定を出力
             $this->storagePut($this->getImportPath('calendars/calendar_room_') . $this->zeroSuppress($all_users_room_id) . '.ini', $ini);
@@ -4379,7 +4422,7 @@ trait MigrationNc3ExportTrait
             $ini .= "[source_info]\n";
             $ini .= "calendar_block_id = " . $nc3_calendar_block->block_id . "\n";
             $ini .= "room_id = " . $nc3_calendar_block->room_id . "\n";
-            $ini .= "module_name = \"calendar\"\n";
+            $ini .= "plugin_key = \"calendar\"\n";
 
             // カレンダーの設定を出力
             $this->storagePut($this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc3_calendar_block->block_id) . '.ini', $ini);
@@ -4437,7 +4480,7 @@ trait MigrationNc3ExportTrait
             $ini .= "[source_info]\n";
             $ini .= "slideshows_block_id = " . $nc3_slideshow->block_id . "\n";
             $ini .= "room_id = " . $nc3_slideshow->room_id . "\n";
-            $ini .= "module_name = \"slides\"\n";
+            $ini .= "plugin_key = \"slides\"\n";
             $ini .= "created_at      = \"" . $this->getCCDatetime($nc3_slideshow->created) . "\"\n";
             $ini .= "created_name    = \"" . $nc3_slideshow->insert_user_name . "\"\n";
             $ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_slideshow->created_user) . "\"\n";
@@ -4528,7 +4571,7 @@ trait MigrationNc3ExportTrait
             $ini .= "[source_info]\n";
             $ini .= "simplemovie_block_id = " . $nc3_simplemovie->block_id . "\n";
             $ini .= "room_id = " . $nc3_simplemovie->room_id . "\n";
-            $ini .= "module_name = \"simplemovie\"\n";
+            $ini .= "plugin_key = \"simplemovie\"\n";
             // シンプル動画の設定を出力
             $this->storagePut($this->getImportPath('simplemovie/simplemovie_') . $this->zeroSuppress($nc3_simplemovie->block_id) . '.ini', $ini);
         }
@@ -4568,7 +4611,7 @@ trait MigrationNc3ExportTrait
             $ini .= "\n";
             $ini .= "[source_info]\n";
             $ini .= "category_id = " . $nc3_reservation_category->category_id . "\n";
-            $ini .= "module_name = \"reservation\"\n";
+            $ini .= "plugin_key = \"reservation\"\n";
 
             // 施設予約の設定を出力
             $this->storagePut($this->getImportPath('reservations/reservation_category_') . $this->zeroSuppress($nc3_reservation_category->category_id) . '.ini', $ini);
@@ -4670,7 +4713,7 @@ trait MigrationNc3ExportTrait
             $ini .= "\n";
             $ini .= "[source_info]\n";
             $ini .= "location_id = " . $nc3_reservation_location->location_id . "\n";
-            $ini .= "module_name = \"reservation\"\n";
+            $ini .= "plugin_key = \"reservation\"\n";
 
             // 施設予約の予約
             // ----------------------------------------------------
@@ -5016,7 +5059,7 @@ trait MigrationNc3ExportTrait
             $ini .= "reservation_block_id = " . $nc3_reservation_block->block_id . "\n";
             $ini .= "room_id = " . $nc3_reservation_block->room_id . "\n";
             $ini .= "room_name = \"" . $nc3_reservation_block->room_name . "\"\n";
-            $ini .= "module_name = \"reservation\"\n";
+            $ini .= "plugin_key = \"reservation\"\n";
 
             // 施設予約の設定を出力
             $this->storagePut($this->getImportPath('reservations/reservation_block_') . $this->zeroSuppress($nc3_reservation_block->block_id) . '.ini', $ini);
@@ -5080,7 +5123,7 @@ trait MigrationNc3ExportTrait
             $photoalbum_ini .= "[source_info]\n";
             $photoalbum_ini .= "photoalbum_id = " . $nc3_photoalbum->photoalbum_id . "\n";
             $photoalbum_ini .= "room_id = " . $nc3_photoalbum->room_id . "\n";
-            $photoalbum_ini .= "module_name = \"photoalbum\"\n";
+            $photoalbum_ini .= "plugin_key = \"photoalbum\"\n";
             $photoalbum_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_photoalbum->created) . "\"\n";
             $photoalbum_ini .= "created_name    = \"" . $nc3_photoalbum->insert_user_name . "\"\n";
             $photoalbum_ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_photoalbum->created_user) . "\"\n";
@@ -5205,7 +5248,7 @@ trait MigrationNc3ExportTrait
                 $slide_ini .= "photoalbum_id = " . $nc3_photoalbum->photoalbum_id . "\n";
                 $slide_ini .= "photoalbum_name = \"" . $nc3_photoalbum->photoalbum_name . "\"\n";
                 $slide_ini .= "room_id = " . $nc3_photoalbum_block->room_id . "\n";
-                $slide_ini .= "module_name = \"photoalbum\"\n";
+                $slide_ini .= "plugin_key = \"photoalbum\"\n";
                 $slide_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_photoalbum_block->created) . "\"\n";
                 $slide_ini .= "created_name    = \"" . $nc3_photoalbum_block->insert_user_name . "\"\n";
                 $slide_ini .= "insert_login_id = \"" . $this->getNc3LoginIdFromNc3UserId($nc3_users, $nc3_photoalbum_block->created_user) . "\"\n";
@@ -5509,10 +5552,11 @@ trait MigrationNc3ExportTrait
         //
         // --- nc3でのヘッダ、左、右、フッタ取得順
         // page ->
-        //  nc3_page_containers(どのエリアが見えてる(is_published = 1)・見えてないか) ->
-        //    nc3_boxes_page_containers(全エリア(page_id = 999 and is_published = 1)のbox特定) ->
+        //  page_containers(どのエリアが見えてる(is_published = 1)・見えてないか) ->
+        //    boxes_page_containers(全エリア(page_id = 999 and is_published = 1)のbox特定) ->
         //      box ->
-        //        frame
+        //        frame ->
+        //          block
 
         // ルームのトップページ
         if ($nc3_page->id == $nc3_page->page_id_top) {
@@ -6109,12 +6153,12 @@ trait MigrationNc3ExportTrait
     /**
      * コンテンツのクリーニング
      */
-    private function cleaningContent($content, $nc3_module_name)
+    private function cleaningContent($content, $nc3_plugin_key)
     {
         // 改行コードが含まれる場合があるので置換
         $content = str_replace(array("\r", "\n"), '', $content);
 
-        $plugin_name = $this->nc3GetPluginName($nc3_module_name);
+        $plugin_name = $this->nc3GetPluginName($nc3_plugin_key);
 
         // style から除去する属性の取得
         $clear_styles = $this->getMigrationConfig($plugin_name, 'export_clear_style');
@@ -6173,19 +6217,19 @@ trait MigrationNc3ExportTrait
     /**
      * NC3：WYSIWYG の記事の保持
      */
-    private function nc3Wysiwyg(?Nc3Frame $nc3_frame, ?string $save_folder, ?string $content_filename, ?string $ini_filename, ?string $content, ?string $nc3_module_name = null)
+    private function nc3Wysiwyg(?Nc3Frame $nc3_frame, ?string $save_folder, ?string $content_filename, ?string $ini_filename, ?string $content, ?string $nc3_plugin_key = null)
     {
         // [TODO] 未対応
         // nc3リンク切れチェック
         // $nc3_links = MigrationUtils::getContentHrefOrSrc($content);
         // if (is_array($nc3_links)) {
         //     foreach ($nc3_links as $nc3_link) {
-        //         // $this->checkDeadLinkNc2($nc3_link, $nc3_module_name . '(wysiwyg)', $nc3_frame);
+        //         // $this->checkDeadLinkNc2($nc3_link, $nc3_plugin_key . '(wysiwyg)', $nc3_frame);
         //     }
         // }
 
         // コンテンツのクリーニング
-        $content = $this->cleaningContent($content, $nc3_module_name);
+        $content = $this->cleaningContent($content, $nc3_plugin_key);
 
         // 画像を探す
         $img_srcs = MigrationUtils::getContentImage($content);
@@ -6216,10 +6260,6 @@ trait MigrationNc3ExportTrait
         // cabinet_action_main_download をエクスポート形式に変換
         // [upload_files]に追記したいので、nc2MigrationCommonDownloadMainの直後に実行
         // $content = $this->nc3MigrationCabinetActionMainDownload($save_folder, $ini_filename, $content, 'href');
-
-        // [TODO] 未対応
-        // ?page_id=XX置換
-        // $content = $this->nc3MigrationPageIdToPermalink($content);
 
         // Google Analytics タグ部分を削除
         $content = MigrationUtils::deleteGATag($content);
@@ -6313,37 +6353,6 @@ trait MigrationNc3ExportTrait
     }
 
     /**
-     * NC3：?page_id=XXをpermalinkに置換
-     */
-    private function nc3MigrationPageIdToPermalink($content, $links = true)
-    {
-        // wysiwygのパターン
-        $pattern = '/\?page_id=(.*?)"/is';
-        $endstring = '"';
-        if (!$links) {
-            // リンクリスト等のパターン
-            $pattern = '/\?page_id=(.*?)$/is';
-            $endstring = '';
-        }
-        if (preg_match_all($pattern, $content, $m)) {
-            $replace_key_vals = [];
-            $page_ids = $m[1];
-            foreach ($page_ids as $page_id) {
-                $nc2_page = Nc2Page::where('page_id', $page_id)->first();
-                if ($nc2_page) {
-                    $key = '?page_id='. $page_id. $endstring;
-                    $replace_key_vals[$key] = $nc2_page["permalink"]. $endstring;
-                }
-            }
-            $search = array_keys($replace_key_vals);
-            $replace = array_values($replace_key_vals);
-            $content = str_replace($search, $replace, $content);
-        }
-
-        return $content;
-    }
-
-    /**
      * NC3：cabinet_action_main_download をエクスポート形式に変換
      */
     private function nc3MigrationCabinetActionMainDownload($save_folder, $ini_filename, $content, $attr = 'href')
@@ -6378,5 +6387,38 @@ trait MigrationNc3ExportTrait
             }
         }
         return $content;
+    }
+
+    /**
+     * block_role_permissionsのvalueをblock_key,permission,role_keyで取得
+     */
+    private function getNc3BlockRolePermissionValue(Collection $block_role_permissions, string $block_key, string $permission, string $role_key, ?string $default = '0'): string
+    {
+        $block_role_permission = $block_role_permissions->where('block_key', $block_key)
+            ->where('permission', $permission)
+            ->firstWhere('role_key', $role_key);
+        $block_role_permission = $block_role_permission ?? new Nc3BlockRolePermission();
+        return $block_role_permission->value ?? $default;
+    }
+
+    /**
+     * site_settingsのvalueをkeyで取得
+     */
+    private function getNc3SiteSettingValueByKey(Collection $site_settings, string $key): ?string
+    {
+        $site_setting = $site_settings->firstWhere('key', $key);
+        $site_setting = $site_setting ?? new Nc3SiteSetting();
+        return $site_setting->value;
+    }
+
+    /**
+     * block_settingsのvalueをblock_key,field_nameで取得
+     */
+    private function getNc3BlockSettingValue(Collection $block_settings, string $block_key, string $field_name, ?string $default = '0'): string
+    {
+        $block_setting = $block_settings->where('block_key', $block_key)
+            ->firstWhere('field_name', $field_name);
+        $block_setting = $block_setting ?? new Nc3BlockSetting();
+        return $block_setting->value ?? $default;
     }
 }
