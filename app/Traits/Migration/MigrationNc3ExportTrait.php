@@ -5524,7 +5524,8 @@ trait MigrationNc3ExportTrait
             ->orderBy('boxes.space_id')
             ->orderBy('boxes.room_id')
             ->orderBy('boxes.page_id')
-            ->orderBy('boxes.weight')
+            ->orderBy('frames.box_id')
+            ->orderBy('frames.weight')
             ->get();
 
         // ブロックをループ
