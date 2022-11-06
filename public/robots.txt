@@ -1,2 +1,4 @@
 User-agent: *
-Disallow:
+Disallow: /*/plugin/*?frame_*_page=
+Disallow: /*/json/
+Disallow: /*/redirect/
