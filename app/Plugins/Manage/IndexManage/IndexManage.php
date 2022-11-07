@@ -37,7 +37,7 @@ class IndexManage extends ManagePluginBase
      *
      * @return view
      * @method_title お知らせ
-     * @method_desc 最新機能やバージョンアップ情報が表示されます。
+     * @method_desc インストールされているConnect-CMSのバージョン及び最新機能やバージョンアップ情報が表示されます。
      * @method_detail Connect-CMSのバージョンアップ情報は公式サイトでも確認できます。
      */
     public function index($request)

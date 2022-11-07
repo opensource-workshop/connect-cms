@@ -131,6 +131,12 @@ class DatabasesearchesPluginTest extends DuskTestCase
      */
     private function template()
     {
-        $this->putManualTemplateData($this->test_frame, 'user', '/test/databasesearch', ['databasesearches', 'データベース検索'], ['card_04' => 'card_04']);
+        $this->putManualTemplateData(
+            $this->test_frame,
+            'user',
+            '/test/databasesearch',
+            ['databasesearches', 'データベース検索'],
+            ['card_03' => 'card_03', 'card_04' => 'card_04']
+        );
     }
 }

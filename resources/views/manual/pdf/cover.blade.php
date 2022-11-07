@@ -11,6 +11,7 @@
 <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
 <h1 style="text-align: center; font-size: 32px;">Connect-CMS マニュアル</h1>
 <h3 style="text-align: center; font-size: 18px;">https://connect-cms.jp</h3>
+<h4 style="text-align: center; font-size: 12px;">Connect-CMSのバージョン：{{config('version.cc_version')}}</h4>
 <h4 style="text-align: center; font-size: 12px;">{{date('Y年m月d日')}}</h4>
 <h1></h1>
 <h1></h1>

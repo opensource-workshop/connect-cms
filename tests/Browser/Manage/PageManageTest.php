@@ -42,6 +42,7 @@ class PageManageTest extends DuskTestCase
         $this->store();
         $this->upload();
         $this->movePage();
+        $this->roleList();
         $this->index();  // マニュアル用に再度スクリーンショット
     }
 
@@ -241,5 +242,29 @@ class PageManageTest extends DuskTestCase
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/page/pageRoleUpdate/images/pageRoleUpdate2');
         });
+    }
+
+    /**
+     * ページ権限一覧
+     */
+    private function roleList()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/manage/page/roleList')
+                    ->screenshot('manage/page/roleList/images/roleList1')
+                    ->scrollIntoView('footer')
+                    ->screenshot('manage/page/roleList/images/roleList2');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('[
+            {"path": "manage/page/roleList/images/roleList1",
+             "name": "ページ権限一覧１"
+            },
+            {"path": "manage/page/roleList/images/roleList2",
+             "name": "ページ権限一覧２",
+             "comment": "<ul class=\"mb-0\"><li>ページ毎の権限設定の状態が確認できます。。</li></ul>"
+            }
+        ]', null, 3);
     }
 }

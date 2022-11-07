@@ -23,9 +23,11 @@ class SystemManageTest extends DuskTestCase
         $this->index();
         $this->updateDebugmodeOn();
         $this->updateDebugmodeOff();
+        $this->mail();
+        $this->mailTest();
         $this->log();
-        $this->updateLog();
         $this->server();
+        $this->updateLog();
     }
 
     /**
@@ -85,6 +87,46 @@ class SystemManageTest extends DuskTestCase
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/system/updateDebugmode/images/updateDebugmodeOff');
         });
+    }
+
+    /**
+     * メール設定の表示
+     */
+    private function mail()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/manage/system/mail')
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/system/mail/images/mail');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('[
+            {"path": "manage/system/mail/images/mail",
+             "name": "メール設定",
+             "comment": "<ul class=\"mb-0\"><li>Connect-CMSが使用するSMTPメール送信設定を設定できます。</li></ul>"
+            }
+        ]', null, 3);
+    }
+
+    /**
+     * メール送信テストの表示
+     */
+    private function mailTest()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/manage/system/mailTest')
+                    ->assertTitleContains('Connect-CMS')
+                    ->screenshot('manage/system/mailTest/images/mailTest');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('[
+            {"path": "manage/system/mailTest/images/mailTest",
+             "name": "メール送信テスト",
+             "comment": "<ul class=\"mb-0\"><li>Connect-CMSで設定されたSMTPメール送信設定をテストできます。</li></ul>"
+            }
+        ]', null, 3);
     }
 
     /**

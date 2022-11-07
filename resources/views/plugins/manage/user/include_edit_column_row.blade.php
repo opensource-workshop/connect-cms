@@ -24,7 +24,7 @@
     </td>
     {{-- 入力データ型 --}}
     <td>
-        <select class="form-control" name="column_type_{{ $column->id }}" style="min-width: 140px;">
+        <select class="form-control" name="column_type_{{ $column->id }}" id="column_type_{{ $column->id }}" style="min-width: 140px;">
             <option value="" disabled>型を指定</option>
             @foreach (UserColumnType::getMembers() as $key=>$value)
                 <option value="{{$key}}" @if ($key == old("column_type_$column->id", $column->column_type)) selected="selected" @endif>{{ $value }}</option>
@@ -40,6 +40,7 @@
         <button
             type="button"
             class="btn btn-success btn-xs cc-font-90 text-nowrap"
+            id="button_user_column_detail_{{ $column->id }}"
             @if (
                 $column->column_type == UserColumnType::radio ||
                 $column->column_type == UserColumnType::checkbox ||

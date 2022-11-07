@@ -8,7 +8,9 @@ use Tests\DuskTestCase;
 
 use App\Enums\PluginName;
 use App\Models\Common\Buckets;
+use App\Models\Common\Categories;
 use App\Models\Common\Frame;
+use App\Models\Common\PluginCategory;
 use App\Models\Common\Uploads;
 use App\Models\Core\Dusks;
 use App\Models\User\Faqs\Faqs;
@@ -41,6 +43,7 @@ class FaqsPluginTest extends DuskTestCase
         $this->logout();
         $this->index();    // 記事一覧
         $this->show();
+        $this->template();
     }
 
     /**
@@ -52,10 +55,12 @@ class FaqsPluginTest extends DuskTestCase
         Faqs::truncate();
         FaqsPosts::truncate();
         FaqsPostsTags::truncate();
+        Categories::where('target', 'faqs')->forceDelete();
+        PluginCategory::where('target', 'faqs')->forceDelete();
         $this->initPlugin('faqs', '/test/faq');
 
         // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'show', 'create', 'createBuckets', 'listCategories', 'listBuckets');
+        $this->reserveManual('index', 'show', 'create', 'template', 'createBuckets', 'listCategories', 'listBuckets');
     }
 
     /**
@@ -66,22 +71,50 @@ class FaqsPluginTest extends DuskTestCase
         // 実行
         $this->browse(function (Browser $browser) {
             $post = FaqsPosts::first();
+            $category = PluginCategory::where('target', 'faqs')->first();
             $browser->visit('/test/faq')
                     ->assertPathBeginsWith('/')
-                    ->screenshot('user/faqs/index/images/index1');
+                    ->screenshot('user/faqs/index/images/index1')
+                    ->click('#a_category_button_' . $category->categories_id)
+                    ->screenshot('user/faqs/index/images/index2');
 
+            // ドロップダウン形式の絞り込みの例
+            $this->login(1);
+            $browser->visit("/plugin/faqs/editBuckets/" . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->assertPathBeginsWith('/')
+                    ->click('#label_narrowing_down_type_dropdown')
+                    ->press("変更確定");
+            $this->logout();
+
+            $browser->visit('/test/faq')
+                    ->click('#categories_id_' . $this->test_frame->id)
+                    ->pause(500)
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/faqs/index/images/index3');
+
+            // 本文表示
             $browser->click('#button_collapse_faq' . $post->id)
                     ->pause(500)
                     ->assertPathBeginsWith('/')
-                    ->screenshot('user/faqs/index/images/index2');
+                    ->screenshot('user/faqs/index/images/index4');
         });
 
         // マニュアル用データ出力
         $this->putManualData('[
             {"path": "user/faqs/index/images/index1",
-             "comment": "<ul class=\"mb-0\"><li>FAQの一覧です。</li></ul>"
+             "name": "FAQ一覧（絞り込み機能をボタン形式）",
+             "comment": "<ul class=\"mb-0\"><li>FAQの一覧です。</li><li>絞り込み機能をボタン形式に設定している例です。</li></ul>"
             },
             {"path": "user/faqs/index/images/index2",
+             "name": "FAQ一覧（ボタン形式で絞り込んだ状態）",
+             "comment": "<ul class=\"mb-0\"><li>絞り込みたいカテゴリのボタンをクリックした状態です。</li><li>クリックしたカテゴリのFAQのみに絞り込まれます。</li></ul>"
+            },
+            {"path": "user/faqs/index/images/index3",
+             "name": "FAQ一覧（絞り込み機能をドロップダウン形式）",
+             "comment": "<ul class=\"mb-0\"><li>FAQの一覧です。</li><li>絞り込み機能をドロップダウン形式に設定している例です。</li></ul>"
+            },
+            {"path": "user/faqs/index/images/index2",
+             "name": "FAQ本文の表示",
              "comment": "<ul class=\"mb-0\"><li>質問の詳細をアコーディオン方式で表示します。</li></ul>"
             }
         ]', null, 4, 'basic');
@@ -101,6 +134,7 @@ class FaqsPluginTest extends DuskTestCase
                     ->type('view_count', '10')
                     ->click('#label_rss_on')
                     ->type('rss_count', '10')
+                    ->click('#label_narrowing_down_type_button')
                     ->screenshot('user/faqs/createBuckets/images/createBuckets')
                     ->press("登録確定");
 
@@ -138,14 +172,53 @@ class FaqsPluginTest extends DuskTestCase
         // 実行
         $this->browse(function (Browser $browser) {
             $browser->visit('/plugin/faqs/listCategories/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->click('#div_general_view_flag_1')  // カスタムチェックボックスのインプットとラベルをくくるdivは自動テスト時、ラベルが空の場合にクリックできないための対応
+                    ->pause(500)
                     ->assertPathBeginsWith('/')
+                    ->press('変更')
                     ->screenshot('user/faqs/listCategories/images/listCategories');
         });
 
         // マニュアル用データ出力
         $this->putManualData('[
             {"path": "user/faqs/listCategories/images/listCategories",
+             "name": "カテゴリ設定画面",
              "comment": "<ul class=\"mb-0\"><li>カテゴリ設定は共通カテゴリとこのブログ独自のカテゴリ設定があります。</li><li>上の表が共通カテゴリで、表示のON/OFFと順番が指定できます。</li><li>下の表でこのブログ独自のカテゴリを設定できます。</li></ul>"
+            }
+        ]', null, 4);
+
+        // 個別カテゴリの作成
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/plugin/faqs/listCategories/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->click('#div_add_view_flag')
+                    ->type('add_display_sequence', '2')
+                    ->type('add_classname', 'faq_dev')
+                    ->type('add_category', '開発関係')
+                    ->type('add_color', '#ffffff')
+                    ->type('add_background_color', '#009000')
+                    ->assertPathBeginsWith('/')
+                    ->press('変更');
+        });
+
+        // 個別カテゴリの作成
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/plugin/faqs/listCategories/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->click('#div_add_view_flag')
+                    ->type('add_display_sequence', '3')
+                    ->type('add_classname', 'faq_use')
+                    ->type('add_category', '使用方法')
+                    ->type('add_color', '#ffffff')
+                    ->type('add_background_color', '#c00000')
+                    ->assertPathBeginsWith('/')
+                    ->press('変更')
+                    ->screenshot('user/faqs/listCategories/images/listCategories2');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('[
+            {"path": "user/faqs/listCategories/images/listCategories2",
+             "name": "個別カテゴリ登録後",
+             "comment": "<ul class=\"mb-0\"><li>個別カテゴリも登録した後の状態です。</li></ul>"
             }
         ]', null, 4);
     }
@@ -172,31 +245,47 @@ class FaqsPluginTest extends DuskTestCase
     }
 
     /**
+     * 1件分の記事登録
+     */
+    private function postOne($browser, $title, $body, $category_id, $img_no1, $img_no2)
+    {
+        $browser->visit('/plugin/faqs/create/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                ->type('post_title', $title)
+                ->driver->executeScript('tinyMCE.get(0).setContent(\'' . $body . '\')');
+
+        $browser->pause(500)
+                ->screenshot('user/faqs/create/images/create' . $img_no1)
+                ->scrollIntoView('footer')
+                ->select("categories_id", $category_id)
+                ->screenshot('user/faqs/create/images/create' . $img_no2)
+                ->press('登録確定');
+    }
+
+    /**
      * 記事登録
      */
     private function create()
     {
         // 実行
         $this->browse(function (Browser $browser) {
-            // 一度クリア
-            FaqsPosts::truncate();
+            // 記事で使うカテゴリの取得
+            $categories = PluginCategory::where('target', 'faqs')->orderBy('id')->get();
 
             // 記事で使う画像の取得
             $upload = $this->firstOrCreateFileUpload('manual', 'copy_data/image/blobid0000000000001.png', 'blobid0000000000001.png', 'image/png', 'png', 'faqs', $this->test_frame->page_id);
-            $body = '<p>FAQの本文です。</p>';
+
+            //$body = '<p>FAQの本文です。</p>';
+            $body = "";
             if ($upload) {
                 $body .= '<br /><img src="/file/' . $upload->id . '" />';
             }
 
-            $browser->visit('/plugin/faqs/create/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                    ->type('post_title', 'テストのFAQ記事')
-                    ->driver->executeScript('tinyMCE.get(0).setContent(\'' . $body . '\')');
-
-            $browser->pause(500)
-                    ->screenshot('user/faqs/create/images/create1')
-                    ->scrollIntoView('footer')
-                    ->screenshot('user/faqs/create/images/create2')
-                    ->press('登録確定');
+            // カテゴリが3件取得できているはずなので、記事も3件作成する。
+            $idx = 0;
+            foreach ($categories as $category) {
+                $this->postOne($browser, "テストのFAQ記事" . ($idx + 1), "<p>FAQの本文です。" . ($idx + 1) . "</p>" . $body, $category->categories_id, $idx * 2 + 1, $idx * 2 + 2);
+                $idx++;
+            }
 
             // 編集リンクを表示
             $post = FaqsPosts::first();
@@ -246,5 +335,13 @@ class FaqsPluginTest extends DuskTestCase
 
         // マニュアル用データ出力
         $this->putManualData('user/faqs/show/images/show', null, 4);
+    }
+
+    /**
+     * テンプレート
+     */
+    private function template()
+    {
+        $this->putManualTemplateData($this->test_frame, 'user', '/test/faq', ['faqs', 'FAQ'], ['category' => 'カテゴリー別表示']);
     }
 }

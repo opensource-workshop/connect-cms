@@ -54,7 +54,8 @@
                 <td nowrap class="align-middle text-center">
                     <input type="hidden" value="{{$category->id}}" name="general_categories_id[{{$category->id}}]">
 
-                    <div class="custom-control custom-checkbox">
+                    {{-- カスタムチェックボックスのインプットとラベルをくくる div の id は自動テスト時、ラベルが空の場合にクリックできないための対応 --}}
+                    <div class="custom-control custom-checkbox" id="div_general_view_flag_{{$category->id}}">
                         {{-- チェック外した場合にも値を飛ばす対応 --}}
                         <input type="hidden" value="0" name="general_view_flag[{{$category->id}}]">
 
@@ -92,7 +93,8 @@
                 <td nowrap class="align-middle text-center">
                     <input type="hidden" value="{{$category->id}}" name="plugin_categories_id[{{$category->id}}]">
 
-                    <div class="custom-control custom-checkbox">
+                    {{-- カスタムチェックボックスのインプットとラベルをくくる div の id は自動テスト時、ラベルが空の場合にクリックできないための対応 --}}
+                    <div class="custom-control custom-checkbox" id="div_plugin_view_flag_{{$category->id}}">
                         {{-- チェック外した場合にも値を飛ばす対応 --}}
                         <input type="hidden" value="0" name="plugin_view_flag[{{$category->id}}]">
 
@@ -124,7 +126,8 @@
 
             <tr>
                 <td nowrap class="align-middle text-center">
-                    <div class="custom-control custom-checkbox">
+                    {{-- カスタムチェックボックスのインプットとラベルをくくる div の id は自動テスト時、ラベルが空の場合にクリックできないための対応 --}}
+                    <div class="custom-control custom-checkbox" id="div_add_view_flag">
                         {{-- チェック外した場合にも値を飛ばす対応 --}}
                         <input type="hidden" value="0" name="add_view_flag">
 

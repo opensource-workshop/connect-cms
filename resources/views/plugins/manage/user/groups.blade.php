@@ -51,7 +51,7 @@
                                 @else
                                     <input type="radio" value="" id="group_role_{{$group_user->id}}_0" name="group_roles[{{$group_user->id}}]" class="custom-control-input">
                                 @endif
-                                <label class="custom-control-label" for="group_role_{{$group_user->id}}_0">不参加</label>
+                                <label class="custom-control-label" for="group_role_{{$group_user->id}}_0" id="label_group_role_{{$group_user->id}}_0">不参加</label>
                             </div>
                             <div class="custom-control custom-radio custom-control-inline">
                                 @if($group_user->group_role == "general")
@@ -59,7 +59,7 @@
                                 @else
                                     <input type="radio" value="general" id="group_role_{{$group_user->id}}_1" name="group_roles[{{$group_user->id}}]" class="custom-control-input">
                                 @endif
-                                <label class="custom-control-label" for="group_role_{{$group_user->id}}_1">参加</label>
+                                <label class="custom-control-label" for="group_role_{{$group_user->id}}_1" id="label_group_role_{{$group_user->id}}_1">参加</label>
 {{--
                                 <label class="custom-control-label" for="group_role_{{$group_user->id}}_1">一般</label>
 --}}

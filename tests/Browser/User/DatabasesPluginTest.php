@@ -231,7 +231,7 @@ class DatabasesPluginTest extends DuskTestCase
             },
             {"path": "user/databases/input/images/input2",
              "name": "新規登録画面",
-             "comment": "<ul class=\"mb-0\"><li>項目設定した内容の登録画面が表示されます。</li></ul>"
+             "comment": "<ul class=\"mb-0\"><li>項目設定した内容の登録画面が表示されます。</li><li>公開日時を指定できます。初期値は画面を表示した時間が設定されています。</li><li>公開終了日時を設定できます。</li></ul>"
             }
         ]', null, 4);
     }
@@ -490,7 +490,7 @@ class DatabasesPluginTest extends DuskTestCase
             'user',
             '/test/database',
             ['databases', 'データベース'],
-            ['table' => 'table', 'default-left-col-3' => 'default-left-col-3']
+            ['table' => 'table', 'default-left-col-3' => 'default-left-col-3', 'card_02' => 'カードタイプ（２列）']
         );
     }
 }

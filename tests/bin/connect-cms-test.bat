@@ -90,11 +90,11 @@ php artisan dusk tests\Browser\Manage\PageManageTest.php
 echo --- サイト管理のテスト
 php artisan dusk tests\Browser\Manage\SiteManageTest.php
 
-echo --- ユーザ管理のテスト
-php artisan dusk tests\Browser\Manage\UserManageTest.php
-
 echo --- グループ管理のテスト
 php artisan dusk tests\Browser\Manage\GroupManageTest.php
+
+echo --- ユーザ管理のテスト
+php artisan dusk tests\Browser\Manage\UserManageTest.php
 
 echo --- セキュリティ管理のテスト
 php artisan dusk tests\Browser\Manage\SecurityManageTest.php

@@ -7,6 +7,12 @@ use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
 use App\Models\Core\Configs;
+use App\User;
+use App\Models\Core\UsersColumns;
+use App\Models\Core\UsersColumnsSelects;
+use App\Models\Core\UsersInputCols;
+use App\Models\Core\UsersLoginHistories;
+use App\Models\Core\UsersRoles;
 
 /**
  * > tests\bin\connect-cms-test.bat
@@ -21,6 +27,7 @@ class UserManageTest extends DuskTestCase
      */
     public function testInvoke()
     {
+        $this->init();
         $this->login(1);
         $this->index();
         $this->originalRole('1', 'student', '学生');
@@ -28,12 +35,27 @@ class UserManageTest extends DuskTestCase
         $this->originalRole('2', 'teacher', '教員');
         $this->saveOriginalRoles();
         $this->originalRole();
+        $this->editColumns();
         $this->regist();
-        $this->register();
+        //$this->register();
         $this->import();
         $this->submitImport();
         $this->autoRegist();
         $this->bulkDelete();
+    }
+
+    /**
+     * 初期処理
+     */
+    private function init()
+    {
+        // データクリア
+        User::where('id', '<>', 1)->forceDelete();
+        UsersColumns::truncate();
+        UsersColumnsSelects::truncate();
+        UsersInputCols::truncate();
+        UsersLoginHistories::truncate();
+        UsersRoles::where('users_id', '<>', 1)->forceDelete();
     }
 
     /**
@@ -121,6 +143,50 @@ class UserManageTest extends DuskTestCase
     }
 
     /**
+     * 項目設定
+     */
+    private function editColumns()
+    {
+        $this->browse(function (Browser $browser) {
+
+            // 役割設定を取得して、学生にする。
+            $original_role_student = Configs::where('category', 'original_role')->where('name', 'student')->first();
+
+            $browser->visit('/manage/user/editColumns')
+                    ->assertTitleContains('Connect-CMS')
+                    ->type('column_name', '所属')
+                    ->press('#button_user_olumn_add')
+                    ->screenshot('manage/user/editColumns1/images/editColumns1')
+                    ->click('#column_type_1')
+                    ->screenshot('manage/user/editColumns1/images/editColumns2')
+                    ->click('#button_user_column_detail_1')
+                    ->screenshot('manage/user/editColumns1/images/editColumns3')
+                    ->scrollIntoView('footer')
+                    ->screenshot('manage/user/editColumns1/images/editColumns4');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('[
+            {"path": "manage/user/editColumns1/images/editColumns1",
+             "name": "項目設定",
+             "comment": "<ul class=\"mb-0\"><li>ユーザの属性として設定できる項目を増やすことができます。</li></ul>"
+            },
+            {"path": "manage/user/editColumns1/images/editColumns2",
+             "name": "項目設定の型",
+             "comment": "<ul class=\"mb-0\"><li>設定できる項目は、1行文字列型、複数行文字列型、単一選択型、複数選択型、リストボックス型、メールアドレス型、同意型があります。</li></ul>"
+            },
+            {"path": "manage/user/editColumns1/images/editColumns3",
+             "name": "項目の詳細設定",
+             "comment": "<ul class=\"mb-0\"><li>詳細設定の内容は項目の型によって異なります。これは1行文字列型の場合の画面です。</li><li>型によっては登録時にチェックできるものもあります。</li></ul>"
+            },
+            {"path": "manage/user/editColumns1/images/editColumns4",
+             "name": "項目の詳細設定",
+             "comment": "<ul class=\"mb-0\"><li>キャプションやプレースホルダも型によっては設定できます。</li></ul>"
+            }
+        ]', null, 3);
+    }
+
+    /**
      * ユーザ登録画面
      */
     private function regist()
@@ -132,32 +198,41 @@ class UserManageTest extends DuskTestCase
 
             $browser->visit('/manage/user/regist')
                     ->assertTitleContains('Connect-CMS')
-                    ->screenshot('manage/user/regist/images/regist1');
-
-            $browser->scrollIntoView('footer')
-                    ->assertTitleContains('Connect-CMS')
-                    ->screenshot('manage/user/regist/images/regist2');
-
-            $browser->visit('/manage/user/regist')
                     ->type('name', 'テストユーザ')
                     ->type('userid', 'test-user')
                     ->type('email', 'test@osws.jp')
                     ->type('password', 'test-user')
                     ->type('password_confirmation', 'test-user')
+                    ->screenshot('manage/user/regist/images/regist1')
+                    ->scrollIntoView('footer')
                     ->click('#label_role_reporter')
                     ->click('#label_original_role' . $original_role_student->id)
-                    ->assertTitleContains('Connect-CMS')
-                    ->screenshot('manage/user/regist/images/regist3');
+                    ->pause(500)
+                    ->screenshot('manage/user/regist/images/regist2')
+                    ->press('ユーザ登録')
+                    ->click('#label_group_role_1_1') // ここでは、group_user->id を 1 で想定。（順番に実行してきたらそうなるはず）
+                    ->pause(500)
+                    ->screenshot('manage/user/regist/images/regist3')
+                    ->press('変更')
+                    ->screenshot('manage/user/regist/images/regist4');
         });
 
         // マニュアル用データ出力
         $this->putManualData('[
             {"path": "manage/user/regist/images/regist1",
-             "name": "ユーザ登録１"
+             "name": "ユーザ登録画面１"
             },
             {"path": "manage/user/regist/images/regist2",
-             "name": "ユーザ登録２",
-             "comment": "<ul class=\"mb-0\"><li>ユーザを登録・変更することができます。また、編集画面ではユーザの削除もできます。</li><li>権限については、権限・役割のページで説明します。</li><li>ユーザ情報に任意項目を追加できます。<ul class=\"mb-0\"><li>任意項目を追加・編集する画面はありません。今後追加する予定です。</li><li>直接DBにデータ投入を行う事で任意項目を追加できます。詳しくはGithub wikiのUserページを参照してください。<br /><a href=\"https://github.com/opensource-workshop/connect-cms/wiki/User\" target=\"_blank\" rel=\"noopener\" class=\"cc-icon-external\">https://github.com/opensource-workshop/connect-cms/wiki/User</a></li></ul></li></ul>"
+             "name": "ユーザ登録画面２",
+             "comment": "<ul class=\"mb-0\"><li>ユーザを登録・変更することができます。また、編集画面ではユーザの削除もできます。</li><li>権限については、権限・役割のページで説明します。</li><li>ユーザ情報に任意項目を追加できます。</li><li>任意項目の追加・編集は項目設定で行います。</li></ul>"
+            },
+            {"path": "manage/user/regist/images/regist3",
+             "name": "グループ参加画面",
+             "comment": "<ul class=\"mb-0\"><li>グループへの参加の設定を行います。<br />ここでキャンセルしても、ユーザは登録されています。</li></ul>"
+            },
+            {"path": "manage/user/regist/images/regist4",
+             "name": "登録ユーザへの通知画面",
+             "comment": "<ul class=\"mb-0\"><li>メールアドレスが登録された場合、登録されたメールアドレスにユーザを登録したことを通知する画面が表示されます。<br />ここでキャンセルしても、ユーザは登録されています。</li></ul>"
             }
         ]', null, 3);
     }
@@ -165,14 +240,14 @@ class UserManageTest extends DuskTestCase
     /**
      * ユーザ登録処理
      */
-    private function register()
-    {
-        $this->browse(function (Browser $browser) {
-            $browser->press('ユーザ登録')
-                    ->assertTitleContains('Connect-CMS')
-                    ->screenshot('manage/user/register/images/register');
-        });
-    }
+    //private function register()
+    //{
+    //    $this->browse(function (Browser $browser) {
+    //        $browser->press('ユーザ登録')
+    //                ->assertTitleContains('Connect-CMS')
+    //                ->screenshot('manage/user/register/images/register');
+    //    });
+    //}
 
     /**
      * CSVインポート処理
@@ -264,7 +339,7 @@ class UserManageTest extends DuskTestCase
             },
             {"path": "manage/user/autoRegist/images/autoRegist5",
              "name": "個人情報保護への同意や追記文章、初期コンテンツ権限",
-             "comment": "<ul class=\"mb-0\"><li>ユーザ登録する際に規約など文章に同意を求めることができます。また、登録時のコンテンツ権限も設定できます。</li></ul>"
+             "comment": "<ul class=\"mb-0\"><li>ユーザ登録する際に規約など文章に同意を求めることができます。また、登録時のコンテンツ権限も設定できます。</li><li>自動ユーザ登録で登録したユーザの初期権限を設定することもできます。</li></ul>"
             }
         ]', null, 3);
     }

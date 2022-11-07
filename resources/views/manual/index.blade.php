@@ -26,8 +26,11 @@
                 <div class="col-lg-8">
                     <p>ようこそ、Connect-CMS のマニュアルへ。</p>
                     <p>まずは、バッジ・メニューから、見たいカテゴリをクリックしましょう。</p>
-                    {{-- バッジ・メニュー --}}
-                    @include('manual.common.badge_menu')
+                    <p>
+                        {{-- バッジ・メニュー --}}
+                        @include('manual.common.badge_menu')
+                    </p>
+                    <p>このマニュアルを生成したConnect-CMSのバージョン：{{config('version.cc_version')}}</p>
                 </div>
             </div>
         @else
@@ -35,6 +38,7 @@
             <p>まずは、バッジ・メニューから、見たいカテゴリをクリックしましょう。</p>
             {{-- バッジ・メニュー --}}
             @include('manual.common.badge_menu')
+            <p>このマニュアルを生成したConnect-CMSのバージョン：(v{{config('version.cc_version')}})</p>
         @endif
     </div>
 </div>
