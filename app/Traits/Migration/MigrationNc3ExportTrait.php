@@ -6272,7 +6272,7 @@ trait MigrationNc3ExportTrait
         // 画像を探す
         $img_srcs = MigrationUtils::getContentImage($content);
 
-        // 画像の中のcommon_download_main をエクスポートしたパスに変換する。
+        // 画像の中の wysiwygのdownload をエクスポートしたパスに変換する。
         $content = $this->nc3MigrationCommonDownloadMain($nc3_frame, $save_folder, $ini_filename, $content, $img_srcs, '[upload_images]');
         // [TODO] 未対応
         // cabinet_action_main_download をエクスポート形式に変換
@@ -6292,7 +6292,7 @@ trait MigrationNc3ExportTrait
 
         // 添付ファイルを探す
         $anchors = MigrationUtils::getContentAnchor($content);
-        // 添付ファイルの中のcommon_download_main をエクスポートしたパスに変換する。
+        // 添付ファイルの中の wysiwygのdownload をエクスポートしたパスに変換する。
         $content = $this->nc3MigrationCommonDownloadMain($nc3_frame, $save_folder, $ini_filename, $content, $anchors, '[upload_files]');
         // [TODO] 未対応
         // cabinet_action_main_download をエクスポート形式に変換
@@ -6311,7 +6311,7 @@ trait MigrationNc3ExportTrait
     }
 
     /**
-     * NC3：common_download_main をエクスポート形式に変換
+     * NC3：wysiwygのdownload をエクスポート形式に変換
      */
     private function nc3MigrationCommonDownloadMain(?Nc3Frame $nc3_frame, ?string $save_folder, ?string $ini_filename, ?string $content, $paths, string $section_name): ?string
     {
@@ -6338,7 +6338,7 @@ trait MigrationNc3ExportTrait
     }
 
     /**
-     * NC3：common_download_main をエクスポート形式に変換
+     * NC3：wysiwygのdownload をエクスポート形式に変換
      */
     private function nc3MigrationCommonDownloadMainImple(?string $content, array $paths, ?Nc3Frame $nc3_frame): array
     {
@@ -6352,7 +6352,7 @@ trait MigrationNc3ExportTrait
             // ファイルURL例）
             // 　http://localhost/wysiwyg/file/download/1/173
 
-            // common_download_main があれば、NC3 の画像として移行する。
+            // wysiwygのdownload があれば、NC3 の画像として移行する。
             if (stripos($path, 'wysiwyg/image/download') !== false || stripos($path, 'wysiwyg/file/download') !== false) {
                 // pathのみに置換
                 $path_tmp = parse_url($path, PHP_URL_PATH);
@@ -6362,7 +6362,7 @@ trait MigrationNc3ExportTrait
                 // /で分割
                 $src_params = explode('/', $path_tmp);
 
-                // [TODO] image_size を参照していないため、今後見直しそう
+                // [TODO] image_size (bigとかsmall等) を参照していないため、今後見直しそう
                 // $room_id = $src_params[0];
                 $upload_id = $src_params[1];
                 // $image_size = isset($src_params[2]) ? $src_params[2] : null;
