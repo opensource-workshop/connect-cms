@@ -6163,54 +6163,91 @@ trait MigrationNc3ExportTrait
 
         // style から除去する属性の取得
         $clear_styles = $this->getMigrationConfig($plugin_name, 'export_clear_style');
-        if (!$clear_styles) {
-            return $content;
-        }
+        if ($clear_styles) {
+            $pattern = "/style *= *(\".*?\"|'.*?')/i";
+            $match_ret = preg_match_all($pattern, $content, $matches);
+            // style が見つかれば、件数が返ってくる。
+            if ($match_ret) {
+                // [1] にstyle の中身のみ入ってくる。（style="background-color:rgb(255, 0, 0);" の "background-color:rgb(255, 0, 0);" の部分）
+                foreach ($matches[1] as $match) {
+                    // セミコロンの位置
+                    $semicolon_pos = stripos($match, ';');
+                    // セミコロンがない場合は処理しない。
+                    if (!$semicolon_pos) {
+                        continue;
+                    }
 
-        $pattern = "/style *= *(\".*?\"|'.*?')/i";
-        $match_ret = preg_match_all($pattern, $content, $matches);
-        // style が見つかれば、件数が返ってくる。
-        if ($match_ret) {
-            // [1] にstyle の中身のみ入ってくる。（style="background-color:rgb(255, 0, 0);" の "background-color:rgb(255, 0, 0);" の部分）
-            foreach ($matches[1] as $match) {
-                // セミコロンの位置
-                $semicolon_pos = stripos($match, ';');
-                // セミコロンがない場合は処理しない。
-                if (!$semicolon_pos) {
-                    continue;
-                }
+                    // 1style複数属性に対応（;で分割, "background-color:rgb(255, 0, 0);" のダブルクォート除去）
+                    $attributes = explode(';', str_replace('"', '', $match));
+                    foreach ($attributes as $attribute) {
 
-                // 属性項目名のみ抜き出し（background-color）
-                // $property = substr($match, 1, stripos($match, ':') - 1);
-                // $property = mb_strtolower($property);
-                // if (in_array($property, $clear_styles)) {
-                //     // 値を含めた属性全体の抜き出し（background-color:rgb(255, 0, 0);）
-                //     $style_value = substr($match, 1, stripos($match, ';'));
-                //     // 値の除去
-                //     $content = str_replace($style_value, '', $content);
-                // }
+                        // 属性項目名のみ抜き出し（background-color）
+                        $property = substr($attribute, 0, stripos($attribute, ':'));
+                        $property = mb_strtolower($property);
 
-                // 1style複数属性に対応（;で分割, "background-color:rgb(255, 0, 0);" のダブルクォート除去）
-                $attributes = explode(';', str_replace('"', '', $match));
-                foreach ($attributes as $attribute) {
-
-                    // 属性項目名のみ抜き出し（background-color）
-                    $property = substr($attribute, 0, stripos($attribute, ':'));
-                    $property = mb_strtolower($property);
-
-                    if (in_array($property, $clear_styles)) {
-                        // 値を含めた属性全体を除去（background-color:rgb(255, 0, 0);）
-                        $content = str_replace($attribute . ';', '', $content);
+                        if (in_array($property, $clear_styles)) {
+                            // 値を含めた属性全体を除去（background-color:rgb(255, 0, 0);）
+                            $content = str_replace($attribute . ';', '', $content);
+                        }
                     }
                 }
             }
-        }
 
-        // 不要な style="" があれば消す。
-        $content = str_replace(' style=""', '', $content);
+            // 不要な style="" があれば消す。
+            $content = str_replace(' style=""', '', $content);
+        }
 
         // 不要な <span> のみで属性のないものがあれば消したいが、無効な<span> に対応する </span> のみ抜き出すのが難しく、
         // 今回は課題として残しておく。
+
+        // imgタグの不要属性 除去
+        // <img class="img-responsive nc3-img nc3-img-block" title="" src="../../uploads/upload_00059.jpg" alt="" data-size="big" data-position="" data-imgid="59" />
+
+        $pattern = '/<img.*?(data-size\s*=\s*[\"|\'].*?[\"|\']).*?>/i';
+        $match_cnt = preg_match_all($pattern, $content, $matches);
+        if ($match_cnt) {
+            // [1] に中身のみ入ってくる。
+            foreach ($matches[1] as $match) {
+                // 除去
+                $content = str_replace($match . ' ', '', $content);
+            }
+        }
+
+        $pattern = '/<img.*?(data-position\s*=\s*[\"|\'].*?[\"|\']).*?>/i';
+        $match_cnt = preg_match_all($pattern, $content, $matches);
+        if ($match_cnt) {
+            // [1] に中身のみ入ってくる。
+            foreach ($matches[1] as $match) {
+                // 除去
+                $content = str_replace($match . ' ', '', $content);
+            }
+        }
+
+        $pattern = '/<img.*?(data-imgid\s*=\s*[\"|\'].*?[\"|\']).*?>/i';
+        $match_cnt = preg_match_all($pattern, $content, $matches);
+        if ($match_cnt) {
+            // [1] に中身のみ入ってくる。
+            foreach ($matches[1] as $match) {
+                // 除去
+                $content = str_replace($match . ' ', '', $content);
+            }
+        }
+
+        $pattern = '/<img.*?(class\s*=\s*[\"|\'].*?[\"|\']).*?>/i';
+        $match_cnt = preg_match_all($pattern, $content, $matches);
+        if ($match_cnt) {
+            // [1] に中身のみ入ってくる。
+            foreach ($matches[1] as $match) {
+                // 除去class
+                $replace = str_replace(' nc3-img-block', '', $match);
+                $replace = str_replace('nc3-img-block', '', $replace);
+                $replace = str_replace(' nc3-img', '', $replace);
+                $replace = str_replace('nc3-img', '', $replace);
+
+                // 除去
+                $content = str_replace($match, $replace, $content);
+            }
+        }
 
         return $content;
     }
