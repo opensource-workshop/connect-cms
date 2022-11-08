@@ -5616,14 +5616,14 @@ trait MigrationNc3ExportTrait
             $nc3_common_frames = $nc3_common_frames_query
                 ->orderBy('boxes.space_id')
                 ->orderBy('boxes.room_id')
-                ->orderBy('boxes.page_id')
-                ->orderBy('boxes.weight')
+                ->orderBy('frames.box_id')
+                ->orderBy('frames.weight')
                 ->get();
 
             // 共通部分を frame 設定に追加する。
             foreach ($nc3_common_frames as $nc3_common_frame) {
                 // frame 設定に追加
-                $nc3_frames->prepend($nc3_common_frame);
+                $nc3_frames->push($nc3_common_frame);
             }
 
             // サイトトップページのみbox_idを保持
