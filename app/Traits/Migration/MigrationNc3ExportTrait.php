@@ -6247,6 +6247,22 @@ trait MigrationNc3ExportTrait
                 // 除去
                 $content = str_replace($match, $replace, $content);
             }
+
+            // 不要な class="" があれば消す。
+            $content = str_replace(' class=""', '', $content);
+        }
+
+        // nc3ではimgにaltとtitleが自動設定されるため、titleが空なら消す
+        $pattern = '/<img.*?title\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
+        $match_cnt = preg_match_all($pattern, $content, $matches);
+        if ($match_cnt) {
+            // [1] に中身のみ入ってくる。
+            foreach ($matches[1] as $match) {
+                if (empty($match)) {
+                    // 中身が空なら不要な title="" を消す。
+                    $content = str_replace(' title=""', '', $content);
+                }
+            }
         }
 
         return $content;
@@ -6362,9 +6378,9 @@ trait MigrationNc3ExportTrait
                 // /で分割
                 $src_params = explode('/', $path_tmp);
 
-                // [TODO] image_size (bigとかsmall等) を参照していないため、今後見直しそう
                 // $room_id = $src_params[0];
                 $upload_id = $src_params[1];
+                // image_size = (bigとかsmallとか)
                 // $image_size = isset($src_params[2]) ? $src_params[2] : null;
 
                 // フレーム設定ファイルの追記
