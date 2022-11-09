@@ -8177,7 +8177,7 @@ trait MigrationTrait
     /**
      *  NC2モジュール名の取得
      */
-    public function nc2GetModuleNames($action_names, $connect_change = true)
+    private function nc2GetModuleNames($action_names, $connect_change = true)
     {
         $available_connect_plugin_names = ['blogs', 'bbses', 'databases'];
         $ret = array();
