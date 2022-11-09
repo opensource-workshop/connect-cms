@@ -8973,6 +8973,7 @@ trait MigrationTrait
             $journals_ini .= "[source_info]\n";
             $journals_ini .= "journal_id = " . $nc2_journal->journal_id . "\n";
             $journals_ini .= "room_id = " . $nc2_journal->room_id . "\n";
+            $journals_ini .= "space_type = " . $nc2_journal->space_type . "\n";   // スペースタイプ, 1:パブリックスペース, 2:グループスペース
             $journals_ini .= "module_name = \"journal\"\n";
             $journals_ini .= "created_at      = \"" . $this->getCCDatetime($nc2_journal->insert_time) . "\"\n";
             $journals_ini .= "created_name    = \"" . $nc2_journal->insert_user_name . "\"\n";
