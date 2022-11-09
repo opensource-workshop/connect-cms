@@ -9273,8 +9273,8 @@ trait MigrationTrait
                 $mail_body = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_body);
             }
 
-            // 掲示板を日誌に移行する。
-            // Connect-CMS に掲示板ができたら、掲示板 to 掲示板の移行機能も追加する。
+            // 掲示板に移行する。
+            // [blog_base]等は、Connect-CMS 掲示板がなかった時、日誌に移行していた時の名残。
 
             $journals_ini = "";
             $journals_ini .= "[blog_base]\n";
