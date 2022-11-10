@@ -8760,11 +8760,6 @@ trait MigrationTrait
             // multidatabase_block の取得
             // 1DB で複数ブロックがあるので、Join せずに、個別に読む
             $nc2_multidatabase_block = Nc2MultidatabaseBlock::where('multidatabase_id', $nc2_multidatabase->multidatabase_id)->orderBy('block_id', 'asc')->first();
-            if (empty($nc2_multidatabase_block)) {
-                $multidatabase_ini .= "view_count = 10\n";  // 初期値
-            } else {
-                $multidatabase_ini .= "view_count = " . $nc2_multidatabase_block->visible_item . "\n";
-            }
 
             // この汎用データベースが配置されている最初のページオブジェクトを取得しておく
             // WYSIWYG で相対パスを絶対パスに変換する際に、ページの固定URL が必要になるため。
