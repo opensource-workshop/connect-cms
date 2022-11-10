@@ -159,6 +159,7 @@ use App\Utilities\Migration\MigrationUtils;
 use App\Enums\BlogFrameConfig;
 use App\Enums\CounterDesignType;
 use App\Enums\ContentOpenType;
+use App\Enums\DatabaseSortFlag;
 use App\Enums\DayOfWeek;
 use App\Enums\FacilityDisplayType;
 use App\Enums\LinklistType;
@@ -11523,9 +11524,9 @@ trait MigrationTrait
         if ($nc2_multidatabase_block->default_sort == 'seq') {
             $this->putError(3, 'データベースのソートが未対応順（カスタマイズ順）', "nc2_multidatabase_block = " . $nc2_multidatabase_block->block_id);
         } elseif ($nc2_multidatabase_block->default_sort == 'date') {
-            $default_sort_flag = 'created_desc';
+            $default_sort_flag = DatabaseSortFlag::created_desc;
         } elseif ($nc2_multidatabase_block->default_sort == 'date_asc') {
-            $default_sort_flag = 'created_asc';
+            $default_sort_flag = DatabaseSortFlag::created_asc;
         } else {
             $this->putError(3, 'データベースのソートが未対応順', "nc2_multidatabase_block = " . $nc2_multidatabase_block->block_id);
         }
