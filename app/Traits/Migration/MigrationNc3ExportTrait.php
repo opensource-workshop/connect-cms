@@ -253,893 +253,6 @@ trait MigrationNc3ExportTrait
     }
 
     /**
-     * NC3のリンク切れチェック
-     */
-    private function checkDeadLinkNc2($url, $nc3_plugin_key = null, $nc3_block = null)
-    {
-        $scheme = parse_url($url, PHP_URL_SCHEME);
-
-        if (in_array($scheme, ['http', 'https'])) {
-
-            $nc3_base_url = $this->getMigrationConfig('basic', 'check_deadlink_nc3_base_url', '');
-            if (empty($nc3_base_url)) {
-                $this->putLinkCheck(3, 'check_deadlink_nc3_base_url未設定', 'migration_config.iniの [basic] check_deadlink_nc3_base_url を設定してください');
-            }
-
-            $domain = str_replace("https://", "", $nc3_base_url);
-            $domain = str_replace("http://", "", $domain);
-
-            // 先頭がNC3のベースURL
-            if (preg_match("/^http:\/\/{$domain}|^https:\/\/{$domain}/", $url)) {
-                // 内部リンク
-                $this->checkDeadLinkInsideNc2($url, $nc3_plugin_key, $nc3_block);
-            } else {
-                // 外部リンク
-                $this->checkDeadLinkOutside($url, $nc3_plugin_key, $nc3_block);
-            }
-
-        } elseif (is_null($scheme)) {
-            // "{{CORE_BASE_URL}}/images/comp/textarea/titleicon/icon-weather9.gif" 等はここで処理
-
-            // 内部リンク
-            $this->checkDeadLinkInsideNc2($url, $nc3_plugin_key, $nc3_block);
-        } else {
-            // 対象外
-            $this->putLinkCheck(3, $nc3_plugin_key . '|リンク切れチェック対象外', $url, $nc3_block);
-        }
-    }
-
-    /**
-     * 外部URLのリンク切れチェック
-     */
-    private function checkDeadLinkOutside($url, $nc3_plugin_key, $nc3_block): bool
-    {
-        // タイムアウト(秒)を変更
-        ini_set('default_socket_timeout', 3);
-
-        stream_context_set_default([
-            'ssl' => [
-                'verify_peer' => false,
-                'verify_peer_name' => false,
-            ],
-        ]);
-
-        // 独自でエラーをcatchする
-        set_error_handler(function ($severity, $message) {
-            throw new \Exception($message);
-        });
-
-        try {
-            $headers = get_headers($url, true);
-        } catch (\Exception $e) {
-            // NG
-            $this->putLinkCheck(3, $nc3_plugin_key . '|外部リンク|リンク切れ|' . $e->getMessage(), $url, $nc3_block);
-            return false;
-
-        } finally {
-            // エラーハンドリングを元に戻す
-            restore_error_handler();
-
-            // タイムアウト(秒)を元に戻す
-            ini_restore('default_socket_timeout');
-        }
-
-
-        $i = 0;
-        while (!isset($headers[$i])) {
-            if (stripos($headers[$i], "200") !== false) {
-                // OK
-                return true;
-            } elseif (stripos($headers[$i], "301") !== false) {
-                // 301リダイレクトのため、次要素の $header でチェック
-            } elseif (stripos($headers[$i], "302") !== false) {
-                // OK
-                return true;
-            } else {
-                // NG
-                $this->putLinkCheck(3, $nc3_plugin_key . '|外部リンク|リンク切れ|' . $headers[$i], $url, $nc3_block);
-                return false;
-            }
-            $i++;
-        }
-
-        // NG. 基本ここには到達しない想定
-        $this->putLinkCheck(3, $nc3_plugin_key . '|外部リンク|リンク切れ', $url, $nc3_block);
-        return false;
-    }
-
-    /**
-     * 内部URL(nc3)のリンク切れチェック
-     */
-    private function checkDeadLinkInsideNc2($url, $nc3_plugin_key = null, $nc3_block = null)
-    {
-
-        // >>> parse_url("http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=42&page_id=0&display_type=2#_active_center_42")
-        // => [
-        //      "scheme" => "http",
-        //      "host" => "localhost",
-        //      "port" => 8080,
-        //      "path" => "/index.php",
-        //      "query" => "action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=42&page_id=0&display_type=2",
-        //      "fragment" => "_active_center_42",
-        //    ]
-        //
-        // >>> parse_url("http://localhost:8080/新規カテゴリ2/新規カテゴリ2-1/新規カテゴリ2-1-1/")
-        // => [
-        //      "scheme" => "http",
-        //      "host" => "localhost",
-        //      "port" => 8080,
-        //      "path" => "/新規カテゴリ2/新規カテゴリ2-1/新規カテゴリ2-1-1/",
-        //    ]
-
-        $nc3_base_url = $this->getMigrationConfig('basic', 'check_deadlink_nc3_base_url', '');
-
-        // &amp; => & 等のデコード
-        $check_url = htmlspecialchars_decode($url);
-        // {{CORE_BASE_URL}} 置換
-        $check_url = str_replace("{{CORE_BASE_URL}}", $nc3_base_url, $check_url);
-
-        $check_url_path = parse_url($check_url, PHP_URL_PATH);
-        $check_url_query = parse_url($check_url, PHP_URL_QUERY);
-
-        // トップページ
-        // ---------------------------------
-        // http://localhost:8080/
-        // http://localhost:8080
-        // /
-        // ./
-        // /index.php
-        // ./index.php
-        // http://localhost:8080/index.php
-        // ---------------------------------
-        // (pathがトップページに該当するもの＋queryなし)は、OK扱いにする
-        if (in_array($check_url_path, [null, '/', './', '/index.php', './index.php']) && is_null($check_url_query)) {
-            return;
-        }
-        // ---------------------------------
-        // http://localhost:8080/?lang=japanese
-        // http://localhost:8080/?lang=english
-        // http://localhost:8080/?lang=chinese
-        // ---------------------------------
-        // queryあり＋pathがトップページに該当するもの＋queryはlang１つだけ、はOK扱いにする
-        parse_str($check_url_query, $check_url_query_array);
-        if ($check_url_query_array) {
-            $lang = MigrationUtils::getArrayValue($check_url_query_array, 'lang', null, null);
-            if (in_array($check_url_path, ['/', './', '/index.php', './index.php']) && count($check_url_query_array) === 1 && $lang) {
-                if (in_array($lang, ['japanese', 'english', 'chinese'])) {
-                    // OK
-                } else {
-                    // NG
-                    $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|lang値の間違い', $url, $nc3_block);
-                }
-                return;
-            }
-        }
-        // 以下 check_url_path は値が存在する
-
-        // ページ＋mod_rewrite
-        // ---------------------------------
-        // http://localhost:8080/カウンター/
-        // http://localhost:8080/group/グループ１/
-        // http://localhost:8080/group/グループ１/サブグループ１/
-        // http://localhost:8080/新規カテゴリ2/新規カテゴリ2-1/新規カテゴリ2-1-1/
-        // ---------------------------------
-        $check_page_permalink = trim($check_url_path, '/');
-        if ($check_page_permalink) {
-            // 頭とお尻の/を取り除いたpath + 空以外 の permalink でページの存在チェック
-            $nc3_page = Nc2Page::where('permalink', trim($check_url_path, '/'))->where('permalink', '!=', '')->first();
-            if ($nc3_page) {
-                // ページデータあり. チェックOK
-                return;
-            }
-        }
-
-        // ページ（mod_rewriteなし. page_id指定）
-        // ---------------------------------
-        // http://localhost:8080/?page_id=16
-        // ---------------------------------
-        if ($check_url_query_array) {
-            // >>> parse_str("page_id=16", $result)
-            // >>> $result
-            // => [
-            //      "page_id" => "16",
-            //    ]
-            //
-            // >>> parse_str("action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=42&page_id=0&display_type=2", $result)
-            // >>> $result
-            // => [
-            //      "action" => "pages_view_main",
-            //      "active_center" => "reservation_view_main_init",
-            //      "reserve_details_id" => "19",
-            //      "active_block_id" => "42",
-            //      "page_id" => "0",
-            //      "display_type" => "2",
-            //    ]
-            $page_id = MigrationUtils::getArrayValue($check_url_query_array, 'page_id', null, null);
-            if ($page_id) {
-                $nc3_page = Nc2Page::where('page_id', $page_id)->first();
-                if ($nc3_page) {
-                    // ページデータあり. チェックOK
-                } else {
-                    // NG
-                    $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|ページデータなし', $url, $nc3_block);
-                }
-                return;
-            }
-        }
-
-        // ダウンロードURL（ファイル・画像）
-        // ---------------------------------
-        // (画像) ./?action=common_download_main&upload_id=10
-        // (添付) ./?action=common_download_main&upload_id=11
-        // ---------------------------------
-        if ($check_url_query_array) {
-            $action = MigrationUtils::getArrayValue($check_url_query_array, 'action', null, null);
-            if ($action == 'common_download_main') {
-                $upload_id = MigrationUtils::getArrayValue($check_url_query_array, 'upload_id', null, null);
-                if ($upload_id) {
-                    $nc3_upload = Nc2Upload::where('upload_id', $upload_id)->first();
-                    if ($nc3_upload) {
-                        // アップロードデータあり. チェックOK
-                    } else {
-                        // NG
-                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|アップロードデータなし', $url, $nc3_block);
-                    }
-                } else {
-                    // NG
-                    $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|common_download_mainでアップロードIDなし', $url, $nc3_block);
-                }
-                return;
-            }
-        }
-
-        // ---------------------------------
-        // 新着表示の各リンク
-        // ---------------------------------
-        // (中央エリアに表示)
-        //   (action)active_center & active_block_id(任意)
-        //
-        //   (施設予約)       http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=42&page_id=0&display_type=2#_active_center_42
-        //   (カレンダー)     http://localhost:8080/index.php?action=pages_view_main&active_center=calendar_view_main_init&plan_id=42&active_block_id=11&page_id=1&display_type=5#_active_center_11
-        //   active_block_idなしでも表示できる
-        //   (施設予約)       http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&page_id=0&display_type=2#_active_center_42
-        //   (カレンダー)     http://localhost:8080/index.php?action=pages_view_main&active_center=calendar_view_main_init&plan_id=42&page_id=1&display_type=5#_active_center_11
-        //   (検索)          ./index.php?action=pages_view_main&active_center=search_view_main_center
-        //
-        //   (手動で active_center 入れてリンク作成)
-        //   (キャビネット)   http://localhost:8080/index.php?action=pages_view_main&active_center=cabinet_view_main_init&cabinet_id=2&folder_id=&block_id=69#_69
-        // active_center でblock_id無でもトップページとして表示できる
-        //   (キャビネット)   http://localhost:8080/index.php?action=pages_view_main&active_center=cabinet_view_main_init&cabinet_id=2&folder_id=#_69
-        // active_center で存在しないblock_idは「データの取得失敗」エラーで表示できない
-        //   (キャビネット)   http://localhost:8080/index.php?action=pages_view_main&active_center=cabinet_view_main_init&cabinet_id=2&folder_id=&block_id=699999#_69
-        // ---------------------------------
-        // (通常モジュール)
-        //   (action)active_action & block_id(必須)
-        //
-        //   (キャビネット)   http://localhost:8080/index.php?action=pages_view_main&active_action=cabinet_view_main_init&cabinet_id=2&folder_id=&block_id=69#_69
-        //   (掲示板)        http://localhost:8080/index.php?action=pages_view_main&active_action=bbs_view_main_post&post_id=9&block_id=56#_56
-        //   (フォトアルバム) http://localhost:8080/index.php?action=pages_view_main&active_action=photoalbum_view_main_init&album_id=1&block_id=68#photoalbum_album_68_1
-        //
-        //   (手動で block_id など修正してリンク作成)
-        // active_action でblock_id無は「キャビネット削除された可能性」エラーで表示できない
-        //   (キャビネット)   http://localhost:8080/index.php?action=pages_view_main&active_action=cabinet_view_main_init&cabinet_id=2&folder_id=#_69
-        // active_action で存在しないblock_idは「キャビネット削除された可能性」エラーで表示できない
-        //   (キャビネット)   http://localhost:8080/index.php?action=pages_view_main&active_action=cabinet_view_main_init&cabinet_id=2&folder_id=&block_id=699999#_69
-        //
-        //   (pages_view_main 内での active_action処理の調査)
-        //   $blocks[$count]['full_path'] = BASE_URL.INDEX_FILE_NAME."?action=".$block['action_name']."&block_id=".$block['block_id']."&page_id=".$block['page_id'];    //絶対座標に変換
-        //   (掲示板ページ表示)       http://localhost:8080/index.php?action=pages_view_main&active_action=bbs_view_main_post&post_id=9&block_id=56#_56
-        //                           ↓
-        //   (掲示板ブロックだけ表示)  http://localhost:8080/index.php?action=bbs_view_main_post&post_id=9&block_id=56&page_id=33#_56
-        //   (掲示板ブロックだけ表示)  http://localhost:8080/index.php?action=bbs_view_main_post&post_id=9&block_id=56#_56    // page_idなくても表示できた
-        //
-        // ---------------------------------
-        // 検索結果の各リンク
-        // ---------------------------------
-        // (お知らせ)   http://localhost:8080/index.php?action=pages_view_main&block_id=72&page_id=50&active_action=announcement_view_main_init#_72
-        // (掲示板)     http://localhost:8080/index.php?action=pages_view_main&block_id=56&active_action=bbs_view_main_post&bbs_id=3&post_id=9#_56
-        // (カレンダー) http://localhost:8080/index.php?action=pages_view_main&page_id=13&active_center=calendar_view_main_init&date=20210811&current_time=000000&display_type=5
-        // ---------------------------------
-        //
-        // NC3モジュール名| 新着 | 検索 | リンクチェック対象
-        // お知らせ         o      o     o
-        // アンケート       o      -     o
-        // Todo            o      o     o
-        // カレンダー       o      o     o
-        // 掲示板           o      o     o
-        // キャビネット     o      o     o
-        // レポート         o      o     o
-        // 小テスト         o      -     o
-        // 施設予約         o      o     o
-        // 日誌             o      o     o
-        // フォトアルバム    o      -     o
-        // 汎用データベース  o      o     o
-        // 回覧板           o      o     o
-        // FAQ              -      o     o
-        // 検索             -      -     o
-        // ---------------------------------
-
-        if ($check_url_query_array) {
-
-            $action = MigrationUtils::getArrayValue($check_url_query_array, 'action', null, null);
-            if ($action == 'pages_view_main') {
-
-                // (通常モジュール)
-                //   (action)active_action & block_id(必須)         例：掲示板, お知らせ, キャビネット等
-                // (中央エリアに表示)
-                //   (action)active_center & active_block_id(任意)  例：カレンダー, 施設予約, 検索
-                $active_action = MigrationUtils::getArrayValue($check_url_query_array, 'active_action', null, null);
-                $active_center = MigrationUtils::getArrayValue($check_url_query_array, 'active_center', null, null);
-
-                if ($active_action) {
-                    // block存在チェック(必須)
-                    $block_id = MigrationUtils::getArrayValue($check_url_query_array, 'block_id', null, null);
-                    $check_nc3_block = Nc2Block::where('block_id', $block_id)->first();
-                    if ($check_nc3_block) {
-                        // OK
-                    } else {
-                        // NG
-                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|blockデータなし', $url, $nc3_block);
-                        return;
-                    }
-                }
-
-                if ($active_action || $active_center) {
-                    // page_id存在チェック(任意)
-                    $page_id = MigrationUtils::getArrayValue($check_url_query_array, 'page_id', null, null);
-                    if ($page_id) {
-                        $check_nc3_page = Nc2Page::where('page_id', $page_id)->first();
-                        if ($check_nc3_page) {
-                            // OK
-                        } else {
-                            // NG
-                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|pageデータなし', $url, $nc3_block);
-                            return;
-                        }
-                    }
-                }
-
-                // (通常モジュール) active_action
-                // --------------------------------
-                if ($active_action == 'bbs_view_main_post') {
-                    // (掲示板パラメータ)
-                    //   block_id 必須
-                    //   post_id  必須
-                    //   bbs_id   任意. あれば存在チェック
-                    //
-                    // (掲示板-新着)
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=bbs_view_main_post&post_id=9&block_id=56#_56
-                    // block_idを存在しないIDにすると、「該当ページに配置してある掲示板が削除された可能性があります。」エラー
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=bbs_view_main_post&post_id=9&block_id=56999999999999#_56
-                    // post_idを存在しないIDにすると、ページは開けて、掲示板の箇所が「入力値が不正です。不正にアクセスされた可能性があります。」エラー
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=bbs_view_main_post&post_id=99999999999999&block_id=56#_56
-                    //
-                    // (掲示板-検索)
-                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=56&active_action=bbs_view_main_post&bbs_id=3&post_id=9#_56
-                    // bbs_idなくても表示できた
-                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=56&active_action=bbs_view_main_post&post_id=9#_56
-                    // bbs_idを存在しないIDにすると、ページは開けて、掲示板の箇所が「入力値が不正です。不正にアクセスされた可能性があります。」エラー
-                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=56&active_action=bbs_view_main_post&bbs_id=39999999&post_id=9#_56
-                    //
-                    // (掲示板-active_center, 手動でリンク作成を想定)
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_block_id=56&active_center=bbs_view_main_post&bbs_id=3&post_id=9#_56
-                    // active_block_idを存在しないID, active_block_id設定なしにしても、詳細表示部分が空白なだけで、エラーにはならない。
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_block_id=56999999999&active_center=bbs_view_main_post&bbs_id=3&post_id=9#_56
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=bbs_view_main_post&bbs_id=3&post_id=9#_56
-
-                    // bbs_post存在チェック
-                    $post_id = MigrationUtils::getArrayValue($check_url_query_array, 'post_id', null, null);
-                    $check_nc3_bbs_post = Nc2BbsPost::where('post_id', $post_id)->first();
-                    if ($check_nc3_bbs_post) {
-                        // OK
-                    } else {
-                        // NG
-                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|bbs_postデータなし', $url, $nc3_block);
-                        return;
-                    }
-
-                    // bbs_id存在チェック(任意)
-                    $bbs_id = MigrationUtils::getArrayValue($check_url_query_array, 'bbs_id', null, null);
-                    if ($bbs_id) {
-                        $check_nc3_bbs = Nc2Bbs::where('bbs_id', $bbs_id)->first();
-                        if ($check_nc3_bbs) {
-                            // OK
-                        } else {
-                            // NG
-                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|bbsデータなし', $url, $nc3_block);
-                            return;
-                        }
-                    }
-
-                    // OK
-                    return;
-
-                } elseif ($active_action == 'announcement_view_main_init') {
-                    // (お知らせパラメータ)
-                    //   block_id 必須
-                    //   page_id  任意. あれば存在チェック
-                    //
-                    // (お知らせ-新着)
-                    // http://localhost:8080/index.php?action=pages_view_main&&block_id=72#_72
-                    //
-                    // (お知らせ-検索)
-                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=72&page_id=50&active_action=announcement_view_main_init#_72
-                    // page_idなしでも表示できる
-                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=72&active_action=announcement_view_main_init#_72
-                    // page_idを存在しないIDにすると「データ取得に失敗」エラー
-                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=72&page_id=50999999&active_action=announcement_view_main_init#_72
-                    // block_idがない or 存在しないIDにすると、「該当ページに配置してある掲示板が削除された可能性があります。」エラー
-                    //   http://localhost:8080/index.php?action=pages_view_main&page_id=50&active_action=announcement_view_main_init#_72
-                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=7299999&page_id=50&active_action=announcement_view_main_init#_72
-
-                    // OK
-                    return;
-
-                } elseif ($active_action == 'journal_view_main_detail') {
-                    // (日誌パラメータ)
-                    //   block_id       必須
-                    //   post_id        必須
-                    //   comment_flag   任意. (チェック不要). 1:コメント入力あり 1以外:コメント入力なし
-                    //
-                    // (日誌-新着)
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=journal_view_main_detail&post_id=4&comment_flag=1&block_id=34#_34
-                    // post_idなし or 存在しないIDにすると「記事は存在しいません」エラー
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=journal_view_main_detail&comment_flag=1&block_id=34#_34
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=journal_view_main_detail&post_id=49999&comment_flag=1&block_id=34#_34
-                    // comment_flagなし or 変な値でも記事表示できる＋コメント入力なし
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=journal_view_main_detail&post_id=4&block_id=34#_34
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=journal_view_main_detail&post_id=4&comment_flag=199999&block_id=34#_34
-                    //
-                    // (日誌-検索)
-                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=34&active_action=journal_view_main_detail&post_id=4#_34
-
-                    // journal_post存在チェック
-                    $post_id = MigrationUtils::getArrayValue($check_url_query_array, 'post_id', null, null);
-                    $check_nc3_journal_post = Nc2JournalPost::where('post_id', $post_id)->first();
-                    if ($check_nc3_journal_post) {
-                        // OK
-                    } else {
-                        // NG
-                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|journal_postデータなし', $url, $nc3_block);
-                        return;
-                    }
-
-                    // OK
-                    return;
-
-                } elseif ($active_action == 'multidatabase_view_main_detail') {
-                    // (汎用DBパラメータ)
-                    //   block_id          必須
-                    //   multidatabase_id  必須
-                    //   content_id        必須
-                    //
-                    // (汎用DB-新着)
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=multidatabase_view_main_detail&content_id=4&multidatabase_id=1&block_id=51#_51
-                    // multidatabase_idなし or IDが存在しないと「入力値が不正」エラー
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=multidatabase_view_main_detail&content_id=4&block_id=51#_51
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=multidatabase_view_main_detail&content_id=4&multidatabase_id=19999&block_id=51#_51
-                    // content_idなし or IDが存在しないとコンテンツが存在しません」エラー
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=multidatabase_view_main_detail&multidatabase_id=1&block_id=51#_51
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=multidatabase_view_main_detail&content_id=499999&multidatabase_id=1&block_id=51#_51
-                    //
-                    // (汎用DB-検索)
-                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=51&active_action=multidatabase_view_main_detail&content_id=4&multidatabase_id=1&block_id=51#_51
-
-                    // multidatabase存在チェック
-                    $multidatabase_id = MigrationUtils::getArrayValue($check_url_query_array, 'multidatabase_id', null, null);
-                    $check_nc3_multidatabase = Nc2Multidatabase::where('multidatabase_id', $multidatabase_id)->first();
-                    if ($check_nc3_multidatabase) {
-                        // OK
-                    } else {
-                        // NG
-                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|multidatabaseデータなし', $url, $nc3_block);
-                        return;
-                    }
-
-                    // multidatabase_content存在チェック
-                    $content_id = MigrationUtils::getArrayValue($check_url_query_array, 'content_id', null, null);
-                    $check_nc3_multidatabase_content = Nc2MultidatabaseContent::where('content_id', $content_id)->first();
-                    if ($check_nc3_multidatabase_content) {
-                        // OK
-                    } else {
-                        // NG
-                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|multidatabase_contentデータなし', $url, $nc3_block);
-                        return;
-                    }
-
-                    // OK
-                    return;
-
-                } elseif ($active_action == 'cabinet_view_main_init') {
-                    // (キャビネットパラメータ)
-                    //   block_id          必須
-                    //   cabinet_id        任意.
-                    //   folder_id         任意.
-                    //
-                    // (キャビネット-新着)
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=cabinet_view_main_init&cabinet_id=2&folder_id=&block_id=69#_69
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=cabinet_view_main_init&block_id=69#_69
-                    // cabinet_idなしは表示できる
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=cabinet_view_main_init&folder_id=&block_id=69#_69
-                    // cabinet_idのIDが存在しないと「公開されているキャビネットはありません」エラー
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=cabinet_view_main_init&cabinet_id=2999999&folder_id=&block_id=69#_69
-                    // folder_idなしは表示できる
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=cabinet_view_main_init&cabinet_id=2&block_id=69#_69
-                    // folder_idのIDが存在しないと「権限が不正」エラー
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=cabinet_view_main_init&cabinet_id=2&folder_id=99999&block_id=69#_69
-                    //
-                    // (キャビネット-検索)
-                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=69&active_action=cabinet_view_main_init&cabinet_id=2&folder_id=0#_69
-
-                    // cabinet_manage存在チェック(任意)
-                    $cabinet_id = MigrationUtils::getArrayValue($check_url_query_array, 'cabinet_id', null, null);
-                    if ($cabinet_id) {
-                        $check_nc3_cabinet_manage = Nc2CabinetManage::where('cabinet_id', $cabinet_id)->first();
-                        if ($check_nc3_cabinet_manage) {
-                            // OK
-                        } else {
-                            // NG
-                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|cabinet_manageデータなし', $url, $nc3_block);
-                            return;
-                        }
-                    }
-
-                    // folder_id(=file_id)のcabinet_file存在チェック(任意)
-                    $folder_id = MigrationUtils::getArrayValue($check_url_query_array, 'folder_id', null, null);
-                    if ($folder_id) {
-                        $check_nc3_cabinet_file = Nc2CabinetFile::where('file_id', $folder_id)->first();
-                        if ($check_nc3_cabinet_file) {
-                            // OK
-                        } else {
-                            // NG
-                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|cabinet_fileデータなし.folder_id=file_id', $url, $nc3_block);
-                            return;
-                        }
-                    }
-
-                    // OK
-                    return;
-
-                } elseif ($active_action == 'faq_view_main_init') {
-                    // (FAQパラメータ)
-                    //   block_id          必須
-                    //   question_id       任意.（チェック不要）
-                    //
-                    // (FAQ-検索-のみ)
-                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=35&active_action=faq_view_main_init&question_id=4#_faq_answer_4
-                    // question_idなし or 存在しないIDでも表示できる
-                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=35&active_action=faq_view_main_init#_faq_answer_4
-                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=35&active_action=faq_view_main_init&question_id=4999#_faq_answer_4
-
-                    // OK
-                    return;
-
-                } elseif ($active_action == 'photoalbum_view_main_init') {
-                    // (フォトアルバムパラメータ)
-                    //   block_id          必須
-                    //   album_id          任意.（チェック不要）
-                    //
-                    // (フォトアルバム-新着-のみ)
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=photoalbum_view_main_init&album_id=1&block_id=68#photoalbum_album_68_1
-                    // album_idなし or 存在しないIDでも表示できる
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=photoalbum_view_main_init&block_id=68#photoalbum_album_68_1
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=photoalbum_view_main_init&album_id=19999999999999&block_id=68#photoalbum_album_68_1
-
-                    // OK
-                    return;
-
-                } elseif ($active_action == 'assignment_view_main_whatsnew' || $active_action == 'assignment_view_main_init') {
-                    // (レポートパラメータ)
-                    //   block_id          必須
-                    //   (新着：assignment_view_main_whatsnew) assignment_id     必須
-                    //   (検索：assignment_view_main_init)     assignment_id     任意.
-                    //
-                    // (レポート-新着)
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=assignment_view_main_whatsnew&assignment_id=1&block_id=74#_74
-                    // assignment_idなし or 存在しないIDだと「入力値が不正」エラー
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=assignment_view_main_whatsnew&block_id=74#_74
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=assignment_view_main_whatsnew&assignment_id=1999999&block_id=74#_74
-                    //
-                    // (レポート-検索)
-                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=74&active_action=assignment_view_main_init&assignment_id=1#_74
-                    // assignment_idなしでも表示できる
-                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=74&active_action=assignment_view_main_init#_74
-                    // assignment_idで存在しないIDだと「公開されている課題はありません」エラー
-                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=74&active_action=assignment_view_main_init&assignment_id=1999999#_74
-
-
-                    if ($active_action == 'assignment_view_main_whatsnew') {
-                        // (レポート-新着)
-                        // assignment存在チェック（必須）
-                        $assignment_id = MigrationUtils::getArrayValue($check_url_query_array, 'assignment_id', null, null);
-                        $check_nc3_assignment = Nc2Assignment::where('assignment_id', $assignment_id)->first();
-                        if ($check_nc3_assignment) {
-                            // OK
-                        } else {
-                            // NG
-                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|assignmentデータなし', $url, $nc3_block);
-                            return;
-                        }
-
-                    } elseif ($active_action == 'assignment_view_main_init') {
-                        // (レポート-検索)
-                        // assignment存在チェック（任意）
-                        $assignment_id = MigrationUtils::getArrayValue($check_url_query_array, 'assignment_id', null, null);
-                        if ($assignment_id) {
-                            $check_nc3_assignment = Nc2Assignment::where('assignment_id', $assignment_id)->first();
-                            if ($check_nc3_assignment) {
-                                // OK
-                            } else {
-                                // NG
-                                $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|assignmentデータなし', $url, $nc3_block);
-                                return;
-                            }
-                        }
-                    }
-
-                    // OK
-                    return;
-
-                } elseif ($active_action == 'questionnaire_view_main_whatsnew') {
-                    // (アンケートパラメータ)
-                    //   block_id          必須
-                    //   questionnaire_id  必須
-                    //
-                    // (アンケート-新着-のみ)
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=questionnaire_view_main_whatsnew&questionnaire_id=1&block_id=75#_75
-                    // questionnaire_idなし or 存在しないIDだと「入力値が不正」エラー
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=questionnaire_view_main_whatsnew&block_id=75#_75
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=questionnaire_view_main_whatsnew&questionnaire_id=19999999&block_id=75#_75
-
-                    // questionnaire存在チェック
-                    $questionnaire_id = MigrationUtils::getArrayValue($check_url_query_array, 'questionnaire_id', null, null);
-                    $check_nc3_questionnaire = Nc2Questionnaire::where('questionnaire_id', $questionnaire_id)->first();
-                    if ($check_nc3_questionnaire) {
-                        // OK
-                    } else {
-                        // NG
-                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|questionnaireデータなし', $url, $nc3_block);
-                        return;
-                    }
-
-                    // OK
-                    return;
-
-                } elseif ($active_action == 'quiz_view_main_whatsnew') {
-                    // (小テストパラメータ)
-                    //   block_id          必須
-                    //   quiz_id           必須
-                    //
-                    // (小テスト-新着-のみ)
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=quiz_view_main_whatsnew&quiz_id=1&block_id=77#_77
-                    // quiz_idなし or 存在しないIDだと「入力値が不正」エラー
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=quiz_view_main_whatsnew&block_id=77#_77
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=quiz_view_main_whatsnew&quiz_id=1999999&block_id=77#_77
-
-                    // quiz存在チェック
-                    $quiz_id = MigrationUtils::getArrayValue($check_url_query_array, 'quiz_id', null, null);
-                    $check_nc3_quiz = Nc2Quiz::where('quiz_id', $quiz_id)->first();
-                    if ($check_nc3_quiz) {
-                        // OK
-                    } else {
-                        // NG
-                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|quizデータなし', $url, $nc3_block);
-                        return;
-                    }
-
-                    // OK
-                    return;
-
-                } elseif ($active_action == 'todo_view_main_init') {
-                    // (Todoパラメータ)
-                    //   block_id          必須
-                    //   todo_id           任意
-                    //   page_id           任意
-                    //
-                    // (Todo-新着)
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=todo_view_main_init&todo_id=11&block_id=76#_76
-                    // todo_idなし だと表示できる
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=todo_view_main_init&block_id=76#_76
-                    // todo_idが存在しないID だと「公開されているTodoリストはありません」エラー
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=todo_view_main_init&todo_id=11999999&block_id=76#_76
-                    //
-                    // (Todo-検索)
-                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=76&page_id=55&active_action=todo_view_main_init#_76
-
-                    // todo存在チェック（任意）
-                    $todo_id = MigrationUtils::getArrayValue($check_url_query_array, 'todo_id', null, null);
-                    if ($todo_id) {
-                        $check_nc3_todo = Nc2Todo::where('todo_id', $todo_id)->first();
-                        if ($check_nc3_todo) {
-                            // OK
-                        } else {
-                            // NG
-                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|todoデータなし', $url, $nc3_block);
-                            return;
-                        }
-                    }
-
-                    // OK
-                    return;
-
-                } elseif ($active_action == 'circular_view_main_detail') {
-                    // (回覧板パラメータ)
-                    //   block_id          必須
-                    //   circular_id       必須
-                    //   page_id           任意
-                    //   room_id           任意（チェック不要）
-                    //
-                    // (回覧板-新着)
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=circular_view_main_detail&circular_id=2&page_id=53&block_id=78#_78
-                    // circular_idなし or 存在しないID だと「既に削除されています」エラー
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=circular_view_main_detail&page_id=53&block_id=78#_78
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=circular_view_main_detail&circular_id=299999&page_id=53&block_id=78#_78
-                    //
-                    // (回覧板-検索)
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=circular_view_main_detail&block_id=78&room_id=1&circular_id=2#_78
-                    // room_idなし or 存在しないID でも表示できる
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=circular_view_main_detail&block_id=78&circular_id=2#_78
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=circular_view_main_detail&block_id=78&room_id=19999&circular_id=2#_78
-
-                    // circular存在チェック
-                    $circular_id = MigrationUtils::getArrayValue($check_url_query_array, 'circular_id', null, null);
-                    $check_nc3_circular = Nc2Circular::where('circular_id', $circular_id)->first();
-                    if ($check_nc3_circular) {
-                        // OK
-                    } else {
-                        // NG
-                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|circularデータなし', $url, $nc3_block);
-                        return;
-                    }
-
-                    // OK
-                    return;
-                }
-
-
-                // (中央エリアに表示) active_center
-                // --------------------------------
-                if ($active_center == 'search_view_main_center') {
-                    // （検索-初期インストール配置のヘッダー検索お知らせ）
-                    //   ./index.php?action=pages_view_main&active_center=search_view_main_center
-                    // （検索-active_action, 手動でリンク作成を想定
-                    //   → 対応しない
-                    //   block_idがないと、「該当ページに配置してある検索が削除された可能性があります。」エラー
-                    //   ./index.php?action=pages_view_main&active_action=search_view_main_center
-
-                    // OK
-                    return;
-
-                } elseif ($active_center == 'reservation_view_main_init') {
-                    // (施設予約-新着)
-                    //   active_block_id      任意. (チェック不要)
-                    //   page_id              任意. あれば存在チェック
-                    //   reserve_details_id   任意. (チェック不要)
-                    //   display_type         任意. あれば値チェック=1|2|3
-                    //   reserve_id           任意. (チェック不要)
-                    //
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=42&page_id=0&display_type=2#_active_center_42
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init
-                    // active_block_idなしでも, 存在しないIDでも表示できる
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&page_id=0&display_type=2#_active_center_42
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=4299999999999999&page_id=0&display_type=2#_active_center_42
-                    // page_idなしでも表示できる
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&display_type=2#_active_center_42
-                    // page_idを存在しないIDにすると「データ取得に失敗」エラー
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&page_id=9999999&display_type=2#_active_center_42
-                    // reserve_details_idなし or 存在しないIDでも表示できる. あれば該当日の一覧を表示
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=1999999999&active_block_id=42&page_id=0&display_type=2#_active_center_42
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&active_block_id=42&page_id=0&display_type=2#_active_center_42
-                    // display_typeなしでも表示できる
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=42&page_id=0#_active_center_42
-                    // display_typeの「入力値が不正です」エラー
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=42&page_id=0&display_type=999#_active_center_42
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=42&page_id=0&display_type=4#_active_center_42
-                    //
-                    // >>> parse_str("action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=42&page_id=0&display_type=2", $result)
-                    // >>> $result
-                    // => [
-                    //      "action" => "pages_view_main",
-                    //      "active_center" => "reservation_view_main_init",
-                    //      "reserve_details_id" => "19",
-                    //      "active_block_id" => "42",
-                    //      "page_id" => "0",
-                    //      "display_type" => "2",
-                    //    ]
-                    //
-                    // (施設予約-検索)
-                    //   http://localhost:8080/index.php?action=pages_view_main&page_id=13&active_center=reservation_view_main_init&reserve_id=74
-                    // reserve_id が存在しないIDでも表示できる
-                    //   http://localhost:8080/index.php?action=pages_view_main&page_id=13&active_center=reservation_view_main_init&reserve_id=74999999
-
-                    // display_typeの有効値チェック(任意)
-                    $display_type = MigrationUtils::getArrayValue($check_url_query_array, 'display_type', null, null);
-                    if ($display_type) {
-                        if ((int)$display_type <= 3) {
-                            // OK 1|2|3, ※ イレギュラーだけど0,-1,-2...でも表示可
-                        } else {
-                            // NG
-                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|display_type対象外', $url, $nc3_block);
-                            return;
-                        }
-                    }
-
-                    // OK
-                    return;
-
-                } elseif ($active_center == 'calendar_view_main_init') {
-                    // (カレンダー-新着)
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=calendar_view_main_init&plan_id=42&active_block_id=11&page_id=1&display_type=5#_active_center_11
-                    // page_idなしでも表示できる
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=calendar_view_main_init&plan_id=42&active_block_id=11&display_type=5#_active_center_11
-                    // page_idを存在しないIDにすると「データ取得に失敗」エラー
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=calendar_view_main_init&plan_id=42&active_block_id=11&page_id=19999999999&display_type=5#_active_center_11
-                    // display_typeなしでも表示できる
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=calendar_view_main_init&plan_id=42&active_block_id=11&page_id=1#_active_center_11
-                    // display_type=0|-1|-2...は表示できちゃう
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=calendar_view_main_init&plan_id=42&active_block_id=11&page_id=1&display_type=-1#_active_center_11
-                    // display_typeの「入力値が不正です」エラー
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=calendar_view_main_init&plan_id=42&active_block_id=11&page_id=1&display_type=8#_active_center_11
-                    // plan_id なし or ID存在しなくても表示できる
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=calendar_view_main_init&active_block_id=11&page_id=1&display_type=5#_active_center_11
-                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=calendar_view_main_init&plan_id=42999&active_block_id=11&page_id=1&display_type=5#_active_center_11
-                    //
-                    // http://localhost:8080/index.php?
-                    //   - action=pages_view_main
-                    //   - active_center=calendar_view_main_init
-                    //   - plan_id=42           任意. (チェック不要)
-                    //   - active_block_id=11
-                    //   - page_id=1            上にチェック処理あり
-                    //   o display_type=5       任意. あれば値チェック=1～8
-                    //   - #_active_center_11
-                    //
-                    // (カレンダー-検索)
-                    //   http://localhost:8080/index.php?action=pages_view_main&page_id=13&active_center=calendar_view_main_init&date=20210811&current_time=000000&display_type=5
-                    // date|current_time なし or 値が変な値でも表示できる
-                    //   http://localhost:8080/index.php?action=pages_view_main&page_id=13&active_center=calendar_view_main_init&display_type=5
-                    //   http://localhost:8080/index.php?action=pages_view_main&page_id=13&active_center=calendar_view_main_init&date=202108119999&current_time=0000009999&display_type=5
-                    //   http://localhost:8080/index.php?action=pages_view_main&page_id=13&active_center=calendar_view_main_init&date=20210811&display_type=5
-                    //
-                    // http://localhost:8080/index.php?
-                    //   - date=20210811        任意. (チェック不要)
-                    //   - current_time=000000  任意. (チェック不要)
-                    //   o display_type=5       任意. あれば値チェック=1～8
-
-                    // display_typeの有効値チェック(任意)
-                    $display_type = MigrationUtils::getArrayValue($check_url_query_array, 'display_type', null, null);
-                    if ($display_type) {
-                        if ((int)$display_type <= 8) {
-                            // OK ※イレギュラーだけど0,-1,-2...でも表示可
-                        } else {
-                            // NG
-                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|display_type対象外', $url, $nc3_block);
-                            return;
-                        }
-                    }
-
-                    // OK
-                    return;
-                }
-
-            }
-        }
-
-        // 外部リンク
-        // 内部リンクの直ファイル指定の存在チェック。例）http://localhost:8080/htdocs/install/logo.gif
-        // if ($this->checkDeadLinkOutside($check_url, $nc3_plugin_key, $nc3_block)) {
-        //     // 外部OK=移行対象外 (link_checkログには吐かない)
-        //     $this->putMonitor(3, $nc3_plugin_key . '|内部リンク＋外部リンクチェックOK|移行対象外URL', $url, $nc3_block);
-        // } else {
-        //     // 外部NG
-        //     $header = get_headers($check_url, true);
-        //     $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク＋外部リンクチェックNG|未対応URL|' . $header[0], $url, $nc3_block);
-        // }
-
-        // 移行対象外 (link_checkログには吐かない)
-        $this->putMonitor(3, $nc3_plugin_key . '|内部リンク|移行対象外URL', $url, $nc3_block);
-    }
-
-    /**
      * エクスポート・インポートの初期処理
      */
     private function migrationInit()
@@ -6208,5 +5321,892 @@ trait MigrationNc3ExportTrait
             4 => StatusType::approval_pending,  // 差し戻しは承認待ちへ
         ];
         return $convert_statuses[$nc3_status] ?? StatusType::active;
+    }
+
+    /**
+     * NC3のリンク切れチェック
+     */
+    private function checkDeadLinkNc2($url, $nc3_plugin_key = null, $nc3_block = null)
+    {
+        $scheme = parse_url($url, PHP_URL_SCHEME);
+
+        if (in_array($scheme, ['http', 'https'])) {
+
+            $nc3_base_url = $this->getMigrationConfig('basic', 'check_deadlink_nc3_base_url', '');
+            if (empty($nc3_base_url)) {
+                $this->putLinkCheck(3, 'check_deadlink_nc3_base_url未設定', 'migration_config.iniの [basic] check_deadlink_nc3_base_url を設定してください');
+            }
+
+            $domain = str_replace("https://", "", $nc3_base_url);
+            $domain = str_replace("http://", "", $domain);
+
+            // 先頭がNC3のベースURL
+            if (preg_match("/^http:\/\/{$domain}|^https:\/\/{$domain}/", $url)) {
+                // 内部リンク
+                $this->checkDeadLinkInsideNc2($url, $nc3_plugin_key, $nc3_block);
+            } else {
+                // 外部リンク
+                $this->checkDeadLinkOutside($url, $nc3_plugin_key, $nc3_block);
+            }
+
+        } elseif (is_null($scheme)) {
+            // "{{CORE_BASE_URL}}/images/comp/textarea/titleicon/icon-weather9.gif" 等はここで処理
+
+            // 内部リンク
+            $this->checkDeadLinkInsideNc2($url, $nc3_plugin_key, $nc3_block);
+        } else {
+            // 対象外
+            $this->putLinkCheck(3, $nc3_plugin_key . '|リンク切れチェック対象外', $url, $nc3_block);
+        }
+    }
+
+    /**
+     * 外部URLのリンク切れチェック
+     */
+    private function checkDeadLinkOutside($url, $nc3_plugin_key, $nc3_block): bool
+    {
+        // タイムアウト(秒)を変更
+        ini_set('default_socket_timeout', 3);
+
+        stream_context_set_default([
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+            ],
+        ]);
+
+        // 独自でエラーをcatchする
+        set_error_handler(function ($severity, $message) {
+            throw new \Exception($message);
+        });
+
+        try {
+            $headers = get_headers($url, true);
+        } catch (\Exception $e) {
+            // NG
+            $this->putLinkCheck(3, $nc3_plugin_key . '|外部リンク|リンク切れ|' . $e->getMessage(), $url, $nc3_block);
+            return false;
+
+        } finally {
+            // エラーハンドリングを元に戻す
+            restore_error_handler();
+
+            // タイムアウト(秒)を元に戻す
+            ini_restore('default_socket_timeout');
+        }
+
+
+        $i = 0;
+        while (!isset($headers[$i])) {
+            if (stripos($headers[$i], "200") !== false) {
+                // OK
+                return true;
+            } elseif (stripos($headers[$i], "301") !== false) {
+                // 301リダイレクトのため、次要素の $header でチェック
+            } elseif (stripos($headers[$i], "302") !== false) {
+                // OK
+                return true;
+            } else {
+                // NG
+                $this->putLinkCheck(3, $nc3_plugin_key . '|外部リンク|リンク切れ|' . $headers[$i], $url, $nc3_block);
+                return false;
+            }
+            $i++;
+        }
+
+        // NG. 基本ここには到達しない想定
+        $this->putLinkCheck(3, $nc3_plugin_key . '|外部リンク|リンク切れ', $url, $nc3_block);
+        return false;
+    }
+
+    /**
+     * 内部URL(nc3)のリンク切れチェック
+     */
+    private function checkDeadLinkInsideNc2($url, $nc3_plugin_key = null, $nc3_block = null)
+    {
+
+        // >>> parse_url("http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=42&page_id=0&display_type=2#_active_center_42")
+        // => [
+        //      "scheme" => "http",
+        //      "host" => "localhost",
+        //      "port" => 8080,
+        //      "path" => "/index.php",
+        //      "query" => "action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=42&page_id=0&display_type=2",
+        //      "fragment" => "_active_center_42",
+        //    ]
+        //
+        // >>> parse_url("http://localhost:8080/新規カテゴリ2/新規カテゴリ2-1/新規カテゴリ2-1-1/")
+        // => [
+        //      "scheme" => "http",
+        //      "host" => "localhost",
+        //      "port" => 8080,
+        //      "path" => "/新規カテゴリ2/新規カテゴリ2-1/新規カテゴリ2-1-1/",
+        //    ]
+
+        $nc3_base_url = $this->getMigrationConfig('basic', 'check_deadlink_nc3_base_url', '');
+
+        // &amp; => & 等のデコード
+        $check_url = htmlspecialchars_decode($url);
+        // {{CORE_BASE_URL}} 置換
+        $check_url = str_replace("{{CORE_BASE_URL}}", $nc3_base_url, $check_url);
+
+        $check_url_path = parse_url($check_url, PHP_URL_PATH);
+        $check_url_query = parse_url($check_url, PHP_URL_QUERY);
+
+        // トップページ
+        // ---------------------------------
+        // http://localhost:8080/
+        // http://localhost:8080
+        // /
+        // ./
+        // /index.php
+        // ./index.php
+        // http://localhost:8080/index.php
+        // ---------------------------------
+        // (pathがトップページに該当するもの＋queryなし)は、OK扱いにする
+        if (in_array($check_url_path, [null, '/', './', '/index.php', './index.php']) && is_null($check_url_query)) {
+            return;
+        }
+        // ---------------------------------
+        // http://localhost:8080/?lang=japanese
+        // http://localhost:8080/?lang=english
+        // http://localhost:8080/?lang=chinese
+        // ---------------------------------
+        // queryあり＋pathがトップページに該当するもの＋queryはlang１つだけ、はOK扱いにする
+        parse_str($check_url_query, $check_url_query_array);
+        if ($check_url_query_array) {
+            $lang = MigrationUtils::getArrayValue($check_url_query_array, 'lang', null, null);
+            if (in_array($check_url_path, ['/', './', '/index.php', './index.php']) && count($check_url_query_array) === 1 && $lang) {
+                if (in_array($lang, ['japanese', 'english', 'chinese'])) {
+                    // OK
+                } else {
+                    // NG
+                    $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|lang値の間違い', $url, $nc3_block);
+                }
+                return;
+            }
+        }
+        // 以下 check_url_path は値が存在する
+
+        // ページ＋mod_rewrite
+        // ---------------------------------
+        // http://localhost:8080/カウンター/
+        // http://localhost:8080/group/グループ１/
+        // http://localhost:8080/group/グループ１/サブグループ１/
+        // http://localhost:8080/新規カテゴリ2/新規カテゴリ2-1/新規カテゴリ2-1-1/
+        // ---------------------------------
+        $check_page_permalink = trim($check_url_path, '/');
+        if ($check_page_permalink) {
+            // 頭とお尻の/を取り除いたpath + 空以外 の permalink でページの存在チェック
+            $nc3_page = Nc2Page::where('permalink', trim($check_url_path, '/'))->where('permalink', '!=', '')->first();
+            if ($nc3_page) {
+                // ページデータあり. チェックOK
+                return;
+            }
+        }
+
+        // ページ（mod_rewriteなし. page_id指定）
+        // ---------------------------------
+        // http://localhost:8080/?page_id=16
+        // ---------------------------------
+        if ($check_url_query_array) {
+            // >>> parse_str("page_id=16", $result)
+            // >>> $result
+            // => [
+            //      "page_id" => "16",
+            //    ]
+            //
+            // >>> parse_str("action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=42&page_id=0&display_type=2", $result)
+            // >>> $result
+            // => [
+            //      "action" => "pages_view_main",
+            //      "active_center" => "reservation_view_main_init",
+            //      "reserve_details_id" => "19",
+            //      "active_block_id" => "42",
+            //      "page_id" => "0",
+            //      "display_type" => "2",
+            //    ]
+            $page_id = MigrationUtils::getArrayValue($check_url_query_array, 'page_id', null, null);
+            if ($page_id) {
+                $nc3_page = Nc2Page::where('page_id', $page_id)->first();
+                if ($nc3_page) {
+                    // ページデータあり. チェックOK
+                } else {
+                    // NG
+                    $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|ページデータなし', $url, $nc3_block);
+                }
+                return;
+            }
+        }
+
+        // ダウンロードURL（ファイル・画像）
+        // ---------------------------------
+        // (画像) ./?action=common_download_main&upload_id=10
+        // (添付) ./?action=common_download_main&upload_id=11
+        // ---------------------------------
+        if ($check_url_query_array) {
+            $action = MigrationUtils::getArrayValue($check_url_query_array, 'action', null, null);
+            if ($action == 'common_download_main') {
+                $upload_id = MigrationUtils::getArrayValue($check_url_query_array, 'upload_id', null, null);
+                if ($upload_id) {
+                    $nc3_upload = Nc2Upload::where('upload_id', $upload_id)->first();
+                    if ($nc3_upload) {
+                        // アップロードデータあり. チェックOK
+                    } else {
+                        // NG
+                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|アップロードデータなし', $url, $nc3_block);
+                    }
+                } else {
+                    // NG
+                    $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|common_download_mainでアップロードIDなし', $url, $nc3_block);
+                }
+                return;
+            }
+        }
+
+        // ---------------------------------
+        // 新着表示の各リンク
+        // ---------------------------------
+        // (中央エリアに表示)
+        //   (action)active_center & active_block_id(任意)
+        //
+        //   (施設予約)       http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=42&page_id=0&display_type=2#_active_center_42
+        //   (カレンダー)     http://localhost:8080/index.php?action=pages_view_main&active_center=calendar_view_main_init&plan_id=42&active_block_id=11&page_id=1&display_type=5#_active_center_11
+        //   active_block_idなしでも表示できる
+        //   (施設予約)       http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&page_id=0&display_type=2#_active_center_42
+        //   (カレンダー)     http://localhost:8080/index.php?action=pages_view_main&active_center=calendar_view_main_init&plan_id=42&page_id=1&display_type=5#_active_center_11
+        //   (検索)          ./index.php?action=pages_view_main&active_center=search_view_main_center
+        //
+        //   (手動で active_center 入れてリンク作成)
+        //   (キャビネット)   http://localhost:8080/index.php?action=pages_view_main&active_center=cabinet_view_main_init&cabinet_id=2&folder_id=&block_id=69#_69
+        // active_center でblock_id無でもトップページとして表示できる
+        //   (キャビネット)   http://localhost:8080/index.php?action=pages_view_main&active_center=cabinet_view_main_init&cabinet_id=2&folder_id=#_69
+        // active_center で存在しないblock_idは「データの取得失敗」エラーで表示できない
+        //   (キャビネット)   http://localhost:8080/index.php?action=pages_view_main&active_center=cabinet_view_main_init&cabinet_id=2&folder_id=&block_id=699999#_69
+        // ---------------------------------
+        // (通常モジュール)
+        //   (action)active_action & block_id(必須)
+        //
+        //   (キャビネット)   http://localhost:8080/index.php?action=pages_view_main&active_action=cabinet_view_main_init&cabinet_id=2&folder_id=&block_id=69#_69
+        //   (掲示板)        http://localhost:8080/index.php?action=pages_view_main&active_action=bbs_view_main_post&post_id=9&block_id=56#_56
+        //   (フォトアルバム) http://localhost:8080/index.php?action=pages_view_main&active_action=photoalbum_view_main_init&album_id=1&block_id=68#photoalbum_album_68_1
+        //
+        //   (手動で block_id など修正してリンク作成)
+        // active_action でblock_id無は「キャビネット削除された可能性」エラーで表示できない
+        //   (キャビネット)   http://localhost:8080/index.php?action=pages_view_main&active_action=cabinet_view_main_init&cabinet_id=2&folder_id=#_69
+        // active_action で存在しないblock_idは「キャビネット削除された可能性」エラーで表示できない
+        //   (キャビネット)   http://localhost:8080/index.php?action=pages_view_main&active_action=cabinet_view_main_init&cabinet_id=2&folder_id=&block_id=699999#_69
+        //
+        //   (pages_view_main 内での active_action処理の調査)
+        //   $blocks[$count]['full_path'] = BASE_URL.INDEX_FILE_NAME."?action=".$block['action_name']."&block_id=".$block['block_id']."&page_id=".$block['page_id'];    //絶対座標に変換
+        //   (掲示板ページ表示)       http://localhost:8080/index.php?action=pages_view_main&active_action=bbs_view_main_post&post_id=9&block_id=56#_56
+        //                           ↓
+        //   (掲示板ブロックだけ表示)  http://localhost:8080/index.php?action=bbs_view_main_post&post_id=9&block_id=56&page_id=33#_56
+        //   (掲示板ブロックだけ表示)  http://localhost:8080/index.php?action=bbs_view_main_post&post_id=9&block_id=56#_56    // page_idなくても表示できた
+        //
+        // ---------------------------------
+        // 検索結果の各リンク
+        // ---------------------------------
+        // (お知らせ)   http://localhost:8080/index.php?action=pages_view_main&block_id=72&page_id=50&active_action=announcement_view_main_init#_72
+        // (掲示板)     http://localhost:8080/index.php?action=pages_view_main&block_id=56&active_action=bbs_view_main_post&bbs_id=3&post_id=9#_56
+        // (カレンダー) http://localhost:8080/index.php?action=pages_view_main&page_id=13&active_center=calendar_view_main_init&date=20210811&current_time=000000&display_type=5
+        // ---------------------------------
+        //
+        // NC3モジュール名| 新着 | 検索 | リンクチェック対象
+        // お知らせ         o      o     o
+        // アンケート       o      -     o
+        // Todo            o      o     o
+        // カレンダー       o      o     o
+        // 掲示板           o      o     o
+        // キャビネット     o      o     o
+        // レポート         o      o     o
+        // 小テスト         o      -     o
+        // 施設予約         o      o     o
+        // 日誌             o      o     o
+        // フォトアルバム    o      -     o
+        // 汎用データベース  o      o     o
+        // 回覧板           o      o     o
+        // FAQ              -      o     o
+        // 検索             -      -     o
+        // ---------------------------------
+
+        if ($check_url_query_array) {
+
+            $action = MigrationUtils::getArrayValue($check_url_query_array, 'action', null, null);
+            if ($action == 'pages_view_main') {
+
+                // (通常モジュール)
+                //   (action)active_action & block_id(必須)         例：掲示板, お知らせ, キャビネット等
+                // (中央エリアに表示)
+                //   (action)active_center & active_block_id(任意)  例：カレンダー, 施設予約, 検索
+                $active_action = MigrationUtils::getArrayValue($check_url_query_array, 'active_action', null, null);
+                $active_center = MigrationUtils::getArrayValue($check_url_query_array, 'active_center', null, null);
+
+                if ($active_action) {
+                    // block存在チェック(必須)
+                    $block_id = MigrationUtils::getArrayValue($check_url_query_array, 'block_id', null, null);
+                    $check_nc3_block = Nc2Block::where('block_id', $block_id)->first();
+                    if ($check_nc3_block) {
+                        // OK
+                    } else {
+                        // NG
+                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|blockデータなし', $url, $nc3_block);
+                        return;
+                    }
+                }
+
+                if ($active_action || $active_center) {
+                    // page_id存在チェック(任意)
+                    $page_id = MigrationUtils::getArrayValue($check_url_query_array, 'page_id', null, null);
+                    if ($page_id) {
+                        $check_nc3_page = Nc2Page::where('page_id', $page_id)->first();
+                        if ($check_nc3_page) {
+                            // OK
+                        } else {
+                            // NG
+                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|pageデータなし', $url, $nc3_block);
+                            return;
+                        }
+                    }
+                }
+
+                // (通常モジュール) active_action
+                // --------------------------------
+                if ($active_action == 'bbs_view_main_post') {
+                    // (掲示板パラメータ)
+                    //   block_id 必須
+                    //   post_id  必須
+                    //   bbs_id   任意. あれば存在チェック
+                    //
+                    // (掲示板-新着)
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=bbs_view_main_post&post_id=9&block_id=56#_56
+                    // block_idを存在しないIDにすると、「該当ページに配置してある掲示板が削除された可能性があります。」エラー
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=bbs_view_main_post&post_id=9&block_id=56999999999999#_56
+                    // post_idを存在しないIDにすると、ページは開けて、掲示板の箇所が「入力値が不正です。不正にアクセスされた可能性があります。」エラー
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=bbs_view_main_post&post_id=99999999999999&block_id=56#_56
+                    //
+                    // (掲示板-検索)
+                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=56&active_action=bbs_view_main_post&bbs_id=3&post_id=9#_56
+                    // bbs_idなくても表示できた
+                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=56&active_action=bbs_view_main_post&post_id=9#_56
+                    // bbs_idを存在しないIDにすると、ページは開けて、掲示板の箇所が「入力値が不正です。不正にアクセスされた可能性があります。」エラー
+                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=56&active_action=bbs_view_main_post&bbs_id=39999999&post_id=9#_56
+                    //
+                    // (掲示板-active_center, 手動でリンク作成を想定)
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_block_id=56&active_center=bbs_view_main_post&bbs_id=3&post_id=9#_56
+                    // active_block_idを存在しないID, active_block_id設定なしにしても、詳細表示部分が空白なだけで、エラーにはならない。
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_block_id=56999999999&active_center=bbs_view_main_post&bbs_id=3&post_id=9#_56
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=bbs_view_main_post&bbs_id=3&post_id=9#_56
+
+                    // bbs_post存在チェック
+                    $post_id = MigrationUtils::getArrayValue($check_url_query_array, 'post_id', null, null);
+                    $check_nc3_bbs_post = Nc2BbsPost::where('post_id', $post_id)->first();
+                    if ($check_nc3_bbs_post) {
+                        // OK
+                    } else {
+                        // NG
+                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|bbs_postデータなし', $url, $nc3_block);
+                        return;
+                    }
+
+                    // bbs_id存在チェック(任意)
+                    $bbs_id = MigrationUtils::getArrayValue($check_url_query_array, 'bbs_id', null, null);
+                    if ($bbs_id) {
+                        $check_nc3_bbs = Nc2Bbs::where('bbs_id', $bbs_id)->first();
+                        if ($check_nc3_bbs) {
+                            // OK
+                        } else {
+                            // NG
+                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|bbsデータなし', $url, $nc3_block);
+                            return;
+                        }
+                    }
+
+                    // OK
+                    return;
+
+                } elseif ($active_action == 'announcement_view_main_init') {
+                    // (お知らせパラメータ)
+                    //   block_id 必須
+                    //   page_id  任意. あれば存在チェック
+                    //
+                    // (お知らせ-新着)
+                    // http://localhost:8080/index.php?action=pages_view_main&&block_id=72#_72
+                    //
+                    // (お知らせ-検索)
+                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=72&page_id=50&active_action=announcement_view_main_init#_72
+                    // page_idなしでも表示できる
+                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=72&active_action=announcement_view_main_init#_72
+                    // page_idを存在しないIDにすると「データ取得に失敗」エラー
+                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=72&page_id=50999999&active_action=announcement_view_main_init#_72
+                    // block_idがない or 存在しないIDにすると、「該当ページに配置してある掲示板が削除された可能性があります。」エラー
+                    //   http://localhost:8080/index.php?action=pages_view_main&page_id=50&active_action=announcement_view_main_init#_72
+                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=7299999&page_id=50&active_action=announcement_view_main_init#_72
+
+                    // OK
+                    return;
+
+                } elseif ($active_action == 'journal_view_main_detail') {
+                    // (日誌パラメータ)
+                    //   block_id       必須
+                    //   post_id        必須
+                    //   comment_flag   任意. (チェック不要). 1:コメント入力あり 1以外:コメント入力なし
+                    //
+                    // (日誌-新着)
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=journal_view_main_detail&post_id=4&comment_flag=1&block_id=34#_34
+                    // post_idなし or 存在しないIDにすると「記事は存在しいません」エラー
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=journal_view_main_detail&comment_flag=1&block_id=34#_34
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=journal_view_main_detail&post_id=49999&comment_flag=1&block_id=34#_34
+                    // comment_flagなし or 変な値でも記事表示できる＋コメント入力なし
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=journal_view_main_detail&post_id=4&block_id=34#_34
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=journal_view_main_detail&post_id=4&comment_flag=199999&block_id=34#_34
+                    //
+                    // (日誌-検索)
+                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=34&active_action=journal_view_main_detail&post_id=4#_34
+
+                    // journal_post存在チェック
+                    $post_id = MigrationUtils::getArrayValue($check_url_query_array, 'post_id', null, null);
+                    $check_nc3_journal_post = Nc2JournalPost::where('post_id', $post_id)->first();
+                    if ($check_nc3_journal_post) {
+                        // OK
+                    } else {
+                        // NG
+                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|journal_postデータなし', $url, $nc3_block);
+                        return;
+                    }
+
+                    // OK
+                    return;
+
+                } elseif ($active_action == 'multidatabase_view_main_detail') {
+                    // (汎用DBパラメータ)
+                    //   block_id          必須
+                    //   multidatabase_id  必須
+                    //   content_id        必須
+                    //
+                    // (汎用DB-新着)
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=multidatabase_view_main_detail&content_id=4&multidatabase_id=1&block_id=51#_51
+                    // multidatabase_idなし or IDが存在しないと「入力値が不正」エラー
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=multidatabase_view_main_detail&content_id=4&block_id=51#_51
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=multidatabase_view_main_detail&content_id=4&multidatabase_id=19999&block_id=51#_51
+                    // content_idなし or IDが存在しないとコンテンツが存在しません」エラー
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=multidatabase_view_main_detail&multidatabase_id=1&block_id=51#_51
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=multidatabase_view_main_detail&content_id=499999&multidatabase_id=1&block_id=51#_51
+                    //
+                    // (汎用DB-検索)
+                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=51&active_action=multidatabase_view_main_detail&content_id=4&multidatabase_id=1&block_id=51#_51
+
+                    // multidatabase存在チェック
+                    $multidatabase_id = MigrationUtils::getArrayValue($check_url_query_array, 'multidatabase_id', null, null);
+                    $check_nc3_multidatabase = Nc2Multidatabase::where('multidatabase_id', $multidatabase_id)->first();
+                    if ($check_nc3_multidatabase) {
+                        // OK
+                    } else {
+                        // NG
+                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|multidatabaseデータなし', $url, $nc3_block);
+                        return;
+                    }
+
+                    // multidatabase_content存在チェック
+                    $content_id = MigrationUtils::getArrayValue($check_url_query_array, 'content_id', null, null);
+                    $check_nc3_multidatabase_content = Nc2MultidatabaseContent::where('content_id', $content_id)->first();
+                    if ($check_nc3_multidatabase_content) {
+                        // OK
+                    } else {
+                        // NG
+                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|multidatabase_contentデータなし', $url, $nc3_block);
+                        return;
+                    }
+
+                    // OK
+                    return;
+
+                } elseif ($active_action == 'cabinet_view_main_init') {
+                    // (キャビネットパラメータ)
+                    //   block_id          必須
+                    //   cabinet_id        任意.
+                    //   folder_id         任意.
+                    //
+                    // (キャビネット-新着)
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=cabinet_view_main_init&cabinet_id=2&folder_id=&block_id=69#_69
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=cabinet_view_main_init&block_id=69#_69
+                    // cabinet_idなしは表示できる
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=cabinet_view_main_init&folder_id=&block_id=69#_69
+                    // cabinet_idのIDが存在しないと「公開されているキャビネットはありません」エラー
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=cabinet_view_main_init&cabinet_id=2999999&folder_id=&block_id=69#_69
+                    // folder_idなしは表示できる
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=cabinet_view_main_init&cabinet_id=2&block_id=69#_69
+                    // folder_idのIDが存在しないと「権限が不正」エラー
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=cabinet_view_main_init&cabinet_id=2&folder_id=99999&block_id=69#_69
+                    //
+                    // (キャビネット-検索)
+                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=69&active_action=cabinet_view_main_init&cabinet_id=2&folder_id=0#_69
+
+                    // cabinet_manage存在チェック(任意)
+                    $cabinet_id = MigrationUtils::getArrayValue($check_url_query_array, 'cabinet_id', null, null);
+                    if ($cabinet_id) {
+                        $check_nc3_cabinet_manage = Nc2CabinetManage::where('cabinet_id', $cabinet_id)->first();
+                        if ($check_nc3_cabinet_manage) {
+                            // OK
+                        } else {
+                            // NG
+                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|cabinet_manageデータなし', $url, $nc3_block);
+                            return;
+                        }
+                    }
+
+                    // folder_id(=file_id)のcabinet_file存在チェック(任意)
+                    $folder_id = MigrationUtils::getArrayValue($check_url_query_array, 'folder_id', null, null);
+                    if ($folder_id) {
+                        $check_nc3_cabinet_file = Nc2CabinetFile::where('file_id', $folder_id)->first();
+                        if ($check_nc3_cabinet_file) {
+                            // OK
+                        } else {
+                            // NG
+                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|cabinet_fileデータなし.folder_id=file_id', $url, $nc3_block);
+                            return;
+                        }
+                    }
+
+                    // OK
+                    return;
+
+                } elseif ($active_action == 'faq_view_main_init') {
+                    // (FAQパラメータ)
+                    //   block_id          必須
+                    //   question_id       任意.（チェック不要）
+                    //
+                    // (FAQ-検索-のみ)
+                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=35&active_action=faq_view_main_init&question_id=4#_faq_answer_4
+                    // question_idなし or 存在しないIDでも表示できる
+                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=35&active_action=faq_view_main_init#_faq_answer_4
+                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=35&active_action=faq_view_main_init&question_id=4999#_faq_answer_4
+
+                    // OK
+                    return;
+
+                } elseif ($active_action == 'photoalbum_view_main_init') {
+                    // (フォトアルバムパラメータ)
+                    //   block_id          必須
+                    //   album_id          任意.（チェック不要）
+                    //
+                    // (フォトアルバム-新着-のみ)
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=photoalbum_view_main_init&album_id=1&block_id=68#photoalbum_album_68_1
+                    // album_idなし or 存在しないIDでも表示できる
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=photoalbum_view_main_init&block_id=68#photoalbum_album_68_1
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=photoalbum_view_main_init&album_id=19999999999999&block_id=68#photoalbum_album_68_1
+
+                    // OK
+                    return;
+
+                } elseif ($active_action == 'assignment_view_main_whatsnew' || $active_action == 'assignment_view_main_init') {
+                    // (レポートパラメータ)
+                    //   block_id          必須
+                    //   (新着：assignment_view_main_whatsnew) assignment_id     必須
+                    //   (検索：assignment_view_main_init)     assignment_id     任意.
+                    //
+                    // (レポート-新着)
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=assignment_view_main_whatsnew&assignment_id=1&block_id=74#_74
+                    // assignment_idなし or 存在しないIDだと「入力値が不正」エラー
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=assignment_view_main_whatsnew&block_id=74#_74
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=assignment_view_main_whatsnew&assignment_id=1999999&block_id=74#_74
+                    //
+                    // (レポート-検索)
+                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=74&active_action=assignment_view_main_init&assignment_id=1#_74
+                    // assignment_idなしでも表示できる
+                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=74&active_action=assignment_view_main_init#_74
+                    // assignment_idで存在しないIDだと「公開されている課題はありません」エラー
+                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=74&active_action=assignment_view_main_init&assignment_id=1999999#_74
+
+
+                    if ($active_action == 'assignment_view_main_whatsnew') {
+                        // (レポート-新着)
+                        // assignment存在チェック（必須）
+                        $assignment_id = MigrationUtils::getArrayValue($check_url_query_array, 'assignment_id', null, null);
+                        $check_nc3_assignment = Nc2Assignment::where('assignment_id', $assignment_id)->first();
+                        if ($check_nc3_assignment) {
+                            // OK
+                        } else {
+                            // NG
+                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|assignmentデータなし', $url, $nc3_block);
+                            return;
+                        }
+
+                    } elseif ($active_action == 'assignment_view_main_init') {
+                        // (レポート-検索)
+                        // assignment存在チェック（任意）
+                        $assignment_id = MigrationUtils::getArrayValue($check_url_query_array, 'assignment_id', null, null);
+                        if ($assignment_id) {
+                            $check_nc3_assignment = Nc2Assignment::where('assignment_id', $assignment_id)->first();
+                            if ($check_nc3_assignment) {
+                                // OK
+                            } else {
+                                // NG
+                                $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|assignmentデータなし', $url, $nc3_block);
+                                return;
+                            }
+                        }
+                    }
+
+                    // OK
+                    return;
+
+                } elseif ($active_action == 'questionnaire_view_main_whatsnew') {
+                    // (アンケートパラメータ)
+                    //   block_id          必須
+                    //   questionnaire_id  必須
+                    //
+                    // (アンケート-新着-のみ)
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=questionnaire_view_main_whatsnew&questionnaire_id=1&block_id=75#_75
+                    // questionnaire_idなし or 存在しないIDだと「入力値が不正」エラー
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=questionnaire_view_main_whatsnew&block_id=75#_75
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=questionnaire_view_main_whatsnew&questionnaire_id=19999999&block_id=75#_75
+
+                    // questionnaire存在チェック
+                    $questionnaire_id = MigrationUtils::getArrayValue($check_url_query_array, 'questionnaire_id', null, null);
+                    $check_nc3_questionnaire = Nc2Questionnaire::where('questionnaire_id', $questionnaire_id)->first();
+                    if ($check_nc3_questionnaire) {
+                        // OK
+                    } else {
+                        // NG
+                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|questionnaireデータなし', $url, $nc3_block);
+                        return;
+                    }
+
+                    // OK
+                    return;
+
+                } elseif ($active_action == 'quiz_view_main_whatsnew') {
+                    // (小テストパラメータ)
+                    //   block_id          必須
+                    //   quiz_id           必須
+                    //
+                    // (小テスト-新着-のみ)
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=quiz_view_main_whatsnew&quiz_id=1&block_id=77#_77
+                    // quiz_idなし or 存在しないIDだと「入力値が不正」エラー
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=quiz_view_main_whatsnew&block_id=77#_77
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=quiz_view_main_whatsnew&quiz_id=1999999&block_id=77#_77
+
+                    // quiz存在チェック
+                    $quiz_id = MigrationUtils::getArrayValue($check_url_query_array, 'quiz_id', null, null);
+                    $check_nc3_quiz = Nc2Quiz::where('quiz_id', $quiz_id)->first();
+                    if ($check_nc3_quiz) {
+                        // OK
+                    } else {
+                        // NG
+                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|quizデータなし', $url, $nc3_block);
+                        return;
+                    }
+
+                    // OK
+                    return;
+
+                } elseif ($active_action == 'todo_view_main_init') {
+                    // (Todoパラメータ)
+                    //   block_id          必須
+                    //   todo_id           任意
+                    //   page_id           任意
+                    //
+                    // (Todo-新着)
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=todo_view_main_init&todo_id=11&block_id=76#_76
+                    // todo_idなし だと表示できる
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=todo_view_main_init&block_id=76#_76
+                    // todo_idが存在しないID だと「公開されているTodoリストはありません」エラー
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=todo_view_main_init&todo_id=11999999&block_id=76#_76
+                    //
+                    // (Todo-検索)
+                    //   http://localhost:8080/index.php?action=pages_view_main&block_id=76&page_id=55&active_action=todo_view_main_init#_76
+
+                    // todo存在チェック（任意）
+                    $todo_id = MigrationUtils::getArrayValue($check_url_query_array, 'todo_id', null, null);
+                    if ($todo_id) {
+                        $check_nc3_todo = Nc2Todo::where('todo_id', $todo_id)->first();
+                        if ($check_nc3_todo) {
+                            // OK
+                        } else {
+                            // NG
+                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|todoデータなし', $url, $nc3_block);
+                            return;
+                        }
+                    }
+
+                    // OK
+                    return;
+
+                } elseif ($active_action == 'circular_view_main_detail') {
+                    // (回覧板パラメータ)
+                    //   block_id          必須
+                    //   circular_id       必須
+                    //   page_id           任意
+                    //   room_id           任意（チェック不要）
+                    //
+                    // (回覧板-新着)
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=circular_view_main_detail&circular_id=2&page_id=53&block_id=78#_78
+                    // circular_idなし or 存在しないID だと「既に削除されています」エラー
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=circular_view_main_detail&page_id=53&block_id=78#_78
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=circular_view_main_detail&circular_id=299999&page_id=53&block_id=78#_78
+                    //
+                    // (回覧板-検索)
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=circular_view_main_detail&block_id=78&room_id=1&circular_id=2#_78
+                    // room_idなし or 存在しないID でも表示できる
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=circular_view_main_detail&block_id=78&circular_id=2#_78
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_action=circular_view_main_detail&block_id=78&room_id=19999&circular_id=2#_78
+
+                    // circular存在チェック
+                    $circular_id = MigrationUtils::getArrayValue($check_url_query_array, 'circular_id', null, null);
+                    $check_nc3_circular = Nc2Circular::where('circular_id', $circular_id)->first();
+                    if ($check_nc3_circular) {
+                        // OK
+                    } else {
+                        // NG
+                        $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|circularデータなし', $url, $nc3_block);
+                        return;
+                    }
+
+                    // OK
+                    return;
+                }
+
+
+                // (中央エリアに表示) active_center
+                // --------------------------------
+                if ($active_center == 'search_view_main_center') {
+                    // （検索-初期インストール配置のヘッダー検索お知らせ）
+                    //   ./index.php?action=pages_view_main&active_center=search_view_main_center
+                    // （検索-active_action, 手動でリンク作成を想定
+                    //   → 対応しない
+                    //   block_idがないと、「該当ページに配置してある検索が削除された可能性があります。」エラー
+                    //   ./index.php?action=pages_view_main&active_action=search_view_main_center
+
+                    // OK
+                    return;
+
+                } elseif ($active_center == 'reservation_view_main_init') {
+                    // (施設予約-新着)
+                    //   active_block_id      任意. (チェック不要)
+                    //   page_id              任意. あれば存在チェック
+                    //   reserve_details_id   任意. (チェック不要)
+                    //   display_type         任意. あれば値チェック=1|2|3
+                    //   reserve_id           任意. (チェック不要)
+                    //
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=42&page_id=0&display_type=2#_active_center_42
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init
+                    // active_block_idなしでも, 存在しないIDでも表示できる
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&page_id=0&display_type=2#_active_center_42
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=4299999999999999&page_id=0&display_type=2#_active_center_42
+                    // page_idなしでも表示できる
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&display_type=2#_active_center_42
+                    // page_idを存在しないIDにすると「データ取得に失敗」エラー
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&page_id=9999999&display_type=2#_active_center_42
+                    // reserve_details_idなし or 存在しないIDでも表示できる. あれば該当日の一覧を表示
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=1999999999&active_block_id=42&page_id=0&display_type=2#_active_center_42
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&active_block_id=42&page_id=0&display_type=2#_active_center_42
+                    // display_typeなしでも表示できる
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=42&page_id=0#_active_center_42
+                    // display_typeの「入力値が不正です」エラー
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=42&page_id=0&display_type=999#_active_center_42
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=42&page_id=0&display_type=4#_active_center_42
+                    //
+                    // >>> parse_str("action=pages_view_main&active_center=reservation_view_main_init&reserve_details_id=19&active_block_id=42&page_id=0&display_type=2", $result)
+                    // >>> $result
+                    // => [
+                    //      "action" => "pages_view_main",
+                    //      "active_center" => "reservation_view_main_init",
+                    //      "reserve_details_id" => "19",
+                    //      "active_block_id" => "42",
+                    //      "page_id" => "0",
+                    //      "display_type" => "2",
+                    //    ]
+                    //
+                    // (施設予約-検索)
+                    //   http://localhost:8080/index.php?action=pages_view_main&page_id=13&active_center=reservation_view_main_init&reserve_id=74
+                    // reserve_id が存在しないIDでも表示できる
+                    //   http://localhost:8080/index.php?action=pages_view_main&page_id=13&active_center=reservation_view_main_init&reserve_id=74999999
+
+                    // display_typeの有効値チェック(任意)
+                    $display_type = MigrationUtils::getArrayValue($check_url_query_array, 'display_type', null, null);
+                    if ($display_type) {
+                        if ((int)$display_type <= 3) {
+                            // OK 1|2|3, ※ イレギュラーだけど0,-1,-2...でも表示可
+                        } else {
+                            // NG
+                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|display_type対象外', $url, $nc3_block);
+                            return;
+                        }
+                    }
+
+                    // OK
+                    return;
+
+                } elseif ($active_center == 'calendar_view_main_init') {
+                    // (カレンダー-新着)
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=calendar_view_main_init&plan_id=42&active_block_id=11&page_id=1&display_type=5#_active_center_11
+                    // page_idなしでも表示できる
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=calendar_view_main_init&plan_id=42&active_block_id=11&display_type=5#_active_center_11
+                    // page_idを存在しないIDにすると「データ取得に失敗」エラー
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=calendar_view_main_init&plan_id=42&active_block_id=11&page_id=19999999999&display_type=5#_active_center_11
+                    // display_typeなしでも表示できる
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=calendar_view_main_init&plan_id=42&active_block_id=11&page_id=1#_active_center_11
+                    // display_type=0|-1|-2...は表示できちゃう
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=calendar_view_main_init&plan_id=42&active_block_id=11&page_id=1&display_type=-1#_active_center_11
+                    // display_typeの「入力値が不正です」エラー
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=calendar_view_main_init&plan_id=42&active_block_id=11&page_id=1&display_type=8#_active_center_11
+                    // plan_id なし or ID存在しなくても表示できる
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=calendar_view_main_init&active_block_id=11&page_id=1&display_type=5#_active_center_11
+                    //   http://localhost:8080/index.php?action=pages_view_main&active_center=calendar_view_main_init&plan_id=42999&active_block_id=11&page_id=1&display_type=5#_active_center_11
+                    //
+                    // http://localhost:8080/index.php?
+                    //   - action=pages_view_main
+                    //   - active_center=calendar_view_main_init
+                    //   - plan_id=42           任意. (チェック不要)
+                    //   - active_block_id=11
+                    //   - page_id=1            上にチェック処理あり
+                    //   o display_type=5       任意. あれば値チェック=1～8
+                    //   - #_active_center_11
+                    //
+                    // (カレンダー-検索)
+                    //   http://localhost:8080/index.php?action=pages_view_main&page_id=13&active_center=calendar_view_main_init&date=20210811&current_time=000000&display_type=5
+                    // date|current_time なし or 値が変な値でも表示できる
+                    //   http://localhost:8080/index.php?action=pages_view_main&page_id=13&active_center=calendar_view_main_init&display_type=5
+                    //   http://localhost:8080/index.php?action=pages_view_main&page_id=13&active_center=calendar_view_main_init&date=202108119999&current_time=0000009999&display_type=5
+                    //   http://localhost:8080/index.php?action=pages_view_main&page_id=13&active_center=calendar_view_main_init&date=20210811&display_type=5
+                    //
+                    // http://localhost:8080/index.php?
+                    //   - date=20210811        任意. (チェック不要)
+                    //   - current_time=000000  任意. (チェック不要)
+                    //   o display_type=5       任意. あれば値チェック=1～8
+
+                    // display_typeの有効値チェック(任意)
+                    $display_type = MigrationUtils::getArrayValue($check_url_query_array, 'display_type', null, null);
+                    if ($display_type) {
+                        if ((int)$display_type <= 8) {
+                            // OK ※イレギュラーだけど0,-1,-2...でも表示可
+                        } else {
+                            // NG
+                            $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク|display_type対象外', $url, $nc3_block);
+                            return;
+                        }
+                    }
+
+                    // OK
+                    return;
+                }
+
+            }
+        }
+
+        // 外部リンク
+        // 内部リンクの直ファイル指定の存在チェック。例）http://localhost:8080/htdocs/install/logo.gif
+        // if ($this->checkDeadLinkOutside($check_url, $nc3_plugin_key, $nc3_block)) {
+        //     // 外部OK=移行対象外 (link_checkログには吐かない)
+        //     $this->putMonitor(3, $nc3_plugin_key . '|内部リンク＋外部リンクチェックOK|移行対象外URL', $url, $nc3_block);
+        // } else {
+        //     // 外部NG
+        //     $header = get_headers($check_url, true);
+        //     $this->putLinkCheck(3, $nc3_plugin_key . '|内部リンク＋外部リンクチェックNG|未対応URL|' . $header[0], $url, $nc3_block);
+        // }
+
+        // 移行対象外 (link_checkログには吐かない)
+        $this->putMonitor(3, $nc3_plugin_key . '|内部リンク|移行対象外URL', $url, $nc3_block);
     }
 }
