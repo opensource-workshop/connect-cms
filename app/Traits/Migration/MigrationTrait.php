@@ -795,9 +795,7 @@ trait MigrationTrait
      */
     private function getNc2LoginIdFromNc2UserId($nc2_users, $nc2_user_id)
     {
-        $nc2_user = $nc2_users->firstWhere('user_id', $nc2_user_id);
-        $nc2_user = $nc2_user ?? new Nc2User();
-        return $nc2_user->login_id;
+        return Nc2User::getNc2LoginIdFromNc2UserId($nc2_users, $nc2_user_id);
     }
 
     /**
