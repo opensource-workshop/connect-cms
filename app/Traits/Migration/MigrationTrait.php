@@ -476,7 +476,7 @@ trait MigrationTrait
             Buckets::where('plugin_name', 'bbses')->delete();
             BbsFrame::truncate();
             MigrationMapping::where('target_source_table', 'bbses')->delete();
-            MigrationMapping::where('target_source_table', 'bbs_posts')->delete();
+            MigrationMapping::where('target_source_table', 'bbses_post')->delete();
         }
 
         if ($target == 'counters' || $target == 'all') {
