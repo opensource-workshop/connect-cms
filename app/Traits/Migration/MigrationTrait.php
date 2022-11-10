@@ -476,7 +476,7 @@ trait MigrationTrait
             Buckets::where('plugin_name', 'bbses')->delete();
             BbsFrame::truncate();
             MigrationMapping::where('target_source_table', 'bbses')->delete();
-            MigrationMapping::where('target_source_table', 'bbs_posts')->delete();
+            MigrationMapping::where('target_source_table', 'bbses_post')->delete();
         }
 
         if ($target == 'counters' || $target == 'all') {
@@ -3112,6 +3112,9 @@ trait MigrationTrait
                         if (array_key_exists('source_info', $blog_ini) && array_key_exists('module_name', $blog_ini['source_info']) && $blog_ini['source_info']['module_name'] == 'bbs') {
                             $target_source_table = 'bbses_post';
                         }
+                        if (array_key_exists('source_info', $blog_ini) && array_key_exists('plugin_key', $blog_ini['source_info']) && $blog_ini['source_info']['plugin_key'] == 'bbses') {
+                            $target_source_table = 'bbses_post';
+                        }
                         $mapping = MigrationMapping::create([
                             'target_source_table'  => $target_source_table,
                             'source_key'           => $post_source_keys[$post_index],
@@ -4321,7 +4324,7 @@ trait MigrationTrait
                         'bbs_id' => $bbs->id,
                         'title' => $tsv_cols[4],
                         'body' => $this->changeWYSIWYG($tsv_cols[5]),
-                        'thread_root_id' => $tsv_cols[9] === '0' ? 0 : $this->fetchMigratedKey('bbses_post', $tsv_cols[10]),
+                        'thread_root_id' => $tsv_cols[9] === '0' || $tsv_cols[9] === '' ? 0 : $this->fetchMigratedKey('bbses_post', $tsv_cols[10]),
                         'thread_updated_at' => $this->getDatetimeFromTsvAndCheckFormat(11, $tsv_cols, 11),
                         'first_committed_at' => $this->getDatetimeFromTsvAndCheckFormat(0, $tsv_cols, 0),
                         'status' => $tsv_cols[2],
@@ -4337,7 +4340,7 @@ trait MigrationTrait
                     $bbs_post->timestamps = false;
                     $bbs_post->save();
                     // 根記事の場合、保存後のid をthread_root_id にセットして更新
-                    if ($tsv_cols[9] === '0') {
+                    if ($tsv_cols[9] === '0' || $tsv_cols[9] === '') {
                         $bbs_post->thread_root_id = $bbs_post->id;
                         $bbs_post->save();
                     }
@@ -8177,7 +8180,7 @@ trait MigrationTrait
     /**
      *  NC2モジュール名の取得
      */
-    public function nc2GetModuleNames($action_names, $connect_change = true)
+    private function nc2GetModuleNames($action_names, $connect_change = true)
     {
         $available_connect_plugin_names = ['blogs', 'bbses', 'databases'];
         $ret = array();
@@ -8973,6 +8976,7 @@ trait MigrationTrait
             $journals_ini .= "[source_info]\n";
             $journals_ini .= "journal_id = " . $nc2_journal->journal_id . "\n";
             $journals_ini .= "room_id = " . $nc2_journal->room_id . "\n";
+            $journals_ini .= "space_type = " . $nc2_journal->space_type . "\n";   // スペースタイプ, 1:パブリックスペース, 2:グループスペース
             $journals_ini .= "module_name = \"journal\"\n";
             $journals_ini .= "created_at      = \"" . $this->getCCDatetime($nc2_journal->insert_time) . "\"\n";
             $journals_ini .= "created_name    = \"" . $nc2_journal->insert_user_name . "\"\n";
@@ -9273,8 +9277,8 @@ trait MigrationTrait
                 $mail_body = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_body);
             }
 
-            // 掲示板を日誌に移行する。
-            // Connect-CMS に掲示板ができたら、掲示板 to 掲示板の移行機能も追加する。
+            // 掲示板に移行する。
+            // [blog_base]等は、Connect-CMS 掲示板がなかった時、日誌に移行していた時の名残。
 
             $journals_ini = "";
             $journals_ini .= "[blog_base]\n";
