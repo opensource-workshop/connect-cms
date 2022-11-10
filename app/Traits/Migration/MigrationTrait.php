@@ -3112,6 +3112,9 @@ trait MigrationTrait
                         if (array_key_exists('source_info', $blog_ini) && array_key_exists('module_name', $blog_ini['source_info']) && $blog_ini['source_info']['module_name'] == 'bbs') {
                             $target_source_table = 'bbses_post';
                         }
+                        if (array_key_exists('source_info', $blog_ini) && array_key_exists('plugin_key', $blog_ini['source_info']) && $blog_ini['source_info']['plugin_key'] == 'bbses') {
+                            $target_source_table = 'bbses_post';
+                        }
                         $mapping = MigrationMapping::create([
                             'target_source_table'  => $target_source_table,
                             'source_key'           => $post_source_keys[$post_index],
@@ -4321,7 +4324,7 @@ trait MigrationTrait
                         'bbs_id' => $bbs->id,
                         'title' => $tsv_cols[4],
                         'body' => $this->changeWYSIWYG($tsv_cols[5]),
-                        'thread_root_id' => $tsv_cols[9] === '0' ? 0 : $this->fetchMigratedKey('bbses_post', $tsv_cols[10]),
+                        'thread_root_id' => $tsv_cols[9] === '0' || $tsv_cols[9] === '' ? 0 : $this->fetchMigratedKey('bbses_post', $tsv_cols[10]),
                         'thread_updated_at' => $this->getDatetimeFromTsvAndCheckFormat(11, $tsv_cols, 11),
                         'first_committed_at' => $this->getDatetimeFromTsvAndCheckFormat(0, $tsv_cols, 0),
                         'status' => $tsv_cols[2],
@@ -4337,7 +4340,7 @@ trait MigrationTrait
                     $bbs_post->timestamps = false;
                     $bbs_post->save();
                     // 根記事の場合、保存後のid をthread_root_id にセットして更新
-                    if ($tsv_cols[9] === '0') {
+                    if ($tsv_cols[9] === '0' || $tsv_cols[9] === '') {
                         $bbs_post->thread_root_id = $bbs_post->id;
                         $bbs_post->save();
                     }
