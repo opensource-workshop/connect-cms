@@ -2681,7 +2681,7 @@ trait MigrationTrait
         ]);
 
         // 管理者 group_users 作成
-        $admin_users_roles = UsersRoles::where('target', 'base')->where('role_name', 'role_article_admin')->get();
+        $admin_users_roles = UsersRoles::where('target', 'manage')->where('role_name', 'admin_system')->get();
         foreach ($admin_users_roles as $users_roles) {
             $group_user = GroupUser::updateOrCreate(
                 ['group_id' => $admin_group->id, 'user_id' => $users_roles->users_id],
@@ -8498,6 +8498,7 @@ trait MigrationTrait
             } elseif ($nc2_user->role_authority_id == 4) { // 4:一般
                 $users_ini .= "users_roles_base   = \"role_reporter\"\n";
             } elseif ($nc2_user->role_authority_id == 6) { // 6:事務局（デフォルト）
+                $users_ini .= "users_roles_manage = \"admin_page|admin_user\"\n";
                 $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
             } elseif ($nc2_user->role_authority_id == 7) { // 7:管理者（デフォルト）
                 $users_ini .= "users_roles_manage = \"admin_system\"\n";
