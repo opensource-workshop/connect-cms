@@ -2681,7 +2681,7 @@ trait MigrationTrait
         ]);
 
         // 管理者 group_users 作成
-        $admin_users_roles = UsersRoles::where('target', 'base')->where('role_name', 'role_article_admin')->get();
+        $admin_users_roles = UsersRoles::where('target', 'manage')->where('role_name', 'admin_system')->get();
         foreach ($admin_users_roles as $users_roles) {
             $group_user = GroupUser::updateOrCreate(
                 ['group_id' => $admin_group->id, 'user_id' => $users_roles->users_id],
