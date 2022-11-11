@@ -8498,6 +8498,7 @@ trait MigrationTrait
             } elseif ($nc2_user->role_authority_id == 4) { // 4:一般
                 $users_ini .= "users_roles_base   = \"role_reporter\"\n";
             } elseif ($nc2_user->role_authority_id == 6) { // 6:事務局（デフォルト）
+                $users_ini .= "users_roles_manage = \"admin_page|admin_user\"\n";
                 $users_ini .= "users_roles_base   = \"role_article_admin\"\n";
             } elseif ($nc2_user->role_authority_id == 7) { // 7:管理者（デフォルト）
                 $users_ini .= "users_roles_manage = \"admin_system\"\n";
