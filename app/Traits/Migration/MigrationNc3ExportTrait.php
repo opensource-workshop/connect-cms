@@ -4982,7 +4982,7 @@ trait MigrationNc3ExportTrait
             $view_format = $convert_view_formats[$nc3_bbs_frame_setting->display_type];
         } else {
             $view_format = '';
-            $this->putError(3, '掲示板の表示形式が未対応の形式', "nc3_bbs_frame_setting = " . $nc3_frame->key);
+            $this->putError(3, '掲示板の表示形式が未対応の形式', "nc3_bbs_frame_setting = " . $nc3_bbs_frame_setting->frame_key);
         }
 
         $frame_ini = "[bbs]\n";
