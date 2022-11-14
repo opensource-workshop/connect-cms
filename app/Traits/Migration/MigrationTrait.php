@@ -8863,6 +8863,7 @@ trait MigrationTrait
                 $multidatabase_cols_rows[$metadata_id]["sort_flag"]        = $multidatabase_metadata->sort_flag;
                 $multidatabase_cols_rows[$metadata_id]["search_flag"]      = $multidatabase_metadata->search_flag;
                 $multidatabase_cols_rows[$metadata_id]["select_flag"]      = ($multidatabase_metadata->type == 4 || $multidatabase_metadata->type == 12) ? 1 : 0;
+                $multidatabase_cols_rows[$metadata_id]["display_sequence"] = null;  // 後処理で連番セット
                 $multidatabase_cols_rows[$metadata_id]["row_group"]        = null;
                 $multidatabase_cols_rows[$metadata_id]["column_group"]     = null;
                 if ($multidatabase_metadata->display_pos == 1) {
