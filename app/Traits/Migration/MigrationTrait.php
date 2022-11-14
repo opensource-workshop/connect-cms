@@ -423,6 +423,7 @@ trait MigrationTrait
             Buckets::where('plugin_name', 'databases')->delete();
             MigrationMapping::where('target_source_table', 'databases')->delete();
             MigrationMapping::where('target_source_table', 'databases_post')->delete();
+            MigrationMapping::where('target_source_table', 'databases_columns')->delete();
         }
 
         if ($target == 'forms' || $target == 'all') {
@@ -2521,6 +2522,13 @@ trait MigrationTrait
                         'row_group'        => empty($databases_ini[$column_id]['row_group']) ? null : $databases_ini[$column_id]['row_group'],
                         'column_group'     => empty($databases_ini[$column_id]['column_group']) ? null : $databases_ini[$column_id]['column_group'],
                     ]);
+                    // カラムのマッピングテーブルの追加
+                    $mapping_column = MigrationMapping::create([
+                        'target_source_table'  => 'databases_columns',
+                        'source_key'           => $column_id,
+                        'destination_key'      => $databases_column->id,
+                    ]);
+
                     $column_ids[] = $databases_column->id;
                     $create_columns[] = $databases_column;
 
@@ -5297,6 +5305,20 @@ trait MigrationTrait
             $this->putError(1, 'Database フレームのみで実体なし', "page_dir = " . $page_dir);
         }
 
+        $default_sort_flag = $this->getArrayValue($frame_ini, 'database', 'default_sort_flag', null);
+        // |を含む（任意項目のソート対応）
+        if (strpos($default_sort_flag, '|') !== false) {
+            $default_sort_flag_arr = explode('|', $default_sort_flag);
+            $nc3_metadata_id = $default_sort_flag_arr[0];
+            $cc_order = $default_sort_flag_arr[1];
+
+            $mapping_column = MigrationMapping::where('target_source_table', 'databases_columns')->where('source_key', $nc3_metadata_id)->first();
+            if ($mapping_column) {
+                // ソート置換
+                $default_sort_flag = $mapping_column->destination_key . '_' . $cc_order;
+            }
+        }
+
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
 
@@ -5314,7 +5336,7 @@ trait MigrationTrait
                 'use_search_flag'   => $this->getArrayValue($frame_ini, 'database', 'use_search_flag', 1),
                 'use_select_flag'   => $this->getArrayValue($frame_ini, 'database', 'use_select_flag', 1),
                 'use_sort_flag'     => $this->getArrayValue($frame_ini, 'database', 'use_sort_flag', null),
-                'default_sort_flag' => $this->getArrayValue($frame_ini, 'database', 'default_sort_flag', null),
+                'default_sort_flag' => $default_sort_flag,
                 'use_filter_flag'   => $this->getArrayValue($frame_ini, 'database', 'use_filter_flag', 0),
                 'view_count'        => $view_count,
                 'default_hide'      => 0,
