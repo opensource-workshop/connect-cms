@@ -4739,7 +4739,7 @@ trait MigrationNc3ExportTrait
             $nc3_block = Nc3Block::find($nc3_frame->block_id);
             // ブロックがあり、リンクリストがない場合は対象外
             if (!empty($nc3_block)) {
-                // NC3カウンターにプラグイン固有のデータまとめテーブルがないため、block_idをセット
+                // NC3リンクリストにプラグイン固有のデータまとめテーブルがないため、block_idをセット
                 // [TODO] id名と値ズレ
                 $ret = "linklist_id = \"" . $this->zeroSuppress($nc3_block->id) . "\"\n";
             }
