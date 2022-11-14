@@ -1513,7 +1513,6 @@ trait MigrationNc3ExportTrait
             $journals_ini .= "[source_info]\n";
             $journals_ini .= "journal_id = " . $nc3_blog->id . "\n";
             $journals_ini .= "room_id = " . $nc3_blog->room_id . "\n";
-            $journals_ini .= "space_id = " . $nc3_blog->space_id . "\n";
             $journals_ini .= "plugin_key = \"blogs\"\n";
             $journals_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_blog->created) . "\"\n";
             $journals_ini .= "created_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_blog->created_user) . "\"\n";
@@ -1853,7 +1852,6 @@ trait MigrationNc3ExportTrait
             $journals_ini .= "[source_info]\n";
             $journals_ini .= "journal_id = " . 'BBS_' . $nc3_bbs->id . "\n";
             $journals_ini .= "room_id = " . $nc3_bbs->room_id . "\n";
-            $journals_ini .= "space_id = " . $nc3_bbs->space_id . "\n";
             $journals_ini .= "plugin_key = \"bbses\"\n";
             $journals_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_bbs->created) . "\"\n";
             $journals_ini .= "created_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_bbs->created_user) . "\"\n";
