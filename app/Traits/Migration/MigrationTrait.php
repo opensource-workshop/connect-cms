@@ -2594,6 +2594,10 @@ trait MigrationTrait
                     }
                     // 行データをタブで項目に分割
                     $database_tsv_cols = explode("\t", trim($database_tsv_line, "\n\r"));
+                    if (!isset($database_tsv_cols[1])) {
+                        // タブ区切りで１番目がセットされないのは、末尾空行と判断してスルーする。
+                        continue;
+                    }
 
                     $created_id   = $this->getUserIdFromLoginId($users, $database_tsv_cols[$tsv_idxs['insert_login_id']]);
                     $created_name = $database_tsv_cols[$tsv_idxs['created_name']];
