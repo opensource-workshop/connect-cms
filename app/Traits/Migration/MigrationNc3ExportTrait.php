@@ -35,6 +35,9 @@ use App\Models\Migration\Nc3\Nc3MailSetting;
 use App\Models\Migration\Nc3\Nc3MenuFramePage;
 use App\Models\Migration\Nc3\Nc3MenuFrameSetting;
 use App\Models\Migration\Nc3\Nc3Multidatabase;
+use App\Models\Migration\Nc3\Nc3MultidatabaseContent;
+use App\Models\Migration\Nc3\Nc3MultidatabaseFrameSetting;
+use App\Models\Migration\Nc3\Nc3MultidatabaseMetadata;
 // use App\Models\Migration\Nc3\Nc3Topic;
 use App\Models\Migration\Nc3\Nc3TopicFrameSetting;
 use App\Models\Migration\Nc3\Nc3Page;
@@ -59,6 +62,7 @@ use App\Enums\AreaType;
 use App\Enums\BlogNoticeEmbeddedTag;
 use App\Enums\CounterDesignType;
 use App\Enums\ContentOpenType;
+use App\Enums\DatabaseSortFlag;
 use App\Enums\DayOfWeek;
 use App\Enums\LinklistType;
 use App\Enums\NoticeEmbeddedTag;
@@ -121,7 +125,6 @@ trait MigrationNc3ExportTrait
         // 'faqs'             => 'faqs',         // FAQ
         // 'iframes'          => 'Development',  // iFrame
         // 'links'            => 'linklists',    // リンクリスト
-        // 'multidatabases'   => 'databases',    // データベース
         // 'photo_albums'     => 'photoalbums',  // フォトアルバム
         // 'questionnaires'   => 'Development',  // アンケート
         // 'quizzes'          => 'Development',  // 小テスト
@@ -132,29 +135,29 @@ trait MigrationNc3ExportTrait
         // 'tasks'            => 'Development',  // ToDo
         // 'topics'           => 'whatsnews',    // 新着情報
         // 'videos'           => 'Development',  // 動画
-        'access_counters'  => 'Development',  // カウンター
-        'announcements'    => 'contents',     // お知らせ
-        'bbses'            => 'bbses',        // 掲示板
-        'blogs'            => 'blogs',        // ブログ
-        'cabinets'         => 'Development',  // キャビネット
-        'calendars'        => 'Development',  // カレンダー
-        'circular_notices' => 'Development',  // 回覧板
-        'faqs'             => 'Development',  // FAQ
-        'iframes'          => 'Development',  // iFrame
-        'links'            => 'Development',  // リンクリスト
-        'menus'            => 'menus',        // メニュー
-        'multidatabases'   => 'Development',  // データベース
-        'photo_albums'     => 'Development',  // フォトアルバム
-        'questionnaires'   => 'Development',  // アンケート
-        'quizzes'          => 'Development',  // 小テスト
-        'registrations'    => 'Development',  // フォーム
-        'reservations'     => 'Development',  // 施設予約
-        'rss_readers'      => 'Development',  // RSS
-        'searches'         => 'Development',  // 検索
-        'tasks'            => 'Development',  // ToDo
-        'topics'           => 'Development',  // 新着情報
-        'videos'           => 'Development',  // 動画
-        'wysiwyg'          => 'Development',  // wysiwyg(upload用)
+        'access_counters'  => 'Development',    // カウンター
+        'announcements'    => 'contents',       // お知らせ
+        'bbses'            => 'bbses',          // 掲示板
+        'blogs'            => 'blogs',          // ブログ
+        'cabinets'         => 'Development',    // キャビネット
+        'calendars'        => 'Development',    // カレンダー
+        'circular_notices' => 'Development',    // 回覧板
+        'faqs'             => 'Development',    // FAQ
+        'iframes'          => 'Development',    // iFrame
+        'links'            => 'Development',    // リンクリスト
+        'menus'            => 'menus',          // メニュー
+        'multidatabases'   => 'databases',      // データベース
+        'photo_albums'     => 'Development',    // フォトアルバム
+        'questionnaires'   => 'Development',    // アンケート
+        'quizzes'          => 'Development',    // 小テスト
+        'registrations'    => 'Development',    // フォーム
+        'reservations'     => 'Development',    // 施設予約
+        'rss_readers'      => 'Development',    // RSS
+        'searches'         => 'Development',    // 検索
+        'tasks'            => 'Development',    // ToDo
+        'topics'           => 'Development',    // 新着情報
+        'videos'           => 'Development',    // 動画
+        'wysiwyg'          => 'Development',    // wysiwyg(upload用)
     ];
 
     /**
@@ -444,14 +447,14 @@ trait MigrationNc3ExportTrait
             $this->nc3ExportBbs($redo);
         }
 
+        // NC3 汎用データベース（multidatabases）データのエクスポート
+        if ($this->isTarget('nc3_export', 'plugins', 'databases')) {
+            $this->nc3ExportMultidatabase($redo);
+        }
+
         //////////////////
         // [TODO] まだ
         //////////////////
-        // // NC3 汎用データベース（multidatabase）データのエクスポート
-        // if ($this->isTarget('nc3_export', 'plugins', 'databases')) {
-        //     $this->nc3ExportMultidatabase($redo);
-        // }
-
         // // NC3 登録フォーム（registration）データのエクスポート
         // if ($this->isTarget('nc3_export', 'plugins', 'forms')) {
         //     $this->nc3ExportRegistration($redo);
@@ -2245,7 +2248,7 @@ trait MigrationNc3ExportTrait
     }
 
     /**
-     * NC3：汎用データベース（Multidatabase）の移行
+     * NC3：汎用データベース（multidatabases）の移行
      */
     private function nc3ExportMultidatabase($redo)
     {
@@ -2257,14 +2260,24 @@ trait MigrationNc3ExportTrait
             Storage::deleteDirectory($this->getImportPath('databases/'));
         }
 
-        // NC3汎用データベース（Multidatabase）を移行する。
-        $nc3_export_where_multidatabase_ids = $this->getMigrationConfig('databases', 'nc3_export_where_multidatabase_ids');
+        // NC3汎用データベース（multidatabases）を移行する。
+        $nc3_multidatabases_query = Nc3Multidatabase::select('multidatabases.*', 'blocks.key as block_key', 'blocks.room_id', 'rooms.space_id')
+            ->join('blocks', function ($join) {
+                $join->on('blocks.id', '=', 'multidatabases.block_id')
+                    ->where('blocks.plugin_key', 'multidatabases');
+            })
+            ->join('rooms', function ($join) {
+                $join->on('rooms.id', '=', 'blocks.room_id')
+                    ->whereIn('rooms.space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID]);
+            })
+            ->orderBy('multidatabases.id');
 
-        if (empty($nc3_export_where_multidatabase_ids)) {
-            $nc3_multidatabases = Nc2Multidatabase::orderBy('multidatabase_id')->get();
-        } else {
-            $nc3_multidatabases = Nc2Multidatabase::whereIn('multidatabase_id', $nc3_export_where_multidatabase_ids)->orderBy('multidatabase_id')->get();
+        $nc3_export_where_multidatabase_ids = $this->getMigrationConfig('databases', 'nc3_export_where_multidatabase_ids');
+        if ($nc3_export_where_multidatabase_ids) {
+            $nc3_multidatabases_query = $nc3_multidatabases_query->whereIn('multidatabases.id', $nc3_export_where_multidatabase_ids);
         }
+
+        $nc3_multidatabases = $nc3_multidatabases_query->get();
 
         // 空なら戻る
         if ($nc3_multidatabases->isEmpty()) {
@@ -2272,7 +2285,7 @@ trait MigrationNc3ExportTrait
         }
 
         // nc3の全ユーザ取得
-        $nc3_users = Nc2User::get();
+        $nc3_users = Nc3User::get();
 
         // NC3汎用データベース（Multidatabase）のループ
         foreach ($nc3_multidatabases as $nc3_multidatabase) {
@@ -2287,50 +2300,29 @@ trait MigrationNc3ExportTrait
                 continue;
             }
 
-            $multidatabase_id = $nc3_multidatabase->multidatabase_id;
-
             // データベース設定
             $multidatabase_ini = "";
             $multidatabase_ini .= "[database_base]\n";
-            $multidatabase_ini .= "database_name = \"" . $nc3_multidatabase->multidatabase_name . "\"\n";
-
-            // multidatabase_block の取得
-            // 1DB で複数ブロックがあるので、Join せずに、個別に読む
-            $nc3_multidatabase_block = Nc2MultidatabaseBlock::where('multidatabase_id', $nc3_multidatabase->multidatabase_id)->orderBy('block_id', 'asc')->first();
-            if (empty($nc3_multidatabase_block)) {
-                $multidatabase_ini .= "view_count = 10\n";  // 初期値
-            } else {
-                $multidatabase_ini .= "view_count = " . $nc3_multidatabase_block->visible_item . "\n";
-            }
-
-            // この汎用データベースが配置されている最初のページオブジェクトを取得しておく
-            // WYSIWYG で相対パスを絶対パスに変換する際に、ページの固定URL が必要になるため。
-            $nc3_page = null;
-            if (!empty($nc3_multidatabase_block)) {
-                $nc3_block = Nc2Block::where('block_id', $nc3_multidatabase_block->block_id)->first();
-            }
-            if (!empty($nc3_block)) {
-                $nc3_page = Nc2Page::where('page_id', $nc3_block->page_id)->first();
-            }
+            $multidatabase_ini .= "database_name = \"" . $nc3_multidatabase->name . "\"\n";
 
             // NC3 情報
             $multidatabase_ini .= "\n";
             $multidatabase_ini .= "[source_info]\n";
-            $multidatabase_ini .= "multidatabase_id = " . $nc3_multidatabase->multidatabase_id . "\n";
+            $multidatabase_ini .= "multidatabase_id = " . $nc3_multidatabase->id . "\n";
             $multidatabase_ini .= "room_id = " . $nc3_multidatabase->room_id . "\n";
-            $multidatabase_ini .= "plugin_key = \"multidatabase\"\n";
+            $multidatabase_ini .= "plugin_key = \"multidatabases\"\n";
             $multidatabase_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_multidatabase->created) . "\"\n";
-            $multidatabase_ini .= "created_name    = \"" . $nc3_multidatabase->insert_user_name . "\"\n";
+            $multidatabase_ini .= "created_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_multidatabase->created_user) . "\"\n";
             $multidatabase_ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_multidatabase->created_user) . "\"\n";
             $multidatabase_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_multidatabase->modified) . "\"\n";
-            $multidatabase_ini .= "updated_name    = \"" . $nc3_multidatabase->update_user_name . "\"\n";
+            $multidatabase_ini .= "updated_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_multidatabase->modified_user) . "\"\n";
             $multidatabase_ini .= "update_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_multidatabase->modified_user) . "\"\n";
 
             // 汎用データベースのカラム情報
-            $multidatabase_metadatas = Nc2MultidatabaseMetadata::where('multidatabase_id', $multidatabase_id)
-                                                               ->orderBy('display_pos', 'asc')
-                                                               ->orderBy('display_sequence', 'asc')
-                                                               ->get();
+            $multidatabase_metadatas = Nc3MultidatabaseMetadata::where('multidatabase_id', $nc3_multidatabase->id)
+                ->orderBy('position', 'asc')
+                ->orderBy('rank', 'asc')
+                ->get();
             if (empty($multidatabase_metadatas)) {
                 continue;
             }
@@ -2338,75 +2330,79 @@ trait MigrationNc3ExportTrait
             // カラム情報
             $multidatabase_cols_rows = array();
 
-            // 行情報
-            //$row_group_header = 0;
-            //$row_group_left = 0;
-            //$row_group_right = 0;
-            //$row_group_footer = 0;
-
             foreach ($multidatabase_metadatas as $multidatabase_metadata) {
                 // type
-                if ($multidatabase_metadata->type == 1) {
+                if ($multidatabase_metadata->type == 'text') {
                     $column_type = "text";
-                } elseif ($multidatabase_metadata->type == 2) {
+                } elseif ($multidatabase_metadata->type == 'textarea') {
                     $column_type = "textarea";
-                } elseif ($multidatabase_metadata->type == 3) {
+                } elseif ($multidatabase_metadata->type == 'link') {
                     $column_type = "link";
-                } elseif ($multidatabase_metadata->type == 4) {
+                } elseif ($multidatabase_metadata->type == 'select') {
                     $column_type = "select";
-                } elseif ($multidatabase_metadata->type == 12) {
+                } elseif ($multidatabase_metadata->type == 'checkbox') {
                     $column_type = "checkbox";
-                } elseif ($multidatabase_metadata->type == 5) {
+                } elseif ($multidatabase_metadata->type == 'file') {
                     $column_type = "file";
-                } elseif ($multidatabase_metadata->type == 0) {
+                } elseif ($multidatabase_metadata->type == 'image') {
                     $column_type = "image";
-                } elseif ($multidatabase_metadata->type == 6) {
+                } elseif ($multidatabase_metadata->type == 'wysiwyg') {
                     $column_type = "wysiwyg";
-                } elseif ($multidatabase_metadata->type == 7) {
-                    $column_type = "text";                       // あとで連番型の実装すること。
-                } elseif ($multidatabase_metadata->type == 8) {
+                } elseif ($multidatabase_metadata->type == 'autonumber') {  // 自動採番
+                    $column_type = "text";
+                } elseif ($multidatabase_metadata->type == 'mail') {
                     $column_type = "mail";
-                } elseif ($multidatabase_metadata->type == 9) {
+                } elseif ($multidatabase_metadata->type == 'date') {
                     $column_type = "date";
-                } elseif ($multidatabase_metadata->type == 10) {
+                } elseif ($multidatabase_metadata->type == 'created') {
                     $column_type = "created";
-                } elseif ($multidatabase_metadata->type == 11) {
+                } elseif ($multidatabase_metadata->type == 'updated') {
                     $column_type = "updated";
                 }
-                $metadata_id = $multidatabase_metadata->metadata_id;
+                $select_flag = 0;
+                // (nc) 絞り込みは、select|checkboxで一覧表示の時に表示
+                if ($multidatabase_metadata->type == 'select' || $multidatabase_metadata->type == 'checkbox') {
+                    if ($multidatabase_metadata->is_visible_list == 1) {
+                        $select_flag = 1;
+                    }
+                }
+                $metadata_id = $multidatabase_metadata->id;
                 $multidatabase_cols_rows[$metadata_id]["column_type"]      = $column_type;
                 $multidatabase_cols_rows[$metadata_id]["column_name"]      = $multidatabase_metadata->name;
-                $multidatabase_cols_rows[$metadata_id]["required"]         = $multidatabase_metadata->require_flag;
+                $multidatabase_cols_rows[$metadata_id]["required"]         = $multidatabase_metadata->is_require;
                 $multidatabase_cols_rows[$metadata_id]["frame_col"]        = null;
-                $multidatabase_cols_rows[$metadata_id]["list_hide_flag"]   = ($multidatabase_metadata->list_flag == 0) ? 1 : 0;
-                $multidatabase_cols_rows[$metadata_id]["detail_hide_flag"] = ($multidatabase_metadata->detail_flag == 0) ? 1 : 0;
-                $multidatabase_cols_rows[$metadata_id]["sort_flag"]        = $multidatabase_metadata->sort_flag;
-                $multidatabase_cols_rows[$metadata_id]["search_flag"]      = $multidatabase_metadata->search_flag;
-                $multidatabase_cols_rows[$metadata_id]["select_flag"]      = ($multidatabase_metadata->type == 4 || $multidatabase_metadata->type == 12) ? 1 : 0;
-                $multidatabase_cols_rows[$metadata_id]["display_sequence"] = $multidatabase_metadata->display_sequence;
+                $multidatabase_cols_rows[$metadata_id]["title_flag"]       = $multidatabase_metadata->is_title;
+                $multidatabase_cols_rows[$metadata_id]["list_hide_flag"]   = ($multidatabase_metadata->is_visible_list == 0) ? 1 : 0;
+                $multidatabase_cols_rows[$metadata_id]["detail_hide_flag"] = ($multidatabase_metadata->is_visible_detail == 0) ? 1 : 0;
+                $multidatabase_cols_rows[$metadata_id]["sort_flag"]        = $multidatabase_metadata->is_sortable;
+                $multidatabase_cols_rows[$metadata_id]["search_flag"]      = $multidatabase_metadata->is_searchable;
+                $multidatabase_cols_rows[$metadata_id]["select_flag"]      = $select_flag;
+                $multidatabase_cols_rows[$metadata_id]["display_sequence"] = null;  // 後処理で連番セット
                 $multidatabase_cols_rows[$metadata_id]["row_group"]        = null;
                 $multidatabase_cols_rows[$metadata_id]["column_group"]     = null;
-                if ($multidatabase_metadata->display_pos == 1) {
-                    //$row_group_header++;
+                if ($multidatabase_metadata->position == 0) {
+                    // header
                     $multidatabase_cols_rows[$metadata_id]["row_group"]    = 1;
                     $multidatabase_cols_rows[$metadata_id]["column_group"] = 1;
                 }
-                if ($multidatabase_metadata->display_pos == 2) {
-                    //$row_group_left++;
+                if ($multidatabase_metadata->position == 1) {
+                    // left
                     $multidatabase_cols_rows[$metadata_id]["row_group"]    = 2;
                     $multidatabase_cols_rows[$metadata_id]["column_group"] = 1;
                 }
-                if ($multidatabase_metadata->display_pos == 3) {
-                    //$row_group_right++;
+                if ($multidatabase_metadata->position == 2) {
+                    // right
                     $multidatabase_cols_rows[$metadata_id]["row_group"]    = 2;
                     $multidatabase_cols_rows[$metadata_id]["column_group"] = 2;
                 }
-                if ($multidatabase_metadata->display_pos == 4) {
-                    //$row_group_footer++;
+                if ($multidatabase_metadata->position == 3) {
+                    // footer
                     $multidatabase_cols_rows[$metadata_id]["row_group"]    = 3;
                     $multidatabase_cols_rows[$metadata_id]["column_group"] = 1;
                 }
-                $multidatabase_cols_rows[$metadata_id]["columns_selects"]  = $multidatabase_metadata->select_content;
+                $columns_selects = json_decode($multidatabase_metadata->selections) ?? [];
+                // columns_selects <= aaa|bbb|ccc
+                $multidatabase_cols_rows[$metadata_id]["columns_selects"]  = implode('|', $columns_selects);
             }
 
             // カラム情報出力
@@ -2428,6 +2424,7 @@ trait MigrationNc3ExportTrait
                 $multidatabase_ini .= "column_name      = \"" . $multidatabase_cols["column_name"]      . "\"\n";
                 $multidatabase_ini .= "required         = "   . $multidatabase_cols["required"]         . "\n";
                 $multidatabase_ini .= "frame_col        = "   . $multidatabase_cols["frame_col"]        . "\n";
+                $multidatabase_ini .= "title_flag       = "   . $multidatabase_cols["title_flag"]       . "\n";
                 $multidatabase_ini .= "list_hide_flag   = "   . $multidatabase_cols["list_hide_flag"]   . "\n";
                 $multidatabase_ini .= "detail_hide_flag = "   . $multidatabase_cols["detail_hide_flag"] . "\n";
                 $multidatabase_ini .= "sort_flag        = "   . $multidatabase_cols["sort_flag"]        . "\n";
@@ -2463,144 +2460,91 @@ trait MigrationNc3ExportTrait
             $tsv_cols['content_id'] = "";
 
             // データベースの記事
-            $multidatabase_metadata_contents = Nc2MultidatabaseMetadataContent::
-                select(
-                    'multidatabase_metadata_content.*',
-                    'multidatabase_metadata.type',
-                    'multidatabase_content.agree_flag',
-                    'multidatabase_content.temporary_flag',
-                    'multidatabase_content.display_sequence as content_display_sequence',
-                    'multidatabase_content.insert_time as multidatabase_content_insert_time',
-                    'multidatabase_content.insert_user_name as multidatabase_content_insert_user_name',
-                    'multidatabase_content.insert_user_id as multidatabase_content_insert_user_id',
-                    'multidatabase_content.update_time as multidatabase_content_update_time',
-                    'multidatabase_content.update_user_name as multidatabase_content_update_user_name',
-                    'multidatabase_content.update_user_id as multidatabase_content_update_user_id'
-                )
-                ->join('multidatabase_metadata', 'multidatabase_metadata.metadata_id', '=', 'multidatabase_metadata_content.metadata_id')
-                ->join('multidatabase_content', 'multidatabase_content.content_id', '=', 'multidatabase_metadata_content.content_id')
-                ->join('multidatabase', 'multidatabase.multidatabase_id', '=', 'multidatabase_metadata.multidatabase_id')
-                ->where('multidatabase.multidatabase_id', $multidatabase_id)
-                ->orderBy('multidatabase_metadata_content.content_id', 'asc')
-                ->orderBy('multidatabase_metadata.display_pos', 'asc')
-                ->orderBy('multidatabase_metadata.display_sequence', 'asc')
+            $multidatabase_contents = Nc3MultidatabaseContent::where('multidatabase_contents.multidatabase_id', $nc3_multidatabase->id)
+                ->where('multidatabase_contents.is_latest', 1)
+                ->orderBy('multidatabase_contents.id', 'asc')
                 ->get();
 
-            // カラムデータのループ
-            $content_id = 0;
-            $tsv_record = $tsv_cols;
-            Storage::delete($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.tsv');
-            $tsv = '';
-            $old_metadata_content = null; // コントロールブレイク用、一つ前のレコード（追加・更新日時で使用）
-            foreach ($multidatabase_metadata_contents as $multidatabase_metadata_content) {
-                // レコードのID が変わった＝コントロールブレイク
-                if ($content_id != $multidatabase_metadata_content->content_id) {
-                    if ($content_id == 0) {
-                        // 最初の1件
-                        //Storage::append($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.tsv', $tsv_header);
-                        $old_metadata_content = $multidatabase_metadata_content;
-                        $tsv .= $tsv_header . "\n";
-                    } else {
-                        // 承認待ち、一時保存
-                        $tsv_record['status'] = 0;
-                        if ($old_metadata_content->agree_flag == 1) {
-                            $tsv_record['status'] = 1;
-                        }
-                        if ($old_metadata_content->temporary_flag == 1) {
-                            $tsv_record['status'] = 2;
-                        }
-                        // 表示順
-                        $tsv_record['display_sequence'] = $old_metadata_content->content_display_sequence;
-                        // 投稿日
-                        $tsv_record['posted_at']       = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
-                        // 登録日時、更新日時等
-                        $tsv_record['created_at']      = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
-                        $tsv_record['created_name']    = $old_metadata_content->multidatabase_content_insert_user_name;
-                        $tsv_record['insert_login_id'] = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $old_metadata_content->multidatabase_content_insert_user_id);
-                        $tsv_record['updated_at']      = $this->getCCDatetime($old_metadata_content->multidatabase_content_update_time);
-                        $tsv_record['updated_name']    = $old_metadata_content->multidatabase_content_update_user_name;
-                        $tsv_record['update_login_id'] = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $old_metadata_content->multidatabase_content_update_user_id);
-                        // NC3 レコードを示すID
-                        $tsv_record['content_id'] = $old_metadata_content->content_id;
-                        // データ行の書き出し
-                        //Storage::append($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.tsv', implode("\t", $tsv_record));
-                        $tsv .= implode("\t", $tsv_record) . "\n";
-                    }
-                    $content_id = $multidatabase_metadata_content->content_id;
-                    $tsv_record = $tsv_cols;
-                }
-                $content = str_replace("\n", "<br />", $multidatabase_metadata_content->content);
+            // アップロードファイル
+            $multidatabase_uploads = Nc3UploadFile::where('plugin_key', 'multidatabases')
+                ->whereIn('content_key', $multidatabase_contents->pluck('key'))
+                ->get();
 
-                // メタデータの型による変換
-                if ($multidatabase_metadata_content->type == 0 || $multidatabase_metadata_content->type == 5) {
-                    // 画像型、ファイル型
-                    if (strpos($content, '?action=multidatabase_action_main_filedownload&upload_id=') !== false) {
+            Storage::delete($this->getImportPath('databases/database_') . $this->zeroSuppress($nc3_multidatabase->id) . '.tsv');
+            $tsv = '';
+            $tsv .= $tsv_header . "\n";
+            foreach ($multidatabase_contents as $multidatabase_content) {
+                // tsv_record配列 初期化
+                $tsv_record = $tsv_cols;
+
+                // メタデータ分ループして各valueを取得
+                foreach ($multidatabase_metadatas as $multidatabase_metadata) {
+                    $value_no = 'value' . $multidatabase_metadata->col_no;
+                    $content = $multidatabase_content->$value_no;
+
+                    $content = str_replace("\n", "<br />", $content);
+                    // データ中にタブ文字が存在するケースがあったため、タブ文字は半角スペースに置き換えるようにした。
+                    $content = str_replace("\t", " ", $content);
+
+                    // メタデータの型による変換
+                    if ($multidatabase_metadata->type == 'file' || $multidatabase_metadata->type == 'image') {
+                        // 画像型、ファイル型
+                        // (nc3) 画像、ファイル型は、ファイルあってもvalue空。毎回UploadFile見る必要あり。
+
                         // NC3 のアップロードID 抜き出し
-                        $nc3_uploads_id = str_replace('?action=multidatabase_action_main_filedownload&upload_id=', '', $content);
-                        // uploads.ini からファイルを探す
-                        if (array_key_exists('uploads', $this->uploads_ini) && array_key_exists('upload', $this->uploads_ini['uploads']) && array_key_exists($nc3_uploads_id, $this->uploads_ini['uploads']['upload'])) {
-                            if (array_key_exists($nc3_uploads_id, $this->uploads_ini) && array_key_exists('temp_file_name', $this->uploads_ini[$nc3_uploads_id])) {
-                                $content = '../../uploads/' . $this->uploads_ini[$nc3_uploads_id]['temp_file_name'];
+                        $multidatabase_upload = $multidatabase_uploads->firstWhere('field_name', $value_no . '_attach');
+                        $nc3_uploads_id = $multidatabase_upload->id;
+                        if ($nc3_uploads_id) {
+                            // uploads.ini からファイルを探す
+                            if (array_key_exists('uploads', $this->uploads_ini) && array_key_exists('upload', $this->uploads_ini['uploads']) && array_key_exists($nc3_uploads_id, $this->uploads_ini['uploads']['upload'])) {
+                                if (array_key_exists($nc3_uploads_id, $this->uploads_ini) && array_key_exists('temp_file_name', $this->uploads_ini[$nc3_uploads_id])) {
+                                    $content = '../../uploads/' . $this->uploads_ini[$nc3_uploads_id]['temp_file_name'];
+                                } else {
+                                    $this->putMonitor(3, "No Match uploads_ini array_key_exists temp_file_name.", "nc3_uploads_id = " . $nc3_uploads_id);
+                                }
                             } else {
-                                $this->putMonitor(3, "No Match uploads_ini array_key_exists temp_file_name.", "nc3_uploads_id = " . $nc3_uploads_id);
+                                $this->putMonitor(3, "No Match uploads_ini array_key_exists uploads_ini_uploads_upload.", "nc3_uploads_id = " . $nc3_uploads_id);
                             }
-                        } else {
-                            $this->putMonitor(3, "No Match uploads_ini array_key_exists uploads_ini_uploads_upload.", "nc3_uploads_id = " . $nc3_uploads_id);
                         }
-                    } else {
-                        $this->putMonitor(3, "No Match content strpos. :". $content);
-                    }
-                } elseif ($multidatabase_metadata_content->type == 6) {
-                    // WYSIWYG
-                    $content = $this->nc3Wysiwyg(null, null, null, null, $content, 'multidatabase');
-                } elseif ($multidatabase_metadata_content->type == 9) {
-                    // 日付型
-                    if (!empty($content) && strlen($content) == 14) {
+
+                    } elseif ($multidatabase_metadata->type == 'wysiwyg') {
+                        // WYSIWYG
+                        $content = $this->nc3Wysiwyg(null, null, null, null, $content, 'multidatabase');
+                    } elseif ($multidatabase_metadata->type == 'date') {
+                        // 日付型
                         $content = $this->getCCDatetime($content);
+                    } elseif ($multidatabase_metadata->type == 'link') {
+                        // リンク. NC3のリンク切れチェック
+                        // [TODO] まだ
+                        // $this->checkDeadLinkNc2($content, 'multidatabase', $nc3_block);
                     }
-                } elseif ($multidatabase_metadata_content->type == 3) {
-                    // リンク. NC3のリンク切れチェック
-                    $this->checkDeadLinkNc2($content, 'multidatabase', $nc3_block);
+
+                    $tsv_record[$multidatabase_metadata->id] = $content;
                 }
-                // データ中にタブ文字が存在するケースがあったため、タブ文字は半角スペースに置き換えるようにした。
-                $tsv_record[$multidatabase_metadata_content->metadata_id] = str_replace("\t", " ", $content);
-                $old_metadata_content = $multidatabase_metadata_content;
-            }
-            // 最後の行の登録日時、更新日時
-            // レコードがない場合もあり得る。
-            if (!empty($old_metadata_content)) {
-                // 承認待ち、一時保存
-                $tsv_record['status'] = 0;
-                if ($old_metadata_content->agree_flag == 1) {
-                    $tsv_record['status'] = 1;
-                }
-                if ($old_metadata_content->temporary_flag == 1) {
-                    $tsv_record['status'] = 2;
-                }
+
+                // 状態
+                $tsv_record['status'] = $this->convertCCStatusFromNc3Status($multidatabase_content->status);
                 // 表示順
-                $tsv_record['display_sequence'] = $old_metadata_content->content_display_sequence;
+                $tsv_record['display_sequence'] = null;
                 // 投稿日
-                $tsv_record['posted_at']       = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
+                $tsv_record['posted_at']       = $this->getCCDatetime($multidatabase_content->created);
                 // 登録日時、更新日時等
-                $tsv_record['created_at']      = $this->getCCDatetime($old_metadata_content->multidatabase_content_insert_time);
-                $tsv_record['created_name']    = $old_metadata_content->multidatabase_content_insert_user_name;
-                $tsv_record['insert_login_id'] = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $old_metadata_content->multidatabase_content_insert_user_id);
-                $tsv_record['updated_at']      = $this->getCCDatetime($old_metadata_content->multidatabase_content_update_time);
-                $tsv_record['updated_name']    = $old_metadata_content->multidatabase_content_update_user_name;
-                $tsv_record['update_login_id'] = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $old_metadata_content->multidatabase_content_update_user_id);
-                $tsv_record['content_id'] = $old_metadata_content->content_id;
-                $tsv .= implode("\t", $tsv_record);
+                $tsv_record['created_at']      = $this->getCCDatetime($multidatabase_content->created);
+                $tsv_record['created_name']    = Nc3User::getNc3HandleFromNc3UserId($nc3_users, $multidatabase_content->created_user);
+                $tsv_record['insert_login_id'] = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $multidatabase_content->created_user);
+                $tsv_record['updated_at']      = $this->getCCDatetime($multidatabase_content->modified);
+                $tsv_record['updated_name']    = Nc3User::getNc3HandleFromNc3UserId($nc3_users, $multidatabase_content->modified_user);
+                $tsv_record['update_login_id'] = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $multidatabase_content->modified_user);
+                $tsv_record['content_id']      = $multidatabase_content->id;
+                $tsv .= implode("\t", $tsv_record) . "\n";
             }
 
             // データ行の書き出し
-            //Storage::append($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.tsv', implode("\t", $tsv_record));
-            //Storage::append($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.tsv', $tsv);
             $tsv = $this->exportStrReplace($tsv, 'databases');
-            $this->storageAppend($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.tsv', $tsv);
+            $this->storageAppend($this->getImportPath('databases/database_') . $this->zeroSuppress($nc3_multidatabase->id) . '.tsv', $tsv);
 
             // detabase の設定
-            //Storage::put($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.ini', $multidatabase_ini);
-            $this->storagePut($this->getImportPath('databases/database_') . $this->zeroSuppress($multidatabase_id) . '.ini', $multidatabase_ini);
+            $this->storagePut($this->getImportPath('databases/database_') . $this->zeroSuppress($nc3_multidatabase->id) . '.ini', $multidatabase_ini);
         }
     }
 
@@ -3211,8 +3155,8 @@ trait MigrationNc3ExportTrait
             $ini .= "room_name = '" . $nc3_page_room->page_name . "'\n";
             // プライベートフラグ, 1:プライベートルーム, 0:プライベートルーム以外
             $ini .= "private_flag = " . $nc3_page_room->private_flag . "\n";
-            // [TODO] nc3にspace_typeなし。 スペースタイプ, 1:パブリックスペース, 2:グループスペース
-            $ini .= "space_type = " . $nc3_page_room->space_id . "\n";
+            // スペースID
+            $ini .= "space_id = " . $nc3_page_room->space_id . "\n";
             $ini .= "plugin_key = \"calendar\"\n";
 
 
@@ -4868,7 +4812,6 @@ trait MigrationNc3ExportTrait
             // 今のところ、メニューの追加設定はなし。
         } elseif ($plugin_name == 'databases') {
             // データベース
-            // [TODO] 未対応
             $this->nc3FrameExportDatabases($nc3_frame, $new_page_index, $frame_index_str);
         } elseif ($plugin_name == 'bbses') {
             // 掲示板
@@ -4922,9 +4865,9 @@ trait MigrationNc3ExportTrait
      */
     private function nc3FrameExportDatabases(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
     {
-        // NC3 ブロック設定の取得
-        $nc3_multidatabase_block = Nc2MultidatabaseBlock::where('block_id', $nc3_frame->block_id)->first();
-        if (empty($nc3_multidatabase_block)) {
+        // NC3 フレーム設定の取得
+        $nc3_multidatabase_frame_setting = Nc3MultidatabaseFrameSetting::where('frame_key', $nc3_frame->key)->first();
+        if (empty($nc3_multidatabase_frame_setting)) {
             return;
         }
 
@@ -4936,20 +4879,54 @@ trait MigrationNc3ExportTrait
         $frame_ini .= "use_search_flag = 1\n";
         $frame_ini .= "use_select_flag = 1\n";
         $frame_ini .= "use_sort_flag = \"\"\n";
-        // デフォルトの表示順
-        $default_sort_flag = '';
-        if ($nc3_multidatabase_block->default_sort == 'seq') {
-            $this->putError(3, 'データベースのソートが未対応順（カスタマイズ順）', "nc3_multidatabase_block = " . $nc3_multidatabase_block->block_id);
-        } elseif ($nc3_multidatabase_block->default_sort == 'date') {
-            $default_sort_flag = 'created_desc';
-        } elseif ($nc3_multidatabase_block->default_sort == 'date_asc') {
-            $default_sort_flag = 'created_asc';
-        } else {
-            $this->putError(3, 'データベースのソートが未対応順', "nc3_multidatabase_block = " . $nc3_multidatabase_block->block_id);
+
+        // (nc3) デフォルトの表示順
+        // 0            : 指定なし
+        // created      : 作成日時(昇順)
+        // created_desc : 作成日時(降順)
+        // modified     : 更新日時(昇順)
+        // modified_desc: 更新日時(降順)
+        // ※任意項目例
+        // value1      : タイトル(昇順)
+        // value1_desc : タイトル(降順)
+
+        // (cc) ※任意項目例
+        // 1_asc       : カラムID＋_asc(昇順)
+        // 1_desc      : カラムID＋_desc(降順)
+
+        // nc3任意項目ソート
+        $multidatabase_metadatas = Nc3Multidatabase::select('multidatabase_metadatas.*')
+            ->join('multidatabase_metadatas', function ($join) {
+                // 日本語のみでもmultidatabase_metadatas.language_idは1(英語)でも表示されたため、whereに含めない
+                $join->on('multidatabase_metadatas.multidatabase_id', '=', 'multidatabases.id');
+            })
+            ->where('multidatabases.block_id', $nc3_frame->block_id)
+            ->where('multidatabase_metadatas.is_sortable', 1)    // ソート対象とするか 0:対象外,1:対象
+            ->get();
+
+        // (NC3)default_sort_type -> (Connect)default_sort_flag
+        $convert_default_sort_flags = [
+            0               => '',  // 指定なし
+            'created'       => DatabaseSortFlag::created_asc,
+            'created_desc'  => DatabaseSortFlag::created_desc,
+            'modified'      => DatabaseSortFlag::updated_asc,
+            'modified_desc' => DatabaseSortFlag::updated_desc,
+        ];
+        // 任意項目ソート
+        foreach ($multidatabase_metadatas as $multidatabase_metadata) {
+            // エクスポート時では任意項目のConnectソート置換ができないため、仮値をセットしてインポート時に置換する
+            $convert_default_sort_flags["value{$multidatabase_metadata->col_no}"] = $multidatabase_metadata->id . '|' . DatabaseSortFlag::order_asc;
+            $convert_default_sort_flags["value{$multidatabase_metadata->col_no}_desc"] = $multidatabase_metadata->id . '|' . DatabaseSortFlag::order_desc;
         }
+
+        $default_sort_flag = $convert_default_sort_flags[$nc3_multidatabase_frame_setting->default_sort_type] ?? null;
+        if (is_null($default_sort_flag)) {
+            $this->putError(3, 'データベースのソートが未対応順', "nc3_multidatabase_frame_setting = " . $nc3_multidatabase_frame_setting->frame_key);
+        }
+
         $frame_ini .= "default_sort_flag = \"" . $default_sort_flag . "\"\n";
-        $frame_ini .= "view_count = "          . $nc3_multidatabase_block->visible_item . "\n";
-        $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
+        $frame_ini .= "view_count = "          . $nc3_multidatabase_frame_setting->content_per_page . "\n";
+        $this->storageAppend($save_folder . "/" . $ini_filename, $frame_ini);
     }
 
     /**
