@@ -2456,7 +2456,7 @@ trait MigrationNc3ExportTrait
                 ['{X-SUBJECT}',   '[[' . NoticeEmbeddedTag::title . ']]'],
                 ['{X-USER}',      '[[' . NoticeEmbeddedTag::created_name . ']]'],
                 ['{X-TO_DATE}',   '[[' . NoticeEmbeddedTag::created_at . ']]'],
-                ['{X-DATA}',      '[[' . DatabaseNoticeEmbeddedTag::body . ']]'],
+                ['{X-DATA}',      '[[' . DatabaseNoticeEmbeddedTag::all_items . ']]'],
                 ['{X-URL}',       '[[' . NoticeEmbeddedTag::url . ']]'],
                 ['{X-PLUGIN_NAME}', 'データベース'],
                 // 除外
