@@ -5346,6 +5346,131 @@ trait MigrationTrait
                 'default_hide'      => 0,
             ]);
         }
+
+        // bucketあり
+        if (!empty($bucket)) {
+            // 権限設定
+            // ---------------------------------------
+            // 投稿権限：(nc2) 日誌単位であり、(cc) バケツ単位であり
+            // 承認権限：(nc2) あり、(cc) あり
+            BucketsRoles::updateOrCreate(
+                [
+                    'buckets_id' => $bucket->id,
+                    'role' => 'role_article',   // モデレータ
+                ], [
+                    'post_flag'     => $this->getArrayValue($database_ini, 'database_base', 'article_post_flag', 0),
+                    'approval_flag' => $this->getArrayValue($database_ini, 'database_base', 'article_approval_flag', 0),
+                ]
+            );
+            BucketsRoles::updateOrCreate(
+                [
+                    'buckets_id' => $bucket->id,
+                    'role' => 'role_reporter',  // 編集者
+                ], [
+                    'post_flag'     => $this->getArrayValue($database_ini, 'database_base', 'reporter_post_flag', 0),
+                    'approval_flag' => $this->getArrayValue($database_ini, 'database_base', 'reporter_approval_flag', 0),
+                ]
+            );
+
+            // メール設定
+            // ---------------------------------------
+            // Buckets のメール設定取得
+            $bucket_mail = BucketsMail::firstOrNew(['buckets_id' => $bucket->id]);
+
+            $notice_groups = [];
+            if ($this->getArrayValue($database_ini, 'database_base', 'notice_admin_group')) {
+                // グループ通知
+                // ※ importGroups()は処理前のため管理者グループなし。そのため仮コードを登録してimportGroups()で置換する。
+                $notice_groups[] = 'X-管理者グループ';
+            }
+
+            $room_id = $this->getArrayValue($database_ini, 'source_info', 'room_id');
+
+            if ($this->getArrayValue($database_ini, 'database_base', 'notice_group')) {
+                // ルームグループ全てに、グループ通知
+                // ※ importGroups()は処理前のためnc2ルームグループなし。そのため仮コード(nc2ルームID)を登録してimportGroups()で置換する。
+                if ($room_id) {
+                    $notice_groups[] = "X-{$room_id}_role_article_admin";
+                    $notice_groups[] = "X-{$room_id}_role_article";
+                    $notice_groups[] = "X-{$room_id}_role_reporter";
+                    $notice_groups[] = "X-{$room_id}_role_role_guest";
+                }
+            }
+
+            $notice_on = $this->getArrayValue($database_ini, 'database_base', 'notice_on') ? 1 : 0;
+
+            if ($notice_on && $this->getArrayValue($database_ini, 'database_base', 'notice_moderator_group')) {
+                // モデグループまで通知
+                // $this->putMonitor(3, 'ブログのメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                if ($room_id) {
+                    $notice_groups[] = "X-{$room_id}_role_article_admin";
+                    $notice_groups[] = "X-{$room_id}_role_article";
+                }
+            }
+            if ($notice_on && $this->getArrayValue($database_ini, 'database_base', 'notice_public_general_group')) {
+                // パブリック一般通知
+                // $this->putMonitor(3, '公開エリアのブログのメール設定（一般まで）は、手動で「一般グループ」を作成して、追加で「一般グループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                if ($room_id) {
+                    $notice_groups[] = "X-{$room_id}_role_article_admin";
+                    $notice_groups[] = "X-{$room_id}_role_article";
+                    $notice_groups[] = "X-{$room_id}_role_reporter";
+                }
+            }
+            if ($notice_on && $this->getArrayValue($database_ini, 'database_base', 'notice_public_moderator_group')) {
+                // パブリックモデレーター通知
+                // $this->putMonitor(3, '公開エリアのブログのメール設定（モデレータまで）は、手動で「モデレータグループ」を作成して、追加で「モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+                if ($room_id) {
+                    $notice_groups[] = "X-{$room_id}_role_article_admin";
+                    $notice_groups[] = "X-{$room_id}_role_article";
+                }
+            }
+
+            $approval_groups = [];
+            if ($this->getArrayValue($database_ini, 'database_base', 'approval_admin_group')) {
+                // グループ通知
+                // ※ importGroups()は処理前のため管理者グループなし。そのため仮コードを登録してimportGroups()で置換する。
+                $approval_groups[] = 'X-管理者グループ';
+            }
+
+            $approved_groups = [];
+            if ($this->getArrayValue($database_ini, 'database_base', 'approved_admin_group')) {
+                // グループ通知
+                // ※ importGroups()は処理前のため管理者グループなし。そのため仮コードを登録してimportGroups()で置換する。
+                $approved_groups[] = 'X-管理者グループ';
+            }
+
+            // array_filter()でarrayの空要素削除
+            $notice_groups = array_filter($notice_groups);
+
+            // 投稿通知
+            $bucket_mail->timing             = 0;       // 0:即時送信
+            $bucket_mail->notice_on          = $notice_on;
+            $bucket_mail->notice_create      = $notice_on;
+            $bucket_mail->notice_update      = 0;
+            $bucket_mail->notice_delete      = 0;
+            $bucket_mail->notice_addresses   = null;
+            $bucket_mail->notice_everyone    = $this->getArrayValue($database_ini, 'database_base', 'notice_everyone') ? 1 : 0;
+            $bucket_mail->notice_groups      = implode('|', $notice_groups) == "" ? null : implode('|', $notice_groups);
+            $bucket_mail->notice_roles       = null;    // 画面項目なし
+            $bucket_mail->notice_subject     = $this->getArrayValue($database_ini, 'database_base', 'mail_subject');
+            $bucket_mail->notice_body        = $this->getArrayValue($database_ini, 'database_base', 'mail_body');
+            // 関連記事通知
+            $bucket_mail->relate_on          = 0;
+            // 承認通知
+            $bucket_mail->approval_on        = $this->getArrayValue($database_ini, 'database_base', 'approval_on') ? 1 : 0;
+            $bucket_mail->approval_groups    = implode('|', $approval_groups) == "" ? null : implode('|', $approval_groups);
+            $bucket_mail->approval_subject   = $this->getArrayValue($database_ini, 'database_base', 'approval_subject');
+            $bucket_mail->approval_body      = $this->getArrayValue($database_ini, 'database_base', 'approval_body');
+            // 承認済み通知
+            $bucket_mail->approved_on        = $this->getArrayValue($database_ini, 'database_base', 'approved_on') ? 1 : 0;
+            $bucket_mail->approved_author    = $this->getArrayValue($database_ini, 'database_base', 'approved_author') ? 1 : 0;
+            $bucket_mail->approved_groups    = implode('|', $approved_groups) == "" ? null : implode('|', $approved_groups);
+            $bucket_mail->approved_subject   = $this->getArrayValue($database_ini, 'database_base', 'approved_subject');
+            $bucket_mail->approved_body      = $this->getArrayValue($database_ini, 'database_base', 'approved_body');
+
+            // BucketsMails の更新
+            $bucket_mail->save();
+        }
     }
 
     /**
