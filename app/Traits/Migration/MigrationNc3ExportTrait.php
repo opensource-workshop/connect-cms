@@ -62,6 +62,7 @@ use App\Enums\AreaType;
 use App\Enums\BlogNoticeEmbeddedTag;
 use App\Enums\CounterDesignType;
 use App\Enums\ContentOpenType;
+use App\Enums\DatabaseNoticeEmbeddedTag;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\DayOfWeek;
 use App\Enums\LinklistType;
@@ -2287,6 +2288,18 @@ trait MigrationNc3ExportTrait
         // nc3の全ユーザ取得
         $nc3_users = Nc3User::get();
 
+        // 記事を投稿できる権限, メール通知を受け取る権限
+        $block_role_permissions = Nc3BlockRolePermission::getBlockRolePermissionsByBlockKeys($nc3_multidatabases->pluck('block_key'));
+
+        // メール設定
+        $mail_settings = Nc3MailSetting::getMailSettingsByBlockKeys($nc3_multidatabases->pluck('block_key'), 'multidatabases');
+
+        // サイト設定
+        $site_settings = Nc3SiteSetting::where('language_id', Nc3Language::language_id_ja)->get();
+
+        // ブロック設定
+        $block_settings = Nc3BlockSetting::whereIn('block_key', $nc3_multidatabases->pluck('block_key'))->get();
+
         // NC3汎用データベース（Multidatabase）のループ
         foreach ($nc3_multidatabases as $nc3_multidatabase) {
             $room_ids = $this->getMigrationConfig('basic', 'nc3_export_room_ids');
@@ -2300,10 +2313,204 @@ trait MigrationNc3ExportTrait
                 continue;
             }
 
+            // (nc3)投稿権限は１件のみ 投稿権限, 一般
+            $post_permission_general_user = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_multidatabase->block_key, 'content_creatable', 'general_user');
+
+            // 権限設定
+            // ----------------------------------------------------
+            // ※ユーザ (nc3)一般 => (cc)編集者
+
+            $article_post_flag = 1;     // 投稿権限はnc3編集者まで常時チェックON
+            $reporter_post_flag = 0;
+
+            // 一般まで
+            if ($post_permission_general_user) {
+                $reporter_post_flag = 1;
+            }
+
+            // メール設定
+            // ----------------------------------------------------
+            // mail_authority
+            // 1: ゲストまで 　　→ パブ通知は、「全ユーザに通知」
+            // 　※ 掲示板-パブリック（パブサブも同様）： ⇒ 「全ユーザに通知」
+            // 　※ 掲示板-グループ：　　　　　　　　　　 ⇒ ルームグループに、グループ通知
+            // 2: 一般まで 　　　→ グループは、グループ通知
+            // 　※ 掲示板-パブリック（パブサブも同様）： ⇒ (手動)でグループ作って、グループ通知　⇒ 移行で警告表示
+            // 　※ 掲示板-グループ：　 　　　　　　　　　⇒ ルームグループに、グループ通知
+            // 3: モデレータまで → (手動)でグループ作って、グループ通知　⇒ 移行で警告表示
+            // 4: 主担のみ 　　　→グループ管理者は、「管理者グループ」通知
+
+            // (nc3)メール通知を受け取る権限
+            // ゲスト
+            $mail_permission_visitor = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_multidatabase->block_key, 'mail_content_receivable', 'visitor');
+            // 一般
+            $mail_permission_general_user = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_multidatabase->block_key, 'mail_content_receivable', 'general_user');
+            // 編集者
+            $mail_permission_editor = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_multidatabase->block_key, 'mail_content_receivable', 'editor');
+
+            $notice_everyone = 0;
+            $notice_admin_group = 0;
+            $notice_moderator_group = 0;
+            $notice_group = 0;
+            $notice_public_general_group = 0;
+            $notice_public_moderator_group = 0;
+
+            // ゲストまで
+            if ($mail_permission_visitor) {
+                if ($nc3_multidatabase->space_id == Nc3Space::PUBLIC_SPACE_ID) {
+                    // 全ユーザ通知
+                    $notice_everyone = 1;
+
+                } elseif ($nc3_multidatabase->space_id == Nc3Space::COMMUNITY_SPACE_ID) {
+                    // グループ通知
+                    $notice_group = 1;
+                }
+
+            // 一般まで
+            } elseif ($mail_permission_general_user) {
+                if ($nc3_multidatabase->space_id == Nc3Space::PUBLIC_SPACE_ID) {
+                    // パブリック一般通知
+                    $notice_public_general_group = 1;
+                    $notice_admin_group = 1;
+
+                } elseif ($nc3_multidatabase->space_id == Nc3Space::COMMUNITY_SPACE_ID) {
+                    // グループ通知
+                    $notice_group = 1;
+                }
+
+            // 編集者まで
+            } elseif ($mail_permission_editor) {
+                if ($nc3_multidatabase->space_id == Nc3Space::PUBLIC_SPACE_ID) {
+                    // パブリックモデレーター通知
+                    $notice_public_moderator_group = 1;
+                    $notice_admin_group = 1;
+                } elseif ($nc3_multidatabase->space_id == Nc3Space::COMMUNITY_SPACE_ID) {
+                    // モデレータユーザ通知
+                    $notice_moderator_group = 1;
+                    $notice_admin_group = 1;
+                }
+
+            // 編集者OFF=編集長までON
+            } elseif ($mail_permission_editor == 0) {
+                // 管理者グループ通知
+                $notice_admin_group = 1;
+            }
+
+            // 通知メール（データなければblock_key=nullの初期設定取得）
+            $mail_setting = $mail_settings->firstWhere('block_key', $nc3_multidatabase->block_key) ?? $mail_settings->firstWhere('block_key', null);
+            $mail_subject = $mail_setting->mail_fixed_phrase_subject;
+            $mail_body = $mail_setting->mail_fixed_phrase_body;
+
+            // 承認メール
+            $approval_subject = Nc3SiteSetting::getNc3SiteSettingValueByKey($site_settings, 'Workflow.approval_mail_subject');
+            $approval_body = Nc3SiteSetting::getNc3SiteSettingValueByKey($site_settings, 'Workflow.approval_mail_body');
+
+            // 承認完了メール
+            $approved_subject = Nc3SiteSetting::getNc3SiteSettingValueByKey($site_settings, 'Workflow.approval_completion_mail_subject');
+            $approved_body = Nc3SiteSetting::getNc3SiteSettingValueByKey($site_settings, 'Workflow.approval_completion_mail_body');
+
+            // --- メール配信設定
+            // [{X-SITE_NAME}-{X-PLUGIN_NAME}]{X-SUBJECT}({X-ROOM} {X-BLOCK_NAME})
+            //
+            // {X-PLUGIN_NAME}に投稿されたのでお知らせします。
+            // ルーム名:{X-ROOM}
+            // 汎用データベースタイトル:{X-BLOCK_NAME}
+            // コンテンツタイトル:{X-SUBJECT}
+            // 投稿者:{X-USER}
+            // 投稿日時:{X-TO_DATE}
+            //
+            //
+            // {X-DATA}
+            //
+            //
+            // この記事に返信するには、下記アドレスへ
+            // {X-URL}
+
+            // --- 承認申請メール
+            // (承認依頼){X-PLUGIN_MAIL_SUBJECT}
+            //
+            // {X-USER}さんから{X-PLUGIN_NAME}の承認依頼があったことをお知らせします。
+            //
+            // {X-WORKFLOW_COMMENT}
+            //
+            //
+            // {X-PLUGIN_MAIL_BODY}
+
+            // --- 承認完了メール
+            // (承認完了){X-PLUGIN_MAIL_SUBJECT}
+            //
+            // {X-USER}さんの{X-PLUGIN_NAME}の承認が完了されたことをお知らせします。
+            // もし{X-USER}さんの{X-PLUGIN_NAME}に覚えがない場合はこのメールを破棄してください。
+            //
+            // {X-WORKFLOW_COMMENT}
+            //
+            //
+            // {X-PLUGIN_MAIL_BODY}
+
+            // 変換
+            $convert_embedded_tags = [
+                // nc3埋込タグ, cc埋込タグ
+                ['{X-PLUGIN_MAIL_SUBJECT}', $mail_subject],
+                ['{X-PLUGIN_MAIL_BODY}', $mail_body],
+                ['{X-SITE_NAME}', '[[' . NoticeEmbeddedTag::site_name . ']]'],
+                ['{X-SUBJECT}',   '[[' . NoticeEmbeddedTag::title . ']]'],
+                ['{X-USER}',      '[[' . NoticeEmbeddedTag::created_name . ']]'],
+                ['{X-TO_DATE}',   '[[' . NoticeEmbeddedTag::created_at . ']]'],
+                ['{X-DATA}',      '[[' . DatabaseNoticeEmbeddedTag::body . ']]'],
+                ['{X-URL}',       '[[' . NoticeEmbeddedTag::url . ']]'],
+                ['{X-PLUGIN_NAME}', 'データベース'],
+                // 除外
+                ['({X-ROOM} {X-BLOCK_NAME})', ''],
+                ['汎用データベースタイトル:{X-BLOCK_NAME}', ''],
+                ['ルーム名:{X-ROOM}', ''],
+                ['{X-BLOCK_NAME}', ''],
+                ['{X-ROOM}', ''],
+                ['{X-WORKFLOW_COMMENT}', ''],
+            ];
+            foreach ($convert_embedded_tags as $convert_embedded_tag) {
+                $mail_subject =     str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_subject);
+                $mail_body =        str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_body);
+                $approval_subject = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $approval_subject);
+                $approval_body =    str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $approval_body);
+                $approved_subject = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $approved_subject);
+                $approved_body =    str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $approved_body);
+            }
+
+            // （NC3）承認メールは、承認必要＋承認メール通知ONで、承認権限（～編集者まで設定可）に飛ぶ。
+            // （NC3）承認完了メールは、サイトセッティングにあるけどメール飛ばなかった。
+            //        承認完了時、メール通知ON（～ゲストまで通知）でメール通知フォーマットでメール飛ぶ。
+            //        ⇒ （CC）NC3承認完了通知フォーマットを、CC承認完了通知フォーマットにセット。けど通知しない。
+
+            // 記事承認（content_publishable）はルーム管理者・編集長固定. 編集者は承認必要
+
+            $use_workflow = Nc3BlockSetting::getNc3BlockSettingValue($block_settings, $nc3_multidatabase->block_key, 'use_workflow');
+
             // データベース設定
             $multidatabase_ini = "";
             $multidatabase_ini .= "[database_base]\n";
             $multidatabase_ini .= "database_name = \"" . $nc3_multidatabase->name . "\"\n";
+            $multidatabase_ini .= "article_post_flag = " . $article_post_flag . "\n";
+            $multidatabase_ini .= "article_approval_flag = 0\n";                                 // 編集長=モデは承認不要
+            $multidatabase_ini .= "reporter_post_flag = " . $reporter_post_flag . "\n";
+            $multidatabase_ini .= "reporter_approval_flag = " . $use_workflow . "\n";            // 承認ありなら編集者承認ON
+            $multidatabase_ini .= "notice_on = " . $mail_setting->is_mail_send . "\n";
+            $multidatabase_ini .= "notice_everyone = " . $notice_everyone . "\n";
+            $multidatabase_ini .= "notice_group = " . $notice_group . "\n";
+            $multidatabase_ini .= "notice_moderator_group = " . $notice_moderator_group . "\n";
+            $multidatabase_ini .= "notice_admin_group = " . $notice_admin_group . "\n";
+            $multidatabase_ini .= "notice_public_general_group = " . $notice_public_general_group . "\n";
+            $multidatabase_ini .= "notice_public_moderator_group = " . $notice_public_moderator_group . "\n";
+            $multidatabase_ini .= "mail_subject = \"" . $mail_subject . "\"\n";
+            $multidatabase_ini .= "mail_body = \"" . $mail_body . "\"\n";
+            $multidatabase_ini .= "approval_on = " . $mail_setting->is_mail_send_approval . "\n";
+            $multidatabase_ini .= "approval_admin_group = " . $use_workflow . "\n";              // 1:「管理者グループ」通知
+            $multidatabase_ini .= "approval_subject = \"" . $approval_subject . "\"\n";
+            $multidatabase_ini .= "approval_body = \"" . $approval_body . "\"\n";
+            $multidatabase_ini .= "approved_on = 0\n";                                           // 承認完了通知はメール飛ばなかった
+            $multidatabase_ini .= "approved_author = 0\n";                                       // 1:投稿者へ通知する
+            $multidatabase_ini .= "approved_admin_group = 0\n";                                  // 1:「管理者グループ」通知
+            $multidatabase_ini .= "approved_subject = \"" . $approved_subject . "\"\n";
+            $multidatabase_ini .= "approved_body = \"" . $approved_body . "\"\n";
 
             // NC3 情報
             $multidatabase_ini .= "\n";
