@@ -2503,7 +2503,7 @@ trait MigrationNc3ExportTrait
             $multidatabase_ini .= "mail_subject = \"" . $mail_subject . "\"\n";
             $multidatabase_ini .= "mail_body = \"" . $mail_body . "\"\n";
             $multidatabase_ini .= "approval_on = " . $mail_setting->is_mail_send_approval . "\n";
-            $multidatabase_ini .= "approval_admin_group = " . $use_workflow . "\n";              // 1:「管理者グループ」通知
+            $multidatabase_ini .= "approval_admin_group = 1\n";                                  // approval_onのON/OFFに関わらず通知先は1:「管理者グループ」をセット
             $multidatabase_ini .= "approval_subject = \"" . $approval_subject . "\"\n";
             $multidatabase_ini .= "approval_body = \"" . $approval_body . "\"\n";
             $multidatabase_ini .= "approved_on = 0\n";                                           // 承認完了通知はメール飛ばなかった
