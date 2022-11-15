@@ -1542,6 +1542,7 @@ class DatabasesPlugin extends UserPluginBase
             DatabaseNoticeEmbeddedTag::display_sequence => $databases_inputs->display_sequence,
         ];
 
+        $all_items = '';
         foreach ($databases_columns as $databases_column) {
             // 除外する埋め込みタグはセットしない
             if (DatabasesColumns::isNotEmbeddedTagsColumnType($databases_column->column_type)) {
@@ -1556,21 +1557,27 @@ class DatabasesPlugin extends UserPluginBase
             }
 
             if ($databases_column->column_type == DatabaseColumnType::wysiwyg) {
-                $overwrite_notice_embedded_tags["X-{$databases_column->column_name}"] = BucketsMail::stripTagsWysiwyg($value);
+                $value = BucketsMail::stripTagsWysiwyg($value);
+                $overwrite_notice_embedded_tags["X-{$databases_column->column_name}"] = $value;
+                $all_items .= "{$databases_column->column_name}: {$value}\n";
             } elseif (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
 
                 if ($value) {
                     $upload = Uploads::find($value);
                     $upload = $upload ?? new Uploads();
                     $overwrite_notice_embedded_tags["X-{$databases_column->column_name}"] = $upload->client_original_name;
+                    $all_items .= "{$databases_column->column_name}: {$upload->client_original_name}\n";
                 } else {
                     $overwrite_notice_embedded_tags["X-{$databases_column->column_name}"] = '';
+                    $all_items .= "{$databases_column->column_name}:\n";
                 }
 
             } else {
                 $overwrite_notice_embedded_tags["X-{$databases_column->column_name}"] = $value;
+                $all_items .= "{$databases_column->column_name}: {$value}\n";
             }
         }
+        $overwrite_notice_embedded_tags[DatabaseNoticeEmbeddedTag::all_items] = $all_items;
 
         // メール送信 引数(レコードを表すモデルオブジェクト, 保存前のレコード, 詳細表示メソッド, 上書き埋め込みタグ)
         $this->sendPostNotice($databases_inputs, $before_databases_inputs, 'detail', $overwrite_notice_embedded_tags);
