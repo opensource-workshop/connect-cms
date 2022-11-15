@@ -159,6 +159,7 @@ use App\Utilities\Migration\MigrationUtils;
 use App\Enums\BlogFrameConfig;
 use App\Enums\CounterDesignType;
 use App\Enums\ContentOpenType;
+use App\Enums\DatabaseNoticeEmbeddedTag;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\DayOfWeek;
 use App\Enums\FacilityDisplayType;
@@ -8871,13 +8872,20 @@ trait MigrationTrait
         }
 
         // NC2汎用データベース（Multidatabase）を移行する。
-        $nc2_export_where_multidatabase_ids = $this->getMigrationConfig('databases', 'nc2_export_where_multidatabase_ids');
+        $nc2_multidatabases_query = Nc2Multidatabase::select('multidatabase.*', 'page_rooms.space_type')
+            ->join('pages as page_rooms', function ($join) {
+                $join->on('page_rooms.page_id', '=', 'multidatabase.room_id')
+                    ->whereColumn('page_rooms.page_id', 'page_rooms.room_id')
+                    ->whereIn('page_rooms.space_type', [Nc2Page::space_type_public, Nc2Page::space_type_group])
+                    ->where('page_rooms.room_id', '!=', 2);        // 2:グループスペースを除外（枠だけでグループルームじゃないので除外）
+            })
+            ->orderBy('multidatabase.multidatabase_id');
 
-        if (empty($nc2_export_where_multidatabase_ids)) {
-            $nc2_multidatabases = Nc2Multidatabase::orderBy('multidatabase_id')->get();
-        } else {
-            $nc2_multidatabases = Nc2Multidatabase::whereIn('multidatabase_id', $nc2_export_where_multidatabase_ids)->orderBy('multidatabase_id')->get();
+        $nc2_export_where_multidatabase_ids = $this->getMigrationConfig('databases', 'nc2_export_where_multidatabase_ids');
+        if (!empty($nc2_export_where_multidatabase_ids)) {
+            $nc2_multidatabases_query = $nc2_multidatabases_query->whereIn('multidatabase.multidatabase_id', $nc2_export_where_multidatabase_ids);
         }
+        $nc2_multidatabases = $nc2_multidatabases_query->get();
 
         // 空なら戻る
         if ($nc2_multidatabases->isEmpty()) {
@@ -8900,12 +8908,165 @@ trait MigrationTrait
                 continue;
             }
 
+            // 権限設定
+            // ----------------------------------------------------
+            // contents_authority
+            // 2: 一般まで
+            // 3: モデレータまで
+            // 4: 主担のみ
+            $article_post_flag = 0;
+            $reporter_post_flag = 0;
+            if ($nc2_multidatabase->contents_authority == 2) {
+                $article_post_flag = 1;
+                $reporter_post_flag = 1;
+
+            } elseif ($nc2_multidatabase->contents_authority == 3) {
+                $article_post_flag = 1;
+
+            } elseif ($nc2_multidatabase->contents_authority == 4) {
+                // 一般,モデレータ=0でccでは主担=コンテンツ管理者は投稿可のため、なにもしない
+            }
+
+            // メール設定
+            // ----------------------------------------------------
+            // mail_authority
+            // 1: ゲストまで 　　→ パブ通知は、「全ユーザに通知」
+            // 　※ 掲示板-パブリック（パブサブも同様）： ⇒ 「全ユーザに通知」
+            // 　※ 掲示板-グループ：　　　　　　　　　　 ⇒ ルームグループ全てに、グループ通知
+            // 2: 一般まで 　　　→ グループは、グループ通知
+            // 　※ 掲示板-パブリック（パブサブも同様）： ⇒ パブグループ_編集者まで、グループ通知
+            // 　※ 掲示板-グループ：　 　　　　　　　　　⇒ ルームグループ全てに、グループ通知
+            // 3: モデレータまで → モデグループまで、グループ通知
+            // 4: 主担のみ 　　　→ グループ管理者は、「管理者グループ」通知
+            $notice_everyone = 0;
+            $notice_admin_group = 0;
+            $notice_moderator_group = 0;
+            $notice_group = 0;
+            $notice_public_general_group = 0;
+            $notice_public_moderator_group = 0;
+
+            if ($nc2_multidatabase->mail_authority === 1) {
+                if ($nc2_multidatabase->space_type == Nc2Page::space_type_public) {
+                    // 全ユーザ通知
+                    $notice_everyone = 1;
+
+                } elseif ($nc2_multidatabase->space_type == Nc2Page::space_type_group) {
+                    // グループ通知
+                    $notice_group = 1;
+                }
+
+            } elseif ($nc2_multidatabase->mail_authority == 2) {
+                if ($nc2_multidatabase->space_type == Nc2Page::space_type_public) {
+                    // パブリック一般通知
+                    $notice_public_general_group = 1;
+                    $notice_admin_group = 1;
+
+                } elseif ($nc2_multidatabase->space_type == Nc2Page::space_type_group) {
+                    // グループ通知
+                    $notice_group = 1;
+                }
+
+            } elseif ($nc2_multidatabase->mail_authority == 3) {
+                if ($nc2_multidatabase->space_type == Nc2Page::space_type_public) {
+                    // パブリックモデレーター通知
+                    $notice_public_moderator_group = 1;
+                    $notice_admin_group = 1;
+                } elseif ($nc2_multidatabase->space_type == Nc2Page::space_type_group) {
+                    // モデレータユーザ通知
+                    $notice_moderator_group = 1;
+                    $notice_admin_group = 1;
+                }
+
+            } elseif ($nc2_multidatabase->mail_authority == 4) {
+                // 管理者グループ通知
+                $notice_admin_group = 1;
+            }
+
+            $mail_subject = $nc2_multidatabase->mail_subject;
+            $mail_body = $nc2_multidatabase->mail_body;
+            $approved_subject = $nc2_multidatabase->agree_mail_subject;
+            $approved_body = $nc2_multidatabase->agree_mail_body;
+
+            // --- メール配信設定
+            // [{X-SITE_NAME}]汎用データベースデータ登録({X-ROOM} {X-MDB_NAME})
+            //
+            // 汎用データベースにデータを登録されたのでお知らせします。
+            // ルーム名称:{X-ROOM}
+            // 汎用データベース:{X-MDB_NAME}
+            // 登録者:{X-USER}
+            // 登録日時:{X-TO_DATE}
+            //
+            //
+            // {X-DATA}
+            //
+            // 登録内容確認画面URL
+            // {X-URL}
+
+            // --- 承認完了通知設定
+            // [{X-SITE_NAME}]汎用データベースコンテンツ投稿承認完了通知
+            //
+            // {X-SITE_NAME}におけるコンテンツ投稿の承認が完了しました。
+            // もし{X-SITE_NAME}でのコンテンツ投稿に覚えがない場合はこのメールを破棄してください。
+            //
+            // コンテンツの内容を確認するには下記のリンクをクリックして下さい。
+            // {X-URL}
+
+            // 変換
+            $convert_embedded_tags = [
+                // nc2埋込タグ, cc埋込タグ
+                ['{X-SITE_NAME}', '[[' . NoticeEmbeddedTag::site_name . ']]'],
+                ['{X-USER}',      '[[' . NoticeEmbeddedTag::created_name . ']]'],
+                ['{X-TO_DATE}',   '[[' . NoticeEmbeddedTag::created_at . ']]'],
+                ['{X-DATA}',      '[[' . DatabaseNoticeEmbeddedTag::all_items . ']]'],
+                ['{X-URL}',       '[[' . NoticeEmbeddedTag::url . ']]'],
+                // 除外
+                ['({X-ROOM} {X-MDB_NAME})', ''],
+                ['汎用データベース:{X-MDB_NAME}', ''],
+                ['ルーム名称:{X-ROOM}', ''],
+                ['{X-MDB_NAME}', ''],
+                ['{X-ROOM}', ''],
+            ];
+            foreach ($convert_embedded_tags as $convert_embedded_tag) {
+                $mail_subject     = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_subject);
+                $mail_body        = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_body);
+                $approved_subject = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $approved_subject);
+                $approved_body    = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $approved_body);
+            }
+
+            // （NC2）承認メールは、承認あり＋メール通知ON（～ゲストまで通知）でも、メール通知フォーマットで「主担」のみに飛ぶ。
+            //        ⇒ （CC）NC2メール通知フォーマットを、CC承認メールフォーマットにセット
+            // （NC2）承認完了メールは、承認完了通知ONで、承認完了通知フォーマットで「投稿者」のみに飛ぶ。
+            //        他ユーザには、メール通知ON（～ゲストまで通知）でメール通知フォーマットで全員にメール飛ぶ。
+            //        ⇒ （CC）NC2承認完了通知フォーマットを、CC承認完了通知フォーマットにセット。通知先は、投稿者＋管理グループ。
+
             $multidatabase_id = $nc2_multidatabase->multidatabase_id;
 
             // データベース設定
             $multidatabase_ini = "";
             $multidatabase_ini .= "[database_base]\n";
             $multidatabase_ini .= "database_name = \"" . $nc2_multidatabase->multidatabase_name . "\"\n";
+            $multidatabase_ini .= "article_post_flag = " . $article_post_flag . "\n";
+            $multidatabase_ini .= "article_approval_flag = " . $nc2_multidatabase->agree_flag . "\n";      // agree_flag 1:承認あり 0:承認なし
+            $multidatabase_ini .= "reporter_post_flag = " . $reporter_post_flag . "\n";
+            $multidatabase_ini .= "reporter_approval_flag = " . $nc2_multidatabase->agree_flag . "\n";     // agree_flag 1:承認あり 0:承認なし
+            $multidatabase_ini .= "notice_on = " . $nc2_multidatabase->mail_flag . "\n";
+            $multidatabase_ini .= "notice_everyone = " . $notice_everyone . "\n";
+            $multidatabase_ini .= "notice_group = " . $notice_group . "\n";
+            $multidatabase_ini .= "notice_moderator_group = " . $notice_moderator_group . "\n";
+            $multidatabase_ini .= "notice_admin_group = " . $notice_admin_group . "\n";
+            $multidatabase_ini .= "notice_public_general_group = " . $notice_public_general_group . "\n";
+            $multidatabase_ini .= "notice_public_moderator_group = " . $notice_public_moderator_group . "\n";
+            $multidatabase_ini .= "mail_subject = \"" . $mail_subject . "\"\n";
+            $multidatabase_ini .= "mail_body = \"" . $mail_body . "\"\n";
+            $multidatabase_ini .= "approval_on = " . $nc2_multidatabase->agree_flag . "\n";                // 承認ありなら 1: 承認通知
+            $multidatabase_ini .= "approval_admin_group = " . $nc2_multidatabase->agree_flag . "\n";       // 1:「管理者グループ」通知
+            $multidatabase_ini .= "approval_subject = \"" . $mail_subject . "\"\n";                        // 承認通知はメール通知フォーマットと同じ
+            $multidatabase_ini .= "approval_body = \"" . $mail_body . "\"\n";
+            $multidatabase_ini .= "approved_on = " . $nc2_multidatabase->agree_mail_flag . "\n";           // agree_mail_flag 1:承認完了通知する 0:通知しない
+            $multidatabase_ini .= "approved_author = " . $nc2_multidatabase->agree_mail_flag . "\n";       // 1:投稿者へ通知する
+            $multidatabase_ini .= "approved_admin_group = " . $nc2_multidatabase->agree_mail_flag . "\n";  // 1:「管理者グループ」通知
+            $multidatabase_ini .= "approved_subject = \"" . $approved_subject . "\"\n";
+            $multidatabase_ini .= "approved_body = \"" . $approved_body . "\"\n";
 
             // multidatabase_block の取得
             // 1DB で複数ブロックがあるので、Join せずに、個別に読む
