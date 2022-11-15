@@ -18,8 +18,8 @@ final class DatabaseNoticeEmbeddedTag extends NoticeEmbeddedTag
     const enum = [
         self::site_name => 'サイト名',
         self::method => '処理名',
-        self::title => 'タイトル',
-        self::body => '本文',
+        self::title => 'タイトル（タイトル指定した項目）',
+        self::body => '本文（本文指定した項目）',
         self::posted_at => '公開日時',
         self::expires_at => '公開終了日時',
         self::display_sequence => '表示順',
@@ -40,6 +40,7 @@ final class DatabaseNoticeEmbeddedTag extends NoticeEmbeddedTag
         $embedded_tags[] = ['[[' . self::site_name . ']]',        self::getDescription(self::site_name)];
         $embedded_tags[] = ['[[' . self::method . ']]',           self::getDescription(self::method)];
         $embedded_tags[] = ['[[' . self::title . ']]',            self::getDescription(self::title)];
+        $embedded_tags[] = ['[[' . self::body . ']]',             self::getDescription(self::body)];
         $embedded_tags[] = ['[[' . self::posted_at . ']]',        self::getDescription(self::posted_at)];
         $embedded_tags[] = ['[[' . self::expires_at . ']]',       self::getDescription(self::expires_at)];
         $embedded_tags[] = ['[[' . self::display_sequence . ']]', self::getDescription(self::display_sequence)];
