@@ -8909,7 +8909,7 @@ trait MigrationTrait
 
             // multidatabase_block の取得
             // 1DB で複数ブロックがあるので、Join せずに、個別に読む
-            $nc2_multidatabase_block = Nc2MultidatabaseBlock::where('multidatabase_id', $nc2_multidatabase->multidatabase_id)->orderBy('block_id', 'asc')->first();
+            $nc2_multidatabase_block = Nc2MultidatabaseBlock::where('multidatabase_id', $multidatabase_id)->orderBy('block_id', 'asc')->first();
 
             // この汎用データベースが配置されている最初のページオブジェクトを取得しておく
             // WYSIWYG で相対パスを絶対パスに変換する際に、ページの固定URL が必要になるため。
@@ -8924,7 +8924,7 @@ trait MigrationTrait
             // NC2 情報
             $multidatabase_ini .= "\n";
             $multidatabase_ini .= "[source_info]\n";
-            $multidatabase_ini .= "multidatabase_id = " . $nc2_multidatabase->multidatabase_id . "\n";
+            $multidatabase_ini .= "multidatabase_id = " . $multidatabase_id . "\n";
             $multidatabase_ini .= "room_id = " . $nc2_multidatabase->room_id . "\n";
             $multidatabase_ini .= "module_name = \"multidatabase\"\n";
             $multidatabase_ini .= "created_at      = \"" . $this->getCCDatetime($nc2_multidatabase->insert_time) . "\"\n";
