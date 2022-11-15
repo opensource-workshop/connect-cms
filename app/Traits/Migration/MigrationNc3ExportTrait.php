@@ -1279,7 +1279,7 @@ trait MigrationNc3ExportTrait
         $block_role_permissions = Nc3BlockRolePermission::getBlockRolePermissionsByBlockKeys($nc3_blogs->pluck('block_key'));
 
         // メール設定
-        $mail_settings = Nc3MailSetting::getMailSettingsByBlockKeys($nc3_blogs->pluck('block_key'));
+        $mail_settings = Nc3MailSetting::getMailSettingsByBlockKeys($nc3_blogs->pluck('block_key'), 'blogs');
 
         // サイト設定
         $site_settings = Nc3SiteSetting::where('language_id', Nc3Language::language_id_ja)->get();
@@ -1392,8 +1392,8 @@ trait MigrationNc3ExportTrait
                 $notice_admin_group = 1;
             }
 
-            // 通知メール
-            $mail_setting = $mail_settings->firstWhere('block_key', $nc3_blog->block_key) ?? new Nc3MailSetting();
+            // 通知メール（データなければblock_key=nullの初期設定取得）
+            $mail_setting = $mail_settings->firstWhere('block_key', $nc3_blog->block_key) ?? $mail_settings->firstWhere('block_key', null);
             $mail_subject = $mail_setting->mail_fixed_phrase_subject;
             $mail_body = $mail_setting->mail_fixed_phrase_body;
 
@@ -1638,7 +1638,7 @@ trait MigrationNc3ExportTrait
         $block_role_permissions = Nc3BlockRolePermission::getBlockRolePermissionsByBlockKeys($nc3_bbses->pluck('block_key'));
 
         // メール設定
-        $mail_settings = Nc3MailSetting::getMailSettingsByBlockKeys($nc3_bbses->pluck('block_key'));
+        $mail_settings = Nc3MailSetting::getMailSettingsByBlockKeys($nc3_bbses->pluck('block_key'), 'bbses');
 
         // サイト設定
         $site_settings = Nc3SiteSetting::where('language_id', Nc3Language::language_id_ja)->get();
@@ -1756,8 +1756,8 @@ trait MigrationNc3ExportTrait
                 $notice_admin_group = 1;
             }
 
-            // 通知メール
-            $mail_setting = $mail_settings->firstWhere('block_key', $nc3_bbs->block_key) ?? new Nc3MailSetting();
+            // 通知メール（データなければblock_key=nullの初期設定取得）
+            $mail_setting = $mail_settings->firstWhere('block_key', $nc3_bbs->block_key) ?? $mail_settings->firstWhere('block_key', null);
             $mail_subject = $mail_setting->mail_fixed_phrase_subject;
             $mail_body = $mail_setting->mail_fixed_phrase_body;
 
