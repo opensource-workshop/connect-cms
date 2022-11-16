@@ -2999,10 +2999,10 @@ trait MigrationTrait
             $whatsnew_ini = parse_ini_file($whatsnew_ini_paths, true);
 
             // ルーム指定を探しておく。
-            $room_id = null;
-            if (array_key_exists('source_info', $whatsnew_ini) && array_key_exists('room_id', $whatsnew_ini['source_info'])) {
-                $room_id = $whatsnew_ini['source_info']['room_id'];
-            }
+            // $room_id = null;
+            // if (array_key_exists('source_info', $whatsnew_ini) && array_key_exists('room_id', $whatsnew_ini['source_info'])) {
+            //     $room_id = $whatsnew_ini['source_info']['room_id'];
+            // }
 
             // nc2 の whatsnew_block_id
             $nc2_whatsnew_block_id = 0;
