@@ -1575,11 +1575,11 @@ trait MigrationNc3ExportTrait
                 $journals_tsv .= $like->like_count                                              . "\t"; // [9] いいね数
                 $journals_tsv .=                                                                  "\t"; // [10]いいねのsession_id & user_id. nc3ない
                 $journals_tsv .= $this->getCCDatetime($nc3_blog_post->created)                                  . "\t";   // [11]
-                $journals_tsv .= Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_blog->created_user)          . "\t";   // [12]
-                $journals_tsv .= Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_blog_post->created_user)    . "\t";   // [13]
+                $journals_tsv .= Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_blog_post->created_user)   . "\t";   // [12]
+                $journals_tsv .= Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_blog_post->created_user)  . "\t";   // [13]
                 $journals_tsv .= $this->getCCDatetime($nc3_blog_post->modified)                                 . "\t";   // [14]
-                $journals_tsv .= Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_blog->modified_user)         . "\t";   // [15]
-                $journals_tsv .= Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_blog_post->modified_user);            // [16]
+                $journals_tsv .= Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_blog_post->modified_user)  . "\t";   // [15]
+                $journals_tsv .= Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_blog_post->modified_user);          // [16]
 
                 // 記事のタイトルの一覧
                 // タイトルに " あり
