@@ -5768,7 +5768,6 @@ trait MigrationTrait
         // 変数定義
         $nc2_whatsnew_block_id = null;
         $whatsnew_ini = null;
-        $registration_id = null;
         $migration_mappings = null;
         $whatsnew = null;
         $bucket = null;
