@@ -38,10 +38,11 @@ use App\Models\Migration\Nc3\Nc3Multidatabase;
 use App\Models\Migration\Nc3\Nc3MultidatabaseContent;
 use App\Models\Migration\Nc3\Nc3MultidatabaseFrameSetting;
 use App\Models\Migration\Nc3\Nc3MultidatabaseMetadata;
-// use App\Models\Migration\Nc3\Nc3Topic;
+use App\Models\Migration\Nc3\Nc3TopicFramePlugin;
 use App\Models\Migration\Nc3\Nc3TopicFrameSetting;
 use App\Models\Migration\Nc3\Nc3Page;
 use App\Models\Migration\Nc3\Nc3PageContainer;
+use App\Models\Migration\Nc3\Nc3Plugin;
 use App\Models\Migration\Nc3\Nc3Registration;
 use App\Models\Migration\Nc3\Nc3ReservationFrameSetting;
 use App\Models\Migration\Nc3\Nc3Room;
@@ -134,7 +135,6 @@ trait MigrationNc3ExportTrait
         // 'rss_readers'      => 'Development',  // RSS
         // 'searches'         => 'searchs',      // 検索
         // 'tasks'            => 'Development',  // ToDo
-        // 'topics'           => 'whatsnews',    // 新着情報
         // 'videos'           => 'Development',  // 動画
         'access_counters'  => 'Development',    // カウンター
         'announcements'    => 'contents',       // お知らせ
@@ -156,7 +156,7 @@ trait MigrationNc3ExportTrait
         'rss_readers'      => 'Development',    // RSS
         'searches'         => 'Development',    // 検索
         'tasks'            => 'Development',    // ToDo
-        'topics'           => 'Development',    // 新着情報
+        'topics'           => 'whatsnews',      // 新着情報
         'videos'           => 'Development',    // 動画
         'wysiwyg'          => 'Development',    // wysiwyg(upload用)
     ];
@@ -453,6 +453,11 @@ trait MigrationNc3ExportTrait
             $this->nc3ExportMultidatabase($redo);
         }
 
+        // NC3 新着情報（topics）データのエクスポート
+        if ($this->isTarget('nc3_export', 'plugins', 'whatsnews')) {
+            $this->nc3ExportTopics($redo);
+        }
+
         //////////////////
         // [TODO] まだ
         //////////////////
@@ -469,11 +474,6 @@ trait MigrationNc3ExportTrait
         // // NC3 リンクリスト（linklist）データのエクスポート
         // if ($this->isTarget('nc3_export', 'plugins', 'linklists')) {
         //     $this->nc3ExportLinklist($redo);
-        // }
-
-        // // NC3 新着情報（whatsnew）データのエクスポート
-        // if ($this->isTarget('nc3_export', 'plugins', 'whatsnews')) {
-        //     $this->nc3ExportWhatsnew($redo);
         // }
 
         // // NC3 キャビネット（cabinet）データのエクスポート
@@ -758,24 +758,22 @@ trait MigrationNc3ExportTrait
     }
 
     /**
-     *  NC3モジュール名の取得
-     * 「TODO」まだ
+     * NC3プラグインキーからConnect-CMS のプラグイン名に変換
      */
-    private function nc3GetModuleNames($action_names, $connect_change = true)
+    private function getCCPluginNamesFromNc3PluginKeys($plugin_keys)
     {
         $available_connect_plugin_names = ['blogs', 'bbses', 'databases'];
         $ret = array();
-        foreach ($action_names as $action_name) {
-            $action_name_parts = explode('_', $action_name);
+        foreach ($plugin_keys as $plugin_key) {
             // Connect-CMS のプラグイン名に変換
-            if ($connect_change == true && array_key_exists($action_name_parts[0], $this->plugin_name)) {
-                $connect_plugin_name = $this->plugin_name[$action_name_parts[0]];
+            if (array_key_exists($plugin_key, $this->plugin_name)) {
+                $connect_plugin_name = $this->plugin_name[$plugin_key];
                 if ($connect_plugin_name == 'Development') {
-                    $this->putError(3, '新着：未開発プラグイン', "action_names = " . $action_name_parts[0]);
+                    $this->putError(3, '新着：未開発プラグイン', "plugin_key = {$plugin_key}");
                 } elseif (in_array($connect_plugin_name, $available_connect_plugin_names)) {
                     $ret[] = $connect_plugin_name;
                 } else {
-                    $this->putError(3, '新着：未対応プラグイン', "action_names = " . $action_name_parts[0]);
+                    $this->putError(3, '新着：未対応プラグイン', "plugin_key = {$plugin_key}");
                 }
             }
         }
@@ -2982,11 +2980,11 @@ trait MigrationNc3ExportTrait
     }
 
     /**
-     * NC3：新着情報（Whatsnew）の移行
+     * NC3：新着情報（Topics）の移行
      */
-    private function nc3ExportWhatsnew($redo)
+    private function nc3ExportTopics($redo)
     {
-        $this->putMonitor(3, "Start nc3ExportWhatsnew.");
+        $this->putMonitor(3, "Start nc3ExportTopics.");
 
         // データクリア
         if ($redo === true) {
@@ -2994,37 +2992,42 @@ trait MigrationNc3ExportTrait
             Storage::deleteDirectory($this->getImportPath('whatsnews/'));
         }
 
-        // NC3新着情報（Whatsnew）を移行する。
-        $nc3_whatsnew_blocks_query = Nc2WhatsnewBlock::select('whatsnew_block.*', 'blocks.block_name', 'pages.page_name')
-                                                     ->join('blocks', 'blocks.block_id', '=', 'whatsnew_block.block_id');
-        $nc3_whatsnew_blocks_query->join('pages', function ($join) {
-            $join->on('pages.page_id', '=', 'blocks.page_id')
-                 ->where('pages.private_flag', '=', 0);
-        });
-        $nc3_whatsnew_blocks = $nc3_whatsnew_blocks_query->orderBy('block_id')->get();
+        // NC3新着情報（Topics）を移行する。
+        $nc3_topic_frame_settings = Nc3TopicFrameSetting::
+            select('topic_frame_settings.*', 'frames_languages.name as frame_name', 'frames.room_id', 'frames.id as frame_id', 'pages_languages.name as page_name')
+            ->join('frames', 'frames.key', '=', 'topic_frame_settings.frame_key')
+            ->join('frames_languages', function ($join) {
+                $join->on('frames_languages.frame_id', '=', 'frames.id')
+                    ->where('frames_languages.language_id', Nc3Language::language_id_ja);
+            })
+            ->join('boxes', 'boxes.id', '=', 'frames.box_id')
+            ->leftJoin('pages_languages', function ($join) {
+                $join->on('pages_languages.page_id', '=', 'boxes.page_id')
+                    ->where('pages_languages.language_id', Nc3Language::language_id_ja);
+            })
+            ->orderBy('topic_frame_settings.frame_key')
+            ->get();
 
         // 空なら戻る
-        if ($nc3_whatsnew_blocks->isEmpty()) {
+        if ($nc3_topic_frame_settings->isEmpty()) {
             return;
         }
 
         // nc3の全ユーザ取得
-        $nc3_users = Nc2User::get();
+        $nc3_users = Nc3User::get();
 
-        // NC3新着情報（Whatsnew）のループ
-        foreach ($nc3_whatsnew_blocks as $nc3_whatsnew_block) {
+        // NC3新着情報（Topics）のループ
+        foreach ($nc3_topic_frame_settings as $nc3_topic_frame_setting) {
             $room_ids = $this->getMigrationConfig('basic', 'nc3_export_room_ids');
             // ルーム指定があれば、指定されたルームのみ処理する。
             if (empty($room_ids)) {
                 // ルーム指定なし。全データの移行
-            } elseif (!empty($room_ids) && in_array($nc3_whatsnew_block->room_id, $room_ids)) {
+            } elseif (!empty($room_ids) && in_array($nc3_topic_frame_setting->room_id, $room_ids)) {
                 // ルーム指定あり。指定ルームに合致する。
             } else {
                 // ルーム指定あり。条件に合致せず。移行しない。
                 continue;
             }
-
-            $whatsnew_block_id = $nc3_whatsnew_block->block_id;
 
             // 新着情報設定
             $whatsnew_ini = "";
@@ -3032,45 +3035,55 @@ trait MigrationNc3ExportTrait
 
             // 新着情報の名前は、ブロックタイトルがあればブロックタイトル。なければページ名＋「の新着情報」。
             $whatsnew_name = '無題';
-            if (!empty($nc3_whatsnew_block->page_name)) {
-                $whatsnew_name = $nc3_whatsnew_block->page_name;
+            if (!empty($nc3_topic_frame_setting->page_name)) {
+                $whatsnew_name = $nc3_topic_frame_setting->page_name;
             }
-            if (!empty($nc3_whatsnew_block->block_name)) {
-                $whatsnew_name = $nc3_whatsnew_block->block_name;
+            if (!empty($nc3_topic_frame_setting->frame_name)) {
+                $whatsnew_name = $nc3_topic_frame_setting->frame_name;
             }
 
             $whatsnew_ini .= "whatsnew_name = \""  . $whatsnew_name . "\"\n";
-            $whatsnew_ini .= "view_pattern = "     . ($nc3_whatsnew_block->display_flag == 1 ? 0 : 1) . "\n"; // NC3: 0=日数, 1=件数 Connect-CMS: 0=件数, 1=日数
-            $whatsnew_ini .= "count = "            . $nc3_whatsnew_block->display_number . "\n";
-            $whatsnew_ini .= "days = "             . $nc3_whatsnew_block->display_days . "\n";
-            $whatsnew_ini .= "rss = "              . $nc3_whatsnew_block->allow_rss_feed . "\n";
-            $whatsnew_ini .= "rss_count = "        . $nc3_whatsnew_block->display_number . "\n";
-            $whatsnew_ini .= "view_posted_name = " . $nc3_whatsnew_block->display_user_name    . "\n";
-            $whatsnew_ini .= "view_posted_at = "   . $nc3_whatsnew_block->display_insert_time . "\n";
+            $whatsnew_ini .= "view_pattern = "     . ($nc3_topic_frame_setting->unit_type == 1 ? 0 : 1) . "\n"; // NC3: 0=日数, 1=件数 Connect-CMS: 0=件数, 1=日数
+            $whatsnew_ini .= "count = "            . $nc3_topic_frame_setting->display_number . "\n";
+            $whatsnew_ini .= "days = "             . $nc3_topic_frame_setting->display_days . "\n";
+            $whatsnew_ini .= "rss = "              . $nc3_topic_frame_setting->use_rss_feed . "\n";
+            $whatsnew_ini .= "rss_count = "        . $nc3_topic_frame_setting->display_number . "\n";
+            $whatsnew_ini .= "view_posted_name = " . $nc3_topic_frame_setting->display_created_user . "\n";
+            $whatsnew_ini .= "view_posted_at = "   . $nc3_topic_frame_setting->display_created . "\n";
 
             // 対象のプラグインを取得（Connect-CMS にまだないものは除外＆ログ出力）
-            $display_modules = explode(',', $nc3_whatsnew_block->display_modules);
-            $nc3_modules = Nc2Modules::whereIn('module_id', $display_modules)->orderBy('module_id', 'asc')->get();
-            $whatsnew_ini .= "target_plugins = \"" . $this->nc3GetModuleNames($nc3_modules->pluck('action_name')) . "\"\n";
+            if ($nc3_topic_frame_setting->select_plugin) {
+                $plugin_keys = Nc3TopicFramePlugin::where('frame_key', $nc3_topic_frame_setting->frame_key)->pluck('plugin_key');
+                $whatsnew_ini .= "target_plugins = \"" . $this->getCCPluginNamesFromNc3PluginKeys($plugin_keys) . "\"\n";
+            } else {
+                // 新着対象の全プラグインON
+                $plugin_keys = Nc3Plugin::where('display_topics', 1)
+                    ->where('language_id', Nc3Language::language_id_ja)
+                    ->orderBy('id', 'asc')
+                    ->pluck('key');
+                $whatsnew_ini .= "target_plugins = \"" . $this->getCCPluginNamesFromNc3PluginKeys($plugin_keys) . "\"\n";
+            }
 
+            // 特定のルームの特定のブロックを表示 の移行：未対応
             $whatsnew_ini .= "frame_select = 0\n";
+
+            $whatsnew_ini .= "read_more_use_flag = 1\n";
 
             // NC3 情報
             $whatsnew_ini .= "\n";
             $whatsnew_ini .= "[source_info]\n";
-            $whatsnew_ini .= "whatsnew_block_id = " . $whatsnew_block_id . "\n";
-            $whatsnew_ini .= "room_id = "           . $nc3_whatsnew_block->room_id . "\n";
-            $whatsnew_ini .= "plugin_key = \"whatsnew\"\n";
-            $whatsnew_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_whatsnew_block->created) . "\"\n";
-            $whatsnew_ini .= "created_name    = \"" . $nc3_whatsnew_block->insert_user_name . "\"\n";
-            $whatsnew_ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_whatsnew_block->created_user) . "\"\n";
-            $whatsnew_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_whatsnew_block->modified) . "\"\n";
-            $whatsnew_ini .= "updated_name    = \"" . $nc3_whatsnew_block->update_user_name . "\"\n";
-            $whatsnew_ini .= "update_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_whatsnew_block->modified_user) . "\"\n";
+            $whatsnew_ini .= "whatsnew_block_id = " . $nc3_topic_frame_setting->frame_id . "\n";
+            $whatsnew_ini .= "room_id         = "   . $nc3_topic_frame_setting->room_id . "\n";
+            $whatsnew_ini .= "plugin_key      = \"topics\"\n";
+            $whatsnew_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_topic_frame_setting->created) . "\"\n";
+            $whatsnew_ini .= "created_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_topic_frame_setting->created_user) . "\"\n";
+            $whatsnew_ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_topic_frame_setting->created_user) . "\"\n";
+            $whatsnew_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_topic_frame_setting->modified) . "\"\n";
+            $whatsnew_ini .= "updated_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_topic_frame_setting->modified_user) . "\"\n";
+            $whatsnew_ini .= "update_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_topic_frame_setting->modified_user) . "\"\n";
 
             // 新着情報の設定を出力
-            //Storage::put($this->getImportPath('whatsnews/whatsnew_') . $this->zeroSuppress($whatsnew_block_id) . '.ini', $whatsnew_ini);
-            $this->storagePut($this->getImportPath('whatsnews/whatsnew_') . $this->zeroSuppress($whatsnew_block_id) . '.ini', $whatsnew_ini);
+            $this->storagePut($this->getImportPath('whatsnews/whatsnew_') . $this->zeroSuppress($nc3_topic_frame_setting->frame_id) . '.ini', $whatsnew_ini);
         }
     }
 
@@ -4908,9 +4921,8 @@ trait MigrationNc3ExportTrait
         } elseif ($nc3_frame->plugin_key == 'topics') {
             $nc3_topic_frame_setting = Nc3TopicFrameSetting::where('frame_key', $nc3_frame->key)->first();
             if (!empty($nc3_topic_frame_setting)) {
-                // block_idはないため、frame_keyをセット
-                // [TODO] id名と値ズレ
-                $ret = "whatsnew_block_id = \"" . $this->zeroSuppress($nc3_topic_frame_setting->frame_key) . "\"\n";
+                // block_idないため、frame_idで代用
+                $ret = "whatsnew_block_id = \"" . $this->zeroSuppress($nc3_frame->id) . "\"\n";
             }
         } elseif ($nc3_frame->plugin_key == 'cabinets') {
             $nc3_cabinet = Nc3Cabinet::where('block_id', $nc3_frame->block_id)->first();
@@ -4969,17 +4981,15 @@ trait MigrationNc3ExportTrait
             $nc3_calendar_frame_setting = Nc3CalendarFrameSetting::where('frame_key', $nc3_frame->key)->first();
             // 設定があり、カレンダーがない場合は対象外
             if (!empty($nc3_calendar_frame_setting)) {
-                // block_idはないため、frame_keyをセット
-                // [TODO] id名と値ズレ
-                $ret = "calendar_block_id = \"" . $this->zeroSuppress($nc3_calendar_frame_setting->frame_key) . "\"\n";
+                // block_idないため、frame_idで代用
+                $ret = "calendar_block_id = \"" . $this->zeroSuppress($nc3_frame->id) . "\"\n";
             }
         } elseif ($nc3_frame->plugin_key == 'reservations') {
             $nc3_reservation_frame_setting = Nc3ReservationFrameSetting::where('frame_key', $nc3_frame->key)->first();
             // ブロックがあり、施設予約がない場合は対象外
             if (!empty($nc3_reservation_frame_setting)) {
-                // block_idはないため、frame_keyをセット
-                // [TODO] id名と値ズレ
-                $ret = "reservation_block_id = \"" . $this->zeroSuppress($nc3_reservation_frame_setting->frame_key) . "\"\n";
+                // block_idないため、frame_idで代用
+                $ret = "reservation_block_id = \"" . $this->zeroSuppress($nc3_frame->id) . "\"\n";
             }
         } elseif ($nc3_frame->plugin_key == 'photo_albums') {
             $nc3_photoalbum = Nc3PhotoAlbum::where('block_id', $nc3_frame->block_id)->where('is_active', 1)->first();
@@ -4990,7 +5000,7 @@ trait MigrationNc3ExportTrait
                     ->where('display_type', Nc3PhotoAlbumFrameSetting::DISPLAY_SLIDESHOW)
                     ->first();
                 if ($nc3_photoalbum_frame_setting) {
-                    $ret = "slideshows_block_id = \"" . $this->zeroSuppress($nc3_photoalbum->block_id) . "\"\n";
+                    $ret = "slideshows_block_id = \"" . $this->zeroSuppress($nc3_frame->id) . "\"\n";
                 } else {
                     $ret = "photoalbum_id = \"" . $this->zeroSuppress($nc3_photoalbum->id) . "\"\n";
                 }
