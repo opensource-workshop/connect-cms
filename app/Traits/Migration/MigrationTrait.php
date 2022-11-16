@@ -3052,6 +3052,7 @@ trait MigrationTrait
                 'view_posted_at'   => $whatsnew_ini['whatsnew_base']['view_posted_at'],
                 'target_plugins'   => $whatsnew_ini['whatsnew_base']['target_plugins'],
                 'frame_select'     => $whatsnew_ini['whatsnew_base']['frame_select'],
+                'read_more_use_flag' => $this->getArrayValue($whatsnew_ini, 'whatsnew_base', 'read_more_use_flag', 0),
             ]);
             $whatsnew->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($whatsnew_ini, 'source_info', 'insert_login_id', null));
             $whatsnew->created_name = $this->getArrayValue($whatsnew_ini, 'source_info', 'created_name', null);
