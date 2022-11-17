@@ -9765,15 +9765,35 @@ trait MigrationTrait
                 continue;
             }
 
+            // 権限設定
+            // ----------------------------------------------------
+            // add_authority_id
+            // 2: 一般まで
+            // 3: モデレータまで
+            // 4: 主担のみ
+            $article_post_flag = 0;
+            $reporter_post_flag = 0;
+            if ($cabinet_manage->add_authority_id == 2) {
+                $article_post_flag = 1;
+                $reporter_post_flag = 1;
+
+            } elseif ($cabinet_manage->add_authority_id == 3) {
+                $article_post_flag = 1;
+
+            } elseif ($cabinet_manage->add_authority_id == 4) {
+                // 一般,モデレータ=0でccでは主担=コンテンツ管理者は投稿可のため、なにもしない
+            }
+
             // キャビネット設定
             $upload_max_size = ($cabinet_manage->upload_max_size == "0") ? '"infinity"' : $cabinet_manage->upload_max_size;
             $ini = "";
             $ini .= "[cabinet_base]\n";
             $ini .= "cabinet_name = \"" . $cabinet_manage->cabinet_name . "\"\n";
-            $ini .= "active_flag = " .  $cabinet_manage->active_flag . "\n";
-            $ini .= "add_authority_id = " . $cabinet_manage->add_authority_id . "\n";
-            $ini .= "cabinet_max_size = " . $cabinet_manage->cabinet_max_size . "\n";
+            // $ini .= "active_flag = " .  $cabinet_manage->active_flag . "\n";             // インポートで使ってない
+            // $ini .= "cabinet_max_size = " . $cabinet_manage->cabinet_max_size . "\n";    // インポートで使ってない
             $ini .= "upload_max_size = " . $upload_max_size . "\n";
+            $ini .= "article_post_flag = " . $article_post_flag . "\n";
+            $ini .= "reporter_post_flag = " . $reporter_post_flag . "\n";
 
             // NC2 情報
             $ini .= "\n";
@@ -9801,17 +9821,17 @@ trait MigrationTrait
 
             $tsv = '';
             foreach ($cabinet_files as $index => $cabinet_file) {
-                $tsv .= $cabinet_file['file_id'] . "\t";
+                $tsv .= $cabinet_file['file_id'] . "\t";                // [0] ID
                 $tsv .= $cabinet_file['cabinet_id'] . "\t";
                 $tsv .= $cabinet_file['upload_id'] . "\t";
-                $tsv .= $cabinet_file['parent_id'] . "\t";
+                $tsv .= $cabinet_file['parent_id'] . "\t";              // [3] 親ID
                 $tsv .= str_replace("\t", '', $cabinet_file['file_name']) . "\t";
                 $tsv .= $cabinet_file['extension'] . "\t";
-                $tsv .= $cabinet_file['depth'] . "\t";
+                $tsv .= $cabinet_file['depth'] . "\t";                  // [6] 階層の深さ（インポートで使ってない）
                 $tsv .= $cabinet_file['size'] . "\t";
                 $tsv .= $cabinet_file['download_num'] . "\t";
-                $tsv .= $cabinet_file['file_type'] . "\t";
-                $tsv .= $cabinet_file['display_sequence'] . "\t";
+                $tsv .= $cabinet_file['file_type'] . "\t";              // [9] is_folder
+                $tsv .= $cabinet_file['display_sequence'] . "\t";       // [10] 表示順（インポートで使ってない）
                 $tsv .= $cabinet_file['room_id'] . "\t";
                 $tsv .= str_replace("\t", '', $cabinet_file['comment']) . "\t";
                 $tsv .= $this->getCCDatetime($cabinet_file->insert_time)                             . "\t";    // [13]
