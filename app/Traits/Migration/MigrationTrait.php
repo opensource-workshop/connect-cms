@@ -5518,6 +5518,32 @@ trait MigrationTrait
         }
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+
+        // bucketあり
+        if (!empty($bucket)) {
+            // 権限設定
+            // ---------------------------------------
+            // 投稿権限：(nc3) キャビネット単位であり、(cc) バケツ単位であり
+            // 承認権限：(nc3) なし、(cc) なし => buckets_roles.approval_flag = 0固定
+            BucketsRoles::updateOrCreate(
+                [
+                    'buckets_id' => $bucket->id,
+                    'role' => 'role_article',   // モデレータ
+                ], [
+                    'post_flag' => $this->getArrayValue($cabinet_ini, 'cabinet_base', 'article_post_flag', 0),
+                    'approval_flag' => 0,
+                ]
+            );
+            BucketsRoles::updateOrCreate(
+                [
+                    'buckets_id' => $bucket->id,
+                    'role' => 'role_reporter',  // 編集者
+                ], [
+                    'post_flag' => $this->getArrayValue($cabinet_ini, 'cabinet_base', 'reporter_post_flag', 0),
+                    'approval_flag' => 0,
+                ]
+            );
+        }
     }
 
     /**
