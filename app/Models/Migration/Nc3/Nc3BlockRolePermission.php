@@ -33,12 +33,24 @@ class Nc3BlockRolePermission extends Model
     /**
      * block_role_permissionsのvalueをblock_key,permission,role_keyで取得
      */
-    public static function getNc3BlockRolePermissionValue(Collection $block_role_permissions, string $block_key, string $permission, string $role_key, ?string $default = '0'): string
+    public static function getNc3BlockRolePermissionValue(Collection $block_role_permissions, string $block_key, int $room_id, string $permission, string $role_key, ?string $default = '0'): string
     {
+        // $defaultPermissions, <-なければ $roomRolePermissions, <-なければ $blockPermissions
+        // roomRolePermissionsに値あるだろうから、defaultPermissionsは見ない
+
+        // block_role_permission
         $block_role_permission = $block_role_permissions->where('block_key', $block_key)
             ->where('permission', $permission)
             ->firstWhere('role_key', $role_key);
         $block_role_permission = $block_role_permission ?? new Nc3BlockRolePermission();
-        return $block_role_permission->value ?? $default;
+        if ($block_role_permission->value) {
+            return $block_role_permission->value;
+        }
+
+        // 以下、block_role_permissionに値なかった場合
+
+        // room_role_permissions（ルームの権限。ルームでのブロック権限のデフォルト値含む）
+        $room_role_permission = Nc3RoomRolePermission::firstOrNewRoomRolePermission($room_id, $role_key, $permission);
+        return $room_role_permission->value ?? $default;
     }
 }

@@ -1309,7 +1309,7 @@ trait MigrationNc3ExportTrait
             }
 
             // (nc3)投稿権限は１件のみ 投稿権限, 一般
-            $post_permission_general_user = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_blog->block_key, 'content_creatable', 'general_user');
+            $post_permission_general_user = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_blog->block_key, $nc3_blog->room_id, 'content_creatable', 'general_user');
 
             // 権限設定
             // ----------------------------------------------------
@@ -1337,11 +1337,11 @@ trait MigrationNc3ExportTrait
 
             // (nc3)メール通知を受け取る権限
             // ゲスト
-            $mail_permission_visitor = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_blog->block_key, 'mail_content_receivable', 'visitor');
+            $mail_permission_visitor = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_blog->block_key, $nc3_blog->room_id, 'mail_content_receivable', 'visitor');
             // 一般
-            $mail_permission_general_user = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_blog->block_key, 'mail_content_receivable', 'general_user');
+            $mail_permission_general_user = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_blog->block_key, $nc3_blog->room_id, 'mail_content_receivable', 'general_user');
             // 編集者
-            $mail_permission_editor = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_blog->block_key, 'mail_content_receivable', 'editor');
+            $mail_permission_editor = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_blog->block_key, $nc3_blog->room_id, 'mail_content_receivable', 'editor');
 
             $notice_everyone = 0;
             $notice_admin_group = 0;
@@ -1671,9 +1671,9 @@ trait MigrationNc3ExportTrait
             // コメントを投稿できる権限（content_comment_creatable）=根記事への返信OK
 
             // (nc3)投稿権限 １件のみ=投稿権限, 一般
-            $post_permission_general_user = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_bbs->block_key, 'content_creatable', 'general_user');
+            $post_permission_general_user = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_bbs->block_key, $nc3_bbs->room_id, 'content_creatable', 'general_user');
             // (nc3)返信権限 3件あるけど一般までのみ取得（他2件:1-ゲストまでの場合、一般もONのため、取得不要。2-編集長までの場合、編集長は投稿権限が常にONのため、CCでは投稿可と判断して返信権限の判定不要）
-            $reply_permission_general_user = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_bbs->block_key, 'content_comment_creatable', 'general_user');
+            $reply_permission_general_user = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_bbs->block_key, $nc3_bbs->room_id, 'content_comment_creatable', 'general_user');
 
             $article_post_flag = 1;     // 投稿権限はnc3編集者まで常時チェックON
             $reporter_post_flag = 0;
@@ -1701,11 +1701,11 @@ trait MigrationNc3ExportTrait
 
             // (nc3)メール通知を受け取る権限
             // ゲスト
-            $mail_permission_visitor = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_bbs->block_key, 'mail_content_receivable', 'visitor');
+            $mail_permission_visitor = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_bbs->block_key, $nc3_bbs->room_id, 'mail_content_receivable', 'visitor');
             // 一般
-            $mail_permission_general_user = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_bbs->block_key, 'mail_content_receivable', 'general_user');
+            $mail_permission_general_user = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_bbs->block_key, $nc3_bbs->room_id, 'mail_content_receivable', 'general_user');
             // 編集者
-            $mail_permission_editor = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_bbs->block_key, 'mail_content_receivable', 'editor');
+            $mail_permission_editor = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_bbs->block_key, $nc3_bbs->room_id, 'mail_content_receivable', 'editor');
 
             $notice_everyone = 0;
             $notice_admin_group = 0;
@@ -2312,7 +2312,7 @@ trait MigrationNc3ExportTrait
             }
 
             // (nc3)投稿権限は１件のみ 投稿権限, 一般
-            $post_permission_general_user = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_multidatabase->block_key, 'content_creatable', 'general_user');
+            $post_permission_general_user = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_multidatabase->block_key, $nc3_multidatabase->room_id, 'content_creatable', 'general_user');
 
             // 権限設定
             // ----------------------------------------------------
@@ -2340,11 +2340,11 @@ trait MigrationNc3ExportTrait
 
             // (nc3)メール通知を受け取る権限
             // ゲスト
-            $mail_permission_visitor = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_multidatabase->block_key, 'mail_content_receivable', 'visitor');
+            $mail_permission_visitor = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_multidatabase->block_key, $nc3_multidatabase->room_id, 'mail_content_receivable', 'visitor');
             // 一般
-            $mail_permission_general_user = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_multidatabase->block_key, 'mail_content_receivable', 'general_user');
+            $mail_permission_general_user = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_multidatabase->block_key, $nc3_multidatabase->room_id, 'mail_content_receivable', 'general_user');
             // 編集者
-            $mail_permission_editor = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_multidatabase->block_key, 'mail_content_receivable', 'editor');
+            $mail_permission_editor = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_multidatabase->block_key, $nc3_multidatabase->room_id, 'mail_content_receivable', 'editor');
 
             $notice_everyone = 0;
             $notice_admin_group = 0;
