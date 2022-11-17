@@ -2801,6 +2801,7 @@ trait MigrationTrait
 
             // 登録期間で制御する
             $regist_control_flag = 0;
+            $regist_from = null;
             $regist_to = null;
 
             // nc2 の active_flag (動作／停止)
@@ -2815,6 +2816,8 @@ trait MigrationTrait
             } else {
                 // 動作
                 $regist_control_flag = $form_ini['form_base']['regist_control_flag'];
+                $regist_from = $this->getDatetimeFromIniAndCheckFormat($form_ini, 'form_base', 'regist_from', '');
+                $regist_from = $regist_from ? $regist_from : null;
                 $regist_to = $this->getDatetimeFromIniAndCheckFormat($form_ini, 'form_base', 'regist_to', '');
                 $regist_to = $regist_to ? $regist_to : null;
             }
@@ -2844,6 +2847,7 @@ trait MigrationTrait
                 'numbering_use_flag'  => $form_ini['form_base']['numbering_use_flag'],
                 'numbering_prefix'    => $form_ini['form_base']['numbering_prefix'],
                 'regist_control_flag' => $regist_control_flag,
+                'regist_from'         => $regist_from,
                 'regist_to'           => $regist_to,
             ]);
             $form->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($form_ini, 'source_info', 'insert_login_id', null));
