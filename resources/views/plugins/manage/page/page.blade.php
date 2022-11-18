@@ -48,10 +48,55 @@ use App\Models\Common\Page;
                     form_move_page.submit();
                 }
             }
+
             {{-- 表示切り替え用フォームのsubmit JavaScript --}}
             function submit_toggle_display( source_id ) {
                 form_toggle_display.action = form_toggle_display.action + "/" + source_id;
                 form_toggle_display.submit();
+            }
+
+            {{-- ページ階層移動モーダル画面でのjavascript --}}
+            $(function(){
+                {{-- 移動先決定ボタン --}}
+                $('#moveLevelDoneBtn').on('click', function() {
+                    let destination_id = $('input:radio[name="level_move_modal_page_id"]:checked').val();
+                    if (destination_id) {
+                        form_move_page.destination_id.value = destination_id;
+                        form_move_page.submit();
+                    }
+                })
+                {{-- 移動先選択ボタン --}}
+                $('input:radio[name="level_move_modal_page_id"]').on('change', function() {
+                    let level_move_modal_page_radio_id = $(this).attr('id');
+                    let level_move_modal_page_radio_label = $('label[for="' + level_move_modal_page_radio_id + '"]').text();
+                    $('.destination-page').text(level_move_modal_page_radio_label);
+                    $('#moveLevelDoneBtn').prop('disabled', false);
+                })
+            });
+            {{-- ページ階層移動アイコンを押下した際にターゲットのページをセットする --}}
+            function select_page (source_id, page_name) {
+                // ページセット
+                form_move_page.action = form_move_page.action.replace(/movePage(.*$)/g, 'movePage');
+                form_move_page.action = form_move_page.action + "/" + source_id;
+                // テキストセット
+                let page_name_txt = '「 <span class="source-page lead">' + page_name + '</span>」を「<span class="destination-page lead"></span>」へ移動します';
+                $('.modal-title').html(page_name_txt);
+                // ラジオボタンを外す
+                if($('input:radio[name="level_move_modal_page_id"]:checked')[0]){
+                    $('input:radio[name="level_move_modal_page_id"]:checked')[0].checked = false;
+                }
+                // 選択不可を解除
+                $('input:radio[name="level_move_modal_page_id"]').prop('disabled', false);
+                // 決定ボタンを無効化
+                $('#moveLevelDoneBtn').prop('disabled', true);
+                // 自分自身は選択不可にする
+                $('#level_move_modal_page_' + source_id).prop('disabled', true);
+                // 子孫のノードは選択不可にする data-descendant_idsに子孫格納済
+                let descendant_ids = $('#level_move_modal_page_' + source_id).data('descendant_ids');
+                $(descendant_ids).each(function(i) {
+                    let descendant_id = $(this)[0].valueOf();
+                    $('#level_move_modal_page_' + descendant_id).prop('disabled', true);
+                });
             }
         </script>
 
@@ -78,11 +123,61 @@ use App\Models\Common\Page;
             {{ csrf_field() }}
         </form>
 
+        {{-- 階層変更用モーダル表示 --}}
+        <div class="modal fade" id="moveLevlModal" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header pb-0">
+                        <h4><div class="modal-title" style="font-size:1rem;">階層移動</div></h4>
+                    </div>
+                    <div class="modal-body" style="max-height: 500px; overflow-y: scroll;">
+                            <div class="custom-control custom-radio custom-control-block">
+                                <input type="radio" value="0" id="level_move_modal_page_0" name="level_move_modal_page_id" class="custom-control-input">
+                                <label class="custom-control-label" for="level_move_modal_page_0">最上位</label>
+                            </div>
+                        @php
+                            $tmp_pages = $pages;
+                        @endphp
+                        @foreach($pages as $page_item)
+                            {{-- 以下で子孫のIDをdatasetに追加する,子孫がいないページはチェックしない --}}
+                            @php
+                                $arr_descendant_ids = [];
+                                $calc_rgt = $page_item->_lft;
+                                $calc_rgt++;
+                                if ($calc_rgt != $page_item->_rgt) {
+                                    foreach ($tmp_pages as $parent_page) {
+                                        if($parent_page->isDescendantOf($page_item)) {
+                                            $arr_descendant_ids[] = $parent_page->id;
+                                        }
+                                    }
+                                }
+                                $str_descendant_ids = implode(',', $arr_descendant_ids);
+                            @endphp
+                            <div class="custom-control custom-radio custom-control-block">
+                                <input type="radio" value="{{$page_item->id}}" id="level_move_modal_page_{{$page_item->id}}" data-descendant_ids="[{{$str_descendant_ids}}]" name="level_move_modal_page_id" class="custom-control-input">
+                                @for ($i = 0; $i < $page_item->depth; $i++)
+                                    @if ($i+1==$page_item->depth) <span class="px-3"></span> @else <span class="px-2"></span>@endif
+                                @endfor
+                                <label class="custom-control-label" for="level_move_modal_page_{{$page_item->id}}">{{$page_item->page_name}}</label>
+                            </div>
+                        @endforeach
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">閉じる</button>
+                        <button id="moveLevelDoneBtn" type="button" class="btn btn-primary" disabled>決定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+
         <div class="table-responsive">
             <table class="table table-striped cc-font-90">
             <thead>
                 <th></th>
-                <th nowrap>移動先</th>
+                <th nowrap><i class="fas fa-sitemap" title="階層移動" alt="階層移動"></i></th>
                 <th nowrap>ページ名</th>
                 <th nowrap class="pl-1"><i class="far fa-eye" title="メニュー表示"></i></th>
                 <th nowrap>固定リンク</th>
@@ -129,23 +224,9 @@ use App\Models\Common\Page;
                             <i class="fas fa-arrow-down"></i>
                         </button>
                     </td>
-                    <td class="table-text p-1">
-                        {{-- 指定場所移動 --}}
-                        <form name="form_select_page{{$page_item->id}}" id="form_select_page{{$page_item->id}}" class="form-horizontal">
-                            <select name="select_page" class="manage-page-selectpage" onChange="submit_move_page({{$page_item->id}});">
-                                <option value="">...</option>
-                                <option value="0">最上位の階層へ</option>
-                                @foreach($pages_select as $page_select)
-                                    {{-- 自分自身 or 子孫のノードは選択不可にする --}}
-                                    <option value="{{$page_select->id}}"@if ($page_item->id == $page_select->id or $page_select->isDescendantOf($page)) disabled style="background-color: #f0f0f0;"@endif>
-                                        @for ($i = 0; $i < $page_select->depth; $i++)
-                                        -
-                                        @endfor
-                                        {{$page_select->page_name}}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </form>
+                    <td class="table-text p-1" nowrap>
+                        {{-- 階層移動 --}}
+                        <a class="btn p-1 btn-primary btn-sm" style="cursor:pointer;color:#FFF;" data-toggle="modal" data-target="#moveLevlModal" onclick="select_page({{$page_item->id}} , '{{$page_item->page_name}}' );" ><i class="fas fa-sitemap"></i></a>
                     </td>
                     <td class="table-text p-1 manage-page-pagename">
                         {{-- 各ページの深さをもとにインデントの表現 --}}
