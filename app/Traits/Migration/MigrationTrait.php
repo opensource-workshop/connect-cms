@@ -2999,10 +2999,10 @@ trait MigrationTrait
             $whatsnew_ini = parse_ini_file($whatsnew_ini_paths, true);
 
             // ルーム指定を探しておく。
-            $room_id = null;
-            if (array_key_exists('source_info', $whatsnew_ini) && array_key_exists('room_id', $whatsnew_ini['source_info'])) {
-                $room_id = $whatsnew_ini['source_info']['room_id'];
-            }
+            // $room_id = null;
+            // if (array_key_exists('source_info', $whatsnew_ini) && array_key_exists('room_id', $whatsnew_ini['source_info'])) {
+            //     $room_id = $whatsnew_ini['source_info']['room_id'];
+            // }
 
             // nc2 の whatsnew_block_id
             $nc2_whatsnew_block_id = 0;
@@ -3052,6 +3052,7 @@ trait MigrationTrait
                 'view_posted_at'   => $whatsnew_ini['whatsnew_base']['view_posted_at'],
                 'target_plugins'   => $whatsnew_ini['whatsnew_base']['target_plugins'],
                 'frame_select'     => $whatsnew_ini['whatsnew_base']['frame_select'],
+                'read_more_use_flag' => $this->getArrayValue($whatsnew_ini, 'whatsnew_base', 'read_more_use_flag', 0),
             ]);
             $whatsnew->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($whatsnew_ini, 'source_info', 'insert_login_id', null));
             $whatsnew->created_name = $this->getArrayValue($whatsnew_ini, 'source_info', 'created_name', null);
@@ -5517,6 +5518,32 @@ trait MigrationTrait
         }
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+
+        // bucketあり
+        if (!empty($bucket)) {
+            // 権限設定
+            // ---------------------------------------
+            // 投稿権限：(nc3) キャビネット単位であり、(cc) バケツ単位であり
+            // 承認権限：(nc3) なし、(cc) なし => buckets_roles.approval_flag = 0固定
+            BucketsRoles::updateOrCreate(
+                [
+                    'buckets_id' => $bucket->id,
+                    'role' => 'role_article',   // モデレータ
+                ], [
+                    'post_flag' => $this->getArrayValue($cabinet_ini, 'cabinet_base', 'article_post_flag', 0),
+                    'approval_flag' => 0,
+                ]
+            );
+            BucketsRoles::updateOrCreate(
+                [
+                    'buckets_id' => $bucket->id,
+                    'role' => 'role_reporter',  // 編集者
+                ], [
+                    'post_flag' => $this->getArrayValue($cabinet_ini, 'cabinet_base', 'reporter_post_flag', 0),
+                    'approval_flag' => 0,
+                ]
+            );
+        }
     }
 
     /**
@@ -5767,7 +5794,6 @@ trait MigrationTrait
         // 変数定義
         $nc2_whatsnew_block_id = null;
         $whatsnew_ini = null;
-        $registration_id = null;
         $migration_mappings = null;
         $whatsnew = null;
         $bucket = null;
@@ -9739,15 +9765,35 @@ trait MigrationTrait
                 continue;
             }
 
+            // 権限設定
+            // ----------------------------------------------------
+            // add_authority_id
+            // 2: 一般まで
+            // 3: モデレータまで
+            // 4: 主担のみ
+            $article_post_flag = 0;
+            $reporter_post_flag = 0;
+            if ($cabinet_manage->add_authority_id == 2) {
+                $article_post_flag = 1;
+                $reporter_post_flag = 1;
+
+            } elseif ($cabinet_manage->add_authority_id == 3) {
+                $article_post_flag = 1;
+
+            } elseif ($cabinet_manage->add_authority_id == 4) {
+                // 一般,モデレータ=0でccでは主担=コンテンツ管理者は投稿可のため、なにもしない
+            }
+
             // キャビネット設定
             $upload_max_size = ($cabinet_manage->upload_max_size == "0") ? '"infinity"' : $cabinet_manage->upload_max_size;
             $ini = "";
             $ini .= "[cabinet_base]\n";
             $ini .= "cabinet_name = \"" . $cabinet_manage->cabinet_name . "\"\n";
-            $ini .= "active_flag = " .  $cabinet_manage->active_flag . "\n";
-            $ini .= "add_authority_id = " . $cabinet_manage->add_authority_id . "\n";
-            $ini .= "cabinet_max_size = " . $cabinet_manage->cabinet_max_size . "\n";
+            // $ini .= "active_flag = " .  $cabinet_manage->active_flag . "\n";             // インポートで使ってない
+            // $ini .= "cabinet_max_size = " . $cabinet_manage->cabinet_max_size . "\n";    // インポートで使ってない
             $ini .= "upload_max_size = " . $upload_max_size . "\n";
+            $ini .= "article_post_flag = " . $article_post_flag . "\n";
+            $ini .= "reporter_post_flag = " . $reporter_post_flag . "\n";
 
             // NC2 情報
             $ini .= "\n";
@@ -9775,17 +9821,17 @@ trait MigrationTrait
 
             $tsv = '';
             foreach ($cabinet_files as $index => $cabinet_file) {
-                $tsv .= $cabinet_file['file_id'] . "\t";
+                $tsv .= $cabinet_file['file_id'] . "\t";                // [0] ID
                 $tsv .= $cabinet_file['cabinet_id'] . "\t";
                 $tsv .= $cabinet_file['upload_id'] . "\t";
-                $tsv .= $cabinet_file['parent_id'] . "\t";
+                $tsv .= $cabinet_file['parent_id'] . "\t";              // [3] 親ID
                 $tsv .= str_replace("\t", '', $cabinet_file['file_name']) . "\t";
                 $tsv .= $cabinet_file['extension'] . "\t";
-                $tsv .= $cabinet_file['depth'] . "\t";
+                $tsv .= $cabinet_file['depth'] . "\t";                  // [6] 階層の深さ（インポートで使ってない）
                 $tsv .= $cabinet_file['size'] . "\t";
                 $tsv .= $cabinet_file['download_num'] . "\t";
-                $tsv .= $cabinet_file['file_type'] . "\t";
-                $tsv .= $cabinet_file['display_sequence'] . "\t";
+                $tsv .= $cabinet_file['file_type'] . "\t";              // [9] is_folder
+                $tsv .= $cabinet_file['display_sequence'] . "\t";       // [10] 表示順（インポートで使ってない）
                 $tsv .= $cabinet_file['room_id'] . "\t";
                 $tsv .= str_replace("\t", '', $cabinet_file['comment']) . "\t";
                 $tsv .= $this->getCCDatetime($cabinet_file->insert_time)                             . "\t";    // [13]
