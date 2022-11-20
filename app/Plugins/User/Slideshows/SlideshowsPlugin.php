@@ -754,7 +754,7 @@ class SlideshowsPlugin extends UserPluginBase
      *
      * @method_title 画像の登録
      * @method_desc スライドショーの画像を登録します。
-     * @method_detail 画像やリンクURLを登録できます。
+     * @method_detail 画像やリンクURLを登録できます。<br />PDFをアップロードして、各ページを1つの画像に自動変換して登録することもできます。
      */
     public function editItem($request, $page_id, $frame_id, $id = null, $message = null, $errors = null)
     {
