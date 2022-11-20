@@ -183,7 +183,7 @@ class SlideshowsPluginTest extends DuskTestCase
                     ->assertPathBeginsWith('/')
                     ->screenshot('user/slideshows/editItemPdf/images/editItemPdf2')
                     ->visit('test/slideshow')
-                    ->pause(500)
+                    ->pause(1000)
                     ->screenshot('user/slideshows/editItemPdf/images/editItemPdf3');
 
             // フレームを半分に。
