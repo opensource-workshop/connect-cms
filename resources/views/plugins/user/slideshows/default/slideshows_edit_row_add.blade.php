@@ -168,6 +168,7 @@
         <button
             class="btn btn-success cc-font-90 text-nowrap"
             onclick="javascript:submit_add_pdf();"
+            dusk="submit_add_pdf"
         >
             <i class="fas fa-plus"></i> 追加
         </button>

@@ -158,7 +158,7 @@ use App\Models\Common\Page;
                                 @for ($i = 0; $i < $page_item->depth; $i++)
                                     @if ($i+1==$page_item->depth) <span class="px-3"></span> @else <span class="px-2"></span>@endif
                                 @endfor
-                                <label class="custom-control-label" for="level_move_modal_page_{{$page_item->id}}">{{$page_item->page_name}}</label>
+                                <label class="custom-control-label" for="level_move_modal_page_{{$page_item->id}}" id="level_move_page_{{$page_item->id}}">{{$page_item->page_name}}</label>
                             </div>
                         @endforeach
                     </div>
@@ -169,9 +169,6 @@ use App\Models\Common\Page;
                 </div>
             </div>
         </div>
-
-
-
 
         <div class="table-responsive">
             <table class="table table-striped cc-font-90">
@@ -226,7 +223,7 @@ use App\Models\Common\Page;
                     </td>
                     <td class="table-text p-1" nowrap>
                         {{-- 階層移動 --}}
-                        <a class="btn p-1 btn-primary btn-sm" style="cursor:pointer;color:#FFF;" data-toggle="modal" data-target="#moveLevlModal" onclick="select_page({{$page_item->id}} , '{{$page_item->page_name}}' );" ><i class="fas fa-sitemap"></i></a>
+                        <a class="btn p-1 btn-primary btn-sm" id="move_level_{{$page_item->id}}" style="cursor:pointer;color:#FFF;" data-toggle="modal" data-target="#moveLevlModal" onclick="select_page({{$page_item->id}} , '{{$page_item->page_name}}' );" ><i class="fas fa-sitemap"></i></a>
                     </td>
                     <td class="table-text p-1 manage-page-pagename">
                         {{-- 各ページの深さをもとにインデントの表現 --}}
