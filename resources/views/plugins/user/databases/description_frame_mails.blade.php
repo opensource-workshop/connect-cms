@@ -32,7 +32,7 @@ use App\Models\User\Databases\DatabasesColumns;
                 </tbody>
             </table>
 
-            データベース毎に埋め込みタグが利用できます。<br />
+            <span id="span_database_columns_tag">データベース毎に埋め込みタグが利用できます。</span><br />
             @if($database)
                 データベース：{{$database->databases_name}}<br />
                 <table class="table table-striped table-sm table-bordered">
