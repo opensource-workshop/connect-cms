@@ -1033,7 +1033,8 @@ trait MigrationNc3ExportTrait
                     } else {
                         $item_value = $nc3_user->$item_key;
                     }
-                    $users_ini .= "{$item_name}            = \"" . $item_value . "\"\n";
+                    $item_value = str_replace('"', '\"', $item_value);
+                    $users_ini .= "{$item_name}            = \"{$item_value}\"\n";
                 }
             }
 
