@@ -3,7 +3,6 @@
 namespace App\Traits\Migration;
 
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 
@@ -45,6 +44,9 @@ use App\Models\Migration\Nc3\Nc3Page;
 use App\Models\Migration\Nc3\Nc3PageContainer;
 use App\Models\Migration\Nc3\Nc3Plugin;
 use App\Models\Migration\Nc3\Nc3Registration;
+use App\Models\Migration\Nc3\Nc3RegistrationChoice;
+use App\Models\Migration\Nc3\Nc3RegistrationPage;
+use App\Models\Migration\Nc3\Nc3RegistrationQuestion;
 use App\Models\Migration\Nc3\Nc3ReservationFrameSetting;
 use App\Models\Migration\Nc3\Nc3Room;
 use App\Models\Migration\Nc3\Nc3PhotoAlbum;
@@ -67,6 +69,7 @@ use App\Enums\ContentOpenType;
 use App\Enums\DatabaseNoticeEmbeddedTag;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\DayOfWeek;
+use App\Enums\FormColumnType;
 use App\Enums\LinklistType;
 use App\Enums\NoticeEmbeddedTag;
 use App\Enums\ReservationLimitedByRole;
@@ -130,7 +133,6 @@ trait MigrationNc3ExportTrait
         // 'photo_albums'     => 'photoalbums',  // フォトアルバム
         // 'questionnaires'   => 'Development',  // アンケート
         // 'quizzes'          => 'Development',  // 小テスト
-        // 'registrations'    => 'forms',        // フォーム
         // 'reservations'     => 'reservations', // 施設予約
         // 'rss_readers'      => 'Development',  // RSS
         // 'searches'         => 'searchs',      // 検索
@@ -151,7 +153,7 @@ trait MigrationNc3ExportTrait
         'photo_albums'     => 'Development',    // フォトアルバム
         'questionnaires'   => 'Development',    // アンケート
         'quizzes'          => 'Development',    // 小テスト
-        'registrations'    => 'Development',    // フォーム
+        'registrations'    => 'forms',          // フォーム
         'reservations'     => 'Development',    // 施設予約
         'rss_readers'      => 'Development',    // RSS
         'searches'         => 'Development',    // 検索
@@ -463,14 +465,14 @@ trait MigrationNc3ExportTrait
             $this->nc3ExportCabinet($redo);
         }
 
+        // NC3 登録フォーム（registrations）データのエクスポート
+        if ($this->isTarget('nc3_export', 'plugins', 'forms')) {
+            $this->nc3ExportRegistration($redo);
+        }
+
         //////////////////
         // [TODO] まだ
         //////////////////
-        // // NC3 登録フォーム（registration）データのエクスポート
-        // if ($this->isTarget('nc3_export', 'plugins', 'forms')) {
-        //     $this->nc3ExportRegistration($redo);
-        // }
-
         // // NC3 FAQ（faq）データのエクスポート
         // if ($this->isTarget('nc3_export', 'plugins', 'faqs')) {
         //     $this->nc3ExportFaq($redo);
@@ -2755,7 +2757,7 @@ trait MigrationNc3ExportTrait
     }
 
     /**
-     * NC3：登録フォーム（Registration）の移行
+     * NC3：登録フォーム（registrations）の移行
      */
     private function nc3ExportRegistration($redo)
     {
@@ -2767,14 +2769,24 @@ trait MigrationNc3ExportTrait
             Storage::deleteDirectory($this->getImportPath('forms/'));
         }
 
-        // NC3登録フォーム（Registration）を移行する。
-        $nc3_export_where_registration_ids = $this->getMigrationConfig('forms', 'nc3_export_where_registration_ids');
+        // NC3登録フォーム（registrations）を移行する。
+        $nc3_registrations_query = Nc3Registration::select('registrations.*', 'blocks.key as block_key', 'blocks.room_id', 'rooms.space_id')
+            ->join('blocks', function ($join) {
+                $join->on('blocks.id', '=', 'registrations.block_id')
+                    ->where('blocks.plugin_key', 'registrations');
+            })
+            ->join('rooms', function ($join) {
+                $join->on('rooms.id', '=', 'blocks.room_id')
+                    ->whereIn('rooms.space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID]);
+            })
+            ->where('registrations.is_latest', 1)
+            ->orderBy('registrations.id');
 
-        if (empty($nc3_export_where_registration_ids)) {
-            $nc3_registrations = Nc2Registration::orderBy('registration_id')->get();
-        } else {
-            $nc3_registrations = Nc2Registration::whereIn('registration_id', $nc3_export_where_registration_ids)->orderBy('registration_id')->get();
+        $nc3_export_where_registration_ids = $this->getMigrationConfig('forms', 'nc3_export_where_registration_ids');
+        if ($nc3_export_where_registration_ids) {
+            $nc3_registrations_query = $nc3_registrations_query->whereIn('registrations.id', $nc3_export_where_registration_ids);
         }
+        $nc3_registrations = $nc3_registrations_query->get();
 
         // 空なら戻る
         if ($nc3_registrations->isEmpty()) {
@@ -2782,7 +2794,7 @@ trait MigrationNc3ExportTrait
         }
 
         // nc3の全ユーザ取得
-        $nc3_users = Nc2User::get();
+        $nc3_users = Nc3User::get();
 
         // NC3登録フォーム（Registration）のループ
         foreach ($nc3_registrations as $nc3_registration) {
@@ -2798,184 +2810,310 @@ trait MigrationNc3ExportTrait
             }
 
             // 対象外指定があれば、読み飛ばす
-            if ($this->isOmmit('forms', 'export_ommit_registration_ids', $nc3_registration->registration_id)) {
+            if ($this->isOmmit('forms', 'export_ommit_registration_ids', $nc3_registration->id)) {
                 continue;
             }
 
-            // (nc3) mail_send = (1)登録をメールで通知する          => 通知メールアドレスありなら (cc) mail_send_flag = 以下のアドレスにメール送信するON
-            //     (nc3) regist_user_send = 登録者本人にメールする  => (cc) user_mail_send_flag = 登録者にメール送信する
-            // (nc3) mail_send = (0)登録をメールで通知しない        => (cc) mail_send_flag      = (0 固定) 以下のアドレスにメール送信しない
-            //                                                    => (cc) user_mail_send_flag = (0 固定) 登録者にメール送信しない
-            // (nc3) rcpt_to = 主担以外で通知するメールアドレス      => (cc) mail_send_address   = 送信するメールアドレス（複数ある場合はカンマで区切る）
-
-            $mail_send_address = $nc3_registration->rcpt_to;
+            // (nc3) is_answer_mail_send = (1)登録をメールで通知する   => 通知メールアドレスありなら (cc) mail_send_flag = 以下のアドレスにメール送信するON
+            //     (nc3) is_regist_user_send = 登録者本人にメールする  => (cc) user_mail_send_flag = 登録者にメール送信する
+            // (nc3) is_answer_mail_send = (0)登録をメールで通知しない => (cc) mail_send_flag      = (0 固定) 以下のアドレスにメール送信しない
+            //                                                       => (cc) user_mail_send_flag = (0 固定) 登録者にメール送信しない
+            // (nc3) rcpt_to = 主担以外で通知するメールアドレス = なし  => (cc) mail_send_address   = 送信するメールアドレス（複数ある場合はカンマで区切る）
 
             // (nc3) mail_send = 登録をメールで通知する
-            if ($nc3_registration->mail_send) {
+            if ($nc3_registration->is_answer_mail_send) {
                 // メール通知ON
-                $user_mail_send_flag = $nc3_registration->regist_user_send;
+                $user_mail_send_flag = $nc3_registration->is_regist_user_send;
                 // 通知メールアドレスありなら (cc) mail_send_flag = 以下のアドレスにメール送信するON
-                $mail_send_flag = $mail_send_address ? 1 : 0;
-
+                $mail_send_flag = 0;
             } else {
                 // メール通知OFF
                 $user_mail_send_flag = 0;
                 $mail_send_flag = 0;
             }
 
-            $registration_id = $nc3_registration->registration_id;
-            $regist_control_flag = $nc3_registration->period ? 1 : 0;
-            $regist_to =  $nc3_registration->period ? $this->getCCDatetime($nc3_registration->period) : '';
+            $regist_control_flag = $nc3_registration->answer_timing ? 1 : 0;
+            $regist_from =  $nc3_registration->answer_start_period ? $this->getCCDatetime($nc3_registration->answer_start_period) : '';
+            $regist_to =  $nc3_registration->answer_end_period ? $this->getCCDatetime($nc3_registration->answer_end_period) : '';
+
+            // 登録メール
+            $mail_subject = $nc3_registration->registration_mail_subject;
+            $mail_body = $nc3_registration->registration_mail_body;
+            $mail_body = str_replace("\n", '\n', $mail_body);
+
+            // --- 登録メール
+            // [{X-SITE_NAME}-{X-PLUGIN_NAME}]{X-SUBJECT}を受け付けました。
+            //
+            // {X-SUBJECT}の登録通知先メールアドレスとしてあなたのメールアドレスが使用されました。
+            // もし{X-SUBJECT}への登録に覚えがない場合はこのメールを破棄してください。
+            //
+            //
+            // {X-SUBJECT}を受け付けました。
+            //
+            // 登録日時:{X-TO_DATE}
+            //
+            //
+            // {X-DATA}
+            //
+            // メール内容を印刷の上、会場にご持参ください。
+
+            // 変換
+            $convert_embedded_tags = [
+                // nc3埋込タグ, cc埋込タグ
+                ['{X-SITE_NAME}', '[[' . NoticeEmbeddedTag::site_name . ']]'],
+                ['{X-SUBJECT}',   '[[' . NoticeEmbeddedTag::title . ']]'],
+                ['{X-USER}',      '[[' . NoticeEmbeddedTag::created_name . ']]'],
+                ['{X-TO_DATE}',   '[[' . NoticeEmbeddedTag::created_at . ']]'],
+                ['{X-DATA}',      '[[' . NoticeEmbeddedTag::body . ']]'],
+                ['{X-PLUGIN_NAME}', '登録フォーム'],
+                // 除外
+                ['{X-ROOM}', ''],
+            ];
+            foreach ($convert_embedded_tags as $convert_embedded_tag) {
+                $mail_subject =     str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_subject);
+                $mail_body =        str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_body);
+            }
 
             // 登録フォーム設定
             $registration_ini = "";
             $registration_ini .= "[form_base]\n";
-            $registration_ini .= "forms_name = \""        . $nc3_registration->registration_name . "\"\n";
+            $registration_ini .= "forms_name = \""        . $nc3_registration->title . "\"\n";
             $registration_ini .= "mail_send_flag = "      . $mail_send_flag . "\n";
-            $registration_ini .= "mail_send_address = \"" . $mail_send_address . "\"\n";
+            $registration_ini .= "mail_send_address = \"\"\n";
             $registration_ini .= "user_mail_send_flag = " . $user_mail_send_flag . "\n";
-            $registration_ini .= "mail_subject = \""      . $nc3_registration->mail_subject . "\"\n";
-            $registration_ini .= "mail_format = \""       . str_replace("\n", '\n', $nc3_registration->mail_body) . "\"\n";
+            $registration_ini .= "mail_subject = \""      . $mail_subject . "\"\n";
+            $registration_ini .= "mail_format = \""       . $mail_body . "\"\n";
             $registration_ini .= "data_save_flag = 1\n";
-            $registration_ini .= "after_message = \""     . str_replace("\n", '\n', $nc3_registration->accept_message) . "\"\n";
+            $registration_ini .= "after_message = \""     . str_replace("\n", '\n', $nc3_registration->thanks_content) . "\"\n";
             $registration_ini .= "numbering_use_flag = 0\n";
             $registration_ini .= "numbering_prefix = null\n";
-            $registration_ini .= "regist_control_flag = " . $regist_control_flag. "\n";
+            $registration_ini .= "regist_control_flag = " . $regist_control_flag . "\n";
+            $registration_ini .= "regist_from = \""       . $regist_from . "\"\n";
             $registration_ini .= "regist_to = \""         . $regist_to . "\"\n";
 
             // NC3 情報
             $registration_ini .= "\n";
             $registration_ini .= "[source_info]\n";
-            $registration_ini .= "registration_id = " . $nc3_registration->registration_id . "\n";
-            $registration_ini .= "active_flag = "     . $nc3_registration->active_flag . "\n";
-            $registration_ini .= "room_id = "         . $nc3_registration->room_id . "\n";
-            $registration_ini .= "plugin_key = \"registration\"\n";
+            $registration_ini .= "registration_id = " . $nc3_registration->id . "\n";
+            $registration_ini .= "active_flag     = " . $nc3_registration->is_active . "\n";
+            $registration_ini .= "room_id         = " . $nc3_registration->room_id . "\n";
+            $registration_ini .= "plugin_key      = \"registration\"\n";
             $registration_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_registration->created) . "\"\n";
-            $registration_ini .= "created_name    = \"" . $nc3_registration->insert_user_name . "\"\n";
+            $registration_ini .= "created_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_registration->created_user) . "\"\n";
             $registration_ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_registration->created_user) . "\"\n";
             $registration_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_registration->modified) . "\"\n";
-            $registration_ini .= "updated_name    = \"" . $nc3_registration->update_user_name . "\"\n";
+            $registration_ini .= "updated_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_registration->modified_user) . "\"\n";
             $registration_ini .= "update_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_registration->modified_user) . "\"\n";
 
             // 登録フォームのカラム情報
-            $registration_items = Nc2RegistrationItem::where('registration_id', $registration_id)
-                ->orderBy('item_sequence', 'asc')
+            $registration_questions = Nc3RegistrationPage::select('registration_questions.*')
+                ->join('registration_questions', function ($join) {
+                    $join->on('registration_questions.registration_page_id', '=', 'registration_pages.id');
+                })
+                ->where('registration_pages.registration_id', $nc3_registration->id)
+                ->orderBy('registration_pages.id', 'asc')
+                ->orderBy('registration_questions.question_sequence', 'asc')
                 ->get();
 
-            if (empty($registration_items)) {
+            if (empty($registration_questions)) {
                 continue;
             }
+
+            $registration_choices = Nc3RegistrationChoice::whereIn('registration_question_id', $registration_questions->pluck('id'))
+                ->orderBy('registration_question_id')
+                ->orderBy('choice_sequence')
+                ->get();
 
             // カラム情報出力
             $registration_ini .= "\n";
             $registration_ini .= "[form_columns]\n";
 
             // カラム情報
-            //$forms_columns_rows = array();
-            foreach ($registration_items as $registration_item) {
-                $registration_ini .= "form_column[" . $registration_item->item_id . "] = \"" . $registration_item->item_name . "\"\n";
+            foreach ($registration_questions as $registration_question) {
+                $registration_ini .= "form_column[" . $registration_question->id . "] = \"" . $registration_question->question_value . "\"\n";
             }
             $registration_ini .= "\n";
 
             // カラム詳細情報
-            foreach ($registration_items as $registration_item) {
-                $item_id = $registration_item->item_id;
+            foreach ($registration_questions as $registration_question) {
+                $registration_ini .= "[" . $registration_question->id . "]" . "\n";
 
-                $registration_ini .= "[" . $item_id . "]" . "\n";
+                $rule_allowed_numeric = 'null';
+                $rule_max = 'null';
+                $rule_min = 'null';
+                $rule_word_count = 'null';
 
-                // type
-                if ($registration_item->item_type == 1) {
-                    $column_type = "text";
-                } elseif ($registration_item->item_type == 2) {
-                    $column_type = "checkbox";
-                } elseif ($registration_item->item_type == 3) {
-                    $column_type = "radio";
-                } elseif ($registration_item->item_type == 4) {
-                    $column_type = "select";
-                } elseif ($registration_item->item_type == 5) {
-                    $column_type = "textarea";
-                } elseif ($registration_item->item_type == 6) {
-                    $column_type = "mail";
-                } elseif ($registration_item->item_type == 7) {
-                    $column_type = "file";
+                // type | 1:択一選択 | 2:複数選択 | 3:テキスト | 4:テキストエリア | 7:日付・時刻 | 8:リスト
+                if ($registration_question->question_type == Nc3RegistrationQuestion::question_type_text) {
+                    // (オプション) 登録を数値で求める
+                    if ($registration_question->question_type_option == 1) {
+                        $rule_allowed_numeric = 1;
+                        // (オプション) 範囲を指定する
+                        if ($registration_question->is_range) {
+                            $rule_max = $registration_question->max;
+                            $rule_min = $registration_question->min;
+                        }
+                    } else {
+                        // (オプション) 範囲(文字数)を指定する
+                        if ($registration_question->is_range) {
+                            $rule_word_count = $registration_question->max;
+                        }
+                    }
+                    $column_type = FormColumnType::text;
+                } elseif ($registration_question->question_type == Nc3RegistrationQuestion::question_type_checkbox) {
+                    $column_type = FormColumnType::checkbox;
+                } elseif ($registration_question->question_type == Nc3RegistrationQuestion::question_type_radio) {
+                    $column_type = FormColumnType::radio;
+                } elseif ($registration_question->question_type == Nc3RegistrationQuestion::question_type_select) {
+                    $column_type = FormColumnType::select;
+                } elseif ($registration_question->question_type == Nc3RegistrationQuestion::question_type_textarea) {
+                    $column_type = FormColumnType::textarea;
+                } elseif ($registration_question->question_type == Nc3RegistrationQuestion::question_type_date) {
+                    // 2:日付 / 3:時間 / 7:日付と時間
+                    if ($registration_question->question_type_option == 2) {
+                        // 日付
+                        $column_type = FormColumnType::date;
+                    } elseif ($registration_question->question_type_option == 3) {
+                        // 時間
+                        $column_type = FormColumnType::time;
+                    } elseif ($registration_question->question_type_option == 7) {
+                        // 日付と時間
+                        $column_type = FormColumnType::date;
+                        $this->putError(1, 'Form 項目「日付と時間」は日付として移行', "項目名 = " . $registration_question->question_value);
+                    }
+
+                    // (オプション) 期間を設定する = 移行しない
+                    if ($registration_question->is_range) {
+                        $this->putError(1, 'Form 項目「日付と時間」で「期間を設定する」は移行しない', "{$registration_question->min} ～ {$registration_question->max}");
+                    }
+                } elseif ($registration_question->question_type == Nc3RegistrationQuestion::question_type_mail) {
+                    $column_type = FormColumnType::mail;
+                } elseif ($registration_question->question_type == Nc3RegistrationQuestion::question_type_file) {
+                    $column_type = FormColumnType::file;
                 }
 
-                $item_id = $registration_item->item_id;
+                $option_value = $registration_choices->where('registration_question_id', $registration_question->id)->pluck('choice_value')->implode('|');
                 $registration_ini .= "column_type                = \"" . $column_type                     . "\"\n";
-                $registration_ini .= "column_name                = \"" . $registration_item->item_name    . "\"\n";
-                $registration_ini .= "option_value               = \"" . $registration_item->option_value . "\"\n";
-                $registration_ini .= "required                   = "   . $registration_item->require_flag . "\n";
+                $registration_ini .= "column_name                = \"" . $registration_question->question_value . "\"\n";
+                $registration_ini .= "option_value               = \"" . $option_value                    . "\"\n"; // |区切り
+                $registration_ini .= "required                   = "   . $registration_question->is_require   . "\n";
                 $registration_ini .= "frame_col                  = "   . 0                                . "\n";
-                $registration_ini .= "caption                    = \"" . $registration_item->description  . "\"\n";
+                $registration_ini .= "caption                    = \"" . $registration_question->description  . "\"\n";
                 $registration_ini .= "caption_color              = \"" . "text-dark"                      . "\"\n";
                 $registration_ini .= "minutes_increments         = "   . 10                               . "\n";
                 $registration_ini .= "minutes_increments_from    = "   . 10                               . "\n";
                 $registration_ini .= "minutes_increments_to      = "   . 10                               . "\n";
-                $registration_ini .= "rule_allowed_numeric       = null\n";
+                $registration_ini .= "rule_allowed_numeric       = {$rule_allowed_numeric}\n";
                 $registration_ini .= "rule_allowed_alpha_numeric = null\n";
                 $registration_ini .= "rule_digits_or_less        = null\n";
-                $registration_ini .= "rule_max                   = null\n";
-                $registration_ini .= "rule_min                   = null\n";
-                $registration_ini .= "rule_word_count            = null\n";
+                $registration_ini .= "rule_max                   = {$rule_max}\n";
+                $registration_ini .= "rule_min                   = {$rule_min}\n";
+                $registration_ini .= "rule_word_count            = {$rule_word_count}\n";
                 $registration_ini .= "rule_date_after_equal      = null\n";
                 $registration_ini .= "\n";
             }
 
             // フォーム の設定
-            //Storage::put($this->getImportPath('forms/form_') . $this->zeroSuppress($registration_id) . '.ini', $registration_ini);
-            $this->storagePut($this->getImportPath('forms/form_') . $this->zeroSuppress($registration_id) . '.ini', $registration_ini);
+            $this->storagePut($this->getImportPath('forms/form_') . $this->zeroSuppress($nc3_registration->id) . '.ini', $registration_ini);
 
             // 登録データもエクスポートする場合
             if ($this->hasMigrationConfig('forms', 'nc3_export_registration_data', true)) {
                 // 対象外指定があれば、読み飛ばす
-                if ($this->isOmmit('forms', 'export_ommit_registration_data_ids', $nc3_registration->registration_id)) {
+                if ($this->isOmmit('forms', 'export_ommit_registration_data_ids', $nc3_registration->id)) {
                     continue;
                 }
 
                 // データ部
                 $registration_data_header = "[form_inputs]\n";
                 $registration_data = "";
-                $registration_item_datas = Nc2RegistrationItemData::
+
+                // registration_answers.registration_question_key から registration_questions.key (複数) になってて、一意にたどれないため、
+                // registration_pages から結合で対応
+
+                $registration_answers = Nc3RegistrationPage::
                     select(
-                        'registration_item_data.*',
-                        'registration_data.insert_time AS data_insert_time',
-                        'registration_data.insert_user_name AS data_insert_user_name',
-                        'registration_data.insert_user_id AS data_insert_user_id',
-                        'registration_data.update_time AS data_update_time',
-                        'registration_data.update_user_name AS data_update_user_name',
-                        'registration_data.update_user_id AS data_update_user_id'
+                        'registration_answers.*',
+                        'registration_questions.id as registration_question_id',
+                        'registration_questions.question_type',
+                        'registration_answer_summaries.id AS registration_answer_summary_id',
+                        'registration_answer_summaries.created AS data_created',
+                        'registration_answer_summaries.created_user AS data_created_user',
+                        'registration_answer_summaries.modified AS data_modified',
+                        'registration_answer_summaries.modified_user AS data_modified_user'
                     )
-                    ->join('registration_item', function ($join) {
-                        $join->on('registration_item.registration_id', '=', 'registration_item_data.registration_id')
-                            ->on('registration_item.item_id', '=', 'registration_item_data.item_id');
+                    ->join('registration_questions', function ($join) {
+                        $join->on('registration_questions.registration_page_id', '=', 'registration_pages.id');
                     })
-                    ->join('registration_data', function ($join) {
-                        $join->on('registration_data.registration_id', '=', 'registration_item_data.registration_id')
-                            ->on('registration_data.data_id', '=', 'registration_item_data.data_id');
+                    ->join('registration_answers', function ($join) {
+                        $join->on('registration_answers.registration_question_key', '=', 'registration_questions.key');
                     })
-                    ->where('registration_item_data.registration_id', $registration_id)
-                    ->orderBy('registration_item_data.data_id', 'asc')
-                    ->orderBy('registration_item.item_sequence', 'asc')
+                    ->join('registration_answer_summaries', function ($join) {
+                        $join->on('registration_answer_summaries.id', '=', 'registration_answers.registration_answer_summary_id');
+                    })
+                    ->where('registration_pages.registration_id', $nc3_registration->id)
+                    ->orderBy('registration_answer_summaries.serial_number', 'desc')
+                    ->orderBy('registration_questions.question_sequence', 'asc')
                     ->get();
 
-                $data_id = null;
-                foreach ($registration_item_datas as $registration_item_data) {
-                    if ($registration_item_data->data_id != $data_id) {
-                        $registration_data_header .= "input[" . $registration_item_data->data_id . "] = \"\"\n";
-                        $registration_data .= "\n[" . $registration_item_data->data_id . "]\n";
-                        $registration_data .= "created_at      = \"" . $this->getCCDatetime($registration_item_data->data_insert_time) . "\"\n";
-                        $registration_data .= "created_name    = \"" . $registration_item_data->data_insert_user_name . "\"\n";
-                        $registration_data .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $registration_item_data->data_insert_user_id) . "\"\n";
-                        $registration_data .= "updated_at      = \"" . $this->getCCDatetime($registration_item_data->data_update_time) . "\"\n";
-                        $registration_data .= "updated_name    = \"" . $registration_item_data->data_update_user_name . "\"\n";
-                        $registration_data .= "update_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $registration_item_data->data_update_user_id) . "\"\n";
-                        $data_id = $registration_item_data->data_id;
+                // アップロードファイル
+                $registration_uploads = Nc3UploadFile::where('plugin_key', 'registrations')
+                    ->whereIn('content_key', $registration_answers->pluck('id'))
+                    ->get();
+
+                $answer_summary_id = null;
+                foreach ($registration_answers as $registration_answer) {
+                    if ($registration_answer->registration_answer_summary_id != $answer_summary_id) {
+                        $registration_data_header .= "input[" . $registration_answer->registration_answer_summary_id . "] = \"\"\n";
+                        $registration_data .= "\n[" . $registration_answer->registration_answer_summary_id . "]\n";
+                        $registration_data .= "created_at      = \"" . $this->getCCDatetime($registration_answer->data_created) . "\"\n";
+                        $registration_data .= "created_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $registration_answer->data_created_user) . "\"\n";
+                        $registration_data .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $registration_answer->data_created_user) . "\"\n";
+                        $registration_data .= "updated_at      = \"" . $this->getCCDatetime($registration_answer->data_modified) . "\"\n";
+                        $registration_data .= "updated_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $registration_answer->data_modified_user) . "\"\n";
+                        $registration_data .= "update_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $registration_answer->data_modified_user) . "\"\n";
+                        $answer_summary_id = $registration_answer->registration_answer_summary_id;
                     }
-                    $registration_data .= $registration_item_data->item_id . " = \"" . str_replace("\n", '\n', $registration_item_data->item_data_value) . "\"\n";
+
+                    $value = str_replace('"', '\"', $registration_answer->answer_value);
+
+                    if (Nc3RegistrationQuestion::isOptionItem($registration_answer->question_type)) {
+                        // | で選択肢をばらす
+                        $options = explode('|', $value);
+                        $option_values = [];
+                        foreach ($options as $option) {
+                            // key valueを:でばらして、valueだけ取得
+                            $option_value = explode(':', $option);
+                            if (isset($option_value[1])) {
+                                $option_values[] = $option_value[1];
+                            }
+                        }
+                        // valueに詰めなおし
+                        $value = implode('|', $option_values);
+                    } elseif ($registration_answer->question_type == Nc3RegistrationQuestion::question_type_file) {
+                        // ファイル型
+                        // (nc3) ファイル型は、毎回UploadFile見る必要あり。
+
+                        // NC3 のアップロードID 抜き出し
+                        $nc3_upload = $registration_uploads->firstWhere('content_key', $registration_answer->id) ?? new Nc3UploadFile();
+                        $nc3_uploads_id = $nc3_upload->id;
+                        if ($nc3_uploads_id) {
+                            // uploads.ini からファイルを探す
+                            if (array_key_exists('uploads', $this->uploads_ini) && array_key_exists('upload', $this->uploads_ini['uploads']) && array_key_exists($nc3_uploads_id, $this->uploads_ini['uploads']['upload'])) {
+                                if (array_key_exists($nc3_uploads_id, $this->uploads_ini) && array_key_exists('temp_file_name', $this->uploads_ini[$nc3_uploads_id])) {
+                                    $value = '../../uploads/' . $this->uploads_ini[$nc3_uploads_id]['temp_file_name'];
+                                } else {
+                                    $this->putMonitor(3, "No Match uploads_ini array_key_exists temp_file_name.", "nc3_uploads_id = " . $nc3_uploads_id);
+                                }
+                            } else {
+                                $this->putMonitor(3, "No Match uploads_ini array_key_exists uploads_ini_uploads_upload.", "nc3_uploads_id = " . $nc3_uploads_id);
+                            }
+                        }
+                    }
+
+                    $registration_data .=  "{$registration_answer->registration_question_id} = \"{$value}\"\n";
                 }
                 // フォーム の登録データ
-                //Storage::put($this->getImportPath('forms/form_') . $this->zeroSuppress($registration_id) . '.txt', $registration_data_header . $registration_data);
-                $this->storagePut($this->getImportPath('forms/form_') . $this->zeroSuppress($registration_id) . '.txt', $registration_data_header . $registration_data);
+                $this->storagePut($this->getImportPath('forms/form_') . $this->zeroSuppress($nc3_registration->id) . '.txt', $registration_data_header . $registration_data);
             }
         }
     }

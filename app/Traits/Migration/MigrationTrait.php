@@ -163,6 +163,7 @@ use App\Enums\DatabaseNoticeEmbeddedTag;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\DayOfWeek;
 use App\Enums\FacilityDisplayType;
+use App\Enums\FormColumnType;
 use App\Enums\LinklistType;
 use App\Enums\NoticeEmbeddedTag;
 use App\Enums\NotShowType;
@@ -2869,6 +2870,7 @@ trait MigrationTrait
 
             // カラムID のNC2, Connect-CMS 変換テーブル（項目データの登録時に使うため）
             $column_ids = array();
+            $create_columns = array();
 
             // カラムテーブルとカラム選択肢テーブルの追加
             $display_sequence_column = 0;
@@ -2895,6 +2897,7 @@ trait MigrationTrait
                 ]);
 
                 $column_ids[$item_id] = $form_column->id;
+                $create_columns[$item_id] = $form_column;
 
                 if (!empty($form_ini[$item_id]['option_value'])) {
                     $column_selects = explode('|', $form_ini[$item_id]['option_value']);
@@ -2951,6 +2954,20 @@ trait MigrationTrait
                     if (!isset($column_ids[$item_id])) {
                         // column_ids 以外のカラムは登録しない
                         continue;
+                    }
+
+                    if ($create_columns[$item_id]->column_type == FormColumnType::file) {
+                        // ファイル
+                        $data = str_replace('../../uploads/upload_', "", $data);
+                        if (empty($data)) {
+                            $data = '';
+                        } else {
+                            $data = intval(substr($data, 0, strpos($data, '.')));
+                            $upload_mapping = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $data)->first();
+                            if (!empty($upload_mapping)) {
+                                $data = $upload_mapping->destination_key;
+                            }
+                        }
                     }
 
                     $bulks[] = [
@@ -9597,6 +9614,7 @@ trait MigrationTrait
                 $registration_item_datas = Nc2RegistrationItemData::
                     select(
                         'registration_item_data.*',
+                        'registration_item.item_type',
                         'registration_data.insert_time AS data_insert_time',
                         'registration_data.insert_user_name AS data_insert_user_name',
                         'registration_data.insert_user_id AS data_insert_user_id',
@@ -9630,7 +9648,29 @@ trait MigrationTrait
                         $registration_data .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $registration_item_data->data_update_user_id) . "\"\n";
                         $data_id = $registration_item_data->data_id;
                     }
+
                     $value = str_replace('"', '\"', $registration_item_data->item_data_value);
+
+                    if ($registration_item_data->item_type == 7) {
+                        // ファイル型
+                        if (strpos($value, '?action=common_download_chief&upload_id=') !== false) {
+                            // NC2 のアップロードID 抜き出し
+                            $nc2_uploads_id = str_replace('?action=common_download_chief&upload_id=', '', $value);
+                            // uploads.ini からファイルを探す
+                            if (array_key_exists('uploads', $this->uploads_ini) && array_key_exists('upload', $this->uploads_ini['uploads']) && array_key_exists($nc2_uploads_id, $this->uploads_ini['uploads']['upload'])) {
+                                if (array_key_exists($nc2_uploads_id, $this->uploads_ini) && array_key_exists('temp_file_name', $this->uploads_ini[$nc2_uploads_id])) {
+                                    $value = '../../uploads/' . $this->uploads_ini[$nc2_uploads_id]['temp_file_name'];
+                                } else {
+                                    $this->putMonitor(3, "No Match uploads_ini array_key_exists temp_file_name.", "nc2_uploads_id = " . $nc2_uploads_id);
+                                }
+                            } else {
+                                $this->putMonitor(3, "No Match uploads_ini array_key_exists uploads_ini_uploads_upload.", "nc2_uploads_id = " . $nc2_uploads_id);
+                            }
+                        } else {
+                            $this->putMonitor(3, "No Match content strpos. :". $value);
+                        }
+                    }
+
                     $registration_data .=  "{$registration_item_data->item_id} = \"{$value}\"\n";
                 }
                 // フォーム の登録データ
