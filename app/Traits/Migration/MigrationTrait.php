@@ -7667,8 +7667,8 @@ trait MigrationTrait
             $users_ini .= "email              = \"" . trim($nc2_user->email) . "\"\n";
             $users_ini .= "userid             = \"" . $nc2_user->login_id . "\"\n";
             $users_ini .= "password           = \"" . $nc2_user->password . "\"\n";
-            $users_ini .= "created_at      = \"" . $this->getCCDatetime($nc2_user->insert_time) . "\"\n";
-            $users_ini .= "updated_at      = \"" . $this->getCCDatetime($nc2_user->update_time) . "\"\n";
+            $users_ini .= "created_at         = \"" . $this->getCCDatetime($nc2_user->insert_time) . "\"\n";
+            $users_ini .= "updated_at         = \"" . $this->getCCDatetime($nc2_user->update_time) . "\"\n";
             if ($nc2_user->active_flag == 0) {
                 $users_ini .= "status             = " . UserStatus::not_active . "\n";
             } else {
@@ -7680,7 +7680,8 @@ trait MigrationTrait
                     $item_name = "item_{$nc2_any_item->item_id}";
                     // NC2システム固定値の置換
                     $item_value = rtrim(str_replace(array_keys($nc2_static_user_item_value), array_values($nc2_static_user_item_value), $nc2_user->$item_name), '|');// 最後のパイプは削除する
-                    $users_ini .= "{$item_name}            = \"" . $item_value . "\"\n";
+                    $item_value = str_replace('"', '\"', $item_value);
+                    $users_ini .= "{$item_name}            = \"{$item_value}\"\n";
                 }
             }
 
