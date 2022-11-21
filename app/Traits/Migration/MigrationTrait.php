@@ -163,6 +163,7 @@ use App\Enums\DatabaseNoticeEmbeddedTag;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\DayOfWeek;
 use App\Enums\FacilityDisplayType;
+use App\Enums\FormColumnType;
 use App\Enums\LinklistType;
 use App\Enums\NoticeEmbeddedTag;
 use App\Enums\NotShowType;
@@ -2869,6 +2870,7 @@ trait MigrationTrait
 
             // カラムID のNC2, Connect-CMS 変換テーブル（項目データの登録時に使うため）
             $column_ids = array();
+            $create_columns = array();
 
             // カラムテーブルとカラム選択肢テーブルの追加
             $display_sequence_column = 0;
@@ -2895,6 +2897,7 @@ trait MigrationTrait
                 ]);
 
                 $column_ids[$item_id] = $form_column->id;
+                $create_columns[$item_id] = $form_column;
 
                 if (!empty($form_ini[$item_id]['option_value'])) {
                     $column_selects = explode('|', $form_ini[$item_id]['option_value']);
@@ -2951,6 +2954,20 @@ trait MigrationTrait
                     if (!isset($column_ids[$item_id])) {
                         // column_ids 以外のカラムは登録しない
                         continue;
+                    }
+
+                    if ($create_columns[$item_id]->column_type == FormColumnType::file) {
+                        // ファイル
+                        $data = str_replace('../../uploads/upload_', "", $data);
+                        if (empty($data)) {
+                            $data = '';
+                        } else {
+                            $data = intval(substr($data, 0, strpos($data, '.')));
+                            $upload_mapping = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $data)->first();
+                            if (!empty($upload_mapping)) {
+                                $data = $upload_mapping->destination_key;
+                            }
+                        }
                     }
 
                     $bulks[] = [
