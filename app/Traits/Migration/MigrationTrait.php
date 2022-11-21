@@ -9625,7 +9625,8 @@ trait MigrationTrait
                         $registration_data .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $registration_item_data->data_update_user_id) . "\"\n";
                         $data_id = $registration_item_data->data_id;
                     }
-                    $registration_data .= $registration_item_data->item_id . " = \"" . str_replace("\n", '\n', $registration_item_data->item_data_value) . "\"\n";
+                    $value = str_replace('"', '\"', $registration_item_data->item_data_value);
+                    $registration_data .=  "{$registration_item_data->item_id} = \"{$value}\"\n";
                 }
                 // フォーム の登録データ
                 //Storage::put($this->getImportPath('forms/form_') . $this->zeroSuppress($registration_id) . '.txt', $registration_data_header . $registration_data);
