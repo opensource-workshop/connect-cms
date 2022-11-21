@@ -9614,6 +9614,7 @@ trait MigrationTrait
                 $registration_item_datas = Nc2RegistrationItemData::
                     select(
                         'registration_item_data.*',
+                        'registration_item.item_type',
                         'registration_data.insert_time AS data_insert_time',
                         'registration_data.insert_user_name AS data_insert_user_name',
                         'registration_data.insert_user_id AS data_insert_user_id',
@@ -9647,7 +9648,29 @@ trait MigrationTrait
                         $registration_data .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $registration_item_data->data_update_user_id) . "\"\n";
                         $data_id = $registration_item_data->data_id;
                     }
+
                     $value = str_replace('"', '\"', $registration_item_data->item_data_value);
+
+                    if ($registration_item_data->item_type == 7) {
+                        // ファイル型
+                        if (strpos($value, '?action=common_download_chief&upload_id=') !== false) {
+                            // NC2 のアップロードID 抜き出し
+                            $nc2_uploads_id = str_replace('?action=common_download_chief&upload_id=', '', $value);
+                            // uploads.ini からファイルを探す
+                            if (array_key_exists('uploads', $this->uploads_ini) && array_key_exists('upload', $this->uploads_ini['uploads']) && array_key_exists($nc2_uploads_id, $this->uploads_ini['uploads']['upload'])) {
+                                if (array_key_exists($nc2_uploads_id, $this->uploads_ini) && array_key_exists('temp_file_name', $this->uploads_ini[$nc2_uploads_id])) {
+                                    $value = '../../uploads/' . $this->uploads_ini[$nc2_uploads_id]['temp_file_name'];
+                                } else {
+                                    $this->putMonitor(3, "No Match uploads_ini array_key_exists temp_file_name.", "nc2_uploads_id = " . $nc2_uploads_id);
+                                }
+                            } else {
+                                $this->putMonitor(3, "No Match uploads_ini array_key_exists uploads_ini_uploads_upload.", "nc2_uploads_id = " . $nc2_uploads_id);
+                            }
+                        } else {
+                            $this->putMonitor(3, "No Match content strpos. :". $value);
+                        }
+                    }
+
                     $registration_data .=  "{$registration_item_data->item_id} = \"{$value}\"\n";
                 }
                 // フォーム の登録データ
