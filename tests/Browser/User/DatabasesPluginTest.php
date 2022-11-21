@@ -44,6 +44,7 @@ class DatabasesPluginTest extends DuskTestCase
         $this->editColumn(true);
         $this->editView();
         $this->listBuckets();
+        $this->editBucketsMails();
         $this->import();
         $this->input();
 
@@ -70,7 +71,7 @@ class DatabasesPluginTest extends DuskTestCase
         $this->initPlugin('databases', '/test/database');
 
         // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'input', 'detail', 'template', 'editColumn', 'editColumnDetail', 'editView', 'createBuckets', 'listBuckets', 'import');
+        $this->reserveManual('index', 'input', 'detail', 'template', 'editColumn', 'editColumnDetail', 'editView', 'createBuckets', 'listBuckets', 'import', 'editBucketsMails');
     }
 
     /**
@@ -441,6 +442,41 @@ class DatabasesPluginTest extends DuskTestCase
             {"path": "user/databases/import/images/import",
              "name": "インポート",
              "comment": "<ul class=\"mb-0\"><li>インポート機能は、管理者用の機能です。<br />CSVファイルを使って、データベースへ一括登録できます。</li><li>CSVファイルの文字コードは<span style=\"color:#e83e8c;\">Shift_JIS</span>, 又は<span style=\"color:#e83e8c;\">UTF-8</span>です。<br />文字コードの自動検出は、<span style=\"color:#e83e8c;\">Shift_JIS</span>, <span style=\"color:#e83e8c;\">UTF-8</span>のいずれかを自動検出します。</li><li>CSVインポートは登録・更新・添付ファイルに対応しています。<br />添付ファイルは、下記「添付ファイル一括インポートの場合」を参照してください。</li></ul>"
+            }
+        ]', null, 4);
+    }
+
+    /**
+     * メール設定
+     */
+    private function editBucketsMails()
+    {
+        // 実行
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/plugin/databases/editBucketsMails/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/databases/editBucketsMails/images/editBucketsMails1')
+                    ->click('#label_notice_on')
+                    ->pause(500)
+                    ->visit('/plugin/databases/editBucketsMails/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#span_notice_body')
+                    ->screenshot('user/databases/editBucketsMails/images/editBucketsMails2')
+                    ->visit('/plugin/databases/editBucketsMails/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#span_database_columns_tag')
+                    ->screenshot('user/databases/editBucketsMails/images/editBucketsMails3');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('[
+            {"path": "user/databases/editBucketsMails/images/editBucketsMails1",
+             "name": "メール設定画面",
+             "comment": "<ul class=\"mb-0\"><li>投稿通知、承認通知、承認済み通知のメールを設定できます。</li></ul>"
+            },
+            {"path": "user/databases/editBucketsMails/images/editBucketsMails2",
+             "name": "埋め込みタグ",
+             "comment": "<ul class=\"mb-0\"><li>【データベース】プラグインで使用できる埋め込みタグはこの通りです。</li></ul>"
+            },
+            {"path": "user/databases/editBucketsMails/images/editBucketsMails3",
+             "name": "データベース毎の埋め込みタグ",
+             "comment": "<ul class=\"mb-0\"><li>【データベース】プラグインの場合、バケツごとに設定した項目で埋め込みタグを使用できます。</li></ul>"
             }
         ]', null, 4);
     }

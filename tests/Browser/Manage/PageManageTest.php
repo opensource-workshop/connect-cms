@@ -36,6 +36,7 @@ class PageManageTest extends DuskTestCase
      */
     public function testInvoke()
     {
+        $this->init();
         $this->login(1);
         $this->index();
         $this->edit();
@@ -44,6 +45,15 @@ class PageManageTest extends DuskTestCase
         $this->movePage();
         $this->roleList();
         $this->index();  // マニュアル用に再度スクリーンショット
+    }
+
+    /**
+     * 初期処理
+     */
+    private function init()
+    {
+        // データクリア
+        Page::where('permanent_link', '<>', '/')->delete();
     }
 
     /**
@@ -124,20 +134,37 @@ class PageManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
 
-            // ブログ を テスト の下に移動
+            // 固定記事 を テスト の下に移動
             $test_page = Page::where('page_name', 'プラグイン・テスト')->first();
             $sub_page = Page::where('page_name', '固定記事')->first();
 
             $browser->visit('/manage/page')
-                    ->select('#form_select_page' . $sub_page->id . ' .manage-page-selectpage', $test_page->id)
-                    ->screenshot('manage/page/movePage/images/movePage');
+                    ->screenshot('manage/page/movePage/images/movePage1')
+                    ->click("#move_level_" . $sub_page->id)
+                    ->pause(500)
+                    ->screenshot('manage/page/movePage/images/movePage2')
+                    ->click("#level_move_page_" . $test_page->id)
+                    ->pause(500)
+                    ->screenshot('manage/page/movePage/images/movePage3')
+                    ->press("決定");
         });
 
         // 他のページも移動
         $this->movePageNoScreenshot();
 
         // マニュアル用データ出力
-        $this->putManualData('manage/page/movePage/images/movePage', null, 3, 'basic');
+        //$this->putManualData('manage/page/movePage/images/movePage1', null, 3, 'basic');
+        // マニュアル用データ出力
+        $this->putManualData('[
+            {"path": "manage/page/movePage/images/movePage1",
+             "name": "ページ一覧",
+             "comment": "<ul class=\"mb-0\"><li>現在のページの一覧を確認できます。</li></ul>"
+            },
+            {"path": "manage/page/movePage/images/movePage3",
+             "name": "ページ移動",
+             "comment": "<ul class=\"mb-0\"><li>移動したいページを選択して決定をクリックすることで、ページの階層を移動できます。</li></ul>"
+            }
+        ]', null, 3);
     }
 
     /**
@@ -263,7 +290,7 @@ class PageManageTest extends DuskTestCase
             },
             {"path": "manage/page/roleList/images/roleList2",
              "name": "ページ権限一覧２",
-             "comment": "<ul class=\"mb-0\"><li>ページ毎の権限設定の状態が確認できます。。</li></ul>"
+             "comment": "<ul class=\"mb-0\"><li>ページ毎の権限設定の状態が確認できます。</li></ul>"
             }
         ]', null, 3);
     }

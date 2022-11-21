@@ -727,8 +727,13 @@ EOF;
             $parent_page = Page::where('page_name', $parent_name)->first();
             foreach ($children_names as $children_name) {
                 $sub_page = Page::where('page_name', $children_name)->first();
+
                 $browser->visit('/manage/page')
-                        ->select('#form_select_page' . $sub_page->id . ' .manage-page-selectpage', $parent_page->id);
+                        ->click("#move_level_" . $sub_page->id)
+                        ->pause(500)
+                        ->click("#level_move_page_" . $parent_page->id)
+                        ->pause(500)
+                        ->press("決定");
             }
         });
     }

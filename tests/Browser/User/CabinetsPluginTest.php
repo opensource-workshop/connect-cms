@@ -73,7 +73,7 @@ class CabinetsPluginTest extends DuskTestCase
         $this->putManualData('[
             {"path": "user/cabinets/index/images/index",
              "name": "フォルダ、ファイルの一覧",
-             "comment": "<ul class=\"mb-0\"><li>ファイルをクリックすることで、ファイルをダウンロードすることができます。</li><li>ファイルやフォルダのチェックボックスをクリックすると、圧縮して一括でダウンロードできます。</li></ul>"
+             "comment": "<ul class=\"mb-0\"><li>ファイルをクリックすることで、ファイルをダウンロードすることができます。</li><li>ファイルやフォルダのチェックボックスをクリックすると、圧縮して一括でダウンロードできます。</li><li>「名前」の左横のチェックボックスで全選択できます。</li></ul>"
             }
         ]', null, 4, 'basic');
     }

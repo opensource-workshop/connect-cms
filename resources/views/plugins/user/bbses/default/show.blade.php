@@ -136,7 +136,13 @@
 </nav>
 
 {{-- スレッドの投稿一覧 --}}
-@include('plugins.user.bbses.default.thread_show')
+@if (isset($is_template_no_frame))
+    @include('plugins.user.bbses.no_frame.thread_show')
+@else
+    @include('plugins.user.bbses.default.thread_show')
+@endif
+
+
 
 {{-- / post がある想定の処理 --}}
 @endif
