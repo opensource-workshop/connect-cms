@@ -113,8 +113,16 @@ class UploadController extends ConnectController
                 return response()->download(storage_path(config('connect.forbidden_image_path')));
             }
 
-            // キャッシュしない
-            $headers = $no_cache_headers;
+            // 閲覧パスワード設定あるか
+            if ($page->isRequestPasswordSetting($page_tree)) {
+                // キャッシュしない
+                $headers = $no_cache_headers;
+            }
+            // 表示制限設定あるか
+            if ($page->isViewLimitSetting()) {
+                // キャッシュしない
+                $headers = $no_cache_headers;
+            }
         }
 
         // ファイルに固有のチェック関数が設定されている場合は、チェック関数を呼ぶ

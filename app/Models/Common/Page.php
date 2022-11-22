@@ -323,6 +323,29 @@ class Page extends Model
     }
 
     /**
+     * 表示制限の設定ありか判断
+     */
+    public function isViewLimitSetting()
+    {
+        // IP アドレス制限
+        if ($this->ip_address) {
+            return true;
+        }
+
+        // ログインユーザ全員参加ページ
+        if ($this->membership_flag == 2) {
+            return true;
+        }
+
+        // メンバーシップページ
+        if ($this->membership_flag == 1) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * 親子ページを加味して 表示可否の判断
      */
     public function isVisibleAncestorsAndSelf(Collection $page_tree) : bool
@@ -535,6 +558,24 @@ class Page extends Model
 
         // 認証を要求
         return true;
+    }
+
+    /**
+     * 閲覧パスワード設定あるか
+     */
+    public function isRequestPasswordSetting($page_tree)
+    {
+        // 自分のページから親を遡って取得
+        $page_tree = $this->getPageTreeByGoingBackParent($page_tree);
+
+        // 自分及び先祖ページに閲覧パスワードが設定されていなければ戻る
+        foreach ($page_tree as $page) {
+            if ($page->password) {
+                // 設定あり
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
