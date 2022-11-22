@@ -8655,6 +8655,9 @@ trait MigrationTrait
             return;
         }
 
+        // nc2の全ユーザ取得
+        $nc2_users = Nc2User::get();
+
         // NC2FAQ（Faq）のループ
         foreach ($nc2_faqs as $nc2_faq) {
             $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
@@ -8679,17 +8682,47 @@ trait MigrationTrait
                 $nc2_page = Nc2Page::where('page_id', $nc2_block->page_id)->first();
             }
 
+            // 権限設定
+            // ----------------------------------------------------
+            // post_authority
+            // 2: 一般まで
+            // 3: モデレータまで
+            // 4: 主担のみ
+            $article_post_flag = 0;
+            $reporter_post_flag = 0;
+            if ($nc2_faq->faq_authority == 2) {
+                $article_post_flag = 1;
+                $reporter_post_flag = 1;
+
+            } elseif ($nc2_faq->faq_authority == 3) {
+                $article_post_flag = 1;
+
+            } elseif ($nc2_faq->faq_authority == 4) {
+                // 一般,モデレータ=0でccでは主担=コンテンツ管理者は投稿可のため、なにもしない
+            }
+
             $faqs_ini = "";
             $faqs_ini .= "[faq_base]\n";
             $faqs_ini .= "faq_name = \"" . $nc2_faq->faq_name . "\"\n";
             $faqs_ini .= "view_count = 10\n";
+            $faqs_ini .= "sequence_conditions = " . FaqSequenceConditionType::display_sequence_order . "\n";
+            $faqs_ini .= "article_post_flag = " . $article_post_flag . "\n";
+            $faqs_ini .= "article_approval_flag = 0\n";                         // 0:承認なし
+            $faqs_ini .= "reporter_post_flag = " . $reporter_post_flag . "\n";
+            $faqs_ini .= "reporter_approval_flag = 0\n";                        // 0:承認なし
 
             // NC2 情報
             $faqs_ini .= "\n";
             $faqs_ini .= "[source_info]\n";
-            $faqs_ini .= "faq_id = " . $nc2_faq->faq_id . "\n";
-            $faqs_ini .= "room_id = " . $nc2_faq->room_id . "\n";
-            $faqs_ini .= "module_name = \"faq\"\n";
+            $faqs_ini .= "faq_id          = " . $nc2_faq->faq_id . "\n";
+            $faqs_ini .= "room_id         = " . $nc2_faq->room_id . "\n";
+            $faqs_ini .= "module_name     = \"faq\"\n";
+            $faqs_ini .= "created_at      = \"" . $this->getCCDatetime($nc2_faq->insert_time) . "\"\n";
+            $faqs_ini .= "created_name    = \"" . $nc2_faq->insert_user_name . "\"\n";
+            $faqs_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_faq->insert_user_id) . "\"\n";
+            $faqs_ini .= "updated_at      = \"" . $this->getCCDatetime($nc2_faq->update_time) . "\"\n";
+            $faqs_ini .= "updated_name    = \"" . $nc2_faq->update_user_name . "\"\n";
+            $faqs_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_faq->update_user_id) . "\"\n";
 
             // NC2FAQで使ってるカテゴリ（faq_category）のみ移行する。
             $faqs_ini .= "\n";
@@ -8746,11 +8779,11 @@ trait MigrationTrait
 
                 $question_answer = $this->nc2Wysiwyg(null, null, null, null, $nc2_faq_question->question_answer, 'faq', $nc2_page);
 
-                $faqs_tsv .= $category                       . "\t";
+                $faqs_tsv .= $category                           . "\t";
                 $faqs_tsv .= $nc2_faq_question->display_sequence . "\t";
-                $faqs_tsv .= $nc2_faq_question->insert_time      . "\t";
+                $faqs_tsv .= $this->getCCDatetime($nc2_faq_question->insert_time) . "\t";
                 $faqs_tsv .= $nc2_faq_question->question_name    . "\t";
-                $faqs_tsv .= $question_answer                . "\t";
+                $faqs_tsv .= $question_answer                    . "\t";
 
                 // $faqs_ini .= "post_title[" . $nc2_faq_question->question_id . "] = \"" . str_replace('"', '', $nc2_faq_question->question_name) . "\"\n";
             }
