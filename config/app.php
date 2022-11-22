@@ -317,6 +317,7 @@ $app_array = [
         'LentFlag' => \App\Enums\LentFlag::class,
         'FaqNarrowingDownType' => \App\Enums\FaqNarrowingDownType::class,
         'ColorName' => \App\Enums\ColorName::class,
+        'FaqSequenceConditionType' => \App\Enums\FaqSequenceConditionType::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

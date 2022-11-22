@@ -163,6 +163,7 @@ use App\Enums\DatabaseNoticeEmbeddedTag;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\DayOfWeek;
 use App\Enums\FacilityDisplayType;
+use App\Enums\FaqSequenceConditionType;
 use App\Enums\FormColumnType;
 use App\Enums\LinklistType;
 use App\Enums\NoticeEmbeddedTag;
@@ -2163,6 +2164,9 @@ trait MigrationTrait
         // FAQ定義の取り込み
         $faqs_ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('faqs/faq_*.ini'));
 
+        // ユーザ取得
+        $users = User::get();
+
         // FAQ定義のループ
         foreach ($faqs_ini_paths as $faqs_ini_path) {
             // ini_file の解析
@@ -2192,14 +2196,23 @@ trait MigrationTrait
             // マッピングテーブルを確認して、追加か更新の処理を分岐
             if (empty($mapping)) {
                 // マッピングテーブルがなければ、Buckets テーブルと Faqs テーブル、マッピングテーブルを追加
-                $faq_name = '無題';
-                if (array_key_exists('faq_base', $faq_ini) && array_key_exists('faq_name', $faq_ini['faq_base'])) {
-                    $faq_name = $faq_ini['faq_base']['faq_name'];
-                }
+                $faq_name = Arr::get($faq_ini, 'faq_base.faq_name', '無題');
+
                 $bucket = Buckets::create(['bucket_name' => $faq_name, 'plugin_name' => 'faqs']);
 
-                $view_count = 10;
-                $faq = Faqs::create(['bucket_id' => $bucket->id, 'faq_name' => $faq_name, 'view_count' => $view_count]);
+                $view_count = Arr::get($faq_ini, 'faq_base.view_count', 10);
+                $sequence_conditions = Arr::get($faq_ini, 'faq_base.sequence_conditions', FaqSequenceConditionType::latest_order);
+
+                $faq = new Faqs(['bucket_id' => $bucket->id, 'faq_name' => $faq_name, 'view_count' => $view_count, 'sequence_conditions' => $sequence_conditions]);
+                $faq->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($faq_ini, 'source_info', 'insert_login_id', null));
+                $faq->created_name = $this->getArrayValue($faq_ini, 'source_info', 'created_name', null);
+                $faq->created_at   = $this->getDatetimeFromIniAndCheckFormat($faq_ini, 'source_info', 'created_at');
+                $faq->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($faq_ini, 'source_info', 'update_login_id', null));
+                $faq->updated_name = $this->getArrayValue($faq_ini, 'source_info', 'updated_name', null);
+                $faq->updated_at   = $this->getDatetimeFromIniAndCheckFormat($faq_ini, 'source_info', 'updated_at');
+                // 登録更新日時を自動更新しない
+                $faq->timestamps = false;
+                $faq->save();
 
                 // マッピングテーブルの追加
                 $mapping = MigrationMapping::create([
@@ -2260,11 +2273,10 @@ trait MigrationTrait
                     $post_text = $this->addParagraph('faqs', $post_text);
 
                     // FAQ記事テーブル追加
-                    $faqs_posts = FaqsPosts::create(['faqs_id' => $faq->id, 'post_title' => $faq_tsv_cols[3], 'post_text' => $post_text, 'categories_id' => $categories_id, 'posted_at' => $posted_at]);
-                    $faqs_posts->save();
-                    $faqs_posts->contents_id = $faqs_posts->id;
+                    $faqs_posts = FaqsPosts::create(['faqs_id' => $faq->id, 'post_title' => $faq_tsv_cols[3], 'post_text' => $post_text, 'categories_id' => $categories_id, 'posted_at' => $posted_at, 'display_sequence' => $faq_tsv_cols[1]]);
 
                     // 更新
+                    $faqs_posts->contents_id = $faqs_posts->id;
                     $faqs_posts->save();
                 }
             }
@@ -5228,6 +5240,32 @@ trait MigrationTrait
         }
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+
+        // bucketあり
+        if (!empty($bucket)) {
+            // 権限設定
+            // ---------------------------------------
+            // 投稿権限：(nc3) FAQ単位であり、(cc) バケツ単位であり
+            // 承認権限：(nc3) あり、(cc) あり
+            BucketsRoles::updateOrCreate(
+                [
+                    'buckets_id' => $bucket->id,
+                    'role' => 'role_article',   // モデレータ
+                ], [
+                    'post_flag'     => $this->getArrayValue($faq_ini, 'faq_base', 'article_post_flag', 0),
+                    'approval_flag' => $this->getArrayValue($faq_ini, 'faq_base', 'article_approval_flag', 0),
+                ]
+            );
+            BucketsRoles::updateOrCreate(
+                [
+                    'buckets_id' => $bucket->id,
+                    'role' => 'role_reporter',  // 編集者
+                ], [
+                    'post_flag'     => $this->getArrayValue($faq_ini, 'faq_base', 'reporter_post_flag', 0),
+                    'approval_flag' => $this->getArrayValue($faq_ini, 'faq_base', 'reporter_approval_flag', 0),
+                ]
+            );
+        }
     }
 
     /**

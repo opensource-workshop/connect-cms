@@ -27,6 +27,7 @@ use App\Models\Migration\Nc3\Nc3CabinetFile;
 use App\Models\Migration\Nc3\Nc3CalendarFrameSetting;
 use App\Models\Migration\Nc3\Nc3Category;
 use App\Models\Migration\Nc3\Nc3Faq;
+use App\Models\Migration\Nc3\Nc3FaqQuestion;
 use App\Models\Migration\Nc3\Nc3Frame;
 use App\Models\Migration\Nc3\Nc3Like;
 // use App\Models\Migration\Nc3\Nc3Link;
@@ -69,6 +70,7 @@ use App\Enums\ContentOpenType;
 use App\Enums\DatabaseNoticeEmbeddedTag;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\DayOfWeek;
+use App\Enums\FaqSequenceConditionType;
 use App\Enums\FormColumnType;
 use App\Enums\LinklistType;
 use App\Enums\NoticeEmbeddedTag;
@@ -126,17 +128,10 @@ trait MigrationNc3ExportTrait
     protected $plugin_name = [
         // 'access_counters'  => 'counters',     // カウンター
         // 'calendars'        => 'calendars',    // カレンダー
-        // 'circular_notices' => 'Development',  // 回覧板
-        // 'faqs'             => 'faqs',         // FAQ
-        // 'iframes'          => 'Development',  // iFrame
         // 'links'            => 'linklists',    // リンクリスト
         // 'photo_albums'     => 'photoalbums',  // フォトアルバム
-        // 'questionnaires'   => 'Development',  // アンケート
-        // 'quizzes'          => 'Development',  // 小テスト
         // 'reservations'     => 'reservations', // 施設予約
-        // 'rss_readers'      => 'Development',  // RSS
         // 'searches'         => 'searchs',      // 検索
-        // 'tasks'            => 'Development',  // ToDo
         // 'videos'           => 'Development',  // 動画
         'access_counters'  => 'Development',    // カウンター
         'announcements'    => 'contents',       // お知らせ
@@ -145,7 +140,7 @@ trait MigrationNc3ExportTrait
         'cabinets'         => 'cabinets',       // キャビネット
         'calendars'        => 'Development',    // カレンダー
         'circular_notices' => 'Development',    // 回覧板
-        'faqs'             => 'Development',    // FAQ
+        'faqs'             => 'faqs',           // FAQ
         'iframes'          => 'Development',    // iFrame
         'links'            => 'Development',    // リンクリスト
         'menus'            => 'menus',          // メニュー
@@ -470,13 +465,14 @@ trait MigrationNc3ExportTrait
             $this->nc3ExportRegistration($redo);
         }
 
+        // NC3 FAQ（faqs）データのエクスポート
+        if ($this->isTarget('nc3_export', 'plugins', 'faqs')) {
+            $this->nc3ExportFaq($redo);
+        }
+
         //////////////////
         // [TODO] まだ
         //////////////////
-        // // NC3 FAQ（faq）データのエクスポート
-        // if ($this->isTarget('nc3_export', 'plugins', 'faqs')) {
-        //     $this->nc3ExportFaq($redo);
-        // }
 
         // // NC3 リンクリスト（linklist）データのエクスポート
         // if ($this->isTarget('nc3_export', 'plugins', 'linklists')) {
@@ -1941,7 +1937,7 @@ trait MigrationNc3ExportTrait
     }
 
     /**
-     * NC3：FAQ（Faq）の移行
+     * NC3：FAQ（faqs）の移行
      */
     private function nc3ExportFaq($redo)
     {
@@ -1953,13 +1949,38 @@ trait MigrationNc3ExportTrait
             Storage::deleteDirectory($this->getImportPath('faqs/'));
         }
 
-        // NC3FAQ（Faq）を移行する。
-        $nc3_faqs = Nc2Faq::orderBy('faq_id')->get();
+        // NC3FAQ（faqs）を移行する。
+        $nc3_faqs = Nc3Faq::select('faqs.*', 'blocks.key as block_key', 'blocks.room_id', 'rooms.space_id')
+            ->join('blocks', function ($join) {
+                $join->on('blocks.id', '=', 'faqs.block_id')
+                    ->where('blocks.plugin_key', 'faqs');
+            })
+            ->join('rooms', function ($join) {
+                $join->on('rooms.id', '=', 'blocks.room_id')
+                    ->whereIn('rooms.space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID]);
+            })
+            ->orderBy('faqs.id')
+            ->get();
 
         // 空なら戻る
         if ($nc3_faqs->isEmpty()) {
             return;
         }
+
+        // nc3の全ユーザ取得
+        $nc3_users = Nc3User::get();
+
+        // 記事を投稿できる権限, メール通知を受け取る権限
+        $block_role_permissions = Nc3BlockRolePermission::getBlockRolePermissionsByBlockKeys($nc3_faqs->pluck('block_key'));
+
+        // カテゴリ
+        $categories = Nc3Category::getCategoriesByBlockIds($nc3_faqs->pluck('block_id'));
+
+        // ブロック設定
+        $block_settings = Nc3BlockSetting::whereIn('block_key', $nc3_faqs->pluck('block_key'))->get();
+
+        // 使用言語（日本語・英語）で有効な言語を取得
+        $language_ids = Nc3Language::where('is_active', 1)->pluck('id');
 
         // NC3FAQ（Faq）のループ
         foreach ($nc3_faqs as $nc3_faq) {
@@ -1974,101 +1995,99 @@ trait MigrationNc3ExportTrait
                 continue;
             }
 
-            // このFAQが配置されている最初のページオブジェクトを取得しておく
-            // WYSIWYG で相対パスを絶対パスに変換する際に、ページの固定URL が必要になるため。
-            $nc3_page = null;
-            $nc3_faq_block = Nc2FaqBlock::where('faq_id', $nc3_faq->faq_id)->orderBy('block_id', 'asc')->first();
-            if (!empty($nc3_faq_block)) {
-                $nc3_block = Nc2Block::where('block_id', $nc3_faq_block->block_id)->first();
+            // (nc3)投稿権限は１件のみ 投稿権限, 一般
+            $post_permission_general_user = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $nc3_faq->block_key, $nc3_faq->room_id, 'content_creatable', 'general_user');
+
+            // 権限設定
+            // ----------------------------------------------------
+            // ※ユーザ (nc3)一般 => (cc)編集者
+
+            $article_post_flag = 1;     // 投稿権限はnc3編集者まで常時チェックON
+            $reporter_post_flag = 0;
+
+            // 一般まで
+            if ($post_permission_general_user) {
+                $reporter_post_flag = 1;
             }
-            if (!empty($nc3_block)) {
-                $nc3_page = Nc2Page::where('page_id', $nc3_block->page_id)->first();
-            }
+
+            $use_workflow = Nc3BlockSetting::getNc3BlockSettingValue($block_settings, $nc3_faq->block_key, 'use_workflow');
 
             $faqs_ini = "";
             $faqs_ini .= "[faq_base]\n";
-            $faqs_ini .= "faq_name = \"" . $nc3_faq->faq_name . "\"\n";
+            $faqs_ini .= "faq_name = \"" . $nc3_faq->name . "\"\n";
             $faqs_ini .= "view_count = 10\n";
+            $faqs_ini .= "sequence_conditions = " . FaqSequenceConditionType::display_sequence_order . "\n";
+            $faqs_ini .= "article_post_flag = " . $article_post_flag . "\n";
+            $faqs_ini .= "article_approval_flag = 0\n";                                 // 編集長=モデは承認不要
+            $faqs_ini .= "reporter_post_flag = " . $reporter_post_flag . "\n";
+            $faqs_ini .= "reporter_approval_flag = " . $use_workflow . "\n";            // 承認ありなら編集者承認ON
 
             // NC3 情報
             $faqs_ini .= "\n";
             $faqs_ini .= "[source_info]\n";
-            $faqs_ini .= "faq_id = " . $nc3_faq->faq_id . "\n";
-            $faqs_ini .= "room_id = " . $nc3_faq->room_id . "\n";
-            $faqs_ini .= "plugin_key = \"faq\"\n";
+            $faqs_ini .= "faq_id          = " . $nc3_faq->id . "\n";
+            $faqs_ini .= "room_id         = " . $nc3_faq->room_id . "\n";
+            $faqs_ini .= "plugin_key      = \"faqs\"\n";
+            $faqs_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_faq->created) . "\"\n";
+            $faqs_ini .= "created_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_faq->created_user) . "\"\n";
+            $faqs_ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_faq->created_user) . "\"\n";
+            $faqs_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_faq->modified) . "\"\n";
+            $faqs_ini .= "updated_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_faq->modified_user) . "\"\n";
+            $faqs_ini .= "update_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_faq->modified_user) . "\"\n";
 
             // NC3FAQで使ってるカテゴリ（faq_category）のみ移行する。
             $faqs_ini .= "\n";
             $faqs_ini .= "[categories]\n";
-            // $nc3_faq_categories = Nc2FaqCategory::where('faq_id', $nc3_faq->faq_id)->orderBy('display_sequence')->get();
-            $nc3_faq_categories = Nc2FaqCategory::
-                select(
-                    'faq_category.category_id',
-                    'faq_category.category_name'
-                )
-                ->where('faq_category.faq_id', $nc3_faq->faq_id)
-                ->join('faq_question', function ($join) {
-                    $join->on('faq_question.category_id', '=', 'faq_category.category_id')
-                         ->whereColumn('faq_question.faq_id', 'faq_category.faq_id');
-                })
-                ->groupBy(
-                    'faq_category.category_id',
-                    'faq_category.category_name',
-                    'faq_category.display_sequence'
-                )
-                ->orderBy('faq_category.display_sequence')
-                ->get();
+            $faq_categories = $categories->where('block_id', $nc3_faq->block_id);
 
             $faqs_ini_originals = "";
 
-            foreach ($nc3_faq_categories as $nc3_faq_category) {
-                $faqs_ini_originals .= "original_categories[" . $nc3_faq_category->category_id . "] = \"" . $nc3_faq_category->category_name . "\"\n";
+            foreach ($faq_categories as $faq_category) {
+                $faqs_ini_originals .= "original_categories[" . $faq_category->id . "] = \"" . $faq_category->name . "\"\n";
             }
             if (!empty($faqs_ini_originals)) {
                 $faqs_ini .= $faqs_ini_originals;
             }
 
             // NC3FAQの記事（faq_question）を移行する。
-            $nc3_faq_questions = Nc2FaqQuestion::where('faq_id', $nc3_faq->faq_id)->orderBy('display_sequence')->get();
+            $nc3_faq_questions = Nc3FaqQuestion::select('faq_questions.*', 'faq_question_orders.weight as display_sequence')
+                ->join('faq_question_orders', function ($join) {
+                    $join->on('faq_question_orders.faq_question_key', '=', 'faq_questions.key');
+                })
+                ->where('faq_questions.faq_key', $nc3_faq->key)
+                ->where('faq_questions.is_latest', 1)
+                ->whereIn('faq_questions.language_id', $language_ids)
+                ->orderBy('faq_question_orders.weight')
+                ->get();
 
             // FAQの記事はTSV でエクスポート
             // カテゴリID{\t}表示順{\t}タイトル{\t}本文
             $faqs_tsv = "";
 
             // NC3FAQの記事をループ
-            // $faqs_ini .= "\n";
-            // $faqs_ini .= "[faq_question]\n";
             foreach ($nc3_faq_questions as $nc3_faq_question) {
                 // TSV 形式でエクスポート
                 if (!empty($faqs_tsv)) {
                     $faqs_tsv .= "\n";
                 }
 
-                $category_obj  = $nc3_faq_categories->firstWhere('category_id', $nc3_faq_question->category_id);
-                $category = "";
-                if (!empty($category_obj)) {
-                    $category  = $category_obj->category_name;
-                }
+                $faq_category = $faq_categories->firstWhere('id', $nc3_faq_question->category_id) ?? new Nc3Category();
 
-                $question_answer = $this->nc3Wysiwyg(null, null, null, null, $nc3_faq_question->question_answer, 'faq');
+                $answer = $this->nc3Wysiwyg(null, null, null, null, $nc3_faq_question->answer, 'faqs');
 
-                $faqs_tsv .= $category                       . "\t";
-                $faqs_tsv .= $nc3_faq_question->display_sequence . "\t";
-                $faqs_tsv .= $this->getCCDatetime($nc3_faq_question->created)      . "\t";
-                $faqs_tsv .= $nc3_faq_question->question_name    . "\t";
-                $faqs_tsv .= $question_answer                . "\t";
-
-                // $faqs_ini .= "post_title[" . $nc3_faq_question->question_id . "] = \"" . str_replace('"', '', $nc3_faq_question->question_name) . "\"\n";
+                $faqs_tsv .= $faq_category->name                                . "\t"; // [0]
+                $faqs_tsv .= $nc3_faq_question->display_sequence                . "\t"; // [1]
+                $faqs_tsv .= $this->getCCDatetime($nc3_faq_question->created)   . "\t";
+                $faqs_tsv .= $nc3_faq_question->question                        . "\t";
+                $faqs_tsv .= $answer                                            . "\t";
             }
 
             // FAQ の設定
-            //Storage::put($this->getImportPath('faqs/faq_') . $this->zeroSuppress($nc3_faq->faq_id) . '.ini', $faqs_ini);
-            $this->storagePut($this->getImportPath('faqs/faq_') . $this->zeroSuppress($nc3_faq->faq_id) . '.ini', $faqs_ini);
+            $this->storagePut($this->getImportPath('faqs/faq_') . $this->zeroSuppress($nc3_faq->id) . '.ini', $faqs_ini);
 
             // FAQ の記事
-            //Storage::put($this->getImportPath('faqs/faq_') . $this->zeroSuppress($nc3_faq->faq_id) . '.tsv', $faqs_tsv);
             $faqs_tsv = $this->exportStrReplace($faqs_tsv, 'faqs');
-            $this->storagePut($this->getImportPath('faqs/faq_') . $this->zeroSuppress($nc3_faq->faq_id) . '.tsv', $faqs_tsv);
+            $this->storagePut($this->getImportPath('faqs/faq_') . $this->zeroSuppress($nc3_faq->id) . '.tsv', $faqs_tsv);
         }
     }
 
