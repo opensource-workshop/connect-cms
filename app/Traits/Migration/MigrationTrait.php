@@ -2169,10 +2169,10 @@ trait MigrationTrait
             $faq_ini = parse_ini_file($faqs_ini_path, true);
 
             // ルーム指定を探しておく。
-            $room_id = null;
-            if (array_key_exists('source_info', $faq_ini) && array_key_exists('room_id', $faq_ini['source_info'])) {
-                $room_id = $faq_ini['source_info']['room_id'];
-            }
+            // $room_id = null;
+            // if (array_key_exists('source_info', $faq_ini) && array_key_exists('room_id', $faq_ini['source_info'])) {
+            //     $room_id = $faq_ini['source_info']['room_id'];
+            // }
 
             // nc2 の faq_id
             $nc2_faq_id = 0;
