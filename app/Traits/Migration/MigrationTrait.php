@@ -1938,10 +1938,10 @@ trait MigrationTrait
             $blog_ini = parse_ini_file($blogs_ini_path, true);
 
             // ルーム指定を探しておく。
-            $room_id = null;
-            if (array_key_exists('source_info', $blog_ini) && array_key_exists('room_id', $blog_ini['source_info'])) {
-                $room_id = $blog_ini['source_info']['room_id'];
-            }
+            // $room_id = null;
+            // if (array_key_exists('source_info', $blog_ini) && array_key_exists('room_id', $blog_ini['source_info'])) {
+            //     $room_id = $blog_ini['source_info']['room_id'];
+            // }
 
             // ルーム指定があれば、指定されたルームのみ処理する。
             //if (empty($cc_import_blogs_room_ids)) {
