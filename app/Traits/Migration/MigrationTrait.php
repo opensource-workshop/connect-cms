@@ -163,6 +163,7 @@ use App\Enums\DatabaseNoticeEmbeddedTag;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\DayOfWeek;
 use App\Enums\FacilityDisplayType;
+use App\Enums\FaqSequenceConditionType;
 use App\Enums\FormColumnType;
 use App\Enums\LinklistType;
 use App\Enums\NoticeEmbeddedTag;
@@ -1938,10 +1939,10 @@ trait MigrationTrait
             $blog_ini = parse_ini_file($blogs_ini_path, true);
 
             // ルーム指定を探しておく。
-            $room_id = null;
-            if (array_key_exists('source_info', $blog_ini) && array_key_exists('room_id', $blog_ini['source_info'])) {
-                $room_id = $blog_ini['source_info']['room_id'];
-            }
+            // $room_id = null;
+            // if (array_key_exists('source_info', $blog_ini) && array_key_exists('room_id', $blog_ini['source_info'])) {
+            //     $room_id = $blog_ini['source_info']['room_id'];
+            // }
 
             // ルーム指定があれば、指定されたルームのみ処理する。
             //if (empty($cc_import_blogs_room_ids)) {
@@ -2163,16 +2164,19 @@ trait MigrationTrait
         // FAQ定義の取り込み
         $faqs_ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('faqs/faq_*.ini'));
 
+        // ユーザ取得
+        $users = User::get();
+
         // FAQ定義のループ
         foreach ($faqs_ini_paths as $faqs_ini_path) {
             // ini_file の解析
             $faq_ini = parse_ini_file($faqs_ini_path, true);
 
             // ルーム指定を探しておく。
-            $room_id = null;
-            if (array_key_exists('source_info', $faq_ini) && array_key_exists('room_id', $faq_ini['source_info'])) {
-                $room_id = $faq_ini['source_info']['room_id'];
-            }
+            // $room_id = null;
+            // if (array_key_exists('source_info', $faq_ini) && array_key_exists('room_id', $faq_ini['source_info'])) {
+            //     $room_id = $faq_ini['source_info']['room_id'];
+            // }
 
             // nc2 の faq_id
             $nc2_faq_id = 0;
@@ -2192,14 +2196,23 @@ trait MigrationTrait
             // マッピングテーブルを確認して、追加か更新の処理を分岐
             if (empty($mapping)) {
                 // マッピングテーブルがなければ、Buckets テーブルと Faqs テーブル、マッピングテーブルを追加
-                $faq_name = '無題';
-                if (array_key_exists('faq_base', $faq_ini) && array_key_exists('faq_name', $faq_ini['faq_base'])) {
-                    $faq_name = $faq_ini['faq_base']['faq_name'];
-                }
+                $faq_name = Arr::get($faq_ini, 'faq_base.faq_name', '無題');
+
                 $bucket = Buckets::create(['bucket_name' => $faq_name, 'plugin_name' => 'faqs']);
 
-                $view_count = 10;
-                $faq = Faqs::create(['bucket_id' => $bucket->id, 'faq_name' => $faq_name, 'view_count' => $view_count]);
+                $view_count = Arr::get($faq_ini, 'faq_base.view_count', 10);
+                $sequence_conditions = Arr::get($faq_ini, 'faq_base.sequence_conditions', FaqSequenceConditionType::latest_order);
+
+                $faq = new Faqs(['bucket_id' => $bucket->id, 'faq_name' => $faq_name, 'view_count' => $view_count, 'sequence_conditions' => $sequence_conditions]);
+                $faq->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($faq_ini, 'source_info', 'insert_login_id', null));
+                $faq->created_name = $this->getArrayValue($faq_ini, 'source_info', 'created_name', null);
+                $faq->created_at   = $this->getDatetimeFromIniAndCheckFormat($faq_ini, 'source_info', 'created_at');
+                $faq->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($faq_ini, 'source_info', 'update_login_id', null));
+                $faq->updated_name = $this->getArrayValue($faq_ini, 'source_info', 'updated_name', null);
+                $faq->updated_at   = $this->getDatetimeFromIniAndCheckFormat($faq_ini, 'source_info', 'updated_at');
+                // 登録更新日時を自動更新しない
+                $faq->timestamps = false;
+                $faq->save();
 
                 // マッピングテーブルの追加
                 $mapping = MigrationMapping::create([
@@ -2242,9 +2255,7 @@ trait MigrationTrait
                     if (!isset($faq_tsv_cols[2])) {
                         continue;
                     }
-                    // 投稿日時の変換(NC2 の投稿日時はGMT のため、9時間プラスする) NC2=20151020122600
-                    $posted_at_ts = mktime((int)substr($faq_tsv_cols[2], 8, 2), (int)substr($faq_tsv_cols[2], 10, 2), (int)substr($faq_tsv_cols[2], 12, 2), (int)substr($faq_tsv_cols[2], 4, 2), (int)substr($faq_tsv_cols[2], 6, 2), (int)substr($faq_tsv_cols[2], 0, 4));
-                    $posted_at = date('Y-m-d H:i:s', $posted_at_ts + (60 * 60 * 9));
+                    $posted_at = $faq_tsv_cols[2];
 
                     // 記事のカテゴリID
                     // 記事のカテゴリID = original_categories にキーがあれば、original_categories の文言でFAQ単位のカテゴリを探してID 特定。
@@ -2260,11 +2271,10 @@ trait MigrationTrait
                     $post_text = $this->addParagraph('faqs', $post_text);
 
                     // FAQ記事テーブル追加
-                    $faqs_posts = FaqsPosts::create(['faqs_id' => $faq->id, 'post_title' => $faq_tsv_cols[3], 'post_text' => $post_text, 'categories_id' => $categories_id, 'posted_at' => $posted_at]);
-                    $faqs_posts->save();
-                    $faqs_posts->contents_id = $faqs_posts->id;
+                    $faqs_posts = FaqsPosts::create(['faqs_id' => $faq->id, 'post_title' => $faq_tsv_cols[3], 'post_text' => $post_text, 'categories_id' => $categories_id, 'posted_at' => $posted_at, 'display_sequence' => $faq_tsv_cols[1]]);
 
                     // 更新
+                    $faqs_posts->contents_id = $faqs_posts->id;
                     $faqs_posts->save();
                 }
             }
@@ -5228,6 +5238,32 @@ trait MigrationTrait
         }
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+
+        // bucketあり
+        if (!empty($bucket)) {
+            // 権限設定
+            // ---------------------------------------
+            // 投稿権限：(nc3) FAQ単位であり、(cc) バケツ単位であり
+            // 承認権限：(nc3) あり、(cc) あり
+            BucketsRoles::updateOrCreate(
+                [
+                    'buckets_id' => $bucket->id,
+                    'role' => 'role_article',   // モデレータ
+                ], [
+                    'post_flag'     => $this->getArrayValue($faq_ini, 'faq_base', 'article_post_flag', 0),
+                    'approval_flag' => $this->getArrayValue($faq_ini, 'faq_base', 'article_approval_flag', 0),
+                ]
+            );
+            BucketsRoles::updateOrCreate(
+                [
+                    'buckets_id' => $bucket->id,
+                    'role' => 'role_reporter',  // 編集者
+                ], [
+                    'post_flag'     => $this->getArrayValue($faq_ini, 'faq_base', 'reporter_post_flag', 0),
+                    'approval_flag' => $this->getArrayValue($faq_ini, 'faq_base', 'reporter_approval_flag', 0),
+                ]
+            );
+        }
     }
 
     /**
@@ -8619,6 +8655,9 @@ trait MigrationTrait
             return;
         }
 
+        // nc2の全ユーザ取得
+        $nc2_users = Nc2User::get();
+
         // NC2FAQ（Faq）のループ
         foreach ($nc2_faqs as $nc2_faq) {
             $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
@@ -8643,17 +8682,47 @@ trait MigrationTrait
                 $nc2_page = Nc2Page::where('page_id', $nc2_block->page_id)->first();
             }
 
+            // 権限設定
+            // ----------------------------------------------------
+            // post_authority
+            // 2: 一般まで
+            // 3: モデレータまで
+            // 4: 主担のみ
+            $article_post_flag = 0;
+            $reporter_post_flag = 0;
+            if ($nc2_faq->faq_authority == 2) {
+                $article_post_flag = 1;
+                $reporter_post_flag = 1;
+
+            } elseif ($nc2_faq->faq_authority == 3) {
+                $article_post_flag = 1;
+
+            } elseif ($nc2_faq->faq_authority == 4) {
+                // 一般,モデレータ=0でccでは主担=コンテンツ管理者は投稿可のため、なにもしない
+            }
+
             $faqs_ini = "";
             $faqs_ini .= "[faq_base]\n";
             $faqs_ini .= "faq_name = \"" . $nc2_faq->faq_name . "\"\n";
             $faqs_ini .= "view_count = 10\n";
+            $faqs_ini .= "sequence_conditions = " . FaqSequenceConditionType::display_sequence_order . "\n";
+            $faqs_ini .= "article_post_flag = " . $article_post_flag . "\n";
+            $faqs_ini .= "article_approval_flag = 0\n";                         // 0:承認なし
+            $faqs_ini .= "reporter_post_flag = " . $reporter_post_flag . "\n";
+            $faqs_ini .= "reporter_approval_flag = 0\n";                        // 0:承認なし
 
             // NC2 情報
             $faqs_ini .= "\n";
             $faqs_ini .= "[source_info]\n";
-            $faqs_ini .= "faq_id = " . $nc2_faq->faq_id . "\n";
-            $faqs_ini .= "room_id = " . $nc2_faq->room_id . "\n";
-            $faqs_ini .= "module_name = \"faq\"\n";
+            $faqs_ini .= "faq_id          = " . $nc2_faq->faq_id . "\n";
+            $faqs_ini .= "room_id         = " . $nc2_faq->room_id . "\n";
+            $faqs_ini .= "module_name     = \"faq\"\n";
+            $faqs_ini .= "created_at      = \"" . $this->getCCDatetime($nc2_faq->insert_time) . "\"\n";
+            $faqs_ini .= "created_name    = \"" . $nc2_faq->insert_user_name . "\"\n";
+            $faqs_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_faq->insert_user_id) . "\"\n";
+            $faqs_ini .= "updated_at      = \"" . $this->getCCDatetime($nc2_faq->update_time) . "\"\n";
+            $faqs_ini .= "updated_name    = \"" . $nc2_faq->update_user_name . "\"\n";
+            $faqs_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_faq->update_user_id) . "\"\n";
 
             // NC2FAQで使ってるカテゴリ（faq_category）のみ移行する。
             $faqs_ini .= "\n";
@@ -8710,11 +8779,11 @@ trait MigrationTrait
 
                 $question_answer = $this->nc2Wysiwyg(null, null, null, null, $nc2_faq_question->question_answer, 'faq', $nc2_page);
 
-                $faqs_tsv .= $category                       . "\t";
+                $faqs_tsv .= $category                           . "\t";
                 $faqs_tsv .= $nc2_faq_question->display_sequence . "\t";
-                $faqs_tsv .= $nc2_faq_question->insert_time      . "\t";
+                $faqs_tsv .= $this->getCCDatetime($nc2_faq_question->insert_time) . "\t";
                 $faqs_tsv .= $nc2_faq_question->question_name    . "\t";
-                $faqs_tsv .= $question_answer                . "\t";
+                $faqs_tsv .= $question_answer                    . "\t";
 
                 // $faqs_ini .= "post_title[" . $nc2_faq_question->question_id . "] = \"" . str_replace('"', '', $nc2_faq_question->question_name) . "\"\n";
             }

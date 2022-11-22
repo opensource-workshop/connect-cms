@@ -12,5 +12,6 @@ class Faqs extends Model
         'faq_name',
         'view_count',
         'display_posted_at_flag',
+        'sequence_conditions',
     ];
 }
