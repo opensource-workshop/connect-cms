@@ -3075,6 +3075,7 @@ trait MigrationNc3ExportTrait
                     }
 
                     $value = str_replace('"', '\"', $registration_answer->answer_value);
+                    $value = str_replace("\n", '\n', $value);
 
                     if (Nc3RegistrationQuestion::isOptionItem($registration_answer->question_type)) {
                         // | で選択肢をばらす
