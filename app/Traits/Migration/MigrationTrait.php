@@ -2952,7 +2952,7 @@ trait MigrationTrait
                     $bulks[] = [
                         'forms_inputs_id'  => $forms_inputs->id,
                         'forms_columns_id' => $column_ids[$item_id],
-                        'value'            => $data,
+                        'value'            => str_replace('\n', "\n", $data),
                         'created_id'       => $this->getUserIdFromLoginId($users, $this->getArrayValue($data_txt_ini, $data_id, 'insert_login_id', null)),
                         'created_name'     => $this->getArrayValue($data_txt_ini, $data_id, 'created_name', null),
                         'created_at'       => $this->getDatetimeFromIniAndCheckFormat($data_txt_ini, $data_id, 'created_at'),
@@ -9627,6 +9627,7 @@ trait MigrationTrait
                         $data_id = $registration_item_data->data_id;
                     }
                     $value = str_replace('"', '\"', $registration_item_data->item_data_value);
+                    $value = str_replace("\n", '\n', $value);
                     $registration_data .=  "{$registration_item_data->item_id} = \"{$value}\"\n";
                 }
                 // フォーム の登録データ
