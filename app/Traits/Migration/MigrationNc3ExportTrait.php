@@ -30,7 +30,8 @@ use App\Models\Migration\Nc3\Nc3Faq;
 use App\Models\Migration\Nc3\Nc3FaqQuestion;
 use App\Models\Migration\Nc3\Nc3Frame;
 use App\Models\Migration\Nc3\Nc3Like;
-// use App\Models\Migration\Nc3\Nc3Link;
+use App\Models\Migration\Nc3\Nc3Link;
+use App\Models\Migration\Nc3\Nc3LinkFrameSetting;
 use App\Models\Migration\Nc3\Nc3Language;
 use App\Models\Migration\Nc3\Nc3MailSetting;
 use App\Models\Migration\Nc3\Nc3MenuFramePage;
@@ -128,7 +129,6 @@ trait MigrationNc3ExportTrait
     protected $plugin_name = [
         // 'access_counters'  => 'counters',     // カウンター
         // 'calendars'        => 'calendars',    // カレンダー
-        // 'links'            => 'linklists',    // リンクリスト
         // 'photo_albums'     => 'photoalbums',  // フォトアルバム
         // 'reservations'     => 'reservations', // 施設予約
         // 'searches'         => 'searchs',      // 検索
@@ -142,7 +142,7 @@ trait MigrationNc3ExportTrait
         'circular_notices' => 'Development',    // 回覧板
         'faqs'             => 'faqs',           // FAQ
         'iframes'          => 'Development',    // iFrame
-        'links'            => 'Development',    // リンクリスト
+        'links'            => 'linklists',      // リンクリスト
         'menus'            => 'menus',          // メニュー
         'multidatabases'   => 'databases',      // データベース
         'photo_albums'     => 'Development',    // フォトアルバム
@@ -470,14 +470,14 @@ trait MigrationNc3ExportTrait
             $this->nc3ExportFaq($redo);
         }
 
+        // NC3 リンクリスト（links）データのエクスポート
+        if ($this->isTarget('nc3_export', 'plugins', 'linklists')) {
+            $this->nc3ExportLinklist($redo);
+        }
+
         //////////////////
         // [TODO] まだ
         //////////////////
-
-        // // NC3 リンクリスト（linklist）データのエクスポート
-        // if ($this->isTarget('nc3_export', 'plugins', 'linklists')) {
-        //     $this->nc3ExportLinklist($redo);
-        // }
 
         // // NC3 カウンター（counter）データのエクスポート
         // if ($this->isTarget('nc3_export', 'plugins', 'counters')) {
@@ -2092,7 +2092,7 @@ trait MigrationNc3ExportTrait
     }
 
     /**
-     * NC3：リンクリスト（Linklist）の移行
+     * NC3：リンクリスト（links）の移行
      */
     private function nc3ExportLinklist($redo)
     {
@@ -2104,167 +2104,126 @@ trait MigrationNc3ExportTrait
             Storage::deleteDirectory($this->getImportPath('linklists/'));
         }
 
-        // NC3リンクリスト（Linklist）を移行する。
-        $nc3_linklists = Nc2Linklist::orderBy('linklist_id')->get();
+        // NC3リンクリスト（links）を移行する。
+        $nc3_blocks = Nc3Block::select('blocks.*', 'blocks.key as block_key', 'rooms.space_id', 'blocks_languages.name')
+            ->join('blocks_languages', function ($join) {
+                $join->on('blocks_languages.block_id', '=', 'blocks.id')
+                    ->where('blocks_languages.language_id', Nc3Language::language_id_ja);
+            })
+            ->join('rooms', function ($join) {
+                $join->on('rooms.id', '=', 'blocks.room_id')
+                    ->whereIn('rooms.space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID]);
+            })
+            ->where('blocks.plugin_key', 'links')
+            ->orderBy('blocks.id')
+            ->get();
 
         // 空なら戻る
-        if ($nc3_linklists->isEmpty()) {
+        if ($nc3_blocks->isEmpty()) {
             return;
         }
 
         // nc3の全ユーザ取得
-        $nc3_users = Nc2User::get();
+        $nc3_users = Nc3User::get();
+
+        // カテゴリ
+        $categories = Nc3Category::getCategoriesByBlockIds($nc3_blocks->pluck('id'));
 
         // NC3リンクリスト（Linklist）のループ
-        foreach ($nc3_linklists as $nc3_linklist) {
+        foreach ($nc3_blocks as $nc3_block) {
             $room_ids = $this->getMigrationConfig('basic', 'nc3_export_room_ids');
             // ルーム指定があれば、指定されたルームのみ処理する。
             if (empty($room_ids)) {
                 // ルーム指定なし。全データの移行
-            } elseif (!empty($room_ids) && in_array($nc3_linklist->room_id, $room_ids)) {
+            } elseif (!empty($room_ids) && in_array($nc3_block->room_id, $room_ids)) {
                 // ルーム指定あり。指定ルームに合致する。
             } else {
                 // ルーム指定あり。条件に合致せず。移行しない。
                 continue;
             }
 
-            // target 指定を取るために最初のブロックを参照（NC3 はブロック単位でtarget 指定していた。最初を移行する）
-            $nc3_linklist_block = Nc2LinklistBlock::firstOrNew(
-                ['linklist_id' => $nc3_linklist->linklist_id],
-                ['target_blank_flag' => '0']
-            );
-
-            // (NC3)mark リストマーカー -> (Connect)type 表示形式 変換
-            $convert_types = [
-                'none'        => LinklistType::none,
-                'disc'        => LinklistType::black_circle,
-                'circle'      => LinklistType::white_circle,
-                'square'      => LinklistType::black_square,
-                'lower-alpha' => LinklistType::english_lowercase,
-                'upper-alpha' => LinklistType::english_uppercase,
-                'mark_a1.gif' => LinklistType::black_square,
-                'mark_a2.gif' => LinklistType::black_square,
-                'mark_a3.gif' => LinklistType::black_square,
-                'mark_a4.gif' => LinklistType::black_square,
-                'mark_a5.gif' => LinklistType::black_square,
-                'mark_b1.gif' => LinklistType::black_square,
-                'mark_b2.gif' => LinklistType::black_square,
-                'mark_b3.gif' => LinklistType::black_square,
-                'mark_c1.gif' => LinklistType::black_square,
-                'mark_c2.gif' => LinklistType::black_square,
-                'mark_c3.gif' => LinklistType::black_square,
-                'mark_c4.gif' => LinklistType::black_square,
-                'mark_d1.gif' => LinklistType::black_square,
-                'mark_d2.gif' => LinklistType::black_square,
-                'mark_d3.gif' => LinklistType::black_square,
-                'mark_d4.gif' => LinklistType::black_square,
-                'mark_d5.gif' => LinklistType::black_square,
-                'mark_e1.gif' => LinklistType::white_circle,
-                'mark_e2.gif' => LinklistType::white_circle,
-                'mark_e3.gif' => LinklistType::white_circle,
-                'mark_e4.gif' => LinklistType::white_circle,
-                'mark_e5.gif' => LinklistType::white_circle,
-            ];
-
-            $type = $convert_types[$nc3_linklist_block->mark] ?? LinklistType::none;
-
             $linklists_ini = "";
             $linklists_ini .= "[linklist_base]\n";
-            $linklists_ini .= "linklist_name = \"" . $nc3_linklist->linklist_name . "\"\n";
-            // $linklists_ini .= "view_count = 10\n";
-            $linklists_ini .= "type = " . $type . "\n";
+            $linklists_ini .= "linklist_name = \"" . $nc3_block->name . "\"\n";
 
             // NC3 情報
             $linklists_ini .= "\n";
             $linklists_ini .= "[source_info]\n";
-            $linklists_ini .= "linklist_id = " . $nc3_linklist->linklist_id . "\n";
-            $linklists_ini .= "room_id = " . $nc3_linklist->room_id . "\n";
-            $linklists_ini .= "plugin_key = \"linklist\"\n";
-            $linklists_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_linklist->created) . "\"\n";
-            $linklists_ini .= "created_name    = \"" . $nc3_linklist->insert_user_name . "\"\n";
-            $linklists_ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_linklist->created_user) . "\"\n";
-            $linklists_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_linklist->modified) . "\"\n";
-            $linklists_ini .= "updated_name    = \"" . $nc3_linklist->update_user_name . "\"\n";
-            $linklists_ini .= "update_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_linklist->modified_user) . "\"\n";
+            $linklists_ini .= "linklist_id     = " . $nc3_block->id . "\n";
+            $linklists_ini .= "room_id         = " . $nc3_block->room_id . "\n";
+            $linklists_ini .= "plugin_key      = \"links\"\n";
+            $linklists_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_block->created) . "\"\n";
+            $linklists_ini .= "created_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_block->created_user) . "\"\n";
+            $linklists_ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_block->created_user) . "\"\n";
+            $linklists_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_block->modified) . "\"\n";
+            $linklists_ini .= "updated_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_block->modified_user) . "\"\n";
+            $linklists_ini .= "update_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_block->modified_user) . "\"\n";
 
-            // NC3リンクリストで使っているカテゴリ（linklist_category）のみ移行する。
+            // NC3リンクリストで使っているカテゴリのみ移行する。
             $linklists_ini .= "\n";
             $linklists_ini .= "[categories]\n";
-            // NC3リンクリストは自動的に「カテゴリなし」（名前変更不可）カテゴリが作成されるため、「カテゴリなし」は移行除外する。
-            // ※ また、NC3では「カテゴリなし」１個だけだと、カテゴリを表示しない仕様
-            // $nc3_linklist_categories = Nc2LinklistCategory::where('linklist_id', $nc3_linklist->linklist_id)->where('category_name', '!=','カテゴリなし')->orderBy('category_sequence')->get();
-            $nc3_linklist_categories = Nc2LinklistCategory::
-                select(
-                    'linklist_category.category_id',
-                    'linklist_category.category_name'
-                )
-                ->where('linklist_category.linklist_id', $nc3_linklist->linklist_id)
-                ->where('category_name', '!=', 'カテゴリなし')
-                ->join('linklist_link', function ($join) {
-                    $join->on('linklist_link.category_id', '=', 'linklist_category.category_id')
-                         ->whereColumn('linklist_link.linklist_id', 'linklist_category.linklist_id');
+
+            $linklist_categories = $categories->where('block_id', $nc3_block->id);
+
+            $journals_ini_originals = "";
+
+            foreach ($linklist_categories as $linklist_category) {
+                $journals_ini_originals .= "original_categories[" . $linklist_category->id . "] = \"" . $linklist_category->name . "\"\n";
+            }
+            if (!empty($journals_ini_originals)) {
+                $linklists_ini .= $journals_ini_originals;
+            }
+
+            // NC3リンクリストの記事（links）を移行する。
+            $nc3_links = Nc3Link::select('links.*', 'link_orders.weight as display_sequence')
+                ->join('link_orders', function ($join) {
+                    $join->on('link_orders.link_key', '=', 'links.key');
                 })
-                ->groupBy(
-                    'linklist_category.category_id',
-                    'linklist_category.category_name',
-                    'linklist_category.category_sequence'
-                )
-                ->orderBy('linklist_category.category_sequence')
+                ->where('links.block_id', $nc3_block->id)
+                ->where('links.is_latest', 1)
+                ->orderBy('link_orders.category_key')
+                ->orderBy('link_orders.weight')
                 ->get();
 
-            $linklists_ini_originals = "";
-
-            foreach ($nc3_linklist_categories as $nc3_linklist_category) {
-                $linklists_ini_originals .= "original_categories[" . $nc3_linklist_category->category_id . "] = \"" . $nc3_linklist_category->category_name . "\"\n";
-            }
-            if (!empty($linklists_ini_originals)) {
-                $linklists_ini .= $linklists_ini_originals;
-            }
-
-            // NC3リンクリストの記事（linklist_link）を移行する。
-            $nc3_linklist_links = Nc2LinklistLink::where('linklist_id', $nc3_linklist->linklist_id)->orderBy('link_sequence')->get();
+            // target 指定を取るために最初のブロックを参照（NC3 はブロック単位でtarget 指定していた。最初を移行する）
+            $nc3_link_frame_setting = Nc3Frame::select('link_frame_settings.*')
+                ->join('link_frame_settings', function ($join) {
+                    $join->on('link_frame_settings.frame_key', '=', 'frames.key');
+                })
+                ->where('frames.block_id', $nc3_block->id)
+                ->first() ?? new Nc3LinkFrameSetting();
 
             // リンクリストの記事はTSV でエクスポート
             // タイトル{\t}URL{\t}説明{\t}新規ウィンドウflag{\t}表示順
             $linklists_tsv = "";
 
-            $nc3_block = Nc2Block::where('block_id', $nc3_linklist_block->block_id)->first();
+            // $nc3_block = Nc2Block::where('block_id', $nc3_linklist_block->block_id)->first();
 
             // NC3リンクリストの記事をループ
-            // $linklists_ini .= "\n";
-            // $linklists_ini .= "[linklist_link]\n";
-            foreach ($nc3_linklist_links as $nc3_linklist_link) {
+            foreach ($nc3_links as $nc3_link) {
                 // TSV 形式でエクスポート
                 if (!empty($linklists_tsv)) {
                     $linklists_tsv .= "\n";
                 }
 
-                $category_obj  = $nc3_linklist_categories->firstWhere('category_id', $nc3_linklist_link->category_id);
-                $category = "";
-                if (!empty($category_obj)) {
-                    $category  = $category_obj->category_name;
-                }
+                $linklist_category = $linklist_categories->firstWhere('id', $nc3_link->category_id) ?? new Nc3Category();
 
-                $linklists_tsv .= str_replace(array("\r", "\n", "\t"), "", $nc3_linklist_link->title)              . "\t";
-                $linklists_tsv .= str_replace(array("\r", "\n", "\t"), "", $nc3_linklist_link->url)                . "\t";
-                $linklists_tsv .= str_replace(array("\r", "\n", "\t"), " ", $nc3_linklist_link->description)       . "\t";
-                $linklists_tsv .= $nc3_linklist_block->target_blank_flag                        . "\t";
-                $linklists_tsv .= $nc3_linklist_link->link_sequence                             . "\t";
-                $linklists_tsv .= $category;
+                $linklists_tsv .= str_replace(array("\r", "\n", "\t"), "", $nc3_link->title)        . "\t";
+                $linklists_tsv .= str_replace(array("\r", "\n", "\t"), "", $nc3_link->url)          . "\t";
+                $linklists_tsv .= str_replace(array("\r", "\n", "\t"), " ", $nc3_link->description) . "\t";
+                $linklists_tsv .= $nc3_link_frame_setting->open_new_tab                             . "\t"; // [3] 新規ウィンドウで表示
+                $linklists_tsv .= $nc3_link->display_sequence                                       . "\t";
+                $linklists_tsv .= $linklist_category->name;
 
                 // NC3のリンク切れチェック
-                $this->checkDeadLinkNc2($nc3_linklist_link->url, 'linklist', $nc3_block);
-
-                // $linklists_ini .= "post_title[" . $nc3_linklist_link->link_id . "] = \"" . str_replace('"', '', $nc3_linklist_link->title) . "\"\n";
+                // $this->checkDeadLinkNc2($nc3_link->url, 'linklist', $nc3_block);
             }
 
             // リンクリストの設定
-            //Storage::put($this->getImportPath('linklists/linklist_') . $this->zeroSuppress($nc3_linklist->linklist_id) . '.ini', $linklists_ini);
-            $this->storagePut($this->getImportPath('linklists/linklist_') . $this->zeroSuppress($nc3_linklist->linklist_id) . '.ini', $linklists_ini);
+            $this->storagePut($this->getImportPath('linklists/linklist_') . $this->zeroSuppress($nc3_block->id) . '.ini', $linklists_ini);
 
             // リンクリストの記事
-            //Storage::put($this->getImportPath('linklists/linklist_') . $this->zeroSuppress($nc3_linklist->linklist_id) . '.tsv', $linklists_tsv);
-            $this->storagePut($this->getImportPath('linklists/linklist_') . $this->zeroSuppress($nc3_linklist->linklist_id) . '.tsv', $linklists_tsv);
+            $this->storagePut($this->getImportPath('linklists/linklist_') . $this->zeroSuppress($nc3_block->id) . '.tsv', $linklists_tsv);
         }
     }
 
@@ -5094,13 +5053,11 @@ trait MigrationNc3ExportTrait
             $nc3_faq = Nc3Faq::where('block_id', $nc3_frame->block_id)->first();
             $ret = "faq_id = \"" . $this->zeroSuppress($nc3_faq->id) . "\"\n";
         } elseif ($nc3_frame->plugin_key == 'links') {
-            // $nc3_link = Nc3Link::where('block_id', $nc3_frame->block_id)->where('language_id', $nc3_frame->language_id)->where('is_active', 1)->first();
             // リンクリストはNC2と違い、プラグイン固有のデータまとめテーブルがないため、ブロックテーブル参照
             $nc3_block = Nc3Block::find($nc3_frame->block_id);
             // ブロックがあり、リンクリストがない場合は対象外
             if (!empty($nc3_block)) {
-                // NC3リンクリストにプラグイン固有のデータまとめテーブルがないため、block_idをセット
-                // [TODO] id名と値ズレ
+                // linklist_idないため、block_idで代用
                 $ret = "linklist_id = \"" . $this->zeroSuppress($nc3_block->id) . "\"\n";
             }
         } elseif ($nc3_frame->plugin_key == 'multidatabases') {
@@ -5231,6 +5188,9 @@ trait MigrationNc3ExportTrait
         } elseif ($plugin_name == 'bbses') {
             // 掲示板
             $this->nc3FrameExportBbses($nc3_frame, $new_page_index, $frame_index_str);
+        } elseif ($plugin_name == 'linklists') {
+            // リンクリスト
+            $this->nc3FrameExportLinklists($nc3_frame, $new_page_index, $frame_index_str);
         }
     }
 
@@ -5336,7 +5296,7 @@ trait MigrationNc3ExportTrait
 
         $default_sort_flag = $convert_default_sort_flags[$nc3_multidatabase_frame_setting->default_sort_type] ?? null;
         if (is_null($default_sort_flag)) {
-            $this->putError(3, 'データベースのソートが未対応順', "nc3_multidatabase_frame_setting = " . $nc3_multidatabase_frame_setting->frame_key);
+            $this->putError(3, 'データベースのソートが未対応順', "frame_key = {$nc3_multidatabase_frame_setting->frame_key}|nc3_multidatabase_frame_setting.default_sort_type = {$nc3_multidatabase_frame_setting->default_sort_type}");
         }
 
         $frame_ini .= "default_sort_flag = \"" . $default_sort_flag . "\"\n";
@@ -5372,12 +5332,72 @@ trait MigrationNc3ExportTrait
             $view_format = $convert_view_formats[$nc3_bbs_frame_setting->display_type];
         } else {
             $view_format = '';
-            $this->putError(3, '掲示板の表示形式が未対応の形式', "nc3_bbs_frame_setting = " . $nc3_bbs_frame_setting->frame_key);
+            $this->putError(3, '掲示板の表示形式が未対応の形式', "frame_key = {$nc3_bbs_frame_setting->frame_key}|nc3_bbs_frame_setting.display_type = {$nc3_bbs_frame_setting->display_type}");
         }
 
         $frame_ini = "[bbs]\n";
         $frame_ini .= "view_count = {$nc3_bbs_frame_setting->articles_per_page}\n";
         $frame_ini .= "view_format = {$view_format}\n";
+        $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
+    }
+
+    /**
+     * NC3：リンクリストのフレーム特有部分のエクスポート
+     */
+    private function nc3FrameExportLinklists(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
+    {
+        // NC3 フレーム設定の取得
+        $nc3_link_frame_setting = Nc3LinkFrameSetting::where('frame_key', $nc3_frame->key)->first();
+        if (empty($nc3_link_frame_setting)) {
+            return;
+        }
+
+        $ini_filename = "frame_" . $frame_index_str . '.ini';
+
+        $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
+
+        // (NC3)list_style リストマーカー -> (Connect)type 表示形式 変換
+        // (nc3) @see app\Plugin\Links\Model\LinkFrameSetting.php
+        // (nc3) @see app\Plugin\Links\webroot\img\mark
+        $convert_types = [
+            ''            => LinklistType::none,
+            'disc'        => LinklistType::black_circle,
+            'circle'      => LinklistType::white_circle,
+            'lower-alpha' => LinklistType::english_lowercase,
+            'upper-alpha' => LinklistType::english_uppercase,
+            'mark_a1.gif' => LinklistType::black_square,
+            'mark_a2.gif' => LinklistType::black_square,
+            'mark_a3.gif' => LinklistType::black_square,
+            'mark_a4.gif' => LinklistType::black_square,
+            'mark_a5.gif' => LinklistType::black_square,
+            'mark_b1.gif' => LinklistType::black_square,
+            'mark_b2.gif' => LinklistType::black_square,
+            'mark_b3.gif' => LinklistType::black_square,
+            'mark_c1.gif' => LinklistType::black_square,
+            'mark_c2.gif' => LinklistType::black_square,
+            'mark_c3.gif' => LinklistType::black_square,
+            'mark_c4.gif' => LinklistType::black_square,
+            'mark_d1.gif' => LinklistType::black_square,
+            'mark_d2.gif' => LinklistType::black_square,
+            'mark_d3.gif' => LinklistType::black_square,
+            'mark_d4.gif' => LinklistType::black_square,
+            'mark_d5.gif' => LinklistType::black_square,
+            'mark_e1.gif' => LinklistType::white_circle,
+            'mark_e2.gif' => LinklistType::white_circle,
+            'mark_e3.gif' => LinklistType::white_circle,
+            'mark_e4.gif' => LinklistType::white_circle,
+            'mark_e5.gif' => LinklistType::white_circle,
+        ];
+        if (isset($convert_types[$nc3_link_frame_setting->list_style])) {
+            $type = $convert_types[$nc3_link_frame_setting->list_style];
+        } else {
+            $type = LinklistType::none;
+            $this->putError(3, '掲示板の表示形式が未対応の形式', "frame_key = {$nc3_link_frame_setting->frame_key}|nc3_link_frame_setting.list_style = {$nc3_link_frame_setting->list_style}");
+        }
+
+        $frame_ini = "[linklist]\n";
+        // $frame_ini .= "view_count = 10\n";
+        $frame_ini .= "type = {$type}\n";
         $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
     }
 

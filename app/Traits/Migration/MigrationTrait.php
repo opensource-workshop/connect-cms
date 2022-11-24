@@ -5315,6 +5315,7 @@ trait MigrationTrait
         if (!empty($linklist_ini) && array_key_exists('linklist_base', $linklist_ini) && array_key_exists('type', $linklist_ini['linklist_base'])) {
             $type = $linklist_ini['linklist_base']['type'];
         }
+        $type = Arr::get($frame_ini, 'linklist.type', $type);
 
         // linklist_frames 登録
         if (!empty($frame)) {
