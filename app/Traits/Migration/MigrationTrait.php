@@ -5276,7 +5276,7 @@ trait MigrationTrait
         $linklist_ini = null;
         $nc2_linklist_id = null;
         $migration_mappings = null;
-        $linklists = null;
+        $linklist = null;
         $bucket = null;
 
         // エクスポートファイルの linklist_id 取得（エクスポート時の連番）
