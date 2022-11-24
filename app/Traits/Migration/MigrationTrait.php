@@ -3505,7 +3505,7 @@ trait MigrationTrait
             }
 
             // Buckets テーブルと Counters テーブル、マッピングテーブルを追加
-            $counter_name = '無題';
+            $counter_name = Arr::get($ini, 'counter_base.counter_name', '無題');
             $bucket = new Buckets(['bucket_name' => $counter_name, 'plugin_name' => 'counters']);
             $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'created_at');
             $bucket->updated_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'updated_at');
@@ -5925,9 +5925,13 @@ trait MigrationTrait
 
         // counter_frames 登録
         if (!empty($counter)) {
+            // 表示形式
+            $design_type = Arr::get($counter_ini, 'counter_base.design_type', CounterDesignType::numeric);
+            $design_type = Arr::get($frame_ini, 'counter.design_type', $design_type);
+
             CounterFrame::create([
                 'frame_id' => $frame->id,
-                'design_type' => $this->getArrayValue($counter_ini, 'counter_base', 'design_type', CounterDesignType::numeric),
+                'design_type' => $design_type,
                 'use_total_count' => 1,
                 'use_today_count' => 1,
                 'use_yesterday_count' => 1,

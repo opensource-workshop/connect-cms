@@ -12,6 +12,7 @@ use Symfony\Component\Yaml\Yaml;
 use App\Models\Migration\MigrationMapping;
 
 use App\Models\Migration\Nc3\Nc3AccessCounter;
+use App\Models\Migration\Nc3\Nc3AccessCounterFrameSetting;
 use App\Models\Migration\Nc3\Nc3Announcement;
 use App\Models\Migration\Nc3\Nc3Box;
 use App\Models\Migration\Nc3\Nc3Bbs;
@@ -127,13 +128,12 @@ trait MigrationNc3ExportTrait
      * 廃止のものは 'Abolition' にする。
      */
     protected $plugin_name = [
-        // 'access_counters'  => 'counters',     // カウンター
         // 'calendars'        => 'calendars',    // カレンダー
         // 'photo_albums'     => 'photoalbums',  // フォトアルバム
         // 'reservations'     => 'reservations', // 施設予約
         // 'searches'         => 'searchs',      // 検索
         // 'videos'           => 'Development',  // 動画
-        'access_counters'  => 'Development',    // カウンター
+        'access_counters'  => 'counters',       // カウンター
         'announcements'    => 'contents',       // お知らせ
         'bbses'            => 'bbses',          // 掲示板
         'blogs'            => 'blogs',          // ブログ
@@ -475,14 +475,14 @@ trait MigrationNc3ExportTrait
             $this->nc3ExportLinklist($redo);
         }
 
+        // NC3 カウンター（access_counters）データのエクスポート
+        if ($this->isTarget('nc3_export', 'plugins', 'counters')) {
+            $this->nc3ExportCounter($redo);
+        }
+
         //////////////////
         // [TODO] まだ
         //////////////////
-
-        // // NC3 カウンター（counter）データのエクスポート
-        // if ($this->isTarget('nc3_export', 'plugins', 'counters')) {
-        //     $this->nc3ExportCounter($redo);
-        // }
 
         // // NC3 カレンダー（calendar）データのエクスポート
         // if ($this->isTarget('nc3_export', 'plugins', 'calendars')) {
@@ -3351,7 +3351,7 @@ trait MigrationNc3ExportTrait
     }
 
     /**
-     * NC3：カウンター（カウンター）の移行
+     * NC3：カウンター（access_counters）の移行
      */
     private function nc3ExportCounter($redo)
     {
@@ -3363,13 +3363,27 @@ trait MigrationNc3ExportTrait
             Storage::deleteDirectory($this->getImportPath('counters/'));
         }
 
-        // NC3カウンター（Counter）を移行する。
-        $where_counter_block_ids = $this->getMigrationConfig('counters', 'nc3_export_where_counter_block_ids');
-        if (empty($where_counter_block_ids)) {
-            $nc3_counters = Nc2Counter::orderBy('block_id')->get();
-        } else {
-            $nc3_counters = Nc2Counter::whereIn('block_id', $where_counter_block_ids)->orderBy('block_id')->get();
+        // NC3カウンター（access_counters）を移行する。
+        $nc3_counters_query = Nc3AccessCounter::select('access_counters.*', 'blocks.key as block_key', 'blocks.room_id', 'blocks_languages.name')
+            ->join('blocks', function ($join) {
+                $join->on('blocks.key', '=', 'access_counters.block_key')
+                    ->where('blocks.plugin_key', 'access_counters');
+            })
+            ->join('blocks_languages', function ($join) {
+                $join->on('blocks_languages.block_id', '=', 'blocks.id')
+                    ->where('blocks_languages.language_id', Nc3Language::language_id_ja);
+            })
+            ->join('rooms', function ($join) {
+                $join->on('rooms.id', '=', 'blocks.room_id')
+                    ->whereIn('rooms.space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID]);
+            })
+            ->orderBy('access_counters.id');
+
+        $where_counter_ids = $this->getMigrationConfig('counters', 'nc3_export_where_counter_ids');
+        if ($where_counter_ids) {
+            $nc3_counters_query = $nc3_counters_query->whereIn('access_counters.id', $where_counter_ids);
         }
+        $nc3_counters = $nc3_counters_query->get();
 
         // 空なら戻る
         if ($nc3_counters->isEmpty()) {
@@ -3377,7 +3391,7 @@ trait MigrationNc3ExportTrait
         }
 
         // nc3の全ユーザ取得
-        $nc3_users = Nc2User::get();
+        $nc3_users = Nc3User::get();
 
         // NC3カウンター（Counter）のループ
         foreach ($nc3_counters as $nc3_counter) {
@@ -3388,67 +3402,32 @@ trait MigrationNc3ExportTrait
                 continue;
             }
 
-            // (NC3)show_type -> (Connect)design_type 変換
-            $convert_design_types = [
-                'black'       => CounterDesignType::badge_dark,
-                'black2'      => CounterDesignType::badge_dark,
-                'black3'      => CounterDesignType::badge_dark,
-                'color'       => CounterDesignType::badge_light,
-                'digit01'     => CounterDesignType::white_number_warning,
-                'digit02'     => CounterDesignType::white_number_warning,
-                'digit03'     => CounterDesignType::white_number_danger,
-                'digit04'     => CounterDesignType::white_number_danger,
-                'digit05'     => CounterDesignType::white_number_primary,
-                'digit06'     => CounterDesignType::white_number_info,
-                'digit07'     => CounterDesignType::white_number_dark,
-                'digit08'     => CounterDesignType::white_number_dark,
-                'digit09'     => CounterDesignType::white_number_dark,
-                'digit10'     => CounterDesignType::white_number_dark,
-                'digit11'     => CounterDesignType::white_number_success,
-                'digit12'     => CounterDesignType::white_number_success,
-                'gray'        => CounterDesignType::badge_light,
-                'gray2'       => CounterDesignType::badge_light,
-                'gray3'       => CounterDesignType::badge_light,
-                'gray_large'  => CounterDesignType::badge_light,
-                'green'       => CounterDesignType::badge_success,
-                'green_large' => CounterDesignType::badge_success,
-                'white'       => CounterDesignType::white_number,
-                'white_large' => CounterDesignType::circle_success,
-            ];
-            $design_type = $convert_design_types[$nc3_counter->show_type] ?? CounterDesignType::numeric;
-
             // カウンター設定
             $ini = "";
             $ini .= "[counter_base]\n";
+            $ini .= "counter_name = " . $nc3_counter->name . "\n";
             // カウント数
-            $ini .= "counter_num = " . $nc3_counter->counter_num . "\n";
-            // 表示する桁数
-            // $ini .= "counter_digit = " .  $nc3_counter->counter_digit . "\n";
-
-            $ini .= "design_type = " . $design_type . "\n";
-
+            $ini .= "counter_num = " . $nc3_counter->count . "\n";
             // 文字(前)
-            $ini .= "show_char_before = " . $nc3_counter->show_char_before . "\n";
+            $ini .= "show_char_before = ''\n";
             // 文字(後)
-            $ini .= "show_char_after = " . $nc3_counter->show_char_after . "\n";
-            // 上記以外に表示したい文字
-            // $ini .= "comment = " . $nc3_counter->comment . "\n";
+            $ini .= "show_char_after = ''\n";
 
             // NC3 情報
             $ini .= "\n";
             $ini .= "[source_info]\n";
-            $ini .= "counter_block_id = " . $nc3_counter->block_id . "\n";
-            $ini .= "room_id = " . $nc3_counter->room_id . "\n";
-            $ini .= "plugin_key = \"counter\"\n";
+            $ini .= "counter_block_id = " . $nc3_counter->id . "\n";
+            $ini .= "room_id         = " . $nc3_counter->room_id . "\n";
+            $ini .= "plugin_key      = \"access_counters\"\n";
             $ini .= "created_at      = \"" . $this->getCCDatetime($nc3_counter->created) . "\"\n";
-            $ini .= "created_name    = \"" . $nc3_counter->insert_user_name . "\"\n";
+            $ini .= "created_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_counter->created_user) . "\"\n";
             $ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_counter->created_user) . "\"\n";
             $ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_counter->modified) . "\"\n";
-            $ini .= "updated_name    = \"" . $nc3_counter->update_user_name . "\"\n";
+            $ini .= "updated_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_counter->modified_user) . "\"\n";
             $ini .= "update_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_counter->modified_user) . "\"\n";
 
             // カウンターの設定を出力
-            $this->storagePut($this->getImportPath('counters/counter_') . $this->zeroSuppress($nc3_counter->block_id) . '.ini', $ini);
+            $this->storagePut($this->getImportPath('counters/counter_') . $this->zeroSuppress($nc3_counter->id) . '.ini', $ini);
         }
     }
 
@@ -5129,8 +5108,7 @@ trait MigrationNc3ExportTrait
             $nc3_counter = Nc3AccessCounter::where('block_key', $nc3_frame->block_key)->first();
             // ブロックがあり、カウンターがない場合は対象外
             if (!empty($nc3_counter)) {
-                // NC3カウンターにblock_idはないため、counter_idをセット
-                // [TODO] id名と値ズレ
+                // NC3カウンターにblock_idはないため、counter_idで代用
                 $ret = "counter_block_id = \"" . $this->zeroSuppress($nc3_counter->id) . "\"\n";
             }
         } elseif ($nc3_frame->plugin_key == 'calendars') {
@@ -5192,6 +5170,9 @@ trait MigrationNc3ExportTrait
         } elseif ($plugin_name == 'linklists') {
             // リンクリスト
             $this->nc3FrameExportLinklists($nc3_frame, $new_page_index, $frame_index_str);
+        } elseif ($plugin_name == 'counters') {
+            // カウンター
+            $this->nc3FrameExportCounters($nc3_frame, $new_page_index, $frame_index_str);
         }
     }
 
@@ -5389,16 +5370,40 @@ trait MigrationNc3ExportTrait
             'mark_e4.gif' => LinklistType::white_circle,
             'mark_e5.gif' => LinklistType::white_circle,
         ];
-        if (isset($convert_types[$nc3_link_frame_setting->list_style])) {
-            $type = $convert_types[$nc3_link_frame_setting->list_style];
-        } else {
-            $type = LinklistType::none;
-            $this->putError(3, 'リンクリストの表示形式が未対応の形式', "frame_key = {$nc3_link_frame_setting->frame_key}|nc3_link_frame_setting.list_style = {$nc3_link_frame_setting->list_style}");
-        }
+        $type = $convert_types[$nc3_link_frame_setting->list_style] ?? LinklistType::none;
 
         $frame_ini = "[linklist]\n";
         // $frame_ini .= "view_count = 10\n";
         $frame_ini .= "type = {$type}\n";
+        $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
+    }
+
+    /**
+     * NC3：カウンターのフレーム特有部分のエクスポート
+     */
+    private function nc3FrameExportCounters(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
+    {
+        // NC3 フレーム設定の取得（データなければ、badge_secondaryを指定）
+        $access_counter_frame_setting = Nc3AccessCounterFrameSetting::where('frame_key', $nc3_frame->key)->firstOrNew([]);
+
+        $ini_filename = "frame_" . $frame_index_str . '.ini';
+
+        $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
+
+        // (NC3)display_type -> (Connect)design_type 変換
+        // (nc3) @see app\Plugin\AccessCounters\Model\AccessCounterFrameSetting.php
+        $convert_design_types = [
+            Nc3AccessCounterFrameSetting::display_type_default => CounterDesignType::badge_secondary,
+            Nc3AccessCounterFrameSetting::display_type_primary => CounterDesignType::badge_primary,
+            Nc3AccessCounterFrameSetting::display_type_success => CounterDesignType::badge_success,
+            Nc3AccessCounterFrameSetting::display_type_info    => CounterDesignType::badge_info,
+            Nc3AccessCounterFrameSetting::display_type_warning => CounterDesignType::badge_warning,
+            Nc3AccessCounterFrameSetting::display_type_danger  => CounterDesignType::badge_danger,
+        ];
+        $design_type = $convert_design_types[$access_counter_frame_setting->display_type] ?? CounterDesignType::badge_secondary;
+
+        $frame_ini  = "[counter]\n";
+        $frame_ini .= "design_type = {$design_type}\n";
         $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
     }
 
