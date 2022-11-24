@@ -2215,6 +2215,7 @@ trait MigrationNc3ExportTrait
                 $linklists_tsv .= $nc3_link->display_sequence                                       . "\t";
                 $linklists_tsv .= $linklist_category->name;
 
+                // [TODO] 未対応
                 // NC3のリンク切れチェック
                 // $this->checkDeadLinkNc2($nc3_link->url, 'linklist', $nc3_block);
             }
@@ -5392,7 +5393,7 @@ trait MigrationNc3ExportTrait
             $type = $convert_types[$nc3_link_frame_setting->list_style];
         } else {
             $type = LinklistType::none;
-            $this->putError(3, '掲示板の表示形式が未対応の形式', "frame_key = {$nc3_link_frame_setting->frame_key}|nc3_link_frame_setting.list_style = {$nc3_link_frame_setting->list_style}");
+            $this->putError(3, 'リンクリストの表示形式が未対応の形式', "frame_key = {$nc3_link_frame_setting->frame_key}|nc3_link_frame_setting.list_style = {$nc3_link_frame_setting->list_style}");
         }
 
         $frame_ini = "[linklist]\n";
