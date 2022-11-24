@@ -5311,11 +5311,7 @@ trait MigrationTrait
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
 
         // リンクリストの表示形式
-        $type = LinklistType::none; // 初期値
-        if (!empty($linklist_ini) && array_key_exists('linklist_base', $linklist_ini) && array_key_exists('type', $linklist_ini['linklist_base'])) {
-            $type = $linklist_ini['linklist_base']['type'];
-        }
-        $type = Arr::get($frame_ini, 'linklist.type', $type);
+        $type = Arr::get($frame_ini, 'linklist.type', LinklistType::none);
 
         // linklist_frames 登録
         if (!empty($frame)) {
@@ -8843,45 +8839,9 @@ trait MigrationTrait
                 ['target_blank_flag' => '0']
             );
 
-            // (NC2)mark リストマーカー -> (Connect)type 表示形式 変換
-            $convert_types = [
-                'none'        => LinklistType::none,
-                'disc'        => LinklistType::black_circle,
-                'circle'      => LinklistType::white_circle,
-                'square'      => LinklistType::black_square,
-                'lower-alpha' => LinklistType::english_lowercase,
-                'upper-alpha' => LinklistType::english_uppercase,
-                'mark_a1.gif' => LinklistType::black_square,
-                'mark_a2.gif' => LinklistType::black_square,
-                'mark_a3.gif' => LinklistType::black_square,
-                'mark_a4.gif' => LinklistType::black_square,
-                'mark_a5.gif' => LinklistType::black_square,
-                'mark_b1.gif' => LinklistType::black_square,
-                'mark_b2.gif' => LinklistType::black_square,
-                'mark_b3.gif' => LinklistType::black_square,
-                'mark_c1.gif' => LinklistType::black_square,
-                'mark_c2.gif' => LinklistType::black_square,
-                'mark_c3.gif' => LinklistType::black_square,
-                'mark_c4.gif' => LinklistType::black_square,
-                'mark_d1.gif' => LinklistType::black_square,
-                'mark_d2.gif' => LinklistType::black_square,
-                'mark_d3.gif' => LinklistType::black_square,
-                'mark_d4.gif' => LinklistType::black_square,
-                'mark_d5.gif' => LinklistType::black_square,
-                'mark_e1.gif' => LinklistType::white_circle,
-                'mark_e2.gif' => LinklistType::white_circle,
-                'mark_e3.gif' => LinklistType::white_circle,
-                'mark_e4.gif' => LinklistType::white_circle,
-                'mark_e5.gif' => LinklistType::white_circle,
-            ];
-
-            $type = $convert_types[$nc2_linklist_block->mark] ?? LinklistType::none;
-
             $linklists_ini = "";
             $linklists_ini .= "[linklist_base]\n";
             $linklists_ini .= "linklist_name = \"" . $nc2_linklist->linklist_name . "\"\n";
-            // $linklists_ini .= "view_count = 10\n";
-            $linklists_ini .= "type = " . $type . "\n";
 
             // NC2 情報
             $linklists_ini .= "\n";
@@ -11924,6 +11884,9 @@ trait MigrationTrait
         } elseif ($plugin_name == 'bbses') {
             // 掲示板
             $this->nc2BlockExportBbses($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
+        } elseif ($plugin_name == 'linklists') {
+            // リンクリスト
+            $this->nc2BlockExportLinklists($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
         }
     }
 
@@ -12045,6 +12008,66 @@ trait MigrationTrait
         $frame_ini = "[bbs]\n";
         $frame_ini .= "view_count = {$nc2_bbs_block->visible_row}\n";
         $frame_ini .= "view_format = {$view_format}\n";
+        $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
+    }
+
+    /**
+     * NC2：リンクリストのブロック特有部分のエクスポート
+     */
+    private function nc2BlockExportLinklists($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
+    {
+        // NC2 ブロック設定の取得
+        $nc2_linklist_block = Nc2LinklistBlock::where('block_id', $nc2_block->block_id)->first();
+        if (empty($nc2_linklist_block)) {
+            return;
+        }
+
+        $ini_filename = "frame_" . $frame_index_str . '.ini';
+
+        $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
+
+        // (NC2)mark リストマーカー -> (Connect)type 表示形式 変換
+        $convert_types = [
+            'none'        => LinklistType::none,
+            'disc'        => LinklistType::black_circle,
+            'circle'      => LinklistType::white_circle,
+            'square'      => LinklistType::black_square,
+            'lower-alpha' => LinklistType::english_lowercase,
+            'upper-alpha' => LinklistType::english_uppercase,
+            'mark_a1.gif' => LinklistType::black_square,
+            'mark_a2.gif' => LinklistType::black_square,
+            'mark_a3.gif' => LinklistType::black_square,
+            'mark_a4.gif' => LinklistType::black_square,
+            'mark_a5.gif' => LinklistType::black_square,
+            'mark_b1.gif' => LinklistType::black_square,
+            'mark_b2.gif' => LinklistType::black_square,
+            'mark_b3.gif' => LinklistType::black_square,
+            'mark_c1.gif' => LinklistType::black_square,
+            'mark_c2.gif' => LinklistType::black_square,
+            'mark_c3.gif' => LinklistType::black_square,
+            'mark_c4.gif' => LinklistType::black_square,
+            'mark_d1.gif' => LinklistType::black_square,
+            'mark_d2.gif' => LinklistType::black_square,
+            'mark_d3.gif' => LinklistType::black_square,
+            'mark_d4.gif' => LinklistType::black_square,
+            'mark_d5.gif' => LinklistType::black_square,
+            'mark_e1.gif' => LinklistType::white_circle,
+            'mark_e2.gif' => LinklistType::white_circle,
+            'mark_e3.gif' => LinklistType::white_circle,
+            'mark_e4.gif' => LinklistType::white_circle,
+            'mark_e5.gif' => LinklistType::white_circle,
+        ];
+
+        if (isset($convert_types[$nc2_linklist_block->mark])) {
+            $type = $convert_types[$nc2_linklist_block->mark];
+        } else {
+            $type = LinklistType::none;
+            $this->putError(3, 'リンクリストの表示形式が未対応の形式', "block_id = {$nc2_linklist_block->block_id}|nc2_linklist_block.mark = " . $nc2_linklist_block->mark);
+        }
+
+        $frame_ini = "[linklist]\n";
+        // $frame_ini .= "view_count = 10\n";
+        $frame_ini .= "type = {$type}\n";
         $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
     }
 
