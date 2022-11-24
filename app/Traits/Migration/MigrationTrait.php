@@ -2305,10 +2305,10 @@ trait MigrationTrait
             $linklist_ini = parse_ini_file($linklists_ini_path, true);
 
             // ルーム指定を探しておく。
-            $room_id = null;
-            if (array_key_exists('source_info', $linklist_ini) && array_key_exists('room_id', $linklist_ini['source_info'])) {
-                $room_id = $linklist_ini['source_info']['room_id'];
-            }
+            // $room_id = null;
+            // if (array_key_exists('source_info', $linklist_ini) && array_key_exists('room_id', $linklist_ini['source_info'])) {
+            //     $room_id = $linklist_ini['source_info']['room_id'];
+            // }
 
             // nc2 の linklist_id
             $nc2_linklist_id = 0;
