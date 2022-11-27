@@ -55,19 +55,18 @@ jobs:
       - name: Set if input php_version is empty
         run: |
           if [[ -z "$PHP_VERSION" ]]; then
-            echo "::set-output name=PHP_VERSION::$PHP_VERSION_DEFAULT"
+            echo "PHP_VERSION=${PHP_VERSION_DEFAULT}" >> $GITHUB_ENV
           else
-            echo "::set-output name=PHP_VERSION::$PHP_VERSION"
+            echo "PHP_VERSION=${PHP_VERSION}" >> $GITHUB_ENV
           fi
         env:
           PHP_VERSION: ${{ github.event.inputs.php_version }}
-        id: php_version_empty_action
 
       # https://github.com/shivammathur/setup-php (community)
-      - name: Setup PHP ${{ steps.php_version_empty_action.outputs.PHP_VERSION }}
+      - name: Setup PHP ${{ env.PHP_VERSION }}
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ steps.php_version_empty_action.outputs.PHP_VERSION }}
+          php-version: ${{ env.PHP_VERSION }}
           coverage: none
           ini-values: post_max_size=128M, upload_max_filesize=128M, date.timezone=Asia/Tokyo
 
@@ -91,22 +90,21 @@ jobs:
             mysql --user="root" --password="root" -e "SELECT user, host, plugin FROM mysql.user;"
           fi
         env:
-          PHP_VERSION: ${{ steps.php_version_empty_action.outputs.PHP_VERSION }}
+          PHP_VERSION: ${{ env.PHP_VERSION }}
 
       # Composer
       - name: Validate composer.json and composer.lock
         run: COMPOSER=composer-dev.json composer validate
 
       - name: Get composer cache directory
-        id: composer-cache
-        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+        run: echo "composer-cache-dir=$(composer config cache-files-dir)" >> $GITHUB_ENV
 
       # https://help.github.com/en/actions/configuring-and-managing-workflows/caching-dependencies-to-speed-up-workflows
       # https://github.com/actions/cache (official)
       - name: Cache composer dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
-          path: ${{ steps.composer-cache.outputs.dir }}
+          path: ${{ env.composer-cache-dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
@@ -118,7 +116,7 @@ jobs:
             COMPOSER=composer-dev.json composer install --no-progress --optimize-autoloader
           fi
         env:
-          PHP_VERSION: ${{ steps.php_version_empty_action.outputs.PHP_VERSION }}
+          PHP_VERSION: ${{ env.PHP_VERSION }}
 
       # Laravel
       - name: Generate Application Key
@@ -397,28 +395,27 @@ jobs:
       - name: Set if input is_output_manual is empty
         run: |
           if [[ -z "$IS_OUTPUT_MANUAL" ]]; then
-            echo "::set-output name=IS_OUTPUT_MANUAL::$IS_OUTPUT_MANUAL_DEFAULT"
+            echo "IS_OUTPUT_MANUAL=$IS_OUTPUT_MANUAL_DEFAULT" >> $GITHUB_ENV
           else
-            echo "::set-output name=IS_OUTPUT_MANUAL::$IS_OUTPUT_MANUAL"
+            echo "IS_OUTPUT_MANUAL=$IS_OUTPUT_MANUAL" >> $GITHUB_ENV
           fi
         env:
           IS_OUTPUT_MANUAL: ${{ github.event.inputs.is_output_manual }}
-        id: is_output_manual_empty_action
 
       - name: 'Run Dusk マニュアルHTML出力'
-        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == 'true' }}
+        if: ${{ env.IS_OUTPUT_MANUAL == 'true' }}
         run: php artisan dusk tests/Manual/src/ManualOutput.php
 
       - name: 'Run Dusk マニュアルPDF出力'
-        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == 'true' }}
+        if: ${{ env.IS_OUTPUT_MANUAL == 'true' }}
         run: php artisan dusk tests/Manual/src/ManualPdf.php contact_page=on
 
       - name: 'Run Dusk マニュアルPDF（基礎編）出力'
-        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == 'true' }}
+        if: ${{ env.IS_OUTPUT_MANUAL == 'true' }}
         run: php artisan dusk tests/Manual/src/ManualPdf.php contact_page=on level=basic
 
       - name: Upload Manual
-        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == 'true' && always() }}
+        if: ${{ env.IS_OUTPUT_MANUAL == 'true' && always() }}
         uses: actions/upload-artifact@v3
         with:
           name: manual
