@@ -1,4 +1,4 @@
-name: Laravel Dusk connect-cms-test
+name: Laravel Dusk Connect-cms-test
 
 on:
   # schedule:
@@ -47,7 +47,7 @@ jobs:
           sed -i -e 's|APP_ENV=production|APP_ENV=local|g' .env
           sed -i -e 's|APP_URL=http://localhost|APP_URL=http://localhost:8000|g' .env
           sed -i -e 's|TRANSLATE_API_URL=""|TRANSLATE_API_URL="http://localhost:8000"|g' .env
-          # sed -i -e 's|PDF_THUMBNAIL_API_URL=""|PDF_THUMBNAIL_API_URL="http://localhost:8000"|g' .env
+          sed -i -e 's|PDF_THUMBNAIL_API_URL=""|PDF_THUMBNAIL_API_URL="http://localhost:8000"|g' .env
           sed -i -e 's|FACE_AI_API_URL=""|FACE_AI_API_URL="http://localhost:8000"|g' .env
           # sed -e "$ a MANUAL_PUT_BASE=\"$GITHUB_WORKSPACE/tests/Manual/html/\"" .env
 
@@ -313,7 +313,7 @@ jobs:
 
       - name: 'Run Dusk スライドショー'
         if: always()
-        run: php artisan dusk tests/Browser/User/SlideshowsPluginTest.php
+        run: php artisan dusk tests/Browser/User/SlideshowsPluginTest.php no_api_test
 
       - name: 'Run Dusk 開館カレンダー'
         if: always()
