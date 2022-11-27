@@ -313,7 +313,7 @@ jobs:
 
       - name: 'Run Dusk スライドショー'
         if: always()
-        run: php artisan dusk tests/Browser/User/SlideshowsPluginTest.php
+        run: php artisan dusk tests/Browser/User/SlideshowsPluginTest.php no_api_test
 
       - name: 'Run Dusk 開館カレンダー'
         if: always()

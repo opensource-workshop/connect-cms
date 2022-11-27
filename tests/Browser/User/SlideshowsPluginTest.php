@@ -36,7 +36,9 @@ class SlideshowsPluginTest extends DuskTestCase
         $this->listBuckets();
 
         $this->editItem();
-        $this->editItemPdf();
+        if (! $this->no_api_test) {
+            $this->editItemPdf();
+        }
 
         $this->logout();
         $this->index();   // 記事一覧
