@@ -73,8 +73,10 @@ class SlideshowsPluginTest extends DuskTestCase
             // フレームの順番を入れ替える。
             $this->frame1->display_sequence = 1;
             $this->frame1->save();
-            $this->frame2->display_sequence = 2;
-            $this->frame2->save();
+            if (! $this->no_api_test) {
+                $this->frame2->display_sequence = 2;
+                $this->frame2->save();
+            }
 
             $browser->visit('/');
             $browser->visit('/test/slideshow')
