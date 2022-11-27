@@ -36,7 +36,9 @@ class SlideshowsPluginTest extends DuskTestCase
         $this->listBuckets();
 
         $this->editItem();
-        $this->editItemPdf();
+        if (! $this->no_api_test) {
+            $this->editItemPdf();
+        }
 
         $this->logout();
         $this->index();   // 記事一覧
@@ -71,8 +73,10 @@ class SlideshowsPluginTest extends DuskTestCase
             // フレームの順番を入れ替える。
             $this->frame1->display_sequence = 1;
             $this->frame1->save();
-            $this->frame2->display_sequence = 2;
-            $this->frame2->save();
+            if (! $this->no_api_test) {
+                $this->frame2->display_sequence = 2;
+                $this->frame2->save();
+            }
 
             $browser->visit('/');
             $browser->visit('/test/slideshow')
@@ -190,7 +194,7 @@ class SlideshowsPluginTest extends DuskTestCase
             $this->test_frame->frame_col = 6;
             $this->test_frame->save();
 
-            $browser->visit('http://laravel8.localhost/test/slideshow')
+            $browser->visit('test/slideshow')
                     ->pause(500)
                     ->screenshot('user/slideshows/editItemPdf/images/editItemPdf4')
                     ->click('.frame-' . $this->test_frame->id .  ' .carousel-control-next')

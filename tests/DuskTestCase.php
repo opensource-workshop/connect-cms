@@ -41,6 +41,11 @@ abstract class DuskTestCase extends BaseTestCase
     protected $no_manual = false;
 
     /**
+     * APIテストの実行可否
+     */
+    protected $no_api_test = false;
+
+    /**
      * テストするフレーム
      */
     protected $test_frame = null;
@@ -111,6 +116,10 @@ abstract class DuskTestCase extends BaseTestCase
         if ($_SERVER && count($_SERVER['argv']) > 4) {
             if ($_SERVER['argv'][4] == 'no_manual') {
                 $this->no_manual = true;
+            }
+            // コマンドライン引数 第5（配列インデックス4）に no_api_test が指定されていた場合は、APIテストを実行しない。
+            if ($_SERVER['argv'][4] == 'no_api_test') {
+                $this->no_api_test = true;
             }
         }
 

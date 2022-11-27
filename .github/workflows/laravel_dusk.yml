@@ -43,12 +43,12 @@ jobs:
       - name: Setup .env
         run: |
           cp .env.example .env
-          sed -i -e "s|DB_PASSWORD=|DB_PASSWORD=root|g" .env
-          sed -i -e "s|APP_ENV=production|APP_ENV=local|g" .env
-          sed -i -e "s|APP_URL=http://localhost|APP_URL=http://localhost:8000|g" .env
-          sed -i -e "s|TRANSLATE_API_URL=""|TRANSLATE_API_URL="http://localhost:8000"|g" .env
-          sed -i -e "s|PDF_THUMBNAIL_API_URL=""|PDF_THUMBNAIL_API_URL="http://localhost:8000"|g" .env
-          sed -i -e "s|FACE_AI_API_URL=""|FACE_AI_API_URL="http://localhost:8000"|g" .env
+          sed -i -e 's|DB_PASSWORD=|DB_PASSWORD=root|g' .env
+          sed -i -e 's|APP_ENV=production|APP_ENV=local|g' .env
+          sed -i -e 's|APP_URL=http://localhost|APP_URL=http://localhost:8000|g' .env
+          sed -i -e 's|TRANSLATE_API_URL=""|TRANSLATE_API_URL="http://localhost:8000"|g' .env
+          sed -i -e 's|PDF_THUMBNAIL_API_URL=""|PDF_THUMBNAIL_API_URL="http://localhost:8000"|g' .env
+          sed -i -e 's|FACE_AI_API_URL=""|FACE_AI_API_URL="http://localhost:8000"|g' .env
           # sed -e "$ a MANUAL_PUT_BASE=\"$GITHUB_WORKSPACE/tests/Manual/html/\"" .env
 
       # schedule でphpバージョン指定
@@ -98,15 +98,14 @@ jobs:
         run: COMPOSER=composer-dev.json composer validate
 
       - name: Get composer cache directory
-        id: composer-cache
-        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+        run: echo "composer-cache-dir=$(composer config cache-files-dir)" >> $GITHUB_ENV
 
       # https://help.github.com/en/actions/configuring-and-managing-workflows/caching-dependencies-to-speed-up-workflows
       # https://github.com/actions/cache (official)
       - name: Cache composer dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
-          path: ${{ steps.composer-cache.outputs.dir }}
+          path: ${{ env.composer-cache-dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
@@ -155,24 +154,23 @@ jobs:
       - name: Set if input is_output_manual is empty
         run: |
           if [[ -z "$IS_OUTPUT_MANUAL" ]]; then
-            echo "::set-output name=IS_OUTPUT_MANUAL::$IS_OUTPUT_MANUAL_DEFAULT"
+            echo "IS_OUTPUT_MANUAL=$IS_OUTPUT_MANUAL_DEFAULT" >> $GITHUB_ENV
           else
-            echo "::set-output name=IS_OUTPUT_MANUAL::$IS_OUTPUT_MANUAL"
+            echo "IS_OUTPUT_MANUAL=$IS_OUTPUT_MANUAL" >> $GITHUB_ENV
           fi
         env:
           IS_OUTPUT_MANUAL: ${{ github.event.inputs.is_output_manual }}
-        id: is_output_manual_empty_action
 
       - name: 'Run Dusk マニュアルHTML出力'
-        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == 'true' }}
+        if: ${{ env.IS_OUTPUT_MANUAL == 'true' }}
         run: php artisan dusk tests/Manual/src/ManualOutput.php
 
       - name: 'Run Dusk マニュアルPDF出力'
-        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == 'true' }}
+        if: ${{ env.IS_OUTPUT_MANUAL == 'true' }}
         run: php artisan dusk tests/Manual/src/ManualPdf.php
 
       - name: Upload Manual
-        if: ${{ steps.is_output_manual_empty_action.outputs.IS_OUTPUT_MANUAL == 'true' && always() }}
+        if: ${{ env.IS_OUTPUT_MANUAL == 'true' && always() }}
         uses: actions/upload-artifact@v3
         with:
           name: manual
