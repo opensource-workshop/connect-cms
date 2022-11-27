@@ -190,7 +190,7 @@ class SlideshowsPluginTest extends DuskTestCase
             $this->test_frame->frame_col = 6;
             $this->test_frame->save();
 
-            $browser->visit('http://laravel8.localhost/test/slideshow')
+            $browser->visit('test/slideshow')
                     ->pause(500)
                     ->screenshot('user/slideshows/editItemPdf/images/editItemPdf4')
                     ->click('.frame-' . $this->test_frame->id .  ' .carousel-control-next')
