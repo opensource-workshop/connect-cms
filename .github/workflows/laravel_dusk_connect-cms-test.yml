@@ -138,12 +138,13 @@ jobs:
       - name: Run Laravel Server
         run: php artisan serve &
 
-      # @see tests\bin\connect-cms-test.bat
+      # copy by tests\bin\connect-cms-test.bat
       # ---------------------------------------------
       # - 事前準備用の実行
       # ---------------------------------------------
 
       - name: 'Run Dusk データ準備用 - ログ管理 - マニュアルなし'
+        if: always()
         run: php artisan dusk tests/Browser/Manage/LogManageTest.php no_manual
 
       # ---------------------------------------------
@@ -151,12 +152,15 @@ jobs:
       # ---------------------------------------------
 
       - name: 'Run Dusk 設計'
+        if: always()
         run: php artisan dusk tests/Browser/Blueprint/IndexBlueprintTest.php
 
       - name: 'Run Dusk ページ'
+        if: always()
         run: php artisan dusk tests/Browser/Blueprint/PageBlueprintTest.php
 
       - name: 'Run Dusk 外部サービス'
+        if: always()
         run: php artisan dusk tests/Browser/Blueprint/ServiceBlueprintTest.php
 
       # ---------------------------------------------
@@ -164,39 +168,51 @@ jobs:
       # ---------------------------------------------
 
       - name: 'Run Dusk 管理画面アクセス'
+        if: always()
         run: php artisan dusk tests/Browser/Manage/IndexManageTest.php
 
       - name: 'Run Dusk ページ管理のテスト'
+        if: always()
         run: php artisan dusk tests/Browser/Manage/PageManageTest.php
 
       - name: 'Run Dusk サイト管理のテスト'
+        if: always()
         run: php artisan dusk tests/Browser/Manage/SiteManageTest.php
 
       - name: 'Run Dusk グループ管理のテスト'
+        if: always()
         run: php artisan dusk tests/Browser/Manage/GroupManageTest.php
 
       - name: 'Run Dusk ユーザ管理のテスト'
+        if: always()
         run: php artisan dusk tests/Browser/Manage/UserManageTest.php
 
       - name: 'Run Dusk セキュリティ管理のテスト'
+        if: always()
         run: php artisan dusk tests/Browser/Manage/SecurityManageTest.php
 
       - name: 'Run Dusk プラグイン管理のテスト'
+        if: always()
         run: php artisan dusk tests/Browser/Manage/PluginManageTest.php
 
       - name: 'Run Dusk システム管理のテスト'
+        if: always()
         run: php artisan dusk tests/Browser/Manage/SystemManageTest.php
 
       - name: 'Run Dusk API管理のテスト'
+        if: always()
         run: php artisan dusk tests/Browser/Manage/ApiManageTest.php
 
       - name: 'Run Dusk メッセージ管理のテスト'
+        if: always()
         run: php artisan dusk tests/Browser/Manage/MessageManageTest.php
 
       - name: 'Run Dusk 外部認証管理のテスト'
+        if: always()
         run: php artisan dusk tests/Browser/Manage/AuthManageTest.php
 
       - name: 'Run Dusk 外部サービス設定のテスト'
+        if: always()
         run: php artisan dusk tests/Browser/Manage/ServiceManageTest.php
 
       # ---------------------------------------------
@@ -204,27 +220,35 @@ jobs:
       # ---------------------------------------------
 
       - name: 'Run Dusk アップロードファイル'
+        if: always()
         run: php artisan dusk tests/Browser/Manage/UploadfileManageTest.php
 
       - name: 'Run Dusk 施設管理'
+        if: always()
         run: php artisan dusk tests/Browser/Manage/ReservationManageTest.php
 
       - name: 'Run Dusk テーマ管理'
+        if: always()
         run: php artisan dusk tests/Browser/Manage/ThemeManageTest.php
 
       - name: 'Run Dusk 連番管理'
+        if: always()
         run: php artisan dusk tests/Browser/Manage/NumberManageTest.php
 
       - name: 'Run Dusk コード管理'
+        if: always()
         run: php artisan dusk tests/Browser/Manage/CodeManageTest.php
 
       - name: 'Run Dusk ログ管理'
+        if: always()
         run: php artisan dusk tests/Browser/Manage/LogManageTest.php
 
       - name: 'Run Dusk 祝日管理'
+        if: always()
         run: php artisan dusk tests/Browser/Manage/HolidayManageTest.php
 
       - name: 'Run Dusk 他システム移行'
+        if: always()
         run: php artisan dusk tests/Browser/Manage/MigrationManageTest.php
 
       # ---------------------------------------------
@@ -232,31 +256,39 @@ jobs:
       # ---------------------------------------------
 
       # - name: 'Run Dusk ページなし(404)'
-      # php artisan dusk tests/Browser/Core/PageNotFoundTest.php
+      #   if: always()
+      #   run: php artisan dusk tests/Browser/Core/PageNotFoundTest.php
 
       # - name: 'Run Dusk 権限なし(403)'
-      # php artisan dusk tests/Browser/Core/PageForbiddenTest.php
+      #   if: always()
+      #   run: php artisan dusk tests/Browser/Core/PageForbiddenTest.php
 
       # - name: 'Run Dusk 初回確認メッセージ動作テスト'
-      # php artisan dusk tests/Browser/Core/MessageFirstShowTest.php
+      #   if: always()
+      #   run: php artisan dusk tests/Browser/Core/MessageFirstShowTest.php
 
       # - name: 'Run Dusk 初回確認メッセージ動作テスト 項目フル入力'
-      # php artisan dusk tests/Browser/Core/MessageFirstShowFullTest.php
+      #   if: always()
+      #   run: php artisan dusk tests/Browser/Core/MessageFirstShowFullTest.php
 
       # - name: 'Run Dusk 閲覧パスワード付ページテスト'
-      # php artisan dusk tests/Browser/Core/PagePasswordTest.php
+      #   if: always()
+      #   run: php artisan dusk tests/Browser/Core/PagePasswordTest.php
 
       # - name: 'Run Dusk ログインテスト'
-      # php artisan dusk tests/Browser/Core/LoginTest.php
+      #   if: always()
+      #   run: php artisan dusk tests/Browser/Core/LoginTest.php
 
       # ---------------------------------------------
       # - 共通①
       # ---------------------------------------------
 
       - name: 'Run Dusk ログイン・ログアウト'
+        if: always()
         run: php artisan dusk tests/Browser/Common/LoginLogoutTest.php
 
       - name: 'Run Dusk 管理機能'
+        if: always()
         run: php artisan dusk tests/Browser/Common/AdminLinkTest.php
 
       # ---------------------------------------------
@@ -264,63 +296,83 @@ jobs:
       # ---------------------------------------------
 
       - name: 'Run Dusk 固定記事'
+        if: always()
         run: php artisan dusk tests/Browser/User/ContentsPluginTest.php
 
       - name: 'Run Dusk メニュー'
+        if: always()
         run: php artisan dusk tests/Browser/User/MenusPluginTest.php
 
       - name: 'Run Dusk ブログ'
+        if: always()
         run: php artisan dusk tests/Browser/User/BlogsPluginTest.php
 
       - name: 'Run Dusk カレンダー'
+        if: always()
         run: php artisan dusk tests/Browser/User/CalendarsPluginTest.php
 
       - name: 'Run Dusk スライドショー'
+        if: always()
         run: php artisan dusk tests/Browser/User/SlideshowsPluginTest.php
 
       - name: 'Run Dusk 開館カレンダー'
+        if: always()
         run: php artisan dusk tests/Browser/User/OpeningcalendarsPluginTest.php
 
       - name: 'Run Dusk 新着情報'
+        if: always()
         run: php artisan dusk tests/Browser/User/WhatsnewsPluginTest.php
 
       - name: 'Run Dusk FAQ'
+        if: always()
         run: php artisan dusk tests/Browser/User/FaqsPluginTest.php
 
       - name: 'Run Dusk リンクリスト'
+        if: always()
         run: php artisan dusk tests/Browser/User/LinklistsPluginTest.php
 
       - name: 'Run Dusk キャビネット'
+        if: always()
         run: php artisan dusk tests/Browser/User/CabinetsPluginTest.php
 
       - name: 'Run Dusk フォトアルバム'
+        if: always()
         run: php artisan dusk tests/Browser/User/PhotoalbumsPluginTest.php
 
       - name: 'Run Dusk データベース'
+        if: always()
         run: php artisan dusk tests/Browser/User/DatabasesPluginTest.php
 
       - name: 'Run Dusk OPAC'
+        if: always()
         run: php artisan dusk tests/Browser/User/OpacsPluginTest.php
 
       - name: 'Run Dusk フォーム'
+        if: always()
         run: php artisan dusk tests/Browser/User/FormsPluginTest.php
 
       - name: 'Run Dusk カウンター'
+        if: always()
         run: php artisan dusk tests/Browser/User/CountersPluginTest.php
 
       - name: 'Run Dusk サイト内検索'
+        if: always()
         run: php artisan dusk tests/Browser/User/SearchsPluginTest.php
 
       - name: 'Run Dusk データベース検索'
+        if: always()
         run: php artisan dusk tests/Browser/User/DatabasesearchesPluginTest.php
 
       - name: 'Run Dusk 掲示板'
+        if: always()
         run: php artisan dusk tests/Browser/User/BbsesPluginTest.php
 
       - name: 'Run Dusk 施設予約'
+        if: always()
         run: php artisan dusk tests/Browser/User/ReservationsPluginTest.php
 
       - name: 'Run Dusk タブ'
+        if: always()
         run: php artisan dusk tests/Browser/User/TabsPluginTest.php
 
       # ---------------------------------------------
@@ -328,12 +380,15 @@ jobs:
       # ---------------------------------------------
 
       - name: 'Run Dusk マイページ'
+        if: always()
         run: php artisan dusk tests/Browser/Mypage/IndexMypageTest.php
 
       - name: 'Run Dusk プロフィール'
+        if: always()
         run: php artisan dusk tests/Browser/Mypage/ProfileMypageTest.php
 
       - name: 'Run Dusk ログイン履歴'
+        if: always()
         run: php artisan dusk tests/Browser/Mypage/LoginHistoryMypageTest.php
 
       # ---------------------------------------------
@@ -341,6 +396,7 @@ jobs:
       # ---------------------------------------------
 
       - name: 'Run Dusk 権限'
+        if: always()
         run: php artisan dusk tests/Browser/Blueprint/RoleBlueprintTest.php
 
       # ---------------------------------------------
@@ -348,12 +404,15 @@ jobs:
       # ---------------------------------------------
 
       - name: 'Run Dusk フレーム'
+        if: always()
         run: php artisan dusk tests/Browser/Common/FrameTest.php
 
       - name: 'Run Dusk WYSIWYG'
+        if: always()
         run: php artisan dusk tests/Browser/Common/WysiwygTest.php
 
       - name: 'Run Dusk パスワード付きページ'
+        if: always()
         run: php artisan dusk tests/Browser/Common/PasswordPageTest.php
 
       # ---------------------------------------------
@@ -361,15 +420,19 @@ jobs:
       # ---------------------------------------------
 
       # - name: 'Run Dusk Connect-Study 共通'
+      #   if: always()
       #   run: php artisan dusk tests/Browser/ConnectStudy/ConnectStudyCommon.php
 
       # - name: 'Run Dusk DroneStudy'
+      #   if: always()
       #   run: php artisan dusk tests/Browser/ConnectStudy/DroneStudyTest.php
 
       # - name: 'Run Dusk FaceStudy'
+      #   if: always()
       #   run: php artisan dusk tests/Browser/ConnectStudy/FaceStudyTest.php
 
       # - name: 'Run Dusk SpeechStudy'
+      #   if: always()
       #   run: php artisan dusk tests/Browser/ConnectStudy/SpeechStudyTest.php
 
       # ---------------------------------------------
@@ -377,7 +440,8 @@ jobs:
       # ---------------------------------------------
 
       # - name: 'Run Dusk トップページの動画'
-      # php artisan dusk tests/Browser/Top/IndexTopTest.php
+      #   if: always()
+      #   run: php artisan dusk tests/Browser/Top/IndexTopTest.php
 
       # https://github.com/actions/upload-artifact (official)
       - name: Upload Screenshots
