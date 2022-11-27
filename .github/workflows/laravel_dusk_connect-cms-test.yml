@@ -1,4 +1,4 @@
-name: Laravel Dusk connect-cms-test
+name: Laravel Dusk Connect-cms-test
 
 on:
   # schedule:
