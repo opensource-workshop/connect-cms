@@ -360,17 +360,17 @@ jobs:
       # - Connect-Study
       # ---------------------------------------------
 
-      - name: 'Run Dusk Connect-Study 共通'
-        run: php artisan dusk tests/Browser/ConnectStudy/ConnectStudyCommon.php
+      # - name: 'Run Dusk Connect-Study 共通'
+      #   run: php artisan dusk tests/Browser/ConnectStudy/ConnectStudyCommon.php
 
-      - name: 'Run Dusk DroneStudy'
-        run: php artisan dusk tests/Browser/ConnectStudy/DroneStudyTest.php
+      # - name: 'Run Dusk DroneStudy'
+      #   run: php artisan dusk tests/Browser/ConnectStudy/DroneStudyTest.php
 
-      - name: 'Run Dusk FaceStudy'
-        run: php artisan dusk tests/Browser/ConnectStudy/FaceStudyTest.php
+      # - name: 'Run Dusk FaceStudy'
+      #   run: php artisan dusk tests/Browser/ConnectStudy/FaceStudyTest.php
 
-      - name: 'Run Dusk SpeechStudy'
-        run: php artisan dusk tests/Browser/ConnectStudy/SpeechStudyTest.php
+      # - name: 'Run Dusk SpeechStudy'
+      #   run: php artisan dusk tests/Browser/ConnectStudy/SpeechStudyTest.php
 
       # ---------------------------------------------
       # - トップページの動画
