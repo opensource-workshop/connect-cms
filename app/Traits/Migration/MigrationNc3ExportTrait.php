@@ -3734,6 +3734,41 @@ trait MigrationNc3ExportTrait
             // カレンダーの設定を出力
             $this->storagePut($this->getImportPath('calendars/calendar_room_') . $this->zeroSuppress($all_users_room_id) . '.ini', $ini);
         }
+
+
+        // NC3カレンダーフレーム（インポート時にframe_idからroom_idを取得するために出力）
+        $nc3_calendar_frame_settings = Nc3CalendarFrameSetting::select('calendar_frame_settings.*', 'frames.id as frame_id', 'frames.room_id')
+            ->leftJoin('frames', function ($join) {
+                $join->on('frames.key', '=', 'calendar_frame_settings.frame_key');
+            })
+            ->orderBy('calendar_frame_settings.id')
+            ->get();
+
+        // 空なら戻る
+        if ($nc3_calendar_frame_settings->isEmpty()) {
+            return;
+        }
+
+        // NC3カレンダーブロックのループ
+        foreach ($nc3_calendar_frame_settings as $nc3_calendar_frame_setting) {
+
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (!empty($nc3_export_room_ids) && !in_array($nc3_room->id, $nc3_export_room_ids)) {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
+            // NC3 情報
+            $ini = "";
+            $ini .= "\n";
+            $ini .= "[source_info]\n";
+            $ini .= "calendar_block_id = " . $nc3_calendar_frame_setting->frame_id . "\n";
+            $ini .= "room_id           = " . $nc3_calendar_frame_setting->room_id . "\n";
+            $ini .= "plugin_key        = \"calendars\"\n";
+
+            // カレンダーの設定を出力
+            $this->storagePut($this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc3_calendar_frame_setting->frame_id) . '.ini', $ini);
+        }
     }
 
     /**
