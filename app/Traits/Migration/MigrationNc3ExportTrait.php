@@ -5784,7 +5784,7 @@ trait MigrationNc3ExportTrait
 
 
         $i = 0;
-        while (!isset($headers[$i])) {
+        while (isset($headers[$i])) {
             if (stripos($headers[$i], "200") !== false) {
                 // OK
                 return true;
