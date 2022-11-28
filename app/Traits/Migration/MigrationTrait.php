@@ -10317,13 +10317,6 @@ trait MigrationTrait
             return;
         }
 
-        // NC2 指定ルームのみ表示 nc2_calendar_select_room
-        // if (empty($where_calendar_block_ids)) {
-        //     $nc2_calendar_select_rooms = Nc2CalendarSelectRoom::orderBy('block_id')->get();
-        // } else {
-        //     $nc2_calendar_select_rooms = Nc2CalendarSelectRoom::whereIn('block_id', $where_calendar_block_ids)->orderBy('block_id')->get();
-        // }
-
         // NC2カレンダーブロックのループ
         foreach ($nc2_calendar_blocks as $nc2_calendar_block) {
 
@@ -10333,33 +10326,13 @@ trait MigrationTrait
                 continue;
             }
 
-            // NC2 カレンダーブロック（表示方法）設定
-            $ini = "";
-            $ini .= "[calendar_block]\n";
-            // 表示方法
-            $ini .= "display_type = " . $nc2_calendar_block->display_type . "\n";
-            // 開始位置
-            // $ini .= "start_pos = " .  $nc2_calendar_block->start_pos . "\n";
-            // 表示日数
-            // $ini .= "display_count = " . $nc2_calendar_block->display_count . "\n";
-            // 指定したルームのみ表示する 1:ルーム指定する 0:指定しない
-            // $ini .= "select_room = " . $nc2_calendar_block->select_room . "\n";
-            // [不明] 画面に該当項目なし。プライベートルームにカレンダー配置しても 0 だった。
-            // $ini .= "myroom_flag = " . $nc2_calendar_block->myroom_flag . "\n";
-
-            // NC2 指定ルームのみ表示
-            // $ini .= "\n";
-            // $ini .= "[calendar_select_room]\n";
-            // foreach ($nc2_calendar_select_rooms as $nc2_calendar_select_room) {
-            //     $ini .= "room_id[] = " . $nc2_calendar_select_room->room_id . "\n";
-            // }
-
             // NC2 情報
+            $ini = "";
             $ini .= "\n";
             $ini .= "[source_info]\n";
             $ini .= "calendar_block_id = " . $nc2_calendar_block->block_id . "\n";
-            $ini .= "room_id = " . $nc2_calendar_block->room_id . "\n";
-            $ini .= "module_name = \"calendar\"\n";
+            $ini .= "room_id           = " . $nc2_calendar_block->room_id . "\n";
+            $ini .= "module_name       = \"calendar\"\n";
 
             // カレンダーの設定を出力
             $this->storagePut($this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc2_calendar_block->block_id) . '.ini', $ini);
@@ -11564,18 +11537,7 @@ trait MigrationTrait
                 // overrideNc2Block()関連設定 があれば最優先で設定
                 $frame_ini .= "template = \"" . $nc2_block->template . "\"\n";
             } elseif ($nc2_block->getModuleName() == 'calendar') {
-                $calendar_block_ini = null;
-                $calendar_display_type = null;
-
-                // カレンダーブロックの情報取得
-                if (Storage::exists($this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc2_block->block_id) . '.ini')) {
-                    $calendar_block_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc2_block->block_id) . '.ini', true);
-                }
-
-                if (!empty($calendar_block_ini) && array_key_exists('calendar_block', $calendar_block_ini) && array_key_exists('display_type', $calendar_block_ini['calendar_block'])) {
-                    // NC2 のcalendar の display_type
-                    $calendar_display_type = $this->getArrayValue($calendar_block_ini, 'calendar_block', 'display_type', null);
-                }
+                $nc2_calendar_block = Nc2CalendarBlock::where('block_id', $nc2_block->block_id)->first() ?? new Nc2CalendarBlock();
 
                 // frame_design 変換 (key:nc2)display_type => (value:cc)template
                 // (NC2)初期値 = 月表示（縮小）= 2
@@ -11589,7 +11551,7 @@ trait MigrationTrait
                     6 => 'day',         // 6:スケジュール（時間順）
                     7 => 'day',         // 7:スケジュール（会員順）
                 ];
-                $frame_design = $display_type_to_frame_designs[$calendar_display_type] ?? 'default';
+                $frame_design = $display_type_to_frame_designs[$nc2_calendar_block->display_type] ?? 'default';
                 $frame_ini .= "template = \"" . $frame_design . "\"\n";
             } else {
                 $frame_ini .= "template = \"" . $this->nc2BlockTemp($nc2_block) . "\"\n";
