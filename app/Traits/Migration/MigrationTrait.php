@@ -10304,13 +10304,8 @@ trait MigrationTrait
         }
 
 
-        // NC2カレンダーブロック（モジュール配置したブロック（どう見せるか、だけ。ここ無くても予定データある））を移行する。
-        $where_calendar_block_ids = $this->getMigrationConfig('calendars', 'nc2_export_where_calendar_block_ids');
-        if (empty($where_calendar_block_ids)) {
-            $nc2_calendar_blocks = Nc2CalendarBlock::orderBy('block_id')->get();
-        } else {
-            $nc2_calendar_blocks = Nc2CalendarBlock::whereIn('block_id', $where_calendar_block_ids)->orderBy('block_id')->get();
-        }
+        // NC2カレンダーブロック（インポート時にblock_idからroom_idを取得するために出力）
+        $nc2_calendar_blocks = Nc2CalendarBlock::orderBy('block_id')->get();
 
         // 空なら戻る
         if ($nc2_calendar_blocks->isEmpty()) {
