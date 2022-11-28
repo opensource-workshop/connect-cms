@@ -5997,48 +5997,48 @@ trait MigrationTrait
 
         // bucketあり
         if (!empty($bucket)) {
+            // NC2 のcalendar の add_authority_id
+            $add_authority_id = Arr::get($calendar_room_ini, 'calendar_manage.add_authority_id');
 
-            // calendar_room_iniに[calendar_manage]add_authority_idあり
-            if (!empty($calendar_room_ini) && array_key_exists('calendar_manage', $calendar_room_ini) && array_key_exists('add_authority_id', $calendar_room_ini['calendar_manage'])) {
+            // 権限設定
+            // 投稿権限：(nc2) あり、(cc) あり
+            //   (nc2) モデレータ⇒ (cc) モデレータ
+            //   (nc2) 一般⇒ (cc) 編集者
+            //   (nc2) [calendar_manage] => add_authority_id, 予定を追加できる権限. 2:主担,モデレータ,一般  3:主担,モデレータ  4:主担  5:なし（全会員のみ設定可能）
+            // 承認権限：(nc2) なし、(cc) あり => buckets_roles.approval_flag = 0固定
 
-                // NC2 のcalendar の add_authority_id
-                $add_authority_id = $this->getArrayValue($calendar_room_ini, 'calendar_manage', 'add_authority_id', null);
+            // モデレータの投稿権限 変換 (key:nc2)add_authority_id => (value:cc)post_flag
+            $role_article_post_flags = [
+                2 => 1,
+                3 => 1,
+                4 => 0,
+                5 => 0,
+            ];
+            $article_post_flag = $role_article_post_flags[$add_authority_id] ?? 0;
+            $article_post_flag = Arr::get($calendar_room_ini, 'calendar_manage.article_post_flag', $article_post_flag);
 
-                // 権限設定
-                // 投稿権限：(nc2) あり、(cc) あり
-                //   (nc2) モデレータ⇒ (cc) モデレータ
-                //   (nc2) 一般⇒ (cc) 編集者
-                //   (nc2) [calendar_manage] => add_authority_id, 予定を追加できる権限. 2:主担,モデレータ,一般  3:主担,モデレータ  4:主担  5:なし（全会員のみ設定可能）
-                // 承認権限：(nc2) なし、(cc) あり => buckets_roles.approval_flag = 0固定
+            // 編集者の投稿権限 変換 (key:nc2)add_authority_id => (value:cc)post_flag
+            $role_reporter_post_flags = [
+                2 => 1,
+                3 => 0,
+                4 => 0,
+                5 => 0,
+            ];
+            $reporter_post_flag = $role_reporter_post_flags[$add_authority_id] ?? 0;
+            $reporter_post_flag = Arr::get($calendar_room_ini, 'calendar_manage.reporter_post_flag', $reporter_post_flag);
 
-                // モデレータの投稿権限 変換 (key:nc2)add_authority_id => (value:cc)post_flag
-                $role_article_post_flags = [
-                    2 => 1,
-                    3 => 1,
-                    4 => 0,
-                    5 => 0,
-                ];
-                // 編集者の投稿権限 変換 (key:nc2)add_authority_id => (value:cc)post_flag
-                $role_reporter_post_flags = [
-                    2 => 1,
-                    3 => 0,
-                    4 => 0,
-                    5 => 0,
-                ];
-
-                BucketsRoles::create([
-                    'buckets_id' => $bucket->id,
-                    'role' => 'role_article',   // モデレータ
-                    'post_flag' => $role_article_post_flags[$add_authority_id] ?? 0,
-                    'approval_flag' => 0,
-                ]);
-                BucketsRoles::create([
-                    'buckets_id' => $bucket->id,
-                    'role' => 'role_reporter',  // 編集者
-                    'post_flag' => $role_reporter_post_flags[$add_authority_id] ?? 0,
-                    'approval_flag' => 0,
-                ]);
-            }
+            BucketsRoles::create([
+                'buckets_id'    => $bucket->id,
+                'role'          => 'role_article',   // モデレータ
+                'post_flag'     => $article_post_flag,
+                'approval_flag' => Arr::get($calendar_room_ini, 'calendar_manage.article_approval_flag', 0),
+            ]);
+            BucketsRoles::create([
+                'buckets_id'    => $bucket->id,
+                'role'          => 'role_reporter',  // 編集者
+                'post_flag'     => $reporter_post_flag,
+                'approval_flag' => Arr::get($calendar_room_ini, 'calendar_manage.reporter_approval_flag', 0),
+            ]);
         }
 
         // Frames 登録
