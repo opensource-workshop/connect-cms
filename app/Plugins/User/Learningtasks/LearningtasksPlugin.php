@@ -2632,7 +2632,7 @@ class LearningtasksPlugin extends UserPluginBase
                 'required',
                 'file',
                 'mimes:csv,txt', // mimesの都合上text/csvなのでtxtも許可が必要
-                'mimetypes:application/csv,text/plain',
+                'mimetypes:application/csv,text/plain,text/csv',
             ],
         ];
 
