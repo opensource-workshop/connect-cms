@@ -3617,19 +3617,13 @@ trait MigrationTrait
                 // 行ループで使用する各種変数
                 $header_skip = true;       // ヘッダースキップフラグ（1行目はカラム名の行）
 
-                // NC2 calendar_plan
-                $tsv_idxs['calendar_id'] = 0;
-                $tsv_idxs['plan_id'] = 0;
-                $tsv_idxs['user_id'] = 0;
-                $tsv_idxs['user_name'] = 0;
+                $tsv_idxs['post_id'] = 0;
                 $tsv_idxs['title'] = 0;
                 $tsv_idxs['allday_flag'] = 0;
                 $tsv_idxs['start_date'] = 0;
                 $tsv_idxs['start_time'] = 0;
                 $tsv_idxs['end_date'] = 0;
                 $tsv_idxs['end_time'] = 0;
-
-                // NC2 calendar_plan_details
                 // 場所
                 $tsv_idxs['location'] = 0;
                 // 連絡先
@@ -3638,18 +3632,15 @@ trait MigrationTrait
                 $tsv_idxs['body'] = 0;
                 // 繰り返し条件
                 $tsv_idxs['rrule'] = 0;
-
-                // NC2 calendar_plan 登録日・更新日等
+                // 登録日・更新日等
                 $tsv_idxs['created_at'] = 0;
                 $tsv_idxs['created_name'] = 0;
                 $tsv_idxs['insert_login_id'] = 0;
                 $tsv_idxs['updated_at'] = 0;
                 $tsv_idxs['updated_name'] = 0;
                 $tsv_idxs['update_login_id'] = 0;
-
                 // CC 状態
                 $tsv_idxs['status'] = 0;
-
 
                 // 改行で記事毎に分割（行の処理）
                 $calendar_tsv_lines = explode("\n", $calendar_tsv);
@@ -3706,7 +3697,7 @@ trait MigrationTrait
                     // 記事のマッピングテーブルの追加
                     $mapping = MigrationMapping::create([
                         'target_source_table'  => 'calendars_post',
-                        'source_key'           => $calendar_tsv_cols[$tsv_idxs['calendar_id']],
+                        'source_key'           => $calendar_tsv_cols[$tsv_idxs['post_id']],
                         'destination_key'      => $calendar_post->id,
                     ]);
 
@@ -10110,20 +10101,15 @@ trait MigrationTrait
 
 
             // カラムのヘッダー及びTSV 行毎の枠準備
-            $tsv_header = "calendar_id" . "\t" . "plan_id" . "\t" . "user_id" . "\t" . "user_name" . "\t" . "title" . "\t" .
-                "allday_flag" . "\t" . "start_date" . "\t" . "start_time" . "\t" . "end_date" . "\t" . "end_time" . "\t" .
-                // NC2 calendar_plan_details
+            $tsv_header = "post_id" . "\t" . "title" . "\t" . "allday_flag" . "\t" . "start_date" . "\t" . "start_time" . "\t" . "end_date" . "\t" . "end_time" . "\t" .
                 "location" . "\t" . "contact" . "\t" . "body" . "\t" . "rrule" . "\t" .
-                // NC2 calendar_plan 登録日・更新日等
+                // 登録日・更新日等
                 "created_at" . "\t" . "created_name" . "\t" . "insert_login_id" . "\t" . "updated_at" . "\t" . "updated_name" . "\t" . "update_login_id" . "\t" .
                 // CC 状態
                 "status";
 
             // NC2 calendar_plan
-            $tsv_cols['calendar_id'] = "";
-            $tsv_cols['plan_id'] = "";
-            $tsv_cols['user_id'] = "";
-            $tsv_cols['user_name'] = "";
+            $tsv_cols['post_id'] = "";
             $tsv_cols['title'] = "";
             $tsv_cols['allday_flag'] = "";
             $tsv_cols['start_date'] = "";
@@ -10173,11 +10159,7 @@ trait MigrationTrait
                 // 初期化
                 $tsv_record = $tsv_cols;
 
-                // NC2 calendar_plan
-                $tsv_record['calendar_id'] = $calendar_plan->calendar_id;
-                $tsv_record['plan_id'] = $calendar_plan->plan_id;
-                $tsv_record['user_id'] = $calendar_plan->user_id;
-                $tsv_record['user_name'] = $calendar_plan->user_name;
+                $tsv_record['post_id'] = $calendar_plan->calendar_id;
                 $tsv_record['title'] = trim($calendar_plan->title);
                 $tsv_record['allday_flag'] = $calendar_plan->allday_flag;
 
