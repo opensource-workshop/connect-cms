@@ -111,7 +111,7 @@ jobs:
       - name: Install or Update Composer Dependencies
         run: |
           # if [[ "$PHP_VERSION" = "8.1" ]]; then
-          #  COMPOSER=composer-dev.json composer update --no-progress --optimize-autoloader
+          #   COMPOSER=composer-dev.json composer update --no-progress --optimize-autoloader
           # else
           COMPOSER=composer-dev.json composer install --no-progress --optimize-autoloader
           # fi
