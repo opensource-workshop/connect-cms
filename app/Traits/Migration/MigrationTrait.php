@@ -5997,46 +5997,16 @@ trait MigrationTrait
 
         // bucketあり
         if (!empty($bucket)) {
-            // NC2 のcalendar の add_authority_id
-            $add_authority_id = Arr::get($calendar_room_ini, 'calendar_manage.add_authority_id');
-
-            // 権限設定
-            // 投稿権限：(nc2) あり、(cc) あり
-            //   (nc2) モデレータ⇒ (cc) モデレータ
-            //   (nc2) 一般⇒ (cc) 編集者
-            //   (nc2) [calendar_manage] => add_authority_id, 予定を追加できる権限. 2:主担,モデレータ,一般  3:主担,モデレータ  4:主担  5:なし（全会員のみ設定可能）
-            // 承認権限：(nc2) なし、(cc) あり => buckets_roles.approval_flag = 0固定
-
-            // モデレータの投稿権限 変換 (key:nc2)add_authority_id => (value:cc)post_flag
-            $role_article_post_flags = [
-                2 => 1,
-                3 => 1,
-                4 => 0,
-                5 => 0,
-            ];
-            $article_post_flag = $role_article_post_flags[$add_authority_id] ?? 0;
-            $article_post_flag = Arr::get($calendar_room_ini, 'calendar_manage.article_post_flag', $article_post_flag);
-
-            // 編集者の投稿権限 変換 (key:nc2)add_authority_id => (value:cc)post_flag
-            $role_reporter_post_flags = [
-                2 => 1,
-                3 => 0,
-                4 => 0,
-                5 => 0,
-            ];
-            $reporter_post_flag = $role_reporter_post_flags[$add_authority_id] ?? 0;
-            $reporter_post_flag = Arr::get($calendar_room_ini, 'calendar_manage.reporter_post_flag', $reporter_post_flag);
-
             BucketsRoles::create([
                 'buckets_id'    => $bucket->id,
                 'role'          => 'role_article',   // モデレータ
-                'post_flag'     => $article_post_flag,
+                'post_flag'     => Arr::get($calendar_room_ini, 'calendar_manage.article_post_flag', 0),
                 'approval_flag' => Arr::get($calendar_room_ini, 'calendar_manage.article_approval_flag', 0),
             ]);
             BucketsRoles::create([
                 'buckets_id'    => $bucket->id,
                 'role'          => 'role_reporter',  // 編集者
-                'post_flag'     => $reporter_post_flag,
+                'post_flag'     => Arr::get($calendar_room_ini, 'calendar_manage.reporter_post_flag', 0),
                 'approval_flag' => Arr::get($calendar_room_ini, 'calendar_manage.reporter_approval_flag', 0),
             ]);
         }
@@ -10089,25 +10059,42 @@ trait MigrationTrait
                 continue;
             }
 
+            // NC2 権限設定
+            $nc2_calendar_manage = $nc2_calendar_manages->firstWhere('room_id', $nc2_page_room->room_id) ?? new Nc2CalendarManage();
+
+            // 投稿権限：(nc2) あり、(cc) あり
+            //   (nc2) モデレータ⇒ (cc) モデレータ
+            //   (nc2) 一般⇒ (cc) 編集者
+            //   (nc2) [calendar_manage] => add_authority_id, 予定を追加できる権限. 2:主担,モデレータ,一般  3:主担,モデレータ  4:主担  5:なし（全会員のみ設定可能）
+            // 承認権限：(nc2) なし、(cc) あり => buckets_roles.approval_flag = 0固定
+
+            // モデレータの投稿権限 変換 (key:nc2)add_authority_id => (value:cc)post_flag
+            $role_article_post_flags = [
+                2 => 1,
+                3 => 1,
+                4 => 0,
+                5 => 0,
+            ];
+            $article_post_flag = $role_article_post_flags[$nc2_calendar_manage->add_authority_id] ?? 0;
+
+            // 編集者の投稿権限 変換 (key:nc2)add_authority_id => (value:cc)post_flag
+            $role_reporter_post_flags = [
+                2 => 1,
+                3 => 0,
+                4 => 0,
+                5 => 0,
+            ];
+            $reporter_post_flag = $role_reporter_post_flags[$nc2_calendar_manage->add_authority_id] ?? 0;
+
             // カレンダー設定
             $ini = "";
             $ini .= "[calendar_base]\n";
-
-            // NC2 権限設定
-            $nc2_calendar_manage = $nc2_calendar_manages->firstWhere('room_id', $nc2_page_room->room_id);
             $ini .= "\n";
             $ini .= "[calendar_manage]\n";
-            if (is_null($nc2_calendar_manage)) {
-                // データなしは 4:主担。 ここに全会員ルームのデータは入ってこないため、これでOK
-                $ini .= "add_authority_id = 4\n";
-                // フラグは必ず1
-                // $ini .= "use_flag = 1\n";
-            } else {
-                // 予定を追加できる権限. 2:主担,モデレータ,一般  3:主担,モデレータ  4:主担  5:なし（全会員のみ設定可能）
-                $ini .= "add_authority_id = " . $nc2_calendar_manage->add_authority_id . "\n";
-                // フラグ. 1:使う
-                // $ini .= "use_flag = " . $nc2_calendar_manage->use_flag . "\n";
-            }
+            $ini .= "article_post_flag      = {$article_post_flag}\n";
+            $ini .= "article_approval_flag  = 0\n";
+            $ini .= "reporter_post_flag     = {$reporter_post_flag}\n";
+            $ini .= "reporter_approval_flag = 0\n";
 
             // NC2 情報
             $ini .= "\n";
