@@ -3553,17 +3553,13 @@ trait MigrationNc3ExportTrait
 
 
             // カラムのヘッダー及びTSV 行毎の枠準備
-            $tsv_header = "calendar_id" . "\t" . "plan_id" . "\t" . "user_id" . "\t" . "user_name" . "\t" . "title" . "\t" .
-                "allday_flag" . "\t" . "start_date" . "\t" . "start_time" . "\t" . "end_date" . "\t" . "end_time" . "\t" .
+            $tsv_header = "post_id" . "\t" . "title" . "\t" . "allday_flag" . "\t" . "start_date" . "\t" . "start_time" . "\t" . "end_date" . "\t" . "end_time" . "\t" .
                 "location" . "\t" . "contact" . "\t" . "body" . "\t" . "rrule" . "\t" .
                 "created_at" . "\t" . "created_name" . "\t" . "insert_login_id" . "\t" . "updated_at" . "\t" . "updated_name" . "\t" . "update_login_id" . "\t" .
                 // CC 状態
                 "status";
 
-            $tsv_cols['calendar_id'] = "";
-            $tsv_cols['plan_id'] = "";
-            $tsv_cols['user_id'] = "";
-            $tsv_cols['user_name'] = "";
+            $tsv_cols['post_id'] = "";
             $tsv_cols['title'] = "";
             $tsv_cols['allday_flag'] = "";
             $tsv_cols['start_date'] = "";
@@ -3612,10 +3608,7 @@ trait MigrationNc3ExportTrait
                 // 初期化
                 $tsv_record = $tsv_cols;
 
-                // $tsv_record['calendar_id'] = $calendar_event->id;
-                // $tsv_record['plan_id']     = $calendar_event->calendar_rrule_id;
-                // $tsv_record['user_id']     = $calendar_event->user_id;
-                // $tsv_record['user_name']   = $calendar_event->user_name;
+                $tsv_record['post_id'] = $calendar_event->id;
                 $tsv_record['title']       = $calendar_event->title;
                 $tsv_record['allday_flag'] = $calendar_event->is_allday;
 
