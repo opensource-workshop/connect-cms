@@ -3617,19 +3617,13 @@ trait MigrationTrait
                 // 行ループで使用する各種変数
                 $header_skip = true;       // ヘッダースキップフラグ（1行目はカラム名の行）
 
-                // NC2 calendar_plan
-                $tsv_idxs['calendar_id'] = 0;
-                $tsv_idxs['plan_id'] = 0;
-                $tsv_idxs['user_id'] = 0;
-                $tsv_idxs['user_name'] = 0;
+                $tsv_idxs['post_id'] = 0;
                 $tsv_idxs['title'] = 0;
                 $tsv_idxs['allday_flag'] = 0;
                 $tsv_idxs['start_date'] = 0;
                 $tsv_idxs['start_time'] = 0;
                 $tsv_idxs['end_date'] = 0;
                 $tsv_idxs['end_time'] = 0;
-
-                // NC2 calendar_plan_details
                 // 場所
                 $tsv_idxs['location'] = 0;
                 // 連絡先
@@ -3638,18 +3632,15 @@ trait MigrationTrait
                 $tsv_idxs['body'] = 0;
                 // 繰り返し条件
                 $tsv_idxs['rrule'] = 0;
-
-                // NC2 calendar_plan 登録日・更新日等
+                // 登録日・更新日等
                 $tsv_idxs['created_at'] = 0;
                 $tsv_idxs['created_name'] = 0;
                 $tsv_idxs['insert_login_id'] = 0;
                 $tsv_idxs['updated_at'] = 0;
                 $tsv_idxs['updated_name'] = 0;
                 $tsv_idxs['update_login_id'] = 0;
-
                 // CC 状態
                 $tsv_idxs['status'] = 0;
-
 
                 // 改行で記事毎に分割（行の処理）
                 $calendar_tsv_lines = explode("\n", $calendar_tsv);
@@ -3706,7 +3697,7 @@ trait MigrationTrait
                     // 記事のマッピングテーブルの追加
                     $mapping = MigrationMapping::create([
                         'target_source_table'  => 'calendars_post',
-                        'source_key'           => $calendar_tsv_cols[$tsv_idxs['calendar_id']],
+                        'source_key'           => $calendar_tsv_cols[$tsv_idxs['post_id']],
                         'destination_key'      => $calendar_post->id,
                     ]);
 
@@ -5997,48 +5988,18 @@ trait MigrationTrait
 
         // bucketあり
         if (!empty($bucket)) {
-
-            // calendar_room_iniに[calendar_manage]add_authority_idあり
-            if (!empty($calendar_room_ini) && array_key_exists('calendar_manage', $calendar_room_ini) && array_key_exists('add_authority_id', $calendar_room_ini['calendar_manage'])) {
-
-                // NC2 のcalendar の add_authority_id
-                $add_authority_id = $this->getArrayValue($calendar_room_ini, 'calendar_manage', 'add_authority_id', null);
-
-                // 権限設定
-                // 投稿権限：(nc2) あり、(cc) あり
-                //   (nc2) モデレータ⇒ (cc) モデレータ
-                //   (nc2) 一般⇒ (cc) 編集者
-                //   (nc2) [calendar_manage] => add_authority_id, 予定を追加できる権限. 2:主担,モデレータ,一般  3:主担,モデレータ  4:主担  5:なし（全会員のみ設定可能）
-                // 承認権限：(nc2) なし、(cc) あり => buckets_roles.approval_flag = 0固定
-
-                // モデレータの投稿権限 変換 (key:nc2)add_authority_id => (value:cc)post_flag
-                $role_article_post_flags = [
-                    2 => 1,
-                    3 => 1,
-                    4 => 0,
-                    5 => 0,
-                ];
-                // 編集者の投稿権限 変換 (key:nc2)add_authority_id => (value:cc)post_flag
-                $role_reporter_post_flags = [
-                    2 => 1,
-                    3 => 0,
-                    4 => 0,
-                    5 => 0,
-                ];
-
-                BucketsRoles::create([
-                    'buckets_id' => $bucket->id,
-                    'role' => 'role_article',   // モデレータ
-                    'post_flag' => $role_article_post_flags[$add_authority_id] ?? 0,
-                    'approval_flag' => 0,
-                ]);
-                BucketsRoles::create([
-                    'buckets_id' => $bucket->id,
-                    'role' => 'role_reporter',  // 編集者
-                    'post_flag' => $role_reporter_post_flags[$add_authority_id] ?? 0,
-                    'approval_flag' => 0,
-                ]);
-            }
+            BucketsRoles::create([
+                'buckets_id'    => $bucket->id,
+                'role'          => 'role_article',   // モデレータ
+                'post_flag'     => Arr::get($calendar_room_ini, 'calendar_manage.article_post_flag', 0),
+                'approval_flag' => Arr::get($calendar_room_ini, 'calendar_manage.article_approval_flag', 0),
+            ]);
+            BucketsRoles::create([
+                'buckets_id'    => $bucket->id,
+                'role'          => 'role_reporter',  // 編集者
+                'post_flag'     => Arr::get($calendar_room_ini, 'calendar_manage.reporter_post_flag', 0),
+                'approval_flag' => Arr::get($calendar_room_ini, 'calendar_manage.reporter_approval_flag', 0),
+            ]);
         }
 
         // Frames 登録
@@ -10089,25 +10050,42 @@ trait MigrationTrait
                 continue;
             }
 
+            // NC2 権限設定
+            $nc2_calendar_manage = $nc2_calendar_manages->firstWhere('room_id', $nc2_page_room->room_id) ?? new Nc2CalendarManage();
+
+            // 投稿権限：(nc2) あり、(cc) あり
+            //   (nc2) モデレータ⇒ (cc) モデレータ
+            //   (nc2) 一般⇒ (cc) 編集者
+            //   (nc2) [calendar_manage] => add_authority_id, 予定を追加できる権限. 2:主担,モデレータ,一般  3:主担,モデレータ  4:主担  5:なし（全会員のみ設定可能）
+            // 承認権限：(nc2) なし、(cc) あり => buckets_roles.approval_flag = 0固定
+
+            // モデレータの投稿権限 変換 (key:nc2)add_authority_id => (value:cc)post_flag
+            $role_article_post_flags = [
+                2 => 1,
+                3 => 1,
+                4 => 0,
+                5 => 0,
+            ];
+            $article_post_flag = $role_article_post_flags[$nc2_calendar_manage->add_authority_id] ?? 0;
+
+            // 編集者の投稿権限 変換 (key:nc2)add_authority_id => (value:cc)post_flag
+            $role_reporter_post_flags = [
+                2 => 1,
+                3 => 0,
+                4 => 0,
+                5 => 0,
+            ];
+            $reporter_post_flag = $role_reporter_post_flags[$nc2_calendar_manage->add_authority_id] ?? 0;
+
             // カレンダー設定
             $ini = "";
             $ini .= "[calendar_base]\n";
-
-            // NC2 権限設定
-            $nc2_calendar_manage = $nc2_calendar_manages->firstWhere('room_id', $nc2_page_room->room_id);
             $ini .= "\n";
             $ini .= "[calendar_manage]\n";
-            if (is_null($nc2_calendar_manage)) {
-                // データなしは 4:主担。 ここに全会員ルームのデータは入ってこないため、これでOK
-                $ini .= "add_authority_id = 4\n";
-                // フラグは必ず1
-                // $ini .= "use_flag = 1\n";
-            } else {
-                // 予定を追加できる権限. 2:主担,モデレータ,一般  3:主担,モデレータ  4:主担  5:なし（全会員のみ設定可能）
-                $ini .= "add_authority_id = " . $nc2_calendar_manage->add_authority_id . "\n";
-                // フラグ. 1:使う
-                // $ini .= "use_flag = " . $nc2_calendar_manage->use_flag . "\n";
-            }
+            $ini .= "article_post_flag      = {$article_post_flag}\n";
+            $ini .= "article_approval_flag  = 0\n";
+            $ini .= "reporter_post_flag     = {$reporter_post_flag}\n";
+            $ini .= "reporter_approval_flag = 0\n";
 
             // NC2 情報
             $ini .= "\n";
@@ -10123,20 +10101,15 @@ trait MigrationTrait
 
 
             // カラムのヘッダー及びTSV 行毎の枠準備
-            $tsv_header = "calendar_id" . "\t" . "plan_id" . "\t" . "user_id" . "\t" . "user_name" . "\t" . "title" . "\t" .
-                "allday_flag" . "\t" . "start_date" . "\t" . "start_time" . "\t" . "end_date" . "\t" . "end_time" . "\t" .
-                // NC2 calendar_plan_details
+            $tsv_header = "post_id" . "\t" . "title" . "\t" . "allday_flag" . "\t" . "start_date" . "\t" . "start_time" . "\t" . "end_date" . "\t" . "end_time" . "\t" .
                 "location" . "\t" . "contact" . "\t" . "body" . "\t" . "rrule" . "\t" .
-                // NC2 calendar_plan 登録日・更新日等
+                // 登録日・更新日等
                 "created_at" . "\t" . "created_name" . "\t" . "insert_login_id" . "\t" . "updated_at" . "\t" . "updated_name" . "\t" . "update_login_id" . "\t" .
                 // CC 状態
                 "status";
 
             // NC2 calendar_plan
-            $tsv_cols['calendar_id'] = "";
-            $tsv_cols['plan_id'] = "";
-            $tsv_cols['user_id'] = "";
-            $tsv_cols['user_name'] = "";
+            $tsv_cols['post_id'] = "";
             $tsv_cols['title'] = "";
             $tsv_cols['allday_flag'] = "";
             $tsv_cols['start_date'] = "";
@@ -10186,11 +10159,7 @@ trait MigrationTrait
                 // 初期化
                 $tsv_record = $tsv_cols;
 
-                // NC2 calendar_plan
-                $tsv_record['calendar_id'] = $calendar_plan->calendar_id;
-                $tsv_record['plan_id'] = $calendar_plan->plan_id;
-                $tsv_record['user_id'] = $calendar_plan->user_id;
-                $tsv_record['user_name'] = $calendar_plan->user_name;
+                $tsv_record['post_id'] = $calendar_plan->calendar_id;
                 $tsv_record['title'] = trim($calendar_plan->title);
                 $tsv_record['allday_flag'] = $calendar_plan->allday_flag;
 
@@ -10304,25 +10273,13 @@ trait MigrationTrait
         }
 
 
-        // NC2カレンダーブロック（モジュール配置したブロック（どう見せるか、だけ。ここ無くても予定データある））を移行する。
-        $where_calendar_block_ids = $this->getMigrationConfig('calendars', 'nc2_export_where_calendar_block_ids');
-        if (empty($where_calendar_block_ids)) {
-            $nc2_calendar_blocks = Nc2CalendarBlock::orderBy('block_id')->get();
-        } else {
-            $nc2_calendar_blocks = Nc2CalendarBlock::whereIn('block_id', $where_calendar_block_ids)->orderBy('block_id')->get();
-        }
+        // NC2カレンダーブロック（インポート時にblock_idからroom_idを取得するために出力）
+        $nc2_calendar_blocks = Nc2CalendarBlock::orderBy('block_id')->get();
 
         // 空なら戻る
         if ($nc2_calendar_blocks->isEmpty()) {
             return;
         }
-
-        // NC2 指定ルームのみ表示 nc2_calendar_select_room
-        // if (empty($where_calendar_block_ids)) {
-        //     $nc2_calendar_select_rooms = Nc2CalendarSelectRoom::orderBy('block_id')->get();
-        // } else {
-        //     $nc2_calendar_select_rooms = Nc2CalendarSelectRoom::whereIn('block_id', $where_calendar_block_ids)->orderBy('block_id')->get();
-        // }
 
         // NC2カレンダーブロックのループ
         foreach ($nc2_calendar_blocks as $nc2_calendar_block) {
@@ -10333,33 +10290,13 @@ trait MigrationTrait
                 continue;
             }
 
-            // NC2 カレンダーブロック（表示方法）設定
-            $ini = "";
-            $ini .= "[calendar_block]\n";
-            // 表示方法
-            $ini .= "display_type = " . $nc2_calendar_block->display_type . "\n";
-            // 開始位置
-            // $ini .= "start_pos = " .  $nc2_calendar_block->start_pos . "\n";
-            // 表示日数
-            // $ini .= "display_count = " . $nc2_calendar_block->display_count . "\n";
-            // 指定したルームのみ表示する 1:ルーム指定する 0:指定しない
-            // $ini .= "select_room = " . $nc2_calendar_block->select_room . "\n";
-            // [不明] 画面に該当項目なし。プライベートルームにカレンダー配置しても 0 だった。
-            // $ini .= "myroom_flag = " . $nc2_calendar_block->myroom_flag . "\n";
-
-            // NC2 指定ルームのみ表示
-            // $ini .= "\n";
-            // $ini .= "[calendar_select_room]\n";
-            // foreach ($nc2_calendar_select_rooms as $nc2_calendar_select_room) {
-            //     $ini .= "room_id[] = " . $nc2_calendar_select_room->room_id . "\n";
-            // }
-
             // NC2 情報
+            $ini = "";
             $ini .= "\n";
             $ini .= "[source_info]\n";
             $ini .= "calendar_block_id = " . $nc2_calendar_block->block_id . "\n";
-            $ini .= "room_id = " . $nc2_calendar_block->room_id . "\n";
-            $ini .= "module_name = \"calendar\"\n";
+            $ini .= "room_id           = " . $nc2_calendar_block->room_id . "\n";
+            $ini .= "module_name       = \"calendar\"\n";
 
             // カレンダーの設定を出力
             $this->storagePut($this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc2_calendar_block->block_id) . '.ini', $ini);
@@ -11564,18 +11501,7 @@ trait MigrationTrait
                 // overrideNc2Block()関連設定 があれば最優先で設定
                 $frame_ini .= "template = \"" . $nc2_block->template . "\"\n";
             } elseif ($nc2_block->getModuleName() == 'calendar') {
-                $calendar_block_ini = null;
-                $calendar_display_type = null;
-
-                // カレンダーブロックの情報取得
-                if (Storage::exists($this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc2_block->block_id) . '.ini')) {
-                    $calendar_block_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc2_block->block_id) . '.ini', true);
-                }
-
-                if (!empty($calendar_block_ini) && array_key_exists('calendar_block', $calendar_block_ini) && array_key_exists('display_type', $calendar_block_ini['calendar_block'])) {
-                    // NC2 のcalendar の display_type
-                    $calendar_display_type = $this->getArrayValue($calendar_block_ini, 'calendar_block', 'display_type', null);
-                }
+                $nc2_calendar_block = Nc2CalendarBlock::where('block_id', $nc2_block->block_id)->first() ?? new Nc2CalendarBlock();
 
                 // frame_design 変換 (key:nc2)display_type => (value:cc)template
                 // (NC2)初期値 = 月表示（縮小）= 2
@@ -11589,7 +11515,7 @@ trait MigrationTrait
                     6 => 'day',         // 6:スケジュール（時間順）
                     7 => 'day',         // 7:スケジュール（会員順）
                 ];
-                $frame_design = $display_type_to_frame_designs[$calendar_display_type] ?? 'default';
+                $frame_design = $display_type_to_frame_designs[$nc2_calendar_block->display_type] ?? 'default';
                 $frame_ini .= "template = \"" . $frame_design . "\"\n";
             } else {
                 $frame_ini .= "template = \"" . $this->nc2BlockTemp($nc2_block) . "\"\n";
@@ -12512,7 +12438,7 @@ trait MigrationTrait
 
 
         $i = 0;
-        while (!isset($headers[$i])) {
+        while (isset($headers[$i])) {
             if (stripos($headers[$i], "200") !== false) {
                 // OK
                 return true;

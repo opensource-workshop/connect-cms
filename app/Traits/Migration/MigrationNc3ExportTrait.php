@@ -25,6 +25,8 @@ use App\Models\Migration\Nc3\Nc3Blog;
 use App\Models\Migration\Nc3\Nc3BlogEntry;
 use App\Models\Migration\Nc3\Nc3Cabinet;
 use App\Models\Migration\Nc3\Nc3CabinetFile;
+use App\Models\Migration\Nc3\Nc3Calendar;
+use App\Models\Migration\Nc3\Nc3CalendarEvent;
 use App\Models\Migration\Nc3\Nc3CalendarFrameSetting;
 use App\Models\Migration\Nc3\Nc3Category;
 use App\Models\Migration\Nc3\Nc3Faq;
@@ -52,6 +54,7 @@ use App\Models\Migration\Nc3\Nc3RegistrationPage;
 use App\Models\Migration\Nc3\Nc3RegistrationQuestion;
 use App\Models\Migration\Nc3\Nc3ReservationFrameSetting;
 use App\Models\Migration\Nc3\Nc3Room;
+use App\Models\Migration\Nc3\Nc3RoomRolePermission;
 use App\Models\Migration\Nc3\Nc3PhotoAlbum;
 use App\Models\Migration\Nc3\Nc3PhotoAlbumFrameSetting;
 use App\Models\Migration\Nc3\Nc3SiteSetting;
@@ -128,7 +131,6 @@ trait MigrationNc3ExportTrait
      * 廃止のものは 'Abolition' にする。
      */
     protected $plugin_name = [
-        // 'calendars'        => 'calendars',    // カレンダー
         // 'photo_albums'     => 'photoalbums',  // フォトアルバム
         // 'reservations'     => 'reservations', // 施設予約
         // 'searches'         => 'searchs',      // 検索
@@ -138,7 +140,7 @@ trait MigrationNc3ExportTrait
         'bbses'            => 'bbses',          // 掲示板
         'blogs'            => 'blogs',          // ブログ
         'cabinets'         => 'cabinets',       // キャビネット
-        'calendars'        => 'Development',    // カレンダー
+        'calendars'        => 'calendars',      // カレンダー
         'circular_notices' => 'Development',    // 回覧板
         'faqs'             => 'faqs',           // FAQ
         'iframes'          => 'Development',    // iFrame
@@ -480,14 +482,14 @@ trait MigrationNc3ExportTrait
             $this->nc3ExportCounter($redo);
         }
 
+        // NC3 カレンダー（calendars）データのエクスポート
+        if ($this->isTarget('nc3_export', 'plugins', 'calendars')) {
+            $this->nc3ExportCalendar($redo);
+        }
+
         //////////////////
         // [TODO] まだ
         //////////////////
-
-        // // NC3 カレンダー（calendar）データのエクスポート
-        // if ($this->isTarget('nc3_export', 'plugins', 'calendars')) {
-        //     $this->nc3ExportCalendar($redo);
-        // }
 
         // // NC3 スライダー（slides）データのエクスポート
         // if ($this->isTarget('nc3_export', 'plugins', 'slideshows')) {
@@ -3432,7 +3434,7 @@ trait MigrationNc3ExportTrait
     }
 
     /**
-     * NC3：カレンダー（カレンダー）の移行
+     * NC3：カレンダー（calendars）の移行
      */
     private function nc3ExportCalendar($redo)
     {
@@ -3446,40 +3448,56 @@ trait MigrationNc3ExportTrait
 
         // ・NC3ルーム一覧とって、NC3予定データを移行する
         //   ※ ルームなしはありえない（必ずパブリックルームがあるため）
-        // ・NC3カレンダーブロック（モジュール配置したブロック（どう見せるか、だけ。ここ無くても予定データある））を移行する。
 
-        // NC3ルーム一覧を移行する。
+        // NC3全会員 （communityのルートroom_idが全会員のroom_id）
+        $nc3_space = Nc3Space::find(Nc3Space::COMMUNITY_SPACE_ID);
+        $all_users_room_id = $nc3_space->room_id_root;
+
+        // NC3ルーム一覧を移行する。（全会員は除外）
+        $nc3_rooms_query = Nc3Room::select('rooms.*', 'rooms_languages.name as room_name')
+            ->join('rooms_languages', function ($join) {
+                $join->on('rooms_languages.room_id', 'rooms.id')
+                    ->where('rooms_languages.language_id', Nc3Language::language_id_ja);
+            })
+            ->where('rooms.id', '!=', $all_users_room_id)
+            ->orderBy('rooms.id');
+
         $nc3_export_private_room_calendar = $this->getMigrationConfig('calendars', 'nc3_export_private_room_calendar');
         if (empty($nc3_export_private_room_calendar)) {
             // プライベートルームをエクスポート（=移行）しない
-            $nc3_page_rooms = Nc2Page::whereColumn('page_id', 'room_id')
-                ->whereIn('space_type', [1, 2])     // 1:パブリックスペース, 2:グループスペース
-                ->where('room_id', '!=', 2)         // 2:グループスペースを除外（枠だけでグループルームじゃないので除外）
-                ->where('private_flag', 0)          // 0:プライベートルーム以外
-                ->orderBy('room_id')
-                ->get();
+            $nc3_rooms_query = $nc3_rooms_query->whereIn('space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID]);
+
         } else {
             // プライベートルームをエクスポート（=移行）する
-            $nc3_page_rooms = Nc2Page::whereColumn('page_id', 'room_id')
-                ->whereIn('space_type', [1, 2])     // 1:パブリックスペース, 2:グループスペース
-                ->where('room_id', '!=', 2)         // 2:グループスペースを除外（枠だけでグループルームじゃないので除外）
-                ->orderBy('room_id')
-                ->get();
-        }
+            $nc3_rooms_query = $nc3_rooms_query->whereIn('space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID, Nc3Space::PRIVATE_SPACE_ID]);
 
-        // NC3権限設定（サイト全体で１設定のみ）. インストール時は空。権限設定でOK押さないとデータできない。
-        $nc3_calendar_manages = Nc2CalendarManage::orderBy('room_id')->get();
+        }
+        $nc3_rooms = $nc3_rooms_query->get();
+
+        // (nc3) calendarsはなぜかblock_key=1ルームとして設定を保持しているため取得
+        $nc3_calendars = Nc3Calendar::select('calendars.*', 'blocks.room_id')
+            ->join('blocks', function ($join) {
+                $join->on('blocks.key', 'calendars.block_key')
+                    ->where('blocks.plugin_key', 'calendars');
+            })
+            ->get();
 
         $nc3_export_room_ids = $this->getMigrationConfig('basic', 'nc3_export_room_ids');
 
         // nc3の全ユーザ取得
-        $nc3_users = Nc2User::get();
+        $nc3_users = Nc3User::get();
+
+        // NC3権限設定
+        $nc3_room_role_permissions = Nc3RoomRolePermission::getRoomRolePermissionsByRoomIds($nc3_rooms->pluck('id'));
+
+        // ブロック設定
+        $block_settings = Nc3BlockSetting::whereIn('block_key', $nc3_calendars->pluck('block_key'))->get();
 
         // ルームでループ（NC3カレンダーはルーム単位でエクスポート）
-        foreach ($nc3_page_rooms as $nc3_page_room) {
+        foreach ($nc3_rooms as $nc3_room) {
 
             // ルーム指定があれば、指定されたルームのみ処理する。
-            if (!empty($nc3_export_room_ids) && !in_array($nc3_page_room->room_id, $nc3_export_room_ids)) {
+            if (!empty($nc3_export_room_ids) && !in_array($nc3_room->id, $nc3_export_room_ids)) {
                 // ルーム指定あり。条件に合致せず。移行しない。
                 continue;
             }
@@ -3488,50 +3506,60 @@ trait MigrationNc3ExportTrait
             $ini = "";
             $ini .= "[calendar_base]\n";
 
-            // NC3 権限設定
-            $nc3_calendar_manage = $nc3_calendar_manages->firstWhere('room_id', $nc3_page_room->room_id);
+            // 権限設定
+            // ----------------------------------------------------
+            // ※ユーザ (nc3)一般 => (cc)編集者
+            // カレンダーの権限はサイトで１セット。だけどなぜか 一般の権限設定は block_role_permission にあるためそっちも見る。
+            $nc3_room_role_permission = $nc3_room_role_permissions->where('permission', 'content_creatable')
+                ->where('role_key', 'general_user')
+                ->firstWhere('room_id', $nc3_room->id);
+
+            $article_post_flag = 1;     // 投稿権限はnc3編集者まで常時チェックON
+            $reporter_post_flag = 0;
+
+            if (empty($nc3_room_role_permission)) {
+                $reporter_post_flag = 0;
+            } else {
+                $reporter_post_flag = $nc3_room_role_permission->block_role_permission_value ? $nc3_room_role_permission->block_role_permission_value : $nc3_room_role_permission->value;
+            }
+
+            // 承認あり
+            // パブリック　：デフォ承認ありっぽい
+            // コミュニティ：デフォ承認なしっぽい
+            // 全会員　　　：デフォ承認ありっぽい。（全会員は room_id=3, Nc3Space::COMMUNITY_SPACE_IDのルートroom_id）
+            // $roomBlock[$this->alias]['use_workflow'] = Hash::get($roomBlock, 'Room.need_approval'); がデフォ値。
+            // 記事承認（content_publishable）はルーム管理者・編集長固定. 編集者は承認必要
+
+            // room_idからcalendarsのblock_keyを取り出し
+            $nc3_calendar = $nc3_calendars->firstWhere('room_id', $nc3_room->id) ?? new Nc3Calendar();
+            $use_workflow = Nc3BlockSetting::getNc3BlockSettingValue($block_settings, $nc3_calendar->block_key, 'use_workflow', $nc3_room->need_approval);
+
             $ini .= "\n";
             $ini .= "[calendar_manage]\n";
-            if (is_null($nc3_calendar_manage)) {
-                // データなしは 4:主担。 ここに全会員ルームのデータは入ってこないため、これでOK
-                $ini .= "add_authority_id = 4\n";
-                // フラグは必ず1
-                // $ini .= "use_flag = 1\n";
-            } else {
-                // 予定を追加できる権限. 2:主担,モデレータ,一般  3:主担,モデレータ  4:主担  5:なし（全会員のみ設定可能）
-                $ini .= "add_authority_id = " . $nc3_calendar_manage->add_authority_id . "\n";
-                // フラグ. 1:使う
-                // $ini .= "use_flag = " . $nc3_calendar_manage->use_flag . "\n";
-            }
+            $ini .= "article_post_flag      = {$article_post_flag}\n";
+            $ini .= "article_approval_flag  = 0\n";                                 // 編集長=モデは承認不要
+            $ini .= "reporter_post_flag     = {$reporter_post_flag}\n";
+            $ini .= "reporter_approval_flag = {$use_workflow}\n";                   // 承認ありなら編集者承認ON
 
             // NC3 情報
             $ini .= "\n";
             $ini .= "[source_info]\n";
-            $ini .= "room_id = " . $nc3_page_room->room_id . "\n";
+            $ini .= "room_id = " . $nc3_room->id . "\n";
             // ルーム名
-            $ini .= "room_name = '" . $nc3_page_room->page_name . "'\n";
-            // プライベートフラグ, 1:プライベートルーム, 0:プライベートルーム以外
-            $ini .= "private_flag = " . $nc3_page_room->private_flag . "\n";
+            $ini .= "room_name = '" . $nc3_room->room_name . "'\n";
             // スペースID
-            $ini .= "space_id = " . $nc3_page_room->space_id . "\n";
-            $ini .= "plugin_key = \"calendar\"\n";
+            $ini .= "space_id = " . $nc3_room->space_id . "\n";
+            $ini .= "plugin_key = \"calendars\"\n";
 
 
             // カラムのヘッダー及びTSV 行毎の枠準備
-            $tsv_header = "calendar_id" . "\t" . "plan_id" . "\t" . "user_id" . "\t" . "user_name" . "\t" . "title" . "\t" .
-                "allday_flag" . "\t" . "start_date" . "\t" . "start_time" . "\t" . "end_date" . "\t" . "end_time" . "\t" .
-                // NC3 calendar_plan_details
+            $tsv_header = "post_id" . "\t" . "title" . "\t" . "allday_flag" . "\t" . "start_date" . "\t" . "start_time" . "\t" . "end_date" . "\t" . "end_time" . "\t" .
                 "location" . "\t" . "contact" . "\t" . "body" . "\t" . "rrule" . "\t" .
-                // NC3 calendar_plan 登録日・更新日等
                 "created_at" . "\t" . "created_name" . "\t" . "insert_login_id" . "\t" . "updated_at" . "\t" . "updated_name" . "\t" . "update_login_id" . "\t" .
                 // CC 状態
                 "status";
 
-            // NC3 calendar_plan
-            $tsv_cols['calendar_id'] = "";
-            $tsv_cols['plan_id'] = "";
-            $tsv_cols['user_id'] = "";
-            $tsv_cols['user_name'] = "";
+            $tsv_cols['post_id'] = "";
             $tsv_cols['title'] = "";
             $tsv_cols['allday_flag'] = "";
             $tsv_cols['start_date'] = "";
@@ -3539,7 +3567,6 @@ trait MigrationNc3ExportTrait
             $tsv_cols['end_date'] = "";
             $tsv_cols['end_time'] = "";
 
-            // NC3 calendar_plan_details
             // 場所
             $tsv_cols['location'] = "";
             // 連絡先
@@ -3549,7 +3576,7 @@ trait MigrationNc3ExportTrait
             // 繰り返し条件
             $tsv_cols['rrule'] = "";
 
-            // NC3 calendar_plan 登録日・更新日等
+            // 登録日・更新日等
             $tsv_cols['created_at'] = "";
             $tsv_cols['created_name'] = "";
             $tsv_cols['insert_login_id'] = "";
@@ -3560,45 +3587,41 @@ trait MigrationNc3ExportTrait
             // CC 状態
             $tsv_cols['status'] = "";
 
-            // カレンダーの予定 calendar_plan
-            $calendar_plans = Nc2CalendarPlan::
-                leftjoin('calendar_plan_details', function ($join) {
-                    $join->on('calendar_plan.plan_id', '=', 'calendar_plan_details.plan_id')
-                        ->whereColumn('calendar_plan.room_id', 'calendar_plan_details.room_id');
+            // カレンダーの予定
+            $calendar_events = Nc3CalendarEvent::select('calendar_events.*', 'calendar_rrules.rrule')
+                ->leftJoin('calendar_rrules', function ($join) {
+                    $join->on('calendar_rrules.id', '=', 'calendar_events.calendar_rrule_id');
                 })
-                ->where('calendar_plan.room_id', $nc3_page_room->room_id)
-                ->orderBy('calendar_plan.calendar_id', 'asc')
+                ->where('calendar_events.is_latest', 1)
+                ->where('calendar_events.room_id', $nc3_room->id)
+                ->orderBy('calendar_events.room_id', 'asc')
                 ->get();
 
             // カラムデータのループ
-            Storage::delete($this->getImportPath('calendars/calendar_room_') . $this->zeroSuppress($nc3_page_room->room_id) . '.tsv');
+            Storage::delete($this->getImportPath('calendars/calendar_room_') . $this->zeroSuppress($nc3_room->id) . '.tsv');
 
             $tsv = '';
             $tsv .= $tsv_header . "\n";
 
-            foreach ($calendar_plans as $calendar_plan) {
+            foreach ($calendar_events as $calendar_event) {
 
                 // 初期化
                 $tsv_record = $tsv_cols;
 
-                // NC3 calendar_plan
-                $tsv_record['calendar_id'] = $calendar_plan->calendar_id;
-                $tsv_record['plan_id'] = $calendar_plan->plan_id;
-                $tsv_record['user_id'] = $calendar_plan->user_id;
-                $tsv_record['user_name'] = $calendar_plan->user_name;
-                $tsv_record['title'] = $calendar_plan->title;
-                $tsv_record['allday_flag'] = $calendar_plan->allday_flag;
+                $tsv_record['post_id'] = $calendar_event->id;
+                $tsv_record['title']       = $calendar_event->title;
+                $tsv_record['allday_flag'] = $calendar_event->is_allday;
 
                 // 予定開始日時
                 // Carbon()で処理。必須値のため基本値がある想定で、timezone_offset で時間加算して予定時間を算出
-                $start_time_full = (new Carbon($calendar_plan->start_time_full))->addHour($calendar_plan->timezone_offset);
-                $tsv_record['start_date'] = $start_time_full->format('Y-m-d');
-                $tsv_record['start_time'] = $start_time_full->format('H:i:s');
+                $dtstart = (new Carbon($calendar_event->dtstart))->addHour($calendar_event->timezone_offset);
+                $tsv_record['start_date'] = $dtstart->format('Y-m-d');
+                $tsv_record['start_time'] = $dtstart->format('H:i:s');
 
                 // 予定終了日時
                 // Carbon()で処理。必須値のため基本値がある想定で、timezone_offset で時間加算して予定時間を算出
-                $end_time_full = (new Carbon($calendar_plan->end_time_full))->addHour($calendar_plan->timezone_offset);
-                if ($calendar_plan->allday_flag == 1) {
+                $dtend = (new Carbon($calendar_event->dtend))->addHour($calendar_event->timezone_offset);
+                if ($calendar_event->is_allday == 1) {
                     // 全日で終了日時の変換対応. -1日する。
                     //
                     // ・NC3 で登録できる開始時間：0:00～23:55 （24:00ないため、こっちは対応不要）
@@ -3611,153 +3634,133 @@ trait MigrationNc3ExportTrait
                     //    そのため、2021/08/11 0:00～2021/08/12 0:00 を 2021/08/11 0:00～2021/08/11 0:00に変換する。
 
                     // -1日
-                    $end_time_full = $end_time_full->subDay();
-                } elseif ($end_time_full->format('H:i:s') == '00:00:00') {
+                    $dtend = $dtend->subDay();
+                } elseif ($dtend->format('H:i:s') == '00:00:00') {
                     // 全日以外で終了日時が0:00の変換対応. -1分する。
                     // ※ 例えばNC3の「時間指定」で10:00～24:00という予定に対応して、10:00～23:59に終了時間を変換する
 
                     // -1分
-                    $end_time_full = $end_time_full->subMinute();
+                    $dtend = $dtend->subMinute();
                 }
-                $tsv_record['end_date'] = $end_time_full->format('Y-m-d');
-                $tsv_record['end_time'] = $end_time_full->format('H:i:s');
+                $tsv_record['end_date'] = $dtend->format('Y-m-d');
+                $tsv_record['end_time'] = $dtend->format('H:i:s');
 
-                // NC3 calendar_plan_details（plan_id, room_idあり）
                 // 場所
-                $tsv_record['location'] = $calendar_plan->location;
+                $tsv_record['location'] = $calendar_event->location;
                 // 連絡先
-                $tsv_record['contact'] = $calendar_plan->contact;
+                $tsv_record['contact'] = $calendar_event->contact;
                 // 内容 [WYSIWYG]
-                $tsv_record['body'] = $this->nc3Wysiwyg(null, null, null, null, $calendar_plan->description, 'calendar');
-
+                $tsv_record['body'] = $this->nc3Wysiwyg(null, null, null, null, $calendar_event->description, 'calendars');
                 // 繰り返し条件
-                $tsv_record['rrule'] = $calendar_plan->rrule;
-
-                // NC3 calendar_plan 登録日・更新日等
-                $tsv_record['created_at']      = $this->getCCDatetime($calendar_plan->created);
-                $tsv_record['created_name']    = $calendar_plan->insert_user_name;
-                $tsv_record['insert_login_id'] = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $calendar_plan->created_user);
-                $tsv_record['updated_at']      = $this->getCCDatetime($calendar_plan->modified);
-                $tsv_record['updated_name']    = $calendar_plan->update_user_name;
-                $tsv_record['update_login_id'] = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $calendar_plan->modified_user);
-
-                // NC3カレンダー予定は公開のみ
-                $tsv_record['status'] = 0;
+                $tsv_record['rrule'] = $calendar_event->rrule;
+                // 登録日・更新日等
+                $tsv_record['created_at']      = $this->getCCDatetime($calendar_event->created);
+                $tsv_record['created_name']    = Nc3User::getNc3HandleFromNc3UserId($nc3_users, $calendar_event->created_user);
+                $tsv_record['insert_login_id'] = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $calendar_event->created_user);
+                $tsv_record['updated_at']      = $this->getCCDatetime($calendar_event->modified);
+                $tsv_record['updated_name']    = Nc3User::getNc3HandleFromNc3UserId($nc3_users, $calendar_event->modified_user);
+                $tsv_record['update_login_id'] = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $calendar_event->modified_user);
+                $tsv_record['status']          = $calendar_event->status;
 
                 $tsv .= implode("\t", $tsv_record) . "\n";
             }
 
             // データ行の書き出し
             $tsv = $this->exportStrReplace($tsv, 'calendars');
-            $this->storageAppend($this->getImportPath('calendars/calendar_room_') . $this->zeroSuppress($nc3_page_room->room_id) . '.tsv', $tsv);
+            $this->storageAppend($this->getImportPath('calendars/calendar_room_') . $this->zeroSuppress($nc3_room->id) . '.tsv', $tsv);
 
             // カレンダーの設定を出力
-            $this->storagePut($this->getImportPath('calendars/calendar_room_') . $this->zeroSuppress($nc3_page_room->room_id) . '.ini', $ini);
+            $this->storagePut($this->getImportPath('calendars/calendar_room_') . $this->zeroSuppress($nc3_room->id) . '.ini', $ini);
         }
 
 
-        // NC3全会員 room_id=0（nc3_page にデータないため手動で設定）
-        $all_users_room_id = 0;
+        // NC3全会員
 
         // ルーム指定があれば、指定されたルームのみ処理する。
         if (empty($nc3_export_room_ids) || in_array($all_users_room_id, $nc3_export_room_ids)) {
 
+            // NC3ルーム（全会員）
+            $nc3_room = Nc3Room::find($all_users_room_id);
+
+            // 権限設定
+            // ----------------------------------------------------
+            // ※ユーザ (nc3)一般 => (cc)編集者
+            // カレンダーの権限はサイトで１セット。だけどなぜか 一般の権限設定は block_role_permission にあるためそっちも見る。
+            $nc3_room_role_permission = $nc3_room_role_permissions->where('permission', 'content_creatable')
+                ->where('role_key', 'general_user')
+                ->firstWhere('room_id', $nc3_room->id);
+
+            $article_post_flag = 1;     // 投稿権限はnc3編集者まで常時チェックON
+            $reporter_post_flag = 0;
+
+            if (empty($nc3_room_role_permission)) {
+                $reporter_post_flag = 0;
+            } else {
+                $reporter_post_flag = $nc3_room_role_permission->block_role_permission_value ? $nc3_room_role_permission->block_role_permission_value : $nc3_room_role_permission->value;
+            }
+
+            // 承認あり
+            // room_idからcalendarsのblock_keyを取り出し
+            $nc3_calendar = $nc3_calendars->firstWhere('room_id', $nc3_room->id) ?? new Nc3Calendar();
+            $use_workflow = Nc3BlockSetting::getNc3BlockSettingValue($block_settings, $nc3_calendar->block_key, 'use_workflow', $nc3_room->need_approval);
+
             // カレンダー設定
             $ini = "";
             $ini .= "[calendar_base]\n";
-
-            // NC3 権限設定
-            $nc3_calendar_manage = $nc3_calendar_manages->firstWhere('room_id', $all_users_room_id);
             $ini .= "\n";
             $ini .= "[calendar_manage]\n";
-            if (is_null($nc3_calendar_manage)) {
-                // 全会員のデータなしは 5:なし（全会員のみ設定可能）
-                $ini .= "add_authority_id = 5\n";
-                // フラグは必ず1
-                // $ini .= "use_flag = 1\n";
-            } else {
-                // 予定を追加できる権限. 2:主担,モデレータ,一般  3:主担,モデレータ  4:主担  5:なし（全会員のみ設定可能）
-                $ini .= "add_authority_id = " . $nc3_calendar_manage->add_authority_id . "\n";
-                // フラグ. 1:使う
-                // $ini .= "use_flag = " . $nc3_calendar_manage->use_flag . "\n";
-            }
+            $ini .= "article_post_flag      = {$article_post_flag}\n";
+            $ini .= "article_approval_flag  = 0\n";                                 // 編集長=モデは承認不要
+            $ini .= "reporter_post_flag     = {$reporter_post_flag}\n";
+            $ini .= "reporter_approval_flag = {$use_workflow}\n";                   // 承認ありなら編集者承認ON
 
             // NC3 情報
             $ini .= "\n";
             $ini .= "[source_info]\n";
-            $ini .= "room_id = " . $all_users_room_id . "\n";
+            $ini .= "room_id = " . $nc3_room->id . "\n";
             // ルーム名
-            $ini .= "room_name = 全会員\n";
-            // プライベートフラグ, 1:プライベートルーム
-            $ini .= "private_flag = 0\n";
-            // スペースタイプ, 1:パブリックスペース, 2:グループスペース
-            $ini .= "space_type =\n";
-            $ini .= "plugin_key = \"calendar\"\n";
+            $ini .= "room_name = '全会員'\n";
+            // スペースID
+            $ini .= "space_id = " . $nc3_room->space_id . "\n";
+            $ini .= "plugin_key = \"calendars\"\n";
 
             // カレンダーの設定を出力
             $this->storagePut($this->getImportPath('calendars/calendar_room_') . $this->zeroSuppress($all_users_room_id) . '.ini', $ini);
         }
 
 
-        // NC3カレンダーブロック（モジュール配置したブロック（どう見せるか、だけ。ここ無くても予定データある））を移行する。
-        $where_calendar_block_ids = $this->getMigrationConfig('calendars', 'nc3_export_where_calendar_block_ids');
-        if (empty($where_calendar_block_ids)) {
-            $nc3_calendar_blocks = Nc2CalendarBlock::orderBy('block_id')->get();
-        } else {
-            $nc3_calendar_blocks = Nc2CalendarBlock::whereIn('block_id', $where_calendar_block_ids)->orderBy('block_id')->get();
-        }
+        // NC3カレンダーフレーム（インポート時にframe_idからroom_idを取得するために出力）
+        $nc3_calendar_frame_settings = Nc3CalendarFrameSetting::select('calendar_frame_settings.*', 'frames.id as frame_id', 'frames.room_id')
+            ->leftJoin('frames', function ($join) {
+                $join->on('frames.key', '=', 'calendar_frame_settings.frame_key');
+            })
+            ->orderBy('calendar_frame_settings.id')
+            ->get();
 
         // 空なら戻る
-        if ($nc3_calendar_blocks->isEmpty()) {
+        if ($nc3_calendar_frame_settings->isEmpty()) {
             return;
         }
 
-        // NC3 指定ルームのみ表示 nc3_calendar_select_room
-        // if (empty($where_calendar_block_ids)) {
-        //     $nc3_calendar_select_rooms = Nc2CalendarSelectRoom::orderBy('block_id')->get();
-        // } else {
-        //     $nc3_calendar_select_rooms = Nc2CalendarSelectRoom::whereIn('block_id', $where_calendar_block_ids)->orderBy('block_id')->get();
-        // }
-
         // NC3カレンダーブロックのループ
-        foreach ($nc3_calendar_blocks as $nc3_calendar_block) {
+        foreach ($nc3_calendar_frame_settings as $nc3_calendar_frame_setting) {
 
             // ルーム指定があれば、指定されたルームのみ処理する。
-            if (!empty($nc3_export_room_ids) && !in_array($nc3_page_room->room_id, $nc3_export_room_ids)) {
+            if (!empty($nc3_export_room_ids) && !in_array($nc3_room->id, $nc3_export_room_ids)) {
                 // ルーム指定あり。条件に合致せず。移行しない。
                 continue;
             }
 
-            // NC3 カレンダーブロック（表示方法）設定
-            $ini = "";
-            $ini .= "[calendar_block]\n";
-            // 表示方法
-            $ini .= "display_type = " . $nc3_calendar_block->display_type . "\n";
-            // 開始位置
-            // $ini .= "start_pos = " .  $nc3_calendar_block->start_pos . "\n";
-            // 表示日数
-            // $ini .= "display_count = " . $nc3_calendar_block->display_count . "\n";
-            // 指定したルームのみ表示する 1:ルーム指定する 0:指定しない
-            // $ini .= "select_room = " . $nc3_calendar_block->select_room . "\n";
-            // [不明] 画面に該当項目なし。プライベートルームにカレンダー配置しても 0 だった。
-            // $ini .= "myroom_flag = " . $nc3_calendar_block->myroom_flag . "\n";
-
-            // NC3 指定ルームのみ表示
-            // $ini .= "\n";
-            // $ini .= "[calendar_select_room]\n";
-            // foreach ($nc3_calendar_select_rooms as $nc3_calendar_select_room) {
-            //     $ini .= "room_id[] = " . $nc3_calendar_select_room->room_id . "\n";
-            // }
-
             // NC3 情報
+            $ini = "";
             $ini .= "\n";
             $ini .= "[source_info]\n";
-            $ini .= "calendar_block_id = " . $nc3_calendar_block->block_id . "\n";
-            $ini .= "room_id = " . $nc3_calendar_block->room_id . "\n";
-            $ini .= "plugin_key = \"calendar\"\n";
+            $ini .= "calendar_block_id = " . $nc3_calendar_frame_setting->frame_id . "\n";
+            $ini .= "room_id           = " . $nc3_calendar_frame_setting->room_id . "\n";
+            $ini .= "plugin_key        = \"calendars\"\n";
 
             // カレンダーの設定を出力
-            $this->storagePut($this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc3_calendar_block->block_id) . '.ini', $ini);
+            $this->storagePut($this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc3_calendar_frame_setting->frame_id) . '.ini', $ini);
         }
     }
 
@@ -4840,37 +4843,6 @@ trait MigrationNc3ExportTrait
                 $frame_ini .= "frame_col = " . $nc3_frame->frame_col . "\n";
             }
 
-            // 各項目
-            // [TODO] 未対応
-            // if ($nc3_frame->plugin_key == 'calendars') {
-            //     $calendar_block_ini = null;
-            //     $calendar_display_type = null;
-
-            //     // カレンダーブロックの情報取得
-            //     if (Storage::exists($this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc3_frame->block_id) . '.ini')) {
-            //         $calendar_block_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc3_frame->block_id) . '.ini', true);
-            //     }
-
-            //     if (!empty($calendar_block_ini) && array_key_exists('calendar_block', $calendar_block_ini) && array_key_exists('display_type', $calendar_block_ini['calendar_block'])) {
-            //         // NC3 のcalendar の display_type
-            //         $calendar_display_type = MigrationUtils::getArrayValue($calendar_block_ini, 'calendar_block', 'display_type', null);
-            //     }
-
-            //     // frame_design 変換 (key:nc3)display_type => (value:cc)template
-            //     // (NC3)初期値 = 月表示（縮小）= 2
-            //     // (CC) 初期値 = 月表示（大）= default
-            //     $display_type_to_frame_designs = [
-            //         1 => 'default',     // 1:年間表示
-            //         2 => 'small_month', // 2:月表示（縮小）
-            //         3 => 'default',     // 3:月表示（拡大）
-            //         4 => 'default',     // 4:週表示
-            //         5 => 'day',         // 5:日表示
-            //         6 => 'day',         // 6:スケジュール（時間順）
-            //         7 => 'day',         // 7:スケジュール（会員順）
-            //     ];
-            //     $frame_design = $display_type_to_frame_designs[$calendar_display_type] ?? 'default';
-            //     $frame_ini .= "template = \"" . $frame_design . "\"\n";
-            // }
             if (!empty($nc3_frame->template)) {
                 // overrideNc3Frame()関連設定 があれば最優先で設定
                 $frame_ini .= "template = \"" . $nc3_frame->template . "\"\n";
@@ -4894,6 +4866,24 @@ trait MigrationNc3ExportTrait
                 ];
                 $template = $convert_templates[$nc3_menu_frame_setting->display_type] ?? 'default';
                 $frame_ini .= "template = \"{$template}\"\n";
+
+            } elseif ($nc3_frame->plugin_key == 'calendars') {
+                // NC3カレンダーフレーム（どう見せるか、だけ。ここ無くても予定データある）を移行する。
+                $nc3_calendar_frame_setting = Nc3CalendarFrameSetting::where('frame_key', $nc3_frame->key)->first();
+
+                // frame_design 変換 (key:nc3)display_type => (value:cc)template
+                // (NC3)初期値 = 月表示（縮小）= 1
+                // (CC) 初期値 = 月表示（大）= default
+                $display_type_to_frame_designs = [
+                    1 => 'small_month', // 1:月表示（縮小）
+                    2 => 'default',     // 2:月表示（拡大）
+                    3 => 'default',     // 3:週表示
+                    4 => 'day',         // 4:日表示
+                    5 => 'day',         // 5:スケジュール（時間順）
+                    6 => 'day',         // 6:スケジュール（会員順）
+                ];
+                $frame_design = $display_type_to_frame_designs[$nc3_calendar_frame_setting->display_type] ?? 'default';
+                $frame_ini .= "template = \"" . $frame_design . "\"\n";
             } else {
                 $frame_ini .= "template = \"default\"\n";
             }
@@ -5794,7 +5784,7 @@ trait MigrationNc3ExportTrait
 
 
         $i = 0;
-        while (!isset($headers[$i])) {
+        while (isset($headers[$i])) {
             if (stripos($headers[$i], "200") !== false) {
                 // OK
                 return true;
