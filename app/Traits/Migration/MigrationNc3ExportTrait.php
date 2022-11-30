@@ -138,7 +138,6 @@ trait MigrationNc3ExportTrait
     protected $plugin_name = [
         // 'photo_albums'     => 'photoalbums',  // フォトアルバム
         // 'searches'         => 'searchs',      // 検索
-        // 'videos'           => 'Development',  // 動画
         'access_counters'  => 'counters',       // カウンター
         'announcements'    => 'contents',       // お知らせ
         'bbses'            => 'bbses',          // 掲示板
