@@ -4240,7 +4240,7 @@ trait MigrationTrait
                             ]);
 
                             // 開始日
-                            // ※ [要注意] NC2の reservation_reserve_details.rrule は DTSTART がないため、移行時は開始日の補完が必要。
+                            // ※ [要注意] NC2/NC3の rrule は DTSTART がないため、移行時は開始日の補完が必要。
                             //            DTSTART無指定だと、今日日付で処理される。
                             $dtstart = RRule::parseDate($reservation_tsv_cols[$tsv_idxs['start_time_full']]);
 
