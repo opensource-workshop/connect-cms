@@ -52,7 +52,11 @@ use App\Models\Migration\Nc3\Nc3Registration;
 use App\Models\Migration\Nc3\Nc3RegistrationChoice;
 use App\Models\Migration\Nc3\Nc3RegistrationPage;
 use App\Models\Migration\Nc3\Nc3RegistrationQuestion;
+use App\Models\Migration\Nc3\Nc3ReservationEvent;
 use App\Models\Migration\Nc3\Nc3ReservationFrameSetting;
+use App\Models\Migration\Nc3\Nc3ReservationLocation;
+use App\Models\Migration\Nc3\Nc3ReservationLocationsApprovalUser;
+use App\Models\Migration\Nc3\Nc3ReservationLocationsReservable;
 use App\Models\Migration\Nc3\Nc3Room;
 use App\Models\Migration\Nc3\Nc3RoomRolePermission;
 use App\Models\Migration\Nc3\Nc3PhotoAlbum;
@@ -79,6 +83,7 @@ use App\Enums\FaqSequenceConditionType;
 use App\Enums\FormColumnType;
 use App\Enums\LinklistType;
 use App\Enums\NoticeEmbeddedTag;
+use App\Enums\ReservationCalendarDisplayType;
 use App\Enums\ReservationLimitedByRole;
 use App\Enums\ReservationNoticeEmbeddedTag;
 use App\Enums\StatusType;
@@ -132,7 +137,6 @@ trait MigrationNc3ExportTrait
      */
     protected $plugin_name = [
         // 'photo_albums'     => 'photoalbums',  // フォトアルバム
-        // 'reservations'     => 'reservations', // 施設予約
         // 'searches'         => 'searchs',      // 検索
         // 'videos'           => 'Development',  // 動画
         'access_counters'  => 'counters',       // カウンター
@@ -151,7 +155,7 @@ trait MigrationNc3ExportTrait
         'questionnaires'   => 'Development',    // アンケート
         'quizzes'          => 'Development',    // 小テスト
         'registrations'    => 'forms',          // フォーム
-        'reservations'     => 'Development',    // 施設予約
+        'reservations'     => 'reservations',   // 施設予約
         'rss_readers'      => 'Development',    // RSS
         'searches'         => 'Development',    // 検索
         'tasks'            => 'Development',    // ToDo
@@ -487,6 +491,11 @@ trait MigrationNc3ExportTrait
             $this->nc3ExportCalendar($redo);
         }
 
+        // NC3 施設予約（reservations）データのエクスポート
+        if ($this->isTarget('nc3_export', 'plugins', 'reservations')) {
+            $this->nc3ExportReservation($redo);
+        }
+
         //////////////////
         // [TODO] まだ
         //////////////////
@@ -499,11 +508,6 @@ trait MigrationNc3ExportTrait
         // // NC3 シンプル動画（simplemovie）データのエクスポート
         // if ($this->isTarget('nc3_export', 'plugins', 'simplemovie')) {
         //     $this->nc3ExportSimplemovie($redo);
-        // }
-
-        // // NC3 施設予約（reservation）データのエクスポート
-        // if ($this->isTarget('nc3_export', 'plugins', 'reservations')) {
-        //     $this->nc3ExportReservation($redo);
         // }
 
         // // NC3 フォトアルバム（photoalbum）データのエクスポート
@@ -3927,46 +3931,68 @@ trait MigrationNc3ExportTrait
 
         // ・NC3ルーム一覧とって、NC3予定データを移行する
         //   ※ ルームなしはありえない（必ずパブリックルームがあるため）
-        // ・NC3施設予約ブロック（モジュール配置したブロック（どう見せるか、だけ。ここ無くても予定データある））を移行する。
+        // ・NC3施設予約フレーム（配置したフレーム（どう見せるか、だけ。ここ無くても予定データある））を移行する。
 
         // 施設カテゴリ
         // ----------------------------------------------------
-        $nc3_reservation_categories = Nc2ReservationCategory::orderBy('display_sequence')->get();
+        $block = Nc3Block::where('plugin_key', 'reservations')->first() ?? new Nc3Block();
+        // カテゴリ
+        $nc3_reservation_categories = Nc3Category::getCategoriesByBlockIds([$block->id]);
         foreach ($nc3_reservation_categories as $nc3_reservation_category) {
+
+            // (cc)表示順=1（カテゴリなし）あり＋(nc3)の並び順は1から、のため+1
+            $display_sequence = $nc3_reservation_category->display_sequence + 1;
+
             // NC3 施設カテゴリ設定
             $ini = "";
             $ini .= "[reservation_category]\n";
             // カテゴリ名
-            $ini .= "category_name = \"" . $nc3_reservation_category->category_name . "\"\n";
-
+            $ini .= "category_name = \"" . $nc3_reservation_category->name . "\"\n";
             // 表示順
-            $ini .= "display_sequence = " . $nc3_reservation_category->display_sequence . "\n";
-
+            $ini .= "display_sequence = " . $display_sequence . "\n";
             // NC3 情報
             $ini .= "\n";
             $ini .= "[source_info]\n";
-            $ini .= "category_id = " . $nc3_reservation_category->category_id . "\n";
-            $ini .= "plugin_key = \"reservation\"\n";
+            $ini .= "category_id = " . $nc3_reservation_category->id . "\n";
+            $ini .= "plugin_key = \"reservations\"\n";
 
             // 施設予約の設定を出力
-            $this->storagePut($this->getImportPath('reservations/reservation_category_') . $this->zeroSuppress($nc3_reservation_category->category_id) . '.ini', $ini);
+            $this->storagePut($this->getImportPath('reservations/reservation_category_') . $this->zeroSuppress($nc3_reservation_category->id) . '.ini', $ini);
         }
 
         // NC3施設のエクスポート
         // ----------------------------------------------------
         $where_reservation_location_ids = $this->getMigrationConfig('reservations', 'nc3_export_where_reservation_location_ids');
         if (empty($where_reservation_location_ids)) {
-            $nc3_reservation_locations = Nc2ReservationLocation::orderBy('category_id')->orderBy('display_sequence')->get();
-            $nc3_reservation_location_details = Nc2ReservationLocationDetail::orderBy('location_id')->get();
+            $nc3_reservation_locations = Nc3ReservationLocation::orderBy('category_id')->orderBy('weight')->get();
         } else {
-            $nc3_reservation_locations = Nc2ReservationLocation::whereIn('location_id', $where_reservation_location_ids)->orderBy('category_id')->orderBy('display_sequence')->get();
-            $nc3_reservation_location_details = Nc2ReservationLocationDetail::whereIn('location_id', $where_reservation_location_ids)->orderBy('location_id')->get();
+            $nc3_reservation_locations = Nc3ReservationLocation::whereIn('id', $where_reservation_location_ids)->orderBy('category_id')->orderBy('weight')->get();
         }
 
         // nc3の全ユーザ取得
-        $nc3_users = Nc2User::get();
+        $nc3_users = Nc3User::get();
+
+        // 施設管理者
+        $nc3_reservation_locations_approval_users = Nc3ReservationLocationsApprovalUser::select('reservation_locations_approval_users.location_key', 'users.handlename')
+            ->join('users', function ($join) {
+                $join->on('users.id', '=', 'reservation_locations_approval_users.user_id');
+            })
+            ->orderBy('reservation_locations_approval_users.id')
+            ->get();
+
+        // 予約できる権限
+        $nc3_reservation_location_reservables = Nc3ReservationLocationsReservable::get();
+
+        // 並び順（nc3の施設並び順が壊れていて、1番目から0,3,4,5 だったため、並び順を振りなおす）
+        $display_sequence = 1;
+        $before_category_id = null;
 
         foreach ($nc3_reservation_locations as $nc3_reservation_location) {
+            // 表示順初期化
+            if ($before_category_id != $nc3_reservation_location->category_id) {
+                $display_sequence = 1;
+            }
+
             // NC3 施設カテゴリ設定
             $ini = "";
             $ini .= "[reservation_location]\n";
@@ -3974,29 +4000,40 @@ trait MigrationNc3ExportTrait
             $ini .= "category_id = " . $nc3_reservation_location->category_id . "\n";
             // 施設名
             $ini .= "location_name = \"" . $nc3_reservation_location->location_name . "\"\n";
-            // （画面に対象となる項目なし）active_flag
-            // $ini .= "active_flag = " . $nc3_reservation_location->active_flag . "\n";
 
-            // 予約できる権限 4:主担のみ, 3:モデレータ以上, 2:一般以上
-            // $ini .= "add_authority = " . $nc3_reservation_location->add_authority . "\n";
-            if ($nc3_reservation_location->add_authority == 4 || $nc3_reservation_location->add_authority == 3) {
+            // 予約できる権限
+            // 一般
+            $is_reservable_general_user = Nc3ReservationLocationsReservable::getReservableValue($nc3_reservation_location_reservables, $nc3_reservation_location->key, 'general_user');
+            // 編集者
+            $is_reservable_editor       = Nc3ReservationLocationsReservable::getReservableValue($nc3_reservation_location_reservables, $nc3_reservation_location->key, 'editor');
+            // 編集長
+            $is_reservable_chief_editor = Nc3ReservationLocationsReservable::getReservableValue($nc3_reservation_location_reservables, $nc3_reservation_location->key, 'chief_editor');
+
+            if ($is_reservable_general_user) {
+                // 一般まで
+                $ini .= "is_limited_by_role = " . ReservationLimitedByRole::not_limited . "\n";
+            } elseif ($is_reservable_editor) {
+                // 編集者まで
+                $ini .= "is_limited_by_role = " . ReservationLimitedByRole::limited . "\n";
+            } elseif ($is_reservable_chief_editor) {
+                // 編集長まで
                 $ini .= "is_limited_by_role = " . ReservationLimitedByRole::limited . "\n";
             } else {
-                $ini .= "is_limited_by_role = " . ReservationLimitedByRole::not_limited . "\n";
+                // ルーム管理者のみ
+                $ini .= "is_limited_by_role = " . ReservationLimitedByRole::limited . "\n";
             }
 
-            // 利用曜日 例）SU,MO,TU,WE,TH,FR,SA
-            // $ini .= "time_table = " . $nc3_reservation_location->time_table . "\n";
-            $time_tables = explode(',', $nc3_reservation_location->time_table);
+            // 利用曜日 例）Sun|Mon|Tue|Wed|Thu|Fri|Sat
+            $time_tables = explode('|', $nc3_reservation_location->time_table);
             // 変換
             $convert_day_of_week = [
-                'SU' => DayOfWeek::sun,
-                'MO' => DayOfWeek::mon,
-                'TU' => DayOfWeek::tue,
-                'WE' => DayOfWeek::wed,
-                'TH' => DayOfWeek::thu,
-                'FR' => DayOfWeek::fri,
-                'SA' => DayOfWeek::sat,
+                'Sun' => DayOfWeek::sun,
+                'Mon' => DayOfWeek::mon,
+                'Tue' => DayOfWeek::tue,
+                'Wed' => DayOfWeek::wed,
+                'Thu' => DayOfWeek::thu,
+                'Fri' => DayOfWeek::fri,
+                'Sat' => DayOfWeek::sat,
             ];
             $day_of_weeks = [];
             foreach ($time_tables as $time_table) {
@@ -4004,10 +4041,8 @@ trait MigrationNc3ExportTrait
             }
             $ini .= "day_of_weeks = \"" . implode('|', $day_of_weeks) . "\"\n";
 
-            $start_time = new Carbon($nc3_reservation_location->start_time);
-            $start_time->addHour($nc3_reservation_location->timezone_offset); // 例）9.0 = 9時間後
-            $end_time = new Carbon($nc3_reservation_location->end_time);
-            $end_time->addHour($nc3_reservation_location->timezone_offset);
+            $start_time = (new Carbon($nc3_reservation_location->start_time, 'UTC'))->timezone($nc3_reservation_location->timezone);
+            $end_time = (new Carbon($nc3_reservation_location->end_time, 'UTC'))->timezone($nc3_reservation_location->timezone);
             $end_time_str = $end_time->format('H:i:s');
 
             // 開始～終了 の差が 24h なら「利用時間の制限なし」
@@ -4021,64 +4056,49 @@ trait MigrationNc3ExportTrait
                 $ini .= "is_time_control = 1\n";
             }
 
-            // 利用時間-開始 例）20220203150000 = yyyyMMddhhiiss = 15(+9) = 24:00
+            // 利用時間-開始 例）2022-02-03 15:00:00 = 15(+9) = 24:00
             $ini .= "start_time = " . $start_time->format('H:i:s') . "\n";
-            // 利用時間-終了 例）20220204150000 = yyyyMMddhhiiss = 15(+9) = 翌日24:00
+            // 利用時間-終了 例）2022-02-04 15:00:00 = 15(+9) = 翌日24:00
             $ini .= "end_time = " . $end_time_str . "\n";
-            // （画面に対象となる項目なし）duplication_flag、例) 0、※ DBから直接 1 にすると予約重複可能になるが、知られてない
-            // $ini .= "duplication_flag = " . $nc3_reservation_location->duplication_flag . "\n";
-            // 個人的な予約を受け付ける
-            // $ini .= "use_private_flag = " . $nc3_reservation_location->use_private_flag . "\n";
-            // 個人的な予約で使用する権限。0:会員の権限、1:ルームでの権限
-            // $ini .= "use_auth_flag = " . $nc3_reservation_location->use_auth_flag . "\n";
-            // 全てのルームから予約を受け付ける。1:ON、0:OFF
-            // $ini .= "allroom_flag = " . $nc3_reservation_location->allroom_flag . "\n";
             // 並び順
-            $ini .= "display_sequence = " . $nc3_reservation_location->display_sequence . "\n";
-
-            $nc3_reservation_location_detail = $nc3_reservation_location_details->firstWhere('location_id', $nc3_reservation_location->location_id);
-            $nc3_reservation_location_detail = $nc3_reservation_location_detail ?? new Nc2ReservationLocationDetail();
-
+            // $ini .= "display_sequence = " . $nc3_reservation_location->weight . "\n";
+            $ini .= "display_sequence = " . $display_sequence . "\n";
             // 施設管理者
-            $ini .= "facility_manager_name = \"" . $nc3_reservation_location_detail->contact . "\"\n";
+            $ini .= "facility_manager_name = \"" . $nc3_reservation_locations_approval_users->where('location_key', $nc3_reservation_location->key)->pluck('handlename')->implode(', ') . "\"\n";
             // 補足
-            $ini .= "supplement = \"" . str_replace('"', '\"', $nc3_reservation_location_detail->description) . "\"\n";
-
+            $ini .= "supplement = \"" . str_replace('"', '\"', $nc3_reservation_location->detail) . "\"\n";
             // NC3 情報
             $ini .= "\n";
             $ini .= "[source_info]\n";
-            $ini .= "location_id = " . $nc3_reservation_location->location_id . "\n";
-            $ini .= "plugin_key = \"reservation\"\n";
+            $ini .= "location_id = " . $nc3_reservation_location->id . "\n";
+            $ini .= "plugin_key = \"reservations\"\n";
+
+            $display_sequence++;
 
             // 施設予約の予約
             // ----------------------------------------------------
             // カラムのヘッダー及びTSV 行毎の枠準備
             $tsv_header = "reserve_id" . "\t" . "reserve_details_id" . "\t" . "title" . "\t" .
                 "allday_flag" . "\t" . "start_time_full" . "\t" . "end_time_full" . "\t" .
-                // NC3 reservation_reserve_details
                 "contact" . "\t" . "description" . "\t" . "rrule" . "\t" .
-                // NC3 reservation_reserve 登録日・更新日等
+                // 登録日・更新日等
                 "created_at" . "\t" . "created_name" . "\t" . "insert_login_id" . "\t" . "updated_at" . "\t" . "updated_name" . "\t" . "update_login_id" . "\t" .
                 // CC 状態
                 "status";
 
-            // NC3 reservation_reserve
             $tsv_cols['reserve_id'] = "";
             $tsv_cols['reserve_details_id'] = "";
             $tsv_cols['title'] = "";
             $tsv_cols['allday_flag'] = "";
             $tsv_cols['start_time_full'] = "";
             $tsv_cols['end_time_full'] = "";
-
-            // NC3 reservation_reserve_details
             // 連絡先
             $tsv_cols['contact'] = "";
             // 内容
             $tsv_cols['description'] = "";
             // 繰り返し条件
             $tsv_cols['rrule'] = "";
-
-            // NC3 reservation_reserve 登録日・更新日等
+            // 登録日・更新日等
             $tsv_cols['created_at'] = "";
             $tsv_cols['created_name'] = "";
             $tsv_cols['insert_login_id'] = "";
@@ -4089,301 +4109,303 @@ trait MigrationNc3ExportTrait
             // CC 状態
             $tsv_cols['status'] = "";
 
-            // 施設予約の予約 reservation_reserve
-            $reservation_reserves = Nc2ReservationReserve::
-                leftjoin('reservation_reserve_details', function ($join) {
-                    $join->on('reservation_reserve.reserve_details_id', '=', 'reservation_reserve_details.reserve_details_id')
-                        ->whereColumn('reservation_reserve.location_id', 'reservation_reserve_details.location_id')
-                        ->whereColumn('reservation_reserve.room_id', 'reservation_reserve_details.room_id');
+            // 施設予約の予約
+            $reservation_events = Nc3ReservationEvent::select('reservation_events.*', 'reservation_rrules.rrule')
+                ->leftJoin('reservation_rrules', function ($join) {
+                    $join->on('reservation_rrules.id', '=', 'reservation_events.reservation_rrule_id');
                 })
-                ->where('reservation_reserve.location_id', $nc3_reservation_location->location_id)
-                ->orderBy('reservation_reserve.reserve_details_id', 'asc')
+                ->where('reservation_events.location_key', $nc3_reservation_location->key)
+                ->where('reservation_events.is_latest', 1)
+                ->orderBy('reservation_events.id', 'asc')
                 ->get();
 
             // カラムデータのループ
-            Storage::delete($this->getImportPath('reservations/reservation_location_reserve_') . $this->zeroSuppress($nc3_reservation_location->location_id) . '.tsv');
+            Storage::delete($this->getImportPath('reservations/reservation_location_reserve_') . $this->zeroSuppress($nc3_reservation_location->id) . '.tsv');
 
             $tsv = '';
             $tsv .= $tsv_header . "\n";
 
-            foreach ($reservation_reserves as $reservation_reserve) {
-
+            foreach ($reservation_events as $reservation_event) {
                 // 初期化
                 $tsv_record = $tsv_cols;
 
-                // NC3 reservation_reserve
-                $tsv_record['reserve_id'] = $reservation_reserve->reserve_id;
-                $tsv_record['reserve_details_id'] = $reservation_reserve->reserve_details_id;
-                $tsv_record['title'] = $reservation_reserve->title;
-                $tsv_record['allday_flag'] = $reservation_reserve->allday_flag;
-
+                $tsv_record['reserve_id']         = $reservation_event->id;
+                $tsv_record['reserve_details_id'] = $reservation_event->reservation_rrule_id;   // reserve_details_idがないため、reservation_rrule_idで代用
+                $tsv_record['title']              = $reservation_event->title;
+                $tsv_record['allday_flag']        = $reservation_event->is_allday;
                 // 予定開始日時
-                // Carbon()で処理。必須値のため基本値がある想定で、timezone_offset で時間加算して予定時間を算出
-                $start_time_full = (new Carbon($reservation_reserve->start_time_full))->addHour($reservation_reserve->timezone_offset);
-                $tsv_record['start_time_full'] = $start_time_full;
-
+                $tsv_record['start_time_full']    = new Carbon($reservation_event->dtstart, $reservation_event->timezone);
                 // 予定終了日時
-                // Carbon()で処理。必須値のため基本値がある想定で、timezone_offset で時間加算して予定時間を算出
-                $end_time_full = (new Carbon($reservation_reserve->end_time_full))->addHour($reservation_reserve->timezone_offset);
-                // if ($reservation_reserve->allday_flag == 1) {
-                //     // 全日で終了日時の変換対応. -1日する。
-                //     //
-                //     // ・NC3 で登録できる開始時間：0:00～23:55 （24:00ないため、こっちは対応不要）
-                //     // ・NC3 で登録できる終了時間：0:05～24:00 （0:00に設定しても前日24:00に自動変換される）
-                //     // ・Connect 終了時間 0:00～23:59
-                //     // 24:00はデータ上0:00のため、0:00から-5分して23:55に変換する。
-                //     //
-                //     // ※ NC3の全日１日は、        20210810 150000（+9時間）～20210811 150000（+9時間）←当日～翌日
-                //     //    Connect-CMSの全日１日は、2021-08-11 00:00:00～2021-08-11 00:00:00 ←前後同じ, 時間は設定できず 00:00:00 で登録される。
-                //     //    そのため、2021/08/11 0:00～2021/08/12 0:00 を 2021/08/11 0:00～2021/08/11 0:00に変換する。
-
-                //     // -1日
-                //     $end_time_full = $end_time_full->subDay();
-                // } elseif ($end_time_full->format('H:i:s') == '00:00:00') {
-                // if ($end_time_full->format('H:i:s') == '00:00:00') {
-                //     // 全日以外で終了日時が0:00の変換対応. -5分する。
-                //     // ※ 例えばNC3の「時間指定」で10:00～24:00という予定に対応して、10:00～23:55に終了時間を変換する
-
-                //     // -5分
-                //     $end_time_full = $end_time_full->subMinute(5);
-                // }
-                $tsv_record['end_time_full'] = $end_time_full;
-
-                // NC3 reservation_reserve_details
+                $tsv_record['end_time_full']      = new Carbon($reservation_event->dtend, $reservation_event->timezone);
                 // 連絡先
-                $tsv_record['contact'] = $reservation_reserve->contact;
+                $tsv_record['contact']            = $reservation_event->contact;
                 // 内容 [WYSIWYG]
-                $tsv_record['description'] = $this->nc3Wysiwyg(null, null, null, null, $reservation_reserve->description, 'reservation');
+                $tsv_record['description']        = $this->nc3Wysiwyg(null, null, null, null, $reservation_event->description, 'reservations');
                 // 繰り返し条件
-                $tsv_record['rrule'] = $reservation_reserve->rrule;
-
-                // NC3 reservation_reserve システム項目
-                $tsv_record['created_at'] = $this->getCCDatetime($reservation_reserve->created);
-                $tsv_record['created_name'] = $reservation_reserve->insert_user_name;
-                $tsv_record['insert_login_id'] = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $reservation_reserve->created_user);
-                $tsv_record['updated_at'] = $this->getCCDatetime($reservation_reserve->modified);
-                $tsv_record['updated_name'] = $reservation_reserve->update_user_name;
-                $tsv_record['update_login_id'] = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $reservation_reserve->modified_user);
-
-                // NC3施設予約予定は公開のみ
-                $tsv_record['status'] = 0;
+                $tsv_record['rrule']              = $reservation_event->rrule;
+                // システム項目
+                $tsv_record['created_at']      = $this->getCCDatetime($reservation_event->created);
+                $tsv_record['created_name']    = Nc3User::getNc3HandleFromNc3UserId($nc3_users, $reservation_event->created_user);
+                $tsv_record['insert_login_id'] = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $reservation_event->created_user);
+                $tsv_record['updated_at']      = $this->getCCDatetime($reservation_event->modified);
+                $tsv_record['updated_name']    = Nc3User::getNc3HandleFromNc3UserId($nc3_users, $reservation_event->modified_user);
+                $tsv_record['update_login_id'] = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $reservation_event->modified_user);
+                // 状態
+                $tsv_record['status'] = $reservation_event->status;
 
                 $tsv .= implode("\t", $tsv_record) . "\n";
             }
 
             // 施設予約の設定を出力
-            $this->storagePut($this->getImportPath('reservations/reservation_location_') . $this->zeroSuppress($nc3_reservation_location->location_id) . '.ini', $ini);
+            $this->storagePut($this->getImportPath('reservations/reservation_location_') . $this->zeroSuppress($nc3_reservation_location->id) . '.ini', $ini);
 
             // データ行の書き出し
             $tsv = $this->exportStrReplace($tsv, 'reservations');
-            $this->storageAppend($this->getImportPath('reservations/reservation_location_') . $this->zeroSuppress($nc3_reservation_location->location_id) . '.tsv', $tsv);
+            $this->storageAppend($this->getImportPath('reservations/reservation_location_') . $this->zeroSuppress($nc3_reservation_location->id) . '.tsv', $tsv);
         }
 
         // メール設定
         // ----------------------------------------------------
-        // modules テーブルの reservationモジューデータ 取得
-        $nc3_module = Nc2Modules::where('action_name', 'like', 'reservation%')->first();
-        $nc3_module = $nc3_module ?? new Nc2Modules();
+        // 通知を受け取る権限
+        $block_role_permissions = Nc3BlockRolePermission::getBlockRolePermissionsByBlockKeys([$block->key]);
+        $nc3_space = Nc3Space::find(Nc3Space::PUBLIC_SPACE_ID);
+        // ゲスト
+        $is_mail_content_receivable_visitor = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $block->key, $nc3_space->room_id_root, 'mail_content_receivable', 'visitor');
+        // 一般
+        $is_mail_content_receivable_general_user = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $block->key, $nc3_space->room_id_root, 'mail_content_receivable', 'general_user');
+        // 編集者
+        $is_mail_content_receivable_editor = Nc3BlockRolePermission::getNc3BlockRolePermissionValue($block_role_permissions, $block->key, $nc3_space->room_id_root, 'mail_content_receivable', 'editor');
 
-        // config テーブルの 施設予約のメール設定 取得
-        $nc3_configs = Nc2Config::where('conf_modid', $nc3_module->module_id)->get();
-
-        // mail_send（メール通知する）. default=_ON
-        $nc3_config_mail_send = $nc3_configs->firstWhere('conf_name', 'mail_send');
-        $mail_send = null;
-        if (is_null($nc3_config_mail_send)) {
-            // 通知しない
-            $mail_send = 0;
-        } elseif ($nc3_config_mail_send->conf_value == '_ON') {
-            // 通知する
-            $mail_send = 1;
-        } else {
-            $mail_send = (int) $nc3_config_mail_send->conf_value;
-        }
-
-        // mail_authority（通知する権限）. default=_AUTH_GUEST ゲストまで全て（主担,モデ,一般,ゲストのチェックON）
-        $nc3_config_mail_authority = $nc3_configs->firstWhere('conf_name', 'mail_authority');
-        $mail_authority = null;
-        if (is_null($nc3_config_mail_authority)) {
-            // 主担のみ
-            $mail_authority = 4;
-        } elseif ($nc3_config_mail_authority->conf_value == '_AUTH_GUEST') {
-            // ゲストまで全て（主担,モデ,一般,ゲストのチェックON）
-            $mail_authority = 1;
-        } else {
-            $mail_authority = (int) $nc3_config_mail_authority->conf_value;
-        }
-
-        // mail_authority
-        // 1: ゲストまで
-        // 2: 一般まで
-        // 3: モデレータまで
-        // 4: 主担のみ
         $notice_everyone = 0;
         $notice_admin_group = 0;
         $notice_all_moderator_group = 0;
-        if ($mail_authority === 1) {
-            // 全ユーザ通知
+        if ($is_mail_content_receivable_visitor) {
+            // ゲストまで：　　全ユーザ通知
             $notice_everyone = 1;
 
-        } elseif ($mail_authority == 2) {
-            // 全一般ユーザ通知（≒全ユーザ通知）
+        } elseif ($is_mail_content_receivable_general_user) {
+            // 一般まで：　　　全一般ユーザ通知（≒全ユーザ通知）
             $notice_everyone = 1;
             $this->putMonitor(3, '施設予約のメール設定（一般まで）は、全ユーザ通知で移行します。', 'ini_path=' . $this->getImportPath('reservations/reservation_mail') . '.ini');
 
-        } elseif ($mail_authority == 3) {
-            // 全モデレータユーザ通知
+        } elseif ($is_mail_content_receivable_editor) {
+            // 編集者まで：　　全モデレータユーザ通知
             $notice_all_moderator_group = 1;
             $notice_admin_group = 1;
 
-        } elseif ($mail_authority == 4) {
-            // 管理者グループ通知
+        } else {
+            // 編集長まで：　　管理者グループ通知
             $notice_admin_group = 1;
         }
 
-        // mail_subject（件名）. default=RESERVATION_MAIL_SUBJECT ←多言語により表示言語によって変わる
-        $nc3_config_mail_subject = $nc3_configs->firstWhere('conf_name', 'mail_subject');
-        $mail_subject = null;
-        if (is_null($nc3_config_mail_subject)) {
-            $mail_subject = null;
-        } elseif ($nc3_config_mail_subject->conf_value == 'RESERVATION_MAIL_SUBJECT') {
-            $mail_subject = '[{X-SITE_NAME}]予約の通知';
-        } else {
-            $mail_subject = $nc3_config_mail_subject->conf_value;
-        }
+        $mail_settings = Nc3MailSetting::getMailSettingsByBlockKeys([$block->key], 'reservations');
 
-        // mail_body（本文）. default=RESERVATION_MAIL_BODY ←多言語により表示言語によって変わる
-        $nc3_configmail_body = $nc3_configs->firstWhere('conf_name', 'mail_body');
-        $mail_body = null;
-        if (is_null($nc3_configmail_body)) {
-            $mail_body = null;
-        } elseif ($nc3_configmail_body->conf_value == 'RESERVATION_MAIL_BODY') {
-            $mail_body = "施設の予約が入りましたのでお知らせします。\n\n施設:{X-LOCATION_NAME}\n件名:{X-TITLE}\n利用グループ:{X-RESERVE_FLAG}\n利用日時:{X-RESERVE_TIME}\n連絡先:{X-CONTACT}\n繰返し:{X-RRULE}\n登録者:{X-USER}\n登録時刻:{X-INPUT_TIME}\n\n{X-BODY}\n\nこの予約を確認するには、下記アドレスへ\n{X-URL}";
-        } else {
-            $mail_body = $nc3_configmail_body->conf_value;
-        }
+        // 通知メール（データなければblock_key=nullの初期設定取得）
+        $mail_setting = $mail_settings->firstWhere('block_key', $block->key) ?? $mail_settings->firstWhere('block_key', null);
+        $mail_subject = $mail_setting->mail_fixed_phrase_subject;
+        $mail_body = $mail_setting->mail_fixed_phrase_body;
+
+        // サイト設定
+        $site_settings = Nc3SiteSetting::where('language_id', Nc3Language::language_id_ja)->get();
+
+        // 承認メール
+        $approval_subject = Nc3SiteSetting::getNc3SiteSettingValueByKey($site_settings, 'Workflow.approval_mail_subject');
+        $approval_body = Nc3SiteSetting::getNc3SiteSettingValueByKey($site_settings, 'Workflow.approval_mail_body');
+
+        // 承認完了メール
+        $approved_subject = Nc3SiteSetting::getNc3SiteSettingValueByKey($site_settings, 'Workflow.approval_completion_mail_subject');
+        $approved_body = Nc3SiteSetting::getNc3SiteSettingValueByKey($site_settings, 'Workflow.approval_completion_mail_body');
+
+        // --- メール配信設定
+        // [{X-SITE_NAME}]予約通知
+        //
+        // 施設に予約が追加されたのでお知らせします。
+        //
+        // 件名:{X-SUBJECT}
+        // 公開対象:{X-ROOM}
+        // 開始日時:{X-START_TIME}
+        // 終了日時:{X-END_TIME}
+        // 場所:{X-LOCATION}
+        // 連絡先:{X-CONTACT}
+        // 繰返し:{X-RRULE}
+        // 記入者:{X-USER}
+        // 記入日時:{X-TO_DATE}
+        //
+        // {X-BODY}
+        //
+        // この予約を見るには、下記アドレスへ
+        // {X-URL}
+
+        // --- 承認申請メール
+        // (承認依頼){X-PLUGIN_MAIL_SUBJECT}
+        //
+        // {X-USER}さんから{X-PLUGIN_NAME}の承認依頼があったことをお知らせします。
+        //
+        // {X-WORKFLOW_COMMENT}
+        //
+        //
+        // {X-PLUGIN_MAIL_BODY}
+
+        // --- 承認完了メール
+        // (承認完了){X-PLUGIN_MAIL_SUBJECT}
+        //
+        // {X-USER}さんの{X-PLUGIN_NAME}の承認が完了されたことをお知らせします。
+        // もし{X-USER}さんの{X-PLUGIN_NAME}に覚えがない場合はこのメールを破棄してください。
+        //
+        // {X-WORKFLOW_COMMENT}
+        //
+        //
+        // {X-PLUGIN_MAIL_BODY}
 
         // 変換
         $convert_embedded_tags = [
             // nc3埋込タグ, cc埋込タグ
-            ['{X-SITE_NAME}', '[[' . ReservationNoticeEmbeddedTag::site_name . ']]'],
-            ['{X-LOCATION_NAME}', '[[' . ReservationNoticeEmbeddedTag::facility_name . ']]'],
-            // change: [[title]]は、施設管理の項目「タイトルの設定」で変わるため、タイトルの埋め込みタグは[[X-件名]]に変換する。
-            // ['{X-TITLE}', '[[' . ReservationNoticeEmbeddedTag::title . ']]'],
-            ['{X-TITLE}', '[[X-件名]]'],
-            ['{X-RESERVE_TIME}', '[[' . ReservationNoticeEmbeddedTag::booking_time . ']]'],
-            ['{X-CONTACT}', '[[X-連絡先]]'],
-            ['{X-RRULE}', '[[' . ReservationNoticeEmbeddedTag::rrule . ']]'],
-            ['{X-USER}', '[[' . ReservationNoticeEmbeddedTag::created_name . ']]'],
-            ['{X-INPUT_TIME}', '[[' . ReservationNoticeEmbeddedTag::created_at . ']]'],
-            ['{X-BODY}', '[[X-補足]]'],
-            ['{X-URL}', '[[' . ReservationNoticeEmbeddedTag::url . ']]'],
-            // 除外
-            ['利用グループ:{X-RESERVE_FLAG}', ''],
-            ['{X-RESERVE_FLAG}', ''],
-        ];
+            ['{X-PLUGIN_MAIL_SUBJECT}', $mail_subject],
+            ['{X-PLUGIN_MAIL_BODY}', $mail_body],
+            ['{X-SITE_NAME}',  '[[' . NoticeEmbeddedTag::site_name . ']]'],
+            // [[title]]は、施設管理の項目「タイトルの設定」で変わるため、タイトルの埋め込みタグは[[X-件名]]に変換する。
+            ['{X-SUBJECT}',    '[[X-件名]]'],
+            ['{X-USER}',       '[[' . NoticeEmbeddedTag::created_name . ']]'],
+            ['{X-TO_DATE}',    '[[' . NoticeEmbeddedTag::created_at . ']]'],
+            ['{X-BODY}',       '[[' . NoticeEmbeddedTag::body . ']]'],
+            ['{X-URL}',        '[[' . NoticeEmbeddedTag::url . ']]'],
+            ['開始日時:{X-START_TIME}', '利用日時:[[' . ReservationNoticeEmbeddedTag::booking_time . ']]'],
+            ['{X-START_TIME}', '[[' . ReservationNoticeEmbeddedTag::booking_time . ']]'],
+            ['{X-LOCATION}',   '[[' . ReservationNoticeEmbeddedTag::facility_name . ']]'],
+            ['{X-CONTACT}',    '[[X-連絡先]]'],
+            ['{X-RRULE}',      '[[' . ReservationNoticeEmbeddedTag::rrule . ']]'],
+            ['{X-BODY}',       '[[X-補足]]'],
 
+            ['{X-PLUGIN_NAME}', '施設予約'],
+            // 除外
+            ['公開対象:{X-ROOM}', ''],
+            ['終了日時:{X-END_TIME}', ''],
+            ['{X-ROOM}', ''],
+            ['{X-END_TIME}', ''],
+            ['{X-WORKFLOW_COMMENT}', ''],
+        ];
         foreach ($convert_embedded_tags as $convert_embedded_tag) {
-            $mail_subject = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_subject);
-            $mail_body = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_body);
+            $mail_subject =     str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_subject);
+            $mail_body =        str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_body);
+            $approval_subject = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $approval_subject);
+            $approval_body =    str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $approval_body);
+            $approved_subject = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $approved_subject);
+            $approved_body =    str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $approved_body);
         }
 
         // 施設予約のメール設定
         $ini = "";
         $ini .= "[reservation_mail]\n";
         // メール通知する
-        $ini .= "mail_send = " . $mail_send . "\n";
+        $ini .= "notice_on = " . $mail_setting->is_mail_send . "\n";
         // 全ユーザ通知
         $ini .= "notice_everyone = " . $notice_everyone . "\n";
         // 全モデレータユーザ通知
         $ini .= "notice_all_moderator_group = " . $notice_all_moderator_group . "\n";
         // 管理者グループ通知
         $ini .= "notice_admin_group = " . $notice_admin_group . "\n";
-        // 件名
+
         $ini .= "mail_subject = \"" . $mail_subject . "\"\n";
-        // 本文
         $ini .= "mail_body = \"" . $mail_body . "\"\n";
+        $ini .= "approval_on = " . $mail_setting->is_mail_send_approval . "\n";
+        $ini .= "approval_admin_group = 1\n";                                   // 1:「管理者グループ」通知
+        $ini .= "approval_subject = \"" . $approval_subject . "\"\n";
+        $ini .= "approval_body = \"" . $approval_body . "\"\n";
+        $ini .= "approved_on = 0\n";                                            // 承認完了通知はメール飛ばなかった
+        $ini .= "approved_author = 0\n";                                        // 1:投稿者へ通知する
+        $ini .= "approved_admin_group = 0\n";                                   // 1:「管理者グループ」通知
+        $ini .= "approved_subject = \"" . $approved_subject . "\"\n";
+        $ini .= "approved_body = \"" . $approved_body . "\"\n";
 
         // 施設予約の設定を出力
         $this->storagePut($this->getImportPath('reservations/reservation_mail') . '.ini', $ini);
 
-        // NC3施設予約ブロック（モジュール配置したブロック（どう見せるか、だけ。ここ無くても予約データある））を移行する。
+        // NC3施設予約フレーム（モ配置したフレーム（どう見せるか、だけ。ここ無くても予約データある））を移行する。
         // ----------------------------------------------------
-        $where_reservation_block_ids = $this->getMigrationConfig('reservations', 'nc3_export_where_reservation_block_ids');
-        if (empty($where_reservation_block_ids)) {
-            $nc3_reservation_blocks_query = Nc2ReservationBlock::query();
-        } else {
-            $nc3_reservation_blocks_query = Nc2ReservationBlock::whereIn('reservation_block.block_id', $where_reservation_block_ids);
-        }
+        $nc3_reservation_frame_settings_query = Nc3ReservationFrameSetting::
+            select(
+                'reservation_frame_settings.*',
+                'frames.id as frame_id',
+                'frames.room_id',
+                'frames_languages.name as frame_name',
+                'pages_languages.name as page_name',
+                'rooms_languages.name as room_name',
+                'reservation_locations.id as location_id',
+            )
+            ->leftJoin('frames', function ($join) {
+                $join->on('frames.key', '=', 'reservation_frame_settings.frame_key');
+            })
+            ->leftJoin('frames_languages', function ($join) {
+                $join->on('frames_languages.frame_id', '=', 'frames.id')
+                    ->where('frames_languages.language_id', Nc3Language::language_id_ja);
+            })
+            ->leftJoin('boxes', function ($join) {
+                $join->on('boxes.id', '=', 'frames.box_id');
+            })
+            ->leftJoin('pages_languages', function ($join) {
+                $join->on('pages_languages.page_id', '=', 'boxes.page_id')
+                    ->where('pages_languages.language_id', Nc3Language::language_id_ja);
+            })
+            ->leftJoin('rooms_languages', function ($join) {
+                $join->on('rooms_languages.room_id', 'frames.room_id')
+                    ->where('rooms_languages.language_id', Nc3Language::language_id_ja);
+            })
+            ->leftJoin('reservation_locations', function ($join) {
+                $join->on('reservation_locations.key', 'reservation_frame_settings.location_key')
+                    ->where('rooms_languages.language_id', Nc3Language::language_id_ja);
+            })
+            ->orderBy('reservation_frame_settings.id');
 
-        $nc3_reservation_blocks = $nc3_reservation_blocks_query->select('reservation_block.*', 'blocks.block_name', 'pages.page_name', 'page_rooms.page_name as room_name')
-            ->join('blocks', 'blocks.block_id', '=', 'reservation_block.block_id')
-            ->join('pages', function ($join) {
-                $join->on('pages.page_id', '=', 'blocks.page_id')
-                     ->where('pages.private_flag', 0);
-            })
-            ->join('pages as page_rooms', function ($join) {
-                $join->on('page_rooms.page_id', '=', 'reservation_block.room_id')
-                     ->whereColumn('page_rooms.page_id', 'page_rooms.room_id')
-                     ->whereIn('page_rooms.space_type', [1, 2])     // 1:パブリックスペース, 2:グループスペース
-                     ->where('page_rooms.room_id', '!=', 2)         // 2:グループスペースを除外（枠だけでグループルームじゃないので除外）
-                     ->where('page_rooms.private_flag', 0);         // 0:プライベートルーム以外
-            })
-            ->orderBy('reservation_block.block_id')
-            ->get();
+        $where_reservation_frame_ids = $this->getMigrationConfig('reservations', 'nc3_export_where_reservation_frame_ids');
+        if ($where_reservation_frame_ids) {
+            $nc3_reservation_frame_settings_query = $nc3_reservation_frame_settings_query->whereIn('frame_id', $where_reservation_frame_ids);
+        }
+        $nc3_reservation_frame_settings = $nc3_reservation_frame_settings_query->get();
 
         // 空なら戻る
-        if ($nc3_reservation_blocks->isEmpty()) {
+        if ($nc3_reservation_frame_settings->isEmpty()) {
             return;
         }
 
         // エクスポート対象の施設予約名をページ名から取得する（指定がなければブロックタイトルがあればブロックタイトル。なければページ名）
         $reservation_name_is_page_name = $this->getMigrationConfig('reservations', 'nc3_export_reservation_name_is_page_name');
 
-        // NC3施設予約ブロックのループ
-        foreach ($nc3_reservation_blocks as $nc3_reservation_block) {
+        foreach ($nc3_reservation_frame_settings as $nc3_reservation_frame_setting) {
 
-            // NC3 施設予約ブロック（表示方法）設定
+            // NC3 施設予約（表示方法）設定
             $ini = "";
             $ini .= "[reservation_block]\n";
 
             // 表示方法
-            // 1: 月表示(施設別)
-            // 2: 週表示(施設別)
-            // 3: 日表示(カテゴリ別)
-            $ini .= "display_type = " . $nc3_reservation_block->display_type . "\n";
+            // (nc3)
+            // 1: 週表示(カテゴリ別)
+            // 2: 日表示(カテゴリ別)
+            // 3: 月表示(施設別)
+            // 4: 週表示(施設別)
 
-            // （表示する）カテゴリ（「最初に表示する施設」を絞り込むための設定）
-            // 0:全て表示
-            // 1:カテゴリなし
-            // 2以降: 任意のカテゴリ
-            $ini .= "category_id = " . $nc3_reservation_block->category_id . "\n";
+            // 表示方法 変換 (key:nc3)display_type => (value:cc) reservation_initial_display_type
+            $reservation_initial_display_types = [
+                1 => ReservationCalendarDisplayType::week,
+                2 => ReservationCalendarDisplayType::week,
+                3 => ReservationCalendarDisplayType::month,
+                4 => ReservationCalendarDisplayType::week,
+            ];
+            $display_type = $reservation_initial_display_types[$nc3_reservation_frame_setting->display_type] ?? ReservationCalendarDisplayType::month;
+
+            $ini .= "display_type = " . $display_type . "\n";
 
             // 最初に表示する施設
-            // ※ 表示方法=月・週表示のみ設定される
-            $ini .= "location_id = " . $nc3_reservation_block->location_id . "\n";
+            // ※ 表示方法=月・週(施設別)表示のみ設定される
+            $ini .= "location_id = " . $nc3_reservation_frame_setting->location_id . "\n";
 
-            // 時間枠表示
-            // 0:表示しない
-            // 1:表示する
-            // $ini .= "display_timeframe = " . $nc3_reservation_block->display_timeframe . "\n";
-
-            // 表示開始時
-            // default: 閲覧時刻により変動
-            // default以外（0900等）：時間固定
-            // $ini .= "display_start_time = " . $nc3_reservation_block->display_start_time . "\n";
-
-            // 表示幅
-            // $ini .= "display_interval = " .  $nc3_reservation_block->display_interval . "\n";
-
-            // 施設予約の名前は、ブロックタイトルがあればブロックタイトル。なければページ名。
+            // 施設予約の名前は、フレームタイトルがあればフレームタイトル。なければページ名。
             $reservation_name = '無題';
-            if (!empty($nc3_reservation_block->page_name)) {
-                $reservation_name = $nc3_reservation_block->page_name;
+            if (!empty($nc3_reservation_frame_setting->page_name)) {
+                $reservation_name = $nc3_reservation_frame_setting->page_name;
             }
             if (empty($reservation_name_is_page_name)) {
-                if (!empty($nc3_reservation_block->block_name)) {
-                    $reservation_name = $nc3_reservation_block->block_name;
+                if (!empty($nc3_reservation_frame_setting->frame_name)) {
+                    $reservation_name = $nc3_reservation_frame_setting->frame_name;
                 }
             }
             $ini .= "reservation_name = \""  . $reservation_name . "\"\n";
@@ -4391,13 +4413,13 @@ trait MigrationNc3ExportTrait
             // NC3 情報
             $ini .= "\n";
             $ini .= "[source_info]\n";
-            $ini .= "reservation_block_id = " . $nc3_reservation_block->block_id . "\n";
-            $ini .= "room_id = " . $nc3_reservation_block->room_id . "\n";
-            $ini .= "room_name = \"" . $nc3_reservation_block->room_name . "\"\n";
-            $ini .= "plugin_key = \"reservation\"\n";
+            $ini .= "reservation_block_id = " . $nc3_reservation_frame_setting->frame_id . "\n";    // block_idがないため、frame_idで代用
+            $ini .= "room_id              = " . $nc3_reservation_frame_setting->room_id . "\n";
+            $ini .= "room_name            = \"" . $nc3_reservation_frame_setting->room_name . "\"\n";
+            $ini .= "plugin_key           = \"reservations\"\n";
 
             // 施設予約の設定を出力
-            $this->storagePut($this->getImportPath('reservations/reservation_block_') . $this->zeroSuppress($nc3_reservation_block->block_id) . '.ini', $ini);
+            $this->storagePut($this->getImportPath('reservations/reservation_block_') . $this->zeroSuppress($nc3_reservation_frame_setting->frame_id) . '.ini', $ini);
         }
     }
 
