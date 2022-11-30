@@ -6221,17 +6221,30 @@ trait MigrationTrait
                 $notice_groups = 'X-管理者グループ';
             }
 
-            $mail_send = $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'mail_send') ? 1 : 0;
-
-            if ($mail_send && $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'notice_all_moderator_group')) {
+            $notice_on = $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'notice_on') ? 1 : 0;
+            if ($notice_on && $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'notice_all_moderator_group')) {
                 // 全モデレータユーザ通知
                 $this->putMonitor(3, '施設予約のメール設定（モデレータまで）は、手動で「全モデレータグループ」を作成して、追加で「全モデレータグループ」に通知設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
             }
 
+            $approval_groups = [];
+            if ($this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'approval_admin_group')) {
+                // グループ通知
+                // ※ importGroups()は処理前のため管理者グループなし。そのため仮コードを登録してimportGroups()で置換する。
+                $approval_groups[] = 'X-管理者グループ';
+            }
+
+            $approved_groups = [];
+            if ($this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'approved_admin_group')) {
+                // グループ通知
+                // ※ importGroups()は処理前のため管理者グループなし。そのため仮コードを登録してimportGroups()で置換する。
+                $approved_groups[] = 'X-管理者グループ';
+            }
+
             // 投稿通知
             $bucket_mail->timing             = 0;       // 0:即時送信
-            $bucket_mail->notice_on          = $mail_send ? 1 : 0;
-            $bucket_mail->notice_create      = $mail_send ? 1 : 0;
+            $bucket_mail->notice_on          = $notice_on;
+            $bucket_mail->notice_create      = $notice_on;
             $bucket_mail->notice_update      = 0;
             $bucket_mail->notice_delete      = 0;
             $bucket_mail->notice_addresses   = null;
@@ -6240,14 +6253,20 @@ trait MigrationTrait
             $bucket_mail->notice_roles       = null;    // 画面項目なし
             $bucket_mail->notice_subject     = $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'mail_subject');
             $bucket_mail->notice_body        = $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'mail_body');
-
             // 関連記事通知
             $bucket_mail->relate_on          = 0;
             // 承認通知
-            $bucket_mail->approval_on        = 0;
+            $bucket_mail->approval_on        = $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'approval_on') ? 1 : 0;
+            $bucket_mail->approval_groups    = implode('|', $approval_groups) == "" ? null : implode('|', $approval_groups);
+            $bucket_mail->approval_subject   = $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'approval_subject');
+            $bucket_mail->approval_body      = $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'approval_body');
             // 承認済み通知
-            $bucket_mail->approved_on        = 0;
-            $bucket_mail->approved_author    = 0;
+            $bucket_mail->approved_on        = $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'approved_on') ? 1 : 0;
+            $bucket_mail->approved_author    = $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'approved_author') ? 1 : 0;
+            $bucket_mail->approved_groups    = implode('|', $approved_groups) == "" ? null : implode('|', $approved_groups);
+            $bucket_mail->approved_subject   = $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'approved_subject');
+            $bucket_mail->approved_body      = $this->getArrayValue($reservation_mail_ini, 'reservation_mail', 'approved_body');
+
             // BucketsMails の更新
             $bucket_mail->save();
         }
@@ -10829,7 +10848,7 @@ trait MigrationTrait
         $ini = "";
         $ini .= "[reservation_mail]\n";
         // メール通知する
-        $ini .= "mail_send = " . $mail_send . "\n";
+        $ini .= "notice_on = " . $mail_send . "\n";
         // 全ユーザ通知
         $ini .= "notice_everyone = " . $notice_everyone . "\n";
         // 全モデレータユーザ通知
