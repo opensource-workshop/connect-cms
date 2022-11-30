@@ -5968,8 +5968,6 @@ trait MigrationTrait
 
         // カレンダールームの情報取得
         if (!empty($nc2_calendar_room_id) && Storage::exists($this->getImportPath('calendars/calendar_room_') . $this->zeroSuppress($nc2_calendar_room_id) . '.ini')) {
-            // dd($nc2_calendar_room_id);
-
             $calendar_room_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('calendars/calendar_room_') . $this->zeroSuppress($nc2_calendar_room_id) . '.ini', true);
         }
 
