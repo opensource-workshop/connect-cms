@@ -4267,14 +4267,13 @@ trait MigrationNc3ExportTrait
             ['{X-SUBJECT}',    '[[X-件名]]'],
             ['{X-USER}',       '[[' . NoticeEmbeddedTag::created_name . ']]'],
             ['{X-TO_DATE}',    '[[' . NoticeEmbeddedTag::created_at . ']]'],
-            ['{X-BODY}',       '[[' . NoticeEmbeddedTag::body . ']]'],
+            ['{X-BODY}',       '[[X-補足]]'],
             ['{X-URL}',        '[[' . NoticeEmbeddedTag::url . ']]'],
             ['開始日時:{X-START_TIME}', '利用日時:[[' . ReservationNoticeEmbeddedTag::booking_time . ']]'],
             ['{X-START_TIME}', '[[' . ReservationNoticeEmbeddedTag::booking_time . ']]'],
             ['{X-LOCATION}',   '[[' . ReservationNoticeEmbeddedTag::facility_name . ']]'],
             ['{X-CONTACT}',    '[[X-連絡先]]'],
             ['{X-RRULE}',      '[[' . ReservationNoticeEmbeddedTag::rrule . ']]'],
-            ['{X-BODY}',       '[[X-補足]]'],
 
             ['{X-PLUGIN_NAME}', '施設予約'],
             // 除外
