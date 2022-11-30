@@ -3965,22 +3965,26 @@ trait MigrationTrait
 
         // 施設カテゴリの取り込み
         // ------------------------------------------
-        // ReservationsCategory のコレクションを保持。後で入力データを移行する際に nc2_category_id でひっぱるため。
+        // ReservationsCategory のコレクションを保持。後で入力データを移行する際に source_category_id でひっぱるため。
         $create_reservation_categories = collect();
+        // カテゴリなし
+        $reservation_no_category = ReservationsCategory::find(1);
+        // コレクションに要素追加
+        $create_reservation_categories = $create_reservation_categories->concat([$reservation_no_category]);
 
         $ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('reservations/reservation_category_*.ini'));
         foreach ($ini_paths as $ini_path) {
             // ini_file の解析
             $ini = parse_ini_file($ini_path, true);
 
-            // nc2 の category_id
-            $nc2_category_id = 0;
+            // 移行元 の category_id
+            $source_category_id = 0;
             if (array_key_exists('source_info', $ini) && array_key_exists('category_id', $ini['source_info'])) {
-                $nc2_category_id = $ini['source_info']['category_id'];
+                $source_category_id = $ini['source_info']['category_id'];
             }
 
             // マッピングテーブルの取得
-            $mapping = MigrationMapping::where('target_source_table', 'reservations_category')->where('source_key', $nc2_category_id)->first();
+            $mapping = MigrationMapping::where('target_source_table', 'reservations_category')->where('source_key', $source_category_id)->first();
 
             // マッピングテーブルを確認して、あれば削除
             if (!empty($mapping)) {
@@ -3991,19 +3995,12 @@ trait MigrationTrait
                 $mapping->delete();
             }
 
-            // カテゴリなし(id=1)以外を移行
-            if ($ini['source_info']['category_id'] == 1) {
-                $reservation_categories = ReservationsCategory::find(1);
-                $this->putMonitor(1, '施設予約のカテゴリなしは移行しない', "施設カテゴリ名={$ini['reservation_category']['category_name']}, ini_path={$ini_path}");
+            $reservation_categories = ReservationsCategory::create([
+                'category' => $ini['reservation_category']['category_name'],
+                'display_sequence' => $ini['reservation_category']['display_sequence'],
+            ]);
 
-            } else {
-                $reservation_categories = ReservationsCategory::create([
-                    'category' => $ini['reservation_category']['category_name'],
-                    'display_sequence' => $ini['reservation_category']['display_sequence'],
-                ]);
-            }
-
-            $reservation_categories->nc2_category_id = $ini['source_info']['category_id'];
+            $reservation_categories->source_category_id = $ini['source_info']['category_id'];
             // コレクションに要素追加
             $create_reservation_categories = $create_reservation_categories->concat([$reservation_categories]);
 
@@ -4087,8 +4084,8 @@ trait MigrationTrait
                 $mapping->delete();
             }
 
-            // 対象カテゴリ
-            $create_reservation_category = $create_reservation_categories->firstWhere('nc2_category_id', $ini['reservation_location']['category_id']);
+            // 対象カテゴリ（なければカテゴリなし）
+            $create_reservation_category = $create_reservation_categories->firstWhere('source_category_id', $ini['reservation_location']['category_id']) ?? $reservation_no_category;
 
             // 施設の登録処理
             $reservations_facility = ReservationsFacility::create([
@@ -6278,23 +6275,10 @@ trait MigrationTrait
             // フレーム設定保存
             // ---------------------------------------
 
-            // nc2表示方法
-            // 1: 月表示(施設別)
-            // 2: 週表示(施設別)
-            // 3: 日表示(カテゴリ別)
-            $display_type = $this->getArrayValue($reservation_block_ini, 'reservation_block', 'display_type');
-
-            // モデレータの投稿権限 変換 (key:nc2)display_type => (value:cc) calendar_initial_display_type
-            $calendar_initial_display_types = [
-                1 => ReservationCalendarDisplayType::month,
-                2 => ReservationCalendarDisplayType::week,
-                3 => ReservationCalendarDisplayType::week,
-            ];
-
             // カレンダー初期表示
             $frame_config = FrameConfig::updateOrCreate(
                 ['frame_id' => $frame->id, 'name' => ReservationFrameConfig::calendar_initial_display_type],
-                ['value' => $calendar_initial_display_types[$display_type] ?? ReservationCalendarDisplayType::month]
+                ['value' => $this->getArrayValue($reservation_block_ini, 'reservation_block', 'display_type', ReservationCalendarDisplayType::month)]
             );
 
             // nc2最初に表示する施設
@@ -10489,6 +10473,12 @@ trait MigrationTrait
         // ----------------------------------------------------
         $nc2_reservation_categories = Nc2ReservationCategory::orderBy('display_sequence')->get();
         foreach ($nc2_reservation_categories as $nc2_reservation_category) {
+            // カテゴリなし(id=1)は移行しない
+            if ($nc2_reservation_category->category_id === 1) {
+                $this->putMonitor(1, '施設予約のカテゴリなしは移行しない', "施設カテゴリ名={$nc2_reservation_category->category_name}");
+                continue;
+            }
+
             // NC2 施設カテゴリ設定
             $ini = "";
             $ini .= "[reservation_category]\n";
@@ -10907,30 +10897,20 @@ trait MigrationTrait
             // 1: 月表示(施設別)
             // 2: 週表示(施設別)
             // 3: 日表示(カテゴリ別)
-            $ini .= "display_type = " . $nc2_reservation_block->display_type . "\n";
 
-            // （表示する）カテゴリ（「最初に表示する施設」を絞り込むための設定）
-            // 0:全て表示
-            // 1:カテゴリなし
-            // 2以降: 任意のカテゴリ
-            $ini .= "category_id = " . $nc2_reservation_block->category_id . "\n";
+            // 表示方法 変換 (key:nc2)display_type => (value:cc) reservation_initial_display_type
+            $reservation_initial_display_types = [
+                1 => ReservationCalendarDisplayType::month,
+                2 => ReservationCalendarDisplayType::week,
+                3 => ReservationCalendarDisplayType::week,
+            ];
+            $display_type = $reservation_initial_display_types[$nc2_reservation_block->display_type] ?? ReservationCalendarDisplayType::month;
+
+            $ini .= "display_type = " . $display_type . "\n";
 
             // 最初に表示する施設
             // ※ 表示方法=月・週表示のみ設定される
             $ini .= "location_id = " . $nc2_reservation_block->location_id . "\n";
-
-            // 時間枠表示
-            // 0:表示しない
-            // 1:表示する
-            // $ini .= "display_timeframe = " . $nc2_reservation_block->display_timeframe . "\n";
-
-            // 表示開始時
-            // default: 閲覧時刻により変動
-            // default以外（0900等）：時間固定
-            // $ini .= "display_start_time = " . $nc2_reservation_block->display_start_time . "\n";
-
-            // 表示幅
-            // $ini .= "display_interval = " .  $nc2_reservation_block->display_interval . "\n";
 
             // 施設予約の名前は、ブロックタイトルがあればブロックタイトル。なければページ名。
             $reservation_name = '無題';
