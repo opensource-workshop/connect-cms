@@ -3663,7 +3663,8 @@ trait MigrationNc3ExportTrait
                 $tsv_record['updated_at']      = $this->getCCDatetime($calendar_event->modified);
                 $tsv_record['updated_name']    = Nc3User::getNc3HandleFromNc3UserId($nc3_users, $calendar_event->modified_user);
                 $tsv_record['update_login_id'] = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $calendar_event->modified_user);
-                $tsv_record['status']          = $calendar_event->status;
+                // 状態
+                $tsv_record['status']          = $this->convertCCStatusFromNc3Status($calendar_event->status);
 
                 $tsv .= implode("\t", $tsv_record) . "\n";
             }
@@ -4149,8 +4150,27 @@ trait MigrationNc3ExportTrait
                 $tsv_record['updated_at']      = $this->getCCDatetime($reservation_event->modified);
                 $tsv_record['updated_name']    = Nc3User::getNc3HandleFromNc3UserId($nc3_users, $reservation_event->modified_user);
                 $tsv_record['update_login_id'] = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $reservation_event->modified_user);
+
                 // 状態
-                $tsv_record['status'] = $reservation_event->status;
+                // (nc3)
+                // const STATUS_PUBLISHED = '1';
+                // const STATUS_APPROVAL_WAITING = '2';
+                // const STATUS_IN_DRAFT = '3';
+                // const STATUS_DISAPPROVED = '4';
+
+                // (NC3)status -> (Connect)status
+                $convert_statuses = [
+                    1 => StatusType::active,
+                    2 => StatusType::approval_pending,
+                    3 => StatusType::active,            // ccの施設予約に一時保存はないため、公開で移行
+                    4 => StatusType::approval_pending,  // 差し戻しは承認待ちへ
+                ];
+                $status = $convert_statuses[$reservation_event->status] ?? StatusType::active;
+                if ($reservation_event->status == 3) {
+                    $this->putMonitor(1, '施設の予約の一時保存は公開で移行します。', "施設名={$nc3_reservation_location->location_name}|件名={$reservation_event->title}|予約ID={$reservation_event->id}");
+                }
+
+                $tsv_record['status']          = $status;
 
                 $tsv .= implode("\t", $tsv_record) . "\n";
             }
