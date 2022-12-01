@@ -830,8 +830,12 @@ class LearningtasksPlugin extends UserPluginBase
     /* 画面アクション関数 */
 
     /**
-     *  データ初期表示関数
-     *  コアがページ表示の際に呼び出す関数
+     * データ初期表示関数
+     * コアがページ表示の際に呼び出す関数
+     *
+     * @method_title 科目一覧
+     * @method_desc 受講生であれば、レポートや試験評価が確認。教員であれば評価待ちの受講者一覧を確認できます。
+     * @method_detail
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -1061,6 +1065,10 @@ class LearningtasksPlugin extends UserPluginBase
 
     /**
      * 詳細表示関数
+     *
+     * @method_title 科目の詳細
+     * @method_desc 受講生であれば、レポートが提出できます。教員であれば評価入力ができます。コンテンツ管理者であれば評価やコメント等を削除できます。
+     * @method_detail
      */
     public function show($request, $page_id, $frame_id, $post_id)
     {
