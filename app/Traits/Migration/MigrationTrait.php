@@ -4278,7 +4278,7 @@ trait MigrationTrait
 
             if (ReservationsInput::where('facility_id', $reservations_facility->id)->count() == 0) {
                 // 施設予約の予約の移行なし
-                $this->putError(3, '施設予約の予約なし', "施設名={$reservations_facility->facility_name}, ini_path={$ini_path}");
+                $this->putMonitor(1, '施設予約の予約なし', "施設名={$reservations_facility->facility_name}, ini_path={$ini_path}");
             }
 
             // マッピングテーブルの追加
