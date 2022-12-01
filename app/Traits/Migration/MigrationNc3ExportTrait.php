@@ -4134,9 +4134,9 @@ trait MigrationNc3ExportTrait
                 $tsv_record['title']              = $reservation_event->title;
                 $tsv_record['allday_flag']        = $reservation_event->is_allday;
                 // 予定開始日時
-                $tsv_record['start_time_full']    = new Carbon($reservation_event->dtstart, $reservation_event->timezone);
+                $tsv_record['start_time_full']    = (new Carbon($reservation_event->dtstart, 'UTC'))->timezone($reservation_event->timezone);
                 // 予定終了日時
-                $tsv_record['end_time_full']      = new Carbon($reservation_event->dtend, $reservation_event->timezone);
+                $tsv_record['end_time_full']      = (new Carbon($reservation_event->dtend, 'UTC'))->timezone($reservation_event->timezone);
                 // 連絡先
                 $tsv_record['contact']            = $reservation_event->contact;
                 // 内容 [WYSIWYG]
