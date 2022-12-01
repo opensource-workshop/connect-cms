@@ -37,10 +37,27 @@
                     {{-- エラーメッセージエリア ※共通blade呼び出し --}}
                     @include('plugins.common.errors_form_line')
 
+                    {{-- エラーメッセージ --}}
+                    @if (session('slideshows_error_message'))
+                    <div class="alert alert-danger mt-2">
+                        <i class="fas fa-exclamation-circle"></i> {{ session('slideshows_error_message') }}
+                    </div>
+                    @endif
+
                     {{-- メッセージエリア --}}
                     <div class="alert alert-info mt-2">
-                        <i class="fas fa-exclamation-circle"></i> {{ session('flash_message') ? session('flash_message') : 'スライドショーに表示させる画像やリンクを設定します。' }}
-                        <a href="https://manual.connect-cms.jp/user/slideshows/index.html" target="_brank"><i class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></i></a>
+                        @if (session('flash_message'))
+                            <i class="fas fa-exclamation-circle"></i>{{ session('flash_message') }}
+                            <a href="https://manual.connect-cms.jp/user/slideshows/index.html" target="_brank"><i class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></i></a>
+                        @else
+                            <ul>
+                                <li>
+                                    スライドショーに表示させる画像やリンクを設定します。
+                                    <a href="https://manual.connect-cms.jp/user/slideshows/index.html" target="_brank"><i class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></i></a>
+                                </li>
+                                <li>PDFを選択して追加することで、PDFの内容を画像に変換して登録できます。</li>
+                            </ul>
+                        @endif
                     </div>
 
                     {{-- 項目一覧 --}}
@@ -107,6 +124,14 @@
             }
 
             /**
+             * PDF選択の追加ボタン押下
+             */
+            function submit_add_pdf() {
+                slideshow_items.action = "{{url('/')}}/redirect/plugin/slideshows/addPdf/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+                slideshow_items.submit();
+            }
+
+            /**
              * 項目の削除ボタン押下
              */
             function submit_delete_item(item_id) {
@@ -162,7 +187,8 @@
                         @endforeach
                         // 新規追加行用の変数
                         image_url_add:"",
-                        file_name_add:""
+                        file_name_add:"",
+                        selected_pdf:""
                     }
                 },
                 methods: {
@@ -172,6 +198,14 @@
                         // console.log(file);
                         eval("this.image_url_" + items_id + " = URL.createObjectURL(file);");
                         eval("this.file_name_" + items_id + " = file.name;");
+                    },
+                    // 選択中のPDFを表示する
+                    setPdfFile(event){
+                        let file = event.target.files[0];
+                        if (file === undefined) {
+                            this.selected_pdf = "";
+                        }
+                        this.selected_pdf = file.name;
                     }
                 }
             });

@@ -1476,9 +1476,27 @@ class UserPluginBase extends PluginBase
             //
             // 編集者(role_reporter)権限 = Active ＋ 自分の全ステータス記事の取得
             //
-            $query->where(function ($tmp_query) use ($table_name) {
-                $tmp_query->where($table_name . '.status', StatusType::active)
-                        ->orWhere($table_name . '.created_id', Auth::user()->id);
+            $query->where(function ($tmp_query1) use ($table_name) {
+                // Active
+                $tmp_query1->where(function ($tmp_query2) use ($table_name) {
+                    $tmp_query2->where($table_name . '.status', StatusType::active);
+
+                    // DBカラム posted_at(投稿日時) 存在するか
+                    if (Schema::hasColumn($table_name, 'posted_at')) {
+                        $tmp_query2->where($table_name . '.posted_at', '<=', Carbon::now());
+                    }
+
+                    // DBカラム expires_at(終了日時) 存在するか
+                    if (Schema::hasColumn($table_name, 'expires_at')) {
+                        $tmp_query2->where(function ($tmp_query3) use ($table_name) {
+                            $tmp_query3->whereNull($table_name . '.expires_at')
+                                ->orWhere($table_name . '.expires_at', '>', Carbon::now());
+                        });
+                    }
+                });
+
+                // 自分の全ステータス記事の取得
+                $tmp_query1->orWhere($table_name . '.created_id', Auth::user()->id);
             });
         } else {
             //

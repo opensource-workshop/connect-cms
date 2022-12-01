@@ -73,7 +73,7 @@ class CabinetsPluginTest extends DuskTestCase
         $this->putManualData('[
             {"path": "user/cabinets/index/images/index",
              "name": "フォルダ、ファイルの一覧",
-             "comment": "<ul class=\"mb-0\"><li>ファイルをクリックすることで、ファイルをダウンロードすることができます。</li><li>ファイルやフォルダのチェックボックスをクリックすると、圧縮して一括でダウンロードできます。</li></ul>"
+             "comment": "<ul class=\"mb-0\"><li>ファイルをクリックすることで、ファイルをダウンロードすることができます。</li><li>ファイルやフォルダのチェックボックスをクリックすると、圧縮して一括でダウンロードできます。</li><li>「名前」の左横のチェックボックスで全選択できます。</li></ul>"
             }
         ]', null, 4, 'basic');
     }
@@ -119,7 +119,11 @@ class CabinetsPluginTest extends DuskTestCase
                     ->attach('upload_file[' . $this->test_frame->id . ']', __DIR__.'/cabinet/ドキュメント.pdf')
                     ->screenshot('user/cabinets/upload/images/upload1')
                     ->press('#button_upload_file' . $this->test_frame->id)
-                    ->screenshot('user/cabinets/upload/images/upload2');
+                    ->screenshot('user/cabinets/upload/images/upload2')
+                    ->press('ファイル追加')
+                    ->pause(500)
+                    ->attach('upload_file[' . $this->test_frame->id . ']', __DIR__.'/cabinet/テスト.zip')
+                    ->screenshot('user/cabinets/upload/images/upload3');
         });
 
         // マニュアル用データ出力
@@ -130,6 +134,10 @@ class CabinetsPluginTest extends DuskTestCase
             {"path": "user/cabinets/upload/images/upload2",
              "name": "ファイルのアップロード後",
              "comment": "<ul class=\"mb-0\"><li>ファイルをアップロードできます。</li></ul>"
+            },
+            {"path": "user/cabinets/upload/images/upload3",
+             "name": "zipファイルの指定時",
+             "comment": "<ul class=\"mb-0\"><li>zipファイルを指定した場合は、zipを展開するオプションが選択できます。<br />フォルダ構成が再現されて、ファイルがキャビネットに格納されます。</li></ul>"
             }
         ]', null, 4, 'basic');
     }

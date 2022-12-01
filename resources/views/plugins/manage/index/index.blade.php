@@ -11,6 +11,12 @@
 {{-- 管理画面メイン部分のコンテンツ section:manage_content で作ること --}}
 @section('manage_content')
 
+@if (!$is_writable_storage)
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-circle"></i> アップロードするディレクトリに書込権限がありません。対象ディレクトリ：<code>storage</code><br />
+    </div>
+@endif
+
 {{-- バージョン情報 --}}
 @if (config('version.show_cc_version'))
 <div class="card mb-2">

@@ -107,7 +107,7 @@
 
                 <div class="form-row">
                     <div class="col-12">
-                        <label class="control-label">配送希望</label>
+                        <label class="control-label">配達日の指定希望</label>
                     </div>
                     <div class="form-group col-12">
                         @foreach (DeliveryRequestFlag::getMembers() as $enum_value => $enum_label)

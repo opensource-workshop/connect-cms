@@ -23,7 +23,7 @@ class ExportNc2 extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'NC2 をDBからConnect-CMS 移行形式のHTMLにエクスポートする';
 
     /**
      * Create a new command instance.
@@ -56,7 +56,7 @@ class ExportNc2 extends Command
             $redo = $this->argument("second_param") == 'redo' ? true : false;
         }
 
-        // NC2 をデータベースから移行する
+        // NC2 からデータをエクスポート
         $this->exportNc2($target, $target_plugin, $redo);
     }
 }

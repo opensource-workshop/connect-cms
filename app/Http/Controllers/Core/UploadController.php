@@ -73,6 +73,14 @@ class UploadController extends ConnectController
             return;
         }
 
+        $no_cache_headers = [
+            'Cache-Control' => 'no-store',
+            'Expires' => 'Thu, 01 Dec 1994 16:00:00 GMT'
+        ];
+        $headers = [
+            'Cache-Control' => config('connect.CACHE_CONTROL'),
+        ];
+
         // 一時保存ファイルの場合は所有者を確認して、所有者ならOK
         // 一時保存ファイルは、登録時の確認画面を表示している際を想定している。
         if ($uploads->temporary_flag == 1) {
@@ -80,11 +88,19 @@ class UploadController extends ConnectController
             if ($uploads->created_id != $user_id) {
                 return response()->download(storage_path(config('connect.no_image_path')));
             }
+
+            // キャッシュしない
+            $headers = $no_cache_headers;
         }
 
         // ファイルにページ情報がある場合
         if ($uploads->page_id) {
             $page = Page::find($uploads->page_id);
+            // アップロードしたページがない場合、今まで500エラーで見えなかった。そのためページがない場合、非表示とする
+            if (is_null($page)) {
+                return;
+            }
+
             // $page_roles = $this->getPageRoles(array($page->id));
             $page_roles = PageRole::getPageRoles(array($page->id));
 
@@ -101,6 +117,17 @@ class UploadController extends ConnectController
             if (!$page->isView(Auth::user(), true, true, $page_roles)) {
                 return response()->download(storage_path(config('connect.forbidden_image_path')));
             }
+
+            // 閲覧パスワード設定あるか
+            if ($page->isRequestPasswordSetting($page_tree)) {
+                // キャッシュしない
+                $headers = $no_cache_headers;
+            }
+            // 表示制限設定あるか
+            if ($page->isViewLimitSetting()) {
+                // キャッシュしない
+                $headers = $no_cache_headers;
+            }
         }
 
         // ファイルに固有のチェック関数が設定されている場合は、チェック関数を呼ぶ
@@ -111,6 +138,9 @@ class UploadController extends ConnectController
                 //Log::debug($return_message);
                 return response()->download(storage_path(config('connect.forbidden_image_path')));
             }
+
+            // キャッシュしない
+            $headers = $no_cache_headers;
         }
 
         // カウントアップの対象拡張子ならカウントアップ
@@ -119,13 +149,8 @@ class UploadController extends ConnectController
             $uploads->increment('download_count', 1);
         }
 
-        // ファイルを返す
-        //$content = '';
         $fullpath = storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension;
-
-        // $content_disposition = '';
-        $content_disposition = 'inline; filename="'. $uploads['client_original_name'] .'"' .
-            "; filename*=UTF-8''" . rawurlencode($uploads['client_original_name']);
+        $content_disposition = "filename*=UTF-8''" . rawurlencode($uploads['client_original_name']);
 
         // インライン表示する拡張子
         $inline_extensions = [
@@ -147,7 +172,7 @@ class UploadController extends ConnectController
                 $size = config('connect.THUMBNAIL_SIZE')['LARGE'];
             }
 
-            $img = \Image::cache(function ($image) use ($fullpath, $size) {
+            $img = Image::cache(function ($image) use ($fullpath, $size) {
                 return $image->make($fullpath)->resize(
                     $size,
                     $size,
@@ -157,39 +182,38 @@ class UploadController extends ConnectController
                     }
                 );
             }, config('connect.CACHE_MINUTS'), true); // 第3引数のtrue は戻り値にImage オブジェクトを返す意味。（false の場合は画像データ）
-            return $img->response();
+
+            $headers['Content-Disposition'] = 'inline; ' . $content_disposition;
+            return $this->setCacheControlPrivate($img->response()->withHeaders($headers)->setEtag(md5($img->response()->getContent())));
         }
 
-        // if (isset($uploads['extension']) && strtolower($uploads['extension']) == 'pdf') {
-        // if (strtolower($uploads->extension) == 'pdf') {
-        // if (in_array(strtolower($uploads->extension), $inline_extensions)) {
         if (in_array(strtolower($uploads->extension), $inline_extensions) && $request->response != 'download') {
-            return response()
-                    ->file(
-                        // storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
-                        // [
-                        //     'Content-Disposition' =>
-                        //         'inline; filename="'. $uploads['client_original_name'] .'"' .
-                        //         "; filename*=UTF-8''" . rawurlencode($uploads['client_original_name'])
-                        // ]
-                        $fullpath,
-                        ['Content-Disposition' => $content_disposition]
-                    );
+            if (strtolower($uploads->extension) == 'pdf') {
+                // pdfはキャッシュしない
+                $no_cache_headers['Content-Disposition'] = 'inline; ' . $content_disposition;
+                return response()->file($fullpath, $no_cache_headers);
+            } else {
+                $headers['Content-Disposition'] = 'inline; ' . $content_disposition;
+                return $this->setCacheControlPrivate(response()->file($fullpath, $headers)->setEtag(md5_file($fullpath)));
+            }
         } else {
-            return response()
-                    ->download(
-                        // storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension,
-                        // $uploads['client_original_name'],
-                        // [
-                        //     'Content-Disposition' =>
-                        //         'inline; filename="'. $uploads['client_original_name'] .'"' .
-                        //         "; filename*=UTF-8''" . rawurlencode($uploads['client_original_name'])
-                        // ]
-                        $fullpath,
-                        $uploads['client_original_name'],
-                        ['Content-Disposition' => $content_disposition]
-                    );
+            $no_cache_headers['Content-Disposition'] = 'attachment; ' . $content_disposition;
+            return response()->download($fullpath, $uploads['client_original_name'], $no_cache_headers);
         }
+    }
+
+    /**
+     * Cache-Controlにprivateを含むならprivateをセット
+     * - Laravel特有対応
+     *   - headerでCache-Control にprivateを指定しても、Laravelだと自動的にpublicが付き２重定義になったため、setPrivate()で対応
+     * @see \Symfony\Component\HttpFoundation\Response setPrivate()
+     */
+    private function setCacheControlPrivate($response)
+    {
+        if (strpos(config('connect.CACHE_CONTROL'), 'private') !== false) {
+            return $response->setPrivate();
+        }
+        return $response;
     }
 
     /**
@@ -225,11 +249,22 @@ class UploadController extends ConnectController
             return;
         }
 
+        $no_cache_headers = [
+            'Cache-Control' => 'no-store',
+            'Expires' => 'Thu, 01 Dec 1994 16:00:00 GMT'
+        ];
+        $headers = [
+            'Cache-Control' => config('connect.CACHE_CONTROL'),
+        ];
+
         // OKチェック
         if ($userdir_allow->value == 'allow_login') {
             // 該当ディレクトリの制限設定がログインユーザのみ閲覧許可の場合
             if (Auth::user()) {
                 // ログイン中なのでOK
+
+                // キャッシュしない
+                $headers = $no_cache_headers;
             } else {
                 // ログインしてないのでNG
                 return;
@@ -245,7 +280,7 @@ class UploadController extends ConnectController
         $fullpath = storage_path('user/') . $dir . '/' . $filename;
 
         // httpヘッダー
-        $content_disposition = 'inline; filename="'. $filename .'"' . "; filename*=UTF-8''" . rawurlencode($filename);
+        $content_disposition = "filename*=UTF-8''" . rawurlencode($filename);
 
         // インライン表示する拡張子
         $inline_extensions = [
@@ -258,21 +293,21 @@ class UploadController extends ConnectController
             'html',
             'js',
             'xml',
+            'txt',
         ];
 
         if (in_array(strtolower(pathinfo($filename, PATHINFO_EXTENSION)), $inline_extensions) && $request->response != 'download') {
-            return response()
-                    ->file(
-                        $fullpath,
-                        ['Content-Disposition' => $content_disposition]
-                    );
+            if (strtolower(pathinfo($filename, PATHINFO_EXTENSION)) == 'pdf') {
+                // pdfはキャッシュしない
+                $no_cache_headers['Content-Disposition'] = 'inline; ' . $content_disposition;
+                return response()->file($fullpath, $no_cache_headers);
+            } else {
+                $headers['Content-Disposition'] = 'inline; ' . $content_disposition;
+                return $this->setCacheControlPrivate(response()->file($fullpath, $headers)->setEtag(md5_file($fullpath)));
+            }
         } else {
-            return response()
-                    ->download(
-                        $fullpath,
-                        $filename,
-                        ['Content-Disposition' => $content_disposition]
-                    );
+            $no_cache_headers['Content-Disposition'] = 'attachment; ' . $content_disposition;
+            return response()->download($fullpath, $filename, $no_cache_headers);
         }
     }
 
@@ -321,16 +356,6 @@ class UploadController extends ConnectController
      */
     public function getCss(Request $request, $page_id = null)
     {
-        // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
-
-        // config のgeneral カテゴリーを読み込んでおく。
-        // id のファイルを読んでhttp request に返す。
-        // $config_generals = array();
-        // $config_generals_rs = Configs::where('category', 'general')->get();
-        // foreach ($config_generals_rs as $config_general) {
-        //     $config_generals[$config_general['name']]['value'] = $config_general['value'];
-        //     $config_generals[$config_general['name']]['category'] = $config_general['category'];
-        // }
         $configs = Configs::getSharedConfigs();
 
         // 自分のページと親ページを遡って取得し、ページの背景色を探す。
@@ -360,15 +385,11 @@ class UploadController extends ConnectController
 
         // 背景色
         if (empty($background_color)) {
-            // $base_background_color = Configs::where('name', '=', 'base_background_color')->first();
-            // $background_color = $base_background_color->value;
             $background_color = Configs::getConfigsValue($configs, 'base_background_color', null);
         }
 
         // ヘッダーの背景色
         if (empty($header_color)) {
-            // $base_header_color = Configs::where('name', '=', 'base_header_color')->first();
-            // $header_color = $base_header_color->value;
             $header_color = Configs::getConfigsValue($configs, 'base_header_color', null);
         }
 
@@ -378,6 +399,8 @@ class UploadController extends ConnectController
         }
 
         header('Content-Type: text/css');
+        header("Content-Disposition: inline; filename={$page_id}.css");
+        header('Cache-Control: ' . config('connect.CACHE_CONTROL'));
 
         // 背景色
         if ($background_color) {
@@ -390,7 +413,6 @@ class UploadController extends ConnectController
         }
 
         // 画像の保存機能の無効化(スマホ長押し禁止)
-        // if ($config_generals['base_touch_callout']['value'] == '1') {
         if (Configs::getConfigsValue($configs, 'base_touch_callout') == '1') {
             echo <<<EOD
 img {

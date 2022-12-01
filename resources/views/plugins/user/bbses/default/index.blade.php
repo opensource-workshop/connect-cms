@@ -67,10 +67,21 @@
                 {{-- no_frameテンプレート --}}
                 {{-- 根記事（スレッドの記事は古い順なので、根記事は最初） --}}
                 @include('plugins.user.bbses.default.post_title_div', ['view_post' => $post, 'current_post' => null, 'list_class' => $loop->first ? '' : 'mt-2'])
-                {{-- スレッド記事 --}}
-                @foreach ($children_posts->where("thread_root_id", $post->id) as $children_post)
-                    @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => null, 'list_class' => ''])
-                @endforeach
+                    @if (!isset($plugin_frame->view_format) || $plugin_frame->view_format == 0)
+                        {{-- フラット形式 --}}
+                        @foreach ($children_posts->where("thread_root_id", $post->id) as $children_post)
+                            @include('plugins.user.bbses.default.post_title_div', ['view_post' => $children_post, 'current_post' => null, 'list_class' => 'mb-2'])
+                        @endforeach
+                    @else
+                        {{-- ツリー形式 --}}
+                        @php
+                            $tree_posts = App\Models\User\Bbses\BbsPost::setDepth($children_posts->where("thread_root_id", $post->id));
+                        @endphp
+                        @foreach ($tree_posts as $tree_post)
+                            @include('plugins.user.bbses.default.post_title_div_tree', ['view_post' => $tree_post, 'current_post' => null, 'list_class' => 'tree'])
+                        @endforeach
+                    @endif
+
                 <div class="mb-2"></div>
             @else
                 {{-- defaultテンプレート --}}

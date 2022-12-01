@@ -4,26 +4,25 @@ namespace App\Console\Commands\Migration;
 
 use Illuminate\Console\Command;
 
-use App\Traits\Migration\MigrationTrait;
+use App\Traits\Migration\MigrationExportNc3PageTrait;
 
-class ImportHtml extends Command
+class ExportNc3PageFromHttp extends Command
 {
-
-    use MigrationTrait;
+    use MigrationExportNc3PageTrait;
 
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'command:ImportHtml {page_id}';
+    protected $signature = 'command:ExportNc3PageFromHttp {url} {page_id}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'NC3 の１つのウェブページからConnect-CMS 移行形式のHTMLにエクスポートする';
 
     /**
      * Create a new command instance.
@@ -42,7 +41,7 @@ class ImportHtml extends Command
      */
     public function handle()
     {
-        // Connect-CMS �ڍs�`����HTML ���C���|�[�g����
-        $this->importHtml($this->argument("page_id"));
+        // NC3 の１つのウェブページからデータをエクスポート
+        $this->migrationNC3Page($this->argument("url"), $this->argument("page_id"));
     }
 }

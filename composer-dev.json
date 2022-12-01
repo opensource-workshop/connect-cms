@@ -25,6 +25,7 @@
         "laravelcollective/html": "^6.0",
         "rlanvin/php-rrule": "^2.3",
         "setasign/fpdi": "^2.3",
+        "symfony/yaml": "^5.4",
         "tecnickcom/tcpdf": "^6.3"
     },
     "require-dev": {

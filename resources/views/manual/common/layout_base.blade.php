@@ -9,15 +9,18 @@
     <script src="{{$base_path}}js/jquery-3.6.0.min.js"></script>
     <script src="{{$base_path}}js/popper.min.js"></script>
     <script src="{{$base_path}}js/bootstrap.min.js"></script>
-    <title>Connect-CMSマニュアル</title>
+    <title>Connect-CMSマニュアル (v{{config('version.cc_version')}})</title>
 </head>
 <body class=" ">
     <nav class="navbar navbar-expand-md bg-dark navbar-dark  " aria-label="ヘッダー">
 
         <!-- Branding Image -->
-        <a class="navbar-brand" href="{{$base_path}}index.html">
-            Connect-CMSマニュアル
-        </a>
+        <div>
+            <a class="navbar-brand mr-2" href="{{$base_path}}index.html">
+                Connect-CMSマニュアル
+            </a>
+            <small class="mr-2" style="color: #ffffff;">v{{config('version.cc_version')}}</small>
+        </div>
 
         {{-- バッジ・メニュー --}}
         <div class="d-none d-md-block">

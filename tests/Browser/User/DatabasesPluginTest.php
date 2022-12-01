@@ -44,6 +44,7 @@ class DatabasesPluginTest extends DuskTestCase
         $this->editColumn(true);
         $this->editView();
         $this->listBuckets();
+        $this->editBucketsMails();
         $this->import();
         $this->input();
 
@@ -70,7 +71,7 @@ class DatabasesPluginTest extends DuskTestCase
         $this->initPlugin('databases', '/test/database');
 
         // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'input', 'detail', 'template', 'editColumn', 'editColumnDetail', 'editView', 'createBuckets', 'listBuckets', 'import');
+        $this->reserveManual('index', 'input', 'detail', 'template', 'editColumn', 'editColumnDetail', 'editView', 'createBuckets', 'listBuckets', 'import', 'editBucketsMails');
     }
 
     /**
@@ -231,7 +232,7 @@ class DatabasesPluginTest extends DuskTestCase
             },
             {"path": "user/databases/input/images/input2",
              "name": "新規登録画面",
-             "comment": "<ul class=\"mb-0\"><li>項目設定した内容の登録画面が表示されます。</li></ul>"
+             "comment": "<ul class=\"mb-0\"><li>項目設定した内容の登録画面が表示されます。</li><li>公開日時を指定できます。初期値は画面を表示した時間が設定されています。</li><li>公開終了日時を設定できます。</li></ul>"
             }
         ]', null, 4);
     }
@@ -446,6 +447,41 @@ class DatabasesPluginTest extends DuskTestCase
     }
 
     /**
+     * メール設定
+     */
+    private function editBucketsMails()
+    {
+        // 実行
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/plugin/databases/editBucketsMails/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/databases/editBucketsMails/images/editBucketsMails1')
+                    ->click('#label_notice_on')
+                    ->pause(500)
+                    ->visit('/plugin/databases/editBucketsMails/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#span_notice_body')
+                    ->screenshot('user/databases/editBucketsMails/images/editBucketsMails2')
+                    ->visit('/plugin/databases/editBucketsMails/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#span_database_columns_tag')
+                    ->screenshot('user/databases/editBucketsMails/images/editBucketsMails3');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('[
+            {"path": "user/databases/editBucketsMails/images/editBucketsMails1",
+             "name": "メール設定画面",
+             "comment": "<ul class=\"mb-0\"><li>投稿通知、承認通知、承認済み通知のメールを設定できます。</li></ul>"
+            },
+            {"path": "user/databases/editBucketsMails/images/editBucketsMails2",
+             "name": "埋め込みタグ",
+             "comment": "<ul class=\"mb-0\"><li>【データベース】プラグインで使用できる埋め込みタグはこの通りです。</li></ul>"
+            },
+            {"path": "user/databases/editBucketsMails/images/editBucketsMails3",
+             "name": "データベース毎の埋め込みタグ",
+             "comment": "<ul class=\"mb-0\"><li>【データベース】プラグインの場合、バケツごとに設定した項目で埋め込みタグを使用できます。</li></ul>"
+            }
+        ]', null, 4);
+    }
+
+    /**
      * フレーム表示設定
      */
     private function editView()
@@ -490,7 +526,7 @@ class DatabasesPluginTest extends DuskTestCase
             'user',
             '/test/database',
             ['databases', 'データベース'],
-            ['table' => 'table', 'default-left-col-3' => 'default-left-col-3']
+            ['table' => 'table', 'default-left-col-3' => 'default-left-col-3', 'card_02' => 'カードタイプ（２列）']
         );
     }
 }

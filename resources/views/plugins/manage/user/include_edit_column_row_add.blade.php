@@ -27,7 +27,7 @@
     </td>
     {{-- ＋ボタン --}}
     <td class="text-center">
-        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_column(this);">
+        <button class="btn btn-primary cc-font-90 text-nowrap" id="button_user_olumn_add" onclick="javascript:submit_add_column(this);">
             <i class="fas fa-plus"></i> <span class="d-sm-none">追加</span>
         </button>
     </td>

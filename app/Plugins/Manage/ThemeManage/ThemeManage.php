@@ -3,11 +3,9 @@
 namespace App\Plugins\Manage\ThemeManage;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-
-use File;
-//use DB;
 
 use App\Plugins\Manage\ManagePluginBase;
 
@@ -290,11 +288,15 @@ class ThemeManage extends ManagePluginBase
         // セッション初期化などのLaravel 処理
         $request->flash();
 
+        // copy by resources/lang/ja/validation.php - alpha_dash
+        $messages['dir_name.regex'] = ':attributeには英数字・ハイフン・アンダースコアのみからなる文字列を指定してください。';
+
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'dir_name'   => ['required'],
+            /* regex：英数字_- OK */
+            'dir_name'   => ['required', 'regex:/\w+|[-]+/'],
             'theme_name' => ['required'],
-        ]);
+        ], $messages);
         $validator->setAttributeNames([
             'dir_name'   => 'ディレクトリ名',
             'theme_name' => 'テーマ名',

@@ -25,15 +25,19 @@
         {{-- 詳細でのスレッド記事の展開方法：すべて閉じる --}}
         <div class="card mb-3 {{$view_format_name}}">
             {{-- 詳細でのスレッド記事の展開方法：すべて閉じるの場合は、card のヘッダに根記事のタイトルを表示 --}}
-            <div class="card-header">
-                {{$thread_root_post->title}}
-                @if ($thread_root_post->status == 1) <span class="badge badge-warning align-bottom">一時保存</span>
-                @elseif ($thread_root_post->status == 2) <span class="badge badge-warning align-bottom">承認待ち</span>
-                @endif
-                <span class="float-right">
-                    @include('plugins.user.bbses.default.post_created_at_and_name', ['post' => $thread_root_post])
-                </span>
-            </div>
+            @if (isset($is_template_no_frame))
+            @else
+                <div class="card-header">
+                    {{$thread_root_post->title}}
+                    @if ($thread_root_post->status == 1) <span class="badge badge-warning align-bottom">一時保存</span>
+                    @elseif ($thread_root_post->status == 2) <span class="badge badge-warning align-bottom">承認待ち</span>
+                    @endif
+                    <span class="float-right">
+                        @include('plugins.user.bbses.default.post_created_at_and_name', ['post' => $thread_root_post])
+                    </span>
+                </div>
+
+            @endif
             {{-- 詳細でのスレッド記事の展開方法：すべて閉じるの場合は、card のボディに根記事を含めた記事のタイトル一覧を表示 --}}
             <div class="card-body">
                 {{-- 根記事（スレッドの記事は古い順なので、根記事は最初） --}}
@@ -64,9 +68,11 @@
             {{-- 詳細でのスレッド記事の展開方法の判定 --}}
             @if ($plugin_frame->thread_format != 0)
                 {{-- 詳細でのスレッド記事の展開方法が詳細表示している記事のみ展開の場合 --}}
+
                 <div class="card-header">
                     @include('plugins.user.bbses.default.post_title', ['view_post' => $thread_root_post, 'current_post' => $post, 'list_class' => ''])
                 </div>
+
                 <div class="card-body">
                     {{-- 根記事（スレッドの記事は古い順なので、根記事は最初） --}}
                     {{-- 返信の場合は、親のpost を展開、詳細表示の場合は、自分のpost を展開 --}}

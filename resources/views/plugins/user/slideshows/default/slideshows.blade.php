@@ -37,6 +37,7 @@
                                 <img
                                     src="{{url('/')}}/file/{{ $item->uploads_id }}"
                                     class="d-block w-100"
+                                    loading="lazy"
                                     @if (!empty($slideshow->height)) style="object-fit: contain; height: {{$slideshow->height}}px;" @endif
                                 >
                             </a>
@@ -45,6 +46,7 @@
                             <img
                                 src="{{url('/')}}/file/{{ $item->uploads_id }}"
                                 class="d-block w-100"
+                                loading="lazy"
                                 @if (!empty($slideshow->height)) style="object-fit: contain; height: {{$slideshow->height}}px;" @endif
                             >
                         @endif

@@ -13,4 +13,10 @@ return [
 
     // NC2 のアップロードファイルのパス
     'NC2_EXPORT_UPLOADS_PATH' => env('NC2_EXPORT_UPLOADS_PATH'),
+
+    // NC3 のアップロードファイルのパス
+    'NC3_EXPORT_UPLOADS_PATH' => env('NC3_EXPORT_UPLOADS_PATH'),
+
+    // NC3 のapplication.ymlのパス
+    'NC3_APPLICATION_YML_PATH' => env('NC3_APPLICATION_YML_PATH'),
 ];

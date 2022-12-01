@@ -41,6 +41,11 @@ abstract class DuskTestCase extends BaseTestCase
     protected $no_manual = false;
 
     /**
+     * APIテストの実行可否
+     */
+    protected $no_api_test = false;
+
+    /**
      * テストするフレーム
      */
     protected $test_frame = null;
@@ -111,6 +116,10 @@ abstract class DuskTestCase extends BaseTestCase
         if ($_SERVER && count($_SERVER['argv']) > 4) {
             if ($_SERVER['argv'][4] == 'no_manual') {
                 $this->no_manual = true;
+            }
+            // コマンドライン引数 第5（配列インデックス4）に no_api_test が指定されていた場合は、APIテストを実行しない。
+            if ($_SERVER['argv'][4] == 'no_api_test') {
+                $this->no_api_test = true;
             }
         }
 
@@ -727,8 +736,13 @@ EOF;
             $parent_page = Page::where('page_name', $parent_name)->first();
             foreach ($children_names as $children_name) {
                 $sub_page = Page::where('page_name', $children_name)->first();
+
                 $browser->visit('/manage/page')
-                        ->select('#form_select_page' . $sub_page->id . ' .manage-page-selectpage', $parent_page->id);
+                        ->click("#move_level_" . $sub_page->id)
+                        ->pause(500)
+                        ->click("#level_move_page_" . $parent_page->id)
+                        ->pause(500)
+                        ->press("決定");
             }
         });
     }

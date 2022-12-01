@@ -133,7 +133,7 @@
                         @include('plugins.common.errors_inline', ['name' => 'notice_subject'])
                     </div>
 
-                    <span class="badge badge-secondary mt-3 mb-1">投稿通知の本文</span>
+                    <span class="badge badge-secondary mt-3 mb-1" id="span_notice_body">投稿通知の本文</span>
                     <div class="form-group mb-0">
                         <textarea name="notice_body" class="form-control" rows=5>{!!old('notice_body', $bucket_mail->notice_body)!!}</textarea>
                     </div>

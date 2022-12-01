@@ -16,6 +16,9 @@ Connect-CMS公式サイト<br />
 https://connect-cms.jp/<br />
 フォーラム掲示板や基本的な情報はこちらを参照してください。<br />
 
+<h4 style="text-align: center; font-size: 12px;">【バージョン】</h4>
+Connect-CMSのバージョン：{{config('version.cc_version')}}<br />
+
 <h4 style="text-align: center; font-size: 12px;">【ライセンス】</h4>
 Connect-CMS のライセンス<br />
 ソフトウェアとしての Connect-CMS は MIT ライセンスで公開しています。<br />

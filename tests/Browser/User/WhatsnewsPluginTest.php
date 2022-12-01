@@ -181,6 +181,12 @@ class WhatsnewsPluginTest extends DuskTestCase
      */
     private function template()
     {
-        $this->putManualTemplateData($this->test_frame, 'user', '/test', ['whatsnews', '新着情報'], ['onerow' => 'onerow', 'card_04' => 'card_04']);
+        $this->putManualTemplateData(
+            $this->test_frame,
+            'user',
+            '/test',
+            ['whatsnews', '新着情報'],
+            ['onerow' => 'onerow', 'card_03' => 'card_03', 'card_04' => 'card_04']
+        );
     }
 }

@@ -46,6 +46,7 @@ $narrowing_down_type = FrameConfig::getConfigValueAndOld($frame_configs, FaqFram
         @else
             {{$category->classname}}
         @endif "
+        id="a_category_button_{{$category->id}}"
     >
         {{$category->category}}
     </a>

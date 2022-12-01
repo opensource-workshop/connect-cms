@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 
 use App\Traits\Migration\MigrationTrait;
 
-class FromHttp extends Command
+class ImportPageHtml extends Command
 {
 
     use MigrationTrait;
@@ -16,14 +16,14 @@ class FromHttp extends Command
      *
      * @var string
      */
-    protected $signature = 'command:MigrationFromHttp {url} {page_id}';
+    protected $signature = 'command:ImportPageHtml {page_id}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'ページ指定で Connect-CMS 移行形式のHTML をインポートする';
 
     /**
      * Create a new command instance.
@@ -42,7 +42,7 @@ class FromHttp extends Command
      */
     public function handle()
     {
-        // NC3 ����ʂ���ڍs����
-        $this->migrationNC3Page($this->argument("url"), $this->argument("page_id"));
+        // Connect-CMS 移行形式のHTML をインポートする
+        $this->importHtml($this->argument("page_id"));
     }
 }

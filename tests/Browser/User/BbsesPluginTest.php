@@ -35,6 +35,7 @@ class BbsesPluginTest extends DuskTestCase
         $this->createBuckets();
         $this->editView();
         $this->listBuckets();
+        $this->editBucketsMails();
 
         $this->edit("テスト投稿　１件目");  // 記事登録
         $this->edit("テスト投稿　２件目");  // 記事登録 2件目
@@ -57,7 +58,7 @@ class BbsesPluginTest extends DuskTestCase
         $this->initPlugin('bbses', '/test/bbs');
 
         // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'show', 'edit', 'createBuckets', 'editView', 'listBuckets');
+        $this->reserveManual('index', 'show', 'edit', 'createBuckets', 'editView', 'listBuckets', 'editBucketsMails');
     }
 
     /**
@@ -221,6 +222,35 @@ class BbsesPluginTest extends DuskTestCase
         $this->putManualData('[
             {"path": "user/bbses/listBuckets/images/listBuckets",
              "comment": "<ul class=\"mb-0\"><li>表示ブログを変更できます。</li></ul>"
+            }
+        ]', null, 4);
+    }
+
+    /**
+     * メール設定
+     */
+    private function editBucketsMails()
+    {
+        // 実行
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/plugin/bbses/editBucketsMails/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->assertPathBeginsWith('/')
+                    ->screenshot('user/bbses/editBucketsMails/images/editBucketsMails1')
+                    ->click('#label_notice_on')
+                    ->pause(500)
+                    ->visit('/plugin/bbses/editBucketsMails/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#span_notice_body')
+                    ->screenshot('user/bbses/editBucketsMails/images/editBucketsMails2');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('[
+            {"path": "user/bbses/editBucketsMails/images/editBucketsMails1",
+             "name": "メール設定画面",
+             "comment": "<ul class=\"mb-0\"><li>投稿通知、関連記事通知、承認通知、承認済み通知のメールを設定できます。</li></ul>"
+            },
+            {"path": "user/bbses/editBucketsMails/images/editBucketsMails2",
+             "name": "埋め込みタグ",
+             "comment": "<ul class=\"mb-0\"><li>【掲示板】プラグインで使用できる埋め込みタグはこの通りです。</li></ul>"
             }
         ]', null, 4);
     }

@@ -23,6 +23,7 @@ yarn-error.log
 .vscode/launch.json
 composer.phar
 migration_config.ini
+migration_config_nc3.ini
 
 # Option Plugins (対象外部分はオプションプラグインのサンプル)
 github_copy.bat
