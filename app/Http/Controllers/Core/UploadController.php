@@ -96,6 +96,11 @@ class UploadController extends ConnectController
         // ファイルにページ情報がある場合
         if ($uploads->page_id) {
             $page = Page::find($uploads->page_id);
+            // アップロードしたページがない場合、今まで500エラーで見えなかった。そのためページがない場合、非表示とする
+            if (is_null($page)) {
+                return;
+            }
+
             // $page_roles = $this->getPageRoles(array($page->id));
             $page_roles = PageRole::getPageRoles(array($page->id));
 
