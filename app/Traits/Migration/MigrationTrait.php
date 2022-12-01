@@ -3707,7 +3707,7 @@ trait MigrationTrait
             if (CalendarPost::where('calendar_id', $calendar->id)->count() == 0) {
                 // カレンダー予定の移行なし
 
-                $this->putMonitor(3, 'カレンダー予定なし', "カレンダー名={$calendar->name}, ini_path={$ini_path}");
+                $this->putMonitor(3, 'カレンダー予定なしで移行しない', "カレンダー名={$calendar->name}, ini_path={$ini_path}");
 
                 // 予定空のカレンダーは移行せず、ログ出力する。
                 Calendar::destroy($calendar->id);
@@ -4208,27 +4208,24 @@ trait MigrationTrait
                         $column_contact = $columns->firstWhere('column_name', '連絡先');
                         $column_description = $columns->firstWhere('column_name', '補足');
 
-                        // bulk insert
-                        $reservations_inputs_columns = ReservationsInputsColumn::insert(
-                            // 件名
-                            [
-                                'inputs_parent_id' => $reservation_post->inputs_parent_id,
-                                'column_id' => $column_title->id,
-                                'value' => $reservation_tsv_cols[$tsv_idxs['title']],
-                            ],
-                            // 連絡先
-                            [
-                                'inputs_parent_id' => $reservation_post->inputs_parent_id,
-                                'column_id' => $column_contact->id,
-                                'value' => $reservation_tsv_cols[$tsv_idxs['contact']],
-                            ],
-                            // 補足
-                            [
-                                'inputs_parent_id' => $reservation_post->inputs_parent_id,
-                                'column_id' => $column_description->id,
-                                'value' => $this->changeWYSIWYG($reservation_tsv_cols[$tsv_idxs['description']]),
-                            ],
-                        );
+                        // 件名
+                        $reservations_inputs_column = ReservationsInputsColumn::create([
+                            'inputs_parent_id' => $reservation_post->inputs_parent_id,
+                            'column_id' => $column_title->id,
+                            'value' => $reservation_tsv_cols[$tsv_idxs['title']],
+                        ]);
+                        // 連絡先
+                        $reservations_inputs_column = ReservationsInputsColumn::create([
+                            'inputs_parent_id' => $reservation_post->inputs_parent_id,
+                            'column_id' => $column_contact->id,
+                            'value' => $reservation_tsv_cols[$tsv_idxs['contact']],
+                        ]);
+                        // 補足
+                        $reservations_inputs_column = ReservationsInputsColumn::create([
+                            'inputs_parent_id' => $reservation_post->inputs_parent_id,
+                            'column_id' => $column_description->id,
+                            'value' => $this->changeWYSIWYG($reservation_tsv_cols[$tsv_idxs['description']]),
+                        ]);
 
                         // rruleあれば登録
                         $rrule_setting = $reservation_tsv_cols[$tsv_idxs['rrule']];
@@ -4278,7 +4275,7 @@ trait MigrationTrait
 
             if (ReservationsInput::where('facility_id', $reservations_facility->id)->count() == 0) {
                 // 施設予約の予約の移行なし
-                $this->putError(3, '施設予約の予約なし', "施設名={$reservations_facility->facility_name}, ini_path={$ini_path}");
+                $this->putMonitor(1, '施設予約の予約なし', "施設名={$reservations_facility->facility_name}, ini_path={$ini_path}");
             }
 
             // マッピングテーブルの追加
