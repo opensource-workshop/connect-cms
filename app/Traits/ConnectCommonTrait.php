@@ -15,8 +15,6 @@ use App\Models\Common\Page;
 use App\Models\Common\YasumiHoliday;
 use App\Models\Core\Plugins;
 
-use Yasumi\Yasumi;
-
 trait ConnectCommonTrait
 {
     /**
@@ -466,7 +464,7 @@ trait ConnectCommonTrait
     protected function addHolidaysFromTo(ConnectCarbon $start_date, ConnectCarbon $end_date, array $dates) : array
     {
         // 年の祝日一覧を取得する。
-        $yasumis = $this->getYasumis($start_date->year);
+        $yasumis = YasumiHoliday::getYasumis($start_date->year);
 
         // 独自設定祝日データの取得（From-To指定）
         $connect_holidays = Holiday::whereBetween('holiday_date', [$start_date, $end_date])->orderBy('holiday_date')->get();
@@ -476,19 +474,11 @@ trait ConnectCommonTrait
 
         // 年またぎ対応（開始と終了で年が違う場合、終了年の祝日もセット）
         if ($start_date->year != $end_date->year) {
-            $end_yasumis = $this->getYasumis($end_date->year);
+            $end_yasumis = YasumiHoliday::getYasumis($end_date->year);
             $dates = $this->addConnectHolidays($connect_holidays, $dates, $end_yasumis);
         }
 
         return $dates;
-    }
-
-    /**
-     * 年の祝日を取得
-     */
-    private function getYasumis($year, ?string $country = 'Japan', ?string $locale = 'ja_JP') : \Yasumi\Provider\AbstractProvider
-    {
-        return Yasumi::create($country, (int)$year, $locale);
     }
 
     /**

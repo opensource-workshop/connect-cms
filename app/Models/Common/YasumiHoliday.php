@@ -3,6 +3,7 @@
 namespace App\Models\Common;
 
 use Yasumi\Holiday;
+use Yasumi\Yasumi;
 
 class YasumiHoliday extends Holiday
 {
@@ -29,5 +30,13 @@ class YasumiHoliday extends Holiday
     ) {
         parent::__construct($key, $names, $date, $displayLocale);
         $this->orginal_holiday_status = $orginal_holiday_status;
+    }
+
+    /**
+     * 年の祝日を取得
+     */
+    public static function getYasumis($year, ?string $country = 'Japan', ?string $locale = 'ja_JP') : \Yasumi\Provider\AbstractProvider
+    {
+        return Yasumi::create($country, (int)$year, $locale);
     }
 }

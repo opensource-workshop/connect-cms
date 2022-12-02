@@ -10,7 +10,6 @@ use App\Models\Common\YasumiHoliday;
 use App\Models\Core\Configs;
 
 use Carbon\Carbon;
-use Yasumi\Yasumi;
 
 use App\Plugins\Manage\ManagePluginBase;
 
@@ -20,7 +19,7 @@ use App\Plugins\Manage\ManagePluginBase;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 祝日管理
- * @package Contoroller
+ * @package Controller
  * @plugin_title 祝日管理
  * @plugin_desc 祝日に関する機能が集まった管理機能です。
  */
@@ -76,18 +75,10 @@ class HolidayManage extends ManagePluginBase
     /**
      *  年の祝日を取得
      */
-    public function getYasumis($year, $country = 'Japan', $locale = 'ja_JP')
-    {
-        return Yasumi::create($country, (int)$year, $locale);
-    }
-
-    /**
-     *  年の祝日を取得
-     */
     public function getYasumi($date)
     {
         $ymd = explode('-', $date);
-        $holidays = $this->getYasumis($ymd[0]);
+        $holidays = YasumiHoliday::getYasumis($ymd[0]);
         $holiday = null;
         foreach ($holidays as $holiday_item) {
             if ($holiday_item->format('Y-m-d') == $date) {
@@ -127,7 +118,7 @@ class HolidayManage extends ManagePluginBase
         }
 
         // 年の祝日一覧を取得する。
-        $holidays = $this->getYasumis($request->session()->get('holiday_year'));
+        $holidays = YasumiHoliday::getYasumis($request->session()->get('holiday_year'));
 
         // 独自設定祝日を加味する。
         foreach ($this->getPosts($request) as $post) {
@@ -235,7 +226,6 @@ class HolidayManage extends ManagePluginBase
         }
 
         // 計算した祝日データの呼び出し
-        $holidays = $this->getYasumis($request->session()->get('holiday_year'));
         $holiday = $this->getYasumi($date);
         // 独自設定祝日データの呼び出し
         $post = $this->getPostFromDate($date);
