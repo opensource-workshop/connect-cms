@@ -241,16 +241,7 @@
             <div class="col-9 col-xl-6">
             @endif
                 <div class="text-center">
-                    @if (isset($parent_post))
-                        {{-- 返信 --}}
-                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/calendars/show/{{$page->id}}/{{$frame_id}}/{{$parent_post->id}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
-                    @elseif (empty($post->id))
-                        {{-- 新規 --}}
-                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
-                    @else
-                        {{-- 編集 --}}
-                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/calendars/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
-                    @endif
+                    <a href="{{URL::to($page->permanent_link)}}#frame-{{$frame_id}}" class="btn btn-secondary mr-2"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></a>
                     <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($post->id))
