@@ -45,6 +45,68 @@
         {{-- 登録後メッセージ表示 --}}
         @include('plugins.common.flash_message')
 
+        <div class="accordion" id="search_accordion">
+            <div class="card">
+                <button class="btn btn-link p-0 text-left collapsed" type="button" data-toggle="collapse" data-target="#search_collapse" aria-expanded="false" aria-controls="search_collapse" id="app_reservation_search_condition_button">
+                    <div class="card-header" id="app_reservation_search_condition">
+                        絞り込み条件 <i class="fas fa-angle-down"></i>@if (Session::has('app_reservation_search_condition'))<span class="badge badge-pill badge-primary ml-2">条件設定中</span>@endif
+                   </div>
+                </button>
+                <div id="search_collapse" class="collapse" aria-labelledby="app_reservation_search_condition" data-parent="#search_accordion">
+                    <div class="card-body border-bottom">
+
+                        <form name="form_search" id="form_search" class="form-horizontal" method="post" action="{{url('/')}}/manage/reservation/search">
+                            {{ csrf_field() }}
+
+                            {{-- 施設名 --}}
+                            <div class="form-group row">
+                                <label for="app_reservation_search_condition_facility_name" class="col-md-3 col-form-label text-md-right">施設名</label>
+                                <div class="col-md-9">
+                                    <input type="text" name="app_reservation_search_condition[facility_name]" id="app_reservation_search_condition_facility_name" value="{{Session::get('app_reservation_search_condition.facility_name')}}" class="form-control">
+                                </div>
+                            </div>
+
+                            {{-- 登録者 --}}
+                            <div class="form-group row">
+                                <label for="app_reservation_search_condition_created_name" class="col-md-3 col-form-label text-md-right">登録者</label>
+                                <div class="col-md-9">
+                                    <input type="text" name="app_reservation_search_condition[created_name]" id="app_reservation_search_condition_created_name" value="{{Session::get('app_reservation_search_condition.created_name')}}" class="form-control">
+                                </div>
+                            </div>
+
+                            {{-- 並べ替え --}}
+                            <div class="form-group row">
+                                <label for="sort" class="col-md-3 col-form-label text-md-right">並べ替え</label>
+                                <div class="col-md-9">
+                                    <select name="app_reservation_search_condition[sort]" id="sort" class="form-control">
+                                        <option value="default"@if(Session::get('app_reservation_search_condition.sort') == "default" || !Session::has('app_reservation_search_condition.sort')) selected @endif>施設ID 昇順 & 利用日From 降順</option>
+                                        <option value="id_asc"@if(Session::get('app_reservation_search_condition.sort') == "id_asc") selected @endif>ID 昇順</option>
+                                        <option value="id_desc"@if(Session::get('app_reservation_search_condition.sort') == "id_desc") selected @endif>ID 降順</option>
+                                        <option value="updated_at_asc"@if(Session::get('app_reservation_search_condition.sort') == "updated_at_asc") selected @endif>更新日 昇順</option>
+                                        <option value="updated_at_desc"@if(Session::get('app_reservation_search_condition.sort') == "updated_at_desc") selected @endif>更新日 降順</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {{-- ボタンエリア --}}
+                            <div class="form-group text-center">
+                                <div class="row">
+                                    <div class="mx-auto">
+                                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/reservation/clearSearch')}}'">
+                                            <i class="fas fa-times"></i> クリア
+                                        </button>
+                                        <button type="submit" class="btn btn-primary form-horizontal">
+                                            <i class="fas fa-check"></i> 絞り込み
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- <div class="row mt-2"> --}}
         <div class="row">
             <div class="col-3 text-left d-flex align-items-end">
