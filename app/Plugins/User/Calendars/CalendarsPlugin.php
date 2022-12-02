@@ -454,8 +454,9 @@ class CalendarsPlugin extends UserPluginBase
         // 保存
         $post->save();
 
-        // 登録後はリダイレクトして編集画面を開く。(form のリダイレクト指定では post した id が渡せないため)
-        return new Collection(['redirect_path' => url('/') . "/plugin/calendars/edit/" . $page_id . "/" . $frame_id . "/" . $post->id . "#frame-" . $frame_id]);
+        // 登録後は初期表示へ
+        // return new Collection(['redirect_path' => url('/') . "/plugin/calendars/edit/" . $page_id . "/" . $frame_id . "/" . $post->id . "#frame-" . $frame_id]);
+        return collect(['redirect_path' => url($this->page->permanent_link) . "#frame-{$frame_id}"]);
     }
 
     /**
