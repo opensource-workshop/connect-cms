@@ -74,18 +74,6 @@ class HolidayManage extends ManagePluginBase
     }
 
     /**
-     *  祝日データ取得
-     */
-    private function getData($request)
-    {
-        // 祝日データ取得
-        $app_logs_query = $this->getQuery($request);
-
-        // データ取得
-        return $app_logs_query->orderBy('id', 'desc')->paginate(10);
-    }
-
-    /**
      *  年の祝日を取得
      */
     public function getYasumis($year, $country = 'Japan', $locale = 'ja_JP')
