@@ -10,7 +10,6 @@ use App\Models\Common\YasumiHoliday;
 use App\Models\Core\Configs;
 
 use Carbon\Carbon;
-use Yasumi\Yasumi;
 
 use App\Plugins\Manage\ManagePluginBase;
 
@@ -20,14 +19,12 @@ use App\Plugins\Manage\ManagePluginBase;
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 祝日管理
- * @package Contoroller
+ * @package Controller
  * @plugin_title 祝日管理
  * @plugin_desc 祝日に関する機能が集まった管理機能です。
  */
 class HolidayManage extends ManagePluginBase
 {
-    // php artisan make:migration create_holidays --create=holidays
-
     /**
      *  権限定義
      */
@@ -47,7 +44,7 @@ class HolidayManage extends ManagePluginBase
     /**
      * 独自設定祝日データの呼び出し
      */
-    public function getPost($id)
+    private function getPost($id)
     {
         // 独自設定祝日を取得する。
         $this->post = Holiday::firstOrNew(['id' => $id]);
@@ -57,7 +54,7 @@ class HolidayManage extends ManagePluginBase
     /**
      * 独自設定祝日データの呼び出し
      */
-    public function getPostFromDate($date)
+    private function getPostFromDate($date)
     {
         // 独自設定祝日を取得する。
         $this->post = Holiday::firstOrNew(['holiday_date' => $date]);
@@ -67,39 +64,19 @@ class HolidayManage extends ManagePluginBase
     /**
      * 独自設定祝日データの呼び出し
      */
-    public function getPosts($request)
+    private function getPosts($request)
     {
         // 独自設定祝日を取得する。
         return Holiday::where('holiday_date', 'LIKE', $request->session()->get('holiday_year') . '-' .$request->session()->get('holiday_month') . '%')->orderBy('holiday_date')->get();
     }
 
     /**
-     *  祝日データ取得
-     */
-    private function getData($request)
-    {
-        // 祝日データ取得
-        $app_logs_query = $this->getQuery($request);
-
-        // データ取得
-        return $app_logs_query->orderBy('id', 'desc')->paginate(10);
-    }
-
-    /**
      *  年の祝日を取得
      */
-    public function getYasumis($year, $country = 'Japan', $locale = 'ja_JP')
-    {
-        return Yasumi::create($country, (int)$year, $locale);
-    }
-
-    /**
-     *  年の祝日を取得
-     */
-    public function getYasumi($date)
+    private function getYasumi($date)
     {
         $ymd = explode('-', $date);
-        $holidays = $this->getYasumis($ymd[0]);
+        $holidays = YasumiHoliday::getYasumis($ymd[0]);
         $holiday = null;
         foreach ($holidays as $holiday_item) {
             if ($holiday_item->format('Y-m-d') == $date) {
@@ -139,30 +116,9 @@ class HolidayManage extends ManagePluginBase
         }
 
         // 年の祝日一覧を取得する。
-        $holidays = $this->getYasumis($request->session()->get('holiday_year'));
-
+        $holidays = YasumiHoliday::getYasumis($request->session()->get('holiday_year'));
         // 独自設定祝日を加味する。
-        foreach ($this->getPosts($request) as $post) {
-            // 計算の祝日に同じ日があれば、追加設定を有効にするために、かぶせる。
-            // Yasumi のメソッドに日付指定での抜き出しがないので、ループする。
-            $found_flag = false;
-            foreach ($holidays as &$holiday) {
-                if ($holiday->format('Y-m-d') == $post->holiday_date) {
-                    // 独自設定の祝日と同じ日が計算の祝日にあれば、計算の祝日を消して、独自設定を有効にする。
-                    $found_flag = true;
-                    $holidays->removeHoliday($holiday->shortName);
-                    $new_holiday = new YasumiHoliday($post->id, ['ja_JP' => $post->holiday_name], new Carbon($post->holiday_date), 'ja_JP', 2);
-                    $holidays->addHoliday($new_holiday);
-                    break;
-                }
-            }
-            // 計算の祝日にない独自設定は、追加祝日として扱う。
-            if ($found_flag == false) {
-                $new_holiday = new YasumiHoliday($post->id, ['ja_JP' => $post->holiday_name], new Carbon($post->holiday_date), 'ja_JP', 1);
-                $new_holiday->orginal_holiday_post = $post;
-                $holidays->addHoliday($new_holiday);
-            }
-        }
+        $holidays = YasumiHoliday::addConnectHolidays($this->getPosts($request), $holidays);
 
         // 画面の呼び出し
         return view('plugins.manage.holiday.index', [
@@ -247,7 +203,6 @@ class HolidayManage extends ManagePluginBase
         }
 
         // 計算した祝日データの呼び出し
-        $holidays = $this->getYasumis($request->session()->get('holiday_year'));
         $holiday = $this->getYasumi($date);
         // 独自設定祝日データの呼び出し
         $post = $this->getPostFromDate($date);
