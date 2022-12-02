@@ -25,8 +25,6 @@ use App\Plugins\Manage\ManagePluginBase;
  */
 class HolidayManage extends ManagePluginBase
 {
-    // php artisan make:migration create_holidays --create=holidays
-
     /**
      *  権限定義
      */
@@ -46,7 +44,7 @@ class HolidayManage extends ManagePluginBase
     /**
      * 独自設定祝日データの呼び出し
      */
-    public function getPost($id)
+    private function getPost($id)
     {
         // 独自設定祝日を取得する。
         $this->post = Holiday::firstOrNew(['id' => $id]);
@@ -56,7 +54,7 @@ class HolidayManage extends ManagePluginBase
     /**
      * 独自設定祝日データの呼び出し
      */
-    public function getPostFromDate($date)
+    private function getPostFromDate($date)
     {
         // 独自設定祝日を取得する。
         $this->post = Holiday::firstOrNew(['holiday_date' => $date]);
@@ -66,7 +64,7 @@ class HolidayManage extends ManagePluginBase
     /**
      * 独自設定祝日データの呼び出し
      */
-    public function getPosts($request)
+    private function getPosts($request)
     {
         // 独自設定祝日を取得する。
         return Holiday::where('holiday_date', 'LIKE', $request->session()->get('holiday_year') . '-' .$request->session()->get('holiday_month') . '%')->orderBy('holiday_date')->get();
@@ -75,7 +73,7 @@ class HolidayManage extends ManagePluginBase
     /**
      *  年の祝日を取得
      */
-    public function getYasumi($date)
+    private function getYasumi($date)
     {
         $ymd = explode('-', $date);
         $holidays = YasumiHoliday::getYasumis($ymd[0]);
