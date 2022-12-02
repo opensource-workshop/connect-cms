@@ -117,29 +117,8 @@ class HolidayManage extends ManagePluginBase
 
         // 年の祝日一覧を取得する。
         $holidays = YasumiHoliday::getYasumis($request->session()->get('holiday_year'));
-
         // 独自設定祝日を加味する。
-        foreach ($this->getPosts($request) as $post) {
-            // 計算の祝日に同じ日があれば、追加設定を有効にするために、かぶせる。
-            // Yasumi のメソッドに日付指定での抜き出しがないので、ループする。
-            $found_flag = false;
-            foreach ($holidays as &$holiday) {
-                if ($holiday->format('Y-m-d') == $post->holiday_date) {
-                    // 独自設定の祝日と同じ日が計算の祝日にあれば、計算の祝日を消して、独自設定を有効にする。
-                    $found_flag = true;
-                    $holidays->removeHoliday($holiday->shortName);
-                    $new_holiday = new YasumiHoliday($post->id, ['ja_JP' => $post->holiday_name], new Carbon($post->holiday_date), 'ja_JP', 2);
-                    $holidays->addHoliday($new_holiday);
-                    break;
-                }
-            }
-            // 計算の祝日にない独自設定は、追加祝日として扱う。
-            if ($found_flag == false) {
-                $new_holiday = new YasumiHoliday($post->id, ['ja_JP' => $post->holiday_name], new Carbon($post->holiday_date), 'ja_JP', 1);
-                $new_holiday->orginal_holiday_post = $post;
-                $holidays->addHoliday($new_holiday);
-            }
-        }
+        $holidays = YasumiHoliday::addConnectHolidays($this->getPosts($request), $holidays);
 
         // 画面の呼び出し
         return view('plugins.manage.holiday.index', [

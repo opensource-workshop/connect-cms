@@ -486,27 +486,8 @@ trait ConnectCommonTrait
      */
     private function addConnectHolidays(Collection $connect_holidays, array $dates, \Yasumi\Provider\AbstractProvider $yasumis) : array
     {
-        foreach ($connect_holidays as $holiday) {
-            // 計算の祝日に同じ日があれば、追加設定を有効にするために、かぶせる。
-            // Yasumi のメソッドに日付指定での抜き出しがないので、ループする。
-            $found_flag = false;
-            foreach ($yasumis as &$yasumi) {
-                if ($yasumi->format('Y-m-d') == $holiday->holiday_date) {
-                    // 独自設定の祝日と同じ日が計算の祝日にあれば、計算の祝日を消して、独自設定を有効にする。
-                    $found_flag = true;
-                    $yasumis->removeHoliday($yasumi->shortName);
-                    $new_holiday = new YasumiHoliday($holiday->id, ['ja_JP' => $holiday->holiday_name], new ConnectCarbon($holiday->holiday_date), 'ja_JP', 2);
-                    $yasumis->addHoliday($new_holiday);
-                    break;
-                }
-            }
-            // 計算の祝日にない独自設定は、追加祝日として扱う。
-            if ($found_flag == false) {
-                $new_holiday = new YasumiHoliday($holiday->id, ['ja_JP' => $holiday->holiday_name], new ConnectCarbon($holiday->holiday_date), 'ja_JP', 1);
-                $new_holiday->orginal_holiday_post = $holiday;
-                $yasumis->addHoliday($new_holiday);
-            }
-        }
+        // 独自設定祝日を加味する。
+        $yasumis = YasumiHoliday::addConnectHolidays($connect_holidays, $yasumis);
 
         // 独自祝日を加味した祝日一覧をループ。対象の年月日があれば、date オブジェクトに holiday 属性として追加する。
         foreach ($yasumis as $yasumi) {
