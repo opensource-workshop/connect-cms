@@ -3468,12 +3468,10 @@ trait MigrationNc3ExportTrait
         $nc3_export_private_room_calendar = $this->getMigrationConfig('calendars', 'nc3_export_private_room_calendar');
         if (empty($nc3_export_private_room_calendar)) {
             // プライベートルームをエクスポート（=移行）しない
-            $nc3_rooms_query = $nc3_rooms_query->whereIn('space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID]);
-
+            $nc3_rooms_query = $nc3_rooms_query->whereIn('rooms.space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID]);
         } else {
             // プライベートルームをエクスポート（=移行）する
-            $nc3_rooms_query = $nc3_rooms_query->whereIn('space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID, Nc3Space::PRIVATE_SPACE_ID]);
-
+            $nc3_rooms_query = $nc3_rooms_query->whereIn('rooms.space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID, Nc3Space::PRIVATE_SPACE_ID]);
         }
         $nc3_rooms = $nc3_rooms_query->get();
 
