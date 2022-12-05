@@ -673,7 +673,7 @@ trait MigrationNc3ExportTrait
                      'destination_key'     => $this->zeroSuppress($new_page_index)]
                 );
 
-                // ブロック処理
+                // フレーム処理
                 $this->nc3Frame($nc3_sort_page, $new_page_index, $nc3_top_page);
             }
 
@@ -4709,7 +4709,7 @@ trait MigrationNc3ExportTrait
             ->orderBy('frames.weight')
             ->get();
 
-        // ブロックをループ
+        // フレームをループ
         $frame_index = 0; // フレームの連番
 
         // [Connect出力] 割り切り実装
