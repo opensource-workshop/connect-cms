@@ -60,7 +60,9 @@ use App\Models\Migration\Nc3\Nc3ReservationLocationsReservable;
 use App\Models\Migration\Nc3\Nc3Room;
 use App\Models\Migration\Nc3\Nc3RoomRolePermission;
 use App\Models\Migration\Nc3\Nc3PhotoAlbum;
+use App\Models\Migration\Nc3\Nc3PhotoAlbumDisplayAlbum;
 use App\Models\Migration\Nc3\Nc3PhotoAlbumFrameSetting;
+use App\Models\Migration\Nc3\Nc3PhotoAlbumPhoto;
 use App\Models\Migration\Nc3\Nc3SiteSetting;
 use App\Models\Migration\Nc3\Nc3Space;
 use App\Models\Migration\Nc3\Nc3UploadFile;
@@ -83,6 +85,7 @@ use App\Enums\FaqSequenceConditionType;
 use App\Enums\FormColumnType;
 use App\Enums\LinklistType;
 use App\Enums\NoticeEmbeddedTag;
+use App\Enums\PhotoalbumSort;
 use App\Enums\ReservationCalendarDisplayType;
 use App\Enums\ReservationLimitedByRole;
 use App\Enums\ReservationNoticeEmbeddedTag;
@@ -136,7 +139,6 @@ trait MigrationNc3ExportTrait
      * 廃止のものは 'Abolition' にする。
      */
     protected $plugin_name = [
-        // 'photo_albums'     => 'photoalbums',  // フォトアルバム
         // 'searches'         => 'searchs',      // 検索
         'access_counters'  => 'counters',       // カウンター
         'announcements'    => 'contents',       // お知らせ
@@ -150,7 +152,7 @@ trait MigrationNc3ExportTrait
         'links'            => 'linklists',      // リンクリスト
         'menus'            => 'menus',          // メニュー
         'multidatabases'   => 'databases',      // データベース
-        'photo_albums'     => 'Development',    // フォトアルバム
+        'photo_albums'     => 'photoalbums',    // フォトアルバム
         'questionnaires'   => 'Development',    // アンケート
         'quizzes'          => 'Development',    // 小テスト
         'registrations'    => 'forms',          // フォーム
@@ -412,14 +414,6 @@ trait MigrationNc3ExportTrait
         // 移行の初期処理
         $this->migrationInit();
 
-        // uploads_path の取得
-        $uploads_path = config('migration.NC3_EXPORT_UPLOADS_PATH');
-
-        // uploads_path の最後に / がなければ追加
-        if (!empty($uploads_path) && mb_substr($uploads_path, -1) != '/') {
-            $uploads_path = $uploads_path . '/';
-        }
-
         // サイト基本設定のエクスポート
         if ($this->isTarget('nc3_export', 'basic')) {
             $this->nc3ExportBasic();
@@ -427,7 +421,7 @@ trait MigrationNc3ExportTrait
 
         // アップロード・データとファイルのエクスポート
         if ($this->isTarget('nc3_export', 'uploads')) {
-            $this->nc3ExportUploads($uploads_path, $redo);
+            $this->nc3ExportUploads($redo);
         }
 
         // ユーザデータのエクスポート
@@ -495,24 +489,10 @@ trait MigrationNc3ExportTrait
             $this->nc3ExportReservation($redo);
         }
 
-        //////////////////
-        // [TODO] まだ
-        //////////////////
-
-        // // NC3 スライダー（slides）データのエクスポート
-        // if ($this->isTarget('nc3_export', 'plugins', 'slideshows')) {
-        //     $this->nc3ExportSlides($redo);
-        // }
-
-        // // NC3 シンプル動画（simplemovie）データのエクスポート
-        // if ($this->isTarget('nc3_export', 'plugins', 'simplemovie')) {
-        //     $this->nc3ExportSimplemovie($redo);
-        // }
-
-        // // NC3 フォトアルバム（photoalbum）データのエクスポート
-        // if ($this->isTarget('nc3_export', 'plugins', 'photoalbums')) {
-        //     $this->nc3ExportPhotoalbum($redo);
-        // }
+        // NC3 フォトアルバム（photoalbums）データのエクスポート
+        if ($this->isTarget('nc3_export', 'plugins', 'photoalbums')) {
+            $this->nc3ExportPhotoalbum($redo);
+        }
 
         // pages データとファイルのエクスポート
         if ($this->isTarget('nc3_export', 'pages')) {
@@ -673,7 +653,7 @@ trait MigrationNc3ExportTrait
                      'destination_key'     => $this->zeroSuppress($new_page_index)]
                 );
 
-                // ブロック処理
+                // フレーム処理
                 $this->nc3Frame($nc3_sort_page, $new_page_index, $nc3_top_page);
             }
 
@@ -835,7 +815,7 @@ trait MigrationNc3ExportTrait
      * [2]
      * ・・・
      */
-    private function nc3ExportUploads($uploads_path, $redo)
+    private function nc3ExportUploads($redo)
     {
         $this->putMonitor(3, "Start nc3ExportUploads.");
 
@@ -861,6 +841,9 @@ trait MigrationNc3ExportTrait
         // uploads,ini ファイルの詳細（変数に保持、後でappend。[uploads] セクションが切れないため。）
         $uploads_ini = "";
         $uploads_ini_detail = "";
+
+        // nc3 uploads_path の取得
+        $uploads_path = $this->getExportUploadsPath();
 
         // アップロード・ファイルのループ
         foreach ($nc3_uploads as $nc3_upload) {
@@ -3468,12 +3451,10 @@ trait MigrationNc3ExportTrait
         $nc3_export_private_room_calendar = $this->getMigrationConfig('calendars', 'nc3_export_private_room_calendar');
         if (empty($nc3_export_private_room_calendar)) {
             // プライベートルームをエクスポート（=移行）しない
-            $nc3_rooms_query = $nc3_rooms_query->whereIn('space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID]);
-
+            $nc3_rooms_query = $nc3_rooms_query->whereIn('rooms.space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID]);
         } else {
             // プライベートルームをエクスポート（=移行）する
-            $nc3_rooms_query = $nc3_rooms_query->whereIn('space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID, Nc3Space::PRIVATE_SPACE_ID]);
-
+            $nc3_rooms_query = $nc3_rooms_query->whereIn('rooms.space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID, Nc3Space::PRIVATE_SPACE_ID]);
         }
         $nc3_rooms = $nc3_rooms_query->get();
 
@@ -3765,154 +3746,6 @@ trait MigrationNc3ExportTrait
 
             // カレンダーの設定を出力
             $this->storagePut($this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc3_calendar_frame_setting->frame_id) . '.ini', $ini);
-        }
-    }
-
-    /**
-     * NC3：スライダー（スライダー）の移行
-     */
-    private function nc3ExportSlides($redo)
-    {
-        $this->putMonitor(3, "Start nc3ExportSlides.");
-
-        // データクリア
-        if ($redo === true) {
-            // 移行用ファイルの削除
-            Storage::deleteDirectory($this->getImportPath('slideshows/'));
-        }
-
-        // NC3スライダー（Slideshow）を移行する。
-        $where_slideshow_block_ids = $this->getMigrationConfig('slideshows', 'nc3_export_where_slideshow_block_ids');
-        if (empty($where_slideshow_block_ids)) {
-            $nc3_slideshows = Nc2Slides::orderBy('block_id')->get();
-        } else {
-            $nc3_slideshows = Nc2Slides::whereIn('block_id', $where_slideshow_block_ids)->orderBy('block_id')->get();
-        }
-
-        // 空なら戻る
-        if ($nc3_slideshows->isEmpty()) {
-            return;
-        }
-
-        // nc3の全ユーザ取得
-        $nc3_users = Nc2User::get();
-
-        // NC3スライダー（Slideshow）のループ
-        foreach ($nc3_slideshows as $nc3_slideshow) {
-            $room_ids = $this->getMigrationConfig('basic', 'nc3_export_room_ids');
-            // ルーム指定があれば、指定されたルームのみ処理する。
-            if (!empty($room_ids) && !in_array($nc3_slideshow->room_id, $room_ids)) {
-                // ルーム指定あり。条件に合致せず。移行しない。
-                continue;
-            }
-
-            // (nc3初期値) 5500
-            $image_interval = $nc3_slideshow->pause ? $nc3_slideshow->pause : 5500;
-
-            // スライダー設定
-            $ini = "";
-            $ini .= "[slideshow_base]\n";
-            $ini .= "image_interval = " . $image_interval . "\n";
-
-            // NC3 情報
-            $ini .= "\n";
-            $ini .= "[source_info]\n";
-            $ini .= "slideshows_block_id = " . $nc3_slideshow->block_id . "\n";
-            $ini .= "room_id = " . $nc3_slideshow->room_id . "\n";
-            $ini .= "plugin_key = \"slides\"\n";
-            $ini .= "created_at      = \"" . $this->getCCDatetime($nc3_slideshow->created) . "\"\n";
-            $ini .= "created_name    = \"" . $nc3_slideshow->insert_user_name . "\"\n";
-            $ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_slideshow->created_user) . "\"\n";
-            $ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_slideshow->modified) . "\"\n";
-            $ini .= "updated_name    = \"" . $nc3_slideshow->update_user_name . "\"\n";
-            $ini .= "update_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_slideshow->modified_user) . "\"\n";
-
-            // 付与情報を移行する。
-            $nc3_slides_urls = Nc2SlidesUrl::where('slides_id', $nc3_slideshow->slides_id)->orderBy('slides_url_id')->get();
-            // TSV でエクスポート
-            // image_path{\t}uploads_id{\t}link_url{\t}link_target{\t}caption{\t}display_flag{\t}display_sequence
-            $slides_tsv = "";
-            foreach ($nc3_slides_urls as $nc3_slides_url) {
-                // TSV 形式でエクスポート
-                if (!empty($slides_tsv)) {
-                    $slides_tsv .= "\n";
-                }
-                $slides_tsv .= "\t";                                                            // image_path
-                $slides_tsv .= $nc3_slides_url->image_file_id . "\t";                           // uploads_id
-                $slides_tsv .= $nc3_slides_url->url . "\t";                                     // link_url
-                $slides_tsv .= ($nc3_slides_url->target_new == 0) ? "\t" : '_blank' . "\t";     // link_target
-                $slides_tsv .= $nc3_slides_url->linkstr . "\t";                                 // caption
-                $slides_tsv .= $nc3_slides_url->view . "\t";                                    // display_flag
-                $slides_tsv .= $nc3_slides_url->display_sequence . "\t";                        // display_sequence
-            }
-            // スライダーの設定を出力
-            $this->storagePut($this->getImportPath('slideshows/slideshows_') . $this->zeroSuppress($nc3_slideshow->block_id) . '.ini', $ini);
-            // スライダーの付与情報を出力
-            $this->storagePut($this->getImportPath('slideshows/slideshows_') . $this->zeroSuppress($nc3_slideshow->block_id) . '.tsv', $slides_tsv);
-
-        }
-    }
-
-    /**
-     * NC3：シンプル動画の移行
-     */
-    private function nc3ExportSimplemovie($redo)
-    {
-        $this->putMonitor(3, "Start nc3ExportSimplemovie.");
-
-        // データクリア
-        if ($redo === true) {
-            // 移行用ファイルの削除
-            Storage::deleteDirectory($this->getImportPath('simplemovie/'));
-        }
-
-        // NC3シンプル動画を移行する。
-        $where_simplemovie_block_ids = $this->getMigrationConfig('simplemovie', 'nc3_export_where_simplemovie_block_ids');
-        if (empty($where_simplemovie_block_ids)) {
-            $nc3_simplemovies = Nc2Simplemovie::orderBy('block_id')->get();
-        } else {
-            $nc3_simplemovies = Nc2Simplemovie::whereIn('block_id', $where_simplemovie_block_ids)->orderBy('block_id')->get();
-        }
-
-        // 空なら戻る
-        if ($nc3_simplemovies->isEmpty()) {
-            return;
-        }
-
-        // NC3スライダー（Slideshow）のループ
-        foreach ($nc3_simplemovies as $nc3_simplemovie) {
-            $room_ids = $this->getMigrationConfig('basic', 'nc3_export_room_ids');
-            // ルーム指定があれば、指定されたルームのみ処理する。
-            if (!empty($room_ids) && !in_array($nc3_simplemovie->room_id, $room_ids)) {
-                // ルーム指定あり。条件に合致せず。移行しない。
-                continue;
-            }
-
-            // 動画が設定されていない場合はエクスポートしない
-            if ($nc3_simplemovie->movie_upload_id == null) {
-                continue;
-            }
-
-            // シンプル動画設定
-            $ini = "";
-            $ini .= "[simplemovie_base]\n";
-            $ini .= "simplemovie_movie_upload_id = " . $nc3_simplemovie->movie_upload_id . "\n";
-            $ini .= "simplemovie_movie_upload_id_request = " . $nc3_simplemovie->movie_upload_id_request . "\n";
-            $ini .= "simplemovie_thumbnail_upload_id = " . $nc3_simplemovie->thumbnail_upload_id . "\n";
-            $ini .= "simplemovie_thumbnail_upload_id_request = " . $nc3_simplemovie->thumbnail_upload_id_request . "\n";
-            $ini .= "simplemovie_width = " . $nc3_simplemovie->width . "\n";
-            $ini .= "simplemovie_height = " . $nc3_simplemovie->height . "\n";
-            $ini .= "simplemovie_autoplay_flag = " . $nc3_simplemovie->autoplay_flag . "\n";
-            $ini .= "simplemovie_embed_show_flag = " . $nc3_simplemovie->embed_show_flag . "\n";
-            $ini .= "simplemovie_agree_flag = " . $nc3_simplemovie->agree_flag . "\n";
-            // NC3 情報
-            $ini .= "\n";
-            $ini .= "[source_info]\n";
-            $ini .= "simplemovie_block_id = " . $nc3_simplemovie->block_id . "\n";
-            $ini .= "room_id = " . $nc3_simplemovie->room_id . "\n";
-            $ini .= "plugin_key = \"simplemovie\"\n";
-            // シンプル動画の設定を出力
-            $this->storagePut($this->getImportPath('simplemovie/simplemovie_') . $this->zeroSuppress($nc3_simplemovie->block_id) . '.ini', $ini);
         }
     }
 
@@ -4442,7 +4275,7 @@ trait MigrationNc3ExportTrait
     }
 
     /**
-     * NC3：フォトアルバム（Photoalbum）の移行
+     * NC3：フォトアルバム（Photoalbums）の移行
      */
     private function nc3ExportPhotoalbum($redo)
     {
@@ -4454,14 +4287,34 @@ trait MigrationNc3ExportTrait
             Storage::deleteDirectory($this->getImportPath('photoalbums/'));
         }
 
-        // NC3フォトアルバム（Photoalbum）を移行する。
-        $nc3_export_where_photoalbum_ids = $this->getMigrationConfig('photoalbums', 'nc3_export_where_photoalbum_ids');
+        // NC3ルーム一覧
+        $nc3_rooms = Nc3Room::select('rooms.*', 'rooms_languages.name as room_name')
+            ->join('rooms_languages', function ($join) {
+                $join->on('rooms_languages.room_id', 'rooms.id')
+                    ->where('rooms_languages.language_id', Nc3Language::language_id_ja);
+            })
+            ->whereIn('rooms.space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID])
+            ->orderBy('rooms.id')
+            ->get();
 
-        if (empty($nc3_export_where_photoalbum_ids)) {
-            $nc3_photoalbums = Nc2Photoalbum::orderBy('photoalbum_id')->get();
-        } else {
-            $nc3_photoalbums = Nc2Photoalbum::whereIn('photoalbum_id', $nc3_export_where_photoalbum_ids)->orderBy('photoalbum_id')->get();
+        // NC3フォトアルバム（Photoalbums）を移行する。
+        $nc3_photoalbums_query = Nc3Photoalbum::select('photo_albums.*', 'blocks.key as block_key', 'blocks.room_id', 'rooms.space_id')
+            ->join('blocks', function ($join) {
+                $join->on('blocks.id', '=', 'photo_albums.block_id')
+                    ->where('blocks.plugin_key', 'photo_albums');
+            })
+            ->join('rooms', function ($join) {
+                $join->on('rooms.id', '=', 'blocks.room_id')
+                    ->whereIn('rooms.space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID]);
+            })
+            ->where('photo_albums.is_latest', 1)
+            ->orderBy('photo_albums.id');
+
+        $nc3_export_where_photoalbum_ids = $this->getMigrationConfig('photoalbums', 'nc3_export_where_photoalbum_ids');
+        if ($nc3_export_where_photoalbum_ids) {
+            $nc3_photoalbums_query = $nc3_photoalbums_query->whereIn('photo_albums.id', $nc3_export_where_photoalbum_ids);
         }
+        $nc3_photoalbums = $nc3_photoalbums_query->get();
 
         // 空なら戻る
         if ($nc3_photoalbums->isEmpty()) {
@@ -4470,80 +4323,102 @@ trait MigrationNc3ExportTrait
 
 
         // nc3の全ユーザ取得
-        $nc3_users = Nc2User::get();
+        $nc3_users = Nc3User::get();
 
-        $nc3_photoalbum_alubums_all = Nc2PhotoalbumAlbum::orderBy('photoalbum_id')->orderBy('album_sequence')->get();
-        $nc3_photoalbum_photos_all = Nc2PhotoalbumPhoto::orderBy('photoalbum_id')->orderBy('album_id')->orderBy('photo_sequence')->get();
+        $nc3_photoalbum_photos_all = Nc3PhotoAlbumPhoto::where('is_latest', 1)->orderBy('id')->get();
 
-        // NC3フォトアルバム（Photoalbum）のループ
-        foreach ($nc3_photoalbums as $nc3_photoalbum) {
+        // アップロードファイル
+        $photoalbum_uploads_all = Nc3UploadFile::where('plugin_key', 'photo_albums')->get();
+
+        // 表示アルバム
+        $photo_album_display_albums_all = Nc3PhotoAlbumDisplayAlbum::get();
+
+        // nc3 uploads_path の取得
+        $nc3_uploads_path = $this->getExportUploadsPath();
+
+        // nc3はフォトアルバムのバケツがないため、ルーム単位で出力する
+        // 例）name=パブリックルームのフォトアルバム
+
+        // ルーム単位で出力
+        foreach ($nc3_rooms as $nc3_room) {
             $room_ids = $this->getMigrationConfig('basic', 'nc3_export_room_ids');
             // ルーム指定があれば、指定されたルームのみ処理する。
             if (empty($room_ids)) {
                 // ルーム指定なし。全データの移行
-            } elseif (!empty($room_ids) && in_array($nc3_photoalbum->room_id, $room_ids)) {
+            } elseif (!empty($room_ids) && in_array($nc3_room->id, $room_ids)) {
                 // ルーム指定あり。指定ルームに合致する。
             } else {
                 // ルーム指定あり。条件に合致せず。移行しない。
                 continue;
             }
 
+            // 空なら移行しない
+            $nc3_photoalbum_alubums = $nc3_photoalbums->where('room_id', $nc3_room->id);
+            if ($nc3_photoalbum_alubums->isEmpty()) {
+                continue;
+            }
+
             // データベース設定
             $photoalbum_ini = "";
             $photoalbum_ini .= "[photoalbum_base]\n";
-            $photoalbum_ini .= "photoalbum_name = \"" . $nc3_photoalbum->photoalbum_name . "\"\n";
+            $photoalbum_ini .= "photoalbum_name = \"" . $nc3_room->room_name . "のフォトアルバム\"\n";
 
             // NC3 情報
             $photoalbum_ini .= "\n";
             $photoalbum_ini .= "[source_info]\n";
-            $photoalbum_ini .= "photoalbum_id = " . $nc3_photoalbum->photoalbum_id . "\n";
-            $photoalbum_ini .= "room_id = " . $nc3_photoalbum->room_id . "\n";
-            $photoalbum_ini .= "plugin_key = \"photoalbum\"\n";
-            $photoalbum_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_photoalbum->created) . "\"\n";
-            $photoalbum_ini .= "created_name    = \"" . $nc3_photoalbum->insert_user_name . "\"\n";
-            $photoalbum_ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_photoalbum->created_user) . "\"\n";
-            $photoalbum_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_photoalbum->modified) . "\"\n";
-            $photoalbum_ini .= "updated_name    = \"" . $nc3_photoalbum->update_user_name . "\"\n";
-            $photoalbum_ini .= "update_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_photoalbum->modified_user) . "\"\n";
+            $photoalbum_ini .= "photoalbum_id   = " . $nc3_room->id . "\n";
+            $photoalbum_ini .= "room_id         = " . $nc3_room->id . "\n";
+            $photoalbum_ini .= "plugin_key      = \"photoalbums\"\n";
 
             // アルバム 情報
             $photoalbum_ini .= "\n";
             $photoalbum_ini .= "[albums]\n";
 
-            $nc3_photoalbum_alubums = $nc3_photoalbum_alubums_all->where('photoalbum_id', $nc3_photoalbum->photoalbum_id);
             foreach ($nc3_photoalbum_alubums as $nc3_photoalbum_alubum) {
-                $photoalbum_ini .= "album[" . $nc3_photoalbum_alubum->album_id . "] = \"" . $nc3_photoalbum_alubum->album_name . "\"\n";
+                $photoalbum_ini .= "album[" . $nc3_photoalbum_alubum->id . "] = \"" . $nc3_photoalbum_alubum->name . "\"\n";
             }
             $photoalbum_ini .= "\n";
 
             // アルバム詳細 情報
             foreach ($nc3_photoalbum_alubums as $nc3_photoalbum_alubum) {
-                $photoalbum_ini .= "[" . $nc3_photoalbum_alubum->album_id . "]" . "\n";
-                $photoalbum_ini .= "album_id                   = \"" . $nc3_photoalbum_alubum->album_id . "\"\n";
-                $photoalbum_ini .= "album_name                 = \"" . $nc3_photoalbum_alubum->album_name . "\"\n";
-                $photoalbum_ini .= "album_description          = \"" . $nc3_photoalbum_alubum->album_description . "\"\n";
-                $photoalbum_ini .= "public_flag                = "   . $nc3_photoalbum_alubum->public_flag . "\n";
-                $photoalbum_ini .= "nc3_upload_id              = "   . $nc3_photoalbum_alubum->upload_id . "\n";
-                $photoalbum_ini .= "width                      = "   . $nc3_photoalbum_alubum->width . "\n";
-                $photoalbum_ini .= "height                     = "   . $nc3_photoalbum_alubum->height . "\n";
+                $album_upload = $photoalbum_uploads_all->where('field_name', 'jacket')->firstWhere('content_key', $nc3_photoalbum_alubum->key) ?? new Nc3UploadFile();
+
+                // 画像：原寸
+                $image_file_path = $nc3_uploads_path . $album_upload->path . $album_upload->id . '/' . $album_upload->real_file_name;
+                $image_width = 0;
+                $image_height = 0;
+                if (File::exists($image_file_path)) {
+                    list($image_width, $image_height) = getimagesize($image_file_path);
+                } else {
+                    $this->putError(3, "Image file not exists: " . $nc3_uploads_path . $album_upload->path . $album_upload->id . '/' . $album_upload->real_file_name);
+                }
+
+                $photoalbum_ini .= "[" . $nc3_photoalbum_alubum->id . "]" . "\n";
+                $photoalbum_ini .= "album_id                   = \"" . $nc3_photoalbum_alubum->id . "\"\n";
+                $photoalbum_ini .= "album_name                 = \"" . $nc3_photoalbum_alubum->name . "\"\n";
+                $photoalbum_ini .= "album_description          = \"" . $nc3_photoalbum_alubum->description . "\"\n";
+                $photoalbum_ini .= "public_flag                = 1\n";   // 1:公開
+                $photoalbum_ini .= "upload_id                  = "   . $album_upload->id . "\n";
+                $photoalbum_ini .= "width                      = {$image_width}\n";
+                $photoalbum_ini .= "height                     = {$image_height}\n";
                 $photoalbum_ini .= "created_at                 = \"" . $this->getCCDatetime($nc3_photoalbum_alubum->created) . "\"\n";
-                $photoalbum_ini .= "created_name               = \"" . $nc3_photoalbum_alubum->insert_user_name . "\"\n";
+                $photoalbum_ini .= "created_name               = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_photoalbum_alubum->created_user) . "\"\n";
                 $photoalbum_ini .= "insert_login_id            = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_photoalbum_alubum->created_user) . "\"\n";
                 $photoalbum_ini .= "updated_at                 = \"" . $this->getCCDatetime($nc3_photoalbum_alubum->modified) . "\"\n";
-                $photoalbum_ini .= "updated_name               = \"" . $nc3_photoalbum_alubum->update_user_name . "\"\n";
+                $photoalbum_ini .= "updated_name               = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_photoalbum_alubum->modified_user) . "\"\n";
                 $photoalbum_ini .= "update_login_id            = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_photoalbum_alubum->modified_user) . "\"\n";
                 $photoalbum_ini .= "\n";
             }
 
             // フォトアルバム の設定
-            $this->storagePut($this->getImportPath('photoalbums/photoalbum_') . $this->zeroSuppress($nc3_photoalbum->photoalbum_id) . '.ini', $photoalbum_ini);
+            $this->storagePut($this->getImportPath('photoalbums/photoalbum_') . $this->zeroSuppress($nc3_room->id) . '.ini', $photoalbum_ini);
 
             // カラムのヘッダー及びTSV 行毎の枠準備
-            $tsv_header = "photo_id" . "\t" . "nc3_upload_id" . "\t" . "photo_name" . "\t" . "photo_description" . "\t" . "width" . "\t" ."height" . "\t" .
+            $tsv_header = "photo_id" . "\t" . "upload_id" . "\t" . "photo_name" . "\t" . "photo_description" . "\t" . "width" . "\t" ."height" . "\t" .
                 "created_at" . "\t" . "created_name" . "\t" . "insert_login_id" . "\t" . "updated_at" . "\t" . "updated_name" . "\t" . "update_login_id";
 
             $tsv_cols['photo_id'] = "";
-            $tsv_cols['nc3_upload_id'] = "";
+            $tsv_cols['upload_id'] = "";
             $tsv_cols['photo_name'] = "";
             $tsv_cols['photo_description'] = "";
             $tsv_cols['width'] = "";
@@ -4558,28 +4433,40 @@ trait MigrationNc3ExportTrait
             // 写真 情報
             foreach ($nc3_photoalbum_alubums as $nc3_photoalbum_alubum) {
 
-                Storage::delete($this->getImportPath('photoalbums/photoalbum_') . $this->zeroSuppress($nc3_photoalbum->photoalbum_id) . '_' . $this->zeroSuppress($nc3_photoalbum_alubum->album_id) . '.tsv');
+                Storage::delete($this->getImportPath('photoalbums/photoalbum_') . $this->zeroSuppress($nc3_room->id) . '_' . $this->zeroSuppress($nc3_photoalbum_alubum->id) . '.tsv');
 
                 $tsv = '';
                 $tsv .= $tsv_header . "\n";
 
-                $nc3_photoalbum_photos = $nc3_photoalbum_photos_all->where('album_id', $nc3_photoalbum_alubum->album_id);
+                $nc3_photoalbum_photos = $nc3_photoalbum_photos_all->where('album_key', $nc3_photoalbum_alubum->key);
                 foreach ($nc3_photoalbum_photos as $nc3_photoalbum_photo) {
 
                     // 初期化
                     $tsv_record = $tsv_cols;
 
-                    $tsv_record['photo_id']          = $nc3_photoalbum_photo->photo_id;
-                    $tsv_record['nc3_upload_id']     = $nc3_photoalbum_photo->upload_id;
-                    $tsv_record['photo_name']        = $nc3_photoalbum_photo->photo_name;
-                    $tsv_record['photo_description'] = $nc3_photoalbum_photo->photo_description;
-                    $tsv_record['width']             = $nc3_photoalbum_photo->width;
-                    $tsv_record['height']            = $nc3_photoalbum_photo->height;
+                    $photo_upload = $photoalbum_uploads_all->where('field_name', 'photo')->firstWhere('content_key', $nc3_photoalbum_photo->key) ?? new Nc3UploadFile();
+
+                    // 画像：原寸
+                    $image_file_path = $nc3_uploads_path . $photo_upload->path . $photo_upload->id . '/' . $photo_upload->real_file_name;
+                    $image_width = 0;
+                    $image_height = 0;
+                    if (File::exists($image_file_path)) {
+                        list($image_width, $image_height) = getimagesize($image_file_path);
+                    } else {
+                        $this->putError(3, "Image file not exists: " . $nc3_uploads_path . $photo_upload->path . $photo_upload->id . '/' . $photo_upload->real_file_name);
+                    }
+
+                    $tsv_record['photo_id']          = $nc3_photoalbum_photo->id;
+                    $tsv_record['upload_id']         = $photo_upload->id;
+                    $tsv_record['photo_name']        = $nc3_photoalbum_photo->title;
+                    $tsv_record['photo_description'] = $nc3_photoalbum_photo->description;
+                    $tsv_record['width']             = $image_width;
+                    $tsv_record['height']            = $image_height;
                     $tsv_record['created_at']        = $this->getCCDatetime($nc3_photoalbum_photo->created);
-                    $tsv_record['created_name']      = $nc3_photoalbum_photo->insert_user_name;
+                    $tsv_record['created_name']      = Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_photoalbum_photo->created_user);
                     $tsv_record['insert_login_id']   = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_photoalbum_photo->created_user);
                     $tsv_record['updated_at']        = $this->getCCDatetime($nc3_photoalbum_photo->modified);
-                    $tsv_record['updated_name']      = $nc3_photoalbum_photo->update_user_name;
+                    $tsv_record['updated_name']      = Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_photoalbum_photo->modified_user);
                     $tsv_record['update_login_id']   = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_photoalbum_photo->modified_user);
 
                     $tsv .= implode("\t", $tsv_record) . "\n";
@@ -4587,52 +4474,63 @@ trait MigrationNc3ExportTrait
 
                 // データ行の書き出し
                 $tsv = $this->exportStrReplace($tsv, 'photoalbums');
-                $this->storageAppend($this->getImportPath('photoalbums/photoalbum_') . $this->zeroSuppress($nc3_photoalbum->photoalbum_id) . '_' . $this->zeroSuppress($nc3_photoalbum_alubum->album_id) . '.tsv', $tsv);
+                $this->storageAppend($this->getImportPath('photoalbums/photoalbum_') . $this->zeroSuppress($nc3_room->id) . '_' . $this->zeroSuppress($nc3_photoalbum_alubum->id) . '.tsv', $tsv);
             }
 
             // スライド表示はスライダーにも移行
-
-            // photoalbum_block の取得
-            // 1DB で複数ブロックがあるので、Join せずに、個別に読む
-            $nc3_photoalbum_blocks = Nc2PhotoalbumBlock::where('photoalbum_id', $nc3_photoalbum->photoalbum_id)
-                ->where('display', Nc2PhotoalbumBlock::DISPLAY_SLIDESHOW)
-                ->orderBy('block_id', 'asc')->get();
+            $nc3_photoalbum_frame_settings = Nc3Frame::select('photo_album_frame_settings.*', 'frames.id as frame_id')
+                ->join('photo_album_frame_settings', function ($join) {
+                    $join->on('photo_album_frame_settings.frame_key', '=', 'frames.key');
+                })
+                ->where('photo_album_frame_settings.display_type', Nc3PhotoAlbumFrameSetting::DISPLAY_SLIDESHOW)
+                ->whereIn('frames.block_id', $nc3_photoalbum_alubums->pluck('block_id'))
+                ->get();
 
             // NC3スライダー（Slideshow）のループ
-            foreach ($nc3_photoalbum_blocks as $nc3_photoalbum_block) {
+            foreach ($nc3_photoalbum_frame_settings as $nc3_photoalbum_frame_setting) {
                 // アルバム
-                $nc3_photoalbum_alubum = $nc3_photoalbum_alubums_all->firstWhere('album_id', $nc3_photoalbum_block->display_album_id);
-                $nc3_photoalbum_alubum = $nc3_photoalbum_alubum ?? new Nc2PhotoalbumAlbum();
+                $photo_album_display_album = $photo_album_display_albums_all->firstWhere('frame_key', $nc3_photoalbum_frame_setting->frame_key) ?? new Nc3PhotoAlbumDisplayAlbum();
+                $nc3_photoalbum_alubum = $nc3_photoalbum_alubums->firstWhere('key', $photo_album_display_album->album_key) ?? new Nc3Photoalbum();
 
-                // (nc)秒 => (cc)ミリ秒
-                $image_interval = $nc3_photoalbum_block->slide_time * 1000;
+                // (nc3)5000ミリ秒固定 => (cc)ミリ秒
+                // @see (nc3) app\Plugin\PhotoAlbums\View\PhotoAlbumPhotos\slide.ctp
+                $image_interval = 5000;
 
-                $height = $nc3_photoalbum_block->size_flag ? $nc3_photoalbum_block->height : null;
+                $height = $nc3_photoalbum_frame_setting->slide_height;
+                if ($height == 0) {
+                    // height=0(自動)の場合、固定値をセット
+                    $height = $this->getMigrationConfig('photoalbums', 'nc3_export_slideshow_convert_auto_height_value', 250);
+                }
 
                 // スライダー設定
                 $slide_ini = "";
                 $slide_ini .= "[slideshow_base]\n";
-                $slide_ini .= "slideshows_name = \"{$nc3_photoalbum_alubum->album_name}\"\n";
-                $slide_ini .= "image_interval = {$image_interval}\n";
-                $slide_ini .= "height = {$height}\n";
+                $slide_ini .= "slideshows_name = \"{$nc3_photoalbum_alubum->name}\"\n";
+                $slide_ini .= "image_interval  = {$image_interval}\n";
+                $slide_ini .= "height          = {$height}\n";
 
                 // NC3 情報
                 $slide_ini .= "\n";
                 $slide_ini .= "[source_info]\n";
-                $slide_ini .= "slideshows_block_id = " . $nc3_photoalbum_block->block_id . "\n";
-                $slide_ini .= "photoalbum_id = " . $nc3_photoalbum->photoalbum_id . "\n";
-                $slide_ini .= "photoalbum_name = \"" . $nc3_photoalbum->photoalbum_name . "\"\n";
-                $slide_ini .= "room_id = " . $nc3_photoalbum_block->room_id . "\n";
-                $slide_ini .= "plugin_key = \"photoalbum\"\n";
-                $slide_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_photoalbum_block->created) . "\"\n";
-                $slide_ini .= "created_name    = \"" . $nc3_photoalbum_block->insert_user_name . "\"\n";
-                $slide_ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_photoalbum_block->created_user) . "\"\n";
-                $slide_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_photoalbum_block->modified) . "\"\n";
-                $slide_ini .= "updated_name    = \"" . $nc3_photoalbum_block->update_user_name . "\"\n";
-                $slide_ini .= "update_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_photoalbum_block->modified_user) . "\"\n";
+                $slide_ini .= "slideshows_block_id = " . $nc3_photoalbum_frame_setting->frame_id . "\n";    // block_idは無いため、frame_idで代用
+                $slide_ini .= "photoalbum_id       = " . $nc3_photoalbum_alubum->id . "\n";
+                $slide_ini .= "photoalbum_name     = \"" . $nc3_photoalbum_alubum->name . "\"\n";
+                $slide_ini .= "room_id             = " . $nc3_photoalbum_alubum->room_id . "\n";
+                $slide_ini .= "plugin_key      = \"photoalbums\"\n";
+                $slide_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_photoalbum_frame_setting->created) . "\"\n";
+                $slide_ini .= "created_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_photoalbum_frame_setting->created_user) . "\"\n";
+                $slide_ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_photoalbum_frame_setting->created_user) . "\"\n";
+                $slide_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_photoalbum_frame_setting->modified) . "\"\n";
+                $slide_ini .= "updated_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_photoalbum_frame_setting->modified_user) . "\"\n";
+                $slide_ini .= "update_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_photoalbum_frame_setting->modified_user) . "\"\n";
 
-                // 写真
-                $nc3_photoalbum_photos = $nc3_photoalbum_photos_all->where('album_id', $nc3_photoalbum_block->display_album_id);
+                // 写真（並び順指定のため、DBから再取得）
+                // photos_sort=PhotoAlbumPhoto.modified
+                $photos_sorts = explode('.', $nc3_photoalbum_frame_setting->photos_sort);
+                $nc3_photoalbum_photos = Nc3PhotoAlbumPhoto::where('album_key', $nc3_photoalbum_alubum->key)
+                    ->where('is_latest', 1)
+                    ->orderBy($photos_sorts[1], $nc3_photoalbum_frame_setting->photos_direction)
+                    ->get();
 
                 // TSV でエクスポート
                 // image_path{\t}uploads_id{\t}link_url{\t}link_target{\t}caption{\t}display_flag{\t}display_sequence
@@ -4641,23 +4539,25 @@ trait MigrationNc3ExportTrait
 
                     $display_sequence = $i + 1;
 
+                    $photo_upload = $photoalbum_uploads_all->where('field_name', 'photo')->firstWhere('content_key', $nc3_photoalbum_photo->key) ?? new Nc3UploadFile();
+
                     // TSV 形式でエクスポート
                     if (!empty($slides_tsv)) {
                         $slides_tsv .= "\n";
                     }
                     $slides_tsv .= "\t";                                        // image_path
-                    $slides_tsv .= $nc3_photoalbum_photo->upload_id . "\t";     // uploads_id
+                    $slides_tsv .= $photo_upload->id . "\t";                    // uploads_id
                     $slides_tsv .= "\t";                                        // link_url
                     $slides_tsv .= "\t";                                        // link_target
-                    $slides_tsv .= "\t";                                        // caption
+                    $slides_tsv .= "{$nc3_photoalbum_photo->description}\t";    // caption
                     $slides_tsv .= "1\t";                                       // display_flag
                     $slides_tsv .= $display_sequence . "\t";                    // display_sequence
                 }
 
                 // スライダーの設定を出力
-                $this->storagePut($this->getImportPath('slideshows/slideshows_') . $this->zeroSuppress($nc3_photoalbum_block->block_id) . '.ini', $slide_ini);
+                $this->storagePut($this->getImportPath('slideshows/slideshows_') . $this->zeroSuppress($nc3_photoalbum_frame_setting->frame_id) . '.ini', $slide_ini);
                 // スライダーの付与情報を出力
-                $this->storagePut($this->getImportPath('slideshows/slideshows_') . $this->zeroSuppress($nc3_photoalbum_block->block_id) . '.tsv', $slides_tsv);
+                $this->storagePut($this->getImportPath('slideshows/slideshows_') . $this->zeroSuppress($nc3_photoalbum_frame_setting->frame_id) . '.tsv', $slides_tsv);
             }
         }
     }
@@ -4667,7 +4567,7 @@ trait MigrationNc3ExportTrait
      */
     private function nc3Frame(Nc3Page $nc3_page, int $new_page_index, Nc3Page $nc3_top_page)
     {
-        // 指定されたページ内のブロックを取得
+        // 指定されたページ内のフレームを取得
         $nc3_frames_query = Nc3Frame::
             select(
                 'frames.*',
@@ -4711,7 +4611,7 @@ trait MigrationNc3ExportTrait
             ->orderBy('frames.weight')
             ->get();
 
-        // ブロックをループ
+        // フレームをループ
         $frame_index = 0; // フレームの連番
 
         // [Connect出力] 割り切り実装
@@ -5164,6 +5064,7 @@ trait MigrationNc3ExportTrait
                     ->where('display_type', Nc3PhotoAlbumFrameSetting::DISPLAY_SLIDESHOW)
                     ->first();
                 if ($nc3_photoalbum_frame_setting) {
+                    // NC3フォトアルバムにblock_idはないため、frame_idで代用
                     $ret = "slideshows_block_id = \"" . $this->zeroSuppress($nc3_frame->id) . "\"\n";
                 } else {
                     $ret = "photoalbum_id = \"" . $this->zeroSuppress($nc3_photoalbum->id) . "\"\n";
@@ -5203,6 +5104,9 @@ trait MigrationNc3ExportTrait
         } elseif ($plugin_name == 'counters') {
             // カウンター
             $this->nc3FrameExportCounters($nc3_frame, $new_page_index, $frame_index_str);
+        } elseif ($plugin_name == 'photoalbums') {
+            // フォトアルバム
+            $this->nc3FrameExportPhotoalbums($nc3_frame, $new_page_index, $frame_index_str);
         }
     }
 
@@ -5413,7 +5317,7 @@ trait MigrationNc3ExportTrait
      */
     private function nc3FrameExportCounters(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
     {
-        // NC3 フレーム設定の取得（データなければ、badge_secondaryを指定）
+        // NC3 フレーム設定の取得
         $access_counter_frame_setting = Nc3AccessCounterFrameSetting::where('frame_key', $nc3_frame->key)->firstOrNew([]);
 
         $ini_filename = "frame_" . $frame_index_str . '.ini';
@@ -5434,6 +5338,39 @@ trait MigrationNc3ExportTrait
 
         $frame_ini  = "[counter]\n";
         $frame_ini .= "design_type = {$design_type}\n";
+        $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
+    }
+
+    /**
+     * NC3：フォトアルバムのフレーム特有部分のエクスポート
+     */
+    private function nc3FrameExportPhotoalbums(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
+    {
+        // NC3 フレーム設定の取得
+        $photo_album_frame_setting = Nc3PhotoAlbumFrameSetting::where('frame_key', $nc3_frame->key)->firstOrNew([]);
+
+        $ini_filename = "frame_" . $frame_index_str . '.ini';
+
+        $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
+
+        // (NC3)albums_order -> (Connect)sort_album 変換
+        $convert_sort_albums = [
+            Nc3PhotoAlbumFrameSetting::albums_order_new    => PhotoalbumSort::created_desc,
+            Nc3PhotoAlbumFrameSetting::albums_order_create => PhotoalbumSort::created_asc,
+            Nc3PhotoAlbumFrameSetting::albums_order_title  => PhotoalbumSort::name_asc,
+        ];
+        $sort_album = $convert_sort_albums[$photo_album_frame_setting->albums_order] ?? PhotoalbumSort::name_asc;
+
+        // (NC3)photos_order -> (Connect)sort_photo 変換
+        $convert_sort_photos = [
+            Nc3PhotoAlbumFrameSetting::photos_order_new    => PhotoalbumSort::created_desc,
+            Nc3PhotoAlbumFrameSetting::photos_order_create => PhotoalbumSort::created_asc,
+        ];
+        $sort_photo = $convert_sort_photos[$photo_album_frame_setting->photos_order] ?? PhotoalbumSort::name_asc;
+
+        $frame_ini  = "[photoalbum]\n";
+        $frame_ini .= "sort_album = \"{$sort_album}\"\n";
+        $frame_ini .= "sort_photo = \"{$sort_photo}\"\n";
         $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
     }
 
@@ -6618,5 +6555,20 @@ trait MigrationNc3ExportTrait
 
         // 移行対象外 (link_checkログには吐かない)
         $this->putMonitor(3, $nc3_plugin_key . '|内部リンク|移行対象外URL', $url, $nc3_frame);
+    }
+
+    /**
+     * nc3 uploads_path の取得
+     */
+    private function getExportUploadsPath(): string
+    {
+        // uploads_path の取得
+        $uploads_path = config('migration.NC3_EXPORT_UPLOADS_PATH');
+
+        // uploads_path の最後に / がなければ追加
+        if (!empty($uploads_path) && mb_substr($uploads_path, -1) != '/') {
+            $uploads_path = $uploads_path . '/';
+        }
+        return $uploads_path;
     }
 }

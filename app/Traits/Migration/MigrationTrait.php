@@ -169,6 +169,8 @@ use App\Enums\LinklistType;
 use App\Enums\NoticeEmbeddedTag;
 use App\Enums\NotShowType;
 use App\Enums\PermissionType;
+use App\Enums\PhotoalbumFrameConfig;
+use App\Enums\PhotoalbumSort;
 use App\Enums\Required;
 use App\Enums\ReservationCalendarDisplayType;
 use App\Enums\ReservationColumnType;
@@ -4465,11 +4467,11 @@ trait MigrationTrait
                     $children->save();
 
                     // カスタムジャケットのアップロードIDあり
-                    if ($photoalbums_ini[$album_id]['nc2_upload_id']) {
+                    if ($photoalbums_ini[$album_id]['upload_id']) {
                         // アルバムのジャケット登録
                         $contents = [
                             'photoalbum_id' => $photoalbum->id,
-                            'nc2_upload_id' => $photoalbums_ini[$album_id]['nc2_upload_id'],
+                            'upload_id'     => $photoalbums_ini[$album_id]['upload_id'],
                             'name'          => $album_name,
                             'width'         => $photoalbums_ini[$album_id]['width'],
                             'height'        => $photoalbums_ini[$album_id]['height'],
@@ -4487,7 +4489,7 @@ trait MigrationTrait
                         // マッピングテーブルの追加
                         $mapping_album_cover_tmp = MigrationMapping::create([
                             'target_source_table'  => 'photoalbums_album_cover',
-                            'source_key'           => $photoalbums_ini[$album_id]['nc2_upload_id'],
+                            'source_key'           => $photoalbums_ini[$album_id]['upload_id'],
                             'destination_key'      => $grandchild->id,
                         ]);
 
@@ -4506,7 +4508,7 @@ trait MigrationTrait
 
                     // マッピングテーブルの取得
                     $mapping_album_cover = MigrationMapping::where('target_source_table', 'photoalbums_album_cover')
-                        ->where('source_key', $photoalbums_ini[$album_id]['nc2_upload_id'])
+                        ->where('source_key', $photoalbums_ini[$album_id]['upload_id'])
                         ->first();
 
                     if ($mapping_album_cover) {
@@ -4528,7 +4530,7 @@ trait MigrationTrait
                     // 行ループで使用する各種変数
                     $header_skip = true;       // ヘッダースキップフラグ（1行目はカラム名の行）
                     $tsv_idxs['photo_id'] = 0;
-                    $tsv_idxs['nc2_upload_id'] = 0;
+                    $tsv_idxs['upload_id'] = 0;
                     $tsv_idxs['photo_name'] = 0;
                     $tsv_idxs['photo_description'] = 0;
                     $tsv_idxs['width'] = 0;
@@ -4575,7 +4577,7 @@ trait MigrationTrait
                             // 写真登録
                             $contents = [
                                 'photoalbum_id' => $photoalbum->id,
-                                'nc2_upload_id' => $photoalbum_tsv_cols[$tsv_idxs['nc2_upload_id']],
+                                'upload_id' => $photoalbum_tsv_cols[$tsv_idxs['upload_id']],
                                 'name' => $photoalbum_tsv_cols[$tsv_idxs['photo_name']],
                                 'width' => $photoalbum_tsv_cols[$tsv_idxs['width']],
                                 'height' => $photoalbum_tsv_cols[$tsv_idxs['height']],
@@ -4616,15 +4618,15 @@ trait MigrationTrait
      */
     private function createPhotoalbumContent(Collection $upload_mappings, Collection $uploads_all, PhotoalbumContent $children, array $contents): PhotoalbumContent
     {
-        $upload_mapping = $upload_mappings->firstWhere('source_key', $contents['nc2_upload_id']);
+        $upload_mapping = $upload_mappings->firstWhere('source_key', $contents['upload_id']);
         $upload = null;
         if ($upload_mapping) {
             $upload = $uploads_all->firstWhere('id', $upload_mapping->destination_key);
             if (!$upload) {
-                $this->putMonitor(3, "Connectの Uploads にアップロードIDなし。nc2_album_name={$contents['name']}, nc2_upload_id={$contents['nc2_upload_id']}, is_cover={$contents['is_cover']}");
+                $this->putMonitor(3, "Connectの Uploads にアップロードIDなし。nc2_album_name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}");
             }
         } else {
-            $this->putMonitor(3, "Connectの MigrationMapping にアップロードIDなし。nc2_album_name={$contents['name']}, nc2_upload_id={$contents['nc2_upload_id']}, is_cover={$contents['is_cover']}\n");
+            $this->putMonitor(3, "Connectの MigrationMapping にアップロードIDなし。nc2_album_name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}\n");
         }
 
         // 写真登録
@@ -5910,13 +5912,9 @@ trait MigrationTrait
 
         // counter_frames 登録
         if (!empty($counter)) {
-            // 表示形式
-            $design_type = Arr::get($counter_ini, 'counter_base.design_type', CounterDesignType::numeric);
-            $design_type = Arr::get($frame_ini, 'counter.design_type', $design_type);
-
             CounterFrame::create([
                 'frame_id' => $frame->id,
-                'design_type' => $design_type,
+                'design_type'     => Arr::get($frame_ini, 'counter.design_type', CounterDesignType::numeric),
                 'use_total_count' => 1,
                 'use_today_count' => 1,
                 'use_yesterday_count' => 1,
@@ -6354,6 +6352,21 @@ trait MigrationTrait
 
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+
+        // frame_configs 登録
+        if (!empty($photoalbums)) {
+            // アルバム並び順
+            $frame_config = FrameConfig::updateOrCreate(
+                ['frame_id' => $frame->id, 'name' => PhotoalbumFrameConfig::sort_folder],
+                ['value' => Arr::get($frame_ini, 'photoalbum.sort_album', PhotoalbumSort::name_asc)]
+            );
+
+            // 写真並び順
+            $frame_config = FrameConfig::updateOrCreate(
+                ['frame_id' => $frame->id, 'name' => PhotoalbumFrameConfig::sort_file],
+                ['value' => Arr::get($frame_ini, 'photoalbum.sort_photo', PhotoalbumSort::name_asc)]
+            );
+        }
     }
 
     /**
@@ -9931,51 +9944,16 @@ trait MigrationTrait
                 continue;
             }
 
-            // (NC2)show_type -> (Connect)design_type 変換
-            $convert_design_types = [
-                'black'       => CounterDesignType::badge_dark,
-                'black2'      => CounterDesignType::badge_dark,
-                'black3'      => CounterDesignType::badge_dark,
-                'color'       => CounterDesignType::badge_light,
-                'digit01'     => CounterDesignType::white_number_warning,
-                'digit02'     => CounterDesignType::white_number_warning,
-                'digit03'     => CounterDesignType::white_number_danger,
-                'digit04'     => CounterDesignType::white_number_danger,
-                'digit05'     => CounterDesignType::white_number_primary,
-                'digit06'     => CounterDesignType::white_number_info,
-                'digit07'     => CounterDesignType::white_number_dark,
-                'digit08'     => CounterDesignType::white_number_dark,
-                'digit09'     => CounterDesignType::white_number_dark,
-                'digit10'     => CounterDesignType::white_number_dark,
-                'digit11'     => CounterDesignType::white_number_success,
-                'digit12'     => CounterDesignType::white_number_success,
-                'gray'        => CounterDesignType::badge_light,
-                'gray2'       => CounterDesignType::badge_light,
-                'gray3'       => CounterDesignType::badge_light,
-                'gray_large'  => CounterDesignType::badge_light,
-                'green'       => CounterDesignType::badge_success,
-                'green_large' => CounterDesignType::badge_success,
-                'white'       => CounterDesignType::white_number,
-                'white_large' => CounterDesignType::circle_success,
-            ];
-            $design_type = $convert_design_types[$nc2_counter->show_type] ?? CounterDesignType::numeric;
-
             // カウンター設定
             $ini = "";
             $ini .= "[counter_base]\n";
             // カウント数
             $ini .= "counter_num = " . $nc2_counter->counter_num . "\n";
-            // 表示する桁数
-            // $ini .= "counter_digit = " .  $nc2_counter->counter_digit . "\n";
-
-            $ini .= "design_type = " . $design_type . "\n";
 
             // 文字(前)
             $ini .= "show_char_before = '" . $nc2_counter->show_char_before . "'\n";
             // 文字(後)
             $ini .= "show_char_after = '" . $nc2_counter->show_char_after . "'\n";
-            // 上記以外に表示したい文字
-            // $ini .= "comment = " . $nc2_counter->comment . "\n";
 
             // NC2 情報
             $ini .= "\n";
@@ -11016,7 +10994,7 @@ trait MigrationTrait
                 $photoalbum_ini .= "album_name                 = \"" . $nc2_photoalbum_alubum->album_name . "\"\n";
                 $photoalbum_ini .= "album_description          = \"" . $nc2_photoalbum_alubum->album_description . "\"\n";
                 $photoalbum_ini .= "public_flag                = "   . $nc2_photoalbum_alubum->public_flag . "\n";
-                $photoalbum_ini .= "nc2_upload_id              = "   . $nc2_photoalbum_alubum->upload_id . "\n";
+                $photoalbum_ini .= "upload_id                  = "   . $nc2_photoalbum_alubum->upload_id . "\n";
                 $photoalbum_ini .= "width                      = "   . $nc2_photoalbum_alubum->width . "\n";
                 $photoalbum_ini .= "height                     = "   . $nc2_photoalbum_alubum->height . "\n";
                 $photoalbum_ini .= "created_at                 = \"" . $this->getCCDatetime($nc2_photoalbum_alubum->insert_time) . "\"\n";
@@ -11032,11 +11010,11 @@ trait MigrationTrait
             $this->storagePut($this->getImportPath('photoalbums/photoalbum_') . $this->zeroSuppress($nc2_photoalbum->photoalbum_id) . '.ini', $photoalbum_ini);
 
             // カラムのヘッダー及びTSV 行毎の枠準備
-            $tsv_header = "photo_id" . "\t" . "nc2_upload_id" . "\t" . "photo_name" . "\t" . "photo_description" . "\t" . "width" . "\t" ."height" . "\t" .
+            $tsv_header = "photo_id" . "\t" . "upload_id" . "\t" . "photo_name" . "\t" . "photo_description" . "\t" . "width" . "\t" ."height" . "\t" .
                 "created_at" . "\t" . "created_name" . "\t" . "insert_login_id" . "\t" . "updated_at" . "\t" . "updated_name" . "\t" . "update_login_id";
 
             $tsv_cols['photo_id'] = "";
-            $tsv_cols['nc2_upload_id'] = "";
+            $tsv_cols['upload_id'] = "";
             $tsv_cols['photo_name'] = "";
             $tsv_cols['photo_description'] = "";
             $tsv_cols['width'] = "";
@@ -11063,7 +11041,7 @@ trait MigrationTrait
                     $tsv_record = $tsv_cols;
 
                     $tsv_record['photo_id']          = $nc2_photoalbum_photo->photo_id;
-                    $tsv_record['nc2_upload_id']     = $nc2_photoalbum_photo->upload_id;
+                    $tsv_record['upload_id']         = $nc2_photoalbum_photo->upload_id;
                     $tsv_record['photo_name']        = $nc2_photoalbum_photo->photo_name;
                     $tsv_record['photo_description'] = $nc2_photoalbum_photo->photo_description;
                     $tsv_record['width']             = $nc2_photoalbum_photo->width;
@@ -11811,6 +11789,9 @@ trait MigrationTrait
         } elseif ($plugin_name == 'linklists') {
             // リンクリスト
             $this->nc2BlockExportLinklists($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
+        } elseif ($plugin_name == 'counters') {
+            // カウンター
+            $this->nc2BlockExportCounters($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
         }
     }
 
@@ -11992,6 +11973,56 @@ trait MigrationTrait
         $frame_ini = "[linklist]\n";
         // $frame_ini .= "view_count = 10\n";
         $frame_ini .= "type = {$type}\n";
+        $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
+    }
+
+    /**
+     * NC2：リンクリストのブロック特有部分のエクスポート
+     */
+    private function nc2BlockExportCounters($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
+    {
+        // NC2 ブロック設定の取得
+        $nc2_counter = Nc2Counter::where('block_id', $nc2_block->block_id)->first();
+
+        if (empty($nc2_counter)) {
+            return;
+        }
+
+        $ini_filename = "frame_" . $frame_index_str . '.ini';
+
+        $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
+
+        // (NC2)show_type -> (Connect)design_type 変換
+        $convert_design_types = [
+            'black'       => CounterDesignType::badge_dark,
+            'black2'      => CounterDesignType::badge_dark,
+            'black3'      => CounterDesignType::badge_dark,
+            'color'       => CounterDesignType::badge_light,
+            'digit01'     => CounterDesignType::white_number_warning,
+            'digit02'     => CounterDesignType::white_number_warning,
+            'digit03'     => CounterDesignType::white_number_danger,
+            'digit04'     => CounterDesignType::white_number_danger,
+            'digit05'     => CounterDesignType::white_number_primary,
+            'digit06'     => CounterDesignType::white_number_info,
+            'digit07'     => CounterDesignType::white_number_dark,
+            'digit08'     => CounterDesignType::white_number_dark,
+            'digit09'     => CounterDesignType::white_number_dark,
+            'digit10'     => CounterDesignType::white_number_dark,
+            'digit11'     => CounterDesignType::white_number_success,
+            'digit12'     => CounterDesignType::white_number_success,
+            'gray'        => CounterDesignType::badge_light,
+            'gray2'       => CounterDesignType::badge_light,
+            'gray3'       => CounterDesignType::badge_light,
+            'gray_large'  => CounterDesignType::badge_light,
+            'green'       => CounterDesignType::badge_success,
+            'green_large' => CounterDesignType::badge_success,
+            'white'       => CounterDesignType::white_number,
+            'white_large' => CounterDesignType::circle_success,
+        ];
+        $design_type = $convert_design_types[$nc2_counter->show_type] ?? CounterDesignType::numeric;
+
+        $frame_ini  = "[counter]\n";
+        $frame_ini .= "design_type = {$design_type}\n";
         $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
     }
 
