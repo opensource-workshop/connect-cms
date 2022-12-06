@@ -169,6 +169,8 @@ use App\Enums\LinklistType;
 use App\Enums\NoticeEmbeddedTag;
 use App\Enums\NotShowType;
 use App\Enums\PermissionType;
+use App\Enums\PhotoalbumFrameConfig;
+use App\Enums\PhotoalbumSort;
 use App\Enums\Required;
 use App\Enums\ReservationCalendarDisplayType;
 use App\Enums\ReservationColumnType;
@@ -6354,6 +6356,21 @@ trait MigrationTrait
 
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+
+        // frame_configs 登録
+        if (!empty($photoalbums)) {
+            // アルバム並び順
+            $frame_config = FrameConfig::updateOrCreate(
+                ['frame_id' => $frame->id, 'name' => PhotoalbumFrameConfig::sort_folder],
+                ['value' => Arr::get($frame_ini, 'photoalbum.sort_album', PhotoalbumSort::name_asc)]
+            );
+
+            // 写真並び順
+            $frame_config = FrameConfig::updateOrCreate(
+                ['frame_id' => $frame->id, 'name' => PhotoalbumFrameConfig::sort_file],
+                ['value' => Arr::get($frame_ini, 'photoalbum.sort_photo', PhotoalbumSort::name_asc)]
+            );
+        }
     }
 
     /**
