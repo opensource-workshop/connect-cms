@@ -494,20 +494,6 @@ trait MigrationNc3ExportTrait
             $this->nc3ExportPhotoalbum($redo);
         }
 
-        //////////////////
-        // [TODO] まだ
-        //////////////////
-
-        // // NC3 スライダー（slides）データのエクスポート
-        // if ($this->isTarget('nc3_export', 'plugins', 'slideshows')) {
-        //     $this->nc3ExportSlides($redo);
-        // }
-
-        // // NC3 シンプル動画（simplemovie）データのエクスポート
-        // if ($this->isTarget('nc3_export', 'plugins', 'simplemovie')) {
-        //     $this->nc3ExportSimplemovie($redo);
-        // }
-
         // pages データとファイルのエクスポート
         if ($this->isTarget('nc3_export', 'pages')) {
             // データクリア
@@ -3764,154 +3750,6 @@ trait MigrationNc3ExportTrait
     }
 
     /**
-     * NC3：スライダー（スライダー）の移行
-     */
-    private function nc3ExportSlides($redo)
-    {
-        $this->putMonitor(3, "Start nc3ExportSlides.");
-
-        // データクリア
-        if ($redo === true) {
-            // 移行用ファイルの削除
-            Storage::deleteDirectory($this->getImportPath('slideshows/'));
-        }
-
-        // NC3スライダー（Slideshow）を移行する。
-        $where_slideshow_block_ids = $this->getMigrationConfig('slideshows', 'nc3_export_where_slideshow_block_ids');
-        if (empty($where_slideshow_block_ids)) {
-            $nc3_slideshows = Nc2Slides::orderBy('block_id')->get();
-        } else {
-            $nc3_slideshows = Nc2Slides::whereIn('block_id', $where_slideshow_block_ids)->orderBy('block_id')->get();
-        }
-
-        // 空なら戻る
-        if ($nc3_slideshows->isEmpty()) {
-            return;
-        }
-
-        // nc3の全ユーザ取得
-        $nc3_users = Nc2User::get();
-
-        // NC3スライダー（Slideshow）のループ
-        foreach ($nc3_slideshows as $nc3_slideshow) {
-            $room_ids = $this->getMigrationConfig('basic', 'nc3_export_room_ids');
-            // ルーム指定があれば、指定されたルームのみ処理する。
-            if (!empty($room_ids) && !in_array($nc3_slideshow->room_id, $room_ids)) {
-                // ルーム指定あり。条件に合致せず。移行しない。
-                continue;
-            }
-
-            // (nc3初期値) 5500
-            $image_interval = $nc3_slideshow->pause ? $nc3_slideshow->pause : 5500;
-
-            // スライダー設定
-            $ini = "";
-            $ini .= "[slideshow_base]\n";
-            $ini .= "image_interval = " . $image_interval . "\n";
-
-            // NC3 情報
-            $ini .= "\n";
-            $ini .= "[source_info]\n";
-            $ini .= "slideshows_block_id = " . $nc3_slideshow->block_id . "\n";
-            $ini .= "room_id = " . $nc3_slideshow->room_id . "\n";
-            $ini .= "plugin_key = \"slides\"\n";
-            $ini .= "created_at      = \"" . $this->getCCDatetime($nc3_slideshow->created) . "\"\n";
-            $ini .= "created_name    = \"" . $nc3_slideshow->insert_user_name . "\"\n";
-            $ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_slideshow->created_user) . "\"\n";
-            $ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_slideshow->modified) . "\"\n";
-            $ini .= "updated_name    = \"" . $nc3_slideshow->update_user_name . "\"\n";
-            $ini .= "update_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_slideshow->modified_user) . "\"\n";
-
-            // 付与情報を移行する。
-            $nc3_slides_urls = Nc2SlidesUrl::where('slides_id', $nc3_slideshow->slides_id)->orderBy('slides_url_id')->get();
-            // TSV でエクスポート
-            // image_path{\t}uploads_id{\t}link_url{\t}link_target{\t}caption{\t}display_flag{\t}display_sequence
-            $slides_tsv = "";
-            foreach ($nc3_slides_urls as $nc3_slides_url) {
-                // TSV 形式でエクスポート
-                if (!empty($slides_tsv)) {
-                    $slides_tsv .= "\n";
-                }
-                $slides_tsv .= "\t";                                                            // image_path
-                $slides_tsv .= $nc3_slides_url->image_file_id . "\t";                           // uploads_id
-                $slides_tsv .= $nc3_slides_url->url . "\t";                                     // link_url
-                $slides_tsv .= ($nc3_slides_url->target_new == 0) ? "\t" : '_blank' . "\t";     // link_target
-                $slides_tsv .= $nc3_slides_url->linkstr . "\t";                                 // caption
-                $slides_tsv .= $nc3_slides_url->view . "\t";                                    // display_flag
-                $slides_tsv .= $nc3_slides_url->display_sequence . "\t";                        // display_sequence
-            }
-            // スライダーの設定を出力
-            $this->storagePut($this->getImportPath('slideshows/slideshows_') . $this->zeroSuppress($nc3_slideshow->block_id) . '.ini', $ini);
-            // スライダーの付与情報を出力
-            $this->storagePut($this->getImportPath('slideshows/slideshows_') . $this->zeroSuppress($nc3_slideshow->block_id) . '.tsv', $slides_tsv);
-
-        }
-    }
-
-    /**
-     * NC3：シンプル動画の移行
-     */
-    private function nc3ExportSimplemovie($redo)
-    {
-        $this->putMonitor(3, "Start nc3ExportSimplemovie.");
-
-        // データクリア
-        if ($redo === true) {
-            // 移行用ファイルの削除
-            Storage::deleteDirectory($this->getImportPath('simplemovie/'));
-        }
-
-        // NC3シンプル動画を移行する。
-        $where_simplemovie_block_ids = $this->getMigrationConfig('simplemovie', 'nc3_export_where_simplemovie_block_ids');
-        if (empty($where_simplemovie_block_ids)) {
-            $nc3_simplemovies = Nc2Simplemovie::orderBy('block_id')->get();
-        } else {
-            $nc3_simplemovies = Nc2Simplemovie::whereIn('block_id', $where_simplemovie_block_ids)->orderBy('block_id')->get();
-        }
-
-        // 空なら戻る
-        if ($nc3_simplemovies->isEmpty()) {
-            return;
-        }
-
-        // NC3スライダー（Slideshow）のループ
-        foreach ($nc3_simplemovies as $nc3_simplemovie) {
-            $room_ids = $this->getMigrationConfig('basic', 'nc3_export_room_ids');
-            // ルーム指定があれば、指定されたルームのみ処理する。
-            if (!empty($room_ids) && !in_array($nc3_simplemovie->room_id, $room_ids)) {
-                // ルーム指定あり。条件に合致せず。移行しない。
-                continue;
-            }
-
-            // 動画が設定されていない場合はエクスポートしない
-            if ($nc3_simplemovie->movie_upload_id == null) {
-                continue;
-            }
-
-            // シンプル動画設定
-            $ini = "";
-            $ini .= "[simplemovie_base]\n";
-            $ini .= "simplemovie_movie_upload_id = " . $nc3_simplemovie->movie_upload_id . "\n";
-            $ini .= "simplemovie_movie_upload_id_request = " . $nc3_simplemovie->movie_upload_id_request . "\n";
-            $ini .= "simplemovie_thumbnail_upload_id = " . $nc3_simplemovie->thumbnail_upload_id . "\n";
-            $ini .= "simplemovie_thumbnail_upload_id_request = " . $nc3_simplemovie->thumbnail_upload_id_request . "\n";
-            $ini .= "simplemovie_width = " . $nc3_simplemovie->width . "\n";
-            $ini .= "simplemovie_height = " . $nc3_simplemovie->height . "\n";
-            $ini .= "simplemovie_autoplay_flag = " . $nc3_simplemovie->autoplay_flag . "\n";
-            $ini .= "simplemovie_embed_show_flag = " . $nc3_simplemovie->embed_show_flag . "\n";
-            $ini .= "simplemovie_agree_flag = " . $nc3_simplemovie->agree_flag . "\n";
-            // NC3 情報
-            $ini .= "\n";
-            $ini .= "[source_info]\n";
-            $ini .= "simplemovie_block_id = " . $nc3_simplemovie->block_id . "\n";
-            $ini .= "room_id = " . $nc3_simplemovie->room_id . "\n";
-            $ini .= "plugin_key = \"simplemovie\"\n";
-            // シンプル動画の設定を出力
-            $this->storagePut($this->getImportPath('simplemovie/simplemovie_') . $this->zeroSuppress($nc3_simplemovie->block_id) . '.ini', $ini);
-        }
-    }
-
-    /**
      * NC3：施設予約の移行
      */
     private function nc3ExportReservation($redo)
@@ -4641,7 +4479,6 @@ trait MigrationNc3ExportTrait
             }
 
             // スライド表示はスライダーにも移行
-
             $nc3_photoalbum_frame_settings = Nc3Frame::select('photo_album_frame_settings.*', 'frames.id as frame_id')
                 ->join('photo_album_frame_settings', function ($join) {
                     $join->on('photo_album_frame_settings.frame_key', '=', 'frames.key');
