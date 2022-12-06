@@ -412,14 +412,6 @@ trait MigrationNc3ExportTrait
         // 移行の初期処理
         $this->migrationInit();
 
-        // uploads_path の取得
-        $uploads_path = config('migration.NC3_EXPORT_UPLOADS_PATH');
-
-        // uploads_path の最後に / がなければ追加
-        if (!empty($uploads_path) && mb_substr($uploads_path, -1) != '/') {
-            $uploads_path = $uploads_path . '/';
-        }
-
         // サイト基本設定のエクスポート
         if ($this->isTarget('nc3_export', 'basic')) {
             $this->nc3ExportBasic();
@@ -427,7 +419,7 @@ trait MigrationNc3ExportTrait
 
         // アップロード・データとファイルのエクスポート
         if ($this->isTarget('nc3_export', 'uploads')) {
-            $this->nc3ExportUploads($uploads_path, $redo);
+            $this->nc3ExportUploads($redo);
         }
 
         // ユーザデータのエクスポート
@@ -835,7 +827,7 @@ trait MigrationNc3ExportTrait
      * [2]
      * ・・・
      */
-    private function nc3ExportUploads($uploads_path, $redo)
+    private function nc3ExportUploads($redo)
     {
         $this->putMonitor(3, "Start nc3ExportUploads.");
 
@@ -861,6 +853,9 @@ trait MigrationNc3ExportTrait
         // uploads,ini ファイルの詳細（変数に保持、後でappend。[uploads] セクションが切れないため。）
         $uploads_ini = "";
         $uploads_ini_detail = "";
+
+        // nc3 uploads_path の取得
+        $uploads_path = $this->getExportUploadsPath();
 
         // アップロード・ファイルのループ
         foreach ($nc3_uploads as $nc3_upload) {
@@ -6616,5 +6611,20 @@ trait MigrationNc3ExportTrait
 
         // 移行対象外 (link_checkログには吐かない)
         $this->putMonitor(3, $nc3_plugin_key . '|内部リンク|移行対象外URL', $url, $nc3_frame);
+    }
+
+    /**
+     * nc3 uploads_path の取得
+     */
+    private function getExportUploadsPath(): string
+    {
+        // uploads_path の取得
+        $uploads_path = config('migration.NC3_EXPORT_UPLOADS_PATH');
+
+        // uploads_path の最後に / がなければ追加
+        if (!empty($uploads_path) && mb_substr($uploads_path, -1) != '/') {
+            $uploads_path = $uploads_path . '/';
+        }
+        return $uploads_path;
     }
 }
