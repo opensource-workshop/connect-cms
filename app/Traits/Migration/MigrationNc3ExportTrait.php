@@ -4398,7 +4398,7 @@ trait MigrationNc3ExportTrait
                 $photoalbum_ini .= "album_name                 = \"" . $nc3_photoalbum_alubum->name . "\"\n";
                 $photoalbum_ini .= "album_description          = \"" . $nc3_photoalbum_alubum->description . "\"\n";
                 $photoalbum_ini .= "public_flag                = 1\n";   // 1:公開
-                $photoalbum_ini .= "nc2_upload_id              = "   . $album_upload->id . "\n";    // [TODO] 今後upload_idにリネームしたいな
+                $photoalbum_ini .= "upload_id                  = "   . $album_upload->id . "\n";
                 $photoalbum_ini .= "width                      = {$image_width}\n";
                 $photoalbum_ini .= "height                     = {$image_height}\n";
                 $photoalbum_ini .= "created_at                 = \"" . $this->getCCDatetime($nc3_photoalbum_alubum->created) . "\"\n";
@@ -4414,12 +4414,11 @@ trait MigrationNc3ExportTrait
             $this->storagePut($this->getImportPath('photoalbums/photoalbum_') . $this->zeroSuppress($nc3_room->id) . '.ini', $photoalbum_ini);
 
             // カラムのヘッダー及びTSV 行毎の枠準備
-            // [TODO] 今後upload_idにリネームしたいな
-            $tsv_header = "photo_id" . "\t" . "nc2_upload_id" . "\t" . "photo_name" . "\t" . "photo_description" . "\t" . "width" . "\t" ."height" . "\t" .
+            $tsv_header = "photo_id" . "\t" . "upload_id" . "\t" . "photo_name" . "\t" . "photo_description" . "\t" . "width" . "\t" ."height" . "\t" .
                 "created_at" . "\t" . "created_name" . "\t" . "insert_login_id" . "\t" . "updated_at" . "\t" . "updated_name" . "\t" . "update_login_id";
 
             $tsv_cols['photo_id'] = "";
-            $tsv_cols['nc2_upload_id'] = "";
+            $tsv_cols['upload_id'] = "";
             $tsv_cols['photo_name'] = "";
             $tsv_cols['photo_description'] = "";
             $tsv_cols['width'] = "";
@@ -4458,7 +4457,7 @@ trait MigrationNc3ExportTrait
                     }
 
                     $tsv_record['photo_id']          = $nc3_photoalbum_photo->id;
-                    $tsv_record['nc2_upload_id']     = $photo_upload->id;
+                    $tsv_record['upload_id']         = $photo_upload->id;
                     $tsv_record['photo_name']        = $nc3_photoalbum_photo->title;
                     $tsv_record['photo_description'] = $nc3_photoalbum_photo->description;
                     $tsv_record['width']             = $image_width;

@@ -4467,11 +4467,11 @@ trait MigrationTrait
                     $children->save();
 
                     // カスタムジャケットのアップロードIDあり
-                    if ($photoalbums_ini[$album_id]['nc2_upload_id']) {
+                    if ($photoalbums_ini[$album_id]['upload_id']) {
                         // アルバムのジャケット登録
                         $contents = [
                             'photoalbum_id' => $photoalbum->id,
-                            'nc2_upload_id' => $photoalbums_ini[$album_id]['nc2_upload_id'],
+                            'upload_id'     => $photoalbums_ini[$album_id]['upload_id'],
                             'name'          => $album_name,
                             'width'         => $photoalbums_ini[$album_id]['width'],
                             'height'        => $photoalbums_ini[$album_id]['height'],
@@ -4489,7 +4489,7 @@ trait MigrationTrait
                         // マッピングテーブルの追加
                         $mapping_album_cover_tmp = MigrationMapping::create([
                             'target_source_table'  => 'photoalbums_album_cover',
-                            'source_key'           => $photoalbums_ini[$album_id]['nc2_upload_id'],
+                            'source_key'           => $photoalbums_ini[$album_id]['upload_id'],
                             'destination_key'      => $grandchild->id,
                         ]);
 
@@ -4508,7 +4508,7 @@ trait MigrationTrait
 
                     // マッピングテーブルの取得
                     $mapping_album_cover = MigrationMapping::where('target_source_table', 'photoalbums_album_cover')
-                        ->where('source_key', $photoalbums_ini[$album_id]['nc2_upload_id'])
+                        ->where('source_key', $photoalbums_ini[$album_id]['upload_id'])
                         ->first();
 
                     if ($mapping_album_cover) {
@@ -4530,7 +4530,7 @@ trait MigrationTrait
                     // 行ループで使用する各種変数
                     $header_skip = true;       // ヘッダースキップフラグ（1行目はカラム名の行）
                     $tsv_idxs['photo_id'] = 0;
-                    $tsv_idxs['nc2_upload_id'] = 0;
+                    $tsv_idxs['upload_id'] = 0;
                     $tsv_idxs['photo_name'] = 0;
                     $tsv_idxs['photo_description'] = 0;
                     $tsv_idxs['width'] = 0;
@@ -4577,7 +4577,7 @@ trait MigrationTrait
                             // 写真登録
                             $contents = [
                                 'photoalbum_id' => $photoalbum->id,
-                                'nc2_upload_id' => $photoalbum_tsv_cols[$tsv_idxs['nc2_upload_id']],
+                                'upload_id' => $photoalbum_tsv_cols[$tsv_idxs['upload_id']],
                                 'name' => $photoalbum_tsv_cols[$tsv_idxs['photo_name']],
                                 'width' => $photoalbum_tsv_cols[$tsv_idxs['width']],
                                 'height' => $photoalbum_tsv_cols[$tsv_idxs['height']],
@@ -4618,15 +4618,15 @@ trait MigrationTrait
      */
     private function createPhotoalbumContent(Collection $upload_mappings, Collection $uploads_all, PhotoalbumContent $children, array $contents): PhotoalbumContent
     {
-        $upload_mapping = $upload_mappings->firstWhere('source_key', $contents['nc2_upload_id']);
+        $upload_mapping = $upload_mappings->firstWhere('source_key', $contents['upload_id']);
         $upload = null;
         if ($upload_mapping) {
             $upload = $uploads_all->firstWhere('id', $upload_mapping->destination_key);
             if (!$upload) {
-                $this->putMonitor(3, "Connectの Uploads にアップロードIDなし。nc2_album_name={$contents['name']}, nc2_upload_id={$contents['nc2_upload_id']}, is_cover={$contents['is_cover']}");
+                $this->putMonitor(3, "Connectの Uploads にアップロードIDなし。nc2_album_name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}");
             }
         } else {
-            $this->putMonitor(3, "Connectの MigrationMapping にアップロードIDなし。nc2_album_name={$contents['name']}, nc2_upload_id={$contents['nc2_upload_id']}, is_cover={$contents['is_cover']}\n");
+            $this->putMonitor(3, "Connectの MigrationMapping にアップロードIDなし。nc2_album_name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}\n");
         }
 
         // 写真登録
@@ -11033,7 +11033,7 @@ trait MigrationTrait
                 $photoalbum_ini .= "album_name                 = \"" . $nc2_photoalbum_alubum->album_name . "\"\n";
                 $photoalbum_ini .= "album_description          = \"" . $nc2_photoalbum_alubum->album_description . "\"\n";
                 $photoalbum_ini .= "public_flag                = "   . $nc2_photoalbum_alubum->public_flag . "\n";
-                $photoalbum_ini .= "nc2_upload_id              = "   . $nc2_photoalbum_alubum->upload_id . "\n";
+                $photoalbum_ini .= "upload_id                  = "   . $nc2_photoalbum_alubum->upload_id . "\n";
                 $photoalbum_ini .= "width                      = "   . $nc2_photoalbum_alubum->width . "\n";
                 $photoalbum_ini .= "height                     = "   . $nc2_photoalbum_alubum->height . "\n";
                 $photoalbum_ini .= "created_at                 = \"" . $this->getCCDatetime($nc2_photoalbum_alubum->insert_time) . "\"\n";
@@ -11049,11 +11049,11 @@ trait MigrationTrait
             $this->storagePut($this->getImportPath('photoalbums/photoalbum_') . $this->zeroSuppress($nc2_photoalbum->photoalbum_id) . '.ini', $photoalbum_ini);
 
             // カラムのヘッダー及びTSV 行毎の枠準備
-            $tsv_header = "photo_id" . "\t" . "nc2_upload_id" . "\t" . "photo_name" . "\t" . "photo_description" . "\t" . "width" . "\t" ."height" . "\t" .
+            $tsv_header = "photo_id" . "\t" . "upload_id" . "\t" . "photo_name" . "\t" . "photo_description" . "\t" . "width" . "\t" ."height" . "\t" .
                 "created_at" . "\t" . "created_name" . "\t" . "insert_login_id" . "\t" . "updated_at" . "\t" . "updated_name" . "\t" . "update_login_id";
 
             $tsv_cols['photo_id'] = "";
-            $tsv_cols['nc2_upload_id'] = "";
+            $tsv_cols['upload_id'] = "";
             $tsv_cols['photo_name'] = "";
             $tsv_cols['photo_description'] = "";
             $tsv_cols['width'] = "";
@@ -11080,7 +11080,7 @@ trait MigrationTrait
                     $tsv_record = $tsv_cols;
 
                     $tsv_record['photo_id']          = $nc2_photoalbum_photo->photo_id;
-                    $tsv_record['nc2_upload_id']     = $nc2_photoalbum_photo->upload_id;
+                    $tsv_record['upload_id']         = $nc2_photoalbum_photo->upload_id;
                     $tsv_record['photo_name']        = $nc2_photoalbum_photo->photo_name;
                     $tsv_record['photo_description'] = $nc2_photoalbum_photo->photo_description;
                     $tsv_record['width']             = $nc2_photoalbum_photo->width;
