@@ -4660,7 +4660,7 @@ trait MigrationNc3ExportTrait
      */
     private function nc3Frame(Nc3Page $nc3_page, int $new_page_index, Nc3Page $nc3_top_page)
     {
-        // 指定されたページ内のブロックを取得
+        // 指定されたページ内のフレームを取得
         $nc3_frames_query = Nc3Frame::
             select(
                 'frames.*',
@@ -5406,7 +5406,7 @@ trait MigrationNc3ExportTrait
      */
     private function nc3FrameExportCounters(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
     {
-        // NC3 フレーム設定の取得（データなければ、badge_secondaryを指定）
+        // NC3 フレーム設定の取得
         $access_counter_frame_setting = Nc3AccessCounterFrameSetting::where('frame_key', $nc3_frame->key)->firstOrNew([]);
 
         $ini_filename = "frame_" . $frame_index_str . '.ini';
