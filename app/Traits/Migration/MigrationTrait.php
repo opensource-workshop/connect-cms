@@ -5912,13 +5912,9 @@ trait MigrationTrait
 
         // counter_frames 登録
         if (!empty($counter)) {
-            // 表示形式
-            $design_type = Arr::get($counter_ini, 'counter_base.design_type', CounterDesignType::numeric);
-            $design_type = Arr::get($frame_ini, 'counter.design_type', $design_type);
-
             CounterFrame::create([
                 'frame_id' => $frame->id,
-                'design_type' => $design_type,
+                'design_type'     => Arr::get($frame_ini, 'counter.design_type', CounterDesignType::numeric),
                 'use_total_count' => 1,
                 'use_today_count' => 1,
                 'use_yesterday_count' => 1,
@@ -9948,51 +9944,16 @@ trait MigrationTrait
                 continue;
             }
 
-            // (NC2)show_type -> (Connect)design_type 変換
-            $convert_design_types = [
-                'black'       => CounterDesignType::badge_dark,
-                'black2'      => CounterDesignType::badge_dark,
-                'black3'      => CounterDesignType::badge_dark,
-                'color'       => CounterDesignType::badge_light,
-                'digit01'     => CounterDesignType::white_number_warning,
-                'digit02'     => CounterDesignType::white_number_warning,
-                'digit03'     => CounterDesignType::white_number_danger,
-                'digit04'     => CounterDesignType::white_number_danger,
-                'digit05'     => CounterDesignType::white_number_primary,
-                'digit06'     => CounterDesignType::white_number_info,
-                'digit07'     => CounterDesignType::white_number_dark,
-                'digit08'     => CounterDesignType::white_number_dark,
-                'digit09'     => CounterDesignType::white_number_dark,
-                'digit10'     => CounterDesignType::white_number_dark,
-                'digit11'     => CounterDesignType::white_number_success,
-                'digit12'     => CounterDesignType::white_number_success,
-                'gray'        => CounterDesignType::badge_light,
-                'gray2'       => CounterDesignType::badge_light,
-                'gray3'       => CounterDesignType::badge_light,
-                'gray_large'  => CounterDesignType::badge_light,
-                'green'       => CounterDesignType::badge_success,
-                'green_large' => CounterDesignType::badge_success,
-                'white'       => CounterDesignType::white_number,
-                'white_large' => CounterDesignType::circle_success,
-            ];
-            $design_type = $convert_design_types[$nc2_counter->show_type] ?? CounterDesignType::numeric;
-
             // カウンター設定
             $ini = "";
             $ini .= "[counter_base]\n";
             // カウント数
             $ini .= "counter_num = " . $nc2_counter->counter_num . "\n";
-            // 表示する桁数
-            // $ini .= "counter_digit = " .  $nc2_counter->counter_digit . "\n";
-
-            $ini .= "design_type = " . $design_type . "\n";
 
             // 文字(前)
             $ini .= "show_char_before = '" . $nc2_counter->show_char_before . "'\n";
             // 文字(後)
             $ini .= "show_char_after = '" . $nc2_counter->show_char_after . "'\n";
-            // 上記以外に表示したい文字
-            // $ini .= "comment = " . $nc2_counter->comment . "\n";
 
             // NC2 情報
             $ini .= "\n";
@@ -11828,6 +11789,9 @@ trait MigrationTrait
         } elseif ($plugin_name == 'linklists') {
             // リンクリスト
             $this->nc2BlockExportLinklists($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
+        } elseif ($plugin_name == 'counters') {
+            // カウンター
+            $this->nc2BlockExportCounters($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
         }
     }
 
@@ -12009,6 +11973,56 @@ trait MigrationTrait
         $frame_ini = "[linklist]\n";
         // $frame_ini .= "view_count = 10\n";
         $frame_ini .= "type = {$type}\n";
+        $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
+    }
+
+    /**
+     * NC2：リンクリストのブロック特有部分のエクスポート
+     */
+    private function nc2BlockExportCounters($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
+    {
+        // NC2 ブロック設定の取得
+        $nc2_counter = Nc2Counter::where('block_id', $nc2_block->block_id)->first();
+
+        if (empty($nc2_counter)) {
+            return;
+        }
+
+        $ini_filename = "frame_" . $frame_index_str . '.ini';
+
+        $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
+
+        // (NC2)show_type -> (Connect)design_type 変換
+        $convert_design_types = [
+            'black'       => CounterDesignType::badge_dark,
+            'black2'      => CounterDesignType::badge_dark,
+            'black3'      => CounterDesignType::badge_dark,
+            'color'       => CounterDesignType::badge_light,
+            'digit01'     => CounterDesignType::white_number_warning,
+            'digit02'     => CounterDesignType::white_number_warning,
+            'digit03'     => CounterDesignType::white_number_danger,
+            'digit04'     => CounterDesignType::white_number_danger,
+            'digit05'     => CounterDesignType::white_number_primary,
+            'digit06'     => CounterDesignType::white_number_info,
+            'digit07'     => CounterDesignType::white_number_dark,
+            'digit08'     => CounterDesignType::white_number_dark,
+            'digit09'     => CounterDesignType::white_number_dark,
+            'digit10'     => CounterDesignType::white_number_dark,
+            'digit11'     => CounterDesignType::white_number_success,
+            'digit12'     => CounterDesignType::white_number_success,
+            'gray'        => CounterDesignType::badge_light,
+            'gray2'       => CounterDesignType::badge_light,
+            'gray3'       => CounterDesignType::badge_light,
+            'gray_large'  => CounterDesignType::badge_light,
+            'green'       => CounterDesignType::badge_success,
+            'green_large' => CounterDesignType::badge_success,
+            'white'       => CounterDesignType::white_number,
+            'white_large' => CounterDesignType::circle_success,
+        ];
+        $design_type = $convert_design_types[$nc2_counter->show_type] ?? CounterDesignType::numeric;
+
+        $frame_ini  = "[counter]\n";
+        $frame_ini .= "design_type = {$design_type}\n";
         $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
     }
 
