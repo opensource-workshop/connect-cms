@@ -11,7 +11,17 @@ class Searchs extends Model
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = [];
+    protected $fillable = [
+        'bucket_id',
+        'search_name',
+        'count',
+        'view_posted_name',
+        'view_posted_at',
+        'target_plugins',
+        'frame_select',
+        'target_frame_ids',
+        'recieve_keyword',
+    ];
 
     /**
      * 表示するプラグインの配列を返却

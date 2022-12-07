@@ -63,6 +63,7 @@ use App\Models\Migration\Nc3\Nc3PhotoAlbum;
 use App\Models\Migration\Nc3\Nc3PhotoAlbumDisplayAlbum;
 use App\Models\Migration\Nc3\Nc3PhotoAlbumFrameSetting;
 use App\Models\Migration\Nc3\Nc3PhotoAlbumPhoto;
+use App\Models\Migration\Nc3\Nc3SearchFramePlugin;
 use App\Models\Migration\Nc3\Nc3SiteSetting;
 use App\Models\Migration\Nc3\Nc3Space;
 use App\Models\Migration\Nc3\Nc3UploadFile;
@@ -139,7 +140,6 @@ trait MigrationNc3ExportTrait
      * 廃止のものは 'Abolition' にする。
      */
     protected $plugin_name = [
-        // 'searches'         => 'searchs',      // 検索
         'access_counters'  => 'counters',       // カウンター
         'announcements'    => 'contents',       // お知らせ
         'bbses'            => 'bbses',          // 掲示板
@@ -158,12 +158,22 @@ trait MigrationNc3ExportTrait
         'registrations'    => 'forms',          // フォーム
         'reservations'     => 'reservations',   // 施設予約
         'rss_readers'      => 'Development',    // RSS
-        'searches'         => 'Development',    // 検索
+        'searches'         => 'searchs',        // 検索
         'tasks'            => 'Development',    // ToDo
         'topics'           => 'whatsnews',      // 新着情報
         'videos'           => 'Development',    // 動画
         'wysiwyg'          => 'Development',    // wysiwyg(upload用)
     ];
+
+    /**
+     * 新着の対応プラグイン
+     */
+    private $available_whatsnew_connect_plugin_names = ['blogs', 'bbses', 'databases'];
+
+    /**
+     * 検索の対応プラグイン
+     */
+    private $available_search_connect_plugin_names = ['contents', 'blogs', 'bbses', 'databases', 'faqs'];
 
     /**
      * バッチの対象（処理する対象 all or uploads など）
@@ -494,6 +504,11 @@ trait MigrationNc3ExportTrait
             $this->nc3ExportPhotoalbum($redo);
         }
 
+        // NC3 検索（searches）データのエクスポート
+        if ($this->isTarget('nc3_export', 'plugins', 'searchs')) {
+            $this->nc3ExportSearch($redo);
+        }
+
         // pages データとファイルのエクスポート
         if ($this->isTarget('nc3_export', 'pages')) {
             // データクリア
@@ -741,22 +756,37 @@ trait MigrationNc3ExportTrait
     }
 
     /**
+     * 新着でNC3プラグインキーからConnect-CMS のプラグイン名に変換
+     */
+    private function getCCPluginNamesFromNc3WhatsnewPluginKeys($plugin_keys)
+    {
+        return $this->getCCPluginNamesFromNc3PluginKeys($plugin_keys, $this->available_whatsnew_connect_plugin_names, '新着');
+    }
+
+    /**
+     * 検索でNC3プラグインキーからConnect-CMS のプラグイン名に変換
+     */
+    private function getCCPluginNamesFromNc3SearchPluginKeys($plugin_keys)
+    {
+        return $this->getCCPluginNamesFromNc3PluginKeys($plugin_keys, $this->available_search_connect_plugin_names, '検索');
+    }
+
+    /**
      * NC3プラグインキーからConnect-CMS のプラグイン名に変換
      */
-    private function getCCPluginNamesFromNc3PluginKeys($plugin_keys)
+    private function getCCPluginNamesFromNc3PluginKeys($plugin_keys, array $available_connect_plugin_names, string $log_head_plugin_name)
     {
-        $available_connect_plugin_names = ['blogs', 'bbses', 'databases'];
         $ret = array();
         foreach ($plugin_keys as $plugin_key) {
             // Connect-CMS のプラグイン名に変換
             if (array_key_exists($plugin_key, $this->plugin_name)) {
                 $connect_plugin_name = $this->plugin_name[$plugin_key];
                 if ($connect_plugin_name == 'Development') {
-                    $this->putError(3, '新着：未開発プラグイン', "plugin_key = {$plugin_key}");
+                    $this->putError(3, "{$log_head_plugin_name}：未開発プラグイン", "plugin_key = {$plugin_key}");
                 } elseif (in_array($connect_plugin_name, $available_connect_plugin_names)) {
                     $ret[] = $connect_plugin_name;
                 } else {
-                    $this->putError(3, '新着：未対応プラグイン', "plugin_key = {$plugin_key}");
+                    $this->putError(3, "{$log_head_plugin_name}：未対応プラグイン", "plugin_key = {$plugin_key}");
                 }
             }
         }
@@ -3140,7 +3170,7 @@ trait MigrationNc3ExportTrait
             $whatsnew_ini = "";
             $whatsnew_ini .= "[whatsnew_base]\n";
 
-            // 新着情報の名前は、ブロックタイトルがあればブロックタイトル。なければページ名＋「の新着情報」。
+            // 新着情報の名前は、フレームタイトルがあればフレームタイトル。なければページ名＋「の新着情報」。
             $whatsnew_name = '無題';
             if (!empty($nc3_topic_frame_setting->page_name)) {
                 $whatsnew_name = $nc3_topic_frame_setting->page_name;
@@ -3161,14 +3191,14 @@ trait MigrationNc3ExportTrait
             // 対象のプラグインを取得（Connect-CMS にまだないものは除外＆ログ出力）
             if ($nc3_topic_frame_setting->select_plugin) {
                 $plugin_keys = Nc3TopicFramePlugin::where('frame_key', $nc3_topic_frame_setting->frame_key)->pluck('plugin_key');
-                $whatsnew_ini .= "target_plugins = \"" . $this->getCCPluginNamesFromNc3PluginKeys($plugin_keys) . "\"\n";
+                $whatsnew_ini .= "target_plugins = \"" . $this->getCCPluginNamesFromNc3WhatsnewPluginKeys($plugin_keys) . "\"\n";
             } else {
                 // 新着対象の全プラグインON
                 $plugin_keys = Nc3Plugin::where('display_topics', 1)
                     ->where('language_id', Nc3Language::language_id_ja)
                     ->orderBy('id', 'asc')
                     ->pluck('key');
-                $whatsnew_ini .= "target_plugins = \"" . $this->getCCPluginNamesFromNc3PluginKeys($plugin_keys) . "\"\n";
+                $whatsnew_ini .= "target_plugins = \"" . $this->getCCPluginNamesFromNc3WhatsnewPluginKeys($plugin_keys) . "\"\n";
             }
 
             // 特定のルームの特定のブロックを表示 の移行：未対応
@@ -4218,7 +4248,7 @@ trait MigrationNc3ExportTrait
             return;
         }
 
-        // エクスポート対象の施設予約名をページ名から取得する（指定がなければブロックタイトルがあればブロックタイトル。なければページ名）
+        // エクスポート対象の施設予約名をページ名から取得する（指定がなければフレームタイトルがあればフレームタイトル。なければページ名）
         $reservation_name_is_page_name = $this->getMigrationConfig('reservations', 'nc3_export_reservation_name_is_page_name');
 
         foreach ($nc3_reservation_frame_settings as $nc3_reservation_frame_setting) {
@@ -4559,6 +4589,100 @@ trait MigrationNc3ExportTrait
                 // スライダーの付与情報を出力
                 $this->storagePut($this->getImportPath('slideshows/slideshows_') . $this->zeroSuppress($nc3_photoalbum_frame_setting->frame_id) . '.tsv', $slides_tsv);
             }
+        }
+    }
+
+    /**
+     * NC3：検索（searches）の移行
+     */
+    private function nc3ExportSearch($redo)
+    {
+        $this->putMonitor(3, "Start nc3ExportSearch.");
+
+        // データクリア
+        if ($redo === true) {
+            // 移行用ファイルの削除
+            Storage::deleteDirectory($this->getImportPath('searchs/'));
+        }
+
+        // NC3検索（searches）を移行する。
+        // search_frame_settingは表示方法で決定ボタンを押さないとデータできないが、データなくてもdefault値で検索可能。そのためフレームがあれば、検索プラグイン設置済みと判断。フレームを参照
+        $nc3_frames = Nc3Frame::
+            select('frames.*', 'frames_languages.name as frame_name', 'frames.id as frame_id', 'frames.key as frame_key', 'pages_languages.name as page_name')
+            ->join('frames_languages', function ($join) {
+                $join->on('frames_languages.frame_id', '=', 'frames.id')
+                    ->where('frames_languages.language_id', Nc3Language::language_id_ja);
+            })
+            ->join('boxes', 'boxes.id', '=', 'frames.box_id')
+            ->leftJoin('pages_languages', function ($join) {
+                $join->on('pages_languages.page_id', '=', 'boxes.page_id')
+                    ->where('pages_languages.language_id', Nc3Language::language_id_ja);
+            })
+            ->where('frames.plugin_key', 'searches')
+            ->where('frames.is_deleted', 0)
+            ->orderBy('frames.id')
+            ->get();
+
+        // 空なら戻る
+        if ($nc3_frames->isEmpty()) {
+            return;
+        }
+
+        // nc3の全ユーザ取得
+        // $nc3_users = Nc3User::get();
+
+        foreach ($nc3_frames as $nc3_frame) {
+            $room_ids = $this->getMigrationConfig('basic', 'nc3_export_room_ids');
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (empty($room_ids)) {
+                // ルーム指定なし。全データの移行
+            } elseif (!empty($room_ids) && in_array($nc3_frame->room_id, $room_ids)) {
+                // ルーム指定あり。指定ルームに合致する。
+            } else {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
+            // 検索設定
+            $search_ini = "";
+            $search_ini .= "[search_base]\n";
+
+            // 検索の名前は、フレームタイトルがあればフレームタイトル。
+            $search_name = '無題';
+            if (!empty($nc3_frame->page_name)) {
+                $search_name = $nc3_frame->page_name;
+            }
+            if (!empty($nc3_frame->frame_name)) {
+                $search_name = $nc3_frame->frame_name;
+            }
+
+            $search_ini .= "search_name      = \"{$search_name}\"\n";
+            $search_ini .= "count            = 20\n";   // 表示件数
+            $search_ini .= "view_posted_name = 1\n";    // 登録者の表示
+            $search_ini .= "view_posted_at   = 1\n";    // 登録日時の表示
+
+            // 対象のプラグインを取得（Connect-CMS にまだないものは除外＆ログ出力）
+            $plugin_keys = Nc3SearchFramePlugin::where('frame_key', $nc3_frame->frame_key)->pluck('plugin_key');
+            // 表示方法で「決定」ボタン押さないと、表示方法データなし。だけど検索できる。defaultは下記。
+            // @see (nc3) app\Plugin\Searches\Model\SearchFrameSetting.php
+            $plugin_keys = $plugin_keys->isEmpty() ? ['announcements', 'bbses', 'blogs'] : $plugin_keys;
+            $search_ini .= "target_plugins = \"" . $this->getCCPluginNamesFromNc3SearchPluginKeys($plugin_keys) . "\"\n";
+
+            // NC3 情報
+            $search_ini .= "\n";
+            $search_ini .= "[source_info]\n";
+            $search_ini .= "search_block_id = " . $nc3_frame->frame_id . "\n";   // block_idは無いためframe_idで代用
+            $search_ini .= "room_id         = " . $nc3_frame->room_id . "\n";
+            $search_ini .= "plugin_key      = \"searches\"\n";
+            $search_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_frame->created) . "\"\n";
+            // $search_ini .= "created_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_frame->created_user) . "\"\n";
+            // $search_ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_frame->created_user) . "\"\n";
+            $search_ini .= "updated_at      = \"" . $this->getCCDatetime($nc3_frame->modified) . "\"\n";
+            // $search_ini .= "updated_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_frame->modified_user) . "\"\n";
+            // $search_ini .= "update_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_frame->modified_user) . "\"\n";
+
+            // 新着情報の設定を出力
+            $this->storagePut($this->getImportPath('searchs/search_') . $this->zeroSuppress($nc3_frame->frame_id) . '.ini', $search_ini);
         }
     }
 
@@ -4910,8 +5034,7 @@ trait MigrationNc3ExportTrait
 
             // Connect-CMS のプラグイン名の取得
             $plugin_name = $this->nc3GetPluginName($nc3_frame->plugin_key);
-            // [?] ここにsearchsのみプラグイン指定されてる理由はなんだろ？
-            if ($plugin_name == 'Development' || $plugin_name == 'Abolition' || $plugin_name == 'searchs') {
+            if ($plugin_name == 'Development' || $plugin_name == 'Abolition') {
                 // 移行できなかったNC3プラグイン
                 $this->putError(3, "no migrate nc3-plugin", "プラグイン = " . $nc3_frame->plugin_key, $nc3_frame);
             }
@@ -5070,6 +5193,11 @@ trait MigrationNc3ExportTrait
                     $ret = "photoalbum_id = \"" . $this->zeroSuppress($nc3_photoalbum->id) . "\"\n";
                 }
             }
+        } elseif ($nc3_frame->plugin_key == 'searches') {
+            // search_frame_settingは表示方法で決定ボタンを押さないとデータできないが、データなくてもdefault値で検索可能。そのためフレームがあれば、検索プラグイン設置済みと判断。
+            // $nc3_search_frame_setting = Nc3SearchFrameSetting::where('frame_key', $nc3_frame->key)->first();
+            // block_idないため、frame_idで代用
+            $ret = "search_block_id = \"" . $this->zeroSuppress($nc3_frame->id) . "\"\n";
         }
         return $ret;
     }
