@@ -2,14 +2,12 @@
 
 namespace App\Traits\Migration;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -79,6 +77,7 @@ use App\Models\User\Reservations\ReservationsFacility;
 use App\Models\User\Reservations\ReservationsInput;
 use App\Models\User\Reservations\ReservationsInputsColumn;
 use App\Models\User\Whatsnews\Whatsnews;
+use App\Models\User\Searchs\Searchs;
 use App\Models\User\Slideshows\Slideshows;
 use App\Models\User\Slideshows\SlideshowsItems;
 
@@ -149,6 +148,7 @@ use App\Models\Migration\Nc2\Nc2Todo;
 use App\Models\Migration\Nc2\Nc2Upload;
 use App\Models\Migration\Nc2\Nc2User;
 use App\Models\Migration\Nc2\Nc2WhatsnewBlock;
+use App\Models\Migration\Nc2\Nc2SearchBlock;
 use App\Models\Migration\Nc2\Nc2Slides;
 use App\Models\Migration\Nc2\Nc2SlidesUrl;
 use App\Models\Migration\Nc2\Nc2Simplemovie;
@@ -266,6 +266,16 @@ trait MigrationTrait
         'slides'        => 'slideshows',   // スライダー
         'simplemovie'   => 'contents',     // シンプル動画
     ];
+
+    /**
+     * 新着の対応プラグイン
+     */
+    private $available_whatsnew_connect_plugin_names = ['blogs', 'bbses', 'databases'];
+
+    /**
+     * 検索の対応プラグイン
+     */
+    private $available_search_connect_plugin_names = ['contents', 'blogs', 'bbses', 'databases', 'faqs'];
 
     // delete: 全体カテゴリは作らない
     // /**
@@ -563,6 +573,12 @@ trait MigrationTrait
             MigrationMapping::where('target_source_table', 'photoalbums_album')->delete();
             MigrationMapping::where('target_source_table', 'photoalbums_album_cover')->delete();
             MigrationMapping::where('target_source_table', 'photoalbums_photo')->delete();
+        }
+
+        if ($target == 'searchs' || $target == 'all') {
+            Searchs::truncate();
+            Buckets::where('plugin_name', 'searchs')->delete();
+            MigrationMapping::where('target_source_table', 'searchs')->delete();
         }
     }
 
@@ -934,6 +950,11 @@ trait MigrationTrait
         // フォトアルバムの取り込み
         if ($this->isTarget('cc_import', 'plugins', 'photoalbums')) {
             $this->importPhotoalbums($redo);
+        }
+
+        // 検索の取り込み
+        if ($this->isTarget('cc_import', 'plugins', 'searchs')) {
+            $this->importSearchs($redo);
         }
 
         // 固定URLの取り込み
@@ -4655,6 +4676,89 @@ trait MigrationTrait
     }
 
     /**
+     * Connect-CMS 移行形式の検索をインポート
+     */
+    private function importSearchs($redo)
+    {
+        $this->putMonitor(3, "Searchs import Start.");
+
+        // データクリア
+        if ($redo === true) {
+            $this->clearData('searchs');
+        }
+
+        // 検索定義の取り込み
+        $search_ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('searchs/search_*.ini'));
+
+        // ユーザ取得
+        // $users = User::get();
+
+        // 検索定義のループ
+        foreach ($search_ini_paths as $search_ini_paths) {
+            // ini_file の解析
+            $search_ini = parse_ini_file($search_ini_paths, true);
+
+            // ルーム指定を探しておく。
+            // $room_id = Arr::get($search_ini, 'source_info.room_id');
+
+            // nc2 の search_block_id
+            $nc2_search_block_id = Arr::get($search_ini, 'source_info.search_block_id', 0);
+
+            // マッピングテーブルの取得
+            $mapping = MigrationMapping::where('target_source_table', 'searchs')->where('source_key', $nc2_search_block_id)->first();
+
+            // マッピングテーブルを確認して、あれば削除
+            if (!empty($mapping)) {
+                // searchs 取得。この情報から紐づけて、消すものを消してゆく。
+                $search = Searchs::where('id', $mapping->destination_key)->first();
+
+                if (!empty($search)) {
+                    // Buckets 削除
+                    Buckets::where('id', $search->bucket_id)->delete();
+                    // 検索削除
+                    $search->delete();
+                }
+                // マッピングテーブル削除
+                $mapping->delete();
+            }
+
+            // Buckets テーブルと Search テーブル、マッピングテーブルを追加
+            $search_name = Arr::get($search_ini, 'search_base.search_name', '無題');
+            $bucket = new Buckets(['bucket_name' => $search_name, 'plugin_name' => 'searchs']);
+            $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($search_ini, 'source_info', 'created_at');
+            $bucket->updated_at = $this->getDatetimeFromIniAndCheckFormat($search_ini, 'source_info', 'updated_at');
+            // 登録更新日時を自動更新しない
+            $bucket->timestamps = false;
+            $bucket->save();
+
+            $search = new Searchs([
+                'bucket_id'        => $bucket->id,
+                'search_name'      => $search_name,
+                'count'            => $search_ini['search_base']['count'],
+                'view_posted_name' => $search_ini['search_base']['view_posted_name'],
+                'view_posted_at'   => $search_ini['search_base']['view_posted_at'],
+                'target_plugins'   => $search_ini['search_base']['target_plugins'],
+            ]);
+            // $search->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($search_ini, 'source_info', 'insert_login_id', null));
+            // $search->created_name = $this->getArrayValue($search_ini, 'source_info', 'created_name', null);
+            $search->created_at   = $this->getDatetimeFromIniAndCheckFormat($search_ini, 'source_info', 'created_at');
+            // $search->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($search_ini, 'source_info', 'update_login_id', null));
+            // $search->updated_name = $this->getArrayValue($search_ini, 'source_info', 'updated_name', null);
+            $search->updated_at   = $this->getDatetimeFromIniAndCheckFormat($search_ini, 'source_info', 'updated_at');
+            // 登録更新日時を自動更新しない
+            $search->timestamps = false;
+            $search->save();
+
+            // マッピングテーブルの追加
+            $mapping = MigrationMapping::create([
+                'target_source_table'  => 'searchs',
+                'source_key'           => $nc2_search_block_id,
+                'destination_key'      => $search->id,
+            ]);
+        }
+    }
+
+    /**
      * シーダーの呼び出し
      */
     //private function importSeeder($redo)
@@ -4909,6 +5013,9 @@ trait MigrationTrait
         } elseif ($plugin_name == 'photoalbums') {
             // フォトアルバム
             $this->importPluginPhotoalbums($page, $page_dir, $frame_ini, $display_sequence);
+        } elseif ($plugin_name == 'searchs') {
+            // 検索
+            $this->importPluginSearchs($page, $page_dir, $frame_ini, $display_sequence);
         }
     }
 
@@ -6370,6 +6477,48 @@ trait MigrationTrait
     }
 
     /**
+     * 検索プラグインの登録処理
+     */
+    private function importPluginSearchs($page, $page_dir, $frame_ini, $display_sequence)
+    {
+        // ページ移行の中の、フレーム（ブロック）移行。
+        // フレーム（ブロック）で指定されている内容から、移行した新しいバケツを探して、フレーム作成処理へつなげる。
+
+        // 変数定義
+        $search_ini = null;
+        $migration_mappings = null;
+        $search = null;
+        $bucket = null;
+
+        // フレームのエクスポートファイルから、NC2 の検索のID 取得
+        $nc2_search_block_id = Arr::get($frame_ini, 'frame_base.search_block_id');
+
+        // エクスポートした検索の設定内容の取得
+        if (!empty($nc2_search_block_id) && Storage::exists($this->getImportPath('searchs/search_') . $nc2_search_block_id . '.ini')) {
+            $search_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('searchs/search_') . $nc2_search_block_id . '.ini', true);
+        }
+        // NC2 の search_block_id でマップ確認
+        if (!empty($search_ini) && array_key_exists('source_info', $search_ini) && array_key_exists('search_block_id', $search_ini['source_info'])) {
+            $search_block_id = $search_ini['source_info']['search_block_id'];
+            $migration_mappings = MigrationMapping::where('target_source_table', 'searchs')->where('source_key', $search_block_id)->first();
+        }
+        // マップから新・検索 を取得
+        if (!empty($migration_mappings)) {
+            $search = Searchs::find($migration_mappings->destination_key);
+        }
+        // 新・検索 からBucket ID を取得
+        if (!empty($search)) {
+            $bucket = Buckets::find($search->bucket_id);
+        }
+        // bucket がない場合は、フレームは作るけど、エラーログを出しておく。
+        if (empty($bucket)) {
+            $this->putError(1, 'Search フレームのみで実体なし', "page_dir = " . $page_dir);
+        }
+        // Frames 登録
+        $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+    }
+
+    /**
      * 固定記事プラグインの登録処理
      */
     private function importPluginContents($page, $page_dir, $frame_ini, $display_sequence)
@@ -7170,6 +7319,11 @@ trait MigrationTrait
             $this->nc2ExportPhotoalbum($redo);
         }
 
+        // NC2 検索（search）データのエクスポート
+        if ($this->isTarget('nc2_export', 'plugins', 'searchs')) {
+            $this->nc2ExportSearch($redo);
+        }
+
         // NC2 固定リンク（abbreviate_url）データのエクスポート
         if ($this->isTarget('nc2_export', 'plugins', 'blogs') ||
             $this->isTarget('nc2_export', 'plugins', 'databases') ||
@@ -7404,23 +7558,44 @@ trait MigrationTrait
     }
 
     /**
-     *  NC2モジュール名の取得
+     * 新着でNC2モジュールのアクション名からConnect-CMS のプラグイン名に変換
      */
-    private function nc2GetModuleNames($action_names, $connect_change = true)
+    private function getCCPluginNamesFromNc2WhatsnewActionNames($action_names): string
     {
-        $available_connect_plugin_names = ['blogs', 'bbses', 'databases'];
         $ret = array();
         foreach ($action_names as $action_name) {
             $action_name_parts = explode('_', $action_name);
             // Connect-CMS のプラグイン名に変換
-            if ($connect_change == true && array_key_exists($action_name_parts[0], $this->plugin_name)) {
+            if (array_key_exists($action_name_parts[0], $this->plugin_name)) {
                 $connect_plugin_name = $this->plugin_name[$action_name_parts[0]];
                 if ($connect_plugin_name == 'Development') {
                     $this->putError(3, '新着：未開発プラグイン', "action_names = " . $action_name_parts[0]);
-                } elseif (in_array($connect_plugin_name, $available_connect_plugin_names)) {
+                } elseif (in_array($connect_plugin_name, $this->available_whatsnew_connect_plugin_names)) {
                     $ret[] = $connect_plugin_name;
                 } else {
                     $this->putError(3, '新着：未対応プラグイン', "action_names = " . $action_name_parts[0]);
+                }
+            }
+        }
+        return implode(',', $ret);
+    }
+
+    /**
+     * 検索でNC2モジュールのアクション名からConnect-CMS のプラグイン名に変換
+     */
+    private function getCCPluginNamesFromNc2SearchModuleNames($module_names): string
+    {
+        $ret = array();
+        foreach ($module_names as $module_name) {
+            // Connect-CMS のプラグイン名に変換
+            if (array_key_exists($module_name, $this->plugin_name)) {
+                $connect_plugin_name = $this->plugin_name[$module_name];
+                if ($connect_plugin_name == 'Development') {
+                    $this->putError(3, '検索：未開発プラグイン', "module_name = " . $module_name);
+                } elseif (in_array($connect_plugin_name, $this->available_search_connect_plugin_names)) {
+                    $ret[] = $connect_plugin_name;
+                } else {
+                    $this->putError(3, '検索：未対応プラグイン', "module_name = " . $module_name);
                 }
             }
         }
@@ -9757,7 +9932,7 @@ trait MigrationTrait
             // 対象のプラグインを取得（Connect-CMS にまだないものは除外＆ログ出力）
             $display_modules = explode(',', $nc2_whatsnew_block->display_modules);
             $nc2_modules = Nc2Modules::whereIn('module_id', $display_modules)->orderBy('module_id', 'asc')->get();
-            $whatsnew_ini .= "target_plugins = \"" . $this->nc2GetModuleNames($nc2_modules->pluck('action_name')) . "\"\n";
+            $whatsnew_ini .= "target_plugins = \"" . $this->getCCPluginNamesFromNc2WhatsnewActionNames($nc2_modules->pluck('action_name')) . "\"\n";
 
             $whatsnew_ini .= "frame_select = 0\n";
 
@@ -11134,6 +11309,89 @@ trait MigrationTrait
     }
 
     /**
+     * NC2：検索（search）の移行
+     */
+    private function nc2ExportSearch($redo)
+    {
+        $this->putMonitor(3, "Start nc3ExportSearch.");
+
+        // データクリア
+        if ($redo === true) {
+            // 移行用ファイルの削除
+            Storage::deleteDirectory($this->getImportPath('searchs/'));
+        }
+
+        // NC2検索（search）を移行する。
+        $nc2_search_blocks = Nc2SearchBlock::select('search_blocks.*', 'blocks.block_name', 'pages.page_name')
+            ->join('blocks', 'blocks.block_id', '=', 'search_blocks.block_id')
+            ->join('pages', function ($join) {
+                $join->on('pages.page_id', '=', 'blocks.page_id')
+                    ->where('pages.private_flag', '=', 0);
+            })
+            ->orderBy('search_blocks.block_id')
+            ->get();
+
+        // 空なら戻る
+        if ($nc2_search_blocks->isEmpty()) {
+            return;
+        }
+
+        // nc2の全ユーザ取得
+        // $nc2_users = Nc2User::get();
+
+        foreach ($nc2_search_blocks as $nc2_search_block) {
+            $room_ids = $this->getMigrationConfig('basic', 'nc3_export_room_ids');
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (empty($room_ids)) {
+                // ルーム指定なし。全データの移行
+            } elseif (!empty($room_ids) && in_array($nc2_search_block->room_id, $room_ids)) {
+                // ルーム指定あり。指定ルームに合致する。
+            } else {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
+            // 検索設定
+            $search_ini = "";
+            $search_ini .= "[search_base]\n";
+
+            // 検索の名前は、ブロックタイトルがあればブロックタイトル。
+            $search_name = '無題';
+            if (!empty($nc2_search_block->page_name)) {
+                $search_name = $nc2_search_block->page_name;
+            }
+            if (!empty($nc2_search_block->frame_name)) {
+                $search_name = $nc2_search_block->frame_name;
+            }
+
+            $search_ini .= "search_name      = \"{$search_name}\"\n";
+            $search_ini .= "count            = 5\n";    // 表示件数
+            $search_ini .= "view_posted_name = 1\n";    // 登録者の表示
+            $search_ini .= "view_posted_at   = 1\n";    // 登録日時の表示
+
+            // 対象のプラグインを取得（Connect-CMS にまだないものは除外＆ログ出力）
+            $default_target_modules = explode(',', $nc2_search_block->default_target_module);
+            $search_ini .= "target_plugins = \"" . $this->getCCPluginNamesFromNc2SearchModuleNames($default_target_modules) . "\"\n";
+
+            // NC3 情報
+            $search_ini .= "\n";
+            $search_ini .= "[source_info]\n";
+            $search_ini .= "search_block_id = " . $nc2_search_block->block_id . "\n";
+            $search_ini .= "room_id         = " . $nc2_search_block->room_id . "\n";
+            $search_ini .= "module_name     = \"search\"\n";
+            $search_ini .= "created_at      = \"" . $this->getCCDatetime($nc2_search_block->insert_time) . "\"\n";
+            // $search_ini .= "created_name    = \"" . $nc2_search_block->insert_user_name . "\"\n";
+            // $search_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_search_block->insert_user_id) . "\"\n";
+            $search_ini .= "updated_at      = \"" . $this->getCCDatetime($nc2_search_block->update_time) . "\"\n";
+            // $search_ini .= "updated_name    = \"" . $nc2_search_block->update_user_name . "\"\n";
+            // $search_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_search_block->update_user_id) . "\"\n";
+
+            // 新着情報の設定を出力
+            $this->storagePut($this->getImportPath('searchs/search_') . $this->zeroSuppress($nc2_search_block->block_id) . '.ini', $search_ini);
+        }
+    }
+
+    /**
      * NC2：固定リンク（abbreviate_url）の移行
      */
     private function nc2ExportAbbreviateUrl($redo)
@@ -11552,7 +11810,7 @@ trait MigrationTrait
 
             // Connect-CMS のプラグイン名の取得
             $plugin_name = $this->nc2GetPluginName($nc2_block->getModuleName());
-            if ($plugin_name == 'Development' || $plugin_name == 'Abolition' || $plugin_name == 'searchs') {
+            if ($plugin_name == 'Development' || $plugin_name == 'Abolition') {
                 // 移行できなかったモジュール
                 $this->putError(3, "no migrate module", "モジュール = " . $nc2_block->getModuleName(), $nc2_block);
             }
@@ -11715,6 +11973,9 @@ trait MigrationTrait
                     $ret = "photoalbum_id = \"" . $this->zeroSuppress($nc2_photoalbum_block->photoalbum_id) . "\"\n";
                 }
             }
+        } elseif ($module_name == 'search') {
+            $nc2_search_block = Nc2SearchBlock::where('block_id', $nc2_block->block_id)->first();
+            $ret = "search_block_id = \"" . $this->zeroSuppress($nc2_search_block->block_id) . "\"\n";
         }
         return $ret;
     }
