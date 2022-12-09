@@ -2698,7 +2698,7 @@ trait MigrationNc3ExportTrait
                         // (nc3) 画像、ファイル型は、ファイルあってもvalue空。毎回UploadFile見る必要あり。
 
                         // NC3 のアップロードID 抜き出し
-                        $multidatabase_upload = $multidatabase_uploads->firstWhere('field_name', $value_no . '_attach');
+                        $multidatabase_upload = $multidatabase_uploads->firstWhere('field_name', $value_no . '_attach') ?? new Nc3UploadFile();
                         $nc3_uploads_id = $multidatabase_upload->id;
                         if ($nc3_uploads_id) {
                             // uploads.ini からファイルを探す
