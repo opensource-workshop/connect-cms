@@ -3798,7 +3798,13 @@ trait MigrationNc3ExportTrait
 
         // 施設カテゴリ
         // ----------------------------------------------------
-        $block = Nc3Block::where('plugin_key', 'reservations')->first() ?? new Nc3Block();
+        $block = Nc3Block::where('plugin_key', 'reservations')->first();
+
+        // 空なら戻る
+        if (empty($block)) {
+            return;
+        }
+
         // カテゴリ
         $nc3_reservation_categories = Nc3Category::getCategoriesByBlockIds([$block->id]);
         foreach ($nc3_reservation_categories as $nc3_reservation_category) {
