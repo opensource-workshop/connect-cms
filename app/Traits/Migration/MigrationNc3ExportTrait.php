@@ -2698,7 +2698,7 @@ trait MigrationNc3ExportTrait
                         // (nc3) 画像、ファイル型は、ファイルあってもvalue空。毎回UploadFile見る必要あり。
 
                         // NC3 のアップロードID 抜き出し
-                        $multidatabase_upload = $multidatabase_uploads->firstWhere('field_name', $value_no . '_attach');
+                        $multidatabase_upload = $multidatabase_uploads->firstWhere('field_name', $value_no . '_attach') ?? new Nc3UploadFile();
                         $nc3_uploads_id = $multidatabase_upload->id;
                         if ($nc3_uploads_id) {
                             // uploads.ini からファイルを探す
@@ -3798,7 +3798,13 @@ trait MigrationNc3ExportTrait
 
         // 施設カテゴリ
         // ----------------------------------------------------
-        $block = Nc3Block::where('plugin_key', 'reservations')->first() ?? new Nc3Block();
+        $block = Nc3Block::where('plugin_key', 'reservations')->first();
+
+        // 空なら戻る
+        if (empty($block)) {
+            return;
+        }
+
         // カテゴリ
         $nc3_reservation_categories = Nc3Category::getCategoriesByBlockIds([$block->id]);
         foreach ($nc3_reservation_categories as $nc3_reservation_category) {
@@ -5507,8 +5513,8 @@ trait MigrationNc3ExportTrait
      */
     private function cleaningContent($content, $nc3_plugin_key)
     {
-        // 改行コードが含まれる場合があるので置換
-        $content = str_replace(array("\r", "\n"), '', $content);
+        // 改行コード・タブコードが含まれる場合があるので置換
+        $content = str_replace(array("\r", "\n", "\t"), '', $content);
 
         $plugin_name = $this->nc3GetPluginName($nc3_plugin_key);
 

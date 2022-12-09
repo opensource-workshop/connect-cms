@@ -12292,8 +12292,8 @@ trait MigrationTrait
      */
     private function cleaningContent($content, $nc2_module_name)
     {
-        // 改行コードが含まれる場合があるので置換
-        $content = str_replace(array("\r", "\n"), '', $content);
+        // 改行コード・タブコードが含まれる場合があるので置換
+        $content = str_replace(array("\r", "\n", "\t"), '', $content);
 
         $plugin_name = $this->nc2GetPluginName($nc2_module_name);
 
