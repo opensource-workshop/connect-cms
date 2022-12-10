@@ -5847,6 +5847,8 @@ trait MigrationNc3ExportTrait
                 $this->checkDeadLinkOutside($url, $nc3_plugin_key, $nc3_frame);
             }
 
+        } elseif (in_array($scheme, ['mailto'])) {
+            // 対象外
         } elseif (is_null($scheme)) {
             // "{{__BASE_URL__}}/images/comp/textarea/titleicon/icon-weather9.gif" 等はここで処理
 
