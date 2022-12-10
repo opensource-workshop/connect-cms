@@ -5126,7 +5126,7 @@ trait MigrationNc3ExportTrait
             }
         } elseif ($nc3_frame->plugin_key == 'menus') {
             // メニューの非表示設定を加味する。
-            $nc3_menu_frame_pages_hidden = Nc3MenuFramePage::select('menu_frames_pages.*', 'pages.sort_key')
+            $nc3_menu_frame_pages_hidden = Nc3MenuFramePage::select('menu_frames_pages.*', 'pages.id as page_id')
                 ->join('pages', 'pages.id', '=', 'menu_frames_pages.page_id')
                 ->where("menu_frames_pages.frame_key", $nc3_frame->key)
                 ->where("menu_frames_pages.is_hidden", 1)   // 1:非表示
@@ -5144,14 +5144,7 @@ trait MigrationNc3ExportTrait
                 // そのため、旧データで対象外を記載しておき、import の際に変換する。
 
                 // 選択しないページを除外
-                $ommit_nc3_pages = array();
-                foreach ($nc3_menu_frame_pages_hidden as $nc3_menu_frame_page_hidden) {
-                    // 下層ページを含めて取得
-                    $ommit_pages = Nc3Page::where('sort_key', 'like', $nc3_menu_frame_page_hidden->sort_key . '%')->get();
-                    if ($ommit_pages->isNotEmpty()) {
-                        $ommit_nc3_pages = $ommit_nc3_pages + $ommit_pages->pluck('id')->toArray();
-                    }
-                }
+                $ommit_nc3_pages = $nc3_menu_frame_pages_hidden->pluck('page_id')->toArray();
                 $ret .= "\n";
                 $ret .= "[menu]\n";
                 $ret .= "select_flag        = \"1\"\n";
