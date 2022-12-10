@@ -6020,8 +6020,8 @@ trait MigrationNc3ExportTrait
                 // pathのみに置換
                 $path_tmp = parse_url($check_page_permalink, PHP_URL_PATH);
                 // 不要文字を取り除き
-                $path_tmp = str_replace('/wysiwyg/image/download/', '', $path_tmp);
-                $path_tmp = str_replace('/wysiwyg/file/download/', '', $path_tmp);
+                $path_tmp = str_replace('wysiwyg/image/download/', '', $path_tmp);
+                $path_tmp = str_replace('wysiwyg/file/download/', '', $path_tmp);
                 // /で分割
                 $src_params = explode('/', $path_tmp);
 
