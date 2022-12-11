@@ -73,6 +73,8 @@ return [
 
     // Login link path
     'LOGIN_PATH' => env('LOGIN_PATH', 'login'),
+    // Login link string
+    'LOGIN_STR' => env('LOGIN_STR', 'ログイン'),
 
     // Self register base role.(comma separator. Not set is guest)
     'SELF_REGISTER_BASE_ROLES' => env('SELF_REGISTER_BASE_ROLES', null),
