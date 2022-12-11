@@ -12676,6 +12676,8 @@ trait MigrationTrait
                 $this->checkDeadLinkOutside($url, $nc2_module_name, $nc2_block);
             }
 
+        } elseif (in_array($scheme, ['mailto'])) {
+            // 対象外
         } elseif (is_null($scheme)) {
             // "{{CORE_BASE_URL}}/images/comp/textarea/titleicon/icon-weather9.gif" 等はここで処理
 
