@@ -159,6 +159,7 @@ use App\Utilities\Migration\MigrationUtils;
 use App\Enums\BlogFrameConfig;
 use App\Enums\CounterDesignType;
 use App\Enums\ContentOpenType;
+use App\Enums\DatabaseColumnType;
 use App\Enums\DatabaseNoticeEmbeddedTag;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\DayOfWeek;
@@ -1166,20 +1167,138 @@ trait MigrationTrait
                     // nc3各プラグインリンク変換
                     // （nc3固有処理だけど、インポート後でないとページ・フレーム等がなくプラグイン固有リンクの置換できないため、ここに記載）
                     $content->content_text = $this->convertNc3PluginPermalink($content->content_text, $link, 'contents.content_text');
+                    // 登録更新日時を自動更新しない
+                    $content->timestamps = false;
                     $content->save();
                 }
             }
-            $links2 = MigrationUtils::getContentHrefOrSrc($content->content2_text);
-            if (is_array($links2)) {
-                foreach ($links2 as $link) {
+            $links = MigrationUtils::getContentHrefOrSrc($content->content2_text);
+            if (is_array($links)) {
+                foreach ($links as $link) {
                     // nc3各プラグインリンク変換
                     $content->content2_text = $this->convertNc3PluginPermalink($content->content2_text, $link, 'contents.content2_text');
+                    $content->timestamps = false;
                     $content->save();
                 }
             }
         }
 
         // （ブログ）
+        $blog_posts = BlogsPosts::get();
+        foreach ($blog_posts as $blog_post) {
+            $links = MigrationUtils::getContentHrefOrSrc($blog_post->post_text);
+            if (is_array($links)) {
+                foreach ($links as $link) {
+                    // nc3各プラグインリンク変換
+                    $blog_post->post_text = $this->convertNc3PluginPermalink($blog_post->post_text, $link, 'blogs_posts.post_text');
+                    $blog_post->timestamps = false;
+                    $blog_post->save();
+                }
+            }
+            $links = MigrationUtils::getContentHrefOrSrc($content->post_text2);
+            if (is_array($links)) {
+                foreach ($links as $link) {
+                    // nc3各プラグインリンク変換
+                    $blog_post->post_text2 = $this->convertNc3PluginPermalink($blog_post->post_text2, $link, 'blogs_posts.post_text2');
+                    $blog_post->timestamps = false;
+                    $blog_post->save();
+                }
+            }
+        }
+
+        // （掲示板）
+        $bbs_posts = BbsPost::get();
+        foreach ($bbs_posts as $bbs_post) {
+            $links = MigrationUtils::getContentHrefOrSrc($bbs_post->body);
+            if (is_array($links)) {
+                foreach ($links as $link) {
+                    // nc3各プラグインリンク変換
+                    $bbs_post->body = $this->convertNc3PluginPermalink($bbs_post->body, $link, 'bbs_posts.body');
+                    $bbs_post->timestamps = false;
+                    $bbs_post->save();
+                }
+            }
+        }
+
+        // （FAQ）
+        $faq_posts = FaqsPosts::get();
+        foreach ($faq_posts as $faq_post) {
+            $links = MigrationUtils::getContentHrefOrSrc($faq_post->post_text);
+            if (is_array($links)) {
+                foreach ($links as $link) {
+                    // nc3各プラグインリンク変換
+                    $faq_post->post_text = $this->convertNc3PluginPermalink($faq_post->post_text, $link, 'faqs_posts.post_text');
+                    $faq_post->timestamps = false;
+                    $faq_post->save();
+                }
+            }
+        }
+
+        // （データベース-wysiwyg）
+        $databases_column_ids_wysiwyg = DatabasesColumns::where('column_type', DatabaseColumnType::wysiwyg)->pluck('id');
+        $databases_input_cols = DatabasesInputCols::whereIn('databases_columns_id', $databases_column_ids_wysiwyg)->get();
+        foreach ($databases_input_cols as $databases_input_col) {
+            $links = MigrationUtils::getContentHrefOrSrc($databases_input_col->value);
+            if (is_array($links)) {
+                foreach ($links as $link) {
+                    // nc3各プラグインリンク変換
+                    $databases_input_col->value = $this->convertNc3PluginPermalink($databases_input_col->value, $link, 'databases_input_cols.value(wysiwyg)');
+                    $databases_input_col->timestamps = false;
+                    $databases_input_col->save();
+                }
+            }
+        }
+        // （データベース-link）
+        $databases_column_ids_link = DatabasesColumns::where('column_type', DatabaseColumnType::link)->pluck('id');
+        $databases_input_cols = DatabasesInputCols::whereIn('databases_columns_id', $databases_column_ids_link)->get();
+        foreach ($databases_input_cols as $databases_input_col) {
+            if ($databases_input_col->value) {
+                // nc3各プラグインリンク変換
+                $databases_input_col->value = $this->convertNc3PluginPermalink($databases_input_col->value, $databases_input_col->value, 'databases_input_cols.value(link)');
+                $databases_input_col->timestamps = false;
+                $databases_input_col->save();
+            }
+        }
+
+        // （カレンダー）
+        $calendar_posts = CalendarPost::get();
+        foreach ($calendar_posts as $calendar_post) {
+            $links = MigrationUtils::getContentHrefOrSrc($calendar_post->body);
+            if (is_array($links)) {
+                foreach ($links as $link) {
+                    // nc3各プラグインリンク変換
+                    $calendar_post->body = $this->convertNc3PluginPermalink($calendar_post->body, $link, 'calendar_posts.body');
+                    $calendar_post->timestamps = false;
+                    $calendar_post->save();
+                }
+            }
+        }
+
+        // （施設予約）
+        $reservations_column_ids_wysiwyg = ReservationsColumn::where('column_type', ReservationColumnType::wysiwyg)->pluck('id');
+        $reservations_inputs_columns = ReservationsInputsColumn::whereIn('column_id', $reservations_column_ids_wysiwyg)->get();
+        foreach ($reservations_inputs_columns as $reservations_inputs_column) {
+            $links = MigrationUtils::getContentHrefOrSrc($reservations_inputs_column->value);
+            if (is_array($links)) {
+                foreach ($links as $link) {
+                    // nc3各プラグインリンク変換
+                    $reservations_inputs_column->value = $this->convertNc3PluginPermalink($reservations_inputs_column->value, $link, 'reservations_inputs_columns.value(wysiwyg)');
+                    $reservations_inputs_column->timestamps = false;
+                    $reservations_inputs_column->save();
+                }
+            }
+        }
+
+        // （リンクリスト-link）
+        $linklist_posts = LinklistPost::get();
+        foreach ($linklist_posts as $linklist_post) {
+            if ($linklist_post->url) {
+                // nc3各プラグインリンク変換
+                $linklist_post->url = $this->convertNc3PluginPermalink($linklist_post->url, $linklist_post->url, 'linklist_posts.url');
+                $linklist_post->timestamps = false;
+                $linklist_post->save();
+            }
+        }
     }
 
     /**
