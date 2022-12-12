@@ -333,7 +333,8 @@ trait MigrationNc3ExportTrait
      */
     private function getCCDatetime($utc_datetime): ?Carbon
     {
-        if (empty($utc_datetime)) {
+        // created(datetime) = null の場合、取得すると string(19) "0000-00-00 00:00:00" となったため対応
+        if (empty($utc_datetime) || $utc_datetime == "0000-00-00 00:00:00") {
             return null;
         }
         if (is_string($utc_datetime)) {
