@@ -1568,6 +1568,9 @@ trait MigrationNc3ExportTrait
             // NC3日誌の記事をループ
             $journals_ini .= "\n";
             $journals_ini .= "[blog_post]\n";
+
+            $journals_ini_key = "\n";
+            $journals_ini_key .= "[content_keys]\n";    // インポートでMigrationMappingにセット用。その後プラグイン固有リンク置換で使う
             foreach ($nc3_blog_posts as $nc3_blog_post) {
                 // TSV 形式でエクスポート
                 if (!empty($journals_tsv)) {
@@ -1605,8 +1608,11 @@ trait MigrationNc3ExportTrait
                     // ログ出力
                     $this->putError(1, 'Blog title in double-quotation', "タイトル = " . $nc3_blog_post->title);
                 }
-                $journals_ini .= "post_title[" . $nc3_blog_post->id . "] = \"" . str_replace('"', '', $nc3_blog_post->title) . "\"\n";
+                $journals_ini     .= "post_title[" . $nc3_blog_post->id . "] = \"" . str_replace('"', '', $nc3_blog_post->title) . "\"\n";
+
+                $journals_ini_key .= "content_key[" . $nc3_blog_post->id . "] = \"" . str_replace('"', '', $nc3_blog_post->key) . "\"\n";
             }
+            $journals_ini .= $journals_ini_key;
 
             // blog の設定
             $this->storagePut($this->getImportPath('blogs/blog_') . $this->zeroSuppress($nc3_blog->id) . '.ini', $journals_ini);
@@ -2677,6 +2683,9 @@ trait MigrationNc3ExportTrait
                 ->whereIn('content_key', $multidatabase_contents->pluck('key'))
                 ->get();
 
+            $multidatabase_ini .= "\n";
+            $multidatabase_ini .= "[content_keys]\n";    // インポートでMigrationMappingにセット用。その後プラグイン固有リンク置換で使う
+
             Storage::delete($this->getImportPath('databases/database_') . $this->zeroSuppress($nc3_multidatabase->id) . '.tsv');
             $tsv = '';
             $tsv .= $tsv_header . "\n";
@@ -2743,6 +2752,8 @@ trait MigrationNc3ExportTrait
                 $tsv_record['update_login_id'] = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $multidatabase_content->modified_user);
                 $tsv_record['content_id']      = $multidatabase_content->id;
                 $tsv .= implode("\t", $tsv_record) . "\n";
+
+                $multidatabase_ini .= "content_key[" . $multidatabase_content->id . "] = \"" . $multidatabase_content->key . "\"\n";
             }
 
             // データ行の書き出し
