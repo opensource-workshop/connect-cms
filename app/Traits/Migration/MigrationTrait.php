@@ -2300,11 +2300,8 @@ trait MigrationTrait
 
                     $target_source_table = 'blogs_post';
                     $target_source_table_from_key = 'blogs_post_from_key';
-                    if (array_key_exists('source_info', $blog_ini) && array_key_exists('module_name', $blog_ini['source_info']) && $blog_ini['source_info']['module_name'] == 'bbs') {
-                        $target_source_table = 'bbses_post';
-                        $target_source_table_from_key = 'bbses_post_from_key';
-                    }
-                    if (array_key_exists('source_info', $blog_ini) && array_key_exists('plugin_key', $blog_ini['source_info']) && $blog_ini['source_info']['plugin_key'] == 'bbses') {
+                    $module_name = Arr::get($blog_ini, 'source_info.module_name');
+                    if (in_array($module_name, ['bbs', 'bbses'])) {
                         $target_source_table = 'bbses_post';
                         $target_source_table_from_key = 'bbses_post_from_key';
                     }

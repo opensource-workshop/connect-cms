@@ -1534,7 +1534,7 @@ trait MigrationNc3ExportTrait
             $journals_ini .= "[source_info]\n";
             $journals_ini .= "journal_id = " . $nc3_blog->id . "\n";
             $journals_ini .= "room_id = " . $nc3_blog->room_id . "\n";
-            $journals_ini .= "plugin_key = \"blogs\"\n";
+            $journals_ini .= "module_name = \"blogs\"\n";
             $journals_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_blog->created) . "\"\n";
             $journals_ini .= "created_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_blog->created_user) . "\"\n";
             $journals_ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_blog->created_user) . "\"\n";
@@ -1879,7 +1879,7 @@ trait MigrationNc3ExportTrait
             $journals_ini .= "[source_info]\n";
             $journals_ini .= "journal_id = " . 'BBS_' . $nc3_bbs->id . "\n";
             $journals_ini .= "room_id = " . $nc3_bbs->room_id . "\n";
-            $journals_ini .= "plugin_key = \"bbses\"\n";
+            $journals_ini .= "module_name = \"bbses\"\n";
             $journals_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_bbs->created) . "\"\n";
             $journals_ini .= "created_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_bbs->created_user) . "\"\n";
             $journals_ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_bbs->created_user) . "\"\n";
@@ -2053,7 +2053,7 @@ trait MigrationNc3ExportTrait
             $faqs_ini .= "[source_info]\n";
             $faqs_ini .= "faq_id          = " . $nc3_faq->id . "\n";
             $faqs_ini .= "room_id         = " . $nc3_faq->room_id . "\n";
-            $faqs_ini .= "plugin_key      = \"faqs\"\n";
+            $faqs_ini .= "module_name     = \"faqs\"\n";
             $faqs_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_faq->created) . "\"\n";
             $faqs_ini .= "created_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_faq->created_user) . "\"\n";
             $faqs_ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_faq->created_user) . "\"\n";
@@ -2177,7 +2177,7 @@ trait MigrationNc3ExportTrait
             $linklists_ini .= "[source_info]\n";
             $linklists_ini .= "linklist_id     = " . $nc3_block->id . "\n";
             $linklists_ini .= "room_id         = " . $nc3_block->room_id . "\n";
-            $linklists_ini .= "plugin_key      = \"links\"\n";
+            $linklists_ini .= "module_name     = \"links\"\n";
             $linklists_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_block->created) . "\"\n";
             $linklists_ini .= "created_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_block->created_user) . "\"\n";
             $linklists_ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_block->created_user) . "\"\n";
@@ -2522,7 +2522,7 @@ trait MigrationNc3ExportTrait
             $multidatabase_ini .= "[source_info]\n";
             $multidatabase_ini .= "multidatabase_id = " . $nc3_multidatabase->id . "\n";
             $multidatabase_ini .= "room_id = " . $nc3_multidatabase->room_id . "\n";
-            $multidatabase_ini .= "plugin_key = \"multidatabases\"\n";
+            $multidatabase_ini .= "module_name = \"multidatabases\"\n";
             $multidatabase_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_multidatabase->created) . "\"\n";
             $multidatabase_ini .= "created_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_multidatabase->created_user) . "\"\n";
             $multidatabase_ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_multidatabase->created_user) . "\"\n";
@@ -2907,7 +2907,7 @@ trait MigrationNc3ExportTrait
             $registration_ini .= "registration_id = " . $nc3_registration->id . "\n";
             $registration_ini .= "active_flag     = " . $nc3_registration->is_active . "\n";
             $registration_ini .= "room_id         = " . $nc3_registration->room_id . "\n";
-            $registration_ini .= "plugin_key      = \"registration\"\n";
+            $registration_ini .= "module_name     = \"registration\"\n";
             $registration_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_registration->created) . "\"\n";
             $registration_ini .= "created_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_registration->created_user) . "\"\n";
             $registration_ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_registration->created_user) . "\"\n";
@@ -3224,7 +3224,7 @@ trait MigrationNc3ExportTrait
             $whatsnew_ini .= "[source_info]\n";
             $whatsnew_ini .= "whatsnew_block_id = " . $nc3_topic_frame_setting->frame_id . "\n";
             $whatsnew_ini .= "room_id         = "   . $nc3_topic_frame_setting->room_id . "\n";
-            $whatsnew_ini .= "plugin_key      = \"topics\"\n";
+            $whatsnew_ini .= "module_name     = \"topics\"\n";
             $whatsnew_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_topic_frame_setting->created) . "\"\n";
             $whatsnew_ini .= "created_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_topic_frame_setting->created_user) . "\"\n";
             $whatsnew_ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_topic_frame_setting->created_user) . "\"\n";
@@ -3318,7 +3318,7 @@ trait MigrationNc3ExportTrait
             $ini .= "[source_info]\n";
             $ini .= "cabinet_id      = " . $cabinet->id . "\n";
             $ini .= "room_id         = " . $cabinet->room_id . "\n";
-            $ini .= "plugin_key      = \"cabinets\"\n";
+            $ini .= "module_name     = \"cabinets\"\n";
             $ini .= "created_at      = \"" . $this->getCCDatetime($cabinet->created) . "\"\n";
             $ini .= "created_name    = \"" . $cabinet->insert_user_name . "\"\n";
             $ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $cabinet->created_user) . "\"\n";
@@ -3449,7 +3449,7 @@ trait MigrationNc3ExportTrait
             $ini .= "[source_info]\n";
             $ini .= "counter_block_id = " . $nc3_counter->id . "\n";
             $ini .= "room_id         = " . $nc3_counter->room_id . "\n";
-            $ini .= "plugin_key      = \"access_counters\"\n";
+            $ini .= "module_name     = \"access_counters\"\n";
             $ini .= "created_at      = \"" . $this->getCCDatetime($nc3_counter->created) . "\"\n";
             $ini .= "created_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_counter->created_user) . "\"\n";
             $ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_counter->created_user) . "\"\n";
@@ -3576,7 +3576,7 @@ trait MigrationNc3ExportTrait
             $ini .= "room_name = '" . $nc3_room->room_name . "'\n";
             // スペースID
             $ini .= "space_id = " . $nc3_room->space_id . "\n";
-            $ini .= "plugin_key = \"calendars\"\n";
+            $ini .= "module_name = \"calendars\"\n";
 
 
             // カラムのヘッダー及びTSV 行毎の枠準備
@@ -3750,7 +3750,7 @@ trait MigrationNc3ExportTrait
             $ini .= "room_name = '全会員'\n";
             // スペースID
             $ini .= "space_id = " . $nc3_room->space_id . "\n";
-            $ini .= "plugin_key = \"calendars\"\n";
+            $ini .= "module_name = \"calendars\"\n";
 
             // カレンダーの設定を出力
             $this->storagePut($this->getImportPath('calendars/calendar_room_') . $this->zeroSuppress($all_users_room_id) . '.ini', $ini);
@@ -3785,7 +3785,7 @@ trait MigrationNc3ExportTrait
             $ini .= "[source_info]\n";
             $ini .= "calendar_block_id = " . $nc3_calendar_frame_setting->frame_id . "\n";
             $ini .= "room_id           = " . $nc3_calendar_frame_setting->room_id . "\n";
-            $ini .= "plugin_key        = \"calendars\"\n";
+            $ini .= "module_name       = \"calendars\"\n";
 
             // カレンダーの設定を出力
             $this->storagePut($this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc3_calendar_frame_setting->frame_id) . '.ini', $ini);
@@ -3836,7 +3836,7 @@ trait MigrationNc3ExportTrait
             $ini .= "\n";
             $ini .= "[source_info]\n";
             $ini .= "category_id = " . $nc3_reservation_category->id . "\n";
-            $ini .= "plugin_key = \"reservations\"\n";
+            $ini .= "module_name = \"reservations\"\n";
 
             // 施設予約の設定を出力
             $this->storagePut($this->getImportPath('reservations/reservation_category_') . $this->zeroSuppress($nc3_reservation_category->id) . '.ini', $ini);
@@ -3953,7 +3953,7 @@ trait MigrationNc3ExportTrait
             $ini .= "\n";
             $ini .= "[source_info]\n";
             $ini .= "location_id = " . $nc3_reservation_location->id . "\n";
-            $ini .= "plugin_key = \"reservations\"\n";
+            $ini .= "module_name = \"reservations\"\n";
 
             $display_sequence++;
 
@@ -4316,7 +4316,7 @@ trait MigrationNc3ExportTrait
             $ini .= "reservation_block_id = " . $nc3_reservation_frame_setting->frame_id . "\n";    // block_idがないため、frame_idで代用
             $ini .= "room_id              = " . $nc3_reservation_frame_setting->room_id . "\n";
             $ini .= "room_name            = \"" . $nc3_reservation_frame_setting->room_name . "\"\n";
-            $ini .= "plugin_key           = \"reservations\"\n";
+            $ini .= "module_name          = \"reservations\"\n";
 
             // 施設予約の設定を出力
             $this->storagePut($this->getImportPath('reservations/reservation_block_') . $this->zeroSuppress($nc3_reservation_frame_setting->frame_id) . '.ini', $ini);
@@ -4417,7 +4417,7 @@ trait MigrationNc3ExportTrait
             $photoalbum_ini .= "[source_info]\n";
             $photoalbum_ini .= "photoalbum_id   = " . $nc3_room->id . "\n";
             $photoalbum_ini .= "room_id         = " . $nc3_room->id . "\n";
-            $photoalbum_ini .= "plugin_key      = \"photoalbums\"\n";
+            $photoalbum_ini .= "module_name     = \"photoalbums\"\n";
 
             // アルバム 情報
             $photoalbum_ini .= "\n";
@@ -4565,7 +4565,7 @@ trait MigrationNc3ExportTrait
                 $slide_ini .= "photoalbum_id       = " . $nc3_photoalbum_alubum->id . "\n";
                 $slide_ini .= "photoalbum_name     = \"" . $nc3_photoalbum_alubum->name . "\"\n";
                 $slide_ini .= "room_id             = " . $nc3_photoalbum_alubum->room_id . "\n";
-                $slide_ini .= "plugin_key      = \"photoalbums\"\n";
+                $slide_ini .= "module_name     = \"photoalbums\"\n";
                 $slide_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_photoalbum_frame_setting->created) . "\"\n";
                 $slide_ini .= "created_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_photoalbum_frame_setting->created_user) . "\"\n";
                 $slide_ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_photoalbum_frame_setting->created_user) . "\"\n";
@@ -4692,7 +4692,7 @@ trait MigrationNc3ExportTrait
             $search_ini .= "[source_info]\n";
             $search_ini .= "search_block_id = " . $nc3_frame->frame_id . "\n";   // block_idは無いためframe_idで代用
             $search_ini .= "room_id         = " . $nc3_frame->room_id . "\n";
-            $search_ini .= "plugin_key      = \"searches\"\n";
+            $search_ini .= "module_name     = \"searches\"\n";
             $search_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_frame->created) . "\"\n";
             // $search_ini .= "created_name    = \"" . Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_frame->created_user) . "\"\n";
             // $search_ini .= "insert_login_id = \"" . Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_frame->created_user) . "\"\n";
