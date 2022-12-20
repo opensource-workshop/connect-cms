@@ -578,6 +578,8 @@ trait MigrationTrait
             MigrationMapping::where('target_source_table', 'photoalbums_album')->delete();
             MigrationMapping::where('target_source_table', 'photoalbums_album_cover')->delete();
             MigrationMapping::where('target_source_table', 'photoalbums_photo')->delete();
+            MigrationMapping::where('target_source_table', 'photoalbums_video')->delete();
+            MigrationMapping::where('target_source_table', 'photoalbums_video_from_key')->delete();
         }
 
         if ($target == 'searchs' || $target == 'all') {
@@ -2300,11 +2302,8 @@ trait MigrationTrait
 
                     $target_source_table = 'blogs_post';
                     $target_source_table_from_key = 'blogs_post_from_key';
-                    if (array_key_exists('source_info', $blog_ini) && array_key_exists('module_name', $blog_ini['source_info']) && $blog_ini['source_info']['module_name'] == 'bbs') {
-                        $target_source_table = 'bbses_post';
-                        $target_source_table_from_key = 'bbses_post_from_key';
-                    }
-                    if (array_key_exists('source_info', $blog_ini) && array_key_exists('plugin_key', $blog_ini['source_info']) && $blog_ini['source_info']['plugin_key'] == 'bbses') {
+                    $module_name = Arr::get($blog_ini, 'source_info.module_name');
+                    if (in_array($module_name, ['bbs', 'bbses'])) {
                         $target_source_table = 'bbses_post';
                         $target_source_table_from_key = 'bbses_post_from_key';
                     }
@@ -4561,6 +4560,8 @@ trait MigrationTrait
             // nc2 の photoalbum_id
             $nc2_photoalbum_id = $this->getArrayValue($photoalbums_ini, 'source_info', 'photoalbum_id', 0);
 
+            $module_name = Arr::get($photoalbums_ini, 'source_info.module_name');
+
             // フォトアルバム指定の有無
             $cc_import_where_photoalbum_ids = $this->getMigrationConfig('photoalbums', 'cc_import_where_photoalbum_ids');
             if (!empty($cc_import_where_photoalbum_ids)) {
@@ -4629,91 +4630,105 @@ trait MigrationTrait
                 $parent = PhotoalbumContent::firstOrNew(['photoalbum_id' => $photoalbum->id]);
             }
 
+            // MigrationMappingにセット用。その後プラグイン固有リンク置換で使う
+            $post_source_content_keys = Arr::get($photoalbums_ini, 'content_keys.content_key', []);
+
             foreach ($this->getArrayValue($photoalbums_ini, 'albums', 'album', []) as $album_id => $album_name) {
 
                 $is_empty_album = true;
 
-                // マッピングテーブルの取得
-                $mapping_album = MigrationMapping::where('target_source_table', 'photoalbums_album')->where('source_key', $album_id)->first();
+                if ($module_name == 'videos') {
+                    // videos -> photoalbums
+                    // 動画から移行する場合、アルバム枠は作らず移行する
 
-                // マッピングテーブルを確認して、追加か取得の処理を分岐
-                if (empty($mapping_album)) {
-
-                    if (!$photoalbums_ini[$album_id]['public_flag']) {
-                        $this->putMonitor(3, "非公開のアルバムを移行します。", "フォトアルバム名=" . $photoalbums_ini['photoalbum_base']['photoalbum_name'] . ", album_name={$album_name}, photoalbum_contents.id={$parent->id}");
-                    }
-
-                    // アルバム作成（フォルダ扱い）
-                    $children = $parent->children()->create([
-                        'photoalbum_id' => $photoalbum->id,
-                        'upload_id' => null,
-                        'name' => $album_name,
-                        'description' => $photoalbums_ini[$album_id]['album_description'],
-                        'is_folder' => PhotoalbumContent::is_folder_on,
-                        'is_cover' => PhotoalbumContent::is_cover_off,
-                    ]);
-                    $children->created_id   = $this->getUserIdFromLoginId($users, $photoalbums_ini[$album_id]['insert_login_id']);
-                    $children->created_name = $photoalbums_ini[$album_id]['created_name'];
-                    $children->created_at   = $this->getDatetimeFromIniAndCheckFormat($photoalbums_ini, $album_id, 'created_at');
-                    $children->updated_id   = $this->getUserIdFromLoginId($users, $photoalbums_ini[$album_id]['update_login_id']);
-                    $children->updated_name = $photoalbums_ini[$album_id]['updated_name'];
-                    $children->updated_at   = $this->getDatetimeFromIniAndCheckFormat($photoalbums_ini, $album_id, 'updated_at');
-                    // 登録更新日時を自動更新しない
-                    $children->timestamps = false;
-                    $children->save();
-
-                    // カスタムジャケットのアップロードIDあり
-                    if ($photoalbums_ini[$album_id]['upload_id']) {
-                        // アルバムのジャケット登録
-                        $contents = [
-                            'photoalbum_id' => $photoalbum->id,
-                            'upload_id'     => $photoalbums_ini[$album_id]['upload_id'],
-                            'name'          => $album_name,
-                            'width'         => $photoalbums_ini[$album_id]['width'],
-                            'height'        => $photoalbums_ini[$album_id]['height'],
-                            'description'   => $photoalbums_ini[$album_id]['album_description'],
-                            'is_cover'      => PhotoalbumContent::is_cover_on,
-                            'created_id'    => $this->getUserIdFromLoginId($users, $photoalbums_ini[$album_id]['insert_login_id']),
-                            'created_name'  => $photoalbums_ini[$album_id]['created_name'],
-                            'created_at'    => $this->getDatetimeFromIniAndCheckFormat($photoalbums_ini, $album_id, 'created_at'),
-                            'updated_id'    => $this->getUserIdFromLoginId($users, $photoalbums_ini[$album_id]['update_login_id']),
-                            'updated_name'  => $photoalbums_ini[$album_id]['updated_name'],
-                            'updated_at'    => $this->getDatetimeFromIniAndCheckFormat($photoalbums_ini, $album_id, 'updated_at'),
-                        ];
-                        $grandchild = $this->createPhotoalbumContent($upload_mappings, $uploads_all, $children, $contents);
-
-                        // マッピングテーブルの追加
-                        $mapping_album_cover_tmp = MigrationMapping::create([
-                            'target_source_table'  => 'photoalbums_album_cover',
-                            'source_key'           => $photoalbums_ini[$album_id]['upload_id'],
-                            'destination_key'      => $grandchild->id,
-                        ]);
-
-                        $is_empty_album = false;
-                    }
-
-                    // マッピングテーブルの追加
-                    $mapping_album_tmp = MigrationMapping::create([
-                        'target_source_table'  => 'photoalbums_album',
-                        'source_key'           => $album_id,
-                        'destination_key'      => $children->id,
-                    ]);
-
+                    // Photoalbum のデータを取得（TSV）
+                    $photoalbums_tsv_path = $this->getImportPath('photoalbums/photoalbum_video_') . $this->zeroSuppress($nc2_photoalbum_id) . '_' . $this->zeroSuppress($album_id) . '.tsv';
+                    $children = $parent;
                 } else {
-                    $children = PhotoalbumContent::find($mapping_album->destination_key);
+                    // photoalbums
 
                     // マッピングテーブルの取得
-                    $mapping_album_cover = MigrationMapping::where('target_source_table', 'photoalbums_album_cover')
-                        ->where('source_key', $photoalbums_ini[$album_id]['upload_id'])
-                        ->first();
+                    $mapping_album = MigrationMapping::where('target_source_table', 'photoalbums_album')->where('source_key', $album_id)->first();
 
-                    if ($mapping_album_cover) {
-                        $is_empty_album = false;
+                    // マッピングテーブルを確認して、追加か取得の処理を分岐
+                    if (empty($mapping_album)) {
+
+                        if (!$photoalbums_ini[$album_id]['public_flag']) {
+                            $this->putMonitor(3, "非公開のアルバムを移行します。", "フォトアルバム名=" . $photoalbums_ini['photoalbum_base']['photoalbum_name'] . ", album_name={$album_name}, photoalbum_contents.id={$parent->id}");
+                        }
+
+                        // アルバム作成（フォルダ扱い）
+                        $children = $parent->children()->create([
+                            'photoalbum_id' => $photoalbum->id,
+                            'upload_id' => null,
+                            'name' => $album_name,
+                            'description' => $photoalbums_ini[$album_id]['album_description'],
+                            'is_folder' => PhotoalbumContent::is_folder_on,
+                            'is_cover' => PhotoalbumContent::is_cover_off,
+                        ]);
+                        $children->created_id   = $this->getUserIdFromLoginId($users, $photoalbums_ini[$album_id]['insert_login_id']);
+                        $children->created_name = $photoalbums_ini[$album_id]['created_name'];
+                        $children->created_at   = $this->getDatetimeFromIniAndCheckFormat($photoalbums_ini, $album_id, 'created_at');
+                        $children->updated_id   = $this->getUserIdFromLoginId($users, $photoalbums_ini[$album_id]['update_login_id']);
+                        $children->updated_name = $photoalbums_ini[$album_id]['updated_name'];
+                        $children->updated_at   = $this->getDatetimeFromIniAndCheckFormat($photoalbums_ini, $album_id, 'updated_at');
+                        // 登録更新日時を自動更新しない
+                        $children->timestamps = false;
+                        $children->save();
+
+                        // カスタムジャケットのアップロードIDあり
+                        if ($photoalbums_ini[$album_id]['upload_id']) {
+                            // アルバムのジャケット登録
+                            $contents = [
+                                'photoalbum_id' => $photoalbum->id,
+                                'upload_id'     => $photoalbums_ini[$album_id]['upload_id'],
+                                'name'          => $album_name,
+                                'width'         => $photoalbums_ini[$album_id]['width'],
+                                'height'        => $photoalbums_ini[$album_id]['height'],
+                                'description'   => $photoalbums_ini[$album_id]['album_description'],
+                                'is_cover'      => PhotoalbumContent::is_cover_on,
+                                'created_id'    => $this->getUserIdFromLoginId($users, $photoalbums_ini[$album_id]['insert_login_id']),
+                                'created_name'  => $photoalbums_ini[$album_id]['created_name'],
+                                'created_at'    => $this->getDatetimeFromIniAndCheckFormat($photoalbums_ini, $album_id, 'created_at'),
+                                'updated_id'    => $this->getUserIdFromLoginId($users, $photoalbums_ini[$album_id]['update_login_id']),
+                                'updated_name'  => $photoalbums_ini[$album_id]['updated_name'],
+                                'updated_at'    => $this->getDatetimeFromIniAndCheckFormat($photoalbums_ini, $album_id, 'updated_at'),
+                            ];
+                            $grandchild = $this->createPhotoalbumContent($upload_mappings, $uploads_all, $children, $contents);
+
+                            // マッピングテーブルの追加
+                            $mapping_album_cover_tmp = MigrationMapping::create([
+                                'target_source_table'  => 'photoalbums_album_cover',
+                                'source_key'           => $photoalbums_ini[$album_id]['upload_id'],
+                                'destination_key'      => $grandchild->id,
+                            ]);
+
+                            $is_empty_album = false;
+                        }
+
+                        // マッピングテーブルの追加
+                        $mapping_album_tmp = MigrationMapping::create([
+                            'target_source_table'  => 'photoalbums_album',
+                            'source_key'           => $album_id,
+                            'destination_key'      => $children->id,
+                        ]);
+
+                    } else {
+                        $children = PhotoalbumContent::find($mapping_album->destination_key);
+
+                        // マッピングテーブルの取得
+                        $mapping_album_cover = MigrationMapping::where('target_source_table', 'photoalbums_album_cover')
+                            ->where('source_key', $photoalbums_ini[$album_id]['upload_id'])
+                            ->first();
+
+                        if ($mapping_album_cover) {
+                            $is_empty_album = false;
+                        }
                     }
-                }
 
-                // Photoalbum のデータを取得（TSV）
-                $photoalbums_tsv_path = $this->getImportPath('photoalbums/photoalbum_') . $this->zeroSuppress($nc2_photoalbum_id) . '_' . $this->zeroSuppress($album_id) . '.tsv';
+                    // Photoalbum のデータを取得（TSV）
+                    $photoalbums_tsv_path = $this->getImportPath('photoalbums/photoalbum_') . $this->zeroSuppress($nc2_photoalbum_id) . '_' . $this->zeroSuppress($album_id) . '.tsv';
+                }
 
                 if (Storage::exists($photoalbums_tsv_path)) {
                     // TSV ファイル取得（1つのTSV で1つのフォトアルバム丸ごと）
@@ -4727,6 +4742,7 @@ trait MigrationTrait
                     $header_skip = true;       // ヘッダースキップフラグ（1行目はカラム名の行）
                     $tsv_idxs['photo_id'] = 0;
                     $tsv_idxs['upload_id'] = 0;
+                    $tsv_idxs['video_upload_id'] = 0;
                     $tsv_idxs['photo_name'] = 0;
                     $tsv_idxs['photo_description'] = 0;
                     $tsv_idxs['width'] = 0;
@@ -4764,37 +4780,79 @@ trait MigrationTrait
                         // 行データをタブで項目に分割
                         $photoalbum_tsv_cols = explode("\t", trim($photoalbum_tsv_line, "\n\r"));
 
-                        // マッピングテーブルの取得
-                        $mapping_photo = MigrationMapping::where('target_source_table', 'photoalbums_photo')
-                            ->where('source_key', $photoalbum_tsv_cols[$tsv_idxs['photo_id']])
-                            ->first();
+                        if ($module_name == 'videos') {
+                            // 動画のマッピングテーブルの取得
+                            $mapping_video = MigrationMapping::where('target_source_table', 'photoalbums_video')
+                                ->where('source_key', $photoalbum_tsv_cols[$tsv_idxs['video_upload_id']])
+                                ->first();
 
-                        if (empty($mapping_photo)) {
-                            // 写真登録
-                            $contents = [
-                                'photoalbum_id' => $photoalbum->id,
-                                'upload_id' => $photoalbum_tsv_cols[$tsv_idxs['upload_id']],
-                                'name' => $photoalbum_tsv_cols[$tsv_idxs['photo_name']],
-                                'width' => $photoalbum_tsv_cols[$tsv_idxs['width']],
-                                'height' => $photoalbum_tsv_cols[$tsv_idxs['height']],
-                                'description' => $photoalbum_tsv_cols[$tsv_idxs['photo_description']],
-                                'is_cover' => PhotoalbumContent::is_cover_off,
-                                // 'nc2_photo_id' => $photoalbum_tsv_cols[$tsv_idxs['photo_id']],
-                                'created_id'   => $this->getUserIdFromLoginId($users, $photoalbum_tsv_cols[$tsv_idxs['insert_login_id']]),
-                                'created_name' => $photoalbum_tsv_cols[$tsv_idxs['created_name']],
-                                'created_at'   => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['created_at'], $photoalbum_tsv_cols, 'created_at'),
-                                'updated_id'   => $this->getUserIdFromLoginId($users, $photoalbum_tsv_cols[$tsv_idxs['update_login_id']]),
-                                'updated_name' => $photoalbum_tsv_cols[$tsv_idxs['updated_name']],
-                                'updated_at'   => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['updated_at'], $photoalbum_tsv_cols, 'updated_at'),
-                            ];
-                            $grandchild = $this->createPhotoalbumContent($upload_mappings, $uploads_all, $children, $contents);
+                            if (empty($mapping_video)) {
+                                // 動画登録
+                                $contents = [
+                                    'photoalbum_id' => $photoalbum->id,
+                                    'upload_id'     => $photoalbum_tsv_cols[$tsv_idxs['video_upload_id']],
+                                    'poster_upload_id' => $photoalbum_tsv_cols[$tsv_idxs['upload_id']],
+                                    'name'          => $photoalbum_tsv_cols[$tsv_idxs['photo_name']],
+                                    'description'   => $photoalbum_tsv_cols[$tsv_idxs['photo_description']],
+                                    'is_cover'      => PhotoalbumContent::is_cover_off,
+                                    'created_id'    => $this->getUserIdFromLoginId($users, $photoalbum_tsv_cols[$tsv_idxs['insert_login_id']]),
+                                    'created_name'  => $photoalbum_tsv_cols[$tsv_idxs['created_name']],
+                                    'created_at'    => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['created_at'], $photoalbum_tsv_cols, 'created_at'),
+                                    'updated_id'    => $this->getUserIdFromLoginId($users, $photoalbum_tsv_cols[$tsv_idxs['update_login_id']]),
+                                    'updated_name'  => $photoalbum_tsv_cols[$tsv_idxs['updated_name']],
+                                    'updated_at'    => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['updated_at'], $photoalbum_tsv_cols, 'updated_at'),
+                                ];
+                                $grandchild = $this->createPhotoalbumContentVideo($upload_mappings, $uploads_all, $children, $contents);
 
-                            // マッピングテーブルの追加
-                            $mapping_photo_tmp = MigrationMapping::create([
-                                'target_source_table'  => 'photoalbums_photo',
-                                'source_key'           => $photoalbum_tsv_cols[$tsv_idxs['photo_id']],
-                                'destination_key'      => $grandchild->id,
-                            ]);
+                                // マッピングテーブルの追加
+                                $mapping_video_tmp = MigrationMapping::create([
+                                    'target_source_table'  => 'photoalbums_video',
+                                    'source_key'           => $photoalbum_tsv_cols[$tsv_idxs['video_upload_id']],
+                                    'destination_key'      => $grandchild->id,
+                                ]);
+
+                                // プラグイン固有リンク置換用マッピングテーブル追加
+                                $content_id = $photoalbum_tsv_cols[$tsv_idxs['photo_id']];
+                                if (array_key_exists($content_id, $post_source_content_keys)) {
+                                    $mapping_video_from_key = MigrationMapping::create([
+                                        'target_source_table'  => 'photoalbums_video_from_key',
+                                        'source_key'           => $post_source_content_keys[$content_id],
+                                        'destination_key'      => $grandchild->id,
+                                    ]);
+                                }
+                            }
+                        } else {
+                            // 写真のマッピングテーブルの取得
+                            $mapping_photo = MigrationMapping::where('target_source_table', 'photoalbums_photo')
+                                ->where('source_key', $photoalbum_tsv_cols[$tsv_idxs['photo_id']])
+                                ->first();
+
+                            if (empty($mapping_photo)) {
+                                // 写真登録
+                                $contents = [
+                                    'photoalbum_id' => $photoalbum->id,
+                                    'upload_id' => $photoalbum_tsv_cols[$tsv_idxs['upload_id']],
+                                    'name' => $photoalbum_tsv_cols[$tsv_idxs['photo_name']],
+                                    'width' => $photoalbum_tsv_cols[$tsv_idxs['width']],
+                                    'height' => $photoalbum_tsv_cols[$tsv_idxs['height']],
+                                    'description' => $photoalbum_tsv_cols[$tsv_idxs['photo_description']],
+                                    'is_cover' => PhotoalbumContent::is_cover_off,
+                                    'created_id'   => $this->getUserIdFromLoginId($users, $photoalbum_tsv_cols[$tsv_idxs['insert_login_id']]),
+                                    'created_name' => $photoalbum_tsv_cols[$tsv_idxs['created_name']],
+                                    'created_at'   => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['created_at'], $photoalbum_tsv_cols, 'created_at'),
+                                    'updated_id'   => $this->getUserIdFromLoginId($users, $photoalbum_tsv_cols[$tsv_idxs['update_login_id']]),
+                                    'updated_name' => $photoalbum_tsv_cols[$tsv_idxs['updated_name']],
+                                    'updated_at'   => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['updated_at'], $photoalbum_tsv_cols, 'updated_at'),
+                                ];
+                                $grandchild = $this->createPhotoalbumContent($upload_mappings, $uploads_all, $children, $contents);
+
+                                // マッピングテーブルの追加
+                                $mapping_photo_tmp = MigrationMapping::create([
+                                    'target_source_table'  => 'photoalbums_photo',
+                                    'source_key'           => $photoalbum_tsv_cols[$tsv_idxs['photo_id']],
+                                    'destination_key'      => $grandchild->id,
+                                ]);
+                            }
                         }
 
                         $is_empty_album = false;
@@ -4819,10 +4877,10 @@ trait MigrationTrait
         if ($upload_mapping) {
             $upload = $uploads_all->firstWhere('id', $upload_mapping->destination_key);
             if (!$upload) {
-                $this->putMonitor(3, "Connectの Uploads にアップロードIDなし。nc2_album_name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}");
+                $this->putMonitor(3, "Connectの Uploads にアップロードIDなし。album_name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}");
             }
         } else {
-            $this->putMonitor(3, "Connectの MigrationMapping にアップロードIDなし。nc2_album_name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}\n");
+            $this->putMonitor(3, "Connectの MigrationMapping にアップロードIDなし。album_name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}\n");
         }
 
         // 写真登録
@@ -4836,6 +4894,51 @@ trait MigrationTrait
             'is_folder'     => PhotoalbumContent::is_folder_off,
             'is_cover'      => $contents['is_cover'],
             'mimetype'      => $upload->mimetype,
+        ]);
+        $grandchild->created_id   = $contents['created_id'];
+        $grandchild->created_name = $contents['created_name'];
+        $grandchild->created_at   = $contents['created_at'];
+        $grandchild->updated_id   = $contents['updated_id'];
+        $grandchild->updated_name = $contents['updated_name'];
+        $grandchild->updated_at   = $contents['updated_at'];
+        // 登録更新日時を自動更新しない
+        $grandchild->timestamps = false;
+        $grandchild->save();
+
+        return $grandchild;
+    }
+
+    /**
+     * 動画の登録
+     */
+    private function createPhotoalbumContentVideo(Collection $upload_mappings, Collection $uploads_all, PhotoalbumContent $children, array $contents): PhotoalbumContent
+    {
+        $video_upload_mapping = $upload_mappings->firstWhere('source_key', $contents['upload_id']);
+        $poster_upload_mapping = $upload_mappings->firstWhere('source_key', $contents['poster_upload_id']);
+        $video_upload = null;
+        if ($video_upload_mapping) {
+            $video_upload = $uploads_all->firstWhere('id', $video_upload_mapping->destination_key);
+            if (!$video_upload) {
+                $this->putMonitor(3, "Connectの Uploads にアップロードIDなし。name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}");
+            }
+        } else {
+            $this->putMonitor(3, "Connectの MigrationMapping にアップロードIDなし。name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}\n");
+            var_dump($contents);
+        }
+
+        // 動画登録
+        // @see PhotoalbumsPlugin::writeVideo()
+        $grandchild = $children->children()->create([
+            'photoalbum_id'    => $contents['photoalbum_id'],
+            'upload_id'        => $video_upload_mapping->destination_key,
+            'poster_upload_id' => isset($poster_upload_mapping) ? $poster_upload_mapping->destination_key : null,
+            'name'             => $contents['name'],
+            'width'            => null,
+            'height'           => null,
+            'description'      => $contents['description'],
+            'is_folder'        => PhotoalbumContent::is_folder_off,
+            'is_cover'         => $contents['is_cover'],
+            'mimetype'         => $video_upload->mimetype,
         ]);
         $grandchild->created_id   = $contents['created_id'];
         $grandchild->created_name = $contents['created_name'];
@@ -6597,20 +6700,29 @@ trait MigrationTrait
     private function importPluginPhotoalbums($page, $page_dir, $frame_ini, $display_sequence)
     {
         // 変数定義
-        $photoalbum_id = null;
         $photoalbum_ini = null;
         $migration_mappings = null;
         $photoalbums = null;
         $bucket = null;
 
         // エクスポートファイルの photoalbum_id 取得（エクスポート時の連番）
-        if (array_key_exists('frame_base', $frame_ini) && array_key_exists('photoalbum_id', $frame_ini['frame_base'])) {
-            $photoalbum_id = $frame_ini['frame_base']['photoalbum_id'];
-        }
+        $photoalbum_id       = Arr::get($frame_ini, 'frame_base.photoalbum_id');
+
+        $target_source_table = Arr::get($frame_ini, 'source_info.target_source_table');
+
         // フォトアルバムの情報取得
-        if (!empty($photoalbum_id) && Storage::exists($this->getImportPath('photoalbums/photoalbum_') . $photoalbum_id . '.ini')) {
-            $photoalbum_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('photoalbums/photoalbum_') . $photoalbum_id . '.ini', true);
+        if ($target_source_table == 'videos') {
+            // video -> photoalbums
+            if (!empty($photoalbum_id) && Storage::exists($this->getImportPath('photoalbums/photoalbum_video_') . $photoalbum_id . '.ini')) {
+                $photoalbum_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('photoalbums/photoalbum_video_') . $photoalbum_id . '.ini', true);
+            }
+        } else {
+            // フォトアルバム
+            if (!empty($photoalbum_id) && Storage::exists($this->getImportPath('photoalbums/photoalbum_') . $photoalbum_id . '.ini')) {
+                $photoalbum_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('photoalbums/photoalbum_') . $photoalbum_id . '.ini', true);
+            }
         }
+
         // NC2 のphotoalbum_id
         if (!empty($photoalbum_ini) && array_key_exists('source_info', $photoalbum_ini) && array_key_exists('photoalbum_id', $photoalbum_ini['source_info'])) {
             $photoalbum_id = $photoalbum_ini['source_info']['photoalbum_id'];
@@ -6637,6 +6749,18 @@ trait MigrationTrait
 
         // frame_configs 登録
         if (!empty($photoalbums)) {
+            // 投稿日
+            $frame_config = FrameConfig::updateOrCreate(
+                ['frame_id' => $frame->id, 'name' => PhotoalbumFrameConfig::posted_at],
+                ['value' => Arr::get($frame_ini, 'photoalbum.posted_at', ShowType::not_show)]
+            );
+
+            // 動画埋め込みコード
+            $frame_config = FrameConfig::updateOrCreate(
+                ['frame_id' => $frame->id, 'name' => PhotoalbumFrameConfig::embed_code],
+                ['value' => Arr::get($frame_ini, 'photoalbum.embed_code', ShowType::not_show)]
+            );
+
             // アルバム並び順
             $frame_config = FrameConfig::updateOrCreate(
                 ['frame_id' => $frame->id, 'name' => PhotoalbumFrameConfig::sort_folder],
@@ -11360,11 +11484,12 @@ trait MigrationTrait
             $this->storagePut($this->getImportPath('photoalbums/photoalbum_') . $this->zeroSuppress($nc2_photoalbum->photoalbum_id) . '.ini', $photoalbum_ini);
 
             // カラムのヘッダー及びTSV 行毎の枠準備
-            $tsv_header = "photo_id" . "\t" . "upload_id" . "\t" . "photo_name" . "\t" . "photo_description" . "\t" . "width" . "\t" ."height" . "\t" .
+            $tsv_header = "photo_id" . "\t" . "upload_id" . "\t" . "video_upload_id" . "\t" . "photo_name" . "\t" . "photo_description" . "\t" . "width" . "\t" ."height" . "\t" .
                 "created_at" . "\t" . "created_name" . "\t" . "insert_login_id" . "\t" . "updated_at" . "\t" . "updated_name" . "\t" . "update_login_id";
 
             $tsv_cols['photo_id'] = "";
             $tsv_cols['upload_id'] = "";
+            $tsv_cols['video_upload_id'] = "";
             $tsv_cols['photo_name'] = "";
             $tsv_cols['photo_description'] = "";
             $tsv_cols['width'] = "";
@@ -11392,6 +11517,7 @@ trait MigrationTrait
 
                     $tsv_record['photo_id']          = $nc2_photoalbum_photo->photo_id;
                     $tsv_record['upload_id']         = $nc2_photoalbum_photo->upload_id;
+                    $tsv_record['video_upload_id']   = '';
                     $tsv_record['photo_name']        = $nc2_photoalbum_photo->photo_name;
                     $tsv_record['photo_description'] = $nc2_photoalbum_photo->photo_description;
                     $tsv_record['width']             = $nc2_photoalbum_photo->width;
@@ -13818,6 +13944,50 @@ trait MigrationTrait
 
         // &amp; => & 等のデコード
         $check_url = htmlspecialchars_decode($url);
+        $check_url_path = parse_url($check_url, PHP_URL_PATH);
+
+        // (nc3プラグイン)
+
+        if ($check_url_path) {
+            if (stripos($check_url_path, '/blogs/blog_entries/view/') !== false) {
+                // (ブログ)
+                //  nc3 http://localhost:8081/blogs/blog_entries/view/27/2e19fea842dd98fe341ad536771b90a8?frame_id=49
+                //  cc  http://localhost/plugin/blogs/show/16/49/26#frame-49
+                return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/blogs/blog_entries/view/', '/plugin/blogs/show/', 'blogs_post_from_key');
+            } elseif (stripos($check_url_path, '/multidatabases/multidatabase_contents/detail/') !== false) {
+                // (汎用DB)
+                //  nc3 http://localhost:8081/multidatabases/multidatabase_contents/detail/43/50ed8d82a743a87bb78e89f2a654b490?frame_id=43
+                //  cc  http://localhost/plugin/databases/detail/11/37/290#frame-37
+                return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/multidatabases/multidatabase_contents/detail/', '/plugin/databases/detail/', 'databases_post_from_key');
+            } elseif (stripos($check_url_path, '/videos/videos/embed/') !== false) {
+                // (動画埋込)
+                //  nc3 http://localhost:8081/setting/videos/videos/embed/55/a66fda57248fe7e64818e2438cac5e7c?frame_id=398
+                //  cc  http://localhost/download/plugin/photoalbums/embed/47/91/65
+                return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/videos/videos/embed/', '/download/plugin/photoalbums/embed/', 'photoalbums_video_from_key');
+            }
+        }
+
+        return $content;
+    }
+
+    /**
+     * nc3プラグインリンク１つをConnectのプラグインリンクに変換
+     */
+    private function convertNc3PluginPermalinkToConnect(?string $content, string $url, string $db_colum, string $from_nc3_plugin_permalink, string $to_cc_plugin_permalink, string $content_target_source_table): ?string
+    {
+        // (ブログ)
+        //  nc3 http://localhost:8081/blogs/blog_entries/view/27/2e19fea842dd98fe341ad536771b90a8?frame_id=49
+        //      block_id=27, content_key=2e19fea842dd98fe341ad536771b90a8
+        //      ※ ?frame_id=999 がないとnc3でもページ特定できない
+        //  cc  http://localhost/plugin/blogs/show/16/49/26#frame-49
+        //      page_id=16, frame_id=49, post_id=26
+        //  (nc3) content_key    => MigrationMapping => (cc) post_id
+        //  (nc3) frame_id       => MigrationMapping => (cc) frame_id
+        //  (cc)  frame->id                          => (cc) frame->page_id
+
+        // &amp; => & 等のデコード
+        $check_url = htmlspecialchars_decode($url);
+        $check_url = str_replace('/setting', '', $check_url);
 
         $check_url_path = parse_url($check_url, PHP_URL_PATH);
         $check_url_query = parse_url($check_url, PHP_URL_QUERY);
@@ -13828,79 +13998,34 @@ trait MigrationTrait
         $url_path = parse_url($url, PHP_URL_PATH);
         $url_query = parse_url($url, PHP_URL_QUERY);
 
-        // (nc3プラグイン)
-
-        if ($check_url_path) {
-            if (stripos($check_url_path, '/blogs/blog_entries/view/') !== false) {
-                // (ブログ)
-                //  nc3 http://localhost:8081/blogs/blog_entries/view/27/2e19fea842dd98fe341ad536771b90a8?frame_id=49
-                //      block_id=27, content_key=2e19fea842dd98fe341ad536771b90a8
-                //      ※ ?frame_id=999 がないとnc3でもページ特定できない
-                //  cc  http://localhost/plugin/blogs/show/16/49/26#frame-49
-                //      page_id=16, frame_id=49, post_id=26
-                //  (nc3) content_key    => MigrationMapping => (cc) post_id
-                //  (nc3) frame_id       => MigrationMapping => (cc) frame_id
-                //  (cc)  frame->id                          => (cc) frame->page_id
-
-                $frame_id = Arr::get($check_url_query_array, 'frame_id');
-                if (is_null($frame_id)) {
-                    // frame_idなしは置換できない
-                    $this->putError(3, $db_colum . '|プラグイン固有リンク|frame_idなしで置換できない', $url);
-                    return $content;
-                }
-
-                // 不要文字を取り除き
-                $path_tmp = str_replace('/blogs/blog_entries/view/', '', $check_url_path);
-                // /で分割
-                $src_params = explode('/', $path_tmp);
-
-                // $block_id = $src_params[0];
-                $content_key = $src_params[1];
-
-                $map_content = MigrationMapping::where('target_source_table', 'blogs_post_from_key')->where('source_key', $content_key)->first();
-                $map_frame   = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $frame_id)->firstOrNew([]);
-                $frame       = Frame::find($map_frame->destination_key);
-                if ($map_content && $frame) {
-                    $content = str_replace("{$url_path}?{$url_query}", "/plugin/blogs/show/{$frame->page_id}/{$frame->id}/{$map_content->destination_key}#frame-{$frame->id}", $content);
-                } else {
-                    // frame_idなしは置換できない
-                    $this->putError(3, $db_colum . '|プラグイン固有リンク|MigrationMapping(target_source_table=blogs_post_from_key|frames) or Frameデータなし', $url);
-                }
-                return $content;
-
-            } elseif (stripos($check_url_path, '/multidatabases/multidatabase_contents/detail/') !== false) {
-                // (汎用DB)
-                //  nc3 http://localhost:8081/multidatabases/multidatabase_contents/detail/43/50ed8d82a743a87bb78e89f2a654b490?frame_id=43
-                //  cc  http://localhost/plugin/databases/detail/11/37/290#frame-37
-
-                $frame_id = Arr::get($check_url_query_array, 'frame_id');
-                if (is_null($frame_id)) {
-                    // frame_idなしは置換できない
-                    $this->putError(3, $db_colum . '|プラグイン固有リンク|frame_idなしで置換できない', $url);
-                    return $content;
-                }
-
-                // 不要文字を取り除き
-                $path_tmp = str_replace('/multidatabases/multidatabase_contents/detail/', '', $check_url_path);
-                // /で分割
-                $src_params = explode('/', $path_tmp);
-
-                // $block_id = $src_params[0];
-                $content_key = $src_params[1];
-
-                $map_content = MigrationMapping::where('target_source_table', 'databases_post_from_key')->where('source_key', $content_key)->first();
-                $map_frame   = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $frame_id)->firstOrNew([]);
-                $frame       = Frame::find($map_frame->destination_key);
-                if ($map_content && $frame) {
-                    $content = str_replace("{$url_path}?{$url_query}", "/plugin/databases/detail/{$frame->page_id}/{$frame->id}/{$map_content->destination_key}#frame-{$frame->id}", $content);
-                } else {
-                    // frame_idなしは置換できない
-                    $this->putError(3, $db_colum . '|プラグイン固有リンク|MigrationMapping(target_source_table=databases_post_from_key|frames) or Frameデータなし', $url);
-                }
-                return $content;
-            }
+        $frame_id = Arr::get($check_url_query_array, 'frame_id');
+        if (is_null($frame_id)) {
+            // frame_idなしは置換できない
+            $this->putError(3, $db_colum . '|プラグイン固有リンク|frame_idなしで置換できない', $url);
+            return $content;
         }
 
+        // 不要文字を取り除き
+        // $path_tmp = str_replace('/blogs/blog_entries/view/', '', $check_url_path);
+        $path_tmp = str_replace($from_nc3_plugin_permalink, '', $check_url_path);
+        // /で分割
+        $src_params = explode('/', $path_tmp);
+
+        // $block_id = $src_params[0];
+        $content_key = $src_params[1];
+
+        // $map_content = MigrationMapping::where('target_source_table', 'blogs_post_from_key')->where('source_key', $content_key)->first();
+        $map_content = MigrationMapping::where('target_source_table', $content_target_source_table)->where('source_key', $content_key)->first();
+        $map_frame   = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $frame_id)->firstOrNew([]);
+        $frame       = Frame::find($map_frame->destination_key);
+        if ($map_content && $frame) {
+            // $content = str_replace("{$url_path}?{$url_query}", "/plugin/blogs/show/{$frame->page_id}/{$frame->id}/{$map_content->destination_key}#frame-{$frame->id}", $content);
+            $content = str_replace("{$url_path}?{$url_query}", "{$to_cc_plugin_permalink}{$frame->page_id}/{$frame->id}/{$map_content->destination_key}#frame-{$frame->id}", $content);
+        } else {
+            var_dump($map_content, $content_key);
+            // frame_idなしは置換できない
+            $this->putError(3, $db_colum . "|プラグイン固有リンク|MigrationMapping(target_source_table={$content_target_source_table}|frames) or Frameデータなし", $url);
+        }
         return $content;
     }
 }
