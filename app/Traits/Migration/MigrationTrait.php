@@ -579,6 +579,7 @@ trait MigrationTrait
             MigrationMapping::where('target_source_table', 'photoalbums_album_cover')->delete();
             MigrationMapping::where('target_source_table', 'photoalbums_photo')->delete();
             MigrationMapping::where('target_source_table', 'photoalbums_video')->delete();
+            MigrationMapping::where('target_source_table', 'photoalbums_video_from_key')->delete();
         }
 
         if ($target == 'searchs' || $target == 'all') {
@@ -4629,6 +4630,9 @@ trait MigrationTrait
                 $parent = PhotoalbumContent::firstOrNew(['photoalbum_id' => $photoalbum->id]);
             }
 
+            // MigrationMappingにセット用。その後プラグイン固有リンク置換で使う
+            $post_source_content_keys = Arr::get($photoalbums_ini, 'content_keys.content_key', []);
+
             foreach ($this->getArrayValue($photoalbums_ini, 'albums', 'album', []) as $album_id => $album_name) {
 
                 $is_empty_album = true;
@@ -4806,6 +4810,16 @@ trait MigrationTrait
                                     'source_key'           => $photoalbum_tsv_cols[$tsv_idxs['video_upload_id']],
                                     'destination_key'      => $grandchild->id,
                                 ]);
+
+                                // プラグイン固有リンク置換用マッピングテーブル追加
+                                $content_id = $photoalbum_tsv_cols[$tsv_idxs['photo_id']];
+                                if (array_key_exists($content_id, $post_source_content_keys)) {
+                                    $mapping_video_from_key = MigrationMapping::create([
+                                        'target_source_table'  => 'photoalbums_video_from_key',
+                                        'source_key'           => $post_source_content_keys[$content_id],
+                                        'destination_key'      => $grandchild->id,
+                                    ]);
+                                }
                             }
                         } else {
                             // 写真のマッピングテーブルの取得
@@ -13930,6 +13944,50 @@ trait MigrationTrait
 
         // &amp; => & 等のデコード
         $check_url = htmlspecialchars_decode($url);
+        $check_url_path = parse_url($check_url, PHP_URL_PATH);
+
+        // (nc3プラグイン)
+
+        if ($check_url_path) {
+            if (stripos($check_url_path, '/blogs/blog_entries/view/') !== false) {
+                // (ブログ)
+                //  nc3 http://localhost:8081/blogs/blog_entries/view/27/2e19fea842dd98fe341ad536771b90a8?frame_id=49
+                //  cc  http://localhost/plugin/blogs/show/16/49/26#frame-49
+                return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/blogs/blog_entries/view/', '/plugin/blogs/show/', 'blogs_post_from_key');
+            } elseif (stripos($check_url_path, '/multidatabases/multidatabase_contents/detail/') !== false) {
+                // (汎用DB)
+                //  nc3 http://localhost:8081/multidatabases/multidatabase_contents/detail/43/50ed8d82a743a87bb78e89f2a654b490?frame_id=43
+                //  cc  http://localhost/plugin/databases/detail/11/37/290#frame-37
+                return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/multidatabases/multidatabase_contents/detail/', '/plugin/databases/detail/', 'databases_post_from_key');
+            } elseif (stripos($check_url_path, '/videos/videos/embed/') !== false) {
+                // (動画埋込)
+                //  nc3 http://localhost:8081/setting/videos/videos/embed/55/a66fda57248fe7e64818e2438cac5e7c?frame_id=398
+                //  cc  http://localhost/download/plugin/photoalbums/embed/47/91/65
+                return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/videos/videos/embed/', '/download/plugin/photoalbums/embed/', 'photoalbums_video_from_key');
+            }
+        }
+
+        return $content;
+    }
+
+    /**
+     * nc3プラグインリンク１つをConnectのプラグインリンクに変換
+     */
+    private function convertNc3PluginPermalinkToConnect(?string $content, string $url, string $db_colum, string $from_nc3_plugin_permalink, string $to_cc_plugin_permalink, string $content_target_source_table): ?string
+    {
+        // (ブログ)
+        //  nc3 http://localhost:8081/blogs/blog_entries/view/27/2e19fea842dd98fe341ad536771b90a8?frame_id=49
+        //      block_id=27, content_key=2e19fea842dd98fe341ad536771b90a8
+        //      ※ ?frame_id=999 がないとnc3でもページ特定できない
+        //  cc  http://localhost/plugin/blogs/show/16/49/26#frame-49
+        //      page_id=16, frame_id=49, post_id=26
+        //  (nc3) content_key    => MigrationMapping => (cc) post_id
+        //  (nc3) frame_id       => MigrationMapping => (cc) frame_id
+        //  (cc)  frame->id                          => (cc) frame->page_id
+
+        // &amp; => & 等のデコード
+        $check_url = htmlspecialchars_decode($url);
+        $check_url = str_replace('/setting', '', $check_url);
 
         $check_url_path = parse_url($check_url, PHP_URL_PATH);
         $check_url_query = parse_url($check_url, PHP_URL_QUERY);
@@ -13940,79 +13998,34 @@ trait MigrationTrait
         $url_path = parse_url($url, PHP_URL_PATH);
         $url_query = parse_url($url, PHP_URL_QUERY);
 
-        // (nc3プラグイン)
-
-        if ($check_url_path) {
-            if (stripos($check_url_path, '/blogs/blog_entries/view/') !== false) {
-                // (ブログ)
-                //  nc3 http://localhost:8081/blogs/blog_entries/view/27/2e19fea842dd98fe341ad536771b90a8?frame_id=49
-                //      block_id=27, content_key=2e19fea842dd98fe341ad536771b90a8
-                //      ※ ?frame_id=999 がないとnc3でもページ特定できない
-                //  cc  http://localhost/plugin/blogs/show/16/49/26#frame-49
-                //      page_id=16, frame_id=49, post_id=26
-                //  (nc3) content_key    => MigrationMapping => (cc) post_id
-                //  (nc3) frame_id       => MigrationMapping => (cc) frame_id
-                //  (cc)  frame->id                          => (cc) frame->page_id
-
-                $frame_id = Arr::get($check_url_query_array, 'frame_id');
-                if (is_null($frame_id)) {
-                    // frame_idなしは置換できない
-                    $this->putError(3, $db_colum . '|プラグイン固有リンク|frame_idなしで置換できない', $url);
-                    return $content;
-                }
-
-                // 不要文字を取り除き
-                $path_tmp = str_replace('/blogs/blog_entries/view/', '', $check_url_path);
-                // /で分割
-                $src_params = explode('/', $path_tmp);
-
-                // $block_id = $src_params[0];
-                $content_key = $src_params[1];
-
-                $map_content = MigrationMapping::where('target_source_table', 'blogs_post_from_key')->where('source_key', $content_key)->first();
-                $map_frame   = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $frame_id)->firstOrNew([]);
-                $frame       = Frame::find($map_frame->destination_key);
-                if ($map_content && $frame) {
-                    $content = str_replace("{$url_path}?{$url_query}", "/plugin/blogs/show/{$frame->page_id}/{$frame->id}/{$map_content->destination_key}#frame-{$frame->id}", $content);
-                } else {
-                    // frame_idなしは置換できない
-                    $this->putError(3, $db_colum . '|プラグイン固有リンク|MigrationMapping(target_source_table=blogs_post_from_key|frames) or Frameデータなし', $url);
-                }
-                return $content;
-
-            } elseif (stripos($check_url_path, '/multidatabases/multidatabase_contents/detail/') !== false) {
-                // (汎用DB)
-                //  nc3 http://localhost:8081/multidatabases/multidatabase_contents/detail/43/50ed8d82a743a87bb78e89f2a654b490?frame_id=43
-                //  cc  http://localhost/plugin/databases/detail/11/37/290#frame-37
-
-                $frame_id = Arr::get($check_url_query_array, 'frame_id');
-                if (is_null($frame_id)) {
-                    // frame_idなしは置換できない
-                    $this->putError(3, $db_colum . '|プラグイン固有リンク|frame_idなしで置換できない', $url);
-                    return $content;
-                }
-
-                // 不要文字を取り除き
-                $path_tmp = str_replace('/multidatabases/multidatabase_contents/detail/', '', $check_url_path);
-                // /で分割
-                $src_params = explode('/', $path_tmp);
-
-                // $block_id = $src_params[0];
-                $content_key = $src_params[1];
-
-                $map_content = MigrationMapping::where('target_source_table', 'databases_post_from_key')->where('source_key', $content_key)->first();
-                $map_frame   = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $frame_id)->firstOrNew([]);
-                $frame       = Frame::find($map_frame->destination_key);
-                if ($map_content && $frame) {
-                    $content = str_replace("{$url_path}?{$url_query}", "/plugin/databases/detail/{$frame->page_id}/{$frame->id}/{$map_content->destination_key}#frame-{$frame->id}", $content);
-                } else {
-                    // frame_idなしは置換できない
-                    $this->putError(3, $db_colum . '|プラグイン固有リンク|MigrationMapping(target_source_table=databases_post_from_key|frames) or Frameデータなし', $url);
-                }
-                return $content;
-            }
+        $frame_id = Arr::get($check_url_query_array, 'frame_id');
+        if (is_null($frame_id)) {
+            // frame_idなしは置換できない
+            $this->putError(3, $db_colum . '|プラグイン固有リンク|frame_idなしで置換できない', $url);
+            return $content;
         }
 
+        // 不要文字を取り除き
+        // $path_tmp = str_replace('/blogs/blog_entries/view/', '', $check_url_path);
+        $path_tmp = str_replace($from_nc3_plugin_permalink, '', $check_url_path);
+        // /で分割
+        $src_params = explode('/', $path_tmp);
+
+        // $block_id = $src_params[0];
+        $content_key = $src_params[1];
+
+        // $map_content = MigrationMapping::where('target_source_table', 'blogs_post_from_key')->where('source_key', $content_key)->first();
+        $map_content = MigrationMapping::where('target_source_table', $content_target_source_table)->where('source_key', $content_key)->first();
+        $map_frame   = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $frame_id)->firstOrNew([]);
+        $frame       = Frame::find($map_frame->destination_key);
+        if ($map_content && $frame) {
+            // $content = str_replace("{$url_path}?{$url_query}", "/plugin/blogs/show/{$frame->page_id}/{$frame->id}/{$map_content->destination_key}#frame-{$frame->id}", $content);
+            $content = str_replace("{$url_path}?{$url_query}", "{$to_cc_plugin_permalink}{$frame->page_id}/{$frame->id}/{$map_content->destination_key}#frame-{$frame->id}", $content);
+        } else {
+            var_dump($map_content, $content_key);
+            // frame_idなしは置換できない
+            $this->putError(3, $db_colum . "|プラグイン固有リンク|MigrationMapping(target_source_table={$content_target_source_table}|frames) or Frameデータなし", $url);
+        }
         return $content;
     }
 }

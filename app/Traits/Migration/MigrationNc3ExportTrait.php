@@ -4800,16 +4800,6 @@ trait MigrationNc3ExportTrait
             $photoalbum_ini .= "album[" . $nc3_block->id . "] = \"" . $nc3_block->name . "\"\n";
             $photoalbum_ini .= "\n";
 
-            // videos->photoalbums移行の場合は、photoalbums用のフォルダに吐き出す
-            // $export_path = 'videos/video_';
-            // if ($this->plugin_name['videos'] === 'photoalbums') {
-            //     $export_path = 'photoalbums/photoalbum_video_';
-            // }
-            $export_path = 'photoalbums/photoalbum_video_';
-
-            // フォトアルバム の設定
-            $this->storagePut($this->getImportPath($export_path) . $this->zeroSuppress($nc3_block->id) . '.ini', $photoalbum_ini);
-
             // カラムのヘッダー及びTSV 行毎の枠準備
             $tsv_header = "photo_id" . "\t" . "upload_id" . "\t" . "video_upload_id" . "\t" . "photo_name" . "\t" . "photo_description" . "\t" . "width" . "\t" ."height" . "\t" .
                 "created_at" . "\t" . "created_name" . "\t" . "insert_login_id" . "\t" . "updated_at" . "\t" . "updated_name" . "\t" . "update_login_id";
@@ -4828,17 +4818,27 @@ trait MigrationNc3ExportTrait
             $tsv_cols['updated_name'] = "";
             $tsv_cols['update_login_id'] = "";
 
+            // videos->photoalbums移行の場合は、photoalbums用のフォルダに吐き出す
+            // $export_path = 'videos/video_';
+            // if ($this->plugin_name['videos'] === 'photoalbums') {
+            //     $export_path = 'photoalbums/photoalbum_video_';
+            // }
+            $export_path = 'photoalbums/photoalbum_video_';
+
             Storage::delete($this->getImportPath($export_path) . $this->zeroSuppress($nc3_block->id) . '_' . $this->zeroSuppress($nc3_block->id) . '.tsv');
 
             $tsv = '';
             $tsv .= $tsv_header . "\n";
 
-            foreach ($nc3_videos as $nc3_videos) {
+            $photoalbum_ini_key = "\n";
+            $photoalbum_ini_key .= "[content_keys]\n";    // インポートでMigrationMappingにセット用。その後プラグイン固有リンク置換で使う
+
+            foreach ($nc3_videos as $nc3_video) {
                 // 初期化
                 $tsv_record = $tsv_cols;
 
-                $video_upload = $videos_uploads_all->where('field_name', 'video_file')->firstWhere('content_key', $nc3_videos->key) ?? new Nc3UploadFile();
-                $poster_upload = $videos_uploads_all->where('field_name', 'thumbnail')->firstWhere('content_key', $nc3_videos->key) ?? new Nc3UploadFile();
+                $video_upload = $videos_uploads_all->where('field_name', 'video_file')->firstWhere('content_key', $nc3_video->key) ?? new Nc3UploadFile();
+                $poster_upload = $videos_uploads_all->where('field_name', 'thumbnail')->firstWhere('content_key', $nc3_video->key) ?? new Nc3UploadFile();
 
                 // 動画
                 $video_file_path = $nc3_uploads_path . $video_upload->path . $video_upload->id . '/' . $video_upload->real_file_name;
@@ -4846,22 +4846,28 @@ trait MigrationNc3ExportTrait
                     $this->putError(3, "Video file not exists: " . $video_file_path);
                 }
 
-                $tsv_record['photo_id']          = $nc3_videos->id;
+                $tsv_record['photo_id']          = $nc3_video->id;
                 $tsv_record['upload_id']         = $poster_upload->id;
                 $tsv_record['video_upload_id']   = $video_upload->id;
-                $tsv_record['photo_name']        = $nc3_videos->title;
-                $tsv_record['photo_description'] = $this->nc3Wysiwyg(null, null, null, null, $nc3_videos->description, 'videos');
+                $tsv_record['photo_name']        = $nc3_video->title;
+                $tsv_record['photo_description'] = $this->nc3Wysiwyg(null, null, null, null, $nc3_video->description, 'videos');
                 $tsv_record['width']             = '';
                 $tsv_record['height']            = '';
-                $tsv_record['created_at']        = $this->getCCDatetime($nc3_videos->created);
-                $tsv_record['created_name']      = Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_videos->created_user);
-                $tsv_record['insert_login_id']   = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_videos->created_user);
-                $tsv_record['updated_at']        = $this->getCCDatetime($nc3_videos->modified);
-                $tsv_record['updated_name']      = Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_videos->modified_user);
-                $tsv_record['update_login_id']   = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_videos->modified_user);
+                $tsv_record['created_at']        = $this->getCCDatetime($nc3_video->created);
+                $tsv_record['created_name']      = Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_video->created_user);
+                $tsv_record['insert_login_id']   = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_video->created_user);
+                $tsv_record['updated_at']        = $this->getCCDatetime($nc3_video->modified);
+                $tsv_record['updated_name']      = Nc3User::getNc3HandleFromNc3UserId($nc3_users, $nc3_video->modified_user);
+                $tsv_record['update_login_id']   = Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $nc3_video->modified_user);
 
                 $tsv .= implode("\t", $tsv_record) . "\n";
+
+                $photoalbum_ini_key .= "content_key[" . $nc3_video->id . "] = \"" . str_replace('"', '', $nc3_video->key) . "\"\n";
             }
+            $photoalbum_ini .= $photoalbum_ini_key;
+
+            // 動画 の設定
+            $this->storagePut($this->getImportPath($export_path) . $this->zeroSuppress($nc3_block->id) . '.ini', $photoalbum_ini);
 
             // データ行の書き出し
             $tsv = $this->exportStrReplace($tsv, 'videos');
@@ -6259,8 +6265,10 @@ trait MigrationNc3ExportTrait
         }
 
         // (通常プラグイン)
-        //  (ブログ) http://localhost:8081/blogs/blog_entries/view/27/2e19fea842dd98fe341ad536771b90a8?frame_id=49
-        //  (汎用DB) http://localhost:8081/multidatabases/multidatabase_contents/detail/43/50ed8d82a743a87bb78e89f2a654b490?frame_id=43
+        //  (ブログ)   http://localhost:8081/blogs/blog_entries/view/27/2e19fea842dd98fe341ad536771b90a8?frame_id=49
+        //  (汎用DB)   http://localhost:8081/multidatabases/multidatabase_contents/detail/43/50ed8d82a743a87bb78e89f2a654b490?frame_id=43
+        //  (動画)     http://localhost:8081/videos/videos/view/33/20e8fdb50d8a31a23b542050850260b4?frame_id=24
+        //  (動画埋込) http://localhost:8081/setting/videos/videos/embed/55/a66fda57248fe7e64818e2438cac5e7c?frame_id=398
 
         if ($check_page_permalink) {
             if (stripos($check_page_permalink, 'blogs/blog_entries/view/') !== false) {
@@ -6270,6 +6278,15 @@ trait MigrationNc3ExportTrait
             } elseif (stripos($check_page_permalink, 'multidatabases/multidatabase_contents/detail/') !== false) {
                 // 汎用DB
                 $this->checkDeadLinkInsideNc3Plugin($check_page_permalink, 'multidatabases/multidatabase_contents/detail/', Nc3MultidatabaseContent::query(), $url, $nc3_plugin_key, $nc3_frame);
+                return;
+            } elseif (stripos($check_page_permalink, 'videos/videos/view/') !== false) {
+                // 動画
+                // リンク切れチェックは、CCに機能あるものだけチェックするため、動画⇒フォトアルバムの場合、CCフォトアルバムに詳細URLがないため、チェックしない。
+                // $this->checkDeadLinkInsideNc3Plugin($check_page_permalink, 'videos/videos/view/', Nc3Video::query(), $url, $nc3_plugin_key, $nc3_frame);
+                // return;
+            } elseif (stripos($check_page_permalink, 'videos/videos/embed/') !== false) {
+                // 動画埋込
+                $this->checkDeadLinkInsideNc3Plugin($check_page_permalink, 'videos/videos/embed/', Nc3Video::query(), $url, $nc3_plugin_key, $nc3_frame);
                 return;
             }
         }
