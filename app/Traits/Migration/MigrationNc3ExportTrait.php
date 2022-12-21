@@ -6304,10 +6304,10 @@ trait MigrationNc3ExportTrait
         //  ブログ                      http://localhost:8081/blogs/blog_entries/view/27/2e19fea842dd98fe341ad536771b90a8?frame_id=49
         //  汎用DB                      http://localhost:8081/multidatabases/multidatabase_contents/detail/43/50ed8d82a743a87bb78e89f2a654b490?frame_id=43
         //  動画埋込                    http://localhost:8081/setting/videos/videos/embed/55/a66fda57248fe7e64818e2438cac5e7c?frame_id=398
-        //  -----------------------
-        //  （未開発）
         //  掲示板-親記事               http://localhost:8081/bbses/bbs_articles/view/31/7cc26bc0b09822e45e04956a774e31d8?frame_id=55
         //  掲示板-子記事               http://localhost:8081/bbses/bbs_articles/view/31/7cc26bc0b09822e45e04956a774e31d8?frame_id=55#!#bbs-article-26
+        //  -----------------------
+        //  （未開発）
         //  キャビネット-フォルダ        http://localhost:8081/cabinets/cabinet_files/index/42/ae8a188d05776556078a79200bbc6b3a?frame_id=378
         //  キャビネット-ダウンロード    http://localhost:8081/cabinets/cabinet_files/download/42/b203268ac59db031fc8d20a8e4380ef0?frame_id=378
         //  フォトアルバム-アルバム表示  http://localhost:8081/photo_albums/photo_album_photos/index/7/0c5b4369a2ff04786ee5ac0e02273cc9?frame_id=392
