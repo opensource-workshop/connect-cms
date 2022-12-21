@@ -488,6 +488,7 @@ trait MigrationTrait
             MigrationMapping::where('target_source_table', 'cabinets')->delete();
             MigrationMapping::where('target_source_table', 'cabinet_contents')->delete();
             MigrationMapping::where('target_source_table', 'cabinet_contents_from_key')->delete();
+            MigrationMapping::where('target_source_table', 'cabinet_content_uploads_from_key')->delete();
         }
 
         if ($target == 'bbses' || $target == 'all') {
@@ -3426,11 +3427,11 @@ trait MigrationTrait
                     $tsv_cols = explode("\t", $tsv_line);
 
                     $upload_mapping = MigrationMapping::where('target_source_table', 'uploads')
-                                        ->where('source_key', $tsv_cols[2])->first();
+                                        ->where('source_key', $tsv_cols[2])->first() ?? new MigrationMapping();
 
                     $cabinet_content = new CabinetContent([
                         'cabinet_id' => $cabinet->id,
-                        'upload_id' => $upload_mapping ? $upload_mapping->destination_key : null,
+                        'upload_id' => $upload_mapping->destination_key,
                         'name' => empty($tsv_cols[5]) ? $tsv_cols[4] : $tsv_cols[4] . '.' . $tsv_cols[5],
                         'is_folder' => $tsv_cols[9],
                         'comment' => $tsv_cols[12],
@@ -3462,6 +3463,14 @@ trait MigrationTrait
                             'source_key'           => $post_source_content_keys[$content_id],
                             'destination_key'      => $cabinet_content->id,
                         ]);
+
+                        if ($upload_mapping->destination_key) {
+                            $mapping = MigrationMapping::create([
+                                'target_source_table'  => 'cabinet_content_uploads_from_key',
+                                'source_key'           => $post_source_content_keys[$content_id],
+                                'destination_key'      => $upload_mapping->destination_key,
+                            ]);
+                        }
                     }
                 }
 
@@ -14004,6 +14013,11 @@ trait MigrationTrait
                 //  nc3 http://localhost:8081/cabinets/cabinet_files/index/42/ae8a188d05776556078a79200bbc6b3a?frame_id=378
                 //  cc  http://localhost/plugin/cabinets/changeDirectory/26/63/4#frame-63
                 return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/cabinets/cabinet_files/index/', '/plugin/cabinets/changeDirectory/', 'cabinet_contents_from_key');
+            } elseif (stripos($check_url_path, '/cabinets/cabinet_files/download/') !== false) {
+                // (キャビネット-ファイル)
+                //  nc3 http://localhost:8081/cabinets/cabinet_files/download/42/b203268ac59db031fc8d20a8e4380ef0?frame_id=378
+                //  cc  http://localhost/file/24
+                return $this->convertNc3PluginPermalinkToConnectFile($content, $url, $db_colum, '/cabinets/cabinet_files/download/', 'cabinet_content_uploads_from_key');
             }
         }
 
@@ -14062,9 +14076,44 @@ trait MigrationTrait
             // $content = str_replace("{$url_path}?{$url_query}", "/plugin/blogs/show/{$frame->page_id}/{$frame->id}/{$map_content->destination_key}#frame-{$frame->id}", $content);
             $content = str_replace("{$url_path}?{$url_query}", "{$to_cc_plugin_permalink}{$frame->page_id}/{$frame->id}/{$map_content->destination_key}#frame-{$frame->id}", $content);
         } else {
-            var_dump($map_content, $content_key);
             // frame_idなしは置換できない
             $this->putError(3, $db_colum . "|プラグイン固有リンク|MigrationMapping(target_source_table={$content_target_source_table}|frames) or Frameデータなし", $url);
+        }
+        return $content;
+    }
+
+    /**
+     * nc3プラグインリンク１つをConnectのファイルリンクに変換
+     */
+    private function convertNc3PluginPermalinkToConnectFile(?string $content, string $url, string $db_colum, string $from_nc3_plugin_permalink, string $content_target_source_table): ?string
+    {
+        // (キャビネット-ファイル)
+        //  nc3 http://localhost:8081/cabinets/cabinet_files/download/42/b203268ac59db031fc8d20a8e4380ef0?frame_id=378
+        //  cc  http://localhost/file/24
+
+        // &amp; => & 等のデコード
+        $check_url = htmlspecialchars_decode($url);
+        $check_url = str_replace('/setting', '', $check_url);
+
+        $check_url_path = parse_url($check_url, PHP_URL_PATH);
+
+        // デコードなし
+        $url_path = parse_url($url, PHP_URL_PATH);
+        $url_query = parse_url($url, PHP_URL_QUERY);
+
+        // 不要文字を取り除き
+        $path_tmp = str_replace($from_nc3_plugin_permalink, '', $check_url_path);
+        // /で分割
+        $src_params = explode('/', $path_tmp);
+
+        // $block_id = $src_params[0];
+        $content_key = $src_params[1];
+
+        $map_upload = MigrationMapping::where('target_source_table', $content_target_source_table)->where('source_key', $content_key)->first();
+        if ($map_upload) {
+            $content = str_replace("{$url_path}?{$url_query}", "/file/{$map_upload->destination_key}", $content);
+        } else {
+            $this->putError(3, $db_colum . "|プラグイン固有リンク|MigrationMapping(target_source_table={$content_target_source_table})データなし", $url);
         }
         return $content;
     }

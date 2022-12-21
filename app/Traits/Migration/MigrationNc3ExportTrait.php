@@ -6314,9 +6314,9 @@ trait MigrationNc3ExportTrait
         //  掲示板-親記事               http://localhost:8081/bbses/bbs_articles/view/31/7cc26bc0b09822e45e04956a774e31d8?frame_id=55
         //  掲示板-子記事               http://localhost:8081/bbses/bbs_articles/view/31/7cc26bc0b09822e45e04956a774e31d8?frame_id=55#!#bbs-article-26
         //  キャビネット-フォルダ        http://localhost:8081/cabinets/cabinet_files/index/42/ae8a188d05776556078a79200bbc6b3a?frame_id=378
+        //  キャビネット-ファイル        http://localhost:8081/cabinets/cabinet_files/download/42/b203268ac59db031fc8d20a8e4380ef0?frame_id=378
         //  -----------------------
         //  （未開発）
-        //  キャビネット-ダウンロード    http://localhost:8081/cabinets/cabinet_files/download/42/b203268ac59db031fc8d20a8e4380ef0?frame_id=378
         //  FAQ                        http://localhost:8081/faqs/faq_questions/view/81/a6caf71b3ab8c4220d8a2102575c1f05?frame_id=434
         //  フォトアルバム-アルバム表示  http://localhost:8081/photo_albums/photo_album_photos/index/7/0c5b4369a2ff04786ee5ac0e02273cc9?frame_id=392
         //  施設予約                   http://localhost:8081/reservations/reservation_plans/view/c7fb658e08e5265a9dfada9dee24d8db?frame_id=446
@@ -6359,6 +6359,14 @@ trait MigrationNc3ExportTrait
                         $join->on('cabinets.key', '=', 'cabinet_files.cabinet_key');
                     });
                 $this->checkDeadLinkInsideNc3Plugin($check_page_permalink, 'cabinets/cabinet_files/index/', $cabinet_files_query, $url, $nc3_plugin_key, $nc3_frame, 'cabinet_files.key');
+                return;
+            } elseif (stripos($check_page_permalink, 'cabinets/cabinet_files/download/') !== false) {
+                // キャビネット-ファイル
+                $cabinet_files_query = Nc3CabinetFile::select('cabinet_files.*', 'cabinets.block_id')
+                    ->join('cabinets', function ($join) {
+                        $join->on('cabinets.key', '=', 'cabinet_files.cabinet_key');
+                    });
+                $this->checkDeadLinkInsideNc3Plugin($check_page_permalink, 'cabinets/cabinet_files/download/', $cabinet_files_query, $url, $nc3_plugin_key, $nc3_frame, 'cabinet_files.key');
                 return;
             }
         }
