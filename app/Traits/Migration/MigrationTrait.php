@@ -3564,6 +3564,9 @@ trait MigrationTrait
                 $post_source_keys = array_keys($ini['blog_post']['post_title']);
             }
 
+            // MigrationMappingにセット用。その後プラグイン固有リンク置換で使う
+            $post_source_content_keys = Arr::get($ini, 'content_keys.content_key', []);
+
             // 投稿の移行
             $post_index = 0;
             $tsv_filename = str_replace('ini', 'tsv', basename($ini_path));
@@ -3630,11 +3633,21 @@ trait MigrationTrait
 
                     // マッピングテーブルの追加
                     if (array_key_exists($post_index, $post_source_keys)) {
+                        $content_id = $post_source_keys[$post_index];
                         $mapping = MigrationMapping::create([
                             'target_source_table'  => 'bbses_post',
-                            'source_key'           => $post_source_keys[$post_index],
+                            'source_key'           => $content_id,
                             'destination_key'      => $bbs_post->id,
                         ]);
+
+                        // プラグイン固有リンク置換用マッピングテーブル追加
+                        if (array_key_exists($content_id, $post_source_content_keys)) {
+                            $mapping_from_key = MigrationMapping::create([
+                                'target_source_table'  => 'bbses_post_from_key',
+                                'source_key'           => $post_source_content_keys[$content_id],
+                                'destination_key'      => $bbs_post->id,
+                            ]);
+                        }
                     }
                     $post_index++;
                 }
@@ -13964,6 +13977,13 @@ trait MigrationTrait
                 //  nc3 http://localhost:8081/setting/videos/videos/embed/55/a66fda57248fe7e64818e2438cac5e7c?frame_id=398
                 //  cc  http://localhost/download/plugin/photoalbums/embed/47/91/65
                 return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/videos/videos/embed/', '/download/plugin/photoalbums/embed/', 'photoalbums_video_from_key');
+            } elseif (stripos($check_url_path, '/bbses/bbs_articles/view/') !== false) {
+                // (掲示板)
+                //  nc3-親記事 http://localhost:8081/bbses/bbs_articles/view/31/7cc26bc0b09822e45e04956a774e31d8?frame_id=55
+                //      子記事 http://localhost:8081/bbses/bbs_articles/view/31/7cc26bc0b09822e45e04956a774e31d8?frame_id=55#!#bbs-article-26
+                //            ※ 子記事も親記事として変換する
+                //  cc        http://localhost/plugin/bbses/show/22/59/18#frame-59
+                return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/bbses/bbs_articles/view/', '/plugin/bbses/show/', 'bbses_post_from_key');
             }
         }
 
