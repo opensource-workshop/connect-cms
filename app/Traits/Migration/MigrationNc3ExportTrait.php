@@ -4477,9 +4477,14 @@ trait MigrationNc3ExportTrait
             $photoalbum_ini .= "\n";
             $photoalbum_ini .= "[albums]\n";
 
+            $photoalbum_ini_key = "\n";
+            $photoalbum_ini_key .= "[album_keys]\n";    // インポートでMigrationMappingにセット用。その後プラグイン固有リンク置換で使う
+
             foreach ($nc3_photoalbum_alubums as $nc3_photoalbum_alubum) {
-                $photoalbum_ini .= "album[" . $nc3_photoalbum_alubum->id . "] = \"" . $nc3_photoalbum_alubum->name . "\"\n";
+                $photoalbum_ini     .= "album["     . $nc3_photoalbum_alubum->id . "] = \"" . $nc3_photoalbum_alubum->name . "\"\n";
+                $photoalbum_ini_key .= "album_key[" . $nc3_photoalbum_alubum->id . "] = \"" . $nc3_photoalbum_alubum->key . "\"\n";
             }
+            $photoalbum_ini .= $photoalbum_ini_key;
             $photoalbum_ini .= "\n";
 
             // アルバム詳細 情報
@@ -6323,9 +6328,9 @@ trait MigrationNc3ExportTrait
         //  キャビネット-フォルダ        http://localhost:8081/cabinets/cabinet_files/index/42/ae8a188d05776556078a79200bbc6b3a?frame_id=378
         //  キャビネット-ファイル        http://localhost:8081/cabinets/cabinet_files/download/42/b203268ac59db031fc8d20a8e4380ef0?frame_id=378
         //  FAQ                        http://localhost:8081/faqs/faq_questions/view/81/a6caf71b3ab8c4220d8a2102575c1f05?frame_id=434
+        //  フォトアルバム-アルバム表示  http://localhost:8081/photo_albums/photo_album_photos/index/7/0c5b4369a2ff04786ee5ac0e02273cc9?frame_id=392
         //  -----------------------
         //  （未開発）
-        //  フォトアルバム-アルバム表示  http://localhost:8081/photo_albums/photo_album_photos/index/7/0c5b4369a2ff04786ee5ac0e02273cc9?frame_id=392
         //  施設予約                   http://localhost:8081/reservations/reservation_plans/view/c7fb658e08e5265a9dfada9dee24d8db?frame_id=446
         //  カレンダー                  http://localhost:8081/calendars/calendar_plans/view/05b08f33b1e13953d3caf1e8d1ceeb01?frame_id=463
         //  -----------------------
@@ -6378,6 +6383,10 @@ trait MigrationNc3ExportTrait
             } elseif (stripos($check_page_permalink, 'faqs/faq_questions/view/') !== false) {
                 // FAQ
                 $this->checkDeadLinkInsideNc3Plugin($check_page_permalink, 'faqs/faq_questions/view/', Nc3FaqQuestion::query(), $url, $nc3_plugin_key, $nc3_frame);
+                return;
+            } elseif (stripos($check_page_permalink, 'photo_albums/photo_album_photos/index/') !== false) {
+                // フォトアルバム-アルバム表示
+                $this->checkDeadLinkInsideNc3Plugin($check_page_permalink, 'photo_albums/photo_album_photos/index/', Nc3PhotoAlbum::query(), $url, $nc3_plugin_key, $nc3_frame);
                 return;
             }
         }

@@ -580,6 +580,7 @@ trait MigrationTrait
             MigrationMapping::where('target_source_table', 'photoalbums')->delete();
             MigrationMapping::where('target_source_table', 'photoalbums_album')->delete();
             MigrationMapping::where('target_source_table', 'photoalbums_album_cover')->delete();
+            MigrationMapping::where('target_source_table', 'photoalbums_album_from_key')->delete();
             MigrationMapping::where('target_source_table', 'photoalbums_photo')->delete();
             MigrationMapping::where('target_source_table', 'photoalbums_video')->delete();
             MigrationMapping::where('target_source_table', 'photoalbums_video_from_key')->delete();
@@ -4683,6 +4684,7 @@ trait MigrationTrait
 
             // MigrationMappingにセット用。その後プラグイン固有リンク置換で使う
             $post_source_content_keys = Arr::get($photoalbums_ini, 'content_keys.content_key', []);
+            $source_album_keys = Arr::get($photoalbums_ini, 'album_keys.album_key', []);
 
             foreach ($this->getArrayValue($photoalbums_ini, 'albums', 'album', []) as $album_id => $album_name) {
 
@@ -4763,6 +4765,15 @@ trait MigrationTrait
                             'source_key'           => $album_id,
                             'destination_key'      => $children->id,
                         ]);
+
+                        // プラグイン固有リンク置換用マッピングテーブル追加
+                        if (array_key_exists($album_id, $source_album_keys)) {
+                            $mapping_album_from_key = MigrationMapping::create([
+                                'target_source_table'  => 'photoalbums_album_from_key',
+                                'source_key'           => $source_album_keys[$album_id],
+                                'destination_key'      => $children->id,
+                            ]);
+                        }
 
                     } else {
                         $children = PhotoalbumContent::find($mapping_album->destination_key);
@@ -14038,6 +14049,11 @@ trait MigrationTrait
                 //  nc3 http://localhost:8081/faqs/faq_questions/view/81/a6caf71b3ab8c4220d8a2102575c1f05?frame_id=434
                 //  cc  http://localhost/plugin/faqs/show/37/76/1#frame-76
                 return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/faqs/faq_questions/view/', '/plugin/faqs/show/', 'faqs_post_from_key');
+            } elseif (stripos($check_url_path, '/photo_albums/photo_album_photos/index/') !== false) {
+                // (フォトアルバム-アルバム表示)
+                //  nc3 http://localhost:8081/photo_albums/photo_album_photos/index/7/0c5b4369a2ff04786ee5ac0e02273cc9?frame_id=392
+                //  cc  http://localhost/plugin/photoalbums/changeDirectory/17/53/39#frame-53
+                return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/photo_albums/photo_album_photos/index/', '/plugin/photoalbums/changeDirectory/', 'photoalbums_album_from_key');
             }
         }
 
