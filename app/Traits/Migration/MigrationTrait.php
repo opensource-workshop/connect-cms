@@ -463,6 +463,7 @@ trait MigrationTrait
             Buckets::where('plugin_name', 'faqs')->delete();
             MigrationMapping::where('target_source_table', 'faqs')->delete();
             MigrationMapping::where('target_source_table', 'categories_faqs')->delete();
+            MigrationMapping::where('target_source_table', 'faqs_post_from_key')->delete();
         }
 
         if ($target == 'linklists' || $target == 'all') {
@@ -2424,6 +2425,9 @@ trait MigrationTrait
                 $index++;
             }
 
+            // MigrationMappingにセット用。その後プラグイン固有リンク置換で使う
+            $post_source_content_keys = Arr::get($faq_ini, 'content_keys.content_key', []);
+
             // Faqs の記事を取得（TSV）
             $faq_tsv_filename = str_replace('ini', 'tsv', basename($faqs_ini_path));
             if (Storage::exists($this->getImportPath('faqs/') . $faq_tsv_filename)) {
@@ -2453,6 +2457,7 @@ trait MigrationTrait
                     // 本文
                     $faq_tsv_cols[3] = isset($faq_tsv_cols[3]) ? $faq_tsv_cols[3] : '';
                     $faq_tsv_cols[4] = isset($faq_tsv_cols[4]) ? $faq_tsv_cols[4] : '';
+                    $content_id      = isset($faq_tsv_cols[5]) ? $faq_tsv_cols[5] : '';
                     $post_text = $this->changeWYSIWYG($faq_tsv_cols[4]);
                     $post_text = $this->addParagraph('faqs', $post_text);
 
@@ -2462,6 +2467,15 @@ trait MigrationTrait
                     // 更新
                     $faqs_posts->contents_id = $faqs_posts->id;
                     $faqs_posts->save();
+
+                    // プラグイン固有リンク置換用マッピングテーブル追加
+                    if (array_key_exists($content_id, $post_source_content_keys)) {
+                        $mapping = MigrationMapping::create([
+                            'target_source_table'  => 'faqs_post_from_key',
+                            'source_key'           => $post_source_content_keys[$content_id],
+                            'destination_key'      => $faqs_posts->id,
+                        ]);
+                    }
                 }
             }
         }
@@ -9268,6 +9282,7 @@ trait MigrationTrait
                 $faqs_tsv .= $this->getCCDatetime($nc2_faq_question->insert_time) . "\t";
                 $faqs_tsv .= $nc2_faq_question->question_name    . "\t";
                 $faqs_tsv .= $question_answer                    . "\t";
+                $faqs_tsv .= $nc2_faq_question->question_id      . "\t"; // [5]
 
                 // $faqs_ini .= "post_title[" . $nc2_faq_question->question_id . "] = \"" . str_replace('"', '', $nc2_faq_question->question_name) . "\"\n";
             }
@@ -14018,6 +14033,11 @@ trait MigrationTrait
                 //  nc3 http://localhost:8081/cabinets/cabinet_files/download/42/b203268ac59db031fc8d20a8e4380ef0?frame_id=378
                 //  cc  http://localhost/file/24
                 return $this->convertNc3PluginPermalinkToConnectFile($content, $url, $db_colum, '/cabinets/cabinet_files/download/', 'cabinet_content_uploads_from_key');
+            } elseif (stripos($check_url_path, '/faqs/faq_questions/view/') !== false) {
+                // (FAQ)
+                //  nc3 http://localhost:8081/faqs/faq_questions/view/81/a6caf71b3ab8c4220d8a2102575c1f05?frame_id=434
+                //  cc  http://localhost/plugin/faqs/show/37/76/1#frame-76
+                return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/faqs/faq_questions/view/', '/plugin/faqs/show/', 'faqs_post_from_key');
             }
         }
 

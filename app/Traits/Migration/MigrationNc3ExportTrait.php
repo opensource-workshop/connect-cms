@@ -1619,7 +1619,7 @@ trait MigrationNc3ExportTrait
                 }
                 $journals_ini     .= "post_title[" . $nc3_blog_post->id . "] = \"" . str_replace('"', '', $nc3_blog_post->title) . "\"\n";
 
-                $journals_ini_key .= "content_key[" . $nc3_blog_post->id . "] = \"" . str_replace('"', '', $nc3_blog_post->key) . "\"\n";
+                $journals_ini_key .= "content_key[" . $nc3_blog_post->id . "] = \"" . $nc3_blog_post->key . "\"\n";
             }
             $journals_ini .= $journals_ini_key;
 
@@ -1956,9 +1956,9 @@ trait MigrationNc3ExportTrait
                     // ログ出力
                     $this->putError(1, 'BBS title in double-quotation', "タイトル = " . $nc3_bbs_post->title);
                 }
-                $journals_ini .= "post_title[" . $nc3_bbs_post->id . "] = \"" . str_replace('"', '', $nc3_bbs_post->title) . "\"\n";
+                $journals_ini     .= "post_title[" . $nc3_bbs_post->id . "] = \"" . str_replace('"', '', $nc3_bbs_post->title) . "\"\n";
 
-                $journals_ini_key .= "content_key[" . $nc3_bbs_post->id . "] = \"" . str_replace('"', '', $nc3_bbs_post->key) . "\"\n";
+                $journals_ini_key .= "content_key[" . $nc3_bbs_post->id . "] = \"" . $nc3_bbs_post->key . "\"\n";
             }
             $journals_ini .= $journals_ini_key;
 
@@ -2105,6 +2105,9 @@ trait MigrationNc3ExportTrait
             // カテゴリID{\t}表示順{\t}タイトル{\t}本文
             $faqs_tsv = "";
 
+            $faqs_ini_key = "\n";
+            $faqs_ini_key .= "[content_keys]\n";    // インポートでMigrationMappingにセット用。その後プラグイン固有リンク置換で使う
+
             // NC3FAQの記事をループ
             foreach ($nc3_faq_questions as $nc3_faq_question) {
                 // TSV 形式でエクスポート
@@ -2121,7 +2124,11 @@ trait MigrationNc3ExportTrait
                 $faqs_tsv .= $this->getCCDatetime($nc3_faq_question->created)   . "\t";
                 $faqs_tsv .= $nc3_faq_question->question                        . "\t";
                 $faqs_tsv .= $answer                                            . "\t";
+                $faqs_tsv .= $nc3_faq_question->id                              . "\t"; // [5]
+
+                $faqs_ini_key .= "content_key[" . $nc3_faq_question->id . "] = \"" . $nc3_faq_question->key . "\"\n";
             }
+            $faqs_ini .= $faqs_ini_key;
 
             // FAQ の設定
             $this->storagePut($this->getImportPath('faqs/faq_') . $this->zeroSuppress($nc3_faq->id) . '.ini', $faqs_ini);
@@ -3417,7 +3424,7 @@ trait MigrationNc3ExportTrait
                     $tsv .= "\n";
                 }
 
-                $ini_key .= "content_key[" . $cabinet_file->id . "] = \"" . str_replace('"', '', $cabinet_file->key) . "\"\n";
+                $ini_key .= "content_key[" . $cabinet_file->id . "] = \"" . $cabinet_file->key . "\"\n";
             }
             $ini .= $ini_key;
 
@@ -4905,7 +4912,7 @@ trait MigrationNc3ExportTrait
 
                 $tsv .= implode("\t", $tsv_record) . "\n";
 
-                $photoalbum_ini_key .= "content_key[" . $nc3_video->id . "] = \"" . str_replace('"', '', $nc3_video->key) . "\"\n";
+                $photoalbum_ini_key .= "content_key[" . $nc3_video->id . "] = \"" . $nc3_video->key . "\"\n";
             }
             $photoalbum_ini .= $photoalbum_ini_key;
 
@@ -6315,9 +6322,9 @@ trait MigrationNc3ExportTrait
         //  掲示板-子記事               http://localhost:8081/bbses/bbs_articles/view/31/7cc26bc0b09822e45e04956a774e31d8?frame_id=55#!#bbs-article-26
         //  キャビネット-フォルダ        http://localhost:8081/cabinets/cabinet_files/index/42/ae8a188d05776556078a79200bbc6b3a?frame_id=378
         //  キャビネット-ファイル        http://localhost:8081/cabinets/cabinet_files/download/42/b203268ac59db031fc8d20a8e4380ef0?frame_id=378
+        //  FAQ                        http://localhost:8081/faqs/faq_questions/view/81/a6caf71b3ab8c4220d8a2102575c1f05?frame_id=434
         //  -----------------------
         //  （未開発）
-        //  FAQ                        http://localhost:8081/faqs/faq_questions/view/81/a6caf71b3ab8c4220d8a2102575c1f05?frame_id=434
         //  フォトアルバム-アルバム表示  http://localhost:8081/photo_albums/photo_album_photos/index/7/0c5b4369a2ff04786ee5ac0e02273cc9?frame_id=392
         //  施設予約                   http://localhost:8081/reservations/reservation_plans/view/c7fb658e08e5265a9dfada9dee24d8db?frame_id=446
         //  カレンダー                  http://localhost:8081/calendars/calendar_plans/view/05b08f33b1e13953d3caf1e8d1ceeb01?frame_id=463
@@ -6367,6 +6374,10 @@ trait MigrationNc3ExportTrait
                         $join->on('cabinets.key', '=', 'cabinet_files.cabinet_key');
                     });
                 $this->checkDeadLinkInsideNc3Plugin($check_page_permalink, 'cabinets/cabinet_files/download/', $cabinet_files_query, $url, $nc3_plugin_key, $nc3_frame, 'cabinet_files.key');
+                return;
+            } elseif (stripos($check_page_permalink, 'faqs/faq_questions/view/') !== false) {
+                // FAQ
+                $this->checkDeadLinkInsideNc3Plugin($check_page_permalink, 'faqs/faq_questions/view/', Nc3FaqQuestion::query(), $url, $nc3_plugin_key, $nc3_frame);
                 return;
             }
         }
