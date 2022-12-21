@@ -487,6 +487,7 @@ trait MigrationTrait
             Buckets::where('plugin_name', 'cabinets')->delete();
             MigrationMapping::where('target_source_table', 'cabinets')->delete();
             MigrationMapping::where('target_source_table', 'cabinet_contents')->delete();
+            MigrationMapping::where('target_source_table', 'cabinet_contents_from_key')->delete();
         }
 
         if ($target == 'bbses' || $target == 'all') {
@@ -3404,6 +3405,9 @@ trait MigrationTrait
                 'destination_key'      => $cabinet->id,
             ]);
 
+            // MigrationMappingにセット用。その後プラグイン固有リンク置換で使う
+            $post_source_content_keys = Arr::get($ini, 'content_keys.content_key', []);
+
             // ファイルの移行
             $tsv_filename = str_replace('ini', 'tsv', basename($ini_path));
             if (Storage::exists($this->getImportPath('cabinets/') . $tsv_filename)) {
@@ -3443,11 +3447,22 @@ trait MigrationTrait
 
                     $cabinet_content->migrate_parent_id = $tsv_cols[3];
                     $migrated_contents->push($cabinet_content);
+
+                    $content_id = $tsv_cols[0];
                     $mapping = MigrationMapping::create([
                         'target_source_table'  => 'cabinet_contents',
-                        'source_key'           => $tsv_cols[0],
+                        'source_key'           => $content_id,
                         'destination_key'      => $cabinet_content->id,
                     ]);
+
+                    // プラグイン固有リンク置換用マッピングテーブル追加
+                    if (array_key_exists($content_id, $post_source_content_keys)) {
+                        $mapping = MigrationMapping::create([
+                            'target_source_table'  => 'cabinet_contents_from_key',
+                            'source_key'           => $post_source_content_keys[$content_id],
+                            'destination_key'      => $cabinet_content->id,
+                        ]);
+                    }
                 }
 
                 // 移行したcabinet_contentsの入れ子構造再構築
@@ -13984,6 +13999,11 @@ trait MigrationTrait
                 //            ※ 子記事も親記事として変換する
                 //  cc        http://localhost/plugin/bbses/show/22/59/18#frame-59
                 return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/bbses/bbs_articles/view/', '/plugin/bbses/show/', 'bbses_post_from_key');
+            } elseif (stripos($check_url_path, '/cabinets/cabinet_files/index/') !== false) {
+                // (キャビネット-フォルダ)
+                //  nc3 http://localhost:8081/cabinets/cabinet_files/index/42/ae8a188d05776556078a79200bbc6b3a?frame_id=378
+                //  cc  http://localhost/plugin/cabinets/changeDirectory/26/63/4#frame-63
+                return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/cabinets/cabinet_files/index/', '/plugin/cabinets/changeDirectory/', 'cabinet_contents_from_key');
             }
         }
 
