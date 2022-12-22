@@ -463,6 +463,7 @@ trait MigrationTrait
             Buckets::where('plugin_name', 'faqs')->delete();
             MigrationMapping::where('target_source_table', 'faqs')->delete();
             MigrationMapping::where('target_source_table', 'categories_faqs')->delete();
+            MigrationMapping::where('target_source_table', 'faqs_post_from_key')->delete();
         }
 
         if ($target == 'linklists' || $target == 'all') {
@@ -487,6 +488,8 @@ trait MigrationTrait
             Buckets::where('plugin_name', 'cabinets')->delete();
             MigrationMapping::where('target_source_table', 'cabinets')->delete();
             MigrationMapping::where('target_source_table', 'cabinet_contents')->delete();
+            MigrationMapping::where('target_source_table', 'cabinet_contents_from_key')->delete();
+            MigrationMapping::where('target_source_table', 'cabinet_content_uploads_from_key')->delete();
         }
 
         if ($target == 'bbses' || $target == 'all') {
@@ -517,6 +520,8 @@ trait MigrationTrait
             BucketsRoles::whereIn('buckets_id', $buckets_ids)->delete();
             Buckets::where('plugin_name', 'calendars')->delete();
             MigrationMapping::where('target_source_table', 'calendars')->delete();
+            MigrationMapping::where('target_source_table', 'calendars_post')->delete();
+            MigrationMapping::where('target_source_table', 'calendars_post_from_key')->delete();
         }
 
         if ($target == 'slideshows' || $target == 'all') {
@@ -557,7 +562,7 @@ trait MigrationTrait
             ReservationsColumnsSelect::truncate();
 
             // 消してしまった初期登録のカテゴリなし、基本項目セットの再登録
-            // php artisan db:seed --class=DefaultReservationsTableSeeder
+            // php artisan db:seed --class=DefaultReservationsTableSeeder --force
             Artisan::call('db:seed --class=DefaultReservationsTableSeeder --force');
 
             $buckets_ids = Buckets::where('plugin_name', 'reservations')->pluck('id');
@@ -566,6 +571,7 @@ trait MigrationTrait
             InputsRepeat::where('target', 'reservations')->forceDelete();
             MigrationMapping::where('target_source_table', 'reservations_category')->delete();
             MigrationMapping::where('target_source_table', 'reservations_post')->delete();
+            MigrationMapping::where('target_source_table', 'reservations_post_from_key')->delete();
             MigrationMapping::where('target_source_table', 'reservations_location')->delete();
             MigrationMapping::where('target_source_table', 'reservations_block')->delete();
         }
@@ -577,6 +583,7 @@ trait MigrationTrait
             MigrationMapping::where('target_source_table', 'photoalbums')->delete();
             MigrationMapping::where('target_source_table', 'photoalbums_album')->delete();
             MigrationMapping::where('target_source_table', 'photoalbums_album_cover')->delete();
+            MigrationMapping::where('target_source_table', 'photoalbums_album_from_key')->delete();
             MigrationMapping::where('target_source_table', 'photoalbums_photo')->delete();
             MigrationMapping::where('target_source_table', 'photoalbums_video')->delete();
             MigrationMapping::where('target_source_table', 'photoalbums_video_from_key')->delete();
@@ -2422,6 +2429,9 @@ trait MigrationTrait
                 $index++;
             }
 
+            // MigrationMappingにセット用。その後プラグイン固有リンク置換で使う
+            $post_source_content_keys = Arr::get($faq_ini, 'content_keys.content_key', []);
+
             // Faqs の記事を取得（TSV）
             $faq_tsv_filename = str_replace('ini', 'tsv', basename($faqs_ini_path));
             if (Storage::exists($this->getImportPath('faqs/') . $faq_tsv_filename)) {
@@ -2451,6 +2461,7 @@ trait MigrationTrait
                     // 本文
                     $faq_tsv_cols[3] = isset($faq_tsv_cols[3]) ? $faq_tsv_cols[3] : '';
                     $faq_tsv_cols[4] = isset($faq_tsv_cols[4]) ? $faq_tsv_cols[4] : '';
+                    $content_id      = isset($faq_tsv_cols[5]) ? $faq_tsv_cols[5] : '';
                     $post_text = $this->changeWYSIWYG($faq_tsv_cols[4]);
                     $post_text = $this->addParagraph('faqs', $post_text);
 
@@ -2460,6 +2471,15 @@ trait MigrationTrait
                     // 更新
                     $faqs_posts->contents_id = $faqs_posts->id;
                     $faqs_posts->save();
+
+                    // プラグイン固有リンク置換用マッピングテーブル追加
+                    if (array_key_exists($content_id, $post_source_content_keys)) {
+                        $mapping = MigrationMapping::create([
+                            'target_source_table'  => 'faqs_post_from_key',
+                            'source_key'           => $post_source_content_keys[$content_id],
+                            'destination_key'      => $faqs_posts->id,
+                        ]);
+                    }
                 }
             }
         }
@@ -3404,6 +3424,9 @@ trait MigrationTrait
                 'destination_key'      => $cabinet->id,
             ]);
 
+            // MigrationMappingにセット用。その後プラグイン固有リンク置換で使う
+            $post_source_content_keys = Arr::get($ini, 'content_keys.content_key', []);
+
             // ファイルの移行
             $tsv_filename = str_replace('ini', 'tsv', basename($ini_path));
             if (Storage::exists($this->getImportPath('cabinets/') . $tsv_filename)) {
@@ -3422,11 +3445,11 @@ trait MigrationTrait
                     $tsv_cols = explode("\t", $tsv_line);
 
                     $upload_mapping = MigrationMapping::where('target_source_table', 'uploads')
-                                        ->where('source_key', $tsv_cols[2])->first();
+                                        ->where('source_key', $tsv_cols[2])->first() ?? new MigrationMapping();
 
                     $cabinet_content = new CabinetContent([
                         'cabinet_id' => $cabinet->id,
-                        'upload_id' => $upload_mapping ? $upload_mapping->destination_key : null,
+                        'upload_id' => $upload_mapping->destination_key,
                         'name' => empty($tsv_cols[5]) ? $tsv_cols[4] : $tsv_cols[4] . '.' . $tsv_cols[5],
                         'is_folder' => $tsv_cols[9],
                         'comment' => $tsv_cols[12],
@@ -3443,11 +3466,30 @@ trait MigrationTrait
 
                     $cabinet_content->migrate_parent_id = $tsv_cols[3];
                     $migrated_contents->push($cabinet_content);
+
+                    $content_id = $tsv_cols[0];
                     $mapping = MigrationMapping::create([
                         'target_source_table'  => 'cabinet_contents',
-                        'source_key'           => $tsv_cols[0],
+                        'source_key'           => $content_id,
                         'destination_key'      => $cabinet_content->id,
                     ]);
+
+                    // プラグイン固有リンク置換用マッピングテーブル追加
+                    if (array_key_exists($content_id, $post_source_content_keys)) {
+                        $mapping = MigrationMapping::create([
+                            'target_source_table'  => 'cabinet_contents_from_key',
+                            'source_key'           => $post_source_content_keys[$content_id],
+                            'destination_key'      => $cabinet_content->id,
+                        ]);
+
+                        if ($upload_mapping->destination_key) {
+                            $mapping = MigrationMapping::create([
+                                'target_source_table'  => 'cabinet_content_uploads_from_key',
+                                'source_key'           => $post_source_content_keys[$content_id],
+                                'destination_key'      => $upload_mapping->destination_key,
+                            ]);
+                        }
+                    }
                 }
 
                 // 移行したcabinet_contentsの入れ子構造再構築
@@ -3564,6 +3606,9 @@ trait MigrationTrait
                 $post_source_keys = array_keys($ini['blog_post']['post_title']);
             }
 
+            // MigrationMappingにセット用。その後プラグイン固有リンク置換で使う
+            $post_source_content_keys = Arr::get($ini, 'content_keys.content_key', []);
+
             // 投稿の移行
             $post_index = 0;
             $tsv_filename = str_replace('ini', 'tsv', basename($ini_path));
@@ -3630,11 +3675,21 @@ trait MigrationTrait
 
                     // マッピングテーブルの追加
                     if (array_key_exists($post_index, $post_source_keys)) {
+                        $content_id = $post_source_keys[$post_index];
                         $mapping = MigrationMapping::create([
                             'target_source_table'  => 'bbses_post',
-                            'source_key'           => $post_source_keys[$post_index],
+                            'source_key'           => $content_id,
                             'destination_key'      => $bbs_post->id,
                         ]);
+
+                        // プラグイン固有リンク置換用マッピングテーブル追加
+                        if (array_key_exists($content_id, $post_source_content_keys)) {
+                            $mapping_from_key = MigrationMapping::create([
+                                'target_source_table'  => 'bbses_post_from_key',
+                                'source_key'           => $post_source_content_keys[$content_id],
+                                'destination_key'      => $bbs_post->id,
+                            ]);
+                        }
                     }
                     $post_index++;
                 }
@@ -3800,6 +3855,9 @@ trait MigrationTrait
             ]);
 
 
+            // MigrationMappingにセット用。その後プラグイン固有リンク置換で使う
+            $post_source_content_keys = Arr::get($ini, 'content_keys.content_key', []);
+
             // Calendar のデータを取得（TSV） ※ iniとtsvが同じ名前の時、この処理でファイル名が取れる。
             $calendar_tsv_filename = str_replace('ini', 'tsv', basename($ini_path));
 
@@ -3892,12 +3950,21 @@ trait MigrationTrait
                     $calendar_post->save();
 
                     // 記事のマッピングテーブルの追加
+                    $content_id = $calendar_tsv_cols[$tsv_idxs['post_id']];
                     $mapping = MigrationMapping::create([
                         'target_source_table'  => 'calendars_post',
-                        'source_key'           => $calendar_tsv_cols[$tsv_idxs['post_id']],
+                        'source_key'           => $content_id,
                         'destination_key'      => $calendar_post->id,
                     ]);
 
+                    // プラグイン固有リンク置換用マッピングテーブル追加
+                    if (array_key_exists($content_id, $post_source_content_keys)) {
+                        $mapping = MigrationMapping::create([
+                            'target_source_table'  => 'calendars_post_from_key',
+                            'source_key'           => $post_source_content_keys[$content_id],
+                            'destination_key'      => $calendar_post->id,
+                        ]);
+                    }
                 }
             }
 
@@ -4305,6 +4372,8 @@ trait MigrationTrait
             $before_nc2_reserve_details_id = null;
             // １つ前の親ID
             $before_inputs_parent_id = null;
+            // MigrationMappingにセット用。その後プラグイン固有リンク置換で使う
+            $post_source_content_keys = Arr::get($ini, 'content_keys.content_key', []);
 
             // Calendar のデータを取得（TSV） ※ iniとtsvが同じ名前の時、この処理でファイル名が取れる。
             $reservation_tsv_filename = str_replace('ini', 'tsv', basename($ini_path));
@@ -4461,12 +4530,21 @@ trait MigrationTrait
                     $before_nc2_reserve_details_id = $reservation_tsv_cols[$tsv_idxs['reserve_details_id']];
 
                     // 記事のマッピングテーブルの追加
+                    $content_id = $reservation_tsv_cols[$tsv_idxs['reserve_id']];
                     $mapping = MigrationMapping::create([
                         'target_source_table'  => 'reservations_post',
-                        'source_key'           => $reservation_tsv_cols[$tsv_idxs['reserve_id']],
+                        'source_key'           => $content_id,
                         'destination_key'      => $reservation_post->id,
                     ]);
 
+                    // プラグイン固有リンク置換用マッピングテーブル追加
+                    if (array_key_exists($content_id, $post_source_content_keys)) {
+                        $mapping = MigrationMapping::create([
+                            'target_source_table'  => 'reservations_post_from_key',
+                            'source_key'           => $post_source_content_keys[$content_id],
+                            'destination_key'      => $reservation_post->id,
+                        ]);
+                    }
                 }
             }
 
@@ -4632,6 +4710,7 @@ trait MigrationTrait
 
             // MigrationMappingにセット用。その後プラグイン固有リンク置換で使う
             $post_source_content_keys = Arr::get($photoalbums_ini, 'content_keys.content_key', []);
+            $source_album_keys = Arr::get($photoalbums_ini, 'album_keys.album_key', []);
 
             foreach ($this->getArrayValue($photoalbums_ini, 'albums', 'album', []) as $album_id => $album_name) {
 
@@ -4712,6 +4791,15 @@ trait MigrationTrait
                             'source_key'           => $album_id,
                             'destination_key'      => $children->id,
                         ]);
+
+                        // プラグイン固有リンク置換用マッピングテーブル追加
+                        if (array_key_exists($album_id, $source_album_keys)) {
+                            $mapping_album_from_key = MigrationMapping::create([
+                                'target_source_table'  => 'photoalbums_album_from_key',
+                                'source_key'           => $source_album_keys[$album_id],
+                                'destination_key'      => $children->id,
+                            ]);
+                        }
 
                     } else {
                         $children = PhotoalbumContent::find($mapping_album->destination_key);
@@ -9231,6 +9319,7 @@ trait MigrationTrait
                 $faqs_tsv .= $this->getCCDatetime($nc2_faq_question->insert_time) . "\t";
                 $faqs_tsv .= $nc2_faq_question->question_name    . "\t";
                 $faqs_tsv .= $question_answer                    . "\t";
+                $faqs_tsv .= $nc2_faq_question->question_id      . "\t"; // [5]
 
                 // $faqs_ini .= "post_title[" . $nc2_faq_question->question_id . "] = \"" . str_replace('"', '', $nc2_faq_question->question_name) . "\"\n";
             }
@@ -13964,6 +14053,43 @@ trait MigrationTrait
                 //  nc3 http://localhost:8081/setting/videos/videos/embed/55/a66fda57248fe7e64818e2438cac5e7c?frame_id=398
                 //  cc  http://localhost/download/plugin/photoalbums/embed/47/91/65
                 return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/videos/videos/embed/', '/download/plugin/photoalbums/embed/', 'photoalbums_video_from_key');
+            } elseif (stripos($check_url_path, '/bbses/bbs_articles/view/') !== false) {
+                // (掲示板)
+                //  nc3-親記事 http://localhost:8081/bbses/bbs_articles/view/31/7cc26bc0b09822e45e04956a774e31d8?frame_id=55
+                //      子記事 http://localhost:8081/bbses/bbs_articles/view/31/7cc26bc0b09822e45e04956a774e31d8?frame_id=55#!#bbs-article-26
+                //            ※ 子記事も親記事として変換する
+                //  cc        http://localhost/plugin/bbses/show/22/59/18#frame-59
+                return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/bbses/bbs_articles/view/', '/plugin/bbses/show/', 'bbses_post_from_key');
+            } elseif (stripos($check_url_path, '/cabinets/cabinet_files/index/') !== false) {
+                // (キャビネット-フォルダ)
+                //  nc3 http://localhost:8081/cabinets/cabinet_files/index/42/ae8a188d05776556078a79200bbc6b3a?frame_id=378
+                //  cc  http://localhost/plugin/cabinets/changeDirectory/26/63/4#frame-63
+                return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/cabinets/cabinet_files/index/', '/plugin/cabinets/changeDirectory/', 'cabinet_contents_from_key');
+            } elseif (stripos($check_url_path, '/cabinets/cabinet_files/download/') !== false) {
+                // (キャビネット-ファイル)
+                //  nc3 http://localhost:8081/cabinets/cabinet_files/download/42/b203268ac59db031fc8d20a8e4380ef0?frame_id=378
+                //  cc  http://localhost/file/24
+                return $this->convertNc3PluginPermalinkToConnectFile($content, $url, $db_colum, '/cabinets/cabinet_files/download/', 'cabinet_content_uploads_from_key');
+            } elseif (stripos($check_url_path, '/faqs/faq_questions/view/') !== false) {
+                // (FAQ)
+                //  nc3 http://localhost:8081/faqs/faq_questions/view/81/a6caf71b3ab8c4220d8a2102575c1f05?frame_id=434
+                //  cc  http://localhost/plugin/faqs/show/37/76/1#frame-76
+                return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/faqs/faq_questions/view/', '/plugin/faqs/show/', 'faqs_post_from_key');
+            } elseif (stripos($check_url_path, '/photo_albums/photo_album_photos/index/') !== false) {
+                // (フォトアルバム-アルバム表示)
+                //  nc3 http://localhost:8081/photo_albums/photo_album_photos/index/7/0c5b4369a2ff04786ee5ac0e02273cc9?frame_id=392
+                //  cc  http://localhost/plugin/photoalbums/changeDirectory/17/53/39#frame-53
+                return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/photo_albums/photo_album_photos/index/', '/plugin/photoalbums/changeDirectory/', 'photoalbums_album_from_key');
+            } elseif (stripos($check_url_path, '/reservations/reservation_plans/view/') !== false) {
+                // (施設予約)
+                //  nc3 http://localhost:8081/reservations/reservation_plans/view/c7fb658e08e5265a9dfada9dee24d8db?frame_id=446
+                //  cc  http://localhost/plugin/reservations/showBooking/10/36/9#frame-36
+                return $this->convertNc3PluginPermalinkCalToConnect($content, $url, $db_colum, '/reservations/reservation_plans/view/', '/plugin/reservations/showBooking/', 'reservations_post_from_key');
+            } elseif (stripos($check_url_path, '/calendars/calendar_plans/view/') !== false) {
+                // (カレンダー)
+                //  nc3 http://localhost:8081/calendars/calendar_plans/view/05b08f33b1e13953d3caf1e8d1ceeb01?frame_id=463
+                //  cc  http://localhost/plugin/calendars/show/15/44/17#frame-44
+                return $this->convertNc3PluginPermalinkCalToConnect($content, $url, $db_colum, '/calendars/calendar_plans/view/', '/plugin/calendars/show/', 'calendars_post_from_key');
             }
         }
 
@@ -13973,7 +14099,7 @@ trait MigrationTrait
     /**
      * nc3プラグインリンク１つをConnectのプラグインリンクに変換
      */
-    private function convertNc3PluginPermalinkToConnect(?string $content, string $url, string $db_colum, string $from_nc3_plugin_permalink, string $to_cc_plugin_permalink, string $content_target_source_table): ?string
+    private function convertNc3PluginPermalinkToConnect(?string $content, string $url, string $db_colum, string $from_nc3_plugin_permalink, string $to_cc_plugin_permalink, string $content_target_source_table, ?bool $is_nc3_cal_plugin = false): ?string
     {
         // (ブログ)
         //  nc3 http://localhost:8081/blogs/blog_entries/view/27/2e19fea842dd98fe341ad536771b90a8?frame_id=49
@@ -14011,8 +14137,16 @@ trait MigrationTrait
         // /で分割
         $src_params = explode('/', $path_tmp);
 
-        // $block_id = $src_params[0];
-        $content_key = $src_params[1];
+        if ($is_nc3_cal_plugin) {
+            // nc3カレンダー系プラグインはURL形式が違う
+            // (施設予約)
+            //  nc3 http://localhost:8081/reservations/reservation_plans/view/c7fb658e08e5265a9dfada9dee24d8db?frame_id=446
+            //  cc  http://localhost/plugin/reservations/showBooking/10/36/9#frame-36
+            $content_key = $src_params[0];
+        } else {
+            // $block_id = $src_params[0];
+            $content_key = $src_params[1];
+        }
 
         // $map_content = MigrationMapping::where('target_source_table', 'blogs_post_from_key')->where('source_key', $content_key)->first();
         $map_content = MigrationMapping::where('target_source_table', $content_target_source_table)->where('source_key', $content_key)->first();
@@ -14022,10 +14156,53 @@ trait MigrationTrait
             // $content = str_replace("{$url_path}?{$url_query}", "/plugin/blogs/show/{$frame->page_id}/{$frame->id}/{$map_content->destination_key}#frame-{$frame->id}", $content);
             $content = str_replace("{$url_path}?{$url_query}", "{$to_cc_plugin_permalink}{$frame->page_id}/{$frame->id}/{$map_content->destination_key}#frame-{$frame->id}", $content);
         } else {
-            var_dump($map_content, $content_key);
             // frame_idなしは置換できない
             $this->putError(3, $db_colum . "|プラグイン固有リンク|MigrationMapping(target_source_table={$content_target_source_table}|frames) or Frameデータなし", $url);
         }
         return $content;
+    }
+
+    /**
+     * nc3プラグインリンク１つをConnectのファイルリンクに変換
+     */
+    private function convertNc3PluginPermalinkToConnectFile(?string $content, string $url, string $db_colum, string $from_nc3_plugin_permalink, string $content_target_source_table): ?string
+    {
+        // (キャビネット-ファイル)
+        //  nc3 http://localhost:8081/cabinets/cabinet_files/download/42/b203268ac59db031fc8d20a8e4380ef0?frame_id=378
+        //  cc  http://localhost/file/24
+
+        // &amp; => & 等のデコード
+        $check_url = htmlspecialchars_decode($url);
+        $check_url = str_replace('/setting', '', $check_url);
+
+        $check_url_path = parse_url($check_url, PHP_URL_PATH);
+
+        // デコードなし
+        $url_path = parse_url($url, PHP_URL_PATH);
+        $url_query = parse_url($url, PHP_URL_QUERY);
+
+        // 不要文字を取り除き
+        $path_tmp = str_replace($from_nc3_plugin_permalink, '', $check_url_path);
+        // /で分割
+        $src_params = explode('/', $path_tmp);
+
+        // $block_id = $src_params[0];
+        $content_key = $src_params[1];
+
+        $map_upload = MigrationMapping::where('target_source_table', $content_target_source_table)->where('source_key', $content_key)->first();
+        if ($map_upload) {
+            $content = str_replace("{$url_path}?{$url_query}", "/file/{$map_upload->destination_key}", $content);
+        } else {
+            $this->putError(3, $db_colum . "|プラグイン固有リンク|MigrationMapping(target_source_table={$content_target_source_table})データなし", $url);
+        }
+        return $content;
+    }
+
+    /**
+     * nc3カレンダー系プラグインリンク１つをConnectのプラグインリンクに変換
+     */
+    private function convertNc3PluginPermalinkCalToConnect(?string $content, string $url, string $db_colum, string $from_nc3_plugin_permalink, string $to_cc_plugin_permalink, string $content_target_source_table, ?bool $is_nc3_cal_plugin = false): ?string
+    {
+        return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, $from_nc3_plugin_permalink, $to_cc_plugin_permalink, $content_target_source_table, true);
     }
 }
