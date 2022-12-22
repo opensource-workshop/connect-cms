@@ -560,7 +560,7 @@ trait MigrationTrait
             ReservationsColumnsSelect::truncate();
 
             // 消してしまった初期登録のカテゴリなし、基本項目セットの再登録
-            // php artisan db:seed --class=DefaultReservationsTableSeeder
+            // php artisan db:seed --class=DefaultReservationsTableSeeder --force
             Artisan::call('db:seed --class=DefaultReservationsTableSeeder --force');
 
             $buckets_ids = Buckets::where('plugin_name', 'reservations')->pluck('id');
@@ -569,6 +569,7 @@ trait MigrationTrait
             InputsRepeat::where('target', 'reservations')->forceDelete();
             MigrationMapping::where('target_source_table', 'reservations_category')->delete();
             MigrationMapping::where('target_source_table', 'reservations_post')->delete();
+            MigrationMapping::where('target_source_table', 'reservations_post_from_key')->delete();
             MigrationMapping::where('target_source_table', 'reservations_location')->delete();
             MigrationMapping::where('target_source_table', 'reservations_block')->delete();
         }
@@ -4357,6 +4358,8 @@ trait MigrationTrait
             $before_nc2_reserve_details_id = null;
             // １つ前の親ID
             $before_inputs_parent_id = null;
+            // MigrationMappingにセット用。その後プラグイン固有リンク置換で使う
+            $post_source_content_keys = Arr::get($ini, 'content_keys.content_key', []);
 
             // Calendar のデータを取得（TSV） ※ iniとtsvが同じ名前の時、この処理でファイル名が取れる。
             $reservation_tsv_filename = str_replace('ini', 'tsv', basename($ini_path));
@@ -4513,12 +4516,21 @@ trait MigrationTrait
                     $before_nc2_reserve_details_id = $reservation_tsv_cols[$tsv_idxs['reserve_details_id']];
 
                     // 記事のマッピングテーブルの追加
+                    $content_id = $reservation_tsv_cols[$tsv_idxs['reserve_id']];
                     $mapping = MigrationMapping::create([
                         'target_source_table'  => 'reservations_post',
-                        'source_key'           => $reservation_tsv_cols[$tsv_idxs['reserve_id']],
+                        'source_key'           => $content_id,
                         'destination_key'      => $reservation_post->id,
                     ]);
 
+                    // プラグイン固有リンク置換用マッピングテーブル追加
+                    if (array_key_exists($content_id, $post_source_content_keys)) {
+                        $mapping = MigrationMapping::create([
+                            'target_source_table'  => 'reservations_post_from_key',
+                            'source_key'           => $post_source_content_keys[$content_id],
+                            'destination_key'      => $reservation_post->id,
+                        ]);
+                    }
                 }
             }
 
@@ -14054,6 +14066,11 @@ trait MigrationTrait
                 //  nc3 http://localhost:8081/photo_albums/photo_album_photos/index/7/0c5b4369a2ff04786ee5ac0e02273cc9?frame_id=392
                 //  cc  http://localhost/plugin/photoalbums/changeDirectory/17/53/39#frame-53
                 return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/photo_albums/photo_album_photos/index/', '/plugin/photoalbums/changeDirectory/', 'photoalbums_album_from_key');
+            } elseif (stripos($check_url_path, '/reservations/reservation_plans/view/') !== false) {
+                // (施設予約)
+                //  nc3 http://localhost:8081/reservations/reservation_plans/view/c7fb658e08e5265a9dfada9dee24d8db?frame_id=446
+                //  cc  http://localhost/plugin/reservations/showBooking/10/36/9#frame-36
+                return $this->convertNc3PluginPermalinkCalToConnect($content, $url, $db_colum, '/reservations/reservation_plans/view/', '/plugin/reservations/showBooking/', 'reservations_post_from_key');
             }
         }
 
@@ -14063,7 +14080,7 @@ trait MigrationTrait
     /**
      * nc3プラグインリンク１つをConnectのプラグインリンクに変換
      */
-    private function convertNc3PluginPermalinkToConnect(?string $content, string $url, string $db_colum, string $from_nc3_plugin_permalink, string $to_cc_plugin_permalink, string $content_target_source_table): ?string
+    private function convertNc3PluginPermalinkToConnect(?string $content, string $url, string $db_colum, string $from_nc3_plugin_permalink, string $to_cc_plugin_permalink, string $content_target_source_table, ?bool $is_nc3_cal_plugin = false): ?string
     {
         // (ブログ)
         //  nc3 http://localhost:8081/blogs/blog_entries/view/27/2e19fea842dd98fe341ad536771b90a8?frame_id=49
@@ -14101,8 +14118,16 @@ trait MigrationTrait
         // /で分割
         $src_params = explode('/', $path_tmp);
 
-        // $block_id = $src_params[0];
-        $content_key = $src_params[1];
+        if ($is_nc3_cal_plugin) {
+            // nc3カレンダー系プラグインはURL形式が違う
+            // (施設予約)
+            //  nc3 http://localhost:8081/reservations/reservation_plans/view/c7fb658e08e5265a9dfada9dee24d8db?frame_id=446
+            //  cc  http://localhost/plugin/reservations/showBooking/10/36/9#frame-36
+            $content_key = $src_params[0];
+        } else {
+            // $block_id = $src_params[0];
+            $content_key = $src_params[1];
+        }
 
         // $map_content = MigrationMapping::where('target_source_table', 'blogs_post_from_key')->where('source_key', $content_key)->first();
         $map_content = MigrationMapping::where('target_source_table', $content_target_source_table)->where('source_key', $content_key)->first();
@@ -14152,5 +14177,13 @@ trait MigrationTrait
             $this->putError(3, $db_colum . "|プラグイン固有リンク|MigrationMapping(target_source_table={$content_target_source_table})データなし", $url);
         }
         return $content;
+    }
+
+    /**
+     * nc3カレンダー系プラグインリンク１つをConnectのプラグインリンクに変換
+     */
+    private function convertNc3PluginPermalinkCalToConnect(?string $content, string $url, string $db_colum, string $from_nc3_plugin_permalink, string $to_cc_plugin_permalink, string $content_target_source_table, ?bool $is_nc3_cal_plugin = false): ?string
+    {
+        return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, $from_nc3_plugin_permalink, $to_cc_plugin_permalink, $content_target_source_table, true);
     }
 }

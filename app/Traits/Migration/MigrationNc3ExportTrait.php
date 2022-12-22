@@ -1580,6 +1580,7 @@ trait MigrationNc3ExportTrait
 
             $journals_ini_key = "\n";
             $journals_ini_key .= "[content_keys]\n";    // インポートでMigrationMappingにセット用。その後プラグイン固有リンク置換で使う
+
             foreach ($nc3_blog_posts as $nc3_blog_post) {
                 // TSV 形式でエクスポート
                 if (!empty($journals_tsv)) {
@@ -4061,6 +4062,9 @@ trait MigrationNc3ExportTrait
             $tsv = '';
             $tsv .= $tsv_header . "\n";
 
+            $ini_key = "\n";
+            $ini_key .= "[content_keys]\n";    // インポートでMigrationMappingにセット用。その後プラグイン固有リンク置換で使う
+
             foreach ($reservation_events as $reservation_event) {
                 // 初期化
                 $tsv_record = $tsv_cols;
@@ -4109,7 +4113,10 @@ trait MigrationNc3ExportTrait
                 $tsv_record['status']          = $status;
 
                 $tsv .= implode("\t", $tsv_record) . "\n";
+
+                $ini_key .= "content_key[" . $reservation_event->id . "] = \"" . $reservation_event->key . "\"\n";
             }
+            $ini .= $ini_key;
 
             // 施設予約の設定を出力
             $this->storagePut($this->getImportPath('reservations/reservation_location_') . $this->zeroSuppress($nc3_reservation_location->id) . '.ini', $ini);
@@ -6329,16 +6336,16 @@ trait MigrationNc3ExportTrait
         //  キャビネット-ファイル        http://localhost:8081/cabinets/cabinet_files/download/42/b203268ac59db031fc8d20a8e4380ef0?frame_id=378
         //  FAQ                        http://localhost:8081/faqs/faq_questions/view/81/a6caf71b3ab8c4220d8a2102575c1f05?frame_id=434
         //  フォトアルバム-アルバム表示  http://localhost:8081/photo_albums/photo_album_photos/index/7/0c5b4369a2ff04786ee5ac0e02273cc9?frame_id=392
+        //  施設予約                    http://localhost:8081/reservations/reservation_plans/view/c7fb658e08e5265a9dfada9dee24d8db?frame_id=446
         //  -----------------------
         //  （未開発）
-        //  施設予約                   http://localhost:8081/reservations/reservation_plans/view/c7fb658e08e5265a9dfada9dee24d8db?frame_id=446
         //  カレンダー                  http://localhost:8081/calendars/calendar_plans/view/05b08f33b1e13953d3caf1e8d1ceeb01?frame_id=463
         //  -----------------------
         //  （cc機能無しのため実装せず）
-        //  動画                       http://localhost:8081/videos/videos/view/33/20e8fdb50d8a31a23b542050850260b4?frame_id=24
-        //  お知らせ-新着or検索リンク    http://localhost:8081/announcements/announcements/view/107/9d3641e6a1dda574509e42d04f04892a
-        //  アンケート-回答             http://localhost:8081/questionnaires/questionnaire_answers/view/25/a272c029cefee372dd0623794ebe962a?frame_id=44
-        //  小テスト-回答               http://localhost:8081/quizzes/quiz_answers/start/86/3edf210b7fa05a5e735b26c0bd988552?frame_id=442
+        //  動画（⇒フォトアルバムに詳細ページなし）             http://localhost:8081/videos/videos/view/33/20e8fdb50d8a31a23b542050850260b4?frame_id=24
+        //  お知らせ-新着or検索リンク（⇒お知らせに固有URLなし）  http://localhost:8081/announcements/announcements/view/107/9d3641e6a1dda574509e42d04f04892a
+        //  アンケート-回答                                    http://localhost:8081/questionnaires/questionnaire_answers/view/25/a272c029cefee372dd0623794ebe962a?frame_id=44
+        //  小テスト-回答                                     http://localhost:8081/quizzes/quiz_answers/start/86/3edf210b7fa05a5e735b26c0bd988552?frame_id=442
         //  TODO
         //  回覧板
 
@@ -6366,18 +6373,12 @@ trait MigrationNc3ExportTrait
                 return;
             } elseif (stripos($check_page_permalink, 'cabinets/cabinet_files/index/') !== false) {
                 // キャビネット-フォルダ
-                $cabinet_files_query = Nc3CabinetFile::select('cabinet_files.*', 'cabinets.block_id')
-                    ->join('cabinets', function ($join) {
-                        $join->on('cabinets.key', '=', 'cabinet_files.cabinet_key');
-                    });
+                $cabinet_files_query = Nc3CabinetFile::join('cabinets', 'cabinets.key', '=', 'cabinet_files.cabinet_key');
                 $this->checkDeadLinkInsideNc3Plugin($check_page_permalink, 'cabinets/cabinet_files/index/', $cabinet_files_query, $url, $nc3_plugin_key, $nc3_frame, 'cabinet_files.key');
                 return;
             } elseif (stripos($check_page_permalink, 'cabinets/cabinet_files/download/') !== false) {
                 // キャビネット-ファイル
-                $cabinet_files_query = Nc3CabinetFile::select('cabinet_files.*', 'cabinets.block_id')
-                    ->join('cabinets', function ($join) {
-                        $join->on('cabinets.key', '=', 'cabinet_files.cabinet_key');
-                    });
+                $cabinet_files_query = Nc3CabinetFile::join('cabinets', 'cabinets.key', '=', 'cabinet_files.cabinet_key');
                 $this->checkDeadLinkInsideNc3Plugin($check_page_permalink, 'cabinets/cabinet_files/download/', $cabinet_files_query, $url, $nc3_plugin_key, $nc3_frame, 'cabinet_files.key');
                 return;
             } elseif (stripos($check_page_permalink, 'faqs/faq_questions/view/') !== false) {
@@ -6387,6 +6388,10 @@ trait MigrationNc3ExportTrait
             } elseif (stripos($check_page_permalink, 'photo_albums/photo_album_photos/index/') !== false) {
                 // フォトアルバム-アルバム表示
                 $this->checkDeadLinkInsideNc3Plugin($check_page_permalink, 'photo_albums/photo_album_photos/index/', Nc3PhotoAlbum::query(), $url, $nc3_plugin_key, $nc3_frame);
+                return;
+            } elseif (stripos($check_page_permalink, 'reservations/reservation_plans/view/') !== false) {
+                // 施設予約
+                $this->checkDeadLinkInsideNc3PluginCal($check_page_permalink, 'reservations/reservation_plans/view/', Nc3ReservationEvent::query(), $url, $nc3_plugin_key, $nc3_frame);
                 return;
             }
         }
@@ -6437,6 +6442,38 @@ trait MigrationNc3ExportTrait
         } else {
             // NG
             $this->putLinkCheck(3, $nc3_plugin_key . "|内部リンク|{$nc3_plugin_permalink}でblock_id or content_keyなし", $url, $nc3_frame);
+            return false;
+        }
+    }
+
+    /**
+     * 内部URL(nc3)のカレンダー系プラグイン個別のリンク切れチェック
+     */
+    private function checkDeadLinkInsideNc3PluginCal(string $check_page_permalink, string $nc3_plugin_permalink, Builder $nc3_plugin_content_model_query, string $url, ?string $nc3_plugin_key, ?Nc3Frame $nc3_frame = null, ?string $key_colum = 'key'): bool
+    {
+        // pathのみに置換
+        $path_tmp = parse_url($check_page_permalink, PHP_URL_PATH);
+        // 不要文字を取り除き
+        $path_tmp = str_replace($nc3_plugin_permalink, '', $path_tmp);
+        // /で分割
+        $src_params = explode('/', $path_tmp);
+
+        $content_key = $src_params[0];
+
+        if ($content_key) {
+            $check_nc3_content = $nc3_plugin_content_model_query->where($key_colum, $content_key)->where('is_latest', 1)->first();
+            if ($check_nc3_content) {
+                // OK
+                return true;
+            } else {
+                // NG
+                $model = $nc3_plugin_content_model_query->make();
+                $this->putLinkCheck(3, $nc3_plugin_key . "|内部リンク|{$model->getTable()}データなし", $url, $nc3_frame);
+                return false;
+            }
+        } else {
+            // NG
+            $this->putLinkCheck(3, $nc3_plugin_key . "|内部リンク|{$nc3_plugin_permalink}でcontent_keyなし", $url, $nc3_frame);
             return false;
         }
     }
