@@ -3685,6 +3685,9 @@ trait MigrationNc3ExportTrait
             $tsv = '';
             $tsv .= $tsv_header . "\n";
 
+            $ini_key = "\n";
+            $ini_key .= "[content_keys]\n";    // インポートでMigrationMappingにセット用。その後プラグイン固有リンク置換で使う
+
             foreach ($calendar_events as $calendar_event) {
 
                 // 初期化
@@ -3746,7 +3749,10 @@ trait MigrationNc3ExportTrait
                 $tsv_record['status']          = $this->convertCCStatusFromNc3Status($calendar_event->status);
 
                 $tsv .= implode("\t", $tsv_record) . "\n";
+
+                $ini_key .= "content_key[" . $calendar_event->id . "] = \"" . $calendar_event->key . "\"\n";
             }
+            $ini .= $ini_key;
 
             // データ行の書き出し
             $tsv = $this->exportStrReplace($tsv, 'calendars');
@@ -6337,15 +6343,13 @@ trait MigrationNc3ExportTrait
         //  FAQ                        http://localhost:8081/faqs/faq_questions/view/81/a6caf71b3ab8c4220d8a2102575c1f05?frame_id=434
         //  フォトアルバム-アルバム表示  http://localhost:8081/photo_albums/photo_album_photos/index/7/0c5b4369a2ff04786ee5ac0e02273cc9?frame_id=392
         //  施設予約                    http://localhost:8081/reservations/reservation_plans/view/c7fb658e08e5265a9dfada9dee24d8db?frame_id=446
-        //  -----------------------
-        //  （未開発）
         //  カレンダー                  http://localhost:8081/calendars/calendar_plans/view/05b08f33b1e13953d3caf1e8d1ceeb01?frame_id=463
         //  -----------------------
         //  （cc機能無しのため実装せず）
-        //  動画（⇒フォトアルバムに詳細ページなし）             http://localhost:8081/videos/videos/view/33/20e8fdb50d8a31a23b542050850260b4?frame_id=24
-        //  お知らせ-新着or検索リンク（⇒お知らせに固有URLなし）  http://localhost:8081/announcements/announcements/view/107/9d3641e6a1dda574509e42d04f04892a
-        //  アンケート-回答                                    http://localhost:8081/questionnaires/questionnaire_answers/view/25/a272c029cefee372dd0623794ebe962a?frame_id=44
-        //  小テスト-回答                                     http://localhost:8081/quizzes/quiz_answers/start/86/3edf210b7fa05a5e735b26c0bd988552?frame_id=442
+        //  動画（⇒ccフォトアルバムに詳細ページなし）             http://localhost:8081/videos/videos/view/33/20e8fdb50d8a31a23b542050850260b4?frame_id=24
+        //  お知らせ-新着or検索リンク（⇒ccお知らせに固有URLなし）  http://localhost:8081/announcements/announcements/view/107/9d3641e6a1dda574509e42d04f04892a
+        //  アンケート-回答                                      http://localhost:8081/questionnaires/questionnaire_answers/view/25/a272c029cefee372dd0623794ebe962a?frame_id=44
+        //  小テスト-回答                                        http://localhost:8081/quizzes/quiz_answers/start/86/3edf210b7fa05a5e735b26c0bd988552?frame_id=442
         //  TODO
         //  回覧板
 
@@ -6392,6 +6396,10 @@ trait MigrationNc3ExportTrait
             } elseif (stripos($check_page_permalink, 'reservations/reservation_plans/view/') !== false) {
                 // 施設予約
                 $this->checkDeadLinkInsideNc3PluginCal($check_page_permalink, 'reservations/reservation_plans/view/', Nc3ReservationEvent::query(), $url, $nc3_plugin_key, $nc3_frame);
+                return;
+            } elseif (stripos($check_page_permalink, 'calendars/calendar_plans/view/') !== false) {
+                // カレンダー
+                $this->checkDeadLinkInsideNc3PluginCal($check_page_permalink, 'calendars/calendar_plans/view/', Nc3CalendarEvent::query(), $url, $nc3_plugin_key, $nc3_frame);
                 return;
             }
         }

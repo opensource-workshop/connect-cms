@@ -520,6 +520,8 @@ trait MigrationTrait
             BucketsRoles::whereIn('buckets_id', $buckets_ids)->delete();
             Buckets::where('plugin_name', 'calendars')->delete();
             MigrationMapping::where('target_source_table', 'calendars')->delete();
+            MigrationMapping::where('target_source_table', 'calendars_post')->delete();
+            MigrationMapping::where('target_source_table', 'calendars_post_from_key')->delete();
         }
 
         if ($target == 'slideshows' || $target == 'all') {
@@ -3853,6 +3855,9 @@ trait MigrationTrait
             ]);
 
 
+            // MigrationMappingにセット用。その後プラグイン固有リンク置換で使う
+            $post_source_content_keys = Arr::get($ini, 'content_keys.content_key', []);
+
             // Calendar のデータを取得（TSV） ※ iniとtsvが同じ名前の時、この処理でファイル名が取れる。
             $calendar_tsv_filename = str_replace('ini', 'tsv', basename($ini_path));
 
@@ -3945,12 +3950,21 @@ trait MigrationTrait
                     $calendar_post->save();
 
                     // 記事のマッピングテーブルの追加
+                    $content_id = $calendar_tsv_cols[$tsv_idxs['post_id']];
                     $mapping = MigrationMapping::create([
                         'target_source_table'  => 'calendars_post',
-                        'source_key'           => $calendar_tsv_cols[$tsv_idxs['post_id']],
+                        'source_key'           => $content_id,
                         'destination_key'      => $calendar_post->id,
                     ]);
 
+                    // プラグイン固有リンク置換用マッピングテーブル追加
+                    if (array_key_exists($content_id, $post_source_content_keys)) {
+                        $mapping = MigrationMapping::create([
+                            'target_source_table'  => 'calendars_post_from_key',
+                            'source_key'           => $post_source_content_keys[$content_id],
+                            'destination_key'      => $calendar_post->id,
+                        ]);
+                    }
                 }
             }
 
@@ -14071,6 +14085,11 @@ trait MigrationTrait
                 //  nc3 http://localhost:8081/reservations/reservation_plans/view/c7fb658e08e5265a9dfada9dee24d8db?frame_id=446
                 //  cc  http://localhost/plugin/reservations/showBooking/10/36/9#frame-36
                 return $this->convertNc3PluginPermalinkCalToConnect($content, $url, $db_colum, '/reservations/reservation_plans/view/', '/plugin/reservations/showBooking/', 'reservations_post_from_key');
+            } elseif (stripos($check_url_path, '/calendars/calendar_plans/view/') !== false) {
+                // (カレンダー)
+                //  nc3 http://localhost:8081/calendars/calendar_plans/view/05b08f33b1e13953d3caf1e8d1ceeb01?frame_id=463
+                //  cc  http://localhost/plugin/calendars/show/15/44/17#frame-44
+                return $this->convertNc3PluginPermalinkCalToConnect($content, $url, $db_colum, '/calendars/calendar_plans/view/', '/plugin/calendars/show/', 'calendars_post_from_key');
             }
         }
 
