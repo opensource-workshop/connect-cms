@@ -928,7 +928,7 @@ class ReservationsPlugin extends UserPluginBase
             // 繰り返し終了
             if ($request->rrule_repeat_end == 'UNTIL') {
                 // 指定日 UNTIL
-                $rrule_setting['UNTIL'] = $request->rrule_until . ' ' . $request->end_datetime . ':00';
+                $rrule_setting['UNTIL'] = $request->rrule_until . ' 00:00:00';
             } else {
                 // 指定の回数後 COUNT とみなす
                 $rrule_setting['COUNT'] = (int) $request->rrule_count;
