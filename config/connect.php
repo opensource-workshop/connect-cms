@@ -62,7 +62,7 @@ return [
     'CC_SETTING_EXPAND_COL' => 6,
 
     // ダウンロード時にカウントする拡張子
-    'CC_COUNT_EXTENSION' => array('pdf', 'xls', 'xlsx', 'doc', 'docx', 'ppt', 'pptx', 'sb2', 'sb3', 'mp4'),
+    'CC_COUNT_EXTENSION' => array('pdf', 'xls', 'xlsx', 'doc', 'docx', 'ppt', 'pptx', 'sb2', 'sb3', 'mp4', 'mp3'),
 
     // delete: TRANSLATE_API_URL, TRANSLATE_API_KEYに設定見直し
     // OSWS 翻訳サービス使用の有無
