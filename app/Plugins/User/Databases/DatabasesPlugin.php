@@ -1023,7 +1023,7 @@ class DatabasesPlugin extends UserPluginBase
     public function input($request, $page_id, $frame_id, $id = null, $errors = null)
     {
         // セッション初期化などのLaravel 処理。
-        $request->flash();
+        // $request->flash();
 
         // Databases、Frame データ
         $database = $this->getDatabases($frame_id);
@@ -1324,6 +1324,16 @@ class DatabasesPlugin extends UserPluginBase
         if ($validator->fails()) {
             // var_dump($validator->errors()->first("posted_at"));
             // Log::debug(var_export($request->posted_at, true));
+
+            // ファイル項目を探してセッション対象から除く
+            $flashExcepts = [];
+            foreach ($databases_columns as $databases_column) {
+                if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+                    $flashExcepts[] = 'databases_columns_value.' . $databases_column->id;
+                }
+            }
+            // 入力をフラッシュデータとして保存
+            $request->flashExcept($flashExcepts);
 
             return $this->input($request, $page_id, $frame_id, $id, $validator->errors());
         }
