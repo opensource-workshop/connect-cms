@@ -313,9 +313,9 @@ class PageManage extends ManagePluginBase
     }
 
     /**
-     * ページ指定場所移動
+     * ページ階層移動
      *
-     * @method_title ページ移動
+     * @method_title ページ階層移動
      * @method_desc ページは移動先を指定することで、階層を変更することができます。また、上下矢印でメニューへの表示順番を変更することもできます。
      */
     public function movePage($request, $page_id)
