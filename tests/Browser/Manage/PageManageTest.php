@@ -105,7 +105,16 @@ class PageManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/page/edit/images/edit,manage/page/edit/images/edit2', null, 3, 'basic');
+        $this->putManualData('[
+            {"path": "manage/page/edit/images/edit",
+             "name": "ページ編集1",
+             "comment": "<ul class=\"mb-0\"><li>ページ名を指定してください。</li><li>URLを表す固定リンクを指定してください。</li><li>限定公開設定を使うことで、ページを非公開にすることができます。メンバーシップページは指定したユーザのみ、ログインユーザ全員参加はログインしていれば見ることができます。</li><li>パスワードを指定すると、ページの閲覧の際にパスワードが必要になります。</li></ul>"
+            },
+            {"path": "manage/page/edit/images/edit2",
+             "name": "ページ編集2",
+             "comment": "<ul class=\"mb-0\"><li>テーマとレイアウトはページ毎に設定することもできます。</li><li>メニュー表示はメニューの基本設定で表示するか否かを指定できます。</li><li>IPアドレス制限は、このページを閲覧する際の閲覧元のIPアドレスを制限します。その他、様々な設定が可能です。</li></ul>"
+            }
+        ]', null, 3, 'basic');
     }
 
     /**
@@ -135,7 +144,12 @@ class PageManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/page/upload/images/upload', null, 3);
+        $this->putManualData('[
+            {"path": "manage/page/upload/images/upload",
+             "name": "ページ一覧",
+             "comment": "<ul class=\"mb-0\"><li>初期配置にチェックすると、インポートした各ページに固定記事プラグインがひとつ配置されます。</li></ul>"
+            }
+        ]', null, 3, 'basic');
     }
 
     /**
