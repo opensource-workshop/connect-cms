@@ -38,6 +38,11 @@ class IndexManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/index/index/images/index', null, 3);
+        $this->putManualData('[
+            {"path": "manage/index/index/images/index",
+             "name": "管理画面トップ",
+             "comment": "<ul class=\"mb-0\"><li>インストールされているConnect-CMSのバージョンが表示されます。</li><li>Connect-CMS最新情報が表示されます。<br />バージョンアップ情報なども表示されます。</li></ul>"
+            }
+        ]', null, 3);
     }
 }

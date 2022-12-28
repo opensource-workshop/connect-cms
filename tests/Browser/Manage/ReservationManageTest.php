@@ -38,6 +38,7 @@ class ReservationManageTest extends DuskTestCase
         $this->registOther("中会議室", "小会議室１", "小会議室２", "プロジェクタ", "ドローンセットＡ", "ドローンセットＢ");
         $this->columnSets();
         $this->registColumnSet();
+        $this->bookings();
         $this->index();
     }
 
@@ -61,7 +62,7 @@ class ReservationManageTest extends DuskTestCase
         Artisan::call('db:seed', ['--class'=> 'DefaultReservationsTableSeeder']);
 
         // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'regist', 'categories', 'columnSets', 'registColumnSet');
+        $this->reserveManual('index', 'regist', 'categories', 'columnSets', 'registColumnSet', 'bookings');
     }
 
     /**
@@ -209,6 +210,66 @@ class ReservationManageTest extends DuskTestCase
             {"path": "manage/reservation/registColumnSet/images/registColumnSet",
              "name": "項目セット登録",
              "comment": "<ul class=\"mb-0\"><li>項目セットを登録します。</li></ul>"
+            }
+        ]', null, 3);
+    }
+
+    /**
+     * 予約一覧
+     */
+    private function bookings()
+    {
+        // 予約データ作成（ここではデータベースに直接データを作成。一般ユーザ画面のテストは後でプラグイン側で実施）
+        // 実行日の第一水曜日(施設管理で平日のみ予約許可にしているので)
+        // 後で一般ユーザ画面のテストで予約データは作り直されます。
+        $monday_1 = new \DateTime('first Monday of ' . date('Y-m'));
+
+        $reservations_input = ReservationsInput::create([
+            "inputs_parent_id" => 1,
+            "facility_id" => 1,
+            "start_datetime" => $monday_1->format('Y-m-d 10:00'),
+            "end_datetime" => $monday_1->format('Y-m-d 12:00'),
+            "first_committed_at" => $monday_1->format('Y-m-d 09:00'),
+            "status" => 0,
+        ]);
+
+        // テストのために複数代入を許可するのではなく、update で値をセット
+        $reservations_input->created_id = 1;
+        $reservations_input->created_name = "システム管理者";
+        $reservations_input->created_at = $monday_1->format('Y-m-d 09:00');
+        $reservations_input->updated_id = 1;
+        $reservations_input->updated_name = "システム管理者";
+        $reservations_input->updated_at = $monday_1->format('Y-m-d 09:00');
+        $reservations_input->save();
+
+
+        ReservationsInputsColumn::create([
+            "inputs_parent_id" => 1,
+            "facility_id" => 1,
+            "column_id" => 1,
+            "value" => "テストの予約①",
+        ]);
+
+        // ブラウザ操作
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/manage/reservation/bookings')
+                    ->screenshot('manage/reservation/bookings/images/bookings');
+        });
+        $this->browse(function (Browser $browser) {
+            $browser->click('#app_reservation_search_condition')
+                    ->pause(500)
+                    ->screenshot('manage/reservation/bookings/images/bookings2');
+        });
+
+        // マニュアル用データ出力
+        $this->putManualData('[
+            {"path": "manage/reservation/bookings/images/bookings",
+             "name": "予約一覧",
+             "comment": "<ul class=\"mb-0\"><li>予約一覧の閲覧とCSVによるダウンロードが可能です。</li></ul>"
+            },
+            {"path": "manage/reservation/bookings/images/bookings2",
+             "name": "絞り込み画面",
+             "comment": "<ul class=\"mb-0\"><li>施設名と登録者で絞り込むことができます。</li><li>施設ID等で並べ替えすることができます。</li></ul>"
             }
         ]', null, 3);
     }

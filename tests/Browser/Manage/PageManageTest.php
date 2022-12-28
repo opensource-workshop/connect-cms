@@ -54,6 +54,9 @@ class PageManageTest extends DuskTestCase
     {
         // データクリア
         Page::where('permanent_link', '<>', '/')->delete();
+
+        // 最初にマニュアルの順番確定用にメソッドを指定する。
+        $this->reserveManual('index', 'edit', 'movePage', 'roleList', 'upload');
     }
 
     /**
@@ -61,14 +64,22 @@ class PageManageTest extends DuskTestCase
      */
     private function index()
     {
+        // ブラウザ操作と画面キャプチャ
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/page')
                     ->assertTitleContains('Connect-CMS')
-                    ->screenshot('manage/page/index/images/index');
+                    ->screenshot('manage/page/index/images/index1')
+                    ->scrollIntoView('footer')
+                    ->screenshot('manage/page/index/images/index2');
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/page/index/images/index', null, 3, 'basic');
+        $this->putManualData('[
+            {"path": "manage/page/index/images/index1",
+             "name": "ページ一覧",
+             "comment": "<ul class=\"mb-0\"><li>現在のページの一覧を確認できます。</li><li>ページ内容の編集は<a href=\"../edit/index.html\">「ページ編集」</a>を参照してください。</li><li>上矢印と下矢印で同じ階層内のページ移動ができます。</li><li>階層の移動は<a href=\"../movePage/index.html\">「ページ階層移動」</a>を参照してください。</li><li>ページ名が表示されます。大なり記号は階層を表しています。</li><li>目のアイコンはメニューの初期設定で表示するかどうかを表します。<br />クリックすることで、状態を変更できます。</li><li>固定リンクは設定した内容が表示されます。ページにリンクされています。</li><li>シリンダー鍵マークはパスワード付きページを表します。</li><li>南京錠マークはメンバーシップページとログインユーザ全員参加ページを表します。</li><li>ページ権限設定はメンバーシップページにたいする権限が設定さえているかどうかを表します。</li><li>その他、ページ編集で設定したいくつかの内容の状態がアイコンで表示されます。</li></ul>"
+            }
+        ]', null, 3, 'basic');
     }
 
     /**
