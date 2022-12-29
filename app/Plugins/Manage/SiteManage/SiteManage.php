@@ -634,6 +634,11 @@ class SiteManage extends ManagePluginBase
      */
     public function deleteLanguages($request, $id)
     {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
         // 指定された言語設定を削除する。
         Configs::where('name', 'language_' . $id)->delete();
         return $this->languages($request, $id, null);
