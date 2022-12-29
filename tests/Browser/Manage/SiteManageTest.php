@@ -70,7 +70,24 @@ class SiteManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/index/images/index,manage/site/index/images/index2,manage/site/index/images/index3,manage/site/index/images/index4', null, 3, 'basic');
+        $this->putManualData('[
+            {"path": "manage/site/index/images/index",
+             "name": "画面1",
+             "comment": "<ul class=\"mb-0\"><li>サイト名や適用するテーマなど、サイトに関する基本的なことを設定します。</li><li>追加テーマを指定した際は基本テーマの後で追加テーマのCSSが反映されます。</li></ul>"
+            },
+            {"path": "manage/site/index/images/index2",
+             "name": "画面1",
+             "comment": "<ul class=\"mb-0\"><li>ヘッダーバーの文字色や各エリアに付加するクラス名を指定できます。</li><li>クラス名はテーマでオリジナルのCSSを作成する場合に参照するセレクタとなります。</li></ul>"
+            },
+            {"path": "manage/site/index/images/index3",
+             "name": "画面1",
+             "comment": "<ul class=\"mb-0\"><li>ヘッダーバーの表示、固定、ログインリンクの表示などが設定できます。</li></ul>"
+            },
+            {"path": "manage/site/index/images/index4",
+             "name": "画面1",
+             "comment": "<ul class=\"mb-0\"><li>パスワードリセットの使用可否、ログイン後に移動するページ、マイページの使用可否が設定できます。</li><li>画像の保存機能を無効化する設定もできます。</li><li>スマートフォン表示の際のハンバーガーメニューの表示は、全ページを表示するデフォルトか今いるフォルダの仮想のみ展開するオープンカレントツリーを選ぶことができます。</li></ul>"
+            }
+        ]', null, 3, 'basic');
     }
 
     /**
@@ -114,7 +131,12 @@ class SiteManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/meta/images/meta', null, 3);
+        $this->putManualData('[
+            {"path": "manage/site/meta/images/meta",
+             "name": "meta情報",
+             "comment": "<ul class=\"mb-0\"><li>HEADのdescriptionに出力される値を設定できます。</li></ul>"
+            }
+        ]', null, 3, 'basic');
     }
 
     /**
@@ -138,11 +160,17 @@ class SiteManageTest extends DuskTestCase
             $browser->visit('/manage/site/layout')
                     ->click('#label_browser_width_footer')
                     ->assertTitleContains('Connect-CMS')
+                    ->pause(500)
                     ->screenshot('manage/site/layout/images/layout');
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/layout/images/layout', null, 3);
+        $this->putManualData('[
+            {"path": "manage/site/layout/images/layout",
+             "name": "レイアウト設定",
+             "comment": "<ul class=\"mb-0\"><li>ブラウザ幅100％で表示するエリアをヘッダー、センター、フッターからそれぞれ選ぶことができます。</li></ul>"
+            }
+        ]', null, 3, 'basic');
     }
 
     /**
@@ -174,7 +202,12 @@ class SiteManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/categories/images/categories', null, 3, 'basic');
+        $this->putManualData('[
+            {"path": "manage/site/categories/images/categories",
+             "name": "カテゴリ設定",
+             "comment": "<ul class=\"mb-0\"><li>ここでは、対象がALLの共通カテゴリ―を設定できます。</li></ul>"
+            }
+        ]', null, 3, 'basic');
     }
 
     /**
@@ -204,7 +237,12 @@ class SiteManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/languages/images/languages', null, 3);
+        $this->putManualData('[
+            {"path": "manage/site/languages/images/languages",
+             "name": "他言語設定",
+             "comment": "<ul class=\"mb-0\"><li>URLは各言語のページの最初に付く値を設定します。</li></ul>"
+            }
+        ]', null, 3, 'basic');
     }
 
     /**
@@ -220,7 +258,7 @@ class SiteManageTest extends DuskTestCase
     }
 
     /**
-     * エラー画面設定
+     * エラーページ設定
      */
     private function pageError()
     {
@@ -233,7 +271,12 @@ class SiteManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/pageError/images/pageError', null, 3);
+        $this->putManualData('[
+            {"path": "manage/site/pageError/images/pageError",
+             "name": "エラーページ設定",
+             "comment": "<ul class=\"mb-0\"><li>ここで指定した表示ページはこの指定内容の固定リンクをページ管理で作成しておく必要があります。</li></ul>"
+            }
+        ]', null, 3, 'basic');
     }
 
     /**
@@ -261,7 +304,12 @@ class SiteManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/analytics/images/analytics', null, 3);
+        $this->putManualData('[
+            {"path": "manage/site/analytics/images/analytics",
+             "name": "アクセス解析設定",
+             "comment": "<ul class=\"mb-0\"><li>複数のトラッキングコードの指定なども可能です。</li></ul>"
+            }
+        ]', null, 3, 'basic');
     }
 
     /**
@@ -289,7 +337,12 @@ class SiteManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/favicon/images/favicon', null, 3);
+        $this->putManualData('[
+            {"path": "manage/site/favicon/images/favicon",
+             "name": "ファビコン設定",
+             "comment": "<ul class=\"mb-0\"><li>.ico形式のファイルをアップロードしてください。</li></ul>"
+            }
+        ]', null, 3, 'basic');
     }
 
     /**
@@ -317,7 +370,12 @@ class SiteManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/wysiwyg/images/wysiwyg', null, 3, 'basic');
+        $this->putManualData('[
+            {"path": "manage/site/wysiwyg/images/wysiwyg",
+             "name": "WYSIWYG設定",
+             "comment": "<ul class=\"mb-0\"><li>初期に選択させる画像サイズは1200px、800px、400px、200pxから選ぶことができます。</li></ul>"
+            }
+        ]', null, 3, 'basic');
     }
 
     /**
@@ -332,6 +390,11 @@ class SiteManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/site/document/images/document', null, 3);
+        $this->putManualData('[
+            {"path": "manage/site/document/images/document",
+             "name": "サイト設計書",
+             "comment": "<ul class=\"mb-0\"><li>追加の出力内容で、サイト設計書に反映させる項目を増やせます。</li><li>最終ページには問合せ先や連絡先を提示するページがあり、最終ページの内容の各項目に登録してあるものが反映されます。</li></ul>"
+            }
+        ]', null, 3, 'basic');
     }
 }
