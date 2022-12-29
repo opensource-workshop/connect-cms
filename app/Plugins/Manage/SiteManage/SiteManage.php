@@ -131,6 +131,7 @@ class SiteManage extends ManagePluginBase
         $role_ckeck_table["saveLoginPermit"]  = array('admin_site');
         $role_ckeck_table["languages"]        = array('admin_site');
         $role_ckeck_table["saveLanguages"]    = array('admin_site');
+        $role_ckeck_table["deleteLanguages"]  = array('admin_site');
         $role_ckeck_table["meta"]             = array('admin_site');
         $role_ckeck_table["saveMeta"]         = array('admin_site');
         $role_ckeck_table["pageError"]        = array('admin_site');
@@ -624,6 +625,17 @@ class SiteManage extends ManagePluginBase
             }
         }
 
+        return $this->languages($request, $id, null);
+    }
+
+
+    /**
+     *  言語設定の削除処理
+     */
+    public function deleteLanguages($request, $id)
+    {
+        // 指定された言語設定を削除する。
+        Configs::where('name', 'language_' . $id)->delete();
         return $this->languages($request, $id, null);
     }
 
