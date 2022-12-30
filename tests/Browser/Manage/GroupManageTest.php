@@ -19,11 +19,20 @@ class GroupManageTest extends DuskTestCase
      */
     public function testInvoke()
     {
+        $this->init();
         $this->login(1);
-        $this->index(); // マニュアル用インデックスデータ作成のため。
+        $this->index();
         $this->edit('テスト一般');
         $this->update();
-        $this->index(); // 中身のある画面で上書き
+    }
+
+    /**
+     * 初期処理
+     */
+    private function init()
+    {
+        // 最初にマニュアルの順番確定用にメソッドを指定する。（edit2はユーザ設定後の画面）
+        $this->reserveManual('index', 'edit', 'edit2');
     }
 
     /**
@@ -37,8 +46,7 @@ class GroupManageTest extends DuskTestCase
                     ->screenshot('manage/group/index/images/index');
         });
 
-        // マニュアル用データ出力
-        $this->putManualData('manage/group/index/images/index', null, 3);
+        // マニュアル用データ出力(ユーザ登録後に出力)
     }
 
     /**
@@ -54,7 +62,12 @@ class GroupManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/group/edit/images/edit', null, 3);
+        $this->putManualData('[
+            {"path": "manage/group/edit/images/edit",
+             "name": "グループ登録",
+             "comment": "<ul class=\"mb-0\"><li>グループ名と表示順を指定してグループを登録できます。</li></ul>"
+            }
+        ]', null, 3);
     }
 
     /**
