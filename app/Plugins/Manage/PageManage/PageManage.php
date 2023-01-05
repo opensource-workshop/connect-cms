@@ -34,6 +34,9 @@ use App\Plugins\Manage\ManagePluginBase;
  * @package Controller
  * @plugin_title ページ管理
  * @plugin_desc ページの作成や設定など、ページに関する機能が集まった管理機能です。
+ * @spec ページを管理できること。
+         ページに必要な情報として「ページ名」、「固定リンク」、「メニューへの表示の有無」を持つこと。
+         ページに必要な機能として「ページにパスワードを設定する」、「ページにデザインテーマを設定する」、「ページを閲覧可能なIPアドレスを指定できる」こと。
  */
 class PageManage extends ManagePluginBase
 {
@@ -87,6 +90,7 @@ class PageManage extends ManagePluginBase
      * @method_title ページ一覧
      * @method_desc ページの一覧が表示されます。<br />ページに関する設定などが俯瞰できる画面です。
      * @method_detail ページの内容を編集するときは、ページ名の左にある編集ボタンをクリックしてください。
+     * @spec ページの一覧が表示されること。
      */
     public function index($request, $page_id = null, $errors = array())
     {
@@ -134,6 +138,12 @@ class PageManage extends ManagePluginBase
      * @method_detail <ul><li>ページに関する各項目を設定してページの作成ができます。</li>
                           <li>IPアドレス制限は、学内や社内などの特定のIPアドレスから参照されている時だけ、表示を許可したい。という使い方です。IPアドレス制限した場合は、URLを直接指定しても、制限が有効になり指定したIPアドレス以外からは参照できません。</li>
                           <li>ページを削除した場合でも、コンテンツは削除されていません。コンテンツを削除したい場合は、各コンテンツの設定画面にて削除を行ってください。</li></ul>
+     * @spec ページの登録と変更が行えること。
+             ページには固定リンクを設定できること。
+             パスワードで保護されたページを作成できること。
+             ページにはCSS等からなるデザインテーマを設定できること。
+             ページは組織内や特定の環境からのみ閲覧できるようにするため、IPアドレスで閲覧制限できること。
+             メニューに表示されるページの順番を変更できること。
      */
     public function edit($request, $page_id = null)
     {
@@ -317,6 +327,8 @@ class PageManage extends ManagePluginBase
      *
      * @method_title ページ階層移動
      * @method_desc ページは移動先を指定することで、階層を変更することができます。また、上下矢印でメニューへの表示順番を変更することもできます。
+     * @spec ページは階層構造を作成できること。
+             ページは作成後に階層を変更できること。
      */
     public function movePage($request, $page_id)
     {
@@ -471,6 +483,7 @@ class PageManage extends ManagePluginBase
      * @method_title CSVインポート
      * @method_desc CSVファイルをアップロードして、ページの登録ができます。
      * @method_detail 画面のCSVフォーマットをコピーして使用してください。
+     * @spec ページはCSVファイルをインポートして作成できること。
      */
     public function upload($request, $page_id)
     {
@@ -838,6 +851,7 @@ class PageManage extends ManagePluginBase
      * @method_title ページ権限一覧
      * @method_desc ページ権限の一覧が表示されます。<br />ページ権限に関する設定などが俯瞰できる画面です。
      * @method_detail ページ権限を編集するときは、編集ボタンをクリックしてください。
+     * @spec 管理作業の分散のため、ページ毎に編集できるユーザを設定できること。
      */
     public function roleList($request, $id)
     {

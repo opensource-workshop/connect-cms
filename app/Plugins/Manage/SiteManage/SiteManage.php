@@ -110,6 +110,8 @@ use App\Models\Migration\Nc2\Nc2Simplemovie;
  * @package Controller
  * @plugin_title サイト管理
  * @plugin_desc サイトの基本設定など、サイト全体に関する機能が集まった管理機能です。
+ * @spec サイトの基本的な設定を管理できること。
+         サイトに必要な情報等として、サイト名、サイトのCSSデザインテーマ、meta情報、ページレイアウト、エラーページ設定、アクセス解析設定、favicon設定、多言語設定ができること。
  */
 class SiteManage extends ManagePluginBase
 {
@@ -156,6 +158,8 @@ class SiteManage extends ManagePluginBase
      * @method_title サイト基本設定
      * @method_desc サイト名や基本のテーマなど、サイト全体の設定を行う画面です。
      * @method_detail 各項目の説明は画面の項目ごとのコメントを参照してください。
+     * @spec サイト名、CSS等のデザインテーマ、ログインリンクの表示の有無、画像の保存を無効化することができること。
+             パスワードがわからなくなった場合のためにユーザ自らパスワードリセットができること。
      */
     public function index($request, $page_id = null)
     {
@@ -516,6 +520,9 @@ class SiteManage extends ManagePluginBase
      * @method_title 多言語設定
      * @method_desc 多言語対応サイトを作成するときに使用します。
      * @method_detail 他言語設定することで、メニューが各言語ごとに表示されるようになり、他言語対応サイトとなります。
+     * @spec 複数の言語対応サイトの作成を可能にするため、使用する言語を複数、設定できること。
+             言語間で同じ意味のページを行き来できるようになっていること。
+             複数の言語ページを作成した際、メニューには閲覧中の言語のページが表示されていること。
      */
     public function languages($request, $id, $errors = null)
     {
@@ -691,6 +698,7 @@ class SiteManage extends ManagePluginBase
      * @method_title meta情報
      * @method_desc 画面出力時のMETAタグの設定を行う画面です。
      * @method_detail 出力されるHTMLのHEAD部分の内容になります。
+     * @spec HTMLのmeta情報を設定できること。
      */
     public function meta($request, $id, $errors = null)
     {
@@ -786,6 +794,7 @@ class SiteManage extends ManagePluginBase
      * @method_title アクセス解析設定
      * @method_desc GoogleAnalytics のトラッキングコードを埋め込むための画面です。
      * @method_detail ここで設定したトラッキングコードは、各画面で自動的に使用されます。
+     * @spec アクセス解析用にGoogle Analyticsタグの埋め込みができること。
      */
     public function analytics($request, $id, $errors = null)
     {
@@ -830,6 +839,7 @@ class SiteManage extends ManagePluginBase
      * @method_title Favicon 設定
      * @method_desc Favicon を設定できます。
      * @method_detail サイトで使用するFavicon 画像をアップロードします。
+     * @spec Favicon用画像のアップデートができること。
      */
     public function favicon($request)
     {

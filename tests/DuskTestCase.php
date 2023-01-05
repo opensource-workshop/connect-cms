@@ -428,6 +428,24 @@ abstract class DuskTestCase extends BaseTestCase
     }
 
     /**
+     *  ソースをリフレクションしてドキュメントを抽出する。
+     */
+    protected function getDocumentSpec($annotation_name, $class_name, $method_name = null)
+    {
+        $document = $this->getDocument($annotation_name, $class_name, $method_name);
+        if (empty($document)) {
+            return "";
+        }
+
+        // 改行区切りで配列にして、各行をtrimする。
+        $document_array = explode("\n", $document);
+        foreach ($document_array as &$document_line) {
+            $document_line = trim($document_line);
+        }
+        return implode("\n", $document_array);
+    }
+
+    /**
      * マニュアルデータの初期値出力（最小限）
      */
     public function reserveManualMin($category, $plugin_name, $methods)
@@ -519,6 +537,11 @@ abstract class DuskTestCase extends BaseTestCase
         $dusk->method_title = $this->getDocument('method_title', $class_name, $dusk->method_name);
         $dusk->method_desc = $this->getDocument('method_desc', $class_name, $dusk->method_name);
         $dusk->method_detail = $this->getDocument('method_detail', $class_name, $dusk->method_name);
+        if ($source_method == 'index') {
+            $dusk->spec_class = $this->getDocumentSpec('spec', $class_name);
+        }
+        $dusk->spec_method = $this->getDocumentSpec('spec', $class_name, $dusk->method_name);
+
         $dusk->img_args = $img_args;
         $dusk->save();
 
