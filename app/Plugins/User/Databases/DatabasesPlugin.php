@@ -1800,7 +1800,7 @@ class DatabasesPlugin extends UserPluginBase
             $value = $obj ? $obj->value : "";
         }
 
-        return $value;
+        return $value ?? "";
     }
 
     /**
