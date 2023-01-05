@@ -41,6 +41,10 @@ use App\Utilities\String\StringUtils;
  * @package Controller
  * @plugin_title ブログ
  * @plugin_desc ブログを作成できるプラグインです。サイトからのニュース配信などにも使用します。
+ * @spec ブログを作成できること。
+         ブログは用途ごとに作成でき、記事はWYSIWYG形式で記載できること。
+         権限により投稿、承認が設定できること。
+         投稿、承認、承認済みの各タイミングでメールによる通知の設定ができること。
  */
 class BlogsPlugin extends UserPluginBase
 {
@@ -589,6 +593,10 @@ WHERE status = 0
      * @method_title 記事一覧
      * @method_desc ブログを表示します。
      * @method_detail 日付が新しいものから、表示されます。
+     * @spec ブログを作成できること。
+             ブログは用途ごとに作成でき、記事はWYSIWYG形式で記載できること。
+             権限により投稿、承認が設定できること。
+             投稿、承認、承認済みの各タイミングでメールによる通知の設定ができること。
      */
     public function index($request, $page_id, $frame_id)
     {
