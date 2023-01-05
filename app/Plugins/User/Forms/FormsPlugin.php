@@ -676,7 +676,6 @@ class FormsPlugin extends UserPluginBase
 
         // 入力値をトリム
         // bugfix: 【データベース】（Laravel6テスト）ファイル型項目にファイルをアップするとシステムエラーと同じ対応 https://github.com/opensource-workshop/connect-cms/issues/732
-        // $request->merge(StringUtils::trimInput($request->all()));
         foreach ($forms_columns as $forms_column) {
             // ファイルタイプ以外の入力値をトリム
             if (! FormsColumns::isFileColumnType($forms_column->column_type)) {
@@ -698,7 +697,6 @@ class FormsPlugin extends UserPluginBase
         $validator->setAttributeNames($validator_array['message']);
 
         // エラーがあった場合は入力画面に戻る。
-        // $message = null;
         if ($validator->fails()) {
 
             // ファイル項目を探してセッション対象から除く
@@ -749,8 +747,6 @@ class FormsPlugin extends UserPluginBase
                 }
             }
         }
-
-        // var_dump('publicConfirm', $request->forms_columns_value);
 
         // 表示テンプレートを呼び出す。
         return $this->view('forms_confirm', [
