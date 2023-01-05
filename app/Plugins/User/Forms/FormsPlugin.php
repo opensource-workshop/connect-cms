@@ -278,9 +278,6 @@ class FormsPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id, $errors = null)
     {
-        // セッション初期化などのLaravel 処理。
-        $request->flash();
-
         // Forms、Frame データ
         $form = $this->getForms($frame_id);
 
@@ -703,6 +700,17 @@ class FormsPlugin extends UserPluginBase
         // エラーがあった場合は入力画面に戻る。
         // $message = null;
         if ($validator->fails()) {
+
+            // ファイル項目を探してセッション対象から除く
+            $flashExcepts = [];
+            foreach ($forms_columns as $forms_column) {
+                if (FormsColumns::isFileColumnType($forms_column->column_type)) {
+                    $flashExcepts[] = 'forms_columns_value.' . $forms_column->id;
+                }
+            }
+            // 入力をフラッシュデータとして保存
+            $request->flashExcept($flashExcepts);
+
             return $this->index($request, $page_id, $frame_id, $validator->errors());
         }
 
