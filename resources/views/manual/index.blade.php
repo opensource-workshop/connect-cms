@@ -42,7 +42,6 @@
         @endif
     </div>
 </div>
-
 <div class="row mt-3">
     <div class="col-sm">
         <div class="card">
@@ -53,6 +52,39 @@
                     <li><a href="./pdf/manual.pdf" target="_blank">Connect-CMS 全機能版マニュアルPDF ダウンロード</a>
                     <li><a href="./pdf/basic.pdf" target="_blank">Connect-CMS 基本機能版マニュアルPDF ダウンロード</a>
                 </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mt-3">
+    <div class="col-sm">
+        <div class="card">
+            <div class="card-header text-white bg-primary">Connect-CMS 仕様</div>
+            <div class="card-body">
+                <p>Connect-CMS を実装する際の元の仕様をダウンロードできます。</p>
+
+                <table class="table" style="width: auto;">
+                <thead>
+                    <tr>
+                        <th scope="col"></th>
+                        <th scope="col">テキスト形式</th>
+                        <th scope="col">PDF形式</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th scope="row">概要版</th>
+                        <td><a href="./spec/spec_summary.txt" target="_blank">概要版仕様 テキスト形式</a></td>
+                        <td><a href="./spec/spec_summary.pdf" target="_blank">概要版仕様 PDF形式</a></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">詳細版</th>
+                        <td><a href="./spec/spec_detail.txt" target="_blank">詳細版仕様 テキスト形式</a></td>
+                        <td><a href="./spec/spec_detail.pdf" target="_blank">詳細版仕様 PDF形式</a></td>
+                    </tr>
+                </tbody>
+                </table>
+
             </div>
         </div>
     </div>
