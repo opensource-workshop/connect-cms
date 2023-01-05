@@ -278,9 +278,6 @@ class FormsPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id, $errors = null)
     {
-        // セッション初期化などのLaravel 処理。
-        $request->flash();
-
         // Forms、Frame データ
         $form = $this->getForms($frame_id);
 
@@ -679,7 +676,6 @@ class FormsPlugin extends UserPluginBase
 
         // 入力値をトリム
         // bugfix: 【データベース】（Laravel6テスト）ファイル型項目にファイルをアップするとシステムエラーと同じ対応 https://github.com/opensource-workshop/connect-cms/issues/732
-        // $request->merge(StringUtils::trimInput($request->all()));
         foreach ($forms_columns as $forms_column) {
             // ファイルタイプ以外の入力値をトリム
             if (! FormsColumns::isFileColumnType($forms_column->column_type)) {
@@ -701,8 +697,18 @@ class FormsPlugin extends UserPluginBase
         $validator->setAttributeNames($validator_array['message']);
 
         // エラーがあった場合は入力画面に戻る。
-        // $message = null;
         if ($validator->fails()) {
+
+            // ファイル項目を探してセッション対象から除く
+            $flashExcepts = [];
+            foreach ($forms_columns as $forms_column) {
+                if (FormsColumns::isFileColumnType($forms_column->column_type)) {
+                    $flashExcepts[] = 'forms_columns_value.' . $forms_column->id;
+                }
+            }
+            // 入力をフラッシュデータとして保存
+            $request->flashExcept($flashExcepts);
+
             return $this->index($request, $page_id, $frame_id, $validator->errors());
         }
 
@@ -741,8 +747,6 @@ class FormsPlugin extends UserPluginBase
                 }
             }
         }
-
-        // var_dump('publicConfirm', $request->forms_columns_value);
 
         // 表示テンプレートを呼び出す。
         return $this->view('forms_confirm', [
