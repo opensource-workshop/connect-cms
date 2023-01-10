@@ -928,7 +928,12 @@ class ReservationsPlugin extends UserPluginBase
             // 繰り返し終了
             if ($request->rrule_repeat_end == 'UNTIL') {
                 // 指定日 UNTIL
-                $rrule_setting['UNTIL'] = $request->rrule_until . ' 00:00:00';
+                if ($request->end_datetime == '24:00') {
+                    // 繰り返し指定日2023-01-24、24:00まで予約できる施設で終日予約した場合 '2023-01-24 24:00:00'となり 指定日が1/25になってしまうため、'2023-01-24 00:00:00'として扱う
+                    $rrule_setting['UNTIL'] = $request->rrule_until . ' 00:00:00';
+                } else {
+                    $rrule_setting['UNTIL'] = $request->rrule_until . ' ' . $request->end_datetime . ':00';
+                }
             } else {
                 // 指定の回数後 COUNT とみなす
                 $rrule_setting['COUNT'] = (int) $request->rrule_count;
