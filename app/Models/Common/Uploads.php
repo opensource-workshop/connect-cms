@@ -5,9 +5,12 @@ namespace App\Models\Common;
 use App\Models\Core\Configs;
 use Illuminate\Database\Eloquent\Model;
 use Intervention\Image\Facades\Image;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Uploads extends Model
 {
+    use SoftDeletes;
+
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */

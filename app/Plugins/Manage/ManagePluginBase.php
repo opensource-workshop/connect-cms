@@ -7,6 +7,7 @@ use File;
 use App\Models\Core\Configs;
 
 use App\Plugins\PluginBase;
+use App\Traits\ConnectCommonTrait;
 
 /**
  * 管理プラグイン
@@ -20,6 +21,8 @@ use App\Plugins\PluginBase;
  */
 class ManagePluginBase extends PluginBase
 {
+    use ConnectCommonTrait;
+
     /**
      *  設定されているConfig の取得
      */

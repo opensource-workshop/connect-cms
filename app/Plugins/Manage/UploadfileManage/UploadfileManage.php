@@ -38,6 +38,7 @@ class UploadfileManage extends ManagePluginBase
         $role_ckeck_table["clearSearch"] = array('admin_site');
         $role_ckeck_table["edit"]        = array('admin_site');
         $role_ckeck_table["save"]        = array('admin_site');
+        $role_ckeck_table["delete"]      = array('admin_site');
         $role_ckeck_table["uploadImage"] = array('admin_site');
         $role_ckeck_table["deleteImage"] = array('admin_site');
         $role_ckeck_table["userdir"]    = array('admin_site');
@@ -196,6 +197,22 @@ class UploadfileManage extends ManagePluginBase
         $upload->save();
 
         return redirect("/manage/uploadfile/edit/" . $uploads_id)->with('info_message', '更新しました。');
+    }
+
+    /**
+     *  削除
+     */
+    public function delete($request, $uploads_id)
+    {
+        $upload = Uploads::findOrFail($uploads_id);
+
+        // ファイル削除
+        Storage::delete($this->getDirectory($upload->id) . '/' . $upload->id . '.' .$upload->extension);
+
+        // レコード削除
+        $upload->delete();
+
+        return redirect('/manage/uploadfile/')->with('info_message', '削除しました。(ID:' . $upload->id . ', ファイル名:' . $upload->client_original_name . ')');
     }
 
     /**
