@@ -98,13 +98,16 @@
             {{-- ボタンエリア --}}
             <div class="form-group text-center">
                 <div class="row">
-                    <div class="mx-auto">
+                    <div class="col-xl-3"></div>
+                    <div class="col-9 col-xl-6 mx-auto">
                         <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/uploadfile')}}'">
                             <i class="fas fa-times"></i> キャンセル
                         </button>
-                        <button type="submit" class="btn btn-primary mr-2 form-horizontal">
+                        <button type="submit" class="btn btn-primary form-horizontal">
                             <i class="fas fa-check"></i> 更新
                         </button>
+                    </div>
+                    <div class="col-3 col-xl-3 text-right">
                         <a data-toggle="collapse" href="#collapse_delete">
                             <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="d-none d-md-inline"> 削除</span></span>
                         </a>
