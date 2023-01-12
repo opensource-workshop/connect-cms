@@ -18,6 +18,8 @@ use App\Plugins\Manage\ManagePluginBase;
  * @package Controller
  * @plugin_title 管理画面
  * @plugin_desc 管理画面の初めに開く画面です。Connect-CMS の公式サイトより、最新情報を取得して表示します。
+ * @spec CMSに管理者権限ログインした場合、管理者機能が使えること。
+         また、管理者がインストールされているCMSのバージョンを把握できるように管理画面でバージョンを確認できること。
  */
 class IndexManage extends ManagePluginBase
 {
@@ -39,6 +41,7 @@ class IndexManage extends ManagePluginBase
      * @method_title お知らせ
      * @method_desc インストールされているConnect-CMSのバージョン及び最新機能やバージョンアップ情報が表示されます。
      * @method_detail Connect-CMSのバージョンアップ情報は公式サイトでも確認できます。
+     * @spec バージョン把握のため、管理画面でインストールされているバージョンが表示されること。
      */
     public function index($request)
     {

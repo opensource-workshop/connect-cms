@@ -27,6 +27,8 @@ use App\Rules\CustomValiWysiwygMax;
  * @package Controller
  * @plugin_title 固定記事
  * @plugin_desc サイト上に文字や画像を配置できるプラグインです。
+ * @spec ページ上に任意の文章を表示、画像の挿入、ファイルの添付ができること。
+         編集方法はWYSIWYG方式などでHTMLを理解していない編集者でも容易に編集できること。
  */
 class ContentsPlugin extends UserPluginBase
 {
@@ -316,6 +318,8 @@ class ContentsPlugin extends UserPluginBase
      * @method_title 表示
      * @method_desc サイト上に記載した文字や画像を表示できる基本となるプラグインです。
      * @method_detail
+     * @spec ページ上に任意の文章を表示、画像の挿入、ファイルの添付ができること。
+             編集方法はWYSIWYG方式などでHTMLを理解していない編集者でも容易に編集できること。
      */
     public function index($request, $page_id, $frame_id)
     {

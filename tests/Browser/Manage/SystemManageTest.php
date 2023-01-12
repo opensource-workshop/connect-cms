@@ -142,7 +142,12 @@ class SystemManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/system/log/images/log', null, 3);
+        $this->putManualData('[
+            {"path": "manage/system/log/images/log",
+             "name": "エラーログ設定",
+             "comment": "<ul class=\"mb-0\"><li>エラーログは storage/logs ディレクトリに出力されます。</li><li>システム的なエラーがあった際はPHPのスタックトレース形式のログが出力されます。</li></ul>"
+            }
+        ]', null, 3);
     }
 
     /**
@@ -169,6 +174,11 @@ class SystemManageTest extends DuskTestCase
         });
 
         // マニュアル用データ出力
-        $this->putManualData('manage/system/server/images/server', null, 3);
+        $this->putManualData('[
+            {"path": "manage/system/server/images/server",
+             "name": "サーバ設定",
+             "comment": "<ul class=\"mb-0\"><li>画像アップロード時にシステムエラーになる場合は、画像の変換処理でメモリが不足している可能性があります。<br />そのような場合は、ここで画像変換時に使用するメモリ上限を設定することで、エラーを回避できる可能性があります。</li></ul>"
+            }
+        ]', null, 3);
     }
 }

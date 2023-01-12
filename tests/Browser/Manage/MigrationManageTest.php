@@ -34,7 +34,8 @@ class MigrationManageTest extends DuskTestCase
 
         $this->putManualData('[
             {"path": "manage/migration/index/images/index",
-             "name": "NetCommons2移行"
+             "name": "NetCommons2移行",
+             "comment": "<ul class=\"mb-0\"><li>NetCommons2のフルバックアップはNetCommons2の管理画面で作成、ダウンロードすることができます。</li><li>NetCommons2のフルバックアップファイルのサイズが大きい場合は、アップロードで失敗したり、処理時間が長くてエラーになったりすることがあります。<br />そのような場合は、ApacheやPHPの設定を見直してください。</li></ul>"
             }
         ]', null, 3);
     }

@@ -79,6 +79,8 @@ EOF;
              'method_title' => '表示',
              'method_desc' => 'サイト上に記載した文字や画像を表示できる基本となるプラグインです。',
              'method_detail' => '',
+             'spec_class' => $this->getDocumentSpec('spec', 'App\Plugins\User\Contents\ContentsPlugin'),
+             'spec_method' => $this->getDocumentSpec('spec', 'App\Plugins\User\Contents\ContentsPlugin', 'index'),
              'html_path' => 'user/contents/index/index.html',
              'img_args' => '[
                  {"path": "user/contents/index/images/index",
