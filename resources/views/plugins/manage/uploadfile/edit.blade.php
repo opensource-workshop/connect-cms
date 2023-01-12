@@ -105,11 +105,9 @@
                         <button type="submit" class="btn btn-primary mr-2 form-horizontal">
                             <i class="fas fa-check"></i> 更新
                         </button>
-                        @if ($upload->id)
-                            <a data-toggle="collapse" href="#collapse_delete">
-                                <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="d-none d-md-inline"> 削除</span></span>
-                            </a>
-                        @endif
+                        <a data-toggle="collapse" href="#collapse_delete">
+                            <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="d-none d-md-inline"> 削除</span></span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -117,21 +115,19 @@
     </div>
 </div>
 
-@if ($upload->id)
-    <div id="collapse_delete" class="collapse mt-3">
-        <div class="card border-danger">
-            <div class="card-body">
-                <span class="text-danger">アップロードファイルを削除します。<br>元に戻すことはできないため、よく確認して実行してください。</span>
-                <div class="text-center">
-                    {{-- 削除ボタン --}}
-                    <form action="{{url('/manage/uploadfile/delete')}}/{{$upload->id}}" method="POST">
-                        {{csrf_field()}}
-                        <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
-                    </form>
-                </div>
+<div id="collapse_delete" class="collapse mt-3">
+    <div class="card border-danger">
+        <div class="card-body">
+            <span class="text-danger">アップロードファイルを削除します。<br>元に戻すことはできないため、よく確認して実行してください。</span>
+            <div class="text-center">
+                {{-- 削除ボタン --}}
+                <form action="{{url('/manage/uploadfile/delete')}}/{{$upload->id}}" method="POST">
+                    {{csrf_field()}}
+                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
+                </form>
             </div>
         </div>
     </div>
-@endif
+</div>
 
 @endsection
