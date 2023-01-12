@@ -212,7 +212,7 @@ class UploadfileManage extends ManagePluginBase
         // レコード削除
         $upload->delete();
 
-        return redirect('/manage/uploadfile/')->with('info_message', '削除しました。(ID:' . $upload->id . ', ファイル名:' . $upload->client_original_name . ')');
+        return redirect('/manage/uploadfile/')->with('flash_message', '削除しました。(ID:' . $upload->id . ', ファイル名:' . $upload->client_original_name . ')');
     }
 
     /**

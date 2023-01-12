@@ -18,11 +18,8 @@
     </div>
     <div class="card-body">
 
-        @if (session('info_message'))
-            <div class="alert alert-info">
-                {{session('info_message')}}
-            </div>
-        @endif
+        {{-- メッセージ表示 --}}
+        @include('plugins.common.flash_message')
 
         <div class="accordion" id="search_accordion">
             <div class="card">
