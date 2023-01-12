@@ -13,6 +13,7 @@ use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
 
 use App\Plugins\Manage\ManagePluginBase;
+use App\Traits\ConnectCommonTrait;
 
 /**
  * アップロードファイル管理クラス
@@ -26,6 +27,8 @@ use App\Plugins\Manage\ManagePluginBase;
  */
 class UploadfileManage extends ManagePluginBase
 {
+    use ConnectCommonTrait;
+
     /**
      *  権限定義
      */
