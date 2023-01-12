@@ -51,7 +51,7 @@ if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null
         <h1 class="card-header {{$class_header_bg}} border-0" style="padding-top: 0px;padding-bottom: 0px;">
     @elseif (Auth::check() && empty($frame->frame_title))
         @php $class_header_bg = "bg-transparent"; @endphp
-        <h1 class="card-header {{$class_header_bg}} border-0" style="padding-top: 0px;padding-bottom: 0px;height: 24px;">
+        <h1 class="card-header {{$class_header_bg}} border-0" style="padding-top: 0px;padding-bottom: 0px;">
     @else
         @php $class_header_bg = "bg-{$frame->frame_design}"; @endphp
         <h1 class="card-header {{$class_header_bg}} cc-{{$frame->frame_design}}-font-color">
