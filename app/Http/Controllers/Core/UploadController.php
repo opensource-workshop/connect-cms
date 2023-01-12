@@ -55,9 +55,9 @@ class UploadController extends ConnectController
      */
     public function getFile(Request $request, $id = null)
     {
-        // id がない場合は404
+        // id がない場合は空を返す。（例：DBプラグイン－画像型で必須指定なしでの運用等）
         if (empty($id)) {
-            abort(404);
+            return response()->download(storage_path(config('connect.no_image_path')));
         }
 
         // id のファイルを読んでhttp request に返す。
