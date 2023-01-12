@@ -339,7 +339,7 @@ rem ---------------------------------------------
 
 if "%1" == "t_all" (
     echo --- édólèoóÕ
-    php artisan dusk tests\Manual\src\SpecOutput.php
+rem    php artisan dusk tests\Manual\src\SpecOutput.php
 )
 
 rem ---------------------------------------------

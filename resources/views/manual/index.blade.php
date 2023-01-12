@@ -56,6 +56,7 @@
         </div>
     </div>
 </div>
+{{--
 <div class="row mt-3">
     <div class="col-sm">
         <div class="card">
@@ -89,6 +90,7 @@
         </div>
     </div>
 </div>
+--}}
 <div class="row mt-3">
     <div class="col-sm">
         <div class="card">
