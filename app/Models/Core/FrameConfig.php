@@ -15,6 +15,11 @@ class FrameConfig extends Model
     use SoftDeletes, UserableNohistory;
 
     /**
+     * @var string
+     */
+    const CHECKBOX_SEPARATOR = '|';
+
+    /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
     protected $fillable = [
@@ -69,13 +74,18 @@ class FrameConfig extends Model
     {
         foreach ($frame_config_names as $key => $name) {
 
-            if ($request->$name != '0' && empty($request->$name)) {
+            // 必須入力チェック
+            // チェックボックスの場合、すべて選択しない場合があるので除外する
+            if (!is_array($request->$name) && $request->$name != '0' && empty($request->$name)) {
                 continue;
             }
 
+            // 配列の設定値はパイプ区切りにする
+            $value = is_array($request->$name) ? implode(self::CHECKBOX_SEPARATOR, $request->$name) : $request->$name;
+
             self::updateOrCreate(
                 ['frame_id' => $frame_id, 'name' => $name],
-                ['value' => $request->$name]
+                ['value' => $value]
             );
         }
     }
