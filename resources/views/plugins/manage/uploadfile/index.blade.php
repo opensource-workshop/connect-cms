@@ -18,6 +18,9 @@
     </div>
     <div class="card-body">
 
+        {{-- メッセージ表示 --}}
+        @include('plugins.common.flash_message')
+
         <div class="accordion" id="search_accordion">
             <div class="card">
                 <button class="btn btn-link p-0 text-left collapsed" type="button" data-toggle="collapse" data-target="#search_collapse" aria-expanded="false" aria-controls="search_collapse">

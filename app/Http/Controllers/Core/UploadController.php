@@ -55,7 +55,7 @@ class UploadController extends ConnectController
      */
     public function getFile(Request $request, $id = null)
     {
-        // id がない場合は空を返す。
+        // id がない場合は空を返す。（例：DBプラグイン－画像型で必須指定なしでの運用等）
         if (empty($id)) {
             return response()->download(storage_path(config('connect.no_image_path')));
         }
@@ -63,14 +63,14 @@ class UploadController extends ConnectController
         // id のファイルを読んでhttp request に返す。
         $uploads = Uploads::where('id', $id)->first();
 
-        // データベースがない場合は空で返す
+        // レコードがない場合は404
         if (empty($uploads)) {
-            return response()->download(storage_path(config('connect.no_image_path')));
+            abort(404);
         }
 
-        // ファイルの実体がない場合は空を返す。
+        // ファイルの実体がない場合は404
         if (!Storage::exists($this->getDirectory($id) . '/' . $id . '.' . $uploads->extension)) {
-            return;
+            abort(404);
         }
 
         $no_cache_headers = [
@@ -81,12 +81,12 @@ class UploadController extends ConnectController
             'Cache-Control' => config('connect.CACHE_CONTROL'),
         ];
 
-        // 一時保存ファイルの場合は所有者を確認して、所有者ならOK
+        // 一時保存ファイルの場合は所有者を確認して、所有者ならOK。所有者以外なら404
         // 一時保存ファイルは、登録時の確認画面を表示している際を想定している。
         if ($uploads->temporary_flag == 1) {
             $user_id = Auth::id();
             if ($uploads->created_id != $user_id) {
-                return response()->download(storage_path(config('connect.no_image_path')));
+                abort(404);
             }
 
             // キャッシュしない
