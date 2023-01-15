@@ -40,7 +40,7 @@ class ServiceBlueprintTest extends DuskTestCase
             'sort' => 1,
             'plugin_name' => 'service',
             'plugin_title' => '外部サービス',
-            'plugin_desc' => 'Connect-CMSの外部サービスについて説明します。',
+            'plugin_desc' => 'Connect-CMSの機能を補完する外部サービス',
             'method_name' => 'index',
             'method_title' => '外部サービス',
             'method_desc' => '外部サービスとは、Connect-CMSから呼び出すAPIサービスです。',

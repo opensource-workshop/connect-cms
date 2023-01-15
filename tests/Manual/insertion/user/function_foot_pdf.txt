@@ -1,0 +1,16 @@
+<tr nobr="true">
+    <td style="width: 30%;">アンケート</td>
+    <td style="width: 70%;">（開発中）フォームのアンケートモードとして実装中</td>
+</tr>
+<tr nobr="true">
+    <td style="width: 30%;">テスト</td>
+    <td style="width: 70%;">（開発中）フォームのテストモードとして実装中</td>
+</tr>
+<tr nobr="true">
+    <td style="width: 30%;">ToDo</td>
+    <td style="width: 70%;">（開発予定）タスクを共有できるToDoプラグイン</td>
+</tr>
+<tr nobr="true">
+    <td style="width: 30%;">回覧板</td>
+    <td style="width: 70%;">（開発予定）議題の既読確認のできる回覧板機能</td>
+</tr>

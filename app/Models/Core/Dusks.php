@@ -107,7 +107,9 @@ class Dusks extends Model
     public function getInsertion($level, $position, $front = '', $rear = '')
     {
         $search_dir = '';
-        if ($level == 'plugin') {
+        if ($level == 'category') {
+            $search_dir = 'insertion/' . $this->category;
+        } elseif ($level == 'plugin') {
             $search_dir = 'insertion/' . $this->category . '/' . $this->plugin_name;
         } elseif ($level == 'method') {
             $search_dir = 'insertion/' . $this->category . '/' . $this->plugin_name . '/'. $this->method_name;

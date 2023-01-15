@@ -217,10 +217,7 @@ class ManualPdf extends DuskTestCase
         $this->screenshots_root = base_path('tests/Browser/screenshots/');
 
         // マニュアル出力のために、dusk データベースなど利用するので、アサーションは無条件にOKとしたい。
-        $this->browse(function (Browser $browser) {
-            $browser->visit('/')
-                    ->assertTitleContains('Connect-CMS');
-        });
+        $this->assertTrue(true);
 
         // 全データ取得
         $dusks = Dusks::where('category', '!=', 'top')->orderBy("id", "asc")->get();

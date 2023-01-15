@@ -64,7 +64,7 @@ class RoleBlueprintTest extends DuskTestCase
             'sort' => 1,
             'plugin_name' => 'role',
             'plugin_title' => '権限',
-            'plugin_desc' => 'Connect-CMSの権限について説明します。',
+            'plugin_desc' => 'Connect-CMSの権限',
             'method_name' => 'index',
             'method_title' => '権限の種類',
             'method_desc' => '権限とは、管理機能やプラグインの配置ができる権限や記事の投稿ができる権限などのように、各操作を許可するものを指します。',
