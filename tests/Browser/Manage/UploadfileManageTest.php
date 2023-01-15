@@ -68,7 +68,7 @@ class UploadfileManageTest extends DuskTestCase
         $this->putManualData('[
             {"path": "manage/uploadfile/edit/images/edit",
              "name": "アップロードファイル編集",
-             "comment": "<ul class=\"mb-0\"><li>ファイル名の変更が可能です。</li></ul>"
+             "comment": "<ul class=\"mb-0\"><li>ファイル名の変更が可能です。</li><li>ファイルの削除が可能です。</li></ul>"
             }
         ]', null, 3);
     }
