@@ -109,7 +109,7 @@ class FunctionListPdf extends DuskTestCase
         // マニュアル表紙
         $pdf->writeHTML(
             view(
-                'manual.function.cover',[]
+                'manual.function.cover', []
             )->render(), false
         );
 
