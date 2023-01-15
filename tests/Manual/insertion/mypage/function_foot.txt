@@ -1,0 +1,1 @@
+<dd class="col-md-6 col-lg-3 text-nowrap">サイト内メッセージ（開発予定）</dd>

@@ -92,6 +92,18 @@ class ManualOutput extends DuskTestCase
     }
 
     /**
+     * 機能一覧出力
+     *
+     * @return void
+     */
+    private function outputFunction($view_path, $methods)
+    {
+        // ページ生成
+        $html = view($view_path, ['level' => 'category', 'base_path' => '../', 'methods' => $methods]);
+        $this->putFile("function/index.html", $html);
+    }
+
+    /**
      * カテゴリトップ出力
      *
      * @return void
@@ -312,11 +324,14 @@ class ManualOutput extends DuskTestCase
         });
 
         // 全データ取得
-        $methods = Dusks::get();
+        $methods = Dusks::orderBy('sort')->orderBy('id')->get();
         //$methods = Dusks::where('plugin_name', 'contents')->get();
 
         // トップページ(トップページは Dusk レコードがないので、空の Dusks を使用する)
         $this->outputHome('manual/index');
+
+        // 機能一覧
+        $this->outputFunction('manual/function', $methods);
 
         // カテゴリトップ出力
         $this->outputCategory('manual/category', $methods);

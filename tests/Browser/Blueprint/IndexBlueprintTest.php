@@ -40,7 +40,7 @@ class IndexBlueprintTest extends DuskTestCase
             'sort' => 1,
             'plugin_name' => 'index',
             'plugin_title' => '構造',
-            'plugin_desc' => 'Connect-CMSの構造について説明します。',
+            'plugin_desc' => 'Connect-CMSのデータ構造',
             'method_name' => 'index',
             'method_title' => 'バケツ',
             'method_desc' => 'Connect-CMSでは、記事はバケツに入っていると考えます。',

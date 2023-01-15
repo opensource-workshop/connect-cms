@@ -316,6 +316,9 @@ if "%1" == "t_all" (
 
     echo --- マニュアルPDF（基礎編）出力
     php artisan dusk tests\Manual\src\ManualPdf.php contact_page=on level=basic
+
+    echo --- 機能一覧PDF出力
+    php artisan dusk tests\Manual\src\FunctionListPdf.php
 )
 
 rem ---------------------------------------------

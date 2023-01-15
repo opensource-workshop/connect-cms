@@ -40,7 +40,7 @@ class PageBlueprintTest extends DuskTestCase
             'sort' => 1,
             'plugin_name' => 'page',
             'plugin_title' => 'ページ',
-            'plugin_desc' => 'Connect-CMSのページについて説明します。',
+            'plugin_desc' => 'Connect-CMSのページ、フレーム、バケツ、プラグインの関係',
             'method_name' => 'index',
             'method_title' => 'ページとフレーム',
             'method_desc' => 'Connect-CMS のページについて説明します。',
