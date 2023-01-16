@@ -53,19 +53,19 @@
                 <tbody>
                     <tr>
                         <th nowrap rowspan="2" class="align-middle text-center">全機能版</th>
-                        <td colspan="2" class="text-center"><a href="./pdf/manual.pdf">管理者編・一般編合成マニュアル</a></td>
+                        <td colspan="2" class="text-center"><a href="./pdf/manual.pdf" target="_blank">管理者編・一般編合成マニュアル</a></td>
                     </tr>
                     <tr>
-                        <td><a href="./pdf/manual_manage.pdf">管理者編 マニュアル</a></td>
-                        <td><a href="./pdf/manual_user.pdf">一般ユーザ編 マニュアル</a></td>
+                        <td><a href="./pdf/manual_manage.pdf" target="_blank">管理者編 マニュアル</a></td>
+                        <td><a href="./pdf/manual_user.pdf" target="_blank">一般ユーザ編 マニュアル</a></td>
                     </tr>
                     <tr>
                         <th nowrap rowspan="2" class="align-middle text-center">基本機能版</th>
-                        <td colspan="2" class="text-center"><a href="./pdf/manual_basic.pdf">管理者編・一般編合成マニュアル</a></td>
+                        <td colspan="2" class="text-center"><a href="./pdf/manual_basic.pdf" target="_blank">管理者編・一般編合成マニュアル</a></td>
                     </tr>
                     <tr>
-                        <td><a href="./pdf/manual_manage_basic.pdf">管理者編 マニュアル</a></td>
-                        <td><a href="./pdf/manual_user_basic.pdf">一般ユーザ編 マニュアル</a></td>
+                        <td><a href="./pdf/manual_manage_basic.pdf" target="_blank">管理者編 マニュアル</a></td>
+                        <td><a href="./pdf/manual_user_basic.pdf" target="_blank">一般ユーザ編 マニュアル</a></td>
                     </tr>
                 </tbody>
                 </table>
@@ -76,20 +76,6 @@
                 </li></ul>
             </li>
         </ul>
-    </div>
-</div>
-<div class="row mt-3">
-    <div class="col-sm">
-        <div class="card">
-            <div class="card-header text-white bg-primary">Connect-CMS ダウンロード・マニュアル</div>
-            <div class="card-body">
-                <p>Connect-CMS のマニュアルをPDF でダウンロードできます。</p>
-                <ul>
-                    <li><a href="./pdf/manual.pdf" target="_blank">Connect-CMS 全機能版マニュアルPDF ダウンロード</a>
-                    <li><a href="./pdf/basic.pdf" target="_blank">Connect-CMS 基本機能版マニュアルPDF ダウンロード</a>
-                </ul>
-            </div>
-        </div>
     </div>
 </div>
 {{--
