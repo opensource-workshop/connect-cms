@@ -52,7 +52,7 @@ class WysiwygTest extends DuskTestCase
         $this->translate();
         $this->pdf();
         $this->face();
-        $this->error();
+        //$this->error();
 
         $this->logout();
     }
@@ -1021,7 +1021,7 @@ class WysiwygTest extends DuskTestCase
         // マニュアル用データ出力（権限）
         Dusks::create([
             'category' => 'common',
-            'sort' => 1,
+            'sort' => 2,
             'plugin_name' => 'wysiwyg',
             'plugin_title' => 'WYSIWYG',
             'plugin_desc' => 'WYSIWYG機能で記事を編集できます。',

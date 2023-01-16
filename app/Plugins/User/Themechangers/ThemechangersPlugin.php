@@ -127,7 +127,7 @@ class ThemechangersPlugin extends UserPluginBase
      * 初期表示取得関数
      *
      * @return view
-     * @method_title 書記表示
+     * @method_title 初期表示
      * @method_desc 現在インストールされているテーマが一覧で選択でき、一時的に表示を切り替えることができます。
      * @method_detail ユーザが作成したオリジナルのテーマも選択できます。
      */
