@@ -1,0 +1,4 @@
+<tr nobr="true">
+    <td style="width: 30%;">バックアップ管理</td>
+    <td style="width: 70%;">（開発予定）データ・ポータビリティを実現するためのバックアップ機能</td>
+</tr>
