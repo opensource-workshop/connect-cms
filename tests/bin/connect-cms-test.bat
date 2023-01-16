@@ -244,6 +244,9 @@ php artisan dusk tests\Browser\User\ReservationsPluginTest.php
 echo --- タブ
 php artisan dusk tests\Browser\User\TabsPluginTest.php
 
+echo --- テーマチェンジャー
+php artisan dusk tests\Browser\User\ThemechangersPluginTest.php
+
 echo ※ スクリーンショットの保存先
 echo tests\Browser\screenshots
 

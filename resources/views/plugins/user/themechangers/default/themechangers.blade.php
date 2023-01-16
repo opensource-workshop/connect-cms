@@ -37,7 +37,7 @@
             </div>
 
             <div class="text-center mt-2">
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn btn-primary" id="themechanger_button{{$frame->id}}">
                     <i class="fas fa-check"></i> 変更
                 </button>
             </div>

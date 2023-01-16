@@ -148,7 +148,7 @@ class UploadfileManage extends ManagePluginBase
      *  編集画面
      *
      * @method_title アップロードファイル編集
-     * @method_desc アップロードファイルのファイル名が編集できます。
+     * @method_desc アップロードファイルのファイル名の編集と削除ができます。
      * @method_detail アップロードファイルの詳細情報を確認することができます。
      */
     public function edit($request, $uploads_id)

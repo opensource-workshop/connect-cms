@@ -19,6 +19,8 @@ use App\Plugins\User\UserPluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category テーマチェンジャー・プラグイン
  * @package Controller
+ * @plugin_title テーマチェンジャー
+ * @plugin_desc テーマ設定を変更保存することなく切り替えて確認できるようにするプラグインです。
  */
 class ThemechangersPlugin extends UserPluginBase
 {
@@ -122,9 +124,12 @@ class ThemechangersPlugin extends UserPluginBase
     /* 画面アクション関数 */
 
     /**
-     *  初期表示取得関数
+     * 初期表示取得関数
      *
      * @return view
+     * @method_title 書記表示
+     * @method_desc 現在インストールされているテーマが一覧で選択でき、一時的に表示を切り替えることができます。
+     * @method_detail ユーザが作成したオリジナルのテーマも選択できます。
      */
     public function index($request, $page_id, $frame_id)
     {
@@ -150,7 +155,11 @@ class ThemechangersPlugin extends UserPluginBase
     }
 
     /**
-     *  テーマ選択関数
+     * テーマ切り替え
+     *
+     * @method_title テーマ切り替え
+     * @method_desc テーマを一時的に切り替えます。
+     * @method_detail ここでテーマを切り替えても、他のユーザには影響がないため、安全にテーマのテストができます。
      */
     public function select($request, $page_id, $frame_id)
     {
