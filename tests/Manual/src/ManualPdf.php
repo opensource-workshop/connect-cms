@@ -27,6 +27,11 @@ class ManualPdf extends DuskTestCase
     private $level = null;
 
     /**
+     * 出力カテゴリ
+     */
+    private $arg_category = null;
+
+    /**
      * コンストラクタ
      *
      * @return void
@@ -103,13 +108,6 @@ class ManualPdf extends DuskTestCase
      */
     private function outputCategory($pdf, $dusks, $category)
     {
-        // レベル指定されている場合に、指定のレベルが含まれない場合は出力しない。
-        if (!empty($this->level)) {
-            if ($dusks->where('category', $category->category)->where('level', $this->level)->isEmpty()) {
-                return $pdf;
-            }
-        }
-
         $pdf->addPage();
         $pdf->Bookmark(ManualCategory::getDescription($category->category), 0, 0, '', '', array(0, 0, 0));
         $pdf->writeHTML(
@@ -133,11 +131,6 @@ class ManualPdf extends DuskTestCase
      */
     private function outputPlugin($pdf, $dusks, $category, $plugin)
     {
-        // レベル指定されている場合に、指定のレベルでないものは出力しない。
-        if (!empty($this->level) && $this->level != $plugin->level) {
-            return $pdf;
-        }
-
         $pdf->addPage();
         $pdf->Bookmark($plugin->plugin_title, 1, 0, '', '', array(0, 0, 0));
         $pdf->writeHTML(
@@ -161,11 +154,6 @@ class ManualPdf extends DuskTestCase
      */
     private function outputMethod($pdf, $method)
     {
-        // レベル指定されている場合に、指定のレベルでないものは出力しない。
-        if (!empty($this->level) && $this->level != $method->level) {
-            return $pdf;
-        }
-
         $pdf->addPage();
         $pdf->Bookmark($method->method_title, 2, 0, '', '', array(0, 0, 0));
         $pdf->writeHTML(
@@ -185,11 +173,44 @@ class ManualPdf extends DuskTestCase
      */
     private function getPdfName()
     {
-        if (empty($this->level)) {
-            return 'manual.pdf';
-        } else {
-            return $this->level . '.pdf';
+        $pdf_name = 'manual';
+
+        if ($this->arg_category == 'study') {
+            return $pdf_name . '_connect-study.pdf';
         }
+
+        if ($this->arg_category == 'manage') {
+            $pdf_name .= '_manage';
+        } elseif ($this->arg_category == 'user') {
+            $pdf_name .= '_user';
+        }
+
+        if ($this->level == 'basic') {
+            $pdf_name .= '_basic';
+        }
+
+        return $pdf_name . ".pdf";
+    }
+
+    /**
+     * 出力するデータの絞り込み
+     *
+     * @return void
+     */
+    private function getDusks()
+    {
+        $query = Dusks::where('category', '!=', 'top');
+        if ($this->level == 'basic') {
+            $query->where('level', 'basic');
+        }
+        if ($this->arg_category == 'manage') {
+            $query->whereIn('category', ['blueprint', 'common', 'manage']);
+        } elseif ($this->arg_category == 'user') {
+            $query->whereIn('category', ['blueprint', 'common', 'user', 'mypage']);
+        } elseif ($this->arg_category == 'study') {
+            $query->whereIn('category', ['blueprint', 'study']);
+        }
+        return $query->orderBy("sort", "asc")->orderBy("id", "asc")->get();
     }
 
     /**
@@ -210,6 +231,9 @@ class ManualPdf extends DuskTestCase
                 if ($argv_array[0] == 'level') {
                     $this->level = $argv_array[1];
                 }
+                if ($argv_array[0] == 'category') {
+                    $this->arg_category = $argv_array[1];
+                }
             }
         }
 
@@ -219,8 +243,8 @@ class ManualPdf extends DuskTestCase
         // マニュアル出力のために、dusk データベースなど利用するので、アサーションは無条件にOKとしたい。
         $this->assertTrue(true);
 
-        // 全データ取得
-        $dusks = Dusks::where('category', '!=', 'top')->orderBy("id", "asc")->get();
+        // 引数に応じて必要なデータ取得
+        $dusks = $this->getDusks();
 
         // 出力するPDF の準備
         $pdf = new CCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
@@ -261,6 +285,7 @@ class ManualPdf extends DuskTestCase
                 'manual.pdf.cover',
                 [
                     'level' => $this->level,
+                    'category' => $this->arg_category,
                 ]
             )->render(), false
         );
@@ -273,8 +298,6 @@ class ManualPdf extends DuskTestCase
         // マニュアルHTML は、カテゴリ、プラグイン、メソッドをそれぞれ独立でループした。（メニューの生成のため）
 
         // カテゴリのループ
-        // echo "\n";
-        //foreach ($dusks->where('plugin_name', 'index')->where('method_name', 'index') as $category) {
         foreach ($dusks->groupBy('category') as $category) {
             $pdf = $this->outputCategory($pdf, $dusks, $category[0]);
 

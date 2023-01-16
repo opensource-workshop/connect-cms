@@ -42,6 +42,42 @@
         @endif
     </div>
 </div>
+<div class="card">
+    <div class="card-header text-white bg-primary">Connect-CMS マニュアル・ダウンロード</div>
+    <div class="card-body">
+        <p>Connect-CMS のマニュアルをPDF でダウンロードできます。</p>
+        <p>用途に応じて必要な種類をダウンロードしてお使いください。</p>
+        <ul>
+            <li><b>標準機能マニュアル</b>
+                <table class="table table-bordered table-responsive-md w-auto">
+                <tbody>
+                    <tr>
+                        <th nowrap rowspan="2" class="align-middle text-center">全機能版</th>
+                        <td colspan="2" class="text-center"><a href="./pdf/manual.pdf">管理者編・一般編合成マニュアル</a></td>
+                    </tr>
+                    <tr>
+                        <td><a href="./pdf/manual_manage.pdf">管理者編 マニュアル</a></td>
+                        <td><a href="./pdf/manual_user.pdf">一般ユーザ編 マニュアル</a></td>
+                    </tr>
+                    <tr>
+                        <th nowrap rowspan="2" class="align-middle text-center">基本機能版</th>
+                        <td colspan="2" class="text-center"><a href="./pdf/manual_basic.pdf">管理者編・一般編合成マニュアル</a></td>
+                    </tr>
+                    <tr>
+                        <td><a href="./pdf/manual_manage_basic.pdf">管理者編 マニュアル</a></td>
+                        <td><a href="./pdf/manual_user_basic.pdf">一般ユーザ編 マニュアル</a></td>
+                    </tr>
+                </tbody>
+                </table>
+            </li>
+            <li><b>オプション機能マニュアル</b>
+                <ul>
+                    <li><a href="./pdf/manual_connect-study.pdf" target="_blank">Connect-Study編 マニュアル</a>
+                </li></ul>
+            </li>
+        </ul>
+    </div>
+</div>
 <div class="row mt-3">
     <div class="col-sm">
         <div class="card">

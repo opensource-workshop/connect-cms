@@ -11,8 +11,13 @@ rem > tests\bin\connect-cms-test.bat fresh     <<-- テーブルの再構築＆シーダー
 rem
 rem マニュアル出力
 rem > php artisan dusk tests\Manual\src\ManualOutput.php
-rem > php artisan dusk tests\Manual\src\ManualPdf.php contact_page=on ※ 全機能版
-rem > php artisan dusk tests\Manual\src\ManualPdf.php contact_page=on level=basic ※ 基本機能版
+rem > php artisan dusk tests\Manual\src\ManualPdf.php contact_page=on
+rem > php artisan dusk tests\Manual\src\ManualPdf.php contact_page=on category=manage
+rem > php artisan dusk tests\Manual\src\ManualPdf.php contact_page=on category=user
+rem > php artisan dusk tests\Manual\src\ManualPdf.php contact_page=on level=basic
+rem > php artisan dusk tests\Manual\src\ManualPdf.php contact_page=on level=basic category=manage
+rem > php artisan dusk tests\Manual\src\ManualPdf.php contact_page=on level=basic category=user
+rem > php artisan dusk tests\Manual\src\ManualPdf.php contact_page=on category=study
 rem > php artisan dusk tests\Manual\src\ManualVideo.php
 rem
 rem テーマのテスト
@@ -316,9 +321,16 @@ if "%1" == "t_all" (
 
     echo --- マニュアルPDF出力
     php artisan dusk tests\Manual\src\ManualPdf.php contact_page=on
+    php artisan dusk tests\Manual\src\ManualPdf.php contact_page=on category=manage
+    php artisan dusk tests\Manual\src\ManualPdf.php contact_page=on category=user
 
-    echo --- マニュアルPDF（基礎編）出力
+    echo --- マニュアルPDF（基本編）出力
     php artisan dusk tests\Manual\src\ManualPdf.php contact_page=on level=basic
+    php artisan dusk tests\Manual\src\ManualPdf.php contact_page=on level=basic category=manage
+    php artisan dusk tests\Manual\src\ManualPdf.php contact_page=on level=basic category=user
+
+    echo --- マニュアルPDF（オプション編）出力
+    php artisan dusk tests\Manual\src\ManualPdf.php contact_page=on category=study
 
     echo --- 機能一覧PDF出力
     php artisan dusk tests\Manual\src\FunctionListPdf.php

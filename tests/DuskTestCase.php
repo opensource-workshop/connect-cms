@@ -593,7 +593,7 @@ EOF;
         $dusk = Dusks::putManualData(
             ['html_path' => $category . '/' . $plugin[0] . '/template/index.html'],
             ['category' => $category,
-             'sort' => 2,
+             'sort' => 4,
              'plugin_name' => $plugin[0],
              'plugin_title' => $plugin[1],
              'plugin_desc' => '',
