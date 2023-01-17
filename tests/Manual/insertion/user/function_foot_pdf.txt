@@ -7,6 +7,10 @@
     <td style="width: 70%;">（開発中）フォームのテストモードとして実装中</td>
 </tr>
 <tr nobr="true">
+    <td style="width: 30%;">RSS</td>
+    <td style="width: 70%;">（開発予定）他サイトのRSSを取得して表示できるプラグイン</td>
+</tr>
+<tr nobr="true">
     <td style="width: 30%;">ToDo</td>
     <td style="width: 70%;">（開発予定）タスクを共有できるToDoプラグイン</td>
 </tr>
