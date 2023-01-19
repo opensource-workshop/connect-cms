@@ -305,6 +305,13 @@ echo --- SpeechStudy
 php artisan dusk tests\Browser\ConnectStudy\SpeechStudyTest.php
 
 rem ---------------------------------------------
+rem - 共通③
+rem ---------------------------------------------
+
+echo --- ログインロック
+php artisan dusk tests\Browser\Common\LoginLockTest.php
+
+rem ---------------------------------------------
 rem - トップページの動画
 rem ---------------------------------------------
 

@@ -26,6 +26,9 @@ class LoginLogoutTest extends DuskTestCase
      */
     public function testInvoke()
     {
+        // 最初にマニュアルの順番確定用にメソッドを指定する。（lock はバッチの最後にこれだけ実行。実行すると1分間ロックされるため）
+        $this->reserveManual('index', 'logout', 'reset', 'lock');
+
         $this->loginTest();
         $this->logoutTest();
         $this->resetTest();
