@@ -52,7 +52,7 @@ use App\Models\Core\UsersColumns;
         <label for="name" class="col-md-4 col-form-label text-md-right">ユーザ名 <label class="badge badge-danger">必須</label></label>
 
         <div class="col-md-8">
-            <input id="name" type="text" class="form-control @if ($errors->has('name')) border-danger @endif" name="name" value="{{ old('name', $user->name) }}" placeholder="{{ __('messages.input_user_name') }}" required autofocus>
+            <input id="name" type="text" class="form-control @if ($errors->has('name')) border-danger @endif" name="name" value="{{ old('name', $user->name) }}" placeholder="{{ __('messages.input_user_name') }}" required>
             @include('plugins.common.errors_inline', ['name' => 'name'])
         </div>
     </div>
@@ -61,7 +61,7 @@ use App\Models\Core\UsersColumns;
         <label for="userid" class="col-md-4 col-form-label text-md-right">ログインID <label class="badge badge-danger">必須</label></label>
 
         <div class="col-md-8">
-            <input id="userid" type="text" class="form-control @if ($errors->has('userid')) border-danger @endif" name="userid" value="{{ old('userid', $user->userid) }}" placeholder="{{ __('messages.input_login_id') }}" required autofocus>
+            <input id="userid" type="text" class="form-control @if ($errors->has('userid')) border-danger @endif" name="userid" value="{{ old('userid', $user->userid) }}" placeholder="{{ __('messages.input_login_id') }}" required>
             @include('plugins.common.errors_inline', ['name' => 'userid'])
         </div>
     </div>
@@ -87,7 +87,7 @@ use App\Models\Core\UsersColumns;
             <label for="email" class="col-md-4 col-form-label text-md-right">eメールアドレス <label class="badge badge-danger">必須</label></label>
 
             <div class="col-md-8">
-                <input id="email" type="text" class="form-control @if ($errors->has('email')) border-danger @endif" name="email" value="{{ old('email', $user->email) }}" placeholder="{{ __('messages.input_email') }}" required autofocus>
+                <input id="email" type="text" class="form-control @if ($errors->has('email')) border-danger @endif" name="email" value="{{ old('email', $user->email) }}" placeholder="{{ __('messages.input_email') }}" required>
                 @include('plugins.common.errors_inline', ['name' => 'email'])
             </div>
         </div>
