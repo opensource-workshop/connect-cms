@@ -1264,7 +1264,7 @@ class UserManage extends ManagePluginBase
 
         // 初期コンテンツ権限
         // 空要素の削除
-        $base_roles = array_filter($request->base_roles, 'strlen');
+        $base_roles = array_filter($request->base_roles);
         $configs = Configs::updateOrCreate(
             ['name' => 'user_register_base_roles'],
             [
