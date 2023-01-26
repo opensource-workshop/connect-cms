@@ -1254,50 +1254,51 @@ class UserPluginBase extends PluginBase
      */
     public function putLog($e)
     {
-        // Config データの取得
-        $configs = Configs::where('category', 'log')->get();
+        // // Config データの取得
+        // $configs = Configs::where('category', 'log')->get();
 
-        // ログファイル名
-        $log_filename = 'laravel';
+        // // ログファイル名
+        // $log_filename = 'laravel';
 
-        $config_log_filename_choice_obj = $configs->where('name', 'log_filename_choice')->first();
+        // $config_log_filename_choice_obj = $configs->where('name', 'log_filename_choice')->first();
 
-        $config_log_filename_obj = $configs->where('name', 'log_filename')->first();
-        if (empty($config_log_filename_obj)) {
-            $config_log_filename = "";
-        } else {
-            $config_log_filename = $config_log_filename_obj->value;
-        }
+        // $config_log_filename_obj = $configs->where('name', 'log_filename')->first();
+        // if (empty($config_log_filename_obj)) {
+        //     $config_log_filename = "";
+        // } else {
+        //     $config_log_filename = $config_log_filename_obj->value;
+        // }
 
-        if (!empty($config_log_filename_choice_obj) && $config_log_filename_choice_obj->value == '1' && isset($config_log_filename)) {
-            $log_filename = $config_log_filename;
-        }
-        $log_path =  storage_path() .'/logs/' . $log_filename . '.log';
+        // if (!empty($config_log_filename_choice_obj) && $config_log_filename_choice_obj->value == '1' && isset($config_log_filename)) {
+        //     $log_filename = $config_log_filename;
+        // }
+        // $log_path =  storage_path() .'/logs/' . $log_filename . '.log';
 
-        // ログレベル（Laravel6 でログのレベル指定が変わったため修正）
-        $log_level =  config('logging.channels.errorlog.level');
+        // // ログレベル（Laravel6 でログのレベル指定が変わったため修正）
+        // $log_level =  config('logging.channels.errorlog.level');
 
-        // 以降のハンドラに処理を続行させるかどうかのフラグ、デフォルトは、true
-        $bubble = true;
+        // // 以降のハンドラに処理を続行させるかどうかのフラグ、デフォルトは、true
+        // $bubble = true;
 
-        // ログを生成
-        $log = new Logger('connect_error_log');
+        // // ログを生成
+        // $log = new Logger('connect_error_log');
 
-        // ハンドラー（単一 or 日付毎）
-        $log_handler_obj = $configs->where('name', 'log_handler')->first();
-        if (!empty($log_handler_obj) && $log_handler_obj->value == '1') {
-            $handler = new RotatingFileHandler($log_path, $maxFiles = 0, $log_level, $bubble);
-        } else {
-            $handler = new StreamHandler($log_path, $log_level, $bubble);
-        }
+        // // ハンドラー（単一 or 日付毎）
+        // $log_handler_obj = $configs->where('name', 'log_handler')->first();
+        // if (!empty($log_handler_obj) && $log_handler_obj->value == '1') {
+        //     $handler = new RotatingFileHandler($log_path, $maxFiles = 0, $log_level, $bubble);
+        // } else {
+        //     $handler = new StreamHandler($log_path, $log_level, $bubble);
+        // }
 
-        // StackTrace用フォーマッタで整形
-        $formatter = new LineFormatter();
-        $formatter->includeStacktraces(true);
+        // // StackTrace用フォーマッタで整形
+        // $formatter = new LineFormatter();
+        // $formatter->includeStacktraces(true);
 
-        // ログ出力
-        $log->pushHandler($handler->setFormatter($formatter));
-        $log->error($e);
+        // // ログ出力
+        // $log->pushHandler($handler->setFormatter($formatter));
+        // $log->error($e);
+        Log::error($e);
     }
 
     /**
