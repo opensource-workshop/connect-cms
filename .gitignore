@@ -20,7 +20,7 @@ npm-debug.log
 yarn-error.log
 !.gitkeep
 /connect-cms.code-workspace
-.vscode/launch.json
+.vscode/
 composer.phar
 migration_config.ini
 migration_config_nc3.ini
@@ -55,7 +55,7 @@ sync_option_private_2_dev.sh
 !/database/migrations_option/2020_06_03_163936_optionsamples_table.php
 /database/seeders/Options/*
 /resources/views/plugins_option/*
-!/resources/views/plugins_option/user/optionsamples/*
+/resources/views/mail_option/*
 
 # Dusk
 /tests/tmp/*
