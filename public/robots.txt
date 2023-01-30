@@ -2,3 +2,4 @@ User-agent: *
 Disallow: /plugin/*?frame_*_page=
 Disallow: /json/
 Disallow: /redirect/
+Disallow: *?action=common_download_main
