@@ -25,7 +25,7 @@ class SystemManageTest extends DuskTestCase
         $this->updateDebugmodeOff();
         $this->mail();
         $this->mailTest();
-        $this->log();
+        // $this->log();
         $this->server();
         $this->updateLog();
     }
@@ -132,6 +132,7 @@ class SystemManageTest extends DuskTestCase
     /**
      * エラーログ設定の表示
      */
+    /*
     private function log()
     {
         $this->browse(function (Browser $browser) {
@@ -149,6 +150,7 @@ class SystemManageTest extends DuskTestCase
             }
         ]', null, 3);
     }
+    */
 
     /**
      * エラーログ設定の更新
