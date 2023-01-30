@@ -45,13 +45,13 @@
                 @endif
                 </li>
 
-                <li role="presentation" class="nav-item">
+                {{-- <li role="presentation" class="nav-item">
                 @if ($function == "log")
                     <span class="nav-link"><span class="active">エラーログ設定</span></span>
                 @else
                     <a href="{{url('/manage/system/log')}}" class="nav-link">エラーログ設定</a></li>
                 @endif
-                </li>
+                </li> --}}
             </ul>
         </div>
     </nav>
