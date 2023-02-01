@@ -1150,6 +1150,9 @@ class UserPluginBase extends PluginBase
         if (strpos($php, 'php-cgi') !== false) {
             // php-cgiの場合、末尾から-cgiを取り除きphp(CLI版PHP)にして実行
             // php-cgiのままだと、exec()からartisanコマンドを実行してもHTMLが返され、queue:workが実行されない
+            // 例）/opt/remi/php81/root/usr/bin/php-cgi
+            //     ↓
+            //     /opt/remi/php81/root/usr/bin/php
             $php = rtrim($php, '-cgi');
         }
 
