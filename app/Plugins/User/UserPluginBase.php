@@ -1154,6 +1154,11 @@ class UserPluginBase extends PluginBase
             //     ↓
             //     /opt/remi/php81/root/usr/bin/php
             $php = rtrim($php, '-cgi');
+            if (!file_exists($php)) {
+                // php無しの場合、エラーログを出力
+                Log::error('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+                Log::error('php-cgiからphpに切替えましたがphpがありません。' . $php);
+            }
         }
 
         // artisanコマンドのパス
