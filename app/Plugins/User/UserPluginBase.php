@@ -1147,6 +1147,11 @@ class UserPluginBase extends PluginBase
         // 実行可能な PHP バイナリの検索
         $php_binary_finder = new PhpExecutableFinder();
         $php = $php_binary_finder->find();
+        if (strpos($php, 'php-cgi') !== false) {
+            // php-cgiの場合、末尾から-cgiを取り除きphp(CLI版PHP)にして実行
+            // php-cgiのままだと、exec()からartisanコマンドを実行してもHTMLが返され、queue:workが実行されない
+            $php = rtrim($php, '-cgi');
+        }
 
         // artisanコマンドのパス
         $artisan = base_path('artisan');
@@ -1170,7 +1175,7 @@ class UserPluginBase extends PluginBase
 
         // [TODO] Laravel 6.x = Process v4.4.22 のため$process->setOptions()使えない。残念
         // $timeout = null;    // 念のため、Processクラスでのコマンド実行のタイムアウトの無効化（非同期実行で一瞬でコマンド実行終わるため、問題ないと思うけど念のため）
-        // $process = new Process([$php_binary_path, 'artisan', 'queue:work', '--stop-when-empty', '--timeout=3600'], base_path(), null, null, $timeout);
+        // $process = new Process([$php, 'artisan', 'queue:work', '--stop-when-empty', '--timeout=3600'], base_path(), null, null, $timeout);
 
         // @see https://symfony.com/doc/current/components/process.html Processのsymfony公式Doc
         // // このオプションを使用すると、メインスクリプトが終了した後も、サブプロセスを実行し続けることができます。
