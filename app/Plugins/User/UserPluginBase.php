@@ -1144,21 +1144,19 @@ class UserPluginBase extends PluginBase
             return;
         }
 
-        // 実行可能な PHP バイナリの検索
-        $php_binary_finder = new PhpExecutableFinder();
-        $php = $php_binary_finder->find();
-        if (strpos($php, 'php-cgi') !== false) {
-            // php-cgiの場合、末尾から-cgiを取り除きphp(CLI版PHP)にして実行
-            // php-cgiのままだと、exec()からartisanコマンドを実行してもHTMLが返され、queue:workが実行されない
-            // 例）/opt/remi/php81/root/usr/bin/php-cgi
-            //     ↓
-            //     /opt/remi/php81/root/usr/bin/php
-            $php = rtrim($php, '-cgi');
+        if (config('connect.QUEUE_PHP_BIN')) {
+            // .envにQUEUE_PHP_BIN設定あり
+            $php = config('connect.QUEUE_PHP_BIN');
             if (!file_exists($php)) {
                 // php無しの場合、エラーログを出力
                 Log::error('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
-                Log::error('php-cgiからphpに切替えましたがphpがありません。' . $php);
+                Log::error('指定されたパスにphpがありません。' . $php);
+                return;
             }
+        } else {
+            // .envにQUEUE_PHP_BIN設定なしの場合、実行可能な PHP バイナリの検索
+            $php_binary_finder = new PhpExecutableFinder();
+            $php = $php_binary_finder->find();
         }
 
         // artisanコマンドのパス
