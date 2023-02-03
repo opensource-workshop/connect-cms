@@ -400,7 +400,6 @@ class DatabasesTool
                         });
                     }
                 }
-
             });
         });
 
