@@ -8,6 +8,9 @@ use App\Models\User\Databases\DatabasesColumns;
 
 use App\Traits\ConnectCommonTrait;
 
+use App\Enums\DatabaseColumnRoleName;
+use App\Enums\DatabaseRoleName;
+
 /**
  * データベースの便利関数
  */
@@ -26,7 +29,8 @@ class DatabasesTool
                 'databases_columns.*',
                 'databases_frames.use_filter_flag',
                 'databases_frames.filter_search_keyword',
-                'databases_frames.filter_search_columns'
+                'databases_frames.filter_search_columns',
+                'databases_frames.frames_id'
             )
             ->join('databases', 'databases.id', '=', 'databases_columns.databases_id')
             ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
@@ -40,17 +44,17 @@ class DatabasesTool
     public static function getDatabasesFramesSettings($columns)
     {
         // 各データベースのフレームの表示設定
-        // array[databases_id][databases_column_id][] = $databases_column->id...
-        // array[databases_id][use_filter_flag] = $databases_column->use_filter_flag
-        // array[databases_id][filter_search_keyword] = $databases_column->filter_search_keyword
-        // array[databases_id][filter_search_columns] = $databases_column->filter_search_columns
+        // array[frames_id][databases_column_id][] = $databases_column->id...
+        // array[frames_id][use_filter_flag] = $databases_column->use_filter_flag
+        // array[frames_id][filter_search_keyword] = $databases_column->filter_search_keyword
+        // array[frames_id][filter_search_columns] = $databases_column->filter_search_columns
         $databases_frames_settings = [];
         if (!empty($columns)) {
             foreach ($columns as $column) {
-                $databases_frames_settings[$column->databases_id]['databases_columns_ids'][] = $column->id;
-                $databases_frames_settings[$column->databases_id]['use_filter_flag'] = $column->use_filter_flag;
-                $databases_frames_settings[$column->databases_id]['filter_search_keyword'] = $column->filter_search_keyword;
-                $databases_frames_settings[$column->databases_id]['filter_search_columns'] = $column->filter_search_columns;
+                $databases_frames_settings[$column->frames_id]['databases_columns_ids'][] = $column->id;
+                $databases_frames_settings[$column->frames_id]['use_filter_flag'] = $column->use_filter_flag;
+                $databases_frames_settings[$column->frames_id]['filter_search_keyword'] = $column->filter_search_keyword;
+                $databases_frames_settings[$column->frames_id]['filter_search_columns'] = $column->filter_search_columns;
             }
         }
         return $databases_frames_settings;
@@ -65,24 +69,23 @@ class DatabasesTool
     public static function appendSearchKeywordAndSearchColumnsAllDb($where_in_colum_name, $inputs_query, $databases_frames_settings, $hide_columns_ids)
     {
         // 各データベースのフレームの表示設定
-        foreach ($databases_frames_settings as $databases_id => $databases_frames_setting) {
-            // ・databases_id毎に配列を組んでいるため、databases_columns_ids = 1つのdatabases_idに対応
-            // ・databases_frames_settings のモトになった columns は、frameで絞っているので、同一DBを複数frame配置でだぶる不具合も発生しない想定。
+        foreach ($databases_frames_settings as $frames_id => $databases_frames_setting) {
 
             // 絞り込み制御ON、絞り込み検索キーワードあり
             if (!empty($databases_frames_setting['use_filter_flag']) && !empty($databases_frames_setting['filter_search_keyword'])) {
-                $inputs_query = self::appendSearchKeyword(
+                $inputs_query = self::appendSearchKeywordByFrame(
                     $where_in_colum_name,
                     $inputs_query,
                     $databases_frames_setting['databases_columns_ids'],
                     $hide_columns_ids,
-                    $databases_frames_setting['filter_search_keyword']
+                    $databases_frames_setting['filter_search_keyword'],
+                    $frames_id
                 );
             }
 
             // 絞り込み制御ON、絞り込み指定あり
             if (!empty($databases_frames_setting['use_filter_flag']) && !empty($databases_frames_setting['filter_search_columns'])) {
-                $inputs_query = self::appendSearchColumns($where_in_colum_name, $inputs_query, json_decode($databases_frames_setting['filter_search_columns'], true));
+                $inputs_query = self::appendSearchColumnsByFrame($where_in_colum_name, $inputs_query, json_decode($databases_frames_setting['filter_search_columns'], true), $frames_id);
             }
         }
         return $inputs_query;
@@ -131,7 +134,7 @@ class DatabasesTool
                 // ログイン済み
                 foreach ($databases_columns_roles as $databases_columns_role) {
                     if ($this->isCan('role_article') &&
-                            $databases_columns_role->role_name == \DatabaseColumnRoleName::role_article &&
+                            $databases_columns_role->role_name == DatabaseColumnRoleName::role_article &&
                             $databases_columns_role->$display_flag_column_name == 1) {
                         // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
                         // Log::debug(var_export('モデレータ', true));
@@ -141,7 +144,7 @@ class DatabasesTool
                         unset($databases_hide_columns_ids[$databases_columns_role->databases_columns_id]);
                         continue 2;
                     } elseif ($this->isCan('role_reporter') &&
-                            $databases_columns_role->role_name == \DatabaseColumnRoleName::role_reporter &&
+                            $databases_columns_role->role_name == DatabaseColumnRoleName::role_reporter &&
                             $databases_columns_role->$display_flag_column_name == 1) {
                         // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
                         // Log::debug(var_export('編集者権限', true));
@@ -154,7 +157,7 @@ class DatabasesTool
                             !$this->isCan('role_article') &&
                             !$this->isCan('role_approval') &&
                             !$this->isCan('role_reporter') &&
-                            $databases_columns_role->role_name == \DatabaseColumnRoleName::no_role &&
+                            $databases_columns_role->role_name == DatabaseColumnRoleName::no_role &&
                             $databases_columns_role->$display_flag_column_name == 1) {
                         // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
                         // Log::debug(var_export('権限なし', true));
@@ -170,7 +173,7 @@ class DatabasesTool
                 // 未ログイン
                 foreach ($databases_columns_roles as $databases_columns_role) {
                     // 未ログインで非表示のcolumnは、取り除く
-                    if ($databases_columns_role->role_name == \DatabaseColumnRoleName::not_login &&
+                    if ($databases_columns_role->role_name == DatabaseColumnRoleName::not_login &&
                             $databases_columns_role->$display_flag_column_name == 1) {
                         // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
                         // Log::debug(var_export('未ログイン', true));
@@ -216,7 +219,7 @@ class DatabasesTool
 
             foreach ($databases_roles as $databases_role) {
                 if ($this->isCan('role_article') &&
-                        $databases_role->role_name == \DatabaseRoleName::role_article &&
+                        $databases_role->role_name == DatabaseRoleName::role_article &&
                         $databases_role->posted_regist_edit_display_flag == 1) {
                     // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
                     // \Log::debug(var_export('モデレータ', true));
@@ -225,7 +228,7 @@ class DatabasesTool
                     // 非表示扱いから取り除く(=表示する)
                     return false;
                 } elseif ($this->isCan('role_reporter') &&
-                        $databases_role->role_name == \DatabaseRoleName::role_reporter &&
+                        $databases_role->role_name == DatabaseRoleName::role_reporter &&
                         $databases_role->posted_regist_edit_display_flag == 1) {
                     // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
                     // \Log::debug(var_export('編集者権限', true));
@@ -283,6 +286,52 @@ class DatabasesTool
     }
 
     /**
+     * フレーム単位で検索キーワードの絞り込み
+     *
+     * データベースプラグイン例）   $where_in_colum_name = 'databases_inputs.id'
+     * データベース検索プラグイン例）$where_in_colum_name = 'databases_inputs_id'
+     * 新着例）                    $where_in_colum_name = 'databases_inputs.id'
+     */
+    public static function appendSearchKeywordByFrame($where_in_colum_name, $inputs_query, $databases_columns_ids, $hide_columns_ids, $search_keyword, $frames_id)
+    {
+        $inputs_query->where(function ($query) use ($frames_id, $search_keyword, $where_in_colum_name, $databases_columns_ids, $hide_columns_ids) {
+
+            // 該当フレーム以外は絞り込み条件設定しない
+            // 該当フレームは絞り込む
+            $query->where('frames.id', '!=', $frames_id);
+            $query->orWhere(function ($query2) use ($frames_id, $search_keyword, $where_in_colum_name, $databases_columns_ids, $hide_columns_ids) {
+                $query2->where('frames.id', $frames_id);
+
+                /**
+                 * キーワードでスペース連結してAND検索
+                 *
+                 * mb_convert_kanaメモ
+                 * s:全角スペース→半角スペース
+                 */
+                $search_keywords = explode(' ', mb_convert_kana($search_keyword, 's'));
+
+                // キーワードAND検索
+                foreach ($search_keywords as $search) {
+
+                    $query2->whereIn($where_in_colum_name, function ($query3) use ($search, $databases_columns_ids, $hide_columns_ids) {
+                        // 縦持ちのvalue を検索して、行の id を取得。search_flag で対象のカラムを絞る。
+                        $query3->select('databases_inputs_id')
+                                ->from('databases_input_cols')
+                                ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+                                ->where('databases_columns.search_flag', 1)
+                                ->whereIn('databases_columns.id', $databases_columns_ids)
+                                ->whereNotIn('databases_columns.id', $hide_columns_ids)
+                                ->where('value', 'like', '%' . $search . '%')
+                                ->groupBy('databases_inputs_id');
+                    });
+                }
+            });
+        });
+
+        return $inputs_query;
+    }
+
+    /**
      * カラムの絞り込み
      *
      * データベースプラグイン例）   $where_in_colum_name = 'databases_inputs.id'
@@ -310,6 +359,49 @@ class DatabasesTool
                 });
             }
         }
+
+        return $inputs_query;
+    }
+
+    /**
+     * フレーム単位でカラムの絞り込み
+     *
+     * データベースプラグイン例）   $where_in_colum_name = 'databases_inputs.id'
+     * データベース検索プラグイン例）$where_in_colum_name = 'databases_inputs_id'
+     * 新着例）                    $where_in_colum_name = 'databases_inputs.id'
+     */
+    public static function appendSearchColumnsByFrame($where_in_colum_name, $inputs_query, $search_columns, $frames_id)
+    {
+
+        $inputs_query->where(function ($query) use ($frames_id, $where_in_colum_name, $search_columns) {
+
+            // 該当フレーム以外は絞り込み条件設定しない
+            // 該当フレームは絞り込む
+            $query->where('frames.id', '!=', $frames_id);
+            $query->orWhere(function ($query2) use ($frames_id, $where_in_colum_name, $search_columns) {
+                $query2->where('frames.id', $frames_id);
+
+                // bugfix: $search_columns は 絞り込み項目（単一・複数・リスト）がない場合、nullになるため、arrayにキャスト
+                foreach ((array)$search_columns as $search_column) {
+                    if ($search_column && $search_column['columns_id'] && $search_column['value']) {
+                        $query2->whereIn($where_in_colum_name, function ($query3) use ($search_column) {
+                                // 縦持ちのvalue を検索して、行の id を取得。column_id で対象のカラムを絞る。
+                                $query3->select('databases_inputs_id')
+                                        ->from('databases_input_cols')
+                                        ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+                                        ->where('databases_columns_id', $search_column['columns_id']);
+
+                            if ($search_column['where'] == 'PART') {
+                                $query3->where('value', 'LIKE', '%' . $search_column['value'] . '%');
+                            } else {
+                                $query3->where('value', $search_column['value']);
+                            }
+                            $query3->groupBy('databases_inputs_id');
+                        });
+                    }
+                }
+            });
+        });
 
         return $inputs_query;
     }
