@@ -8,6 +8,9 @@ use App\Models\User\Databases\DatabasesColumns;
 
 use App\Traits\ConnectCommonTrait;
 
+use App\Enums\DatabaseColumnRoleName;
+use App\Enums\DatabaseRoleName;
+
 /**
  * データベースの便利関数
  */
@@ -131,7 +134,7 @@ class DatabasesTool
                 // ログイン済み
                 foreach ($databases_columns_roles as $databases_columns_role) {
                     if ($this->isCan('role_article') &&
-                            $databases_columns_role->role_name == \DatabaseColumnRoleName::role_article &&
+                            $databases_columns_role->role_name == DatabaseColumnRoleName::role_article &&
                             $databases_columns_role->$display_flag_column_name == 1) {
                         // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
                         // Log::debug(var_export('モデレータ', true));
@@ -141,7 +144,7 @@ class DatabasesTool
                         unset($databases_hide_columns_ids[$databases_columns_role->databases_columns_id]);
                         continue 2;
                     } elseif ($this->isCan('role_reporter') &&
-                            $databases_columns_role->role_name == \DatabaseColumnRoleName::role_reporter &&
+                            $databases_columns_role->role_name == DatabaseColumnRoleName::role_reporter &&
                             $databases_columns_role->$display_flag_column_name == 1) {
                         // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
                         // Log::debug(var_export('編集者権限', true));
@@ -154,7 +157,7 @@ class DatabasesTool
                             !$this->isCan('role_article') &&
                             !$this->isCan('role_approval') &&
                             !$this->isCan('role_reporter') &&
-                            $databases_columns_role->role_name == \DatabaseColumnRoleName::no_role &&
+                            $databases_columns_role->role_name == DatabaseColumnRoleName::no_role &&
                             $databases_columns_role->$display_flag_column_name == 1) {
                         // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
                         // Log::debug(var_export('権限なし', true));
@@ -170,7 +173,7 @@ class DatabasesTool
                 // 未ログイン
                 foreach ($databases_columns_roles as $databases_columns_role) {
                     // 未ログインで非表示のcolumnは、取り除く
-                    if ($databases_columns_role->role_name == \DatabaseColumnRoleName::not_login &&
+                    if ($databases_columns_role->role_name == DatabaseColumnRoleName::not_login &&
                             $databases_columns_role->$display_flag_column_name == 1) {
                         // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
                         // Log::debug(var_export('未ログイン', true));
@@ -216,7 +219,7 @@ class DatabasesTool
 
             foreach ($databases_roles as $databases_role) {
                 if ($this->isCan('role_article') &&
-                        $databases_role->role_name == \DatabaseRoleName::role_article &&
+                        $databases_role->role_name == DatabaseRoleName::role_article &&
                         $databases_role->posted_regist_edit_display_flag == 1) {
                     // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
                     // \Log::debug(var_export('モデレータ', true));
@@ -225,7 +228,7 @@ class DatabasesTool
                     // 非表示扱いから取り除く(=表示する)
                     return false;
                 } elseif ($this->isCan('role_reporter') &&
-                        $databases_role->role_name == \DatabaseRoleName::role_reporter &&
+                        $databases_role->role_name == DatabaseRoleName::role_reporter &&
                         $databases_role->posted_regist_edit_display_flag == 1) {
                     // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
                     // \Log::debug(var_export('編集者権限', true));
