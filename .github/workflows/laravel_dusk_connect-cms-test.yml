@@ -38,7 +38,8 @@ jobs:
 
       # スクリーンショットの日本語表示対応
       - name: Install Jp font
-        run: sudo apt install fonts-noto
+        #run: sudo apt install fonts-noto
+        run: sudo apt install fonts-ipafont fonts-ipaexfont
 
       - name: Setup .env
         run: |
