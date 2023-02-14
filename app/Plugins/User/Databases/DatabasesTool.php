@@ -401,8 +401,10 @@ class DatabasesTool
                 });
             }
         }
+
+        return $inputs_query;
     }
-    
+
     /**
      * フレーム単位でカラムの絞り込み
      *
