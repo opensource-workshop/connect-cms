@@ -313,4 +313,46 @@ class DatabasesTool
 
         return $inputs_query;
     }
+
+    /**
+     * カラムの絞り込み（複数選択）
+     */
+    public static function appendSearchColumnsMultiple($where_in_colum_name, $inputs_query, $search_columns)
+    {
+        foreach ((array)$search_columns as $search_column) {
+            if ($search_column && $search_column['columns_id'] && isset($search_column['value'])) {
+                $inputs_query->whereIn($where_in_colum_name, function ($query) use ($search_column) {
+                        // 縦持ちのvalue を検索して、行の id を取得。column_id で対象のカラムを絞る。
+                        $query->select('databases_inputs_id')
+                                ->from('databases_input_cols')
+                                ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+                                ->where('databases_columns_id', $search_column['columns_id']);
+
+                        if (isset($search_column['and_or']) && $search_column['and_or'] === 'AND') {
+                            foreach ($search_column['value'] as $value) {
+                                if ($search_column['where'] == 'PART') {
+                                    $query->where('value', 'LIKE', '%' . $value . '%');
+                                } else {
+                                    $query->where('value', $value);
+                                }
+                            }
+                        } else {
+                            $query->where(function ($q) use ($search_column) {
+                                foreach ($search_column['value'] as $value) {
+                                    if ($search_column['where'] == 'PART') {
+                                        $q->orWhere('value', 'LIKE', '%' . $value . '%');
+                                    } else {
+                                        $q->orWhere('value', $value);
+                                    }
+                                }
+                            });
+                        }
+
+                        $query->groupBy('databases_inputs_id');
+                });
+            }
+        }
+
+        return $inputs_query;
+    }
 }

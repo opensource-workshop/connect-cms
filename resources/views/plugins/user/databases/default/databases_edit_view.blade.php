@@ -87,13 +87,29 @@
         <label class="{{$frame->getSettingLabelClass(true)}}">絞り込み機能の表示</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
-                <input type="radio" value="1" id="use_select_flag_1" name="use_select_flag" class="custom-control-input" @if(old('use_select_flag', $view_frame->use_select_flag) == 1) checked="checked" @endif>
-                <label class="custom-control-label" for="use_select_flag_1" id="label_use_select_flag_1">表示する</label>
-            </div>
-            <div class="custom-control custom-radio custom-control-inline">
                 <input type="radio" value="0" id="use_select_flag_0" name="use_select_flag" class="custom-control-input" @if(old('use_select_flag', $view_frame->use_select_flag) == 0) checked="checked" @endif>
                 <label class="custom-control-label" for="use_select_flag_0" id="label_use_select_flag_0">表示しない</label>
             </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" value="1" id="use_select_flag_1" name="use_select_flag" class="custom-control-input" @if(old('use_select_flag', $view_frame->use_select_flag) == 1) checked="checked" @endif>
+                <label class="custom-control-label" for="use_select_flag_1" id="label_use_select_flag_1">表示する</label>
+            </div>
+        </div>
+    </div>
+
+    {{-- 絞り込み機能の表示（複数選択） --}}
+    @php
+        $use_select_multiple_flag = FrameConfig::getConfigValueAndOld($frame_configs, DatabaseFrameConfig::database_use_select_multiple_flag, ShowType::not_show);
+    @endphp
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">{{DatabaseFrameConfig::getDescription('database_use_select_multiple_flag')}}</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            @foreach (ShowType::getMembers() as $key => $type)
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" value="{{$key}}" id="use_select_multiple_flag_{{$key}}" name="database_use_select_multiple_flag" class="custom-control-input" @if ($use_select_multiple_flag == $key) checked="checked" @endif>
+                <label class="custom-control-label" for="use_select_multiple_flag_{{$key}}" id="label_use_select_multiple_flag_{{$key}}">{{$type}}</label>
+            </div>
+            @endforeach
         </div>
     </div>
 

@@ -318,6 +318,7 @@ $app_array = [
         'FaqNarrowingDownType' => \App\Enums\FaqNarrowingDownType::class,
         'ColorName' => \App\Enums\ColorName::class,
         'FaqSequenceConditionType' => \App\Enums\FaqSequenceConditionType::class,
+        'DatabaseFrameConfig' => \App\Enums\DatabaseFrameConfig::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
