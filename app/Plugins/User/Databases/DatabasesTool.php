@@ -377,27 +377,27 @@ class DatabasesTool
                                 ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
                                 ->where('databases_columns_id', $search_column['columns_id']);
 
-                        if (isset($search_column['and_or']) && $search_column['and_or'] === 'AND') {
+                    if (isset($search_column['and_or']) && $search_column['and_or'] === 'AND') {
+                        foreach ($search_column['value'] as $value) {
+                            if ($search_column['where'] == 'PART') {
+                                $query->where('value', 'LIKE', '%' . $value . '%');
+                            } else {
+                                $query->where('value', $value);
+                            }
+                        }
+                    } else {
+                        $query->where(function ($q) use ($search_column) {
                             foreach ($search_column['value'] as $value) {
                                 if ($search_column['where'] == 'PART') {
-                                    $query->where('value', 'LIKE', '%' . $value . '%');
+                                    $q->orWhere('value', 'LIKE', '%' . $value . '%');
                                 } else {
-                                    $query->where('value', $value);
+                                    $q->orWhere('value', $value);
                                 }
                             }
-                        } else {
-                            $query->where(function ($q) use ($search_column) {
-                                foreach ($search_column['value'] as $value) {
-                                    if ($search_column['where'] == 'PART') {
-                                        $q->orWhere('value', 'LIKE', '%' . $value . '%');
-                                    } else {
-                                        $q->orWhere('value', $value);
-                                    }
-                                }
-                            });
-                        }
+                        });
+                    }
 
-                        $query->groupBy('databases_inputs_id');
+                    $query->groupBy('databases_inputs_id');
                 });
             }
         }
