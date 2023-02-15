@@ -1144,9 +1144,20 @@ class UserPluginBase extends PluginBase
             return;
         }
 
-        // 実行可能な PHP バイナリの検索
-        $php_binary_finder = new PhpExecutableFinder();
-        $php = $php_binary_finder->find();
+        if (config('connect.QUEUE_PHP_BIN')) {
+            // .envにQUEUE_PHP_BIN設定あり
+            $php = config('connect.QUEUE_PHP_BIN');
+            if (!file_exists($php)) {
+                // php無しの場合、エラーログを出力
+                Log::error('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+                Log::error('指定されたパスにphpがありません。' . $php);
+                return;
+            }
+        } else {
+            // .envにQUEUE_PHP_BIN設定なしの場合、実行可能な PHP バイナリの検索
+            $php_binary_finder = new PhpExecutableFinder();
+            $php = $php_binary_finder->find();
+        }
 
         // artisanコマンドのパス
         $artisan = base_path('artisan');
@@ -1170,7 +1181,7 @@ class UserPluginBase extends PluginBase
 
         // [TODO] Laravel 6.x = Process v4.4.22 のため$process->setOptions()使えない。残念
         // $timeout = null;    // 念のため、Processクラスでのコマンド実行のタイムアウトの無効化（非同期実行で一瞬でコマンド実行終わるため、問題ないと思うけど念のため）
-        // $process = new Process([$php_binary_path, 'artisan', 'queue:work', '--stop-when-empty', '--timeout=3600'], base_path(), null, null, $timeout);
+        // $process = new Process([$php, 'artisan', 'queue:work', '--stop-when-empty', '--timeout=3600'], base_path(), null, null, $timeout);
 
         // @see https://symfony.com/doc/current/components/process.html Processのsymfony公式Doc
         // // このオプションを使用すると、メインスクリプトが終了した後も、サブプロセスを実行し続けることができます。
@@ -1254,50 +1265,51 @@ class UserPluginBase extends PluginBase
      */
     public function putLog($e)
     {
-        // Config データの取得
-        $configs = Configs::where('category', 'log')->get();
+        // // Config データの取得
+        // $configs = Configs::where('category', 'log')->get();
 
-        // ログファイル名
-        $log_filename = 'laravel';
+        // // ログファイル名
+        // $log_filename = 'laravel';
 
-        $config_log_filename_choice_obj = $configs->where('name', 'log_filename_choice')->first();
+        // $config_log_filename_choice_obj = $configs->where('name', 'log_filename_choice')->first();
 
-        $config_log_filename_obj = $configs->where('name', 'log_filename')->first();
-        if (empty($config_log_filename_obj)) {
-            $config_log_filename = "";
-        } else {
-            $config_log_filename = $config_log_filename_obj->value;
-        }
+        // $config_log_filename_obj = $configs->where('name', 'log_filename')->first();
+        // if (empty($config_log_filename_obj)) {
+        //     $config_log_filename = "";
+        // } else {
+        //     $config_log_filename = $config_log_filename_obj->value;
+        // }
 
-        if (!empty($config_log_filename_choice_obj) && $config_log_filename_choice_obj->value == '1' && isset($config_log_filename)) {
-            $log_filename = $config_log_filename;
-        }
-        $log_path =  storage_path() .'/logs/' . $log_filename . '.log';
+        // if (!empty($config_log_filename_choice_obj) && $config_log_filename_choice_obj->value == '1' && isset($config_log_filename)) {
+        //     $log_filename = $config_log_filename;
+        // }
+        // $log_path =  storage_path() .'/logs/' . $log_filename . '.log';
 
-        // ログレベル（Laravel6 でログのレベル指定が変わったため修正）
-        $log_level =  config('logging.channels.errorlog.level');
+        // // ログレベル（Laravel6 でログのレベル指定が変わったため修正）
+        // $log_level =  config('logging.channels.errorlog.level');
 
-        // 以降のハンドラに処理を続行させるかどうかのフラグ、デフォルトは、true
-        $bubble = true;
+        // // 以降のハンドラに処理を続行させるかどうかのフラグ、デフォルトは、true
+        // $bubble = true;
 
-        // ログを生成
-        $log = new Logger('connect_error_log');
+        // // ログを生成
+        // $log = new Logger('connect_error_log');
 
-        // ハンドラー（単一 or 日付毎）
-        $log_handler_obj = $configs->where('name', 'log_handler')->first();
-        if (!empty($log_handler_obj) && $log_handler_obj->value == '1') {
-            $handler = new RotatingFileHandler($log_path, $maxFiles = 0, $log_level, $bubble);
-        } else {
-            $handler = new StreamHandler($log_path, $log_level, $bubble);
-        }
+        // // ハンドラー（単一 or 日付毎）
+        // $log_handler_obj = $configs->where('name', 'log_handler')->first();
+        // if (!empty($log_handler_obj) && $log_handler_obj->value == '1') {
+        //     $handler = new RotatingFileHandler($log_path, $maxFiles = 0, $log_level, $bubble);
+        // } else {
+        //     $handler = new StreamHandler($log_path, $log_level, $bubble);
+        // }
 
-        // StackTrace用フォーマッタで整形
-        $formatter = new LineFormatter();
-        $formatter->includeStacktraces(true);
+        // // StackTrace用フォーマッタで整形
+        // $formatter = new LineFormatter();
+        // $formatter->includeStacktraces(true);
 
-        // ログ出力
-        $log->pushHandler($handler->setFormatter($formatter));
-        $log->error($e);
+        // // ログ出力
+        // $log->pushHandler($handler->setFormatter($formatter));
+        // $log->error($e);
+        Log::error($e);
     }
 
     /**
