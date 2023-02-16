@@ -690,7 +690,7 @@
                 @endif
 
                 {{-- 複数選択の絞り込みでAND/ORを表示する --}}
-                @if ($column->column_type == DatabaseColumnType::radio || $column->column_type == DatabaseColumnType::checkbox || $column->column_type == DatabaseColumnType::select)
+                @if ($column->column_type == DatabaseColumnType::checkbox)
                 <div class="form-group row">
                     <label class="{{$frame->getSettingLabelClass(true)}}">複数選択の絞り込みでAND/ORを表示する</label>
                     <div class="{{$frame->getSettingInputClass(true)}}">
