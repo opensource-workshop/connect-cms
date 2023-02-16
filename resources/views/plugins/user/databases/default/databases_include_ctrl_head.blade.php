@@ -57,7 +57,7 @@
                     $and_or = Session::get("search_column_multiple." . $frame->id . '.' . $loop->index . ".and_or");
                     $column_index = $loop->index;
                 @endphp
-                <div class="col-sm">
+                <div class="col-sm pb-4">
                     <h5>{{$select_column->column_name}}</h5>
                     <input name="search_column_multiple[{{$loop->index}}][name]" type="hidden" value="{{$select_column->column_name}}">
                     <input name="search_column_multiple[{{$loop->index}}][columns_id]" type="hidden" value="{{$select_column->id}}">
