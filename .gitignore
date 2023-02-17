@@ -32,6 +32,9 @@ option_private_2_dev.ps1
 sync_dev_2_option_private.sh
 sync_option_private_2_dev.sh
 
+# Option Plugins 用ライブラリ
+composer-option*
+
 /app/ModelsOption/*
 !/app/ModelsOption/User/
 /app/ModelsOption/User/*
