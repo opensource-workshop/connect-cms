@@ -125,7 +125,7 @@
 @include('plugins.common.user_paginate', ['posts' => $inputs, 'frame' => $frame, 'aria_label_name' => $form->forms_name, 'class' => 'form-group mt-3'])
 
 {{-- ボタン --}}
-<div class="text-center">
+<div class="text-center pt-2">
     <div class="row">
         <div class="col">
             <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}">
