@@ -5,7 +5,7 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
 --}}
-    <tr id="column_add_tr">
+<tr id="column_add_tr">
     {{-- 余白 --}}
     <td>
     </td>
