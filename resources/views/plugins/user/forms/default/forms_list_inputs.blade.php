@@ -39,18 +39,25 @@
     }
 </script>
 
-<div class="text-right">
-    {{-- (右側)ダウンロードボタン --}}
-    <div class="btn-group">
-        <button type="button" class="btn btn-primary btn-sm" onclick="submit_download_shift_jis({{$form->id}});">
-            <i class="fas fa-file-download"></i> ダウンロード
-        </button>
-        <button type="button" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <span class="sr-only">ドロップダウンボタン</span>
-        </button>
-        <div class="dropdown-menu dropdown-menu-right">
-            <a class="dropdown-item" href="#" onclick="submit_download_shift_jis({{$form->id}}); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
-            <a class="dropdown-item" href="#" onclick="submit_download_utf_8({{$form->id}}); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
+<div class="row">
+    <div class="col-3 text-left d-flex align-items-end">
+        {{-- (左側)件数 --}}
+        <span class="badge badge-pill badge-light">{{ $inputs->total() }} 件</span>
+    </div>
+
+    <div class="col text-right">
+        {{-- (右側)ダウンロードボタン --}}
+        <div class="btn-group">
+            <button type="button" class="btn btn-primary btn-sm" onclick="submit_download_shift_jis({{$form->id}});">
+                <i class="fas fa-file-download"></i> ダウンロード
+            </button>
+            <button type="button" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <span class="sr-only">ドロップダウンボタン</span>
+            </button>
+            <div class="dropdown-menu dropdown-menu-right">
+                <a class="dropdown-item" href="#" onclick="submit_download_shift_jis({{$form->id}}); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
+                <a class="dropdown-item" href="#" onclick="submit_download_utf_8({{$form->id}}); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
+            </div>
         </div>
     </div>
 </div>
