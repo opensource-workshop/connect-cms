@@ -1,7 +1,6 @@
 {{--
- * 登録画面テンプレート。
+ * 縦並び 登録画面テンプレート
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
@@ -28,21 +27,14 @@
         <legend class="sr-only">{{$form->forms_name}}</legend>
         {{ csrf_field() }}
 
+        @php $no = 1; @endphp
         @foreach($forms_columns as $form_column)
             <div class="form-group row">
 
                 @switch($form_column->column_type)
                     @case("group")
-                        @if (isset($is_template_label_sm_4))
-                            {{-- label-sm-4テンプレート --}}
-                            <label class="col-sm-4 control-label">{{$form_column->column_name}} @if ($form_column->required)<strong class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger lead' }}">{{__('messages.required')}}</strong> @endif</label>
-                        @elseif (isset($is_template_label_sm_6))
-                            {{-- label-sm-6テンプレート --}}
-                            <label class="col-sm-6 control-label">{{$form_column->column_name}} @if ($form_column->required)<strong class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</strong> @endif</label>
-                        @else
-                            {{-- defaultテンプレート --}}
-                            <label class="col-sm-2 control-label">{{$form_column->column_name}} @if ($form_column->required)<strong class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</strong> @endif</label>
-                        @endif
+                        {{-- defaultテンプレート --}}
+                        <label class="col-12 control-label">{!!nl2br(e($form_column->column_name))!!} @if ($form_column->required)<strong class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</strong> @endif</label>
 
                         @php
                             // グループカラムの幅の計算
@@ -59,13 +51,13 @@
                                         時間FromToは入力項目のtitleで項目説明しているため、項目名のラベルにforを付けない。--}}
                                     @if ($group_row->column_type == 'radio' || $group_row->column_type == 'checkbox')
                                         <div class="col-sm-{{$col_count}} pl-0">
-                                        <label class="control-label" style="vertical-align: top; padding-left: 16px; padding-top: 8px;">{{$group_row->column_name}}</label>
+                                        <label class="control-label" style="vertical-align: top; padding-left: 16px; padding-top: 8px;">Q{{$no}} {!!nl2br(e($group_row->column_name))!!}</label>
                                     @elseif ($group_row->column_type == 'time_from_to')
                                         <div class="col-sm-{{$col_count}} pr-0">
-                                        <label class="control-label">{{$group_row->column_name}}</label>
+                                        <label class="control-label">Q{{$no}} {!!nl2br(e($group_row->column_name))!!}</label>
                                     @else
                                         <div class="col-sm-{{$col_count}} pr-0">
-                                        <label class="control-label" for="column-{{$group_row->id}}-{{$frame_id}}">{{$group_row->column_name}}</label>
+                                        <label class="control-label" for="column-{{$group_row->id}}-{{$frame_id}}">Q{{$no}} {!!nl2br(e($group_row->column_name))!!}</label>
                                     @endif
 
                                     {{-- 必須 --}}
@@ -88,6 +80,7 @@
                                     @endphp
                                     <div class="small {{ $group_row->caption_color }}">{!! $caption !!}</div>
                                         </div>
+                                    @php $no++; @endphp
                                 @endforeach
                             </div>
                             @php
@@ -110,18 +103,10 @@
                             }
                         @endphp
 
-                        @if (isset($is_template_label_sm_4))
-                            {{-- label-sm-4テンプレート --}}
-                            <label class="col-sm-4 control-label" {{$label_for}}>{{$form_column->column_name}} @if ($form_column->required)<strong class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger lead' }}">{{__('messages.required')}}</strong> @endif</label>
-                        @elseif (isset($is_template_label_sm_6))
-                            {{-- label-sm-6テンプレート --}}
-                            <label class="col-sm-6 control-label" {{$label_for}}>{{$form_column->column_name}} @if ($form_column->required)<strong class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</strong> @endif</label>
-                        @else
-                            {{-- defaultテンプレート --}}
-                            <label class="col-sm-2 control-label" {{$label_for}}>{{$form_column->column_name}} @if ($form_column->required)<strong class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</strong> @endif</label>
-                        @endif
+                        {{-- defaultテンプレート --}}
+                        <label class="col-12 control-label" {{$label_for}}>Q{{$no}} {!!nl2br(e($form_column->column_name))!!} @if ($form_column->required)<strong class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</strong> @endif</label>
 
-                        <div class="col-sm">
+                        <div class="col-12">
                             @include('plugins.user.forms.default.forms_input_' . $form_column->column_type, ['form_obj' => $form_column, 'label_id' => 'column-'.$form_column->id.'-'.$frame_id])
                             @php
                                 $caption = nl2br($form_column->caption);
@@ -129,6 +114,7 @@
                             @endphp
                             <div class="small {{ $form_column->caption_color }}">{!! $caption !!}</div>
                         </div>
+                        @php $no++; @endphp
                 @endswitch
             </div>
         @endforeach

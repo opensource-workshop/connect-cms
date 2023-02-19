@@ -2,6 +2,7 @@
  * 項目の設定画面
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
 --}}
@@ -116,35 +117,71 @@
                     </div>
                 @endif
 
-                <div class="table-responsive">
+                @if ($form_mode == FormMode::form)
+                    {{-- フォームの場合 --}}
+                    <div class="table-responsive">
+                        {{-- 項目の一覧 --}}
+                        <table class="table table-hover table-sm">
+                            <thead>
+                                <tr>
+                                    <th class="text-center" nowrap>表示順</th>
+                                    <th class="text-center" style="min-width: 165px;" nowrap>項目名</th>
+                                    <th class="text-center" style="min-width: 165px;" nowrap>型</th>
+                                    <th class="text-center" nowrap>必須</th>
+                                    <th class="text-center" nowrap>詳細 <a href="https://manual.connect-cms.jp/user/forms/editColumnDetail/index.html" target="_brank"><span class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></a></th>
+                                    <th class="text-center" nowrap>コピー</th>
+                                    <th class="text-center" nowrap>更新</th>
+                                    <th class="text-center" nowrap>削除</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{-- 更新用の行 --}}
+                                @foreach($columns as $column)
+                                    @include('plugins.user.forms.default.forms_edit_row')
+                                @endforeach
+                                {{-- 新規登録用の行 --}}
+                                <tr>
+                                    <th colspan="8">【項目の追加行】</th>
+                                </tr>
+                                @include('plugins.user.forms.default.forms_edit_row_add')
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    {{-- アンケートの場合 --}}
+                    <div class="table-responsive">
+                        {{-- 項目の一覧 --}}
+                        <table class="table table-hover table-sm">
+                            <thead>
+                                <tr>
+                                    <th class="text-center align-middle" rowspan="2" nowrap>表示順</th>
+                                    <th class="text-center" colspan="6" nowrap>項目名</th>
+                                </tr>
+                                <tr>
+                                    {{-- <th class="text-center" style="min-width: 165px;" nowrap>型</th> --}}
+                                    <th class="text-center" style="min-width: 165px;" nowrap>型</th>
+                                    <th class="text-center" nowrap>必須</th>
+                                    <th class="text-center" nowrap>詳細 <a href="https://manual.connect-cms.jp/user/forms/editColumnDetail/index.html" target="_brank"><span class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></a></th>
+                                    <th class="text-center" nowrap>コピー</th>
+                                    <th class="text-center" nowrap>更新</th>
+                                    <th class="text-center" nowrap>削除</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{-- 更新用の行 --}}
+                                @foreach($columns as $column)
+                                    @include('plugins.user.forms.default.forms_edit_row2')
+                                @endforeach
+                                {{-- 新規登録用の行 --}}
+                                <tr>
+                                    <th colspan="8">【項目の追加行】</th>
+                                </tr>
+                                @include('plugins.user.forms.default.forms_edit_row2_add')
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
 
-                    {{-- 項目の一覧 --}}
-                    <table class="table table-hover table-sm">
-                        <thead>
-                            <tr>
-                                <th class="text-center" nowrap>表示順</th>
-                                <th class="text-center" style="min-width: 165px;" nowrap>項目名</th>
-                                <th class="text-center" style="min-width: 165px;" nowrap>型</th>
-                                <th class="text-center" nowrap>必須</th>
-                                <th class="text-center" nowrap>詳細 <a href="https://manual.connect-cms.jp/user/forms/editColumnDetail/index.html" target="_brank"><span class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></a></th>
-                                <th class="text-center" nowrap>コピー</th>
-                                <th class="text-center" nowrap>更新</th>
-                                <th class="text-center" nowrap>削除</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {{-- 更新用の行 --}}
-                            @foreach($columns as $column)
-                                @include('plugins.user.forms.default.forms_edit_row')
-                            @endforeach
-                            {{-- 新規登録用の行 --}}
-                            <tr>
-                                <th colspan="8">【項目の追加行】</th>
-                            </tr>
-                            @include('plugins.user.forms.default.forms_edit_row_add')
-                        </tbody>
-                    </table>
-                </div>
                 {{-- ボタンエリア --}}
                 <div class="text-center mt-3 mt-md-0">
                     {{-- キャンセルボタン --}}

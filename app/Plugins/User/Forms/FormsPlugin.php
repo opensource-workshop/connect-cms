@@ -37,6 +37,7 @@ use App\Utilities\Token\TokenUtils;
 use App\Enums\Bs4TextColor;
 use App\Enums\CsvCharacterCode;
 use App\Enums\FormColumnType;
+use App\Enums\FormMode;
 use App\Enums\FormStatusType;
 use App\Enums\PluginName;
 use App\Enums\Required;
@@ -47,6 +48,7 @@ use App\Enums\Required;
  * フォームの作成＆データ収集用プラグイン。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
  * @package Controller
@@ -81,6 +83,7 @@ class FormsPlugin extends UserPluginBase
         $functions = array();
         $functions['get']  = [
             'index',
+            'aggregate',
             'publicConfirmToken',
             'listInputs',
             'editInput',
@@ -94,6 +97,7 @@ class FormsPlugin extends UserPluginBase
             'copyColumn',
             'storeInput',
             'copyForm',
+            'downloadCsvAggregate',
         ];
         return $functions;
     }
@@ -114,6 +118,8 @@ class FormsPlugin extends UserPluginBase
         $role_check_table["editInput"]            = ['frames.edit'];
         $role_check_table["storeInput"]           = ['frames.create'];
         $role_check_table["copyForm"]             = ['buckets.create'];
+        $role_check_table["aggregate"]            = ['role_article'];
+        $role_check_table["downloadCsvAggregate"] = ['role_article'];
         return $role_check_table;
     }
 
@@ -414,15 +420,28 @@ class FormsPlugin extends UserPluginBase
         // var_dump('index', $request->forms_columns_value, $frame_id, $request->frame_id);
 
         if (empty($setting_error_messages)) {
-            // 表示テンプレートを呼び出す。
-            return $this->view('forms', [
-                'request' => $request,
-                'frame_id' => $frame_id,
-                'form' => $form,
-                'forms_columns' => $forms_columns,
-                'forms_columns_id_select' => $forms_columns_id_select,
-                'errors' => $errors,
-            ]);
+            // 表示テンプレートを呼び出す
+            if ($form->form_mode == FormMode::form) {
+                // フォーム
+                return $this->view('forms', [
+                    'request' => $request,
+                    'frame_id' => $frame_id,
+                    'form' => $form,
+                    'forms_columns' => $forms_columns,
+                    'forms_columns_id_select' => $forms_columns_id_select,
+                    'errors' => $errors,
+                ]);
+            } else {
+                // アンケート
+                return $this->view('index_tandem', [
+                    'request' => $request,
+                    'frame_id' => $frame_id,
+                    'form' => $form,
+                    'forms_columns' => $forms_columns,
+                    'forms_columns_id_select' => $forms_columns_id_select,
+                    'errors' => $errors,
+                ]);
+            }
         } else {
             // エラーあり
             return $this->view('forms_error_messages', [
@@ -621,6 +640,60 @@ class FormsPlugin extends UserPluginBase
     }
 
     /**
+     * 集計結果
+     *
+     * @method_title 集計結果
+     * @method_desc 設定した権限の人は入力されたデータを一覧表示できます。登録一覧とは違い表示のみで、編集はできません。
+     * @method_detail 入力されたデータのダウンロードもできます。
+     */
+    public function aggregate($request, $page_id, $frame_id, $forms_id = null)
+    {
+        // フォーム＆フレームデータ
+        $form_frame = $this->getFormFrame($frame_id);
+
+        $form = null;
+        if (!empty($forms_id)) {
+            // forms_id が渡ってくればforms_id が対象
+            $form = Forms::where('id', $forms_id)->first();
+        } elseif (!empty($form_frame->bucket_id)) {
+            // Frame のbucket_id があれば、bucket_id からフォームデータ取得
+            $form = Forms::where('bucket_id', $form_frame->bucket_id)->first();
+        }
+
+        if (empty($form)) {
+            return $this->viewError("404_inframe", null, 'form is null');
+        }
+        if (!$form->can_view_inputs_moderator) {
+            return $this->viewError("403_inframe", null, 'モデレータは集計結果を表示できる=off');
+        }
+
+        // カラムの取得
+        $columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence', 'asc')->get();
+
+        $inputs_query = FormsInputs::where('forms_id', $form->id);
+        $inputs_query->orderBy('forms_inputs.created_at', 'desc');
+
+        // データ取得
+        $get_count = 10;
+        $inputs = $inputs_query->paginate($get_count, ["*"], "frame_{$frame_id}_page");
+
+        // 登録データ詳細の取得
+        $input_cols = FormsInputCols::select('forms_input_cols.*', 'uploads.client_original_name')
+            ->leftJoin('uploads', 'uploads.id', '=', 'forms_input_cols.value')
+            ->whereIn('forms_inputs_id', $inputs->pluck('id'))
+            ->orderBy('forms_inputs_id', 'asc')->orderBy('forms_columns_id', 'asc')
+            ->get();
+
+        // 表示テンプレートを呼び出す。
+        return $this->view('aggregate', [
+            'form' => $form,
+            'columns' => $columns,
+            'inputs' => $inputs,
+            'input_cols' => $input_cols,
+        ]);
+    }
+
+    /**
      * 登録時の確認
      */
     public function publicConfirm($request, $page_id, $frame_id, $id = null)
@@ -748,14 +821,26 @@ class FormsPlugin extends UserPluginBase
             }
         }
 
-        // 表示テンプレートを呼び出す。
-        return $this->view('forms_confirm', [
-            'request' => $request,
-            'frame_id' => $frame_id,
-            'form' => $form,
-            'forms_columns' => $forms_columns,
-            'uploads' => $uploads,
-        ]);
+        // 表示テンプレートを呼び出す
+        if ($form->form_mode == FormMode::form) {
+            // フォーム
+            return $this->view('forms_confirm', [
+                'request' => $request,
+                'frame_id' => $frame_id,
+                'form' => $form,
+                'forms_columns' => $forms_columns,
+                'uploads' => $uploads,
+            ]);
+        } else {
+            // アンケート
+            return $this->view('forms_confirm_tandem', [
+                'request' => $request,
+                'frame_id' => $frame_id,
+                'form' => $form,
+                'forms_columns' => $forms_columns,
+                'uploads' => $uploads,
+            ]);
+        }
     }
 
     /**
@@ -828,6 +913,8 @@ class FormsPlugin extends UserPluginBase
         // 添付ファイルID
         $attach_uploads_ids = [];
 
+        $no = 1;
+
         // forms_input_cols 登録
         foreach ($forms_columns as $forms_column) {
             if ($forms_column->column_type == FormColumnType::group) {
@@ -863,16 +950,31 @@ class FormsPlugin extends UserPluginBase
                 $upload = Uploads::where('id', $value)->first();
 
                 // メールの内容(ファイル系は、ファイル名を載せる)
-                $contents_text .= $forms_column->column_name . "：" . $upload->client_original_name . "\n";
+                if ($form->form_mode == FormMode::form) {
+                    // フォーム
+                    $contents_text .= $forms_column->column_name . "：" . $upload->client_original_name . "\n";
+                } else {
+                    // アンケート
+                    $contents_text .= "Q{$no} {$forms_column->column_name}：\n{$upload->client_original_name}\n\n";
+                }
+
             } else {
                 // メールの内容
-                $contents_text .= $forms_column->column_name . "：" . $value . "\n";
+                if ($form->form_mode == FormMode::form) {
+                    // フォーム
+                    $contents_text .= $forms_column->column_name . "：" . $value . "\n";
+                } else {
+                    // アンケート
+                    $contents_text .= "Q{$no} {$forms_column->column_name}：\n$value\n\n";
+                }
             }
 
             // メール型
             if ($forms_column->column_type == FormColumnType::mail) {
                 $user_mailaddresses[] = $value;
             }
+
+            $no++;
         }
         // 最後の改行を除去
         $contents_text = trim($contents_text);
@@ -1561,6 +1663,7 @@ class FormsPlugin extends UserPluginBase
 
         // フォーム設定
         $forms->forms_name          = $request->forms_name;
+        $forms->form_mode           = $request->form_mode;
         $forms->entry_limit         = $request->entry_limit;
         $forms->entry_limit_over_message = $request->entry_limit_over_message;
         $forms->display_control_flag = empty($request->display_control_flag) ? 0 : $request->display_control_flag;
@@ -1569,6 +1672,7 @@ class FormsPlugin extends UserPluginBase
         $forms->regist_control_flag = empty($request->regist_control_flag) ? 0 : $request->regist_control_flag;
         $forms->regist_from         = empty($request->regist_from) ? null : new Carbon($request->regist_from);
         $forms->regist_to           = empty($request->regist_to) ? null : new Carbon($request->regist_to);
+        $forms->can_view_inputs_moderator = empty($request->can_view_inputs_moderator) ? 0 : $request->can_view_inputs_moderator;
         $forms->mail_send_flag      = empty($request->mail_send_flag) ? 0 : $request->mail_send_flag;
         $forms->mail_send_address   = $request->mail_send_address;
         $forms->user_mail_send_flag = empty($request->user_mail_send_flag) ? 0 : $request->user_mail_send_flag;
@@ -1795,9 +1899,11 @@ class FormsPlugin extends UserPluginBase
         // フォームのID。まだフォームがない場合は0
         $forms_id = 0;
         $use_temporary_regist_mail_flag = null;
+        $form_mode = FormMode::form;
         if (!empty($form_db)) {
             $forms_id = $form_db->id;
             $use_temporary_regist_mail_flag = $form_db->use_temporary_regist_mail_flag;
+            $form_mode = $form_db->form_mode;
         }
 
         // 項目データ取得
@@ -1853,16 +1959,14 @@ class FormsPlugin extends UserPluginBase
         }
 
         // 編集画面テンプレートを呼び出す。
-        return $this->view(
-            'forms_edit',
-            [
-                'forms_id'   => $forms_id,
-                'columns'    => $columns,
-                'message'    => $message,
-                'warning_message' => $warning_message,
-                'errors'     => $errors,
-            ]
-        );
+        return $this->view('forms_edit',[
+            'forms_id'        => $forms_id,
+            'form_mode'       => $form_mode,
+            'columns'         => $columns,
+            'message'         => $message,
+            'warning_message' => $warning_message,
+            'errors'          => $errors,
+        ]);
     }
 
     /**
@@ -2241,6 +2345,14 @@ class FormsPlugin extends UserPluginBase
         if (!empty($columns_id)) {
             DB::table('forms_columns_selects')->where('forms_columns_id', $columns_id)->delete();
         }
+    }
+
+    /**
+     * 集計結果ダウンロード
+     */
+    public function downloadCsvAggregate($request, $page_id, $frame_id, $id)
+    {
+        return $this->downloadCsv($request, $page_id, $frame_id, $id);
     }
 
     /**

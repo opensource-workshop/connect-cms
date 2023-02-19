@@ -2,6 +2,7 @@
  * フォーム編集画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォームプラグイン
 --}}
@@ -82,6 +83,25 @@
     </div>
 
     <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}} pt-0">フォームモード</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="col pl-0">
+                @foreach (FormMode::getMembers() as $enum_value => $enum_label)
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @php $form_mode = $form->form_mode ?? FormMode::getDefault(); @endphp
+                        @if (old('form_mode', $form_mode) == $enum_value)
+                            <input type="radio" value="{{$enum_value}}" id="form_mode_{{$enum_value}}" name="form_mode" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="{{$enum_value}}" id="form_mode_{{$enum_value}}" name="form_mode" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="form_mode_{{$enum_value}}">{{$enum_label}}</label>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}} pt-0">データ保存</label>
         <div class="{{$frame->getSettingInputClass()}}">
             <div class="custom-control custom-checkbox">
@@ -104,6 +124,22 @@
         <label class="{{$frame->getSettingLabelClass()}} pt-0">本登録数</label>
         <div class="{{$frame->getSettingInputClass()}}">
             {{$form->active_entry_count}}
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}} pt-0">集計結果</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <label>以下の権限は集計結果を表示できる</label>
+            <div class="custom-control custom-checkbox">
+                <input type="hidden" name="can_view_inputs_moderator" value="0">
+                <input type="checkbox" name="can_view_inputs_moderator" value="1" class="custom-control-input" id="can_view_inputs_moderator" @if(old('can_view_inputs_moderator', $form->can_view_inputs_moderator)) checked=checked @endif>
+                <label class="custom-control-label" for="can_view_inputs_moderator">モデレータ</label>
+            </div>
+            <small class="text-muted">
+                ※ 集計結果は、登録一覧と同じの登録データが確認できます。<br />
+                ※ チェックONにすると、表側に集計結果ボタンを表示します。
+            </small>
         </div>
     </div>
 
