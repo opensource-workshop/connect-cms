@@ -137,7 +137,7 @@
                 <label class="custom-control-label" for="can_view_inputs_moderator">モデレータ</label>
             </div>
             <small class="text-muted">
-                ※ 集計結果は、登録一覧と同じの登録データが確認できます。<br />
+                ※ 集計結果は、登録一覧と同じ内容を確認できます。<br />
                 ※ チェックONにすると、表側に集計結果ボタンを表示します。
             </small>
         </div>
