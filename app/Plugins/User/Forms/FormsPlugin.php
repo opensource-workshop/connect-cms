@@ -1959,7 +1959,7 @@ class FormsPlugin extends UserPluginBase
         }
 
         // 編集画面テンプレートを呼び出す。
-        return $this->view('forms_edit',[
+        return $this->view('forms_edit', [
             'forms_id'        => $forms_id,
             'form_mode'       => $form_mode,
             'columns'         => $columns,
