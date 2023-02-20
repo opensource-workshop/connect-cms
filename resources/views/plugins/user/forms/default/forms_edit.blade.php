@@ -22,6 +22,9 @@
             </div>
         @else
 
+        {{-- WYSIWYG 呼び出し --}}
+        @include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame->id])
+
 <script type="text/javascript">
 
     /**
@@ -111,8 +114,13 @@
                 @if ($errors && $errors->any())
                     <div class="alert alert-danger mt-2">
                         @foreach ($errors->all() as $error)
-                        <i class="fas fa-exclamation-circle"></i>
-                            {{ $error }}<br>
+                            <i class="fas fa-exclamation-triangle"></i> {{ $error }}<br />
+                            @if (stripos($error, 'バイト以下の文字列'))
+                                <small>
+                                    <i class="fas fa-exclamation-triangle"></i> WYSIWYG のバイト数エラーの詳細については、Connect-CMS公式サイトを参照してください。<br />
+                                    <a href="https://manual.connect-cms.jp/common/wysiwyg/error/index.html" target="_blank">https://manual.connect-cms.jp/common/wysiwyg/error/index.html</a>
+                                </small>
+                            @endif
                         @endforeach
                     </div>
                 @endif

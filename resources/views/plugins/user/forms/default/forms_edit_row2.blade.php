@@ -20,7 +20,7 @@
     </td>
     {{-- 項目名 --}}
     <td colspan="6">
-        <textarea rows="2" name="column_name_{{ $column->id }}" class="form-control @if ($errors && $errors->has('column_name_'.$column->id)) border-danger @endif" >{{ old('column_name_'.$column->id, $column->column_name)}}</textarea>
+        <small>{{ $column->column_name }}</small>
     </td>
 </tr>
 <tr>

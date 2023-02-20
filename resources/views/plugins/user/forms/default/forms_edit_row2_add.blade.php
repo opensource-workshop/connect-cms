@@ -10,7 +10,7 @@
     <td></td>
     {{-- 項目名 --}}
     <td colspan="6">
-        <textarea rows="2" name="column_name" class="form-control @if ($errors && $errors->has('column_name')) border-danger @endif" >{{ old('column_name')}}</textarea>
+        <textarea name="column_name" class="wysiwyg{{$frame->id}} @if ($errors && $errors->has('column_name')) border-danger @endif" >{{ old('column_name')}}</textarea>
     </td>
 </tr>
 <tr>

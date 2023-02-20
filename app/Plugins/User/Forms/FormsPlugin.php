@@ -28,6 +28,7 @@ use App\Rules\CustomValiTimeFromTo;
 use App\Rules\CustomValiBothRequired;
 use App\Rules\CustomValiTokenExists;
 use App\Rules\CustomValiEmails;
+use App\Rules\CustomValiWysiwygMax;
 
 use App\Plugins\User\UserPluginBase;
 
@@ -1798,7 +1799,7 @@ class FormsPlugin extends UserPluginBase
     {
         // エラーチェック
         $validator = Validator::make($request->all(), [
-            'column_name'  => ['required'],
+            'column_name'  => ['required', new CustomValiWysiwygMax()],
             'column_type'  => ['required'],
         ]);
         $validator->setAttributeNames([
@@ -1855,8 +1856,10 @@ class FormsPlugin extends UserPluginBase
 
         // フォームのID。まだフォームがない場合は0
         $forms_id = 0;
+        $form_mode = null;
         if (!empty($form_db)) {
-            $forms_id = $form_db->id;
+            $forms_id  = $form_db->id;
+            $form_mode = $form_db->form_mode;
         }
 
         // --- 画面に値を渡す準備
@@ -1864,16 +1867,14 @@ class FormsPlugin extends UserPluginBase
         $selects = FormsColumnsSelects::query()->where('forms_columns_id', $column->id)->orderBy('display_sequence', 'asc')->get();
 
         // 編集画面テンプレートを呼び出す。
-        return $this->view(
-            'forms_edit_row_detail',
-            [
-                'forms_id' => $forms_id,
-                'column'     => $column,
-                'selects'     => $selects,
-                'message'     => $message,
-                'errors'     => $errors,
-            ]
-        );
+        return $this->view('forms_edit_row_detail', [
+            'forms_id'  => $forms_id,
+            'form_mode' => $form_mode,
+            'column'    => $column,
+            'selects'   => $selects,
+            'message'   => $message,
+            'errors'    => $errors,
+        ]);
     }
 
     /**
@@ -2105,6 +2106,13 @@ class FormsPlugin extends UserPluginBase
      */
     public function updateColumnDetail($request, $page_id, $frame_id)
     {
+        // フォームデータ取得
+        $form = Forms::where('id', $request->forms_id)->first();
+        if (empty($form)) {
+            // バケツ空テンプレートを呼び出す。
+            return $this->commonView('empty_bucket_setting');
+        }
+
         $column = FormsColumns::query()->where('id', $request->column_id)->first();
 
         $validator_values = null;
@@ -2112,45 +2120,38 @@ class FormsPlugin extends UserPluginBase
 
         // データ型が「まとめ行」の場合はまとめ数について必須チェック
         if ($column->column_type == FormColumnType::group) {
-            $validator_values['frame_col'] = [
-                'required'
-            ];
+            $validator_values['frame_col'] = ['required'];
             $validator_attributes['frame_col'] = 'まとめ数';
         }
         // 桁数チェックの指定時、入力値が数値であるかチェック
         if ($request->rule_digits_or_less) {
-            $validator_values['rule_digits_or_less'] = [
-                'numeric',
-            ];
+            $validator_values['rule_digits_or_less'] = ['numeric'];
             $validator_attributes['rule_digits_or_less'] = '入力桁数';
         }
         // 最大値の指定時、入力値が数値であるかチェック
         if ($request->rule_max) {
-            $validator_values['rule_max'] = [
-                'numeric',
-            ];
+            $validator_values['rule_max'] = ['numeric'];
             $validator_attributes['rule_max'] = '最大値';
         }
         // 最小値の指定時、入力値が数値であるかチェック
         if ($request->rule_min) {
-            $validator_values['rule_min'] = [
-                'numeric',
-            ];
+            $validator_values['rule_min'] = ['numeric'];
             $validator_attributes['rule_min'] = '最小値';
         }
         // 入力文字数の指定時、入力値が数値であるかチェック
         if ($request->rule_word_count) {
-            $validator_values['rule_word_count'] = [
-                'numeric',
-            ];
+            $validator_values['rule_word_count'] = ['numeric'];
             $validator_attributes['rule_word_count'] = '入力文字数';
         }
         // ～日以降許容を指定時、入力値が数値であるかチェック
         if ($request->rule_date_after_equal) {
-            $validator_values['rule_date_after_equal'] = [
-                'numeric',
-            ];
+            $validator_values['rule_date_after_equal'] = ['numeric'];
             $validator_attributes['rule_date_after_equal'] = '～日以降を許容';
+        }
+        // アンケートの場合、項目名のwysiwygチェック
+        if ($form->form_mode == FormMode::questionnaire) {
+            $validator_values['column_name'] = ['required', new CustomValiWysiwygMax()];
+            $validator_attributes['column_name'] = '項目名';
         }
 
         // エラーチェック
@@ -2196,9 +2197,19 @@ class FormsPlugin extends UserPluginBase
         $column->rule_regex = $request->rule_regex;
         // ～日以降を許容
         $column->rule_date_after_equal = $request->rule_date_after_equal;
+        // アンケートの場合、項目名の更新
+        if ($form->form_mode == FormMode::questionnaire) {
+            $column->column_name = $request->column_name;
+        }
 
         $column->save();
-        $message = '項目【 '. $column->column_name .' 】を更新しました。';
+        if ($form->form_mode == FormMode::form) {
+            // フォーム
+            $message = '項目【 '. $column->column_name .' 】を更新しました。';
+        } else {
+            // アンケート
+            $message = '項目を更新しました。';
+        }
 
         // 編集画面を呼び出す
         return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, $message, null);
