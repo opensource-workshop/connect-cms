@@ -81,7 +81,6 @@
             $('[data-toggle="tooltip"]').tooltip()
             // 常時表示 ※表示の判定は項目側で実施
             $('[id^=detail-button-tip]').tooltip('show');
-            $('#frame-col-tip').tooltip('show');
         })
     </script>
 
