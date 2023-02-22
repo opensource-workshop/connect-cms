@@ -10,6 +10,8 @@
     <td></td>
     {{-- 項目名 --}}
     <td colspan="6">
+        {{-- WYSIWYG 呼び出し --}}
+        @include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame->id, 'use_br' => true])
         <textarea name="column_name" class="wysiwyg{{$frame->id}} @if ($errors && $errors->has('column_name')) border-danger @endif" >{{ old('column_name')}}</textarea>
     </td>
 </tr>

@@ -37,6 +37,11 @@
         form_download.character_code.value = '{{CsvCharacterCode::utf_8}}';
         form_download.submit();
     }
+
+    $(function () {
+        // ツールチップ有効化
+        $('[data-toggle="tooltip"]').tooltip()
+    })
 </script>
 
 <div class="row">
@@ -68,7 +73,9 @@
         <tr>
             <th nowrap>状態</th>
             @foreach($columns as $column)
-                <th>{{$column->column_name}}</th>
+                <th>
+                    {{mb_substr(strip_tags($column->column_name), 0, 20)}}@if (mb_strlen(strip_tags($column->column_name)) > 20)<a href="#frame-{{$frame_id}}" data-toggle="tooltip" data-placement="right" title="{{strip_tags($column->column_name)}}">...</a> @endif
+                </th>
             @endforeach
             @if ($form->numbering_use_flag)
                 <th nowrap>採番</th>

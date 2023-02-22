@@ -22,9 +22,6 @@
             </div>
         @else
 
-        {{-- WYSIWYG 呼び出し --}}
-        @include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame->id])
-
 <script type="text/javascript">
 
     /**

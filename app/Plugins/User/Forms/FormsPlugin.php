@@ -956,7 +956,8 @@ class FormsPlugin extends UserPluginBase
                     $contents_text .= $forms_column->column_name . "：" . $upload->client_original_name . "\n";
                 } else {
                     // アンケート
-                    $contents_text .= "Q{$no} {$forms_column->column_name}：\n{$upload->client_original_name}\n\n";
+                    $column_name = strip_tags($forms_column->column_name);
+                    $contents_text .= "Q{$no} {$column_name}：\n{$upload->client_original_name}\n\n";
                 }
 
             } else {
@@ -966,7 +967,8 @@ class FormsPlugin extends UserPluginBase
                     $contents_text .= $forms_column->column_name . "：" . $value . "\n";
                 } else {
                     // アンケート
-                    $contents_text .= "Q{$no} {$forms_column->column_name}：\n$value\n\n";
+                    $column_name = strip_tags($forms_column->column_name);
+                    $contents_text .= "Q{$no} {$column_name}：\n$value\n\n";
                 }
             }
 
@@ -2453,7 +2455,7 @@ ORDER BY forms_inputs_id, forms_columns_id
         $copy_base['status'] = '';
         // 見出し行
         foreach ($columns as $column) {
-            $csv_array[0][$column->id] = $column->column_name;
+            $csv_array[0][$column->id] = strip_tags($column->column_name);
             $copy_base[$column->id] = '';
         }
         if ($form->numbering_use_flag) {

@@ -20,7 +20,7 @@
     </td>
     {{-- 項目名 --}}
     <td colspan="6">
-        <small>{{ $column->column_name }}</small>
+        <small>{{ strip_tags($column->column_name) }}</small>
     </td>
 </tr>
 <tr>

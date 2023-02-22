@@ -34,7 +34,7 @@
                 @switch($form_column->column_type)
                     @case("group")
                         {{-- defaultテンプレート --}}
-                        <label class="col-12 control-label">{!!nl2br(e($form_column->column_name))!!} @if ($form_column->required)<strong class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</strong> @endif</label>
+                        <label class="col-12 control-label">{!! $form_column->column_name !!} @if ($form_column->required)<strong class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</strong> @endif</label>
 
                         @php
                             // グループカラムの幅の計算
@@ -51,13 +51,13 @@
                                         時間FromToは入力項目のtitleで項目説明しているため、項目名のラベルにforを付けない。--}}
                                     @if ($group_row->column_type == 'radio' || $group_row->column_type == 'checkbox')
                                         <div class="col-sm-{{$col_count}} pl-0">
-                                        <label class="control-label" style="vertical-align: top; padding-left: 16px; padding-top: 8px;">Q{{$no}} {!!nl2br(e($group_row->column_name))!!}</label>
+                                        <label class="control-label" style="vertical-align: top; padding-left: 16px; padding-top: 8px;">Q{{$no}} {!! $group_row->column_name !!}</label>
                                     @elseif ($group_row->column_type == 'time_from_to')
                                         <div class="col-sm-{{$col_count}} pr-0">
-                                        <label class="control-label">Q{{$no}} {!!nl2br(e($group_row->column_name))!!}</label>
+                                        <label class="control-label">Q{{$no}} {!! $group_row->column_name !!}</label>
                                     @else
                                         <div class="col-sm-{{$col_count}} pr-0">
-                                        <label class="control-label" for="column-{{$group_row->id}}-{{$frame_id}}">Q{{$no}} {!!nl2br(e($group_row->column_name))!!}</label>
+                                        <label class="control-label" for="column-{{$group_row->id}}-{{$frame_id}}">Q{{$no}} {!! $group_row->column_name !!}</label>
                                     @endif
 
                                     {{-- 必須 --}}
@@ -104,7 +104,7 @@
                         @endphp
 
                         {{-- defaultテンプレート --}}
-                        <label class="col-12 control-label" {{$label_for}}>Q{{$no}} {!!nl2br(e($form_column->column_name))!!} @if ($form_column->required)<strong class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</strong> @endif</label>
+                        <label class="col-12 control-label" {{$label_for}}>Q{{$no}} {!! $form_column->column_name !!} @if ($form_column->required)<strong class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</strong> @endif</label>
 
                         <div class="col-12">
                             @include('plugins.user.forms.default.forms_input_' . $form_column->column_type, ['form_obj' => $form_column, 'label_id' => 'column-'.$form_column->id.'-'.$frame_id])

@@ -18,7 +18,7 @@
 @include('plugins.common.errors_form_line')
 
 {{-- WYSIWYG 呼び出し --}}
-@include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame->id])
+@include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame->id, 'use_br' => true])
 
 <script type="text/javascript">
 
@@ -101,6 +101,7 @@
                     <textarea name="column_name" class="wysiwyg{{$frame->id}}">{!!old('column_name', $column->column_name)!!}</textarea>
                 </div>
                 @include('plugins.common.errors_inline_wysiwyg', ['name' => 'column_name'])
+                <small class="text-muted">※ 項目名の改行はbrタグになります。</small>
             </div>
 
             {{-- ボタンエリア --}}

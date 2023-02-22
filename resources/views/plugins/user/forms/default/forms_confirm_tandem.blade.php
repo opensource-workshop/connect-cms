@@ -41,7 +41,7 @@
 
         @case(FormColumnType::group)
             {{-- defaultテンプレート --}}
-            <label class="col-12 control-label">{!!nl2br(e($form_column->column_name))!!}</label>
+            <label class="col-12 control-label">{!! $form_column->column_name !!}</label>
 
             @php
             // グループカラムの幅の計算
@@ -56,7 +56,7 @@
                 <div class="row p-0">
                     @foreach($form_column->group as $group_row)
                         <div class="col-sm-{{$col_count}} pr-0">
-                            <label class="control-label">Q{{$no}} {!!nl2br(e($group_row->column_name))!!}</label><br />
+                            <label class="control-label">Q{{$no}} {!! $group_row->column_name !!}</label><br />
                             @include('plugins.user.forms.default.forms_confirm_column_' . $group_row->column_type, ['form_obj' => $group_row])
                             @php $no++; @endphp
                         </div>
@@ -66,7 +66,7 @@
             @break
 
         @default
-            <label class="col-12 control-label">Q{{$no}}  {!!nl2br(e($form_column->column_name))!!}</label>
+            <label class="col-12 control-label">Q{{$no}}  {!! $form_column->column_name !!}</label>
 
             {{-- 項目 --}}
             <div class="col-12">
