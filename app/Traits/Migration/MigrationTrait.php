@@ -130,6 +130,10 @@ use App\Models\Migration\Nc2\Nc2PhotoalbumAlbum;
 use App\Models\Migration\Nc2\Nc2PhotoalbumBlock;
 use App\Models\Migration\Nc2\Nc2PhotoalbumPhoto;
 use App\Models\Migration\Nc2\Nc2Questionnaire;
+use App\Models\Migration\Nc2\Nc2QuestionnaireAnswer;
+use App\Models\Migration\Nc2\Nc2QuestionnaireBlock;
+use App\Models\Migration\Nc2\Nc2QuestionnaireChoice;
+use App\Models\Migration\Nc2\Nc2QuestionnaireQuestion;
 use App\Models\Migration\Nc2\Nc2Quiz;
 use App\Models\Migration\Nc2\Nc2Registration;
 use App\Models\Migration\Nc2\Nc2RegistrationBlock;
@@ -166,6 +170,7 @@ use App\Enums\DayOfWeek;
 use App\Enums\FacilityDisplayType;
 use App\Enums\FaqSequenceConditionType;
 use App\Enums\FormColumnType;
+use App\Enums\FormMode;
 use App\Enums\LinklistType;
 use App\Enums\NoticeEmbeddedTag;
 use App\Enums\NotShowType;
@@ -256,7 +261,7 @@ trait MigrationTrait
         'online'        => 'Development',  // オンライン状況
         'photoalbum'    => 'photoalbums',  // フォトアルバム
         'pm'            => 'Abolition',    // プライベートメッセージ
-        'questionnaire' => 'Development',  // アンケート
+        'questionnaire' => 'forms',        // アンケート
         'quiz'          => 'Development',  // 小テスト
         'registration'  => 'forms',        // フォーム
         'reservation'   => 'reservations', // 施設予約
@@ -3050,9 +3055,14 @@ trait MigrationTrait
                 $regist_to = $regist_to ? $regist_to : null;
             }
 
+            if ($form_ini['form_base']['mail_send_flag'] && empty($form_ini['form_base']['mail_send_address']) && empty($form_ini['form_base']['user_mail_send_flag'])) {
+                $this->putMonitor(3, 'メール送信=ONですが、送信メールアドレス=空＆登録者にメール送る=OFFのため、メール飛びません。設定画面から設定してください。', "バケツ名={$bucket->bucket_name}, bucket_id={$bucket->id}");
+            }
+
             $form = new Forms([
                 'bucket_id'           => $bucket->id,
                 'forms_name'          => $form_name,
+                'form_mode'           => Arr::get($form_ini, 'form_base.form_mode', FormMode::form),
                 'mail_send_flag'      => $form_ini['form_base']['mail_send_flag'],
                 'mail_send_address'   => $form_ini['form_base']['mail_send_address'],
                 'user_mail_send_flag' => $form_ini['form_base']['user_mail_send_flag'],
@@ -6260,10 +6270,22 @@ trait MigrationTrait
         if (array_key_exists('frame_base', $frame_ini) && array_key_exists('form_id', $frame_ini['frame_base'])) {
             $form_id = $frame_ini['frame_base']['form_id'];
         }
+
+        $target_source_table = Arr::get($frame_ini, 'source_info.target_source_table');
+
         // フォームの情報取得
-        if (!empty($form_id) && Storage::exists($this->getImportPath('forms/form_') . $form_id . '.ini')) {
-            $form_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('forms/form_') . $form_id . '.ini', true);
+        if ($target_source_table == 'questionnaire') {
+            // questionnaire -> forms
+            if (!empty($form_id) && Storage::exists($this->getImportPath('forms/form_questionnaire_') . $form_id . '.ini')) {
+                $form_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('forms/form_questionnaire_') . $form_id . '.ini', true);
+            }
+        } else {
+            // フォーム
+            if (!empty($form_id) && Storage::exists($this->getImportPath('forms/form_') . $form_id . '.ini')) {
+                $form_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('forms/form_') . $form_id . '.ini', true);
+            }
         }
+
         // NC2 の registration_id でマップ確認
         if (!empty($form_ini) && array_key_exists('source_info', $form_ini) && array_key_exists('registration_id', $form_ini['source_info'])) {
             $registration_id = $form_ini['source_info']['registration_id'];
@@ -7697,6 +7719,11 @@ trait MigrationTrait
         // NC2 検索（search）データのエクスポート
         if ($this->isTarget('nc2_export', 'plugins', 'searchs')) {
             $this->nc2ExportSearch($redo);
+        }
+
+        // NC2 アンケート（questionnaire）データのエクスポート
+        if ($this->isTarget('nc2_export', 'plugins', 'questionnaires')) {
+            $this->nc2ExportQuestionnaire($redo);
         }
 
         // NC2 固定リンク（abbreviate_url）データのエクスポート
@@ -10096,6 +10123,7 @@ trait MigrationTrait
             $registration_ini = "";
             $registration_ini .= "[form_base]\n";
             $registration_ini .= "forms_name = \""        . $nc2_registration->registration_name . "\"\n";
+            $registration_ini .= "form_mode  = \""        . FormMode::form . "\"\n";
             $registration_ini .= "mail_send_flag = "      . $mail_send_flag . "\n";
             $registration_ini .= "mail_send_address = \"" . $mail_send_address . "\"\n";
             $registration_ini .= "user_mail_send_flag = " . $user_mail_send_flag . "\n";
@@ -11802,6 +11830,327 @@ trait MigrationTrait
     }
 
     /**
+     * NC2：アンケート（Questionnaire）の移行
+     */
+    private function nc2ExportQuestionnaire($redo)
+    {
+        $this->putMonitor(3, "Start nc2ExportQuestionnaire.");
+
+        // データクリア
+        if ($redo === true) {
+            // 移行用ファイルの削除
+            $import_file_paths = glob($this->getImportPath('forms/form_questionnaire_*'));
+            foreach ($import_file_paths as $import_file_path) {
+                Storage::delete($import_file_path);
+            }
+        }
+
+        // NC2アンケート（Questionnaire）を移行する。
+        $nc2_export_where_questionnaire_ids = $this->getMigrationConfig('questionnaires', 'nc2_export_where_questionnaire_ids');
+
+        if (empty($nc2_export_where_questionnaire_ids)) {
+            $nc2_questionnaires = Nc2Questionnaire::orderBy('questionnaire_id')->get();
+        } else {
+            $nc2_questionnaires = Nc2Questionnaire::whereIn('questionnaire_id', $nc2_export_where_questionnaire_ids)->orderBy('questionnaire_id')->get();
+        }
+
+        // 空なら戻る
+        if ($nc2_questionnaires->isEmpty()) {
+            return;
+        }
+
+        // nc2の全ユーザ取得
+        $nc2_users = Nc2User::get();
+
+        // NC2アンケート（Questionnaire）のループ
+        foreach ($nc2_questionnaires as $nc2_questionnaire) {
+            $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (empty($room_ids)) {
+                // ルーム指定なし。全データの移行
+            } elseif (!empty($room_ids) && in_array($nc2_questionnaire->room_id, $room_ids)) {
+                // ルーム指定あり。指定ルームに合致する。
+            } else {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
+            // 対象外指定があれば、読み飛ばす
+            if ($this->isOmmit('questionnaires', 'export_ommit_questionnaire_ids', $nc2_questionnaire->questionnaire_id)) {
+                continue;
+            }
+
+            // このアンケートが配置されている最初のページオブジェクトを取得しておく
+            // WYSIWYG で相対パスを絶対パスに変換する際に、ページの固定URL が必要になるため。
+            $nc2_page = null;
+            $nc2_questionnaire_block = Nc2QuestionnaireBlock::where('questionnaire_id', $nc2_questionnaire->questionnaire_id)->orderBy('block_id', 'asc')->first();
+            if (!empty($nc2_questionnaire_block)) {
+                $nc2_block = Nc2Block::where('block_id', $nc2_questionnaire_block->block_id)->first();
+            }
+            if (!empty($nc2_block)) {
+                $nc2_page = Nc2Page::where('page_id', $nc2_block->page_id)->first();
+            }
+
+            // (nc2) mail_send = 登録をメールで通知する
+            if ($nc2_questionnaire->mail_send) {
+                // メール通知ON
+                $mail_send_flag = 1;
+
+            } else {
+                // メール通知OFF
+                $mail_send_flag = 0;
+            }
+
+            $mail_subject = $nc2_questionnaire->mail_subject;
+            $mail_body = $nc2_questionnaire->mail_body;
+
+            // --- メール配信設定
+            // [{X-SITE_NAME}]アンケート回答
+            //
+            // アンケートが回答されたのでお知らせします。
+            // ルーム名称:{X-ROOM}
+            // アンケートタイトル:{X-QUESTIONNAIRE_NAME}
+            // 回答者:{X-USER}
+            // 回答日時:{X-TO_DATE}
+
+            // 回答結果を参照するには、下記アドレスへ
+            // {X-URL}
+
+            // 変換
+            $convert_embedded_tags = [
+                // nc2埋込タグ, cc埋込タグ
+                ['{X-SITE_NAME}', '[[' . NoticeEmbeddedTag::site_name . ']]'],
+                ['{X-QUESTIONNAIRE_NAME}', '[[form_name]]'],
+                ['{X-TO_DATE}', '[[to_datetime]]'],
+                // 除外
+                ['ルーム名称:{X-ROOM}', ''],
+                ['回答者:{X-USER}', ''],
+                ['{X-ROOM}', ''],
+                ['回答結果を参照するには、下記アドレスへ', ''],
+                ['{X-URL}', ''],
+            ];
+            foreach ($convert_embedded_tags as $convert_embedded_tag) {
+                $mail_subject = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_subject);
+                $mail_body = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_body);
+            }
+
+            $regist_control_flag = $nc2_questionnaire->period ? 1 : 0;
+            $regist_to =  $nc2_questionnaire->period ? $this->getCCDatetime($nc2_questionnaire->period) : '';
+
+            // 状態 変換
+            // (nc) 0:未実施, 1:公開, 2:終了
+            // (cc) 0:停止, 1:公開
+            // (key:nc2)status => (value:cc)active_flag
+            $convert_active_flags = [
+                0 => 0,
+                1 => 1,
+                2 => 0,
+            ];
+            if (isset($convert_active_flags[$nc2_questionnaire->status])) {
+                $active_flag = $convert_active_flags[$nc2_questionnaire->status];
+            } else {
+                $active_flag = 0;
+                $this->putError(3, '掲示板の表示形式が未対応の形式', "nc2_questionnaire->status = " . $nc2_questionnaire->status);
+            }
+
+            // アンケート設定
+            $questionnaire_ini = "";
+            $questionnaire_ini .= "[form_base]\n";
+            $questionnaire_ini .= "forms_name = \""        . $nc2_questionnaire->questionnaire_name . "\"\n";
+            $questionnaire_ini .= "form_mode  = \""        . FormMode::questionnaire . "\"\n";
+            $questionnaire_ini .= "mail_send_flag = "      . $mail_send_flag . "\n";
+            $questionnaire_ini .= "mail_send_address =\n";
+            $questionnaire_ini .= "user_mail_send_flag = 0\n";
+            $questionnaire_ini .= "mail_subject = \""      . $mail_subject . "\"\n";
+            $questionnaire_ini .= "mail_format = \""       . $mail_body . "\"\n";
+            $questionnaire_ini .= "data_save_flag = 1\n";
+            $questionnaire_ini .= "after_message =\n";
+            $questionnaire_ini .= "numbering_use_flag = 0\n";
+            $questionnaire_ini .= "numbering_prefix = null\n";
+            $questionnaire_ini .= "regist_control_flag = " . $regist_control_flag. "\n";
+            $questionnaire_ini .= "regist_to = \""         . $regist_to . "\"\n";
+
+            // NC2 情報
+            $questionnaire_ini .= "\n";
+            $questionnaire_ini .= "[source_info]\n";
+            $questionnaire_ini .= "registration_id  = QUESTIONNAIRE_" . $nc2_questionnaire->questionnaire_id . "\n";
+            $questionnaire_ini .= "active_flag      = " . $active_flag . "\n";
+            $questionnaire_ini .= "room_id          = " . $nc2_questionnaire->room_id . "\n";
+            $questionnaire_ini .= "module_name      = \"questionnaire\"\n";
+            $questionnaire_ini .= "created_at       = \"" . $this->getCCDatetime($nc2_questionnaire->insert_time) . "\"\n";
+            $questionnaire_ini .= "created_name     = \"" . $nc2_questionnaire->insert_user_name . "\"\n";
+            $questionnaire_ini .= "insert_login_id  = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_questionnaire->insert_user_id) . "\"\n";
+            $questionnaire_ini .= "updated_at       = \"" . $this->getCCDatetime($nc2_questionnaire->update_time) . "\"\n";
+            $questionnaire_ini .= "updated_name     = \"" . $nc2_questionnaire->update_user_name . "\"\n";
+            $questionnaire_ini .= "update_login_id  = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_questionnaire->update_user_id) . "\"\n";
+
+            // アンケートのカラム情報
+            $questionnaire_questions = Nc2QuestionnaireQuestion::where('questionnaire_id', $nc2_questionnaire->questionnaire_id)
+                ->orderBy('question_sequence', 'asc')
+                ->get();
+
+            if (empty($questionnaire_questions)) {
+                continue;
+            }
+
+            // カラム情報出力
+            $questionnaire_ini .= "\n";
+            $questionnaire_ini .= "[form_columns]\n";
+
+            // カラム情報
+            foreach ($questionnaire_questions as $questionnaire_question) {
+                $question_value = $this->nc2Wysiwyg(null, null, null, null, $questionnaire_question->question_value, 'questionnaire', $nc2_page);
+
+                $questionnaire_ini .= "form_column[" . $questionnaire_question->question_id . "] = \"" . $question_value . "\"\n";
+            }
+            $questionnaire_ini .= "\n";
+
+            $option_values = Nc2QuestionnaireChoice::where('questionnaire_id', $nc2_questionnaire->questionnaire_id)
+                ->orderBy('choice_sequence', 'asc')
+                ->get();
+
+            // カラム詳細情報
+            foreach ($questionnaire_questions as $questionnaire_question) {
+                $questionnaire_ini .= "[" . $questionnaire_question->question_id . "]" . "\n";
+
+                // type
+                if ($questionnaire_question->question_type == 0) {
+                    $column_type = "radio";
+                } elseif ($questionnaire_question->question_type == 1) {
+                    $column_type = "checkbox";
+                } elseif ($questionnaire_question->question_type == 2) {
+                    $column_type = "textarea";
+                }
+
+                // 選択肢
+                $option_value = $option_values->where('question_id', $questionnaire_question->question_id)
+                    ->pluck('choice_value')
+                    ->implode('|');
+
+                $questionnaire_ini .= "column_type                = \"" . $column_type                     . "\"\n";
+                $questionnaire_ini .= "column_name                = \"" . $questionnaire_question->question_value    . "\"\n";
+                $questionnaire_ini .= "option_value               = \"" . $option_value . "\"\n";
+                $questionnaire_ini .= "required                   = "   . $questionnaire_question->require_flag . "\n";
+                $questionnaire_ini .= "frame_col                  = "   . 0                                . "\n";
+                $questionnaire_ini .= "caption                    = \"" . $questionnaire_question->description  . "\"\n";
+                $questionnaire_ini .= "caption_color              = \"" . "text-dark"                      . "\"\n";
+                $questionnaire_ini .= "minutes_increments         = "   . 10                               . "\n";
+                $questionnaire_ini .= "minutes_increments_from    = "   . 10                               . "\n";
+                $questionnaire_ini .= "minutes_increments_to      = "   . 10                               . "\n";
+                $questionnaire_ini .= "rule_allowed_numeric       = null\n";
+                $questionnaire_ini .= "rule_allowed_alpha_numeric = null\n";
+                $questionnaire_ini .= "rule_digits_or_less        = null\n";
+                $questionnaire_ini .= "rule_max                   = null\n";
+                $questionnaire_ini .= "rule_min                   = null\n";
+                $questionnaire_ini .= "rule_word_count            = null\n";
+                $questionnaire_ini .= "rule_date_after_equal      = null\n";
+                $questionnaire_ini .= "\n";
+            }
+
+            // フォーム の設定
+            $this->storagePut($this->getImportPath('forms/form_questionnaire_') . $this->zeroSuppress($nc2_questionnaire->questionnaire_id) . '.ini', $questionnaire_ini);
+
+            // 登録データもエクスポートする場合
+            if ($this->hasMigrationConfig('questionnaires', 'nc2_export_questionnaire_data', true)) {
+                // 対象外指定があれば、読み飛ばす
+                if ($this->isOmmit('questionnaires', 'export_ommit_questionnaire_data_ids', $nc2_questionnaire->questionnaire_id)) {
+                    continue;
+                }
+
+                // データ部
+                $questionnaire_data_header = "[form_inputs]\n";
+                $questionnaire_data = "";
+                $questionnaire_answers = Nc2QuestionnaireAnswer::
+                    select(
+                        'questionnaire_answer.*',
+                        'questionnaire_question.question_type',
+                        'questionnaire_summary.insert_time AS summary_insert_time',
+                        'questionnaire_summary.insert_user_name AS summary_insert_user_name',
+                        'questionnaire_summary.insert_user_id AS summary_insert_user_id',
+                        'questionnaire_summary.update_time AS summary_update_time',
+                        'questionnaire_summary.update_user_name AS summary_update_user_name',
+                        'questionnaire_summary.update_user_id AS summary_update_user_id'
+                    )
+                    ->join('questionnaire_question', function ($join) {
+                        $join->on('questionnaire_question.questionnaire_id', '=', 'questionnaire_answer.questionnaire_id')
+                            ->on('questionnaire_question.question_id', '=', 'questionnaire_answer.question_id');
+                    })
+                    ->join('questionnaire_summary', function ($join) {
+                        $join->on('questionnaire_summary.questionnaire_id', '=', 'questionnaire_answer.questionnaire_id')
+                            ->on('questionnaire_summary.summary_id', '=', 'questionnaire_answer.summary_id');
+                    })
+                    ->where('questionnaire_answer.questionnaire_id', $nc2_questionnaire->questionnaire_id)
+                    ->orderBy('questionnaire_answer.summary_id', 'asc')
+                    ->orderBy('questionnaire_question.question_sequence', 'asc')
+                    ->get();
+
+                $summary_id = null;
+                foreach ($questionnaire_answers as $questionnaire_answer) {
+                    if ($questionnaire_answer->summary_id != $summary_id) {
+                        $questionnaire_data_header .= "input[" . $questionnaire_answer->summary_id . "] = \"\"\n";
+                        $questionnaire_data .= "\n[" . $questionnaire_answer->summary_id . "]\n";
+                        $questionnaire_data .= "created_at      = \"" . $this->getCCDatetime($questionnaire_answer->summary_insert_time) . "\"\n";
+                        $questionnaire_data .= "created_name    = \"" . $questionnaire_answer->summary_insert_user_name . "\"\n";
+                        $questionnaire_data .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $questionnaire_answer->summary_insert_user_id) . "\"\n";
+                        $questionnaire_data .= "updated_at      = \"" . $this->getCCDatetime($questionnaire_answer->summary_update_time) . "\"\n";
+                        $questionnaire_data .= "updated_name    = \"" . $questionnaire_answer->summary_update_user_name . "\"\n";
+                        $questionnaire_data .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $questionnaire_answer->summary_update_user_id) . "\"\n";
+                        $summary_id = $questionnaire_answer->summary_id;
+                    }
+
+                    $value = str_replace('"', '\"', $questionnaire_answer->answer_value);
+                    $value = str_replace("\n", '\n', $value);
+
+                    // 選択肢
+                    $option_value = $option_values->where('question_id', $questionnaire_answer->question_id)->pluck('choice_value');
+
+                    // type
+                    if ($questionnaire_answer->question_type == 0) {
+                        // radio
+                        // (nc2)value = 0|1|0
+                        $value_arr = explode('|', $value);
+                        $value_return = '';
+                        foreach ($value_arr as $key => $val) {
+                            if ($val) {
+                                if (isset($option_value[$key])) {
+                                    // 選択肢を値に変換
+                                    $value_return = $option_value[$key];
+                                    break;
+                                }
+                            }
+                        }
+                        $value = $value_return;
+
+                    } elseif ($questionnaire_answer->question_type == 1) {
+                        // checkbox
+                        // (nc2)value = 0|1|1
+                        $value_arr = explode('|', $value);
+                        $value_returns = [];
+                        foreach ($value_arr as $key => $val) {
+                            if ($val) {
+                                if (isset($option_value[$key])) {
+                                    // 選択肢を値に変換
+                                    $value_returns[] = $option_value[$key];
+                                    break;
+                                }
+                            }
+                        }
+                        $value = implode('|', $value_returns);
+
+                    } elseif ($questionnaire_answer->question_type == 2) {
+                        // textarea
+                        // 何もしない
+                    }
+
+                    $questionnaire_data .=  "{$questionnaire_answer->question_id} = \"{$value}\"\n";
+                }
+                // フォーム の登録データ
+                $this->storagePut($this->getImportPath('forms/form_questionnaire_') . $this->zeroSuppress($nc2_questionnaire->questionnaire_id) . '.txt', $questionnaire_data_header . $questionnaire_data);
+            }
+        }
+    }
+
+    /**
      * NC2：固定リンク（abbreviate_url）の移行
      */
     private function nc2ExportAbbreviateUrl($redo)
@@ -12386,6 +12735,12 @@ trait MigrationTrait
         } elseif ($module_name == 'search') {
             $nc2_search_block = Nc2SearchBlock::where('block_id', $nc2_block->block_id)->first();
             $ret = "search_block_id = \"" . $this->zeroSuppress($nc2_search_block->block_id) . "\"\n";
+        } elseif ($module_name == 'questionnaire') {
+            $nc2_questionnaire_block = Nc2QuestionnaireBlock::where('block_id', $nc2_block->block_id)->first();
+            // ブロックがあり、アンケートがない場合は対象外
+            if (!empty($nc2_questionnaire_block)) {
+                $ret = "form_id = \"" . $this->zeroSuppress($nc2_questionnaire_block->questionnaire_id) . "\"\n";
+            }
         }
         return $ret;
     }
