@@ -4855,7 +4855,7 @@ trait MigrationNc3ExportTrait
             // NC3 情報
             $photoalbum_ini .= "\n";
             $photoalbum_ini .= "[source_info]\n";
-            $photoalbum_ini .= "photoalbum_id   = " . $nc3_block->id . "\n";
+            $photoalbum_ini .= "photoalbum_id   = VIDEO_" . $nc3_block->id . "\n";
             $photoalbum_ini .= "room_id         = " . $nc3_block->room_id . "\n";
             $photoalbum_ini .= "module_name     = \"videos\"\n";
             $photoalbum_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_block->created) . "\"\n";
