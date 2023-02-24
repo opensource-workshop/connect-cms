@@ -359,7 +359,8 @@
             <input type="text" name="temporary_regist_mail_subject" value="{{old('temporary_regist_mail_subject', $form->temporary_regist_mail_subject)}}" class="form-control" placeholder="（例）仮登録のお知らせと本登録のお願い">
             <small class="text-muted">
                 ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
-                ※ [[form_name]] を記述すると該当部分にフォーム名が入ります。
+                ※ [[form_name]] を記述すると該当部分にフォーム名が入ります。<br>
+                ※ [[to_datetime]] を記述すると該当部分に登録日時が入ります。<br>
             </small>
         </div>
     </div>
@@ -373,6 +374,7 @@
                 ※ [[entry_url]] を記述すると本登録URLが入ります。本登録URLの有効期限は仮登録後60分です。<br>
                 ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
                 ※ [[form_name]] を記述すると該当部分にフォーム名が入ります。<br>
+                ※ [[to_datetime]] を記述すると該当部分に登録日時が入ります。<br>
                 ※ [[body]] を記述すると該当部分に登録内容が入ります。
             </small>
             @if ($errors && $errors->has('temporary_regist_mail_format')) <div class="text-danger">{{$errors->first('temporary_regist_mail_format')}}</div> @endif
@@ -401,6 +403,7 @@
             <small class="text-muted">
                 ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
                 ※ [[form_name]] を記述すると該当部分にフォーム名が入ります。<br>
+                ※ [[to_datetime]] を記述すると該当部分に登録日時が入ります。<br>
                 ※ [[number]] を記述すると該当部分に採番した番号が入ります。（採番機能の使用時）
             </small>
         </div>
@@ -414,6 +417,7 @@
             <small class="text-muted">
                 ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
                 ※ [[form_name]] を記述すると該当部分にフォーム名が入ります。<br>
+                ※ [[to_datetime]] を記述すると該当部分に登録日時が入ります。<br>
                 ※ [[body]] を記述すると該当部分に登録内容が入ります。<br>
                 ※ [[number]] を記述すると該当部分に採番した番号が入ります。（採番機能の使用時）
             </small>
