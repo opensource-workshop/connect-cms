@@ -87,6 +87,7 @@ use App\Enums\DatabaseSortFlag;
 use App\Enums\DayOfWeek;
 use App\Enums\FaqSequenceConditionType;
 use App\Enums\FormColumnType;
+use App\Enums\FormMode;
 use App\Enums\LinklistType;
 use App\Enums\NoticeEmbeddedTag;
 use App\Enums\PhotoalbumSort;
@@ -2911,6 +2912,7 @@ trait MigrationNc3ExportTrait
             $registration_ini = "";
             $registration_ini .= "[form_base]\n";
             $registration_ini .= "forms_name = \""        . $nc3_registration->title . "\"\n";
+            $registration_ini .= "form_mode  = \""        . FormMode::form . "\"\n";
             $registration_ini .= "mail_send_flag = "      . $mail_send_flag . "\n";
             $registration_ini .= "mail_send_address = \"\"\n";
             $registration_ini .= "user_mail_send_flag = " . $user_mail_send_flag . "\n";
