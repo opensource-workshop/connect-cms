@@ -2973,10 +2973,10 @@ trait MigrationTrait
             $form_ini = parse_ini_file($form_ini_path, true);
 
             // ルーム指定を探しておく。
-            $room_id = null;
-            if (array_key_exists('source_info', $form_ini) && array_key_exists('room_id', $form_ini['source_info'])) {
-                $room_id = $form_ini['source_info']['room_id'];
-            }
+            // $room_id = null;
+            // if (array_key_exists('source_info', $form_ini) && array_key_exists('room_id', $form_ini['source_info'])) {
+            //     $room_id = $form_ini['source_info']['room_id'];
+            // }
 
             // nc2 の registration_id
             $nc2_registration_id = 0;
@@ -3050,28 +3050,16 @@ trait MigrationTrait
                 $regist_to = $regist_to ? $regist_to : null;
             }
 
-            // メールフォーマットの置換処理
-            $mail_format = str_replace('\n', "\n", $form_ini['form_base']['mail_format']);
-            // 登録日時、ルームの出力は未実装機能
-            $replace_tags = [
-                '{X-SITE_NAME}'=>'[[site_name]]',
-                '{X-ROOM}'=>'',
-                '{X-REGISTRATION_NAME}'=>'[[form_name]]',
-                '{X-TO_DATE}'=>'[[to_datetime]]',
-                '{X-DATA}'=>'[[body]]',
-            ];
-            $mail_subject = str_replace(array_keys($replace_tags), array_values($replace_tags), $form_ini['form_base']['mail_subject']);
-            $mail_format = str_replace(array_keys($replace_tags), array_values($replace_tags), $mail_format);
             $form = new Forms([
                 'bucket_id'           => $bucket->id,
                 'forms_name'          => $form_name,
                 'mail_send_flag'      => $form_ini['form_base']['mail_send_flag'],
                 'mail_send_address'   => $form_ini['form_base']['mail_send_address'],
                 'user_mail_send_flag' => $form_ini['form_base']['user_mail_send_flag'],
-                'mail_subject'        => $mail_subject,
-                'mail_format'         => $mail_format,
+                'mail_subject'        => $form_ini['form_base']['mail_subject'],
+                'mail_format'         => $form_ini['form_base']['mail_format'],
                 'data_save_flag'      => $form_ini['form_base']['data_save_flag'],
-                'after_message'       => str_replace('\n', "\n", $form_ini['form_base']['after_message']),
+                'after_message'       => $form_ini['form_base']['after_message'],
                 'numbering_use_flag'  => $form_ini['form_base']['numbering_use_flag'],
                 'numbering_prefix'    => $form_ini['form_base']['numbering_prefix'],
                 'regist_control_flag' => $regist_control_flag,
@@ -10068,6 +10056,38 @@ trait MigrationTrait
                 $mail_send_flag = 0;
             }
 
+            $mail_subject = $nc2_registration->mail_subject;
+            $mail_body = $nc2_registration->mail_body;
+
+            // --- メール配信設定
+            // {X-REGISTRATION_NAME}の登録通知先メールアドレスとしてあなたのメールアドレスが使用されました。
+            // もし{X-REGISTRATION_NAME}への登録に覚えがない場合はこのメールを破棄してください。
+            //
+            // {X-REGISTRATION_NAME}を受け付けました。
+            //
+            // 登録日時:{X-TO_DATE}
+            //
+            //
+            // {X-DATA}
+            //
+            // メール内容を印刷の上、会場にご持参ください。
+
+            // 変換
+            $convert_embedded_tags = [
+                // nc2埋込タグ, cc埋込タグ
+                ['{X-SITE_NAME}', '[[' . NoticeEmbeddedTag::site_name . ']]'],
+                ['{X-REGISTRATION_NAME}', '[[form_name]]'],
+                ['{X-TO_DATE}', '[[to_datetime]]'],
+                ['{X-DATA}', '[[' . NoticeEmbeddedTag::body . ']]'],
+                // 除外
+                ['{X-ROOM} ', ''],
+                ['{X-ROOM}', ''],
+            ];
+            foreach ($convert_embedded_tags as $convert_embedded_tag) {
+                $mail_subject = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_subject);
+                $mail_body = str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_body);
+            }
+
             $registration_id = $nc2_registration->registration_id;
             $regist_control_flag = $nc2_registration->period ? 1 : 0;
             $regist_to =  $nc2_registration->period ? $this->getCCDatetime($nc2_registration->period) : '';
@@ -10079,10 +10099,10 @@ trait MigrationTrait
             $registration_ini .= "mail_send_flag = "      . $mail_send_flag . "\n";
             $registration_ini .= "mail_send_address = \"" . $mail_send_address . "\"\n";
             $registration_ini .= "user_mail_send_flag = " . $user_mail_send_flag . "\n";
-            $registration_ini .= "mail_subject = \""      . $nc2_registration->mail_subject . "\"\n";
-            $registration_ini .= "mail_format = \""       . str_replace("\n", '\n', $nc2_registration->mail_body) . "\"\n";
+            $registration_ini .= "mail_subject = \""      . $mail_subject . "\"\n";
+            $registration_ini .= "mail_format = \""       . $mail_body . "\"\n";
             $registration_ini .= "data_save_flag = 1\n";
-            $registration_ini .= "after_message = \""     . str_replace("\n", '\n', $nc2_registration->accept_message) . "\"\n";
+            $registration_ini .= "after_message = \""     . $nc2_registration->accept_message . "\"\n";
             $registration_ini .= "numbering_use_flag = 0\n";
             $registration_ini .= "numbering_prefix = null\n";
             $registration_ini .= "regist_control_flag = " . $regist_control_flag. "\n";
