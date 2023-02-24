@@ -4793,7 +4793,10 @@ trait MigrationNc3ExportTrait
         // データクリア
         if ($redo === true) {
             // 移行用ファイルの削除
-            Storage::deleteDirectory($this->getImportPath('videos/'));
+            $import_file_paths = glob($this->getImportPath('photoalbums/photoalbum_video_*'));
+            foreach ($import_file_paths as $import_file_path) {
+                Storage::delete($import_file_path);
+            }
         }
 
         // NC3動画（videos）を移行する。
