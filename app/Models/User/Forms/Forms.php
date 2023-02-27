@@ -23,6 +23,7 @@ class Forms extends Model
     protected $fillable = [
         'bucket_id',
         'forms_name',
+        'form_mode',
         'entry_limit',
         'entry_limit_over_message',
         'display_control_flag',
@@ -31,6 +32,7 @@ class Forms extends Model
         'regist_control_flag',
         'regist_from',
         'regist_to',
+        'can_view_inputs_moderator',
         'mail_send_flag',
         'mail_send_address',
         'user_mail_send_flag',

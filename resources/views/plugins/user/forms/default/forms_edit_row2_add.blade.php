@@ -1,18 +1,23 @@
 {{--
- * 項目の追加行テンプレート
+ * 項目の追加行テンプレート（２行）
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
 --}}
-<tr id="column_add_tr">
+<tr>
     {{-- 余白 --}}
-    <td>
-    </td>
+    <td></td>
     {{-- 項目名 --}}
-    <td>
-        <input class="form-control @if ($errors && $errors->has('column_name')) border-danger @endif" type="text" name="column_name" value="{{ old('column_name') }}">
+    <td colspan="6">
+        {{-- WYSIWYG 呼び出し --}}
+        @include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame->id, 'use_br' => true])
+        <textarea name="column_name" class="wysiwyg{{$frame->id}} @if ($errors && $errors->has('column_name')) border-danger @endif" >{{ old('column_name')}}</textarea>
     </td>
+</tr>
+<tr>
+    {{-- 余白 --}}
+    <td></td>
     {{-- 型 --}}
     <td>
         <select class="form-control" name="column_type">
@@ -32,16 +37,13 @@
         <input type="checkbox" name="required" value="1" data-toggle="tooltip" title="必須項目として指定します。" @if (old("required") == Required::on) checked="checked" @endif>
     </td>
     {{-- 余白 --}}
-    <td>
-    </td>
+    <td></td>
     {{-- 余白 --}}
-    <td>
-    </td>
+    <td></td>
     {{-- ＋ボタン --}}
     <td class="text-center">
         <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_column();" id="button_submit_add_column"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
     </td>
     {{-- 余白 --}}
-    <td>
-    </td>
+    <td></td>
 </tr>

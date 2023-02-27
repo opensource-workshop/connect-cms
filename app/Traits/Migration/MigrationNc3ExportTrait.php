@@ -87,6 +87,7 @@ use App\Enums\DatabaseSortFlag;
 use App\Enums\DayOfWeek;
 use App\Enums\FaqSequenceConditionType;
 use App\Enums\FormColumnType;
+use App\Enums\FormMode;
 use App\Enums\LinklistType;
 use App\Enums\NoticeEmbeddedTag;
 use App\Enums\PhotoalbumSort;
@@ -2894,13 +2895,13 @@ trait MigrationNc3ExportTrait
             $convert_embedded_tags = [
                 // nc3埋込タグ, cc埋込タグ
                 ['{X-SITE_NAME}', '[[' . NoticeEmbeddedTag::site_name . ']]'],
-                ['{X-SUBJECT}',   '[[' . NoticeEmbeddedTag::title . ']]'],
-                ['{X-USER}',      '[[' . NoticeEmbeddedTag::created_name . ']]'],
-                ['{X-TO_DATE}',   '[[' . NoticeEmbeddedTag::created_at . ']]'],
+                ['{X-SUBJECT}',   '[[form_name]]'],
+                ['{X-TO_DATE}',   '[[to_datetime]]'],
                 ['{X-DATA}',      '[[' . NoticeEmbeddedTag::body . ']]'],
                 ['{X-PLUGIN_NAME}', '登録フォーム'],
                 // 除外
                 ['{X-ROOM}', ''],
+                ['{X-USER}', ''],
             ];
             foreach ($convert_embedded_tags as $convert_embedded_tag) {
                 $mail_subject =     str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_subject);
@@ -2911,13 +2912,14 @@ trait MigrationNc3ExportTrait
             $registration_ini = "";
             $registration_ini .= "[form_base]\n";
             $registration_ini .= "forms_name = \""        . $nc3_registration->title . "\"\n";
+            $registration_ini .= "form_mode  = \""        . FormMode::form . "\"\n";
             $registration_ini .= "mail_send_flag = "      . $mail_send_flag . "\n";
             $registration_ini .= "mail_send_address = \"\"\n";
             $registration_ini .= "user_mail_send_flag = " . $user_mail_send_flag . "\n";
             $registration_ini .= "mail_subject = \""      . $mail_subject . "\"\n";
             $registration_ini .= "mail_format = \""       . $mail_body . "\"\n";
             $registration_ini .= "data_save_flag = 1\n";
-            $registration_ini .= "after_message = \""     . str_replace("\n", '\n', $nc3_registration->thanks_content) . "\"\n";
+            $registration_ini .= "after_message = \""     . $nc3_registration->thanks_content . "\"\n";
             $registration_ini .= "numbering_use_flag = 0\n";
             $registration_ini .= "numbering_prefix = null\n";
             $registration_ini .= "regist_control_flag = " . $regist_control_flag . "\n";
@@ -4793,7 +4795,10 @@ trait MigrationNc3ExportTrait
         // データクリア
         if ($redo === true) {
             // 移行用ファイルの削除
-            Storage::deleteDirectory($this->getImportPath('videos/'));
+            $import_file_paths = glob($this->getImportPath('photoalbums/photoalbum_video_*'));
+            foreach ($import_file_paths as $import_file_path) {
+                Storage::delete($import_file_path);
+            }
         }
 
         // NC3動画（videos）を移行する。
@@ -4852,7 +4857,7 @@ trait MigrationNc3ExportTrait
             // NC3 情報
             $photoalbum_ini .= "\n";
             $photoalbum_ini .= "[source_info]\n";
-            $photoalbum_ini .= "photoalbum_id   = " . $nc3_block->id . "\n";
+            $photoalbum_ini .= "photoalbum_id   = VIDEO_" . $nc3_block->id . "\n";
             $photoalbum_ini .= "room_id         = " . $nc3_block->room_id . "\n";
             $photoalbum_ini .= "module_name     = \"videos\"\n";
             $photoalbum_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_block->created) . "\"\n";
