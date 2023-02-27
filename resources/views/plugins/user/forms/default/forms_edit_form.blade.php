@@ -2,6 +2,7 @@
  * フォーム編集画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォームプラグイン
 --}}
@@ -82,6 +83,25 @@
     </div>
 
     <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}} pt-0">フォームモード</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="col pl-0">
+                @foreach (FormMode::getMembers() as $enum_value => $enum_label)
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @php $form_mode = $form->form_mode ?? FormMode::getDefault(); @endphp
+                        @if (old('form_mode', $form_mode) == $enum_value)
+                            <input type="radio" value="{{$enum_value}}" id="form_mode_{{$enum_value}}" name="form_mode" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="{{$enum_value}}" id="form_mode_{{$enum_value}}" name="form_mode" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="form_mode_{{$enum_value}}">{{$enum_label}}</label>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}} pt-0">データ保存</label>
         <div class="{{$frame->getSettingInputClass()}}">
             <div class="custom-control custom-checkbox">
@@ -104,6 +124,22 @@
         <label class="{{$frame->getSettingLabelClass()}} pt-0">本登録数</label>
         <div class="{{$frame->getSettingInputClass()}}">
             {{$form->active_entry_count}}
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}} pt-0">集計結果</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <label>以下の権限は集計結果を表示できる</label>
+            <div class="custom-control custom-checkbox">
+                <input type="hidden" name="can_view_inputs_moderator" value="0">
+                <input type="checkbox" name="can_view_inputs_moderator" value="1" class="custom-control-input" id="can_view_inputs_moderator" @if(old('can_view_inputs_moderator', $form->can_view_inputs_moderator)) checked=checked @endif>
+                <label class="custom-control-label" for="can_view_inputs_moderator">モデレータ</label>
+            </div>
+            <small class="text-muted">
+                ※ 集計結果は、登録一覧と同じ内容を確認できます。<br />
+                ※ チェックONにすると、表側に集計結果ボタンを表示します。
+            </small>
         </div>
     </div>
 
@@ -323,7 +359,8 @@
             <input type="text" name="temporary_regist_mail_subject" value="{{old('temporary_regist_mail_subject', $form->temporary_regist_mail_subject)}}" class="form-control" placeholder="（例）仮登録のお知らせと本登録のお願い">
             <small class="text-muted">
                 ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
-                ※ [[form_name]] を記述すると該当部分にフォーム名が入ります。
+                ※ [[form_name]] を記述すると該当部分にフォーム名が入ります。<br>
+                ※ [[to_datetime]] を記述すると該当部分に登録日時が入ります。<br>
             </small>
         </div>
     </div>
@@ -337,6 +374,7 @@
                 ※ [[entry_url]] を記述すると本登録URLが入ります。本登録URLの有効期限は仮登録後60分です。<br>
                 ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
                 ※ [[form_name]] を記述すると該当部分にフォーム名が入ります。<br>
+                ※ [[to_datetime]] を記述すると該当部分に登録日時が入ります。<br>
                 ※ [[body]] を記述すると該当部分に登録内容が入ります。
             </small>
             @if ($errors && $errors->has('temporary_regist_mail_format')) <div class="text-danger">{{$errors->first('temporary_regist_mail_format')}}</div> @endif
@@ -365,6 +403,7 @@
             <small class="text-muted">
                 ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
                 ※ [[form_name]] を記述すると該当部分にフォーム名が入ります。<br>
+                ※ [[to_datetime]] を記述すると該当部分に登録日時が入ります。<br>
                 ※ [[number]] を記述すると該当部分に採番した番号が入ります。（採番機能の使用時）
             </small>
         </div>
@@ -378,6 +417,7 @@
             <small class="text-muted">
                 ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
                 ※ [[form_name]] を記述すると該当部分にフォーム名が入ります。<br>
+                ※ [[to_datetime]] を記述すると該当部分に登録日時が入ります。<br>
                 ※ [[body]] を記述すると該当部分に登録内容が入ります。<br>
                 ※ [[number]] を記述すると該当部分に採番した番号が入ります。（採番機能の使用時）
             </small>
