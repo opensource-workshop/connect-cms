@@ -17,6 +17,9 @@
 
 @include('plugins.common.errors_form_line')
 
+{{-- WYSIWYG 呼び出し --}}
+@include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame->id, 'use_br' => true])
+
 <script type="text/javascript">
 
     /**
@@ -80,9 +83,33 @@
 
     {{-- メッセージエリア --}}
     <div class="alert alert-info mt-2">
-        <i class="fas fa-exclamation-circle"></i> {{ $message ? $message : '項目【' . $column->column_name . ' 】の詳細設定を行います。' }}
+        @if ($form_mode == FormMode::form)
+            {{-- フォーム --}}
+            <i class="fas fa-exclamation-circle"></i> {{ $message ? $message : '項目【' . $column->column_name . ' 】の詳細設定を行います。' }}
+        @else
+            {{-- アンケート --}}
+            <i class="fas fa-exclamation-circle"></i> {{ $message ? $message : '項目の詳細設定を行います。' }}
+        @endif
     </div>
 
+    @if ($form_mode == FormMode::questionnaire)
+        {{-- アンケートの場合のみ、詳細で項目名をwysiwyg入力させる --}}
+        <div class="card mb-4">
+            <h5 class="card-header">項目名 <span class="badge badge-danger">必須</span></h5>
+            <div class="card-body">
+                <div @if ($errors && $errors->has('column_name')) class="border border-danger" @endif>
+                    <textarea name="column_name" class="wysiwyg{{$frame->id}}">{!!old('column_name', $column->column_name)!!}</textarea>
+                </div>
+                @include('plugins.common.errors_inline_wysiwyg', ['name' => 'column_name'])
+                <small class="text-muted">※ 項目名の改行はbrタグになります。</small>
+            </div>
+
+            {{-- ボタンエリア --}}
+            <div class="form-group text-center">
+                <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary form-horizontal" id="button_col_original"><i class="fas fa-check"></i> 更新</button>
+            </div>
+        </div>
+    @endif
 
     @if ($column->column_type == FormColumnType::radio || $column->column_type == FormColumnType::checkbox || $column->column_type == FormColumnType::select)
     {{-- 選択肢の設定 --}}
