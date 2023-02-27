@@ -1,14 +1,14 @@
 {{--
- * 登録一覧画面テンプレート
+ * 集計結果
+ * forms_list_inputs.blade.phpよりコピー
+ *
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category フォーム・プラグイン
 --}}
-@extends('core.cms_frame_base_setting')
+@extends('core.cms_frame_base')
 
-@section("core.cms_frame_edit_tab_$frame->id")
-    {{-- プラグイン側のフレームメニュー --}}
-    @include('plugins.user.forms.forms_frame_edit_tab')
-@endsection
-
-@section("plugin_setting_$frame->id")
+@section("plugin_contents_$frame->id")
 
 {{-- 登録後メッセージ表示 --}}
 @include('plugins.common.flash_message')
@@ -25,7 +25,7 @@
         if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}で登録データをダウンロードします。\nよろしいですか？') ) {
             return;
         }
-        form_download.action = "{{url('/')}}/download/plugin/forms/downloadCsv/{{$page->id}}/{{$frame_id}}/" + id;
+        form_download.action = "{{url('/')}}/download/plugin/forms/downloadCsvAggregate/{{$page->id}}/{{$frame_id}}/" + id;
         form_download.character_code.value = '{{CsvCharacterCode::sjis_win}}';
         form_download.submit();
     }
@@ -33,7 +33,7 @@
         if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}で登録データをダウンロードします。\nよろしいですか？') ) {
             return;
         }
-        form_download.action = "{{url('/')}}/download/plugin/forms/downloadCsv/{{$page->id}}/{{$frame_id}}/" + id;
+        form_download.action = "{{url('/')}}/download/plugin/forms/downloadCsvAggregate/{{$page->id}}/{{$frame_id}}/" + id;
         form_download.character_code.value = '{{CsvCharacterCode::utf_8}}';
         form_download.submit();
     }
@@ -98,11 +98,7 @@
         <tr>
         @endif
 
-            <td nowrap>
-                <a href="{{url('/')}}/plugin/forms/editInput/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}" title="編集">
-                    <i class="far fa-edit"></i> {{$input->status}}
-                </a>
-            </td>
+            <td nowrap>{{$input->status}}</td>
 
             @foreach($columns as $column)
                 <td style="min-width: 100px;">
@@ -142,8 +138,8 @@
 <div class="text-center pt-2">
     <div class="row">
         <div class="col">
-            <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}">
-                <span class="btn btn-info"><i class="fas fa-list"></i> <span class="d-none d-sm-inline">フォーム選択へ</span></span>
+            <a href="{{url($page->permanent_link)}}#frame-{{$frame->id}}" class="btn btn-secondary">
+                <i class="fas fa-chevron-left"></i> フォームへ
             </a>
         </div>
     </div>
