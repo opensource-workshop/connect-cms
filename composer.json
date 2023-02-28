@@ -15,6 +15,7 @@
         "ezyang/htmlpurifier": "^4.13",
         "fideloper/proxy": "^4.4",
         "firebase/php-jwt": "^5.5",
+        "guzzlehttp/guzzle": "^7.5",
         "intervention/image": "^2.5",
         "intervention/imagecache": "^2.5",
         "kalnoy/nestedset": "^6.0",
