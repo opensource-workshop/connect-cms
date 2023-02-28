@@ -9,11 +9,11 @@
     ],
     "license": "MIT",
     "require": {
-        "php": ">=7.3.0",
+        "php": "^8.0.2",
         "azuyalabs/yasumi": "^2.3",
         "doctrine/dbal": "^2.10",
         "ezyang/htmlpurifier": "^4.13",
-        "firebase/php-jwt": "^5.5",
+        "firebase/php-jwt": "^6.0",
         "guzzlehttp/guzzle": "^7.5",
         "intervention/image": "^2.5",
         "intervention/imagecache": "^2.5",

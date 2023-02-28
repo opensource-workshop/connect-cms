@@ -21,6 +21,7 @@
     {{-- 項目名 --}}
     <td colspan="6">
         <small>{{ strip_tags($column->column_name) }}</small>
+        <input type="hidden" name="column_name_{{ $column->id }}" value="{{ $column->column_name }}">
     </td>
 </tr>
 <tr>
