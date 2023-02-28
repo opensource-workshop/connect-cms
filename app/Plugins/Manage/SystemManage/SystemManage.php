@@ -229,7 +229,11 @@ class SystemManage extends ManagePluginBase
         $path = base_path('.env');
 
         if (file_exists($path)) {
-            file_put_contents($path, str_replace('MAIL_FROM_ADDRESS=' . config('mail.from.address'), "MAIL_FROM_ADDRESS={$request->mail_from_address}", file_get_contents($path)));
+            if (preg_match('/MAIL_FROM_ADDRESS=null/', file_get_contents($path))) {
+                file_put_contents($path, preg_replace('/MAIL_FROM_ADDRESS=null/'                               , "MAIL_FROM_ADDRESS={$request->mail_from_address}", file_get_contents($path)));
+            } else {
+                file_put_contents($path, preg_replace('/MAIL_FROM_ADDRESS=' . config('mail.from.address') . '/', "MAIL_FROM_ADDRESS={$request->mail_from_address}", file_get_contents($path)));
+            }
 
             // ${APP_NAME}, ダブルクォート囲みなし は先に置換
             file_put_contents($path, str_replace('MAIL_FROM_NAME="${APP_NAME}"', "MAIL_FROM_NAME=\"{$request->mail_from_name}\"", file_get_contents($path)));
@@ -238,9 +242,22 @@ class SystemManage extends ManagePluginBase
 
             file_put_contents($path, str_replace('MAIL_HOST=' . config('mail.host'), "MAIL_HOST={$request->mail_host}", file_get_contents($path)));
             file_put_contents($path, str_replace('MAIL_PORT=' . config('mail.port'), "MAIL_PORT={$request->mail_port}", file_get_contents($path)));
-            file_put_contents($path, str_replace('MAIL_USERNAME=' . config('mail.username'), "MAIL_USERNAME={$request->mail_username}", file_get_contents($path)));
-            file_put_contents($path, str_replace('MAIL_PASSWORD=' . config('mail.password'), "MAIL_PASSWORD={$request->mail_password}", file_get_contents($path)));
-            file_put_contents($path, str_replace('MAIL_ENCRYPTION=' . config('mail.encryption'), "MAIL_ENCRYPTION={$request->mail_encryption}", file_get_contents($path)));
+
+            if (preg_match('/MAIL_USERNAME=null/', file_get_contents($path))) {
+                file_put_contents($path, preg_replace('/MAIL_USERNAME=null/'                           , "MAIL_USERNAME={$request->mail_username}", file_get_contents($path)));
+            } else {
+                file_put_contents($path, preg_replace('/MAIL_USERNAME=' . config('mail.username') . '/', "MAIL_USERNAME={$request->mail_username}", file_get_contents($path)));
+            }
+            if (preg_match('/MAIL_PASSWORD=null/', file_get_contents($path))) {
+                file_put_contents($path, preg_replace('/MAIL_PASSWORD=null/'                            , "MAIL_PASSWORD={$request->mail_password}", file_get_contents($path)));
+            } else {
+                file_put_contents($path, preg_replace('/MAIL_PASSWORD=' . config('mail.password') . '/', "MAIL_PASSWORD={$request->mail_password}", file_get_contents($path)));
+            }
+            if (preg_match('/MAIL_ENCRYPTION=null/', file_get_contents($path))) {
+                file_put_contents($path, preg_replace('/MAIL_ENCRYPTION=null/'                             , "MAIL_ENCRYPTION={$request->mail_encryption}", file_get_contents($path)));
+            } else {
+                file_put_contents($path, preg_replace('/MAIL_ENCRYPTION=' . config('mail.encryption') . '/', "MAIL_ENCRYPTION={$request->mail_encryption}", file_get_contents($path)));
+            }
         }
 
         // .envファイルを変更したらキャッシュクリア
