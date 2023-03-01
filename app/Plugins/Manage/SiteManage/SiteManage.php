@@ -24,6 +24,7 @@ use App\Models\Common\PageRole;
 use App\Plugins\Manage\ManagePluginBase;
 use App\Plugins\Manage\SiteManage\CCPDF;
 use App\Enums\BaseLoginRedirectPage;
+use App\Enums\StatusType;
 
 /* 移行データ用 */
 use App\Models\User\Contents\Contents;
@@ -1551,6 +1552,7 @@ class SiteManage extends ManagePluginBase
         $contents = Contents::select('contents.content_text', 'contents.content2_text', 'pages.page_name', 'frames.frame_title')
             ->join('frames', 'contents.bucket_id', '=', 'frames.bucket_id')
             ->join('pages', 'pages.id', '=', 'frames.page_id')
+            ->where('status', StatusType::active)
             ->orderBy('pages._lft')
             ->get();
         $link_error_list_href = [];
