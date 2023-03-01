@@ -116,6 +116,8 @@ use App\Models\Migration\Nc2\Nc2Simplemovie;
  */
 class SiteManage extends ManagePluginBase
 {
+    // リンクチェック処理で使用するホワイトリスト
+    private $not_broken_links = array();
     /**
      *  権限定義
      */
@@ -1638,23 +1640,29 @@ class SiteManage extends ManagePluginBase
                     $arr_url = explode('/', $url);
                     $url = $base_url. '/'. $arr_url[2]. '/'. $arr_url[3];
                 }
-                $ch = curl_init($url);
-                curl_setopt_array($ch, array(
-                    CURLOPT_HEADER => true,
-                    CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_TIMEOUT => 10,
-                    CURLOPT_USERAGENT => $_SERVER['HTTP_USER_AGENT'],
-                    CURLOPT_NOBODY => true,
-                ));
-                $data = curl_exec($ch);
-                $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                curl_close($ch);
-                if ($status != '200') {
-                    $ret[] = [
-                        'page_name' => $page_name,
-                        'frame_title' => $frame_title,
-                        'url' => $url,
-                    ];
+                if(!in_array($url, $this->not_broken_links)){
+                    // URLホワイトリストに存在しないURLはレスポンスチェック
+                    $ch = curl_init($url);
+                    curl_setopt_array($ch, array(
+                        CURLOPT_HEADER => true,
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_TIMEOUT => 10,
+                        CURLOPT_USERAGENT => $_SERVER['HTTP_USER_AGENT'],
+                        CURLOPT_NOBODY => true,
+                    ));
+                    $data = curl_exec($ch);
+                    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    curl_close($ch);
+                    if ($status != '200') {
+                        $ret[] = [
+                            'page_name' => $page_name,
+                            'frame_title' => $frame_title,
+                            'url' => $url,
+                        ];
+                    }else{
+                        // 問題なしと判定したURLはホワイトリストへ格納
+                        $this->not_broken_links[] = $url;
+                    }
                 }
             }
         }
