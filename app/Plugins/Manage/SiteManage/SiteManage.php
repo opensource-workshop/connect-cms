@@ -1633,12 +1633,9 @@ class SiteManage extends ManagePluginBase
         $ret = [];
         if (preg_match_all('/'. $attr.'="(.*?)"/', $html, $m)) {
             foreach ($m[1] as $url) {
-                // 内部リンクを想定 基本はあるから返却する？
                 if (preg_match('#^/#', $url)) {
-                    continue;
-                    $base_url = url('/');
-                    $arr_url = explode('/', $url);
-                    $url = $base_url. '/'. $arr_url[2]. '/'. $arr_url[3];
+                    // 内部リンクの場合はベースURLを補完
+                    $url = url('/') . $url;
                 }
                 if(!in_array($url, $this->not_broken_links)){
                     // URLホワイトリストに存在しないURLはレスポンスチェック
