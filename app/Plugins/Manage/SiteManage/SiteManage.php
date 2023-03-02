@@ -1552,7 +1552,7 @@ class SiteManage extends ManagePluginBase
             $this->outputSection($pdf, $sections);
         }
 
-        if($request->document_link_check == 1){
+        if ($request->document_link_check == 1) {
             /* リンク切れチェック */
             /* 固定記事の表示設定されているリンクのみをチェックする */
             $contents = Contents::select('contents.content_text', 'contents.content2_text', 'pages.page_name', 'frames.frame_title')
@@ -1653,7 +1653,7 @@ class SiteManage extends ManagePluginBase
                     // 内部リンクの場合はベースURLを補完
                     $url = url('/') . $url;
                 }
-                if(!in_array($url, $this->not_broken_links)){
+                if (!in_array($url, $this->not_broken_links)) {
                     // URLホワイトリストに存在しないURLはレスポンスチェック
                     $ch = curl_init($url);
                     curl_setopt_array($ch, array(
@@ -1669,7 +1669,7 @@ class SiteManage extends ManagePluginBase
                     if ('20' == substr($status, 0, 2) || '30' == substr($status, 0, 2)) {
                         // 問題なし（20X or 30X）と判定したURLはホワイトリストへ格納
                         $this->not_broken_links[] = $url;
-                    }else{
+                    } else {
                         // 問題ありなら返却配列へ格納
                         $ret[] = [
                             'page_name' => $page_name,
