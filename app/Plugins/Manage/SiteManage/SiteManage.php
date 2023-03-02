@@ -1634,6 +1634,10 @@ class SiteManage extends ManagePluginBase
         if (preg_match_all('/'. $attr.'="(.*?)"/', $html, $m)) {
             foreach ($m[1] as $url) {
                 $url_display_pdf = $url;
+                if (preg_match('#^\##', $url)) {
+                    // #始まり（ページ内ジャンプやJSトリガー等）はスキップする
+                    continue;
+                }
                 if (preg_match('#^/#', $url)) {
                     // 内部リンクの場合はベースURLを補完
                     $url = url('/') . $url;
