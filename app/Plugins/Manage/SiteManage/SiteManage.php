@@ -1655,6 +1655,7 @@ class SiteManage extends ManagePluginBase
                             'page_name' => $page_name,
                             'frame_title' => $frame_title,
                             'url' => $url,
+                            'http_status' => $status,
                         ];
                     }else{
                         // 問題なしと判定したURLはホワイトリストへ格納
