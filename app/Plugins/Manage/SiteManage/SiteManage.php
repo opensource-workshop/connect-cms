@@ -1633,6 +1633,7 @@ class SiteManage extends ManagePluginBase
         $ret = [];
         if (preg_match_all('/'. $attr.'="(.*?)"/', $html, $m)) {
             foreach ($m[1] as $url) {
+                $url_display_pdf = $url;
                 if (preg_match('#^/#', $url)) {
                     // 内部リンクの場合はベースURLを補完
                     $url = url('/') . $url;
@@ -1658,7 +1659,7 @@ class SiteManage extends ManagePluginBase
                         $ret[] = [
                             'page_name' => $page_name,
                             'frame_title' => $frame_title,
-                            'url' => $url,
+                            'url' => $url_display_pdf,
                             'http_status' => $status,
                         ];
                     }
