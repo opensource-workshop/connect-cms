@@ -1628,7 +1628,16 @@ class SiteManage extends ManagePluginBase
         return redirect()->back();
     }
 
-    private function checkLink($html, $page_name, $frame_title, $attr = 'href')
+    /**
+     * 引数の$htmlからURLを抽出、HTTPレスポンスチェックを行い、レスポンスに問題のあるURLを配列にして返す
+     *
+     * @param string|null $html
+     * @param string $page_name
+     * @param string|null $frame_title
+     * @param string|null $attr
+     * @return array
+     */
+    private function checkLink(?string $html, string $page_name, ?string $frame_title, ?string $attr = 'href') : array
     {
         $ret = [];
         if (preg_match_all('/'. $attr.'="(.*?)"/', $html, $m)) {
