@@ -1650,16 +1650,17 @@ class SiteManage extends ManagePluginBase
                     $data = curl_exec($ch);
                     $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
                     curl_close($ch);
-                    if ($status != '200') {
+                    if ('20' == substr($status, 0, 2) || '30' == substr($status, 0, 2)) {
+                        // 問題なし（20X or 30X）と判定したURLはホワイトリストへ格納
+                        $this->not_broken_links[] = $url;
+                    }else{
+                        // 問題ありなら返却配列へ格納
                         $ret[] = [
                             'page_name' => $page_name,
                             'frame_title' => $frame_title,
                             'url' => $url,
                             'http_status' => $status,
                         ];
-                    }else{
-                        // 問題なしと判定したURLはホワイトリストへ格納
-                        $this->not_broken_links[] = $url;
                     }
                 }
             }
