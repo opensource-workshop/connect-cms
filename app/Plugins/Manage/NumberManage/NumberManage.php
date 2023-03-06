@@ -10,6 +10,7 @@ use App\Plugins\Manage\ManagePluginBase;
  * 連番管理クラス
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 連番管理
  * @package Controller
@@ -91,7 +92,11 @@ class NumberManage extends ManagePluginBase
         }
 
         // 連番クリア
-        Numbers::where('id', $id)->update(['serial_number' => 0]);
+        // bugfix: updated_id,updated_nameが自動セットされるアップデート方法に見直し
+        // Numbers::where('id', $id)->update(['serial_number' => 0]);
+        $number = Numbers::find($id);
+        $number->serial_number = 0;
+        $number->save();
 
         return redirect("/manage/number");
     }
