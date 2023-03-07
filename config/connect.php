@@ -155,4 +155,7 @@ return [
 
     // QUEUE_CONNECTION=database 時に使われるPHP BINのパス. null時は自動判定
     'QUEUE_PHP_BIN' => env('QUEUE_PHP_BIN', null),
+
+    // 連番管理の連番クリア機能を無効化するプラグイン名
+    'PLUGIN_NAME_TO_DISABLE_SERIAL_NUMBER_CLEAR' => env('PLUGIN_NAME_TO_DISABLE_SERIAL_NUMBER_CLEAR', null),
 ];

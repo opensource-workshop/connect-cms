@@ -9,7 +9,10 @@
 
 @section("core.cms_frame_edit_tab_$frame->id")
     {{-- プラグイン側のフレームメニュー --}}
-    @include('plugins.user.' . $frame->plugin_name . '.' . $frame->plugin_name . '_frame_edit_tab')
+    @includeFirst([
+        'plugins.user.' . $frame->plugin_name . '.' . $frame->plugin_name . '_frame_edit_tab',
+        'plugins_option.user.' . $frame->plugin_name . '.' . $frame->plugin_name . '_frame_edit_tab'
+    ])
 @endsection
 
 @section("plugin_setting_$frame->id")
