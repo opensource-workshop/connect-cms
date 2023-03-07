@@ -91,6 +91,8 @@ class PluginBase
 
         // インクリメント
         $numbers->increment('serial_number', 1);
+        // インクリメントでupdating()イベントが走らないため、saveを実行してupdated_id,updated_nameを自動セット
+        $numbers->save();
 
         return $numbers->serial_number;
     }
