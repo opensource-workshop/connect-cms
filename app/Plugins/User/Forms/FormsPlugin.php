@@ -330,7 +330,7 @@ class FormsPlugin extends UserPluginBase
             // 登録期間外か
             if ($this->isOutOfTermRegist($form)) {
                 // エラー画面へ
-                return $this->view('forms_error_messages', [
+                return $this->commonView('error_messages', [
                     'error_messages' => ['登録期間外のため、登録出来ません。'],
                 ]);
             }
@@ -339,7 +339,7 @@ class FormsPlugin extends UserPluginBase
             if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
                 // $setting_error_messages[] = '制限数に達したため登録を終了しました。';
                 // エラー画面へ
-                return $this->view('forms_error_messages', [
+                return $this->commonView('error_messages', [
                     'error_messages' => [$form->entry_limit_over_message],
                 ]);
             }
@@ -445,7 +445,7 @@ class FormsPlugin extends UserPluginBase
             }
         } else {
             // エラーあり
-            return $this->view('forms_error_messages', [
+            return $this->commonView('error_messages', [
                 'setting_error_messages' => $setting_error_messages,
             ]);
         }
@@ -711,7 +711,7 @@ class FormsPlugin extends UserPluginBase
         // 登録期間外か
         if ($this->isOutOfTermRegist($form)) {
             // エラー画面へ
-            return $this->view('forms_error_messages', [
+            return $this->commonView('error_messages', [
                 'error_messages' => ['登録期間外のため、登録出来ません。'],
             ]);
         }
@@ -719,7 +719,7 @@ class FormsPlugin extends UserPluginBase
         // 登録制限数オーバーか
         if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
             // エラー画面へ
-            return $this->view('forms_error_messages', [
+            return $this->commonView('error_messages', [
                 'error_messages' => [$form->entry_limit_over_message],
             ]);
         }
@@ -861,7 +861,7 @@ class FormsPlugin extends UserPluginBase
         // 登録期間外か
         if ($this->isOutOfTermRegist($form)) {
             // エラー画面へ
-            return $this->view('forms_error_messages', [
+            return $this->commonView('error_messages', [
                 'error_messages' => ['登録期間外のため、登録出来ません。'],
             ]);
         }
@@ -869,7 +869,7 @@ class FormsPlugin extends UserPluginBase
         // 登録制限数オーバーか
         if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
             // エラー画面へ
-            return $this->view('forms_error_messages', [
+            return $this->commonView('error_messages', [
                 'error_messages' => [$form->entry_limit_over_message],
             ]);
         }
@@ -1162,7 +1162,7 @@ class FormsPlugin extends UserPluginBase
         // 登録期間外か
         if ($this->isOutOfTermRegist($form)) {
             // エラー画面へ
-            return $this->view('forms_error_messages', [
+            return $this->commonView('error_messages', [
                 'error_messages' => ['登録期間外のため、登録出来ません。'],
             ]);
         }
@@ -1170,7 +1170,7 @@ class FormsPlugin extends UserPluginBase
         // 登録制限数オーバーか
         if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
             // エラー画面へ
-            return $this->view('forms_error_messages', [
+            return $this->commonView('error_messages', [
                 'error_messages' => [$form->entry_limit_over_message],
             ]);
         }
@@ -1179,7 +1179,7 @@ class FormsPlugin extends UserPluginBase
         // $forms_inputs がなかったら、エラー画面へ
         $forms_inputs = FormsInputs::find($id);
         if (empty($forms_inputs)) {
-            return $this->view('forms_error_messages', [
+            return $this->commonView('error_messages', [
                 'error_messages' => ['有効期限切れのため、そのURLはご利用できません。'],
             ]);
         }
@@ -1191,7 +1191,7 @@ class FormsPlugin extends UserPluginBase
 
         // getで日付形式エラーは表示しない（通常URLをコピペミス等でいじらなければエラーにならない想定）
         if ($validator->fails()) {
-            return $this->view('forms_error_messages', [
+            return $this->commonView('error_messages', [
                 'error_messages' => $validator->errors()->all(),
             ]);
         }
@@ -1220,7 +1220,7 @@ class FormsPlugin extends UserPluginBase
         // 登録期間外か
         if ($this->isOutOfTermRegist($form)) {
             // エラー画面へ
-            return $this->view('forms_error_messages', [
+            return $this->commonView('error_messages', [
                 'error_messages' => ['登録期間外のため、登録出来ません。'],
             ]);
         }
@@ -1228,7 +1228,7 @@ class FormsPlugin extends UserPluginBase
         // 登録制限数オーバーか
         if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
             // エラー画面へ
-            return $this->view('forms_error_messages', [
+            return $this->commonView('error_messages', [
                 'error_messages' => [$form->entry_limit_over_message],
             ]);
         }
@@ -1237,7 +1237,7 @@ class FormsPlugin extends UserPluginBase
         // $forms_inputs がなかったら、エラー画面へ
         $forms_inputs = FormsInputs::find($id);
         if (empty($forms_inputs)) {
-            return $this->view('forms_error_messages', [
+            return $this->commonView('error_messages', [
                 'error_messages' => ['有効期限切れのため、そのURLはご利用できません。'],
             ]);
         }
@@ -1249,7 +1249,7 @@ class FormsPlugin extends UserPluginBase
 
         // getで日付形式エラーは表示しない（通常URLをコピペミス等でいじらなければエラーにならない想定）
         if ($validator->fails()) {
-            return $this->view('forms_error_messages', [
+            return $this->commonView('error_messages', [
                 'error_messages' => $validator->errors()->all(),
             ]);
         }
