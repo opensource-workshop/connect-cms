@@ -106,7 +106,12 @@
         <div class="{{$frame->getSettingInputClass()}}">
             <div class="custom-control custom-checkbox">
                 <input type="hidden" name="data_save_flag" value="0">
-                <input type="checkbox" name="data_save_flag" value="1" class="custom-control-input" id="data_save_flag" @if(old('data_save_flag', $form->data_save_flag)) checked=checked @endif>
+                @if ($create_flag)
+                    {{-- 新規登録の場合は「データ保存」はonにしておく（データ保存設定の忘れ防止。基本は保存する。外したい時は外せるように。） --}}
+                    <input type="checkbox" name="data_save_flag" value="1" class="custom-control-input" id="data_save_flag" @if(old('data_save_flag', '1')) checked=checked @endif>
+                @else
+                    <input type="checkbox" name="data_save_flag" value="1" class="custom-control-input" id="data_save_flag" @if(old('data_save_flag', $form->data_save_flag)) checked=checked @endif>
+                @endif
                 <label class="custom-control-label" for="data_save_flag">データを保存する（チェックを外すと、サイト上にデータを保持しません）</label>
             </div>
             @if ($errors && $errors->has('data_save_flag')) <div class="text-danger">{{$errors->first('data_save_flag')}}</div> @endif
