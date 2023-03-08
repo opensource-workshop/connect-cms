@@ -31,8 +31,10 @@
         <td>デフォルトで追加するオリジナル権限</td>
         <td>{{$configs->firstWhere('name', 'auth_netcomons2_add_role')->value}}</td>
     </tr>
-    <tr nobr="true">
-        <td>管理者操作用パスワード</td>
-        <td>{{$configs->firstWhere('name', 'auth_netcomons2_admin_password')->value}}</td>
-    </tr>
+    @if ($document_auth_netcomons2_admin_password)
+        <tr nobr="true">
+            <td>管理者操作用パスワード</td>
+            <td>{{$configs->firstWhere('name', 'auth_netcomons2_admin_password')->value}}</td>
+        </tr>
+    @endif
 </table>

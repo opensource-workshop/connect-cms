@@ -24,6 +24,7 @@ use App\Models\Common\PageRole;
 use App\Plugins\Manage\ManagePluginBase;
 use App\Plugins\Manage\SiteManage\CCPDF;
 use App\Enums\BaseLoginRedirectPage;
+use App\Enums\StatusType;
 
 /* 移行データ用 */
 use App\Models\User\Contents\Contents;
@@ -115,6 +116,8 @@ use App\Models\Migration\Nc2\Nc2Simplemovie;
  */
 class SiteManage extends ManagePluginBase
 {
+    // リンクチェック処理で使用するホワイトリスト
+    private $not_broken_links = array();
     /**
      *  権限定義
      */
@@ -1051,6 +1054,7 @@ class SiteManage extends ManagePluginBase
             'document' => [
                  'document_secret_name',
                  'document_auth_netcomons2_admin_password',
+                 'document_link_check',
                  'document_support_org_title',
                  'document_support_org_txt',
                  'document_support_contact_title',
@@ -1291,6 +1295,7 @@ class SiteManage extends ManagePluginBase
         // --- API管理
 
         $api_secrets = ApiSecret::orderBy('id')->get();
+        $document_secret_name = $request->document_secret_name;
 
         // API管理
         $pdf->addPage();
@@ -1298,7 +1303,7 @@ class SiteManage extends ManagePluginBase
 
         // API管理
         $sections = [
-            ['api_list', compact('api_secrets'), 'Secret Code 一覧'],
+            ['api_list', compact('api_secrets', 'document_secret_name'), 'Secret Code 一覧'],
         ];
         $this->outputSection($pdf, $sections);
 
@@ -1315,6 +1320,7 @@ class SiteManage extends ManagePluginBase
         $this->outputSection($pdf, $sections);
 
         // --- 外部認証
+        $document_auth_netcomons2_admin_password = $request->document_auth_netcomons2_admin_password;
 
         // 外部認証
         $pdf->addPage();
@@ -1325,7 +1331,7 @@ class SiteManage extends ManagePluginBase
             ['auth_base',        compact('configs'), '認証設定'],
             ['auth_ldap',        compact('configs'), 'LDAP認証'],
             ['auth_shibboleth',  compact('configs'), 'Shibboleth認証'],
-            ['auth_netcommons2', compact('configs'), 'NetCommons2認証'],
+            ['auth_netcommons2', compact('configs', 'document_auth_netcomons2_admin_password'), 'NetCommons2認証'],
         ];
         $this->outputSection($pdf, $sections);
 
@@ -1546,48 +1552,48 @@ class SiteManage extends ManagePluginBase
             $this->outputSection($pdf, $sections);
         }
 
-        /* リンク切れチェック */
-        /* 固定記事の表示設定されているリンクのみをチェックする */
-        $contents = Contents::select('contents.content_text', 'contents.content2_text', 'pages.page_name', 'frames.frame_title')
-            ->join('frames', 'contents.bucket_id', '=', 'frames.bucket_id')
-            ->join('pages', 'pages.id', '=', 'frames.page_id')
-            ->orderBy('pages._lft')
-            ->get();
-        $link_error_list_href = [];
-        $link_error_list_src = [];
-        foreach ($contents as $content) {
-            $checked_list = $this->checkLink($content->content_text, $content->page_name, $content->frame_title);
-            if ($checked_list) {
-                $link_error_list_href = array_merge($link_error_list_href, $checked_list);
+        if ($request->document_link_check == 1) {
+            /* リンク切れチェック */
+            /* 固定記事の表示設定されているリンクのみをチェックする */
+            $contents = Contents::select('contents.content_text', 'contents.content2_text', 'pages.page_name', 'frames.frame_title')
+                ->join('frames', 'contents.bucket_id', '=', 'frames.bucket_id')
+                ->join('pages', 'pages.id', '=', 'frames.page_id')
+                ->where('status', StatusType::active)
+                ->orderBy('pages._lft')
+                ->get();
+            $link_error_list_href = [];
+            $link_error_list_src = [];
+            foreach ($contents as $content) {
+                $checked_list = $this->checkLink($content->content_text, $content->page_name, $content->frame_title);
+                if ($checked_list) {
+                    $link_error_list_href = array_merge($link_error_list_href, $checked_list);
+                }
+                $checked_list = $this->checkLink($content->content_text, $content->page_name, $content->frame_title, 'src');
+                if ($checked_list) {
+                    $link_error_list_src = array_merge($link_error_list_src, $checked_list);
+                }
+                $checked_list = $this->checkLink($content->content2_text, $content->page_name, $content->frame_title);
+                if ($checked_list) {
+                    $link_error_list_href = array_merge($link_error_list_href, $checked_list);
+                }
+                $checked_list = $this->checkLink($content->content2_text, $content->page_name, $content->frame_title, 'src');
+                if ($checked_list) {
+                    $link_error_list_src = array_merge($link_error_list_src, $checked_list);
+                }
             }
-            $checked_list = $this->checkLink($content->content_text, $content->page_name, $content->frame_title, 'src');
-            if ($checked_list) {
-                $link_error_list_src = array_merge($link_error_list_src, $checked_list);
-            }
-            $checked_list = $this->checkLink($content->content2_text, $content->page_name, $content->frame_title);
-            if ($checked_list) {
-                $link_error_list_href = array_merge($link_error_list_href, $checked_list);
-            }
-            $checked_list = $this->checkLink($content->content2_text, $content->page_name, $content->frame_title, 'src');
-            if ($checked_list) {
-                $link_error_list_src = array_merge($link_error_list_src, $checked_list);
-            }
+
+            // リンク切れチェック
+            $pdf->addPage();
+            $pdf->Bookmark('リンク切れチェック', 0, 0, '', '', array(0, 0, 0));
+            // リンク切れチェック
+            $sections = [
+                ['check_link', compact(
+                    'link_error_list_src',
+                    'link_error_list_href',
+                ), 'リンク切れチェック一覧'],
+            ];
+            $this->outputSection($pdf, $sections);
         }
-
-        // リンク切れチェック
-        $pdf->addPage();
-        $pdf->Bookmark('リンク切れチェック', 0, 0, '', '', array(0, 0, 0));
-        // リンク切れチェック
-        $sections = [
-            ['check_link', compact(
-                'link_error_list_src',
-                'link_error_list_href',
-            ), 'リンク切れチェック一覧'],
-        ];
-        $this->outputSection($pdf, $sections);
-
-
-
 
         // --- 問い合わせ先
 
@@ -1624,35 +1630,54 @@ class SiteManage extends ManagePluginBase
         return redirect()->back();
     }
 
-    private function checkLink($html, $page_name, $frame_title, $attr = 'href')
+    /**
+     * 引数の$htmlからURLを抽出、HTTPレスポンスチェックを行い、レスポンスに問題のあるURLを配列にして返す
+     *
+     * @param string|null $html
+     * @param string $page_name
+     * @param string|null $frame_title
+     * @param string|null $attr
+     * @return array
+     */
+    private function checkLink(?string $html, string $page_name, ?string $frame_title, ?string $attr = 'href') : array
     {
         $ret = [];
         if (preg_match_all('/'. $attr.'="(.*?)"/', $html, $m)) {
             foreach ($m[1] as $url) {
-                // 内部リンクを想定 基本はあるから返却する？
-                if (preg_match('#^/#', $url)) {
+                $url_display_pdf = $url;
+                if (preg_match('#^\##', $url)) {
+                    // #始まり（ページ内ジャンプやJSトリガー等）はスキップする
                     continue;
-                    $base_url = url('/');
-                    $arr_url = explode('/', $url);
-                    $url = $base_url. '/'. $arr_url[2]. '/'. $arr_url[3];
                 }
-                $ch = curl_init($url);
-                curl_setopt_array($ch, array(
-                    CURLOPT_HEADER => true,
-                    CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_TIMEOUT => 10,
-                    CURLOPT_USERAGENT => $_SERVER['HTTP_USER_AGENT'],
-                    CURLOPT_NOBODY => true,
-                ));
-                $data = curl_exec($ch);
-                $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                curl_close($ch);
-                if ($status != '200') {
-                    $ret[] = [
-                        'page_name' => $page_name,
-                        'frame_title' => $frame_title,
-                        'url' => $url,
-                    ];
+                if (preg_match('#^/#', $url)) {
+                    // 内部リンクの場合はベースURLを補完
+                    $url = url('/') . $url;
+                }
+                if (!in_array($url, $this->not_broken_links)) {
+                    // URLホワイトリストに存在しないURLはレスポンスチェック
+                    $ch = curl_init($url);
+                    curl_setopt_array($ch, array(
+                        CURLOPT_HEADER => true,
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_TIMEOUT => 10,
+                        CURLOPT_USERAGENT => $_SERVER['HTTP_USER_AGENT'],
+                        CURLOPT_NOBODY => true,
+                    ));
+                    $data = curl_exec($ch);
+                    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    curl_close($ch);
+                    if ('20' == substr($status, 0, 2) || '30' == substr($status, 0, 2)) {
+                        // 問題なし（20X or 30X）と判定したURLはホワイトリストへ格納
+                        $this->not_broken_links[] = $url;
+                    } else {
+                        // 問題ありなら返却配列へ格納
+                        $ret[] = [
+                            'page_name' => $page_name,
+                            'frame_title' => $frame_title,
+                            'url' => $url_display_pdf,
+                            'http_status' => $status,
+                        ];
+                    }
                 }
             }
         }
