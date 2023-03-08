@@ -1642,6 +1642,13 @@ class SiteManage extends ManagePluginBase
     private function checkLink(?string $html, string $page_name, ?string $frame_title, ?string $attr = 'href') : array
     {
         $ret = [];
+
+        // チェック対象が空ならチェックしない
+        // preg_match_all()の第2引数がnullだとこける（PHP8.1～
+        if (empty($html)) {
+            return $ret;
+        }
+
         if (preg_match_all('/'. $attr.'="(.*?)"/', $html, $m)) {
             foreach ($m[1] as $url) {
                 $url_display_pdf = $url;
