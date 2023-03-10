@@ -2218,6 +2218,8 @@ class DatabasesPlugin extends UserPluginBase
             return $this->editColumn($request, $page_id, $frame_id, $request->databases_id, null, $errors);
         }
 
+        $message = '項目【 '. $request->column_name .' 】を追加しました。';
+
         // 新規登録時の表示順を設定
         $max_display_sequence = DatabasesColumns::query()->where('databases_id', $request->databases_id)->max('display_sequence');
         $max_display_sequence = $max_display_sequence ? $max_display_sequence + 1 : 1;
@@ -2232,12 +2234,12 @@ class DatabasesPlugin extends UserPluginBase
         $column->caption_color = Bs4TextColor::dark;
 
         // 複数年月型（テキスト入力）は、デフォルトでキャプションをセットする
-        if (DatabaseColumnType::dates_ym == $request->column_type) {
+        if ($column->column_type == DatabaseColumnType::dates_ym) {
             $column->caption = DatabaseColumnType::dates_ym_caption;
+            $message = '項目【 '.$column->column_name.' 】を追加し、キャプションに【 '.$column->caption.' 】を設定しました。';
         }
 
         $column->save();
-        $message = '項目【 '. $request->column_name .' 】を追加しました。';
 
         // 編集画面へ戻る。
         return $this->editColumn($request, $page_id, $frame_id, $request->databases_id, $message, $errors);
@@ -2443,6 +2445,8 @@ class DatabasesPlugin extends UserPluginBase
             return $this->editColumn($request, $page_id, $frame_id, $request->databases_id, null, $errors);
         }
 
+        $message = '項目【 '. $request->$str_column_name .' 】を更新しました。';
+
         // 項目の更新処理
         $column = DatabasesColumns::query()->where('id', $request->column_id)->first();
         $column->column_name = $request->$str_column_name;
@@ -2450,13 +2454,12 @@ class DatabasesPlugin extends UserPluginBase
         $column->required = $request->$str_required ? Required::on : Required::off;
 
         // 複数年月型（テキスト入力）は、キャプションが空なら定型文をセットする
-        if (DatabaseColumnType::dates_ym == $request->column_type &&
-                !$column->caption) {
+        if ($column->column_type == DatabaseColumnType::dates_ym && !$column->caption) {
             $column->caption = DatabaseColumnType::dates_ym_caption;
+            $message = '項目【 '.$column->column_name.' 】を更新し、キャプションが空のため【 '.$column->caption.' 】を設定しました。';
         }
 
         $column->save();
-        $message = '項目【 '. $request->$str_column_name .' 】を更新しました。';
 
         // 編集画面を呼び出す
         return $this->editColumn($request, $page_id, $frame_id, $request->databases_id, $message, $errors);
