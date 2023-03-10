@@ -6,6 +6,7 @@
  |-----------------------------------------------------------------
  */
 $messages = [
+    'content_url_broken_link_check' => '固定記事内のURLリンク切れチェック',
     'enter_keyword' => 'キーワードを入力',
     'select_achievement_type' => '保有業績タイプを選択',
     'confirm' => '確定',

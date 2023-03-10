@@ -9,9 +9,9 @@
 @include('plugins/manage/site/pdf/css')
 
 <br />
-<h2 style="text-align: center; font-size: 28px;">リンクチェック</h2>
+<h2 style="text-align: center; font-size: 28px;">{{ __('messages.content_url_broken_link_check') }}</h2>
 <br />
-<h4>リンクチェックデータ一覧</h4>
+<h4>{{ __('messages.content_url_broken_link_check') }}一覧</h4>
 <h5>
     - 固定記事プラグインで設定されているすべてのリンクに対してHTTPレスポンスチェックを行い、HTTPステータスがNGのものを一覧で出力しています。<br>
     - 代表的なNGのHTTPステータスの凡例：
