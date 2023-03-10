@@ -95,8 +95,7 @@ class TabsPlugin extends UserPluginBase
         if ($this->frame->area_id == AreaType::main) {
             // タブ自身が配置されているエリアが中央エリアの場合、現在表示されているpage_idを使用する
             $target_page_id = $page_id;
-        }
-        else {
+        } else {
             // タブ自身が配置されているエリアが共通エリアの場合、$page_idのIDは中央エリアのpage_idなので、タブ自身のpage_idを使用する
             $target_page_id =  $this->frame->page_id;
         }
