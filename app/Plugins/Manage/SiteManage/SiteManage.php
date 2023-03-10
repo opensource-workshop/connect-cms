@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Lang;
 
 use setasign\Fpdi\Tcpdf\Fpdi;
 
@@ -1584,13 +1585,13 @@ class SiteManage extends ManagePluginBase
 
             // リンク切れチェック
             $pdf->addPage();
-            $pdf->Bookmark('リンク切れチェック', 0, 0, '', '', array(0, 0, 0));
+            $pdf->Bookmark(Lang::get('messages.content_url_broken_link_check'), 0, 0, '', '', array(0, 0, 0));
             // リンク切れチェック
             $sections = [
                 ['check_link', compact(
                     'link_error_list_src',
                     'link_error_list_href',
-                ), 'リンク切れチェック一覧'],
+                ), Lang::get('messages.content_url_broken_link_check') . '一覧'],
             ];
             $this->outputSection($pdf, $sections);
         }

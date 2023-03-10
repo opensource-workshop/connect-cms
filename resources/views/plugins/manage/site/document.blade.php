@@ -65,7 +65,7 @@
                         </div>
                         <div class="custom-control custom-checkbox custom-control-inline">
                             <input name="document_link_check" value="1" type="checkbox" class="custom-control-input" id="document_link_check" @if(Configs::getConfigsValueAndOld($configs, "document_link_check") == "1") checked="checked" @endif>
-                            <label class="custom-control-label" for="document_link_check">リンクチェック</label>
+                            <label class="custom-control-label" for="document_link_check">{{ __('messages.content_url_broken_link_check') }}</label>
                         </div>
                     </div>
                 </div>
