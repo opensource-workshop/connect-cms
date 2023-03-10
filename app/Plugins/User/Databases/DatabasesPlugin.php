@@ -1273,38 +1273,40 @@ class DatabasesPlugin extends UserPluginBase
                 }
             }
 
-            // 数値チェック
-            if ($databases_column->rule_allowed_numeric) {
-                // 入力値があった場合（マイナスを意図した入力記号はすべて半角に置換する）＆ 全角→半角へ丸める
-                $tmp_numeric_columns_value = StringUtils::convertNumericAndMinusZenkakuToHankaku($request->databases_columns_value[$databases_column->id]);
+            if (isset($request->databases_columns_value[$databases_column->id])) {
+                // 数値チェック
+                if ($databases_column->rule_allowed_numeric) {
+                    // 入力値があった場合（マイナスを意図した入力記号はすべて半角に置換する）＆ 全角→半角へ丸める
+                    $tmp_numeric_columns_value = StringUtils::convertNumericAndMinusZenkakuToHankaku($request->databases_columns_value[$databases_column->id]);
 
-                $tmp_array = $request->databases_columns_value;
-                $tmp_array[$databases_column->id] = $tmp_numeric_columns_value;
-                $request->merge([
-                    "databases_columns_value" => $tmp_array,
-                ]);
-            }
-            // 複数年月型
-            if ($databases_column->column_type == DatabaseColumnType::dates_ym) {
-                // 一度配列にして、trim後、また文字列に戻す。
-                $tmp_columns_value = StringUtils::trimInputKanma($request->databases_columns_value[$databases_column->id]);
+                    $tmp_array = $request->databases_columns_value;
+                    $tmp_array[$databases_column->id] = $tmp_numeric_columns_value;
+                    $request->merge([
+                        "databases_columns_value" => $tmp_array,
+                    ]);
+                }
+                // 複数年月型
+                if ($databases_column->column_type == DatabaseColumnType::dates_ym) {
+                    // 一度配列にして、trim後、また文字列に戻す。
+                    $tmp_columns_value = StringUtils::trimInputKanma($request->databases_columns_value[$databases_column->id]);
 
-                $tmp_array = $request->databases_columns_value;
-                $tmp_array[$databases_column->id] = $tmp_columns_value;
-                $request->merge([
-                    "databases_columns_value" => $tmp_array,
-                ]);
-            }
-            // wysiwyg型
-            if ($databases_column->column_type == DatabaseColumnType::wysiwyg) {
-                // XSS対応のJavaScript等の制限
-                $tmp_columns_value = $this->clean($request->databases_columns_value[$databases_column->id]);
+                    $tmp_array = $request->databases_columns_value;
+                    $tmp_array[$databases_column->id] = $tmp_columns_value;
+                    $request->merge([
+                        "databases_columns_value" => $tmp_array,
+                    ]);
+                }
+                // wysiwyg型
+                if ($databases_column->column_type == DatabaseColumnType::wysiwyg) {
+                    // XSS対応のJavaScript等の制限
+                    $tmp_columns_value = $this->clean($request->databases_columns_value[$databases_column->id]);
 
-                $tmp_array = $request->databases_columns_value;
-                $tmp_array[$databases_column->id] = $tmp_columns_value;
-                $request->merge([
-                    "databases_columns_value" => $tmp_array,
-                ]);
+                    $tmp_array = $request->databases_columns_value;
+                    $tmp_array[$databases_column->id] = $tmp_columns_value;
+                    $request->merge([
+                        "databases_columns_value" => $tmp_array,
+                    ]);
+                }
             }
         }
 
