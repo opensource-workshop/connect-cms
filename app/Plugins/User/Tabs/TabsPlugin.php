@@ -8,6 +8,7 @@ use App\Models\Common\Frame;
 use App\Models\User\Tabs\Tabs;
 
 use App\Plugins\User\UserPluginBase;
+use App\Enums\AreaType;
 
 /**
  * タブ・プラグイン
@@ -89,9 +90,21 @@ class TabsPlugin extends UserPluginBase
         if (!empty($tabs)) {
             $frame_ids = explode(',', $tabs->frame_ids);
         }
-
+        
+        $target_page_id = null;
+        if( $this->frame->area_id == AreaType::main )
+        {
+            // タブ自身が配置されているエリアが中央エリアの場合、現在表示されているpage_idを使用する
+            $target_page_id = $page_id;
+        }
+        else
+        {
+            // タブ自身が配置されているエリアが共通エリアの場合、$page_idのIDは中央エリアのpage_idなので、タブ自身のpage_idを使用する
+            $target_page_id =  $this->frame->page_id;
+        }
+        
         // タブでくくるために、同じページの自分以外のフレーム取得
-        $frames = Frame::where('page_id', $page_id)
+        $frames = Frame::where('page_id', $target_page_id)
                        ->where('area_id', $this->frame->area_id)
                        ->where('id', '!=', $frame_id)
                        ->whereIn('id', $frame_ids)
