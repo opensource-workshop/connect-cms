@@ -1,10 +1,14 @@
 {{--
- * エラーメッセージのテンプレート。
+ * 任意のエラーメッセージのテンプレート。
+ *
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category プラグイン共通
 --}}
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
-{{-- フォーム利用者向けの業務メッセージ　表示期間外など --}}
+{{-- 利用者向けの業務メッセージ　表示期間外など --}}
 @isset($error_messages)
 <div class="card border-danger">
     <div class="card-body">
@@ -15,7 +19,7 @@
 </div>
 @endisset
 
-{{-- フォーム設定者向けのシステムメッセージ バケツ未設定など --}}
+{{-- 設定者向けのシステムメッセージ バケツ未設定など --}}
 @isset($setting_error_messages)
 @can('frames.edit',[[null, null, null, $frame]])
 <div class="card border-danger">

@@ -24,11 +24,9 @@ use App\Models\User\Blogs\BlogsPosts;
 <script type="text/javascript">
     function save_action() {
         @if (empty($blogs_posts->id))
-            form_blogs_posts{{$frame_id}}.action = "{{url('/')}}/redirect/plugin/blogs/temporarysave/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}";
-            form_blogs_posts{{$frame_id}}.redirect_path = "{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}";
+            form_blogs_posts{{$frame_id}}.action = "{{url('/')}}/redirect/plugin/blogs/temporarysave/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         @else
-            form_blogs_posts{{$frame_id}}.action = "{{url('/')}}/redirect/plugin/blogs/temporarysave/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}#frame-{{$frame->id}}";
-            form_blogs_posts{{$frame_id}}.redirect_path = "{{url('/')}}/plugin/blogs/edit/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}#frame-{{$frame->id}}";
+            form_blogs_posts{{$frame_id}}.action = "{{url('/')}}/redirect/plugin/blogs/temporarysave/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}#frame-{{$frame_id}}";
         @endif
         form_blogs_posts{{$frame_id}}.submit();
     }

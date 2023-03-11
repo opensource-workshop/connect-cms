@@ -6,6 +6,7 @@
  |-----------------------------------------------------------------
  */
 return [
+    'content_url_broken_link_check' => 'Content URL Broken Link Check',
     'enter_keyword' => 'Enter Keyword',
     'select_achievement_type' => 'Select holding achievement type',
     'confirm' => 'Confirm',
