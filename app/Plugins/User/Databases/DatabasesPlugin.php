@@ -734,7 +734,7 @@ class DatabasesPlugin extends UserPluginBase
             if ($databases_frames) {
                 $get_count = $databases_frames->view_count;
             }
-            $inputs = $inputs_query->paginate($get_count, ["*"], "frame_{$frame_id}_page");
+            $inputs = $inputs_query->paginate($get_count, ["*"], $this->pageName($frame_id));
 
             // 登録データ行のタイトル取得
             $inputs_titles = DatabasesInputs::
@@ -798,7 +798,7 @@ class DatabasesPlugin extends UserPluginBase
 
         // 初期表示を隠す判定
         $default_hide_list = false;
-        if (($database_frame && $database_frame->default_hide == 1 && $request->isMethod('get') && !$request->page)) {
+        if (($database_frame && $database_frame->default_hide == 1 && $request->isMethod('get') && !$request->{$this->pageName($frame_id)})) {
             $default_hide_list = true;
         }
 
@@ -826,6 +826,17 @@ class DatabasesPlugin extends UserPluginBase
         // change: 同ページに(a)データベースプラグイン,(b)フォームを配置して(b)フォームで入力エラーが起きても、入力値が復元しないバグ対応。
         // ])->withInput($request->all);
         ]);
+    }
+
+    /**
+     * ぺジネーション用のページ名を取得する
+     *
+     * @param int $frame_id
+     * @return string ページ名
+     */
+    private function pageName(int $frame_id): string
+    {
+        return "frame_{$frame_id}_page";
     }
 
     /**
