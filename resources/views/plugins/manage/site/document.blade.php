@@ -22,6 +22,12 @@
 
     <script type="text/javascript">
         {{-- ダウンロードのsubmit JavaScript --}}
+        function set_additional_parameter_2_download_form() {
+            // 追加の出力内容
+            document_download.document_secret_name.value = document.querySelector('#document_secret_name').checked ? 1 : null;
+            document_download.document_auth_netcomons2_admin_password.value = document.querySelector('#document_auth_netcomons2_admin_password').checked ? 1 : null;
+            document_download.document_link_check.value = document.querySelector('#document_link_check').checked ? 1 : null;
+        }
         function submit_download() {
             document_download.action = "{{url('/')}}/manage/site/downloadDocument";
             document_download.submit();
@@ -56,6 +62,10 @@
                         <div class="custom-control custom-checkbox custom-control-inline">
                             <input name="document_auth_netcomons2_admin_password" value="1" type="checkbox" class="custom-control-input" id="document_auth_netcomons2_admin_password" @if(Configs::getConfigsValueAndOld($configs, "document_auth_netcomons2_admin_password") == "1") checked="checked" @endif>
                             <label class="custom-control-label" for="document_auth_netcomons2_admin_password">外部認証 - NetCommons認証の管理者操作用パスワード</label>
+                        </div>
+                        <div class="custom-control custom-checkbox custom-control-inline">
+                            <input name="document_link_check" value="1" type="checkbox" class="custom-control-input" id="document_link_check" @if(Configs::getConfigsValueAndOld($configs, "document_link_check") == "1") checked="checked" @endif>
+                            <label class="custom-control-label" for="document_link_check">{{ __('messages.content_url_broken_link_check') }}</label>
                         </div>
                     </div>
                 </div>
@@ -119,21 +129,24 @@
 
     <form action="" method="POST" name="document_download" class="">
         {{ csrf_field() }}
+        <input type="hidden" name="document_secret_name" value="">
+        <input type="hidden" name="document_auth_netcomons2_admin_password" value="">
+        <input type="hidden" name="document_link_check" value="">
         <div class="form-group text-center">
             <button type="reset" class="btn btn-secondary mr-2"><i class="fas fa-times"></i><span class="d-none d-md-inline"> キャンセル</span></button>
 
             <button type="button" class="btn btn-primary mr-2" onclick="submit_save_download();"><i class="far fa-save"></i><span class="d-none d-md-inline"> 設定の保存</span></button>
 
             <div class="btn-group mr-1">
-                <button type="button" class="btn btn-primary" onclick="submit_download();">
+                <button type="button" class="btn btn-primary" onclick="set_additional_parameter_2_download_form(); submit_download();">
                     <i class="fas fa-file-download"></i><span class="d-none d-sm-inline"> ダウンロード</span>
                 </button>
                 <button type="button" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <span class="sr-only">ドロップダウンボタン</span>
                 </button>
                 <div class="dropdown-menu dropdown-menu-right">
-                    <a class="dropdown-item" href="#" onclick="submit_download(); return false;">ダウンロード（ファイル保存）</a>
-                    <a class="dropdown-item" href="#" onclick="submit_download_inline(); return false;">ダウンロード（画面表示）</a>
+                    <a class="dropdown-item" href="#" onclick="set_additional_parameter_2_download_form(); submit_download(); return false;">ダウンロード（ファイル保存）</a>
+                    <a class="dropdown-item" href="#" onclick="set_additional_parameter_2_download_form(); submit_download_inline(); return false;">ダウンロード（画面表示）</a>
                 </div>
             </div>
 

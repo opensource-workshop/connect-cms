@@ -16,51 +16,62 @@
 
     @if ($default_hide_list)
     @else
-        {{-- データのループ --}}
-        <div class="table-responsive">
-        <table class="table table-bordered">
-            <caption class="sr-only">{{$database_frame->databases_name}}</caption>
-            <thead class="thead-light">
-            <tr>
-            @foreach($columns as $column)
-                @if($column->list_hide_flag == 0)
-                <th class="text-nowrap">{{$column->column_name}}</th>
-                @endif
-            @endforeach
-            </tr>
-            </thead>
-
-            <tbody>
-            @foreach($inputs as $input)
-            <tr>
-                @php
-                // bugfix: $loop->firstだと1つ目の項目が、一覧非表示の場合、詳細画面に飛べなくなるため、フラグで対応する
-                $is_first = true;
-                @endphp
-
+        @if($inputs->isNotEmpty())
+            {{-- データのループ --}}
+            <div class="table-responsive">
+            <table class="table table-bordered">
+                <caption class="sr-only">{{$database_frame->databases_name}}</caption>
+                <thead class="thead-light">
+                <tr>
                 @foreach($columns as $column)
                     @if($column->list_hide_flag == 0)
-                        @if($is_first)
-                            <td class="{{$column->classname}}">
-                                <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}">
-                                    @include('plugins.user.databases.default.databases_include_value')
-                                </a>
-                            </td>
-                            @php
-                            $is_first = false;
-                            @endphp
-                        @else
-                            <td class="{{$column->classname}}">
-                                @include('plugins.user.databases.default.databases_include_value')
-                            </td>
-                        @endif
+                    <th class="text-nowrap">{{$column->column_name}}</th>
                     @endif
                 @endforeach
-            </tr>
-            @endforeach
-            </tbody>
-        </table>
-        </div>
+                </tr>
+                </thead>
+
+                <tbody>
+                @foreach($inputs as $input)
+                <tr>
+                    @php
+                    // bugfix: $loop->firstだと1つ目の項目が、一覧非表示の場合、詳細画面に飛べなくなるため、フラグで対応する
+                    $is_first = true;
+                    @endphp
+
+                    @foreach($columns as $column)
+                        @if($column->list_hide_flag == 0)
+                            @if($is_first)
+                                <td class="{{$column->classname}}">
+                                    <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}">
+                                        @include('plugins.user.databases.default.databases_include_value')
+                                    </a>
+                                </td>
+                                @php
+                                $is_first = false;
+                                @endphp
+                            @else
+                                <td class="{{$column->classname}}">
+                                    @include('plugins.user.databases.default.databases_include_value')
+                                </td>
+                            @endif
+                        @endif
+                    @endforeach
+                </tr>
+                @endforeach
+                </tbody>
+            </table>
+            </div>
+        @else
+            {{-- 検索結果0件 --}}
+            @if (session('is_search.'.$frame_id))
+                @if ($database_frame->search_results_empty_message)
+                    {{$database_frame->search_results_empty_message}}
+                @else
+                    {{ __('messages.search_results_empty') }}
+                @endif
+            @endif
+        @endif
 
         {{-- ページング処理 --}}
         @include('plugins.common.user_paginate', ['posts' => $inputs, 'frame' => $frame, 'aria_label_name' => $database_frame->databases_name])

@@ -27,7 +27,7 @@
     }
 </script>
 
-<form action="" method="POST" name="form_clear_no" class="">
+<form action="" method="POST" name="form_clear_no">
     {{ csrf_field() }}
 </form>
 
@@ -73,33 +73,13 @@
         <td class="d-block d-sm-table-cell"><span class="d-sm-none">連番：</span>{{$number->serial_number}}</td>
 
         <td class="d-block d-sm-table-cell pb-sm-0"><span class="d-sm-none">連番クリア：</span>
-            <a href="javascript:form_clear('{{$number->id}}');"><span class="btn btn-danger btn-sm"><i class="fas fa-eraser"></i></span></a>
+            <button onclick="javascript:form_clear('{{$number->id}}');" class="btn btn-danger btn-sm" @if ($number->plugin_name == $cc_disable_plugin) disabled @endif><i class="fas fa-eraser"></i></button>
         </td>
     </tr>
     @endforeach
 </tbody>
 </table>
 
-
-    <form action="{{url('/')}}/manage/number/update" method="POST">
-        {{csrf_field()}}
-
-        {{-- サイト名 --}}
-{{--
-        <div class="form-group">
-            <label class="col-form-label">サイト名</label>
-            <input type="text" name="base_site_name" value="{{$configs["base_site_name"]}}" class="form-control">
-            <small class="form-text text-muted">サイト名（各ページで上書き可能 ※予定）</small>
-        </div>
---}}
-
-        {{-- Submitボタン --}}
-{{--
-        <div class="form-group text-center">
-            <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
-        </div>
---}}
-    </form>
 </div>
 </div>
 
