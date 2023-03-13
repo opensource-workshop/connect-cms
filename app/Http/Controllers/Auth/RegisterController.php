@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\UserColumnType;
 use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 //use App\Providers\RouteServiceProvider;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Validator;
 
 use Illuminate\Support\Facades\Auth;
 use App\Models\Core\Configs;
+use App\Models\Core\UserSection;
 use App\Models\Core\UsersInputCols;
 use App\Plugins\Manage\UserManage\UsersTool;
 use App\Rules\CustomValiUserEmailUnique;
@@ -170,6 +172,15 @@ class RegisterController extends Controller
                 $value = implode(UsersTool::CHECKBOX_SEPARATOR, $data['users_columns_value'][$users_column->id]);
             } else {
                 $value = $data['users_columns_value'][$users_column->id];
+            }
+
+            // 所属型は個別のテーブルに書き込む
+            if (!empty($value) && $users_column->column_type === UserColumnType::affiliation) {
+                UserSection::updateOrCreate(
+                    ['user_id' => $user->id],
+                    ['section_id' => $value]
+                );
+                continue;
             }
 
             // データ登録フラグを見て登録

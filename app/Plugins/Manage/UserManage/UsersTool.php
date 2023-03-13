@@ -177,6 +177,11 @@ class UsersTool
                 $validator_rule[] = Rule::in($selects);
             }
         }
+        // 所属型マスタ存在チェック
+        if ($users_column->column_type == UserColumnType::affiliation) {
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = 'exists:sections,id';
+        }
 
         // バリデータールールをセット
         if ($validator_rule) {
@@ -217,7 +222,9 @@ class UsersTool
 
         foreach ($users_columns as $users_column) {
             $value = "";
-            if (is_array($users_input_cols[$users_column->id])) {
+            if ($users_column->column_type === UserColumnType::affiliation) {
+                $value = $user->section->name;
+            } elseif (is_array($users_input_cols[$users_column->id])) {
                 $value = implode(self::CHECKBOX_SEPARATOR, $users_input_cols[$users_column->id]->value);
             } else {
                 $value = $users_input_cols[$users_column->id]->value;
@@ -253,7 +260,9 @@ class UsersTool
 
         foreach ($users_columns as $users_column) {
             $value = "";
-            if (is_array($users_input_cols[$users_column->id])) {
+            if ($users_column->column_type === UserColumnType::affiliation) {
+                $value = $user->section->name;
+            } elseif (is_array($users_input_cols[$users_column->id])) {
                 $value = implode(self::CHECKBOX_SEPARATOR, $users_input_cols[$users_column->id]->value);
             } else {
                 $value = $users_input_cols[$users_column->id]->value;

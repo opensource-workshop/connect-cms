@@ -37,6 +37,8 @@ use App\Enums\Required;
 use App\Enums\UserColumnType;
 use App\Enums\UserRegisterNoticeEmbeddedTag;
 use App\Enums\UserStatus;
+use App\Models\Core\Section;
+use App\Models\Core\UserSection;
 
 /**
  * ユーザ管理クラス
@@ -96,6 +98,10 @@ class UserManage extends ManagePluginBase
         $role_check_table["updateSelectSequence"] = ['admin_site'];
         $role_check_table["updateAgree"]          = ['admin_site'];
         $role_check_table["deleteSelect"]         = ['admin_site'];
+        $role_check_table["addSection"]            = ['admin_site'];
+        $role_check_table["updateSection"]         = ['admin_site'];
+        $role_check_table["updateSectionSequence"] = ['admin_site'];
+        $role_check_table["deleteSection"]         = ['admin_site'];
 
         return $role_check_table;
     }
@@ -200,7 +206,16 @@ class UserManage extends ManagePluginBase
 
         // ユーザー追加項目のソート順
         $sort_column_orders = [];
+        // 所属型のソート順
+        $affiliation_sort_orders = [];
         foreach ($users_columns as $users_column) {
+            // 所属型のソート順
+            if ($users_column->column_type === UserColumnType::affiliation) {
+                $affiliation_sort_orders[$users_column->id . '_asc'] = 'asc';
+                $affiliation_sort_orders[$users_column->id . '_desc'] = 'desc';
+                continue;
+            }
+
             // ソート順
             $sort_column_orders[$users_column->id . '_asc'] = 'asc';
             $sort_column_orders[$users_column->id . '_desc'] = 'desc';
@@ -240,6 +255,20 @@ class UserManage extends ManagePluginBase
                 ->leftjoin(DB::raw("({$sub_query_users_login_histories->toSql()}) AS users_login_histories"), 'users_login_histories.users_id', '=', 'users.id');
         }
 
+        // 所属型の項目をEager Loading
+        if ($users_columns->where('column_type', UserColumnType::affiliation)->isNotEmpty()) {
+            $users_query->with('section');
+            if (!empty($affiliation_sort_orders)) {
+                $users_query->leftJoin('user_sections', function ($join) {
+                    $join->on('users.id', '=', 'user_sections.user_id');
+                });
+                $users_query->leftJoin('sections', function ($join) {
+                    $join->on('user_sections.section_id', '=', 'sections.id');
+                });
+            }
+
+        }
+
         // 権限
         if ($in_users) {
             $users_query->whereIn('users.id', $in_users->pluck('users_id'));
@@ -277,9 +306,22 @@ class UserManage extends ManagePluginBase
         }
 
         foreach ($users_columns as $users_column) {
+            // 所属型の項目をEager Loading
+            if ($users_column->column_type === UserColumnType::affiliation) {
+                $users_query->with('section');
+            }
+
             if ($request->session()->has('user_search_condition.users_columns_value.'. $users_column->id)) {
                 // [TODO] 追加項目でチェックボックスを複数チェック入れるとAND検索。OR検索に今後見直す。既にデータベースで対応しているようだ。
                 $search_keyword = $request->session()->get('user_search_condition.users_columns_value.'. $users_column->id);
+
+                // 所属型
+                if ($users_column->column_type === UserColumnType::affiliation) {
+                    $users_query->whereHas('user_section', function ($query) use ($search_keyword)  {
+                        $query->where('section_id', $search_keyword);
+                    });
+                    continue;
+                }
 
                 // $users_query->whereIn('users_inputs.id', function ($query) use ($search_keyword, $users_columns_id, $hide_columns_ids) {
                 $users_query->whereIn('users.id', function ($query) use ($search_keyword, $users_column) {
@@ -312,6 +354,8 @@ class UserManage extends ManagePluginBase
             $users_query->orderBy('users.userid', 'asc');
         } elseif ($sort == 'userid_desc') {
             $users_query->orderBy('users.userid', 'desc');
+        } elseif (array_key_exists($sort, $affiliation_sort_orders)) {
+            $users_query->orderBy('sections.display_sequence', $affiliation_sort_orders[$sort]);
         } elseif (array_key_exists($sort, $sort_column_orders)) {
             // ユーザー追加項目のソートあり
             $users_query->orderBy('users_input_cols.value', $sort_column_orders[$sort]);
@@ -480,6 +524,7 @@ class UserManage extends ManagePluginBase
             "users_columns_id_select" => $users_columns_id_select,
             "input_cols" => $input_cols,
             "groups_select" => $groups_select,
+            "sections" => Section::orderBy('display_sequence')->get(),
         ]);
     }
 
@@ -586,6 +631,8 @@ class UserManage extends ManagePluginBase
             'users_columns' => $users_columns,
             'users_columns_id_select' => $users_columns_id_select,
             'input_cols' => $input_cols,
+            'sections' => Section::orderBy('display_sequence')->get(),
+            'user_section' => new UserSection(),
         ]);
     }
 
@@ -634,6 +681,8 @@ class UserManage extends ManagePluginBase
             'users_columns' => $users_columns,
             'users_columns_id_select' => $users_columns_id_select,
             'input_cols' => $input_cols,
+            'sections' => Section::orderBy('display_sequence')->get(),
+            'user_section' => UserSection::where('user_id', $user->id)->firstOrNew(),
         ]);
     }
 
@@ -736,6 +785,21 @@ class UserManage extends ManagePluginBase
                 $value = implode(UsersTool::CHECKBOX_SEPARATOR, $request->users_columns_value[$users_column->id]);
             } else {
                 $value = $request->users_columns_value[$users_column->id];
+            }
+
+            // 所属型は個別のテーブルに書き込む
+            if ($users_column->column_type === UserColumnType::affiliation) {
+                // 値無しは所属情報を削除
+                if (empty($value)) {
+                    UserSection::where('user_id', $user->id)->delete();
+                    continue;
+                }
+
+                UserSection::updateOrCreate(
+                    ['user_id' => $user->id],
+                    ['section_id' => $value]
+                );
+                continue;
             }
 
             // データ登録フラグを見て登録
@@ -2130,10 +2194,16 @@ class UserManage extends ManagePluginBase
     public function addColumn($request, $id)
     {
         // エラーチェック
-        $validator = Validator::make($request->all(), [
+        $rules = [
             'column_name' => ['required'],
             'column_type' => ['required'],
-        ]);
+        ];
+        // 所属型は一個まで
+        if ($request->column_type === UserColumnType::affiliation) {
+            $rules['column_type'][] =  'unique:users_columns';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
         $validator->setAttributeNames([
             'column_name' => '項目名',
             'column_type' => '型',
@@ -2235,6 +2305,13 @@ class UserManage extends ManagePluginBase
         // 明細行から削除対象の項目名を抽出
         $str_column_name = "column_name_"."$request->column_id";
 
+        // 所属型の関連テーブルを削除
+        $users_column = UsersColumns::findOrFail($request->column_id);
+        if ($users_column->column_type === UserColumnType::affiliation) {
+            UserSection::query()->delete();
+            Section::query()->delete();
+        }
+
         // 項目の削除
         UsersColumns::destroy('id', $request->column_id);
 
@@ -2273,6 +2350,7 @@ class UserManage extends ManagePluginBase
             'column'         => $column,
             'selects'        => $selects,
             'select_agree'   => $select_agree,
+            'sections' => Section::orderBy('display_sequence')->get(),
         ]);
     }
 
@@ -2492,4 +2570,120 @@ class UserManage extends ManagePluginBase
         // 編集画面を呼び出す
         return redirect("/manage/user/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
     }
+
+    /**
+     * 組織の登録
+     */
+    public function addSection($request, $id)
+    {
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            'section_name'  => ['required', 'max:191'],
+            'section_code'  => ['max:191'],
+        ]);
+        $validator->setAttributeNames([
+            'section_name'  => '組織名',
+            'section_code'  => 'コード',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // 新規登録時の表示順を設定
+        $max_display_sequence = Section::max('display_sequence');
+        $max_display_sequence = $max_display_sequence ? $max_display_sequence + 1 : 1;
+
+        // 施設の登録処理
+        $section = new Section();
+        $section->name = $request->section_name;
+        $section->code = $request->section_code;
+        $section->display_sequence = $max_display_sequence;
+        $section->save();
+        $message = '組織【 '. $request->section_name .' 】を追加しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/user/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
+    }
+
+    /**
+     * 組織の更新
+     */
+    public function updateSection($request, $id)
+    {
+        // 明細行から更新対象を抽出する為のnameを取得
+        $str_section_name = "section_name_"."$request->section_id";
+        $str_section_code = "section_code_"."$request->section_id";
+
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            $str_section_name => ['required', 'max:191'],
+            $str_section_code => ['max:191'],
+        ]);
+        $validator->setAttributeNames([
+            $str_section_name => '組織名',
+            $str_section_code => 'コード',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // 項目の更新処理
+        $section = Section::where('id', $request->section_id)->first();
+        $section->name = $request->$str_section_name;
+        $section->code = $request->$str_section_code;
+        $section->save();
+        $message = '組織【 '. $request->$str_section_name .' 】を更新しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/user/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
+    }
+
+    /**
+     * 組織の表示順の更新
+     */
+    public function updateSectionSequence($request, $id)
+    {
+        // ボタンが押された行の施設データ
+        $target_section = Section::where('id', $request->section_id)->first();
+
+        // ボタンが押された前（後）の施設データ
+        $query = Section::query();
+        $pair_section = $request->display_sequence_operation == 'up' ?
+            $query->where('display_sequence', '<', $request->display_sequence)->orderby('display_sequence', 'desc')->limit(1)->first() :
+            $query->where('display_sequence', '>', $request->display_sequence)->orderby('display_sequence', 'asc')->limit(1)->first();
+
+        // それぞれの表示順を退避
+        $target_section_display_sequence = $target_section->display_sequence;
+        $pair_section_display_sequence = $pair_section->display_sequence;
+
+        // 入れ替えて更新
+        $target_section->display_sequence = $pair_section_display_sequence;
+        $target_section->save();
+        $pair_section->display_sequence = $target_section_display_sequence;
+        $pair_section->save();
+
+        $message = '組織【 '. $target_section->section_name .' 】の表示順を更新しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/user/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
+    }
+
+    /**
+     * 項目に紐づく組織の削除
+     */
+    public function deleteSection($request, $id)
+    {
+        // 削除
+        Section::destroy('id', $request->section_id);
+
+        // 明細行から削除対象の組織名を抽出
+        $str_section_name = "section_name_"."$request->section_id";
+        $message = '組織【 '. $request->$str_section_name .' 】を削除しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/user/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
+    }
+
 }
