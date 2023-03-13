@@ -689,6 +689,23 @@
                     </div>
                 @endif
 
+                {{-- 複数選択の絞り込みでAND/ORを表示する --}}
+                @if ($column->column_type == DatabaseColumnType::checkbox)
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass(true)}}">複数選択の絞り込みでAND/ORを表示する</label>
+                    <div class="{{$frame->getSettingInputClass(true)}}">
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="0" id="use_select_and_or_flag_0" name="use_select_and_or_flag" class="custom-control-input" @if(old('use_select_and_or_flag', $column->use_select_and_or_flag) == 0) checked="checked" @endif>
+                            <label class="custom-control-label" for="use_select_and_or_flag_0" id="label_use_select_and_or_flag_0">表示しない</label>
+                        </div>
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="1" id="use_select_and_or_flag_1" name="use_select_and_or_flag" class="custom-control-input" @if(old('use_select_and_or_flag', $column->use_select_and_or_flag) == 1) checked="checked" @endif>
+                            <label class="custom-control-label" for="use_select_and_or_flag_1" id="label_use_select_and_or_flag_1">表示する</label>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 {{-- グループ --}}
                 <div class="form-group row" id="div_group">
                     <label class="{{$frame->getSettingLabelClass(true)}} pt-0">グループ</label>

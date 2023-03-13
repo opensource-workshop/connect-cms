@@ -29,12 +29,12 @@
     {{-- 検索 --}}
     @if($database_frame && $database_frame->use_search_flag == 1)
     <div class="input-group mb-3">
-        <input 
-            type="text" 
-            name="search_keyword" 
-            class="form-control" 
-            value="{{Session::get('search_keyword.'.$frame_id)}}" 
-            placeholder="{{ $database_frame->placeholder_search ? $database_frame->placeholder_search : '検索はキーワードを入力してください。' }}" 
+        <input
+            type="text"
+            name="search_keyword"
+            class="form-control"
+            value="{{Session::get('search_keyword.'.$frame_id)}}"
+            placeholder="{{ $database_frame->placeholder_search ? $database_frame->placeholder_search : '検索はキーワードを入力してください。' }}"
             title="検索キーワード"
         >
         <div class="input-group-append">
@@ -43,6 +43,59 @@
             </button>
         </div>
     </div>
+    @endif
+
+    {{-- 絞り込み（複数選択） --}}
+    @php
+        $use_select_multiple_flag = FrameConfig::getConfigValueAndOld($frame_configs, DatabaseFrameConfig::database_use_select_multiple_flag, ShowType::not_show);
+    @endphp
+    @if(($use_select_multiple_flag && $select_columns && count($select_columns) >= 1))
+        <div class="form-group form-row mb-3">
+            @foreach($select_columns as $select_column)
+                @php
+                    $checked_values = (array)Session::get("search_column_multiple." . $frame->id . '.' . $loop->index . ".value");
+                    $and_or = Session::get("search_column_multiple." . $frame->id . '.' . $loop->index . ".and_or");
+                    $column_index = $loop->index;
+                @endphp
+                <div class="col-sm pb-4">
+                    <h5>{{$select_column->column_name}}</h5>
+                    <input name="search_column_multiple[{{$loop->index}}][name]" type="hidden" value="{{$select_column->column_name}}">
+                    <input name="search_column_multiple[{{$loop->index}}][columns_id]" type="hidden" value="{{$select_column->id}}">
+                    @if($select_column->column_type == DatabaseColumnType::checkbox)
+                    <input name="search_column_multiple[{{$loop->index}}][where]" type="hidden" value="PART">
+                    @else
+                    <input name="search_column_multiple[{{$loop->index}}][where]" type="hidden" value="ALL">
+                    @endif
+                    {{-- AND/OR --}}
+                    {{-- 初期表示はOR --}}
+                    @if ($select_column->use_select_and_or_flag)
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="AND" id="select_and" name="search_column_multiple[{{$loop->index}}][and_or]" class="custom-control-input" @if($and_or === 'AND') checked @endif>
+                            <label class="custom-control-label" for="select_and">and</label>
+                        </div>
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="OR" id="select_or" name="search_column_multiple[{{$loop->index}}][and_or]" class="custom-control-input" @if($and_or === null || $and_or === 'OR')  checked @endif>
+                            <label class="custom-control-label" for="select_or">or</label>
+                        </div>
+                    @endif
+
+                    {{-- 選択肢 --}}
+                    @foreach($columns_selects->where('databases_columns_id', $select_column->id) as $columns_select)
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" name="search_column_multiple[{{$column_index}}][value][]" value="{{$columns_select->value}}" id="{{$columns_select->id . $frame->id}}"
+                            @if(in_array($columns_select->value, $checked_values)) checked @endif
+                            >
+                        <label class="custom-control-label" for="{{$columns_select->id . $frame->id}}">{{  $columns_select->value  }}</label>
+                    </div>
+                    @endforeach
+                </div>
+            @endforeach
+        </div>
+        <div class="text-center mb-3">
+            <button type="submit" class="btn btn-primary" title="検索">
+                <i class="fas fa-search" role="presentation"></i>検索
+            </button>
+        </div>
     @endif
 
     @if(($databases_frames->use_select_flag && $select_columns && count($select_columns) >= 1) || $databases_frames->isBasicUseSortFlag())
