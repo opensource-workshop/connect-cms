@@ -43,7 +43,7 @@
                     <thead>
                         <tr>
                             <th nowrap>表示順</th>
-                            <th nowrap>定義名（半角英数字）</th>
+                            <th nowrap>定義名</th>
                             <th nowrap>表示名</th>
                             <th nowrap><i class="fas fa-trash-alt"></i></th>
                         </tr>
@@ -97,6 +97,7 @@
                         @endforeach
                         です。
                     </li>
+                    <li>定義名は、半角英数字、ダッシュ(-)、下線(_)で入力できます。</li>
                 </ul>
             </div>
 

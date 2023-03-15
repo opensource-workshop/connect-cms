@@ -874,7 +874,7 @@ class UserManage extends ManagePluginBase
         if (!empty($request->add_additional1) || !empty($request->add_name) || !empty($request->add_value)) {
             // 項目のエラーチェック
             $rules['add_additional1'] = ['required', 'numeric'];
-            $rules['add_name'] = ['required', 'alpha_num'];
+            $rules['add_name'] = ['required', 'alpha_dash'];
             $rules['add_value'] = ['required'];
 
             $setAttributeNames['add_additional1'] = '追加行の表示順';
@@ -887,7 +887,7 @@ class UserManage extends ManagePluginBase
             foreach ($request->configs_id as $config_id) {
                 // 項目のエラーチェック
                 $rules['additional1.'.$config_id] = ['required', 'numeric'];
-                $rules['name.'.$config_id] = ['required', 'alpha_num'];
+                $rules['name.'.$config_id] = ['required', 'alpha_dash'];
                 $rules['value.'.$config_id] = ['required'];
 
                 $setAttributeNames['additional1.'.$config_id] = '表示順';
@@ -911,7 +911,7 @@ class UserManage extends ManagePluginBase
                 // 項目のエラーチェック
                 $validator = Validator::make($request->all(), [
                     'additional1.'.$config_id => ['required', 'numeric'],
-                    'name.'.$config_id        => ['required', 'alpha_num'],
+                    'name.'.$config_id        => ['required', 'alpha_dash'],
                     'value.'.$config_id       => ['required'],
                 ]);
                 $validator->setAttributeNames([
