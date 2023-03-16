@@ -1137,7 +1137,7 @@ class UserPluginBase extends PluginBase
      * @see https://readouble.com/laravel/6.x/ja/queues.html#running-the-queue-worker キューされたすべてのジョブを処理し、終了する - Laravel 6.x キュー
      * @see config\queue.php キューの設定ファイル。[connections => [database => [retry_after]]](リトライ時間) > --timeout(タイムアウト) でないと例外が発生する。
      */
-    private function asyncQueueWork()
+    protected function asyncQueueWork()
     {
         if (config('queue.default') != 'database') {
             // キュードライバがdatabase以外は実行しない
