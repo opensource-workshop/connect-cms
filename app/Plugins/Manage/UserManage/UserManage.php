@@ -206,16 +206,7 @@ class UserManage extends ManagePluginBase
 
         // ユーザー追加項目のソート順
         $sort_column_orders = [];
-        // 所属型のソート順
-        $affiliation_sort_orders = [];
         foreach ($users_columns as $users_column) {
-            // 所属型のソート順
-            if ($users_column->column_type === UserColumnType::affiliation) {
-                $affiliation_sort_orders[$users_column->id . '_asc'] = 'asc';
-                $affiliation_sort_orders[$users_column->id . '_desc'] = 'desc';
-                continue;
-            }
-
             // ソート順
             $sort_column_orders[$users_column->id . '_asc'] = 'asc';
             $sort_column_orders[$users_column->id . '_desc'] = 'desc';
@@ -258,15 +249,6 @@ class UserManage extends ManagePluginBase
         // 所属型の項目をEager Loading
         if ($users_columns->where('column_type', UserColumnType::affiliation)->isNotEmpty()) {
             $users_query->with('section');
-            if (!empty($affiliation_sort_orders)) {
-                $users_query->leftJoin('user_sections', function ($join) {
-                    $join->on('users.id', '=', 'user_sections.user_id');
-                });
-                $users_query->leftJoin('sections', function ($join) {
-                    $join->on('user_sections.section_id', '=', 'sections.id');
-                });
-            }
-
         }
 
         // 権限
@@ -306,22 +288,9 @@ class UserManage extends ManagePluginBase
         }
 
         foreach ($users_columns as $users_column) {
-            // 所属型の項目をEager Loading
-            if ($users_column->column_type === UserColumnType::affiliation) {
-                $users_query->with('section');
-            }
-
             if ($request->session()->has('user_search_condition.users_columns_value.'. $users_column->id)) {
                 // [TODO] 追加項目でチェックボックスを複数チェック入れるとAND検索。OR検索に今後見直す。既にデータベースで対応しているようだ。
                 $search_keyword = $request->session()->get('user_search_condition.users_columns_value.'. $users_column->id);
-
-                // 所属型
-                if ($users_column->column_type === UserColumnType::affiliation) {
-                    $users_query->whereHas('user_section', function ($query) use ($search_keyword)  {
-                        $query->where('section_id', $search_keyword);
-                    });
-                    continue;
-                }
 
                 // $users_query->whereIn('users_inputs.id', function ($query) use ($search_keyword, $users_columns_id, $hide_columns_ids) {
                 $users_query->whereIn('users.id', function ($query) use ($search_keyword, $users_column) {
@@ -354,8 +323,6 @@ class UserManage extends ManagePluginBase
             $users_query->orderBy('users.userid', 'asc');
         } elseif ($sort == 'userid_desc') {
             $users_query->orderBy('users.userid', 'desc');
-        } elseif (array_key_exists($sort, $affiliation_sort_orders)) {
-            $users_query->orderBy('sections.display_sequence', $affiliation_sort_orders[$sort]);
         } elseif (array_key_exists($sort, $sort_column_orders)) {
             // ユーザー追加項目のソートあり
             $users_query->orderBy('users_input_cols.value', $sort_column_orders[$sort]);
@@ -792,14 +759,14 @@ class UserManage extends ManagePluginBase
                 // 値無しは所属情報を削除
                 if (empty($value)) {
                     UserSection::where('user_id', $user->id)->delete();
-                    continue;
-                }
-
+                } else {
                 UserSection::updateOrCreate(
                     ['user_id' => $user->id],
                     ['section_id' => $value]
                 );
-                continue;
+                    // users_input_cols には　名称を設定する
+                    $value = Section::find($value)->name;
+                }
             }
 
             // データ登録フラグを見て登録
@@ -2631,9 +2598,18 @@ class UserManage extends ManagePluginBase
 
         // 項目の更新処理
         $section = Section::where('id', $request->section_id)->first();
+        $before_name = $section->name;
         $section->name = $request->$str_section_name;
         $section->code = $request->$str_section_code;
         $section->save();
+
+        // users_input_colsに登録されているデータを更新内容に合わせる
+        $column = UsersColumns::where('column_type', UserColumnType::affiliation)->first();
+        UsersInputCols::query()
+            ->where('users_columns_id', $column->id)
+            ->where('value', $before_name)
+            ->update(['value' => $request->$str_section_name]);
+
         $message = '組織【 '. $request->$str_section_name .' 】を更新しました。';
 
         // 編集画面を呼び出す

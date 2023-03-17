@@ -222,9 +222,7 @@ class UsersTool
 
         foreach ($users_columns as $users_column) {
             $value = "";
-            if ($users_column->column_type === UserColumnType::affiliation) {
-                $value = $user->section->name;
-            } elseif (is_array($users_input_cols[$users_column->id])) {
+            if (is_array($users_input_cols[$users_column->id])) {
                 $value = implode(self::CHECKBOX_SEPARATOR, $users_input_cols[$users_column->id]->value);
             } else {
                 $value = $users_input_cols[$users_column->id]->value;
@@ -260,9 +258,7 @@ class UsersTool
 
         foreach ($users_columns as $users_column) {
             $value = "";
-            if ($users_column->column_type === UserColumnType::affiliation) {
-                $value = $user->section->name;
-            } elseif (is_array($users_input_cols[$users_column->id])) {
+            if (is_array($users_input_cols[$users_column->id])) {
                 $value = implode(self::CHECKBOX_SEPARATOR, $users_input_cols[$users_column->id]->value);
             } else {
                 $value = $users_input_cols[$users_column->id]->value;

@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Validator;
 
 use Illuminate\Support\Facades\Auth;
 use App\Models\Core\Configs;
+use App\Models\Core\Section;
 use App\Models\Core\UserSection;
 use App\Models\Core\UsersInputCols;
 use App\Plugins\Manage\UserManage\UsersTool;
@@ -180,7 +181,9 @@ class RegisterController extends Controller
                     ['user_id' => $user->id],
                     ['section_id' => $value]
                 );
-                continue;
+
+                // users_input_cols には　名称を設定する
+                $value = Section::find($value)->name;
             }
 
             // データ登録フラグを見て登録
