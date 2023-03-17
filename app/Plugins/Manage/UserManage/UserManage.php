@@ -2581,7 +2581,7 @@ class UserManage extends ManagePluginBase
         $max_display_sequence = Section::max('display_sequence');
         $max_display_sequence = $max_display_sequence ? $max_display_sequence + 1 : 1;
 
-        // 施設の登録処理
+        // 組織の登録処理
         $section = new Section();
         $section->name = $request->section_name;
         $section->code = $request->section_code;
