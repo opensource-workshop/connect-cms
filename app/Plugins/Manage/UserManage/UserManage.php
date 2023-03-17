@@ -2565,7 +2565,7 @@ class UserManage extends ManagePluginBase
     {
         // エラーチェック
         $validator = Validator::make($request->all(), [
-            'section_name'  => ['required', 'max:191'],
+            'section_name'  => ['required', 'max:191', Rule::unique('sections', 'name')],
             'section_code'  => ['max:191'],
         ]);
         $validator->setAttributeNames([
@@ -2604,7 +2604,7 @@ class UserManage extends ManagePluginBase
 
         // エラーチェック
         $validator = Validator::make($request->all(), [
-            $str_section_name => ['required', 'max:191'],
+            $str_section_name => ['required', 'max:191', Rule::unique('sections', 'name')->ignore($request->section_id)],
             $str_section_code => ['max:191'],
         ]);
         $validator->setAttributeNames([

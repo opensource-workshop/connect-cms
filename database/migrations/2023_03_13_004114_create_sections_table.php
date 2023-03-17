@@ -15,7 +15,7 @@ class CreateSectionsTable extends Migration
     {
         Schema::create('sections', function (Blueprint $table) {
             $table->id();
-            $table->string('code', 191)->comment('組織コード');
+            $table->string('code', 191)->nullable()->comment('組織コード');
             $table->string('name', 191)->comment('組織名');
             $table->integer('display_sequence')->comment('並び順');
 
@@ -25,6 +25,9 @@ class CreateSectionsTable extends Migration
             $table->integer('updated_id')->nullable();
             $table->string('updated_name', 255)->nullable();
             $table->timestamp('updated_at')->nullable();
+
+            // 一意制約
+            $table->unique('name');
         });
     }
 
