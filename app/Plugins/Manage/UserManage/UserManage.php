@@ -1740,6 +1740,19 @@ class UserManage extends ManagePluginBase
                 $users_input_cols->users_columns_id = $users_column->id;
                 $users_input_cols->value = $value;
                 $users_input_cols->save();
+
+                // 所属型
+                if ($users_column->column_type === UserColumnType::affiliation) {
+                    // 値無しは所属情報を削除
+                    if (empty($value)) {
+                        UserSection::where('user_id', $user->id)->delete();
+                    } else {
+                        UserSection::updateOrCreate(
+                            ['user_id' => $user->id],
+                            ['section_id' => Section::where('name', $value)->first()->id]
+                        );
+                    }
+                }
             }
 
             // --- 権限(コンテンツ権限 & 管理権限)
@@ -1919,6 +1932,13 @@ class UserManage extends ManagePluginBase
                             // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
                             $csv_column = StringUtils::trimInput($csv_column);
                             // Log::debug(var_export($csv_column, true));
+                        }
+
+                        // 所属型
+                        if ($users_column->column_type == UserColumnType::affiliation) {
+                            $section = Section::where('name', $csv_column)->first();
+                            // マスタにない組織名が設定されたら、後続のバリデーションでエラーになるようにIDとしてありえない文字列を設定する
+                            $csv_column = $section ? $section->id : '-';
                         }
                     }
                 }
