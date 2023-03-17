@@ -2172,6 +2172,7 @@ class UserManage extends ManagePluginBase
             "function"       => __FUNCTION__,
             "plugin_name"    => "user",
             'columns'        => $columns,
+            'exists_user_sections' => UserSection::exists(),
         ]);
     }
 

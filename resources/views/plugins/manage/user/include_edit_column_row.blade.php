@@ -65,7 +65,14 @@
 
     {{-- 削除ボタン --}}
     <td class="text-center px-2">
-        <button class="btn btn-danger cc-font-90 text-nowrap" onclick="javascript:return submit_delete_column({{ $column->id }});"><i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span></button>
+        {{-- 所属が登録されてたら項目の削除はさせない --}}
+        @if ($column->column_type == UserColumnType::affiliation && $exists_user_sections)
+            <div class="button-wrapper" data-toggle="tooltip" title="{{$column->column_name}}登録済みのユーザがいるため項目を削除できません。">
+                <button class="btn btn-danger cc-font-90 text-nowrap" disabled><i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span></button>
+            </div>
+        @else
+            <button class="btn btn-danger cc-font-90 text-nowrap" onclick="javascript:return submit_delete_column({{ $column->id }});"><i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span></button>
+        @endif
     </td>
 </tr>
 {{-- 選択肢の設定内容の表示行 --}}
