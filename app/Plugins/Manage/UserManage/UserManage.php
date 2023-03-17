@@ -760,10 +760,10 @@ class UserManage extends ManagePluginBase
                 if (empty($value)) {
                     UserSection::where('user_id', $user->id)->delete();
                 } else {
-                UserSection::updateOrCreate(
-                    ['user_id' => $user->id],
-                    ['section_id' => $value]
-                );
+                    UserSection::updateOrCreate(
+                        ['user_id' => $user->id],
+                        ['section_id' => $value]
+                    );
                     // users_input_cols には　名称を設定する
                     $value = Section::find($value)->name;
                 }
@@ -1697,7 +1697,7 @@ class UserManage extends ManagePluginBase
             // --- グループ
             $group_col_no = array_search('group', $import_column_col_no);
             // 配列に変換する。
-            $csv_groups = explode(UsersTool::CHECKBOX_SEPARATOR, $csv_columns[$group_col_no]);
+            $csv_groups = explode(UsersTool::CHECKBOX_SEPARATOR, $csv_columns[$group_col_no] ?? '');
             // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
             $csv_groups = StringUtils::trimInput($csv_groups);
 
@@ -1782,7 +1782,7 @@ class UserManage extends ManagePluginBase
             // --- 役割設定
             $user_original_roles_col_no = array_search('user_original_roles', $import_column_col_no);
             // 配列に変換する。
-            $csv_user_original_roles_names = explode(UsersTool::CHECKBOX_SEPARATOR, $csv_columns[$user_original_roles_col_no]);
+            $csv_user_original_roles_names = explode(UsersTool::CHECKBOX_SEPARATOR, $csv_columns[$user_original_roles_col_no] ?? '');
             // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
             $csv_user_original_roles_names = StringUtils::trimInput($csv_user_original_roles_names);
             // dd($csv_user_original_roles_names);
