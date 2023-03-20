@@ -177,6 +177,11 @@ class UsersTool
                 $validator_rule[] = Rule::in($selects);
             }
         }
+        // 所属型マスタ存在チェック
+        if ($users_column->column_type == UserColumnType::affiliation) {
+            $validator_rule[] = 'nullable';
+            $validator_rule[] = 'exists:sections,id';
+        }
 
         // バリデータールールをセット
         if ($validator_rule) {

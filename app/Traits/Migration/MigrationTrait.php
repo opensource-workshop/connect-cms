@@ -3099,7 +3099,8 @@ trait MigrationTrait
 
             // カラムテーブルとカラム選択肢テーブルの追加
             $display_sequence_column = 0;
-            foreach ($form_ini['form_columns']['form_column'] as $item_id => $item_name) {
+            $form_ini_column = Arr::get($form_ini, 'form_columns.form_column', []);
+            foreach ($form_ini_column as $item_id => $item_name) {
                 $form_column = FormsColumns::create([
                     'forms_id'                   => $form->id,
                     'column_type'                => $form_ini[$item_id]['column_type'],
@@ -8065,8 +8066,14 @@ trait MigrationTrait
             Storage::deleteDirectory(config('connect.directory_base'));
         }
 
-        // NC2 アップロードテーブルを移行する。
-        $nc2_uploads = Nc2Upload::orderBy('upload_id')->get();
+        $nc2_uploads_query = Nc2Upload::query();
+
+        // 対象外モジュールID指定の有無
+        if ($this->getMigrationConfig('uploads', 'nc2_export_ommit_module_ids')) {
+            $nc2_uploads_query->whereNotIn('module_id', $this->getMigrationConfig('uploads', 'nc2_export_ommit_module_ids'));
+        }
+
+        $nc2_uploads = $nc2_uploads_query->orderBy('upload_id')->get();
 
         // uploads,ini ファイル
         //Storage::put($this->getImportPath('uploads/uploads.ini'), "[uploads]");
@@ -11989,7 +11996,7 @@ trait MigrationTrait
                 ->orderBy('question_sequence', 'asc')
                 ->get();
 
-            if (empty($questionnaire_questions)) {
+            if ($questionnaire_questions->isEmpty()) {
                 continue;
             }
 
@@ -12000,6 +12007,8 @@ trait MigrationTrait
             // カラム情報
             foreach ($questionnaire_questions as $questionnaire_question) {
                 $question_value = $this->nc2Wysiwyg(null, null, null, null, $questionnaire_question->question_value, 'questionnaire', $nc2_page);
+                // ダブルクォーテーションのエスケープ
+                $question_value = str_replace('"', '\"', $question_value);
 
                 $questionnaire_ini .= "form_column[" . $questionnaire_question->question_id . "] = \"" . $question_value . "\"\n";
             }
@@ -12027,9 +12036,13 @@ trait MigrationTrait
                     ->pluck('choice_value')
                     ->implode('|');
 
+                $question_value = $this->nc2Wysiwyg(null, null, null, null, $questionnaire_question->question_value, 'questionnaire', $nc2_page);
+                // ダブルクォーテーションのエスケープ
+                $question_value = str_replace('"', '\"', $question_value);
+
                 $questionnaire_ini .= "column_type                = \"" . $column_type                     . "\"\n";
-                $questionnaire_ini .= "column_name                = \"" . $questionnaire_question->question_value    . "\"\n";
-                $questionnaire_ini .= "option_value               = \"" . $option_value . "\"\n";
+                $questionnaire_ini .= "column_name                = \"" . $question_value                  . "\"\n";
+                $questionnaire_ini .= "option_value               = \"" . $option_value                    . "\"\n";
                 $questionnaire_ini .= "required                   = "   . $questionnaire_question->require_flag . "\n";
                 $questionnaire_ini .= "frame_col                  = "   . 0                                . "\n";
                 $questionnaire_ini .= "caption                    = \"" . $questionnaire_question->description  . "\"\n";

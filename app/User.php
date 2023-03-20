@@ -11,6 +11,8 @@ use App\Notifications\PasswordResetNotification;
 use App\Enums\UserStatus;
 
 use App\Models\Common\GroupUser;
+use App\Models\Core\UserSection;
+use App\Models\Core\Section;
 
 class User extends Authenticatable
 {
@@ -209,5 +211,21 @@ class User extends Authenticatable
     public function group_users()    // phpcs:ignore
     {
         return $this->hasMany(GroupUser::class);
+    }
+
+    /**
+     * 所属情報
+     */
+    public function user_section()  // phpcs:ignore
+    {
+        return $this->hasOne(UserSection::class);
+    }
+
+    /**
+     * 所属の組織
+     */
+    public function section()
+    {
+        return $this->hasOneThrough(Section::class, UserSection::class, 'user_id', 'id', 'id', 'section_id');
     }
 }

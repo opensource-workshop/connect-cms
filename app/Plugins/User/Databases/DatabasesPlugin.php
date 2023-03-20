@@ -44,11 +44,13 @@ use App\Enums\Bs4TextColor;
 use App\Enums\CsvCharacterCode;
 use App\Enums\DatabaseColumnType;
 use App\Enums\DatabaseColumnRoleName;
+use App\Enums\DatabaseFrameConfig;
 use App\Enums\DatabaseRoleName;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\Required;
 use App\Enums\DatabaseNoticeEmbeddedTag;
 use App\Enums\StatusType;
+use App\Models\Core\FrameConfig;
 
 /**
  * データベース・プラグイン
@@ -694,6 +696,10 @@ class DatabasesPlugin extends UserPluginBase
             if (!empty(session('search_column.'.$frame_id))) {
                 $inputs_query = DatabasesTool::appendSearchColumns('databases_inputs.id', $inputs_query, session('search_column.'.$frame_id));
             }
+            // 画面の絞り込み指定（複数選択）
+            if (!empty(session('search_column_multiple.'.$frame_id))) {
+                $inputs_query = DatabasesTool::appendSearchColumnsMultiple('databases_inputs.id', $inputs_query, session('search_column_multiple.'.$frame_id));
+            }
 
             // 並べ替え指定があれば、並べ替えする項目をSELECT する。
             if ($sort_column_id == DatabaseSortFlag::random && $sort_column_order == DatabaseSortFlag::order_session) {
@@ -728,7 +734,7 @@ class DatabasesPlugin extends UserPluginBase
             if ($databases_frames) {
                 $get_count = $databases_frames->view_count;
             }
-            $inputs = $inputs_query->paginate($get_count, ["*"], "frame_{$frame_id}_page");
+            $inputs = $inputs_query->paginate($get_count, ["*"], $this->pageName($frame_id));
 
             // 登録データ行のタイトル取得
             $inputs_titles = DatabasesInputs::
@@ -792,7 +798,7 @@ class DatabasesPlugin extends UserPluginBase
 
         // 初期表示を隠す判定
         $default_hide_list = false;
-        if (($database_frame && $database_frame->default_hide == 1 && $request->isMethod('get') && !$request->page)) {
+        if (($database_frame && $database_frame->default_hide == 1 && $request->isMethod('get') && !$request->{$this->pageName($frame_id)})) {
             $default_hide_list = true;
         }
 
@@ -816,9 +822,21 @@ class DatabasesPlugin extends UserPluginBase
             'input_cols'       => $input_cols,
             'columns_selects'  => isset($columns_selects) ? $columns_selects : null,
             'default_hide_list' => $default_hide_list,
+            'frame_configs' => $this->frame_configs,
         // change: 同ページに(a)データベースプラグイン,(b)フォームを配置して(b)フォームで入力エラーが起きても、入力値が復元しないバグ対応。
         // ])->withInput($request->all);
         ]);
+    }
+
+    /**
+     * ぺジネーション用のページ名を取得する
+     *
+     * @param int $frame_id
+     * @return string ページ名
+     */
+    private function pageName(int $frame_id): string
+    {
+        return "frame_{$frame_id}_page";
     }
 
     /**
@@ -915,6 +933,9 @@ class DatabasesPlugin extends UserPluginBase
 
             // 絞り込み
             session(['search_column.'.$frame_id => $request->search_column]);
+
+            // 絞り込み（複数選択）
+            session(['search_column_multiple.'.$frame_id => $request->search_column_multiple]);
 
             // オプション検索
             session(['search_options.'.$frame_id => $request->search_options]);
@@ -2654,6 +2675,8 @@ class DatabasesPlugin extends UserPluginBase
         $column->search_flag = (empty($request->search_flag)) ? 0 : $request->search_flag;
         // 絞り込み対象指定
         $column->select_flag = (empty($request->select_flag)) ? 0 : $request->select_flag;
+        // 複数選択の絞り込みでAND/ORを表示する
+        $column->use_select_and_or_flag = (empty($request->use_select_and_or_flag)) ? 0 : $request->use_select_and_or_flag;
         // 行グループ
         $column->row_group = $request->row_group;
         // 列グループ
@@ -3842,6 +3865,7 @@ class DatabasesPlugin extends UserPluginBase
                 'columns' => $columns,
                 'select_columns' => $select_columns,
                 'columns_selects' => $columns_selects,
+                'frame_configs' => $this->frame_configs,
             ]
         )->withInput($request->all);
     }
@@ -3894,6 +3918,10 @@ class DatabasesPlugin extends UserPluginBase
                 'filter_search_columns' => json_encode($request->filter_search_columns),
             ]
         );
+
+        FrameConfig::saveFrameConfigs($request, $frame_id, DatabaseFrameConfig::getMemberKeys());
+        // 更新したので、frame_configsを設定しなおす
+        $this->refreshFrameConfigs();
 
         return $this->editView($request, $page_id, $frame_id);
     }

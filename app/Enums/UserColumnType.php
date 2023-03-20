@@ -17,6 +17,7 @@ final class UserColumnType extends EnumsBase
     const select = 'select';
     const mail = 'mail';
     const agree = 'agree';
+    const affiliation = 'affiliation';
 
     // key/valueの連想配列
     const enum = [
@@ -27,5 +28,6 @@ final class UserColumnType extends EnumsBase
         self::select => 'リストボックス型',
         self::mail => 'メールアドレス型',
         self::agree => '同意型',
+        self::affiliation => '所属型',
     ];
 }

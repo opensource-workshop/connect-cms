@@ -70,6 +70,48 @@
         return false;
     }
 
+
+    /**
+     * 組織追加ボタン押下
+     */
+     function submit_add_section(btn) {
+        form_selects.action = "{{url('/')}}/manage/user/addSection";
+        btn.disabled = true;
+        form_selects.submit();
+    }
+
+    /**
+     * 表示順操作ボタン押下
+     */
+    function submit_section_display_sequence(section_id, display_sequence, display_sequence_operation) {
+        form_selects.action = "{{url('/')}}/manage/user/updateSectionSequence";
+        form_selects.section_id.value = section_id;
+        form_selects.display_sequence.value = display_sequence;
+        form_selects.display_sequence_operation.value = display_sequence_operation;
+        form_selects.submit();
+    }
+
+    /**
+     * 組織の更新ボタン押下
+     */
+    function submit_update_section(section_id) {
+        form_selects.action = "{{url('/')}}/manage/user/updateSection";
+        form_selects.section_id.value = section_id;
+        form_selects.submit();
+    }
+
+    /**
+     * 組織の削除ボタン押下
+     */
+     function submit_delete_section(section_id) {
+        if (confirm('組織を削除します。\nよろしいですか？')){
+            form_selects.action = "{{url('/')}}/manage/user/deleteSection";
+            form_selects.section_id.value = section_id;
+            form_selects.submit();
+        }
+        return false;
+    }
+
     // ツールチップ
     $(function () {
         // 有効化
@@ -88,6 +130,7 @@
             {{ csrf_field() }}
             <input type="hidden" name="column_id" value="{{ $column->id }}">
             <input type="hidden" name="select_id" value="">
+            <input type="hidden" name="section_id" value="">
             <input type="hidden" name="display_sequence" value="">
             <input type="hidden" name="display_sequence_operation" value="">
 
@@ -349,6 +392,107 @@
                 </div>
             @endif
 
+            {{-- 所属型 --}}
+            @if ($column->column_type == UserColumnType::affiliation)
+                {{-- 選択肢の設定 --}}
+                <div class="card mb-4">
+                    <h5 class="card-header">選択肢の設定</h5>
+                    <div class="card-body">
+
+                        <div class="table-responsive">
+
+                            {{-- 選択項目の一覧 --}}
+                            <table class="table table-hover table-sm">
+                                <thead class="thead-light">
+                                    <tr>
+                                        @if (count($sections) > 0)
+                                            <th class="text-center" nowrap>表示順</th>
+                                            <th class="text-center" nowrap>組織名</th>
+                                            <th class="text-center" nowrap>コード</th>
+                                            <th class="text-center" nowrap>更新</th>
+                                            <th class="text-center" nowrap>削除</th>
+                                        @endif
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{-- 更新用の行 --}}
+                                    @foreach ($sections as $section)
+                                        <tr>
+                                            {{-- 表示順操作 --}}
+                                            <td class="text-center" nowrap>
+                                                {{-- 上移動 --}}
+                                                <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_section_display_sequence({{ $section->id }}, {{ $section->display_sequence }}, 'up')">
+                                                    <i class="fas fa-arrow-up"></i>
+                                                </button>
+
+                                                {{-- 下移動 --}}
+                                                <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->last) disabled @endif onclick="javascript:submit_section_display_sequence({{ $section->id }}, {{ $section->display_sequence }}, 'down')">
+                                                    <i class="fas fa-arrow-down"></i>
+                                                </button>
+                                            </td>
+
+                                            {{-- 組織名 --}}
+                                            <td>
+                                                <input class="form-control @if ($errors && $errors->has('section_name_'.$section->id)) border-danger @endif" type="text" name="section_name_{{ $section->id }}" value="{{ old('section_name_'.$section->id, $section->name)}}">
+                                            </td>
+
+                                            {{-- コード --}}
+                                            <td>
+                                                <input class="form-control @if ($errors && $errors->has('section_code_'.$section->id)) border-danger @endif" type="text" name="section_code_{{ $section->id }}" value="{{ old('section_code_'.$section->id, $section->code)}}">
+                                            </td>
+
+                                            {{-- 更新ボタン --}}
+                                            <td class="align-middle text-center">
+                                                <button
+                                                    class="btn btn-primary cc-font-90 text-nowrap"
+                                                    onclick="javascript:submit_update_section({{ $section->id }});"
+                                                >
+                                                    <i class="fas fa-check"></i> <span class="d-sm-none">更新</span>
+                                                </button>
+                                            </td>
+
+                                            {{-- 削除ボタン --}}
+                                            <td class="text-center">
+                                                <div class="button-wrapper" @if ($section->users->count()) data-toggle="tooltip" title="所属しているユーザがいるため削除できません。" @endif>
+                                                <button
+                                                    class="btn btn-danger cc-font-90 text-nowrap"
+                                                    onclick="javascript:return submit_delete_section({{ $section->id }});"
+                                                    @if ($section->users->count()) disabled @endif
+                                                >
+                                                    <i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span>
+                                                </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                    <tr class="thead-light">
+                                        <th colspan="7">【組織の追加行】</th>
+                                    </tr>
+
+                                    {{-- 新規登録用の行 --}}
+                                    <tr>
+                                        <td></td>
+                                        <td>
+                                            {{-- 組織名 --}}
+                                            <input class="form-control @if ($errors && $errors->has('section_name')) border-danger @endif" type="text" name="section_name" value="{{ old('section_name') }}" placeholder="組織名">
+                                        </td>
+                                        <td>
+                                            {{-- コード --}}
+                                            <input class="form-control @if ($errors && $errors->has('section_code')) border-danger @endif" type="text" name="section_code" value="{{ old('section_code') }}" placeholder="コード">
+                                        </td>
+                                        <td class="text-center">
+                                            {{-- ＋ボタン --}}
+                                            <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_section(this);"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+            @endif
 
             {{-- キャプション設定 --}}
             <div class="card mb-4" id="div_caption">
@@ -423,5 +567,16 @@
 
     </div>
 </div>
+
+{{-- disableのボタンにツールチップを置くための対応 --}}
+<style>
+.button-wrapper {
+  display: inline-block;
+}
+
+.button-wrapper .btn:disabled {
+  pointer-events: none;
+}
+</style>
 
 @endsection
