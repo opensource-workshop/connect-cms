@@ -19,10 +19,10 @@ class CreateUserSectionsTable extends Migration
             $table->unsignedBigInteger('section_id')->comment('組織ID');
 
             $table->integer('created_id')->nullable();
-            $table->string('created_name', 255)->nullable();
+            $table->string('created_name')->nullable();
             $table->timestamp('created_at')->nullable();
             $table->integer('updated_id')->nullable();
-            $table->string('updated_name', 255)->nullable();
+            $table->string('updated_name')->nullable();
             $table->timestamp('updated_at')->nullable();
 
             // 外部キー

@@ -15,15 +15,15 @@ class CreateSectionsTable extends Migration
     {
         Schema::create('sections', function (Blueprint $table) {
             $table->id();
-            $table->string('code', 191)->nullable()->comment('組織コード');
-            $table->string('name', 191)->comment('組織名');
+            $table->string('code')->nullable()->comment('組織コード');
+            $table->string('name')->comment('組織名');
             $table->integer('display_sequence')->comment('並び順');
 
             $table->integer('created_id')->nullable();
-            $table->string('created_name', 255)->nullable();
+            $table->string('created_name')->nullable();
             $table->timestamp('created_at')->nullable();
             $table->integer('updated_id')->nullable();
-            $table->string('updated_name', 255)->nullable();
+            $table->string('updated_name')->nullable();
             $table->timestamp('updated_at')->nullable();
 
             // 一意制約
