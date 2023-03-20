@@ -25,6 +25,8 @@ use App\Providers\RouteServiceProvider;
 
 use App\Enums\UserRegisterNoticeEmbeddedTag;
 use App\Enums\UserStatus;
+use App\Models\Core\Section;
+use App\Models\Core\UserSection;
 
 trait RegistersUsers
 {
@@ -87,6 +89,8 @@ trait RegistersUsers
             'users_columns_id_select' => $users_columns_id_select,
             'input_cols' => $input_cols,
             'themes' => $themes,
+            'sections' => Section::orderBy('display_sequence')->get(),
+            'user_section' => new UserSection(),
         ]);
     }
 

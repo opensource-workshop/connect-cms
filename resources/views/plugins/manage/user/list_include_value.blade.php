@@ -24,6 +24,11 @@
         // $value = "&nbsp;";
         $value = "\n";
     }
+
+    // 所属型
+    if ($users_column->column_type == UserColumnType::affiliation) {
+        $value = $user->section->name;
+    }
 @endphp
 
 {!!nl2br(e($value))!!}

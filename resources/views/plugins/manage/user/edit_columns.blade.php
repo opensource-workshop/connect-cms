@@ -135,4 +135,15 @@
     </div>
 </div>
 
+{{-- disableのボタンにツールチップを置くための対応 --}}
+<style>
+    .button-wrapper {
+      display: inline-block;
+    }
+
+    .button-wrapper .btn:disabled {
+      pointer-events: none;
+    }
+    </style>
+
 @endsection
