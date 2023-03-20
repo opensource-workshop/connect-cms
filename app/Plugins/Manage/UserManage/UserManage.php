@@ -2682,5 +2682,4 @@ class UserManage extends ManagePluginBase
         // 編集画面を呼び出す
         return redirect("/manage/user/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
     }
-
 }
