@@ -12,7 +12,7 @@ return [
     |
     */
 
-    'cc_version' => '1.5.3',
+    'cc_version' => '1.6.0',
 
     'show_cc_version' => true,
 ];
