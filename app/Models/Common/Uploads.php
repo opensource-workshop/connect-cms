@@ -3,6 +3,7 @@
 namespace App\Models\Common;
 
 use App\Models\Core\Configs;
+use App\Enums\ImageMimetype;
 use Illuminate\Database\Eloquent\Model;
 use Intervention\Image\Facades\Image;
 
@@ -112,16 +113,13 @@ class Uploads extends Model
     }
 
     /**
-     *  画像ファイルか判定
+     * 画像ファイルならtrueを返す
+     *
+     * @return boolean
      */
-    public static function isImage($mimetype)
+    public function getIsImageAttribute() : bool
     {
-        if ($mimetype == 'image/png'  ||
-            $mimetype == 'image/jpeg' ||
-            $mimetype == 'image/gif') {
-            return true;
-        }
-        return false;
+        return in_array($this->mimetype, ImageMimetype::getMemberKeys()) ? true : false;
     }
 
     /**
