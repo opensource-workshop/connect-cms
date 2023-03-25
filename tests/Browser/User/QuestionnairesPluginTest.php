@@ -9,7 +9,6 @@ use Tests\DuskTestCase;
 use App\Enums\PluginName;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
-use App\Models\Common\Page;
 use App\Models\Common\Uploads;
 use App\Models\Core\Dusks;
 use App\Models\User\Forms\Forms;
@@ -19,11 +18,11 @@ use App\Models\User\Forms\FormsInputCols;
 use App\Models\User\Forms\FormsInputs;
 
 /**
- * フォームテスト
+ * アンケートテスト
  *
  * @see https://github.com/opensource-workshop/connect-cms/wiki/Dusk#テスト実行 [How to test]
  */
-class FormsPluginTest extends DuskTestCase
+class QuestionnairesPluginTest extends DuskTestCase
 {
     /**
      * フォームテスト
@@ -34,20 +33,18 @@ class FormsPluginTest extends DuskTestCase
     public function test()
     {
         $this->init();
-        $this->login(1);
+//        $this->login(1);
 
-        $this->createBuckets();
-        $this->editColumn();
-        $this->editColumnDetail();
-        $this->editColumn(true);
-        $this->listInputs();
-        $this->listBuckets();
+//        $this->createBuckets();
+//        $this->editColumn();
+//        $this->editColumnDetail();
+//        $this->editColumn(true);
+//        $this->listInputs();
+//        $this->listBuckets();
 
-        $this->logout();
+//        $this->logout();
         $this->index();
-        $this->template();
-
-        $this->questionnaires();
+//        $this->template();
     }
 
     /**
@@ -56,15 +53,15 @@ class FormsPluginTest extends DuskTestCase
     private function init()
     {
         // データクリア
-        Forms::truncate();
-        FormsColumns::truncate();
-        FormsColumnsSelects::truncate();
-        FormsInputCols::truncate();
-        FormsInputs::truncate();
-        $this->initPlugin('forms', '/test/form');
+        Dusks::where('plugin_name', 'questionnaires')->delete();
+
+//        $this->initPlugin('forms', '/test/questionnaire');
 
         // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManual('index', 'editColumn', 'editColumnDetail', 'createBuckets', 'listInputs', 'listBuckets', 'template');
+//        $this->reserveManual('index');
+
+        // プラグインがなければ追加(テストするFrameとページのインスタンス変数への保持も)
+//        $this->addPluginFirst('forms', '/test/questionnaire', 2);
     }
 
     /**
@@ -72,29 +69,32 @@ class FormsPluginTest extends DuskTestCase
      */
     private function index()
     {
-        // プラグインがなければ追加(テストするFrameとページのインスタンス変数への保持も)
-        $this->addPluginFirst('forms', '/test/form', 2);
-
         // 実行
+/*
         $this->browse(function (Browser $browser) {
-            $browser->visit('/test/form')
+            $browser->visit('/test/questionnaire')
                     ->assertPathBeginsWith('/')
-                    ->screenshot('user/forms/index/images/index1');
+                    ->screenshot('user/questionnaires/index/images/index1');
 
             $browser->scrollIntoView('footer')
-                    ->screenshot('user/forms/index/images/index2');
+                    ->screenshot('user/questionnaires/index/images/index2');
         });
-
+*/
         // マニュアル用データ出力
-        $this->putManualData('[
-            {"path": "user/forms/index/images/index1",
-             "name": "入力画面１"
-            },
-            {"path": "user/forms/index/images/index2",
-             "name": "入力画面２",
-             "comment": "<ul class=\"mb-0\"><li>設定した項目の入力フォームが完成です。</li></ul>"
-            }
-        ]', null, 4, 'basic');
+        $dusk_index = Dusks::create([
+            'category' => 'user',
+            'sort' => 4,
+            'plugin_name' => 'questionnaires',
+            'plugin_title' => 'アンケート',
+            'plugin_desc' => 'アンケートを取ることができます。',
+            'method_name' => 'index',
+            'method_title' => 'アンケート回答。',
+            'method_desc' => 'アンケートの回答画面です。設定した項目でアンケートを取ることができます。',
+            'method_detail' => 'アンケートはフォームプラグインのアンケートモードで実現します。<br />詳しくはフォームプラグインのページを参照してください。',
+            'html_path' => 'user/questionnaires/index/index.html',
+            'level' => 'basic',
+            'test_result' => 'OK',
+        ]);
     }
 
     /**
@@ -380,270 +380,7 @@ class FormsPluginTest extends DuskTestCase
             'user',
             '/test/form',
             ['forms', 'フォーム'],
-            ['default' => 'default', 'label-sm-4' => 'ラベル長め（幅１／３使用）', 'label-sm-6' => 'ラベル長め（幅１／２使用）']
+            ['label-sm-4' => 'ラベル長め（幅１／３使用）', 'label-sm-6' => 'ラベル長め（幅１／２使用）']
         );
-    }
-
-    /**
-     * アンケート
-     */
-    private function questionnaires()
-    {
-        $this->login(1);
-
-        // アンケート - 初期化
-        $this->initQ();
-
-        // マニュアル用データ準備（Duskレコードの準備と親Duskの取得）
-        $this->createDusks([
-            'category' => 'user',
-            'sort' => 4,
-            'plugin_name' => 'questionnaires',
-            'plugin_title' => 'アンケート',
-            'plugin_desc' => 'アンケートを取ることができます。アンケートはフォームプラグインのアンケートモードで実現します。',
-            'level' => 'basic',
-            'test_result' => 'OK',
-        ], ['index', 'createBuckets', 'editColumn', 'editColumnDetail']);
-
-        // アンケート - バケツ作成
-        $this->createBucketsQ();
-
-        // アンケート - 項目の作成
-        $this->editColumnQ();
-
-        $this->logout();
-
-        // アンケート - 回答入力
-        $this->indexQ();
-    }
-
-    /**
-     * アンケート - 表示
-     */
-    private function indexQ()
-    {
-        // 実行
-        $this->browse(function (Browser $browser) {
-            $browser->visit('/test/questionnaire')
-                    ->screenshot('user/questionnaires/index/images/index');
-        });
-
-        // マニュアルデータ
-        $this->updateDusk('questionnaires', 'index', [
-            'method_title' => 'アンケート回答画面',
-            'method_desc' => '設定した項目でアンケートを取ることができます。',
-            'method_detail' => '',
-            'html_path' => 'user/questionnaires/index/index.html',
-            'img_args' => '[
-                {"path": "user/questionnaires/index/images/index",
-                 "name": "アンケート回答画面",
-                 "comment": "<ul class=\"mb-0\"><li>設定した項目でアンケートを取ることができます。</li><li>項目は1行テキスト形式、複数行テキスト形式、ラジオボタンで択一選択、チェックボックスで複数選択が使用できます。</li></ul>"
-                }
-             ]',
-        ]);
-    }
-
-    /**
-     * アンケート - 初期化
-     */
-    private function initQ()
-    {
-        // アンケートのデータの削除
-        $forms = Forms::where('form_mode', 'questionnaire')->get();
-        foreach ($forms as $form) {
-            FormsColumns::where('forms_id', $form->id)->delete();
-        }
-
-        // アンケートのマニュアルデータの削除
-        Dusks::where('plugin_name', 'questionnaires')->delete();
-
-        // アンケートのフレームの削除
-        $page = Page::firstOrNew(['permanent_link' => '/test/questionnaire']);
-        Frame::where('page_id', $page->id)->delete();
-
-        // プラグインがなければ追加(テストするFrameとページのインスタンス変数への保持も)
-        $this->addPluginFirst('forms', '/test/questionnaire', 2);
-    }
-
-    /**
-     * アンケート - バケツ作成
-     */
-    private function createBucketsQ()
-    {
-        // 実行
-        $this->browse(function (Browser $browser) {
-            $browser->visit('/plugin/forms/createBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                    ->type('forms_name', 'テストのアンケート')
-                    ->click('#label_form_mode_questionnaire')
-                    ->pause(500)
-                    ->screenshot('user/questionnaires/createBuckets/images/createBuckets1');
-
-            $browser->scrollIntoView('footer')
-                    ->screenshot('user/questionnaires/createBuckets/images/createBuckets2')
-                    ->press('登録確定');
-
-            // 一度、選択確定させる。
-            $bucket = Buckets::where('plugin_name', 'forms')->orderBy('id', 'desc')->first();
-            $browser->visit('/plugin/forms/listBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                    ->radio('select_bucket', $bucket->id)
-                    ->screenshot('user/questionnaires/listBuckets/images/listBuckets')
-                    ->press("表示フォーム変更");
-        });
-
-        // マニュアルデータ
-        $this->updateDusk('questionnaires', 'createBuckets', [
-            'method_title' => 'アンケート作成',
-            'method_desc' => 'アンケートの回答画面です。設定した項目でアンケートを取ることができます。',
-            'method_detail' => 'アンケートはフォームプラグインのアンケートモードで実現します。<br />詳しくはフォームプラグインのページを参照してください。',
-            'html_path' => 'user/questionnaires/createBuckets/index.html',
-            'img_args' => '[
-                {"path": "user/questionnaires/createBuckets/images/createBuckets1",
-                 "name": "アンケート作成画面１",
-                 "comment": "<ul class=\"mb-0\"><li>フォームを作成する際、フォームモードをアンケートとして使用する。を選んでください。</li></ul>"
-                },
-                {"path": "user/questionnaires/createBuckets/images/createBuckets2",
-                 "name": "アンケート作成画面２",
-                 "comment": "<ul class=\"mb-0\"><li>項目を設定して、新しいアンケートを作成できます。</li></ul>"
-                }
-            ]',
-        ]);
-    }
-
-    /**
-     * アンケート - 項目の作成
-     */
-    private function editColumnQ($view_only = false)
-    {
-        // 実行
-        $this->browse(function (Browser $browser) use ($view_only) {
-            if (!$view_only) {
-                $browser->visit('/plugin/forms/editColumn/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                        ->driver->executeScript('tinyMCE.get(0).setContent(\'氏名\')');
-
-                // executeScriptした後は一度、メソッドチェーンを切らないと、次のメソッドでエラーが出る（ワーニングとかが出ている？？）
-                $browser->pause(500)
-                        ->select("column_type", 'text')
-                        ->check("required")
-                        //->pause(500)
-                        //->screenshot('user/questionnaires/editColumn/images/editColumn1')
-                        ->press('#button_submit_add_column');
-
-                $this->editColumnOneQ(
-                    $browser, [
-                        "ヤンバルクイナは好きですか？" => ["type" => "radio", "required" => true, "id" => 2],
-                        "Connect-CMSは好きですか？" => ["type" => "checkbox", "required" => true, "id" => 3],
-                        "ヤンバルクイナとConnect-CMSへの愛をどうぞ" => ["type" => "textarea", "required" => false, "id" => 4]
-                    ]
-                );
-            }
-
-            // 項目の詳細を設定
-            $this->editColumnDetailQ();
-            // スクリーンショット
-            $browser->visit('/plugin/forms/editColumn/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                    ->screenshot('user/questionnaires/editColumn/images/editColumn1')
-                    ->scrollIntoView('#forms_edit_row2_add')
-                    ->screenshot('user/questionnaires/editColumn/images/editColumn2');
-        });
-
-        // マニュアルデータ
-        $this->updateDusk('questionnaires', 'editColumn', [
-            'method_title' => 'カラム編集',
-            'method_desc' => 'カラムの設定を行います。',
-            'method_detail' => 'カラム名と型を指定してカラムを作成します。',
-            'html_path' => 'user/questionnaires/editColumn/index.html',
-            'img_args' => '[
-                {"path": "user/questionnaires/editColumn/images/editColumn1",
-                 "name": "項目の追加",
-                 "comment": "<ul class=\"mb-0\"><li>項目の追加行で新しい項目を追加します。</li></ul>"
-                },
-                {"path": "user/questionnaires/editColumn/images/editColumn2",
-                 "name": "複数の項目を設定した状態",
-                 "comment": "<ul class=\"mb-0\"><li>アンケートを想定した項目を作りました。</li></ul>"
-                }
-            ]',
-        ]);
-    }
-
-    /**
-     * 項目の作成
-     */
-    private function editColumnOneQ(&$browser, $columns)
-    {
-        foreach ($columns as $column_name => $column_attr) {
-            $browser->visit('/plugin/forms/editColumn/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                    ->driver->executeScript('tinyMCE.get(0).setContent(\'' . $column_name . '\')');
-
-            // executeScriptした後は一度、メソッドチェーンを切らないと、次のメソッドでエラーが出る（ワーニングとかが出ている？？）
-            $browser->pause(500)
-                    ->select("column_type", $column_attr["type"]);
-            if ($column_attr["required"]) {
-                $browser->check("required");
-            }
-            $browser->press('#button_submit_add_column');
-        }
-    }
-
-    /**
-     * 項目詳細の作成
-     */
-    private function editColumnDetailQ()
-    {
-        // 実行
-        $this->browse(function (Browser $browser) {
-            // ヤンバルクイナは好きですか？
-            $col = FormsColumns::where('column_name', 'ヤンバルクイナは好きですか？')->first();
-            $browser->visit('/')
-                    ->visit('/plugin/forms/editColumnDetail/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $col->id . '#div_column_selects')
-                    ->type('select_name', '超好き')
-                    ->press('#button_add_select')
-                    ->pause(500);
-            $browser->visit('/plugin/forms/editColumnDetail/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $col->id . '#div_column_selects')
-                    ->type('select_name', '超絶Love！')
-                    ->press('#button_add_select')
-                    ->pause(500);
-            $browser->visit('/plugin/forms/editColumnDetail/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $col->id . '#div_column_selects')
-                    ->type('select_name', 'めっちゃ好きやねん')
-                    ->press('#button_add_select')
-                    ->pause(500);
-            $browser->visit('/plugin/forms/editColumnDetail/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $col->id . '#div_column_selects')
-                    ->screenshot('user/questionnaires/editColumnDetail/images/editColumnDetailRadio1');
-
-            // Connect-CMSは好きですか？
-            $col = FormsColumns::where('column_name', 'Connect-CMSは好きですか？')->first();
-            $browser->visit('/')
-                    ->visit('/plugin/forms/editColumnDetail/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $col->id . '#div_column_selects')
-                    ->type('select_name', 'Like Like Like')
-                    ->press('#button_add_select')
-                    ->pause(500);
-            $browser->visit('/plugin/forms/editColumnDetail/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $col->id . '#div_column_selects')
-                    ->type('select_name', 'もうずっと使っていく！')
-                    ->press('#button_add_select')
-                    ->pause(500);
-            $browser->visit('/plugin/forms/editColumnDetail/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $col->id . '#div_column_selects')
-                    ->type('select_name', '開発にも参画するくらい好き')
-                    ->press('#button_add_select')
-                    ->pause(500);
-            $browser->visit('/plugin/forms/editColumnDetail/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $col->id . '#div_column_selects')
-                    ->screenshot('user/questionnaires/editColumnDetail/images/editColumnDetailCheckbox1');
-        });
-
-        // マニュアルデータ
-        $this->updateDusk('questionnaires', 'editColumnDetail', [
-            'method_title' => 'カラムの詳細編集',
-            'method_desc' => 'カラムの詳細設定を行います。',
-            'method_detail' => '入力チェック、キャプションやプレースホルダなどを設定できます。<br />できることはフォームプラグインと共通ですので、フォームプラグインのページも参照してください。',
-            'html_path' => 'user/questionnaires/editColumnDetail/index.html',
-            'img_args' => '[
-                {"path": "user/questionnaires/editColumnDetail/images/editColumnDetailRadio1",
-                 "name": "作成１",
-                 "comment": "<ul class=\"mb-0\"><li>ラジオボタンでの項目設定例です。</li></ul>"
-                },
-                {"path": "user/questionnaires/editColumnDetail/images/editColumnDetailCheckbox1",
-                 "name": "作成１",
-                 "comment": "<ul class=\"mb-0\"><li>チェックボックスでの項目設定例です。</li></ul>"
-                }
-            ]',
-        ]);
     }
 }

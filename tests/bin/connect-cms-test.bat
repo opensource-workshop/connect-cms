@@ -316,7 +316,7 @@ rem - トップページの動画
 rem ---------------------------------------------
 
 echo --- トップページの動画
-rem php artisan dusk tests\Browser\Top\IndexTopTest.php
+php artisan dusk tests\Browser\Top\IndexTopTest.php
 
 rem ---------------------------------------------
 rem - マニュアル出力

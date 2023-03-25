@@ -178,7 +178,7 @@ class Dusks extends Model
      */
     public function hasMp4($level = 1, $mp4dir = 'mp4')
     {
-        if (\File::exists(config('connect.manual_put_base') . dirname($this->html_path, $level) . '/' . $mp4dir . '/mizuki/_video.mp4')) {
+        if (\File::exists(config('connect.manual_put_base') . dirname($this->html_path, $level) . '/' . $mp4dir . '/' . config('connect.manual_voiceid') . '/_video.mp4')) {
             return true;
         }
         return false;
@@ -204,7 +204,7 @@ class Dusks extends Model
      */
     public function getMp4Path($level = 1, $mp4dir = 'mp4')
     {
-        return dirname($this->html_path, $level) . '/' . $mp4dir . '/mizuki/_video.mp4';
+        return dirname($this->html_path, $level) . '/' . $mp4dir . '/' . config('connect.manual_voiceid') . '/_video.mp4';
     }
 
     /**
@@ -214,7 +214,7 @@ class Dusks extends Model
      */
     public function hasPoster($level = 1, $mp4dir = 'mp4')
     {
-        if (\File::exists(config('connect.manual_put_base') . dirname($this->html_path, $level) . '/' . $mp4dir . '/mizuki/_poster.png')) {
+        if (\File::exists(config('connect.manual_put_base') . dirname($this->html_path, $level) . '/' . $mp4dir . '/' . config('connect.manual_voiceid') . '/_poster.png')) {
             return true;
         }
         return false;
@@ -240,7 +240,7 @@ class Dusks extends Model
      */
     public function getPosterPath($level = 1, $mp4dir = 'mp4')
     {
-        return dirname($this->html_path, $level) . '/' . $mp4dir . '/mizuki/_poster.png';
+        return dirname($this->html_path, $level) . '/' . $mp4dir . '/' . config('connect.manual_voiceid') . '/_poster.png';
     }
 
     /**
@@ -290,19 +290,19 @@ class Dusks extends Model
         (
             [0] => Array
                 (
-                    [mp3_file_disk]   => user/blogs/index/mp3/mizuki/index.mp3
-                    [mp4_dir_disk]    => user/blogs/index/mp4/mizuki
-                    [mp4_list_disk]   => user/blogs/index/mp4/mizuki/_mp4list.txt
-                    [mp4_fade_disk]   => user/blogs/index/mp4/mizuki/fade_index.mp4
-                    [mp4_final_disk]  => user/blogs/index/mp4/mizuki/_video.mp4
+                    [mp3_file_disk]   => user/blogs/index/mp3/tomoko/index.mp3
+                    [mp4_dir_disk]    => user/blogs/index/mp4/tomoko
+                    [mp4_list_disk]   => user/blogs/index/mp4/tomoko/_mp4list.txt
+                    [mp4_fade_disk]   => user/blogs/index/mp4/tomoko/fade_index.mp4
+                    [mp4_final_disk]  => user/blogs/index/mp4/tomoko/_video.mp4
                     [img_file_real]   => C:\***\tests\Browser\screenshots\user\blogs\index\images\index.png
-                    [mp3_file_real]   => C:\***\tests\tmp\user\blogs\index\mp3\mizuki\index.mp3
-                    [mp4_nofade_real] => C:\***\tests\tmp\user\blogs\index\mp4\mizuki\nofade_index.mp4
-                    [mp4_fade_real]   => C:\***\tests\tmp\user\blogs\index\mp4\mizuki\fade_index.mp4
-                    [mp4_fade_real2]  => C:\\SitesLaravel\\connect-cms\\htdocs\\test.localhost\\tests\\tmp\\user\\blogs\\index\\mp4\\mizuki\\fade_index.mp4
-                    [mp4_list_real]   => C:\***\tests\tmp\user\blogs\index\mp4\mizuki\_mp4list.txt
-                    [mp4_final_real]  => C:\***\tests\tmp\user\blogs\index\mp4\mizuki\_video.mp4
-                    [mp4_manual_real] => C:\SitesLaravel\connect-cms-manual\user/blogs/index/mp4/mizuki/_video.mp4
+                    [mp3_file_real]   => C:\***\tests\tmp\user\blogs\index\mp3\tomoko\index.mp3
+                    [mp4_nofade_real] => C:\***\tests\tmp\user\blogs\index\mp4\tomoko\nofade_index.mp4
+                    [mp4_fade_real]   => C:\***\tests\tmp\user\blogs\index\mp4\tomoko\fade_index.mp4
+                    [mp4_fade_real2]  => C:\\SitesLaravel\\connect-cms\\htdocs\\test.localhost\\tests\\tmp\\user\\blogs\\index\\mp4\\tomoko\\fade_index.mp4
+                    [mp4_list_real]   => C:\***\tests\tmp\user\blogs\index\mp4\tomoko\_mp4list.txt
+                    [mp4_final_real]  => C:\***\tests\tmp\user\blogs\index\mp4\tomoko\_video.mp4
+                    [mp4_manual_real] => C:\SitesLaravel\connect-cms-manual\user/blogs/index/mp4/tomoko/_video.mp4
                     [comment]         => 記事は新しいものから表示されます。
                 )
             [1] => Array
@@ -376,12 +376,12 @@ class Dusks extends Model
 */
         // ナレーション文章や必要なファイルパスを組み立て
         $material = [
-            'mp3_file_disk'    => $base_dir . '/' . $dir_under . 'mp3/mizuki/' . $basename . '.mp3',
-            'mp4_list_disk'    => $base_dir . '/' . $dir_under . 'mp4/mizuki/' . '_mp4list.txt',
-            'mp4_fade_disk'    => $base_dir . '/' . $dir_under . 'mp4/mizuki/' . 'fade_'. $basename . '.mp4',
-            'mp4_nofade_disk'  => $base_dir . '/' . $dir_under . 'mp4/mizuki/' . 'nofade_' . $basename . '.mp4',
-            'mp4_final_poster' => $base_dir . '/' . $dir_under . 'mp4/mizuki/' . '_poster.png',
-            'mp4_final_disk'   => $base_dir . '/' . $dir_under . 'mp4/mizuki/' . '_video.mp4',
+            'mp3_file_disk'    => $base_dir . '/' . $dir_under . 'mp3/' . config('connect.manual_voiceid') . '/' . $basename . '.mp3',
+            'mp4_list_disk'    => $base_dir . '/' . $dir_under . 'mp4/' . config('connect.manual_voiceid') . '/' . '_mp4list.txt',
+            'mp4_fade_disk'    => $base_dir . '/' . $dir_under . 'mp4/' . config('connect.manual_voiceid') . '/' . 'fade_'. $basename . '.mp4',
+            'mp4_nofade_disk'  => $base_dir . '/' . $dir_under . 'mp4/' . config('connect.manual_voiceid') . '/' . 'nofade_' . $basename . '.mp4',
+            'mp4_final_poster' => $base_dir . '/' . $dir_under . 'mp4/' . config('connect.manual_voiceid') . '/' . '_poster.png',
+            'mp4_final_disk'   => $base_dir . '/' . $dir_under . 'mp4/' . config('connect.manual_voiceid') . '/' . '_video.mp4',
         ];
         $material = array_merge($material, [
             'img_file_real'   => self::getRealPath('screenshot', $json_path->path . '.png'),
@@ -459,11 +459,11 @@ class Dusks extends Model
 
         // ナレーション文章や必要なファイルパスを組み立て
         $material = [
-            'mp3_file_disk'   => $base_dir . '/_mp3/mizuki/' . $basename . '.mp3',
-            'mp4_list_disk'   => $base_dir . '/_mp4/mizuki/' . '_mp4list.txt',
-            'mp4_fade_disk'   => $base_dir . '/_mp4/mizuki/' . 'fade_'. $basename . '.mp4',
-            'mp4_nofade_disk' => $base_dir . '/_mp4/mizuki/' . 'nofade_' . $basename . '.mp4',
-            'mp4_final_disk'  => $base_dir . '/_mp4/mizuki/' . '_video.mp4',
+            'mp3_file_disk'   => $base_dir . '/_mp3/tomoko/' . $basename . '.mp3',
+            'mp4_list_disk'   => $base_dir . '/_mp4/tomoko/' . '_mp4list.txt',
+            'mp4_fade_disk'   => $base_dir . '/_mp4/tomoko/' . 'fade_'. $basename . '.mp4',
+            'mp4_nofade_disk' => $base_dir . '/_mp4/tomoko/' . 'nofade_' . $basename . '.mp4',
+            'mp4_final_disk'  => $base_dir . '/_mp4/tomoko/' . '_video.mp4',
         ];
         $material = array_merge($material, [
             'img_file_real'   => self::getRealPath('screenshot', $json_path->path . '.png'),
@@ -538,11 +538,11 @@ class Dusks extends Model
 
         // ナレーション文章や必要なファイルパスを組み立て
         $material = [
-            'mp3_file_disk'   => $base_dir . '/_mp3/mizuki/' . $basename . '.mp3',
-            'mp4_list_disk'   => $base_dir . '/_mp4/mizuki/' . '_mp4list.txt',
-            'mp4_fade_disk'   => $base_dir . '/_mp4/mizuki/' . 'fade_'. $basename . '.mp4',
-            'mp4_nofade_disk' => $base_dir . '/_mp4/mizuki/' . 'nofade_' . $basename . '.mp4',
-            'mp4_final_disk'  => $base_dir . '/_mp4/mizuki/' . '_video.mp4',
+            'mp3_file_disk'   => $base_dir . '/_mp3/tomoko/' . $basename . '.mp3',
+            'mp4_list_disk'   => $base_dir . '/_mp4/tomoko/' . '_mp4list.txt',
+            'mp4_fade_disk'   => $base_dir . '/_mp4/tomoko/' . 'fade_'. $basename . '.mp4',
+            'mp4_nofade_disk' => $base_dir . '/_mp4/tomoko/' . 'nofade_' . $basename . '.mp4',
+            'mp4_final_disk'  => $base_dir . '/_mp4/tomoko/' . '_video.mp4',
         ];
         $material = array_merge($material, [
             'img_file_real'   => self::getRealPath('screenshot', $json_path->path . '.png'),

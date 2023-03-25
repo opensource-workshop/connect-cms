@@ -161,7 +161,9 @@ class ManualVideo extends DuskTestCase
         $response = $this->polly->synthesizeSpeech([
             'OutputFormat'  => 'mp3',
             'Text'          => $text,
-            'VoiceId'       => 'Mizuki',
+            'VoiceId'       => ucfirst(config('connect.manual_voiceid')),
+            'Engine'        => 'neural',
+            //'VoiceId'       => 'Mizuki',
             //'VoiceId'       => 'Takumi',
             'TextType'      => 'ssml',
             //'TextType'      => 'string',
@@ -294,7 +296,7 @@ class ManualVideo extends DuskTestCase
      */
     public function testVideo()
     {
-        require config('connect.REQUIRE_AWS_SDK_PATH');
+//        require config('connect.REQUIRE_AWS_SDK_PATH');
 
         $this->createSdk();
         $this->createPolly();

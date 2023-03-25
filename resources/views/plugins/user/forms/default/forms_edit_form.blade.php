@@ -94,7 +94,7 @@
                         @else
                             <input type="radio" value="{{$enum_value}}" id="form_mode_{{$enum_value}}" name="form_mode" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label" for="form_mode_{{$enum_value}}">{{$enum_label}}</label>
+                        <label class="custom-control-label" for="form_mode_{{$enum_value}}" id="label_form_mode_{{$enum_value}}">{{$enum_label}}</label>
                     </div>
                 @endforeach
             </div>

@@ -20,6 +20,9 @@ return [
     // マニュアルの問合せ先ページ内容
     'manual_contact_page' => env('MANUAL_CONTACT_PAGE', ''),
 
+    // マニュアル生成時の声
+    'manual_voiceid' => env('MANUAL_VOICEID', 'takumi'),
+
     // プラグイン管理にも表示しないプラグイン(小文字で指定)
     'PLUGIN_FORCE_HIDDEN' => ['knowledges', 'codestudies'],
 

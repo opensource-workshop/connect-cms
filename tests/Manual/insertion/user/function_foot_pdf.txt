@@ -1,8 +1,4 @@
 <tr nobr="true">
-    <td style="width: 30%;">アンケート</td>
-    <td style="width: 70%;">（開発中）フォームのアンケートモードとして実装中</td>
-</tr>
-<tr nobr="true">
     <td style="width: 30%;">テスト</td>
     <td style="width: 70%;">（開発中）フォームのテストモードとして実装中</td>
 </tr>

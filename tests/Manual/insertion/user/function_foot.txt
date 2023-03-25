@@ -1,4 +1,3 @@
-<dd class="col-md-6 col-lg-3 text-nowrap">アンケート（開発中）</dd>
 <dd class="col-md-6 col-lg-3 text-nowrap">テスト（開発中）</dd>
 <dd class="col-md-6 col-lg-3 text-nowrap">RSS（開発予定）</dd>
 <dd class="col-md-6 col-lg-3 text-nowrap">ToDo（開発予定）</dd>

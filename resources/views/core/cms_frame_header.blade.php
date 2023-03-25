@@ -132,13 +132,13 @@ if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null
             {{-- 上移動。POSTのためのフォーム --}}
             <form action="{{url('/')}}/core/frame/sequenceUp/{{$page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}#frame-{{$frame->frame_id}}" name="form_{{ $frame->frame_id }}_up" method="POST" class="form-inline d-inline">
                 {{ csrf_field() }}
-                <a href="javascript:form_{{ $frame->frame_id }}_up.submit();" title="上移動"><i class="fas fa-angle-up {{$class_header_bg}} align-bottom cc-font-color"></i></a>
+                <a href="javascript:form_{{ $frame->frame_id }}_up.submit();" title="上移動" id="frame_up_{{ $frame->frame_id }}"><i class="fas fa-angle-up {{$class_header_bg}} align-bottom cc-font-color"></i></a>
             </form>
 
             {{-- 下移動。POSTのためのフォーム --}}
             <form action="{{url('/')}}/core/frame/sequenceDown/{{$page->id}}/{{ $frame->frame_id }}/{{ $frame->area_id }}#frame-{{$frame->frame_id}}" name="form_{{ $frame->frame_id }}_down" method="POST" class="form-inline d-inline">
                 {{ csrf_field() }}
-                <a href="javascript:form_{{ $frame->frame_id }}_down.submit();" title="下移動"><i class="fas fa-angle-down {{$class_header_bg}} align-bottom cc-font-color"></i></a>
+                <a href="javascript:form_{{ $frame->frame_id }}_down.submit();" title="下移動" id="frame_down_{{ $frame->frame_id }}"><i class="fas fa-angle-down {{$class_header_bg}} align-bottom cc-font-color"></i></a>
             </form>
 
             {{-- 変更画面へのリンク --}}
