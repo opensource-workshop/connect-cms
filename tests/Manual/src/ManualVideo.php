@@ -156,12 +156,14 @@ class ManualVideo extends DuskTestCase
      *
      * @return void
      */
-    private function createMp3($text)
+    private function createMp3($text, $category)
     {
         $response = $this->polly->synthesizeSpeech([
             'OutputFormat'  => 'mp3',
             'Text'          => $text,
-            'VoiceId'       => 'Mizuki',
+            'VoiceId'       => ucfirst(ManualCategory::getVoiceId($category)),
+            'Engine'        => ManualCategory::getVoiceEngine($category),
+            //'VoiceId'       => 'Mizuki',
             //'VoiceId'       => 'Takumi',
             'TextType'      => 'ssml',
             //'TextType'      => 'string',
@@ -172,7 +174,7 @@ class ManualVideo extends DuskTestCase
     /**
      * 動画生成
      */
-    private function createMovie($materials)
+    private function createMovie($materials, $category)
     {
         // 素材がない場合は動画を生成しない。
         if (empty($materials)) {
@@ -188,7 +190,7 @@ class ManualVideo extends DuskTestCase
         foreach ($materials as $index => $material) {
             // mp3 生成（ない場合のみ）
             if (!\Storage::disk('tests_tmp')->exists($material['mp3_file_disk'])) {
-                \Storage::disk('tests_tmp')->put($material['mp3_file_disk'], $this->createMp3('<speak>' . $material['comment'] . '</speak>'));
+                \Storage::disk('tests_tmp')->put($material['mp3_file_disk'], $this->createMp3('<speak>' . $material['comment'] . '</speak>', $category));
             }
 
             // mp4 生成（mp4 がない場合）
@@ -249,13 +251,13 @@ class ManualVideo extends DuskTestCase
      *
      * @return void
      */
-    private function outputCategory($plugins)
+    private function outputCategory($plugins, $category)
     {
         // 動画生成に必要な内容を編集
         $materials = Dusks::getCategoryMaterials($plugins);
 
         // 動画生成
-        $this->createMovie($materials);
+        $this->createMovie($materials, $category);
     }
 
     /**
@@ -263,13 +265,13 @@ class ManualVideo extends DuskTestCase
      *
      * @return void
      */
-    private function outputPlugin($methods)
+    private function outputPlugin($methods, $category)
     {
         // 動画生成に必要な内容を編集
         $materials = Dusks::getPluginMaterials($methods);
 
         // 動画生成
-        $this->createMovie($materials);
+        $this->createMovie($materials, $category);
     }
 
     /**
@@ -277,14 +279,14 @@ class ManualVideo extends DuskTestCase
      *
      * @return void
      */
-    private function outputMethod($method, $first_comment = null)
+    private function outputMethod($method, $category, $first_comment = null)
     {
         // 動画生成に必要な内容を編集
         $materials = $method->getMethodMaterials($first_comment);
         //print_r($materials);
-
+//\Log::debug($materials);
         // 動画生成
-        $this->createMovie($materials);
+        $this->createMovie($materials, $category);
     }
 
     /**
@@ -294,7 +296,7 @@ class ManualVideo extends DuskTestCase
      */
     public function testVideo()
     {
-        require config('connect.REQUIRE_AWS_SDK_PATH');
+//        require config('connect.REQUIRE_AWS_SDK_PATH');
 
         $this->createSdk();
         $this->createPolly();
@@ -329,15 +331,15 @@ class ManualVideo extends DuskTestCase
         // カテゴリのループ
         // echo "\n";
         foreach ($dusks->groupBy('category') as $category) {
-            $this->outputCategory($dusks->where('category', $category[0]->category)->where('method_name', 'index'));
+            $this->outputCategory($dusks->where('category', $category[0]->category)->where('method_name', 'index'), $category[0]->category);
 
             // プラグインのループ
             foreach ($dusks->where('category', $category[0]->category)->where('method_name', 'index') as $plugin) {
-                $this->outputPlugin($dusks->where('category', $plugin->category)->where('plugin_name', $plugin->plugin_name));
+                $this->outputPlugin($dusks->where('category', $plugin->category)->where('plugin_name', $plugin->plugin_name), $category[0]->category);
 
                 // メソッドのループ
                 foreach ($dusks->where('category', $category[0]->category)->where('plugin_name', $plugin->plugin_name) as $method) {
-                    $this->outputMethod($method);
+                    $this->outputMethod($method, $category[0]->category);
                 }
             }
         }
@@ -346,7 +348,7 @@ class ManualVideo extends DuskTestCase
         $top_method = Dusks::where('category', 'top')->orderBy("id", "asc")->first();
         if (!empty($top_method)) {
             $first_comment = $top_method->plugin_desc;
-            $this->outputMethod($top_method, $first_comment);
+            $this->outputMethod($top_method, 'top', $first_comment);
         }
     }
 }

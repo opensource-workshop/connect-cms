@@ -178,7 +178,7 @@
                                     @include('plugins.user.forms.default.forms_edit_row2')
                                 @endforeach
                                 {{-- 新規登録用の行 --}}
-                                <tr>
+                                <tr id="forms_edit_row2_add">
                                     <th colspan="8">【項目の追加行】</th>
                                 </tr>
                                 @include('plugins.user.forms.default.forms_edit_row2_add')

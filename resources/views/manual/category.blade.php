@@ -32,7 +32,6 @@
             @endif
         </div>
     </div>
-
     <div class="card mt-3">
         <div class="card-header text-white bg-primary">プラグイン一覧</div>
         <div class="card-body">

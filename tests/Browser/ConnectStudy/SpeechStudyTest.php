@@ -8,6 +8,7 @@ use Tests\DuskTestCase;
 
 use App\User;
 
+use App\Enums\ManualCategory;
 use App\Enums\PluginName;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
@@ -77,7 +78,7 @@ class SpeechStudyTest extends DuskTestCase
             'img_args' => '[
                 {"path": "study/speechstudies/index/images/index",
                  "name": "音声合成画面",
-                 "comment": "<ul class=\"mb-0\"><li>読み上げボタンを押すことで、指定したテキストが音声合成されます。実は、私、Mizukiもこの音声合成で作成されています。</li></ul>"
+                 "comment": "<ul class=\"mb-0\"><li>読み上げボタンを押すことで、指定したテキストが音声合成されます。実は、私、' . ManualCategory::getVoiceId("study") . 'もこの音声合成で作成されています。</li></ul>"
                 },
                 {"path": "study/speechstudies/index/images/company1",
                  "name": "株式会社のアクセントその１",

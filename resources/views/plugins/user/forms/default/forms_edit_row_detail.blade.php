@@ -113,7 +113,7 @@
 
     @if ($column->column_type == FormColumnType::radio || $column->column_type == FormColumnType::checkbox || $column->column_type == FormColumnType::select)
     {{-- 選択肢の設定 --}}
-    <div class="card">
+    <div class="card" id="div_column_selects">
         <h5 class="card-header">選択肢の設定</h5>
         <div class="card-body">
             {{-- エラーメッセージエリア --}}

@@ -70,6 +70,16 @@ class ThemechangersPluginTest extends DuskTestCase
                     ->visit("/test")
                     ->visit("/")
                     ->screenshot('user/themechangers/select/images/select2');
+
+            $this->login(1);
+
+            // フレームを下移動
+            $browser->visit("/")
+                    ->click('#frame_down_' . $this->test_frame->id)
+                    ->pause(500)
+                    ->click('#frame_down_' . $this->test_frame->id);
+
+            $this->logout();
         });
 
         // マニュアル用データ出力

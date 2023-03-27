@@ -4,18 +4,18 @@
 <div class="card mt-3">
     <div class="card-header text-white bg-primary">Connect-CMS オンライン・マニュアル</div>
     <div class="card-body">
-        @if (\App\Models\Core\Dusks::hasMp4File('top/index/index/mp4/mizuki/_video.mp4'))
+        @if (\App\Models\Core\Dusks::hasMp4File('top/index/index/mp4/' . config('connect.manual_voiceid') . '/_video.mp4'))
             <div class="row">
                 <div class="col-lg-4 p-0">
                     <div class="embed-responsive embed-responsive-16by9">
-                        @if (\App\Models\Core\Dusks::hasPosterFile('top/index/index/mp4/mizuki/_poster.png'))
-                        <video src="./top/index/index/mp4/mizuki/_video.mp4"
+                        @if (\App\Models\Core\Dusks::hasPosterFile('top/index/index/mp4/' . config('connect.manual_voiceid') . '/_poster.png'))
+                        <video src="./top/index/index/mp4/{{config('connect.manual_voiceid')}}/_video.mp4"
                                class="embed-responsive-item"
-                               poster="./top/index/index/mp4/mizuki/_poster.png"
+                               poster="./top/index/index/mp4/{{config('connect.manual_voiceid')}}/_poster.png"
                                controls>
                         </video>
                         @else
-                        <video src="./top/index/index/mp4/mizuki/_video.mp4"
+                        <video src="./top/index/index/mp4/{{config('connect.manual_voiceid')}}/_video.mp4"
                                class="embed-responsive-item"
                                controls>
                         </video>
