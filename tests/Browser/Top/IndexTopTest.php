@@ -53,6 +53,7 @@ class IndexTopTest extends DuskTestCase
                     ->visit('/test/calendar')
                     ->screenshot('top/index/index/images/calendar')
                     ->visit('/test/slideshow')
+                    ->pause(500)
                     ->screenshot('top/index/index/images/slideshow')
                     ->visit('/test/openingcalendar')
                     ->screenshot('top/index/index/images/openingcalendar')
