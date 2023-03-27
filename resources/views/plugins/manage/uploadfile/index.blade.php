@@ -102,7 +102,15 @@
                 <tr>
                     <td><a href="{{url('/')}}/manage/uploadfile/edit/{{$upload->id}}" id="edit_{{$loop->iteration}}"><i class="far fa-edit"></i></a></td>
                     <td>{{$upload->id}}</td>
-                    <td><a href="{{url('/')}}/file/{{$upload->id}}" target="_blank">{{$upload->client_original_name}}</a></td>
+                    <td>
+                        <a href="{{url('/')}}/file/{{$upload->id}}" target="_blank">
+                            {{$upload->client_original_name}}
+                            @if ($upload->is_image)
+                                {{-- 画像ファイルの場合、サムネイル画像を表示 --}}
+                                <img src="{{url('/')}}/file/{{ $upload->id }}" class="w-10" loading="lazy">
+                            @endif
+                        </a>
+                    </td>
                     <td>{{$upload->getFormatSize()}}</td>
                     <td>{{$upload->created_at}}</td>
                     <td>{{$upload->getPluginNameFull()}}</td>
