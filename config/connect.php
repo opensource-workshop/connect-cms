@@ -161,4 +161,8 @@ return [
 
     // 連番管理の連番クリア機能を無効化するプラグイン名
     'PLUGIN_NAME_TO_DISABLE_SERIAL_NUMBER_CLEAR' => env('PLUGIN_NAME_TO_DISABLE_SERIAL_NUMBER_CLEAR', null),
+
+    // データベースプラグイン
+    // 詳細画面で非表示項目をパラメータのID指定で強制的に表示する機能(beta)
+    'DATABASES_FORCE_SHOW_COLUMN_ON_DETAIL' => env('DATABASES_FORCE_SHOW_COLUMN_ON_DETAIL', false),
 ];
