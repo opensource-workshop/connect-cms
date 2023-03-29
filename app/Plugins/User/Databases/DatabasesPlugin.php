@@ -867,7 +867,7 @@ class DatabasesPlugin extends UserPluginBase
             $show_columns = session('force_show_columns.'.$this->frame->id);
             if ($show_columns && $hide_flag_column_name === 'detail_hide_flag') {
                 $disp_databases_columns = $databases_columns
-                        ->filter(function($value) use($show_columns) {
+                        ->filter(function ($value) use ($show_columns) {
                             return $value->detail_hide_flag == 0 ||
                                 // 詳細に表示しない（検索時に強制表示指定可）かつ表示指定ありのID
                                 ($value->detail_hide_flag == 2 && in_array($value->id, $show_columns));
