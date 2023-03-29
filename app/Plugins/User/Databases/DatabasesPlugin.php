@@ -1872,7 +1872,7 @@ class DatabasesPlugin extends UserPluginBase
                 $plugin_name . '.' . $plugin_name . '_name',
                 'databases_inputs.databases_id'
             )
-            ->orderBy('frames.bucket_id', 'desc')
+            ->orderBy($plugin_name . '.bucket_id', 'desc')
             ->orderBy($plugin_name . '.created_at', 'desc')
             ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
