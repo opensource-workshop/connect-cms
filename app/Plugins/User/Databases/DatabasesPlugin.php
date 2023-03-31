@@ -869,6 +869,20 @@ class DatabasesPlugin extends UserPluginBase
         $disp_databases_columns = $databases_columns->where($hide_flag_column_name, 0)
                                                     ->whereNotIn('id', $hide_columns_ids);
 
+        // 詳細画面で非表示項目をパラメータのID指定で強制的に表示する機能(beta)
+        if (config('connect.DATABASES_FORCE_SHOW_COLUMN_ON_DETAIL')) {
+            $show_columns = session('force_show_columns.'.$this->frame->id);
+            if ($show_columns && $hide_flag_column_name === 'detail_hide_flag') {
+                $disp_databases_columns = $databases_columns
+                        ->filter(function ($value) use ($show_columns) {
+                            return $value->detail_hide_flag == 0 ||
+                                // 詳細に表示しない（検索時に強制表示指定可）かつ表示指定ありのID
+                                ($value->detail_hide_flag == 2 && in_array($value->id, $show_columns));
+                        })
+                    ->whereNotIn('id', $hide_columns_ids);
+            }
+        }
+
         foreach ($disp_databases_columns as $databases_column) {
             if (is_null($databases_column->row_group) && is_null($databases_column->column_group)) {
                 // 行グループ・列グループどっちも設定なし
@@ -956,6 +970,11 @@ class DatabasesPlugin extends UserPluginBase
             // ランダム読み込みのための Seed をセッション中に作っておく
             if (empty(session('sort_seed.'.$frame_id))) {
                 session(['sort_seed.'.$frame_id => rand()]);
+            }
+
+            // 詳細画面で非表示項目をパラメータのID指定で強制的に表示する機能(beta)
+            if (config('connect.DATABASES_FORCE_SHOW_COLUMN_ON_DETAIL')) {
+                session(['force_show_columns.'.$frame_id => $request->force_show_columns]);
             }
 
             // 並べ替え

@@ -529,6 +529,13 @@
                             <input type="radio" value="1" id="detail_hide_flag_1" name="detail_hide_flag" class="custom-control-input" @if(old('detail_hide_flag', $column->detail_hide_flag) == 1) checked="checked" @endif>
                             <label class="custom-control-label" for="detail_hide_flag_1">詳細に表示しない</label>
                         </div>
+                        {{-- 詳細画面で非表示項目をパラメータのID指定で強制的に表示する機能(beta) --}}
+                        @if (config('connect.DATABASES_FORCE_SHOW_COLUMN_ON_DETAIL'))
+                            <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" value="2" id="detail_hide_flag_2" name="detail_hide_flag" class="custom-control-input" @if(old('detail_hide_flag', $column->detail_hide_flag) == 2) checked="checked" @endif>
+                                <label class="custom-control-label" for="detail_hide_flag_2">詳細に表示しない（検索時に強制表示指定可）</label>
+                            </div>
+                        @endif
                     </div>
                 </div>
 
