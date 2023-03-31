@@ -2,6 +2,7 @@
 
 namespace App\Plugins\User\Databases;
 
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -774,6 +775,12 @@ class DatabasesPlugin extends UserPluginBase
 
             // カラム選択肢の取得
             $columns_selects = DatabasesColumnsSelects::whereIn('databases_columns_id', $columns->pluck('id'))->orderBy('display_sequence', 'asc')->get();
+
+            //  絞り込み項目の登録済み件数を表示する(beta)
+            if (config('connect.DATABASES_SHOW_SEARCH_COLUMN_COUNT')) {
+                $all_databases_inputs = $this->appendAuthWhereBase(DatabasesInputs::where('databases_id', $database->id), 'databases_inputs')->get();
+                $columns_selects = $this->setColumnsSelectsRegisteredCount($columns_selects, $all_databases_inputs);
+            }
 
             // 絞り込み対象カラム
             $select_columns = $columns->where('select_flag', 1)
@@ -4220,5 +4227,36 @@ AND databases_inputs.posted_at <= NOW()
         View::share('columns', $columns);
 
         return $view;
+    }
+
+    /**
+     * DatabasesColumnsSelectsのregistered_countを設定する
+     *
+     * @param Illuminate\Database\Eloquent\Collection $columns_selects 設定対象
+     * @param Illuminate\Database\Eloquent\Collection $all_databases_inputs 対象データベースの全登録データ
+     * @return lluminate\Database\Eloquent\Collection 設定済みのデータ
+     */
+    private function setColumnsSelectsRegisteredCount(EloquentCollection $columns_selects, EloquentCollection $all_databases_inputs): EloquentCollection
+    {
+        $databases_inputs_ids = $all_databases_inputs->pluck('id');
+        $databases_input_cols = DatabasesInputCols::whereIn('databases_inputs_id', $databases_inputs_ids)->get();
+
+        foreach ($columns_selects as $select) {
+            $databases_column = DatabasesColumns::find($select->databases_columns_id);
+            $hit = $databases_input_cols->where('databases_columns_id', $select->databases_columns_id);
+            if ($databases_column->column_type === DatabaseColumnType::checkbox) {
+                // チェックボックスの場合、パイプ区切りで登録されているので部分一致検索
+                $hit = $hit->filter(function ($record) use ($select) {
+                    return strpos($record->value, $select->value) !== false;
+                });
+            } else {
+                $hit = $hit->where('value', $select->value);
+            }
+
+            $hit = $hit->pluck('id')->unique();
+            $select->setRegisteredCount($hit->count());
+        }
+
+        return $columns_selects;
     }
 }

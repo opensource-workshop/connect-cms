@@ -165,4 +165,6 @@ return [
     // データベースプラグイン
     // 詳細画面で非表示項目をパラメータのID指定で強制的に表示する機能(beta)
     'DATABASES_FORCE_SHOW_COLUMN_ON_DETAIL' => env('DATABASES_FORCE_SHOW_COLUMN_ON_DETAIL', false),
+    // 絞り込み項目の登録済み件数を表示する(beta)
+    'DATABASES_SHOW_SEARCH_COLUMN_COUNT' => env('DATABASES_SHOW_SEARCH_COLUMN_COUNT', false),
 ];

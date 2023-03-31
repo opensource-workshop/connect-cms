@@ -13,4 +13,12 @@ class DatabasesColumnsSelects extends Model
 
     // 更新する項目の定義
     protected $fillable = ['databases_columns_id', 'value', 'display_sequence', 'created_at', 'updated_at'];
+
+    /**
+     * この項目の登録済み件数を設定する
+     */
+    public function setRegisteredCount(int $count)
+    {
+        $this->attributes['registered_count'] = $count;
+    }
 }
