@@ -20,6 +20,9 @@ return [
     // マニュアルの問合せ先ページ内容
     'manual_contact_page' => env('MANUAL_CONTACT_PAGE', ''),
 
+    // マニュアル生成時の声
+    'manual_voiceid' => env('MANUAL_VOICEID', 'takumi'),
+
     // プラグイン管理にも表示しないプラグイン(小文字で指定)
     'PLUGIN_FORCE_HIDDEN' => ['knowledges', 'codestudies'],
 
@@ -158,4 +161,10 @@ return [
 
     // 連番管理の連番クリア機能を無効化するプラグイン名
     'PLUGIN_NAME_TO_DISABLE_SERIAL_NUMBER_CLEAR' => env('PLUGIN_NAME_TO_DISABLE_SERIAL_NUMBER_CLEAR', null),
+
+    // データベースプラグイン
+    // 詳細画面で非表示項目をパラメータのID指定で強制的に表示する機能(beta)
+    'DATABASES_FORCE_SHOW_COLUMN_ON_DETAIL' => env('DATABASES_FORCE_SHOW_COLUMN_ON_DETAIL', false),
+    // 絞り込み項目の登録済み件数を表示する(beta)
+    'DATABASES_SHOW_SEARCH_COLUMN_COUNT' => env('DATABASES_SHOW_SEARCH_COLUMN_COUNT', false),
 ];

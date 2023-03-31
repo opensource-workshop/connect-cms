@@ -769,4 +769,39 @@ EOF;
             }
         });
     }
+
+    /**
+     * Duskレコードの作成
+     */
+    protected function createDusks($dusk_cols, $method_names = [])
+    {
+        // 親レコードの作成
+        $dusk_parent = null;
+
+        // 子レコードの作成
+        foreach ($method_names as $method_name) {
+            $dusk_cols['method_name'] = $method_name;
+            if (empty($dusk_parent)) {
+                $dusk_parent = Dusks::create($dusk_cols);
+            } else {
+                Dusks::create($dusk_cols, $dusk_parent);
+            }
+        }
+    }
+
+    /**
+     * Duskレコードの更新
+     */
+    protected function updateDusk($plugin_name, $method_name, $dusk_cols)
+    {
+        // 更新するDusk取得
+        $dusk = Dusks::where('plugin_name', $plugin_name)->where('method_name', $method_name)->first();
+        if (empty($dusk)) {
+            return null;
+        }
+        foreach ($dusk_cols as $dusk_col => $value) {
+            $dusk->$dusk_col = $value;
+        }
+        $dusk->save();
+    }
 }

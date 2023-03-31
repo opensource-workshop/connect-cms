@@ -50,11 +50,6 @@ class PhotoalbumContent extends Model
         return $this->hasOne(Uploads::class, 'id', 'poster_upload_id')->withDefault();
     }
 
-    public function isImage($mimetype)
-    {
-        return Uploads::isImage($mimetype);
-    }
-
     public function isVideo($mimetype)
     {
         return Uploads::isVideo($mimetype);
@@ -135,7 +130,7 @@ class PhotoalbumContent extends Model
      */
     public function getCoverFileId()
     {
-        if (Uploads::isImage($this->mimetype)) {
+        if ($this->upload->is_image) {
             return $this->upload_id;
         } else {
             return $this->poster_upload_id;

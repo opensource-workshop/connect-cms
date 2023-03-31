@@ -2,6 +2,7 @@
 
 namespace App\Plugins\User\Databases;
 
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -775,6 +776,12 @@ class DatabasesPlugin extends UserPluginBase
             // カラム選択肢の取得
             $columns_selects = DatabasesColumnsSelects::whereIn('databases_columns_id', $columns->pluck('id'))->orderBy('display_sequence', 'asc')->get();
 
+            //  絞り込み項目の登録済み件数を表示する(beta)
+            if (config('connect.DATABASES_SHOW_SEARCH_COLUMN_COUNT')) {
+                $all_databases_inputs = $this->appendAuthWhereBase(DatabasesInputs::where('databases_id', $database->id), 'databases_inputs')->get();
+                $columns_selects = $this->setColumnsSelectsRegisteredCount($columns_selects, $all_databases_inputs);
+            }
+
             // 絞り込み対象カラム
             $select_columns = $columns->where('select_flag', 1)
                                         ->whereNotIn('id', $hide_columns_ids);
@@ -861,6 +868,20 @@ class DatabasesPlugin extends UserPluginBase
         // 詳細に表示する (detail_hide_flag=0)
         $disp_databases_columns = $databases_columns->where($hide_flag_column_name, 0)
                                                     ->whereNotIn('id', $hide_columns_ids);
+
+        // 詳細画面で非表示項目をパラメータのID指定で強制的に表示する機能(beta)
+        if (config('connect.DATABASES_FORCE_SHOW_COLUMN_ON_DETAIL')) {
+            $show_columns = session('force_show_columns.'.$this->frame->id);
+            if ($show_columns && $hide_flag_column_name === 'detail_hide_flag') {
+                $disp_databases_columns = $databases_columns
+                        ->filter(function ($value) use ($show_columns) {
+                            return $value->detail_hide_flag == 0 ||
+                                // 詳細に表示しない（検索時に強制表示指定可）かつ表示指定ありのID
+                                ($value->detail_hide_flag == 2 && in_array($value->id, $show_columns));
+                        })
+                    ->whereNotIn('id', $hide_columns_ids);
+            }
+        }
 
         foreach ($disp_databases_columns as $databases_column) {
             if (is_null($databases_column->row_group) && is_null($databases_column->column_group)) {
@@ -949,6 +970,11 @@ class DatabasesPlugin extends UserPluginBase
             // ランダム読み込みのための Seed をセッション中に作っておく
             if (empty(session('sort_seed.'.$frame_id))) {
                 session(['sort_seed.'.$frame_id => rand()]);
+            }
+
+            // 詳細画面で非表示項目をパラメータのID指定で強制的に表示する機能(beta)
+            if (config('connect.DATABASES_FORCE_SHOW_COLUMN_ON_DETAIL')) {
+                session(['force_show_columns.'.$frame_id => $request->force_show_columns]);
             }
 
             // 並べ替え
@@ -1872,7 +1898,7 @@ class DatabasesPlugin extends UserPluginBase
                 $plugin_name . '.' . $plugin_name . '_name',
                 'databases_inputs.databases_id'
             )
-            ->orderBy('frames.bucket_id', 'desc')
+            ->orderBy($plugin_name . '.bucket_id', 'desc')
             ->orderBy($plugin_name . '.created_at', 'desc')
             ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
@@ -4201,5 +4227,36 @@ AND databases_inputs.posted_at <= NOW()
         View::share('columns', $columns);
 
         return $view;
+    }
+
+    /**
+     * DatabasesColumnsSelectsのregistered_countを設定する
+     *
+     * @param Illuminate\Database\Eloquent\Collection $columns_selects 設定対象
+     * @param Illuminate\Database\Eloquent\Collection $all_databases_inputs 対象データベースの全登録データ
+     * @return lluminate\Database\Eloquent\Collection 設定済みのデータ
+     */
+    private function setColumnsSelectsRegisteredCount(EloquentCollection $columns_selects, EloquentCollection $all_databases_inputs): EloquentCollection
+    {
+        $databases_inputs_ids = $all_databases_inputs->pluck('id');
+        $databases_input_cols = DatabasesInputCols::whereIn('databases_inputs_id', $databases_inputs_ids)->get();
+
+        foreach ($columns_selects as $select) {
+            $databases_column = DatabasesColumns::find($select->databases_columns_id);
+            $hit = $databases_input_cols->where('databases_columns_id', $select->databases_columns_id);
+            if ($databases_column->column_type === DatabaseColumnType::checkbox) {
+                // チェックボックスの場合、パイプ区切りで登録されているので部分一致検索
+                $hit = $hit->filter(function ($record) use ($select) {
+                    return strpos($record->value, $select->value) !== false;
+                });
+            } else {
+                $hit = $hit->where('value', $select->value);
+            }
+
+            $hit = $hit->pluck('id')->unique();
+            $select->setRegisteredCount($hit->count());
+        }
+
+        return $columns_selects;
     }
 }
