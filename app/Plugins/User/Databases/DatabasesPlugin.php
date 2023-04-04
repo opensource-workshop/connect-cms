@@ -299,7 +299,8 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.databases_id',
                 'databases_columns.title_flag',
                 'databases_columns.body_flag',
-                'uploads.client_original_name'
+                'uploads.client_original_name',
+                'uploads.download_count',
             )
             ->leftJoin('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
             ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
@@ -767,7 +768,7 @@ class DatabasesPlugin extends UserPluginBase
             // Log::debug(var_export(DB::getQueryLog(), true));
 
             // 登録データ詳細の取得
-            $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'uploads.client_original_name')
+            $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'uploads.client_original_name', 'uploads.download_count')
                                             ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
                                             ->whereIn('databases_inputs_id', $inputs->pluck('id'))
                                             ->orderBy('databases_inputs_id', 'asc')->orderBy('databases_columns_id', 'asc')
@@ -2703,6 +2704,8 @@ class DatabasesPlugin extends UserPluginBase
         $column->select_flag = (empty($request->select_flag)) ? 0 : $request->select_flag;
         // 複数選択の絞り込みでAND/ORを表示する
         $column->use_select_and_or_flag = (empty($request->use_select_and_or_flag)) ? 0 : $request->use_select_and_or_flag;
+        // ダウンロード件数を表示する
+        $column->show_download_count = (empty($request->show_download_count)) ? 0 : $request->show_download_count;
         // 行グループ
         $column->row_group = $request->row_group;
         // 列グループ
