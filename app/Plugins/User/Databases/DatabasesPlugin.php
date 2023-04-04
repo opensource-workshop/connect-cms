@@ -2706,6 +2706,8 @@ class DatabasesPlugin extends UserPluginBase
         $column->use_select_and_or_flag = (empty($request->use_select_and_or_flag)) ? 0 : $request->use_select_and_or_flag;
         // ダウンロード件数を表示する
         $column->show_download_count = (empty($request->show_download_count)) ? 0 : $request->show_download_count;
+        // ダウンロードボタンを表示する
+        $column->show_download_button = (empty($request->show_download_button)) ? 0 : $request->show_download_button;
         // 行グループ
         $column->row_group = $request->row_group;
         // 列グループ

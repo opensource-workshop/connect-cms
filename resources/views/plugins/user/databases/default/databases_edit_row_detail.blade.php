@@ -730,6 +730,23 @@
                 </div>
                 @endif
 
+                {{-- ダウンロードボタンを表示する --}}
+                @if ($column->column_type == DatabaseColumnType::file)
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass(true)}}">ダウンロードボタンを表示する</label>
+                    <div class="{{$frame->getSettingInputClass(true)}}">
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="0" id="show_download_button_0" name="show_download_button" class="custom-control-input" @if(old('show_download_button', $column->show_download_button) == 0) checked="checked" @endif>
+                            <label class="custom-control-label" for="show_download_button_0" id="label_show_download_button_0">表示しない</label>
+                        </div>
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="1" id="show_download_button_1" name="show_download_button" class="custom-control-input" @if(old('show_download_button', $column->show_download_button) == 1) checked="checked" @endif>
+                            <label class="custom-control-label" for="show_download_button_1" id="label_show_download_button_1">表示する</label>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 {{-- グループ --}}
                 <div class="form-group row" id="div_group">
                     <label class="{{$frame->getSettingLabelClass(true)}} pt-0">グループ</label>

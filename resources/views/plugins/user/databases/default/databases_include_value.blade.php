@@ -26,6 +26,11 @@
                 $value .= '</button>';
             }
 
+            // ダウンロード件数
+            if ($column->show_download_count) {
+                $value .= '<span class="ml-4 databases-file-download-count-label">ダウンロード数：</span>';
+                $value .= '<span class="databases-file-download-count">'. $obj->download_count . '</span>';
+            }
         }
     }
     // 画像型
