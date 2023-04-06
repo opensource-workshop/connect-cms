@@ -1001,7 +1001,13 @@ class DatabasesPlugin extends UserPluginBase
                 session(['search_term.'.$frame_id => '']);
             }
         }
-        return $this->index($request, $page_id, $frame_id);
+
+        // 詳細画面のブラウザバックでフォーム再送信の確認を表示させないようにするため、リダイレクトする
+        // リダイレクト後にindex処理を行うようにviewでredirect_pathを指定する
+        if (!$request->has('redirect_path')) {
+            // リダイレクト指定がなければ、当アクションで検索処理を実行する
+            return $this->index($request, $page_id, $frame_id);
+        }
     }
 
     /**
