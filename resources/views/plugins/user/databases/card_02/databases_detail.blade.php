@@ -93,7 +93,7 @@
         @if(Session::has('page_no.'.$frame_id))
         <a href="{{url('/')}}{{$page->getLinkUrl()}}?frame_{{$frame_id}}_page={{Session::get('page_no.'.$frame_id)}}#frame-{{$frame_id}}">
         @else
-        <a href="{{url('/')}}{{$page->getLinkUrl()}}#frame-{{$frame_id}}">
+        <a href="{{url('/')}}{{$page->getLinkUrl()}}?frame_{{$frame_id}}_page=1#frame-{{$frame_id}}">
         @endif
             <span class="btn btn-info"><i class="fas fa-list"></i> <span class="d-none d-sm-inline">{{__('messages.to_list')}}</span></span>
         </a>

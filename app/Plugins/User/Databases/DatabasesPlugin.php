@@ -352,7 +352,7 @@ class DatabasesPlugin extends UserPluginBase
         // $request->flash();
 
         // リクエストにページが渡ってきたら、セッションに保持しておく。（詳細や更新後に元のページに戻るため）
-        $frame_page = "frame_{$frame_id}_page";
+        $frame_page = $this->pageName($frame_id);
         if ($request->has($frame_page)) {
                 $request->session()->put('page_no.'.$frame_id, $request->$frame_page);
         } else {
@@ -1900,7 +1900,7 @@ class DatabasesPlugin extends UserPluginBase
             )
             ->orderBy($plugin_name . '.bucket_id', 'desc')
             ->orderBy($plugin_name . '.created_at', 'desc')
-            ->paginate(10, ["*"], "frame_{$frame_id}_page");
+            ->paginate(10, ["*"], $this->pageName($frame_id));
 
         // 表示テンプレートを呼び出す。
         return $this->view('databases_list_buckets', [
