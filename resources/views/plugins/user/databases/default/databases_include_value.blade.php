@@ -18,6 +18,19 @@
         }
         else {
             $value = '<a href="' . url('/') . '/file/' . $obj->value . '" target="_blank">' . $obj->client_original_name . '</a>';
+
+            // ダウンロード件数
+            if ($column->show_download_button) {
+                $value .= '<button class="ml-4 btn btn-sm btn-primary databases-file-download-button" onclick="window.open(\''. url('/') . '/file/' . $obj->value . '\', \'_blank\')">';
+                $value .= '<i class="fas fa-download"></i><span class="d-none d-sm-inline"> ダウンロード</span>';
+                $value .= '</button>';
+            }
+
+            // ダウンロード件数
+            if ($column->show_download_count) {
+                $value .= '<span class="ml-4 databases-file-download-count-label">ダウンロード数：</span>';
+                $value .= '<span class="databases-file-download-count">'. $obj->download_count . '</span>';
+            }
         }
     }
     // 画像型

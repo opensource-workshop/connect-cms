@@ -299,7 +299,8 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.databases_id',
                 'databases_columns.title_flag',
                 'databases_columns.body_flag',
-                'uploads.client_original_name'
+                'uploads.client_original_name',
+                'uploads.download_count',
             )
             ->leftJoin('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
             ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
@@ -352,7 +353,7 @@ class DatabasesPlugin extends UserPluginBase
         // $request->flash();
 
         // リクエストにページが渡ってきたら、セッションに保持しておく。（詳細や更新後に元のページに戻るため）
-        $frame_page = "frame_{$frame_id}_page";
+        $frame_page = $this->pageName($frame_id);
         if ($request->has($frame_page)) {
                 $request->session()->put('page_no.'.$frame_id, $request->$frame_page);
         } else {
@@ -767,7 +768,7 @@ class DatabasesPlugin extends UserPluginBase
             // Log::debug(var_export(DB::getQueryLog(), true));
 
             // 登録データ詳細の取得
-            $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'uploads.client_original_name')
+            $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'uploads.client_original_name', 'uploads.download_count')
                                             ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
                                             ->whereIn('databases_inputs_id', $inputs->pluck('id'))
                                             ->orderBy('databases_inputs_id', 'asc')->orderBy('databases_columns_id', 'asc')
@@ -1001,7 +1002,13 @@ class DatabasesPlugin extends UserPluginBase
                 session(['search_term.'.$frame_id => '']);
             }
         }
-        return $this->index($request, $page_id, $frame_id);
+
+        // 詳細画面のブラウザバックでフォーム再送信の確認を表示させないようにするため、リダイレクトする
+        // リダイレクト後にindex処理を行うようにviewでredirect_pathを指定する
+        if (!$request->has('redirect_path')) {
+            // リダイレクト指定がなければ、当アクションで検索処理を実行する
+            return $this->index($request, $page_id, $frame_id);
+        }
     }
 
     /**
@@ -1900,7 +1907,7 @@ class DatabasesPlugin extends UserPluginBase
             )
             ->orderBy($plugin_name . '.bucket_id', 'desc')
             ->orderBy($plugin_name . '.created_at', 'desc')
-            ->paginate(10, ["*"], "frame_{$frame_id}_page");
+            ->paginate(10, ["*"], $this->pageName($frame_id));
 
         // 表示テンプレートを呼び出す。
         return $this->view('databases_list_buckets', [
@@ -2703,6 +2710,10 @@ class DatabasesPlugin extends UserPluginBase
         $column->select_flag = (empty($request->select_flag)) ? 0 : $request->select_flag;
         // 複数選択の絞り込みでAND/ORを表示する
         $column->use_select_and_or_flag = (empty($request->use_select_and_or_flag)) ? 0 : $request->use_select_and_or_flag;
+        // ダウンロード件数を表示する
+        $column->show_download_count = (empty($request->show_download_count)) ? 0 : $request->show_download_count;
+        // ダウンロードボタンを表示する
+        $column->show_download_button = (empty($request->show_download_button)) ? 0 : $request->show_download_button;
         // 行グループ
         $column->row_group = $request->row_group;
         // 列グループ
