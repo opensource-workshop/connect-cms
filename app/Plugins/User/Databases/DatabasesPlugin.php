@@ -51,6 +51,7 @@ use App\Enums\DatabaseSortFlag;
 use App\Enums\Required;
 use App\Enums\DatabaseNoticeEmbeddedTag;
 use App\Enums\StatusType;
+use App\Models\Common\Categories;
 use App\Models\Core\FrameConfig;
 
 /**
@@ -465,6 +466,11 @@ class DatabasesPlugin extends UserPluginBase
 
             // 権限によって非表示columのdatabases_columns_id配列を取得する
             $hide_columns_ids = (new DatabasesTool())->getHideColumnsIds($columns, 'list_detail_display_flag');
+
+            // カテゴリ
+            $inputs_query = $inputs_query->leftJoin('categories', 'categories.id', '=', 'databases_inputs.categories_id')
+                                ->addSelect('categories.classname as category_classname')
+                                ->addSelect('categories.category as category');
 
             $databases_columns_ids = [];
             foreach ($databases_columns as $databases_column) {
@@ -1117,6 +1123,9 @@ class DatabasesPlugin extends UserPluginBase
             $input_cols = $this->getDatabasesInputCols($id);
         }
 
+        // カテゴリ
+        $databases_categories = Categories::getInputCategories($this->frame->plugin_name, $database->id);
+
         // 表示テンプレートを呼び出す。
         return $this->view('databases_input', [
             'request'  => $request,
@@ -1129,6 +1138,7 @@ class DatabasesPlugin extends UserPluginBase
             'inputs'      => $inputs,
             'is_hide_posted' => $is_hide_posted,
             'errors'      => $errors,
+            'databases_categories' => $databases_categories,
         ]);
     }
 
@@ -1301,9 +1311,11 @@ class DatabasesPlugin extends UserPluginBase
         $validator_array['column']['posted_at']         = ['required', 'date_format:Y-m-d H:i'];
         $validator_array['column']['expires_at']        = ['nullable', 'date_format:Y-m-d H:i', 'after:posted_at'];
         $validator_array['column']['display_sequence']  = ['nullable', 'numeric'];
+        $validator_array['column']['categories_id'] = ['nullable', 'exists:categories,id'];
         $validator_array['message']['posted_at']        = '公開日時';
         $validator_array['message']['expires_at']       = '公開終了日時';
         $validator_array['message']['display_sequence'] = '表示順';
+        $validator_array['message']['categories_id'] = 'カテゴリ';
 
         // --- 入力値変換
         // 入力値をトリム
@@ -1454,6 +1466,9 @@ class DatabasesPlugin extends UserPluginBase
                 }
             }
         }
+
+        // カテゴリ
+        $databases_categories = Categories::getInputCategories($this->frame->plugin_name, $database->id);
         //print_r($delete_upload_column_ids);
         //print_r($uploads);
         // 表示テンプレートを呼び出す。
@@ -1466,6 +1481,7 @@ class DatabasesPlugin extends UserPluginBase
             'uploads'                  => $uploads,
             'delete_upload_column_ids' => $delete_upload_column_ids,
             'is_hide_posted'           => $is_hide_posted,
+            'databases_categories' => $databases_categories,
         ]);
     }
 
@@ -1504,6 +1520,7 @@ class DatabasesPlugin extends UserPluginBase
             $databases_inputs->display_sequence = $display_sequence;
             $databases_inputs->posted_at = $request->posted_at . ':00';
             $databases_inputs->expires_at = $request->filled('expires_at') ? $request->expires_at . ':00' : null;
+            $databases_inputs->categories_id = $request->categories_id;
             $databases_inputs->save();
         } else {
             $databases_inputs = DatabasesInputs::where('id', $id)->first();
@@ -1517,6 +1534,7 @@ class DatabasesPlugin extends UserPluginBase
             $databases_inputs->display_sequence = $display_sequence;
             $databases_inputs->posted_at = $request->posted_at . ':00';
             $databases_inputs->expires_at = $request->filled('expires_at') ? $request->expires_at . ':00' : null;
+            $databases_inputs->categories_id = $request->categories_id;
             $databases_inputs->update();
         }
 
@@ -4075,8 +4093,8 @@ AND databases_inputs.posted_at <= NOW()
                 DB::raw('null                  as important'),
                 'databases_inputs.posted_at    as posted_at',
                 'databases_inputs.created_name as posted_name',
-                DB::raw('null                  as classname'),
-                DB::raw('null                  as category'),
+                'categories.classname as classname',
+                'categories.category as category',
                 DB::raw('"databases"           as plugin_name')
             )
             ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
@@ -4113,6 +4131,8 @@ AND databases_inputs.posted_at <= NOW()
                 $leftJoin->on('databases_inputs.id', '=', 'input_cols_image.databases_inputs_id')
                             ->on('columns_image.id', '=', 'input_cols_image.databases_columns_id');
             })
+            // カテゴリ
+            ->leftJoin('categories', 'categories.id', '=', 'databases_inputs.categories_id')
 
             ->where('databases_inputs.status', StatusType::active)
             ->where(function ($query) {
@@ -4164,9 +4184,9 @@ AND databases_inputs.posted_at <= NOW()
                 DB::raw('0 as important'),
                 'databases_inputs.created_at as posted_at',
                 DB::raw('null as posted_name'),
-                DB::raw('null as classname'),
-                DB::raw('null as categories_id'),
-                DB::raw('null as category'),
+                'categories.classname as classname',
+                'categories.id as categories_id',
+                'categories.category as category',
                 DB::raw('"databases" as plugin_name')
             )
             ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
@@ -4182,6 +4202,8 @@ AND databases_inputs.posted_at <= NOW()
                 $leftJoin->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
                     ->on('databases_columns.id', '=', 'databases_input_cols.databases_columns_id');
             })
+            // カテゴリ
+            ->leftJoin('categories', 'categories.id', '=', 'databases_inputs.categories_id')
             ->where('databases_inputs.status', StatusType::active)
             ->where('databases_inputs.posted_at', '<=', Carbon::now())
             ->where(function ($query) {
@@ -4269,5 +4291,66 @@ AND databases_inputs.posted_at <= NOW()
         }
 
         return $columns_selects;
+    }
+
+    /**
+     * カテゴリ表示関数
+     *
+     * @method_title カテゴリ
+     * @method_desc FAQで使用するカテゴリを設定します。
+     * @method_detail 共通カテゴリの選択、もしくはFAQ独自のカテゴリを登録します。
+     */
+    public function listCategories($request, $page_id, $frame_id, $id = null)
+    {
+        // FAQ
+        $database_frame = $this->getDatabaseFrame($frame_id);
+
+        // 共通カテゴリ
+        $general_categories = Categories::getGeneralCategories($this->frame->plugin_name, $database_frame->databases_id);
+
+        // 個別カテゴリ（プラグイン）
+        $plugin_categories = Categories::getPluginCategories($this->frame->plugin_name, $database_frame->databases_id);
+
+        // 表示テンプレートを呼び出す。
+        return $this->view('databases_list_categories', [
+            'general_categories' => $general_categories,
+            'plugin_categories' => $plugin_categories,
+            'database_frame' => $database_frame,
+        ]);
+    }
+
+    /**
+     *  カテゴリ登録処理
+     */
+    public function saveCategories($request, $page_id, $frame_id, $id = null)
+    {
+        /* エラーチェック
+        ------------------------------------ */
+
+        $validator = Categories::validatePluginCategories($request);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        /* カテゴリ追加
+        ------------------------------------ */
+
+        // FAQ
+        $database_frame = $this->getDatabaseFrame($frame_id);
+
+        Categories::savePluginCategories($request, $this->frame->plugin_name, $database_frame->databases_id);
+
+        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+    }
+
+    /**
+     *  カテゴリ削除処理
+     */
+    public function deleteCategories($request, $page_id, $frame_id, $id = null)
+    {
+        Categories::deleteCategories($this->frame->plugin_name, $id);
+
+        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 }
