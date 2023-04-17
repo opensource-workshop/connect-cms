@@ -14,7 +14,7 @@ class AddSortDownloadCountToDatabasesColumnsTable extends Migration
     public function up()
     {
         Schema::table('databases_columns', function (Blueprint $table) {
-            $table->integer('sort_download_count')->default(0)->comment('ダウンロード件数で並び替え')->after('show_download_count');
+            $table->integer('sort_download_count')->default(0)->comment('ダウンロード件数で並び替え')->after('show_download_button');
         });
     }
 
