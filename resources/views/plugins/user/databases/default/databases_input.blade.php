@@ -104,6 +104,20 @@
             </div>
         @endif
 
+        <div class="form-group row">
+            <label class="col-sm-3 control-label">カテゴリ</label>
+            <div class="col-sm-9">
+                <select class="form-control" name="categories_id" class="form-control @if ($errors && $errors->has('category')) border-danger @endif">
+                    <option value=""></option>
+                    @foreach($databases_categories as $category)
+                    <option value="{{$category->id}}" @if(old('category', $inputs->categories_id)==$category->id) selected="selected" @endif>{{$category->category}}</option>
+                    @endforeach
+                </select>
+                @include('plugins.common.errors_inline', ['name' => 'categories_id'])
+                <small class="text-muted">※ カテゴリは新着情報に表示されます。</small>
+            </div>
+        </div>
+
         {{-- ボタンエリア --}}
         <div class="form-group text-center">
             <div class="row">
