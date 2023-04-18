@@ -434,14 +434,17 @@ class DatabasesPlugin extends UserPluginBase
             // ソート(セッションがあれば優先。なければ初期値を使用)
             $sort_column_id = '';
             $sort_column_order = '';
+            $sort_column_option = '';
             if (session('sort_column_id.'.$frame_id) && session('sort_column_order.'.$frame_id)) {
                 $sort_column_id = session('sort_column_id.'.$frame_id);
                 $sort_column_order = session('sort_column_order.'.$frame_id);
+                $sort_column_option = session('sort_column_option.'.$frame_id);
             } elseif ($databases_frames && $databases_frames->default_sort_flag) {
                 $sort_flag = explode('_', $databases_frames->default_sort_flag);
-                if (count($sort_flag) == 2) {
+                if (count($sort_flag) >= 2) {
                     $sort_column_id = $sort_flag[0];
                     $sort_column_order = $sort_flag[1];
+                    $sort_column_option = $sort_flag[2] ?? '';
                 }
             }
 
@@ -459,6 +462,10 @@ class DatabasesPlugin extends UserPluginBase
                                                          ->where('databases_input_cols.databases_columns_id', '=', $sort_column_id);
                                                 })
                                                ->where('databases_id', $database->id);
+                // ダウンロード件数でのソート
+                if ($sort_column_option === 'downloadcount') {
+                    $inputs_query = $inputs_query->leftjoin('uploads', 'databases_input_cols.value', 'uploads.id');
+                }
             }
 
             // 権限によって表示する記事を絞る
@@ -731,9 +738,17 @@ class DatabasesPlugin extends UserPluginBase
             } elseif ($sort_column_id == DatabaseSortFlag::posted && $sort_column_order == DatabaseSortFlag::order_desc) {
                 $inputs_query->orderBy('databases_inputs.posted_at', 'desc');
             } elseif ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == DatabaseSortFlag::order_asc) {
-                $inputs_query->orderBy('databases_input_cols.value', 'asc');
+                if ($sort_column_option === 'downloadcount') {
+                    $inputs_query->orderBy('uploads.download_count', 'asc');
+                } else {
+                    $inputs_query->orderBy('databases_input_cols.value', 'asc');
+                }
             } elseif ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == DatabaseSortFlag::order_desc) {
-                $inputs_query->orderBy('databases_input_cols.value', 'desc');
+                if ($sort_column_option === 'downloadcount') {
+                    $inputs_query->orderBy('uploads.download_count', 'desc');
+                } else {
+                    $inputs_query->orderBy('databases_input_cols.value', 'desc');
+                }
             }
             $inputs_query->orderBy('databases_inputs.id', 'asc');
 
@@ -989,12 +1004,15 @@ class DatabasesPlugin extends UserPluginBase
             if (count($sort_column_parts) == 1) {
                 session(['sort_column_id.'.$frame_id    => $sort_column_parts[0]]);
                 session(['sort_column_order.'.$frame_id => '']);
-            } elseif (count($sort_column_parts) == 2) {
+                session(['sort_column_option.'.$frame_id => '']);
+            } elseif (count($sort_column_parts) >= 2) {
                 session(['sort_column_id.'.$frame_id    => $sort_column_parts[0]]);
                 session(['sort_column_order.'.$frame_id => $sort_column_parts[1]]);
+                session(['sort_column_option.'.$frame_id => $sort_column_parts[2] ?? '']);
             } else {
                 session(['sort_column_id.'.$frame_id    => '']);
                 session(['sort_column_order.'.$frame_id => '']);
+                session(['sort_column_option.'.$frame_id => '']);
             }
             // var_dump($sort_column_parts);
 
@@ -2732,6 +2750,8 @@ class DatabasesPlugin extends UserPluginBase
         $column->show_download_count = (empty($request->show_download_count)) ? 0 : $request->show_download_count;
         // ダウンロードボタンを表示する
         $column->show_download_button = (empty($request->show_download_button)) ? 0 : $request->show_download_button;
+        // ダウンロード件数で並び替え
+        $column->sort_download_count = (empty($request->sort_download_count)) ? 0 : $request->sort_download_count;
         // 行グループ
         $column->row_group = $request->row_group;
         // 列グループ

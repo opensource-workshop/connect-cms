@@ -154,12 +154,17 @@
                 {{-- 1:昇順＆降順、2:昇順のみ、3:降順のみ --}}
                 @foreach($columns->whereIn('sort_flag', [1, 2, 3]) as $sort_column)
 
+                    @php
+                        $sort_option = $sort_column->sort_download_count ? '_downloadcount' : null;
+                        $sort_option_name = $sort_column->sort_download_count ? 'ダウンロード数' : null;
+                    @endphp
+
                     @if($sort_column->sort_flag == 1 || $sort_column->sort_flag == 2)
-                        <option value="{{$sort_column->id}}_asc" @if(($sort_column->id . '_asc') == $default_sort_flag) selected @endif>{{$sort_column->column_name}}(昇順)</option>
+                        <option value="{{$sort_column->id}}_asc{{$sort_option}}" @if(($sort_column->id . '_asc' . $sort_option) == $default_sort_flag) selected @endif>{{$sort_column->column_name}}{{$sort_option_name}}(昇順)</option>
                     @endif
 
                     @if($sort_column->sort_flag == 1 || $sort_column->sort_flag == 3)
-                        <option value="{{$sort_column->id}}_desc" @if(($sort_column->id . '_desc') == $default_sort_flag) selected @endif>{{$sort_column->column_name}}(降順)</option>
+                        <option value="{{$sort_column->id}}_desc{{$sort_option}}" @if(($sort_column->id . '_desc' . $sort_option) == $default_sort_flag) selected @endif>{{$sort_column->column_name}}{{$sort_option_name}}(降順)</option>
                     @endif
                 @endforeach
             </optgroup>

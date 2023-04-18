@@ -664,6 +664,23 @@
                     </div>
                 </div>
 
+                {{-- ダウンロード件数でのソートを行う --}}
+                @if ($column->column_type == DatabaseColumnType::file)
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass(true)}}">ダウンロード件数で並べ替え</label>
+                    <div class="{{$frame->getSettingInputClass(true)}}">
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="0" id="sort_download_count_0" name="sort_download_count" class="custom-control-input" @if(old('sort_download_count', $column->sort_download_count) == 0) checked="checked" @endif>
+                            <label class="custom-control-label" for="sort_download_count_0">使用しない</label>
+                        </div>
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="1" id="sort_download_count_1" name="sort_download_count" class="custom-control-input" @if(old('sort_download_count', $column->sort_download_count) == 1) checked="checked" @endif>
+                            <label class="custom-control-label" for="sort_download_count_1">使用する</label>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 {{-- 検索対象指定 --}}
                 <div class="form-group row">
                     <label class="{{$frame->getSettingLabelClass(true)}}">検索対象指定</label>
