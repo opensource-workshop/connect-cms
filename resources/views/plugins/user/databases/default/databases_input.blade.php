@@ -114,6 +114,7 @@
                     @endforeach
                 </select>
                 @include('plugins.common.errors_inline', ['name' => 'categories_id'])
+                <small class="text-muted">※ カテゴリは新着情報に表示されます。</small>
             </div>
         </div>
 
