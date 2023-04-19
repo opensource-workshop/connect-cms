@@ -397,7 +397,8 @@ class FaqsPlugin extends UserPluginBase
                       ->where('status', '?')
                       ->where(function ($plugin_query) use ($search_keyword) {
                           $plugin_query->where('faqs_posts.post_title', 'like', "%$search_keyword%")
-                                       ->orWhere('faqs_posts.post_text', 'like', "%$search_keyword%");
+                                       ->orWhere('faqs_posts.post_text', 'like', "%$search_keyword%")
+                                       ->orWhere('categories.category', 'like', "%$search_keyword%");
                       })
                       ->whereNull('faqs_posts.deleted_at');
         $return[] = 'show_page_frame_post';

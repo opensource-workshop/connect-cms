@@ -258,7 +258,7 @@ class DatabasesTool
      * データベース検索プラグイン例）$where_in_colum_name = 'databases_inputs_id'
      * 新着例）                    $where_in_colum_name = 'databases_inputs.id'
      */
-    public static function appendSearchKeyword($where_in_colum_name, $inputs_query, $databases_columns_ids, $hide_columns_ids, $search_keyword)
+    public static function appendSearchKeyword($where_in_colum_name, $inputs_query, $databases_columns_ids, $hide_columns_ids, $search_keyword, string $category_column = null)
     {
         /**
          * キーワードでスペース連結してAND検索
@@ -270,17 +270,37 @@ class DatabasesTool
 
         // キーワードAND検索
         foreach ($search_keywords as $search_keyword) {
-            $inputs_query->whereIn($where_in_colum_name, function ($query) use ($search_keyword, $databases_columns_ids, $hide_columns_ids) {
-                // 縦持ちのvalue を検索して、行の id を取得。search_flag で対象のカラムを絞る。
-                $query->select('databases_inputs_id')
-                        ->from('databases_input_cols')
-                        ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
-                        ->where('databases_columns.search_flag', 1)
-                        ->whereIn('databases_columns.id', $databases_columns_ids)
-                        ->whereNotIn('databases_columns.id', $hide_columns_ids)
-                        ->where('value', 'like', '%' . $search_keyword . '%')
-                        ->groupBy('databases_inputs_id');
+            $inputs_query->where(function ($query) use ($search_keyword, $databases_columns_ids, $hide_columns_ids, $where_in_colum_name, $category_column) {
+                // 検索対象項目を検索する
+                $query->whereIn($where_in_colum_name, function ($q) use ($search_keyword, $databases_columns_ids, $hide_columns_ids) {
+                    // 縦持ちのvalue を検索して、行の id を取得。search_flag で対象のカラムを絞る。
+                    $q->select('databases_inputs_id')
+                            ->from('databases_input_cols')
+                            ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+                            ->where('databases_columns.search_flag', 1)
+                            ->whereIn('databases_columns.id', $databases_columns_ids)
+                            ->whereNotIn('databases_columns.id', $hide_columns_ids)
+                            ->where('value', 'like', '%' . $search_keyword . '%')
+                            ->groupBy('databases_inputs_id');
+                });
+
+                // カテゴリを検索する
+                if ($category_column) {
+                    $query->orWhere($category_column, 'like', '%' . $search_keyword . '%');
+                }
             });
+
+            // $inputs_query->whereIn($where_in_colum_name, function ($query) use ($search_keyword, $databases_columns_ids, $hide_columns_ids) {
+            //     // 縦持ちのvalue を検索して、行の id を取得。search_flag で対象のカラムを絞る。
+            //     $query->select('databases_inputs_id')
+            //             ->from('databases_input_cols')
+            //             ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+            //             ->where('databases_columns.search_flag', 1)
+            //             ->whereIn('databases_columns.id', $databases_columns_ids)
+            //             ->whereNotIn('databases_columns.id', $hide_columns_ids)
+            //             ->where('value', 'like', '%' . $search_keyword . '%')
+            //             ->groupBy('databases_inputs_id');
+            // });
         }
         return $inputs_query;
     }

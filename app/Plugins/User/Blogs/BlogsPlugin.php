@@ -550,7 +550,8 @@ WHERE status = 0
                       ->where(function ($plugin_query) use ($search_keyword) {
                           $plugin_query->where('blogs_posts.post_title', 'like', '%'.$search_keyword.'%')
                                        ->orWhere('blogs_posts.post_text', 'like', '%'.$search_keyword.'%')
-                                       ->orWhere('blogs_posts.post_text2', 'like', '%'.$search_keyword.'%');
+                                       ->orWhere('blogs_posts.post_text2', 'like', '%'.$search_keyword.'%')
+                                       ->orWhere('categories.category', 'like', '%'.$search_keyword.'%');
                       })
                       ->whereRaw('CASE
                                   WHEN blogs_frames.scope IS NULL
