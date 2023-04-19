@@ -4246,8 +4246,7 @@ AND databases_inputs.posted_at <= NOW()
             $query,
             $columns->pluck('id'),
             $hide_columns_ids,
-            $search_keyword,
-            'categories.category'
+            $search_keyword
         );
 
         $return[] = $query;
