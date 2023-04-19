@@ -2764,6 +2764,7 @@ ORDER BY forms_inputs_id, forms_columns_id
             ->leftJoin('forms_input_cols', 'forms_inputs.id', '=', 'forms_input_cols.forms_inputs_id')
             ->leftJoin('forms_columns', 'forms_input_cols.forms_columns_id', '=', 'forms_columns.id')
             ->where('forms_inputs.id', $form_inputs_id)
+            ->orderBy('display_sequence')
             ->get();
 
 
