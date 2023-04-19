@@ -59,25 +59,25 @@ if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null
 
     {{-- フレームタイトル --}}
     {{$frame->frame_title}}
-    
+
     {{-- 各ステータスラベルは、ログインしている＆プラグイン管理者＆プレビューモードではない状態の時のみ表示 --}}
     @if (Auth::check() &&
-        (Auth::user()->can('role_arrangement')) &&
-         app('request')->input('mode') != 'preview')
-    
-        @if (Auth::check() && $frame->default_hidden)
+        Auth::user()->can('role_arrangement') &&
+        app('request')->input('mode') != 'preview')
+
+        @if ($frame->default_hidden)
             <small><span class="badge badge-warning">初期非表示</span></small>
         @endif
 
-        @if (Auth::check() && $frame->none_hidden)
+        @if ($frame->none_hidden)
             <small><span class="badge badge-warning">データがない場合は非表示</span></small>
         @endif
 
-        @if (Auth::check() && $frame->page_only == 1 && $page->id == $frame->page_id)
+        @if ($frame->page_only == 1 && $page->id == $frame->page_id)
             <small><span class="badge badge-warning">このページのみ表示する。</span></small>
         @endif
 
-        @if (Auth::check() && $frame->page_only == 2 && $page->id == $frame->page_id)
+        @if ($frame->page_only == 2 && $page->id == $frame->page_id)
             <small><span class="badge badge-warning">このページのみ表示しない。</span></small>
         @endif
     @endif
