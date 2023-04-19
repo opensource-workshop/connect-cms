@@ -2714,7 +2714,7 @@ ORDER BY forms_inputs_id, forms_columns_id
         }
 
         // 登録処理
-        foreach ($this->fetchTargetFrames(explode(',' , $form->target_frame_ids)) as $frame) {
+        foreach ($this->fetchTargetFrames(explode(',', $form->target_frame_ids)) as $frame) {
             // バケツ未指定は連携できない
             if (!$frame->bucket_id) {
                 Log::debug('bucket_id is null.');
@@ -2735,7 +2735,6 @@ ORDER BY forms_inputs_id, forms_columns_id
                     break;
             }
         }
-
     }
 
     /**
