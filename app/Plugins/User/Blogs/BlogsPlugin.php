@@ -551,7 +551,8 @@ WHERE status = 0
                           $plugin_query->where('blogs_posts.post_title', 'like', '%'.$search_keyword.'%')
                                        ->orWhere('blogs_posts.post_text', 'like', '%'.$search_keyword.'%')
                                        ->orWhere('blogs_posts.post_text2', 'like', '%'.$search_keyword.'%')
-                                       ->orWhere('categories.category', 'like', '%'.$search_keyword.'%');
+                                       ->orWhere('categories.category', 'like', '%'.$search_keyword.'%')
+                                       ->orWhereRaw("EXISTS (SELECT * FROM blogs_posts_tags WHERE blogs_posts_id = blogs_posts.id AND blogs_posts_tags.tags LIKE ?)", '%'.$search_keyword.'%');
                       })
                       ->whereRaw('CASE
                                   WHEN blogs_frames.scope IS NULL
