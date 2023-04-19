@@ -450,7 +450,7 @@ class DatabasesPlugin extends UserPluginBase
 
             // ソートなし or ソートするカラムIDが数値じゃない（=入力なしと同じ扱いにする）
             if (empty($sort_column_id) || !ctype_digit($sort_column_id)) {
-                $inputs_query = DatabasesInputs::where('databases_id', $database->id);
+                $inputs_query = DatabasesInputs::select('databases_inputs.*')->where('databases_id', $database->id);
             } else {
                 // ソートあり
                 $inputs_query = DatabasesInputs::select('databases_inputs.*', 'databases_input_cols.value')
