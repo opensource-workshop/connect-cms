@@ -399,7 +399,7 @@ class FaqsPlugin extends UserPluginBase
                           $plugin_query->where('faqs_posts.post_title', 'like', "%$search_keyword%")
                                        ->orWhere('faqs_posts.post_text', 'like', "%$search_keyword%")
                                        ->orWhere('categories.category', 'like', "%$search_keyword%")
-                                       ->orWhereRaw("EXISTS (SELECT * FROM faqs_posts_tags WHERE faqs_posts_id = faqs_posts.id AND faqs_posts_tags.tags LIKE ?)", '%'.$search_keyword.'%');;
+                                       ->orWhereRaw("EXISTS (SELECT * FROM faqs_posts_tags WHERE faqs_posts_id = faqs_posts.id AND faqs_posts_tags.tags LIKE ?)", '%'.$search_keyword.'%');
                       })
                       ->whereNull('faqs_posts.deleted_at');
         $return[] = 'show_page_frame_post';
