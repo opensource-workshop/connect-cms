@@ -2735,6 +2735,8 @@ ORDER BY forms_inputs_id, forms_columns_id
                     break;
             }
         }
+
+        $request->flash_message = '登録内容を他プラグインへ連携しました。連携した情報は連携先で一時保存状態になっています。登録内容を確認して公開してください。';
     }
 
     /**
