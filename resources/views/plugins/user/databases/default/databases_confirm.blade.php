@@ -202,7 +202,8 @@
         <label class="col-sm-3 control-label text-nowrap">カテゴリ</label>
         <div class="col-sm-9">
             @php
-                $category_name = $databases_categories->where('id', $request->categories_id)->first()->category;
+                $category = $databases_categories->where('id', $request->categories_id)->first();
+                $category_name = $category ? $category->category : null;
             @endphp
             {{$category_name}}
             <input name="categories_id" class="form-control" type="hidden" value="{{$request->categories_id}}">
