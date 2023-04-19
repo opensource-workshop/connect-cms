@@ -14,7 +14,7 @@
             <div class="input-group-prepend mr-3">
                 <div class="custom-control custom-checkbox">
                     <input type="checkbox" name="narrow_down" value="1" class="custom-control-input" id="narrow_down" @if(old("narrow_down")) checked=checked @endif>
-                    <label class="custom-control-label" id="narrow_down_label" for="narrow_down">このカテゴリ内のみ</label>
+                    <label class="custom-control-label" id="narrow_down_label" for="narrow_down">{{$searchs_frame->narrow_down_label}}</label>
                 </div>
             </div>
         @endif
