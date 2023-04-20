@@ -11,6 +11,7 @@ use App\Traits\ConnectCommonTrait;
 
 use App\Enums\DatabaseColumnRoleName;
 use App\Enums\DatabaseRoleName;
+use App\Models\User\Databases\DatabasesInputs;
 
 /**
  * データベースの便利関数
@@ -283,6 +284,14 @@ class DatabasesTool
                 ->where('value', 'like', '%' . $search_keyword . '%')
                 ->groupBy('databases_inputs_id')
                 ->pluck('databases_inputs_id');
+
+            // カテゴリで検索する
+            $databases_inputs_ids_category = DatabasesInputs::select('databases_inputs.id as databases_inputs_id')
+                ->leftJoin('categories', 'databases_inputs.categories_id', '=', 'categories.id')
+                ->where('categories.category', 'like', '%' . $search_keyword . '%')
+                ->pluck('databases_inputs_id');
+
+            $databases_inputs_ids = $databases_inputs_ids->merge($databases_inputs_ids_category)->unique();
 
             if ($target_databases_inputs_ids->isEmpty()) {
                 // 初回：検索１単語目の結果 inputs_ids
