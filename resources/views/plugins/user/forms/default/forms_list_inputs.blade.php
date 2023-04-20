@@ -19,6 +19,13 @@
     <input type="hidden" name="character_code" value="">
 </form>
 
+{{-- 他プラグイン連携フォーム --}}
+<form action="" method="post" name="form_register_other_plugins" class="d-inline">
+    {{ csrf_field() }}
+    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/forms/listInputs/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
+</form>
+
+
 <script type="text/javascript">
     {{-- ダウンロードのsubmit JavaScript --}}
     function submit_download_shift_jis(id) {
@@ -36,6 +43,14 @@
         form_download.action = "{{url('/')}}/download/plugin/forms/downloadCsv/{{$page->id}}/{{$frame_id}}/" + id;
         form_download.character_code.value = '{{CsvCharacterCode::utf_8}}';
         form_download.submit();
+    }
+
+    function submit_register_other_plugins(id) {
+        if( !confirm('登録データを設定した対象に連携します。\nよろしいですか？') ) {
+            return;
+        }
+        form_register_other_plugins.action = "{{url('/')}}/redirect/plugin/forms/registerOtherPlugins/{{$page->id}}/{{$frame_id}}/" + id;
+        form_register_other_plugins.submit();
     }
 
     $(function () {
@@ -71,6 +86,9 @@
 <table class="table table-bordered table-responsive table-sm mt-2">
     <thead class="thead-light">
         <tr>
+            @if ($form->other_plugins_register_use_flag)
+                <th nowrap>連携</th>
+            @endif
             <th nowrap>状態</th>
             @foreach($columns as $column)
                 <th>
@@ -97,6 +115,14 @@
         {{-- 本登録 --}}
         <tr>
         @endif
+
+            @if ($form->other_plugins_register_use_flag)
+                <td>
+                    @if ($input->status == FormStatusType::active)
+                        <button type="button" class="btn btn-sm btn-primary" onclick="submit_register_other_plugins({{$input->id}});"><i class="fas fa-check"></i></button>
+                    @endif
+                </td>
+            @endif
 
             <td nowrap>
                 <a href="{{url('/')}}/plugin/forms/editInput/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}" title="編集">
