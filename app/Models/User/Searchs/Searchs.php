@@ -21,6 +21,7 @@ class Searchs extends Model
         'frame_select',
         'target_frame_ids',
         'recieve_keyword',
+        'narrow_down_label',
     ];
 
     /**

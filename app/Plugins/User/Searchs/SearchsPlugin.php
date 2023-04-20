@@ -119,7 +119,7 @@ class SearchsPlugin extends UserPluginBase
     /**
      * 検索結果の取得
      */
-    private function searchContents($request, $searchs_frame, $method = null)
+    private function searchContents($request, $searchs_frame, $method = null, $narrow_down = null)
     {
         // 検索がまだできていない場合
         if (!$searchs_frame || empty($searchs_frame->id)) {
@@ -173,7 +173,8 @@ class SearchsPlugin extends UserPluginBase
         // 各プラグインのSQL をUNION
         foreach ($union_sqls as $union_sql) {
             // フレームの選択が行われる場合
-            if ($searchs_frame->frame_select == 1) {
+            // 選択したものだけ表示する or ユーザ指定時に選択したものを表示するの絞り込み指定あり
+            if ($searchs_frame->frame_select == 1 || ($searchs_frame->frame_select == 2 && $request->narrow_down)) {
                 $union_sql->whereIn('frames.id', explode(',', $searchs_frame->target_frame_ids));
             }
             $searchs_sql->unionAll($union_sql);
@@ -250,7 +251,7 @@ class SearchsPlugin extends UserPluginBase
         $searchs_frame = $this->getSearchsFrame($frame_id);
 
         // 新着の一覧取得
-        list($searchs_results, $link_pattern, $link_base) = $this->searchContents($request, $searchs_frame);
+        list($searchs_results, $link_pattern, $link_base) = $this->searchContents($request, $searchs_frame, null, $request->narrow_down);
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -353,11 +354,13 @@ class SearchsPlugin extends UserPluginBase
             'search_name'     => ['required'],
             'count'           => ['required', 'numeric'],
             'target_plugin'   => ['required'],
+            'narrow_down_label' => ['nullable', 'string', 'max:191'],
         ]);
         $validator->setAttributeNames([
             'search_name'     => '検索設定名',
             'count'           => '1ページの表示件数',
             'target_plugin'   => '対象プラグイン',
+            'narrow_down_label' => '絞り込みチェックボックスのラベル',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -417,6 +420,7 @@ class SearchsPlugin extends UserPluginBase
         $searchs->frame_select      = intval($request->frame_select);
         $searchs->target_frame_ids  = empty($request->target_frame_ids) ? "": implode(',', $request->target_frame_ids);
         $searchs->recieve_keyword   = intval($request->recieve_keyword);
+        $searchs->narrow_down_label = $request->narrow_down_label;
 
         // データ保存
         $searchs->save();
