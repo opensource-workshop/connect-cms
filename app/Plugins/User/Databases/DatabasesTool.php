@@ -5,6 +5,7 @@ namespace App\Plugins\User\Databases;
 use Illuminate\Support\Facades\Auth;
 
 use App\Models\User\Databases\DatabasesColumns;
+use App\Models\User\Databases\DatabasesInputCols;
 
 use App\Traits\ConnectCommonTrait;
 
@@ -268,22 +269,34 @@ class DatabasesTool
          */
         $search_keywords = explode(' ', mb_convert_kana($search_keyword, 's'));
 
-        $inputs_query->whereIn($where_in_colum_name, function ($query) use ($search_keywords, $databases_columns_ids, $hide_columns_ids) {
+        $target_databases_inputs_ids = collect();
+
+        // キーワードAND検索
+        foreach ($search_keywords as $search_keyword) {
             // 縦持ちのvalue を検索して、行の id を取得。search_flag で対象のカラムを絞る。
-            $query->select('databases_inputs_id')
-                    ->from('databases_input_cols')
-                    ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
-                    ->where('databases_columns.search_flag', 1)
-                    ->whereIn('databases_columns.id', $databases_columns_ids)
-                    ->whereNotIn('databases_columns.id', $hide_columns_ids);
+            $databases_inputs_ids = DatabasesInputCols::select('databases_inputs_id')
+                ->from('databases_input_cols')
+                ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+                ->where('databases_columns.search_flag', 1)
+                ->whereIn('databases_columns.id', $databases_columns_ids)
+                ->whereNotIn('databases_columns.id', $hide_columns_ids)
+                ->where('value', 'like', '%' . $search_keyword . '%')
+                ->groupBy('databases_inputs_id')
+                ->pluck('databases_inputs_id');
 
-            // キーワードAND検索
-            foreach ($search_keywords as $search_keyword) {
-                $query->where('value', 'like', '%' . $search_keyword . '%');
+            if ($target_databases_inputs_ids->isEmpty()) {
+                // 初回：検索１単語目の結果 inputs_ids
+                $target_databases_inputs_ids = $databases_inputs_ids;
+            } else {
+                // 検索２単語目以降の結果 inputs_ids
+                // - intersect() : 指定した「配列」かコレクションに存在していない値をオリジナルコレクションから取り除きます。
+                // - これでANDを実現
+                $target_databases_inputs_ids = $target_databases_inputs_ids->intersect($databases_inputs_ids);
             }
+        }
 
-            $query->groupBy('databases_inputs_id');
-        });
+        // 該当した inputs_id だけ含める
+        $inputs_query->whereIn($where_in_colum_name, $target_databases_inputs_ids);
         return $inputs_query;
     }
 
