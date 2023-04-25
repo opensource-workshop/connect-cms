@@ -363,13 +363,11 @@ class SearchsPlugin extends UserPluginBase
             'search_name'     => ['required'],
             'count'           => ['required', 'numeric'],
             'target_plugin'   => ['required'],
-            'narrow_down_label' => ['nullable', 'string', 'max:191'],
         ]);
         $validator->setAttributeNames([
             'search_name'     => '検索設定名',
             'count'           => '1ページの表示件数',
             'target_plugin'   => '対象プラグイン',
-            'narrow_down_label' => '絞り込みチェックボックスのラベル',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -429,7 +427,6 @@ class SearchsPlugin extends UserPluginBase
         $searchs->frame_select      = intval($request->frame_select);
         $searchs->target_frame_ids  = empty($request->target_frame_ids) ? "": implode(',', $request->target_frame_ids);
         $searchs->recieve_keyword   = intval($request->recieve_keyword);
-        $searchs->narrow_down_label = $request->narrow_down_label;
 
         // データ保存
         $searchs->save();
