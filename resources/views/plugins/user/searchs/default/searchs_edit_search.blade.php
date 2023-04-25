@@ -166,22 +166,13 @@
                         @endif
                         <label class="custom-control-label" for="frame_select_1">選択したものだけ表示する</label>
                     </div>
-                    <div class="custom-control custom-radio custom-control-inline">
-                        @if($searchs->frame_select == 2)
-                            <input type="radio" value="2" id="frame_select_2" name="frame_select" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="2" id="frame_select_2" name="frame_select" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="frame_select_2">ユーザ指定時に選択したものを表示する</label>
-                    </div>
                 </div>
             </div>
 
             <div class="form-group row">
                 <div class="{{$frame->getSettingLabelClass()}}"></div>
                 <div class="{{$frame->getSettingInputClass()}}">
-                    <small class="text-muted">※ 「選択したものだけ表示する」、「ユーザー指定時に選択したものを表示する」を選択した場合、「固定記事」は検索対象外になります。</small><br>
-                    <small class="text-muted">※ 「ユーザー指定時に選択したものを表示する」を選択した場合、キーワード入力欄の隣に絞り込みチェックボックスが表示されます。絞り込みチェックボックスを選択して検索すると、「対象ページ - フレーム」で選択したものを表示します。絞り込みチェックボックスが未選択の場合は、全て表示します。</small>
+                    <small class="text-muted">※ 「選択したものだけ表示する」を選択した場合、「固定記事」は検索対象外になります。</small><br>
                 </div>
             </div>
 
@@ -216,6 +207,8 @@
                 </div>
             </div>
 
+            {{-- 固定記事でチェックボックスのラベルを作るので廃止 --}}
+            {{--
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass()}}">絞り込みチェックボックスのラベル</label>
                 <div class="{{$frame->getSettingInputClass()}}">
@@ -224,6 +217,8 @@
                     <small class="text-muted">※ フレームの選択で「ユーザー指定時に選択したものを表示する」を選択した場合に表示される、チェックボックスのラベルを設定できます。</small>
                 </div>
             </div>
+            --}}
+
             {{-- Submitボタン --}}
             <div class="form-group text-center">
                 <div class="row">
