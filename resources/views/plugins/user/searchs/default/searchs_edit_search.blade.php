@@ -207,18 +207,6 @@
                 </div>
             </div>
 
-            {{-- 固定記事でチェックボックスのラベルを作るので廃止 --}}
-            {{--
-            <div class="form-group row">
-                <label class="{{$frame->getSettingLabelClass()}}">絞り込みチェックボックスのラベル</label>
-                <div class="{{$frame->getSettingInputClass()}}">
-                    <input type="text" name="narrow_down_label" value="{{old('narrow_down_label', $searchs->narrow_down_label)}}" class="form-control">
-                    @if ($errors && $errors->has('narrow_down_label')) <div class="text-danger">{{$errors->first('narrow_down_label')}}</div> @endif
-                    <small class="text-muted">※ フレームの選択で「ユーザー指定時に選択したものを表示する」を選択した場合に表示される、チェックボックスのラベルを設定できます。</small>
-                </div>
-            </div>
-            --}}
-
             {{-- Submitボタン --}}
             <div class="form-group text-center">
                 <div class="row">
