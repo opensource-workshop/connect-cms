@@ -47,9 +47,16 @@
         </dd>
     @endforeach
     </dl>
+@php
+    $appends['search_keyword'] = old('search_keyword');
+    // ページ配下の絞込み
+    if (old('narrow_down_page_id')) {
+        $appends['narrow_down_page_id'] = old('narrow_down_page_id');
+    }
 
+@endphp
     {{-- ページング処理 --}}
-    @include('plugins.common.user_paginate', ['posts' => $searchs_results, 'frame' => $frame, 'appends' => ['search_keyword' => old('search_keyword')], 'aria_label_name' => $searchs_frame->search_name])
+    @include('plugins.common.user_paginate', ['posts' => $searchs_results, 'frame' => $frame, $appends])
 </div>
 @endif
 @endsection

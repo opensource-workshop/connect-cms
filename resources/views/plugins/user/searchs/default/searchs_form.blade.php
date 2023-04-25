@@ -7,16 +7,10 @@
 --}}
 <form action="{{url('/')}}/plugin/searchs/search/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="post" name="form_approval" class="d-inline" role="search" aria-label="{{$searchs_frame->search_name}}">
     {{ csrf_field() }}
-
     <div class="input-group">
-        {{-- ユーザ指定時に選択したものを表示する --}}
-        @if ($searchs_frame->frame_select == 2)
-            <div class="input-group-prepend mr-3">
-                <div class="custom-control custom-checkbox">
-                    <input type="checkbox" name="narrow_down" value="1" class="custom-control-input" id="narrow_down" @if(old("narrow_down")) checked=checked @endif>
-                    <label class="custom-control-label" id="narrow_down_label" for="narrow_down">{{$searchs_frame->narrow_down_label}}</label>
-                </div>
-            </div>
+        {{-- ページ配下の絞込み --}}
+        @if (old('narrow_down_page_id'))
+            <input type="hidden" name="narrow_down_page_id" value="{{ old('narrow_down_page_id') }}">
         @endif
         <input type="text" name="search_keyword" class="form-control" value="{{old('search_keyword')}}" placeholder="検索はキーワードを入力してください。" title="検索キーワード" />
         <div class="input-group-append">

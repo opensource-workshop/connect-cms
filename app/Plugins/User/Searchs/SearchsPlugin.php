@@ -173,10 +173,19 @@ class SearchsPlugin extends UserPluginBase
         // 各プラグインのSQL をUNION
         foreach ($union_sqls as $union_sql) {
             // フレームの選択が行われる場合
-            // 選択したものだけ表示する or ユーザ指定時に選択したものを表示するの絞り込み指定あり
-            if ($searchs_frame->frame_select == 1 || ($searchs_frame->frame_select == 2 && $request->narrow_down)) {
+            // 選択したものだけ表示する
+            if ($searchs_frame->frame_select == 1) {
                 $union_sql->whereIn('frames.id', explode(',', $searchs_frame->target_frame_ids));
             }
+
+            // 固定記事でサイト検索が作られることを想定してnarrow_down_page_idにサイト検索元のページIDを指定する
+            // 指定ページ以下に絞って検索する
+            if ($request->narrow_down_page_id) {
+                $page_ids = Page::findOrNew($request->narrow_down_page_id)->descendants()->pluck('id');
+                $page_ids->push($request->narrow_down_page_id);
+                $union_sql->whereIn('pages.id', $page_ids);
+            }
+
             $searchs_sql->unionAll($union_sql);
         }
 
