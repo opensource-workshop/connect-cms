@@ -321,6 +321,7 @@ $app_array = [
         'DatabaseFrameConfig' => \App\Enums\DatabaseFrameConfig::class,
         'FormMode' => \App\Enums\FormMode::class,
         'FormsRegisterTargetPlugin' => \App\Enums\FormsRegisterTargetPlugin::class,
+        'WebsiteType' => \App\Enums\WebsiteType::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
