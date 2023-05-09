@@ -3,6 +3,8 @@
 namespace App\Plugins\Manage\PageManage;
 
 // use Illuminate\Http\Request;
+
+use App\Enums\WebsiteType;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -22,6 +24,7 @@ use App\Rules\CustomValiUrlMax;
 
 use App\Traits\Migration\MigrationTrait;
 use App\Traits\Migration\MigrationExportNc3PageTrait;
+use App\Traits\Migration\MigrationExportHtmlPageTrait;
 
 use App\Plugins\Manage\ManagePluginBase;
 
@@ -41,7 +44,7 @@ use App\Plugins\Manage\ManagePluginBase;
 class PageManage extends ManagePluginBase
 {
     // 移行用ライブラリ
-    use MigrationTrait, MigrationExportNc3PageTrait;
+    use MigrationTrait, MigrationExportNc3PageTrait, MigrationExportHtmlPageTrait;
 
     /**
      * 権限定義
@@ -775,8 +778,16 @@ class PageManage extends ManagePluginBase
                        ->withInput();
         }
 
-        // NC3 を画面から移行する
-        $this->migrationNC3Page($request->url, $request->destination_page_id);
+        // 移行元システムによって処理を分岐
+        if ($request->source_system == WebsiteType::netcommons2) {
+            // TODO: netcommons2 からの移行
+        } elseif ($request->source_system == WebsiteType::netcommons3) {
+            // netcommons3 からの移行
+            $this->migrationNC3Page($request->url, $request->destination_page_id);
+        } elseif ($request->source_system == WebsiteType::html) {
+            // html からの移行
+            $this->migrationHtmlPage($request->url, $request->destination_page_id);
+        }
 
         // 指示された画面に戻る。
         return $this->migrationOrder($request, $page_id);
