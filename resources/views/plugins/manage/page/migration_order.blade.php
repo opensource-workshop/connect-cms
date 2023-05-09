@@ -35,16 +35,16 @@
                 <div class="col-md-9 d-sm-flex align-items-center">
 
                     <div class="custom-control custom-radio custom-control-inline">
-                        <input type="radio" value="netcommons3" id="source_system_netcommons3" name="source_system" class="custom-control-input" checked>
-                        <label class="custom-control-label" for="source_system_netcommons3">NetCommons3</label>
+                        <input type="radio" value="{{ WebsiteType::netcommons3 }}" id="source_system_netcommons3" name="source_system" class="custom-control-input" checked>
+                        <label class="custom-control-label" for="source_system_netcommons3">{{ WebsiteType::getDescription(WebsiteType::netcommons3) }}</label>
                     </div>
                     <div class="custom-control custom-radio custom-control-inline">
-                        <input type="radio" value="netcommons2" id="source_system_netcommons2" name="source_system" class="custom-control-input" disabled>
-                        <label class="custom-control-label" for="source_system_netcommons2">NetCommons2</label>
+                        <input type="radio" value="{{ WebsiteType::netcommons2 }}" id="source_system_netcommons2" name="source_system" class="custom-control-input" disabled>
+                        <label class="custom-control-label" for="source_system_netcommons2">{{ WebsiteType::getDescription(WebsiteType::netcommons2) }}</label>
                     </div>
                     <div class="custom-control custom-radio custom-control-inline">
-                        <input type="radio" value="html" id="source_system_html" name="source_system" class="custom-control-input" disabled>
-                        <label class="custom-control-label" for="source_system_html">HTML</label>
+                        <input type="radio" value="{{ WebsiteType::html }}" id="source_system_html" name="source_system" class="custom-control-input">
+                        <label class="custom-control-label" for="source_system_html">{{ WebsiteType::getDescription(WebsiteType::html) }}</label>
                     </div>
                 </div>
             </div>
