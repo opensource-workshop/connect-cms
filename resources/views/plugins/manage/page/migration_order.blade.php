@@ -115,12 +115,16 @@
             {{ csrf_field() }}
 
             <div class="form-group row">
-                <label for="page_name" class="col-md-3 col-form-label text-md-right pt-0">取り込み済み<br class="d-none d-md-inline" />移行データ</label>
+                <label for="page_name" class="col-md-3 col-form-label text-md-right pt-0">取り込み済み<br class="d-none d-md-inline" />移行データ<br class="d-none d-md-inline">（取り込み日時）</label>
                 <div class="col-md-9">
                     @foreach($migration_pages as $migration_page)
                     <div class="custom-control custom-radio custom-control-inline">
                         <input type="radio" value="{{$migration_page->id}}" id="migration_page_{{$migration_page->id}}" name="migration_page_id" class="custom-control-input">
+                        {{-- 取り込み済み移行データ名（＝移行先ページ名） --}}
                         <label class="custom-control-label" for="migration_page_{{$migration_page->id}}">{{$migration_page->page_name}}</label>
+                        {{-- ページ毎のディレクトリ更新日時を表示 --}}
+                        <span class="ml-2 mr-2">({{ Carbon::createFromTimestamp(Storage::lastModified('migration/import/pages/' . $migration_page->id))->format('Y/m/d H:i:s') }})</span>
+                        {{-- 削除ボタン --}}
                         <a href="#" onClick="submit_migration_file_delete({{$migration_page->id}});"><i class="fas fa-trash-alt mt-1 ml-1"></i></a>
                     </div>
                     <br />
