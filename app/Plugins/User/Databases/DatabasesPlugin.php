@@ -51,6 +51,7 @@ use App\Enums\DatabaseSortFlag;
 use App\Enums\Required;
 use App\Enums\DatabaseNoticeEmbeddedTag;
 use App\Enums\StatusType;
+use App\Models\Common\Categories;
 use App\Models\Core\FrameConfig;
 
 /**
@@ -433,14 +434,17 @@ class DatabasesPlugin extends UserPluginBase
             // ソート(セッションがあれば優先。なければ初期値を使用)
             $sort_column_id = '';
             $sort_column_order = '';
+            $sort_column_option = '';
             if (session('sort_column_id.'.$frame_id) && session('sort_column_order.'.$frame_id)) {
                 $sort_column_id = session('sort_column_id.'.$frame_id);
                 $sort_column_order = session('sort_column_order.'.$frame_id);
+                $sort_column_option = session('sort_column_option.'.$frame_id);
             } elseif ($databases_frames && $databases_frames->default_sort_flag) {
                 $sort_flag = explode('_', $databases_frames->default_sort_flag);
-                if (count($sort_flag) == 2) {
+                if (count($sort_flag) >= 2) {
                     $sort_column_id = $sort_flag[0];
                     $sort_column_order = $sort_flag[1];
+                    $sort_column_option = $sort_flag[2] ?? '';
                 }
             }
 
@@ -449,7 +453,7 @@ class DatabasesPlugin extends UserPluginBase
 
             // ソートなし or ソートするカラムIDが数値じゃない（=入力なしと同じ扱いにする）
             if (empty($sort_column_id) || !ctype_digit($sort_column_id)) {
-                $inputs_query = DatabasesInputs::where('databases_id', $database->id);
+                $inputs_query = DatabasesInputs::select('databases_inputs.*')->where('databases_id', $database->id);
             } else {
                 // ソートあり
                 $inputs_query = DatabasesInputs::select('databases_inputs.*', 'databases_input_cols.value')
@@ -458,6 +462,10 @@ class DatabasesPlugin extends UserPluginBase
                                                          ->where('databases_input_cols.databases_columns_id', '=', $sort_column_id);
                                                 })
                                                ->where('databases_id', $database->id);
+                // ダウンロード件数でのソート
+                if ($sort_column_option === 'downloadcount') {
+                    $inputs_query = $inputs_query->leftjoin('uploads', 'databases_input_cols.value', 'uploads.id');
+                }
             }
 
             // 権限によって表示する記事を絞る
@@ -465,6 +473,11 @@ class DatabasesPlugin extends UserPluginBase
 
             // 権限によって非表示columのdatabases_columns_id配列を取得する
             $hide_columns_ids = (new DatabasesTool())->getHideColumnsIds($columns, 'list_detail_display_flag');
+
+            // カテゴリ
+            $inputs_query = $inputs_query->leftJoin('categories', 'categories.id', '=', 'databases_inputs.categories_id')
+                                ->addSelect('categories.classname as category_classname')
+                                ->addSelect('categories.category as category');
 
             $databases_columns_ids = [];
             foreach ($databases_columns as $databases_column) {
@@ -725,9 +738,17 @@ class DatabasesPlugin extends UserPluginBase
             } elseif ($sort_column_id == DatabaseSortFlag::posted && $sort_column_order == DatabaseSortFlag::order_desc) {
                 $inputs_query->orderBy('databases_inputs.posted_at', 'desc');
             } elseif ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == DatabaseSortFlag::order_asc) {
-                $inputs_query->orderBy('databases_input_cols.value', 'asc');
+                if ($sort_column_option === 'downloadcount') {
+                    $inputs_query->orderBy('uploads.download_count', 'asc');
+                } else {
+                    $inputs_query->orderBy('databases_input_cols.value', 'asc');
+                }
             } elseif ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == DatabaseSortFlag::order_desc) {
-                $inputs_query->orderBy('databases_input_cols.value', 'desc');
+                if ($sort_column_option === 'downloadcount') {
+                    $inputs_query->orderBy('uploads.download_count', 'desc');
+                } else {
+                    $inputs_query->orderBy('databases_input_cols.value', 'desc');
+                }
             }
             $inputs_query->orderBy('databases_inputs.id', 'asc');
 
@@ -983,12 +1004,15 @@ class DatabasesPlugin extends UserPluginBase
             if (count($sort_column_parts) == 1) {
                 session(['sort_column_id.'.$frame_id    => $sort_column_parts[0]]);
                 session(['sort_column_order.'.$frame_id => '']);
-            } elseif (count($sort_column_parts) == 2) {
+                session(['sort_column_option.'.$frame_id => '']);
+            } elseif (count($sort_column_parts) >= 2) {
                 session(['sort_column_id.'.$frame_id    => $sort_column_parts[0]]);
                 session(['sort_column_order.'.$frame_id => $sort_column_parts[1]]);
+                session(['sort_column_option.'.$frame_id => $sort_column_parts[2] ?? '']);
             } else {
                 session(['sort_column_id.'.$frame_id    => '']);
                 session(['sort_column_order.'.$frame_id => '']);
+                session(['sort_column_option.'.$frame_id => '']);
             }
             // var_dump($sort_column_parts);
 
@@ -1117,6 +1141,9 @@ class DatabasesPlugin extends UserPluginBase
             $input_cols = $this->getDatabasesInputCols($id);
         }
 
+        // カテゴリ
+        $databases_categories = Categories::getInputCategories($this->frame->plugin_name, $database->id);
+
         // 表示テンプレートを呼び出す。
         return $this->view('databases_input', [
             'request'  => $request,
@@ -1129,6 +1156,7 @@ class DatabasesPlugin extends UserPluginBase
             'inputs'      => $inputs,
             'is_hide_posted' => $is_hide_posted,
             'errors'      => $errors,
+            'databases_categories' => $databases_categories,
         ]);
     }
 
@@ -1301,9 +1329,11 @@ class DatabasesPlugin extends UserPluginBase
         $validator_array['column']['posted_at']         = ['required', 'date_format:Y-m-d H:i'];
         $validator_array['column']['expires_at']        = ['nullable', 'date_format:Y-m-d H:i', 'after:posted_at'];
         $validator_array['column']['display_sequence']  = ['nullable', 'numeric'];
+        $validator_array['column']['categories_id'] = ['nullable', 'exists:categories,id'];
         $validator_array['message']['posted_at']        = '公開日時';
         $validator_array['message']['expires_at']       = '公開終了日時';
         $validator_array['message']['display_sequence'] = '表示順';
+        $validator_array['message']['categories_id'] = 'カテゴリ';
 
         // --- 入力値変換
         // 入力値をトリム
@@ -1454,6 +1484,9 @@ class DatabasesPlugin extends UserPluginBase
                 }
             }
         }
+
+        // カテゴリ
+        $databases_categories = Categories::getInputCategories($this->frame->plugin_name, $database->id);
         //print_r($delete_upload_column_ids);
         //print_r($uploads);
         // 表示テンプレートを呼び出す。
@@ -1466,6 +1499,7 @@ class DatabasesPlugin extends UserPluginBase
             'uploads'                  => $uploads,
             'delete_upload_column_ids' => $delete_upload_column_ids,
             'is_hide_posted'           => $is_hide_posted,
+            'databases_categories' => $databases_categories,
         ]);
     }
 
@@ -1504,6 +1538,7 @@ class DatabasesPlugin extends UserPluginBase
             $databases_inputs->display_sequence = $display_sequence;
             $databases_inputs->posted_at = $request->posted_at . ':00';
             $databases_inputs->expires_at = $request->filled('expires_at') ? $request->expires_at . ':00' : null;
+            $databases_inputs->categories_id = $request->categories_id;
             $databases_inputs->save();
         } else {
             $databases_inputs = DatabasesInputs::where('id', $id)->first();
@@ -1517,6 +1552,7 @@ class DatabasesPlugin extends UserPluginBase
             $databases_inputs->display_sequence = $display_sequence;
             $databases_inputs->posted_at = $request->posted_at . ':00';
             $databases_inputs->expires_at = $request->filled('expires_at') ? $request->expires_at . ':00' : null;
+            $databases_inputs->categories_id = $request->categories_id;
             $databases_inputs->update();
         }
 
@@ -2714,6 +2750,8 @@ class DatabasesPlugin extends UserPluginBase
         $column->show_download_count = (empty($request->show_download_count)) ? 0 : $request->show_download_count;
         // ダウンロードボタンを表示する
         $column->show_download_button = (empty($request->show_download_button)) ? 0 : $request->show_download_button;
+        // ダウンロード件数で並び替え
+        $column->sort_download_count = (empty($request->sort_download_count)) ? 0 : $request->sort_download_count;
         // 行グループ
         $column->row_group = $request->row_group;
         // 列グループ
@@ -4075,8 +4113,8 @@ AND databases_inputs.posted_at <= NOW()
                 DB::raw('null                  as important'),
                 'databases_inputs.posted_at    as posted_at',
                 'databases_inputs.created_name as posted_name',
-                DB::raw('null                  as classname'),
-                DB::raw('null                  as category'),
+                'categories.classname as classname',
+                'categories.category as category',
                 DB::raw('"databases"           as plugin_name')
             )
             ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
@@ -4113,6 +4151,8 @@ AND databases_inputs.posted_at <= NOW()
                 $leftJoin->on('databases_inputs.id', '=', 'input_cols_image.databases_inputs_id')
                             ->on('columns_image.id', '=', 'input_cols_image.databases_columns_id');
             })
+            // カテゴリ
+            ->leftJoin('categories', 'categories.id', '=', 'databases_inputs.categories_id')
 
             ->where('databases_inputs.status', StatusType::active)
             ->where(function ($query) {
@@ -4162,11 +4202,11 @@ AND databases_inputs.posted_at <= NOW()
                 'pages.permanent_link        as permanent_link',
                 'databases_input_cols.value  as post_title',
                 DB::raw('0 as important'),
-                'databases_inputs.created_at as posted_at',
-                DB::raw('null as posted_name'),
-                DB::raw('null as classname'),
-                DB::raw('null as categories_id'),
-                DB::raw('null as category'),
+                'databases_inputs.posted_at as posted_at',
+                'databases_inputs.created_name as posted_name',
+                'categories.classname as classname',
+                'categories.id as categories_id',
+                'categories.category as category',
                 DB::raw('"databases" as plugin_name')
             )
             ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
@@ -4182,6 +4222,8 @@ AND databases_inputs.posted_at <= NOW()
                 $leftJoin->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
                     ->on('databases_columns.id', '=', 'databases_input_cols.databases_columns_id');
             })
+            // カテゴリ
+            ->leftJoin('categories', 'categories.id', '=', 'databases_inputs.categories_id')
             ->where('databases_inputs.status', StatusType::active)
             ->where('databases_inputs.posted_at', '<=', Carbon::now())
             ->where(function ($query) {
@@ -4269,5 +4311,66 @@ AND databases_inputs.posted_at <= NOW()
         }
 
         return $columns_selects;
+    }
+
+    /**
+     * カテゴリ表示関数
+     *
+     * @method_title カテゴリ
+     * @method_desc FAQで使用するカテゴリを設定します。
+     * @method_detail 共通カテゴリの選択、もしくはFAQ独自のカテゴリを登録します。
+     */
+    public function listCategories($request, $page_id, $frame_id, $id = null)
+    {
+        // FAQ
+        $database_frame = $this->getDatabaseFrame($frame_id);
+
+        // 共通カテゴリ
+        $general_categories = Categories::getGeneralCategories($this->frame->plugin_name, $database_frame->databases_id);
+
+        // 個別カテゴリ（プラグイン）
+        $plugin_categories = Categories::getPluginCategories($this->frame->plugin_name, $database_frame->databases_id);
+
+        // 表示テンプレートを呼び出す。
+        return $this->view('databases_list_categories', [
+            'general_categories' => $general_categories,
+            'plugin_categories' => $plugin_categories,
+            'database_frame' => $database_frame,
+        ]);
+    }
+
+    /**
+     *  カテゴリ登録処理
+     */
+    public function saveCategories($request, $page_id, $frame_id, $id = null)
+    {
+        /* エラーチェック
+        ------------------------------------ */
+
+        $validator = Categories::validatePluginCategories($request);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        /* カテゴリ追加
+        ------------------------------------ */
+
+        // FAQ
+        $database_frame = $this->getDatabaseFrame($frame_id);
+
+        Categories::savePluginCategories($request, $this->frame->plugin_name, $database_frame->databases_id);
+
+        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+    }
+
+    /**
+     *  カテゴリ削除処理
+     */
+    public function deleteCategories($request, $page_id, $frame_id, $id = null)
+    {
+        Categories::deleteCategories($this->frame->plugin_name, $id);
+
+        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 }

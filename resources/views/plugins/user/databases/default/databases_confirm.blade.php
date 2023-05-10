@@ -198,6 +198,18 @@
         </div>
     @endif
 
+    <div class="form-group row">
+        <label class="col-sm-3 control-label text-nowrap">カテゴリ</label>
+        <div class="col-sm-9">
+            @php
+                $category = $databases_categories->where('id', $request->categories_id)->first();
+                $category_name = $category ? $category->category : null;
+            @endphp
+            {{$category_name}}
+            <input name="categories_id" class="form-control" type="hidden" value="{{$request->categories_id}}">
+        </div>
+    </div>
+
     {{-- ボタンエリア --}}
     <div class="form-group text-center">
         <button type="button" class="btn btn-secondary mr-2" onclick="submit_databases_cancel();"><i class="fas fa-chevron-left"></i> 前へ</button>

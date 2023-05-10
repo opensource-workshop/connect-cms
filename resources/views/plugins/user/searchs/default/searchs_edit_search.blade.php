@@ -172,7 +172,7 @@
             <div class="form-group row">
                 <div class="{{$frame->getSettingLabelClass()}}"></div>
                 <div class="{{$frame->getSettingInputClass()}}">
-                    <small class="text-muted">※ 「選択したものだけ表示する」を選択した場合、「固定記事」は検索対象外になります。</small>
+                    <small class="text-muted">※ 「選択したものだけ表示する」を選択した場合、「固定記事」は検索対象外になります。</small><br>
                 </div>
             </div>
 

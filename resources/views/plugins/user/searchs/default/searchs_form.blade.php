@@ -7,8 +7,11 @@
 --}}
 <form action="{{url('/')}}/plugin/searchs/search/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="post" name="form_approval" class="d-inline" role="search" aria-label="{{$searchs_frame->search_name}}">
     {{ csrf_field() }}
-
     <div class="input-group">
+        {{-- ページ配下の絞込み --}}
+        @if (old('narrow_down_page_id'))
+            <input type="hidden" name="narrow_down_page_id" value="{{ old('narrow_down_page_id') }}">
+        @endif
         <input type="text" name="search_keyword" class="form-control" value="{{old('search_keyword')}}" placeholder="検索はキーワードを入力してください。" title="検索キーワード" />
         <div class="input-group-append">
             <button type="submit" class="btn btn-primary" title="検索" id="button_search">

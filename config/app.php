@@ -320,6 +320,7 @@ $app_array = [
         'FaqSequenceConditionType' => \App\Enums\FaqSequenceConditionType::class,
         'DatabaseFrameConfig' => \App\Enums\DatabaseFrameConfig::class,
         'FormMode' => \App\Enums\FormMode::class,
+        'FormsRegisterTargetPlugin' => \App\Enums\FormsRegisterTargetPlugin::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

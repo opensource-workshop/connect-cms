@@ -43,4 +43,16 @@ class Forms extends Model
         'numbering_use_flag',
         'numbering_prefix'
     ];
+
+    /**
+     *  指定したFrame が表示対象か判定
+     *
+     */
+    public function isTargetFrame($frame_id)
+    {
+        if (in_array($frame_id, explode(',', $this->target_frame_ids))) {
+            return true;
+        }
+        return false;
+    }
 }

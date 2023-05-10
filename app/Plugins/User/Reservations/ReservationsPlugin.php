@@ -269,7 +269,7 @@ class ReservationsPlugin extends UserPluginBase
         $facility_display_type = FrameConfig::getConfigValue($this->frame_configs, ReservationFrameConfig::facility_display_type, FacilityDisplayType::all);
         $initial_facility = null;
         if ($facility_display_type == FacilityDisplayType::only) {
-            $initial_facility = (int) session('initial_facility'. $frame_id, FrameConfig::getConfigValue($this->frame_configs, ReservationFrameConfig::initial_facility));
+            $initial_facility = (int) session('initial_facility'. $frame_id) ?? FrameConfig::getConfigValue($this->frame_configs, ReservationFrameConfig::initial_facility);
         }
 
         // 予約データ
@@ -450,6 +450,9 @@ class ReservationsPlugin extends UserPluginBase
             $calendar['calendar_cells'] = $calendar_cells;
             $calendars[$facility->facility_name] = $calendar;
         }
+
+// \Log::error('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+// \Log::error(var_export($initial_facility, true));
 
         // 必要なデータ揃っているか確認
         // フレームに紐づいた施設予約親データが存在すること

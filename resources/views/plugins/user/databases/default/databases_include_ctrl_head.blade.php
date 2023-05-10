@@ -131,17 +131,20 @@
             @php
                 $sort_column_id = '';
                 $sort_column_order = '';
+                $sort_column_option = '';
 
                 // 並べ替え項目をセッション優先、次に初期値で変数に整理（選択肢のselected のため）
                 if (Session::get('sort_column_id.'.$frame_id) && Session::get('sort_column_order.'.$frame_id)) {
                     $sort_column_id = Session::get('sort_column_id.'.$frame_id);
                     $sort_column_order = Session::get('sort_column_order.'.$frame_id);
+                    $sort_column_option = Session::get('sort_column_option.'.$frame_id);
                 }
                 else if ($databases_frames && $databases_frames->default_sort_flag) {
                     $default_sort_flag_part = explode('_', $databases_frames->default_sort_flag);
-                    if (count($default_sort_flag_part) == 2) {
+                    if (count($default_sort_flag_part) >= 2) {
                         $sort_column_id = $default_sort_flag_part[0];
                         $sort_column_order = $default_sort_flag_part[1];
+                        $sort_column_option = $default_sort_flag_part[2] ?? '';
                     }
                 }
             @endphp
@@ -163,12 +166,17 @@
                         {{-- 1:昇順＆降順、2:昇順のみ、3:降順のみ --}}
                         @foreach($sort_columns as $sort_column)
 
+                            @php
+                                $sort_option = $sort_column->sort_download_count ? '_downloadcount' : null;
+                                $sort_option_name = $sort_column->sort_download_count ? 'ダウンロード数' : null;
+                            @endphp
+
                             @if($sort_column->sort_flag == 1 || $sort_column->sort_flag == 2)
-                                <option value="{{$sort_column->id}}_asc" @if($sort_column->id == $sort_column_id && $sort_column_order == 'asc') selected @endif>{{  $sort_column->column_name  }}(昇順)</option>
+                                <option value="{{$sort_column->id}}_asc{{$sort_option}}" @if($sort_column->id == $sort_column_id && $sort_column_order == 'asc') selected @endif>{{  $sort_column->column_name  }}{{ $sort_option_name }}(昇順)</option>
                             @endif
 
                             @if($sort_column->sort_flag == 1 || $sort_column->sort_flag == 3)
-                                <option value="{{$sort_column->id}}_desc" @if($sort_column->id == $sort_column_id && $sort_column_order == 'desc') selected @endif>{{  $sort_column->column_name  }}(降順)</option>
+                                <option value="{{$sort_column->id}}_desc{{$sort_option}}" @if($sort_column->id == $sort_column_id && $sort_column_order == 'desc') selected @endif>{{  $sort_column->column_name  }}{{ $sort_option_name }}(降順)</option>
                             @endif
 
                         @endforeach
