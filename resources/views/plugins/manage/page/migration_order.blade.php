@@ -22,6 +22,15 @@
 
     <div class="card-body">
 
+        <div class="alert alert-danger" style="margin-top: 10px;">
+            <h1>本機能（Webスクレイピング）を利用するに当たっての注意点</h1>
+            <ul>
+                <li>Webスクレイピングは、対象サイトの利用規約に違反する場合があります。必ず対象サイトの利用規約を確認し、遵守してください。</li>
+                <li>スクレイピングによってサイトへ負荷をかけすぎるとサーバに負荷がかかり、サイトがダウンすることがあります。負荷をかけすぎないようにご注意ください。本機能では「{{ $request_interval }}秒に1回まで」の制限を設けています。</li>
+                <li>スクレイピング結果を使用する場合、利用規約や著作権に関する法律に従って使用するようにしてください。不正使用は法的な責任を問われることがあります。</li>
+            </ul>
+        </div>
+
         <div class="alert alert-info" style="margin-top: 10px;">
             移行先ページ名：{{$current_page->page_name}}
         </div>
@@ -84,6 +93,7 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-check"></i> データ取り込み
                     </button>
+                    @if ($errors && $errors->has('request_interval')) <div class="text-danger">{{$errors->first('request_interval')}}</div> @endif
                 </div>
             </div>
         </form>

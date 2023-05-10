@@ -7,6 +7,7 @@ namespace App\Plugins\Manage\PageManage;
 use App\Enums\WebsiteType;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 use DB;
 
@@ -45,6 +46,9 @@ class PageManage extends ManagePluginBase
 {
     // 移行用ライブラリ
     use MigrationTrait, MigrationExportNc3PageTrait, MigrationExportHtmlPageTrait;
+
+    // 外部ページインポート（Webスクレイピング）リクエスト間隔（秒）を指定
+    protected $request_interval = 10;
 
     /**
      * 権限定義
@@ -729,6 +733,7 @@ class PageManage extends ManagePluginBase
             "page"            => $current_page,  // bugfix: サブメニュー表示するのにpage変数必要
             "pages"           => $pages,
             "migration_pages" => $migration_pages,
+            "request_interval" => $this->request_interval,
         ]);
     }
 
@@ -778,6 +783,23 @@ class PageManage extends ManagePluginBase
                        ->withInput();
         }
 
+        /**
+         * リクエスト間隔チェック
+         */
+        // 最後にリクエストを送信した時間を記録するファイルのパスを指定
+        $last_request_time_file = 'migration/import/migration_last_request_time.txt';
+
+        // 最後にリクエストを送信した時間をファイルから読み込む
+        $last_request_time = Storage::exists($last_request_time_file) ? intval(Storage::get($last_request_time_file)) : null;
+
+        // 前回のリクエストから一定時間経過していない場合は、エラーメッセージを追加
+        if ($last_request_time !== null && (time() - $last_request_time) < $this->request_interval) {
+            $validator->errors()->add('request_interval', 'リクエスト間隔が短すぎます。しばらく時間を置いてから再度ボタンを押下してください。');
+            return redirect('manage/page/migrationOrder/' . $page_id)
+                       ->withErrors($validator)
+                       ->withInput();
+        }
+
         // 移行元システムによって処理を分岐
         if ($request->source_system == WebsiteType::netcommons2) {
             // TODO: netcommons2 からの移行
@@ -788,6 +810,9 @@ class PageManage extends ManagePluginBase
             // html からの移行
             $this->migrationHtmlPage($request->url, $request->destination_page_id);
         }
+
+        // リクエストを送信した時間をファイルに書き込む
+        Storage::put($last_request_time_file, time());
 
         // 指示された画面に戻る。
         return $this->migrationOrder($request, $page_id);
