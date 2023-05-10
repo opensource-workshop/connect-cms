@@ -119,7 +119,7 @@ class SearchsPlugin extends UserPluginBase
     /**
      * 検索結果の取得
      */
-    private function searchContents($request, $searchs_frame, $method = null)
+    private function searchContents($request, $searchs_frame, $method = null, $narrow_down = null)
     {
         // 検索がまだできていない場合
         if (!$searchs_frame || empty($searchs_frame->id)) {
@@ -173,9 +173,19 @@ class SearchsPlugin extends UserPluginBase
         // 各プラグインのSQL をUNION
         foreach ($union_sqls as $union_sql) {
             // フレームの選択が行われる場合
+            // 選択したものだけ表示する
             if ($searchs_frame->frame_select == 1) {
                 $union_sql->whereIn('frames.id', explode(',', $searchs_frame->target_frame_ids));
             }
+
+            // 固定記事でサイト検索が作られることを想定してnarrow_down_page_idにサイト検索元のページIDを指定する
+            // 指定ページ以下に絞って検索する
+            if ($request->narrow_down_page_id) {
+                $page_ids = Page::findOrNew($request->narrow_down_page_id)->descendants()->pluck('id');
+                $page_ids->push($request->narrow_down_page_id);
+                $union_sql->whereIn('pages.id', $page_ids);
+            }
+
             $searchs_sql->unionAll($union_sql);
         }
 
@@ -250,7 +260,7 @@ class SearchsPlugin extends UserPluginBase
         $searchs_frame = $this->getSearchsFrame($frame_id);
 
         // 新着の一覧取得
-        list($searchs_results, $link_pattern, $link_base) = $this->searchContents($request, $searchs_frame);
+        list($searchs_results, $link_pattern, $link_base) = $this->searchContents($request, $searchs_frame, null, $request->narrow_down);
 
         // 表示テンプレートを呼び出す。
         return $this->view(

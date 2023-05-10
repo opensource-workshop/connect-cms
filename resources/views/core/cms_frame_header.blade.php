@@ -59,20 +59,27 @@ if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null
 
     {{-- フレームタイトル --}}
     {{$frame->frame_title}}
-    @if (Auth::check() && $frame->default_hidden)
-        <small><span class="badge badge-warning">初期非表示</span></small>
-    @endif
 
-    @if (Auth::check() && $frame->none_hidden)
-        <small><span class="badge badge-warning">データがない場合は非表示</span></small>
-    @endif
+    {{-- 各ステータスラベルは、ログインしている＆プラグイン管理者＆プレビューモードではない状態の時のみ表示 --}}
+    @if (Auth::check() &&
+        Auth::user()->can('role_arrangement') &&
+        app('request')->input('mode') != 'preview')
 
-    @if (Auth::check() && $frame->page_only == 1 && $page->id == $frame->page_id)
-        <small><span class="badge badge-warning">このページのみ表示する。</span></small>
-    @endif
+        @if ($frame->default_hidden)
+            <small><span class="badge badge-warning">初期非表示</span></small>
+        @endif
 
-    @if (Auth::check() && $frame->page_only == 2 && $page->id == $frame->page_id)
-        <small><span class="badge badge-warning">このページのみ表示しない。</span></small>
+        @if ($frame->none_hidden)
+            <small><span class="badge badge-warning">データがない場合は非表示</span></small>
+        @endif
+
+        @if ($frame->page_only == 1 && $page->id == $frame->page_id)
+            <small><span class="badge badge-warning">このページのみ表示する。</span></small>
+        @endif
+
+        @if ($frame->page_only == 2 && $page->id == $frame->page_id)
+            <small><span class="badge badge-warning">このページのみ表示しない。</span></small>
+        @endif
     @endif
 
     {{-- 公開以外の場合にステータス表示 ※デフォルト状態の公開もステータス表示すると画面表示が煩雑になる為、意識的な設定（非公開、又は、限定公開）のみステータス表示を行う --}}

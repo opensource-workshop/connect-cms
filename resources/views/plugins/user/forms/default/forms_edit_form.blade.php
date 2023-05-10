@@ -466,6 +466,50 @@
         </div>
     </div>
 
+    <hr>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">他プラグイン連携</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-checkbox">
+                <input type="hidden" name="other_plugins_register_use_flag" value="0">
+                <input type="checkbox" name="other_plugins_register_use_flag" value="1" class="custom-control-input" id="other_plugins_register_use_flag" @if(old('other_plugins_register_use_flag', $form->other_plugins_register_use_flag)) checked=checked @endif>
+                <label class="custom-control-label" for="other_plugins_register_use_flag">他プラグイン連携機能を使用する</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">対象ページ - フレーム</label>
+        <div class="{{$frame->getSettingInputClass(false, true)}}">
+            <ul class="nav nav-pills" role="tablist">
+                @foreach(FormsRegisterTargetPlugin::getPluginsCanSpecifiedFrames() as $target_plugin => $target_plugin_full)
+                    <li class="nav-item">
+                        <a href="#{{$target_plugin}}{{$frame->id}}" class="nav-link @if($loop->first) active @endif" data-toggle="tab" role="tab">{{$target_plugin_full}}</a>
+                    </li>
+                @endforeach
+            </ul>
+
+            <div class="tab-content">
+                @foreach(FormsRegisterTargetPlugin::getPluginsCanSpecifiedFrames() as $target_plugin => $target_plugin_full)
+                    <div id="{{$target_plugin}}{{$frame->id}}" class="tab-pane card @if($loop->first) active @endif" role="tabpanel">
+                        <div class="card-body py-2 pl-3">
+                            @foreach($target_plugins_frames as $target_plugins_frame)
+                                @if ($target_plugins_frame->plugin_name == $target_plugin)
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" name="target_frame_ids[{{$target_plugins_frame->id}}]" value="{{$target_plugins_frame->id}}" class="custom-control-input" id="target_plugins_frame_{{$target_plugins_frame->id}}" @if(old("target_frame_ids.$target_plugins_frame->id", $form->isTargetFrame($target_plugins_frame->id))) checked=checked @endif>
+                                        <label class="custom-control-label" for="target_plugins_frame_{{$target_plugins_frame->id}}">{{$target_plugins_frame->page_name}} - {{$target_plugins_frame->frame_title}}</label>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                @endforeach
+                @if ($errors && $errors->has('target_plugins_frames')) <div class="text-danger">{{$errors->first('target_plugins_frames')}}</div> @endif
+            </div>
+        </div>
+    </div>
+
     {{-- Submitボタン --}}
     <div class="form-group text-center">
         <div class="row">

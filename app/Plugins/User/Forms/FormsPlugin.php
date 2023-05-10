@@ -39,9 +39,17 @@ use App\Enums\Bs4TextColor;
 use App\Enums\CsvCharacterCode;
 use App\Enums\FormColumnType;
 use App\Enums\FormMode;
+use App\Enums\FormsRegisterTargetPlugin;
 use App\Enums\FormStatusType;
 use App\Enums\PluginName;
 use App\Enums\Required;
+use App\Enums\StatusType;
+use App\Models\User\Bbses\Bbs;
+use App\Models\User\Bbses\BbsPost;
+use App\Models\User\Blogs\Blogs;
+use App\Models\User\Blogs\BlogsPosts;
+use App\Models\User\Faqs\Faqs;
+use App\Models\User\Faqs\FaqsPosts;
 
 /**
  * フォーム・プラグイン
@@ -99,6 +107,7 @@ class FormsPlugin extends UserPluginBase
             'storeInput',
             'copyForm',
             'downloadCsvAggregate',
+            'registerOtherPlugins',
         ];
         return $functions;
     }
@@ -121,6 +130,7 @@ class FormsPlugin extends UserPluginBase
         $role_check_table["copyForm"]             = ['buckets.create'];
         $role_check_table["aggregate"]            = ['role_article'];
         $role_check_table["downloadCsvAggregate"] = ['role_article'];
+        $role_check_table["registerOtherPlugins"] = ['role_article'];
         return $role_check_table;
     }
 
@@ -1529,11 +1539,15 @@ class FormsPlugin extends UserPluginBase
         $form->tmp_entry_count = $tmp_entry_count;
         $form->active_entry_count = $active_entry_count;
 
+        // 選択できるフレームの一覧
+        $target_plugins_frames = $this->getTargetPluginsFrames();
+
         // 表示テンプレートを呼び出す。
         return $this->view('forms_edit_form', [
             'form_frame'  => $form_frame,
             'form'        => $form,
             'create_flag' => $create_flag,
+            'target_plugins_frames' => $target_plugins_frames,
             'message'     => $message,
             'errors'      => $errors,
         ])->withInput($request->all);
@@ -1691,6 +1705,8 @@ class FormsPlugin extends UserPluginBase
         $forms->after_message       = $this->clean($request->after_message);
         $forms->numbering_use_flag  = empty($request->numbering_use_flag) ? 0 : $request->numbering_use_flag;
         $forms->numbering_prefix    = $request->numbering_prefix;
+        $forms->other_plugins_register_use_flag  = empty($request->other_plugins_register_use_flag) ? 0 : $request->other_plugins_register_use_flag;
+        $forms->target_frame_ids = empty($request->target_frame_ids) ? "": implode(',', $request->target_frame_ids);
 
         // データ保存
         $forms->save();
@@ -2674,6 +2690,214 @@ ORDER BY forms_inputs_id, forms_columns_id
                 $copy_form_column_select->save();
             }
         }
+    }
+
+    /**
+     * 他プラグイン連携機能
+     */
+    public function registerOtherPlugins($request, $page_id, $frame_id, $form_inputs_id)
+    {
+        // 有効のステータスのみ連携可能
+        $form_input = FormsInputs::where('id', $form_inputs_id)->where('status', FormStatusType::active)->first();
+
+        // パラメータ不正
+        if (!isset($form_input)) {
+            Log::debug('form_inputs_id is not found or not active.');
+            return;
+        }
+
+        $form = Forms::find($form_input->forms_id);
+        // 他プラグイン連携未設定はどうしようもない
+        if ($form->other_plugins_register_use_flag == 0 || empty($form->target_frame_ids)) {
+            Log::debug($form->target_frame_ids);
+            return;
+        }
+
+        // 登録処理
+        foreach ($this->fetchTargetFrames(explode(',', $form->target_frame_ids)) as $frame) {
+            // バケツ未指定は連携できない
+            if (!$frame->bucket_id) {
+                Log::debug('bucket_id is null.');
+                continue;
+            }
+
+            switch ($frame->plugin_name) {
+                case PluginName::getPluginName(PluginName::bbses):
+                    $this->toBbs($frame->bucket_id, $this->fetchFormInputValues($form_inputs_id), $form);
+                    break;
+                case PluginName::getPluginName(PluginName::blogs):
+                    $this->toBlog($frame->bucket_id, $this->fetchFormInputValues($form_inputs_id), $form);
+                    break;
+                case PluginName::getPluginName(PluginName::faqs):
+                    $this->toFaq($frame->bucket_id, $this->fetchFormInputValues($form_inputs_id), $form);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        $request->flash_message = '登録内容を他プラグインへ連携しました。連携した情報は連携先で一時保存状態になっています。登録内容を確認して公開してください。';
+    }
+
+    /**
+     * 他プラグイン連携対象のフレームを取得する
+     *
+     * @param array $target_frame_ids
+     * @return Collection
+     */
+    private function fetchTargetFrames(array $target_frame_ids): Collection
+    {
+        return Frame::select('plugin_name', 'bucket_id')
+            ->whereIn('id', $target_frame_ids)
+            ->whereIn('plugin_name', FormsRegisterTargetPlugin::getKeysPluginsCanSpecifiedFrames())
+            ->groupBy('plugin_name', 'bucket_id')
+            ->get();
+    }
+
+    /**
+     * 本文用にフォーム登録データを取得する
+     *
+     * @param array $target_frame_ids
+     * @return Collection
+     */
+    private function fetchFormInputValues(int $form_inputs_id): Collection
+    {
+        $input_values = FormsInputs::select('forms_columns.column_name', 'forms_input_cols.value')
+            ->leftJoin('forms_input_cols', 'forms_inputs.id', '=', 'forms_input_cols.forms_inputs_id')
+            ->leftJoin('forms_columns', 'forms_input_cols.forms_columns_id', '=', 'forms_columns.id')
+            ->where('forms_inputs.id', $form_inputs_id)
+            ->orderBy('display_sequence')
+            ->get();
+
+
+        return $input_values;
+    }
+
+    /**
+     * フォーム登録データを掲示板に登録する
+     *
+     * @param int $bucket_id 登録先のバケツID
+     * @param Collection $input_values フォーム登録データ
+     * @param Forms $form
+     */
+    private function toBbs(int $bucket_id, Collection $input_values, Forms $form)
+    {
+        $bbs_id = Bbs::where('bucket_id', $bucket_id)->first()->id;
+
+        $post = BbsPost::create([
+            'bbs_id' => $bbs_id,
+            'title' => $this->getTitle($form->forms_name),
+            'body' => $this->getBody($input_values),
+            'status' => StatusType::temporary,
+            'thread_updated_at' => date('Y-m-d H:i:s'),
+            'created_id' => Auth::user()->id,
+        ]);
+        $post->thread_root_id = $post->id;
+        $post->save();
+    }
+
+    /**
+     * フォーム登録データをブログに登録する
+     *
+     * @param int $bucket_id 登録先のバケツID
+     * @param Collection $input_values フォーム登録データ
+     * @param Forms $form
+     */
+    private function toBlog(int $bucket_id, Collection $input_values, Forms $form)
+    {
+        $blogs_id = Blogs::where('bucket_id', $bucket_id)->first()->id;
+
+        $post = BlogsPosts::create([
+            'blogs_id' => $blogs_id,
+            'post_title' => $this->getTitle($form->forms_name),
+            'posted_at' => date('Y-m-d H:i:s'),
+            'post_text' => $this->getBody($input_values),
+            'read_more_flag' => 0,
+            'status' => StatusType::temporary,
+            'created_id' => Auth::user()->id,
+        ]);
+
+        $post->contents_id = $post->id;
+        $post->save();
+    }
+
+    /**
+     * フォーム登録データをFAQに登録する
+     *
+     * @param int $bucket_id 登録先のバケツID
+     * @param Collection $input_values フォーム登録データ
+     * @param Forms $form
+     */
+    private function toFaq(int $bucket_id, Collection $input_values, Forms $form)
+    {
+        $faqs_id = Faqs::where('bucket_id', $bucket_id)->first()->id;
+
+        $max_display_sequence = FaqsPosts::where('faqs_id', $faqs_id)->max('display_sequence');
+        $display_sequence = empty($max_display_sequence) ? 1 : $max_display_sequence + 1;
+
+        $post = FaqsPosts::create([
+            'faqs_id' => $faqs_id,
+            'post_title' => $this->getTitle($form->forms_name),
+            'posted_at' => date('Y-m-d H:i:s'),
+            'post_text' => $this->getBody($input_values),
+            'display_sequence' => $display_sequence,
+            'status' => StatusType::temporary,
+            'created_id' => Auth::user()->id,
+        ]);
+
+        $post->contents_id = $post->id;
+        $post->save();
+    }
+
+    /**
+     * 他プラグイン連携時の件名を取得する
+     *
+     * @param string $form_name
+     * @return string
+     */
+    private function getTitle(string $form_name): string
+    {
+        return "フォーム「{$form_name}」から連携";
+    }
+
+    /**
+     * 他プラグイン連携時の本文を取得する
+     *
+     * @param Collection $input_values フォーム登録データ
+     * @return string
+     */
+    private function getBody(Collection $input_values)
+    {
+        $body = '';
+
+        foreach ($input_values as $value) {
+            $body .= '<h1>';
+            $body .= htmlspecialchars($value->column_name);
+            $body .= '</h1>';
+            $body .= '<p>';
+            $body .= htmlspecialchars($value->value);
+            $body .= '</p>';
+        }
+
+        return $body;
+    }
+
+    /**
+     * 他プラグイン連携対象のプラグインがあるフレームデータの取得
+     */
+    private function getTargetPluginsFrames()
+    {
+        // Frame データ
+        $frames = Frame::select('frames.*', 'pages._lft', 'pages.page_name', 'buckets.bucket_name')
+            // ->whereIn('frames.plugin_name', array('blogs'))
+            ->whereIn('frames.plugin_name', FormsRegisterTargetPlugin::getKeysPluginsCanSpecifiedFrames())
+            ->leftJoin('buckets', 'frames.bucket_id', '=', 'buckets.id')
+            ->leftJoin('pages', 'frames.page_id', '=', 'pages.id')
+            // ->where('disable_searchs', 0)
+            ->orderBy('pages._lft', 'asc')
+            ->get();
+
+        return $frames;
     }
 
     /**
