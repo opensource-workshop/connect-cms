@@ -269,7 +269,7 @@ class ReservationsPlugin extends UserPluginBase
         $facility_display_type = FrameConfig::getConfigValue($this->frame_configs, ReservationFrameConfig::facility_display_type, FacilityDisplayType::all);
         $initial_facility = null;
         if ($facility_display_type == FacilityDisplayType::only) {
-            $initial_facility = (int) session('initial_facility'. $frame_id) ?? FrameConfig::getConfigValue($this->frame_configs, ReservationFrameConfig::initial_facility);
+            $initial_facility = session('initial_facility'. $frame_id) ?? FrameConfig::getConfigValue($this->frame_configs, ReservationFrameConfig::initial_facility);
         }
 
         // 予約データ
