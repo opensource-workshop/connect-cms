@@ -751,8 +751,11 @@ trait MigrationTrait
     /**
      * インポートする際の参照コンテンツ（画像、ファイル）の追加ディレクトリ取得
      */
-    private function getImportSrcDir($default = '/file/')
+    private function getImportSrcDir($default = null)
     {
+        if (is_null($default)) {
+            $default = url('/') . '/file/';
+        }
         $cc_import_add_src_dir = $this->getMigrationConfig('pages', 'cc_import_add_src_dir', '');
         return $cc_import_add_src_dir . $default ;
     }
