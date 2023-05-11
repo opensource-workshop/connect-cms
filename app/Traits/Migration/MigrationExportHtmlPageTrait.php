@@ -112,7 +112,7 @@ trait MigrationExportHtmlPageTrait
                 $img_extension = null;
 
                 // $image_path が絶対パスか相対パスか判別して、絶対パスの場合はそのまま、相対パスの場合はアクセスURLを組成する
-                if($this->isAbsoluteURL($image_path)) {
+                if ($this->isAbsoluteURL($image_path)) {
                     $download_img_path = $image_path;
                 } else {
                     // $image_pathがスラッシュで始まっている場合はルートURLと連結、そうでない場合はディレクトリまで含んだURLと連結
@@ -171,7 +171,7 @@ trait MigrationExportHtmlPageTrait
                 }
 
                 // ファイルが存在する、且つ、拡張子が取得できた場合、ファイル名に拡張子を付与して保存
-                if(Storage::exists($save_path) && $img_extension){
+                if (Storage::exists($save_path) && $img_extension) {
                     Storage::move($save_path, $save_path . '.' . $img_extension);
     
                     // 画像の設定情報の記載
