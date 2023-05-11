@@ -114,7 +114,7 @@ class UploadController extends ConnectController
             }
 
             // ファイルに閲覧権限がない場合
-            if (!$page->isView(Auth::user(), true, true, $page_roles)) {
+            if (!$page->isVisibleAncestorsAndSelf($page_tree)) {
                 return response()->download(storage_path(config('connect.forbidden_image_path')));
             }
 
