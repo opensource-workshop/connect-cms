@@ -27,8 +27,12 @@ trait MigrationExportHtmlPageTrait
 
     /**
      * ページのHTML取得
+     *
+     * @param string $url
+     * @param integer $page_id
+     * @return void
      */
-    private function migrationHtmlPage($url, $page_id)
+    private function migrationHtmlPage(string $url, int $page_id) : void
     {
         // マイグレーション用のディレクトリに$page_idのディレクトリが存在する場合は削除する
         if (Storage::exists("migration/import/pages/" . $page_id)) {
@@ -166,8 +170,8 @@ trait MigrationExportHtmlPageTrait
                         break;
                 }
 
-                // 拡張子が取得できた場合はファイル名に拡張子を付与して保存
-                if($img_extension){
+                // ファイルが存在する、且つ、拡張子が取得できた場合、ファイル名に拡張子を付与して保存
+                if(Storage::exists($save_path) && $img_extension){
                     Storage::move($save_path, $save_path . '.' . $img_extension);
     
                     // 画像の設定情報の記載
