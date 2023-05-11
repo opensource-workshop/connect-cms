@@ -229,7 +229,7 @@ trait MigrationExportHtmlPageTrait
       * @param string $url
       * @return boolean
       */
-    function isAbsoluteURL(string $url) : bool
+    private function isAbsoluteURL(string $url) : bool
     {
         return parse_url($url, PHP_URL_SCHEME) !== null;
     }
@@ -240,7 +240,7 @@ trait MigrationExportHtmlPageTrait
      * @param string $url
      * @return string
      */
-    function extractRootURL(string $url) : string
+    private function extractRootURL(string $url) : string
     {
         $parsed_url = parse_url($url);
         return $parsed_url['scheme'] . '://' . $parsed_url['host'];
@@ -252,7 +252,7 @@ trait MigrationExportHtmlPageTrait
      * @param string $url
      * @return string
      */
-    function extractUrlDirectory(string $url) : string
+    private function extractUrlDirectory(string $url) : string
     {
         $parsed_url = parse_url($url);
         $directory_url = $parsed_url['scheme'] . '://' . $parsed_url['host'] . $parsed_url['path'];
