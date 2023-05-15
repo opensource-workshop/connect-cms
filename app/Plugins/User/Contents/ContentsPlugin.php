@@ -258,7 +258,8 @@ class ContentsPlugin extends UserPluginBase
                        DB::raw('null as classname'),
                        DB::raw('null as categories_id'),
                        DB::raw('null as category'),
-                       DB::raw('"contents" as plugin_name')
+                       DB::raw('"contents" as plugin_name'),
+                       'contents.content_text as body'
                    )
                    ->join('frames', 'frames.bucket_id', '=', 'contents.bucket_id')
                    ->join('pages', 'pages.id', '=', 'frames.page_id')
