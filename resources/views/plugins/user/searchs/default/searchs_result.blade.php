@@ -46,7 +46,7 @@
             @endif
         </dd>
         {{-- 本文 半角160文字（全角80文字）まで 世の検索エンジンがだいたいこれくらい --}}
-        <dd class="text-secondary">
+        <dd class="text-secondary search-result-body">
             {!! mb_strimwidth(strip_tags($searchs_result->body), 0, 160, '…') !!}
         </dd>
     @endforeach
