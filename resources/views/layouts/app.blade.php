@@ -82,7 +82,7 @@ if (! isset($cc_configs)) {
     <link href="{{asset('fontawesome/css/all.min.css')}}" rel='stylesheet' type='text/css'>
 
     <!-- Scripts -->
-    <script src="{{asset('js/app.js')}}"></script>
+    <script src="{{ mix('/js/app.js') }}"></script>
 @if( App::environment(['local', 'staging']) )
     <script>Vue.config.devtools = true;</script>
 @endif
