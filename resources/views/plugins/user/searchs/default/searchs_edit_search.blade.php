@@ -72,7 +72,7 @@
                 <label class="{{$frame->getSettingLabelClass()}}">登録者の表示</label>
                 <div class="{{$frame->getSettingInputClass(true)}}">
                     <div class="custom-control custom-radio custom-control-inline">
-                        @if($searchs->view_posted_name == 1)
+                        @if(old('view_posted_name', $searchs->view_posted_name) == 1)
                             <input type="radio" value="1" id="view_posted_name_1" name="view_posted_name" class="custom-control-input" checked="checked">
                         @else
                             <input type="radio" value="1" id="view_posted_name_1" name="view_posted_name" class="custom-control-input">
@@ -80,7 +80,7 @@
                         <label class="custom-control-label" for="view_posted_name_1">表示する</label>
                     </div>
                     <div class="custom-control custom-radio custom-control-inline">
-                        @if($searchs->view_posted_name == 0)
+                        @if(old('view_posted_name', $searchs->view_posted_name) == 0)
                             <input type="radio" value="0" id="view_posted_name_0" name="view_posted_name" class="custom-control-input" checked="checked">
                         @else
                             <input type="radio" value="0" id="view_posted_name_0" name="view_posted_name" class="custom-control-input">
@@ -94,7 +94,7 @@
                 <label class="{{$frame->getSettingLabelClass()}}">登録日時の表示</label><br />
                 <div class="{{$frame->getSettingInputClass(true)}}">
                     <div class="custom-control custom-radio custom-control-inline">
-                        @if($searchs->view_posted_at == 1)
+                        @if(old('view_posted_at', $searchs->view_posted_at)  == 1)
                             <input type="radio" value="1" id="view_posted_at_1" name="view_posted_at" class="custom-control-input" checked="checked">
                         @else
                             <input type="radio" value="1" id="view_posted_at_1" name="view_posted_at" class="custom-control-input">
@@ -102,7 +102,7 @@
                         <label class="custom-control-label" for="view_posted_at_1">表示する</label>
                     </div>
                     <div class="custom-control custom-radio custom-control-inline">
-                        @if($searchs->view_posted_at == 0)
+                        @if(old('view_posted_at', $searchs->view_posted_at) == 0)
                             <input type="radio" value="0" id="view_posted_at_0" name="view_posted_at" class="custom-control-input" checked="checked">
                         @else
                             <input type="radio" value="0" id="view_posted_at_0" name="view_posted_at" class="custom-control-input">
@@ -129,7 +129,7 @@
                 <label class="{{$frame->getSettingLabelClass()}}">他ページからのキーワード</label><br />
                 <div class="{{$frame->getSettingInputClass(true)}}">
                     <div class="custom-control custom-radio custom-control-inline">
-                        @if($searchs->recieve_keyword == 1)
+                        @if(old('recieve_keyword', $searchs->recieve_keyword) == 1)
                             <input type="radio" value="1" id="recieve_keyword_1" name="recieve_keyword" class="custom-control-input" checked="checked">
                         @else
                             <input type="radio" value="1" id="recieve_keyword_1" name="recieve_keyword" class="custom-control-input">
@@ -137,7 +137,7 @@
                         <label class="custom-control-label" for="recieve_keyword_1">受け取る</label>
                     </div>
                     <div class="custom-control custom-radio custom-control-inline">
-                        @if($searchs->recieve_keyword == 0)
+                        @if(old('recieve_keyword', $searchs->recieve_keyword) == 0)
                             <input type="radio" value="0" id="recieve_keyword_0" name="recieve_keyword" class="custom-control-input" checked="checked">
                         @else
                             <input type="radio" value="0" id="recieve_keyword_0" name="recieve_keyword" class="custom-control-input">
@@ -151,7 +151,7 @@
                 <label class="{{$frame->getSettingLabelClass()}}">フレームの選択</label>
                 <div class="{{$frame->getSettingInputClass(true)}}">
                     <div class="custom-control custom-radio custom-control-inline">
-                        @if($searchs->frame_select == 0)
+                        @if(old('frame_select', $searchs->frame_select) == 0)
                             <input type="radio" value="0" id="frame_select_0" name="frame_select" class="custom-control-input" checked="checked">
                         @else
                             <input type="radio" value="0" id="frame_select_0" name="frame_select" class="custom-control-input">
@@ -159,7 +159,7 @@
                         <label class="custom-control-label" for="frame_select_0">全て表示する</label>
                     </div>
                     <div class="custom-control custom-radio custom-control-inline">
-                        @if($searchs->frame_select == 1)
+                        @if(old('frame_select', $searchs->frame_select) == 1)
                             <input type="radio" value="1" id="frame_select_1" name="frame_select" class="custom-control-input" checked="checked">
                         @else
                             <input type="radio" value="1" id="frame_select_1" name="frame_select" class="custom-control-input">
