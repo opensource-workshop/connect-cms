@@ -166,7 +166,8 @@ class SearchsPlugin extends UserPluginBase
                      DB::raw("null as classname"),
                      DB::raw("null as categories_id"),
                      DB::raw("null as category"),
-                     DB::raw("null as plugin_name")
+                     DB::raw("null as plugin_name"),
+                     DB::raw("null as body")
                  )
                  ->leftJoin('categories', 'categories.id', '=', 'searchs_dual.categories_id');
 

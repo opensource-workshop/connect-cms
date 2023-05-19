@@ -533,7 +533,8 @@ WHERE status = 0
                           'categories.classname        as classname',
                           'blogs_posts.categories_id   as categories_id',
                           'categories.category         as category',
-                          DB::raw('"blogs" as plugin_name')
+                          DB::raw('"blogs" as plugin_name'),
+                          DB::raw('CONCAT(IFNULL(blogs_posts.post_text, ""), IFNULL(blogs_posts.post_text2, "")) as body'),
                       )
                       ->join('blogs', 'blogs.id', '=', 'blogs_posts.blogs_id')
                       ->join('frames', 'frames.bucket_id', '=', 'blogs.bucket_id')
