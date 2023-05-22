@@ -21,6 +21,12 @@
  * Date: 2023-05-11T18:29Z
  */
 
+/*!@preserve
+ * Tempus Dominus Bootstrap4 v5.39.0 (https://tempusdominus.github.io/bootstrap-4/)
+ * Copyright 2016-2020 Jonathan Peterson and contributors
+ * Licensed under MIT (https://github.com/tempusdominus/bootstrap-3/blob/master/LICENSE)
+ */
+
 /**
  * @license
  * Lodash <https://lodash.com/>
@@ -54,3 +60,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+//! Copyright (c) JS Foundation and other contributors
+
+//! github.com/moment/moment-timezone
+
+//! license : MIT
+
+//! moment-timezone.js
+
+//! moment.js
+
+//! moment.js locale configuration
+
+//! version : 0.5.43
