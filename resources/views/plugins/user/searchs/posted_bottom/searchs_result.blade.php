@@ -20,7 +20,7 @@
 @if ($searchs_results)
 <div class="container pt-3">
     @foreach($searchs_results as $searchs_result)
-        <div class="row mb-3 search-result-row">
+        <div class="row search-result-row pb-3 pt-3 border-bottom">
             {{-- カテゴリ --}}
             @if(!empty($searchs_result->category))
             <div class="search-result-category text-nowrap col-md-auto col-auto order-md-1 order-1">
