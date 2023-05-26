@@ -2284,11 +2284,12 @@ trait MigrationNc3ExportTrait
                 }
 
                 $linklist_category = $linklist_categories->firstWhere('id', $nc3_link->category_id) ?? new Nc3Category();
+                $open_new_tab = $nc3_link_frame_setting->open_new_tab ?? 1;
 
                 $linklists_tsv .= str_replace(array("\r", "\n", "\t"), "", $nc3_link->title)        . "\t";
                 $linklists_tsv .= str_replace(array("\r", "\n", "\t"), "", $nc3_link->url)          . "\t";
                 $linklists_tsv .= str_replace(array("\r", "\n", "\t"), " ", $nc3_link->description) . "\t";
-                $linklists_tsv .= $nc3_link_frame_setting->open_new_tab                             . "\t"; // [3] 新規ウィンドウで表示
+                $linklists_tsv .= $open_new_tab                                                     . "\t"; // [3] 新規ウィンドウで表示
                 $linklists_tsv .= $nc3_link->display_sequence                                       . "\t";
                 $linklists_tsv .= $linklist_category->name;
 
