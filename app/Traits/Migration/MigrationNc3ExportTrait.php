@@ -2935,6 +2935,10 @@ trait MigrationNc3ExportTrait
                 $mail_body =        str_ireplace($convert_embedded_tag[0], $convert_embedded_tag[1], $mail_body);
             }
 
+            $after_message = $this->nc3Wysiwyg(null, null, null, null, $nc3_registration->thanks_content, 'registrations');
+            // ダブルクォーテーション対策
+            $after_message = str_replace('"', '\"', $after_message);
+
             // 登録フォーム設定
             $registration_ini = "";
             $registration_ini .= "[form_base]\n";
@@ -2946,7 +2950,7 @@ trait MigrationNc3ExportTrait
             $registration_ini .= "mail_subject = \""      . $mail_subject . "\"\n";
             $registration_ini .= "mail_format = \""       . $mail_body . "\"\n";
             $registration_ini .= "data_save_flag = 1\n";
-            $registration_ini .= "after_message = \""     . $nc3_registration->thanks_content . "\"\n";
+            $registration_ini .= "after_message = \""     . $after_message . "\"\n";
             $registration_ini .= "numbering_use_flag = 0\n";
             $registration_ini .= "numbering_prefix = null\n";
             $registration_ini .= "regist_control_flag = " . $regist_control_flag . "\n";
