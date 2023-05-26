@@ -6116,6 +6116,12 @@ trait MigrationNc3ExportTrait
      */
     private function checkDeadLinkNc3(string $url, string $nc3_plugin_key, ?Nc3Frame $nc3_frame = null): void
     {
+        // リンクチェックしない場合は返却
+        $check_deadlink_nc3 = $this->getMigrationConfig('basic', 'check_deadlink_nc3', '');
+        if (empty($check_deadlink_nc3)) {
+            return;
+        }
+
         $scheme = parse_url($url, PHP_URL_SCHEME);
 
         if (in_array($scheme, ['http', 'https'])) {
