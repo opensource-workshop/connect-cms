@@ -543,15 +543,24 @@ trait MigrationNc3ExportTrait
             // and Room.space_id = 2 -- 2:public　x
             // order by Page.sort_key asc; x
             // see) https://github.com/NetCommons3/NetCommons/blob/d1c6871b4a00dccefe3cae278143c0015fcad9ce/Lib/Current/CurrentLibPage.php#L239-L260
-            $nc3_top_page = Nc3Page::
+            $nc3_top_page_query = Nc3Page::
                 select('pages.id')
                 ->join('rooms', function ($join) {
                     $join->on('rooms.id', '=', 'pages.room_id')
                         ->where('rooms.space_id', Nc3Space::PUBLIC_SPACE_ID);
                 })
-                ->whereNotNull('pages.parent_id')
-                ->orderBy('pages.sort_key')
-                ->first();
+                ->whereNotNull('pages.parent_id');
+                // ->orderBy('pages.sort_key')
+                // ->first();
+
+            $older_than_nc3_2_0 = $this->getMigrationConfig('basic', 'older_than_nc3_2_0');
+            if ($older_than_nc3_2_0) {
+                // nc3.2.0より古い場合は、sort_key が無いため sort_key でソートしない
+            } else {
+                // 通常
+                $nc3_top_page_query->orderBy('pages.sort_key');
+            }
+            $nc3_top_page = $nc3_top_page_query->first();
 
             // NC3 のページデータ
             $nc3_pages_query = Nc3Page::
@@ -579,11 +588,21 @@ trait MigrationNc3ExportTrait
                 $nc3_pages_query->whereNotIn('id', $this->getMigrationConfig('pages', 'nc3_export_ommit_page_ids'));
             }
 
-            $nc3_pages = $nc3_pages_query
-                ->orderBy('pages_languages.language_id')
-                ->orderBy('pages.sort_key')
-                ->orderBy('rooms.sort_key')
-                ->get();
+            $nc3_pages_query->orderBy('pages_languages.language_id');
+                // ->orderBy('pages.sort_key')
+                // ->orderBy('rooms.sort_key')
+                // ->get();
+
+            if ($older_than_nc3_2_0) {
+                // nc3.2.0より古い場合は、sort_key が無いため sort_key でソートしない
+                // @see https://github.com/NetCommons3/Pages/commit/77840e492352a21f7300ab1fa877f47f94f0bd1c
+                // @see https://github.com/NetCommons3/Rooms/commit/8edfd1ea18f4b45f5aee7f961d0480048e2d6fc9
+            } else {
+                // 通常
+                $nc3_pages_query->orderBy('pages.sort_key')
+                                ->orderBy('rooms.sort_key');
+            }
+            $nc3_pages = $nc3_pages_query->get();
 
             // NC3 のページID を使うことにした。
             //// 新規ページ用のインデックス
@@ -1181,7 +1200,15 @@ trait MigrationNc3ExportTrait
         // if ($this->getMigrationConfig('pages', 'nc3_export_ommit_page_ids')) {
         //     $nc3_rooms_query->whereNotIn('page_id', $this->getMigrationConfig('pages', 'nc3_export_ommit_page_ids'));
         // }
-        $nc3_rooms = $nc3_rooms_query->orderBy('rooms.sort_key')->get();
+
+        $older_than_nc3_2_0 = $this->getMigrationConfig('basic', 'older_than_nc3_2_0');
+        if ($older_than_nc3_2_0) {
+            // nc3.2.0より古い場合は、sort_key が無いため sort_key でソートしない
+            $nc3_rooms = $nc3_rooms_query->get();
+        } else {
+            // 通常
+            $nc3_rooms = $nc3_rooms_query->orderBy('rooms.sort_key')->get();
+        }
 
         // 空なら戻る
         if ($nc3_rooms->isEmpty()) {
@@ -3065,7 +3092,7 @@ trait MigrationNc3ExportTrait
                 // registration_answers.registration_question_key から registration_questions.key (複数) になってて、一意にたどれないため、
                 // registration_pages から結合で対応
 
-                $registration_answers = Nc3RegistrationPage::
+                $registration_answers_query = Nc3RegistrationPage::
                     select(
                         'registration_answers.*',
                         'registration_questions.id as registration_question_id',
@@ -3085,10 +3112,22 @@ trait MigrationNc3ExportTrait
                     ->join('registration_answer_summaries', function ($join) {
                         $join->on('registration_answer_summaries.id', '=', 'registration_answers.registration_answer_summary_id');
                     })
-                    ->where('registration_pages.registration_id', $nc3_registration->id)
-                    ->orderBy('registration_answer_summaries.serial_number', 'desc')
-                    ->orderBy('registration_questions.question_sequence', 'asc')
-                    ->get();
+                    ->where('registration_pages.registration_id', $nc3_registration->id);
+                    // ->orderBy('registration_answer_summaries.serial_number', 'desc')
+                    // ->orderBy('registration_questions.question_sequence', 'asc')
+                    // ->get();
+
+                $older_than_nc3_2_0 = $this->getMigrationConfig('basic', 'older_than_nc3_2_0');
+                if ($older_than_nc3_2_0) {
+                    // nc3.2.0より古い場合は、serial_number が無いため serial_number でソートしない（nc3.1.6でserial_number追加された）
+                    // @see https://github.com/NetCommons3/Registrations/commit/7497b637e7568dd6625b21a2720e4a7a59c21227
+                    $registration_answers_query->orderBy('registration_questions.question_sequence', 'asc');
+                } else {
+                    // 通常
+                    $registration_answers_query->orderBy('registration_answer_summaries.serial_number', 'desc')
+                                                ->orderBy('registration_questions.question_sequence', 'asc');
+                }
+                $registration_answers = $registration_answers_query->get();
 
                 // アップロードファイル
                 $registration_uploads = Nc3UploadFile::where('plugin_key', 'registrations')
