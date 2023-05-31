@@ -728,6 +728,29 @@ class UserManage extends ManagePluginBase
         // Log::debug(var_export($request->all(), true));
         // Log::debug(var_export($validator_array, true));
 
+        // 任意のバリデーションを追加
+        $validator->after(function ($validator) use ($id, $request) {
+            // システム管理者持ちユーザーで && システム管理者権限持ちが１人 && システム管理者権限が外れてたら入力エラー
+
+            // ユーザ権限取得
+            $users_roles = $this->getRoles($id);
+
+            // システム管理者持ちユーザー
+            if (Arr::get($users_roles, 'manage.admin_system') == 1) {
+                // システム管理者権限の人数
+                $in_users = UsersRoles::select('users_roles.users_id')
+                    ->where('role_name', 'admin_system')
+                    ->get();
+                $admin_system_user_count = User::whereIn('users.id', $in_users->pluck('users_id'))->count();
+
+                // システム管理者権限持ちが１人 && システム管理者権限が外れてる
+                if ($admin_system_user_count <= 1 && empty(Arr::get($request->manage, 'admin_system'))) {
+                    // 入力エラー追加
+                    $validator->errors()->add('undelete', '最後のシステム管理者保持者のため、システム管理者権限を外さないでください。');
+                }
+            }
+        });
+
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
             // Log::debug(var_export($request->old(), true));
