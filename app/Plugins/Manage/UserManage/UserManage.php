@@ -643,11 +643,13 @@ class UserManage extends ManagePluginBase
 
         // システム管理者ありユーザー
         if (Arr::get($users_roles, 'manage.admin_system') == 1) {
-            // システム管理者の人数
+            // システム管理者権限の人数
             $in_users = UsersRoles::select('users_roles.users_id')
                 ->where('role_name', 'admin_system')
                 ->get();
             $admin_system_user_count = User::whereIn('users.id', $in_users->pluck('users_id'))->count();
+
+            // システム管理者権限持ちが１人
             if ($admin_system_user_count <= 1) {
                 // 削除させない
                 $can_deleted = false;
