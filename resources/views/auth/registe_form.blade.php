@@ -319,8 +319,8 @@ use App\Models\Core\UsersColumns;
                 @endif
             @endif
         </div>
-        {{-- 既存ユーザの場合は削除処理のボタンも表示(自分自身の場合は表示しない) --}}
-        @if (isset($id) && $id && $id != Auth::user()->id)
+        {{-- 既存ユーザの場合は削除処理のボタンも表示(自分自身の場合は表示しない, 最後のシステム管理者保持者は削除させない) --}}
+        @if (isset($id) && $id && $id != Auth::user()->id && $can_deleted)
             <div class="col-sm-3 pull-right text-right">
                 <a data-toggle="collapse" href="#collapse{{$id}}">
                     <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="d-none d-sm-inline">削除</span></span>
@@ -330,7 +330,7 @@ use App\Models\Core\UsersColumns;
     </div>
 </form>
 
-@if (isset($id) && $id && $id != Auth::user()->id)
+@if (isset($id) && $id && $id != Auth::user()->id && $can_deleted)
 <div id="collapse{{$id}}" class="collapse" style="margin-top: 8px;">
     <div class="card border-danger">
         <div class="card-body">
