@@ -3,6 +3,7 @@
 namespace App\Plugins\Manage\UserManage;
 
 // use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
@@ -637,6 +638,24 @@ class UserManage extends ManagePluginBase
         // カラムの登録データ
         $input_cols = UsersTool::getUsersInputCols([$id]);
 
+        // 削除できる
+        $can_deleted = true;
+
+        // システム管理者ありユーザー
+        if (Arr::get($users_roles, 'manage.admin_system') == 1) {
+            // システム管理者権限の人数
+            $in_users = UsersRoles::select('users_roles.users_id')
+                ->where('role_name', 'admin_system')
+                ->get();
+            $admin_system_user_count = User::whereIn('users.id', $in_users->pluck('users_id'))->count();
+
+            // システム管理者権限持ちが１人
+            if ($admin_system_user_count <= 1) {
+                // 削除させない
+                $can_deleted = false;
+            }
+        }
+
         // 画面呼び出し
         return view('plugins.manage.user.regist', [
             "function" => __FUNCTION__,
@@ -650,6 +669,7 @@ class UserManage extends ManagePluginBase
             'input_cols' => $input_cols,
             'sections' => Section::orderBy('display_sequence')->get(),
             'user_section' => UserSection::where('user_id', $user->id)->firstOrNew(),
+            'can_deleted' => $can_deleted,
         ]);
     }
 
@@ -707,6 +727,29 @@ class UserManage extends ManagePluginBase
         $validator->setAttributeNames($validator_array['message']);
         // Log::debug(var_export($request->all(), true));
         // Log::debug(var_export($validator_array, true));
+
+        // 任意のバリデーションを追加
+        $validator->after(function ($validator) use ($id, $request) {
+            // システム管理者持ちユーザーで && システム管理者権限持ちが１人 && システム管理者権限が外れてたら入力エラー
+
+            // ユーザ権限取得
+            $users_roles = $this->getRoles($id);
+
+            // システム管理者持ちユーザー
+            if (Arr::get($users_roles, 'manage.admin_system') == 1) {
+                // システム管理者権限の人数
+                $in_users = UsersRoles::select('users_roles.users_id')
+                    ->where('role_name', 'admin_system')
+                    ->get();
+                $admin_system_user_count = User::whereIn('users.id', $in_users->pluck('users_id'))->count();
+
+                // システム管理者権限持ちが１人 && システム管理者権限が外れてる
+                if ($admin_system_user_count <= 1 && empty(Arr::get($request->manage, 'admin_system'))) {
+                    // 入力エラー追加
+                    $validator->errors()->add('undelete', '最後のシステム管理者保持者のため、システム管理者権限を外さないでください。');
+                }
+            }
+        });
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
@@ -844,6 +887,23 @@ class UserManage extends ManagePluginBase
             $validator = Validator::make($request->all(), []);
             $validator->errors()->add('undelete', '自分は削除できません。');
             return $this->edit($request, $id)->withErrors($validator);
+        }
+
+        // ユーザ権限取得
+        $users_roles = $this->getRoles($id);
+
+        // システム管理者ありユーザー
+        if (Arr::get($users_roles, 'manage.admin_system') == 1) {
+            // システム管理者の人数
+            $in_users = UsersRoles::select('users_roles.users_id')
+                ->where('role_name', 'admin_system')
+                ->get();
+            $admin_system_user_count = User::whereIn('users.id', $in_users->pluck('users_id'))->count();
+            if ($admin_system_user_count <= 1) {
+                $validator = Validator::make($request->all(), []);
+                $validator->errors()->add('undelete', '最後のシステム管理者保持者は削除できません。');
+                return $this->edit($request, $id)->withErrors($validator);
+            }
         }
 
         // id がある場合、データを削除
