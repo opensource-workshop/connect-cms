@@ -1419,7 +1419,7 @@ class SiteManage extends ManagePluginBase
 
         // --- 移行データチェック出力
         $MigrationMapping = MigrationMapping::count();
-        if ($MigrationMapping) {
+        if ($MigrationMapping && $this->canDbConnectNc2()) {
 
             // NC2 のページデータ
             $nc2_pages_query = Nc2Page::where('private_flag', 0)        // 0:プライベートルーム以外
@@ -1629,6 +1629,21 @@ class SiteManage extends ManagePluginBase
         // 出力 ( D：Download, I：Inline )
         $pdf->output('SiteDocument-' . $output->get('base_site_name') . '.pdf', $disposition);
         return redirect()->back();
+    }
+
+    /**
+     * NC2のDBに接続できるか
+     */
+    private function canDbConnectNc2() : bool
+    {
+        try {
+            DB::connection('nc2')->getPdo();
+            // 接続成功
+            return true;
+        } catch (\PDOException $e) {
+            // 接続失敗
+            return false;
+        }
     }
 
     /**
