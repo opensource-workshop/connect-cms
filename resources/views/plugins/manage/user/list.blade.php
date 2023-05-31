@@ -317,7 +317,17 @@ use App\Models\Core\UsersColumns;
             @foreach($users as $user)
                 <tr class="{{$user->getStstusBackgroundClass()}}">
                     <td nowrap>
-                        <a href="{{url('/')}}/manage/user/edit/{{$user->id}}" title="ユーザ変更"><i class="far fa-edit"></i></a>
+                        @if ($user->hasRoleAdminSystem())
+                            @if ($has_auth_role_admin_system)
+                                {{-- システム管理者権限持ちユーザの編集は、システム管理者のみ可 --}}
+                                <a href="{{url('/')}}/manage/user/edit/{{$user->id}}" title="ユーザ変更"><i class="far fa-edit"></i></a>
+                            @else
+                                {{-- 編集させない --}}
+                            @endif
+                        @else
+                            {{-- 通常 --}}
+                            <a href="{{url('/')}}/manage/user/edit/{{$user->id}}" title="ユーザ変更"><i class="far fa-edit"></i></a>
+                        @endif
                         {{$user->userid}}
                     </td>
                     <td>{{$user->name}}</td>

@@ -484,6 +484,11 @@ class UserManage extends ManagePluginBase
         $groups_select = Group::get();
         // dd($groups);
 
+        // ユーザ権限取得
+        $auth_users_roles = $this->getRoles(Auth::user()->id);
+        // 自身のシステム管理者権限持ち
+        $has_auth_role_admin_system = Arr::get($auth_users_roles, 'manage.admin_system') == 1 ? true : false;
+
         return view('plugins.manage.user.list', [
             "function" => __FUNCTION__,
             "plugin_name" => "user",
@@ -493,6 +498,7 @@ class UserManage extends ManagePluginBase
             "input_cols" => $input_cols,
             "groups_select" => $groups_select,
             "sections" => Section::orderBy('display_sequence')->get(),
+            "has_auth_role_admin_system" => $has_auth_role_admin_system,
         ]);
     }
 
@@ -656,6 +662,17 @@ class UserManage extends ManagePluginBase
             }
         }
 
+        // 対象がシステム管理者ありユーザー
+        if (Arr::get($users_roles, 'manage.admin_system') == 1) {
+            // 自身のユーザ権限取得
+            $auth_users_roles = $this->getRoles(Auth::user()->id);
+
+            // 自身がシステム管理者でない場合はエラー
+            if (empty(Arr::get($auth_users_roles, 'manage.admin_system'))) {
+                abort(403, '権限がありません。');
+            }
+        }
+
         // 画面呼び出し
         return view('plugins.manage.user.regist', [
             "function" => __FUNCTION__,
@@ -678,6 +695,20 @@ class UserManage extends ManagePluginBase
      */
     public function update($request, $id = null)
     {
+        // ユーザ権限取得
+        $users_roles = $this->getRoles($id);
+
+        // 対象がシステム管理者ありユーザー
+        if (Arr::get($users_roles, 'manage.admin_system') == 1) {
+            // 自身のユーザ権限取得
+            $auth_users_roles = $this->getRoles(Auth::user()->id);
+
+            // 自身がシステム管理者でない場合はエラー
+            if (empty(Arr::get($auth_users_roles, 'manage.admin_system'))) {
+                abort(403, '権限がありません。');
+            }
+        }
+
         // 項目のエラーチェック
         // change: ユーザーの追加項目に対応
         // $validator = Validator::make($request->all(), [
@@ -729,11 +760,8 @@ class UserManage extends ManagePluginBase
         // Log::debug(var_export($validator_array, true));
 
         // 任意のバリデーションを追加
-        $validator->after(function ($validator) use ($id, $request) {
+        $validator->after(function ($validator) use ($users_roles, $request) {
             // システム管理者持ちユーザーで && システム管理者権限持ちが１人 && システム管理者権限が外れてたら入力エラー
-
-            // ユーザ権限取得
-            $users_roles = $this->getRoles($id);
 
             // システム管理者持ちユーザー
             if (Arr::get($users_roles, 'manage.admin_system') == 1) {
@@ -875,7 +903,6 @@ class UserManage extends ManagePluginBase
      */
     public function destroy($request, $id = null)
     {
-
         // セッション初期化などのLaravel 処理。
         $request->flash();
 
@@ -902,6 +929,19 @@ class UserManage extends ManagePluginBase
             if ($admin_system_user_count <= 1) {
                 $validator = Validator::make($request->all(), []);
                 $validator->errors()->add('undelete', '最後のシステム管理者保持者は削除できません。');
+                return $this->edit($request, $id)->withErrors($validator);
+            }
+        }
+
+        // 対象がシステム管理者ありユーザー
+        if (Arr::get($users_roles, 'manage.admin_system') == 1) {
+            // 自身のユーザ権限取得
+            $auth_users_roles = $this->getRoles($user_id);
+
+            // 自身がシステム管理者でない場合はエラー
+            if (empty(Arr::get($auth_users_roles, 'manage.admin_system'))) {
+                $validator = Validator::make($request->all(), []);
+                $validator->errors()->add('undelete', '権限がありません。');
                 return $this->edit($request, $id)->withErrors($validator);
             }
         }
