@@ -643,10 +643,11 @@ class UserManage extends ManagePluginBase
 
         // システム管理者ありユーザー
         if (Arr::get($users_roles, 'manage.admin_system') == 1) {
-            // システム管理者権限の人数
+            // 利用不可等を含めたシステム管理者権限の人数
             $in_users = UsersRoles::select('users_roles.users_id')
                 ->where('role_name', 'admin_system')
                 ->get();
+            // ここでは users.status 見ず、仮削除とかのユーザも取得。入力チェックで users.status 見て最後の１人管理者チェックする
             $admin_system_user_count = User::whereIn('users.id', $in_users->pluck('users_id'))->count();
 
             // システム管理者権限持ちが１人
@@ -728,8 +729,12 @@ class UserManage extends ManagePluginBase
         // Log::debug(var_export($request->all(), true));
         // Log::debug(var_export($validator_array, true));
 
+        // 更新前のステータス
+        $user = User::find($id);
+        $before_status = $user ? $user->status : null;
+
         // 任意のバリデーションを追加
-        $validator->after(function ($validator) use ($id, $request) {
+        $validator->after(function ($validator) use ($id, $request, $before_status) {
             // システム管理者持ちユーザーで && システム管理者権限持ちが１人 && システム管理者権限が外れてたら入力エラー
 
             // ユーザ権限取得
@@ -737,16 +742,24 @@ class UserManage extends ManagePluginBase
 
             // システム管理者持ちユーザー
             if (Arr::get($users_roles, 'manage.admin_system') == 1) {
-                // システム管理者権限の人数
+                // 利用可能なシステム管理者権限の人数
                 $in_users = UsersRoles::select('users_roles.users_id')
                     ->where('role_name', 'admin_system')
                     ->get();
-                $admin_system_user_count = User::whereIn('users.id', $in_users->pluck('users_id'))->count();
+                $admin_system_user_count = User::where('users.status', UserStatus::active)
+                    ->whereIn('users.id', $in_users->pluck('users_id'))
+                    ->count();
 
-                // システム管理者権限持ちが１人 && システム管理者権限が外れてる
+                // 利用可能なシステム管理者権限持ちが１人 && システム管理者権限が外れてる
                 if ($admin_system_user_count <= 1 && empty(Arr::get($request->manage, 'admin_system'))) {
                     // 入力エラー追加
-                    $validator->errors()->add('undelete', '最後のシステム管理者保持者のため、システム管理者権限を外さないでください。');
+                    $validator->errors()->add('undelete', '最後のシステム管理者保持者のため、管理権限のシステム管理者権限を外さないでください。');
+                }
+
+                // 利用可能なシステム管理者権限持ちが１人 && システム管理者権限付き && 利用可能なユーザから、利用できないユーザに変更
+                if ($admin_system_user_count <= 1 && Arr::get($request->manage, 'admin_system') == 1 && $before_status == UserStatus::active && $request->status != UserStatus::active) {
+                    // 入力エラー追加
+                    $validator->errors()->add('undelete', '最後のシステム管理者保持者のため、状態を利用可能以外にしないでください。');
                 }
             }
         });
@@ -758,10 +771,6 @@ class UserManage extends ManagePluginBase
             // return redirect('manage/user/edit/' . $id)->withErrors($validator)->withInput();
             return redirect()->back()->withErrors($validator)->withInput();
         }
-
-        // 更新前のステータス（承認完了判定用）
-        $user = User::find($id);
-        $before_status = $user ? $user->status : null;
 
         // 更新内容の配列
         $update_array = [
@@ -894,7 +903,7 @@ class UserManage extends ManagePluginBase
 
         // システム管理者ありユーザー
         if (Arr::get($users_roles, 'manage.admin_system') == 1) {
-            // システム管理者の人数
+            // 利用不可等を含めたシステム管理者権限の人数
             $in_users = UsersRoles::select('users_roles.users_id')
                 ->where('role_name', 'admin_system')
                 ->get();
