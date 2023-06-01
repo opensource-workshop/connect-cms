@@ -140,6 +140,26 @@ class User extends Authenticatable
     }
 
     /**
+     * システム管理者権限持ちか（一覧用）
+     */
+    public function hasRoleAdminSystem() : bool
+    {
+        // 権限データがあるか確認
+        if (empty($this->view_user_roles)) {
+            return false;
+        }
+
+        foreach ($this->view_user_roles as $view_user_role) {
+            if ($view_user_role->role_name == 'admin_system') {
+                // システム権限あり
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * 仮登録のinput disable 属性の要否を判断して返す。
      */
     public function getStstusTemporaryDisabled($enum_value)
