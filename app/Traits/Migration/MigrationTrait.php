@@ -4737,7 +4737,8 @@ trait MigrationTrait
                     // 動画から移行する場合、アルバム枠は作らず移行する
 
                     // Photoalbum のデータを取得（TSV）
-                    $photoalbums_tsv_path = $this->getImportPath('photoalbums/photoalbum_video_') . $this->zeroSuppress($nc2_photoalbum_id) . '_' . $this->zeroSuppress($album_id) . '.tsv';
+                    $nc2_video_photoalbum_id = ltrim($nc2_photoalbum_id, 'VIDEO_');
+                    $photoalbums_tsv_path = $this->getImportPath('photoalbums/photoalbum_video_') . $this->zeroSuppress($nc2_video_photoalbum_id) . '_' . $this->zeroSuppress($album_id) . '.tsv';
                     $children = $parent;
                 } else {
                     // photoalbums
