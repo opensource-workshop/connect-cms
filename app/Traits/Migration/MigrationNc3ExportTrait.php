@@ -6010,6 +6010,7 @@ trait MigrationNc3ExportTrait
 
         // HTML content の保存
         if ($save_folder) {
+            $content = $this->exportStrReplace($content, 'contents');
             $this->storagePut($save_folder . "/" . $content_filename, $content);
         }
 
