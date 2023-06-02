@@ -13211,6 +13211,7 @@ trait MigrationTrait
 
         // HTML content の保存
         if ($save_folder) {
+            $content = $this->exportStrReplace($content, 'contents');
             //Storage::put($save_folder . "/" . $content_filename, $content);
             $this->storagePut($save_folder . "/" . $content_filename, $content);
         }
