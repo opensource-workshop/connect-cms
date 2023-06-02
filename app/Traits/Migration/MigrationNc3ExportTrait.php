@@ -1914,7 +1914,7 @@ trait MigrationNc3ExportTrait
             // NC3 情報
             $journals_ini .= "\n";
             $journals_ini .= "[source_info]\n";
-            $journals_ini .= "journal_id = " . 'BBS_' . $nc3_bbs->id . "\n";
+            $journals_ini .= "journal_id = \"BBS_" . $nc3_bbs->id . "\"\n";
             $journals_ini .= "room_id = " . $nc3_bbs->room_id . "\n";
             $journals_ini .= "module_name = \"bbses\"\n";
             $journals_ini .= "created_at      = \"" . $this->getCCDatetime($nc3_bbs->created) . "\"\n";

@@ -9128,7 +9128,7 @@ trait MigrationTrait
             // NC2 情報
             $journals_ini .= "\n";
             $journals_ini .= "[source_info]\n";
-            $journals_ini .= "journal_id = " . 'BBS_' . $nc2_bbs->bbs_id . "\n";
+            $journals_ini .= "journal_id = \"BBS_" . $nc2_bbs->bbs_id . "\"\n";
             $journals_ini .= "room_id = " . $nc2_bbs->room_id . "\n";
             $journals_ini .= "module_name = \"bbs\"\n";
             $journals_ini .= "created_at      = \"" . $this->getCCDatetime($nc2_bbs->insert_time) . "\"\n";
@@ -11998,7 +11998,7 @@ trait MigrationTrait
             // NC2 情報
             $questionnaire_ini .= "\n";
             $questionnaire_ini .= "[source_info]\n";
-            $questionnaire_ini .= "registration_id  = QUESTIONNAIRE_" . $nc2_questionnaire->questionnaire_id . "\n";
+            $questionnaire_ini .= "registration_id  = \"QUESTIONNAIRE_" . $nc2_questionnaire->questionnaire_id . "\"\n";
             $questionnaire_ini .= "active_flag      = " . $active_flag . "\n";
             $questionnaire_ini .= "room_id          = " . $nc2_questionnaire->room_id . "\n";
             $questionnaire_ini .= "module_name      = \"questionnaire\"\n";
