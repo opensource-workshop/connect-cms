@@ -1,7 +1,7 @@
 {{--
  * 確認画面(confirm select)テンプレート。
 --}}
-@if (array_key_exists($form_obj->id, $request->forms_columns_value))
+@if (array_key_exists($form_obj->id, (array)$request->forms_columns_value))
     <input name="forms_columns_value[{{$form_obj->id}}]" type="hidden" value="{{$request->forms_columns_value[$form_obj->id]}}">{{$request->forms_columns_value[$form_obj->id]}}
 @else
     <input name="forms_columns_value[{{$form_obj->id}}]" type="hidden">
