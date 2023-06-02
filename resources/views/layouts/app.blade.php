@@ -266,9 +266,17 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                                 @if (Auth::user()->can('role_arrangement'))
                                     @if (isset($page_list))
                                         @if (app('request')->input('mode') == 'preview')
-                                            <a href="{{ url()->current() }}" class="dropdown-item">プレビュー終了</a>
+                                            @isset ($page)
+                                                <a href="{{ url($page->permanent_link) }}" class="dropdown-item">プレビュー終了</a>
+                                            @else
+                                                <a href="{{ url()->current() }}" class="dropdown-item">プレビュー終了</a>
+                                            @endisset
                                         @else
-                                            <a href="{{ url()->current() }}/?mode=preview" class="dropdown-item">プレビューモード</a>
+                                            @isset ($page)
+                                                <a href="{{ url($page->permanent_link) }}?mode=preview" class="dropdown-item">プレビューモード</a>
+                                            @else
+                                                <a href="{{ url()->current() }}/?mode=preview" class="dropdown-item">プレビューモード</a>
+                                            @endisset
                                         @endif
                                         @if (Auth::user()->can('role_manage_on') && isset($page_list))
                                             <div class="dropdown-divider"></div>
