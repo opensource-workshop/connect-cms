@@ -751,8 +751,11 @@ trait MigrationTrait
     /**
      * インポートする際の参照コンテンツ（画像、ファイル）の追加ディレクトリ取得
      */
-    private function getImportSrcDir($default = '/file/')
+    private function getImportSrcDir($default = null)
     {
+        if (is_null($default)) {
+            $default = url('/') . '/file/';
+        }
         $cc_import_add_src_dir = $this->getMigrationConfig('pages', 'cc_import_add_src_dir', '');
         return $cc_import_add_src_dir . $default ;
     }
@@ -1003,6 +1006,9 @@ trait MigrationTrait
             // ルームの指定（あれば後で使う）
             //$cc_import_page_room_ids = $this->getMigrationConfig('pages', 'cc_import_page_room_ids');
 
+            // 強制的にレイアウト上書き
+            $cc_import_force_layouts = $this->getMigrationConfig('pages', 'cc_import_force_layouts', null);
+
             // 新ページのループ
             foreach ($paths as $path) {
                 // ページ指定の有無
@@ -1071,6 +1077,17 @@ trait MigrationTrait
                 $page = Page::where('permanent_link', $page_ini['page_base']['permanent_link'])->first();
                 // var_dump($page);
 
+                $layout = Arr::get($page_ini, 'page_base.layout');
+
+                // インポートページのディレクトリNo
+                $import_page_dir_no = ltrim(basename($path), '_');
+
+                // 強制的にレイアウトを適用する指定があれば上書きする。
+                $cc_import_force_layout = Arr::get($cc_import_force_layouts, $import_page_dir_no);
+                if ($cc_import_force_layout) {
+                    $layout = $cc_import_force_layout;
+                }
+
                 // 対象のURL がなかった場合はページの作成
                 if (empty($page)) {
                     $this->putMonitor(1, "Page create.");
@@ -1078,7 +1095,7 @@ trait MigrationTrait
                     // ページの作成
                     $page = Page::create(['page_name'         => $page_ini['page_base']['page_name'],
                                           'permanent_link'    => $page_ini['page_base']['permanent_link'],
-                                          'layout'            => array_key_exists('layout', $page_ini['page_base']) ? $page_ini['page_base']['layout'] : null,
+                                          'layout'            => $layout,
                                           'base_display_flag' => $page_ini['page_base']['base_display_flag'],
                                           'membership_flag'   => empty($page_ini['page_base']['membership_flag']) ? 0 : $page_ini['page_base']['membership_flag'],
                                         ]);
@@ -1097,7 +1114,7 @@ trait MigrationTrait
                 } else {
                     // 対象のURL があった場合はページの更新
                     $page->page_name         = $page_ini['page_base']['page_name'];
-                    $page->layout            = array_key_exists('layout', $page_ini['page_base']) ? $page_ini['page_base']['layout'] : null;
+                    $page->layout            = $layout;
                     $page->base_display_flag = $page_ini['page_base']['base_display_flag'];
                     $page->membership_flag   = empty($page_ini['page_base']['membership_flag']) ? 0 : $page_ini['page_base']['membership_flag'];
                     $page->save();
@@ -1108,9 +1125,9 @@ trait MigrationTrait
                 // マッピングテーブルの追加
                 $mapping = MigrationMapping::updateOrCreate(
                     ['target_source_table' => 'connect_page',
-                    'source_key' => ltrim(basename($path), '_')],
+                    'source_key' => $import_page_dir_no],
                     ['target_source_table'  => 'connect_page',
-                    'source_key'           => ltrim(basename($path), '_'),
+                    'source_key'           => $import_page_dir_no,
                     'destination_key'      => $page->id]
                 );
 
@@ -4720,7 +4737,8 @@ trait MigrationTrait
                     // 動画から移行する場合、アルバム枠は作らず移行する
 
                     // Photoalbum のデータを取得（TSV）
-                    $photoalbums_tsv_path = $this->getImportPath('photoalbums/photoalbum_video_') . $this->zeroSuppress($nc2_photoalbum_id) . '_' . $this->zeroSuppress($album_id) . '.tsv';
+                    $nc2_video_photoalbum_id = ltrim($nc2_photoalbum_id, 'VIDEO_');
+                    $photoalbums_tsv_path = $this->getImportPath('photoalbums/photoalbum_video_') . $this->zeroSuppress($nc2_video_photoalbum_id) . '_' . $this->zeroSuppress($album_id) . '.tsv';
                     $children = $parent;
                 } else {
                     // photoalbums
@@ -9110,7 +9128,7 @@ trait MigrationTrait
             // NC2 情報
             $journals_ini .= "\n";
             $journals_ini .= "[source_info]\n";
-            $journals_ini .= "journal_id = " . 'BBS_' . $nc2_bbs->bbs_id . "\n";
+            $journals_ini .= "journal_id = \"BBS_" . $nc2_bbs->bbs_id . "\"\n";
             $journals_ini .= "room_id = " . $nc2_bbs->room_id . "\n";
             $journals_ini .= "module_name = \"bbs\"\n";
             $journals_ini .= "created_at      = \"" . $this->getCCDatetime($nc2_bbs->insert_time) . "\"\n";
@@ -11980,7 +11998,7 @@ trait MigrationTrait
             // NC2 情報
             $questionnaire_ini .= "\n";
             $questionnaire_ini .= "[source_info]\n";
-            $questionnaire_ini .= "registration_id  = QUESTIONNAIRE_" . $nc2_questionnaire->questionnaire_id . "\n";
+            $questionnaire_ini .= "registration_id  = \"QUESTIONNAIRE_" . $nc2_questionnaire->questionnaire_id . "\"\n";
             $questionnaire_ini .= "active_flag      = " . $active_flag . "\n";
             $questionnaire_ini .= "room_id          = " . $nc2_questionnaire->room_id . "\n";
             $questionnaire_ini .= "module_name      = \"questionnaire\"\n";
@@ -13194,6 +13212,7 @@ trait MigrationTrait
 
         // HTML content の保存
         if ($save_folder) {
+            $content = $this->exportStrReplace($content, 'contents');
             //Storage::put($save_folder . "/" . $content_filename, $content);
             $this->storagePut($save_folder . "/" . $content_filename, $content);
         }

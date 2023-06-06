@@ -53,3 +53,12 @@ if (token) {
 //     cluster: process.env.MIX_PUSHER_APP_CLUSTER,
 //     forceTLS: true
 // });
+
+
+/**
+ * Load moment.js and tempusdominus-bootstrap-4
+ */
+window.moment = require('moment');
+import 'moment/locale/ja';
+require('tempusdominus-bootstrap-4');
+import 'moment-timezone';

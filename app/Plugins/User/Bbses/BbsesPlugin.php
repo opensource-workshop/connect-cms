@@ -298,7 +298,8 @@ class BbsesPlugin extends UserPluginBase
                 DB::raw("null             as classname"),
                 DB::raw("null             as category_id"),
                 DB::raw("null             as category"),
-                DB::raw('"bbses"          as plugin_name')
+                DB::raw('"bbses"          as plugin_name'),
+                'bbs_posts.body as body',
             )
             ->join('bbses', function ($join) {
                 // 論理削除対応

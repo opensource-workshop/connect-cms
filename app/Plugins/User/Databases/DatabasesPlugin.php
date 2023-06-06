@@ -4207,11 +4207,13 @@ AND databases_inputs.posted_at <= NOW()
                 'categories.classname as classname',
                 'categories.id as categories_id',
                 'categories.category as category',
-                DB::raw('"databases" as plugin_name')
+                DB::raw('"databases" as plugin_name'),
+                'body_input_col.value as body'
             )
             ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
             ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
             ->join('pages', 'pages.id', '=', 'frames.page_id')
+            // タイトル
             ->leftJoin('databases_columns', function ($leftJoin) use ($hide_columns_ids) {
                 $leftJoin->on('databases_inputs.databases_id', '=', 'databases_columns.databases_id')
                     ->where('databases_columns.title_flag', 1)
@@ -4221,6 +4223,17 @@ AND databases_inputs.posted_at <= NOW()
             ->leftJoin('databases_input_cols', function ($leftJoin) {
                 $leftJoin->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
                     ->on('databases_columns.id', '=', 'databases_input_cols.databases_columns_id');
+            })
+            // 本文
+            ->leftJoin('databases_columns as body_column', function ($leftJoin) use ($hide_columns_ids) {
+                $leftJoin->on('databases_inputs.databases_id', '=', 'body_column.databases_id')
+                    ->where('body_column.body_flag', 1)
+                    // タイトル指定しても、権限によって非表示columだったらvalue表示しない（基本的に、タイトル指定したけど権限で非表示は、設定ミスと思う。その時は(無題)で表示される）
+                    ->whereNotIn('body_column.id', $hide_columns_ids);
+            })
+            ->leftJoin('databases_input_cols as body_input_col', function ($leftJoin) {
+                $leftJoin->on('databases_inputs.id', '=', 'body_input_col.databases_inputs_id')
+                    ->on('body_column.id', '=', 'body_input_col.databases_columns_id');
             })
             // カテゴリ
             ->leftJoin('categories', 'categories.id', '=', 'databases_inputs.categories_id')

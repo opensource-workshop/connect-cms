@@ -103,27 +103,29 @@
     @if(($databases_frames->use_select_flag && $select_columns && count($select_columns) >= 1) || $databases_frames->isBasicUseSortFlag())
         <div class="form-group form-row mb-3">
         {{-- 絞り込み --}}
-        @foreach($select_columns as $select_column)
-            @php
-                $session_column_name = "search_column." . $frame->id . '.' . $loop->index . ".value";
-            @endphp
-            <div class="col-sm">
-                <input name="search_column[{{$loop->index}}][name]" type="hidden" value="{{$select_column->column_name}}">
-                <input name="search_column[{{$loop->index}}][columns_id]" type="hidden" value="{{$select_column->id}}">
-                @if($select_column->column_type == DatabaseColumnType::checkbox)
-                <input name="search_column[{{$loop->index}}][where]" type="hidden" value="PART">
-                @else
-                <input name="search_column[{{$loop->index}}][where]" type="hidden" value="ALL">
-                @endif
-                <select class="form-control" name="search_column[{{$loop->index}}][value]" title="{{$select_column->column_name}}" onChange="javascript:submit(this.form);" aria-describedby="search_column{{$loop->index}}_{{$frame_id}}" id="select_search_column{{$loop->index}}_{{$frame_id}}">
-                    <option value="">{{$select_column->column_name}}</option>
-                    @foreach($columns_selects->where('databases_columns_id', $select_column->id) as $columns_select)
-                        <option value="{{$columns_select->value}}" @if($columns_select->value == Session::get($session_column_name)) selected @endif>{{  $columns_select->value  }}</option>
-                    @endforeach
-                </select>
-                <small class="form-text text-muted" id="search_column{{$loop->index}}_{{$frame_id}}">選択すると自動的に絞り込みします。</small>
-            </div>
-        @endforeach
+        @if ($databases_frames->use_select_flag && $select_columns && count($select_columns) >= 1)
+            @foreach($select_columns as $select_column)
+                @php
+                    $session_column_name = "search_column." . $frame->id . '.' . $loop->index . ".value";
+                @endphp
+                <div class="col-sm">
+                    <input name="search_column[{{$loop->index}}][name]" type="hidden" value="{{$select_column->column_name}}">
+                    <input name="search_column[{{$loop->index}}][columns_id]" type="hidden" value="{{$select_column->id}}">
+                    @if($select_column->column_type == DatabaseColumnType::checkbox)
+                    <input name="search_column[{{$loop->index}}][where]" type="hidden" value="PART">
+                    @else
+                    <input name="search_column[{{$loop->index}}][where]" type="hidden" value="ALL">
+                    @endif
+                    <select class="form-control" name="search_column[{{$loop->index}}][value]" title="{{$select_column->column_name}}" onChange="javascript:submit(this.form);" aria-describedby="search_column{{$loop->index}}_{{$frame_id}}" id="select_search_column{{$loop->index}}_{{$frame_id}}">
+                        <option value="">{{$select_column->column_name}}</option>
+                        @foreach($columns_selects->where('databases_columns_id', $select_column->id) as $columns_select)
+                            <option value="{{$columns_select->value}}" @if($columns_select->value == Session::get($session_column_name)) selected @endif>{{  $columns_select->value  }}</option>
+                        @endforeach
+                    </select>
+                    <small class="form-text text-muted" id="search_column{{$loop->index}}_{{$frame_id}}">選択すると自動的に絞り込みします。</small>
+                </div>
+            @endforeach
+        @endif
 
         {{-- 並び順 --}}
         @if($sort_count > 0 || $databases_frames->isBasicUseSortFlag())

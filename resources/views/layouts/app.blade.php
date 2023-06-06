@@ -76,29 +76,20 @@ if (! isset($cc_configs)) {
     <title>@if(isset($page)){{$page->page_name}} | @endif{{ Configs::getConfigsValue($cc_configs, 'base_site_name', config('app.name', 'Connect-CMS')) }}</title>
 
     <!-- Styles -->
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <link href="{{ mix('css/app.css') }}" rel="stylesheet">
 
     <!-- Fonts -->
     <link href="{{asset('fontawesome/css/all.min.css')}}" rel='stylesheet' type='text/css'>
 
     <!-- Scripts -->
-    <script src="{{asset('js/app.js')}}"></script>
+    <script src="{{ mix('/js/app.js') }}"></script>
 @if( App::environment(['local', 'staging']) )
     <script>Vue.config.devtools = true;</script>
 @endif
 
     <!-- tempusdominus-bootstrap-4 -->
     <link rel="stylesheet" href="{{asset('css/tempusdominus-bootstrap-4/tempusdominus-bootstrap-4.min.css')}}" />
-    {{--
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/locale/ja.js"></script>
-    --}}
-    <script src="{{asset('js/moment.js/moment.min.js')}}"></script>
-    <script src="{{asset('js/moment.js/locale/ja.js')}}"></script>
-    {{--
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.1.2/js/tempusdominus-bootstrap-4.min.js"></script>
-    --}}
-    <script src="{{asset('js/tempusdominus-bootstrap-4/tempusdominus-bootstrap-4.min.js')}}"></script>
+
 
     <!-- Connect-CMS Global CSS -->
     <link href="{{ asset('css/connect.css') }}?version={{ filemtime(public_path() . "/css/connect.css") }}" rel="stylesheet">
@@ -266,9 +257,17 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                                 @if (Auth::user()->can('role_arrangement'))
                                     @if (isset($page_list))
                                         @if (app('request')->input('mode') == 'preview')
-                                            <a href="{{ url()->current() }}" class="dropdown-item">プレビュー終了</a>
+                                            @isset ($page)
+                                                <a href="{{ url($page->permanent_link) }}" class="dropdown-item">プレビュー終了</a>
+                                            @else
+                                                <a href="{{ url()->current() }}" class="dropdown-item">プレビュー終了</a>
+                                            @endisset
                                         @else
-                                            <a href="{{ url()->current() }}/?mode=preview" class="dropdown-item">プレビューモード</a>
+                                            @isset ($page)
+                                                <a href="{{ url($page->permanent_link) }}?mode=preview" class="dropdown-item">プレビューモード</a>
+                                            @else
+                                                <a href="{{ url()->current() }}/?mode=preview" class="dropdown-item">プレビューモード</a>
+                                            @endisset
                                         @endif
                                         @if (Auth::user()->can('role_manage_on') && isset($page_list))
                                             <div class="dropdown-divider"></div>

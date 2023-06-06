@@ -388,7 +388,8 @@ class FaqsPlugin extends UserPluginBase
                           'categories.classname        as classname',
                           'faqs_posts.categories_id   as categories_id',
                           'categories.category         as category',
-                          DB::raw('"faqs" as plugin_name')
+                          DB::raw('"faqs" as plugin_name'),
+                          'faqs_posts.post_text as body'
                       )
                       ->join('faqs', 'faqs.id', '=', 'faqs_posts.faqs_id')
                       ->join('frames', 'frames.bucket_id', '=', 'faqs.bucket_id')
