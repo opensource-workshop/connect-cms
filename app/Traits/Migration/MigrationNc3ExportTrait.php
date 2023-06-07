@@ -5357,6 +5357,22 @@ trait MigrationNc3ExportTrait
                 ];
                 $frame_design = $display_type_to_frame_designs[$nc3_calendar_frame_setting->display_type] ?? 'default';
                 $frame_ini .= "template = \"" . $frame_design . "\"\n";
+            } elseif ($nc3_frame->plugin_key == 'bbses') {
+                // NC3 フレーム設定の取得
+                $nc3_bbs_frame_setting = Nc3BbsFrameSetting::where('frame_key', $nc3_frame->key)->firstOrNew([]);
+
+                // 表示形式 変換
+                // (nc) all:全件一覧, root:根記事一覧,flat:フラット
+                // (cc) default:デフォルト, no_frame:枠なし
+                // (key:nc3)display_type => (value:cc)テンプレート
+                $convert_view_formats = [
+                    'all'  => 'no_frame',
+                    'root' => 'no_frame',
+                    'flat' => 'default',
+                ];
+                $template = $convert_view_formats[$nc3_bbs_frame_setting->display_type] ?? 'default';
+
+                $frame_ini .= "template = \"{$template}\"\n";
             } else {
                 $frame_ini .= "template = \"default\"\n";
             }
