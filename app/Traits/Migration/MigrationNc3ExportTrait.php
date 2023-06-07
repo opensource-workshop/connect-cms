@@ -604,6 +604,40 @@ trait MigrationNc3ExportTrait
             }
             $nc3_pages = $nc3_pages_query->get();
 
+            // 全ページレイアウトを出力する
+            $export_full_page_layout = $this->getMigrationConfig('pages', 'export_full_page_layout');
+            if ($export_full_page_layout) {
+                // NC3ページレイアウト全件
+                $container_types = [
+                    Nc3Box::container_type_header,
+                    Nc3Box::container_type_left,
+                    Nc3Box::container_type_right,
+                    Nc3Box::container_type_footer
+                ];
+                $nc3_page_containers = Nc3PageContainer::whereIn('container_type', $container_types)->get();
+
+                // --- nc3でのヘッダ、左、右、フッタ取得順
+                // page ->
+                //  page_containers(どのエリアが見えてる(is_published = 1)・見えてないか) ->
+                //    boxes_page_containers(全エリア(page_id = 999 and is_published = 1)のbox特定) ->
+                //      box ->
+                //        frame ->
+                //          block
+
+                // 該当レイアウトにプラグイン配置（フレームありなし）の有無、全件
+                $nc3_page_container_frames = Nc3PageContainer::select('frames.*', 'page_containers.container_type', 'page_containers.page_id')
+                    ->join('boxes_page_containers', function ($join) {
+                        $join->on('boxes_page_containers.page_container_id', '=', 'page_containers.id')
+                            ->where('boxes_page_containers.is_published', 1);      // 有効なデータ
+                    })
+                    ->join('boxes', 'boxes.id', '=', 'boxes_page_containers.box_id')
+                    ->join('frames', 'frames.box_id', '=', 'boxes.id')
+                    ->whereIn('page_containers.container_type', $container_types)
+                    ->where('page_containers.is_published', 1)      // 見えてるエリア
+                    ->where('frames.is_deleted', 0)
+                    ->get();
+            }
+
             // NC3 のページID を使うことにした。
             //// 新規ページ用のインデックス
             //// 新規ページは _99 のように _ 付でページを作っておく。（_ 付はデータ作成時に既存page_id の続きで採番する）
@@ -681,6 +715,67 @@ trait MigrationNc3ExportTrait
                     if (!empty($parent_page_mapping) && $parent_room_flg) {
                         $page_ini .= "parent_page_dir = \"" . $parent_page_mapping->destination_key . "\"\n";
                     }
+                }
+
+                // 全ページレイアウトを出力する
+                if ($export_full_page_layout) {
+                    $nc3_page_containers_by_page = $nc3_page_containers->where('page_id', $nc3_sort_page->id);
+                    $nc3_page_container_frames_by_page = $nc3_page_container_frames->where('page_id', $nc3_sort_page->id);
+
+                    // ;cc_import_force_layouts["インポートページのディレクトリNo"] = "ヘッダー|左|右|フッター"、 1:表示,0:非表示
+                    $layout = '';
+                    // ヘッダーエリア
+                    $nc3_page_container_header = $nc3_page_containers_by_page->firstWhere('container_type', Nc3Box::container_type_header) ?? new Nc3PageContainer();
+                    if ($nc3_page_container_header->is_published) {
+                        // プラグイン配置（フレーム）あり・なし判定。NC3だとレイアウトONでもプラグイン配置なしだと、そのエリアがないものとして表示されるため。
+                        $nc3_page_container_frame = $nc3_page_container_frames_by_page->firstWhere('container_type', Nc3Box::container_type_header);
+                        if ($nc3_page_container_frame) {
+                            // プラグイン配置（フレーム）あり
+                            $layout .= '1';
+                        } else {
+                            // なし
+                            $layout .= '0';
+                        }
+                    } else {
+                        $layout .= '0';
+                    }
+                    // 左エリア
+                    $nc3_page_container_left = $nc3_page_containers_by_page->firstWhere('container_type', Nc3Box::container_type_left) ?? new Nc3PageContainer();
+                    if ($nc3_page_container_left->is_published) {
+                        $nc3_page_container_frame = $nc3_page_container_frames_by_page->firstWhere('container_type', Nc3Box::container_type_left);
+                        if ($nc3_page_container_frame) {
+                            $layout .= '|1';
+                        } else {
+                            $layout .= '|0';
+                        }
+                    } else {
+                        $layout .= '|0';
+                    }
+                    // 右エリア
+                    $nc3_page_container_right = $nc3_page_containers_by_page->firstWhere('container_type', Nc3Box::container_type_right) ?? new Nc3PageContainer();
+                    if ($nc3_page_container_right->is_published) {
+                        $nc3_page_container_frame = $nc3_page_container_frames_by_page->firstWhere('container_type', Nc3Box::container_type_right);
+                        if ($nc3_page_container_frame) {
+                            $layout .= '|1';
+                        } else {
+                            $layout .= '|0';
+                        }
+                    } else {
+                        $layout .= '|0';
+                    }
+                    // フッターエリア
+                    $nc3_page_container_footer = $nc3_page_containers_by_page->firstWhere('container_type', Nc3Box::container_type_footer) ?? new Nc3PageContainer();
+                    if ($nc3_page_container_footer->is_published) {
+                        $nc3_page_container_frame = $nc3_page_container_frames_by_page->firstWhere('container_type', Nc3Box::container_type_footer);
+                        if ($nc3_page_container_frame) {
+                            $layout .= '|1';
+                        } else {
+                            $layout .= '|0';
+                        }
+                    } else {
+                        $layout .= '|0';
+                    }
+                    $page_ini .= "layout = \"{$layout}\"\n";
                 }
 
                 // ページディレクトリの作成
