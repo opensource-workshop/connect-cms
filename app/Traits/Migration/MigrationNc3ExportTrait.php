@@ -5151,6 +5151,9 @@ trait MigrationNc3ExportTrait
             }
         }
 
+        // メニューのフレームタイトルを消さずに残す
+        $export_frame_title = $this->getMigrationConfig('menus', 'export_frame_title');
+
         // ページ内のブロック
         foreach ($nc3_frames as $nc3_frame) {
             $this->putMonitor(1, "Frame", "frame_id = " . $nc3_frame->id);
@@ -5177,7 +5180,12 @@ trait MigrationNc3ExportTrait
 
             // フレームタイトル＆メニューの特別処理
             if ($nc3_frame->plugin_key == 'menus') {
-                $frame_ini .= "frame_title = \"\"\n";
+                if ($export_frame_title) {
+                    // メニューのフレームタイトルを残す
+                    $frame_ini .= "frame_title = \"" . $nc3_frame->frame_name . "\"\n";
+                } else {
+                    $frame_ini .= "frame_title = \"\"\n";
+                }
             } else {
                 $frame_ini .= "frame_title = \"" . $nc3_frame->frame_name . "\"\n";
             }
