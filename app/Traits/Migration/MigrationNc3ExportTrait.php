@@ -604,6 +604,40 @@ trait MigrationNc3ExportTrait
             }
             $nc3_pages = $nc3_pages_query->get();
 
+            // 全ページレイアウトを出力する
+            $export_full_page_layout = $this->getMigrationConfig('pages', 'export_full_page_layout');
+            if ($export_full_page_layout) {
+                // NC3ページレイアウト全件
+                $container_types = [
+                    Nc3Box::container_type_header,
+                    Nc3Box::container_type_left,
+                    Nc3Box::container_type_right,
+                    Nc3Box::container_type_footer
+                ];
+                $nc3_page_containers = Nc3PageContainer::whereIn('container_type', $container_types)->get();
+
+                // --- nc3でのヘッダ、左、右、フッタ取得順
+                // page ->
+                //  page_containers(どのエリアが見えてる(is_published = 1)・見えてないか) ->
+                //    boxes_page_containers(全エリア(page_id = 999 and is_published = 1)のbox特定) ->
+                //      box ->
+                //        frame ->
+                //          block
+
+                // 該当レイアウトにプラグイン配置（フレームありなし）の有無、全件
+                $nc3_page_container_frames = Nc3PageContainer::select('frames.*', 'page_containers.container_type', 'page_containers.page_id')
+                    ->join('boxes_page_containers', function ($join) {
+                        $join->on('boxes_page_containers.page_container_id', '=', 'page_containers.id')
+                            ->where('boxes_page_containers.is_published', 1);      // 有効なデータ
+                    })
+                    ->join('boxes', 'boxes.id', '=', 'boxes_page_containers.box_id')
+                    ->join('frames', 'frames.box_id', '=', 'boxes.id')
+                    ->whereIn('page_containers.container_type', $container_types)
+                    ->where('page_containers.is_published', 1)      // 見えてるエリア
+                    ->where('frames.is_deleted', 0)
+                    ->get();
+            }
+
             // NC3 のページID を使うことにした。
             //// 新規ページ用のインデックス
             //// 新規ページは _99 のように _ 付でページを作っておく。（_ 付はデータ作成時に既存page_id の続きで採番する）
@@ -681,6 +715,67 @@ trait MigrationNc3ExportTrait
                     if (!empty($parent_page_mapping) && $parent_room_flg) {
                         $page_ini .= "parent_page_dir = \"" . $parent_page_mapping->destination_key . "\"\n";
                     }
+                }
+
+                // 全ページレイアウトを出力する
+                if ($export_full_page_layout) {
+                    $nc3_page_containers_by_page = $nc3_page_containers->where('page_id', $nc3_sort_page->id);
+                    $nc3_page_container_frames_by_page = $nc3_page_container_frames->where('page_id', $nc3_sort_page->id);
+
+                    // ;cc_import_force_layouts["インポートページのディレクトリNo"] = "ヘッダー|左|右|フッター"、 1:表示,0:非表示
+                    $layout = '';
+                    // ヘッダーエリア
+                    $nc3_page_container_header = $nc3_page_containers_by_page->firstWhere('container_type', Nc3Box::container_type_header) ?? new Nc3PageContainer();
+                    if ($nc3_page_container_header->is_published) {
+                        // プラグイン配置（フレーム）あり・なし判定。NC3だとレイアウトONでもプラグイン配置なしだと、そのエリアがないものとして表示されるため。
+                        $nc3_page_container_frame = $nc3_page_container_frames_by_page->firstWhere('container_type', Nc3Box::container_type_header);
+                        if ($nc3_page_container_frame) {
+                            // プラグイン配置（フレーム）あり
+                            $layout .= '1';
+                        } else {
+                            // なし
+                            $layout .= '0';
+                        }
+                    } else {
+                        $layout .= '0';
+                    }
+                    // 左エリア
+                    $nc3_page_container_left = $nc3_page_containers_by_page->firstWhere('container_type', Nc3Box::container_type_left) ?? new Nc3PageContainer();
+                    if ($nc3_page_container_left->is_published) {
+                        $nc3_page_container_frame = $nc3_page_container_frames_by_page->firstWhere('container_type', Nc3Box::container_type_left);
+                        if ($nc3_page_container_frame) {
+                            $layout .= '|1';
+                        } else {
+                            $layout .= '|0';
+                        }
+                    } else {
+                        $layout .= '|0';
+                    }
+                    // 右エリア
+                    $nc3_page_container_right = $nc3_page_containers_by_page->firstWhere('container_type', Nc3Box::container_type_right) ?? new Nc3PageContainer();
+                    if ($nc3_page_container_right->is_published) {
+                        $nc3_page_container_frame = $nc3_page_container_frames_by_page->firstWhere('container_type', Nc3Box::container_type_right);
+                        if ($nc3_page_container_frame) {
+                            $layout .= '|1';
+                        } else {
+                            $layout .= '|0';
+                        }
+                    } else {
+                        $layout .= '|0';
+                    }
+                    // フッターエリア
+                    $nc3_page_container_footer = $nc3_page_containers_by_page->firstWhere('container_type', Nc3Box::container_type_footer) ?? new Nc3PageContainer();
+                    if ($nc3_page_container_footer->is_published) {
+                        $nc3_page_container_frame = $nc3_page_container_frames_by_page->firstWhere('container_type', Nc3Box::container_type_footer);
+                        if ($nc3_page_container_frame) {
+                            $layout .= '|1';
+                        } else {
+                            $layout .= '|0';
+                        }
+                    } else {
+                        $layout .= '|0';
+                    }
+                    $page_ini .= "layout = \"{$layout}\"\n";
                 }
 
                 // ページディレクトリの作成
@@ -5151,6 +5246,9 @@ trait MigrationNc3ExportTrait
             }
         }
 
+        // メニューのフレームタイトルを消さずに残す
+        $export_frame_title = $this->getMigrationConfig('menus', 'export_frame_title');
+
         // ページ内のブロック
         foreach ($nc3_frames as $nc3_frame) {
             $this->putMonitor(1, "Frame", "frame_id = " . $nc3_frame->id);
@@ -5177,7 +5275,12 @@ trait MigrationNc3ExportTrait
 
             // フレームタイトル＆メニューの特別処理
             if ($nc3_frame->plugin_key == 'menus') {
-                $frame_ini .= "frame_title = \"\"\n";
+                if ($export_frame_title) {
+                    // メニューのフレームタイトルを残す
+                    $frame_ini .= "frame_title = \"" . $nc3_frame->frame_name . "\"\n";
+                } else {
+                    $frame_ini .= "frame_title = \"\"\n";
+                }
             } else {
                 $frame_ini .= "frame_title = \"" . $nc3_frame->frame_name . "\"\n";
             }
@@ -5254,6 +5357,22 @@ trait MigrationNc3ExportTrait
                 ];
                 $frame_design = $display_type_to_frame_designs[$nc3_calendar_frame_setting->display_type] ?? 'default';
                 $frame_ini .= "template = \"" . $frame_design . "\"\n";
+            } elseif ($nc3_frame->plugin_key == 'bbses') {
+                // NC3 フレーム設定の取得
+                $nc3_bbs_frame_setting = Nc3BbsFrameSetting::where('frame_key', $nc3_frame->key)->firstOrNew([]);
+
+                // 表示形式 変換
+                // (nc) all:全件一覧, root:根記事一覧,flat:フラット
+                // (cc) default:デフォルト, no_frame:枠なし
+                // (key:nc3)display_type => (value:cc)テンプレート
+                $convert_view_formats = [
+                    'all'  => 'no_frame',
+                    'root' => 'no_frame',
+                    'flat' => 'default',
+                ];
+                $template = $convert_view_formats[$nc3_bbs_frame_setting->display_type] ?? 'default';
+
+                $frame_ini .= "template = \"{$template}\"\n";
             } else {
                 $frame_ini .= "template = \"default\"\n";
             }
