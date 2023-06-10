@@ -136,8 +136,9 @@ class FrameCore
         $validate_targets['content_open_type'] = ['required'];
         $validate_names['content_open_type'] = '公開設定';
         if ($request->content_open_type == ContentOpenType::limited_open) {
-            $validate_targets['content_open_date_from'] = ['required', 'date'];
-            $validate_targets['content_open_date_to'] = ['required', 'date', 'after:content_open_date_from'];
+            // TIMESTAMP 値の範囲は'1970-01-01 00:00:01.000000'から'2038-01-19 03:14:07.999999'
+            $validate_targets['content_open_date_from'] = ['required', 'date', 'after:1970-01-02', 'before:2038-01-19'];
+            $validate_targets['content_open_date_to'] = ['required', 'date', 'after:content_open_date_from', 'after:1970-01-02', 'before:2038-01-19'];
             $validate_names['content_open_date_from'] = '公開日時From';
             $validate_names['content_open_date_to'] = '公開日時To';
         }
