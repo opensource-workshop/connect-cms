@@ -1637,6 +1637,7 @@ trait MigrationNc3ExportTrait
             $journals_ini .= "blog_name = \"" . $nc3_blog->name . "\"\n";
             $journals_ini .= "view_count = 10\n";
             $journals_ini .= "use_like = " . Nc3BlockSetting::getNc3BlockSettingValue($block_settings, $nc3_blog->block_key, 'use_like') . "\n";
+            $journals_ini .= "use_view_count_spectator = 1\n";                              // 表示件数リストを表示ON
             $journals_ini .= "article_post_flag = " . $article_post_flag . "\n";
             $journals_ini .= "article_approval_flag = 0\n";                                 // 編集長=モデは承認不要
             $journals_ini .= "reporter_post_flag = " . $reporter_post_flag . "\n";
@@ -1994,6 +1995,7 @@ trait MigrationNc3ExportTrait
             $journals_ini .= "[blog_base]\n";
             $journals_ini .= "blog_name = \"" . $nc3_bbs->name . "\"\n";
             $journals_ini .= "use_like = " . Nc3BlockSetting::getNc3BlockSettingValue($block_settings, $nc3_bbs->block_key, 'use_like') . "\n";
+            $journals_ini .= "use_view_count_spectator = 1\n";                              // 表示件数リストを表示ON
             $journals_ini .= "article_post_flag = " . $article_post_flag . "\n";
             $journals_ini .= "reporter_post_flag = " . $reporter_post_flag . "\n";
             $journals_ini .= "notice_on = " . $mail_setting->is_mail_send . "\n";
