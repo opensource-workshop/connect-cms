@@ -115,6 +115,29 @@
         </div>
     </div>
 
+    <div class="row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">表示件数リストを表示</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" value="0" id="use_view_count_spectator_off" name="use_view_count_spectator" class="custom-control-input"  @if (old('use_view_count_spectator', $blog->use_view_count_spectator) == 0) checked="checked" @endif>
+                <label class="custom-control-label" for="use_view_count_spectator_off" id="label_use_view_count_spectator_off">表示しない</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" value="1" id="use_view_count_spectator_on" name="use_view_count_spectator" class="custom-control-input" @if (old('use_view_count_spectator', $blog->use_view_count_spectator) == 1) checked="checked" @endif>
+                <label class="custom-control-label" for="use_view_count_spectator_on" id="label_use_view_count_spectator_on">表示する</label>
+            </div>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}"></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <small class="form-text text-muted">
+                「表示する」場合、観覧者が表示件数を変更できます。<br />
+                表示件数の初期値は「 <a href="{{url('/')}}/plugin/blogs/settingBlogFrame/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}">表示条件</a> 」から設定できます。<br />
+            </small>
+        </div>
+    </div>
+
     {{-- Submitボタン --}}
     <div class="form-group text-center">
         <div class="row">
