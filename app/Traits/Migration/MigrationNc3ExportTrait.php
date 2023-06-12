@@ -1637,6 +1637,7 @@ trait MigrationNc3ExportTrait
             $journals_ini .= "blog_name = \"" . $nc3_blog->name . "\"\n";
             $journals_ini .= "view_count = 10\n";
             $journals_ini .= "use_like = " . Nc3BlockSetting::getNc3BlockSettingValue($block_settings, $nc3_blog->block_key, 'use_like') . "\n";
+            $journals_ini .= "use_view_count_spectator = 1\n";                              // 表示件数リストを表示ON
             $journals_ini .= "article_post_flag = " . $article_post_flag . "\n";
             $journals_ini .= "article_approval_flag = 0\n";                                 // 編集長=モデは承認不要
             $journals_ini .= "reporter_post_flag = " . $reporter_post_flag . "\n";
@@ -1994,6 +1995,7 @@ trait MigrationNc3ExportTrait
             $journals_ini .= "[blog_base]\n";
             $journals_ini .= "blog_name = \"" . $nc3_bbs->name . "\"\n";
             $journals_ini .= "use_like = " . Nc3BlockSetting::getNc3BlockSettingValue($block_settings, $nc3_bbs->block_key, 'use_like') . "\n";
+            $journals_ini .= "use_view_count_spectator = 1\n";                              // 表示件数リストを表示ON
             $journals_ini .= "article_post_flag = " . $article_post_flag . "\n";
             $journals_ini .= "reporter_post_flag = " . $reporter_post_flag . "\n";
             $journals_ini .= "notice_on = " . $mail_setting->is_mail_send . "\n";
@@ -5388,8 +5390,11 @@ trait MigrationNc3ExportTrait
             $frame_ini .= "content_open_type = \"{$content_open_type}\"\n";
 
             if ($content_open_type == ContentOpenType::limited_open) {
-                $frame_ini .= "content_open_date_from = \"" . $this->getCCDatetime($nc3_frame->publish_start) . "\"\n";
-                $frame_ini .= "content_open_date_to = \"" . $this->getCCDatetime($nc3_frame->publish_end) . "\"\n";
+                // Connectの限定公開はFrom-Toどちらも必須&timestamp型のため、nullの場合はtimestamp型上限加減の値をセットする
+                $publish_start = $this->getCCDatetime($nc3_frame->publish_start) ?? new Carbon('1970-01-02 00:00:00');
+                $publish_end   = $this->getCCDatetime($nc3_frame->publish_end) ?? new Carbon('2038-01-01 00:00:00');
+                $frame_ini .= "content_open_date_from = \"{$publish_start}\"\n";
+                $frame_ini .= "content_open_date_to = \"{$publish_end}\"\n";
             }
 
             // overrideNc3Frame()関連設定

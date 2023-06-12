@@ -65,7 +65,7 @@ class BlogsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['settingBlogFrame', 'saveLikeJson', 'copy'];
+        $functions['get']  = ['settingBlogFrame', 'saveLikeJson', 'copy', 'indexCount'];
         $functions['post'] = ['saveBlogFrame'];
         return $functions;
     }
@@ -211,6 +211,7 @@ class BlogsPlugin extends UserPluginBase
                 'blogs.rss_count',
                 'blogs.use_like',
                 'blogs.like_button_name',
+                'blogs.use_view_count_spectator',
                 'blogs_frames.scope',
                 'blogs_frames.scope_value',
                 'blogs_frames.important_view',
@@ -287,10 +288,11 @@ class BlogsPlugin extends UserPluginBase
         //$blogs_posts = null;
 
         // 件数
-        $count = FrameConfig::getConfigValue($this->frame_configs, BlogFrameConfig::blog_view_count);
-        if ($option_count != null) {
-            $count = $option_count;
-        }
+        // $count = FrameConfig::getConfigValue($this->frame_configs, BlogFrameConfig::blog_view_count);
+        // if ($option_count != null) {
+        //     $count = $option_count;
+        // }
+        $count = $option_count;
         if ($count < 0) {
             $count = 0;
         }
@@ -609,8 +611,20 @@ WHERE status = 0
             return;
         }
 
+        // 件数
+        $count = FrameConfig::getConfigValue($this->frame_configs, BlogFrameConfig::blog_view_count, 15);
+        if ($count < 0) {
+            $count = 0;
+        }
+        // 件数選ぶONならセッション、OFFなら初期の表示件数
+        if ($blog_frame->use_view_count_spectator == 1) {
+            $view_count = session("view_count_spectator_{$frame_id}", $count);
+        } else {
+            $view_count = $count;
+        }
+
         // ブログデータ一覧の取得
-        $blogs_posts = $this->getPosts($blog_frame);
+        $blogs_posts = $this->getPosts($blog_frame, $view_count);
 
         // タグ：画面表示するデータのblogs_posts_id を集める
         $posts_ids = array();
@@ -639,7 +653,18 @@ WHERE status = 0
             'blogs_posts' => $blogs_posts,
             'blog_frame'  => $blog_frame,
             'blog_frame_setting' => BlogsFrames::where('frames_id', $frame_id)->firstOrNew([]),
+            'count'       => $count,
         ]);
+    }
+
+    /**
+     * 件数指定
+     */
+    public function indexCount($request, $page_id, $frame_id)
+    {
+        session(["view_count_spectator_{$frame_id}" => $request->input("view_count_spectator")]);
+
+        // リダイレクト先を指定しないため、画面から渡されたredirect_pathに飛ぶ
     }
 
     /**
@@ -1246,6 +1271,7 @@ WHERE status = 0
         $blogs->rss_count     = $request->rss_count;
         $blogs->use_like      = $request->use_like;
         $blogs->like_button_name = $request->like_button_name;
+        $blogs->use_view_count_spectator = $request->use_view_count_spectator;
         //$blogs->approval_flag = $request->approval_flag;
 
         // データ保存
