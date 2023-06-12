@@ -65,7 +65,7 @@ class BlogsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['settingBlogFrame', 'saveLikeJson', 'copy', 'index', 'indexCount'];
+        $functions['get']  = ['settingBlogFrame', 'saveLikeJson', 'copy', 'indexCount'];
         $functions['post'] = ['saveBlogFrame'];
         return $functions;
     }
