@@ -6,7 +6,7 @@
  * @category ブログプラグイン
 --}}
 @if (isset($blog_frame->use_view_count_spectator) && $blog_frame->use_view_count_spectator == 1)
-    <form action="{{url('/')}}/redirect/plugin/blogs/index_count/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="get" name="view_count_spectator_down{{$frame_id}}">
+    <form action="{{url('/')}}/redirect/plugin/blogs/indexCount/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="get" name="view_count_spectator_down{{$frame_id}}">
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/blogs/index/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
         <div class="float-right">
             {{-- 表示件数リスト --}}

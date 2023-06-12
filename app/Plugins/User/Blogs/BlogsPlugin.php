@@ -65,7 +65,7 @@ class BlogsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['settingBlogFrame', 'saveLikeJson', 'copy', 'index', 'index_count'];
+        $functions['get']  = ['settingBlogFrame', 'saveLikeJson', 'copy', 'index', 'indexCount'];
         $functions['post'] = ['saveBlogFrame'];
         return $functions;
     }
@@ -660,7 +660,7 @@ WHERE status = 0
     /**
      * 件数指定
      */
-    public function index_count($request, $page_id, $frame_id)
+    public function indexCount($request, $page_id, $frame_id)
     {
         session(["view_count_spectator_{$frame_id}" => $request->input("view_count_spectator")]);
 
