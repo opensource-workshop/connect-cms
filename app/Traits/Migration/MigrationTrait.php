@@ -2183,8 +2183,9 @@ trait MigrationTrait
                 $bucket->save();
 
                 $use_like = $this->getArrayValue($blog_ini, 'blog_base', 'use_like', 0);
+                $use_view_count_spectator = $this->getArrayValue($blog_ini, 'blog_base', 'use_view_count_spectator', 0);
 
-                $blog = new Blogs(['bucket_id' => $bucket->id, 'blog_name' => $blog_name, 'use_like' => $use_like]);
+                $blog = new Blogs(['bucket_id' => $bucket->id, 'blog_name' => $blog_name, 'use_like' => $use_like, 'use_view_count_spectator' => $use_view_count_spectator]);
                 $blog->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($blog_ini, 'source_info', 'insert_login_id', null));
                 $blog->created_name = $this->getArrayValue($blog_ini, 'source_info', 'created_name', null);
                 $blog->created_at   = $this->getDatetimeFromIniAndCheckFormat($blog_ini, 'source_info', 'created_at');
@@ -8778,6 +8779,7 @@ trait MigrationTrait
             $journals_ini .= "blog_name = \"" . $nc2_journal->journal_name . "\"\n";
             $journals_ini .= "view_count = 10\n";
             $journals_ini .= "use_like = " . $nc2_journal->vote_flag . "\n";
+            $journals_ini .= "use_view_count_spectator = 1\n";                                  // 表示件数リストを表示ON
             $journals_ini .= "article_post_flag = " . $article_post_flag . "\n";
             $journals_ini .= "article_approval_flag = " . $nc2_journal->agree_flag . "\n";      // agree_flag 1:承認あり 0:承認なし
             $journals_ini .= "reporter_post_flag = " . $reporter_post_flag . "\n";
@@ -9113,6 +9115,7 @@ trait MigrationTrait
             $journals_ini .= "[blog_base]\n";
             $journals_ini .= "blog_name = \"" . $nc2_bbs->bbs_name . "\"\n";
             $journals_ini .= "use_like = " . $nc2_bbs->vote_flag . "\n";
+            $journals_ini .= "use_view_count_spectator = 1\n";                              // 表示件数リストを表示ON
             $journals_ini .= "article_post_flag = " . $article_post_flag . "\n";
             $journals_ini .= "reporter_post_flag = " . $reporter_post_flag . "\n";
             $journals_ini .= "notice_on = " . $nc2_bbs->mail_send . "\n";
