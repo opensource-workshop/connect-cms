@@ -16,5 +16,6 @@ class Blogs extends Model
         'bucket_id',
         'blog_name',
         'use_like',
+        'use_view_count_spectator',
     ];
 }

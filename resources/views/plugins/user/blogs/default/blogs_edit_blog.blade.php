@@ -66,20 +66,20 @@
         <label class="{{$frame->getSettingLabelClass(true)}}">RSSの表示</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
-                @if (old('rss', $blog->rss) == 1)
-                    <input type="radio" value="1" id="rss_on" name="rss" class="custom-control-input" checked="checked">
-                @else
-                    <input type="radio" value="1" id="rss_on" name="rss" class="custom-control-input">
-                @endif
-                <label class="custom-control-label" for="rss_on" id="label_rss_on">表示する</label>
-            </div>
-            <div class="custom-control custom-radio custom-control-inline">
                 @if (old('rss', $blog->rss) == 0)
                     <input type="radio" value="0" id="rss_off" name="rss" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="0" id="rss_off" name="rss" class="custom-control-input">
                 @endif
                 <label class="custom-control-label" for="rss_off" id="label_rss_off">表示しない</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                @if (old('rss', $blog->rss) == 1)
+                    <input type="radio" value="1" id="rss_on" name="rss" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="1" id="rss_on" name="rss" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="rss_on" id="label_rss_on">表示する</label>
             </div>
         </div>
     </div>
@@ -96,12 +96,12 @@
         <label class="{{$frame->getSettingLabelClass(true)}}">いいねボタンの表示</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
-                <input type="radio" value="1" id="use_like_on" name="use_like" class="custom-control-input" data-toggle="collapse" data-target="#collapse_like_button_name:not(.show)" aria-expanded="false" aria-controls="collapse_like_button_name" @if (old('use_like', $blog->use_like) == 1) checked="checked" @endif>
-                <label class="custom-control-label" for="use_like_on" id="label_use_like_on">表示する</label>
-            </div>
-            <div class="custom-control custom-radio custom-control-inline">
                 <input type="radio" value="0" id="use_like_off" name="use_like" class="custom-control-input" data-toggle="collapse" data-target="#collapse_like_button_name.show" aria-expanded="false" aria-controls="collapse_like_button_name"  @if (old('use_like', $blog->use_like) == 0) checked="checked" @endif>
                 <label class="custom-control-label" for="use_like_off" id="label_use_like_off">表示しない</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" value="1" id="use_like_on" name="use_like" class="custom-control-input" data-toggle="collapse" data-target="#collapse_like_button_name:not(.show)" aria-expanded="false" aria-controls="collapse_like_button_name" @if (old('use_like', $blog->use_like) == 1) checked="checked" @endif>
+                <label class="custom-control-label" for="use_like_on" id="label_use_like_on">表示する</label>
             </div>
         </div>
     </div>
@@ -112,6 +112,29 @@
             <input type="text" name="like_button_name" value="{{old('like_button_name', $blog->like_button_name)}}" class="form-control @if ($errors->has('like_button_name')) border-danger @endif">
             @include('plugins.common.errors_inline', ['name' => 'like_button_name'])
             <small class="form-text text-muted">空の場合「{{Like::like_button_default}}」を表示します。</small>
+        </div>
+    </div>
+
+    <div class="row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">表示件数リストを表示</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" value="0" id="use_view_count_spectator_off" name="use_view_count_spectator" class="custom-control-input"  @if (old('use_view_count_spectator', $blog->use_view_count_spectator) == 0) checked="checked" @endif>
+                <label class="custom-control-label" for="use_view_count_spectator_off" id="label_use_view_count_spectator_off">表示しない</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" value="1" id="use_view_count_spectator_on" name="use_view_count_spectator" class="custom-control-input" @if (old('use_view_count_spectator', $blog->use_view_count_spectator) == 1) checked="checked" @endif>
+                <label class="custom-control-label" for="use_view_count_spectator_on" id="label_use_view_count_spectator_on">表示する</label>
+            </div>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}"></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <small class="form-text text-muted">
+                「表示する」場合、観覧者が表示件数を変更できます。<br />
+                表示件数の初期値は「 <a href="{{url('/')}}/plugin/blogs/settingBlogFrame/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}">表示条件</a> 」から設定できます。<br />
+            </small>
         </div>
     </div>
 

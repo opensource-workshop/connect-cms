@@ -42,6 +42,8 @@
 
 {{-- ブログ表示 --}}
 @if (isset($blogs_posts))
+{{-- 表示件数リスト --}}
+@include('plugins.user.blogs.default.include_view_count_spectator')
 <div>
     <dl>
     @foreach($blogs_posts as $post)
