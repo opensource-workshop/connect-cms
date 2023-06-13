@@ -86,6 +86,7 @@ use App\Enums\ContentOpenType;
 use App\Enums\DatabaseNoticeEmbeddedTag;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\DayOfWeek;
+use App\Enums\FaqNarrowingDownType;
 use App\Enums\FaqSequenceConditionType;
 use App\Enums\FormColumnType;
 use App\Enums\FormMode;
@@ -5681,6 +5682,9 @@ trait MigrationNc3ExportTrait
         } elseif ($plugin_name == 'blogs') {
             // ブログ
             $this->nc3FrameExportBlogs($nc3_frame, $new_page_index, $frame_index_str);
+        } elseif ($plugin_name == 'faqs') {
+            // FAQ
+            $this->nc3FrameExportFaqs($nc3_frame, $new_page_index, $frame_index_str);
         }
     }
 
@@ -5994,6 +5998,20 @@ trait MigrationNc3ExportTrait
 
         $frame_ini = "[blog]\n";
         $frame_ini .= "view_count = {$nc3_blog_frame_setting->articles_per_page}\n";
+        $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
+    }
+
+    /**
+     * NC3：FAQのフレーム特有部分のエクスポート
+     */
+    private function nc3FrameExportFaqs(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
+    {
+        $ini_filename = "frame_" . $frame_index_str . '.ini';
+
+        $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
+
+        $frame_ini = "[faq]\n";
+        $frame_ini .= "narrowing_down_type = \"". FaqNarrowingDownType::dropdown . "\"\n";
         $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
     }
 

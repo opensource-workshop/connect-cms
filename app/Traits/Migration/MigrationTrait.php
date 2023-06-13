@@ -168,6 +168,8 @@ use App\Enums\DatabaseNoticeEmbeddedTag;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\DayOfWeek;
 use App\Enums\FacilityDisplayType;
+use App\Enums\FaqFrameConfig;
+use App\Enums\FaqNarrowingDownType;
 use App\Enums\FaqSequenceConditionType;
 use App\Enums\FormColumnType;
 use App\Enums\FormMode;
@@ -5713,6 +5715,17 @@ trait MigrationTrait
         }
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+
+        // frame_configs 登録
+        if (!empty($faqs)) {
+            // 絞り込み機能
+            $narrowing_down_type = $this->getArrayValue($frame_ini, 'faq', 'narrowing_down_type', FaqNarrowingDownType::none);
+
+            $frame_config = FrameConfig::updateOrCreate(
+                ['frame_id' => $frame->id, 'name' => FaqFrameConfig::faq_narrowing_down_type],
+                ['value' => $narrowing_down_type]
+            );
+        }
 
         // bucketあり
         if (!empty($bucket)) {
