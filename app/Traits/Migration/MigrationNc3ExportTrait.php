@@ -24,6 +24,7 @@ use App\Models\Migration\Nc3\Nc3BlockRolePermission;
 use App\Models\Migration\Nc3\Nc3BlockSetting;
 use App\Models\Migration\Nc3\Nc3Blog;
 use App\Models\Migration\Nc3\Nc3BlogEntry;
+use App\Models\Migration\Nc3\Nc3BlogFrameSetting;
 use App\Models\Migration\Nc3\Nc3Cabinet;
 use App\Models\Migration\Nc3\Nc3CabinetFile;
 use App\Models\Migration\Nc3\Nc3Calendar;
@@ -1635,7 +1636,7 @@ trait MigrationNc3ExportTrait
             $journals_ini = "";
             $journals_ini .= "[blog_base]\n";
             $journals_ini .= "blog_name = \"" . $nc3_blog->name . "\"\n";
-            $journals_ini .= "view_count = 10\n";
+            // $journals_ini .= "view_count = 10\n";
             $journals_ini .= "use_like = " . Nc3BlockSetting::getNc3BlockSettingValue($block_settings, $nc3_blog->block_key, 'use_like') . "\n";
             $journals_ini .= "use_view_count_spectator = 1\n";                              // 表示件数リストを表示ON
             $journals_ini .= "article_post_flag = " . $article_post_flag . "\n";
@@ -5670,6 +5671,9 @@ trait MigrationNc3ExportTrait
                 // フォトアルバム
                 $this->nc3FrameExportPhotoalbums($nc3_frame, $new_page_index, $frame_index_str);
             }
+        } elseif ($plugin_name == 'blogs') {
+            // ブログ
+            $this->nc3FrameExportBlogs($nc3_frame, $new_page_index, $frame_index_str);
         }
     }
 
@@ -5963,6 +5967,26 @@ trait MigrationNc3ExportTrait
         $frame_ini .= "sort_photo = \"{$sort}\"\n";
         $frame_ini .= "embed_code = " . ShowType::show . "\n";
         $frame_ini .= "posted_at  = " . ShowType::show . "\n";
+        $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
+    }
+
+    /**
+     * NC3：ブログのフレーム特有部分のエクスポート
+     */
+    private function nc3FrameExportBlogs(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
+    {
+        // NC3 フレーム設定の取得
+        $nc3_blog_frame_setting = Nc3BlogFrameSetting::where('frame_key', $nc3_frame->key)->first();
+        if (empty($nc3_blog_frame_setting)) {
+            return;
+        }
+
+        $ini_filename = "frame_" . $frame_index_str . '.ini';
+
+        $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
+
+        $frame_ini = "[blog]\n";
+        $frame_ini .= "view_count = {$nc3_blog_frame_setting->articles_per_page}\n";
         $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
     }
 
