@@ -65,7 +65,7 @@ class BlogsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['settingBlogFrame', 'saveLikeJson', 'copy', 'indexCount'];
+        $functions['get']  = ['settingBlogFrame', 'saveLikeJson', 'copy', 'indexCount', 'search'];
         $functions['post'] = ['saveBlogFrame'];
         return $functions;
     }
@@ -212,6 +212,7 @@ class BlogsPlugin extends UserPluginBase
                 'blogs.use_like',
                 'blogs.like_button_name',
                 'blogs.use_view_count_spectator',
+                'blogs.narrowing_down_type',
                 'blogs_frames.scope',
                 'blogs_frames.scope_value',
                 'blogs_frames.important_view',
@@ -283,7 +284,7 @@ class BlogsPlugin extends UserPluginBase
     /**
      *  ブログ記事一覧取得
      */
-    private function getPosts($blog_frame, $option_count = null)
+    private function getPosts($blog_frame, $option_count = null, ?int $categories_id = null)
     {
         //$blogs_posts = null;
 
@@ -330,6 +331,11 @@ class BlogsPlugin extends UserPluginBase
 
         // カテゴリのleftJoin
         $blogs_query = Categories::appendCategoriesLeftJoin($blogs_query, $this->frame->plugin_name, 'blogs_posts.categories_id', 'blogs_posts.blogs_id');
+
+        // カテゴリ検索
+        if ($categories_id) {
+            $blogs_query->where('blogs_posts.categories_id', $categories_id);
+        }
 
         // いいねのleftJoin
         $blogs_query = Like::appendLikeLeftJoin($blogs_query, $plugin_name, 'blogs_posts.contents_id', 'blogs_posts.blogs_id');
@@ -623,8 +629,16 @@ WHERE status = 0
             $view_count = $count;
         }
 
+        if (empty($blog_frame->narrowing_down_type)) {
+            // カテゴリの絞り込み機能を表示しない場合、カテゴリ検索しない(null)
+            $categories_id = null;
+        } else {
+            // カテゴリの絞り込み機能ありなら、カテゴリ検索. sessionなしならカテゴリ検索しない(null)
+            $categories_id = session('categories_id_'. $this->frame->id);
+        }
+
         // ブログデータ一覧の取得
-        $blogs_posts = $this->getPosts($blog_frame, $view_count);
+        $blogs_posts = $this->getPosts($blog_frame, $view_count, $categories_id);
 
         // タグ：画面表示するデータのblogs_posts_id を集める
         $posts_ids = array();
@@ -648,12 +662,16 @@ WHERE status = 0
             }
         }
 
+        // カテゴリ
+        $blogs_categories = Categories::getInputCategories($this->frame->plugin_name, $blog_frame->blogs_id);
+
         // 表示テンプレートを呼び出す。
         return $this->view('blogs', [
-            'blogs_posts' => $blogs_posts,
-            'blog_frame'  => $blog_frame,
+            'blogs_posts'        => $blogs_posts,
+            'blog_frame'         => $blog_frame,
             'blog_frame_setting' => BlogsFrames::where('frames_id', $frame_id)->firstOrNew([]),
-            'count'       => $count,
+            'blogs_categories'   => $blogs_categories,
+            'count'              => $count,
         ]);
     }
 
@@ -665,6 +683,25 @@ WHERE status = 0
         session(["view_count_spectator_{$frame_id}" => $request->input("view_count_spectator")]);
 
         // リダイレクト先を指定しないため、画面から渡されたredirect_pathに飛ぶ
+    }
+
+    /**
+     * カテゴリ絞り込み
+     */
+    public function search($request, $page_id, $frame_id)
+    {
+        if ($request->has('categories_id')) {
+            $categories_id = (int)$request->categories_id;
+            if ($categories_id) {
+                // 絞り込み条件あり
+                session(['categories_id_'. $frame_id => (int)$request->categories_id]);
+            } else {
+                // 絞り込み条件で空を選択
+                session()->forget('categories_id_'. $this->frame->id);
+            }
+        }
+
+        return $this->index($request, $page_id, $frame_id);
     }
 
     /**
@@ -1272,6 +1309,7 @@ WHERE status = 0
         $blogs->use_like      = $request->use_like;
         $blogs->like_button_name = $request->like_button_name;
         $blogs->use_view_count_spectator = $request->use_view_count_spectator;
+        $blogs->narrowing_down_type = $request->narrowing_down_type;
         //$blogs->approval_flag = $request->approval_flag;
 
         // データ保存

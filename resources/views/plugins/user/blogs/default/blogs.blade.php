@@ -44,8 +44,16 @@
 
 {{-- ブログ表示 --}}
 @if (isset($blogs_posts))
-    {{-- 表示件数リスト --}}
-    @include('plugins.user.blogs.default.include_view_count_spectator')
+    <div class="float-right ml-2">
+        {{-- 表示件数リスト --}}
+        @include('plugins.user.blogs.default.include_view_count_spectator')
+    </div>
+    <div class="float-right">
+        {{-- 絞り込み機能 --}}
+        @include('plugins.user.blogs.default.include_narrowing_down')
+    </div>
+    {{-- floatの回り込み解除 --}}
+    <div class="clearfix"></div>
 
     @if (isset($is_template_titleindex))
     {{-- titleindexテンプレート --}}

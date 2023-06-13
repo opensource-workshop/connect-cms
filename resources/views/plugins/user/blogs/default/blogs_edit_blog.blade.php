@@ -116,7 +116,7 @@
     </div>
 
     <div class="row">
-        <label class="{{$frame->getSettingLabelClass(true)}}">表示件数リストを表示</label>
+        <label class="{{$frame->getSettingLabelClass(true)}}">表示件数リストの表示</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
                 <input type="radio" value="0" id="use_view_count_spectator_off" name="use_view_count_spectator" class="custom-control-input"  @if (old('use_view_count_spectator', $blog->use_view_count_spectator) == 0) checked="checked" @endif>
@@ -135,6 +135,23 @@
                 「表示する」場合、観覧者が表示件数を変更できます。<br />
                 表示件数の初期値は「 <a href="{{url('/')}}/plugin/blogs/settingBlogFrame/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}">表示条件</a> 」から設定できます。<br />
             </small>
+        </div>
+    </div>
+
+    <div class="row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">カテゴリの絞り込み機能表示</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            @foreach (BlogNarrowingDownType::getMembers() as $enum_value => $enum_label)
+                <div class="custom-control custom-radio custom-control-inline">
+                    @php $narrowing_down_type = $blog->narrowing_down_type ?? BlogNarrowingDownType::getDefault(); @endphp
+                    @if (old('narrowing_down_type', $narrowing_down_type) == $enum_value)
+                        <input type="radio" value="{{$enum_value}}" id="narrowing_down_type_{{$enum_value}}" name="narrowing_down_type" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="{{$enum_value}}" id="narrowing_down_type_{{$enum_value}}" name="narrowing_down_type" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="narrowing_down_type_{{$enum_value}}">{{$enum_label}}</label>
+                </div>
+            @endforeach
         </div>
     </div>
 
