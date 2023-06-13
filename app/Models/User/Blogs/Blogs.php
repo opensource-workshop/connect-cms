@@ -17,5 +17,6 @@ class Blogs extends Model
         'blog_name',
         'use_like',
         'use_view_count_spectator',
+        'narrowing_down_type',
     ];
 }
