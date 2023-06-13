@@ -556,7 +556,9 @@ trait MigrationNc3ExportTrait
 
             $older_than_nc3_2_0 = $this->getMigrationConfig('basic', 'older_than_nc3_2_0');
             if ($older_than_nc3_2_0) {
-                // nc3.2.0より古い場合は、sort_key が無いため sort_key でソートしない
+                // nc3.2.0より古い場合は、sort_key が無いため parent_id, lft でソートすると、ページの並び順を再現できた。
+                $nc3_top_page_query->orderBy('pages.parent_id')
+                                    ->orderBy('pages.lft');
             } else {
                 // 通常
                 $nc3_top_page_query->orderBy('pages.sort_key');
