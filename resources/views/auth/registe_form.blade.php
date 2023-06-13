@@ -236,15 +236,18 @@ use App\Models\Core\UsersColumns;
         <div class="form-group row">
             <label for="password-confirm" class="col-md-4 text-md-right">管理権限</label>
             <div class="col-md-8">
-                <div class="custom-control custom-checkbox">
-                    @if ((isset($users_roles["manage"]) && isset($users_roles["manage"]["admin_system"]) && $users_roles["manage"]["admin_system"] == 1) ||
-                          old('manage.admin_system') == 1)
-                        <input name="manage[admin_system]" value="1" type="checkbox" class="custom-control-input" id="admin_system" checked="checked">
-                    @else
-                        <input name="manage[admin_system]" value="1" type="checkbox" class="custom-control-input" id="admin_system">
-                    @endif
-                    <label class="custom-control-label" for="admin_system" id="label_admin_system">システム管理者</label>
-                </div>
+                {{-- システム管理者権限付与は、システム管理者のみ可 --}}
+                @if (Auth::user()->can('admin_system'))
+                    <div class="custom-control custom-checkbox">
+                        @if ((isset($users_roles["manage"]) && isset($users_roles["manage"]["admin_system"]) && $users_roles["manage"]["admin_system"] == 1) ||
+                            old('manage.admin_system') == 1)
+                            <input name="manage[admin_system]" value="1" type="checkbox" class="custom-control-input" id="admin_system" checked="checked">
+                        @else
+                            <input name="manage[admin_system]" value="1" type="checkbox" class="custom-control-input" id="admin_system">
+                        @endif
+                        <label class="custom-control-label" for="admin_system" id="label_admin_system">システム管理者</label>
+                    </div>
+                @endif
                 <div class="custom-control custom-checkbox">
                     @if ((isset($users_roles["manage"]) && isset($users_roles["manage"]["admin_site"]) && $users_roles["manage"]["admin_site"] == 1) ||
                           old('manage.admin_site') == 1)
