@@ -5532,13 +5532,10 @@ trait MigrationTrait
         // frame_configs 登録
         if (!empty($blogs)) {
             // 表示件数
-            $view_count = 10;
-            if (array_key_exists('blog_base', $blog_ini) && array_key_exists('view_count', $blog_ini['blog_base'])) {
-                $view_count = $blog_ini['blog_base']['view_count'];
+            $view_count = $this->getArrayValue($frame_ini, 'blog', 'view_count', 10);
+            if (empty($view_count)) {
                 // view_count が 0 を含む空の場合は、初期値にする。（NC2 で0 で全件表示されているものがあるので、その対応）
-                if (empty($view_count)) {
-                    $view_count = 10;
-                }
+                $view_count = 10;
             }
 
             $frame_config = FrameConfig::updateOrCreate(
@@ -8777,7 +8774,7 @@ trait MigrationTrait
             $journals_ini = "";
             $journals_ini .= "[blog_base]\n";
             $journals_ini .= "blog_name = \"" . $nc2_journal->journal_name . "\"\n";
-            $journals_ini .= "view_count = 10\n";
+            // $journals_ini .= "view_count = 10\n";
             $journals_ini .= "use_like = " . $nc2_journal->vote_flag . "\n";
             $journals_ini .= "use_view_count_spectator = 1\n";                                  // 表示件数リストを表示ON
             $journals_ini .= "article_post_flag = " . $article_post_flag . "\n";
@@ -12852,6 +12849,9 @@ trait MigrationTrait
         } elseif ($plugin_name == 'counters') {
             // カウンター
             $this->nc2BlockExportCounters($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
+        } elseif ($plugin_name == 'blogs') {
+            // ブログ
+            $this->nc2BlockExportBlogs($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
         }
     }
 
@@ -13083,6 +13083,26 @@ trait MigrationTrait
 
         $frame_ini  = "[counter]\n";
         $frame_ini .= "design_type = {$design_type}\n";
+        $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
+    }
+
+    /**
+     * NC2：ブログのブロック特有部分のエクスポート
+     */
+    private function nc2BlockExportBlogs($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
+    {
+        // NC2 ブロック設定の取得
+        $nc2_journal_block = Nc2JournalBlock::where('block_id', $nc2_block->block_id)->first();
+        if (empty($nc2_journal_block)) {
+            return;
+        }
+
+        $ini_filename = "frame_" . $frame_index_str . '.ini';
+
+        $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
+
+        $frame_ini = "[blog]\n";
+        $frame_ini .= "view_count = {$nc2_journal_block->visible_item}\n";
         $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
     }
 
