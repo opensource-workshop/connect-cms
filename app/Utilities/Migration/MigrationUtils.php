@@ -60,17 +60,29 @@ class MigrationUtils
      */
     private static function getImageStyle($content)
     {
-        $pattern = '/<img.*?style\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
+        $pattern = '/<img.*?style\s*=\s*[\"\'](.*?)[\"\'].*?>/i';
         return self::getContentPregMatchAll($content, $pattern, 1);
     }
 
     /**
-     * HTML からiframe タグの style 属性を取得
+     * HTML からiframe タグを取得
      */
-    private static function getIframeStyle($content)
+    private static function getIframe($content)
     {
-        $pattern = '/<iframe.*?style\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
-        return self::getContentPregMatchAll($content, $pattern, 1);
+        $pattern = '/<iframe(".*?"|\'.*?\'|[^\'"])*?>/i';
+        return self::getContentPregMatchAll($content, $pattern, 0);
+    }
+
+    /**
+     * iframe タグの style 属性を取得
+     * iframe タグの style 属性は任意のため、HTMLではなくiframeタグのみから取得する
+     */
+    private static function getIframeStyle($iframe_tag)
+    {
+        $pattern = '/<iframe.*?style\s*=\s*[\"\'](.*?)[\"\'].*?>/i';
+        // ※ iframe のstyleは必須じゃないので、この正規表現でHTMLからstyle取得だと、下記のようなものを取得して誤作動した
+        // string(137) "<iframe src="//www.youtube.com/embed/xxxxxx" width="800" height="449" allowfullscreen=""></iframe></p><p style="text-align:center;">"
+        return self::getContentPregMatchAll($iframe_tag, $pattern, 1);
     }
 
     /**
@@ -78,7 +90,7 @@ class MigrationUtils
      */
     private static function getIframeSrc($content)
     {
-        $pattern = '/<iframe.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
+        $pattern = '/<iframe.*?src\s*=\s*[\"\'](.*?)[\"\'].*?>/i';
         return self::getContentPregMatchAll($content, $pattern, 1);
     }
 
@@ -188,18 +200,37 @@ class MigrationUtils
         // Google Map 埋め込み時のスマホ用対応。widthを 100% に変更
         $iframe_srces = self::getIframeSrc($content);
         if (!empty($iframe_srces)) {
-            // iFrame のsrc を取得（複数の可能性もあり）
-            $iframe_styles = self::getIframeStyle($content);
-            if (!empty($iframe_styles)) {
-                foreach ($iframe_styles as $iframe_style) {
-                    $width_pos = strpos($iframe_style, 'width');
-                    $width_length = strpos($iframe_style, ";", $width_pos) - $width_pos + 1;
-                    $iframe_style_width = substr($iframe_style, $width_pos, $width_length);
-                    if (!empty($iframe_style_width)) {
-                        $content = str_replace($iframe_style_width, "width:100%;", $content);
+
+            // iframeのstyle属性は任意のため、ない事がある。そのため置換する場合、下記で対応
+            // ・まず該当のiframeタグを取得（A）
+            // ・該当タグから 目的の属性（style）を取得
+            // ・該当タグを置換（A’）
+            // ・コンテンツの（A）タグを（A’）タグに置換
+
+            // iFrame タグ取得（複数の可能性もあり）
+            $iframe_tags = self::getIframe($content);
+            if (!empty($iframe_tags)) {
+                foreach ($iframe_tags as $iframe_tag) {
+
+                    // iFrame のsrc を取得（複数の可能性もあり）
+                    $iframe_styles = self::getIframeStyle($iframe_tag);
+                    if (!empty($iframe_styles)) {
+                        foreach ($iframe_styles as $iframe_style) {
+                            $width_pos = strpos($iframe_style, 'width');
+                            $width_length = strpos($iframe_style, ";", $width_pos) - $width_pos + 1;
+                            $iframe_style_width = substr($iframe_style, $width_pos, $width_length);
+                            if (!empty($iframe_style_width)) {
+                                // iframeタグ内を置換
+                                $iframe_tag_replace = str_replace($iframe_style_width, "width:100%;", $iframe_tag);
+
+                                // コンテンツのiframeタグのみ置換
+                                $content = str_replace($iframe_tag, $iframe_tag_replace, $content);
+                            }
+                        }
                     }
                 }
             }
+
         }
         return $content;
     }
