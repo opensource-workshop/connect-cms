@@ -1,5 +1,6 @@
 @if ($paginator->hasPages())
-    <ul class="pagination">
+    {{-- bugfix: ページ送り（paginate）が中央エリアでもフレーム幅以上になるとはみ出るため、flex-wrapで折り返しするよう対応 --}}
+    <ul class="pagination flex-wrap">
         {{-- Previous Page Link --}}
         @if ($paginator->onFirstPage())
             <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
