@@ -80,6 +80,7 @@ use App\Traits\ConnectCommonTrait;
 use App\Utilities\Migration\MigrationUtils;
 
 use App\Enums\AreaType;
+use App\Enums\BlogNarrowingDownType;
 use App\Enums\BlogNoticeEmbeddedTag;
 use App\Enums\CounterDesignType;
 use App\Enums\ContentOpenType;
@@ -1647,6 +1648,7 @@ trait MigrationNc3ExportTrait
             // $journals_ini .= "view_count = 10\n";
             $journals_ini .= "use_like = " . Nc3BlockSetting::getNc3BlockSettingValue($block_settings, $nc3_blog->block_key, 'use_like') . "\n";
             $journals_ini .= "use_view_count_spectator = 1\n";                              // 表示件数リストを表示ON
+            $journals_ini .= "narrowing_down_type = \"" . BlogNarrowingDownType::dropdown . "\"\n"; // カテゴリの絞り込み機能ON
             $journals_ini .= "article_post_flag = " . $article_post_flag . "\n";
             $journals_ini .= "article_approval_flag = 0\n";                                 // 編集長=モデは承認不要
             $journals_ini .= "reporter_post_flag = " . $reporter_post_flag . "\n";
