@@ -598,6 +598,10 @@ trait MigrationNc3ExportTrait
                 // nc3.2.0より古い場合は、sort_key が無いため sort_key でソートしない
                 // @see https://github.com/NetCommons3/Pages/commit/77840e492352a21f7300ab1fa877f47f94f0bd1c
                 // @see https://github.com/NetCommons3/Rooms/commit/8edfd1ea18f4b45f5aee7f961d0480048e2d6fc9
+
+                // 若い親IDのページを先に移行しないと、MigrationMappingに親ページID達がなくマッチングできず、移行後にページ階層を再現できないため、parent_idのソート追加。
+                // nc3.2.0より新しければ、sort_keyで対応され、親ページID達が先に登録されるため、parent_idのソートは不要と思う。
+                $nc3_pages_query->orderBy('pages.parent_id');
             } else {
                 // 通常
                 $nc3_pages_query->orderBy('pages.sort_key')
