@@ -14495,7 +14495,7 @@ trait MigrationTrait
                 //  nc3 http://localhost:8081/blogs/blog_entries/view/27/2e19fea842dd98fe341ad536771b90a8?frame_id=49
                 //  cc  http://localhost/plugin/blogs/show/16/49/26#frame-49
                 return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/blogs/blog_entries/view/', '/plugin/blogs/show/', 'blogs_post_from_key');
-            } elseif (stripos($check_url_path, '/blogs/blog_entries/index/') !== false && stripos($check_url_path, 'category_id') !== false ) {
+            } elseif (stripos($check_url_path, '/blogs/blog_entries/index/') !== false && stripos($check_url_path, 'category_id') !== false) {
                 // (ブログ-一覧-カテゴリ指定)
                 //  nc3 http://localhost:8081/blogs/blog_entries/index/8/category_id:6?frame_id=8
                 //  cc  http://localhost/plugin/blogs/search/1/9?categories_id=6#frame-9
