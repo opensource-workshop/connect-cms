@@ -322,6 +322,7 @@ $app_array = [
         'FormMode' => \App\Enums\FormMode::class,
         'FormsRegisterTargetPlugin' => \App\Enums\FormsRegisterTargetPlugin::class,
         'WebsiteType' => \App\Enums\WebsiteType::class,
+        'BlogNarrowingDownType' => \App\Enums\BlogNarrowingDownType::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

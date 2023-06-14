@@ -24,6 +24,7 @@ use App\Models\Migration\Nc3\Nc3BlockRolePermission;
 use App\Models\Migration\Nc3\Nc3BlockSetting;
 use App\Models\Migration\Nc3\Nc3Blog;
 use App\Models\Migration\Nc3\Nc3BlogEntry;
+use App\Models\Migration\Nc3\Nc3BlogFrameSetting;
 use App\Models\Migration\Nc3\Nc3Cabinet;
 use App\Models\Migration\Nc3\Nc3CabinetFile;
 use App\Models\Migration\Nc3\Nc3Calendar;
@@ -79,12 +80,14 @@ use App\Traits\ConnectCommonTrait;
 use App\Utilities\Migration\MigrationUtils;
 
 use App\Enums\AreaType;
+use App\Enums\BlogNarrowingDownType;
 use App\Enums\BlogNoticeEmbeddedTag;
 use App\Enums\CounterDesignType;
 use App\Enums\ContentOpenType;
 use App\Enums\DatabaseNoticeEmbeddedTag;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\DayOfWeek;
+use App\Enums\FaqNarrowingDownType;
 use App\Enums\FaqSequenceConditionType;
 use App\Enums\FormColumnType;
 use App\Enums\FormMode;
@@ -555,7 +558,9 @@ trait MigrationNc3ExportTrait
 
             $older_than_nc3_2_0 = $this->getMigrationConfig('basic', 'older_than_nc3_2_0');
             if ($older_than_nc3_2_0) {
-                // nc3.2.0より古い場合は、sort_key が無いため sort_key でソートしない
+                // nc3.2.0より古い場合は、sort_key が無いため parent_id, lft でソートすると、ページの並び順を再現できた。
+                $nc3_top_page_query->orderBy('pages.parent_id')
+                                    ->orderBy('pages.lft');
             } else {
                 // 通常
                 $nc3_top_page_query->orderBy('pages.sort_key');
@@ -594,9 +599,14 @@ trait MigrationNc3ExportTrait
                 // ->get();
 
             if ($older_than_nc3_2_0) {
-                // nc3.2.0より古い場合は、sort_key が無いため sort_key でソートしない
+                // nc3.2.0より古い場合は、sort_key が無いため parent_id, lft でソートすると、ページの並び順を再現できた。
                 // @see https://github.com/NetCommons3/Pages/commit/77840e492352a21f7300ab1fa877f47f94f0bd1c
                 // @see https://github.com/NetCommons3/Rooms/commit/8edfd1ea18f4b45f5aee7f961d0480048e2d6fc9
+                //
+                // ※ 若い親IDのページを先に移行しないと、MigrationMappingに親ページID達がなくマッチングできず、移行後にページ階層を再現できないため、parent_idのソート必要。
+                // nc3.2.0より新しければ、sort_keyで対応され、親ページID達が先に登録されるため、parent_idのソートは不要と思う。
+                $nc3_pages_query->orderBy('pages.parent_id')
+                                ->orderBy('pages.lft');
             } else {
                 // 通常
                 $nc3_pages_query->orderBy('pages.sort_key')
@@ -1635,9 +1645,10 @@ trait MigrationNc3ExportTrait
             $journals_ini = "";
             $journals_ini .= "[blog_base]\n";
             $journals_ini .= "blog_name = \"" . $nc3_blog->name . "\"\n";
-            $journals_ini .= "view_count = 10\n";
+            // $journals_ini .= "view_count = 10\n";
             $journals_ini .= "use_like = " . Nc3BlockSetting::getNc3BlockSettingValue($block_settings, $nc3_blog->block_key, 'use_like') . "\n";
             $journals_ini .= "use_view_count_spectator = 1\n";                              // 表示件数リストを表示ON
+            $journals_ini .= "narrowing_down_type = \"" . BlogNarrowingDownType::dropdown . "\"\n"; // カテゴリの絞り込み機能ON
             $journals_ini .= "article_post_flag = " . $article_post_flag . "\n";
             $journals_ini .= "article_approval_flag = 0\n";                                 // 編集長=モデは承認不要
             $journals_ini .= "reporter_post_flag = " . $reporter_post_flag . "\n";
@@ -5670,6 +5681,12 @@ trait MigrationNc3ExportTrait
                 // フォトアルバム
                 $this->nc3FrameExportPhotoalbums($nc3_frame, $new_page_index, $frame_index_str);
             }
+        } elseif ($plugin_name == 'blogs') {
+            // ブログ
+            $this->nc3FrameExportBlogs($nc3_frame, $new_page_index, $frame_index_str);
+        } elseif ($plugin_name == 'faqs') {
+            // FAQ
+            $this->nc3FrameExportFaqs($nc3_frame, $new_page_index, $frame_index_str);
         }
     }
 
@@ -5963,6 +5980,40 @@ trait MigrationNc3ExportTrait
         $frame_ini .= "sort_photo = \"{$sort}\"\n";
         $frame_ini .= "embed_code = " . ShowType::show . "\n";
         $frame_ini .= "posted_at  = " . ShowType::show . "\n";
+        $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
+    }
+
+    /**
+     * NC3：ブログのフレーム特有部分のエクスポート
+     */
+    private function nc3FrameExportBlogs(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
+    {
+        // NC3 フレーム設定の取得
+        $nc3_blog_frame_setting = Nc3BlogFrameSetting::where('frame_key', $nc3_frame->key)->first();
+        if (empty($nc3_blog_frame_setting)) {
+            return;
+        }
+
+        $ini_filename = "frame_" . $frame_index_str . '.ini';
+
+        $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
+
+        $frame_ini = "[blog]\n";
+        $frame_ini .= "view_count = {$nc3_blog_frame_setting->articles_per_page}\n";
+        $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
+    }
+
+    /**
+     * NC3：FAQのフレーム特有部分のエクスポート
+     */
+    private function nc3FrameExportFaqs(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
+    {
+        $ini_filename = "frame_" . $frame_index_str . '.ini';
+
+        $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
+
+        $frame_ini = "[faq]\n";
+        $frame_ini .= "narrowing_down_type = \"". FaqNarrowingDownType::dropdown . "\"\n";
         $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
     }
 

@@ -1,5 +1,6 @@
 @if ($paginator->hasPages())
-    <ul class="pagination">
+    {{-- bugfix: ページ送り（paginate）が中央エリアでもフレーム幅以上になるとはみ出るため、flex-wrapで折り返しするよう対応 --}}
+    <ul class="pagination flex-wrap">
         {{-- Previous Page Link --}}
         @if ($paginator->onFirstPage())
             <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
@@ -38,7 +39,7 @@
 
                     {{-- 1ページ目と2ページ目以外は、カレントの前に「...」表示 --}}
                     @if ($page == $paginator->currentPage() && $page != 1 && $page != 2)
-                        <li class="page-item disabled d-block d-md-none"><span class="page-link">...</span></li>
+                        <li class="page-item disabled d-block d-sm-none"><span class="page-link">...</span></li>
                     @endif
 
                     @if ($page == $paginator->currentPage())
@@ -49,7 +50,7 @@
 
                     {{-- 最終ページと最終ページの1ページ前以外は、カレントの後に「...」表示 --}}
                     @if ($page == $paginator->currentPage() && $page != $paginator->lastPage() && $page != (intval($paginator->lastPage()) - 1))
-                        <li class="page-item disabled d-block d-md-none"><span class="page-link">...</span></li>
+                        <li class="page-item disabled d-block d-sm-none"><span class="page-link">...</span></li>
                     @endif
                 @endforeach
             @endif

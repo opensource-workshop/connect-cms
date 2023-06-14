@@ -161,6 +161,7 @@ use App\Traits\ConnectCommonTrait;
 use App\Utilities\Migration\MigrationUtils;
 
 use App\Enums\BlogFrameConfig;
+use App\Enums\BlogNarrowingDownType;
 use App\Enums\CounterDesignType;
 use App\Enums\ContentOpenType;
 use App\Enums\DatabaseColumnType;
@@ -168,6 +169,8 @@ use App\Enums\DatabaseNoticeEmbeddedTag;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\DayOfWeek;
 use App\Enums\FacilityDisplayType;
+use App\Enums\FaqFrameConfig;
+use App\Enums\FaqNarrowingDownType;
 use App\Enums\FaqSequenceConditionType;
 use App\Enums\FormColumnType;
 use App\Enums\FormMode;
@@ -2184,8 +2187,15 @@ trait MigrationTrait
 
                 $use_like = $this->getArrayValue($blog_ini, 'blog_base', 'use_like', 0);
                 $use_view_count_spectator = $this->getArrayValue($blog_ini, 'blog_base', 'use_view_count_spectator', 0);
+                $narrowing_down_type = $this->getArrayValue($blog_ini, 'blog_base', 'narrowing_down_type', BlogNarrowingDownType::none);
 
-                $blog = new Blogs(['bucket_id' => $bucket->id, 'blog_name' => $blog_name, 'use_like' => $use_like, 'use_view_count_spectator' => $use_view_count_spectator]);
+                $blog = new Blogs([
+                    'bucket_id' => $bucket->id,
+                    'blog_name' => $blog_name,
+                    'use_like' => $use_like,
+                    'use_view_count_spectator' => $use_view_count_spectator,
+                    'narrowing_down_type' => $narrowing_down_type,
+                ]);
                 $blog->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($blog_ini, 'source_info', 'insert_login_id', null));
                 $blog->created_name = $this->getArrayValue($blog_ini, 'source_info', 'created_name', null);
                 $blog->created_at   = $this->getDatetimeFromIniAndCheckFormat($blog_ini, 'source_info', 'created_at');
@@ -5532,13 +5542,10 @@ trait MigrationTrait
         // frame_configs 登録
         if (!empty($blogs)) {
             // 表示件数
-            $view_count = 10;
-            if (array_key_exists('blog_base', $blog_ini) && array_key_exists('view_count', $blog_ini['blog_base'])) {
-                $view_count = $blog_ini['blog_base']['view_count'];
+            $view_count = $this->getArrayValue($frame_ini, 'blog', 'view_count', 10);
+            if (empty($view_count)) {
                 // view_count が 0 を含む空の場合は、初期値にする。（NC2 で0 で全件表示されているものがあるので、その対応）
-                if (empty($view_count)) {
-                    $view_count = 10;
-                }
+                $view_count = 10;
             }
 
             $frame_config = FrameConfig::updateOrCreate(
@@ -5716,6 +5723,17 @@ trait MigrationTrait
         }
         // Frames 登録
         $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+
+        // frame_configs 登録
+        if (!empty($faqs)) {
+            // 絞り込み機能
+            $narrowing_down_type = $this->getArrayValue($frame_ini, 'faq', 'narrowing_down_type', FaqNarrowingDownType::none);
+
+            $frame_config = FrameConfig::updateOrCreate(
+                ['frame_id' => $frame->id, 'name' => FaqFrameConfig::faq_narrowing_down_type],
+                ['value' => $narrowing_down_type]
+            );
+        }
 
         // bucketあり
         if (!empty($bucket)) {
@@ -8777,9 +8795,10 @@ trait MigrationTrait
             $journals_ini = "";
             $journals_ini .= "[blog_base]\n";
             $journals_ini .= "blog_name = \"" . $nc2_journal->journal_name . "\"\n";
-            $journals_ini .= "view_count = 10\n";
+            // $journals_ini .= "view_count = 10\n";
             $journals_ini .= "use_like = " . $nc2_journal->vote_flag . "\n";
             $journals_ini .= "use_view_count_spectator = 1\n";                                  // 表示件数リストを表示ON
+            $journals_ini .= "narrowing_down_type = \"" . BlogNarrowingDownType::dropdown . "\"\n"; // カテゴリの絞り込み機能ON
             $journals_ini .= "article_post_flag = " . $article_post_flag . "\n";
             $journals_ini .= "article_approval_flag = " . $nc2_journal->agree_flag . "\n";      // agree_flag 1:承認あり 0:承認なし
             $journals_ini .= "reporter_post_flag = " . $reporter_post_flag . "\n";
@@ -12852,6 +12871,9 @@ trait MigrationTrait
         } elseif ($plugin_name == 'counters') {
             // カウンター
             $this->nc2BlockExportCounters($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
+        } elseif ($plugin_name == 'blogs') {
+            // ブログ
+            $this->nc2BlockExportBlogs($nc2_page, $nc2_block, $new_page_index, $frame_index_str);
         }
     }
 
@@ -13083,6 +13105,26 @@ trait MigrationTrait
 
         $frame_ini  = "[counter]\n";
         $frame_ini .= "design_type = {$design_type}\n";
+        $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
+    }
+
+    /**
+     * NC2：ブログのブロック特有部分のエクスポート
+     */
+    private function nc2BlockExportBlogs($nc2_page, $nc2_block, $new_page_index, $frame_index_str)
+    {
+        // NC2 ブロック設定の取得
+        $nc2_journal_block = Nc2JournalBlock::where('block_id', $nc2_block->block_id)->first();
+        if (empty($nc2_journal_block)) {
+            return;
+        }
+
+        $ini_filename = "frame_" . $frame_index_str . '.ini';
+
+        $save_folder = $this->getImportPath('pages/') . $this->zeroSuppress($new_page_index);
+
+        $frame_ini = "[blog]\n";
+        $frame_ini .= "view_count = {$nc2_journal_block->visible_item}\n";
         $this->storageAppend($save_folder . "/"     . $ini_filename, $frame_ini);
     }
 
