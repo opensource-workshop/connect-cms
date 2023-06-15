@@ -655,6 +655,12 @@ trait MigrationNc3ExportTrait
             // エクスポートしたページフォルダは連番にした。
             $new_page_index = 0;
 
+            // メニューで表示している下層ページを表示 取得
+            $nc3_menu_frame_pages_folder = Nc3MenuFramePage::whereIn("page_id", $nc3_pages->pluck('id'))
+                ->where("folder_type", 1)   // 1:下層ページを表示
+                ->where("is_hidden", 0)     // 0:表示
+                ->get();
+
             // ページのループ
             $this->putMonitor(1, "Page loop.");
             foreach ($nc3_pages as $nc3_sort_page) {
@@ -787,6 +793,11 @@ trait MigrationNc3ExportTrait
                     }
                     $page_ini .= "layout = \"{$layout}\"\n";
                 }
+
+                // 下層ページを表示
+                // １つでもメニューで「下層ページ表示」設定のページがあれば、ページは「下層ページを表示」ONで移行
+                $transfer_lower_page_flag = $nc3_menu_frame_pages_folder->firstWhere('page_id', $nc3_sort_page->id) ? 1 : 0;
+                $page_ini .= "transfer_lower_page_flag = {$transfer_lower_page_flag}\n";
 
                 // ページディレクトリの作成
                 $new_page_index++;

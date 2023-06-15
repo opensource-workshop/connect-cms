@@ -1096,12 +1096,14 @@ trait MigrationTrait
                     $this->putMonitor(1, "Page create.");
 
                     // ページの作成
-                    $page = Page::create(['page_name'         => $page_ini['page_base']['page_name'],
-                                          'permanent_link'    => $page_ini['page_base']['permanent_link'],
-                                          'layout'            => $layout,
-                                          'base_display_flag' => $page_ini['page_base']['base_display_flag'],
-                                          'membership_flag'   => empty($page_ini['page_base']['membership_flag']) ? 0 : $page_ini['page_base']['membership_flag'],
-                                        ]);
+                    $page = Page::create([
+                        'page_name'                => $page_ini['page_base']['page_name'],
+                        'permanent_link'           => $page_ini['page_base']['permanent_link'],
+                        'layout'                   => $layout,
+                        'base_display_flag'        => $page_ini['page_base']['base_display_flag'],
+                        'membership_flag'          => empty($page_ini['page_base']['membership_flag']) ? 0 : $page_ini['page_base']['membership_flag'],
+                        'transfer_lower_page_flag' => Arr::get($page_ini, 'page_base.transfer_lower_page_flag', 0),
+                    ]);
 
                     // 親ページの指定があるか
                     if (array_key_exists('page_base', $page_ini) && array_key_exists('parent_page_dir', $page_ini['page_base'])) {
@@ -1116,10 +1118,11 @@ trait MigrationTrait
                     }
                 } else {
                     // 対象のURL があった場合はページの更新
-                    $page->page_name         = $page_ini['page_base']['page_name'];
-                    $page->layout            = $layout;
-                    $page->base_display_flag = $page_ini['page_base']['base_display_flag'];
-                    $page->membership_flag   = empty($page_ini['page_base']['membership_flag']) ? 0 : $page_ini['page_base']['membership_flag'];
+                    $page->page_name                = $page_ini['page_base']['page_name'];
+                    $page->layout                   = $layout;
+                    $page->base_display_flag        = $page_ini['page_base']['base_display_flag'];
+                    $page->membership_flag          = empty($page_ini['page_base']['membership_flag']) ? 0 : $page_ini['page_base']['membership_flag'];
+                    $page->transfer_lower_page_flag = Arr::get($page_ini, 'page_base.transfer_lower_page_flag', 0);
                     $page->save();
 
                     $this->putMonitor(3, "Page found. Use existing page. url=" . $page_ini['page_base']['permanent_link']);
