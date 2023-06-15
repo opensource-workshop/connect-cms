@@ -956,6 +956,14 @@ trait MigrationNc3ExportTrait
         $salt = str_replace(array("\r\n", "\r", "\n"), "", $yaml['Security']['salt']);  // salt末尾に改行あり。改行削除
         $basic_ini .= "nc3_security_salt = \"" . $salt . "\"\n";
 
+        // サイト概要
+        $meta_description = Nc3SiteSetting::getNc3SiteSettingValueByKey($site_settings, 'Meta.description');
+        // NC初期設定のサイト概要は除去
+        $meta_description = str_replace('CMS,Netcommons,NetCommons3,CakePHP', '', $meta_description);
+        // ダブルクォーテーション対策
+        $meta_description = str_replace('"', '\"', $meta_description);
+        $basic_ini .= "description = \"" . $meta_description . "\"\n";
+
         // basic.ini ファイル保存
         $this->storagePut($this->getImportPath('basic/basic.ini'), $basic_ini);
     }

@@ -1390,6 +1390,9 @@ trait MigrationTrait
 
             // nc3_security_salt
             MigrationUtils::updateConfig('nc3_security_salt', $basic_ini, 'migration');
+
+            // サイト概要
+            MigrationUtils::updateConfig('description', $basic_ini, 'meta');
         }
     }
 
@@ -8065,6 +8068,15 @@ trait MigrationTrait
         // $default_theme_public = $configs->where('conf_name', 'default_theme_public')->first();
         // $default_theme_public = empty($default_theme_public) ? '' : $default_theme_public->conf_value;
         // $basic_ini .= "default_theme_public = \"" . $default_theme_public . "\"\n";
+
+        // サイト概要
+        $meta_description_config = $configs->firstWhere('conf_name', 'meta_description') ?? new Nc2Config();
+        $meta_description = $meta_description_config->conf_value;
+        // NC初期設定のサイト概要は除去
+        $meta_description = str_replace('CMS,Netcommons,Maple', '', $meta_description);
+        // ダブルクォーテーション対策
+        $meta_description = str_replace('"', '\"', $meta_description);
+        $basic_ini .= "description = \"" . $meta_description . "\"\n";
 
         // basic,ini ファイル保存
         //Storage::put($this->getImportPath('basic/basic.ini'), $basic_ini);
