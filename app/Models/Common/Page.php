@@ -36,9 +36,10 @@ class Page extends Model
         'membership_flag',
         'container_flag',
         'ip_address',
+        'class',
         'othersite_url',
         'othersite_url_target',
-        'class',
+        'transfer_lower_page_flag',
         'password',
     ];
 
