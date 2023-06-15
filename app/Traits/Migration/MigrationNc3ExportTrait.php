@@ -2465,6 +2465,8 @@ trait MigrationNc3ExportTrait
         // ブロック設定
         $block_settings = Nc3BlockSetting::whereIn('block_key', $nc3_multidatabases->pluck('block_key'))->get();
 
+        $older_than_nc3_2_0 = $this->getMigrationConfig('basic', 'older_than_nc3_2_0');
+
         // NC3汎用データベース（Multidatabase）のループ
         foreach ($nc3_multidatabases as $nc3_multidatabase) {
             $room_ids = $this->getMigrationConfig('basic', 'nc3_export_room_ids');
@@ -2833,11 +2835,20 @@ trait MigrationNc3ExportTrait
             $tsv_cols['update_login_id'] = "";
             $tsv_cols['content_id'] = "";
 
-            // データベースの記事
-            $multidatabase_contents = Nc3MultidatabaseContent::where('multidatabase_contents.multidatabase_id', $nc3_multidatabase->id)
-                ->where('multidatabase_contents.is_latest', 1)
-                ->orderBy('multidatabase_contents.id', 'asc')
-                ->get();
+            if ($older_than_nc3_2_0) {
+                // nc3.2.0より古い場合(nc3.1.10で修正)は、生きてる記事でも multidatabase_id=0 のため multidatabase_key で検索する
+                // @see https://github.com/NetCommons3/NetCommons3/issues/1280
+                $multidatabase_contents = Nc3MultidatabaseContent::where('multidatabase_contents.multidatabase_key', $nc3_multidatabase->key)
+                    ->where('multidatabase_contents.is_latest', 1)
+                    ->orderBy('multidatabase_contents.id', 'asc')
+                    ->get();
+            } else {
+                // 通常
+                $multidatabase_contents = Nc3MultidatabaseContent::where('multidatabase_contents.multidatabase_id', $nc3_multidatabase->id)
+                    ->where('multidatabase_contents.is_latest', 1)
+                    ->orderBy('multidatabase_contents.id', 'asc')
+                    ->get();
+            }
 
             // アップロードファイル
             $multidatabase_uploads = Nc3UploadFile::where('plugin_key', 'multidatabases')
@@ -5537,7 +5548,7 @@ trait MigrationNc3ExportTrait
         } elseif ($nc3_frame->plugin_key == 'multidatabases') {
             $nc3_multidatabase = Nc3Multidatabase::where('block_id', $nc3_frame->block_id)->first();
             if (empty($nc3_multidatabase)) {
-                $this->putError(3, "Nc2MultidatabaseBlock not found.", "block_id = " . $nc3_frame->block_id, $nc3_frame);
+                $this->putError(3, "Nc3Multidatabase not found.", "block_id = " . $nc3_frame->block_id, $nc3_frame);
             } else {
                 $ret = "database_id = \"" . $this->zeroSuppress($nc3_multidatabase->id) . "\"\n";
             }
