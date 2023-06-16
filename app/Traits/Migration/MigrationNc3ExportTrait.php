@@ -5247,9 +5247,12 @@ trait MigrationNc3ExportTrait
                 select(
                     'frames.*',
                     'frames_languages.name as frame_name',
-                    'frames_languages.language_id as language_id',
-                    'boxes.container_type as container_type',
-                    'blocks.key as block_key'
+                    'frames_languages.language_id',
+                    'boxes.container_type',
+                    'blocks.key as block_key',
+                    'blocks.public_type',
+                    'blocks.publish_start',
+                    'blocks.publish_end'
                 )
                 ->join('boxes', 'boxes.id', '=', 'frames.box_id')
                 ->join('frames_languages', function ($join) {
