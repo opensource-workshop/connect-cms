@@ -5243,13 +5243,17 @@ trait MigrationNc3ExportTrait
             }
 
             // box_idを使って指定されたページ内のフレーム取得
+            // ※ select()の内容は、既に取ってる $nc3_frames に追加するため、同じにする必要あり
             $nc3_common_frames_query = Nc3Frame::
                 select(
                     'frames.*',
                     'frames_languages.name as frame_name',
-                    'frames_languages.language_id as language_id',
-                    'boxes.container_type as container_type',
-                    'blocks.key as block_key'
+                    'frames_languages.language_id',
+                    'boxes.container_type',
+                    'blocks.key as block_key',
+                    'blocks.public_type',
+                    'blocks.publish_start',
+                    'blocks.publish_end'
                 )
                 ->join('boxes', 'boxes.id', '=', 'frames.box_id')
                 ->join('frames_languages', function ($join) {
