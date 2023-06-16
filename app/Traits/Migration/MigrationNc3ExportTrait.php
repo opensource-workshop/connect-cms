@@ -5243,6 +5243,7 @@ trait MigrationNc3ExportTrait
             }
 
             // box_idを使って指定されたページ内のフレーム取得
+            // ※ select()の内容は、既に取ってる $nc3_frames に追加するため、同じにする必要あり
             $nc3_common_frames_query = Nc3Frame::
                 select(
                     'frames.*',
