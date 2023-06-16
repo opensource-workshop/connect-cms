@@ -256,7 +256,7 @@ class Frame extends Model
 
     /**
      * 利用者が見れるフレームか
-     * ※この関数を修正する場合、scopeVisible()も修正すべきか確認してください。
+     * ※この関数を修正する場合、isInvisiblePrivateFrame()も修正すべきか確認してください。
      */
     public function scopeVisible($query)
     {
