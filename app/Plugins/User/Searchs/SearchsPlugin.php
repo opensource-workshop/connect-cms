@@ -489,7 +489,6 @@ class SearchsPlugin extends UserPluginBase
         $pages = Page::get();
         // 見れないページ除外
         $visible_page_ids = [];
-        // $request = app(\Request::class);
         foreach ($pages as $page) {
             // 自分のページから親を遡って取得
             $page_tree = Page::reversed()->ancestorsAndSelf($page->id);
