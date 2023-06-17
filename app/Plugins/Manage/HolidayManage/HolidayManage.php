@@ -123,7 +123,7 @@ class HolidayManage extends ManagePluginBase
 
         // 表示年リストの初期値
         $holiday_date_max = Holiday::max('holiday_date');
-        if (empty($holiday_date_max))  {
+        if (empty($holiday_date_max)) {
             // 現在年＋１
             $year_list_initial = date("Y") + 1;
         } else {
