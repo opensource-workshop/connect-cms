@@ -265,9 +265,12 @@ class Frame extends Model
             return $query;
         }
 
-        return $query->where('content_open_type', '<>', ContentOpenType::always_close)
-            ->whereDate('content_open_date_from', '<=', Carbon::now())
-            ->whereDate('content_open_date_to', '>=', Carbon::now());
+        return $query->where('content_open_type', ContentOpenType::always_open)
+            ->orWhere(function($query) {
+                $query->where('content_open_type', ContentOpenType::limited_open)
+                    ->whereDate('content_open_date_from', '<=', Carbon::now())
+                    ->whereDate('content_open_date_to', '>=', Carbon::now());
+            });
     }
 
 }
