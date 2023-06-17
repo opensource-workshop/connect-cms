@@ -17,6 +17,7 @@ use App\Plugins\Manage\ManagePluginBase;
  * 祝日管理クラス
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 祝日管理
  * @package Controller
@@ -120,12 +121,28 @@ class HolidayManage extends ManagePluginBase
         // 独自設定祝日を加味する。
         $holidays = YasumiHoliday::addConnectHolidays($this->getPosts($request), $holidays);
 
+        // 表示年リストの初期値
+        $holiday_date_max = Holiday::max('holiday_date');
+        if (empty($holiday_date_max)) {
+            // 現在年＋１
+            $year_list_initial = date("Y") + 1;
+        } else {
+            $holiday_date_max = new Carbon($holiday_date_max);
+            if ($holiday_date_max->year > (date("Y") + 1)) {
+                // 登録の最大年
+                $year_list_initial = $holiday_date_max->year;
+            } else {
+                $year_list_initial = date("Y") + 1;
+            }
+        }
+
         // 画面の呼び出し
         return view('plugins.manage.holiday.index', [
             "function"    => __FUNCTION__,
             "plugin_name" => "holiday",
             "configs"     => $configs_array,
             "holidays"    => $holidays,
+            "year_list_initial" => $year_list_initial,
         ]);
     }
 

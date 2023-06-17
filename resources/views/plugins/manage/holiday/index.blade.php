@@ -32,7 +32,7 @@
                 <label for="year" class="col-md-2 col-form-label text-md-right">表示年</label>
                 <div class="col-md-10">
                 <select class="form-control" name="year" onChange="submitFormYear()">
-                    @for ($i = date("Y") + 1; $i >= 2000; $i--)
+                    @for ($i = $year_list_initial; $i >= 2000; $i--)
                     <option value="{{$i}}"@if (Session::get('holiday_year') == $i) selected @endif>{{$i}}年</option>
                     @endfor
                 </select>
