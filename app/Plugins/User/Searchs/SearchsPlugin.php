@@ -173,8 +173,8 @@ class SearchsPlugin extends UserPluginBase
 
         // 各プラグインのSQL をUNION
         // 公開されているページ、フレームを検索対象とする
-        $searchablePageIds = $this->fetchSearchablePageIds($request);
-        $searchableFrameIds = Frame::visible()->get()->pluck('id');
+        $searchable_page_ids = $this->fetchSearchablePageIds($request);
+        $searchable_frame_ids = Frame::visible()->get()->pluck('id');
 
         foreach ($union_sqls as $union_sql) {
             // フレームの選択が行われる場合
@@ -192,9 +192,9 @@ class SearchsPlugin extends UserPluginBase
             }
 
             // 非公開ページ除外
-            $union_sql->whereIn('pages.id', $searchablePageIds);
+            $union_sql->whereIn('pages.id', $searchable_page_ids);
             // 非公開フレーム除外
-            $union_sql->whereIn('frames.id', $searchableFrameIds);
+            $union_sql->whereIn('frames.id', $searchable_frame_ids);
 
             $searchs_sql->unionAll($union_sql);
         }
