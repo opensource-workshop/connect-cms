@@ -229,6 +229,7 @@ class Frame extends Model
 
     /**
      * 非公開・限定公開フレームが非表示か
+     * ※この関数を修正する場合、scopeVisible()も修正すべきか確認してください。
      */
     public function isInvisiblePrivateFrame()
     {
@@ -252,4 +253,24 @@ class Frame extends Model
         // 表示
         return false;
     }
+
+    /**
+     * 利用者が見れるフレームか
+     * ※この関数を修正する場合、isInvisiblePrivateFrame()も修正すべきか確認してください。
+     */
+    public function scopeVisible($query)
+    {
+        // ログイン状態かつ、管理権限があればすべてフレームを見られる
+        if (Auth::check() && Auth::user()->can('role_arrangement')) {
+            return $query;
+        }
+
+        return $query->where('content_open_type', ContentOpenType::always_open)
+            ->orWhere(function($query) {
+                $query->where('content_open_type', ContentOpenType::limited_open)
+                    ->whereDate('content_open_date_from', '<=', Carbon::now())
+                    ->whereDate('content_open_date_to', '>=', Carbon::now());
+            });
+    }
+
 }

@@ -172,6 +172,10 @@ class SearchsPlugin extends UserPluginBase
                  ->leftJoin('categories', 'categories.id', '=', 'searchs_dual.categories_id');
 
         // 各プラグインのSQL をUNION
+        // 公開されているページ、フレームを検索対象とする
+        $searchable_page_ids = $this->fetchSearchablePageIds($request);
+        $searchable_frame_ids = Frame::visible()->get()->pluck('id');
+
         foreach ($union_sqls as $union_sql) {
             // フレームの選択が行われる場合
             // 選択したものだけ表示する
@@ -186,6 +190,11 @@ class SearchsPlugin extends UserPluginBase
                 $page_ids->push($request->narrow_down_page_id);
                 $union_sql->whereIn('pages.id', $page_ids);
             }
+
+            // 非公開ページ除外
+            $union_sql->whereIn('pages.id', $searchable_page_ids);
+            // 非公開フレーム除外
+            $union_sql->whereIn('frames.id', $searchable_frame_ids);
 
             $searchs_sql->unionAll($union_sql);
         }
@@ -470,5 +479,35 @@ class SearchsPlugin extends UserPluginBase
 
         // 新着情報設定選択画面を呼ぶ
         return $this->listBuckets($request, $page_id, $frame_id, $id);
+    }
+
+    /**
+     * 検索対象のページIDを取得する
+     */
+    private function fetchSearchablePageIds($request)
+    {
+        $pages = Page::get();
+        // 見れないページ除外
+        $visible_page_ids = [];
+        foreach ($pages as $page) {
+            // 自分のページから親を遡って取得
+            $page_tree = Page::reversed()->ancestorsAndSelf($page->id);
+
+            // パスワード認証
+            if ($page->isRequestPassword($request, $page_tree)) {
+                // 見れないページ
+                continue;
+            }
+
+            // 親子ページを加味してページ表示できるか
+            if (!$page->isVisibleAncestorsAndSelf($page_tree)) {
+                continue;
+            }
+
+            // 見れるページ
+            $visible_page_ids[] = $page->id;
+        }
+
+        return $visible_page_ids;
     }
 }
