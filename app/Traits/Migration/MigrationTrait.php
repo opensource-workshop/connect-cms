@@ -1096,12 +1096,14 @@ trait MigrationTrait
                     $this->putMonitor(1, "Page create.");
 
                     // ページの作成
-                    $page = Page::create(['page_name'         => $page_ini['page_base']['page_name'],
-                                          'permanent_link'    => $page_ini['page_base']['permanent_link'],
-                                          'layout'            => $layout,
-                                          'base_display_flag' => $page_ini['page_base']['base_display_flag'],
-                                          'membership_flag'   => empty($page_ini['page_base']['membership_flag']) ? 0 : $page_ini['page_base']['membership_flag'],
-                                        ]);
+                    $page = Page::create([
+                        'page_name'                => $page_ini['page_base']['page_name'],
+                        'permanent_link'           => $page_ini['page_base']['permanent_link'],
+                        'layout'                   => $layout,
+                        'base_display_flag'        => $page_ini['page_base']['base_display_flag'],
+                        'membership_flag'          => empty($page_ini['page_base']['membership_flag']) ? 0 : $page_ini['page_base']['membership_flag'],
+                        'transfer_lower_page_flag' => Arr::get($page_ini, 'page_base.transfer_lower_page_flag', 0),
+                    ]);
 
                     // 親ページの指定があるか
                     if (array_key_exists('page_base', $page_ini) && array_key_exists('parent_page_dir', $page_ini['page_base'])) {
@@ -1116,10 +1118,11 @@ trait MigrationTrait
                     }
                 } else {
                     // 対象のURL があった場合はページの更新
-                    $page->page_name         = $page_ini['page_base']['page_name'];
-                    $page->layout            = $layout;
-                    $page->base_display_flag = $page_ini['page_base']['base_display_flag'];
-                    $page->membership_flag   = empty($page_ini['page_base']['membership_flag']) ? 0 : $page_ini['page_base']['membership_flag'];
+                    $page->page_name                = $page_ini['page_base']['page_name'];
+                    $page->layout                   = $layout;
+                    $page->base_display_flag        = $page_ini['page_base']['base_display_flag'];
+                    $page->membership_flag          = empty($page_ini['page_base']['membership_flag']) ? 0 : $page_ini['page_base']['membership_flag'];
+                    $page->transfer_lower_page_flag = Arr::get($page_ini, 'page_base.transfer_lower_page_flag', 0);
                     $page->save();
 
                     $this->putMonitor(3, "Page found. Use existing page. url=" . $page_ini['page_base']['permanent_link']);
@@ -1390,6 +1393,9 @@ trait MigrationTrait
 
             // nc3_security_salt
             MigrationUtils::updateConfig('nc3_security_salt', $basic_ini, 'migration');
+
+            // サイト概要
+            MigrationUtils::updateConfig('description', $basic_ini, 'meta');
         }
     }
 
@@ -8066,6 +8072,15 @@ trait MigrationTrait
         // $default_theme_public = empty($default_theme_public) ? '' : $default_theme_public->conf_value;
         // $basic_ini .= "default_theme_public = \"" . $default_theme_public . "\"\n";
 
+        // サイト概要
+        $meta_description_config = $configs->firstWhere('conf_name', 'meta_description') ?? new Nc2Config();
+        $meta_description = $meta_description_config->conf_value;
+        // NC初期設定のサイト概要は除去
+        $meta_description = str_replace('CMS,Netcommons,Maple', '', $meta_description);
+        // ダブルクォーテーション対策
+        $meta_description = str_replace('"', '\"', $meta_description);
+        $basic_ini .= "description = \"" . $meta_description . "\"\n";
+
         // basic,ini ファイル保存
         //Storage::put($this->getImportPath('basic/basic.ini'), $basic_ini);
         $this->storagePut($this->getImportPath('basic/basic.ini'), $basic_ini);
@@ -14491,10 +14506,15 @@ trait MigrationTrait
 
         if ($check_url_path) {
             if (stripos($check_url_path, '/blogs/blog_entries/view/') !== false) {
-                // (ブログ)
+                // (ブログ-記事)
                 //  nc3 http://localhost:8081/blogs/blog_entries/view/27/2e19fea842dd98fe341ad536771b90a8?frame_id=49
                 //  cc  http://localhost/plugin/blogs/show/16/49/26#frame-49
                 return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, '/blogs/blog_entries/view/', '/plugin/blogs/show/', 'blogs_post_from_key');
+            } elseif (stripos($check_url_path, '/blogs/blog_entries/index/') !== false && stripos($check_url_path, 'category_id') !== false) {
+                // (ブログ-一覧-カテゴリ指定)
+                //  nc3 http://localhost:8081/blogs/blog_entries/index/8/category_id:6?frame_id=8
+                //  cc  http://localhost/plugin/blogs/search/1/9?categories_id=6#frame-9
+                return $this->convertNc3PluginPermalinkToConnectCategory($content, $url, $db_colum, '/blogs/blog_entries/index/', '/plugin/blogs/search/', 'categories_blogs');
             } elseif (stripos($check_url_path, '/multidatabases/multidatabase_contents/detail/') !== false) {
                 // (汎用DB)
                 //  nc3 http://localhost:8081/multidatabases/multidatabase_contents/detail/43/50ed8d82a743a87bb78e89f2a654b490?frame_id=43
@@ -14615,6 +14635,66 @@ trait MigrationTrait
     }
 
     /**
+     * nc3プラグインのカテゴリリンク１つをConnectのプラグインリンクに変換
+     */
+    private function convertNc3PluginPermalinkToConnectCategory(?string $content, string $url, string $db_colum, string $from_nc3_plugin_permalink, string $to_cc_plugin_permalink, string $content_target_source_table): ?string
+    {
+        // (ブログ-一覧-カテゴリ指定)
+        //  nc3 http://localhost:8081/blogs/blog_entries/index/8/category_id:6?frame_id=8
+        //      block_id=8, category_id=6
+        //      ※ ?frame_id=999 がないとnc3でもページ特定できない
+        //  cc  http://localhost/plugin/blogs/search/1/9?categories_id=6#frame-9
+        //      page_id=1, frame_id=9, post_id=9
+        //  (nc3) category_id    => MigrationMapping => (cc) category_id
+        //  (nc3) frame_id       => MigrationMapping => (cc) frame_id
+        //  (cc)  frame->id                          => (cc) frame->page_id
+
+        // &amp; => & 等のデコード
+        $check_url = htmlspecialchars_decode($url);
+        $check_url = str_replace('/setting', '', $check_url);
+
+        $check_url_path = parse_url($check_url, PHP_URL_PATH);
+        $check_url_query = parse_url($check_url, PHP_URL_QUERY);
+        // "frame_id=49" を ["frame_id" => "49"] に変換
+        parse_str($check_url_query, $check_url_query_array);
+
+        // デコードなし
+        $url_path = parse_url($url, PHP_URL_PATH);
+        $url_query = parse_url($url, PHP_URL_QUERY);
+
+        $frame_id = Arr::get($check_url_query_array, 'frame_id');
+        if (is_null($frame_id)) {
+            // frame_idなしは置換できない
+            $this->putError(3, $db_colum . '|プラグイン固有リンク|frame_idなしで置換できない', $url);
+            return $content;
+        }
+
+        // 不要文字を取り除き
+        // $path_tmp = str_replace('/blogs/blog_entries/index/', '', $check_url_path);
+        $path_tmp = str_replace($from_nc3_plugin_permalink, '', $check_url_path);
+        // /で分割
+        $src_params = explode('/', $path_tmp);
+
+        $category_id_str = $src_params[1];
+        $category_id_arr = explode(':', $category_id_str);
+        $category_id = $category_id_arr[1] ?? null;
+
+        // $map_category = MigrationMapping::where('target_source_table', 'categories_blogs')->where('source_key', $category_id)->first();
+        $map_category = MigrationMapping::where('target_source_table', $content_target_source_table)->where('source_key', $category_id)->first();
+        $map_frame   = MigrationMapping::where('target_source_table', 'frames')->where('source_key', $frame_id)->firstOrNew([]);
+        $frame       = Frame::find($map_frame->destination_key);
+
+        if ($map_category && $frame) {
+            // $content = str_replace("{$url_path}?{$url_query}", "/plugin/blogs/index/{$frame->page_id}/{$frame->id}?categories_id={$map_category->destination_key}#frame-{$frame->id}", $content);
+            $content = str_replace("{$url_path}?{$url_query}", "{$to_cc_plugin_permalink}{$frame->page_id}/{$frame->id}?categories_id={$map_category->destination_key}#frame-{$frame->id}", $content);
+        } else {
+            // frame_idなしは置換できない
+            $this->putError(3, $db_colum . "|プラグイン固有リンク|MigrationMapping(target_source_table={$content_target_source_table}|frames) or Frameデータなし", $url);
+        }
+        return $content;
+    }
+
+    /**
      * nc3プラグインリンク１つをConnectのファイルリンクに変換
      */
     private function convertNc3PluginPermalinkToConnectFile(?string $content, string $url, string $db_colum, string $from_nc3_plugin_permalink, string $content_target_source_table): ?string
@@ -14653,7 +14733,7 @@ trait MigrationTrait
     /**
      * nc3カレンダー系プラグインリンク１つをConnectのプラグインリンクに変換
      */
-    private function convertNc3PluginPermalinkCalToConnect(?string $content, string $url, string $db_colum, string $from_nc3_plugin_permalink, string $to_cc_plugin_permalink, string $content_target_source_table, ?bool $is_nc3_cal_plugin = false): ?string
+    private function convertNc3PluginPermalinkCalToConnect(?string $content, string $url, string $db_colum, string $from_nc3_plugin_permalink, string $to_cc_plugin_permalink, string $content_target_source_table): ?string
     {
         return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, $from_nc3_plugin_permalink, $to_cc_plugin_permalink, $content_target_source_table, true);
     }

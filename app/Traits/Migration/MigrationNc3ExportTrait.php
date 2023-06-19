@@ -655,6 +655,12 @@ trait MigrationNc3ExportTrait
             // エクスポートしたページフォルダは連番にした。
             $new_page_index = 0;
 
+            // メニューで表示している下層ページを表示 取得
+            $nc3_menu_frame_pages_folder = Nc3MenuFramePage::whereIn("page_id", $nc3_pages->pluck('id'))
+                ->where("folder_type", 1)   // 1:下層ページを表示
+                ->where("is_hidden", 0)     // 0:表示
+                ->get();
+
             // ページのループ
             $this->putMonitor(1, "Page loop.");
             foreach ($nc3_pages as $nc3_sort_page) {
@@ -787,6 +793,11 @@ trait MigrationNc3ExportTrait
                     }
                     $page_ini .= "layout = \"{$layout}\"\n";
                 }
+
+                // 下層ページを表示
+                // １つでもメニューで「下層ページ表示」設定のページがあれば、ページは「下層ページを表示」ONで移行
+                $transfer_lower_page_flag = $nc3_menu_frame_pages_folder->firstWhere('page_id', $nc3_sort_page->id) ? 1 : 0;
+                $page_ini .= "transfer_lower_page_flag = {$transfer_lower_page_flag}\n";
 
                 // ページディレクトリの作成
                 $new_page_index++;
@@ -955,6 +966,14 @@ trait MigrationNc3ExportTrait
         $yaml = Yaml::parse(file_get_contents($nc3_application_yml_path));
         $salt = str_replace(array("\r\n", "\r", "\n"), "", $yaml['Security']['salt']);  // salt末尾に改行あり。改行削除
         $basic_ini .= "nc3_security_salt = \"" . $salt . "\"\n";
+
+        // サイト概要
+        $meta_description = Nc3SiteSetting::getNc3SiteSettingValueByKey($site_settings, 'Meta.description');
+        // NC初期設定のサイト概要は除去
+        $meta_description = str_replace('CMS,Netcommons,NetCommons3,CakePHP', '', $meta_description);
+        // ダブルクォーテーション対策
+        $meta_description = str_replace('"', '\"', $meta_description);
+        $basic_ini .= "description = \"" . $meta_description . "\"\n";
 
         // basic.ini ファイル保存
         $this->storagePut($this->getImportPath('basic/basic.ini'), $basic_ini);
@@ -2465,6 +2484,8 @@ trait MigrationNc3ExportTrait
         // ブロック設定
         $block_settings = Nc3BlockSetting::whereIn('block_key', $nc3_multidatabases->pluck('block_key'))->get();
 
+        $older_than_nc3_2_0 = $this->getMigrationConfig('basic', 'older_than_nc3_2_0');
+
         // NC3汎用データベース（Multidatabase）のループ
         foreach ($nc3_multidatabases as $nc3_multidatabase) {
             $room_ids = $this->getMigrationConfig('basic', 'nc3_export_room_ids');
@@ -2833,11 +2854,20 @@ trait MigrationNc3ExportTrait
             $tsv_cols['update_login_id'] = "";
             $tsv_cols['content_id'] = "";
 
-            // データベースの記事
-            $multidatabase_contents = Nc3MultidatabaseContent::where('multidatabase_contents.multidatabase_id', $nc3_multidatabase->id)
-                ->where('multidatabase_contents.is_latest', 1)
-                ->orderBy('multidatabase_contents.id', 'asc')
-                ->get();
+            if ($older_than_nc3_2_0) {
+                // nc3.2.0より古い場合(nc3.1.10で修正)は、生きてる記事でも multidatabase_id=0 のため multidatabase_key で検索する
+                // @see https://github.com/NetCommons3/NetCommons3/issues/1280
+                $multidatabase_contents = Nc3MultidatabaseContent::where('multidatabase_contents.multidatabase_key', $nc3_multidatabase->key)
+                    ->where('multidatabase_contents.is_latest', 1)
+                    ->orderBy('multidatabase_contents.id', 'asc')
+                    ->get();
+            } else {
+                // 通常
+                $multidatabase_contents = Nc3MultidatabaseContent::where('multidatabase_contents.multidatabase_id', $nc3_multidatabase->id)
+                    ->where('multidatabase_contents.is_latest', 1)
+                    ->orderBy('multidatabase_contents.id', 'asc')
+                    ->get();
+            }
 
             // アップロードファイル
             $multidatabase_uploads = Nc3UploadFile::where('plugin_key', 'multidatabases')
@@ -5213,13 +5243,17 @@ trait MigrationNc3ExportTrait
             }
 
             // box_idを使って指定されたページ内のフレーム取得
+            // ※ select()の内容は、既に取ってる $nc3_frames に追加するため、同じにする必要あり
             $nc3_common_frames_query = Nc3Frame::
                 select(
                     'frames.*',
                     'frames_languages.name as frame_name',
-                    'frames_languages.language_id as language_id',
-                    'boxes.container_type as container_type',
-                    'blocks.key as block_key'
+                    'frames_languages.language_id',
+                    'boxes.container_type',
+                    'blocks.key as block_key',
+                    'blocks.public_type',
+                    'blocks.publish_start',
+                    'blocks.publish_end'
                 )
                 ->join('boxes', 'boxes.id', '=', 'frames.box_id')
                 ->join('frames_languages', function ($join) {
@@ -5537,7 +5571,7 @@ trait MigrationNc3ExportTrait
         } elseif ($nc3_frame->plugin_key == 'multidatabases') {
             $nc3_multidatabase = Nc3Multidatabase::where('block_id', $nc3_frame->block_id)->first();
             if (empty($nc3_multidatabase)) {
-                $this->putError(3, "Nc2MultidatabaseBlock not found.", "block_id = " . $nc3_frame->block_id, $nc3_frame);
+                $this->putError(3, "Nc3Multidatabase not found.", "block_id = " . $nc3_frame->block_id, $nc3_frame);
             } else {
                 $ret = "database_id = \"" . $this->zeroSuppress($nc3_multidatabase->id) . "\"\n";
             }
@@ -6155,10 +6189,7 @@ trait MigrationNc3ExportTrait
 
         // 画像の中の wysiwygのdownload をエクスポートしたパスに変換する。
         $content = $this->nc3MigrationCommonDownloadMain($nc3_frame, $save_folder, $ini_filename, $content, $img_srcs, '[upload_images]');
-        // [TODO] 未対応
-        // cabinet_action_main_download をエクスポート形式に変換
-        // [upload_images]に追記したいので、nc2MigrationCommonDownloadMainの直後に実行
-        // $content = $this->nc3MigrationCabinetActionMainDownload($save_folder, $ini_filename, $content, 'src');
+        // /cabinets/cabinet_files/download/ をエクスポート形式に変換は不要。MigrationTrait::convertNc3PluginPermalink() プラグイン固有リンク置換 で同じ処理されてるため。
 
         // CSS の img-fluid を自動で付ける最小の画像幅
         $img_fluid_min_width = $this->getMigrationConfig('wysiwyg', 'img_fluid_min_width', 0);
@@ -6175,10 +6206,7 @@ trait MigrationNc3ExportTrait
         $anchors = MigrationUtils::getContentAnchor($content);
         // 添付ファイルの中の wysiwygのdownload をエクスポートしたパスに変換する。
         $content = $this->nc3MigrationCommonDownloadMain($nc3_frame, $save_folder, $ini_filename, $content, $anchors, '[upload_files]');
-        // [TODO] 未対応
-        // cabinet_action_main_download をエクスポート形式に変換
-        // [upload_files]に追記したいので、nc2MigrationCommonDownloadMainの直後に実行
-        // $content = $this->nc3MigrationCabinetActionMainDownload($save_folder, $ini_filename, $content, 'href');
+        // /cabinets/cabinet_files/download/ をエクスポート形式に変換は不要。MigrationTrait::convertNc3PluginPermalink() プラグイン固有リンク置換 で同じ処理されてるため。
 
         // Google Analytics タグ部分を削除
         $content = MigrationUtils::deleteGATag($content);
@@ -6271,44 +6299,6 @@ trait MigrationNc3ExportTrait
         // パスを変更した記事を返す。
         return array($content, $export_paths);
     }
-
-    /**
-     * NC3：cabinet_action_main_download をエクスポート形式に変換
-     */
-    private function nc3MigrationCabinetActionMainDownload($save_folder, $ini_filename, $content, $attr = 'href')
-    {
-        //?action=cabinet_action_main_download&block_id=778&room_id=1&cabinet_id=9&file_id=2020&upload_id=5688
-        $pattern = '/'. $attr.'=".*?\?action=cabinet_action_main_download&.*?upload_id=([0-9]+)"/i';
-        if (preg_match_all($pattern, $content, $cabinet_downloads)) {
-            $cabinet_file_ids = $cabinet_downloads[1];
-            $replace_key_vals = [];
-            foreach ($cabinet_file_ids as $key => $file_id) {
-                // 移行したアップロードファイルをini ファイルから探す
-                if ($this->uploads_ini && array_key_exists('uploads', $this->uploads_ini) && array_key_exists($file_id, $this->uploads_ini['uploads']['upload'])) {
-                    $path = '../../uploads/' . $this->uploads_ini[$file_id]['temp_file_name'];
-                    $replace_href_pattern = '/'. $attr.'="(.*?\?action=cabinet_action_main_download&.*?upload_id='. $file_id.')"/i';
-                    if (preg_match_all($replace_href_pattern, $content, $m)) {
-                        $match_href = $m[1][0];
-                        $replace_key_vals[$key] = [ 'upload_id' => $file_id,
-                                                    'match_href' => $match_href,
-                                                    'path' => $path,
-                        ];
-                    }
-                }
-            }
-            // 既にnc2MigrationCommonDownloadMainでiniファイルに追記されているので、[upload_files]は空にする
-            $ini_text = '';
-            foreach ($replace_key_vals as $vals) {
-                $content = str_replace($vals['match_href'], $vals['path'], $content);
-                $ini_text .= 'upload[' . $vals['upload_id'] . "] = \"" . $vals['path'] . "\"\n";
-            }
-            if ($ini_filename) {
-                $this->storageAppend($save_folder . "/" . $ini_filename, $ini_text);
-            }
-        }
-        return $content;
-    }
-
 
     /**
      * NC3の記事ステータスからConnectのステータスへ変換
