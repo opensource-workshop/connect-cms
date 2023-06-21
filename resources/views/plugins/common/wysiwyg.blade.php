@@ -6,6 +6,13 @@
  * @category プラグイン共通
 --}}
 @php
+    // php8.0 Warning対応
+    $frame_id = $frame_id ?? null;
+    $frame = $frame ?? new \App\Models\Common\Frame();
+    $page_id = $page_id ?? null;
+    $theme_group_default = $theme_group_default ?? null;
+    $theme = $theme ?? null;
+
     // テーマ固有書式
     $style_formats_file = '';
     $style_formats_path = public_path() . '/themes/' . $theme . '/wysiwyg/style_formats.txt';
