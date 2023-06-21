@@ -186,7 +186,6 @@ class ReservationManage extends ManagePluginBase
             "facility" => $facility,
             "categories" => $categories,
             "columns_sets" => $columns_sets,
-            "paginate_page" => $this->getPaginatePageFromRequestOrSession($request, 'reservation_page_condition.page', 'page'),
         ]);
     }
 
