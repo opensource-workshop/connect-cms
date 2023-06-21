@@ -55,17 +55,17 @@
                 <tr>
                     <td nowrap>{{$holiday->format('Y-m-d')}}（{{DayOfWeek::getDescription($holiday->format('w'))}}）</td>
                     <td nowrap>{{$holiday->getName()}}</td>
-                    @if ($holiday->orginal_holiday_status == 1)
+                    @if ($holiday->original_holiday_status == 1)
                     <td nowrap><span class="badge badge-pill badge-primary">独自追加</span></td>
-                    @elseif ($holiday->orginal_holiday_status == 2)
+                    @elseif ($holiday->original_holiday_status == 2)
                     <td nowrap><span class="badge badge-pill badge-danger">無効</span></td>
                     @else
                     <td nowrap><span class="badge badge-pill badge-success">計算値</span></td>
                     @endif
                     <td nowrap>
                         {{-- 独自追加の場合は、独自データの編集画面 --}}
-                        @if ($holiday->orginal_holiday_status == 1)
-                        <a href="{{url('/')}}/manage/holiday/edit/{{$holiday->orginal_holiday_post->id}}">
+                        @if ($holiday->original_holiday_status == 1)
+                        <a href="{{url('/')}}/manage/holiday/edit/{{$holiday->original_holiday_post->id}}">
                         {{-- 計算値 or 計算値の場合は、編集画面 --}}
                         @else
                         <a href="{{url('/')}}/manage/holiday/overrideEdit/{{$holiday->format('Y-m-d')}}">
