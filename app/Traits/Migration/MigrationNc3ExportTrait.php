@@ -6103,7 +6103,7 @@ trait MigrationNc3ExportTrait
         // imgタグの不要属性 除去
         // <img class="img-responsive nc3-img nc3-img-block" title="" src="../../uploads/upload_00059.jpg" alt="" data-size="big" data-position="" data-imgid="59" />
 
-        $pattern = '/<img.*?(data-size\s*=\s*[\"|\'].*?[\"|\']).*?>/i';
+        $pattern = '/<img.*?(data-size\s*=\s*[\"\'].*?[\"\']).*?>/i';
         $match_cnt = preg_match_all($pattern, $content, $matches);
         if ($match_cnt) {
             // [1] に中身のみ入ってくる。
@@ -6113,7 +6113,7 @@ trait MigrationNc3ExportTrait
             }
         }
 
-        $pattern = '/<img.*?(data-position\s*=\s*[\"|\'].*?[\"|\']).*?>/i';
+        $pattern = '/<img.*?(data-position\s*=\s*[\"\'].*?[\"\']).*?>/i';
         $match_cnt = preg_match_all($pattern, $content, $matches);
         if ($match_cnt) {
             // [1] に中身のみ入ってくる。
@@ -6123,7 +6123,7 @@ trait MigrationNc3ExportTrait
             }
         }
 
-        $pattern = '/<img.*?(data-imgid\s*=\s*[\"|\'].*?[\"|\']).*?>/i';
+        $pattern = '/<img.*?(data-imgid\s*=\s*[\"\'].*?[\"\']).*?>/i';
         $match_cnt = preg_match_all($pattern, $content, $matches);
         if ($match_cnt) {
             // [1] に中身のみ入ってくる。
@@ -6133,7 +6133,7 @@ trait MigrationNc3ExportTrait
             }
         }
 
-        $pattern = '/<img.*?(class\s*=\s*[\"|\'].*?[\"|\']).*?>/i';
+        $pattern = '/<img.*?(class\s*=\s*[\"\'].*?[\"\']).*?>/i';
         $match_cnt = preg_match_all($pattern, $content, $matches);
         if ($match_cnt) {
             // [1] に中身のみ入ってくる。
@@ -6153,7 +6153,7 @@ trait MigrationNc3ExportTrait
         }
 
         // nc3ではimgにaltとtitleが自動設定されるため、titleが空なら消す
-        $pattern = '/<img.*?title\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
+        $pattern = '/<img.*?title\s*=\s*[\"\'](.*?)[\"\'].*?>/i';
         $match_cnt = preg_match_all($pattern, $content, $matches);
         if ($match_cnt) {
             // [1] に中身のみ入ってくる。
