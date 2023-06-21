@@ -6211,6 +6211,9 @@ trait MigrationNc3ExportTrait
         // Google Analytics タグ部分を削除
         $content = MigrationUtils::deleteGATag($content);
 
+        // NC3絵文字を削除
+        $content = MigrationUtils::deleteNc3Emoji($content);
+
         // HTML content の保存
         if ($save_folder) {
             $content = $this->exportStrReplace($content, 'contents');
