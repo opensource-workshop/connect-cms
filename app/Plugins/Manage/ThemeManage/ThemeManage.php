@@ -40,7 +40,7 @@ class ThemeManage extends ManagePluginBase
         $role_ckeck_table["uploadImage"] = array('admin_site');
         $role_ckeck_table["deleteImage"] = array('admin_site');
         $role_ckeck_table["deleteTheme"] = array('admin_site');
-        $role_ckeck_table["generateIndex"]    = array('admin_site');
+        $role_ckeck_table["generateIndex"] = array('admin_site');
         $role_ckeck_table["generate"]    = array('admin_site');
         return $role_ckeck_table;
     }
