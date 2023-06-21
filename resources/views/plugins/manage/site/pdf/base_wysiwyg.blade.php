@@ -17,14 +17,14 @@
     </tr>
     <tr nobr="true">
         <td>文字サイズの使用</td>
-        @if ($configs->firstWhere('name', 'fontsizeselect')->value == '1') <td>使用する</td> @else <td>使用しない</td> @endif
+        @if (Configs::getConfigsValue($configs, 'fontsizeselect', null) == '1') <td>使用する</td> @else <td>使用しない</td> @endif
     </tr>
     <tr nobr="true">
         <td>初期に選択させる画像サイズ</td>
-        @if ($configs->firstWhere('name', 'resized_image_size_initial')->value == '1200') <td>大(1200px)</td>
-        @elseif ($configs->firstWhere('name', 'resized_image_size_initial')->value == '800') <td>中(800px)</td>
-        @elseif ($configs->firstWhere('name', 'resized_image_size_initial')->value == '400') <td>小(400px)</td>
-        @elseif ($configs->firstWhere('name', 'resized_image_size_initial')->value == '200') <td>極小(200px)</td>
+        @if (Configs::getConfigsValue($configs, 'resized_image_size_initial', null) == '1200') <td>大(1200px)</td>
+        @elseif (Configs::getConfigsValue($configs, 'resized_image_size_initial', null) == '800') <td>中(800px)</td>
+        @elseif (Configs::getConfigsValue($configs, 'resized_image_size_initial', null) == '400') <td>小(400px)</td>
+        @elseif (Configs::getConfigsValue($configs, 'resized_image_size_initial', null) == '200') <td>極小(200px)</td>
         @else <td>原寸(以下の幅、高さ)</td>
         @endif
     </tr>

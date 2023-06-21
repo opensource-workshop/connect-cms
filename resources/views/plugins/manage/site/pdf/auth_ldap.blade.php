@@ -17,18 +17,18 @@
     </tr>
     <tr nobr="true">
         <td>LDAP URI</td>
-        <td>{{$configs->firstWhere('name', 'auth_ldap_uri')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'auth_ldap_uri', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>DNタイプ</td>
-        @if ($configs->firstWhere('name', 'use_auth_method')->value == '1') <td>使用する</td> @else <td>使用しない</td> @endif
+        @if (Configs::getConfigsValue($configs, 'use_auth_method', null) == '1') <td>使用する</td> @else <td>使用しない</td> @endif
     </tr>
     <tr nobr="true">
         <td>通常ログインも使用</td>
-        @if ($configs->firstWhere('name', 'auth_ldap_dn_type')->value == 'dn') <td>DN (uid=ユーザID,DN形式)</td> @elseif ($configs->firstWhere('name', 'auth_ldap_dn_type')->value == 'active_directory') <td>Active Directory (ユーザID@DN形式)</td> @else <td></td> @endif
+        @if (Configs::getConfigsValue($configs, 'auth_ldap_dn_type', null) == 'dn') <td>DN (uid=ユーザID,DN形式)</td> @elseif (Configs::getConfigsValue($configs, 'auth_ldap_dn_type', null) == 'active_directory') <td>Active Directory (ユーザID@DN形式)</td> @else <td></td> @endif
     </tr>
     <tr nobr="true">
         <td>DN</td>
-        <td>{{$configs->firstWhere('name', 'auth_ldap_dn')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'auth_ldap_dn', null)}}</td>
     </tr>
 </table>

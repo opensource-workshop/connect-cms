@@ -21,6 +21,6 @@
     </tr>
     <tr nobr="true">
         <td>画像リサイズ時のPHPメモリ数</td>
-        <td>{{$configs->firstWhere('name', 'memory_limit_for_image_resize')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'memory_limit_for_image_resize', null)}}</td>
     </tr>
 </table>

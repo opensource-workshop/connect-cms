@@ -17,6 +17,6 @@
     </tr>
     <tr nobr="true">
         <td>トラッキングコード</td>
-        <td>{!!nl2br(htmlspecialchars($configs->firstWhere('name', 'tracking_code')->value), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401)!!}</td>
+        <td>{!!nl2br(htmlspecialchars(Configs::getConfigsValue($configs, 'tracking_code', null)), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401)!!}</td>
     </tr>
 </table>

@@ -1094,7 +1094,7 @@ class SiteManage extends ManagePluginBase
         $output = collect();
 
         // サイト名
-        $output->put('base_site_name', $configs->firstWhere('name', 'base_site_name')->value);
+        $output->put('base_site_name', Configs::getConfigsValue($configs, 'base_site_name', null));
 
         // 出力するPDF の準備
         $pdf = new CCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
@@ -1119,7 +1119,7 @@ class SiteManage extends ManagePluginBase
         // ヘッダーのフォントの設定（フォント情報を配列で渡す必要があるので、要注意）
         $pdf->setHeaderMargin(5);
         $pdf->setHeaderFont(array('ipaexg', '', 10));
-        $pdf->setHeaderData('', 0, $configs->firstWhere('name', 'base_site_name')->value . " - " . url('/'), '');
+        $pdf->setHeaderData('', 0, Configs::getConfigsValue($configs, 'base_site_name', null) . " - " . url('/'), '');
 
         // フッター
         $pdf->setPrintFooter(true);

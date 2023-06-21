@@ -17,6 +17,6 @@
     </tr>
     <tr nobr="true">
         <td>サイト概要</td>
-        <td>{{$configs->firstWhere('name', 'description')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'description', null)}}</td>
     </tr>
 </table>

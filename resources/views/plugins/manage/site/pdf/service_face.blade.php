@@ -17,10 +17,10 @@
     </tr>
     <tr nobr="true">
         <td>初期に選択させる画像の大きさ</td>
-        <td>{{$configs->firstWhere('name', 'face_ai_initial_size')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'face_ai_initial_size', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>初期に選択させるモザイクの粗さ</td>
-        <td>{{$configs->firstWhere('name', 'face_ai_initial_fineness')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'face_ai_initial_fineness', null)}}</td>
     </tr>
 </table>
