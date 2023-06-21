@@ -292,7 +292,7 @@ use App\Models\User\Reservations\ReservationsFacility;
             <div class="form-group text-center">
                 <div class="form-row">
                     <div class="offset-xl-3 col-9 col-xl-6">
-                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/manage/reservation?page={{$paginate_page}}&search_words={{$search_words}}'"><i class="fas fa-times"></i> キャンセル</button>
+                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/manage/reservation?page={{$paginate_page}}'"><i class="fas fa-times"></i> キャンセル</button>
                         @if ($facility->id)
                         <button type="button" class="btn btn-primary form-horizontal mr-2" onclick="submitAction('{{url('/')}}/manage/reservation/update/{{$facility->id}}')">
                             <i class="fas fa-check"></i> 変更確定

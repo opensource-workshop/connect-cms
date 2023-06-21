@@ -186,6 +186,7 @@ class ReservationManage extends ManagePluginBase
             "facility" => $facility,
             "categories" => $categories,
             "columns_sets" => $columns_sets,
+            "paginate_page" => $this->getPaginatePageFromRequestOrSession($request, 'reservation_page_condition.page', 'page'),
         ]);
     }
 
@@ -194,7 +195,6 @@ class ReservationManage extends ManagePluginBase
      */
     public function update($request, $id)
     {
-
         // エラーチェック
         $validator = Validator::make($request->all(), [
             'facility_name'              => ['required', 'max:255'],
