@@ -27,24 +27,24 @@
 
     <div class="form-group form-row">
         <label class="col-md text-md-right">削除対象ユーザ数</label>
-        <div class="col-md">{{  $users->count()  }}人</div>
+        <div class="col-md">{{ $users->count() }}人</div>
     </div>
 
     {{-- 既存ユーザの場合は削除処理のボタンも表示(自分自身の場合は表示しない) --}}
     <div class="form-group text-center">
-        <a data-toggle="collapse" href="#collapse{{$id}}">
+        <a data-toggle="collapse" href="#collapse">
             <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="d-none d-sm-inline">一括削除</span></span>
         </a>
     </div>
 
-    <div id="collapse{{$id}}" class="collapse">
+    <div id="collapse" class="collapse">
         <div class="card border-danger">
             <div class="card-body">
                 <span class="text-danger">仮削除ユーザを一括削除します。<br>元に戻すことはできないため、よく確認して実行してください。</span>
 
                 <div class="text-center">
                     {{-- 削除ボタン --}}
-                    <form action="{{url('/manage/user/bulkDestroy/')}}/{{$id}}" method="POST">
+                    <form action="{{url('/manage/user/bulkDestroy')}}" method="POST">
                         {{csrf_field()}}
                         <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('仮削除ユーザを一括削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                     </form>
