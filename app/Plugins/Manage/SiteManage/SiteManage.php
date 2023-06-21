@@ -823,13 +823,13 @@ class SiteManage extends ManagePluginBase
         $request->flash();
 
         // 設定されているページエラー設定のリスト取得
-        $analytics = $this->getConfigs('tracking_code');
+        $configs = Configs::where('name', 'tracking_code')->get();
 
         return view('plugins.manage.site.analytics', [
             "function"    => __FUNCTION__,
             "plugin_name" => "site",
             "id"          => $id,
-            "analytics"   => $analytics,
+            "configs"     => $configs,
         ]);
     }
 
