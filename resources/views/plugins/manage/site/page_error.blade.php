@@ -26,13 +26,13 @@
         {{-- 403 --}}
         <div class="form-group">
             <label class="col-form-label">IPアドレス制限などで権限がない場合の表示ページ</label>
-            <input type="text" name="page_permanent_link_403" value="{{$page_errors["page_permanent_link_403"]->value}}" class="form-control">
+            <input type="text" name="page_permanent_link_403" value="{{ Configs::getConfigsValueAndOld($configs, 'page_permanent_link_403', null) }}" class="form-control">
         </div>
 
         {{-- 404 --}}
         <div class="form-group">
             <label class="col-form-label">指定ページがない場合の表示ページ</label>
-            <input type="text" name="page_permanent_link_404" value="{{$page_errors["page_permanent_link_404"]->value}}" class="form-control">
+            <input type="text" name="page_permanent_link_404" value="{{ Configs::getConfigsValueAndOld($configs, 'page_permanent_link_404', null) }}" class="form-control">
         </div>
 
         <div class="card card-body bg-light p-2 mb-3">

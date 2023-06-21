@@ -771,13 +771,13 @@ class SiteManage extends ManagePluginBase
         $request->flash();
 
         // 設定されているページエラー設定のリスト取得
-        $page_errors = $this->getConfigs(null, 'page_error');
+        $configs = Configs::where('category', 'page_error')->get();
 
         return view('plugins.manage.site.page_error', [
             "function"    => __FUNCTION__,
             "plugin_name" => "site",
             "id"          => $id,
-            "page_errors" => $page_errors,
+            "configs"     => $configs,
         ]);
     }
 
