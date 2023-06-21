@@ -38,7 +38,6 @@
     <form name="form_code" action="" method="POST" class="form-horizontal">
         {{ csrf_field() }}
         <input name="page" value="{{$paginate_page}}" type="hidden">
-        <input name="search_words" value="{{$search_words}}" type="hidden">
 
         <!-- Code form  -->
         @if ($codes_help_message->id)
