@@ -136,7 +136,7 @@ class AuthManage extends ManagePluginBase
     public function netcommons2($request)
     {
         // Config データの取得
-        $config = Configs::where('name', 'auth_method')->where('value', AuthMethodType::netcommons2)->first();
+        $config = Configs::where('name', 'auth_method')->where('value', AuthMethodType::netcommons2)->firstOrNew([]);
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
