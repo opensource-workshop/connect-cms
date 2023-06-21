@@ -50,18 +50,12 @@ class MessageManage extends ManagePluginBase
         // Config データの取得
         $configs = Configs::get();
 
-        // Config データの変換
-        $configs_array = array();
-        foreach ($configs as $config) {
-            $configs_array[$config->name] = $config->value;
-        }
-
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
         return view('plugins.manage.message.message', [
             "function" => __FUNCTION__,
             "plugin_name" => "message",
-            "configs" => $configs_array,
+            "configs" => $configs,
         ]);
     }
 
