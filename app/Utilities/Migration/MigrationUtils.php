@@ -254,6 +254,23 @@ class MigrationUtils
     }
 
     /**
+     * HTML からNC3絵文字を削除
+     *
+     * @link https://regexper.com/#%2F%3Cimg.*%3F%28class%5Cs*%3D%5Cs*%5B%5C%22%5C'%5Dnc-title-icon%5B%5C%22%5C'%5D%29.*%3F%3E%2Fi
+     * @link https://www.php.net/manual/ja/reference.pcre.pattern.modifiers.php
+     */
+    public static function deleteNc3Emoji($content)
+    {
+        $pattern = '/<img.*?(class\s*=\s*[\"\']nc-title-icon[\"\']).*?>/i';
+        preg_match_all($pattern, $content, $matches);
+
+        foreach ($matches[0] as $matche) {
+            $content = str_replace($matche, '', $content);
+        }
+        return $content;
+    }
+
+    /**
      * サイト基本設定をインポート
      */
     public static function updateConfig($name, $ini, $category = 'general')
