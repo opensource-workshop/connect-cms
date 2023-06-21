@@ -727,13 +727,13 @@ class SiteManage extends ManagePluginBase
         $request->flash();
 
         // 設定されているmeta情報のリスト取得
-        $meta = $this->getConfigs(null, 'meta');
+        $configs = Configs::where('category', 'meta')->get();
 
         return view('plugins.manage.site.meta', [
             "function"    => __FUNCTION__,
             "plugin_name" => "site",
             "id"          => $id,
-            "meta"        => $meta,
+            "configs"     => $configs,
         ]);
     }
 
