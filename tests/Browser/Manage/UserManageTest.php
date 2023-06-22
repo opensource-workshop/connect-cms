@@ -210,6 +210,7 @@ class UserManageTest extends DuskTestCase
                     ->pause(500)
                     ->screenshot('manage/user/regist/images/regist2')
                     ->press('ユーザ登録')
+                    ->pause(500)
                     ->click('#label_group_role_1_1') // ここでは、group_user->id を 1 で想定。（順番に実行してきたらそうなるはず）
                     ->pause(500)
                     ->screenshot('manage/user/regist/images/regist3')
