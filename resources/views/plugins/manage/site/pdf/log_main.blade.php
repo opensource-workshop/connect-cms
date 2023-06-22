@@ -20,8 +20,8 @@
     </tr>
     <tr nobr="true">
         <td>記録範囲</td>
-        @if ($configs->firstWhere('name', 'app_log_scope')->value == 'all') <td>全て</td>
-        @elseif ($configs->firstWhere('name', 'app_log_scope')->value == 'select') <td>選択したもののみ</td>
+        @if (Configs::getConfigsValue($configs, 'app_log_scope', null) == 'all') <td>全て</td>
+        @elseif (Configs::getConfigsValue($configs, 'app_log_scope', null) == 'select') <td>選択したもののみ</td>
         @else <td></td>
         @endif
     </tr>
@@ -35,11 +35,11 @@
     </tr>
     <tr nobr="true">
         <td>ログイン・ログアウト</td>
-        @if ($configs->firstWhere('name', 'save_log_type_login')->value == '1') <td>〇</td> @else <td></td> @endif
+        @if (Configs::getConfigsValue($configs, 'save_log_type_login', null) == '1') <td>〇</td> @else <td></td> @endif
     </tr>
     <tr nobr="true">
         <td>ログイン後のページ操作</td>
-        @if ($configs->firstWhere('name', 'save_log_type_authed')->value == '1') <td>〇</td> @else <td></td> @endif
+        @if (Configs::getConfigsValue($configs, 'save_log_type_authed', null) == '1') <td>〇</td> @else <td></td> @endif
     </tr>
 </table>
 
@@ -51,59 +51,59 @@
     </tr>
     <tr nobr="true">
         <td>一般ページ</td>
-        @if ($configs->firstWhere('name', 'save_log_type_page')->value == '1') <td>〇</td> @else <td></td> @endif
+        @if (Configs::getConfigsValue($configs, 'save_log_type_page', null) == '1') <td>〇</td> @else <td></td> @endif
     </tr>
     <tr nobr="true">
         <td>管理画面</td>
-        @if ($configs->firstWhere('name', 'save_log_type_manage')->value == '1') <td>〇</td> @else <td></td> @endif
+        @if (Configs::getConfigsValue($configs, 'save_log_type_manage', null) == '1') <td>〇</td> @else <td></td> @endif
     </tr>
     <tr nobr="true">
         <td>マイページ</td>
-        @if ($configs->firstWhere('name', 'save_log_type_mypage')->value == '1') <td>〇</td> @else <td></td> @endif
+        @if (Configs::getConfigsValue($configs, 'save_log_type_mypage', null) == '1') <td>〇</td> @else <td></td> @endif
     </tr>
     <tr nobr="true">
         <td>API</td>
-        @if ($configs->firstWhere('name', 'save_log_type_api')->value == '1') <td>〇</td> @else <td></td> @endif
+        @if (Configs::getConfigsValue($configs, 'save_log_type_api', null) == '1') <td>〇</td> @else <td></td> @endif
     </tr>
     <tr nobr="true">
         <td>検索キーワード</td>
-        @if ($configs->firstWhere('name', 'save_log_type_search_keyword')->value == '1') <td>〇</td> @else <td></td> @endif
+        @if (Configs::getConfigsValue($configs, 'save_log_type_search_keyword', null) == '1') <td>〇</td> @else <td></td> @endif
     </tr>
     <tr nobr="true">
         <td>メール送信</td>
-        @if ($configs->firstWhere('name', 'save_log_type_sendmail')->value == '1') <td>〇</td> @else <td></td> @endif
+        @if (Configs::getConfigsValue($configs, 'save_log_type_sendmail', null) == '1') <td>〇</td> @else <td></td> @endif
     </tr>
     <tr nobr="true">
         <td>パスワードページ認証</td>
-        @if ($configs->firstWhere('name', 'save_log_type_passwordpage')->value == '1') <td>〇</td> @else <td></td> @endif
+        @if (Configs::getConfigsValue($configs, 'save_log_type_passwordpage', null) == '1') <td>〇</td> @else <td></td> @endif
     </tr>
     <tr nobr="true">
         <td>ダウンロード</td>
-        @if ($configs->firstWhere('name', 'save_log_type_download')->value == '1') <td>〇</td> @else <td></td> @endif
+        @if (Configs::getConfigsValue($configs, 'save_log_type_download', null) == '1') <td>〇</td> @else <td></td> @endif
     </tr>
     <tr nobr="true">
         <td>CSS</td>
-        @if ($configs->firstWhere('name', 'save_log_type_css')->value == '1') <td>〇</td> @else <td></td> @endif
+        @if (Configs::getConfigsValue($configs, 'save_log_type_css', null) == '1') <td>〇</td> @else <td></td> @endif
     </tr>
     <tr nobr="true">
         <td>ファイル</td>
-        @if ($configs->firstWhere('name', 'save_log_type_file')->value == '1') <td>〇</td> @else <td></td> @endif
+        @if (Configs::getConfigsValue($configs, 'save_log_type_file', null) == '1') <td>〇</td> @else <td></td> @endif
     </tr>
     <tr nobr="true">
         <td>パスワード関係</td>
-        @if ($configs->firstWhere('name', 'save_log_type_password')->value == '1') <td>〇</td> @else <td></td> @endif
+        @if (Configs::getConfigsValue($configs, 'save_log_type_password', null) == '1') <td>〇</td> @else <td></td> @endif
     </tr>
     <tr nobr="true">
         <td>ユーザ登録</td>
-        @if ($configs->firstWhere('name', 'save_log_type_register')->value == '1') <td>〇</td> @else <td></td> @endif
+        @if (Configs::getConfigsValue($configs, 'save_log_type_register', null) == '1') <td>〇</td> @else <td></td> @endif
     </tr>
     <tr nobr="true">
         <td>コア側処理</td>
-        @if ($configs->firstWhere('name', 'save_log_type_core')->value == '1') <td>〇</td> @else <td></td> @endif
+        @if (Configs::getConfigsValue($configs, 'save_log_type_core', null) == '1') <td>〇</td> @else <td></td> @endif
     </tr>
     <tr nobr="true">
         <td>言語切り替え</td>
-        @if ($configs->firstWhere('name', 'save_log_type_language')->value == '1') <td>〇</td> @else <td></td> @endif
+        @if (Configs::getConfigsValue($configs, 'save_log_type_language', null) == '1') <td>〇</td> @else <td></td> @endif
     </tr>
 </table>
 
@@ -115,10 +115,10 @@
     </tr>
     <tr nobr="true">
         <td>GET</td>
-        @if ($configs->firstWhere('name', 'save_log_type_http_get')->value == '1') <td>〇</td> @else <td></td> @endif
+        @if (Configs::getConfigsValue($configs, 'save_log_type_http_get', null) == '1') <td>〇</td> @else <td></td> @endif
     </tr>
     <tr nobr="true">
         <td>POST</td>
-        @if ($configs->firstWhere('name', 'save_log_type_http_post')->value == '1') <td>〇</td> @else <td></td> @endif
+        @if (Configs::getConfigsValue($configs, 'save_log_type_http_post', null) == '1') <td>〇</td> @else <td></td> @endif
     </tr>
 </table>

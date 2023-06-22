@@ -17,7 +17,7 @@
     </tr>
     <tr nobr="true">
         <td>多言語設定の使用</td>
-        @if ($configs->firstWhere('name', 'language_multi_on')->value == '1') <td>使用する</td> @else <td>使用しない</td> @endif
+        @if (Configs::getConfigsValue($configs, 'language_multi_on', null) == '1') <td>使用する</td> @else <td>使用しない</td> @endif
     </tr>
 </table>
 

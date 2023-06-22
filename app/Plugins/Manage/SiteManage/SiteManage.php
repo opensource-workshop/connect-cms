@@ -727,13 +727,13 @@ class SiteManage extends ManagePluginBase
         $request->flash();
 
         // 設定されているmeta情報のリスト取得
-        $meta = $this->getConfigs(null, 'meta');
+        $configs = Configs::where('category', 'meta')->get();
 
         return view('plugins.manage.site.meta', [
             "function"    => __FUNCTION__,
             "plugin_name" => "site",
             "id"          => $id,
-            "meta"        => $meta,
+            "configs"     => $configs,
         ]);
     }
 
@@ -771,13 +771,13 @@ class SiteManage extends ManagePluginBase
         $request->flash();
 
         // 設定されているページエラー設定のリスト取得
-        $page_errors = $this->getConfigs(null, 'page_error');
+        $configs = Configs::where('category', 'page_error')->get();
 
         return view('plugins.manage.site.page_error', [
             "function"    => __FUNCTION__,
             "plugin_name" => "site",
             "id"          => $id,
-            "page_errors" => $page_errors,
+            "configs"     => $configs,
         ]);
     }
 
@@ -823,13 +823,13 @@ class SiteManage extends ManagePluginBase
         $request->flash();
 
         // 設定されているページエラー設定のリスト取得
-        $analytics = $this->getConfigs('tracking_code');
+        $configs = Configs::where('name', 'tracking_code')->get();
 
         return view('plugins.manage.site.analytics', [
             "function"    => __FUNCTION__,
             "plugin_name" => "site",
             "id"          => $id,
-            "analytics"   => $analytics,
+            "configs"     => $configs,
         ]);
     }
 
@@ -1094,7 +1094,7 @@ class SiteManage extends ManagePluginBase
         $output = collect();
 
         // サイト名
-        $output->put('base_site_name', $configs->firstWhere('name', 'base_site_name')->value);
+        $output->put('base_site_name', Configs::getConfigsValue($configs, 'base_site_name', null));
 
         // 出力するPDF の準備
         $pdf = new CCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
@@ -1119,7 +1119,7 @@ class SiteManage extends ManagePluginBase
         // ヘッダーのフォントの設定（フォント情報を配列で渡す必要があるので、要注意）
         $pdf->setHeaderMargin(5);
         $pdf->setHeaderFont(array('ipaexg', '', 10));
-        $pdf->setHeaderData('', 0, $configs->firstWhere('name', 'base_site_name')->value . " - " . url('/'), '');
+        $pdf->setHeaderData('', 0, Configs::getConfigsValue($configs, 'base_site_name', null) . " - " . url('/'), '');
 
         // フッター
         $pdf->setPrintFooter(true);

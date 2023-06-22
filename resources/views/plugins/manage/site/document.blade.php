@@ -80,7 +80,7 @@
                         <label class="col-form-label">問い合わせ先タイトル</label>
                     </div>
                     <div class="col-md-10">
-                        <input type="text" value="{{old('document_support_org_title', $configs->firstWhere('name', 'document_support_org_title')->value)}}" name="document_support_org_title" class="form-control">
+                        <input type="text" value="{{ Configs::getConfigsValueAndOld($configs, 'document_support_org_title', null) }}" name="document_support_org_title" class="form-control">
                     </div>
                 </div>
                 <div class="row mt-md-2">
@@ -88,7 +88,7 @@
                         <label class="col-form-label">問い合わせ先の情報等</label>
                     </div>
                     <div class="col-md-10">
-                        <textarea name="document_support_org_txt" class="form-control" rows=5>{!!old('document_support_org_txt', $configs->firstWhere('name', 'document_support_org_txt')->value)!!}</textarea>
+                        <textarea name="document_support_org_txt" class="form-control" rows=5>{!! Configs::getConfigsValueAndOld($configs, 'document_support_org_txt', null) !!}</textarea>
                     </div>
                 </div>
                 <div class="row mt-md-2">
@@ -96,7 +96,7 @@
                         <label class="col-form-label">その他連絡先タイトル</label>
                     </div>
                     <div class="col-md-10">
-                        <input type="text" value="{{old('document_support_contact_title', $configs->firstWhere('name', 'document_support_contact_title')->value)}}" name="document_support_contact_title" class="form-control">
+                        <input type="text" value="{{ Configs::getConfigsValueAndOld($configs, 'document_support_contact_title', null) }}" name="document_support_contact_title" class="form-control">
                     </div>
                 </div>
                 <div class="row mt-md-2">
@@ -104,7 +104,7 @@
                         <label class="col-form-label">その他連絡先の情報等</label>
                     </div>
                     <div class="col-md-10">
-                        <textarea name="document_support_contact_txt" class="form-control" rows=5>{!!old('document_support_contact_txt', $configs->firstWhere('name', 'document_support_contact_txt')->value)!!}</textarea>
+                        <textarea name="document_support_contact_txt" class="form-control" rows=5>{!! Configs::getConfigsValueAndOld($configs, 'document_support_contact_txt', null) !!}</textarea>
                     </div>
                 </div>
                 <div class="row mt-md-2">
@@ -112,7 +112,7 @@
                         <label class="col-form-label">その他記載タイトル</label>
                     </div>
                     <div class="col-md-10">
-                        <input type="text" value="{{old('document_support_other_title', $configs->firstWhere('name', 'document_support_other_title')->value)}}" name="document_support_other_title" class="form-control">
+                        <input type="text" value="{{ Configs::getConfigsValueAndOld($configs, 'document_support_other_title', null) }}" name="document_support_other_title" class="form-control">
                     </div>
                 </div>
                 <div class="row mt-md-2">
@@ -120,7 +120,7 @@
                         <label class="col-form-label">その他記載</label>
                     </div>
                     <div class="col-md-10">
-                        <textarea name="document_support_other_txt" class="form-control" rows=5>{!!old('document_support_other_txt', $configs->firstWhere('name', 'document_support_other_txt')->value)!!}</textarea>
+                        <textarea name="document_support_other_txt" class="form-control" rows=5>{!! Configs::getConfigsValueAndOld($configs, 'document_support_other_txt', null) !!}</textarea>
                     </div>
                 </div>
             </div>

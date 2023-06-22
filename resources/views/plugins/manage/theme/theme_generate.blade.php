@@ -195,16 +195,16 @@
                     <div class="col-md-8">
                     <select name="menu_horizon_color" id="menu_horizon_color" class="form-control">
                     @foreach($colors as $color_name => $code)
-                        <option value="{{$color_name}}"@if(old('menu_horizon_color', $menu_horizon_color) == $color_name) selected @endif>{{$color_name}}</option>
+                        <option value="{{$color_name}}"@if(old('menu_horizon_color') == $color_name) selected @endif>{{$color_name}}</option>
                     @endforeach
                     </select>
                     </div>
                     <label for="menu_horizon_background" class="col-md-4 col-form-label text-md-right">背景色</label>
                     <div class="col-md-8">
                     <select name="menu_horizon_background" id="menu_horizon_background" class="form-control">
-                        <option value="none"@if(old('menu_horizon_background', $menu_horizon_background) == 'none') selected @endif>無し</option>
+                        <option value="none"@if(old('menu_horizon_background') == 'none') selected @endif>無し</option>
                     @foreach($colors as $color_name => $code)
-                        <option value="{{$color_name}}"@if(old('menu_horizon_background', $menu_horizon_background) == $color_name) selected @endif>{{$color_name}}</option>
+                        <option value="{{$color_name}}"@if(old('menu_horizon_background') == $color_name) selected @endif>{{$color_name}}</option>
                     @endforeach
                     </select>
                     </div>
@@ -212,21 +212,21 @@
                     <div class="col-md-8">
                     <select name="menu_horizon_border" id="menu_horizon_border" class="form-control">
                     @foreach($borders as $borderval => $border_lang)
-                        <option value="{{$borderval}}"@if(old('menu_horizon_border', $menu_horizon_border) == $borderval) selected @endif>{{$borderval}}</option>
+                        <option value="{{$borderval}}"@if(old('menu_horizon_border') == $borderval) selected @endif>{{$borderval}}</option>
                     @endforeach
                     </select>
                     </div>
                     <label for="menu_horizon_background_image" class="col-md-4 col-form-label text-md-right">背景パターン</label>
                     <div class="col-md-8">
                     <select name="menu_horizon_background_image" id="menu_horizon_background_image" class="form-control">
-                    <option value="none"@if(old('menu_horizon_background_image', $menu_horizon_background_image) == 'none') selected @endif>非表示</option>
-                    <option value="clear"@if(old('menu_horizon_background_image', $menu_horizon_background_image) == 'clear') selected @endif>クリア</option>
-                    <option value="craft"@if(old('menu_horizon_background_image', $menu_horizon_background_image) == 'craft') selected @endif>クラフト</option>
-                    <option value="ledge"@if(old('menu_horizon_background_image', $menu_horizon_background_image) == 'ledge') selected @endif>レッジ</option>
-                    <option value="shiny"@if(old('menu_horizon_background_image', $menu_horizon_background_image) == 'shiny') selected @endif>ピカピカ</option>
-                    <option value="stitch"@if(old('menu_horizon_background_image', $menu_horizon_background_image) == 'stitch') selected @endif>ステッチ</option>
-                    <option value="washed"@if(old('menu_horizon_background_image', $menu_horizon_background_image) == 'washed') selected @endif>ウォッシュ</option>
-                    <option value="underline"@if(old('menu_horizon_background_image', $menu_horizon_background_image) == 'underline') selected @endif>下線</option>
+                    <option value="none"@if(old('menu_horizon_background_image') == 'none') selected @endif>非表示</option>
+                    <option value="clear"@if(old('menu_horizon_background_image') == 'clear') selected @endif>クリア</option>
+                    <option value="craft"@if(old('menu_horizon_background_image') == 'craft') selected @endif>クラフト</option>
+                    <option value="ledge"@if(old('menu_horizon_background_image') == 'ledge') selected @endif>レッジ</option>
+                    <option value="shiny"@if(old('menu_horizon_background_image') == 'shiny') selected @endif>ピカピカ</option>
+                    <option value="stitch"@if(old('menu_horizon_background_image') == 'stitch') selected @endif>ステッチ</option>
+                    <option value="washed"@if(old('menu_horizon_background_image') == 'washed') selected @endif>ウォッシュ</option>
+                    <option value="underline"@if(old('menu_horizon_background_image') == 'underline') selected @endif>下線</option>
                     </select>
                     </div>
                 </div>
@@ -237,16 +237,16 @@
                     <div class="col-md-8">
                     <select name="menu_vertical_color" id="menu_vertical_color" class="form-control">
                     @foreach($colors as $color_name => $code)
-                        <option value="{{$color_name}}"@if(old('menu_vertical_color', $menu_vertical_color) == $color_name) selected @endif>{{$color_name}}</option>
+                        <option value="{{$color_name}}"@if(old('menu_vertical_color') == $color_name) selected @endif>{{$color_name}}</option>
                     @endforeach
                     </select>
                     </div>
                     <label for="menu_vertical_background" class="col-md-4 col-form-label text-md-right">背景色</label>
                     <div class="col-md-8">
                     <select name="menu_vertical_background" id="menu_vertical_background" class="form-control">
-                        <option value="none"@if(old('menu_vertical_background', $menu_vertical_background) == 'none') selected @endif>無し</option>
+                        <option value="none"@if(old('menu_vertical_background') == 'none') selected @endif>無し</option>
                     @foreach($colors as $color_name => $code)
-                        <option value="{{$color_name}}"@if(old('menu_vertical_background', $menu_vertical_background) == $color_name) selected @endif>{{$color_name}}</option>
+                        <option value="{{$color_name}}"@if(old('menu_vertical_background') == $color_name) selected @endif>{{$color_name}}</option>
                     @endforeach
                     </select>
                     </div>
@@ -254,20 +254,20 @@
                     <div class="col-md-8">
                     <select name="menu_vertical_border" id="menu_vertical_border" class="form-control">
                     @foreach($borders as $borderval => $border_lang)
-                        <option value="{{$borderval}}"@if(old('menu_vertical_border', $menu_vertical_border) == $borderval) selected @endif>{{$borderval}}</option>
+                        <option value="{{$borderval}}"@if(old('menu_vertical_border') == $borderval) selected @endif>{{$borderval}}</option>
                     @endforeach
                     </select>
                     </div>
                     <label for="menu_vertical_background_image" class="col-md-4 col-form-label text-md-right">背景パターン</label>
                     <div class="col-md-8">
                     <select name="menu_vertical_background_image" id="menu_vertical_background_image" class="form-control">
-                    <option value="none"@if(old('menu_vertical_background_image', $menu_vertical_background_image) == 'none') selected @endif>非表示</option>
-                    <option value="circle"@if(old('menu_vertical_background_image', $menu_vertical_background_image) == 'circle') selected @endif>サークル</option>
-                    <option value="clear"@if(old('menu_vertical_background_image', $menu_vertical_background_image) == 'clear') selected @endif>クリア</option>
-                    <option value="craft"@if(old('menu_vertical_background_image', $menu_vertical_background_image) == 'craft') selected @endif>クラフト</option>
-                    <option value="shiny"@if(old('menu_vertical_background_image', $menu_vertical_background_image) == 'shiny') selected @endif>ピカピカ</option>
-                    <option value="stitch"@if(old('menu_vertical_background_image', $menu_vertical_background_image) == 'stitch') selected @endif>ステッチ</option>
-                    <option value="underline"@if(old('menu_vertical_background_image', $menu_vertical_background_image) == 'underline') selected @endif>下線</option>
+                    <option value="none"@if(old('menu_vertical_background_image') == 'none') selected @endif>非表示</option>
+                    <option value="circle"@if(old('menu_vertical_background_image') == 'circle') selected @endif>サークル</option>
+                    <option value="clear"@if(old('menu_vertical_background_image') == 'clear') selected @endif>クリア</option>
+                    <option value="craft"@if(old('menu_vertical_background_image') == 'craft') selected @endif>クラフト</option>
+                    <option value="shiny"@if(old('menu_vertical_background_image') == 'shiny') selected @endif>ピカピカ</option>
+                    <option value="stitch"@if(old('menu_vertical_background_image') == 'stitch') selected @endif>ステッチ</option>
+                    <option value="underline"@if(old('menu_vertical_background_image') == 'underline') selected @endif>下線</option>
                     </select>
                     </div>
                 </div>
@@ -278,16 +278,16 @@
                     <div class="col-md-8">
                         <select name="frame_tittle_color" id="frame_tittle_color" class="form-control">
                         @foreach($colors as $color_name => $code)
-                            <option value="{{$color_name}}"@if(old('frame_tittle_color', $frame_tittle_color) == $color_name) selected @endif>{{$color_name}}</option>
+                            <option value="{{$color_name}}"@if(old('frame_tittle_color') == $color_name) selected @endif>{{$color_name}}</option>
                         @endforeach
                         </select>
                     </div>
                     <label for="frame_tittle_background" class="col-md-4 col-form-label text-md-right">背景色</label>
                     <div class="col-md-8">
                         <select name="frame_tittle_background" id="frame_tittle_background" class="form-control">
-                            <option value="none"@if(old('frame_tittle_background', $frame_tittle_background) == 'none') selected @endif>無し</option>
+                            <option value="none"@if(old('frame_tittle_background') == 'none') selected @endif>無し</option>
                         @foreach($colors as $color_name => $code)
-                            <option value="{{$color_name}}"@if(old('frame_tittle_background', $frame_tittle_background) == $color_name) selected @endif>{{$color_name}}</option>
+                            <option value="{{$color_name}}"@if(old('frame_tittle_background') == $color_name) selected @endif>{{$color_name}}</option>
                         @endforeach
                         </select>
                     </div>
@@ -295,24 +295,24 @@
                     <div class="col-md-8">
                         <select name="frame_tittle_border" id="frame_tittle_border" class="form-control">
                         @foreach($borders as $borderval => $border_lang)
-                            <option value="{{$borderval}}"@if(old('frame_tittle_border', $frame_tittle_border) == $borderval) selected @endif>{{$borderval}}</option>
+                            <option value="{{$borderval}}"@if(old('frame_tittle_border') == $borderval) selected @endif>{{$borderval}}</option>
                         @endforeach
                         </select>
                     </div>
                     <label for="frame_tittle_background_image" class="col-md-4 col-form-label text-md-right">背景パターン</label>
                     <div class="col-md-8">
                         <select name="frame_tittle_background_image" id="frame_tittle_background_image" class="form-control">
-                            <option value="none"@if(old('frame_tittle_background_image', $frame_tittle_background_image) == 'none') selected @endif>非表示</option>
-                            <option value="circle"@if(old('frame_tittle_background_image', $frame_tittle_background_image) == 'circle') selected @endif>サークル</option>
-                            <option value="rectangle"@if(old('frame_tittle_background_image', $frame_tittle_background_image) == 'rectangle') selected @endif>長方形</option>
-                            <option value="craft"@if(old('frame_tittle_background_image', $frame_tittle_background_image) == 'craft') selected @endif>クラフト</option>
-                            <option value="shiny"@if(old('frame_tittle_background_image', $frame_tittle_background_image) == 'shiny') selected @endif>ピカピカ</option>
-                            <option value="stitch"@if(old('frame_tittle_background_image', $frame_tittle_background_image) == 'stitch') selected @endif>ステッチ</option>
-                            <option value="center"@if(old('frame_tittle_background_image', $frame_tittle_background_image) == 'center') selected @endif>中央</option>
-                            <option value="ribbon"@if(old('frame_tittle_background_image', $frame_tittle_background_image) == 'ribbon') selected @endif>リボン</option>
-                            <option value="balloon"@if(old('frame_tittle_background_image', $frame_tittle_background_image) == 'balloon') selected @endif>吹き出し</option>
-                            <option value="emphasis"@if(old('frame_tittle_background_image', $frame_tittle_background_image) == 'emphasis') selected @endif>強調</option>
-                            <option value="underline"@if(old('frame_tittle_background_image', $frame_tittle_background_image) == 'underline') selected @endif>下線</option>
+                            <option value="none"@if(old('frame_tittle_background_image') == 'none') selected @endif>非表示</option>
+                            <option value="circle"@if(old('frame_tittle_background_image') == 'circle') selected @endif>サークル</option>
+                            <option value="rectangle"@if(old('frame_tittle_background_image') == 'rectangle') selected @endif>長方形</option>
+                            <option value="craft"@if(old('frame_tittle_background_image') == 'craft') selected @endif>クラフト</option>
+                            <option value="shiny"@if(old('frame_tittle_background_image') == 'shiny') selected @endif>ピカピカ</option>
+                            <option value="stitch"@if(old('frame_tittle_background_image') == 'stitch') selected @endif>ステッチ</option>
+                            <option value="center"@if(old('frame_tittle_background_image') == 'center') selected @endif>中央</option>
+                            <option value="ribbon"@if(old('frame_tittle_background_image') == 'ribbon') selected @endif>リボン</option>
+                            <option value="balloon"@if(old('frame_tittle_background_image') == 'balloon') selected @endif>吹き出し</option>
+                            <option value="emphasis"@if(old('frame_tittle_background_image') == 'emphasis') selected @endif>強調</option>
+                            <option value="underline"@if(old('frame_tittle_background_image') == 'underline') selected @endif>下線</option>
                         </select>
                     </div>
                 </div>
@@ -324,7 +324,7 @@
                     <div class="col-md-8">
                         <select name="font_family" id="font_family" class="form-control">
                         @foreach($fontfamilys as $fontfamilyname => $fontfamilycode)
-                            <option value="{{$fontfamilycode}}"@if(old('font_family', $font_family) == $fontfamilycode) selected @endif>{{$fontfamilyname}}</option>
+                            <option value="{{$fontfamilycode}}"@if(old('font_family') == $fontfamilycode) selected @endif>{{$fontfamilyname}}</option>
                         @endforeach
                         </select>
                     </div>

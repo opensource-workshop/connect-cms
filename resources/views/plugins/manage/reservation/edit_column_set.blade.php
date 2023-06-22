@@ -19,8 +19,8 @@
         {{-- ボタンによってアクション切替 --}}
         <script type="text/javascript">
             function submitAction(url) {
-                form_code.action = url;
-                form_code.submit();
+                form_column_set.action = url;
+                form_column_set.submit();
             }
         </script>
     </div>
@@ -32,9 +32,8 @@
             <i class="fas fa-exclamation-circle"></i> 予約登録時の項目をまとめたセットを追加・変更します。
         </div>
 
-        <form name="form_code" action="" method="POST" class="form-horizontal">
+        <form name="form_column_set" action="" method="POST" class="form-horizontal">
             {{ csrf_field() }}
-            <input name="page" value="{{$paginate_page}}" type="hidden">
 
             <div class="form-group form-row">
                 <label for="name" class="col-md-3 col-form-label text-md-right">項目セット名 <span class="badge badge-danger">必須</span></label>

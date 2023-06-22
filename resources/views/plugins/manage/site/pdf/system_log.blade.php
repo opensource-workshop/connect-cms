@@ -18,14 +18,14 @@
     </tr>
     <tr nobr="true">
         <td>ログファイルの形式</td>
-        @if ($configs->firstWhere('name', 'log_handler')->value == '1') <td>日付毎のファイル</td> @else <td>単一ファイル</td> @endif
+        @if (Configs::getConfigsValue($configs, 'log_handler', null) == '1') <td>日付毎のファイル</td> @else <td>単一ファイル</td> @endif
     </tr>
     <tr nobr="true">
         <td>ログファイル名の指定の有無</td>
-        @if ($configs->firstWhere('name', 'log_filename_choice')->value == '1') <td>指定する</td> @else <td>指定しない</td> @endif
+        @if (Configs::getConfigsValue($configs, 'log_filename_choice', null) == '1') <td>指定する</td> @else <td>指定しない</td> @endif
     </tr>
     <tr nobr="true">
         <td>ログファイル名</td>
-        <td>{{$configs->firstWhere('name', 'log_filename')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'log_filename', null)}}</td>
     </tr>
 </table>

@@ -26,7 +26,7 @@
         {{-- サイト概要 --}}
         <div class="form-group">
             <label class="control-label">サイト概要</label>
-            <textarea name="description" class="form-control" rows=2>{!!old('description', $meta["description"]->value)!!}</textarea>
+            <textarea name="description" class="form-control" rows=2>{!! Configs::getConfigsValueAndOld($configs, 'description', null) !!}</textarea>
         </div>
 
         {{-- Submitボタン --}}

@@ -194,7 +194,6 @@ class ReservationManage extends ManagePluginBase
      */
     public function update($request, $id)
     {
-
         // エラーチェック
         $validator = Validator::make($request->all(), [
             'facility_name'              => ['required', 'max:255'],

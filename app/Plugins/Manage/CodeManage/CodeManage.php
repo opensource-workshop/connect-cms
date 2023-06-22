@@ -26,7 +26,7 @@ use App\Enums\CsvCharacterCode;
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コード管理
- * @package Contoroller
+ * @package Controller
  * @plugin_title コード管理
  * @plugin_desc 各プラグインでユーザーが使用するコードを一括管理できる機能です。
  */
