@@ -319,6 +319,7 @@ class SiteManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
+                    ->pause(500)
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/site/analytics/images/saveAnalytics');
         });
