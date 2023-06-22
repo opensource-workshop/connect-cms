@@ -34,7 +34,8 @@
                                 @else
                                     <input type="radio" value="{{$enum_value}}" id="message_first_show_type_{{$enum_value}}" name="message_first_show_type" class="custom-control-input">
                                 @endif
-                                <label class="custom-control-label" for="message_first_show_type_{{$enum_value}}">{{$enum_label}}</label>
+                                {{-- duskでradioの選択にlabelのid必要 --}}
+                                <label class="custom-control-label" for="message_first_show_type_{{$enum_value}}" id="label_message_first_show_type_{{$enum_value}}">{{$enum_label}}</label>
                             </div>
                         </div>
                     @endforeach
@@ -57,7 +58,8 @@
                                 @else
                                     <input type="radio" value="{{$enum_value}}" id="message_first_permission_type_{{$enum_value}}" name="message_first_permission_type" class="custom-control-input">
                                 @endif
-                                <label class="custom-control-label" for="message_first_permission_type_{{$enum_value}}">{{$enum_label}}</label>
+                                {{-- duskでradioの選択にlabelのid必要 --}}
+                                <label class="custom-control-label" for="message_first_permission_type_{{$enum_value}}" id="label_message_first_permission_type_{{$enum_value}}">{{$enum_label}}</label>
                             </div>
                         </div>
                     @endforeach
