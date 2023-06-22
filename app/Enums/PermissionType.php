@@ -13,7 +13,15 @@ final class PermissionType extends EnumsBase
 
     // key/valueの連想配列
     const enum = [
-        self::not_allowed=>'許可しない',
-        self::allowed=>'許可する',
+        self::not_allowed => '許可しない',
+        self::allowed => '許可する',
     ];
+
+    /**
+     * 初期値
+     */
+    public static function getDefault()
+    {
+        return self::not_allowed;
+    }
 }

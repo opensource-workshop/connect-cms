@@ -16,4 +16,12 @@ final class ShowType extends EnumsBase
         self::not_show => '表示しない',
         self::show => '表示する',
     ];
+
+    /**
+     * 初期値
+     */
+    public static function getDefault()
+    {
+        return self::not_show;
+    }
 }

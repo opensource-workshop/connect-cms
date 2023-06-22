@@ -27,7 +27,7 @@
 
     // 所属型
     if ($users_column->column_type == UserColumnType::affiliation) {
-        $value = $user->section->name;
+        $value = $user->section->name ?? null;
     }
 @endphp
 

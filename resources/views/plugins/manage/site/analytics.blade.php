@@ -26,7 +26,7 @@
         {{-- トラッキングコード --}}
         <div class="form-group">
             <label class="control-label">トラッキングコード</label>
-            <textarea name="tracking_code" class="form-control" rows=15>{!!old('tracking_code', $analytics["tracking_code"]->value)!!}</textarea>
+            <textarea name="tracking_code" class="form-control" rows=15>{!! Configs::getConfigsValueAndOld($configs, 'tracking_code', null) !!}</textarea>
         </div>
 
         {{-- Submitボタン --}}

@@ -22,7 +22,7 @@
     </tr>
     <tr nobr="true">
         <td>自動ユーザ登録の使用</td>
-        @if ($configs->firstWhere('name', 'user_register_enable')->value == '1') <td>許可する</td> @else <td>許可しない</td> @endif
+        @if (Configs::getConfigsValue($configs, 'user_register_enable', null) == '1') <td>許可する</td> @else <td>許可しない</td> @endif
     </tr>
 </table>
 
@@ -35,15 +35,15 @@
     </tr>
     <tr nobr="true">
         <td>メール送信先</td>
-        @if ($configs->firstWhere('name', 'user_register_mail_send_flag')->value == '1') <td>使用する</td> @else <td>使用しない</td> @endif
+        @if (Configs::getConfigsValue($configs, 'user_register_mail_send_flag', null) == '1') <td>使用する</td> @else <td>使用しない</td> @endif
     </tr>
     <tr nobr="true">
         <td>送信するメールアドレス</td>
-        <td>{{$configs->firstWhere('name', 'user_register_mail_send_address')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'user_register_mail_send_address', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>登録者にメール送信する</td>
-        @if ($configs->firstWhere('name', 'user_register_user_mail_send_flag')->value == '1') <td>送信する</td> @else <td>送信しない</td> @endif
+        @if (Configs::getConfigsValue($configs, 'user_register_user_mail_send_flag', null) == '1') <td>送信する</td> @else <td>送信しない</td> @endif
     </tr>
 </table>
 
@@ -56,19 +56,19 @@
     </tr>
     <tr nobr="true">
         <td>登録者に仮登録メールを送信する</td>
-        @if ($configs->firstWhere('name', 'user_register_temporary_regist_mail_flag')->value == '1') <td>送信する</td> @else <td>送信しない</td> @endif
+        @if (Configs::getConfigsValue($configs, 'user_register_temporary_regist_mail_flag', null) == '1') <td>送信する</td> @else <td>送信しない</td> @endif
     </tr>
     <tr nobr="true">
         <td>仮登録メール件名</td>
-        <td>{{$configs->firstWhere('name', 'user_register_temporary_regist_mail_subject')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'user_register_temporary_regist_mail_subject', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>仮登録メールフォーマット</td>
-        <td>{!!nl2br($configs->firstWhere('name', 'user_register_temporary_regist_mail_format')->value)!!}</td>
+        <td>{!!nl2br(Configs::getConfigsValue($configs, 'user_register_temporary_regist_mail_format', null))!!}</td>
     </tr>
     <tr nobr="true">
         <td>仮登録後のメッセージ</td>
-        <td>{{$configs->firstWhere('name', 'user_register_temporary_regist_after_message')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'user_register_temporary_regist_after_message', null)}}</td>
     </tr>
 </table>
 
@@ -81,19 +81,19 @@
     </tr>
     <tr nobr="true">
         <td>本登録メール件名</td>
-        <td>{{$configs->firstWhere('name', 'user_register_mail_subject')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'user_register_mail_subject', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>本登録メールフォーマット</td>
-        <td>{!!nl2br($configs->firstWhere('name', 'user_register_mail_format')->value)!!}</td>
+        <td>{!!nl2br(Configs::getConfigsValue($configs, 'user_register_mail_format', null))!!}</td>
     </tr>
     <tr nobr="true">
         <td>本登録後のメッセージ</td>
-        <td>{{$configs->firstWhere('name', 'user_register_after_message')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'user_register_after_message', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>ヘッダーバーの表示</td>
-        @if ($configs->firstWhere('name', 'base_header_hidden')->value == '1') <td>表示しない</td> @else <td>表示する</td> @endif
+        @if (Configs::getConfigsValue($configs, 'base_header_hidden', null) == '1') <td>表示しない</td> @else <td>表示する</td> @endif
     </tr>
 </table>
 
@@ -106,14 +106,14 @@
     </tr>
     <tr nobr="true">
         <td>個人情報保護方針への同意</td>
-        @if ($configs->firstWhere('name', 'user_register_requre_privacy')->value == '1') <td>同意を求める</td> @else <td>同意を求めない</td> @endif
+        @if (Configs::getConfigsValue($configs, 'user_register_requre_privacy', null) == '1') <td>同意を求める</td> @else <td>同意を求めない</td> @endif
     </tr>
     <tr nobr="true">
         <td>個人情報保護方針の表示内容</td>
         <td>次行を参照</td>
     </tr>
     <tr nobr="true">
-        <td colspan="2">{!!nl2br($configs->firstWhere('name', 'user_register_privacy_description')->value)!!}</td>
+        <td colspan="2">{!!nl2br(Configs::getConfigsValue($configs, 'user_register_privacy_description', null))!!}</td>
     </tr>
 </table>
 
@@ -129,6 +129,6 @@
         <td>次行を参照</td>
     </tr>
     <tr nobr="true">
-        <td colspan="2">{!!nl2br($configs->firstWhere('name', 'user_register_description')->value)!!}</td>
+        <td colspan="2">{!!nl2br(Configs::getConfigsValue($configs, 'user_register_description', null))!!}</td>
     </tr>
 </table>

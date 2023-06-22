@@ -12,17 +12,17 @@
 <h2 style="text-align: center; font-size: 28px;">お問い合わせ先</h2>
 
 <br />
-<h3><u>{{$configs->firstWhere('name', 'document_support_org_title')->value}}</u></h3>
+<h3><u>{{Configs::getConfigsValue($configs, 'document_support_org_title', null)}}</u></h3>
 <br />
 <br />
-{!!nl2br($configs->firstWhere('name', 'document_support_org_txt')->value)!!}<br />
+{!!nl2br(Configs::getConfigsValue($configs, 'document_support_org_txt', null))!!}<br />
 
-<h3><u>{{$configs->firstWhere('name', 'document_support_contact_title')->value}}</u></h3>
+<h3><u>{{Configs::getConfigsValue($configs, 'document_support_contact_title', null)}}</u></h3>
 <br />
 <br />
-{!!nl2br($configs->firstWhere('name', 'document_support_contact_txt')->value)!!}<br />
+{!!nl2br(Configs::getConfigsValue($configs, 'document_support_contact_txt', null))!!}<br />
 
-<h3><u>{{$configs->firstWhere('name', 'document_support_other_title')->value}}</u></h3>
+<h3><u>{{Configs::getConfigsValue($configs, 'document_support_other_title', null)}}</u></h3>
 <br />
 <br />
-{!!nl2br($configs->firstWhere('name', 'document_support_other_txt')->value)!!}<br />
+{!!nl2br(Configs::getConfigsValue($configs, 'document_support_other_txt', null))!!}<br />

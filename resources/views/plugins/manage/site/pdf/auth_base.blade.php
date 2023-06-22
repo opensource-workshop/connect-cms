@@ -20,14 +20,14 @@
     </tr>
     <tr nobr="true">
         <td>外部認証</td>
-        @if ($configs->firstWhere('name', 'use_auth_method')->value == '1') <td>使用する</td> @else <td>使用しない</td> @endif
+        @if (Configs::getConfigsValue($configs, 'use_auth_method', null) == '1') <td>使用する</td> @else <td>使用しない</td> @endif
     </tr>
     <tr nobr="true">
         <td>使用する外部認証</td>
-        <td>{{$configs->firstWhere('name', 'auth_method_event')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'auth_method_event', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>通常ログインも使用</td>
-        @if ($configs->firstWhere('name', 'use_normal_login_along_with_auth_method')->value == '1') <td>使用しない</td> @else <td>使用する</td> @endif
+        @if (Configs::getConfigsValue($configs, 'use_normal_login_along_with_auth_method', null) == '1') <td>使用しない</td> @else <td>使用する</td> @endif
     </tr>
 </table>

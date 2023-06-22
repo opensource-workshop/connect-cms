@@ -20,14 +20,14 @@
     </tr>
     <tr nobr="true">
         <td>翻訳</td>
-        @if ($configs->firstWhere('name', 'use_translate')->value == '1') <td>使用する</td> @else <td>使用しない</td> @endif
+        @if (Configs::getConfigsValue($configs, 'use_translate', null) == '1') <td>使用する</td> @else <td>使用しない</td> @endif
     </tr>
     <tr nobr="true">
         <td>PDFアップロード</td>
-        @if ($configs->firstWhere('name', 'use_pdf_thumbnail')->value == '1') <td>使用する</td> @else <td>使用しない</td> @endif
+        @if (Configs::getConfigsValue($configs, 'use_pdf_thumbnail', null) == '1') <td>使用する</td> @else <td>使用しない</td> @endif
     </tr>
     <tr nobr="true">
         <td>AI顔認識</td>
-        @if ($configs->firstWhere('name', 'use_face_ai')->value == '1') <td>使用する</td> @else <td>使用しない</td> @endif
+        @if (Configs::getConfigsValue($configs, 'use_face_ai', null) == '1') <td>使用する</td> @else <td>使用しない</td> @endif
     </tr>
 </table>
