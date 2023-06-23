@@ -73,28 +73,9 @@ class PluginBase
     /**
      * 連番取得
      */
-    public function getNo($plugin_name = null, $buckets_id = null, $prefix = null)
+    protected function getNo($plugin_name = null, $buckets_id = null, $prefix = null): int
     {
-        // 連番データは、払いだした最大の数値を保持している状態。
-
-        // firstOrCreate で最初の連番に 0 を指定して、取得した値をインクリメント
-        $numbers = Numbers::firstOrCreate(
-            [
-                'plugin_name'   => $plugin_name,
-                'buckets_id'    => $buckets_id,
-                'prefix'        => $prefix
-            ],
-            [
-                'serial_number' => 0,
-            ]
-        );
-
-        // インクリメント
-        $numbers->increment('serial_number', 1);
-        // インクリメントでupdating()イベントが走らないため、saveを実行してupdated_id,updated_nameを自動セット
-        $numbers->save();
-
-        return $numbers->serial_number;
+        return Numbers::getNo($plugin_name, $buckets_id, $prefix);
     }
 
     /**
