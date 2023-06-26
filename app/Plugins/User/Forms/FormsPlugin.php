@@ -371,8 +371,6 @@ class FormsPlugin extends UserPluginBase
                 $forms_columns_value_for_time_to = $request->forms_columns_value_for_time_to;
 
                 foreach ($tmp_forms_columns as $tmp_forms_column) {
-                    // $tmp_array[$tmp_forms_column->id] = isset($forms_columns_value[$tmp_forms_column->id]) ? $forms_columns_value[$tmp_forms_column->id] : null;
-                    // var_dump($tmp_forms_column->id);
 
                     if (! isset($forms_columns_value[$tmp_forms_column->id])) {
                         // 入力なし
@@ -404,7 +402,6 @@ class FormsPlugin extends UserPluginBase
                             $forms_columns_value[$tmp_forms_column->id] = $request->input($tmp_forms_column->column_name, null);
                         }
 
-                        // var_dump($tmp_forms_column->id);
                         $request->merge([
                             "forms_columns_value" => $forms_columns_value,
                             "forms_columns_value_confirmation" => $forms_columns_value_confirmation,
@@ -414,21 +411,10 @@ class FormsPlugin extends UserPluginBase
                     }
                 }
             }
-
-            // foreach ($forms_columns as $forms_column) {
-            //     var_dump($forms_column->id);
-            //     if (isset($forms_column->group)) {
-            //         foreach ($forms_column->group as $group_row) {
-            //             var_dump($group_row->id);
-            //         }
-            //     }
-            // }
         } else {
             // フレームに紐づくフォーム親データがない場合
             $setting_error_messages[] = 'フレームの設定画面から、使用するフォームを選択するか、作成してください。';
         }
-
-        // var_dump('index', $request->forms_columns_value, $frame_id, $request->frame_id);
 
         if (empty($setting_error_messages)) {
             // 表示テンプレートを呼び出す
