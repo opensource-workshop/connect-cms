@@ -362,7 +362,7 @@
         <div class="{{$frame->getSettingInputClass()}}">
             <div class="custom-control custom-checkbox">
                 <input type="hidden" name="use_temporary_regist_mail_flag" value="0">
-                <input type="checkbox" name="use_temporary_regist_mail_flag" value="1" class="custom-control-input" id="use_temporary_regist_mail_flag" @if(old('use_temporary_regist_mail_flag', $form->use_temporary_regist_mail_flag)) checked=checked @endif>
+                <input type="checkbox" name="use_temporary_regist_mail_flag" value="1" class="custom-control-input" id="use_temporary_regist_mail_flag" @if(old('use_temporary_regist_mail_flag', $form->use_temporary_regist_mail_flag)) checked=checked @endif data-toggle="collapse" data-target="#collapse_temporary_regist{{$frame_id}}" aria-expanded="false" aria-controls="collapse_temporary_regist{{$frame_id}}">
                 <label class="custom-control-label" for="use_temporary_regist_mail_flag">登録者に仮登録メールを送信する</label>
             </div>
             <div>
@@ -374,39 +374,41 @@
         </div>
     </div>
 
-    <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}"></label>
-        <div class="{{$frame->getSettingInputClass()}}">
-            <label class="control-label">仮登録メール件名</label>
-            <input type="text" name="temporary_regist_mail_subject" value="{{old('temporary_regist_mail_subject', $form->temporary_regist_mail_subject)}}" class="form-control" placeholder="（例）仮登録のお知らせと本登録のお願い">
-            <small class="text-muted">
-                ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
-                ※ [[form_name]] を記述すると該当部分にフォーム名が入ります。<br>
-                ※ [[to_datetime]] を記述すると該当部分に登録日時が入ります。<br>
-            </small>
+    <div class="collapse" id="collapse_temporary_regist{{$frame_id}}">
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}"></label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <label class="control-label">仮登録メール件名</label>
+                <input type="text" name="temporary_regist_mail_subject" value="{{old('temporary_regist_mail_subject', $form->temporary_regist_mail_subject)}}" class="form-control" placeholder="（例）仮登録のお知らせと本登録のお願い">
+                <small class="text-muted">
+                    ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
+                    ※ [[form_name]] を記述すると該当部分にフォーム名が入ります。<br>
+                    ※ [[to_datetime]] を記述すると該当部分に登録日時が入ります。<br>
+                </small>
+            </div>
         </div>
-    </div>
 
-    <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}"></label>
-        <div class="{{$frame->getSettingInputClass()}}">
-            <label class="control-label">仮登録メールフォーマット</label>
-            <textarea name="temporary_regist_mail_format" class="form-control" rows=5 placeholder="（例）仮登録を受け付けました。&#13;&#10;引き続き、下記のURLへアクセスしていただき、本登録を行ってください。&#13;&#10;&#13;&#10;↓本登録URL&#13;&#10;[[entry_url]]&#13;&#10;&#13;&#10;※お使いのメールソフトによっては、URLが途中で切れてアクセスできない場合があります。&#13;&#10;　その場合はクリックされるのではなくURLをブラウザのアドレス欄にコピー＆ペーストしてアクセスしてください。&#13;&#10;----------------------------------&#13;&#10;[[body]]&#13;&#10;----------------------------------">{{old('temporary_regist_mail_format', $form->temporary_regist_mail_format)}}</textarea>
-            @include('plugins.common.errors_inline', ['name' => 'temporary_regist_mail_format'])
-            <small class="text-muted">
-                ※ [[entry_url]] を記述すると本登録URLが入ります。本登録URLの有効期限は仮登録後60分です。<br>
-                ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
-                ※ [[form_name]] を記述すると該当部分にフォーム名が入ります。<br>
-                ※ [[to_datetime]] を記述すると該当部分に登録日時が入ります。<br>
-                ※ [[body]] を記述すると該当部分に登録内容が入ります。
-            </small>
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}"></label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <label class="control-label">仮登録メールフォーマット</label>
+                <textarea name="temporary_regist_mail_format" class="form-control" rows=5 placeholder="（例）仮登録を受け付けました。&#13;&#10;引き続き、下記のURLへアクセスしていただき、本登録を行ってください。&#13;&#10;&#13;&#10;↓本登録URL&#13;&#10;[[entry_url]]&#13;&#10;&#13;&#10;※お使いのメールソフトによっては、URLが途中で切れてアクセスできない場合があります。&#13;&#10;　その場合はクリックされるのではなくURLをブラウザのアドレス欄にコピー＆ペーストしてアクセスしてください。&#13;&#10;----------------------------------&#13;&#10;[[body]]&#13;&#10;----------------------------------">{{old('temporary_regist_mail_format', $form->temporary_regist_mail_format)}}</textarea>
+                @include('plugins.common.errors_inline', ['name' => 'temporary_regist_mail_format'])
+                <small class="text-muted">
+                    ※ [[entry_url]] を記述すると本登録URLが入ります。本登録URLの有効期限は仮登録後60分です。<br>
+                    ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
+                    ※ [[form_name]] を記述すると該当部分にフォーム名が入ります。<br>
+                    ※ [[to_datetime]] を記述すると該当部分に登録日時が入ります。<br>
+                    ※ [[body]] を記述すると該当部分に登録内容が入ります。
+                </small>
+            </div>
         </div>
-    </div>
 
-    <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">仮登録後のメッセージ</label>
-        <div class="{{$frame->getSettingInputClass()}}">
-            <textarea name="temporary_regist_after_message" class="form-control" rows=5 placeholder="（例）仮登録を受け付けました。&#13;&#10;メールを送信しましたので内容をご確認の上、本登録を行ってください。">{{old('temporary_regist_after_message', $form->temporary_regist_after_message)}}</textarea>
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}">仮登録後のメッセージ</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <textarea name="temporary_regist_after_message" class="form-control" rows=5 placeholder="（例）仮登録を受け付けました。&#13;&#10;メールを送信しましたので内容をご確認の上、本登録を行ってください。">{{old('temporary_regist_after_message', $form->temporary_regist_after_message)}}</textarea>
+            </div>
         </div>
     </div>
 
@@ -588,6 +590,11 @@
     @if (old('access_limit_type', $access_limit_type) == FormAccessLimitType::password)
         // 閲覧パスワード
         $('#collapse_form_password{{$frame_id}}').collapse('show')
+    @endif
+
+    @if(old('use_temporary_regist_mail_flag', $form->use_temporary_regist_mail_flag))
+        // 仮登録メール
+        $('#collapse_temporary_regist{{$frame_id}}').collapse('show')
     @endif
 
     @if (old('numbering_use_flag', $form->numbering_use_flag))
