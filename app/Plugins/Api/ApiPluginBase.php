@@ -2,6 +2,8 @@
 
 namespace App\Plugins\Api;
 
+use Illuminate\Http\Request;
+
 use App\Models\Core\ApiSecret;
 
 use App\Plugins\PluginBase;
@@ -77,5 +79,34 @@ class ApiPluginBase extends PluginBase
 
         // 制限クリア」。
         return array('code' => '', 'message' => '');
+    }
+
+    /**
+     * requestに紐づけられたSlackのハッシュ値（A）と、request内容から生成したハッシュ値（B）を比較して、一致すればtrueを返す
+     *
+     * @param Request $request
+     * @return boolean
+     */
+    public function compareSlackHashes(Request $request) : bool
+    {
+        // Slackの投稿に紐付けられたハッシュ値（A）を取得
+        $slack_signature = $request->header('x-slack-signature');
+        list($version, $signature_hash) = explode("=", $slack_signature);
+
+        // request内容からハッシュ値生成用の基本文字列を生成
+        $timestamp = $request->header('x-slack-request-timestamp');
+        $body = $request->all();
+        $query = "";
+        foreach ($body as $key => $value) {
+            $query .= $key . '=' . urlencode($value). '&';
+        }
+        $query = rtrim($query,'&');
+        $base_string = $version . ':' . $timestamp . ':' . $query;
+
+        // 基本文字列からハッシュ値（B）を作る
+        $hash = hash_hmac('sha256', $base_string, config('connect.SLACK_SIGNING_SECRET'));
+
+        // ハッシュ（A，B）を比較する
+        return hash_equals($signature_hash , $hash);
     }
 }
