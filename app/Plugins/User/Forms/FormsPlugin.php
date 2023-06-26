@@ -422,7 +422,6 @@ class FormsPlugin extends UserPluginBase
                 // フォーム
                 return $this->view('forms', [
                     'request' => $request,
-                    'frame_id' => $frame_id,
                     'form' => $form,
                     'forms_columns' => $forms_columns,
                     'forms_columns_id_select' => $forms_columns_id_select,
@@ -432,7 +431,6 @@ class FormsPlugin extends UserPluginBase
                 // アンケート
                 return $this->view('index_tandem', [
                     'request' => $request,
-                    'frame_id' => $frame_id,
                     'form' => $form,
                     'forms_columns' => $forms_columns,
                     'forms_columns_id_select' => $forms_columns_id_select,
