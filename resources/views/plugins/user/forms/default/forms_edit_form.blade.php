@@ -170,12 +170,12 @@
             <div class="col pl-0">
                 <label>表示期間の制御</label><br>
                 <div class="custom-control custom-radio custom-control-inline">
-                    <input type="radio" value="1" id="display_control_flag_1" name="display_control_flag" class="custom-control-input" @if(old('display_control_flag', $form->display_control_flag) == 1) checked="checked" @endif>
-                    <label class="custom-control-label" for="display_control_flag_1">表示期間で制御する</label>
-                </div>
-                <div class="custom-control custom-radio custom-control-inline">
                     <input type="radio" value="0" id="display_control_flag_0" name="display_control_flag" class="custom-control-input" @if(old('display_control_flag', $form->display_control_flag) == 0) checked="checked" @endif>
                     <label class="custom-control-label" for="display_control_flag_0">表示期間で制御しない</label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input type="radio" value="1" id="display_control_flag_1" name="display_control_flag" class="custom-control-input" @if(old('display_control_flag', $form->display_control_flag) == 1) checked="checked" @endif>
+                    <label class="custom-control-label" for="display_control_flag_1">表示期間で制御する</label>
                 </div>
             </div>
         </div>
@@ -229,12 +229,12 @@
             <div class="col pl-0">
                 <label>登録期間の制御</label><br>
                 <div class="custom-control custom-radio custom-control-inline">
-                    <input type="radio" value="1" id="regist_control_flag_1" name="regist_control_flag" class="custom-control-input" @if(old('regist_control_flag', $form->regist_control_flag) == 1) checked="checked" @endif>
-                    <label class="custom-control-label" for="regist_control_flag_1">登録期間で制御する</label>
-                </div>
-                <div class="custom-control custom-radio custom-control-inline">
                     <input type="radio" value="0" id="regist_control_flag_0" name="regist_control_flag" class="custom-control-input" @if(old('regist_control_flag', $form->regist_control_flag) == 0) checked="checked" @endif>
                     <label class="custom-control-label" for="regist_control_flag_0">登録期間で制御しない</label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input type="radio" value="1" id="regist_control_flag_1" name="regist_control_flag" class="custom-control-input" @if(old('regist_control_flag', $form->regist_control_flag) == 1) checked="checked" @endif>
+                    <label class="custom-control-label" for="regist_control_flag_1">登録期間で制御する</label>
                 </div>
             </div>
         </div>
@@ -320,12 +320,12 @@
             <div class="col pl-0">
                 <label>メールの添付ファイル制御</label><br>
                 <div class="custom-control custom-radio custom-control-inline">
-                    <input type="radio" value="1" id="mail_attach_flag_1" name="mail_attach_flag" class="custom-control-input" @if(old('mail_attach_flag', $form->mail_attach_flag) == 1) checked="checked" @endif>
-                    <label class="custom-control-label" for="mail_attach_flag_1">メールにファイルを添付する</label>
-                </div>
-                <div class="custom-control custom-radio custom-control-inline">
                     <input type="radio" value="0" id="mail_attach_flag_0" name="mail_attach_flag" class="custom-control-input" @if(old('mail_attach_flag', $form->mail_attach_flag) == 0) checked="checked" @endif>
                     <label class="custom-control-label" for="mail_attach_flag_0">メールにファイルを添付しない</label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input type="radio" value="1" id="mail_attach_flag_1" name="mail_attach_flag" class="custom-control-input" @if(old('mail_attach_flag', $form->mail_attach_flag) == 1) checked="checked" @endif>
+                    <label class="custom-control-label" for="mail_attach_flag_1">メールにファイルを添付する</label>
                 </div>
                 <div>
                     <small class="text-muted">
