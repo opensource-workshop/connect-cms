@@ -24,6 +24,8 @@ class Forms extends Model
         'bucket_id',
         'forms_name',
         'form_mode',
+        'access_limit_type',
+        'form_password',
         'entry_limit',
         'entry_limit_over_message',
         'display_control_flag',

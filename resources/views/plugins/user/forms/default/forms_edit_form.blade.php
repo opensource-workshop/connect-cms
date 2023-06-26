@@ -110,7 +110,44 @@
                 @endif
                 <label class="custom-control-label" for="data_save_flag">データを保存する（チェックを外すと、サイト上にデータを保持しません）</label>
             </div>
-            @if ($errors && $errors->has('data_save_flag')) <div class="text-danger">{{$errors->first('data_save_flag')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'data_save_flag'])
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">閲覧制限</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="col pl-0">
+                @foreach (FormAccessLimitType::getMembers() as $enum_value => $enum_label)
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @php
+                            $access_limit_type = $form->access_limit_type ?? FormAccessLimitType::getDefault();
+                            $checked = '';
+                            if (old('access_limit_type', $access_limit_type) == $enum_value) {
+                                $checked = 'checked="checked"';
+                            }
+                        @endphp
+                        @switch($enum_value)
+                            @case(FormAccessLimitType::none)
+                                <input type="radio" value="{{$enum_value}}" id="access_limit_type_{{$enum_value}}" name="access_limit_type" class="custom-control-input" {{$checked}}
+                                data-toggle="collapse" data-target="#collapse_form_password{{$frame_id}}.show">
+                                @break
+                            @case(FormAccessLimitType::password)
+                                <input type="radio" value="{{$enum_value}}" id="access_limit_type_{{$enum_value}}" name="access_limit_type" class="custom-control-input" {{$checked}}
+                                    data-toggle="collapse" data-target="#collapse_form_password{{$frame_id}}:not(.show)" aria-expanded="true" aria-controls="collapse_form_password{{$frame_id}}">
+                                @break
+                        @endswitch
+                        <label class="custom-control-label" for="access_limit_type_{{$enum_value}}" id="label_access_limit_type_{{$enum_value}}">{{$enum_label}}</label>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+    <div class="form-group row collapse" id="collapse_form_password{{$frame_id}}">
+        <label class="{{$frame->getSettingLabelClass()}}">閲覧パスワード</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="form_password" value="{{old('form_password', $form->form_password)}}" class="form-control">
+            @include('plugins.common.errors_inline', ['name' => 'form_password'])
         </div>
     </div>
 
@@ -545,6 +582,12 @@
         v_numbering_prefix: document.getElementById('numbering_prefix').value
       }
     })
+
+    {{-- 初期状態で開くもの --}}
+    @php $access_limit_type = $form->access_limit_type ?? FormAccessLimitType::getDefault(); @endphp
+    @if (old('access_limit_type', $access_limit_type) == FormAccessLimitType::password)
+        $('#collapse_form_password{{$frame_id}}').collapse('show')
+    @endif
 </script>
 @endif
 @endsection
