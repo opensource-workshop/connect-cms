@@ -464,13 +464,13 @@
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-checkbox">
                 <input type="hidden" name="numbering_use_flag" value="0">
-                <input type="checkbox" name="numbering_use_flag" value="1" class="custom-control-input" id="numbering_use_flag" @if(old('numbering_use_flag', $form->numbering_use_flag)) checked=checked @endif>
+                <input type="checkbox" name="numbering_use_flag" value="1" class="custom-control-input" id="numbering_use_flag" @if(old('numbering_use_flag', $form->numbering_use_flag)) checked=checked @endif data-toggle="collapse" data-target="#app_numbering_prefix_{{$frame_id}}" aria-expanded="false" aria-controls="app_numbering_prefix_{{$frame_id}}">
                 <label class="custom-control-label" for="numbering_use_flag">採番機能を使用する</label>
             </div>
         </div>
     </div>
 
-    <div id="app_{{ $frame->id }}" class="form-group row">
+    <div id="app_numbering_prefix_{{ $frame->id }}" class="form-group row collapse">
         <label class="{{$frame->getSettingLabelClass()}}"></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <label class="control-label">採番プレフィックス</label>
@@ -577,7 +577,7 @@
 </div>
 <script>
     new Vue({
-      el: "#app_{{ $frame->id }}",
+      el: "#app_numbering_prefix_{{ $frame->id }}",
       data: {
         v_numbering_prefix: document.getElementById('numbering_prefix').value
       }
@@ -586,7 +586,13 @@
     {{-- 初期状態で開くもの --}}
     @php $access_limit_type = $form->access_limit_type ?? FormAccessLimitType::getDefault(); @endphp
     @if (old('access_limit_type', $access_limit_type) == FormAccessLimitType::password)
+        // 閲覧パスワード
         $('#collapse_form_password{{$frame_id}}').collapse('show')
+    @endif
+
+    @if (old('numbering_use_flag', $form->numbering_use_flag))
+        // 採番プレフィックス
+        $('#app_numbering_prefix_{{$frame_id}}').collapse('show')
     @endif
 </script>
 @endif
