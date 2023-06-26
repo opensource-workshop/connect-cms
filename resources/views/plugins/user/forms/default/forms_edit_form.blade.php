@@ -71,7 +71,7 @@
     {{ csrf_field() }}
 
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">フォーム名 <label class="badge badge-danger">必須</label></label>
+        <label class="{{$frame->getSettingLabelClass()}}">フォーム名 <span class="badge badge-danger">必須</span></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="forms_name" value="{{old('forms_name', $form->forms_name)}}" class="form-control">
             @include('plugins.common.errors_inline', ['name' => 'forms_name'])
