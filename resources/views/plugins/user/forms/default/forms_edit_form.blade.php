@@ -74,7 +74,7 @@
         <label class="{{$frame->getSettingLabelClass()}}">フォーム名 <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="forms_name" value="{{old('forms_name', $form->forms_name)}}" class="form-control">
-            @if ($errors && $errors->has('forms_name')) <div class="text-danger">{{$errors->first('forms_name')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'forms_name'])
         </div>
     </div>
 
@@ -148,11 +148,11 @@
         <label class="{{$frame->getSettingLabelClass()}}">登録制限数</label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="entry_limit" value="{{old('entry_limit', $form->entry_limit)}}" class="form-control">
+            @include('plugins.common.errors_inline', ['name' => 'entry_limit'])
             <small class="text-muted">
                 ※ 未入力か 0 の場合、登録数を制限しません。<br>
                 ※ 制限する場合、本登録数で制限します。
-            </small><br>
-            @if ($errors && $errors->has('entry_limit')) <div class="text-danger">{{$errors->first('entry_limit')}}</div> @endif
+            </small>
         </div>
     </div>
 
@@ -186,39 +186,31 @@
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="col pl-0">
                 <label>表示開始日時</label>
-
                 <div class="input-group" id="display_from{{$frame_id}}" data-target-input="nearest">
                     <input class="form-control datetimepicker-input" type="text" name="display_from" value="{{old('display_from', $form->display_from)}}" data-target="#display_from{{$frame_id}}">
                     <div class="input-group-append" data-target="#display_from{{$frame_id}}" data-toggle="datetimepicker">
                         <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
-
+                @include('plugins.common.errors_inline', ['name' => 'display_from'])
                 <small class="text-muted">
                     ※ 未入力の場合、開始日時で表示制限しません。<br>
                     ※ 開始日時になった瞬間に公開します。例えば14:00の場合、14:00に公開します。
                 </small>
-                @if ($errors && $errors->has('display_from'))
-                    <div class="text-danger">{{$errors->first('display_from')}}</div>
-                @endif
             </div>
             <div class="col pl-0">
                 <label>表示終了日時</label>
-
                 <div class="input-group" id="display_to{{$frame_id}}" data-target-input="nearest">
                     <input class="form-control datetimepicker-input" type="text" name="display_to" value="{{old('display_to', $form->display_to)}}" data-target="#display_to{{$frame_id}}">
                     <div class="input-group-append" data-target="#display_to{{$frame_id}}" data-toggle="datetimepicker">
                         <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
-
+                @include('plugins.common.errors_inline', ['name' => 'display_to'])
                 <small class="text-muted">
                     ※ 未入力の場合、終了日時で表示制限しません。<br>
                     ※ 終了日時になった瞬間に表示終了します。例えば15:00の場合、14:59まで表示します。
                 </small>
-                @if ($errors && $errors->has('display_to'))
-                    <div class="text-danger">{{$errors->first('display_to')}}</div>
-                @endif
             </div>
         </div>
     </div>
@@ -245,39 +237,31 @@
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="col pl-0">
                 <label>登録開始日時</label>
-
                 <div class="input-group" id="regist_from{{$frame_id}}" data-target-input="nearest">
                     <input class="form-control datetimepicker-input" type="text" name="regist_from" value="{{old('regist_from', $form->regist_from)}}" data-target="#regist_from{{$frame_id}}">
                     <div class="input-group-append" data-target="#regist_from{{$frame_id}}" data-toggle="datetimepicker">
                         <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
-
+                @include('plugins.common.errors_inline', ['name' => 'regist_from'])
                 <small class="text-muted">
                     ※ 未入力の場合、開始日時で登録制限しません。<br>
                     ※ 開始日時になった瞬間に登録開始します。例えば14:00の場合、14:00に登録開始します。
                 </small>
-                @if ($errors && $errors->has('regist_from'))
-                    <div class="text-danger">{{$errors->first('regist_from')}}</div>
-                @endif
             </div>
             <div class="col pl-0">
                 <label>登録終了日時</label>
-
                 <div class="input-group" id="regist_to{{$frame_id}}" data-target-input="nearest">
                     <input class="form-control datetimepicker-input" type="text" name="regist_to" value="{{old('regist_to', $form->regist_to)}}" data-target="#regist_to{{$frame_id}}">
                     <div class="input-group-append" data-target="#regist_to{{$frame_id}}" data-toggle="datetimepicker">
                         <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
-
+                @include('plugins.common.errors_inline', ['name' => 'regist_to'])
                 <small class="text-muted">
                     ※ 未入力の場合、終了日時で登録制限しません。<br>
                     ※ 終了日時になった瞬間に登録終了します。例えば15:00の場合、14:59まで登録できます。
                 </small>
-                @if ($errors && $errors->has('regist_to'))
-                    <div class="text-danger">{{$errors->first('regist_to')}}</div>
-                @endif
             </div>
         </div>
     </div>
@@ -298,7 +282,7 @@
         <div class="{{$frame->getSettingInputClass()}}">
             <label class="control-label">送信するメールアドレス（複数ある場合はカンマで区切る）</label>
             <input type="text" name="mail_send_address" value="{{old('mail_send_address', $form->mail_send_address)}}" class="form-control">
-            @if ($errors && $errors->has('mail_send_address')) <div class="text-danger">{{$errors->first('mail_send_address')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'mail_send_address'])
         </div>
     </div>
 
@@ -310,7 +294,7 @@
                 <input type="checkbox" name="user_mail_send_flag" value="1" class="custom-control-input" id="user_mail_send_flag" @if(old('user_mail_send_flag', $form->user_mail_send_flag)) checked=checked @endif>
                 <label class="custom-control-label" for="user_mail_send_flag">登録者にメール送信する</label>
             </div>
-            @if ($errors && $errors->has('user_mail_send_flag')) <div class="text-danger">{{$errors->first('user_mail_send_flag')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'user_mail_send_flag'])
         </div>
     </div>
 
@@ -371,6 +355,7 @@
         <div class="{{$frame->getSettingInputClass()}}">
             <label class="control-label">仮登録メールフォーマット</label>
             <textarea name="temporary_regist_mail_format" class="form-control" rows=5 placeholder="（例）仮登録を受け付けました。&#13;&#10;引き続き、下記のURLへアクセスしていただき、本登録を行ってください。&#13;&#10;&#13;&#10;↓本登録URL&#13;&#10;[[entry_url]]&#13;&#10;&#13;&#10;※お使いのメールソフトによっては、URLが途中で切れてアクセスできない場合があります。&#13;&#10;　その場合はクリックされるのではなくURLをブラウザのアドレス欄にコピー＆ペーストしてアクセスしてください。&#13;&#10;----------------------------------&#13;&#10;[[body]]&#13;&#10;----------------------------------">{{old('temporary_regist_mail_format', $form->temporary_regist_mail_format)}}</textarea>
+            @include('plugins.common.errors_inline', ['name' => 'temporary_regist_mail_format'])
             <small class="text-muted">
                 ※ [[entry_url]] を記述すると本登録URLが入ります。本登録URLの有効期限は仮登録後60分です。<br>
                 ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
@@ -378,7 +363,6 @@
                 ※ [[to_datetime]] を記述すると該当部分に登録日時が入ります。<br>
                 ※ [[body]] を記述すると該当部分に登録内容が入ります。
             </small>
-            @if ($errors && $errors->has('temporary_regist_mail_format')) <div class="text-danger">{{$errors->first('temporary_regist_mail_format')}}</div> @endif
         </div>
     </div>
 
@@ -501,7 +485,7 @@
                         </div>
                     </div>
                 @endforeach
-                @if ($errors && $errors->has('target_plugins_frames')) <div class="text-danger">{{$errors->first('target_plugins_frames')}}</div> @endif
+                @include('plugins.common.errors_inline', ['name' => 'target_plugins_frames'])
             </div>
         </div>
     </div>
