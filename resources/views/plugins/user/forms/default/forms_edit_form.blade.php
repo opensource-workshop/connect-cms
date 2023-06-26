@@ -259,18 +259,18 @@
             <div class="col pl-0">
                 <label>登録期間の制御</label><br>
                 <div class="custom-control custom-radio custom-control-inline">
-                    <input type="radio" value="0" id="regist_control_flag_0" name="regist_control_flag" class="custom-control-input" @if(old('regist_control_flag', $form->regist_control_flag) == 0) checked="checked" @endif>
+                    <input type="radio" value="0" id="regist_control_flag_0" name="regist_control_flag" class="custom-control-input" @if(old('regist_control_flag', $form->regist_control_flag) == 0) checked="checked" @endif data-toggle="collapse" data-target="#collapse_regist_control{{$frame_id}}.show">
                     <label class="custom-control-label" for="regist_control_flag_0">登録期間で制御しない</label>
                 </div>
                 <div class="custom-control custom-radio custom-control-inline">
-                    <input type="radio" value="1" id="regist_control_flag_1" name="regist_control_flag" class="custom-control-input" @if(old('regist_control_flag', $form->regist_control_flag) == 1) checked="checked" @endif>
+                    <input type="radio" value="1" id="regist_control_flag_1" name="regist_control_flag" class="custom-control-input" @if(old('regist_control_flag', $form->regist_control_flag) == 1) checked="checked" @endif data-toggle="collapse" data-target="#collapse_regist_control{{$frame_id}}:not(.show)" aria-expanded="true" aria-controls="collapse_regist_control{{$frame_id}}">
                     <label class="custom-control-label" for="regist_control_flag_1">登録期間で制御する</label>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="form-group row">
+    <div class="form-group row collapse" id="collapse_regist_control{{$frame_id}}">
         <label class="{{$frame->getSettingLabelClass()}} pt-0"></label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="col pl-0">
@@ -596,6 +596,11 @@
     @if(old('display_control_flag', $form->display_control_flag) == 1)
         // 表示期間
         $('#collapse_display_control{{$frame_id}}').collapse('show')
+    @endif
+
+    @if(old('regist_control_flag', $form->regist_control_flag) == 1)
+        // 登録期間
+        $('#collapse_regist_control{{$frame_id}}').collapse('show')
     @endif
 
     @if(old('use_temporary_regist_mail_flag', $form->use_temporary_regist_mail_flag))
