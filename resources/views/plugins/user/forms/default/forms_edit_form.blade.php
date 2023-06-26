@@ -490,13 +490,13 @@
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-checkbox">
                 <input type="hidden" name="other_plugins_register_use_flag" value="0">
-                <input type="checkbox" name="other_plugins_register_use_flag" value="1" class="custom-control-input" id="other_plugins_register_use_flag" @if(old('other_plugins_register_use_flag', $form->other_plugins_register_use_flag)) checked=checked @endif>
+                <input type="checkbox" name="other_plugins_register_use_flag" value="1" class="custom-control-input" id="other_plugins_register_use_flag" @if(old('other_plugins_register_use_flag', $form->other_plugins_register_use_flag)) checked=checked @endif  data-toggle="collapse" data-target="#collapse_other_plugins{{$frame_id}}" aria-expanded="false" aria-controls="collapse_other_plugins{{$frame_id}}">
                 <label class="custom-control-label" for="other_plugins_register_use_flag">他プラグイン連携機能を使用する</label>
             </div>
         </div>
     </div>
 
-    <div class="form-group row">
+    <div class="form-group row collapse" id="collapse_other_plugins{{$frame_id}}">
         <label class="{{$frame->getSettingLabelClass()}}">対象ページ - フレーム</label>
         <div class="{{$frame->getSettingInputClass(false, true)}}">
             <ul class="nav nav-pills" role="tablist">
@@ -593,6 +593,11 @@
     @if (old('numbering_use_flag', $form->numbering_use_flag))
         // 採番プレフィックス
         $('#app_numbering_prefix_{{$frame_id}}').collapse('show')
+    @endif
+
+    @if(old('other_plugins_register_use_flag', $form->other_plugins_register_use_flag))
+        // 対象ページ - フレーム
+        $('#collapse_other_plugins{{$frame_id}}').collapse('show')
     @endif
 </script>
 @endif
