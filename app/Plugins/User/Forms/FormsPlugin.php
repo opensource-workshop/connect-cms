@@ -711,7 +711,7 @@ class FormsPlugin extends UserPluginBase
 
         // エラーチェック
         if ($form->form_password != $request->form_password) {
-            return redirect()->back()->withErrors(['form_password' => 'パスワードが異なります。'])->withInput();
+            return redirect()->back()->withErrors(['form_password' => '閲覧パスワードが異なります。'])->withInput();
         }
 
         // 一時セッションで閲覧を許可
