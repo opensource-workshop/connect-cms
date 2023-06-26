@@ -202,7 +202,7 @@
     </div>
 
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass(true)}} pt-0">表示期間</label>
+        <label class="{{$frame->getSettingLabelClass()}} pt-0">表示期間</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="col pl-0">
                 <label>表示期間の制御</label><br>
@@ -219,7 +219,7 @@
     </div>
 
     <div class="form-group row collapse" id="collapse_display_control{{$frame_id}}">
-        <label class="{{$frame->getSettingLabelClass(true)}} pt-0"></label>
+        <label class="{{$frame->getSettingLabelClass()}} pt-0"></label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="col pl-0">
                 <label>表示開始日時</label>
@@ -254,7 +254,7 @@
     </div>
 
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass(true)}} pt-0">登録期間</label>
+        <label class="{{$frame->getSettingLabelClass()}} pt-0">登録期間</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="col pl-0">
                 <label>登録期間の制御</label><br>
@@ -271,7 +271,7 @@
     </div>
 
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass(true)}} pt-0"></label>
+        <label class="{{$frame->getSettingLabelClass()}} pt-0"></label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="col pl-0">
                 <label>登録開始日時</label>
@@ -337,7 +337,7 @@
     </div>
 
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass(true)}} pt-0"></label>
+        <label class="{{$frame->getSettingLabelClass()}} pt-0"></label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="col pl-0">
                 <label>メールの添付ファイル制御</label><br>
