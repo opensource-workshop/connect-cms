@@ -79,7 +79,7 @@
     </div>
 
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass(true)}} pt-0">フォームモード</label>
+        <label class="{{$frame->getSettingLabelClass()}}">フォームモード</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="col pl-0">
                 @foreach (FormMode::getMembers() as $enum_value => $enum_label)
