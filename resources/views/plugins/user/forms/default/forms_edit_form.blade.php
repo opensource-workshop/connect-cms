@@ -207,18 +207,18 @@
             <div class="col pl-0">
                 <label>表示期間の制御</label><br>
                 <div class="custom-control custom-radio custom-control-inline">
-                    <input type="radio" value="0" id="display_control_flag_0" name="display_control_flag" class="custom-control-input" @if(old('display_control_flag', $form->display_control_flag) == 0) checked="checked" @endif>
+                    <input type="radio" value="0" id="display_control_flag_0" name="display_control_flag" class="custom-control-input" @if(old('display_control_flag', $form->display_control_flag) == 0) checked="checked" @endif data-toggle="collapse" data-target="#collapse_display_control{{$frame_id}}.show">
                     <label class="custom-control-label" for="display_control_flag_0">表示期間で制御しない</label>
                 </div>
                 <div class="custom-control custom-radio custom-control-inline">
-                    <input type="radio" value="1" id="display_control_flag_1" name="display_control_flag" class="custom-control-input" @if(old('display_control_flag', $form->display_control_flag) == 1) checked="checked" @endif>
+                    <input type="radio" value="1" id="display_control_flag_1" name="display_control_flag" class="custom-control-input" @if(old('display_control_flag', $form->display_control_flag) == 1) checked="checked" @endif data-toggle="collapse" data-target="#collapse_display_control{{$frame_id}}:not(.show)" aria-expanded="true" aria-controls="collapse_display_control{{$frame_id}}">
                     <label class="custom-control-label" for="display_control_flag_1">表示期間で制御する</label>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="form-group row">
+    <div class="form-group row collapse" id="collapse_display_control{{$frame_id}}">
         <label class="{{$frame->getSettingLabelClass(true)}} pt-0"></label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="col pl-0">
@@ -232,7 +232,8 @@
                 @include('plugins.common.errors_inline', ['name' => 'display_from'])
                 <small class="text-muted">
                     ※ 未入力の場合、開始日時で表示制限しません。<br>
-                    ※ 開始日時になった瞬間に公開します。例えば14:00の場合、14:00に公開します。
+                    ※ 開始日時になった瞬間に公開します。例えば14:00の場合、14:00に公開します。<br>
+                    <br><!-- 項目が縦中央によるため、改行でそろえる -->
                 </small>
             </div>
             <div class="col pl-0">
@@ -590,6 +591,11 @@
     @if (old('access_limit_type', $access_limit_type) == FormAccessLimitType::password)
         // 閲覧パスワード
         $('#collapse_form_password{{$frame_id}}').collapse('show')
+    @endif
+
+    @if(old('display_control_flag', $form->display_control_flag) == 1)
+        // 表示期間
+        $('#collapse_display_control{{$frame_id}}').collapse('show')
     @endif
 
     @if(old('use_temporary_regist_mail_flag', $form->use_temporary_regist_mail_flag))
