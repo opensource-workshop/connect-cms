@@ -90,6 +90,9 @@ return [
     // csrfチェックの除外設定
     'VERIFY_CSRF_TOKEN_EXCEPT' => env('VERIFY_CSRF_TOKEN_EXCEPT', ''),
 
+    // Slackの署名付きトークン
+    'SLACK_SIGNING_SECRET' => env('SLACK_SIGNING_SECRET', ''),
+
     // 外部APIを使って翻訳
     'TRANSLATE_API_URL' => env('TRANSLATE_API_URL', ''),
     'TRANSLATE_API_KEY' => env('TRANSLATE_API_KEY', ''),
