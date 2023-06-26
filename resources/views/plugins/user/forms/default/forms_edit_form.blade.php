@@ -67,11 +67,7 @@
 @else
 
 {{-- create_flag がtrue の場合、新規作成するためにforms_id を空にする --}}
-@if ($create_flag)
-<form action="{{url('/')}}/plugin/forms/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
-@else
-<form action="{{url('/')}}/plugin/forms/saveBuckets/{{$page->id}}/{{$frame_id}}/{{$form->id}}#frame-{{$frame_id}}" method="POST" class="">
-@endif
+<form action="{{url('/')}}/plugin/forms/saveBuckets/{{$page->id}}/{{$frame_id}}@if($create_flag)/{{$form->id}}@endif#frame-{{$frame_id}}" method="POST">
     {{ csrf_field() }}
 
     <div class="form-group row">
