@@ -172,6 +172,7 @@ use App\Enums\FacilityDisplayType;
 use App\Enums\FaqFrameConfig;
 use App\Enums\FaqNarrowingDownType;
 use App\Enums\FaqSequenceConditionType;
+use App\Enums\FormAccessLimitType;
 use App\Enums\FormColumnType;
 use App\Enums\FormMode;
 use App\Enums\LinklistType;
@@ -3097,6 +3098,8 @@ trait MigrationTrait
                 'bucket_id'           => $bucket->id,
                 'forms_name'          => $form_name,
                 'form_mode'           => Arr::get($form_ini, 'form_base.form_mode', FormMode::form),
+                'access_limit_type'   => Arr::get($form_ini, 'form_base.access_limit_type', FormAccessLimitType::none),
+                'form_password'       => Arr::get($form_ini, 'form_base.form_password'),
                 'mail_send_flag'      => $form_ini['form_base']['mail_send_flag'],
                 'mail_send_address'   => $form_ini['form_base']['mail_send_address'],
                 'user_mail_send_flag' => $form_ini['form_base']['user_mail_send_flag'],

@@ -37,6 +37,7 @@ use App\Utilities\Token\TokenUtils;
 
 use App\Enums\Bs4TextColor;
 use App\Enums\CsvCharacterCode;
+use App\Enums\FormAccessLimitType;
 use App\Enums\FormColumnType;
 use App\Enums\FormMode;
 use App\Enums\FormsRegisterTargetPlugin;
@@ -102,6 +103,7 @@ class FormsPlugin extends UserPluginBase
             'publicConfirm',
             'publicStore',
             'publicStoreToken',
+            'publicPassword',
             'cancel',
             'copyColumn',
             'storeInput',
@@ -371,8 +373,6 @@ class FormsPlugin extends UserPluginBase
                 $forms_columns_value_for_time_to = $request->forms_columns_value_for_time_to;
 
                 foreach ($tmp_forms_columns as $tmp_forms_column) {
-                    // $tmp_array[$tmp_forms_column->id] = isset($forms_columns_value[$tmp_forms_column->id]) ? $forms_columns_value[$tmp_forms_column->id] : null;
-                    // var_dump($tmp_forms_column->id);
 
                     if (! isset($forms_columns_value[$tmp_forms_column->id])) {
                         // 入力なし
@@ -404,7 +404,6 @@ class FormsPlugin extends UserPluginBase
                             $forms_columns_value[$tmp_forms_column->id] = $request->input($tmp_forms_column->column_name, null);
                         }
 
-                        // var_dump($tmp_forms_column->id);
                         $request->merge([
                             "forms_columns_value" => $forms_columns_value,
                             "forms_columns_value_confirmation" => $forms_columns_value_confirmation,
@@ -414,29 +413,28 @@ class FormsPlugin extends UserPluginBase
                     }
                 }
             }
-
-            // foreach ($forms_columns as $forms_column) {
-            //     var_dump($forms_column->id);
-            //     if (isset($forms_column->group)) {
-            //         foreach ($forms_column->group as $group_row) {
-            //             var_dump($group_row->id);
-            //         }
-            //     }
-            // }
         } else {
             // フレームに紐づくフォーム親データがない場合
             $setting_error_messages[] = 'フレームの設定画面から、使用するフォームを選択するか、作成してください。';
         }
 
-        // var_dump('index', $request->forms_columns_value, $frame_id, $request->frame_id);
-
         if (empty($setting_error_messages)) {
-            // 表示テンプレートを呼び出す
+
+            if ($form->access_limit_type == FormAccessLimitType::password) {
+                if (session('can_view_form_password' . $frame_id)) {
+                    // 閲覧OKならパスワード画面を表示しない
+                } else {
+                    // 閲覧パスワード
+                    return $this->view('index_password', [
+                        'form' => $form,
+                    ]);
+                }
+            }
+
             if ($form->form_mode == FormMode::form) {
                 // フォーム
                 return $this->view('forms', [
                     'request' => $request,
-                    'frame_id' => $frame_id,
                     'form' => $form,
                     'forms_columns' => $forms_columns,
                     'forms_columns_id_select' => $forms_columns_id_select,
@@ -446,7 +444,6 @@ class FormsPlugin extends UserPluginBase
                 // アンケート
                 return $this->view('index_tandem', [
                     'request' => $request,
-                    'frame_id' => $frame_id,
                     'form' => $form,
                     'forms_columns' => $forms_columns,
                     'forms_columns_id_select' => $forms_columns_id_select,
@@ -702,6 +699,25 @@ class FormsPlugin extends UserPluginBase
             'inputs' => $inputs,
             'input_cols' => $input_cols,
         ]);
+    }
+
+    /**
+     * 閲覧パスワード確認
+     */
+    public function publicPassword($request, $page_id, $frame_id)
+    {
+        // Forms、Frame データ
+        $form = $this->getForms($frame_id);
+
+        // エラーチェック
+        if ($form->form_password != $request->form_password) {
+            return redirect()->back()->withErrors(['form_password' => '閲覧パスワードが異なります。'])->withInput();
+        }
+
+        // 一時セッションで閲覧を許可
+        session()->flash('can_view_form_password' . $frame_id, 1);
+
+        // リダイレクト先を指定しないため、画面から渡されたredirect_pathに飛ぶ
     }
 
     /**
@@ -1681,6 +1697,8 @@ class FormsPlugin extends UserPluginBase
         // フォーム設定
         $forms->forms_name          = $request->forms_name;
         $forms->form_mode           = $request->form_mode;
+        $forms->access_limit_type   = $request->access_limit_type;
+        $forms->form_password       = $request->form_password;
         $forms->entry_limit         = $request->entry_limit;
         $forms->entry_limit_over_message = $request->entry_limit_over_message;
         $forms->display_control_flag = empty($request->display_control_flag) ? 0 : $request->display_control_flag;

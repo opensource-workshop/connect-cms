@@ -10,15 +10,25 @@ use App\Enums\EnumsBase;
 class NoticeEmbeddedTag extends EnumsBase
 {
     // 定数メンバ
+    /** サイト名 */
     const site_name = 'site_name';
+    /** 処理名 */
     const method = 'method';
+    /** タイトル */
     const title = 'title';
+    /** 本文 */
     const body = 'body';
+    /** URL */
     const url = 'url';
+    /** 削除時のコメント */
     const delete_comment = 'delete_comment';
+    /** 登録者 */
     const created_name = 'created_name';
+    /** 登録日時 */
     const created_at = 'created_at';
+    /** 更新者 */
     const updated_name = 'updated_name';
+    /** 更新日時 */
     const updated_at = 'updated_at';
 
     // key/valueの連想配列

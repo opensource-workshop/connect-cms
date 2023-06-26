@@ -15,6 +15,7 @@ use App\Models\Migration\MigrationMapping;
 use App\Models\Migration\Nc3\Nc3AccessCounter;
 use App\Models\Migration\Nc3\Nc3AccessCounterFrameSetting;
 use App\Models\Migration\Nc3\Nc3Announcement;
+use App\Models\Migration\Nc3\Nc3AuthorizationKey;
 use App\Models\Migration\Nc3\Nc3Box;
 use App\Models\Migration\Nc3\Nc3Bbs;
 use App\Models\Migration\Nc3\Nc3BbsArticle;
@@ -89,6 +90,7 @@ use App\Enums\DatabaseSortFlag;
 use App\Enums\DayOfWeek;
 use App\Enums\FaqNarrowingDownType;
 use App\Enums\FaqSequenceConditionType;
+use App\Enums\FormAccessLimitType;
 use App\Enums\FormColumnType;
 use App\Enums\FormMode;
 use App\Enums\LinklistType;
@@ -2996,6 +2998,9 @@ trait MigrationNc3ExportTrait
         // nc3の全ユーザ取得
         $nc3_users = Nc3User::get();
 
+        // NC3認証キー（閲覧パスワード）
+        $nc3_authorization_keys = Nc3AuthorizationKey::where('model', 'Registration')->get();
+
         // NC3登録フォーム（Registration）のループ
         foreach ($nc3_registrations as $nc3_registration) {
             $room_ids = $this->getMigrationConfig('basic', 'nc3_export_room_ids');
@@ -3078,11 +3083,22 @@ trait MigrationNc3ExportTrait
             // ダブルクォーテーション対策
             $after_message = str_replace('"', '\"', $after_message);
 
+            $access_limit_type = FormAccessLimitType::none;
+            // (NC3)キーフレーズによる登録ガードを設けるか | 0:キーフレーズガードは用いない | 1:キーフレーズガードを用いる
+            if ($nc3_registration->is_key_pass_use) {
+                // 閲覧パスワードON
+                $access_limit_type = FormAccessLimitType::password;
+            }
+
+            $nc3_authorization_key = $nc3_authorization_keys->firstWhere('content_id', $nc3_registration->id) ?? new Nc3AuthorizationKey();
+
             // 登録フォーム設定
             $registration_ini = "";
             $registration_ini .= "[form_base]\n";
             $registration_ini .= "forms_name = \""        . $nc3_registration->title . "\"\n";
-            $registration_ini .= "form_mode  = \""        . FormMode::form . "\"\n";
+            $registration_ini .= "form_mode = \""         . FormMode::form . "\"\n";
+            $registration_ini .= "access_limit_type = "   . $access_limit_type . "\n";
+            $registration_ini .= "form_password = \""     . $nc3_authorization_key->authorization_key . "\"\n";
             $registration_ini .= "mail_send_flag = "      . $mail_send_flag . "\n";
             $registration_ini .= "mail_send_address = \"\"\n";
             $registration_ini .= "user_mail_send_flag = " . $user_mail_send_flag . "\n";
