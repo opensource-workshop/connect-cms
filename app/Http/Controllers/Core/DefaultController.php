@@ -3,22 +3,16 @@
 namespace App\Http\Controllers\Core;
 
 use Illuminate\Http\Request;
-use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
-
-use DB;
-use File;
 
 use App\Http\Controllers\Core\ConnectController;
 
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Core\Configs;
-// use App\Models\Core\Plugins;
 
 use App\Traits\ConnectCommonTrait;
 
