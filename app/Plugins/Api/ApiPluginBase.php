@@ -143,6 +143,6 @@ class ApiPluginBase extends PluginBase
         $hash = hash_hmac('sha256', $base_string, config('connect.SLACK_SIGNING_SECRET'));
 
         // ハッシュ（A，B）を比較する
-        return hash_equals($signature_hash , $hash);
+        return hash_equals($signature_hash, $hash);
     }
 }
