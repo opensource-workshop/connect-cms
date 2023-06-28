@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 use App\Models\Common\Buckets;
@@ -28,6 +27,7 @@ use App\Utilities\String\StringUtils;
  * サイト内の新着情報を表示するプラグイン。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 新着情報プラグイン
  * @package Controller
@@ -150,20 +150,14 @@ class WhatsnewsPlugin extends UserPluginBase
      */
     private function getTargetPluginsFrames()
     {
-        // debug:確認したいSQLの前にこれを仕込んで
-        //DB::enableQueryLog();
-
         // Frame データ
         $frames = Frame::select('frames.*', 'pages._lft', 'pages.page_name', 'buckets.bucket_name')
-                        ->whereIn('frames.plugin_name', array('blogs', 'bbses', 'databases'))
+                        ->whereIn('frames.plugin_name', WhatsnewTargetPluginTool::getMemberKeys())
                         ->leftJoin('buckets', 'frames.bucket_id', '=', 'buckets.id')
                         ->leftJoin('pages', 'frames.page_id', '=', 'pages.id')
                         ->where('disable_whatsnews', 0)
                         ->orderBy('pages._lft', 'asc')
                         ->get();
-
-        // sql debug
-        //Log::debug(var_export(DB::getQueryLog(), true));
         return $frames;
     }
 
@@ -214,13 +208,19 @@ class WhatsnewsPlugin extends UserPluginBase
             // クラスファイルの存在チェック。
             $file_path = base_path() . "/app/Plugins/User/" . ucfirst($target_plugin) . "/" . ucfirst($target_plugin) . "Plugin.php";
 
-            // ファイルの存在確認
-            if (!file_exists($file_path)) {
-                return $this->viewError("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
-            }
-
             // 各プラグインのgetWhatsnewArgs() 関数を呼び出し。
             $class_name = "App\Plugins\User\\" . ucfirst($target_plugin) . "\\" . ucfirst($target_plugin) . "Plugin";
+
+            // ない場合はオプションプラグインを探す
+            if (!file_exists($file_path)) {
+                $file_path = base_path() . "/app/PluginsOption/User/" . ucfirst($target_plugin) . "/" . ucfirst($target_plugin) . "Plugin.php";
+                $class_name = "App\PluginsOption\User\\" . ucfirst($target_plugin) . "\\" . ucfirst($target_plugin) . "Plugin";
+
+                // ファイルの存在確認
+                if (!file_exists($file_path)) {
+                    return $this->viewError("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
+                }
+            }
 
             list($union_sqls[$target_plugin], $link_pattern[$target_plugin], $link_base[$target_plugin]) = $class_name::getWhatsnewArgs();
         }

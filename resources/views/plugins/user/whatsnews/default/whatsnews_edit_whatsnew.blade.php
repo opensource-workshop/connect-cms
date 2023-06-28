@@ -7,6 +7,10 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 新着情報プラグイン
 --}}
+@php
+use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
+@endphp
+
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -400,7 +404,7 @@
         <label class="{{$frame->getSettingLabelClass()}}">対象ページ - フレーム</label>
         <div class="{{$frame->getSettingInputClass(false, true)}}">
             <ul class="nav nav-pills" role="tablist">
-                @foreach(WhatsnewsTargetPlugin::getMembers() as $target_plugin => $target_plugin_full)
+                @foreach(WhatsnewTargetPluginTool::getMembers() as $target_plugin => $target_plugin_full)
                     {{--
                     <li class="nav-item">
                         <a href="#blogs{{frame->id}}" class="nav-link active" data-toggle="tab" role="tab">ブログ</a>
@@ -413,7 +417,7 @@
             </ul>
 
             <div class="tab-content">
-                @foreach(WhatsnewsTargetPlugin::getMembers() as $target_plugin => $target_plugin_full)
+                @foreach(WhatsnewTargetPluginTool::getMembers() as $target_plugin => $target_plugin_full)
                     <div id="{{$target_plugin}}{{$frame->id}}" class="tab-pane card @if($loop->first) active @endif" role="tabpanel">
                         <div class="card-body py-2 pl-3">
                             @foreach($target_plugins_frames as $target_plugins_frame)

@@ -54,6 +54,11 @@ class BbsesPlugin extends UserPluginBase
      */
     public $post = null;
 
+    /**
+     * 新着機能を使うか
+     */
+    public $use_whatsnew = true;
+
     /* コアから呼び出す関数 */
 
     /**

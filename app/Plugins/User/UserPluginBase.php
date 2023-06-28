@@ -128,6 +128,11 @@ class UserPluginBase extends PluginBase
     public $use_getpost = true;
 
     /**
+     * 新着機能を使うか
+     */
+    public $use_whatsnew = false;
+
+    /**
      * コンストラクタ
      */
     public function __construct($page = null, $frame = null, $pages = null, $page_tree = null)

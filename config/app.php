@@ -251,7 +251,6 @@ $app_array = [
         'MinutesIncrements' => \App\Enums\MinutesIncrements::class,
         'ConnectLocale' => \App\Enums\ConnectLocale::class,
         'GroupType' => \App\Enums\GroupType::class,
-        'WhatsnewsTargetPlugin' => \App\Enums\WhatsnewsTargetPlugin::class,
         'CsvCharacterCode' => \App\Enums\CsvCharacterCode::class,
         'ShowType' => \App\Enums\ShowType::class,
         'NotShowType' => \App\Enums\NotShowType::class,
