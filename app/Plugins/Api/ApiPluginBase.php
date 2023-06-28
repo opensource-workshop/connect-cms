@@ -94,15 +94,11 @@ class ApiPluginBase extends PluginBase
         list($version, $signature_hash) = explode("=", $slack_signature);
 
         // request内容からハッシュ値生成用の基本文字列を生成
+        $version = 'v0';
         $timestamp = $request->header('x-slack-request-timestamp');
-        $body = $request->all();
-        $query = "";
-        foreach ($body as $key => $value) {
-            $query .= $key . '=' . urlencode($value). '&';
-        }
-        $query = rtrim($query,'&');
-        $base_string = $version . ':' . $timestamp . ':' . $query;
-
+        $body = $request->getContent();
+        $base_string = $version . ':' . $timestamp . ':' . $body;
+        
         // 基本文字列からハッシュ値（B）を作る
         $hash = hash_hmac('sha256', $base_string, config('connect.SLACK_SIGNING_SECRET'));
 
