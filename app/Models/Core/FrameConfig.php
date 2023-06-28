@@ -67,6 +67,7 @@ class FrameConfig extends Model
      * @param Illuminate\Http\Request $request リクエスト
      * @param int $frame_id フレームID
      * @param array $frame_config_names フレーム設定のname配列
+     * @param string $checkbox_separator チェックボックスの区切り文字
      */
     public static function saveFrameConfigs(\Illuminate\Http\Request $request, int $frame_id, array $frame_config_names, ?string $checkbox_separator = self::CHECKBOX_SEPARATOR) : void
     {
