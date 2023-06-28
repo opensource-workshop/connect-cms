@@ -6,8 +6,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-use Illuminate\Support\Facades\Log;
-
 use App\UserableNohistory;
 
 class FrameConfig extends Model
@@ -70,18 +68,22 @@ class FrameConfig extends Model
      * @param int $frame_id フレームID
      * @param array $frame_config_names フレーム設定のname配列
      */
-    public static function saveFrameConfigs(\Illuminate\Http\Request $request, int $frame_id, array $frame_config_names) : void
+    public static function saveFrameConfigs(\Illuminate\Http\Request $request, int $frame_id, array $frame_config_names, ?string $checkbox_separator = self::CHECKBOX_SEPARATOR) : void
     {
         foreach ($frame_config_names as $key => $name) {
 
+            $request_value = $request->$name;
+            // arrayならarray_filter()でarrayの空要素削除
+            $request_value = is_array($request_value) ? array_filter($request_value) : $request_value;
+
             // 必須入力チェック
             // チェックボックスの場合、すべて選択しない場合があるので除外する
-            if (!is_array($request->$name) && $request->$name != '0' && empty($request->$name)) {
+            if (!is_array($request_value) && $request_value != '0' && empty($request_value)) {
                 continue;
             }
 
             // 配列の設定値はパイプ区切りにする
-            $value = is_array($request->$name) ? implode(self::CHECKBOX_SEPARATOR, $request->$name) : $request->$name;
+            $value = is_array($request_value) ? implode($checkbox_separator, $request_value) : $request_value;
 
             self::updateOrCreate(
                 ['frame_id' => $frame_id, 'name' => $name],
