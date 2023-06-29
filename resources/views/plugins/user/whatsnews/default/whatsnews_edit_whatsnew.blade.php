@@ -251,6 +251,11 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                         class="custom-control-input"
                         {{ old('read_more_use_flag', $whatsnew->read_more_use_flag) == $key ? 'checked' : '' }}
                         v-model="read_more_use_flag"
+                        @if ($key == ShowType::not_show)
+                            data-toggle="collapse" data-target="#collapse_read_more{{$frame_id}}.show"
+                        @else
+                            data-toggle="collapse" data-target="#collapse_read_more{{$frame_id}}:not(.show)" aria-expanded="true" aria-controls="collapse_read_more{{$frame_id}}"
+                        @endif
                     >
                     <label class="custom-control-label"
                            for="{{ "read_more_use_flag_${key}" }}"
@@ -262,93 +267,95 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
         </div>
     </div>
 
-    {{-- もっと見る取得件数／回 --}}
-    <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">ボタン押下時の<br>取得件数／回</label>
-        <div class="{{$frame->getSettingInputClass()}}">
-            <input
-                type="text"
-                name="read_more_fetch_count"
-                value="{{old('read_more_fetch_count', $whatsnew->read_more_fetch_count ? $whatsnew->read_more_fetch_count : 5)}}"
-                class="form-control col-sm-3 @if($errors && $errors->has('read_more_fetch_count')) border-danger @endif"
-            >
-            @include('plugins.common.errors_inline', ['name' => 'read_more_fetch_count'])
+    <div class="collapse" id="collapse_read_more{{$frame_id}}">
+        {{-- もっと見る取得件数／回 --}}
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}">ボタン押下時の<br>取得件数／回</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <input
+                    type="text"
+                    name="read_more_fetch_count"
+                    value="{{old('read_more_fetch_count', $whatsnew->read_more_fetch_count ? $whatsnew->read_more_fetch_count : 5)}}"
+                    class="form-control col-sm-3 @if($errors && $errors->has('read_more_fetch_count')) border-danger @endif"
+                >
+                @include('plugins.common.errors_inline', ['name' => 'read_more_fetch_count'])
+            </div>
         </div>
-    </div>
 
-    {{-- もっと見るボタン名 --}}
-    <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">ボタン名</label>
-        <div class="{{$frame->getSettingInputClass()}}">
-            <input
-                type="text"
-                name="read_more_name"
-                value="{{old('read_more_name', $whatsnew->read_more_name ? $whatsnew->read_more_name : 'もっと見る')}}"
-                class="form-control @if($errors && $errors->has('read_more_name')) border-danger @endif"
-                v-model="read_more_name"
-            >
-            @include('plugins.common.errors_inline', ['name' => 'read_more_name'])
+        {{-- もっと見るボタン名 --}}
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}">ボタン名</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <input
+                    type="text"
+                    name="read_more_name"
+                    value="{{old('read_more_name', $whatsnew->read_more_name ? $whatsnew->read_more_name : 'もっと見る')}}"
+                    class="form-control @if($errors && $errors->has('read_more_name')) border-danger @endif"
+                    v-model="read_more_name"
+                >
+                @include('plugins.common.errors_inline', ['name' => 'read_more_name'])
+            </div>
         </div>
-    </div>
 
-    {{-- もっと見るボタン色 --}}
-    <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">ボタン色</label>
-        <div class="{{$frame->getSettingInputClass()}}">
-            <select class="form-control" name="read_more_btn_color_type" v-model="read_more_btn_color_type">
-                @foreach (Bs4Color::getMembers() as $key=>$value)
-                    <option value="{{$key}}" class="{{ 'text-' . $key }}" @if($key == old('read_more_btn_color_type', $whatsnew->read_more_btn_color_type)) selected @endif>
-                        {{ $value }}
-                    </option>
+        {{-- もっと見るボタン色 --}}
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}">ボタン色</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <select class="form-control" name="read_more_btn_color_type" v-model="read_more_btn_color_type">
+                    @foreach (Bs4Color::getMembers() as $key=>$value)
+                        <option value="{{$key}}" class="{{ 'text-' . $key }}" @if($key == old('read_more_btn_color_type', $whatsnew->read_more_btn_color_type)) selected @endif>
+                            {{ $value }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+
+        {{-- もっと見るボタンの形 --}}
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}">ボタンの形</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <select class="form-control" name="read_more_btn_type" v-model="read_more_btn_type">
+                    @foreach (RadiusType::getMembers() as $key=>$value)
+                        <option value="{{$key}}" @if($key == old('read_more_btn_type', $whatsnew->read_more_btn_type)) selected @endif>
+                            {{ $value }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+
+        {{-- もっと見るボタン透過設定 --}}
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">ボタン透過の使用</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                @foreach (UseType::enum as $key => $value)
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input
+                            type="radio"
+                            value="{{ $key }}"
+                            id="{{ "read_more_btn_transparent_flag_${key}" }}"
+                            name="read_more_btn_transparent_flag"
+                            class="custom-control-input"
+                            {{ $whatsnew->read_more_btn_transparent_flag == $key ? 'checked' : '' }}
+                            v-model="read_more_btn_transparent_flag"
+                        >
+                        <label class="custom-control-label" for="{{ "read_more_btn_transparent_flag_${key}" }}">
+                            {{ $value }}
+                        </label>
+                    </div>
                 @endforeach
-            </select>
+            </div>
         </div>
-    </div>
 
-    {{-- もっと見るボタンの形 --}}
-    <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass()}}">ボタンの形</label>
-        <div class="{{$frame->getSettingInputClass()}}">
-            <select class="form-control" name="read_more_btn_type" v-model="read_more_btn_type">
-                @foreach (RadiusType::getMembers() as $key=>$value)
-                    <option value="{{$key}}" @if($key == old('read_more_btn_type', $whatsnew->read_more_btn_type)) selected @endif>
-                        {{ $value }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
-    </div>
-
-    {{-- もっと見るボタン透過設定 --}}
-    <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass(true)}}">ボタン透過の使用</label>
-        <div class="{{$frame->getSettingInputClass(true)}}">
-            @foreach (UseType::enum as $key => $value)
-                <div class="custom-control custom-radio custom-control-inline">
-                    <input
-                        type="radio"
-                        value="{{ $key }}"
-                        id="{{ "read_more_btn_transparent_flag_${key}" }}"
-                        name="read_more_btn_transparent_flag"
-                        class="custom-control-input"
-                        {{ $whatsnew->read_more_btn_transparent_flag == $key ? 'checked' : '' }}
-                        v-model="read_more_btn_transparent_flag"
-                    >
-                    <label class="custom-control-label" for="{{ "read_more_btn_transparent_flag_${key}" }}">
-                        {{ $value }}
-                    </label>
-                </div>
-            @endforeach
-        </div>
-    </div>
-
-    {{-- もっと見るボタンプレビュー --}}
-    <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass(true)}}">ボタンプレビュー</label>
-        <div class="text-center {{$frame->getSettingInputClass(true)}}">
-            <p :class="[readMoreBtnClass]">
-                @{{ read_more_name }}
-            </p>
+        {{-- もっと見るボタンプレビュー --}}
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">ボタンプレビュー</label>
+            <div class="text-center {{$frame->getSettingInputClass(true)}}">
+                <p :class="[readMoreBtnClass]">
+                    @{{ read_more_name }}
+                </p>
+            </div>
         </div>
     </div>
 
@@ -361,7 +368,11 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
             @foreach($whatsnew->getTargetPlugins() as $key => $target_plugin)
                 <div class="custom-control custom-checkbox custom-control-inline">
                     <input type="checkbox" name="target_plugin[{{$key}}]" value="{{$key}}" class="custom-control-input" id="target_plugin_{{$key}}" @if(old("target_plugin.$key", $target_plugin['use_flag'])) checked=checked @endif>
-                    <label class="custom-control-label" for="target_plugin_{{$key}}" id="label_target_plugin_{{$key}}">{{$target_plugin['plugin_name_full']}}</label>
+                    <label class="custom-control-label" for="target_plugin_{{$key}}" id="label_target_plugin_{{$key}}">{{$target_plugin['plugin_name_full']}}
+@php
+//    var_dump(old("target_plugin.$key"), $target_plugin['use_flag'])
+@endphp
+                    </label>
                 </div>
             @endforeach
             @include('plugins.common.errors_inline', ['name' => 'target_plugin', 'class' => 'float-none'])
@@ -524,6 +535,12 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
             this.setDisabledTargetFrame({{ $whatsnew->frame_select }});
         }
     })
+
+    {{-- 初期状態で開くもの --}}
+    @if (old('read_more_use_flag', $whatsnew->read_more_use_flag) == ShowType::show)
+        // 登録期間
+        $('#collapse_read_more{{$frame_id}}').collapse('show')
+    @endif
 
     @if (old('frame_select', $whatsnew->frame_select) == 1)
         // 対象ページ - フレーム
