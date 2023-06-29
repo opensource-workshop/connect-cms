@@ -705,7 +705,6 @@ class WhatsnewsPlugin extends UserPluginBase
         $whatsnews->read_more_btn_transparent_flag = $request->read_more_btn_transparent_flag;
         $whatsnews->target_plugins    = implode(',', $request->target_plugin);
         $whatsnews->frame_select      = intval($request->frame_select);
-//Log::debug($request->target_frame_ids);
         $whatsnews->target_frame_ids  = empty($request->target_frame_ids) ? "": implode(',', $request->target_frame_ids);
 
         // データ保存
