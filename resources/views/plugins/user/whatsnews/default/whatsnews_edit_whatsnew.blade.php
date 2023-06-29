@@ -379,7 +379,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                     id="frame_select_0"
                     name="frame_select"
                     class="custom-control-input"
-                    {{ $whatsnew->frame_select == 0 ? 'checked' : '' }}
+                    {{ old('frame_select', $whatsnew->frame_select) == 0 ? 'checked' : '' }}
                     v-on:click="setDisabledTargetFrame(0)"
                 >
                 <label class="custom-control-label" for="frame_select_0">全て表示する</label>
@@ -391,7 +391,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                     id="frame_select_1"
                     name="frame_select"
                     class="custom-control-input"
-                    {{ $whatsnew->frame_select == 1 ? 'checked' : '' }}
+                    {{ old('frame_select', $whatsnew->frame_select) == 1 ? 'checked' : '' }}
                     v-on:click="setDisabledTargetFrame(1)"
                 >
                 <label class="custom-control-label" for="frame_select_1">選択したものだけ表示する</label>
