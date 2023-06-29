@@ -638,7 +638,7 @@ class WhatsnewsPlugin extends UserPluginBase
         // エラーがあった場合は入力画面に戻る。
         $message = null;
         if ($validator->fails()) {
-            if (empty($whatsnews_frame->whatsnews_id)) {
+            if (empty($request->whatsnews_id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
             } else {
