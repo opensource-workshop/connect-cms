@@ -7,6 +7,10 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 新着情報プラグイン
 --}}
+@php
+use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
+@endphp
+
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -59,8 +63,8 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">新着情報名 <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="whatsnew_name" value="{{old('whatsnew_name', $whatsnew->whatsnew_name)}}" class="form-control">
-            @if ($errors && $errors->has('whatsnew_name')) <div class="text-danger">{{$errors->first('whatsnew_name')}}</div> @endif
+            <input type="text" name="whatsnew_name" value="{{old('whatsnew_name', $whatsnew->whatsnew_name)}}" class="form-control @if($errors && $errors->has('whatsnew_name')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'whatsnew_name'])
         </div>
     </div>
 
@@ -93,8 +97,8 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">表示件数</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="count" value="{{old('count', $whatsnew->count)}}" class="form-control col-sm-3">
-            @if ($errors && $errors->has('count')) <div class="text-danger">{{$errors->first('count')}}</div> @endif
+            <input type="text" name="count" value="{{old('count', $whatsnew->count)}}" class="form-control col-sm-3 @if($errors && $errors->has('count')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'count'])
         </div>
     </div>
 
@@ -102,8 +106,8 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">表示日数</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="days" value="{{old('days', $whatsnew->days)}}" class="form-control col-sm-3">
-            @if ($errors && $errors->has('days')) <div class="text-danger">{{$errors->first('days')}}</div> @endif
+            <input type="text" name="days" value="{{old('days', $whatsnew->days)}}" class="form-control col-sm-3 @if($errors && $errors->has('days')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'days'])
         </div>
     </div>
 
@@ -135,8 +139,8 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">RSS件数</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="rss_count" value="{{old('rss_count', $whatsnew->rss_count)}}" class="form-control col-sm-3">
-            @if ($errors && $errors->has('rss_count')) <div class="text-danger">{{$errors->first('rss_count')}}</div> @endif
+            <input type="text" name="rss_count" value="{{old('rss_count', $whatsnew->rss_count)}}" class="form-control col-sm-3 @if($errors && $errors->has('rss_count')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'rss_count'])
         </div>
     </div>
 
@@ -266,9 +270,9 @@
                 type="text"
                 name="read_more_fetch_count"
                 value="{{old('read_more_fetch_count', $whatsnew->read_more_fetch_count ? $whatsnew->read_more_fetch_count : 5)}}"
-                class="form-control col-sm-3"
+                class="form-control col-sm-3 @if($errors && $errors->has('read_more_fetch_count')) border-danger @endif"
             >
-            @if ($errors && $errors->has('read_more_fetch_count')) <div class="text-danger">{{$errors->first('read_more_fetch_count')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'read_more_fetch_count'])
         </div>
     </div>
 
@@ -280,10 +284,10 @@
                 type="text"
                 name="read_more_name"
                 value="{{old('read_more_name', $whatsnew->read_more_name ? $whatsnew->read_more_name : 'もっと見る')}}"
-                class="form-control"
+                class="form-control @if($errors && $errors->has('read_more_name')) border-danger @endif"
                 v-model="read_more_name"
             >
-            @if ($errors && $errors->has('read_more_name')) <div class="text-danger">{{$errors->first('read_more_name')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'read_more_name'])
         </div>
     </div>
 
@@ -360,7 +364,7 @@
                     <label class="custom-control-label" for="target_plugin_{{$key}}" id="label_target_plugin_{{$key}}">{{$target_plugin['plugin_name_full']}}</label>
                 </div>
             @endforeach
-            @if ($errors && $errors->has('target_plugin')) <div class="text-danger float-none">{{$errors->first('target_plugin')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'target_plugin', 'class' => 'float-none'])
         </div>
     </div>
 
@@ -375,8 +379,9 @@
                     id="frame_select_0"
                     name="frame_select"
                     class="custom-control-input"
-                    {{ $whatsnew->frame_select == 0 ? 'checked' : '' }}
+                    {{ old('frame_select', $whatsnew->frame_select) == 0 ? 'checked' : '' }}
                     v-on:click="setDisabledTargetFrame(0)"
+                    data-toggle="collapse" data-target="#collapse_frame_select{{$frame_id}}.show"
                 >
                 <label class="custom-control-label" for="frame_select_0">全て表示する</label>
             </div>
@@ -387,8 +392,9 @@
                     id="frame_select_1"
                     name="frame_select"
                     class="custom-control-input"
-                    {{ $whatsnew->frame_select == 1 ? 'checked' : '' }}
+                    {{ old('frame_select', $whatsnew->frame_select) == 1 ? 'checked' : '' }}
                     v-on:click="setDisabledTargetFrame(1)"
+                    data-toggle="collapse" data-target="#collapse_frame_select{{$frame_id}}:not(.show)" aria-expanded="true" aria-controls="collapse_frame_select{{$frame_id}}"
                 >
                 <label class="custom-control-label" for="frame_select_1">選択したものだけ表示する</label>
             </div>
@@ -396,11 +402,11 @@
     </div>
 
     {{-- 対象ページ - フレーム --}}
-    <div class="form-group row">
+    <div class="form-group row collapse" id="collapse_frame_select{{$frame_id}}">
         <label class="{{$frame->getSettingLabelClass()}}">対象ページ - フレーム</label>
         <div class="{{$frame->getSettingInputClass(false, true)}}">
             <ul class="nav nav-pills" role="tablist">
-                @foreach(WhatsnewsTargetPlugin::getMembers() as $target_plugin => $target_plugin_full)
+                @foreach(WhatsnewTargetPluginTool::getMembers() as $target_plugin => $target_plugin_full)
                     {{--
                     <li class="nav-item">
                         <a href="#blogs{{frame->id}}" class="nav-link active" data-toggle="tab" role="tab">ブログ</a>
@@ -413,7 +419,7 @@
             </ul>
 
             <div class="tab-content">
-                @foreach(WhatsnewsTargetPlugin::getMembers() as $target_plugin => $target_plugin_full)
+                @foreach(WhatsnewTargetPluginTool::getMembers() as $target_plugin => $target_plugin_full)
                     <div id="{{$target_plugin}}{{$frame->id}}" class="tab-pane card @if($loop->first) active @endif" role="tabpanel">
                         <div class="card-body py-2 pl-3">
                             @foreach($target_plugins_frames as $target_plugins_frame)
@@ -427,7 +433,7 @@
                         </div>
                     </div>
                 @endforeach
-                @if ($errors && $errors->has('target_plugins_frames')) <div class="text-danger">{{$errors->first('target_plugins_frames')}}</div> @endif
+                @include('plugins.common.errors_inline', ['name' => 'target_frame_ids'])
             </div>
         </div>
     </div>
@@ -518,6 +524,11 @@
             this.setDisabledTargetFrame({{ $whatsnew->frame_select }});
         }
     })
+
+    @if (old('frame_select', $whatsnew->frame_select) == 1)
+        // 対象ページ - フレーム
+        $('#collapse_frame_select{{$frame_id}}').collapse('show')
+    @endif
 </script>
 
 @endsection
