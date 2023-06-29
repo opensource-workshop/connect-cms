@@ -381,6 +381,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                     class="custom-control-input"
                     {{ old('frame_select', $whatsnew->frame_select) == 0 ? 'checked' : '' }}
                     v-on:click="setDisabledTargetFrame(0)"
+                    data-toggle="collapse" data-target="#collapse_frame_select{{$frame_id}}.show"
                 >
                 <label class="custom-control-label" for="frame_select_0">全て表示する</label>
             </div>
@@ -393,6 +394,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                     class="custom-control-input"
                     {{ old('frame_select', $whatsnew->frame_select) == 1 ? 'checked' : '' }}
                     v-on:click="setDisabledTargetFrame(1)"
+                    data-toggle="collapse" data-target="#collapse_frame_select{{$frame_id}}:not(.show)" aria-expanded="true" aria-controls="collapse_frame_select{{$frame_id}}"
                 >
                 <label class="custom-control-label" for="frame_select_1">選択したものだけ表示する</label>
             </div>
@@ -400,7 +402,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
     </div>
 
     {{-- 対象ページ - フレーム --}}
-    <div class="form-group row">
+    <div class="form-group row collapse" id="collapse_frame_select{{$frame_id}}">
         <label class="{{$frame->getSettingLabelClass()}}">対象ページ - フレーム</label>
         <div class="{{$frame->getSettingInputClass(false, true)}}">
             <ul class="nav nav-pills" role="tablist">
@@ -522,6 +524,11 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
             this.setDisabledTargetFrame({{ $whatsnew->frame_select }});
         }
     })
+
+    @if (old('frame_select', $whatsnew->frame_select) == 1)
+        // 対象ページ - フレーム
+        $('#collapse_frame_select{{$frame_id}}').collapse('show')
+    @endif
 </script>
 
 @endsection
