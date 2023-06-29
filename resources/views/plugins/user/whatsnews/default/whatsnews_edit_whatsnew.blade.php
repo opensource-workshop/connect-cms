@@ -63,8 +63,8 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">新着情報名 <label class="badge badge-danger">必須</label></label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="whatsnew_name" value="{{old('whatsnew_name', $whatsnew->whatsnew_name)}}" class="form-control">
-            @if ($errors && $errors->has('whatsnew_name')) <div class="text-danger">{{$errors->first('whatsnew_name')}}</div> @endif
+            <input type="text" name="whatsnew_name" value="{{old('whatsnew_name', $whatsnew->whatsnew_name)}}" class="form-control @if($errors && $errors->has('whatsnew_name')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'whatsnew_name'])
         </div>
     </div>
 
@@ -97,8 +97,8 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">表示件数</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="count" value="{{old('count', $whatsnew->count)}}" class="form-control col-sm-3">
-            @if ($errors && $errors->has('count')) <div class="text-danger">{{$errors->first('count')}}</div> @endif
+            <input type="text" name="count" value="{{old('count', $whatsnew->count)}}" class="form-control col-sm-3 @if($errors && $errors->has('count')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'count'])
         </div>
     </div>
 
@@ -106,8 +106,8 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">表示日数</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="days" value="{{old('days', $whatsnew->days)}}" class="form-control col-sm-3">
-            @if ($errors && $errors->has('days')) <div class="text-danger">{{$errors->first('days')}}</div> @endif
+            <input type="text" name="days" value="{{old('days', $whatsnew->days)}}" class="form-control col-sm-3 @if($errors && $errors->has('days')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'days'])
         </div>
     </div>
 
@@ -139,8 +139,8 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">RSS件数</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="rss_count" value="{{old('rss_count', $whatsnew->rss_count)}}" class="form-control col-sm-3">
-            @if ($errors && $errors->has('rss_count')) <div class="text-danger">{{$errors->first('rss_count')}}</div> @endif
+            <input type="text" name="rss_count" value="{{old('rss_count', $whatsnew->rss_count)}}" class="form-control col-sm-3 @if($errors && $errors->has('rss_count')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'rss_count'])
         </div>
     </div>
 
@@ -270,9 +270,9 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                 type="text"
                 name="read_more_fetch_count"
                 value="{{old('read_more_fetch_count', $whatsnew->read_more_fetch_count ? $whatsnew->read_more_fetch_count : 5)}}"
-                class="form-control col-sm-3"
+                class="form-control col-sm-3 @if($errors && $errors->has('read_more_fetch_count')) border-danger @endif"
             >
-            @if ($errors && $errors->has('read_more_fetch_count')) <div class="text-danger">{{$errors->first('read_more_fetch_count')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'read_more_fetch_count'])
         </div>
     </div>
 
@@ -284,10 +284,10 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                 type="text"
                 name="read_more_name"
                 value="{{old('read_more_name', $whatsnew->read_more_name ? $whatsnew->read_more_name : 'もっと見る')}}"
-                class="form-control"
+                class="form-control @if($errors && $errors->has('read_more_name')) border-danger @endif"
                 v-model="read_more_name"
             >
-            @if ($errors && $errors->has('read_more_name')) <div class="text-danger">{{$errors->first('read_more_name')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'read_more_name'])
         </div>
     </div>
 
@@ -364,7 +364,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                     <label class="custom-control-label" for="target_plugin_{{$key}}" id="label_target_plugin_{{$key}}">{{$target_plugin['plugin_name_full']}}</label>
                 </div>
             @endforeach
-            @if ($errors && $errors->has('target_plugin')) <div class="text-danger float-none">{{$errors->first('target_plugin')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'target_plugin', 'class' => 'float-none'])
         </div>
     </div>
 
@@ -431,7 +431,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                         </div>
                     </div>
                 @endforeach
-                @if ($errors && $errors->has('target_plugins_frames')) <div class="text-danger">{{$errors->first('target_plugins_frames')}}</div> @endif
+                @include('plugins.common.errors_inline', ['name' => 'target_frame_ids'])
             </div>
         </div>
     </div>
