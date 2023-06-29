@@ -75,7 +75,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
         <label class="{{$frame->getSettingLabelClass()}}">取得方式</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-radio custom-control-inline">
-                @if($whatsnew->view_pattern == 0)
+                @if (old('view_pattern', $whatsnew->view_pattern) == 0)
                     <input type="radio" value="0" id="view_pattern_0" name="view_pattern" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="0" id="view_pattern_0" name="view_pattern" class="custom-control-input">
@@ -83,7 +83,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                 <label class="custom-control-label" for="view_pattern_0">件数で表示する。</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
-                @if($whatsnew->view_pattern == 1)
+                @if (old('view_pattern', $whatsnew->view_pattern) == 1)
                     <input type="radio" value="1" id="view_pattern_1" name="view_pattern" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="1" id="view_pattern_1" name="view_pattern" class="custom-control-input">
@@ -125,6 +125,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                         id="{{ "rss_${key}" }}"
                         name="rss"
                         class="custom-control-input"
+                        {{ old('rss', $whatsnew->rss) == $key ? 'checked' : '' }}
                         {{ $whatsnew->rss == $key ? 'checked' : '' }}
                     >
                     <label class="custom-control-label" for="{{ "rss_${key}" }}">
@@ -158,7 +159,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                         id="{{ "view_posted_name_${key}" }}"
                         name="view_posted_name"
                         class="custom-control-input"
-                        {{ $whatsnew->view_posted_name == $key ? 'checked' : '' }}
+                        {{ old('view_posted_name', $whatsnew->view_posted_name) == $key ? 'checked' : '' }}
                     >
                     <label class="custom-control-label"
                            for="{{ "view_posted_name_${key}" }}"
@@ -182,7 +183,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                         id="{{ "view_posted_at_${key}" }}"
                         name="view_posted_at"
                         class="custom-control-input"
-                        {{ $whatsnew->view_posted_at == $key ? 'checked' : '' }}
+                        {{ old('view_posted_at', $whatsnew->view_posted_at) == $key ? 'checked' : '' }}
                     >
                     <label class="custom-control-label"
                            for="{{ "view_posted_at_${key}" }}"
@@ -201,7 +202,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
         <label class="{{$frame->getSettingLabelClass()}} @if(!$frame->isExpandNarrow()) pt-sm-0 @endif">重要記事の扱い</label><br />
         <div class="{{$frame->getSettingInputClass()}}">
             <div class="custom-control custom-radio custom-control-inline">
-                @if($whatsnew->important == "")
+                @if (old('important', $whatsnew->important) == "")
                     <input type="radio" value="" id="important_0" name="important" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="" id="important_0" name="important" class="custom-control-input">
@@ -209,7 +210,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                 <label class="custom-control-label text-nowrap" for="important_0">区別しない</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
-                @if($whatsnew->important == "top")
+                @if (old('important', $whatsnew->important) == "top")
                     <input type="radio" value="top" id="important_1" name="important" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="top" id="important_1" name="important" class="custom-control-input">
@@ -217,7 +218,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                 <label class="custom-control-label text-nowrap" for="important_1">上に表示する</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
-                @if($whatsnew->important == "important_only")
+                @if (old('important', $whatsnew->important) == "important_only")
                     <input type="radio" value="important_only" id="important_2" name="important" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="important_only" id="important_2" name="important" class="custom-control-input">
@@ -225,7 +226,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                 <label class="custom-control-label text-nowrap" for="important_2">重要記事のみ表示する</label>
             </div>
             <div class="custom-control custom-radio custom-control-inline">
-                @if($whatsnew->important == "not_important")
+                @if (old('important', $whatsnew->important) == "not_important")
                     <input type="radio" value="not_important" id="important_3" name="important" class="custom-control-input" checked="checked">
                 @else
                     <input type="radio" value="not_important" id="important_3" name="important" class="custom-control-input">
@@ -337,7 +338,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                             id="{{ "read_more_btn_transparent_flag_${key}" }}"
                             name="read_more_btn_transparent_flag"
                             class="custom-control-input"
-                            {{ $whatsnew->read_more_btn_transparent_flag == $key ? 'checked' : '' }}
+                            {{ old('read_more_btn_transparent_flag', $whatsnew->read_more_btn_transparent_flag) == $key ? 'checked' : '' }}
                             v-model="read_more_btn_transparent_flag"
                         >
                         <label class="custom-control-label" for="{{ "read_more_btn_transparent_flag_${key}" }}">
@@ -483,7 +484,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
 @endif
 @endif
 
-@if(isset($whatsnew))
+@if (isset($whatsnew))
 <div id="collapse{{$whatsnew_frame->id}}" class="collapse" style="margin-top: 8px;">
     <div class="card border-danger">
         <div class="card-body">
@@ -538,7 +539,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
 
     {{-- 初期状態で開くもの --}}
     @if (old('read_more_use_flag', $whatsnew->read_more_use_flag) == ShowType::show)
-        // 登録期間
+        // もっと見る設定
         $('#collapse_read_more{{$frame_id}}').collapse('show')
     @endif
 
