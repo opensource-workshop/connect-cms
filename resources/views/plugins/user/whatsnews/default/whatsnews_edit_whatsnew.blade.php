@@ -126,7 +126,11 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                         name="rss"
                         class="custom-control-input"
                         {{ old('rss', $whatsnew->rss) == $key ? 'checked' : '' }}
-                        {{ $whatsnew->rss == $key ? 'checked' : '' }}
+                        @if ($key == ShowType::not_show)
+                            data-toggle="collapse" data-target="#collapse_rss_count{{$frame_id}}.show"
+                        @else
+                            data-toggle="collapse" data-target="#collapse_rss_count{{$frame_id}}:not(.show)" aria-expanded="true" aria-controls="collapse_rss_count{{$frame_id}}"
+                        @endif
                     >
                     <label class="custom-control-label" for="{{ "rss_${key}" }}">
                         {{ $value }}
@@ -137,7 +141,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
     </div>
 
     {{-- RSS件数 --}}
-    <div class="form-group row">
+    <div class="form-group row collapse" id="collapse_rss_count{{$frame_id}}">
         <label class="{{$frame->getSettingLabelClass()}}">RSS件数</label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="rss_count" value="{{old('rss_count', $whatsnew->rss_count)}}" class="form-control col-sm-3 @if($errors && $errors->has('rss_count')) border-danger @endif">
@@ -538,6 +542,11 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
     })
 
     {{-- 初期状態で開くもの --}}
+    @if (old('rss', $whatsnew->rss) == ShowType::show)
+        // RSS件数
+        $('#collapse_rss_count{{$frame_id}}').collapse('show')
+    @endif
+
     @if (old('read_more_use_flag', $whatsnew->read_more_use_flag) == ShowType::show)
         // もっと見る設定
         $('#collapse_read_more{{$frame_id}}').collapse('show')
