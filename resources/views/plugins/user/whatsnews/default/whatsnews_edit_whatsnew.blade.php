@@ -249,7 +249,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                         id="{{ "read_more_use_flag_${key}" }}"
                         name="read_more_use_flag"
                         class="custom-control-input"
-                        {{ $whatsnew->read_more_use_flag == $key ? 'checked' : '' }}
+                        {{ old('read_more_use_flag', $whatsnew->read_more_use_flag) == $key ? 'checked' : '' }}
                         v-model="read_more_use_flag"
                     >
                     <label class="custom-control-label"
