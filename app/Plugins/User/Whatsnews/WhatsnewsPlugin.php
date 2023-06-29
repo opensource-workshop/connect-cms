@@ -609,36 +609,36 @@ class WhatsnewsPlugin extends UserPluginBase
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'whatsnew_name'     => ['required'],
-            'target_plugin'     => ['required'],
-            'count'             => ['nullable', 'numeric'],
-            'days'              => ['nullable', 'numeric'],
-            'rss_count'         => ['nullable', 'numeric'],
-            'read_more_use_flag' => ['required', 'numeric'],
-            'read_more_name' => ['required'],
-            'read_more_fetch_count' => ['required', 'numeric'],
-            'read_more_btn_color_type' => ['required'],
-            'read_more_btn_type' => ['required'],
+            'whatsnew_name'                  => ['required'],
+            'target_plugin'                  => ['required'],
+            'count'                          => ['nullable', 'numeric'],
+            'days'                           => ['nullable', 'numeric'],
+            'rss_count'                      => ['nullable', 'numeric'],
+            'read_more_use_flag'             => ['required', 'numeric'],
+            'read_more_name'                 => ['required'],
+            'read_more_fetch_count'          => ['required', 'numeric'],
+            'read_more_btn_color_type'       => ['required'],
+            'read_more_btn_type'             => ['required'],
             'read_more_btn_transparent_flag' => ['required', 'numeric'],
         ]);
         $validator->setAttributeNames([
-            'whatsnew_name'     => '新着情報設定名称',
-            'target_plugin'     => '対象プラグイン',
-            'count'             => '表示件数',
-            'days'              => '表示日数',
-            'rss_count'         => '対象RSS件数',
-            'read_more_use_flag' => 'もっと見るボタンの表示',
-            'read_more_name' => 'ボタン名',
-            'read_more_fetch_count' => 'ボタン押下時の取得件数／回',
-            'read_more_btn_color_type' => 'もっと見るボタン色',
-            'read_more_btn_type' => 'もっと見るボタンの形',
+            'whatsnew_name'                  => '新着情報名',
+            'target_plugin'                  => '対象プラグイン',
+            'count'                          => '表示件数',
+            'days'                           => '表示日数',
+            'rss_count'                      => '対象RSS件数',
+            'read_more_use_flag'             => 'もっと見るボタンの表示',
+            'read_more_name'                 => 'ボタン名',
+            'read_more_fetch_count'          => 'ボタン押下時の取得件数／回',
+            'read_more_btn_color_type'       => 'もっと見るボタン色',
+            'read_more_btn_type'             => 'もっと見るボタンの形',
             'read_more_btn_transparent_flag' => 'ボタン透過の使用',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
         $message = null;
         if ($validator->fails()) {
-            if (empty($whatsnews_frame->whatsnews_id)) {
+            if (empty($request->whatsnews_id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
             } else {
@@ -705,7 +705,6 @@ class WhatsnewsPlugin extends UserPluginBase
         $whatsnews->read_more_btn_transparent_flag = $request->read_more_btn_transparent_flag;
         $whatsnews->target_plugins    = implode(',', $request->target_plugin);
         $whatsnews->frame_select      = intval($request->frame_select);
-//Log::debug($request->target_frame_ids);
         $whatsnews->target_frame_ids  = empty($request->target_frame_ids) ? "": implode(',', $request->target_frame_ids);
 
         // データ保存
