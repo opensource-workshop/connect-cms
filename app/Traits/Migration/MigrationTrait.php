@@ -1456,6 +1456,7 @@ trait MigrationTrait
                         'plugin_name'          => $uploads_ini[$upload_key]['plugin_name'],
                         'page_id'              => $uploads_ini[$upload_key]['page_id'],
                         'temporary_flag'       => 0,
+                        'check_method'         => $uploads_ini[$upload_key]['plugin_name'] == 'forms' ? 'canDownload' : null,
                     ]);
 
                     // マッピングテーブルの追加
@@ -1477,6 +1478,7 @@ trait MigrationTrait
                         $upload->plugin_name          = $uploads_ini[$upload_key]['plugin_name'];
                         $upload->page_id              = $uploads_ini[$upload_key]['page_id'];
                         $upload->temporary_flag       = 0;
+                        $upload->check_method         = $uploads_ini[$upload_key]['plugin_name'] == 'forms' ? 'canDownload' : null;
                         $upload->save();
                     }
                 }

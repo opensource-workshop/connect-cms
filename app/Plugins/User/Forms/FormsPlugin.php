@@ -829,6 +829,7 @@ class FormsPlugin extends UserPluginBase
                         'extension'            => $request->file($req_filename)->getClientOriginalExtension(),
                         'size'                 => $request->file($req_filename)->getSize(),
                         'plugin_name'          => 'forms',
+                        'check_method'         => 'canDownload',
                         'page_id'              => $page_id,
                         'temporary_flag'       => 1,
                         'created_id'           => empty(Auth::user()) ? null : Auth::user()->id,
@@ -2942,5 +2943,27 @@ ORDER BY forms_inputs_id, forms_columns_id
 
         $bucket->save();
         return $bucket;
+    }
+
+    /**
+     * ダウンロードできるか（ファイルダウンロード処理から呼ばれる）
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param Uploads $upload アップロードファイル
+     * @return array
+     * @see \App\Http\Controllers\Core\UploadController callCheckMethod()
+     */
+    public static function canDownload($request, Uploads $upload): array
+    {
+        // コンテナはページ毎に表示バケツを絞る機能。
+        // アップロードファイルは、バケツより上位のページ単位($upload->page_id)でファイルにアクセスできるかを UploadController でチェックしているため、コンテナかどうか判定しなくてOK。
+
+        // 権限チェック
+        if (Auth::check() && Auth::user()->can('role_article')) {
+            // 権限あり
+            return [true, 'OK'];
+        } else {
+            return [false, '対象ファイルに対する権限なし'];
+        }
     }
 }
