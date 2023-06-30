@@ -85,6 +85,9 @@ class UploadController extends ConnectController
         // 一時保存ファイルは、登録時の確認画面を表示している際を想定している。
         if ($uploads->temporary_flag == 1) {
             $user_id = Auth::id();
+            if ($user_id === null) {
+                abort(404);
+            }
             if ($uploads->created_id != $user_id) {
                 abort(404);
             }
