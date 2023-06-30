@@ -2948,9 +2948,12 @@ ORDER BY forms_inputs_id, forms_columns_id
     /**
      * ダウンロードできるか（ファイルダウンロード処理から呼ばれる）
      *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param Uploads $upload アップロードファイル
+     * @return array
      * @see \App\Http\Controllers\Core\UploadController callCheckMethod()
      */
-    public static function canDownload($request, $upload)
+    public static function canDownload($request, Uploads $upload): array
     {
         // コンテナはページ毎に表示バケツを絞る機能。
         // アップロードファイルは、バケツより上位のページ単位($upload->page_id)でファイルにアクセスできるかを UploadController でチェックしているため、コンテナかどうか判定しなくてOK。
@@ -2962,6 +2965,5 @@ ORDER BY forms_inputs_id, forms_columns_id
         } else {
             return [false, '対象ファイルに対する権限なし'];
         }
-
     }
 }
