@@ -44,7 +44,7 @@ class UploadfileManage extends ManagePluginBase
         $role_ckeck_table["delete"]      = array('admin_site');
         $role_ckeck_table["uploadImage"] = array('admin_site');
         $role_ckeck_table["deleteImage"] = array('admin_site');
-        $role_ckeck_table["userdir"]    = array('admin_site');
+        $role_ckeck_table["userdir"]     = array('admin_site');
         $role_ckeck_table["saveUserdir"] = array('admin_site');
         return $role_ckeck_table;
     }
@@ -197,6 +197,7 @@ class UploadfileManage extends ManagePluginBase
         }
 
         $upload->client_original_name = $filename . '.' . $upload->extension;
+        $upload->temporary_flag       = $request->temporary_flag;
         $upload->save();
 
         return redirect("/manage/uploadfile/edit/" . $uploads_id)->with('info_message', '更新しました。');
