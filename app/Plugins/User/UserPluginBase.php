@@ -128,6 +128,11 @@ class UserPluginBase extends PluginBase
     public $use_getpost = true;
 
     /**
+     * 新着機能を使うか
+     */
+    public $use_whatsnew = false;
+
+    /**
      * コンストラクタ
      */
     public function __construct($page = null, $frame = null, $pages = null, $page_tree = null)
@@ -353,14 +358,14 @@ class UserPluginBase extends PluginBase
             return 'plugins.user.' . $this->frame->plugin_name . '.' . $this->frame->template . '.' . $blade_name;
         }
 
-        // デフォルトテンプレートのファイル存在チェック
-        if (File::exists(resource_path().'/views/plugins/user/' . $this->frame->plugin_name . "/default/" . $blade_name . ".blade.php")) {
-            return 'plugins.user.' . $this->frame->plugin_name . '.default.' . $blade_name;
-        }
-
         // オプションの指定したテンプレートのファイル存在チェック
         if (File::exists(resource_path().'/views/plugins_option/user/' . $this->frame->plugin_name . "/" . $this->frame->template . "/" . $blade_name . ".blade.php")) {
             return 'plugins_option.user.' . $this->frame->plugin_name . '.' . $this->frame->template . '.' . $blade_name;
+        }
+
+        // デフォルトテンプレートのファイル存在チェック
+        if (File::exists(resource_path().'/views/plugins/user/' . $this->frame->plugin_name . "/default/" . $blade_name . ".blade.php")) {
+            return 'plugins.user.' . $this->frame->plugin_name . '.default.' . $blade_name;
         }
 
         // オプションのデフォルトテンプレートのファイル存在チェック

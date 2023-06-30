@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 use App\Models\Common\Buckets;
@@ -28,6 +27,7 @@ use App\Utilities\String\StringUtils;
  * サイト内の新着情報を表示するプラグイン。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 新着情報プラグイン
  * @package Controller
@@ -150,20 +150,14 @@ class WhatsnewsPlugin extends UserPluginBase
      */
     private function getTargetPluginsFrames()
     {
-        // debug:確認したいSQLの前にこれを仕込んで
-        //DB::enableQueryLog();
-
         // Frame データ
         $frames = Frame::select('frames.*', 'pages._lft', 'pages.page_name', 'buckets.bucket_name')
-                        ->whereIn('frames.plugin_name', array('blogs', 'bbses', 'databases'))
+                        ->whereIn('frames.plugin_name', WhatsnewTargetPluginTool::getMemberKeys())
                         ->leftJoin('buckets', 'frames.bucket_id', '=', 'buckets.id')
                         ->leftJoin('pages', 'frames.page_id', '=', 'pages.id')
                         ->where('disable_whatsnews', 0)
                         ->orderBy('pages._lft', 'asc')
                         ->get();
-
-        // sql debug
-        //Log::debug(var_export(DB::getQueryLog(), true));
         return $frames;
     }
 
@@ -214,13 +208,19 @@ class WhatsnewsPlugin extends UserPluginBase
             // クラスファイルの存在チェック。
             $file_path = base_path() . "/app/Plugins/User/" . ucfirst($target_plugin) . "/" . ucfirst($target_plugin) . "Plugin.php";
 
-            // ファイルの存在確認
-            if (!file_exists($file_path)) {
-                return $this->viewError("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
-            }
-
             // 各プラグインのgetWhatsnewArgs() 関数を呼び出し。
             $class_name = "App\Plugins\User\\" . ucfirst($target_plugin) . "\\" . ucfirst($target_plugin) . "Plugin";
+
+            // ない場合はオプションプラグインを探す
+            if (!file_exists($file_path)) {
+                $file_path = base_path() . "/app/PluginsOption/User/" . ucfirst($target_plugin) . "/" . ucfirst($target_plugin) . "Plugin.php";
+                $class_name = "App\PluginsOption\User\\" . ucfirst($target_plugin) . "\\" . ucfirst($target_plugin) . "Plugin";
+
+                // ファイルの存在確認
+                if (!file_exists($file_path)) {
+                    return $this->viewError("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
+                }
+            }
 
             list($union_sqls[$target_plugin], $link_pattern[$target_plugin], $link_base[$target_plugin]) = $class_name::getWhatsnewArgs();
         }
@@ -609,36 +609,36 @@ class WhatsnewsPlugin extends UserPluginBase
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'whatsnew_name'     => ['required'],
-            'target_plugin'     => ['required'],
-            'count'             => ['nullable', 'numeric'],
-            'days'              => ['nullable', 'numeric'],
-            'rss_count'         => ['nullable', 'numeric'],
-            'read_more_use_flag' => ['required', 'numeric'],
-            'read_more_name' => ['required'],
-            'read_more_fetch_count' => ['required', 'numeric'],
-            'read_more_btn_color_type' => ['required'],
-            'read_more_btn_type' => ['required'],
+            'whatsnew_name'                  => ['required'],
+            'target_plugin'                  => ['required'],
+            'count'                          => ['nullable', 'numeric'],
+            'days'                           => ['nullable', 'numeric'],
+            'rss_count'                      => ['nullable', 'numeric'],
+            'read_more_use_flag'             => ['required', 'numeric'],
+            'read_more_name'                 => ['required'],
+            'read_more_fetch_count'          => ['required', 'numeric'],
+            'read_more_btn_color_type'       => ['required'],
+            'read_more_btn_type'             => ['required'],
             'read_more_btn_transparent_flag' => ['required', 'numeric'],
         ]);
         $validator->setAttributeNames([
-            'whatsnew_name'     => '新着情報設定名称',
-            'target_plugin'     => '対象プラグイン',
-            'count'             => '表示件数',
-            'days'              => '表示日数',
-            'rss_count'         => '対象RSS件数',
-            'read_more_use_flag' => 'もっと見るボタンの表示',
-            'read_more_name' => 'ボタン名',
-            'read_more_fetch_count' => 'ボタン押下時の取得件数／回',
-            'read_more_btn_color_type' => 'もっと見るボタン色',
-            'read_more_btn_type' => 'もっと見るボタンの形',
+            'whatsnew_name'                  => '新着情報名',
+            'target_plugin'                  => '対象プラグイン',
+            'count'                          => '表示件数',
+            'days'                           => '表示日数',
+            'rss_count'                      => '対象RSS件数',
+            'read_more_use_flag'             => 'もっと見るボタンの表示',
+            'read_more_name'                 => 'ボタン名',
+            'read_more_fetch_count'          => 'ボタン押下時の取得件数／回',
+            'read_more_btn_color_type'       => 'もっと見るボタン色',
+            'read_more_btn_type'             => 'もっと見るボタンの形',
             'read_more_btn_transparent_flag' => 'ボタン透過の使用',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
         $message = null;
         if ($validator->fails()) {
-            if (empty($whatsnews_frame->whatsnews_id)) {
+            if (empty($request->whatsnews_id)) {
                 $create_flag = true;
                 return $this->createBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
             } else {
@@ -705,7 +705,6 @@ class WhatsnewsPlugin extends UserPluginBase
         $whatsnews->read_more_btn_transparent_flag = $request->read_more_btn_transparent_flag;
         $whatsnews->target_plugins    = implode(',', $request->target_plugin);
         $whatsnews->frame_select      = intval($request->frame_select);
-//Log::debug($request->target_frame_ids);
         $whatsnews->target_frame_ids  = empty($request->target_frame_ids) ? "": implode(',', $request->target_frame_ids);
 
         // データ保存

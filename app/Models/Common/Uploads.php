@@ -4,11 +4,15 @@ namespace App\Models\Common;
 
 use App\Models\Core\Configs;
 use App\Enums\ImageMimetype;
+use App\UserableNohistory;
 use Illuminate\Database\Eloquent\Model;
 use Intervention\Image\Facades\Image;
 
 class Uploads extends Model
 {
+    // 保存時のユーザー関連データの保持（履歴なしUserable）
+    use UserableNohistory;
+
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
