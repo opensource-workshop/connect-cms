@@ -9,7 +9,8 @@ if ($uploads && $uploads->where('columns_id', $form_obj->id)) {
 @endphp
 @if(isset($value_obj)) {{-- ファイルがアップロードされた or もともとアップロードされていて変更がない時 --}}
     <input name="forms_columns_value[{{$form_obj->id}}]" class="form-control" type="hidden" value="{{$value_obj->id}}">
-    <a href="{{url('/')}}/file/{{$value_obj->id}}" target="_blank">{{$value_obj->client_original_name}}</a>
+    {{-- <a href="{{url('/')}}/file/{{$value_obj->id}}" target="_blank">{{$value_obj->client_original_name}}</a> --}}
+    {{$value_obj->client_original_name}}
 @else
     <input name="forms_columns_value[{{$form_obj->id}}]" class="form-control" type="hidden" value="">
 @endif
