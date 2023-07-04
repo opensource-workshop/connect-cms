@@ -129,15 +129,28 @@ trait MigrationNc3ExportTrait
     private $migration_config = array();
 
     /**
-     * エクスポート済みトップページのbox_id保持
+     * @var array エクスポート済みトップページのbox_id保持
      */
     private $exported_common_top_page_box_ids = [
         Nc3Box::container_type_header => [],
         Nc3Box::container_type_left   => [],
-        Nc3Box::container_type_main   => [],
         Nc3Box::container_type_right  => [],
         Nc3Box::container_type_footer => []
     ];
+
+    /**
+     * @var array エクスポート済みルームのトップページのbox_id保持
+     *
+     * [
+     *     room_id => [
+     *         header => [],
+     *         left   => [],
+     *         right  => [],
+     *         footer => []
+     *     ],
+     * ]
+     */
+    private $exported_room_top_page_box_ids = [];
 
     /**
      * エクスポート済みframe_id保持
@@ -5151,59 +5164,153 @@ trait MigrationNc3ExportTrait
      */
     private function nc3Frame(Nc3Page $nc3_page, int $new_page_index, Nc3Page $nc3_top_page)
     {
-        // 指定されたページ内のフレームを取得
-        $nc3_frames_query = Nc3Frame::
-            select(
-                'frames.*',
-                'frames_languages.name as frame_name',
-                'frames_languages.language_id',
-                'boxes.container_type',
-                'blocks.key as block_key',
-                'blocks.public_type',
-                'blocks.publish_start',
-                'blocks.publish_end'
-            )
-            ->join('boxes', 'boxes.id', '=', 'frames.box_id')
-            ->join('frames_languages', function ($join) {
-                $join->on('frames_languages.frame_id', '=', 'frames.id');
-            })
-            ->join('languages', function ($join) {
-                $join->on('languages.id', '=', 'frames_languages.language_id')
-                    ->where('languages.is_active', 1);  // 使用言語（日本語・英語）で有効な言語を取得
-            })
-            ->leftJoin('blocks', 'blocks.id', '=', 'frames.block_id')
-            ->where('boxes.page_id', $nc3_page->id)
-            ->where('frames.is_deleted', 0);
-
-        // 対象外のフレームがあれば加味する。
         $export_ommit_frames = $this->getMigrationConfig('frames', 'export_ommit_frames');
-        if (!empty($export_ommit_frames)) {
-            $nc3_frames_query->whereNotIn('frames.id', $export_ommit_frames);
-        }
-
-        // メニューが対象外なら除外する。
         $export_ommit_menu = $this->getMigrationConfig('menus', 'export_ommit_menu');
-        if ($export_ommit_menu) {
-            $nc3_frames_query->where('frames.plugin_key', '<>', 'menus');
-        }
 
-        $nc3_frames = $nc3_frames_query
-            ->orderBy('boxes.space_id')
-            ->orderBy('boxes.room_id')
-            ->orderBy('boxes.page_id')
-            ->orderBy('frames.box_id')
-            ->orderBy('frames.weight')
-            ->get();
+        if ($nc3_page->id == $nc3_page->page_id_top) {
+            // ルームのトップページ
+            // boxes.page_id = null（共通エリア（サイト全体・パブ共通・ルーム共通））は後処理でとるため、ここで取らない
+
+            // 指定されたページ内のフレームを取得
+            $nc3_frames_query = Nc3Frame::
+                select(
+                    'frames.*',
+                    'frames_languages.name as frame_name',
+                    'frames_languages.language_id',
+                    'boxes.container_type',
+                    'blocks.key as block_key',
+                    'blocks.public_type',
+                    'blocks.publish_start',
+                    'blocks.publish_end'
+                )
+                ->join('boxes', 'boxes.id', '=', 'frames.box_id')
+                ->join('boxes_page_containers', function ($join) {
+                    $join->on('boxes_page_containers.box_id', '=', 'boxes.id')
+                    ->where('boxes_page_containers.is_published', 1);      // 有効なデータ
+                })
+                ->join('frames_languages', function ($join) {
+                    $join->on('frames_languages.frame_id', '=', 'frames.id');
+                })
+                ->join('languages', function ($join) {
+                    $join->on('languages.id', '=', 'frames_languages.language_id')
+                        ->where('languages.is_active', 1);  // 使用言語（日本語・英語）で有効な言語を取得
+                })
+                ->leftJoin('blocks', 'blocks.id', '=', 'frames.block_id')
+                ->where('boxes.page_id', $nc3_page->id)
+                ->where('frames.is_deleted', 0);
+
+            // 対象外のフレームがあれば加味する。
+            if (!empty($export_ommit_frames)) {
+                $nc3_frames_query->whereNotIn('frames.id', $export_ommit_frames);
+            }
+
+            // メニューが対象外なら除外する。
+            if ($export_ommit_menu) {
+                $nc3_frames_query->where('frames.plugin_key', '<>', 'menus');
+            }
+
+            $nc3_frames = $nc3_frames_query
+                ->orderBy('boxes.space_id')
+                ->orderBy('boxes.room_id')
+                ->orderBy('boxes.page_id')
+                ->orderBy('frames.box_id')
+                ->orderBy('frames.weight')
+                ->get();
+
+        } else {
+            // ルームのトップページ以外
+            // boxes.page_id = null（パブ共通・ルーム共通）はここでとるけど、boxes.type 1:サイト全体はいらない。
+            // トップページ・ルームトップで取得したboxes.idがあったら取り除く。
+            //
+            // boxes.type           1:サイト全体, 2:スペース, 3:ルーム, 4:ページ
+            // boxes.container_type 1:Header, 2:Major, 3:Main, 4:Minor, 5:Footer
+
+            $nc3_frames_query = Nc3PageContainer::
+                select(
+                    'frames.*',
+                    'frames_languages.name as frame_name',
+                    'frames_languages.language_id',
+                    'boxes.container_type',
+                    'blocks.key as block_key',
+                    'blocks.public_type',
+                    'blocks.publish_start',
+                    'blocks.publish_end'
+                )
+                ->join('boxes_page_containers', function ($join) {
+                    $join->on('boxes_page_containers.page_container_id', '=', 'page_containers.id')
+                    ->where('boxes_page_containers.is_published', 1);      // 有効なデータ
+                })
+                ->join('boxes', function ($join) {
+                    $join->on('boxes.id', '=', 'boxes_page_containers.box_id')
+                        ->where('boxes.type', '!=', 1);                  // 1:サイト全体 以外
+                })
+                ->join('frames', function ($join) {
+                    $join->on('frames.box_id', '=', 'boxes.id')
+                    ->where('frames.is_deleted', 0);      // 有効なデータ
+                })
+                ->join('frames_languages', function ($join) {
+                    $join->on('frames_languages.frame_id', '=', 'frames.id');
+                })
+                ->join('languages', function ($join) {
+                    $join->on('languages.id', '=', 'frames_languages.language_id')
+                        ->where('languages.is_active', 1);  // 使用言語（日本語・英語）で有効な言語を取得
+                })
+                ->leftJoin('blocks', 'blocks.id', '=', 'frames.block_id')
+                ->where('page_containers.page_id', $nc3_page->id);
+
+            // 対象外のフレームがあれば加味する。
+            if (!empty($export_ommit_frames)) {
+                $nc3_frames_query->whereNotIn('frames.id', $export_ommit_frames);
+            }
+
+            // メニューが対象外なら除外する。
+            if ($export_ommit_menu) {
+                $nc3_frames_query->where('frames.plugin_key', '<>', 'menus');
+            }
+
+            $nc3_frames = $nc3_frames_query
+                ->orderBy('boxes.space_id')
+                ->orderBy('boxes.room_id')
+                ->orderBy('boxes.page_id')
+                ->orderBy('frames.box_id')
+                ->orderBy('frames.weight')
+                ->get();
+
+
+            // ここでトップページ・ルームトップの除外
+            $container_types = [
+                Nc3Box::container_type_header,
+                Nc3Box::container_type_left,
+                Nc3Box::container_type_right,
+                Nc3Box::container_type_footer
+            ];
+            foreach ($container_types as $container_type) {
+                $nc3_boxes_arr = $nc3_frames->where('container_type', $container_type)->pluck('box_id')->toArray();
+
+                // 例えばトップページのヘッダーエリアのbox_idと差がなければ、トップページと同じものが配置されているため、結果から取り除く
+                $nc3_boxes_diff_top = array_diff($nc3_boxes_arr, $this->exported_common_top_page_box_ids[$container_type]);
+                if (empty($nc3_boxes_diff_top)) {
+                    $nc3_frames = $nc3_frames->whereNotIn('box_id', $this->exported_common_top_page_box_ids[$container_type]);
+                }
+
+                // 例えばルームトップのヘッダーエリアのbox_idと差がなければ、ルームトップと同じものが配置されているため、結果から取り除く
+                $exported_room_top_page_box_ids = Arr::get($this->exported_room_top_page_box_ids, "{$nc3_page->room_id}.{$container_type}", []);
+                $nc3_boxes_diff_room = array_diff($nc3_boxes_arr, $exported_room_top_page_box_ids);
+                if (empty($nc3_boxes_diff_room) && $exported_room_top_page_box_ids) {
+                    $nc3_frames = $nc3_frames->whereNotIn('box_id', $exported_room_top_page_box_ids);
+                }
+            }
+        }
 
         // フレームをループ
         $frame_index = 0; // フレームの連番
 
         // [Connect出力] 割り切り実装
-        // ・サイトトップページ　　　：ヘッダ・フッタ・左・右は、（サイト全体・パブ共通・ルーム共通・当ページのみ）であっても、Connectでは結果として、サイト全体設定として扱われる。
-        // ・ルームのトップページ　　：（サイト全体・パブ共通・ルーム共通）ヘッダ・フッタ・左・右を出力
-        //  　　　 ・（ヘッダ・フッタ）サイトトップとbox_idが違ければ出力
-        //   　　　・（左・右）　　　　サイトトップとbox_id（複数）が違ければframe_idが同じでも出力
-        // ・全ページ共通　　　　　　：メインエリア出力,（当ページのみ）ヘッダ・フッタ・左・右を出力.
+        // ・サイトトップページ　　　　：ヘッダ・フッタ・左・右は、（サイト全体・パブ共通・ルーム共通・当ページのみ）であっても、Connectでは結果として、サイト全体設定として扱われる。
+        // ・ルームのトップページ　　　：（サイト全体・パブ共通・ルーム共通）ヘッダ・フッタ・左・右を出力
+        //  　　　 ・（ヘッダ・フッタ）　サイトトップとbox_idが違ければ出力
+        //   　　　・（左・右）　　　　　サイトトップとbox_id（複数）が違ければframe_idが同じでも出力
+        // ・トップ・ルームトップ以外　：ヘッダ・フッタ・左・右でトップ・ルームトップとbox_idが違ければ(当ページのみ)で出力。
         //
         // [NC3]
         // NC3 では、ヘッダ、フッタが下記いずれかで別れてる。
@@ -5239,12 +5346,13 @@ trait MigrationNc3ExportTrait
                 ->join('boxes', 'boxes.id', '=', 'boxes_page_containers.box_id')
                 ->where('page_containers.is_published', 1)      // 見えてるエリア
                 ->where('boxes.page_id', null)                  // page_id = nullは共通エリア（サイト全体・パブ共通・ルーム共通）
+                ->where('boxes.container_type', '!=', Nc3Box::container_type_main)    // メインエリアは使いまわさないため、除外
                 ->get();
 
+            // エリア毎に違いがあれば、そのbox_id取得して加える
             $container_types = [
                 Nc3Box::container_type_header,
                 Nc3Box::container_type_left,
-                Nc3Box::container_type_main,
                 Nc3Box::container_type_right,
                 Nc3Box::container_type_footer
             ];
@@ -5253,7 +5361,7 @@ trait MigrationNc3ExportTrait
                 // 差があれば、元のnc3_boxesをセット
                 $nc3_boxes_arr = $nc3_boxes->where('container_type', $container_type)->pluck('id')->toArray();
                 $nc3_boxes_diff = array_diff($nc3_boxes_arr, $this->exported_common_top_page_box_ids[$container_type]);
-                if (!empty($nc3_boxes_diff)) {
+                if ($nc3_boxes_diff) {
                     $common_box_ids = array_merge_recursive($common_box_ids, $nc3_boxes_arr);
                 }
             }
@@ -5297,12 +5405,19 @@ trait MigrationNc3ExportTrait
                 $nc3_frames->push($nc3_common_frame);
             }
 
-            // サイトトップページのみbox_idを保持
             if ($nc3_page->id == $nc3_top_page->id) {
+                // サイトトップページのbox_idを保持
                 $this->exported_common_top_page_box_ids = [
                     Nc3Box::container_type_header => $nc3_boxes->where('container_type', Nc3Box::container_type_header)->pluck('id')->toArray(),
                     Nc3Box::container_type_left   => $nc3_boxes->where('container_type', Nc3Box::container_type_left)->pluck('id')->toArray(),
-                    Nc3Box::container_type_main   => $nc3_boxes->where('container_type', Nc3Box::container_type_main)->pluck('id')->toArray(),
+                    Nc3Box::container_type_right  => $nc3_boxes->where('container_type', Nc3Box::container_type_right)->pluck('id')->toArray(),
+                    Nc3Box::container_type_footer => $nc3_boxes->where('container_type', Nc3Box::container_type_footer)->pluck('id')->toArray(),
+                ];
+            } else {
+                // ルームのトップページのbox_idを保持
+                $this->exported_room_top_page_box_ids[$nc3_page->room_id] = [
+                    Nc3Box::container_type_header => $nc3_boxes->where('container_type', Nc3Box::container_type_header)->pluck('id')->toArray(),
+                    Nc3Box::container_type_left   => $nc3_boxes->where('container_type', Nc3Box::container_type_left)->pluck('id')->toArray(),
                     Nc3Box::container_type_right  => $nc3_boxes->where('container_type', Nc3Box::container_type_right)->pluck('id')->toArray(),
                     Nc3Box::container_type_footer => $nc3_boxes->where('container_type', Nc3Box::container_type_footer)->pluck('id')->toArray(),
                 ];
@@ -5357,7 +5472,7 @@ trait MigrationNc3ExportTrait
             } elseif ($nc3_frame->plugin_key == 'menus') {
                 $frame_ini .= "frame_design = \"none\"\n";
             } else {
-                $frame_ini .= "frame_design = \"" . $nc3_frame->getFrameDesign($this->getMigrationConfig('frames', 'export_frame_default_design', 'default')) . "\"\n";
+                $frame_ini .= "frame_design = \"" . Nc3Frame::getFrameDesign($nc3_frame->header_type, $this->getMigrationConfig('frames', 'export_frame_default_design', 'default')) . "\"\n";
             }
 
             if ($nc3_frame->plugin_key == 'photo_albums') {
@@ -5535,7 +5650,7 @@ trait MigrationNc3ExportTrait
     /**
      * NC3：NC3フレームの上書き
      */
-    private function overrideNc3Frame(Nc3Frame $nc3_frame): Nc3Frame
+    private function overrideNc3Frame($nc3_frame)
     {
         // @nc3_override/frames/{frame_id}.ini があれば処理
         $nc3_override_frame_path = $this->migration_base . '@nc3_override/frames/' . $nc3_frame->id . '.ini';
@@ -5555,7 +5670,7 @@ trait MigrationNc3ExportTrait
     /**
      * NC3：フレームに紐づくモジュールのメインデータのID 取得
      */
-    private function nc3FrameMainDataId(Nc3Frame $nc3_frame): string
+    private function nc3FrameMainDataId($nc3_frame): string
     {
         // 各プラグインテーブル（例：blogs）のlanguage_idは、データ作成時のlanguage_id。language_id = 1(英語)で表示してるページは日本語ページとかありえるため、
         // language_idで絞り込まない。
@@ -5697,7 +5812,7 @@ trait MigrationNc3ExportTrait
      * NC3：ページ内のフレームに配置されているプラグインのエクスポート。
      * プラグインごとのエクスポート処理に振り分け。
      */
-    private function nc3FrameExport(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
+    private function nc3FrameExport($nc3_frame, int $new_page_index, string $frame_index_str): void
     {
         // Connect-CMS のプラグイン名の取得
         $plugin_name = $this->nc3GetPluginName($nc3_frame->plugin_key);
@@ -5743,7 +5858,7 @@ trait MigrationNc3ExportTrait
     /**
      * NC3：固定記事（お知らせ）のエクスポート
      */
-    private function nc3FrameExportContents(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
+    private function nc3FrameExportContents($nc3_frame, int $new_page_index, string $frame_index_str): void
     {
         // お知らせモジュールのデータの取得
         // （NC3になって「続きを読む」機能なくなった。）
@@ -5784,7 +5899,7 @@ trait MigrationNc3ExportTrait
     /**
      * NC3：汎用データベースのブロック特有部分のエクスポート
      */
-    private function nc3FrameExportDatabases(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
+    private function nc3FrameExportDatabases($nc3_frame, int $new_page_index, string $frame_index_str): void
     {
         // NC3 フレーム設定の取得
         $nc3_multidatabase_frame_setting = Nc3MultidatabaseFrameSetting::where('frame_key', $nc3_frame->key)->first();
@@ -5853,7 +5968,7 @@ trait MigrationNc3ExportTrait
     /**
      * NC3：掲示板のフレーム特有部分のエクスポート
      */
-    private function nc3FrameExportBbses(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
+    private function nc3FrameExportBbses($nc3_frame, int $new_page_index, string $frame_index_str): void
     {
         // NC3 フレーム設定の取得
         $nc3_bbs_frame_setting = Nc3BbsFrameSetting::where('frame_key', $nc3_frame->key)->first();
@@ -5890,7 +6005,7 @@ trait MigrationNc3ExportTrait
     /**
      * NC3：リンクリストのフレーム特有部分のエクスポート
      */
-    private function nc3FrameExportLinklists(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
+    private function nc3FrameExportLinklists($nc3_frame, int $new_page_index, string $frame_index_str): void
     {
         // NC3 フレーム設定の取得
         $nc3_link_frame_setting = Nc3LinkFrameSetting::where('frame_key', $nc3_frame->key)->first();
@@ -5945,7 +6060,7 @@ trait MigrationNc3ExportTrait
     /**
      * NC3：カウンターのフレーム特有部分のエクスポート
      */
-    private function nc3FrameExportCounters(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
+    private function nc3FrameExportCounters($nc3_frame, int $new_page_index, string $frame_index_str): void
     {
         // NC3 フレーム設定の取得
         $access_counter_frame_setting = Nc3AccessCounterFrameSetting::where('frame_key', $nc3_frame->key)->firstOrNew([]);
@@ -5974,7 +6089,7 @@ trait MigrationNc3ExportTrait
     /**
      * NC3：フォトアルバムのフレーム特有部分のエクスポート
      */
-    private function nc3FrameExportPhotoalbums(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
+    private function nc3FrameExportPhotoalbums($nc3_frame, int $new_page_index, string $frame_index_str): void
     {
         // NC3 フレーム設定の取得
         $photo_album_frame_setting = Nc3PhotoAlbumFrameSetting::where('frame_key', $nc3_frame->key)->firstOrNew([]);
@@ -6007,7 +6122,7 @@ trait MigrationNc3ExportTrait
     /**
      * NC3：動画のフレーム特有部分をフォトアルバム設定としてエクスポート
      */
-    private function nc3FrameExportPhotoalbumVideos(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
+    private function nc3FrameExportPhotoalbumVideos($nc3_frame, int $new_page_index, string $frame_index_str): void
     {
         // NC3 フレーム設定の取得
         $video_frame_setting = Nc3VideoFrameSetting::where('frame_key', $nc3_frame->key)->firstOrNew([]);
@@ -6036,7 +6151,7 @@ trait MigrationNc3ExportTrait
     /**
      * NC3：ブログのフレーム特有部分のエクスポート
      */
-    private function nc3FrameExportBlogs(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
+    private function nc3FrameExportBlogs($nc3_frame, int $new_page_index, string $frame_index_str): void
     {
         // NC3 フレーム設定の取得
         $nc3_blog_frame_setting = Nc3BlogFrameSetting::where('frame_key', $nc3_frame->key)->first();
@@ -6056,7 +6171,7 @@ trait MigrationNc3ExportTrait
     /**
      * NC3：FAQのフレーム特有部分のエクスポート
      */
-    private function nc3FrameExportFaqs(Nc3Frame $nc3_frame, int $new_page_index, string $frame_index_str): void
+    private function nc3FrameExportFaqs($nc3_frame, int $new_page_index, string $frame_index_str): void
     {
         $ini_filename = "frame_" . $frame_index_str . '.ini';
 
@@ -6187,7 +6302,7 @@ trait MigrationNc3ExportTrait
     /**
      * NC3：WYSIWYG の記事の保持
      */
-    private function nc3Wysiwyg(?Nc3Frame $nc3_frame, ?string $save_folder, ?string $content_filename, ?string $ini_filename, ?string $content, ?string $nc3_plugin_key = null)
+    private function nc3Wysiwyg($nc3_frame, ?string $save_folder, ?string $content_filename, ?string $ini_filename, ?string $content, ?string $nc3_plugin_key = null)
     {
         // nc3リンク切れチェック
         $nc3_links = MigrationUtils::getContentHrefOrSrc($content);
@@ -6242,7 +6357,7 @@ trait MigrationNc3ExportTrait
     /**
      * NC3：wysiwygのdownload をエクスポート形式に変換
      */
-    private function nc3MigrationCommonDownloadMain(?Nc3Frame $nc3_frame, ?string $save_folder, ?string $ini_filename, ?string $content, $paths, string $section_name): ?string
+    private function nc3MigrationCommonDownloadMain($nc3_frame, ?string $save_folder, ?string $ini_filename, ?string $content, $paths, string $section_name): ?string
     {
         if (empty($paths)) {
             return $content;
@@ -6269,7 +6384,7 @@ trait MigrationNc3ExportTrait
     /**
      * NC3：wysiwygのdownload をエクスポート形式に変換
      */
-    private function nc3MigrationCommonDownloadMainImple(?string $content, array $paths, ?Nc3Frame $nc3_frame): array
+    private function nc3MigrationCommonDownloadMainImple(?string $content, array $paths, $nc3_frame): array
     {
         // 修正したパスの配列
         $export_paths = array();
@@ -6343,7 +6458,7 @@ trait MigrationNc3ExportTrait
     /**
      * NC3のリンク切れチェック
      */
-    private function checkDeadLinkNc3(string $url, string $nc3_plugin_key, ?Nc3Frame $nc3_frame = null): void
+    private function checkDeadLinkNc3(string $url, string $nc3_plugin_key, $nc3_frame = null): void
     {
         // リンクチェックしない場合は返却
         $check_deadlink_nc3 = $this->getMigrationConfig('basic', 'check_deadlink_nc3', '');
