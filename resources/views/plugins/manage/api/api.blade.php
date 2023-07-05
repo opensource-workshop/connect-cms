@@ -100,7 +100,7 @@
                     <div class="container-fluid row">
                     @foreach ($api_inis as $api_name => $api_check)
                         <div class="custom-control custom-checkbox custom-control-inline">
-                            @if (old('apis')[$api_name])
+                            @if (old("apis.{$api_name}"))
                                 <input type="checkbox" name="apis[{{$api_name}}]" value="{{$api_name}}" id="apis_{{$api_name}}" class="custom-control-input" checked="checked">
                             @else
                                 <input type="checkbox" name="apis[{{$api_name}}]" value="{{$api_name}}" id="apis_{{$api_name}}" class="custom-control-input">
