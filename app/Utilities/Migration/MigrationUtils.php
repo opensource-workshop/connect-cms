@@ -33,7 +33,7 @@ class MigrationUtils
      */
     public static function getContentImage($content)
     {
-        $pattern = '/<img.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
+        $pattern = '/<img.*?src\s*=\s*[\"\'](.*?)[\"\'].*?>/i';
         return self::getContentPregMatchAll($content, $pattern, 1);
     }
 
@@ -42,7 +42,7 @@ class MigrationUtils
      */
     private static function getContentImageTag($content)
     {
-        $pattern = '/<img.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
+        $pattern = '/<img.*?src\s*=\s*[\"\'](.*?)[\"\'].*?>/i';
 
         if (preg_match_all($pattern, $content, $images)) {
             if (is_array($images) && isset($images[0])) {
@@ -275,6 +275,37 @@ class MigrationUtils
         foreach ($imgs[0] as $img) {
             // ・imgタグから 目的のclass = "nc-title-icon" を取得
             $pattern = '/<img.*?(class\s*=\s*[\"\']nc-title-icon[\"\']).*?>/i';
+            preg_match_all($pattern, $img, $matches);
+            foreach ($matches[0] as $matche) {
+                // ・該当imgを消す
+                $content = str_replace($matche, '', $content);
+            }
+        }
+
+        return $content;
+    }
+
+    /**
+     * HTML からNC2絵文字を削除
+     *
+     * ・まずimgタグを取得
+     * ・imgタグから 目的のsrc = /images/comp/textarea/titleicon/ を取得
+     * ・該当imgを消す
+     *
+     * @link https://regexper.com/#%2F%3Cimg.*%3Fsrc%5Cs*%3D%5Cs*%5B%5C%22%5C'%5D%28.*%3F%5C%2Fimages%5C%2Fcomp%5C%2Ftextarea%5C%2Ftitleicon%5C%2F.*%3F%29%5B%5C%22%5C'%5D.*%3F%3E%2F
+     * @link https://www.php.net/manual/ja/reference.pcre.pattern.modifiers.php
+     */
+    public static function deleteNc2Emoji($content)
+    {
+        // ・まずimgタグを取得
+        $imgs = self::getContentImageTag($content);
+        if (!$imgs) {
+            return $content;
+        }
+
+        foreach ($imgs[0] as $img) {
+            // ・imgタグから 目的のsrc = /images/comp/textarea/titleicon/ を取得
+            $pattern = '/<img.*?src\s*=\s*[\"\'](.*?\/images\/comp\/textarea\/titleicon\/.*?)[\"\'].*?>/i';
             preg_match_all($pattern, $img, $matches);
             foreach ($matches[0] as $matche) {
                 // ・該当imgを消す

@@ -13275,6 +13275,9 @@ trait MigrationTrait
         // Google Analytics タグ部分を削除
         $content = MigrationUtils::deleteGATag($content);
 
+        // NC2絵文字を削除
+        $content = MigrationUtils::deleteNc2Emoji($content);
+
         // HTML content の保存
         if ($save_folder) {
             $content = $this->exportStrReplace($content, 'contents');
