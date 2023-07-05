@@ -12526,7 +12526,7 @@ trait MigrationTrait
                     $frame_ini .= "frame_title = \"" . $nc2_block->block_name . "\"\n";
                 } else {
                     $frame_ini .= "frame_title = \"\"\n";
-                }                
+                }
             } else {
                 $frame_ini .= "frame_title = \"" . $nc2_block->block_name . "\"\n";
             }
