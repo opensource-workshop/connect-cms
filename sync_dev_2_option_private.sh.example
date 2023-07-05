@@ -14,7 +14,7 @@ src_root_dir='/path_to_dev_connect-cms/'
 dist_root_dir='/path_to_option_private_dir/'
 # プラグイン名
 option_plugin="pluginname"
-option_plugin_controller_dir="${option_plugin^}"
+option_plugin_controller_dir="${option_plugin}"
 option_plugin_resources_dir="${option_plugin}"
 option_plugin_model_dir=$option_plugin_controller_dir
 option_plugin_command_dir=$option_plugin_controller_dir
@@ -28,9 +28,9 @@ rsync -arvz --delete "${src_root_dir}resources/views/plugins_option/user/${optio
 # バッチ
 rsync -arvz --delete "${src_root_dir}app/Console/CommandsOption/${option_plugin_command_dir}" "${dist_root_dir}${option_plugin}/app/Console/CommandsOption/"
 # マイグレーション
-rsync -arvz --delete --exclude '2020_06_03_163936_optionsamples_table.php' --exclude '_readme.txt' "${src_root_dir}database/migrations_option" "${dist_root_dir}${option_plugin}/database/"
+rsync -arvz --delete --exclude '_readme.txt' "${src_root_dir}database/migrations_option" "${dist_root_dir}${option_plugin}/database/"
 # シーダー
-rsync -arvz --delete "${src_root_dir}database/seeders/Options/${option_plugin^}" "${dist_root_dir}${option_plugin}/database/seeders/Options/"
+rsync -arvz --delete "${src_root_dir}database/seeders/Options/${option_plugin}" "${dist_root_dir}${option_plugin}/database/seeders/Options/"
 # Enum
 rsync -arvz --delete "${src_root_dir}app/EnumsOption" "${dist_root_dir}${option_plugin}/app/"
 # 画像
