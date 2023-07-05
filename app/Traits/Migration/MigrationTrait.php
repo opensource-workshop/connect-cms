@@ -12494,6 +12494,9 @@ trait MigrationTrait
             $nc2_blocks[] = $nc2_sort_block;
         }
 
+        // メニューのフレームタイトルを消さずに残す
+        $export_frame_title = $this->getMigrationConfig('menus', 'export_frame_title');
+
         // ページ内のブロック
         foreach ($nc2_blocks as $nc2_block) {
             $this->putMonitor(1, "Block", "block_id = " . $nc2_block->block_id);
@@ -12518,7 +12521,12 @@ trait MigrationTrait
 
             // フレームタイトル＆メニューの特別処理
             if ($nc2_block->getModuleName() == 'menu') {
-                $frame_ini .= "frame_title = \"\"\n";
+                if ($export_frame_title) {
+                    // メニューのフレームタイトルを残す
+                    $frame_ini .= "frame_title = \"" . $nc2_block->block_name . "\"\n";
+                } else {
+                    $frame_ini .= "frame_title = \"\"\n";
+                }
             } else {
                 $frame_ini .= "frame_title = \"" . $nc2_block->block_name . "\"\n";
             }
