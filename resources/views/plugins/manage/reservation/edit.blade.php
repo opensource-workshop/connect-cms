@@ -150,7 +150,7 @@ use App\Models\User\Reservations\ReservationsFacility;
                         <div class="col-md-4">
                             <label>利用開始時間</label>
                             <div class="input-group date" id="start_time" data-target-input="nearest">
-                                <input type="text" name="start_time" value="{{ old('start_time', substr($facility->start_time, 0, -3)) }}" class="form-control datetimepicker-input @if ($errors->has('start_time')) border-danger @endif" data-target="#start_time">
+                                <input type="text" name="start_time" value="{{ old('start_time', substr((string)$facility->start_time, 0, -3)) }}" class="form-control datetimepicker-input @if ($errors->has('start_time')) border-danger @endif" data-target="#start_time">
                                 <div class="input-group-append" data-target="#start_time" data-toggle="datetimepicker">
                                     <div class="input-group-text"><i class="fas fa-clock"></i></div>
                                 </div>
@@ -161,7 +161,7 @@ use App\Models\User\Reservations\ReservationsFacility;
                         <div class="col-md-4">
                             <label>利用終了時間</label>
                             <div class="input-group date" id="end_time" data-target-input="nearest">
-                                <input type="text" name="end_time" value="{{ old('end_time', substr($facility->end_time, 0, -3)) }}" class="form-control datetimepicker-input @if ($errors->has('end_time')) border-danger @endif" data-target="#end_time">
+                                <input type="text" name="end_time" value="{{ old('end_time', substr((string)$facility->end_time, 0, -3)) }}" class="form-control datetimepicker-input @if ($errors->has('end_time')) border-danger @endif" data-target="#end_time">
                                 <div class="input-group-append" data-target="#end_time" data-toggle="datetimepicker">
                                     <div class="input-group-text"><i class="fas fa-clock"></i></div>
                                 </div>

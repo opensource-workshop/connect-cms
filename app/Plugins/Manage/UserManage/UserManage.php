@@ -1671,7 +1671,8 @@ class UserManage extends ManagePluginBase
         // 読み込み
         $fp = fopen($csv_full_path, 'r');
         // CSVファイル：Shift-JIS -> UTF-8変換時のみ
-        if ($character_code == CsvCharacterCode::sjis_win) {
+        // if ($character_code == CsvCharacterCode::sjis_win) {
+        if (CsvCharacterCode::isShiftJis($character_code)) {
             // ストリームフィルタ内で、Shift-JIS -> UTF-8変換
             $fp = CsvUtils::setStreamFilterRegisterSjisToUtf8($fp);
         }
@@ -1867,7 +1868,7 @@ class UserManage extends ManagePluginBase
             // --- 権限(コンテンツ権限 & 管理権限)
             $view_user_roles_col_no = array_search('view_user_roles', $import_column_col_no);
             // 配列に変換する。nullの場合[0 => ""]になる
-            $csv_view_user_roles = explode(UsersTool::CHECKBOX_SEPARATOR, $csv_columns[$view_user_roles_col_no]);
+            $csv_view_user_roles = explode(UsersTool::CHECKBOX_SEPARATOR, (string)$csv_columns[$view_user_roles_col_no]);
             // 配列値の入力値をトリム (preg_replace(/u)で置換. /u = UTF-8 として処理)
             $csv_view_user_roles = StringUtils::trimInput($csv_view_user_roles);
 

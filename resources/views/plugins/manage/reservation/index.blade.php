@@ -61,7 +61,7 @@
                             @endif
                         </td>
                         <td class="d-block d-sm-table-cell"><span class="d-sm-none">施設管理者：</span>{{ $facility->facility_manager_name }}</td>
-                        <td class="d-block d-sm-table-cell"><span class="d-sm-none">補足：</span>{{ str_limit(strip_tags($facility->supplement),36,'...') }}</td>
+                        <td class="d-block d-sm-table-cell"><span class="d-sm-none">補足：</span>{{ str_limit(strip_tags((string)$facility->supplement),36,'...') }}</td>
                         <td class="d-block d-sm-table-cell"><span class="d-sm-none">表示順：</span>{{$facility->display_sequence}}</td>
                         <td class="d-block d-sm-table-cell"><span class="d-sm-none">重複予約：</span>{{ PermissionType::getDescription($facility->is_allow_duplicate) }}</td>
                         <td class="d-block d-sm-table-cell"><span class="d-sm-none">権限で予約制限：</span>{{ ReservationLimitedByRole::getDescription($facility->is_limited_by_role) }}</td>
