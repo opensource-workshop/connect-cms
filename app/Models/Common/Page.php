@@ -246,10 +246,11 @@ class Page extends Model
      */
     public function getPermanentlinkClassname()
     {
-        if (empty(trim($this->permanent_link, '/'))) {
+        $permanent_link = $this->permanent_link ?? '';
+        if (empty(trim($permanent_link, '/'))) {
             return "home";
         }
-        return str_replace('/', '-', trim($this->permanent_link, '/'));
+        return str_replace('/', '-', trim($permanent_link, '/'));
     }
 
     /**
@@ -473,7 +474,7 @@ class Page extends Model
      */
     public function getSimpleLayout()
     {
-        return str_replace('|', '', $this->layout);
+        return str_replace('|', '', (string)$this->layout);
     }
 
     /**

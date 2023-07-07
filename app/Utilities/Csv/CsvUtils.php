@@ -46,11 +46,11 @@ class CsvUtils
     public static function getCharacterCodeAuto($csv_full_path)
     {
         // 全体ではなく0～1024までを取得
-        $contents = file_get_contents($csv_full_path, null, null, 0, 1024);
+        $contents = file_get_contents($csv_full_path, false, null, 0, 1024);
 
         // 文字エンコーディングをsjis-win, UTF-8の順番で自動検出. 対象文字コード外の場合、false戻る
         $character_code = mb_detect_encoding($contents, CsvCharacterCode::sjis_win . ", " . CsvCharacterCode::utf_8);
-        // \Log::debug(var_export($character_code, true));
+        // \Log::error(var_export($character_code, true));
 
         return $character_code;
     }

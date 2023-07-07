@@ -12,6 +12,7 @@ final class CsvCharacterCode extends EnumsBase
     // 定数メンバ
     const auto = 'auto';
     const sjis_win = 'SJIS-win';
+    const cp932 = 'CP932';
     const utf_8 = 'UTF-8';
 
     // key/valueの連想配列
@@ -39,5 +40,16 @@ final class CsvCharacterCode extends EnumsBase
     {
         $enum = self::getSelectMembers();
         return $enum[$key];
+    }
+
+    /**
+     * Shift-JISか
+     */
+    public static function isShiftJis($character_code): bool
+    {
+        if ($character_code == self::sjis_win || $character_code == self::cp932) {
+            return true;
+        }
+        return false;
     }
 }

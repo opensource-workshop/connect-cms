@@ -119,6 +119,7 @@ class ReservationsPluginTest extends DuskTestCase
 
             $browser->visit('plugin/reservations/editBooking/' . $this->test_frame->page_id . '/' . $this->test_frame->id .
                             '?facility_id=1&target_date=' . $monday_1->format('Y-m-d') . '#frame-' . $this->test_frame->id)
+                    ->pause(500)
                     ->type('start_datetime', '10:00')
                     ->type('end_datetime', '12:00')
                     ->type('columns_value[1]', 'テストの予約①')

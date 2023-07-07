@@ -93,7 +93,7 @@ class Configs extends Model
     /**
      * 設定の任意クラス(値)を抽出（カンマ設定時はランダムで１つ設定）
      */
-    public static function getConfigsRandValue($configs, $key, $default = null)
+    public static function getConfigsRandValue($configs, $key, $default = '')
     {
         $value = self::getConfigsValue($configs, $key, $default);
 
