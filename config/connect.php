@@ -170,4 +170,7 @@ return [
     'DATABASES_FORCE_SHOW_COLUMN_ON_DETAIL' => env('DATABASES_FORCE_SHOW_COLUMN_ON_DETAIL', false),
     // 絞り込み項目の登録済み件数を表示する(beta)
     'DATABASES_SHOW_SEARCH_COLUMN_COUNT' => env('DATABASES_SHOW_SEARCH_COLUMN_COUNT', false),
+
+    // public配下のディレクトリを指定してファイル管理. null時は機能自体使わない(beta)
+    'MANAGE_USERDIR_PUBLIC_TARGET' => env('MANAGE_USERDIR_PUBLIC_TARGET', null),
 ];

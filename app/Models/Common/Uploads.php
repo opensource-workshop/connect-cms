@@ -5,6 +5,7 @@ namespace App\Models\Common;
 use App\Models\Core\Configs;
 use App\Enums\ImageMimetype;
 use App\UserableNohistory;
+use App\Utilities\File\FileUtils;
 use Illuminate\Database\Eloquent\Model;
 use Intervention\Image\Facades\Image;
 
@@ -23,12 +24,7 @@ class Uploads extends Model
      */
     public function getFormatSize($r = 0)
     {
-        $size = $this->size;
-        $units = array("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB");
-        for ($i = 0; $size >= 1024 && $i < 4; $i++) {
-            $size /= 1024;
-        }
-        return round($size, $r).$units[$i];
+        return FileUtils::getFormatSize($this->size, $r);
     }
 
     /**
@@ -123,7 +119,7 @@ class Uploads extends Model
      */
     public function getIsImageAttribute() : bool
     {
-        return in_array($this->mimetype, ImageMimetype::getMemberKeys()) ? true : false;
+        return FileUtils::isImage($this->mimetype);
     }
 
     /**

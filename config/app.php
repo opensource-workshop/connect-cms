@@ -327,6 +327,7 @@ $app_array = [
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
         'StringUtils' => \App\Utilities\String\StringUtils::class,
+        'FileUtils' => \App\Utilities\File\FileUtils::class,
 
         // Models
         'Plugins' => \App\Models\Core\Plugins::class,
