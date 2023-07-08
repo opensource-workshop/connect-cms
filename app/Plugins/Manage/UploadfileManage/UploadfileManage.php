@@ -2,12 +2,9 @@
 
 namespace App\Plugins\Manage\UploadfileManage;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-
-use File;
 
 use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
@@ -15,13 +12,16 @@ use App\Models\Core\Configs;
 use App\Plugins\Manage\ManagePluginBase;
 use App\Traits\ConnectCommonTrait;
 
+use Symfony\Component\Finder\Exception\DirectoryNotFoundException;
+
 /**
  * アップロードファイル管理クラス
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category アップロードファイル管理
- * @package Contoroller
+ * @package Controller
  * @plugin_title アップロードファイル管理
  * @plugin_desc アップロードファイルに関する機能が集まった管理機能です。
  */
@@ -42,10 +42,10 @@ class UploadfileManage extends ManagePluginBase
         $role_ckeck_table["edit"]        = array('admin_site');
         $role_ckeck_table["save"]        = array('admin_site');
         $role_ckeck_table["delete"]      = array('admin_site');
-        $role_ckeck_table["uploadImage"] = array('admin_site');
-        $role_ckeck_table["deleteImage"] = array('admin_site');
         $role_ckeck_table["userdir"]     = array('admin_site');
         $role_ckeck_table["saveUserdir"] = array('admin_site');
+        $role_ckeck_table["userdirPublic"] = array('admin_site');
+        $role_ckeck_table["deleteUserdirPublic"] = array('admin_site');
         return $role_ckeck_table;
     }
 
@@ -270,5 +270,73 @@ class UploadfileManage extends ManagePluginBase
         }
 
         return redirect("/manage/uploadfile/userdir")->with('info_message', '更新しました。');
+    }
+
+    /**
+     * ユーザパブリックファイルの一覧画面
+     */
+    public function userdirPublic($request)
+    {
+        $manage_userdir_public_target = config('connect.MANAGE_USERDIR_PUBLIC_TARGET');
+        if (empty($manage_userdir_public_target)) {
+            session()->flash('flash_error_message', '設定値が空です');
+
+            // 空の場合はファイル表示しない。
+            return view('plugins.manage.uploadfile.userdir_public', [
+                "function"    => __FUNCTION__,
+                "plugin_name" => "uploadfile",
+                "manage_userdir_public_target" => $manage_userdir_public_target,
+                "files" => [],
+            ]);
+        }
+
+        $path = public_path($manage_userdir_public_target);
+        $files = [];
+        try {
+            $files = File::allFiles($path);
+        } catch (DirectoryNotFoundException $e) {
+            // 指定ディレクトリなし
+            session()->flash('flash_error_message', '指定されたディレクトリがありません。' . $path);
+        }
+
+        return view('plugins.manage.uploadfile.userdir_public', [
+            "function"    => __FUNCTION__,
+            "plugin_name" => "uploadfile",
+            "manage_userdir_public_target" => $manage_userdir_public_target,
+            "files" => $files,
+        ]);
+    }
+
+    /**
+     * ユーザパブリックファイルの削除削除
+     */
+    public function deleteUserdirPublic($request)
+    {
+        // 入力内容が存在するかのチェック
+        if (!$request->has('delete_files') || !is_array($request->delete_files)) {
+            return $this->userdirPublic($request);
+        }
+
+        $manage_userdir_public_target = config('connect.MANAGE_USERDIR_PUBLIC_TARGET');
+        if (empty($manage_userdir_public_target)) {
+            return $this->userdirPublic($request);
+        }
+
+        // public/uploads の下のディレクトリ参照。リクエストされて、ここにあるもののみ、削除対象
+        // リクエストの不正防止
+        $path = public_path($manage_userdir_public_target);
+        $files = File::allFiles($path);
+        $files_all = [];
+        foreach ($files as $file) {
+            $files_all[] = $file->getPathname();
+        }
+
+        foreach ($request->delete_files as $delete_file) {
+            if (in_array($delete_file, $files_all)) {
+                File::delete($delete_file);
+            }
+        }
+
+        return redirect("/manage/uploadfile/userdirPublic")->with('flash_message', '削除しました。');
     }
 }
