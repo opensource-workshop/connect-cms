@@ -278,6 +278,7 @@ class UploadfileManage extends ManagePluginBase
     public function userdirPublic($request)
     {
         $manage_userdir_public_target = config('connect.MANAGE_USERDIR_PUBLIC_TARGET');
+        $manage_userdir_public_target = basename($manage_userdir_public_target);
         if (empty($manage_userdir_public_target)) {
             session()->flash('flash_error_message', '設定値が空です');
 
@@ -318,6 +319,7 @@ class UploadfileManage extends ManagePluginBase
         }
 
         $manage_userdir_public_target = config('connect.MANAGE_USERDIR_PUBLIC_TARGET');
+        $manage_userdir_public_target = basename($manage_userdir_public_target);
         if (empty($manage_userdir_public_target)) {
             return $this->userdirPublic($request);
         }
