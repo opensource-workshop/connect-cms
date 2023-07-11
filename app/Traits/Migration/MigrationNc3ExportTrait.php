@@ -4882,6 +4882,9 @@ trait MigrationNc3ExportTrait
                     if (!empty($slides_tsv)) {
                         $slides_tsv .= "\n";
                     }
+
+                    $nc3_photoalbum_photo->description = str_replace(array("\r\n", "\r", "\n"), "", $nc3_photoalbum_photo->description);
+
                     $slides_tsv .= "\t";                                        // image_path
                     $slides_tsv .= $photo_upload->id . "\t";                    // uploads_id
                     $slides_tsv .= "\t";                                        // link_url
