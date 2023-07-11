@@ -3623,7 +3623,7 @@ trait MigrationNc3ExportTrait
                 $tsv .= $cabinet_file->is_folder . "\t";            // [9] is_folder
                 $tsv .= "\t";                                       // [10] 表示順（インポートで使ってない）
                 $tsv .= $cabinet->room_id . "\t";
-                $tsv .= str_replace("\t", '', $cabinet_file->description) . "\t";
+                $tsv .= str_replace(array("\r\n", "\r", "\n", "\t"), '', $cabinet_file->description) . "\t";
                 $tsv .= $this->getCCDatetime($cabinet_file->created)                                  . "\t";   // [13]
                 $tsv .= Nc3User::getNc3HandleFromNc3UserId($nc3_users, $cabinet_file->created_user)   . "\t";   // [14]
                 $tsv .= Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $cabinet_file->created_user)  . "\t";   // [15]
