@@ -3230,7 +3230,7 @@ trait MigrationNc3ExportTrait
                 $registration_ini .= "option_value               = \"" . $option_value                    . "\"\n"; // |区切り
                 $registration_ini .= "required                   = "   . $registration_question->is_require   . "\n";
                 $registration_ini .= "frame_col                  = "   . 0                                . "\n";
-                $registration_ini .= "caption                    = \"" . $registration_question->description  . "\"\n";
+                $registration_ini .= "caption                    = '" . $registration_question->description  . "'\n";
                 $registration_ini .= "caption_color              = \"" . "text-dark"                      . "\"\n";
                 $registration_ini .= "minutes_increments         = "   . 10                               . "\n";
                 $registration_ini .= "minutes_increments_from    = "   . 10                               . "\n";
