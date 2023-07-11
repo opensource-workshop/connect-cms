@@ -4789,6 +4789,9 @@ trait MigrationNc3ExportTrait
                         $this->putError(3, "Image file not exists: " . $nc3_uploads_path . $photo_upload->path . $photo_upload->id . '/' . $photo_upload->real_file_name);
                     }
 
+                    $nc3_photoalbum_photo->title = str_replace(array("\r\n", "\r", "\n"), "", $nc3_photoalbum_photo->title);
+                    $nc3_photoalbum_photo->description = str_replace(array("\r\n", "\r", "\n"), "", $nc3_photoalbum_photo->description);
+
                     $tsv_record['photo_id']          = $nc3_photoalbum_photo->id;
                     $tsv_record['upload_id']         = $photo_upload->id;
                     $tsv_record['video_upload_id']   = '';
