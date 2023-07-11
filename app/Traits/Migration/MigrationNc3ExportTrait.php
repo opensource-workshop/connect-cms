@@ -574,8 +574,7 @@ trait MigrationNc3ExportTrait
             $older_than_nc3_2_0 = $this->getMigrationConfig('basic', 'older_than_nc3_2_0');
             if ($older_than_nc3_2_0) {
                 // nc3.2.0より古い場合は、sort_key が無いため parent_id, lft でソートすると、ページの並び順を再現できた。
-                $nc3_top_page_query->orderBy('pages.parent_id')
-                                    ->orderBy('pages.lft');
+                $nc3_top_page_query->orderBy('pages.lft');
             } else {
                 // 通常
                 $nc3_top_page_query->orderBy('pages.sort_key');
@@ -618,10 +617,9 @@ trait MigrationNc3ExportTrait
                 // @see https://github.com/NetCommons3/Pages/commit/77840e492352a21f7300ab1fa877f47f94f0bd1c
                 // @see https://github.com/NetCommons3/Rooms/commit/8edfd1ea18f4b45f5aee7f961d0480048e2d6fc9
                 //
-                // ※ 若い親IDのページを先に移行しないと、MigrationMappingに親ページID達がなくマッチングできず、移行後にページ階層を再現できないため、parent_idのソート必要。
+                // ※ 若い親IDのページを先に移行しないと、MigrationMappingに親ページID達がなくマッチングできず、移行後にページ階層を再現できないため、若い親IDを上に並べる。
                 // nc3.2.0より新しければ、sort_keyで対応され、親ページID達が先に登録されるため、parent_idのソートは不要と思う。
-                $nc3_pages_query->orderBy('pages.parent_id')
-                                ->orderBy('pages.lft');
+                $nc3_pages_query->orderBy('pages.lft');
             } else {
                 // 通常
                 $nc3_pages_query->orderBy('pages.sort_key')
@@ -3232,7 +3230,7 @@ trait MigrationNc3ExportTrait
                 $registration_ini .= "option_value               = \"" . $option_value                    . "\"\n"; // |区切り
                 $registration_ini .= "required                   = "   . $registration_question->is_require   . "\n";
                 $registration_ini .= "frame_col                  = "   . 0                                . "\n";
-                $registration_ini .= "caption                    = \"" . $registration_question->description  . "\"\n";
+                $registration_ini .= "caption                    = '" . $registration_question->description  . "'\n";
                 $registration_ini .= "caption_color              = \"" . "text-dark"                      . "\"\n";
                 $registration_ini .= "minutes_increments         = "   . 10                               . "\n";
                 $registration_ini .= "minutes_increments_from    = "   . 10                               . "\n";
@@ -3625,7 +3623,7 @@ trait MigrationNc3ExportTrait
                 $tsv .= $cabinet_file->is_folder . "\t";            // [9] is_folder
                 $tsv .= "\t";                                       // [10] 表示順（インポートで使ってない）
                 $tsv .= $cabinet->room_id . "\t";
-                $tsv .= str_replace("\t", '', $cabinet_file->description) . "\t";
+                $tsv .= str_replace(array("\r\n", "\r", "\n", "\t"), '', $cabinet_file->description) . "\t";
                 $tsv .= $this->getCCDatetime($cabinet_file->created)                                  . "\t";   // [13]
                 $tsv .= Nc3User::getNc3HandleFromNc3UserId($nc3_users, $cabinet_file->created_user)   . "\t";   // [14]
                 $tsv .= Nc3User::getNc3LoginIdFromNc3UserId($nc3_users, $cabinet_file->created_user)  . "\t";   // [15]
@@ -4791,6 +4789,9 @@ trait MigrationNc3ExportTrait
                         $this->putError(3, "Image file not exists: " . $nc3_uploads_path . $photo_upload->path . $photo_upload->id . '/' . $photo_upload->real_file_name);
                     }
 
+                    $nc3_photoalbum_photo->title = str_replace(array("\r\n", "\r", "\n"), "", $nc3_photoalbum_photo->title);
+                    $nc3_photoalbum_photo->description = str_replace(array("\r\n", "\r", "\n"), "", $nc3_photoalbum_photo->description);
+
                     $tsv_record['photo_id']          = $nc3_photoalbum_photo->id;
                     $tsv_record['upload_id']         = $photo_upload->id;
                     $tsv_record['video_upload_id']   = '';
@@ -4881,6 +4882,9 @@ trait MigrationNc3ExportTrait
                     if (!empty($slides_tsv)) {
                         $slides_tsv .= "\n";
                     }
+
+                    $nc3_photoalbum_photo->description = str_replace(array("\r\n", "\r", "\n"), "", $nc3_photoalbum_photo->description);
+
                     $slides_tsv .= "\t";                                        // image_path
                     $slides_tsv .= $photo_upload->id . "\t";                    // uploads_id
                     $slides_tsv .= "\t";                                        // link_url
