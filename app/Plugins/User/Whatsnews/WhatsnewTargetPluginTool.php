@@ -29,20 +29,11 @@ class WhatsnewTargetPluginTool
         $plugins = Plugins::where('display_flag', 1)->orderBy('display_sequence')->get();
 
         foreach ($plugins as $plugin) {
-            // 通常のクラスファイルの存在チェック。
-            $file_path = base_path() . "/app/Plugins/User/" . ucfirst($plugin->plugin_name) . "/" . ucfirst($plugin->plugin_name) . "Plugin.php";
-            // 各プラグインのgetWhatsnewArgs() 関数を呼び出し。
-            $class_name = "App\Plugins\User\\" . ucfirst($plugin->plugin_name) . "\\" . ucfirst($plugin->plugin_name) . "Plugin";
-
-            // ない場合はオプションプラグインを探す
+            // クラスファイルの存在チェック。
+            list($class_name, $file_path) = Plugins::getPluginClassNameAndFilePath($plugin->plugin_name);
+            // ファイルの存在確認
             if (!file_exists($file_path)) {
-                $file_path = base_path() . "/app/PluginsOption/User/" . ucfirst($plugin->plugin_name) . "/" . ucfirst($plugin->plugin_name) . "Plugin.php";
-                $class_name = "App\PluginsOption\User\\" . ucfirst($plugin->plugin_name) . "\\" . ucfirst($plugin->plugin_name) . "Plugin";
-
-                // ファイルの存在確認
-                if (!file_exists($file_path)) {
-                    continue;
-                }
+                continue;
             }
 
             $class = new $class_name;
