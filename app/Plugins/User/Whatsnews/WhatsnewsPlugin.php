@@ -13,6 +13,7 @@ use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
+use App\Models\Core\Plugins;
 use App\Models\User\Whatsnews\Whatsnews;
 
 use App\Enums\WhatsnewFrameConfig;
@@ -206,20 +207,10 @@ class WhatsnewsPlugin extends UserPluginBase
         $link_base = array();
         foreach ($target_plugins as $target_plugin) {
             // クラスファイルの存在チェック。
-            $file_path = base_path() . "/app/Plugins/User/" . ucfirst($target_plugin) . "/" . ucfirst($target_plugin) . "Plugin.php";
-
-            // 各プラグインのgetWhatsnewArgs() 関数を呼び出し。
-            $class_name = "App\Plugins\User\\" . ucfirst($target_plugin) . "\\" . ucfirst($target_plugin) . "Plugin";
-
-            // ない場合はオプションプラグインを探す
+            list($class_name, $file_path) = Plugins::getPluginClassNameAndFilePath($target_plugin);
+            // ファイルの存在確認
             if (!file_exists($file_path)) {
-                $file_path = base_path() . "/app/PluginsOption/User/" . ucfirst($target_plugin) . "/" . ucfirst($target_plugin) . "Plugin.php";
-                $class_name = "App\PluginsOption\User\\" . ucfirst($target_plugin) . "\\" . ucfirst($target_plugin) . "Plugin";
-
-                // ファイルの存在確認
-                if (!file_exists($file_path)) {
-                    return $this->viewError("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
-                }
+                return $this->viewError("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
             }
 
             list($union_sqls[$target_plugin], $link_pattern[$target_plugin], $link_base[$target_plugin]) = $class_name::getWhatsnewArgs();
@@ -442,16 +433,13 @@ class WhatsnewsPlugin extends UserPluginBase
          */
         foreach ($target_plugins as $target_plugin) {
             // クラスファイルの存在チェック。
-            $file_path = base_path() . "/app/Plugins/User/" . ucfirst($target_plugin) . "/" . ucfirst($target_plugin) . "Plugin.php";
-
+            list($class_name, $file_path) = Plugins::getPluginClassNameAndFilePath($target_plugin);
             // ファイルの存在確認
             if (!file_exists($file_path)) {
                 return $this->viewError("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
             }
 
             // 各プラグインのgetWhatsnewArgs() 関数を呼び出し。
-            $class_name = "App\Plugins\User\\" . ucfirst($target_plugin) . "\\" . ucfirst($target_plugin) . "Plugin";
-
             list($union_sqls[$target_plugin], $link_pattern[$target_plugin], $link_base[$target_plugin]) = $class_name::getWhatsnewArgs();
         }
 
