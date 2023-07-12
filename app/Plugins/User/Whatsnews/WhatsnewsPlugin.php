@@ -456,9 +456,11 @@ class WhatsnewsPlugin extends UserPluginBase
         // データ抽出
         $whatsnewses = $whatsnews_query->get();
 
-        // bugfix: 新着タイトルにウィジウィグが入る事がある（databaseのウィジウィグ型をタイトルに指定）ため、タグ除去する。
         $whatsnewses->transform(function ($whatsnew, $key) {
+            // bugfix: 新着タイトルにウィジウィグが入る事がある（databaseのウィジウィグ型をタイトルに指定）ため、タグ除去する。
             $whatsnew->post_title = strip_tags($whatsnew->post_title);
+            // jsではnullをセットすると'null'として扱われるため、空文字に変換
+            $whatsnew->classname = $whatsnew->classname ?? '';
             return $whatsnew;
         });
 
