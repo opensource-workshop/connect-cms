@@ -6,15 +6,15 @@
  * @category スライドショー・プラグイン
 --}}
 <tr>
-    <td class="d-none d-xl-display d-xl-table-cell"></td>
-    <td class="d-none d-xl-display d-xl-table-cell"></td>
+    <td class="d-none d-lg-display d-lg-table-cell"></td>
+    <td class="d-none d-lg-display d-lg-table-cell"></td>
     {{-- 画像ファイル --}}
-    <td class="d-block d-xl-table-cell align-middle">
+    <td class="d-table-cell align-middle">
         {{-- 画像選択ボタン --}}
         <label class="input-group-btn d-flex align-items-center justify-content-center">
             <span class="btn btn-primary text-nowrap" style="cursor: hand; cursor:pointer;">
                 画像選択<input type="file" name="image_file" style="display:none" @change="setImageResource('add', arguments[0])">
-                <label class="badge badge-danger d-xl-none">必須</label>
+                <label class="badge badge-danger d-lg-none">必須</label>
             </span>
         </label>
         @include('plugins.common.errors_inline', ['name' => 'image_file'])
@@ -55,8 +55,8 @@
         </div>
     </td>
     {{-- リンクURL --}}
-    <td class="d-block d-xl-table-cell align-middle">
-        <strong class="d-xl-none">リンクURL：</strong>
+    <td class="d-block d-lg-table-cell align-middle">
+        <strong class="d-lg-none">リンクURL：</strong>
         <input
             type="text"
             name="link_url"
@@ -67,8 +67,8 @@
         @include('common.errors_inline', ['name' => 'link_url'])
     </td>
     {{-- キャプション --}}
-    <td class="d-block d-xl-table-cell align-middle">
-        <strong class="d-xl-none">キャプション：</strong>
+    <td class="d-block d-lg-table-cell align-middle">
+        <strong class="d-lg-none">キャプション：</strong>
         <input
             type="text"
             name="caption"
@@ -78,8 +78,8 @@
         @include('common.errors_inline', ['name' => 'caption'])
     </td>
     {{-- リンクターゲット --}}
-    <td class="d-block d-xl-table-cell align-middle">
-        <strong class="d-xl-none">リンクターゲット：</strong>
+    <td class="d-block d-lg-table-cell align-middle">
+        <strong class="d-lg-none">リンクターゲット：</strong>
         <input
             type="text"
             name="link_target"
@@ -90,7 +90,7 @@
         @include('common.errors_inline', ['name' => 'link_target'])
     </td>
     {{-- ＋ボタン --}}
-    <td class="d-block d-xl-table-cell align-middle d-flex align-items-center justify-content-center">
+    <td class="d-block d-lg-table-cell align-middle d-flex align-items-center justify-content-center">
         <button
             class="btn btn-success cc-font-90 text-nowrap"
             onclick="javascript:submit_add_item();"
@@ -104,9 +104,9 @@
 
 @if (!empty(config('connect.PDF_THUMBNAIL_API_URL')))
 <tr>
-    <td class="d-none d-xl-display d-xl-table-cell"></td>
-    <td class="d-none d-xl-display d-xl-table-cell"></td>
-    <td class="d-block d-xl-table-cell align-middle">
+    <td class="d-none d-lg-display d-lg-table-cell"></td>
+    <td class="d-none d-lg-display d-lg-table-cell"></td>
+    <td class="d-table-cell align-middle">
         <label class="input-group-btn d-flex align-items-center justify-content-center" data-toggle="modal" data-target="#modalPdfAdd">
             <span class="btn btn-primary text-nowrap" style="cursor: hand; cursor:pointer;">
                 PDF選択
@@ -158,13 +158,13 @@
         </div>
     </td>
     {{-- リンクURL --}}
-    <td class="d-block d-xl-table-cell align-middle"></td>
+    <td class="d-none d-lg-display d-lg-table-cell"></td>
     {{-- キャプション --}}
-    <td class="d-block d-xl-table-cell align-middle"></td>
+    <td class="d-none d-lg-display d-lg-table-cell"></td>
     {{-- リンクターゲット --}}
-    <td class="d-block d-xl-table-cell align-middle"></td>
+    <td class="d-none d-lg-display d-lg-table-cell"></td>
     {{-- ＋ボタン --}}
-    <td class="d-block d-xl-table-cell align-middle d-flex align-items-center justify-content-center">
+    <td class="d-block d-lg-table-cell align-middle d-flex align-items-center justify-content-center">
         <button
             class="btn btn-success cc-font-90 text-nowrap"
             onclick="javascript:submit_add_pdf();"
