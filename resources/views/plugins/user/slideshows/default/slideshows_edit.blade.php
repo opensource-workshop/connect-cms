@@ -64,14 +64,14 @@
                     <div class="table-responsive">
                         <table class="table table-hover table-sm">
                             <thead>
-                                <tr class="d-none d-xl-table-row">
-                                    <th class="text-center text-nowrap align-middle d-block d-xl-table-cell">表示順</th>
-                                    <th class="text-center text-nowrap align-middle d-block d-xl-table-cell">表示</th>
-                                    <th class="text-center text-nowrap align-middle d-block d-xl-table-cell">画像<label class="badge badge-danger">必須</label></th>
-                                    <th class="text-center text-nowrap align-middle d-block d-xl-table-cell">リンクURL</th>
-                                    <th class="text-center text-nowrap align-middle d-block d-xl-table-cell">キャプション</th>
-                                    <th class="text-center text-nowrap align-middle d-block d-xl-table-cell">リンクターゲット</th>
-                                    <th class="text-center text-nowrap align-middle d-block d-xl-table-cell">削除</th>
+                                <tr class="d-none d-lg-table-row">
+                                    <th class="text-center text-nowrap align-middle d-block d-lg-table-cell">表示順</th>
+                                    <th class="text-center text-nowrap align-middle d-block d-lg-table-cell">表示</th>
+                                    <th class="text-center text-nowrap align-middle d-block d-lg-table-cell">画像 <label class="badge badge-danger">必須</label></th>
+                                    <th class="text-center text-nowrap align-middle d-block d-lg-table-cell">リンクURL</th>
+                                    <th class="text-center text-nowrap align-middle d-block d-lg-table-cell">キャプション</th>
+                                    <th class="text-center text-nowrap align-middle d-block d-lg-table-cell">リンクターゲット</th>
+                                    <th class="text-center text-nowrap align-middle d-block d-lg-table-cell">削除</th>
                                 </tr>
                             </thead>
                             <tbody>
