@@ -9,6 +9,9 @@
 
 @section("plugin_contents_$frame->id")
 
+{{-- 登録後メッセージ表示 --}}
+@include('plugins.common.flash_message_for_frame')
+
 @if (isset($frame) && $frame->bucket_id)
     {{-- バケツあり --}}
 @else
