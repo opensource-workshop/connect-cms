@@ -103,6 +103,75 @@ use App\Models\Migration\Nc2\Nc2Slides;
 use App\Models\Migration\Nc2\Nc2SlidesUrl;
 use App\Models\Migration\Nc2\Nc2Simplemovie;
 
+use App\Models\Migration\Nc3\Nc3VideoFrameSetting;
+use App\Models\Migration\Nc3\Nc3AccessCounter;
+use App\Models\Migration\Nc3\Nc3AccessCounterFrameSetting;
+use App\Models\Migration\Nc3\Nc3Announcement;
+use App\Models\Migration\Nc3\Nc3AuthorizationKey;
+use App\Models\Migration\Nc3\Nc3Bbs;
+use App\Models\Migration\Nc3\Nc3BbsArticle;
+use App\Models\Migration\Nc3\Nc3BbsFrameSetting;
+use App\Models\Migration\Nc3\Nc3Block;
+use App\Models\Migration\Nc3\Nc3BlockRolePermission;
+use App\Models\Migration\Nc3\Nc3BlockSetting;
+use App\Models\Migration\Nc3\Nc3Blog;
+use App\Models\Migration\Nc3\Nc3BlogEntry;
+use App\Models\Migration\Nc3\Nc3BlogFrameSetting;
+use App\Models\Migration\Nc3\Nc3Box;
+use App\Models\Migration\Nc3\Nc3Cabinet;
+use App\Models\Migration\Nc3\Nc3CabinetFile;
+use App\Models\Migration\Nc3\Nc3Calendar;
+use App\Models\Migration\Nc3\Nc3CalendarEvent;
+use App\Models\Migration\Nc3\Nc3CalendarFrameSetting;
+use App\Models\Migration\Nc3\Nc3Category;
+use App\Models\Migration\Nc3\Nc3Faq;
+use App\Models\Migration\Nc3\Nc3FaqQuestion;
+use App\Models\Migration\Nc3\Nc3Frame;
+use App\Models\Migration\Nc3\Nc3Language;
+use App\Models\Migration\Nc3\Nc3Like;
+use App\Models\Migration\Nc3\Nc3Link;
+use App\Models\Migration\Nc3\Nc3LinkFrameSetting;
+use App\Models\Migration\Nc3\Nc3MailSetting;
+use App\Models\Migration\Nc3\Nc3MenuFramePage;
+use App\Models\Migration\Nc3\Nc3MenuFrameSetting;
+use App\Models\Migration\Nc3\Nc3Multidatabase;
+use App\Models\Migration\Nc3\Nc3MultidatabaseContent;
+use App\Models\Migration\Nc3\Nc3MultidatabaseFrameSetting;
+use App\Models\Migration\Nc3\Nc3MultidatabaseMetadata;
+use App\Models\Migration\Nc3\Nc3Page;
+use App\Models\Migration\Nc3\Nc3PageContainer;
+use App\Models\Migration\Nc3\Nc3PhotoAlbum;
+use App\Models\Migration\Nc3\Nc3PhotoAlbumDisplayAlbum;
+use App\Models\Migration\Nc3\Nc3PhotoAlbumFrameSetting;
+use App\Models\Migration\Nc3\Nc3PhotoAlbumPhoto;
+use App\Models\Migration\Nc3\Nc3Plugin;
+use App\Models\Migration\Nc3\Nc3Registration;
+use App\Models\Migration\Nc3\Nc3RegistrationAnswerSummary;
+use App\Models\Migration\Nc3\Nc3RegistrationChoice;
+use App\Models\Migration\Nc3\Nc3RegistrationPage;
+use App\Models\Migration\Nc3\Nc3RegistrationQuestion;
+use App\Models\Migration\Nc3\Nc3ReservationEvent;
+use App\Models\Migration\Nc3\Nc3ReservationFrameSetting;
+use App\Models\Migration\Nc3\Nc3ReservationLocation;
+use App\Models\Migration\Nc3\Nc3ReservationLocationsApprovalUser;
+use App\Models\Migration\Nc3\Nc3ReservationLocationsReservable;
+use App\Models\Migration\Nc3\Nc3RolesRoom;
+use App\Models\Migration\Nc3\Nc3Room;
+use App\Models\Migration\Nc3\Nc3RoomRolePermission;
+use App\Models\Migration\Nc3\Nc3SearchFramePlugin;
+use App\Models\Migration\Nc3\Nc3SearchFrameSetting;
+use App\Models\Migration\Nc3\Nc3SiteSetting;
+use App\Models\Migration\Nc3\Nc3Space;
+use App\Models\Migration\Nc3\Nc3Topic;
+use App\Models\Migration\Nc3\Nc3TopicFramePlugin;
+use App\Models\Migration\Nc3\Nc3TopicFrameSetting;
+use App\Models\Migration\Nc3\Nc3UploadFile;
+use App\Models\Migration\Nc3\Nc3User;
+use App\Models\Migration\Nc3\Nc3UserAttribute;
+use App\Models\Migration\Nc3\Nc3UserAttributeChoice;
+use App\Models\Migration\Nc3\Nc3UsersLanguage;
+use App\Models\Migration\Nc3\Nc3Video;
+
 /**
  * サイト管理クラス
  *
@@ -1419,8 +1488,9 @@ class SiteManage extends ManagePluginBase
 
         // --- 移行データチェック出力
         $MigrationMapping = MigrationMapping::count();
+        $Migrationoutput_flag = false;
         if ($MigrationMapping && $this->canDbConnectNc2()) {
-
+            $Migrationoutput_flag = true;
             // NC2 のページデータ
             $nc2_pages_query = Nc2Page::where('private_flag', 0)        // 0:プライベートルーム以外
                                       ->where('root_id', '<>', 0)
@@ -1436,6 +1506,8 @@ class SiteManage extends ManagePluginBase
             }
             // 経路探索の文字列（キー）でソート
             ksort($nc2_sort_pages);
+            // ページ
+            $mg_sort_pages = $nc2_sort_pages;
 
             // NC2 の日誌データ
             $nc2_journals = Nc2Journal::select('journal.*', 'page_rooms.space_type')
@@ -1450,7 +1522,10 @@ class SiteManage extends ManagePluginBase
             foreach ($nc2_journals as &$nc2_journal) {
                 $nc2_journal_posts = Nc2JournalPost::where('journal_id', $nc2_journal->journal_id)->orderBy('post_id')->get();
                 $nc2_journal->count = $nc2_journal_posts->count();
+                $nc2_journal->blog_name = $nc2_journal->journal_name;
             }
+            // ブログ
+            $mg_blogs = $nc2_journals;
 
             // NC2 汎用DBデータ
             $nc2_multidatabases = Nc2Multidatabase::select('multidatabase.multidatabase_id', 'multidatabase.multidatabase_name', 'multidatabase_content.content_id')
@@ -1471,7 +1546,8 @@ class SiteManage extends ManagePluginBase
                 $ret_multidatabase[] = $tmp_obj;
             }
             $nc2_multidatabases = collect($ret_multidatabase);
-
+            // データベース
+            $mg_multidatabases = $nc2_multidatabases;
 
             // NC2 の会員データ
             $nc2_users = Nc2User::select('users.login_id', 'users.handle', 'authorities.role_authority_name')
@@ -1497,8 +1573,122 @@ class SiteManage extends ManagePluginBase
                         break;
                 }
             }
+            //会員
+            $mg_users = $nc2_users;
+        }
 
 
+        if ($MigrationMapping && $this->canDbConnectNc3()) {
+            $Migrationoutput_flag = true;
+            // NC3 のページデータ
+
+            $nc3_pages_query = Nc3Page::
+                select('pages.*', 'rooms.space_id', 'rooms.page_id_top', 'pages_languages.name as page_name', 'pages_languages.language_id')
+                ->join('rooms', function ($join) {
+                    $join->on('rooms.id', '=', 'pages.room_id')
+                        ->where('rooms.space_id', '!=', Nc3Space::PRIVATE_SPACE_ID); // プライベートルーム以外
+                })
+                ->join('pages_languages', function ($join) {
+                    $join->on('pages_languages.page_id', '=', 'pages.id');
+                })
+                ->join('languages', function ($join) {
+                    $join->on('languages.id', '=', 'pages_languages.language_id')
+                        ->where('languages.is_active', 1);  // 使用言語（日本語・英語）で有効な言語を取得
+                })
+                ->whereNotNull('pages.root_id');
+            $nc3_pages_query->orderBy('pages_languages.language_id');
+            $older_than_nc3_2_0 = true;
+            if ($older_than_nc3_2_0) {
+                // nc3.2.0より古い場合は、sort_key が無いため parent_id, lft でソートすると、ページの並び順を再現できた。
+                $nc3_pages_query->orderBy('pages.lft');
+            } else {
+                // 通常
+                $nc3_pages_query->orderBy('pages.sort_key')
+                                ->orderBy('rooms.sort_key');
+            }
+            $nc3_pages = $nc3_pages_query->get();
+            // ページ
+            $mg_sort_pages = $nc3_pages;
+
+            // NC3ブログ
+            $nc3_blogs = Nc3Blog::select('blogs.*','blogs.name AS blog_name', 'blocks.key as block_key', 'blocks.room_id', 'rooms.space_id')
+                ->join('blocks', function ($join) {
+                    $join->on('blocks.id', '=', 'blogs.block_id')
+                        ->where('blocks.plugin_key', 'blogs');
+                })
+                ->join('rooms', function ($join) {
+                    $join->on('rooms.id', '=', 'blocks.room_id')
+                        ->whereIn('rooms.space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID]);
+                })
+                ->orderBy('blogs.id')
+                ->get();
+            // 使用言語（日本語・英語）で有効な言語を取得
+            $language_ids = Nc3Language::where('is_active', 1)->pluck('id');
+            // NC3ブログのループ
+            foreach ($nc3_blogs as $nc3_blog) {
+                // NC3日誌の記事
+                $nc3_blog_posts = Nc3BlogEntry::where('block_id', $nc3_blog->block_id)
+                    ->where('is_latest', 1)
+                    ->whereIn('language_id', $language_ids)
+                    ->orderBy('id')
+                    ->get();
+                $nc3_blog->count = count($nc3_blog_posts);
+            }
+            // ブログ
+            $mg_blogs = $nc3_blogs;
+
+            // NC3汎用データベース（multidatabases）
+            $nc3_multidatabases_query = Nc3Multidatabase::select('multidatabases.*', 'blocks.key as block_key', 'blocks.room_id', 'rooms.space_id')
+                ->join('blocks', function ($join) {
+                    $join->on('blocks.id', '=', 'multidatabases.block_id')
+                        ->where('blocks.plugin_key', 'multidatabases');
+                })
+                ->join('rooms', function ($join) {
+                    $join->on('rooms.id', '=', 'blocks.room_id')
+                        ->whereIn('rooms.space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID]);
+                })
+                ->orderBy('multidatabases.id');
+            $nc3_multidatabases = $nc3_multidatabases_query->get();
+            // NC3汎用データベース（Multidatabase）のループ
+            foreach ($nc3_multidatabases as $nc3_multidatabase) {
+                // NC3汎用データベースのデータ
+                $nc3_multidatabase_contents = Nc3MultidatabaseContent::where('multidatabase_key', $nc3_multidatabase->block_key)
+                    ->where('is_latest', 1)
+                    ->orderBy('id')
+                    ->get();
+                $nc3_multidatabase->multidatabase_id = $nc3_multidatabase->block_key;
+                $nc3_multidatabase->multidatabase_name = $nc3_multidatabase->name;
+                $nc3_multidatabase->multidatabase_content_count = count($nc3_multidatabase_contents);
+            }
+            // データベース
+            $mg_multidatabases = $nc3_multidatabases;
+
+            // NC3 の会員データ
+            $nc3_users_query = Nc3User::select('users.username AS login_id', 'users.handlename AS handle', 'users.role_key')->where('username', '<>', '');
+            $nc3_users = $nc3_users_query->orderBy('users.created')->get();
+            foreach ($nc3_users as &$nc3_user) {
+                switch ($nc3_user->role_key) {
+                    case 'system_administrator':
+                        $nc3_user->role_authority_name = 'システム管理者';
+                        break;
+                    case 'administrator':
+                        $nc3_user->role_authority_name = '主担';
+                        break;
+                    case 'common_user':
+                        $nc3_user->role_authority_name = '一般';
+                        break;
+                    case 'guest_user':
+                        $nc3_user->role_authority_name = 'ゲスト';
+                        break;
+                }
+            }
+
+            //会員
+            $mg_users = $nc3_users;
+        }
+
+        // Connect移行後のデータ
+        if ($Migrationoutput_flag) {
             // Connect-CMSの会員データ
             $users = User::select('users.id', 'users.userid', 'users.name')
                 ->orderBy('users.id')
@@ -1544,10 +1734,10 @@ class SiteManage extends ManagePluginBase
             $pdf->Bookmark('移行データ', 0, 0, '', '', array(0, 0, 0));
             $sections = [
                 ['migrate_main', compact(
-                    'nc2_sort_pages', 'pages',
-                    'nc2_journals', 'blogs',
-                    'nc2_multidatabases', 'databases',
-                    'nc2_users', 'users',
+                    'mg_sort_pages', 'pages',
+                    'mg_blogs', 'blogs',
+                    'mg_multidatabases', 'databases',
+                    'mg_users', 'users',
                 ), '移行データ一覧'],
             ];
             $this->outputSection($pdf, $sections);
@@ -1638,6 +1828,21 @@ class SiteManage extends ManagePluginBase
     {
         try {
             DB::connection('nc2')->getPdo();
+            // 接続成功
+            return true;
+        } catch (\PDOException $e) {
+            // 接続失敗
+            return false;
+        }
+    }
+
+    /**
+     * NC3のDBに接続できるか
+     */
+    private function canDbConnectNc3() : bool
+    {
+        try {
+            DB::connection('nc3')->getPdo();
             // 接続成功
             return true;
         } catch (\PDOException $e) {
