@@ -1611,7 +1611,7 @@ class SiteManage extends ManagePluginBase
             $mg_sort_pages = $nc3_pages;
 
             // NC3ブログ
-            $nc3_blogs = Nc3Blog::select('blogs.*','blogs.name AS blog_name', 'blocks.key as block_key', 'blocks.room_id', 'rooms.space_id')
+            $nc3_blogs = Nc3Blog::select('blogs.*', 'blogs.name AS blog_name', 'blocks.key as block_key', 'blocks.room_id', 'rooms.space_id')
                 ->join('blocks', function ($join) {
                     $join->on('blocks.id', '=', 'blogs.block_id')
                         ->where('blocks.plugin_key', 'blogs');
