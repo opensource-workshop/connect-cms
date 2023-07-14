@@ -547,7 +547,8 @@ trait MigrationNc3ExportTrait
                 Storage::deleteDirectory($this->getImportPath('pages/'));
                 // pagesエクスポート関連のnc3Frame()でmenuのエクスポートで@insert配下ディレクトリに出力しているため、同ディレクトリを削除
                 // ⇒ 移行後用の新ページを作成したのを置いておき、移行後にinsertするような使い方だから削除されると微妙なため、コメントアウト
-                // Storage::deleteDirectory($this->getImportPath('pages/', '@insert/'));
+                // ⇒ 明示的にredoしているので@insertも消すことにする
+                Storage::deleteDirectory($this->getImportPath('pages/', '@insert/'));
             }
 
             // NC3 トップページ
