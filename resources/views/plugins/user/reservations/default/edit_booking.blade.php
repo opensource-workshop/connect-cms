@@ -69,7 +69,7 @@ use App\Models\User\Reservations\ReservationsFacility;
         // 予約終了時間ボタン押下
         $('#end_datetime').datetimepicker(time_setting);
 
-        $('#end_datetime').on('change.datetimepicker', function(e) {
+        $('#end_datetime').on('change.datetimepicker hide.datetimepicker show.datetimepicker', function(e) {
             convert_endtime_0h_to_24h();
         });
     });

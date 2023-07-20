@@ -64,12 +64,16 @@
 
     {{-- Twitterボタン --}}
     @include('plugins.common.twitter', [
-        'post_title' => $post->post_title,
+        'post_title'        => $post->post_title,
+        'share_connect_url' => "/plugin/blogs/show/$page->id/$frame_id/$post->id",
+        'frame_config_name' => BlogFrameConfig::blog_display_twitter_button,
     ])
 
     {{-- Facebookボタン --}}
     @include('plugins.common.facebook', [
-        'post_title' => $post->post_title,
+        'post_title'        => $post->post_title,
+        'share_connect_url' => "/plugin/blogs/show/$page->id/$frame_id/$post->id",
+        'frame_config_name' => BlogFrameConfig::blog_display_facebook_button,
     ])
     {{-- タグ --}}
     @isset($post_tags)
