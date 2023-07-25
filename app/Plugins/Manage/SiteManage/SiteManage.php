@@ -1652,7 +1652,7 @@ class SiteManage extends ManagePluginBase
             // NC3汎用データベース（Multidatabase）のループ
             foreach ($nc3_multidatabases as $nc3_multidatabase) {
                 // NC3汎用データベースのデータ
-                $nc3_multidatabase_contents = Nc3MultidatabaseContent::where('multidatabase_key', $nc3_multidatabase->block_key)
+                $nc3_multidatabase_contents = Nc3MultidatabaseContent::where('multidatabase_key', $nc3_multidatabase->key)
                     ->where('is_latest', 1)
                     ->orderBy('id')
                     ->get();
