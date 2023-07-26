@@ -236,6 +236,7 @@ class Frame extends Model
         // 非ログインまたはフレーム編集権限を持たない、且つ、非表示条件（非公開、又は、限定公開、又は、ログイン後非表示）にマッチした場合はフレームを非表示にする
 
         if (
+            // !Auth::check() &&
             (!Auth::check() || !Auth::user()->can('role_arrangement')) &&
             (
                 $this->content_open_type == ContentOpenType::always_close ||
