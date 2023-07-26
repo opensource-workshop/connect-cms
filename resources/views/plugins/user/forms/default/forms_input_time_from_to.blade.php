@@ -2,6 +2,7 @@
  * 登録画面(input time)テンプレート。
  *
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
 --}}
@@ -55,6 +56,11 @@
     });
 </script>
 
+@php
+    $value_for_time_from = $request->forms_columns_value_for_time_from[$form_obj->id] ?? null;
+    $value_for_time_to = $request->forms_columns_value_for_time_to[$form_obj->id] ?? null;
+@endphp
+
 <div class="row">
 
     <div class="col-sm-5">
@@ -63,7 +69,7 @@
             <input
                 type="text"
                 name="forms_columns_value_for_time_from[{{ $form_obj->id }}]"
-                value="@if ($frame_id == $request->frame_id){{old('forms_columns_value_for_time_from.'.$form_obj->id, $request->forms_columns_value_for_time_from[$form_obj->id])}}@endif"
+                value="@if ($frame_id == $request->frame_id){{old('forms_columns_value_for_time_from.'.$form_obj->id, $value_for_time_from)}}@endif"
                 class="form-control datetimepicker-input"
                 data-target="#{{ $form_obj->id }}_from"
                 id="{{$label_id}}"
@@ -81,7 +87,7 @@
             <input
                 type="text"
                 name="forms_columns_value_for_time_to[{{ $form_obj->id }}]"
-                value="@if ($frame_id == $request->frame_id){{old('forms_columns_value_for_time_to.'.$form_obj->id, $request->forms_columns_value_for_time_to[$form_obj->id])}}@endif"
+                value="@if ($frame_id == $request->frame_id){{old('forms_columns_value_for_time_to.'.$form_obj->id, $value_for_time_to)}}@endif"
                 class="form-control datetimepicker-input"
                 data-target="#{{ $form_obj->id }}_to"
                 title="{{$form_obj->column_name}}の終了時間"
