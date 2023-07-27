@@ -758,7 +758,7 @@ class ReservationManage extends ManagePluginBase
         }
 
         // 更新データは上記update後に取得しないと、title_flagが更新されない
-        $column = ReservationsColumn::where('id', $request->column_id)->first();
+        $column = ReservationsColumn::where('id', $request->column_id)->where('columns_set_id', $request->columns_set_id)->first();
 
         // タイトル指定
         $column->title_flag = $title_flag;
