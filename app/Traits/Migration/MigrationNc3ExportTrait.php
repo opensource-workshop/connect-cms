@@ -3906,7 +3906,7 @@ trait MigrationNc3ExportTrait
                 $tsv_record = $tsv_cols;
 
                 $tsv_record['post_id'] = $calendar_event->id;
-                $tsv_record['title']       = $calendar_event->title;
+                $tsv_record['title'] = str_replace(array("\r", "\n", "\t"), '', $calendar_event->title);
                 $tsv_record['allday_flag'] = $calendar_event->is_allday;
 
                 // 予定開始日時
