@@ -12976,7 +12976,8 @@ trait MigrationTrait
         // デフォルトの表示順
         $default_sort_flag = '';
         if ($nc2_multidatabase_block->default_sort == 'seq') {
-            $this->putError(3, 'データベースのソートが未対応順（カスタマイズ順）', "nc2_multidatabase_block = " . $nc2_multidatabase_block->block_id);
+            // $this->putError(3, 'データベースのソートが未対応順（カスタマイズ順）', "nc2_multidatabase_block = " . $nc2_multidatabase_block->block_id);
+            $default_sort_flag = DatabaseSortFlag::display_asc;
         } elseif ($nc2_multidatabase_block->default_sort == 'date') {
             $default_sort_flag = DatabaseSortFlag::created_desc;
         } elseif ($nc2_multidatabase_block->default_sort == 'date_asc') {
