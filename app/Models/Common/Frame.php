@@ -258,6 +258,7 @@ class Frame extends Model
     /**
      * 利用者が見れるフレームか
      * ※この関数を修正する場合、isInvisiblePrivateFrame()も修正すべきか確認してください。
+     * ※Frame::visible() 等で呼ばれる
      */
     public function scopeVisible($query)
     {
@@ -271,6 +272,11 @@ class Frame extends Model
                 $query->where('content_open_type', ContentOpenType::limited_open)
                     ->whereDate('content_open_date_from', '<=', Carbon::now())
                     ->whereDate('content_open_date_to', '>=', Carbon::now());
+            })
+            ->orWhere(function ($query) {
+                $auth_check = Auth::check() ? 'true' : 'false';
+                $query->where('content_open_type', ContentOpenType::login_close)
+                    ->whereRaw("FALSE = $auth_check");
             });
     }
 }
