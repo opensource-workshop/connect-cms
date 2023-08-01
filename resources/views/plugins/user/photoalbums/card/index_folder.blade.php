@@ -2,14 +2,24 @@
  * フォトアルバム画面テンプレート（フォルダ）
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォトアルバム・プラグイン
 --}}
 {{-- データ一覧にアルバムが含まれる場合 --}}
 @if ($photoalbum_contents->where('is_folder', 1)->isNotEmpty())
+@php
+if ($frame->isExpandNarrow()) {
+    // 右・左エリア = スマホ表示と同等にする
+    $col_class = 'col-12';
+} else {
+    // メインエリア・フッターエリア
+    $col_class = 'col-md-4';
+}
+@endphp
 <div class="row">
     @foreach($photoalbum_contents->where('is_folder', 1) as $photoalbum_content)
-    <div class="col-md-4">
+    <div class="{{$col_class}}">
         <div class="card ml-3 mb-3 mt-3 p-0 mx-auto">
             <a href="{{url('/')}}/plugin/photoalbums/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}/#frame-{{$frame->id}}" class="text-center">
                 {{-- カバー画像が指定されていれば使用し、指定されていなければ、グレーのカバーを使用 --}}
