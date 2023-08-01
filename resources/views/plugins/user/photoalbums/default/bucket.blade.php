@@ -2,6 +2,7 @@
  * フォトアルバム・バケツ編集画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォトアルバム・プラグイン
 --}}
@@ -51,7 +52,7 @@
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass()}}" for="upload-max-size">画像の最大サイズ</label>
             <div class="{{$frame->getSettingInputClass()}}">
-                <select class="form-control col-md-3 @if ($errors && $errors->has('image_upload_max_size')) border-danger @endif" name="image_upload_max_size" id="upload-max-size">
+                <select class="form-control @if(!$frame->isExpandNarrow()) col-md-3 @endif @if ($errors && $errors->has('image_upload_max_size')) border-danger @endif" name="image_upload_max_size" id="upload-max-size">
                     @foreach (UploadMaxSize::getMembers() as $key=>$value)
                     <option value="{{$key}}" @if(old("image_upload_max_size", $photoalbum->image_upload_max_size) == $key) selected="selected" @endif>
                         {{ $value }}
@@ -65,7 +66,7 @@
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass()}}" for="upload-max-size">画像アップロード時の最大変換サイズ</label>
             <div class="{{$frame->getSettingInputClass()}}">
-                <select class="form-control col-md-6 @if ($errors && $errors->has('image_upload_max_px')) border-danger @endif" name="image_upload_max_px" id="image_upload_max_px">
+                <select class="form-control @if(!$frame->isExpandNarrow()) col-md-6 @endif @if ($errors && $errors->has('image_upload_max_px')) border-danger @endif" name="image_upload_max_px" id="image_upload_max_px">
                     @foreach (ResizedImageSize::getMembers() as $key=>$value)
                     <option value="{{$key}}" @if(old("image_upload_max_px", $photoalbum->image_upload_max_px) == $key) selected="selected" @endif>
                         {{ $value }}
@@ -79,7 +80,7 @@
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass()}}" for="upload-max-size">動画の最大サイズ</label>
             <div class="{{$frame->getSettingInputClass()}}">
-                <select class="form-control col-md-3 @if ($errors && $errors->has('video_upload_max_size')) border-danger @endif" name="video_upload_max_size" id="upload-max-size">
+                <select class="form-control @if(!$frame->isExpandNarrow()) col-md-3 @endif @if ($errors && $errors->has('video_upload_max_size')) border-danger @endif" name="video_upload_max_size" id="upload-max-size">
                     @foreach (UploadMaxSize::getMembers() as $key=>$value)
                     <option value="{{$key}}" @if(old("video_upload_max_size", $photoalbum->video_upload_max_size) == $key) selected="selected" @endif>
                         {{ $value }}
@@ -93,7 +94,7 @@
         </div>
         {{-- Submitボタン --}}
         <div class="form-group text-center">
-            <div class="row">
+            <div class="form-row">
                 <div class="col-3"></div>
                 <div class="col-6">
                     <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}'">
