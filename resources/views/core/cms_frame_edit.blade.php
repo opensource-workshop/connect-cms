@@ -215,10 +215,23 @@
                     @endforeach
                 </div>
             </div>
+
+            @php
+            if ($frame->isExpandNarrow()) {
+                // 右・左エリア = スマホ表示と同等にする
+                $date_col_class = 'col-12';
+                $text_muted_col_class = 'col-12';
+            } else {
+                // メインエリア・フッターエリア
+                $date_col_class = 'col-md-9';
+                $text_muted_col_class = 'offset-md-3 col-md-9';
+            }
+            @endphp
+
             {{-- 公開日時From --}}
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass(true)}}">公開日時From</label>
-                <div class="col-md-9 input-group date" id="content_open_date_from" data-target-input="nearest">
+                <div class="{{$date_col_class}} input-group date" id="content_open_date_from" data-target-input="nearest">
                     <input
                         type="text"
                         name="content_open_date_from"
@@ -232,7 +245,7 @@
                         <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
-                <small class="offset-md-3 col-md-9 text-muted">
+                <small class="{{$text_muted_col_class}} text-muted">
                     ※右のボタンからカレンダー入力も可能です。
                 </small>
                 @if ($errors && $errors->has('content_open_date_from'))
@@ -246,7 +259,7 @@
             {{-- 公開日時To --}}
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass(true)}}">公開日時To</label>
-                <div class="col-md-9 input-group date" id="content_open_date_to" data-target-input="nearest">
+                <div class="{{$date_col_class}} input-group date" id="content_open_date_to" data-target-input="nearest">
                     <input
                         type="text"
                         name="content_open_date_to"
@@ -260,7 +273,7 @@
                         <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
-                <small class="offset-md-3 col-md-9 text-muted">
+                <small class="{{$text_muted_col_class}} text-muted">
                     ※右のボタンからカレンダー入力も可能です。
                 </small>
                 @if ($errors && $errors->has('content_open_date_to'))
