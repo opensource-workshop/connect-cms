@@ -94,7 +94,7 @@ class DefaultConfigsTableSeeder extends Seeder
                     [
                         'name'=>'base_theme',
                         'value'=>null,
-                        'category'=>'user_register',
+                        'category'=>'general',
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
                     ],
