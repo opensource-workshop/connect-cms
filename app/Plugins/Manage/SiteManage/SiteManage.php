@@ -16,6 +16,7 @@ use App\Models\Core\ApiSecret;
 use App\Models\Core\Configs;
 use App\Models\Core\ConfigsLoginPermits;
 use App\Models\Core\Plugins;
+use App\Models\Core\UsersColumnsSet;
 use App\Models\Common\Categories;
 use App\Models\Common\Frame;
 use App\Models\Common\Group;
@@ -1284,9 +1285,11 @@ class SiteManage extends ManagePluginBase
         $pdf->addPage();
         $pdf->Bookmark('ユーザ設定', 0, 0, '', '', array(0, 0, 0));
 
+        $columns_sets = UsersColumnsSet::get();
+
         // フレーム設定
         $sections = [
-            ['user_regist', compact('configs'), '自動ユーザ登録設定'],
+            ['user_regist', compact('configs', 'columns_sets'), '自動ユーザ登録設定'],
         ];
         $this->outputSection($pdf, $sections);
 

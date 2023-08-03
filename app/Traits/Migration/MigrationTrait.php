@@ -1619,6 +1619,7 @@ trait MigrationTrait
 
             $column_type = $this->getArrayValue($ini, 'users_columns_base', 'column_type');
             $users_column = UsersColumns::create([
+                'columns_set_id'   => 1,
                 'column_type'      => $column_type,
                 'column_name'      => $this->getArrayValue($ini, 'users_columns_base', 'column_name'),
                 'required'         => intval($this->getArrayValue($ini, 'users_columns_base', 'required', 0)),
@@ -1653,6 +1654,7 @@ trait MigrationTrait
                     $display_sequence = $i;
                     $display_sequence++;
                     $users_column_select = UsersColumnsSelects::create([
+                        'columns_set_id'   => 1,
                         'users_columns_id' => $users_column->id,
                         'value'            => $value,
                         'display_sequence' => $display_sequence,
@@ -1748,6 +1750,7 @@ trait MigrationTrait
                     $user->userid     = $user_item['userid'];
                     $user->password   = $user_item['password'];
                     $user->status     = $user_item['status'];
+                    $user->columns_set_id = 1;
                     $user->created_at = $user_item['created_at'];
                     $user->updated_at = $user_item['updated_at'];
                     $user->save();

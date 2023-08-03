@@ -1,5 +1,9 @@
 {{--
  * 自動ユーザ登録設定画面のテンプレート
+ *
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category ユーザ管理
 --}}
 
 {{-- 管理画面ベース画面 --}}
@@ -21,8 +25,17 @@
         {{-- 登録後メッセージ表示 --}}
         @include('plugins.common.flash_message')
 
-        <form action="{{url('/')}}/manage/user/autoRegistUpdate" method="POST">
+        <form action="{{url('/')}}/manage/user/autoRegistUpdate/{{$columns_set_id}}" method="POST">
             {{csrf_field()}}
+
+            {{-- 項目セット --}}
+            <div class="form-group">
+                @foreach($columns_sets as $columns_set)
+                    <button type="button" class="btn @if($columns_set->id == $columns_set_id) btn-primary @else btn-outline-primary @endif btn-sm" onclick="location.href='{{url('/')}}/manage/user/autoRegist/{{$columns_set->id}}'">
+                        ユーザ({{$columns_set->name}})
+                    </button>
+                @endforeach
+            </div>
 
             {{-- 自動ユーザ登録の使用 --}}
             <div class="form-group row">

@@ -27,30 +27,24 @@ class UsersTool
     /**
      * ユーザーのカラム取得
      */
-    public static function getUsersColumns()
+    public static function getUsersColumns(?int $columns_set_id)
     {
         // ユーザーのカラム
-        $users_columns = UsersColumns::orderBy('display_sequence')->get();
-
-        // カラムデータがない場合
-        if (empty($users_columns)) {
-            return null;
-        }
-
-        return $users_columns;
+        return UsersColumns::where('columns_set_id', $columns_set_id)->orderBy('display_sequence')->get();
     }
 
     /**
      * カラムの選択肢 取得
      */
-    public static function getUsersColumnsSelects()
+    public static function getUsersColumnsSelects(?int $columns_set_id)
     {
         // カラムの選択肢
         $users_columns_selects = UsersColumnsSelects::select('users_columns_selects.*')
-                ->join('users_columns', 'users_columns.id', '=', 'users_columns_selects.users_columns_id')
-                ->orderBy('users_columns_selects.users_columns_id', 'asc')
-                ->orderBy('users_columns_selects.display_sequence', 'asc')
-                ->get();
+            ->join('users_columns', 'users_columns.id', '=', 'users_columns_selects.users_columns_id')
+            ->where('users_columns_selects.columns_set_id', $columns_set_id)
+            ->orderBy('users_columns_selects.users_columns_id', 'asc')
+            ->orderBy('users_columns_selects.display_sequence', 'asc')
+            ->get();
 
         // カラムID毎に詰めなおし
         $users_columns_id_select = array();
@@ -89,12 +83,12 @@ class UsersTool
     /**
      * セットすべきバリデータールールが存在する場合、受け取った配列にセットして返す
      *
-     * @param [array] $validator_array 二次元配列
-     * @param [App\Models\User\Databases\DatabasesColumns] $users_column
-     * @param [int] $user_id
+     * @param array $validator_array 二次元配列
+     * @param \App\Models\User\Databases\DatabasesColumns $users_column
+     * @param int $user_id
      * @return array
      */
-    public static function getValidatorRule($validator_array, $users_column, $user_id = null)
+    public static function getValidatorRule($validator_array, $users_column, $user_id = null, int $columns_set_id)
     {
         $validator_rule = null;
         // 必須チェック
@@ -104,7 +98,7 @@ class UsersTool
         // メールアドレスチェック
         if ($users_column->column_type == UserColumnType::mail) {
             $validator_rule[] = 'email';
-            $validator_rule[] = new CustomValiUserEmailUnique($user_id);
+            $validator_rule[] = new CustomValiUserEmailUnique($user_id, $columns_set_id);
             if ($users_column->required == 0) {
                 $validator_rule[] = 'nullable';
             }
@@ -152,10 +146,10 @@ class UsersTool
                 $users_column->column_type == UserColumnType::select) {
             // カラムの選択肢用データ
             $selects = UsersColumnsSelects::where('users_columns_id', $users_column->id)
-                                            ->orderBy('users_columns_id', 'asc')
-                                            ->orderBy('display_sequence', 'asc')
-                                            ->pluck('value')
-                                            ->toArray();
+                ->orderBy('users_columns_id', 'asc')
+                ->orderBy('display_sequence', 'asc')
+                ->pluck('value')
+                ->toArray();
 
             // 単一選択チェック
             if ($users_column->column_type == UserColumnType::radio) {
@@ -198,6 +192,10 @@ class UsersTool
     public static function getNoticeEmbeddedTags(User $user): array
     {
         $configs = Configs::getSharedConfigs();
+        // category=general or category=user_register & columns_set_id に configs を絞る
+        $configs = $configs->filter(function ($config, $key) use ($user) {
+            return $config->category = 'general' || ($config->category = 'user_register' && $config->additional1 = $user->columns_set_id);
+        });
 
         $default = [
             UserRegisterNoticeEmbeddedTag::site_name => Configs::getConfigsValue($configs, 'base_site_name'),
@@ -211,7 +209,7 @@ class UsersTool
         ];
 
         // ユーザーのカラム
-        $users_columns = self::getUsersColumns();
+        $users_columns = self::getUsersColumns($user->columns_set_id);
         // ユーザーカラムの登録データ
         $users_input_cols = UsersInputCols::where('users_id', $user->id)
             ->get()
@@ -246,7 +244,7 @@ class UsersTool
         $contents_text .= "eメールアドレス： " . $user->email . "\n";
 
         // ユーザーのカラム
-        $users_columns = self::getUsersColumns();
+        $users_columns = self::getUsersColumns($user->columns_set_id);
 
         // ユーザーカラムの登録データ
         $users_input_cols = UsersInputCols::where('users_id', $user->id)

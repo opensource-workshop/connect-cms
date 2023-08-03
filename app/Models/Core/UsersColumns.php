@@ -5,6 +5,7 @@ namespace App\Models\Core;
 use Illuminate\Database\Eloquent\Model;
 
 use App\UserableNohistory;
+use App\Enums\UserColumnType;
 
 class UsersColumns extends Model
 {
@@ -13,6 +14,7 @@ class UsersColumns extends Model
 
     // 更新する項目の定義
     protected $fillable = [
+        'columns_set_id',
         'column_type',
         'column_name',
         'required',
@@ -35,9 +37,9 @@ class UsersColumns extends Model
     public static function isChoicesColumnType($column_type)
     {
         // ラジオとチェックボックスは選択肢にラベルを使っているため、項目名のラベルにforを付けない
-        if ($column_type == \UserColumnType::radio ||
-                $column_type == \UserColumnType::checkbox ||
-                $column_type == \UserColumnType::agree) {
+        if ($column_type == UserColumnType::radio ||
+                $column_type == UserColumnType::checkbox ||
+                $column_type == UserColumnType::agree) {
             return true;
         }
         return false;

@@ -128,6 +128,7 @@
 
         <form action="" id="form_selects" name="form_selects" method="POST" class="form-horizontal">
             {{ csrf_field() }}
+            <input type="hidden" name="columns_set_id" value="{{$columns_set->id}}">
             <input type="hidden" name="column_id" value="{{ $column->id }}">
             <input type="hidden" name="select_id" value="">
             <input type="hidden" name="section_id" value="">
@@ -559,7 +560,7 @@
 
             {{-- ボタンエリア --}}
             <div class="form-group text-center">
-                <a href="{{url('/')}}/manage/user/editColumns" class="btn btn-secondary">
+                <a href="{{url('/')}}/manage/user/editColumns/{{$columns_set->id}}" class="btn btn-secondary">
                     <i class="fas fa-chevron-left"></i> 項目設定へ
                 </a>
             </div>
