@@ -3703,7 +3703,7 @@ trait MigrationNc3ExportTrait
             // カウンター設定
             $ini = "";
             $ini .= "[counter_base]\n";
-            $ini .= "counter_name = " . $nc3_counter->name . "\n";
+            $ini .= "counter_name = '" . $nc3_counter->name . "'\n";
             // カウント数
             $ini .= "counter_num = " . $nc3_counter->count . "\n";
             // 文字(前)
