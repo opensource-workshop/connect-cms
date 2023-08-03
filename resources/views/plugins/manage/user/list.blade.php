@@ -2,6 +2,7 @@
  * ユーザ一覧のテンプレート
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ユーザ管理
 --}}
@@ -16,7 +17,7 @@ use App\Models\Core\UsersColumns;
 @section('manage_content')
 
 {{-- ダウンロード用フォーム --}}
-<form method="post" name="user_download" action="{{url('/')}}/manage/user/downloadCsv">
+<form method="post" name="user_download" action="{{url('/')}}/manage/user/downloadCsv/{{$columns_set_id}}">
     {{ csrf_field() }}
     <input type="hidden" name="character_code" value="">
 </form>
@@ -53,7 +54,7 @@ use App\Models\Core\UsersColumns;
         {{-- 登録後メッセージ表示 --}}
         @include('plugins.common.flash_message')
 
-        <div class="accordion" id="search_accordion">
+        <div class="accordion form-group" id="search_accordion">
             <div class="card">
                 <button class="btn btn-link p-0 text-left collapsed" type="button" data-toggle="collapse" data-target="#search_collapse" aria-expanded="false" aria-controls="search_collapse">
                     <div class="card-header" id="user_search_condition">
@@ -268,30 +269,46 @@ use App\Models\Core\UsersColumns;
             </div>
         </div>
 
-        <div class="row mt-2">
+        @if (config('connect.USE_USERS_COLUMNS_SET'))
+            {{-- 項目セット検索エリア --}}
+            <div class="form-group">
+                <button type="button" class="btn @if(empty($columns_set_id)) btn-primary @else btn-outline-primary @endif btn-sm" onclick="location.href='{{url('/')}}/manage/user/index?columns_set_id=0'">
+                    ユーザ一覧(全て)
+                </button>
+                @foreach($columns_sets as $columns_set)
+                    <button type="button" class="btn @if($columns_set->id == $columns_set_id) btn-primary @else btn-outline-primary @endif btn-sm" onclick="location.href='{{url('/')}}/manage/user/index?columns_set_id={{$columns_set->id}}'">
+                        ユーザ一覧({{$columns_set->name}})
+                    </button>
+                @endforeach
+            </div>
+        @endif
+
+        <div class="row">
             <div class="col-3 text-left d-flex align-items-end">
                 {{-- (左側)件数 --}}
                 <span class="badge badge-pill badge-light">{{ $users->total() }} 件</span>
             </div>
 
-            <div class="col text-right">
-                {{-- (右側)ダウンロードボタン --}}
-                <div class="btn-group">
-                    <button type="button" class="btn btn-link" onclick="submit_download_shift_jis();">
-                        <i class="fas fa-file-download"></i> ダウンロード
-                    </button>
-                    <button type="button" class="btn btn-link dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <span class="sr-only">ドロップダウンボタン</span>
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-right">
-                        <a class="dropdown-item" href="#" onclick="submit_download_shift_jis(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
-                        <a class="dropdown-item" href="#" onclick="submit_download_utf_8(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
-                        <a class="dropdown-item" href="https://manual.connect-cms.jp/manage/user/index.html" target="_brank">
-                            <span class="btn btn-link"><i class="fas fa-question-circle"></i> オンラインマニュアル</span>
-                        </a>
+            @if ($columns_set_id)
+                <div class="col text-right">
+                    {{-- (右側)ダウンロードボタン --}}
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-link" onclick="submit_download_shift_jis();">
+                            <i class="fas fa-file-download"></i> ダウンロード
+                        </button>
+                        <button type="button" class="btn btn-link dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span class="sr-only">ドロップダウンボタン</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <a class="dropdown-item" href="#" onclick="submit_download_shift_jis(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
+                            <a class="dropdown-item" href="#" onclick="submit_download_utf_8(); return false;">ダウンロード（{{CsvCharacterCode::enum[CsvCharacterCode::utf_8]}}）</a>
+                            <a class="dropdown-item" href="https://manual.connect-cms.jp/manage/user/index.html" target="_brank">
+                                <span class="btn btn-link"><i class="fas fa-question-circle"></i> オンラインマニュアル</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
-            </div>
+            @endif
         </div>
 
         <div class="form-group table-responsive">
@@ -302,9 +319,15 @@ use App\Models\Core\UsersColumns;
                     <th nowrap>ユーザー名</th>
                     <th nowrap><i class="fas fa-users"></i> グループ</th>
                     <th nowrap>eメール</th>
+                    @if (config('connect.USE_USERS_COLUMNS_SET'))
+                        <th nowrap>項目セット</th>
+                    @endif
                     @foreach($users_columns as $users_column)
                         <th nowrap>{{$users_column->column_name}}</th>
                     @endforeach
+                    @if (empty($columns_set_id))
+                        <th nowrap>項目セット値</th>
+                    @endif
                     <th nowrap>権限</th>
                     <th nowrap>役割設定</th>
                     <th nowrap>状態</th>
@@ -350,6 +373,19 @@ use App\Models\Core\UsersColumns;
                         </button>
                     </td>
                     <td>{{$user->email}}</td>
+                    @if (config('connect.USE_USERS_COLUMNS_SET'))
+                        <td>
+                            {{ $user->columns_set_name }}
+                            @if ($user->columns_set_name)
+                                <a href="{{url('/')}}/manage/user/editColumns/{{$user->columns_set_id}}" class="badge badge-success"><i class="far fa-edit"></i> 項目</a>
+                            @endif
+                        </td>
+                    @endif
+                    @if (empty($columns_set_id))
+                        <td>
+                            {{ str_limit(strip_tags($user->inputs_column_value),100,'...') }}
+                        </td>
+                    @endif
                     @foreach($users_columns as $users_column)
                         <td>@include('plugins.manage.user.list_include_value')</td>
                     @endforeach
