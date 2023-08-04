@@ -69,7 +69,7 @@ class RegisterController extends Controller
             'column' => [
                 'name'           => 'required|string|max:255',
                 'userid'         => 'required|max:255|unique:users',
-                'email'          => ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique(null, $columns_set_id)],
+                'email'          => ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($columns_set_id, null)],
                 'password'       => 'required|string|min:6|confirmed',
                 'status'         => 'required',
                 'columns_set_id' => ['required'],
@@ -89,7 +89,7 @@ class RegisterController extends Controller
         // ユーザ自動登録の場合（認証されていない）は、メールアドレスも必須にする。
         if (!Auth::user()) {
             // change: ユーザーの追加項目に対応
-            $validator_array['column']['email'] = ['required', 'email', 'max:255', new CustomValiUserEmailUnique(null, $columns_set_id)];
+            $validator_array['column']['email'] = ['required', 'email', 'max:255', new CustomValiUserEmailUnique($columns_set_id, null)];
 
             // bugfix: 個人情報保護方針への同意を求める場合、必須にする
             $user_register_requre_privacy = Configs::where('name', 'user_register_requre_privacy')->where('additional1', $columns_set_id)->first();

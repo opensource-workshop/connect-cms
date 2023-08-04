@@ -26,7 +26,7 @@ class CustomValiUserEmailUnique implements Rule
      *
      * @return void
      */
-    public function __construct($user_id = null, ?int $columns_set_id)
+    public function __construct(?int $columns_set_id, $user_id = null)
     {
         $this->user_id = $user_id;
         $this->columns_set_id = $columns_set_id;

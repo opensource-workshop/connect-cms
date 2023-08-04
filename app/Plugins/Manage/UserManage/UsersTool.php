@@ -98,7 +98,7 @@ class UsersTool
         // メールアドレスチェック
         if ($users_column->column_type == UserColumnType::mail) {
             $validator_rule[] = 'email';
-            $validator_rule[] = new CustomValiUserEmailUnique($user_id, $columns_set_id);
+            $validator_rule[] = new CustomValiUserEmailUnique($columns_set_id, $user_id);
             if ($users_column->required == 0) {
                 $validator_rule[] = 'nullable';
             }

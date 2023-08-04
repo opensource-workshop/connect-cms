@@ -803,7 +803,7 @@ class UserManage extends ManagePluginBase
                 'name'           => 'required|string|max:255',
                 // ログインID
                 'userid'         => ['required', 'max:255', Rule::unique('users', 'userid')->ignore($id)],
-                'email'          => ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($id, $user->columns_set_id)],
+                'email'          => ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($user->columns_set_id, $id)],
                 'password'       => 'nullable|string|min:6|confirmed',
                 'status'         => 'required',
                 'columns_set_id' => ['required'],
@@ -2071,7 +2071,7 @@ class UserManage extends ManagePluginBase
             // ログインID
             $rules[1] = ['required', 'max:255', Rule::unique('users', 'userid')->ignore($users_id)];
             // eメールアドレス
-            $rules[4] = ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($users_id, $columns_set_id)];
+            $rules[4] = ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($columns_set_id, $users_id)];
             // パスワード
             if ($users_id) {
                 // ユーザ変更時
