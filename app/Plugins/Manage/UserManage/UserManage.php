@@ -823,7 +823,7 @@ class UserManage extends ManagePluginBase
 
         foreach ($users_columns as $users_column) {
             // バリデータールールをセット
-            $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $id, $user->columns_set_id);
+            $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $user->columns_set_id, $id);
         }
 
         // 項目のエラーチェック
@@ -2087,7 +2087,7 @@ class UserManage extends ManagePluginBase
                 // $validator_array['message']['users_columns_value.' . $users_column->id] = $users_column->column_name;
 
                 // バリデータールールを取得
-                $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $users_id, $columns_set_id);
+                $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $columns_set_id, $users_id);
 
                 // バリデータールールあるか
                 if (isset($validator_array['column']['users_columns_value.' . $users_column->id])) {

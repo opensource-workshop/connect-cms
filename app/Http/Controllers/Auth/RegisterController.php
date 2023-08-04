@@ -103,7 +103,7 @@ class RegisterController extends Controller
 
         foreach ($users_columns as $users_column) {
             // バリデータールールをセット
-            $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, null, $columns_set_id);
+            $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $columns_set_id, null);
         }
 
         // 入力値チェック

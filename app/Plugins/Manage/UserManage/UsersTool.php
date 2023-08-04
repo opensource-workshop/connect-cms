@@ -88,7 +88,7 @@ class UsersTool
      * @param int $user_id
      * @return array
      */
-    public static function getValidatorRule($validator_array, $users_column, $user_id = null, int $columns_set_id)
+    public static function getValidatorRule($validator_array, $users_column, int $columns_set_id, $user_id = null)
     {
         $validator_rule = null;
         // 必須チェック
