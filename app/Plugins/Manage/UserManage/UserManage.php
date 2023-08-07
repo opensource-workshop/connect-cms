@@ -795,15 +795,13 @@ class UserManage extends ManagePluginBase
             }
         }
 
-        $user = User::find($id);
-
         // 項目のエラーチェック
         $validator_array = [
             'column' => [
                 'name'           => 'required|string|max:255',
                 // ログインID
                 'userid'         => ['required', 'max:255', Rule::unique('users', 'userid')->ignore($id)],
-                'email'          => ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($user->columns_set_id, $id)],
+                'email'          => ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($request->columns_set_id, $id)],
                 'password'       => 'nullable|string|min:6|confirmed',
                 'status'         => 'required',
                 'columns_set_id' => ['required'],
@@ -819,11 +817,11 @@ class UserManage extends ManagePluginBase
         ];
 
         // ユーザーのカラム
-        $users_columns = UsersTool::getUsersColumns($user->columns_set_id);
+        $users_columns = UsersTool::getUsersColumns($request->columns_set_id);
 
         foreach ($users_columns as $users_column) {
             // バリデータールールをセット
-            $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $user->columns_set_id, $id);
+            $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $request->columns_set_id, $id);
         }
 
         // 項目のエラーチェック
@@ -831,6 +829,7 @@ class UserManage extends ManagePluginBase
         $validator->setAttributeNames($validator_array['message']);
 
         // 更新前のステータス
+        $user = User::find($id);
         $before_status = $user ? $user->status : null;
 
         // 任意のバリデーションを追加
@@ -887,6 +886,8 @@ class UserManage extends ManagePluginBase
 
         // ユーザデータの更新
         User::where('id', $id)->update($update_array);
+        // 更新後を再取得
+        $user = User::find($id);
 
         // ユーザーの追加項目.
         // id（行 id）が渡ってきたら、詳細データは一度消す。その後、登録と同じ処理にする。delete -> insert
