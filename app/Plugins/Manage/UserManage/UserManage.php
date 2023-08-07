@@ -674,6 +674,14 @@ class UserManage extends ManagePluginBase
         // カラムの登録データ
         $input_cols = null;
 
+        // ユーザー登録関連設定の取得
+        $configs = Configs::where('category', 'general')
+            ->orWhere(function ($query) use ($columns_set_id) {
+                $query->where('category', 'user_register')
+                    ->where('additional1', $columns_set_id);
+            })
+            ->get();
+
         return view('plugins.manage.user.regist', [
             "function" => __FUNCTION__,
             "plugin_name" => "user",
@@ -686,6 +694,7 @@ class UserManage extends ManagePluginBase
             'input_cols' => $input_cols,
             'sections' => Section::orderBy('display_sequence')->get(),
             'user_section' => new UserSection(),
+            'configs' => $configs,
         ]);
     }
 
@@ -726,6 +735,14 @@ class UserManage extends ManagePluginBase
         $users_columns_id_select = UsersTool::getUsersColumnsSelects($columns_set_id);
         // カラムの登録データ
         $input_cols = UsersTool::getUsersInputCols([$id]);
+
+        // ユーザー登録関連設定の取得
+        $configs = Configs::where('category', 'general')
+            ->orWhere(function ($query) use ($columns_set_id) {
+                $query->where('category', 'user_register')
+                    ->where('additional1', $columns_set_id);
+            })
+            ->get();
 
         // 削除できる
         $can_deleted = true;
@@ -773,6 +790,7 @@ class UserManage extends ManagePluginBase
             'sections' => Section::orderBy('display_sequence')->get(),
             'user_section' => UserSection::where('user_id', $user->id)->firstOrNew(),
             'can_deleted' => $can_deleted,
+            'configs' => $configs,
         ]);
     }
 

@@ -209,7 +209,7 @@ use App\Models\Core\UsersColumns;
 
     {{-- 未ログイン（自動登録）時に個人情報保護方針への同意関係が設定されている場合 --}}
     @if (!Auth::user())
-        @if (isset($configs['user_register_requre_privacy']) && $configs['user_register_requre_privacy'] == 1)
+        @if (Configs::getConfigsValue($configs, "user_register_requre_privacy") == 1)
             <div class="form-group row">
                 <label for="password-confirm" class="col-md-4 col-form-label text-md-right pt-0">個人情報保護方針への同意  <label class="badge badge-danger">必須</label></label>
 
@@ -219,9 +219,7 @@ use App\Models\Core\UsersColumns;
                         <label class="custom-control-label" for="user_register_requre_privacy"> 以下の内容に同意します。</label>
                     </div>
                     @include('plugins.common.errors_inline', ['name' => 'user_register_requre_privacy'])
-                    @if (isset($configs['user_register_privacy_description']))
-                        {!!$configs['user_register_privacy_description']!!}
-                    @endif
+                    {!!Configs::getConfigsValue($configs, "user_register_requre_privacy", null)!!}
                 </div>
             </div>
         @endif
@@ -369,7 +367,7 @@ use App\Models\Core\UsersColumns;
                 <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> ユーザ変更</button>
             @else
                 {{-- ユーザ仮登録ON --}}
-                @if (isset($configs['user_register_temporary_regist_mail_flag']) && $configs['user_register_temporary_regist_mail_flag'] == 1)
+                @if (Configs::getConfigsValue($configs, "user_register_temporary_regist_mail_flag") == 1)
                     <button type="submit" class="btn btn-info"><i class="fas fa-check"></i> ユーザ仮登録</button>
                 @else
                     <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> ユーザ登録</button>

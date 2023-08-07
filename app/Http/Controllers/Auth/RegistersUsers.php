@@ -63,12 +63,6 @@ trait RegistersUsers
             })
             ->get();
 
-        $configs_array = array();
-        foreach ($configs as $config) {
-            $configs_array[$config['name']] = $config['value'];
-        }
-        $configs = $configs_array;
-
         // ユーザ登録の権限チェック
         if ($this->isCan('admin_user')) {
             // ユーザ登録の権限があればOK
