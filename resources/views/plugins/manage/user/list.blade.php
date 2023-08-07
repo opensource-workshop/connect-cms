@@ -58,14 +58,14 @@ use App\Models\Core\UsersColumns;
             <div class="card">
                 <button class="btn btn-link p-0 text-left collapsed" type="button" data-toggle="collapse" data-target="#search_collapse" aria-expanded="false" aria-controls="search_collapse">
                     <div class="card-header" id="user_search_condition">
-                        絞り込み条件 <i class="fas fa-angle-down"></i>
+                        絞り込み条件 <i class="fas fa-angle-down"></i>@if (Session::has('user_search_condition'))<span class="badge badge-pill badge-primary ml-2">条件設定中</span>@endif
                     </div>
                 </button>
-                @if (Session::has('user_search_condition'))
+                {{-- @if (Session::has('user_search_condition'))
                 <div id="search_collapse" class="collapse show" aria-labelledby="user_search_condition" data-parent="#search_accordion">
-                @else
+                @else --}}
                 <div id="search_collapse" class="collapse" aria-labelledby="user_search_condition" data-parent="#search_accordion">
-                @endif
+                {{-- @endif --}}
                     <div class="card-body border-bottom">
 
                         <form name="form_search" id="form_search" class="form-horizontal" method="post" action="{{url('/')}}/manage/user/search">
