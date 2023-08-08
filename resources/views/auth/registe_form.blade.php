@@ -358,14 +358,15 @@ use App\Models\Core\UsersColumns;
                 <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/user')}}'">
                     <i class="fas fa-times"></i> キャンセル
                 </button>
+                @if ($is_function_edit)
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> ユーザ変更</button>
+                @else
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> ユーザ登録</button>
+                @endif
             @else
                 <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}'">
                     <i class="fas fa-times"></i> キャンセル
                 </button>
-            @endif
-            @if ($is_function_edit)
-                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> ユーザ変更</button>
-            @else
                 {{-- ユーザ仮登録ON --}}
                 @if (Configs::getConfigsValue($configs, "user_register_temporary_regist_mail_flag") == 1)
                     <button type="submit" class="btn btn-info"><i class="fas fa-check"></i> ユーザ仮登録</button>
