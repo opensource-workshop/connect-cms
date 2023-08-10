@@ -5193,7 +5193,7 @@ trait MigrationNc3ExportTrait
                     $join->on('boxes_page_containers.box_id', '=', 'boxes.id')
                     ->where('boxes_page_containers.is_published', 1);      // 有効なデータ
                 })
-                ->join('frames_languages', function ($join) use($nc3_page_language_id) {
+                ->join('frames_languages', function ($join) use ($nc3_page_language_id) {
                     $join->on('frames_languages.frame_id', '=', 'frames.id')
                     ->where('frames_languages.language_id', '=', $nc3_page_language_id);
                 })
@@ -5254,7 +5254,7 @@ trait MigrationNc3ExportTrait
                     $join->on('frames.box_id', '=', 'boxes.id')
                     ->where('frames.is_deleted', 0);      // 有効なデータ
                 })
-                ->join('frames_languages', function ($join) use($nc3_page_language_id) {
+                ->join('frames_languages', function ($join) use ($nc3_page_language_id) {
                     $join->on('frames_languages.frame_id', '=', 'frames.id')
                     ->where('frames_languages.language_id', '=', $nc3_page_language_id);
                 })
