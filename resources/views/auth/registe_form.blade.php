@@ -80,13 +80,13 @@ use App\Models\Core\UsersColumns;
                         @endforeach
                     </select>
                     @include('plugins.common.errors_inline', ['name' => 'columns_set_id'])
-                    <small class="form-text text-muted">※ 選択すると、項目セットの追加項目を自動切替します。</small>
+                    <small class="form-text text-muted">※ 選択すると、関連した項目に自動切替します。</small>
                 </div>
             </div>
         @else
             {{-- 自動登録 --}}
             <div class="form-group row">
-                <label for="columns_set_id" class="col-md-4 col-form-label text-md-right">項目セット <span class="badge badge-danger">必須</span></label>
+                <label for="columns_set_id" class="col-md-4 col-form-label text-md-right">{{Configs::getConfigsValue($configs, "user_columns_set_label_name", '項目セット')}} <span class="badge badge-danger">必須</span></label>
                 <div class="col-md-8">
                     <select name="columns_set_id" id="columns_set_id" class="form-control @if ($errors->has('columns_set_id')) border-danger @endif" onchange="changeSeminarUserIdAction()">
                         @foreach ($columns_sets as $columns_set)
@@ -94,7 +94,7 @@ use App\Models\Core\UsersColumns;
                         @endforeach
                     </select>
                     @include('plugins.common.errors_inline', ['name' => 'columns_set_id'])
-                    <small class="form-text text-muted">※ 選択すると、項目セットの追加項目を自動切替します。</small>
+                    <small class="form-text text-muted">※ 選択すると、関連した項目に自動切替します。</small>
                 </div>
             </div>
         @endif

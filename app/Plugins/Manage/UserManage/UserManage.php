@@ -1286,7 +1286,13 @@ class UserManage extends ManagePluginBase
         }
 
         // Config データの取得
-        $configs = Configs::where('category', 'user_register')->where('additional1', $id)->get();
+        $configs = Configs::where('category', 'user_register')
+            ->where('additional1', $id)
+            ->orWhere(function ($query) {
+                $query->where('category', 'user_register')
+                    ->where('additional1', 'all');
+            })
+            ->get();
 
         return view('plugins.manage.user.auto_regist', [
             "function" => __FUNCTION__,
@@ -1509,6 +1515,15 @@ class UserManage extends ManagePluginBase
             [
                 'category' => 'user_register',
                 'value' => $base_roles ? implode(',', $base_roles) : '',
+            ]
+        );
+
+        // 項目セット名（全ての自動ユーザ登録設定で共通設定. additional1=all）
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_columns_set_label_name', 'additional1' => 'all'],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_columns_set_label_name
             ]
         );
 

@@ -61,6 +61,11 @@ trait RegistersUsers
                 $query->where('category', 'user_register')
                     ->where('additional1', $columns_set_id);
             })
+            // （全ての自動ユーザ登録設定で共通設定. additional1=all. 項目セット名とか）
+            ->orWhere(function ($query) {
+                $query->where('category', 'user_register')
+                    ->where('additional1', 'all');
+            })
             ->get();
 
         // ユーザ登録の権限チェック

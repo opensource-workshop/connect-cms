@@ -343,6 +343,17 @@
                 </div>
             </div>
 
+            @if (config('connect.USE_USERS_COLUMNS_SET'))
+                <div class="form-group row">
+                    <label class="col-md-3 col-form-label text-md-right">項目セット名</label>
+                    <div class="col">
+                        <input type="text" name="user_columns_set_label_name" value="{{Configs::getConfigsValueAndOld($configs, 'user_columns_set_label_name')}}" class="form-control">
+                        <small class="text-muted">※ 自動ユーザ登録時の項目セットの項目名を変更できます。未設定の場合「項目セット」を表示します。<br></small>
+                        <small class="text-danger">※ この設定は、全ての自動ユーザ登録設定で共通設定です。<br></small>
+                    </div>
+                </div>
+            @endif
+
             {{-- Submitボタン --}}
             <div class="form-group text-center">
                 <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
