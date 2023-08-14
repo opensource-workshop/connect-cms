@@ -4829,7 +4829,7 @@ trait MigrationNc3ExportTrait
                 // アルバム
                 $photo_album_display_album = Nc3PhotoAlbumDisplayAlbum::where('frame_key', $nc3_photoalbum_frame_setting->frame_key)->orderBy('created', 'desc')->first();
                 if (!$photo_album_display_album) {
-                   continue;
+                    continue;
                 }
                 $nc3_photoalbum_alubum = $nc3_photoalbum_alubums->firstWhere('key', $photo_album_display_album->album_key) ?? new Nc3Photoalbum();
 
