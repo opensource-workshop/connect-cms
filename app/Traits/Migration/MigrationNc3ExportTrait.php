@@ -5171,7 +5171,7 @@ trait MigrationNc3ExportTrait
     {
         $export_ommit_frames = $this->getMigrationConfig('frames', 'export_ommit_frames');
         $export_ommit_menu = $this->getMigrationConfig('menus', 'export_ommit_menu');
-
+        $nc3_page_language_id = $nc3_page->language_id;
         if ($nc3_page->id == $nc3_page->page_id_top) {
             // ルームのトップページ
             // boxes.page_id = null（共通エリア（サイト全体・パブ共通・ルーム共通））は後処理でとるため、ここで取らない
@@ -5193,8 +5193,9 @@ trait MigrationNc3ExportTrait
                     $join->on('boxes_page_containers.box_id', '=', 'boxes.id')
                     ->where('boxes_page_containers.is_published', 1);      // 有効なデータ
                 })
-                ->join('frames_languages', function ($join) {
-                    $join->on('frames_languages.frame_id', '=', 'frames.id');
+                ->join('frames_languages', function ($join) use ($nc3_page_language_id) {
+                    $join->on('frames_languages.frame_id', '=', 'frames.id')
+                    ->where('frames_languages.language_id', '=', $nc3_page_language_id);
                 })
                 ->join('languages', function ($join) {
                     $join->on('languages.id', '=', 'frames_languages.language_id')
@@ -5253,8 +5254,9 @@ trait MigrationNc3ExportTrait
                     $join->on('frames.box_id', '=', 'boxes.id')
                     ->where('frames.is_deleted', 0);      // 有効なデータ
                 })
-                ->join('frames_languages', function ($join) {
-                    $join->on('frames_languages.frame_id', '=', 'frames.id');
+                ->join('frames_languages', function ($join) use ($nc3_page_language_id) {
+                    $join->on('frames_languages.frame_id', '=', 'frames.id')
+                    ->where('frames_languages.language_id', '=', $nc3_page_language_id);
                 })
                 ->join('languages', function ($join) {
                     $join->on('languages.id', '=', 'frames_languages.language_id')
@@ -5867,7 +5869,7 @@ trait MigrationNc3ExportTrait
     {
         // お知らせモジュールのデータの取得
         // （NC3になって「続きを読む」機能なくなった。）
-        $announcement = Nc3Announcement::where('block_id', $nc3_frame->block_id)->where('is_active', 1)->firstOrNew([]);
+        $announcement = Nc3Announcement::where('block_id', $nc3_frame->block_id)->where('is_active', 1)->where('language_id', $nc3_frame->language_id)->firstOrNew([]);
 
         // 記事
 
