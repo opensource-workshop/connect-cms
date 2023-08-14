@@ -4828,6 +4828,9 @@ trait MigrationNc3ExportTrait
             foreach ($nc3_photoalbum_frame_settings as $nc3_photoalbum_frame_setting) {
                 // アルバム
                 $photo_album_display_album = Nc3PhotoAlbumDisplayAlbum::where('frame_key', $nc3_photoalbum_frame_setting->frame_key)->orderBy('created', 'desc')->first();
+                if (!$photo_album_display_album) {
+                   continue;
+                }
                 $nc3_photoalbum_alubum = $nc3_photoalbum_alubums->firstWhere('key', $photo_album_display_album->album_key) ?? new Nc3Photoalbum();
 
                 // (nc3)5000ミリ秒固定 => (cc)ミリ秒
