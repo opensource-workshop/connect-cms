@@ -18,10 +18,29 @@ use App\Models\Core\UsersColumns;
     }
 @endphp
 
+<script>
+    /** 会員変更submit */
+    function changeSeminarUserIdAction(columns_set_id) {
+        @if (Auth::user() && Auth::user()->can('admin_user'))
+            @if ($is_function_edit)
+                {{-- ユーザ管理-編集 --}}
+                document.forms['form_register'].action = '{{url('/manage/user/edit/')}}/{{$id}}?columns_set_id=' + columns_set_id;
+            @else
+                {{-- ユーザ管理-登録 --}}
+                document.forms['form_register'].action = '{{url('/manage/user/regist')}}?columns_set_id=' + columns_set_id;
+            @endif
+        @else
+            {{-- 自動ユーザ登録-再表示 --}}
+            document.forms['form_register'].action = '{{route('show_register_form.re_show')}}';
+        @endif
+        document.forms['form_register'].submit();
+    }
+</script>
+
 @if ($is_function_edit)
-    <form class="form-horizontal" method="POST" action="{{url('/manage/user/update/')}}/{{$id}}">
+    <form class="form-horizontal" method="POST" action="{{url('/manage/user/update/')}}/{{$id}}" name="form_register">
 @else
-    <form class="form-horizontal" method="POST" action="{{route('register')}}">
+    <form class="form-horizontal" method="POST" action="{{route('register')}}" name="form_register">
 @endif
     {{ csrf_field() }}
 
@@ -46,6 +65,41 @@ use App\Models\Core\UsersColumns;
         {{-- この値はUserを登録する際に使われず、サーバーサイドでシステム設定値をもとにステータスを決定する --}}
         {{-- see also : App\Http\Controllers\Auth userStatus() --}}
         <input type="hidden" value="{{UserStatus::active}}" name="status">
+    @endif
+
+    @if (config('connect.USE_USERS_COLUMNS_SET'))
+        @if (Auth::user() && Auth::user()->can('admin_user'))
+            {{-- 管理者によるユーザ登録 --}}
+            <div class="form-group row">
+                <label for="columns_set_id" class="col-md-4 col-form-label text-md-right">項目セット <span class="badge badge-danger">必須</span></label>
+                <div class="col-md-8">
+                    <select name="columns_set_id" id="columns_set_id" class="form-control @if ($errors->has('columns_set_id')) border-danger @endif" onchange="changeSeminarUserIdAction(this.value)">
+                        <option value=""></option>
+                        @foreach ($columns_sets as $columns_set)
+                            <option value="{{$columns_set->id}}" @if (old('columns_set_id', $user->columns_set_id) == $columns_set->id) selected="selected" @endif>{{$columns_set->name}}</option>
+                        @endforeach
+                    </select>
+                    @include('plugins.common.errors_inline', ['name' => 'columns_set_id'])
+                    <small class="form-text text-muted">※ 選択すると、関連した項目に自動切替します。</small>
+                </div>
+            </div>
+        @else
+            {{-- 自動登録 --}}
+            <div class="form-group row">
+                <label for="columns_set_id" class="col-md-4 col-form-label text-md-right">{{Configs::getConfigsValue($configs, "user_columns_set_label_name", '項目セット')}} <span class="badge badge-danger">必須</span></label>
+                <div class="col-md-8">
+                    <select name="columns_set_id" id="columns_set_id" class="form-control @if ($errors->has('columns_set_id')) border-danger @endif" onchange="changeSeminarUserIdAction()">
+                        @foreach ($columns_sets as $columns_set)
+                            <option value="{{$columns_set->id}}" @if (old('columns_set_id', $columns_set_id) == $columns_set->id) selected="selected" @endif>{{$columns_set->name}}</option>
+                        @endforeach
+                    </select>
+                    @include('plugins.common.errors_inline', ['name' => 'columns_set_id'])
+                    <small class="form-text text-muted">※ 選択すると、関連した項目に自動切替します。</small>
+                </div>
+            </div>
+        @endif
+    @else
+        <input type="hidden" name="columns_set_id" value="{{$columns_set_id}}">
     @endif
 
     <div class="form-group row">
@@ -155,7 +209,7 @@ use App\Models\Core\UsersColumns;
 
     {{-- 未ログイン（自動登録）時に個人情報保護方針への同意関係が設定されている場合 --}}
     @if (!Auth::user())
-        @if (isset($configs['user_register_requre_privacy']) && $configs['user_register_requre_privacy'] == 1)
+        @if (Configs::getConfigsValue($configs, "user_register_requre_privacy") == 1)
             <div class="form-group row">
                 <label for="password-confirm" class="col-md-4 col-form-label text-md-right pt-0">個人情報保護方針への同意  <label class="badge badge-danger">必須</label></label>
 
@@ -165,9 +219,7 @@ use App\Models\Core\UsersColumns;
                         <label class="custom-control-label" for="user_register_requre_privacy"> 以下の内容に同意します。</label>
                     </div>
                     @include('plugins.common.errors_inline', ['name' => 'user_register_requre_privacy'])
-                    @if (isset($configs['user_register_privacy_description']))
-                        {!!$configs['user_register_privacy_description']!!}
-                    @endif
+                    {!!Configs::getConfigsValue($configs, "user_register_requre_privacy", null)!!}
                 </div>
             </div>
         @endif
@@ -303,19 +355,20 @@ use App\Models\Core\UsersColumns;
         <div class="col-sm-3"></div>
         <div class="col-sm-6">
             @if (Auth::user() && Auth::user()->can('admin_user'))
-            <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/user')}}'">
-                <i class="fas fa-times"></i> キャンセル
-            </button>
+                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/user')}}'">
+                    <i class="fas fa-times"></i> キャンセル
+                </button>
+                @if ($is_function_edit)
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> ユーザ変更</button>
+                @else
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> ユーザ登録</button>
+                @endif
             @else
-            <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}'">
-                <i class="fas fa-times"></i> キャンセル
-            </button>
-            @endif
-            @if ($is_function_edit)
-                <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> ユーザ変更</button>
-            @else
+                <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}'">
+                    <i class="fas fa-times"></i> キャンセル
+                </button>
                 {{-- ユーザ仮登録ON --}}
-                @if (isset($configs['user_register_temporary_regist_mail_flag']) && $configs['user_register_temporary_regist_mail_flag'] == 1)
+                @if (Configs::getConfigsValue($configs, "user_register_temporary_regist_mail_flag") == 1)
                     <button type="submit" class="btn btn-info"><i class="fas fa-check"></i> ユーザ仮登録</button>
                 @else
                     <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> ユーザ登録</button>

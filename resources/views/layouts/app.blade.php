@@ -2,7 +2,9 @@
  * メニュー表示画面
  *
  * @param obj $pages ページデータの配列
+ *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category メニュープラグイン
 --}}
@@ -287,7 +289,13 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                     @endif
                 @endif
                 {{-- @if (isset($configs['user_register_enable']) && ($configs['user_register_enable'] == '1')) --}}
-                @if (Configs::getConfigsValue($cc_configs, 'user_register_enable') == '1')
+                {{-- @if (Configs::getConfigsValue($cc_configs, 'user_register_enable') == '1') --}}
+                @php
+                    $user_register_enables = $cc_configs->where('category', 'user_register')
+                        ->where('name', 'user_register_enable')
+                        ->where('value', '1');
+                @endphp
+                @if ($user_register_enables->isNotEmpty())
                     <li><a class="nav-link" href="{{ route('show_register_form') }}">ユーザ登録</a></li>
                 @endif
             @else

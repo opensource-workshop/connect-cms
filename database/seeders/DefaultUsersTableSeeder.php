@@ -26,6 +26,7 @@ class DefaultUsersTableSeeder extends Seeder
                         // change to laravel6.
                         // 'password' => bcrypt('C-admin'),
                         'password' => Hash::make('C-admin'),
+                        'columns_set_id' => 1,
                         'remember_token' => '',
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),

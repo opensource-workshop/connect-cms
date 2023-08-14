@@ -35,6 +35,7 @@ Route::post('/password/reset', 'Auth\ResetPasswordController@reset')->name('pass
 
 //ユーザー登録
 Route::get('register', 'Auth\RegisterController@showRegistrationForm')->name('show_register_form');
+Route::post('register_re_display', 'Auth\RegisterController@reShowRegistrationForm')->name('show_register_form.re_show');
 
 // システム管理者 or ユーザ管理者の場合、OK
 //Route::group(['middleware' => ['auth', 'can:system_user-admin']], function () {

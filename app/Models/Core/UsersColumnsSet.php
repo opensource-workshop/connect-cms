@@ -5,18 +5,19 @@ namespace App\Models\Core;
 use Illuminate\Database\Eloquent\Model;
 
 use App\UserableNohistory;
+use App\Traits\ConnectModelDisplaySequenceTrait;
 
-class UsersColumnsSelects extends Model
+class UsersColumnsSet extends Model
 {
     // 保存時のユーザー関連データの保持（履歴なしUserable）
     use UserableNohistory;
+    use ConnectModelDisplaySequenceTrait;
 
-    // 更新する項目の定義
+    /**
+     * create()やupdate()で入力を受け付ける ホワイトリスト
+     */
     protected $fillable = [
-        'columns_set_id',
-        'users_columns_id',
-        'value',
-        'agree_description',
+        'name',
         'display_sequence',
     ];
 }

@@ -4,22 +4,22 @@ namespace App\Http\Controllers\Auth;
 
 use App\Enums\UserColumnType;
 use App\Enums\UserStatus;
-use App\Http\Controllers\Controller;
-//use App\Providers\RouteServiceProvider;
-use App\User;
 //use Illuminate\Foundation\Auth\RegistersUsers;
 use App\Http\Controllers\Auth\RegistersUsers;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
-
-use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Controller;
 use App\Models\Core\Configs;
 use App\Models\Core\Section;
 use App\Models\Core\UserSection;
 use App\Models\Core\UsersInputCols;
 use App\Plugins\Manage\UserManage\UsersTool;
+//use App\Providers\RouteServiceProvider;
 use App\Rules\CustomValiUserEmailUnique;
+use App\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 
 class RegisterController extends Controller
 {
@@ -33,7 +33,6 @@ class RegisterController extends Controller
     | provide this functionality without requiring any additional code.
     |
     */
-
     use RegistersUsers;
 
     /**
@@ -57,34 +56,32 @@ class RegisterController extends Controller
     /**
      * Get a validator for an incoming registration request.
      *
-     * @param  array  $data
+     * @param array $data
      * @return \Illuminate\Contracts\Validation\Validator
      */
     protected function validator(array $data)
     {
+        // columns_set_id はhidden等で必ずセットされる想定
+        $columns_set_id = Arr::get($data, 'columns_set_id');
+
         // change: ユーザーの追加項目に対応
-        // $validate_rule = [
-        //     'name'     => 'required|string|max:255',
-        //     'userid'   => 'required|max:255|unique:users',
-        //     'email'    => 'nullable|email|max:255|unique:users',
-        //     'password' => 'required|string|min:6|confirmed',
-        //     'status'   => 'required',
-        // ];
         $validator_array = [
             'column' => [
-                'name'     => 'required|string|max:255',
-                'userid'   => 'required|max:255|unique:users',
-                'email'    => ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique(null)],
-                'password' => 'required|string|min:6|confirmed',
-                'status'   => 'required',
+                'name'           => 'required|string|max:255',
+                'userid'         => 'required|max:255|unique:users',
+                'email'          => ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($columns_set_id, null)],
+                'password'       => 'required|string|min:6|confirmed',
+                'status'         => 'required',
+                'columns_set_id' => ['required'],
             ],
             // 項目名
             'message' => [
-                'name' => 'ユーザ名',
-                'userid' => 'ログインID',
-                'email' => 'eメール',
-                'password' => 'パスワード',
-                'status' => '状態',
+                'name'                         => 'ユーザ名',
+                'userid'                       => 'ログインID',
+                'email'                        => 'eメール',
+                'password'                     => 'パスワード',
+                'status'                       => '状態',
+                'columns_set_id'               => '項目セット',
                 'user_register_requre_privacy' => '個人情報保護方針への同意',
             ]
         ];
@@ -92,40 +89,29 @@ class RegisterController extends Controller
         // ユーザ自動登録の場合（認証されていない）は、メールアドレスも必須にする。
         if (!Auth::user()) {
             // change: ユーザーの追加項目に対応
-            // $validate_rule['email'] = 'required|string|email|max:255|unique:users';
-            // $validate_rule['user_register_requre_privacy'] = 'required';
-            $validator_array['column']['email'] = ['required', 'email', 'max:255', new CustomValiUserEmailUnique(null)];
+            $validator_array['column']['email'] = ['required', 'email', 'max:255', new CustomValiUserEmailUnique($columns_set_id, null)];
 
             // bugfix: 個人情報保護方針への同意を求める場合、必須にする
-            $user_register_requre_privacy = Configs::where('name', 'user_register_requre_privacy')->first();
+            $user_register_requre_privacy = Configs::where('name', 'user_register_requre_privacy')->where('additional1', $columns_set_id)->first();
             if (!empty($user_register_requre_privacy) && $user_register_requre_privacy->value == '1') {
                 $validator_array['column']['user_register_requre_privacy'] = 'required';
             }
         }
 
         // ユーザーのカラム
-        $users_columns = UsersTool::getUsersColumns();
+        $users_columns = UsersTool::getUsersColumns($columns_set_id);
 
         foreach ($users_columns as $users_column) {
             // バリデータールールをセット
-            $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, null);
+            $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $columns_set_id, null);
         }
 
         // 入力値チェック
-        // $validator = Validator::make($data, $validate_rule);
         $validator = Validator::make($data, $validator_array['column']);
 
         // 項目名
         // change: ユーザーの追加項目に対応
-        // $validator->setAttributeNames([
-        //     'name'                         => 'ユーザ名',
-        //     'userid'                       => 'ログインID',
-        //     'email'                        => 'eメールアドレス',
-        //     'password'                     => 'パスワード',
-        //     'user_register_requre_privacy' => '個人情報保護方針への同意',
-        // ]);
         $validator->setAttributeNames($validator_array['message']);
-        // dd($validator->errors());
         return $validator;
     }
 
@@ -142,26 +128,30 @@ class RegisterController extends Controller
             $this->redirectTo = '/';
         }
 
+        // columns_set_id はhidden等で必ずセットされる想定
+        $columns_set_id = Arr::get($data, 'columns_set_id');
+
         // 設定の取得
-        $configs = Configs::get();
+        $configs = Configs::where('category', 'user_register')->where('additional1', $columns_set_id)->get();
 
         $status = $this->userStatus($data, $configs);
 
         // ユーザ登録
         $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'userid' => $data['userid'],
+            'name'           => $data['name'],
+            'email'          => $data['email'],
+            'userid'         => $data['userid'],
             // change to laravel6.
             // 'password' => bcrypt($data['password']),
-            'password' => Hash::make($data['password']),
-            'status' => $status,
+            'password'       => Hash::make($data['password']),
+            'status'         => $status,
+            'columns_set_id' => $columns_set_id,
         ]);
 
         // ユーザーの追加項目の登録.
         // ----------------------------------
         // ユーザーのカラム
-        $users_columns = UsersTool::getUsersColumns();
+        $users_columns = UsersTool::getUsersColumns($columns_set_id);
 
         // users_input_cols 登録
         foreach ($users_columns as $users_column) {
@@ -216,7 +206,7 @@ class RegisterController extends Controller
      * 登録するユーザーステータスを取得する
      *
      * @param array $data
-     * @param Conllection　$configs 設定値
+     * @param Collection $configs 設定値
      * @return ユーザステータス
      */
     private function userStatus(array $data, Collection $configs) : int
