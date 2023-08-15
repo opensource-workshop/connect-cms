@@ -240,8 +240,7 @@ class Frame extends Model
             return false;
         }
 
-        if (
-            $this->content_open_type == ContentOpenType::always_close ||
+        if ($this->content_open_type == ContentOpenType::always_close ||
             (
                 $this->content_open_type == ContentOpenType::limited_open &&
                 !Carbon::now()->between($this->content_open_date_from, $this->content_open_date_to)
