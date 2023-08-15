@@ -12,27 +12,21 @@
 @section('manage_content')
 
 <script type="text/javascript">
-    /**
-     * 項目の追加
-     */
+    /** 項目の追加 */
     function submit_add_column(btn) {
         form_columns.action = "{{url('/')}}/manage/user/addColumn";
         btn.disabled = true;
         form_columns.submit();
     }
 
-    /**
-     * 項目の更新
-     */
+    /** 項目の更新 */
     function submit_update_column(column_id) {
         form_columns.action = "{{url('/')}}/manage/user/updateColumn";
         form_columns.column_id.value = column_id;
         form_columns.submit();
     }
 
-    /**
-     * 項目の表示順操作
-     */
+    /** 項目の表示順操作 */
     function submit_display_sequence(column_id, display_sequence, display_sequence_operation) {
         form_columns.action = "{{url('/')}}/manage/user/updateColumnSequence";
         form_columns.column_id.value = column_id;
@@ -41,9 +35,7 @@
         form_columns.submit();
     }
 
-    /**
-     * 項目の削除ボタン押下
-     */
+    /** 項目の削除ボタン押下 */
      function submit_delete_column(column_id) {
         if (confirm('項目を削除します。\nよろしいですか？')){
             form_columns.action = "{{url('/')}}/manage/user/deleteColumn";
@@ -155,6 +147,6 @@
     .button-wrapper .btn:disabled {
       pointer-events: none;
     }
-    </style>
+</style>
 
 @endsection
