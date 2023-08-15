@@ -8,7 +8,6 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\RedirectsUsers;
 use Illuminate\Support\Facades\Validator;
 
-// Connect-CMS 用設定データ
 use App\User;
 use App\Models\Core\Configs;
 use App\Models\Core\UsersColumnsSet;
@@ -82,7 +81,7 @@ trait RegistersUsers
 
         // *** ユーザの追加項目
         // ユーザーのカラム
-        $users_columns = UsersTool::getUsersColumns($columns_set_id);
+        $users_columns = UsersTool::getUsersColumnsRegister($columns_set_id);
         // カラムの選択肢
         $users_columns_id_select = UsersTool::getUsersColumnsSelects($columns_set_id);
         // カラムの登録データ

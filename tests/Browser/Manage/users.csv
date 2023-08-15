@@ -1,4 +1,4 @@
-﻿id,ログインID,ユーザ名,グループ,eメールアドレス,パスワード,権限,役割設定,状態
+﻿id,ログインID,ユーザ名,グループ,メールアドレス,パスワード,権限,役割設定,状態
 ,user01,user01システム管理者,,,user01,role_article_admin|role_arrangement|role_article|role_approval|role_reporter|admin_system|admin_site|admin_page|admin_user,,0
 ,user02,user02コンテンツ管理者,,,user02,role_article_admin,,0
 ,user03,user03プラグイン管理者,,,user03,role_arrangement,,0

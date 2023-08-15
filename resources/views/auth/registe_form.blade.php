@@ -102,109 +102,121 @@ use App\Models\Core\UsersColumns;
         <input type="hidden" name="columns_set_id" value="{{$columns_set_id}}">
     @endif
 
-    <div class="form-group row">
-        <label for="name" class="col-md-4 col-form-label text-md-right">ユーザ名 <label class="badge badge-danger">必須</label></label>
-
-        <div class="col-md-8">
-            <input id="name" type="text" class="form-control @if ($errors->has('name')) border-danger @endif" name="name" value="{{ old('name', $user->name) }}" placeholder="{{ __('messages.input_user_name') }}" required>
-            @include('plugins.common.errors_inline', ['name' => 'name'])
-        </div>
-    </div>
-
-    <div class="form-group row">
-        <label for="userid" class="col-md-4 col-form-label text-md-right">ログインID <label class="badge badge-danger">必須</label></label>
-
-        <div class="col-md-8">
-            <input id="userid" type="text" class="form-control @if ($errors->has('userid')) border-danger @endif" name="userid" value="{{ old('userid', $user->userid) }}" placeholder="{{ __('messages.input_login_id') }}" required>
-            @include('plugins.common.errors_inline', ['name' => 'userid'])
-        </div>
-    </div>
-
-    @if (Auth::user() && Auth::user()->can('admin_user'))
-        {{-- 管理者によるユーザ登録 --}}
-        <div class="form-group row">
-            <label for="email" class="col-md-4 col-form-label text-md-right">eメールアドレス</label>
-
-            <div class="col-md-8">
-                <input id="email" type="text" class="form-control @if ($errors->has('email')) border-danger @endif" name="email" value="{{ old('email', $user->email) }}" placeholder="{{ __('messages.input_email') }}">
-                @include('plugins.common.errors_inline', ['name' => 'email'])
-                @if (!$is_function_edit)
-                    <small class="text-muted">
-                        ※ 登録時にeメールアドレスがある場合、登録メール送信画面に移動します。<br />
-                    </small>
-                @endif
-            </div>
-        </div>
-    @else
-        {{-- 自動登録 --}}
-        <div class="form-group row">
-            <label for="email" class="col-md-4 col-form-label text-md-right">eメールアドレス <label class="badge badge-danger">必須</label></label>
-
-            <div class="col-md-8">
-                <input id="email" type="text" class="form-control @if ($errors->has('email')) border-danger @endif" name="email" value="{{ old('email', $user->email) }}" placeholder="{{ __('messages.input_email') }}" required>
-                @include('plugins.common.errors_inline', ['name' => 'email'])
-            </div>
-        </div>
-    @endif
-
-    <div class="form-group row">
-        @if ($is_function_edit)
-            <label for="password" class="col-md-4 col-form-label text-md-right">パスワード</label>
-        @else
-            <label for="password" class="col-md-4 col-form-label text-md-right">パスワード <label class="badge badge-danger">必須</label></label>
-        @endif
-
-        <div class="col-md-8">
-            @if ($is_function_edit)
-                <input id="password" type="password" class="form-control @if ($errors->has('password')) border-danger @endif" name="password" autocomplete="new-password" placeholder="{{ __('messages.input_password') }}">
-            @else
-                <input id="password" type="password" class="form-control @if ($errors->has('password')) border-danger @endif" name="password" autocomplete="new-password" required placeholder="{{ __('messages.input_password') }}">
-            @endif
-
-            @if ($errors->has('password'))
-                @foreach ($errors->get('password') as $error)
-                    <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$error}}</div>
-                @endforeach
-            @endif
-        </div>
-    </div>
-
-    <div class="form-group row">
-        @if ($is_function_edit)
-            <label for="password-confirm" class="col-md-4 col-form-label text-md-right">確認用パスワード</label>
-        @else
-            <label for="password-confirm" class="col-md-4 col-form-label text-md-right">確認用パスワード <label class="badge badge-danger">必須</label></label>
-        @endif
-
-        <div class="col-md-8">
-            @if ($is_function_edit)
-                <input id="password-confirm" type="password" class="form-control" name="password_confirmation" placeholder="{{ __('messages.input_password_confirm') }}">
-            @else
-                <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required placeholder="{{ __('messages.input_password_confirm') }}">
-            @endif
-        </div>
-    </div>
-
     {{-- ユーザーの追加カラム --}}
-    @foreach($users_columns as $users_column)
-        @php
-            // ラジオとチェックボックスは選択肢にラベルを使っているため、項目名のラベルにforを付けない
-            if (UsersColumns::isChoicesColumnType($users_column->column_type)) {
-                $label_for = '';
-                $label_class = 'pt-0';
-            } else {
-                $label_for = 'for=user-column-' . $users_column->id;
-                $label_class = '';
-            }
-        @endphp
-
-        <div class="form-group row">
-            <label class="col-md-4 col-form-label text-md-right {{$label_class}}" {{$label_for}}>{{$users_column->column_name}} @if ($users_column->required)<span class="badge badge-danger">必須</span> @endif</label>
-            <div class="col-md-8">
-                @include('auth.registe_form_input_' . $users_column->column_type, ['user_obj' => $users_column, 'label_id' => 'user-column-'.$users_column->id])
-                <div class="small {{ $users_column->caption_color }}">{!! nl2br((string)$users_column->caption) !!}</div>
+    @foreach($users_columns as $column)
+        @if ($column->column_type == UserColumnType::user_name)
+            {{-- ユーザ名 --}}
+            <div class="form-group row">
+                <label for="name" class="col-md-4 col-form-label text-md-right">{{$column->column_name}} <label class="badge badge-danger">必須</label></label>
+                <div class="col-md-8">
+                    <input id="name" type="text" class="form-control @if ($errors->has('name')) border-danger @endif" name="name" value="{{ old('name', $user->name) }}" placeholder="{{ $column->place_holder ?? __('messages.input_user_name') }}" required>
+                    @include('plugins.common.errors_inline', ['name' => 'name'])
+                    <div class="small {{ $column->caption_color }}">{!! nl2br((string)$column->caption) !!}</div>
+                </div>
             </div>
-        </div>
+
+        @elseif ($column->column_type == UserColumnType::login_id)
+            {{-- ログインID --}}
+            <div class="form-group row">
+                <label for="userid" class="col-md-4 col-form-label text-md-right">{{$column->column_name}} <label class="badge badge-danger">必須</label></label>
+                <div class="col-md-8">
+                    <input id="userid" type="text" class="form-control @if ($errors->has('userid')) border-danger @endif" name="userid" value="{{ old('userid', $user->userid) }}" placeholder="{{ $column->place_holder ?? __('messages.input_login_id') }}" required>
+                    @include('plugins.common.errors_inline', ['name' => 'userid'])
+                    <div class="small {{ $column->caption_color }}">{!! nl2br((string)$column->caption) !!}</div>
+                </div>
+            </div>
+
+        @elseif ($column->column_type == UserColumnType::user_email)
+            {{-- メールアドレス --}}
+            @if (Auth::user() && Auth::user()->can('admin_user'))
+                {{-- 管理者によるユーザ登録 --}}
+                <div class="form-group row">
+                    <label for="email" class="col-md-4 col-form-label text-md-right">{{$column->column_name}}</label>
+                    <div class="col-md-8">
+                        <input id="email" type="text" class="form-control @if ($errors->has('email')) border-danger @endif" name="email" value="{{ old('email', $user->email) }}" placeholder="{{ $column->place_holder ?? __('messages.input_email') }}">
+                        @include('plugins.common.errors_inline', ['name' => 'email'])
+                        @if (!$is_function_edit)
+                            <small class="text-muted">
+                                ※ 登録時に{{$column->column_name}}がある場合、登録メール送信画面に移動します。<br />
+                            </small>
+                        @endif
+                        <div class="small {{ $column->caption_color }}">{!! nl2br((string)$column->caption) !!}</div>
+                    </div>
+                </div>
+            @else
+                {{-- 自動登録 --}}
+                <div class="form-group row">
+                    <label for="email" class="col-md-4 col-form-label text-md-right">{{$column->column_name}} <label class="badge badge-danger">必須</label></label>
+                    <div class="col-md-8">
+                        <input id="email" type="text" class="form-control @if ($errors->has('email')) border-danger @endif" name="email" value="{{ old('email', $user->email) }}" placeholder="{{ $column->place_holder ?? __('messages.input_email') }}" required>
+                        @include('plugins.common.errors_inline', ['name' => 'email'])
+                        <div class="small {{ $column->caption_color }}">{!! nl2br((string)$column->caption) !!}</div>
+                    </div>
+                </div>
+            @endif
+
+        @elseif ($column->column_type == UserColumnType::user_password)
+            {{-- パスワード --}}
+            <div class="form-group row">
+                @if ($is_function_edit)
+                    <label for="password" class="col-md-4 col-form-label text-md-right">{{$column->column_name}}</label>
+                @else
+                    <label for="password" class="col-md-4 col-form-label text-md-right">{{$column->column_name}} <label class="badge badge-danger">必須</label></label>
+                @endif
+                <div class="col-md-8">
+                    @if ($is_function_edit)
+                        <input id="password" type="password" class="form-control @if ($errors->has('password')) border-danger @endif" name="password" autocomplete="new-password" placeholder="{{ $column->place_holder ?? __('messages.input_password') }}">
+                    @else
+                        <input id="password" type="password" class="form-control @if ($errors->has('password')) border-danger @endif" name="password" autocomplete="new-password" required placeholder="{{ $column->place_holder ?? __('messages.input_password') }}">
+                    @endif
+                    @if ($errors->has('password'))
+                        @foreach ($errors->get('password') as $error)
+                            <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$error}}</div>
+                        @endforeach
+                    @endif
+                </div>
+            </div>
+
+            <div class="form-group row">
+                @if ($is_function_edit)
+                    <label for="password-confirm" class="col-md-4 col-form-label text-md-right">確認用{{$column->column_name}}</label>
+                @else
+                    <label for="password-confirm" class="col-md-4 col-form-label text-md-right">確認用{{$column->column_name}} <label class="badge badge-danger">必須</label></label>
+                @endif
+                <div class="col-md-8">
+                    @if ($is_function_edit)
+                        <input id="password-confirm" type="password" class="form-control" name="password_confirmation" placeholder="{{ $column->place_holder ?? __('messages.input_password_confirm') }}">
+                    @else
+                        <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required placeholder="{{ $column->place_holder ?? __('messages.input_password_confirm') }}">
+                    @endif
+                    <div class="small {{ $column->caption_color }}">{!! nl2br((string)$column->caption) !!}</div>
+                </div>
+            </div>
+
+        @elseif ($column->column_type == UserColumnType::created_at)
+            {{-- 表示しない --}}
+        @elseif ($column->column_type == UserColumnType::updated_at)
+            {{-- 表示しない --}}
+        @else
+            @php
+                // ラジオとチェックボックスは選択肢にラベルを使っているため、項目名のラベルにforを付けない
+                if (UsersColumns::isChoicesColumnType($column->column_type)) {
+                    $label_for = '';
+                    $label_class = 'pt-0';
+                } else {
+                    $label_for = 'for=user-column-' . $column->id;
+                    $label_class = '';
+                }
+            @endphp
+
+            <div class="form-group row">
+                <label class="col-md-4 col-form-label text-md-right {{$label_class}}" {{$label_for}}>{{$column->column_name}} @if ($column->required)<span class="badge badge-danger">必須</span> @endif</label>
+                <div class="col-md-8">
+                    @include('auth.registe_form_input_' . $column->column_type, ['user_obj' => $column, 'label_id' => 'user-column-'.$column->id])
+                    <div class="small {{ $column->caption_color }}">{!! nl2br((string)$column->caption) !!}</div>
+                </div>
+            </div>
+        @endif
     @endforeach
 
     {{-- 未ログイン（自動登録）時に個人情報保護方針への同意関係が設定されている場合 --}}

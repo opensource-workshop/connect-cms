@@ -5,6 +5,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ユーザ管理
 --}}
+@php
+use App\Models\Core\UsersColumns;
+@endphp
 {{-- 管理画面ベース画面 --}}
 @extends('plugins.manage.manage')
 
@@ -12,18 +15,14 @@
 @section('manage_content')
 
 <script type="text/javascript">
-    /**
-     * 選択肢追加ボタン押下
-     */
+    /** 選択肢追加ボタン押下 */
     function submit_add_select(btn) {
         form_selects.action = "{{url('/')}}/manage/user/addSelect";
         btn.disabled = true;
         form_selects.submit();
     }
 
-    /**
-     * 表示順操作ボタン押下
-     */
+    /** 表示順操作ボタン押下 */
     function submit_display_sequence(select_id, display_sequence, display_sequence_operation) {
         form_selects.action = "{{url('/')}}/manage/user/updateSelectSequence";
         form_selects.select_id.value = select_id;
@@ -32,35 +31,27 @@
         form_selects.submit();
     }
 
-    /**
-     * 選択肢の更新ボタン押下
-     */
+    /** 選択肢の更新ボタン押下 */
     function submit_update_select(select_id) {
         form_selects.action = "{{url('/')}}/manage/user/updateSelect";
         form_selects.select_id.value = select_id;
         form_selects.submit();
     }
 
-    /**
-     * 同意内容の更新ボタン押下
-     */
+    /** 同意内容の更新ボタン押下 */
      function submit_update_agree(select_id) {
         form_selects.action = "{{url('/')}}/manage/user/updateAgree";
         form_selects.select_id.value = select_id;
         form_selects.submit();
     }
 
-    /**
-     * その他の設定の更新ボタン押下
-     */
+    /** その他の設定の更新ボタン押下 */
     function submit_update_column_detail() {
         form_selects.action = "{{url('/')}}/manage/user/updateColumnDetail";
         form_selects.submit();
     }
 
-    /**
-     * 選択肢の削除ボタン押下
-     */
+    /** 選択肢の削除ボタン押下 */
      function submit_delete_select(select_id) {
         if (confirm('選択肢を削除します。\nよろしいですか？')){
             form_selects.action = "{{url('/')}}/manage/user/deleteSelect";
@@ -70,19 +61,14 @@
         return false;
     }
 
-
-    /**
-     * 組織追加ボタン押下
-     */
+    /** 組織追加ボタン押下 */
      function submit_add_section(btn) {
         form_selects.action = "{{url('/')}}/manage/user/addSection";
         btn.disabled = true;
         form_selects.submit();
     }
 
-    /**
-     * 表示順操作ボタン押下
-     */
+    /** 表示順操作ボタン押下 */
     function submit_section_display_sequence(section_id, display_sequence, display_sequence_operation) {
         form_selects.action = "{{url('/')}}/manage/user/updateSectionSequence";
         form_selects.section_id.value = section_id;
@@ -91,18 +77,14 @@
         form_selects.submit();
     }
 
-    /**
-     * 組織の更新ボタン押下
-     */
+    /** 組織の更新ボタン押下 */
     function submit_update_section(section_id) {
         form_selects.action = "{{url('/')}}/manage/user/updateSection";
         form_selects.section_id.value = section_id;
         form_selects.submit();
     }
 
-    /**
-     * 組織の削除ボタン押下
-     */
+    /** 組織の削除ボタン押下 */
      function submit_delete_section(section_id) {
         if (confirm('組織を削除します。\nよろしいですか？')){
             form_selects.action = "{{url('/')}}/manage/user/deleteSection";
@@ -158,7 +140,7 @@
                 $column->column_type == UserColumnType::checkbox
                 )
                 {{-- 選択肢の設定 --}}
-                <div class="card mb-4">
+                <div class="card form-group">
                     <h5 class="card-header">選択肢の設定</h5>
                     <div class="card-body">
 
@@ -246,7 +228,7 @@
 
             @if ($column->column_type == UserColumnType::agree)
                 {{-- 同意内容の設定 --}}
-                <div class="card mb-4">
+                <div class="card form-group">
                     <h5 class="card-header">同意内容の設定</h5>
                     <div class="card-body">
 
@@ -282,7 +264,7 @@
 
             @if ($column->column_type == UserColumnType::text || $column->column_type == UserColumnType::textarea || $column->column_type == UserColumnType::mail)
                 {{-- チェック処理の設定 --}}
-                <div class="card mb-4" id="div_rule">
+                <div class="card form-group" id="div_rule">
                     <h5 class="card-header">チェック処理の設定</h5>
                     <div class="card-body">
                         {{-- 1行文字列型／複数行文字列型のチェック群 --}}
@@ -373,12 +355,12 @@
                                 <label class="col-md-3 col-form-label text-md-right">正規表現</label>
                                 <div class="col-md-9 align-items-center">
                                     <input type="text" name="rule_regex" value="{{old('rule_regex', $column->rule_regex)}}" class="form-control">
+                                    @if ($errors && $errors->has('rule_regex')) <div class="text-danger">{{$errors->first('rule_regex')}}</div> @endif
                                     <small class="text-muted">
                                         ※ エラーメッセージは「正しい形式の＜項目名＞を指定してください。」と表示されるため、併せてキャプションの設定をする事をオススメします。<br>
                                         ※ （設定例：電話番号ハイフンあり）/0\d{1,4}-\d{1,4}-\d{4}/<br>
                                         ※ （設定例：指定ドメインのメールアドレスのみ）/@example\.com$/<br>
                                     </small>
-                                    @if ($errors && $errors->has('rule_regex')) <div class="text-danger">{{$errors->first('rule_regex')}}</div> @endif
                                 </div>
                             </div>
                         @endif
@@ -396,7 +378,7 @@
             {{-- 所属型 --}}
             @if ($column->column_type == UserColumnType::affiliation)
                 {{-- 選択肢の設定 --}}
-                <div class="card mb-4">
+                <div class="card form-group">
                     <h5 class="card-header">選択肢の設定</h5>
                     <div class="card-body">
 
@@ -495,32 +477,171 @@
                 </div>
             @endif
 
-            {{-- キャプション設定 --}}
-            <div class="card mb-4" id="div_caption">
-                <h5 class="card-header">キャプションの設定</h5>
+            @if ($column->column_type == UserColumnType::created_at || $column->column_type == UserColumnType::updated_at)
+                {{-- 表示しない --}}
+            @else
+                {{-- キャプション設定 --}}
+                <div class="card form-group" id="div_caption">
+                    <h5 class="card-header">キャプションの設定</h5>
+                    <div class="card-body">
+
+                        {{-- キャプション内容 --}}
+                        <div class="form-group row">
+                            <label class="col-md-3 col-form-label text-md-right pt-0">内容 </label>
+                            <div class="col-md-9 align-items-center">
+                                <textarea name="caption" class="form-control" rows="3">{{old('caption', $column->caption)}}</textarea>
+                            </div>
+                        </div>
+
+                        {{-- キャプション文字色 --}}
+                        <div class="form-group row">
+                            <label class="col-md-3 col-form-label text-md-right">文字色 </label>
+                            <div class="col-md-9 align-items-center">
+                                <select class="form-control" name="caption_color">
+                                    @foreach (Bs4TextColor::getMembers() as $key=>$value)
+                                        <option value="{{$key}}" class="{{ $key }}" @if($key == old('caption_color', $column->caption_color)) selected @endif>
+                                            {{ $value }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        {{-- ボタンエリア --}}
+                        <div class="form-group text-center">
+                            <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary database-horizontal">
+                                <i class="fas fa-check"></i> 更新
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                @if (
+                    $column->column_type == UserColumnType::text ||
+                    $column->column_type == UserColumnType::textarea ||
+                    $column->column_type == UserColumnType::mail ||
+                    $column->column_type == UserColumnType::user_name ||
+                    $column->column_type == UserColumnType::login_id ||
+                    $column->column_type == UserColumnType::user_email
+                    )
+                    {{-- プレースホルダ設定 --}}
+                    <div class="card form-group">
+                        <h5 class="card-header">プレースホルダの設定</h5>
+                        <div class="card-body">
+
+                            {{-- プレースホルダ内容 --}}
+                            <div class="form-group row">
+                                <label class="col-md-3 col-form-label text-md-right">内容 </label>
+                                <div class="col-md-9 align-items-center">
+                                    <input type="text" name="place_holder" class="form-control" value="{{old('place_holder', $column->place_holder)}}">
+                                    @if ($column->column_type == UserColumnType::user_name)
+                                        <small class="text-muted">※ 未設定の場合「{{__('messages.input_user_name')}}」（多言語対応）を表示します。設定した場合、英日どちらでも同じ設定値を表示します。</small>
+                                    @elseif ($column->column_type == UserColumnType::login_id)
+                                        <small class="text-muted">※ 未設定の場合「{{__('messages.input_login_id')}}」（多言語対応）を表示します。設定した場合、英日どちらでも同じ設定値を表示します。</small>
+                                    @elseif ($column->column_type == UserColumnType::user_email)
+                                        <small class="text-muted">※ 未設定の場合「{{__('messages.input_email')}}」（多言語対応）を表示します。設定した場合、英日どちらでも同じ設定値を表示します。</small>
+                                    @endif
+                                </div>
+                            </div>
+
+                            {{-- ボタンエリア --}}
+                            <div class="form-group text-center">
+                                <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            @endif
+
+            {{-- 表示・編集設定 --}}
+            <div class="card form-group">
+                <h5 class="card-header">表示・編集設定</h5>
                 <div class="card-body">
 
-                    {{-- キャプション内容 --}}
-                    <div class="form-group row">
-                        <label class="col-md-3 col-form-label text-md-right pt-0">内容 </label>
-                        <div class="col-md-9 align-items-center">
-                            <textarea name="caption" class="form-control" rows="3">{{old('caption', $column->caption)}}</textarea>
-                        </div>
-                    </div>
-
-                    {{-- キャプション文字色 --}}
-                    <div class="form-group row">
-                        <label class="col-md-3 col-form-label text-md-right">文字色 </label>
-                        <div class="col-md-9 align-items-center">
-                            <select class="form-control" name="caption_color">
-                                @foreach (Bs4TextColor::getMembers() as $key=>$value)
-                                    <option value="{{$key}}" class="{{ $key }}" @if($key == old('caption_color', $column->caption_color)) selected @endif>
-                                        {{ $value }}
-                                    </option>
+                    @if ($column->column_type == UserColumnType::created_at || $column->column_type == UserColumnType::updated_at)
+                        {{-- 表示しない --}}
+                    @else
+                        {{-- 自動ユーザ登録時の表示指定 --}}
+                        <div class="form-group row">
+                            <label class="col-md-3 col-form-label text-md-right pt-0">自動ユーザ登録時の表示指定</label>
+                            <div class="col-md-9 align-items-center">
+                                @php
+                                    $show_auto_regist_disabled = '';
+                                    if (UsersColumns::isFixedColumnType($column->column_type) || $column->required == Required::on) {
+                                        $show_auto_regist_disabled = 'disabled';
+                                    }
+                                @endphp
+                                @if ($show_auto_regist_disabled)
+                                    <input type="hidden" name="is_show_auto_regist" value="{{$column->is_show_auto_regist}}">
+                                @endif
+                                @foreach (ShowType::getMembers() as $enum_value => $enum_label)
+                                    <div class="custom-control custom-radio custom-control-inline">
+                                        @if ($column->is_show_auto_regist == $enum_value)
+                                            <input type="radio" value="{{$enum_value}}" id="is_show_auto_regist_{{$enum_value}}" name="is_show_auto_regist" class="custom-control-input" checked="checked" {{$show_auto_regist_disabled}}>
+                                        @else
+                                            <input type="radio" value="{{$enum_value}}" id="is_show_auto_regist_{{$enum_value}}" name="is_show_auto_regist" class="custom-control-input" {{$show_auto_regist_disabled}}>
+                                        @endif
+                                        {{-- duskでradioの選択にlabelのid必要 --}}
+                                        <label class="custom-control-label" for="is_show_auto_regist_{{$enum_value}}" id="label_is_show_auto_regist_{{$enum_value}}">{{$enum_label}}</label>
+                                    </div>
                                 @endforeach
-                            </select>
+                                <br />
+                                <small class="text-muted">※ 自動ユーザ登録時に表示するか設定できます。<br /></small>
+                                @if ($column->required == Required::on)
+                                    <small class="text-danger">※ 必須入力の場合、表示指定を変更できません。<br /></small>
+                                @endif
+                            </div>
                         </div>
-                    </div>
+                    @endif
+
+                    @if ($column->column_type == UserColumnType::user_password)
+                        {{-- 表示しない --}}
+                        <input type="hidden" name="is_show_my_page" value="{{ShowType::not_show}}">
+                    @else
+                        {{-- マイページの表示指定 --}}
+                        <div class="form-group row">
+                            <label class="col-md-3 col-form-label text-md-right pt-0">マイページの表示指定</label>
+                            <div class="col-md-9 align-items-center">
+                                @foreach (ShowType::getMembers() as $enum_value => $enum_label)
+                                    <div class="custom-control custom-radio custom-control-inline">
+                                        @if ($column->is_show_my_page == $enum_value)
+                                            <input type="radio" value="{{$enum_value}}" id="is_show_my_page_{{$enum_value}}" name="is_show_my_page" class="custom-control-input" checked="checked">
+                                        @else
+                                            <input type="radio" value="{{$enum_value}}" id="is_show_my_page_{{$enum_value}}" name="is_show_my_page" class="custom-control-input">
+                                        @endif
+                                        {{-- duskでradioの選択にlabelのid必要 --}}
+                                        <label class="custom-control-label" for="is_show_my_page_{{$enum_value}}" id="label_is_show_my_page_{{$enum_value}}">{{$enum_label}}</label>
+                                    </div>
+                                @endforeach
+                                <br />
+                                <small class="text-muted">※ マイページでユーザ自身に表示するか設定できます。</small>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if ($column->column_type == UserColumnType::created_at || $column->column_type == UserColumnType::updated_at)
+                        {{-- 表示しない --}}
+                    @else
+                        {{-- マイページの編集指定 --}}
+                        <div class="form-group row">
+                            <label class="col-md-3 col-form-label text-md-right pt-0">マイページの編集指定</label>
+                            <div class="col-md-9 align-items-center">
+                                @foreach (EditType::getMembers() as $enum_value => $enum_label)
+                                    <div class="custom-control custom-radio custom-control-inline">
+                                        @if ($column->is_edit_my_page == $enum_value)
+                                            <input type="radio" value="{{$enum_value}}" id="is_edit_my_page_{{$enum_value}}" name="is_edit_my_page" class="custom-control-input" checked="checked">
+                                        @else
+                                            <input type="radio" value="{{$enum_value}}" id="is_edit_my_page_{{$enum_value}}" name="is_edit_my_page" class="custom-control-input">
+                                        @endif
+                                        {{-- duskでradioの選択にlabelのid必要 --}}
+                                        <label class="custom-control-label" for="is_edit_my_page_{{$enum_value}}" id="label_is_edit_my_page_{{$enum_value}}">{{$enum_label}}</label>
+                                    </div>
+                                @endforeach
+                                <br />
+                                <small class="text-muted">※ マイページ＞マイプロフィール変更でユーザ自身に編集させるか設定できます。</small>
+                            </div>
+                        </div>
+                    @endif
 
                     {{-- ボタンエリア --}}
                     <div class="form-group text-center">
@@ -530,33 +651,6 @@
                     </div>
                 </div>
             </div>
-
-            @if (
-                $column->column_type == UserColumnType::text ||
-                $column->column_type == UserColumnType::textarea ||
-                $column->column_type == UserColumnType::mail
-                )
-                {{-- プレースホルダ設定 --}}
-                <div class="card mb-4">
-                    <h5 class="card-header">プレースホルダの設定</h5>
-                    <div class="card-body">
-
-                        {{-- プレースホルダ内容 --}}
-                        <div class="form-group row">
-                            <label class="col-md-3 col-form-label text-md-right">内容 </label>
-                            <div class="col-md-9 align-items-center">
-                                <input type="text" name="place_holder" class="form-control" value="{{old('place_holder', $column->place_holder)}}">
-                            </div>
-                        </div>
-
-                        {{-- ボタンエリア --}}
-                        <div class="form-group text-center">
-                            <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
-                        </div>
-                    </div>
-                </div>
-                <br>
-            @endif
 
             {{-- ボタンエリア --}}
             <div class="form-group text-center">

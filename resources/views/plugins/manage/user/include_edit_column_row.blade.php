@@ -23,17 +23,29 @@
         <input class="form-control @if ($errors && $errors->has('column_name_'.$column->id)) border-danger @endif" type="text" name="column_name_{{ $column->id }}" value="{{ old('column_name_'.$column->id, $column->column_name)}}">
     </td>
     {{-- 入力データ型 --}}
-    <td>
-        <select class="form-control" name="column_type_{{ $column->id }}" id="column_type_{{ $column->id }}" style="min-width: 140px;">
-            <option value="" disabled>型を指定</option>
-            @foreach (UserColumnType::getMembers() as $key=>$value)
-                <option value="{{$key}}" @if ($key == old("column_type_$column->id", $column->column_type)) selected="selected" @endif>{{ $value }}</option>
-            @endforeach
-        </select>
+    <td class="align-middle">
+        @if ($column->is_fixed_column)
+            {{-- 固定項目 --}}
+            {{UserColumnType::getDescriptionFixed($column->column_type)}}
+            <input type="hidden" name="column_type_{{ $column->id }}" value="{{$column->column_type}}">
+        @else
+            <select class="form-control" name="column_type_{{ $column->id }}" id="column_type_{{ $column->id }}" style="min-width: 140px;">
+                <option value="" disabled>型を指定</option>
+                @foreach (UserColumnType::getMembers() as $key=>$value)
+                    <option value="{{$key}}" @if ($key == old("column_type_$column->id", $column->column_type)) selected="selected" @endif>{{ $value }}</option>
+                @endforeach
+            </select>
+        @endif
     </td>
     {{-- 必須 --}}
     <td class="align-middle text-center">
-        <input type="checkbox" name="required_{{ $column->id }}" value="1" @if (old('required_'.$column->id, $column->required) == Required::on) checked="checked" @endif>
+        @if ($column->is_fixed_column || $column->column_type == UserColumnType::created_at || $column->column_type == UserColumnType::updated_at)
+            {{-- 固定項目, 登録日時, 更新日時 --}}
+            <input type="hidden" name="required_{{ $column->id }}" @if (old('required_'.$column->id, $column->required) == Required::on) value="1" @else value="0" @endif>
+            <input type="checkbox" name="required_{{ $column->id }}" value="1" @if (old('required_'.$column->id, $column->required) == Required::on) checked="checked" @endif disabled>
+        @else
+            <input type="checkbox" name="required_{{ $column->id }}" value="1" @if (old('required_'.$column->id, $column->required) == Required::on) checked="checked" @endif>
+        @endif
     </td>
     {{-- 選択肢の設定ボタン --}}
     <td class="text-center px-2">
@@ -68,6 +80,11 @@
         {{-- 所属が登録されてたら項目の削除はさせない --}}
         @if ($column->column_type == UserColumnType::affiliation && $exists_user_sections)
             <div class="button-wrapper" data-toggle="tooltip" title="{{$column->column_name}}登録済みのユーザがいるため項目を削除できません。">
+                <button class="btn btn-danger cc-font-90 text-nowrap" disabled><i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span></button>
+            </div>
+        @elseif ($column->is_fixed_column)
+            {{-- 固定項目 --}}
+            <div class="button-wrapper" data-toggle="tooltip" title="ユーザに必ず必要な項目のため削除できません。">
                 <button class="btn btn-danger cc-font-90 text-nowrap" disabled><i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span></button>
             </div>
         @else

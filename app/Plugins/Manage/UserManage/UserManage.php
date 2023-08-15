@@ -33,7 +33,9 @@ use App\Utilities\Csv\CsvUtils;
 use App\Utilities\String\StringUtils;
 
 use App\Enums\CsvCharacterCode;
+use App\Enums\EditType;
 use App\Enums\Required;
+use App\Enums\ShowType;
 use App\Enums\UserColumnType;
 use App\Enums\UserRegisterNoticeEmbeddedTag;
 use App\Enums\UserStatus;
@@ -813,6 +815,9 @@ class UserManage extends ManagePluginBase
             }
         }
 
+        // ユーザーのカラム
+        $users_columns = UsersTool::getUsersColumns($request->columns_set_id);
+
         // 項目のエラーチェック
         $validator_array = [
             'column' => [
@@ -825,19 +830,20 @@ class UserManage extends ManagePluginBase
                 'columns_set_id' => ['required'],
             ],
             'message' => [
-                'name'           => 'ユーザ名',
-                'userid'         => 'ログインID',
-                'email'          => 'eメール',
-                'password'       => 'パスワード',
+                'name'           => UsersColumns::getLabelUserName($users_columns),
+                'userid'         => UsersColumns::getLabelLoginId($users_columns),
+                'email'          => UsersColumns::getLabelUserEmail($users_columns),
+                'password'       => UsersColumns::getLabelUserPassword($users_columns),
                 'status'         => '状態',
                 'columns_set_id' => '項目セット',
             ]
         ];
 
-        // ユーザーのカラム
-        $users_columns = UsersTool::getUsersColumns($request->columns_set_id);
-
         foreach ($users_columns as $users_column) {
+            if (UsersColumns::isLoopNotShowColumnType($users_column->column_type)) {
+                // 既に入力チェックセット済みのため、ここではチェックしない
+                continue;
+            }
             // バリデータールールをセット
             $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $request->columns_set_id, $id);
         }
@@ -913,6 +919,11 @@ class UserManage extends ManagePluginBase
 
         // users_input_cols 登録
         foreach ($users_columns as $users_column) {
+            if (UsersColumns::isLoopNotShowColumnType($users_column->column_type)) {
+                // 既に登録済みのため、ここでは登録しない
+                continue;
+            }
+
             $value = "";
             if (!isset($request->users_columns_value[$users_column->id])) {
                 // 値なし
@@ -1665,15 +1676,19 @@ class UserManage extends ManagePluginBase
     private function getImportColumn($users_columns)
     {
         // 見出し行-頭（固定項目）
-        $import_column['id'] = 'id';
-        $import_column['userid'] = 'ログインID';
-        $import_column['name'] = 'ユーザ名';
-        $import_column['group'] = 'グループ';
-        $import_column['email'] = 'eメールアドレス';
-        $import_column['password'] = 'パスワード';
+        $import_column['id']       = 'id';
+        $import_column['userid']   = UsersColumns::getLabelLoginId($users_columns);
+        $import_column['name']     = UsersColumns::getLabelUserName($users_columns);
+        $import_column['group']    = 'グループ';
+        $import_column['email']    = UsersColumns::getLabelUserEmail($users_columns);
+        $import_column['password'] = UsersColumns::getLabelUserPassword($users_columns);
 
         // 見出し行
         foreach ($users_columns as $column) {
+            if (UsersColumns::isLoopNotShowColumnType($column->column_type)) {
+                continue;
+            }
+
             $import_column[$column->id] = $column->column_name;
         }
 
@@ -1822,8 +1837,11 @@ class UserManage extends ManagePluginBase
             return redirect()->back()->withErrors(['users_csv' => $error_msgs])->withInput();
         }
 
+        // 固定項目を取り除いたユーザカラム. values()でキーをリセットしたコレクション取得
+        $users_columns_not_fixed_column = $users_columns->whereNotIn('column_type', UsersColumns::loopNotShowColumnTypes())->values();
+
         $group = Group::get();
-        $import_column_col_no = $this->getImportColumnColNo($users_columns);
+        $import_column_col_no = $this->getImportColumnColNo($users_columns_not_fixed_column);
         // 役割設定
         $configs_original_role = Configs::where('category', 'original_role')->get();
 
@@ -1896,7 +1914,7 @@ class UserManage extends ManagePluginBase
             // ユーザ名
             $name_col_no = array_search('name', $import_column_col_no);
             $user->name = $csv_columns[$name_col_no];
-            // eメールアドレス
+            // メールアドレス
             $email_col_no = array_search('email', $import_column_col_no);
             $user->email = $csv_columns[$email_col_no];
 
@@ -1958,6 +1976,10 @@ class UserManage extends ManagePluginBase
 
             // users_input_cols 登録
             foreach ($users_columns as $users_column) {
+                if (UsersColumns::isLoopNotShowColumnType($users_column->column_type)) {
+                    continue;
+                }
+
                 $users_column_col_no = array_search($users_column->id, $import_column_col_no, true);
                 $value = $csv_columns[$users_column_col_no];
 
@@ -2054,7 +2076,7 @@ class UserManage extends ManagePluginBase
             // グループ. (グループ名の存在チェック。複数値あり)
             // 3 => new CustomValiCsvExistsGroupName($group),
             3 => new CustomValiCsvExistsName($group->pluck('name')->toArray()),
-            // eメールアドレス. 後でセット
+            // メールアドレス. 後でセット
             4 => [],
             // パスワード. 後でセット
             5 => [],
@@ -2069,7 +2091,11 @@ class UserManage extends ManagePluginBase
         // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
         // \Log::debug(var_export($col, true));
         // \Log::debug(var_export($users_columns->count(), true));
-        $col = $users_columns->count() - 1;
+
+        // 固定項目を取り除いたユーザカラム. values()でキーをリセットしたコレクション取得
+        $users_columns_not_fixed_column = $users_columns->whereNotIn('column_type', UsersColumns::loopNotShowColumnTypes())->values();
+
+        $col = $users_columns_not_fixed_column->count() - 1;
         // $rules[$col + 7] = ['nullable', Rule::in([
         $rules[$col + 7] = ['nullable', new CustomValiCsvExistsName([
             'role_article_admin',
@@ -2104,7 +2130,7 @@ class UserManage extends ManagePluginBase
             // ユニークチェックを含むバリデーション追加
             // ログインID
             $rules[1] = ['required', 'max:255', Rule::unique('users', 'userid')->ignore($users_id)];
-            // eメールアドレス
+            // メールアドレス
             $rules[4] = ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($columns_set_id, $users_id)];
             // パスワード
             if ($users_id) {
@@ -2116,7 +2142,7 @@ class UserManage extends ManagePluginBase
             }
 
             // ユーザの任意項目（メールのユニークチェックで自分以外をチェックするため、ここでチェック追加）
-            foreach ($users_columns as $col => $users_column) {
+            foreach ($users_columns_not_fixed_column as $col => $users_column) {
                 // $validator_array['column']['users_columns_value.' . $users_column->id] = $validator_rule;
                 // $validator_array['message']['users_columns_value.' . $users_column->id] = $users_column->column_name;
 
@@ -2146,7 +2172,7 @@ class UserManage extends ManagePluginBase
                     // intであれば任意項目
                     if (is_int($column_id)) {
                         // 任意項目. 必ずある想定
-                        $users_column = $users_columns->firstWhere('id', $column_id);
+                        $users_column = $users_columns_not_fixed_column->firstWhere('id', $column_id);
 
                         // [TODO] ユーザ任意項目のチェックボックスはarray型にしてバリデーションできるけど、権限はarrayでRule::inしてもうまくいかなかった。原因おいきれなかった。
                         // 複数選択型
@@ -2182,16 +2208,16 @@ class UserManage extends ManagePluginBase
             // 行頭（固定項目）
             // id
             $attribute_names[0] = $line_count . '行目のid';
-            $attribute_names[1] = $line_count . '行目のログインID';
-            $attribute_names[2] = $line_count . '行目のユーザ名';
+            $attribute_names[1] = $line_count . '行目の' . UsersColumns::getLabelLoginId($users_columns);
+            $attribute_names[2] = $line_count . '行目の' . UsersColumns::getLabelUserName($users_columns);
             $attribute_names[3] = $line_count . '行目のグループ';
-            $attribute_names[4] = $line_count . '行目のeメールアドレス';
-            $attribute_names[5] = $line_count . '行目のパスワード';
+            $attribute_names[4] = $line_count . '行目の' . UsersColumns::getLabelUserEmail($users_columns);
+            $attribute_names[5] = $line_count . '行目の' . UsersColumns::getLabelUserPassword($users_columns);
 
             // bugfix: 追加項目なしの場合、$colが初期化されないので修正
             $col = -1;
 
-            foreach ($users_columns as $col => $users_column) {
+            foreach ($users_columns_not_fixed_column as $col => $users_column) {
                 // 行数＋項目名
                 // 頭-固定項目 の id 分　col をずらすため、+1
                 $attribute_names[$col + 6] = $line_count . '行目の' . $users_column->column_name;
@@ -2393,7 +2419,9 @@ class UserManage extends ManagePluginBase
         // 項目セット取得
         $columns_sets = UsersColumnsSet::orderBy('display_sequence')->paginate(10, '*', 'page', $page);
 
-        $columns = UsersColumns::whereIn('columns_set_id', $columns_sets->pluck('id'))->get();
+        $columns = UsersColumns::whereIn('columns_set_id', $columns_sets->pluck('id'))
+            ->orderBy('display_sequence')
+            ->get();
 
         foreach ($columns_sets as $columns_set) {
             // 項目名をセット
@@ -2609,8 +2637,18 @@ class UserManage extends ManagePluginBase
         $column->column_name = $request->$str_column_name;
         $column->column_type = $request->$str_column_type;
         $column->required = $request->$str_required ? Required::on : Required::off;
+        $message = '項目【 '. $column->column_name .' 】を更新しました。';
+
+        // 固定項目以外
+        if (!UsersColumns::isFixedColumnType($column->column_type)) {
+            // 必須入力
+            if ($column->required == Required::on) {
+                $column->is_show_auto_regist = ShowType::show;
+                $message = '項目【 '.$column->column_name.' 】を更新し、必須入力のため、自動登録時の表示指定【 '.ShowType::getDescription($column->is_show_auto_regist).' 】を設定しました。';
+            }
+        }
+
         $column->save();
-        $message = '項目【 '. $request->$str_column_name .' 】を更新しました。';
 
         // 編集画面を呼び出す
         return redirect("/manage/user/editColumns/$request->columns_set_id")->with('flash_message', $message);
@@ -2716,7 +2754,6 @@ class UserManage extends ManagePluginBase
      */
     public function updateColumnDetail($request, $id)
     {
-
         $validator_values = null;
         $validator_attributes = null;
 
@@ -2766,6 +2803,9 @@ class UserManage extends ManagePluginBase
         $column->caption = $request->caption;
         $column->caption_color = $request->caption_color;
         $column->place_holder = $request->place_holder;
+        $column->is_show_auto_regist = $request->is_show_auto_regist ? EditType::ok : EditType::ng;
+        $column->is_show_my_page = $request->is_show_my_page ? ShowType::show : ShowType::not_show;
+        $column->is_edit_my_page = $request->is_edit_my_page ? EditType::ok : EditType::ng;
         // 数値のみ許容
         $column->rule_allowed_numeric = (empty($request->rule_allowed_numeric)) ? 0 : $request->rule_allowed_numeric;
         // 英数値のみ許容

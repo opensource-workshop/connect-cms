@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Core\Configs;
 use App\Models\Core\Section;
 use App\Models\Core\UserSection;
+use App\Models\Core\UsersColumns;
 use App\Models\Core\UsersInputCols;
 use App\Plugins\Manage\UserManage\UsersTool;
 //use App\Providers\RouteServiceProvider;
@@ -64,6 +65,9 @@ class RegisterController extends Controller
         // columns_set_id はhidden等で必ずセットされる想定
         $columns_set_id = Arr::get($data, 'columns_set_id');
 
+        // ユーザーのカラム
+        $users_columns = UsersTool::getUsersColumns($columns_set_id);
+
         // change: ユーザーの追加項目に対応
         $validator_array = [
             'column' => [
@@ -76,10 +80,10 @@ class RegisterController extends Controller
             ],
             // 項目名
             'message' => [
-                'name'                         => 'ユーザ名',
-                'userid'                       => 'ログインID',
-                'email'                        => 'eメール',
-                'password'                     => 'パスワード',
+                'name'                         => UsersColumns::getLabelUserName($users_columns),
+                'userid'                       => UsersColumns::getLabelLoginId($users_columns),
+                'email'                        => UsersColumns::getLabelUserEmail($users_columns),
+                'password'                     => UsersColumns::getLabelUserPassword($users_columns),
                 'status'                       => '状態',
                 'columns_set_id'               => '項目セット',
                 'user_register_requre_privacy' => '個人情報保護方針への同意',
@@ -98,10 +102,11 @@ class RegisterController extends Controller
             }
         }
 
-        // ユーザーのカラム
-        $users_columns = UsersTool::getUsersColumns($columns_set_id);
-
         foreach ($users_columns as $users_column) {
+            if (UsersColumns::isLoopNotShowColumnType($users_column->column_type)) {
+                // 既に入力チェックセット済みのため、ここではチェックしない
+                continue;
+            }
             // バリデータールールをセット
             $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $columns_set_id, null);
         }
@@ -155,6 +160,11 @@ class RegisterController extends Controller
 
         // users_input_cols 登録
         foreach ($users_columns as $users_column) {
+            if (UsersColumns::isLoopNotShowColumnType($users_column->column_type)) {
+                // 既に入力チェックセット済みのため、ここではチェックしない
+                continue;
+            }
+
             $value = "";
             if (!isset($data['users_columns_value'][$users_column->id])) {
                 // 値なし
