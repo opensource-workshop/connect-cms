@@ -76,11 +76,11 @@
                                 </tr>
                             @else
                                 @php
-                                    $user_input_col = $user_input_cols->firstWhere('users_columns_id', $column->id);
+                                    $input_col = $input_cols->firstWhere('users_columns_id', $column->id);
                                 @endphp
                                 <tr class="input-cols">
-                                    <th>{{$user_input_col->column_name}}</th>
-                                    <td>{{$user_input_col->value}}</td>
+                                    <th>{{$input_col->column_name}}</th>
+                                    <td>{{$input_col->value}}</td>
                                 </tr>
                             @endif
                         @endforeach

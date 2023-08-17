@@ -19,6 +19,9 @@ use App\Plugins\Manage\UserManage\UsersTool;
  */
 class IndexMypage extends MypagePluginBase
 {
+    /**
+     * 関数定義（コアから呼び出す）
+     */
     public function getPublicFunctions()
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
@@ -31,7 +34,7 @@ class IndexMypage extends MypagePluginBase
     }
 
     /**
-     *  ページ初期表示
+     * ページ初期表示
      *
      * @return view
      * @method_title マイページ
@@ -42,15 +45,8 @@ class IndexMypage extends MypagePluginBase
     {
         // ログインしているユーザー情報を取得
         $user = Auth::user();
-        $user_input_cols = UsersInputCols::select('users_input_cols.*', 'users_columns.column_type', 'users_columns.column_name', 'users_columns.display_sequence', 'uploads.client_original_name')
-            ->leftJoin('users_columns', 'users_columns.id', '=', 'users_input_cols.users_columns_id')
-            ->leftJoin('uploads', 'uploads.id', '=', 'users_input_cols.value')
-            ->where('users_id', $user->id)
-            ->orderBy('display_sequence', 'asc')
-            ->orderBy('users_id', 'asc')
-            ->orderBy('users_columns_id', 'asc')
-            ->get();
-
+        // カラムの登録データ
+        $input_cols = UsersTool::getUsersInputCols([$user->id]);
         // ユーザーのカラム
         $users_columns = UsersTool::getUsersColumns($user->columns_set_id);
 
@@ -62,7 +58,7 @@ class IndexMypage extends MypagePluginBase
             "function"        => __FUNCTION__,
             "id"              => $user->id,
             "user"            => $user,
-            "user_input_cols" => $user_input_cols,
+            "input_cols"      => $input_cols,
             "users_columns"   => $users_columns,
         ]);
     }
