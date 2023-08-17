@@ -38,7 +38,7 @@
                                     src="{{url('/')}}/file/{{ $item->uploads_id }}"
                                     class="d-block w-100"
                                     loading="lazy"
-                                    @if (!empty($slideshow->height)) style="object-fit: contain; height: {{$slideshow->height}}px;" @endif
+                                    @if (!empty($slideshow->height)) style="object-fit: cover; height: {{$slideshow->height}}px;" @endif
                                 >
                             </a>
                         @else
@@ -47,7 +47,7 @@
                                 src="{{url('/')}}/file/{{ $item->uploads_id }}"
                                 class="d-block w-100"
                                 loading="lazy"
-                                @if (!empty($slideshow->height)) style="object-fit: contain; height: {{$slideshow->height}}px;" @endif
+                                @if (!empty($slideshow->height)) style="object-fit: cover; height: {{$slideshow->height}}px;" @endif
                             >
                         @endif
                         {{-- キャプション ※設定があれば表示 --}}
