@@ -3,7 +3,7 @@
 namespace app\Plugins\Mypage\IndexMypage;
 
 use Illuminate\Support\Facades\Auth;
-use App\Models\Core\UsersInputCols;
+use App\Enums\ShowType;
 use App\Plugins\Mypage\MypagePluginBase;
 use App\Plugins\Manage\UserManage\UsersTool;
 
@@ -49,6 +49,7 @@ class IndexMypage extends MypagePluginBase
         $input_cols = UsersTool::getUsersInputCols([$user->id]);
         // ユーザーのカラム
         $users_columns = UsersTool::getUsersColumns($user->columns_set_id);
+        $users_columns = $users_columns->where('is_show_my_page', ShowType::show);
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。

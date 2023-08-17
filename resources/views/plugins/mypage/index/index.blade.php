@@ -38,10 +38,6 @@
                             <td nowrap="nowrap">{{ $user->id }}</td>
                         </tr> --}}
                         @foreach($users_columns as $column)
-                            @if ($column->is_show_my_page == ShowType::not_show)
-                                @continue
-                            @endif
-
                             @if ($column->column_type == UserColumnType::user_name)
                                 {{-- ユーザ名 --}}
                                 <tr>
