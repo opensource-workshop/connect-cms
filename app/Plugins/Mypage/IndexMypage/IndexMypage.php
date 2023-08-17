@@ -3,9 +3,9 @@
 namespace app\Plugins\Mypage\IndexMypage;
 
 use Illuminate\Support\Facades\Auth;
-use App\User;
 use App\Models\Core\UsersInputCols;
 use App\Plugins\Mypage\MypagePluginBase;
+use App\Plugins\Manage\UserManage\UsersTool;
 
 /**
  * マイページ画面インデックスクラス
@@ -18,11 +18,11 @@ class IndexMypage extends MypagePluginBase
     public function getPublicFunctions()
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
-        $functions = array();
+        $functions = [];
         $functions['get']  = [
-                              'passPdfDownload',
-                              'certPdfDownload',
-                            ];
+            'passPdfDownload',
+            'certPdfDownload',
+        ];
         return $functions;
     }
 
@@ -46,6 +46,10 @@ class IndexMypage extends MypagePluginBase
             ->orderBy('users_id', 'asc')
             ->orderBy('users_columns_id', 'asc')
             ->get();
+
+        // ユーザーのカラム
+        $users_columns = UsersTool::getUsersColumns($user->columns_set_id);
+
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
         return view('plugins.mypage.index.index', [
@@ -55,6 +59,7 @@ class IndexMypage extends MypagePluginBase
             "id"              => $user->id,
             "user"            => $user,
             "user_input_cols" => $user_input_cols,
+            "users_columns"   => $users_columns,
         ]);
     }
 }
