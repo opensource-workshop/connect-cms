@@ -4310,22 +4310,18 @@ AND databases_inputs.posted_at <= NOW()
     private function setColumnsSelectsRegisteredCount(EloquentCollection $columns_selects, EloquentCollection $all_databases_inputs): EloquentCollection
     {
         $databases_inputs_ids = $all_databases_inputs->pluck('id');
-        $databases_input_cols = DatabasesInputCols::whereIn('databases_inputs_id', $databases_inputs_ids)->get();
-
         foreach ($columns_selects as $select) {
+            $query = DatabasesInputCols::whereIn('databases_inputs_id', $databases_inputs_ids)
+                ->where('databases_columns_id', $select->databases_columns_id);
+
             $databases_column = DatabasesColumns::find($select->databases_columns_id);
-            $hit = $databases_input_cols->where('databases_columns_id', $select->databases_columns_id);
             if ($databases_column->column_type === DatabaseColumnType::checkbox) {
                 // チェックボックスの場合、パイプ区切りで登録されているので部分一致検索
-                $hit = $hit->filter(function ($record) use ($select) {
-                    return strpos($record->value, $select->value) !== false;
-                });
+                $query->where('value', 'LIKE', "%$select->value%");
             } else {
-                $hit = $hit->where('value', $select->value);
+                $query->where('value', $select->value);
             }
-
-            $hit = $hit->pluck('id')->unique();
-            $select->setRegisteredCount($hit->count());
+            $select->setRegisteredCount($query->count());
         }
 
         return $columns_selects;
