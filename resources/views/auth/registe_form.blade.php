@@ -46,7 +46,7 @@ use App\Models\Core\UsersColumns;
 
     @if (Auth::user() && Auth::user()->can('admin_user'))
         <div class="form-group row">
-            <label for="name" class="col-md-4 col-form-label text-md-right">状態 <label class="badge badge-danger">必須</label></label>
+            <label for="name" class="col-md-4 col-form-label text-md-right">状態 <span class="badge badge-danger">必須</span></label>
             <div class="col-md-8 d-sm-flex align-items-center">
                 @foreach (UserStatus::getMembers() as $enum_value => $enum_label)
                     <div class="custom-control custom-radio custom-control-inline">
@@ -107,7 +107,7 @@ use App\Models\Core\UsersColumns;
         @if ($column->column_type == UserColumnType::user_name)
             {{-- ユーザ名 --}}
             <div class="form-group row">
-                <label for="name" class="col-md-4 col-form-label text-md-right">{{$column->column_name}} <label class="badge badge-danger">必須</label></label>
+                <label for="name" class="col-md-4 col-form-label text-md-right">{{$column->column_name}} <span class="badge badge-danger">必須</span></label>
                 <div class="col-md-8">
                     <input id="name" type="text" class="form-control @if ($errors->has('name')) border-danger @endif" name="name" value="{{ old('name', $user->name) }}" placeholder="{{ $column->place_holder ?? __('messages.input_user_name') }}" required>
                     @include('plugins.common.errors_inline', ['name' => 'name'])
@@ -118,7 +118,7 @@ use App\Models\Core\UsersColumns;
         @elseif ($column->column_type == UserColumnType::login_id)
             {{-- ログインID --}}
             <div class="form-group row">
-                <label for="userid" class="col-md-4 col-form-label text-md-right">{{$column->column_name}} <label class="badge badge-danger">必須</label></label>
+                <label for="userid" class="col-md-4 col-form-label text-md-right">{{$column->column_name}} <span class="badge badge-danger">必須</span></label>
                 <div class="col-md-8">
                     <input id="userid" type="text" class="form-control @if ($errors->has('userid')) border-danger @endif" name="userid" value="{{ old('userid', $user->userid) }}" placeholder="{{ $column->place_holder ?? __('messages.input_login_id') }}" required>
                     @include('plugins.common.errors_inline', ['name' => 'userid'])
@@ -146,7 +146,7 @@ use App\Models\Core\UsersColumns;
             @else
                 {{-- 自動登録 --}}
                 <div class="form-group row">
-                    <label for="email" class="col-md-4 col-form-label text-md-right">{{$column->column_name}} <label class="badge badge-danger">必須</label></label>
+                    <label for="email" class="col-md-4 col-form-label text-md-right">{{$column->column_name}} <span class="badge badge-danger">必須</span></label>
                     <div class="col-md-8">
                         <input id="email" type="text" class="form-control @if ($errors->has('email')) border-danger @endif" name="email" value="{{ old('email', $user->email) }}" placeholder="{{ $column->place_holder ?? __('messages.input_email') }}" required>
                         @include('plugins.common.errors_inline', ['name' => 'email'])
@@ -161,13 +161,13 @@ use App\Models\Core\UsersColumns;
                 @if ($is_function_edit)
                     <label for="password" class="col-md-4 col-form-label text-md-right">{{$column->column_name}}</label>
                 @else
-                    <label for="password" class="col-md-4 col-form-label text-md-right">{{$column->column_name}} <label class="badge badge-danger">必須</label></label>
+                    <label for="password" class="col-md-4 col-form-label text-md-right">{{$column->column_name}} <span class="badge badge-danger">必須</span></label>
                 @endif
                 <div class="col-md-8">
                     @if ($is_function_edit)
-                        <input id="password" type="password" class="form-control @if ($errors->has('password')) border-danger @endif" name="password" autocomplete="new-password" placeholder="{{ $column->place_holder ?? __('messages.input_password') }}">
+                        <input id="password" type="password" class="form-control @if ($errors->has('password')) border-danger @endif" name="password" autocomplete="new-password" placeholder="{{ __('messages.input_password') }}">
                     @else
-                        <input id="password" type="password" class="form-control @if ($errors->has('password')) border-danger @endif" name="password" autocomplete="new-password" required placeholder="{{ $column->place_holder ?? __('messages.input_password') }}">
+                        <input id="password" type="password" class="form-control @if ($errors->has('password')) border-danger @endif" name="password" autocomplete="new-password" required placeholder="{{ __('messages.input_password') }}">
                     @endif
                     @if ($errors->has('password'))
                         @foreach ($errors->get('password') as $error)
@@ -181,13 +181,13 @@ use App\Models\Core\UsersColumns;
                 @if ($is_function_edit)
                     <label for="password-confirm" class="col-md-4 col-form-label text-md-right">確認用{{$column->column_name}}</label>
                 @else
-                    <label for="password-confirm" class="col-md-4 col-form-label text-md-right">確認用{{$column->column_name}} <label class="badge badge-danger">必須</label></label>
+                    <label for="password-confirm" class="col-md-4 col-form-label text-md-right">確認用{{$column->column_name}} <span class="badge badge-danger">必須</span></label>
                 @endif
                 <div class="col-md-8">
                     @if ($is_function_edit)
-                        <input id="password-confirm" type="password" class="form-control" name="password_confirmation" placeholder="{{ $column->place_holder ?? __('messages.input_password_confirm') }}">
+                        <input id="password-confirm" type="password" class="form-control" name="password_confirmation" placeholder="{{ __('messages.input_password_confirm') }}">
                     @else
-                        <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required placeholder="{{ $column->place_holder ?? __('messages.input_password_confirm') }}">
+                        <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required placeholder="{{ __('messages.input_password_confirm') }}">
                     @endif
                     <div class="small {{ $column->caption_color }}">{!! nl2br((string)$column->caption) !!}</div>
                 </div>
@@ -223,7 +223,7 @@ use App\Models\Core\UsersColumns;
     @if (!Auth::user())
         @if (Configs::getConfigsValue($configs, "user_register_requre_privacy") == 1)
             <div class="form-group row">
-                <label for="password-confirm" class="col-md-4 col-form-label text-md-right pt-0">個人情報保護方針への同意  <label class="badge badge-danger">必須</label></label>
+                <label for="password-confirm" class="col-md-4 col-form-label text-md-right pt-0">個人情報保護方針への同意  <span class="badge badge-danger">必須</span></label>
 
                 <div class="col-md-8">
                     <div class="custom-control custom-checkbox custom-control-inline">
