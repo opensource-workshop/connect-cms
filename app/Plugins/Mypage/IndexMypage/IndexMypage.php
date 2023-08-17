@@ -10,6 +10,10 @@ use App\Plugins\Manage\UserManage\UsersTool;
 /**
  * マイページ画面インデックスクラス
  *
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category マイページ
+ * @package Controller
  * @plugin_title マイページ
  * @plugin_desc マイページの初めに開く画面です。自分の情報を確認できます。
  */
