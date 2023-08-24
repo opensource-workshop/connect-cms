@@ -2801,7 +2801,9 @@ class UserManage extends ManagePluginBase
 
         // 項目の更新処理
         $column->caption = $request->caption;
-        $column->caption_color = $request->caption_color;
+        if ($request->caption_color) {
+            $column->caption_color = $request->caption_color;
+        }
         $column->place_holder = $request->place_holder;
         $column->is_show_auto_regist = $request->is_show_auto_regist ? EditType::ok : EditType::ng;
         $column->is_show_my_page = $request->is_show_my_page ? ShowType::show : ShowType::not_show;
