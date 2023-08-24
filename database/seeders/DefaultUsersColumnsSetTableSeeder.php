@@ -36,6 +36,5 @@ class DefaultUsersColumnsSetTableSeeder extends Seeder
                 'display_sequence' => 1,
             ]);
         }
-
     }
 }

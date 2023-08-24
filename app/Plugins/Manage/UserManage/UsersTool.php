@@ -14,6 +14,7 @@ use App\Rules\CustomValiAlphaNumForMultiByte;
 use App\Rules\CustomValiCheckWidthForString;
 use App\Rules\CustomValiUserEmailUnique;
 
+use App\Enums\ShowType;
 use App\Enums\UserColumnType;
 use App\Enums\UserRegisterNoticeEmbeddedTag;
 
@@ -31,6 +32,15 @@ class UsersTool
     {
         // ユーザーのカラム
         return UsersColumns::where('columns_set_id', $columns_set_id)->orderBy('display_sequence')->get();
+    }
+
+    /**
+     * 自動ユーザ登録のユーザーのカラム取得
+     */
+    public static function getUsersColumnsRegister(int $columns_set_id)
+    {
+        // ユーザーのカラム
+        return UsersColumns::where('columns_set_id', $columns_set_id)->where('is_show_auto_regist', ShowType::show)->orderBy('display_sequence')->get();
     }
 
     /**
@@ -237,14 +247,14 @@ class UsersTool
      */
     public static function getMailContentsText($configs, $user)
     {
-        // メールの内容
-        $contents_text = '';
-        $contents_text .= "ユーザ名： " . $user->name . "\n";
-        $contents_text .= "ログインID： " . $user->userid . "\n";
-        $contents_text .= "eメールアドレス： " . $user->email . "\n";
-
         // ユーザーのカラム
         $users_columns = self::getUsersColumns($user->columns_set_id);
+
+        // メールの内容
+        $contents_text = '';
+        $contents_text .= UsersColumns::getLabelUserName($users_columns)  . "： {$user->name}\n";
+        $contents_text .= UsersColumns::getLabelLoginId($users_columns)   . "： {$user->userid}\n";
+        $contents_text .= UsersColumns::getLabelUserEmail($users_columns) . "： {$user->email}\n";
 
         // ユーザーカラムの登録データ
         $users_input_cols = UsersInputCols::where('users_id', $user->id)
@@ -255,6 +265,10 @@ class UsersTool
             });
 
         foreach ($users_columns as $users_column) {
+            if (UsersColumns::isLoopNotShowColumnType($users_column->column_type)) {
+                continue;
+            }
+
             $value = "";
             if (is_array($users_input_cols[$users_column->id])) {
                 $value = implode(self::CHECKBOX_SEPARATOR, $users_input_cols[$users_column->id]->value);

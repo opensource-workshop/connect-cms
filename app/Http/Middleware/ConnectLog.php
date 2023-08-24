@@ -197,7 +197,7 @@ class ConnectLog
 
             // ユーザ登録
             if ($configs->where('name', 'save_log_type_register')->where('value', '1')->isNotEmpty() && $type == 'Register') {
-                // ログインID とeメールアドレスを記録する。
+                // ログインID とメールアドレスを記録する。
                 $tmp_value = array();
                 if ($request->filled('userid')) {
                     $tmp_value[] = 'userid:' . $request->input("userid");

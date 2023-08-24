@@ -57,7 +57,10 @@
                         @endif
                         <label class="custom-control-label" for="user_register_enable_off" id="label_user_register_enable_off">許可しない</label>
                     </div>
-                    <small class="form-text text-muted">自動ユーザ登録を使用するかどうかを選択</small>
+                    <small class="form-text text-muted">
+                        ※ 自動ユーザ登録を使用するかどうかを選択<br />
+                        ※ 自動ユーザ登録時に登録させる項目は [ <a href="{{ url('/manage/user/editColumns/'. $columns_set_id) }}">項目設定</a> ] の「詳細」からそれぞれ設定してください。<br />
+                    </small>
                 </div>
             </div>
 

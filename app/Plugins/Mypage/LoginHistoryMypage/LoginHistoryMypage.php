@@ -11,6 +11,10 @@ use App\Plugins\Mypage\MypagePluginBase;
 /**
  * ログイン履歴マイページクラス
  *
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category ログイン履歴
+ * @package Controller
  * @plugin_title ログイン履歴
  * @plugin_desc 自分のログイン履歴を確認できます。
  */
@@ -30,8 +34,8 @@ class LoginHistoryMypage extends MypagePluginBase
 
         // ログイン履歴取得
         $users_login_histories = UsersLoginHistories::where('users_id', $user->id)
-                ->orderBy('logged_in_at', 'desc')
-                ->paginate(10, ["*"]);
+            ->orderBy('logged_in_at', 'desc')
+            ->paginate(10, ["*"]);
 
         // 画面呼び出し
         return view('plugins.mypage.loginhistory.list', [
