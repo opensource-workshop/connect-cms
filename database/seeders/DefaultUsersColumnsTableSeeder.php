@@ -29,6 +29,11 @@ class DefaultUsersColumnsTableSeeder extends Seeder
         $columns_sets = UsersColumnsSet::get();
         foreach ($columns_sets as $columns_set) {
             if (UsersColumns::where('columns_set_id', $columns_set->id)->where('column_type', UserColumnType::user_name)->count() == 0) {
+
+                // 固定項目を項目順の頭に追加して、追加項目はその後の表示順に更新する事で、現在の並び順を再現する。
+
+                $users_columns = UsersColumns::where('columns_set_id', $columns_set->id)->orderBy('display_sequence')->get();
+
                 UsersColumns::insert([
                     [
                         'columns_set_id'        => $columns_set->id,
@@ -86,6 +91,11 @@ class DefaultUsersColumnsTableSeeder extends Seeder
                         'display_sequence'      => 5,
                     ],
                 ]);
+
+                foreach ($users_columns as $users_column) {
+                    $users_column->display_sequence = $users_column->display_sequence + 5;
+                    $users_column->save();
+                }
             }
         }
     }
