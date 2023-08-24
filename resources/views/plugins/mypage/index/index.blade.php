@@ -75,8 +75,8 @@
                                     $input_col = $input_cols->firstWhere('users_columns_id', $column->id);
                                 @endphp
                                 <tr class="input-cols">
-                                    <th>{{$input_col->column_name}}</th>
-                                    <td>{{$input_col->value}}</td>
+                                    <th>{{$column->column_name}}</th>
+                                    <td>{{$input_col->value ?? ''}}</td>
                                 </tr>
                             @endif
                         @endforeach
