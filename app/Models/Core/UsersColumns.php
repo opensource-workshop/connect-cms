@@ -3,8 +3,10 @@
 namespace App\Models\Core;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 use App\UserableNohistory;
+use App\Enums\UserColumnType;
 
 class UsersColumns extends Model
 {
@@ -13,8 +15,13 @@ class UsersColumns extends Model
 
     // 更新する項目の定義
     protected $fillable = [
+        'columns_set_id',
         'column_type',
         'column_name',
+        'is_fixed_column',
+        'is_show_auto_regist',
+        'is_show_my_page',
+        'is_edit_my_page',
         'required',
         'caption',
         'caption_color',
@@ -32,14 +39,117 @@ class UsersColumns extends Model
     /**
      * 選択肢系のカラム型か
      */
-    public static function isChoicesColumnType($column_type)
+    public static function isChoicesColumnType($column_type): bool
     {
         // ラジオとチェックボックスは選択肢にラベルを使っているため、項目名のラベルにforを付けない
-        if ($column_type == \UserColumnType::radio ||
-                $column_type == \UserColumnType::checkbox ||
-                $column_type == \UserColumnType::agree) {
+        if ($column_type == UserColumnType::radio ||
+                $column_type == UserColumnType::checkbox ||
+                $column_type == UserColumnType::agree) {
             return true;
         }
         return false;
+    }
+
+    /**
+     * 固定項目のカラム型か
+     */
+    public static function isFixedColumnType($column_type): bool
+    {
+        if ($column_type == UserColumnType::user_name ||
+                $column_type == UserColumnType::login_id ||
+                $column_type == UserColumnType::user_email ||
+                $column_type == UserColumnType::user_password) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * ループで非表示のカラム型か
+     */
+    public static function isLoopNotShowColumnType($column_type): bool
+    {
+        if ($column_type == UserColumnType::user_name ||
+            $column_type == UserColumnType::login_id ||
+            $column_type == UserColumnType::user_email ||
+            $column_type == UserColumnType::user_password ||
+            $column_type == UserColumnType::created_at ||
+            $column_type == UserColumnType::updated_at
+        ) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * ループで非表示のカラム型 取得
+     */
+    public static function loopNotShowColumnTypes(): array
+    {
+        return [
+            UserColumnType::user_name,
+            UserColumnType::login_id,
+            UserColumnType::user_email,
+            UserColumnType::user_password,
+            UserColumnType::created_at,
+            UserColumnType::updated_at,
+        ];
+    }
+
+    /**
+     * コレクションからラベル名取得
+     */
+    private static function getLabelFromCollection(Collection $users_columns, string $column_type, string $default): string
+    {
+        $column = $users_columns->firstWhere('column_type', $column_type);
+        return $column->column_name ?? $default;
+    }
+
+    /**
+     * ログインIDのラベル取得
+     */
+    public static function getLabelLoginId(Collection $users_columns): string
+    {
+        return self::getLabelFromCollection($users_columns, UserColumnType::login_id, 'ログインID');
+    }
+
+    /**
+     * ユーザ名のラベル取得
+     */
+    public static function getLabelUserName(Collection $users_columns): string
+    {
+        return self::getLabelFromCollection($users_columns, UserColumnType::user_name, 'ユーザ名');
+    }
+
+    /**
+     * メールアドレスのラベル取得
+     */
+    public static function getLabelUserEmail(Collection $users_columns): string
+    {
+        return self::getLabelFromCollection($users_columns, UserColumnType::user_email, 'メールアドレス');
+    }
+
+    /**
+     * パスワードのラベル取得
+     */
+    public static function getLabelUserPassword(Collection $users_columns): string
+    {
+        return self::getLabelFromCollection($users_columns, UserColumnType::user_password, 'パスワード');
+    }
+
+    /**
+     * 登録日時のラベル取得
+     */
+    public static function getLabelCreatedAt(Collection $users_columns): string
+    {
+        return self::getLabelFromCollection($users_columns, UserColumnType::created_at, '登録日時');
+    }
+
+    /**
+     * 更新日時のラベル取得
+     */
+    public static function getLabelUpdatedAt(Collection $users_columns): string
+    {
+        return self::getLabelFromCollection($users_columns, UserColumnType::updated_at, '更新日時');
     }
 }

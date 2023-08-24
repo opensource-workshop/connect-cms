@@ -33,31 +33,52 @@
             <div class="user-area form-group">
                 <table class="table table-hover cc-font-90">
                     <tbody>
-                        <tr>
+                        {{-- <tr>
                             <th style="width:20%;" nowrap="nowrap">ユーザID</th>
                             <td nowrap="nowrap">{{ $user->id }}</td>
-                        </tr>
-                        <tr>
-                            <th nowrap="nowrap">ログインID</th>
-                            <td nowrap="nowrap">{{ $user->userid }}</td>
-                        </tr>
-                        <tr>
-                            <th nowrap="nowrap">ユーザ名</th>
-                            <td nowrap="nowrap">{{ $user->name }}</td>
-                        </tr>
-                        <tr>
-                            <th nowrap="nowrap">メールアドレス</th>
-                            <td nowrap="nowrap">{{ $user->email }}</td>
-                        </tr>
-                        <tr>
-                            <th nowrap="nowrap">登録日時</th>
-                            <td nowrap="nowrap">{{ $user->created_at->format('Y/m/d H:i') }}</td>
-                        </tr>
-                        @foreach($user_input_cols as $user_input_col)
-                            <tr class="input-cols">
-                                <th>{{$user_input_col->column_name}}</th>
-                                <td>{{$user_input_col->value}}</td>
-                            </tr>
+                        </tr> --}}
+                        @foreach($users_columns as $column)
+                            @if ($column->column_type == UserColumnType::user_name)
+                                {{-- ユーザ名 --}}
+                                <tr>
+                                    <th style="width:20%;" nowrap="nowrap">{{$column->column_name}}</th>
+                                    <td nowrap="nowrap">{{ $user->name }}</td>
+                                </tr>
+                            @elseif ($column->column_type == UserColumnType::login_id)
+                                {{-- ログインID --}}
+                                <tr>
+                                    <th style="width:20%;" nowrap="nowrap">{{$column->column_name}}</th>
+                                    <td nowrap="nowrap">{{ $user->userid }}</td>
+                                </tr>
+                            @elseif ($column->column_type == UserColumnType::user_email)
+                                {{-- メールアドレス --}}
+                                <tr>
+                                    <th style="width:20%;" nowrap="nowrap">{{$column->column_name}}</th>
+                                    <td nowrap="nowrap">{{ $user->email }}</td>
+                                </tr>
+                            @elseif ($column->column_type == UserColumnType::user_password)
+                                {{-- 表示しない --}}
+                            @elseif ($column->column_type == UserColumnType::created_at)
+                                {{-- 登録日時 --}}
+                                <tr>
+                                    <th style="width:20%;" nowrap="nowrap">{{$column->column_name}}</th>
+                                    <td nowrap="nowrap">{{ $user->created_at->format('Y/m/d H:i') }}</td>
+                                </tr>
+                            @elseif ($column->column_type == UserColumnType::updated_at)
+                                {{-- 更新日時 --}}
+                                <tr>
+                                    <th style="width:20%;" nowrap="nowrap">{{$column->column_name}}</th>
+                                    <td nowrap="nowrap">{{ $user->updated_at->format('Y/m/d H:i') }}</td>
+                                </tr>
+                            @else
+                                @php
+                                    $input_col = $input_cols->firstWhere('users_columns_id', $column->id);
+                                @endphp
+                                <tr class="input-cols">
+                                    <th>{{$column->column_name}}</th>
+                                    <td>{{$input_col->value ?? ''}}</td>
+                                </tr>
+                            @endif
                         @endforeach
                     </tbody>
                 </table>

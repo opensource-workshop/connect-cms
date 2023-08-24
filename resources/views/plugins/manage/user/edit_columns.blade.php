@@ -12,27 +12,21 @@
 @section('manage_content')
 
 <script type="text/javascript">
-    /**
-     * 項目の追加
-     */
+    /** 項目の追加 */
     function submit_add_column(btn) {
         form_columns.action = "{{url('/')}}/manage/user/addColumn";
         btn.disabled = true;
         form_columns.submit();
     }
 
-    /**
-     * 項目の更新
-     */
+    /** 項目の更新 */
     function submit_update_column(column_id) {
         form_columns.action = "{{url('/')}}/manage/user/updateColumn";
         form_columns.column_id.value = column_id;
         form_columns.submit();
     }
 
-    /**
-     * 項目の表示順操作
-     */
+    /** 項目の表示順操作 */
     function submit_display_sequence(column_id, display_sequence, display_sequence_operation) {
         form_columns.action = "{{url('/')}}/manage/user/updateColumnSequence";
         form_columns.column_id.value = column_id;
@@ -41,9 +35,7 @@
         form_columns.submit();
     }
 
-    /**
-     * 項目の削除ボタン押下
-     */
+    /** 項目の削除ボタン押下 */
      function submit_delete_column(column_id) {
         if (confirm('項目を削除します。\nよろしいですか？')){
             form_columns.action = "{{url('/')}}/manage/user/deleteColumn";
@@ -72,6 +64,7 @@
         {{-- 一覧フォーム --}}
         <form action="{{url('/')}}/manage/user/addColumn" id="form_columns" name="form_columns" method="POST">
             {{ csrf_field() }}
+            <input type="hidden" name="columns_set_id" value="{{$columns_set->id}}">
             <input type="hidden" name="column_id" value="">
             <input type="hidden" name="display_sequence" value="">
             <input type="hidden" name="display_sequence_operation" value="">
@@ -81,7 +74,11 @@
 
             {{-- メッセージエリア --}}
             <div class="alert alert-info">
-                <i class="fas fa-exclamation-circle"></i> ユーザ項目を追加・変更します。
+                @if (config('connect.USE_USERS_COLUMNS_SET'))
+                    <i class="fas fa-exclamation-circle"></i> ユーザ項目セット【 {{$columns_set->name}} 】の項目を追加・変更します。
+                @else
+                    <i class="fas fa-exclamation-circle"></i> ユーザ項目を追加・変更します。
+                @endif
             </div>
 
             {{-- エラーメッセージエリア --}}
@@ -126,9 +123,15 @@
 
             {{-- ボタンエリア --}}
             <div class="text-center">
-                <a href="{{url('/')}}/manage/user/editColumns" class="btn btn-secondary">
-                    <i class="fas fa-times"></i> キャンセル
-                </a>
+                @if (config('connect.USE_USERS_COLUMNS_SET'))
+                    <a href="{{url('/')}}/manage/user/columnSets" class="btn btn-secondary">
+                        <i class="fas fa-chevron-left"></i> 項目セット一覧へ
+                    </a>
+                @else
+                    <a href="{{url('/')}}/manage/user/editColumns/1" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> キャンセル
+                    </a>
+                @endif
             </div>
         </form>
 
@@ -144,6 +147,6 @@
     .button-wrapper .btn:disabled {
       pointer-events: none;
     }
-    </style>
+</style>
 
 @endsection

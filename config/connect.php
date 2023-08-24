@@ -159,6 +159,9 @@ return [
     // Use the container (beta)
     'USE_CONTAINER_BETA' => env('USE_CONTAINER_BETA', false),
 
+    // ユーザの項目セットを使う
+    'USE_USERS_COLUMNS_SET' => env('USE_USERS_COLUMNS_SET', false),
+
     // QUEUE_CONNECTION=database 時に使われるPHP BINのパス. null時は自動判定
     'QUEUE_PHP_BIN' => env('QUEUE_PHP_BIN', null),
 

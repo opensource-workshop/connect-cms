@@ -323,6 +323,7 @@ $app_array = [
         'WebsiteType' => \App\Enums\WebsiteType::class,
         'BlogNarrowingDownType' => \App\Enums\BlogNarrowingDownType::class,
         'FormAccessLimitType' => \App\Enums\FormAccessLimitType::class,
+        'EditType' => \App\Enums\EditType::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

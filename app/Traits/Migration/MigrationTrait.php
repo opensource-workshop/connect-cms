@@ -404,6 +404,11 @@ trait MigrationTrait
             UsersColumns::truncate();
             UsersColumnsSelects::truncate();
             UsersInputCols::truncate();
+
+            // 消してしまった初期の項目の再登録
+            // php artisan db:seed --class=DefaultUsersColumnsTableSeeder --force
+            Artisan::call('db:seed --class=DefaultUsersColumnsTableSeeder --force');
+
             MigrationMapping::where('target_source_table', 'users')->delete();
         }
 
@@ -1618,12 +1623,17 @@ trait MigrationTrait
             }
 
             $column_type = $this->getArrayValue($ini, 'users_columns_base', 'column_type');
+
+            $max_display_sequence = UsersColumns::where('columns_set_id', 1)->max('display_sequence');
+            $display_sequence = empty($max_display_sequence) ? 0 : $max_display_sequence;
+
             $users_column = UsersColumns::create([
+                'columns_set_id'   => 1,
                 'column_type'      => $column_type,
                 'column_name'      => $this->getArrayValue($ini, 'users_columns_base', 'column_name'),
                 'required'         => intval($this->getArrayValue($ini, 'users_columns_base', 'required', 0)),
                 'caption'          => $this->getArrayValue($ini, 'users_columns_base', 'caption'),
-                'display_sequence' => intval($this->getArrayValue($ini, 'users_columns_base', 'display_sequence')),
+                'display_sequence' => $display_sequence + intval($this->getArrayValue($ini, 'users_columns_base', 'display_sequence')),
             ]);
 
             $users_column->nc2_item_id = $nc2_item_id;
@@ -1653,6 +1663,7 @@ trait MigrationTrait
                     $display_sequence = $i;
                     $display_sequence++;
                     $users_column_select = UsersColumnsSelects::create([
+                        'columns_set_id'   => 1,
                         'users_columns_id' => $users_column->id,
                         'value'            => $value,
                         'display_sequence' => $display_sequence,
@@ -1748,6 +1759,7 @@ trait MigrationTrait
                     $user->userid     = $user_item['userid'];
                     $user->password   = $user_item['password'];
                     $user->status     = $user_item['status'];
+                    $user->columns_set_id = 1;
                     $user->created_at = $user_item['created_at'];
                     $user->updated_at = $user_item['updated_at'];
                     $user->save();

@@ -235,17 +235,17 @@ class Frame extends Model
     {
         // 非ログインまたはフレーム編集権限を持たない、且つ、非表示条件（非公開、又は、限定公開、又は、ログイン後非表示）にマッチした場合はフレームを非表示にする
 
-        if (
-            // !Auth::check() &&
-            (!Auth::check() || !Auth::user()->can('role_arrangement')) &&
+        if (Auth::check() && Auth::user()->can('role_arrangement') && app('request')->input('mode') != 'preview') {
+            // 表示
+            return false;
+        }
+
+        if ($this->content_open_type == ContentOpenType::always_close ||
             (
-                $this->content_open_type == ContentOpenType::always_close ||
-                (
-                    $this->content_open_type == ContentOpenType::limited_open &&
-                    !Carbon::now()->between($this->content_open_date_from, $this->content_open_date_to)
-                ) ||
-                (Auth::check() && $this->content_open_type == ContentOpenType::login_close)
-            )
+                $this->content_open_type == ContentOpenType::limited_open &&
+                !Carbon::now()->between($this->content_open_date_from, $this->content_open_date_to)
+            ) ||
+            (Auth::check() && $this->content_open_type == ContentOpenType::login_close)
         ) {
             // 非表示
             return true;

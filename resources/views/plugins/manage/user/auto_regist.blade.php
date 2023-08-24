@@ -1,5 +1,9 @@
 {{--
  * 自動ユーザ登録設定画面のテンプレート
+ *
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category ユーザ管理
 --}}
 
 {{-- 管理画面ベース画面 --}}
@@ -21,8 +25,17 @@
         {{-- 登録後メッセージ表示 --}}
         @include('plugins.common.flash_message')
 
-        <form action="{{url('/')}}/manage/user/autoRegistUpdate" method="POST">
+        <form action="{{url('/')}}/manage/user/autoRegistUpdate/{{$columns_set_id}}" method="POST">
             {{csrf_field()}}
+
+            {{-- 項目セット --}}
+            <div class="form-group">
+                @foreach($columns_sets as $columns_set)
+                    <button type="button" class="btn @if($columns_set->id == $columns_set_id) btn-primary @else btn-outline-primary @endif btn-sm" onclick="location.href='{{url('/')}}/manage/user/autoRegist/{{$columns_set->id}}'">
+                        ユーザ({{$columns_set->name}})
+                    </button>
+                @endforeach
+            </div>
 
             {{-- 自動ユーザ登録の使用 --}}
             <div class="form-group row">
@@ -44,7 +57,10 @@
                         @endif
                         <label class="custom-control-label" for="user_register_enable_off" id="label_user_register_enable_off">許可しない</label>
                     </div>
-                    <small class="form-text text-muted">自動ユーザ登録を使用するかどうかを選択</small>
+                    <small class="form-text text-muted">
+                        ※ 自動ユーザ登録を使用するかどうかを選択<br />
+                        ※ 自動ユーザ登録時に登録させる項目は [ <a href="{{ url('/manage/user/editColumns/'. $columns_set_id) }}">項目設定</a> ] の「詳細」からそれぞれ設定してください。<br />
+                    </small>
                 </div>
             </div>
 
@@ -329,6 +345,17 @@
                     </small>
                 </div>
             </div>
+
+            @if (config('connect.USE_USERS_COLUMNS_SET'))
+                <div class="form-group row">
+                    <label class="col-md-3 col-form-label text-md-right">項目セット名</label>
+                    <div class="col">
+                        <input type="text" name="user_columns_set_label_name" value="{{Configs::getConfigsValueAndOld($configs, 'user_columns_set_label_name')}}" class="form-control">
+                        <small class="text-muted">※ 自動ユーザ登録時の項目セットの項目名を変更できます。未設定の場合「項目セット」を表示します。<br></small>
+                        <small class="text-danger">※ この設定は、全ての自動ユーザ登録設定で共通設定です。<br></small>
+                    </div>
+                </div>
+            @endif
 
             {{-- Submitボタン --}}
             <div class="form-group text-center">
