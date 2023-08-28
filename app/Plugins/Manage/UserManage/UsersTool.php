@@ -80,7 +80,8 @@ class UsersTool
     public static function getUsersInputCols($users_ids)
     {
         // カラムの登録データ
-        $input_cols = UsersInputCols::select(
+        $input_cols = UsersInputCols::
+            select(
                 'users_input_cols.*',
                 'users_columns.column_type',
                 'users_columns.column_name',
