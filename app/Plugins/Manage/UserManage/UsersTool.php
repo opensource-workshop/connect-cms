@@ -80,7 +80,14 @@ class UsersTool
     public static function getUsersInputCols($users_ids)
     {
         // カラムの登録データ
-        $input_cols = UsersInputCols::select('users_input_cols.*', 'users_columns.column_type', 'users_columns.column_name', 'uploads.client_original_name')
+        $input_cols = UsersInputCols::select(
+                'users_input_cols.*',
+                'users_columns.column_type',
+                'users_columns.column_name',
+                'users_columns.use_variable',
+                'users_columns.variable_name',
+                'uploads.client_original_name'
+            )
             ->leftJoin('users_columns', 'users_columns.id', '=', 'users_input_cols.users_columns_id')
             ->leftJoin('uploads', 'uploads.id', '=', 'users_input_cols.value')
             ->whereIn('users_id', $users_ids)

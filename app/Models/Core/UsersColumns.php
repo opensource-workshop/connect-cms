@@ -18,6 +18,8 @@ class UsersColumns extends Model
         'columns_set_id',
         'column_type',
         'column_name',
+        'use_variable',
+        'variable_name',
         'is_fixed_column',
         'is_show_auto_regist',
         'is_show_my_page',
@@ -35,6 +37,19 @@ class UsersColumns extends Model
         'rule_word_count',
         'display_sequence',
     ];
+
+    /**
+     * 選択肢タイプのカラム型か
+     */
+    public static function isSelectColumnType($column_type): bool
+    {
+        if ($column_type == UserColumnType::radio ||
+                $column_type == UserColumnType::checkbox ||
+                $column_type == UserColumnType::select) {
+            return true;
+        }
+        return false;
+    }
 
     /**
      * 選択肢系のカラム型か

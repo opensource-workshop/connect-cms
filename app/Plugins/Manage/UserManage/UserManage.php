@@ -39,6 +39,7 @@ use App\Enums\ShowType;
 use App\Enums\UserColumnType;
 use App\Enums\UserRegisterNoticeEmbeddedTag;
 use App\Enums\UserStatus;
+use App\Enums\UseType;
 use App\Models\Core\Section;
 use App\Models\Core\UserSection;
 
@@ -2481,14 +2482,24 @@ class UserManage extends ManagePluginBase
     public function updateColumnSet($request, $id)
     {
         // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
+        $validator_values = [
             'name' => ['required', 'max:191'],
             'display_sequence' => ['nullable', 'numeric'],
-        ]);
-        $validator->setAttributeNames([
+        ];
+        $validator_attributes = [
             'name' => '項目セット名',
             'display_sequence' => '表示順',
-        ]);
+        ];
+
+        // 変数名の使用で必須チェック
+        if ($request->use_variable) {
+            $validator_values['variable_name'] = ['required', 'max:255'];
+            $validator_attributes['variable_name'] = '変数名';
+        }
+
+        // エラーチェック
+        $validator = Validator::make($request->all(), $validator_values);
+        $validator->setAttributeNames($validator_attributes);
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
@@ -2500,6 +2511,10 @@ class UserManage extends ManagePluginBase
 
         $columns_set = UsersColumnsSet::firstOrNew(['id' => $id]);
         $columns_set->name             = $request->name;
+        $columns_set->use_variable     = $request->use_variable ? UseType::use : UseType::not_use;
+        if ($request->use_variable) {
+            $columns_set->variable_name = $request->variable_name;
+        }
         $columns_set->display_sequence = $display_sequence;
         $columns_set->save();
 
@@ -2545,15 +2560,16 @@ class UserManage extends ManagePluginBase
         // ユーザーのカラム
         $columns = UsersTool::getUsersColumns($id);
 
-        // カラムの選択肢
-        $users_columns_selects = UsersColumnsSelects::where('columns_set_id', $id)
-            ->orderBy('users_columns_id', 'asc')
-            ->orderBy('display_sequence', 'asc')
-            ->get();
-
         foreach ($columns as &$column) {
-            $column->select_count = $users_columns_selects->where('users_columns_id', $column->id)->count();
-            $column->select_names = $users_columns_selects->where('users_columns_id', $column->id)->pluck('value')->implode(',');
+            if (UsersColumns::isSelectColumnType($column->column_type)) {
+                // 選択肢
+                $column->selects = UsersColumnsSelects::where('columns_set_id', $id)
+                    ->orderBy('users_columns_id', 'asc')
+                    ->orderBy('display_sequence', 'asc')
+                    ->get();
+            } else {
+                $column->selects = collect();
+            }
         }
 
         return view('plugins.manage.user.edit_columns', [
@@ -2785,6 +2801,11 @@ class UserManage extends ManagePluginBase
             ];
             $validator_attributes['rule_word_count'] = '入力最大文字数';
         }
+        // 変数名の使用で必須チェック
+        if ($request->use_variable) {
+            $validator_values['variable_name'] = ['required', 'max:255'];
+            $validator_attributes['variable_name'] = '変数名';
+        }
 
         // エラーチェック
         if ($validator_values) {
@@ -2808,6 +2829,10 @@ class UserManage extends ManagePluginBase
         $column->is_show_auto_regist = $request->is_show_auto_regist ? EditType::ok : EditType::ng;
         $column->is_show_my_page = $request->is_show_my_page ? ShowType::show : ShowType::not_show;
         $column->is_edit_my_page = $request->is_edit_my_page ? EditType::ok : EditType::ng;
+        $column->use_variable = $request->use_variable ? UseType::use : UseType::not_use;
+        if ($request->use_variable) {
+            $column->variable_name = $request->variable_name;
+        }
         // 数値のみ許容
         $column->rule_allowed_numeric = (empty($request->rule_allowed_numeric)) ? 0 : $request->rule_allowed_numeric;
         // 英数値のみ許容

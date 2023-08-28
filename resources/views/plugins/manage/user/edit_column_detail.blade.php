@@ -94,11 +94,32 @@ use App\Models\Core\UsersColumns;
         return false;
     }
 
-    // ツールチップ
+    /** 変数名の使用の表示・非表示 */
+    function change_use_variable(radio_value) {
+        switch (radio_value) {
+            case '1':
+                $('#variable_name_div').collapse('show');
+                break;
+            case '0':
+                $('#variable_name_div').collapse('hide');
+                break;
+            default:
+                // 空の場合を想定
+                $('#variable_name_div').collapse('hide');
+        }
+    }
+
     $(function () {
-        // 有効化
+        /** ツールチップ有効化 */
         $('[data-toggle="tooltip"]').tooltip()
-    })
+
+        /** 変数名の使用の制御radio.change */
+        $('input[name="use_variable"]').change(function(){
+            // 変数名の使用の表示・非表示
+            change_use_variable($(this).val());
+        });
+
+    });
 </script>
 
 <div class="card">
@@ -652,6 +673,44 @@ use App\Models\Core\UsersColumns;
                 </div>
             </div>
 
+            {{-- 変数名の設定 --}}
+            <div class="card form-group">
+                <h5 class="card-header">変数名の設定</h5>
+                <div class="card-body">
+                    {{-- 変数名の使用 --}}
+                    <div class="form-group row">
+                        <label class="col-md-3 col-form-label text-md-right pt-0">変数名の使用</label>
+                        <div class="col-md-9 align-items-center">
+                            @foreach (UseType::getMembers() as $enum_value => $enum_label)
+                                <div class="custom-control custom-radio custom-control-inline">
+                                    @if (old('use_variable', $column->use_variable) == $enum_value)
+                                        <input type="radio" value="{{$enum_value}}" id="use_variable_{{$enum_value}}" name="use_variable" class="custom-control-input" checked="checked">
+                                    @else
+                                        <input type="radio" value="{{$enum_value}}" id="use_variable_{{$enum_value}}" name="use_variable" class="custom-control-input">
+                                    @endif
+                                    {{-- duskでradioの選択にlabelのid必要 --}}
+                                    <label class="custom-control-label" for="use_variable_{{$enum_value}}" id="label_use_variable_{{$enum_value}}">{{$enum_label}}</label>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    {{-- 変数名 --}}
+                    <div class="form-group row collapse" id="variable_name_div">
+                        <label class="col-md-3 col-form-label text-md-right">変数名 <span class="badge badge-danger">必須</span></label>
+                        <div class="col-md-9 align-items-center">
+                            <input type="text" name="variable_name" value="{{old('variable_name', $column->variable_name)}}" class="form-control @if ($errors && $errors->has("variable_name")) border-danger @endif" />
+                            @include('plugins.common.errors_inline', ['name' => "variable_name"])
+                        </div>
+                    </div>
+
+                    {{-- ボタンエリア --}}
+                    <div class="form-group text-center">
+                        <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
+                    </div>
+                </div>
+            </div>
+
             {{-- ボタンエリア --}}
             <div class="form-group text-center">
                 <a href="{{url('/')}}/manage/user/editColumns/{{$columns_set->id}}" class="btn btn-secondary">
@@ -674,4 +733,8 @@ use App\Models\Core\UsersColumns;
 }
 </style>
 
+<script>
+    {{-- 初期状態で開くもの --}}
+    change_use_variable('{{old('use_variable', $column->use_variable)}}');
+</script>
 @endsection
