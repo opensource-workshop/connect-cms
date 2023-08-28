@@ -79,4 +79,20 @@ class UserColumnType extends EnumsBase
             self::updated_at,
         ];
     }
+
+    /**
+     * 検索で完全一致のカラム型 取得
+     */
+    public static function searchExactMatchColumnTypes(): array
+    {
+        $class_name = self::getOptionClass();
+        // オプションクラス有＋メソッド有なら呼ぶ
+        if ($class_name) {
+            if (method_exists($class_name, 'searchExactMatchColumnTypes')) {
+                return $class_name::searchExactMatchColumnTypes();
+            }
+        }
+
+        return [];
+    }
 }

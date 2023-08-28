@@ -99,6 +99,17 @@ class UsersColumns extends Model
     }
 
     /**
+     * 検索で完全一致のカラム型か
+     */
+    public static function isSearchExactMatchColumnType($column_type): bool
+    {
+        if (in_array($column_type, UserColumnType::searchExactMatchColumnTypes())) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * コレクションからラベル名取得
      */
     private static function getLabelFromCollection(Collection $users_columns, string $column_type, string $default): string
