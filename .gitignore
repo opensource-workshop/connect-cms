@@ -60,6 +60,7 @@ composer-option*
 /database/seeders/Options/*
 /resources/views/plugins_option/*
 /resources/views/mail_option/*
+/resources/views/auth_option/*
 
 # Dusk
 /tests/tmp/*

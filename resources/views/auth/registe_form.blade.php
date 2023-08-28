@@ -19,8 +19,8 @@ use App\Models\Core\UsersColumns;
 @endphp
 
 <script>
-    /** 会員変更submit */
-    function changeSeminarUserIdAction(columns_set_id) {
+    /** 項目セット変更submit */
+    function changeColumnsSetIdAction(columns_set_id) {
         @if (Auth::user() && Auth::user()->can('admin_user'))
             @if ($is_function_edit)
                 {{-- ユーザ管理-編集 --}}
@@ -73,7 +73,7 @@ use App\Models\Core\UsersColumns;
             <div class="form-group row">
                 <label for="columns_set_id" class="col-md-4 col-form-label text-md-right">項目セット <span class="badge badge-danger">必須</span></label>
                 <div class="col-md-8">
-                    <select name="columns_set_id" id="columns_set_id" class="form-control @if ($errors->has('columns_set_id')) border-danger @endif" onchange="changeSeminarUserIdAction(this.value)">
+                    <select name="columns_set_id" id="columns_set_id" class="form-control @if ($errors->has('columns_set_id')) border-danger @endif" onchange="changeColumnsSetIdAction(this.value)">
                         <option value=""></option>
                         @foreach ($columns_sets as $columns_set)
                             <option value="{{$columns_set->id}}" @if (old('columns_set_id', $user->columns_set_id) == $columns_set->id) selected="selected" @endif>{{$columns_set->name}}</option>
@@ -88,7 +88,7 @@ use App\Models\Core\UsersColumns;
             <div class="form-group row">
                 <label for="columns_set_id" class="col-md-4 col-form-label text-md-right">{{Configs::getConfigsValue($configs, "user_columns_set_label_name", '項目セット')}} <span class="badge badge-danger">必須</span></label>
                 <div class="col-md-8">
-                    <select name="columns_set_id" id="columns_set_id" class="form-control @if ($errors->has('columns_set_id')) border-danger @endif" onchange="changeSeminarUserIdAction()">
+                    <select name="columns_set_id" id="columns_set_id" class="form-control @if ($errors->has('columns_set_id')) border-danger @endif" onchange="changeColumnsSetIdAction()">
                         @foreach ($columns_sets as $columns_set)
                             <option value="{{$columns_set->id}}" @if (old('columns_set_id', $columns_set_id) == $columns_set->id) selected="selected" @endif>{{$columns_set->name}}</option>
                         @endforeach
@@ -212,7 +212,7 @@ use App\Models\Core\UsersColumns;
             <div class="form-group row">
                 <label class="col-md-4 col-form-label text-md-right {{$label_class}}" {{$label_for}}>{{$column->column_name}} @if ($column->required)<span class="badge badge-danger">必須</span> @endif</label>
                 <div class="col-md-8">
-                    @include('auth.registe_form_input_' . $column->column_type, ['user_obj' => $column, 'label_id' => 'user-column-'.$column->id])
+                    @includeFirst(["auth_option.registe_form_input_$column->column_type", "auth.registe_form_input_$column->column_type"], ['user_obj' => $column, 'label_id' => 'user-column-'.$column->id])
                     <div class="small {{ $column->caption_color }}">{!! nl2br((string)$column->caption) !!}</div>
                 </div>
             </div>

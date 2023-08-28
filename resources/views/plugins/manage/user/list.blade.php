@@ -145,7 +145,7 @@ use App\Models\Core\UsersColumns;
                                     <div class="form-group row">
                                         <label class="col-md-3 col-form-label text-md-right {{$label_class}}" {{$label_for}}>{{$column->column_name}}</label>
                                         <div class="col-md-9">
-                                            @include('plugins.manage.user.list_search_' . $column->column_type, ['user_obj' => $column, 'label_id' => 'user-column-'.$column->id])
+                                            @includeFirst(["plugins_option.manage.user.list_search_$column->column_type", "plugins.manage.user.list_search_$column->column_type"], ['user_obj' => $column, 'label_id' => 'user-column-'.$column->id])
                                         </div>
                                     </div>
                                 @endif
@@ -402,7 +402,7 @@ use App\Models\Core\UsersColumns;
                         @if (UsersColumns::isLoopNotShowColumnType($users_column->column_type))
                             {{-- 表示しない --}}
                         @else
-                            <td>@include('plugins.manage.user.list_include_value')</td>
+                            <td>@includeFirst(['plugins_option.manage.user.list_include_value', 'plugins.manage.user.list_include_value'])</td>
                         @endif
                     @endforeach
                     <td nowrap>

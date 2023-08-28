@@ -36,7 +36,7 @@
                 <tr>
                     <td class="d-block d-sm-table-cell">
                         <a href="{{url('/')}}/manage/user/editColumnSet/{{$columns_set->id}}"><i class="far fa-edit"></i></a>
-                        <span class="d-sm-none">項目セット名：</span>{{$columns_set->name}}
+                        <span class="d-sm-none">項目セット名：</span>{{$columns_set->name}}@if($columns_set->use_variable) ({{$columns_set->variable_name}}) @endif
                     </td>
                     <td class="d-block d-sm-table-cell"><span class="d-sm-none">表示順：</span>{{$columns_set->display_sequence}}</td>
                     <td class="d-block d-sm-table-cell">

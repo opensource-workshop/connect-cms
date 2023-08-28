@@ -18,6 +18,8 @@ class UsersColumnsSet extends Model
      */
     protected $fillable = [
         'name',
+        'use_variable',
+        'variable_name',
         'display_sequence',
     ];
 }
