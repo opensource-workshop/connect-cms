@@ -212,7 +212,7 @@ use App\Models\Core\UsersColumns;
             <div class="form-group row">
                 <label class="col-md-4 col-form-label text-md-right {{$label_class}}" {{$label_for}}>{{$column->column_name}} @if ($column->required)<span class="badge badge-danger">必須</span> @endif</label>
                 <div class="col-md-8">
-                    @include('auth.registe_form_input_' . $column->column_type, ['user_obj' => $column, 'label_id' => 'user-column-'.$column->id])
+                    @includeFirst(["auth_option.registe_form_input_$column->column_type", "auth.registe_form_input_$column->column_type"], ['user_obj' => $column, 'label_id' => 'user-column-'.$column->id])
                     <div class="small {{ $column->caption_color }}">{!! nl2br((string)$column->caption) !!}</div>
                 </div>
             </div>

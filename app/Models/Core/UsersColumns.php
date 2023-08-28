@@ -69,13 +69,7 @@ class UsersColumns extends Model
      */
     public static function isLoopNotShowColumnType($column_type): bool
     {
-        if ($column_type == UserColumnType::user_name ||
-            $column_type == UserColumnType::login_id ||
-            $column_type == UserColumnType::user_email ||
-            $column_type == UserColumnType::user_password ||
-            $column_type == UserColumnType::created_at ||
-            $column_type == UserColumnType::updated_at
-        ) {
+        if (in_array($column_type, UserColumnType::loopNotShowColumnTypes())) {
             return true;
         }
         return false;
@@ -86,14 +80,7 @@ class UsersColumns extends Model
      */
     public static function loopNotShowColumnTypes(): array
     {
-        return [
-            UserColumnType::user_name,
-            UserColumnType::login_id,
-            UserColumnType::user_email,
-            UserColumnType::user_password,
-            UserColumnType::created_at,
-            UserColumnType::updated_at,
-        ];
+        return UserColumnType::loopNotShowColumnTypes();
     }
 
     /**
