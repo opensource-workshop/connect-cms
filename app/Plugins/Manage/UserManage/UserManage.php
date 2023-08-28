@@ -323,8 +323,15 @@ class UserManage extends ManagePluginBase
                             ->join('users_columns', 'users_columns.id', '=', 'users_input_cols.users_columns_id')
                             ->where('users_columns.id', $users_column->id)
                             //->whereNotIn('users_columns.id', $hide_columns_ids)
-                            ->where('value', 'like', '%' . $search_keyword . '%')
                             ->groupBy('users_id');
+
+                    if (UsersColumns::isSearchExactMatchColumnType($users_column->column_type)) {
+                        // 完全一致
+                        $query->where('value', $search_keyword);
+                    } else {
+                        // 部分一致（通常）
+                        $query->where('value', 'like', '%' . $search_keyword . '%');
+                    }
                 });
             }
         }
@@ -623,7 +630,8 @@ class UserManage extends ManagePluginBase
 
         session(["user_search_condition" => $user_search_condition]);
 
-        return redirect("/manage/user");
+        // is_search_collapse_show=1で検索エリアを開いたままにできる（オプションプラグイン等で利用）
+        return redirect("/manage/user")->with('is_search_collapse_show', $request->is_search_collapse_show);
     }
 
     /**
