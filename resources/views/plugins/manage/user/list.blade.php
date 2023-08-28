@@ -402,7 +402,6 @@ use App\Models\Core\UsersColumns;
                         @if (UsersColumns::isLoopNotShowColumnType($users_column->column_type))
                             {{-- 表示しない --}}
                         @else
-                            {{-- <td>@include('plugins.manage.user.list_include_value')</td> --}}
                             <td>@includeFirst(['plugins_option.manage.user.list_include_value', 'plugins.manage.user.list_include_value'])</td>
                         @endif
                     @endforeach
