@@ -623,7 +623,8 @@ class UserManage extends ManagePluginBase
 
         session(["user_search_condition" => $user_search_condition]);
 
-        return redirect("/manage/user");
+        // is_search_collapse_show=1で検索エリアを開いたままにできる（オプションプラグイン等で利用）
+        return redirect("/manage/user")->with('is_search_collapse_show', $request->is_search_collapse_show);
     }
 
     /**
