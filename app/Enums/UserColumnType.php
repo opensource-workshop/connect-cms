@@ -7,7 +7,7 @@ use App\Enums\EnumsBase;
 /**
  * ユーザ項目区分
  */
-final class UserColumnType extends EnumsBase
+class UserColumnType extends EnumsBase
 {
     // 定数メンバ
     const text = 'text';
@@ -55,5 +55,28 @@ final class UserColumnType extends EnumsBase
     public static function getDescriptionFixed($key): string
     {
         return static::enum_fixed[$key];
+    }
+
+    /**
+     * ループで非表示のカラム型 取得
+     */
+    public static function loopNotShowColumnTypes(): array
+    {
+        $class_name = self::getOptionClass();
+        // オプションクラス有＋メソッド有なら呼ぶ
+        if ($class_name) {
+            if (method_exists($class_name, 'loopNotShowColumnTypes')) {
+                return $class_name::loopNotShowColumnTypes();
+            }
+        }
+
+        return [
+            self::user_name,
+            self::login_id,
+            self::user_email,
+            self::user_password,
+            self::created_at,
+            self::updated_at,
+        ];
     }
 }

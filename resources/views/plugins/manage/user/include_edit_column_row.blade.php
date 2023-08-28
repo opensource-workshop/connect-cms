@@ -5,6 +5,10 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ユーザ管理
 --}}
+@php
+use App\Models\Core\UsersColumns;
+@endphp
+
 <tr @if ($column->hide_flag) class="table-secondary" @endif>
     {{-- 表示順操作 --}}
     <td class="align-middle text-center" nowrap>
@@ -53,11 +57,7 @@
             type="button"
             class="btn btn-success btn-xs cc-font-90 text-nowrap"
             id="button_user_column_detail_{{ $column->id }}"
-            @if (
-                $column->column_type == UserColumnType::radio ||
-                $column->column_type == UserColumnType::checkbox ||
-                $column->column_type == UserColumnType::select
-                )
+            @if (UsersColumns::isSelectColumnType($column->column_type))
                 {{-- 選択肢の設定がない場合のみツールチップを表示 --}}
                 @if ($column->select_count == 0)
                     id="detail-button-tip" data-toggle="tooltip" title="選択肢がありません。設定してください。" data-trigger="manual" data-placement="bottom"
@@ -92,22 +92,56 @@
         @endif
     </td>
 </tr>
+
 {{-- 選択肢の設定内容の表示行 --}}
-@if (
-    $column->column_type == UserColumnType::radio ||
-    $column->column_type == UserColumnType::checkbox ||
-    $column->column_type == UserColumnType::select
-    )
-    <tr>
-        <td class="pt-0 border border-0"></td>
-        <td class="pt-0 border border-0" colspan="7">
-            @if ($column->select_count > 0)
-                {{-- 選択肢データがある場合、カンマ付で一覧表示する --}}
-                <i class="far fa-list-alt"></i> {{ $column->select_names }}
-            @elseif ($column->select_count == 0)
-                {{-- 選択肢データがない場合はツールチップ分、余白として改行する --}}
-                <br>
+<tr>
+    <td class="pt-0 border border-0"></td>
+    <td class="pt-0 border border-0" colspan="7">
+        <div class="small">
+            @if ($column->is_show_auto_regist)
+                <span class="text-primary mr-3"><i class="fas fa-toggle-on"></i> 自動ユーザ登録時表示：ON</span>
+            @else
+                <span class="text-secondary mr-3"><i class="fas fa-toggle-off"></i> 自動ユーザ登録時表示：OFF</span>
             @endif
-        </td>
-    </tr>
-@endif
+            @if ($column->is_show_my_page)
+                <span class="text-primary mr-3"><i class="fas fa-toggle-on"></i> マイページ表示：ON</span>
+            @else
+                <span class="text-secondary mr-3"><i class="fas fa-toggle-off"></i> マイページ表示：OFF</span>
+            @endif
+            @if ($column->is_edit_my_page)
+                <span class="text-primary"><i class="fas fa-toggle-on"></i> マイページ編集：ON</span>
+            @else
+                <span class="text-secondary"><i class="fas fa-toggle-off"></i> マイページ編集：OFF</span>
+            @endif
+        </div>
+
+        @if ($column->selects->isNotEmpty())
+            {{-- 選択肢データがある場合、カンマ付で一覧表示する --}}
+            <i class="far fa-list-alt" data-toggle="tooltip" title="選択肢"></i> {{ $column->selects->where('users_columns_id', $column->id)->pluck('value')->implode(',') }}
+        @endif
+
+        @if ($column->caption)
+            {{-- キャプションが設定されている場合、キャプションを表示する --}}
+            <div class="small {{ $column->caption_color }}">
+                <i class="fas fa-pen" data-toggle="tooltip" title="キャプション"></i>
+                {!! mb_strimwidth($column->caption, 0, 60, '...', 'UTF-8') !!}
+            </div>
+        @endif
+
+        @if ($column->place_holder)
+            {{-- プレースホルダが設定されている場合、プレースホルダを表示する --}}
+            <div class="small">
+                <i class="fas fa-pen-square" data-toggle="tooltip" title="プレースホルダ"></i>
+                {!! mb_strimwidth($column->place_holder, 0, 60, '...', 'UTF-8') !!}
+            </div>
+        @endif
+
+        @if ($column->use_variable)
+            {{-- 変数名を使用する場合、変数名を表示する --}}
+            <div class="small">
+                <i class="fas fa-box" data-toggle="tooltip" title="変数名"></i>
+                {!! mb_strimwidth($column->variable_name, 0, 60, '...', 'UTF-8') !!}
+            </div>
+        @endif
+    </td>
+</tr>

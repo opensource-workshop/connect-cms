@@ -22,7 +22,8 @@ class EnumsBase
      */
     public static function getDescription($key): string
     {
-        return static::enum[$key];
+        $enum = static::getEnum();
+        return $enum[$key];
     }
 
     /**
@@ -30,7 +31,7 @@ class EnumsBase
      */
     public static function getMembers()
     {
-        return static::enum;
+        return static::getEnum();
     }
 
     /**
@@ -38,6 +39,36 @@ class EnumsBase
      */
     public static function getMemberKeys()
     {
-        return array_keys(static::enum);
+        return array_keys(static::getEnum());
+    }
+
+    /**
+     * enumを返す
+     */
+    private static function getEnum(): array
+    {
+        $class_name = self::getOptionClass();
+        if ($class_name) {
+            return $class_name::enum;
+        }
+
+        return static::enum;
+    }
+
+    /**
+     * オプションクラスを返す
+     */
+    protected static function getOptionClass(): ?string
+    {
+        // クラス名をnamespace 毎取得
+        $instance_name = explode('\\', get_called_class());
+        if (is_array($instance_name) && $instance_name[0] == 'App' && $instance_name[1] == 'Enums' && !empty($instance_name[2])) {
+            $class_name = "App\EnumsOption\\" . $instance_name[2] . "Option";
+            // オプションあり
+            if (class_exists($class_name)) {
+                return $class_name;
+            }
+        }
+        return null;
     }
 }
