@@ -23,17 +23,18 @@
 @endif
 
 @if ($whatsnews)
-
-@if (isset($whatsnews_frame->rss) && $whatsnews_frame->rss == UseType::use)
-<p class="text-left">
-    <a href="{{url('/')}}/redirect/plugin/whatsnews/rss/{{$page->id}}/{{$frame_id}}/" title="{{$whatsnews_frame->whatsnew_name}}のRSS2.0"><span class="badge badge-info">RSS2.0</span></a>
-</p>
+    @if (isset($whatsnews_frame->rss) && $whatsnews_frame->rss == UseType::use)
+    <p class="text-left">
+        <a href="{{url('/')}}/redirect/plugin/whatsnews/rss/{{$page->id}}/{{$frame_id}}/" title="{{$whatsnews_frame->whatsnew_name}}のRSS2.0"><span class="badge badge-info">RSS2.0</span></a>
+    </p>
+    @endif
 @endif
 
-<div class="container" id="{{ $whatsnews_frame->read_more_use_flag == UseType::use ? 'app_' . $frame->id : '' }}">
+<div class="container" id="{{ 'app_' . $frame->id}}">
 
     <article class="clearfix">
         <div class="row">
+            @if ($whatsnews)
             @foreach($whatsnews as $whatsnew)
             @if (isset($is_template_col_3))
             {{-- カードタイプ３の場合 --}}
@@ -110,10 +111,12 @@
                 @endif
             </div>
             @endforeach
+            @endif
         </div>
     </article>
 
-    @if ($whatsnews_frame->read_more_use_flag == UseType::use)
+    @if ($whatsnews_frame->read_more_use_flag == UseType::use
+        || FrameConfig::getConfigValue($frame_configs, WhatsnewFrameConfig::async) == UseType::use)
         {{-- 「もっと見る」ボタン押下時、非同期で新着一覧をレンダリング --}}
         <article class="clearfix">
             <div class="row">
@@ -125,9 +128,9 @@
                 <div v-for="whatsnews in whatsnewses" class="col-12 col-sm-6 col-lg-3 whatsnew_card mb-2">
                 @endif
 
-                    @if ($link_pattern[$whatsnew->plugin_name] == 'show_page_frame_post')
-                    <a :href="url + link_base[whatsnews.plugin_name] + '/' + whatsnews.page_id + '/' + whatsnews.frame_id + '/' + whatsnews.post_id + '#frame-' + whatsnews.frame_id" style="text-decoration: none; color: initial;">
-                    @endif
+                    {{-- 本当はaタグだけ消して子要素は残したいが、、、 現在show_page_frame_postのパターンがないので一旦このv-ifで回避--}}
+                    <a v-if="link_pattern[whatsnews.plugin_name] == 'show_page_frame_post'"
+                        :href="url + link_base[whatsnews.plugin_name] + '/' + whatsnews.page_id + '/' + whatsnews.frame_id + '/' + whatsnews.post_id + '#frame-' + whatsnews.frame_id" style="text-decoration: none; color: initial;">
 
                     <div  class="p-2" style="height: 100%;"
                         v-bind:class="{ 'border': border == show }"
@@ -139,7 +142,6 @@
                             @{{ whatsnews.post_title_strip_tags }}
                         </dt>
 
-                        
                         {{-- カテゴリ --}}
                         <dd v-if="whatsnews.category != null && whatsnews.category != ''" class="text-center whatsnew_category">
                             <div>
@@ -170,9 +172,7 @@
 
                     </dl>
                 </div>
-                @if ($link_pattern[$whatsnew->plugin_name] == 'show_page_frame_post')
                 </a>
-                @endif
                 </div>
             </div>
         </article>
@@ -193,8 +193,8 @@
     @endif
 </div>
 
-    @if ($whatsnews_frame->read_more_use_flag == UseType::use)
+    @if ($whatsnews_frame->read_more_use_flag == UseType::use
+        || FrameConfig::getConfigValue($frame_configs, WhatsnewFrameConfig::async) == UseType::use)
         @include('plugins.user.whatsnews.whatsnews_script')
     @endif
-@endif
 @endsection

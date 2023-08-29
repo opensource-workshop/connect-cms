@@ -2,6 +2,7 @@
 
 namespace App\Plugins\User\Whatsnews;
 
+use App\Enums\UseType;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Collection;
@@ -445,6 +446,7 @@ class WhatsnewsPlugin extends UserPluginBase
 
         // クエリ取得
         $whatsnews_query = $this->buildQueryGetWhatsnews($whatsnews_frame, $union_sqls);
+        $this->whatsnews_total_count = $whatsnews_query->count();
 
         // limit/offset条件を付加
         if ($request->limit) {
@@ -468,7 +470,14 @@ class WhatsnewsPlugin extends UserPluginBase
         $whatsnewses = $this->addWhatsnewsValue($whatsnewses, $request->post_detail_length);
 
         // 整形して返却
-        return json_encode(json_decode($whatsnewses), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        $json = [
+            'whatsnewses' => $whatsnewses,
+            'link_pattern' => $link_pattern,
+            'link_base' => $link_base,
+            'whatsnews_total_count' => $this->whatsnews_total_count,
+        ];
+
+        return json_encode($json, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     }
 
     /**
@@ -496,7 +505,12 @@ class WhatsnewsPlugin extends UserPluginBase
         $whatsnews_frame = $this->getWhatsnewsFrame($frame_id);
 
         // 新着の一覧取得
-        list($whatsnews, $link_pattern, $link_base) = $this->getWhatsnews($whatsnews_frame);
+        $async = FrameConfig::getConfigValue($this->frame_configs, WhatsnewFrameConfig::async, UseType::not_use);
+        if ($async == UseType::use) {
+            list($whatsnews, $link_pattern, $link_base) = [null, null, null];
+        } else {
+            list($whatsnews, $link_pattern, $link_base) = $this->getWhatsnews($whatsnews_frame);
+        }
         // Log::debug(var_export($whatsnews, true));
         // Log::debug(var_export($link_pattern, true));
 
