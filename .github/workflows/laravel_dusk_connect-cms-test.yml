@@ -147,7 +147,7 @@ jobs:
           chrome-version: 1134343 # Last commit number for Chrome v114
       - run: |
            # CHROME_BIN=$(which chrome)
-           ln -nfs `which chrome` /usr/bin/google-chrome
+           sudo ln -nfs `which chrome` /usr/bin/google-chrome
 
       - name: Downgrade Chrome driver to v114
         run: php artisan dusk:chrome-driver 114
