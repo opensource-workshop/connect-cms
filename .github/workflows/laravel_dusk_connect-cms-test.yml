@@ -140,6 +140,9 @@ jobs:
 
       - name: Upgrade Chrome Driver2
         run: php artisan dusk:chrome-driver 116
+
+      - name: Upgrade Chrome Driver3
+        run: php artisan dusk:chrome-driver 114
   
       - name: Start Chrome Driver
         run: ./vendor/laravel/dusk/bin/chromedriver-linux &
