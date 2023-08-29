@@ -131,9 +131,11 @@ jobs:
         run: php artisan db:seed --force
 
       # Dusk test
+      # https://readouble.com/laravel/8.x/ja/dusk.html#managing-chromedriver-installations
+      # run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
       - name: Upgrade Chrome Driver
-        run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
-
+        run: php artisan dusk:chrome-driver --detect
+ 
       - name: Start Chrome Driver
         run: ./vendor/laravel/dusk/bin/chromedriver-linux &
 
