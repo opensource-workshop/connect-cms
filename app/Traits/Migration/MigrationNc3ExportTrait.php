@@ -1109,7 +1109,7 @@ trait MigrationNc3ExportTrait
 
             $uploads_ini_detail .= "\n";
             $uploads_ini_detail .= "[" . $nc3_upload->id . "]\n";
-            $uploads_ini_detail .= "client_original_name = \"" . $nc3_upload->original_name . "\"\n";
+            $uploads_ini_detail .= "client_original_name = \"" . mb_substr($nc3_upload->original_name, 0, 160) . "\"\n";
             $uploads_ini_detail .= "temp_file_name = \"" . $destination_file_name . '.' . $nc3_upload->extension . "\"\n";
             $uploads_ini_detail .= "size = \"" . $nc3_upload->size . "\"\n";
             $uploads_ini_detail .= "mimetype = \"" . $nc3_upload->mimetype . "\"\n";
