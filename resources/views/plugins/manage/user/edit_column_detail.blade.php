@@ -498,7 +498,7 @@ use App\Models\Core\UsersColumns;
                 </div>
             @endif
 
-            @if ($column->column_type == UserColumnType::created_at || $column->column_type == UserColumnType::updated_at)
+            @if (UsersColumns::isShowOnlyColumnType($column->column_type))
                 {{-- 表示しない --}}
             @else
                 {{-- キャプション設定 --}}
@@ -579,8 +579,9 @@ use App\Models\Core\UsersColumns;
                 <h5 class="card-header">表示・編集設定</h5>
                 <div class="card-body">
 
-                    @if ($column->column_type == UserColumnType::created_at || $column->column_type == UserColumnType::updated_at)
+                    @if (UsersColumns::isShowOnlyColumnType($column->column_type))
                         {{-- 表示しない --}}
+                        <input type="hidden" name="is_show_auto_regist" value="{{$column->is_show_auto_regist}}">
                     @else
                         {{-- 自動ユーザ登録時の表示指定 --}}
                         <div class="form-group row">
@@ -640,8 +641,9 @@ use App\Models\Core\UsersColumns;
                         </div>
                     @endif
 
-                    @if ($column->column_type == UserColumnType::created_at || $column->column_type == UserColumnType::updated_at)
+                    @if (UsersColumns::isShowOnlyColumnType($column->column_type))
                         {{-- 表示しない --}}
+                        <input type="hidden" name="is_edit_my_page" value="{{$column->is_edit_my_page}}">
                     @else
                         {{-- マイページの編集指定 --}}
                         <div class="form-group row">

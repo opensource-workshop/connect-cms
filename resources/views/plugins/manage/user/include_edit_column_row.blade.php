@@ -43,8 +43,8 @@ use App\Models\Core\UsersColumns;
     </td>
     {{-- 必須 --}}
     <td class="align-middle text-center">
-        @if ($column->is_fixed_column || $column->column_type == UserColumnType::created_at || $column->column_type == UserColumnType::updated_at)
-            {{-- 固定項目, 登録日時, 更新日時 --}}
+        @if ($column->is_fixed_column || UsersColumns::isShowOnlyColumnType($column->column_type))
+            {{-- 固定項目, 表示のみの型 --}}
             <input type="hidden" name="required_{{ $column->id }}" @if (old('required_'.$column->id, $column->required) == Required::on) value="1" @else value="0" @endif>
             <input type="checkbox" name="required_{{ $column->id }}" value="1" @if (old('required_'.$column->id, $column->required) == Required::on) checked="checked" @endif disabled>
         @else

@@ -193,10 +193,24 @@ use App\Models\Core\UsersColumns;
                 </div>
             </div>
 
-        @elseif ($column->column_type == UserColumnType::created_at)
+        @elseif (UsersColumns::isShowOnlyAutoRegistColumnType($column->column_type))
             {{-- 表示しない --}}
-        @elseif ($column->column_type == UserColumnType::updated_at)
-            {{-- 表示しない --}}
+        @elseif (UsersColumns::isAutoRegistOnlyColumnTypes($column->column_type))
+            {{-- 未ログイン（自動登録）時のみ表示 --}}
+            @if (!Auth::user())
+                @php
+                    $label_for = 'for=user-column-' . $column->id;
+                    $label_class = '';
+                @endphp
+                <div class="form-group row">
+                    <label class="col-md-4 col-form-label text-md-right {{$label_class}}" {{$label_for}}>{{$column->column_name}} @if ($column->required)<span class="badge badge-danger">必須</span> @endif</label>
+                    <div class="col-md-8">
+                        @includeFirst(["auth_option.registe_form_input_$column->column_type", "auth.registe_form_input_$column->column_type"], ['user_obj' => $column, 'label_id' => 'user-column-'.$column->id])
+                        <div class="small {{ $column->caption_color }}">{!! nl2br((string)$column->caption) !!}</div>
+                    </div>
+                </div>
+            @endif
+
         @else
             @php
                 // ラジオとチェックボックスは選択肢にラベルを使っているため、項目名のラベルにforを付けない

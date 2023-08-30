@@ -2623,10 +2623,21 @@ class UserManage extends ManagePluginBase
         $column->columns_set_id = $request->columns_set_id;
         $column->column_name = $request->column_name;
         $column->column_type = $request->column_type;
-        $column->required = $request->required ? Required::on : Required::off;
+        $message = '項目【 '. $request->column_name .' 】を追加しました。';
+
+        if (UsersColumns::isShowOnlyColumnType($column->column_type)) {
+            $column->required = Required::off;
+            $message = '項目【 '.$column->column_name.' 】を追加し、表示のみの型のため、必須入力を【 off 】に設定しました。';
+        } else {
+            // 通常
+            $column->required = $request->required ? Required::on : Required::off;
+        }
+
+        $column->is_show_auto_regist = ShowType::show;
+        $column->is_show_my_page = ShowType::show;
+        $column->is_edit_my_page = EditType::ng;
         $column->display_sequence = $max_display_sequence;
         $column->save();
-        $message = '項目【 '. $request->column_name .' 】を追加しました。';
 
         // 編集画面を呼び出す
         return redirect("/manage/user/editColumns/$request->columns_set_id")->with('flash_message', $message);
@@ -2660,8 +2671,15 @@ class UserManage extends ManagePluginBase
         $column = UsersColumns::where('id', $request->column_id)->where('columns_set_id', $request->columns_set_id)->first();
         $column->column_name = $request->$str_column_name;
         $column->column_type = $request->$str_column_type;
-        $column->required = $request->$str_required ? Required::on : Required::off;
         $message = '項目【 '. $column->column_name .' 】を更新しました。';
+
+        if (UsersColumns::isShowOnlyColumnType($column->column_type)) {
+            $column->required = Required::off;
+            $message = '項目【 '.$column->column_name.' 】を更新し、表示のみの型のため、必須入力を【 off 】に設定しました。';
+        } else {
+            // 通常
+            $column->required = $request->$str_required ? Required::on : Required::off;
+        }
 
         // 固定項目以外
         if (!UsersColumns::isFixedColumnType($column->column_type)) {

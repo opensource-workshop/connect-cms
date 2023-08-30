@@ -110,6 +110,39 @@ class UsersColumns extends Model
     }
 
     /**
+     * 表示のみのカラム型か
+     */
+    public static function isShowOnlyColumnType($column_type): bool
+    {
+        if (in_array($column_type, UserColumnType::showOnlyColumnTypes())) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 自動登録で表示のみのカラム型か
+     */
+    public static function isShowOnlyAutoRegistColumnType($column_type): bool
+    {
+        if ($column_type == UserColumnType::created_at || $column_type == UserColumnType::updated_at) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 自動登録のみ表示するカラム型か
+     */
+    public static function isAutoRegistOnlyColumnTypes($column_type): bool
+    {
+        if (in_array($column_type, UserColumnType::autoRegistOnlyColumnTypes())) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * コレクションからラベル名取得
      */
     private static function getLabelFromCollection(Collection $users_columns, string $column_type, string $default): string
