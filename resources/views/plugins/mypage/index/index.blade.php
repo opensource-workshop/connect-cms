@@ -1,5 +1,9 @@
 {{--
-    マイページ画面のトップのメインテンプレート
+ * マイページ画面のトップのメインテンプレート
+ *
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category マイページ
 --}}
 {{-- マイページ画面ベース画面 --}}
 @extends('plugins.mypage.mypage')
@@ -71,13 +75,7 @@
                                     <td nowrap="nowrap">{{ $user->updated_at->format('Y/m/d H:i') }}</td>
                                 </tr>
                             @else
-                                @php
-                                    $input_col = $input_cols->firstWhere('users_columns_id', $column->id);
-                                @endphp
-                                <tr class="input-cols">
-                                    <th>{{$column->column_name}}</th>
-                                    <td>{{$input_col->value ?? ''}}</td>
-                                </tr>
+                                @includeFirst(['plugins_option.mypage.index.include_index_column_value', 'plugins.mypage.index.include_index_column_value'])
                             @endif
                         @endforeach
                     </tbody>
