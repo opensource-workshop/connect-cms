@@ -1,5 +1,10 @@
 {{--
+ * プロフィール変更のテンプレート
  * copy by resources\views\auth\registe_form.blade.php
+ *
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category プロフィール
 --}}
 @php
 use App\Models\Core\UsersColumns;
@@ -11,7 +16,7 @@ use App\Models\Core\UsersColumns;
 {{-- 登録後メッセージ表示 --}}
 @include('plugins.common.flash_message')
 
-<form action="{{url('/')}}/mypage/profile/update/{{$id}}" class="form-horizontal" method="POST">
+<form action="{{url('/')}}/mypage/profile/update/{{$id}}" class="form-horizontal" method="POST" name="form_profile">
     {{ csrf_field() }}
 
     @foreach($users_columns as $column)
@@ -79,9 +84,7 @@ use App\Models\Core\UsersColumns;
                 </div>
             </div>
 
-        @elseif ($column->column_type == UserColumnType::created_at)
-            {{-- 表示しない --}}
-        @elseif ($column->column_type == UserColumnType::updated_at)
+        @elseif (UsersColumns::isShowOnlyColumnType($column->column_type))
             {{-- 表示しない --}}
         @else
             @php
@@ -98,7 +101,7 @@ use App\Models\Core\UsersColumns;
             <div class="form-group row">
                 <label class="col-md-4 col-form-label text-md-right {{$label_class}}" {{$label_for}}>{{$column->column_name}} @if ($column->required)<span class="badge badge-danger">必須</span> @endif</label>
                 <div class="col-md-8">
-                    @include('auth.registe_form_input_' . $column->column_type, ['user_obj' => $column, 'label_id' => 'user-column-'.$column->id])
+                    @includeFirst(["auth_option.registe_form_input_$column->column_type", "auth.registe_form_input_$column->column_type"], ['user_obj' => $column, 'label_id' => 'user-column-'.$column->id])
                     <div class="small {{ $column->caption_color }}">{!! nl2br((string)$column->caption) !!}</div>
                 </div>
             </div>

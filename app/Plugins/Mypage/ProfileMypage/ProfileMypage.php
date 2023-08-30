@@ -42,6 +42,13 @@ class ProfileMypage extends MypagePluginBase
      */
     public function index($request, $id = null)
     {
+        // post ＆ URLのなかに'/mypage/profile/index'が含まれている場合、oldに値をセット。(optionテンプレート等で使用)
+        // 入力エラー時はリダイレクトでget通信がくるので、その時は通さない
+        if ($request->isMethod('post') && strpos($request->url(), '/mypage/profile/index') !== false) {
+            // old()に全inputをセット
+            $request->flash();
+        }
+
         // ログインしているユーザー情報を取得
         $user = Auth::user();
         // ユーザーのカラム
