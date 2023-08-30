@@ -61,15 +61,12 @@ use App\Models\Core\UsersColumns;
                         絞り込み条件 <i class="fas fa-angle-down"></i>@if (Session::has('user_search_condition'))<span class="badge badge-pill badge-primary ml-2">条件設定中</span>@endif
                     </div>
                 </button>
-                {{-- @if (Session::has('user_search_condition'))
-                <div id="search_collapse" class="collapse show" aria-labelledby="user_search_condition" data-parent="#search_accordion">
-                @else --}}
-                <div id="search_collapse" class="collapse" aria-labelledby="user_search_condition" data-parent="#search_accordion">
-                {{-- @endif --}}
+                <div id="search_collapse" class="collapse @if(Session::get('is_search_collapse_show')) show @endif" aria-labelledby="user_search_condition" data-parent="#search_accordion">
                     <div class="card-body border-bottom">
 
                         <form name="form_search" id="form_search" class="form-horizontal" method="post" action="{{url('/')}}/manage/user/search">
                             {{ csrf_field() }}
+                            <input type="hidden" name="is_search_collapse_show" value="">
 
                             {{-- ログインID --}}
                             <div class="form-group row">

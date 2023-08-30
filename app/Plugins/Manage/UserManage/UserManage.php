@@ -323,8 +323,15 @@ class UserManage extends ManagePluginBase
                             ->join('users_columns', 'users_columns.id', '=', 'users_input_cols.users_columns_id')
                             ->where('users_columns.id', $users_column->id)
                             //->whereNotIn('users_columns.id', $hide_columns_ids)
-                            ->where('value', 'like', '%' . $search_keyword . '%')
                             ->groupBy('users_id');
+
+                    if (UsersColumns::isSearchExactMatchColumnType($users_column->column_type)) {
+                        // 完全一致
+                        $query->where('value', $search_keyword);
+                    } else {
+                        // 部分一致（通常）
+                        $query->where('value', 'like', '%' . $search_keyword . '%');
+                    }
                 });
             }
         }
@@ -623,7 +630,8 @@ class UserManage extends ManagePluginBase
 
         session(["user_search_condition" => $user_search_condition]);
 
-        return redirect("/manage/user");
+        // is_search_collapse_show=1で検索エリアを開いたままにできる（オプションプラグイン等で利用）
+        return redirect("/manage/user")->with('is_search_collapse_show', $request->is_search_collapse_show);
     }
 
     /**
@@ -2615,10 +2623,21 @@ class UserManage extends ManagePluginBase
         $column->columns_set_id = $request->columns_set_id;
         $column->column_name = $request->column_name;
         $column->column_type = $request->column_type;
-        $column->required = $request->required ? Required::on : Required::off;
+        $message = '項目【 '. $request->column_name .' 】を追加しました。';
+
+        if (UsersColumns::isShowOnlyColumnType($column->column_type)) {
+            $column->required = Required::off;
+            $message = '項目【 '.$column->column_name.' 】を追加し、表示のみの型のため、必須入力を【 off 】に設定しました。';
+        } else {
+            // 通常
+            $column->required = $request->required ? Required::on : Required::off;
+        }
+
+        $column->is_show_auto_regist = ShowType::show;
+        $column->is_show_my_page = ShowType::show;
+        $column->is_edit_my_page = EditType::ng;
         $column->display_sequence = $max_display_sequence;
         $column->save();
-        $message = '項目【 '. $request->column_name .' 】を追加しました。';
 
         // 編集画面を呼び出す
         return redirect("/manage/user/editColumns/$request->columns_set_id")->with('flash_message', $message);
@@ -2652,8 +2671,15 @@ class UserManage extends ManagePluginBase
         $column = UsersColumns::where('id', $request->column_id)->where('columns_set_id', $request->columns_set_id)->first();
         $column->column_name = $request->$str_column_name;
         $column->column_type = $request->$str_column_type;
-        $column->required = $request->$str_required ? Required::on : Required::off;
         $message = '項目【 '. $column->column_name .' 】を更新しました。';
+
+        if (UsersColumns::isShowOnlyColumnType($column->column_type)) {
+            $column->required = Required::off;
+            $message = '項目【 '.$column->column_name.' 】を更新し、表示のみの型のため、必須入力を【 off 】に設定しました。';
+        } else {
+            // 通常
+            $column->required = $request->$str_required ? Required::on : Required::off;
+        }
 
         // 固定項目以外
         if (!UsersColumns::isFixedColumnType($column->column_type)) {

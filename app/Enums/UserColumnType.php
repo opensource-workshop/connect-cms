@@ -79,4 +79,55 @@ class UserColumnType extends EnumsBase
             self::updated_at,
         ];
     }
+
+    /**
+     * 検索で完全一致のカラム型 取得
+     */
+    public static function searchExactMatchColumnTypes(): array
+    {
+        $class_name = self::getOptionClass();
+        // オプションクラス有＋メソッド有なら呼ぶ
+        if ($class_name) {
+            if (method_exists($class_name, 'searchExactMatchColumnTypes')) {
+                return $class_name::searchExactMatchColumnTypes();
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * 表示のみのカラム型 取得
+     */
+    public static function showOnlyColumnTypes(): array
+    {
+        $class_name = self::getOptionClass();
+        // オプションクラス有＋メソッド有なら呼ぶ
+        if ($class_name) {
+            if (method_exists($class_name, 'showOnlyColumnTypes')) {
+                return $class_name::showOnlyColumnTypes();
+            }
+        }
+
+        return [
+            self::created_at,
+            self::updated_at,
+        ];
+    }
+
+    /**
+     * 自動登録のみ表示するカラム型 取得
+     */
+    public static function autoRegistOnlyColumnTypes(): array
+    {
+        $class_name = self::getOptionClass();
+        // オプションクラス有＋メソッド有なら呼ぶ
+        if ($class_name) {
+            if (method_exists($class_name, 'autoRegistOnlyColumnTypes')) {
+                return $class_name::autoRegistOnlyColumnTypes();
+            }
+        }
+
+        return [];
+    }
 }
