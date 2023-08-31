@@ -55,12 +55,12 @@ use App\Models\Core\UsersColumns;
     <td class="text-center px-2">
         <button
             type="button"
-            class="btn btn-success btn-xs cc-font-90 text-nowrap"
+            class="btn btn-success btn-xs cc-font-90 text-nowrap @if (UsersColumns::isSelectColumnType($column->column_type)) detail-button-tip @endif"
             id="button_user_column_detail_{{ $column->id }}"
             @if (UsersColumns::isSelectColumnType($column->column_type))
                 {{-- 選択肢の設定がない場合のみツールチップを表示 --}}
-                @if ($column->select_count == 0)
-                    id="detail-button-tip" data-toggle="tooltip" title="選択肢がありません。設定してください。" data-trigger="manual" data-placement="bottom"
+                @if ($column->selects->isEmpty())
+                    data-toggle="tooltip" title="選択肢がありません。設定してください。" data-trigger="manual" data-placement="bottom"
                 @endif
             @endif
             onclick="location.href='{{url('/')}}/manage/user/editColumnDetail/{{ $column->id }}'"

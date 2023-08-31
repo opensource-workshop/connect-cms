@@ -50,7 +50,7 @@
         // 有効化
         $('[data-toggle="tooltip"]').tooltip()
         // 常時表示 ※表示の判定は項目側で実施
-        $('[id^=detail-button-tip]').tooltip('show');
+        $('.detail-button-tip').tooltip('show');
     })
 </script>
 
