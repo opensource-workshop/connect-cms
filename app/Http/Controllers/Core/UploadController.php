@@ -183,7 +183,7 @@ class UploadController extends ConnectController
                         $constraint->aspectRatio();
                         $constraint->upsize();
                     }
-                );
+                )->orientate();
             }, config('connect.CACHE_MINUTS'), true); // 第3引数のtrue は戻り値にImage オブジェクトを返す意味。（false の場合は画像データ）
 
             $headers['Content-Disposition'] = 'inline; ' . $content_disposition;
