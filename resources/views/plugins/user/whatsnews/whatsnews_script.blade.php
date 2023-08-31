@@ -11,15 +11,23 @@
         data: function() {
             return {
                 url: '{{ url('/') }}',
-                link_pattern: @json($link_pattern),
-                link_base: @json($link_base),
                 whatsnewses: [],
-                whatsnews_total_count: {{ $whatsnews_total_count }}, // 総件数
                 view_posted_at: {{ $whatsnews_frame->view_posted_at }},
                 view_posted_name: {{ $whatsnews_frame->view_posted_name }},
                 show: '1',
                 limit: {{ $whatsnews_frame->read_more_fetch_count }},
-                offset: {{ $whatsnews->count() }}, // 何件目から取得するか（＝現時点の取得件数）※初期値はサーバから返された一覧件数
+                @if (FrameConfig::getConfigValue($frame_configs, WhatsnewFrameConfig::async) == UseType::use)
+                    link_pattern: [],
+                    link_base: [],
+                    whatsnews_total_count: 0, // 総件数
+                    offset: 0, // 何件目から取得するか（＝現時点の取得件数）※初期値は0
+                @else
+                    link_pattern: @json($link_pattern),
+                    link_base: @json($link_base),
+                    whatsnews_total_count: {{ $whatsnews_total_count }}, // 総件数
+                    offset: {{ $whatsnews->count() }}, // 何件目から取得するか（＝現時点の取得件数）※初期値はサーバから返された一覧件数
+                @endif
+
                 @if (is_null($frame_configs->where('name', 'post_detail_length')->first()))
                     post_detail_length: '',
                 @else
@@ -57,12 +65,18 @@
                     .then(function(res){
                         // foreach内ではthisでvueインスタンスのwhatsnewsesが参照できない為、tmp_arrに一時的に代入
                         tmp_arr = self.whatsnewses;
-                        res.data.forEach(function(obj) {
+                        res.data.whatsnewses.forEach(function(obj) {
                             // 取得した差分をループしてtmp_arrに格納
                             tmp_arr.push(obj);
                         });
                         // vueインスタンスのwhatsnewsesに代入
                         this.whatsnewses = tmp_arr;
+
+                        @if (FrameConfig::getConfigValue($frame_configs, WhatsnewFrameConfig::async) == UseType::use)
+                            self.link_pattern = res.data.link_pattern;
+                            self.link_base = res.data.link_base;
+                            self.whatsnews_total_count = res.data.whatsnews_total_count;
+                        @endif
                     })
                     .catch(function (error) {
                         console.log(error)
@@ -71,5 +85,12 @@
                 this.offset += this.limit;
             }
         },
+        @if (FrameConfig::getConfigValue($frame_configs, WhatsnewFrameConfig::async) == UseType::use)
+
+        mounted: function () {
+            this.searchWhatsnewses();
+        },
+
+        @endif
     });
 </script>

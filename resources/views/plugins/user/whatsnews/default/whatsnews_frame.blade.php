@@ -120,6 +120,30 @@
             </div>
         </div>
 
+        {{-- 非同期表示 --}}
+        <h5><span class="badge badge-secondary">非同期表示</span></h5>
+
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">非同期表示</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                @foreach (UseType::enum as $key => $value)
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input
+                            type="radio"
+                            value="{{ $key }}"
+                            id="{{ "async_${key}" }}"
+                            name="async"
+                            class="custom-control-input"
+                            {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::async, 0) == $key ? 'checked' : '' }}
+                        >
+                        <label class="custom-control-label" for="{{ "async_${key}" }}">
+                            {{ $value }}
+                        </label>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
         {{-- Submitボタン --}}
         <div class="text-center">
             <a class="btn btn-secondary mr-2" href="{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}">

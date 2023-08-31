@@ -2572,6 +2572,7 @@ class UserManage extends ManagePluginBase
             if (UsersColumns::isSelectColumnType($column->column_type)) {
                 // 選択肢
                 $column->selects = UsersColumnsSelects::where('columns_set_id', $id)
+                    ->where('users_columns_id', $column->id)
                     ->orderBy('users_columns_id', 'asc')
                     ->orderBy('display_sequence', 'asc')
                     ->get();
