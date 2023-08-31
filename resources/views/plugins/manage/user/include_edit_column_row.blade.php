@@ -46,7 +46,14 @@ use App\Models\Core\UsersColumns;
         @if ($column->is_fixed_column || UsersColumns::isShowOnlyColumnType($column->column_type))
             {{-- 固定項目, 表示のみの型 --}}
             <input type="hidden" name="required_{{ $column->id }}" @if (old('required_'.$column->id, $column->required) == Required::on) value="1" @else value="0" @endif>
-            <input type="checkbox" name="required_{{ $column->id }}" value="1" @if (old('required_'.$column->id, $column->required) == Required::on) checked="checked" @endif disabled>
+            <input type="checkbox" name="required_{{ $column->id }}" value="1"
+                @if (old('required_'.$column->id, $column->required) == Required::on) checked="checked" @endif
+                @if ($column->is_fixed_column)
+                    disabled data-toggle="tooltip" title="ユーザに必ず必要な項目は、必須チェックを変更できません。"
+                @elseif (UsersColumns::isShowOnlyColumnType($column->column_type))
+                    disabled data-toggle="tooltip" title="表示のみの項目のため、必須チェックOFFから変更できません。"
+                @endif
+            >
         @else
             <input type="checkbox" name="required_{{ $column->id }}" value="1" @if (old('required_'.$column->id, $column->required) == Required::on) checked="checked" @endif>
         @endif
@@ -117,7 +124,7 @@ use App\Models\Core\UsersColumns;
 
         @if ($column->selects->isNotEmpty())
             {{-- 選択肢データがある場合、カンマ付で一覧表示する --}}
-            <i class="far fa-list-alt" data-toggle="tooltip" title="選択肢"></i> {{ $column->selects->where('users_columns_id', $column->id)->pluck('value')->implode(',') }}
+            <i class="far fa-list-alt" data-toggle="tooltip" title="選択肢"></i> {{ $column->selects->pluck('value')->implode(',') }}
         @endif
 
         @if ($column->caption)
