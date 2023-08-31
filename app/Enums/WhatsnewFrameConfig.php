@@ -15,6 +15,7 @@ final class WhatsnewFrameConfig extends EnumsBase
     const border = 'border';
     const post_detail = 'post_detail';
     const post_detail_length = 'post_detail_length';
+    const async = 'async';
 
     // key/valueの連想配列
     const enum = [
@@ -23,5 +24,6 @@ final class WhatsnewFrameConfig extends EnumsBase
         self::border => '記事間の罫線',
         self::post_detail => '記事本文',
         self::post_detail_length => '記事本文の文字数',
+        self::async => '非同期表示',
     ];
 }

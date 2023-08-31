@@ -23,14 +23,16 @@
 @endif
 
 @if ($whatsnews)
-<p class="text-left">
-    @if (isset($whatsnews_frame->rss) && $whatsnews_frame->rss == 1)
-    <a href="{{url('/')}}/redirect/plugin/whatsnews/rss/{{$page->id}}/{{$frame_id}}/" title="{{$whatsnews_frame->whatsnew_name}}のRSS2.0"><span class="badge badge-info">RSS2.0</span></a>
-    @endif
-</p>
+    <p class="text-left">
+        @if (isset($whatsnews_frame->rss) && $whatsnews_frame->rss == 1)
+        <a href="{{url('/')}}/redirect/plugin/whatsnews/rss/{{$page->id}}/{{$frame_id}}/" title="{{$whatsnews_frame->whatsnew_name}}のRSS2.0"><span class="badge badge-info">RSS2.0</span></a>
+        @endif
+    </p>
+@endif
 
-<div id="{{ $whatsnews_frame->read_more_use_flag == UseType::use ? 'app_' . $frame->id : '' }}">
+<div id="{{ 'app_' . $frame->id }}">
     <dl>
+    @if ($whatsnews)
     @foreach($whatsnews as $whatsnew)
         {{-- 登録日時、カテゴリ --}}
         @if ($whatsnews_frame->view_posted_at)
@@ -86,6 +88,7 @@
         </dd>
         @endif
     @endforeach
+    @endif
     {{-- 「もっと見る」ボタン押下時、非同期で新着一覧をレンダリング ※templateタグはタグとして出力されないタグです。 --}}
     <template v-for="whatsnews in whatsnewses">
         {{-- 登録日時、カテゴリ --}}
@@ -139,8 +142,8 @@
         {{-- offset<input type="text" name="offset" value="" v-model="offset"> --}}
 </div>
 
-    @if ($whatsnews_frame->read_more_use_flag == UseType::use)
+    @if ($whatsnews_frame->read_more_use_flag == UseType::use
+        || FrameConfig::getConfigValue($frame_configs, WhatsnewFrameConfig::async) == UseType::use)
         @include('plugins.user.whatsnews.whatsnews_script')
     @endif
-@endif
 @endsection

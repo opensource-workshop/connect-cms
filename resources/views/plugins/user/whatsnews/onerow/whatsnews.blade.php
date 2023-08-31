@@ -23,15 +23,15 @@
 @endif
 
 @if ($whatsnews)
-
-@if (isset($whatsnews_frame->rss) && $whatsnews_frame->rss == 1)
-<p class="text-left">
-    <a href="{{url('/')}}/redirect/plugin/whatsnews/rss/{{$page->id}}/{{$frame_id}}/" title="{{$whatsnews_frame->whatsnew_name}}のRSS2.0"><span class="badge badge-info">RSS2.0</span></a>
-</p>
+    @if (isset($whatsnews_frame->rss) && $whatsnews_frame->rss == 1)
+    <p class="text-left">
+        <a href="{{url('/')}}/redirect/plugin/whatsnews/rss/{{$page->id}}/{{$frame_id}}/" title="{{$whatsnews_frame->whatsnew_name}}のRSS2.0"><span class="badge badge-info">RSS2.0</span></a>
+    </p>
+    @endif
 @endif
 
-<div class="container" id="{{ $whatsnews_frame->read_more_use_flag == UseType::use ? 'app_' . $frame->id : '' }}">
-
+<div class="container" id="{{'app_' . $frame->id}}">
+@if ($whatsnews)
 @foreach($whatsnews as $whatsnew)
     <article class="clearfix">
         <div class="row @if (!$loop->first && FrameConfig::getConfigValue($frame_configs, WhatsnewFrameConfig::border))border-top @endif pt-1">
@@ -100,7 +100,9 @@
         @endif
     </article>
 @endforeach
-    @if ($whatsnews_frame->read_more_use_flag == UseType::use)
+@endif
+    @if ($whatsnews_frame->read_more_use_flag == UseType::use
+        || FrameConfig::getConfigValue($frame_configs, WhatsnewFrameConfig::async) == UseType::use)
         {{-- 「もっと見る」ボタン押下時、非同期で新着一覧をレンダリング --}}
         <article v-for="whatsnews in whatsnewses" class="clearfix">
             <div class="row pt-1"
@@ -164,8 +166,8 @@
     @endif
 </div>
 
-    @if ($whatsnews_frame->read_more_use_flag == UseType::use)
+    @if ($whatsnews_frame->read_more_use_flag == UseType::use
+    || FrameConfig::getConfigValue($frame_configs, WhatsnewFrameConfig::async) == UseType::use)
         @include('plugins.user.whatsnews.whatsnews_script')
     @endif
-@endif
 @endsection
