@@ -1865,7 +1865,8 @@ class ReservationsPlugin extends UserPluginBase
                 ReservationsInput::where('inputs_parent_id', $before_inputs_parent_id)
                     ->where('id', '!=', $input->id)
                     ->whereDate('start_datetime', $occurrence->format('Y-m-d'))
-                    ->whereDate('end_datetime', $occurrence->format('Y-m-d'))
+                    // bugfix: 開始日のみで消す。終了日は24h指定時で次の日になるため、end_datetime指定があると機能しない
+                    // ->whereDate('end_datetime', $occurrence->format('Y-m-d'))
                     ->delete();
             }
 
