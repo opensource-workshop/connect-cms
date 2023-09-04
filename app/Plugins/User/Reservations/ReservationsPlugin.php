@@ -1100,7 +1100,7 @@ class ReservationsPlugin extends UserPluginBase
             }
         }
 
-
+        // *** ReservationsInputsColumn更新
         // 項目IDを取得
         $columns_value = $request->columns_value ?? [];
         foreach (array_keys($columns_value) as $key) {
@@ -1121,6 +1121,7 @@ class ReservationsPlugin extends UserPluginBase
             $reservations_inputs_columns->save();
         }
 
+        // *** 登録後メッセージ
         // 利用日時のFrom～To 取得
         $start_end_datetime_str = $reservations_inputs->getStartEndDatetimeStr();
         $flash_message = "{$str_mode}【場所】{$facility->facility_name} 【日時】{$start_end_datetime_str}";
@@ -1136,6 +1137,7 @@ class ReservationsPlugin extends UserPluginBase
 
         session()->flash('flash_message_for_frame' . $frame_id, $flash_message);
 
+        // *** メール送信
         // プラグイン独自の埋め込みタグ
         $overwrite_notice_embedded_tags = [
             NoticeEmbeddedTag::title => $this->getTitle($reservations_inputs, $columns),
