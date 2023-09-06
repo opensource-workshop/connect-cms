@@ -84,6 +84,8 @@ class Configs extends Model
     public static function getConfigsValueWithHtmlRepair($configs, $key, $default = false)
     {
         $value = self::getConfigsValue($configs, $key, $default);
+        // php8.x対応: nullだと HtmlPurifier::purify()内部で preg_replace(): Passing null to parameter #3 ($subject) of type array|string is deprecated エラー起こすため
+        $value = is_null($value) ? '' : $value;
 
         // 閉じタグしかない等、壊れたHTMLを整形（＝修復）して出力するために HtmlPurifier を利用
         $purifier = HtmlUtils::getHtmlPurifier();
