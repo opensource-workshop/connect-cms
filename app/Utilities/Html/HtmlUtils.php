@@ -41,5 +41,4 @@ class HtmlUtils
         $purifier = new HTMLPurifier($config);
         return $purifier;
     }
-
 }
