@@ -25,7 +25,7 @@ class ApiSecret extends Model
      */
     public function getApiCheckbpoxs($api_inis, $check_off = false)
     {
-        $apis = explode(',', $this->apis);
+        $apis = explode(',', (string)$this->apis);
         $ret_apis = array();
         foreach ($api_inis as $api_name => $api_ini) {
             $check = false;

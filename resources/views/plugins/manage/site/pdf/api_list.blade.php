@@ -29,7 +29,7 @@
             <td>{{$api_secret->secret_code}}</td>
         @endif
         <td>{{$api_secret->ip_address}}</td>
-        <td>{!!nl2br($api_secret->apis)!!}</td>
+        <td>{!!nl2br((string)$api_secret->apis)!!}</td>
     </tr>
     @endforeach
     @if($api_secrets->isEmpty())
