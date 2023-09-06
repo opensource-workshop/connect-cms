@@ -15,14 +15,14 @@
 <h3><u>{{Configs::getConfigsValue($configs, 'document_support_org_title', null)}}</u></h3>
 <br />
 <br />
-{!!nl2br(Configs::getConfigsValue($configs, 'document_support_org_txt', null))!!}<br />
+{!!nl2br(Configs::getConfigsValue($configs, 'document_support_org_txt', ''))!!}<br />
 
 <h3><u>{{Configs::getConfigsValue($configs, 'document_support_contact_title', null)}}</u></h3>
 <br />
 <br />
-{!!nl2br(Configs::getConfigsValue($configs, 'document_support_contact_txt', null))!!}<br />
+{!!nl2br(Configs::getConfigsValue($configs, 'document_support_contact_txt', ''))!!}<br />
 
 <h3><u>{{Configs::getConfigsValue($configs, 'document_support_other_title', null)}}</u></h3>
 <br />
 <br />
-{!!nl2br(Configs::getConfigsValue($configs, 'document_support_other_txt', null))!!}<br />
+{!!nl2br(Configs::getConfigsValue($configs, 'document_support_other_txt', ''))!!}<br />

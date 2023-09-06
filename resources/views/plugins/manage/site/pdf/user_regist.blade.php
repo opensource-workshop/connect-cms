@@ -69,7 +69,7 @@
         </tr>
         <tr nobr="true">
             <td>仮登録メールフォーマット</td>
-            <td>{!!nl2br(Configs::getConfigsValue($configs_user_register, 'user_register_temporary_regist_mail_format', null))!!}</td>
+            <td>{!!nl2br(Configs::getConfigsValue($configs_user_register, 'user_register_temporary_regist_mail_format', ''))!!}</td>
         </tr>
         <tr nobr="true">
             <td>仮登録後のメッセージ</td>
@@ -90,7 +90,7 @@
         </tr>
         <tr nobr="true">
             <td>本登録メールフォーマット</td>
-            <td>{!!nl2br(Configs::getConfigsValue($configs_user_register, 'user_register_mail_format', null))!!}</td>
+            <td>{!!nl2br(Configs::getConfigsValue($configs_user_register, 'user_register_mail_format', ''))!!}</td>
         </tr>
         <tr nobr="true">
             <td>本登録後のメッセージ</td>
@@ -118,7 +118,7 @@
             <td>次行を参照</td>
         </tr>
         <tr nobr="true">
-            <td colspan="2">{!!nl2br(Configs::getConfigsValue($configs_user_register, 'user_register_privacy_description', null))!!}</td>
+            <td colspan="2">{!!nl2br(Configs::getConfigsValueWithHtmlRepair($configs_user_register, 'user_register_privacy_description', ''))!!}</td>
         </tr>
     </table>
 
@@ -134,7 +134,7 @@
             <td>次行を参照</td>
         </tr>
         <tr nobr="true">
-            <td colspan="2">{!!nl2br(Configs::getConfigsValue($configs_user_register, 'user_register_description', null))!!}</td>
+            <td colspan="2">{!!nl2br(Configs::getConfigsValueWithHtmlRepair($configs_user_register, 'user_register_description', ''))!!}</td>
         </tr>
     </table>
 @endforeach

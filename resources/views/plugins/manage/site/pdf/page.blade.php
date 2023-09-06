@@ -27,7 +27,8 @@
         <td>{{str_repeat("・", $page->depth)}}{{$page->page_name}}</td>
         <td>{{$page->permanent_link}}</td>
         @if ($page->base_display_flag == 1) <td>〇</td> @else <td></td> @endif
-        @if ($page->getSimpleLayout()) <td><img src="{{url('/')}}/images/core/layout/{{$page->getSimpleLayout()}}.png" style="width: 10px;"></td> @else <td></td> @endif
+        {{-- bugfix: imgタグはフルのURL指定しない。tcpdf内部で getimagesize(): https:// wrapper is disabled in the server configuration by allow_url_fopen=0 エラーになるため --}}
+        @if ($page->getSimpleLayout()) <td><img src="images/core/layout/{{$page->getSimpleLayout()}}.png" style="width: 10px;"></td> @else <td></td> @endif
     </tr>
     @endforeach
 </table>
