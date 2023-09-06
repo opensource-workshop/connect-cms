@@ -2,9 +2,9 @@
 
 namespace App\Models\Core;
 
+use App\Utilities\Html\HtmlUtils;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class Configs extends Model
 {
@@ -74,6 +74,20 @@ class Configs extends Model
         $config = $configs->firstWhere('name', $key);
         // firstWhere()で取得空の場合null が返ってくる。$config->value としても Null 合体演算子?? でundfind indexエラーでないので問題なし。nullなら default値 を返す。
         $value = $config->value ?? $default;
+
+        return $value;
+    }
+
+    /**
+     * 設定値（HTML）を修復して取得
+     */
+    public static function getConfigsValueWithHtmlRepair($configs, $key, $default = false)
+    {
+        $value = self::getConfigsValue($configs, $key, $default);
+
+        // 閉じタグしかない等、壊れたHTMLを整形（＝修復）して出力するために HtmlPurifier を利用
+        $purifier = HtmlUtils::getHtmlPurifier();
+        $value = $purifier->purify($value);
 
         return $value;
     }

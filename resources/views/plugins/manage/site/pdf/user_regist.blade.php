@@ -118,7 +118,7 @@
             <td>次行を参照</td>
         </tr>
         <tr nobr="true">
-            <td colspan="2">{!!nl2br(Configs::getConfigsValue($configs_user_register, 'user_register_privacy_description', null))!!}</td>
+            <td colspan="2">{!!nl2br(Configs::getConfigsValueWithHtmlRepair($configs_user_register, 'user_register_privacy_description', null))!!}</td>
         </tr>
     </table>
 
@@ -134,7 +134,7 @@
             <td>次行を参照</td>
         </tr>
         <tr nobr="true">
-            <td colspan="2">{!!nl2br(Configs::getConfigsValue($configs_user_register, 'user_register_description', null))!!}</td>
+            <td colspan="2">{!!nl2br(Configs::getConfigsValueWithHtmlRepair($configs_user_register, 'user_register_description', null))!!}</td>
         </tr>
     </table>
 @endforeach
