@@ -377,21 +377,21 @@ class DatabasesInputs extends Model
     public function scopeFullText($query, string $keyword)
     {
         $keyword = str_replace(" AND ", "[AND]", $keyword);
-		$keyword = str_replace(" and ", "[AND]", $keyword);
-		$keyword = str_replace(" & ", "[AND]", $keyword);
-		$keyword = str_replace(" OR ", "[OR]", $keyword);
-		$keyword = str_replace(" or ", "[OR]", $keyword);
-		$keyword = str_replace(" | ", "[OR]", $keyword);
-		$keyword = str_replace(" NOT ", "[NOT]", $keyword);
-		$keyword = str_replace(" not ", "[NOT]", $keyword);
+        $keyword = str_replace(" and ", "[AND]", $keyword);
+        $keyword = str_replace(" & ", "[AND]", $keyword);
+        $keyword = str_replace(" OR ", "[OR]", $keyword);
+        $keyword = str_replace(" or ", "[OR]", $keyword);
+        $keyword = str_replace(" | ", "[OR]", $keyword);
+        $keyword = str_replace(" NOT ", "[NOT]", $keyword);
+        $keyword = str_replace(" not ", "[NOT]", $keyword);
 
-		// space replace to AND
-		$keyword = str_replace(" ", "[AND]", $keyword);
+        // space replace to AND
+        $keyword = str_replace(" ", "[AND]", $keyword);
 
-		$keyword = str_replace("[AND]", " +", $keyword);
-		$keyword = str_replace("[OR]", " ", $keyword);
-		$keyword = str_replace("[NOT]", " -", $keyword);
-		$keyword = str_replace("+-", "-", $keyword);
+        $keyword = str_replace("[AND]", " +", $keyword);
+        $keyword = str_replace("[OR]", " ", $keyword);
+        $keyword = str_replace("[NOT]", " -", $keyword);
+        $keyword = str_replace("+-", "-", $keyword);
 
         Log::debug($keyword);
         $query->whereRaw("match(`full_text`) against (? IN BOOLEAN MODE)", [$keyword]);
