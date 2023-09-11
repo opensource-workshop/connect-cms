@@ -2,12 +2,9 @@
 
 namespace App\Plugins\Manage\PageManage;
 
-// use Illuminate\Http\Request;
-
 use App\Enums\WebsiteType;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Log;
 
 use DB;
 
@@ -221,15 +218,16 @@ class PageManage extends ManagePluginBase
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // 固定リンクの先頭に / がない場合、追加する。
-        if (strncmp($request->permanent_link, '/', 1) !== 0) {
-            $request->permanent_link = '/' . $request->permanent_link;
+        // 固定リンクの先頭に / がない場合、追加する。(php8.1対応)stringにキャストする。
+        $permanent_link = (string)$request->permanent_link;
+        if (strncmp($permanent_link, '/', 1) !== 0) {
+            $permanent_link = '/' . $permanent_link;
         }
 
         // ページデータの登録
         $page = new Page;
         $page->page_name            = $request->page_name;
-        $page->permanent_link       = $request->permanent_link;
+        $page->permanent_link       = $permanent_link;
         $page->password             = $request->password;
         $page->background_color     = $request->background_color;
         $page->header_color         = $request->header_color;
