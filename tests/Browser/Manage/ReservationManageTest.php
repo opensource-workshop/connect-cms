@@ -101,7 +101,8 @@ class ReservationManageTest extends DuskTestCase
 
             $browser->scrollIntoView('footer')
                     ->screenshot('manage/reservation/regist/images/regist2')
-                    ->press('登録確定');
+                    ->press('登録確定')
+                    ->assertSee('大会議室');    // 500エラーでも正常終了していたため、チェック追加
         });
 
         // マニュアル用データ出力
