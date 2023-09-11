@@ -506,7 +506,8 @@ jobs:
           path: tests/Manual/html
 
       - name: Upload Logs
-        if: failure()
+        # if: failure()
+        if: ${{ always() }}
         uses: actions/upload-artifact@v3
         with:
           name: console_and_logs
