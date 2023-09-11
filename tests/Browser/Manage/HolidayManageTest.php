@@ -51,6 +51,7 @@ class HolidayManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/holiday/edit')
                     ->assertTitle('Connect-CMS')
+                    ->assertDontSee('500')        // "500" 文字がない事
                     ->screenshot('manage/holiday/edit/images/edit');
         });
 
