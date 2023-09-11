@@ -9,6 +9,9 @@
  *
  * @param $users_columns   項目設定の埋め込みタグ
 --}}
+@php
+use App\Models\Core\UsersColumns;
+@endphp
 <div class="card bg-light mt-1">
     <div class="card-body px-2 pt-0 pb-0">
         <div class="small">
@@ -28,6 +31,11 @@
                         </tr>
                     @endforeach
                     @foreach($users_columns as $column)
+                        @if (UsersColumns::isLoopNotShowColumnType($column->column_type)) {
+                            {{-- 既に取得済みのため、ここでは取得しない --}}
+                            @continue;
+                        @endif
+
                         <tr>
                             <td><code>[[X-{{$column->column_name}}]]</code></td>
                             <td>{{$column->column_name}}</td>
