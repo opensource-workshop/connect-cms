@@ -237,6 +237,11 @@ class UsersTool
             });
 
         foreach ($users_columns as $users_column) {
+            if (UsersColumns::isLoopNotShowColumnType($users_column->column_type)) {
+                // 既に取得済みのため、ここでは取得しない
+                continue;
+            }
+
             $value = "";
             if (is_array($users_input_cols[$users_column->id])) {
                 $value = implode(self::CHECKBOX_SEPARATOR, $users_input_cols[$users_column->id]->value);
