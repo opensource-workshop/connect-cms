@@ -2,8 +2,6 @@
 
 namespace App\Utilities\String;
 
-use Illuminate\Support\Facades\Log;
-
 class StringUtils
 {
     /**
@@ -31,7 +29,9 @@ class StringUtils
     {
         if (is_array($value)) {
             // 渡されたパラメータが配列の場合（radioやcheckbox等）の場合を想定
-            $value = array_map(['self', 'trimInput'], $value);
+            // bugfix: php82 - Use of "self" in callables is deprecated
+            // $value = array_map(['self', 'trimInput'], $value);
+            $value = array_map(self::class . '::trimInput', $value);
         } elseif (is_string($value)) {
             // /u = UTF-8 として処理
             $value = preg_replace('/(^\s+)|(\s+$)/u', '', $value);
