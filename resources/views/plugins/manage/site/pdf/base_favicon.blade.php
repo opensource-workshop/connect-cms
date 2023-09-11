@@ -22,7 +22,8 @@
     <tr nobr="true">
         <td>ファビコン画像</td>
         @if (Configs::getConfigsValue($configs, 'favicon', null))
-            <td><img src="{{url('/')}}/uploads/favicon/{{Configs::getConfigsValue($configs, 'favicon', null)}}" style="width: 50px;" width=50></td>
+            {{-- bugfix: imgタグはフルのURL指定しない。tcpdf内部で getimagesize(): https:// wrapper is disabled in the server configuration by allow_url_fopen=0 エラーになるため --}}
+            <td><img src="uploads/favicon/{{Configs::getConfigsValue($configs, 'favicon', null)}}" style="width: 50px;" width=50></td>
         @else
             <td><br /></td>
         @endif
