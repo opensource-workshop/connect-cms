@@ -221,7 +221,8 @@ class UserManageTest extends DuskTestCase
                     ->pause(500)
                     ->screenshot('manage/user/regist/images/regist3')
                     ->press('変更')
-                    ->screenshot('manage/user/regist/images/regist4');
+                    ->screenshot('manage/user/regist/images/regist4')
+                    ->assertSee('件名');    // 500エラーでも正常終了していたため、チェック追加
         });
 
         // マニュアル用データ出力
