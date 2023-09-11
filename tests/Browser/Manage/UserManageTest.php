@@ -3,6 +3,7 @@
 namespace Tests\Browser\Manage;
 
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Support\Facades\Artisan;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 
@@ -52,6 +53,11 @@ class UserManageTest extends DuskTestCase
         // データクリア
         User::where('id', '<>', 1)->forceDelete();
         UsersColumns::truncate();
+
+        // 消してしまった初期の項目の再登録
+        // php artisan db:seed --class=DefaultUsersColumnsTableSeeder --force
+        Artisan::call('db:seed --class=DefaultUsersColumnsTableSeeder --force');
+
         UsersColumnsSelects::truncate();
         UsersInputCols::truncate();
         UsersLoginHistories::truncate();
@@ -152,14 +158,14 @@ class UserManageTest extends DuskTestCase
             // 役割設定を取得して、学生にする。
             $original_role_student = Configs::where('category', 'original_role')->where('name', 'student')->first();
 
-            $browser->visit('/manage/user/editColumns')
+            $browser->visit('/manage/user/editColumns/1')
                     ->assertTitleContains('Connect-CMS')
                     ->type('column_name', '所属')
                     ->press('#button_user_olumn_add')
                     ->screenshot('manage/user/editColumns1/images/editColumns1')
-                    ->click('#column_type_1')
+                    ->click('#column_type_6')
                     ->screenshot('manage/user/editColumns1/images/editColumns2')
-                    ->click('#button_user_column_detail_1')
+                    ->click('#button_user_column_detail_6')
                     ->screenshot('manage/user/editColumns1/images/editColumns3')
                     ->scrollIntoView('footer')
                     ->screenshot('manage/user/editColumns1/images/editColumns4');
@@ -307,7 +313,7 @@ class UserManageTest extends DuskTestCase
     private function autoRegist()
     {
         $this->browse(function (Browser $browser) {
-            $browser->visit('/manage/user/autoRegist')
+            $browser->visit('/manage/user/autoRegist/1')
                 ->assertTitleContains('Connect-CMS')
                 ->screenshot('manage/user/autoRegist/images/autoRegist1')
                 ->scrollIntoView('#user_register_temporary_regist_mail_flag')
