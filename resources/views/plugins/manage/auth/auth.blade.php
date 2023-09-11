@@ -72,7 +72,7 @@
                                     type="radio" value="{{ $key }}" class="custom-control-input" id="auth_method_event_{{ $key }}"
                                     name="auth_method_event" {{ $checked }}
                                 >
-                                <label class="custom-control-label" for="{{ "auth_method_event_${key}" }}">
+                                <label class="custom-control-label" for="{{ "auth_method_event_{$key}" }}">
                                     {{ $value }}
                                 </label>
                             </div>
