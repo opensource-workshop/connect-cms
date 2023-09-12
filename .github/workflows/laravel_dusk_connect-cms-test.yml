@@ -25,7 +25,7 @@ on:
 env:
   # schedule用
   PHP_VERSION_DEFAULT: '7.4'
-  IS_OUTPUT_MANUAL_DEFAULT: 'false'
+  # IS_OUTPUT_MANUAL_DEFAULT: 'false'
 
 jobs:
 
@@ -477,34 +477,34 @@ jobs:
       # ---------------------------------------------
 
       # Dusk Manual Output
-      - name: Set if input is_output_manual is empty
-        run: |
-          if [[ -z "$IS_OUTPUT_MANUAL" ]]; then
-            echo "IS_OUTPUT_MANUAL=$IS_OUTPUT_MANUAL_DEFAULT" >> $GITHUB_ENV
-          else
-            echo "IS_OUTPUT_MANUAL=$IS_OUTPUT_MANUAL" >> $GITHUB_ENV
-          fi
-        env:
-          IS_OUTPUT_MANUAL: ${{ github.event.inputs.is_output_manual }}
+      # - name: Set if input is_output_manual is empty
+      #   run: |
+      #     if [[ -z "$IS_OUTPUT_MANUAL" ]]; then
+      #       echo "IS_OUTPUT_MANUAL=$IS_OUTPUT_MANUAL_DEFAULT" >> $GITHUB_ENV
+      #     else
+      #       echo "IS_OUTPUT_MANUAL=$IS_OUTPUT_MANUAL" >> $GITHUB_ENV
+      #     fi
+      #   env:
+      #     IS_OUTPUT_MANUAL: ${{ github.event.inputs.is_output_manual }}
 
-      - name: 'Run Dusk マニュアルHTML出力'
-        if: ${{ env.IS_OUTPUT_MANUAL == 'true' }}
-        run: php artisan dusk tests/Manual/src/ManualOutput.php
+      # - name: 'Run Dusk マニュアルHTML出力'
+      #   if: ${{ env.IS_OUTPUT_MANUAL == 'true' }}
+      #   run: php artisan dusk tests/Manual/src/ManualOutput.php
 
-      - name: 'Run Dusk マニュアルPDF出力'
-        if: ${{ env.IS_OUTPUT_MANUAL == 'true' }}
-        run: php artisan dusk tests/Manual/src/ManualPdf.php contact_page=on
+      # - name: 'Run Dusk マニュアルPDF出力'
+      #   if: ${{ env.IS_OUTPUT_MANUAL == 'true' }}
+      #   run: php artisan dusk tests/Manual/src/ManualPdf.php contact_page=on
 
-      - name: 'Run Dusk マニュアルPDF（基礎編）出力'
-        if: ${{ env.IS_OUTPUT_MANUAL == 'true' }}
-        run: php artisan dusk tests/Manual/src/ManualPdf.php contact_page=on level=basic
+      # - name: 'Run Dusk マニュアルPDF（基礎編）出力'
+      #   if: ${{ env.IS_OUTPUT_MANUAL == 'true' }}
+      #   run: php artisan dusk tests/Manual/src/ManualPdf.php contact_page=on level=basic
 
-      - name: Upload Manual
-        if: ${{ env.IS_OUTPUT_MANUAL == 'true' && always() }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: manual
-          path: tests/Manual/html
+      # - name: Upload Manual
+      #   if: ${{ env.IS_OUTPUT_MANUAL == 'true' && always() }}
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: manual
+      #     path: tests/Manual/html
 
       # --- ログ
       - name: Upload Logs
