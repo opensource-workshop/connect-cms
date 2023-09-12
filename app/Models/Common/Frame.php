@@ -279,4 +279,12 @@ class Frame extends Model
                     ->whereRaw("FALSE = $auth_check");
             });
     }
+
+    /**
+     * フレームに関連しているページの取得
+     */
+    public function page()
+    {
+        return $this->hasOne(Page::class, 'id', 'page_id');
+    }
 }

@@ -82,6 +82,33 @@
         </div>
     </div>
 
+    {{-- 検索後の遷移先 --}}
+    @php
+        $database_destination_frame = FrameConfig::getConfigValueAndOld($frame_configs, DatabaseFrameConfig::database_destination_frame, $frame->id);
+    @endphp
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">{{DatabaseFrameConfig::getDescription('database_destination_frame')}}<br><small class="text-muted">ページ - フレーム</small></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            @foreach ($same_database_frames as $database_frame)
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input type="radio" value="{{$database_frame->id}}" id="database_destination_frame{{$loop->index}}" name="database_destination_frame"
+                        class="custom-control-input" @if(old('database_destination_frame', $database_destination_frame) ==  $database_frame->id) checked="checked" @endif>
+                    <label class="custom-control-label" for="database_destination_frame{{$loop->index}}">
+                        @if ($database_frame->id == $frame->id)
+                            <span class="badge bg-info text-dark">初期設定</span>
+                        @endif
+                        {{$database_frame->page_name}} - {{$database_frame->frame_title}}
+                    </label>
+                </div>
+            @endforeach
+            <div class="text-muted">
+                <small>
+                    ※ トップページなどに検索窓を設けて遷移先は別のページにしたいときに初期設定から変更してください。
+                </small>
+            </div>
+        </div>
+    </div>
+
     {{-- 絞り込み機能の表示 --}}
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass(true)}}">絞り込み機能の表示</label>

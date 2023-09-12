@@ -50,6 +50,7 @@ use App\Enums\DatabaseRoleName;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\Required;
 use App\Enums\DatabaseNoticeEmbeddedTag;
+use App\Enums\PluginName;
 use App\Enums\StatusType;
 use App\Models\Common\Categories;
 use App\Models\Core\FrameConfig;
@@ -857,6 +858,7 @@ class DatabasesPlugin extends UserPluginBase
             'columns_selects'  => isset($columns_selects) ? $columns_selects : null,
             'default_hide_list' => $default_hide_list,
             'frame_configs' => $this->frame_configs,
+            'dest_frame' =>$this->getDestinationFrame(),
         // change: 同ページに(a)データベースプラグイン,(b)フォームを配置して(b)フォームで入力エラーが起きても、入力値が復元しないバグ対応。
         // ])->withInput($request->all);
         ]);
@@ -3946,6 +3948,7 @@ class DatabasesPlugin extends UserPluginBase
                 'select_columns' => $select_columns,
                 'columns_selects' => $columns_selects,
                 'frame_configs' => $this->frame_configs,
+                'same_database_frames' => $this->getDatabaseFrames($database->id),
             ]
         )->withInput($request->all);
     }
@@ -4386,5 +4389,44 @@ AND databases_inputs.posted_at <= NOW()
         Categories::deleteCategories($this->frame->plugin_name, $id);
 
         // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+    }
+
+    /**
+     * データベースのフレームを取得する
+     *
+     * @param int $database_id
+     * @return EloquentCollection
+     */
+    private function getDatabaseFrames(?int $database_id): EloquentCollection
+    {
+        if ($database_id === null) {
+            return collect([]);
+        }
+        // Frame データ
+        $frames = Frame::select('frames.*', 'pages._lft', 'pages.page_name', 'buckets.bucket_name')
+            ->where('frames.plugin_name', PluginName::databases)
+            ->leftJoin('buckets', 'frames.bucket_id', '=', 'buckets.id')
+            ->leftJoin('databases', 'buckets.id', '=', 'databases.bucket_id')
+            ->leftJoin('pages', 'frames.page_id', '=', 'pages.id')
+            ->where('databases.id', $database_id)
+            ->orderBy('pages._lft', 'asc')
+            ->get();
+        return $frames;
+    }
+
+    /**
+     * 遷移先のフレームを取得する
+     * @return Frame
+     */
+    private function getDestinationFrame(): Frame
+    {
+        $frame_id = FrameConfig::getConfigValueAndOld($this->frame_configs, DatabaseFrameConfig::database_destination_frame, $this->frame->id);
+        $frame = Frame::with('page')->find($frame_id);
+
+        // 遷移先のフレームがなくなっていたら、当該フレームに留まる
+        if (empty($frame)) {
+            $frame = Frame::with('page')->find($this->frame->id);
+        }
+        return $frame;
     }
 }
