@@ -29,7 +29,7 @@ class CustomValiWysiwygMax implements Rule
     public function passes($attribute, $value)
     {
         // 65,535 バイトまではOK
-        return (strlen($value) > config('connect.WYSIWYG_MAX_BYTE')) ? false : true;
+        return (strlen((string)$value) > config('connect.WYSIWYG_MAX_BYTE')) ? false : true;
     }
 
     /**

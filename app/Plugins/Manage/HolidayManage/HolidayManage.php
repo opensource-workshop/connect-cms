@@ -27,6 +27,12 @@ use App\Plugins\Manage\ManagePluginBase;
 class HolidayManage extends ManagePluginBase
 {
     /**
+     * 独自設定祝日データ
+     * bugfix: php82 - Creation of dynamic property App\Plugins\Manage\HolidayManage\HolidayManage::$post is deprecated 修正
+     */
+    public $post = null;
+
+    /**
      *  権限定義
      */
     public function declareRole()

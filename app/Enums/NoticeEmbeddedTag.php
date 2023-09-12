@@ -74,7 +74,7 @@ class NoticeEmbeddedTag extends EnumsBase
     public static function replaceEmbeddedTags($body, array $notice_embedded_tags)
     {
         foreach ($notice_embedded_tags as $tag => $value) {
-            $body = str_ireplace("[[{$tag}]]", $value, $body);
+            $body = str_ireplace("[[{$tag}]]", (string)$value, $body);
         }
         return $body;
     }
