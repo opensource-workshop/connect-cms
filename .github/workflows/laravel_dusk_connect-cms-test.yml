@@ -17,14 +17,14 @@ on:
         - '8.0'
         - '8.1'
         - '8.2'
-        default: '7.3'
-      is_output_manual:
-        type: boolean
-        description: 'マニュアル出力'
-        default: 'false'
+        default: '7.4'
+      # is_output_manual:
+      #   type: boolean
+      #   description: 'マニュアル出力'
+      #   default: 'false'
 env:
   # schedule用
-  PHP_VERSION_DEFAULT: '7.3'
+  PHP_VERSION_DEFAULT: '7.4'
   IS_OUTPUT_MANUAL_DEFAULT: 'false'
 
 jobs:
@@ -151,7 +151,7 @@ jobs:
 
       - name: Downgrade Chrome driver to v114
         run: php artisan dusk:chrome-driver 114
-  
+
       - name: Start Chrome Driver
         run: ./vendor/laravel/dusk/bin/chromedriver-linux &
 
@@ -463,6 +463,7 @@ jobs:
       #   if: always()
       #   run: php artisan dusk tests/Browser/Top/IndexTopTest.php
 
+      # --- スクリーンショット
       # https://github.com/actions/upload-artifact (official)
       - name: Upload Screenshots
         if: ${{ always() }}
@@ -505,6 +506,7 @@ jobs:
           name: manual
           path: tests/Manual/html
 
+      # --- ログ
       - name: Upload Logs
         # if: failure()
         if: ${{ always() }}
