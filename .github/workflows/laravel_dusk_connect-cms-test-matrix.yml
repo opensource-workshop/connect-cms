@@ -134,16 +134,16 @@ jobs:
       # https://stackoverflow.com/questions/76980975/chrome-driver-failing-in-laravel-dusk-failed-to-open-stream-http-request-fai
       # https://voicetechno-jp.secure-web.jp/ChromeDriverV115orNewer.html
       # https://github.com/browser-actions/setup-chrome (community)
-      - name: Downgrade Chrome browser to v114
-        uses: browser-actions/setup-chrome@latest
-        with:
-          chrome-version: 1134343 # Last commit number for Chrome v114
+      # - name: Downgrade Chrome browser to v114
+      #   uses: browser-actions/setup-chrome@latest
+      #   with:
+      #     chrome-version: 1134343 # Last commit number for Chrome v114
 
-      - name: Chrome bin-path Override
-        run: sudo ln -nfs `which chrome` /usr/bin/google-chrome
+      # - name: Chrome bin-path Override
+      #   run: sudo ln -nfs `which chrome` /usr/bin/google-chrome
 
-      - name: Downgrade Chrome driver to v114
-        run: php artisan dusk:chrome-driver 114
+      # - name: Downgrade Chrome driver to v114
+      #   run: php artisan dusk:chrome-driver 114
 
       - name: Start Chrome Driver
         run: ./vendor/laravel/dusk/bin/chromedriver-linux &
