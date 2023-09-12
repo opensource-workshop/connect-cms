@@ -33,7 +33,7 @@
         "barryvdh/laravel-debugbar": "^3.3",
         "filp/whoops": "~2.0",
         "fakerphp/faker": "^1.9.1",
-        "laravel/dusk": "^6.11",
+        "laravel/dusk": "^7.10",
         "mockery/mockery": "^1.0",
         "nunomaduro/collision": "^6.1",
         "phpunit/phpunit": "^9.0",
