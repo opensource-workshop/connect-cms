@@ -4410,6 +4410,7 @@ AND databases_inputs.posted_at <= NOW()
             ->leftJoin('pages', 'frames.page_id', '=', 'pages.id')
             ->where('databases.id', $database_id)
             ->orderBy('pages._lft', 'asc')
+            ->orderBy('frames.id', 'asc')
             ->get();
         return $frames;
     }
