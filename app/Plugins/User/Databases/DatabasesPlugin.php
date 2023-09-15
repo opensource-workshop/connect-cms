@@ -3,6 +3,7 @@
 namespace App\Plugins\User\Databases;
 
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -4395,9 +4396,9 @@ AND databases_inputs.posted_at <= NOW()
      * データベースのフレームを取得する
      *
      * @param int $database_id
-     * @return EloquentCollection
+     * @return Collection
      */
-    private function getDatabaseFrames(?int $database_id): EloquentCollection
+    private function getDatabaseFrames(?int $database_id): Collection
     {
         if ($database_id === null) {
             return collect([]);
