@@ -1079,6 +1079,9 @@ class DatabasesPlugin extends UserPluginBase
             $blade = 'databases_edit';
         } else {
             $blade = 'databases_detail';
+            // 表示件数を増やす
+            $inputs->views = $inputs->views + 1;
+            $inputs->save();
         }
 
         // 表示テンプレートを呼び出す。
@@ -1647,6 +1650,7 @@ class DatabasesPlugin extends UserPluginBase
             DatabaseNoticeEmbeddedTag::posted_at =>        $databases_inputs->posted_at,
             DatabaseNoticeEmbeddedTag::expires_at =>       $databases_inputs->expires_at,
             DatabaseNoticeEmbeddedTag::display_sequence => $databases_inputs->display_sequence,
+            DatabaseNoticeEmbeddedTag::views => $databases_inputs->views,
         ];
 
         $all_items = '';

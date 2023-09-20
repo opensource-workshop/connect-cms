@@ -85,6 +85,10 @@
     elseif ($column->column_type == DatabaseColumnType::updated) {
         $value = $inputs->updated_at;
     }
+    // 表示件数型
+    elseif ($column->column_type == DatabaseColumnType::views) {
+        $value = $inputs->views;
+    }
     // 公開日型
     elseif ($column->column_type == DatabaseColumnType::posted) {
         $value = $inputs->posted_at;
