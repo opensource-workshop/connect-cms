@@ -2530,6 +2530,9 @@ class UserManage extends ManagePluginBase
             $message = '【 '. $request->name .' 】を変更しました。';
         } else {
             $message = '【 '. $request->name .' 】を登録しました。';
+
+            // UsersColumnsSet登録時のUsersColumns初期登録
+            UsersColumns::initInsertForRegistUsersColumnsSet($columns_set->id);
         }
 
         // 一覧画面に戻る
