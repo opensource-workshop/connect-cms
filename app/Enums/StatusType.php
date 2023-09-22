@@ -7,7 +7,7 @@ use App\Enums\EnumsBase;
 /**
  * ステータス関係
  */
-final class StatusType extends EnumsBase
+class StatusType extends EnumsBase
 {
     // 定数メンバ
     // 参考) https://github.com/opensource-workshop/connect-cms/wiki/Data-history-policy（データ履歴の方針）
