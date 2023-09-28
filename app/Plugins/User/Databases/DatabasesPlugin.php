@@ -722,6 +722,13 @@ class DatabasesPlugin extends UserPluginBase
             }
 
             // 並べ替え指定があれば、並べ替えする項目をSELECT する。
+
+            // 各カラム設定で基本設定にある型であれば、基本設定と同様にソートする
+            $sort_column = DatabasesColumns::find($sort_column_id);
+            if (in_array($sort_column->column_type . '_' . $sort_column_order, DatabaseSortFlag::getMemberKeys())) {
+                $sort_column_id = $sort_column->column_type;
+            }
+
             if ($sort_column_id == DatabaseSortFlag::random && $sort_column_order == DatabaseSortFlag::order_session) {
                 $inputs_query->inRandomOrder(session('sort_seed.'.$frame_id));
             } elseif ($sort_column_id == DatabaseSortFlag::random && $sort_column_order == DatabaseSortFlag::order_every) {
@@ -742,6 +749,10 @@ class DatabasesPlugin extends UserPluginBase
                 $inputs_query->orderBy('databases_inputs.posted_at', 'asc');
             } elseif ($sort_column_id == DatabaseSortFlag::posted && $sort_column_order == DatabaseSortFlag::order_desc) {
                 $inputs_query->orderBy('databases_inputs.posted_at', 'desc');
+            } elseif ($sort_column_id == DatabaseSortFlag::views && $sort_column_order == DatabaseSortFlag::order_asc) {
+                $inputs_query->orderBy('databases_inputs.views', 'asc');
+            } elseif ($sort_column_id == DatabaseSortFlag::views && $sort_column_order == DatabaseSortFlag::order_desc) {
+                $inputs_query->orderBy('databases_inputs.views', 'desc');
             } elseif ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == DatabaseSortFlag::order_asc) {
                 if ($sort_column_option === 'downloadcount') {
                     $inputs_query->orderBy('uploads.download_count', 'asc');
