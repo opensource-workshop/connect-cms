@@ -60,6 +60,7 @@ class DatabasesPluginTest extends DuskTestCase
     private function init()
     {
         // データクリア
+        \Schema::disableForeignKeyConstraints();
         Databases::truncate();
         DatabasesColumns::truncate();
         DatabasesColumnsRole::truncate();
@@ -68,6 +69,7 @@ class DatabasesPluginTest extends DuskTestCase
         DatabasesInputCols::truncate();
         DatabasesInputs::truncate();
         DatabasesRole::truncate();
+        \Schema::enableForeignKeyConstraints();
         $this->initPlugin('databases', '/test/database');
 
         // 最初にマニュアルの順番確定用にメソッドを指定する。
