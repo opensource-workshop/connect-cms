@@ -735,7 +735,7 @@ class DatabasesPlugin extends UserPluginBase
             // 並べ替え指定があれば、並べ替えする項目をSELECT する。
 
             // 各カラム設定で基本設定にある型であれば、基本設定と同様にソートする
-            $sort_column = DatabasesColumns::find($sort_column_id);
+            $sort_column = DatabasesColumns::findOrNew($sort_column_id);
             if (in_array($sort_column->column_type . '_' . $sort_column_order, DatabaseSortFlag::getMemberKeys())) {
                 $sort_column_id = $sort_column->column_type;
             }
@@ -4502,7 +4502,7 @@ AND databases_inputs.posted_at <= NOW()
         }
         return json_encode($r, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     }
-  
+
     /**
      * データベースのフレームを取得する
      *
