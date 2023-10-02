@@ -198,4 +198,68 @@ class UsersColumns extends Model
     {
         return self::getLabelFromCollection($users_columns, UserColumnType::updated_at, '更新日時');
     }
+
+    /**
+     * UsersColumnsSet登録時のUsersColumns初期登録
+     */
+    public static function initInsertForRegistUsersColumnsSet(int $columns_set_id): void
+    {
+        self::insert([
+            [
+                'columns_set_id'        => $columns_set_id,
+                'column_type'           => UserColumnType::user_name,
+                'column_name'           => UserColumnType::getDescriptionFixed(UserColumnType::user_name),
+                'is_fixed_column'       => 1,
+                'is_show_auto_regist'   => 1,
+                'is_show_my_page'       => 1,
+                'is_edit_my_page'       => 0,
+                'required'              => 1,
+                'display_sequence'      => 1,
+            ],
+            [
+                'columns_set_id'        => $columns_set_id,
+                'column_type'           => UserColumnType::login_id,
+                'column_name'           => UserColumnType::getDescriptionFixed(UserColumnType::login_id),
+                'is_fixed_column'       => 1,                           // (画面からいじれない項目)
+                'is_show_auto_regist'   => 1,
+                'is_show_my_page'       => 1,
+                'is_edit_my_page'       => 0,
+                'required'              => 1,                           // 設定するけど is_fixed_column=1 はおそらくrequiredは参照しない
+                'display_sequence'      => 2,
+            ],
+            [
+                'columns_set_id'        => $columns_set_id,
+                'column_type'           => UserColumnType::user_email,
+                'column_name'           => UserColumnType::getDescriptionFixed(UserColumnType::user_email),
+                'is_fixed_column'       => 1,
+                'is_show_auto_regist'   => 1,
+                'is_show_my_page'       => 1,
+                'is_edit_my_page'       => 1,
+                'required'              => 1,
+                'display_sequence'      => 3,
+            ],
+            [
+                'columns_set_id'        => $columns_set_id,
+                'column_type'           => UserColumnType::user_password,
+                'column_name'           => UserColumnType::getDescriptionFixed(UserColumnType::user_password),
+                'is_fixed_column'       => 1,
+                'is_show_auto_regist'   => 1,
+                'is_show_my_page'       => 0,
+                'is_edit_my_page'       => 1,
+                'required'              => 1,
+                'display_sequence'      => 4,
+            ],
+            [
+                'columns_set_id'        => $columns_set_id,
+                'column_type'           => UserColumnType::created_at,
+                'column_name'           => UserColumnType::getDescriptionFixed(UserColumnType::created_at),
+                'is_fixed_column'       => 0,
+                'is_show_auto_regist'   => 0,
+                'is_show_my_page'       => 1,
+                'is_edit_my_page'       => 0,
+                'required'              => 0,
+                'display_sequence'      => 5,
+            ],
+        ]);
+    }
 }

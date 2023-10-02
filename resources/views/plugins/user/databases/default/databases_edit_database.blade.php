@@ -121,6 +121,27 @@
     </div>
 
     <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">全文検索</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            @foreach (UseType::enum as $key => $value)
+            <div class="custom-control custom-radio custom-control-inline">
+                <input
+                    type="radio"
+                    value="{{ $key }}"
+                    id="{{ "full_text_search_${key}" }}"
+                    name="full_text_search"
+                    class="custom-control-input"
+                    {{ old('full_text_search', $database->full_text_search) == $key ? 'checked' : '' }}
+                >
+                <label class="custom-control-label" for="{{ "full_text_search_${key}" }}">
+                    {{ $value }}
+                </label>
+            </div>
+        @endforeach
+        </div>
+    </div>
+    
+    <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">検索キーワードの記録</label>
         <div class="{{$frame->getSettingInputClass()}}">
             @foreach (UseType::enum as $key => $value)

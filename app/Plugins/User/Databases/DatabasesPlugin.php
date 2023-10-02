@@ -3,6 +3,7 @@
 namespace App\Plugins\User\Databases;
 
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -50,7 +51,9 @@ use App\Enums\DatabaseRoleName;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\Required;
 use App\Enums\DatabaseNoticeEmbeddedTag;
+use App\Enums\PluginName;
 use App\Enums\StatusType;
+use App\Enums\UseType;
 use App\Models\Common\Categories;
 use App\Models\Core\FrameConfig;
 use App\Models\User\Databases\DatabasesSearchedWord;
@@ -499,8 +502,8 @@ class DatabasesPlugin extends UserPluginBase
             }
             // 画面のキーワード指定
             if (!empty(session('search_keyword.'.$frame_id))) {
-                $inputs_query = DatabasesTool::appendSearchKeyword('databases_inputs.id', $inputs_query, $databases_columns_ids, $hide_columns_ids, session('search_keyword.'.$frame_id));
-
+                $full_text_search = $database->full_text_search === UseType::use ? true : false;
+                $inputs_query = DatabasesTool::appendSearchKeyword('databases_inputs.id', $inputs_query, $databases_columns_ids, $hide_columns_ids, session('search_keyword.'.$frame_id), $full_text_search);
                 // 検索キーワードの記録
                 if ($database->save_searched_word) {
                     DatabasesTool::saveSearchedWord($database->id, session('search_keyword.'.$frame_id));
@@ -865,6 +868,7 @@ class DatabasesPlugin extends UserPluginBase
             'columns_selects'  => isset($columns_selects) ? $columns_selects : null,
             'default_hide_list' => $default_hide_list,
             'frame_configs' => $this->frame_configs,
+            'dest_frame' =>$this->getDestinationFrame(),
         // change: 同ページに(a)データベースプラグイン,(b)フォームを配置して(b)フォームで入力エラーが起きても、入力値が復元しないバグ対応。
         // ])->withInput($request->all);
         ]);
@@ -1707,6 +1711,9 @@ class DatabasesPlugin extends UserPluginBase
             'after_message' => $after_message
         ]);
         */
+
+        // 全文検索項目を最新化する
+        (new DatabasesTool())->updateFullText($database->id, $databases_inputs->id);
     }
 
     /**
@@ -2124,6 +2131,8 @@ class DatabasesPlugin extends UserPluginBase
         $databases->numbering_use_flag  = (empty($request->numbering_use_flag))  ? 0 : $request->numbering_use_flag;
         $databases->numbering_prefix    = $request->numbering_prefix;
         $databases->save_searched_word = $request->save_searched_word;
+        $old_full_text_search           = empty($request->copy_databases_id) ? $databases->full_text_search : UseType::not_use;
+        $databases->full_text_search    = $request->full_text_search;
 
         // データ保存
         $databases->save();
@@ -2189,6 +2198,16 @@ class DatabasesPlugin extends UserPluginBase
                     }
                 }
             }
+        }
+
+        // 全文検索項目を最新化する
+        // 処理が重いので全文検索の設定が変わった時のみ最新化する
+        if ($databases->full_text_search == UseType::use && $old_full_text_search == UseType::not_use) {
+            Log::debug('updateFullText');
+            (new DatabasesTool())->updateFullText($databases->id);
+        } elseif ($databases->full_text_search == UseType::not_use) {
+            Log::debug('flushFullText');
+            (new DatabasesTool())->flushFullText($databases->id);
         }
 
         // 新規作成フラグを付けてデータベース設定変更画面を呼ぶ
@@ -2516,6 +2535,9 @@ class DatabasesPlugin extends UserPluginBase
         $this->deleteColumnsSelects($request->column_id);
         $message = '項目【 '. $request->$str_column_name .' 】を削除しました。';
 
+        // 全文検索項目を最新化する
+        (new DatabasesTool())->updateFullText($request->databases_id);
+
         // 編集画面へ戻る。
         return $this->editColumn($request, $page_id, $frame_id, $request->databases_id, $message, null);
     }
@@ -2755,6 +2777,7 @@ class DatabasesPlugin extends UserPluginBase
         // 並べ替え指定
         $column->sort_flag = (empty($request->sort_flag)) ? 0 : $request->sort_flag;
         // 検索対象指定
+        $old_search_flag = $column->search_flag;
         $column->search_flag = (empty($request->search_flag)) ? 0 : $request->search_flag;
         // 絞り込み対象指定
         $column->select_flag = (empty($request->select_flag)) ? 0 : $request->select_flag;
@@ -2798,6 +2821,12 @@ class DatabasesPlugin extends UserPluginBase
 
             // 保存
             $columns_role->save();
+        }
+
+        // 全文検索項目を最新化する
+        // 処理が重いので検索対象の設定が変わった時のみ最新化する
+        if ($old_search_flag != $column->search_flag) {
+            (new DatabasesTool())->updateFullText($request->databases_id);
         }
 
         $message = '項目【 '. $column->column_name .' 】を更新しました。';
@@ -3649,6 +3678,9 @@ class DatabasesPlugin extends UserPluginBase
         fclose($fp);
         $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
 
+        // 全文検索項目を最新化する
+        (new DatabasesTool())->updateFullText($database->id);
+
         $request->flash_message = 'インポートしました。';
 
         // redirect_path指定して自動遷移するため、returnで表示viewの指定不要。
@@ -3955,6 +3987,7 @@ class DatabasesPlugin extends UserPluginBase
                 'select_columns' => $select_columns,
                 'columns_selects' => $columns_selects,
                 'frame_configs' => $this->frame_configs,
+                'same_database_frames' => $this->getDatabaseFrames($database->id),
             ]
         )->withInput($request->all);
     }
@@ -4453,5 +4486,45 @@ AND databases_inputs.posted_at <= NOW()
             $r[] = ['word' => $word];
         }
         return json_encode($r, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    }
+  
+    /**
+     * データベースのフレームを取得する
+     *
+     * @param int $database_id
+     * @return Collection
+     */
+    private function getDatabaseFrames(?int $database_id): Collection
+    {
+        if ($database_id === null) {
+            return collect([]);
+        }
+        // Frame データ
+        $frames = Frame::select('frames.*', 'pages._lft', 'pages.page_name', 'buckets.bucket_name')
+            ->where('frames.plugin_name', PluginName::databases)
+            ->leftJoin('buckets', 'frames.bucket_id', '=', 'buckets.id')
+            ->leftJoin('databases', 'buckets.id', '=', 'databases.bucket_id')
+            ->leftJoin('pages', 'frames.page_id', '=', 'pages.id')
+            ->where('databases.id', $database_id)
+            ->orderBy('pages._lft', 'asc')
+            ->orderBy('frames.id', 'asc')
+            ->get();
+        return $frames;
+    }
+
+    /**
+     * 遷移先のフレームを取得する
+     * @return Frame
+     */
+    private function getDestinationFrame(): Frame
+    {
+        $frame_id = FrameConfig::getConfigValueAndOld($this->frame_configs, DatabaseFrameConfig::database_destination_frame, $this->frame->id);
+        $frame = Frame::with('page')->find($frame_id);
+
+        // 遷移先のフレームがなくなっていたら、当該フレームに留まる
+        if (empty($frame)) {
+            $frame = Frame::with('page')->find($this->frame->id);
+        }
+        return $frame;
     }
 }
