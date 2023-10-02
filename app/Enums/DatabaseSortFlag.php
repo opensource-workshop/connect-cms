@@ -13,6 +13,7 @@ final class DatabaseSortFlag extends EnumsBase
     // 注意：_ は区切り文字に使っているため、const内に _ を含めない事
     const created = 'created';
     const updated = 'updated';
+    const views = 'views';
     const posted  = 'posted';
     const display = 'display';
     const random  = 'random';
@@ -35,6 +36,8 @@ final class DatabaseSortFlag extends EnumsBase
     const created_desc   = self::created . '_' . self::order_desc;
     const updated_asc    = self::updated . '_' . self::order_asc;
     const updated_desc   = self::updated . '_' . self::order_desc;
+    const views_asc = self::views . '_' . self::order_asc;
+    const views_desc = self::views . '_' . self::order_desc;
     const posted_asc     = self::posted . '_' . self::order_asc;
     const posted_desc    = self::posted . '_' . self::order_desc;
     const display_asc    = self::display . '_' . self::order_asc;
@@ -49,6 +52,8 @@ final class DatabaseSortFlag extends EnumsBase
         self::created_desc   => '登録日（新しい順）',
         self::updated_asc    => '更新日（古い順）',
         self::updated_desc   => '更新日（新しい順）',
+        self::views_asc    => '表示件数（昇順）',
+        self::views_desc   => '表示件数（降順）',
         self::posted_asc     => '公開日（古い順）',
         self::posted_desc    => '公開日（新しい順）',
         self::display_asc    => '表示順（昇順）',

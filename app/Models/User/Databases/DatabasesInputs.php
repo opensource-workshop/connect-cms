@@ -24,6 +24,7 @@ class DatabasesInputs extends Model
         'expires_at',
         'first_committed_at',
         'categories_id',
+        'views',
         'created_at',
         'updated_at'
     ];

@@ -294,6 +294,12 @@ class DatabasesearchesPlugin extends UserPluginBase
             case DatabaseSearcherSortType::updated_desc:
                 $inputs_ids->orderBy('databases_inputs.updated_at', 'desc');
                 break;
+            case DatabaseSearcherSortType::views_asc:
+                $inputs_ids->orderBy('databases_inputs.views', 'asc');
+                break;
+            case DatabaseSearcherSortType::views_desc:
+                $inputs_ids->orderBy('databases_inputs.views', 'desc');
+                break;
             case DatabaseSearcherSortType::posted_asc:
                 $inputs_ids->orderBy('databases_inputs.posted_at', 'asc');
                 break;

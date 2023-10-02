@@ -14,6 +14,7 @@ final class DatabaseNoticeEmbeddedTag extends NoticeEmbeddedTag
     const posted_at = 'posted_at';
     const expires_at = 'expires_at';
     const display_sequence = 'display_sequence';
+    const views = 'views';
 
     // key/valueの連想配列
     const enum = [
@@ -31,6 +32,7 @@ final class DatabaseNoticeEmbeddedTag extends NoticeEmbeddedTag
         self::created_at => '登録日時',
         self::updated_name => '更新者',
         self::updated_at => '更新日時',
+        self::views => '表示件数',
     ];
 
     /**
@@ -53,6 +55,7 @@ final class DatabaseNoticeEmbeddedTag extends NoticeEmbeddedTag
         $embedded_tags[] = ['[[' . self::created_at . ']]',       self::getDescription(self::created_at)];
         $embedded_tags[] = ['[[' . self::updated_name . ']]',     self::getDescription(self::updated_name)];
         $embedded_tags[] = ['[[' . self::updated_at . ']]',       self::getDescription(self::updated_at)];
+        $embedded_tags[] = ['[[' . self::views . ']]', self::getDescription(self::views)];
         return $embedded_tags;
     }
 }
