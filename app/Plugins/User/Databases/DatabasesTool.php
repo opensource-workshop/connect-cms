@@ -14,6 +14,7 @@ use App\Enums\DatabaseRoleName;
 use App\Enums\UseType;
 use App\Models\User\Databases\Databases;
 use App\Models\User\Databases\DatabasesInputs;
+use App\Models\User\Databases\DatabasesSearchedWord;
 
 /**
  * データベースの便利関数
@@ -479,6 +480,28 @@ class DatabasesTool
         return $inputs_query;
     }
 
+    /**
+     * 検索された語句を保存する
+     *
+     * @param int $databases_id
+     * @param string $keyword
+     */
+    public static function saveSearchedWord(int $databases_id, string $keyword)
+    {
+        $excluded_words = ['AND', '&', 'OR', '|', 'NOT'];
+
+        $keywords = explode(' ', mb_convert_kana($keyword, 's'));
+        foreach ($keywords as $word) {
+            if (in_array(\Str::upper($word), $excluded_words)) {
+                continue;
+            }
+            DatabasesSearchedWord::create([
+                'databases_id' => $databases_id,
+                'word' => $word,
+            ]);
+        }
+    }
+  
     /**
      * 全文検索項目を洗い替える
      *

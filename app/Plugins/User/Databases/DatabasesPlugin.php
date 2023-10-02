@@ -56,6 +56,7 @@ use App\Enums\StatusType;
 use App\Enums\UseType;
 use App\Models\Common\Categories;
 use App\Models\Core\FrameConfig;
+use App\Models\User\Databases\DatabasesSearchedWord;
 
 /**
  * データベース・プラグイン
@@ -100,6 +101,7 @@ class DatabasesPlugin extends UserPluginBase
             'detail',
             'input',
             'search',
+            'trendWords',
         ];
         $functions['post'] = [
             'index',
@@ -133,6 +135,7 @@ class DatabasesPlugin extends UserPluginBase
         $role_check_table["input"]                = array('posts.create', 'posts.update');
         $role_check_table["publicConfirm"]        = array('posts.create', 'posts.update');
         $role_check_table["publicStore"]          = array('posts.create', 'posts.update');
+        $role_check_table["trendWords"] = array('frames.edit');
 
         $role_check_table["addPref"]              = array('buckets.addColumn');
         return $role_check_table;
@@ -501,6 +504,10 @@ class DatabasesPlugin extends UserPluginBase
             if (!empty(session('search_keyword.'.$frame_id))) {
                 $full_text_search = $database->full_text_search === UseType::use ? true : false;
                 $inputs_query = DatabasesTool::appendSearchKeyword('databases_inputs.id', $inputs_query, $databases_columns_ids, $hide_columns_ids, session('search_keyword.'.$frame_id), $full_text_search);
+                // 検索キーワードの記録
+                if ($database->save_searched_word) {
+                    DatabasesTool::saveSearchedWord($database->id, session('search_keyword.'.$frame_id));
+                }
             }
 
             // データベースプラグイン単体では $request->search_options をセットしておらず「オプション検索指定」使っていないが、個別の追加テンプレートで利用するため、消さない。
@@ -2123,6 +2130,7 @@ class DatabasesPlugin extends UserPluginBase
         $databases->after_message       = $request->after_message;
         $databases->numbering_use_flag  = (empty($request->numbering_use_flag))  ? 0 : $request->numbering_use_flag;
         $databases->numbering_prefix    = $request->numbering_prefix;
+        $databases->save_searched_word = $request->save_searched_word;
         $old_full_text_search           = empty($request->copy_databases_id) ? $databases->full_text_search : UseType::not_use;
         $databases->full_text_search    = $request->full_text_search;
 
@@ -4033,6 +4041,11 @@ class DatabasesPlugin extends UserPluginBase
             ]
         );
 
+        // 急上昇ワード未設定を許容する
+        if (!$request->filled(DatabaseFrameConfig::database_trend_words_caption)) {
+            FrameConfig::where('frame_id', $frame_id)->where('name', DatabaseFrameConfig::database_trend_words_caption)->forceDelete();
+        }
+
         FrameConfig::saveFrameConfigs($request, $frame_id, DatabaseFrameConfig::getMemberKeys());
         // 更新したので、frame_configsを設定しなおす
         $this->refreshFrameConfigs();
@@ -4422,6 +4435,59 @@ AND databases_inputs.posted_at <= NOW()
         // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }
 
+    /**
+     * 急上昇ワードを取得する
+     */
+    public function trendWords($request, $page_id, $frame_id, int $database_id)
+    {
+        if ($database_id === null) {
+            return;
+        }
+
+        // 設定済みの値
+        if ($request->old === 'true') {
+            return $this->trendWordsOld();
+        }
+
+        // 期間指定で最新の内容を取得する
+        $query = DatabasesSearchedWord::select('word')
+            ->where('databases_id', $database_id);
+
+        if ($request->period === 'weekly') {
+            $query->where('created_at', '>', Carbon::now()->subWeek());
+        } elseif ($request->period === 'monthly') {
+            $query->where('created_at', '>', Carbon::now()->subMonth());
+        } else {
+            $query->where('created_at', '>', Carbon::now()->subDay());
+        }
+        $trend_words = $query->groupBy('word')
+            ->orderByRaw('COUNT(*) DESC')
+            ->orderByRaw('MIN(id)')
+            ->limit(20)
+            ->get();
+
+        return json_encode($trend_words, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    }
+
+    /**
+     * 設定済みの急上昇ワードを取得する
+     */
+    private function trendWordsOld()
+    {
+        // 登録済み
+        $trend_words = FrameConfig::getConfigValueAndOld($this->frame_configs, DatabaseFrameConfig::database_trend_words);
+        // old()の場合は配列になっている
+        if (!is_array($trend_words)) {
+            $trend_words = explode('|', $trend_words);
+        }
+
+        $r = [];
+        foreach (array_filter($trend_words) as $word) {
+            $r[] = ['word' => $word];
+        }
+        return json_encode($r, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    }
+  
     /**
      * データベースのフレームを取得する
      *

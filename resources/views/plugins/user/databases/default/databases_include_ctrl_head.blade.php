@@ -47,6 +47,29 @@
     </div>
     @endif
 
+    {{-- 急上昇ワード --}}
+    @php
+        $database_show_trend_words = FrameConfig::getConfigValueAndOld($frame_configs, DatabaseFrameConfig::database_show_trend_words, ShowType::not_show);
+        $registered_trend_words = array_filter(explode('|', FrameConfig::getConfigValue($frame_configs, DatabaseFrameConfig::database_trend_words)));
+        $database_trend_words_caption = FrameConfig::getConfigValue($frame_configs, DatabaseFrameConfig::database_trend_words_caption);
+    @endphp
+    @if (($database_frame && $database_frame->use_search_flag == 1 && $database_show_trend_words))
+        <div class="input-group mb-3">
+            <script>
+                function submitSearch(keyword) {
+                    document.databaseform{{$frame_id}}.search_keyword.value = keyword;
+                    document.databaseform{{$frame_id}}.submit();
+                }
+            </script>
+            <span class="trend_word_title">{{$database_trend_words_caption}}</span>
+            @foreach ($registered_trend_words as $word)
+            <a class="mr-2 trend_word" href="javascript:void(0)" onclick="submitSearch('{{$word}}')">
+                {{$word}}
+            </a>
+            @endforeach
+    </div>
+    @endif
+
     {{-- 絞り込み（複数選択） --}}
     @php
         $use_select_multiple_flag = FrameConfig::getConfigValueAndOld($frame_configs, DatabaseFrameConfig::database_use_select_multiple_flag, ShowType::not_show);

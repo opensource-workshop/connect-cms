@@ -140,6 +140,27 @@
         @endforeach
         </div>
     </div>
+    
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">検索キーワードの記録</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            @foreach (UseType::enum as $key => $value)
+            <div class="custom-control custom-radio custom-control-inline">
+                <input
+                    type="radio"
+                    value="{{ $key }}"
+                    id="{{ "save_searched_word_${key}" }}"
+                    name="save_searched_word"
+                    class="custom-control-input"
+                    {{ old('save_searched_word', $database->save_searched_word) == $key ? 'checked' : '' }}
+                >
+                <label class="custom-control-label" for="{{ "save_searched_word_${key}" }}">
+                    {{ $value }}
+                </label>
+            </div>
+        @endforeach
+        </div>
+    </div>
 
 {{--
     <div class="form-group row">
