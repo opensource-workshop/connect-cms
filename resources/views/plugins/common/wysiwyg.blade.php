@@ -646,6 +646,9 @@
         // 画像プラグイン＞アップロード（タブ）非表示. アップロード（タブ）で画像アップロードすると即時アップロードされ、一般（タブ）のリサイズのパラメータが拾えず全て原寸でアップロードされるため、使わない。
         image_uploadtab: false,
 
+        // 画像の詳細設定タブ機能
+        image_advtab: true,
+
         image_class_list: [
             {title: 'Responsive', value: 'img-fluid'},
             {title: '枠線＋Responsive', value: 'img-fluid img-thumbnail'},
