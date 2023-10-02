@@ -42,6 +42,7 @@
 
 @if (!$database->id)
 @else
+<div id="app_{{ $frame->id }}">
 <form action="{{url('/')}}/plugin/databases/saveView/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
 
@@ -79,6 +80,116 @@
                 ※ 検索テキストボックスに初期表示される補足テキストを設定できます。<br>
                 ※ 未設定時は「検索はキーワードを入力してください。」を表示します。
             </small>
+        </div>
+    </div>
+
+    {{-- 急上昇ワード --}}
+    @php
+        $database_show_trend_words = FrameConfig::getConfigValueAndOld($frame_configs, DatabaseFrameConfig::database_show_trend_words, ShowType::not_show);
+    @endphp
+    <script>
+        function hideTrendWords() {
+            $('#collapse_trend_words_{{$frame_id}}').collapse('hide');
+        }
+
+        function showTrendWords() {
+            $('#collapse_trend_words_{{$frame_id}}').collapse('show');
+        }
+    </script>
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">{{DatabaseFrameConfig::getDescription('database_show_trend_words')}}</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            @foreach (ShowType::getMembers() as $key => $type)
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" value="{{$key}}" id="database_show_trend_words_{{$key}}" name="database_show_trend_words"
+                     class="custom-control-input" @if ($database_show_trend_words == $key) checked="checked" @endif
+                     @if ($key === ShowType::show)
+                        onclick="showTrendWords();"
+                     @else
+                        onclick="hideTrendWords();"
+                     @endif
+                     >
+                <label class="custom-control-label" for="database_show_trend_words_{{$key}}">{{$type}}</label>
+            </div>
+            @endforeach
+        </div>
+    </div>
+
+    {{-- 急上昇ワードの選択 --}}
+    @php
+        // 急上昇ワード
+        $database_trend_words = [];
+        $registered_trend_words = array_filter(explode('|', FrameConfig::getConfigValue($frame_configs, DatabaseFrameConfig::database_trend_words)));
+        if (old('database_trend_words')) {
+            $database_trend_words = old('database_trend_words');
+        } else {
+            $database_trend_words = $registered_trend_words;
+        }
+
+        // 表示項目名
+        $database_trend_words_caption = FrameConfig::getConfigValue($frame_configs, DatabaseFrameConfig::database_trend_words_caption);
+    @endphp
+
+    <div class="form-group row collapse @if ($database_show_trend_words == ShowType::show) show @endif" id="collapse_trend_words_{{$frame_id}}">
+        <label class="{{$frame->getSettingLabelClass()}}"></label>
+        <div class="{{$frame->getSettingInputClass(false, true)}}">
+            <div class="card mb-1">
+                <div class="card-body">
+                    <h6 class="card-title">設定済みの値</h6>
+                    <div class="mb-2">
+                        @foreach ($registered_trend_words as $trend_word)<span class="badge badge-pill badge-secondary mr-2">{{$trend_word}}</span>@endforeach
+                    </div>
+                </div>
+            </div>
+            <div class="card mb-1">
+                <div class="card-body">
+                    <h6 class="card-title">更新する値</h6>
+                    <div class="mb-2">
+                        <button type="button" class="btn btn-sm btn-primary" v-on:click="fetchTrendWordsDaily">最新化（日間）</button>
+                        <button type="button" class="btn btn-sm btn-primary" v-on:click="fetchTrendWordsWeekly">最新化（週間）</button>
+                        <button type="button" class="btn btn-sm btn-primary" v-on:click="fetchTrendWordsMonthly">最新化（月間）</button>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge badge-pill badge-info mr-2" v-for="(trend_word, index) in trend_words" v-bind:key="trend_word.word">
+                            @{{trend_word.word}}<a href="javascript:void(0)" class="text-white ml-2" v-on:click="deleteTrendWord(index)"><i class="fas fa-minus-circle"></i></a>
+                            <input type="hidden" name="database_trend_words[]" v-model="trend_word.word">
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="card mb-1">
+                <div class="card-body">
+                    <h6 class="card-title">表示項目名</h6>
+                    <input type="text" name="database_trend_words_caption" value="{{$database_trend_words_caption}}" class="form-control">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- 検索後の遷移先 --}}
+    @php
+        $database_destination_frame = FrameConfig::getConfigValueAndOld($frame_configs, DatabaseFrameConfig::database_destination_frame, $frame->id);
+    @endphp
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass()}}">{{DatabaseFrameConfig::getDescription('database_destination_frame')}}<br><small class="text-muted">ページ - フレーム</small></label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            @foreach ($same_database_frames as $database_frame)
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input type="radio" value="{{$database_frame->id}}" id="database_destination_frame{{$loop->index}}" name="database_destination_frame"
+                        class="custom-control-input" @if(old('database_destination_frame', $database_destination_frame) ==  $database_frame->id) checked="checked" @endif>
+                    <label class="custom-control-label" for="database_destination_frame{{$loop->index}}">
+                        @if ($database_frame->id == $frame->id)
+                            <span class="badge bg-info text-dark">初期設定</span>
+                        @endif
+                        {{$database_frame->page_name}} - {{$database_frame->frame_title}}
+                    </label>
+                </div>
+            @endforeach
+            <div class="text-muted">
+                <small>
+                    ※ トップページなどに検索窓を設けて遷移先は別のページにしたいときに初期設定から変更してください。
+                </small>
+            </div>
         </div>
     </div>
 
@@ -272,6 +383,48 @@
         </div>
     </div>
 </form>
+</div>
+
+<script>
+    const app_{{ $frame->id }} = new Vue({
+        el: "#app_{{ $frame->id }}",
+        data: function() {
+            return {
+                trend_words: [],
+            }
+        },
+        methods: {
+            fetchTrendWords: function (period, old) {
+                let self = this;
+                axios.get("{{url('/')}}/json/databases/trendWords/{{$page->id}}/{{$frame_id}}/{{$database->id}}/?period=" + period + "&old=" + old)
+                    .then(function(res){
+                        self.trend_words = res.data;
+                    })
+                    .catch(function (error) {
+                        console.log(error)
+                    });
+            },
+            fetchTrendWordsDaily: function () {
+                this.fetchTrendWords("daily", false);
+            },
+            fetchTrendWordsWeekly: function () {
+                this.fetchTrendWords("weekly", false);
+            },
+            fetchTrendWordsMonthly: function () {
+                this.fetchTrendWords("monthly", false);
+            },
+            fetchTrendWordsOld: function () {
+                this.fetchTrendWords("", true);
+            },
+            deleteTrendWord: function (index) {
+                this.trend_words.splice(index, 1)
+            },
+        },
+        mounted: function () {
+            this.fetchTrendWordsOld();
+        }
+    });
+</script>
 
 @endif
 @endsection
