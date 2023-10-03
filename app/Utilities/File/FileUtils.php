@@ -23,7 +23,7 @@ class FileUtils
     /**
      * サイズのフォーマット(小数点)
      */
-    public static function getFormatSizeDecimalPoint($size)
+    public static function getFormatSizeDecimalPoint(int $size): string
     {
         $units = array("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB");
         for ($i = 0; $size >= 1024 && $i < 4; $i++) {
@@ -45,7 +45,8 @@ class FileUtils
     /**
      * 指定ディレクトリ配下のサブディレクトリを含めたファイル一覧取得
      */
-    public static function getFileList($dir) {
+    public static function getFileList(string $dir): array
+    {
         $iterator = new RecursiveDirectoryIterator($dir);
         $iterator = new RecursiveIteratorIterator($iterator);
         $list = array();
