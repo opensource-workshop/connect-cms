@@ -446,7 +446,7 @@ trait MigrationTrait
 
         if ($target == 'databases' || $target == 'all') {
             // databases、databases_columns、databases_columns_selects、databases_inputs、databases_input_cols、databases_frames のtruncate
-            Databases::truncate();
+            Databases::query()->delete();
             DatabasesColumns::truncate();
             DatabasesColumnsSelects::truncate();
             DatabasesInputs::truncate();
