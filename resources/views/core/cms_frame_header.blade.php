@@ -18,9 +18,15 @@ if ($frame->frame_title) {
     $canFrameHaederDisplayed = true;   // 表示
 }
 
+// 編集権限があるか
+$can_edit_frame = false;
+if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null,null,$frame]])) {
+    $can_edit_frame = true;
+}
+
 // フレームタイトルが無くても、権限あれば、フレームヘッダ表示する。
 //   - Gate::check()は、Auth::user()->can()と同等メソッド。 @see https://readouble.com/laravel/6.x/ja/authorization.html#authorizing-actions-via-gates
-if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null,null,$frame]])) {
+if ($can_edit_frame) {
     $canFrameHaederDisplayed = true;   // 表示
 }
 @endphp
@@ -48,9 +54,9 @@ if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null
     {{-- 認証していてフレームタイトルが空の場合は、パネルヘッダーの中央にアイコンを配置したいので、高さ指定する。 --}}
     @php
         // プラグインが編集可能であることを表すclass
-        $can_edit_plugin = '';
-        if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null,null,$frame]]) && app('request')->input('mode') != 'preview') {
-            $can_edit_plugin = 'can-edit-plugin';
+        $can_edit_frame_class = '';
+        if ($can_edit_frame) {
+            $can_edit_frame_class = 'can-edit-frame';
         }
     @endphp
 
@@ -59,10 +65,10 @@ if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null
         <h1 class="card-header {{$class_header_bg}} border-0" style="padding-top: 0px;padding-bottom: 0px;">
     @elseif (Auth::check() && empty($frame->frame_title))
         @php $class_header_bg = "bg-transparent"; @endphp
-        <h1 class="card-header {{$class_header_bg}} border-0 {{$can_edit_plugin}}" style="padding-top: 0px;padding-bottom: 0px;">
+        <h1 class="card-header {{$class_header_bg}} border-0 {{$can_edit_frame_class}}" style="padding-top: 0px;padding-bottom: 0px;">
     @else
         @php $class_header_bg = "bg-{$frame->frame_design}"; @endphp
-        <h1 class="card-header {{$class_header_bg}} cc-{{$frame->frame_design}}-font-color {{$can_edit_plugin}}">
+        <h1 class="card-header {{$class_header_bg}} cc-{{$frame->frame_design}}-font-color {{$can_edit_frame_class}}">
     @endif
 
     {{-- フレームタイトル --}}
@@ -111,8 +117,7 @@ if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null
         (Auth::user()->can('role_arrangement')) &&
          app('request')->input('mode') != 'preview')
     --}}
-    @if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null,null,$frame]]) &&
-        app('request')->input('mode') != 'preview')
+    @if ($can_edit_frame && app('request')->input('mode') != 'preview')
 
         {{-- フレームを配置したページのみ、編集できるようにする。 --}}
 {{--
