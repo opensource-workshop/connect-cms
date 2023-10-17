@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Schema;
 
 use Carbon\Carbon;
 use RRule\RRule;
@@ -446,12 +447,14 @@ trait MigrationTrait
 
         if ($target == 'databases' || $target == 'all') {
             // databases、databases_columns、databases_columns_selects、databases_inputs、databases_input_cols、databases_frames のtruncate
-            Databases::query()->delete();
+            Schema::disableForeignKeyConstraints();
+            Databases::truncate();
             DatabasesColumns::truncate();
             DatabasesColumnsSelects::truncate();
             DatabasesInputs::truncate();
             DatabasesInputCols::truncate();
             DatabasesFrames::truncate();
+            Schema::enableForeignKeyConstraints();
             Buckets::where('plugin_name', 'databases')->delete();
             MigrationMapping::where('target_source_table', 'databases')->delete();
             MigrationMapping::where('target_source_table', 'databases_post')->delete();
