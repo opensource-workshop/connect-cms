@@ -5,6 +5,7 @@ namespace App;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 use App\Notifications\PasswordResetNotification;
 
@@ -16,7 +17,7 @@ use App\Models\Core\Section;
 
 class User extends Authenticatable
 {
-    use Notifiable;
+    use HasFactory, Notifiable;
 
     // 日付型の場合、$dates にカラムを指定しておく。
     protected $dates = ['created_at', 'updated_at'];
