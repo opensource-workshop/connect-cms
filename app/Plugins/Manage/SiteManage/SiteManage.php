@@ -27,7 +27,6 @@ use App\Plugins\Manage\ManagePluginBase;
 use App\Plugins\Manage\SiteManage\CCPDF;
 use App\Enums\BaseLoginRedirectPage;
 use App\Enums\StatusType;
-use App\Utilities\File\FileUtils;
 
 /* 移行データ用 */
 use App\Models\User\Contents\Contents;
@@ -178,7 +177,6 @@ use App\Models\Migration\Nc3\Nc3Video;
  * サイト管理クラス
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
- * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category サイト管理
  * @package Controller
@@ -224,7 +222,6 @@ class SiteManage extends ManagePluginBase
         $role_ckeck_table["document"]         = array('admin_site');
         $role_ckeck_table["saveDocument"]     = array('admin_site');
         $role_ckeck_table["downloadDocument"] = array('admin_site');
-        $role_ckeck_table["total"]            = ['admin_site'];
 
         return $role_ckeck_table;
     }
@@ -1972,31 +1969,5 @@ class SiteManage extends ManagePluginBase
         $size_str = sprintf("%'.02d", $size);
 
         return sprintf("%'." . $size_str . "d", $id);
-    }
-
-    /**
-     * 使用容量
-     *
-     * @return view
-     * @method_title 使用容量
-     * @method_desc ファイルの使用量を確認できます。
-     * @method_detail Connect-CMSで使用しているファイル容量を確認できます。
-     */
-    public function total($request, $id = null)
-    {
-        $total = 0;
-        // ディレクトリの全ファイル一覧
-        $files = FileUtils::getFileList(base_path());
-        foreach ($files as $file) {
-            $total += filesize($file);
-        }
-        // 単位付与
-        $total = FileUtils::getFormatSizeDecimalPoint($total);
-
-        return view('plugins.manage.site.total', [
-            "function"    => __FUNCTION__,
-            "plugin_name" => "site",
-            "total"       => $total,
-        ]);
     }
 }
