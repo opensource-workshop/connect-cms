@@ -60,9 +60,6 @@ class DatabasesPluginTest extends DuskTestCase
     private function init()
     {
         // データクリア
-        // databasesのtruncate時、databases_searched_wordsの外部キー制約でこけるため
-        // 一次的に外部キー制約を無効にする
-        \Schema::disableForeignKeyConstraints();
         Databases::truncate();
         DatabasesColumns::truncate();
         DatabasesColumnsRole::truncate();
@@ -71,7 +68,6 @@ class DatabasesPluginTest extends DuskTestCase
         DatabasesInputCols::truncate();
         DatabasesInputs::truncate();
         DatabasesRole::truncate();
-        \Schema::enableForeignKeyConstraints();
         $this->initPlugin('databases', '/test/database');
 
         // 最初にマニュアルの順番確定用にメソッドを指定する。

@@ -23,7 +23,7 @@
 {{-- アクセシビリティ対応。検索OFF & 絞り込み項目なし & ソートOFFの時、検索の空フォームを作らないようにする。 --}}
 @if(($database_frame && $database_frame->use_search_flag == 1) || (($select_columns && count($select_columns) >= 1) || $databases_frames->isBasicUseSortFlag()))
 
-<form action="{{url('/')}}/redirect/plugin/databases/search/{{$dest_frame->page->id}}/{{$dest_frame->id}}#frame-{{$dest_frame->id}}" method="POST" role="search" aria-label="{{$database_frame->databases_name}}" name="databaseform{{$frame_id}}">
+<form action="{{url('/')}}/redirect/plugin/databases/search/{{$dest_frame->page->id}}/{{$dest_frame->id}}#frame-{{$dest_frame->id}}" method="POST" role="search" aria-label="{{$database_frame->databases_name}}">
     {{ csrf_field() }}
     {{-- 詳細画面でブラウザバックをしたときに、フォーム再送信の確認が表示されないようにリダイレクトする --}}
     <input type="hidden" name="redirect_path" value="{{$dest_frame->page->getLinkUrl()}}?frame_{{$dest_frame->id}}_page=1#frame-{{$dest_frame->id}}">
@@ -56,14 +56,14 @@
     @if (($database_frame && $database_frame->use_search_flag == 1 && $database_show_trend_words))
         <div class="input-group mb-3">
             <script>
-                function submitSearch{{$frame_id}}(keyword) {
+                function submitSearch(keyword) {
                     document.databaseform{{$frame_id}}.search_keyword.value = keyword;
                     document.databaseform{{$frame_id}}.submit();
                 }
             </script>
             <span class="trend_word_title">{{$database_trend_words_caption}}</span>
             @foreach ($registered_trend_words as $word)
-            <a class="mr-2 trend_word" href="javascript:void(0)" onclick="submitSearch{{$frame_id}}('{{$word}}')">
+            <a class="mr-2 trend_word" href="javascript:void(0)" onclick="submitSearch('{{$word}}')">
                 {{$word}}
             </a>
             @endforeach
