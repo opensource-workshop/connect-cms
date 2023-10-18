@@ -23,10 +23,10 @@
 {{-- アクセシビリティ対応。検索OFF & 絞り込み項目なし & ソートOFFの時、検索の空フォームを作らないようにする。 --}}
 @if(($database_frame && $database_frame->use_search_flag == 1) || (($select_columns && count($select_columns) >= 1) || $databases_frames->isBasicUseSortFlag()))
 
-<form action="{{url('/')}}/redirect/plugin/databases/search/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" role="search" aria-label="{{$database_frame->databases_name}}">
+<form action="{{url('/')}}/redirect/plugin/databases/search/{{$dest_frame->page->id}}/{{$dest_frame->id}}#frame-{{$dest_frame->id}}" method="POST" role="search" aria-label="{{$database_frame->databases_name}}">
     {{ csrf_field() }}
     {{-- 詳細画面でブラウザバックをしたときに、フォーム再送信の確認が表示されないようにリダイレクトする --}}
-    <input type="hidden" name="redirect_path" value="{{$page->getLinkUrl()}}?frame_{{$frame_id}}_page=1#frame-{{$frame_id}}">
+    <input type="hidden" name="redirect_path" value="{{$dest_frame->page->getLinkUrl()}}?frame_{{$dest_frame->id}}_page=1#frame-{{$dest_frame->id}}">
 
     {{-- 検索 --}}
     @if($database_frame && $database_frame->use_search_flag == 1)
@@ -44,6 +44,29 @@
                 <i class="fas fa-search" role="presentation"></i>
             </button>
         </div>
+    </div>
+    @endif
+
+    {{-- 急上昇ワード --}}
+    @php
+        $database_show_trend_words = FrameConfig::getConfigValueAndOld($frame_configs, DatabaseFrameConfig::database_show_trend_words, ShowType::not_show);
+        $registered_trend_words = array_filter(explode('|', FrameConfig::getConfigValue($frame_configs, DatabaseFrameConfig::database_trend_words)));
+        $database_trend_words_caption = FrameConfig::getConfigValue($frame_configs, DatabaseFrameConfig::database_trend_words_caption);
+    @endphp
+    @if (($database_frame && $database_frame->use_search_flag == 1 && $database_show_trend_words))
+        <div class="input-group mb-3">
+            <script>
+                function submitSearch(keyword) {
+                    document.databaseform{{$frame_id}}.search_keyword.value = keyword;
+                    document.databaseform{{$frame_id}}.submit();
+                }
+            </script>
+            <span class="trend_word_title">{{$database_trend_words_caption}}</span>
+            @foreach ($registered_trend_words as $word)
+            <a class="mr-2 trend_word" href="javascript:void(0)" onclick="submitSearch('{{$word}}')">
+                {{$word}}
+            </a>
+            @endforeach
     </div>
     @endif
 
