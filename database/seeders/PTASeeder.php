@@ -675,7 +675,7 @@ class PTASeeder extends Seeder
             $blogs = new Blogs;
             $blogs->bucket_id    = $bucket_id;
             $blogs->blog_name    = $row["blog_name"];
-            // $blogs->view_count   = 10;
+            $blogs->view_count   = 10;
             $blogs->save();
         }
     }

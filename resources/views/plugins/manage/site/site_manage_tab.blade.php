@@ -53,14 +53,6 @@
                 @endif
                 </li>
 
-                <li role="presentation" class="nav-item">
-                    @if ($function == "total")
-                        <span class="nav-link"><span class="active">使用容量</span></span>
-                    @else
-                        <a href="{{url('/manage/site/total')}}" class="nav-link">使用容量</a>
-                    @endif
-                </li>
-
                 <li class="nav-item dropdown">
                     <a href="#" class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         その他設定

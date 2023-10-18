@@ -18,15 +18,9 @@ if ($frame->frame_title) {
     $canFrameHaederDisplayed = true;   // 表示
 }
 
-// 編集権限があるか
-$can_edit_frame = false;
-if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null,null,$frame]])) {
-    $can_edit_frame = true;
-}
-
 // フレームタイトルが無くても、権限あれば、フレームヘッダ表示する。
 //   - Gate::check()は、Auth::user()->can()と同等メソッド。 @see https://readouble.com/laravel/6.x/ja/authorization.html#authorizing-actions-via-gates
-if ($can_edit_frame) {
+if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null,null,$frame]])) {
     $canFrameHaederDisplayed = true;   // 表示
 }
 @endphp
@@ -52,23 +46,15 @@ if ($can_edit_frame) {
     @endphp
 
     {{-- 認証していてフレームタイトルが空の場合は、パネルヘッダーの中央にアイコンを配置したいので、高さ指定する。 --}}
-    @php
-        // プラグインが編集可能であることを表すclass
-        $can_edit_frame_class = '';
-        if ($can_edit_frame) {
-            $can_edit_frame_class = 'can-edit-frame';
-        }
-    @endphp
-
     @if (Auth::check() && empty($frame->frame_title) && app('request')->input('mode') == 'preview')
         @php $class_header_bg = "bg-transparent"; @endphp
         <h1 class="card-header {{$class_header_bg}} border-0" style="padding-top: 0px;padding-bottom: 0px;">
     @elseif (Auth::check() && empty($frame->frame_title))
         @php $class_header_bg = "bg-transparent"; @endphp
-        <h1 class="card-header {{$class_header_bg}} border-0 {{$can_edit_frame_class}}" style="padding-top: 0px;padding-bottom: 0px;">
+        <h1 class="card-header {{$class_header_bg}} border-0" style="padding-top: 0px;padding-bottom: 0px;">
     @else
         @php $class_header_bg = "bg-{$frame->frame_design}"; @endphp
-        <h1 class="card-header {{$class_header_bg}} cc-{{$frame->frame_design}}-font-color {{$can_edit_frame_class}}">
+        <h1 class="card-header {{$class_header_bg}} cc-{{$frame->frame_design}}-font-color">
     @endif
 
     {{-- フレームタイトル --}}
@@ -117,7 +103,8 @@ if ($can_edit_frame) {
         (Auth::user()->can('role_arrangement')) &&
          app('request')->input('mode') != 'preview')
     --}}
-    @if ($can_edit_frame && app('request')->input('mode') != 'preview')
+    @if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null,null,$frame]]) &&
+        app('request')->input('mode') != 'preview')
 
         {{-- フレームを配置したページのみ、編集できるようにする。 --}}
 {{--
