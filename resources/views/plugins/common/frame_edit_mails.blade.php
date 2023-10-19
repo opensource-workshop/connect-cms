@@ -39,7 +39,12 @@
 
 @include('plugins.common.errors_form_line')
 
-<div class="alert alert-info mt-2"><i class="fas fa-exclamation-circle"></i> メールの送信方法や送信内容を設定します。</div>
+{{-- 投稿通知を送る=on, 承認通知を送る=on, 関連記事の投稿通知を送る=on, 承認済み通知を送る=on --}}
+@if (old('notice_on', $bucket_mail->notice_on) == 1 || old('approval_on', $bucket_mail->approval_on) == 1 || old('relate_on', $bucket_mail->relate_on) == 1 || old('approved_on', $bucket_mail->approved_on) == 1)
+    @include('plugins.common.error_system_mail_setting')
+@endif
+
+<div class="alert alert-info"><i class="fas fa-exclamation-circle"></i> メールの送信方法や送信内容を設定します。</div>
 
 <form action="{{url('/')}}/redirect/plugin/{{$frame->plugin_name}}/saveBucketsMails/{{$page->id}}/{{$frame_id}}/{{$bucket->id}}#frame-{{$frame_id}}" method="POST" class="">
     {{csrf_field()}}
