@@ -312,6 +312,16 @@ class DatabasesearchesPlugin extends UserPluginBase
             case DatabaseSearcherSortType::display_desc:
                 $inputs_ids->orderBy('databases_inputs.display_sequence', 'desc');
                 break;
+            case DatabaseSearcherSortType::random_session:
+                // ランダム読み込みのための Seed をセッション中に作っておく
+                if (empty(session('database_searches_sort_seed.'.$frame_id))) {
+                    session(['database_searches_sort_seed.'.$frame_id => rand()]);
+                }
+                $inputs_ids->inRandomOrder(session('database_searches_sort_seed.'.$frame_id));
+                break;
+            case DatabaseSearcherSortType::random_every:
+                $inputs_ids->inRandomOrder();
+                break;
             default:
                 $inputs_ids->orderBy('databases_inputs.created_at', 'asc');
                 break;
