@@ -59,10 +59,10 @@
             </div>
             <div class="custom-file">
                 <input type="hidden" name="upload_video[{{$frame_id}}]" value="">
-                <input type="file" name="upload_video[{{$frame_id}}]" value="{{old("upload_video.$frame_id")}}" class="custom-file-input @if ($errors && $errors->has("upload_video.$frame_id")) border-danger @endif" id="upload_video{{$frame_id}}">
-                <label class="custom-file-label" for="upload_video" data-browse="参照">動画ファイル選択...</label>
+                <input type="file" name="upload_video[{{$frame_id}}]" value="{{old("upload_video.$frame_id")}}" class="custom-file-input" id="upload_video{{$frame_id}}">
+                <label class="custom-file-label @if ($errors && $errors->has("upload_video.$frame_id")) border-danger @endif" for="upload_video" data-browse="参照">動画ファイル選択...</label>
                 <small class="form-text text-muted">ファイルを入れ替える際は指定します。</small>
-                @if ($errors && $errors->has("upload_video.$frame_id")) 
+                @if ($errors && $errors->has("upload_video.$frame_id"))
                     <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("upload_video.*")}}</div>
                 @endif
             </div>
@@ -83,8 +83,8 @@
             @endif
             <div class="custom-file">
                 <input type="hidden" name="upload_poster[{{$frame_id}}]" value="">
-                <input type="file" name="upload_poster[{{$frame_id}}]" value="{{old("upload_poster.$frame_id")}}" class="custom-file-input @if ($errors && $errors->has("upload_poster.$frame_id")) border-danger @endif" id="upload_poster{{$frame_id}}">
-                <label class="custom-file-label" for="upload_poster" data-browse="参照">ポスター画像選択...</label>
+                <input type="file" name="upload_poster[{{$frame_id}}]" value="{{old("upload_poster.$frame_id")}}" class="custom-file-input" id="upload_poster{{$frame_id}}">
+                <label class="custom-file-label @if ($errors && $errors->has("upload_poster.$frame_id")) border-danger @endif" for="upload_poster" data-browse="参照">ポスター画像選択...</label>
             </div>
         </div>
     </div>
@@ -94,7 +94,7 @@
         <div class="col-md-10">
             <input type="text" name="title[{{$frame_id}}]" value="{{old("title.$frame_id", $photoalbum_content->name)}}" class="form-control @if ($errors->has("title.$frame_id")) border-danger @endif" id="title{{$frame_id}}">
             <small class="form-text text-muted">空の場合、ファイル名をタイトルとして登録します。</small>
-            @if ($errors && $errors->has("title.$frame_id")) 
+            @if ($errors && $errors->has("title.$frame_id"))
                 <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("title.*")}}</div>
             @endif
         </div>
@@ -104,7 +104,7 @@
         <label class="col-md-2 control-label text-md-right">説明</label>
         <div class="col-md-10">
             <textarea name="description[{{$frame_id}}]" class="form-control @if ($errors->has("description.$frame_id")) border-danger @endif" id="description{{$frame_id}}" rows=2>{!!old("description.$frame_id", $photoalbum_content->description)!!}</textarea>
-            @if ($errors && $errors->has("description.$frame_id")) 
+            @if ($errors && $errors->has("description.$frame_id"))
                 <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$errors->first("description.*")}}</div>
             @endif
         </div>
