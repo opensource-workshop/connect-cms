@@ -162,7 +162,7 @@
             <label class="{{$frame->getSettingLabelClass()}} pr-3 pb-0" for="upload_file">画像ファイル <label class="badge badge-danger">必須</label></label>
             <div class="custom-file {{$frame->getSettingInputClass()}}">
                 <input type="hidden" name="upload_file[{{$frame_id}}]" value="">
-                <input type="file" name="upload_file[{{$frame_id}}]" value="{{old("upload_file.$frame_id")}}" class="custom-file-input @if ($errors && $errors->has("upload_file.$frame_id")) is-invalid @endif" id="upload_file{{$frame_id}}">
+                <input type="file" name="upload_file[{{$frame_id}}]" value="{{old("upload_file.$frame_id")}}" class="custom-file-input @if ($errors && $errors->has("upload_file.$frame_id")) border-danger @endif" id="upload_file{{$frame_id}}">
                 <label class="custom-file-label ml-md-2" for="upload_file" data-browse="参照">画像ファイル選択...</label>
             </div>
         </div>
@@ -232,7 +232,7 @@
             <label class="{{$frame->getSettingLabelClass()}} pr-3" for="upload_video">動画ファイル <label class="badge badge-danger">必須</label></label>
             <div class="custom-file {{$frame->getSettingInputClass()}}">
                 <input type="hidden" name="upload_video[{{$frame_id}}]" value="">
-                <input type="file" name="upload_video[{{$frame_id}}]" value="{{old("upload_video.$frame_id")}}" class="custom-file-input @if ($errors && $errors->has("upload_video.$frame_id")) is-invalid @endif" id="upload_video{{$frame_id}}">
+                <input type="file" name="upload_video[{{$frame_id}}]" value="{{old("upload_video.$frame_id")}}" class="custom-file-input @if ($errors && $errors->has("upload_video.$frame_id")) border-danger @endif" id="upload_video{{$frame_id}}">
                 <label class="custom-file-label ml-md-2" for="upload_video" data-browse="参照">動画ファイル選択...</label>
             </div>
         </div>
@@ -257,7 +257,7 @@
             <label class="{{$frame->getSettingLabelClass()}} pr-3" for="upload_poster">ポスター画像</label>
             <div class="custom-file {{$frame->getSettingInputClass()}}">
                 <input type="hidden" name="upload_poster[{{$frame_id}}]" value="">
-                <input type="file" name="upload_poster[{{$frame_id}}]" value="{{old("upload_poster.$frame_id")}}" class="custom-file-input @if ($errors && $errors->has("upload_poster.$frame_id")) is-invalid @endif" id="upload_poster{{$frame_id}}">
+                <input type="file" name="upload_poster[{{$frame_id}}]" value="{{old("upload_poster.$frame_id")}}" class="custom-file-input @if ($errors && $errors->has("upload_poster.$frame_id")) border-danger @endif" id="upload_poster{{$frame_id}}">
                 <label class="custom-file-label ml-md-2" for="upload_poster" data-browse="参照">ポスター画像選択...</label>
             </div>
         </div>
