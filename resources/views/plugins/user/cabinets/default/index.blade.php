@@ -144,7 +144,7 @@
         <div class="form-group">
             <div class="custom-file">
                 <input type="hidden" name="upload_file[{{$frame_id}}]" value="">
-                <input type="file" name="upload_file[{{$frame_id}}]" value="{{old("upload_file.$frame_id")}}" class="custom-file-input @if ($errors && $errors->has("upload_file.$frame_id")) border-danger @endif" id="upload_file{{$frame_id}}">
+                <input type="file" name="upload_file[{{$frame_id}}]" value="{{old("upload_file.$frame_id")}}" class="custom-file-input @if ($errors && $errors->has("upload_file.$frame_id")) is-invalid @endif" id="upload_file{{$frame_id}}">
                 <label class="custom-file-label" for="upload_file" data-browse="参照">ファイル選択...</label>
             </div>
             @if ($errors && $errors->has("upload_file.$frame_id"))

@@ -41,8 +41,8 @@
                 <label class="col-md-3 col-form-label text-md-right">ファビコン・ファイル</label>
                 <div class="col-md-9">
                     <div class="custom-file">
-                        <input type="file" class="custom-file-input @if ($errors->has('favicon')) border-danger @endif" id="favicon" name="favicon" accept=".ico">
-                        <label class="custom-file-label @if ($errors->has('favicon')) border-danger @endif" for="favicon" data-browse="参照">アイコンファイル(.ico)</label>
+                        <input type="file" class="custom-file-input @if ($errors->has('favicon')) is-invalid @endif" id="favicon" name="favicon" accept=".ico">
+                        <label class="custom-file-label" for="favicon" data-browse="参照">アイコンファイル(.ico)</label>
                     </div>
                     @include('plugins.common.errors_inline', ['name' => 'favicon'])
                 </div>

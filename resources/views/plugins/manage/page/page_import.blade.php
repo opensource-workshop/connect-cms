@@ -36,8 +36,8 @@
                 <label for="page_name" class="col-md-3 col-form-label text-md-right">CSVファイル</label>
                 <div class="col-md-9">
                     <div class="custom-file">
-                        <input type="file" class="custom-file-input @if ($errors->has('page_csv')) border-danger @endif" id="page_csv" name="page_csv" accept=".csv">
-                        <label class="custom-file-label @if ($errors->has('page_csv')) border-danger @endif" for="page_csv" data-browse="参照"></label>
+                        <input type="file" class="custom-file-input @if ($errors->has('page_csv')) is-invalid @endif" id="page_csv" name="page_csv" accept=".csv">
+                        <label class="custom-file-label" for="page_csv" data-browse="参照"></label>
                     </div>
                     @if ($errors->has('page_csv'))
                         @foreach ($errors->get('page_csv') as $message)
