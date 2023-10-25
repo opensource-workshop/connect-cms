@@ -3097,7 +3097,8 @@ class DatabasesPlugin extends UserPluginBase
                                             'databases_inputs.updated_at as inputs_updated_at',
                                             'databases_inputs.posted_at as inputs_posted_at',
                                             'databases_inputs.expires_at as inputs_expires_at',
-                                            'databases_inputs.display_sequence as inputs_display_sequence'
+                                            'databases_inputs.display_sequence as inputs_display_sequence',
+                                            'databases_inputs.views as inputs_views'
                                         )
                                         ->join('databases_inputs', 'databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
                                         ->whereIn('databases_inputs_id', DatabasesInputs::select('id')->where('databases_id', $id))
@@ -3142,6 +3143,9 @@ class DatabasesPlugin extends UserPluginBase
                                 break;
                             case DatabaseColumnType::display:
                                 $csv_array[$input_col->databases_inputs_id][$column->id] = $input_col->inputs_display_sequence;
+                                break;
+                            case DatabaseColumnType::views:
+                                $csv_array[$input_col->databases_inputs_id][$column->id] = $input_col->inputs_views;
                                 break;
                         }
                     }
