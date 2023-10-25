@@ -3162,6 +3162,7 @@ class DatabasesPlugin extends UserPluginBase
         $csv_data = '';
         foreach ($csv_array as $csv_line) {
             foreach ($csv_line as $csv_col) {
+                $csv_col = str_replace('"', '""', $csv_col);
                 $csv_data .= '"' . $csv_col . '",';
             }
             // 末尾カンマを削除
