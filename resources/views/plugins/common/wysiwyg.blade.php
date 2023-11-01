@@ -9,7 +9,7 @@
     // php8.0 Warning対応
     $frame_id = $frame_id ?? null;
     $frame = $frame ?? new \App\Models\Common\Frame();
-    $page_id = $page_id ?? null;
+    $page_id = $page_id ?? 0;
     $theme_group_default = $theme_group_default ?? null;
     $theme = $theme ?? null;
 
