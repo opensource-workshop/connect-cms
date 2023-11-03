@@ -60,6 +60,20 @@
 
 @if (empty($learningtask) || (!$learningtask->id && !$create_flag))
 @else
+
+{{-- 【レポート設定】提出-メール送信（教員宛）=on, 評価-メール送信（受講者宛）=on, 教員から参考資料-メール送信（受講者宛）=on
+     【試験設定】    提出-メール送信（教員宛）=on, 評価-メール送信（受講者宛）=on, 教員から参考資料-メール送信（受講者宛）=on
+     【総合評価設定】総合評価コメント-メール送信（受講者宛）=on --}}
+@if (old("base_settings.use_report_mail", $tool->getFunction('use_report_mail')) == 'on' ||
+    old("base_settings.use_report_evaluate_mail", $tool->getFunction('use_report_evaluate_mail')) == 'on' ||
+    old("base_settings.use_report_reference_mail", $tool->getFunction('use_report_reference_mail')) == 'on' ||
+    old("base_settings.use_examination_mail", $tool->getFunction('use_examination_mail')) == 'on' ||
+    old("base_settings.use_examination_evaluate_mail", $tool->getFunction('use_examination_evaluate_mail')) == 'on' ||
+    old("base_settings.use_examination_reference_mail", $tool->getFunction('use_examination_reference_mail')) == 'on' ||
+    old("base_settings.use_evaluate_mail", $tool->getFunction('use_evaluate_mail')) == 'on')
+    @include('plugins.common.error_system_mail_setting')
+@endif
+
 <form action="{{url('/')}}/redirect/plugin/learningtasks/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="">
     {{ csrf_field() }}
 
