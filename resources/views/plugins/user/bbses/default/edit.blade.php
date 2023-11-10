@@ -120,7 +120,8 @@
                     @endif
                     <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
                     <input type="hidden" name="bucket_id" value="">
-                    @if (empty($post->id))
+                    {{-- いきなり一時保存 → 編集時に変更確定と表示され、１度も登録してないのに変更は紛らわしいため first_committed_at で判定 --}}
+                    @if (empty($post->first_committed_at))
                         @if ($buckets->needApprovalUser(Auth::user(), $frame))
                             <button type="submit" class="btn btn-success" onclick="javascript:return confirm('登録申請します。\nよろしいですか？');"><i class="far fa-edit"></i> 登録申請</button>
                         @else
