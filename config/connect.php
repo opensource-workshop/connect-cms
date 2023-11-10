@@ -83,9 +83,18 @@ return [
     'SELF_REGISTER_BASE_ROLES' => env('SELF_REGISTER_BASE_ROLES', null),
 
     // Custom message.
-    'cc_lang_ja_messages_search_results_empty' => env('cc_lang_ja_messages_search_results_empty'),
-    'cc_lang_ja_messages_enter_same_email' => env('cc_lang_ja_messages_enter_same_email'),
-    'cc_lang_ja_messages_input_user_name' => env('cc_lang_ja_messages_input_user_name'),
+    'cc_lang_ja_messages_search_results_empty'            => env('cc_lang_ja_messages_search_results_empty'),
+    'cc_lang_ja_messages_enter_same_email'                => env('cc_lang_ja_messages_enter_same_email'),
+    'cc_lang_ja_messages_input_user_name'                 => env('cc_lang_ja_messages_input_user_name'),
+    'cc_lang_ja_messages_to_regist'                       => env('cc_lang_ja_messages_to_regist'),
+    'cc_lang_ja_messages_regist_application'              => env('cc_lang_ja_messages_regist_application'),
+    'cc_lang_ja_messages_regist_confirmed'                => env('cc_lang_ja_messages_regist_confirmed'),
+    'cc_lang_ja_messages_change_application'              => env('cc_lang_ja_messages_change_application'),
+    'cc_lang_ja_messages_change_confirmed'                => env('cc_lang_ja_messages_change_confirmed'),
+    'cc_lang_ja_messages_confirm_of_regist_application'   => env('cc_lang_ja_messages_confirm_of_regist_application'),
+    'cc_lang_ja_messages_confirmed_of_regist_application' => env('cc_lang_ja_messages_confirmed_of_regist_application'),
+    'cc_lang_ja_messages_confirm_of_change_application'   => env('cc_lang_ja_messages_confirm_of_change_application'),
+    'cc_lang_ja_messages_confirmed_of_change_application' => env('cc_lang_ja_messages_confirmed_of_change_application'),
 
     // csrfチェックの除外設定
     'VERIFY_CSRF_TOKEN_EXCEPT' => env('VERIFY_CSRF_TOKEN_EXCEPT', ''),

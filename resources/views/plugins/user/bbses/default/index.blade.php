@@ -51,7 +51,7 @@
         <div class="row">
             <p class="text-right col-12">
                 {{-- 新規登録ボタン --}}
-                <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/bbses/edit/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}'"><i class="far fa-edit"></i> 新規登録</button>
+                <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}/plugin/bbses/edit/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}'"><i class="far fa-edit"></i> {{__('messages.to_regist')}}</button>
             </p>
         </div>
     @endif
