@@ -15,9 +15,12 @@ final class DatabaseSearcherSortType extends EnumsBase
     const views = 'views';
     const posted  = 'posted';
     const display = 'display';
+    const random  = 'random';
 
     const order_asc     = 'asc';
     const order_desc    = 'desc';
+    const order_session = 'session';
+    const order_every   = 'every';
 
     // 定数メンバ
     const created_asc    = self::created . '_' . self::order_asc;
@@ -30,6 +33,8 @@ final class DatabaseSearcherSortType extends EnumsBase
     const posted_desc    = self::posted . '_' . self::order_desc;
     const display_asc    = self::display . '_' . self::order_asc;
     const display_desc   = self::display . '_' . self::order_desc;
+    const random_session = self::random . '_' . self::order_session;
+    const random_every   = self::random . '_' . self::order_every;
 
     // key/valueの連想配列
     const enum = [
@@ -43,5 +48,7 @@ final class DatabaseSearcherSortType extends EnumsBase
         self::posted_desc    => '公開日（新しい順）',
         self::display_asc    => '表示順（昇順）',
         self::display_desc   => '表示順（降順）',
+        self::random_session => 'ランダム（セッション）',
+        self::random_every   => 'ランダム（毎回）',
     ];
 }

@@ -994,65 +994,63 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function search($request, $page_id, $frame_id)
     {
-        // POST されたときは、新しい絞り込み条件が設定された。ということになるので、セッションの書き換え
-        if ($request->isMethod('post')) {
-            // 検索ON
-            session(['is_search.'.$frame_id => 1]);
+        // searchが実行されるときは新しい絞り込み条件が設定されたということになるので、セッションの書き換え
+        // 検索ON
+        session(['is_search.'.$frame_id => 1]);
 
-            // キーワード
-            session(['search_keyword.'.$frame_id => $request->search_keyword]);
+        // キーワード
+        session(['search_keyword.'.$frame_id => $request->search_keyword]);
 
-            // 絞り込み
-            session(['search_column.'.$frame_id => $request->search_column]);
+        // 絞り込み
+        session(['search_column.'.$frame_id => $request->search_column]);
 
-            // 絞り込み（複数選択）
-            session(['search_column_multiple.'.$frame_id => $request->search_column_multiple]);
+        // 絞り込み（複数選択）
+        session(['search_column_multiple.'.$frame_id => $request->search_column_multiple]);
 
-            // オプション検索
-            session(['search_options.'.$frame_id => $request->search_options]);
+        // オプション検索
+        session(['search_options.'.$frame_id => $request->search_options]);
 
-            // オプション検索OR
-            session(['search_options_or.'.$frame_id => $request->search_options_or]);
+        // オプション検索OR
+        session(['search_options_or.'.$frame_id => $request->search_options_or]);
 
-            // オプション検索期間
-            session(['search_term.'.$frame_id => $request->search_term]);
+        // オプション検索期間
+        session(['search_term.'.$frame_id => $request->search_term]);
 
-            // ランダム読み込みのための Seed をセッション中に作っておく
-            if (empty(session('sort_seed.'.$frame_id))) {
-                session(['sort_seed.'.$frame_id => rand()]);
-            }
+        // ランダム読み込みのための Seed をセッション中に作っておく
+        if (empty(session('sort_seed.'.$frame_id))) {
+            session(['sort_seed.'.$frame_id => rand()]);
+        }
 
-            // 詳細画面で非表示項目をパラメータのID指定で強制的に表示する機能(beta)
-            if (config('connect.DATABASES_FORCE_SHOW_COLUMN_ON_DETAIL')) {
-                session(['force_show_columns.'.$frame_id => $request->force_show_columns]);
-            }
+        // 詳細画面で非表示項目をパラメータのID指定で強制的に表示する機能(beta)
+        if (config('connect.DATABASES_FORCE_SHOW_COLUMN_ON_DETAIL')) {
+            session(['force_show_columns.'.$frame_id => $request->force_show_columns]);
+        }
 
-            // 並べ替え
-            $sort_column_parts = explode('_', $request->sort_column);
-            if (count($sort_column_parts) == 1) {
-                session(['sort_column_id.'.$frame_id    => $sort_column_parts[0]]);
-                session(['sort_column_order.'.$frame_id => '']);
-                session(['sort_column_option.'.$frame_id => '']);
-            } elseif (count($sort_column_parts) >= 2) {
-                session(['sort_column_id.'.$frame_id    => $sort_column_parts[0]]);
-                session(['sort_column_order.'.$frame_id => $sort_column_parts[1]]);
-                session(['sort_column_option.'.$frame_id => $sort_column_parts[2] ?? '']);
-            } else {
-                session(['sort_column_id.'.$frame_id    => '']);
-                session(['sort_column_order.'.$frame_id => '']);
-                session(['sort_column_option.'.$frame_id => '']);
-            }
-            // var_dump($sort_column_parts);
+        // 並べ替え
+        $sort_column_parts = explode('_', $request->sort_column);
+        if (count($sort_column_parts) == 1) {
+            session(['sort_column_id.'.$frame_id    => $sort_column_parts[0]]);
+            session(['sort_column_order.'.$frame_id => '']);
+            session(['sort_column_option.'.$frame_id => '']);
+        } elseif (count($sort_column_parts) >= 2) {
+            session(['sort_column_id.'.$frame_id    => $sort_column_parts[0]]);
+            session(['sort_column_order.'.$frame_id => $sort_column_parts[1]]);
+            session(['sort_column_option.'.$frame_id => $sort_column_parts[2] ?? '']);
+        } else {
+            session(['sort_column_id.'.$frame_id    => '']);
+            session(['sort_column_order.'.$frame_id => '']);
+            session(['sort_column_option.'.$frame_id => '']);
+        }
+        // var_dump($sort_column_parts);
 
-            // 検索条件を削除
-            if ($request->has('clear')) {
-                session(['is_search.'.$frame_id => '']);
-                session(['search_keyword.'.$frame_id => '']);
-                session(['search_column.'.$frame_id => '']);
-                session(['search_options.'.$frame_id => '']);
-                session(['search_options_or.'.$frame_id => '']);
-                session(['search_term.'.$frame_id => '']);
-            }
+        // 検索条件を削除
+        if ($request->has('clear')) {
+            session(['is_search.'.$frame_id => '']);
+            session(['search_keyword.'.$frame_id => '']);
+            session(['search_column.'.$frame_id => '']);
+            session(['search_options.'.$frame_id => '']);
+            session(['search_options_or.'.$frame_id => '']);
+            session(['search_term.'.$frame_id => '']);
         }
 
         // 詳細画面のブラウザバックでフォーム再送信の確認を表示させないようにするため、リダイレクトする
@@ -3099,7 +3097,8 @@ class DatabasesPlugin extends UserPluginBase
                                             'databases_inputs.updated_at as inputs_updated_at',
                                             'databases_inputs.posted_at as inputs_posted_at',
                                             'databases_inputs.expires_at as inputs_expires_at',
-                                            'databases_inputs.display_sequence as inputs_display_sequence'
+                                            'databases_inputs.display_sequence as inputs_display_sequence',
+                                            'databases_inputs.views as inputs_views'
                                         )
                                         ->join('databases_inputs', 'databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
                                         ->whereIn('databases_inputs_id', DatabasesInputs::select('id')->where('databases_id', $id))
@@ -3145,6 +3144,9 @@ class DatabasesPlugin extends UserPluginBase
                             case DatabaseColumnType::display:
                                 $csv_array[$input_col->databases_inputs_id][$column->id] = $input_col->inputs_display_sequence;
                                 break;
+                            case DatabaseColumnType::views:
+                                $csv_array[$input_col->databases_inputs_id][$column->id] = $input_col->inputs_views;
+                                break;
                         }
                     }
                 }
@@ -3164,6 +3166,7 @@ class DatabasesPlugin extends UserPluginBase
         $csv_data = '';
         foreach ($csv_array as $csv_line) {
             foreach ($csv_line as $csv_col) {
+                $csv_col = str_replace('"', '""', $csv_col);
                 $csv_data .= '"' . $csv_col . '",';
             }
             // 末尾カンマを削除

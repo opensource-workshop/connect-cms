@@ -38,7 +38,11 @@
                                 <div class="dbsearch_col_{{$view_col->databases_columns_id}}" >
                                         @if ($view_col->column_type == DatabaseColumnType::wysiwyg)
                                             {{-- wysiwygエディタ項目の場合 --}}
-                                            <span class="column_title">{{$view_column}}：</span><span class="column_value">{!! $view_col->value !!}</span>
+                                            @php
+                                                // aタグの中にaタグがあるとリンクが崩れるのでaタグを除去する
+                                                $contents = preg_replace('/<a .*?>(.*?)<\/a>/', "$1", $view_col->value);
+                                            @endphp
+                                            <span class="column_title">{{$view_column}}：</span><span class="column_value">{!! $contents !!}</span>
                                         @elseif ($view_col->column_type == DatabaseColumnType::image)
                                             {{-- 画像項目の場合 --}}
                                             <img class="img-fluid" src="{{url('/')}}/file/{{$view_col->value}}">
