@@ -122,15 +122,15 @@
                     <input type="hidden" name="bucket_id" value="">
                     @if (empty($post->id))
                         @if ($buckets->needApprovalUser(Auth::user(), $frame))
-                            <button type="submit" class="btn btn-success"><i class="far fa-edit"></i> 登録申請</button>
+                            <button type="submit" class="btn btn-success" onclick="javascript:return confirm('登録申請します。\nよろしいですか？');"><i class="far fa-edit"></i> 登録申請</button>
                         @else
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 登録確定</button>
+                            <button type="submit" class="btn btn-primary" onclick="javascript:return confirm('登録確定します。\nよろしいですか？');"><i class="fas fa-check"></i> 登録確定</button>
                         @endif
                     @else
                         @if ($buckets->needApprovalUser(Auth::user(), $frame))
-                            <button type="submit" class="btn btn-success"><i class="far fa-edit"></i> 変更申請</button>
+                            <button type="submit" class="btn btn-success" onclick="javascript:return confirm('変更申請します。\nよろしいですか？');"><i class="far fa-edit"></i> 変更申請</button>
                         @else
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更確定</button>
+                            <button type="submit" class="btn btn-primary" onclick="javascript:return confirm('変更確定します。\nよろしいですか？');"><i class="fas fa-check"></i> 変更確定</button>
                         @endif
                     @endif
                 </div>
