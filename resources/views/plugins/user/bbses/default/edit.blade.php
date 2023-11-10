@@ -108,38 +108,45 @@
             <div class="col-9 col-xl-6">
             @endif
                 <div class="text-center">
+                    <!-- キャンセル -->
                     @if (isset($parent_post))
                         {{-- 返信 --}}
-                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/bbses/show/{{$page->id}}/{{$frame_id}}/{{$parent_post->id}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
+                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/bbses/show/{{$page->id}}/{{$frame_id}}/{{$parent_post->id}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> {{__('messages.cancel')}}</span></button>
                     @elseif (empty($post->id))
                         {{-- 新規 --}}
-                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
+                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> {{__('messages.cancel')}}</span></button>
                     @else
                         {{-- 編集 --}}
-                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/bbses/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
+                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/plugin/bbses/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> {{__('messages.cancel')}}</span></button>
                     @endif
-                    <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 一時保存</span></button>
+                    <!-- 一時保存 -->
+                    <button type="button" class="btn btn-info mr-2" onclick="javascript:save_action();"><i class="far fa-save"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> {{__('messages.temporary_save')}}</span></button>
                     <input type="hidden" name="bucket_id" value="">
                     {{-- いきなり一時保存 → 編集時に変更確定と表示され、１度も登録してないのに変更は紛らわしいため first_committed_at で判定 --}}
                     @if (empty($post->first_committed_at))
                         @if ($buckets->needApprovalUser(Auth::user(), $frame))
-                            <button type="submit" class="btn btn-success" onclick="javascript:return confirm('登録申請します。\nよろしいですか？');"><i class="far fa-edit"></i> 登録申請</button>
+                            <!-- 登録申請 -->
+                            <button type="submit" class="btn btn-success" onclick="javascript:return confirm('{{ __('messages.confirm_of_regist_application') }}');"><i class="far fa-edit"></i> {{__('messages.regist_application')}}</button>
                         @else
-                            <button type="submit" class="btn btn-primary" onclick="javascript:return confirm('登録確定します。\nよろしいですか？');"><i class="fas fa-check"></i> 登録確定</button>
+                            <!-- 登録確定 -->
+                            <button type="submit" class="btn btn-primary" onclick="javascript:return confirm('{{ __('messages.confirmed_of_regist_application') }}');"><i class="fas fa-check"></i> {{__('messages.regist_confirmed')}}</button>
                         @endif
                     @else
                         @if ($buckets->needApprovalUser(Auth::user(), $frame))
-                            <button type="submit" class="btn btn-success" onclick="javascript:return confirm('変更申請します。\nよろしいですか？');"><i class="far fa-edit"></i> 変更申請</button>
+                            <!-- 変更申請 -->
+                            <button type="submit" class="btn btn-success" onclick="javascript:return confirm('{{ __('messages.confirm_of_change_application') }}');"><i class="far fa-edit"></i> {{__('messages.change_application')}}</button>
                         @else
-                            <button type="submit" class="btn btn-primary" onclick="javascript:return confirm('変更確定します。\nよろしいですか？');"><i class="fas fa-check"></i> 変更確定</button>
+                            <!-- 変更確定 -->
+                            <button type="submit" class="btn btn-primary" onclick="javascript:return confirm('{{ __('messages.confirmed_of_change_application') }}');"><i class="fas fa-check"></i> {{__('messages.change_confirmed')}}</button>
                         @endif
                     @endif
                 </div>
             </div>
             @if (!empty($post->id))
+            <!-- 削除 -->
             <div class="col-3 col-xl-3 text-right">
                 <a data-toggle="collapse" href="#collapse{{$frame_id}}">
-                    <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> 削除</span></span>
+                    <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> {{__('messages.delete')}}</span></span>
                 </a>
             </div>
             @endif
