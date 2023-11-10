@@ -20,12 +20,23 @@
     @include('plugins.user.bbses.default.tree_style')
 @endif
 
-{{-- 一時保存ボタンのアクション --}}
 <script type="text/javascript">
+    /** 一時保存ボタンのアクション */
     function save_action() {
         form_bbses_posts{{$frame_id}}.status.value = "{{StatusType::temporary}}";
         form_bbses_posts{{$frame_id}}.submit();
     }
+
+    $(function(){
+        /** Enterキー押下でフォーム送信防止 */
+        $("input").on("keydown", function(e) {
+            if ((e.which && e.which === 13) || (e.keyCode && e.keyCode === 13)) {
+                return false;
+            } else {
+                return true;
+            }
+        });
+    });
 </script>
 
 @if ($errors && $errors->has('reply_role_error'))
