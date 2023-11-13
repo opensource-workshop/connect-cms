@@ -205,24 +205,8 @@ class BucketsMail extends Model
         // 送信メール
         $notice_addresses = explode(',', $addresses);
 
-        // グループ全員のメール取得
-        $groups_ids = explode(UsersTool::CHECKBOX_SEPARATOR, $notice_groups);
-        // array_filter()でarrayの空要素削除
-        $groups_ids = array_filter($groups_ids);
-
         // グループユーザのメール取得
-        $group_user_emails = [];
-        if (! empty($groups_ids)) {
-            $group_user_emails = GroupUser::select('users.email')
-                ->join('users', function ($join) {
-                    $join->on('users.id', '=', 'group_users.user_id')
-                        ->where('users.status', UserStatus::active)
-                        ->whereNotNull('users.email');
-                })
-                ->whereIn('group_users.group_id', $groups_ids)
-                ->pluck('users.email')
-                ->toArray();
-        }
+        $group_user_emails = self::getEmailGroups($notice_groups);
 
         // 全ユーザに通知ONの場合、メール取得
         $all_user_emails = [];
@@ -246,6 +230,38 @@ class BucketsMail extends Model
         $notice_addresses = array_unique($notice_addresses);
 
         return $notice_addresses;
+    }
+
+    /**
+     * グループから、通知するメールアドレス取得
+     */
+    public static function getEmailGroups(?string $notice_groups) : array
+    {
+        // グループ全員のメール取得
+        $groups_ids = explode(UsersTool::CHECKBOX_SEPARATOR, $notice_groups);
+        // array_filter()でarrayの空要素削除
+        $groups_ids = array_filter($groups_ids);
+
+        // グループユーザのメール取得
+        $group_user_emails = [];
+        if (! empty($groups_ids)) {
+            $group_user_emails = GroupUser::select('users.email')
+                ->join('users', function ($join) {
+                    $join->on('users.id', '=', 'group_users.user_id')
+                        ->where('users.status', UserStatus::active)
+                        ->whereNotNull('users.email');
+                })
+                ->whereIn('group_users.group_id', $groups_ids)
+                ->pluck('users.email')
+                ->toArray();
+        }
+
+        // array_filter()でarrayの空要素削除
+        $group_user_emails = array_filter($group_user_emails);
+        // 重複メールアドレス削除
+        $group_user_emails = array_unique($group_user_emails);
+
+        return $group_user_emails;
     }
 
     /**

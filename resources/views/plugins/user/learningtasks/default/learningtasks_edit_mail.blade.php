@@ -21,6 +21,7 @@
         設定画面から、使用する課題管理を選択するか、作成してください。
     </div>
 @else
+@include('plugins.common.error_system_mail_setting')
 <form action="{{url('/')}}/redirect/plugin/learningtasks/saveMail/{{$page->id}}/{{$frame_id}}/{{$learningtask->id}}#frame-{{$frame_id}}" method="POST">
     {{ csrf_field() }}
     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/editMail/{{$page->id}}/{{$frame_id}}/{{$learningtask->id}}#frame-{{$frame_id}}">

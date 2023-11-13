@@ -100,7 +100,7 @@ use App\Models\Core\UsersColumns;
     </td>
 </tr>
 
-{{-- 選択肢の設定内容の表示行 --}}
+{{-- 設定内容の表示行 --}}
 <tr>
     <td class="pt-0 border border-0"></td>
     <td class="pt-0 border border-0" colspan="7">

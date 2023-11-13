@@ -72,4 +72,18 @@ class Handler extends ExceptionHandler
     {
         return parent::render($request, $exception);
     }
+
+    /**
+     * Register the exception handling callbacks for the application.
+     *
+     * @return void
+     * @link https://readouble.com/laravel/8.x/ja/errors.html#rendering-exceptions
+     */
+    public function register()
+    {
+        $this->renderable(function (\Swift_TransportException $e, $request) {
+            // メール設定エラー
+            return response()->view('errors.mail_setting_error', ['exception' => $e], 500);
+        });
+    }
 }

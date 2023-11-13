@@ -17,6 +17,11 @@
 
 @include('plugins.common.errors_form_line')
 
+{{-- 以下のアドレスにメール送信する=on, 登録者にメール送信する=on, 登録者に仮登録メールを送信する=on --}}
+@if (old('mail_send_flag', $form->mail_send_flag) || old('user_mail_send_flag', $form->user_mail_send_flag) || old('use_temporary_regist_mail_flag', $form->use_temporary_regist_mail_flag))
+    @include('plugins.common.error_system_mail_setting')
+@endif
+
 <script>
     $(function () {
         /**
@@ -304,7 +309,7 @@
         </div>
     </div>
 
-    <div class="form-group row">
+    <div class="row">
         <label class="{{$frame->getSettingLabelClass()}}">メール送信先</label>
         <div class="{{$frame->getSettingInputClass(true)}}">
             <div class="custom-control custom-checkbox">
