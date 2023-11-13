@@ -180,8 +180,7 @@ class BbsesPluginTest extends DuskTestCase
                     // ->type('like_button_name', '👍')
                     ->type('like_button_name', 'イイネ！')
                     ->screenshot('user/bbses/createBuckets/images/createBuckets')
-                    ->press('登録確定')
-                    ->acceptDialog();
+                    ->press('登録確定');
 
             // 一度、選択確定させる。
             $bucket = Buckets::where('plugin_name', 'bbses')->first();
