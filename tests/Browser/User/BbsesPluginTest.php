@@ -114,7 +114,8 @@ class BbsesPluginTest extends DuskTestCase
             $browser->pause(500)
                     ->screenshot('user/bbses/edit/images/create')
                     ->press('登録確定')
-                    ->acceptDialog();
+                    ->acceptDialog()
+                    ->pause(500);
 
             // 最新の記事を取得
             $post = BbsPost::orderBy('id', 'desc')->first();
