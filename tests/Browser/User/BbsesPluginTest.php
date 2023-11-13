@@ -113,7 +113,8 @@ class BbsesPluginTest extends DuskTestCase
 
             $browser->pause(500)
                     ->screenshot('user/bbses/edit/images/create')
-                    ->press('登録確定');
+                    ->press('登録確定')
+                    ->acceptDialog();
 
             // 最新の記事を取得
             $post = BbsPost::orderBy('id', 'desc')->first();
@@ -179,7 +180,8 @@ class BbsesPluginTest extends DuskTestCase
                     // ->type('like_button_name', '👍')
                     ->type('like_button_name', 'イイネ！')
                     ->screenshot('user/bbses/createBuckets/images/createBuckets')
-                    ->press('登録確定');
+                    ->press('登録確定')
+                    ->acceptDialog();
 
             // 一度、選択確定させる。
             $bucket = Buckets::where('plugin_name', 'bbses')->first();
