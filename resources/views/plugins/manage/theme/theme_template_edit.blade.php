@@ -21,7 +21,23 @@
         <form action="{{url('/')}}/manage/theme/saveTemplate" method="POST">
             {{csrf_field()}}
             <input name="dir_name" type="hidden" value="{{$dir_name}}" />
-            <textarea name="template" class="form-control" rows=20 placeholder="（例）&#13;.navbar-dark .navbar-brand {&#13;    color: #ffff00; # デフォルトのヘッダーバー文字色を黄色にします。 &#13;}">{{$template}}</textarea>
+            <textarea name="template" class="form-control" rows=20
+                placeholder="（例）&#13;
+templates : [&#13;
+    {&#13;
+        title: '１行サンプル',&#13;
+        description: '１行サンプルの説明',&#13;
+        content: '<p>１行サンプル</p><p>１行サンプル</p>'&#13;
+    },&#13;
+    {&#13;
+        title: '複数行サンプル',&#13;
+        description: '複数行サンプルの説明',&#13;
+        content: `&#13;
+<p>１行</p>&#13;
+<p>２行</p>&#13;
+<p>３行</p>`&#13;
+    }&#13;
+],">{{$template}}</textarea>
             <div class="form-group mt-3">
                 <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/manage/theme/'"><i class="fas fa-times"></i> キャンセル</button>
                 <button type="submit" class="btn btn-primary form-horizontal">
