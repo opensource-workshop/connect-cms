@@ -1273,16 +1273,6 @@ WHERE status = 0
         // データ保存
         $blogs->save();
 
-        // ブログ名で、Buckets名も更新する
-        Buckets::where('id', $blogs->bucket_id)->update(['bucket_name' => $request->blog_name]);
-
-        // ブログ名で、Buckets名も更新する
-        //Log::debug($blogs->bucket_id);
-        //Log::debug($request->blog_name);
-
-        // 新規作成フラグを付けてブログ設定変更画面を呼ぶ.
-        // $create_flag = false;
-        // return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message);
         return collect(['redirect_path' => url('/') . '/plugin/blogs/editBuckets/' . $page_id . '/' . $frame_id . '/' . $blogs->id . '#frame-' . $frame_id]);
     }
 
