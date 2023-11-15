@@ -592,7 +592,7 @@ WHERE status = 0
         $created_id = null;
         $created_users = collect();
 
-        if (FrameConfig::getConfigValue($this->frame_configs, BlogFrameConfig::narrowing_down_type_for_created_id, BlogNarrowingDownTypeForCreatedId::getDefault()) == BlogNarrowingDownTypeForCreatedId::dropdown) {
+        if ($blog_frame->narrowing_down_type_for_created_id == BlogNarrowingDownTypeForCreatedId::dropdown) {
             // 投稿者の絞り込み機能ありなら、投稿者検索. sessionなしなら投稿者検索しない(null)
             $created_id = session('created_id_'. $this->frame->id);
 
@@ -641,7 +641,7 @@ WHERE status = 0
             $categories_id = (int)$request->categories_id;
             if ($categories_id) {
                 // 絞り込み条件あり
-                session(['categories_id_'. $frame_id => (int)$request->categories_id]);
+                session(['categories_id_'. $frame_id => $categories_id]);
             } else {
                 // 絞り込み条件で空を選択
                 session()->forget('categories_id_'. $this->frame->id);
@@ -1268,21 +1268,12 @@ WHERE status = 0
         $blogs->like_button_name = $request->like_button_name;
         $blogs->use_view_count_spectator = $request->use_view_count_spectator;
         $blogs->narrowing_down_type = $request->narrowing_down_type;
+        $blogs->narrowing_down_type_for_created_id = $request->narrowing_down_type_for_created_id;
         //$blogs->approval_flag = $request->approval_flag;
 
         // データ保存
         $blogs->save();
 
-        // ブログ名で、Buckets名も更新する
-        Buckets::where('id', $blogs->bucket_id)->update(['bucket_name' => $request->blog_name]);
-
-        // ブログ名で、Buckets名も更新する
-        //Log::debug($blogs->bucket_id);
-        //Log::debug($request->blog_name);
-
-        // 新規作成フラグを付けてブログ設定変更画面を呼ぶ.
-        // $create_flag = false;
-        // return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message);
         return collect(['redirect_path' => url('/') . '/plugin/blogs/editBuckets/' . $page_id . '/' . $frame_id . '/' . $blogs->id . '#frame-' . $frame_id]);
     }
 

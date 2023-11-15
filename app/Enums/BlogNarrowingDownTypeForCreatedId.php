@@ -15,7 +15,7 @@ use App\Enums\EnumsBase;
 final class BlogNarrowingDownTypeForCreatedId extends EnumsBase
 {
     // 定数メンバ
-    const none = 'none';
+    const none = '';
     const dropdown = 'dropdown';
 
     // key/valueの連想配列
