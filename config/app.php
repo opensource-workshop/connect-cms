@@ -322,6 +322,7 @@ $app_array = [
         'FormsRegisterTargetPlugin' => \App\Enums\FormsRegisterTargetPlugin::class,
         'WebsiteType' => \App\Enums\WebsiteType::class,
         'BlogNarrowingDownType' => \App\Enums\BlogNarrowingDownType::class,
+        'BlogNarrowingDownTypeForCreatedId' => \App\Enums\BlogNarrowingDownTypeForCreatedId::class,
         'FormAccessLimitType' => \App\Enums\FormAccessLimitType::class,
         'EditType' => \App\Enums\EditType::class,
 

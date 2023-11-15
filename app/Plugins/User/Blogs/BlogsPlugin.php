@@ -19,11 +19,13 @@ use App\Models\User\Blogs\Blogs;
 use App\Models\User\Blogs\BlogsFrames;
 use App\Models\User\Blogs\BlogsPosts;
 use App\Models\User\Blogs\BlogsPostsTags;
+use App\User;
 
 use App\Plugins\User\UserPluginBase;
 
 use App\Enums\BlogFrameConfig;
 use App\Enums\BlogFrameScope;
+use App\Enums\BlogNarrowingDownTypeForCreatedId;
 use App\Enums\BlogNoticeEmbeddedTag;
 use App\Enums\NoticeEmbeddedTag;
 use App\Enums\StatusType;
@@ -289,15 +291,8 @@ class BlogsPlugin extends UserPluginBase
     /**
      *  ブログ記事一覧取得
      */
-    private function getPosts($blog_frame, $option_count = null, ?int $categories_id = null)
+    private function getPosts($blog_frame, $option_count = null, ?int $categories_id = null,  ?int $created_id = null)
     {
-        //$blogs_posts = null;
-
-        // 件数
-        // $count = FrameConfig::getConfigValue($this->frame_configs, BlogFrameConfig::blog_view_count);
-        // if ($option_count != null) {
-        //     $count = $option_count;
-        // }
         $count = $option_count;
         if ($count < 0) {
             $count = 0;
@@ -342,6 +337,11 @@ class BlogsPlugin extends UserPluginBase
             $blogs_query->where('blogs_posts.categories_id', $categories_id);
         }
 
+        // 投稿者検索
+        if ($created_id) {
+            $blogs_query->where('blogs_posts.created_id', $created_id);
+        }
+
         // いいねのleftJoin
         $blogs_query = Like::appendLikeLeftJoin($blogs_query, $plugin_name, 'blogs_posts.contents_id', 'blogs_posts.blogs_id');
 
@@ -374,26 +374,6 @@ class BlogsPlugin extends UserPluginBase
 
         return $blogs_posts;
     }
-
-    // move: UserPluginBaseに移動
-    // /**
-    //  *  要承認の判断
-    //  */
-    // protected function isApproval($frame_id)
-    // {
-    //     return $this->buckets->needApprovalUser(Auth::user(), $this->frame);
-
-    //     //        // 承認の要否確認とステータス処理
-    //     //        $blog_frame = $this->getBlogFrame($frame_id);
-    //     //        if ($blog_frame->approval_flag == 1) {
-    //     //
-    //     //            // 記事修正、コンテンツ管理者権限がない場合は要承認
-    //     //            if (!$this->isCan('role_article') && !$this->isCan('role_article_admin')) {
-    //     //                return true;
-    //     //            }
-    //     //        }
-    //     //        return false;
-    // }
 
     /**
      *  タグの保存
@@ -642,8 +622,22 @@ WHERE status = 0
             $categories_id = session('categories_id_'. $this->frame->id);
         }
 
+        // 投稿者の絞り込み機能を表示しない場合、投稿者検索しない(null)
+        $created_id = null;
+        $created_users = collect();
+
+        if (FrameConfig::getConfigValue($this->frame_configs, BlogFrameConfig::narrowing_down_type_for_created_id, BlogNarrowingDownTypeForCreatedId::getDefault()) == BlogNarrowingDownTypeForCreatedId::dropdown) {
+            // 投稿者の絞り込み機能ありなら、投稿者検索. sessionなしなら投稿者検索しない(null)
+            $created_id = session('created_id_'. $this->frame->id);
+
+            // 投稿者絞込用リスト
+            $tmp_blogs_posts = $this->getPosts($blog_frame, $view_count);
+            $created_ids = $tmp_blogs_posts->groupBy('created_id')->keys();
+            $created_users = User::select('id', 'name')->whereIn('id', $created_ids)->get();
+        }
+
         // ブログデータ一覧の取得
-        $blogs_posts = $this->getPosts($blog_frame, $view_count, $categories_id);
+        $blogs_posts = $this->getPosts($blog_frame, $view_count, $categories_id, $created_id);
 
         // タグ：画面表示するデータのblogs_posts_id を集める
         $posts_ids = array();
@@ -676,6 +670,7 @@ WHERE status = 0
             'blog_frame'         => $blog_frame,
             'blog_frame_setting' => BlogsFrames::where('frames_id', $frame_id)->firstOrNew([]),
             'blogs_categories'   => $blogs_categories,
+            'created_users'      => $created_users,
             'count'              => $count,
         ]);
     }
@@ -703,6 +698,17 @@ WHERE status = 0
             } else {
                 // 絞り込み条件で空を選択
                 session()->forget('categories_id_'. $this->frame->id);
+            }
+        }
+
+        if ($request->has('created_id')) {
+            $created_id = (int)$request->created_id;
+            if ($created_id) {
+                // 絞り込み条件あり
+                session(['created_id_'. $frame_id => $created_id]);
+            } else {
+                // 絞り込み条件で空を選択
+                session()->forget('created_id_'. $this->frame->id);
             }
         }
 

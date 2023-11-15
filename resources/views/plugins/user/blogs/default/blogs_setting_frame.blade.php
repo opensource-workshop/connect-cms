@@ -178,6 +178,24 @@
                 </div>
             </div>
 
+            {{-- 投稿者の絞り込み機能表示 --}}
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">{{BlogFrameConfig::getDescription(BlogFrameConfig::narrowing_down_type_for_created_id)}}</label>
+                <div class="{{$frame->getSettingInputClass(true)}}">
+                    @foreach (BlogNarrowingDownTypeForCreatedId::getMembers() as $enum_value => $enum_label)
+                        <div class="custom-control custom-radio custom-control-inline">
+                            @if (FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::narrowing_down_type_for_created_id, BlogNarrowingDownTypeForCreatedId::getDefault()) == $enum_value)
+                                <input type="radio" value="{{$enum_value}}" id="{{BlogFrameConfig::narrowing_down_type_for_created_id}}_{{$enum_value}}" name="{{BlogFrameConfig::narrowing_down_type_for_created_id}}" class="custom-control-input" checked="checked">
+                            @else
+                                <input type="radio" value="{{$enum_value}}" id="{{BlogFrameConfig::narrowing_down_type_for_created_id}}_{{$enum_value}}" name="{{BlogFrameConfig::narrowing_down_type_for_created_id}}" class="custom-control-input">
+                            @endif
+                            {{-- duskでradioの選択にlabelのid必要 --}}
+                            <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::narrowing_down_type_for_created_id}}_{{$enum_value}}" id="label_{{BlogFrameConfig::narrowing_down_type_for_created_id}}_{{$enum_value}}">{{$enum_label}}</label>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
             {{-- Submitボタン --}}
             <div class="form-group text-center mt-3">
                 <div class="row">
