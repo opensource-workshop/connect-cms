@@ -208,27 +208,7 @@ class BlogsPlugin extends UserPluginBase
      */
     private function getBlogFrame($frame_id)
     {
-        // Frame データ
-        $frame = Frame::
-            select(
-                'frames.*',
-                'blogs.id as blogs_id',
-                'blogs.blog_name',
-                'blogs.rss',
-                'blogs.rss_count',
-                'blogs.use_like',
-                'blogs.like_button_name',
-                'blogs.use_view_count_spectator',
-                'blogs.narrowing_down_type',
-                'blogs_frames.scope',
-                'blogs_frames.scope_value',
-                'blogs_frames.important_view',
-            )
-            ->leftJoin('blogs', 'blogs.bucket_id', '=', 'frames.bucket_id')
-            ->leftJoin('blogs_frames', 'blogs_frames.frames_id', '=', 'frames.id')
-            ->where('frames.id', $frame_id)
-            ->first();
-        return $frame;
+        return Blogs::getBlogFrame($frame_id);
     }
 
     /**
