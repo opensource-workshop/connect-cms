@@ -291,7 +291,7 @@ class BlogsPlugin extends UserPluginBase
     /**
      *  ブログ記事一覧取得
      */
-    private function getPosts($blog_frame, $option_count = null, ?int $categories_id = null,  ?int $created_id = null)
+    private function getPosts($blog_frame, $option_count = null, ?int $categories_id = null, ?int $created_id = null)
     {
         $count = $option_count;
         if ($count < 0) {
