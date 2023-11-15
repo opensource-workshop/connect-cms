@@ -296,7 +296,7 @@ class BlogsPlugin extends UserPluginBase
             });
 
         // カテゴリのleftJoin
-        $blogs_query = Categories::appendCategoriesLeftJoin($blogs_query, $this->frame->plugin_name, 'blogs_posts.categories_id', 'blogs_posts.blogs_id');
+        $blogs_query = Categories::appendCategoriesLeftJoin($blogs_query, $plugin_name, 'blogs_posts.categories_id', 'blogs_posts.blogs_id');
 
         // カテゴリ検索
         if ($categories_id) {
