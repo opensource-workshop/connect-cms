@@ -641,7 +641,7 @@ WHERE status = 0
             $categories_id = (int)$request->categories_id;
             if ($categories_id) {
                 // 絞り込み条件あり
-                session(['categories_id_'. $frame_id => (int)$request->categories_id]);
+                session(['categories_id_'. $frame_id => $categories_id]);
             } else {
                 // 絞り込み条件で空を選択
                 session()->forget('categories_id_'. $this->frame->id);
