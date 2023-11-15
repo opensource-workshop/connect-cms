@@ -46,9 +46,13 @@
     {{-- 表示件数リスト --}}
     @include('plugins.user.blogs.default.include_view_count_spectator')
 </div>
-<div class="float-right">
+<div class="float-right ml-2">
     {{-- 絞り込み機能 --}}
     @include('plugins.user.blogs.default.include_narrowing_down')
+</div>
+<div class="float-right">
+    {{-- 投稿者絞り込み機能 --}}
+    @include('plugins.user.blogs.default.include_narrowing_down_for_created_id')
 </div>
 {{-- floatの回り込み解除 --}}
 <div class="clearfix"></div>
