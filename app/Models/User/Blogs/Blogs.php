@@ -18,6 +18,7 @@ class Blogs extends Model
         'use_like',
         'use_view_count_spectator',
         'narrowing_down_type',
+        'narrowing_down_type_for_created_id',
     ];
 
     /**
@@ -37,6 +38,7 @@ class Blogs extends Model
                 'blogs.like_button_name',
                 'blogs.use_view_count_spectator',
                 'blogs.narrowing_down_type',
+                'blogs.narrowing_down_type_for_created_id',
                 'blogs_frames.scope',
                 'blogs_frames.scope_value',
                 'blogs_frames.important_view',

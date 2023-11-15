@@ -592,7 +592,7 @@ WHERE status = 0
         $created_id = null;
         $created_users = collect();
 
-        if (FrameConfig::getConfigValue($this->frame_configs, BlogFrameConfig::narrowing_down_type_for_created_id, BlogNarrowingDownTypeForCreatedId::getDefault()) == BlogNarrowingDownTypeForCreatedId::dropdown) {
+        if ($blog_frame->narrowing_down_type_for_created_id == BlogNarrowingDownTypeForCreatedId::dropdown) {
             // 投稿者の絞り込み機能ありなら、投稿者検索. sessionなしなら投稿者検索しない(null)
             $created_id = session('created_id_'. $this->frame->id);
 
@@ -1268,6 +1268,7 @@ WHERE status = 0
         $blogs->like_button_name = $request->like_button_name;
         $blogs->use_view_count_spectator = $request->use_view_count_spectator;
         $blogs->narrowing_down_type = $request->narrowing_down_type;
+        $blogs->narrowing_down_type_for_created_id = $request->narrowing_down_type_for_created_id;
         //$blogs->approval_flag = $request->approval_flag;
 
         // データ保存
