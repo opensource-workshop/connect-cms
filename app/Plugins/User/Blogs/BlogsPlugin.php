@@ -271,21 +271,7 @@ class BlogsPlugin extends UserPluginBase
      */
     private function appendSettingWhere($query, $blog_frame)
     {
-        // 全件表示
-        if (empty($blog_frame->scope)) {
-            // 全件取得のため、追加条件なしで戻る。
-        } elseif ($blog_frame->scope == BlogFrameScope::year) {
-            // 年
-            $query->Where('posted_at', '>=', $blog_frame->scope_value . '-01-01')
-                  ->Where('posted_at', '<=', $blog_frame->scope_value . '-12-31 23:59:59');
-        } elseif ($blog_frame->scope == BlogFrameScope::fiscal) {
-            // 年度
-            $fiscal_next = intval($blog_frame->scope_value) + 1;
-            $query->Where('posted_at', '>=', $blog_frame->scope_value . '-04-01')
-                  ->Where('posted_at', '<=', $fiscal_next . '-03-31 23:59:59');
-        }
-
-        return $query;
+        return BlogsPosts::appendSettingWhere($query, $blog_frame);
     }
 
     /**
