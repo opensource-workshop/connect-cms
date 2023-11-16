@@ -6,6 +6,7 @@ use App\Enums\BlogFrameScope;
 use App\Userable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 
 class BlogsPosts extends Model
 {
@@ -49,13 +50,21 @@ class BlogsPosts extends Model
             // 全件取得のため、追加条件なしで戻る。
         } elseif ($blog_frame->scope == BlogFrameScope::year) {
             // 年
-            $query->Where('posted_at', '>=', $blog_frame->scope_value . '-01-01')
-                  ->Where('posted_at', '<=', $blog_frame->scope_value . '-12-31 23:59:59');
+            $query->where('posted_at', '>=', $blog_frame->scope_value . '-01-01')
+                  ->where('posted_at', '<=', $blog_frame->scope_value . '-12-31 23:59:59');
         } elseif ($blog_frame->scope == BlogFrameScope::fiscal) {
             // 年度
             $fiscal_next = intval($blog_frame->scope_value) + 1;
-            $query->Where('posted_at', '>=', $blog_frame->scope_value . '-04-01')
-                  ->Where('posted_at', '<=', $fiscal_next . '-03-31 23:59:59');
+            $query->where('posted_at', '>=', $blog_frame->scope_value . '-04-01')
+                  ->where('posted_at', '<=', $fiscal_next . '-03-31 23:59:59');
+        } elseif ($blog_frame->scope == BlogFrameScope::created_id) {
+            // 自身の投稿のみ
+            $users_id = null;
+            if (Auth::check()) {
+                $users_id = Auth::user()->id;
+            }
+
+            $query->where('blogs_posts.created_id', $users_id);
         }
 
         return $query;

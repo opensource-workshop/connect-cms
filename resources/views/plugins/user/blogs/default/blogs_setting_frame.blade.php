@@ -215,6 +215,8 @@
                     target_range_text = this.v_scope_value + '年1月1日 00:00:00 ~ ' + this.v_scope_value + '年12月31日 23:59:59';
                 }else if(this.v_scope_radio == "fiscal" && this.isNumber(this.v_scope_value) && this.v_scope_value.length == 4){
                     target_range_text = this.v_scope_value + '年4月1日 00:00:00 ~ ' + (Number(this.v_scope_value) + 1) + '年3月31日 23:59:59';
+                }else if(this.v_scope_radio == "created_id"){
+                    target_range_text = '自身の投稿のみ';
                 }
               return target_range_text;
             }

@@ -10,6 +10,10 @@
         <a href="{{url('/')}}/plugin/blogs/settingBlogFrame/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}">
             <i class="fas fa-cog"></i>
         </a>
-        表示条件{{ '（' . $blog_frame_setting->scope_value . BlogFrameScope::getDescription($blog_frame_setting->scope) . '）' }}
+        @if ($blog_frame_setting->scope == BlogFrameScope::created_id)
+            表示条件{{ '（' . BlogFrameScope::getDescription($blog_frame_setting->scope) . '）' }}
+        @else
+            表示条件{{ '（' . $blog_frame_setting->scope_value . BlogFrameScope::getDescription($blog_frame_setting->scope) . '）' }}
+        @endif
     </span>
 @endif
