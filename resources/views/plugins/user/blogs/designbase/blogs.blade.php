@@ -58,7 +58,7 @@
 <div class="clearfix"></div>
 <div>
     <dl>
-    @foreach($blogs_posts as $post)
+    @forelse($blogs_posts as $post)
         {{-- 投稿日時 --}}
         <dt>
             {{$post->posted_at->format('Y/m/d')}}
@@ -78,7 +78,9 @@
                 <span class="badge badge-pill badge-danger">重要記事に設定</span>
             @endif
         </dd>
-    @endforeach
+    @empty
+        <div class="alert alert-info mt-2">記事はありません。</div>
+    @endforelse
 
         {{-- ページング処理 --}}
         @include('plugins.common.user_paginate', ['posts' => $blogs_posts, 'frame' => $frame, 'aria_label_name' => $blog_frame->blog_name])

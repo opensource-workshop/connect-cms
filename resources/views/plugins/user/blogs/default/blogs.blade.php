@@ -67,7 +67,7 @@
     <div class="sidetitleindex">
     @endif
 
-    @foreach($blogs_posts as $post)
+    @forelse($blogs_posts as $post)
 
         @if ($loop->last)
         <article>
@@ -244,7 +244,9 @@
                 </div>
             </footer>
         </article>
-    @endforeach
+    @empty
+        <div class="alert alert-info mt-2">記事はありません。</div>
+    @endforelse
 
     {{-- sidetitleindexテンプレートはページング表示しない --}}
     @if (isset($is_template_sidetitleindex))
