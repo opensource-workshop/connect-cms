@@ -96,21 +96,24 @@ if ($can_edit_frame) {
         @endif
     @endif
 
-    {{-- 公開以外の場合にステータス表示 ※デフォルト状態の公開もステータス表示すると画面表示が煩雑になる為、意識的な設定（非公開、又は、限定公開）のみステータス表示を行う --}}
-    @if (Auth::check() && $frame->content_open_type != ContentOpenType::always_open)
-        <small>
-            <span class="badge badge-warning">
-                <a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_setting/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}">
-                    <i class="fas fa-cog"></i>
-                </a>
-                {{ ContentOpenType::getDescription($frame->content_open_type) }}
-                @if ($frame->content_open_type == ContentOpenType::limited_open)
-                    {{-- 期限付き公開の場合は日付も表示 --}}
-                    {{ '（' . Carbon::parse($frame->content_open_date_from)->format('Y/n/j H:i:s') . ' - ' . Carbon::parse($frame->content_open_date_to)->format('Y/n/j H:i:s') . '）' }}
-                @endif
-            </span>
-        </small>
-    @endif
+    {{-- 権限あり & 公開以外の場合にステータス表示 ※デフォルト状態の公開もステータス表示すると画面表示が煩雑になる為、意識的な設定（非公開、又は、限定公開）のみステータス表示を行う --}}
+    @can('frames.edit',[[null, null, null, $frame]])
+        @if ($frame->content_open_type != ContentOpenType::always_open)
+            <small>
+                <span class="badge badge-warning">
+                    <a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_setting/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}">
+                        <i class="fas fa-cog"></i>
+                    </a>
+                    {{ ContentOpenType::getDescription($frame->content_open_type) }}
+                    @if ($frame->content_open_type == ContentOpenType::limited_open)
+                        {{-- 期限付き公開の場合は日付も表示 --}}
+                        {{ '（' . Carbon::parse($frame->content_open_date_from)->format('Y/n/j H:i:s') . ' - ' . Carbon::parse($frame->content_open_date_to)->format('Y/n/j H:i:s') . '）' }}
+                    @endif
+                </span>
+            </small>
+        @endif
+    @endcan
+
     {{-- ログインしていて、権限があれば、編集機能を有効にする --}}
     {{--
     @if (Auth::check() &&
