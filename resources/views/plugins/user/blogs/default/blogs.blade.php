@@ -48,9 +48,13 @@
         {{-- 表示件数リスト --}}
         @include('plugins.user.blogs.default.include_view_count_spectator')
     </div>
-    <div class="float-right">
-        {{-- 絞り込み機能 --}}
+    <div class="float-right ml-2">
+        {{-- カテゴリ絞り込み機能 --}}
         @include('plugins.user.blogs.default.include_narrowing_down')
+    </div>
+    <div class="float-right">
+        {{-- 投稿者絞り込み機能 --}}
+        @include('plugins.user.blogs.default.include_narrowing_down_for_created_id')
     </div>
     {{-- floatの回り込み解除 --}}
     <div class="clearfix"></div>
@@ -63,7 +67,7 @@
     <div class="sidetitleindex">
     @endif
 
-    @foreach($blogs_posts as $post)
+    @forelse($blogs_posts as $post)
 
         @if ($loop->last)
         <article>
@@ -240,7 +244,9 @@
                 </div>
             </footer>
         </article>
-    @endforeach
+    @empty
+        <div class="alert alert-info mt-2">記事はありません。</div>
+    @endforelse
 
     {{-- sidetitleindexテンプレートはページング表示しない --}}
     @if (isset($is_template_sidetitleindex))

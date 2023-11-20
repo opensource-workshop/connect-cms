@@ -195,8 +195,8 @@
         <div id="app_{{ $frame->id }}">
             {{-- コンテンツ公開区分 --}}
             <div class="form-group row">
-                <label class="{{$frame->getSettingLabelClass(true)}}">公開設定</label>
-                <div class="{{$frame->getSettingInputClass(true)}}">
+                <label class="{{$frame->getSettingLabelClass()}} pt-0">公開設定</label>
+                <div class="{{$frame->getSettingInputClass()}}">
                     @foreach (ContentOpenType::enum as $key => $value)
                         <div class="custom-control custom-radio custom-control-inline">
                             <input

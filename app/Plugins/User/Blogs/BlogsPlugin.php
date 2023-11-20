@@ -19,11 +19,13 @@ use App\Models\User\Blogs\Blogs;
 use App\Models\User\Blogs\BlogsFrames;
 use App\Models\User\Blogs\BlogsPosts;
 use App\Models\User\Blogs\BlogsPostsTags;
+use App\User;
 
 use App\Plugins\User\UserPluginBase;
 
 use App\Enums\BlogFrameConfig;
 use App\Enums\BlogFrameScope;
+use App\Enums\BlogNarrowingDownTypeForCreatedId;
 use App\Enums\BlogNoticeEmbeddedTag;
 use App\Enums\NoticeEmbeddedTag;
 use App\Enums\StatusType;
@@ -206,27 +208,7 @@ class BlogsPlugin extends UserPluginBase
      */
     private function getBlogFrame($frame_id)
     {
-        // Frame データ
-        $frame = Frame::
-            select(
-                'frames.*',
-                'blogs.id as blogs_id',
-                'blogs.blog_name',
-                'blogs.rss',
-                'blogs.rss_count',
-                'blogs.use_like',
-                'blogs.like_button_name',
-                'blogs.use_view_count_spectator',
-                'blogs.narrowing_down_type',
-                'blogs_frames.scope',
-                'blogs_frames.scope_value',
-                'blogs_frames.important_view',
-            )
-            ->leftJoin('blogs', 'blogs.bucket_id', '=', 'frames.bucket_id')
-            ->leftJoin('blogs_frames', 'blogs_frames.frames_id', '=', 'frames.id')
-            ->where('frames.id', $frame_id)
-            ->first();
-        return $frame;
+        return Blogs::getBlogFrame($frame_id);
     }
 
     /**
@@ -269,35 +251,14 @@ class BlogsPlugin extends UserPluginBase
      */
     private function appendSettingWhere($query, $blog_frame)
     {
-        // 全件表示
-        if (empty($blog_frame->scope)) {
-            // 全件取得のため、追加条件なしで戻る。
-        } elseif ($blog_frame->scope == BlogFrameScope::year) {
-            // 年
-            $query->Where('posted_at', '>=', $blog_frame->scope_value . '-01-01')
-                  ->Where('posted_at', '<=', $blog_frame->scope_value . '-12-31 23:59:59');
-        } elseif ($blog_frame->scope == BlogFrameScope::fiscal) {
-            // 年度
-            $fiscal_next = intval($blog_frame->scope_value) + 1;
-            $query->Where('posted_at', '>=', $blog_frame->scope_value . '-04-01')
-                  ->Where('posted_at', '<=', $fiscal_next . '-03-31 23:59:59');
-        }
-
-        return $query;
+        return BlogsPosts::appendSettingWhere($query, $blog_frame);
     }
 
     /**
      *  ブログ記事一覧取得
      */
-    private function getPosts($blog_frame, $option_count = null, ?int $categories_id = null)
+    private function getPosts($blog_frame, $option_count = null, ?int $categories_id = null, ?int $created_id = null)
     {
-        //$blogs_posts = null;
-
-        // 件数
-        // $count = FrameConfig::getConfigValue($this->frame_configs, BlogFrameConfig::blog_view_count);
-        // if ($option_count != null) {
-        //     $count = $option_count;
-        // }
         $count = $option_count;
         if ($count < 0) {
             $count = 0;
@@ -335,11 +296,16 @@ class BlogsPlugin extends UserPluginBase
             });
 
         // カテゴリのleftJoin
-        $blogs_query = Categories::appendCategoriesLeftJoin($blogs_query, $this->frame->plugin_name, 'blogs_posts.categories_id', 'blogs_posts.blogs_id');
+        $blogs_query = Categories::appendCategoriesLeftJoin($blogs_query, $plugin_name, 'blogs_posts.categories_id', 'blogs_posts.blogs_id');
 
         // カテゴリ検索
         if ($categories_id) {
             $blogs_query->where('blogs_posts.categories_id', $categories_id);
+        }
+
+        // 投稿者検索
+        if ($created_id) {
+            $blogs_query->where('blogs_posts.created_id', $created_id);
         }
 
         // いいねのleftJoin
@@ -374,26 +340,6 @@ class BlogsPlugin extends UserPluginBase
 
         return $blogs_posts;
     }
-
-    // move: UserPluginBaseに移動
-    // /**
-    //  *  要承認の判断
-    //  */
-    // protected function isApproval($frame_id)
-    // {
-    //     return $this->buckets->needApprovalUser(Auth::user(), $this->frame);
-
-    //     //        // 承認の要否確認とステータス処理
-    //     //        $blog_frame = $this->getBlogFrame($frame_id);
-    //     //        if ($blog_frame->approval_flag == 1) {
-    //     //
-    //     //            // 記事修正、コンテンツ管理者権限がない場合は要承認
-    //     //            if (!$this->isCan('role_article') && !$this->isCan('role_article_admin')) {
-    //     //                return true;
-    //     //            }
-    //     //        }
-    //     //        return false;
-    // }
 
     /**
      *  タグの保存
@@ -642,30 +588,25 @@ WHERE status = 0
             $categories_id = session('categories_id_'. $this->frame->id);
         }
 
+        // 投稿者の絞り込み機能を表示しない場合、投稿者検索しない(null)
+        $created_id = null;
+        $created_users = collect();
+
+        if ($blog_frame->narrowing_down_type_for_created_id == BlogNarrowingDownTypeForCreatedId::dropdown) {
+            // 投稿者の絞り込み機能ありなら、投稿者検索. sessionなしなら投稿者検索しない(null)
+            $created_id = session('created_id_'. $this->frame->id);
+
+            // 投稿者絞込用リスト
+            $tmp_blogs_posts = $this->getPosts($blog_frame, $view_count);
+            $created_ids = $tmp_blogs_posts->groupBy('created_id')->keys();
+            $created_users = User::select('id', 'name')->whereIn('id', $created_ids)->get();
+        }
+
         // ブログデータ一覧の取得
-        $blogs_posts = $this->getPosts($blog_frame, $view_count, $categories_id);
-
-        // タグ：画面表示するデータのblogs_posts_id を集める
-        $posts_ids = array();
-        foreach ($blogs_posts as $blogs_post) {
-            $posts_ids[] = $blogs_post->id;
-        }
-
-        // タグ：タグデータ取得
-        $blogs_posts_tags_row = BlogsPostsTags::whereIn('blogs_posts_id', $posts_ids)->get();
-
-        // タグ：タグデータ詰めなおし（ブログデータの一覧にあてるための外配列）
-        $blogs_posts_tags = array();
-        foreach ($blogs_posts_tags_row as $record) {
-            $blogs_posts_tags[$record->blogs_posts_id][] = $record->tags;
-        }
+        $blogs_posts = $this->getPosts($blog_frame, $view_count, $categories_id, $created_id);
 
         // タグ：タグデータをポストデータに紐づけ
-        foreach ($blogs_posts as &$blogs_post) {
-            if (array_key_exists($blogs_post->id, $blogs_posts_tags)) {
-                $blogs_post->tags = $blogs_posts_tags[$blogs_post->id];
-            }
-        }
+        $blogs_posts = BlogsPostsTags::stringTags($blogs_posts);
 
         // カテゴリ
         $blogs_categories = Categories::getInputCategories($this->frame->plugin_name, $blog_frame->blogs_id);
@@ -676,6 +617,7 @@ WHERE status = 0
             'blog_frame'         => $blog_frame,
             'blog_frame_setting' => BlogsFrames::where('frames_id', $frame_id)->firstOrNew([]),
             'blogs_categories'   => $blogs_categories,
+            'created_users'      => $created_users,
             'count'              => $count,
         ]);
     }
@@ -699,10 +641,21 @@ WHERE status = 0
             $categories_id = (int)$request->categories_id;
             if ($categories_id) {
                 // 絞り込み条件あり
-                session(['categories_id_'. $frame_id => (int)$request->categories_id]);
+                session(['categories_id_'. $frame_id => $categories_id]);
             } else {
                 // 絞り込み条件で空を選択
                 session()->forget('categories_id_'. $this->frame->id);
+            }
+        }
+
+        if ($request->has('created_id')) {
+            $created_id = (int)$request->created_id;
+            if ($created_id) {
+                // 絞り込み条件あり
+                session(['created_id_'. $frame_id => $created_id]);
+            } else {
+                // 絞り込み条件で空を選択
+                session()->forget('created_id_'. $this->frame->id);
             }
         }
 
@@ -1315,21 +1268,12 @@ WHERE status = 0
         $blogs->like_button_name = $request->like_button_name;
         $blogs->use_view_count_spectator = $request->use_view_count_spectator;
         $blogs->narrowing_down_type = $request->narrowing_down_type;
+        $blogs->narrowing_down_type_for_created_id = $request->narrowing_down_type_for_created_id;
         //$blogs->approval_flag = $request->approval_flag;
 
         // データ保存
         $blogs->save();
 
-        // ブログ名で、Buckets名も更新する
-        Buckets::where('id', $blogs->bucket_id)->update(['bucket_name' => $request->blog_name]);
-
-        // ブログ名で、Buckets名も更新する
-        //Log::debug($blogs->bucket_id);
-        //Log::debug($request->blog_name);
-
-        // 新規作成フラグを付けてブログ設定変更画面を呼ぶ.
-        // $create_flag = false;
-        // return $this->editBuckets($request, $page_id, $frame_id, $blogs_id, $create_flag, $message);
         return collect(['redirect_path' => url('/') . '/plugin/blogs/editBuckets/' . $page_id . '/' . $frame_id . '/' . $blogs->id . '#frame-' . $frame_id]);
     }
 

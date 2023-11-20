@@ -46,15 +46,19 @@
     {{-- 表示件数リスト --}}
     @include('plugins.user.blogs.default.include_view_count_spectator')
 </div>
-<div class="float-right">
+<div class="float-right ml-2">
     {{-- 絞り込み機能 --}}
     @include('plugins.user.blogs.default.include_narrowing_down')
+</div>
+<div class="float-right">
+    {{-- 投稿者絞り込み機能 --}}
+    @include('plugins.user.blogs.default.include_narrowing_down_for_created_id')
 </div>
 {{-- floatの回り込み解除 --}}
 <div class="clearfix"></div>
 <div>
     <dl>
-    @foreach($blogs_posts as $post)
+    @forelse($blogs_posts as $post)
         {{-- 投稿日時 --}}
         <dt>
             {{$post->posted_at->format('Y/m/d')}}
@@ -74,7 +78,9 @@
                 <span class="badge badge-pill badge-danger">重要記事に設定</span>
             @endif
         </dd>
-    @endforeach
+    @empty
+        <div class="alert alert-info mt-2">記事はありません。</div>
+    @endforelse
 
         {{-- ページング処理 --}}
         @include('plugins.common.user_paginate', ['posts' => $blogs_posts, 'frame' => $frame, 'aria_label_name' => $blog_frame->blog_name])
