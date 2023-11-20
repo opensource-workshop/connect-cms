@@ -403,7 +403,10 @@ class UploadController extends ConnectController
 
         header('Content-Type: text/css');
         header("Content-Disposition: inline; filename={$page_id}.css");
-        header('Cache-Control: ' . config('connect.CACHE_CONTROL'));
+        // cssを no_cache に変更
+        // header('Cache-Control: ' . config('connect.CACHE_CONTROL'));
+        header('Cache-Control: no-store');
+        header('Expires: Thu, 01 Dec 1994 16:00:00 GMT');
 
         // 背景色
         if ($background_color) {
