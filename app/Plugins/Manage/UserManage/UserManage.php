@@ -2999,6 +2999,7 @@ class UserManage extends ManagePluginBase
 
         // 項目の更新処理
         $select = UsersColumnsSelects::where('id', $request->select_id)->firstOrNew([]);
+        $select->columns_set_id = $request->columns_set_id;
         $select->users_columns_id = $request->column_id;
         $select->value = $request->value;
         $select->agree_description = $request->agree_description;
