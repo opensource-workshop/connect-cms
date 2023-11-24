@@ -2236,6 +2236,8 @@ trait MigrationTrait
                     'source_key'           => $nc2_journal_id,
                     'destination_key'      => $blog->id,
                 ]);
+            } else {
+                $blog = Blogs::find($mapping->destination_key);
             }
 
             // これ以降は追加も更新も同じロジック
@@ -2468,6 +2470,8 @@ trait MigrationTrait
                     'source_key'           => $nc2_faq_id,
                     'destination_key'      => $faq->id,
                 ]);
+            } else {
+                $faq = Faqs::find($mapping->destination_key);
             }
 
             // これ以降は追加も更新も同じロジック
@@ -2618,6 +2622,8 @@ trait MigrationTrait
                     'source_key'           => $nc2_linklist_id,
                     'destination_key'      => $linklist->id,
                 ]);
+            } else {
+                $linklist = Linklist::find($mapping->destination_key);
             }
 
             // これ以降は追加も更新も同じロジック
