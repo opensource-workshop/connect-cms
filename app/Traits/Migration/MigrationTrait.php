@@ -1241,7 +1241,7 @@ trait MigrationTrait
                     $blog_post->save();
                 }
             }
-            $links = MigrationUtils::getContentHrefOrSrc($content->post_text2);
+            $links = MigrationUtils::getContentHrefOrSrc($blog_post->post_text2);
             if (is_array($links)) {
                 foreach ($links as $link) {
                     // nc3各プラグインリンク変換
