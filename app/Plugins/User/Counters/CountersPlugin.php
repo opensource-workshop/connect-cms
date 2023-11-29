@@ -139,7 +139,7 @@ class CountersPlugin extends UserPluginBase
                 $today_count = CounterCount::getCountOrCreate($counter->id);
 
                 // botチェック
-                if (!RequestUtils::isbot($request)) {
+                if (!RequestUtils::isBot($request)) {
                     // セッションを利用
                     // セッション保持期間はデフォルト2時間（config/session.phpの'lifetime'参照）
                     $counter_histories = session('counter_histories', '');
