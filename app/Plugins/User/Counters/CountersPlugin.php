@@ -3,7 +3,6 @@
 namespace App\Plugins\User\Counters;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 
@@ -17,6 +16,7 @@ use App\Plugins\User\UserPluginBase;
 use App\Enums\CounterDesignType;
 use App\Enums\CsvCharacterCode;
 use App\Utilities\Csv\CsvUtils;
+use App\Utilities\Request\RequestUtils;
 
 /**
  * カウンター・プラグイン
@@ -139,60 +139,7 @@ class CountersPlugin extends UserPluginBase
                 $today_count = CounterCount::getCountOrCreate($counter->id);
 
                 // botチェック
-                $is_bot = false;
-                $ua = $request->header('User-Agent');
-                $bots = [
-                    'bot',
-                    'spider',
-                    'crawler',
-                    'Linguee',
-                    'proximic',
-                    'GrapeshotCrawler',
-                    'Mappy',
-                    'MegaIndex',
-                    'ltx71',
-                    'integralads',
-                    'Yandex',
-                    'Y!',               // Yahoo!JAPAN
-                    'Slurp',            // yahoo
-                    'ichiro',           // goo
-                    'goo_vsearch',      // goo
-                    'gooblogsearch',    // goo
-                    'netEstate',
-                    'Yeti',             // Naver
-                    'Daum',
-                    'Seekport',
-                    'Qwantify',
-                    'GoogleImageProxy', // google
-                    'QQBrowser',
-                    'ManicTime',
-                    'Hatena',
-                    'PocketImageCache',
-                    'Feedly',
-                    'Tiny Tiny RSS',
-                    'Barkrowler',
-                    'SISTRIX Crawler',
-                    'woorankreview',
-                    'MegaIndex',
-                    'Megalodon',
-                    'Steeler',
-                    'dataxu',
-                    'ias-sg',
-                    'go-resty',
-                    'python-requests',
-                    'meg',
-                    'Scrapy',
-                ];
-
-                foreach ($bots as $bot) {
-                    // 大文字小文字を区別せず ユーザーエージェントに bot が含まれているかチェック
-                    if (strpos($ua, $bot) !== false) {
-                        // bot
-                        $is_bot = true;
-                    }
-                }
-
-                if (! $is_bot) {
+                if (!RequestUtils::isbot($request)) {
                     // セッションを利用
                     // セッション保持期間はデフォルト2時間（config/session.phpの'lifetime'参照）
                     $counter_histories = session('counter_histories', '');
@@ -538,7 +485,7 @@ class CountersPlugin extends UserPluginBase
             $csv_data .= "\n";
         }
 
-        // Log::debug(var_export($request->character_code, true));
+        // \Log::debug(var_export($request->character_code, true));
 
         // 文字コード変換
         if ($request->character_code == CsvCharacterCode::utf_8) {
