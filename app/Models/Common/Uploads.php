@@ -6,6 +6,7 @@ use App\Models\Core\Configs;
 use App\Enums\ImageMimetype;
 use App\UserableNohistory;
 use App\Utilities\File\FileUtils;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Intervention\Image\Facades\Image;
 
@@ -13,6 +14,7 @@ class Uploads extends Model
 {
     // 保存時のユーザー関連データの保持（履歴なしUserable）
     use UserableNohistory;
+    use HasFactory;
 
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
