@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class AddFullTextSearchToDatabases extends Migration
@@ -25,7 +26,13 @@ class AddFullTextSearchToDatabases extends Migration
         $version =  $result[0]->version;
         // MariaDBはNGRAMが使えない
         if (strpos($version, 'Maria') !== false) {
-            DB::statement('ALTER TABLE databases_inputs ADD FULLTEXT INDEX ft_idx_databases_inputs_full_text (full_text);');
+            // MariaDB
+            $version = str_replace('-MariaDB', '', $version);
+            $version_arr = explode('.', $version);
+            // MariaDBは5.6以上でFULLTEXT対応
+            if ($version_arr[0] >= 5 && $version_arr[1] >= 6) {
+                DB::statement('ALTER TABLE databases_inputs ADD FULLTEXT INDEX ft_idx_databases_inputs_full_text (full_text);');
+            }
         } else {
             DB::statement('ALTER TABLE databases_inputs ADD FULLTEXT INDEX ft_idx_databases_inputs_full_text (full_text) WITH PARSER ngram;');
         }
