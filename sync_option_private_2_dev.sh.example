@@ -22,8 +22,14 @@ option_plugin_command_dir=$option_plugin_controller_dir
 # コントローラー
 rsync -arvz --delete "${src_root_dir}${option_plugin}/app/PluginsOption/User/${option_plugin_controller_dir}" "${dist_root_dir}app/PluginsOption/User/"
 # モデル
+if [ ! -d "${dist_root_dir}app/ModelsOption/User/" ]; then
+    mkdir -p "${dist_root_dir}app/ModelsOption/User/"
+fi
 rsync -arvz --delete "${src_root_dir}${option_plugin}/app/ModelsOption/User/${option_plugin_model_dir}" "${dist_root_dir}app/ModelsOption/User/"
 # ビュー
+if [ ! -d "${dist_root_dir}resources/views/plugins_option/user/" ]; then
+    mkdir -p "${dist_root_dir}resources/views/plugins_option/user/"
+fi
 rsync -arvz --delete "${src_root_dir}${option_plugin}/resources/views/plugins_option/user/${option_plugin_resources_dir}" "${dist_root_dir}resources/views/plugins_option/user/"
 # バッチ
 rsync -arvz --delete "${src_root_dir}${option_plugin}/app/Console/CommandsOption/${option_plugin_command_dir}" "${dist_root_dir}app/Console/CommandsOption/"
