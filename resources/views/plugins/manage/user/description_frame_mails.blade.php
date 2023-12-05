@@ -31,7 +31,7 @@ use App\Models\Core\UsersColumns;
                         </tr>
                     @endforeach
                     @foreach($users_columns as $column)
-                        @if (UsersColumns::isLoopNotShowColumnType($column->column_type)) {
+                        @if (UsersColumns::isLoopNotShowColumnType($column->column_type))
                             {{-- 既に取得済みのため、ここでは取得しない --}}
                             @continue;
                         @endif
