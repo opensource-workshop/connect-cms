@@ -245,7 +245,7 @@ use App\Models\Core\UsersColumns;
                         <label class="custom-control-label" for="user_register_requre_privacy"> 以下の内容に同意します。</label>
                     </div>
                     @include('plugins.common.errors_inline', ['name' => 'user_register_requre_privacy'])
-                    {!!Configs::getConfigsValue($configs, "user_register_requre_privacy", null)!!}
+                    {!!Configs::getConfigsValue($configs, "user_register_privacy_description", null)!!}
                 </div>
             </div>
         @endif
