@@ -259,7 +259,7 @@ class WhatsnewsPlugin extends UserPluginBase
         }
 
         // 記事詳細から、最初の画像を抜き出して設定する。
-        $whatsnews = $this->addWhatsnewsValue($whatsnews);
+        $whatsnews = $this->addWhatsnewsValues($whatsnews);
 
         // 一旦オブジェクト変数へ。（Singleton のため。フレーム表示確認でコアが使用する）
         $this->whatsnews_results = array($whatsnews, $link_pattern, $link_base);
@@ -270,45 +270,72 @@ class WhatsnewsPlugin extends UserPluginBase
     /**
      * 記事詳細から、最初の画像を抜き出して設定する。
      * 記事詳細に、追加情報を設定する。
+     * (全記事)
      */
-//    private function addFirstImage($whatsnews)
-    private function addWhatsnewsValue($whatsnews, $post_detail_length = null)
+    private function addWhatsnewsValues($whatsnews, $post_detail_length = null)
     {
-        // 記事詳細から、最初の画像を抜き出し
-        $pattern_img = '/<img.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
-        $pattern_alt = '/(alt)=("[^"]*")/i';
         foreach ($whatsnews as &$whatsnew) {
-            // 画像があるときはファイルパスを抽出
-            preg_match($pattern_img, $whatsnew->post_detail, $images);
-            if (is_array($images) && count($images) > 1) {
-                $whatsnew->first_image_path = $images[1];
-                // altがあるときはaltを抽出
-                preg_match($pattern_alt, $images[0], $alts);
-                if (is_array($alts) && count($alts) > 2) {
-                    $whatsnew->first_image_alt = $alts[2];
+            // クラスファイルの存在チェック
+            list($class_name, $class_file_path) = Plugins::getPluginClassNameAndFilePath($whatsnew->plugin_name);
+            if (!file_exists($class_file_path)) {
+                // クラスファイルなし = 通常
+                $whatsnew = $this->addWhatsnewsValue($whatsnew, $post_detail_length);
+            } else {
+                // 関数定義メソッドの有無確認
+                if (method_exists($class_name, 'addWhatsnewsValue')) {
+                    // クラスファイルあり & メソッドあり = 独自処理
+                    $whatsnew = $class_name::addWhatsnewsValue($whatsnew, $post_detail_length);
                 } else {
-                    $whatsnew->first_image_alt = null;
+                    // クラスファイルあり & メソッドなし = 通常
+                    $whatsnew = $this->addWhatsnewsValue($whatsnew, $post_detail_length);
                 }
-            } else {
-                $whatsnew->first_image_path = null;
-                $whatsnew->first_image_alt = null;
-            }
-
-            // タイトルのタグを取り除き, データベース、ウィジウィグ型のタイトル指定に対応
-            $whatsnew->post_title_strip_tags = strip_tags($whatsnew->post_title);
-
-            // タグを取り除き、指定に応じて文字数制限した本文
-            if ($post_detail_length) {
-                $whatsnew->post_detail_strip_tags = mb_substr(strip_tags($whatsnew->post_detail), 0, $post_detail_length);
-                if (mb_strlen(strip_tags($whatsnew->post_detail)) > $post_detail_length) {
-                    $whatsnew->post_detail_strip_tags = $whatsnew->post_detail_strip_tags . '...';
-                }
-            } else {
-                $whatsnew->post_detail_strip_tags = strip_tags($whatsnew->post_detail);
             }
         }
 
         return $whatsnews;
+    }
+
+    /**
+     * 記事詳細から、最初の画像を抜き出して設定する。
+     * 記事詳細に、追加情報を設定する。
+     * (1記事)
+     */
+    private function addWhatsnewsValue($whatsnew, $post_detail_length = null)
+    {
+        // 記事詳細から、最初の画像を抜き出し
+        $pattern_img = '/<img.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
+        $pattern_alt = '/(alt)=("[^"]*")/i';
+
+        // 画像があるときはファイルパスを抽出
+        preg_match($pattern_img, $whatsnew->post_detail, $images);
+        if (is_array($images) && count($images) > 1) {
+            $whatsnew->first_image_path = $images[1];
+            // altがあるときはaltを抽出
+            preg_match($pattern_alt, $images[0], $alts);
+            if (is_array($alts) && count($alts) > 2) {
+                $whatsnew->first_image_alt = $alts[2];
+            } else {
+                $whatsnew->first_image_alt = null;
+            }
+        } else {
+            $whatsnew->first_image_path = null;
+            $whatsnew->first_image_alt = null;
+        }
+
+        // タイトルのタグを取り除き, データベース、ウィジウィグ型のタイトル指定に対応
+        $whatsnew->post_title_strip_tags = strip_tags($whatsnew->post_title);
+
+        // タグを取り除き、指定に応じて文字数制限した本文
+        if ($post_detail_length) {
+            $whatsnew->post_detail_strip_tags = mb_substr(strip_tags($whatsnew->post_detail), 0, $post_detail_length);
+            if (mb_strlen(strip_tags($whatsnew->post_detail)) > $post_detail_length) {
+                $whatsnew->post_detail_strip_tags = $whatsnew->post_detail_strip_tags . '...';
+            }
+        } else {
+            $whatsnew->post_detail_strip_tags = strip_tags($whatsnew->post_detail);
+        }
+
+        return $whatsnew;
     }
 
     private function buildQueryGetWhatsnews($whatsnews_frame, $union_sqls)
@@ -467,7 +494,7 @@ class WhatsnewsPlugin extends UserPluginBase
         });
 
         // 記事詳細から、最初の画像を抜き出して設定する。
-        $whatsnewses = $this->addWhatsnewsValue($whatsnewses, $request->post_detail_length);
+        $whatsnewses = $this->addWhatsnewsValues($whatsnewses, $request->post_detail_length);
 
         // 整形して返却
         $json = [
