@@ -7568,9 +7568,9 @@ trait MigrationTrait
 
         // まだ配列になかった場合（各スペースのルートページ）
         if ($get_display_sequence) {
-            return $this->getRouteBlockLangStr($nc2_page->lang_dirname) . $this->zeroSuppress($nc2_page->root_id) . '_' . $this->zeroSuppress($nc2_page->display_sequence);
+            return $this->getRouteBlockLangStr($nc2_page->lang_dirname) . $this->zeroSuppress($nc2_page->root_id) . '_' . $this->zeroSuppress($nc2_page->parent_id) . '_' . $this->zeroSuppress($nc2_page->display_sequence);
         } else {
-            return $this->getRouteBlockLangStr($nc2_page->lang_dirname) . $this->zeroSuppress($nc2_page->root_id) . '_' . $this->zeroSuppress($nc2_page->page_id);
+            return $this->getRouteBlockLangStr($nc2_page->lang_dirname) . $this->zeroSuppress($nc2_page->root_id) . '_' . $this->zeroSuppress($nc2_page->parent_id) . '_' . $this->zeroSuppress($nc2_page->page_id);
         }
     }
 
@@ -8197,12 +8197,14 @@ trait MigrationTrait
 
             $uploads_ini .= "upload[" . $nc2_upload->upload_id . "] = \"" . $destination_file_name . '.' . $nc2_upload->extension . "\"\n";
 
+            $nc2_upload_mimetype = str_replace("pjpeg", 'jpeg', $nc2_upload->mimetype);
+
             $uploads_ini_detail .= "\n";
             $uploads_ini_detail .= "[" . $nc2_upload->upload_id . "]\n";
             $uploads_ini_detail .= "client_original_name = \"" . $nc2_upload->file_name . "\"\n";
             $uploads_ini_detail .= "temp_file_name = \"" . $destination_file_name . '.' . $nc2_upload->extension . "\"\n";
             $uploads_ini_detail .= "size = \"" . $nc2_upload->file_size . "\"\n";
-            $uploads_ini_detail .= "mimetype = \"" . $nc2_upload->mimetype . "\"\n";
+            $uploads_ini_detail .= "mimetype = \"" . $nc2_upload_mimetype . "\"\n";
             $uploads_ini_detail .= "extension = \"" . $nc2_upload->extension . "\"\n";
             $uploads_ini_detail .= "plugin_name = \"" . $this->nc2GetPluginName($nc2_upload->file_path) . "\"\n";
             $uploads_ini_detail .= "page_id = \"0\"\n";
@@ -8346,12 +8348,33 @@ trait MigrationTrait
             $users_ini .= "user[\"" . $nc2_user->user_id . "\"] = \"" . $nc2_user->handle . "\"\n";
         }
 
+        // NC2メールアドレス重複時のエイリアス追加処置
+        $emails = [];
+        $duplicate_email_users = [];
+        foreach ($nc2_users as &$user) {
+            if (isset($user['email']) && $user['email'] != '') {
+                if (in_array($user['email'], $emails)) {
+                    $duplicate_email_users[] = $user;
+                    $duplicate_emails[] = $user['email'];
+                    // 重複したメールアドレスは移行できないのでエイリアスをつける
+                    $splitemail = explode('@', $user['email']);
+                    $new_email = $splitemail[0]. '+'. $user['login_id']. '@'. $splitemail[1];
+                    $user['email'] = $new_email;
+                } else {
+                    $emails[] = $user['email'];
+                }
+            }
+        }
+
         // NC2ユーザ（User）のループ（ユーザデータ用）
-        foreach ($nc2_users as $nc2_user) {
+        foreach ($nc2_users as &$nc2_user) {
             // テスト用データ変換
             if ($this->hasMigrationConfig('user', 'nc2_export_test_mail', true)) {
                 $nc2_user->email = MigrationUtils::replaceFullwidthAt($nc2_user->email);
                 $nc2_user->login_id = MigrationUtils::replaceFullwidthAt($nc2_user->login_id);
+            }
+            if($nc2_user->insert_time == ""){
+              $nc2_user->insert_time = $nc2_user->update_time;
             }
             $users_ini .= "\n";
             $users_ini .= "[\"" . $nc2_user->user_id . "\"]\n";
@@ -10058,7 +10081,7 @@ trait MigrationTrait
                     }
                 } elseif ($multidatabase_metadata_content->type == 3) {
                     // リンク. NC2のリンク切れチェック
-                    $this->checkDeadLinkNc2($content, 'multidatabase', $nc2_block);
+                    $this->checkDeadLinkNc2($content, 'multidatabase');
                 }
                 // データ中にタブ文字が存在するケースがあったため、タブ文字は半角スペースに置き換えるようにした。
                 $tsv_record[$multidatabase_metadata_content->metadata_id] = str_replace("\t", " ", $content);
@@ -11373,6 +11396,9 @@ trait MigrationTrait
                 // 連絡先
                 $tsv_record['contact'] = $reservation_reserve->contact;
                 // 内容 [WYSIWYG]
+                if (mb_strlen($reservation_reserve->description) > 255) {
+                    $reservation_reserve->description = strip_tags($reservation_reserve->description);
+                }
                 $tsv_record['description'] = $this->nc2Wysiwyg(null, null, null, null, $reservation_reserve->description, 'reservation');
                 // 繰り返し条件
                 $tsv_record['rrule'] = $reservation_reserve->rrule;
@@ -11743,8 +11769,8 @@ trait MigrationTrait
                     $tsv_record['photo_id']          = $nc2_photoalbum_photo->photo_id;
                     $tsv_record['upload_id']         = $nc2_photoalbum_photo->upload_id;
                     $tsv_record['video_upload_id']   = '';
-                    $tsv_record['photo_name']        = $nc2_photoalbum_photo->photo_name;
-                    $tsv_record['photo_description'] = $nc2_photoalbum_photo->photo_description;
+                    $tsv_record['photo_name']        = str_replace(array("\r", "\n", "\t"), '', $nc2_photoalbum_photo->photo_name);
+                    $tsv_record['photo_description'] = str_replace(array("\r", "\n", "\t"), '', $nc2_photoalbum_photo->photo_description);
                     $tsv_record['width']             = $nc2_photoalbum_photo->width;
                     $tsv_record['height']            = $nc2_photoalbum_photo->height;
                     $tsv_record['created_at']        = $this->getCCDatetime($nc2_photoalbum_photo->insert_time);
@@ -12120,17 +12146,18 @@ trait MigrationTrait
                 $question_value = $this->nc2Wysiwyg(null, null, null, null, $questionnaire_question->question_value, 'questionnaire', $nc2_page);
                 // ダブルクォーテーションのエスケープ
                 $question_value = str_replace('"', '\"', $question_value);
+                $question_description = str_replace('"', '\"', $questionnaire_question->description);
 
-                $questionnaire_ini .= "column_type                = \"" . $column_type                     . "\"\n";
-                $questionnaire_ini .= "column_name                = \"" . $question_value                  . "\"\n";
-                $questionnaire_ini .= "option_value               = \"" . $option_value                    . "\"\n";
+                $questionnaire_ini .= "column_type                = \"" . $column_type                          . "\"\n";
+                $questionnaire_ini .= "column_name                = \"" . $question_value                       . "\"\n";
+                $questionnaire_ini .= "option_value               = \"" . $option_value                         . "\"\n";
                 $questionnaire_ini .= "required                   = "   . $questionnaire_question->require_flag . "\n";
-                $questionnaire_ini .= "frame_col                  = "   . 0                                . "\n";
-                $questionnaire_ini .= "caption                    = \"" . $questionnaire_question->description  . "\"\n";
-                $questionnaire_ini .= "caption_color              = \"" . "text-dark"                      . "\"\n";
-                $questionnaire_ini .= "minutes_increments         = "   . 10                               . "\n";
-                $questionnaire_ini .= "minutes_increments_from    = "   . 10                               . "\n";
-                $questionnaire_ini .= "minutes_increments_to      = "   . 10                               . "\n";
+                $questionnaire_ini .= "frame_col                  = "   . 0                                     . "\n";
+                $questionnaire_ini .= "caption                    = \"" . $question_description                 . "\"\n";
+                $questionnaire_ini .= "caption_color              = \"" . "text-dark"                           . "\"\n";
+                $questionnaire_ini .= "minutes_increments         = "   . 10                                    . "\n";
+                $questionnaire_ini .= "minutes_increments_from    = "   . 10                                    . "\n";
+                $questionnaire_ini .= "minutes_increments_to      = "   . 10                                    . "\n";
                 $questionnaire_ini .= "rule_allowed_numeric       = null\n";
                 $questionnaire_ini .= "rule_allowed_alpha_numeric = null\n";
                 $questionnaire_ini .= "rule_digits_or_less        = null\n";
