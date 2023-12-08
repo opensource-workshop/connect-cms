@@ -272,6 +272,15 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                     @endif
                 </li>
             {{-- /管理メニュー表示判定（管理機能 or コンテンツ権限に付与がある場合）--}}
+            @else
+                {{-- マイページのコンテンツ画面へ対応（管理機能 or コンテンツ権限 なしもあり） --}}
+                <li class="nav-item dropdown">
+                    {{-- ページリストがある場合は、コンテンツ画面 --}}
+                    @if (isset($page_list) && !$is_manage_page)
+                    @else
+                        <a class="nav-link" href="{{ url('/') }}">コンテンツ画面へ</a>
+                    @endif
+                </li>
             @endif
 
             @guest
