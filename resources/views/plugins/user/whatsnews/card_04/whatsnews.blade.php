@@ -155,8 +155,8 @@
                         @if (isset($is_template_top_thumbnail))
                         {{-- サムネイル --}}
                         <dd v-if="thumbnail == show && whatsnews.first_image_path" class="text-center whatsnew_thumbnail">
-                            <img v-if="thumbnail_size == 0 || thumbnail_size == ''" v-bind:src="whatsnews.first_image_path" class="pb-1" style="max-width: 200px; max-height: 200px;">
-                            <img v-else v-bind:src="whatsnews.first_image_path" class="pb-1" v-bind:style="thumbnail_style">
+                            <img v-if="thumbnail_size == 0 || thumbnail_size == ''" v-bind:src="whatsnews.first_image_path + '?size=small'" class="pb-1" style="max-width: 200px; max-height: 200px;">
+                            <img v-else v-bind:src="whatsnews.first_image_path + '?size=small'" class="pb-1" v-bind:style="thumbnail_style">
                         </dd>
                         @endif
 
@@ -185,8 +185,8 @@
                         @if (!isset($is_template_top_thumbnail))
                         {{-- サムネイル --}}
                         <dd v-if="thumbnail == show && whatsnews.first_image_path" class="text-center whatsnew_thumbnail">
-                            <img v-if="thumbnail_size == 0 || thumbnail_size == ''" v-bind:src="whatsnews.first_image_path" class="pb-1" style="max-width: 200px; max-height: 200px;">
-                            <img v-else v-bind:src="whatsnews.first_image_path" class="pb-1" v-bind:style="thumbnail_style">
+                            <img v-if="thumbnail_size == 0 || thumbnail_size == ''" v-bind:src="whatsnews.first_image_path + '?size=small'" class="pb-1" style="max-width: 200px; max-height: 200px;">
+                            <img v-else v-bind:src="whatsnews.first_image_path + '?size=small'" class="pb-1" v-bind:style="thumbnail_style">
                         </dd>
                         @endif
 
