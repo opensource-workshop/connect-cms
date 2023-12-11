@@ -81,6 +81,21 @@ class UserColumnType extends EnumsBase
     }
 
     /**
+     * メール埋め込みタグのループで 既に取得済みのため、表示しないカラム型 取得
+     */
+    public static function loopNotShowEmbeddedTagColumnTypes(): array
+    {
+        return [
+            self::user_name,
+            self::login_id,
+            self::user_email,
+            self::user_password,
+            self::created_at,
+            self::updated_at,
+        ];
+    }
+
+    /**
      * 検索で完全一致のカラム型 取得
      */
     public static function searchExactMatchColumnTypes(): array
