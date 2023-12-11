@@ -99,6 +99,17 @@ class UsersColumns extends Model
     }
 
     /**
+     * メール埋め込みタグのループで 既に取得済みのため、表示しないカラム型か
+     */
+    public static function isLoopNotShowEmbeddedTagColumnType($column_type): bool
+    {
+        if (in_array($column_type, UserColumnType::loopNotShowEmbeddedTagColumnTypes())) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * 検索で完全一致のカラム型か
      */
     public static function isSearchExactMatchColumnType($column_type): bool

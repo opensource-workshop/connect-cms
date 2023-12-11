@@ -2,6 +2,7 @@
 
 namespace App\Plugins\Manage\UserManage;
 
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
 use App\User;
@@ -237,17 +238,13 @@ class UsersTool
             });
 
         foreach ($users_columns as $users_column) {
-            if (UsersColumns::isLoopNotShowColumnType($users_column->column_type)) {
+            if (UsersColumns::isLoopNotShowEmbeddedTagColumnType($users_column->column_type)) {
                 // 既に取得済みのため、ここでは取得しない
                 continue;
             }
 
-            $value = "";
-            if (is_array($users_input_cols[$users_column->id])) {
-                $value = implode(self::CHECKBOX_SEPARATOR, $users_input_cols[$users_column->id]->value);
-            } else {
-                $value = $users_input_cols[$users_column->id]->value;
-            }
+            // 埋め込みタグの値
+            $value = self::getNoticeEmbeddedTagsValue($users_input_cols, $users_column, $users_columns);
 
             $default["X-{$users_column->column_name}"] = $value;
         }
@@ -278,16 +275,12 @@ class UsersTool
             });
 
         foreach ($users_columns as $users_column) {
-            if (UsersColumns::isLoopNotShowColumnType($users_column->column_type)) {
+            if (UsersColumns::isLoopNotShowEmbeddedTagColumnType($users_column->column_type)) {
                 continue;
             }
 
-            $value = "";
-            if (is_array($users_input_cols[$users_column->id])) {
-                $value = implode(self::CHECKBOX_SEPARATOR, $users_input_cols[$users_column->id]->value);
-            } else {
-                $value = $users_input_cols[$users_column->id]->value;
-            }
+            // 埋め込みタグの値
+            $value = self::getNoticeEmbeddedTagsValue($users_input_cols, $users_column, $users_columns);
 
             // メールの内容
             $contents_text .= $users_column->column_name . "：" . $value . "\n";
@@ -301,5 +294,45 @@ class UsersTool
         // 最後の改行を除去
         $contents_text = trim($contents_text);
         return $contents_text;
+    }
+
+    /**
+     * 埋め込みタグの値 取得
+     */
+    public static function getNoticeEmbeddedTagsValue(Collection $users_input_cols, UsersColumns $users_column, Collection $users_columns): ?string
+    {
+        $class_name = self::getOptionClass();
+        // オプションクラス有＋メソッド有なら呼ぶ
+        if ($class_name) {
+            if (method_exists($class_name, 'getNoticeEmbeddedTagsValue')) {
+                return $class_name::getNoticeEmbeddedTagsValue($users_input_cols, $users_column, $users_columns);
+            }
+        }
+
+        if (!isset($users_input_cols[$users_column->id])) {
+            return "";
+        }
+
+        $value = "";
+        if (is_array($users_input_cols[$users_column->id])) {
+            $value = implode(self::CHECKBOX_SEPARATOR, $users_input_cols[$users_column->id]->value);
+        } else {
+            $value = $users_input_cols[$users_column->id]->value;
+        }
+
+        return $value;
+    }
+
+    /**
+     * オプションクラスを返す
+     */
+    private static function getOptionClass(): ?string
+    {
+        $class_name = "App\PluginsOption\Manage\UserManage\UsersToolOption";
+        // オプションあり
+        if (class_exists($class_name)) {
+            return $class_name;
+        }
+        return null;
     }
 }
