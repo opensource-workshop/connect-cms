@@ -305,6 +305,7 @@ class UsersTool
         // オプションクラス有＋メソッド有なら呼ぶ
         if ($class_name) {
             if (method_exists($class_name, 'getNoticeEmbeddedTagsValue')) {
+                // $users_columns は、他項目と連動するカスタム型の値取得に利用
                 return $class_name::getNoticeEmbeddedTagsValue($users_input_cols, $users_column, $users_columns);
             }
         }
