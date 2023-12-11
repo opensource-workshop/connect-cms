@@ -43,9 +43,14 @@ trait RegistersUsers
     public function showRegistrationForm(Request $request)
     {
         // ユーザー登録の許可
-        $user_register_enables = Configs::where('category', 'user_register')
-            ->where('name', 'user_register_enable')
-            ->where('value', '1')
+        $user_register_enables = Configs::
+            leftJoin('users_columns_sets', function ($join) {
+                $join->on('users_columns_sets.id', 'configs.additional1');
+            })
+            ->where('configs.category', 'user_register')
+            ->where('configs.name', 'user_register_enable')
+            ->where('configs.value', '1')
+            ->orderBy('users_columns_sets.display_sequence')
             ->get();
 
         $user_register_enable = $user_register_enables->first();
@@ -77,7 +82,7 @@ trait RegistersUsers
         }
 
         // ユーザ登録が有効な項目セット
-        $columns_sets = UsersColumnsSet::whereIn('id', $user_register_enables->pluck('additional1'))->get();
+        $columns_sets = UsersColumnsSet::whereIn('id', $user_register_enables->pluck('additional1'))->orderBy('display_sequence')->get();
 
         // *** ユーザの追加項目
         // ユーザーのカラム

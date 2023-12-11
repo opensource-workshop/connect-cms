@@ -530,7 +530,7 @@ class UserManage extends ManagePluginBase
             "plugin_name" => "user",
             "users" => $users,
             'columns_set_id' => $columns_set_id,
-            'columns_sets' => UsersColumnsSet::get(),
+            'columns_sets' => UsersColumnsSet::orderBy('display_sequence')->get(),
             "users_columns" => $users_columns,
             "users_columns_id_select" => $users_columns_id_select,
             "input_cols" => $input_cols,
@@ -699,7 +699,7 @@ class UserManage extends ManagePluginBase
             "user" => $user,
             "original_role_configs" => $original_role_configs,
             'columns_set_id' => $columns_set_id,
-            'columns_sets' => UsersColumnsSet::get(),
+            'columns_sets' => UsersColumnsSet::orderBy('display_sequence')->get(),
             'users_columns' => $users_columns,
             'users_columns_id_select' => $users_columns_id_select,
             'input_cols' => $input_cols,
@@ -794,7 +794,7 @@ class UserManage extends ManagePluginBase
             "users_roles" => $users_roles,
             "original_role_configs" => $original_role_configs,
             'columns_set_id' => $columns_set_id,
-            'columns_sets' => UsersColumnsSet::get(),
+            'columns_sets' => UsersColumnsSet::orderBy('display_sequence')->get(),
             'users_columns' => $users_columns,
             'users_columns_id_select' => $users_columns_id_select,
             'input_cols' => $input_cols,
@@ -1319,7 +1319,7 @@ class UserManage extends ManagePluginBase
             "plugin_name" => "user",
             "configs" => $configs,
             'columns_set_id' => $id,
-            'columns_sets' => UsersColumnsSet::get(),
+            'columns_sets' => UsersColumnsSet::orderBy('display_sequence')->get(),
             "users_columns" => UsersTool::getUsersColumns($id),
         ]);
     }
@@ -1751,7 +1751,7 @@ class UserManage extends ManagePluginBase
             "function"       => __FUNCTION__,
             "plugin_name"    => "user",
             'columns_set_id' => $this->getColumnsSetIdManageDefault(),
-            'columns_sets'   => UsersColumnsSet::get(),
+            'columns_sets' => UsersColumnsSet::orderBy('display_sequence')->get(),
         ]);
     }
 
