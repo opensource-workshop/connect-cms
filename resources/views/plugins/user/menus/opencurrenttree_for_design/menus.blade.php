@@ -21,7 +21,7 @@
                     {{-- 非表示のページは対象外(非表示の判断はこのページのみで、子のページはそのページでの判断を行う) --}}
                     @if ($page->isView(Auth::user(), false, true, $page_roles))
 
-                        <li>
+                        <li @if($page->getClass()) class="{{$page->getClass()}}"@endif>
                             {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
                             @if ($page->id == $page_id)
                             <a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="list-group-item {{ 'depth-' . $page->depth }} active" aria-current="page">
@@ -57,7 +57,7 @@
 
                     {{-- 非表示のページは対象外 --}}
                     @if ($page->isView(Auth::user(), false, true, $page_roles))
-                        <li>
+                        <li @if($page->getClass()) class="{{$page->getClass()}}"@endif>
                             {{-- リンク生成。メニュー項目全体をリンクにして階層はその中でインデント表記したいため、a タグから記載 --}}
                             @if ($page->id == $page_id)
                             <a href="{{$page->getUrl()}}" {!!$page->getUrlTargetTag()!!} class="list-group-item active" aria-current="page">
