@@ -830,7 +830,7 @@ class SiteManage extends ManagePluginBase
      *  ページエラー設定　表示画面
      *
      * @method_title エラーページ設定
-     * @method_desc 404（該当ページなし）や403（該当ページに権限なし）の際に表示するエラーページを指定できます。
+     * @method_desc 404（該当ページなし）や403（該当ページに権限なし）の際に表示するエラーページを指定できます。また、No Image画像を差し替えられます。
      * @method_detail 指定したエラーページは、通常のページと同じように作成します。また、メニュー表示はOFFにしておきます。
      */
     public function pageError($request, $id)
