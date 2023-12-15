@@ -54,9 +54,26 @@ class UploadController extends ConnectController
      */
     public function getFile(Request $request, $id = null)
     {
+        $no_cache_headers = [
+            'Cache-Control' => 'no-store',
+            'Expires' => 'Thu, 01 Dec 1994 16:00:00 GMT'
+        ];
+        $headers = [
+            'Cache-Control' => config('connect.CACHE_CONTROL'),
+        ];
+
         // id がない場合は空を返す。（例：DBプラグイン－画像型で必須指定なしでの運用等）
         if (empty($id)) {
-            return response()->download(storage_path(config('connect.no_image_path')));
+            $configs = Configs::getSharedConfigs();
+            $no_image = Configs::getConfigsValue($configs, 'no_image', null);
+            if ($no_image) {
+                // カスタムno_image
+                $no_image_path = public_path("/uploads/no_image/{$no_image}");
+            } else {
+                // 標準no_image
+                $no_image_path = storage_path(config('connect.no_image_path'));
+            }
+            return response()->download($no_image_path, null, $headers)->setEtag(md5_file($no_image_path));
         }
 
         // id のファイルを読んでhttp request に返す。
@@ -71,14 +88,6 @@ class UploadController extends ConnectController
         if (!Storage::exists($this->getDirectory($id) . '/' . $id . '.' . $uploads->extension)) {
             abort(404);
         }
-
-        $no_cache_headers = [
-            'Cache-Control' => 'no-store',
-            'Expires' => 'Thu, 01 Dec 1994 16:00:00 GMT'
-        ];
-        $headers = [
-            'Cache-Control' => config('connect.CACHE_CONTROL'),
-        ];
 
         // 一時保存ファイルの場合は所有者を確認して、所有者ならOK。所有者以外なら404
         // 一時保存ファイルは、登録時の確認画面を表示している際を想定している。
