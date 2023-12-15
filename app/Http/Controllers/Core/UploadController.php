@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Core;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 use App\Http\Controllers\Core\ConnectController;
@@ -17,7 +16,7 @@ use App\Enums\UseType;
 
 use App\Models\Common\Categories;
 use App\Models\Common\Page;
-use App\Models\Common\PageRole;
+// use App\Models\Common\PageRole;
 use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
 
@@ -104,21 +103,19 @@ class UploadController extends ConnectController
                 return;
             }
 
-            // $page_roles = $this->getPageRoles(array($page->id));
-            $page_roles = PageRole::getPageRoles(array($page->id));
+            // $page_roles = PageRole::getPageRoles(array($page->id));
 
             // 自分のページから親を遡って取得
             $page_tree = Page::reversed()->ancestorsAndSelf($page->id);
 
             // 認証されていなくてパスワードを要求する場合、パスワード要求画面を表示
-            // if ($page->isRequestPassword($request, $this->page_tree)) {
             if ($page->isRequestPassword($request, $page_tree)) {
-                return response()->download(storage_path(config('connect.forbidden_image_path')));
+                return response()->download(storage_path(config('connect.forbidden_image_path')), null, $no_cache_headers);
             }
 
             // ファイルに閲覧権限がない場合
             if (!$page->isVisibleAncestorsAndSelf($page_tree)) {
-                return response()->download(storage_path(config('connect.forbidden_image_path')));
+                return response()->download(storage_path(config('connect.forbidden_image_path')), null, $no_cache_headers);
             }
 
             // 閲覧パスワード設定あるか
@@ -137,9 +134,9 @@ class UploadController extends ConnectController
         if (!empty($uploads->check_method)) {
             list($return_boolean, $return_message) = $this->callCheckMethod($request, $uploads);
             if (!$return_boolean) {
-                //Log::debug($uploads);
-                //Log::debug($return_message);
-                return response()->download(storage_path(config('connect.forbidden_image_path')));
+                // \Log::debug($uploads);
+                // \Log::debug($return_message);
+                return response()->download(storage_path(config('connect.forbidden_image_path')), null, $no_cache_headers);
             }
 
             // キャッシュしない
