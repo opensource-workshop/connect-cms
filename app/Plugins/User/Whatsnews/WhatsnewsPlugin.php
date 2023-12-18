@@ -772,9 +772,17 @@ class WhatsnewsPlugin extends UserPluginBase
      */
     public function editView($request, $page_id, $frame_id)
     {
+        // 表示中のバケツデータ
+        $whatsnew = $this->getPluginBucket($this->getBucketId());
+
+        if (empty($whatsnew->id)) {
+            // バケツ空テンプレートを呼び出す。
+            return $this->commonView('empty_bucket_setting');
+        }
+
         // 表示テンプレートを呼び出す。
         return $this->view('whatsnews_frame', [
-            'whatsnew' => $this->getPluginBucket($this->getBucketId()),
+            'whatsnew' => $whatsnew,
         ]);
     }
 
@@ -789,7 +797,11 @@ class WhatsnewsPlugin extends UserPluginBase
         // 更新したので、frame_configsを設定しなおす
         $this->refreshFrameConfigs();
 
-        return;
+        // 完了メッセージ
+        $flash_message = '表示設定を変更しました。';
+        session()->flash("flash_message_for_frame{$frame_id}", $flash_message);
+
+        // リダイレクト先を指定しないため、画面から渡されたredirect_pathに飛ぶ
     }
 
     /**
