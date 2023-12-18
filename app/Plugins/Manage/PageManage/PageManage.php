@@ -5,6 +5,7 @@ namespace App\Plugins\Manage\PageManage;
 use App\Enums\WebsiteType;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
 
 use DB;
 
@@ -713,15 +714,20 @@ class PageManage extends ManagePluginBase
         $migration_directories = Storage::directories('migration/import/pages');
 
         // 移行用に取り込んだページ単位ディレクトリのページ情報
-        $page_in = array();
+        $page_in = [];
+        $migration_directories_page_ids = [];
         foreach ($migration_directories as $migration_directory) {
-            $page_in[] = str_replace('migration/import/pages/', '', $migration_directory);
+            $page_id = (int) str_replace('migration/import/pages/', '', $migration_directory);
+            $page_in[] = $page_id;
+            $migration_directories_page_ids[$page_id] = $migration_directory;
         }
-        //print_r($page_in);
 
         // ページ一覧の取得
         $migration_pages = Page::whereIn('id', $page_in)->get();
-        //var_dump($migration_pages);
+        foreach ($migration_pages as $page) {
+            // ページ毎のディレクトリ更新日時
+            $page->migration_directory_timestamp = Carbon::createFromTimestamp(Storage::lastModified($migration_directories_page_ids[$page_id]))->format('Y/m/d H:i:s');
+        }
 
         // 画面呼び出し
         return view('plugins.manage.page.migration_order', [
