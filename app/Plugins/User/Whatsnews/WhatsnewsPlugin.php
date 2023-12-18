@@ -17,6 +17,7 @@ use App\Models\Core\FrameConfig;
 use App\Models\Core\Plugins;
 use App\Models\User\Whatsnews\Whatsnews;
 
+use App\Enums\ShowType;
 use App\Enums\WhatsnewFrameConfig;
 
 use App\Plugins\User\UserPluginBase;
@@ -567,15 +568,13 @@ class WhatsnewsPlugin extends UserPluginBase
 
         // データ取得（1ページの表示件数指定）
         $whatsnews = Whatsnews::orderBy('created_at', 'desc')
-                              ->paginate(10, ["*"], "frame_{$frame_id}_page");
+            ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'whatsnews_list_buckets', [
+        return $this->view('whatsnews_list_buckets', [
             'whatsnew_frame' => $whatsnew_frame,
             'whatsnews'      => $whatsnews,
-            ]
-        );
+        ]);
     }
 
     /**
@@ -585,49 +584,39 @@ class WhatsnewsPlugin extends UserPluginBase
      * @method_desc 新着情報を新しく作成します。
      * @method_detail 新着情報名や表示条件を入力して新着情報を作成できます。
      */
-    public function createBuckets($request, $page_id, $frame_id, $id = null, $create_flag = false, $message = null, $errors = null)
+    public function createBuckets($request, $page_id, $frame_id, $id = null)
     {
-        // 新規作成フラグを付けて設定変更画面を呼ぶ
-        $create_flag = true;
-        return $this->editBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $errors);
+        return $this->editBuckets($request, $page_id, $frame_id, $id);
     }
 
     /**
      * 新着情報設定変更画面の表示
      */
-    public function editBuckets($request, $page_id, $frame_id, $id = null, $create_flag = false, $message = null, $errors = null)
+    public function editBuckets($request, $page_id, $frame_id, $id = null)
     {
-        // セッション初期化などのLaravel 処理。
-        $request->flash();
+        // コアがbucket_id なしで呼び出してくるため、bucket_id は frame_id から探す。
+        if ($this->action == 'createBuckets') {
+            $bucket_id = null;
+        } else {
+            $bucket_id = $this->getBucketId();
+        }
 
-        // 新着情報＆フレームデータ
-        $whatsnew_frame = $this->getWhatsnewsFrame($frame_id);
+        // 表示中のバケツデータ
+        $whatsnew = $this->getPluginBucket($bucket_id);
 
-        // 新着情報設定データ
-        $whatsnew = new Whatsnews();
-
-        if (!empty($id)) {
-            // id が渡ってくればid が対象
-            $whatsnew = Whatsnews::where('id', $id)->first();
-        } elseif (!empty($whatsnew_frame->bucket_id) && $create_flag == false) {
-            // Frame のbucket_id があれば、bucket_id から新着情報設定データ取得、なければ、新規作成か選択へ誘導
-            $whatsnew = Whatsnews::where('bucket_id', $whatsnew_frame->bucket_id)->first();
+        if (empty($whatsnew->id) && $this->action != 'createBuckets') {
+            // バケツ空テンプレートを呼び出す。
+            return $this->commonView('empty_bucket_setting');
         }
 
         // 選択できるフレームの一覧
         $target_plugins_frames = $this->getTargetPluginsFrames();
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'whatsnews_edit_whatsnew', [
-            'whatsnew_frame'        => $whatsnew_frame,
+        return $this->view('whatsnews_edit_whatsnew', [
             'whatsnew'              => $whatsnew,
             'target_plugins_frames' => $target_plugins_frames,
-            'create_flag'           => $create_flag,
-            'message'               => $message,
-            'errors'                => $errors,
-            ]
-        )->withInput($request->all);
+        ]);
     }
 
     /**
@@ -635,9 +624,6 @@ class WhatsnewsPlugin extends UserPluginBase
      */
     public function saveBuckets($request, $page_id, $frame_id, $id = null)
     {
-        // フレームから、新着の設定取得
-        $whatsnews_frame = $this->getWhatsnewsFrame($frame_id);
-
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'whatsnew_name'                  => ['required'],
@@ -667,19 +653,12 @@ class WhatsnewsPlugin extends UserPluginBase
         ]);
 
         // エラーがあった場合は入力画面に戻る。
-        $message = null;
         if ($validator->fails()) {
-            if (empty($request->whatsnews_id)) {
-                $create_flag = true;
-                return $this->createBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
-            } else {
-                $create_flag = false;
-                return $this->editBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
-            }
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         // 更新後のメッセージ
-        $message = null;
+        $flash_message = null;
 
         if (empty($request->whatsnews_id)) {
             // 画面から渡ってくるwhatsnews_id が空ならバケツと設定データを新規登録
@@ -704,7 +683,7 @@ class WhatsnewsPlugin extends UserPluginBase
                 $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
             }
 
-            $message = '新着情報設定を追加しました。';
+            $flash_message = '新着情報設定を追加しました。';
         } else {
             // whatsnews_id があれば、新着情報設定を更新
             // 新着情報設定の取得
@@ -713,7 +692,7 @@ class WhatsnewsPlugin extends UserPluginBase
             // 新着情報名で、Buckets名も更新する
             Buckets::where('id', $whatsnews->bucket_id)->update(['bucket_name' => $request->whatsnew_name]);
 
-            $message = '新着情報設定を変更しました。';
+            $flash_message = '新着情報設定を変更しました。';
         }
 
         // 新着情報設定
@@ -741,9 +720,11 @@ class WhatsnewsPlugin extends UserPluginBase
         // データ保存
         $whatsnews->save();
 
+        // 完了メッセージ
+        session()->flash("flash_message_for_frame{$frame_id}", $flash_message);
+
         // 新規作成フラグを付けて新着情報設定変更画面を呼ぶ
-        $create_flag = false;
-        return $this->editBuckets($request, $page_id, $frame_id, $id, $create_flag, $message);
+        return collect(['redirect_path' => url('/') . "/plugin/whatsnews/editBuckets/{$page_id}/{$frame_id}#frame-{$frame_id}"]);
     }
 
     /**
@@ -771,14 +752,15 @@ class WhatsnewsPlugin extends UserPluginBase
     /**
      * データ紐づけ変更関数
      */
-    public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
+    public function changeBuckets($request, $page_id, $frame_id, $id = null)
     {
         // FrameのバケツIDの更新
-        Frame::where('id', $frame_id)
-               ->update(['bucket_id' => $request->select_bucket]);
+        Frame::where('id', $frame_id)->update(['bucket_id' => $request->select_bucket]);
 
-        // 新着情報設定選択画面を呼ぶ
-        return $this->listBuckets($request, $page_id, $frame_id, $id);
+        $flash_message = '表示する新着情報を変更しました。';
+        session()->flash("flash_message_for_frame{$frame_id}", $flash_message);
+
+        // リダイレクト先を指定しないため、画面から渡されたredirect_pathに飛ぶ
     }
 
     /**
@@ -790,63 +772,65 @@ class WhatsnewsPlugin extends UserPluginBase
      */
     public function editView($request, $page_id, $frame_id)
     {
+        // 表示中のバケツデータ
+        $whatsnew = $this->getPluginBucket($this->getBucketId());
+
+        if (empty($whatsnew->id)) {
+            // バケツ空テンプレートを呼び出す。
+            return $this->commonView('empty_bucket_setting');
+        }
+
         // 表示テンプレートを呼び出す。
         return $this->view('whatsnews_frame', [
-            'whatsnew' => $this->getPluginBucket($this->getBucketId()),
+            'whatsnew' => $whatsnew,
         ]);
     }
 
     /**
      * フレーム表示設定の保存
      */
-    public function saveView($request, $page_id, $frame_id, $cabinet_id)
+    public function saveView($request, $page_id, $frame_id, $id = null)
     {
-        // フレーム設定保存
-        $this->saveFrameConfigs($request, $frame_id, WhatsnewFrameConfig::getMemberKeys());
-
-        // 更新したので、frame_configsを設定しなおす
-        $this->refreshFrameConfigs();
-
-        return;
-    }
-
-    /**
-     * フレーム設定を保存する。
-     *
-     * @param Illuminate\Http\Request $request リクエスト
-     * @param int $frame_id フレームID
-     * @param array $frame_config_names フレーム設定のname配列
-     */
-    protected function saveFrameConfigs(\Illuminate\Http\Request $request, int $frame_id, array $frame_config_names)
-    {
-
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'thumbnail_size'  => ['numeric'],
-            'post_detail_length'  => ['numeric'],
+            'post_detail_length' => ['nullable','numeric'],
+            'thumbnail_size'     => ['nullable','numeric'],
         ]);
         $validator->setAttributeNames([
-            'thumbnail_size'  => WhatsnewFrameConfig::enum['thumbnail_size'],
-            'post_detail_length'  => WhatsnewFrameConfig::enum['post_detail_length'],
+            'post_detail_length' => WhatsnewFrameConfig::enum['post_detail_length'],
+            'thumbnail_size'     => WhatsnewFrameConfig::enum['thumbnail_size'],
         ]);
+
+        // 条件付入力チェック
+        $validator->sometimes('post_detail_length', ['required', 'numeric'], function ($request) {
+            // 表示するなら、数値必須
+            return $request->post_detail == ShowType::show;
+        });
+        $validator->sometimes('thumbnail_size', ['required', 'numeric'], function ($request) {
+            // 表示するなら、数値必須
+            return $request->thumbnail == ShowType::show;
+        });
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // フレーム設定の定数にあるものがrequest にあれば、保存する。
-        foreach ($frame_config_names as $key => $value) {
+        // フレーム設定保存
+        FrameConfig::saveFrameConfigs($request, $frame_id, WhatsnewFrameConfig::getMemberKeys());
 
-            FrameConfig::updateOrCreate(
-                ['frame_id' => $frame_id, 'name' => $value],
-                ['value' => $request->$value]
-            );
-        }
+        // 更新したので、frame_configsを設定しなおす
+        $this->refreshFrameConfigs();
+
+        // 完了メッセージ
+        $flash_message = '表示設定を変更しました。';
+        session()->flash("flash_message_for_frame{$frame_id}", $flash_message);
+
+        // リダイレクト先を指定しないため、画面から渡されたredirect_pathに飛ぶ
     }
 
     /**
-     *  RSS配信
+     * RSS配信
      */
     public function rss($request, $page_id, $frame_id, $id = null)
     {
