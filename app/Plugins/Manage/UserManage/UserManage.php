@@ -491,6 +491,10 @@ class UserManage extends ManagePluginBase
      */
     public function index($request, $id)
     {
+        // 項目セットID
+        // columns_set_idをURL等で指定時、表示ページ数をクリアするため、ページの処理（セッション）より前に処理する
+        $columns_set_id = $this->getColumnsSetIdFromRequestOrSession($request, 'user.columns_set_id');
+
         /* ページの処理（セッション）
         ----------------------------------------------*/
 
@@ -501,9 +505,6 @@ class UserManage extends ManagePluginBase
 
         /* データの取得（検索）
         ----------------------------------------------*/
-
-        // 項目セットID
-        $columns_set_id = $this->getColumnsSetIdFromRequestOrSession($request, 'user.columns_set_id');
 
         // ユーザーのカラム
         $users_columns = UsersTool::getUsersColumns($columns_set_id);
@@ -530,7 +531,7 @@ class UserManage extends ManagePluginBase
             "plugin_name" => "user",
             "users" => $users,
             'columns_set_id' => $columns_set_id,
-            'columns_sets' => UsersColumnsSet::get(),
+            'columns_sets' => UsersColumnsSet::orderBy('display_sequence')->get(),
             "users_columns" => $users_columns,
             "users_columns_id_select" => $users_columns_id_select,
             "input_cols" => $input_cols,
@@ -558,6 +559,9 @@ class UserManage extends ManagePluginBase
 
         if ($request->filled($variable)) {
             session([$session_name => $request->$variable]);
+
+            // columns_set_idをURL等で指定時、表示ページ数をクリア
+            $request->session()->forget('user_page_condition.page');
         }
 
         return $columns_set_id;
@@ -630,6 +634,9 @@ class UserManage extends ManagePluginBase
 
         session(["user_search_condition" => $user_search_condition]);
 
+        // 検索時、表示ページ数をクリア
+        $request->session()->forget('user_page_condition.page');
+
         // is_search_collapse_show=1で検索エリアを開いたままにできる（オプションプラグイン等で利用）
         return redirect("/manage/user")->with('is_search_collapse_show', $request->is_search_collapse_show);
     }
@@ -699,7 +706,7 @@ class UserManage extends ManagePluginBase
             "user" => $user,
             "original_role_configs" => $original_role_configs,
             'columns_set_id' => $columns_set_id,
-            'columns_sets' => UsersColumnsSet::get(),
+            'columns_sets' => UsersColumnsSet::orderBy('display_sequence')->get(),
             'users_columns' => $users_columns,
             'users_columns_id_select' => $users_columns_id_select,
             'input_cols' => $input_cols,
@@ -794,7 +801,7 @@ class UserManage extends ManagePluginBase
             "users_roles" => $users_roles,
             "original_role_configs" => $original_role_configs,
             'columns_set_id' => $columns_set_id,
-            'columns_sets' => UsersColumnsSet::get(),
+            'columns_sets' => UsersColumnsSet::orderBy('display_sequence')->get(),
             'users_columns' => $users_columns,
             'users_columns_id_select' => $users_columns_id_select,
             'input_cols' => $input_cols,
@@ -1319,7 +1326,7 @@ class UserManage extends ManagePluginBase
             "plugin_name" => "user",
             "configs" => $configs,
             'columns_set_id' => $id,
-            'columns_sets' => UsersColumnsSet::get(),
+            'columns_sets' => UsersColumnsSet::orderBy('display_sequence')->get(),
             "users_columns" => UsersTool::getUsersColumns($id),
         ]);
     }
@@ -1751,7 +1758,7 @@ class UserManage extends ManagePluginBase
             "function"       => __FUNCTION__,
             "plugin_name"    => "user",
             'columns_set_id' => $this->getColumnsSetIdManageDefault(),
-            'columns_sets'   => UsersColumnsSet::get(),
+            'columns_sets' => UsersColumnsSet::orderBy('display_sequence')->get(),
         ]);
     }
 

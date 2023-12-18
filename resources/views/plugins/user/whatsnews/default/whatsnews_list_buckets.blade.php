@@ -2,6 +2,7 @@
  * 編集画面(データ選択)テンプレート
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 新着情報プラグイン
  --}}
@@ -13,8 +14,20 @@
 @endsection
 
 @section("plugin_setting_$frame->id")
-<form action="{{url('/')}}/plugin/whatsnews/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
+
+<script>
+    $(function () {
+        // 有効化
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+</script>
+
+{{-- 登録後メッセージ表示 --}}
+@include('plugins.common.flash_message_for_frame')
+
+<form action="{{url('/')}}/redirect/plugin/whatsnews/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
     {{ csrf_field() }}
+    <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/whatsnews/listBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 
     <div class="form-group {{$frame->getSettingTableClass()}}">
         <table class="table table-hover mb-0">
@@ -46,7 +59,7 @@
 
     <div class="text-center">
         <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span></button>
-        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> 変更</button>
+        <button type="submit" class="btn btn-primary" data-toggle="tooltip" title="表示新着情報変更"><i class="fas fa-check"></i> 変更</button>
     </div>
 </form>
 @endsection

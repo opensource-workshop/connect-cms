@@ -2,15 +2,10 @@
 
 namespace App\Plugins\Manage\SiteManage;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Lang;
-
-use setasign\Fpdi\Tcpdf\Fpdi;
 
 use App\Models\Core\ApiSecret;
 use App\Models\Core\Configs;
@@ -18,7 +13,6 @@ use App\Models\Core\ConfigsLoginPermits;
 use App\Models\Core\Plugins;
 use App\Models\Core\UsersColumnsSet;
 use App\Models\Common\Categories;
-use App\Models\Common\Frame;
 use App\Models\Common\Group;
 use App\Models\Common\Holiday;
 use App\Models\Common\Page;
@@ -214,6 +208,7 @@ class SiteManage extends ManagePluginBase
         $role_ckeck_table["saveMeta"]         = array('admin_site');
         $role_ckeck_table["pageError"]        = array('admin_site');
         $role_ckeck_table["savePageError"]    = array('admin_site');
+        $role_ckeck_table["deleteNoImage"]    = array('admin_site');
         $role_ckeck_table["analytics"]        = array('admin_site');
         $role_ckeck_table["saveAnalytics"]    = array('admin_site');
         $role_ckeck_table["favicon"]          = array('admin_site');
@@ -835,16 +830,13 @@ class SiteManage extends ManagePluginBase
      *  ページエラー設定　表示画面
      *
      * @method_title エラーページ設定
-     * @method_desc 404（該当ページなし）や403（該当ページに権限なし）の際に表示するエラーページを指定できます。
+     * @method_desc 404（該当ページなし）や403（該当ページに権限なし）の際に表示するエラーページを指定できます。また、No Image画像を差し替えられます。
      * @method_detail 指定したエラーページは、通常のページと同じように作成します。また、メニュー表示はOFFにしておきます。
      */
-    public function pageError($request, $id, $errors = null)
+    public function pageError($request, $id)
     {
-        // セッション初期化などのLaravel 処理。
-        $request->flash();
-
-        // 設定されているページエラー設定のリスト取得
-        $configs = Configs::where('category', 'page_error')->get();
+        // ページエラー設定, no-image設定
+        $configs = Configs::where('category', 'page_error')->orWhere('category', 'image_error')->get();
 
         return view('plugins.manage.site.page_error', [
             "function"    => __FUNCTION__,
@@ -857,11 +849,24 @@ class SiteManage extends ManagePluginBase
     /**
      *  ページエラー設定　更新
      */
-    public function savePageError($request, $page_id = null, $errors = array())
+    public function savePageError($request, $id = null)
     {
         // httpメソッド確認
         if (!$request->isMethod('post')) {
             abort(403, '権限がありません。');
+        }
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'no_image' => ['nullable', 'image'],
+        ]);
+        $validator->setAttributeNames([
+            'no_image' => 'No Image画像',
+        ]);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         // 403
@@ -878,8 +883,62 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->page_permanent_link_404]
         );
 
-        // ページ管理画面に戻る
-        return redirect("/manage/site/pageError");
+        // ファイルがアップロードされた
+        if ($request->hasFile('no_image')) {
+            // ファイル名
+            $filename = $request->file('no_image')->getClientOriginalName();
+
+            // ファイルの保存
+            $request->file('no_image')->storeAs('tmp', $filename);
+
+            // ファイルパス
+            $src_file = storage_path() . '/app/tmp/' . $filename;
+            $dst_dir  = public_path() . '/uploads/no_image';
+            $dst_file = $dst_dir . '/' . $filename;
+
+            // ディレクトリの存在チェック
+            if (!File::isDirectory($dst_dir)) {
+                $result = File::makeDirectory($dst_dir);
+            }
+
+            // ディレクトリへファイルの移動
+            if (!rename($src_file, $dst_file)) {
+                die("Couldn't rename file");
+            }
+
+            // no_image
+            $configs = Configs::updateOrCreate(
+                ['name'     => 'no_image'],
+                ['category' => 'image_error',
+                 'value'    => $filename]
+            );
+        }
+
+        return redirect("/manage/site/pageError")->with('flash_message', '更新しました。');
+    }
+
+    /**
+     * No Image 設定 削除
+     */
+    public function deleteNoImage($request)
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        $config = Configs::where('name', 'no_image')->first();
+        if (empty($config)) {
+            abort(404);
+        }
+
+        // ファイル削除
+        $dst_file  = public_path() . '/uploads/no_image/' . $config->value;
+        File::delete($dst_file);
+
+        $config->delete();
+
+        return redirect("/manage/site/pageError")->with('flash_message', 'No Image画像を削除しました。');
     }
 
     /**
