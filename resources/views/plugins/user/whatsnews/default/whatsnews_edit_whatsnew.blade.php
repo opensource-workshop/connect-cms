@@ -19,45 +19,30 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
 @endsection
 
 @section("plugin_setting_$frame->id")
-@if ($errors)
-    <div class="alert alert-danger" style="margin-top: 10px;">
-        <i class="fas fa-exclamation-circle"></i>
-        エラーがあります。詳しくは各項目を参照してください。
-    </div>
-@elseif (isset($whatsnew) && !$whatsnew->id)
-    <div class="alert alert-warning" style="margin-top: 10px;">
-        <i class="fas fa-exclamation-circle"></i>
-        設定画面から、使用する新着情報を選択するか、作成してください。
-    </div>
-@else
-    <div class="alert alert-info" style="margin-top: 10px;">
-        <i class="fas fa-exclamation-circle"></i>
 
-        @if ($message)
-            {{$message}}
-        @else
-            @if (empty($whatsnew) || $create_flag)
-                新しい新着情報設定を登録します。
-            @else
-                新着情報設定を変更します。
-            @endif
-        @endif
-    </div>
-@endif
+{{-- 共通エラーメッセージ 呼び出し --}}
+@include('plugins.common.errors_form_line')
+{{-- 登録後メッセージ表示 --}}
+@include('plugins.common.flash_message_for_frame')
 
-@if (isset($whatsnew))
-@if (!$whatsnew->id && !$create_flag)
-@else
-<form action="{{url('/')}}/plugin/whatsnews/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
-    {{ csrf_field() }}
-    <div id="app_{{ $frame->id }}">
-
-    {{-- create_flag がtrue の場合、新規作成するためにwhatsnews_id を空にする --}}
-    @if ($create_flag)
-        <input type="hidden" name="whatsnews_id" value="">
+<div class="alert alert-info">
+    <i class="fas fa-exclamation-circle"></i>
+    @if (empty($whatsnew->id))
+        新しい新着情報設定を登録します。
     @else
-        <input type="hidden" name="whatsnews_id" value="{{$whatsnew->id}}">
+        新着情報設定を変更します。
     @endif
+</div>
+
+<form action="{{url('/')}}/redirect/plugin/whatsnews/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="post">
+    @if (empty($whatsnew->id))
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/whatsnews/createBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
+    @else
+        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/whatsnews/editBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
+    @endif
+    {{ csrf_field() }}
+    <input type="hidden" name="whatsnews_id" value="{{$whatsnew->id}}">
+    <div id="app_{{ $frame->id }}">
 
     {{-- バケツ名 --}}
     <div class="form-group row">
@@ -464,7 +449,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                 </button>
                 <button type="submit" class="btn btn-primary form-horizontal mr-2"><i class="fas fa-check"></i>
                     <span class="{{$frame->getSettingButtonCaptionClass()}}">
-                    @if (empty($whatsnew) || $create_flag)
+                    @if (empty($whatsnew->id))
                         登録
                     @else
                         変更
@@ -473,23 +458,18 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                 </button>
             </div>
             {{-- 既存新着情報設定の場合は削除処理のボタンも表示 --}}
-            @if ($create_flag)
-            @else
+            @if ($whatsnew->id)
                 <div class="col-3 text-right">
-                    <a data-toggle="collapse" href="#collapse{{$whatsnew_frame->id}}">
+                    <a data-toggle="collapse" href="#collapse{{$frame->id}}">
                         <span class="btn btn-danger"><i class="fas fa-trash-alt"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> 削除</span></span>
                     </a>
                 </div>
             @endif
         </div>
     </div>
-    </div>
 </form>
-@endif
-@endif
 
-@if (isset($whatsnew))
-<div id="collapse{{$whatsnew_frame->id}}" class="collapse" style="margin-top: 8px;">
+<div id="collapse{{$frame->id}}" class="collapse" style="margin-top: 8px;">
     <div class="card border-danger">
         <div class="card-body">
             <span class="text-danger">新着情報設定を削除します。<br>元に戻すことはできないため、よく確認して実行してください。</span>
@@ -503,7 +483,6 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
         </div>
     </div>
 </div>
-@endif
 
 <script>
     new Vue({
