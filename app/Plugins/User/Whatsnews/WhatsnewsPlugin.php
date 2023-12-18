@@ -567,15 +567,13 @@ class WhatsnewsPlugin extends UserPluginBase
 
         // データ取得（1ページの表示件数指定）
         $whatsnews = Whatsnews::orderBy('created_at', 'desc')
-                              ->paginate(10, ["*"], "frame_{$frame_id}_page");
+            ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'whatsnews_list_buckets', [
+        return $this->view('whatsnews_list_buckets', [
             'whatsnew_frame' => $whatsnew_frame,
             'whatsnews'      => $whatsnews,
-            ]
-        );
+        ]);
     }
 
     /**
@@ -753,14 +751,15 @@ class WhatsnewsPlugin extends UserPluginBase
     /**
      * データ紐づけ変更関数
      */
-    public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
+    public function changeBuckets($request, $page_id, $frame_id, $id = null)
     {
         // FrameのバケツIDの更新
-        Frame::where('id', $frame_id)
-               ->update(['bucket_id' => $request->select_bucket]);
+        Frame::where('id', $frame_id)->update(['bucket_id' => $request->select_bucket]);
 
-        // 新着情報設定選択画面を呼ぶ
-        return $this->listBuckets($request, $page_id, $frame_id, $id);
+        $flash_message = '表示する新着情報を変更しました。';
+        session()->flash("flash_message_for_frame{$frame_id}", $flash_message);
+
+        // リダイレクト先を指定しないため、画面から渡されたredirect_pathに飛ぶ
     }
 
     /**
