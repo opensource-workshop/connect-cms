@@ -133,7 +133,7 @@
                         {{-- ページ毎のディレクトリ更新日時 --}}
                         <span class="ml-2 mr-2">({{ $migration_page->migration_directory_timestamp }})</span>
                         {{-- 削除ボタン --}}
-                        <button type="button" class="btn btn-link p-0" onClick="submit_migration_file_delete('{{$migration_page->page_id_dir}}');">
+                        <button type="button" class="btn btn-link p-0" onClick="submit_migration_file_delete('{{$migration_page->delete_file_page_id_dir}}');">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>

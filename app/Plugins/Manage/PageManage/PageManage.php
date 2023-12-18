@@ -731,7 +731,7 @@ class PageManage extends ManagePluginBase
         foreach ($migration_pages as $page) {
             // ページ毎のディレクトリ更新日時
             $page->migration_directory_timestamp = Carbon::createFromTimestamp(Storage::lastModified($migration_directories_page_ids[$page_id]['migration_directory']))->format('Y/m/d H:i:s');
-            $page->page_id_dir = $migration_directories_page_ids[$page_id]['page_id_dir'];
+            $page->delete_file_page_id_dir = $migration_directories_page_ids[$page_id]['page_id_dir'];
         }
 
         // 画面呼び出し
