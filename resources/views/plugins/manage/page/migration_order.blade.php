@@ -22,6 +22,12 @@
     @include('plugins.manage.page.page_edit_tab')
 
     <div class="card-body">
+
+        {{-- 共通エラーメッセージ 呼び出し --}}
+        @include('plugins.common.errors_form_line')
+        {{-- 登録後メッセージ表示 --}}
+        @include('plugins.common.flash_message')
+
         <div class="alert alert-danger">
             <h1>本機能（Webスクレイピング）を利用するに当たっての注意点</h1>
             <ul>
@@ -98,42 +104,38 @@
     </div>
 
     <script type="text/javascript">
-        {{-- 移行データ削除用のsubmit JavaScript --}}
-        function submit_migration_file_delete(delete_file_page_id) {
-
+        /** 取り込み済みデータ削除 */
+        function submit_migration_file_delete(delete_file_page_id_dir) {
             if (confirm("取り込み済みデータを削除します。\nよろしいですか？")) {
-                // 続き
+                form_migration_file_delete.delete_file_page_id_dir.value = delete_file_page_id_dir;
+                form_migration_file_delete.submit();
             }
-            else {
-                return false;
-            }
-
-            form_migration_file_delete.delete_file_page_id.value = delete_file_page_id;
-            form_migration_file_delete.submit();
         }
     </script>
-    <form action="{{url('/manage/page/migrationFileDelete')}}/{{$current_page->id}}" method="POST" name="form_migration_file_delete">
+    <form action="{{url('/manage/page/migrationFileDelete')}}/{{$current_page->id}}" method="post" name="form_migration_file_delete">
         {{ csrf_field() }}
-        <input type="hidden" name="delete_file_page_id" value="">
+        <input type="hidden" name="delete_file_page_id_dir" value="">
     </form>
 
-
     <div class="card-body">
-        <form action="{{url('/manage/page/migrationImort')}}/{{$current_page->id}}" method="POST" class="form-horizontal">
+        <form action="{{url('/manage/page/migrationImort')}}/{{$current_page->id}}" method="post" class="form-horizontal">
             {{ csrf_field() }}
 
             <div class="form-group row">
                 <label for="page_name" class="col-md-3 col-form-label text-md-right pt-0">取り込み済み<br class="d-none d-md-inline" />移行データ<br class="d-none d-md-inline">（取り込み日時）</label>
                 <div class="col-md-9">
                     @foreach($migration_pages as $migration_page)
-                    <div class="custom-control custom-radio">
+                    <div class="custom-control custom-radio ">
                         <input type="radio" value="{{$migration_page->id}}" id="migration_page_{{$migration_page->id}}" name="migration_page_id" class="custom-control-input">
                         {{-- 取り込み済み移行データ名（＝移行先ページ名） --}}
                         <label class="custom-control-label" for="migration_page_{{$migration_page->id}}">{{$migration_page->page_name}}</label>
+                        <br class="d-sm-none">
                         {{-- ページ毎のディレクトリ更新日時 --}}
                         <span class="ml-2 mr-2">({{ $migration_page->migration_directory_timestamp }})</span>
                         {{-- 削除ボタン --}}
-                        <a href="#" onClick="submit_migration_file_delete({{$migration_page->id}});"><i class="fas fa-trash-alt mt-1 ml-1"></i></a>
+                        <button type="button" class="btn btn-link p-0" onClick="submit_migration_file_delete('{{$migration_page->page_id_dir}}');">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                     </div>
                     @endforeach
                     @include('plugins.common.errors_inline', ['name' => 'migration_page_id'])

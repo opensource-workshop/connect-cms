@@ -717,16 +717,21 @@ class PageManage extends ManagePluginBase
         $page_in = [];
         $migration_directories_page_ids = [];
         foreach ($migration_directories as $migration_directory) {
-            $page_id = (int) str_replace('migration/import/pages/', '', $migration_directory);
+            $page_id_dir = str_replace('migration/import/pages/', '', $migration_directory);
+            $page_id = (int) $page_id_dir;
             $page_in[] = $page_id;
-            $migration_directories_page_ids[$page_id] = $migration_directory;
+            $migration_directories_page_ids[$page_id] = [
+                'migration_directory' => $migration_directory,
+                'page_id_dir'         => $page_id_dir,
+            ];
         }
 
         // ページ一覧の取得
         $migration_pages = Page::whereIn('id', $page_in)->get();
         foreach ($migration_pages as $page) {
             // ページ毎のディレクトリ更新日時
-            $page->migration_directory_timestamp = Carbon::createFromTimestamp(Storage::lastModified($migration_directories_page_ids[$page_id]))->format('Y/m/d H:i:s');
+            $page->migration_directory_timestamp = Carbon::createFromTimestamp(Storage::lastModified($migration_directories_page_ids[$page_id]['migration_directory']))->format('Y/m/d H:i:s');
+            $page->page_id_dir = $migration_directories_page_ids[$page_id]['page_id_dir'];
         }
 
         // 画面呼び出し
@@ -749,16 +754,15 @@ class PageManage extends ManagePluginBase
     public function migrationFileDelete($request, $page_id)
     {
         // 削除対象のディレクトリが指定されていること。
-        if (!$request->has("delete_file_page_id") && !empty($request->delete_file_page_id)) {
-            // 指示された画面に戻る。
-            return $this->migrationOrder($request, $page_id);
+        if ($request->delete_file_page_id_dir) {
+            // 指定されたディレクトリを削除
+            Storage::deleteDirectory("migration/import/pages/{$request->delete_file_page_id_dir}");
+
+            session()->flash('flash_message', '指定した取り込み済み移行データを削除しました。');
         }
 
-        // 指定されたディレクトリを削除
-        Storage::deleteDirectory("migration/import/pages/" . $request->delete_file_page_id);
-
         // 指示された画面に戻る。
-        return $this->migrationOrder($request, $page_id);
+        return redirect("manage/page/migrationOrder/{$page_id}");
     }
 
     /**
