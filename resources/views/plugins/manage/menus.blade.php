@@ -11,12 +11,12 @@
     <div class="collapse navbar-collapse mt-2" id="Navber">
         @include('plugins.manage.menus_list')
         {{-- オプションプラグインの管理者メニュー --}}
-        @includeIf('plugins_option.manage.menus_list')
+        @includeFirst(['plugins_option.manage.menus_list', 'plugins.manage.menus_list_option'])
     </div>
 </nav>
 
 <nav class="list-group d-none d-lg-block">
     @include('plugins.manage.menus_list')
     {{-- オプションプラグインの管理者メニュー --}}
-    @includeIf('plugins_option.manage.menus_list')
+    @includeFirst(['plugins_option.manage.menus_list', 'plugins.manage.menus_list_option'])
 </nav>
