@@ -17,6 +17,7 @@ use App\Models\Core\FrameConfig;
 use App\Models\Core\Plugins;
 use App\Models\User\Whatsnews\Whatsnews;
 
+use App\Enums\ShowType;
 use App\Enums\WhatsnewFrameConfig;
 
 use App\Plugins\User\UserPluginBase;
@@ -788,10 +789,35 @@ class WhatsnewsPlugin extends UserPluginBase
     /**
      * フレーム表示設定の保存
      */
-    public function saveView($request, $page_id, $frame_id, $cabinet_id)
+    public function saveView($request, $page_id, $frame_id, $id = null)
     {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'post_detail_length' => ['nullable','numeric'],
+            'thumbnail_size'     => ['nullable','numeric'],
+        ]);
+        $validator->setAttributeNames([
+            'post_detail_length' => WhatsnewFrameConfig::enum['post_detail_length'],
+            'thumbnail_size'     => WhatsnewFrameConfig::enum['thumbnail_size'],
+        ]);
+
+        // 条件付入力チェック
+        $validator->sometimes('post_detail_length', ['required', 'numeric'], function ($request) {
+            // 表示するなら、数値必須
+            return $request->post_detail == ShowType::show;
+        });
+        $validator->sometimes('thumbnail_size', ['required', 'numeric'], function ($request) {
+            // 表示するなら、数値必須
+            return $request->thumbnail == ShowType::show;
+        });
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
         // フレーム設定保存
-        $this->saveFrameConfigs($request, $frame_id, WhatsnewFrameConfig::getMemberKeys());
+        FrameConfig::saveFrameConfigs($request, $frame_id, WhatsnewFrameConfig::getMemberKeys());
 
         // 更新したので、frame_configsを設定しなおす
         $this->refreshFrameConfigs();
@@ -804,42 +830,7 @@ class WhatsnewsPlugin extends UserPluginBase
     }
 
     /**
-     * フレーム設定を保存する。
-     *
-     * @param Illuminate\Http\Request $request リクエスト
-     * @param int $frame_id フレームID
-     * @param array $frame_config_names フレーム設定のname配列
-     */
-    protected function saveFrameConfigs(\Illuminate\Http\Request $request, int $frame_id, array $frame_config_names)
-    {
-
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'thumbnail_size'  => ['numeric'],
-            'post_detail_length'  => ['numeric'],
-        ]);
-        $validator->setAttributeNames([
-            'thumbnail_size'  => WhatsnewFrameConfig::enum['thumbnail_size'],
-            'post_detail_length'  => WhatsnewFrameConfig::enum['post_detail_length'],
-        ]);
-
-        // エラーがあった場合は入力画面に戻る。
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        // フレーム設定の定数にあるものがrequest にあれば、保存する。
-        foreach ($frame_config_names as $key => $value) {
-
-            FrameConfig::updateOrCreate(
-                ['frame_id' => $frame_id, 'name' => $value],
-                ['value' => $request->$value]
-            );
-        }
-    }
-
-    /**
-     *  RSS配信
+     * RSS配信
      */
     public function rss($request, $page_id, $frame_id, $id = null)
     {

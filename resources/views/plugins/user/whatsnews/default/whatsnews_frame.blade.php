@@ -24,7 +24,7 @@
     フレームごとの表示設定を変更します。
 </div>
 
-<form action="{{url('/')}}/redirect/plugin/whatsnews/saveView/{{$page->id}}/{{$frame_id}}/{{$whatsnew->id}}#frame-{{$frame->id}}" method="POST" class="">
+<form action="{{url('/')}}/redirect/plugin/whatsnews/saveView/{{$page->id}}/{{$frame_id}}/{{$whatsnew->id}}#frame-{{$frame->id}}" method="post">
     {{ csrf_field() }}
     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/whatsnews/editView/{{$page->id}}/{{$frame_id}}/{{$whatsnew->bucket_id}}#frame-{{$frame_id}}">
 
@@ -56,8 +56,8 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">本文の表示文字数</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="post_detail_length" value="{{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::post_detail_length) }}" class="form-control col-sm-3">
-            @if ($errors && $errors->has('post_detail_length')) <div class="text-danger">{{$errors->first('post_detail_length')}}</div> @endif
+            <input type="text" name="post_detail_length" value="{{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::post_detail_length) }}" class="form-control col-sm-3 @if($errors->has('post_detail_length')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'post_detail_length'])
             <small class="text-muted">※ 0の場合、全文が表示されます。</small>
         </div>
     </div>
@@ -90,8 +90,8 @@
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">最大画像サイズ</label>
         <div class="{{$frame->getSettingInputClass()}}">
-            <input type="text" name="thumbnail_size" value="{{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}" class="form-control col-sm-3">
-            @if ($errors && $errors->has('thumbnail_size')) <div class="text-danger">{{$errors->first('thumbnail_size')}}</div> @endif
+            <input type="text" name="thumbnail_size" value="{{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}" class="form-control col-sm-3 @if($errors->has('thumbnail_size')) border-danger @endif">
+            @include('plugins.common.errors_inline', ['name' => 'thumbnail_size'])
             <small class="text-muted">※ 縦横の長い方に適用。0の場合、200が適用されます。</small>
         </div>
     </div>
