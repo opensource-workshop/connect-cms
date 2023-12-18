@@ -1,5 +1,5 @@
 {{--
- * 新着情報編集画面テンプレート。
+ * 新着情報編集画面テンプレート
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
