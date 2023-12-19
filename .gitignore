@@ -64,6 +64,7 @@ composer-option*
 
 # Dusk
 /tests/tmp/*
+/tests/Browser/screenshots/*
 
 # Docker
 /docker/db
