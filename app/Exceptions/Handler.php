@@ -71,6 +71,8 @@ class Handler extends ExceptionHandler
     {
         if ($exception instanceof TokenMismatchException) {
             // CSRFトークン有効期限切れ(419エラー)
+            session()->flash('flash_message_for_header_class', 'alert-warning');
+            session()->flash('flash_message_for_header', 'トークンの有効期限が切れたため、画面を再表示しました。');
             return redirect()->back();
         }
         return parent::render($request, $exception);
