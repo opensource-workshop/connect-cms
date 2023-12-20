@@ -6,10 +6,10 @@ namespace App\Models\Common;
 // use RecursiveArrayIterator;
 
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request as FacadeRequest;
 
 use Kalnoy\Nestedset\NodeTrait;
@@ -21,6 +21,7 @@ class Page extends Model
 {
     use NodeTrait;
     use ConnectCommonTrait;
+    use HasFactory;
 
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
@@ -142,7 +143,7 @@ class Page extends Model
                        })
                        ->get();
 
-//Log::debug(json_encode( $ret, JSON_UNESCAPED_UNICODE));
+//\Log::debug(json_encode( $ret, JSON_UNESCAPED_UNICODE));
 
             return $ret;
         } else {
@@ -223,7 +224,7 @@ class Page extends Model
             return $pages;
         }
 
-        //Log::debug(json_encode( $tree, JSON_UNESCAPED_UNICODE));
+        //\Log::debug(json_encode( $tree, JSON_UNESCAPED_UNICODE));
         return $tree;
     }
 
