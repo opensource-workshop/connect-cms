@@ -103,6 +103,7 @@ class PageManage extends ManagePluginBase
         $return_obj = 'flat';
         $pages = Page::defaultOrderWithDepth($return_obj);
 
+
         // ページ権限を取得してGroup オブジェクトに保持する。
         $page_roles = PageRole::join('groups', 'groups.id', '=', 'page_roles.group_id')
                 ->whereNull('groups.deleted_at')
