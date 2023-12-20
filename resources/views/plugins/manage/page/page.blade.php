@@ -408,10 +408,5 @@ use App\Models\Common\Page;
             </tbody>
             </table>
         </div><!-- /table-responsive -->
-
-        {{-- <!-- ページング処理 -->
-        <div class="text-center form-group">
-            {{$pages->links()}}
-        </div> --}}
     @endif
 @endsection

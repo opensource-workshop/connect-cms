@@ -101,7 +101,7 @@ class PageManage extends ManagePluginBase
     {
         // ページデータの取得(laravel-nestedset 使用)
         $return_obj = 'flat';
-        $pages = Page::defaultOrderWithDepth($return_obj, null, null, false, true);
+        $pages = Page::defaultOrderWithDepth($return_obj);
 
         // ページ権限を取得してGroup オブジェクトに保持する。
         $page_roles = PageRole::join('groups', 'groups.id', '=', 'page_roles.group_id')
@@ -115,8 +115,7 @@ class PageManage extends ManagePluginBase
         }
 
         // 移動先用にコピー
-        // $pages_select = $pages;
-        $pages_select = Page::defaultOrderWithDepth($return_obj);
+        $pages_select = $pages;
 
         // テーマの取得
         $themes = $this->getThemes();
