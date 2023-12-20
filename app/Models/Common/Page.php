@@ -75,7 +75,7 @@ class Page extends Model
         // current_page_obj がない場合は、ページデータを全て取得（管理画面など）
         // 表示順は入れ子集合モデルの順番
         if (empty($current_page_obj)) {
-            return self::with('page_roles')->defaultOrder()->withDepth()->get();
+            return self::defaultOrder()->with('page_roles')->withDepth()->get();
         }
 
         // メニューで表示するページが絞られている場合は、選択したページのみ取得する。
@@ -95,7 +95,7 @@ class Page extends Model
                 if (!empty($where_page_ids)) {
                     $query_menu->whereIn('id', $where_page_ids);
                 }
-            })->withDepth()->get();
+            })->with('page_roles')->withDepth()->get();
         }
 
         // 使用する言語リストの取得
@@ -135,6 +135,7 @@ class Page extends Model
                             $query_menu->whereIn('id', $where_page_ids);
                         }
                        })
+                       ->with('page_roles')
                        ->withDepth()
                        ->get();
 
@@ -154,6 +155,7 @@ class Page extends Model
                             $query_menu->whereIn('id', $where_page_ids);
                         }
                        })
+                       ->with('page_roles')
                        ->withDepth()
                        ->get();
         }
