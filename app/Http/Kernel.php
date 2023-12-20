@@ -72,7 +72,7 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
 
-        // Connect-CMS ページ処理（一般プラグインページ用）
+        // Connect-CMS ページ処理（一般プラグインページ, ページ管理等で利用）
         'connect.page' => \App\Http\Middleware\ConnectPage::class,
 
         // Connect-CMS 閲覧パスワードページ処理（一般プラグインページ用）
