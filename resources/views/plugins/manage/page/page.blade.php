@@ -74,7 +74,7 @@ use App\Models\Common\Page;
                 })
             });
             {{-- ページ階層移動アイコンを押下した際にターゲットのページをセットする --}}
-            function select_page (source_id, page_name) {
+            function select_page(source_id, page_name) {
                 // ページセット
                 form_move_page.action = form_move_page.action.replace(/movePage(.*$)/g, 'movePage');
                 form_move_page.action = form_move_page.action + "/" + source_id;
@@ -82,7 +82,7 @@ use App\Models\Common\Page;
                 let page_name_txt = '「 <span class="source-page lead">' + page_name + '</span>」を「<span class="destination-page lead"></span>」へ移動します';
                 $('.modal-title').html(page_name_txt);
                 // ラジオボタンを外す
-                if($('input:radio[name="level_move_modal_page_id"]:checked')[0]){
+                if ($('input:radio[name="level_move_modal_page_id"]:checked')[0]) {
                     $('input:radio[name="level_move_modal_page_id"]:checked')[0].checked = false;
                 }
                 // 選択不可を解除
@@ -136,9 +136,9 @@ use App\Models\Common\Page;
                                 <label class="custom-control-label" for="level_move_modal_page_0">最上位</label>
                             </div>
                         @php
-                            $tmp_pages = $pages;
+                            $tmp_pages = $pages_select;
                         @endphp
-                        @foreach($pages as $page_item)
+                        @foreach($pages_select as $page_item)
                             {{-- 以下で子孫のIDをdatasetに追加する,子孫がいないページはチェックしない --}}
                             @php
                                 $arr_descendant_ids = [];
@@ -407,6 +407,11 @@ use App\Models\Common\Page;
                 @endforeach
             </tbody>
             </table>
+        </div><!-- /table-responsive -->
+
+        <!-- ページング処理 -->
+        <div class="text-center form-group">
+            {{$pages->links()}}
         </div>
     @endif
 @endsection

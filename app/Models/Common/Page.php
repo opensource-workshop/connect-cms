@@ -69,12 +69,18 @@ class Page extends Model
     /**
      * 言語設定があれば、特定の言語ページのみに絞る
      */
-    public static function getPages($current_page_obj = null, $menu = null, $setting_mode = false)
+    private static function getPages($current_page_obj = null, $menu = null, $setting_mode = false, $is_paginate = false)
     {
         // current_page_obj がない場合は、ページデータを全て取得（管理画面など）
         // 表示順は入れ子集合モデルの順番
         if (empty($current_page_obj)) {
-            return self::defaultOrder()->get();
+            if ($is_paginate) {
+                // ページャーで取得
+                return self::defaultOrder()->paginate(100);
+            } else {
+                // getで取得(通常)
+                return self::defaultOrder()->get();
+            }
         }
 
         // メニューで表示するページが絞られている場合は、選択したページのみ取得する。
@@ -162,13 +168,13 @@ class Page extends Model
      * @param int $frame_id
      * @return view
      */
-    public static function defaultOrderWithDepth($format = null, $current_page_obj = null, $menu = null, $setting_mode = false)
+    public static function defaultOrderWithDepth($format = null, $current_page_obj = null, $menu = null, $setting_mode = false, $is_paginate = false)
     {
         // ページデータを全て取得
         // 表示順は入れ子集合モデルの順番
         // メニューの表示チェックは、読むデータを絞るものではなく、表示のON/OFF に使用する。（本来の階層は維持する）
         //$pages = self::getPages($current_page_obj, $menu, $setting_mode);
-        $pages = self::getPages($current_page_obj, null, $setting_mode);
+        $pages = self::getPages($current_page_obj, null, $setting_mode, $is_paginate);
 
         //Log::debug($pages);
 
