@@ -75,13 +75,13 @@ class Page extends Model
         // current_page_obj がない場合は、ページデータを全て取得（管理画面など）
         // 表示順は入れ子集合モデルの順番
         if (empty($current_page_obj)) {
-            if ($is_paginate) {
-                // ページャーで取得
-                return self::defaultOrder()->withDepth()->paginate(1000);
-            } else {
-                // getで取得(通常)
-                return self::defaultOrder()->withDepth()->get();
-            }
+            // if ($is_paginate) {
+            //     // ページャーで取得
+            //     return self::with('page_roles')->defaultOrder()->withDepth()->paginate(1000);
+            // } else {
+            // getで取得(通常)
+            return self::with('page_roles')->defaultOrder()->withDepth()->get();
+            // }
         }
 
         // メニューで表示するページが絞られている場合は、選択したページのみ取得する。
@@ -598,7 +598,12 @@ class Page extends Model
     {
         // 自分のページから親を遡って取得
         if (empty($page_tree)) {
-            $page_tree = Page::reversed()->ancestorsAndSelf($this->id);
+            if ($this->depth === 0) {
+                // 深さ指定あり 0 なら遡る必要なし。自ページを返してDB参照を軽減
+                $page_tree = collect([$this]);
+            } else {
+                $page_tree = Page::reversed()->ancestorsAndSelf($this->id);
+            }
         }
         // \Log::debug(var_export($page_tree, true));
 
@@ -608,7 +613,6 @@ class Page extends Model
         }
 
         // トップページを取得
-        // $top_page = Page::orderBy('_lft', 'asc')->first();
         $top_page = self::getTopPage();
 
         // 自分のページツリーの最後（root）にトップが入っていなければ、トップページをページツリーの最後に追加する

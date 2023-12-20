@@ -409,9 +409,9 @@ use App\Models\Common\Page;
             </table>
         </div><!-- /table-responsive -->
 
-        <!-- ページング処理 -->
+        {{-- <!-- ページング処理 -->
         <div class="text-center form-group">
             {{$pages->links()}}
-        </div>
+        </div> --}}
     @endif
 @endsection
