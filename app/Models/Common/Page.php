@@ -77,10 +77,10 @@ class Page extends Model
         if (empty($current_page_obj)) {
             if ($is_paginate) {
                 // ページャーで取得
-                return self::defaultOrder()->paginate(100);
+                return self::defaultOrder()->withDepth()->paginate(1000);
             } else {
                 // getで取得(通常)
-                return self::defaultOrder()->get();
+                return self::defaultOrder()->withDepth()->get();
             }
         }
 
@@ -101,7 +101,7 @@ class Page extends Model
                 if (!empty($where_page_ids)) {
                     $query_menu->whereIn('id', $where_page_ids);
                 }
-            })->get();
+            })->withDepth()->get();
         }
 
         // 使用する言語リストの取得
@@ -141,6 +141,7 @@ class Page extends Model
                             $query_menu->whereIn('id', $where_page_ids);
                         }
                        })
+                       ->withDepth()
                        ->get();
 
 //\Log::debug(json_encode( $ret, JSON_UNESCAPED_UNICODE));
@@ -159,6 +160,7 @@ class Page extends Model
                             $query_menu->whereIn('id', $where_page_ids);
                         }
                        })
+                       ->withDepth()
                        ->get();
         }
     }
@@ -177,7 +179,7 @@ class Page extends Model
         //$pages = self::getPages($current_page_obj, $menu, $setting_mode);
         $pages = self::getPages($current_page_obj, null, $setting_mode, $is_paginate);
 
-        //Log::debug($pages);
+        //\Log::debug($pages);
 
         // メニューの階層を表現するために、一度ツリーにしたものを取得し、クロージャで深さを追加
         $tree = $pages->toTree();
@@ -189,12 +191,13 @@ class Page extends Model
             $where_page_ids = explode(',', $menu->page_ids);
         }
 
-        // クロージャでページ配列を再帰ループし、深さを追加する。
+        // クロージャでページ配列を再帰ループ. 深さは withDepth() で自動設定できるため、ここでは設定しない。
         // テンプレートでは深さをもとにデザイン処理する。
-        $traverse = function ($pages, $prefix = '-', $depth = -1, $display_flag = 1) use (&$traverse, $where_page_ids, $menu) {
-            $depth = $depth+1;
+        // $traverse = function ($pages, $prefix = '-', $depth = -1, $display_flag = 1) use (&$traverse, $where_page_ids, $menu) {
+        $traverse = function ($pages, $display_flag = 1) use (&$traverse, $where_page_ids, $menu) {
+            // $depth = $depth+1;
             foreach ($pages as $page) {
-                $page->depth = $depth;
+                // $page->depth = $depth;
                 //$page->page_name = $page->page_name;
 
                 // 表示フラグを親を引き継いで保持
@@ -215,7 +218,8 @@ class Page extends Model
                 }
 
                 // 再帰呼び出し(表示フラグはメニュー設定の反映されていないページ情報のものを渡す)
-                $traverse($page->children, $prefix.'-', $depth, $page_display_flag);
+                // $traverse($page->children, $prefix.'-', $depth, $page_display_flag);
+                $traverse($page->children, $page_display_flag);
             }
         };
         $traverse($tree);
