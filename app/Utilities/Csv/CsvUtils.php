@@ -140,4 +140,32 @@ class CsvUtils
 
         return $errors;
     }
+
+    /**
+     * レスポンス時のCSVデータ 取得
+     */
+    public static function getResponseCsvData(array $csv_array, ?string $character_code): string
+    {
+        // データ
+        $csv_data = '';
+        foreach ($csv_array as $csv_line) {
+            foreach ($csv_line as $csv_col) {
+                $csv_data .= '"' . $csv_col . '",';
+            }
+            // 末尾カンマを削除
+            $csv_data = substr($csv_data, 0, -1);
+            $csv_data .= "\n";
+        }
+
+        // 文字コード変換
+        if ($character_code == CsvCharacterCode::utf_8) {
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::utf_8);
+            // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
+            $csv_data = self::addUtf8Bom($csv_data);
+        } else {
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::sjis_win);
+        }
+
+        return $csv_data;
+    }
 }
