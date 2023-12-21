@@ -3,7 +3,9 @@
  *
  * @param obj $frames 表示すべきフレームの配列
  * @param obj $page 現在表示中のページ
+ *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
 --}}
@@ -31,7 +33,6 @@
 
     {{-- ヘッダーエリア --}}
     @if ($layouts_info[0]['exists'])
-        {{-- @if (isset($configs_array['browser_width_header']) && $configs_array['browser_width_header']->value == '100%') --}}
         @if (Configs::getConfigsValue($cc_configs, 'browser_width_header') == '100%')
     <header id="ccHeaderArea" class="ccHeaderArea row p-0 mx-auto">
         @else
@@ -53,14 +54,8 @@
     {{-- 中央エリア --}}
     @php
         // センターエリア任意クラスを抽出（カンマ設定時はランダムで１つ設定）
-        // $center_area_optional_class = null;
-        // if(isset($configs_array['center_area_optional_class'])){
-        //     $classes = explode(',', $configs_array['center_area_optional_class']->value);
-        //     $center_area_optional_class = $classes[array_rand($classes)];
-        // }
         $center_area_optional_class = Configs::getConfigsRandValue($cc_configs, 'center_area_optional_class');
     @endphp
-        {{-- @if (isset($configs_array['browser_width_center']) && $configs_array['browser_width_center']->value == '100%') --}}
         @if (Configs::getConfigsValue($cc_configs, 'browser_width_center') == '100%')
     <div id="ccCenterArea" class="ccCenterArea row mx-auto p-0 d-flex align-items-start {{ $center_area_optional_class }}">
         @else
@@ -114,11 +109,6 @@
     {{-- フッターエリア --}}
     @php
         // フッターエリア任意クラスを抽出（カンマ設定時はランダムで１つ設定）
-        // $footer_area_optional_class = null;
-        // if(isset($configs_array['footer_area_optional_class'])){
-        //     $classes = explode(',', $configs_array['footer_area_optional_class']->value);
-        //     $footer_area_optional_class = $classes[array_rand($classes)];
-        // }
         $footer_area_optional_class = Configs::getConfigsRandValue($cc_configs, 'footer_area_optional_class');
     @endphp
     @if ($layouts_info[4]['exists'])
@@ -152,6 +142,6 @@
     </footer>
     @endif
 
-</div>{{-- /container --}}
+</div>{{-- /container-fluid --}}
 
 @endsection
