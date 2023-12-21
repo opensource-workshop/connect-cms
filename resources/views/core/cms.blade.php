@@ -10,38 +10,15 @@
 {{-- 大元のレイアウトの継承とページコンテンツは大元のレイアウトに埋め込むために @section で定義する --}}
 @extends('layouts.app')
 @section('content')
-<div class="container-fluid p-0">
-
-
-{{-- *********************************************************** --}}
-
-{{-- <a href="#" data-href="/test_dir/load.html" data-toggle="modal" data-target="#modalDetails">リンク</a> --}}
-{{-- <a href="#" data-href="{{URL::to('/')}}/test/1" data-toggle="modal" data-target="#modalDetails">リンク</a> --}}
-
-<!-- Modal -->
-<div class="modal fade" id="modalDetails" tabindex="-1" role="dialog" data-backdrop="static">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-        </div>
-    </div>
-</div>
 
 <script>
-$(function () {
-    //任意のリンクをモーダル内に読み込む
-    $("#modalDetails").on("show.bs.modal", function(e) {
-        var link = $(e.relatedTarget); //クリックしたセルのオブジェクトデータ
-        $(this).find(".modal-content").load(link.attr("data-href"));
+    $(function () {
+        // フラッシュメッセージのfadeout
+        $('.connect-flash').fadeOut(10000);
     });
-});
-
-// フラッシュメッセージのfadeout
-$(function(){
-    $('.connect-flash').fadeOut(10000);
-});
 </script>
 
-{{-- *********************************************************** --}}
+<div class="container-fluid p-0">
     {{-- フラッシュメッセージ表示(fadeout あり) --}}
     @if (session('flash_message_for_add_plugin'))
         <div class="connect-flash alert alert-success text-center">

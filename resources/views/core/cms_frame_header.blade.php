@@ -166,14 +166,6 @@ if ($can_edit_frame) {
 
             {{-- 変更画面へのリンク --}}
             <a href="{{url('/')}}/plugin/{{$plugin_instances[$frame->frame_id]->frame->plugin_name}}/{{$plugin_instances[$frame->frame_id]->getFirstFrameEditAction()}}/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame->frame_id}}" title="{{$plugin_name_full}}設定"><small><i class="fas fa-cog {{$class_header_bg}} cc-font-color"></i></small></a>
-
-{{-- モーダル実装 --}}
-            {{-- 変更画面へのリンク --}}
-{{--
-            <a href="#" data-href="{{URL::to('/')}}/core/frame/edit/{{$page->id}}/{{ $frame->frame_id }}" data-toggle="modal" data-target="#modalDetails"><span class="glyphicon glyphicon-edit {{$class_header_bg}}"></a>
---}}
-
-            {{-- 削除。POSTのためのフォーム --}}
         </div>
 {{--
         @else
