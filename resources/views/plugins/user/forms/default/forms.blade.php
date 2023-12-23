@@ -32,7 +32,7 @@
             <div class="form-group row">
 
                 @switch($form_column->column_type)
-                    @case("group")
+                    @case(FormColumnType::group)
                         @if (isset($is_template_label_sm_4))
                             {{-- label-sm-4テンプレート --}}
                             <label class="col-sm-4 control-label">{{$form_column->column_name}} @if ($form_column->required)<strong class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger lead' }}">{{__('messages.required')}}</strong> @endif</label>
@@ -54,6 +54,11 @@
                         <div class="col-sm pr-0">
                             <div class="container-fluid row p-0">
                                 @foreach($form_column->group as $group_row)
+                                    @if ($form_column->column_type == FormColumnType::group)
+                                        {{-- まとめ行2重設定エラー --}}
+                                        @include('plugins.user.forms.default.include_error_multiple_group')
+                                        @continue
+                                    @endif
 
                                     {{-- 項目名。ラジオとチェックボックスは選択肢にラベルを使っているため、項目名のラベルにforを付けない。
                                         時間FromToは入力項目のtitleで項目説明しているため、項目名のラベルにforを付けない。--}}
