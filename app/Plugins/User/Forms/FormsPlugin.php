@@ -769,9 +769,10 @@ class FormsPlugin extends UserPluginBase
                     // まとめ行で指定している項目について、バリデータールールをセット
                     $validator_array = $this->getValidatorRule($validator_array, $group_item, $request);
                 }
+            } else {
+                // まとめ行以外の項目について、バリデータールールをセット
+                $validator_array = $this->getValidatorRule($validator_array, $forms_column, $request);
             }
-            // まとめ行以外の項目について、バリデータールールをセット
-            $validator_array = $this->getValidatorRule($validator_array, $forms_column, $request);
         }
 
         // 入力値をトリム
