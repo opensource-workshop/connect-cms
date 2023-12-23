@@ -54,7 +54,7 @@
                         <div class="col-sm pr-0">
                             <div class="container-fluid row p-0">
                                 @foreach($form_column->group as $group_row)
-                                    @if ($form_column->column_type == FormColumnType::group)
+                                    @if ($group_row->column_type == FormColumnType::group)
                                         {{-- まとめ行2重設定エラー --}}
                                         @include('plugins.user.forms.default.include_error_multiple_group')
                                         @continue
