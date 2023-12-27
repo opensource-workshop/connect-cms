@@ -90,7 +90,7 @@ class UsersTool
                 'users_columns.variable_name',
                 'uploads.client_original_name'
             )
-            ->leftJoin('users_columns', 'users_columns.id', '=', 'users_input_cols.users_columns_id')
+            ->join('users_columns', 'users_columns.id', '=', 'users_input_cols.users_columns_id')
             ->leftJoin('uploads', 'uploads.id', '=', 'users_input_cols.value')
             ->whereIn('users_id', $users_ids)
             ->orderBy('users_id', 'asc')
