@@ -4,6 +4,7 @@
  * @param obj $frames 表示すべきフレームの配列
  * @param obj $page 現在表示中のページ
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
 --}}
@@ -160,6 +161,28 @@
             </div>
         </div>
 
+        @php
+            if ($frame->isExpandNarrow()) {
+                // 右・左エリア = スマホ表示と同等にする
+                $date_col_class = 'col-12';
+                $text_muted_col_class = 'col-12';
+            } else {
+                // メインエリア・フッターエリア
+                $date_col_class = 'col-md-9';
+                $text_muted_col_class = 'offset-md-3 col-md-9';
+            }
+        @endphp
+
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}">body class名</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <input type="text" name="classname_body" class="form-control" value="{{$frame->classname_body}}">
+            </div>
+            <small class="{{$text_muted_col_class}} text-muted">
+                ※ フレーム内bodyにclassを設定できます。例えばスマートフォンのみ表示のclass（<code>d-block d-md-none</code>）を設定しても、フレームヘッダーは消えずフレーム設定が可能です。
+            </small>
+        </div>
+
         {{-- フレーム表示設定 --}}
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass()}} py-sm-0">フレーム表示設定</label>
@@ -215,18 +238,6 @@
                     @endforeach
                 </div>
             </div>
-
-            @php
-            if ($frame->isExpandNarrow()) {
-                // 右・左エリア = スマホ表示と同等にする
-                $date_col_class = 'col-12';
-                $text_muted_col_class = 'col-12';
-            } else {
-                // メインエリア・フッターエリア
-                $date_col_class = 'col-md-9';
-                $text_muted_col_class = 'offset-md-3 col-md-9';
-            }
-            @endphp
 
             {{-- 公開日時From --}}
             <div class="form-group row">
