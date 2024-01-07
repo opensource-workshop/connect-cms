@@ -4,13 +4,10 @@ namespace App\Http\Controllers\Core;
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-// use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 use View;
-
-// use App\Http\Controllers\Core\ConnectController;
 
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
@@ -27,6 +24,7 @@ use App\Traits\ConnectCommonTrait;
  * ClassControllerから呼び出されるもの
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
  * @package Controller
@@ -160,6 +158,7 @@ class FrameCore
                       'page_only'         => ($request->page_only == '') ? 0 : $request->page_only,
                       'default_hidden'    => ($request->default_hidden == '') ? 0 : $request->default_hidden,
                       'classname'         => $request->classname,
+                      'classname_body'    => $request->classname_body,
                       'plug_name'         => $request->plug_name,
                       'none_hidden'       => ($request->none_hidden == '') ? 0 : $request->none_hidden,
                       'content_open_type' => $request->content_open_type,

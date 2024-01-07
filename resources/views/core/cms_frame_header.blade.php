@@ -3,7 +3,9 @@
  *
  * @param obj $frames 表示すべきフレームの配列
  * @param obj $page 現在表示中のページ
- * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
 --}}
@@ -109,6 +111,24 @@ if ($can_edit_frame) {
                         {{-- 期限付き公開の場合は日付も表示 --}}
                         {{ '（' . Carbon::parse($frame->content_open_date_from)->format('Y/n/j H:i:s') . ' - ' . Carbon::parse($frame->content_open_date_to)->format('Y/n/j H:i:s') . '）' }}
                     @endif
+                </span>
+            </small>
+        @endif
+
+        @if ($frame->classname_body)
+            <script type="text/javascript">
+                $(function () {
+                    // ツールチップ有効化
+                    $('[data-toggle="tooltip"]').tooltip()
+                })
+            </script>
+
+            <small>
+                <span class="badge badge-warning">
+                    <a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_setting/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}">
+                        <i class="fas fa-cog"></i>
+                    </a>
+                    body class設定あり  <span class="fas fa-info-circle" data-toggle="tooltip" title="空表示の場合、例えばスマートフォンのみ表示する内容が隠れている場合がありますので、もしフレーム削除する場合はご注意ください。">
                 </span>
             </small>
         @endif

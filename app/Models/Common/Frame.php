@@ -35,6 +35,7 @@ class Frame extends Model
         'page_only',
         'default_hidden',
         'classname',
+        'classname_body',
         'none_hidden',
         'bucket_id',
         'display_sequence',
