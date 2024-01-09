@@ -61,6 +61,7 @@ composer-option*
 /resources/views/plugins_option/*
 /resources/views/mail_option/*
 /resources/views/auth_option/*
+/public/js/option/*
 
 # Dusk
 /tests/tmp/*
