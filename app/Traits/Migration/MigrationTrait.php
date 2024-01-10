@@ -887,7 +887,7 @@ trait MigrationTrait
         $this->putMonitor(3, "importSite() Start.");
 
         // 移行の初期処理
-        if ($added == false) {
+        if ($added == false && $redo === true) {
             $this->clearData($target, true);
         }
 
