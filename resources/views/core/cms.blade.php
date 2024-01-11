@@ -3,45 +3,24 @@
  *
  * @param obj $frames 表示すべきフレームの配列
  * @param obj $page 現在表示中のページ
+ *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
 --}}
 {{-- 大元のレイアウトの継承とページコンテンツは大元のレイアウトに埋め込むために @section で定義する --}}
 @extends('layouts.app')
 @section('content')
-<div class="container-fluid p-0">
-
-
-{{-- *********************************************************** --}}
-
-{{-- <a href="#" data-href="/test_dir/load.html" data-toggle="modal" data-target="#modalDetails">リンク</a> --}}
-{{-- <a href="#" data-href="{{URL::to('/')}}/test/1" data-toggle="modal" data-target="#modalDetails">リンク</a> --}}
-
-<!-- Modal -->
-<div class="modal fade" id="modalDetails" tabindex="-1" role="dialog" data-backdrop="static">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-        </div>
-    </div>
-</div>
 
 <script>
-$(function () {
-    //任意のリンクをモーダル内に読み込む
-    $("#modalDetails").on("show.bs.modal", function(e) {
-        var link = $(e.relatedTarget); //クリックしたセルのオブジェクトデータ
-        $(this).find(".modal-content").load(link.attr("data-href"));
+    $(function () {
+        // フラッシュメッセージのfadeout
+        $('.connect-flash').fadeOut(10000);
     });
-});
-
-// フラッシュメッセージのfadeout
-$(function(){
-    $('.connect-flash').fadeOut(10000);
-});
 </script>
 
-{{-- *********************************************************** --}}
+<div class="container-fluid p-0">
     {{-- フラッシュメッセージ表示(fadeout あり) --}}
     @if (session('flash_message_for_add_plugin'))
         <div class="connect-flash alert alert-success text-center">
@@ -49,16 +28,11 @@ $(function(){
         </div>
     @endif
 
-    {{-- フラッシュメッセージ表示 --}}
-    @if (session('flash_message_for_header'))
-        <div class="alert {{ session('flash_message_for_header_class') ?? 'alert-success' }} text-center">
-            {{ session('flash_message_for_header') }}
-        </div>
-    @endif
+    {{-- フラッシュメッセージ ヘッダー表示 --}}
+    @include('common.flash_message_for_header')
 
     {{-- ヘッダーエリア --}}
     @if ($layouts_info[0]['exists'])
-        {{-- @if (isset($configs_array['browser_width_header']) && $configs_array['browser_width_header']->value == '100%') --}}
         @if (Configs::getConfigsValue($cc_configs, 'browser_width_header') == '100%')
     <header id="ccHeaderArea" class="ccHeaderArea row p-0 mx-auto">
         @else
@@ -80,14 +54,8 @@ $(function(){
     {{-- 中央エリア --}}
     @php
         // センターエリア任意クラスを抽出（カンマ設定時はランダムで１つ設定）
-        // $center_area_optional_class = null;
-        // if(isset($configs_array['center_area_optional_class'])){
-        //     $classes = explode(',', $configs_array['center_area_optional_class']->value);
-        //     $center_area_optional_class = $classes[array_rand($classes)];
-        // }
         $center_area_optional_class = Configs::getConfigsRandValue($cc_configs, 'center_area_optional_class');
     @endphp
-        {{-- @if (isset($configs_array['browser_width_center']) && $configs_array['browser_width_center']->value == '100%') --}}
         @if (Configs::getConfigsValue($cc_configs, 'browser_width_center') == '100%')
     <div id="ccCenterArea" class="ccCenterArea row mx-auto p-0 d-flex align-items-start {{ $center_area_optional_class }}">
         @else
@@ -141,11 +109,6 @@ $(function(){
     {{-- フッターエリア --}}
     @php
         // フッターエリア任意クラスを抽出（カンマ設定時はランダムで１つ設定）
-        // $footer_area_optional_class = null;
-        // if(isset($configs_array['footer_area_optional_class'])){
-        //     $classes = explode(',', $configs_array['footer_area_optional_class']->value);
-        //     $footer_area_optional_class = $classes[array_rand($classes)];
-        // }
         $footer_area_optional_class = Configs::getConfigsRandValue($cc_configs, 'footer_area_optional_class');
     @endphp
     @if ($layouts_info[4]['exists'])
@@ -179,6 +142,6 @@ $(function(){
     </footer>
     @endif
 
-</div>{{-- /container --}}
+</div>{{-- /container-fluid --}}
 
 @endsection

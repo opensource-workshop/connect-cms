@@ -6,10 +6,10 @@ namespace App\Models\Common;
 // use RecursiveArrayIterator;
 
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request as FacadeRequest;
 
 use Kalnoy\Nestedset\NodeTrait;
@@ -21,6 +21,7 @@ class Page extends Model
 {
     use NodeTrait;
     use ConnectCommonTrait;
+    use HasFactory;
 
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
@@ -69,12 +70,12 @@ class Page extends Model
     /**
      * 言語設定があれば、特定の言語ページのみに絞る
      */
-    public static function getPages($current_page_obj = null, $menu = null, $setting_mode = false)
+    private static function getPages($current_page_obj = null, $menu = null, $setting_mode = false)
     {
         // current_page_obj がない場合は、ページデータを全て取得（管理画面など）
         // 表示順は入れ子集合モデルの順番
         if (empty($current_page_obj)) {
-            return self::defaultOrder()->get();
+            return self::defaultOrder()->with('page_roles')->withDepth()->get();
         }
 
         // メニューで表示するページが絞られている場合は、選択したページのみ取得する。
@@ -94,7 +95,7 @@ class Page extends Model
                 if (!empty($where_page_ids)) {
                     $query_menu->whereIn('id', $where_page_ids);
                 }
-            })->get();
+            })->with('page_roles')->withDepth()->get();
         }
 
         // 使用する言語リストの取得
@@ -134,9 +135,11 @@ class Page extends Model
                             $query_menu->whereIn('id', $where_page_ids);
                         }
                        })
+                       ->with('page_roles')
+                       ->withDepth()
                        ->get();
 
-//Log::debug(json_encode( $ret, JSON_UNESCAPED_UNICODE));
+//\Log::debug(json_encode( $ret, JSON_UNESCAPED_UNICODE));
 
             return $ret;
         } else {
@@ -152,6 +155,8 @@ class Page extends Model
                             $query_menu->whereIn('id', $where_page_ids);
                         }
                        })
+                       ->with('page_roles')
+                       ->withDepth()
                        ->get();
         }
     }
@@ -170,7 +175,7 @@ class Page extends Model
         //$pages = self::getPages($current_page_obj, $menu, $setting_mode);
         $pages = self::getPages($current_page_obj, null, $setting_mode);
 
-        //Log::debug($pages);
+        //\Log::debug($pages);
 
         // メニューの階層を表現するために、一度ツリーにしたものを取得し、クロージャで深さを追加
         $tree = $pages->toTree();
@@ -182,12 +187,13 @@ class Page extends Model
             $where_page_ids = explode(',', $menu->page_ids);
         }
 
-        // クロージャでページ配列を再帰ループし、深さを追加する。
+        // クロージャでページ配列を再帰ループ. 深さは withDepth() で自動設定できるため、ここでは設定しない。
         // テンプレートでは深さをもとにデザイン処理する。
-        $traverse = function ($pages, $prefix = '-', $depth = -1, $display_flag = 1) use (&$traverse, $where_page_ids, $menu) {
-            $depth = $depth+1;
+        // $traverse = function ($pages, $prefix = '-', $depth = -1, $display_flag = 1) use (&$traverse, $where_page_ids, $menu) {
+        $traverse = function ($pages, $display_flag = 1) use (&$traverse, $where_page_ids, $menu) {
+            // $depth = $depth+1;
             foreach ($pages as $page) {
-                $page->depth = $depth;
+                // $page->depth = $depth;
                 //$page->page_name = $page->page_name;
 
                 // 表示フラグを親を引き継いで保持
@@ -208,7 +214,8 @@ class Page extends Model
                 }
 
                 // 再帰呼び出し(表示フラグはメニュー設定の反映されていないページ情報のものを渡す)
-                $traverse($page->children, $prefix.'-', $depth, $page_display_flag);
+                // $traverse($page->children, $prefix.'-', $depth, $page_display_flag);
+                $traverse($page->children, $page_display_flag);
             }
         };
         $traverse($tree);
@@ -217,7 +224,7 @@ class Page extends Model
             return $pages;
         }
 
-        //Log::debug(json_encode( $tree, JSON_UNESCAPED_UNICODE));
+        //\Log::debug(json_encode( $tree, JSON_UNESCAPED_UNICODE));
         return $tree;
     }
 
@@ -587,7 +594,12 @@ class Page extends Model
     {
         // 自分のページから親を遡って取得
         if (empty($page_tree)) {
-            $page_tree = Page::reversed()->ancestorsAndSelf($this->id);
+            if ($this->depth === 0) {
+                // 深さ指定あり 0 なら遡る必要なし。自ページを返してDB参照を軽減
+                $page_tree = collect([$this]);
+            } else {
+                $page_tree = Page::reversed()->ancestorsAndSelf($this->id);
+            }
         }
         // \Log::debug(var_export($page_tree, true));
 
@@ -597,7 +609,6 @@ class Page extends Model
         }
 
         // トップページを取得
-        // $top_page = Page::orderBy('_lft', 'asc')->first();
         $top_page = self::getTopPage();
 
         // 自分のページツリーの最後（root）にトップが入っていなければ、トップページをページツリーの最後に追加する

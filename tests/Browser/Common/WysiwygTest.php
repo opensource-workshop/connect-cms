@@ -319,7 +319,12 @@ class WysiwygTest extends DuskTestCase
                     ->screenshot('common/wysiwyg/table/images/table_cell_detail_detail');
 
             // 一度開きなおす。
-            $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $content->id . '#frame-' . $this->frame->id);
+            $browser->visit('/')
+                    ->pause(500);
+
+            $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $content->id . '#frame-' . $this->frame->id)
+                    ->pause(500)
+                    ->screenshot('common/wysiwyg/table/images/edit_reopen');
 
             // 表のドロップダウン
             $browser->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(6) button:nth-child(1) div')
@@ -341,7 +346,12 @@ class WysiwygTest extends DuskTestCase
                     ->screenshot('common/wysiwyg/table/images/table_row_detail_detail');
 
             // 一度開きなおす。
-            $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $content->id . '#frame-' . $this->frame->id);
+            $browser->visit('/')
+                    ->pause(500);
+
+            $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $content->id . '#frame-' . $this->frame->id)
+                    ->pause(500)
+                    ->screenshot('common/wysiwyg/table/images/edit_reopen2');
 
             // 表のドロップダウン
             $browser->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(6) button:nth-child(1) div')
@@ -599,6 +609,11 @@ class WysiwygTest extends DuskTestCase
     {
         // 画面
         $this->browse(function (Browser $browser) {
+
+            // 一度開きなおす。
+            $browser->visit('/')
+                    ->pause(500);
+
             $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
                     ->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(12) button:nth-child(1)')
                     ->pause(500)
@@ -631,6 +646,10 @@ class WysiwygTest extends DuskTestCase
     {
         // 画面
         $this->browse(function (Browser $browser) {
+            // 一度開きなおす。
+            $browser->visit('/')
+                    ->pause(500);
+
             $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
                     ->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(12) button:nth-child(2)')
                     ->pause(500)
@@ -663,6 +682,10 @@ class WysiwygTest extends DuskTestCase
     {
         // 画面
         $this->browse(function (Browser $browser) {
+            // 一度開きなおす。
+            $browser->visit('/')
+                    ->pause(500);
+
             $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
                     ->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(12) button:nth-child(3)')
                     ->pause(500)
@@ -713,6 +736,10 @@ class WysiwygTest extends DuskTestCase
     {
         // 画面
         $this->browse(function (Browser $browser) {
+            // 一度開きなおす。
+            $browser->visit('/')
+                    ->pause(500);
+
             $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
                     ->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(13) button')
                     ->pause(500)
@@ -740,6 +767,10 @@ class WysiwygTest extends DuskTestCase
     {
         // 画面
         $this->browse(function (Browser $browser) {
+            // 一度開きなおす。
+            $browser->visit('/')
+                    ->pause(500);
+
             $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
                     ->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(14) button')
                     ->pause(500)
@@ -771,6 +802,10 @@ class WysiwygTest extends DuskTestCase
 
         // 画面
         $this->browse(function (Browser $browser) {
+            // 一度開きなおす。
+            $browser->visit('/')
+                    ->pause(500);
+
             // 編集画面を開き、WYSIWYGエディタのセレクタをターゲットにCTRL＋Aキーを押して、全選択させる。その後に翻訳プラグインを起動することで、翻訳するテキストが選択されている状態。
             $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
                     ->keys('#mce_0_ifr', ['{control}', 'a'])
@@ -826,6 +861,10 @@ class WysiwygTest extends DuskTestCase
 
         // 画面
         $this->browse(function (Browser $browser) {
+            // 一度開きなおす。
+            $browser->visit('/')
+                    ->pause(500);
+
             $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
                     ->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(15) button:nth-child(2)')
                     ->pause(500)

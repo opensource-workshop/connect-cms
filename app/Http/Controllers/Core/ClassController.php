@@ -32,8 +32,7 @@ class ClassController extends ConnectController
      */
     public function __construct()
     {
-        // ClassController::invokeGetCore, invokePostCore のみ指定（only）
-        $this->middleware('connect.page')->only(['invokeGetCore', 'invokePostCore']);
+        $this->middleware('connect.page');
     }
 
     /**

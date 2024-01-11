@@ -3,7 +3,9 @@
  *
  * @param obj $frames 表示すべきフレームの配列
  * @param obj $page 現在表示中のページ
- * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
 --}}
@@ -112,6 +114,24 @@ if ($can_edit_frame) {
                 </span>
             </small>
         @endif
+
+        @if ($frame->classname_body)
+            <script type="text/javascript">
+                $(function () {
+                    // ツールチップ有効化
+                    $('[data-toggle="tooltip"]').tooltip()
+                })
+            </script>
+
+            <small>
+                <span class="badge badge-warning">
+                    <a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_setting/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}">
+                        <i class="fas fa-cog"></i>
+                    </a>
+                    body class設定あり  <span class="fas fa-info-circle" data-toggle="tooltip" title="空表示の場合、例えばスマートフォンのみ表示する内容が隠れている場合がありますので、もしフレーム削除する場合はご注意ください。">
+                </span>
+            </small>
+        @endif
     @endcan
 
     {{-- ログインしていて、権限があれば、編集機能を有効にする --}}
@@ -166,14 +186,6 @@ if ($can_edit_frame) {
 
             {{-- 変更画面へのリンク --}}
             <a href="{{url('/')}}/plugin/{{$plugin_instances[$frame->frame_id]->frame->plugin_name}}/{{$plugin_instances[$frame->frame_id]->getFirstFrameEditAction()}}/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame->frame_id}}" title="{{$plugin_name_full}}設定"><small><i class="fas fa-cog {{$class_header_bg}} cc-font-color"></i></small></a>
-
-{{-- モーダル実装 --}}
-            {{-- 変更画面へのリンク --}}
-{{--
-            <a href="#" data-href="{{URL::to('/')}}/core/frame/edit/{{$page->id}}/{{ $frame->frame_id }}" data-toggle="modal" data-target="#modalDetails"><span class="glyphicon glyphicon-edit {{$class_header_bg}}"></a>
---}}
-
-            {{-- 削除。POSTのためのフォーム --}}
         </div>
 {{--
         @else

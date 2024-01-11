@@ -2,6 +2,7 @@
  * 確認画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
 --}}
@@ -58,6 +59,12 @@
         @case(FormColumnType::group)
             <div class="form-inline">
                 @foreach($form_column->group as $group_row)
+                    @if ($group_row->column_type == FormColumnType::group)
+                        {{-- まとめ行2重設定エラー --}}
+                        @include('plugins.user.forms.default.include_error_multiple_group')
+                        @continue
+                    @endif
+
                     <label class="control-label" style="vertical-align: top; margin-right: 10px;@if (!$loop->first) margin-left: 30px;@endif">{{$group_row->column_name}}</label>
                     {{-- bugfix: グループ行が各カラムタイプを考慮してなかったため対応 --}}
                     @include('plugins.user.forms.default.forms_confirm_column_' . $group_row->column_type, ['form_obj' => $group_row])
