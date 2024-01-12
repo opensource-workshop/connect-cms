@@ -48,7 +48,7 @@ class CurlUtils
         curl_close($ch);
 
         // 実行結果のログを出力する（Response codeが200番台なら成功）
-        if (200 <= $http_code  && $http_code <= 299) {
+        if (200 <= $http_code && $http_code <= 299) {
             Log::debug("cURL [{$options[CURLOPT_CUSTOMREQUEST]}] {$options[CURLOPT_URL]} : succeed. Response code: $http_code\n$result");
         } else {
             Log::info("cURL [{$options[CURLOPT_CUSTOMREQUEST]}] {$options[CURLOPT_URL]} : failed. Response code: $http_code\n$result");
@@ -76,6 +76,9 @@ class CurlUtils
             CURLOPT_CUSTOMREQUEST => $method,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => config('connect.CURL_TIMEOUT'),
+            CURLOPT_FOLLOWLOCATION => true,     // Locationをたどる（リダイレクト対応）
+            CURLOPT_MAXREDIRS => 5,             // 最大リダイレクト回数
+            CURLOPT_AUTOREFERER => true,        // リダイレクト時、ヘッダのRefererを自動追加
         ];
 
         // ヘッダー設定
