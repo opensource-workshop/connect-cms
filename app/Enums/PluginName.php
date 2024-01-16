@@ -31,6 +31,7 @@ final class PluginName extends EnumsBase
     const receives = 'Receives';
     const linklists = 'Linklists';
     const photoalbums = 'Photoalbums';
+    const rsses = 'Rsses';
 
     // key/valueの連想配列
     const enum = [
@@ -54,6 +55,7 @@ final class PluginName extends EnumsBase
         self::receives => 'データ収集',
         self::linklists => 'リンクリスト',
         self::photoalbums => 'フォトアルバム',
+        self::rsses => 'RSS',
     ];
 
     /**
