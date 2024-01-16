@@ -215,7 +215,7 @@ class RssesPlugin extends UserPluginBase
         }
     }
 
-    // 
+    // 期限切れチェック
     private function isExpireat($last_fetch_at, $interval_min)
     {
         // 0 の場合は都度取得する
