@@ -237,7 +237,7 @@
                 <label class="col-md-3 col-form-label text-md-right"></label>
                 <div class="col">
                     <label class="control-label">承認完了メールフォーマット</label>
-                    <textarea name="user_register_approved_mail_format" class="form-control" rows=5 placeholder="（例）ユーザー登録が承認されました。&#13;&#10;登録したログインID、パスワードでログインしてください。&#13;&#10;----------------------------------&#13;&#10;[[body]]&#13;&#10;----------------------------------">{{Configs::getConfigsValueAndOld($configs, 'user_register_approved_mail_format')}}</textarea>
+                    <textarea name="user_register_approved_mail_format" class="form-control" rows=5 placeholder="（例）ユーザー登録が承認されました。&#13;&#10;登録したログインID、パスワードでログインしてください。&#13;&#10;----------------------------------&#13;&#10;ログインID：[[login_id]]&#13;&#10;----------------------------------">{{Configs::getConfigsValueAndOld($configs, 'user_register_approved_mail_format')}}</textarea>
                     <small class="text-muted">
                         ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
                         ※ [[login_id]] を記述すると該当部分に登録内容が入ります。<br>
