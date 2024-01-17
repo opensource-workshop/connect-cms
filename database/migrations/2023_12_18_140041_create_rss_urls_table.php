@@ -26,7 +26,7 @@ class CreateRssUrlsTable extends Migration
             $table->integer('item_count')->default(10)->comment('RSS取得数');
             $table->integer('display_flag')->default(0)->comment('表示フラグ');
             $table->integer('display_sequence')->comment('表示順');
-            $table->longText('xml')->comment('キャッシュ用');
+            $table->longText('xml')->nullable()->comment('キャッシュ用');
             $table->timestamp('xml_updated_at')->nullable()->comment('XML取得時間');
 
             // 共通項目
