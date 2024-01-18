@@ -2315,12 +2315,12 @@ class UserManage extends ManagePluginBase
      */
     private function sendMailApproved($user)
     {
-        // $configs = Configs::get();
         $configs = Configs::where('category', 'general')
             ->orWhere(function ($query) use ($user) {
                 $query->where('category', 'user_register')
                     ->where('additional1', $user->columns_set_id);
-            });
+            })
+            ->get();
 
         // 登録者にメール送信する
         $user_register_user_mail_send_flag = Configs::getConfigsValue($configs, 'user_register_user_mail_send_flag');

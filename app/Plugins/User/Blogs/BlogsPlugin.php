@@ -257,7 +257,7 @@ class BlogsPlugin extends UserPluginBase
     /**
      *  ブログ記事一覧取得
      */
-    private function getPosts($blog_frame, $option_count = null, ?int $categories_id = null, ?int $created_id = null)
+    private function getPosts($blog_frame, $option_count = null, ?int $categories_id = null, ?int $created_id = null, ?bool $is_paginate = true)
     {
         $count = $option_count;
         if ($count < 0) {
@@ -324,9 +324,17 @@ class BlogsPlugin extends UserPluginBase
         }
 
         // 続き
-        $blogs_posts = $blogs_query->orderBy('posted_at', 'desc')
-            ->orderBy('contents_id', 'desc')
-            ->paginate($count, ["*"], "frame_{$blog_frame->id}_page");
+        $blogs_query->orderBy('posted_at', 'desc')
+            ->orderBy('contents_id', 'desc');
+
+        // データ取得
+        if ($is_paginate) {
+            // ページャーで取得
+            $blogs_posts = $blogs_query->paginate($count, ["*"], "frame_{$blog_frame->id}_page");
+        } else {
+            // getで取得
+            $blogs_posts = $blogs_query->get();
+        }
 
         foreach ($blogs_posts as &$blogs_post) {
             // 続きを読むボタン名・続きを閉じるボタン名が空なら、初期値セットする
@@ -597,7 +605,7 @@ WHERE status = 0
             $created_id = session('created_id_'. $this->frame->id);
 
             // 投稿者絞込用リスト
-            $tmp_blogs_posts = $this->getPosts($blog_frame, $view_count);
+            $tmp_blogs_posts = $this->getPosts($blog_frame, null, null, null, false);
             $created_ids = $tmp_blogs_posts->groupBy('created_id')->keys();
             $created_users = User::select('id', 'name')->whereIn('id', $created_ids)->get();
         }
