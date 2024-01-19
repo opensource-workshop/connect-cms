@@ -9,5 +9,7 @@
 @endphp
 
 @if ($errors && $errors->has($name))
-    <div class="text-danger {{$class}}"><i class="fas fa-exclamation-triangle"></i> {{$errors->first($name)}}</div>
+    @foreach($errors->get($name) as $error)
+        <div class="text-danger {{$class}}"><i class="fas fa-exclamation-triangle"></i> {{$error}}</div>
+    @endforeach
 @endif
