@@ -293,7 +293,7 @@ class RssesPlugin extends UserPluginBase
                     'link' => $link,
                     'description' => $description,
                     'pubDateTime' => $pubDateTime,
-                    'pubDate' => date("Y/n/j", strtotime($pubDateTime)),
+                    'pubDate' => date("Y/m/d", strtotime($pubDateTime)),
             ];
         }
         return $ret_items;
