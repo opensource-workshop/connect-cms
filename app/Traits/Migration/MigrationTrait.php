@@ -622,7 +622,6 @@ trait MigrationTrait
             Buckets::where('plugin_name', 'rsses')->delete();
             MigrationMapping::where('target_source_table', 'rsses')->delete();
         }
-
     }
 
     /**
