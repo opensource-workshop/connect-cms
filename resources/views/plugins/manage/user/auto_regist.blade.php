@@ -72,11 +72,11 @@
                 <label class="col-md-3 col-form-label text-md-right pt-0">管理者の承認</label>
                 <div class="col pt-0">
                     <div class="custom-control custom-radio custom-control-inline">
-                        <input type="radio" value="1" id="require_approval_enable" name="user_registration_require_approval" class="custom-control-input" @if ($require_approval === '1') checked="checked" @endif>
+                        <input type="radio" value="1" id="require_approval_enable" name="user_registration_require_approval" class="custom-control-input" @if ($require_approval === '1') checked="checked" @endif data-toggle="collapse" data-target="#collapse_register_approved" aria-expanded="false" aria-controls="collapse_register_approved">
                         <label class="custom-control-label" for="require_approval_enable" id="label_require_approval_enable">必要</label>
                     </div>
                     <div class="custom-control custom-radio custom-control-inline">
-                        <input type="radio" value="0" id="require_approval_disable" name="user_registration_require_approval" class="custom-control-input" @if ($require_approval === '0') checked="checked" @endif>
+                        <input type="radio" value="0" id="require_approval_disable" name="user_registration_require_approval" class="custom-control-input" @if ($require_approval === '0') checked="checked" @endif data-toggle="collapse" data-target="#collapse_register_approved" aria-expanded="false" aria-controls="collapse_register_approved">
                         <label class="custom-control-label" for="require_approval_disable" id="label_require_approval_disable">不要</label>
                     </div>
                     <small class="form-text text-muted">ユーザ登録に管理者の承認が必要か選択してください。</small>
@@ -221,30 +221,25 @@
                 </div>
             </div>
 
-            {{-- 承認完了メール --}}
-            <div class="form-group row" id="div_user_register_approved_mail_subject">
-                <label class="col-md-3 col-form-label text-md-right pt-0">承認完了メール</label>
-                <div class="col">
-                    <label class="control-label">承認完了メール件名</label>
-                    <input type="text" name="user_register_approved_mail_subject" value="{{Configs::getConfigsValueAndOld($configs, 'user_register_approved_mail_subject')}}" class="form-control">
-                    <small class="text-muted">
-                        ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
-                    </small>
+            <div class="collapse" id="collapse_register_approved">
+                {{-- 承認完了メール --}}
+                <div class="form-group row" id="div_user_register_approved_mail_subject">
+                    <label class="col-md-3 col-form-label text-md-right pt-0">承認完了メール</label>
+                    <div class="col">
+                        <label class="control-label">承認完了メール件名</label>
+                        <input type="text" name="user_register_approved_mail_subject" value="{{Configs::getConfigsValueAndOld($configs, 'user_register_approved_mail_subject')}}" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label class="col-md-3 col-form-label text-md-right"></label>
+                    <div class="col">
+                        <label class="control-label">承認完了メールフォーマット</label>
+                        <textarea name="user_register_approved_mail_format" class="form-control" rows=5 placeholder="（例）ユーザー登録が承認されました。&#13;&#10;登録したログインID、パスワードでログインしてください。&#13;&#10;----------------------------------&#13;&#10;ログインID：[[login_id]]&#13;&#10;----------------------------------">{{Configs::getConfigsValueAndOld($configs, 'user_register_approved_mail_format')}}</textarea>
+                        @include('plugins.manage.user.description_frame_mails', ['users_columns' => $users_columns])
+                    </div>
                 </div>
             </div>
-
-            <div class="form-group row">
-                <label class="col-md-3 col-form-label text-md-right"></label>
-                <div class="col">
-                    <label class="control-label">承認完了メールフォーマット</label>
-                    <textarea name="user_register_approved_mail_format" class="form-control" rows=5 placeholder="（例）ユーザー登録が承認されました。&#13;&#10;登録したログインID、パスワードでログインしてください。&#13;&#10;----------------------------------&#13;&#10;ログインID：[[login_id]]&#13;&#10;----------------------------------">{{Configs::getConfigsValueAndOld($configs, 'user_register_approved_mail_format')}}</textarea>
-                    <small class="text-muted">
-                        ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
-                        ※ [[login_id]] を記述すると該当部分に登録内容が入ります。<br>
-                    </small>
-                </div>
-            </div>
-
 
             {{-- 自動ユーザ登録時に個人情報保護方針への同意を求めるか --}}
             <div class="form-group row" id="div_user_register_requre_privacy">
@@ -366,11 +361,14 @@
 </div>
 
 {{-- 初期状態で開くもの --}}
-@if(Configs::getConfigsValueAndOld($configs, "user_register_temporary_regist_mail_flag") == "1")
-    <script>
-    $('#collapse_register_temporary').collapse({
-        toggle: true
-    })
-    </script>
-@endif
+<script>
+    @if (Configs::getConfigsValueAndOld($configs, "user_register_temporary_regist_mail_flag") == "1")
+        // 仮登録メール件名・本文
+        $('#collapse_register_temporary').collapse('show')
+    @endif
+    @if ($require_approval == "1")
+        // 承認完了メール件名・本文
+        $('#collapse_register_approved').collapse('show')
+    @endif
+</script>
 @endsection
