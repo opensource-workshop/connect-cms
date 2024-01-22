@@ -8,14 +8,14 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category メニュープラグイン
 --}}
-{{-- ページ名 --}}
 <?php
+use App\Http\Controllers\Core\CookieCore;
+
     // URL から現在のURL パスを判定する。
     $current_url = url()->current();
     $base_url = url('/');
     $current_permanent_link = str_replace( $base_url, '', $current_url);
     $current_permanent_links = explode('/', $current_permanent_link);
-    // print_r($current_permanent_links);
     $is_manage_page = false;
     if (!empty($current_permanent_links) && count($current_permanent_links) > 1 && $current_permanent_links[1] == 'manage') {
         $is_manage_page = true;
@@ -396,26 +396,20 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
     {{-- 初回確認メッセージの表示モーダル --}}
     @php
         // Configsテーブルから設定値を取得
-        // $message_first_show_type = isset($configs_array['message_first_show_type']) ? $configs_array['message_first_show_type']->value : 0;
-        // $message_first_permission_type = isset($configs_array['message_first_permission_type']) ? $configs_array['message_first_permission_type']->value : 0;
-        // $message_first_exclued_urls = isset($configs_array['message_first_exclued_url']) ? explode(',' ,$configs_array['message_first_exclued_url']->value) : array();
-        // $message_first_optional_class = isset($configs_array['message_first_optional_class']) ? $configs_array['message_first_optional_class']->value : '';
         $message_first_show_type = Configs::getConfigsValue($cc_configs, 'message_first_show_type', 0);
         $message_first_permission_type = Configs::getConfigsValue($cc_configs, 'message_first_permission_type', 0);
         $message_first_exclued_urls = explode(',', Configs::getConfigsValue($cc_configs, 'message_first_exclued_url', ''));
         $message_first_optional_class = Configs::getConfigsValue($cc_configs, 'message_first_optional_class', '');
-        // dd($message_first_show_type, $message_first_permission_type, $message_first_exclued_urls, $message_first_optional_class, !in_array($page->permanent_link ,$message_first_exclued_urls), Cookie::get('connect_cookie_message_first'));
     @endphp
-    {{-- 管理画面で設定ON、且つ、本ページが初回確認メッセージ表示の除外URL以外、且つ、同意していない（Cookie未セット）場合にメッセージ表示 --}}
-    @if($message_first_show_type == ShowType::show && isset($page) && !in_array($page->permanent_link ,$message_first_exclued_urls) && Cookie::get('connect_cookie_message_first') != 'agreed')
-
+    {{-- 管理画面で設定ON、且つ、本ページが初回確認メッセージ表示の除外URL以外、且つ、同意していない（Cookie未セット or Cookieありで初回メッセージの更新日より古い）場合にメッセージ表示 --}}
+    {{-- @if($message_first_show_type == ShowType::show && isset($page) && !in_array($page->permanent_link ,$message_first_exclued_urls) && (!Cookie::has('connect_cookie_message_first') || Cookie::get('connect_cookie_message_first') != 'agreed')) --}}
+    @if ($message_first_show_type == ShowType::show && isset($page) && !in_array($page->permanent_link ,$message_first_exclued_urls) && (!Cookie::has('connect_cookie_message_first') || Cookie::get('connect_cookie_message_first') < CookieCore::getCookieForMessageTimestamp()))
         <!-- 初回確認メッセージ表示用のモーダルウィンドウ -->
         <div class="modal {{ $message_first_optional_class }}" id="first_message_modal" tabindex="-1" role="dialog" aria-labelledby="first_message_modal_label" aria-hidden="true" data-backdrop="{{ $message_first_permission_type == PermissionType::not_allowed ? 'static' : 'true' }}">
             <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
                 <div class="modal-content">
                     <div class="modal-body">
                         {{-- メッセージ内容 --}}
-                        {{-- $configs_array['message_first_content']->value --}}
                         {!! Configs::getConfigsValue($cc_configs, 'message_first_content') !!}
                     </div>
                     <div class="modal-footer">
@@ -424,7 +418,6 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
 
                             {{-- ボタン --}}
                             <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="submit_form_set_cookie();">
-                                {{-- $configs_array['message_first_button_name']->value --}}
                                 {{ Configs::getConfigsValue($cc_configs, 'message_first_button_name') }}
                             </button>
                         </form>
