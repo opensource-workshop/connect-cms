@@ -2327,17 +2327,16 @@ class UserManage extends ManagePluginBase
 
         // メール送信
         if ($user_register_user_mail_send_flag && $user->email) {
-            // メール件名の組み立て
+            // メール件名
             $subject = Configs::getConfigsValue($configs, 'user_register_approved_mail_subject');
+            // メール本文
+            $mail_format = Configs::getConfigsValue($configs, 'user_register_approved_mail_format');
 
-            // メール件名内のサイト名文字列を置換
-            $subject = str_replace('[[site_name]]', Configs::getConfigsValue($configs, 'base_site_name'), $subject);
+            // 埋め込みタグ
+            $notice_embedded_tags = UsersTool::getNoticeEmbeddedTags($user);
 
-            // メール本文の組み立て
-            $mail_text = Configs::getConfigsValue($configs, 'user_register_approved_mail_format');
-            // メール本文内のサイト名文字列を置換
-            $mail_text = str_replace('[[site_name]]', Configs::getConfigsValue($configs, 'base_site_name'), $mail_text);
-            $mail_text = str_replace('[[login_id]]', $user->userid, $mail_text);
+            $subject = UserRegisterNoticeEmbeddedTag::replaceEmbeddedTags($subject, $notice_embedded_tags);
+            $mail_text = UserRegisterNoticeEmbeddedTag::replaceEmbeddedTags($mail_format, $notice_embedded_tags);
 
             // メールオプション
             $mail_options = ['subject' => $subject, 'template' => 'mail.send'];
