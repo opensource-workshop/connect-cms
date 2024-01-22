@@ -21,22 +21,6 @@ use App\Http\Controllers\Core\CookieCore;
         $is_manage_page = true;
     }
 
-/*
-    // トップページの判定
-    if (empty($current_permanent_link)) {
-        $current_permanent_link = "/";
-    }
-
-    // URL パスでPage テーブル検索
-    $current_page = \App\Page::where('permanent_link', '=', $current_permanent_link)->first();
-*/
-/*
-    // ページ一覧の取得
-    $class_name = "App\Page";
-    $page_obj = new $class_name;
-    //$menu_pages = $page_obj::orderBy('display_sequence')->get();
-    $menu_pages = $page_obj::defaultOrderWithDepth();
-*/
 if (! isset($cc_configs)) {
     // cc_configsは app\Http\Middleware\ConnectInit.php で処理しているため、基本ここには入らない。
     // .envのAPP_KEYに"xxxx"とダブルクォートで囲むと`php artisan key:generate`しても変換されない＋APP_DEBUG=falseで、cc_configsなしでここに到達する。
@@ -47,22 +31,12 @@ if (! isset($cc_configs)) {
 <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}">
 <head>
-{{--
-@if(isset($configs_array['tracking_code']))
-    {!!$configs_array['tracking_code']->value!!}
-@endif
---}}
 @if (Configs::getConfigsValue($cc_configs, 'tracking_code'))
     {!!Configs::getConfigsValue($cc_configs, 'tracking_code')!!}
 @endif
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-{{--
-@if(isset($configs_array['description']))
-    <meta name="description" content="{{$configs_array['description']->getNobrValue()}}">
-@endif
---}}
 @if (Configs::getConfigsValue($cc_configs, 'description'))
     <meta name="description" content="{{ StringUtils::getNobrValue(Configs::getConfigsValue($cc_configs, 'description')) }}">
 @endif
@@ -91,7 +65,6 @@ if (! isset($cc_configs)) {
 
     <!-- tempusdominus-bootstrap-4 -->
     <link rel="stylesheet" href="{{asset('css/tempusdominus-bootstrap-4/tempusdominus-bootstrap-4.min.css')}}" />
-
 
     <!-- Connect-CMS Global CSS -->
     <link href="{{ asset('css/connect.css') }}?version={{ filemtime(public_path() . "/css/connect.css") }}" rel="stylesheet">
@@ -136,43 +109,23 @@ if (! isset($cc_configs)) {
     </script>
 
     <!-- Favicon -->
-    {{--  @if (isset($configs_array) && isset($configs_array['favicon'])) --}}
     @if (Configs::getConfigsValue($cc_configs, 'favicon'))
         <link href="{{url('/')}}/uploads/favicon/favicon.ico" rel="SHORTCUT ICON" />
     @endif
 </head>
 @php
 // body任意クラスを抽出（カンマ設定時はランダムで１つ設定）
-// $body_optional_class = null;
-// if (isset($configs_array['body_optional_class'])) {
-//     $classes = explode(',', $configs_array['body_optional_class']->value);
-//     $body_optional_class = $classes[array_rand($classes)];
-// }
 $body_optional_class = Configs::getConfigsRandValue($cc_configs, 'body_optional_class');
 
 // ヘッダーバーnavの文字色クラス
 // change: 管理画面ではviewに共通的に変数をセットする仕組みがあったため、管理画面・一般画面どちらも表示するためにここで再度Configsをgetした(苦肉の策)を、共通の$cc_configsを参照するよう見直し
-//$base_header_font_color_class = Configs::getConfigsValue($configs, 'base_header_font_color_class', BaseHeaderFontColorClass::navbar_dark);
-// if (isset($configs) && isset($configs['base_header_font_color_class'])) {
-//     $base_header_font_color_class = $configs['base_header_font_color_class'];
-// } else {
-//     $base_header_font_color_class = BaseHeaderFontColorClass::navbar_dark;
-// }
-// $config_basic_header = Configs::where('category', 'general')->get();
 $base_header_font_color_class = Configs::getConfigsValue($cc_configs, 'base_header_font_color_class', BaseHeaderFontColorClass::navbar_dark);
 
 // ヘッダーバー任意クラスを抽出（カンマ設定時はランダムで１つ設定）
-// $base_header_optional_class = Configs::getConfigsValue($cc_configs, 'base_header_optional_class', null);
-// $base_header_classes = explode(',', $base_header_optional_class);
-// $base_header_optional_class = $base_header_classes[array_rand($base_header_classes)];
 $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_header_optional_class');
 
 @endphp
 <body class="@if(isset($page)){{$page->getPermanentlinkClassname()}}@endif {{ $body_optional_class }}">
-{{--
-@if (Auth::check() || (isset($configs) && isset($configs['base_header_hidden']) && ($configs['base_header_hidden'] != '1')))
-<nav class="navbar navbar-expand-md bg-dark {{$base_header_font_color_class}} @if (isset($configs) && ($configs['base_header_fix'] == '1')) sticky-top @endif {{ $base_header_optional_class }}" aria-label="ヘッダー">
---}}
 @if (Auth::check() || Configs::getConfigsValue($cc_configs, 'base_header_hidden') != '1')
 <nav class="navbar navbar-expand-md bg-dark {{$base_header_font_color_class}} @if (Configs::getConfigsValue($cc_configs, 'base_header_fix') == '1') sticky-top @endif {{ $base_header_optional_class }}" aria-label="ヘッダー">
     <!-- Branding Image -->
@@ -196,17 +149,9 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                 @foreach($page_list as $page_obj)
 
                     {{-- スマホメニューテンプレート(default) --}}
-                    {{--
-                    @if (isset($configs) &&
-                            (!isset($configs['smartphone_menu_template']) ||
-                                (isset($configs['smartphone_menu_template']) && ($configs['smartphone_menu_template'] == ''))
-                            )
-                        )
-                    --}}
                     @if (Configs::getConfigsValue($cc_configs, 'smartphone_menu_template', '') == '')
                         {{-- default メニュー --}}
                         @include('layouts.default_menu')
-                    {{-- @elseif (isset($configs) && isset($configs['smartphone_menu_template']) && ($configs['smartphone_menu_template'] == 'opencurrenttree')) --}}
                     @elseif (Configs::getConfigsValue($cc_configs, 'smartphone_menu_template') == 'opencurrenttree')
                         {{-- opencurrenttree メニュー --}}
                         @include('layouts.opencurrenttree_menu')
@@ -284,7 +229,6 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
             @endif
 
             @guest
-                {{-- @if (isset($configs['base_header_login_link']) && ($configs['base_header_login_link'] == '1')) --}}
                 @if (Configs::getConfigsValue($cc_configs, 'base_header_login_link') == '1')
                     @php
                         // 外部認証設定 取得
@@ -297,8 +241,6 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                         <li><a class="nav-link" href="{{ route('show_login_form') }}">{{config('connect.LOGIN_STR')}}</a></li>
                     @endif
                 @endif
-                {{-- @if (isset($configs['user_register_enable']) && ($configs['user_register_enable'] == '1')) --}}
-                {{-- @if (Configs::getConfigsValue($cc_configs, 'user_register_enable') == '1') --}}
                 @php
                     $user_register_enables = $cc_configs->where('category', 'user_register')
                         ->where('name', 'user_register_enable')
