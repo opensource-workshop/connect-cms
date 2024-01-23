@@ -177,7 +177,7 @@ use App\Models\Common\Page;
         </div>
 
         <div class="table-responsive">
-            <table class="table table-striped cc-font-90">
+            <table class="table table-striped cc-font-90 mb-0">
             <thead>
                 <th></th>
                 <th nowrap><i class="fas fa-sitemap" title="階層移動" alt="階層移動"></i></th>
@@ -427,6 +427,7 @@ use App\Models\Common\Page;
                 @endforeach
             </tbody>
             </table>
+            <small class="text-muted">※ 表示内容が多い場合、横スクロールできます。</small>
         </div><!-- /table-responsive -->
     @endif
 @endsection
