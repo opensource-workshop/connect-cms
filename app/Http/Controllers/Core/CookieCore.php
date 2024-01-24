@@ -59,7 +59,7 @@ class CookieCore
     {
         // メッセージ内容
         // 初回メッセージ確認を「表示する」にした場合、「メッセージ内容」が空でもレコードが作成されるため、基本new Carbon()に到達しない想定。
-        $config = Configs::where('name', 'message_first_content')->firstOrNew([]);
+        $config = Configs::firstOrNew(['name' => 'message_first_content']);
         $updated_at = $config->updated_at ?? new Carbon();
 
         return $updated_at->timestamp;
