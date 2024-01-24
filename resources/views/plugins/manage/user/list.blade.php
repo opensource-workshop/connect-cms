@@ -317,7 +317,7 @@ use App\Models\Core\UsersColumns;
         </div>
 
         <div class="form-group table-responsive">
-            <table class="table table-hover cc-font-90">
+            <table class="table table-hover cc-font-90 mb-0">
             <thead>
                 <tr>
                     <th nowrap>{{ UsersColumns::getLabelLoginId($users_columns) }}</th>
@@ -419,7 +419,7 @@ use App\Models\Core\UsersColumns;
             @endforeach
             </tbody>
             </table>
-            <small class="text-muted">※ 横スクロールできます。</small>
+            <small class="text-muted">※ 表示内容が多い場合、横スクロールできます。</small>
         </div>
 
         {{-- ページング処理 --}}

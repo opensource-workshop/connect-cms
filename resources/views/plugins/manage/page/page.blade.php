@@ -24,16 +24,28 @@ use App\Models\Common\Page;
     <!-- Pages list -->
     @if (count($pages) > 0)
         <script type="text/javascript">
-            {{-- ページの上移動用フォームのsubmit JavaScript --}}
-            function submit_sequence_up( id ) {
-                form_sequence_up.action = form_sequence_up.action + "/" + id;
-                form_sequence_up.submit();
+            /** ページの上移動 */
+            function submit_sequence_up(id) {
+                form_sequence.action = "{{url('/manage/page/sequenceUp')}}/" + id;
+                form_sequence.submit();
             }
 
-            {{-- ページの下移動用フォームのsubmit JavaScript --}}
-            function submit_sequence_down( id ) {
-                form_sequence_down.action = form_sequence_down.action + "/" + id;
-                form_sequence_down.submit();
+            /** ページの下移動 */
+            function submit_sequence_down(id) {
+                form_sequence.action = "{{url('/manage/page/sequenceDown')}}/" + id;
+                form_sequence.submit();
+            }
+
+            /** ページを一番上へ移動 */
+            function submit_sequence_top(id) {
+                form_sequence.action = "{{url('/manage/page/sequenceTop')}}/" + id;
+                form_sequence.submit();
+            }
+
+            /** ページを一番下へ移動 */
+            function submit_sequence_bottom(id) {
+                form_sequence.action = "{{url('/manage/page/sequenceBottom')}}/" + id;
+                form_sequence.submit();
             }
 
             {{-- ページの指定場所移動用フォームのsubmit JavaScript --}}
@@ -100,16 +112,10 @@ use App\Models\Common\Page;
             }
         </script>
 
-        {{-- ページの上移動用フォーム(POSTのためのフォーム。一つ用意して一覧からJavascriptで呼び出し) --}}
-        <form action="{{url('/manage/page/sequenceUp')}}" method="POST" name="form_sequence_up" id="form_sequence_up" class="form-horizontal">
+        {{-- ページ移動用フォーム(POSTのためのフォーム。一つ用意して一覧からJavascriptで呼び出し) --}}
+        <form action="" method="POST" name="form_sequence">
             {{ csrf_field() }}
-            <input type="hidden" name="seq_method" value="sequence_up">
-        </form>
-
-        {{-- ページの下移動用フォーム(POSTのためのフォーム。一つ用意して一覧からJavascriptで呼び出し) --}}
-        <form action="{{url('/manage/page/sequenceDown')}}" method="POST" name="form_sequence_down" id="form_sequence_down" class="form-horizontal">
-            {{ csrf_field() }}
-            <input type="hidden" name="seq_method" value="sequence_down">
+            {{-- <input type="hidden" name="seq_method" value=""> --}}
         </form>
 
         {{-- ページの指定場所移動用フォーム(POSTのためのフォーム。一つ用意して一覧からJavascriptで呼び出し) --}}
@@ -171,7 +177,7 @@ use App\Models\Common\Page;
         </div>
 
         <div class="table-responsive">
-            <table class="table table-striped cc-font-90">
+            <table class="table table-striped cc-font-90 mb-0">
             <thead>
                 <th></th>
                 <th nowrap><i class="fas fa-sitemap" title="階層移動" alt="階層移動"></i></th>
@@ -220,6 +226,20 @@ use App\Models\Common\Page;
                         <button type="button" class="btn p-1" @if ($loop->last) disabled @endif onclick="javascript:submit_sequence_down({{$page_item->id}})">
                             <i class="fas fa-arrow-down"></i>
                         </button>
+
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="dropdownMenuButtonSequence" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButtonSequence">
+                                <button type="button" class="dropdown-item" @if ($loop->first) disabled @endif onclick="javascript:submit_sequence_top({{$page_item->id}})">
+                                    一番上へ
+                                </button>
+                                <button type="button" class="dropdown-item" @if ($loop->last) disabled @endif onclick="javascript:submit_sequence_bottom({{$page_item->id}})">
+                                    一番下へ
+                                </button>
+                            </div>
+                        </div>
                     </td>
                     <td class="table-text p-1" nowrap>
                         {{-- 階層移動 --}}
@@ -407,6 +427,7 @@ use App\Models\Common\Page;
                 @endforeach
             </tbody>
             </table>
+            <small class="text-muted">※ 表示内容が多い場合、横スクロールできます。</small>
         </div><!-- /table-responsive -->
     @endif
 @endsection
