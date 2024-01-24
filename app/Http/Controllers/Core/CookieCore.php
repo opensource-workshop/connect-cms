@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Core;
 
-// use App\Http\Controllers\Core\ConnectController;
 use App\Models\Common\Page;
 use App\Models\Core\Configs;
 use Carbon\Carbon;
@@ -17,7 +16,6 @@ use Carbon\Carbon;
  * @category コア
  * @package Controller
  */
-// class CookieController extends ConnectController
 class CookieCore
 {
     /**
@@ -51,7 +49,6 @@ class CookieCore
         $page = Page::where('id', $page_id)->first();
 
         // cookieをセット（cookie名、値、有効期間（分））して、元ページへリダイレクト
-        // return redirect($page->permanent_link)->cookie('connect_cookie_message_first', 'agreed', 525600);
         return redirect($page->permanent_link)->cookie('connect_cookie_message_first', self::getCookieForMessageTimestamp(), 525600);
     }
 

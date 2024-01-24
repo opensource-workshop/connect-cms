@@ -343,8 +343,7 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
         $message_first_exclued_urls = explode(',', Configs::getConfigsValue($cc_configs, 'message_first_exclued_url', ''));
         $message_first_optional_class = Configs::getConfigsValue($cc_configs, 'message_first_optional_class', '');
     @endphp
-    {{-- 管理画面で設定ON、且つ、本ページが初回確認メッセージ表示の除外URL以外、且つ、同意していない（Cookie未セット or Cookieありで初回メッセージの更新日より古い）場合にメッセージ表示 --}}
-    {{-- @if($message_first_show_type == ShowType::show && isset($page) && !in_array($page->permanent_link ,$message_first_exclued_urls) && (!Cookie::has('connect_cookie_message_first') || Cookie::get('connect_cookie_message_first') != 'agreed')) --}}
+    {{-- 管理画面で設定ON、且つ、本ページが初回確認メッセージ表示の除外URL以外、且つ、（Cookie未セット or Cookieありで初回メッセージの更新日より古い）場合にメッセージ表示 --}}
     @if ($message_first_show_type == ShowType::show && isset($page) && !in_array($page->permanent_link ,$message_first_exclued_urls) && (!Cookie::has('connect_cookie_message_first') || Cookie::get('connect_cookie_message_first') < CookieCore::getCookieForMessageTimestamp()))
         <!-- 初回確認メッセージ表示用のモーダルウィンドウ -->
         <div class="modal {{ $message_first_optional_class }}" id="first_message_modal" tabindex="-1" role="dialog" aria-labelledby="first_message_modal_label" aria-hidden="true" data-backdrop="{{ $message_first_permission_type == PermissionType::not_allowed ? 'static' : 'true' }}">
