@@ -71,7 +71,10 @@
             <div class="form-group">
                 <label class="control-label">メッセージ内容</label>
                 <textarea name="message_first_content" class="form-control" rows=5 placeholder="（例）当サイトではトラフィック分析を目的として、クッキー(Cookie)を利用しています。当サイトの閲覧を続けた場合、クッキーの利用に同意いただいたことになります。詳しくはプライバシーポリシーをご覧ください。">{{ Configs::getConfigsValueAndOld($configs, 'message_first_content', null) }}</textarea>
-                <small class="form-text text-muted">※ポップアップに表示するメッセージを設定します。HTML入力が可能です。scriptタグは使用できません。</small>
+                <small class="form-text text-muted">
+                    ※ポップアップに表示するメッセージを設定します。HTML入力が可能です。scriptタグは使用できません。<br />
+                    ※メッセージ内容を変更した場合、すでに同意済みの訪問者にも再度ポップアップメッセージを表示します。
+                </small>
             </div>
 
             {{-- ボタン名 --}}

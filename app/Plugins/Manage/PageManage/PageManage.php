@@ -61,7 +61,9 @@ class PageManage extends ManagePluginBase
         $role_ckeck_table["update"]          = array('admin_page');
         $role_ckeck_table["destroy"]         = array('admin_page');
         $role_ckeck_table["sequenceUp"]      = array('admin_page');
+        $role_ckeck_table["sequenceTop"]     = ['admin_page'];
         $role_ckeck_table["sequenceDown"]    = array('admin_page');
+        $role_ckeck_table["sequenceBottom"]  = ['admin_page'];
         $role_ckeck_table["movePage"]        = array('admin_page');
         $role_ckeck_table["import"]          = array('admin_page');
         $role_ckeck_table["upload"]          = array('admin_page');
@@ -316,6 +318,21 @@ class PageManage extends ManagePluginBase
     }
 
     /**
+     * ページを一番上へ移動
+     */
+    public function sequenceTop($request, $page_id)
+    {
+        // 移動元のオブジェクトを取得
+        $pages = Page::find($page_id);
+        // 兄弟の一番上取得
+        $sibling = $pages->siblings()->defaultOrder()->first();
+        $pages->insertBeforeNode($sibling);
+
+        // ページ管理画面に戻る
+        return redirect("/manage/page");
+    }
+
+    /**
      * ページ下移動
      */
     public function sequenceDown($request, $page_id)
@@ -323,6 +340,21 @@ class PageManage extends ManagePluginBase
         // 移動元のオブジェクトを取得して、down
         $pages = Page::find($page_id);
         $pages->down();
+
+        // ページ管理画面に戻る
+        return redirect("/manage/page");
+    }
+
+    /**
+     * ページを一番下へ移動
+     */
+    public function sequenceBottom($request, $page_id)
+    {
+        // 移動元のオブジェクトを取得
+        $pages = Page::find($page_id);
+        // 兄弟の一番下取得
+        $sibling = $pages->siblings()->reversed()->first();
+        $pages->insertAfterNode($sibling);
 
         // ページ管理画面に戻る
         return redirect("/manage/page");
