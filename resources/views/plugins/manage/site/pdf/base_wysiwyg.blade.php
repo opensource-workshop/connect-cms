@@ -21,11 +21,9 @@
     </tr>
     <tr nobr="true">
         <td>初期に選択させる画像サイズ</td>
-        @if (Configs::getConfigsValue($configs, 'resized_image_size_initial', null) == '1200') <td>大(1200px)</td>
-        @elseif (Configs::getConfigsValue($configs, 'resized_image_size_initial', null) == '800') <td>中(800px)</td>
-        @elseif (Configs::getConfigsValue($configs, 'resized_image_size_initial', null) == '400') <td>小(400px)</td>
-        @elseif (Configs::getConfigsValue($configs, 'resized_image_size_initial', null) == '200') <td>極小(200px)</td>
-        @else <td>原寸(以下の幅、高さ)</td>
-        @endif
+        @php
+            $resized_image_size_initial = Configs::getConfigsValue($configs, "resized_image_size_initial", ResizedImageSize::getDefault());
+        @endphp
+        <td>{{ ResizedImageSize::getDescription($resized_image_size_initial) }}</td>
     </tr>
 </table>
