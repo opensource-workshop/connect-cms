@@ -122,7 +122,7 @@
                     <label class="col-form-label">送信するメールアドレス（複数ある場合はカンマで区切る）</label>
                     <input type="text" name="user_register_mail_send_address" value="{{Configs::getConfigsValueAndOld($configs, 'user_register_mail_send_address')}}" class="form-control">
                     <small class="form-text text-muted">自動ユーザ登録時に管理者や担当者等に通知するメールアドレスを設定</small>
-                    @if ($errors && $errors->has('user_register_mail_send_address')) <div class="text-danger">{{$errors->first('user_register_mail_send_address')}}</div> @endif
+                    @include('plugins.common.errors_inline', ['name' => 'user_register_mail_send_address'])
                 </div>
             </div>
 
@@ -139,10 +139,9 @@
                         @endif
                         <label class="custom-control-label" for="user_register_user_mail_send_flag">登録者にメール送信する</label>
                     </div>
-                    @if ($errors && $errors->has('user_register_user_mail_send_flag')) <div class="text-danger">{{$errors->first('user_register_user_mail_send_flag')}}</div> @endif
+                    @include('plugins.common.errors_inline', ['name' => 'user_register_user_mail_send_flag'])
                 </div>
             </div>
-
 
             <div class="form-group row">
                 <label class="col-md-3 col-form-label text-md-right pt-0">仮登録メール</label>
@@ -187,7 +186,7 @@
                             ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
                             ※ [[body]] を記述すると該当部分に登録内容が入ります。
                         </small>
-                        @if ($errors && $errors->has('user_register_temporary_regist_mail_format')) <div class="text-danger">{{$errors->first('user_register_temporary_regist_mail_format')}}</div> @endif
+                        @include('plugins.common.errors_inline', ['name' => 'user_register_temporary_regist_mail_format'])
                     </div>
                 </div>
 
