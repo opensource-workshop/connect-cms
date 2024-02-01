@@ -1398,6 +1398,15 @@ class UserManage extends ManagePluginBase
             ]
         );
 
+        // 自動ユーザ登録後の自動ログイン
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_auto_login_flag', 'additional1' => $id],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_auto_login_flag
+            ]
+        );
+
         // 以下のアドレスにメール送信する
         $configs = Configs::updateOrCreate(
             ['name' => 'user_register_mail_send_flag', 'additional1' => $id],

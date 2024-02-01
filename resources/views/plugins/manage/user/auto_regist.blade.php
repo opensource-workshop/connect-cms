@@ -83,6 +83,22 @@
                 </div>
             </div>
 
+            <!-- 自動ユーザ登録後の自動ログイン -->
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label text-md-right pt-0">自動ユーザ登録後の自動ログイン</label>
+                <div class="col pt-0">
+                    @foreach (PermissionType::getMembers() as $enum_value => $enum_label)
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="{{$enum_value}}" id="user_register_auto_login_flag{{$loop->iteration}}" name="user_register_auto_login_flag" class="custom-control-input" @if(Configs::getConfigsValueAndOld($configs, 'user_register_auto_login_flag', '0') == $enum_value) checked @endif>
+                            <label class="custom-control-label" for="user_register_auto_login_flag{{$loop->iteration}}">{{$enum_label}}</label>
+                        </div>
+                    @endforeach
+                    <small class="form-text text-muted">
+                        ※ 許可した場合、自動ユーザ登録を行ったユーザは、登録後に自動ログインします。<br />
+                    </small>
+                </div>
+            </div>
+
             {{-- 自動ユーザ登録時に以下のアドレスにメール送信する --}}
             <div class="form-group row">
                 <label class="col-md-3 col-form-label text-md-right pt-0">メール送信先</label>
