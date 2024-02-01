@@ -41,22 +41,12 @@
             <div class="form-group row">
                 <label class="col-md-3 col-form-label text-md-right pt-0">自動ユーザ登録の使用</label>
                 <div class="col pt-0">
-                    <div class="custom-control custom-radio custom-control-inline">
-                        @if(Configs::getConfigsValueAndOld($configs, "user_register_enable") == "1")
-                            <input type="radio" value="1" id="user_register_enable_on" name="user_register_enable" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="1" id="user_register_enable_on" name="user_register_enable" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="user_register_enable_on" id="label_user_register_enable_on">許可する</label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline">
-                        @if(Configs::getConfigsValueAndOld($configs, "user_register_enable") == "0")
-                            <input type="radio" value="0" id="user_register_enable_off" name="user_register_enable" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="0" id="user_register_enable_off" name="user_register_enable" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="user_register_enable_off" id="label_user_register_enable_off">許可しない</label>
-                    </div>
+                    @foreach (PermissionType::getMembers() as $enum_value => $enum_label)
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="{{$enum_value}}" id="user_register_enable{{$loop->iteration}}" name="user_register_enable" class="custom-control-input" @if(Configs::getConfigsValueAndOld($configs, 'user_register_enable', '0') == $enum_value) checked @endif>
+                            <label class="custom-control-label" for="user_register_enable{{$loop->iteration}}">{{$enum_label}}</label>
+                        </div>
+                    @endforeach
                     <small class="form-text text-muted">
                         ※ 自動ユーザ登録を使用するかどうかを選択<br />
                         ※ 自動ユーザ登録時に登録させる項目は [ <a href="{{ url('/manage/user/editColumns/'. $columns_set_id) }}">項目設定</a> ] の「詳細」からそれぞれ設定してください。<br />
@@ -72,14 +62,30 @@
                 <label class="col-md-3 col-form-label text-md-right pt-0">管理者の承認</label>
                 <div class="col pt-0">
                     <div class="custom-control custom-radio custom-control-inline">
-                        <input type="radio" value="1" id="require_approval_enable" name="user_registration_require_approval" class="custom-control-input" @if ($require_approval === '1') checked="checked" @endif data-toggle="collapse" data-target="#collapse_register_approved" aria-expanded="false" aria-controls="collapse_register_approved">
-                        <label class="custom-control-label" for="require_approval_enable" id="label_require_approval_enable">必要</label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline">
                         <input type="radio" value="0" id="require_approval_disable" name="user_registration_require_approval" class="custom-control-input" @if ($require_approval === '0') checked="checked" @endif data-toggle="collapse" data-target="#collapse_register_approved" aria-expanded="false" aria-controls="collapse_register_approved">
                         <label class="custom-control-label" for="require_approval_disable" id="label_require_approval_disable">不要</label>
                     </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input type="radio" value="1" id="require_approval_enable" name="user_registration_require_approval" class="custom-control-input" @if ($require_approval === '1') checked="checked" @endif data-toggle="collapse" data-target="#collapse_register_approved" aria-expanded="false" aria-controls="collapse_register_approved">
+                        <label class="custom-control-label" for="require_approval_enable" id="label_require_approval_enable">必要</label>
+                    </div>
                     <small class="form-text text-muted">ユーザ登録に管理者の承認が必要か選択してください。</small>
+                </div>
+            </div>
+
+            <!-- 自動ユーザ登録後の自動ログイン -->
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label text-md-right pt-0">自動ユーザ登録後の自動ログイン</label>
+                <div class="col pt-0">
+                    @foreach (PermissionType::getMembers() as $enum_value => $enum_label)
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="{{$enum_value}}" id="user_register_auto_login_flag{{$loop->iteration}}" name="user_register_auto_login_flag" class="custom-control-input" @if(Configs::getConfigsValueAndOld($configs, 'user_register_auto_login_flag', '0') == $enum_value) checked @endif>
+                            <label class="custom-control-label" for="user_register_auto_login_flag{{$loop->iteration}}">{{$enum_label}}</label>
+                        </div>
+                    @endforeach
+                    <small class="form-text text-muted">
+                        ※ 許可した場合、自動ユーザ登録を行ったユーザは、登録後に自動ログインします。<br />
+                    </small>
                 </div>
             </div>
 
@@ -106,7 +112,7 @@
                     <label class="col-form-label">送信するメールアドレス（複数ある場合はカンマで区切る）</label>
                     <input type="text" name="user_register_mail_send_address" value="{{Configs::getConfigsValueAndOld($configs, 'user_register_mail_send_address')}}" class="form-control">
                     <small class="form-text text-muted">自動ユーザ登録時に管理者や担当者等に通知するメールアドレスを設定</small>
-                    @if ($errors && $errors->has('user_register_mail_send_address')) <div class="text-danger">{{$errors->first('user_register_mail_send_address')}}</div> @endif
+                    @include('plugins.common.errors_inline', ['name' => 'user_register_mail_send_address'])
                 </div>
             </div>
 
@@ -123,10 +129,9 @@
                         @endif
                         <label class="custom-control-label" for="user_register_user_mail_send_flag">登録者にメール送信する</label>
                     </div>
-                    @if ($errors && $errors->has('user_register_user_mail_send_flag')) <div class="text-danger">{{$errors->first('user_register_user_mail_send_flag')}}</div> @endif
+                    @include('plugins.common.errors_inline', ['name' => 'user_register_user_mail_send_flag'])
                 </div>
             </div>
-
 
             <div class="form-group row">
                 <label class="col-md-3 col-form-label text-md-right pt-0">仮登録メール</label>
@@ -171,7 +176,7 @@
                             ※ [[site_name]] を記述すると該当部分にサイト名が入ります。<br>
                             ※ [[body]] を記述すると該当部分に登録内容が入ります。
                         </small>
-                        @if ($errors && $errors->has('user_register_temporary_regist_mail_format')) <div class="text-danger">{{$errors->first('user_register_temporary_regist_mail_format')}}</div> @endif
+                        @include('plugins.common.errors_inline', ['name' => 'user_register_temporary_regist_mail_format'])
                     </div>
                 </div>
 
