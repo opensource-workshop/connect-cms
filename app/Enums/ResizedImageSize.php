@@ -44,7 +44,7 @@ final class ResizedImageSize extends EnumsBase
      */
     public static function getDefault()
     {
-        return self::asis;
+        return self::small;
     }
 
     /**
