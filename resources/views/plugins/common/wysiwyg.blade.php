@@ -58,6 +58,30 @@
         $content_css_file = File::get($content_css_default_path);
     }
 
+    // ディレクトリインストール時のcontent_css:のパス修正
+    $appUrl = config('app.url');
+    $appUrl = rtrim($appUrl, '/'); // 末尾の '/' を削除
+    $urlParts = parse_url($appUrl);
+    $path = isset($urlParts['path']) ? $urlParts['path'] : '';
+    // パスが存在し、かつ '/' で終わらない場合はディレクトリインストールと見なす
+    $isDirectoryInstall = !empty($path) && substr($path, -1) !== '/';
+    if ($isDirectoryInstall) {
+        // 引用符で囲まれた文字列を取得
+        preg_match_all('/"([^"]*)"/', $content_css_file, $matches);
+        // $matches[1] の0番目の要素を取得
+        $firstMatch = isset($matches[1][0]) ? $matches[1][0] : null;
+        if ($firstMatch !== null) {
+            $dataArray = explode(', ', $firstMatch);
+            // 各データの先頭に変数を追加
+            $modifiedDataArray = array_map(function ($item) use ($path) {
+                return $path . $item;
+            }, $dataArray);
+            $modifiedFirstMatch = implode(', ', $modifiedDataArray);
+            // content_cssに追記する
+            $content_css_file = 'content_css: "'. $firstMatch. ', '. $modifiedFirstMatch. '",';
+        }
+    }
+
     // テーブル
     $table_class_list_file = '';
     $table_class_list_path = public_path() . '/themes/' . $theme . '/wysiwyg/table_class_list.txt';
