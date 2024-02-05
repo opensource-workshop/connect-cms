@@ -81,6 +81,9 @@ use App\Models\User\Whatsnews\Whatsnews;
 use App\Models\User\Searchs\Searchs;
 use App\Models\User\Slideshows\Slideshows;
 use App\Models\User\Slideshows\SlideshowsItems;
+use App\Models\User\Rsses\Rsses;
+use App\Models\User\Rsses\RssUrls;
+
 
 use App\User;
 
@@ -157,6 +160,7 @@ use App\Models\Migration\Nc2\Nc2SearchBlock;
 use App\Models\Migration\Nc2\Nc2Slides;
 use App\Models\Migration\Nc2\Nc2SlidesUrl;
 use App\Models\Migration\Nc2\Nc2Simplemovie;
+use App\Models\Migration\Nc2\Nc2RssBlock;
 
 use App\Traits\ConnectCommonTrait;
 use App\Utilities\Migration\MigrationUtils;
@@ -270,7 +274,7 @@ trait MigrationTrait
         'quiz'          => 'Development',  // 小テスト
         'registration'  => 'forms',        // フォーム
         'reservation'   => 'reservations', // 施設予約
-        'rss'           => 'Development',  // RSS
+        'rss'           => 'rsses',        // RSS
         'search'        => 'searchs',      // 検索
         'todo'          => 'Development',  // ToDo
         'whatsnew'      => 'whatsnews',    // 新着情報
@@ -610,6 +614,13 @@ trait MigrationTrait
             Searchs::truncate();
             Buckets::where('plugin_name', 'searchs')->delete();
             MigrationMapping::where('target_source_table', 'searchs')->delete();
+        }
+
+        if ($target == 'rsses' || $target == 'all') {
+            Rsses::truncate();
+            RssUrls::truncate();
+            Buckets::where('plugin_name', 'rsses')->delete();
+            MigrationMapping::where('target_source_table', 'rsses')->delete();
         }
     }
 
@@ -989,6 +1000,11 @@ trait MigrationTrait
         // 検索の取り込み
         if ($this->isTarget('cc_import', 'plugins', 'searchs')) {
             $this->importSearchs($redo);
+        }
+
+        // RSSの取り込み
+        if ($this->isTarget('cc_import', 'plugins', 'rsses')) {
+            $this->importRsses($redo);
         }
 
         // 固定URLの取り込み
@@ -5185,6 +5201,114 @@ trait MigrationTrait
     }
 
     /**
+     * Connect-CMS 移行形式のRSSをインポート
+     */
+    private function importRsses($redo)
+    {
+        $this->putMonitor(3, "Rsses import start.");
+
+        // データクリア
+        if ($redo === true) {
+            $this->clearData('rsses');
+        }
+
+        // 定義の取り込み
+        $ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('rsses/rsses_*.ini'));
+        // ユーザ取得
+        $users = User::get();
+        // 定義のループ
+        foreach ($ini_paths as $ini_path) {
+            // ini_file の解析
+            $ini = parse_ini_file($ini_path, true);
+
+            // nc2 の block_id
+            $nc2_rsses_block_id = 0;
+            if (array_key_exists('source_info', $ini) && array_key_exists('rsses_block_id', $ini['source_info'])) {
+                $nc2_rsses_block_id = $ini['source_info']['rsses_block_id'];
+            }
+
+            // マッピングテーブルの取得
+            $mapping = MigrationMapping::where('target_source_table', 'rsses')->where('source_key', $nc2_rsses_block_id)->first();
+
+            // マッピングテーブルを確認して、追加か取得の処理を分岐
+            if (empty($mapping)) {
+                // Buckets テーブルと rsses テーブル、マッピングテーブルを追加
+                $rsses_name = $this->getArrayValue($ini, 'rss_base', 'rsses_name', '無題');
+
+                $bucket = new Buckets(['bucket_name' => $rsses_name, 'plugin_name' => 'rsses']);
+                $bucket->created_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'created_at');
+                $bucket->updated_at = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'updated_at');
+                // 登録更新日時を自動更新しない
+                $bucket->timestamps = false;
+                $bucket->save();
+
+                $cache_interval = $this->getArrayValue($ini, 'rss_base', 'cache_interval', 5);
+                $mergesort_flag = $this->getArrayValue($ini, 'rss_base', 'mergesort_flag', 0);
+                $mergesort_count = $this->getArrayValue($ini, 'rss_base', 'mergesort_count', 10);
+                $rsses = new rsses([
+                    'bucket_id' => $bucket->id,
+                    'rsses_name' => $rsses_name,
+                    'cache_interval' => $cache_interval,
+                    'mergesort_flag' => $mergesort_flag,
+                    'mergesort_count'  => $mergesort_count,
+                ]);
+                $rsses->created_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'insert_login_id', null));
+                $rsses->created_name = $this->getArrayValue($ini, 'source_info', 'created_name', null);
+                $rsses->created_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'created_at');
+                $rsses->updated_id   = $this->getUserIdFromLoginId($users, $this->getArrayValue($ini, 'source_info', 'update_login_id', null));
+                $rsses->updated_name = $this->getArrayValue($ini, 'source_info', 'updated_name', null);
+                $rsses->updated_at   = $this->getDatetimeFromIniAndCheckFormat($ini, 'source_info', 'updated_at');
+                // 登録更新日時を自動更新しない
+                $rsses->timestamps = false;
+                $rsses->save();
+
+                // RSSのデータを取得（TSV）
+                $rsses_tsv_filename = str_replace('ini', 'tsv', basename($ini_path));
+                if (Storage::exists($this->getImportPath('rsses/') . $rsses_tsv_filename)) {
+                    // TSV ファイル取得（1つのTSV で1つのRSS）
+                    $rsses_tsv = Storage::get($this->getImportPath('rsses/') . $rsses_tsv_filename);
+                    // 無いものは対象外
+                    if (empty($rsses_tsv)) {
+                        continue;
+                    }
+                    // 改行でURL毎に分割するがNC2の場合は1対1
+                    $rsses_tsv_lines = explode("\n", $rsses_tsv);
+                    foreach ($rsses_tsv_lines as $rsses_tsv_line) {
+                        $rsses_tsv_cols = explode("\t", $rsses_tsv_line);
+                        // url{\t}title{\t}caption{\t}item_count{\t}display_flag{\t}display_sequence
+
+                        $url = isset($rsses_tsv_cols[0]) ? $rsses_tsv_cols[0] : null;
+                        $title = isset($rsses_tsv_cols[1]) ? $rsses_tsv_cols[1] : null;
+                        $caption = isset($rsses_tsv_cols[2]) ? $rsses_tsv_cols[2] : null;
+                        $item_count = isset($rsses_tsv_cols[3]) ? $rsses_tsv_cols[3] : null;
+                        $display_flag = isset($rsses_tsv_cols[4]) ? $rsses_tsv_cols[4] : null;
+                        $display_sequence = isset($rsses_tsv_cols[5]) ? $rsses_tsv_cols[5] : null;
+
+                        // 付与テーブルデータを作成する
+                        $rss_urls = rssUrls::create([
+                            'rsses_id' => $rsses->id,
+                            'url' => $url,
+                            'title' => $title,
+                            'caption' => $caption,
+                            'item_count' => $item_count,
+                            'caption' => $caption,
+                            'display_flag' => $display_flag,
+                            'display_sequence' => $display_sequence,
+                        ]);
+                    }
+                }
+                // マッピングテーブルの追加
+                $mapping = MigrationMapping::create([
+                    'target_source_table'  => 'rsses',
+                    'source_key'           => $nc2_rsses_block_id,
+                    'destination_key'      => $rsses->id,
+                ]);
+            }
+
+        }
+    }
+
+    /**
      * シーダーの呼び出し
      */
     //private function importSeeder($redo)
@@ -5442,6 +5566,9 @@ trait MigrationTrait
         } elseif ($plugin_name == 'searchs') {
             // 検索
             $this->importPluginSearchs($page, $page_dir, $frame_ini, $display_sequence);
+        } elseif ($plugin_name == 'rsses') {
+            // RSS
+            $this->importPluginRsses($page, $page_dir, $frame_ini, $display_sequence);
         }
     }
 
@@ -6986,6 +7113,52 @@ trait MigrationTrait
     }
 
     /**
+     * RSSプラグインの登録処理
+     */
+    private function importPluginRsses($page, $page_dir, $frame_ini, $display_sequence)
+    {
+        // 変数定義
+        $rsses_block_id = null;
+        $rss_ini = null;
+        $nc2_rsses_block_id = null;
+        $migration_mapping = null;
+        $rss = null;
+        $bucket = null;
+
+        // エクスポートファイルの rsses_block_id 取得（エクスポート時の連番）
+        $rsses_block_id = $this->getArrayValue($frame_ini, 'frame_base', 'rsses_block_id', null);
+
+        // RSSの情報取得
+        if (!empty($rsses_block_id) && Storage::exists($this->getImportPath('rsses/rsses_') . $rsses_block_id . '.ini')) {
+            $rss_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('rsses/rsses_') . $rsses_block_id . '.ini', true);
+        }
+        // NC2 のrss_block_id
+        $nc2_rsses_block_id = $this->getArrayValue($rss_ini, 'source_info', 'rsses_block_id', null);
+
+        // NC2 のrss_block_id でマップ確認
+        if (!empty($rss_ini) && array_key_exists('source_info', $rss_ini) && array_key_exists('rsses_block_id', $rss_ini['source_info'])) {
+            $migration_mapping = MigrationMapping::where('target_source_table', 'rsses')->where('source_key', $nc2_rsses_block_id)->first();
+        }
+
+        // マップから新RSS を取得
+        if (!empty($migration_mapping)) {
+            $rss = Rsses::find($migration_mapping->destination_key);
+        }
+        // 新RSS からBucket ID を取得
+        if (!empty($rss)) {
+            $bucket = Buckets::find($rss->bucket_id);
+        }
+
+        // bucket がない場合は、フレームは作るけど、エラーログを出しておく。
+        if (empty($bucket)) {
+            $this->putError(1, 'RSS フレームのみで実体なし', "page_dir = " . $page_dir);
+        }
+
+        // Frames 登録
+        $frame = $this->importPluginFrame($page, $frame_ini, $display_sequence, $bucket);
+    }
+
+    /**
      * 固定記事プラグインの登録処理
      */
     private function importPluginContents($page, $page_dir, $frame_ini, $display_sequence)
@@ -7794,6 +7967,11 @@ trait MigrationTrait
         // NC2 アンケート（questionnaire）データのエクスポート
         if ($this->isTarget('nc2_export', 'plugins', 'questionnaires')) {
             $this->nc2ExportQuestionnaire($redo);
+        }
+
+        // NC2 RSS（rss）データのエクスポート
+        if ($this->isTarget('nc2_export', 'plugins', 'rsses')) {
+            $this->nc2ExportRss($redo);
         }
 
         // NC2 固定リンク（abbreviate_url）データのエクスポート
@@ -12245,6 +12423,116 @@ trait MigrationTrait
     }
 
     /**
+     * NC2：RSS（rss）の移行
+     */
+    private function nc2ExportRss($redo)
+    {
+        $this->putMonitor(3, "Start nc3ExportRss.");
+
+        // データクリア
+        if ($redo === true) {
+            // 移行用ファイルの削除
+            Storage::deleteDirectory($this->getImportPath('rsses/'));
+        }
+
+        // NC2RSS（rss）を移行する。
+        $nc2_rss_blocks = Nc2RssBlock::select('rss_block.*', 'blocks.block_name', 'pages.page_name')
+            ->join('blocks', 'blocks.block_id', '=', 'rss_block.block_id')
+            ->join('pages', function ($join) {
+                $join->on('pages.page_id', '=', 'blocks.page_id')
+                    ->where('pages.private_flag', '=', 0);
+            })
+            ->orderBy('rss_block.block_id')
+            ->get();
+
+        // 空なら戻る
+        if ($nc2_rss_blocks->isEmpty()) {
+            return;
+        }
+        // nc2の全ユーザ取得
+        $nc2_users = Nc2User::get();
+
+        foreach ($nc2_rss_blocks as $nc2_rss_block) {
+            $room_ids = $this->getMigrationConfig('basic', 'nc3_export_room_ids');
+            // ルーム指定があれば、指定されたルームのみ処理する。
+            if (empty($room_ids)) {
+                // ルーム指定なし。全データの移行
+            } elseif (!empty($room_ids) && in_array($nc2_rss_block->room_id, $room_ids)) {
+                // ルーム指定あり。指定ルームに合致する。
+            } else {
+                // ルーム指定あり。条件に合致せず。移行しない。
+                continue;
+            }
+
+            // RSS設定
+            $rss_ini = "";
+            $rss_ini .= "[rss_base]\n";
+
+            // RSSの名前は、ブロックタイトルがあればブロックタイトル。
+            $rss_name = '無題';
+            if (!empty($nc2_rss_block->page_name)) {
+                $rss_name = $nc2_rss_block->page_name;
+            }
+            if (!empty($nc2_rss_block->frame_name)) {
+                $rss_name = $nc2_rss_block->frame_name;
+            }
+            // キャッシュタイム
+            $cache_interval = '0';
+            if ($nc2_rss_block->cache_time) {
+                $cache_time = $nc2_rss_block->cache_time;
+                switch ($cache_time) {
+                    case '3600':
+                    case '18000':
+                    case '43200':
+                    case '86400':
+                    case '259200':
+                    case '604800':
+                    case '2592000':
+                        $cache_interval = '60'; //1時間以上は1時間にする
+                        break;
+                    case '1':
+                    default:
+                        $cache_interval = '5'; // 都度取得は嫌なので5分
+                        break;
+                }
+            }
+            $rss_ini .= "rsses_name      = \"{$rss_name}\"\n";
+            $rss_ini .= "cache_interval  = \"{$cache_interval}\"\n";
+            $rss_ini .= "mergesort_flag  = \"0\"\n";
+            $rss_ini .= "mergesort_count = \"10\"\n";
+
+            // NC2 情報
+            $rss_ini .= "\n";
+            $rss_ini .= "[source_info]\n";
+            $rss_ini .= "rsses_block_id  = " . $nc2_rss_block->block_id . "\n";
+            $rss_ini .= "room_id         = " . $nc2_rss_block->room_id . "\n";
+            $rss_ini .= "module_name     = \"rss\"\n";
+            $rss_ini .= "created_at      = \"" . $this->getCCDatetime($nc2_rss_block->insert_time) . "\"\n";
+            $rss_ini .= "created_name    = \"" . $nc2_rss_block->insert_user_name . "\"\n";
+            $rss_ini .= "insert_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_rss_block->insert_user_id) . "\"\n";
+            $rss_ini .= "updated_at      = \"" . $this->getCCDatetime($nc2_rss_block->update_time) . "\"\n";
+            $rss_ini .= "updated_name    = \"" . $nc2_rss_block->update_user_name . "\"\n";
+            $rss_ini .= "update_login_id = \"" . $this->getNc2LoginIdFromNc2UserId($nc2_users, $nc2_rss_block->update_user_id) . "\"\n";
+
+            // TSV でエクスポート
+            $rsses_tsv = "";
+            // NC2では1対1のデータ
+            // url{\t}title{\t}caption{\t}item_count{\t}display_flag{\t}display_sequence
+            $rsses_tsv .= $nc2_rss_block->url . "\t";       // url
+            $rsses_tsv .= $nc2_rss_block->site_name . "\t"; // site_name を titleにする
+            $rsses_tsv .= "\t";                       // caption
+            $rsses_tsv .= $nc2_rss_block->visible_row . "\t"; // visible_rowをitem_count
+            $rsses_tsv .= "1\t";                       // display_flag
+            $rsses_tsv .= "1\t";                       // display_sequence
+
+            // RSSの設定を出力
+            $this->storagePut($this->getImportPath('rsses/rsses_') . $this->zeroSuppress($nc2_rss_block->block_id) . '.ini', $rss_ini);
+            // RSSのURL情報を出力
+            $this->storagePut($this->getImportPath('rsses/rsses_') . $this->zeroSuppress($nc2_rss_block->block_id) . '.tsv', $rsses_tsv);
+        }
+    }
+
+    /**
      * NC2：固定リンク（abbreviate_url）の移行
      */
     private function nc2ExportAbbreviateUrl($redo)
@@ -12843,6 +13131,9 @@ trait MigrationTrait
             if (!empty($nc2_questionnaire_block)) {
                 $ret = "form_id = \"" . $this->zeroSuppress($nc2_questionnaire_block->questionnaire_id) . "\"\n";
             }
+        } elseif ($module_name == 'rss') {
+            $nc2_rss_block = Nc2RssBlock::where('block_id', $nc2_block->block_id)->first();
+            $ret = "rsses_block_id = \"" . $this->zeroSuppress($nc2_rss_block->block_id) . "\"\n";
         }
         return $ret;
     }
