@@ -27,6 +27,8 @@ use App\Traits\Migration\MigrationExportHtmlPageTrait;
 
 use App\Plugins\Manage\ManagePluginBase;
 
+use App\Utilities\Csv\CsvUtils;
+
 /**
  * ページ管理クラス
  *
@@ -525,7 +527,6 @@ class PageManage extends ManagePluginBase
      */
     public function upload($request, $page_id)
     {
-
         // CSVファイルチェック
         $validator = Validator::make($request->all(), [
             'page_csv' => [
@@ -538,7 +539,6 @@ class PageManage extends ManagePluginBase
             'page_csv' => 'インポートCSV',
         ]);
         if ($validator->fails()) {
-            // return ( $this->import($request, $page_id, $validator->errors()->all()) );
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
@@ -558,7 +558,6 @@ class PageManage extends ManagePluginBase
             fclose($fp);
             Storage::delete($path);
 
-            // return ( $this->import($request, $page_id, $error_msgs) );
             return redirect()->back()->withErrors(['page_csv' => $error_msgs])->withInput();
         }
 
@@ -569,7 +568,6 @@ class PageManage extends ManagePluginBase
             fclose($fp);
             Storage::delete($path);
 
-            // return ( $this->import($request, $page_id, $error_msgs) );
             return redirect()->back()->withErrors(['page_csv' => $error_msgs])->withInput();
         }
 
