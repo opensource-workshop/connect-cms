@@ -27,6 +27,8 @@ use App\Traits\Migration\MigrationExportHtmlPageTrait;
 
 use App\Plugins\Manage\ManagePluginBase;
 
+use App\Utilities\Csv\CsvUtils;
+
 /**
  * ページ管理クラス
  *
@@ -525,7 +527,6 @@ class PageManage extends ManagePluginBase
      */
     public function upload($request, $page_id)
     {
-
         // CSVファイルチェック
         $validator = Validator::make($request->all(), [
             'page_csv' => [
@@ -538,15 +539,13 @@ class PageManage extends ManagePluginBase
             'page_csv' => 'インポートCSV',
         ]);
         if ($validator->fails()) {
-            // return ( $this->import($request, $page_id, $validator->errors()->all()) );
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
         // CSVファイル一時保孫
         $path = $request->file('page_csv')->store('tmp');
 
-        // bugfix: fgetcsv() は ロケール設定の影響を受け、xampp環境＋日本語文字列で誤動作したため、ロケール設定する。
-        setlocale(LC_ALL, 'ja_JP.UTF-8');
+        CsvUtils::setLocale();
 
         // 一行目（ヘッダ）読み込み
         $fp = fopen(storage_path('app/') . $path, 'r');
@@ -559,7 +558,6 @@ class PageManage extends ManagePluginBase
             fclose($fp);
             Storage::delete($path);
 
-            // return ( $this->import($request, $page_id, $error_msgs) );
             return redirect()->back()->withErrors(['page_csv' => $error_msgs])->withInput();
         }
 
@@ -570,7 +568,6 @@ class PageManage extends ManagePluginBase
             fclose($fp);
             Storage::delete($path);
 
-            // return ( $this->import($request, $page_id, $error_msgs) );
             return redirect()->back()->withErrors(['page_csv' => $error_msgs])->withInput();
         }
 
