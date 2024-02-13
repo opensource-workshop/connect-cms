@@ -23,6 +23,8 @@ use App\Plugins\User\UserPluginBase;
 
 use App\Rules\CustomValiWysiwygMax;
 
+use App\Utilities\File\FileUtils;
+
 /**
  * カレンダー・プラグイン
  *
@@ -272,7 +274,7 @@ class CalendarsPlugin extends UserPluginBase
     public function index($request, $page_id, $frame_id)
     {
         // 曜日表示のために日本語設定にする。
-        setlocale(LC_ALL, 'ja_JP.UTF-8');
+        FileUtils::setLocale();
 
         // プラグインのフレームデータ
         $plugin_frame = $this->getPluginFrame($frame_id);

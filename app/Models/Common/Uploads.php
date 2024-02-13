@@ -34,10 +34,7 @@ class Uploads extends Model
      */
     public function getFilename()
     {
-        // 環境によってはsetlocale しておかないと、ファイル名がうまくpathinfo で取得できなかった。
-        // 2020-12-15 Connect-CMS 公式サイトで、ファイル名が空になったり一部しか取得できないケースがあった。
-        // false を返すことなどもあるようで、ワーニングの抑止の意味も含めて @ 付きでCall
-        @setlocale(LC_ALL, 'ja_JP.UTF-8');
+        FileUtils::setLocale();
         return $path_parts = pathinfo($this->client_original_name, PATHINFO_FILENAME);
     }
 

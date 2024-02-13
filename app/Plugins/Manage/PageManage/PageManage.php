@@ -545,8 +545,7 @@ class PageManage extends ManagePluginBase
         // CSVファイル一時保孫
         $path = $request->file('page_csv')->store('tmp');
 
-        // bugfix: fgetcsv() は ロケール設定の影響を受け、xampp環境＋日本語文字列で誤動作したため、ロケール設定する。
-        setlocale(LC_ALL, 'ja_JP.UTF-8');
+        CsvUtils::setLocale();
 
         // 一行目（ヘッダ）読み込み
         $fp = fopen(storage_path('app/') . $path, 'r');
