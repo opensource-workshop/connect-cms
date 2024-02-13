@@ -2,12 +2,11 @@
 
 namespace App\Utilities\Csv;
 
-use Illuminate\Support\Facades\Validator;
-
+use App\Enums\CsvCharacterCode;
 use App\Utilities\Csv\SjisToUtf8EncodingFilter;
 use App\Utilities\String\StringUtils;
-
-use App\Enums\CsvCharacterCode;
+use App\Utilities\File\FileUtils;
+use Illuminate\Support\Facades\Validator;
 
 class CsvUtils
 {
@@ -167,5 +166,14 @@ class CsvUtils
         }
 
         return $csv_data;
+    }
+
+    /**
+     * localeをセット
+     * fgetcsv()処理前に利用
+     */
+    public static function setLocale(): void
+    {
+        FileUtils::setLocale();
     }
 }
