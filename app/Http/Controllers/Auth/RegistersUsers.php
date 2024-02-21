@@ -143,8 +143,6 @@ trait RegistersUsers
         $this->validator($request->all())->validate();
 
         // 設定の取得
-        // $configs = Configs::where('category', 'user_register')->get();
-        // $configs = Configs::get();
         $configs = Configs::where('category', 'general')
             ->orWhere(function ($query) use ($request) {
                 $query->Where('category', 'user_register')
@@ -153,7 +151,6 @@ trait RegistersUsers
             ->get();
 
         // ユーザ登録の権限チェック
-        //if (isset($user) && ($user->role == 1 || $user->role == 3)) {
         if ($this->isCan('admin_user')) {
             // ユーザ登録の権限があればOK
         } elseif (Configs::getConfigsValue($configs, 'user_register_enable') != "1") {
@@ -230,8 +227,6 @@ trait RegistersUsers
 
         // ユーザー自動登録（未ログイン、ユーザ管理者以外）
         if (!Auth::user() || !$this->isCan('admin_user')) {
-            // session()->flash('flash_message_for_header', 'ユーザ登録が完了しました。登録したログインID、パスワードでログインしてください。');
-
             // 登録者に仮登録メールを送信する
             if (Configs::getConfigsValue($configs, 'user_register_temporary_regist_mail_flag')) {
                 // *** 仮登録
@@ -293,8 +288,14 @@ trait RegistersUsers
             }
         }
 
-        // 作成したユーザでのログイン処理は行わない。mod by nagahara@opensource-workshop.jp
-        // $this->guard()->login($user);
+        // 自動ユーザ登録後の自動ログイン
+        if (Configs::getConfigsValue($configs, 'user_register_auto_login_flag')) {
+            // 未ログイン
+            if (!Auth::user()) {
+                // 自動ログイン
+                Auth::login($user, true);
+            }
+        }
 
         return $this->registered($request, $user)
                         ?: redirect($this->redirectPath())->with('flash_message', 'ユーザ登録しました。続けて参加グループを設定してください。');

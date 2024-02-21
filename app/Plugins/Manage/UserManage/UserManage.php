@@ -1398,6 +1398,15 @@ class UserManage extends ManagePluginBase
             ]
         );
 
+        // 自動ユーザ登録後の自動ログイン
+        $configs = Configs::updateOrCreate(
+            ['name' => 'user_register_auto_login_flag', 'additional1' => $id],
+            [
+                'category' => 'user_register',
+                'value' => $request->user_register_auto_login_flag
+            ]
+        );
+
         // 以下のアドレスにメール送信する
         $configs = Configs::updateOrCreate(
             ['name' => 'user_register_mail_send_flag', 'additional1' => $id],
@@ -1769,7 +1778,6 @@ class UserManage extends ManagePluginBase
         ]);
 
         if ($validator->fails()) {
-            // Log::debug(var_export($validator->errors(), true));
             // エラーと共に編集画面を呼び出す
             return redirect()->back()->withErrors($validator)->withInput();
         }
@@ -1809,8 +1817,7 @@ class UserManage extends ManagePluginBase
             $fp = CsvUtils::setStreamFilterRegisterSjisToUtf8($fp);
         }
 
-        // bugfix: fgetcsv() は ロケール設定の影響を受け、xampp環境＋日本語文字列で誤動作したため、ロケール設定する。
-        setlocale(LC_ALL, 'ja_JP.UTF-8');
+        CsvUtils::setLocale();
 
         // 一行目（ヘッダ）
         $header_columns = fgetcsv($fp, 0, ',');
@@ -1819,7 +1826,6 @@ class UserManage extends ManagePluginBase
             // UTF-8のみBOMコードを取り除く
             $header_columns = CsvUtils::removeUtf8Bom($header_columns);
         }
-        // \Log::debug('$header_columns:'. var_export($header_columns, true));
 
         // 任意カラムの取得
         $users_columns = UsersTool::getUsersColumns($request->columns_set_id);
@@ -1854,11 +1860,6 @@ class UserManage extends ManagePluginBase
             return redirect()->back()->withErrors(['users_csv' => $error_msgs])->withInput();
         }
 
-        // [debug]
-        // fclose($fp);
-        // Storage::delete($path); // 一時ファイルの削除
-        // dd('ここまで');
-
         // ファイルポインタの位置を先頭に戻す
         rewind($fp);
 
@@ -1873,7 +1874,6 @@ class UserManage extends ManagePluginBase
         // データ
         while (($csv_columns = fgetcsv($fp, 0, ',')) !== false) {
             // --- 入力値変換
-            // Log::debug(var_export($csv_columns, true));
 
             // 入力値をトリム(preg_replace(/u)で置換. /u = UTF-8 として処理)
             $csv_columns = StringUtils::trimInput($csv_columns);
@@ -1889,13 +1889,6 @@ class UserManage extends ManagePluginBase
                 // 空文字をnullに変換
                 $csv_column = StringUtils::convertEmptyStringsToNull($csv_column);
             }
-            // Log::debug('$csv_columns:'. var_export($csv_columns, true));
-
-            // [debug]
-            //// 一時ファイルの削除
-            // fclose($fp);
-            // Storage::delete($path);
-            // dd('ここまで' . $posted_at);
 
             // --- User
             if (empty($users_id)) {
