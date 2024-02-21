@@ -72,10 +72,11 @@ if (! isset($cc_configs)) {
     <!-- Connect-CMS Option Plugin's CSS -->
     @php
         $option_css_path = public_path('css/option');
-        $option_csses = \File::files($option_css_path);
+        $option_csses = glob($option_css_path . '/*.css');
     @endphp
     @foreach ($option_csses as $css)
-        <link href="{{ asset('css/option/' . $css->getFilename()) }}?version={{ $css->getMTime() }}" rel="stylesheet">
+        @php $file = new SplFileInfo($css);@endphp
+        <link href="{{ asset('css/option/' . $file->getFilename()) }}?version={{ $file->getMTime() }}" rel="stylesheet">
     @endforeach
 
     <!-- Themes CSS（基本） -->
