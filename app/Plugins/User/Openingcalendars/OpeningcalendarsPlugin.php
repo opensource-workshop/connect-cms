@@ -80,16 +80,6 @@ class OpeningcalendarsPlugin extends UserPluginBase
         return $role_check_table;
     }
 
-    /**
-     *  編集画面の最初のタブ（コアから呼び出す）
-     *
-     *  スーパークラスをオーバーライド
-     */
-    public function getFirstFrameEditAction()
-    {
-        return "editBuckets";
-    }
-
     /* private関数 */
 
     /**

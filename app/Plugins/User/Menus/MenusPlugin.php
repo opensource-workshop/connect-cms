@@ -37,16 +37,6 @@ class MenusPlugin extends UserPluginBase
     /* コアから呼び出す関数 */
 
     /**
-     * 編集画面の最初のタブ
-     *
-     *  スーパークラスをオーバーライド
-     */
-    public function getFirstFrameEditAction()
-    {
-        return "select";
-    }
-
-    /**
      * 関数定義（コアから呼び出す）
      */
     public function getPublicFunctions()

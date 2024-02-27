@@ -142,23 +142,6 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
-     *  編集画面の最初のタブ
-     *
-     *  スーパークラスをオーバーライド
-     */
-    public function getFirstFrameEditAction()
-    {
-        // データベースの設定がまだの場合は、データベースの新規作成に遷移する。
-        $database = $this->getDatabases($this->frame->id);
-        if (empty($database)) {
-            return "createBuckets";
-        }
-
-        // カラムの設定画面
-        return "editColumn";
-    }
-
-    /**
      *  POST取得関数（コアから呼び出す）
      *  コアがPOSTチェックの際に呼び出す関数
      */
