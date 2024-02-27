@@ -82,16 +82,6 @@ class SlideshowsPlugin extends UserPluginBase
         return $role_check_table;
     }
 
-    /**
-     *  編集画面の最初のタブ ※スーパークラスをオーバーライド
-     */
-    public function getFirstFrameEditAction()
-    {
-        // スライドショー未作成の場合、スライドショーの新規作成に遷移
-        $slideshow = $this->getSlideshows($this->frame->id);
-        return $slideshow ? 'editBuckets' : 'createBuckets';
-    }
-
     /* private関数 */
 
     /**

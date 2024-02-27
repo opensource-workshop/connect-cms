@@ -87,16 +87,6 @@ class BbsesPlugin extends UserPluginBase
     }
 
     /**
-     * 編集画面の最初のタブ（コアから呼び出す）
-     *
-     * スーパークラスをオーバーライド
-     */
-    public function getFirstFrameEditAction()
-    {
-        return "editBuckets";
-    }
-
-    /**
      * POST取得関数（コアから呼び出す）
      * コアがPOSTチェックの際に呼び出す関数
      */
