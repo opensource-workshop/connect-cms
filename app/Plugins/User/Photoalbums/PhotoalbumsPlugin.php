@@ -87,17 +87,6 @@ class PhotoalbumsPlugin extends UserPluginBase
     }
 
     /**
-     * 編集画面の最初のタブ（コアから呼び出す）
-     * スーパークラスをオーバーライド
-     *
-     * @return string 関数名
-     */
-    public function getFirstFrameEditAction()
-    {
-        return "editBuckets";
-    }
-
-    /**
      * プラグインのバケツ取得関数
      *
      * @param int $bucket_id バケツID

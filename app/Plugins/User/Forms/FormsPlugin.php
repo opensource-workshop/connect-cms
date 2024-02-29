@@ -136,23 +136,6 @@ class FormsPlugin extends UserPluginBase
         return $role_check_table;
     }
 
-    /**
-     *  編集画面の最初のタブ
-     *
-     *  スーパークラスをオーバーライド
-     */
-    public function getFirstFrameEditAction()
-    {
-        // フォームの設定がまだの場合は、フォームの新規作成に遷移する。
-        $form = $this->getForms($this->frame->id);
-        if (empty($form)) {
-            return "createBuckets";
-        }
-
-        // カラムの設定画面
-        return "editColumn";
-    }
-
     /* private関数 */
 
     /**

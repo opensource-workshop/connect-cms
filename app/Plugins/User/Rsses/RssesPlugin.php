@@ -76,16 +76,6 @@ class RssesPlugin extends UserPluginBase
         return $role_check_table;
     }
 
-    /**
-     *  編集画面の最初のタブ ※スーパークラスをオーバーライド
-     */
-    public function getFirstFrameEditAction()
-    {
-        // RSS未作成の場合、RSSの新規作成に遷移
-        $rss = $this->getRsses($this->frame->id);
-        return $rss ? 'editBuckets' : 'createBuckets';
-    }
-
     /* private関数 */
 
     /**

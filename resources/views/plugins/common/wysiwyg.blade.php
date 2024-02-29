@@ -274,7 +274,7 @@
             selector : 'textarea',
         @endif
 
-        cache_suffix: '?v=5.8.0.11',
+        cache_suffix: '?v=5.8.0.12',
 
         // change: app.blade.phpと同様にlocaleを見て切替
         // language : 'ja',
@@ -823,7 +823,7 @@
                     //        エラーが出ないように要素が無い場合、処理しない事を検討したが、その場合、リサイズされなくなるため、対応を見送った。
 
                     // リサイズ画像サイズをinput type=textに保持
-                    document.getElementById('cc-resized-image-size-' + frame_id).value = jQuery('.tox-listbox--select')[0].dataset.value
+                    document.getElementById('cc-resized-image-size-' + frame_id).value = event.value.resize;
                 }
             });
 

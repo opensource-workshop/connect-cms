@@ -25,19 +25,6 @@ use App\Plugins\User\UserPluginBase;
  */
 class KnowledgesPlugin extends UserPluginBase
 {
-
-    /**
-     *  編集画面の最初のタブ
-     *
-     *  スーパークラスをオーバーライド
-     */
-/*
-    public function getFirstFrameEditAction()
-    {
-        return "edit";
-    }
-*/
-
     /**
      *  関数定義（コアから呼び出す）
      */

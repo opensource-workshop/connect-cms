@@ -69,6 +69,16 @@ if (! isset($cc_configs)) {
     <!-- Connect-CMS Global CSS -->
     <link href="{{ asset('css/connect.css') }}?version={{ filemtime(public_path() . "/css/connect.css") }}" rel="stylesheet">
 
+    <!-- Connect-CMS Option Plugin's CSS -->
+    @php
+        $option_css_path = public_path('css/option');
+        $option_csses = glob($option_css_path . '/*.css');
+    @endphp
+    @foreach ($option_csses as $css)
+        @php $file = new SplFileInfo($css);@endphp
+        <link href="{{ asset('css/option/' . $file->getFilename()) }}?version={{ $file->getMTime() }}" rel="stylesheet">
+    @endforeach
+
     <!-- Themes CSS（基本） -->
 @if (isset($themes['css']) && $themes['css'] != '' && file_exists(public_path() . "/themes/{$themes['css']}/themes.css"))
     <link href="{{url('/')}}/themes/{{$themes['css']}}/themes.css?version={{ filemtime(public_path() . "/themes/{$themes['css']}/themes.css") }}" rel="stylesheet">
