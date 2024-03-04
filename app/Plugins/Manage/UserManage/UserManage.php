@@ -1927,6 +1927,8 @@ class UserManage extends ManagePluginBase
             // 状態
             $status_col_no = array_search('status', $import_column_col_no);
             $user->status = $csv_columns[$status_col_no];
+            // 項目セットID
+            $user->columns_set_id = $request->columns_set_id;
 
             $user->save();
 
