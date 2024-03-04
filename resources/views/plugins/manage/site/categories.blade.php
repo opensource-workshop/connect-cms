@@ -49,7 +49,7 @@
                         --}}
                         <tr>
                             <th nowrap>表示順 <span class="badge badge-danger">必須</span></th>
-                            <th nowrap>クラス名</th>
+                            <th nowrap>クラス名 <span class="badge badge-danger">必須</span></th>
                             <th nowrap>カテゴリ <span class="badge badge-danger">必須</span></th>
                             <th nowrap>文字色 <span class="badge badge-danger">必須</span></th>
                             <th nowrap>背景色 <span class="badge badge-danger">必須</span></th>
@@ -126,7 +126,7 @@
                     <li>カテゴリ設定後は、各プラグインのカテゴリ設定で表示設定が必要です。</li>
                     <li>各プラグインのカテゴリ設定から、コンテンツ単位で独自カテゴリを設定することも可能です。</li>
                     <li>「文字色」「背景色」にはHTMLで指定できる色キーワード（例：<code>red</code>, <code>blue</code>）やRGB色（例：<code>#000000</code>, <code>#111</code>）等を設定できます。</li>
-                    <li>「クラス名」はCSSのクラス名を設定できます。<code>cc_category_クラス名</code> で使用できます。</li>
+                    <li>「クラス名」はCSSのクラス名を設定できます。<code>cc_category_クラス名</code> で使用できます。「クラス名」は重複しないように設定してください。</li>
                 </ul>
             </div>
 
