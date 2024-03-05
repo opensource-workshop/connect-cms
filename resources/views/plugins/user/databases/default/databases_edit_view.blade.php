@@ -362,6 +362,44 @@
         </div>
     </div>
 
+    {{-- 表示件数リストの表示 --}}
+    @php
+        $view_count_spectator = FrameConfig::getConfigValueAndOld($frame_configs, DatabaseFrameConfig::database_view_count_spectator, ShowType::not_show);
+    @endphp
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">{{DatabaseFrameConfig::getDescription('database_view_count_spectator')}}</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            @foreach (ShowType::getMembers() as $key => $type)
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" value="{{$key}}" id="view_count_spectator{{$key}}" name="database_view_count_spectator" class="custom-control-input" @if ($view_count_spectator == $key) checked="checked" @endif>
+                <label class="custom-control-label" for="view_count_spectator{{$key}}" id="view_count_spectator{{$key}}">{{$type}}</label>
+            </div>
+            @endforeach
+            <small class="form-text text-muted">
+                表示する場合、閲覧者が表示件数を変更できます。
+            </small>
+        </div>
+    </div>
+
+    {{-- 表示件数の表示 --}}
+    @php
+        $page_total_views = FrameConfig::getConfigValueAndOld($frame_configs, DatabaseFrameConfig::database_page_total_views, ShowType::not_show);
+    @endphp
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">{{DatabaseFrameConfig::getDescription('database_page_total_views')}}</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            @foreach (ShowType::getMembers() as $key => $type)
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" value="{{$key}}" id="page_total_views{{$key}}" name="database_page_total_views" class="custom-control-input" @if ($page_total_views == $key) checked="checked" @endif>
+                <label class="custom-control-label" for="page_total_views{{$key}}" id="page_total_views{{$key}}">{{$type}}</label>
+            </div>
+            @endforeach
+            <small class="form-text text-muted">
+                表示している一覧の件数と総件数を表示します。
+            </small>
+        </div>
+    </div>
+
     {{-- Submitボタン --}}
     <div class="form-group text-center">
         <div class="row">
