@@ -716,8 +716,8 @@ class FormsPlugin extends UserPluginBase
     /**
      * 画像認証確認
      */
-   public function publicCaptcha($request, $page_id, $frame_id)
-   {
+    public function publicCaptcha($request, $page_id, $frame_id)
+    {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'captcha' => ['required', 'captcha'],
@@ -730,11 +730,11 @@ class FormsPlugin extends UserPluginBase
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-       // 一時セッションで閲覧を許可
-       session()->flash('can_view_form_captcha' . $frame_id, 1);
+        // 一時セッションで閲覧を許可
+        session()->flash('can_view_form_captcha' . $frame_id, 1);
 
-       // リダイレクト先を指定しないため、画面から渡されたredirect_pathに飛ぶ
-   }
+        // リダイレクト先を指定しないため、画面から渡されたredirect_pathに飛ぶ
+    }
 
     /**
      * 登録時の確認
