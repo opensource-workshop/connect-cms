@@ -15,6 +15,8 @@ final class DatabaseFrameConfig extends EnumsBase
     const database_trend_words = 'database_trend_words';
     const database_trend_words_caption = 'database_trend_words_caption';
     const database_destination_frame = 'database_destination_frame';
+    const database_view_count_spectator = 'database_view_count_spectator';
+    const database_page_total_views = 'database_page_total_views';
 
     // key/valueの連想配列
     const enum = [
@@ -23,5 +25,7 @@ final class DatabaseFrameConfig extends EnumsBase
         self::database_trend_words => '急上昇ワード',
         self::database_trend_words_caption => '急上昇ワード表示項目名',
         self::database_destination_frame => '検索後の遷移先',
+        self::database_view_count_spectator => '表示件数リストの表示',
+        self::database_page_total_views => '表示件数の表示',
     ];
 }
