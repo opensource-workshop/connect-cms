@@ -16,14 +16,14 @@
         {{-- 機能選択タブ --}}
         <div class="frame-setting-menu">
             <nav class="navbar navbar-expand-md navbar-light bg-light py-1">
-                <span class="d-md-none" style="margin: 0.5rem 0;">プロフィール</span>
+                <span class="d-md-none" style="margin: 0.5rem 0;">マイページ</span>
                 <div class="navbar-collapse collapse" id="collapsingNavbarLg">
                     <ul class="navbar-nav">
                         <li role="presentation" class="nav-item">
                         @if ($function == "index")
-                            <span class="nav-link"><span class="active">プロフィール</span></span>
+                            <span class="nav-link"><span class="active">マイページ</span></span>
                         @else
-                            <a href="{{url('/mypage')}}" class="nav-link">プロフィール</a></li>
+                            <a href="{{url('/mypage/profile')}}" class="nav-link">マイページ</a></li>
                         @endif
                         </li>
                     </ul>

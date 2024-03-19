@@ -104,7 +104,6 @@ class FormsPlugin extends UserPluginBase
             'publicStore',
             'publicStoreToken',
             'publicPassword',
-            'publicCaptcha',
             'cancel',
             'copyColumn',
             'storeInput',
@@ -413,15 +412,6 @@ class FormsPlugin extends UserPluginBase
                         'form' => $form,
                     ]);
                 }
-            } elseif ($form->access_limit_type == FormAccessLimitType::captcha) {
-                if (session('can_view_form_captcha' . $frame_id)) {
-                    // 閲覧OKならcaptcha画面を表示しない
-                } else {
-                    // 画像認証
-                    return $this->view('index_captcha', [
-                        'form' => $form,
-                    ]);
-                }
             }
 
             if ($form->form_mode == FormMode::form) {
@@ -709,29 +699,6 @@ class FormsPlugin extends UserPluginBase
 
         // 一時セッションで閲覧を許可
         session()->flash('can_view_form_password' . $frame_id, 1);
-
-        // リダイレクト先を指定しないため、画面から渡されたredirect_pathに飛ぶ
-    }
-
-    /**
-     * 画像認証確認
-     */
-    public function publicCaptcha($request, $page_id, $frame_id)
-    {
-        // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'captcha' => ['required', 'captcha'],
-        ]);
-        $validator->setAttributeNames([
-            'captcha' => '画像認証',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        // 一時セッションで閲覧を許可
-        session()->flash('can_view_form_captcha' . $frame_id, 1);
 
         // リダイレクト先を指定しないため、画面から渡されたredirect_pathに飛ぶ
     }

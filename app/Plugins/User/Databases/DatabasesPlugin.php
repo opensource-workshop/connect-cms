@@ -110,7 +110,6 @@ class DatabasesPlugin extends UserPluginBase
             'cancel',
             'addPref',
             'search',
-            'indexCount',
         ];
         return $functions;
     }
@@ -768,7 +767,6 @@ class DatabasesPlugin extends UserPluginBase
             if ($databases_frames) {
                 $get_count = $databases_frames->view_count;
             }
-            $get_count = session("view_count_spectator_{$frame_id}", $get_count);
             $inputs = $inputs_query->paginate($get_count, ["*"], $this->pageName($frame_id));
 
             // 登録データ行のタイトル取得
@@ -865,7 +863,6 @@ class DatabasesPlugin extends UserPluginBase
             'default_hide_list' => $default_hide_list,
             'frame_configs' => $this->frame_configs,
             'dest_frame' =>$this->getDestinationFrame(),
-            'view_count' => $get_count ?? null,
         // change: 同ページに(a)データベースプラグイン,(b)フォームを配置して(b)フォームで入力エラーが起きても、入力値が復元しないバグ対応。
         // ])->withInput($request->all);
         ]);
@@ -4508,15 +4505,5 @@ AND databases_inputs.posted_at <= NOW()
             $frame = Frame::with('page')->find($this->frame->id);
         }
         return $frame;
-    }
-
-    /**
-     * 件数指定
-     */
-    public function indexCount($request, $page_id, $frame_id)
-    {
-        session(["view_count_spectator_{$frame_id}" => $request->input("view_count_spectator")]);
-
-        // リダイレクト先を指定しないため、画面から渡されたredirect_pathに飛ぶ
     }
 }

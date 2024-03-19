@@ -170,8 +170,6 @@ $app_array = [
          */
         // 画像処理
         Intervention\Image\ImageServiceProvider::class,
-        // Captcha
-        Mews\Captcha\CaptchaServiceProvider::class,
 
         /*
          * Application Service Providers...
@@ -341,8 +339,6 @@ $app_array = [
 
         // 画像処理
         'Image' => Intervention\Image\Facades\Image::class,
-        // Captcha
-        'Captcha' => Mews\Captcha\Facades\Captcha::class,
 
     ],
 

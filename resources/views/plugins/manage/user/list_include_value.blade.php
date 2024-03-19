@@ -6,8 +6,7 @@
 
     // 複数選択型
     if ($users_column->column_type == UserColumnType::checkbox) {
-        // php8対応 str_replace(): Passing null to parameter #3 ($subject) of type string is deprecated
-        if (empty($obj) || is_null($obj->value)) {
+        if (empty($obj)) {
             $value = '';
         }
         else {

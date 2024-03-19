@@ -510,11 +510,11 @@ use App\Models\Common\Page;
         </div>
     </div>
     <div class="form-group row">
-        <label for="class" class="col-md-3 col-form-label text-md-right">メニュークラス名</label>
+        <label for="class" class="col-md-3 col-form-label text-md-right">クラス名</label>
         <div class="col-md-9">
             <input type="text" name="class" id="class" value="{{old('class', $page->class)}}" class="form-control">
             @include('common.errors_inline', ['name' => 'class'])
-            <small class="form-text text-muted">※ メニュープラグイン（一部テンプレート）のページに対して、デザインで使用するためのclass名を設定できます。</small>
+            <small class="form-text text-muted">※ デザインで使用するためのclass名</small>
         </div>
     </div>
 
