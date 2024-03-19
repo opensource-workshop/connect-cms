@@ -204,7 +204,7 @@ class PageManage extends ManagePluginBase
             'header_color'     => 'ヘッダーバーの背景色',
             'ip_address'       => 'IPアドレス制限',
             'othersite_url'    => '外部サイトURL',
-            'class'            => 'クラス名',
+            'class'            => 'メニュークラス名',
         ]);
         return $validator;
     }
