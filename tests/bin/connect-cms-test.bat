@@ -225,6 +225,9 @@ php artisan dusk tests\Browser\User\PhotoalbumsPluginTest.php
 echo --- データベース
 php artisan dusk tests\Browser\User\DatabasesPluginTest.php
 
+echo --- RSS
+php artisan dusk tests\Browser\User\RssesPluginTest.php
+
 echo --- OPAC
 php artisan dusk tests\Browser\User\OpacsPluginTest.php
 
