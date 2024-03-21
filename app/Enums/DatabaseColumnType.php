@@ -30,6 +30,7 @@ final class DatabaseColumnType extends EnumsBase
     // const group = 'group';
     const created = 'created';
     const updated = 'updated';
+    const views = 'views';
     const posted = 'posted';
     const display = 'display';
 
@@ -58,6 +59,7 @@ final class DatabaseColumnType extends EnumsBase
         // self::group=>'まとめ行',
         self::created => '登録日型（自動更新）',
         self::updated => '更新日型（自動更新）',
+        self::views => '表示件数型（自動更新）',
         self::posted => '公開日型（表示のみ）',
         self::display => '表示順型（表示のみ）',
     ];

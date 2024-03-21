@@ -126,16 +126,6 @@ class ReservationsPlugin extends UserPluginBase
     }
 
     /**
-     *  編集画面の最初のタブ（コアから呼び出す）
-     *
-     *  スーパークラスをオーバーライド
-     */
-    public function getFirstFrameEditAction()
-    {
-        return "editBuckets";
-    }
-
-    /**
      * POST取得関数（コアから呼び出す）
      * コアがPOSTチェックの際に呼び出す関数
      */
@@ -269,7 +259,7 @@ class ReservationsPlugin extends UserPluginBase
         $facility_display_type = FrameConfig::getConfigValue($this->frame_configs, ReservationFrameConfig::facility_display_type, FacilityDisplayType::all);
         $initial_facility = null;
         if ($facility_display_type == FacilityDisplayType::only) {
-            $initial_facility = (int) session('initial_facility'. $frame_id, FrameConfig::getConfigValue($this->frame_configs, ReservationFrameConfig::initial_facility));
+            $initial_facility = session('initial_facility'. $frame_id) ?? FrameConfig::getConfigValue($this->frame_configs, ReservationFrameConfig::initial_facility);
         }
 
         // 予約データ
@@ -316,30 +306,11 @@ class ReservationsPlugin extends UserPluginBase
         $search_end_date = null;
 
         if ($view_format == ReservationCalendarDisplayType::month) {
-
             /**
              * 月表示用のデータ
              */
-            $firstDay = new ConnectCarbon("$carbon_target_date->year-$carbon_target_date->month-01");
-            // カレンダーを四角形にするため、前月となる左上の隙間用のデータを入れるためずらす
-            $firstDay->subDay($firstDay->dayOfWeek);
-            // 35マス（7列×5行）で収まらない場合の加算日数の算出
-            $addDay =
-                // 当月の日数が31日、且つ、前の月末日が木曜か金曜の場合
-                $carbon_target_date->copy()->endOfmonth()->day == 31 && ($firstDay->copy()->endOfmonth()->isThursday() || $firstDay->copy()->endOfmonth()->isFriday()) ||
-                // 当月の日数が30日、且つ、前の月末日が金曜の場合
-                $carbon_target_date->copy()->endOfmonth()->day == 30 && ($firstDay->copy()->endOfmonth()->isFriday())
-                ? 7 : 0;
-            // 当月の月末日以降の処理
-            $count = 31 + $addDay;
-            $count =  ceil($count / 7) * 7;
-            // dd("addDay：$addDay","カレンダー1日目：$firstDay","カレンダー1日目の曜日：$firstDay->dayOfWeek","count:$count");
-
-            for ($i = 0; $i < $count; $i++, $firstDay->addDay()) {
-                $dates[$firstDay->format('Y-m-d')] = $firstDay->copy();
-            }
+            $dates = $this->generateCalendarMonthDates($carbon_target_date);
         } else {
-
             /**
              * 週表示用のデータ
              */
@@ -450,6 +421,9 @@ class ReservationsPlugin extends UserPluginBase
             $calendar['calendar_cells'] = $calendar_cells;
             $calendars[$facility->facility_name] = $calendar;
         }
+
+// \Log::error('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
+// \Log::error(var_export($initial_facility, true));
 
         // 必要なデータ揃っているか確認
         // フレームに紐づいた施設予約親データが存在すること
@@ -1116,7 +1090,7 @@ class ReservationsPlugin extends UserPluginBase
             }
         }
 
-
+        // *** ReservationsInputsColumn更新
         // 項目IDを取得
         $columns_value = $request->columns_value ?? [];
         foreach (array_keys($columns_value) as $key) {
@@ -1137,6 +1111,7 @@ class ReservationsPlugin extends UserPluginBase
             $reservations_inputs_columns->save();
         }
 
+        // *** 登録後メッセージ
         // 利用日時のFrom～To 取得
         $start_end_datetime_str = $reservations_inputs->getStartEndDatetimeStr();
         $flash_message = "{$str_mode}【場所】{$facility->facility_name} 【日時】{$start_end_datetime_str}";
@@ -1152,6 +1127,7 @@ class ReservationsPlugin extends UserPluginBase
 
         session()->flash('flash_message_for_frame' . $frame_id, $flash_message);
 
+        // *** メール送信
         // プラグイン独自の埋め込みタグ
         $overwrite_notice_embedded_tags = [
             NoticeEmbeddedTag::title => $this->getTitle($reservations_inputs, $columns),
@@ -1879,7 +1855,8 @@ class ReservationsPlugin extends UserPluginBase
                 ReservationsInput::where('inputs_parent_id', $before_inputs_parent_id)
                     ->where('id', '!=', $input->id)
                     ->whereDate('start_datetime', $occurrence->format('Y-m-d'))
-                    ->whereDate('end_datetime', $occurrence->format('Y-m-d'))
+                    // bugfix: 開始日のみで消す。終了日は24h指定時で次の日になるため、end_datetime指定があると機能しない
+                    // ->whereDate('end_datetime', $occurrence->format('Y-m-d'))
                     ->delete();
             }
 

@@ -6,6 +6,13 @@
  * @category プラグイン共通
 --}}
 @php
+    // php8.0 Warning対応
+    $frame_id = $frame_id ?? null;
+    $frame = $frame ?? new \App\Models\Common\Frame();
+    $page_id = $page_id ?? 0;
+    $theme_group_default = $theme_group_default ?? null;
+    $theme = $theme ?? null;
+
     // テーマ固有書式
     $style_formats_file = '';
     $style_formats_path = public_path() . '/themes/' . $theme . '/wysiwyg/style_formats.txt';
@@ -49,6 +56,30 @@
     }
     else if (File::exists($content_css_default_path)) {
         $content_css_file = File::get($content_css_default_path);
+    }
+
+    // ディレクトリインストール時のcontent_css:のパス修正
+    $appUrl = config('app.url');
+    $appUrl = rtrim($appUrl, '/'); // 末尾の '/' を削除
+    $urlParts = parse_url($appUrl);
+    $path = isset($urlParts['path']) ? $urlParts['path'] : '';
+    // パスが存在し、かつ '/' で終わらない場合はディレクトリインストールと見なす
+    $isDirectoryInstall = !empty($path) && substr($path, -1) !== '/';
+    if ($isDirectoryInstall) {
+        // 引用符で囲まれた文字列を取得
+        preg_match_all('/"([^"]*)"/', $content_css_file, $matches);
+        // $matches[1] の0番目の要素を取得
+        $firstMatch = isset($matches[1][0]) ? $matches[1][0] : null;
+        if ($firstMatch !== null) {
+            $dataArray = explode(', ', $firstMatch);
+            // 各データの先頭に変数を追加
+            $modifiedDataArray = array_map(function ($item) use ($path) {
+                return $path . $item;
+            }, $dataArray);
+            $modifiedFirstMatch = implode(', ', $modifiedDataArray);
+            // content_cssに追記する
+            $content_css_file = 'content_css: "'. $firstMatch. ', '. $modifiedFirstMatch. '",';
+        }
     }
 
     // テーブル
@@ -243,7 +274,7 @@
             selector : 'textarea',
         @endif
 
-        cache_suffix: '?v=5.8.0.11',
+        cache_suffix: '?v=5.8.0.12',
 
         // change: app.blade.phpと同様にlocaleを見て切替
         // language : 'ja',
@@ -639,6 +670,9 @@
         // 画像プラグイン＞アップロード（タブ）非表示. アップロード（タブ）で画像アップロードすると即時アップロードされ、一般（タブ）のリサイズのパラメータが拾えず全て原寸でアップロードされるため、使わない。
         image_uploadtab: false,
 
+        // 画像の詳細設定タブ機能
+        image_advtab: true,
+
         image_class_list: [
             {title: 'Responsive', value: 'img-fluid'},
             {title: '枠線＋Responsive', value: 'img-fluid img-thumbnail'},
@@ -789,7 +823,7 @@
                     //        エラーが出ないように要素が無い場合、処理しない事を検討したが、その場合、リサイズされなくなるため、対応を見送った。
 
                     // リサイズ画像サイズをinput type=textに保持
-                    document.getElementById('cc-resized-image-size-' + frame_id).value = jQuery('.tox-listbox--select')[0].dataset.value
+                    document.getElementById('cc-resized-image-size-' + frame_id).value = event.value.resize;
                 }
             });
 

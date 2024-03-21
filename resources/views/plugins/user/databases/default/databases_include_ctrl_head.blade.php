@@ -23,8 +23,10 @@
 {{-- アクセシビリティ対応。検索OFF & 絞り込み項目なし & ソートOFFの時、検索の空フォームを作らないようにする。 --}}
 @if(($database_frame && $database_frame->use_search_flag == 1) || (($select_columns && count($select_columns) >= 1) || $databases_frames->isBasicUseSortFlag()))
 
-<form action="{{url('/')}}/plugin/databases/search/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" role="search" aria-label="{{$database_frame->databases_name}}">
+<form action="{{url('/')}}/redirect/plugin/databases/search/{{$dest_frame->page->id}}/{{$dest_frame->id}}#frame-{{$dest_frame->id}}" method="POST" role="search" aria-label="{{$database_frame->databases_name}}" name="databaseform{{$frame_id}}">
     {{ csrf_field() }}
+    {{-- 詳細画面でブラウザバックをしたときに、フォーム再送信の確認が表示されないようにリダイレクトする --}}
+    <input type="hidden" name="redirect_path" value="{{$dest_frame->page->getLinkUrl()}}?frame_{{$dest_frame->id}}_page=1#frame-{{$dest_frame->id}}">
 
     {{-- 検索 --}}
     @if($database_frame && $database_frame->use_search_flag == 1)
@@ -42,6 +44,29 @@
                 <i class="fas fa-search" role="presentation"></i>
             </button>
         </div>
+    </div>
+    @endif
+
+    {{-- 急上昇ワード --}}
+    @php
+        $database_show_trend_words = FrameConfig::getConfigValueAndOld($frame_configs, DatabaseFrameConfig::database_show_trend_words, ShowType::not_show);
+        $registered_trend_words = array_filter(explode('|', FrameConfig::getConfigValue($frame_configs, DatabaseFrameConfig::database_trend_words)));
+        $database_trend_words_caption = FrameConfig::getConfigValue($frame_configs, DatabaseFrameConfig::database_trend_words_caption);
+    @endphp
+    @if (($database_frame && $database_frame->use_search_flag == 1 && $database_show_trend_words))
+        <div class="input-group mb-3">
+            <script>
+                function submitSearch{{$frame_id}}(keyword) {
+                    document.databaseform{{$frame_id}}.search_keyword.value = keyword;
+                    document.databaseform{{$frame_id}}.submit();
+                }
+            </script>
+            <span class="trend_word_title">{{$database_trend_words_caption}}</span>
+            @foreach ($registered_trend_words as $word)
+            <a class="mr-2 trend_word" href="javascript:void(0)" onclick="submitSearch{{$frame_id}}('{{$word}}')">
+                {{$word}}
+            </a>
+            @endforeach
     </div>
     @endif
 
@@ -101,27 +126,29 @@
     @if(($databases_frames->use_select_flag && $select_columns && count($select_columns) >= 1) || $databases_frames->isBasicUseSortFlag())
         <div class="form-group form-row mb-3">
         {{-- 絞り込み --}}
-        @foreach($select_columns as $select_column)
-            @php
-                $session_column_name = "search_column." . $frame->id . '.' . $loop->index . ".value";
-            @endphp
-            <div class="col-sm">
-                <input name="search_column[{{$loop->index}}][name]" type="hidden" value="{{$select_column->column_name}}">
-                <input name="search_column[{{$loop->index}}][columns_id]" type="hidden" value="{{$select_column->id}}">
-                @if($select_column->column_type == DatabaseColumnType::checkbox)
-                <input name="search_column[{{$loop->index}}][where]" type="hidden" value="PART">
-                @else
-                <input name="search_column[{{$loop->index}}][where]" type="hidden" value="ALL">
-                @endif
-                <select class="form-control" name="search_column[{{$loop->index}}][value]" title="{{$select_column->column_name}}" onChange="javascript:submit(this.form);" aria-describedby="search_column{{$loop->index}}_{{$frame_id}}" id="select_search_column{{$loop->index}}_{{$frame_id}}">
-                    <option value="">{{$select_column->column_name}}</option>
-                    @foreach($columns_selects->where('databases_columns_id', $select_column->id) as $columns_select)
-                        <option value="{{$columns_select->value}}" @if($columns_select->value == Session::get($session_column_name)) selected @endif>{{  $columns_select->value  }}</option>
-                    @endforeach
-                </select>
-                <small class="form-text text-muted" id="search_column{{$loop->index}}_{{$frame_id}}">選択すると自動的に絞り込みします。</small>
-            </div>
-        @endforeach
+        @if ($databases_frames->use_select_flag && $select_columns && count($select_columns) >= 1)
+            @foreach($select_columns as $select_column)
+                @php
+                    $session_column_name = "search_column." . $frame->id . '.' . $loop->index . ".value";
+                @endphp
+                <div class="col-sm">
+                    <input name="search_column[{{$loop->index}}][name]" type="hidden" value="{{$select_column->column_name}}">
+                    <input name="search_column[{{$loop->index}}][columns_id]" type="hidden" value="{{$select_column->id}}">
+                    @if($select_column->column_type == DatabaseColumnType::checkbox)
+                    <input name="search_column[{{$loop->index}}][where]" type="hidden" value="PART">
+                    @else
+                    <input name="search_column[{{$loop->index}}][where]" type="hidden" value="ALL">
+                    @endif
+                    <select class="form-control" name="search_column[{{$loop->index}}][value]" title="{{$select_column->column_name}}" onChange="javascript:submit(this.form);" aria-describedby="search_column{{$loop->index}}_{{$frame_id}}" id="select_search_column{{$loop->index}}_{{$frame_id}}">
+                        <option value="">{{$select_column->column_name}}</option>
+                        @foreach($columns_selects->where('databases_columns_id', $select_column->id) as $columns_select)
+                            <option value="{{$columns_select->value}}" @if($columns_select->value == Session::get($session_column_name)) selected @endif>{{  $columns_select->value  }}</option>
+                        @endforeach
+                    </select>
+                    <small class="form-text text-muted" id="search_column{{$loop->index}}_{{$frame_id}}">選択すると自動的に絞り込みします。</small>
+                </div>
+            @endforeach
+        @endif
 
         {{-- 並び順 --}}
         @if($sort_count > 0 || $databases_frames->isBasicUseSortFlag())
@@ -129,17 +156,20 @@
             @php
                 $sort_column_id = '';
                 $sort_column_order = '';
+                $sort_column_option = '';
 
                 // 並べ替え項目をセッション優先、次に初期値で変数に整理（選択肢のselected のため）
                 if (Session::get('sort_column_id.'.$frame_id) && Session::get('sort_column_order.'.$frame_id)) {
                     $sort_column_id = Session::get('sort_column_id.'.$frame_id);
                     $sort_column_order = Session::get('sort_column_order.'.$frame_id);
+                    $sort_column_option = Session::get('sort_column_option.'.$frame_id);
                 }
                 else if ($databases_frames && $databases_frames->default_sort_flag) {
                     $default_sort_flag_part = explode('_', $databases_frames->default_sort_flag);
-                    if (count($default_sort_flag_part) == 2) {
+                    if (count($default_sort_flag_part) >= 2) {
                         $sort_column_id = $default_sort_flag_part[0];
                         $sort_column_order = $default_sort_flag_part[1];
+                        $sort_column_option = $default_sort_flag_part[2] ?? '';
                     }
                 }
             @endphp
@@ -161,12 +191,17 @@
                         {{-- 1:昇順＆降順、2:昇順のみ、3:降順のみ --}}
                         @foreach($sort_columns as $sort_column)
 
+                            @php
+                                $sort_option = $sort_column->sort_download_count ? '_downloadcount' : null;
+                                $sort_option_name = $sort_column->sort_download_count ? 'ダウンロード数' : null;
+                            @endphp
+
                             @if($sort_column->sort_flag == 1 || $sort_column->sort_flag == 2)
-                                <option value="{{$sort_column->id}}_asc" @if($sort_column->id == $sort_column_id && $sort_column_order == 'asc') selected @endif>{{  $sort_column->column_name  }}(昇順)</option>
+                                <option value="{{$sort_column->id}}_asc{{$sort_option}}" @if($sort_column->id == $sort_column_id && $sort_column_order == 'asc') selected @endif>{{  $sort_column->column_name  }}{{ $sort_option_name }}(昇順)</option>
                             @endif
 
                             @if($sort_column->sort_flag == 1 || $sort_column->sort_flag == 3)
-                                <option value="{{$sort_column->id}}_desc" @if($sort_column->id == $sort_column_id && $sort_column_order == 'desc') selected @endif>{{  $sort_column->column_name  }}(降順)</option>
+                                <option value="{{$sort_column->id}}_desc{{$sort_option}}" @if($sort_column->id == $sort_column_id && $sort_column_order == 'desc') selected @endif>{{  $sort_column->column_name  }}{{ $sort_option_name }}(降順)</option>
                             @endif
 
                         @endforeach

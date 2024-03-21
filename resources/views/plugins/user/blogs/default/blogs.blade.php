@@ -44,6 +44,20 @@
 
 {{-- ブログ表示 --}}
 @if (isset($blogs_posts))
+    <div class="float-right ml-2">
+        {{-- 表示件数リスト --}}
+        @include('plugins.user.blogs.default.include_view_count_spectator')
+    </div>
+    <div class="float-right ml-2">
+        {{-- カテゴリ絞り込み機能 --}}
+        @include('plugins.user.blogs.default.include_narrowing_down')
+    </div>
+    <div class="float-right">
+        {{-- 投稿者絞り込み機能 --}}
+        @include('plugins.user.blogs.default.include_narrowing_down_for_created_id')
+    </div>
+    {{-- floatの回り込み解除 --}}
+    <div class="clearfix"></div>
 
     @if (isset($is_template_titleindex))
     {{-- titleindexテンプレート --}}
@@ -53,7 +67,7 @@
     <div class="sidetitleindex">
     @endif
 
-    @foreach($blogs_posts as $post)
+    @forelse($blogs_posts as $post)
 
         @if ($loop->last)
         <article>
@@ -132,7 +146,7 @@
         {{-- カテゴリ --}}
         @if ($post->category_view_flag)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
         {{-- 重要記事設定マーク ※ログイン時のみ表示 --}}
-        @if ($post->important == 1 && Auth::user() && Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]))
+        @if ($post->important == 1 && Auth::user() && (Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]) || $post->created_id == Auth::user()->id))
             <span class="badge badge-pill badge-danger">重要記事に設定</span>
         @endif
 
@@ -172,12 +186,16 @@
 
                     {{-- Twitterボタン --}}
                     @include('plugins.common.twitter', [
-                        'post_title' => $post->post_title,
+                        'post_title'        => $post->post_title,
+                        'share_connect_url' => "/plugin/blogs/show/$page->id/$frame_id/$post->id",
+                        'frame_config_name' => BlogFrameConfig::blog_display_twitter_button,
                     ])
 
                     {{-- Facebookボタン --}}
                     @include('plugins.common.facebook', [
-                        'post_title' => $post->post_title,
+                        'post_title'        => $post->post_title,
+                        'share_connect_url' => "/plugin/blogs/show/$page->id/$frame_id/$post->id",
+                        'frame_config_name' => BlogFrameConfig::blog_display_facebook_button,
                     ])
 
                     {{-- タグ --}}
@@ -226,7 +244,9 @@
                 </div>
             </footer>
         </article>
-    @endforeach
+    @empty
+        <div class="alert alert-info mt-2">記事はありません。</div>
+    @endforelse
 
     {{-- sidetitleindexテンプレートはページング表示しない --}}
     @if (isset($is_template_sidetitleindex))

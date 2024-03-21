@@ -19,7 +19,7 @@ class FaqsPosts extends Model
     protected $dates = ['posted_at'];
 
     // 更新する項目の定義
-    protected $fillable = ['contents_id', 'faqs_id', 'post_title', 'post_text', 'categories_id', 'posted_at', 'display_sequence'];
+    protected $fillable = ['contents_id', 'faqs_id', 'post_title', 'post_text', 'categories_id', 'posted_at', 'display_sequence', 'status'];
 
     /**
      *  リスト表示用タイトル

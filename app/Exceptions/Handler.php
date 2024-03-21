@@ -2,9 +2,8 @@
 
 namespace App\Exceptions;
 
-use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Session\TokenMismatchException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -70,6 +69,31 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
+        if ($exception instanceof TokenMismatchException) {
+            // CSRFトークン有効期限切れ(419エラー)
+            session()->flash('flash_message_for_header_class', 'alert-warning');
+            session()->flash('flash_message_for_header', 'トークンの有効期限が切れたため、画面を再表示しました。');
+
+            if ($request->has('redirect_path')) {
+                // 一般プラグイン編集時リダイレクト対応
+                return redirect($request->redirect_path)->withInput();
+            }
+            return redirect()->back()->withInput();
+        }
         return parent::render($request, $exception);
+    }
+
+    /**
+     * Register the exception handling callbacks for the application.
+     *
+     * @return void
+     * @link https://readouble.com/laravel/8.x/ja/errors.html#rendering-exceptions
+     */
+    public function register()
+    {
+        $this->renderable(function (\Swift_TransportException $e, $request) {
+            // メール設定エラー
+            return response()->view('errors.mail_setting_error', ['exception' => $e], 500);
+        });
     }
 }

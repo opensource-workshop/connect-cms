@@ -22,7 +22,7 @@
         @include('plugins.common.flash_message')
 
         {{-- 一覧エリア --}}
-        <div class="text-right mt-3"><span class="badge badge-pill badge-light">{{ $columns_sets->total() }} 件</span></div>
+        <div class="text-left"><span class="badge badge-pill badge-light">{{ $columns_sets->total() }} 件</span></div>
         <table class="table table-hover cc-font-90">
             <thead>
                 <tr class="d-none d-sm-table-row">

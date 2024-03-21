@@ -7,7 +7,7 @@
 --}}
 <tr>
     {{-- 表示順 --}}
-    <td class="d-none d-xl-display d-xl-table-cell text-nowrap" style="text-align:center; vertical-align:middle;">
+    <td class="d-none d-lg-display d-lg-table-cell text-nowrap" style="text-align:center; vertical-align:middle;">
         {{-- 上移動 --}}
         <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_display_sequence({{ $item->id }}, {{ $item->display_sequence }}, 'up')">
             <i class="fas fa-arrow-up"></i>
@@ -19,7 +19,7 @@
         </button>
     </td>
     {{-- 表示フラグ--}}
-    <td class="d-none d-xl-display d-xl-table-cell" style="text-align:center; vertical-align:middle;">
+    <td class="d-none d-lg-display d-lg-table-cell" style="text-align:center; vertical-align:middle;">
         <div class="custom-control custom-checkbox">
             <input
                 type="checkbox"
@@ -35,12 +35,12 @@
         </div>
     </td>
     {{-- 画像ファイル --}}
-    <td class="d-block d-xl-table-cell align-middle">
+    <td class="d-block d-table-cell align-middle">
         {{-- 画像選択ボタン --}}
         <label class="input-group-btn d-flex align-items-center justify-content-center">
             <span class="btn btn-primary text-nowrap" style="cursor: hand; cursor:pointer;">
                 画像選択<input type="file" name="image_files[{{ $item->id }}]" style="display:none" @change="setImageResource({{ $item->id }}, arguments[0])">
-                <label class="badge badge-danger d-xl-none">必須</label>
+                <label class="badge badge-danger d-lg-none">必須</label>
             </span>
         </label>
         @include('plugins.common.errors_inline', ['name' => 'image_files.' . $item->id])
@@ -78,42 +78,42 @@
         </div>
     </td>
     {{-- リンクURL --}}
-    <td class="d-block d-xl-table-cell align-middle">
-        <strong class="d-xl-none">リンクURL：</strong>
-        <input 
-            type="text" 
-            name="link_urls[{{ $item->id }}]" 
-            class="form-control @if ($errors && $errors->has("link_urls.$item->id")) border-danger @endif" 
+    <td class="d-block d-lg-table-cell align-middle">
+        <strong class="d-lg-none">リンクURL：</strong>
+        <input
+            type="text"
+            name="link_urls[{{ $item->id }}]"
+            class="form-control @if ($errors && $errors->has("link_urls.$item->id")) border-danger @endif"
             value="{{ old("link_urls.$item->id", $item->link_url) }}"
             placeholder="例：https://connect-cms.jp/"
         >
         @include('common.errors_inline', ['name' => "link_urls.$item->id"])
     </td>
     {{-- キャプション --}}
-    <td class="d-block d-xl-table-cell align-middle">
-        <strong class="d-xl-none">キャプション：</strong>
-        <input 
-            type="text" 
-            name="captions[{{ $item->id }}]" 
-            class="form-control @if ($errors && $errors->has("captions.$item->id")) border-danger @endif" 
+    <td class="d-block d-lg-table-cell align-middle">
+        <strong class="d-lg-none">キャプション：</strong>
+        <input
+            type="text"
+            name="captions[{{ $item->id }}]"
+            class="form-control @if ($errors && $errors->has("captions.$item->id")) border-danger @endif"
             value="{{ old("captions.$item->id", $item->caption) }}"
         >
         @include('common.errors_inline', ['name' => "captions.$item->id"])
     </td>
     {{-- リンクターゲット --}}
-    <td class="d-block d-xl-table-cell align-middle">
-        <strong class="d-xl-none">リンクターゲット：</strong>
-        <input 
-            type="text" 
-            name="link_targets[{{ $item->id }}]" 
-            class="form-control @if ($errors && $errors->has("link_targets.$item->id")) border-danger @endif" 
+    <td class="d-block d-lg-table-cell align-middle">
+        <strong class="d-lg-none">リンクターゲット：</strong>
+        <input
+            type="text"
+            name="link_targets[{{ $item->id }}]"
+            class="form-control @if ($errors && $errors->has("link_targets.$item->id")) border-danger @endif"
             value="{{ old("link_targets.$item->id", $item->link_target) }}"
             placeholder="例：_blank、_self等"
         >
         @include('common.errors_inline', ['name' => "link_targets.$item->id"])
     </td>
     {{-- 削除ボタン --}}
-    <td class="d-block d-xl-table-cell align-middle d-flex align-items-center justify-content-center">
+    <td class="d-block d-lg-table-cell align-middle d-flex align-items-center justify-content-center">
         <button
             class="btn btn-danger cc-font-90 text-nowrap"
             onclick="javascript:return submit_delete_item({{ $item->id }});"

@@ -2,11 +2,8 @@
 
 namespace App\Plugins\User\Opacs;
 
-use SimpleXMLElement;
-
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\MessageBag;
@@ -31,9 +28,9 @@ use App\Plugins\User\UserPluginBase;
 use App\Enums\DeliveryRequestFlag;
 use App\Enums\LentFlag;
 use App\Enums\OpacConfigSelectType;
-use App\Enums\CsvCharacterCode;
 
 use App\Utilities\Csv\CsvUtils;
+use App\Utilities\Curl\CurlUtils;
 
 /**
  * Opacプラグイン
@@ -129,16 +126,6 @@ class OpacsPlugin extends UserPluginBase
     }
 
     /**
-     *  編集画面の最初のタブ
-     *
-     *  スーパークラスをオーバーライド
-     */
-    public function getFirstFrameEditAction()
-    {
-        return "editBuckets";
-    }
-
-    /**
      * POST取得関数（コアから呼び出す）
      * コアがPOSTチェックの際に呼び出す関数
      */
@@ -194,19 +181,22 @@ class OpacsPlugin extends UserPluginBase
         }
 
         // 国会図書館API
-        $request_url = 'https://iss.ndl.go.jp/api/opensearch?isbn=' . $request->isbn;
+        // $request_url = 'https://iss.ndl.go.jp/api/opensearch?isbn=' . $request->isbn;
+        $request_url = 'https://ndlsearch.ndl.go.jp/api/opensearch?isbn=' . $request->isbn;
 
         // NDL OpenSearch 呼び出しと結果のXML 取得
         $xml = null;
         try {
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $request_url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            $xml_string = curl_exec($ch);
+            $res = CurlUtils::execute($request_url);
+            $xml_string = $res['body'];
             $xml = simplexml_load_string($xml_string, 'SimpleXMLElement', LIBXML_NOERROR|LIBXML_ERR_NONE|LIBXML_ERR_FATAL);
             //var_dump($xml);
+            if ($xml === false) {
+                return array($opacs_books, "書誌データ取得でエラーが発生しました。");
+            }
+
         } catch (Exception $e) {
-            // Log::debug($e);
+            // \Log::debug($e);
             return array($opacs_books, "書誌データ取得でエラーが発生しました。");
         }
 
@@ -1916,23 +1906,19 @@ class OpacsPlugin extends UserPluginBase
         $opacs_books = new OpacsBooks();
 
        // 書籍データ取得
-        $input_error_message = '';
-        list($tmp_opacs_books, $search_error_message) = $this->getBook($request, $opacs_books);
-        if (empty($tmp_opacs_books)) {
-            $input_error_message = '書誌データが検索できませんでした。';
-        } else {
-            $opacs_books = $tmp_opacs_books;
+        list($opacs_books, $input_error_message) = $this->getBook($request, $opacs_books);
+
+        // エラーがあった場合、入力保持
+        if ($input_error_message) {
+            $request->flash();
         }
 
-        // 表示テンプレートを呼び出す。(blade でold を使用するため、withInput 使用)
-        return $this->view(
-            'opacs_input', [
+        return $this->view('opacs_input', [
             'opac_frame'  => $opac_frame,
             'opacs_books' => $opacs_books,
             'book_search' => $request->book_search,
             'input_error_message' => $input_error_message,
-            ]
-        )->withInput($request->all);
+        ]);
     }
 
     /**
@@ -2091,24 +2077,7 @@ class OpacsPlugin extends UserPluginBase
         ];
 
         // データ
-        $csv_data = '';
-        foreach ($csv_array as $csv_line) {
-            foreach ($csv_line as $csv_col) {
-                $csv_data .= '"' . $csv_col . '",';
-            }
-            // 末尾カンマを削除
-            $csv_data = substr($csv_data, 0, -1);
-            $csv_data .= "\n";
-        }
-
-        // 文字コード変換
-        if ($request->character_code == CsvCharacterCode::utf_8) {
-            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::utf_8);
-            // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
-            $csv_data = CsvUtils::addUtf8Bom($csv_data);
-        } else {
-            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::sjis_win);
-        }
+        $csv_data = CsvUtils::getResponseCsvData($csv_array, $request->character_code);
 
         return response()->make($csv_data, 200, $headers);
     }

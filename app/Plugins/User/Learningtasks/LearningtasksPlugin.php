@@ -173,16 +173,6 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     *  編集画面の最初のタブ（コアから呼び出す）
-     *
-     *  スーパークラスをオーバーライド
-     */
-    public function getFirstFrameEditAction()
-    {
-        return "editBuckets";
-    }
-
-    /**
      * POST取得関数（コアから呼び出す）
      * コアがPOSTチェックの際に呼び出す関数
      */
@@ -2233,26 +2223,7 @@ class LearningtasksPlugin extends UserPluginBase
         ];
 
         // データ
-        $csv_data = '';
-        foreach ($csv_array as $csv_line) {
-            foreach ($csv_line as $csv_col) {
-                $csv_data .= '"' . $csv_col . '",';
-            }
-            // 末尾カンマを削除
-            $csv_data = substr($csv_data, 0, -1);
-            $csv_data .= "\n";
-        }
-
-        // Log::debug(var_export($request->character_code, true));
-
-        // 文字コード変換
-        if ($request->character_code == CsvCharacterCode::utf_8) {
-            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::utf_8);
-            // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
-            $csv_data = CsvUtils::addUtf8Bom($csv_data);
-        } else {
-            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::sjis_win);
-        }
+        $csv_data = CsvUtils::getResponseCsvData($csv_array, $request->character_code);
 
         return response()->make($csv_data, 200, $headers);
     }
@@ -2651,21 +2622,18 @@ class LearningtasksPlugin extends UserPluginBase
         ]);
 
         if ($validator->fails()) {
-            // Log::debug(var_export($validator->errors(), true));
             // エラーと共に編集画面を呼び出す
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
         // CSVファイル一時保存
         $path = $request->file('examinations_csv')->store('tmp');
-        // Log::debug(var_export(storage_path('app/') . $path, true));
         $csv_full_path = storage_path('app/') . $path;
 
         // ファイル拡張子取得
         $file_extension = $request->file('examinations_csv')->getClientOriginalExtension();
         // 小文字に変換
         $file_extension = strtolower($file_extension);
-        // Log::debug(var_export($file_extension, true));
 
         // 文字コード
         $character_code = $request->character_code;
@@ -2688,13 +2656,12 @@ class LearningtasksPlugin extends UserPluginBase
         // 読み込み
         $fp = fopen($csv_full_path, 'r');
         // CSVファイル：Shift-JIS -> UTF-8変換時のみ
-        if ($character_code == CsvCharacterCode::sjis_win) {
+        if (CsvCharacterCode::isShiftJis($character_code)) {
             // ストリームフィルタ内で、Shift-JIS -> UTF-8変換
             $fp = CsvUtils::setStreamFilterRegisterSjisToUtf8($fp);
         }
 
-        // bugfix: fgetcsv() は ロケール設定の影響を受け、xampp環境＋日本語文字列で誤動作したため、ロケール設定する。
-        setlocale(LC_ALL, 'ja_JP.UTF-8');
+        CsvUtils::setLocale();
 
         // 一行目（ヘッダ）
         $header_columns = fgetcsv($fp, 0, ',');
@@ -2703,8 +2670,6 @@ class LearningtasksPlugin extends UserPluginBase
             // UTF-8のみBOMコードを取り除く
             $header_columns = CsvUtils::removeUtf8Bom($header_columns);
         }
-        // dd($csv_full_path);
-        // \Log::debug('$header_columns:'. var_export($header_columns, true));
 
         // カラムの取得
         $examination_columns = LearningtasksExaminationColumn::getImportColumn();
@@ -2715,8 +2680,7 @@ class LearningtasksPlugin extends UserPluginBase
             // 一時ファイルの削除
             fclose($fp);
             Storage::delete($path);
-
-            return redirect()->back()->withErrors(['learningtasks_examinations_id' => $error_msgs])->withInput();
+            return redirect()->back()->withErrors(['examinations_csv' => $error_msgs])->withInput();
         }
 
         $cvs_rules = [
@@ -2744,12 +2708,6 @@ class LearningtasksPlugin extends UserPluginBase
             return redirect()->back()->withErrors(['examinations_csv' => $error_msgs])->withInput();
         }
 
-        // [debug]
-        // // 一時ファイルの削除
-        // fclose($fp);
-        // Storage::delete($path);
-        // dd('ここまで');
-
         // ファイルポインタの位置を先頭に戻す
         rewind($fp);
 
@@ -2764,7 +2722,6 @@ class LearningtasksPlugin extends UserPluginBase
         // データ
         while (($csv_columns = fgetcsv($fp, 0, ',')) !== false) {
             // --- 入力値変換
-            // Log::debug(var_export($csv_columns, true));
 
             // 入力値をトリム(preg_replace(/u)で置換. /u = UTF-8 として処理)
             $csv_columns = StringUtils::trimInput($csv_columns);
@@ -2779,13 +2736,6 @@ class LearningtasksPlugin extends UserPluginBase
                 // 空文字をnullに変換
                 $csv_column = StringUtils::convertEmptyStringsToNull($csv_column);
             }
-            // Log::debug('$csv_columns:'. var_export($csv_columns, true));
-
-            // [debug]
-            //// 一時ファイルの削除
-            // fclose($fp);
-            // Storage::delete($path);
-            // dd('ここまで' . $posted_at);
 
             if (empty($learningtasks_examinations_id)) {
                 // 登録
@@ -2798,11 +2748,6 @@ class LearningtasksPlugin extends UserPluginBase
 
             $learningtasks_examinations->post_id = $post_id;
 
-            // $learningtasks_examinations->start_at = $csv_columns[0] . ':00';
-            // $learningtasks_examinations->end_at = $csv_columns[1] . ':00';
-            // if ($csv_columns[2]) {
-            //     $learningtasks_examinations->entry_end_at = $csv_columns[2] . ':00';
-            // }
             $learningtasks_examinations->start_at = new Carbon($csv_columns[0]);
             $learningtasks_examinations->end_at = new Carbon($csv_columns[1]);
             if ($csv_columns[2]) {
@@ -2825,7 +2770,7 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     * CSVインポートのフォーマットダウンロード
+     * CSVインポートの試験日時フォーマットダウンロード
      */
     public function downloadCsvFormatExaminations($request, $page_id, $frame_id, $post_id)
     {
@@ -2835,7 +2780,7 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-     * データベースデータダウンロード
+     * 試験日時ダウンロード
      */
     public function downloadCsvExaminations($request, $page_id, $frame_id, $post_id, $data_output_flag = true)
     {
@@ -2885,26 +2830,7 @@ class LearningtasksPlugin extends UserPluginBase
         ];
 
         // データ
-        $csv_data = '';
-        foreach ($csv_array as $csv_line) {
-            foreach ($csv_line as $csv_col) {
-                $csv_data .= '"' . $csv_col . '",';
-            }
-            // 末尾カンマを削除
-            $csv_data = substr($csv_data, 0, -1);
-            $csv_data .= "\n";
-        }
-
-        // Log::debug(var_export($request->character_code, true));
-
-        // 文字コード変換
-        if ($request->character_code == CsvCharacterCode::utf_8) {
-            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::utf_8);
-            // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
-            $csv_data = CsvUtils::addUtf8Bom($csv_data);
-        } else {
-            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::sjis_win);
-        }
+        $csv_data = CsvUtils::getResponseCsvData($csv_array, $request->character_code);
 
         return response()->make($csv_data, 200, $headers);
     }

@@ -4,7 +4,14 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 新着情報プラグイン
- --}}
+--}}
+<script>
+    $(function () {
+        // 有効化
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+</script>
+
 @if ($action == 'editBuckets')
     <li role="presentation" class="nav-item">
         <span class="nav-link"><span class="active">設定変更</span></span>
@@ -34,10 +41,10 @@
 @endif
 @if ($action == 'listBuckets')
     <li role="presentation" class="nav-item">
-        <span class="nav-link"><span class="active">選択</span></span>
+        <span class="nav-link"><span class="active" data-toggle="tooltip" title="新着情報選択">選択</span></span>
     </li>
 @else
     <li role="presentation" class="nav-item">
-        <a href="{{url('/')}}/plugin/whatsnews/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">選択</a>
+        <a href="{{url('/')}}/plugin/whatsnews/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link" data-toggle="tooltip" title="新着情報選択">選択</a>
     </li>
 @endif

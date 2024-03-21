@@ -26,7 +26,7 @@ use App\Enums\CsvCharacterCode;
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コード管理
- * @package Contoroller
+ * @package Controller
  * @plugin_title コード管理
  * @plugin_desc 各プラグインでユーザーが使用するコードを一括管理できる機能です。
  */
@@ -862,7 +862,6 @@ class CodeManage extends ManagePluginBase
         ]);
 
         if ($validator->fails()) {
-            // Log::debug(var_export($validator->errors(), true));
             // エラーと共に編集画面を呼び出す
             return redirect()->back()->withErrors($validator)->withInput();
         }
@@ -870,14 +869,12 @@ class CodeManage extends ManagePluginBase
 
         // CSVファイル一時保存
         $path = $request->file('codes_csv')->store('tmp');
-        // Log::debug(var_export(storage_path('app/') . $path, true));
         $csv_full_path = storage_path('app/') . $path;
 
         // ファイル拡張子取得
         $file_extension = $request->file('codes_csv')->getClientOriginalExtension();
         // 小文字に変換
         $file_extension = strtolower($file_extension);
-        // Log::debug(var_export($file_extension, true));
 
         // 文字コード
         $character_code = $request->character_code;
@@ -900,20 +897,12 @@ class CodeManage extends ManagePluginBase
         // 読み込み
         $fp = fopen($csv_full_path, 'r');
         // CSVファイル：Shift-JIS -> UTF-8変換時のみ
-        if ($character_code == CsvCharacterCode::sjis_win) {
+        if (CsvCharacterCode::isShiftJis($character_code)) {
             // ストリームフィルタ内で、Shift-JIS -> UTF-8変換
             $fp = CsvUtils::setStreamFilterRegisterSjisToUtf8($fp);
         }
 
-        // ・fgetcsv() は ロケール設定の影響を受け、xampp環境＋日本語文字列で誤動作したため、ロケール設定する。
-        //
-        // [詳細]
-        // ・xampp環境のロケールは、LC_CTYPE=Japanese_Japan.932 でした。
-        //   これだと、「ド」の次のカンマが認識できなくなり 1カラム 'コード,値' で誤認識される。また末尾改行の処理も誤動作おこしました。
-        //   \Log::debug(var_export(setlocale(LC_ALL, "0"), true));
-        //   [2021-05-07 17:26:12] local.DEBUG: 'LC_COLLATE=C;LC_CTYPE=Japanese_Japan.932;LC_MONETARY=C;LC_NUMERIC=C;LC_TIME=C'
-        // ・fgetcsv() https://www.php.net/manual/ja/function.fgetcsv.php
-        setlocale(LC_ALL, 'ja_JP.UTF-8');
+        CsvUtils::setLocale();
 
         // 一行目（ヘッダ）
         $header_columns = fgetcsv($fp, 0, ',');
@@ -922,11 +911,6 @@ class CodeManage extends ManagePluginBase
             // UTF-8のみBOMコードを取り除く
             $header_columns = CsvUtils::removeUtf8Bom($header_columns);
         }
-        // [debug]
-        // fclose($fp);
-        // Storage::delete($path);
-        // \Log::debug('$header_columns:'. var_export($header_columns, true));
-        // dd($csv_full_path);
 
         // カラムの取得
         $code_columns = CodeColumn::getImportColumn();
@@ -967,11 +951,6 @@ class CodeManage extends ManagePluginBase
             return redirect()->back()->withErrors(['codes_csv' => $error_msgs])->withInput();
         }
 
-        // // 一時ファイルの削除
-        // fclose($fp);
-        // Storage::delete($path);
-        // dd('ここまで');
-
         // ファイルポインタの位置を先頭に戻す
         rewind($fp);
 
@@ -986,7 +965,6 @@ class CodeManage extends ManagePluginBase
         // データ
         while (($csv_columns = fgetcsv($fp, 0, ',')) !== false) {
             // --- 入力値変換
-            // Log::debug(var_export($csv_columns, true));
 
             // 入力値をトリム(preg_replace(/u)で置換. /u = UTF-8 として処理)
             $csv_columns = StringUtils::trimInput($csv_columns);
@@ -1001,12 +979,6 @@ class CodeManage extends ManagePluginBase
                 // 空文字をnullに変換
                 $csv_column = StringUtils::convertEmptyStringsToNull($csv_column);
             }
-            // Log::debug('$csv_columns:'. var_export($csv_columns, true));
-
-            // 一時ファイルの削除
-            // fclose($fp);
-            // Storage::delete($path);
-            // dd('ここまで' . $posted_at);
 
             if (empty($codes_id)) {
                 // 登録
@@ -1129,26 +1101,7 @@ class CodeManage extends ManagePluginBase
         ];
 
         // データ
-        $csv_data = '';
-        foreach ($csv_array as $csv_line) {
-            foreach ($csv_line as $csv_col) {
-                $csv_data .= '"' . $csv_col . '",';
-            }
-            // 末尾カンマを削除
-            $csv_data = substr($csv_data, 0, -1);
-            $csv_data .= "\n";
-        }
-
-        // Log::debug(var_export($request->character_code, true));
-
-        // 文字コード変換
-        if ($request->character_code == CsvCharacterCode::utf_8) {
-            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::utf_8);
-            // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
-            $csv_data = CsvUtils::addUtf8Bom($csv_data);
-        } else {
-            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::sjis_win);
-        }
+        $csv_data = CsvUtils::getResponseCsvData($csv_array, $request->character_code);
 
         return response()->make($csv_data, 200, $headers);
     }

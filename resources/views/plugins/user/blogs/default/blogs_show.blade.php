@@ -81,7 +81,7 @@
 {{-- カテゴリ --}}
 @if ($post->category_view_flag)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
 {{-- 重要記事設定マーク ※ログイン時のみ表示 --}}
-@if ($post->important == 1 && Auth::user() && Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]))
+@if ($post->important == 1 && Auth::user() && (Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]) || $post->created_id == Auth::user()->id))
     <span class="badge badge-pill badge-danger">重要記事に設定</span>
 @endif
 
@@ -116,12 +116,16 @@
 
     {{-- Twitterボタン --}}
     @include('plugins.common.twitter', [
-        'post_title' => $post->post_title,
+        'post_title'        => $post->post_title,
+        'share_connect_url' => "/plugin/blogs/show/$page->id/$frame_id/$post->id",
+        'frame_config_name' => BlogFrameConfig::blog_display_twitter_button,
     ])
 
     {{-- Facebookボタン --}}
     @include('plugins.common.facebook', [
-        'post_title' => $post->post_title,
+        'post_title'        => $post->post_title,
+        'share_connect_url' => "/plugin/blogs/show/$page->id/$frame_id/$post->id",
+        'frame_config_name' => BlogFrameConfig::blog_display_facebook_button,
     ])
 
     {{-- タグ --}}

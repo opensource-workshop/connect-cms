@@ -2,6 +2,7 @@
 
 namespace App\Plugins\Manage\UserManage;
 
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
 use App\User;
@@ -14,6 +15,7 @@ use App\Rules\CustomValiAlphaNumForMultiByte;
 use App\Rules\CustomValiCheckWidthForString;
 use App\Rules\CustomValiUserEmailUnique;
 
+use App\Enums\ShowType;
 use App\Enums\UserColumnType;
 use App\Enums\UserRegisterNoticeEmbeddedTag;
 
@@ -27,30 +29,33 @@ class UsersTool
     /**
      * ユーザーのカラム取得
      */
-    public static function getUsersColumns()
+    public static function getUsersColumns(?int $columns_set_id)
     {
         // ユーザーのカラム
-        $users_columns = UsersColumns::orderBy('display_sequence')->get();
+        return UsersColumns::where('columns_set_id', $columns_set_id)->orderBy('display_sequence')->get();
+    }
 
-        // カラムデータがない場合
-        if (empty($users_columns)) {
-            return null;
-        }
-
-        return $users_columns;
+    /**
+     * 自動ユーザ登録のユーザーのカラム取得
+     */
+    public static function getUsersColumnsRegister(int $columns_set_id)
+    {
+        // ユーザーのカラム
+        return UsersColumns::where('columns_set_id', $columns_set_id)->where('is_show_auto_regist', ShowType::show)->orderBy('display_sequence')->get();
     }
 
     /**
      * カラムの選択肢 取得
      */
-    public static function getUsersColumnsSelects()
+    public static function getUsersColumnsSelects(?int $columns_set_id)
     {
         // カラムの選択肢
         $users_columns_selects = UsersColumnsSelects::select('users_columns_selects.*')
-                ->join('users_columns', 'users_columns.id', '=', 'users_columns_selects.users_columns_id')
-                ->orderBy('users_columns_selects.users_columns_id', 'asc')
-                ->orderBy('users_columns_selects.display_sequence', 'asc')
-                ->get();
+            ->join('users_columns', 'users_columns.id', '=', 'users_columns_selects.users_columns_id')
+            ->where('users_columns_selects.columns_set_id', $columns_set_id)
+            ->orderBy('users_columns_selects.users_columns_id', 'asc')
+            ->orderBy('users_columns_selects.display_sequence', 'asc')
+            ->get();
 
         // カラムID毎に詰めなおし
         $users_columns_id_select = array();
@@ -76,8 +81,16 @@ class UsersTool
     public static function getUsersInputCols($users_ids)
     {
         // カラムの登録データ
-        $input_cols = UsersInputCols::select('users_input_cols.*', 'users_columns.column_type', 'users_columns.column_name', 'uploads.client_original_name')
-            ->leftJoin('users_columns', 'users_columns.id', '=', 'users_input_cols.users_columns_id')
+        $input_cols = UsersInputCols::
+            select(
+                'users_input_cols.*',
+                'users_columns.column_type',
+                'users_columns.column_name',
+                'users_columns.use_variable',
+                'users_columns.variable_name',
+                'uploads.client_original_name'
+            )
+            ->join('users_columns', 'users_columns.id', '=', 'users_input_cols.users_columns_id')
             ->leftJoin('uploads', 'uploads.id', '=', 'users_input_cols.value')
             ->whereIn('users_id', $users_ids)
             ->orderBy('users_id', 'asc')
@@ -89,12 +102,12 @@ class UsersTool
     /**
      * セットすべきバリデータールールが存在する場合、受け取った配列にセットして返す
      *
-     * @param [array] $validator_array 二次元配列
-     * @param [App\Models\User\Databases\DatabasesColumns] $users_column
-     * @param [int] $user_id
+     * @param array $validator_array 二次元配列
+     * @param \App\Models\User\Databases\DatabasesColumns $users_column
+     * @param int $user_id
      * @return array
      */
-    public static function getValidatorRule($validator_array, $users_column, $user_id = null)
+    public static function getValidatorRule($validator_array, $users_column, int $columns_set_id, $user_id = null)
     {
         $validator_rule = null;
         // 必須チェック
@@ -104,7 +117,7 @@ class UsersTool
         // メールアドレスチェック
         if ($users_column->column_type == UserColumnType::mail) {
             $validator_rule[] = 'email';
-            $validator_rule[] = new CustomValiUserEmailUnique($user_id);
+            $validator_rule[] = new CustomValiUserEmailUnique($columns_set_id, $user_id);
             if ($users_column->required == 0) {
                 $validator_rule[] = 'nullable';
             }
@@ -152,10 +165,10 @@ class UsersTool
                 $users_column->column_type == UserColumnType::select) {
             // カラムの選択肢用データ
             $selects = UsersColumnsSelects::where('users_columns_id', $users_column->id)
-                                            ->orderBy('users_columns_id', 'asc')
-                                            ->orderBy('display_sequence', 'asc')
-                                            ->pluck('value')
-                                            ->toArray();
+                ->orderBy('users_columns_id', 'asc')
+                ->orderBy('display_sequence', 'asc')
+                ->pluck('value')
+                ->toArray();
 
             // 単一選択チェック
             if ($users_column->column_type == UserColumnType::radio) {
@@ -198,6 +211,10 @@ class UsersTool
     public static function getNoticeEmbeddedTags(User $user): array
     {
         $configs = Configs::getSharedConfigs();
+        // category=general or category=user_register & columns_set_id に configs を絞る
+        $configs = $configs->filter(function ($config, $key) use ($user) {
+            return $config->category = 'general' || ($config->category = 'user_register' && $config->additional1 = $user->columns_set_id);
+        });
 
         $default = [
             UserRegisterNoticeEmbeddedTag::site_name => Configs::getConfigsValue($configs, 'base_site_name'),
@@ -211,7 +228,7 @@ class UsersTool
         ];
 
         // ユーザーのカラム
-        $users_columns = self::getUsersColumns();
+        $users_columns = self::getUsersColumns($user->columns_set_id);
         // ユーザーカラムの登録データ
         $users_input_cols = UsersInputCols::where('users_id', $user->id)
             ->get()
@@ -221,12 +238,13 @@ class UsersTool
             });
 
         foreach ($users_columns as $users_column) {
-            $value = "";
-            if (is_array($users_input_cols[$users_column->id])) {
-                $value = implode(self::CHECKBOX_SEPARATOR, $users_input_cols[$users_column->id]->value);
-            } else {
-                $value = $users_input_cols[$users_column->id]->value;
+            if (UsersColumns::isLoopNotShowEmbeddedTagColumnType($users_column->column_type)) {
+                // 既に取得済みのため、ここでは取得しない
+                continue;
             }
+
+            // 埋め込みタグの値
+            $value = self::getNoticeEmbeddedTagsValue($users_input_cols, $users_column, $users_columns);
 
             $default["X-{$users_column->column_name}"] = $value;
         }
@@ -239,14 +257,14 @@ class UsersTool
      */
     public static function getMailContentsText($configs, $user)
     {
+        // ユーザーのカラム
+        $users_columns = self::getUsersColumns($user->columns_set_id);
+
         // メールの内容
         $contents_text = '';
-        $contents_text .= "ユーザ名： " . $user->name . "\n";
-        $contents_text .= "ログインID： " . $user->userid . "\n";
-        $contents_text .= "eメールアドレス： " . $user->email . "\n";
-
-        // ユーザーのカラム
-        $users_columns = self::getUsersColumns();
+        $contents_text .= UsersColumns::getLabelUserName($users_columns)  . "： {$user->name}\n";
+        $contents_text .= UsersColumns::getLabelLoginId($users_columns)   . "： {$user->userid}\n";
+        $contents_text .= UsersColumns::getLabelUserEmail($users_columns) . "： {$user->email}\n";
 
         // ユーザーカラムの登録データ
         $users_input_cols = UsersInputCols::where('users_id', $user->id)
@@ -257,12 +275,12 @@ class UsersTool
             });
 
         foreach ($users_columns as $users_column) {
-            $value = "";
-            if (is_array($users_input_cols[$users_column->id])) {
-                $value = implode(self::CHECKBOX_SEPARATOR, $users_input_cols[$users_column->id]->value);
-            } else {
-                $value = $users_input_cols[$users_column->id]->value;
+            if (UsersColumns::isLoopNotShowEmbeddedTagColumnType($users_column->column_type)) {
+                continue;
             }
+
+            // 埋め込みタグの値
+            $value = self::getNoticeEmbeddedTagsValue($users_input_cols, $users_column, $users_columns);
 
             // メールの内容
             $contents_text .= $users_column->column_name . "：" . $value . "\n";
@@ -276,5 +294,46 @@ class UsersTool
         // 最後の改行を除去
         $contents_text = trim($contents_text);
         return $contents_text;
+    }
+
+    /**
+     * 埋め込みタグの値 取得
+     */
+    public static function getNoticeEmbeddedTagsValue(Collection $users_input_cols, UsersColumns $users_column, Collection $users_columns): ?string
+    {
+        $class_name = self::getOptionClass();
+        // オプションクラス有＋メソッド有なら呼ぶ
+        if ($class_name) {
+            if (method_exists($class_name, 'getNoticeEmbeddedTagsValue')) {
+                // $users_columns は、他項目と連動するカスタム型の値取得に利用
+                return $class_name::getNoticeEmbeddedTagsValue($users_input_cols, $users_column, $users_columns);
+            }
+        }
+
+        if (!isset($users_input_cols[$users_column->id])) {
+            return "";
+        }
+
+        $value = "";
+        if (is_array($users_input_cols[$users_column->id])) {
+            $value = implode(self::CHECKBOX_SEPARATOR, $users_input_cols[$users_column->id]->value);
+        } else {
+            $value = $users_input_cols[$users_column->id]->value;
+        }
+
+        return $value;
+    }
+
+    /**
+     * オプションクラスを返す
+     */
+    private static function getOptionClass(): ?string
+    {
+        $class_name = "App\PluginsOption\Manage\UserManage\UsersToolOption";
+        // オプションあり
+        if (class_exists($class_name)) {
+            return $class_name;
+        }
+        return null;
     }
 }

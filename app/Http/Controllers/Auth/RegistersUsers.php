@@ -4,14 +4,13 @@ namespace App\Http\Controllers\Auth;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\RedirectsUsers;
 use Illuminate\Support\Facades\Validator;
 
-// Connect-CMS 用設定データ
 use App\User;
 use App\Models\Core\Configs;
+use App\Models\Core\UsersColumnsSet;
 use App\Models\Core\UsersRoles;
 use App\Traits\ConnectCommonTrait;
 use App\Traits\ConnectMailTrait;
@@ -38,35 +37,58 @@ trait RegistersUsers
      * Show the application registration form.
      * ユーザー登録画面表示（自動登録）
      *
+     * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
-    public function showRegistrationForm()
+    public function showRegistrationForm(Request $request)
     {
-        // ユーザー登録関連設定の取得
-        $configs = Configs::where('category', 'general')->orWhere('category', 'user_register')->get();
-        $configs_array = array();
-        foreach ($configs as $config) {
-            $configs_array[$config['name']] = $config['value'];
-        }
-        $configs = $configs_array;
+        // ユーザー登録の許可
+        $user_register_enables = Configs::
+            leftJoin('users_columns_sets', function ($join) {
+                $join->on('users_columns_sets.id', 'configs.additional1');
+            })
+            ->where('configs.category', 'user_register')
+            ->where('configs.name', 'user_register_enable')
+            ->where('configs.value', '1')
+            ->orderBy('users_columns_sets.display_sequence')
+            ->get();
 
-        // ログインしているユーザー情報を取得
-        //$user = Auth::user();
+        $user_register_enable = $user_register_enables->first();
+        // ユーザー登録の許可が１つもない場合(null)、画面表示は出来ないため、columns_set_id=0でもOK
+        $columns_set_id_default = $user_register_enable ? $user_register_enable->additional1 : 0;
+
+        $columns_set_id = $request->input('columns_set_id', $columns_set_id_default);
+
+        // ユーザー登録関連設定の取得
+        $configs = Configs::where('category', 'general')
+            ->orWhere(function ($query) use ($columns_set_id) {
+                $query->where('category', 'user_register')
+                    ->where('additional1', $columns_set_id);
+            })
+            // （全ての自動ユーザ登録設定で共通設定. additional1=all. 項目セット名とか）
+            ->orWhere(function ($query) {
+                $query->where('category', 'user_register')
+                    ->where('additional1', 'all');
+            })
+            ->get();
 
         // ユーザ登録の権限チェック
-        //if (isset($user) && ($user->role == 1 || $user->role == 3)) {
         if ($this->isCan('admin_user')) {
             // ユーザ登録の権限があればOK
-        } elseif ($configs_array['user_register_enable'] != "1") {
+        // } elseif ($configs_array['user_register_enable'] != "1") {
+        } elseif ($user_register_enables->isEmpty()) {
             // 未ログインの場合は、ユーザー登録が許可されていなければ、認証エラーとする。
             abort(403);
         }
 
-        //// ユーザの追加項目.
+        // ユーザ登録が有効な項目セット
+        $columns_sets = UsersColumnsSet::whereIn('id', $user_register_enables->pluck('additional1'))->orderBy('display_sequence')->get();
+
+        // *** ユーザの追加項目
         // ユーザーのカラム
-        $users_columns = UsersTool::getUsersColumns();
+        $users_columns = UsersTool::getUsersColumnsRegister($columns_set_id);
         // カラムの選択肢
-        $users_columns_id_select = UsersTool::getUsersColumnsSelects();
+        $users_columns_id_select = UsersTool::getUsersColumnsSelects($columns_set_id);
         // カラムの登録データ
         $input_cols = null;
 
@@ -75,16 +97,18 @@ trait RegistersUsers
         $base_theme = Configs::getConfigsValue($tmp_configs, 'base_theme', null);
         $additional_theme = Configs::getConfigsValue($tmp_configs, 'additional_theme', null);
         $themes = [
-                    'css' => $base_theme,
-                    'js' => $base_theme,
-                    'additional_css' => $additional_theme,
-                    'additional_js' => $additional_theme,
+            'css' => $base_theme,
+            'js' => $base_theme,
+            'additional_css' => $additional_theme,
+            'additional_js' => $additional_theme,
         ];
 
         // フォームの初期値として空のユーザオブジェクトを渡す。
         return view('auth.register', [
             "user" => new User(),
             "configs" => $configs,
+            'columns_set_id' => $columns_set_id,
+            'columns_sets' => $columns_sets,
             'users_columns' => $users_columns,
             'users_columns_id_select' => $users_columns_id_select,
             'input_cols' => $input_cols,
@@ -95,9 +119,23 @@ trait RegistersUsers
     }
 
     /**
+     * ユーザー登録画面 再表示（自動登録）
+     *
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function reShowRegistrationForm(Request $request)
+    {
+        // old()に全inputをセット
+        $request->flash();
+
+        return redirect(route('show_register_form') . "?columns_set_id=$request->columns_set_id");
+    }
+
+    /**
      * Handle a registration request for the application.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
     public function register(Request $request)
@@ -105,16 +143,18 @@ trait RegistersUsers
         $this->validator($request->all())->validate();
 
         // 設定の取得
-        // $configs = Configs::where('category', 'user_register')->get();
-        $configs = Configs::get();
+        $configs = Configs::where('category', 'general')
+            ->orWhere(function ($query) use ($request) {
+                $query->Where('category', 'user_register')
+                    ->Where('additional1', $request->columns_set_id);
+            })
+            ->get();
 
         // ユーザ登録の権限チェック
-        //if (isset($user) && ($user->role == 1 || $user->role == 3)) {
         if ($this->isCan('admin_user')) {
             // ユーザ登録の権限があればOK
         } elseif (Configs::getConfigsValue($configs, 'user_register_enable') != "1") {
             // 未ログインの場合は、ユーザー登録が許可されていなければ、認証エラーとする。
-            //Log::debug("register 403.");
             abort(403);
         }
 
@@ -187,9 +227,6 @@ trait RegistersUsers
 
         // ユーザー自動登録（未ログイン、ユーザ管理者以外）
         if (!Auth::user() || !$this->isCan('admin_user')) {
-            // session()->flash('flash_message_for_header', 'ユーザ登録が完了しました。登録したログインID、パスワードでログインしてください。');
-
-
             // 登録者に仮登録メールを送信する
             if (Configs::getConfigsValue($configs, 'user_register_temporary_regist_mail_flag')) {
                 // *** 仮登録
@@ -251,10 +288,15 @@ trait RegistersUsers
             }
         }
 
-        // 作成したユーザでのログイン処理は行わない。mod by nagahara@opensource-workshop.jp
-        // $this->guard()->login($user);
+        // 自動ユーザ登録後の自動ログイン
+        if (Configs::getConfigsValue($configs, 'user_register_auto_login_flag')) {
+            // 未ログイン
+            if (!Auth::user()) {
+                // 自動ログイン
+                Auth::login($user, true);
+            }
+        }
 
-        //Log::debug("register end brfore.");
         return $this->registered($request, $user)
                         ?: redirect($this->redirectPath())->with('flash_message', 'ユーザ登録しました。続けて参加グループを設定してください。');
     }
@@ -318,13 +360,6 @@ trait RegistersUsers
      */
     public function confirmToken(Request $request)
     {
-        // 設定の取得
-        $configs = Configs::where('category', 'user_register')->get();
-
-        // 仮登録機能OFFは、エラー画面へ
-        if (!Configs::getConfigsValue($configs, 'user_register_temporary_regist_mail_flag')) {
-            abort(403, '権限がありません');
-        }
         $id = (string) $request->route('id');
         $token = (string) $request->route('token');
 
@@ -337,7 +372,14 @@ trait RegistersUsers
             ]);
         }
 
-        // dd($request->route('id'));
+        // 設定の取得
+        $configs = Configs::where('category', 'user_register')->where('additional1', $user->columns_set_id)->get();
+
+        // 仮登録機能OFFは、エラー画面へ
+        if (!Configs::getConfigsValue($configs, 'user_register_temporary_regist_mail_flag')) {
+            abort(403, '権限がありません');
+        }
+
         // 項目のエラーチェック(トークンチェック)
         $validator = Validator::make(
             ['token' => $token],
@@ -381,13 +423,6 @@ trait RegistersUsers
      */
     public function storeToken(Request $request)
     {
-        // 設定の取得
-        $configs = Configs::get();
-
-        // 仮登録機能OFFは、エラー画面へ
-        if (!Configs::getConfigsValue($configs, 'user_register_temporary_regist_mail_flag')) {
-            abort(403, '権限がありません');
-        }
         $id = (string) $request->route('id');
         $token = (string) $request->route('token');
 
@@ -400,7 +435,15 @@ trait RegistersUsers
             ]);
         }
 
-        // dd($request->route('id'));
+        // 設定の取得
+        // $configs = Configs::get();
+        $configs = Configs::where('category', 'user_register')->where('additional1', $user->columns_set_id)->get();
+
+        // 仮登録機能OFFは、エラー画面へ
+        if (!Configs::getConfigsValue($configs, 'user_register_temporary_regist_mail_flag')) {
+            abort(403, '権限がありません');
+        }
+
         // 項目のエラーチェック(トークンチェック)
         $validator = Validator::make(
             ['token' => $token],

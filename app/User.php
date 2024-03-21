@@ -5,6 +5,7 @@ namespace App;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 use App\Notifications\PasswordResetNotification;
 
@@ -16,7 +17,7 @@ use App\Models\Core\Section;
 
 class User extends Authenticatable
 {
-    use Notifiable;
+    use HasFactory, Notifiable;
 
     // 日付型の場合、$dates にカラムを指定しておく。
     protected $dates = ['created_at', 'updated_at'];
@@ -30,7 +31,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'userid', 'password', 'status', 'add_token', 'add_token_created_at',
+        'name', 'email', 'userid', 'password', 'status', 'columns_set_id', 'add_token', 'add_token_created_at',
     ];
 
     /**
@@ -137,6 +138,26 @@ class User extends Authenticatable
         }
 
         return $content_roles . $admin_roles;
+    }
+
+    /**
+     * システム管理者権限持ちか（一覧用）
+     */
+    public function hasRoleAdminSystem() : bool
+    {
+        // 権限データがあるか確認
+        if (empty($this->view_user_roles)) {
+            return false;
+        }
+
+        foreach ($this->view_user_roles as $view_user_role) {
+            if ($view_user_role->role_name == 'admin_system') {
+                // システム権限あり
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

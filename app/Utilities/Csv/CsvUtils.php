@@ -2,12 +2,11 @@
 
 namespace App\Utilities\Csv;
 
-use Illuminate\Support\Facades\Validator;
-
+use App\Enums\CsvCharacterCode;
 use App\Utilities\Csv\SjisToUtf8EncodingFilter;
 use App\Utilities\String\StringUtils;
-
-use App\Enums\CsvCharacterCode;
+use App\Utilities\File\FileUtils;
+use Illuminate\Support\Facades\Validator;
 
 class CsvUtils
 {
@@ -46,11 +45,11 @@ class CsvUtils
     public static function getCharacterCodeAuto($csv_full_path)
     {
         // 全体ではなく0～1024までを取得
-        $contents = file_get_contents($csv_full_path, null, null, 0, 1024);
+        $contents = file_get_contents($csv_full_path, false, null, 0, 1024);
 
         // 文字エンコーディングをsjis-win, UTF-8の順番で自動検出. 対象文字コード外の場合、false戻る
         $character_code = mb_detect_encoding($contents, CsvCharacterCode::sjis_win . ", " . CsvCharacterCode::utf_8);
-        // \Log::debug(var_export($character_code, true));
+        // \Log::error(var_export($character_code, true));
 
         return $character_code;
     }
@@ -139,5 +138,42 @@ class CsvUtils
         }
 
         return $errors;
+    }
+
+    /**
+     * レスポンス時のCSVデータ 取得
+     */
+    public static function getResponseCsvData(array $csv_array, ?string $character_code): string
+    {
+        // データ
+        $csv_data = '';
+        foreach ($csv_array as $csv_line) {
+            foreach ($csv_line as $csv_col) {
+                $csv_data .= '"' . $csv_col . '",';
+            }
+            // 末尾カンマを削除
+            $csv_data = substr($csv_data, 0, -1);
+            $csv_data .= "\n";
+        }
+
+        // 文字コード変換
+        if ($character_code == CsvCharacterCode::utf_8) {
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::utf_8);
+            // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
+            $csv_data = self::addUtf8Bom($csv_data);
+        } else {
+            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::sjis_win);
+        }
+
+        return $csv_data;
+    }
+
+    /**
+     * localeをセット
+     * fgetcsv()処理前に利用
+     */
+    public static function setLocale(): void
+    {
+        FileUtils::setLocale();
     }
 }

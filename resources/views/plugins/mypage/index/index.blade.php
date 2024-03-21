@@ -1,5 +1,9 @@
 {{--
-    マイページ画面のトップのメインテンプレート
+ * マイページ画面のトップのメインテンプレート
+ *
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category マイページ
 --}}
 {{-- マイページ画面ベース画面 --}}
 @extends('plugins.mypage.mypage')
@@ -12,14 +16,14 @@
         {{-- 機能選択タブ --}}
         <div class="frame-setting-menu">
             <nav class="navbar navbar-expand-md navbar-light bg-light py-1">
-                <span class="d-md-none" style="margin: 0.5rem 0;">マイページ</span>
+                <span class="d-md-none" style="margin: 0.5rem 0;">プロフィール</span>
                 <div class="navbar-collapse collapse" id="collapsingNavbarLg">
                     <ul class="navbar-nav">
                         <li role="presentation" class="nav-item">
                         @if ($function == "index")
-                            <span class="nav-link"><span class="active">マイページ</span></span>
+                            <span class="nav-link"><span class="active">プロフィール</span></span>
                         @else
-                            <a href="{{url('/mypage/profile')}}" class="nav-link">マイページ</a></li>
+                            <a href="{{url('/mypage')}}" class="nav-link">プロフィール</a></li>
                         @endif
                         </li>
                     </ul>
@@ -33,31 +37,46 @@
             <div class="user-area form-group">
                 <table class="table table-hover cc-font-90">
                     <tbody>
-                        <tr>
+                        {{-- <tr>
                             <th style="width:20%;" nowrap="nowrap">ユーザID</th>
                             <td nowrap="nowrap">{{ $user->id }}</td>
-                        </tr>
-                        <tr>
-                            <th nowrap="nowrap">ログインID</th>
-                            <td nowrap="nowrap">{{ $user->userid }}</td>
-                        </tr>
-                        <tr>
-                            <th nowrap="nowrap">ユーザ名</th>
-                            <td nowrap="nowrap">{{ $user->name }}</td>
-                        </tr>
-                        <tr>
-                            <th nowrap="nowrap">メールアドレス</th>
-                            <td nowrap="nowrap">{{ $user->email }}</td>
-                        </tr>
-                        <tr>
-                            <th nowrap="nowrap">登録日時</th>
-                            <td nowrap="nowrap">{{ $user->created_at->format('Y/m/d H:i') }}</td>
-                        </tr>
-                        @foreach($user_input_cols as $user_input_col)
-                            <tr class="input-cols">
-                                <th>{{$user_input_col->column_name}}</th>
-                                <td>{{$user_input_col->value}}</td>
-                            </tr>
+                        </tr> --}}
+                        @foreach($users_columns as $column)
+                            @if ($column->column_type == UserColumnType::user_name)
+                                {{-- ユーザ名 --}}
+                                <tr>
+                                    <th style="width:20%;" nowrap="nowrap">{{$column->column_name}}</th>
+                                    <td nowrap="nowrap">{{ $user->name }}</td>
+                                </tr>
+                            @elseif ($column->column_type == UserColumnType::login_id)
+                                {{-- ログインID --}}
+                                <tr>
+                                    <th style="width:20%;" nowrap="nowrap">{{$column->column_name}}</th>
+                                    <td nowrap="nowrap">{{ $user->userid }}</td>
+                                </tr>
+                            @elseif ($column->column_type == UserColumnType::user_email)
+                                {{-- メールアドレス --}}
+                                <tr>
+                                    <th style="width:20%;" nowrap="nowrap">{{$column->column_name}}</th>
+                                    <td nowrap="nowrap">{{ $user->email }}</td>
+                                </tr>
+                            @elseif ($column->column_type == UserColumnType::user_password)
+                                {{-- 表示しない --}}
+                            @elseif ($column->column_type == UserColumnType::created_at)
+                                {{-- 登録日時 --}}
+                                <tr>
+                                    <th style="width:20%;" nowrap="nowrap">{{$column->column_name}}</th>
+                                    <td nowrap="nowrap">{{ $user->created_at->format('Y/m/d H:i') }}</td>
+                                </tr>
+                            @elseif ($column->column_type == UserColumnType::updated_at)
+                                {{-- 更新日時 --}}
+                                <tr>
+                                    <th style="width:20%;" nowrap="nowrap">{{$column->column_name}}</th>
+                                    <td nowrap="nowrap">{{ $user->updated_at->format('Y/m/d H:i') }}</td>
+                                </tr>
+                            @else
+                                @includeFirst(['plugins_option.mypage.index.include_index_column_value', 'plugins.mypage.index.include_index_column_value'])
+                            @endif
                         @endforeach
                     </tbody>
                 </table>

@@ -49,6 +49,7 @@ class DatabasesColumns extends Model
         // 登録日型・更新日型・公開日型・表示順型は入力しない
         if ($this->column_type == DatabaseColumnType::created ||
                 $this->column_type == DatabaseColumnType::updated ||
+                $this->column_type == DatabaseColumnType::views ||
                 $this->column_type == DatabaseColumnType::posted ||
                 $this->column_type == DatabaseColumnType::display) {
             return true;
@@ -78,6 +79,7 @@ class DatabasesColumns extends Model
         // 登録日型・更新日型・公開日型・表示順型は入力しない
         if ($column_type == DatabaseColumnType::created ||
                 $column_type == DatabaseColumnType::updated ||
+                $column_type == DatabaseColumnType::views ||
                 $column_type == DatabaseColumnType::posted ||
                 $column_type == DatabaseColumnType::display) {
             return true;

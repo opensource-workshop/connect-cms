@@ -41,16 +41,6 @@ class DatabasesearchesPlugin extends UserPluginBase
     /* コアから呼び出す関数 */
 
     /**
-     *  編集画面の最初のタブ
-     *
-     *  スーパークラスをオーバーライド
-     */
-    public function getFirstFrameEditAction()
-    {
-        return "editBuckets";
-    }
-
-    /**
      *  関数定義（コアから呼び出す）
      */
     public function getPublicFunctions()
@@ -294,6 +284,12 @@ class DatabasesearchesPlugin extends UserPluginBase
             case DatabaseSearcherSortType::updated_desc:
                 $inputs_ids->orderBy('databases_inputs.updated_at', 'desc');
                 break;
+            case DatabaseSearcherSortType::views_asc:
+                $inputs_ids->orderBy('databases_inputs.views', 'asc');
+                break;
+            case DatabaseSearcherSortType::views_desc:
+                $inputs_ids->orderBy('databases_inputs.views', 'desc');
+                break;
             case DatabaseSearcherSortType::posted_asc:
                 $inputs_ids->orderBy('databases_inputs.posted_at', 'asc');
                 break;
@@ -305,6 +301,16 @@ class DatabasesearchesPlugin extends UserPluginBase
                 break;
             case DatabaseSearcherSortType::display_desc:
                 $inputs_ids->orderBy('databases_inputs.display_sequence', 'desc');
+                break;
+            case DatabaseSearcherSortType::random_session:
+                // ランダム読み込みのための Seed をセッション中に作っておく
+                if (empty(session('database_searches_sort_seed.'.$frame_id))) {
+                    session(['database_searches_sort_seed.'.$frame_id => rand()]);
+                }
+                $inputs_ids->inRandomOrder(session('database_searches_sort_seed.'.$frame_id));
+                break;
+            case DatabaseSearcherSortType::random_every:
+                $inputs_ids->inRandomOrder();
                 break;
             default:
                 $inputs_ids->orderBy('databases_inputs.created_at', 'asc');

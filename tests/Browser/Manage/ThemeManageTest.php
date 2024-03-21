@@ -51,6 +51,7 @@ class ThemeManageTest extends DuskTestCase
                     ->screenshot('manage/theme/index/images/index');
 
             $browser->click('#image_edit_1')
+                    ->pause(500)
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/theme/index/images/image_edit');
         });
@@ -73,6 +74,7 @@ class ThemeManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/theme')
                     ->click('#css_edit_1')
+                    ->pause(500)
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/theme/editCss/images/editCss');
         });
@@ -95,6 +97,7 @@ class ThemeManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/theme')
                     ->click('#js_edit_1')
+                    ->pause(500)
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/theme/editJs/images/editJs');
         });
@@ -117,6 +120,7 @@ class ThemeManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/theme')
                     ->click('#image_edit_1')
+                    ->pause(500)
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/theme/listImages/images/listImages');
         });
@@ -139,6 +143,7 @@ class ThemeManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/theme')
                     ->click('#name_edit_1')
+                    ->pause(500)
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/theme/editName/images/editName');
         });

@@ -3,31 +3,38 @@
 namespace app\Plugins\Mypage\IndexMypage;
 
 use Illuminate\Support\Facades\Auth;
-use App\User;
-use App\Models\Core\UsersInputCols;
+use App\Enums\ShowType;
 use App\Plugins\Mypage\MypagePluginBase;
+use App\Plugins\Manage\UserManage\UsersTool;
 
 /**
  * マイページ画面インデックスクラス
  *
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category マイページ
+ * @package Controller
  * @plugin_title マイページ
  * @plugin_desc マイページの初めに開く画面です。自分の情報を確認できます。
  */
 class IndexMypage extends MypagePluginBase
 {
+    /**
+     * 関数定義（コアから呼び出す）
+     */
     public function getPublicFunctions()
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
-        $functions = array();
+        $functions = [];
         $functions['get']  = [
-                              'passPdfDownload',
-                              'certPdfDownload',
-                            ];
+            'passPdfDownload',
+            'certPdfDownload',
+        ];
         return $functions;
     }
 
     /**
-     *  ページ初期表示
+     * ページ初期表示
      *
      * @return view
      * @method_title マイページ
@@ -38,14 +45,12 @@ class IndexMypage extends MypagePluginBase
     {
         // ログインしているユーザー情報を取得
         $user = Auth::user();
-        $user_input_cols = UsersInputCols::select('users_input_cols.*', 'users_columns.column_type', 'users_columns.column_name', 'users_columns.display_sequence', 'uploads.client_original_name')
-            ->leftJoin('users_columns', 'users_columns.id', '=', 'users_input_cols.users_columns_id')
-            ->leftJoin('uploads', 'uploads.id', '=', 'users_input_cols.value')
-            ->where('users_id', $user->id)
-            ->orderBy('display_sequence', 'asc')
-            ->orderBy('users_id', 'asc')
-            ->orderBy('users_columns_id', 'asc')
-            ->get();
+        // カラムの登録データ
+        $input_cols = UsersTool::getUsersInputCols([$user->id]);
+        // ユーザーのカラム
+        $users_columns = UsersTool::getUsersColumns($user->columns_set_id);
+        $users_columns = $users_columns->where('is_show_my_page', ShowType::show);
+
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
         return view('plugins.mypage.index.index', [
@@ -54,7 +59,8 @@ class IndexMypage extends MypagePluginBase
             "function"        => __FUNCTION__,
             "id"              => $user->id,
             "user"            => $user,
-            "user_input_cols" => $user_input_cols,
+            "input_cols"      => $input_cols,
+            "users_columns"   => $users_columns,
         ]);
     }
 }

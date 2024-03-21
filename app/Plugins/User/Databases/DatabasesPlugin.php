@@ -2,6 +2,8 @@
 
 namespace App\Plugins\User\Databases;
 
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -49,8 +51,12 @@ use App\Enums\DatabaseRoleName;
 use App\Enums\DatabaseSortFlag;
 use App\Enums\Required;
 use App\Enums\DatabaseNoticeEmbeddedTag;
+use App\Enums\PluginName;
 use App\Enums\StatusType;
+use App\Enums\UseType;
+use App\Models\Common\Categories;
 use App\Models\Core\FrameConfig;
+use App\Models\User\Databases\DatabasesSearchedWord;
 
 /**
  * データベース・プラグイン
@@ -77,6 +83,11 @@ class DatabasesPlugin extends UserPluginBase
      */
     public $post = null;
 
+    /**
+     * 新着機能を使うか
+     */
+    public $use_whatsnew = true;
+
     /* コアから呼び出す関数 */
 
     /**
@@ -90,6 +101,7 @@ class DatabasesPlugin extends UserPluginBase
             'detail',
             'input',
             'search',
+            'trendWords',
         ];
         $functions['post'] = [
             'index',
@@ -98,6 +110,7 @@ class DatabasesPlugin extends UserPluginBase
             'cancel',
             'addPref',
             'search',
+            'indexCount',
         ];
         return $functions;
     }
@@ -123,26 +136,10 @@ class DatabasesPlugin extends UserPluginBase
         $role_check_table["input"]                = array('posts.create', 'posts.update');
         $role_check_table["publicConfirm"]        = array('posts.create', 'posts.update');
         $role_check_table["publicStore"]          = array('posts.create', 'posts.update');
+        $role_check_table["trendWords"] = array('frames.edit');
 
         $role_check_table["addPref"]              = array('buckets.addColumn');
         return $role_check_table;
-    }
-
-    /**
-     *  編集画面の最初のタブ
-     *
-     *  スーパークラスをオーバーライド
-     */
-    public function getFirstFrameEditAction()
-    {
-        // データベースの設定がまだの場合は、データベースの新規作成に遷移する。
-        $database = $this->getDatabases($this->frame->id);
-        if (empty($database)) {
-            return "createBuckets";
-        }
-
-        // カラムの設定画面
-        return "editColumn";
     }
 
     /**
@@ -298,7 +295,8 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.databases_id',
                 'databases_columns.title_flag',
                 'databases_columns.body_flag',
-                'uploads.client_original_name'
+                'uploads.client_original_name',
+                'uploads.download_count',
             )
             ->leftJoin('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
             ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
@@ -351,7 +349,7 @@ class DatabasesPlugin extends UserPluginBase
         // $request->flash();
 
         // リクエストにページが渡ってきたら、セッションに保持しておく。（詳細や更新後に元のページに戻るため）
-        $frame_page = "frame_{$frame_id}_page";
+        $frame_page = $this->pageName($frame_id);
         if ($request->has($frame_page)) {
                 $request->session()->put('page_no.'.$frame_id, $request->$frame_page);
         } else {
@@ -431,14 +429,17 @@ class DatabasesPlugin extends UserPluginBase
             // ソート(セッションがあれば優先。なければ初期値を使用)
             $sort_column_id = '';
             $sort_column_order = '';
+            $sort_column_option = '';
             if (session('sort_column_id.'.$frame_id) && session('sort_column_order.'.$frame_id)) {
                 $sort_column_id = session('sort_column_id.'.$frame_id);
                 $sort_column_order = session('sort_column_order.'.$frame_id);
+                $sort_column_option = session('sort_column_option.'.$frame_id);
             } elseif ($databases_frames && $databases_frames->default_sort_flag) {
                 $sort_flag = explode('_', $databases_frames->default_sort_flag);
-                if (count($sort_flag) == 2) {
+                if (count($sort_flag) >= 2) {
                     $sort_column_id = $sort_flag[0];
                     $sort_column_order = $sort_flag[1];
+                    $sort_column_option = $sort_flag[2] ?? '';
                 }
             }
 
@@ -447,7 +448,7 @@ class DatabasesPlugin extends UserPluginBase
 
             // ソートなし or ソートするカラムIDが数値じゃない（=入力なしと同じ扱いにする）
             if (empty($sort_column_id) || !ctype_digit($sort_column_id)) {
-                $inputs_query = DatabasesInputs::where('databases_id', $database->id);
+                $inputs_query = DatabasesInputs::select('databases_inputs.*')->where('databases_id', $database->id);
             } else {
                 // ソートあり
                 $inputs_query = DatabasesInputs::select('databases_inputs.*', 'databases_input_cols.value')
@@ -456,6 +457,10 @@ class DatabasesPlugin extends UserPluginBase
                                                          ->where('databases_input_cols.databases_columns_id', '=', $sort_column_id);
                                                 })
                                                ->where('databases_id', $database->id);
+                // ダウンロード件数でのソート
+                if ($sort_column_option === 'downloadcount') {
+                    $inputs_query = $inputs_query->leftjoin('uploads', 'databases_input_cols.value', 'uploads.id');
+                }
             }
 
             // 権限によって表示する記事を絞る
@@ -463,6 +468,11 @@ class DatabasesPlugin extends UserPluginBase
 
             // 権限によって非表示columのdatabases_columns_id配列を取得する
             $hide_columns_ids = (new DatabasesTool())->getHideColumnsIds($columns, 'list_detail_display_flag');
+
+            // カテゴリ
+            $inputs_query = $inputs_query->leftJoin('categories', 'categories.id', '=', 'databases_inputs.categories_id')
+                                ->addSelect('categories.classname as category_classname')
+                                ->addSelect('categories.category as category');
 
             $databases_columns_ids = [];
             foreach ($databases_columns as $databases_column) {
@@ -476,7 +486,12 @@ class DatabasesPlugin extends UserPluginBase
             }
             // 画面のキーワード指定
             if (!empty(session('search_keyword.'.$frame_id))) {
-                $inputs_query = DatabasesTool::appendSearchKeyword('databases_inputs.id', $inputs_query, $databases_columns_ids, $hide_columns_ids, session('search_keyword.'.$frame_id));
+                $full_text_search = $database->full_text_search === UseType::use ? true : false;
+                $inputs_query = DatabasesTool::appendSearchKeyword('databases_inputs.id', $inputs_query, $databases_columns_ids, $hide_columns_ids, session('search_keyword.'.$frame_id), $full_text_search);
+                // 検索キーワードの記録
+                if ($database->save_searched_word) {
+                    DatabasesTool::saveSearchedWord($database->id, session('search_keyword.'.$frame_id));
+                }
             }
 
             // データベースプラグイン単体では $request->search_options をセットしておらず「オプション検索指定」使っていないが、個別の追加テンプレートで利用するため、消さない。
@@ -702,6 +717,13 @@ class DatabasesPlugin extends UserPluginBase
             }
 
             // 並べ替え指定があれば、並べ替えする項目をSELECT する。
+
+            // 各カラム設定で基本設定にある型であれば、基本設定と同様にソートする
+            $sort_column = DatabasesColumns::findOrNew($sort_column_id);
+            if (in_array($sort_column->column_type . '_' . $sort_column_order, DatabaseSortFlag::getMemberKeys())) {
+                $sort_column_id = $sort_column->column_type;
+            }
+
             if ($sort_column_id == DatabaseSortFlag::random && $sort_column_order == DatabaseSortFlag::order_session) {
                 $inputs_query->inRandomOrder(session('sort_seed.'.$frame_id));
             } elseif ($sort_column_id == DatabaseSortFlag::random && $sort_column_order == DatabaseSortFlag::order_every) {
@@ -722,10 +744,22 @@ class DatabasesPlugin extends UserPluginBase
                 $inputs_query->orderBy('databases_inputs.posted_at', 'asc');
             } elseif ($sort_column_id == DatabaseSortFlag::posted && $sort_column_order == DatabaseSortFlag::order_desc) {
                 $inputs_query->orderBy('databases_inputs.posted_at', 'desc');
+            } elseif ($sort_column_id == DatabaseSortFlag::views && $sort_column_order == DatabaseSortFlag::order_asc) {
+                $inputs_query->orderBy('databases_inputs.views', 'asc');
+            } elseif ($sort_column_id == DatabaseSortFlag::views && $sort_column_order == DatabaseSortFlag::order_desc) {
+                $inputs_query->orderBy('databases_inputs.views', 'desc');
             } elseif ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == DatabaseSortFlag::order_asc) {
-                $inputs_query->orderBy('databases_input_cols.value', 'asc');
+                if ($sort_column_option === 'downloadcount') {
+                    $inputs_query->orderBy('uploads.download_count', 'asc');
+                } else {
+                    $inputs_query->orderBy('databases_input_cols.value', 'asc');
+                }
             } elseif ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == DatabaseSortFlag::order_desc) {
-                $inputs_query->orderBy('databases_input_cols.value', 'desc');
+                if ($sort_column_option === 'downloadcount') {
+                    $inputs_query->orderBy('uploads.download_count', 'desc');
+                } else {
+                    $inputs_query->orderBy('databases_input_cols.value', 'desc');
+                }
             }
             $inputs_query->orderBy('databases_inputs.id', 'asc');
 
@@ -734,6 +768,7 @@ class DatabasesPlugin extends UserPluginBase
             if ($databases_frames) {
                 $get_count = $databases_frames->view_count;
             }
+            $get_count = session("view_count_spectator_{$frame_id}", $get_count);
             $inputs = $inputs_query->paginate($get_count, ["*"], $this->pageName($frame_id));
 
             // 登録データ行のタイトル取得
@@ -766,7 +801,7 @@ class DatabasesPlugin extends UserPluginBase
             // Log::debug(var_export(DB::getQueryLog(), true));
 
             // 登録データ詳細の取得
-            $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'uploads.client_original_name')
+            $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'uploads.client_original_name', 'uploads.download_count')
                                             ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
                                             ->whereIn('databases_inputs_id', $inputs->pluck('id'))
                                             ->orderBy('databases_inputs_id', 'asc')->orderBy('databases_columns_id', 'asc')
@@ -774,6 +809,12 @@ class DatabasesPlugin extends UserPluginBase
 
             // カラム選択肢の取得
             $columns_selects = DatabasesColumnsSelects::whereIn('databases_columns_id', $columns->pluck('id'))->orderBy('display_sequence', 'asc')->get();
+
+            //  絞り込み項目の登録済み件数を表示する(beta)
+            if (config('connect.DATABASES_SHOW_SEARCH_COLUMN_COUNT')) {
+                $all_databases_inputs = $this->appendAuthWhereBase(DatabasesInputs::where('databases_id', $database->id), 'databases_inputs')->get();
+                $columns_selects = $this->setColumnsSelectsRegisteredCount($columns_selects, $all_databases_inputs);
+            }
 
             // 絞り込み対象カラム
             $select_columns = $columns->where('select_flag', 1)
@@ -823,6 +864,8 @@ class DatabasesPlugin extends UserPluginBase
             'columns_selects'  => isset($columns_selects) ? $columns_selects : null,
             'default_hide_list' => $default_hide_list,
             'frame_configs' => $this->frame_configs,
+            'dest_frame' =>$this->getDestinationFrame(),
+            'view_count' => $get_count ?? null,
         // change: 同ページに(a)データベースプラグイン,(b)フォームを配置して(b)フォームで入力エラーが起きても、入力値が復元しないバグ対応。
         // ])->withInput($request->all);
         ]);
@@ -861,6 +904,20 @@ class DatabasesPlugin extends UserPluginBase
         // 詳細に表示する (detail_hide_flag=0)
         $disp_databases_columns = $databases_columns->where($hide_flag_column_name, 0)
                                                     ->whereNotIn('id', $hide_columns_ids);
+
+        // 詳細画面で非表示項目をパラメータのID指定で強制的に表示する機能(beta)
+        if (config('connect.DATABASES_FORCE_SHOW_COLUMN_ON_DETAIL')) {
+            $show_columns = session('force_show_columns.'.$this->frame->id);
+            if ($show_columns && $hide_flag_column_name === 'detail_hide_flag') {
+                $disp_databases_columns = $databases_columns
+                        ->filter(function ($value) use ($show_columns) {
+                            return $value->detail_hide_flag == 0 ||
+                                // 詳細に表示しない（検索時に強制表示指定可）かつ表示指定ありのID
+                                ($value->detail_hide_flag == 2 && in_array($value->id, $show_columns));
+                        })
+                    ->whereNotIn('id', $hide_columns_ids);
+            }
+        }
 
         foreach ($disp_databases_columns as $databases_column) {
             if (is_null($databases_column->row_group) && is_null($databases_column->column_group)) {
@@ -923,59 +980,71 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function search($request, $page_id, $frame_id)
     {
-        // POST されたときは、新しい絞り込み条件が設定された。ということになるので、セッションの書き換え
-        if ($request->isMethod('post')) {
-            // 検索ON
-            session(['is_search.'.$frame_id => 1]);
+        // searchが実行されるときは新しい絞り込み条件が設定されたということになるので、セッションの書き換え
+        // 検索ON
+        session(['is_search.'.$frame_id => 1]);
 
-            // キーワード
-            session(['search_keyword.'.$frame_id => $request->search_keyword]);
+        // キーワード
+        session(['search_keyword.'.$frame_id => $request->search_keyword]);
 
-            // 絞り込み
-            session(['search_column.'.$frame_id => $request->search_column]);
+        // 絞り込み
+        session(['search_column.'.$frame_id => $request->search_column]);
 
-            // 絞り込み（複数選択）
-            session(['search_column_multiple.'.$frame_id => $request->search_column_multiple]);
+        // 絞り込み（複数選択）
+        session(['search_column_multiple.'.$frame_id => $request->search_column_multiple]);
 
-            // オプション検索
-            session(['search_options.'.$frame_id => $request->search_options]);
+        // オプション検索
+        session(['search_options.'.$frame_id => $request->search_options]);
 
-            // オプション検索OR
-            session(['search_options_or.'.$frame_id => $request->search_options_or]);
+        // オプション検索OR
+        session(['search_options_or.'.$frame_id => $request->search_options_or]);
 
-            // オプション検索期間
-            session(['search_term.'.$frame_id => $request->search_term]);
+        // オプション検索期間
+        session(['search_term.'.$frame_id => $request->search_term]);
 
-            // ランダム読み込みのための Seed をセッション中に作っておく
-            if (empty(session('sort_seed.'.$frame_id))) {
-                session(['sort_seed.'.$frame_id => rand()]);
-            }
-
-            // 並べ替え
-            $sort_column_parts = explode('_', $request->sort_column);
-            if (count($sort_column_parts) == 1) {
-                session(['sort_column_id.'.$frame_id    => $sort_column_parts[0]]);
-                session(['sort_column_order.'.$frame_id => '']);
-            } elseif (count($sort_column_parts) == 2) {
-                session(['sort_column_id.'.$frame_id    => $sort_column_parts[0]]);
-                session(['sort_column_order.'.$frame_id => $sort_column_parts[1]]);
-            } else {
-                session(['sort_column_id.'.$frame_id    => '']);
-                session(['sort_column_order.'.$frame_id => '']);
-            }
-            // var_dump($sort_column_parts);
-
-            // 検索条件を削除
-            if ($request->has('clear')) {
-                session(['is_search.'.$frame_id => '']);
-                session(['search_keyword.'.$frame_id => '']);
-                session(['search_column.'.$frame_id => '']);
-                session(['search_options.'.$frame_id => '']);
-                session(['search_options_or.'.$frame_id => '']);
-                session(['search_term.'.$frame_id => '']);
-            }
+        // ランダム読み込みのための Seed をセッション中に作っておく
+        if (empty(session('sort_seed.'.$frame_id))) {
+            session(['sort_seed.'.$frame_id => rand()]);
         }
-        return $this->index($request, $page_id, $frame_id);
+
+        // 詳細画面で非表示項目をパラメータのID指定で強制的に表示する機能(beta)
+        if (config('connect.DATABASES_FORCE_SHOW_COLUMN_ON_DETAIL')) {
+            session(['force_show_columns.'.$frame_id => $request->force_show_columns]);
+        }
+
+        // 並べ替え
+        $sort_column_parts = explode('_', $request->sort_column);
+        if (count($sort_column_parts) == 1) {
+            session(['sort_column_id.'.$frame_id    => $sort_column_parts[0]]);
+            session(['sort_column_order.'.$frame_id => '']);
+            session(['sort_column_option.'.$frame_id => '']);
+        } elseif (count($sort_column_parts) >= 2) {
+            session(['sort_column_id.'.$frame_id    => $sort_column_parts[0]]);
+            session(['sort_column_order.'.$frame_id => $sort_column_parts[1]]);
+            session(['sort_column_option.'.$frame_id => $sort_column_parts[2] ?? '']);
+        } else {
+            session(['sort_column_id.'.$frame_id    => '']);
+            session(['sort_column_order.'.$frame_id => '']);
+            session(['sort_column_option.'.$frame_id => '']);
+        }
+        // var_dump($sort_column_parts);
+
+        // 検索条件を削除
+        if ($request->has('clear')) {
+            session(['is_search.'.$frame_id => '']);
+            session(['search_keyword.'.$frame_id => '']);
+            session(['search_column.'.$frame_id => '']);
+            session(['search_options.'.$frame_id => '']);
+            session(['search_options_or.'.$frame_id => '']);
+            session(['search_term.'.$frame_id => '']);
+        }
+
+        // 詳細画面のブラウザバックでフォーム再送信の確認を表示させないようにするため、リダイレクトする
+        // リダイレクト後にindex処理を行うようにviewでredirect_pathを指定する
+        if (!$request->has('redirect_path')) {
+            // リダイレクト指定がなければ、当アクションで検索処理を実行する
+            return $this->index($request, $page_id, $frame_id);
+        }
     }
 
     /**
@@ -1017,6 +1086,9 @@ class DatabasesPlugin extends UserPluginBase
             $blade = 'databases_edit';
         } else {
             $blade = 'databases_detail';
+            // 表示件数を増やす
+            $inputs->views = $inputs->views + 1;
+            $inputs->save();
         }
 
         // 表示テンプレートを呼び出す。
@@ -1084,6 +1156,9 @@ class DatabasesPlugin extends UserPluginBase
             $input_cols = $this->getDatabasesInputCols($id);
         }
 
+        // カテゴリ
+        $databases_categories = Categories::getInputCategories($this->frame->plugin_name, $database->id);
+
         // 表示テンプレートを呼び出す。
         return $this->view('databases_input', [
             'request'  => $request,
@@ -1096,6 +1171,7 @@ class DatabasesPlugin extends UserPluginBase
             'inputs'      => $inputs,
             'is_hide_posted' => $is_hide_posted,
             'errors'      => $errors,
+            'databases_categories' => $databases_categories,
         ]);
     }
 
@@ -1268,9 +1344,11 @@ class DatabasesPlugin extends UserPluginBase
         $validator_array['column']['posted_at']         = ['required', 'date_format:Y-m-d H:i'];
         $validator_array['column']['expires_at']        = ['nullable', 'date_format:Y-m-d H:i', 'after:posted_at'];
         $validator_array['column']['display_sequence']  = ['nullable', 'numeric'];
+        $validator_array['column']['categories_id'] = ['nullable', 'exists:categories,id'];
         $validator_array['message']['posted_at']        = '公開日時';
         $validator_array['message']['expires_at']       = '公開終了日時';
         $validator_array['message']['display_sequence'] = '表示順';
+        $validator_array['message']['categories_id'] = 'カテゴリ';
 
         // --- 入力値変換
         // 入力値をトリム
@@ -1421,6 +1499,9 @@ class DatabasesPlugin extends UserPluginBase
                 }
             }
         }
+
+        // カテゴリ
+        $databases_categories = Categories::getInputCategories($this->frame->plugin_name, $database->id);
         //print_r($delete_upload_column_ids);
         //print_r($uploads);
         // 表示テンプレートを呼び出す。
@@ -1433,6 +1514,7 @@ class DatabasesPlugin extends UserPluginBase
             'uploads'                  => $uploads,
             'delete_upload_column_ids' => $delete_upload_column_ids,
             'is_hide_posted'           => $is_hide_posted,
+            'databases_categories' => $databases_categories,
         ]);
     }
 
@@ -1471,6 +1553,7 @@ class DatabasesPlugin extends UserPluginBase
             $databases_inputs->display_sequence = $display_sequence;
             $databases_inputs->posted_at = $request->posted_at . ':00';
             $databases_inputs->expires_at = $request->filled('expires_at') ? $request->expires_at . ':00' : null;
+            $databases_inputs->categories_id = $request->categories_id;
             $databases_inputs->save();
         } else {
             $databases_inputs = DatabasesInputs::where('id', $id)->first();
@@ -1484,6 +1567,7 @@ class DatabasesPlugin extends UserPluginBase
             $databases_inputs->display_sequence = $display_sequence;
             $databases_inputs->posted_at = $request->posted_at . ':00';
             $databases_inputs->expires_at = $request->filled('expires_at') ? $request->expires_at . ':00' : null;
+            $databases_inputs->categories_id = $request->categories_id;
             $databases_inputs->update();
         }
 
@@ -1573,6 +1657,7 @@ class DatabasesPlugin extends UserPluginBase
             DatabaseNoticeEmbeddedTag::posted_at =>        $databases_inputs->posted_at,
             DatabaseNoticeEmbeddedTag::expires_at =>       $databases_inputs->expires_at,
             DatabaseNoticeEmbeddedTag::display_sequence => $databases_inputs->display_sequence,
+            DatabaseNoticeEmbeddedTag::views => $databases_inputs->views,
         ];
 
         $all_items = '';
@@ -1625,6 +1710,9 @@ class DatabasesPlugin extends UserPluginBase
             'after_message' => $after_message
         ]);
         */
+
+        // 全文検索項目を最新化する
+        (new DatabasesTool())->updateFullText($database->id, $databases_inputs->id);
     }
 
     /**
@@ -1872,9 +1960,9 @@ class DatabasesPlugin extends UserPluginBase
                 $plugin_name . '.' . $plugin_name . '_name',
                 'databases_inputs.databases_id'
             )
-            ->orderBy('frames.bucket_id', 'desc')
+            ->orderBy($plugin_name . '.bucket_id', 'desc')
             ->orderBy($plugin_name . '.created_at', 'desc')
-            ->paginate(10, ["*"], "frame_{$frame_id}_page");
+            ->paginate(10, ["*"], $this->pageName($frame_id));
 
         // 表示テンプレートを呼び出す。
         return $this->view('databases_list_buckets', [
@@ -2041,6 +2129,9 @@ class DatabasesPlugin extends UserPluginBase
         $databases->after_message       = $request->after_message;
         $databases->numbering_use_flag  = (empty($request->numbering_use_flag))  ? 0 : $request->numbering_use_flag;
         $databases->numbering_prefix    = $request->numbering_prefix;
+        $databases->save_searched_word = $request->save_searched_word;
+        $old_full_text_search           = empty($request->copy_databases_id) ? $databases->full_text_search : UseType::not_use;
+        $databases->full_text_search    = $request->full_text_search;
 
         // データ保存
         $databases->save();
@@ -2106,6 +2197,16 @@ class DatabasesPlugin extends UserPluginBase
                     }
                 }
             }
+        }
+
+        // 全文検索項目を最新化する
+        // 処理が重いので全文検索の設定が変わった時のみ最新化する
+        if ($databases->full_text_search == UseType::use && $old_full_text_search == UseType::not_use) {
+            Log::debug('updateFullText');
+            (new DatabasesTool())->updateFullText($databases->id);
+        } elseif ($databases->full_text_search == UseType::not_use) {
+            Log::debug('flushFullText');
+            (new DatabasesTool())->flushFullText($databases->id);
         }
 
         // 新規作成フラグを付けてデータベース設定変更画面を呼ぶ
@@ -2433,6 +2534,9 @@ class DatabasesPlugin extends UserPluginBase
         $this->deleteColumnsSelects($request->column_id);
         $message = '項目【 '. $request->$str_column_name .' 】を削除しました。';
 
+        // 全文検索項目を最新化する
+        (new DatabasesTool())->updateFullText($request->databases_id);
+
         // 編集画面へ戻る。
         return $this->editColumn($request, $page_id, $frame_id, $request->databases_id, $message, null);
     }
@@ -2672,11 +2776,18 @@ class DatabasesPlugin extends UserPluginBase
         // 並べ替え指定
         $column->sort_flag = (empty($request->sort_flag)) ? 0 : $request->sort_flag;
         // 検索対象指定
+        $old_search_flag = $column->search_flag;
         $column->search_flag = (empty($request->search_flag)) ? 0 : $request->search_flag;
         // 絞り込み対象指定
         $column->select_flag = (empty($request->select_flag)) ? 0 : $request->select_flag;
         // 複数選択の絞り込みでAND/ORを表示する
         $column->use_select_and_or_flag = (empty($request->use_select_and_or_flag)) ? 0 : $request->use_select_and_or_flag;
+        // ダウンロード件数を表示する
+        $column->show_download_count = (empty($request->show_download_count)) ? 0 : $request->show_download_count;
+        // ダウンロードボタンを表示する
+        $column->show_download_button = (empty($request->show_download_button)) ? 0 : $request->show_download_button;
+        // ダウンロード件数で並び替え
+        $column->sort_download_count = (empty($request->sort_download_count)) ? 0 : $request->sort_download_count;
         // 行グループ
         $column->row_group = $request->row_group;
         // 列グループ
@@ -2709,6 +2820,12 @@ class DatabasesPlugin extends UserPluginBase
 
             // 保存
             $columns_role->save();
+        }
+
+        // 全文検索項目を最新化する
+        // 処理が重いので検索対象の設定が変わった時のみ最新化する
+        if ($old_search_flag != $column->search_flag) {
+            (new DatabasesTool())->updateFullText($request->databases_id);
         }
 
         $message = '項目【 '. $column->column_name .' 】を更新しました。';
@@ -2966,7 +3083,8 @@ class DatabasesPlugin extends UserPluginBase
                                             'databases_inputs.updated_at as inputs_updated_at',
                                             'databases_inputs.posted_at as inputs_posted_at',
                                             'databases_inputs.expires_at as inputs_expires_at',
-                                            'databases_inputs.display_sequence as inputs_display_sequence'
+                                            'databases_inputs.display_sequence as inputs_display_sequence',
+                                            'databases_inputs.views as inputs_views'
                                         )
                                         ->join('databases_inputs', 'databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
                                         ->whereIn('databases_inputs_id', DatabasesInputs::select('id')->where('databases_id', $id))
@@ -3012,6 +3130,9 @@ class DatabasesPlugin extends UserPluginBase
                             case DatabaseColumnType::display:
                                 $csv_array[$input_col->databases_inputs_id][$column->id] = $input_col->inputs_display_sequence;
                                 break;
+                            case DatabaseColumnType::views:
+                                $csv_array[$input_col->databases_inputs_id][$column->id] = $input_col->inputs_views;
+                                break;
                         }
                     }
                 }
@@ -3028,27 +3149,7 @@ class DatabasesPlugin extends UserPluginBase
         ];
 
         // データ
-        $csv_data = '';
-        foreach ($csv_array as $csv_line) {
-            foreach ($csv_line as $csv_col) {
-                $csv_data .= '"' . $csv_col . '",';
-            }
-            // 末尾カンマを削除
-            $csv_data = substr($csv_data, 0, -1);
-            $csv_data .= "\n";
-        }
-
-        // Log::debug(var_export($request->character_code, true));
-
-        // 文字コード変換
-        // $csv_data = mb_convert_encoding($csv_data, "SJIS-win");
-        if ($request->character_code == CsvCharacterCode::utf_8) {
-            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::utf_8);
-            // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
-            $csv_data = CsvUtils::addUtf8Bom($csv_data);
-        } else {
-            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::sjis_win);
-        }
+        $csv_data = CsvUtils::getResponseCsvData($csv_array, $request->character_code);
 
         return response()->make($csv_data, 200, $headers);
     }
@@ -3211,13 +3312,12 @@ class DatabasesPlugin extends UserPluginBase
         // 読み込み
         $fp = fopen($csv_full_path, 'r');
         // CSVファイル：Shift-JIS -> UTF-8変換時のみ
-        if ($character_code == CsvCharacterCode::sjis_win) {
+        if (CsvCharacterCode::isShiftJis($character_code)) {
             // ストリームフィルタ内で、Shift-JIS -> UTF-8変換
             $fp = CsvUtils::setStreamFilterRegisterSjisToUtf8($fp);
         }
 
-        // bugfix: fgetcsv() は ロケール設定の影響を受け、xampp環境＋日本語文字列で誤動作したため、ロケール設定する。
-        setlocale(LC_ALL, 'ja_JP.UTF-8');
+        CsvUtils::setLocale();
 
         // 一行目（ヘッダ）
         $header_columns = fgetcsv($fp, 0, ',');
@@ -3560,6 +3660,9 @@ class DatabasesPlugin extends UserPluginBase
         fclose($fp);
         $this->rmImportTmpFile($path, $file_extension, $unzip_dir_full_path);
 
+        // 全文検索項目を最新化する
+        (new DatabasesTool())->updateFullText($database->id);
+
         $request->flash_message = 'インポートしました。';
 
         // redirect_path指定して自動遷移するため、returnで表示viewの指定不要。
@@ -3866,6 +3969,7 @@ class DatabasesPlugin extends UserPluginBase
                 'select_columns' => $select_columns,
                 'columns_selects' => $columns_selects,
                 'frame_configs' => $this->frame_configs,
+                'same_database_frames' => $this->getDatabaseFrames($database->id),
             ]
         )->withInput($request->all);
     }
@@ -3918,6 +4022,11 @@ class DatabasesPlugin extends UserPluginBase
                 'filter_search_columns' => json_encode($request->filter_search_columns),
             ]
         );
+
+        // 急上昇ワード未設定を許容する
+        if (!$request->filled(DatabaseFrameConfig::database_trend_words_caption)) {
+            FrameConfig::where('frame_id', $frame_id)->where('name', DatabaseFrameConfig::database_trend_words_caption)->forceDelete();
+        }
 
         FrameConfig::saveFrameConfigs($request, $frame_id, DatabaseFrameConfig::getMemberKeys());
         // 更新したので、frame_configsを設定しなおす
@@ -4038,8 +4147,8 @@ AND databases_inputs.posted_at <= NOW()
                 DB::raw('null                  as important'),
                 'databases_inputs.posted_at    as posted_at',
                 'databases_inputs.created_name as posted_name',
-                DB::raw('null                  as classname'),
-                DB::raw('null                  as category'),
+                'categories.classname as classname',
+                'categories.category as category',
                 DB::raw('"databases"           as plugin_name')
             )
             ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
@@ -4076,6 +4185,8 @@ AND databases_inputs.posted_at <= NOW()
                 $leftJoin->on('databases_inputs.id', '=', 'input_cols_image.databases_inputs_id')
                             ->on('columns_image.id', '=', 'input_cols_image.databases_columns_id');
             })
+            // カテゴリ
+            ->leftJoin('categories', 'categories.id', '=', 'databases_inputs.categories_id')
 
             ->where('databases_inputs.status', StatusType::active)
             ->where(function ($query) {
@@ -4125,16 +4236,18 @@ AND databases_inputs.posted_at <= NOW()
                 'pages.permanent_link        as permanent_link',
                 'databases_input_cols.value  as post_title',
                 DB::raw('0 as important'),
-                'databases_inputs.created_at as posted_at',
-                DB::raw('null as posted_name'),
-                DB::raw('null as classname'),
-                DB::raw('null as categories_id'),
-                DB::raw('null as category'),
-                DB::raw('"databases" as plugin_name')
+                'databases_inputs.posted_at as posted_at',
+                'databases_inputs.created_name as posted_name',
+                'categories.classname as classname',
+                'categories.id as categories_id',
+                'categories.category as category',
+                DB::raw('"databases" as plugin_name'),
+                'body_input_col.value as body'
             )
             ->join('databases', 'databases.id', '=', 'databases_inputs.databases_id')
             ->join('frames', 'frames.bucket_id', '=', 'databases.bucket_id')
             ->join('pages', 'pages.id', '=', 'frames.page_id')
+            // タイトル
             ->leftJoin('databases_columns', function ($leftJoin) use ($hide_columns_ids) {
                 $leftJoin->on('databases_inputs.databases_id', '=', 'databases_columns.databases_id')
                     ->where('databases_columns.title_flag', 1)
@@ -4145,6 +4258,19 @@ AND databases_inputs.posted_at <= NOW()
                 $leftJoin->on('databases_inputs.id', '=', 'databases_input_cols.databases_inputs_id')
                     ->on('databases_columns.id', '=', 'databases_input_cols.databases_columns_id');
             })
+            // 本文
+            ->leftJoin('databases_columns as body_column', function ($leftJoin) use ($hide_columns_ids) {
+                $leftJoin->on('databases_inputs.databases_id', '=', 'body_column.databases_id')
+                    ->where('body_column.body_flag', 1)
+                    // タイトル指定しても、権限によって非表示columだったらvalue表示しない（基本的に、タイトル指定したけど権限で非表示は、設定ミスと思う。その時は(無題)で表示される）
+                    ->whereNotIn('body_column.id', $hide_columns_ids);
+            })
+            ->leftJoin('databases_input_cols as body_input_col', function ($leftJoin) {
+                $leftJoin->on('databases_inputs.id', '=', 'body_input_col.databases_inputs_id')
+                    ->on('body_column.id', '=', 'body_input_col.databases_columns_id');
+            })
+            // カテゴリ
+            ->leftJoin('categories', 'categories.id', '=', 'databases_inputs.categories_id')
             ->where('databases_inputs.status', StatusType::active)
             ->where('databases_inputs.posted_at', '<=', Carbon::now())
             ->where(function ($query) {
@@ -4201,5 +4327,196 @@ AND databases_inputs.posted_at <= NOW()
         View::share('columns', $columns);
 
         return $view;
+    }
+
+    /**
+     * DatabasesColumnsSelectsのregistered_countを設定する
+     *
+     * @param Illuminate\Database\Eloquent\Collection $columns_selects 設定対象
+     * @param Illuminate\Database\Eloquent\Collection $all_databases_inputs 対象データベースの全登録データ
+     * @return lluminate\Database\Eloquent\Collection 設定済みのデータ
+     */
+    private function setColumnsSelectsRegisteredCount(EloquentCollection $columns_selects, EloquentCollection $all_databases_inputs): EloquentCollection
+    {
+        $databases_inputs_ids = $all_databases_inputs->pluck('id');
+        foreach ($columns_selects as $select) {
+            $query = DatabasesInputCols::whereIn('databases_inputs_id', $databases_inputs_ids)
+                ->where('databases_columns_id', $select->databases_columns_id);
+
+            $databases_column = DatabasesColumns::find($select->databases_columns_id);
+            if ($databases_column->column_type === DatabaseColumnType::checkbox) {
+                // チェックボックスの場合、パイプ区切りで登録されているので部分一致検索
+                $query->where('value', 'LIKE', "%$select->value%");
+            } else {
+                $query->where('value', $select->value);
+            }
+            $select->setRegisteredCount($query->count());
+        }
+
+        return $columns_selects;
+    }
+
+    /**
+     * カテゴリ表示関数
+     *
+     * @method_title カテゴリ
+     * @method_desc FAQで使用するカテゴリを設定します。
+     * @method_detail 共通カテゴリの選択、もしくはFAQ独自のカテゴリを登録します。
+     */
+    public function listCategories($request, $page_id, $frame_id, $id = null)
+    {
+        // FAQ
+        $database_frame = $this->getDatabaseFrame($frame_id);
+
+        // 共通カテゴリ
+        $general_categories = Categories::getGeneralCategories($this->frame->plugin_name, $database_frame->databases_id);
+
+        // 個別カテゴリ（プラグイン）
+        $plugin_categories = Categories::getPluginCategories($this->frame->plugin_name, $database_frame->databases_id);
+
+        // 表示テンプレートを呼び出す。
+        return $this->view('databases_list_categories', [
+            'general_categories' => $general_categories,
+            'plugin_categories' => $plugin_categories,
+            'database_frame' => $database_frame,
+        ]);
+    }
+
+    /**
+     *  カテゴリ登録処理
+     */
+    public function saveCategories($request, $page_id, $frame_id, $id = null)
+    {
+        /* エラーチェック
+        ------------------------------------ */
+
+        $validator = Categories::validatePluginCategories($request);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        /* カテゴリ追加
+        ------------------------------------ */
+
+        // FAQ
+        $database_frame = $this->getDatabaseFrame($frame_id);
+
+        Categories::savePluginCategories($request, $this->frame->plugin_name, $database_frame->databases_id);
+
+        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+    }
+
+    /**
+     *  カテゴリ削除処理
+     */
+    public function deleteCategories($request, $page_id, $frame_id, $id = null)
+    {
+        Categories::deleteCategories($this->frame->plugin_name, $id);
+
+        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+    }
+
+    /**
+     * 急上昇ワードを取得する
+     */
+    public function trendWords($request, $page_id, $frame_id, int $database_id)
+    {
+        if ($database_id === null) {
+            return;
+        }
+
+        // 設定済みの値
+        if ($request->old === 'true') {
+            return $this->trendWordsOld();
+        }
+
+        // 期間指定で最新の内容を取得する
+        $query = DatabasesSearchedWord::select('word')
+            ->where('databases_id', $database_id);
+
+        if ($request->period === 'weekly') {
+            $query->where('created_at', '>', Carbon::now()->subWeek());
+        } elseif ($request->period === 'monthly') {
+            $query->where('created_at', '>', Carbon::now()->subMonth());
+        } else {
+            $query->where('created_at', '>', Carbon::now()->subDay());
+        }
+        $trend_words = $query->groupBy('word')
+            ->orderByRaw('COUNT(*) DESC')
+            ->orderByRaw('MIN(id)')
+            ->limit(20)
+            ->get();
+
+        return json_encode($trend_words, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    }
+
+    /**
+     * 設定済みの急上昇ワードを取得する
+     */
+    private function trendWordsOld()
+    {
+        // 登録済み
+        $trend_words = FrameConfig::getConfigValueAndOld($this->frame_configs, DatabaseFrameConfig::database_trend_words);
+        // old()の場合は配列になっている
+        if (!is_array($trend_words)) {
+            $trend_words = explode('|', $trend_words);
+        }
+
+        $r = [];
+        foreach (array_filter($trend_words) as $word) {
+            $r[] = ['word' => $word];
+        }
+        return json_encode($r, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    }
+
+    /**
+     * データベースのフレームを取得する
+     *
+     * @param int $database_id
+     * @return Collection
+     */
+    private function getDatabaseFrames(?int $database_id): Collection
+    {
+        if ($database_id === null) {
+            return collect([]);
+        }
+        // Frame データ
+        $frames = Frame::select('frames.*', 'pages._lft', 'pages.page_name', 'buckets.bucket_name')
+            ->where('frames.plugin_name', PluginName::databases)
+            ->leftJoin('buckets', 'frames.bucket_id', '=', 'buckets.id')
+            ->leftJoin('databases', 'buckets.id', '=', 'databases.bucket_id')
+            ->leftJoin('pages', 'frames.page_id', '=', 'pages.id')
+            ->where('databases.id', $database_id)
+            ->orderBy('pages._lft', 'asc')
+            ->orderBy('frames.id', 'asc')
+            ->get();
+        return $frames;
+    }
+
+    /**
+     * 遷移先のフレームを取得する
+     * @return Frame
+     */
+    private function getDestinationFrame(): Frame
+    {
+        $frame_id = FrameConfig::getConfigValueAndOld($this->frame_configs, DatabaseFrameConfig::database_destination_frame, $this->frame->id);
+        $frame = Frame::with('page')->find($frame_id);
+
+        // 遷移先のフレームがなくなっていたら、当該フレームに留まる
+        if (empty($frame)) {
+            $frame = Frame::with('page')->find($this->frame->id);
+        }
+        return $frame;
+    }
+
+    /**
+     * 件数指定
+     */
+    public function indexCount($request, $page_id, $frame_id)
+    {
+        session(["view_count_spectator_{$frame_id}" => $request->input("view_count_spectator")]);
+
+        // リダイレクト先を指定しないため、画面から渡されたredirect_pathに飛ぶ
     }
 }

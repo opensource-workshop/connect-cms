@@ -17,14 +17,14 @@
     </tr>
     <tr nobr="true">
         <td>ヘッダーエリア</td>
-        <td>{{$configs->firstWhere('name', 'browser_width_header')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'browser_width_header', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>センターエリア（左、メイン、右）</td>
-        <td>{{$configs->firstWhere('name', 'browser_width_center')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'browser_width_center', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>フッター</td>
-        <td>{{$configs->firstWhere('name', 'browser_width_footer')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'browser_width_footer', null)}}</td>
     </tr>
 </table>

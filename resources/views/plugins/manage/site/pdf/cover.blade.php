@@ -10,7 +10,7 @@
 
 <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
 <h1 style="text-align: center; font-size: 32px;">Webサイト設計書</h1>
-<h2 style="text-align: center; font-size: 24px;">{{$configs->firstWhere('name', 'base_site_name')->value}}</h2>
+<h2 style="text-align: center; font-size: 24px;">{{Configs::getConfigsValue($configs, 'base_site_name', null)}}</h2>
 <h3 style="text-align: center; font-size: 18px;">{{url('/')}}</h3>
 <h4 style="text-align: center; font-size: 12px;">{{date('Y年m月d日')}}</h4>
 

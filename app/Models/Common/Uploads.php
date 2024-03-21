@@ -4,11 +4,18 @@ namespace App\Models\Common;
 
 use App\Models\Core\Configs;
 use App\Enums\ImageMimetype;
+use App\UserableNohistory;
+use App\Utilities\File\FileUtils;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Intervention\Image\Facades\Image;
 
 class Uploads extends Model
 {
+    // 保存時のユーザー関連データの保持（履歴なしUserable）
+    use UserableNohistory;
+    use HasFactory;
+
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
@@ -19,12 +26,7 @@ class Uploads extends Model
      */
     public function getFormatSize($r = 0)
     {
-        $size = $this->size;
-        $units = array("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB");
-        for ($i = 0; $size >= 1024 && $i < 4; $i++) {
-            $size /= 1024;
-        }
-        return round($size, $r).$units[$i];
+        return FileUtils::getFormatSize($this->size, $r);
     }
 
     /**
@@ -32,10 +34,7 @@ class Uploads extends Model
      */
     public function getFilename()
     {
-        // 環境によってはsetlocale しておかないと、ファイル名がうまくpathinfo で取得できなかった。
-        // 2020-12-15 Connect-CMS 公式サイトで、ファイル名が空になったり一部しか取得できないケースがあった。
-        // false を返すことなどもあるようで、ワーニングの抑止の意味も含めて @ 付きでCall
-        @setlocale(LC_ALL, 'ja_JP.UTF-8');
+        FileUtils::setLocale();
         return $path_parts = pathinfo($this->client_original_name, PATHINFO_FILENAME);
     }
 
@@ -119,7 +118,7 @@ class Uploads extends Model
      */
     public function getIsImageAttribute() : bool
     {
-        return in_array($this->mimetype, ImageMimetype::getMemberKeys()) ? true : false;
+        return FileUtils::isImage($this->mimetype);
     }
 
     /**

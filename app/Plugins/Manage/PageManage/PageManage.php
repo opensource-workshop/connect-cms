@@ -2,9 +2,10 @@
 
 namespace App\Plugins\Manage\PageManage;
 
-// use Illuminate\Http\Request;
+use App\Enums\WebsiteType;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
 
 use DB;
 
@@ -22,8 +23,11 @@ use App\Rules\CustomValiUrlMax;
 
 use App\Traits\Migration\MigrationTrait;
 use App\Traits\Migration\MigrationExportNc3PageTrait;
+use App\Traits\Migration\MigrationExportHtmlPageTrait;
 
 use App\Plugins\Manage\ManagePluginBase;
+
+use App\Utilities\Csv\CsvUtils;
 
 /**
  * ページ管理クラス
@@ -41,7 +45,10 @@ use App\Plugins\Manage\ManagePluginBase;
 class PageManage extends ManagePluginBase
 {
     // 移行用ライブラリ
-    use MigrationTrait, MigrationExportNc3PageTrait;
+    use MigrationTrait, MigrationExportNc3PageTrait, MigrationExportHtmlPageTrait;
+
+    // 外部ページインポート（Webスクレイピング）リクエスト間隔（秒）を指定
+    protected $request_interval = 10;
 
     /**
      * 権限定義
@@ -56,7 +63,9 @@ class PageManage extends ManagePluginBase
         $role_ckeck_table["update"]          = array('admin_page');
         $role_ckeck_table["destroy"]         = array('admin_page');
         $role_ckeck_table["sequenceUp"]      = array('admin_page');
+        $role_ckeck_table["sequenceTop"]     = ['admin_page'];
         $role_ckeck_table["sequenceDown"]    = array('admin_page');
+        $role_ckeck_table["sequenceBottom"]  = ['admin_page'];
         $role_ckeck_table["movePage"]        = array('admin_page');
         $role_ckeck_table["import"]          = array('admin_page');
         $role_ckeck_table["upload"]          = array('admin_page');
@@ -195,7 +204,7 @@ class PageManage extends ManagePluginBase
             'header_color'     => 'ヘッダーバーの背景色',
             'ip_address'       => 'IPアドレス制限',
             'othersite_url'    => '外部サイトURL',
-            'class'            => 'クラス名',
+            'class'            => 'メニュークラス名',
         ]);
         return $validator;
     }
@@ -214,15 +223,16 @@ class PageManage extends ManagePluginBase
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // 固定リンクの先頭に / がない場合、追加する。
-        if (strncmp($request->permanent_link, '/', 1) !== 0) {
-            $request->permanent_link = '/' . $request->permanent_link;
+        // 固定リンクの先頭に / がない場合、追加する。(php8.1対応)stringにキャストする。
+        $permanent_link = (string)$request->permanent_link;
+        if (strncmp($permanent_link, '/', 1) !== 0) {
+            $permanent_link = '/' . $permanent_link;
         }
 
         // ページデータの登録
         $page = new Page;
         $page->page_name            = $request->page_name;
-        $page->permanent_link       = $request->permanent_link;
+        $page->permanent_link       = $permanent_link;
         $page->password             = $request->password;
         $page->background_color     = $request->background_color;
         $page->header_color         = $request->header_color;
@@ -310,6 +320,21 @@ class PageManage extends ManagePluginBase
     }
 
     /**
+     * ページを一番上へ移動
+     */
+    public function sequenceTop($request, $page_id)
+    {
+        // 移動元のオブジェクトを取得
+        $pages = Page::find($page_id);
+        // 兄弟の一番上取得
+        $sibling = $pages->siblings()->defaultOrder()->first();
+        $pages->insertBeforeNode($sibling);
+
+        // ページ管理画面に戻る
+        return redirect("/manage/page");
+    }
+
+    /**
      * ページ下移動
      */
     public function sequenceDown($request, $page_id)
@@ -317,6 +342,21 @@ class PageManage extends ManagePluginBase
         // 移動元のオブジェクトを取得して、down
         $pages = Page::find($page_id);
         $pages->down();
+
+        // ページ管理画面に戻る
+        return redirect("/manage/page");
+    }
+
+    /**
+     * ページを一番下へ移動
+     */
+    public function sequenceBottom($request, $page_id)
+    {
+        // 移動元のオブジェクトを取得
+        $pages = Page::find($page_id);
+        // 兄弟の一番下取得
+        $sibling = $pages->siblings()->reversed()->first();
+        $pages->insertAfterNode($sibling);
 
         // ページ管理画面に戻る
         return redirect("/manage/page");
@@ -487,7 +527,6 @@ class PageManage extends ManagePluginBase
      */
     public function upload($request, $page_id)
     {
-
         // CSVファイルチェック
         $validator = Validator::make($request->all(), [
             'page_csv' => [
@@ -500,15 +539,13 @@ class PageManage extends ManagePluginBase
             'page_csv' => 'インポートCSV',
         ]);
         if ($validator->fails()) {
-            // return ( $this->import($request, $page_id, $validator->errors()->all()) );
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
         // CSVファイル一時保孫
         $path = $request->file('page_csv')->store('tmp');
 
-        // bugfix: fgetcsv() は ロケール設定の影響を受け、xampp環境＋日本語文字列で誤動作したため、ロケール設定する。
-        setlocale(LC_ALL, 'ja_JP.UTF-8');
+        CsvUtils::setLocale();
 
         // 一行目（ヘッダ）読み込み
         $fp = fopen(storage_path('app/') . $path, 'r');
@@ -521,7 +558,6 @@ class PageManage extends ManagePluginBase
             fclose($fp);
             Storage::delete($path);
 
-            // return ( $this->import($request, $page_id, $error_msgs) );
             return redirect()->back()->withErrors(['page_csv' => $error_msgs])->withInput();
         }
 
@@ -532,7 +568,6 @@ class PageManage extends ManagePluginBase
             fclose($fp);
             Storage::delete($path);
 
-            // return ( $this->import($request, $page_id, $error_msgs) );
             return redirect()->back()->withErrors(['page_csv' => $error_msgs])->withInput();
         }
 
@@ -708,15 +743,25 @@ class PageManage extends ManagePluginBase
         $migration_directories = Storage::directories('migration/import/pages');
 
         // 移行用に取り込んだページ単位ディレクトリのページ情報
-        $page_in = array();
+        $page_in = [];
+        $migration_directories_page_ids = [];
         foreach ($migration_directories as $migration_directory) {
-            $page_in[] = str_replace('migration/import/pages/', '', $migration_directory);
+            $page_id_dir = str_replace('migration/import/pages/', '', $migration_directory);
+            $page_id = (int) $page_id_dir;
+            $page_in[] = $page_id;
+            $migration_directories_page_ids[$page_id] = [
+                'migration_directory' => $migration_directory,
+                'page_id_dir'         => $page_id_dir,
+            ];
         }
-        //print_r($page_in);
 
         // ページ一覧の取得
         $migration_pages = Page::whereIn('id', $page_in)->get();
-        //var_dump($migration_pages);
+        foreach ($migration_pages as $page) {
+            // ページ毎のディレクトリ更新日時
+            $page->migration_directory_timestamp = Carbon::createFromTimestamp(Storage::lastModified($migration_directories_page_ids[$page_id]['migration_directory']))->format('Y/m/d H:i:s');
+            $page->delete_file_page_id_dir = $migration_directories_page_ids[$page_id]['page_id_dir'];
+        }
 
         // 画面呼び出し
         return view('plugins.manage.page.migration_order', [
@@ -726,6 +771,7 @@ class PageManage extends ManagePluginBase
             "page"            => $current_page,  // bugfix: サブメニュー表示するのにpage変数必要
             "pages"           => $pages,
             "migration_pages" => $migration_pages,
+            "request_interval" => $this->request_interval,
         ]);
     }
 
@@ -737,16 +783,15 @@ class PageManage extends ManagePluginBase
     public function migrationFileDelete($request, $page_id)
     {
         // 削除対象のディレクトリが指定されていること。
-        if (!$request->has("delete_file_page_id") && !empty($request->delete_file_page_id)) {
-            // 指示された画面に戻る。
-            return $this->migrationOrder($request, $page_id);
+        if ($request->delete_file_page_id_dir) {
+            // 指定されたディレクトリを削除
+            Storage::deleteDirectory("migration/import/pages/{$request->delete_file_page_id_dir}");
+
+            session()->flash('flash_message', '指定した取り込み済み移行データを削除しました。');
         }
 
-        // 指定されたディレクトリを削除
-        Storage::deleteDirectory("migration/import/pages/" . $request->delete_file_page_id);
-
         // 指示された画面に戻る。
-        return $this->migrationOrder($request, $page_id);
+        return redirect("manage/page/migrationOrder/{$page_id}");
     }
 
     /**
@@ -775,8 +820,36 @@ class PageManage extends ManagePluginBase
                        ->withInput();
         }
 
-        // NC3 を画面から移行する
-        $this->migrationNC3Page($request->url, $request->destination_page_id);
+        /**
+         * リクエスト間隔チェック
+         */
+        // 最後にリクエストを送信した時間を記録するファイルのパスを指定
+        $last_request_time_file = 'migration/import/migration_last_request_time.txt';
+
+        // 最後にリクエストを送信した時間をファイルから読み込む
+        $last_request_time = Storage::exists($last_request_time_file) ? intval(Storage::get($last_request_time_file)) : null;
+
+        // 前回のリクエストから一定時間経過していない場合は、エラーメッセージを追加
+        if ($last_request_time !== null && (time() - $last_request_time) < $this->request_interval) {
+            $validator->errors()->add('request_interval', 'リクエスト間隔が短すぎます。しばらく時間を置いてから再度ボタンを押下してください。');
+            return redirect('manage/page/migrationOrder/' . $page_id)
+                       ->withErrors($validator)
+                       ->withInput();
+        }
+
+        // 移行元システムによって処理を分岐
+        if ($request->source_system == WebsiteType::netcommons2) {
+            // TODO: netcommons2 からの移行
+        } elseif ($request->source_system == WebsiteType::netcommons3) {
+            // netcommons3 からの移行
+            $this->migrationNC3Page($request->url, $request->destination_page_id);
+        } elseif ($request->source_system == WebsiteType::html) {
+            // html からの移行
+            $this->migrationHtmlPage($request->url, $request->destination_page_id);
+        }
+
+        // リクエストを送信した時間をファイルに書き込む
+        Storage::put($last_request_time_file, time());
 
         // 指示された画面に戻る。
         return $this->migrationOrder($request, $page_id);

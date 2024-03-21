@@ -194,7 +194,6 @@ class ReservationManage extends ManagePluginBase
      */
     public function update($request, $id)
     {
-
         // エラーチェック
         $validator = Validator::make($request->all(), [
             'facility_name'              => ['required', 'max:255'],
@@ -228,8 +227,8 @@ class ReservationManage extends ManagePluginBase
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // 表示順が空なら、自分を省いた最後の番号+1 をセット
-        $display_sequence = $this->getSaveDisplaySequence(ReservationsFacility::query(), $request->display_sequence, $id);
+        // 表示順が空なら、施設カテゴリ内で自分を省いた最後の番号+1 をセット
+        $display_sequence = ReservationsFacility::getSaveDisplaySequence(ReservationsFacility::where('reservations_categories_id', $request->reservations_categories_id), $request->display_sequence, $id);
 
         // 配列のnull要素のみ取り除く
         $filter_not_null = function ($var) {
@@ -265,21 +264,6 @@ class ReservationManage extends ManagePluginBase
 
         // 一覧画面に戻る
         return redirect("/manage/reservation")->with('flash_message', $message);
-    }
-
-    /**
-     * 登録する表示順を取得
-     */
-    private function getSaveDisplaySequence($query, $display_sequence, $id)
-    {
-        // 表示順が空なら、自分を省いた最後の番号+1 をセット
-        if (!is_null($display_sequence)) {
-            $display_sequence = intval($display_sequence);
-        } else {
-            $max_display_sequence = $query->where('id', '<>', $id)->max('display_sequence');
-            $display_sequence = empty($max_display_sequence) ? 1 : $max_display_sequence + 1;
-        }
-        return $display_sequence;
     }
 
     /**
@@ -499,7 +483,7 @@ class ReservationManage extends ManagePluginBase
         }
 
         // 表示順が空なら、自分を省いた最後の番号+1 をセット
-        $display_sequence = $this->getSaveDisplaySequence(ReservationsColumnsSet::query(), $request->display_sequence, $id);
+        $display_sequence = ReservationsColumnsSet::getSaveDisplaySequence(ReservationsColumnsSet::query(), $request->display_sequence, $id);
 
         $columns_set = ReservationsColumnsSet::firstOrNew(['id' => $id]);
         $columns_set->name             = $request->name;
@@ -774,7 +758,7 @@ class ReservationManage extends ManagePluginBase
         }
 
         // 更新データは上記update後に取得しないと、title_flagが更新されない
-        $column = ReservationsColumn::where('id', $request->column_id)->first();
+        $column = ReservationsColumn::where('id', $request->column_id)->where('columns_set_id', $request->columns_set_id)->first();
 
         // タイトル指定
         $column->title_flag = $title_flag;

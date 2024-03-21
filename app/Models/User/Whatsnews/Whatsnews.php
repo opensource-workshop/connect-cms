@@ -2,11 +2,9 @@
 
 namespace App\Models\User\Whatsnews;
 
-use Illuminate\Support\Facades\Log;
-
 use Illuminate\Database\Eloquent\Model;
 
-use App\Enums\WhatsnewsTargetPlugin;
+use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
 
 class Whatsnews extends Model
 {
@@ -32,10 +30,9 @@ class Whatsnews extends Model
     ];
 
     /**
-     *  表示するプラグインの配列を返却
-     *
+     * 表示するプラグインの配列を返却
      */
-    public function getTargetPlugins()
+    public function getTargetPlugins(): array
     {
         // 新着情報として対象としているプラグインの定義
         // $target_plugins = array(
@@ -43,12 +40,8 @@ class Whatsnews extends Model
         //     "databases" => false,
         // );
         $target_plugins = array();
-        // $target_plugin_keys = WhatsnewsTargetPlugin::getMemberKeys();
-        // foreach ($target_plugin_keys as $target_plugin_key) {
-        //     $target_plugins[$target_plugin_key] = false;
-        // }
 
-        $enums_target_plugins = WhatsnewsTargetPlugin::getMembers();
+        $enums_target_plugins = WhatsnewTargetPluginTool::getMembers();
         foreach ($enums_target_plugins as $target_plugin_key => $enums_target_plugin) {
             $target_plugins[$target_plugin_key]['use_flag'] = false;
             $target_plugins[$target_plugin_key]['plugin_name_full'] = $enums_target_plugin;

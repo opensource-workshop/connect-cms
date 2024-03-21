@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Core;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 use App\Http\Controllers\Core\ConnectController;
@@ -17,7 +16,7 @@ use App\Enums\UseType;
 
 use App\Models\Common\Categories;
 use App\Models\Common\Page;
-use App\Models\Common\PageRole;
+// use App\Models\Common\PageRole;
 use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
 
@@ -55,9 +54,26 @@ class UploadController extends ConnectController
      */
     public function getFile(Request $request, $id = null)
     {
+        $no_cache_headers = [
+            'Cache-Control' => 'no-store',
+            'Expires' => 'Thu, 01 Dec 1994 16:00:00 GMT'
+        ];
+        $headers = [
+            'Cache-Control' => config('connect.CACHE_CONTROL'),
+        ];
+
         // id がない場合は空を返す。（例：DBプラグイン－画像型で必須指定なしでの運用等）
         if (empty($id)) {
-            return response()->download(storage_path(config('connect.no_image_path')));
+            $configs = Configs::getSharedConfigs();
+            $no_image = Configs::getConfigsValue($configs, 'no_image', null);
+            if ($no_image) {
+                // カスタムno_image
+                $no_image_path = public_path("/uploads/no_image/{$no_image}");
+            } else {
+                // 標準no_image
+                $no_image_path = storage_path(config('connect.no_image_path'));
+            }
+            return response()->download($no_image_path, null, $headers)->setEtag(md5_file($no_image_path));
         }
 
         // id のファイルを読んでhttp request に返す。
@@ -73,18 +89,13 @@ class UploadController extends ConnectController
             abort(404);
         }
 
-        $no_cache_headers = [
-            'Cache-Control' => 'no-store',
-            'Expires' => 'Thu, 01 Dec 1994 16:00:00 GMT'
-        ];
-        $headers = [
-            'Cache-Control' => config('connect.CACHE_CONTROL'),
-        ];
-
         // 一時保存ファイルの場合は所有者を確認して、所有者ならOK。所有者以外なら404
         // 一時保存ファイルは、登録時の確認画面を表示している際を想定している。
         if ($uploads->temporary_flag == 1) {
             $user_id = Auth::id();
+            if ($user_id === null) {
+                abort(404);
+            }
             if ($uploads->created_id != $user_id) {
                 abort(404);
             }
@@ -101,21 +112,19 @@ class UploadController extends ConnectController
                 return;
             }
 
-            // $page_roles = $this->getPageRoles(array($page->id));
-            $page_roles = PageRole::getPageRoles(array($page->id));
+            // $page_roles = PageRole::getPageRoles(array($page->id));
 
             // 自分のページから親を遡って取得
             $page_tree = Page::reversed()->ancestorsAndSelf($page->id);
 
             // 認証されていなくてパスワードを要求する場合、パスワード要求画面を表示
-            // if ($page->isRequestPassword($request, $this->page_tree)) {
             if ($page->isRequestPassword($request, $page_tree)) {
-                return response()->download(storage_path(config('connect.forbidden_image_path')));
+                return response()->download(storage_path(config('connect.forbidden_image_path')), null, $no_cache_headers);
             }
 
             // ファイルに閲覧権限がない場合
-            if (!$page->isView(Auth::user(), true, true, $page_roles)) {
-                return response()->download(storage_path(config('connect.forbidden_image_path')));
+            if (!$page->isVisibleAncestorsAndSelf($page_tree)) {
+                return response()->download(storage_path(config('connect.forbidden_image_path')), null, $no_cache_headers);
             }
 
             // 閲覧パスワード設定あるか
@@ -134,9 +143,9 @@ class UploadController extends ConnectController
         if (!empty($uploads->check_method)) {
             list($return_boolean, $return_message) = $this->callCheckMethod($request, $uploads);
             if (!$return_boolean) {
-                //Log::debug($uploads);
-                //Log::debug($return_message);
-                return response()->download(storage_path(config('connect.forbidden_image_path')));
+                // \Log::debug($uploads);
+                // \Log::debug($return_message);
+                return response()->download(storage_path(config('connect.forbidden_image_path')), null, $no_cache_headers);
             }
 
             // キャッシュしない
@@ -180,7 +189,7 @@ class UploadController extends ConnectController
                         $constraint->aspectRatio();
                         $constraint->upsize();
                     }
-                );
+                )->orientate();
             }, config('connect.CACHE_MINUTS'), true); // 第3引数のtrue は戻り値にImage オブジェクトを返す意味。（false の場合は画像データ）
 
             $headers['Content-Disposition'] = 'inline; ' . $content_disposition;
@@ -400,7 +409,10 @@ class UploadController extends ConnectController
 
         header('Content-Type: text/css');
         header("Content-Disposition: inline; filename={$page_id}.css");
-        header('Cache-Control: ' . config('connect.CACHE_CONTROL'));
+        // cssを no_cache に変更
+        // header('Cache-Control: ' . config('connect.CACHE_CONTROL'));
+        header('Cache-Control: no-store');
+        header('Expires: Thu, 01 Dec 1994 16:00:00 GMT');
 
         // 背景色
         if ($background_color) {

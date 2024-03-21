@@ -66,16 +66,6 @@ class LinklistsPlugin extends UserPluginBase
     }
 
     /**
-     * 編集画面の最初のタブ（コアから呼び出す）
-     *
-     * スーパークラスをオーバーライド
-     */
-    public function getFirstFrameEditAction()
-    {
-        return "editBuckets";
-    }
-
-    /**
      * POST取得関数（コアから呼び出す）
      * コアがPOSTチェックの際に呼び出す関数
      */
@@ -347,8 +337,16 @@ class LinklistsPlugin extends UserPluginBase
         // データ保存
         $post->save();
 
-        // 登録後はリダイレクトして編集画面を開く。
-        return new Collection(['redirect_path' => url('/') . "/plugin/linklists/edit/" . $page_id . "/" . $frame_id . "/" . $post->id . "#frame-" . $frame_id]);
+        if ($post_id) {
+            $message = '変更しました。';
+        } else {
+            $message = '登録しました。';
+        }
+        session()->flash("flash_message_for_frame{$frame_id}", $message);
+
+        // 登録後はリダイレクトして初期画面を開く。
+        // return new Collection(['redirect_path' => url('/') . "/plugin/linklists/edit/" . $page_id . "/" . $frame_id . "/" . $post->id . "#frame-" . $frame_id]);
+        return new Collection(['redirect_path' => url($this->page->permanent_link) . "#frame-" . $frame_id]);
     }
 
     /**

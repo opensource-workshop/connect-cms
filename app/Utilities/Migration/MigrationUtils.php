@@ -33,7 +33,7 @@ class MigrationUtils
      */
     public static function getContentImage($content)
     {
-        $pattern = '/<img.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
+        $pattern = '/<img.*?src\s*=\s*[\"\'](.*?)[\"\'].*?>/i';
         return self::getContentPregMatchAll($content, $pattern, 1);
     }
 
@@ -42,7 +42,7 @@ class MigrationUtils
      */
     private static function getContentImageTag($content)
     {
-        $pattern = '/<img.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
+        $pattern = '/<img.*?src\s*=\s*[\"\'](.*?)[\"\'].*?>/i';
 
         if (preg_match_all($pattern, $content, $images)) {
             if (is_array($images) && isset($images[0])) {
@@ -60,17 +60,29 @@ class MigrationUtils
      */
     private static function getImageStyle($content)
     {
-        $pattern = '/<img.*?style\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
+        $pattern = '/<img.*?style\s*=\s*[\"\'](.*?)[\"\'].*?>/i';
         return self::getContentPregMatchAll($content, $pattern, 1);
     }
 
     /**
-     * HTML からiframe タグの style 属性を取得
+     * HTML からiframe タグを取得
      */
-    private static function getIframeStyle($content)
+    private static function getIframe($content)
     {
-        $pattern = '/<iframe.*?style\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
-        return self::getContentPregMatchAll($content, $pattern, 1);
+        $pattern = '/<iframe(".*?"|\'.*?\'|[^\'"])*?>/i';
+        return self::getContentPregMatchAll($content, $pattern, 0);
+    }
+
+    /**
+     * iframe タグの style 属性を取得
+     * iframe タグの style 属性は任意のため、HTMLではなくiframeタグのみから取得する
+     */
+    private static function getIframeStyle($iframe_tag)
+    {
+        $pattern = '/<iframe.*?style\s*=\s*[\"\'](.*?)[\"\'].*?>/i';
+        // ※ iframe のstyleは必須じゃないので、この正規表現でHTMLからstyle取得だと、下記のようなものを取得して誤作動した
+        // string(137) "<iframe src="//www.youtube.com/embed/xxxxxx" width="800" height="449" allowfullscreen=""></iframe></p><p style="text-align:center;">"
+        return self::getContentPregMatchAll($iframe_tag, $pattern, 1);
     }
 
     /**
@@ -78,7 +90,7 @@ class MigrationUtils
      */
     private static function getIframeSrc($content)
     {
-        $pattern = '/<iframe.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
+        $pattern = '/<iframe.*?src\s*=\s*[\"\'](.*?)[\"\'].*?>/i';
         return self::getContentPregMatchAll($content, $pattern, 1);
     }
 
@@ -188,18 +200,37 @@ class MigrationUtils
         // Google Map 埋め込み時のスマホ用対応。widthを 100% に変更
         $iframe_srces = self::getIframeSrc($content);
         if (!empty($iframe_srces)) {
-            // iFrame のsrc を取得（複数の可能性もあり）
-            $iframe_styles = self::getIframeStyle($content);
-            if (!empty($iframe_styles)) {
-                foreach ($iframe_styles as $iframe_style) {
-                    $width_pos = strpos($iframe_style, 'width');
-                    $width_length = strpos($iframe_style, ";", $width_pos) - $width_pos + 1;
-                    $iframe_style_width = substr($iframe_style, $width_pos, $width_length);
-                    if (!empty($iframe_style_width)) {
-                        $content = str_replace($iframe_style_width, "width:100%;", $content);
+
+            // iframeのstyle属性は任意のため、ない事がある。そのため置換する場合、下記で対応
+            // ・まず該当のiframeタグを取得（A）
+            // ・該当タグから 目的の属性（style）を取得
+            // ・該当タグを置換（A’）
+            // ・コンテンツの（A）タグを（A’）タグに置換
+
+            // iFrame タグ取得（複数の可能性もあり）
+            $iframe_tags = self::getIframe($content);
+            if (!empty($iframe_tags)) {
+                foreach ($iframe_tags as $iframe_tag) {
+
+                    // iFrame のsrc を取得（複数の可能性もあり）
+                    $iframe_styles = self::getIframeStyle($iframe_tag);
+                    if (!empty($iframe_styles)) {
+                        foreach ($iframe_styles as $iframe_style) {
+                            $width_pos = strpos($iframe_style, 'width');
+                            $width_length = strpos($iframe_style, ";", $width_pos) - $width_pos + 1;
+                            $iframe_style_width = substr($iframe_style, $width_pos, $width_length);
+                            if (!empty($iframe_style_width)) {
+                                // iframeタグ内を置換
+                                $iframe_tag_replace = str_replace($iframe_style_width, "width:100%;", $iframe_tag);
+
+                                // コンテンツのiframeタグのみ置換
+                                $content = str_replace($iframe_tag, $iframe_tag_replace, $content);
+                            }
+                        }
                     }
                 }
             }
+
         }
         return $content;
     }
@@ -219,6 +250,69 @@ class MigrationUtils
                 $content = str_replace($matche, '', $content);
             }
         }
+        return $content;
+    }
+
+    /**
+     * HTML からNC3絵文字を削除
+     *
+     * ・まずimgタグを取得
+     * ・imgタグから 目的のclass = "nc-title-icon" を取得
+     * ・該当imgを消す
+     * ※ いきなり imgタグから 目的のclass = "nc-title-icon" を取得 すると、正規表現の加減で、1行の「imgタグ(NC3絵文字)Pタグimgタグ(NC3絵文字)」が間違って取得されるため。
+     *
+     * @link https://regexper.com/#%2F%3Cimg.*%3F%28class%5Cs*%3D%5Cs*%5B%5C%22%5C'%5Dnc-title-icon%5B%5C%22%5C'%5D%29.*%3F%3E%2Fi
+     * @link https://www.php.net/manual/ja/reference.pcre.pattern.modifiers.php
+     */
+    public static function deleteNc3Emoji($content)
+    {
+        // ・まずimgタグを取得
+        $imgs = self::getContentImageTag($content);
+        if (!$imgs) {
+            return $content;
+        }
+
+        foreach ($imgs[0] as $img) {
+            // ・imgタグから 目的のclass = "nc-title-icon" を取得
+            $pattern = '/<img.*?(class\s*=\s*[\"\']nc-title-icon[\"\']).*?>/i';
+            preg_match_all($pattern, $img, $matches);
+            foreach ($matches[0] as $matche) {
+                // ・該当imgを消す
+                $content = str_replace($matche, '', $content);
+            }
+        }
+
+        return $content;
+    }
+
+    /**
+     * HTML からNC2絵文字を削除
+     *
+     * ・まずimgタグを取得
+     * ・imgタグから 目的のsrc = /images/comp/textarea/titleicon/ を取得
+     * ・該当imgを消す
+     *
+     * @link https://regexper.com/#%2F%3Cimg.*%3Fsrc%5Cs*%3D%5Cs*%5B%5C%22%5C'%5D%28.*%3F%5C%2Fimages%5C%2Fcomp%5C%2Ftextarea%5C%2Ftitleicon%5C%2F.*%3F%29%5B%5C%22%5C'%5D.*%3F%3E%2F
+     * @link https://www.php.net/manual/ja/reference.pcre.pattern.modifiers.php
+     */
+    public static function deleteNc2Emoji($content)
+    {
+        // ・まずimgタグを取得
+        $imgs = self::getContentImageTag($content);
+        if (!$imgs) {
+            return $content;
+        }
+
+        foreach ($imgs[0] as $img) {
+            // ・imgタグから 目的のsrc = /images/comp/textarea/titleicon/ を取得
+            $pattern = '/<img.*?src\s*=\s*[\"\'](.*?\/images\/comp\/textarea\/titleicon\/.*?)[\"\'].*?>/i';
+            preg_match_all($pattern, $img, $matches);
+            foreach ($matches[0] as $matche) {
+                // ・該当imgを消す
+                $content = str_replace($matche, '', $content);
+            }
+        }
+
         return $content;
     }
 

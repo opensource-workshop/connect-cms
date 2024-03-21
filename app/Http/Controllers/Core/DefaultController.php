@@ -3,22 +3,16 @@
 namespace App\Http\Controllers\Core;
 
 use Illuminate\Http\Request;
-use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
-
-use DB;
-use File;
 
 use App\Http\Controllers\Core\ConnectController;
 
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Core\Configs;
-// use App\Models\Core\Plugins;
 
 use App\Traits\ConnectCommonTrait;
 
@@ -541,12 +535,10 @@ class DefaultController extends ConnectController
             }
 
             $finder = View::getFinder();
-            $plugin_view_path = $finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name;
-
-            // テンプレート・ディレクトリがない場合はオプションプラグインのテンプレートディレクトリを探す
-            if (!file_exists($plugin_view_path)) {
-                $plugin_view_path = $finder->getPaths()[0].'/plugins_option/user/' . $action_core_frame->plugin_name;
-            }
+            // 通常プラグインのテンプレートディレクトリ
+            $plugin_view_paths[] = $finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name;
+            // オプションプラグインのテンプレートディレクトリ
+            $plugin_view_paths[] = $finder->getPaths()[0].'/plugins_option/user/' . $action_core_frame->plugin_name;
 
             // テンプレートソート時に順番が書いていない場合用の変数。通常の順番が1からと想定し、空のものは1000から開始
             $tmp_display_sequence = 1000;
@@ -554,45 +546,53 @@ class DefaultController extends ConnectController
             // テンプレートソート用配列
             $sort_array = array();
 
-            // テンプレート・ディレクトリをループ
-            $file_list = scandir($plugin_view_path);
-            foreach ($file_list as $file) {
-                if (in_array($file, array('.', '..'))) {
+            foreach ($plugin_view_paths as $plugin_view_path) {
+                // テンプレート・ディレクトリがない場合は飛ばす
+                if (!file_exists($plugin_view_path)) {
                     continue;
                 }
-                // テンプレートディレクトリを探す
-                //if (is_dir(($finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name . '/' . $file))) {
-                if (strpos($plugin_view_path, 'plugins_option') === false) {
-                    $template_dir = $finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name . '/' . $file;
-                } else {
-                    $template_dir = $finder->getPaths()[0].'/plugins_option/user/' . $action_core_frame->plugin_name . '/' . $file;
-                }
-                if (is_dir($template_dir)) {
-                    if (File::exists($template_dir."/template.ini")) {
-                        // テンプレート設定ファイルがある場合、テンプレート設定ファイルからテンプレート名を探す。設定がなければディレクトリ名をテンプレート名とする。
-                        $template_inis = parse_ini_file($template_dir."/template.ini");
-                        $template_name = $template_inis['template_name'];
-                        if (empty($template_name)) {
-                            $template_name = $file;
-                        }
-                    } else {
-                        // テンプレート設定ファイルがない場合、テンプレートディレクトリ名をテンプレート名とする
-                        $template_name = $file;
-                        $template_inis = array();
+
+                // テンプレート・ディレクトリをループ
+                $file_list = scandir($plugin_view_path);
+                foreach ($file_list as $file) {
+                    if (in_array($file, array('.', '..'))) {
+                        continue;
                     }
-
-                    // テンプレート配列
-                    $target_frame_templates[$template_name] = $file;
-
-                    // テンプレートソート用配列
-                    if (array_key_exists('display_sequence', $template_inis)) {
-                        $sort_array[] = $template_inis['display_sequence'];
+                    // テンプレートディレクトリを探す
+                    //if (is_dir(($finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name . '/' . $file))) {
+                    if (strpos($plugin_view_path, 'plugins_option') === false) {
+                        $template_dir = $finder->getPaths()[0].'/plugins/user/' . $action_core_frame->plugin_name . '/' . $file;
                     } else {
-                        $sort_array[] = $tmp_display_sequence;
-                        $tmp_display_sequence++;
+                        $template_dir = $finder->getPaths()[0].'/plugins_option/user/' . $action_core_frame->plugin_name . '/' . $file;
+                    }
+                    if (is_dir($template_dir)) {
+                        if (File::exists($template_dir."/template.ini")) {
+                            // テンプレート設定ファイルがある場合、テンプレート設定ファイルからテンプレート名を探す。設定がなければディレクトリ名をテンプレート名とする。
+                            $template_inis = parse_ini_file($template_dir."/template.ini");
+                            $template_name = $template_inis['template_name'];
+                            if (empty($template_name)) {
+                                $template_name = $file;
+                            }
+                        } else {
+                            // テンプレート設定ファイルがない場合、テンプレートディレクトリ名をテンプレート名とする
+                            $template_name = $file;
+                            $template_inis = array();
+                        }
+
+                        // テンプレート配列
+                        $target_frame_templates[$template_name] = $file;
+
+                        // テンプレートソート用配列
+                        if (array_key_exists('display_sequence', $template_inis)) {
+                            $sort_array[] = $template_inis['display_sequence'];
+                        } else {
+                            $sort_array[] = $tmp_display_sequence;
+                            $tmp_display_sequence++;
+                        }
                     }
                 }
             }
+
             // template.iniでtemplate_name(テンプレート名)が被ると array_multisort(): array sizes are inconsistentエラー出る
             // テンプレート名重複は設置ミスです。
             // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');

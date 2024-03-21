@@ -5,10 +5,7 @@ namespace App\Plugins\User\Calendars;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-
-//use Carbon\Carbon;
 
 use App\Enums\StatusType;
 
@@ -23,6 +20,8 @@ use App\Plugins\User\UserPluginBase;
 
 use App\Rules\CustomValiWysiwygMax;
 
+use App\Utilities\File\FileUtils;
+
 /**
  * カレンダー・プラグイン
  *
@@ -35,12 +34,6 @@ use App\Rules\CustomValiWysiwygMax;
  */
 class CalendarsPlugin extends UserPluginBase
 {
-    /* DB migrate
-       php artisan make:migration create_calendars --create=calendars
-       php artisan make:migration create_calendar_posts --create=calendar_posts
-       php artisan make:migration create_calendar_frames --create=calendar_frames
-    */
-
     /* オブジェクト変数 */
 
     /**
@@ -63,23 +56,13 @@ class CalendarsPlugin extends UserPluginBase
     }
 
     /**
-     *  権限定義
+     * 権限定義
      */
     public function declareRole()
     {
         // 権限チェックテーブル (追加チェックなし)
         $role_check_table = [];
         return $role_check_table;
-    }
-
-    /**
-     * 編集画面の最初のタブ（コアから呼び出す）
-     *
-     * スーパークラスをオーバーライド
-     */
-    public function getFirstFrameEditAction()
-    {
-        return "editBuckets";
     }
 
     /**
@@ -138,18 +121,20 @@ class CalendarsPlugin extends UserPluginBase
     }
 
     /**
-     *  POST一覧取得
+     * POST一覧取得
      */
     private function getPosts($from_date, $to_date)
     {
         // データ取得
         $posts_query = CalendarPost::select('calendar_posts.*')
-                                   ->join('calendars', function ($join) {
-                                       $join->on('calendars.id', '=', 'calendar_posts.calendar_id')
-                                          ->where('calendars.bucket_id', '=', $this->frame->bucket_id);
-                                   })
-                                   ->where('calendar_posts.start_date', '<=', $to_date)
-                                   ->where('calendar_posts.end_date', '>=', $from_date);
+            ->join('calendars', function ($join) {
+                $join->on('calendars.id', '=', 'calendar_posts.calendar_id')
+                    ->where('calendars.bucket_id', '=', $this->frame->bucket_id);
+            })
+            ->where('calendar_posts.start_date', '<=', $to_date)
+            ->where('calendar_posts.end_date', '>=', $from_date)
+            ->orderBy('calendar_posts.start_date')
+            ->orderBy('calendar_posts.start_time');
 
         // 権限によって表示する記事を絞る
         $posts_query = $this->appendAuthWhereBase($posts_query, 'calendar_posts');
@@ -272,7 +257,7 @@ class CalendarsPlugin extends UserPluginBase
     public function index($request, $page_id, $frame_id)
     {
         // 曜日表示のために日本語設定にする。
-        setlocale(LC_ALL, 'ja_JP.UTF-8');
+        FileUtils::setLocale();
 
         // プラグインのフレームデータ
         $plugin_frame = $this->getPluginFrame($frame_id);
@@ -324,7 +309,6 @@ class CalendarsPlugin extends UserPluginBase
         return $this->view('index', [
             'dates'            => $dates,
             'posts'            => $posts,
-            // 'current_ym_first' => strtotime(session('calendar_year') . "/" . session('calendar_month') . "/01"),
             'current_ym_first' => strtotime(session($session_year_name) . "/" . session($session_month_name) . "/" . session($session_day_name)),
             'current_month'    => session($session_month_name),
             'plugin_frame'     => $plugin_frame,

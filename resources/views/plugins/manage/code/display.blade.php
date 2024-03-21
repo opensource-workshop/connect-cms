@@ -61,7 +61,7 @@
             <!-- Update code Button -->
             <div class="form-group row">
                 <div class="offset-xl-3 col">
-                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/manage/code?page={{$paginate_page}}'"><i class="fas fa-times"></i> キャンセル</button>
+                    <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/manage/code'"><i class="fas fa-times"></i> キャンセル</button>
                     @if ($config->id)
                     <button type="button" class="btn btn-primary form-horizontal mr-2" id="display_update_button" onclick="this.form.action='{{url('/')}}/manage/code/displayUpdate/{{$config->id}}'; this.form.submit();">
                         <i class="fas fa-check"></i> 更新

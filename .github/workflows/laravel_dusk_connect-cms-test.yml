@@ -16,15 +16,16 @@ on:
         - '7.4'
         - '8.0'
         - '8.1'
-        default: '7.3'
-      is_output_manual:
-        type: boolean
-        description: 'マニュアル出力'
-        default: 'false'
+        - '8.2'
+        default: '7.4'
+      # is_output_manual:
+      #   type: boolean
+      #   description: 'マニュアル出力'
+      #   default: 'false'
 env:
   # schedule用
-  PHP_VERSION_DEFAULT: '7.3'
-  IS_OUTPUT_MANUAL_DEFAULT: 'false'
+  PHP_VERSION_DEFAULT: '7.4'
+  # IS_OUTPUT_MANUAL_DEFAULT: 'false'
 
 jobs:
 
@@ -32,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # https://github.com/actions/checkout (official)
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
@@ -103,7 +104,7 @@ jobs:
       # https://help.github.com/en/actions/configuring-and-managing-workflows/caching-dependencies-to-speed-up-workflows
       # https://github.com/actions/cache (official)
       - name: Cache composer dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ env.composer-cache-dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -130,8 +131,26 @@ jobs:
         run: php artisan db:seed --force
 
       # Dusk test
-      - name: Upgrade Chrome Driver
-        run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
+      - name: Chrome Version
+        run: /opt/google/chrome/chrome --version
+
+      # https://readouble.com/laravel/8.x/ja/dusk.html#managing-chromedriver-installations
+      #- name: Upgrade Chrome Driver
+      #  run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
+
+      # https://stackoverflow.com/questions/76980975/chrome-driver-failing-in-laravel-dusk-failed-to-open-stream-http-request-fai
+      # https://voicetechno-jp.secure-web.jp/ChromeDriverV115orNewer.html
+      # https://github.com/browser-actions/setup-chrome (community)
+      - name: Downgrade Chrome browser to v114
+        uses: browser-actions/setup-chrome@latest
+        with:
+          chrome-version: 1134343 # Last commit number for Chrome v114
+
+      - name: Chrome bin-path Override
+        run: sudo ln -nfs `which chrome` /usr/bin/google-chrome
+
+      - name: Downgrade Chrome driver to v114
+        run: php artisan dusk:chrome-driver 114
 
       - name: Start Chrome Driver
         run: ./vendor/laravel/dusk/bin/chromedriver-linux &
@@ -444,10 +463,11 @@ jobs:
       #   if: always()
       #   run: php artisan dusk tests/Browser/Top/IndexTopTest.php
 
+      # --- スクリーンショット
       # https://github.com/actions/upload-artifact (official)
       - name: Upload Screenshots
         if: ${{ always() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: screenshots
           path: tests/Browser/screenshots
@@ -457,38 +477,40 @@ jobs:
       # ---------------------------------------------
 
       # Dusk Manual Output
-      - name: Set if input is_output_manual is empty
-        run: |
-          if [[ -z "$IS_OUTPUT_MANUAL" ]]; then
-            echo "IS_OUTPUT_MANUAL=$IS_OUTPUT_MANUAL_DEFAULT" >> $GITHUB_ENV
-          else
-            echo "IS_OUTPUT_MANUAL=$IS_OUTPUT_MANUAL" >> $GITHUB_ENV
-          fi
-        env:
-          IS_OUTPUT_MANUAL: ${{ github.event.inputs.is_output_manual }}
+      # - name: Set if input is_output_manual is empty
+      #   run: |
+      #     if [[ -z "$IS_OUTPUT_MANUAL" ]]; then
+      #       echo "IS_OUTPUT_MANUAL=$IS_OUTPUT_MANUAL_DEFAULT" >> $GITHUB_ENV
+      #     else
+      #       echo "IS_OUTPUT_MANUAL=$IS_OUTPUT_MANUAL" >> $GITHUB_ENV
+      #     fi
+      #   env:
+      #     IS_OUTPUT_MANUAL: ${{ github.event.inputs.is_output_manual }}
 
-      - name: 'Run Dusk マニュアルHTML出力'
-        if: ${{ env.IS_OUTPUT_MANUAL == 'true' }}
-        run: php artisan dusk tests/Manual/src/ManualOutput.php
+      # - name: 'Run Dusk マニュアルHTML出力'
+      #   if: ${{ env.IS_OUTPUT_MANUAL == 'true' }}
+      #   run: php artisan dusk tests/Manual/src/ManualOutput.php
 
-      - name: 'Run Dusk マニュアルPDF出力'
-        if: ${{ env.IS_OUTPUT_MANUAL == 'true' }}
-        run: php artisan dusk tests/Manual/src/ManualPdf.php contact_page=on
+      # - name: 'Run Dusk マニュアルPDF出力'
+      #   if: ${{ env.IS_OUTPUT_MANUAL == 'true' }}
+      #   run: php artisan dusk tests/Manual/src/ManualPdf.php contact_page=on
 
-      - name: 'Run Dusk マニュアルPDF（基礎編）出力'
-        if: ${{ env.IS_OUTPUT_MANUAL == 'true' }}
-        run: php artisan dusk tests/Manual/src/ManualPdf.php contact_page=on level=basic
+      # - name: 'Run Dusk マニュアルPDF（基礎編）出力'
+      #   if: ${{ env.IS_OUTPUT_MANUAL == 'true' }}
+      #   run: php artisan dusk tests/Manual/src/ManualPdf.php contact_page=on level=basic
 
-      - name: Upload Manual
-        if: ${{ env.IS_OUTPUT_MANUAL == 'true' && always() }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: manual
-          path: tests/Manual/html
+      # - name: Upload Manual
+      #   if: ${{ env.IS_OUTPUT_MANUAL == 'true' && always() }}
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: manual
+      #     path: tests/Manual/html
 
+      # --- ログ
       - name: Upload Logs
-        if: failure()
-        uses: actions/upload-artifact@v3
+        # if: failure()
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
         with:
           name: console_and_logs
           path: |

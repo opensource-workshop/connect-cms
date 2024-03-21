@@ -3,7 +3,9 @@
  *
  * @param obj $frames 表示すべきフレームの配列
  * @param obj $page 現在表示中のページ
- * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
 --}}
@@ -18,9 +20,15 @@ if ($frame->frame_title) {
     $canFrameHaederDisplayed = true;   // 表示
 }
 
+// 編集権限があるか
+$can_edit_frame = false;
+if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null,null,$frame]])) {
+    $can_edit_frame = true;
+}
+
 // フレームタイトルが無くても、権限あれば、フレームヘッダ表示する。
 //   - Gate::check()は、Auth::user()->can()と同等メソッド。 @see https://readouble.com/laravel/6.x/ja/authorization.html#authorizing-actions-via-gates
-if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null,null,$frame]])) {
+if ($can_edit_frame) {
     $canFrameHaederDisplayed = true;   // 表示
 }
 @endphp
@@ -46,58 +54,93 @@ if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null
     @endphp
 
     {{-- 認証していてフレームタイトルが空の場合は、パネルヘッダーの中央にアイコンを配置したいので、高さ指定する。 --}}
+    @php
+        // プラグインが編集可能であることを表すclass
+        $can_edit_frame_class = '';
+        if ($can_edit_frame) {
+            $can_edit_frame_class = 'can-edit-frame';
+        }
+    @endphp
+
     @if (Auth::check() && empty($frame->frame_title) && app('request')->input('mode') == 'preview')
         @php $class_header_bg = "bg-transparent"; @endphp
         <h1 class="card-header {{$class_header_bg}} border-0" style="padding-top: 0px;padding-bottom: 0px;">
     @elseif (Auth::check() && empty($frame->frame_title))
         @php $class_header_bg = "bg-transparent"; @endphp
-        <h1 class="card-header {{$class_header_bg}} border-0" style="padding-top: 0px;padding-bottom: 0px;">
+        <h1 class="card-header {{$class_header_bg}} border-0 {{$can_edit_frame_class}}" style="padding-top: 0px;padding-bottom: 0px;">
     @else
         @php $class_header_bg = "bg-{$frame->frame_design}"; @endphp
-        <h1 class="card-header {{$class_header_bg}} cc-{{$frame->frame_design}}-font-color">
+        <h1 class="card-header {{$class_header_bg}} cc-{{$frame->frame_design}}-font-color {{$can_edit_frame_class}}">
     @endif
 
     {{-- フレームタイトル --}}
     {{$frame->frame_title}}
-    @if (Auth::check() && $frame->default_hidden)
-        <small><span class="badge badge-warning">初期非表示</span></small>
+
+    {{-- 各ステータスラベルは、ログインしている＆プラグイン管理者＆プレビューモードではない状態の時のみ表示 --}}
+    @if (Auth::check() &&
+        Auth::user()->can('role_arrangement') &&
+        app('request')->input('mode') != 'preview')
+
+        @if ($frame->default_hidden)
+            <small><span class="badge badge-warning">初期非表示</span></small>
+        @endif
+
+        @if ($frame->none_hidden)
+            <small><span class="badge badge-warning">データがない場合は非表示</span></small>
+        @endif
+
+        @if ($frame->page_only == 1 && $page->id == $frame->page_id)
+            <small><span class="badge badge-warning">このページのみ表示する。</span></small>
+        @endif
+
+        @if ($frame->page_only == 2 && $page->id == $frame->page_id)
+            <small><span class="badge badge-warning">このページのみ表示しない。</span></small>
+        @endif
     @endif
 
-    @if (Auth::check() && $frame->none_hidden)
-        <small><span class="badge badge-warning">データがない場合は非表示</span></small>
-    @endif
+    {{-- 権限あり & 公開以外の場合にステータス表示 ※デフォルト状態の公開もステータス表示すると画面表示が煩雑になる為、意識的な設定（非公開、又は、限定公開）のみステータス表示を行う --}}
+    @can('frames.edit',[[null, null, null, $frame]])
+        @if ($frame->content_open_type != ContentOpenType::always_open)
+            <small>
+                <span class="badge badge-warning">
+                    <a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_setting/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}">
+                        <i class="fas fa-cog"></i>
+                    </a>
+                    {{ ContentOpenType::getDescription($frame->content_open_type) }}
+                    @if ($frame->content_open_type == ContentOpenType::limited_open)
+                        {{-- 期限付き公開の場合は日付も表示 --}}
+                        {{ '（' . Carbon::parse($frame->content_open_date_from)->format('Y/n/j H:i:s') . ' - ' . Carbon::parse($frame->content_open_date_to)->format('Y/n/j H:i:s') . '）' }}
+                    @endif
+                </span>
+            </small>
+        @endif
 
-    @if (Auth::check() && $frame->page_only == 1 && $page->id == $frame->page_id)
-        <small><span class="badge badge-warning">このページのみ表示する。</span></small>
-    @endif
+        @if ($frame->classname_body)
+            <script type="text/javascript">
+                $(function () {
+                    // ツールチップ有効化
+                    $('[data-toggle="tooltip"]').tooltip()
+                })
+            </script>
 
-    @if (Auth::check() && $frame->page_only == 2 && $page->id == $frame->page_id)
-        <small><span class="badge badge-warning">このページのみ表示しない。</span></small>
-    @endif
+            <small>
+                <span class="badge badge-warning">
+                    <a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_setting/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}">
+                        <i class="fas fa-cog"></i>
+                    </a>
+                    body class設定あり  <span class="fas fa-info-circle" data-toggle="tooltip" title="空表示の場合、例えばスマートフォンのみ表示する内容が隠れている場合がありますので、もしフレーム削除する場合はご注意ください。">
+                </span>
+            </small>
+        @endif
+    @endcan
 
-    {{-- 公開以外の場合にステータス表示 ※デフォルト状態の公開もステータス表示すると画面表示が煩雑になる為、意識的な設定（非公開、又は、限定公開）のみステータス表示を行う --}}
-    @if (Auth::check() && $frame->content_open_type != ContentOpenType::always_open)
-        <small>
-            <span class="badge badge-warning">
-                <a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_setting/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}">
-                    <i class="fas fa-cog"></i>
-                </a>
-                {{ ContentOpenType::getDescription($frame->content_open_type) }}
-                @if ($frame->content_open_type == ContentOpenType::limited_open)
-                    {{-- 期限付き公開の場合は日付も表示 --}}
-                    {{ '（' . Carbon::parse($frame->content_open_date_from)->format('Y/n/j H:i:s') . ' - ' . Carbon::parse($frame->content_open_date_to)->format('Y/n/j H:i:s') . '）' }}
-                @endif
-            </span>
-        </small>
-    @endif
     {{-- ログインしていて、権限があれば、編集機能を有効にする --}}
     {{--
     @if (Auth::check() &&
         (Auth::user()->can('role_arrangement')) &&
          app('request')->input('mode') != 'preview')
     --}}
-    @if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null,null,$frame]]) &&
-        app('request')->input('mode') != 'preview')
+    @if ($can_edit_frame && app('request')->input('mode') != 'preview')
 
         {{-- フレームを配置したページのみ、編集できるようにする。 --}}
 {{--
@@ -143,14 +186,6 @@ if (Gate::check(['role_frame_header', 'frames.move', 'frames.edit'], [[null,null
 
             {{-- 変更画面へのリンク --}}
             <a href="{{url('/')}}/plugin/{{$plugin_instances[$frame->frame_id]->frame->plugin_name}}/{{$plugin_instances[$frame->frame_id]->getFirstFrameEditAction()}}/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame->frame_id}}" title="{{$plugin_name_full}}設定"><small><i class="fas fa-cog {{$class_header_bg}} cc-font-color"></i></small></a>
-
-{{-- モーダル実装 --}}
-            {{-- 変更画面へのリンク --}}
-{{--
-            <a href="#" data-href="{{URL::to('/')}}/core/frame/edit/{{$page->id}}/{{ $frame->frame_id }}" data-toggle="modal" data-target="#modalDetails"><span class="glyphicon glyphicon-edit {{$class_header_bg}}"></a>
---}}
-
-            {{-- 削除。POSTのためのフォーム --}}
         </div>
 {{--
         @else

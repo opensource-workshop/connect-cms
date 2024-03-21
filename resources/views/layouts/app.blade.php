@@ -2,39 +2,25 @@
  * メニュー表示画面
  *
  * @param obj $pages ページデータの配列
+ *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category メニュープラグイン
 --}}
-{{-- ページ名 --}}
 <?php
+use App\Http\Controllers\Core\CookieCore;
+
     // URL から現在のURL パスを判定する。
     $current_url = url()->current();
     $base_url = url('/');
     $current_permanent_link = str_replace( $base_url, '', $current_url);
     $current_permanent_links = explode('/', $current_permanent_link);
-    // print_r($current_permanent_links);
     $is_manage_page = false;
     if (!empty($current_permanent_links) && count($current_permanent_links) > 1 && $current_permanent_links[1] == 'manage') {
         $is_manage_page = true;
     }
 
-/*
-    // トップページの判定
-    if (empty($current_permanent_link)) {
-        $current_permanent_link = "/";
-    }
-
-    // URL パスでPage テーブル検索
-    $current_page = \App\Page::where('permanent_link', '=', $current_permanent_link)->first();
-*/
-/*
-    // ページ一覧の取得
-    $class_name = "App\Page";
-    $page_obj = new $class_name;
-    //$menu_pages = $page_obj::orderBy('display_sequence')->get();
-    $menu_pages = $page_obj::defaultOrderWithDepth();
-*/
 if (! isset($cc_configs)) {
     // cc_configsは app\Http\Middleware\ConnectInit.php で処理しているため、基本ここには入らない。
     // .envのAPP_KEYに"xxxx"とダブルクォートで囲むと`php artisan key:generate`しても変換されない＋APP_DEBUG=falseで、cc_configsなしでここに到達する。
@@ -45,22 +31,12 @@ if (! isset($cc_configs)) {
 <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}">
 <head>
-{{--
-@if(isset($configs_array['tracking_code']))
-    {!!$configs_array['tracking_code']->value!!}
-@endif
---}}
 @if (Configs::getConfigsValue($cc_configs, 'tracking_code'))
     {!!Configs::getConfigsValue($cc_configs, 'tracking_code')!!}
 @endif
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-{{--
-@if(isset($configs_array['description']))
-    <meta name="description" content="{{$configs_array['description']->getNobrValue()}}">
-@endif
---}}
 @if (Configs::getConfigsValue($cc_configs, 'description'))
     <meta name="description" content="{{ StringUtils::getNobrValue(Configs::getConfigsValue($cc_configs, 'description')) }}">
 @endif
@@ -76,32 +52,32 @@ if (! isset($cc_configs)) {
     <title>@if(isset($page)){{$page->page_name}} | @endif{{ Configs::getConfigsValue($cc_configs, 'base_site_name', config('app.name', 'Connect-CMS')) }}</title>
 
     <!-- Styles -->
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <link href="{{ url('/') }}{{ mix('css/app.css') }}" rel="stylesheet">
 
     <!-- Fonts -->
     <link href="{{asset('fontawesome/css/all.min.css')}}" rel='stylesheet' type='text/css'>
 
     <!-- Scripts -->
-    <script src="{{asset('js/app.js')}}"></script>
+    <script src="{{ url('/') }}{{ mix('/js/app.js') }}"></script>
 @if( App::environment(['local', 'staging']) )
     <script>Vue.config.devtools = true;</script>
 @endif
 
     <!-- tempusdominus-bootstrap-4 -->
     <link rel="stylesheet" href="{{asset('css/tempusdominus-bootstrap-4/tempusdominus-bootstrap-4.min.css')}}" />
-    {{--
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/locale/ja.js"></script>
-    --}}
-    <script src="{{asset('js/moment.js/moment.min.js')}}"></script>
-    <script src="{{asset('js/moment.js/locale/ja.js')}}"></script>
-    {{--
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.1.2/js/tempusdominus-bootstrap-4.min.js"></script>
-    --}}
-    <script src="{{asset('js/tempusdominus-bootstrap-4/tempusdominus-bootstrap-4.min.js')}}"></script>
 
     <!-- Connect-CMS Global CSS -->
     <link href="{{ asset('css/connect.css') }}?version={{ filemtime(public_path() . "/css/connect.css") }}" rel="stylesheet">
+
+    <!-- Connect-CMS Option Plugin's CSS -->
+    @php
+        $option_css_path = public_path('css/option');
+        $option_csses = glob($option_css_path . '/*.css');
+    @endphp
+    @foreach ($option_csses as $css)
+        @php $file = new SplFileInfo($css);@endphp
+        <link href="{{ asset('css/option/' . $file->getFilename()) }}?version={{ $file->getMTime() }}" rel="stylesheet">
+    @endforeach
 
     <!-- Themes CSS（基本） -->
 @if (isset($themes['css']) && $themes['css'] != '' && file_exists(public_path() . "/themes/{$themes['css']}/themes.css"))
@@ -143,62 +119,23 @@ if (! isset($cc_configs)) {
     </script>
 
     <!-- Favicon -->
-    {{--  @if (isset($configs_array) && isset($configs_array['favicon'])) --}}
     @if (Configs::getConfigsValue($cc_configs, 'favicon'))
         <link href="{{url('/')}}/uploads/favicon/favicon.ico" rel="SHORTCUT ICON" />
-    @endif
-
-    <!-- Polyfill -->
-    {{-- ※IEが公式に消えたら（2022年6月16日）消したい。 --}}
-    @php
-        $is_exist_plugin = false;
-        if (isset($plugin_instances)) {
-            foreach ($plugin_instances as $plugin_instance){
-                if ($plugin_instance instanceof \App\Plugins\User\Whatsnews\WhatsnewsPlugin){
-                    $is_exist_plugin = true;
-                } elseif ($plugin_instance instanceof \App\Plugins\User\Blogs\BlogsPlugin) {
-                    $is_exist_plugin = true;
-                }
-            }
-        }
-    @endphp
-    @if ($is_exist_plugin)
-        {{-- IEで発生する「Promiseは定義されていません。」エラー回避＠新着プラグインの非同期処理 --}}
-        <script>window.Promise || document.write('<script src="//www.promisejs.org/polyfills/promise-7.0.4.min.js"><\/script>');</script>
     @endif
 </head>
 @php
 // body任意クラスを抽出（カンマ設定時はランダムで１つ設定）
-// $body_optional_class = null;
-// if (isset($configs_array['body_optional_class'])) {
-//     $classes = explode(',', $configs_array['body_optional_class']->value);
-//     $body_optional_class = $classes[array_rand($classes)];
-// }
 $body_optional_class = Configs::getConfigsRandValue($cc_configs, 'body_optional_class');
 
 // ヘッダーバーnavの文字色クラス
 // change: 管理画面ではviewに共通的に変数をセットする仕組みがあったため、管理画面・一般画面どちらも表示するためにここで再度Configsをgetした(苦肉の策)を、共通の$cc_configsを参照するよう見直し
-//$base_header_font_color_class = Configs::getConfigsValue($configs, 'base_header_font_color_class', BaseHeaderFontColorClass::navbar_dark);
-// if (isset($configs) && isset($configs['base_header_font_color_class'])) {
-//     $base_header_font_color_class = $configs['base_header_font_color_class'];
-// } else {
-//     $base_header_font_color_class = BaseHeaderFontColorClass::navbar_dark;
-// }
-// $config_basic_header = Configs::where('category', 'general')->get();
 $base_header_font_color_class = Configs::getConfigsValue($cc_configs, 'base_header_font_color_class', BaseHeaderFontColorClass::navbar_dark);
 
 // ヘッダーバー任意クラスを抽出（カンマ設定時はランダムで１つ設定）
-// $base_header_optional_class = Configs::getConfigsValue($cc_configs, 'base_header_optional_class', null);
-// $base_header_classes = explode(',', $base_header_optional_class);
-// $base_header_optional_class = $base_header_classes[array_rand($base_header_classes)];
 $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_header_optional_class');
 
 @endphp
 <body class="@if(isset($page)){{$page->getPermanentlinkClassname()}}@endif {{ $body_optional_class }}">
-{{--
-@if (Auth::check() || (isset($configs) && isset($configs['base_header_hidden']) && ($configs['base_header_hidden'] != '1')))
-<nav class="navbar navbar-expand-md bg-dark {{$base_header_font_color_class}} @if (isset($configs) && ($configs['base_header_fix'] == '1')) sticky-top @endif {{ $base_header_optional_class }}" aria-label="ヘッダー">
---}}
 @if (Auth::check() || Configs::getConfigsValue($cc_configs, 'base_header_hidden') != '1')
 <nav class="navbar navbar-expand-md bg-dark {{$base_header_font_color_class}} @if (Configs::getConfigsValue($cc_configs, 'base_header_fix') == '1') sticky-top @endif {{ $base_header_optional_class }}" aria-label="ヘッダー">
     <!-- Branding Image -->
@@ -222,17 +159,9 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                 @foreach($page_list as $page_obj)
 
                     {{-- スマホメニューテンプレート(default) --}}
-                    {{--
-                    @if (isset($configs) &&
-                            (!isset($configs['smartphone_menu_template']) ||
-                                (isset($configs['smartphone_menu_template']) && ($configs['smartphone_menu_template'] == ''))
-                            )
-                        )
-                    --}}
                     @if (Configs::getConfigsValue($cc_configs, 'smartphone_menu_template', '') == '')
                         {{-- default メニュー --}}
                         @include('layouts.default_menu')
-                    {{-- @elseif (isset($configs) && isset($configs['smartphone_menu_template']) && ($configs['smartphone_menu_template'] == 'opencurrenttree')) --}}
                     @elseif (Configs::getConfigsValue($cc_configs, 'smartphone_menu_template') == 'opencurrenttree')
                         {{-- opencurrenttree メニュー --}}
                         @include('layouts.opencurrenttree_menu')
@@ -266,9 +195,17 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                                 @if (Auth::user()->can('role_arrangement'))
                                     @if (isset($page_list))
                                         @if (app('request')->input('mode') == 'preview')
-                                            <a href="{{ url()->current() }}" class="dropdown-item">プレビュー終了</a>
+                                            @isset ($page)
+                                                <a href="{{ url($page->permanent_link) }}" class="dropdown-item">プレビュー終了</a>
+                                            @else
+                                                <a href="{{ url()->current() }}" class="dropdown-item">プレビュー終了</a>
+                                            @endisset
                                         @else
-                                            <a href="{{ url()->current() }}/?mode=preview" class="dropdown-item">プレビューモード</a>
+                                            @isset ($page)
+                                                <a href="{{ url($page->permanent_link) }}?mode=preview" class="dropdown-item">プレビューモード</a>
+                                            @else
+                                                <a href="{{ url()->current() }}/?mode=preview" class="dropdown-item">プレビューモード</a>
+                                            @endisset
                                         @endif
                                         @if (Auth::user()->can('role_manage_on') && isset($page_list))
                                             <div class="dropdown-divider"></div>
@@ -286,14 +223,22 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                             @endif
                         </div>
                     @else
-                        <a class="nav-link" href="{{ url('/') }}">コンテンツ画面へ</a>
+                        <a class="nav-link" href="{{ url('/') }}">トップページへ</a>
                     @endif
                 </li>
             {{-- /管理メニュー表示判定（管理機能 or コンテンツ権限に付与がある場合）--}}
+            @else
+                {{-- マイページのトップページへ対応（管理機能 or コンテンツ権限 なしもあり） --}}
+                <li class="nav-item dropdown">
+                    {{-- ページリストがある場合は、コンテンツ画面 --}}
+                    @if (isset($page_list) && !$is_manage_page)
+                    @else
+                        <a class="nav-link" href="{{ url('/') }}">トップページへ</a>
+                    @endif
+                </li>
             @endif
 
             @guest
-                {{-- @if (isset($configs['base_header_login_link']) && ($configs['base_header_login_link'] == '1')) --}}
                 @if (Configs::getConfigsValue($cc_configs, 'base_header_login_link') == '1')
                     @php
                         // 外部認証設定 取得
@@ -306,8 +251,12 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                         <li><a class="nav-link" href="{{ route('show_login_form') }}">{{config('connect.LOGIN_STR')}}</a></li>
                     @endif
                 @endif
-                {{-- @if (isset($configs['user_register_enable']) && ($configs['user_register_enable'] == '1')) --}}
-                @if (Configs::getConfigsValue($cc_configs, 'user_register_enable') == '1')
+                @php
+                    $user_register_enables = $cc_configs->where('category', 'user_register')
+                        ->where('name', 'user_register_enable')
+                        ->where('value', '1');
+                @endphp
+                @if ($user_register_enables->isNotEmpty())
                     <li><a class="nav-link" href="{{ route('show_register_form') }}">ユーザ登録</a></li>
                 @endif
             @else
@@ -399,26 +348,19 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
     {{-- 初回確認メッセージの表示モーダル --}}
     @php
         // Configsテーブルから設定値を取得
-        // $message_first_show_type = isset($configs_array['message_first_show_type']) ? $configs_array['message_first_show_type']->value : 0;
-        // $message_first_permission_type = isset($configs_array['message_first_permission_type']) ? $configs_array['message_first_permission_type']->value : 0;
-        // $message_first_exclued_urls = isset($configs_array['message_first_exclued_url']) ? explode(',' ,$configs_array['message_first_exclued_url']->value) : array();
-        // $message_first_optional_class = isset($configs_array['message_first_optional_class']) ? $configs_array['message_first_optional_class']->value : '';
         $message_first_show_type = Configs::getConfigsValue($cc_configs, 'message_first_show_type', 0);
         $message_first_permission_type = Configs::getConfigsValue($cc_configs, 'message_first_permission_type', 0);
         $message_first_exclued_urls = explode(',', Configs::getConfigsValue($cc_configs, 'message_first_exclued_url', ''));
         $message_first_optional_class = Configs::getConfigsValue($cc_configs, 'message_first_optional_class', '');
-        // dd($message_first_show_type, $message_first_permission_type, $message_first_exclued_urls, $message_first_optional_class, !in_array($page->permanent_link ,$message_first_exclued_urls), Cookie::get('connect_cookie_message_first'));
     @endphp
-    {{-- 管理画面で設定ON、且つ、本ページが初回確認メッセージ表示の除外URL以外、且つ、同意していない（Cookie未セット）場合にメッセージ表示 --}}
-    @if($message_first_show_type == ShowType::show && isset($page) && !in_array($page->permanent_link ,$message_first_exclued_urls) && Cookie::get('connect_cookie_message_first') != 'agreed')
-
+    {{-- 管理画面で設定ON、且つ、本ページが初回確認メッセージ表示の除外URL以外、且つ、（Cookie未セット or Cookieありで初回メッセージの更新日より古い）場合にメッセージ表示 --}}
+    @if ($message_first_show_type == ShowType::show && isset($page) && !in_array($page->permanent_link ,$message_first_exclued_urls) && (!Cookie::has('connect_cookie_message_first') || Cookie::get('connect_cookie_message_first') < CookieCore::getCookieForMessageTimestamp()))
         <!-- 初回確認メッセージ表示用のモーダルウィンドウ -->
         <div class="modal {{ $message_first_optional_class }}" id="first_message_modal" tabindex="-1" role="dialog" aria-labelledby="first_message_modal_label" aria-hidden="true" data-backdrop="{{ $message_first_permission_type == PermissionType::not_allowed ? 'static' : 'true' }}">
             <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
                 <div class="modal-content">
                     <div class="modal-body">
                         {{-- メッセージ内容 --}}
-                        {{-- $configs_array['message_first_content']->value --}}
                         {!! Configs::getConfigsValue($cc_configs, 'message_first_content') !!}
                     </div>
                     <div class="modal-footer">
@@ -427,7 +369,6 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
 
                             {{-- ボタン --}}
                             <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="submit_form_set_cookie();">
-                                {{-- $configs_array['message_first_button_name']->value --}}
                                 {{ Configs::getConfigsValue($cc_configs, 'message_first_button_name') }}
                             </button>
                         </form>

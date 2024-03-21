@@ -17,16 +17,16 @@
     </tr>
     <tr nobr="true">
         <td>初期に選択させるサムネイルの大きさ</td>
-        <td>{{$configs->firstWhere('name', 'width_of_pdf_thumbnails_initial')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'width_of_pdf_thumbnails_initial', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>初期に選択させるサムネイルの数</td>
-        <td>{{$configs->firstWhere('name', 'number_of_pdf_thumbnails_initial')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'number_of_pdf_thumbnails_initial', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>サムネイルのリンク</td>
-        @if ($configs->firstWhere('name', 'link_of_pdf_thumbnails')->value == 'pdf') <td>PDFを開く</td>
-        @elseif ($configs->firstWhere('name', 'link_of_pdf_thumbnails')->value == 'image') <td>画像を開く</td>
+        @if (Configs::getConfigsValue($configs, 'link_of_pdf_thumbnails', null) == 'pdf') <td>PDFを開く</td>
+        @elseif (Configs::getConfigsValue($configs, 'link_of_pdf_thumbnails', null) == 'image') <td>画像を開く</td>
         @else <td>使用しない</td> @endif
     </tr>
 </table>

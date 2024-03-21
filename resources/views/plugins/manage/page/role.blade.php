@@ -42,13 +42,11 @@
                     <a class="collapsed text-body d-block p-3 m-n3 text-decoration-none" data-toggle="collapse" href="#collapse{{$group->id}}" role="button" aria-expanded="false" aria-controls="collapse{{$group->id}}">
                     @endif
                         {{$group->name}}：
-                        @if(empty($group->getRoleNames()))
-                            <span class="badge badge-secondary">権限なし</span>
-                        @else
-                        @foreach($group->getRoleNames() as $role_name)
+                        @forelse($group->getRoleNames() as $role_name)
                             <span class="badge badge-primary">{{$role_name}}</span>
-                        @endforeach
-                        @endif
+                        @empty
+                            <span class="badge badge-secondary">権限なし</span>
+                        @endforelse
                     </a>
                 </div><!-- /.card-header -->
                 @if($group->id == $group_id)

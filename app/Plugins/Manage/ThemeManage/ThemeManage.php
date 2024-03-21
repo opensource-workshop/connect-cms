@@ -32,6 +32,8 @@ class ThemeManage extends ManagePluginBase
         $role_ckeck_table["create"]      = array('admin_site');
         $role_ckeck_table["editCss"]     = array('admin_site');
         $role_ckeck_table["saveCss"]     = array('admin_site');
+        $role_ckeck_table["editTemplate"] = array('admin_site');
+        $role_ckeck_table["saveTemplate"] = array('admin_site');
         $role_ckeck_table["editJs"]      = array('admin_site');
         $role_ckeck_table["saveJs"]      = array('admin_site');
         $role_ckeck_table["editName"]    = array('admin_site');
@@ -40,7 +42,7 @@ class ThemeManage extends ManagePluginBase
         $role_ckeck_table["uploadImage"] = array('admin_site');
         $role_ckeck_table["deleteImage"] = array('admin_site');
         $role_ckeck_table["deleteTheme"] = array('admin_site');
-        $role_ckeck_table["generateIndex"]    = array('admin_site');
+        $role_ckeck_table["generateIndex"] = array('admin_site');
         $role_ckeck_table["generate"]    = array('admin_site');
         return $role_ckeck_table;
     }
@@ -308,7 +310,7 @@ class ThemeManage extends ManagePluginBase
         }
 
         // ディレクトリの存在チェック
-        if (File::isDirectory(public_path() . '/themes/Users/' . $request->dir_name)) {
+        if (File::isDirectory(public_path() . '/themes/Users/' . basename($request->dir_name))) {
             $validator->errors()->add('dir_name', 'このディレクトリは存在します。');
             return $this->index($request, $id, $validator->errors());
         }
@@ -381,6 +383,74 @@ class ThemeManage extends ManagePluginBase
             "plugin_name" => "theme",
             "dir_name"    => $dir_name,
             "css"         => $css,
+        ]);
+    }
+
+    /**
+     * テンプレート編集画面
+     *
+     * @method_title テンプレート編集
+     * @method_desc ユーザ・テーマ毎のテンプレートを画面で編集できます。
+     * @method_detail 保存したテンプレートは選択したテーマで反映されます。
+     */
+    public function editTemplate($request, $id)
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        // ディレクトリ名
+        $dir_name = basename($request->dir_name);
+
+        // ディレクトリの存在チェック
+        if (!File::isDirectory(public_path() . '/themes/Users/' . basename($request->dir_name) . '/wysiwyg')) {
+            $result = File::makeDirectory(public_path() . '/themes/Users/' . basename($request->dir_name) . '/wysiwyg', 0775);
+        }
+
+        // ファイル名
+        $template_path = public_path() . '/themes/Users/' . $dir_name . '/wysiwyg/templates.txt';
+
+        // ファイルを存在チェックし、なければ空で作成する。
+        if (!File::exists($template_path)) {
+            $result = File::put($template_path, '');
+        }
+
+        // テンプレートファイル取得
+        $template = File::get($template_path);
+
+        return view('plugins.manage.theme.theme_template_edit', [
+            "function"    => __FUNCTION__,
+            "plugin_name" => "theme",
+            "dir_name"    => $dir_name,
+            "template"         => $template,
+        ]);
+    }
+
+    /**
+     * テンプレート保存画面
+     */
+    public function saveTemplate($request, $id)
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        // ディレクトリ名
+        $dir_name = basename($request->dir_name);
+
+        // テンプレート
+        $template = $request->template;
+
+        // template.txt ファイルの保存
+        $result = File::put(public_path() . '/themes/Users/' . $dir_name . '/wysiwyg/templates.txt', $template);
+
+        return view('plugins.manage.theme.theme_template_edit', [
+            "function"    => __FUNCTION__,
+            "plugin_name" => "theme",
+            "dir_name"    => $dir_name,
+            "template"         => $template,
         ]);
     }
 

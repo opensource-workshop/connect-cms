@@ -2,14 +2,24 @@
  * フォトアルバム画面テンプレート（画像・動画）
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォトアルバム・プラグイン
 --}}
 {{-- データ一覧に画像が含まれる場合 --}}
 @if ($photoalbum_contents->where('is_folder', 0)->isNotEmpty())
+@php
+if ($frame->isExpandNarrow()) {
+    // 右・左エリア = スマホ表示と同等にする
+    $col_class = 'col-12';
+} else {
+    // メインエリア・フッターエリア
+    $col_class = 'col-md-4';
+}
+@endphp
 <div class="row">
     @foreach($photoalbum_contents->where('is_folder', 0) as $photoalbum_content)
-    <div class="col-md-4">
+    <div class="{{$col_class}}">
         <div class="card mt-3 shadow-sm">
         @if ($photoalbum_content->upload->is_image)
             <img src="{{url('/')}}/file/{{$photoalbum_content->upload_id}}?size=small"

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 use App\Models\Common\Group;
 use App\UserableNohistory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class GroupUser extends Model
 {
@@ -15,6 +16,7 @@ class GroupUser extends Model
 
     // 保存時のユーザー関連データの保持（履歴なしUserable）
     use UserableNohistory;
+    use HasFactory;
 
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト

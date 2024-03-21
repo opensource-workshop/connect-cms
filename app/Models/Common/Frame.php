@@ -35,6 +35,7 @@ class Frame extends Model
         'page_only',
         'default_hidden',
         'classname',
+        'classname_body',
         'none_hidden',
         'bucket_id',
         'display_sequence',
@@ -229,27 +230,69 @@ class Frame extends Model
 
     /**
      * 非公開・限定公開フレームが非表示か
+     * ※この関数を修正する場合、scopeVisible()も修正すべきか確認してください。
      */
     public function isInvisiblePrivateFrame()
     {
-        // 非ログインまたはフレーム編集権限を持たない、且つ、非表示条件（非公開、又は、限定公開）にマッチした場合はフレームを非表示にする
+        // 非ログインまたはフレーム編集権限を持たない、且つ、非表示条件（非公開、又は、限定公開、又は、ログイン後非表示、又は、ログイン後表示（未ログインで非表示））にマッチした場合はフレームを非表示にする
 
-        if (
-            // !Auth::check() &&
-            (!Auth::check() || !Auth::user()->can('role_arrangement')) &&
-            (
-                $this->content_open_type == ContentOpenType::always_close ||
-                (
-                    $this->content_open_type == ContentOpenType::limited_open &&
-                    !Carbon::now()->between($this->content_open_date_from, $this->content_open_date_to)
-                )
-            )
-        ) {
+        if (Auth::check() && Auth::user()->can('role_arrangement') && app('request')->input('mode') != 'preview') {
+            // 表示
+            return false;
+        }
+
+        if ($this->content_open_type == ContentOpenType::always_close) {
+            // 非表示
+            return true;
+
+        } elseif ($this->content_open_type == ContentOpenType::limited_open &&
+            !Carbon::now()->between($this->content_open_date_from, $this->content_open_date_to)) {
+            // 非表示
+            return true;
+
+        } elseif ($this->content_open_type == ContentOpenType::login_close && Auth::check()) {
+            // 非表示
+            return true;
+
+        } elseif ($this->content_open_type == ContentOpenType::login_open && !Auth::check()) {
             // 非表示
             return true;
         }
 
         // 表示
         return false;
+    }
+
+    /**
+     * 利用者が見れるフレームか
+     * ※この関数を修正する場合、isInvisiblePrivateFrame()も修正すべきか確認してください。
+     * ※Frame::visible() 等で呼ばれる
+     */
+    public function scopeVisible($query)
+    {
+        // ログイン状態かつ、管理権限があればすべてフレームを見られる
+        if (Auth::check() && Auth::user()->can('role_arrangement')) {
+            return $query;
+        }
+
+        return $query->where('content_open_type', ContentOpenType::always_open)
+            ->orWhere(function ($query) {
+                $query->where('content_open_type', ContentOpenType::limited_open)
+                    ->whereDate('content_open_date_from', '<=', Carbon::now())
+                    ->whereDate('content_open_date_to', '>=', Carbon::now());
+            })
+            ->orWhere(function ($query) {
+                $auth_check = Auth::check() ? 'true' : 'false';
+                $query->where('content_open_type', ContentOpenType::login_close)
+                    ->whereRaw("FALSE = $auth_check");
+            });
+    }
+
+    /**
+     * フレームに関連しているページの取得
+     */
+    public function page()
+    {
+        return $this->hasOne(Page::class, 'id', 'page_id');
     }
 }

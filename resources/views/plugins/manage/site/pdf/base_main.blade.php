@@ -24,71 +24,71 @@
     </tr>
     <tr nobr="true">
         <td>サイト名</td>
-        <td>{{$configs->firstWhere('name', 'base_site_name')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'base_site_name', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>基本テーマ</td>
-        <td>{{$configs->firstWhere('name', 'base_theme')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'base_theme', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>追加テーマ</td>
-        <td>{{$configs->firstWhere('name', 'additional_theme')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'additional_theme', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>背景色</td>
-        <td>{{$configs->firstWhere('name', 'base_background_color')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'base_background_color', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>ヘッダーバーの背景色</td>
-        <td>{{$configs->firstWhere('name', 'base_header_color')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'base_header_color', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>ヘッダーバーの文字色</td>
-        <td>{{$configs->firstWhere('name', 'base_header_font_color_class')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'base_header_font_color_class', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>ヘッダーバーの任意クラス</td>
-        <td>{{$configs->firstWhere('name', 'base_header_optional_class')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'base_header_optional_class', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>センターエリア任意クラス</td>
-        <td>{{$configs->firstWhere('name', 'center_area_optional_class')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'center_area_optional_class', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>bodyタグ任意クラス</td>
-        <td>{{$configs->firstWhere('name', 'body_optional_class')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'body_optional_class', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>フッターエリア任意クラス</td>
-        <td>{{$configs->firstWhere('name', 'footer_area_optional_class')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'footer_area_optional_class', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>ヘッダーバーの表示</td>
-        @if ($configs->firstWhere('name', 'base_header_hidden')->value == '1') <td>表示しない</td> @else <td>表示する</td> @endif
+        @if (Configs::getConfigsValue($configs, 'base_header_hidden', null) == '1') <td>表示しない</td> @else <td>表示する</td> @endif
     </tr>
     <tr nobr="true">
         <td>ヘッダーバーの固定</td>
-        @if ($configs->firstWhere('name', 'base_header_fix')->value == '1') <td>固定する</td> @else <td>固定しない</td> @endif
+        @if (Configs::getConfigsValue($configs, 'base_header_fix', null) == '1') <td>固定する</td> @else <td>固定しない</td> @endif
     </tr>
     <tr nobr="true">
         <td>ログインリンクの表示</td>
-        @if ($configs->firstWhere('name', 'base_header_login_link')->value == '1') <td>表示する</td> @else <td>表示しない</td> @endif
+        @if (Configs::getConfigsValue($configs, 'base_header_login_link', null) == '1') <td>表示する</td> @else <td>表示しない</td> @endif
     </tr>
     <tr nobr="true">
         <td>パスワードリセットの使用</td>
-        @if ($configs->firstWhere('name', 'base_login_password_reset')->value == '1') <td>許可する</td> @else <td>許可しない</td> @endif
+        @if (Configs::getConfigsValue($configs, 'base_login_password_reset', null) == '1') <td>許可する</td> @else <td>許可しない</td> @endif
     </tr>
     <tr nobr="true">
         <td>ログイン後に移動するページ</td>
-        @if ($configs->firstWhere('name', 'base_login_redirect_previous_page')->value == '1') <td>元いたページ</td> @elseif ($configs->firstWhere('name', 'base_login_redirect_previous_page')->value == '2') <td>指定したページ</td> @else <td>トップページ</td> @endif
+        @if (Configs::getConfigsValue($configs, 'base_login_redirect_previous_page', null) == '1') <td>元いたページ</td> @elseif (Configs::getConfigsValue($configs, 'base_login_redirect_previous_page', null) == '2') <td>指定したページ</td> @else <td>トップページ</td> @endif
     </tr>
     <tr nobr="true">
         <td>ログイン後に移動する指定ページ</td>
-        <td>{{$configs->firstWhere('name', 'base_login_redirect_select_page')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'base_login_redirect_select_page', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>マイページの使用</td>
-        @if ($configs->firstWhere('name', 'use_mypage')->value == '1') <td>許可する</td> @else <td>許可しない</td> @endif
+        @if (Configs::getConfigsValue($configs, 'use_mypage', null) == '1') <td>許可する</td> @else <td>許可しない</td> @endif
     </tr>
     <tr nobr="true">
         <td>画像の保存機能の無効化</td>
@@ -108,6 +108,6 @@
     </tr>
     <tr nobr="true">
         <td>スマホメニューのフォーマット</td>
-        <td>{{$configs->firstWhere('name', 'smartphone_menu_template')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'smartphone_menu_template', null)}}</td>
     </tr>
 </table>

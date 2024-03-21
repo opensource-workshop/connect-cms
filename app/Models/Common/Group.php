@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 use App\Models\Common\GroupUser;
 use App\UserableNohistory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Group extends Model
 {
@@ -15,6 +16,7 @@ class Group extends Model
 
     // 保存時のユーザー関連データの保持（履歴なしUserable）
     use UserableNohistory;
+    use HasFactory;
 
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
@@ -62,11 +64,11 @@ class Group extends Model
     /**
      * 特定のページが指定されたときのグループに対するRole 名の取得
      */
-    public function getRoleNames()
+    public function getRoleNames(): array
     {
         // Role 設定がない場合
         if (empty($this->page_roles) || $this->page_roles->count() == 0) {
-            return null;
+            return [];
         }
 
         // 保持しているRole 名
@@ -86,7 +88,7 @@ class Group extends Model
 
         // 空の場合
         if (empty($role_names)) {
-            return null;
+            return [];
         }
 
         return $role_names;

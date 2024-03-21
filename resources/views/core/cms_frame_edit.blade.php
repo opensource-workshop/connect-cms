@@ -4,6 +4,7 @@
  * @param obj $frames 表示すべきフレームの配列
  * @param obj $page 現在表示中のページ
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
 --}}
@@ -160,6 +161,28 @@
             </div>
         </div>
 
+        @php
+            if ($frame->isExpandNarrow()) {
+                // 右・左エリア = スマホ表示と同等にする
+                $date_col_class = 'col-12';
+                $text_muted_col_class = 'col-12';
+            } else {
+                // メインエリア・フッターエリア
+                $date_col_class = 'col-md-9';
+                $text_muted_col_class = 'offset-md-3 col-md-9';
+            }
+        @endphp
+
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass()}}">body class名</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <input type="text" name="classname_body" class="form-control" value="{{$frame->classname_body}}">
+            </div>
+            <small class="{{$text_muted_col_class}} text-muted">
+                ※ フレーム内bodyにclassを設定できます。例えばスマートフォンのみ表示のclass（<code>d-block d-md-none</code>）を設定しても、フレームヘッダーは消えずフレーム設定が可能です。
+            </small>
+        </div>
+
         {{-- フレーム表示設定 --}}
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass()}} py-sm-0">フレーム表示設定</label>
@@ -195,8 +218,8 @@
         <div id="app_{{ $frame->id }}">
             {{-- コンテンツ公開区分 --}}
             <div class="form-group row">
-                <label class="{{$frame->getSettingLabelClass(true)}}">公開設定</label>
-                <div class="{{$frame->getSettingInputClass(true)}}">
+                <label class="{{$frame->getSettingLabelClass()}} pt-0">公開設定</label>
+                <div class="{{$frame->getSettingInputClass()}}">
                     @foreach (ContentOpenType::enum as $key => $value)
                         <div class="custom-control custom-radio custom-control-inline">
                             <input
@@ -215,10 +238,11 @@
                     @endforeach
                 </div>
             </div>
+
             {{-- 公開日時From --}}
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass(true)}}">公開日時From</label>
-                <div class="col-md-9 input-group date" id="content_open_date_from" data-target-input="nearest">
+                <div class="{{$date_col_class}} input-group date" id="content_open_date_from" data-target-input="nearest">
                     <input
                         type="text"
                         name="content_open_date_from"
@@ -232,7 +256,7 @@
                         <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
-                <small class="offset-md-3 col-md-9 text-muted">
+                <small class="{{$text_muted_col_class}} text-muted">
                     ※右のボタンからカレンダー入力も可能です。
                 </small>
                 @if ($errors && $errors->has('content_open_date_from'))
@@ -246,7 +270,7 @@
             {{-- 公開日時To --}}
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass(true)}}">公開日時To</label>
-                <div class="col-md-9 input-group date" id="content_open_date_to" data-target-input="nearest">
+                <div class="{{$date_col_class}} input-group date" id="content_open_date_to" data-target-input="nearest">
                     <input
                         type="text"
                         name="content_open_date_to"
@@ -260,7 +284,7 @@
                         <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
-                <small class="offset-md-3 col-md-9 text-muted">
+                <small class="{{$text_muted_col_class}} text-muted">
                     ※右のボタンからカレンダー入力も可能です。
                 </small>
                 @if ($errors && $errors->has('content_open_date_to'))

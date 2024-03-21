@@ -3,7 +3,6 @@
 namespace App\Plugins\User\Counters;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 
@@ -17,6 +16,7 @@ use App\Plugins\User\UserPluginBase;
 use App\Enums\CounterDesignType;
 use App\Enums\CsvCharacterCode;
 use App\Utilities\Csv\CsvUtils;
+use App\Utilities\Request\RequestUtils;
 
 /**
  * カウンター・プラグイン
@@ -61,16 +61,6 @@ class CountersPlugin extends UserPluginBase
         $role_check_table["listCounters"] = ['frames.edit'];
 
         return $role_check_table;
-    }
-
-    /**
-     * 編集画面の最初のタブ（コアから呼び出す）
-     *
-     * スーパークラスをオーバーライド
-     */
-    public function getFirstFrameEditAction()
-    {
-        return "editBuckets";
     }
 
     /* private関数 */
@@ -139,60 +129,7 @@ class CountersPlugin extends UserPluginBase
                 $today_count = CounterCount::getCountOrCreate($counter->id);
 
                 // botチェック
-                $is_bot = false;
-                $ua = $request->header('User-Agent');
-                $bots = [
-                    'bot',
-                    'spider',
-                    'crawler',
-                    'Linguee',
-                    'proximic',
-                    'GrapeshotCrawler',
-                    'Mappy',
-                    'MegaIndex',
-                    'ltx71',
-                    'integralads',
-                    'Yandex',
-                    'Y!',               // Yahoo!JAPAN
-                    'Slurp',            // yahoo
-                    'ichiro',           // goo
-                    'goo_vsearch',      // goo
-                    'gooblogsearch',    // goo
-                    'netEstate',
-                    'Yeti',             // Naver
-                    'Daum',
-                    'Seekport',
-                    'Qwantify',
-                    'GoogleImageProxy', // google
-                    'QQBrowser',
-                    'ManicTime',
-                    'Hatena',
-                    'PocketImageCache',
-                    'Feedly',
-                    'Tiny Tiny RSS',
-                    'Barkrowler',
-                    'SISTRIX Crawler',
-                    'woorankreview',
-                    'MegaIndex',
-                    'Megalodon',
-                    'Steeler',
-                    'dataxu',
-                    'ias-sg',
-                    'go-resty',
-                    'python-requests',
-                    'meg',
-                    'Scrapy',
-                ];
-
-                foreach ($bots as $bot) {
-                    // 大文字小文字を区別せず ユーザーエージェントに bot が含まれているかチェック
-                    if (strpos($ua, $bot) !== false) {
-                        // bot
-                        $is_bot = true;
-                    }
-                }
-
-                if (! $is_bot) {
+                if (!RequestUtils::isBot($request)) {
                     // セッションを利用
                     // セッション保持期間はデフォルト2時間（config/session.phpの'lifetime'参照）
                     $counter_histories = session('counter_histories', '');
@@ -528,26 +465,7 @@ class CountersPlugin extends UserPluginBase
         ];
 
         // データ
-        $csv_data = '';
-        foreach ($csv_array as $csv_line) {
-            foreach ($csv_line as $csv_col) {
-                $csv_data .= '"' . $csv_col . '",';
-            }
-            // 末尾カンマを削除
-            $csv_data = substr($csv_data, 0, -1);
-            $csv_data .= "\n";
-        }
-
-        // Log::debug(var_export($request->character_code, true));
-
-        // 文字コード変換
-        if ($request->character_code == CsvCharacterCode::utf_8) {
-            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::utf_8);
-            // UTF-8のBOMコードを追加する(UTF-8 BOM付きにするとExcelで文字化けしない)
-            $csv_data = CsvUtils::addUtf8Bom($csv_data);
-        } else {
-            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::sjis_win);
-        }
+        $csv_data = CsvUtils::getResponseCsvData($csv_array, $request->character_code);
 
         return response()->make($csv_data, 200, $headers);
     }

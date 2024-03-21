@@ -578,7 +578,9 @@ class LoginController extends Controller
         $nc3_security_salt = Configs::where('name', 'nc3_security_salt')->firstOrNew([]);
 
         // パスワードチェック
-        if (hash("sha512", $nc3_security_salt->value . $request->password) === $user->password) {
+        if (hash("sha512", $nc3_security_salt->value . $request->password) === $user->password ||
+            hash("sha512", $nc3_security_salt->value . md5($request->password)) === $user->password) {
+
             // ログイン
             Auth::login($user, true);
 

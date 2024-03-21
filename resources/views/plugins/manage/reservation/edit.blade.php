@@ -53,7 +53,7 @@ use App\Models\User\Reservations\ReservationsFacility;
         // 利用終了時間ボタン押下
         $('#end_time').datetimepicker(time_setting);
 
-        $('#end_time').on('change.datetimepicker', function(e) {
+        $('#end_time').on('change.datetimepicker hide.datetimepicker show.datetimepicker', function(e) {
             convert_endtime_0h_to_24h();
         });
     });
@@ -150,7 +150,7 @@ use App\Models\User\Reservations\ReservationsFacility;
                         <div class="col-md-4">
                             <label>利用開始時間</label>
                             <div class="input-group date" id="start_time" data-target-input="nearest">
-                                <input type="text" name="start_time" value="{{ old('start_time', substr($facility->start_time, 0, -3)) }}" class="form-control datetimepicker-input @if ($errors->has('start_time')) border-danger @endif" data-target="#start_time">
+                                <input type="text" name="start_time" value="{{ old('start_time', substr((string)$facility->start_time, 0, -3)) }}" class="form-control datetimepicker-input @if ($errors->has('start_time')) border-danger @endif" data-target="#start_time">
                                 <div class="input-group-append" data-target="#start_time" data-toggle="datetimepicker">
                                     <div class="input-group-text"><i class="fas fa-clock"></i></div>
                                 </div>
@@ -161,7 +161,7 @@ use App\Models\User\Reservations\ReservationsFacility;
                         <div class="col-md-4">
                             <label>利用終了時間</label>
                             <div class="input-group date" id="end_time" data-target-input="nearest">
-                                <input type="text" name="end_time" value="{{ old('end_time', substr($facility->end_time, 0, -3)) }}" class="form-control datetimepicker-input @if ($errors->has('end_time')) border-danger @endif" data-target="#end_time">
+                                <input type="text" name="end_time" value="{{ old('end_time', substr((string)$facility->end_time, 0, -3)) }}" class="form-control datetimepicker-input @if ($errors->has('end_time')) border-danger @endif" data-target="#end_time">
                                 <div class="input-group-append" data-target="#end_time" data-toggle="datetimepicker">
                                     <div class="input-group-text"><i class="fas fa-clock"></i></div>
                                 </div>
@@ -292,7 +292,7 @@ use App\Models\User\Reservations\ReservationsFacility;
             <div class="form-group text-center">
                 <div class="form-row">
                     <div class="offset-xl-3 col-9 col-xl-6">
-                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/manage/reservation?page={{$paginate_page}}&search_words={{$search_words}}'"><i class="fas fa-times"></i> キャンセル</button>
+                        <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/manage/reservation'"><i class="fas fa-times"></i> キャンセル</button>
                         @if ($facility->id)
                         <button type="button" class="btn btn-primary form-horizontal mr-2" onclick="submitAction('{{url('/')}}/manage/reservation/update/{{$facility->id}}')">
                             <i class="fas fa-check"></i> 変更確定

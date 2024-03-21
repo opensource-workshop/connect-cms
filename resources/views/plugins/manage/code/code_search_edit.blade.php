@@ -77,7 +77,6 @@
             <label for="display_sequence" class="col-md-3 col-form-label text-md-right">表示順</label>
             <div class="col-md-9">
                 <input type="text" name="display_sequence" id="display_sequence" value="{{old('display_sequence', $codes_search->display_sequence)}}" class="form-control">
-                <div class="text-muted">{{$codes_help_message->display_sequence_help_message}}</div>
             </div>
         </div>
 

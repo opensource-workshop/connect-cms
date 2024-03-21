@@ -24,6 +24,8 @@ class Forms extends Model
         'bucket_id',
         'forms_name',
         'form_mode',
+        'access_limit_type',
+        'form_password',
         'entry_limit',
         'entry_limit_over_message',
         'display_control_flag',
@@ -43,4 +45,16 @@ class Forms extends Model
         'numbering_use_flag',
         'numbering_prefix'
     ];
+
+    /**
+     *  指定したFrame が表示対象か判定
+     *
+     */
+    public function isTargetFrame($frame_id)
+    {
+        if (in_array($frame_id, explode(',', $this->target_frame_ids))) {
+            return true;
+        }
+        return false;
+    }
 }

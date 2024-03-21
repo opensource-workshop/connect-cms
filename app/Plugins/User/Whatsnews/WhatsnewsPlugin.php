@@ -2,11 +2,11 @@
 
 namespace App\Plugins\User\Whatsnews;
 
+use App\Enums\UseType;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 use App\Models\Common\Buckets;
@@ -14,8 +14,10 @@ use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
+use App\Models\Core\Plugins;
 use App\Models\User\Whatsnews\Whatsnews;
 
+use App\Enums\ShowType;
 use App\Enums\WhatsnewFrameConfig;
 
 use App\Plugins\User\UserPluginBase;
@@ -28,6 +30,7 @@ use App\Utilities\String\StringUtils;
  * サイト内の新着情報を表示するプラグイン。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 新着情報プラグイン
  * @package Controller
@@ -91,16 +94,6 @@ class WhatsnewsPlugin extends UserPluginBase
         return $role_check_table;
     }
 
-    /**
-     *  編集画面の最初のタブ（コアから呼び出す）
-     *
-     *  スーパークラスをオーバーライド
-     */
-    public function getFirstFrameEditAction()
-    {
-        return "editBuckets";
-    }
-
     /* private関数 */
 
     /**
@@ -150,20 +143,14 @@ class WhatsnewsPlugin extends UserPluginBase
      */
     private function getTargetPluginsFrames()
     {
-        // debug:確認したいSQLの前にこれを仕込んで
-        //DB::enableQueryLog();
-
         // Frame データ
         $frames = Frame::select('frames.*', 'pages._lft', 'pages.page_name', 'buckets.bucket_name')
-                        ->whereIn('frames.plugin_name', array('blogs', 'bbses', 'databases'))
+                        ->whereIn('frames.plugin_name', WhatsnewTargetPluginTool::getMemberKeys())
                         ->leftJoin('buckets', 'frames.bucket_id', '=', 'buckets.id')
                         ->leftJoin('pages', 'frames.page_id', '=', 'pages.id')
                         ->where('disable_whatsnews', 0)
                         ->orderBy('pages._lft', 'asc')
                         ->get();
-
-        // sql debug
-        //Log::debug(var_export(DB::getQueryLog(), true));
         return $frames;
     }
 
@@ -212,15 +199,11 @@ class WhatsnewsPlugin extends UserPluginBase
         $link_base = array();
         foreach ($target_plugins as $target_plugin) {
             // クラスファイルの存在チェック。
-            $file_path = base_path() . "/app/Plugins/User/" . ucfirst($target_plugin) . "/" . ucfirst($target_plugin) . "Plugin.php";
-
+            list($class_name, $file_path) = Plugins::getPluginClassNameAndFilePath($target_plugin);
             // ファイルの存在確認
             if (!file_exists($file_path)) {
                 return $this->viewError("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
             }
-
-            // 各プラグインのgetWhatsnewArgs() 関数を呼び出し。
-            $class_name = "App\Plugins\User\\" . ucfirst($target_plugin) . "\\" . ucfirst($target_plugin) . "Plugin";
 
             list($union_sqls[$target_plugin], $link_pattern[$target_plugin], $link_base[$target_plugin]) = $class_name::getWhatsnewArgs();
         }
@@ -267,7 +250,7 @@ class WhatsnewsPlugin extends UserPluginBase
         }
 
         // 記事詳細から、最初の画像を抜き出して設定する。
-        $whatsnews = $this->addWhatsnewsValue($whatsnews);
+        $whatsnews = $this->addWhatsnewsValues($whatsnews);
 
         // 一旦オブジェクト変数へ。（Singleton のため。フレーム表示確認でコアが使用する）
         $this->whatsnews_results = array($whatsnews, $link_pattern, $link_base);
@@ -278,45 +261,72 @@ class WhatsnewsPlugin extends UserPluginBase
     /**
      * 記事詳細から、最初の画像を抜き出して設定する。
      * 記事詳細に、追加情報を設定する。
+     * (全記事)
      */
-//    private function addFirstImage($whatsnews)
-    private function addWhatsnewsValue($whatsnews, $post_detail_length = null)
+    private function addWhatsnewsValues($whatsnews, $post_detail_length = null)
     {
-        // 記事詳細から、最初の画像を抜き出し
-        $pattern_img = '/<img.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
-        $pattern_alt = '/(alt)=("[^"]*")/i';
         foreach ($whatsnews as &$whatsnew) {
-            // 画像があるときはファイルパスを抽出
-            preg_match($pattern_img, $whatsnew->post_detail, $images);
-            if (is_array($images) && count($images) > 1) {
-                $whatsnew->first_image_path = $images[1];
-                // altがあるときはaltを抽出
-                preg_match($pattern_alt, $images[0], $alts);
-                if (is_array($alts) && count($alts) > 2) {
-                    $whatsnew->first_image_alt = $alts[2];
+            // クラスファイルの存在チェック
+            list($class_name, $class_file_path) = Plugins::getPluginClassNameAndFilePath($whatsnew->plugin_name);
+            if (!file_exists($class_file_path)) {
+                // クラスファイルなし = 通常
+                $whatsnew = $this->addWhatsnewsValue($whatsnew, $post_detail_length);
+            } else {
+                // 関数定義メソッドの有無確認
+                if (method_exists($class_name, 'addWhatsnewsValue')) {
+                    // クラスファイルあり & メソッドあり = 独自処理
+                    $whatsnew = $class_name::addWhatsnewsValue($whatsnew, $post_detail_length);
                 } else {
-                    $whatsnew->first_image_alt = null;
+                    // クラスファイルあり & メソッドなし = 通常
+                    $whatsnew = $this->addWhatsnewsValue($whatsnew, $post_detail_length);
                 }
-            } else {
-                $whatsnew->first_image_path = null;
-                $whatsnew->first_image_alt = null;
-            }
-
-            // タイトルのタグを取り除き, データベース、ウィジウィグ型のタイトル指定に対応
-            $whatsnew->post_title_strip_tags = strip_tags($whatsnew->post_title);
-
-            // タグを取り除き、指定に応じて文字数制限した本文
-            if ($post_detail_length) {
-                $whatsnew->post_detail_strip_tags = mb_substr(strip_tags($whatsnew->post_detail), 0, $post_detail_length);
-                if (mb_strlen(strip_tags($whatsnew->post_detail)) > $post_detail_length) {
-                    $whatsnew->post_detail_strip_tags = $whatsnew->post_detail_strip_tags . '...';
-                }
-            } else {
-                $whatsnew->post_detail_strip_tags = strip_tags($whatsnew->post_detail);
             }
         }
 
         return $whatsnews;
+    }
+
+    /**
+     * 記事詳細から、最初の画像を抜き出して設定する。
+     * 記事詳細に、追加情報を設定する。
+     * (1記事)
+     */
+    private function addWhatsnewsValue($whatsnew, $post_detail_length = null)
+    {
+        // 記事詳細から、最初の画像を抜き出し
+        $pattern_img = '/<img.*?src\s*=\s*[\"|\'](.*?)[\"|\'].*?>/i';
+        $pattern_alt = '/(alt)=("[^"]*")/i';
+
+        // 画像があるときはファイルパスを抽出
+        preg_match($pattern_img, $whatsnew->post_detail, $images);
+        if (is_array($images) && count($images) > 1) {
+            $whatsnew->first_image_path = $images[1];
+            // altがあるときはaltを抽出
+            preg_match($pattern_alt, $images[0], $alts);
+            if (is_array($alts) && count($alts) > 2) {
+                $whatsnew->first_image_alt = $alts[2];
+            } else {
+                $whatsnew->first_image_alt = null;
+            }
+        } else {
+            $whatsnew->first_image_path = null;
+            $whatsnew->first_image_alt = null;
+        }
+
+        // タイトルのタグを取り除き, データベース、ウィジウィグ型のタイトル指定に対応
+        $whatsnew->post_title_strip_tags = strip_tags($whatsnew->post_title);
+
+        // タグを取り除き、指定に応じて文字数制限した本文
+        if ($post_detail_length) {
+            $whatsnew->post_detail_strip_tags = mb_substr(strip_tags($whatsnew->post_detail), 0, $post_detail_length);
+            if (mb_strlen(strip_tags($whatsnew->post_detail)) > $post_detail_length) {
+                $whatsnew->post_detail_strip_tags = $whatsnew->post_detail_strip_tags . '...';
+            }
+        } else {
+            $whatsnew->post_detail_strip_tags = strip_tags($whatsnew->post_detail);
+        }
+
+        return $whatsnew;
     }
 
     private function buildQueryGetWhatsnews($whatsnews_frame, $union_sqls)
@@ -442,21 +452,19 @@ class WhatsnewsPlugin extends UserPluginBase
          */
         foreach ($target_plugins as $target_plugin) {
             // クラスファイルの存在チェック。
-            $file_path = base_path() . "/app/Plugins/User/" . ucfirst($target_plugin) . "/" . ucfirst($target_plugin) . "Plugin.php";
-
+            list($class_name, $file_path) = Plugins::getPluginClassNameAndFilePath($target_plugin);
             // ファイルの存在確認
             if (!file_exists($file_path)) {
                 return $this->viewError("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
             }
 
             // 各プラグインのgetWhatsnewArgs() 関数を呼び出し。
-            $class_name = "App\Plugins\User\\" . ucfirst($target_plugin) . "\\" . ucfirst($target_plugin) . "Plugin";
-
             list($union_sqls[$target_plugin], $link_pattern[$target_plugin], $link_base[$target_plugin]) = $class_name::getWhatsnewArgs();
         }
 
         // クエリ取得
         $whatsnews_query = $this->buildQueryGetWhatsnews($whatsnews_frame, $union_sqls);
+        $this->whatsnews_total_count = $whatsnews_query->count();
 
         // limit/offset条件を付加
         if ($request->limit) {
@@ -468,17 +476,26 @@ class WhatsnewsPlugin extends UserPluginBase
         // データ抽出
         $whatsnewses = $whatsnews_query->get();
 
-        // bugfix: 新着タイトルにウィジウィグが入る事がある（databaseのウィジウィグ型をタイトルに指定）ため、タグ除去する。
         $whatsnewses->transform(function ($whatsnew, $key) {
+            // bugfix: 新着タイトルにウィジウィグが入る事がある（databaseのウィジウィグ型をタイトルに指定）ため、タグ除去する。
             $whatsnew->post_title = strip_tags($whatsnew->post_title);
+            // jsではnullをセットすると'null'として扱われるため、空文字に変換
+            $whatsnew->classname = $whatsnew->classname ?? '';
             return $whatsnew;
         });
 
         // 記事詳細から、最初の画像を抜き出して設定する。
-        $whatsnewses = $this->addWhatsnewsValue($whatsnewses, $request->post_detail_length);
+        $whatsnewses = $this->addWhatsnewsValues($whatsnewses, $request->post_detail_length);
 
         // 整形して返却
-        return json_encode(json_decode($whatsnewses), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        $json = [
+            'whatsnewses' => $whatsnewses,
+            'link_pattern' => $link_pattern,
+            'link_base' => $link_base,
+            'whatsnews_total_count' => $this->whatsnews_total_count,
+        ];
+
+        return json_encode($json, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     }
 
     /**
@@ -506,7 +523,12 @@ class WhatsnewsPlugin extends UserPluginBase
         $whatsnews_frame = $this->getWhatsnewsFrame($frame_id);
 
         // 新着の一覧取得
-        list($whatsnews, $link_pattern, $link_base) = $this->getWhatsnews($whatsnews_frame);
+        $async = FrameConfig::getConfigValue($this->frame_configs, WhatsnewFrameConfig::async, UseType::not_use);
+        if ($async == UseType::use) {
+            list($whatsnews, $link_pattern, $link_base) = [null, null, null];
+        } else {
+            list($whatsnews, $link_pattern, $link_base) = $this->getWhatsnews($whatsnews_frame);
+        }
         // Log::debug(var_export($whatsnews, true));
         // Log::debug(var_export($link_pattern, true));
 
@@ -536,15 +558,13 @@ class WhatsnewsPlugin extends UserPluginBase
 
         // データ取得（1ページの表示件数指定）
         $whatsnews = Whatsnews::orderBy('created_at', 'desc')
-                              ->paginate(10, ["*"], "frame_{$frame_id}_page");
+            ->paginate(10, ["*"], "frame_{$frame_id}_page");
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'whatsnews_list_buckets', [
+        return $this->view('whatsnews_list_buckets', [
             'whatsnew_frame' => $whatsnew_frame,
             'whatsnews'      => $whatsnews,
-            ]
-        );
+        ]);
     }
 
     /**
@@ -554,49 +574,39 @@ class WhatsnewsPlugin extends UserPluginBase
      * @method_desc 新着情報を新しく作成します。
      * @method_detail 新着情報名や表示条件を入力して新着情報を作成できます。
      */
-    public function createBuckets($request, $page_id, $frame_id, $id = null, $create_flag = false, $message = null, $errors = null)
+    public function createBuckets($request, $page_id, $frame_id, $id = null)
     {
-        // 新規作成フラグを付けて設定変更画面を呼ぶ
-        $create_flag = true;
-        return $this->editBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $errors);
+        return $this->editBuckets($request, $page_id, $frame_id, $id);
     }
 
     /**
      * 新着情報設定変更画面の表示
      */
-    public function editBuckets($request, $page_id, $frame_id, $id = null, $create_flag = false, $message = null, $errors = null)
+    public function editBuckets($request, $page_id, $frame_id, $id = null)
     {
-        // セッション初期化などのLaravel 処理。
-        $request->flash();
+        // コアがbucket_id なしで呼び出してくるため、bucket_id は frame_id から探す。
+        if ($this->action == 'createBuckets') {
+            $bucket_id = null;
+        } else {
+            $bucket_id = $this->getBucketId();
+        }
 
-        // 新着情報＆フレームデータ
-        $whatsnew_frame = $this->getWhatsnewsFrame($frame_id);
+        // 表示中のバケツデータ
+        $whatsnew = $this->getPluginBucket($bucket_id);
 
-        // 新着情報設定データ
-        $whatsnew = new Whatsnews();
-
-        if (!empty($id)) {
-            // id が渡ってくればid が対象
-            $whatsnew = Whatsnews::where('id', $id)->first();
-        } elseif (!empty($whatsnew_frame->bucket_id) && $create_flag == false) {
-            // Frame のbucket_id があれば、bucket_id から新着情報設定データ取得、なければ、新規作成か選択へ誘導
-            $whatsnew = Whatsnews::where('bucket_id', $whatsnew_frame->bucket_id)->first();
+        if (empty($whatsnew->id) && $this->action != 'createBuckets') {
+            // バケツ空テンプレートを呼び出す。
+            return $this->commonView('empty_bucket_setting');
         }
 
         // 選択できるフレームの一覧
         $target_plugins_frames = $this->getTargetPluginsFrames();
 
         // 表示テンプレートを呼び出す。
-        return $this->view(
-            'whatsnews_edit_whatsnew', [
-            'whatsnew_frame'        => $whatsnew_frame,
+        return $this->view('whatsnews_edit_whatsnew', [
             'whatsnew'              => $whatsnew,
             'target_plugins_frames' => $target_plugins_frames,
-            'create_flag'           => $create_flag,
-            'message'               => $message,
-            'errors'                => $errors,
-            ]
-        )->withInput($request->all);
+        ]);
     }
 
     /**
@@ -604,51 +614,41 @@ class WhatsnewsPlugin extends UserPluginBase
      */
     public function saveBuckets($request, $page_id, $frame_id, $id = null)
     {
-        // フレームから、新着の設定取得
-        $whatsnews_frame = $this->getWhatsnewsFrame($frame_id);
-
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'whatsnew_name'     => ['required'],
-            'target_plugin'     => ['required'],
-            'count'             => ['nullable', 'numeric'],
-            'days'              => ['nullable', 'numeric'],
-            'rss_count'         => ['nullable', 'numeric'],
-            'read_more_use_flag' => ['required', 'numeric'],
-            'read_more_name' => ['required'],
-            'read_more_fetch_count' => ['required', 'numeric'],
-            'read_more_btn_color_type' => ['required'],
-            'read_more_btn_type' => ['required'],
+            'whatsnew_name'                  => ['required'],
+            'target_plugin'                  => ['required'],
+            'count'                          => ['nullable', 'numeric'],
+            'days'                           => ['nullable', 'numeric'],
+            'rss_count'                      => ['nullable', 'numeric'],
+            'read_more_use_flag'             => ['required', 'numeric'],
+            'read_more_name'                 => ['required'],
+            'read_more_fetch_count'          => ['required', 'numeric'],
+            'read_more_btn_color_type'       => ['required'],
+            'read_more_btn_type'             => ['required'],
             'read_more_btn_transparent_flag' => ['required', 'numeric'],
         ]);
         $validator->setAttributeNames([
-            'whatsnew_name'     => '新着情報設定名称',
-            'target_plugin'     => '対象プラグイン',
-            'count'             => '表示件数',
-            'days'              => '表示日数',
-            'rss_count'         => '対象RSS件数',
-            'read_more_use_flag' => 'もっと見るボタンの表示',
-            'read_more_name' => 'ボタン名',
-            'read_more_fetch_count' => 'ボタン押下時の取得件数／回',
-            'read_more_btn_color_type' => 'もっと見るボタン色',
-            'read_more_btn_type' => 'もっと見るボタンの形',
+            'whatsnew_name'                  => '新着情報名',
+            'target_plugin'                  => '対象プラグイン',
+            'count'                          => '表示件数',
+            'days'                           => '表示日数',
+            'rss_count'                      => '対象RSS件数',
+            'read_more_use_flag'             => 'もっと見るボタンの表示',
+            'read_more_name'                 => 'ボタン名',
+            'read_more_fetch_count'          => 'ボタン押下時の取得件数／回',
+            'read_more_btn_color_type'       => 'もっと見るボタン色',
+            'read_more_btn_type'             => 'もっと見るボタンの形',
             'read_more_btn_transparent_flag' => 'ボタン透過の使用',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
-        $message = null;
         if ($validator->fails()) {
-            if (empty($whatsnews_frame->whatsnews_id)) {
-                $create_flag = true;
-                return $this->createBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
-            } else {
-                $create_flag = false;
-                return $this->editBuckets($request, $page_id, $frame_id, $id, $create_flag, $message, $validator->errors());
-            }
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         // 更新後のメッセージ
-        $message = null;
+        $flash_message = null;
 
         if (empty($request->whatsnews_id)) {
             // 画面から渡ってくるwhatsnews_id が空ならバケツと設定データを新規登録
@@ -673,7 +673,7 @@ class WhatsnewsPlugin extends UserPluginBase
                 $frame = Frame::where('id', $frame_id)->update(['bucket_id' => $bucket_id]);
             }
 
-            $message = '新着情報設定を追加しました。';
+            $flash_message = '新着情報設定を追加しました。';
         } else {
             // whatsnews_id があれば、新着情報設定を更新
             // 新着情報設定の取得
@@ -682,7 +682,7 @@ class WhatsnewsPlugin extends UserPluginBase
             // 新着情報名で、Buckets名も更新する
             Buckets::where('id', $whatsnews->bucket_id)->update(['bucket_name' => $request->whatsnew_name]);
 
-            $message = '新着情報設定を変更しました。';
+            $flash_message = '新着情報設定を変更しました。';
         }
 
         // 新着情報設定
@@ -705,15 +705,16 @@ class WhatsnewsPlugin extends UserPluginBase
         $whatsnews->read_more_btn_transparent_flag = $request->read_more_btn_transparent_flag;
         $whatsnews->target_plugins    = implode(',', $request->target_plugin);
         $whatsnews->frame_select      = intval($request->frame_select);
-//Log::debug($request->target_frame_ids);
         $whatsnews->target_frame_ids  = empty($request->target_frame_ids) ? "": implode(',', $request->target_frame_ids);
 
         // データ保存
         $whatsnews->save();
 
+        // 完了メッセージ
+        session()->flash("flash_message_for_frame{$frame_id}", $flash_message);
+
         // 新規作成フラグを付けて新着情報設定変更画面を呼ぶ
-        $create_flag = false;
-        return $this->editBuckets($request, $page_id, $frame_id, $id, $create_flag, $message);
+        return collect(['redirect_path' => url('/') . "/plugin/whatsnews/editBuckets/{$page_id}/{$frame_id}#frame-{$frame_id}"]);
     }
 
     /**
@@ -741,14 +742,15 @@ class WhatsnewsPlugin extends UserPluginBase
     /**
      * データ紐づけ変更関数
      */
-    public function changeBuckets($request, $page_id = null, $frame_id = null, $id = null)
+    public function changeBuckets($request, $page_id, $frame_id, $id = null)
     {
         // FrameのバケツIDの更新
-        Frame::where('id', $frame_id)
-               ->update(['bucket_id' => $request->select_bucket]);
+        Frame::where('id', $frame_id)->update(['bucket_id' => $request->select_bucket]);
 
-        // 新着情報設定選択画面を呼ぶ
-        return $this->listBuckets($request, $page_id, $frame_id, $id);
+        $flash_message = '表示する新着情報を変更しました。';
+        session()->flash("flash_message_for_frame{$frame_id}", $flash_message);
+
+        // リダイレクト先を指定しないため、画面から渡されたredirect_pathに飛ぶ
     }
 
     /**
@@ -760,63 +762,65 @@ class WhatsnewsPlugin extends UserPluginBase
      */
     public function editView($request, $page_id, $frame_id)
     {
+        // 表示中のバケツデータ
+        $whatsnew = $this->getPluginBucket($this->getBucketId());
+
+        if (empty($whatsnew->id)) {
+            // バケツ空テンプレートを呼び出す。
+            return $this->commonView('empty_bucket_setting');
+        }
+
         // 表示テンプレートを呼び出す。
         return $this->view('whatsnews_frame', [
-            'whatsnew' => $this->getPluginBucket($this->getBucketId()),
+            'whatsnew' => $whatsnew,
         ]);
     }
 
     /**
      * フレーム表示設定の保存
      */
-    public function saveView($request, $page_id, $frame_id, $cabinet_id)
+    public function saveView($request, $page_id, $frame_id, $id = null)
     {
-        // フレーム設定保存
-        $this->saveFrameConfigs($request, $frame_id, WhatsnewFrameConfig::getMemberKeys());
-
-        // 更新したので、frame_configsを設定しなおす
-        $this->refreshFrameConfigs();
-
-        return;
-    }
-
-    /**
-     * フレーム設定を保存する。
-     *
-     * @param Illuminate\Http\Request $request リクエスト
-     * @param int $frame_id フレームID
-     * @param array $frame_config_names フレーム設定のname配列
-     */
-    protected function saveFrameConfigs(\Illuminate\Http\Request $request, int $frame_id, array $frame_config_names)
-    {
-
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'thumbnail_size'  => ['numeric'],
-            'post_detail_length'  => ['numeric'],
+            'post_detail_length' => ['nullable','numeric'],
+            'thumbnail_size'     => ['nullable','numeric'],
         ]);
         $validator->setAttributeNames([
-            'thumbnail_size'  => WhatsnewFrameConfig::enum['thumbnail_size'],
-            'post_detail_length'  => WhatsnewFrameConfig::enum['post_detail_length'],
+            'post_detail_length' => WhatsnewFrameConfig::enum['post_detail_length'],
+            'thumbnail_size'     => WhatsnewFrameConfig::enum['thumbnail_size'],
         ]);
+
+        // 条件付入力チェック
+        $validator->sometimes('post_detail_length', ['required', 'numeric'], function ($request) {
+            // 表示するなら、数値必須
+            return $request->post_detail == ShowType::show;
+        });
+        $validator->sometimes('thumbnail_size', ['required', 'numeric'], function ($request) {
+            // 表示するなら、数値必須
+            return $request->thumbnail == ShowType::show;
+        });
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // フレーム設定の定数にあるものがrequest にあれば、保存する。
-        foreach ($frame_config_names as $key => $value) {
+        // フレーム設定保存
+        FrameConfig::saveFrameConfigs($request, $frame_id, WhatsnewFrameConfig::getMemberKeys());
 
-            FrameConfig::updateOrCreate(
-                ['frame_id' => $frame_id, 'name' => $value],
-                ['value' => $request->$value]
-            );
-        }
+        // 更新したので、frame_configsを設定しなおす
+        $this->refreshFrameConfigs();
+
+        // 完了メッセージ
+        $flash_message = '表示設定を変更しました。';
+        session()->flash("flash_message_for_frame{$frame_id}", $flash_message);
+
+        // リダイレクト先を指定しないため、画面から渡されたredirect_pathに飛ぶ
     }
 
     /**
-     *  RSS配信
+     * RSS配信
      */
     public function rss($request, $page_id, $frame_id, $id = null)
     {

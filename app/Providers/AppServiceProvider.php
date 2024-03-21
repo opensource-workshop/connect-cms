@@ -2,13 +2,15 @@
 
 namespace App\Providers;
 
+use Illuminate\Foundation\Support\Providers\AuthServiceProvider;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
-// use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Foundation\Support\Providers\AuthServiceProvider;
+use Illuminate\Support\Facades\URL;
+// use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Queue\Events\JobFailed;
 
@@ -43,7 +45,6 @@ class AppServiceProvider extends AuthServiceProvider
      */
     public function boot()
     {
-
         // ペジネーションでBootstrapのスタイルを利用する
         // Laravel 8からデフォルトがTailwind CSSフレームワークに変わったが、以前のままで行く
         Paginator::useBootstrap();
@@ -52,6 +53,11 @@ class AppServiceProvider extends AuthServiceProvider
         // これは、MySQL5.7.7 以上では必要ない対応であるが、Redhat7 デフォルトのMariaDB では必要なもののため、Redhat7 のセキュリティアップデートが終わる2024年6月30日を考慮したものである。
         // see) https://readouble.com/laravel/6.x/ja/migrations.html#creating-indexes
         Schema::defaultStringLength(191);
+
+        // レンサバの設定と相性が悪く、https でアクセスしているにも関わらず $_SERVER['HTTPS] が設定されず、
+        // Laravel, Symfony 側の処理で http 始まりの URL で処理されてしまう。
+        // config('app.url') が https 始まりか？http 始まりか？ をもとに強制的に scheme を設定する
+        URL::forceScheme(Str::startsWith(config('app.url'), 'https') ? 'https' : 'http');
 
         // 認可サービス(Gate)利用の準備
         $this->registerPolicies();

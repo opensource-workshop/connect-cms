@@ -529,6 +529,13 @@
                             <input type="radio" value="1" id="detail_hide_flag_1" name="detail_hide_flag" class="custom-control-input" @if(old('detail_hide_flag', $column->detail_hide_flag) == 1) checked="checked" @endif>
                             <label class="custom-control-label" for="detail_hide_flag_1">詳細に表示しない</label>
                         </div>
+                        {{-- 詳細画面で非表示項目をパラメータのID指定で強制的に表示する機能(beta) --}}
+                        @if (config('connect.DATABASES_FORCE_SHOW_COLUMN_ON_DETAIL'))
+                            <div class="custom-control custom-radio custom-control-inline">
+                                <input type="radio" value="2" id="detail_hide_flag_2" name="detail_hide_flag" class="custom-control-input" @if(old('detail_hide_flag', $column->detail_hide_flag) == 2) checked="checked" @endif>
+                                <label class="custom-control-label" for="detail_hide_flag_2">詳細に表示しない（検索時に強制表示指定可）</label>
+                            </div>
+                        @endif
                     </div>
                 </div>
 
@@ -657,6 +664,23 @@
                     </div>
                 </div>
 
+                {{-- ダウンロード件数でのソートを行う --}}
+                @if ($column->column_type == DatabaseColumnType::file)
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass(true)}}">ダウンロード件数で並べ替え</label>
+                    <div class="{{$frame->getSettingInputClass(true)}}">
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="0" id="sort_download_count_0" name="sort_download_count" class="custom-control-input" @if(old('sort_download_count', $column->sort_download_count) == 0) checked="checked" @endif>
+                            <label class="custom-control-label" for="sort_download_count_0">使用しない</label>
+                        </div>
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="1" id="sort_download_count_1" name="sort_download_count" class="custom-control-input" @if(old('sort_download_count', $column->sort_download_count) == 1) checked="checked" @endif>
+                            <label class="custom-control-label" for="sort_download_count_1">使用する</label>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 {{-- 検索対象指定 --}}
                 <div class="form-group row">
                     <label class="{{$frame->getSettingLabelClass(true)}}">検索対象指定</label>
@@ -701,6 +725,40 @@
                         <div class="custom-control custom-radio custom-control-inline">
                             <input type="radio" value="1" id="use_select_and_or_flag_1" name="use_select_and_or_flag" class="custom-control-input" @if(old('use_select_and_or_flag', $column->use_select_and_or_flag) == 1) checked="checked" @endif>
                             <label class="custom-control-label" for="use_select_and_or_flag_1" id="label_use_select_and_or_flag_1">表示する</label>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
+                {{-- ダウンロード件数を表示する --}}
+                @if ($column->column_type == DatabaseColumnType::file)
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass(true)}}">ダウンロード件数を表示する</label>
+                    <div class="{{$frame->getSettingInputClass(true)}}">
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="0" id="show_download_count_0" name="show_download_count" class="custom-control-input" @if(old('show_download_count', $column->show_download_count) == 0) checked="checked" @endif>
+                            <label class="custom-control-label" for="show_download_count_0" id="label_show_download_count_0">表示しない</label>
+                        </div>
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="1" id="show_download_count_1" name="show_download_count" class="custom-control-input" @if(old('show_download_count', $column->show_download_count) == 1) checked="checked" @endif>
+                            <label class="custom-control-label" for="show_download_count_1" id="label_show_download_count_1">表示する</label>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
+                {{-- ダウンロードボタンを表示する --}}
+                @if ($column->column_type == DatabaseColumnType::file)
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass(true)}}">ダウンロードボタンを表示する</label>
+                    <div class="{{$frame->getSettingInputClass(true)}}">
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="0" id="show_download_button_0" name="show_download_button" class="custom-control-input" @if(old('show_download_button', $column->show_download_button) == 0) checked="checked" @endif>
+                            <label class="custom-control-label" for="show_download_button_0" id="label_show_download_button_0">表示しない</label>
+                        </div>
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="1" id="show_download_button_1" name="show_download_button" class="custom-control-input" @if(old('show_download_button', $column->show_download_button) == 1) checked="checked" @endif>
+                            <label class="custom-control-label" for="show_download_button_1" id="label_show_download_button_1">表示する</label>
                         </div>
                     </div>
                 </div>

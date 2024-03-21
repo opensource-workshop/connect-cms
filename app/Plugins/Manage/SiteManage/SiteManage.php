@@ -2,22 +2,17 @@
 
 namespace App\Plugins\Manage\SiteManage;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Lang;
-
-use setasign\Fpdi\Tcpdf\Fpdi;
 
 use App\Models\Core\ApiSecret;
 use App\Models\Core\Configs;
 use App\Models\Core\ConfigsLoginPermits;
 use App\Models\Core\Plugins;
+use App\Models\Core\UsersColumnsSet;
 use App\Models\Common\Categories;
-use App\Models\Common\Frame;
 use App\Models\Common\Group;
 use App\Models\Common\Holiday;
 use App\Models\Common\Page;
@@ -26,6 +21,7 @@ use App\Plugins\Manage\ManagePluginBase;
 use App\Plugins\Manage\SiteManage\CCPDF;
 use App\Enums\BaseLoginRedirectPage;
 use App\Enums\StatusType;
+use App\Utilities\File\FileUtils;
 
 /* 移行データ用 */
 use App\Models\User\Contents\Contents;
@@ -103,10 +99,80 @@ use App\Models\Migration\Nc2\Nc2Slides;
 use App\Models\Migration\Nc2\Nc2SlidesUrl;
 use App\Models\Migration\Nc2\Nc2Simplemovie;
 
+use App\Models\Migration\Nc3\Nc3VideoFrameSetting;
+use App\Models\Migration\Nc3\Nc3AccessCounter;
+use App\Models\Migration\Nc3\Nc3AccessCounterFrameSetting;
+use App\Models\Migration\Nc3\Nc3Announcement;
+use App\Models\Migration\Nc3\Nc3AuthorizationKey;
+use App\Models\Migration\Nc3\Nc3Bbs;
+use App\Models\Migration\Nc3\Nc3BbsArticle;
+use App\Models\Migration\Nc3\Nc3BbsFrameSetting;
+use App\Models\Migration\Nc3\Nc3Block;
+use App\Models\Migration\Nc3\Nc3BlockRolePermission;
+use App\Models\Migration\Nc3\Nc3BlockSetting;
+use App\Models\Migration\Nc3\Nc3Blog;
+use App\Models\Migration\Nc3\Nc3BlogEntry;
+use App\Models\Migration\Nc3\Nc3BlogFrameSetting;
+use App\Models\Migration\Nc3\Nc3Box;
+use App\Models\Migration\Nc3\Nc3Cabinet;
+use App\Models\Migration\Nc3\Nc3CabinetFile;
+use App\Models\Migration\Nc3\Nc3Calendar;
+use App\Models\Migration\Nc3\Nc3CalendarEvent;
+use App\Models\Migration\Nc3\Nc3CalendarFrameSetting;
+use App\Models\Migration\Nc3\Nc3Category;
+use App\Models\Migration\Nc3\Nc3Faq;
+use App\Models\Migration\Nc3\Nc3FaqQuestion;
+use App\Models\Migration\Nc3\Nc3Frame;
+use App\Models\Migration\Nc3\Nc3Language;
+use App\Models\Migration\Nc3\Nc3Like;
+use App\Models\Migration\Nc3\Nc3Link;
+use App\Models\Migration\Nc3\Nc3LinkFrameSetting;
+use App\Models\Migration\Nc3\Nc3MailSetting;
+use App\Models\Migration\Nc3\Nc3MenuFramePage;
+use App\Models\Migration\Nc3\Nc3MenuFrameSetting;
+use App\Models\Migration\Nc3\Nc3Multidatabase;
+use App\Models\Migration\Nc3\Nc3MultidatabaseContent;
+use App\Models\Migration\Nc3\Nc3MultidatabaseFrameSetting;
+use App\Models\Migration\Nc3\Nc3MultidatabaseMetadata;
+use App\Models\Migration\Nc3\Nc3Page;
+use App\Models\Migration\Nc3\Nc3PageContainer;
+use App\Models\Migration\Nc3\Nc3PhotoAlbum;
+use App\Models\Migration\Nc3\Nc3PhotoAlbumDisplayAlbum;
+use App\Models\Migration\Nc3\Nc3PhotoAlbumFrameSetting;
+use App\Models\Migration\Nc3\Nc3PhotoAlbumPhoto;
+use App\Models\Migration\Nc3\Nc3Plugin;
+use App\Models\Migration\Nc3\Nc3Registration;
+use App\Models\Migration\Nc3\Nc3RegistrationAnswerSummary;
+use App\Models\Migration\Nc3\Nc3RegistrationChoice;
+use App\Models\Migration\Nc3\Nc3RegistrationPage;
+use App\Models\Migration\Nc3\Nc3RegistrationQuestion;
+use App\Models\Migration\Nc3\Nc3ReservationEvent;
+use App\Models\Migration\Nc3\Nc3ReservationFrameSetting;
+use App\Models\Migration\Nc3\Nc3ReservationLocation;
+use App\Models\Migration\Nc3\Nc3ReservationLocationsApprovalUser;
+use App\Models\Migration\Nc3\Nc3ReservationLocationsReservable;
+use App\Models\Migration\Nc3\Nc3RolesRoom;
+use App\Models\Migration\Nc3\Nc3Room;
+use App\Models\Migration\Nc3\Nc3RoomRolePermission;
+use App\Models\Migration\Nc3\Nc3SearchFramePlugin;
+use App\Models\Migration\Nc3\Nc3SearchFrameSetting;
+use App\Models\Migration\Nc3\Nc3SiteSetting;
+use App\Models\Migration\Nc3\Nc3Space;
+use App\Models\Migration\Nc3\Nc3Topic;
+use App\Models\Migration\Nc3\Nc3TopicFramePlugin;
+use App\Models\Migration\Nc3\Nc3TopicFrameSetting;
+use App\Models\Migration\Nc3\Nc3UploadFile;
+use App\Models\Migration\Nc3\Nc3User;
+use App\Models\Migration\Nc3\Nc3UserAttribute;
+use App\Models\Migration\Nc3\Nc3UserAttributeChoice;
+use App\Models\Migration\Nc3\Nc3UsersLanguage;
+use App\Models\Migration\Nc3\Nc3Video;
+
 /**
  * サイト管理クラス
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category サイト管理
  * @package Controller
@@ -142,6 +208,7 @@ class SiteManage extends ManagePluginBase
         $role_ckeck_table["saveMeta"]         = array('admin_site');
         $role_ckeck_table["pageError"]        = array('admin_site');
         $role_ckeck_table["savePageError"]    = array('admin_site');
+        $role_ckeck_table["deleteNoImage"]    = array('admin_site');
         $role_ckeck_table["analytics"]        = array('admin_site');
         $role_ckeck_table["saveAnalytics"]    = array('admin_site');
         $role_ckeck_table["favicon"]          = array('admin_site');
@@ -152,6 +219,7 @@ class SiteManage extends ManagePluginBase
         $role_ckeck_table["document"]         = array('admin_site');
         $role_ckeck_table["saveDocument"]     = array('admin_site');
         $role_ckeck_table["downloadDocument"] = array('admin_site');
+        $role_ckeck_table["total"]            = ['admin_site'];
 
         return $role_ckeck_table;
     }
@@ -727,13 +795,13 @@ class SiteManage extends ManagePluginBase
         $request->flash();
 
         // 設定されているmeta情報のリスト取得
-        $meta = $this->getConfigs(null, 'meta');
+        $configs = Configs::where('category', 'meta')->get();
 
         return view('plugins.manage.site.meta', [
             "function"    => __FUNCTION__,
             "plugin_name" => "site",
             "id"          => $id,
-            "meta"        => $meta,
+            "configs"     => $configs,
         ]);
     }
 
@@ -762,33 +830,43 @@ class SiteManage extends ManagePluginBase
      *  ページエラー設定　表示画面
      *
      * @method_title エラーページ設定
-     * @method_desc 404（該当ページなし）や403（該当ページに権限なし）の際に表示するエラーページを指定できます。
+     * @method_desc 404（該当ページなし）や403（該当ページに権限なし）の際に表示するエラーページを指定できます。また、No Image画像を差し替えられます。
      * @method_detail 指定したエラーページは、通常のページと同じように作成します。また、メニュー表示はOFFにしておきます。
      */
-    public function pageError($request, $id, $errors = null)
+    public function pageError($request, $id)
     {
-        // セッション初期化などのLaravel 処理。
-        $request->flash();
-
-        // 設定されているページエラー設定のリスト取得
-        $page_errors = $this->getConfigs(null, 'page_error');
+        // ページエラー設定, no-image設定
+        $configs = Configs::where('category', 'page_error')->orWhere('category', 'image_error')->get();
 
         return view('plugins.manage.site.page_error', [
             "function"    => __FUNCTION__,
             "plugin_name" => "site",
             "id"          => $id,
-            "page_errors" => $page_errors,
+            "configs"     => $configs,
         ]);
     }
 
     /**
      *  ページエラー設定　更新
      */
-    public function savePageError($request, $page_id = null, $errors = array())
+    public function savePageError($request, $id = null)
     {
         // httpメソッド確認
         if (!$request->isMethod('post')) {
             abort(403, '権限がありません。');
+        }
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'no_image' => ['nullable', 'image'],
+        ]);
+        $validator->setAttributeNames([
+            'no_image' => 'No Image画像',
+        ]);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         // 403
@@ -805,8 +883,62 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->page_permanent_link_404]
         );
 
-        // ページ管理画面に戻る
-        return redirect("/manage/site/pageError");
+        // ファイルがアップロードされた
+        if ($request->hasFile('no_image')) {
+            // ファイル名
+            $filename = $request->file('no_image')->getClientOriginalName();
+
+            // ファイルの保存
+            $request->file('no_image')->storeAs('tmp', $filename);
+
+            // ファイルパス
+            $src_file = storage_path() . '/app/tmp/' . $filename;
+            $dst_dir  = public_path() . '/uploads/no_image';
+            $dst_file = $dst_dir . '/' . $filename;
+
+            // ディレクトリの存在チェック
+            if (!File::isDirectory($dst_dir)) {
+                $result = File::makeDirectory($dst_dir);
+            }
+
+            // ディレクトリへファイルの移動
+            if (!rename($src_file, $dst_file)) {
+                die("Couldn't rename file");
+            }
+
+            // no_image
+            $configs = Configs::updateOrCreate(
+                ['name'     => 'no_image'],
+                ['category' => 'image_error',
+                 'value'    => $filename]
+            );
+        }
+
+        return redirect("/manage/site/pageError")->with('flash_message', '更新しました。');
+    }
+
+    /**
+     * No Image 設定 削除
+     */
+    public function deleteNoImage($request)
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        $config = Configs::where('name', 'no_image')->first();
+        if (empty($config)) {
+            abort(404);
+        }
+
+        // ファイル削除
+        $dst_file  = public_path() . '/uploads/no_image/' . $config->value;
+        File::delete($dst_file);
+
+        $config->delete();
+
+        return redirect("/manage/site/pageError")->with('flash_message', 'No Image画像を削除しました。');
     }
 
     /**
@@ -823,13 +955,13 @@ class SiteManage extends ManagePluginBase
         $request->flash();
 
         // 設定されているページエラー設定のリスト取得
-        $analytics = $this->getConfigs('tracking_code');
+        $configs = Configs::where('name', 'tracking_code')->get();
 
         return view('plugins.manage.site.analytics', [
             "function"    => __FUNCTION__,
             "plugin_name" => "site",
             "id"          => $id,
-            "analytics"   => $analytics,
+            "configs"     => $configs,
         ]);
     }
 
@@ -1094,7 +1226,7 @@ class SiteManage extends ManagePluginBase
         $output = collect();
 
         // サイト名
-        $output->put('base_site_name', $configs->firstWhere('name', 'base_site_name')->value);
+        $output->put('base_site_name', Configs::getConfigsValue($configs, 'base_site_name', null));
 
         // 出力するPDF の準備
         $pdf = new CCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
@@ -1119,7 +1251,7 @@ class SiteManage extends ManagePluginBase
         // ヘッダーのフォントの設定（フォント情報を配列で渡す必要があるので、要注意）
         $pdf->setHeaderMargin(5);
         $pdf->setHeaderFont(array('ipaexg', '', 10));
-        $pdf->setHeaderData('', 0, $configs->firstWhere('name', 'base_site_name')->value . " - " . url('/'), '');
+        $pdf->setHeaderData('', 0, Configs::getConfigsValue($configs, 'base_site_name', null) . " - " . url('/'), '');
 
         // フッター
         $pdf->setPrintFooter(true);
@@ -1215,9 +1347,11 @@ class SiteManage extends ManagePluginBase
         $pdf->addPage();
         $pdf->Bookmark('ユーザ設定', 0, 0, '', '', array(0, 0, 0));
 
+        $columns_sets = UsersColumnsSet::get();
+
         // フレーム設定
         $sections = [
-            ['user_regist', compact('configs'), '自動ユーザ登録設定'],
+            ['user_regist', compact('configs', 'columns_sets'), '自動ユーザ登録設定'],
         ];
         $this->outputSection($pdf, $sections);
 
@@ -1419,8 +1553,9 @@ class SiteManage extends ManagePluginBase
 
         // --- 移行データチェック出力
         $MigrationMapping = MigrationMapping::count();
-        if ($MigrationMapping) {
-
+        $Migrationoutput_flag = false;
+        if ($MigrationMapping && $this->canDbConnectNc2()) {
+            $Migrationoutput_flag = true;
             // NC2 のページデータ
             $nc2_pages_query = Nc2Page::where('private_flag', 0)        // 0:プライベートルーム以外
                                       ->where('root_id', '<>', 0)
@@ -1436,6 +1571,8 @@ class SiteManage extends ManagePluginBase
             }
             // 経路探索の文字列（キー）でソート
             ksort($nc2_sort_pages);
+            // ページ
+            $mg_sort_pages = $nc2_sort_pages;
 
             // NC2 の日誌データ
             $nc2_journals = Nc2Journal::select('journal.*', 'page_rooms.space_type')
@@ -1450,7 +1587,10 @@ class SiteManage extends ManagePluginBase
             foreach ($nc2_journals as &$nc2_journal) {
                 $nc2_journal_posts = Nc2JournalPost::where('journal_id', $nc2_journal->journal_id)->orderBy('post_id')->get();
                 $nc2_journal->count = $nc2_journal_posts->count();
+                $nc2_journal->blog_name = $nc2_journal->journal_name;
             }
+            // ブログ
+            $mg_blogs = $nc2_journals;
 
             // NC2 汎用DBデータ
             $nc2_multidatabases = Nc2Multidatabase::select('multidatabase.multidatabase_id', 'multidatabase.multidatabase_name', 'multidatabase_content.content_id')
@@ -1471,7 +1611,8 @@ class SiteManage extends ManagePluginBase
                 $ret_multidatabase[] = $tmp_obj;
             }
             $nc2_multidatabases = collect($ret_multidatabase);
-
+            // データベース
+            $mg_multidatabases = $nc2_multidatabases;
 
             // NC2 の会員データ
             $nc2_users = Nc2User::select('users.login_id', 'users.handle', 'authorities.role_authority_name')
@@ -1497,8 +1638,122 @@ class SiteManage extends ManagePluginBase
                         break;
                 }
             }
+            //会員
+            $mg_users = $nc2_users;
+        }
 
 
+        if ($MigrationMapping && $this->canDbConnectNc3()) {
+            $Migrationoutput_flag = true;
+            // NC3 のページデータ
+
+            $nc3_pages_query = Nc3Page::
+                select('pages.*', 'rooms.space_id', 'rooms.page_id_top', 'pages_languages.name as page_name', 'pages_languages.language_id')
+                ->join('rooms', function ($join) {
+                    $join->on('rooms.id', '=', 'pages.room_id')
+                        ->where('rooms.space_id', '!=', Nc3Space::PRIVATE_SPACE_ID); // プライベートルーム以外
+                })
+                ->join('pages_languages', function ($join) {
+                    $join->on('pages_languages.page_id', '=', 'pages.id');
+                })
+                ->join('languages', function ($join) {
+                    $join->on('languages.id', '=', 'pages_languages.language_id')
+                        ->where('languages.is_active', 1);  // 使用言語（日本語・英語）で有効な言語を取得
+                })
+                ->whereNotNull('pages.root_id');
+            $nc3_pages_query->orderBy('pages_languages.language_id');
+            $older_than_nc3_2_0 = true;
+            if ($older_than_nc3_2_0) {
+                // nc3.2.0より古い場合は、sort_key が無いため parent_id, lft でソートすると、ページの並び順を再現できた。
+                $nc3_pages_query->orderBy('pages.lft');
+            } else {
+                // 通常
+                $nc3_pages_query->orderBy('pages.sort_key')
+                                ->orderBy('rooms.sort_key');
+            }
+            $nc3_pages = $nc3_pages_query->get();
+            // ページ
+            $mg_sort_pages = $nc3_pages;
+
+            // NC3ブログ
+            $nc3_blogs = Nc3Blog::select('blogs.*', 'blogs.name AS blog_name', 'blocks.key as block_key', 'blocks.room_id', 'rooms.space_id')
+                ->join('blocks', function ($join) {
+                    $join->on('blocks.id', '=', 'blogs.block_id')
+                        ->where('blocks.plugin_key', 'blogs');
+                })
+                ->join('rooms', function ($join) {
+                    $join->on('rooms.id', '=', 'blocks.room_id')
+                        ->whereIn('rooms.space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID]);
+                })
+                ->orderBy('blogs.id')
+                ->get();
+            // 使用言語（日本語・英語）で有効な言語を取得
+            $language_ids = Nc3Language::where('is_active', 1)->pluck('id');
+            // NC3ブログのループ
+            foreach ($nc3_blogs as $nc3_blog) {
+                // NC3日誌の記事
+                $nc3_blog_posts = Nc3BlogEntry::where('block_id', $nc3_blog->block_id)
+                    ->where('is_latest', 1)
+                    ->whereIn('language_id', $language_ids)
+                    ->orderBy('id')
+                    ->get();
+                $nc3_blog->count = count($nc3_blog_posts);
+            }
+            // ブログ
+            $mg_blogs = $nc3_blogs;
+
+            // NC3汎用データベース（multidatabases）
+            $nc3_multidatabases_query = Nc3Multidatabase::select('multidatabases.*', 'blocks.key as block_key', 'blocks.room_id', 'rooms.space_id')
+                ->join('blocks', function ($join) {
+                    $join->on('blocks.id', '=', 'multidatabases.block_id')
+                        ->where('blocks.plugin_key', 'multidatabases');
+                })
+                ->join('rooms', function ($join) {
+                    $join->on('rooms.id', '=', 'blocks.room_id')
+                        ->whereIn('rooms.space_id', [Nc3Space::PUBLIC_SPACE_ID, Nc3Space::COMMUNITY_SPACE_ID]);
+                })
+                ->orderBy('multidatabases.id');
+            $nc3_multidatabases = $nc3_multidatabases_query->get();
+            // NC3汎用データベース（Multidatabase）のループ
+            foreach ($nc3_multidatabases as $nc3_multidatabase) {
+                // NC3汎用データベースのデータ
+                $nc3_multidatabase_contents = Nc3MultidatabaseContent::where('multidatabase_key', $nc3_multidatabase->key)
+                    ->where('is_latest', 1)
+                    ->orderBy('id')
+                    ->get();
+                $nc3_multidatabase->multidatabase_id = $nc3_multidatabase->block_key;
+                $nc3_multidatabase->multidatabase_name = $nc3_multidatabase->name;
+                $nc3_multidatabase->multidatabase_content_count = count($nc3_multidatabase_contents);
+            }
+            // データベース
+            $mg_multidatabases = $nc3_multidatabases;
+
+            // NC3 の会員データ
+            $nc3_users_query = Nc3User::select('users.username AS login_id', 'users.handlename AS handle', 'users.role_key')->where('username', '<>', '');
+            $nc3_users = $nc3_users_query->orderBy('users.created')->get();
+            foreach ($nc3_users as &$nc3_user) {
+                switch ($nc3_user->role_key) {
+                    case 'system_administrator':
+                        $nc3_user->role_authority_name = 'システム管理者';
+                        break;
+                    case 'administrator':
+                        $nc3_user->role_authority_name = '主担';
+                        break;
+                    case 'common_user':
+                        $nc3_user->role_authority_name = '一般';
+                        break;
+                    case 'guest_user':
+                        $nc3_user->role_authority_name = 'ゲスト';
+                        break;
+                }
+            }
+
+            //会員
+            $mg_users = $nc3_users;
+        }
+
+        // Connect移行後のデータ
+        if ($Migrationoutput_flag) {
             // Connect-CMSの会員データ
             $users = User::select('users.id', 'users.userid', 'users.name')
                 ->orderBy('users.id')
@@ -1544,10 +1799,10 @@ class SiteManage extends ManagePluginBase
             $pdf->Bookmark('移行データ', 0, 0, '', '', array(0, 0, 0));
             $sections = [
                 ['migrate_main', compact(
-                    'nc2_sort_pages', 'pages',
-                    'nc2_journals', 'blogs',
-                    'nc2_multidatabases', 'databases',
-                    'nc2_users', 'users',
+                    'mg_sort_pages', 'pages',
+                    'mg_blogs', 'blogs',
+                    'mg_multidatabases', 'databases',
+                    'mg_users', 'users',
                 ), '移行データ一覧'],
             ];
             $this->outputSection($pdf, $sections);
@@ -1629,6 +1884,36 @@ class SiteManage extends ManagePluginBase
         // 出力 ( D：Download, I：Inline )
         $pdf->output('SiteDocument-' . $output->get('base_site_name') . '.pdf', $disposition);
         return redirect()->back();
+    }
+
+    /**
+     * NC2のDBに接続できるか
+     */
+    private function canDbConnectNc2() : bool
+    {
+        try {
+            DB::connection('nc2')->getPdo();
+            // 接続成功
+            return true;
+        } catch (\PDOException $e) {
+            // 接続失敗
+            return false;
+        }
+    }
+
+    /**
+     * NC3のDBに接続できるか
+     */
+    private function canDbConnectNc3() : bool
+    {
+        try {
+            DB::connection('nc3')->getPdo();
+            // 接続成功
+            return true;
+        } catch (\PDOException $e) {
+            // 接続失敗
+            return false;
+        }
     }
 
     /**
@@ -1746,5 +2031,31 @@ class SiteManage extends ManagePluginBase
         $size_str = sprintf("%'.02d", $size);
 
         return sprintf("%'." . $size_str . "d", $id);
+    }
+
+    /**
+     * 使用容量
+     *
+     * @return view
+     * @method_title 使用容量
+     * @method_desc ファイルの使用量を確認できます。
+     * @method_detail Connect-CMSで使用しているファイル容量を確認できます。
+     */
+    public function total($request, $id = null)
+    {
+        $total = 0;
+        // ディレクトリの全ファイル一覧
+        $files = FileUtils::getFileList(base_path());
+        foreach ($files as $file) {
+            $total += filesize($file);
+        }
+        // 単位付与
+        $total = FileUtils::getFormatSizeDecimalPoint($total);
+
+        return view('plugins.manage.site.total', [
+            "function"    => __FUNCTION__,
+            "plugin_name" => "site",
+            "total"       => $total,
+        ]);
     }
 }

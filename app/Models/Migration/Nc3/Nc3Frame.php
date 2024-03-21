@@ -23,7 +23,7 @@ class Nc3Frame extends Model
      * NC3 header_type -> Connect-CMS frame_design 変換用テーブル
      * 定義のないものは 'default' になる想定
      */
-    protected $frame_designs = [
+    const frame_designs = [
         'none'          => 'none',
         'default'       => 'default',
         'primary'       => 'primary',
@@ -36,12 +36,12 @@ class Nc3Frame extends Model
     /**
      *  フレームテンプレートの変換
      */
-    public function getFrameDesign($default = 'default')
+    public static function getFrameDesign($header_type, $default = 'default')
     {
         // NC3 テンプレート変換配列にあれば、その値。
         // なければ default を返す。
-        if (array_key_exists($this->header_type, $this->frame_designs)) {
-            return $this->frame_designs[$this->header_type];
+        if (array_key_exists($header_type, self::frame_designs)) {
+            return self::frame_designs[$header_type];
         }
         return $default;
     }

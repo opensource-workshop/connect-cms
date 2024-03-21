@@ -13,6 +13,7 @@ class UsersColumnsSelects extends Model
 
     // 更新する項目の定義
     protected $fillable = [
+        'columns_set_id',
         'users_columns_id',
         'value',
         'agree_description',

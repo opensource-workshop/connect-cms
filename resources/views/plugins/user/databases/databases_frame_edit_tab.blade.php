@@ -79,3 +79,12 @@
         <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/editBucketsMails/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">メール設定</a>
     </li>
 @endif
+@if ($action == 'listCategories')
+    <li role="presentation" class="nav-item">
+        <span class="nav-link"><span class="active">カテゴリ</span></span>
+    </li>
+@else
+    <li role="presentation" class="nav-item">
+        <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/listCategories/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">カテゴリ</a>
+    </li>
+@endif

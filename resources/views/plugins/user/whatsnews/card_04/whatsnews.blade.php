@@ -2,6 +2,7 @@
  * 新着情報表示画面（カード表示）
  *
  * @author 牧野　可也子 <makino@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 新着情報プラグイン
 --}}
@@ -23,17 +24,18 @@
 @endif
 
 @if ($whatsnews)
-
-@if (isset($whatsnews_frame->rss) && $whatsnews_frame->rss == UseType::use)
-<p class="text-left">
-    <a href="{{url('/')}}/redirect/plugin/whatsnews/rss/{{$page->id}}/{{$frame_id}}/" title="{{$whatsnews_frame->whatsnew_name}}のRSS2.0"><span class="badge badge-info">RSS2.0</span></a>
-</p>
+    @if (isset($whatsnews_frame->rss) && $whatsnews_frame->rss == UseType::use)
+    <p class="text-left">
+        <a href="{{url('/')}}/redirect/plugin/whatsnews/rss/{{$page->id}}/{{$frame_id}}/" title="{{$whatsnews_frame->whatsnew_name}}のRSS2.0"><span class="badge badge-info">RSS2.0</span></a>
+    </p>
+    @endif
 @endif
 
-<div class="container" id="{{ $whatsnews_frame->read_more_use_flag == UseType::use ? 'app_' . $frame->id : '' }}">
+<div class="container" id="{{ 'app_' . $frame->id}}">
 
     <article class="clearfix">
         <div class="row">
+            @if ($whatsnews)
             @foreach($whatsnews as $whatsnew)
             @if (isset($is_template_col_3))
             {{-- カードタイプ３の場合 --}}
@@ -47,6 +49,19 @@
                 @endif
                 <div class="p-2 @if (FrameConfig::getConfigValue($frame_configs, WhatsnewFrameConfig::border))border @endif" style="height: 100%;">
                     <dl>
+                        @if (isset($is_template_top_thumbnail))
+                            {{-- サムネイル --}}
+                            @if ($whatsnew->first_image_path && FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail))
+                                <dd class="text-center whatsnew_thumbnail">
+                                    @if (empty(FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size)))
+                                        <img src="{{$whatsnew->first_image_path}}?size=small" class="pb-1" style="max-width: 200px; max-height: 200px;">
+                                    @else
+                                        <img src="{{$whatsnew->first_image_path}}?size=small" class="pb-1" style="max-width: {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}px; max-height: {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}px;">
+                                    @endif
+                                </dd>
+                            @endif
+                        @endif
+
                         {{-- タイトル --}}
                         @if ($link_pattern[$whatsnew->plugin_name] == 'show_page_frame_post')
                             <dt class="text-center whatsnew_title">
@@ -81,15 +96,17 @@
                             </dd>
                         @endif
 
-                        {{-- サムネイル --}}
-                        @if ($whatsnew->first_image_path && FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail))
-                            <dd class="text-center whatsnew_thumbnail">
-                                @if (empty(FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size)))
-                                    <img src="{{$whatsnew->first_image_path}}?size=small" class="pb-1" style="max-width: 200px; max-height: 200px;">
-                                @else
-                                    <img src="{{$whatsnew->first_image_path}}?size=small" class="pb-1" style="max-width: {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}px; max-height: {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}px;">
-                                @endif
-                            </dd>
+                        @if (!isset($is_template_top_thumbnail))
+                            {{-- サムネイル --}}
+                            @if ($whatsnew->first_image_path && FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail))
+                                <dd class="text-center whatsnew_thumbnail">
+                                    @if (empty(FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size)))
+                                        <img src="{{$whatsnew->first_image_path}}?size=small" class="pb-1" style="max-width: 200px; max-height: 200px;">
+                                    @else
+                                        <img src="{{$whatsnew->first_image_path}}?size=small" class="pb-1" style="max-width: {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}px; max-height: {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail_size) }}px;">
+                                    @endif
+                                </dd>
+                            @endif
                         @endif
 
                         {{-- 本文 --}}
@@ -110,10 +127,12 @@
                 @endif
             </div>
             @endforeach
+            @endif
         </div>
     </article>
 
-    @if ($whatsnews_frame->read_more_use_flag == UseType::use)
+    @if ($whatsnews_frame->read_more_use_flag == UseType::use
+        || FrameConfig::getConfigValue($frame_configs, WhatsnewFrameConfig::async) == UseType::use)
         {{-- 「もっと見る」ボタン押下時、非同期で新着一覧をレンダリング --}}
         <article class="clearfix">
             <div class="row">
@@ -125,21 +144,27 @@
                 <div v-for="whatsnews in whatsnewses" class="col-12 col-sm-6 col-lg-3 whatsnew_card mb-2">
                 @endif
 
-                    @if ($link_pattern[$whatsnew->plugin_name] == 'show_page_frame_post')
-                    <a :href="url + link_base[whatsnews.plugin_name] + '/' + whatsnews.page_id + '/' + whatsnews.frame_id + '/' + whatsnews.post_id + '#frame-' + whatsnews.frame_id" style="text-decoration: none; color: initial;">
-                    @endif
+                    {{-- 本当はaタグだけ消して子要素は残したいが、、、 現在show_page_frame_postのパターンがないので一旦このv-ifで回避--}}
+                    <a v-if="link_pattern[whatsnews.plugin_name] == 'show_page_frame_post'"
+                        :href="url + link_base[whatsnews.plugin_name] + '/' + whatsnews.page_id + '/' + whatsnews.frame_id + '/' + whatsnews.post_id + '#frame-' + whatsnews.frame_id" style="text-decoration: none; color: initial;">
 
                     <div  class="p-2" style="height: 100%;"
                         v-bind:class="{ 'border': border == show }"
                     >
                     <dl>
+                        @if (isset($is_template_top_thumbnail))
+                        {{-- サムネイル --}}
+                        <dd v-if="thumbnail == show && whatsnews.first_image_path" class="text-center whatsnew_thumbnail">
+                            <img v-if="thumbnail_size == 0 || thumbnail_size == ''" v-bind:src="whatsnews.first_image_path + '?size=small'" class="pb-1" style="max-width: 200px; max-height: 200px;">
+                            <img v-else v-bind:src="whatsnews.first_image_path + '?size=small'" class="pb-1" v-bind:style="thumbnail_style">
+                        </dd>
+                        @endif
 
                         {{-- タイトル＋リンク --}}
                         <dt v-if="link_pattern[whatsnews.plugin_name] == 'show_page_frame_post'" class="text-center whatsnew_title">
                             @{{ whatsnews.post_title_strip_tags }}
                         </dt>
 
-                        
                         {{-- カテゴリ --}}
                         <dd v-if="whatsnews.category != null && whatsnews.category != ''" class="text-center whatsnew_category">
                             <div>
@@ -157,11 +182,13 @@
                             @{{ whatsnews.posted_name }}
                         </dd>
 
+                        @if (!isset($is_template_top_thumbnail))
                         {{-- サムネイル --}}
                         <dd v-if="thumbnail == show && whatsnews.first_image_path" class="text-center whatsnew_thumbnail">
-                            <img v-if="thumbnail_size == 0 || thumbnail_size == ''" v-bind:src="whatsnews.first_image_path" class="pb-1" style="max-width: 200px; max-height: 200px;">
-                            <img v-else v-bind:src="whatsnews.first_image_path" class="pb-1" v-bind:style="thumbnail_style">
+                            <img v-if="thumbnail_size == 0 || thumbnail_size == ''" v-bind:src="whatsnews.first_image_path + '?size=small'" class="pb-1" style="max-width: 200px; max-height: 200px;">
+                            <img v-else v-bind:src="whatsnews.first_image_path + '?size=small'" class="pb-1" v-bind:style="thumbnail_style">
                         </dd>
+                        @endif
 
                         {{-- 本文 --}}
                         <dd v-if="post_detail == show" class="whatsnew_post_detail">
@@ -170,9 +197,7 @@
 
                     </dl>
                 </div>
-                @if ($link_pattern[$whatsnew->plugin_name] == 'show_page_frame_post')
                 </a>
-                @endif
                 </div>
             </div>
         </article>
@@ -193,8 +218,8 @@
     @endif
 </div>
 
-    @if ($whatsnews_frame->read_more_use_flag == UseType::use)
+    @if ($whatsnews_frame->read_more_use_flag == UseType::use
+        || FrameConfig::getConfigValue($frame_configs, WhatsnewFrameConfig::async) == UseType::use)
         @include('plugins.user.whatsnews.whatsnews_script')
     @endif
-@endif
 @endsection

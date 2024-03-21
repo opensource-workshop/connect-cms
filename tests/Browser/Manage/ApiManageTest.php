@@ -31,6 +31,7 @@ class ApiManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/api')
+                    ->pause(500)
                     ->type('secret_name', 'テスト')
                     ->type('secret_code', 'secret_1234')
                     ->type('ip_address', '192.168.10.101')

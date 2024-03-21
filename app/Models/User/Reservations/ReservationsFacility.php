@@ -20,10 +20,12 @@ use App\Enums\ReservationLimitedByRole;
 use App\Enums\ShowType;
 
 use App\Traits\ConnectRoleTrait;
+use App\Traits\ConnectModelDisplaySequenceTrait;
 
 class ReservationsFacility extends Model
 {
     use ConnectRoleTrait;
+    use ConnectModelDisplaySequenceTrait;
 
     // 平日
     const weekday = DayOfWeek::mon.'|'.DayOfWeek::tue.'|'.DayOfWeek::wed.'|'.DayOfWeek::thu.'|'.DayOfWeek::fri;

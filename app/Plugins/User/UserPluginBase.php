@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 use Monolog\Logger;
@@ -19,8 +18,6 @@ use Monolog\Handler\RotatingFileHandler;
 use Symfony\Component\Process\PhpExecutableFinder;
 // use Symfony\Component\Process\Process;
 
-use HTMLPurifier;
-use HTMLPurifier_Config;
 use Request;
 
 use Carbon\Carbon;
@@ -50,6 +47,8 @@ use App\Rules\CustomValiRequiredWithoutAllSupportsArrayInput;
 
 use App\Traits\ConnectCommonTrait;
 use App\Traits\ConnectRoleTrait;
+
+use App\Utilities\Html\HtmlUtils;
 
 /**
  * ユーザープラグイン
@@ -126,6 +125,11 @@ class UserPluginBase extends PluginBase
      * POST チェックに使用する getPost() 関数を使うか
      */
     public $use_getpost = true;
+
+    /**
+     * 新着機能を使うか
+     */
+    public $use_whatsnew = false;
 
     /**
      * コンストラクタ
@@ -353,14 +357,14 @@ class UserPluginBase extends PluginBase
             return 'plugins.user.' . $this->frame->plugin_name . '.' . $this->frame->template . '.' . $blade_name;
         }
 
-        // デフォルトテンプレートのファイル存在チェック
-        if (File::exists(resource_path().'/views/plugins/user/' . $this->frame->plugin_name . "/default/" . $blade_name . ".blade.php")) {
-            return 'plugins.user.' . $this->frame->plugin_name . '.default.' . $blade_name;
-        }
-
         // オプションの指定したテンプレートのファイル存在チェック
         if (File::exists(resource_path().'/views/plugins_option/user/' . $this->frame->plugin_name . "/" . $this->frame->template . "/" . $blade_name . ".blade.php")) {
             return 'plugins_option.user.' . $this->frame->plugin_name . '.' . $this->frame->template . '.' . $blade_name;
+        }
+
+        // デフォルトテンプレートのファイル存在チェック
+        if (File::exists(resource_path().'/views/plugins/user/' . $this->frame->plugin_name . "/default/" . $blade_name . ".blade.php")) {
+            return 'plugins.user.' . $this->frame->plugin_name . '.default.' . $blade_name;
         }
 
         // オプションのデフォルトテンプレートのファイル存在チェック
@@ -1319,25 +1323,7 @@ class UserPluginBase extends PluginBase
     {
         if ($this->isHtmlPurifier()) {
             if (empty($this->purifier)) {
-                // HTMLPurifierを設定するためのクラスを生成する
-                $config = HTMLPurifier_Config::createDefault();
-
-                if (!Storage::exists('tmp/htmlpurifier')) {
-                    Storage::makeDirectory('tmp/htmlpurifier');
-                }
-                $config->set('Cache.SerializerPath', storage_path('app/tmp/htmlpurifier'));
-
-                // bugfix: class指定を許可は、デフォルト null ですべてのクラスが許可されている http://htmlpurifier.org/live/configdoc/plain.html#Attr.AllowedClasses
-                // $config->set('Attr.AllowedClasses', array()); // class指定を許可する
-                $config->set('Attr.AllowedClasses', null); // class指定を許可する
-                $config->set('Attr.EnableID', true);          // id属性を許可する
-                $config->set('Filter.YouTube', true);         // Youtube埋め込みを許可する
-                $config->set('HTML.TargetBlank', true);       // target="_blank" が使えるようにする
-                $config->set('Attr.AllowedFrameTargets', ['_blank']);
-                $config->set('HTML.SafeIframe', true);
-                $config->set('URI.SafeIframeRegexp', '%^(https?:)?//(www\.youtube(?:-nocookie)?\.com/embed/|player\.vimeo\.com/video/)%'); //allow YouTube and Vimeo
-
-                $this->purifier = new HTMLPurifier($config);
+                $this->purifier = HtmlUtils::getHtmlPurifier();
             }
 
             return $this->purifier->purify($text);

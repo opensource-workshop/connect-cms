@@ -17,24 +17,24 @@
     </tr>
     <tr nobr="true">
         <td>サイトURL</td>
-        <td>{{$configs->firstWhere('name', 'auth_netcomons2_site_url')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'auth_netcomons2_site_url', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>site_key</td>
-        <td>{{$configs->firstWhere('name', 'auth_netcomons2_site_key')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'auth_netcomons2_site_key', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>Salt</td>
-        <td>{{$configs->firstWhere('name', 'auth_netcomons2_salt')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'auth_netcomons2_salt', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>デフォルトで追加するオリジナル権限</td>
-        <td>{{$configs->firstWhere('name', 'auth_netcomons2_add_role')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'auth_netcomons2_add_role', null)}}</td>
     </tr>
     @if ($document_auth_netcomons2_admin_password)
         <tr nobr="true">
             <td>管理者操作用パスワード</td>
-            <td>{{$configs->firstWhere('name', 'auth_netcomons2_admin_password')->value}}</td>
+            <td>{{Configs::getConfigsValue($configs, 'auth_netcomons2_admin_password', null)}}</td>
         </tr>
     @endif
 </table>

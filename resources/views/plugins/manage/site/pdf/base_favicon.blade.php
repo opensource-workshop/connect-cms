@@ -17,12 +17,13 @@
     </tr>
     <tr nobr="true">
         <td>ファビコン・ファイル</td>
-        <td>{{$configs->firstWhere('name', 'favicon')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'favicon', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>ファビコン画像</td>
-        @if ($configs->firstWhere('name', 'favicon')->value)
-            <td><img src="{{url('/')}}/uploads/favicon/{{$configs->firstWhere('name', 'favicon')->value}}" style="width: 50px;" width=50></td>
+        @if (Configs::getConfigsValue($configs, 'favicon', null))
+            {{-- bugfix: imgタグはフルのURL指定しない。tcpdf内部で getimagesize(): https:// wrapper is disabled in the server configuration by allow_url_fopen=0 エラーになるため --}}
+            <td><img src="uploads/favicon/{{Configs::getConfigsValue($configs, 'favicon', null)}}" style="width: 50px;" width=50></td>
         @else
             <td><br /></td>
         @endif

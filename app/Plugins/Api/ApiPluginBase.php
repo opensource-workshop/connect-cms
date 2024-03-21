@@ -2,6 +2,9 @@
 
 namespace App\Plugins\Api;
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+
 use App\Models\Core\ApiSecret;
 
 use App\Plugins\PluginBase;
@@ -77,5 +80,69 @@ class ApiPluginBase extends PluginBase
 
         // 制限クリア」。
         return array('code' => '', 'message' => '');
+    }
+
+    /**
+     * SlackのAPIリクエストを検証して、検証結果に応じたHTTPステータスコードとメッセージを配列で返す
+     *
+     * @param Request $request
+     * @return array
+     */
+    public function validateSlackAPI(Request $request) : array
+    {
+        // request内に署名ハッシュ値、タイムスタンプがない場合
+        if (!$request->header('x-slack-signature') || !$request->header('x-slack-request-timestamp')) {
+            $message = 'No x-slack-signature or x-slack-request-timestamp in header.';
+            $ret = array('code' => 400, 'message' => $message);
+            Log::error("[validateSlackAPI()] API $message", $ret);
+            return $ret;
+        }
+
+        // config('connect.SLACK_SIGNING_SECRET')が設定されていない場合
+        if (!config('connect.SLACK_SIGNING_SECRET')) {
+            $message = 'No SLACK_SIGNING_SECRET in .env.';
+            $ret = array('code' => 500, 'message' => $message);
+            Log::error("[validateSlackAPI()] API $message", $ret);
+            return $ret;
+        }
+
+        /**
+         * Slackの署名ハッシュ値と、request内容から生成したハッシュ値を比較して、一致しない場合
+         *  - （補足）Slackからはリクエストパラメータを自由に設定できない為、CC側のAPI共通チェックは利用できない
+         */
+        if (!$this->compareSlackHashes($request)) {
+            $message = 'Invalid request. Slack signature mismatch.';
+            $ret = array('code' => 403, 'message' => $message);
+            Log::error("[validateSlackAPI()] API $message", $ret);
+            return $ret;
+        }
+
+        // 制限クリア
+        return array('code' => '', 'message' => '');
+    }
+
+    /**
+     * requestに紐づけられたSlackのハッシュ値（A）と、request内容から生成したハッシュ値（B）を比較して、一致すればtrueを返す
+     *
+     * @param Request $request
+     * @return boolean
+     */
+    public function compareSlackHashes(Request $request) : bool
+    {
+        // Slackの投稿に紐付けられたハッシュ値（A）を取得
+        $slack_signature = $request->header('x-slack-signature');
+        list($version, $signature_hash) = explode("=", $slack_signature);
+
+        // request内容からハッシュ値生成用の基本文字列を生成
+        $version = 'v0';
+        $timestamp = $request->header('x-slack-request-timestamp');
+        $body = $request->getContent();
+        $base_string = $version . ':' . $timestamp . ':' . $body;
+        
+        // 基本文字列からハッシュ値（B）を作る
+        $hash = hash_hmac('sha256', $base_string, config('connect.SLACK_SIGNING_SECRET'));
+
+        // ハッシュ（A，B）を比較する
+        return hash_equals($signature_hash, $hash);
     }
 }

@@ -17,10 +17,10 @@
     </tr>
     <tr nobr="true">
         <td>IPアドレス制限など権限がない場合の表示ページ</td>
-        <td>{{$configs->firstWhere('name', 'page_permanent_link_403')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'page_permanent_link_403', null)}}</td>
     </tr>
     <tr nobr="true">
         <td>指定ページがない場合の表示ページ</td>
-        <td>{{$configs->firstWhere('name', 'page_permanent_link_404')->value}}</td>
+        <td>{{Configs::getConfigsValue($configs, 'page_permanent_link_404', null)}}</td>
     </tr>
 </table>

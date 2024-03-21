@@ -1,8 +1,9 @@
 {{--
- * 登録画面テンプレート。
+ * 一覧画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牧野 可也子 <makino@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
 --}}
@@ -25,7 +26,11 @@
                 <tr>
                 @foreach($columns as $column)
                     @if($column->list_hide_flag == 0)
-                    <th class="text-nowrap">{{$column->column_name}}</th>
+                    <th class="text-nowrap">
+                        @if($column->label_hide_flag == 0)
+                        {{$column->column_name}}
+                        @endif
+                    </th>
                     @endif
                 @endforeach
                 </tr>

@@ -5,11 +5,16 @@ namespace App\Plugins\User\Databases;
 use Illuminate\Support\Facades\Auth;
 
 use App\Models\User\Databases\DatabasesColumns;
+use App\Models\User\Databases\DatabasesInputCols;
 
 use App\Traits\ConnectCommonTrait;
 
 use App\Enums\DatabaseColumnRoleName;
 use App\Enums\DatabaseRoleName;
+use App\Enums\UseType;
+use App\Models\User\Databases\Databases;
+use App\Models\User\Databases\DatabasesInputs;
+use App\Models\User\Databases\DatabasesSearchedWord;
 
 /**
  * データベースの便利関数
@@ -258,7 +263,7 @@ class DatabasesTool
      * データベース検索プラグイン例）$where_in_colum_name = 'databases_inputs_id'
      * 新着例）                    $where_in_colum_name = 'databases_inputs.id'
      */
-    public static function appendSearchKeyword($where_in_colum_name, $inputs_query, $databases_columns_ids, $hide_columns_ids, $search_keyword)
+    public static function appendSearchKeyword($where_in_colum_name, $inputs_query, $databases_columns_ids, $hide_columns_ids, $search_keyword, $full_text_search = false)
     {
         /**
          * キーワードでスペース連結してAND検索
@@ -268,20 +273,47 @@ class DatabasesTool
          */
         $search_keywords = explode(' ', mb_convert_kana($search_keyword, 's'));
 
+        // 全文検索
+        if ($full_text_search) {
+            return $inputs_query->fullText(mb_convert_kana($search_keyword, 's'));
+        }
+
+        $target_databases_inputs_ids = collect();
+
         // キーワードAND検索
         foreach ($search_keywords as $search_keyword) {
-            $inputs_query->whereIn($where_in_colum_name, function ($query) use ($search_keyword, $databases_columns_ids, $hide_columns_ids) {
-                // 縦持ちのvalue を検索して、行の id を取得。search_flag で対象のカラムを絞る。
-                $query->select('databases_inputs_id')
-                        ->from('databases_input_cols')
-                        ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
-                        ->where('databases_columns.search_flag', 1)
-                        ->whereIn('databases_columns.id', $databases_columns_ids)
-                        ->whereNotIn('databases_columns.id', $hide_columns_ids)
-                        ->where('value', 'like', '%' . $search_keyword . '%')
-                        ->groupBy('databases_inputs_id');
-            });
+            // 縦持ちのvalue を検索して、行の id を取得。search_flag で対象のカラムを絞る。
+            $databases_inputs_ids = DatabasesInputCols::select('databases_inputs_id')
+                ->from('databases_input_cols')
+                ->join('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
+                ->where('databases_columns.search_flag', 1)
+                ->whereIn('databases_columns.id', $databases_columns_ids)
+                ->whereNotIn('databases_columns.id', $hide_columns_ids)
+                ->where('value', 'like', '%' . $search_keyword . '%')
+                ->groupBy('databases_inputs_id')
+                ->pluck('databases_inputs_id');
+
+            // カテゴリで検索する
+            $databases_inputs_ids_category = DatabasesInputs::select('databases_inputs.id as databases_inputs_id')
+                ->leftJoin('categories', 'databases_inputs.categories_id', '=', 'categories.id')
+                ->where('categories.category', 'like', '%' . $search_keyword . '%')
+                ->pluck('databases_inputs_id');
+
+            $databases_inputs_ids = $databases_inputs_ids->merge($databases_inputs_ids_category)->unique();
+
+            if ($target_databases_inputs_ids->isEmpty()) {
+                // 初回：検索１単語目の結果 inputs_ids
+                $target_databases_inputs_ids = $databases_inputs_ids;
+            } else {
+                // 検索２単語目以降の結果 inputs_ids
+                // - intersect() : 指定した「配列」かコレクションに存在していない値をオリジナルコレクションから取り除きます。
+                // - これでANDを実現
+                $target_databases_inputs_ids = $target_databases_inputs_ids->intersect($databases_inputs_ids);
+            }
         }
+
+        // 該当した inputs_id だけ含める
+        $inputs_query->whereIn($where_in_colum_name, $target_databases_inputs_ids);
         return $inputs_query;
     }
 
@@ -446,5 +478,98 @@ class DatabasesTool
         });
 
         return $inputs_query;
+    }
+
+    /**
+     * 検索された語句を保存する
+     *
+     * @param int $databases_id
+     * @param string $keyword
+     */
+    public static function saveSearchedWord(int $databases_id, string $keyword)
+    {
+        $excluded_words = ['AND', '&', 'OR', '|', 'NOT'];
+
+        $keywords = explode(' ', mb_convert_kana($keyword, 's'));
+        foreach ($keywords as $word) {
+            if (in_array(\Str::upper($word), $excluded_words)) {
+                continue;
+            }
+            DatabasesSearchedWord::create([
+                'databases_id' => $databases_id,
+                'word' => $word,
+            ]);
+        }
+    }
+  
+    /**
+     * 全文検索項目を洗い替える
+     *
+     * @param int $database_id 洗い替え対象のdatabase_id
+     * @param int $dadatabase_input_idtabase_id 洗い替え対象のdatabase_input_id
+     */
+    public function updateFullText(int $database_id = null, int $database_input_id = null)
+    {
+        // 全文検索対象のデータベースを取得する
+        $query = Databases::where('full_text_search', UseType::use);
+        if ($database_id) {
+            $query = $query->where('id', $database_id);
+        }
+        $databases = $query->get();
+
+        foreach ($databases as $database) {
+            $this->updateFullTextValues($database->id, $database_input_id);
+        }
+    }
+
+    /**
+     * 全文検索項目更新処理
+     *
+     * @param int $database_id 洗い替え対象のdatabase_id
+     * @param int $dadatabase_input_idtabase_id 洗い替え対象のdatabase_input_id
+     */
+    private function updateFullTextValues(int $database_id, $database_input_id = null)
+    {
+        // カラムの取得
+        $columns = DatabasesColumns::where('databases_id', $database_id)->where('search_flag', 1)->get();
+        // ゲストが見られる項目のみ検索対象のカラムとする
+        $hide_columns_ids = $this->getHideColumnsIds($columns, 'list_detail_display_flag');
+        // 検索対象となるカラム
+        $search_column_ids = $columns->WhereNotIn('id', $hide_columns_ids)->pluck('id');
+
+        $query = DatabasesInputs::where('databases_id', $database_id);
+        if ($database_input_id) {
+            $query = $query->where('id', $database_input_id);
+        }
+        $database_inputs = $query->get();
+
+        foreach ($database_inputs as $input) {
+            // 洗い替える
+            // GROUP_CONCATで取得するとGROUP_CONCATの上限桁数（MySQL設定値）があって全部を取得できないことがある
+            // なので、PHPで結合する
+            $input_value = DatabasesInputCols::where('databases_inputs_id', $input->id)
+                ->whereIn('databases_columns_id', $search_column_ids)
+                ->get()
+                ->implode('value');
+
+            // カテゴリも検索対象
+            $category = DatabasesInputs::leftJoin('categories', 'databases_inputs.categories_id', '=', 'categories.id')
+                ->where('databases_inputs.id', $input->id)
+                ->get()
+                ->implode('category');
+
+            $input->full_text = $input_value . $category;
+            $input->save();
+        }
+    }
+
+    /**
+     * 全文検索項目を消す
+     *
+     * @param int $database_id 洗い替え対象のdatabase_id
+     */
+    public function flushFullText(int $database_id)
+    {
+        DatabasesInputs::where('databases_id', $database_id)->update(['full_text' => null]);
     }
 }

@@ -70,18 +70,6 @@ class ContentsPlugin extends UserPluginBase
     }
 
     /**
-     *  編集画面の最初のタブ
-     *
-     *  スーパークラスをオーバーライド
-     */
-/*
-    public function getFirstFrameEditAction()
-    {
-        return "editBucketsRoles";
-    }
-*/
-
-    /**
      * POST取得関数（コアから呼び出す）
      * コアがPOSTチェックの際に呼び出す関数
      */
@@ -258,7 +246,8 @@ class ContentsPlugin extends UserPluginBase
                        DB::raw('null as classname'),
                        DB::raw('null as categories_id'),
                        DB::raw('null as category'),
-                       DB::raw('"contents" as plugin_name')
+                       DB::raw('"contents" as plugin_name'),
+                       'contents.content_text as body'
                    )
                    ->join('frames', 'frames.bucket_id', '=', 'contents.bucket_id')
                    ->join('pages', 'pages.id', '=', 'frames.page_id')

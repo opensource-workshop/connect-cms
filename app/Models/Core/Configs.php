@@ -2,9 +2,9 @@
 
 namespace App\Models\Core;
 
+use App\Utilities\Html\HtmlUtils;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class Configs extends Model
 {
@@ -79,6 +79,22 @@ class Configs extends Model
     }
 
     /**
+     * 設定値（HTML）を修復して取得
+     */
+    public static function getConfigsValueWithHtmlRepair($configs, $key, $default = false)
+    {
+        $value = self::getConfigsValue($configs, $key, $default);
+        // php8.x対応: nullだと HtmlPurifier::purify()内部で preg_replace(): Passing null to parameter #3 ($subject) of type array|string is deprecated エラー起こすため
+        $value = is_null($value) ? '' : $value;
+
+        // 閉じタグしかない等、壊れたHTMLを整形（＝修復）して出力するために HtmlPurifier を利用
+        $purifier = HtmlUtils::getHtmlPurifier();
+        $value = $purifier->purify($value);
+
+        return $value;
+    }
+
+    /**
      * 設定の値取得. old対応あり
      */
     public static function getConfigsValueAndOld($configs, $key, $default = false)
@@ -93,7 +109,7 @@ class Configs extends Model
     /**
      * 設定の任意クラス(値)を抽出（カンマ設定時はランダムで１つ設定）
      */
-    public static function getConfigsRandValue($configs, $key, $default = null)
+    public static function getConfigsRandValue($configs, $key, $default = '')
     {
         $value = self::getConfigsValue($configs, $key, $default);
 

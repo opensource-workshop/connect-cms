@@ -24,6 +24,7 @@ class DefaultConfigsTableSeeder extends Seeder
                     [
                         'name'=>'base_background_color',
                         'value'=>null,
+                        'additional1' => null,
                         'category'=>'general',
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
@@ -31,6 +32,7 @@ class DefaultConfigsTableSeeder extends Seeder
                     [
                         'name'=>'base_header_color',
                         'value'=>null,
+                        'additional1' => null,
                         'category'=>'general',
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
@@ -38,6 +40,7 @@ class DefaultConfigsTableSeeder extends Seeder
                     [
                         'name'=>'base_site_name',
                         'value'=>'Connect-CMS',
+                        'additional1' => null,
                         'category'=>'general',
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
@@ -45,6 +48,7 @@ class DefaultConfigsTableSeeder extends Seeder
                     [
                         'name'=>'base_header_hidden',
                         'value'=>'0',
+                        'additional1' => null,
                         'category'=>'general',
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
@@ -52,6 +56,7 @@ class DefaultConfigsTableSeeder extends Seeder
                     [
                         'name'=>'base_header_fix',
                         'value'=>'0',
+                        'additional1' => null,
                         'category'=>'general',
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
@@ -59,6 +64,7 @@ class DefaultConfigsTableSeeder extends Seeder
                     [
                         'name'=>'base_mousedown_off',
                         'value'=>'0',
+                        'additional1' => null,
                         'category'=>'general',
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
@@ -66,6 +72,7 @@ class DefaultConfigsTableSeeder extends Seeder
                     [
                         'name'=>'base_contextmenu_off',
                         'value'=>'0',
+                        'additional1' => null,
                         'category'=>'general',
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
@@ -73,6 +80,7 @@ class DefaultConfigsTableSeeder extends Seeder
                     [
                         'name'=>'base_touch_callout',
                         'value'=>'0',
+                        'additional1' => null,
                         'category'=>'general',
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
@@ -80,6 +88,7 @@ class DefaultConfigsTableSeeder extends Seeder
                     [
                         'name'=>'base_header_login_link',
                         'value'=>'1',
+                        'additional1' => null,
                         'category'=>'general',
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
@@ -87,6 +96,7 @@ class DefaultConfigsTableSeeder extends Seeder
                     [
                         'name'=>'user_register_enable',
                         'value'=>'0',
+                        'additional1' => 1,
                         'category'=>'user_register',
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
@@ -94,7 +104,8 @@ class DefaultConfigsTableSeeder extends Seeder
                     [
                         'name'=>'base_theme',
                         'value'=>null,
-                        'category'=>'user_register',
+                        'additional1' => null,
+                        'category'=>'general',
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
                     ],
@@ -143,7 +154,8 @@ class DefaultConfigsTableSeeder extends Seeder
             $configs = Configs::create([
                 'name' => 'user_register_after_message',
                 'category' => 'user_register',
-                'value' => 'ユーザ登録が完了しました。登録したログインID、パスワードでログインしてください。'
+                'value' => 'ユーザ登録が完了しました。登録したログインID、パスワードでログインしてください。',
+                'additional1' => 1,
             ]);
         }
 
@@ -188,7 +200,8 @@ class DefaultConfigsTableSeeder extends Seeder
             $configs = Configs::create([
                 'name' => 'user_register_mail_subject',
                 'category' => 'user_register',
-                'value' => 'ユーザ登録が完了しました - [[site_name]]'
+                'value' => 'ユーザ登録が完了しました - [[site_name]]',
+                'additional1' => 1,
             ]);
         }
 
@@ -202,7 +215,8 @@ class DefaultConfigsTableSeeder extends Seeder
 [[body]]
 
 
-ユーザ登録が完了しました。登録したログインID、パスワードでログインしてください。'
+ユーザ登録が完了しました。登録したログインID、パスワードでログインしてください。',
+                'additional1' => 1,
             ]);
         }
 

@@ -51,7 +51,7 @@ class ConnectCarbon extends Carbon
         }
         if (stripos(get_class($this->holiday), "YasumiHoliday") === false) {
             return true;
-        } elseif ($this->holiday->orginal_holiday_status == 1) {
+        } elseif ($this->holiday->original_holiday_status == 1) {
             return true;
         }
         return false;

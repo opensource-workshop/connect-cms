@@ -1,9 +1,14 @@
 {{--
  * 編集画面tabテンプレート
---}}
+ *
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category マイページ
+ --}}
 <div class="frame-setting-menu">
     <nav class="navbar navbar-expand-md navbar-light bg-light py-1">
-        <span class="d-md-none">処理選択 - プロフィール</span>
+        <span class="d-md-none">処理選択 - プロフィール変更</span>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsingNavbarLg">
             <span class="navbar-toggler-icon"></span>
         </button>

@@ -27,7 +27,7 @@
                 @foreach($codes_help_messages as $codes_help_message)
                 <tr>
                     <th class="d-block d-sm-table-cell bg-light">
-                        <a href="{{url('/')}}/manage/code/helpMessageEdit/{{$codes_help_message->id}}?page={{$paginate_page}}&search_words={{$search_words}}"><i class="far fa-edit"></i></a>
+                        <a href="{{url('/')}}/manage/code/helpMessageEdit/{{$codes_help_message->id}}?page={{$paginate_page}}"><i class="far fa-edit"></i></a>
                         <span class="d-sm-none">注釈名：</span>{{$codes_help_message->name}}
                     </th>
                     <td class="d-block d-sm-table-cell"><span class="d-sm-none">注釈キー：</span>{{$codes_help_message->alias_key}}</td>

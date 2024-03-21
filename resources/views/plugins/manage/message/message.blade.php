@@ -25,29 +25,17 @@
             <div class="form-group">
                 <label class="col-form-label">表示の有無</label>
                 <div class="row">
-                    @foreach (ShowType::enum as $key => $value)
-                        {{-- ラジオのチェック判定 --}}
-                        @php
-                            $checked = null;
-                            if(!isset($configs["message_first_show_type"]) && $loop->first){
-                                // 未登録、且つ、ループ初回時はチェックON
-                                $checked = 'checked';
-                            }
-                            if(isset($configs["message_first_show_type"]) && $configs["message_first_show_type"] == $key){
-                                // 設定値があればそれに応じてチェックON
-                                $checked = 'checked';
-                            }
-                        @endphp
-                        {{-- ラジオ表示 --}}
+                    @foreach (ShowType::getMembers() as $enum_value => $enum_label)
                         <div class="col-md-3">
                             <div class="custom-control custom-radio custom-control-inline">
-                                <input 
-                                    type="radio" value="{{ $key }}" class="custom-control-input" id="message_first_show_type_{{ $key }}" 
-                                    name="message_first_show_type" {{ $checked }}
-                                >
-                                <label class="custom-control-label" for="{{ "message_first_show_type_${key}" }}" id="label_{{ "message_first_show_type_${key}" }}">
-                                    {{ $value }}
-                                </label>
+                                @php $message_first_show_type = Configs::getConfigsValueAndOld($configs, 'message_first_show_type', ShowType::getDefault()); @endphp
+                                @if ($message_first_show_type == $enum_value)
+                                    <input type="radio" value="{{$enum_value}}" id="message_first_show_type_{{$enum_value}}" name="message_first_show_type" class="custom-control-input" checked="checked">
+                                @else
+                                    <input type="radio" value="{{$enum_value}}" id="message_first_show_type_{{$enum_value}}" name="message_first_show_type" class="custom-control-input">
+                                @endif
+                                {{-- duskでradioの選択にlabelのid必要 --}}
+                                <label class="custom-control-label" for="message_first_show_type_{{$enum_value}}" id="label_message_first_show_type_{{$enum_value}}">{{$enum_label}}</label>
                             </div>
                         </div>
                     @endforeach
@@ -61,29 +49,17 @@
             <div class="form-group">
                 <label class="col-form-label">ウィンドウ外クリックによる離脱</label>
                 <div class="row">
-                    @foreach (PermissionType::enum as $key => $value)
-                        {{-- ラジオのチェック判定 --}}
-                        @php
-                            $checked = null;
-                            if(!isset($configs["message_first_permission_type"]) && $loop->first){
-                                // 未登録、且つ、ループ初回時はチェックON
-                                $checked = 'checked';
-                            }
-                            if(isset($configs["message_first_permission_type"]) && $configs["message_first_permission_type"] == $key){
-                                // 設定値があればそれに応じてチェックON
-                                $checked = 'checked';
-                            }
-                        @endphp
-                        {{-- ラジオ表示 --}}
+                    @foreach (PermissionType::getMembers() as $enum_value => $enum_label)
                         <div class="col-md-3">
                             <div class="custom-control custom-radio custom-control-inline">
-                                <input 
-                                    type="radio" value="{{ $key }}" class="custom-control-input" id="message_first_permission_type_{{ $key }}" 
-                                    name="message_first_permission_type" {{ $checked }}
-                                >
-                                <label class="custom-control-label" for="{{ "message_first_permission_type_${key}" }}">
-                                    {{ $value }}
-                                </label>
+                                @php $message_first_permission_type = Configs::getConfigsValueAndOld($configs, 'message_first_permission_type', PermissionType::getDefault()); @endphp
+                                @if ($message_first_permission_type == $enum_value)
+                                    <input type="radio" value="{{$enum_value}}" id="message_first_permission_type_{{$enum_value}}" name="message_first_permission_type" class="custom-control-input" checked="checked">
+                                @else
+                                    <input type="radio" value="{{$enum_value}}" id="message_first_permission_type_{{$enum_value}}" name="message_first_permission_type" class="custom-control-input">
+                                @endif
+                                {{-- duskでradioの選択にlabelのid必要 --}}
+                                <label class="custom-control-label" for="message_first_permission_type_{{$enum_value}}" id="label_message_first_permission_type_{{$enum_value}}">{{$enum_label}}</label>
                             </div>
                         </div>
                     @endforeach
@@ -94,28 +70,31 @@
             {{-- メッセージ内容 --}}
             <div class="form-group">
                 <label class="control-label">メッセージ内容</label>
-                <textarea name="message_first_content" class="form-control" rows=5 placeholder="（例）当サイトではトラフィック分析を目的として、クッキー(Cookie)を利用しています。当サイトの閲覧を続けた場合、クッキーの利用に同意いただいたことになります。詳しくはプライバシーポリシーをご覧ください。">{{ $configs['message_first_content'] }}</textarea>
-                <small class="form-text text-muted">※ポップアップに表示するメッセージを設定します。HTML入力が可能です。scriptタグは使用できません。</small>
+                <textarea name="message_first_content" class="form-control" rows=5 placeholder="（例）当サイトではトラフィック分析を目的として、クッキー(Cookie)を利用しています。当サイトの閲覧を続けた場合、クッキーの利用に同意いただいたことになります。詳しくはプライバシーポリシーをご覧ください。">{{ Configs::getConfigsValueAndOld($configs, 'message_first_content', null) }}</textarea>
+                <small class="form-text text-muted">
+                    ※ポップアップに表示するメッセージを設定します。HTML入力が可能です。scriptタグは使用できません。<br />
+                    ※メッセージ内容を変更した場合、すでに同意済みの訪問者にも再度ポップアップメッセージを表示します。
+                </small>
             </div>
 
             {{-- ボタン名 --}}
             <div class="form-group">
                 <label class="col-form-label">ボタン名</label>
-                <input type="text" name="message_first_button_name" value="{{ $configs['message_first_button_name'] }}" class="form-control">
+                <input type="text" name="message_first_button_name" value="{{ Configs::getConfigsValueAndOld($configs, 'message_first_button_name', null) }}" class="form-control">
                 <small class="form-text text-muted">※ポップアップに表示するボタン名を設定します。</small>
             </div>
 
             {{-- 除外URL --}}
             <div class="form-group">
                 <label class="col-form-label">除外URL</label>
-                <input type="text" name="message_first_exclued_url" value="{{ $configs['message_first_exclued_url'] }}" class="form-control" placeholder="（例）/about,/policy">
+                <input type="text" name="message_first_exclued_url" value="{{ Configs::getConfigsValueAndOld($configs, 'message_first_exclued_url', null) }}" class="form-control" placeholder="（例）/about,/policy">
                 <small class="form-text text-muted">※メッセージ表示を除外するURLを設定します。「,」区切りで複数設定できます。</small>
             </div>
 
             {{-- メッセージエリア任意クラス --}}
             <div class="form-group">
                 <label class="col-form-label">メッセージエリア任意クラス</label>
-                <input type="text" name="message_first_optional_class" value="{{ $configs['message_first_optional_class'] }}" class="form-control">
+                <input type="text" name="message_first_optional_class" value="{{ Configs::getConfigsValueAndOld($configs, 'message_first_optional_class', null) }}" class="form-control">
                 <small class="form-text text-muted">※メッセージウィンドウに任意のclass属性を設定します。</small>
             </div>
 

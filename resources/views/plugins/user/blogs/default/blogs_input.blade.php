@@ -71,7 +71,7 @@ use App\Models\User\Blogs\BlogsPosts;
         });
     </script>
 
-    <div class="form-group">
+    <div class="form-group blog-input-important">
         <label class="control-label">重要記事</label>
         <div class="custom-control custom-checkbox">
             <input type="checkbox" name="important" value="1" class="custom-control-input" id="important{{$frame_id}}" @if(old('important', $blogs_posts->important)) checked=checked @endif>
@@ -120,7 +120,7 @@ use App\Models\User\Blogs\BlogsPosts;
         @include('plugins.common.errors_inline_wysiwyg', ['name' => 'post_text2'])
     </div>
 
-    <div class="form-group">
+    <div class="form-group blog-input-category">
         <label class="control-label">カテゴリ</label>
         <select name="categories_id" class="form-control @if ($errors && $errors->has('categories_id')) border-danger @endif">
             <option value=""></option>

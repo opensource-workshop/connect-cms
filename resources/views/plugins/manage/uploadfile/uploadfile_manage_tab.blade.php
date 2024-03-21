@@ -32,6 +32,16 @@
                     <span class="nav-link"><span class="active">アップロードファイル編集</span></span>
                 @endif
                 </li>
+
+                @if (config('connect.MANAGE_USERDIR_PUBLIC_TARGET'))
+                    <li role="presentation" class="nav-item">
+                    @if ($function == "userdirPublic")
+                        <span class="nav-link"><span class="active">ユーザパブリックファイル一覧</span></span>
+                    @else
+                        <a href="{{url('/manage/uploadfile/userdirPublic')}}" class="nav-link">ユーザパブリックファイル一覧</a></li>
+                    @endif
+                    </li>
+                @endif
             </ul>
         </div>
     </nav>

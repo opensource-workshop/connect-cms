@@ -109,7 +109,7 @@ $app_array = [
     |
     */
 
-    'faker_locale' => 'en_US',
+    'faker_locale' => 'ja_JP',
 
     /*
     |--------------------------------------------------------------------------
@@ -170,6 +170,8 @@ $app_array = [
          */
         // 画像処理
         Intervention\Image\ImageServiceProvider::class,
+        // Captcha
+        Mews\Captcha\CaptchaServiceProvider::class,
 
         /*
          * Application Service Providers...
@@ -251,7 +253,6 @@ $app_array = [
         'MinutesIncrements' => \App\Enums\MinutesIncrements::class,
         'ConnectLocale' => \App\Enums\ConnectLocale::class,
         'GroupType' => \App\Enums\GroupType::class,
-        'WhatsnewsTargetPlugin' => \App\Enums\WhatsnewsTargetPlugin::class,
         'CsvCharacterCode' => \App\Enums\CsvCharacterCode::class,
         'ShowType' => \App\Enums\ShowType::class,
         'NotShowType' => \App\Enums\NotShowType::class,
@@ -320,10 +321,17 @@ $app_array = [
         'FaqSequenceConditionType' => \App\Enums\FaqSequenceConditionType::class,
         'DatabaseFrameConfig' => \App\Enums\DatabaseFrameConfig::class,
         'FormMode' => \App\Enums\FormMode::class,
+        'FormsRegisterTargetPlugin' => \App\Enums\FormsRegisterTargetPlugin::class,
+        'WebsiteType' => \App\Enums\WebsiteType::class,
+        'BlogNarrowingDownType' => \App\Enums\BlogNarrowingDownType::class,
+        'BlogNarrowingDownTypeForCreatedId' => \App\Enums\BlogNarrowingDownTypeForCreatedId::class,
+        'FormAccessLimitType' => \App\Enums\FormAccessLimitType::class,
+        'EditType' => \App\Enums\EditType::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
         'StringUtils' => \App\Utilities\String\StringUtils::class,
+        'FileUtils' => \App\Utilities\File\FileUtils::class,
 
         // Models
         'Plugins' => \App\Models\Core\Plugins::class,
@@ -333,6 +341,8 @@ $app_array = [
 
         // 画像処理
         'Image' => Intervention\Image\Facades\Image::class,
+        // Captcha
+        'Captcha' => Mews\Captcha\Facades\Captcha::class,
 
     ],
 

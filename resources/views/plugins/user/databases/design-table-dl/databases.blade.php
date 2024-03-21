@@ -2,6 +2,7 @@
  * 一覧画面テンプレート（tableテンプレートをベース）
  *
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牧野 可也子 <makino@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category データベース・プラグイン
 --}}
@@ -15,6 +16,10 @@
 
     @if ($default_hide_list)
     @else
+        {{-- データベースの表示件数変更セレクトボックス --}}
+        @include('plugins.user.databases.default.databases_include_view_count')
+        {{-- 現在表示している件数テキスト --}}
+        @include('plugins.user.databases.default.databases_include_page_total_views')
         @if($inputs->isNotEmpty())
             {{-- データのループ --}}
             <table class="table table-bordered">
@@ -23,7 +28,11 @@
                 <tr>
                 @foreach($columns as $column)
                     @if($column->list_hide_flag == 0)
-                    <th>{{$column->column_name}}</th>
+                    <th>
+                        @if($column->label_hide_flag == 0)
+                        {{$column->column_name}}
+                        @endif
+                    </th>
                     @endif
                 @endforeach
                 </tr>

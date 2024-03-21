@@ -2,17 +2,9 @@
 
 namespace App\Http\Controllers\Core;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\View;
-
-// use App\Http\Controllers\Core\ConnectController;
-
 use App\Models\Common\Page;
-
-// use App\Traits\ConnectCommonTrait;
+use App\Models\Core\Configs;
+use Carbon\Carbon;
 
 /**
  * Cookie管理
@@ -24,11 +16,8 @@ use App\Models\Common\Page;
  * @category コア
  * @package Controller
  */
-// class CookieController extends ConnectController
 class CookieCore
 {
-    // use ConnectCommonTrait;
-
     /**
      * コンストラクタ
      *
@@ -60,6 +49,19 @@ class CookieCore
         $page = Page::where('id', $page_id)->first();
 
         // cookieをセット（cookie名、値、有効期間（分））して、元ページへリダイレクト
-        return redirect($page->permanent_link)->cookie('connect_cookie_message_first', 'agreed', 525600);
+        return redirect($page->permanent_link)->cookie('connect_cookie_message_first', self::getCookieForMessageTimestamp(), 525600);
+    }
+
+    /**
+     * メッセージ内容の更新タイムスタンプ取得
+     */
+    public static function getCookieForMessageTimestamp(): int
+    {
+        // メッセージ内容
+        // 初回メッセージ確認を「表示する」にした場合、「メッセージ内容」が空でもレコードが作成されるため、基本new Carbon()に到達しない想定。
+        $config = Configs::firstOrNew(['name' => 'message_first_content']);
+        $updated_at = $config->updated_at ?? new Carbon();
+
+        return $updated_at->timestamp;
     }
 }

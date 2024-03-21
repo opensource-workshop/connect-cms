@@ -66,16 +66,6 @@ class SearchsPlugin extends UserPluginBase
         return $role_check_table;
     }
 
-    /**
-     * 編集画面の最初のタブ（コアから呼び出す）
-     *
-     * スーパークラスをオーバーライド
-     */
-    public function getFirstFrameEditAction()
-    {
-        return "editBuckets";
-    }
-
     /* private関数 */
 
     /**
@@ -119,7 +109,7 @@ class SearchsPlugin extends UserPluginBase
     /**
      * 検索結果の取得
      */
-    private function searchContents($request, $searchs_frame, $method = null)
+    private function searchContents($request, $searchs_frame, $method = null, $narrow_down = null)
     {
         // 検索がまだできていない場合
         if (!$searchs_frame || empty($searchs_frame->id)) {
@@ -166,16 +156,36 @@ class SearchsPlugin extends UserPluginBase
                      DB::raw("null as classname"),
                      DB::raw("null as categories_id"),
                      DB::raw("null as category"),
-                     DB::raw("null as plugin_name")
+                     DB::raw("null as plugin_name"),
+                     DB::raw("null as body")
                  )
                  ->leftJoin('categories', 'categories.id', '=', 'searchs_dual.categories_id');
 
         // 各プラグインのSQL をUNION
+        // 公開されているページ、フレームを検索対象とする
+        $searchable_page_ids = $this->fetchSearchablePageIds($request);
+        $searchable_frame_ids = Frame::visible()->get()->pluck('id');
+
         foreach ($union_sqls as $union_sql) {
             // フレームの選択が行われる場合
+            // 選択したものだけ表示する
             if ($searchs_frame->frame_select == 1) {
                 $union_sql->whereIn('frames.id', explode(',', $searchs_frame->target_frame_ids));
             }
+
+            // 固定記事でサイト検索が作られることを想定してnarrow_down_page_idにサイト検索元のページIDを指定する
+            // 指定ページ以下に絞って検索する
+            if ($request->narrow_down_page_id) {
+                $page_ids = Page::findOrNew($request->narrow_down_page_id)->descendants()->pluck('id');
+                $page_ids->push($request->narrow_down_page_id);
+                $union_sql->whereIn('pages.id', $page_ids);
+            }
+
+            // 非公開ページ除外
+            $union_sql->whereIn('pages.id', $searchable_page_ids);
+            // 非公開フレーム除外
+            $union_sql->whereIn('frames.id', $searchable_frame_ids);
+
             $searchs_sql->unionAll($union_sql);
         }
 
@@ -250,7 +260,7 @@ class SearchsPlugin extends UserPluginBase
         $searchs_frame = $this->getSearchsFrame($frame_id);
 
         // 新着の一覧取得
-        list($searchs_results, $link_pattern, $link_base) = $this->searchContents($request, $searchs_frame);
+        list($searchs_results, $link_pattern, $link_base) = $this->searchContents($request, $searchs_frame, null, $request->narrow_down);
 
         // 表示テンプレートを呼び出す。
         return $this->view(
@@ -459,5 +469,35 @@ class SearchsPlugin extends UserPluginBase
 
         // 新着情報設定選択画面を呼ぶ
         return $this->listBuckets($request, $page_id, $frame_id, $id);
+    }
+
+    /**
+     * 検索対象のページIDを取得する
+     */
+    private function fetchSearchablePageIds($request)
+    {
+        $pages = Page::get();
+        // 見れないページ除外
+        $visible_page_ids = [];
+        foreach ($pages as $page) {
+            // 自分のページから親を遡って取得
+            $page_tree = Page::reversed()->ancestorsAndSelf($page->id);
+
+            // パスワード認証
+            if ($page->isRequestPassword($request, $page_tree)) {
+                // 見れないページ
+                continue;
+            }
+
+            // 親子ページを加味してページ表示できるか
+            if (!$page->isVisibleAncestorsAndSelf($page_tree)) {
+                continue;
+            }
+
+            // 見れるページ
+            $visible_page_ids[] = $page->id;
+        }
+
+        return $visible_page_ids;
     }
 }

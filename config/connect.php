@@ -83,12 +83,24 @@ return [
     'SELF_REGISTER_BASE_ROLES' => env('SELF_REGISTER_BASE_ROLES', null),
 
     // Custom message.
-    'cc_lang_ja_messages_search_results_empty' => env('cc_lang_ja_messages_search_results_empty'),
-    'cc_lang_ja_messages_enter_same_email' => env('cc_lang_ja_messages_enter_same_email'),
-    'cc_lang_ja_messages_input_user_name' => env('cc_lang_ja_messages_input_user_name'),
+    'cc_lang_ja_messages_search_results_empty'            => env('cc_lang_ja_messages_search_results_empty'),
+    'cc_lang_ja_messages_enter_same_email'                => env('cc_lang_ja_messages_enter_same_email'),
+    'cc_lang_ja_messages_input_user_name'                 => env('cc_lang_ja_messages_input_user_name'),
+    'cc_lang_ja_messages_to_regist'                       => env('cc_lang_ja_messages_to_regist'),
+    'cc_lang_ja_messages_regist_application'              => env('cc_lang_ja_messages_regist_application'),
+    'cc_lang_ja_messages_regist_confirmed'                => env('cc_lang_ja_messages_regist_confirmed'),
+    'cc_lang_ja_messages_change_application'              => env('cc_lang_ja_messages_change_application'),
+    'cc_lang_ja_messages_change_confirmed'                => env('cc_lang_ja_messages_change_confirmed'),
+    'cc_lang_ja_messages_confirm_of_regist_application'   => env('cc_lang_ja_messages_confirm_of_regist_application'),
+    'cc_lang_ja_messages_confirmed_of_regist_application' => env('cc_lang_ja_messages_confirmed_of_regist_application'),
+    'cc_lang_ja_messages_confirm_of_change_application'   => env('cc_lang_ja_messages_confirm_of_change_application'),
+    'cc_lang_ja_messages_confirmed_of_change_application' => env('cc_lang_ja_messages_confirmed_of_change_application'),
 
     // csrfチェックの除外設定
     'VERIFY_CSRF_TOKEN_EXCEPT' => env('VERIFY_CSRF_TOKEN_EXCEPT', ''),
+
+    // Slackの署名付きトークン
+    'SLACK_SIGNING_SECRET' => env('SLACK_SIGNING_SECRET', ''),
 
     // 外部APIを使って翻訳
     'TRANSLATE_API_URL' => env('TRANSLATE_API_URL', ''),
@@ -156,9 +168,21 @@ return [
     // Use the container (beta)
     'USE_CONTAINER_BETA' => env('USE_CONTAINER_BETA', false),
 
+    // ユーザの項目セットを使う
+    'USE_USERS_COLUMNS_SET' => env('USE_USERS_COLUMNS_SET', false),
+
     // QUEUE_CONNECTION=database 時に使われるPHP BINのパス. null時は自動判定
     'QUEUE_PHP_BIN' => env('QUEUE_PHP_BIN', null),
 
     // 連番管理の連番クリア機能を無効化するプラグイン名
     'PLUGIN_NAME_TO_DISABLE_SERIAL_NUMBER_CLEAR' => env('PLUGIN_NAME_TO_DISABLE_SERIAL_NUMBER_CLEAR', null),
+
+    // データベースプラグイン
+    // 詳細画面で非表示項目をパラメータのID指定で強制的に表示する機能(beta)
+    'DATABASES_FORCE_SHOW_COLUMN_ON_DETAIL' => env('DATABASES_FORCE_SHOW_COLUMN_ON_DETAIL', false),
+    // 絞り込み項目の登録済み件数を表示する(beta)
+    'DATABASES_SHOW_SEARCH_COLUMN_COUNT' => env('DATABASES_SHOW_SEARCH_COLUMN_COUNT', false),
+
+    // public配下のディレクトリを指定してファイル管理. null時は機能自体使わない(beta)
+    'MANAGE_USERDIR_PUBLIC_TARGET' => env('MANAGE_USERDIR_PUBLIC_TARGET', null),
 ];
