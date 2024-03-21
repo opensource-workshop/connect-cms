@@ -9,6 +9,7 @@ FAQ,/test/faq,NULL,NULL,NULL,NULL,1
 キャビネット,/test/cabinet,NULL,NULL,NULL,NULL,1
 フォトアルバム,/test/photoalbum,NULL,NULL,NULL,NULL,1
 データベース,/test/database,NULL,NULL,NULL,NULL,1
+RSS,/test/rss,NULL,NULL,NULL,NULL,1
 OPAC,/test/opac,NULL,NULL,NULL,NULL,1
 フォーム,/test/form,NULL,NULL,NULL,NULL,1
 アンケート,/test/questionnaire,NULL,NULL,NULL,NULL,1

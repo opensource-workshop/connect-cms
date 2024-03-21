@@ -116,8 +116,8 @@ class RssesPlugin extends UserPluginBase
      *  コアがページ表示の際に呼び出す関数
      *
      * @method_title RSS表示
-     * @method_desc 画像をRSS表示します。
-     * @method_detail 画像がRSS表示できます。キャプション表示やリンクの設定ができます。
+     * @method_desc RSSを取得して表示します。
+     * @method_detail 複数のRSSを設定でき、キャプション表示やリンクの設定ができます。
      */
     public function index($request, $page_id, $frame_id, $errors = null)
     {
@@ -632,9 +632,9 @@ class RssesPlugin extends UserPluginBase
     /**
      * 項目編集画面の表示
      *
-     * @method_title 画像の登録
-     * @method_desc RSSの画像を登録します。
-     * @method_detail 画像やURLを登録できます。<br />PDFをアップロードして、各ページを1つの画像に自動変換して登録することもできます。
+     * @method_title RSSの登録
+     * @method_desc RSSを登録します。
+     * @method_detail URLを登録できます。<br />RSS表示画面のタイトルとキャプション、表示データ数を設定できます。
      */
     public function editUrl($request, $page_id, $frame_id, $id = null, $message = null, $errors = null)
     {
