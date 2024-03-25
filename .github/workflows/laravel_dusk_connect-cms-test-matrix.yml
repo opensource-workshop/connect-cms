@@ -356,6 +356,10 @@ jobs:
         if: always()
         run: php artisan dusk tests/Browser/User/DatabasesPluginTest.php
 
+      - name: 'Run Dusk RSS'
+        if: always()
+        run: php artisan dusk tests/Browser/User/RssesPluginTest.php
+
       - name: 'Run Dusk OPAC'
         if: always()
         run: php artisan dusk tests/Browser/User/OpacsPluginTest.php
