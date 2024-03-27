@@ -97,6 +97,7 @@ class FormsPlugin extends UserPluginBase
             'publicConfirmToken',
             'listInputs',
             'editInput',
+            'thanks',
         ];
         $functions['post'] = [
             'index',
@@ -898,24 +899,20 @@ class FormsPlugin extends UserPluginBase
 
         // 表示期間外か
         if ($this->isOutOfTermDisplay($form)) {
-            // 表示しない
-            return false;
+            // 初期表示にリダイレクトして、初期表示処理にまかせる（表示しない）
+            return collect(['redirect_path' => url($this->page->permanent_link)]);
         }
 
         // 登録期間外か
         if ($this->isOutOfTermRegist($form)) {
-            // エラー画面へ
-            return $this->commonView('error_messages', [
-                'error_messages' => ['登録期間外のため、登録出来ません。'],
-            ]);
+            // 初期表示にリダイレクトして、初期表示処理にまかせる（エラー表示）
+            return collect(['redirect_path' => url($this->page->permanent_link)]);
         }
 
         // 登録制限数オーバーか
         if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
-            // エラー画面へ
-            return $this->commonView('error_messages', [
-                'error_messages' => [$form->entry_limit_over_message],
-            ]);
+            // 初期表示にリダイレクトして、初期表示処理にまかせる（エラー表示）
+            return collect(['redirect_path' => url($this->page->permanent_link)]);
         }
 
         // forms_inputs 登録
@@ -1027,10 +1024,11 @@ class FormsPlugin extends UserPluginBase
         $contents_text = trim($contents_text);
 
         if ($form->use_temporary_regist_mail_flag) {
-            // 仮登録
+            // *** 仮登録
             // ユーザ側のみメール送信する
 
             $after_message = $form->temporary_regist_after_message;
+            session()->flash("after_message{$frame_id}", $after_message);
 
             // メール送信
             // メール件名の組み立て
@@ -1066,16 +1064,15 @@ class FormsPlugin extends UserPluginBase
             // メール送信（ユーザー側）
             foreach ($user_mailaddresses as $user_mailaddress) {
                 if (!empty($user_mailaddress)) {
-                    // Mail::to(trim($user_mailaddress))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
                     // メール送信はログ出力の追加に伴いTrait のメソッドに移行
                     $this->sendMail($user_mailaddress, $mail_options, ['content' => $mail_text], $this->getPluginName());
                 }
             }
         } else {
-            // 本登録
-
+            // *** 本登録
             // 登録後メッセージ内の採番文字列を置換
             $after_message = str_replace('[[number]]', $number, $form->after_message);
+            session()->flash("after_message{$frame_id}", $after_message);
 
             // メール送信
             if ($form->mail_send_flag || $form->user_mail_send_flag) {
@@ -1114,7 +1111,6 @@ class FormsPlugin extends UserPluginBase
                 if ($form->mail_send_flag) {
                     $mail_addresses = explode(',', $form->mail_send_address);
                     foreach ($mail_addresses as $mail_address) {
-                        // Mail::to(trim($mail_address))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
                         // メール送信はログ出力の追加に伴いTrait のメソッドに移行
                         $this->sendMail($mail_address, $mail_options, ['content' => $mail_text], $this->getPluginName());
                     }
@@ -1124,7 +1120,6 @@ class FormsPlugin extends UserPluginBase
                 if ($form->user_mail_send_flag) {
                     foreach ($user_mailaddresses as $user_mailaddress) {
                         if (!empty($user_mailaddress)) {
-                            // Mail::to(trim($user_mailaddress))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
                             // メール送信はログ出力の追加に伴いTrait のメソッドに移行
                             $this->sendMail($user_mailaddress, $mail_options, ['content' => $mail_text], $this->getPluginName());
                         }
@@ -1151,9 +1146,17 @@ class FormsPlugin extends UserPluginBase
             }
         }
 
-        // 表示テンプレートを呼び出す。
+        // 登録後のリダイレクト表示
+        return collect(['redirect_path' => url('/') . "/plugin/forms/thanks/{$page_id}/{$frame_id}#frame-{$frame_id}"]);
+    }
+
+    /**
+     * 登録後画面
+     */
+    public function thanks($request, $page_id, $frame_id, $id = null)
+    {
         return $this->view('forms_thanks', [
-            'after_message' => $after_message
+            'after_message' => session("after_message{$frame_id}")
         ]);
     }
 
@@ -1257,33 +1260,30 @@ class FormsPlugin extends UserPluginBase
 
         // 表示期間外か
         if ($this->isOutOfTermDisplay($form)) {
-            // 表示しない
-            return false;
+            // 初期表示にリダイレクトして、初期表示処理にまかせる（表示しない）
+            return collect(['redirect_path' => url($this->page->permanent_link)]);
         }
 
         // 登録期間外か
         if ($this->isOutOfTermRegist($form)) {
-            // エラー画面へ
-            return $this->commonView('error_messages', [
-                'error_messages' => ['登録期間外のため、登録出来ません。'],
-            ]);
+            // 初期表示にリダイレクトして、初期表示処理にまかせる（エラー表示）
+            return collect(['redirect_path' => url($this->page->permanent_link)]);
         }
 
         // 登録制限数オーバーか
         if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
-            // エラー画面へ
-            return $this->commonView('error_messages', [
-                'error_messages' => [$form->entry_limit_over_message],
-            ]);
+            // 初期表示にリダイレクトして、初期表示処理にまかせる（エラー表示）
+            return collect(['redirect_path' => url($this->page->permanent_link)]);
         }
 
         // $id がなかったら、エラー画面へ
         // $forms_inputs がなかったら、エラー画面へ
         $forms_inputs = FormsInputs::find($id);
         if (empty($forms_inputs)) {
-            return $this->commonView('error_messages', [
-                'error_messages' => ['有効期限切れのため、そのURLはご利用できません。'],
-            ]);
+            session()->flash("error_messages{$frame_id}", '有効期限切れのため、そのURLはご利用できません。');
+
+            // 初期表示にリダイレクトして、初期表示処理にまかせる（エラー表示）
+            return collect(['redirect_path' => url($this->page->permanent_link)]);
         }
 
         // 項目のエラーチェック
@@ -1293,9 +1293,11 @@ class FormsPlugin extends UserPluginBase
 
         // getで日付形式エラーは表示しない（通常URLをコピペミス等でいじらなければエラーにならない想定）
         if ($validator->fails()) {
-            return $this->commonView('error_messages', [
-                'error_messages' => $validator->errors()->all(),
-            ]);
+            $error_messages = $validator->errors()->all();
+            session()->flash("error_messages{$frame_id}", $error_messages[0]);
+
+            // 初期表示にリダイレクトして、初期表示処理にまかせる（エラー表示）
+            return collect(['redirect_path' => url($this->page->permanent_link)]);
         }
 
         // forms_inputs 更新
@@ -1314,22 +1316,17 @@ class FormsPlugin extends UserPluginBase
 
         // フォームの登録データ
         $forms_input_cols = FormsInputCols::where('forms_inputs_id', $id)
-                                            ->get()
-                                            // keyをforms_columns_idにした結果をセット
-                                            ->mapWithKeys(function ($item) {
-                                                return [$item['forms_columns_id'] => $item];
-                                            });
+            ->get()
+            // keyをforms_columns_idにした結果をセット
+            ->mapWithKeys(function ($item) {
+                return [$item['forms_columns_id'] => $item];
+            });
 
         // メールの送信文字列
         $contents_text = '';
 
         // 登録者のメールアドレス
         $user_mailaddresses = array();
-        // dd($id, $forms_input_cols->first()->forms_columns_id);
-        // foreach ($forms_input_cols as $forms_input_col) {
-        //     var_dump($forms_input_col->forms_columns_id);
-        // }
-        // dd($forms_input_cols->count());
 
         // 添付ファイルID
         $attach_uploads_ids = [];
@@ -1367,12 +1364,11 @@ class FormsPlugin extends UserPluginBase
         }
         // 最後の改行を除去
         $contents_text = trim($contents_text);
-        // dd($user_mailaddresses);
 
-        // 本登録
-
+        // *** 本登録
         // 登録後メッセージ内の採番文字列を置換
         $after_message = str_replace('[[number]]', $number, $form->after_message);
+        session()->flash("after_message{$frame_id}", $after_message);
 
         // メール送信
         if ($form->mail_send_flag || $form->user_mail_send_flag) {
@@ -1411,7 +1407,6 @@ class FormsPlugin extends UserPluginBase
             if ($form->mail_send_flag) {
                 $mail_addresses = explode(',', $form->mail_send_address);
                 foreach ($mail_addresses as $mail_address) {
-                    // Mail::to(trim($mail_address))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
                     // メール送信はログ出力の追加に伴いTrait のメソッドに移行
                     $this->sendMail($mail_address, $mail_options, ['content' => $mail_text], $this->getPluginName());
                 }
@@ -1421,7 +1416,6 @@ class FormsPlugin extends UserPluginBase
             if ($form->user_mail_send_flag) {
                 foreach ($user_mailaddresses as $user_mailaddress) {
                     if (!empty($user_mailaddress)) {
-                        // Mail::to(trim($user_mailaddress))->send(new ConnectMail($mail_options, ['content' => $mail_text]));
                         // メール送信はログ出力の追加に伴いTrait のメソッドに移行
                         $this->sendMail($user_mailaddress, $mail_options, ['content' => $mail_text], $this->getPluginName());
                     }
@@ -1429,10 +1423,8 @@ class FormsPlugin extends UserPluginBase
             }
         }
 
-        // 表示テンプレートを呼び出す。
-        return $this->view('forms_thanks', [
-            'after_message' => $after_message
-        ]);
+        // 登録後のリダイレクト表示
+        return collect(['redirect_path' => url('/') . "/plugin/forms/thanks/{$page_id}/{$frame_id}#frame-{$frame_id}"]);
     }
 
     /**
