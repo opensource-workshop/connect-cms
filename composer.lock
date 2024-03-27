@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a7d91d8da89970310187f284fed081b4",
+    "content-hash": "b20aef81f019427bd4a1c8d6b8ea582c",
     "packages": [
         {
             "name": "azuyalabs/yasumi",
@@ -2294,31 +2294,31 @@
         },
         {
             "name": "mews/captcha",
-            "version": "3.3.2",
+            "version": "3.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/mewebstudio/captcha.git",
-                "reference": "7aee0e80bcf7eb17fc0d574244e384e56ae2af77"
+                "reference": "8c439263d0ba42e6c05e4d1f3bee0a2b97e675d5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/mewebstudio/captcha/zipball/7aee0e80bcf7eb17fc0d574244e384e56ae2af77",
-                "reference": "7aee0e80bcf7eb17fc0d574244e384e56ae2af77",
+                "url": "https://api.github.com/repos/mewebstudio/captcha/zipball/8c439263d0ba42e6c05e4d1f3bee0a2b97e675d5",
+                "reference": "8c439263d0ba42e6c05e4d1f3bee0a2b97e675d5",
                 "shasum": ""
             },
             "require": {
                 "ext-gd": "*",
-                "illuminate/config": "~5|^6|^7|^8|^9|^10",
-                "illuminate/filesystem": "~5|^6|^7|^8|^9|^10",
-                "illuminate/hashing": "~5|^6|^7|^8|^9|^10",
-                "illuminate/session": "~5|^6|^7|^8|^9|^10",
-                "illuminate/support": "~5|^6|^7|^8|^9|^10",
+                "illuminate/config": "~5|^6|^7|^8|^9|^10.0",
+                "illuminate/filesystem": "~5|^6|^7|^8|^9|^10.0",
+                "illuminate/hashing": "~5|^6|^7|^8|^9|^10.0",
+                "illuminate/session": "~5|^6|^7|^8|^9|^10.0",
+                "illuminate/support": "~5|^6|^7|^8|^9|^10.0",
                 "intervention/image": "~2.5",
-                "php": "^7.2|^8.1"
+                "php": "^7.2|^8.0"
             },
             "require-dev": {
                 "mockery/mockery": "^1.0",
-                "phpunit/phpunit": "^8.5|^9.5.10"
+                "phpunit/phpunit": "^8.5|^9.0"
             },
             "type": "package",
             "extra": {
@@ -2351,7 +2351,7 @@
                     "role": "Developer"
                 }
             ],
-            "description": "Laravel 5/6/7/8/9/10 Captcha Package",
+            "description": "Laravel 5 & 6 Captcha Package",
             "homepage": "https://github.com/mewebstudio/captcha",
             "keywords": [
                 "captcha",
@@ -2361,9 +2361,9 @@
             ],
             "support": {
                 "issues": "https://github.com/mewebstudio/captcha/issues",
-                "source": "https://github.com/mewebstudio/captcha/tree/3.3.2"
+                "source": "https://github.com/mewebstudio/captcha/tree/3.3.0"
             },
-            "time": "2023-07-15T15:07:48+00:00"
+            "time": "2023-03-14T08:30:02+00:00"
         },
         {
             "name": "monolog/monolog",
