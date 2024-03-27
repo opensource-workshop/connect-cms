@@ -197,7 +197,7 @@ class PageManageTest extends DuskTestCase
      */
     private function movePageNoScreenshot()
     {
-        $children_names = ['ブログ','カレンダー','スライドショー','開館カレンダー','FAQ','リンクリスト','キャビネット','フォトアルバム','データベース','OPAC','フォーム','アンケート','課題管理','カウンター','サイト内検索','データベース検索','掲示板','施設予約','メニュー','タブ'];
+        $children_names = ['ブログ','カレンダー','スライドショー','開館カレンダー','FAQ','リンクリスト','キャビネット','フォトアルバム','データベース','RSS','OPAC','フォーム','アンケート','課題管理','カウンター','サイト内検索','データベース検索','掲示板','施設予約','メニュー','タブ'];
         $this->movePageChildren('プラグイン・テスト', $children_names);
 
         $children_names = ['フレーム'];

@@ -76,7 +76,7 @@ class RssesPluginTest extends DuskTestCase
     }
 
     /**
-     * Url登録
+     * URL登録
      */
     private function editUrl($title = null)
     {
@@ -104,9 +104,9 @@ class RssesPluginTest extends DuskTestCase
              "comment": "<ul class=\"mb-0\"><li>RSS取得先URLを入力し、追加ボタンを押すことで登録されます。</li></ul>"
             },
             {"path": "user/rsses/editUrl/images/editUrl2",
-             "name": "Url追加後",
-             "comment": "<ul class=\"mb-0\"><li>Urlを追加すると、「既存の設定行」に追加されます。</li></ul>"
-            },
+             "name": "URL追加後",
+             "comment": "<ul class=\"mb-0\"><li>URLを追加すると、「既存の設定行」に追加されます。</li></ul>"
+            }
         ]', null, 4, 'basic');
     }
 
