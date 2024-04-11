@@ -26,6 +26,9 @@ class UsersTool
 {
     const CHECKBOX_SEPARATOR = '|';
 
+    /** columns_set_id 初期値 1:基本 */
+    const COLUMNS_SET_ID_DEFAULT = 1;
+
     /**
      * ユーザーのカラム取得
      */
