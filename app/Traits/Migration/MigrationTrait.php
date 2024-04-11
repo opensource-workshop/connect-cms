@@ -84,7 +84,6 @@ use App\Models\User\Slideshows\SlideshowsItems;
 use App\Models\User\Rsses\Rsses;
 use App\Models\User\Rsses\RssUrls;
 
-
 use App\User;
 
 use App\Models\Migration\MigrationMapping;
@@ -162,6 +161,7 @@ use App\Models\Migration\Nc2\Nc2SlidesUrl;
 use App\Models\Migration\Nc2\Nc2Simplemovie;
 use App\Models\Migration\Nc2\Nc2RssBlock;
 
+use App\Plugins\Manage\UserManage\UsersTool;
 use App\Traits\ConnectCommonTrait;
 use App\Utilities\Migration\MigrationUtils;
 
@@ -1778,7 +1778,7 @@ trait MigrationTrait
                     $user->userid     = $user_item['userid'];
                     $user->password   = $user_item['password'];
                     $user->status     = $user_item['status'];
-                    $user->columns_set_id = 1;
+                    $user->columns_set_id = UsersTool::COLUMNS_SET_ID_DEFAULT;
                     $user->created_at = $user_item['created_at'];
                     $user->updated_at = $user_item['updated_at'];
                     $user->save();
