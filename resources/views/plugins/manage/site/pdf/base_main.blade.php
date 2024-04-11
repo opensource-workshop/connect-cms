@@ -108,6 +108,9 @@
     </tr>
     <tr nobr="true">
         <td>スマホメニューの表示形式</td>
-        <td>{{Configs::getConfigsValue($configs, 'smartphone_menu_template', null)}}</td>
+        @php
+            $smartphone_menu_template_type = Configs::getConfigsValue($configs, 'smartphone_menu_template', SmartphoneMenuTemplateType::none);
+        @endphp
+        <td>{{SmartphoneMenuTemplateType::getDescription($smartphone_menu_template_type)}}</td>
     </tr>
 </table>
