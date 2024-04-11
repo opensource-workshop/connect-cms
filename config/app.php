@@ -327,6 +327,7 @@ $app_array = [
         'BlogNarrowingDownTypeForCreatedId' => \App\Enums\BlogNarrowingDownTypeForCreatedId::class,
         'FormAccessLimitType' => \App\Enums\FormAccessLimitType::class,
         'EditType' => \App\Enums\EditType::class,
+        'SmartphoneMenuTemplateType' => \App\Enums\SmartphoneMenuTemplateType::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
