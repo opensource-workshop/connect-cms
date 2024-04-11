@@ -59,6 +59,7 @@ class RequestUtils
             'python-requests',
             'meg',
             'Scrapy',
+            'GoogleOther',
         ];
 
         foreach ($bots as $bot) {

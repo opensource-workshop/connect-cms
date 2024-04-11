@@ -16,6 +16,8 @@ use Illuminate\Support\Str;
 // ログインエラーをCatch するために追加。
 use Illuminate\Validation\ValidationException;
 
+use App\Plugins\Manage\UserManage\UsersTool;
+
 use App\User;
 use App\Models\Core\Configs;
 use App\Models\Core\UsersRoles;
@@ -306,6 +308,7 @@ class LoginController extends Controller
                         $user->userid = $request['userid'];
                         $user->password = Hash::make($request['password']);
                         $user->created_event = AuthMethodType::netcommons2;
+                        $user->columns_set_id = UsersTool::COLUMNS_SET_ID_DEFAULT;
                         $user->save();
 
                         // 追加権限設定があれば作成
@@ -411,6 +414,7 @@ class LoginController extends Controller
                         $user->userid = $request->userid;
                         $user->password = $password;
                         $user->created_event = AuthMethodType::ldap;
+                        $user->columns_set_id = UsersTool::COLUMNS_SET_ID_DEFAULT;
                         $user->save();
 
                     } else {
@@ -495,6 +499,7 @@ class LoginController extends Controller
                 $user->email = $email;
                 $user->password = $password;
                 $user->created_event = AuthMethodType::shibboleth;
+                $user->columns_set_id = UsersTool::COLUMNS_SET_ID_DEFAULT;
                 $user->save();
 
                 // [TODO] 区分 (unscoped-affiliation),    faculty (教員)，staff (職員), student (学生)

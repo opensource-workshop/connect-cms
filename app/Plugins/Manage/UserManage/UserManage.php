@@ -577,7 +577,7 @@ class UserManage extends ManagePluginBase
             $columns_set_id = 0;
         } else {
             // 1:ユーザ一覧（基本）
-            $columns_set_id = 1;
+            $columns_set_id = UsersTool::COLUMNS_SET_ID_DEFAULT;
         }
 
         return $columns_set_id;

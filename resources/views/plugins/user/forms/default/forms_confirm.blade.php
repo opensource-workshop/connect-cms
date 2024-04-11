@@ -12,12 +12,13 @@
 <script type="text/javascript">
     {{-- 保存のsubmit JavaScript --}}
     function submit_forms_store() {
-        forms_store{{$frame_id}}.action = "{{URL::to('/')}}/plugin/forms/publicStore/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        forms_store{{$frame_id}}.action = "{{url('/')}}/redirect/plugin/forms/publicStore/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        forms_store{{$frame_id}}.redirect_path.value = "{{url('/')}}/plugin/forms/publicConfirm/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         forms_store{{$frame_id}}.submit();
     }
     {{-- 保存のキャンセル JavaScript --}}
     function submit_forms_cancel() {
-        forms_store{{$frame_id}}.action = "{{URL::to('/')}}/plugin/forms/index/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+        forms_store{{$frame_id}}.action = "{{url('/')}}/plugin/forms/index/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         forms_store{{$frame_id}}.submit();
     }
     {{-- 二重クリック防止 JavaScript --}}
@@ -34,6 +35,8 @@
 
 <form action="" name="forms_store{{$frame_id}}" method="POST">
     {{ csrf_field() }}
+    <input type="hidden" name="redirect_path" value="">
+
     @foreach($forms_columns as $form_column)
     <div class="form-group container-fluid row">
 
