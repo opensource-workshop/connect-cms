@@ -391,8 +391,14 @@
         <div class="form-group">
             <label class="col-form-label">スマホメニューの表示形式</label>
             <select name="smartphone_menu_template" class="form-control">
-                <option value=""@if(Configs::getConfigsValueAndOld($configs, "smartphone_menu_template") == "") selected @endif>default</option>
-                <option value="opencurrenttree"@if(Configs::getConfigsValueAndOld($configs, "smartphone_menu_template") == "opencurrenttree") selected @endif>opencurrenttree</option>
+                @foreach (SmartphoneMenuTemplateType::enum as $key => $value)
+                    <option 
+                        value="{{ $key }}"
+                        @if(Configs::getConfigsValueAndOld($configs, "smartphone_menu_template") == $key) selected @endif
+                    >
+                        {{ SmartphoneMenuTemplateType::getDescription($key) }}
+                    </option>
+                @endforeach
             </select>
         </div>
 

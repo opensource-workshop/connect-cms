@@ -21,6 +21,7 @@ use App\Plugins\Manage\ManagePluginBase;
 use App\Plugins\Manage\SiteManage\CCPDF;
 use App\Enums\BaseLoginRedirectPage;
 use App\Enums\StatusType;
+use App\Enums\SmartphoneMenuTemplateType;
 use App\Utilities\File\FileUtils;
 
 /* 移行データ用 */
@@ -455,7 +456,7 @@ class SiteManage extends ManagePluginBase
         $configs = Configs::updateOrCreate(
             ['name'     => 'smartphone_menu_template'],
             ['category' => 'general',
-             'value'    => (isset($request->smartphone_menu_template) ? $request->smartphone_menu_template : "")]
+             'value'    => (isset($request->smartphone_menu_template) ? $request->smartphone_menu_template : SmartphoneMenuTemplateType::none)]
         );
 
         // ページ管理画面に戻る
