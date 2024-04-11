@@ -451,7 +451,7 @@ class SiteManage extends ManagePluginBase
              'value'    => (isset($request->base_touch_callout) ? $request->base_touch_callout : 0)]
         );
 
-        // スマホメニューのフォーマット
+        // スマホメニューの表示形式
         $configs = Configs::updateOrCreate(
             ['name'     => 'smartphone_menu_template'],
             ['category' => 'general',

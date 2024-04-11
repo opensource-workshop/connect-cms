@@ -107,7 +107,7 @@
         <td>@php echo implode(', ', $image_nosaves); @endphp</td>
     </tr>
     <tr nobr="true">
-        <td>スマホメニューのフォーマット</td>
+        <td>スマホメニューの表示形式</td>
         <td>{{Configs::getConfigsValue($configs, 'smartphone_menu_template', null)}}</td>
     </tr>
 </table>
