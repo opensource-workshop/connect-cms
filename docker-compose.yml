@@ -1,11 +1,10 @@
-version: '3'
 services:
     app:
         container_name: app
         build: ./docker/app
-        volumes: 
+        volumes:
             - .:/var/www/html/connect-cms
-        ports: 
+        ports:
             - 80:80
         environment:
             DB_USERNAME: JohnDoe
