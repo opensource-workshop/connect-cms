@@ -723,10 +723,10 @@ class FormsPlugin extends UserPluginBase
         $validator = Validator::make($request->all(), [
             'captcha' => ['required', 'captcha'],
         ]);
+
         $validator->setAttributeNames([
             'captcha' => '画像認証',
         ]);
-
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }

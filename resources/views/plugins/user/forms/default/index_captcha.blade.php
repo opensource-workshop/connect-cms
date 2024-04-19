@@ -37,7 +37,7 @@
             <input type="text" name="captcha" value="{{old('captcha')}}" class="form-control @if ($errors->has('captcha')) border-danger @endif">
             @include('plugins.common.errors_inline', ['name' => 'captcha'])
             <small class="text-muted">
-                画像の文字を入力してください。
+                画像の文字を入力してください。次の画面でフォーム内容を入力することができます。
             </small>
         </div>
     </div>
