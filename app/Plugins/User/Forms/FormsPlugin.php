@@ -725,10 +725,11 @@ class FormsPlugin extends UserPluginBase
         ];
 
         // 項目のエラーチェック
-        $validator = Validator::make($request->all(), 
+        $validator = Validator::make(
+            $request->all(),
             [
                 'captcha' => ['required', 'captcha'],
-            ], 
+            ],
             $validation_messages
         );
 
