@@ -719,10 +719,20 @@ class FormsPlugin extends UserPluginBase
      */
     public function publicCaptcha($request, $page_id, $frame_id)
     {
+        // カスタムエラーメッセージの定義
+        $validation_messages = [
+            'captcha.captcha' => '画像上に表示されている正しい文字を入力してください。',
+        ];
+
         // 項目のエラーチェック
-        $validator = Validator::make($request->all(), [
-            'captcha' => ['required', 'captcha'],
-        ]);
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'captcha' => ['required', 'captcha'],
+            ],
+            $validation_messages
+        );
+
         $validator->setAttributeNames([
             'captcha' => '画像認証',
         ]);
