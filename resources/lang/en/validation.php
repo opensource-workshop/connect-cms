@@ -182,5 +182,5 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'captcha' => ':attribute must be the correct image character.',
+    'captcha' => 'Please enter the correct characters shown on the image.',
 ];
