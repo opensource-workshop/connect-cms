@@ -22,9 +22,9 @@ sed -i 's/MAIL_FROM_ADDRESS=null/MAIL_FROM_ADDRESS=mailhog@mailhog.com/g' .env
 # アプリケーションキーの初期化
 php artisan key:generate
 # DBマイグレーション
-php artisan migrate
+php artisan migrate --force
 # seederで初期データインポート
-php artisan db:seed
+php artisan db:seed --force
 
 # storageディレクトリとbootstrap/cacheディレクトリをWebサーバから書き込み可能にする
 chown -R www-data:www-data storage
