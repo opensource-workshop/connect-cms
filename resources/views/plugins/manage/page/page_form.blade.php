@@ -441,6 +441,7 @@ use App\Models\Common\Page;
                     <input name="base_display_flag" value="1" type="checkbox" class="custom-control-input" id="base_display_flag">
                 @endif
                 <label class="custom-control-label" for="base_display_flag" id="label_base_display_flag">表示する</label>
+                <small class="form-text text-muted">※ 本設定は、スマホメニューと、メニュープラグインのページ表示条件で「ページ管理の条件」を選択した場合のメニュー表示に反映されます。</small>
             </div>
         </div>
     </div>
