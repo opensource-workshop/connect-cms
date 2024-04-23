@@ -1097,7 +1097,7 @@ class CodeManage extends ManagePluginBase
         $filename = 'codes.csv';
         $headers = [
             'Content-Type' => 'text/csv',
-            'content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         // データ

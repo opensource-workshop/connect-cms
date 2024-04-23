@@ -2219,7 +2219,7 @@ class LearningtasksPlugin extends UserPluginBase
         $filename = $learningtask->learningtasks_name . '.csv';
         $headers = [
             'Content-Type' => 'text/csv',
-            'content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         // データ
@@ -2826,7 +2826,7 @@ class LearningtasksPlugin extends UserPluginBase
         $filename = 'examinations.csv';
         $headers = [
             'Content-Type' => 'text/csv',
-            'content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         // データ
