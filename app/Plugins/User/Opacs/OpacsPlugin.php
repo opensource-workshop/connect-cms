@@ -2073,7 +2073,7 @@ class OpacsPlugin extends UserPluginBase
         $filename = 'lent_counts.csv';
         $headers = [
             'Content-Type' => 'text/csv',
-            'content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         // データ

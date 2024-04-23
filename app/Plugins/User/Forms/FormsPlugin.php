@@ -2532,7 +2532,7 @@ ORDER BY forms_inputs_id, forms_columns_id
         $filename = $form->forms_name . '.csv';
         $headers = [
             'Content-Type' => 'text/csv',
-            'content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         // データ
