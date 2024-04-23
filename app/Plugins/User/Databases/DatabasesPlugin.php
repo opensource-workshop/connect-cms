@@ -3145,7 +3145,7 @@ class DatabasesPlugin extends UserPluginBase
         $filename = $database->databases_name . '.csv';
         $headers = [
             'Content-Type' => 'text/csv',
-            'content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         // データ

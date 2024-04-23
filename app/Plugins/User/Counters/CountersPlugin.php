@@ -461,7 +461,7 @@ class CountersPlugin extends UserPluginBase
         $filename = $counter->name . '.csv';
         $headers = [
             'Content-Type' => 'text/csv',
-            'content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         // データ
