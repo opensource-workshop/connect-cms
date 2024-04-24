@@ -8,6 +8,7 @@ use App\Models\Core\Configs;
 
 use App\Enums\BaseHeaderFontColorClass;
 use App\Enums\ResizedImageSize;
+use App\Enums\SmartphoneMenuTemplateType;
 
 class DefaultConfigsTableSeeder extends Seeder
 {
@@ -104,6 +105,14 @@ class DefaultConfigsTableSeeder extends Seeder
                     [
                         'name'=>'base_theme',
                         'value'=>null,
+                        'additional1' => null,
+                        'category'=>'general',
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ],
+                    [
+                        'name'=>'smartphone_menu_template',
+                        'value'=>SmartphoneMenuTemplateType::opencurrenttree,
                         'additional1' => null,
                         'category'=>'general',
                         'created_at' => date('Y-m-d H:i:s'),
