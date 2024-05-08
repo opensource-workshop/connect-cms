@@ -12,6 +12,17 @@
 
 @include('plugins.common.errors_form_line')
 
+{{-- エラーメッセージ：publicStoreToken()リダイレクト時 --}}
+@if (session('error_messages' . $frame_id))
+    <div class="card border-danger form-group">
+        <div class="card-body">
+            <span class="text-danger">
+                <i class="fas fa-exclamation-triangle"></i> {{ session('error_messages' . $frame_id) }}
+            </span>
+        </div>
+    </div>
+@endif
+
 @if ($form->can_view_inputs_moderator)
     @can('role_article')
         <div class="row">

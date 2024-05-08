@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ['7.4', '8.0', '8.1']
+        php: ['7.3', '7.4', '8.0', '8.1']
 
     name: ubuntu-latest-mysql PHP ${{ matrix.php }}
 
@@ -78,14 +78,14 @@ jobs:
         run: |
           mysql --user="root" --password="root" -e "SELECT user, host, plugin FROM mysql.user;"
 
-      # - name: PHP 7.3 changes database user authentication method
-      #   run: |
-      #     if [[ "$PHP_VERSION" = "7.3" ]]; then
-      #       mysql --user="root" --password="root" -e "alter user 'root'@'localhost' identified with mysql_native_password by 'root';"
-      #       mysql --user="root" --password="root" -e "SELECT user, host, plugin FROM mysql.user;"
-      #     fi
-      #   env:
-      #     PHP_VERSION: ${{ matrix.php }}
+      - name: PHP 7.3 changes database user authentication method
+        run: |
+          if [[ "$PHP_VERSION" = "7.3" ]]; then
+            mysql --user="root" --password="root" -e "alter user 'root'@'localhost' identified with mysql_native_password by 'root';"
+            mysql --user="root" --password="root" -e "SELECT user, host, plugin FROM mysql.user;"
+          fi
+        env:
+          PHP_VERSION: ${{ matrix.php }}
 
       # Composer
       - name: Validate composer.json and composer.lock
@@ -355,6 +355,10 @@ jobs:
       - name: 'Run Dusk データベース'
         if: always()
         run: php artisan dusk tests/Browser/User/DatabasesPluginTest.php
+
+      - name: 'Run Dusk RSS'
+        if: always()
+        run: php artisan dusk tests/Browser/User/RssesPluginTest.php
 
       - name: 'Run Dusk OPAC'
         if: always()

@@ -159,10 +159,10 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                 @foreach($page_list as $page_obj)
 
                     {{-- スマホメニューテンプレート(default) --}}
-                    @if (Configs::getConfigsValue($cc_configs, 'smartphone_menu_template', '') == '')
+                    @if (Configs::getConfigsValue($cc_configs, 'smartphone_menu_template', SmartphoneMenuTemplateType::none) == SmartphoneMenuTemplateType::none)
                         {{-- default メニュー --}}
                         @include('layouts.default_menu')
-                    @elseif (Configs::getConfigsValue($cc_configs, 'smartphone_menu_template') == 'opencurrenttree')
+                    @elseif (Configs::getConfigsValue($cc_configs, 'smartphone_menu_template') == SmartphoneMenuTemplateType::opencurrenttree)
                         {{-- opencurrenttree メニュー --}}
                         @include('layouts.opencurrenttree_menu')
                     @endif

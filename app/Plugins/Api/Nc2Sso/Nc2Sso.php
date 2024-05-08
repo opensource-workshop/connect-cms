@@ -2,25 +2,21 @@
 
 namespace App\Plugins\Api\Nc2Sso;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
-
-use DB;
-
 use App\Models\Core\UsersRoles;
-use App\User;
 use App\Plugins\Api\ApiPluginBase;
+use App\Plugins\Manage\UserManage\UsersTool;
 use App\Traits\ConnectCommonTrait;
+use App\User;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * NC2からのSSO管理クラス
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページ管理
- * @package Contoroller
+ * @package Controller
  */
 class Nc2Sso extends ApiPluginBase
 {
@@ -78,7 +74,7 @@ class Nc2Sso extends ApiPluginBase
         if (!empty($user)) {
             // ユーザ権限データ取得
             //$roles = UsersRoles::getUsersRoles($user->id);
-            $users_roles = new UsersRoles();
+            // $users_roles = new UsersRoles();
 
             // 権限が一般 or ゲストの場合は、自動ログイン
             // if ($user->role == config('cc_role.ROLE_PAGE_MANAGER') || $user->role == config('cc_role.ROLE_GUEST')) {
@@ -121,6 +117,7 @@ class Nc2Sso extends ApiPluginBase
             $user->userid   = $login_id;
             $user->password = 'sso-invalid-password';   // プレーンテキストのパスワードは設定しても、入力パスワードと一致する事はないため、無効になる
             //$user->role     = 0;
+            $user->columns_set_id = UsersTool::COLUMNS_SET_ID_DEFAULT;
             $user->save();
 
             // ユーザ権限の登録
