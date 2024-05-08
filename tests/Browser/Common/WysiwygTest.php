@@ -52,7 +52,7 @@ class WysiwygTest extends DuskTestCase
         $this->translate();
         $this->pdf();
         $this->face();
-        //$this->error();
+        $this->error();
 
         $this->logout();
     }
