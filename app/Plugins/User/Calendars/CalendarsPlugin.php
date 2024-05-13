@@ -21,6 +21,9 @@ use App\Plugins\User\UserPluginBase;
 use App\Rules\CustomValiWysiwygMax;
 
 use App\Utilities\File\FileUtils;
+use Carbon\Carbon;
+use Carbon\CarbonImmutable;
+use Carbon\Exceptions\Exception;
 
 /**
  * カレンダー・プラグイン
@@ -350,8 +353,7 @@ class CalendarsPlugin extends UserPluginBase
 
         // id が空なら、新規オブジェクトとみなして、デフォルトの日付を設定して画面を表示する。
         if (empty($post->id) && $request->filled("date")) {
-            $post->start_date = $request->date;
-            $post->end_date = $request->date;
+            $post = $this->setInitDatetime($post, $request->date);
         }
 
         // 変更画面を呼び出す。
@@ -671,5 +673,42 @@ class CalendarsPlugin extends UserPluginBase
         $calendar_frame->save();
 
         return;
+    }
+
+    /**
+     * 初期日時を設定する
+     *
+     * @param CalendarPost $post
+     * @param string $date
+     * @return CalendarPost
+     */
+    private function setInitDatetime(CalendarPost $post, string $date): CalendarPost
+    {
+        // 想定しない形式の日付だったら初期日時を設定しない
+        try {
+            $init_date =  Carbon::parse($date);
+        } catch (Exception $e) {
+            return $post;
+        }
+
+        if ($init_date->isToday()) {
+            // 当日は現在時刻から近い時刻を設定する
+            $init_date = CarbonImmutable::now();
+            $init_date = CarbonImmutable::parse('2024-04-30 22:11:00');
+            $start_date = $init_date->addHour(1);
+            $end_date = $init_date->addHour(2);
+            $post->start_date = $start_date->format('Y-m-d');
+            $post->start_time = $start_date->format('H:00');
+            $post->end_date = $end_date->format('Y-m-d');
+            $post->end_time = $end_date->format('H:00');
+        } else {
+            // 当日以外は9:00-10:00を設定する
+            $post->start_date = $init_date->format('Y-m-d');
+            $post->start_time = $init_date->format('09:00');
+            $post->end_date = $init_date->format('Y-m-d');
+            $post->end_time = $init_date->format('10:00');
+        }
+
+        return $post;
     }
 }

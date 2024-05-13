@@ -147,7 +147,6 @@
                     $('#start_time').datetimepicker({
                         locale: 'ja',
                         format: 'HH:mm',
-                        defaultDate: moment().add(1, "hours").format('YYYY-MM-DD HH:00'),
                     });
                 });
             </script>
@@ -193,7 +192,6 @@
                     $('#end_time').datetimepicker({
                         locale: 'ja',
                         format: 'HH:mm',
-                        defaultDate: moment().add(2, "hours").format('YYYY-MM-DD HH:00'),
                     });
                 });
             </script>
