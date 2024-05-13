@@ -694,7 +694,6 @@ class CalendarsPlugin extends UserPluginBase
         if ($init_date->isToday()) {
             // 当日は現在時刻から近い時刻を設定する
             $init_date = CarbonImmutable::now();
-            $init_date = CarbonImmutable::parse('2024-04-30 22:11:00');
             $start_date = $init_date->addHour(1);
             $end_date = $init_date->addHour(2);
             $post->start_date = $start_date->format('Y-m-d');
