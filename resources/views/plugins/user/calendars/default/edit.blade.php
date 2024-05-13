@@ -146,7 +146,7 @@
                 $(function () {
                     $('#start_time').datetimepicker({
                         locale: 'ja',
-                        format: 'HH:mm',
+                        format: 'HH:mm'
                     });
                 });
             </script>
@@ -191,7 +191,7 @@
                 $(function () {
                     $('#end_time').datetimepicker({
                         locale: 'ja',
-                        format: 'HH:mm',
+                        format: 'HH:mm'
                     });
                 });
             </script>
