@@ -229,5 +229,31 @@ class DefaultConfigsTableSeeder extends Seeder
             ]);
         }
 
+        if (Configs::where('category', 'app_log')->count() == 0) {
+            // 取得するログの初期値の設定
+            $configs = Configs::insert([
+            [
+                'name' => 'app_log_scope',
+                'category' => 'app_log',
+                'value' => 'select'
+            ], [
+                'name' => 'save_log_type_login',
+                'category' => 'app_log',
+                'value' => '1'
+            ], [
+                'name' => 'save_log_type_sendmail',
+                'category' => 'app_log',
+                'value' => '1'
+            ], [
+                'name' => 'save_log_type_password',
+                'category' => 'app_log',
+                'value' => '1'
+            ], [
+                'name' => 'save_log_type_register',
+                'category' => 'app_log',
+                'value' => '1'
+            ]]);
+        }
+
     }
 }
