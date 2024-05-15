@@ -118,6 +118,46 @@ class DefaultConfigsTableSeeder extends Seeder
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
                     ],
+                    [
+                        'name' => 'app_log_scope',    // これ以降は取得するログの初期値の設定
+                        'value' => 'select',
+                        'additional1' => null,
+                        'category' => 'app_log',
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ],
+                    [
+                        'name' => 'save_log_type_login',
+                        'value' => '1',
+                        'additional1' => null,
+                        'category' => 'app_log',
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ],
+                    [
+                        'name' => 'save_log_type_sendmail',
+                        'value' => '1',
+                        'additional1' => null,
+                        'category' => 'app_log',
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ],
+                    [
+                        'name' => 'save_log_type_password',
+                        'value' => '1',
+                        'additional1' => null,
+                        'category' => 'app_log',
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ],
+                    [
+                        'name' => 'save_log_type_register',
+                        'value' => '1',
+                        'additional1' => null,
+                        'category' => 'app_log',
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ]
                 ]
             );
         }
@@ -227,32 +267,6 @@ class DefaultConfigsTableSeeder extends Seeder
 ユーザ登録が完了しました。登録したログインID、パスワードでログインしてください。',
                 'additional1' => 1,
             ]);
-        }
-
-        if (Configs::where('category', 'app_log')->count() == 0) {
-            // 取得するログの初期値の設定
-            $configs = Configs::insert([
-            [
-                'name' => 'app_log_scope',
-                'category' => 'app_log',
-                'value' => 'select'
-            ], [
-                'name' => 'save_log_type_login',
-                'category' => 'app_log',
-                'value' => '1'
-            ], [
-                'name' => 'save_log_type_sendmail',
-                'category' => 'app_log',
-                'value' => '1'
-            ], [
-                'name' => 'save_log_type_password',
-                'category' => 'app_log',
-                'value' => '1'
-            ], [
-                'name' => 'save_log_type_register',
-                'category' => 'app_log',
-                'value' => '1'
-            ]]);
         }
 
     }
