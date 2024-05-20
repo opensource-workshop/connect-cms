@@ -118,6 +118,46 @@ class DefaultConfigsTableSeeder extends Seeder
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
                     ],
+                    [
+                        'name' => 'app_log_scope',    // これ以降は取得するログの初期値の設定
+                        'value' => 'select',
+                        'additional1' => null,
+                        'category' => 'app_log',
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ],
+                    [
+                        'name' => 'save_log_type_login',
+                        'value' => '1',
+                        'additional1' => null,
+                        'category' => 'app_log',
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ],
+                    [
+                        'name' => 'save_log_type_sendmail',
+                        'value' => '1',
+                        'additional1' => null,
+                        'category' => 'app_log',
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ],
+                    [
+                        'name' => 'save_log_type_password',
+                        'value' => '1',
+                        'additional1' => null,
+                        'category' => 'app_log',
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ],
+                    [
+                        'name' => 'save_log_type_register',
+                        'value' => '1',
+                        'additional1' => null,
+                        'category' => 'app_log',
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ]
                 ]
             );
         }
