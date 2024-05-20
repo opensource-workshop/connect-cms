@@ -546,6 +546,9 @@ class ReservationsPlugin extends UserPluginBase
      */
     public function week($request, $page_id, $frame_id, $target_ymd)
     {
+        if (is_null($target_ymd)) {
+            $target_ymd = date('Ymd');
+        }
         $year = substr($target_ymd, 0, 4);
         $month = substr($target_ymd, 4, 2);
         $day = substr($target_ymd, 6, 2);
@@ -564,11 +567,13 @@ class ReservationsPlugin extends UserPluginBase
      */
     public function month($request, $page_id, $frame_id, $target_ym)
     {
+        if (is_null($target_ym)) {
+            $target_ym = date('Ymd');
+        }
         $year = substr($target_ym, 0, 4);
         $month = substr($target_ym, 4, 2);
         $day = substr($target_ym, 6, 2);
         $day = empty($day) ? '01' : $day;
-        // if (!checkdate($month, '01', $year)) {
         if (!checkdate($month, $day, $year)) {
             return $this->viewError("404_inframe", null, '日時パラメータ不正(' . $year . '/' . $month . '/' . $day . ')');
         }
