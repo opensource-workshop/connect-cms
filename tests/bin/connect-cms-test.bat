@@ -43,9 +43,11 @@ rem trancate ŒÄ‚Ño‚µ
 rem ---------------------------------------------
 if "%1" == "t_all" (
     call:trancate
+    php artisan migrate --env=dusk.local --path=database/migrations_option
 )
 if "%1" == "trancate" (
     call:trancate
+    php artisan migrate --env=dusk.local --path=database/migrations_option
 )
 
 if "%1" == "fresh" (
