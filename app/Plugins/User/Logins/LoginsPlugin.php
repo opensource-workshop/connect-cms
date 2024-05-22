@@ -21,7 +21,7 @@ use App\Plugins\User\UserPluginBase;
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ログイン・プラグイン
  * @package Plugin
- * @plugin_title タブ
+ * @plugin_title ログイン
  * @plugin_desc 任意の場所にログイン画面を表示するプラグインです。
  */
 class LoginsPlugin extends UserPluginBase
@@ -74,9 +74,9 @@ class LoginsPlugin extends UserPluginBase
      *  初期表示取得関数
      *
      * @return view
-     * @method_title タブ表示
-     * @method_desc 画面をリロードすることなく、タブでフレームを切り替えることができます。
-     * @method_detail 固定記事以外にも新着など、異なるプラグインを組み合わせることもできます。表示するのは各プラグインの初期画面です。
+     * @method_title ログイン表示
+     * @method_desc オリジナルのログイン画面を作ることができます。
+     * @method_detail ログイン後に移動する画面を指定することもできます。
      */
     public function index($request, $page_id, $frame_id)
     {

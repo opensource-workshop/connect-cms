@@ -255,6 +255,9 @@ php artisan dusk tests\Browser\User\TabsPluginTest.php
 echo --- テーマチェンジャー
 php artisan dusk tests\Browser\User\ThemechangersPluginTest.php
 
+echo --- ログイン
+php artisan dusk tests\Browser\User\LoginsPluginTest.php
+
 echo ※ スクリーンショットの保存先
 echo tests\Browser\screenshots
 
