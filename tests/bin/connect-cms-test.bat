@@ -43,11 +43,9 @@ rem trancate 呼び出し
 rem ---------------------------------------------
 if "%1" == "t_all" (
     call:trancate
-    php artisan migrate --env=dusk.local --path=database/migrations_option
 )
 if "%1" == "trancate" (
     call:trancate
-    php artisan migrate --env=dusk.local --path=database/migrations_option
 )
 
 if "%1" == "fresh" (
@@ -392,5 +390,8 @@ rem ---------------------------------------------
 
     echo --- データ・初期追加
     php artisan db:seed --env=dusk.local
+
+    echo --- 一緒にテスト＆マニュアル作成するConnect-Studyのデータベース・テーブル生成
+    php artisan migrate --env=dusk.local --path=database/migrations_option
 exit /b
 
