@@ -390,5 +390,8 @@ rem ---------------------------------------------
 
     echo --- データ・初期追加
     php artisan db:seed --env=dusk.local
+
+    echo --- 一緒にテスト＆マニュアル作成するConnect-Studyのデータベース・テーブル生成
+    php artisan migrate --env=dusk.local --path=database/migrations_option
 exit /b
 
