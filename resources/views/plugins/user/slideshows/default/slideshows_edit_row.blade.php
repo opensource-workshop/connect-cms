@@ -47,11 +47,20 @@
 
         <div class="d-flex align-items-center justify-content-center">
             {{-- 画像プレビュー --}}
-            <a href="#" data-toggle="modal" data-target="#modalPreviewRow{{ $item->id }}">
+            @if ($item->client_original_name)
+                {{-- uploadレコードがあれば、モーダルのリンク表示 --}}
+                <a href="#" data-toggle="modal" data-target="#modalPreviewRow{{ $item->id }}">
+                    <img
+                        :src="image_url_{{ $item->id }}"
+                        width="100px"
+                    >
+            @else
+                {{-- uploadレコードがなければ、no_image画像表示 --}}
                 <img
-                    :src="image_url_{{ $item->id }}"
+                    src="{{ asset("/storage/no_image.png") }}"
                     width="100px"
-                >
+                >                       
+            @endif
             </a>
         </div>
         {{-- 画像プレビューモーダル --}}
