@@ -57,7 +57,7 @@
             @else
                 {{-- uploadレコードがなければ、no_image画像表示 --}}
                 <img
-                    src="{{ asset("/storage/no_image.png") }}"
+                    src="{{ asset("images/core/no_image/no_image3.png") }}"
                     width="100px"
                 >                       
             @endif
