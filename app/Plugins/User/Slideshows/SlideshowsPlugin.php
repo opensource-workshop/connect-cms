@@ -765,7 +765,7 @@ class SlideshowsPlugin extends UserPluginBase
                 'slideshows_items.*',
                 'uploads.client_original_name'
             )
-            ->join('uploads', 'uploads.id', '=', 'slideshows_items.uploads_id')
+            ->leftjoin('uploads', 'uploads.id', '=', 'slideshows_items.uploads_id')
             ->where('slideshows_items.slideshows_id', $slideshows_id)
             ->orderby('slideshows_items.display_sequence')
             ->get();
