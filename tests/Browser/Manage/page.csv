@@ -21,6 +21,7 @@ OPAC,/test/opac,NULL,NULL,NULL,NULL,1
 施設予約,/test/reservation,NULL,NULL,NULL,NULL,1
 メニュー,/test/menu,NULL,NULL,NULL,NULL,1
 タブ,/test/tab,NULL,NULL,NULL,NULL,1
+ログイン,/test/login,NULL,NULL,NULL,NULL,1
 パスワード付きページ,/password,NULL,NULL,NULL,NULL,1
 メンバシップページ,/member,NULL,NULL,NULL,NULL,1
 ログインユーザ用ページ,/user,NULL,NULL,NULL,NULL,1
