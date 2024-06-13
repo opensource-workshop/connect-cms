@@ -1,0 +1,15 @@
+// エリアに枠線を表示する
+@mixin with-border($area-name) {
+    border-collapse: collapse;
+    border-color: $info;
+    border-style: dashed;
+    border-width: 1px;
+
+    &::before {
+        color: $info;
+        content: $area-name;
+        left: .5em;
+        position: relative;
+        top: .5em;
+    }
+}
