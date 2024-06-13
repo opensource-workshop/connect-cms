@@ -201,14 +201,18 @@ class LoginController extends Controller
                 $path = parse_url($_SERVER['HTTP_REFERER']); // URLを分解
                 if (array_key_exists('host', $path)) {
                     if ($path['host'] == $_SERVER['HTTP_HOST']) { // ホスト部分が自ホストと同じ
-                        session(['url.intended' => $_SERVER['HTTP_REFERER']]);
+                        //session(['url.intended' => $_SERVER['HTTP_REFERER']]);
+                        session()->flash('url.intended', $_SERVER['HTTP_REFERER']);
                     }
                 }
             }
         } elseif ($base_login_redirect_previous_page == BaseLoginRedirectPage::specified_page) {
             // 指定したページに遷移
             $base_login_redirect_select_page = Configs::getConfigsValue($configs, 'base_login_redirect_select_page', RouteServiceProvider::HOME);
-            session(['url.intended' => $base_login_redirect_select_page]);
+            // セッションへの保持の場合、トップページに置いたログイン・プラグインの「ログイン後に移動する指定ページ」が影響してうまく移動しない場合があったのでフラッシュ・セッションへ変更
+            // ログイン画面は表示された後、ログイン ⇒ ページ移動の流れになるため、フラッシュ・セッションで問題ないと判断した。
+            //session(['url.intended' => $base_login_redirect_select_page]);
+            session()->flash('url.intended', $base_login_redirect_select_page);
         }
 
         // サイトテーマ詰込
