@@ -28,6 +28,7 @@ class SpeechStudyTest extends DuskTestCase
 
         $this->init();
         $this->index();
+        $this->hearing();
     }
 
     /**
@@ -35,14 +36,18 @@ class SpeechStudyTest extends DuskTestCase
      */
     private function init()
     {
+        $this->login(1);
+
         // データクリア
         $this->initPlugin('speechstudies', '/study/speech');
 
         // 最初にマニュアルの順番確定用にメソッドを指定する。
-        $this->reserveManualMin('study', 'speechstudies', ['index']);
+        $this->reserveManualMin('study', 'speechstudies', ['index', 'hearing']);
 
         // プラグインがなければ追加(テストするFrameとページのインスタンス変数への保持も)
         $this->addPluginFirst('speechstudies', '/study/speech', 2);
+
+        $this->logout();
     }
 
     /**
@@ -87,6 +92,53 @@ class SpeechStudyTest extends DuskTestCase
                 {"path": "study/speechstudies/index/images/company2",
                  "name": "株式会社のアクセントその２",
                  "comment": "<ul class=\"mb-0\"><li>株式会社にアクセント記号を追加して、発声を補正している例です。</li></ul>"
+                }
+            ]',
+            'level' => null,
+            'test_result' => 'OK',
+        ]);
+    }
+
+    /**
+     * 音声入力
+     */
+    private function hearing()
+    {
+        $this->login(1);
+
+        // プラグインがなければ追加(テストするFrameとページのインスタンス変数への保持も)
+        $this->addPluginFirst('speechstudies', '/study/hearing', 2);
+
+        $this->test_frame->template = 'recognition';
+        $this->test_frame->save();
+
+        $this->logout();
+
+        // スクリーンショット取得
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/study/hearing')
+                    ->screenshot('study/speechstudies/hearing/images/index');
+        });
+
+        // マニュアル用データ出力
+        $dusk = Dusks::updateOrCreate([
+            'plugin_name' => 'speechstudies',
+            'method_name' => 'hearing'
+        ], [
+            'category' => 'study',
+            'sort' => 6,
+            'plugin_name' => 'speechstudies',
+            'plugin_title' => 'SpeechStudy',
+            'plugin_desc' => 'AIによる、音声合成を体験できます。<br />SpeechStudyはConnect-CMSのオプションプラグインで、外部サービス設定が必要です。',
+            'method_name' => 'hearing',
+            'method_title' => '音声入力',
+            'method_desc' => '音声入力の体験ができます。音声入力したテキストと選択した声や速度で、音声合成を体験できます。',
+            'method_detail' => '音声入力で入力した内容で、サーバにある「AI音声合成プログラム」で入力したテキストを音声に変換します。',
+            'html_path' => 'study/speechstudies/hearing/index.html',
+            'img_args' => '[
+                {"path": "study/speechstudies/hearing/images/index",
+                 "name": "音声入力・合成画面",
+                 "comment": "<ul class=\"mb-0\"><li>音声入力開始ボタンを押すことで、音声を入力できるようになります。</li></ul>"
                 }
             ]',
             'level' => null,
