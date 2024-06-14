@@ -42,7 +42,7 @@ class ConnectStudyCommon extends DuskTestCase
                     ->pause(500);  // 少し待たないと、次のページ移動でデータができていない。
         });
 
-        $children_names = ['ドローン','AI顔認識','音声合成'];
+        $children_names = ['ドローン','AI顔認識','音声合成','音声入力'];
         $this->movePageChildren('Connect-Study', $children_names);
 
         $this->logout();
