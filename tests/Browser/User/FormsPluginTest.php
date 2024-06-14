@@ -82,7 +82,7 @@ class FormsPluginTest extends DuskTestCase
                     ->screenshot('user/forms/index/images/index1');
 
             $browser->scrollIntoView('footer')
-                    ->screenshot('user/forms/index/images/index2');
+                    ->screenshot('user/forms/index/images/index3');
         });
 
         // マニュアル用データ出力
@@ -108,8 +108,11 @@ class FormsPluginTest extends DuskTestCase
                     ->type('forms_name', 'テストのフォーム')
                     ->screenshot('user/forms/createBuckets/images/createBuckets1');
 
+            $browser->scrollIntoView('#div_entry_limit')
+                    ->screenshot('user/forms/index/images/createBuckets2');
+
             $browser->scrollIntoView('footer')
-                    ->screenshot('user/forms/createBuckets/images/createBuckets2')
+                    ->screenshot('user/forms/createBuckets/images/createBuckets3')
                     ->press('登録確定');
 
             // 一度、選択確定させる。
@@ -130,10 +133,14 @@ class FormsPluginTest extends DuskTestCase
         // マニュアル用データ出力
         $this->putManualData('[
             {"path": "user/forms/createBuckets/images/createBuckets1",
-             "name": "作成１"
+             "name": "作成１",
+             "comment": "<ul class=\"mb-0\"><li>フォームモードを選ぶことで、フォームとしての使用とアンケートとしての使用を選択できます。</li><li>データ保存は初期値でチェックが入っています。<br />組織内の個人情報保護規定などでサーバにデータを残せない場合はこのチェックを外すことでサーバにデータが保存されません。ただし、その場合はメール送信先を設定して、メールで登録データを受け取れるようにしておかないと、登録された内容がどこにも保存されないため、注意してください。</li><li>フォームの閲覧制限を設定できます。「制限しない」はページが表示されれば、フォームも表示されます。<br />「パスワードで閲覧制限する」は閲覧パスワードを設定でき、閲覧パスワードを正しく入力してからフォームを表示できます。学校や組織内で事前にプリントなどでパスワードを配布できる場合に便利です。<br />「画像認証で閲覧制限する」はフォームが表示される前に画像認証を設定できます。機械などで宣伝を投稿してくる迷惑投稿の対策になります。</li></ul>"
             },
             {"path": "user/forms/createBuckets/images/createBuckets2",
-             "name": "作成２",
+             "name": "作成２"
+            },
+            {"path": "user/forms/createBuckets/images/createBuckets3",
+             "name": "作成３",
              "comment": "<ul class=\"mb-0\"><li>新しいフォームを作成できます。</li></ul>"
             },
             {"path": "user/forms/createBuckets/images/editBuckets1",

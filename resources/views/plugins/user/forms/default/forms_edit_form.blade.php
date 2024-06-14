@@ -187,7 +187,7 @@
         </div>
     </div>
 
-    <div class="form-group row">
+    <div class="form-group row" id="div_entry_limit">
         <label class="{{$frame->getSettingLabelClass()}}">登録制限数</label>
         <div class="{{$frame->getSettingInputClass()}}">
             <input type="text" name="entry_limit" value="{{old('entry_limit', $form->entry_limit)}}" class="form-control">

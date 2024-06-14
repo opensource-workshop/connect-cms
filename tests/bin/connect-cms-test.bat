@@ -255,6 +255,9 @@ php artisan dusk tests\Browser\User\TabsPluginTest.php
 echo --- テーマチェンジャー
 php artisan dusk tests\Browser\User\ThemechangersPluginTest.php
 
+echo --- ログイン
+php artisan dusk tests\Browser\User\LoginsPluginTest.php
+
 echo ※ スクリーンショットの保存先
 echo tests\Browser\screenshots
 
@@ -390,5 +393,8 @@ rem ---------------------------------------------
 
     echo --- データ・初期追加
     php artisan db:seed --env=dusk.local
+
+    echo --- 一緒にテスト＆マニュアル作成するConnect-Studyのデータベース・テーブル生成
+    php artisan migrate --env=dusk.local --path=database/migrations_option
 exit /b
 

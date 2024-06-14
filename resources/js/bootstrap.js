@@ -62,3 +62,6 @@ window.moment = require('moment');
 import 'moment/locale/ja';
 require('tempusdominus-bootstrap-4');
 import 'moment-timezone';
+
+// Default SortableJS
+window.Sortable = require('sortablejs').default;
