@@ -43,7 +43,7 @@ class FrameFactory extends Factory
             'none_hidden' => 0,
             'bucket_id' => Buckets::factory(),
             'display_sequence' => $this->faker->unique()->randomNumber(),
-            'content_open_type' => ContentOpenType::always_open,
+            'content_open_type' => array_rand(ContentOpenType::enum),
             'content_open_date_from' => $this->faker->dateTimeBetween('now', '+1 week'),
             'content_open_date_to' =>  $this->faker->dateTimeBetween('+1 week', '+2 week'),
         ];
