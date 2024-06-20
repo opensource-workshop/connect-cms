@@ -18,7 +18,7 @@ class FrameFactory extends Factory
     public function definition()
     {
         // app/Plugins/Manage/SiteManage/SiteManage.php よりコピー
-        $area_ids = [0, 1, 3, 4, 2];
+        $area_ids = [0, 1, 2, 3, 4];
 
         // resources\views\core\cms_frame_edit.blade.php よりコピー
         $frame_design = [null, 'none', 'default', 'primary', 'secondary', 'success', 'info', 'warning', 'danger'];
