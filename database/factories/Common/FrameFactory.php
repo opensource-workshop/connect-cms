@@ -24,12 +24,14 @@ class FrameFactory extends Factory
         $frame_design = [null, 'none', 'default', 'primary', 'secondary', 'success', 'info', 'warning', 'danger'];
         $frame_col = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
+        $plugin_name = PluginName::getPluginName(array_rand(PluginName::enum));
+
         return [
             'page_id' => Page::factory(),
             'area_id' => $area_ids[array_rand($area_ids)],
             'frame_title' => $this->faker->title(),
             'frame_design' => $frame_design[array_rand($frame_design)],
-            'plugin_name' => PluginName::getPluginName(array_rand(PluginName::enum)),
+            'plugin_name' => $plugin_name,
             'frame_col' => $frame_col[array_rand($frame_col)],
             'template' => 'default',
             'plug_name' => null,
@@ -41,7 +43,9 @@ class FrameFactory extends Factory
             'classname' => $this->faker->word(),
             'classname_body' => $this->faker->word(),
             'none_hidden' => 0,
-            'bucket_id' => Buckets::factory(),
+            'bucket_id' => Buckets::factory()->create([
+                'plugin_name' => $plugin_name,
+            ]),
             'display_sequence' => $this->faker->unique()->randomNumber(),
             'content_open_type' => array_rand(ContentOpenType::enum),
             'content_open_date_from' => $this->faker->dateTimeBetween('now', '+1 week'),
