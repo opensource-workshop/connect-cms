@@ -3,3 +3,14 @@
 
 // Bootstrap
 @import "~bootstrap/scss/bootstrap";
+
+// Connect-CMS
+//mixin
+@import 'mixin/layout';
+
+// Layout styles
+@import 'layout/header';
+@import 'layout/footer';
+@import 'layout/main';
+@import 'layout/left';
+@import 'layout/right';

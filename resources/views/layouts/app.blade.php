@@ -179,7 +179,7 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                     {{-- ページリストがある場合は、コンテンツ画面 --}}
                     @if (isset($page_list) && !$is_manage_page)
                         <a class="nav-link dropdown-toggle" href="#" id="dropdown_manage" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">管理機能</a>
-                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdown_manage">
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdown_manage" data-handledropdownclose="true">
 
                             {{-- ページリストがある場合は、表のページとみなして「プラグイン追加」を表示 --}}
                             @if (isset($page_list) && !$is_manage_page)
@@ -219,6 +219,39 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                                     @else
                                         <a href="{{ url('/manage') }}" class="dropdown-item">管理者メニュー</a>
                                     @endif
+                                    <div class="dropdown-divider"></div>
+                                @endif
+
+                                {{-- エリア枠付け --}}
+                                @if (Auth::user()->can('frames.create'))
+                                    <div class="custom-control custom-switch keep-open-on-click">
+                                        <input type="checkbox" class="custom-control-input position-static keep-open-on-click" id="switch-area-border">
+                                        <label class="custom-control-label keep-open-on-click" for="switch-area-border">
+                                            エリア枠
+                                        </label>
+                                    </div>
+                                    <div class="dropdown-divider"></div>
+                                    <script>
+                                        // エリアの枠線を付ける
+                                        $('#switch-area-border').on('click', function (event) {
+                                            $('#ccHeaderArea').toggleClass('with-border');
+                                            $('#ccFooterArea').toggleClass('with-border');
+                                            $('#ccMainArea').toggleClass('with-border');
+                                            $('#ccRightArea').toggleClass('with-border');
+                                            $('#ccLeftArea').toggleClass('with-border');
+                                        });
+
+                                        // エリア枠スイッチを押したときにドロップダウンメニューを閉じないようにする
+                                        $('.dropdown-menu[data-handledropdownclose="true"]').on("click.bs.dropdown", function (e) {
+                                            if ($(this).parent().hasClass("show")) {
+                                                var target = $(e.target);
+
+                                                if (target.hasClass("keep-open-on-click")) {
+                                                    e.stopPropagation();
+                                                }
+                                            }
+                                        });
+                                    </script>
                                 @endif
                             @endif
                         </div>
