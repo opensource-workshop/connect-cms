@@ -2,16 +2,17 @@
 
 namespace App\Models\Common;
 
+use App\Models\Common\BucketsRoles;
+use App\Traits\ConnectRoleTrait;
+use Database\Factories\Common\BucketsFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
-
-use App\Models\Common\BucketsRoles;
-
-use App\Traits\ConnectRoleTrait;
 
 class Buckets extends Model
 {
     use ConnectRoleTrait;
+    use HasFactory;
 
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
@@ -206,5 +207,10 @@ class Buckets extends Model
             }
         }
         return true;
+    }
+
+    protected static function newFactory()
+    {
+        return BucketsFactory::new();
     }
 }

@@ -2,17 +2,17 @@
 
 namespace App\Models\Common;
 
-use Illuminate\Database\Eloquent\Model;
-
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-
 use App\Enums\ContentOpenType;
-
 use Carbon\Carbon;
+use Database\Factories\Common\FrameFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Frame extends Model
 {
+    use HasFactory;
+
     // 日付型
     protected $dates = [
         'content_open_date_from',
@@ -30,8 +30,10 @@ class Frame extends Model
         'plugin_name',
         'frame_col',
         'template',
+        'plug_name',
         'browser_width',
         'disable_whatsnews',
+        'disable_searchs',
         'page_only',
         'default_hidden',
         'classname',
@@ -294,5 +296,10 @@ class Frame extends Model
     public function page()
     {
         return $this->hasOne(Page::class, 'id', 'page_id');
+    }
+
+    protected static function newFactory()
+    {
+        return FrameFactory::new();
     }
 }
