@@ -141,6 +141,28 @@ class CsvUtils
     }
 
     /**
+     * ダブルクォーテーションを全角に変換 (csv_array)
+     */
+    public static function convertDoubleQuotesCsvArray(array $csv_array): array
+    {
+        foreach ($csv_array as &$csv_line) {
+            $csv_line = self::convertDoubleQuotesCsvLine($csv_line);
+        }
+        return $csv_array;
+    }
+
+    /**
+     * ダブルクォーテーションを全角に変換 (csv_line)
+     */
+    public static function convertDoubleQuotesCsvLine(array $csv_line): array
+    {
+        foreach ($csv_line as &$csv_col) {
+            $csv_col = str_replace('"', '”', (string)$csv_col);
+        }
+        return $csv_line;
+    }
+
+    /**
      * レスポンス時のCSVデータ 取得
      */
     public static function getResponseCsvData(array $csv_array, ?string $character_code): string
