@@ -552,6 +552,10 @@ class PhotoalbumsPlugin extends UserPluginBase
 //        $image = Uploads::shrinkImage($file, $photoalbum->image_upload_max_px);
         $image = Uploads::shrinkImage($file_params['path'], $photoalbum->image_upload_max_px);
 
+        // リサイズ後のバイナリデータのサイズを取得
+        $extension = strtolower($file_params['extension']);
+        $resized_image_size = strlen((string) $image->encode($extension));
+
         // uploads テーブルに情報追加、ファイルのid を取得する
         $upload = Uploads::create([
 /*
@@ -563,7 +567,7 @@ class PhotoalbumsPlugin extends UserPluginBase
             'client_original_name' => $file_params['client_original_name'],
             'mimetype'             => $file_params['mimetype'],
             'extension'            => $file_params['extension'],
-            'size'                 => $file_params['size'],
+            'size'                 => $resized_image_size,
 
             'plugin_name'          => 'photoalbums',
             'page_id'              => $page_id,
