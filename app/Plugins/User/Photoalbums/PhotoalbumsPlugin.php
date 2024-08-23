@@ -51,6 +51,9 @@ class PhotoalbumsPlugin extends UserPluginBase
     // ファイルダウンロードURL
     private $download_url = '';
 
+    // サポートされている拡張子のリスト
+    private $supported_extensions = ['jpg', 'jpe', 'jpeg', 'png', 'gif'];
+
     /* コアから呼び出す関数 */
 
     /**
@@ -1264,7 +1267,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         // ファイルサイズと形式チェック
         if ($photoalbum->image_upload_max_size !== UploadMaxSize::infinity) {
             $rules['upload_file.*'][] = 'max:' . $photoalbum->image_upload_max_size;
-            $rules['upload_file.*'][] = 'mimes:jpg,jpe,jpeg,png,gif' . $add_mimes;
+            $rules['upload_file.*'][] = 'mimes:' . implode(',', $this->supported_extensions) . $add_mimes;
         }
 
         // 項目名設定
