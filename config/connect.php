@@ -185,4 +185,9 @@ return [
 
     // public配下のディレクトリを指定してファイル管理. null時は機能自体使わない(beta)
     'MANAGE_USERDIR_PUBLIC_TARGET' => env('MANAGE_USERDIR_PUBLIC_TARGET', null),
+
+    // 契約ユーザの個別サポート情報
+    'common_support_url' => env('COMMON_SUPPORT_URL', ""),
+    'individual_support_url' => env('INDIVIDUAL_SUPPORT_URL', ""),
+    'individual_support_password' => env('INDIVIDUAL_SUPPORT_PASSWORD', ""),
 ];
