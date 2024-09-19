@@ -185,7 +185,7 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                         <a class="nav-link dropdown-toggle" href="#" id="dropdown_support" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">サポート情報</a>
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdown_auth">
                             <a class="dropdown-item" href="{{config('connect.common_support_url')}}" target="_blank">共通サポートページ <i class="fas fa-external-link-alt"></i></a>
-                            @if (config('connect.individual_support_password'))
+                            @if (config('connect.individual_support_url'))
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="{{config('connect.individual_support_url')}}" target="_blank">個別サポートページ <i class="fas fa-external-link-alt"></i></a>
                             @endif
