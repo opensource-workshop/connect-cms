@@ -1,8 +1,14 @@
 {{--
  * カテゴリ設定画面（プラグイン側カテゴリ、サイト設定＞カテゴリ設定）の共通エラーメッセージ blade
+ *
+ * @param $class divタグの追加cssクラス (任意)
 --}}
+@php
+   $class = isset($class) ? $class : null;
+@endphp
+
 @if (count($errors) > 0)
-    <div class="card border-danger">
+    <div class="card border-danger {{$class}}">
         <div class="card-body">
             <span class="text-danger">
                 @foreach($errors->all() as $error)
