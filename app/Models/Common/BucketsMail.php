@@ -69,7 +69,6 @@ class BucketsMail extends Model
         // その際は、HTML 改行タグを改行コードに変換し、その後にタグを取り除くことで、メールの本文に挿入するテキストにできる。
         // html_entity_decode で、引用の > などをdecode する。（DB上は &gt; 等で格納しているため）
         if (!empty($post->body)) {
-            // $default[NoticeEmbeddedTag::body] = strip_tags(preg_replace('/<br[[:space:]]*\/?[[:space:]]*>/i', "\n", html_entity_decode($post->body)));
             $default[NoticeEmbeddedTag::body] = self::stripTagsWysiwyg($post->body);
         }
 
