@@ -55,12 +55,8 @@ class ConnectMailJob implements ShouldQueue
      */
     public function handle()
     {
-        // メールオプション
-        // $mail_options = ['subject' => $this->subject, 'template' => 'mail.send'];
-
         // メール送信
         foreach ($this->notice_addresses as $notice_address) {
-            // 現状(2023-03-16)、Jobからはメール送信のログ出力できない
             $this->sendMail($notice_address, $this->mail_options, ['content' => $this->body], $this->plugin_name);
         }
     }
