@@ -547,7 +547,7 @@ class BbsesPlugin extends UserPluginBase
 
         // 関連記事通知メール
         // この post の thread_root_id と同じ post でかつ、この post 自身ではなく、データの status は公開のもの。
-        $mail_users = BbsPost::select('users.name', 'users.email')
+        $mail_users = BbsPost::select('users.email', 'users.id')
                              ->join('users', 'users.id', '=', 'bbs_posts.created_id')
                              ->where('users.status', UserStatus::active)
                              ->whereNotNull('users.email')

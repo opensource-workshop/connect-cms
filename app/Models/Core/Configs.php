@@ -158,8 +158,8 @@ class Configs extends Model
         $request = app(Request::class);
 
         // Configs. app\Http\Middleware\ConnectInit.php でセットした全Configs
-        $configs = $request->attributes->get('configs');
-        // dd($request->attributes->get('configs'));
+        // キューからの呼び出しの場合、SharedConfigsは取得できないため、get() で取得する
+        $configs = $request->attributes->get('configs') ?? Configs::get();
 
         if ($format == 'array') {
             return self::changeConfigsArray($configs);

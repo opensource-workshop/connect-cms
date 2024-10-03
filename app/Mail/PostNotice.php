@@ -40,11 +40,8 @@ class PostNotice extends Mailable
                 'bucket_mail'          => $this->bucket_mail,
             ]);
 
-        // キューからの呼び出しの場合、SharedConfigsは取得できないため、get() で取得する
-        $configs = Configs::getSharedConfigs() ?? Configs::get();
-
         // メール配信管理の使用
-        if (Configs::getConfigsValue($configs, 'use_unsubscribe', '0') == '1') {
+        if (Configs::getSharedConfigsValue('use_unsubscribe', '0') == '1') {
             // メール購読解除のヘッダー追加（＋対象ヘッダーのDKIM署名必要）
             $this->withSwiftMessage(function ($message) {
                 $message->getHeaders()->addTextHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');

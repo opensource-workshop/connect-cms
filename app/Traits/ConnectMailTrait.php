@@ -63,8 +63,7 @@ trait ConnectMailTrait
      */
     public function saveAppLog($plugin_name, $mail_address)
     {
-        // キューからの呼び出しの場合、SharedConfigsは取得できないため、get() で取得する
-        $configs = Configs::getSharedConfigs() ?? Configs::get();
+        $configs = Configs::getSharedConfigs();
 
         // ログを出力するかどうかの判定（最初はfalse、条件に合致したらtrue にする）
         $log_record_flag = false;
