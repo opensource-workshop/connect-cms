@@ -40,6 +40,7 @@ class PostNotice extends Mailable
                 'bucket_mail'          => $this->bucket_mail,
             ]);
 
+        // キューからの呼び出しの場合、SharedConfigsは取得できないため、get() で取得する
         $configs = Configs::getSharedConfigs() ?? Configs::get();
 
         // メール配信管理の使用
