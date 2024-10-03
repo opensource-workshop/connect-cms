@@ -60,6 +60,8 @@ class LoginController extends Controller
     {
         // exceptで指定されたメソッドは除外する
         $this->middleware('guest')->except('logout');
+        // onlyで指定されたメソッドのみ適用
+        $this->middleware('connect.themes')->only('showLoginForm');
     }
 
     /**
@@ -187,9 +189,10 @@ class LoginController extends Controller
     /**
      * Show the application's login form.
      *
+     * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
-    public function showLoginForm()
+    public function showLoginForm(Request $request)
     {
         // ログイン後に移動するページ 設定
         $configs = Configs::where('category', 'general')->get();
@@ -215,19 +218,8 @@ class LoginController extends Controller
             session()->flash('url.intended', $base_login_redirect_select_page);
         }
 
-        // サイトテーマ詰込
-        $configs = Configs::getSharedConfigs();
-        $base_theme = Configs::getConfigsValue($configs, 'base_theme', null);
-        $additional_theme = Configs::getConfigsValue($configs, 'additional_theme', null);
-        $themes = [
-            'css' => $base_theme,
-            'js' => $base_theme,
-            'additional_css' => $additional_theme,
-            'additional_js' => $additional_theme,
-        ];
-
         return view('auth.login', [
-            'themes' => $themes,
+            'themes' => $request->themes,
         ]);
     }
 

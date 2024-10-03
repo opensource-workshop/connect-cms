@@ -2,14 +2,10 @@
 
 namespace App\Http\Controllers\Core;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
-
 use App\Http\Controllers\Core\ConnectController;
-
 use App\Traits\ConnectCommonTrait;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 /**
  * 閲覧パスワードありの処理
@@ -31,6 +27,7 @@ class PasswordController extends ConnectController
     public function __construct()
     {
         $this->middleware('connect.page');
+        $this->middleware('connect.themes');
     }
 
     /**
@@ -57,6 +54,7 @@ class PasswordController extends ConnectController
             // 'page'    => $this->page,
             'page'    => $request->attributes->get('page'),
             'page_id' => $page_id,
+            'themes' => $request->themes,
         ]);
     }
 
@@ -76,14 +74,12 @@ class PasswordController extends ConnectController
         $page = $request->attributes->get('page');
         $page_tree = $request->attributes->get('page_tree');
 
-        // if (!$this->page) {
         if (!$page) {
             // ページがなければチェック失敗
             return false;
         }
 
         // パスワードの照合
-        // if (!$this->page->checkPassword($request->password, $this->page_tree)) {
         if (!$page->checkPassword($request->password, $page_tree)) {
             $validator = Validator::make($request->all(), []);
             $validator->errors()->add('password', 'パスワードが異なります。');
@@ -94,8 +90,6 @@ class PasswordController extends ConnectController
         // セッションへの認証情報保持
         // 自分から先祖を遡って、最初にパスワードが設定されているページで認証するので、
         // セッションの保存もそのページで行う。
-        // $page_tree = $this->getAncestorsAndSelf($page_id);
-
         foreach ($page_tree as $page) {
             if (!empty($page->password)) {
                 $request->session()->put('page_auth.'.$page->id, 'authed');
@@ -104,7 +98,6 @@ class PasswordController extends ConnectController
         }
 
         // 本来表示したかったページへリダイレクト
-        // return redirect($this->page->permanent_link);
         return redirect($page->permanent_link);
     }
 }

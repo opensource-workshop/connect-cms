@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers\Core;
 
+use App\Http\Controllers\Core\ConnectController;
+use App\Traits\ConnectCommonTrait;
 use Illuminate\Http\Request;    // 依存注入のための指定
 
-use App\Http\Controllers\Core\ConnectController;
-
-use App\Traits\ConnectCommonTrait;
 
 /**
  * マイページを呼び出す振り分けコントローラ
@@ -22,13 +21,9 @@ class MypageController extends ConnectController
      */
     public function __construct()
     {
-        // マイページの使用
-        // $use_mypage = Configs::where('name', 'use_mypage')->first();
-
-        // if (empty($use_mypage) || $use_mypage->value == '0') {
-        //     abort(403, "マイページを使用しないため、表示できません。");
-        // }
         $this->middleware('connect.mypage');
+        // onlyで指定されたメソッドのみ適用
+        $this->middleware('connect.themes')->only('invokeGetMypage');
     }
 
     /**
