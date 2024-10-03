@@ -6,7 +6,6 @@ use App\Http\Controllers\Core\ConnectController;
 use App\Traits\ConnectCommonTrait;
 use Illuminate\Http\Request;    // 依存注入のための指定
 
-
 /**
  * マイページを呼び出す振り分けコントローラ
  */
