@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Mail\PostNotice;
-use App\Models\Common\Buckets;
 use App\Models\Common\BucketsMail;
 use App\Traits\ConnectMailTrait;
 use Illuminate\Bus\Queueable;
@@ -64,8 +63,7 @@ class PostNoticeJob implements ShouldQueue
         foreach ($notice_addresses as $notice_address) {
             Mail::to($notice_address)->send(new PostNotice($this->notice_embedded_tags, $bucket_mail));
 
-            $bucket = Buckets::findOrNew($bucket_mail->buckets_id);
-            $this->saveAppLog($bucket->plugin_name, $notice_address);
+            $this->saveAppLog($bucket_mail->plugin_name, $notice_address);
         }
     }
 }

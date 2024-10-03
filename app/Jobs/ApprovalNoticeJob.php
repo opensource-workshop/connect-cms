@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Mail\ApprovalNotice;
-use App\Models\Common\Buckets;
 use App\Models\Common\BucketsMail;
 use App\Traits\ConnectMailTrait;
 use Illuminate\Bus\Queueable;
@@ -64,8 +63,7 @@ class ApprovalNoticeJob implements ShouldQueue
         foreach ($approval_addresses as $approval_address) {
             Mail::to($approval_address)->send(new ApprovalNotice($this->notice_embedded_tags, $bucket_mail));
 
-            $bucket = Buckets::findOrNew($bucket_mail->buckets_id);
-            $this->saveAppLog($bucket->plugin_name, $approval_address);
+            $this->saveAppLog($bucket_mail->plugin_name, $approval_address);
         }
     }
 }

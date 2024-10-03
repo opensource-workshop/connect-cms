@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Mail\RelateNotice;
-use App\Models\Common\Buckets;
 use App\Models\Common\BucketsMail;
 use App\Traits\ConnectMailTrait;
 use Illuminate\Bus\Queueable;
@@ -74,8 +73,7 @@ class RelateNoticeJob implements ShouldQueue
         foreach ($this->relate_user_emails as $email) {
             Mail::to($email)->send(new RelateNotice($this->notice_embedded_tags, $bucket_mail));
 
-            $bucket = Buckets::findOrNew($bucket_mail->buckets_id);
-            $this->saveAppLog($bucket->plugin_name, $email);
+            $this->saveAppLog($bucket_mail->plugin_name, $email);
         }
     }
 }
