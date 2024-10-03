@@ -2,17 +2,17 @@
 
 namespace App\Jobs;
 
+use App\Mail\DeleteNotice;
+use App\Models\Common\Buckets;
+use App\Models\Common\BucketsMail;
+use App\Traits\ConnectMailTrait;
 use Illuminate\Bus\Queueable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-
-use App\Mail\DeleteNotice;
-use App\Models\Common\BucketsMail;
 
 class DeleteNoticeJob implements ShouldQueue
 {
@@ -20,7 +20,7 @@ class DeleteNoticeJob implements ShouldQueue
      * 1.キューに入っているジョブがコンストラクタで Eloquent モデルを受け入れる場合、SerializesModels トレイトにより、モデルの識別子だけがキューにシリアル化されます。
      * 2.ジョブが実際に処理されると、キュー システムはデータベースからモデルインスタンス全体を自動的に再取得します。
      */
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, ConnectMailTrait;
 
     /**
      * 最大試行回数
@@ -69,8 +69,10 @@ class DeleteNoticeJob implements ShouldQueue
             return;
         }
         foreach ($notice_addresses as $notice_address) {
-            // Mail::to($notice_address)->send(new DeleteNotice($this->frame, $this->bucket, $this->post, $this->title, $this->show_method, $this->delete_comment, $bucket_mail));
             Mail::to($notice_address)->send(new DeleteNotice($this->notice_embedded_tags, $bucket_mail));
+
+            $bucket = Buckets::findOrNew($bucket_mail->buckets_id);
+            $this->saveAppLog($bucket->plugin_name, $notice_address);
         }
     }
 }

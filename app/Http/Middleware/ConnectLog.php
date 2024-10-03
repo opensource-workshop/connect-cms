@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
 use App\Models\Core\AppLog;
@@ -14,6 +13,7 @@ use Closure;
  * ログミドルウェア
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
  * @package Middleware
@@ -84,6 +84,10 @@ class ConnectLog
             $type = 'MyPage';
         } elseif ($route_name == 'post_mypage') {
             $type = 'MyPage';
+        } elseif ($route_name == 'get_unsubscribe') {
+            $type = 'Unsubscribe';
+        } elseif ($route_name == 'post_unsubscribe') {
+            $type = 'Unsubscribe';
         } elseif ($route_name == 'get_plugin') {
             $type = 'Page';
         } elseif ($route_name == 'post_plugin') {
@@ -147,6 +151,11 @@ class ConnectLog
 
             // マイページ
             if ($configs->where('name', 'save_log_type_mypage')->where('value', '1')->isNotEmpty() && $type == 'MyPage') {
+                $log_record_flag = true;
+            }
+
+            // メール配信設定
+            if ($configs->where('name', 'save_log_type_unsubscribe')->where('value', '1')->isNotEmpty() && $type == 'Unsubscribe') {
                 $log_record_flag = true;
             }
 
