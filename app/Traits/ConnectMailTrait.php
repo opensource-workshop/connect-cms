@@ -1,15 +1,13 @@
 <?php
 namespace App\Traits;
 
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Route;
-
 use App\Mail\ConnectMail;
-
 use App\Models\Core\Configs;
 use App\Models\Core\AppLog;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Route;
 
 /**
  * メール送信の共通処理
@@ -55,49 +53,56 @@ trait ConnectMailTrait
         //$failure_after_count = count(Mail::failures());
 
         // --- ログ処理 ---
+        $this->saveAppLog($plugin_name, $mail_address);
 
-        // スーパークラスの request があればそこから config を取得して条件を判断、ログ出力
-        if (isset($this->request)) {
-            $configs = $this->request->get('configs');
-
-            // ログを出力するかどうかの判定（最初はfalse、条件に合致したらtrue にする）
-            $log_record_flag = false;
-
-            // value（検索キーワードなど）
-            // $value = null;
-
-            // 記録範囲
-            if ($configs->where('name', 'app_log_scope')->where('value', 'all')->isNotEmpty()) {
-                // 全て
-                $log_record_flag = true;
-            } elseif ($configs->where('name', 'save_log_type_sendmail')->where('value', '1')->isNotEmpty()) {
-                // メール送信ログ出力
-                $log_record_flag = true;
-            }
-
-            if ($log_record_flag) {
-                // ルート名の取得
-                $route_name = Route::current()->getName();
-
-                // ログレコード
-                $app_log = new AppLog();
-                $app_log->ip_address   = $this->request->ip();
-                $app_log->plugin_name  = $plugin_name;
-                $app_log->uri          = $this->request->getRequestUri();
-                $app_log->route_name   = $route_name;
-                $app_log->method       = $this->request->method();
-                $app_log->type         = 'SendMail';
-                //$app_log->return_code  = $return_code;
-                $app_log->value        = $mail_address;
-
-                // ログイン後のみの項目
-                if (Auth::check()) {
-                    $app_log->created_id = Auth::user()->id;
-                    $app_log->userid     = Auth::user()->userid;
-                }
-                $app_log->save();
-            }
-        }
         return;
+    }
+
+    /**
+     * ログ保存
+     */
+    public function saveAppLog($plugin_name, $mail_address)
+    {
+        // キューからの呼び出しの場合、SharedConfigsは取得できないため、get() で取得する
+        $configs = Configs::getSharedConfigs() ?? Configs::get();
+
+        // ログを出力するかどうかの判定（最初はfalse、条件に合致したらtrue にする）
+        $log_record_flag = false;
+
+        // 記録範囲
+        if ($configs->where('name', 'app_log_scope')->where('value', 'all')->isNotEmpty()) {
+            // 全て
+            $log_record_flag = true;
+        } elseif ($configs->where('name', 'save_log_type_sendmail')->where('value', '1')->isNotEmpty()) {
+            // メール送信ログ出力
+            $log_record_flag = true;
+        }
+
+        if (!$log_record_flag) {
+            return;
+        }
+
+        $request = app(Request::class);
+
+        // ルート名の取得
+        $route_name = optional(Route::current())->getName();
+
+        // ログレコード
+        $app_log = new AppLog();
+        $app_log->ip_address   = $request->ip();
+        $app_log->plugin_name  = $plugin_name;
+        $app_log->uri          = $request->getRequestUri();
+        $app_log->route_name   = $route_name;
+        $app_log->method       = $request->method();
+        $app_log->type         = 'SendMail';
+        //$app_log->return_code  = $return_code;
+        $app_log->value        = $mail_address;
+
+        // ログイン後のみの項目
+        if (Auth::check()) {
+            $app_log->created_id = Auth::user()->id;
+            $app_log->userid     = Auth::user()->userid;
+        }
+        $app_log->save();
     }
 }

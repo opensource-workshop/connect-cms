@@ -2,24 +2,19 @@
 
 namespace App\Plugins\Manage\LogManage;
 
-use Symfony\Component\HttpFoundation\StreamedResponse;
-
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
-
 use App\Models\Core\AppLog;
 use App\Models\Core\Configs;
-
 use App\Plugins\Manage\ManagePluginBase;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * ログ管理クラス
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ログ管理
- * @package Contoroller
+ * @package Controller
  * @plugin_title ログ管理
  * @plugin_desc ログに関する機能が集まった管理機能です。
  */
@@ -81,6 +76,10 @@ class LogManage extends ManagePluginBase
             // マイページ
             if ($request->session()->has('app_log_search_condition.log_type_mypage')) {
                 $query->orWhere('type', '=', 'MyPage');
+            }
+            // メール配信設定
+            if ($request->session()->has('app_log_search_condition.log_type_unsubscribe')) {
+                $query->orWhere('type', '=', 'Unsubscribe');
             }
             // API
             if ($request->session()->has('app_log_search_condition.log_type_api')) {
@@ -287,6 +286,9 @@ class LogManage extends ManagePluginBase
 
         // マイページ
         $this->updateImpl($request, 'app_log', 'save_log_type_mypage');
+
+        // メール配信設定
+        $this->updateImpl($request, 'app_log', 'save_log_type_unsubscribe');
 
         // API
         $this->updateImpl($request, 'app_log', 'save_log_type_api');

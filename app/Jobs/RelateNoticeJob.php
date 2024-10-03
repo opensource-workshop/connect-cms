@@ -2,17 +2,16 @@
 
 namespace App\Jobs;
 
+use App\Mail\RelateNotice;
+use App\Models\Common\Buckets;
+use App\Models\Common\BucketsMail;
+use App\Traits\ConnectMailTrait;
 use Illuminate\Bus\Queueable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-
-use Illuminate\Support\Facades\Log;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Mail;
-
-use App\Mail\RelateNotice;
-use App\Models\Common\BucketsMail;
 
 class RelateNoticeJob implements ShouldQueue
 {
@@ -20,7 +19,7 @@ class RelateNoticeJob implements ShouldQueue
      * 1.キューに入っているジョブがコンストラクタで Eloquent モデルを受け入れる場合、SerializesModels トレイトにより、モデルの識別子だけがキューにシリアル化されます。
      * 2.ジョブが実際に処理されると、キューシステムはデータベースからモデルインスタンス全体を自動的に再取得します。
      */
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, ConnectMailTrait;
 
     /**
      * 最大試行回数
@@ -74,6 +73,9 @@ class RelateNoticeJob implements ShouldQueue
         // }
         foreach ($this->relate_user_emails as $email) {
             Mail::to($email)->send(new RelateNotice($this->notice_embedded_tags, $bucket_mail));
+
+            $bucket = Buckets::findOrNew($bucket_mail->buckets_id);
+            $this->saveAppLog($bucket->plugin_name, $email);
         }
     }
 }
