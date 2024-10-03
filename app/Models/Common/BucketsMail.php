@@ -11,6 +11,15 @@ use App\User;
 use App\UserableNohistory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * バケツメールのモデル
+ *
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category 共通
+ * @package Model
+ * @property string $plugin_name getPluginNameAttribute()
+ */
 class BucketsMail extends Model
 {
     // 保存時のユーザー関連データの保持（履歴なしUserable）
@@ -45,6 +54,15 @@ class BucketsMail extends Model
         'approved_subject',
         'approved_body',
     ];
+
+    /**
+     * バケツから plugin_name 取得
+     */
+    public function getPluginNameAttribute(): string
+    {
+        $bucket = Buckets::findOrNew($this->buckets_id);
+        return $bucket->plugin_name;
+    }
 
     /**
      * 通知の埋め込みタグ値の配列をマージ
