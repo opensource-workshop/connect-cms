@@ -2,10 +2,10 @@
 
 namespace App\Mail;
 
+use App\Models\Core\Configs;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Contracts\Queue\ShouldQueue;
 
 class PostNotice extends Mailable
 {
@@ -33,11 +33,24 @@ class PostNotice extends Mailable
      */
     public function build()
     {
-        return $this->text('mail.post.post_text')
+        $this->text('mail.post.post_text')
             ->subject($this->bucket_mail->getFormattedSubject($this->bucket_mail->notice_subject, $this->notice_embedded_tags))
             ->with([
                 'notice_embedded_tags' => $this->notice_embedded_tags,
                 'bucket_mail'          => $this->bucket_mail,
             ]);
+
+        $configs = Configs::getSharedConfigs() ?? Configs::get();
+
+        // メール配信管理の使用
+        if (Configs::getConfigsValue($configs, 'use_unsubscribe', '0') == '1') {
+            // メール購読解除のヘッダー追加（＋対象ヘッダーのDKIM署名必要）
+            $this->withSwiftMessage(function ($message) {
+                $message->getHeaders()->addTextHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
+                $message->getHeaders()->addTextHeader('List-Unsubscribe', '<' . route('get_unsubscribe') . '>');
+            });
+        }
+
+        return $this;
     }
 }
