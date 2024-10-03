@@ -326,6 +326,11 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                                 <a class="dropdown-item" href="{{url('/unsubscribe')}}">メール配信設定</a>
                                 <div class="dropdown-divider"></div>
                             @endif
+                        @elseif (\Route::currentRouteName() == 'get_unsubscribe' || \Route::currentRouteName() == 'post_unsubscribe')
+                            @if (Configs::getConfigsValue($cc_configs, 'use_mypage') == '1')
+                                <a class="dropdown-item" href="{{url('/mypage')}}">マイページ</a>
+                                <div class="dropdown-divider"></div>
+                            @endif
                         @else
                             @if (Configs::getConfigsValue($cc_configs, 'use_mypage') == '1')
                                 <a class="dropdown-item" href="{{url('/mypage')}}">マイページ</a>
