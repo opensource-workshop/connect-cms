@@ -51,10 +51,9 @@ class PasswordController extends ConnectController
     public function input($request, $page_id)
     {
         return $this->view('auth.page_auth', [
-            // 'page'    => $this->page,
             'page'    => $request->attributes->get('page'),
             'page_id' => $page_id,
-            'themes' => $request->themes,
+            'themes'  => $request->themes,
         ]);
     }
 
