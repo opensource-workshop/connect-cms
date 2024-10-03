@@ -25,8 +25,8 @@ use App\Models\Common\Unsubscriber;
                 {{ csrf_field() }}
 
                 @foreach ($plugins as $plugin)
-                    {{-- メール配信設定 --}}
-                    <div class="form-group row">
+                    {{-- メール配信設定, idはCSSで非表示するのに利用を想定 --}}
+                    <div class="form-group row" id="unsubscribe_{{$plugin->plugin_name_strtolower}}">
                         <label class="col-md-4 col-form-label text-md-right pt-0">{{$plugin->plugin_name_full}}のメール配信</label>
                         <div class="col-md-8">
                             @php
@@ -46,7 +46,7 @@ use App\Models\Common\Unsubscriber;
                                     </div>
                                 </div>
                             </div>
-                            <small class="form-text text-muted">メール配信を解除すると、{{$plugin->plugin_name_full}}からの全てのメール配信を止めます。</small>
+                            <small class="form-text text-muted">メール配信を解除すると、{{$plugin->plugin_name_full}}からのメール配信を止めます。</small>
                         </div>
                     </div>
                 @endforeach
