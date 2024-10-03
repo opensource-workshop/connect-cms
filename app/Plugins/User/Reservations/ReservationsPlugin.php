@@ -70,6 +70,11 @@ class ReservationsPlugin extends UserPluginBase
      */
     public $post = null;
 
+    /**
+     * メール配信解除設定（メール配信管理）を使うか
+     */
+    public $use_unsubscribe = true;
+
     /* コアから呼び出す関数 */
 
     /**

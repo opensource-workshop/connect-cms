@@ -132,6 +132,11 @@ class UserPluginBase extends PluginBase
     public $use_whatsnew = false;
 
     /**
+     * メール配信解除設定（メール配信管理）を使うか
+     */
+    public $use_unsubscribe = false;
+
+    /**
      * コンストラクタ
      */
     public function __construct($page = null, $frame = null, $pages = null, $page_tree = null)

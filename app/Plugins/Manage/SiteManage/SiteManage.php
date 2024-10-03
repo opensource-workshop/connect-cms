@@ -435,6 +435,13 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->use_mypage]
         );
 
+        // メール配信設定の使用
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'use_unsubscribe'],
+            ['category' => 'general',
+             'value'    => $request->use_unsubscribe]
+        );
+
         // 画像の保存機能の無効化
         $configs = Configs::updateOrCreate(
             ['name'     => 'base_mousedown_off'],

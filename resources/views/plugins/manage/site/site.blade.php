@@ -349,6 +349,34 @@
             <small class="form-text text-muted">ユーザ自身でパスワード変更等できるマイページ機能を使用するかどうかを選択</small>
         </div>
 
+        {{-- メール配信設定 --}}
+        <div class="form-group">
+            <label class="col-form-label">メール配信設定の使用</label>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if(Configs::getConfigsValueAndOld($configs, "use_unsubscribe") == "1")
+                            <input type="radio" value="1" id="use_unsubscribe_on" name="use_unsubscribe" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1" id="use_unsubscribe_on" name="use_unsubscribe" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="use_unsubscribe_on">許可する</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if(Configs::getConfigsValueAndOld($configs, "use_unsubscribe") == "0")
+                            <input type="radio" value="0" id="use_unsubscribe_off" name="use_unsubscribe" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0" id="use_unsubscribe_off" name="use_unsubscribe" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="use_unsubscribe_off">許可しない</label>
+                    </div>
+                </div>
+            </div>
+            <small class="form-text text-muted">ユーザ自身でメール配信停止や受取設定ができる、メール配信設定機能を使用するかどうかを選択</small>
+        </div>
+
         {{-- 画像の保存機能の無効化 --}}
         <div class="form-group">
             <label class="col-form-label">画像の保存機能の無効化</label>
@@ -392,7 +420,7 @@
             <label class="col-form-label">スマホメニューの表示形式</label>
             <select name="smartphone_menu_template" class="form-control">
                 @foreach (SmartphoneMenuTemplateType::enum as $key => $value)
-                    <option 
+                    <option
                         value="{{ $key }}"
                         @if(Configs::getConfigsValueAndOld($configs, "smartphone_menu_template") == $key) selected @endif
                     >

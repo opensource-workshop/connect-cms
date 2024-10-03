@@ -322,9 +322,18 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdown_auth">
                         @if (\Route::currentRouteName() == 'get_mypage' || \Route::currentRouteName() == 'post_mypage')
                             {{-- マイページのトップ（get_allで来る）もしくは、ルートでget_mypage --}}
+                            @if (Configs::getConfigsValue($cc_configs, 'use_unsubscribe') == '1')
+                                <a class="dropdown-item" href="{{url('/unsubscribe')}}">メール配信設定</a>
+                                <div class="dropdown-divider"></div>
+                            @endif
                         @else
                             @if (Configs::getConfigsValue($cc_configs, 'use_mypage') == '1')
                                 <a class="dropdown-item" href="{{url('/mypage')}}">マイページ</a>
+                            @endif
+                            @if (Configs::getConfigsValue($cc_configs, 'use_unsubscribe') == '1')
+                                <a class="dropdown-item" href="{{url('/unsubscribe')}}">メール配信設定</a>
+                            @endif
+                            @if (Configs::getConfigsValue($cc_configs, 'use_mypage') == '1' || Configs::getConfigsValue($cc_configs, 'use_unsubscribe') == '1')
                                 <div class="dropdown-divider"></div>
                             @endif
                         @endif
