@@ -24,10 +24,8 @@ class BucketsMailTest extends TestCase
 
     /**
      * getFormattedSubject()テスト
-     *
-     * @return void
      */
-    public function testGetFormattedSubject()
+    public function testGetFormattedSubject(): void
     {
         $subject = '【[[site_name]]】通知 [[body]] [[url]] [[delete_comment]]';
         $notice_embedded_tags = [
