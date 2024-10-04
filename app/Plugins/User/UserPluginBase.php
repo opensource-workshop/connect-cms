@@ -33,6 +33,7 @@ use App\Models\Common\BucketsMail;
 use App\Models\Common\BucketsRoles;
 use App\Models\Common\Frame;
 use App\Models\Common\Group;
+use App\Models\Common\Unsubscriber;
 use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
 
@@ -1076,7 +1077,7 @@ class UserPluginBase extends PluginBase
         // 空メールユーザの除外
         $relate_users = $relate_users->whereNotNull('email');
         // 設定ONなら配信停止した人を除くユーザーを取得する
-        $relate_users = BucketsMail::getUsersExcludingUnsubscribers($relate_users, $this->getPluginName());
+        $relate_users = Unsubscriber::getUsersExcludingUnsubscribers($relate_users, $this->getPluginName());
         // 関連通知するメール
         $relate_user_emails = $relate_users->pluck('email')->toArray();
 

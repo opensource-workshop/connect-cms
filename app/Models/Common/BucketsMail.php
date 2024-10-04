@@ -10,7 +10,6 @@ use App\Plugins\Manage\UserManage\UsersTool;
 use App\User;
 use App\UserableNohistory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
 
 /**
  * バケツメールのモデル
@@ -171,7 +170,7 @@ class BucketsMail extends Model
                 ->get();
 
             // 設定ONなら配信停止した人を除くユーザーを取得する
-            $all_users = $this->getUsersExcludingUnsubscribers($all_users, $this->plugin_name);
+            $all_users = Unsubscriber::getUsersExcludingUnsubscribers($all_users, $this->plugin_name);
 
             $all_user_emails = $all_users->pluck('email')->toArray();
         }
@@ -213,7 +212,7 @@ class BucketsMail extends Model
                 ->get();
 
             // 設定ONなら配信停止した人を除くユーザーを取得する
-            $group_users = self::getUsersExcludingUnsubscribers($group_users, $plugin_name);
+            $group_users = Unsubscriber::getUsersExcludingUnsubscribers($group_users, $plugin_name);
 
             $group_user_emails = $group_users->pluck('email')->toArray();
         }
@@ -224,30 +223,6 @@ class BucketsMail extends Model
         $group_user_emails = array_unique($group_user_emails);
 
         return $group_user_emails;
-    }
-
-    /**
-     * 設定ONなら配信停止した人を除くユーザーを取得する
-     */
-    public static function getUsersExcludingUnsubscribers(Collection $users, string $plugin_name) : Collection
-    {
-        // メール配信管理の使用
-        if (Configs::getSharedConfigsValue('use_unsubscribe', '0') == '1') {
-
-            // 配信停止ユーザー取得
-            $unsubscriber‗users_ids = Unsubscriber::whereIn('users_id', $users->pluck('id'))
-                ->where('plugin_name', $plugin_name)
-                ->where('unsubscribed_flag', 1)
-                ->pluck('users_id')
-                ->toArray();
-
-            // 配信停止ユーザーを除外
-            $users = $users->reject(function ($user, $key) use ($unsubscriber‗users_ids) {
-                return in_array($user->id, $unsubscriber‗users_ids);
-            });
-        }
-
-        return $users;
     }
 
     /**
@@ -267,7 +242,7 @@ class BucketsMail extends Model
                 ->get();
 
             // 設定ONなら配信停止した人を除くユーザーを取得する
-            $post_user = self::getUsersExcludingUnsubscribers($post_user, $this->plugin_name);
+            $post_user = Unsubscriber::getUsersExcludingUnsubscribers($post_user, $this->plugin_name);
 
             $approved_author_email = $post_user->pluck('email')->toArray();
         }
