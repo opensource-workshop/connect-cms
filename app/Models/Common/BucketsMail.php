@@ -9,6 +9,7 @@ use App\Models\Core\Configs;
 use App\Plugins\Manage\UserManage\UsersTool;
 use App\User;
 use App\UserableNohistory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -24,6 +25,7 @@ class BucketsMail extends Model
 {
     // 保存時のユーザー関連データの保持（履歴なしUserable）
     use UserableNohistory;
+    use HasFactory;
 
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
