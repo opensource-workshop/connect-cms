@@ -26,11 +26,9 @@ class ConnectMailJobTest extends TestCase
     }
 
     /**
-     * getFormattedSubject()テスト
-     *
-     * @return void
+     * ジョブ実行テスト
      */
-    public function testGetFormattedSubject()
+    public function testJob(): void
     {
         // *** 前準備
         // キューの実行をsyncに設定
