@@ -104,6 +104,14 @@
                             @endif
                             <label class="custom-control-label" for="save_log_type_mypage" id="save_log_type_mypage_label">マイページ</label>
                         </div>
+                        {{-- <div class="custom-control custom-checkbox custom-control-inline">
+                            @if(isset($configs["save_log_type_unsubscribe"]) && $configs["save_log_type_unsubscribe"] == "1")
+                                <input name="save_log_type_unsubscribe" value="1" type="checkbox" class="custom-control-input" id="save_log_type_unsubscribe" checked>
+                            @else
+                                <input name="save_log_type_unsubscribe" value="1" type="checkbox" class="custom-control-input" id="save_log_type_unsubscribe">
+                            @endif
+                            <label class="custom-control-label" for="save_log_type_unsubscribe" id="save_log_type_unsubscribe_label">メール配信設定</label>
+                        </div> --}}
                         <div class="custom-control custom-checkbox custom-control-inline">
                             @if(isset($configs["save_log_type_unsubscribe"]) && $configs["save_log_type_unsubscribe"] == "1")
                                 <input name="save_log_type_unsubscribe" value="1" type="checkbox" class="custom-control-input" id="save_log_type_unsubscribe" checked>

@@ -81,6 +81,7 @@ class LogManage extends ManagePluginBase
             if ($request->session()->has('app_log_search_condition.log_type_unsubscribe')) {
                 $query->orWhere('type', '=', 'Unsubscribe');
             }
+
             // API
             if ($request->session()->has('app_log_search_condition.log_type_api')) {
                 $query->orWhere('type', '=', 'API');
