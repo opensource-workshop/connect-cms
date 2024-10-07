@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit;
+namespace Tests\Unit\Utilities\Curl;
 
 use App\Utilities\Curl\CurlUtils;
 use RuntimeException;

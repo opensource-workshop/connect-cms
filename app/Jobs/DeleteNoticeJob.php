@@ -2,17 +2,16 @@
 
 namespace App\Jobs;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-
 use App\Mail\DeleteNotice;
 use App\Models\Common\BucketsMail;
+use App\Traits\ConnectMailTrait;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class DeleteNoticeJob implements ShouldQueue
 {
@@ -20,7 +19,7 @@ class DeleteNoticeJob implements ShouldQueue
      * 1.キューに入っているジョブがコンストラクタで Eloquent モデルを受け入れる場合、SerializesModels トレイトにより、モデルの識別子だけがキューにシリアル化されます。
      * 2.ジョブが実際に処理されると、キュー システムはデータベースからモデルインスタンス全体を自動的に再取得します。
      */
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, ConnectMailTrait;
 
     /**
      * 最大試行回数
@@ -58,6 +57,7 @@ class DeleteNoticeJob implements ShouldQueue
         // buckets_mails の取得
         $bucket_mail = BucketsMail::firstOrNew(['buckets_id' => $this->bucket->id]);
 
+        // 現状(2024-10-03)、削除通知は「送信先メールアドレス」のみで通知している。
         // エラーチェック（とりあえずデバックログに出力。管理画面で確認できるエラーテーブルに移すこと）
         if (!$bucket_mail->notice_addresses) {
             Log::debug("送信先メールアドレスの指定なし。buckets_id = " . $this->bucket->id);
@@ -69,8 +69,9 @@ class DeleteNoticeJob implements ShouldQueue
             return;
         }
         foreach ($notice_addresses as $notice_address) {
-            // Mail::to($notice_address)->send(new DeleteNotice($this->frame, $this->bucket, $this->post, $this->title, $this->show_method, $this->delete_comment, $bucket_mail));
             Mail::to($notice_address)->send(new DeleteNotice($this->notice_embedded_tags, $bucket_mail));
+
+            $this->saveAppLog($bucket_mail->plugin_name, $notice_address);
         }
     }
 }

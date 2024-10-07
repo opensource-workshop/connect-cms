@@ -2,25 +2,30 @@
 
 namespace App\Models\Common;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Log;
-
-use App\User;
-
-use App\Models\Core\Configs;
-
 use App\Enums\NoticeJobType;
 use App\Enums\NoticeEmbeddedTag;
 use App\Enums\UserStatus;
-
+use App\Models\Core\Configs;
 use App\Plugins\Manage\UserManage\UsersTool;
-
+use App\User;
 use App\UserableNohistory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
+/**
+ * バケツメールのモデル
+ *
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category 共通
+ * @package Model
+ * @property string $plugin_name getPluginNameAttribute()
+ */
 class BucketsMail extends Model
 {
     // 保存時のユーザー関連データの保持（履歴なしUserable）
     use UserableNohistory;
+    use HasFactory;
 
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
@@ -53,6 +58,15 @@ class BucketsMail extends Model
     ];
 
     /**
+     * バケツから plugin_name 取得
+     */
+    public function getPluginNameAttribute(): string
+    {
+        $bucket = Buckets::findOrNew($this->buckets_id);
+        return $bucket->plugin_name;
+    }
+
+    /**
      * 通知の埋め込みタグ値の配列をマージ
      */
     public static function getNoticeEmbeddedTags($frame, $bucket, $post, array $overwrite_notice_embedded_tags, string $show_method, $notice_method, $delete_comment = null) : array
@@ -75,7 +89,6 @@ class BucketsMail extends Model
         // その際は、HTML 改行タグを改行コードに変換し、その後にタグを取り除くことで、メールの本文に挿入するテキストにできる。
         // html_entity_decode で、引用の > などをdecode する。（DB上は &gt; 等で格納しているため）
         if (!empty($post->body)) {
-            // $default[NoticeEmbeddedTag::body] = strip_tags(preg_replace('/<br[[:space:]]*\/?[[:space:]]*>/i', "\n", html_entity_decode($post->body)));
             $default[NoticeEmbeddedTag::body] = self::stripTagsWysiwyg($post->body);
         }
 
@@ -102,25 +115,6 @@ class BucketsMail extends Model
     /**
      * フォーマット済みの投稿通知の本文を取得
      */
-    // public function getFormattedNoticeBody($frame, $bucket, $post, $show_method, $notice_method, $delete_comment = null)
-    // {
-    //     $notice_body = $this->notice_body;
-
-    //     // [[method]]
-    //     $notice_body = str_ireplace('[[method]]', NoticeJobType::getDescription($notice_method), $notice_body);
-
-    //     // [[title]]
-    //     $notice_body = str_ireplace('[[title]]', $post->title, $notice_body);
-
-    //     // [[url]]
-    //     $url = url('/') . '/plugin/' . $bucket->plugin_name . '/' . $show_method . '/' . $frame->page_id . '/' . $frame->id . '/' . $post->id . '#frame-' . $frame->id;
-    //     $notice_body = str_ireplace('[[url]]', $url, $notice_body);
-
-    //     // [[delete_comment]]
-    //     $notice_body = str_ireplace('[[delete_comment]]', $delete_comment, $notice_body);
-
-    //     return $notice_body;
-    // }
     public function getFormattedNoticeBody(array $notice_embedded_tags)
     {
         return $this->replaceEmbeddedTags($this->notice_body, $notice_embedded_tags);
@@ -129,19 +123,6 @@ class BucketsMail extends Model
     /**
      * フォーマット済みの関連記事通知の本文を取得
      */
-    // public function getFormattedRelateBody($frame, $bucket, $post, $show_method)
-    // {
-    //     $relate_body = $this->relate_body;
-
-    //     // [[title]]
-    //     $relate_body = str_ireplace('[[title]]', $post->title, $relate_body);
-
-    //     // [[url]]
-    //     $url = url('/') . '/plugin/' . $bucket->plugin_name . '/' . $show_method . '/' . $frame->page_id . '/' . $frame->id . '/' . $post->id . '#frame-' . $frame->id;
-    //     $relate_body = str_ireplace('[[url]]', $url, $relate_body);
-
-    //     return $relate_body;
-    // }
     public function getFormattedRelateBody(array $notice_embedded_tags)
     {
         return $this->replaceEmbeddedTags($this->relate_body, $notice_embedded_tags);
@@ -150,19 +131,6 @@ class BucketsMail extends Model
     /**
      * フォーマット済みの承認通知の本文を取得
      */
-    // public function getFormattedApprovalBody($frame, $bucket, $post, $show_method)
-    // {
-    //     $approval_body = $this->approval_body;
-
-    //     // [[title]]
-    //     $approval_body = str_ireplace('[[title]]', $post->title, $approval_body);
-
-    //     // [[url]]
-    //     $url = url('/') . '/plugin/' . $bucket->plugin_name . '/' . $show_method . '/' . $frame->page_id . '/' . $frame->id . '/' . $post->id . '#frame-' . $frame->id;
-    //     $approval_body = str_ireplace('[[url]]', $url, $approval_body);
-
-    //     return $approval_body;
-    // }
     public function getFormattedApprovalBody(array $notice_embedded_tags)
     {
         return $this->replaceEmbeddedTags($this->approval_body, $notice_embedded_tags);
@@ -171,19 +139,6 @@ class BucketsMail extends Model
     /**
      * フォーマット済みの承認済み通知の本文を取得
      */
-    // public function getFormattedApprovedBody($frame, $bucket, $post, $show_method)
-    // {
-    //     $approved_body = $this->approved_body;
-
-    //     // [[title]]
-    //     $approved_body = str_ireplace('[[title]]', $post->title, $approved_body);
-
-    //     // [[url]]
-    //     $url = url('/') . '/plugin/' . $bucket->plugin_name . '/' . $show_method . '/' . $frame->page_id . '/' . $frame->id . '/' . $post->id . '#frame-' . $frame->id;
-    //     $approved_body = str_ireplace('[[url]]', $url, $approved_body);
-
-    //     return $approved_body;
-    // }
     public function getFormattedApprovedBody(array $notice_embedded_tags)
     {
         return $this->replaceEmbeddedTags($this->approved_body, $notice_embedded_tags);

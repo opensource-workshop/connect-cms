@@ -3,11 +3,14 @@
 namespace App\Models\Core;
 
 use App\Utilities\Html\HtmlUtils;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
 class Configs extends Model
 {
+    use HasFactory;
+
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
