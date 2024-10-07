@@ -3,7 +3,7 @@
 namespace Tests\Unit\Mail;
 
 use App\Mail\ConnectMail;
-use App\Models\Core\Configs;
+// use App\Models\Core\Configs;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -29,11 +29,11 @@ class ConnectMailTest extends TestCase
     {
         // *** 前準備
         // メール配信設定を使う
-        Configs::factory()->create([
-            'name' => 'use_unsubscribe',
-            'value' => '1',
-            'category' => 'general',
-        ]);
+        // Configs::factory()->create([
+        //     'name' => 'use_unsubscribe',
+        //     'value' => '1',
+        //     'category' => 'general',
+        // ]);
 
         $subject = 'テスト件名';
         $body = 'テスト本文';

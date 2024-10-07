@@ -84,10 +84,10 @@ class ConnectLog
             $type = 'MyPage';
         } elseif ($route_name == 'post_mypage') {
             $type = 'MyPage';
-        } elseif ($route_name == 'get_unsubscribe') {
-            $type = 'Unsubscribe';
-        } elseif ($route_name == 'post_unsubscribe') {
-            $type = 'Unsubscribe';
+        // } elseif ($route_name == 'get_unsubscribe') {
+        //     $type = 'Unsubscribe';
+        // } elseif ($route_name == 'post_unsubscribe') {
+        //     $type = 'Unsubscribe';
         } elseif ($route_name == 'get_plugin') {
             $type = 'Page';
         } elseif ($route_name == 'post_plugin') {
@@ -155,9 +155,9 @@ class ConnectLog
             }
 
             // メール配信設定
-            if ($configs->where('name', 'save_log_type_unsubscribe')->where('value', '1')->isNotEmpty() && $type == 'Unsubscribe') {
-                $log_record_flag = true;
-            }
+            // if ($configs->where('name', 'save_log_type_unsubscribe')->where('value', '1')->isNotEmpty() && $type == 'Unsubscribe') {
+            //     $log_record_flag = true;
+            // }
 
             // API
             if ($configs->where('name', 'save_log_type_api')->where('value', '1')->isNotEmpty() && $type == 'API') {

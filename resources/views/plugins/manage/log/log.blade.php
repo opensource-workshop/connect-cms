@@ -75,10 +75,10 @@
                                         <input name="app_log_search_condition[log_type_mypage]" value="1" type="checkbox" class="custom-control-input" id="log_type_mypage"@if(Session::get('app_log_search_condition.log_type_mypage') == "1") checked @endif>
                                         <label class="custom-control-label" for="log_type_mypage">マイページ</label>
                                     </div>
-                                    <div class="custom-control custom-control-inline custom-checkbox">
+                                    {{-- <div class="custom-control custom-control-inline custom-checkbox">
                                         <input name="app_log_search_condition[log_type_unsubscribe]" value="1" type="checkbox" class="custom-control-input" id="log_type_unsubscribe"@if(Session::get('app_log_search_condition.log_type_unsubscribe') == "1") checked @endif>
                                         <label class="custom-control-label" for="log_type_unsubscribe">メール配信設定</label>
-                                    </div>
+                                    </div> --}}
                                     <div class="custom-control custom-control-inline custom-checkbox">
                                         <input name="app_log_search_condition[log_type_api]" value="1" type="checkbox" class="custom-control-input" id="log_type_api"@if(Session::get('app_log_search_condition.log_type_api') == "1") checked @endif>
                                         <label class="custom-control-label" for="log_type_api">API</label>

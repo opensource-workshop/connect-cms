@@ -78,9 +78,9 @@ class LogManage extends ManagePluginBase
                 $query->orWhere('type', '=', 'MyPage');
             }
             // メール配信設定
-            if ($request->session()->has('app_log_search_condition.log_type_unsubscribe')) {
-                $query->orWhere('type', '=', 'Unsubscribe');
-            }
+            // if ($request->session()->has('app_log_search_condition.log_type_unsubscribe')) {
+            //     $query->orWhere('type', '=', 'Unsubscribe');
+            // }
             // API
             if ($request->session()->has('app_log_search_condition.log_type_api')) {
                 $query->orWhere('type', '=', 'API');
@@ -288,7 +288,7 @@ class LogManage extends ManagePluginBase
         $this->updateImpl($request, 'app_log', 'save_log_type_mypage');
 
         // メール配信設定
-        $this->updateImpl($request, 'app_log', 'save_log_type_unsubscribe');
+        // $this->updateImpl($request, 'app_log', 'save_log_type_unsubscribe');
 
         // API
         $this->updateImpl($request, 'app_log', 'save_log_type_api');
