@@ -157,6 +157,15 @@ class DefaultConfigsTableSeeder extends Seeder
                         'category' => 'app_log',
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
+                    ],
+                    // メール配信設定の使用
+                    [
+                        'name' => 'use_unsubscribe',
+                        'value' => '1',
+                        'additional1' => null,
+                        'category' => 'general',
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
                     ]
                 ]
             );

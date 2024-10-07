@@ -88,6 +88,11 @@ class DatabasesPlugin extends UserPluginBase
      */
     public $use_whatsnew = true;
 
+    /**
+     * メール配信解除設定（メール配信管理）を使うか
+     */
+    public $use_unsubscribe = true;
+
     /* コアから呼び出す関数 */
 
     /**

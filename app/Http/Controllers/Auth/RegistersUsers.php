@@ -92,17 +92,6 @@ trait RegistersUsers
         // カラムの登録データ
         $input_cols = null;
 
-        // サイトテーマ詰込
-        $tmp_configs = Configs::getSharedConfigs();
-        $base_theme = Configs::getConfigsValue($tmp_configs, 'base_theme', null);
-        $additional_theme = Configs::getConfigsValue($tmp_configs, 'additional_theme', null);
-        $themes = [
-            'css' => $base_theme,
-            'js' => $base_theme,
-            'additional_css' => $additional_theme,
-            'additional_js' => $additional_theme,
-        ];
-
         // フォームの初期値として空のユーザオブジェクトを渡す。
         return view('auth.register', [
             "user" => new User(),
@@ -112,7 +101,7 @@ trait RegistersUsers
             'users_columns' => $users_columns,
             'users_columns_id_select' => $users_columns_id_select,
             'input_cols' => $input_cols,
-            'themes' => $themes,
+            'themes' => $request->themes,
             'sections' => Section::orderBy('display_sequence')->get(),
             'user_section' => new UserSection(),
         ]);
@@ -369,6 +358,7 @@ trait RegistersUsers
             // エラー画面へ
             return view('auth.register_error_messages', [
                 'error_messages' => ['有効期限切れのため、そのURLはご利用できません。'],
+                'themes' => $request->themes,
             ]);
         }
 
@@ -391,6 +381,7 @@ trait RegistersUsers
         if ($validator->fails()) {
             return view('auth.register_error_messages', [
                 'error_messages' => $validator->errors()->all(),
+                'themes' => $request->themes,
             ]);
         }
 
@@ -399,6 +390,7 @@ trait RegistersUsers
             // エラー画面へ
             return view('auth.register_error_messages', [
                 'error_messages' => ['有効期限切れのため、そのURLはご利用できません。'],
+                'themes' => $request->themes,
             ]);
         }
 
@@ -408,6 +400,7 @@ trait RegistersUsers
             // エラー画面へ
             return view('auth.register_error_messages', [
                 'error_messages' => ['既にユーザ本登録済みです。'],
+                'themes' => $request->themes,
             ]);
         }
 
@@ -415,6 +408,7 @@ trait RegistersUsers
         return view('auth.register_confirm_token', [
             'id' => $id,
             'token' => $token,
+            'themes' => $request->themes,
         ]);
     }
 
