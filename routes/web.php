@@ -73,6 +73,10 @@ Route::get('/mypage/{plugin_name?}/{action?}/{id?}/{sub_id?}', 'Core\MypageContr
 // マイページ画面postアクション
 Route::post('/mypage/{plugin_name?}/{action?}/{id?}', 'Core\MypageController@invokePostMypage')->name('post_mypage');
 
+// メール配信管理画面系アクション
+Route::get('/unsubscribe/{action?}', 'Core\UnsubscribeController@invokeGetUnsubscribe')->name('get_unsubscribe');
+Route::post('/unsubscribe/{action?}', 'Core\UnsubscribeController@invokePostUnsubscribe')->name('post_unsubscribe');
+
 // 一般プラグインの表示系アクション
 Route::get('/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePost')->name('get_plugin');
 

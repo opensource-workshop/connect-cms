@@ -2,11 +2,10 @@
 
 namespace App\Mail;
 
+use App\Models\Core\Configs;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-
-// use Illuminate\Contracts\Queue\ShouldQueue;
 
 class ConnectMail extends Mailable
 {
@@ -42,6 +41,15 @@ class ConnectMail extends Mailable
                     'mime' => $attach['mime'],
                 ]);
             }
+        }
+
+        // メール配信管理の使用
+        if (Configs::getSharedConfigsValue('use_unsubscribe', '0') == '1') {
+            // メール購読解除のヘッダー追加（＋対象ヘッダーのDKIM署名必要）
+            $mail->withSwiftMessage(function ($message) {
+                $message->getHeaders()->addTextHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
+                $message->getHeaders()->addTextHeader('List-Unsubscribe', '<' . route('get_unsubscribe') . '>');
+            });
         }
 
         return $mail;

@@ -86,6 +86,12 @@ class Kernel extends HttpKernel
 
         // Connect-CMS マイページ処理
         'connect.mypage' => \App\Http\Middleware\ConnectMypage::class,
+
+        // Connect-CMS メール配信管理
+        'connect.unsubscribe' => \App\Http\Middleware\ConnectUnsubscribe::class,
+
+        // Connect-CMS サイトテーマ詰込
+        'connect.themes' => \App\Http\Middleware\ConnectThemes::class,
     ];
 
     /**

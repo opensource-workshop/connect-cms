@@ -161,16 +161,20 @@ class BucketsMail extends Model
         $notice_addresses = explode(',', $addresses);
 
         // グループユーザのメール取得
-        $group_user_emails = self::getEmailGroups($notice_groups);
+        $group_user_emails = self::getEmailGroups($notice_groups, $this->plugin_name);
 
         // 全ユーザに通知ONの場合、メール取得
         $all_user_emails = [];
         if ($notice_everyone) {
-            $all_user_emails = User::select('users.email')
+            $all_users = User::select('users.email', 'users.id')
                 ->where('users.status', UserStatus::active)
                 ->whereNotNull('users.email')
-                ->pluck('users.email')
-                ->toArray();
+                ->get();
+
+            // 設定ONなら配信停止した人を除くユーザーを取得する
+            $all_users = Unsubscriber::getUsersExcludingUnsubscribers($all_users, $this->plugin_name);
+
+            $all_user_emails = $all_users->pluck('email')->toArray();
         }
 
         // [debug]
@@ -190,7 +194,7 @@ class BucketsMail extends Model
     /**
      * グループから、通知するメールアドレス取得
      */
-    public static function getEmailGroups(?string $notice_groups) : array
+    public static function getEmailGroups(?string $notice_groups, ?string $plugin_name) : array
     {
         // グループ全員のメール取得
         $groups_ids = explode(UsersTool::CHECKBOX_SEPARATOR, $notice_groups);
@@ -200,15 +204,19 @@ class BucketsMail extends Model
         // グループユーザのメール取得
         $group_user_emails = [];
         if (! empty($groups_ids)) {
-            $group_user_emails = GroupUser::select('users.email')
+            $group_users = GroupUser::select('users.email', 'users.id')
                 ->join('users', function ($join) {
                     $join->on('users.id', '=', 'group_users.user_id')
                         ->where('users.status', UserStatus::active)
                         ->whereNotNull('users.email');
                 })
                 ->whereIn('group_users.group_id', $groups_ids)
-                ->pluck('users.email')
-                ->toArray();
+                ->get();
+
+            // 設定ONなら配信停止した人を除くユーザーを取得する
+            $group_users = Unsubscriber::getUsersExcludingUnsubscribers($group_users, $plugin_name);
+
+            $group_user_emails = $group_users->pluck('email')->toArray();
         }
 
         // array_filter()でarrayの空要素削除
@@ -233,11 +241,12 @@ class BucketsMail extends Model
             $post_user = User::where('id', $created_id)
                 ->where('users.status', UserStatus::active)
                 ->whereNotNull('users.email')
-                ->first();
+                ->get();
 
-            if ($post_user) {
-                $approved_author_email[] = $post_user->email;
-            }
+            // 設定ONなら配信停止した人を除くユーザーを取得する
+            $post_user = Unsubscriber::getUsersExcludingUnsubscribers($post_user, $this->plugin_name);
+
+            $approved_author_email = $post_user->pluck('email')->toArray();
         }
 
         $approved_addresses = array_merge($approved_addresses, $approved_author_email);

@@ -33,6 +33,7 @@ use App\Models\Common\BucketsMail;
 use App\Models\Common\BucketsRoles;
 use App\Models\Common\Frame;
 use App\Models\Common\Group;
+use App\Models\Common\Unsubscriber;
 use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
 
@@ -130,6 +131,11 @@ class UserPluginBase extends PluginBase
      * 新着機能を使うか
      */
     public $use_whatsnew = false;
+
+    /**
+     * メール配信解除設定（メール配信管理）を使うか
+     */
+    public $use_unsubscribe = false;
 
     /**
      * コンストラクタ
@@ -1030,7 +1036,7 @@ class UserPluginBase extends PluginBase
     /**
      * 関連投稿通知の送信
      */
-    public function sendRelateNotice($post, $before_post, $mail_users, $show_method, array $overwrite_notice_embedded_tags = [])
+    public function sendRelateNotice($post, $before_post, Collection $relate_users, $show_method, array $overwrite_notice_embedded_tags = [])
     {
         // buckets がない場合
         if (empty($this->buckets)) {
@@ -1062,19 +1068,18 @@ class UserPluginBase extends PluginBase
         // // 送信方法の確認
         // if ($bucket_mail->timing == 0) {
         //     // 即時送信
-        //     dispatch_now(new RelateNoticeJob($this->frame, $this->buckets, $post, $show_method, $mail_users));
+        //     dispatch_now(new RelateNoticeJob($this->frame, $this->buckets, $post, $show_method, $relate_users));
         // } else {
         //     // スケジュール送信
-        //     RelateNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $mail_users);
+        //     RelateNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $relate_users);
         // }
 
+        // 空メールユーザの除外
+        $relate_users = $relate_users->whereNotNull('email');
+        // 設定ONなら配信停止した人を除くユーザーを取得する
+        $relate_users = Unsubscriber::getUsersExcludingUnsubscribers($relate_users, $this->getPluginName());
         // 関連通知するメール
-        $relate_user_emails = [];
-        foreach ($mail_users as $relate_user) {
-            if ($relate_user->email) {
-                $relate_user_emails[] = $relate_user->email;
-            }
-        }
+        $relate_user_emails = $relate_users->pluck('email')->toArray();
 
         // 埋め込みタグ
         $notice_embedded_tags = BucketsMail::getNoticeEmbeddedTags($this->frame, $this->buckets, $post, $overwrite_notice_embedded_tags, $show_method, NoticeJobType::notice_relate);

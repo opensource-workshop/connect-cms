@@ -52,6 +52,8 @@ class RegisterController extends Controller
     public function __construct()
     {
         // $this->middleware('guest');
+        // exceptで指定されたメソッドは除外する
+        $this->middleware('connect.themes')->except(['reShowRegistrationForm', 'register']);
     }
 
     /**
