@@ -71,7 +71,7 @@
  */
 
 /**!
- * Sortable 1.15.2
+ * Sortable 1.15.3
  * @author	RubaXa   <trash@rubaxa.org>
  * @author	owenm    <owen23355@gmail.com>
  * @license MIT
@@ -89,4 +89,4 @@
 
 //! moment.js locale configuration
 
-//! version : 0.5.45
+//! version : 0.5.46
