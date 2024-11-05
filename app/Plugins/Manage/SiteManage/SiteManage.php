@@ -240,12 +240,6 @@ class SiteManage extends ManagePluginBase
         // Config データの取得
         $configs = Configs::get();
 
-        // // Config データの変換
-        // $configs_array = array();
-        // foreach ($configs as $config) {
-        //     $configs_array[$config->name] = $config->value;
-        // }
-
         // 設定済みの基本テーマ
         $base_theme_obj = $configs->where('name', 'base_theme')->first();
         $current_base_theme = '';
@@ -268,7 +262,6 @@ class SiteManage extends ManagePluginBase
         return view('plugins.manage.site.site', [
             "function"           => __FUNCTION__,
             "plugin_name"        => "site",
-            // "configs"            => $configs_array,
             "configs"            => $configs,
             "current_base_theme" => $current_base_theme,
             "current_additional_theme" => $current_additional_theme,
