@@ -2,6 +2,7 @@
  * サイト管理のメインテンプレート
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category サイト管理
 --}}
@@ -163,22 +164,22 @@
             <div class="row">
                 <div class="col-md-3">
                     <div class="custom-control custom-radio custom-control-inline">
-                        @if(Configs::getConfigsValueAndOld($configs, "base_header_hidden") == "0")
-                            <input type="radio" value="0" id="base_header_hidden_off" name="base_header_hidden" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="0" id="base_header_hidden_off" name="base_header_hidden" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="base_header_hidden_off">表示する</label>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="custom-control custom-radio custom-control-inline">
                         @if(Configs::getConfigsValueAndOld($configs, "base_header_hidden") == "1")
                             <input type="radio" value="1" id="base_header_hidden_on" name="base_header_hidden" class="custom-control-input" checked="checked">
                         @else
                             <input type="radio" value="1" id="base_header_hidden_on" name="base_header_hidden" class="custom-control-input">
                         @endif
                         <label class="custom-control-label" for="base_header_hidden_on">表示しない</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if(Configs::getConfigsValueAndOld($configs, "base_header_hidden") == "0")
+                            <input type="radio" value="0" id="base_header_hidden_off" name="base_header_hidden" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0" id="base_header_hidden_off" name="base_header_hidden" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_header_hidden_off">表示する</label>
                     </div>
                 </div>
             </div>
@@ -228,22 +229,22 @@
             <div class="row">
                 <div class="col-md-3">
                     <div class="custom-control custom-radio custom-control-inline">
-                        @if(Configs::getConfigsValueAndOld($configs, "base_header_login_link") == "1")
-                            <input type="radio" value="1" id="base_header_login_link_on" name="base_header_login_link" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="1" id="base_header_login_link_on" name="base_header_login_link" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="base_header_login_link_on">表示する</label>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="custom-control custom-radio custom-control-inline">
                         @if(Configs::getConfigsValueAndOld($configs, "base_header_login_link") == "0")
                             <input type="radio" value="0" id="base_header_login_link_off" name="base_header_login_link" class="custom-control-input" checked="checked">
                         @else
                             <input type="radio" value="0" id="base_header_login_link_off" name="base_header_login_link" class="custom-control-input">
                         @endif
                         <label class="custom-control-label" for="base_header_login_link_off">表示しない</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if(Configs::getConfigsValueAndOld($configs, "base_header_login_link") == "1")
+                            <input type="radio" value="1" id="base_header_login_link_on" name="base_header_login_link" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1" id="base_header_login_link_on" name="base_header_login_link" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_header_login_link_on">表示する</label>
                     </div>
                 </div>
             </div>
@@ -259,22 +260,22 @@
             <div class="row">
                 <div class="col-md-3">
                     <div class="custom-control custom-radio custom-control-inline">
-                        @if(Configs::getConfigsValueAndOld($configs, "base_login_password_reset") == "1")
-                            <input type="radio" value="1" id="base_login_password_reset_on" name="base_login_password_reset" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="1" id="base_login_password_reset_on" name="base_login_password_reset" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="base_login_password_reset_on">許可する</label>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="custom-control custom-radio custom-control-inline">
                         @if(Configs::getConfigsValueAndOld($configs, "base_login_password_reset") == "0")
                             <input type="radio" value="0" id="base_login_password_reset_off" name="base_login_password_reset" class="custom-control-input" checked="checked">
                         @else
                             <input type="radio" value="0" id="base_login_password_reset_off" name="base_login_password_reset" class="custom-control-input">
                         @endif
                         <label class="custom-control-label" for="base_login_password_reset_off">許可しない</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if(Configs::getConfigsValueAndOld($configs, "base_login_password_reset") == "1")
+                            <input type="radio" value="1" id="base_login_password_reset_on" name="base_login_password_reset" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1" id="base_login_password_reset_on" name="base_login_password_reset" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_login_password_reset_on">許可する</label>
                     </div>
                 </div>
             </div>
@@ -327,22 +328,22 @@
             <div class="row">
                 <div class="col-md-3">
                     <div class="custom-control custom-radio custom-control-inline">
-                        @if(Configs::getConfigsValueAndOld($configs, "use_mypage") == "1")
-                            <input type="radio" value="1" id="use_mypage_on" name="use_mypage" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="1" id="use_mypage_on" name="use_mypage" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="use_mypage_on">許可する</label>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="custom-control custom-radio custom-control-inline">
                         @if(Configs::getConfigsValueAndOld($configs, "use_mypage") == "0")
                             <input type="radio" value="0" id="use_mypage_off" name="use_mypage" class="custom-control-input" checked="checked">
                         @else
                             <input type="radio" value="0" id="use_mypage_off" name="use_mypage" class="custom-control-input">
                         @endif
                         <label class="custom-control-label" for="use_mypage_off">許可しない</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if(Configs::getConfigsValueAndOld($configs, "use_mypage") == "1")
+                            <input type="radio" value="1" id="use_mypage_on" name="use_mypage" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1" id="use_mypage_on" name="use_mypage" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="use_mypage_on">許可する</label>
                     </div>
                 </div>
             </div>
@@ -392,7 +393,7 @@
             <label class="col-form-label">スマホメニューの表示形式</label>
             <select name="smartphone_menu_template" class="form-control">
                 @foreach (SmartphoneMenuTemplateType::enum as $key => $value)
-                    <option 
+                    <option
                         value="{{ $key }}"
                         @if(Configs::getConfigsValueAndOld($configs, "smartphone_menu_template") == $key) selected @endif
                     >
