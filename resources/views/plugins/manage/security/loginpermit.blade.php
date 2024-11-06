@@ -2,6 +2,7 @@
  * セキュリティ管理のメインテンプレート
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category セキュリティ管理
  --}}
@@ -40,14 +41,6 @@
         <div class="card mb-3">
             <div class="card-body">
                 基本設定：ログインをどこからでも　　
-                <div class="custom-control custom-radio custom-control-inline">
-                    @if (empty($configs_login_reject) || $configs_login_reject->value == null || $configs_login_reject->value == '0')
-                        <input type="radio" value="0" id="reject_off" name="login_reject" class="custom-control-input" checked="checked">
-                    @else
-                        <input type="radio" value="0" id="reject_off" name="login_reject" class="custom-control-input">
-                    @endif
-                    <label class="custom-control-label" for="reject_off">許可する</label>
-                </div>
                 <div class="custom-control custom-radio custom-control-inline pl-3">
                     @if (!empty($configs_login_reject) && $configs_login_reject->value == '1')
                         <input type="radio" value="1" id="reject_on" name="login_reject" class="custom-control-input" checked="checked">
@@ -55,6 +48,14 @@
                         <input type="radio" value="1" id="reject_on" name="login_reject" class="custom-control-input">
                     @endif
                     <label class="custom-control-label" for="reject_on">拒否する</label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if (empty($configs_login_reject) || $configs_login_reject->value == null || $configs_login_reject->value == '0')
+                        <input type="radio" value="0" id="reject_off" name="login_reject" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="0" id="reject_off" name="login_reject" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="reject_off">許可する</label>
                 </div>
             </div>
         </div>

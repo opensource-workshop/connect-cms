@@ -2,6 +2,7 @@
  * セキュリティ管理のHTML記述制限テンプレート
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category セキュリティ管理
 --}}
@@ -31,14 +32,6 @@
             <label for="permanent_link" class="col-md-3 col-form-label text-md-right">コンテンツ管理者</label>
             <div class="col-md-9 d-sm-flex align-items-center">
                 <div class="custom-control custom-radio custom-control-inline">
-                    @if (old('role_article_admin', $purifiers['role_article_admin']) == '1')
-                        <input type="radio" value="1" id="role_article_admin_1" name="role_article_admin" class="custom-control-input" checked="checked">
-                    @else
-                        <input type="radio" value="1" id="role_article_admin_1" name="role_article_admin" class="custom-control-input">
-                    @endif
-                    <label class="custom-control-label" for="role_article_admin_1" id="label_role_article_admin_1">制限する</label>
-                </div>
-                <div class="custom-control custom-radio custom-control-inline">
                     @if (old('role_article_admin', $purifiers['role_article_admin']) == '0')
                         <input type="radio" value="0" id="role_article_admin_0" name="role_article_admin" class="custom-control-input" checked="checked">
                     @else
@@ -46,19 +39,19 @@
                     @endif
                     <label class="custom-control-label" for="role_article_admin_0" id="label_role_article_admin_0">制限しない</label>
                 </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if (old('role_article_admin', $purifiers['role_article_admin']) == '1')
+                        <input type="radio" value="1" id="role_article_admin_1" name="role_article_admin" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="1" id="role_article_admin_1" name="role_article_admin" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="role_article_admin_1" id="label_role_article_admin_1">制限する</label>
+                </div>
             </div>
         </div>
         <div class="form-group row mb-0">
             <label for="permanent_link" class="col-md-3 col-form-label text-md-right">プラグイン管理者</label>
             <div class="col-md-9 d-sm-flex align-items-center">
-                <div class="custom-control custom-radio custom-control-inline">
-                    @if (old('role_arrangement', $purifiers['role_arrangement']) == 1)
-                        <input type="radio" value="1" id="role_arrangement_1" name="role_arrangement" class="custom-control-input" checked="checked">
-                    @else
-                        <input type="radio" value="1" id="role_arrangement_1" name="role_arrangement" class="custom-control-input">
-                    @endif
-                    <label class="custom-control-label" for="role_arrangement_1" id="label_role_arrangement_1">制限する</label>
-                </div>
                 <div class="custom-control custom-radio custom-control-inline">
                     @if (old('role_arrangement', $purifiers['role_arrangement']) == 0)
                         <input type="radio" value="0" id="role_arrangement_0" name="role_arrangement" class="custom-control-input" checked="checked">
@@ -67,19 +60,19 @@
                     @endif
                     <label class="custom-control-label" for="role_arrangement_0" id="label_role_arrangement_0">制限しない</label>
                 </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if (old('role_arrangement', $purifiers['role_arrangement']) == 1)
+                        <input type="radio" value="1" id="role_arrangement_1" name="role_arrangement" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="1" id="role_arrangement_1" name="role_arrangement" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="role_arrangement_1" id="label_role_arrangement_1">制限する</label>
+                </div>
             </div>
         </div>
         <div class="form-group row mb-0">
             <label for="permanent_link" class="col-md-3 col-form-label text-md-right">モデレータ</label>
             <div class="col-md-9 d-sm-flex align-items-center">
-                <div class="custom-control custom-radio custom-control-inline">
-                    @if (old('role_article', $purifiers['role_article']) == 1)
-                        <input type="radio" value="1" id="role_article_1" name="role_article" class="custom-control-input" checked="checked">
-                    @else
-                        <input type="radio" value="1" id="role_article_1" name="role_article" class="custom-control-input">
-                    @endif
-                    <label class="custom-control-label" for="role_article_1" id="label_role_article_1">制限する</label>
-                </div>
                 <div class="custom-control custom-radio custom-control-inline">
                     @if (old('role_article', $purifiers['role_article']) == 0)
                         <input type="radio" value="0" id="role_article_0" name="role_article" class="custom-control-input" checked="checked">
@@ -88,19 +81,19 @@
                     @endif
                     <label class="custom-control-label" for="role_article_0" id="label_role_article_0">制限しない</label>
                 </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if (old('role_article', $purifiers['role_article']) == 1)
+                        <input type="radio" value="1" id="role_article_1" name="role_article" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="1" id="role_article_1" name="role_article" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="role_article_1" id="label_role_article_1">制限する</label>
+                </div>
             </div>
         </div>
         <div class="form-group row mb-0">
             <label for="permanent_link" class="col-md-3 col-form-label text-md-right">承認者</label>
             <div class="col-md-9 d-sm-flex align-items-center">
-                <div class="custom-control custom-radio custom-control-inline">
-                    @if (old('role_approval', $purifiers['role_approval']) == 1)
-                        <input type="radio" value="1" id="role_approval_1" name="role_approval" class="custom-control-input" checked="checked">
-                    @else
-                        <input type="radio" value="1" id="role_approval_1" name="role_approval" class="custom-control-input">
-                    @endif
-                    <label class="custom-control-label" for="role_approval_1" id="label_role_approval_1">制限する</label>
-                </div>
                 <div class="custom-control custom-radio custom-control-inline">
                     @if (old('role_approval', $purifiers['role_approval']) == 0)
                         <input type="radio" value="0" id="role_approval_0" name="role_approval" class="custom-control-input" checked="checked">
@@ -109,19 +102,19 @@
                     @endif
                     <label class="custom-control-label" for="role_approval_0" id="label_role_approval_0">制限しない</label>
                 </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if (old('role_approval', $purifiers['role_approval']) == 1)
+                        <input type="radio" value="1" id="role_approval_1" name="role_approval" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="1" id="role_approval_1" name="role_approval" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="role_approval_1" id="label_role_approval_1">制限する</label>
+                </div>
             </div>
         </div>
         <div class="form-group row mb-0">
             <label for="permanent_link" class="col-md-3 col-form-label text-md-right">編集者</label>
             <div class="col-md-9 d-sm-flex align-items-center">
-                <div class="custom-control custom-radio custom-control-inline">
-                    @if (old('role_reporter', $purifiers['role_reporter']) == 1)
-                        <input type="radio" value="1" id="role_reporter_1" name="role_reporter" class="custom-control-input" checked="checked">
-                    @else
-                        <input type="radio" value="1" id="role_reporter_1" name="role_reporter" class="custom-control-input">
-                    @endif
-                    <label class="custom-control-label" for="role_reporter_1" id="label_role_reporter_1">制限する</label>
-                </div>
                 <div class="custom-control custom-radio custom-control-inline">
                     @if (old('role_reporter', $purifiers['role_reporter']) == 0)
                         <input type="radio" value="0" id="role_reporter_0" name="role_reporter" class="custom-control-input" checked="checked">
@@ -130,19 +123,19 @@
                     @endif
                     <label class="custom-control-label" for="role_reporter_0" id="label_role_reporter_0">制限しない</label>
                 </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if (old('role_reporter', $purifiers['role_reporter']) == 1)
+                        <input type="radio" value="1" id="role_reporter_1" name="role_reporter" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="1" id="role_reporter_1" name="role_reporter" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="role_reporter_1" id="label_role_reporter_1">制限する</label>
+                </div>
             </div>
         </div>
         <div class="form-group row">
             <label for="permanent_link" class="col-md-3 col-form-label text-md-right">ゲスト</label>
             <div class="col-md-9 d-sm-flex align-items-center">
-                <div class="custom-control custom-radio custom-control-inline">
-                    @if (old('role_guest', $purifiers['role_guest']) == 1)
-                        <input type="radio" value="1" id="role_guest_1" name="role_guest" class="custom-control-input" checked="checked">
-                    @else
-                        <input type="radio" value="1" id="role_guest_1" name="role_guest" class="custom-control-input">
-                    @endif
-                    <label class="custom-control-label" for="role_guest_1" id="label_role_guest_1">制限する</label>
-                </div>
                 <div class="custom-control custom-radio custom-control-inline">
                     @if (old('role_guest', $purifiers['role_guest']) == 0)
                         <input type="radio" value="0" id="role_guest_0" name="role_guest" class="custom-control-input" checked="checked">
@@ -150,6 +143,14 @@
                         <input type="radio" value="0" id="role_guest_0" name="role_guest" class="custom-control-input">
                     @endif
                     <label class="custom-control-label" for="role_guest_0" id="label_role_guest_0">制限しない</label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    @if (old('role_guest', $purifiers['role_guest']) == 1)
+                        <input type="radio" value="1" id="role_guest_1" name="role_guest" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="1" id="role_guest_1" name="role_guest" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="role_guest_1" id="label_role_guest_1">制限する</label>
                 </div>
             </div>
         </div>
