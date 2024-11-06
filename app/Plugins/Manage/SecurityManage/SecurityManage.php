@@ -2,24 +2,19 @@
 
 namespace App\Plugins\Manage\SecurityManage;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
-
-use DB;
-
 use App\Models\Core\Configs;
 use App\Models\Core\ConfigsLoginPermits;
-
 use App\Plugins\Manage\ManagePluginBase;
+use Illuminate\Support\Facades\Validator;
 
 /**
  * セキュリティ管理クラス
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category セキュリティ管理
- * @package Contoroller
+ * @package Controller
  * @plugin_title セキュリティ管理
  * @plugin_desc ログイン制限やHTML記述制限など、セキュリティに関する機能が集まった管理機能です。
  */
@@ -33,7 +28,6 @@ class SecurityManage extends ManagePluginBase
         // 権限チェックテーブル
         $role_ckeck_table = array();
         $role_ckeck_table["index"]             = array('admin_site');
-        //$role_ckeck_table["loginPermit"]       = array('admin_site');
         $role_ckeck_table["saveLoginPermit"]   = array('admin_site');
         $role_ckeck_table["deleteLoginPermit"] = array('admin_site');
         $role_ckeck_table["purifier"]          = array('admin_site');
@@ -49,11 +43,8 @@ class SecurityManage extends ManagePluginBase
      * @method_desc ログイン権限を設定できます。
      * @method_detail 権限は適用順に処理されます。全拒否してから特定の権限やIPアドレスを許可するような設定も可能です。
      */
-    public function index($request, $id, $errors = null)
+    public function index($request, $id)
     {
-        // セッション初期化などのLaravel 処理。
-        $request->flash();
-
         // Config データからログイン拒否設定の取得
         $configs_login_reject = Configs::where('name', 'login_reject')->first();
 
@@ -67,8 +58,6 @@ class SecurityManage extends ManagePluginBase
             "plugin_name"          => "security",
             "login_permits"        => $login_permits,
             "configs_login_reject" => $configs_login_reject,
-            "errors"               => $errors,
-            "create_flag"          => true,
         ]);
     }
 
@@ -99,7 +88,7 @@ class SecurityManage extends ManagePluginBase
             ]);
 
             if ($validator->fails()) {
-                return $this->index($request, $id, $validator->errors());
+                return redirect()->back()->withErrors($validator)->withInput();
             }
         }
 
@@ -119,7 +108,7 @@ class SecurityManage extends ManagePluginBase
                 ]);
 
                 if ($validator->fails()) {
-                    return $this->index($request, $id, $validator->errors());
+                    return redirect()->back()->withErrors($validator)->withInput();
                 }
             }
         }
