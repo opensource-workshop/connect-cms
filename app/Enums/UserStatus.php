@@ -18,8 +18,8 @@ final class UserStatus extends EnumsBase
 
     // key/valueの連想配列
     const enum = [
-        self::active => '利用可能',
         self::not_active => '利用不可',
+        self::active => '利用可能',
         self::pending_approval  => '承認待ち',
         self::temporary_delete => '仮削除',
         self::temporary => '仮登録',
