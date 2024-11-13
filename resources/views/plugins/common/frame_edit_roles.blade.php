@@ -1,10 +1,10 @@
 {{--
- * 編集画面テンプレート
+ * 権限設定画面テンプレート
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category コンテンツプラグイン
+ * @category コア
 --}}
 @extends('core.cms_frame_base_setting')
 
@@ -15,74 +15,78 @@
 
 @section("plugin_setting_$frame->id")
 
-<form action="{{url('/')}}/plugin/{{$frame->plugin_name}}/saveBucketsRoles/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame_id}}" name="{{$frame->plugin_name}}_buckets_form" method="POST">
+{{-- 登録後メッセージ表示 --}}
+@include('plugins.common.flash_message_for_frame')
+
+<form action="{{ url("/redirect/plugin/$frame->plugin_name/saveBucketsRoles/$page->id/$frame_id#frame-$frame_id") }}" name="{{$frame->plugin_name}}_buckets_form" method="POST">
     {{ csrf_field() }}
+    <input type="hidden" name="redirect_path" value="{{ url("/plugin/$frame->plugin_name/editBucketsRoles/$page->id/$frame_id#frame-$frame_id") }}">
 
     <div class="form-group">
         <table class="table {{$frame->getSettingTableClass()}}">
-        <thead>
-            <tr>
-                <th class="border-top-0"></th>
-                <th class="border-top-0">投稿</th>
-                @if($use_approval)
-                <th class="border-top-0">承認</th>
-                @endif
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <th>モデレータ</th>
-                <td>
-                    <div class="custom-control custom-checkbox custom-control-inline">
-                        @if($buckets && $buckets->canPost("role_article"))
-                            <input name="role_article[post]" value="1" type="checkbox" class="custom-control-input" id="role_article_post" checked="checked">
-                        @else
-                            <input name="role_article[post]" value="1" type="checkbox" class="custom-control-input" id="role_article_post">
-                        @endif
-                        <label class="custom-control-label" for="role_article_post" id="label_role_article_post">投稿できる</label>
-                    </div>
-                </td>
+            <thead>
+                <tr>
+                    <th class="border-top-0"></th>
+                    <th class="border-top-0">投稿</th>
+                    @if($use_approval)
+                    <th class="border-top-0">承認</th>
+                    @endif
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th>モデレータ</th>
+                    <td>
+                        <div class="custom-control custom-checkbox custom-control-inline">
+                            @if($buckets && $buckets->canPost("role_article"))
+                                <input name="role_article[post]" value="1" type="checkbox" class="custom-control-input" id="role_article_post" checked="checked">
+                            @else
+                                <input name="role_article[post]" value="1" type="checkbox" class="custom-control-input" id="role_article_post">
+                            @endif
+                            <label class="custom-control-label" for="role_article_post" id="label_role_article_post">投稿できる</label>
+                        </div>
+                    </td>
 
-                @if($use_approval)
-                <td>
-                    <div class="custom-control custom-checkbox custom-control-inline">
-                        @if($buckets && $buckets->needApproval("role_article"))
-                            <input name="role_article[approval]" value="1" type="checkbox" class="custom-control-input" id="role_article_approval" checked="checked">
-                        @else
-                            <input name="role_article[approval]" value="1" type="checkbox" class="custom-control-input" id="role_article_approval">
-                        @endif
-                        <label class="custom-control-label" for="role_article_approval" id="label_role_article_approval">承認が必要</label>
-                    </div>
-                </td>
-                @endif
-            </tr>
-            <tr>
-                <th>編集者</th>
-                <td>
-                    <div class="custom-control custom-checkbox custom-control-inline">
-                        @if($buckets && $buckets->canPost("role_reporter"))
-                            <input name="role_reporter[post]" value="1" type="checkbox" class="custom-control-input" id="role_reporter_post" checked="checked">
-                        @else
-                            <input name="role_reporter[post]" value="1" type="checkbox" class="custom-control-input" id="role_reporter_post">
-                        @endif
-                        <label class="custom-control-label" for="role_reporter_post" id="label_role_reporter_post">投稿できる</label>
-                    </div>
-                </td>
+                    @if($use_approval)
+                    <td>
+                        <div class="custom-control custom-checkbox custom-control-inline">
+                            @if($buckets && $buckets->needApproval("role_article"))
+                                <input name="role_article[approval]" value="1" type="checkbox" class="custom-control-input" id="role_article_approval" checked="checked">
+                            @else
+                                <input name="role_article[approval]" value="1" type="checkbox" class="custom-control-input" id="role_article_approval">
+                            @endif
+                            <label class="custom-control-label" for="role_article_approval" id="label_role_article_approval">承認が必要</label>
+                        </div>
+                    </td>
+                    @endif
+                </tr>
+                <tr>
+                    <th>編集者</th>
+                    <td>
+                        <div class="custom-control custom-checkbox custom-control-inline">
+                            @if($buckets && $buckets->canPost("role_reporter"))
+                                <input name="role_reporter[post]" value="1" type="checkbox" class="custom-control-input" id="role_reporter_post" checked="checked">
+                            @else
+                                <input name="role_reporter[post]" value="1" type="checkbox" class="custom-control-input" id="role_reporter_post">
+                            @endif
+                            <label class="custom-control-label" for="role_reporter_post" id="label_role_reporter_post">投稿できる</label>
+                        </div>
+                    </td>
 
-                @if($use_approval)
-                <td>
-                    <div class="custom-control custom-checkbox custom-control-inline">
-                        @if($buckets && $buckets->needApproval("role_reporter"))
-                            <input name="role_reporter[approval]" value="1" type="checkbox" class="custom-control-input" id="role_reporter_approval" checked="checked">
-                        @else
-                            <input name="role_reporter[approval]" value="1" type="checkbox" class="custom-control-input" id="role_reporter_approval">
-                        @endif
-                        <label class="custom-control-label" for="role_reporter_approval" id="label_role_reporter_approval">承認が必要</label>
-                    </div>
-                </td>
-                @endif
-            </tr>
-        </tbody>
+                    @if($use_approval)
+                    <td>
+                        <div class="custom-control custom-checkbox custom-control-inline">
+                            @if($buckets && $buckets->needApproval("role_reporter"))
+                                <input name="role_reporter[approval]" value="1" type="checkbox" class="custom-control-input" id="role_reporter_approval" checked="checked">
+                            @else
+                                <input name="role_reporter[approval]" value="1" type="checkbox" class="custom-control-input" id="role_reporter_approval">
+                            @endif
+                            <label class="custom-control-label" for="role_reporter_approval" id="label_role_reporter_approval">承認が必要</label>
+                        </div>
+                    </td>
+                    @endif
+                </tr>
+            </tbody>
         </table>
     </div>
 
