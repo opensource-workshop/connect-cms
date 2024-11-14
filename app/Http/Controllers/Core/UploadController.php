@@ -152,11 +152,8 @@ class UploadController extends ConnectController
             $headers = $no_cache_headers;
         }
 
-        // カウントアップの対象拡張子ならカウントアップ
-        $cc_count_extension = config('connect.CC_COUNT_EXTENSION');
-        if (isset($uploads['extension']) && is_array($cc_count_extension) && in_array(strtolower($uploads['extension']), $cc_count_extension)) {
-            $uploads->increment('download_count', 1);
-        }
+        // カウントアップ
+        $uploads->increment('download_count', 1);
 
         $fullpath = storage_path('app/') . $this->getDirectory($id) . '/' . $id . '.' . $uploads->extension;
         $content_disposition = "filename*=UTF-8''" . rawurlencode($uploads['client_original_name']);

@@ -64,13 +64,6 @@ return [
     // 設定メニューの折り畳みcol
     'CC_SETTING_EXPAND_COL' => 6,
 
-    // ダウンロード時にカウントする拡張子
-    'CC_COUNT_EXTENSION' => array('pdf', 'xls', 'xlsx', 'doc', 'docx', 'ppt', 'pptx', 'sb2', 'sb3', 'mp4', 'mp3'),
-
-    // delete: TRANSLATE_API_URL, TRANSLATE_API_KEYに設定見直し
-    // OSWS 翻訳サービス使用の有無
-    // 'OSWS_TRANSLATE_AGREEMENT' => env('OSWS_TRANSLATE_AGREEMENT', false),
-
     // Cache-Control
     'CACHE_CONTROL' => env('CACHE_CONTROL', 'max-age=604800'),
 
