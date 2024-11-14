@@ -61,6 +61,10 @@
         <td>マイページ</td>
         @if (Configs::getConfigsValue($configs, 'save_log_type_mypage', null) == '1') <td>〇</td> @else <td></td> @endif
     </tr>
+    {{-- <tr nobr="true">
+        <td>メール配信設定</td>
+        @if (Configs::getConfigsValue($configs, 'save_log_type_unsubscribe', null) == '1') <td>〇</td> @else <td></td> @endif
+    </tr> --}}
     <tr nobr="true">
         <td>API</td>
         @if (Configs::getConfigsValue($configs, 'save_log_type_api', null) == '1') <td>〇</td> @else <td></td> @endif

@@ -2,21 +2,20 @@
 
 namespace App\Jobs;
 
+use App\Mail\PostNotice;
+use App\Models\Common\BucketsMail;
+use App\Traits\ConnectMailTrait;
 use Illuminate\Bus\Queueable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
-use App\Mail\PostNotice;
-use App\Models\Common\BucketsMail;
-
 class PostNoticeJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, ConnectMailTrait;
 
     /**
      * 最大試行回数
@@ -55,20 +54,16 @@ class PostNoticeJob implements ShouldQueue
         $notice_addresses = $bucket_mail->getEmailFromAddressesAndGroups($bucket_mail->notice_addresses, $bucket_mail->notice_groups, $bucket_mail->notice_everyone);
 
         // エラーチェック（とりあえずデバックログに出力。管理画面で確認できるエラーテーブルに移すこと）
-        // if (!$bucket_mail->notice_addresses) {
         if (empty($notice_addresses)) {
             Log::debug("送信メールアドレスなし。buckets_id = " . $this->bucket->id);
             return;
         }
 
         // メール送信
-        // $notice_addresses = explode(',', $bucket_mail->notice_addresses);
-        // if (empty($notice_addresses)) {
-        //     return;
-        // }
         foreach ($notice_addresses as $notice_address) {
-            // Mail::to($notice_address)->send(new PostNotice($this->frame, $this->bucket, $this->post, $this->title, $this->show_method, $this->notice_method, $bucket_mail));
             Mail::to($notice_address)->send(new PostNotice($this->notice_embedded_tags, $bucket_mail));
+
+            $this->saveAppLog($bucket_mail->plugin_name, $notice_address);
         }
     }
 }

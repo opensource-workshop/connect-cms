@@ -17,6 +17,9 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')
         //          ->hourly();
+        /**
+         * 指定日時でバッチスケジュールを設定
+         */
         if(env('OPTION_BATCH_SCHEDULE')){
             // カンマ連結されたバッチスケジュールセットを分割
             $defs = explode(',', env('OPTION_BATCH_SCHEDULE'));
@@ -28,6 +31,21 @@ class Kernel extends ConsoleKernel
 
                 // バッチスケジュールを定義
                 $schedule->command($cmd)->at($time);
+            }
+        }
+
+        /**
+         * 毎分実行のスケジュール設定
+         */
+        if(env('OPTION_BATCH_SCHEDULE_MINUTELY')){
+            // カンマ連結されたバッチスケジュールセットを分割
+            $defs = explode(',', env('OPTION_BATCH_SCHEDULE_MINUTELY'));
+            foreach($defs as $def){
+                // コマンドを取得
+                $cmd = 'command:' . $def;
+
+                // 毎分バッチスケジュールを定義
+                $schedule->command($cmd)->everyMinute();
             }
         }
     }

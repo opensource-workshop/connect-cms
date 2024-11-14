@@ -2,21 +2,20 @@
 
 namespace App\Jobs;
 
+use App\Mail\ApprovedNotice;
+use App\Models\Common\BucketsMail;
+use App\Traits\ConnectMailTrait;
 use Illuminate\Bus\Queueable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
-use App\Mail\ApprovedNotice;
-use App\Models\Common\BucketsMail;
-
 class ApprovedNoticeJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, ConnectMailTrait;
 
     /**
      * 最大試行回数
@@ -58,20 +57,16 @@ class ApprovedNoticeJob implements ShouldQueue
         $approved_addresses = $bucket_mail->getApprovedEmailFromAddressesAndGroups($bucket_mail->approved_addresses, $bucket_mail->approved_groups, $this->created_id);
 
         // エラーチェック（とりあえずデバックログに出力。管理画面で確認できるエラーテーブルに移すこと）
-        // if (!$bucket_mail->approved_addresses) {
         if (empty($approved_addresses)) {
             Log::debug("送信先メールアドレスの指定なし。buckets_id = " . $this->bucket->id);
             return;
         }
 
         // メール送信
-        // $approved_addresses = explode(',', $bucket_mail->approved_addresses);
-        // if (empty($approved_addresses)) {
-        //     return;
-        // }
         foreach ($approved_addresses as $approved_address) {
-            // Mail::to($approved_address)->send(new ApprovedNotice($this->frame, $this->bucket, $this->post, $this->show_method, $bucket_mail));
             Mail::to($approved_address)->send(new ApprovedNotice($this->notice_embedded_tags, $bucket_mail));
+
+            $this->saveAppLog($bucket_mail->plugin_name, $approved_address);
         }
     }
 }

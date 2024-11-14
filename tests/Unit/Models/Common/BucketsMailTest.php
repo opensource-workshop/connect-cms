@@ -2,20 +2,30 @@
 
 namespace Tests\Unit\Models\Common;
 
-use PHPUnit\Framework\TestCase;
-
-use App\Models\Common\BucketsMail;
-
 use App\Enums\NoticeEmbeddedTag;
+use App\Models\Common\BucketsMail;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class BucketsMailTest extends TestCase
 {
+    use RefreshDatabase;
+
+    /**
+     * 初期設定
+     */
+    protected function setUp(): void
+    {
+        $this->refreshApplication();
+        // $this->refreshDatabase();
+
+        parent::setUp();
+    }
+
     /**
      * getFormattedSubject()テスト
-     *
-     * @return void
      */
-    public function testGetFormattedSubject()
+    public function testGetFormattedSubject(): void
     {
         $subject = '【[[site_name]]】通知 [[body]] [[url]] [[delete_comment]]';
         $notice_embedded_tags = [
