@@ -1,0 +1,515 @@
+name: Laravel Dusk Connect-cms-test matrix daily
+
+on:
+  schedule:
+    # 毎日AM1時実行
+    - cron: '0 16 * * *'
+  # 手動実行
+  # workflow_dispatch:
+
+# env:
+#   # schedule用
+#   PHP_VERSION_DEFAULT: '7.4'
+#   IS_OUTPUT_MANUAL_DEFAULT: 'false'
+
+jobs:
+
+  dusk-php:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['7.3', '7.4', '8.0', '8.1']
+
+    name: ubuntu-latest-mysql PHP ${{ matrix.php }}
+
+    steps:
+      # https://github.com/actions/checkout (official)
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # スクリーンショットの日本語表示対応
+      - name: Install Jp font
+        #run: sudo apt install fonts-noto
+        run: sudo apt install fonts-ipafont fonts-ipaexfont
+
+      - name: Setup .env
+        run: |
+          cp .env.example .env
+          sed -i -e 's|DB_PASSWORD=|DB_PASSWORD=root|g' .env
+          sed -i -e 's|APP_ENV=production|APP_ENV=local|g' .env
+          sed -i -e 's|APP_URL=http://localhost|APP_URL=http://localhost:8000|g' .env
+          sed -i -e 's|TRANSLATE_API_URL=""|TRANSLATE_API_URL="http://localhost:8000"|g' .env
+          sed -i -e 's|PDF_THUMBNAIL_API_URL=""|PDF_THUMBNAIL_API_URL="http://localhost:8000"|g' .env
+          sed -i -e 's|FACE_AI_API_URL=""|FACE_AI_API_URL="http://localhost:8000"|g' .env
+          # sed -e "$ a MANUAL_PUT_BASE=\"$GITHUB_WORKSPACE/tests/Manual/html/\"" .env
+
+      # schedule でphpバージョン指定
+      # - name: Set if input php_version is empty
+      #   run: |
+      #     if [[ -z "$PHP_VERSION" ]]; then
+      #       echo "PHP_VERSION=${PHP_VERSION_DEFAULT}" >> $GITHUB_ENV
+      #     else
+      #       echo "PHP_VERSION=${PHP_VERSION}" >> $GITHUB_ENV
+      #     fi
+      #   env:
+      #     PHP_VERSION: ${{ github.event.inputs.php_version }}
+
+      # https://github.com/shivammathur/setup-php (community)
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          ini-values: post_max_size=128M, upload_max_filesize=128M, date.timezone=Asia/Tokyo
+
+      - name: Database Version
+        run: |
+          mysql --version
+
+      - name: Create Database
+        run: |
+          sudo systemctl start mysql
+          mysql --user="root" --password="root" -e "CREATE DATABASE laravel character set UTF8mb4 collate utf8mb4_general_ci;"
+
+      - name: Confirmation of database user authentication method
+        run: |
+          mysql --user="root" --password="root" -e "SELECT user, host, plugin FROM mysql.user;"
+
+      - name: PHP 7.3 changes database user authentication method
+        run: |
+          if [[ "$PHP_VERSION" = "7.3" ]]; then
+            mysql --user="root" --password="root" -e "alter user 'root'@'localhost' identified with mysql_native_password by 'root';"
+            mysql --user="root" --password="root" -e "SELECT user, host, plugin FROM mysql.user;"
+          fi
+        env:
+          PHP_VERSION: ${{ matrix.php }}
+
+      # Composer
+      - name: Validate composer.json and composer.lock
+        run: COMPOSER=composer-dev.json composer validate
+
+      - name: Get composer cache directory
+        run: echo "composer-cache-dir=$(composer config cache-files-dir)" >> $GITHUB_ENV
+
+      # https://help.github.com/en/actions/configuring-and-managing-workflows/caching-dependencies-to-speed-up-workflows
+      # https://github.com/actions/cache (official)
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.composer-cache-dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install or Update Composer Dependencies
+        run: |
+          # if [[ "$PHP_VERSION" = "8.1" ]]; then
+          #   COMPOSER=composer-dev.json composer update --no-progress --optimize-autoloader
+          # else
+          COMPOSER=composer-dev.json composer install --no-progress --optimize-autoloader
+          # fi
+        env:
+          PHP_VERSION: ${{ matrix.php }}
+
+      # Laravel
+      - name: Generate Application Key
+        run: php artisan key:generate
+
+      - name: DB migration
+        run: php artisan migrate --force
+
+      - name: Initial data import with seeder
+        run: php artisan db:seed --force
+
+      # Dusk test
+      - name: Chrome Version
+        run: /opt/google/chrome/chrome --version
+
+      # https://readouble.com/laravel/8.x/ja/dusk.html#managing-chromedriver-installations
+      #- name: Upgrade Chrome Driver
+      #  run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
+
+      # https://stackoverflow.com/questions/76980975/chrome-driver-failing-in-laravel-dusk-failed-to-open-stream-http-request-fai
+      # https://voicetechno-jp.secure-web.jp/ChromeDriverV115orNewer.html
+      # https://github.com/browser-actions/setup-chrome (community)
+      - name: Downgrade Chrome browser to v114
+        uses: browser-actions/setup-chrome@latest
+        with:
+          chrome-version: 1134343 # Last commit number for Chrome v114
+
+      - name: Chrome bin-path Override
+        run: sudo ln -nfs `which chrome` /usr/bin/google-chrome
+
+      - name: Downgrade Chrome driver to v114
+        run: php artisan dusk:chrome-driver 114
+
+      - name: Start Chrome Driver
+        run: ./vendor/laravel/dusk/bin/chromedriver-linux &
+
+      - name: Run Laravel Server
+        run: php artisan serve &
+
+      # copy by tests\bin\connect-cms-test.bat
+      # ---------------------------------------------
+      # - 事前準備用の実行
+      # ---------------------------------------------
+
+      - name: 'Run Dusk データ準備用 - ログ管理 - マニュアルなし'
+        if: always()
+        run: php artisan dusk tests/Browser/Manage/LogManageTest.php no_manual
+
+      # ---------------------------------------------
+      # - 設計 ①
+      # ---------------------------------------------
+
+      - name: 'Run Dusk 設計'
+        if: always()
+        run: php artisan dusk tests/Browser/Blueprint/IndexBlueprintTest.php
+
+      - name: 'Run Dusk ページ'
+        if: always()
+        run: php artisan dusk tests/Browser/Blueprint/PageBlueprintTest.php
+
+      - name: 'Run Dusk 外部サービス'
+        if: always()
+        run: php artisan dusk tests/Browser/Blueprint/ServiceBlueprintTest.php
+
+      # ---------------------------------------------
+      # - 管理プラグイン
+      # ---------------------------------------------
+
+      - name: 'Run Dusk 管理画面アクセス'
+        if: always()
+        run: php artisan dusk tests/Browser/Manage/IndexManageTest.php
+
+      - name: 'Run Dusk ページ管理のテスト'
+        if: always()
+        run: php artisan dusk tests/Browser/Manage/PageManageTest.php
+
+      - name: 'Run Dusk サイト管理のテスト'
+        if: always()
+        run: php artisan dusk tests/Browser/Manage/SiteManageTest.php
+
+      - name: 'Run Dusk グループ管理のテスト'
+        if: always()
+        run: php artisan dusk tests/Browser/Manage/GroupManageTest.php
+
+      - name: 'Run Dusk ユーザ管理のテスト'
+        if: always()
+        run: php artisan dusk tests/Browser/Manage/UserManageTest.php
+
+      - name: 'Run Dusk セキュリティ管理のテスト'
+        if: always()
+        run: php artisan dusk tests/Browser/Manage/SecurityManageTest.php
+
+      - name: 'Run Dusk プラグイン管理のテスト'
+        if: always()
+        run: php artisan dusk tests/Browser/Manage/PluginManageTest.php
+
+      - name: 'Run Dusk システム管理のテスト'
+        if: always()
+        run: php artisan dusk tests/Browser/Manage/SystemManageTest.php
+
+      - name: 'Run Dusk API管理のテスト'
+        if: always()
+        run: php artisan dusk tests/Browser/Manage/ApiManageTest.php
+
+      - name: 'Run Dusk メッセージ管理のテスト'
+        if: always()
+        run: php artisan dusk tests/Browser/Manage/MessageManageTest.php
+
+      - name: 'Run Dusk 外部認証管理のテスト'
+        if: always()
+        run: php artisan dusk tests/Browser/Manage/AuthManageTest.php
+
+      - name: 'Run Dusk 外部サービス設定のテスト'
+        if: always()
+        run: php artisan dusk tests/Browser/Manage/ServiceManageTest.php
+
+      # ---------------------------------------------
+      # - データ管理プラグイン
+      # ---------------------------------------------
+
+      - name: 'Run Dusk アップロードファイル'
+        if: always()
+        run: php artisan dusk tests/Browser/Manage/UploadfileManageTest.php
+
+      - name: 'Run Dusk 施設管理'
+        if: always()
+        run: php artisan dusk tests/Browser/Manage/ReservationManageTest.php
+
+      - name: 'Run Dusk テーマ管理'
+        if: always()
+        run: php artisan dusk tests/Browser/Manage/ThemeManageTest.php
+
+      - name: 'Run Dusk 連番管理'
+        if: always()
+        run: php artisan dusk tests/Browser/Manage/NumberManageTest.php
+
+      - name: 'Run Dusk コード管理'
+        if: always()
+        run: php artisan dusk tests/Browser/Manage/CodeManageTest.php
+
+      - name: 'Run Dusk ログ管理'
+        if: always()
+        run: php artisan dusk tests/Browser/Manage/LogManageTest.php
+
+      - name: 'Run Dusk 祝日管理'
+        if: always()
+        run: php artisan dusk tests/Browser/Manage/HolidayManageTest.php
+
+      - name: 'Run Dusk 他システム移行'
+        if: always()
+        run: php artisan dusk tests/Browser/Manage/MigrationManageTest.php
+
+      # ---------------------------------------------
+      # - コア
+      # ---------------------------------------------
+
+      # - name: 'Run Dusk ページなし(404)'
+      #   if: always()
+      #   run: php artisan dusk tests/Browser/Core/PageNotFoundTest.php
+
+      # - name: 'Run Dusk 権限なし(403)'
+      #   if: always()
+      #   run: php artisan dusk tests/Browser/Core/PageForbiddenTest.php
+
+      # - name: 'Run Dusk 初回確認メッセージ動作テスト'
+      #   if: always()
+      #   run: php artisan dusk tests/Browser/Core/MessageFirstShowTest.php
+
+      # - name: 'Run Dusk 初回確認メッセージ動作テスト 項目フル入力'
+      #   if: always()
+      #   run: php artisan dusk tests/Browser/Core/MessageFirstShowFullTest.php
+
+      # - name: 'Run Dusk 閲覧パスワード付ページテスト'
+      #   if: always()
+      #   run: php artisan dusk tests/Browser/Core/PagePasswordTest.php
+
+      # - name: 'Run Dusk ログインテスト'
+      #   if: always()
+      #   run: php artisan dusk tests/Browser/Core/LoginTest.php
+
+      # ---------------------------------------------
+      # - 共通①
+      # ---------------------------------------------
+
+      - name: 'Run Dusk ログイン・ログアウト'
+        if: always()
+        run: php artisan dusk tests/Browser/Common/LoginLogoutTest.php
+
+      - name: 'Run Dusk 管理機能'
+        if: always()
+        run: php artisan dusk tests/Browser/Common/AdminLinkTest.php
+
+      # ---------------------------------------------
+      # - 一般プラグイン
+      # ---------------------------------------------
+
+      - name: 'Run Dusk 固定記事'
+        if: always()
+        run: php artisan dusk tests/Browser/User/ContentsPluginTest.php
+
+      - name: 'Run Dusk メニュー'
+        if: always()
+        run: php artisan dusk tests/Browser/User/MenusPluginTest.php
+
+      - name: 'Run Dusk ブログ'
+        if: always()
+        run: php artisan dusk tests/Browser/User/BlogsPluginTest.php
+
+      - name: 'Run Dusk カレンダー'
+        if: always()
+        run: php artisan dusk tests/Browser/User/CalendarsPluginTest.php
+
+      - name: 'Run Dusk スライドショー'
+        if: always()
+        run: php artisan dusk tests/Browser/User/SlideshowsPluginTest.php no_api_test
+
+      - name: 'Run Dusk 開館カレンダー'
+        if: always()
+        run: php artisan dusk tests/Browser/User/OpeningcalendarsPluginTest.php
+
+      - name: 'Run Dusk 新着情報'
+        if: always()
+        run: php artisan dusk tests/Browser/User/WhatsnewsPluginTest.php
+
+      - name: 'Run Dusk FAQ'
+        if: always()
+        run: php artisan dusk tests/Browser/User/FaqsPluginTest.php
+
+      - name: 'Run Dusk リンクリスト'
+        if: always()
+        run: php artisan dusk tests/Browser/User/LinklistsPluginTest.php
+
+      - name: 'Run Dusk キャビネット'
+        if: always()
+        run: php artisan dusk tests/Browser/User/CabinetsPluginTest.php
+
+      - name: 'Run Dusk フォトアルバム'
+        if: always()
+        run: php artisan dusk tests/Browser/User/PhotoalbumsPluginTest.php
+
+      - name: 'Run Dusk データベース'
+        if: always()
+        run: php artisan dusk tests/Browser/User/DatabasesPluginTest.php
+
+      - name: 'Run Dusk RSS'
+        if: always()
+        run: php artisan dusk tests/Browser/User/RssesPluginTest.php
+
+      - name: 'Run Dusk OPAC'
+        if: always()
+        run: php artisan dusk tests/Browser/User/OpacsPluginTest.php
+
+      - name: 'Run Dusk フォーム'
+        if: always()
+        run: php artisan dusk tests/Browser/User/FormsPluginTest.php
+
+      - name: 'Run Dusk カウンター'
+        if: always()
+        run: php artisan dusk tests/Browser/User/CountersPluginTest.php
+
+      - name: 'Run Dusk サイト内検索'
+        if: always()
+        run: php artisan dusk tests/Browser/User/SearchsPluginTest.php
+
+      - name: 'Run Dusk データベース検索'
+        if: always()
+        run: php artisan dusk tests/Browser/User/DatabasesearchesPluginTest.php
+
+      - name: 'Run Dusk 掲示板'
+        if: always()
+        run: php artisan dusk tests/Browser/User/BbsesPluginTest.php
+
+      - name: 'Run Dusk 施設予約'
+        if: always()
+        run: php artisan dusk tests/Browser/User/ReservationsPluginTest.php
+
+      - name: 'Run Dusk タブ'
+        if: always()
+        run: php artisan dusk tests/Browser/User/TabsPluginTest.php
+
+      # ---------------------------------------------
+      # - マイページ
+      # ---------------------------------------------
+
+      - name: 'Run Dusk マイページ'
+        if: always()
+        run: php artisan dusk tests/Browser/Mypage/IndexMypageTest.php
+
+      - name: 'Run Dusk プロフィール'
+        if: always()
+        run: php artisan dusk tests/Browser/Mypage/ProfileMypageTest.php
+
+      - name: 'Run Dusk ログイン履歴'
+        if: always()
+        run: php artisan dusk tests/Browser/Mypage/LoginHistoryMypageTest.php
+
+      # ---------------------------------------------
+      # - 設計 ②
+      # ---------------------------------------------
+
+      - name: 'Run Dusk 権限'
+        if: always()
+        run: php artisan dusk tests/Browser/Blueprint/RoleBlueprintTest.php
+
+      # ---------------------------------------------
+      # - 共通②
+      # ---------------------------------------------
+
+      - name: 'Run Dusk フレーム'
+        if: always()
+        run: php artisan dusk tests/Browser/Common/FrameTest.php
+
+      - name: 'Run Dusk WYSIWYG'
+        if: always()
+        run: php artisan dusk tests/Browser/Common/WysiwygTest.php
+
+      - name: 'Run Dusk パスワード付きページ'
+        if: always()
+        run: php artisan dusk tests/Browser/Common/PasswordPageTest.php
+
+      # ---------------------------------------------
+      # - Connect-Study
+      # ---------------------------------------------
+
+      # - name: 'Run Dusk Connect-Study 共通'
+      #   if: always()
+      #   run: php artisan dusk tests/Browser/ConnectStudy/ConnectStudyCommon.php
+
+      # - name: 'Run Dusk DroneStudy'
+      #   if: always()
+      #   run: php artisan dusk tests/Browser/ConnectStudy/DroneStudyTest.php
+
+      # - name: 'Run Dusk FaceStudy'
+      #   if: always()
+      #   run: php artisan dusk tests/Browser/ConnectStudy/FaceStudyTest.php
+
+      # - name: 'Run Dusk SpeechStudy'
+      #   if: always()
+      #   run: php artisan dusk tests/Browser/ConnectStudy/SpeechStudyTest.php
+
+      # ---------------------------------------------
+      # - トップページの動画
+      # ---------------------------------------------
+
+      # - name: 'Run Dusk トップページの動画'
+      #   if: always()
+      #   run: php artisan dusk tests/Browser/Top/IndexTopTest.php
+
+      # --- スクリーンショット
+      # https://github.com/actions/upload-artifact (official)
+      - name: Upload Screenshots
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots PHP ${{ matrix.php }}
+          path: tests/Browser/screenshots
+
+      # ---------------------------------------------
+      # - マニュアル出力
+      # ---------------------------------------------
+
+      # Dusk Manual Output
+      # - name: Set if input is_output_manual is empty
+      #   run: |
+      #     if [[ -z "$IS_OUTPUT_MANUAL" ]]; then
+      #       echo "IS_OUTPUT_MANUAL=$IS_OUTPUT_MANUAL_DEFAULT" >> $GITHUB_ENV
+      #     else
+      #       echo "IS_OUTPUT_MANUAL=$IS_OUTPUT_MANUAL" >> $GITHUB_ENV
+      #     fi
+      #   env:
+      #     IS_OUTPUT_MANUAL: ${{ github.event.inputs.is_output_manual }}
+
+      # - name: 'Run Dusk マニュアルHTML出力'
+      #   if: ${{ env.IS_OUTPUT_MANUAL == 'true' }}
+      #   run: php artisan dusk tests/Manual/src/ManualOutput.php
+
+      # - name: 'Run Dusk マニュアルPDF出力'
+      #   if: ${{ env.IS_OUTPUT_MANUAL == 'true' }}
+      #   run: php artisan dusk tests/Manual/src/ManualPdf.php contact_page=on
+
+      # - name: 'Run Dusk マニュアルPDF（基礎編）出力'
+      #   if: ${{ env.IS_OUTPUT_MANUAL == 'true' }}
+      #   run: php artisan dusk tests/Manual/src/ManualPdf.php contact_page=on level=basic
+
+      # - name: Upload Manual
+      #   if: ${{ env.IS_OUTPUT_MANUAL == 'true' && always() }}
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: manual
+      #     path: tests/Manual/html
+
+      # --- ログ
+      - name: Upload Logs
+        # if: failure()
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: console_and_logs PHP ${{ matrix.php }}
+          path: |
+            tests/Browser/console
+            storage/logs

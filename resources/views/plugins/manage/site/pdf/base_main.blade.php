@@ -90,6 +90,10 @@
         <td>マイページの使用</td>
         @if (Configs::getConfigsValue($configs, 'use_mypage', null) == '1') <td>許可する</td> @else <td>許可しない</td> @endif
     </tr>
+    {{-- <tr nobr="true">
+        <td>メール配信設定の使用</td>
+        @if (Configs::getConfigsValue($configs, 'use_unsubscribe', null) == '1') <td>許可する</td> @else <td>許可しない</td> @endif
+    </tr> --}}
     <tr nobr="true">
         <td>画像の保存機能の無効化</td>
             @php

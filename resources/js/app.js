@@ -15,8 +15,6 @@ window.Vue = require('vue').default;
  * or customize the JavaScript scaffolding to fit your unique needs.
  */
 
-// Vue.component('example-component', require('./components/ExampleComponent.vue'));
-// Vue.component('reservations-calendar-add-booking', require('./components/ReservationsCalendarAddBooking.vue'));
 /*
 const app = new Vue({
     el: '#app'

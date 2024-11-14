@@ -175,6 +175,31 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
         <ul class="navbar-nav text-nowrap">
             {{-- 管理メニュー表示判定（管理機能 or コンテンツ権限に付与がある場合）--}}
             @if (Auth::check() && Auth::user()->can('role_manage_or_post'))
+                @if (config('connect.common_support_url'))
+                    {{-- .env に個別サポート情報の設定がある場合のみ表示 --}}
+                    @if (\Route::currentRouteName() == 'get_mypage' || \Route::currentRouteName() == 'post_mypage')
+                        {{-- マイページのトップ（get_allで来る）もしくは、ルートでget_mypage --}}
+                        {{-- マイページではサポートメニューは表示しない --}}
+                    @else
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="dropdown_support" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">サポート情報</a>
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdown_auth">
+                            @if (config('connect.individual_support_url'))
+                                <a class="dropdown-item" href="{{config('connect.common_support_url')}}" target="_blank">共通サポートページ <i class="fas fa-external-link-alt"></i></a>
+                            @else
+                                <a class="dropdown-item" href="{{config('connect.common_support_url')}}" target="_blank">サポートページ <i class="fas fa-external-link-alt"></i></a>
+                            @endif
+                            @if (config('connect.individual_support_url'))
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="{{config('connect.individual_support_url')}}" target="_blank">個別サポートページ <i class="fas fa-external-link-alt"></i></a>
+                            @endif
+                            @if (config('connect.individual_support_password'))
+                                <div class="px-4">ページ閲覧パスワード<br /><input type="text" class="form-control" value="{{config('connect.individual_support_password')}}"></div>
+                            @endif
+                        </div>
+                    </li>
+                    @endif
+                @endif
                 <li class="nav-item dropdown">
                     {{-- ページリストがある場合は、コンテンツ画面 --}}
                     @if (isset($page_list) && !$is_manage_page)
@@ -230,7 +255,6 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                                             エリア枠
                                         </label>
                                     </div>
-                                    <div class="dropdown-divider"></div>
                                     <script>
                                         // エリアの枠線を付ける
                                         $('#switch-area-border').on('click', function (event) {

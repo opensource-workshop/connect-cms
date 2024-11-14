@@ -27,9 +27,22 @@
 </div>
 @endif
 
+{{-- 個別サポート情報 --}}
+@if (config('connect.individual_support_url'))
+<div class="card mb-2">
+    <div class="card-header bg-success cc-primary-font-color">個別サポート情報</div>
+    <div class="card-body">
+        サポートページ: <a href="{{config('connect.individual_support_url')}}" target="_blank">{{config('connect.individual_support_url')}}</a><br />
+        @if (config('connect.individual_support_password'))
+            ページ閲覧パスワード: {{config('connect.individual_support_password')}}
+        @endif
+    </div>
+</div>
+@endif
+
 @if($rss_xml)
 <div class="card">
-    <div class="card-header">Connect-CMS 更新情報等</div>
+    <div class="card-header bg-primary cc-primary-font-color">Connect-CMS 更新情報等</div>
     <div class="list-group">
     @foreach($rss_xml->channel->item as $rss_item)
         <div class="list-group-item list-group-item-action">
@@ -47,7 +60,7 @@
 </div>
 @else
 <div class="card">
-    <div class="card-header">Connect-CMS 更新情報等</div>
+    <div class="card-header bg-primary cc-primary-font-color">Connect-CMS 更新情報等</div>
     <div class="list-group">
         <div class="list-group-item list-group-item-action">
             <div class="d-flex w-100 justify-content-between">

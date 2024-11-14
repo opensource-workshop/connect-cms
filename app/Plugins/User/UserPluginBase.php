@@ -624,7 +624,7 @@ class UserPluginBase extends PluginBase
             return $this->commonView('empty_bucket_setting');
         }
 
-        return $this->commonView('frame_edit_buckets', [
+        return $this->commonView('frame_edit_roles', [
             'buckets'      => $buckets,
             'plugin_name'  => $this->frame->plugin_name,
             'use_approval' => $use_approval,
@@ -725,32 +725,29 @@ class UserPluginBase extends PluginBase
 
         // buckets がまだない & 固定記事プラグインの場合
         if (empty($buckets) && $this->frame->plugin_name == 'contents') {
+            // Buckets の登録
             $buckets = new Buckets;
             $buckets->bucket_name = '無題';
             $buckets->plugin_name = 'contents';
-            // Buckets の更新
             $buckets->save();
 
             // Frame にbuckets_id を登録
-            Frame::where('id', $frame_id)
-                 ->update(['bucket_id' => $buckets->id]);
+            Frame::where('id', $frame_id)->update(['bucket_id' => $buckets->id]);
         }
 
         // Bucket が取れないとおかしな操作をした可能性があるのでエラーにしておく。
         if (empty($buckets)) {
-            return $this->viewError("error_inframe", "存在しないBucket");
+            $request->merge(['return_mode' => 'asis']);
+            return $this->viewError('404_inframe', null, '存在しないBucket');
         }
 
         // BucketsRoles の更新
         $this->saveRequestRole($request, $buckets, 'role_reporter');
         $this->saveRequestRole($request, $buckets, 'role_article');
 
-        // 画面の呼び出し
-        return $this->commonView('frame_edit_buckets', [
-            'buckets'      => $buckets,
-            'plugin_name'  => $this->frame->plugin_name,
-            'use_approval' => $use_approval,
-        ]);
+        session()->flash("flash_message_for_frame{$frame_id}", '更新しました。');
+
+        // リダイレクト先を指定しないため、画面から渡されたredirect_pathに飛ぶ
     }
 
     /**
