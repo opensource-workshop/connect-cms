@@ -278,7 +278,7 @@ class BbsesPlugin extends UserPluginBase
     /**
      * 検索用メソッド
      */
-    public static function getSearchArgs($search_keyword)
+    public static function getSearchArgs($search_keyword, $page_ids = null)
     {
         $return[] = BbsPost::
             select(
@@ -303,6 +303,7 @@ class BbsesPlugin extends UserPluginBase
             })
             ->join('frames', 'frames.bucket_id', '=', 'bbses.bucket_id')
             ->leftjoin('pages', 'pages.id', '=', 'frames.page_id')
+            ->whereIn('pages.id', $page_ids)
             ->where(function ($plugin_query) use ($search_keyword) {
                 $plugin_query->where('bbs_posts.title', 'like', '%' . $search_keyword . '%')
                     ->orWhere('bbs_posts.body', 'like', '%' . $search_keyword . '%');
