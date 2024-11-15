@@ -698,7 +698,7 @@ class LearningtasksPlugin extends UserPluginBase
     /**
      *  検索用メソッド
      */
-    public static function getSearchArgs($search_keyword)
+    public static function getSearchArgs($search_keyword, $page_ids = null)
     {
         $return[] = DB::table('learningtasks_posts')
                       ->select(
@@ -719,6 +719,7 @@ class LearningtasksPlugin extends UserPluginBase
                       ->join('frames', 'frames.bucket_id', '=', 'learningtasks.bucket_id')
                       ->leftJoin('categories', 'categories.id', '=', 'learningtasks_posts.categories_id')
                       ->leftjoin('pages', 'pages.id', '=', 'frames.page_id')
+                      ->whereIn('pages.id', $page_ids)
                       ->where('status', '?')
                       ->where(function ($plugin_query) use ($search_keyword) {
                           $plugin_query->where('learningtasks_posts.post_title', 'like', '?')
