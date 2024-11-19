@@ -37,15 +37,16 @@ class GroupManage extends ManagePluginBase
     public function declareRole()
     {
         // 権限チェックテーブル
-        $role_check_table = array();
-        $role_check_table["index"] = array('admin_user');
-        $role_check_table["edit"] = array('admin_user');
-        $role_check_table["update"] = array('admin_user');
-        $role_check_table["delete"] = array('admin_user');
-        $role_check_table["removeUser"] = array('admin_user');
-        $role_check_table["joinUser"] = array('admin_user');
-        $role_check_table["notJoinedUsers"] = array('admin_user');
-        return $role_check_table;
+        $role_ckeck_table = array();
+        $role_ckeck_table["index"]              = array('admin_user');
+        $role_ckeck_table["edit"]               = array('admin_user');
+        $role_ckeck_table["update"]             = array('admin_user');
+        $role_ckeck_table["delete"]             = array('admin_user');
+        $role_ckeck_table["removeUser"] = array('admin_user');
+        $role_ckeck_table["joinUser"] = array('admin_user');
+        $role_ckeck_table["notJoinedUsers"] = array('admin_user');
+        // $role_ckeck_table["list"]               = array('admin_user');
+        return $role_ckeck_table;
     }
 
     /**
@@ -192,6 +193,23 @@ class GroupManage extends ManagePluginBase
 
         // 削除後は一覧画面へ
         return redirect('manage/group');
+    }
+
+    /**
+     *  グループ内ユーザー表示
+     *
+     * @return view
+     */
+    public function list($request, $id)
+    {
+        // グループデータの取得
+        $group_users = $this->getGroupUsers($id);
+
+        return view('plugins.manage.group.list', [
+            "function"    => __FUNCTION__,
+            "plugin_name" => "group",
+            "group_users" => $group_users,
+        ]);
     }
 
     /**
