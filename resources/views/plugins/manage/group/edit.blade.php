@@ -2,6 +2,7 @@
  * グループ登録画面のテンプレート
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category グループ管理
  --}}
@@ -30,6 +31,21 @@
                 <div class="col-md-9">
                     <input id="name" type="text" class="form-control @if ($errors->has('name')) border-danger @endif" name="name" value="{{ old('name', $group->name) }}" placeholder="グループ名を入力します。" required autofocus>
                     @include('plugins.common.errors_inline', ['name' => 'name'])
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label text-md-right"></label>
+                <div class="col-md-9">
+                    <div class="custom-control custom-checkbox">
+                        <input type="hidden" value="" name="initial_group_flag">
+                        <input name="initial_group_flag" value="1" type="checkbox" class="custom-control-input" id="initial_group_flag"
+                            @if(old('name', $group->initial_group_flag) == "1") checked="checked" @endif
+                        >
+                        <label class="custom-control-label" for="initial_group_flag">初期参加グループ</label>
+                    </div>
+                    @include('plugins.common.errors_inline', ['name' => 'initial_group_flag'])
+                    <small class="text-muted">※ 選択した場合、ユーザ登録時に参加させるグループになります。</small>
                 </div>
             </div>
 
