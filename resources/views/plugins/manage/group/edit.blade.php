@@ -65,7 +65,7 @@
                         <i class="fas fa-times"></i> キャンセル
                     </button>
                     <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i>
-                        @if (isset($function) && $function == 'edit')
+                        @if ($id)
                             グループ変更
                         @else
                             グループ登録
