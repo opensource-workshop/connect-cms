@@ -190,10 +190,11 @@ class GroupManage extends ManagePluginBase
     }
 
     /**
-     *  グループ内ユーザー表示
+     * グループ内ユーザー表示
      *
      * @return view
      */
+    /*
     public function list($request, $id)
     {
         // グループデータの取得
@@ -205,6 +206,7 @@ class GroupManage extends ManagePluginBase
             "group_users" => $group_users,
         ]);
     }
+    */
 
     /**
      *  グループユーザー削除
