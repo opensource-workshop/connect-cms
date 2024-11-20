@@ -45,7 +45,7 @@
                         <label class="custom-control-label" for="initial_group_flag">初期参加グループ</label>
                     </div>
                     @include('plugins.common.errors_inline', ['name' => 'initial_group_flag'])
-                    <small class="text-muted">※ 選択した場合、ユーザ登録時に参加させるグループになります。</small>
+                    <small class="text-muted">※ 選択した場合、ユーザ登録時に参加させるグループになります。「ユーザ管理＞CSVインポート」は対象外です。</small>
                 </div>
             </div>
 
