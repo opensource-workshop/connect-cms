@@ -141,9 +141,8 @@ class GroupManage extends ManagePluginBase
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            return redirect('manage/group/edit/')
-                       ->withErrors($validator)
-                       ->withInput();
+            $url = $id ? "manage/group/edit/$id" : 'manage/group/edit/';
+            return redirect($url)->withErrors($validator)->withInput();
         }
 
         // 表示順が空なら、自分を省いた最後の番号+1 をセット
