@@ -18,16 +18,14 @@
         @include('plugins.manage.group.group_manage_tab')
     </div>
     <div class="card-body">
-
-        @if (isset($id) && $id)
-        <form class="form-horizontal" method="POST" action="{{url('/manage/group/update/')}}/{{$id}}">
-        @else
-        <form class="form-horizontal" method="POST" action="{{url('/manage/group/update/')}}">
-        @endif
+        <form class="form-horizontal" method="POST" action="{{ url('/manage/group/update/') }}@if($id)/{{$id}}@endif">
             {{ csrf_field() }}
 
             <div class="form-group row">
-                <label for="name" class="col-md-3 col-form-label text-md-right">グループ名</label>
+                <label for="name" class="col-md-3 col-form-label text-md-right">
+                    グループ名
+                    <span class="badge badge-danger">必須</span>
+                </label>
                 <div class="col-md-9">
                     <input id="name" type="text" class="form-control @if ($errors->has('name')) border-danger @endif" name="name" value="{{ old('name', $group->name) }}" placeholder="グループ名を入力します。" required autofocus>
                     @include('plugins.common.errors_inline', ['name' => 'name'])
@@ -73,7 +71,7 @@
                     </button>
                 </div>
                 {{-- 既存グループの場合は削除処理のボタンも表示 --}}
-                @if (isset($id) && $id)
+                @if ($id)
                     <div class="col-sm-3 pull-right text-right">
                         <a data-toggle="collapse" href="#collapse{{$id}}">
                             <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="d-none d-sm-inline">削除</span></span>
@@ -86,7 +84,7 @@
     </div>
 </div>
 
-@if (isset($id) && $id)
+@if ($id)
     <div id="collapse{{$id}}" class="collapse" style="margin-top: 8px;">
         <div class="card border-danger">
             <div class="card-body">
@@ -104,8 +102,7 @@
     </div>
 @endif
 
-@if (isset($id) && $id)
-
+@if ($id)
     {{-- ユーザーのグループ脱退 --}}
     <form id="remove-user" name="removeuser" method="POST" action="{{url('/manage/group/removeUser/')}}/{{$id}}">
         {{csrf_field()}}

@@ -90,7 +90,7 @@ class GroupManage extends ManagePluginBase
     }
 
     /**
-     *  グループ登録・変更画面表示
+     * グループ登録・変更画面表示
      *
      * @method_title グループ登録
      * @method_desc グループ名の変更及び、参加ユーザを一覧で確認できます。
@@ -99,13 +99,7 @@ class GroupManage extends ManagePluginBase
     public function edit($request, $id = null)
     {
         // グループデータの取得
-        if (empty($id)) {
-            // グループデータの空枠
-            $group = new Group();
-        } else {
-            // グループデータの呼び出し
-            $group = Group::find($id);
-        }
+        $group = Group::findOrNew($id);
 
         // グループのユーザデータの取得
         $group_users = $this->getGroupUsers($id);
