@@ -507,12 +507,12 @@
                     <label class="{{$frame->getSettingLabelClass(true)}}">一覧への表示指定</label>
                     <div class="{{$frame->getSettingInputClass(true)}}">
                         <div class="custom-control custom-radio custom-control-inline">
-                            <input type="radio" value="0" id="list_hide_flag_0" name="list_hide_flag" class="custom-control-input" @if(old('list_hide_flag', $column->list_hide_flag) == 0) checked="checked" @endif>
-                            <label class="custom-control-label" for="list_hide_flag_0">一覧に表示する</label>
-                        </div>
-                        <div class="custom-control custom-radio custom-control-inline">
                             <input type="radio" value="1" id="list_hide_flag_1" name="list_hide_flag" class="custom-control-input" @if(old('list_hide_flag', $column->list_hide_flag) == 1) checked="checked" @endif>
                             <label class="custom-control-label" for="list_hide_flag_1">一覧に表示しない</label>
+                        </div>
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="0" id="list_hide_flag_0" name="list_hide_flag" class="custom-control-input" @if(old('list_hide_flag', $column->list_hide_flag) == 0) checked="checked" @endif>
+                            <label class="custom-control-label" for="list_hide_flag_0">一覧に表示する</label>
                         </div>
                     </div>
                 </div>
@@ -521,10 +521,6 @@
                 <div class="form-group row">
                     <label class="{{$frame->getSettingLabelClass(true)}}">詳細への表示指定</label>
                     <div class="{{$frame->getSettingInputClass(true)}}">
-                        <div class="custom-control custom-radio custom-control-inline">
-                            <input type="radio" value="0" id="detail_hide_flag_0" name="detail_hide_flag" class="custom-control-input" @if(old('detail_hide_flag', $column->detail_hide_flag) == 0) checked="checked" @endif>
-                            <label class="custom-control-label" for="detail_hide_flag_0">詳細に表示する</label>
-                        </div>
                         <div class="custom-control custom-radio custom-control-inline">
                             <input type="radio" value="1" id="detail_hide_flag_1" name="detail_hide_flag" class="custom-control-input" @if(old('detail_hide_flag', $column->detail_hide_flag) == 1) checked="checked" @endif>
                             <label class="custom-control-label" for="detail_hide_flag_1">詳細に表示しない</label>
@@ -536,6 +532,10 @@
                                 <label class="custom-control-label" for="detail_hide_flag_2">詳細に表示しない（検索時に強制表示指定可）</label>
                             </div>
                         @endif
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="0" id="detail_hide_flag_0" name="detail_hide_flag" class="custom-control-input" @if(old('detail_hide_flag', $column->detail_hide_flag) == 0) checked="checked" @endif>
+                            <label class="custom-control-label" for="detail_hide_flag_0">詳細に表示する</label>
+                        </div>
                     </div>
                 </div>
 
@@ -544,12 +544,12 @@
                     <label class="{{$frame->getSettingLabelClass(true)}}">項目名の表示指定</label>
                     <div class="{{$frame->getSettingInputClass(true)}}">
                         <div class="custom-control custom-radio custom-control-inline">
-                            <input type="radio" value="0" id="label_hide_flag_0" name="label_hide_flag" class="custom-control-input" @if(old('label_hide_flag', $column->label_hide_flag) == 0) checked="checked" @endif>
-                            <label class="custom-control-label" for="label_hide_flag_0">項目名を表示する</label>
-                        </div>
-                        <div class="custom-control custom-radio custom-control-inline">
                             <input type="radio" value="1" id="label_hide_flag_1" name="label_hide_flag" class="custom-control-input" @if(old('label_hide_flag', $column->label_hide_flag) == 1) checked="checked" @endif>
                             <label class="custom-control-label" for="label_hide_flag_1">項目名を表示しない</label>
+                        </div>
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="0" id="label_hide_flag_0" name="label_hide_flag" class="custom-control-input" @if(old('label_hide_flag', $column->label_hide_flag) == 0) checked="checked" @endif>
+                            <label class="custom-control-label" for="label_hide_flag_0">項目名を表示する</label>
                         </div>
                     </div>
                 </div>
@@ -564,12 +564,12 @@
                                 <div class="col-md">
                                     <label>表示カラムの制御</label><br>
                                     <div class="custom-control custom-radio custom-control-inline">
-                                        <input type="radio" value="1" id="role_display_control_flag_1" name="role_display_control_flag" class="custom-control-input" @if(old('role_display_control_flag', $column->role_display_control_flag) == 1) checked="checked" @endif>
-                                        <label class="custom-control-label" for="role_display_control_flag_1">権限で制御する</label>
-                                    </div>
-                                    <div class="custom-control custom-radio custom-control-inline">
                                         <input type="radio" value="0" id="role_display_control_flag_0" name="role_display_control_flag" class="custom-control-input" @if(old('role_display_control_flag', $column->role_display_control_flag) == 0) checked="checked" @endif>
                                         <label class="custom-control-label" for="role_display_control_flag_0">権限で制御しない</label>
+                                    </div>
+                                    <div class="custom-control custom-radio custom-control-inline">
+                                        <input type="radio" value="1" id="role_display_control_flag_1" name="role_display_control_flag" class="custom-control-input" @if(old('role_display_control_flag', $column->role_display_control_flag) == 1) checked="checked" @endif>
+                                        <label class="custom-control-label" for="role_display_control_flag_1">権限で制御する</label>
                                     </div>
                                     <div>
                                         <small class="text-muted">
