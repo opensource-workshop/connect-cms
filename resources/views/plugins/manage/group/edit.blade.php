@@ -18,6 +18,9 @@
         @include('plugins.manage.group.group_manage_tab')
     </div>
     <div class="card-body">
+        {{-- 共通エラーメッセージ 呼び出し --}}
+        @include('plugins.common.errors_form_line')
+
         <form class="form-horizontal" method="POST" action="{{ url('/manage/group/update/') }}@if($id)/{{$id}}@endif">
             {{ csrf_field() }}
 
@@ -145,6 +148,8 @@
     <div class="card mt-3">
         <div class="card-header">【{{$group->name}}】グループ参加ユーザ一覧</div>
         <div class="card-body">
+            {{-- 登録後メッセージ表示 --}}
+            @include('plugins.common.flash_message')
 
             <div class="table-responsive">
                 <table class="table table-hover cc-font-90">

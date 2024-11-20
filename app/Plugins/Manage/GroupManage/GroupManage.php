@@ -216,7 +216,7 @@ class GroupManage extends ManagePluginBase
         // グループユーザーから削除
         GroupUser::where('group_id', $id)->where('user_id', $request->user_id)->delete();
 
-        return redirect('manage/group/edit/' . $id);
+        return redirect("manage/group/edit/$id")->with('flash_message', 'グループから抜けました。');
     }
 
     /**
@@ -234,7 +234,7 @@ class GroupManage extends ManagePluginBase
             ]
         );
 
-        return redirect('manage/group/edit/' . $id);
+        return redirect("manage/group/edit/$id")->with('flash_message', 'グループに参加しました。');
     }
 
     /**
