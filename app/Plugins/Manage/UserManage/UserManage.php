@@ -1248,6 +1248,16 @@ class UserManage extends ManagePluginBase
             ->get();
             // ->paginate(10);
 
+        // register_redirectTo あり（ユーザ新規登録＞グループ参加）の場合
+        if (session('register_redirectTo')) {
+            foreach ($group_users as &$group_user) {
+                // 初期参加グループなら、参加で初期表示
+                if ($group_user->initial_group_flag) {
+                    $group_user->group_role = 'general';
+                }
+            }
+        }
+
         // 画面呼び出し
         return view('plugins.manage.user.groups', [
             "function"              => __FUNCTION__,

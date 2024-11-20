@@ -2,13 +2,21 @@
 
 namespace App\Models\Common;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-
 use App\Models\Common\GroupUser;
 use App\UserableNohistory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * グループ
+ *
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category グループ管理
+ * @package Model
+ */
 class Group extends Model
 {
     // 論理削除
@@ -21,7 +29,7 @@ class Group extends Model
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
      */
-    protected $fillable = ['name', 'display_sequence'];
+    protected $fillable = ['name', 'initial_group_flag', 'display_sequence'];
 
     /**
      * 日付型の場合、$dates にカラムを指定しておく。
