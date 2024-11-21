@@ -8,86 +8,54 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
 --}}
-{{-- フレーム(編集) --}}
-{{--
-@php
-    // エリアが左か右の場合、フレーム編集画面のbootstrap グリッドを使わない。(LABEL が折り返されて見にくくなるため)
-//    if ($frame->area_id == 1 || $frame->area_id == 3) {
-//        $class_label = "col-md-9 col-form-label ml-2";
-//        $class_input = "col-md-9 ml-2";
-//    }
-//    else {
-//        $class_label = "col-md-3 col-form-label text-md-right";
-//        $class_input = "col-md-9";
-//    }
-@endphp
---}}
-{{-- <table class="table"><tr><td> --}}
 
 {{-- 設定系メニューがデザインに引きずられて画面が不完全になるのを防ぐための措置 --}}
 <style type="text/css">
-<!--
-#frame-{{$frame->id}} {
-    background: #fff;
-    color: #000000;
-    max-height: 100%;
-}
--->
+    #frame-{{$frame->id}} {
+        background: #fff;
+        color: #000000;
+        max-height: 100%;
+    }
 </style>
+
 {{-- フレームが配置ページでない場合の注意 --}}
-@if($frame->page_id != $page_id)
-<script type="text/javascript">
-    // ツールチップ
-    $(function () {
-        // 有効化
-        $('[data-toggle="tooltip"]').tooltip()
-    })
-</script>
-<div class="card-header bg-warning">
-    配置されたページと異なるページです。<span class="fas fa-info-circle" data-toggle="tooltip" title="" data-original-title="設定を変更すると、配置されたページ以下のページに影響があります。"></span>
-</div>
-@endif
-<div class="frame-setting">
-<div class="frame-setting-menu">
-    <nav class="navbar {{$frame->getNavbarExpand()}} navbar-light bg-light">
-        <span class="{{$frame->getNavbarBrand()}}">設定メニュー</span>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsingNavbarLg" id="button_collapsing_navbar_lg">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="navbar-collapse collapse" id="collapsingNavbarLg">
-            <ul class="navbar-nav">
-                {{-- プラグイン側のフレームメニュー --}}
-                {{$action_core_frame->includeFrameTab($page, $frame, $action)}}
-
-                {{-- コア側のフレームメニュー --}}
-                <li class="nav-item">
-                    <span class="nav-link"><span class="active">フレーム編集</span></span>
-                </li>
-                <li class="nav-item">
-                    <a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_delete/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">フレーム削除</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
-</div>
-</div>
-
-{{--
-    <div class="card-body">
-        <ul class="nav nav-tabs">
---}}
-            {{-- プラグイン側のフレームメニュー --}}
-{{--
-            {{$action_core_frame->includeFrameTab($page, $frame, $action)}}
---}}
-
-            {{-- コア側のフレームメニュー --}}
-{{--
-            <li class="nav-item"><a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_setting/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link active">フレーム編集</a></li>
-            <li class="nav-item"><a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_delete/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">フレーム削除</a></li>
-        </ul>
+@if ($frame->page_id != $page_id)
+    <script type="text/javascript">
+        // ツールチップ
+        $(function () {
+            // 有効化
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
+    <div class="card-header bg-warning">
+        配置されたページと異なるページです。<span class="fas fa-info-circle" data-toggle="tooltip" title="" data-original-title="設定を変更すると、配置されたページ以下のページに影響があります。"></span>
     </div>
---}}
+@endif
+
+<div class="frame-setting">
+    <div class="frame-setting-menu">
+        <nav class="navbar {{$frame->getNavbarExpand()}} navbar-light bg-light">
+            <span class="{{$frame->getNavbarBrand()}}">設定メニュー</span>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsingNavbarLg" id="button_collapsing_navbar_lg">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="navbar-collapse collapse" id="collapsingNavbarLg">
+                <ul class="navbar-nav">
+                    {{-- プラグイン側のフレームメニュー --}}
+                    {{$action_core_frame->includeFrameTab($page, $frame, $action)}}
+
+                    {{-- コア側のフレームメニュー --}}
+                    <li class="nav-item">
+                        <span class="nav-link"><span class="active">フレーム編集</span></span>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{URL::to('/')}}/plugin/{{$frame->plugin_name}}/frame_delete/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">フレーム削除</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+</div>
 
 <div class="card-body frame-setting-body">
     <form action="{{url('/')}}/core/frame/update/{{$page->id}}/{{ $frame->frame_id }}" name="form_{{ $frame->frame_id }}_setting" method="POST">
@@ -298,70 +266,70 @@
 
         {{-- このページのみ表示するチェック。メインエリアはもともとページ内のみなので対象外 --}}
         @if ($frame->area_id != 2)
-        <div class="form-group row">
-            <label class="{{$frame->getSettingLabelClass()}}">対象ページ</label>
-            <div class="{{$frame->getSettingInputClass()}} d-flex align-items-center row m-0">
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">対象ページ</label>
+                <div class="{{$frame->getSettingInputClass()}} d-flex align-items-center row m-0">
 
-                <div class="custom-control custom-radio custom-control-inline">
-                    @if ($frame->page_only == 0)
-                        <input type="radio" value="0" id="page_only_0" name="page_only" class="custom-control-input" checked="checked">
-                    @else
-                        <input type="radio" value="0" id="page_only_0" name="page_only" class="custom-control-input">
-                    @endif
-                    <label class="custom-control-label" for="page_only_0">対象ページ全てで表示する。</label>
-                </div>
-                <div class="custom-control custom-radio custom-control-inline">
-                    @if ($frame->page_only == 1)
-                        <input type="radio" value="1" id="page_only_1" name="page_only" class="custom-control-input" checked="checked">
-                    @else
-                        <input type="radio" value="1" id="page_only_1" name="page_only" class="custom-control-input">
-                    @endif
-                    <label class="custom-control-label" for="page_only_1">このページのみ表示する。</label>
-                </div>
-                <div class="custom-control custom-radio custom-control-inline">
-                    @if ($frame->page_only == 2)
-                        <input type="radio" value="2" id="page_only_2" name="page_only" class="custom-control-input" checked="checked">
-                    @else
-                        <input type="radio" value="2" id="page_only_2" name="page_only" class="custom-control-input">
-                    @endif
-                    <label class="custom-control-label" for="page_only_2">このページのみ表示しない。</label>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if ($frame->page_only == 0)
+                            <input type="radio" value="0" id="page_only_0" name="page_only" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0" id="page_only_0" name="page_only" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="page_only_0">対象ページ全てで表示する。</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if ($frame->page_only == 1)
+                            <input type="radio" value="1" id="page_only_1" name="page_only" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1" id="page_only_1" name="page_only" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="page_only_1">このページのみ表示する。</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if ($frame->page_only == 2)
+                            <input type="radio" value="2" id="page_only_2" name="page_only" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="2" id="page_only_2" name="page_only" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="page_only_2">このページのみ表示しない。</label>
+                    </div>
                 </div>
             </div>
-        </div>
         @endif
 
         {{-- 新着の表示制限を行うプラグインをConfig ファイルで設定 --}}
         @if (Config::get("connect.CC_DISABLE_WHATSNEWS_PLUGIN.$frame->plugin_name"))
-        <div class="form-group row">
-            <label class="{{$frame->getSettingLabelClass()}}"></label>
-            <div class="{{$frame->getSettingInputClass()}} d-flex align-items-center">
-                <div class="custom-control custom-checkbox">
-                    @if($frame->disable_whatsnews)
-                        <input name="disable_whatsnews" value="1" type="checkbox" class="custom-control-input" id="disable_whatsnews" checked="checked">
-                    @else
-                        <input name="disable_whatsnews" value="1" type="checkbox" class="custom-control-input" id="disable_whatsnews">
-                    @endif
-                    <label class="custom-control-label" for="disable_whatsnews">新着に表示しない。</label>
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}"></label>
+                <div class="{{$frame->getSettingInputClass()}} d-flex align-items-center">
+                    <div class="custom-control custom-checkbox">
+                        @if($frame->disable_whatsnews)
+                            <input name="disable_whatsnews" value="1" type="checkbox" class="custom-control-input" id="disable_whatsnews" checked="checked">
+                        @else
+                            <input name="disable_whatsnews" value="1" type="checkbox" class="custom-control-input" id="disable_whatsnews">
+                        @endif
+                        <label class="custom-control-label" for="disable_whatsnews">新着に表示しない。</label>
+                    </div>
                 </div>
             </div>
-        </div>
         @endif
 
         {{-- データがない場合にフレームも非表示にする --}}
         @if (Config::get("connect.CC_NONE_HIDDEN_PLUGIN.$frame->plugin_name"))
-        <div class="form-group row">
-            <label class="{{$frame->getSettingLabelClass()}}"></label>
-            <div class="{{$frame->getSettingInputClass()}} d-flex align-items-center">
-                <div class="custom-control custom-checkbox">
-                    @if($frame->none_hidden)
-                        <input name="none_hidden" value="1" type="checkbox" class="custom-control-input" id="none_hidden" checked="checked">
-                    @else
-                        <input name="none_hidden" value="1" type="checkbox" class="custom-control-input" id="none_hidden">
-                    @endif
-                    <label class="custom-control-label" for="none_hidden">データがない場合にフレームも非表示にする。</label>
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}"></label>
+                <div class="{{$frame->getSettingInputClass()}} d-flex align-items-center">
+                    <div class="custom-control custom-checkbox">
+                        @if($frame->none_hidden)
+                            <input name="none_hidden" value="1" type="checkbox" class="custom-control-input" id="none_hidden" checked="checked">
+                        @else
+                            <input name="none_hidden" value="1" type="checkbox" class="custom-control-input" id="none_hidden">
+                        @endif
+                        <label class="custom-control-label" for="none_hidden">データがない場合にフレームも非表示にする。</label>
+                    </div>
                 </div>
             </div>
-        </div>
         @endif
 
         <div class="form-group row mx-auto text-center">
@@ -399,4 +367,3 @@
         });
     });
 </script>
-{{-- </td></tr></table> --}}
