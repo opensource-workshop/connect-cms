@@ -76,7 +76,7 @@ class GroupManageTest extends DuskTestCase
     private function update()
     {
         $this->browse(function (Browser $browser) {
-            $browser->press('グループ変更')
+            $browser->press('グループ登録')
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/group/update/images/update');
         });
