@@ -193,13 +193,13 @@
                             <input
                                 type="radio"
                                 value="{{ $key }}"
-                                id="{{ "content_open_type_${key}" }}"
+                                id="{{ "content_open_type_{$key}" }}"
                                 name="content_open_type"
                                 class="custom-control-input"
                                 {{ old('content_open_type', $frame->content_open_type) ? 'checked' : '' }}
                                 v-model="v_content_open_type"
                             >
-                            <label class="custom-control-label" for="{{ "content_open_type_${key}" }}">
+                            <label class="custom-control-label" for="{{ "content_open_type_{$key}" }}">
                                 {{ $value }}
                             </label>
                         </div>
