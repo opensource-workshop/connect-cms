@@ -18,10 +18,10 @@ final class ContentOpenType extends EnumsBase
 
     // key/valueの連想配列
     const enum = [
-        self::always_open => '公開',
         self::always_close => '非公開',
         self::limited_open => '限定公開',
         self::login_close => 'ログイン後非表示',
         self::login_open => 'ログイン後表示',
+        self::always_open => '公開',
     ];
 }
