@@ -348,17 +348,17 @@
         v_content_open_type: '{{ old('content_open_type', $frame->content_open_type) }}'
       }
     })
-    // 公開日時Fromのpicker
+
     $(function () {
+        // 公開日時Fromのpicker
         $('#content_open_date_from').datetimepicker({
             locale: 'ja',
             sideBySide: true,
             dayViewHeaderFormat: 'YYYY年 M月',
             format: 'YYYY-MM-DD HH:mm:ss'
         });
-    });
-    // 公開日時Toのpicker
-    $(function () {
+
+        // 公開日時Toのpicker
         $('#content_open_date_to').datetimepicker({
             locale: 'ja',
             sideBySide: true,
