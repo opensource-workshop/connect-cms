@@ -107,7 +107,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                     <input
                         type="radio"
                         value="{{ $key }}"
-                        id="{{ "rss_${key}" }}"
+                        id="{{ "rss_{$key}" }}"
                         name="rss"
                         class="custom-control-input"
                         {{ old('rss', $whatsnew->rss) == $key ? 'checked' : '' }}
@@ -117,7 +117,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                             data-toggle="collapse" data-target="#collapse_rss_count{{$frame_id}}:not(.show)" aria-expanded="true" aria-controls="collapse_rss_count{{$frame_id}}"
                         @endif
                     >
-                    <label class="custom-control-label" for="{{ "rss_${key}" }}">
+                    <label class="custom-control-label" for="{{ "rss_{$key}" }}">
                         {{ $value }}
                     </label>
                 </div>
@@ -145,14 +145,14 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                     <input
                         type="radio"
                         value="{{ $key }}"
-                        id="{{ "view_posted_name_${key}" }}"
+                        id="{{ "view_posted_name_{$key}" }}"
                         name="view_posted_name"
                         class="custom-control-input"
                         {{ old('view_posted_name', $whatsnew->view_posted_name) == $key ? 'checked' : '' }}
                     >
                     <label class="custom-control-label"
-                           for="{{ "view_posted_name_${key}" }}"
-                           id="{{ "label_view_posted_name_${key}" }}">
+                           for="{{ "view_posted_name_{$key}" }}"
+                           id="{{ "label_view_posted_name_{$key}" }}">
                         {{ $value }}
                     </label>
                 </div>
@@ -169,14 +169,14 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                     <input
                         type="radio"
                         value="{{ $key }}"
-                        id="{{ "view_posted_at_${key}" }}"
+                        id="{{ "view_posted_at_{$key}" }}"
                         name="view_posted_at"
                         class="custom-control-input"
                         {{ old('view_posted_at', $whatsnew->view_posted_at) == $key ? 'checked' : '' }}
                     >
                     <label class="custom-control-label"
-                           for="{{ "view_posted_at_${key}" }}"
-                           id="{{ "label_view_posted_at_${key}" }}">
+                           for="{{ "view_posted_at_{$key}" }}"
+                           id="{{ "label_view_posted_at_{$key}" }}">
                         {{ $value }}
                     </label>
                 </div>
@@ -236,7 +236,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                     <input
                         type="radio"
                         value="{{ $key }}"
-                        id="{{ "read_more_use_flag_${key}" }}"
+                        id="{{ "read_more_use_flag_{$key}" }}"
                         name="read_more_use_flag"
                         class="custom-control-input"
                         {{ old('read_more_use_flag', $whatsnew->read_more_use_flag) == $key ? 'checked' : '' }}
@@ -248,8 +248,8 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                         @endif
                     >
                     <label class="custom-control-label"
-                           for="{{ "read_more_use_flag_${key}" }}"
-                           id="{{ "label_read_more_use_flag_${key}" }}">
+                           for="{{ "read_more_use_flag_{$key}" }}"
+                           id="{{ "label_read_more_use_flag_{$key}" }}">
                         {{ $value }}
                     </label>
                 </div>
@@ -324,13 +324,13 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
                         <input
                             type="radio"
                             value="{{ $key }}"
-                            id="{{ "read_more_btn_transparent_flag_${key}" }}"
+                            id="{{ "read_more_btn_transparent_flag_{$key}" }}"
                             name="read_more_btn_transparent_flag"
                             class="custom-control-input"
                             {{ old('read_more_btn_transparent_flag', $whatsnew->read_more_btn_transparent_flag) == $key ? 'checked' : '' }}
                             v-model="read_more_btn_transparent_flag"
                         >
-                        <label class="custom-control-label" for="{{ "read_more_btn_transparent_flag_${key}" }}">
+                        <label class="custom-control-label" for="{{ "read_more_btn_transparent_flag_{$key}" }}">
                             {{ $value }}
                         </label>
                     </div>
