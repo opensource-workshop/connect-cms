@@ -214,6 +214,7 @@
                     <input
                         type="text"
                         name="content_open_date_from"
+                        id="content_open_date_from_input"
                         value="{{old('content_open_date_from', $frame ? $frame->content_open_date_from : '')}}"
                         class="form-control datetimepicker-input {{ $errors->has('content_open_date_from') ? ' border-danger' : '' }}"
                         data-target="#content_open_date_from"
@@ -242,6 +243,7 @@
                     <input
                         type="text"
                         name="content_open_date_to"
+                        id="content_open_date_to_input"
                         value="{{old('content_open_date_to', $frame ? $frame->content_open_date_to : '')}}"
                         class="form-control datetimepicker-input {{ $errors->has('content_open_date_to') ? ' border-danger' : '' }}"
                         data-target="#content_open_date_to"
@@ -341,11 +343,13 @@
     </form>
 </div>
 <script>
+    let content_open_type = '{{ old('content_open_type', $frame->content_open_type) }}';
+
     new Vue({
       el: "#app_{{ $frame->id }}",
       data: {
         // コンテンツ公開区分
-        v_content_open_type: '{{ old('content_open_type', $frame->content_open_type) }}'
+        v_content_open_type: content_open_type
       }
     })
 
@@ -365,5 +369,11 @@
             dayViewHeaderFormat: 'YYYY年 M月',
             format: 'YYYY-MM-DD HH:mm:ss'
         });
+
+        // 初期非表示の場合、日時入力をreadonlyにする（初期表示vueでdatetimepickerのinputをreadonlyしているが、datetimepicker側で強制解除されるため追加対応）
+        if (content_open_type != '{{ ContentOpenType::limited_open }}') {
+            $("#content_open_date_from_input").attr("readonly", "readonly");
+            $("#content_open_date_to_input").attr("readonly", "readonly");
+        }
     });
 </script>
