@@ -62,14 +62,15 @@
         @include('plugins.common.flash_message')
 
         <div class="accordion" id="search_accordion">
-            <div class="card">
+            {{-- datetimepicerの小窓がcardの枠内に隠れないようにstyle指定で対応 --}}
+            <div class="card" style="overflow: visible;">
                 <button class="btn btn-link p-0 text-left collapsed" type="button" data-toggle="collapse" data-target="#search_collapse" aria-expanded="false" aria-controls="search_collapse" id="app_reservation_search_condition_button">
                     <div class="card-header" id="app_reservation_search_condition">
                         絞り込み条件 <i class="fas fa-angle-down"></i>@if (Session::has('app_reservation_search_condition'))<span class="badge badge-pill badge-primary ml-2">条件設定中</span>@endif
                    </div>
                 </button>
                 <div id="search_collapse" class="collapse @if ($errors && count($errors) > 0) show @endif" aria-labelledby="app_reservation_search_condition" data-parent="#search_accordion">
-                    <div class="card-body border-bottom">
+                    <div class="card-body">
 
                         <form name="form_search" id="form_search" class="form-horizontal" method="post" action="{{url('/')}}/manage/reservation/search">
                             {{ csrf_field() }}
@@ -117,12 +118,12 @@
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    </div><!-- /.form-row -->
                                     @include('plugins.common.errors_inline', ['name' => 'app_reservation_search_condition.start_datetime'])
                                     @include('plugins.common.errors_inline', ['name' => 'app_reservation_search_condition.end_datetime'])
 
-                                </div>
-                            </div>
+                                </div><!-- /.col-md-9 -->
+                            </div><!-- /.row -->
 
                             <!-- 登録者 -->
                             <div class="form-group row">
@@ -147,7 +148,7 @@
                             </div>
 
                             <!-- ボタンエリア -->
-                            <div class="form-group text-center pb-4">
+                            <div class="text-center">
                                 <div class="row">
                                     <div class="mx-auto">
                                         <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/reservation/clearSearch')}}'">
@@ -159,13 +160,11 @@
                                     </div>
                                 </div>
                             </div>
-                            {{-- datetimepicerの小ウィンドウが絞込条件の枠内で隠れてしまうため、余白確保 --}}
-                            <div><br></div>
                         </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+                    </div><!-- /.card-body -->
+                </div><!-- /#search_collapse -->
+            </div><!-- /.card -->
+        </div><!-- /#search_accordion -->
 
         {{-- <div class="row mt-2"> --}}
         <div class="row">
