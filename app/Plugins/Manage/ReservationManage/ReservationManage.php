@@ -928,6 +928,21 @@ class ReservationManage extends ManagePluginBase
             $inputs_query->where('reservations_facilities.facility_name', 'like', '%' . session()->get('app_reservation_search_condition.facility_name') . '%');
         }
 
+        // 利用日From
+        if (session()->has('app_reservation_search_condition.start_datetime')) {
+            // 例) (S)2024-12-09 13:00 ～ (E)2024-12-10 15:00  = (input-S)2024-12-10 15:00 <= (E) o
+            // 例) (S)2024-12-09 13:00 ～ (E)2024-12-10 15:00  = (input-S)2024-12-10 15:01 <= (E) x
+            $inputs_query->where('reservations_inputs.end_datetime', '>', session()->get('app_reservation_search_condition.start_datetime'));
+        }
+
+        // 利用日To
+        if (session()->has('app_reservation_search_condition.end_datetime')) {
+            // 予約終了時間は、利用時間内か
+            // 例) (S)2024-12-09 13:00 ～ (E)2024-12-10 15:00  = (S) <= (input-E)2024-12-09 13:00 o
+            // 例) (S)2024-12-09 13:00 ～ (E)2024-12-10 15:00  = (S) <= (input-E)2024-12-09 12:59 x
+            $inputs_query->where('reservations_inputs.start_datetime', '<=', session()->get('app_reservation_search_condition.end_datetime'));
+        }
+
         // 登録者名
         if (session()->has('app_reservation_search_condition.created_name')) {
             $inputs_query->where('reservations_inputs.created_name', 'like', '%' . session()->get('app_reservation_search_condition.created_name') . '%');
@@ -1060,7 +1075,7 @@ class ReservationManage extends ManagePluginBase
      */
     public function clearSearch($request, $id)
     {
-        $request->session()->forget('app_reservation_search_condition');
+        session()->forget('app_reservation_search_condition');
         return redirect("/manage/reservation/bookings");
     }
 }
