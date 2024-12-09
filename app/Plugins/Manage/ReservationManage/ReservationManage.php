@@ -1067,6 +1067,27 @@ class ReservationManage extends ManagePluginBase
         // 画面上、検索条件は app_reservation_search_condition という名前で配列になっているので、
         // app_reservation_search_condition をセッションに持つことで、条件の持ち回りが可能。
         session(["app_reservation_search_condition" => $request->input('app_reservation_search_condition')]);
+
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            'app_reservation_search_condition.start_datetime' => ['nullable'],
+            'app_reservation_search_condition.end_datetime' => ['nullable', 'after:app_reservation_search_condition.start_datetime'],
+        ]);
+        $validator->setAttributeNames([
+            'app_reservation_search_condition.start_datetime' => '利用日From',
+            'app_reservation_search_condition.end_datetime' => '利用日To',
+        ]);
+
+        // カスタムエラーメッセージ
+        $validator->setCustomMessages([
+            'app_reservation_search_condition.end_datetime' => ':attributeには:date以降の日時を指定してください。',
+        ]);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
         return redirect("/manage/reservation/bookings");
     }
 

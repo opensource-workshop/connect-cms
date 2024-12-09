@@ -56,7 +56,8 @@
         @include('plugins.manage.reservation.reservation_manage_tab')
     </div>
     <div class="card-body">
-
+        {{-- 共通エラーメッセージ 呼び出し --}}
+        @include('plugins.common.errors_form_line')
         {{-- 登録後メッセージ表示 --}}
         @include('plugins.common.flash_message')
 
@@ -67,7 +68,7 @@
                         絞り込み条件 <i class="fas fa-angle-down"></i>@if (Session::has('app_reservation_search_condition'))<span class="badge badge-pill badge-primary ml-2">条件設定中</span>@endif
                    </div>
                 </button>
-                <div id="search_collapse" class="collapse" aria-labelledby="app_reservation_search_condition" data-parent="#search_accordion">
+                <div id="search_collapse" class="collapse @if ($errors && count($errors) > 0) show @endif" aria-labelledby="app_reservation_search_condition" data-parent="#search_accordion">
                     <div class="card-body border-bottom">
 
                         <form name="form_search" id="form_search" class="form-horizontal" method="post" action="{{url('/')}}/manage/reservation/search">
@@ -117,6 +118,8 @@
                                             </div>
                                         </div>
                                     </div>
+                                    @include('plugins.common.errors_inline', ['name' => 'app_reservation_search_condition.start_datetime'])
+                                    @include('plugins.common.errors_inline', ['name' => 'app_reservation_search_condition.end_datetime'])
 
                                 </div>
                             </div>
