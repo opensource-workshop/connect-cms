@@ -1080,7 +1080,7 @@ class ReservationManage extends ManagePluginBase
 
         // カスタムエラーメッセージ
         $validator->setCustomMessages([
-            'app_reservation_search_condition.end_datetime' => ':attributeには:date以降の日時を指定してください。',
+            'app_reservation_search_condition.end_datetime.after_or_equal' => ':attributeには:date以降の日時を指定してください。',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
