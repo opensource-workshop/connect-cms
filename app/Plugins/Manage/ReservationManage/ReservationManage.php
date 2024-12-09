@@ -1071,7 +1071,7 @@ class ReservationManage extends ManagePluginBase
         // エラーチェック
         $validator = Validator::make($request->all(), [
             'app_reservation_search_condition.start_datetime' => ['nullable'],
-            'app_reservation_search_condition.end_datetime' => ['nullable', 'after:app_reservation_search_condition.start_datetime'],
+            'app_reservation_search_condition.end_datetime' => ['nullable', 'after_or_equal:app_reservation_search_condition.start_datetime'],
         ]);
         $validator->setAttributeNames([
             'app_reservation_search_condition.start_datetime' => '利用日From',
