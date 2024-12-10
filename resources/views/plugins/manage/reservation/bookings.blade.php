@@ -70,6 +70,7 @@
                         絞り込み条件 <i class="fas fa-angle-down"></i>@if (Session::has('app_reservation_search_condition'))<span class="badge badge-pill badge-primary ml-2">条件設定中</span>@endif
                    </div>
                 </button>
+                {{-- 入力エラー時、絞り込み条件を開いたままにする(.show) --}}
                 <div id="search_collapse" class="collapse @if ($errors && count($errors) > 0) show @endif" aria-labelledby="app_reservation_search_condition" data-parent="#search_accordion">
                     <div class="card-body">
 
