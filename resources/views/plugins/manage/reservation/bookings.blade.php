@@ -98,7 +98,7 @@
                                                 @endphp
                                                 <input type="text" name="app_reservation_search_condition[start_datetime]" value="{{$start_datetime}}" class="form-control datetimepicker-input" data-target="#start_datetime">
                                                 <div class="input-group-append" data-target="#start_datetime" data-toggle="datetimepicker">
-                                                    <div class="input-group-text"><i class="far fa-clock"></i></div>
+                                                    <div class="input-group-text"><i class="fas fa-calendar-alt"></i></div>
                                                 </div>
                                                 <div class="form-text pl-2">
                                                     ～
@@ -114,7 +114,7 @@
                                                 @endphp
                                                 <input type="text" name="app_reservation_search_condition[end_datetime]" value="{{$end_datetime}}" class="form-control datetimepicker-input" data-target="#end_datetime">
                                                 <div class="input-group-append" data-target="#end_datetime" data-toggle="datetimepicker">
-                                                    <div class="input-group-text"><i class="far fa-clock"></i></div>
+                                                    <div class="input-group-text"><i class="fas fa-calendar-alt"></i></div>
                                                 </div>
                                             </div>
                                         </div>
