@@ -2,6 +2,7 @@
  * グループ登録画面のテンプレート
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category グループ管理
  --}}
@@ -17,19 +18,35 @@
         @include('plugins.manage.group.group_manage_tab')
     </div>
     <div class="card-body">
+        {{-- 共通エラーメッセージ 呼び出し --}}
+        @include('plugins.common.errors_form_line')
 
-        @if (isset($id) && $id)
-        <form class="form-horizontal" method="POST" action="{{url('/manage/group/update/')}}/{{$id}}">
-        @else
-        <form class="form-horizontal" method="POST" action="{{url('/manage/group/update/')}}">
-        @endif
+        <form class="form-horizontal" method="POST" action="{{ url('/manage/group/update/') }}@if($id)/{{$id}}@endif">
             {{ csrf_field() }}
 
             <div class="form-group row">
-                <label for="name" class="col-md-3 col-form-label text-md-right">グループ名</label>
+                <label for="name" class="col-md-3 col-form-label text-md-right">
+                    グループ名
+                    <span class="badge badge-danger">必須</span>
+                </label>
                 <div class="col-md-9">
                     <input id="name" type="text" class="form-control @if ($errors->has('name')) border-danger @endif" name="name" value="{{ old('name', $group->name) }}" placeholder="グループ名を入力します。" required autofocus>
                     @include('plugins.common.errors_inline', ['name' => 'name'])
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label text-md-right"></label>
+                <div class="col-md-9">
+                    <div class="custom-control custom-checkbox">
+                        <input type="hidden" value="" name="initial_group_flag">
+                        <input name="initial_group_flag" value="1" type="checkbox" class="custom-control-input" id="initial_group_flag"
+                            @if(old('name', $group->initial_group_flag) == "1") checked="checked" @endif
+                        >
+                        <label class="custom-control-label" for="initial_group_flag">初期参加グループ</label>
+                    </div>
+                    @include('plugins.common.errors_inline', ['name' => 'initial_group_flag'])
+                    <small class="text-muted">※ 選択した場合、ユーザ登録時に参加させるグループになります。「ユーザ管理＞CSVインポート」は対象外です。</small>
                 </div>
             </div>
 
@@ -49,7 +66,7 @@
                         <i class="fas fa-times"></i> キャンセル
                     </button>
                     <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i>
-                        @if (isset($function) && $function == 'edit')
+                        @if ($id)
                             グループ変更
                         @else
                             グループ登録
@@ -57,7 +74,7 @@
                     </button>
                 </div>
                 {{-- 既存グループの場合は削除処理のボタンも表示 --}}
-                @if (isset($id) && $id)
+                @if ($id)
                     <div class="col-sm-3 pull-right text-right">
                         <a data-toggle="collapse" href="#collapse{{$id}}">
                             <span class="btn btn-danger"><i class="fas fa-trash-alt"></i> <span class="d-none d-sm-inline">削除</span></span>
@@ -70,7 +87,7 @@
     </div>
 </div>
 
-@if (isset($id) && $id)
+@if ($id)
     <div id="collapse{{$id}}" class="collapse" style="margin-top: 8px;">
         <div class="card border-danger">
             <div class="card-body">
@@ -88,8 +105,7 @@
     </div>
 @endif
 
-@if (isset($id) && $id)
-
+@if ($id)
     {{-- ユーザーのグループ脱退 --}}
     <form id="remove-user" name="removeuser" method="POST" action="{{url('/manage/group/removeUser/')}}/{{$id}}">
         {{csrf_field()}}
@@ -132,6 +148,8 @@
     <div class="card mt-3">
         <div class="card-header">【{{$group->name}}】グループ参加ユーザ一覧</div>
         <div class="card-body">
+            {{-- 登録後メッセージ表示 --}}
+            @include('plugins.common.flash_message')
 
             <div class="table-responsive">
                 <table class="table table-hover cc-font-90">

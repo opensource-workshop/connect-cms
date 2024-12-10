@@ -2,31 +2,38 @@
 
 namespace App\Http\Controllers\Auth;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Auth\Events\Registered;
-use Illuminate\Foundation\Auth\RedirectsUsers;
-use Illuminate\Support\Facades\Validator;
-
-use App\User;
-use App\Models\Core\Configs;
-use App\Models\Core\UsersColumnsSet;
-use App\Models\Core\UsersRoles;
-use App\Traits\ConnectCommonTrait;
-use App\Traits\ConnectMailTrait;
-
-use Carbon\Carbon;
-
-use App\Plugins\Manage\UserManage\UsersTool;
-use App\Utilities\Token\TokenUtils;
-use App\Rules\CustomValiTokenExists;
-use App\Providers\RouteServiceProvider;
-
 use App\Enums\UserRegisterNoticeEmbeddedTag;
 use App\Enums\UserStatus;
+use App\Models\Common\Group;
+use App\Models\Common\GroupUser;
+use App\Models\Core\Configs;
 use App\Models\Core\Section;
+use App\Models\Core\UsersColumnsSet;
+use App\Models\Core\UsersRoles;
 use App\Models\Core\UserSection;
+use App\Plugins\Manage\UserManage\UsersTool;
+use App\Providers\RouteServiceProvider;
+use App\Rules\CustomValiTokenExists;
+use App\Traits\ConnectCommonTrait;
+use App\Traits\ConnectMailTrait;
+use App\User;
+use App\Utilities\Token\TokenUtils;
+use Carbon\Carbon;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Foundation\Auth\RedirectsUsers;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
+/**
+ * ユーザ登録の共通処理
+ *
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
+ * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
+ * @category Auth
+ * @package CommonTrait
+ */
 trait RegistersUsers
 {
     use RedirectsUsers;
@@ -222,6 +229,20 @@ trait RegistersUsers
                         'role_value' => 1
                     ]);
                 }
+            }
+        }
+
+        // ユーザー自動登録（未ログイン、ユーザ管理者以外）
+        if (!Auth::user() || !$this->isCan('admin_user')) {
+            // 初期参加グループ
+            $groups = Group::where('initial_group_flag', 1)->get();
+            foreach ($groups as $group) {
+                // グループ参加
+                GroupUser::create([
+                    'group_id' => $group->id,
+                    'user_id' => $user->id,
+                    'group_role' => 'general',
+                ]);
             }
         }
 

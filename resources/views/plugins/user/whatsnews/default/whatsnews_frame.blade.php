@@ -39,12 +39,12 @@
                     <input
                         type="radio"
                         value="{{ $key }}"
-                        id="{{ "post_detail_${key}" }}"
+                        id="{{ "post_detail_{$key}" }}"
                         name="post_detail"
                         class="custom-control-input"
                         {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::post_detail, 0) == $key ? 'checked' : '' }}
                     >
-                    <label class="custom-control-label" for="{{ "post_detail_${key}" }}">
+                    <label class="custom-control-label" for="{{ "post_detail_{$key}" }}">
                         {{ $value }}
                     </label>
                 </div>
@@ -73,12 +73,12 @@
                     <input
                         type="radio"
                         value="{{ $key }}"
-                        id="{{ "thumbnail_${key}" }}"
+                        id="{{ "thumbnail_{$key}" }}"
                         name="thumbnail"
                         class="custom-control-input"
                         {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::thumbnail, 0) == $key ? 'checked' : '' }}
                     >
-                    <label class="custom-control-label" for="{{ "thumbnail_${key}" }}">
+                    <label class="custom-control-label" for="{{ "thumbnail_{$key}" }}">
                         {{ $value }}
                     </label>
                 </div>
@@ -107,12 +107,12 @@
                     <input
                         type="radio"
                         value="{{ $key }}"
-                        id="{{ "border_${key}" }}"
+                        id="{{ "border_{$key}" }}"
                         name="border"
                         class="custom-control-input"
                         {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::border, 0) == $key ? 'checked' : '' }}
                     >
-                    <label class="custom-control-label" for="{{ "border_${key}" }}">
+                    <label class="custom-control-label" for="{{ "border_{$key}" }}">
                         {{ $value }}
                     </label>
                 </div>
@@ -131,12 +131,12 @@
                     <input
                         type="radio"
                         value="{{ $key }}"
-                        id="{{ "async_${key}" }}"
+                        id="{{ "async_{$key}" }}"
                         name="async"
                         class="custom-control-input"
                         {{ FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::async, 0) == $key ? 'checked' : '' }}
                     >
-                    <label class="custom-control-label" for="{{ "async_${key}" }}">
+                    <label class="custom-control-label" for="{{ "async_{$key}" }}">
                         {{ $value }}
                     </label>
                 </div>

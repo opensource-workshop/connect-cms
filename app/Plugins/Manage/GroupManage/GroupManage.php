@@ -2,26 +2,20 @@
 
 namespace App\Plugins\Manage\GroupManage;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
-
 use App\Enums\UserStatus;
-
 use App\Models\Common\Group;
 use App\Models\Common\GroupUser;
-
 use App\Plugins\Manage\ManagePluginBase;
 use App\User;
 use App\Utilities\String\StringUtils;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 /**
  * グループ管理クラス
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category グループ管理
  * @package Controller
@@ -37,16 +31,16 @@ class GroupManage extends ManagePluginBase
     public function declareRole()
     {
         // 権限チェックテーブル
-        $role_ckeck_table = array();
-        $role_ckeck_table["index"]              = array('admin_user');
-        $role_ckeck_table["edit"]               = array('admin_user');
-        $role_ckeck_table["update"]             = array('admin_user');
-        $role_ckeck_table["delete"]             = array('admin_user');
-        $role_ckeck_table["removeUser"] = array('admin_user');
-        $role_ckeck_table["joinUser"] = array('admin_user');
-        $role_ckeck_table["notJoinedUsers"] = array('admin_user');
-        // $role_ckeck_table["list"]               = array('admin_user');
-        return $role_ckeck_table;
+        $role_check_table = array();
+        $role_check_table["index"] = array('admin_user');
+        $role_check_table["edit"] = array('admin_user');
+        $role_check_table["update"] = array('admin_user');
+        $role_check_table["delete"] = array('admin_user');
+        $role_check_table["removeUser"] = array('admin_user');
+        $role_check_table["joinUser"] = array('admin_user');
+        $role_check_table["notJoinedUsers"] = array('admin_user');
+        // $role_check_table["list"] = array('admin_user');
+        return $role_check_table;
     }
 
     /**
@@ -96,7 +90,7 @@ class GroupManage extends ManagePluginBase
     }
 
     /**
-     *  グループ登録・変更画面表示
+     * グループ登録・変更画面表示
      *
      * @method_title グループ登録
      * @method_desc グループ名の変更及び、参加ユーザを一覧で確認できます。
@@ -105,13 +99,7 @@ class GroupManage extends ManagePluginBase
     public function edit($request, $id = null)
     {
         // グループデータの取得
-        if (empty($id)) {
-            // グループデータの空枠
-            $group = new Group();
-        } else {
-            // グループデータの呼び出し
-            $group = Group::find($id);
-        }
+        $group = Group::findOrNew($id);
 
         // グループのユーザデータの取得
         $group_users = $this->getGroupUsers($id);
@@ -126,13 +114,13 @@ class GroupManage extends ManagePluginBase
     }
 
     /**
-     *  グループ登録・変更処理
+     * グループ登録・変更処理
      */
     public function update($request, $id = null)
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'name'             => 'required|string|max:255',
+            'name'             => 'required|string|max:191',
             'display_sequence' => ['nullable', 'numeric'],
         ]);
         $validator->setAttributeNames([
@@ -147,9 +135,8 @@ class GroupManage extends ManagePluginBase
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            return redirect('manage/group/edit/')
-                       ->withErrors($validator)
-                       ->withInput();
+            $url = $id ? "manage/group/edit/$id" : 'manage/group/edit/';
+            return redirect($url)->withErrors($validator)->withInput();
         }
 
         // 表示順が空なら、自分を省いた最後の番号+1 をセット
@@ -160,12 +147,19 @@ class GroupManage extends ManagePluginBase
             ['id' => $id],
             [
                 'name' => $request->name,
+                'initial_group_flag' => $request->initial_group_flag ? 1 : 0,
                 'display_sequence' => $display_sequence,
             ]
         );
 
+        if ($id) {
+            $flash_message = 'グループを変更しました。';
+        } else {
+            $flash_message = 'グループを登録しました。';
+        }
+
         // 登録・更新後は一覧画面へ
-        return redirect('manage/group');
+        return redirect('manage/group')->with('flash_message', $flash_message);
     }
 
     /**
@@ -184,7 +178,7 @@ class GroupManage extends ManagePluginBase
     }
 
     /**
-     *  グループ削除処理
+     * グループ削除処理
      */
     public function delete($request, $id)
     {
@@ -192,14 +186,15 @@ class GroupManage extends ManagePluginBase
         Group::find($id)->delete();
 
         // 削除後は一覧画面へ
-        return redirect('manage/group');
+        return redirect('manage/group')->with('flash_message', 'グループを削除しました。');
     }
 
     /**
-     *  グループ内ユーザー表示
+     * グループ内ユーザー表示
      *
      * @return view
      */
+    /*
     public function list($request, $id)
     {
         // グループデータの取得
@@ -211,6 +206,7 @@ class GroupManage extends ManagePluginBase
             "group_users" => $group_users,
         ]);
     }
+    */
 
     /**
      *  グループユーザー削除
@@ -220,7 +216,7 @@ class GroupManage extends ManagePluginBase
         // グループユーザーから削除
         GroupUser::where('group_id', $id)->where('user_id', $request->user_id)->delete();
 
-        return redirect('manage/group/edit/' . $id);
+        return redirect("manage/group/edit/$id")->with('flash_message', 'グループから抜けました。');
     }
 
     /**
@@ -238,7 +234,7 @@ class GroupManage extends ManagePluginBase
             ]
         );
 
-        return redirect('manage/group/edit/' . $id);
+        return redirect("manage/group/edit/$id")->with('flash_message', 'グループに参加しました。');
     }
 
     /**

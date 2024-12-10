@@ -18,7 +18,23 @@
 </form>
 
 <script type="text/javascript">
-    {{-- ダウンロードのsubmit JavaScript --}}
+    let calendar_setting = {
+        @if (App::getLocale() == ConnectLocale::ja)
+            dayViewHeaderFormat: 'YYYY年 M月',
+        @endif
+        locale: '{{ App::getLocale() }}',
+        // 日時の両方入力
+        format: 'YYYY-MM-DD HH:mm',
+        sideBySide: true
+    };
+
+    $(function () {
+        // カレンダーボタン押下の設定
+        $('#start_datetime').datetimepicker(calendar_setting);
+        $('#end_datetime').datetimepicker(calendar_setting);
+    });
+
+    /** ダウンロードのsubmit JavaScript */
     function submit_download_shift_jis() {
         if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}で現在の絞り込み条件のユーザをダウンロードします。\nよろしいですか？') ) {
             return;
@@ -41,24 +57,27 @@
         @include('plugins.manage.reservation.reservation_manage_tab')
     </div>
     <div class="card-body">
-
+        {{-- 共通エラーメッセージ 呼び出し --}}
+        @include('plugins.common.errors_form_line')
         {{-- 登録後メッセージ表示 --}}
         @include('plugins.common.flash_message')
 
         <div class="accordion" id="search_accordion">
-            <div class="card">
+            {{-- datetimepicerの小窓がcardの枠内に隠れないようにstyle指定で対応 --}}
+            <div class="card" style="overflow: visible;">
                 <button class="btn btn-link p-0 text-left collapsed" type="button" data-toggle="collapse" data-target="#search_collapse" aria-expanded="false" aria-controls="search_collapse" id="app_reservation_search_condition_button">
                     <div class="card-header" id="app_reservation_search_condition">
                         絞り込み条件 <i class="fas fa-angle-down"></i>@if (Session::has('app_reservation_search_condition'))<span class="badge badge-pill badge-primary ml-2">条件設定中</span>@endif
                    </div>
                 </button>
-                <div id="search_collapse" class="collapse" aria-labelledby="app_reservation_search_condition" data-parent="#search_accordion">
-                    <div class="card-body border-bottom">
+                {{-- 入力エラー時、絞り込み条件を開いたままにする(.show) --}}
+                <div id="search_collapse" class="collapse @if ($errors && count($errors) > 0) show @endif" aria-labelledby="app_reservation_search_condition" data-parent="#search_accordion">
+                    <div class="card-body">
 
                         <form name="form_search" id="form_search" class="form-horizontal" method="post" action="{{url('/')}}/manage/reservation/search">
                             {{ csrf_field() }}
 
-                            {{-- 施設名 --}}
+                            <!-- 施設名 -->
                             <div class="form-group row">
                                 <label for="app_reservation_search_condition_facility_name" class="col-md-3 col-form-label text-md-right">施設名</label>
                                 <div class="col-md-9">
@@ -66,7 +85,49 @@
                                 </div>
                             </div>
 
-                            {{-- 登録者 --}}
+                            <!-- 利用日 -->
+                            <div class="form-group row">
+                                <label class="col-md-3 col-form-label text-md-right">利用日</label>
+                                <div class="col-md-9">
+
+                                    <div class="form-row">
+                                        <!-- 利用日From -->
+                                        <div class="col-md-6">
+                                            <div class="input-group" id="start_datetime" data-target-input="nearest">
+                                                @php
+                                                    $start_datetime = Session::get("app_reservation_search_condition.start_datetime");
+                                                    $start_datetime = $start_datetime ? (new Carbon($start_datetime)) : '';
+                                                @endphp
+                                                <input type="text" name="app_reservation_search_condition[start_datetime]" value="{{$start_datetime}}" class="form-control datetimepicker-input" data-target="#start_datetime">
+                                                <div class="input-group-append" data-target="#start_datetime" data-toggle="datetimepicker">
+                                                    <div class="input-group-text"><i class="fas fa-calendar-alt"></i></div>
+                                                </div>
+                                                <div class="form-text pl-2">
+                                                    ～
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- 利用日To -->
+                                        <div class="col-md-6">
+                                            <div class="input-group" id="end_datetime" data-target-input="nearest">
+                                                @php
+                                                    $end_datetime = Session::get("app_reservation_search_condition.end_datetime");
+                                                    $end_datetime = $end_datetime ? (new Carbon($end_datetime)) : '';
+                                                @endphp
+                                                <input type="text" name="app_reservation_search_condition[end_datetime]" value="{{$end_datetime}}" class="form-control datetimepicker-input" data-target="#end_datetime">
+                                                <div class="input-group-append" data-target="#end_datetime" data-toggle="datetimepicker">
+                                                    <div class="input-group-text"><i class="fas fa-calendar-alt"></i></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div><!-- /.form-row -->
+                                    @include('plugins.common.errors_inline', ['name' => 'app_reservation_search_condition.start_datetime'])
+                                    @include('plugins.common.errors_inline', ['name' => 'app_reservation_search_condition.end_datetime'])
+
+                                </div><!-- /.col-md-9 -->
+                            </div><!-- /.row -->
+
+                            <!-- 登録者 -->
                             <div class="form-group row">
                                 <label for="app_reservation_search_condition_created_name" class="col-md-3 col-form-label text-md-right">登録者</label>
                                 <div class="col-md-9">
@@ -74,7 +135,7 @@
                                 </div>
                             </div>
 
-                            {{-- 並べ替え --}}
+                            <!-- 並べ替え -->
                             <div class="form-group row">
                                 <label for="sort" class="col-md-3 col-form-label text-md-right">並べ替え</label>
                                 <div class="col-md-9">
@@ -88,8 +149,8 @@
                                 </div>
                             </div>
 
-                            {{-- ボタンエリア --}}
-                            <div class="form-group text-center">
+                            <!-- ボタンエリア -->
+                            <div class="text-center">
                                 <div class="row">
                                     <div class="mx-auto">
                                         <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/reservation/clearSearch')}}'">
@@ -102,20 +163,20 @@
                                 </div>
                             </div>
                         </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+                    </div><!-- /.card-body -->
+                </div><!-- /#search_collapse -->
+            </div><!-- /.card -->
+        </div><!-- /#search_accordion -->
 
         {{-- <div class="row mt-2"> --}}
         <div class="row">
             <div class="col-3 text-left d-flex align-items-end">
-                {{-- (左側)件数 --}}
+                <!-- (左側)件数 -->
                 <span class="badge badge-pill badge-light">{{ $inputs->total() }} 件</span>
             </div>
 
             <div class="col text-right">
-                {{-- (右側)ダウンロードボタン --}}
+                <!-- (右側)ダウンロードボタン -->
                 <div class="btn-group">
                     <button type="button" class="btn btn-link" onclick="submit_download_shift_jis();">
                         <i class="fas fa-file-download"></i> ダウンロード
@@ -131,7 +192,7 @@
             </div>
         </div>
 
-        {{-- 一覧エリア --}}
+        <!-- 一覧エリア -->
         <table class="table table-hover cc-font-90">
             <thead>
                 <tr class="d-none d-sm-table-row">

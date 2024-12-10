@@ -46,12 +46,12 @@
                         <input
                             type="radio"
                             value="{{ $key }}"
-                            id="{{ "download_${key}" }}"
+                            id="{{ "download_{$key}" }}"
                             name="download"
                             class="custom-control-input"
                             {{ FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::download, 0) == $key ? 'checked' : '' }}
                         >
-                        <label class="custom-control-label" for="{{ "download_${key}" }}">
+                        <label class="custom-control-label" for="{{ "download_{$key}" }}">
                             {{ $value }}
                         </label>
                     </div>
@@ -71,12 +71,12 @@
                         <input
                             type="radio"
                             value="{{ $key }}"
-                            id="{{ "posted_at_${key}" }}"
+                            id="{{ "posted_at_{$key}" }}"
                             name="posted_at"
                             class="custom-control-input"
                             {{ FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::posted_at, 0) == $key ? 'checked' : '' }}
                         >
-                        <label class="custom-control-label" for="{{ "posted_at_${key}" }}">
+                        <label class="custom-control-label" for="{{ "posted_at_{$key}" }}">
                             {{ $value }}
                         </label>
                     </div>
@@ -93,12 +93,12 @@
                         <input
                             type="radio"
                             value="{{ $key }}"
-                            id="{{ "shooting_at_${key}" }}"
+                            id="{{ "shooting_at_{$key}" }}"
                             name="shooting_at"
                             class="custom-control-input"
                             {{ FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::shooting_at, 0) == $key ? 'checked' : '' }}
                         >
-                        <label class="custom-control-label" for="{{ "shooting_at_${key}" }}">
+                        <label class="custom-control-label" for="{{ "shooting_at_{$key}" }}">
                             {{ $value }}
                         </label>
                     </div>
@@ -115,14 +115,14 @@
                         <input
                             type="radio"
                             value="{{ $key }}"
-                            id="{{ "embed_code_${key}" }}"
+                            id="{{ "embed_code_{$key}" }}"
                             name="embed_code"
                             class="custom-control-input"
                             {{ FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::embed_code, 0) == $key ? 'checked' : '' }}
                         >
                         <label class="custom-control-label"
-                               for="{{ "embed_code_${key}" }}"
-                               id="{{ "label_embed_code_${key}" }}">
+                               for="{{ "embed_code_{$key}" }}"
+                               id="{{ "label_embed_code_{$key}" }}">
                             {{ $value }}
                         </label>
                     </div>

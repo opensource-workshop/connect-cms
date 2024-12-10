@@ -928,6 +928,20 @@ class ReservationManage extends ManagePluginBase
             $inputs_query->where('reservations_facilities.facility_name', 'like', '%' . session()->get('app_reservation_search_condition.facility_name') . '%');
         }
 
+        // 利用日From
+        if (session()->has('app_reservation_search_condition.start_datetime')) {
+            // 例) (S)2024-12-09 13:00 ～ (E)2024-12-10 15:00  = (input-S)2024-12-10 15:00 <= (E) o：含む
+            // 例) (S)2024-12-09 13:00 ～ (E)2024-12-10 15:00  = (input-S)2024-12-10 15:01 <= (E) x：含まない
+            $inputs_query->where('reservations_inputs.end_datetime', '>=', session()->get('app_reservation_search_condition.start_datetime'));
+        }
+
+        // 利用日To
+        if (session()->has('app_reservation_search_condition.end_datetime')) {
+            // 例) (S)2024-12-09 13:00 ～ (E)2024-12-10 15:00  = (S) <= (input-E)2024-12-09 13:00 o：含む
+            // 例) (S)2024-12-09 13:00 ～ (E)2024-12-10 15:00  = (S) <= (input-E)2024-12-09 12:59 x：含まない
+            $inputs_query->where('reservations_inputs.start_datetime', '<=', session()->get('app_reservation_search_condition.end_datetime'));
+        }
+
         // 登録者名
         if (session()->has('app_reservation_search_condition.created_name')) {
             $inputs_query->where('reservations_inputs.created_name', 'like', '%' . session()->get('app_reservation_search_condition.created_name') . '%');
@@ -1052,6 +1066,27 @@ class ReservationManage extends ManagePluginBase
         // 画面上、検索条件は app_reservation_search_condition という名前で配列になっているので、
         // app_reservation_search_condition をセッションに持つことで、条件の持ち回りが可能。
         session(["app_reservation_search_condition" => $request->input('app_reservation_search_condition')]);
+
+        // エラーチェック
+        $validator = Validator::make($request->all(), [
+            'app_reservation_search_condition.start_datetime' => ['nullable'],
+            'app_reservation_search_condition.end_datetime' => ['nullable', 'after_or_equal:app_reservation_search_condition.start_datetime'],
+        ]);
+        $validator->setAttributeNames([
+            'app_reservation_search_condition.start_datetime' => '利用日From',
+            'app_reservation_search_condition.end_datetime' => '利用日To',
+        ]);
+
+        // カスタムエラーメッセージ
+        $validator->setCustomMessages([
+            'app_reservation_search_condition.end_datetime.after_or_equal' => ':attributeには:date以降の日時を指定してください。',
+        ]);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
         return redirect("/manage/reservation/bookings");
     }
 
@@ -1060,7 +1095,7 @@ class ReservationManage extends ManagePluginBase
      */
     public function clearSearch($request, $id)
     {
-        $request->session()->forget('app_reservation_search_condition');
+        session()->forget('app_reservation_search_condition');
         return redirect("/manage/reservation/bookings");
     }
 }
