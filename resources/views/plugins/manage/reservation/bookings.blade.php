@@ -23,12 +23,13 @@
             dayViewHeaderFormat: 'YYYY年 M月',
         @endif
         locale: '{{ App::getLocale() }}',
+        // 日時の両方入力
         format: 'YYYY-MM-DD HH:mm',
         sideBySide: true
     };
 
     $(function () {
-        // カレンダー時計ボタン押下の設定
+        // カレンダーボタン押下の設定
         $('#start_datetime').datetimepicker(calendar_setting);
         $('#end_datetime').datetimepicker(calendar_setting);
     });
