@@ -38,4 +38,9 @@ rsync -arvz --delete "${src_root_dir}public/images/plugins/${option_plugin_resou
 # メールテンプレート
 rsync -arvz --delete "${src_root_dir}resources/views/mail_option/${option_plugin_resources_dir}" "${dist_root_dir}${option_plugin}/resources/views/mail_option/"
 # バリデーション
-rsync -arvz --delete "${src_root_dir}app/RulesOption/${option_plugin^}" "${dist_root_dir}${option_plugin}/app/RulesOption/"
+rsync -arvz --delete "${src_root_dir}app/RulesOption/${option_plugin}" "${dist_root_dir}${option_plugin}/app/RulesOption/"
+# Composer Option
+cp -f "${src_root_dir}composer-option.json" "${dist_root_dir}${option_plugin}/"
+cp -f "${src_root_dir}composer-option.lock" "${dist_root_dir}${option_plugin}/"
+cp -f "${src_root_dir}composer-option-dev.json" "${dist_root_dir}${option_plugin}/"
+cp -f "${src_root_dir}composer-option-dev.lock" "${dist_root_dir}${option_plugin}/"
