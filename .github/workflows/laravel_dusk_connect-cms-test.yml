@@ -520,3 +520,4 @@ jobs:
           path: |
             tests/Browser/console
             storage/logs
+            vendor/laravel/dusk/bin/
