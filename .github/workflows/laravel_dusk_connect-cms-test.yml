@@ -150,8 +150,11 @@ jobs:
           # chrome-version: 114
           install-chromedriver: true
 
-      - name: Chrome bin-path Override
-        run: sudo ln -nfs `which chrome` /usr/bin/google-chrome
+      # - name: Chrome bin-path Override
+      #   run: sudo ln -nfs `which chrome` /usr/bin/google-chrome
+
+      - name: Chrome Copy
+        run: sudo \cp -f `which chrome` /usr/bin/google-chrome
 
       - name: Downgrade Chrome driver to v114
         run: php artisan dusk:chrome-driver 114
