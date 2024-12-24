@@ -140,7 +140,7 @@ jobs:
       # https://github.com/laravel/dusk/issues/1109
       # https://github.com/browser-actions/setup-chrome (community)
       - name: Downgrade Chrome browser to v126
-        uses: browser-actions/setup-chrome@1
+        uses: browser-actions/setup-chrome@v1
         with:
           chrome-version: 126
 
