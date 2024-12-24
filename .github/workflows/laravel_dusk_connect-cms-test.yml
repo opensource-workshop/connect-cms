@@ -163,6 +163,9 @@ jobs:
       #   # run: sudo ln -nfs ${{ steps.setup-chrome.outputs.chromedriver-path }} ./vendor/laravel/dusk/bin/chromedriver-linux
       #   run: sudo ln -nfs ./vendor/laravel/dusk/bin/chromedriver-linux64/chromedriver ./vendor/laravel/dusk/bin/chromedriver-linux
 
+      - name: Chrome Driver Permission Denied 対応
+        run: sudo chmod=+x ./vendor/laravel/dusk/bin/chromedriver-linux64/chromedriver
+
       - name: Start Chrome Driver
         # run: ./vendor/laravel/dusk/bin/chromedriver-linux --port=9515 &
         run: ./vendor/laravel/dusk/bin/chromedriver-linux64/chromedriver --port=9515 &
