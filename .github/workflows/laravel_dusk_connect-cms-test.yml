@@ -134,8 +134,19 @@ jobs:
 
       # https://readouble.com/laravel/9.x/ja/dusk.html#managing-chromedriver-installations
       # https://readouble.com/laravel/9.x/ja/dusk.html#running-tests-on-github-actions
+      # Chrome Version と Chrome Driverを同じにする
       - name: Upgrade Chrome Driver
-        run: php artisan dusk:chrome-driver --detect
+        # run: php artisan dusk:chrome-driver --detect
+        # run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
+        run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3`
+
+      - name: Chrome Driver Copy
+        run: sudo \cp -f ./vendor/laravel/dusk/bin/chromedriver-linux64/chromedriver ./vendor/laravel/dusk/bin/chromedriver-linux
+
+      - name: Chrome Driver Permission Denied 対応
+        run: |
+          sudo chmod +x ./vendor/laravel/dusk/bin/chromedriver-linux64/chromedriver
+          sudo chmod +x ./vendor/laravel/dusk/bin/chromedriver-linux
 
       # https://stackoverflow.com/questions/76980975/chrome-driver-failing-in-laravel-dusk-failed-to-open-stream-http-request-fai
       # https://voicetechno-jp.secure-web.jp/ChromeDriverV115orNewer.html
@@ -152,7 +163,7 @@ jobs:
       #   run: php artisan dusk:chrome-driver 114
 
       - name: Start Chrome Driver
-        run: ./vendor/laravel/dusk/bin/chromedriver-linux &
+        run: ./vendor/laravel/dusk/bin/chromedriver-linux --port=9515 &
 
       - name: Run Laravel Server
         run: php artisan serve &
