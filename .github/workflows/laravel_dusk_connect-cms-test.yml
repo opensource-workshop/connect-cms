@@ -134,34 +134,13 @@ jobs:
 
       # https://readouble.com/laravel/9.x/ja/dusk.html#managing-chromedriver-installations
       # https://readouble.com/laravel/9.x/ja/dusk.html#running-tests-on-github-actions
+      # Chrome Version と Chrome Driverを同じにする
       - name: Upgrade Chrome Driver
         # run: php artisan dusk:chrome-driver --detect
         # run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
         run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3`
 
-      # エラー対応: Facebook\WebDriver\Exception\SessionNotCreatedException: session not created: probably user data directory is already in use, please specify a unique value for --user-data-dir argument, or don't use --user-data-dir
-      # - name: Uninstall Chrome
-      #   run: sudo apt-get remove google-chrome-stable
-
-      # https://github.com/laravel/dusk/issues/1109
-      # https://github.com/browser-actions/setup-chrome (community)
-      # - name: Downgrade Chrome browser to v126
-      #   uses: browser-actions/setup-chrome@v1
-      #   id: setup-chrome
-      #   with:
-      #     chrome-version: 132
-      #     install-chromedriver: true
-
-      # - name: Chrome bin-path Override
-      #   run: sudo ln -nfs `which chrome` /usr/bin/chrome
-
-      # RuntimeException: Invalid path to Chromedriver対応
-      # - name: Downgrade Chrome driver to v126
-      #   run: php artisan dusk:chrome-driver 126
-
-      - name: Chrome Driver bin-path Override
-        # run: sudo ln -nfs ${{ steps.setup-chrome.outputs.chromedriver-path }} ./vendor/laravel/dusk/bin/chromedriver-linux
-        # run: sudo ln -nfs ./vendor/laravel/dusk/bin/chromedriver-linux64/chromedriver ./vendor/laravel/dusk/bin/chromedriver-linux
+      - name: Chrome Driver Copy
         run: sudo \cp -f ./vendor/laravel/dusk/bin/chromedriver-linux64/chromedriver ./vendor/laravel/dusk/bin/chromedriver-linux
 
       - name: Chrome Driver Permission Denied 対応
@@ -169,9 +148,22 @@ jobs:
           sudo chmod +x ./vendor/laravel/dusk/bin/chromedriver-linux64/chromedriver
           sudo chmod +x ./vendor/laravel/dusk/bin/chromedriver-linux
 
+      # https://stackoverflow.com/questions/76980975/chrome-driver-failing-in-laravel-dusk-failed-to-open-stream-http-request-fai
+      # https://voicetechno-jp.secure-web.jp/ChromeDriverV115orNewer.html
+      # https://github.com/browser-actions/setup-chrome (community)
+      # - name: Downgrade Chrome browser to v114
+      #   uses: browser-actions/setup-chrome@latest
+      #   with:
+      #     chrome-version: 1134343 # Last commit number for Chrome v114
+
+      # - name: Chrome bin-path Override
+      #   run: sudo ln -nfs `which chrome` /usr/bin/google-chrome
+
+      # - name: Downgrade Chrome driver to v114
+      #   run: php artisan dusk:chrome-driver 114
+
       - name: Start Chrome Driver
         run: ./vendor/laravel/dusk/bin/chromedriver-linux --port=9515 &
-        # run: ./vendor/laravel/dusk/bin/chromedriver-linux64/chromedriver --port=9515 &
       - name: Run Laravel Server
         run: php artisan serve &
 
