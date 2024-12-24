@@ -135,30 +135,31 @@ jobs:
       # https://readouble.com/laravel/9.x/ja/dusk.html#managing-chromedriver-installations
       # https://readouble.com/laravel/9.x/ja/dusk.html#running-tests-on-github-actions
       - name: Upgrade Chrome Driver
-        run: php artisan dusk:chrome-driver --detect
+        # run: php artisan dusk:chrome-driver --detect
+        run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
 
       # エラー対応: Facebook\WebDriver\Exception\SessionNotCreatedException: session not created: probably user data directory is already in use, please specify a unique value for --user-data-dir argument, or don't use --user-data-dir
-      - name: Uninstall Chrome
-        run: sudo apt-get remove google-chrome-stable
+      # - name: Uninstall Chrome
+      #   run: sudo apt-get remove google-chrome-stable
 
       # https://github.com/laravel/dusk/issues/1109
       # https://github.com/browser-actions/setup-chrome (community)
-      - name: Downgrade Chrome browser to v126
-        uses: browser-actions/setup-chrome@v1
-        id: setup-chrome
-        with:
-          chrome-version: 132
-          install-chromedriver: true
+      # - name: Downgrade Chrome browser to v126
+      #   uses: browser-actions/setup-chrome@v1
+      #   id: setup-chrome
+      #   with:
+      #     chrome-version: 132
+      #     install-chromedriver: true
 
-      - name: Chrome bin-path Override
-        run: sudo ln -nfs `which chrome` /usr/bin/chrome
+      # - name: Chrome bin-path Override
+      #   run: sudo ln -nfs `which chrome` /usr/bin/chrome
 
       # RuntimeException: Invalid path to Chromedriver対応
       # - name: Downgrade Chrome driver to v126
       #   run: php artisan dusk:chrome-driver 126
 
-      - name: Chrome Driver bin-path Override
-        run: sudo ln -nfs ${{ steps.setup-chrome.outputs.chromedriver-path }} ./vendor/laravel/dusk/bin/chromedriver-linux
+      # - name: Chrome Driver bin-path Override
+      #   run: sudo ln -nfs ${{ steps.setup-chrome.outputs.chromedriver-path }} ./vendor/laravel/dusk/bin/chromedriver-linux
 
       - name: Start Chrome Driver
         run: ./vendor/laravel/dusk/bin/chromedriver-linux --port=9515 &
