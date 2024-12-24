@@ -135,9 +135,9 @@ jobs:
         run: /opt/google/chrome/chrome --version
 
       # https://readouble.com/laravel/8.x/ja/dusk.html#managing-chromedriver-installations
-      - name: Upgrade Chrome Driver
-        # run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
-        run: php artisan dusk:chrome-driver 114
+      # - name: Upgrade Chrome Driver
+      #   # run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
+      #   run: php artisan dusk:chrome-driver 114
 
       - name: Set env CHROME_VERSION
         run: |
@@ -146,7 +146,7 @@ jobs:
       # https://stackoverflow.com/questions/76980975/chrome-driver-failing-in-laravel-dusk-failed-to-open-stream-http-request-fai
       # https://voicetechno-jp.secure-web.jp/ChromeDriverV115orNewer.html
       # https://github.com/browser-actions/setup-chrome (community)
-      - name: Downgrade Chrome browser to v131
+      - name: Download Chrome and Chrome Driver(use Chrome Driver Only)
         uses: browser-actions/setup-chrome@v1
         id: setup-chrome
         with:
