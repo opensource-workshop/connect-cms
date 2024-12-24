@@ -141,11 +141,12 @@ jobs:
       # https://github.com/browser-actions/setup-chrome (community)
       - name: Downgrade Chrome browser to v126
         uses: browser-actions/setup-chrome@v1
+        id: setup-chrome
         with:
           chrome-version: 126
 
       - name: Chrome bin-path Override
-        run: sudo ln -nfs `which chrome` /usr/bin/google-chrome
+        run: sudo ln -nfs `which chrome` ${{ steps.setup-chrome.outputs.chrome-path }}
 
       - name: Downgrade Chrome driver to v126
         run: php artisan dusk:chrome-driver 126
