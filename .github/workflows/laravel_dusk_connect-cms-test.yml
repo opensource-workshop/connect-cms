@@ -139,17 +139,22 @@ jobs:
         # run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
         run: php artisan dusk:chrome-driver 114
 
+      - name: Set env CHROME_VERSION
+        run: |
+          echo CHROME_VERSION=`/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1` >> $GITHUB_ENV
+
       # https://stackoverflow.com/questions/76980975/chrome-driver-failing-in-laravel-dusk-failed-to-open-stream-http-request-fai
       # https://voicetechno-jp.secure-web.jp/ChromeDriverV115orNewer.html
       # https://github.com/browser-actions/setup-chrome (community)
-      - name: Downgrade Chrome browser to v114
+      - name: Downgrade Chrome browser to v131
         uses: browser-actions/setup-chrome@v1
         id: setup-chrome
         with:
           # chrome-version: 1134343 # Last commit number for Chrome v114
           # chrome-version: 114.0.5735.90
           # chrome-version: 114
-          chrome-version: 131
+          # chrome-version: 131
+          chrome-version: ${{ env.CHROME_VERSION }}
           install-chromedriver: true
 
       # - name: Chrome bin-path Override
