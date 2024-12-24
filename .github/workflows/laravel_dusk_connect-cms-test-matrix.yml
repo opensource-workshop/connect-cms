@@ -129,6 +129,7 @@ jobs:
 
       # https://readouble.com/laravel/9.x/ja/dusk.html#managing-chromedriver-installations
       # https://readouble.com/laravel/9.x/ja/dusk.html#running-tests-on-github-actions
+      # Chrome Version と Chrome Driverを同じにする
       - name: Upgrade Chrome Driver
         # run: php artisan dusk:chrome-driver --detect
         # run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
