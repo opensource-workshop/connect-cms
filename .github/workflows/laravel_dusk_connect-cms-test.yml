@@ -135,7 +135,8 @@ jobs:
       # https://readouble.com/laravel/9.x/ja/dusk.html#managing-chromedriver-installations
       # https://readouble.com/laravel/9.x/ja/dusk.html#running-tests-on-github-actions
       - name: Upgrade Chrome Driver
-        run: php artisan dusk:chrome-driver --detect
+        # run: php artisan dusk:chrome-driver --detect
+        run: php artisan dusk:chrome-driver 126 --detect
 
       # https://stackoverflow.com/questions/76980975/chrome-driver-failing-in-laravel-dusk-failed-to-open-stream-http-request-fai
       # https://voicetechno-jp.secure-web.jp/ChromeDriverV115orNewer.html
@@ -151,10 +152,8 @@ jobs:
       # - name: Downgrade Chrome driver to v114
       #   run: php artisan dusk:chrome-driver 114
 
-      # https://laravel.com/docs/11.x/dusk#running-tests-on-github-actions
       - name: Start Chrome Driver
-        # run: ./vendor/laravel/dusk/bin/chromedriver-linux &
-        run: .vendor/laravel/dusk/bin/chromedriver-linux64/chromedriver --port=9515 &
+        run: ./vendor/laravel/dusk/bin/chromedriver-linux &
       - name: Run Laravel Server
         run: php artisan serve &
 
@@ -520,4 +519,3 @@ jobs:
           path: |
             tests/Browser/console
             storage/logs
-            vendor/laravel/dusk/bin/
