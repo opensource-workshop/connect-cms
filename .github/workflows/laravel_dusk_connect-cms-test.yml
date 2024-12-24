@@ -149,12 +149,15 @@ jobs:
       - name: Chrome bin-path Override
         run: sudo ln -nfs `which chrome` /usr/bin/chrome
 
-      # - name: Downgrade Chrome driver to v126
-      #   run: php artisan dusk:chrome-driver 126
+      # RuntimeException: Invalid path to Chromedriver対応
+      - name: Downgrade Chrome driver to v126
+        run: php artisan dusk:chrome-driver 126
+
+      - name: Chrome Driver bin-path Override
+        run: sudo ln -nfs ${{ steps.setup-chrome.outputs.chromedriver-path }} ./vendor/laravel/dusk/bin/chromedriver-linux
 
       - name: Start Chrome Driver
-        # run: ./vendor/laravel/dusk/bin/chromedriver-linux &
-        run: ${{ steps.setup-chrome.outputs.chromedriver-path }} &
+        run: ./vendor/laravel/dusk/bin/chromedriver-linux &
       - name: Run Laravel Server
         run: php artisan serve &
 
