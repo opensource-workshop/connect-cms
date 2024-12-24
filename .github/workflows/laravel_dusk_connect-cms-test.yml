@@ -144,21 +144,17 @@ jobs:
         id: setup-chrome
         with:
           chrome-version: 126
-
-      - name: Chrome Version No.2
-        run: chrome --version
-
-      - name: echo $PATH
-        run: echo $PATH
+          install-chromedriver: true
 
       - name: Chrome bin-path Override
         run: sudo ln -nfs `which chrome` /usr/bin/chrome
 
-      - name: Downgrade Chrome driver to v126
-        run: php artisan dusk:chrome-driver 126
+      # - name: Downgrade Chrome driver to v126
+      #   run: php artisan dusk:chrome-driver 126
 
       - name: Start Chrome Driver
-        run: ./vendor/laravel/dusk/bin/chromedriver-linux &
+        # run: ./vendor/laravel/dusk/bin/chromedriver-linux &
+        run: ${{ steps.setup-chrome.outputs.chromedriver-path }} &
       - name: Run Laravel Server
         run: php artisan serve &
 
