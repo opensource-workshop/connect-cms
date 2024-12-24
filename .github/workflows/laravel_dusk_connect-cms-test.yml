@@ -145,9 +145,9 @@ jobs:
         uses: browser-actions/setup-chrome@v1
         id: setup-chrome
         with:
-          # chrome-version: 1134343 # Last commit number for Chrome v114
+          chrome-version: 1134343 # Last commit number for Chrome v114
           # chrome-version: 114.0.5735.90
-          chrome-version: 114
+          # chrome-version: 114
           install-chromedriver: true
 
       - name: Chrome bin-path Override
