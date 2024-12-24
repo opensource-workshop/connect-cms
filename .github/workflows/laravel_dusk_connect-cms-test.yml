@@ -143,17 +143,26 @@ jobs:
       # https://github.com/browser-actions/setup-chrome (community)
       - name: Downgrade Chrome browser to v114
         uses: browser-actions/setup-chrome@latest
+        id: setup-chrome
         with:
           # chrome-version: 1134343 # Last commit number for Chrome v114
           chrome-version: 114.0.5735.90
+          install-chromedriver: true
 
       - name: Chrome bin-path Override
-        run: sudo ln -nfs `which chrome` /usr/bin/google-chrome
+        run: sudo ln -nfs `which chrome` /usr/bin/chrome
 
       - name: Downgrade Chrome driver to v114
         run: php artisan dusk:chrome-driver 114
         # run: php artisan dusk:chrome-driver `chrome --version | cut -d " " -f3`
         # run: php artisan dusk:chrome-driver `/usr/bin/google-chrome --version | cut -d " " -f3 | cut -d "." -f1`
+
+      - name: Chrome Driver Copy
+        run: sudo \cp -f ${{ steps.setup-chrome.outputs.chromedriver-path }} ./vendor/laravel/dusk/bin/chromedriver-linux
+
+      - name: Chrome Driver Permission Denied 対応
+        run: |
+          sudo chmod +x ./vendor/laravel/dusk/bin/chromedriver-linux
 
       - name: Start Chrome Driver
         run: ./vendor/laravel/dusk/bin/chromedriver-linux &
