@@ -142,11 +142,12 @@ jobs:
       # https://voicetechno-jp.secure-web.jp/ChromeDriverV115orNewer.html
       # https://github.com/browser-actions/setup-chrome (community)
       - name: Downgrade Chrome browser to v114
-        uses: browser-actions/setup-chrome@latest
+        uses: browser-actions/setup-chrome@v1
         id: setup-chrome
         with:
           # chrome-version: 1134343 # Last commit number for Chrome v114
-          chrome-version: 114.0.5735.90
+          # chrome-version: 114.0.5735.90
+          chrome-version: 114
           install-chromedriver: true
 
       - name: Chrome bin-path Override
