@@ -151,7 +151,7 @@ jobs:
 
       - name: Downgrade Chrome driver to v114
         # run: php artisan dusk:chrome-driver 114
-        run: php artisan dusk:chrome-driver `/usr/bin/google-chrome --version | cut -d " " -f3`
+        run: php artisan dusk:chrome-driver `chrome --version | cut -d " " -f3`
 
       - name: Start Chrome Driver
         run: ./vendor/laravel/dusk/bin/chromedriver-linux &
