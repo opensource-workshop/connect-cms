@@ -135,8 +135,8 @@ jobs:
       # https://readouble.com/laravel/9.x/ja/dusk.html#managing-chromedriver-installations
       # https://readouble.com/laravel/9.x/ja/dusk.html#running-tests-on-github-actions
       - name: Upgrade Chrome Driver
-        # run: php artisan dusk:chrome-driver --detect
-        run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
+        run: php artisan dusk:chrome-driver --detect
+        # run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
 
       # エラー対応: Facebook\WebDriver\Exception\SessionNotCreatedException: session not created: probably user data directory is already in use, please specify a unique value for --user-data-dir argument, or don't use --user-data-dir
       # - name: Uninstall Chrome
@@ -160,7 +160,7 @@ jobs:
 
       - name: Chrome Driver bin-path Override
         # run: sudo ln -nfs ${{ steps.setup-chrome.outputs.chromedriver-path }} ./vendor/laravel/dusk/bin/chromedriver-linux
-        run: sudo ln -nfs .vendor/laravel/dusk/bin/chromedriver-linux64/chromedriver ./vendor/laravel/dusk/bin/chromedriver-linux
+        run: sudo ln -nfs ./vendor/laravel/dusk/bin/chromedriver-linux64/chromedriver ./vendor/laravel/dusk/bin/chromedriver-linux
 
       - name: Start Chrome Driver
         run: ./vendor/laravel/dusk/bin/chromedriver-linux --port=9515 &
