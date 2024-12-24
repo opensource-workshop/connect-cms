@@ -145,8 +145,11 @@ jobs:
         with:
           chrome-version: 126
 
-      - name: Chrome bin-path Override
-        run: sudo ln -nfs `which chrome` ${{ steps.setup-chrome.outputs.chrome-path }}
+      - name: Chrome Version No.2
+        run: chrome --version
+
+      # - name: Chrome bin-path Override
+      #   run: sudo ln -nfs `which chrome` ${{ steps.setup-chrome.outputs.chrome-path }}
 
       - name: Downgrade Chrome driver to v126
         run: php artisan dusk:chrome-driver 126
