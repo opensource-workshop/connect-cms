@@ -530,19 +530,33 @@ class FaqsPlugin extends UserPluginBase
         $after_post = null;
         if ($faqs_post) {
             $before_post = FaqsPosts::where('faqs_id', $faqs_post->faqs_id)
-                                     ->where('posted_at', '<', $faqs_post->posted_at)
-                                     ->where(function ($query) {
-                                         $query = $this->appendAuthWhere($query);
-                                     })
-                                     ->orderBy('posted_at', 'desc')
-                                     ->first();
+                                    ->where(function ($query) use ($faqs_post) {
+                                        $query->where('posted_at', '<', $faqs_post->posted_at)
+                                            ->orWhere(function ($subQuery) use ($faqs_post) {
+                                                $subQuery->where('posted_at', '=', $faqs_post->posted_at)
+                                                        ->where('id', '<', $faqs_post->id);
+                                            });
+                                    })
+                                    ->where(function ($query) {
+                                        $query = $this->appendAuthWhere($query);
+                                    })
+                                    ->orderBy('posted_at', 'desc')
+                                    ->orderBy('id', 'desc')
+                                    ->first();
             $after_post = FaqsPosts::where('faqs_id', $faqs_post->faqs_id)
-                                     ->where('posted_at', '>', $faqs_post->posted_at)
-                                     ->where(function ($query) {
-                                         $query = $this->appendAuthWhere($query);
-                                     })
-                                     ->orderBy('posted_at', 'asc')
-                                     ->first();
+                                    ->where(function ($query) use ($faqs_post) {
+                                        $query->where('posted_at', '>', $faqs_post->posted_at)
+                                              ->orWhere(function ($subQuery) use ($faqs_post) {
+                                                  $subQuery->where('posted_at', '=', $faqs_post->posted_at)
+                                                           ->where('id', '>', $faqs_post->id);
+                                              });
+                                    })
+                                    ->where(function ($query) {
+                                        $query = $this->appendAuthWhere($query);
+                                    })
+                                    ->orderBy('posted_at', 'asc')
+                                    ->orderBy('id', 'asc')
+                                    ->first();
         }
 
         // 詳細画面を呼び出す。

@@ -12,6 +12,7 @@ use App\Models\Common\Frame;
 use App\User;
 use App\Models\Common\Page;
 use App\Models\Common\PageRole;
+use App\Models\Core\UsersRoles;
 
 trait ConnectRoleTrait
 {
@@ -229,6 +230,14 @@ trait ConnectRoleTrait
         // $user_roles['base'] = ['role_reporter' => 1];    // ←ページ権限あれば上書き
         // $user_roles['manage'] = ['admin_system' => 1];   // ←ページ権限ではセットしてないので、そのまま
         $user_roles = $user->user_roles;
+        if (is_null($user_roles)) {
+            // ユーザーオブジェクトにロールデータを付与
+            // app\Providers\ConnectEloquentUserProvider::judgmentLogin() よりコピー. 通常の画面ログインであれば、
+            // judgmentLogin() でセットされているが、APIだとセットされていないため対応
+            $users_roles = new UsersRoles();
+            $user_roles = $users_roles->getUsersRoles($user->id);
+            $user->user_roles = $user_roles;
+        }
 
         // 所属グループのページ権限取得
         $user_page_roles = $this->getUserPageRoles($user, $page_roles);
