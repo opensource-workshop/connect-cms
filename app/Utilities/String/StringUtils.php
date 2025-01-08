@@ -107,7 +107,9 @@ class StringUtils
      */
     public static function xmlspecialchars(string $string) :string
     {
-        return htmlspecialchars($string, ENT_QUOTES | ENT_SUBSTITUTE | ENT_XML1);
+        $string = htmlspecialchars($string, ENT_QUOTES | ENT_SUBSTITUTE | ENT_XML1);
+        $string = str_replace('&', '&amp;', $string);
+        return $string;
     }
 
     // /**

@@ -69,11 +69,7 @@
 
     @forelse($blogs_posts as $post)
 
-        @if ($loop->last)
-        <article>
-        @else
         <article class="cc_article">
-        @endif
 
         @if (isset($is_template_datafirst))
             {{-- datafirstテンプレート --}}

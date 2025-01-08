@@ -1450,6 +1450,7 @@ EOD;
                 $replaceTarget = array('<br>', '&nbsp;', '&emsp;', '&ensp;');
                 $description = str_replace($replaceTarget, '', $description);
             }
+            $description = StringUtils::xmlspecialchars(strip_tags(html_entity_decode($description)));
             $pub_date = date(DATE_RSS, strtotime($blogs_post->posted_at));
             $content = StringUtils::xmlspecialchars(strip_tags(html_entity_decode($blogs_post->post_text)));
             echo <<<EOD

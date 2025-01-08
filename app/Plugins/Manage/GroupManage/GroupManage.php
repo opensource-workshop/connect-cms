@@ -5,6 +5,7 @@ namespace App\Plugins\Manage\GroupManage;
 use App\Enums\UserStatus;
 use App\Models\Common\Group;
 use App\Models\Common\GroupUser;
+use App\Models\Common\PageRole;
 use App\Plugins\Manage\ManagePluginBase;
 use App\User;
 use App\Utilities\String\StringUtils;
@@ -182,7 +183,17 @@ class GroupManage extends ManagePluginBase
      */
     public function delete($request, $id)
     {
-        // カテゴリ削除
+        // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
+        $page_role_ids = PageRole::where('group_id', $id)->pluck('id');
+        $group_user_ids = GroupUser::where('group_id', $id)->pluck('id');
+
+        // ページ権限削除
+        PageRole::destroy($page_role_ids);
+
+        // グループユーザー削除
+        GroupUser::destroy($group_user_ids);
+
+        // グループ削除
         Group::find($id)->delete();
 
         // 削除後は一覧画面へ

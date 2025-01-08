@@ -27,16 +27,29 @@ $option_plugin_command_dir = $option_plugin_controller_dir
 
 
 ### コピー（robocopy <コピー元> <コピー先>）
+# コントローラー
 robocopy "${src_root_dir}app\PluginsOption\${option_plugin_controller_dir}" "${dist_root_dir}${option_plugin}\app\PluginsOption\${option_plugin_controller_dir}" /s /MIR
+# モデル
 robocopy "${src_root_dir}app\ModelsOption\${option_plugin_model_dir}" "${dist_root_dir}${option_plugin}\app\ModelsOption\${option_plugin_model_dir}" /s /MIR
+# ビュー
 robocopy "${src_root_dir}resources\views\plugins_option\${option_plugin_resources_dir}" "${dist_root_dir}${option_plugin}\resources\views\plugins_option\${option_plugin_resources_dir}" /s /MIR
-robocopy "${src_root_dir}resources\views\mail_option\${option_plugin_resources_dir}" "${dist_root_dir}${option_plugin}\resources\views\plugins_option\${option_plugin_resources_dir}" /s /MIR
+# バッチ
 robocopy "${src_root_dir}app\Console\CommandsOption\${option_plugin_command_dir}" "${dist_root_dir}${option_plugin}\app\Console\CommandsOption\${option_plugin_command_dir}" /s /MIR
-
+# マイグレーション
 robocopy "${src_root_dir}database\migrations_option" "${dist_root_dir}${option_plugin}\database\migrations_option" /s /xf _readme.txt
+# シーダー
 robocopy "${src_root_dir}database\seeders\Options\${option_plugin^}" "${dist_root_dir}${option_plugin}\database\seeders\Options\${option_plugin}" /s /MIR
+# Enum
 robocopy "${src_root_dir}app\EnumsOption" "${dist_root_dir}${option_plugin}\app\EnumsOption" /s /MIR
+# 画像
 robocopy "${src_root_dir}public\images\plugins\${option_plugin}" "${dist_root_dir}${option_plugin}\public\images\plugins\${option_plugin}" /s /MIR
+# メールテンプレート
+robocopy "${src_root_dir}resources\views\mail_option\${option_plugin_resources_dir}" "${dist_root_dir}${option_plugin}\resources\views\plugins_option\${option_plugin_resources_dir}" /s /MIR
+# Composer Option
+Copy-Item -Path "${src_root_dir}composer-option.json" -Destination "${dist_root_dir}${option_plugin}"
+Copy-Item -Path "${src_root_dir}composer-option.lock" -Destination "${dist_root_dir}${option_plugin}"
+Copy-Item -Path "${src_root_dir}composer-option-dev.json" -Destination "${dist_root_dir}${option_plugin}"
+Copy-Item -Path "${src_root_dir}composer-option-dev.lock" -Destination "${dist_root_dir}${option_plugin}"
 
 # 1ファイルのみコピー例
 #Copy-Item -Path "${src_root_dir}resources\views\plugins_option\manage\menus_list.blade.php" -Destination "${dist_root_dir}${option_plugin}\resources\views\plugins_option\manage\"

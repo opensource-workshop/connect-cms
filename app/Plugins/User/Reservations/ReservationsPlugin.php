@@ -849,7 +849,7 @@ class ReservationsPlugin extends UserPluginBase
                 $validator_array['message']['rrule_until'] = '指定日';
             } else {
                 // 指定の回数後 COUNT とみなす
-                $validator_array['column']['rrule_count'] = ['required', 'numeric'];
+                $validator_array['column']['rrule_count'] = ['required', 'numeric', 'min:1'];
                 $validator_array['message']['rrule_count'] = '指定の回数後';
             }
 
@@ -915,7 +915,14 @@ class ReservationsPlugin extends UserPluginBase
                 }
             } else {
                 // 指定の回数後 COUNT とみなす
-                $rrule_setting['COUNT'] = (int) $request->rrule_count;
+                // COUNT must be a positive integer (> 0) エラー対応. 0以下は1にrruleを仮設定して、入力チェックでエラーとする
+                // （警告:ルールにUNTILまたはCOUNTの部分がない場合、無限ループになります）
+                $rrule_count = (int) $request->rrule_count;
+                if ($rrule_count >= 1) {
+                    $rrule_setting['COUNT'] = $rrule_count;
+                } else {
+                    $rrule_setting['COUNT'] = 1;
+                }
             }
 
             $rrule = new RRule($rrule_setting);
