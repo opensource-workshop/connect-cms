@@ -103,6 +103,23 @@ class UsersTool
     }
 
     /**
+     * カラムの値 取得
+     */
+    public static function getUsersInputColValue(UsersInputCols $input_col)
+    {
+        $class_name = self::getOptionClass();
+        // オプションクラス有＋メソッド有なら呼ぶ
+        if ($class_name) {
+            if (method_exists($class_name, 'getUsersInputColValue')) {
+                return $class_name::getUsersInputColValue($input_col);
+            }
+        }
+
+        // 通常の処理
+        return $input_col->value;
+    }
+
+    /**
      * セットすべきバリデータールールが存在する場合、受け取った配列にセットして返す
      *
      * @param array $validator_array 二次元配列

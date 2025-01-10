@@ -1666,7 +1666,7 @@ class UserManage extends ManagePluginBase
 
             // 追加項目データ
             foreach ($input_cols as $input_col) {
-                $csv_array[$input_col->users_id][$input_col->users_columns_id] = $input_col->value;
+                $csv_array[$input_col->users_id][$input_col->users_columns_id] = UsersTool::getUsersInputColValue($input_col);
             }
         }
 
