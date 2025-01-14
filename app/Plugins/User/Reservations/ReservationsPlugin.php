@@ -828,7 +828,7 @@ class ReservationsPlugin extends UserPluginBase
                     $validator_array['message']['rrule_byday_monthly'] = '曜日指定';
                 } else {
                     // 日付指定 BYMONTHDAY
-                    $validator_array['column']['rrule_bymonthday_monthly'] = ['required', 'numeric'];
+                    $validator_array['column']['rrule_bymonthday_monthly'] = ['required', 'numeric', 'min:1', 'max:31'];
                     $validator_array['message']['rrule_bymonthday_monthly'] = '日付指定';
                 }
 
@@ -889,7 +889,13 @@ class ReservationsPlugin extends UserPluginBase
                     $rrule_setting['BYDAY'] = $request->rrule_byday_monthly;                    // 曜日指定（月）
                 } else {
                     // 日付指定 BYMONTHDAY
-                    $rrule_setting['BYMONTHDAY'] = (int) $request->rrule_bymonthday_monthly;    // 日付指定（月）
+                    // Invalid BYMONTHDAY value: 0 (valid values are 1 to 31 or -31 to -1)エラー対応. 0以下32以上は1にrruleを仮設定して、入力チェックでエラーとする
+                    $rrule_bymonthday_monthly = (int) $request->rrule_bymonthday_monthly;
+                    if ($rrule_bymonthday_monthly >= 1 && $rrule_bymonthday_monthly <= 31) {
+                        $rrule_setting['BYMONTHDAY'] = $rrule_bymonthday_monthly;    // 日付指定（月）
+                    } else {
+                        $rrule_setting['BYMONTHDAY'] = 1;
+                    }
                 }
 
             } elseif ($request->rrule_freq == RruleFreq::YEARLY) {
