@@ -80,7 +80,7 @@ class PasswordPageTest extends DuskTestCase
      */
     private function viewPage()
     {
-        // ログアウト
+        // *** ログアウト状態でパスワードページ＞パスワード入力＞ページの閲覧
         $this->browse(function (Browser $browser) {
             $browser->visit('/password')
                     ->assertTitleContains('Connect-CMS')
@@ -88,7 +88,12 @@ class PasswordPageTest extends DuskTestCase
                     ->type('password', 'pass123')
                     ->screenshot('common/password_page/viewPage/images/inputPassword')
                     ->press('ページ閲覧');
+            });
 
+        // *** ログインして固定記事を作成
+        // ※ $this->browse()内で$this->login(), $this->logout() はなるべく使わない。$this->login(), $this->logout() は内部で$this->browse()を使っているため、入れ子呼び出しになり、ログインできたり・できなかったりする事あり（github actions+php8.1等）
+        $this->login(1);
+        $this->browse(function (Browser $browser) {
             // データクリア
             $page = Page::where('permanent_link', '/password')->first();
             $frame = Frame::where('page_id', $page->id)->where('plugin_name', 'contents')->first();
@@ -102,7 +107,6 @@ class PasswordPageTest extends DuskTestCase
             }
 
             // 固定記事を作成
-            $this->login(1);
             $this->addPluginModal('contents', '/password', 2, false);
             $bucket = Buckets::create(['bucket_name' => 'パスワード付きページテスト', 'plugin_name' => 'contents']);
 
@@ -111,8 +115,12 @@ class PasswordPageTest extends DuskTestCase
 
             $this->frame = Frame::orderBy('id', 'desc')->first();
             $this->frame->update(['bucket_id' => $bucket->id]);
-            $this->logout();
+        });
+        // パスワード入力済みセッションをクリアさせないため、ログアウトしない
+        // $this->logout();
 
+        // *** パスワード入力済みのため、パスワード付きページの閲覧できる（固定記事あり）
+        $this->browse(function (Browser $browser) {
             $browser->visit('/password')
                     ->screenshot('common/password_page/viewPage/images/viewPage2');
         });
