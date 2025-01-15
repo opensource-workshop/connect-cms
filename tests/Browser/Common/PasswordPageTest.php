@@ -88,7 +88,7 @@ class PasswordPageTest extends DuskTestCase
                     ->type('password', 'pass123')
                     ->screenshot('common/password_page/viewPage/images/inputPassword')
                     ->press('ページ閲覧');
-            });
+        });
 
         // *** ログインして固定記事を作成
         // ※ $this->browse()内で$this->login(), $this->logout() はなるべく使わない。$this->login(), $this->logout() は内部で$this->browse()を使っているため、入れ子呼び出しになり、ログインできたり・できなかったりする事あり（github actions+php8.1等）
