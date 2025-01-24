@@ -68,11 +68,7 @@
                     <input type="file" class="custom-file-input" id="codes_csv" name="codes_csv" accept=".csv">
                     <label class="custom-file-label" for="codes_csv" data-browse="参照"></label>
                 </div>
-                @if ($errors && $errors->has('codes_csv'))
-                    @foreach ($errors->get('codes_csv') as $message)
-                        <div class="text-danger">{{$message}}</div>
-                    @endforeach
-                @endif
+                @include('plugins.common.errors_inline', ['name' => 'codes_csv'])
                 <small class="text-muted">※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}</small><br />
             </div>
         </div>
