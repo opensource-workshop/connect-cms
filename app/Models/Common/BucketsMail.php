@@ -219,7 +219,7 @@ class BucketsMail extends Model
                 ->join('users_input_cols', function ($users_input_join) {
                     $users_input_join->on('users.id', '=', 'users_input_cols.users_id')
                         ->join('users_columns', function ($users_columns_join) {
-                        $users_columns_join->on('users_columns.id', '=', 'users_input_cols.users_columns_id')
+                            $users_columns_join->on('users_columns.id', '=', 'users_input_cols.users_columns_id')
                             ->where('users_columns.column_type', 'mail');
                         });
                 })
