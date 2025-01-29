@@ -209,6 +209,27 @@ class BucketsMail extends Model
                 ->whereIn('group_users.group_id', $groups_ids)
                 ->pluck('users.email')
                 ->toArray();
+
+            // 追加会員項目のメールアドレス取得
+            $group_user_userinputcols_emails = GroupUser::select('users_input_cols.value')
+                ->join('users', function ($users_join) {
+                    $users_join->on('users.id', '=', 'group_users.user_id')
+                        ->where('users.status', UserStatus::active);
+                })
+                ->join('users_input_cols', function ($users_input_join) {
+                    $users_input_join->on('users.id', '=', 'users_input_cols.users_id')
+                        ->join('users_columns', function ($users_columns_join) {
+                        $users_columns_join->on('users_columns.id', '=', 'users_input_cols.users_columns_id')
+                            ->where('users_columns.column_type', 'mail');
+                        });
+                })
+                ->whereNotNull('users_input_cols.value')
+                ->whereIn('group_users.group_id', $groups_ids)
+                ->pluck('users_input_cols.value')
+                ->toArray();
+
+            //追加項目データをマージ
+            $group_user_emails = array_merge($group_user_emails, $group_user_userinputcols_emails);
         }
 
         // array_filter()でarrayの空要素削除
