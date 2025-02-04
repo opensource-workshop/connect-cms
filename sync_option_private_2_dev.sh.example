@@ -15,7 +15,8 @@ dist_root_dir='/path_to_dev_connect-cms/'
 # プラグイン名
 option_plugin="pluginname"
 option_plugin_controller_dir="${option_plugin}"
-option_plugin_resources_dir="${option_plugin}"
+# ${変数,,}はbashの機能で、全小文字に変換する
+option_plugin_resources_dir="${option_plugin,,}"
 option_plugin_model_dir=$option_plugin_controller_dir
 option_plugin_command_dir=$option_plugin_controller_dir
 

@@ -9,7 +9,7 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^8.0.2",
+        "php": "^8.0.2 || ~8.1 || ~8.2",
         "aws/aws-sdk-php": "^3.262",
         "azuyalabs/yasumi": "^2.3",
         "doctrine/dbal": "^2.10",
