@@ -87,11 +87,7 @@ use App\Utilities\Zip\UnzipUtils;
                     <label class="custom-file-label" for="databases_csv{{$frame->id}}" data-browse="参照"></label>
                 </div>
             @endif
-            @if ($errors && $errors->has('databases_csv'))
-                @foreach ($errors->get('databases_csv') as $message)
-                    <div class="text-danger">{{$message}}</div>
-                @endforeach
-            @endif
+            @include('plugins.common.errors_inline', ['name' => 'databases_csv'])
             <small class="text-muted">※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}</small><br />
             @if (UnzipUtils::useZipArchive())
                 <small class="text-muted">※ CSVファイル・ZIPファイルに対応しています。</small><br />
@@ -120,7 +116,7 @@ use App\Utilities\Zip\UnzipUtils;
     </div>
 
     {{-- Submitボタン --}}
-    <div class="form-group text-center">
+    <div class="text-center">
         <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/listBuckets/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="btn btn-secondary mr-2">
             <i class="fas fa-angle-left"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> DB選択へ</span>
         </a>
