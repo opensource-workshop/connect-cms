@@ -46,9 +46,24 @@ class LogManage extends ManagePluginBase
         // ログデータ取得
         $app_logs_query = AppLog::select('app_logs.*');
 
+        // 日時Start
+        if (session()->has('app_log_search_condition.start_created_at')) {
+            $app_logs_query->where('created_at', '>=', session()->get('app_log_search_condition.start_created_at'));
+        }
+
+        // 日時End
+        if (session()->has('app_log_search_condition.end_created_at')) {
+            $app_logs_query->where('created_at', '<=', session()->get('app_log_search_condition.end_created_at'));
+        }
+
         // ログインID
         if ($request->session()->has('app_log_search_condition.userid')) {
             $app_logs_query->where('userid', 'like', '%' . $request->session()->get('app_log_search_condition.userid') . '%');
+        }
+
+        // URI
+        if ($request->session()->has('app_log_search_condition.uri')) {
+            $app_logs_query->where('uri', 'like', '%' . $request->session()->get('app_log_search_condition.uri') . '%');
         }
 
         // 詳細条件
