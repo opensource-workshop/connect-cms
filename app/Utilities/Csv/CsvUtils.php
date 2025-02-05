@@ -172,7 +172,7 @@ class CsvUtils
         foreach ($csv_array as $csv_line) {
             foreach ($csv_line as $csv_col) {
                 // RFC4180に準拠するため、フィールドの値に含まれるダブルクォーテーションをエスケープする
-                $csv_col = str_replace('"', '""', $csv_col);
+                $csv_col = $csv_col !== null ? str_replace('"', '""', $csv_col) : '';
                 // RFC4180に準拠するため、ダブルクォーテーションで囲む
                 $csv_data .= '"' . $csv_col . '",';
             }
