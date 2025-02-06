@@ -51,6 +51,7 @@ use App\Models\User\Blogs\Blogs;
 use App\Models\User\Blogs\BlogsPosts;
 use App\Models\User\Faqs\Faqs;
 use App\Models\User\Faqs\FaqsPosts;
+use App\Utilities\Csv\CsvUtils;
 
 /**
  * フォーム・プラグイン
@@ -2536,25 +2537,7 @@ ORDER BY forms_inputs_id, forms_columns_id
         ];
 
         // データ
-        $csv_data = '';
-        foreach ($csv_array as $csv_line) {
-            foreach ($csv_line as $csv_col) {
-                $csv_data .= '"' . $csv_col . '",';
-            }
-            // 末尾カンマを削除
-            $csv_data = substr($csv_data, 0, -1);
-            $csv_data .= "\n";
-        }
-
-        // 文字コード変換
-        // $csv_data = mb_convert_encoding($csv_data, "SJIS-win");
-        if ($request->character_code == CsvCharacterCode::utf_8) {
-            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::utf_8);
-            //「UTF-8」の「BOM」であるコード「0xEF」「0xBB」「0xBF」をカンマ区切りにされた文字列の先頭に連結
-            $csv_data = pack('C*', 0xEF, 0xBB, 0xBF) . $csv_data;
-        } else {
-            $csv_data = mb_convert_encoding($csv_data, CsvCharacterCode::sjis_win);
-        }
+        $csv_data = CsvUtils::getResponseCsvData($csv_array, $request->character_code);
 
         return response()->make($csv_data, 200, $headers);
     }
