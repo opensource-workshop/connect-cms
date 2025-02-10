@@ -3,13 +3,6 @@
 namespace App\Plugins\Manage\PageManage;
 
 use App\Enums\WebsiteType;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
-use Carbon\Carbon;
-
-use DB;
-
-use App\User;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Group;
@@ -17,17 +10,19 @@ use App\Models\Common\GroupUser;
 use App\Models\Common\Page;
 use App\Models\Common\PageRole;
 use App\Models\User\Contents\Contents;
-
+use App\Plugins\Manage\ManagePluginBase;
 use App\Rules\CustomValiTextMax;
 use App\Rules\CustomValiUrlMax;
-
 use App\Traits\Migration\MigrationTrait;
 use App\Traits\Migration\MigrationExportNc3PageTrait;
 use App\Traits\Migration\MigrationExportHtmlPageTrait;
-
-use App\Plugins\Manage\ManagePluginBase;
-
+use App\User;
 use App\Utilities\Csv\CsvUtils;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 /**
  * ページ管理クラス
@@ -183,12 +178,12 @@ class PageManage extends ManagePluginBase
     /**
      * ページ登録・変更時のエラーチェック
      */
-    private function pageValidator($request)
+    private function pageValidator($request, $page_id = null)
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'page_name'        => ['required', 'max:255'],
-            'permanent_link'   => ['nullable', new CustomValiUrlMax(true)],
+            'permanent_link'   => ['nullable', new CustomValiUrlMax(true), Rule::unique('pages')->ignore($page_id)],
             'password'         => ['nullable', 'max:255'],
             'background_color' => ['nullable', 'max:255'],
             'header_color'     => ['nullable', 'max:255'],
@@ -214,25 +209,25 @@ class PageManage extends ManagePluginBase
      */
     public function store($request)
     {
+        // 固定リンクの先頭に / がない場合、追加する。
+        if (strncmp($request->permanent_link, '/', 1) !== 0) {
+            $request->merge([
+                "permanent_link" => '/' . $request->permanent_link,
+            ]);
+        }
+
         // ページ登録・変更時のエラーチェック
         $validator = $this->pageValidator($request);
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            // return ( $this->index($request, null, $validator->errors()) );
             return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        // 固定リンクの先頭に / がない場合、追加する。(php8.1対応)stringにキャストする。
-        $permanent_link = (string)$request->permanent_link;
-        if (strncmp($permanent_link, '/', 1) !== 0) {
-            $permanent_link = '/' . $permanent_link;
         }
 
         // ページデータの登録
         $page = new Page;
         $page->page_name            = $request->page_name;
-        $page->permanent_link       = $permanent_link;
+        $page->permanent_link       = $request->permanent_link;
         $page->password             = $request->password;
         $page->background_color     = $request->background_color;
         $page->header_color         = $request->header_color;
@@ -257,17 +252,19 @@ class PageManage extends ManagePluginBase
      */
     public function update($request, $page_id)
     {
+        // 固定リンクの先頭に / がない場合、追加する。
+        if (strncmp($request->permanent_link, '/', 1) !== 0) {
+            $request->merge([
+                "permanent_link" => '/' . $request->permanent_link,
+            ]);
+        }
+
         // ページ登録・変更時のエラーチェック
-        $validator = $this->pageValidator($request);
+        $validator = $this->pageValidator($request, $page_id);
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        // 固定リンクの先頭に / がない場合、追加する。
-        if (strncmp($request->permanent_link, '/', 1) !== 0) {
-            $request->permanent_link = '/' . $request->permanent_link;
         }
 
         // ページデータの更新
