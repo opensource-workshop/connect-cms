@@ -127,10 +127,6 @@ class SlideshowsPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id, $errors = null)
     {
-
-        // セッション初期化などのLaravel 処理。
-        $request->flash();
-
         // Slideshows、Frame データ
         $slideshow = $this->getSlideshows($frame_id);
 

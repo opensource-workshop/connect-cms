@@ -369,9 +369,6 @@ class OpacsPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id, $errors = null, $messages = null)
     {
-        // セッション初期化などのLaravel 処理。
-        $request->flash();
-
         // 処理の振り分け用にフレームの設定を取得
         $opacs_frames_setting = OpacsFrames::where('frames_id', $frame_id)->first();
 

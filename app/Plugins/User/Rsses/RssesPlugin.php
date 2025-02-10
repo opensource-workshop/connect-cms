@@ -121,10 +121,6 @@ class RssesPlugin extends UserPluginBase
      */
     public function index($request, $page_id, $frame_id, $errors = null)
     {
-
-        // セッション初期化などのLaravel 処理。
-        $request->flash();
-
         // Rsses、Frame データ
         $rss = $this->getRsses($frame_id);
 
@@ -225,7 +221,7 @@ class RssesPlugin extends UserPluginBase
         }
         return false;
     }
-    
+
     // XMLデータをDBに登録する
     private function updateXmlresponce($url_id, $xml_response)
     {
