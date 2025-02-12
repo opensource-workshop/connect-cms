@@ -39,11 +39,7 @@
                         <input type="file" class="custom-file-input" id="page_csv" name="page_csv" accept=".csv">
                         <label class="custom-file-label @if ($errors->has('page_csv')) border-danger @endif" for="page_csv" data-browse="参照"></label>
                     </div>
-                    @if ($errors->has('page_csv'))
-                        @foreach ($errors->get('page_csv') as $message)
-                            <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$message}}</div>
-                        @endforeach
-                    @endif
+                    @include('plugins.common.errors_inline', ['name' => 'page_csv'])
                     <small class="text-muted">※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}</small><br />
                 </div>
             </div>
