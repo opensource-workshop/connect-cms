@@ -15,9 +15,9 @@ use App\Models\Common\Page;
 @include('plugins.common.errors_form_line')
 
 @if ($page->id)
-<form action="{{url('/manage/page/update')}}/{{$page->id}}" method="POST" class="form-horizontal">
+<form action="{{url('/manage/page/update')}}/{{$page->id}}" method="post" class="form-horizontal">
 @else
-<form action="{{url('/manage/page/store')}}" method="POST" class="form-horizontal">
+<form action="{{url('/manage/page/store')}}" method="post" class="form-horizontal">
 @endif
     {{ csrf_field() }}
 
@@ -39,6 +39,9 @@ use App\Models\Common\Page;
         <div class="col-md-9">
             <input type="text" name="permanent_link" id="permanent_link" value="{{old('permanent_link', $page->permanent_link)}}" class="form-control @if ($errors->has('permanent_link')) border-danger @endif">
             @include('common.errors_inline', ['name' => 'permanent_link'])
+            <small class="form-text text-muted">
+                ※ 固定リンクの先頭に / がない場合、追加します。<br />
+            </small>
         </div>
     </div>
 
