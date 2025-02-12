@@ -2,6 +2,7 @@
 
 namespace App\Plugins\Manage\PageManage;
 
+use App\Enums\PageCvsIndex;
 use App\Enums\WebsiteType;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
@@ -202,6 +203,24 @@ class PageManage extends ManagePluginBase
             'class'            => 'メニュークラス名',
         ]);
         return $validator;
+    }
+
+    /**
+     * CSVインポート時のエラーチェックルール
+     */
+    private function pageUploadValidatorRules()
+    {
+        $rules = [
+            PageCvsIndex::page_name         => ['required', 'max:255'],
+            PageCvsIndex::permanent_link    => ['required', new CustomValiUrlMax(true), Rule::unique('pages', 'permanent_link')],
+            PageCvsIndex::background_color  => ['required', 'max:255'],
+            PageCvsIndex::header_color      => ['required', 'max:255'],
+            PageCvsIndex::theme             => ['required'],
+            PageCvsIndex::layout            => ['required'],
+            PageCvsIndex::base_display_flag => ['required', Rule::in(['0', '1'])],
+        ];
+
+        return $rules;
     }
 
     /**
@@ -410,12 +429,12 @@ class PageManage extends ManagePluginBase
      */
     private function checkHeader($header_columns)
     {
-        // ヘッダーカラム
-        $header_column_format = array("page_name","permanent_link","background_color","header_color","theme","layout","base_display_flag");
-
         if (empty($header_columns)) {
             return array("CSVファイルが空です。");
         }
+
+        // ヘッダーカラム
+        $header_column_format = $this->getCsvHeader();
 
         // 項目の不足チェック
         $shortness = array_diff($header_column_format, $header_columns);
@@ -432,52 +451,59 @@ class PageManage extends ManagePluginBase
     }
 
     /**
+     * CSVヘッダー取得
+     */
+    private function getCsvHeader(): array
+    {
+        $header_column_format = [];
+
+        foreach (PageCvsIndex::getMembers() as $csv_index => $column_name) {
+            $header_column_format[$csv_index] = $column_name;
+        }
+
+        return $header_column_format;
+    }
+
+    /**
      * CSVデータ行チェック
      */
-    private function checkPageline($fp, $errors = null)
+    private function checkPageline($fp)
     {
+        // CSVインポート時のエラーチェックルール
+        $rules = $this->pageUploadValidatorRules();
+
         $line_count = 1;
+        $errors = [];
+        $permanent_links = [];
 
         while (($csv_columns = fgetcsv($fp, 0, ",")) !== false) {
+            // バリデーション
+            $validator = Validator::make($csv_columns, $rules);
+
+            $attribute_names = [];
+            foreach (PageCvsIndex::getMembers() as $csv_index => $column_name) {
+                $attribute_names[$csv_index] = "{$line_count}行目の {$column_name} ";
+            }
+
+            $validator->setAttributeNames($attribute_names);
+
             foreach ($csv_columns as $column_index => $csv_column) {
-                switch ($column_index) {
-                    case 0:
-                        if (empty($csv_column)) {
-                            $errors[] = $line_count . "行目の page_name は必須です。";
-                        }
-                        break;
-                    case 1:
-                        if (empty($csv_column)) {
-                            $errors[] = $line_count . "行目の permanent_link は必須です。";
-                        }
-                        break;
-                    case 2:
-                        if (empty($csv_column)) {
-                            $errors[] = $line_count . "行目の background_color は必須です。";
-                        }
-                        break;
-                    case 3:
-                        if (empty($csv_column)) {
-                            $errors[] = $line_count . "行目の header_color は必須です。";
-                        }
-                        break;
-                    case 4:
-                        if (empty($csv_column)) {
-                            $errors[] = $line_count . "行目の header_color は必須です。";
-                        }
-                        break;
-                    case 5:
-                        if (empty($csv_column)) {
-                            $errors[] = $line_count . "行目の layout は必須です。";
-                        }
-                        break;
-                    case 6:
-                        if (!$csv_column == '0' && !$csv_column == '1') {
-                            $errors[] = $line_count . "行目の base_display_flag は 0 もしくは 1 である必要があります。";
-                        }
-                        break;
+
+                if ($column_index === PageCvsIndex::permanent_link) {
+                    // CSV内重複チェック
+                    if (in_array($csv_column, $permanent_links)) {
+                        $errors[] = "{$line_count}行目の " . PageCvsIndex::getDescription(PageCvsIndex::permanent_link) . " がCSVファイル内で重複しています。";
+                    }
+
+                    // permanent_link をCSV内重複チェックするため、貯める
+                    $permanent_links[] = $csv_column;
                 }
             }
+
+            if ($validator->fails()) {
+                $errors = array_merge($errors, $validator->errors()->all());
+            }
+
             $line_count++;
         }
 
@@ -559,7 +585,7 @@ class PageManage extends ManagePluginBase
         }
 
         // データ項目のエラーチェック
-        $error_msgs = $this->checkPageline($fp, $error_msgs);
+        $error_msgs = $this->checkPageline($fp);
         if (!empty($error_msgs)) {
             // 一時ファイルの削除
             fclose($fp);
@@ -575,37 +601,45 @@ class PageManage extends ManagePluginBase
         // ヘッダー
         $header_columns = fgetcsv($fp);
 
-        // データ
-        while (($csv_columns = fgetcsv($fp, 0, ",")) !== false) {
-            // 固定リンクの先頭に / がない場合、追加する。
-            if (strncmp($csv_columns[1], '/', 1) !== 0) {
-                $csv_columns[1] = '/' . $csv_columns[1];
+        DB::beginTransaction();
+        try {
+            // データ
+            while (($csv_columns = fgetcsv($fp, 0, ",")) !== false) {
+                // 固定リンクの先頭に / がない場合、追加する。
+                if (strncmp($csv_columns[PageCvsIndex::permanent_link], '/', 1) !== 0) {
+                    $csv_columns[PageCvsIndex::permanent_link] = '/' . $csv_columns[PageCvsIndex::permanent_link];
+                }
+
+                // ページ名, 固定リンクをUTF-8 に変換
+                $csv_columns[PageCvsIndex::page_name] = mb_convert_encoding($csv_columns[PageCvsIndex::page_name], "UTF-8", "SJIS-WIN, Shift_JIS");
+                $csv_columns[PageCvsIndex::permanent_link] = mb_convert_encoding($csv_columns[PageCvsIndex::permanent_link], "UTF-8", "SJIS-WIN, Shift_JIS");
+
+                // ページ作成
+                $page = Page::create([
+                    'page_name'         => $csv_columns[PageCvsIndex::page_name],
+                    'permanent_link'    => $csv_columns[PageCvsIndex::permanent_link],
+                    'background_color'  => ($csv_columns[PageCvsIndex::background_color] == 'NULL') ? null : $csv_columns[PageCvsIndex::background_color],
+                    'header_color'      => ($csv_columns[PageCvsIndex::header_color] == 'NULL')     ? null : $csv_columns[PageCvsIndex::header_color],
+                    'theme'             => ($csv_columns[PageCvsIndex::theme] == 'NULL')            ? null : $csv_columns[PageCvsIndex::theme],
+                    'layout'            => ($csv_columns[PageCvsIndex::layout] == 'NULL')           ? null : $csv_columns[PageCvsIndex::layout],
+                    'base_display_flag' => $csv_columns[PageCvsIndex::base_display_flag]
+                ]);
+
+                // 初期配置がある場合
+                if ($request->has('deploy_content_plugin') && $request->deploy_content_plugin == '1') {
+                    $this->createContent($page->id);
+                }
             }
 
-            // ページ名, 固定リンクをUTF-8 に変換
-            $csv_columns[0] = mb_convert_encoding($csv_columns[0], "UTF-8", "SJIS-WIN, Shift_JIS");
-            $csv_columns[1] = mb_convert_encoding($csv_columns[1], "UTF-8", "SJIS-WIN, Shift_JIS");
-
-            // ページ作成
-            $page = Page::create([
-                'page_name'         => $csv_columns[0],
-                'permanent_link'    => $csv_columns[1],
-                'background_color'  => ($csv_columns[2] == 'NULL') ? null : $csv_columns[2],
-                'header_color'      => ($csv_columns[3] == 'NULL') ? null : $csv_columns[3],
-                'theme'             => ($csv_columns[4] == 'NULL') ? null : $csv_columns[4],
-                'layout'            => ($csv_columns[5] == 'NULL') ? null : $csv_columns[5],
-                'base_display_flag' => $csv_columns[6]
-            ]);
-
-            // 初期配置がある場合
-            if ($request->has('deploy_content_plugin') && $request->deploy_content_plugin == '1') {
-                $this->createContent($page->id);
-            }
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        } finally {
+            // 一時ファイルの削除
+            fclose($fp);
+            Storage::delete($path);
         }
-
-        // 一時ファイルの削除
-        fclose($fp);
-        Storage::delete($path);
 
         // ページ管理画面に戻る
         return redirect("/manage/page/import")->with('flash_message', 'インポートしました。');
