@@ -19,6 +19,7 @@ use App\Traits\Migration\MigrationExportNc3PageTrait;
 use App\Traits\Migration\MigrationExportHtmlPageTrait;
 use App\User;
 use App\Utilities\Csv\CsvUtils;
+use App\Utilities\String\StringUtils;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -571,10 +572,8 @@ class PageManage extends ManagePluginBase
 
     /**
      * 「固定記事」プラグインを新規で配置
-     *
-     * @return view
      */
-    public function createContent($page_id)
+    private function createContent($page_id)
     {
         // Buckets 登録
         $bucket = Buckets::create(['bucket_name' => '無題', 'plugin_name' => 'contents']);
@@ -631,6 +630,8 @@ class PageManage extends ManagePluginBase
 
         // 一行目（ヘッダ）読み込み
         $fp = fopen(storage_path('app/') . $path, 'r');
+        // ストリームフィルタ内で、Shift-JIS -> UTF-8変換
+        $fp = CsvUtils::setStreamFilterRegisterSjisToUtf8($fp);
         $header_columns = fgetcsv($fp);
 
         // ヘッダー項目のエラーチェック
@@ -653,9 +654,8 @@ class PageManage extends ManagePluginBase
             return redirect()->back()->withErrors(['page_csv' => $error_msgs])->withInput();
         }
 
-        // ファイルを閉じて、開きなおす
-        fclose($fp);
-        $fp = fopen(storage_path('app/') . $path, 'r');
+        // ファイルポインタの位置を先頭に戻す
+        rewind($fp);
 
         // ヘッダー
         $header_columns = fgetcsv($fp);
@@ -664,23 +664,28 @@ class PageManage extends ManagePluginBase
         try {
             // データ
             while (($csv_columns = fgetcsv($fp, 0, ",")) !== false) {
+                // --- 入力値変換
+                // 入力値をトリム(preg_replace(/u)で置換. /u = UTF-8 として処理)
+                $csv_columns = StringUtils::trimInput($csv_columns);
+
+                foreach ($csv_columns as $col => &$csv_column) {
+                    // 空文字をnullに変換
+                    $csv_column = $this->convertEmptyStringsToNull($csv_column);
+                }
+
                 // 固定リンクの先頭に / がない場合、追加する。
                 if (strncmp($csv_columns[PageCvsIndex::permanent_link], '/', 1) !== 0) {
                     $csv_columns[PageCvsIndex::permanent_link] = '/' . $csv_columns[PageCvsIndex::permanent_link];
                 }
 
-                // ページ名, 固定リンクをUTF-8 に変換
-                $csv_columns[PageCvsIndex::page_name] = mb_convert_encoding($csv_columns[PageCvsIndex::page_name], "UTF-8", "SJIS-WIN, Shift_JIS");
-                $csv_columns[PageCvsIndex::permanent_link] = mb_convert_encoding($csv_columns[PageCvsIndex::permanent_link], "UTF-8", "SJIS-WIN, Shift_JIS");
-
                 // ページ作成
                 $page = Page::create([
                     'page_name'         => $csv_columns[PageCvsIndex::page_name],
                     'permanent_link'    => $csv_columns[PageCvsIndex::permanent_link],
-                    'background_color'  => ($csv_columns[PageCvsIndex::background_color] == 'NULL') ? null : $csv_columns[PageCvsIndex::background_color],
-                    'header_color'      => ($csv_columns[PageCvsIndex::header_color] == 'NULL')     ? null : $csv_columns[PageCvsIndex::header_color],
-                    'theme'             => ($csv_columns[PageCvsIndex::theme] == 'NULL')            ? null : $csv_columns[PageCvsIndex::theme],
-                    'layout'            => ($csv_columns[PageCvsIndex::layout] == 'NULL')           ? null : $csv_columns[PageCvsIndex::layout],
+                    'background_color'  => $csv_columns[PageCvsIndex::background_color],
+                    'header_color'      => $csv_columns[PageCvsIndex::header_color],
+                    'theme'             => $csv_columns[PageCvsIndex::theme],
+                    'layout'            => $csv_columns[PageCvsIndex::layout],
                     'base_display_flag' => $csv_columns[PageCvsIndex::base_display_flag]
                 ]);
 
@@ -702,6 +707,18 @@ class PageManage extends ManagePluginBase
 
         // ページ管理画面に戻る
         return redirect("/manage/page/import")->with('flash_message', 'インポートしました。');
+    }
+
+    /**
+     * 空文字をnullに変換
+     *
+     * @param  mixed  $value
+     * @return mixed
+     */
+    private function convertEmptyStringsToNull($value)
+    {
+        $value = StringUtils::convertEmptyStringsToNull($value);
+        return $value == 'NULL' ? null : $value;
     }
 
     /**
