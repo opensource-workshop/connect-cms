@@ -2,6 +2,7 @@
  * Page インポート画面
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページ管理
 --}}
@@ -11,16 +12,34 @@
 {{-- 管理画面メイン部分への挿入 --}}
 @section('manage_content')
 
+{{-- ダウンロード用フォーム --}}
+<form action="" method="post" name="page_download_csv_format">
+    {{ csrf_field() }}
+    <input type="hidden" name="character_code" value="{{CsvCharacterCode::sjis_win}}">
+</form>
+
+<script type="text/javascript">
+    /** フォーマットダウンロード */
+    function submit_download_csv_format_shift_jis() {
+        page_download_csv_format.action = '{{url('/manage/page/downloadCsvFormat')}}';
+        page_download_csv_format.submit();
+    }
+
+    /** サンプルダウンロード */
+    function submit_download_csv_format_shift_jis_sample() {
+        page_download_csv_format.action = '{{url('/manage/page/downloadCsvSample')}}';
+        page_download_csv_format.submit();
+    }
+</script>
+
 <div class="card">
     <div class="card-header p-0">
         {{-- 機能選択タブ --}}
         @include('plugins.manage.page.page_manage_tab')
     </div>
     <div class="card-body">
-
         {{-- 共通エラーメッセージ 呼び出し --}}
         @include('plugins.common.errors_form_line')
-
         {{-- 登録後メッセージ表示 --}}
         @include('plugins.common.flash_message')
 
@@ -28,8 +47,25 @@
             <i class="fas fa-exclamation-circle"></i> CSVファイルを使って、ページを一括登録できます。詳細は<a href="https://manual.connect-cms.jp/manage/page/upload/index.html" target="_blank">オンラインマニュアルのページ管理ページ <i class="fas fa-external-link-alt"></i></a>を参照してください。
         </div>
 
+        <div class="form-group row">
+            <div class="col text-right">
+                <div class="btn-group">
+                    <a href="#" onclick="submit_download_csv_format_shift_jis(); return false;">
+                        CSVファイルのフォーマット
+                    </a>
+                    <button type="button" class="btn btn-sm btn-link dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="sr-only">ドロップダウンボタン</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <a class="dropdown-item" href="#" onclick="submit_download_csv_format_shift_jis(); return false;">CSVファイルのフォーマット（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
+                        <a class="dropdown-item" href="#" onclick="submit_download_csv_format_shift_jis_sample(); return false;">CSVファイルのサンプル（{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}）</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- インポート画面(入力フォーム) --}}
-        <form action="{{url('/manage/page/upload')}}" method="POST" class="form-horizontal" enctype="multipart/form-data">
+        <form action="{{url('/manage/page/upload')}}" method="post" class="form-horizontal" enctype="multipart/form-data">
             {{csrf_field()}}
 
             <div class="form-group row">
@@ -60,19 +96,6 @@
                 </button>
             </div>
         </form>
-    </div>
-</div>
-
-<div class="card mt-3">
-    <div class="card-header">CSVフォーマット</div>
-    <div class="card-body">
-<pre>
-"page_name","permanent_link","background_color","header_color","theme","layout","base_display_flag"
-"アップロード","/upload","NULL","NULL","NULL","NULL","1"
-"アップロード2","/upload/2","NULL","NULL","NULL","NULL","1"
-</pre>
-※ 文字コードはShift_JIS
-
     </div>
 </div>
 
