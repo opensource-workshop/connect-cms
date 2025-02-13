@@ -416,6 +416,74 @@ class PageManage extends ManagePluginBase
     }
 
     /**
+     * CSVインポートのフォーマットダウンロード
+     */
+    public function downloadCsvFormat($request, $id = null)
+    {
+        // 返却用配列
+        $csv_array = [];
+
+        // 見出し行-頭（固定項目）
+        $csv_array[0] = $this->getCsvHeader();
+
+        // レスポンス版
+        $filename = 'page.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+
+        // データ
+        $csv_data = CsvUtils::getResponseCsvData($csv_array, $request->character_code);
+
+        return response()->make($csv_data, 200, $headers);
+    }
+
+    /**
+     * CSVインポートのサンプルダウンロード
+     */
+    public function downloadCsvSample($request, $id = null)
+    {
+        // 返却用配列
+        $csv_array = [];
+
+        // 見出し行-頭（固定項目）
+        $csv_array[0] = $this->getCsvHeader();
+
+        // サンプルデータ
+        $csv_array[1] = [
+            PageCvsIndex::page_name => 'アップロード',
+            PageCvsIndex::permanent_link => '/upload',
+            PageCvsIndex::background_color => 'NULL',
+            PageCvsIndex::header_color => 'NULL',
+            PageCvsIndex::theme => 'NULL',
+            PageCvsIndex::layout => 'NULL',
+            PageCvsIndex::base_display_flag => '1',
+        ];
+        $csv_array[2] = [
+            PageCvsIndex::page_name => 'アップロード2',
+            PageCvsIndex::permanent_link => '/upload/2',
+            PageCvsIndex::background_color => 'NULL',
+            PageCvsIndex::header_color => 'NULL',
+            PageCvsIndex::theme => 'NULL',
+            PageCvsIndex::layout => 'NULL',
+            PageCvsIndex::base_display_flag => '1',
+        ];
+
+        // レスポンス版
+        $filename = 'page_sample.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+
+        // データ
+        $csv_data = CsvUtils::getResponseCsvData($csv_array, $request->character_code);
+
+        return response()->make($csv_data, 200, $headers);
+    }
+
+    /**
      * CSVヘッダーチェック
      */
     private function checkHeader($header_columns)
@@ -634,74 +702,6 @@ class PageManage extends ManagePluginBase
 
         // ページ管理画面に戻る
         return redirect("/manage/page/import")->with('flash_message', 'インポートしました。');
-    }
-
-    /**
-     * CSVインポートのフォーマットダウンロード
-     */
-    public function downloadCsvFormat($request, $id = null)
-    {
-        // 返却用配列
-        $csv_array = [];
-
-        // 見出し行-頭（固定項目）
-        $csv_array[0] = $this->getCsvHeader();
-
-        // レスポンス版
-        $filename = 'page.csv';
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
-        ];
-
-        // データ
-        $csv_data = CsvUtils::getResponseCsvData($csv_array, $request->character_code);
-
-        return response()->make($csv_data, 200, $headers);
-    }
-
-    /**
-     * CSVインポートのサンプルダウンロード
-     */
-    public function downloadCsvSample($request, $id = null)
-    {
-        // 返却用配列
-        $csv_array = [];
-
-        // 見出し行-頭（固定項目）
-        $csv_array[0] = $this->getCsvHeader();
-
-        // サンプルデータ
-        $csv_array[1] = [
-            $csv_columns[PageCvsIndex::page_name] = 'アップロード',
-            $csv_columns[PageCvsIndex::permanent_link] = '/upload',
-            $csv_columns[PageCvsIndex::background_color] = 'NULL',
-            $csv_columns[PageCvsIndex::header_color] = 'NULL',
-            $csv_columns[PageCvsIndex::theme] = 'NULL',
-            $csv_columns[PageCvsIndex::layout] = 'NULL',
-            $csv_columns[PageCvsIndex::base_display_flag] = '1',
-        ];
-        $csv_array[2] = [
-            $csv_columns[PageCvsIndex::page_name] = 'アップロード2',
-            $csv_columns[PageCvsIndex::permanent_link] = '/upload/2',
-            $csv_columns[PageCvsIndex::background_color] = 'NULL',
-            $csv_columns[PageCvsIndex::header_color] = 'NULL',
-            $csv_columns[PageCvsIndex::theme] = 'NULL',
-            $csv_columns[PageCvsIndex::layout] = 'NULL',
-            $csv_columns[PageCvsIndex::base_display_flag] = '1',
-        ];
-
-        // レスポンス版
-        $filename = 'page_sample.csv';
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
-        ];
-
-        // データ
-        $csv_data = CsvUtils::getResponseCsvData($csv_array, $request->character_code);
-
-        return response()->make($csv_data, 200, $headers);
     }
 
     /**
