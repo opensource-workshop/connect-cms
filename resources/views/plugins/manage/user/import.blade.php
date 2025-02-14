@@ -133,15 +133,11 @@
                         <input type="file" class="custom-file-input" id="users_csv" name="users_csv" accept=".csv">
                         <label class="custom-file-label @if ($errors->has('users_csv')) border-danger @endif" for="users_csv" data-browse="参照"></label>
                     </div>
-                    @if ($errors && $errors->has('users_csv'))
-                        @foreach ($errors->get('users_csv') as $message)
-                            <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{$message}}</div>
-                        @endforeach
-                    @endif
-                    <small class="text-muted">※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}</small><br />
-                    <small class="text-muted">※ ログインユーザ（自分）の更新はできません。ログインユーザの更新はユーザ一覧より更新してください。</small><br />
-                    <small class="text-muted">※ ユーザを新規登録するする場合、「id」列には「""(空)」を設定してください。</small><br />
+                    @include('plugins.common.errors_inline', ['name' => 'users_csv'])
                     <small class="text-muted">
+                        ※ アップロードできる１ファイルの最大サイズ: {{ini_get('upload_max_filesize')}}<br />
+                        ※ ログインユーザ（自分）の更新はできません。ログインユーザの更新はユーザ一覧より更新してください。<br />
+                        ※ ユーザを新規登録するする場合、「id」列には「""(空)」を設定してください。<br />
                         ※ 既存のユーザを更新する場合、「id」列には既存ユーザのidを設定してください。既存ユーザのidは下部のダウンロードファイルで確認できます。
                         <div class="col text-left">
                             {{-- (右側)ダウンロードボタン --}}
@@ -196,17 +192,13 @@
             </div>
 
             {{-- Submitボタン --}}
-            <div class="form-group text-center">
-                <div class="row">
-                    <div class="offset-sm-3 col-sm-6">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-check"></i>
-                            <span class="" onclick="return confirm('インポートします。\nよろしいですか？')">
-                                インポート
-                            </span>
-                        </button>
-                    </div>
-                </div>
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary" onclick="return confirm('インポートします。\nよろしいですか？')">
+                    <i class="fas fa-check"></i>
+                    <span >
+                        インポート
+                    </span>
+                </button>
             </div>
         </form>
 
