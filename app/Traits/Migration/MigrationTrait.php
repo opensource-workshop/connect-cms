@@ -1442,19 +1442,17 @@ trait MigrationTrait
             return;
         }
 
-        $uploads_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('uploads/uploads.ini'), true);
-
         // ルームの指定（あれば後で使う）
         // $cc_import_uploads_room_ids = $this->getMigrationConfig('uploads', 'cc_import_uploads_room_ids');
 
         // アップロード・ファイルのループ
-        if (array_key_exists('uploads', $uploads_ini) && array_key_exists('upload', $uploads_ini['uploads'])) {
-            foreach ($uploads_ini['uploads']['upload'] as $upload_key => $upload_item) {
+        if (Arr::has($this->uploads_ini, "uploads.upload")) {
+            foreach ($this->uploads_ini['uploads']['upload'] as $upload_key => $upload_item) {
                 // ルーム指定を探しておく。
-                $room_id = null;
-                if (array_key_exists('nc2_room_id', $uploads_ini[$upload_key])) {
-                    $room_id = $uploads_ini[$upload_key]['nc2_room_id'];
-                }
+                // $room_id = null;
+                // if (array_key_exists('nc2_room_id', $this->uploads_ini[$upload_key])) {
+                //     $room_id = $this->uploads_ini[$upload_key]['nc2_room_id'];
+                // }
 
                 // ルーム指定があれば、指定されたルームのみ処理する。
                 //if (empty($cc_import_uploads_room_ids)) {
@@ -1473,14 +1471,14 @@ trait MigrationTrait
                 if (empty($mapping)) {
                     // マッピングテーブルがなければ、Uploads テーブルとマッピングテーブルを追加
                     $upload = Uploads::create([
-                        'client_original_name' => $uploads_ini[$upload_key]['client_original_name'],
-                        'mimetype'             => $uploads_ini[$upload_key]['mimetype'],
-                        'extension'            => $uploads_ini[$upload_key]['extension'],
-                        'size'                 => $uploads_ini[$upload_key]['size'],
-                        'plugin_name'          => $uploads_ini[$upload_key]['plugin_name'],
-                        'page_id'              => $uploads_ini[$upload_key]['page_id'],
+                        'client_original_name' => $this->uploads_ini[$upload_key]['client_original_name'],
+                        'mimetype'             => $this->uploads_ini[$upload_key]['mimetype'],
+                        'extension'            => $this->uploads_ini[$upload_key]['extension'],
+                        'size'                 => $this->uploads_ini[$upload_key]['size'],
+                        'plugin_name'          => $this->uploads_ini[$upload_key]['plugin_name'],
+                        'page_id'              => $this->uploads_ini[$upload_key]['page_id'],
                         'temporary_flag'       => 0,
-                        'check_method'         => $uploads_ini[$upload_key]['plugin_name'] == 'forms' ? 'canDownload' : null,
+                        'check_method'         => $this->uploads_ini[$upload_key]['plugin_name'] == 'forms' ? 'canDownload' : null,
                     ]);
 
                     // マッピングテーブルの追加
@@ -1495,21 +1493,21 @@ trait MigrationTrait
                     if (empty($upload)) {
                         $this->putMonitor(1, "No Mapping target = uploads", "destination_key = " . $mapping->destination_key);
                     } else {
-                        $upload->client_original_name = $uploads_ini[$upload_key]['client_original_name'];
-                        $upload->mimetype             = $uploads_ini[$upload_key]['mimetype'];
-                        $upload->extension            = $uploads_ini[$upload_key]['extension'];
-                        $upload->size                 = $uploads_ini[$upload_key]['size'];
-                        $upload->plugin_name          = $uploads_ini[$upload_key]['plugin_name'];
-                        $upload->page_id              = $uploads_ini[$upload_key]['page_id'];
+                        $upload->client_original_name = $this->uploads_ini[$upload_key]['client_original_name'];
+                        $upload->mimetype             = $this->uploads_ini[$upload_key]['mimetype'];
+                        $upload->extension            = $this->uploads_ini[$upload_key]['extension'];
+                        $upload->size                 = $this->uploads_ini[$upload_key]['size'];
+                        $upload->plugin_name          = $this->uploads_ini[$upload_key]['plugin_name'];
+                        $upload->page_id              = $this->uploads_ini[$upload_key]['page_id'];
                         $upload->temporary_flag       = 0;
-                        $upload->check_method         = $uploads_ini[$upload_key]['plugin_name'] == 'forms' ? 'canDownload' : null;
+                        $upload->check_method         = $this->uploads_ini[$upload_key]['plugin_name'] == 'forms' ? 'canDownload' : null;
                         $upload->save();
                     }
                 }
 
                 // ファイルのコピー
                 $source_file_path = $this->getImportPath('uploads/') . $upload_item;
-                $destination_file_path = $this->getDirectory($upload->id) . '/' . $upload->id . '.' . $uploads_ini[$upload_key]['extension'];
+                $destination_file_path = $this->getDirectory($upload->id) . '/' . $upload->id . '.' . $this->uploads_ini[$upload_key]['extension'];
                 if (Storage::exists($source_file_path)) {
                     if (Storage::exists($destination_file_path)) {
                         Storage::delete($destination_file_path);
@@ -1991,15 +1989,13 @@ trait MigrationTrait
             return;
         }
 
-        $uploads_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('uploads/uploads.ini'), true);
-
         // アップロード・ファイルのループ
-        if (array_key_exists('uploads', $uploads_ini) && array_key_exists('upload', $uploads_ini['uploads'])) {
-            foreach ($uploads_ini['uploads']['upload'] as $upload_key => $upload_item) {
+        if (Arr::has($this->uploads_ini, "uploads.upload")) {
+            foreach ($this->uploads_ini['uploads']['upload'] as $upload_key => $upload_item) {
                 // ルームのトップページを探しておく。
                 $room_page_id_top = null;
-                if (array_key_exists('room_page_id_top', $uploads_ini[$upload_key])) {
-                    $room_page_id_top = $uploads_ini[$upload_key]['room_page_id_top'];
+                if (array_key_exists('room_page_id_top', $this->uploads_ini[$upload_key])) {
+                    $room_page_id_top = $this->uploads_ini[$upload_key]['room_page_id_top'];
                 }
                 if (empty($room_page_id_top)) {
                     continue;
@@ -8314,6 +8310,9 @@ trait MigrationTrait
     {
         $this->putMonitor(3, "Start this->nc2ExportUploads.");
 
+        // メモリ使用量オーバー対応。再設定されるため変数開放
+        unset($this->uploads_ini);
+
         // データクリア
         if ($redo === true) {
             // 移行用ファイルの削除
@@ -8329,8 +8328,6 @@ trait MigrationTrait
             $nc2_uploads_query->whereNotIn('module_id', $this->getMigrationConfig('uploads', 'nc2_export_ommit_module_ids'));
         }
 
-        $nc2_uploads = $nc2_uploads_query->orderBy('upload_id')->get();
-
         // uploads,ini ファイル
         //Storage::put($this->getImportPath('uploads/uploads.ini'), "[uploads]");
         $this->storagePut($this->getImportPath('uploads/uploads.ini'), "[uploads]");
@@ -8339,57 +8336,63 @@ trait MigrationTrait
         $uploads_ini = "";
         $uploads_ini_detail = "";
 
-        // アップロード・ファイルのループ
-        foreach ($nc2_uploads as $nc2_upload) {
-            // NC2 バックアップは対象外
-            if ($nc2_upload->file_path == 'backup/') {
-                continue;
-            }
-
-            // アップロードファイルのルームを無視する指定があれば全部を移行、なければルーム設定を参照
-            if (!$this->hasMigrationConfig('uploads', 'nc2_export_uploads_force_room', true)) {
-                $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
-                // ルーム指定があれば、指定されたルームのみ処理する。
-                if (empty($room_ids)) {
-                    // ルーム指定なし。全データの移行
-                } elseif (!empty($room_ids) && in_array($nc2_upload->room_id, $room_ids)) {
-                    // ルーム指定あり。指定ルームに合致する。
-                } else {
-                    // ルーム指定あり。条件に合致せず。移行しない。
+        // メモリ使用量オーバー対応
+        $nc2_uploads_query->orderBy('upload_id')->chunk(1000, function($nc2_uploads) use ($uploads_path, &$uploads_ini, &$uploads_ini_detail) {
+            // アップロード・ファイルのループ
+            foreach ($nc2_uploads as $nc2_upload) {
+                // NC2 バックアップは対象外
+                if ($nc2_upload->file_path == 'backup/') {
                     continue;
                 }
-            }
 
-            // ファイルのコピー
-            $source_file_path = $uploads_path . $nc2_upload->file_path . $nc2_upload->physical_file_name;
-            $destination_file_dir = storage_path() . "/app/" . $this->getImportPath('uploads');
-            $destination_file_name = "upload_" . $this->zeroSuppress($nc2_upload->upload_id, 5);
-            $destination_file_path = $destination_file_dir . '/' . $destination_file_name . '.' . $nc2_upload->extension;
-
-            if (File::exists($source_file_path)) {
-                if (!File::isDirectory($destination_file_dir)) {
-                    File::makeDirectory($destination_file_dir, 0775, true);
+                // アップロードファイルのルームを無視する指定があれば全部を移行、なければルーム設定を参照
+                if (!$this->hasMigrationConfig('uploads', 'nc2_export_uploads_force_room', true)) {
+                    $room_ids = $this->getMigrationConfig('basic', 'nc2_export_room_ids');
+                    // ルーム指定があれば、指定されたルームのみ処理する。
+                    if (empty($room_ids)) {
+                        // ルーム指定なし。全データの移行
+                    } elseif (!empty($room_ids) && in_array($nc2_upload->room_id, $room_ids)) {
+                        // ルーム指定あり。指定ルームに合致する。
+                    } else {
+                        // ルーム指定あり。条件に合致せず。移行しない。
+                        continue;
+                    }
                 }
-                File::copy($source_file_path, $destination_file_path);
+
+                // ファイルのコピー
+                $source_file_path = $uploads_path . $nc2_upload->file_path . $nc2_upload->physical_file_name;
+                $destination_file_dir = storage_path() . "/app/" . $this->getImportPath('uploads');
+                $destination_file_name = "upload_" . $this->zeroSuppress($nc2_upload->upload_id, 5);
+                $destination_file_path = $destination_file_dir . '/' . $destination_file_name . '.' . $nc2_upload->extension;
+
+                if (File::exists($source_file_path)) {
+                    if (!File::isDirectory($destination_file_dir)) {
+                        File::makeDirectory($destination_file_dir, 0775, true);
+                    }
+                    File::copy($source_file_path, $destination_file_path);
+                }
+
+                $uploads_ini .= "upload[" . $nc2_upload->upload_id . "] = \"" . $destination_file_name . '.' . $nc2_upload->extension . "\"\n";
+
+                $uploads_ini_detail .= "\n";
+                $uploads_ini_detail .= "[" . $nc2_upload->upload_id . "]\n";
+                $uploads_ini_detail .= "client_original_name = \"" . $nc2_upload->file_name . "\"\n";
+                $uploads_ini_detail .= "temp_file_name = \"" . $destination_file_name . '.' . $nc2_upload->extension . "\"\n";
+                $uploads_ini_detail .= "size = \"" . $nc2_upload->file_size . "\"\n";
+                $uploads_ini_detail .= "mimetype = \"" . $nc2_upload->mimetype . "\"\n";
+                $uploads_ini_detail .= "extension = \"" . $nc2_upload->extension . "\"\n";
+                $uploads_ini_detail .= "plugin_name = \"" . $this->nc2GetPluginName($nc2_upload->file_path) . "\"\n";
+                $uploads_ini_detail .= "page_id = \"0\"\n";
+                $uploads_ini_detail .= "nc2_room_id = \"" . $nc2_upload->room_id . "\"\n";
+                $uploads_ini_detail .= "room_page_id_top = " . $nc2_upload->room_id . "\n";
             }
-
-            $uploads_ini .= "upload[" . $nc2_upload->upload_id . "] = \"" . $destination_file_name . '.' . $nc2_upload->extension . "\"\n";
-
-            $uploads_ini_detail .= "\n";
-            $uploads_ini_detail .= "[" . $nc2_upload->upload_id . "]\n";
-            $uploads_ini_detail .= "client_original_name = \"" . $nc2_upload->file_name . "\"\n";
-            $uploads_ini_detail .= "temp_file_name = \"" . $destination_file_name . '.' . $nc2_upload->extension . "\"\n";
-            $uploads_ini_detail .= "size = \"" . $nc2_upload->file_size . "\"\n";
-            $uploads_ini_detail .= "mimetype = \"" . $nc2_upload->mimetype . "\"\n";
-            $uploads_ini_detail .= "extension = \"" . $nc2_upload->extension . "\"\n";
-            $uploads_ini_detail .= "plugin_name = \"" . $this->nc2GetPluginName($nc2_upload->file_path) . "\"\n";
-            $uploads_ini_detail .= "page_id = \"0\"\n";
-            $uploads_ini_detail .= "nc2_room_id = \"" . $nc2_upload->room_id . "\"\n";
-            $uploads_ini_detail .= "room_page_id_top = " . $nc2_upload->room_id . "\n";
-        }
+        });
 
         // アップロード一覧の出力
         Storage::append($this->getImportPath('uploads/uploads.ini'), $uploads_ini . $uploads_ini_detail);
+        // 変数開放
+        unset($uploads_ini);
+        unset($uploads_ini_detail);
 
         // uploads のini ファイルの再読み込み
         if (Storage::exists($this->getImportPath('uploads/uploads.ini'))) {
