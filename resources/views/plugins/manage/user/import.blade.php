@@ -192,17 +192,13 @@
             </div>
 
             {{-- Submitボタン --}}
-            <div class="form-group text-center">
-                <div class="row">
-                    <div class="offset-sm-3 col-sm-6">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-check"></i>
-                            <span class="" onclick="return confirm('インポートします。\nよろしいですか？')">
-                                インポート
-                            </span>
-                        </button>
-                    </div>
-                </div>
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary" onclick="return confirm('インポートします。\nよろしいですか？')">
+                    <i class="fas fa-check"></i>
+                    <span >
+                        インポート
+                    </span>
+                </button>
             </div>
         </form>
 
