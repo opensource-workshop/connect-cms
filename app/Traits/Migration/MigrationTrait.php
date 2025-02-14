@@ -8337,7 +8337,7 @@ trait MigrationTrait
         $uploads_ini_detail = "";
 
         // メモリ使用量オーバー対応
-        $nc2_uploads_query->orderBy('upload_id')->chunk(1000, function($nc2_uploads) use ($uploads_path, &$uploads_ini, &$uploads_ini_detail) {
+        $nc2_uploads_query->orderBy('upload_id')->chunk(1000, function ($nc2_uploads) use ($uploads_path, &$uploads_ini, &$uploads_ini_detail) {
             // アップロード・ファイルのループ
             foreach ($nc2_uploads as $nc2_upload) {
                 // NC2 バックアップは対象外
