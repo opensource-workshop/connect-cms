@@ -16,7 +16,10 @@
             <tr>
                 <th><pre>permanent_link</pre></th>
                 <td><span class="badge badge-danger">必須</span></td>
-                <td>固定リンク</td>
+                <td>
+                    固定リンク<br>
+                    固定リンクの先頭に / がない場合、追加します。
+                </td>
             </tr>
             <tr>
                 <th><pre>background_color</pre></th>

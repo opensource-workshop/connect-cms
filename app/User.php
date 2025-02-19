@@ -163,7 +163,7 @@ class User extends Authenticatable
     /**
      * 仮登録のinput disable 属性の要否を判断して返す。
      */
-    public function getStstusTemporaryDisabled($enum_value)
+    private function getStstusTemporaryDisabled($enum_value)
     {
         // 選択肢が仮登録の場合のみ、disabled の判定をする。
         if ($enum_value != UserStatus::temporary) {

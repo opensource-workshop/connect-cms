@@ -2,6 +2,7 @@
  * ログ管理のメインテンプレート
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ログ管理
  --}}
@@ -10,6 +11,24 @@
 
 {{-- 管理画面メイン部分のコンテンツ section:manage_content で作ること --}}
 @section('manage_content')
+
+<script type="text/javascript">
+    let calendar_setting = {
+        @if (App::getLocale() == ConnectLocale::ja)
+            dayViewHeaderFormat: 'YYYY年 M月',
+        @endif
+        locale: '{{ App::getLocale() }}',
+        // 日時の両方入力
+        format: 'YYYY-MM-DD HH:mm:ss',
+        sideBySide: true
+    };
+
+    $(function () {
+        // 時計ボタン押下の設定
+        $('#start_created_at').datetimepicker(calendar_setting);
+        $('#end_created_at').datetimepicker(calendar_setting);
+    });
+</script>
 
 <div class="card">
     <div class="card-header p-0">
@@ -31,18 +50,76 @@
                         <form name="form_search" id="form_search" class="form-horizontal" method="post" action="{{url('/')}}/manage/log/search">
                             {{ csrf_field() }}
 
-                            {{-- ログインID --}}
+                            <!-- 日時 -->
                             <div class="form-group row">
-                                <label for="app_log_search_condition_userid" class="col-md-3 col-form-label text-md-right">ログインID</label>
+                                <label class="col-md-3 col-form-label text-md-right">日時</label>
                                 <div class="col-md-9">
-                                    <input type="text" name="app_log_search_condition[userid]" id="app_log_search_condition_userid" value="{{Session::get('app_log_search_condition.userid')}}" class="form-control">
-                                    <small class="text-muted">ログインID ＆ 以下の条件を指定した場合はいずれかに合致した場合</small>
+
+                                    <div class="form-row">
+                                        <!-- 日時From -->
+                                        <div class="col-md-6">
+                                            <div class="input-group" id="start_created_at" data-target-input="nearest">
+                                                @php
+                                                    $start_created_at = Session::get("app_log_search_condition.start_created_at");
+                                                    $start_created_at = $start_created_at ? (new Carbon($start_created_at)) : '';
+                                                @endphp
+                                                <input type="text" name="app_log_search_condition[start_created_at]" value="{{$start_created_at}}" class="form-control datetimepicker-input" data-target="#start_created_at">
+                                                <div class="input-group-append" data-target="#start_created_at" data-toggle="datetimepicker">
+                                                    <div class="input-group-text"><i class="far fa-clock"></i></div>
+                                                </div>
+                                                <div class="form-text pl-2">
+                                                    ～
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- 日時To -->
+                                        <div class="col-md-6">
+                                            <div class="input-group" id="end_created_at" data-target-input="nearest">
+                                                @php
+                                                    $end_created_at = Session::get("app_log_search_condition.end_created_at");
+                                                    $end_created_at = $end_created_at ? (new Carbon($end_created_at)) : '';
+                                                @endphp
+                                                <input type="text" name="app_log_search_condition[end_created_at]" value="{{$end_created_at}}" class="form-control datetimepicker-input" data-target="#end_created_at">
+                                                <div class="input-group-append" data-target="#end_created_at" data-toggle="datetimepicker">
+                                                    <div class="input-group-text"><i class="far fa-clock"></i></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div><!-- /.form-row -->
+                                    @include('plugins.common.errors_inline', ['name' => 'app_log_search_condition.start_created_at'])
+                                    @include('plugins.common.errors_inline', ['name' => 'app_log_search_condition.end_created_at'])
+
+                                </div><!-- /.col-md-9 -->
+                            </div><!-- /.row -->
+
+                            <!-- ログインID -->
+                            <div class="form-group row">
+                                <label class="col-md-3 col-form-label text-md-right">ログインID</label>
+                                <div class="col-md-9">
+                                    <input type="text" name="app_log_search_condition[userid]" value="{{Session::get('app_log_search_condition.userid')}}" class="form-control">
                                 </div>
                             </div>
 
-                            {{-- ログイン関係 --}}
+                            <!-- URI -->
                             <div class="form-group row">
-                                <label for="app_log_search_condition_type" class="col-md-3 text-md-right">ログイン関係</label>
+                                <label class="col-md-3 col-form-label text-md-right">URI</label>
+                                <div class="col-md-9">
+                                    <input type="text" name="app_log_search_condition[uri]" value="{{Session::get('app_log_search_condition.uri')}}" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-3"></div>
+                                <div class="col-md-9">
+                                    <div class="alert alert-secondary">
+                                        以下の条件を指定した場合はいずれかに合致した場合
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ログイン関係 -->
+                            <div class="form-group row">
+                                <label class="col-md-3 text-md-right">ログイン関係</label>
                                 <div class="col-md-9">
                                     <div class="custom-control custom-control-inline custom-checkbox">
                                         <input name="app_log_search_condition[log_type_login]" value="1" type="checkbox" class="custom-control-input" id="log_type_login"@if(Session::get('app_log_search_condition.log_type_login') == "1") checked @endif>
@@ -59,9 +136,9 @@
                                 </div>
                             </div>
 
-                            {{-- 種別 --}}
+                            <!-- 種別 -->
                             <div class="form-group row">
-                                <label for="app_log_search_condition_type" class="col-md-3 text-md-right">種別</label>
+                                <label class="col-md-3 text-md-right">種別</label>
                                 <div class="col-md-9">
                                     <div class="custom-control custom-control-inline custom-checkbox">
                                         <input name="app_log_search_condition[log_type_page]" value="1" type="checkbox" class="custom-control-input" id="log_type_page"@if(Session::get('app_log_search_condition.log_type_page') == "1") checked @endif>
@@ -130,9 +207,9 @@
                                 </div>
                             </div>
 
-                            {{-- HTTPメソッド --}}
+                            <!-- HTTPメソッド -->
                             <div class="form-group row">
-                                <label for="app_log_search_condition_type" class="col-md-3 text-md-right">HTTPメソッド</label>
+                                <label class="col-md-3 text-md-right">HTTPメソッド</label>
                                 <div class="col-md-9">
                                     <div class="custom-control custom-control-inline custom-checkbox">
                                         <input name="app_log_search_condition[log_type_http_get]" value="1" type="checkbox" class="custom-control-input" id="log_type_http_get"@if(Session::get('app_log_search_condition.log_type_http_get') == "1") checked @endif>
@@ -145,7 +222,7 @@
                                 </div>
                             </div>
 
-                            {{-- ボタンエリア --}}
+                            <!-- ボタンエリア -->
                             <div class="form-group text-center">
                                 <div class="row">
                                     <div class="mx-auto">
@@ -166,12 +243,12 @@
 
         <div class="row mt-2">
             <div class="col text-left d-flex align-items-end">
-                {{-- (左側)件数 --}}
+                <!-- (左側)件数 -->
                 <span class="badge badge-pill badge-light">{{ $app_logs->total() }} 件</span>
             </div>
 
             <div class="col text-right">
-                {{-- (右側)ダウンロードボタン --}}
+                <!-- (右側)ダウンロードボタン -->
                 <a href="{{url('/')}}/manage/log/downloadCsv" target="_blank" onclick="return confirm('現在の絞り込み条件のログをダウンロードします。\nよろしいですか？')">
                     <span class="btn btn-link"><i class="fas fa-file-download"></i> ダウンロード</span>
                 </a>

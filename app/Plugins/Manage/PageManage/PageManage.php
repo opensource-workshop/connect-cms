@@ -2,14 +2,8 @@
 
 namespace App\Plugins\Manage\PageManage;
 
+use App\Enums\PageCvsIndex;
 use App\Enums\WebsiteType;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
-use Carbon\Carbon;
-
-use DB;
-
-use App\User;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Group;
@@ -17,22 +11,26 @@ use App\Models\Common\GroupUser;
 use App\Models\Common\Page;
 use App\Models\Common\PageRole;
 use App\Models\User\Contents\Contents;
-
+use App\Plugins\Manage\ManagePluginBase;
 use App\Rules\CustomValiTextMax;
 use App\Rules\CustomValiUrlMax;
-
 use App\Traits\Migration\MigrationTrait;
 use App\Traits\Migration\MigrationExportNc3PageTrait;
 use App\Traits\Migration\MigrationExportHtmlPageTrait;
-
-use App\Plugins\Manage\ManagePluginBase;
-
+use App\User;
 use App\Utilities\Csv\CsvUtils;
+use App\Utilities\String\StringUtils;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 /**
  * ページ管理クラス
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category ページ管理
  * @package Controller
@@ -56,39 +54,29 @@ class PageManage extends ManagePluginBase
     public function declareRole()
     {
         // 権限チェックテーブル
-        $role_ckeck_table = array();
-        $role_ckeck_table["index"]           = array('admin_page');
-        $role_ckeck_table["edit"]            = array('admin_page');
-        $role_ckeck_table["store"]           = array('admin_page');
-        $role_ckeck_table["update"]          = array('admin_page');
-        $role_ckeck_table["destroy"]         = array('admin_page');
-        $role_ckeck_table["sequenceUp"]      = array('admin_page');
-        $role_ckeck_table["sequenceTop"]     = ['admin_page'];
-        $role_ckeck_table["sequenceDown"]    = array('admin_page');
-        $role_ckeck_table["sequenceBottom"]  = ['admin_page'];
-        $role_ckeck_table["movePage"]        = array('admin_page');
-        $role_ckeck_table["import"]          = array('admin_page');
-        $role_ckeck_table["upload"]          = array('admin_page');
-        $role_ckeck_table["role"]            = array('admin_page');
-        $role_ckeck_table["saveRole"]        = array('admin_page');
-        $role_ckeck_table["roleList"]        = ['admin_page'];
-        $role_ckeck_table["migrationOrder"]  = array('admin_page');
-        $role_ckeck_table["migrationGet"]    = array('admin_page');
-        $role_ckeck_table["migrationImort"]  = array('admin_page');
-        $role_ckeck_table["migrationFileDelete"] = array('admin_page');
-        $role_ckeck_table["toggleDisplay"] = array('admin_page');
-
-/*
-        $role_ckeck_table = array();
-        $role_ckeck_table["index"]         = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_PAGE_MANAGER'));
-        $role_ckeck_table["edit"]          = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_PAGE_MANAGER'));
-        $role_ckeck_table["store"]         = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_PAGE_MANAGER'));
-        $role_ckeck_table["update"]        = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_PAGE_MANAGER'));
-        $role_ckeck_table["destroy"]       = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_PAGE_MANAGER'));
-        $role_ckeck_table["sequence_up"]   = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_PAGE_MANAGER'));
-        $role_ckeck_table["sequence_down"] = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_PAGE_MANAGER'));
-        $role_ckeck_table["move_page"]     = array(config('cc_role.ROLE_SYSTEM_MANAGER'), config('cc_role.ROLE_PAGE_MANAGER'));
-*/
+        $role_ckeck_table = [];
+        $role_ckeck_table["index"]               = ['admin_page'];
+        $role_ckeck_table["edit"]                = ['admin_page'];
+        $role_ckeck_table["store"]               = ['admin_page'];
+        $role_ckeck_table["update"]              = ['admin_page'];
+        $role_ckeck_table["destroy"]             = ['admin_page'];
+        $role_ckeck_table["sequenceUp"]          = ['admin_page'];
+        $role_ckeck_table["sequenceTop"]         = ['admin_page'];
+        $role_ckeck_table["sequenceDown"]        = ['admin_page'];
+        $role_ckeck_table["sequenceBottom"]      = ['admin_page'];
+        $role_ckeck_table["movePage"]            = ['admin_page'];
+        $role_ckeck_table["import"]              = ['admin_page'];
+        $role_ckeck_table["upload"]              = ['admin_page'];
+        $role_ckeck_table["downloadCsvFormat"]   = ['admin_page'];
+        $role_ckeck_table["downloadCsvSample"]   = ['admin_page'];
+        $role_ckeck_table["role"]                = ['admin_page'];
+        $role_ckeck_table["saveRole"]            = ['admin_page'];
+        $role_ckeck_table["roleList"]            = ['admin_page'];
+        $role_ckeck_table["migrationOrder"]      = ['admin_page'];
+        $role_ckeck_table["migrationGet"]        = ['admin_page'];
+        $role_ckeck_table["migrationImort"]      = ['admin_page'];
+        $role_ckeck_table["migrationFileDelete"] = ['admin_page'];
+        $role_ckeck_table["toggleDisplay"]       = ['admin_page'];
         return $role_ckeck_table;
     }
 
@@ -183,12 +171,12 @@ class PageManage extends ManagePluginBase
     /**
      * ページ登録・変更時のエラーチェック
      */
-    private function pageValidator($request)
+    private function pageValidator($request, $page_id = null)
     {
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'page_name'        => ['required', 'max:255'],
-            'permanent_link'   => ['nullable', new CustomValiUrlMax(true)],
+            'permanent_link'   => ['nullable', new CustomValiUrlMax(true), Rule::unique('pages')->ignore($page_id)],
             'password'         => ['nullable', 'max:255'],
             'background_color' => ['nullable', 'max:255'],
             'header_color'     => ['nullable', 'max:255'],
@@ -210,29 +198,47 @@ class PageManage extends ManagePluginBase
     }
 
     /**
+     * CSVインポート時のエラーチェックルール
+     */
+    private function pageUploadValidatorRules()
+    {
+        $rules = [
+            PageCvsIndex::page_name         => ['required', 'max:255'],
+            PageCvsIndex::permanent_link    => ['required', new CustomValiUrlMax(true), Rule::unique('pages', 'permanent_link')],
+            PageCvsIndex::background_color  => ['required', 'max:255'],
+            PageCvsIndex::header_color      => ['required', 'max:255'],
+            PageCvsIndex::theme             => ['required'],
+            PageCvsIndex::layout            => ['required'],
+            PageCvsIndex::base_display_flag => ['required', Rule::in(['0', '1'])],
+        ];
+
+        return $rules;
+    }
+
+    /**
      * ページ登録処理
      */
     public function store($request)
     {
+        // 固定リンクの先頭に / がない場合、追加する。
+        if (strncmp($request->permanent_link, '/', 1) !== 0) {
+            $request->merge([
+                "permanent_link" => '/' . $request->permanent_link,
+            ]);
+        }
+
         // ページ登録・変更時のエラーチェック
         $validator = $this->pageValidator($request);
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
-            // return ( $this->index($request, null, $validator->errors()) );
             return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        // 固定リンクの先頭に / がない場合、追加する。(php8.1対応)stringにキャストする。
-        $permanent_link = (string)$request->permanent_link;
-        if (strncmp($permanent_link, '/', 1) !== 0) {
-            $permanent_link = '/' . $permanent_link;
         }
 
         // ページデータの登録
         $page = new Page;
         $page->page_name            = $request->page_name;
-        $page->permanent_link       = $permanent_link;
+        $page->permanent_link       = $request->permanent_link;
         $page->password             = $request->password;
         $page->background_color     = $request->background_color;
         $page->header_color         = $request->header_color;
@@ -257,17 +263,19 @@ class PageManage extends ManagePluginBase
      */
     public function update($request, $page_id)
     {
+        // 固定リンクの先頭に / がない場合、追加する。
+        if (strncmp($request->permanent_link, '/', 1) !== 0) {
+            $request->merge([
+                "permanent_link" => '/' . $request->permanent_link,
+            ]);
+        }
+
         // ページ登録・変更時のエラーチェック
-        $validator = $this->pageValidator($request);
+        $validator = $this->pageValidator($request, $page_id);
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        // 固定リンクの先頭に / がない場合、追加する。
-        if (strncmp($request->permanent_link, '/', 1) !== 0) {
-            $request->permanent_link = '/' . $request->permanent_link;
         }
 
         // ページデータの更新
@@ -409,16 +417,84 @@ class PageManage extends ManagePluginBase
     }
 
     /**
+     * CSVインポートのフォーマットダウンロード
+     */
+    public function downloadCsvFormat($request, $id = null)
+    {
+        // 返却用配列
+        $csv_array = [];
+
+        // 見出し行-頭（固定項目）
+        $csv_array[0] = $this->getCsvHeader();
+
+        // レスポンス版
+        $filename = 'page.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+
+        // データ
+        $csv_data = CsvUtils::getResponseCsvData($csv_array, $request->character_code);
+
+        return response()->make($csv_data, 200, $headers);
+    }
+
+    /**
+     * CSVインポートのサンプルダウンロード
+     */
+    public function downloadCsvSample($request, $id = null)
+    {
+        // 返却用配列
+        $csv_array = [];
+
+        // 見出し行-頭（固定項目）
+        $csv_array[0] = $this->getCsvHeader();
+
+        // サンプルデータ
+        $csv_array[1] = [
+            PageCvsIndex::page_name => 'アップロード',
+            PageCvsIndex::permanent_link => '/upload',
+            PageCvsIndex::background_color => 'NULL',
+            PageCvsIndex::header_color => 'NULL',
+            PageCvsIndex::theme => 'NULL',
+            PageCvsIndex::layout => 'NULL',
+            PageCvsIndex::base_display_flag => '1',
+        ];
+        $csv_array[2] = [
+            PageCvsIndex::page_name => 'アップロード2',
+            PageCvsIndex::permanent_link => '/upload/2',
+            PageCvsIndex::background_color => 'NULL',
+            PageCvsIndex::header_color => 'NULL',
+            PageCvsIndex::theme => 'NULL',
+            PageCvsIndex::layout => 'NULL',
+            PageCvsIndex::base_display_flag => '1',
+        ];
+
+        // レスポンス版
+        $filename = 'page_sample.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+
+        // データ
+        $csv_data = CsvUtils::getResponseCsvData($csv_array, $request->character_code);
+
+        return response()->make($csv_data, 200, $headers);
+    }
+
+    /**
      * CSVヘッダーチェック
      */
     private function checkHeader($header_columns)
     {
-        // ヘッダーカラム
-        $header_column_format = array("page_name","permanent_link","background_color","header_color","theme","layout","base_display_flag");
-
         if (empty($header_columns)) {
             return array("CSVファイルが空です。");
         }
+
+        // ヘッダーカラム
+        $header_column_format = $this->getCsvHeader();
 
         // 項目の不足チェック
         $shortness = array_diff($header_column_format, $header_columns);
@@ -435,52 +511,59 @@ class PageManage extends ManagePluginBase
     }
 
     /**
+     * CSVヘッダー取得
+     */
+    private function getCsvHeader(): array
+    {
+        $header_column_format = [];
+
+        foreach (PageCvsIndex::getMembers() as $csv_index => $column_name) {
+            $header_column_format[$csv_index] = $column_name;
+        }
+
+        return $header_column_format;
+    }
+
+    /**
      * CSVデータ行チェック
      */
-    private function checkPageline($fp, $errors = null)
+    private function checkPageline($fp)
     {
+        // CSVインポート時のエラーチェックルール
+        $rules = $this->pageUploadValidatorRules();
+
         $line_count = 1;
+        $errors = [];
+        $permanent_links = [];
 
         while (($csv_columns = fgetcsv($fp, 0, ",")) !== false) {
+            // バリデーション
+            $validator = Validator::make($csv_columns, $rules);
+
+            $attribute_names = [];
+            foreach (PageCvsIndex::getMembers() as $csv_index => $column_name) {
+                $attribute_names[$csv_index] = "{$line_count}行目の {$column_name} ";
+            }
+
+            $validator->setAttributeNames($attribute_names);
+
             foreach ($csv_columns as $column_index => $csv_column) {
-                switch ($column_index) {
-                    case 0:
-                        if (empty($csv_column)) {
-                            $errors[] = $line_count . "行目の page_name は必須です。";
-                        }
-                        break;
-                    case 1:
-                        if (empty($csv_column)) {
-                            $errors[] = $line_count . "行目の permanent_link は必須です。";
-                        }
-                        break;
-                    case 2:
-                        if (empty($csv_column)) {
-                            $errors[] = $line_count . "行目の background_color は必須です。";
-                        }
-                        break;
-                    case 3:
-                        if (empty($csv_column)) {
-                            $errors[] = $line_count . "行目の header_color は必須です。";
-                        }
-                        break;
-                    case 4:
-                        if (empty($csv_column)) {
-                            $errors[] = $line_count . "行目の header_color は必須です。";
-                        }
-                        break;
-                    case 5:
-                        if (empty($csv_column)) {
-                            $errors[] = $line_count . "行目の layout は必須です。";
-                        }
-                        break;
-                    case 6:
-                        if (!$csv_column == '0' && !$csv_column == '1') {
-                            $errors[] = $line_count . "行目の base_display_flag は 0 もしくは 1 である必要があります。";
-                        }
-                        break;
+
+                if ($column_index === PageCvsIndex::permanent_link) {
+                    // CSV内重複チェック
+                    if (in_array($csv_column, $permanent_links)) {
+                        $errors[] = "{$line_count}行目の " . PageCvsIndex::getDescription(PageCvsIndex::permanent_link) . " がCSVファイル内で重複しています。";
+                    }
+
+                    // permanent_link をCSV内重複チェックするため、貯める
+                    $permanent_links[] = $csv_column;
                 }
             }
+
+            if ($validator->fails()) {
+                $errors = array_merge($errors, $validator->errors()->all());
+            }
+
             $line_count++;
         }
 
@@ -489,10 +572,8 @@ class PageManage extends ManagePluginBase
 
     /**
      * 「固定記事」プラグインを新規で配置
-     *
-     * @return view
      */
-    public function createContent($page_id)
+    private function createContent($page_id)
     {
         // Buckets 登録
         $bucket = Buckets::create(['bucket_name' => '無題', 'plugin_name' => 'contents']);
@@ -549,6 +630,8 @@ class PageManage extends ManagePluginBase
 
         // 一行目（ヘッダ）読み込み
         $fp = fopen(storage_path('app/') . $path, 'r');
+        // ストリームフィルタ内で、Shift-JIS -> UTF-8変換
+        $fp = CsvUtils::setStreamFilterRegisterSjisToUtf8($fp);
         $header_columns = fgetcsv($fp);
 
         // ヘッダー項目のエラーチェック
@@ -562,7 +645,7 @@ class PageManage extends ManagePluginBase
         }
 
         // データ項目のエラーチェック
-        $error_msgs = $this->checkPageline($fp, $error_msgs);
+        $error_msgs = $this->checkPageline($fp);
         if (!empty($error_msgs)) {
             // 一時ファイルの削除
             fclose($fp);
@@ -571,47 +654,71 @@ class PageManage extends ManagePluginBase
             return redirect()->back()->withErrors(['page_csv' => $error_msgs])->withInput();
         }
 
-        // ファイルを閉じて、開きなおす
-        fclose($fp);
-        $fp = fopen(storage_path('app/') . $path, 'r');
+        // ファイルポインタの位置を先頭に戻す
+        rewind($fp);
 
         // ヘッダー
         $header_columns = fgetcsv($fp);
 
-        // データ
-        while (($csv_columns = fgetcsv($fp, 0, ",")) !== false) {
-            // 固定リンクの先頭に / がない場合、追加する。
-            if (strncmp($csv_columns[1], '/', 1) !== 0) {
-                $csv_columns[1] = '/' . $csv_columns[1];
+        DB::beginTransaction();
+        try {
+            // データ
+            while (($csv_columns = fgetcsv($fp, 0, ",")) !== false) {
+                // --- 入力値変換
+                // 入力値をトリム(preg_replace(/u)で置換. /u = UTF-8 として処理)
+                $csv_columns = StringUtils::trimInput($csv_columns);
+
+                foreach ($csv_columns as $col => &$csv_column) {
+                    // 空文字をnullに変換
+                    $csv_column = $this->convertEmptyStringsToNull($csv_column);
+                }
+
+                // 固定リンクの先頭に / がない場合、追加する。
+                if (strncmp($csv_columns[PageCvsIndex::permanent_link], '/', 1) !== 0) {
+                    $csv_columns[PageCvsIndex::permanent_link] = '/' . $csv_columns[PageCvsIndex::permanent_link];
+                }
+
+                // ページ作成
+                $page = Page::create([
+                    'page_name'         => $csv_columns[PageCvsIndex::page_name],
+                    'permanent_link'    => $csv_columns[PageCvsIndex::permanent_link],
+                    'background_color'  => $csv_columns[PageCvsIndex::background_color],
+                    'header_color'      => $csv_columns[PageCvsIndex::header_color],
+                    'theme'             => $csv_columns[PageCvsIndex::theme],
+                    'layout'            => $csv_columns[PageCvsIndex::layout],
+                    'base_display_flag' => $csv_columns[PageCvsIndex::base_display_flag]
+                ]);
+
+                // 初期配置がある場合
+                if ($request->has('deploy_content_plugin') && $request->deploy_content_plugin == '1') {
+                    $this->createContent($page->id);
+                }
             }
 
-            // ページ名, 固定リンクをUTF-8 に変換
-            $csv_columns[0] = mb_convert_encoding($csv_columns[0], "UTF-8", "SJIS-WIN, Shift_JIS");
-            $csv_columns[1] = mb_convert_encoding($csv_columns[1], "UTF-8", "SJIS-WIN, Shift_JIS");
-
-            // ページ作成
-            $page = Page::create([
-                'page_name'         => $csv_columns[0],
-                'permanent_link'    => $csv_columns[1],
-                'background_color'  => ($csv_columns[2] == 'NULL') ? null : $csv_columns[2],
-                'header_color'      => ($csv_columns[3] == 'NULL') ? null : $csv_columns[3],
-                'theme'             => ($csv_columns[4] == 'NULL') ? null : $csv_columns[4],
-                'layout'            => ($csv_columns[5] == 'NULL') ? null : $csv_columns[5],
-                'base_display_flag' => $csv_columns[6]
-            ]);
-
-            // 初期配置がある場合
-            if ($request->has('deploy_content_plugin') && $request->deploy_content_plugin == '1') {
-                $this->createContent($page->id);
-            }
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        } finally {
+            // 一時ファイルの削除
+            fclose($fp);
+            Storage::delete($path);
         }
-
-        // 一時ファイルの削除
-        fclose($fp);
-        Storage::delete($path);
 
         // ページ管理画面に戻る
         return redirect("/manage/page/import")->with('flash_message', 'インポートしました。');
+    }
+
+    /**
+     * 空文字をnullに変換
+     *
+     * @param  mixed  $value
+     * @return mixed
+     */
+    private function convertEmptyStringsToNull($value)
+    {
+        $value = StringUtils::convertEmptyStringsToNull($value);
+        return $value == 'NULL' ? null : $value;
     }
 
     /**

@@ -10,10 +10,15 @@ use App\Enums\EnumsBase;
 final class UserStatus extends EnumsBase
 {
     // 定数メンバ
+    /** 利用可能 */
     const active = 0;
+    /** 利用不可 */
     const not_active = 1;
+    /** 仮削除 */
     const temporary_delete = 3;
+    /** 仮登録 */
     const temporary = 2;
+    /** 承認待ち */
     const pending_approval = 4;
 
     // key/valueの連想配列
@@ -31,9 +36,9 @@ final class UserStatus extends EnumsBase
     public static function getChooseableKeys()
     {
         $enum = self::enum;
-        // 仮登録は外す
+        // 仮登録, 承認待ちは外す
         unset($enum[self::temporary]);
-        // dd($enum);
+        unset($enum[self::pending_approval]);
 
         return array_keys($enum);
     }
