@@ -1767,13 +1767,16 @@ trait MigrationTrait
                     $this->putError(3, 'パスワードを変更しました', "userid = " . $user_item['userid']);
                 }
 
-                // emailの duplicate entry 制約対応2
-                if ($email && empty($user)) {
-                    // ユーザの再取得
-                    $user = User::where('email', $email)->first();
-                    if ($user) {
-                        // メールでCCユーザが再取得出来た場合、移行元でメール重複あり。通常のNC2はここには入らないので、何かしらカスタムされている可能性が高い。
-                        $this->putError(3, 'ユーザーのメールアドレスが重複。（重複ユーザはNC2の場合、新しいユーザを移行（後勝ち））', " userid = " . $user_item['userid'] . " name = " . $user_item['name'] . " email='" . $email);
+                // 移行元ユーザでメール重複しているユーザがいても移行する（通常のNC2ではメール重複はしないため、限られた（カスタムありの）NC2のみ使用する想定）
+                if ($this->getMigrationConfig('users', 'cc_import_user_mail_duplicate_force')) {
+                    // emailの duplicate entry 制約対応2
+                    if ($email && empty($user)) {
+                        // ユーザの再取得
+                        $user = User::where('email', $email)->first();
+                        if ($user) {
+                            // メールでCCユーザが再取得出来た場合、移行元でメール重複あり。通常のNC2はここには入らないので、何かしらカスタムされている可能性が高い。
+                            $this->putError(3, 'ユーザーのメールアドレスが重複。（重複ユーザはNC2の場合、新しいユーザを移行（後勝ち））', " userid = " . $user_item['userid'] . " name = " . $user_item['name'] . " email='" . $email);
+                        }
                     }
                 }
 
