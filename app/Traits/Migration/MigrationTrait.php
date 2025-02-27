@@ -5059,7 +5059,7 @@ trait MigrationTrait
         // 写真登録
         $grandchild = $children->children()->create([
             'photoalbum_id' => $contents['photoalbum_id'],
-            'upload_id'     => $upload_mapping->destination_key,
+            'upload_id'     => optional($upload_mapping)->destination_key,
             'name'          => $upload->client_original_name,
             'width'         => $contents['width'],
             'height'        => $contents['height'],
@@ -5103,7 +5103,7 @@ trait MigrationTrait
         // @see PhotoalbumsPlugin::writeVideo()
         $grandchild = $children->children()->create([
             'photoalbum_id'    => $contents['photoalbum_id'],
-            'upload_id'        => $video_upload_mapping->destination_key,
+            'upload_id'        => optional($video_upload_mapping)->destination_key,
             'poster_upload_id' => isset($poster_upload_mapping) ? $poster_upload_mapping->destination_key : null,
             'name'             => $contents['name'],
             'width'            => null,
