@@ -5051,15 +5051,19 @@ trait MigrationTrait
             $upload = $uploads_all->firstWhere('id', $upload_mapping->destination_key);
             if (!$upload) {
                 $this->putMonitor(3, "Connectの Uploads にアップロードIDなし。album_name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}");
+                // 登録するべきデータ(アップロードID)がないため、空モデルを返す
+                return new PhotoalbumContent();
             }
         } else {
             $this->putMonitor(3, "Connectの MigrationMapping にアップロードIDなし。album_name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}\n");
+            // 登録するべきデータ(アップロードID)がないため、空モデルを返す
+            return new PhotoalbumContent();
         }
 
         // 写真登録
         $grandchild = $children->children()->create([
             'photoalbum_id' => $contents['photoalbum_id'],
-            'upload_id'     => optional($upload_mapping)->destination_key,
+            'upload_id'     => $upload_mapping->destination_key,
             'name'          => $upload->client_original_name,
             'width'         => $contents['width'],
             'height'        => $contents['height'],
@@ -5093,17 +5097,21 @@ trait MigrationTrait
             $video_upload = $uploads_all->firstWhere('id', $video_upload_mapping->destination_key);
             if (!$video_upload) {
                 $this->putMonitor(3, "Connectの Uploads にアップロードIDなし。name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}");
+                // 登録するべきデータ(アップロードID)がないため、空モデルを返す
+                return new PhotoalbumContent();
             }
         } else {
             $this->putMonitor(3, "Connectの MigrationMapping にアップロードIDなし。name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}\n");
-            var_dump($contents);
+            // var_dump($contents);
+                // 登録するべきデータ(アップロードID)がないため、空モデルを返す
+                return new PhotoalbumContent();
         }
 
         // 動画登録
         // @see PhotoalbumsPlugin::writeVideo()
         $grandchild = $children->children()->create([
             'photoalbum_id'    => $contents['photoalbum_id'],
-            'upload_id'        => optional($video_upload_mapping)->destination_key,
+            'upload_id'        => $video_upload_mapping->destination_key,
             'poster_upload_id' => isset($poster_upload_mapping) ? $poster_upload_mapping->destination_key : null,
             'name'             => $contents['name'],
             'width'            => null,
