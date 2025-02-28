@@ -1750,7 +1750,7 @@ trait MigrationTrait
                         $this->putError(3, 'ユーザーのメールアドレスがRFC違反。', " userid = " . $user_item['userid'] . " name = " . $user_item['name'] . " email='" . $email . "' error = " . $e->getMessage());
                     }
                 }
-                // Duplicate entry 制約があるので、空文字ならnull に変換
+                // emailの duplicate entry 制約があるので、空文字ならnull に変換
                 if ($email == "") {
                     $email = null;
                 }
@@ -1765,6 +1765,19 @@ trait MigrationTrait
                 if (!empty($nc2_override_pass) && isset($nc2_override_pass[$user_item['userid']])) {
                     $user_item['password'] = $nc2_override_pass[$user_item['userid']];
                     $this->putError(3, 'パスワードを変更しました', "userid = " . $user_item['userid']);
+                }
+
+                // 移行元ユーザでメール重複しているユーザがいても移行する（通常のNC2ではメール重複はしないため、限られた（カスタムありの）NC2のみ使用する想定）
+                if ($this->getMigrationConfig('users', 'cc_import_user_mail_duplicate_force')) {
+                    // emailの duplicate entry 制約対応2
+                    if ($email && empty($user)) {
+                        // ユーザの再取得
+                        $user = User::where('email', $email)->first();
+                        if ($user) {
+                            // メールでCCユーザが再取得出来た場合、移行元でメール重複あり。通常のNC2はここには入らないので、何かしらカスタムされている可能性が高い。
+                            $this->putError(3, 'ユーザーのメールアドレスが重複。（重複ユーザはNC2の場合、新しいユーザを移行（後勝ち））', " userid = " . $user_item['userid'] . " name = " . $user_item['name'] . " email='" . $email);
+                        }
+                    }
                 }
 
                 // ユーザがあるかの確認
@@ -4699,7 +4712,6 @@ trait MigrationTrait
         $users = User::get();
 
         $upload_mappings = MigrationMapping::where('target_source_table', 'uploads')->get();
-        $uploads_all = Uploads::get();
 
         // フォトアルバム定義のループ
         foreach ($photoalbums_ini_paths as $photoalbums_ini_path) {
@@ -4845,7 +4857,7 @@ trait MigrationTrait
                                 'updated_name'  => $photoalbums_ini[$album_id]['updated_name'],
                                 'updated_at'    => $this->getDatetimeFromIniAndCheckFormat($photoalbums_ini, $album_id, 'updated_at'),
                             ];
-                            $grandchild = $this->createPhotoalbumContent($upload_mappings, $uploads_all, $children, $contents);
+                            $grandchild = $this->createPhotoalbumContent($upload_mappings, $children, $contents);
 
                             // マッピングテーブルの追加
                             $mapping_album_cover_tmp = MigrationMapping::create([
@@ -4962,7 +4974,7 @@ trait MigrationTrait
                                     'updated_name'  => $photoalbum_tsv_cols[$tsv_idxs['updated_name']],
                                     'updated_at'    => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['updated_at'], $photoalbum_tsv_cols, 'updated_at'),
                                 ];
-                                $grandchild = $this->createPhotoalbumContentVideo($upload_mappings, $uploads_all, $children, $contents);
+                                $grandchild = $this->createPhotoalbumContentVideo($upload_mappings, $children, $contents);
 
                                 // マッピングテーブルの追加
                                 $mapping_video_tmp = MigrationMapping::create([
@@ -5004,7 +5016,7 @@ trait MigrationTrait
                                     'updated_name' => $photoalbum_tsv_cols[$tsv_idxs['updated_name']],
                                     'updated_at'   => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['updated_at'], $photoalbum_tsv_cols, 'updated_at'),
                                 ];
-                                $grandchild = $this->createPhotoalbumContent($upload_mappings, $uploads_all, $children, $contents);
+                                $grandchild = $this->createPhotoalbumContent($upload_mappings, $children, $contents);
 
                                 // マッピングテーブルの追加
                                 $mapping_photo_tmp = MigrationMapping::create([
@@ -5030,17 +5042,26 @@ trait MigrationTrait
     /**
      * 写真 or アルバムのジャケット登録
      */
-    private function createPhotoalbumContent(Collection $upload_mappings, Collection $uploads_all, PhotoalbumContent $children, array $contents): PhotoalbumContent
+    private function createPhotoalbumContent(Collection $upload_mappings, PhotoalbumContent $children, array $contents): PhotoalbumContent
     {
         $upload_mapping = $upload_mappings->firstWhere('source_key', $contents['upload_id']);
         $upload = null;
         if ($upload_mapping) {
-            $upload = $uploads_all->firstWhere('id', $upload_mapping->destination_key);
+            // メモリオーバー対応
+            // Uploads::get(); を先に取得し、その引数から $upload = $uploads_all->firstWhere('id', $upload_mapping->destination_key); していたが、
+            // Uploads が 39万件の場合、Uploads::get()した時点で PHP Fatal error:  Allowed memory size of **** bytes exhausted エラーとなったため、1件づつselectする。
+            // $upload = $uploads_all->firstWhere('id', $upload_mapping->destination_key);
+            $upload = Uploads::find($upload_mapping->destination_key);
+
             if (!$upload) {
                 $this->putMonitor(3, "Connectの Uploads にアップロードIDなし。album_name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}");
+                // アップロードIDがないため、登録しない。空モデルを返す
+                return new PhotoalbumContent();
             }
         } else {
             $this->putMonitor(3, "Connectの MigrationMapping にアップロードIDなし。album_name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}\n");
+            // アップロードIDがないため、登録しない。空モデルを返す
+            return new PhotoalbumContent();
         }
 
         // 写真登録
@@ -5071,19 +5092,28 @@ trait MigrationTrait
     /**
      * 動画の登録
      */
-    private function createPhotoalbumContentVideo(Collection $upload_mappings, Collection $uploads_all, PhotoalbumContent $children, array $contents): PhotoalbumContent
+    private function createPhotoalbumContentVideo(Collection $upload_mappings, PhotoalbumContent $children, array $contents): PhotoalbumContent
     {
         $video_upload_mapping = $upload_mappings->firstWhere('source_key', $contents['upload_id']);
         $poster_upload_mapping = $upload_mappings->firstWhere('source_key', $contents['poster_upload_id']);
         $video_upload = null;
         if ($video_upload_mapping) {
-            $video_upload = $uploads_all->firstWhere('id', $video_upload_mapping->destination_key);
+            // メモリオーバー対応
+            // Uploads::get(); を先に取得し、その引数から $upload = $uploads_all->firstWhere('id', $upload_mapping->destination_key); していたが、
+            // Uploads が 39万件の場合、Uploads::get()した時点で PHP Fatal error:  Allowed memory size of **** bytes exhausted エラーとなったため、1件づつselectする。
+            // $video_upload = $uploads_all->firstWhere('id', $video_upload_mapping->destination_key);
+            $video_upload = Uploads::find($video_upload_mapping->destination_key);
+
             if (!$video_upload) {
                 $this->putMonitor(3, "Connectの Uploads にアップロードIDなし。name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}");
+                // アップロードIDがないため、登録しない。空モデルを返す
+                return new PhotoalbumContent();
             }
         } else {
             $this->putMonitor(3, "Connectの MigrationMapping にアップロードIDなし。name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}\n");
-            var_dump($contents);
+            // var_dump($contents);
+            // アップロードIDがないため、登録しない。空モデルを返す
+            return new PhotoalbumContent();
         }
 
         // 動画登録
