@@ -4768,8 +4768,6 @@ trait MigrationTrait
         // ユーザ取得
         $users = User::get();
 
-        $upload_mappings = MigrationMapping::where('target_source_table', 'uploads')->get();
-
         // フォトアルバム定義のループ
         foreach ($photoalbums_ini_paths as $photoalbums_ini_path) {
             // ini_file の解析
@@ -4914,7 +4912,7 @@ trait MigrationTrait
                                 'updated_name'  => $photoalbums_ini[$album_id]['updated_name'],
                                 'updated_at'    => $this->getDatetimeFromIniAndCheckFormat($photoalbums_ini, $album_id, 'updated_at'),
                             ];
-                            $grandchild = $this->createPhotoalbumContent($upload_mappings, $children, $contents);
+                            $grandchild = $this->createPhotoalbumContent($children, $contents);
 
                             // マッピングテーブルの追加
                             $mapping_album_cover_tmp = MigrationMapping::create([
@@ -5031,7 +5029,7 @@ trait MigrationTrait
                                     'updated_name'  => $photoalbum_tsv_cols[$tsv_idxs['updated_name']],
                                     'updated_at'    => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['updated_at'], $photoalbum_tsv_cols, 'updated_at'),
                                 ];
-                                $grandchild = $this->createPhotoalbumContentVideo($upload_mappings, $children, $contents);
+                                $grandchild = $this->createPhotoalbumContentVideo($children, $contents);
 
                                 // マッピングテーブルの追加
                                 $mapping_video_tmp = MigrationMapping::create([
@@ -5073,7 +5071,7 @@ trait MigrationTrait
                                     'updated_name' => $photoalbum_tsv_cols[$tsv_idxs['updated_name']],
                                     'updated_at'   => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['updated_at'], $photoalbum_tsv_cols, 'updated_at'),
                                 ];
-                                $grandchild = $this->createPhotoalbumContent($upload_mappings, $children, $contents);
+                                $grandchild = $this->createPhotoalbumContent($children, $contents);
 
                                 // マッピングテーブルの追加
                                 $mapping_photo_tmp = MigrationMapping::create([
@@ -5101,15 +5099,13 @@ trait MigrationTrait
     /**
      * 写真 or アルバムのジャケット登録
      */
-    private function createPhotoalbumContent(Collection $upload_mappings, PhotoalbumContent $children, array $contents): PhotoalbumContent
+    private function createPhotoalbumContent(PhotoalbumContent $children, array $contents): PhotoalbumContent
     {
-        $upload_mapping = $upload_mappings->firstWhere('source_key', $contents['upload_id']);
+        // メモリオーバー対応. Uploads が 39万件の場合、全件get()でメモリを大量に使うため、DBから1件づつselectする。
+        $upload_mapping = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $contents['upload_id'])->first();
         $upload = null;
         if ($upload_mapping) {
-            // メモリオーバー対応
-            // Uploads::get(); を先に取得し、その引数から $upload = $uploads_all->firstWhere('id', $upload_mapping->destination_key); していたが、
-            // Uploads が 39万件の場合、Uploads::get()した時点で PHP Fatal error:  Allowed memory size of **** bytes exhausted エラーとなったため、1件づつselectする。
-            // $upload = $uploads_all->firstWhere('id', $upload_mapping->destination_key);
+            // メモリオーバー対応. Uploads が 39万件の場合、全件get()でメモリを大量に使うため、DBから1件づつselectする。
             $upload = Uploads::find($upload_mapping->destination_key);
 
             if (!$upload) {
@@ -5151,16 +5147,14 @@ trait MigrationTrait
     /**
      * 動画の登録
      */
-    private function createPhotoalbumContentVideo(Collection $upload_mappings, PhotoalbumContent $children, array $contents): PhotoalbumContent
+    private function createPhotoalbumContentVideo(PhotoalbumContent $children, array $contents): PhotoalbumContent
     {
-        $video_upload_mapping = $upload_mappings->firstWhere('source_key', $contents['upload_id']);
-        $poster_upload_mapping = $upload_mappings->firstWhere('source_key', $contents['poster_upload_id']);
+        // メモリオーバー対応. Uploads が 39万件の場合、全件get()でメモリを大量に使うため、DBから毎回selectする
+        $video_upload_mapping = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $contents['upload_id'])->first();
+        $poster_upload_mapping = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $contents['poster_upload_id'])->first();
         $video_upload = null;
         if ($video_upload_mapping) {
-            // メモリオーバー対応
-            // Uploads::get(); を先に取得し、その引数から $upload = $uploads_all->firstWhere('id', $upload_mapping->destination_key); していたが、
-            // Uploads が 39万件の場合、Uploads::get()した時点で PHP Fatal error:  Allowed memory size of **** bytes exhausted エラーとなったため、1件づつselectする。
-            // $video_upload = $uploads_all->firstWhere('id', $video_upload_mapping->destination_key);
+            // メモリオーバー対応. Uploads が 39万件の場合、全件get()でメモリを大量に使うため、DBから1件づつselectする。
             $video_upload = Uploads::find($video_upload_mapping->destination_key);
 
             if (!$video_upload) {
