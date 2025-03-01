@@ -1016,6 +1016,9 @@ trait MigrationTrait
 
         // 新ページの取り込み
         if ($this->isTarget('cc_import', 'pages')) {
+            $this->putMonitor(3, "Pages import start.");
+            $timer_start = $this->timerStart();
+
             // データクリア
             if ($redo === true) {
                 // トップページ以外の削除
@@ -1165,6 +1168,8 @@ trait MigrationTrait
                 // ページの中身の作成
                 $this->importHtmlImpl($page, $path);
             }
+
+            $this->putMonitor(3, "Pages import End.", $this->timerEnd($timer_start));
         }
 
         // シンプル動画単独実行用
@@ -1403,6 +1408,7 @@ trait MigrationTrait
     private function importBasic($redo)
     {
         $this->putMonitor(3, "Basic import Start.");
+        $timer_start = $this->timerStart();
 
         // サイト基本設定ファイル読み込み
         $basic_file_path = $this->getImportPath('basic/basic.ini');
@@ -1422,6 +1428,8 @@ trait MigrationTrait
             // サイト概要
             MigrationUtils::updateConfig('description', $basic_ini, 'meta');
         }
+
+        $this->putMonitor(3, "Basic import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -1429,7 +1437,8 @@ trait MigrationTrait
      */
     private function importUploads($redo)
     {
-        $this->putMonitor(3, "uploads import Start.");
+        $this->putMonitor(3, "Uploads import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -1516,6 +1525,8 @@ trait MigrationTrait
                 }
             }
         }
+
+        $this->putMonitor(3, "Uploads import End.", $this->timerEnd($timer_start));
     }
 
     // delete: 全体カテゴリは作らない
@@ -1607,6 +1618,7 @@ trait MigrationTrait
     private function importUsers($redo)
     {
         $this->putMonitor(3, "Users import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -1824,6 +1836,8 @@ trait MigrationTrait
                 $this->importUsersRoles($user, 'manage', $user_item);
             }
         }
+
+        $this->putMonitor(3, "Users import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -1866,6 +1880,7 @@ trait MigrationTrait
     private function importGroups($redo)
     {
         $this->putMonitor(3, "Groups import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -2036,6 +2051,8 @@ trait MigrationTrait
                 $upload->save();
             }
         }
+
+        $this->putMonitor(3, "Groups import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -2072,6 +2089,7 @@ trait MigrationTrait
     private function importPermalinks($redo)
     {
         $this->putMonitor(3, "Permalinks import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -2159,6 +2177,8 @@ trait MigrationTrait
                 DB::table('permalinks')->insert($bulk);
             }
         }
+
+        $this->putMonitor(3, "Permalinks import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -2167,6 +2187,7 @@ trait MigrationTrait
     private function importBlogs($redo)
     {
         $this->putMonitor(3, "Blogs import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -2422,6 +2443,8 @@ trait MigrationTrait
                 }
             }
         }
+
+        $this->putMonitor(3, "Blogs import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -2430,6 +2453,7 @@ trait MigrationTrait
     private function importFaqs($redo)
     {
         $this->putMonitor(3, "Faqs import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -2569,6 +2593,8 @@ trait MigrationTrait
                 }
             }
         }
+
+        $this->putMonitor(3, "Faqs import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -2577,6 +2603,7 @@ trait MigrationTrait
     private function importLinklists($redo)
     {
         $this->putMonitor(3, "Linklists import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -2699,6 +2726,8 @@ trait MigrationTrait
                 }
             }
         }
+
+        $this->putMonitor(3, "Linklists import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -2707,6 +2736,7 @@ trait MigrationTrait
     private function importDatabases($redo)
     {
         $this->putMonitor(3, "Databases import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -3035,6 +3065,8 @@ trait MigrationTrait
                 }
             }
         }
+
+        $this->putMonitor(3, "Databases import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -3043,6 +3075,7 @@ trait MigrationTrait
     private function importForms($redo)
     {
         $this->putMonitor(3, "Forms import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -3304,8 +3337,9 @@ trait MigrationTrait
                 DB::table('forms_input_cols')->insert($bulks);
             }
         }
-    }
 
+        $this->putMonitor(3, "Forms import End.", $this->timerEnd($timer_start));
+    }
 
     /**
      * Connect-CMS 移行形式の新着情報をインポート
@@ -3313,6 +3347,7 @@ trait MigrationTrait
     private function importWhatsnews($redo)
     {
         $this->putMonitor(3, "Whatsnews import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -3403,6 +3438,8 @@ trait MigrationTrait
                 'destination_key'      => $whatsnew->id,
             ]);
         }
+
+        $this->putMonitor(3, "Whatsnews import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -3411,6 +3448,7 @@ trait MigrationTrait
     private function importCabinets($redo)
     {
         $this->putMonitor(3, "Cabinets import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -3594,6 +3632,8 @@ trait MigrationTrait
                 CabinetContent::fixTree();
             }
         }
+
+        $this->putMonitor(3, "Cabinets import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -3602,6 +3642,7 @@ trait MigrationTrait
     private function importBbses($redo)
     {
         $this->putMonitor(3, "Bbses import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -3779,6 +3820,8 @@ trait MigrationTrait
                 }
             }
         }
+
+        $this->putMonitor(3, "Bbses import End.", $this->timerEnd($timer_start));
     }
 
     private function fetchMigratedKey($target_table, $key)
@@ -3798,6 +3841,7 @@ trait MigrationTrait
     private function importCounters($redo)
     {
         $this->putMonitor(3, "Counters import start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -3878,6 +3922,8 @@ trait MigrationTrait
                 'destination_key'      => $counter->id,
             ]);
         }
+
+        $this->putMonitor(3, "Counters import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -3886,6 +3932,7 @@ trait MigrationTrait
     private function importCalendars($redo)
     {
         $this->putMonitor(3, "Calendars import start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -4070,8 +4117,9 @@ trait MigrationTrait
                     'destination_key'      => $calendar->id,
                 ]);
             }
-
         }
+
+        $this->putMonitor(3, "Calendars import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -4080,6 +4128,7 @@ trait MigrationTrait
     private function importSlideshows($redo)
     {
         $this->putMonitor(3, "Slideshows import start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -4207,8 +4256,9 @@ trait MigrationTrait
                     'destination_key'      => $slideshows->id,
                 ]);
             }
-
         }
+
+        $this->putMonitor(3, "Slideshows import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -4217,6 +4267,7 @@ trait MigrationTrait
     private function importSimplemovie($redo)
     {
         $this->putMonitor(3, "Simplemovie import start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -4297,6 +4348,8 @@ trait MigrationTrait
                 'destination_key'      => $content->id, //固定記事のID
             ]);
         }
+
+        $this->putMonitor(3, "Simplemovie import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -4305,6 +4358,7 @@ trait MigrationTrait
     private function importReservations($redo)
     {
         $this->putMonitor(3, "Reservations import start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -4691,6 +4745,8 @@ trait MigrationTrait
                 'destination_key'      => $reservation->id,
             ]);
         }
+
+        $this->putMonitor(3, "Reservations import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -4699,6 +4755,7 @@ trait MigrationTrait
     private function importPhotoalbums($redo)
     {
         $this->putMonitor(3, "Photoalbums import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -5037,6 +5094,8 @@ trait MigrationTrait
             }
 
         }
+
+        $this->putMonitor(3, "Photoalbums import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -5149,6 +5208,7 @@ trait MigrationTrait
     private function importSearchs($redo)
     {
         $this->putMonitor(3, "Searchs import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -5224,6 +5284,8 @@ trait MigrationTrait
                 'destination_key'      => $search->id,
             ]);
         }
+
+        $this->putMonitor(3, "Searchs import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -5232,6 +5294,7 @@ trait MigrationTrait
     private function importRsses($redo)
     {
         $this->putMonitor(3, "Rsses import start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -5330,8 +5393,9 @@ trait MigrationTrait
                     'destination_key'      => $rsses->id,
                 ]);
             }
-
         }
+
+        $this->putMonitor(3, "Rsses import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -15098,5 +15162,23 @@ trait MigrationTrait
     private function convertNc3PluginPermalinkCalToConnect(?string $content, string $url, string $db_colum, string $from_nc3_plugin_permalink, string $to_cc_plugin_permalink, string $content_target_source_table): ?string
     {
         return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, $from_nc3_plugin_permalink, $to_cc_plugin_permalink, $content_target_source_table, true);
+    }
+
+    /**
+     * タイマースタート
+     */
+    private function timerStart(): float
+    {
+        return microtime(true);
+    }
+
+    /**
+     * タイマー終了
+     */
+    private function timerEnd(float $timer_start): string
+    {
+        $time = (int)(microtime(true) - $timer_start);
+        $time = round($time, 0);
+        return $time . '秒';
     }
 }
