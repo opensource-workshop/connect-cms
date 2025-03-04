@@ -343,6 +343,12 @@ trait MigrationTrait
     private $import_base = 'import/';
 
     /**
+     * Connect-CMSのユーザID
+     * @var array key=login_id, value=user_id
+     */
+    private $cc_user_ids = [];
+
+    /**
      * migration 各データのパス取得
      */
     private function getImportPath($target, $import_base = null)
@@ -853,8 +859,17 @@ trait MigrationTrait
      */
     private function getUserIdFromLoginId($users, $login_id)
     {
+        if (array_key_exists($login_id, $this->cc_user_ids)) {
+            // クラス変数に保持済みのログインＩＤなら、配列から返す
+            return $this->cc_user_ids[$login_id];
+        }
+
         $user = $users->firstWhere('userid', $login_id);
         $user = $user ?? new User();
+
+        // クラス変数に保持
+        $this->cc_user_ids[$login_id] = $user->id;
+
         return $user->id;
     }
 
