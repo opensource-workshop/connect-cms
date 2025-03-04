@@ -910,7 +910,7 @@ trait MigrationTrait
         $this->redo          = $redo;
         $this->added         = $added;
 
-        $this->putMonitor(3, "importSite() Start.");
+        $this->putMonitor(3, "importSite() import_base={$this->import_base} Start.");
 
         // 移行の初期処理
         if ($added == false && $redo === true) {
