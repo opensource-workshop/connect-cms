@@ -1906,6 +1906,9 @@ trait MigrationTrait
         // グループ定義の取り込み
         $group_ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('groups/group_*.ini'));
 
+        // ユーザ取得
+        $users = User::get();
+
         // グループ定義のループ
         foreach ($group_ini_paths as $i => $group_ini_path) {
             // ini_file の解析
@@ -1939,16 +1942,35 @@ trait MigrationTrait
                 ]);
             }
 
+            // バルクINSERT対応
+            // 3万人ユーザ移行で時間かかりすぎるため、バルクバルクINSERTに変更
+            $bulks_group_users = array();
+
             // group_users 作成
             foreach ($group_ini['users']['user'] as $login_id => $role_authority_id) {
-                $user = User::where('userid', $login_id)->first();
-                if (empty($user)) {
+                // $user = User::where('userid', $login_id)->first();
+                // if (empty($user)) {
+                //     continue;
+                // }
+                // $group_user = GroupUser::updateOrCreate(
+                //     ['group_id' => $group->id, 'user_id' => $user->id],
+                //     ['group_id' => $group->id, 'user_id' => $user->id, 'group_role' => 'general']
+                // );
+                $user_id = $this->getUserIdFromLoginId($users, $login_id);
+                if (empty($user_id)) {
                     continue;
                 }
-                $group_user = GroupUser::updateOrCreate(
-                    ['group_id' => $group->id, 'user_id' => $user->id],
-                    ['group_id' => $group->id, 'user_id' => $user->id, 'group_role' => 'general']
-                );
+                $bulks_group_users[] = [
+                    'group_id'   => $group->id,
+                    'user_id'    => $user_id,
+                    'group_role' => 'general',
+                ];
+            }
+            // バルクINSERT
+            $size = 1000; //Prepared statement contains too many placeholders 対策
+            $chunk_bulks = array_chunk($bulks_group_users, $size);
+            foreach ($chunk_bulks as $bulk) {
+                GroupUser::insert($bulk);
             }
 
             $base_group_flag = $this->getArrayValue($group_ini, 'group_base', 'base_group_flag', 0);
@@ -2034,6 +2056,15 @@ trait MigrationTrait
 
         // アップロード・ファイルのループ
         if (Arr::has($this->uploads_ini, "uploads.upload")) {
+            $this->putMonitor(3, "Update Uploads.page_id to room_page_id_top start.");
+
+            // upsert対応
+            // 40万件のアップロードファイル移行で時間かかりすぎるため、upsertに変更
+            $bulks_uploads = array();
+
+            // 1度検索したpage_idを保持 key=(nc2)room_page_id_top, value=(cc)page_id
+            $connect_page_ids = [];
+
             foreach ($this->uploads_ini['uploads']['upload'] as $upload_key => $upload_item) {
                 // ルームのトップページを探しておく。
                 $room_page_id_top = null;
@@ -2043,15 +2074,26 @@ trait MigrationTrait
                 if (empty($room_page_id_top)) {
                     continue;
                 }
-                // アップロードファイルに対応するConnect-CMS のページを探す
-                $nc2_page = MigrationMapping::where('target_source_table', 'source_pages')->where('source_key', $room_page_id_top)->first();
-                if (empty($nc2_page)) {
-                    continue;
+
+                $connect_page_id = null;
+
+                // *** アップロードファイルに対応するConnect-CMS のページを探す
+                if (array_key_exists($room_page_id_top, $connect_page_ids)) {
+                    $connect_page_id = $connect_page_ids[$room_page_id_top];
+                } else {
+                    $nc2_page = MigrationMapping::where('target_source_table', 'source_pages')->where('source_key', $room_page_id_top)->first();
+                    if (empty($nc2_page)) {
+                        continue;
+                    }
+                    $connect_page = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $nc2_page->destination_key)->first();
+                    if (empty($connect_page)) {
+                        continue;
+                    }
+                    // (cc)page_idを保持
+                    $connect_page_ids[$room_page_id_top] = $connect_page->destination_key;
+                    $connect_page_id = $connect_page->destination_key;
                 }
-                $connect_page = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $nc2_page->destination_key)->first();
-                if (empty($connect_page)) {
-                    continue;
-                }
+
                 // アップロードファイルを探す
                 $upload_map = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $upload_key)->first();
                 if (empty($upload_map)) {
@@ -2062,8 +2104,25 @@ trait MigrationTrait
                 if (empty($upload)) {
                     continue;
                 }
-                $upload->page_id = $connect_page->destination_key;
-                $upload->save();
+
+                // $upload->page_id = $connect_page->destination_key;
+                // $upload->save();
+                $bulks_uploads[] = [
+                    'id'             => $upload->id,
+                    'page_id'        => $connect_page_id,
+                    // 以降はupsert（MySQLの INSERT ... ON DUPLICATE KEY UPDATE）対応で NOT NULL＋デフォルト値=なし のカラムに値が必要なためセット
+                    // uploadsに存在するデータしかセットしないため、updateのみ、insertはされない想定
+                    'size'           => $upload->size,
+                ];
+            }
+
+            // upsert対応
+            $size = 1000; //Prepared statement contains too many placeholders 対策
+            $chunk_bulks = array_chunk($bulks_uploads, $size);
+            foreach ($chunk_bulks as $bulk) {
+                // upsert()で「MySQLデータベースドライバは、upsertメソッドの第２引数を無視し、常にテーブルの"primary"および"unique"インデックスを既存レコードの検出に使用する」
+                // 情報源：https://readouble.com/laravel/9.x/ja/eloquent.html#upserts laravel8でも同様
+                Uploads::upsert($bulk, ['id'], ['page_id']);
             }
         }
 
