@@ -1774,7 +1774,7 @@ trait MigrationTrait
                     try {
                         Validator::validate(['email' => $email], ['email' => ['email', 'nullable']]);
                     } catch (\Exception $e) {
-                        $this->putError(3, 'ユーザーのメールアドレスがRFC違反。', " userid = " . $user_item['userid'] . " name = " . $user_item['name'] . " email='" . $email . "' error = " . $e->getMessage());
+                        $this->putError(3, 'ユーザーのメールアドレスがRFC違反。（ユーザ移行はされますが、新システムではユーザ変更時の入力チェックでエラーになりますのでご留意ください。又、入力ミスしたメールアドレスや、;区切りの複数メールアドレスがある場合は、メールが届きませんのでご注意ください。）', " userid = " . $user_item['userid'] . " name = " . $user_item['name'] . " email='" . $email . "' error = " . $e->getMessage());
                     }
                 }
                 // emailの duplicate entry 制約があるので、空文字ならnull に変換
