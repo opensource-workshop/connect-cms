@@ -54,9 +54,6 @@ if (! isset($cc_configs)) {
     <!-- Styles -->
     <link href="{{ url('/') }}{{ mix('css/app.css') }}" rel="stylesheet">
 
-    <!-- Fonts -->
-    <link href="{{asset('fontawesome/css/all.min.css')}}" rel='stylesheet' type='text/css'>
-
     <!-- Scripts -->
     <script src="{{ url('/') }}{{ mix('/js/app.js') }}"></script>
 @if( App::environment(['local', 'staging']) )

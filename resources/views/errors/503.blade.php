@@ -20,9 +20,6 @@
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 
-    <!-- Fonts -->
-    <link href="{{asset('fontawesome/css/all.min.css')}}" rel='stylesheet' type='text/css'>
-
     <!-- Scripts -->
     {{-- <script src="{{asset('js/app.js')}}"></script> --}}
 
