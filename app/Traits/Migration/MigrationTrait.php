@@ -343,6 +343,12 @@ trait MigrationTrait
     private $import_base = 'import/';
 
     /**
+     * Connect-CMSのユーザID
+     * @var array key=login_id, value=user_id
+     */
+    private $cc_user_ids = [];
+
+    /**
      * migration 各データのパス取得
      */
     private function getImportPath($target, $import_base = null)
@@ -853,8 +859,17 @@ trait MigrationTrait
      */
     private function getUserIdFromLoginId($users, $login_id)
     {
+        if (array_key_exists($login_id, $this->cc_user_ids)) {
+            // クラス変数に保持済みのログインＩＤなら、配列から返す
+            return $this->cc_user_ids[$login_id];
+        }
+
         $user = $users->firstWhere('userid', $login_id);
         $user = $user ?? new User();
+
+        // クラス変数に保持
+        $this->cc_user_ids[$login_id] = $user->id;
+
         return $user->id;
     }
 
@@ -895,7 +910,7 @@ trait MigrationTrait
         $this->redo          = $redo;
         $this->added         = $added;
 
-        $this->putMonitor(3, "importSite() Start.");
+        $this->putMonitor(3, "importSite() import_base={$this->import_base} Start.");
 
         // 移行の初期処理
         if ($added == false && $redo === true) {
@@ -1016,6 +1031,9 @@ trait MigrationTrait
 
         // 新ページの取り込み
         if ($this->isTarget('cc_import', 'pages')) {
+            $this->putMonitor(3, "Pages import start.");
+            $timer_start = $this->timerStart();
+
             // データクリア
             if ($redo === true) {
                 // トップページ以外の削除
@@ -1165,6 +1183,8 @@ trait MigrationTrait
                 // ページの中身の作成
                 $this->importHtmlImpl($page, $path);
             }
+
+            $this->putMonitor(3, "Pages import End.", $this->timerEnd($timer_start));
         }
 
         // シンプル動画単独実行用
@@ -1403,6 +1423,7 @@ trait MigrationTrait
     private function importBasic($redo)
     {
         $this->putMonitor(3, "Basic import Start.");
+        $timer_start = $this->timerStart();
 
         // サイト基本設定ファイル読み込み
         $basic_file_path = $this->getImportPath('basic/basic.ini');
@@ -1422,6 +1443,8 @@ trait MigrationTrait
             // サイト概要
             MigrationUtils::updateConfig('description', $basic_ini, 'meta');
         }
+
+        $this->putMonitor(3, "Basic import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -1429,7 +1452,8 @@ trait MigrationTrait
      */
     private function importUploads($redo)
     {
-        $this->putMonitor(3, "uploads import Start.");
+        $this->putMonitor(3, "Uploads import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -1516,6 +1540,8 @@ trait MigrationTrait
                 }
             }
         }
+
+        $this->putMonitor(3, "Uploads import End.", $this->timerEnd($timer_start));
     }
 
     // delete: 全体カテゴリは作らない
@@ -1607,6 +1633,7 @@ trait MigrationTrait
     private function importUsers($redo)
     {
         $this->putMonitor(3, "Users import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -1747,10 +1774,10 @@ trait MigrationTrait
                     try {
                         Validator::validate(['email' => $email], ['email' => ['email', 'nullable']]);
                     } catch (\Exception $e) {
-                        $this->putError(3, 'ユーザーのメールアドレスがRFC違反。', " userid = " . $user_item['userid'] . " name = " . $user_item['name'] . " email='" . $email . "' error = " . $e->getMessage());
+                        $this->putError(3, 'ユーザーのメールアドレスがRFC違反。（ユーザ移行はされますが、新システムではユーザ変更時の入力チェックでエラーになりますのでご留意ください。又、入力ミスしたメールアドレスや、;区切りの複数メールアドレスがある場合は、メールが届きませんのでご注意ください。）', " userid = " . $user_item['userid'] . " name = " . $user_item['name'] . " email='" . $email . "' error = " . $e->getMessage());
                     }
                 }
-                // Duplicate entry 制約があるので、空文字ならnull に変換
+                // emailの duplicate entry 制約があるので、空文字ならnull に変換
                 if ($email == "") {
                     $email = null;
                 }
@@ -1765,6 +1792,19 @@ trait MigrationTrait
                 if (!empty($nc2_override_pass) && isset($nc2_override_pass[$user_item['userid']])) {
                     $user_item['password'] = $nc2_override_pass[$user_item['userid']];
                     $this->putError(3, 'パスワードを変更しました', "userid = " . $user_item['userid']);
+                }
+
+                // 移行元ユーザでメール重複しているユーザがいても移行する（通常のNC2ではメール重複はしないため、限られた（カスタムありの）NC2のみ使用する想定）
+                if ($this->getMigrationConfig('users', 'cc_import_user_mail_duplicate_force')) {
+                    // emailの duplicate entry 制約対応2
+                    if ($email && empty($user)) {
+                        // ユーザの再取得
+                        $user = User::where('email', $email)->first();
+                        if ($user) {
+                            // メールでCCユーザが再取得出来た場合、移行元でメール重複あり。通常のNC2はここには入らないので、何かしらカスタムされている可能性が高い。
+                            $this->putError(3, 'ユーザーのメールアドレスが重複。（重複ユーザはNC2の場合、新しいユーザを移行（後勝ち））', " userid = " . $user_item['userid'] . " name = " . $user_item['name'] . " email='" . $email);
+                        }
+                    }
                 }
 
                 // ユーザがあるかの確認
@@ -1811,6 +1851,8 @@ trait MigrationTrait
                 $this->importUsersRoles($user, 'manage', $user_item);
             }
         }
+
+        $this->putMonitor(3, "Users import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -1853,6 +1895,7 @@ trait MigrationTrait
     private function importGroups($redo)
     {
         $this->putMonitor(3, "Groups import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -1862,6 +1905,9 @@ trait MigrationTrait
 
         // グループ定義の取り込み
         $group_ini_paths = File::glob(storage_path() . '/app/' . $this->getImportPath('groups/group_*.ini'));
+
+        // ユーザ取得
+        $users = User::get();
 
         // グループ定義のループ
         foreach ($group_ini_paths as $i => $group_ini_path) {
@@ -1896,16 +1942,35 @@ trait MigrationTrait
                 ]);
             }
 
+            // バルクINSERT対応
+            // 3万人ユーザ移行で時間かかりすぎるため、バルクバルクINSERTに変更
+            $bulks_group_users = array();
+
             // group_users 作成
             foreach ($group_ini['users']['user'] as $login_id => $role_authority_id) {
-                $user = User::where('userid', $login_id)->first();
-                if (empty($user)) {
+                // $user = User::where('userid', $login_id)->first();
+                // if (empty($user)) {
+                //     continue;
+                // }
+                // $group_user = GroupUser::updateOrCreate(
+                //     ['group_id' => $group->id, 'user_id' => $user->id],
+                //     ['group_id' => $group->id, 'user_id' => $user->id, 'group_role' => 'general']
+                // );
+                $user_id = $this->getUserIdFromLoginId($users, $login_id);
+                if (empty($user_id)) {
                     continue;
                 }
-                $group_user = GroupUser::updateOrCreate(
-                    ['group_id' => $group->id, 'user_id' => $user->id],
-                    ['group_id' => $group->id, 'user_id' => $user->id, 'group_role' => 'general']
-                );
+                $bulks_group_users[] = [
+                    'group_id'   => $group->id,
+                    'user_id'    => $user_id,
+                    'group_role' => 'general',
+                ];
+            }
+            // バルクINSERT
+            $size = 1000; //Prepared statement contains too many placeholders 対策
+            $chunk_bulks = array_chunk($bulks_group_users, $size);
+            foreach ($chunk_bulks as $bulk) {
+                GroupUser::insert($bulk);
             }
 
             $base_group_flag = $this->getArrayValue($group_ini, 'group_base', 'base_group_flag', 0);
@@ -1991,6 +2056,15 @@ trait MigrationTrait
 
         // アップロード・ファイルのループ
         if (Arr::has($this->uploads_ini, "uploads.upload")) {
+            $this->putMonitor(3, "Update Uploads.page_id to room_page_id_top start.");
+
+            // upsert対応
+            // 40万件のアップロードファイル移行で時間かかりすぎるため、upsertに変更
+            $bulks_uploads = array();
+
+            // 1度検索したpage_idを保持 key=(nc2)room_page_id_top, value=(cc)page_id
+            $connect_page_ids = [];
+
             foreach ($this->uploads_ini['uploads']['upload'] as $upload_key => $upload_item) {
                 // ルームのトップページを探しておく。
                 $room_page_id_top = null;
@@ -2000,15 +2074,26 @@ trait MigrationTrait
                 if (empty($room_page_id_top)) {
                     continue;
                 }
-                // アップロードファイルに対応するConnect-CMS のページを探す
-                $nc2_page = MigrationMapping::where('target_source_table', 'source_pages')->where('source_key', $room_page_id_top)->first();
-                if (empty($nc2_page)) {
-                    continue;
+
+                $connect_page_id = null;
+
+                // *** アップロードファイルに対応するConnect-CMS のページを探す
+                if (array_key_exists($room_page_id_top, $connect_page_ids)) {
+                    $connect_page_id = $connect_page_ids[$room_page_id_top];
+                } else {
+                    $nc2_page = MigrationMapping::where('target_source_table', 'source_pages')->where('source_key', $room_page_id_top)->first();
+                    if (empty($nc2_page)) {
+                        continue;
+                    }
+                    $connect_page = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $nc2_page->destination_key)->first();
+                    if (empty($connect_page)) {
+                        continue;
+                    }
+                    // (cc)page_idを保持
+                    $connect_page_ids[$room_page_id_top] = $connect_page->destination_key;
+                    $connect_page_id = $connect_page->destination_key;
                 }
-                $connect_page = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $nc2_page->destination_key)->first();
-                if (empty($connect_page)) {
-                    continue;
-                }
+
                 // アップロードファイルを探す
                 $upload_map = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $upload_key)->first();
                 if (empty($upload_map)) {
@@ -2019,10 +2104,29 @@ trait MigrationTrait
                 if (empty($upload)) {
                     continue;
                 }
-                $upload->page_id = $connect_page->destination_key;
-                $upload->save();
+
+                // $upload->page_id = $connect_page->destination_key;
+                // $upload->save();
+                $bulks_uploads[] = [
+                    'id'             => $upload->id,
+                    'page_id'        => $connect_page_id,
+                    // 以降はupsert（MySQLの INSERT ... ON DUPLICATE KEY UPDATE）対応で NOT NULL＋デフォルト値=なし のカラムに値が必要なためセット
+                    // uploadsに存在するデータしかセットしないため、updateのみ、insertはされない想定
+                    'size'           => $upload->size,
+                ];
+            }
+
+            // upsert対応
+            $size = 1000; //Prepared statement contains too many placeholders 対策
+            $chunk_bulks = array_chunk($bulks_uploads, $size);
+            foreach ($chunk_bulks as $bulk) {
+                // upsert()で「MySQLデータベースドライバは、upsertメソッドの第２引数を無視し、常にテーブルの"primary"および"unique"インデックスを既存レコードの検出に使用する」
+                // 情報源：https://readouble.com/laravel/9.x/ja/eloquent.html#upserts laravel8でも同様
+                Uploads::upsert($bulk, ['id'], ['page_id']);
             }
         }
+
+        $this->putMonitor(3, "Groups import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -2059,6 +2163,7 @@ trait MigrationTrait
     private function importPermalinks($redo)
     {
         $this->putMonitor(3, "Permalinks import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -2146,6 +2251,8 @@ trait MigrationTrait
                 DB::table('permalinks')->insert($bulk);
             }
         }
+
+        $this->putMonitor(3, "Permalinks import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -2154,6 +2261,7 @@ trait MigrationTrait
     private function importBlogs($redo)
     {
         $this->putMonitor(3, "Blogs import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -2409,6 +2517,8 @@ trait MigrationTrait
                 }
             }
         }
+
+        $this->putMonitor(3, "Blogs import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -2417,6 +2527,7 @@ trait MigrationTrait
     private function importFaqs($redo)
     {
         $this->putMonitor(3, "Faqs import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -2556,6 +2667,8 @@ trait MigrationTrait
                 }
             }
         }
+
+        $this->putMonitor(3, "Faqs import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -2564,6 +2677,7 @@ trait MigrationTrait
     private function importLinklists($redo)
     {
         $this->putMonitor(3, "Linklists import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -2686,6 +2800,8 @@ trait MigrationTrait
                 }
             }
         }
+
+        $this->putMonitor(3, "Linklists import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -2694,6 +2810,7 @@ trait MigrationTrait
     private function importDatabases($redo)
     {
         $this->putMonitor(3, "Databases import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -3022,6 +3139,8 @@ trait MigrationTrait
                 }
             }
         }
+
+        $this->putMonitor(3, "Databases import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -3030,6 +3149,7 @@ trait MigrationTrait
     private function importForms($redo)
     {
         $this->putMonitor(3, "Forms import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -3291,8 +3411,9 @@ trait MigrationTrait
                 DB::table('forms_input_cols')->insert($bulks);
             }
         }
-    }
 
+        $this->putMonitor(3, "Forms import End.", $this->timerEnd($timer_start));
+    }
 
     /**
      * Connect-CMS 移行形式の新着情報をインポート
@@ -3300,6 +3421,7 @@ trait MigrationTrait
     private function importWhatsnews($redo)
     {
         $this->putMonitor(3, "Whatsnews import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -3390,6 +3512,8 @@ trait MigrationTrait
                 'destination_key'      => $whatsnew->id,
             ]);
         }
+
+        $this->putMonitor(3, "Whatsnews import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -3398,6 +3522,7 @@ trait MigrationTrait
     private function importCabinets($redo)
     {
         $this->putMonitor(3, "Cabinets import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -3581,6 +3706,8 @@ trait MigrationTrait
                 CabinetContent::fixTree();
             }
         }
+
+        $this->putMonitor(3, "Cabinets import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -3589,6 +3716,7 @@ trait MigrationTrait
     private function importBbses($redo)
     {
         $this->putMonitor(3, "Bbses import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -3766,6 +3894,8 @@ trait MigrationTrait
                 }
             }
         }
+
+        $this->putMonitor(3, "Bbses import End.", $this->timerEnd($timer_start));
     }
 
     private function fetchMigratedKey($target_table, $key)
@@ -3785,6 +3915,7 @@ trait MigrationTrait
     private function importCounters($redo)
     {
         $this->putMonitor(3, "Counters import start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -3865,6 +3996,8 @@ trait MigrationTrait
                 'destination_key'      => $counter->id,
             ]);
         }
+
+        $this->putMonitor(3, "Counters import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -3873,6 +4006,7 @@ trait MigrationTrait
     private function importCalendars($redo)
     {
         $this->putMonitor(3, "Calendars import start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -4057,8 +4191,9 @@ trait MigrationTrait
                     'destination_key'      => $calendar->id,
                 ]);
             }
-
         }
+
+        $this->putMonitor(3, "Calendars import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -4067,6 +4202,7 @@ trait MigrationTrait
     private function importSlideshows($redo)
     {
         $this->putMonitor(3, "Slideshows import start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -4194,8 +4330,9 @@ trait MigrationTrait
                     'destination_key'      => $slideshows->id,
                 ]);
             }
-
         }
+
+        $this->putMonitor(3, "Slideshows import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -4204,6 +4341,7 @@ trait MigrationTrait
     private function importSimplemovie($redo)
     {
         $this->putMonitor(3, "Simplemovie import start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -4284,6 +4422,8 @@ trait MigrationTrait
                 'destination_key'      => $content->id, //固定記事のID
             ]);
         }
+
+        $this->putMonitor(3, "Simplemovie import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -4292,6 +4432,7 @@ trait MigrationTrait
     private function importReservations($redo)
     {
         $this->putMonitor(3, "Reservations import start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -4678,6 +4819,8 @@ trait MigrationTrait
                 'destination_key'      => $reservation->id,
             ]);
         }
+
+        $this->putMonitor(3, "Reservations import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -4686,6 +4829,7 @@ trait MigrationTrait
     private function importPhotoalbums($redo)
     {
         $this->putMonitor(3, "Photoalbums import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -4697,9 +4841,6 @@ trait MigrationTrait
 
         // ユーザ取得
         $users = User::get();
-
-        $upload_mappings = MigrationMapping::where('target_source_table', 'uploads')->get();
-        $uploads_all = Uploads::get();
 
         // フォトアルバム定義のループ
         foreach ($photoalbums_ini_paths as $photoalbums_ini_path) {
@@ -4845,7 +4986,7 @@ trait MigrationTrait
                                 'updated_name'  => $photoalbums_ini[$album_id]['updated_name'],
                                 'updated_at'    => $this->getDatetimeFromIniAndCheckFormat($photoalbums_ini, $album_id, 'updated_at'),
                             ];
-                            $grandchild = $this->createPhotoalbumContent($upload_mappings, $uploads_all, $children, $contents);
+                            $grandchild = $this->createPhotoalbumContent($children, $contents);
 
                             // マッピングテーブルの追加
                             $mapping_album_cover_tmp = MigrationMapping::create([
@@ -4962,7 +5103,7 @@ trait MigrationTrait
                                     'updated_name'  => $photoalbum_tsv_cols[$tsv_idxs['updated_name']],
                                     'updated_at'    => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['updated_at'], $photoalbum_tsv_cols, 'updated_at'),
                                 ];
-                                $grandchild = $this->createPhotoalbumContentVideo($upload_mappings, $uploads_all, $children, $contents);
+                                $grandchild = $this->createPhotoalbumContentVideo($children, $contents);
 
                                 // マッピングテーブルの追加
                                 $mapping_video_tmp = MigrationMapping::create([
@@ -5004,7 +5145,7 @@ trait MigrationTrait
                                     'updated_name' => $photoalbum_tsv_cols[$tsv_idxs['updated_name']],
                                     'updated_at'   => $this->getDatetimeFromTsvAndCheckFormat($tsv_idxs['updated_at'], $photoalbum_tsv_cols, 'updated_at'),
                                 ];
-                                $grandchild = $this->createPhotoalbumContent($upload_mappings, $uploads_all, $children, $contents);
+                                $grandchild = $this->createPhotoalbumContent($children, $contents);
 
                                 // マッピングテーブルの追加
                                 $mapping_photo_tmp = MigrationMapping::create([
@@ -5025,22 +5166,31 @@ trait MigrationTrait
             }
 
         }
+
+        $this->putMonitor(3, "Photoalbums import End.", $this->timerEnd($timer_start));
     }
 
     /**
      * 写真 or アルバムのジャケット登録
      */
-    private function createPhotoalbumContent(Collection $upload_mappings, Collection $uploads_all, PhotoalbumContent $children, array $contents): PhotoalbumContent
+    private function createPhotoalbumContent(PhotoalbumContent $children, array $contents): PhotoalbumContent
     {
-        $upload_mapping = $upload_mappings->firstWhere('source_key', $contents['upload_id']);
+        // メモリオーバー対応. Uploads が 39万件の場合、全件get()でメモリを大量に使うため、DBから1件づつselectする。
+        $upload_mapping = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $contents['upload_id'])->first();
         $upload = null;
         if ($upload_mapping) {
-            $upload = $uploads_all->firstWhere('id', $upload_mapping->destination_key);
+            // メモリオーバー対応. Uploads が 39万件の場合、全件get()でメモリを大量に使うため、DBから1件づつselectする。
+            $upload = Uploads::find($upload_mapping->destination_key);
+
             if (!$upload) {
                 $this->putMonitor(3, "Connectの Uploads にアップロードIDなし。album_name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}");
+                // アップロードIDがないため、登録しない。空モデルを返す
+                return new PhotoalbumContent();
             }
         } else {
             $this->putMonitor(3, "Connectの MigrationMapping にアップロードIDなし。album_name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}\n");
+            // アップロードIDがないため、登録しない。空モデルを返す
+            return new PhotoalbumContent();
         }
 
         // 写真登録
@@ -5071,19 +5221,26 @@ trait MigrationTrait
     /**
      * 動画の登録
      */
-    private function createPhotoalbumContentVideo(Collection $upload_mappings, Collection $uploads_all, PhotoalbumContent $children, array $contents): PhotoalbumContent
+    private function createPhotoalbumContentVideo(PhotoalbumContent $children, array $contents): PhotoalbumContent
     {
-        $video_upload_mapping = $upload_mappings->firstWhere('source_key', $contents['upload_id']);
-        $poster_upload_mapping = $upload_mappings->firstWhere('source_key', $contents['poster_upload_id']);
+        // メモリオーバー対応. Uploads が 39万件の場合、全件get()でメモリを大量に使うため、DBから毎回selectする
+        $video_upload_mapping = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $contents['upload_id'])->first();
+        $poster_upload_mapping = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $contents['poster_upload_id'])->first();
         $video_upload = null;
         if ($video_upload_mapping) {
-            $video_upload = $uploads_all->firstWhere('id', $video_upload_mapping->destination_key);
+            // メモリオーバー対応. Uploads が 39万件の場合、全件get()でメモリを大量に使うため、DBから1件づつselectする。
+            $video_upload = Uploads::find($video_upload_mapping->destination_key);
+
             if (!$video_upload) {
                 $this->putMonitor(3, "Connectの Uploads にアップロードIDなし。name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}");
+                // アップロードIDがないため、登録しない。空モデルを返す
+                return new PhotoalbumContent();
             }
         } else {
             $this->putMonitor(3, "Connectの MigrationMapping にアップロードIDなし。name={$contents['name']}, upload_id={$contents['upload_id']}, is_cover={$contents['is_cover']}\n");
-            var_dump($contents);
+            // var_dump($contents);
+            // アップロードIDがないため、登録しない。空モデルを返す
+            return new PhotoalbumContent();
         }
 
         // 動画登録
@@ -5119,6 +5276,7 @@ trait MigrationTrait
     private function importSearchs($redo)
     {
         $this->putMonitor(3, "Searchs import Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -5194,6 +5352,8 @@ trait MigrationTrait
                 'destination_key'      => $search->id,
             ]);
         }
+
+        $this->putMonitor(3, "Searchs import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -5202,6 +5362,7 @@ trait MigrationTrait
     private function importRsses($redo)
     {
         $this->putMonitor(3, "Rsses import start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -5300,8 +5461,9 @@ trait MigrationTrait
                     'destination_key'      => $rsses->id,
                 ]);
             }
-
         }
+
+        $this->putMonitor(3, "Rsses import End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -15068,5 +15230,23 @@ trait MigrationTrait
     private function convertNc3PluginPermalinkCalToConnect(?string $content, string $url, string $db_colum, string $from_nc3_plugin_permalink, string $to_cc_plugin_permalink, string $content_target_source_table): ?string
     {
         return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, $from_nc3_plugin_permalink, $to_cc_plugin_permalink, $content_target_source_table, true);
+    }
+
+    /**
+     * タイマースタート
+     */
+    private function timerStart(): float
+    {
+        return microtime(true);
+    }
+
+    /**
+     * タイマー終了
+     */
+    private function timerEnd(float $timer_start): string
+    {
+        $time = (int)(microtime(true) - $timer_start);
+        $time = round($time, 0);
+        return $time . '秒';
     }
 }
