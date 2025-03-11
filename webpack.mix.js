@@ -14,6 +14,9 @@ const mix = require('laravel-mix');
 mix.js('resources/js/app.js', 'public/js').vue()
     .sass('resources/sass/app.scss', 'public/css');
 
+// fortawesomeのディレクトリインストール対応で、相対パスを指定
+mix.setResourceRoot('../');
+
 if (mix.inProduction()) {
     mix.version();
 }
