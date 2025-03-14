@@ -6,10 +6,11 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category メニュープラグイン
+ * @category コア
 --}}
 <?php
 use App\Http\Controllers\Core\CookieCore;
+use App\Http\Controllers\Core\UploadController;
 
     // URL から現在のURL パスを判定する。
     $current_url = url()->current();
@@ -96,11 +97,11 @@ if (! isset($cc_configs)) {
     <script src="{{url('/')}}/themes/{{$themes['additional_js']}}/themes.js?version={{ filemtime(public_path() . "/themes/{$themes['additional_js']}/themes.js") }}"></script>
 @endif
 
+    <!-- Connect-CMS Site CSS -->
+    <link href="{{url('/')}}/file/css/site.css?version={{UploadController::getSiteCssTimestamp()}}" rel="stylesheet">
     <!-- Connect-CMS Page CSS -->
 @if (isset($page) && !empty($page->id))
-    <link href="{{url('/')}}/file/css/{{$page->id}}.css" rel="stylesheet">
-@else
-    <link href="{{url('/')}}/file/css/0.css" rel="stylesheet">
+    <link href="{{url('/')}}/file/css/page/{{$page->id}}.css?version={{UploadController::getPageCssTimestamp($page->id)}}" rel="stylesheet">
 @endif
 
     <!-- Context -->

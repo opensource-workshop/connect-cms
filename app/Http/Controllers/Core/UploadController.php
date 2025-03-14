@@ -2,26 +2,21 @@
 
 namespace App\Http\Controllers\Core;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
-
-use App\Http\Controllers\Core\ConnectController;
-
 use App\Enums\LinkOfPdfThumbnail;
 use App\Enums\ResizedImageSize;
 use App\Enums\WidthOfPdfThumbnail;
 use App\Enums\UseType;
-
+use App\Http\Controllers\Core\ConnectController;
 use App\Models\Common\Categories;
 use App\Models\Common\Page;
-// use App\Models\Common\PageRole;
 use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
-
 use App\Traits\ConnectCommonTrait;
-
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Facades\Image;
 
 /**
@@ -30,6 +25,7 @@ use Intervention\Image\Facades\Image;
  * ルーティング処理から呼び出されるもの
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
  * @package Controller
@@ -358,58 +354,21 @@ class UploadController extends ConnectController
     }
 
     /**
-     * CSS送出
+     * (CSS No1) サイト全体のCSS送出
      */
-    public function getCss(Request $request, $page_id = null)
+    public function getSiteCss(Request $request): void
     {
         $configs = Configs::getSharedConfigs();
 
-        // 自分のページと親ページを遡って取得し、ページの背景色を探す。
-        // 最下位に設定されているものが採用される。
-
         // 背景色
-        $background_color = null;
+        $background_color = Configs::getConfigsValue($configs, 'base_background_color', null);
 
         // ヘッダーの背景色
-        $header_color = null;
-
-        if (!empty($page_id)) {
-            $page_tree = Page::reversed()->ancestorsAndSelf($page_id);
-            foreach ($page_tree as $page) {
-                // 背景色
-                if (empty($background_color) && $page->background_color) {
-                    $background_color = $page->background_color;
-                }
-                // ヘッダーの背景色
-                if (empty($header_color) && $page->header_color) {
-                    $header_color = $page->header_color;
-                }
-            }
-        }
-
-        // ページ設定で背景色が指定されていなかった場合は、基本設定を使用する。
-
-        // 背景色
-        if (empty($background_color)) {
-            $background_color = Configs::getConfigsValue($configs, 'base_background_color', null);
-        }
-
-        // ヘッダーの背景色
-        if (empty($header_color)) {
-            $header_color = Configs::getConfigsValue($configs, 'base_header_color', null);
-        }
-
-        // セッションにヘッダーの背景色がある場合（テーマ・チェンジャーで選択時の動き）
-        if ($request && $request->session()->get('session_header_black') == true) {
-            $header_color = '#000000';
-        }
+        $header_color = Configs::getConfigsValue($configs, 'base_header_color', null);
 
         header('Content-Type: text/css');
-        header("Content-Disposition: inline; filename={$page_id}.css");
-        // cssを no_cache に変更
-        // header('Cache-Control: ' . config('connect.CACHE_CONTROL'));
-        header('Cache-Control: no-store');
-        header('Expires: Thu, 01 Dec 1994 16:00:00 GMT');
+        header("Content-Disposition: inline; filename=site.css");
+        header('Cache-Control: ' . config('connect.CACHE_CONTROL'));
 
         // 背景色
         if ($background_color) {
@@ -433,6 +392,7 @@ EOD;
 
         // カテゴリーCSS
         $categories = Categories::orderBy('target', 'asc')->orderBy('display_sequence', 'asc')->get();
+        $categories = $categories->unique("classname");
         foreach ($categories as $category) {
             echo ".cc_category_" . $category->classname . " {\n";
             echo "    background-color: " . $category->background_color . ";\n";
@@ -440,6 +400,183 @@ EOD;
             echo "}\n";
         }
         exit;
+    }
+
+    /**
+     * サイト全体のCSSタイムスタンプ(最大更新日時のTIMESTAMP)取得
+     * （サイト全体のCSSのクエリストリングに使用。CSSをキャッシュしても、クエリストリングを変える事で設定更新時に新しいCSSを反映させる仕組み）
+     */
+    public static function getSiteCssTimestamp()
+    {
+        $configs = Configs::getSharedConfigs();
+
+        $max_updated_at = null;
+
+        // 背景色
+        $max_updated_at = self::getConfigsMaxUpdatedAt($configs, 'base_background_color', $max_updated_at);
+
+        // ヘッダーの背景色
+        $max_updated_at = self::getConfigsMaxUpdatedAt($configs, 'base_header_color', $max_updated_at);
+
+        // 画像の保存機能の無効化(スマホ長押し禁止)
+        $max_updated_at = self::getConfigsMaxUpdatedAt($configs, 'base_touch_callout', $max_updated_at);
+
+        // カテゴリーCSS
+        $max_updated_at_category = Categories::max('updated_at');
+        if ($max_updated_at_category) {
+            $max_updated_at_category = new Carbon($max_updated_at_category);
+
+            $max_updated_at = self::getMaxUpdatedAt($max_updated_at_category, $max_updated_at);
+        }
+
+        // format('U') でUNIXタイムスタンプへ変換
+        $unix_timestamp = $max_updated_at ? $max_updated_at->format('U') : null;
+        return $unix_timestamp;
+    }
+
+    /**
+     * 設定のmax updated_at取得
+     */
+    private static function getConfigsMaxUpdatedAt($configs, $key, ?Carbon $max_updated_at): ?Carbon
+    {
+        $config = $configs->firstWhere('name', $key) ?? new Configs();
+
+        // 設定値あり
+        if ($config->value) {
+            $max_updated_at = self::getMaxUpdatedAt($config->updated_at, $max_updated_at);
+        }
+
+        return $max_updated_at;
+    }
+
+    /**
+     * 日付比較してより大きい updated_at 取得
+     */
+    private static function getMaxUpdatedAt(Carbon $target_updated_at, ?Carbon $max_updated_at): Carbon
+    {
+        // max_updated_at がある場合は、日付比較
+        if ($max_updated_at) {
+            // 大きい？ a > b
+            if ($target_updated_at->gt($max_updated_at)) {
+                $max_updated_at = $target_updated_at;
+            }
+        } else {
+            // max_updated_at が null の場合は、updated_atを設定
+            $max_updated_at = $target_updated_at;
+        }
+
+        return $max_updated_at;
+    }
+
+    /**
+     * (CSS No2) ページ毎のCSS送出
+     * getSiteCss() の後に呼び出し、もし同じcss classがあっても「ページ毎のCSS送出」が優先される。
+     */
+    public function getPageCss(Request $request, $page_id): void
+    {
+        // 自分のページと親ページを遡って取得し、ページの背景色を探す。
+        // 最下位に設定されているものが採用される。
+
+        // 背景色
+        $background_color = null;
+
+        // ヘッダーの背景色
+        $header_color = null;
+
+        $page_tree = Page::reversed()->ancestorsAndSelf($page_id);
+        foreach ($page_tree as $page) {
+            // 背景色
+            if (empty($background_color) && $page->background_color) {
+                $background_color = $page->background_color;
+            }
+            // ヘッダーの背景色
+            if (empty($header_color) && $page->header_color) {
+                $header_color = $page->header_color;
+            }
+        }
+
+        // セッションにヘッダーの背景色がある場合（テーマ・チェンジャーで選択時の動き）
+        if ($request && $request->session()->get('session_header_black') == true) {
+            $header_color = '#000000';
+        }
+
+        header('Content-Type: text/css');
+        header("Content-Disposition: inline; filename={$page_id}.css");
+        header('Cache-Control: ' . config('connect.CACHE_CONTROL'));
+
+        // 背景色
+        if ($background_color) {
+            echo "body {background-color: " . $background_color . "; }\n";
+        }
+
+        // ヘッダーの背景色
+        if ($header_color) {
+            echo ".bg-dark  { background-color: " . $header_color . " !important; }\n";
+        }
+
+        exit;
+    }
+
+    /**
+     * ページ毎のCSSタイムスタンプ(最大更新日時のTIMESTAMP)取得
+     * （ページ毎のCSSのクエリストリングに使用。CSSをキャッシュしても、クエリストリングを変える事で設定更新時に新しいCSSを反映させる仕組み）
+     */
+    public static function getPageCssTimestamp($page_id)
+    {
+        $max_updated_at = null;
+
+        $request = app('request');
+
+        // セッションにヘッダーの背景色がある場合（テーマ・チェンジャーで選択時の動き）は、最新の日時を返して強制表示
+        if ($request && $request->session()->get('session_header_black') == true) {
+            $max_updated_at = new Carbon();
+
+            // format('U') でUNIXタイムスタンプへ変換
+            $unix_timestamp = $max_updated_at->format('U');
+            return $unix_timestamp;
+        }
+
+        // 自分のページと親ページを遡って取得し、ページの背景色を探す。
+        // 最下位に設定されているものが採用される。
+
+        // 背景色
+        $background_color_updated_at = null;
+
+        // ヘッダーの背景色
+        $header_color_updated_at = null;
+
+        if (!empty($page_id)) {
+            $page_tree = Page::reversed()->ancestorsAndSelf($page_id);
+            foreach ($page_tree as $page) {
+                // 背景色
+                if (empty($background_color) && $page->background_color) {
+                    // $background_color = $page->background_color;
+                    $background_color_updated_at = $page->updated_at;
+
+                }
+                // ヘッダーの背景色
+                if (empty($header_color) && $page->header_color) {
+                    // $header_color = $page->header_color;
+                    $header_color_updated_at = $page->updated_at;
+                }
+            }
+        }
+
+        // 背景色
+        if ($background_color_updated_at) {
+            // echo "body {background-color: " . $background_color . "; }\n";
+            $max_updated_at = $background_color_updated_at;
+        }
+
+        // ヘッダーの背景色
+        if ($header_color_updated_at) {
+            // echo ".bg-dark  { background-color: " . $header_color . " !important; }\n";
+            $max_updated_at = self::getMaxUpdatedAt($header_color_updated_at, $max_updated_at);
+        }
+
+        // format('U') でUNIXタイムスタンプへ変換
+        $unix_timestamp = $max_updated_at ? $max_updated_at->format('U') : null;
+        return $unix_timestamp;
     }
 
     /**
