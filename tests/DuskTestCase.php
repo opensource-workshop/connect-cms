@@ -300,6 +300,9 @@ abstract class DuskTestCase extends BaseTestCase
     public function addPluginModal($add_plugin, $permanent_link = '/', $area = 0, $screenshot = true)
     {
         $this->browse(function (Browser $browser) use ($add_plugin, $permanent_link, $area, $screenshot) {
+            // 画面表示がおいつかない場合があるので、ちょっと待つ
+            $browser->pause(500);
+
             // 管理機能からプラグイン追加で指定されたプラグインを追加する。
             $browser->visit($permanent_link)
                     ->clickLink('管理機能')
