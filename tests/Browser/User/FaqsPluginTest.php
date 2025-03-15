@@ -78,6 +78,7 @@ class FaqsPluginTest extends DuskTestCase
         $this->login(1);
         $this->browse(function (Browser $browser) {
             $browser->visit("/plugin/faqs/editBuckets/" . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->pause(500)
                     ->assertPathBeginsWith('/')
                     ->click('#label_narrowing_down_type_dropdown')
                     ->press("変更確定");
@@ -85,9 +86,6 @@ class FaqsPluginTest extends DuskTestCase
         $this->logout();
 
         $this->browse(function (Browser $browser) {
-            // 画面表示がおいつかない場合があるので、ちょっと待つ
-            $browser->pause(500);
-
             $browser->visit('/test/faq')
                     ->click('#categories_id_' . $this->test_frame->id)
                     ->pause(500)
