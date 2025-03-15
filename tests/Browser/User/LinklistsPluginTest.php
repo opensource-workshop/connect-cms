@@ -2,18 +2,12 @@
 
 namespace Tests\Browser\User;
 
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Laravel\Dusk\Browser;
-use Tests\DuskTestCase;
-
-use App\Enums\PluginName;
 use App\Models\Common\Buckets;
-use App\Models\Common\Frame;
-use App\Models\Common\Uploads;
-use App\Models\Core\Dusks;
 use App\Models\User\Linklists\Linklist;
 use App\Models\User\Linklists\LinklistFrame;
 use App\Models\User\Linklists\LinklistPost;
+use Laravel\Dusk\Browser;
+use Tests\DuskTestCase;
 
 /**
  * リンクリストテスト
@@ -184,16 +178,20 @@ class LinklistsPluginTest extends DuskTestCase
     {
         // 実行
         $this->browse(function (Browser $browser) {
+            // ループの連続実行で画面表示がおいついてないので、ちょっと待つ
+            $browser->pause(500);
+
             $browser->visit('/plugin/linklists/edit/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                    ->pause(500)
                     ->type('title', 'Connect-CMS公式')
                     ->type('url', 'https://connect-cms.jp/')
                     ->type('description', 'Connect-CMSの情報はこのサイトから。')
                     ->screenshot('user/linklists/edit/images/create')
                     ->press('登録確定');
 
+            // ループの連続実行で画面表示がおいついてないので、ちょっと待つ
+            $browser->pause(500);
+
             $browser->visit('/plugin/linklists/edit/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                    ->pause(500)
                     ->type('title', '株式会社オープンソース・ワークショップ')
                     ->type('url', 'https://opensource-workshop.jp/')
                     ->type('description', 'Connect-CMSのクラウドサービス')
