@@ -116,6 +116,9 @@ class CalendarsPluginTest extends DuskTestCase
                     ->screenshot('user/calendars/edit/images/edit1')
                     ->press('登録確定');
 
+            // 画面表示がおいつかない場合があるので、ちょっと待つ
+            $browser->pause(500);
+
             $browser->visit('plugin/calendars/edit/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '?date=' . $ym . '-08#frame-' . $this->test_frame->id)
                     ->assertPathBeginsWith('/')
                     ->type('title', 'テストの予定２')
