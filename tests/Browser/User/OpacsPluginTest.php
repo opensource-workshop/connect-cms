@@ -166,6 +166,7 @@ class OpacsPluginTest extends DuskTestCase
             $browser->visit('/plugin/opacs/listBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                     ->assertPathBeginsWith('/')
                     ->screenshot('user/opacs/listBuckets/images/listBuckets')
+                    ->pause(500)
                     ->press("表示OPAC変更");
         });
 
