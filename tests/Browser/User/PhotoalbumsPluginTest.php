@@ -2,17 +2,11 @@
 
 namespace Tests\Browser\User;
 
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Laravel\Dusk\Browser;
-use Tests\DuskTestCase;
-
-use App\Enums\PluginName;
 use App\Models\Common\Buckets;
-use App\Models\Common\Frame;
-use App\Models\Common\Uploads;
-use App\Models\Core\Dusks;
 use App\Models\User\Photoalbums\Photoalbum;
 use App\Models\User\Photoalbums\PhotoalbumContent;
+use Laravel\Dusk\Browser;
+use Tests\DuskTestCase;
 
 /**
  * フォトアルバムテスト
@@ -256,6 +250,9 @@ class PhotoalbumsPluginTest extends DuskTestCase
                     ->select('video_upload_max_size', '51200')
                     ->screenshot('user/photoalbums/createBuckets/images/createBuckets')
                     ->press('登録確定');
+
+            // 画面表示がおいつかない場合があるので、ちょっと待つ
+            $browser->pause(500);
 
             // 一度、選択確定させる。
             $bucket = Buckets::where('plugin_name', 'photoalbums')->first();
