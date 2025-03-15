@@ -2,17 +2,13 @@
 
 namespace Tests\Browser\Common;
 
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Laravel\Dusk\Browser;
-use Tests\DuskTestCase;
-
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Core\Dusks;
 use App\Models\User\Contents\Contents;
-
-use App\Enums\PluginName;
+use Laravel\Dusk\Browser;
+use Tests\DuskTestCase;
 
 /**
  * パスワード付きページテスト
@@ -85,6 +81,7 @@ class PasswordPageTest extends DuskTestCase
             $browser->visit('/password')
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('common/password_page/viewPage/images/viewPage1')
+                    ->pause(500)
                     ->type('password', 'pass123')
                     ->screenshot('common/password_page/viewPage/images/inputPassword')
                     ->press('ページ閲覧');
@@ -105,16 +102,20 @@ class PasswordPageTest extends DuskTestCase
                 }
                 $frame->forceDelete();
             }
+        });
 
-            // 固定記事を作成
-            $this->addPluginModal('contents', '/password', 2, false);
+        // 固定記事を作成
+        // ※ $this->browse() 入れ子対応。下記メソッドはなるべく$this->browse()内で使わない
+        $this->addPluginModal('contents', '/password', 2, false);
+
+        $this->browse(function (Browser $browser) {
             $bucket = Buckets::create(['bucket_name' => 'パスワード付きページテスト', 'plugin_name' => 'contents']);
 
             // 初めは記事は文字のみ。
-            $this->content = Contents::create(['bucket_id' => $bucket->id, 'content_text' => '<p>パスワード付きページのテストです。</p>', 'status' => 0]);
+            $content = Contents::create(['bucket_id' => $bucket->id, 'content_text' => '<p>パスワード付きページのテストです。</p>', 'status' => 0]);
 
-            $this->frame = Frame::orderBy('id', 'desc')->first();
-            $this->frame->update(['bucket_id' => $bucket->id]);
+            $frame = Frame::orderBy('id', 'desc')->first();
+            $frame->update(['bucket_id' => $bucket->id]);
         });
         // パスワード入力済みセッションをクリアさせないため、ログアウトしない
         // $this->logout();
