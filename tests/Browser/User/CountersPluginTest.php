@@ -110,6 +110,9 @@ class CountersPluginTest extends DuskTestCase
                     ->screenshot('user/counters/createBuckets/images/createBuckets')
                     ->press("登録確定");
 
+            // 画面表示がおいつかない場合があるので、ちょっと待つ
+            $browser->pause(500);
+
             // 一度、選択確定させる。
             $bucket = Buckets::where('plugin_name', 'counters')->first();
             $browser->visit('/plugin/counters/listBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
