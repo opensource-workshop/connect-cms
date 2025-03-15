@@ -85,6 +85,9 @@ class FaqsPluginTest extends DuskTestCase
         $this->logout();
 
         $this->browse(function (Browser $browser) {
+            // 画面表示がおいつかない場合があるので、ちょっと待つ
+            $browser->pause(500);
+
             $browser->visit('/test/faq')
                     ->click('#categories_id_' . $this->test_frame->id)
                     ->pause(500)
