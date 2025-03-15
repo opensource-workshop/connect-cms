@@ -78,10 +78,12 @@ class PasswordPageTest extends DuskTestCase
     {
         // *** ログアウト状態でパスワードページ＞パスワード入力＞ページの閲覧
         $this->browse(function (Browser $browser) {
+            // 画面表示がおいつかない場合があるので、ちょっと待つ
+            $browser->pause(500);
+
             $browser->visit('/password')
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('common/password_page/viewPage/images/viewPage1')
-                    ->pause(500)
                     ->type('password', 'pass123')
                     ->screenshot('common/password_page/viewPage/images/inputPassword')
                     ->press('ページ閲覧');
