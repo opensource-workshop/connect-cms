@@ -184,6 +184,9 @@ class LinklistsPluginTest extends DuskTestCase
     {
         // 実行
         $this->browse(function (Browser $browser) {
+            // ループの連続実行で画面表示がおいついてないので、ちょっと待つ
+            $browser->pause(500);
+
             $browser->visit('/plugin/linklists/edit/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                     ->type('title', 'Connect-CMS公式')
                     ->type('url', 'https://connect-cms.jp/')
