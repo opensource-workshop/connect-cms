@@ -82,14 +82,12 @@ class FaqsPluginTest extends DuskTestCase
                     ->click('#label_narrowing_down_type_dropdown')
                     ->pause(500)    // github actionsの安定性のためにclick後に少し待つ
                     ->screenshot('user/faqs/createBuckets/images/editBuckets2')
-                    ->press("変更確定");
+                    ->press("変更確定")
+                    ->pause(500);    // github actionsの安定性のためにpress後に少し待つ
         });
         $this->logout();
 
         $this->browse(function (Browser $browser) {
-            // 画面表示がおいつかない場合があるので、ちょっと待つ
-            $browser->pause(500);
-
             $browser->visit('/test/faq')
                     ->assertPathBeginsWith('/')
                     ->screenshot('user/faqs/index/images/index3-0')
