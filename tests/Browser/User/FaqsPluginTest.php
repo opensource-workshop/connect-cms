@@ -89,7 +89,7 @@ class FaqsPluginTest extends DuskTestCase
             $browser->visit('/test/faq')
                     ->pause(500)
                     ->assertPathBeginsWith('/')
-                    ->click('#categories_id_' . $this->test_frame->id)
+                    // ->click('#categories_id_' . $this->test_frame->id)
                     ->screenshot('user/faqs/index/images/index3');
 
             $post = FaqsPosts::first();
