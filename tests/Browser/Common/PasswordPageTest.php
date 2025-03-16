@@ -45,7 +45,8 @@ class PasswordPageTest extends DuskTestCase
                     ->type('password', 'pass123')
                     ->screenshot('common/password_page/index/images/setPassword')
                     ->scrollIntoView('footer')
-                    ->press('ページ更新');
+                    ->press('ページ更新')
+                    ->pause(500);    // github actionsの安定性のためにpress後に少し待つ
         });
 
         // マニュアル用データ出力
@@ -78,9 +79,6 @@ class PasswordPageTest extends DuskTestCase
     {
         // *** ログアウト状態でパスワードページ＞パスワード入力＞ページの閲覧
         $this->browse(function (Browser $browser) {
-            // 画面表示がおいつかない場合があるので、ちょっと待つ
-            $browser->pause(500);
-
             $browser->visit('/password')
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('common/password_page/viewPage/images/viewPage1')
