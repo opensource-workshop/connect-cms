@@ -80,6 +80,7 @@ class FaqsPluginTest extends DuskTestCase
             $browser->visit("/plugin/faqs/editBuckets/" . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                     ->assertPathBeginsWith('/')
                     ->click('#label_narrowing_down_type_dropdown')
+                    ->pause(500)    // github actionsの安定性のためにclick後に少し待つ
                     ->screenshot('user/faqs/createBuckets/images/editBuckets2')
                     ->press("変更確定");
         });
