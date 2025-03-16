@@ -89,7 +89,9 @@ class FaqsPluginTest extends DuskTestCase
             $browser->visit('/test/faq')
                     ->pause(500)
                     ->assertPathBeginsWith('/')
+                    // ドロップダウンを開く。github actionsでUnable to locate element with selector エラーになるためpress()で開く
                     // ->click('#categories_id_' . $this->test_frame->id)
+                    ->press('#categories_id_' . $this->test_frame->id)
                     ->screenshot('user/faqs/index/images/index3');
 
             $post = FaqsPosts::first();
