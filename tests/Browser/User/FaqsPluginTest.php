@@ -78,20 +78,18 @@ class FaqsPluginTest extends DuskTestCase
         $this->login(1);
         $this->browse(function (Browser $browser) {
             $browser->visit("/plugin/faqs/editBuckets/" . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                    ->pause(500)
                     ->assertPathBeginsWith('/')
                     ->click('#label_narrowing_down_type_dropdown')
+                    ->screenshot('user/faqs/createBuckets/images/editBuckets2')
                     ->press("変更確定");
         });
         $this->logout();
 
         $this->browse(function (Browser $browser) {
             $browser->visit('/test/faq')
-                    ->pause(500)
                     ->assertPathBeginsWith('/')
-                    // ドロップダウンを開く。github actionsでUnable to locate element with selector エラーになるためpress()で開く
-                    // ->click('#categories_id_' . $this->test_frame->id)
-                    ->press('#categories_id_' . $this->test_frame->id)
+                    ->screenshot('user/faqs/index/images/index3-0')
+                    ->click('#categories_id_' . $this->test_frame->id)  // ドロップダウンを開く
                     ->screenshot('user/faqs/index/images/index3');
 
             $post = FaqsPosts::first();
@@ -178,6 +176,9 @@ class FaqsPluginTest extends DuskTestCase
     {
         // 実行
         $this->browse(function (Browser $browser) {
+            // ループの連続実行で画面表示がおいついてないので、ちょっと待つ
+            $browser->pause(500);
+
             $browser->visit('/plugin/faqs/listCategories/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                     ->pause(500)
                     ->assertPathBeginsWith('/')
