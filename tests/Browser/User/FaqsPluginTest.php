@@ -77,10 +77,8 @@ class FaqsPluginTest extends DuskTestCase
         // ※ $this->browse() 入れ子対応。$this->login(), $this->logout()はなるべく$this->browse()内で使わない
         $this->login(1);
         $this->browse(function (Browser $browser) {
-            // 画面表示がおいつかない場合があるので、ちょっと待つ
-            $browser->pause(500);
-
             $browser->visit("/plugin/faqs/editBuckets/" . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->pause(500)
                     ->assertPathBeginsWith('/')
                     ->click('#label_narrowing_down_type_dropdown')
                     ->press("変更確定");
@@ -89,9 +87,9 @@ class FaqsPluginTest extends DuskTestCase
 
         $this->browse(function (Browser $browser) {
             $browser->visit('/test/faq')
-                    ->click('#categories_id_' . $this->test_frame->id)
                     ->pause(500)
                     ->assertPathBeginsWith('/')
+                    ->click('#categories_id_' . $this->test_frame->id)
                     ->screenshot('user/faqs/index/images/index3');
 
             $post = FaqsPosts::first();
@@ -179,9 +177,9 @@ class FaqsPluginTest extends DuskTestCase
         // 実行
         $this->browse(function (Browser $browser) {
             $browser->visit('/plugin/faqs/listCategories/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                    ->click('#div_general_view_flag_1')  // カスタムチェックボックスのインプットとラベルをくくるdivは自動テスト時、ラベルが空の場合にクリックできないための対応
                     ->pause(500)
                     ->assertPathBeginsWith('/')
+                    ->click('#div_general_view_flag_1')  // カスタムチェックボックスのインプットとラベルをくくるdivは自動テスト時、ラベルが空の場合にクリックできないための対応
                     ->press('変更')
                     ->screenshot('user/faqs/listCategories/images/listCategories');
         });
