@@ -77,8 +77,10 @@ class FaqsPluginTest extends DuskTestCase
         // ※ $this->browse() 入れ子対応。$this->login(), $this->logout()はなるべく$this->browse()内で使わない
         $this->login(1);
         $this->browse(function (Browser $browser) {
+            // 画面表示がおいつかない場合があるので、ちょっと待つ
+            $browser->pause(500);
+
             $browser->visit("/plugin/faqs/editBuckets/" . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                    ->pause(500)
                     ->assertPathBeginsWith('/')
                     ->click('#label_narrowing_down_type_dropdown')
                     ->press("変更確定");
