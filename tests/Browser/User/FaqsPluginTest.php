@@ -87,6 +87,9 @@ class FaqsPluginTest extends DuskTestCase
         $this->logout();
 
         $this->browse(function (Browser $browser) {
+            // 画面表示がおいつかない場合があるので、ちょっと待つ
+            $browser->pause(500);
+
             $browser->visit('/test/faq')
                     ->assertPathBeginsWith('/')
                     ->screenshot('user/faqs/index/images/index3-0')
