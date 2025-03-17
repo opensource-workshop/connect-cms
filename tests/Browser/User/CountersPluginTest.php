@@ -2,18 +2,14 @@
 
 namespace Tests\Browser\User;
 
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Laravel\Dusk\Browser;
-use Tests\DuskTestCase;
-
-use App\Enums\PluginName;
+use App\Enums\AreaType;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
-use App\Models\Common\Uploads;
-use App\Models\Core\Dusks;
 use App\Models\User\Counters\Counter;
 use App\Models\User\Counters\CounterCount;
 use App\Models\User\Counters\CounterFrame;
+use Laravel\Dusk\Browser;
+use Tests\DuskTestCase;
 
 /**
  * カウンターテスト
@@ -40,7 +36,7 @@ class CountersPluginTest extends DuskTestCase
         $this->listBuckets();
 
         // 左エリアの下にもカウンターを置く。バケツはメインエリアと同じものを参照。順番は、上にメニュー、下にカウンター
-        $this->addPluginModal('counters', '/', 1, false);
+        $this->addPluginModal('counters', '/', AreaType::left, false);
         Frame::where('area_id', 1)->where('plugin_name', 'menus')->update(['display_sequence' => 1]);
         $frame = Frame::where('area_id', 2)->where('plugin_name', 'counters')->first();
         Frame::where('area_id', 1)->where('plugin_name', 'counters')->update(['display_sequence' => 2, 'bucket_id' => $frame->bucket_id]);
@@ -109,6 +105,9 @@ class CountersPluginTest extends DuskTestCase
                     ->type('name', 'テストのカウンター')
                     ->screenshot('user/counters/createBuckets/images/createBuckets')
                     ->press("登録確定");
+
+            // 画面表示がおいつかない場合があるので、ちょっと待つ
+            $browser->pause(500);
 
             // 一度、選択確定させる。
             $bucket = Buckets::where('plugin_name', 'counters')->first();

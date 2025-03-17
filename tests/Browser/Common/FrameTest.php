@@ -524,6 +524,9 @@ class FrameTest extends DuskTestCase
                         ->screenshot('user/bbses/createBuckets/images/createBuckets')
                         ->press('登録確定');
 
+                // 画面表示がおいつかない場合があるので、ちょっと待つ
+                $browser->pause(500);
+
                 // 一度、選択確定させる。
                 $bucket = Buckets::where('plugin_name', 'bbses')->first();
                 $browser->visit('/plugin/bbses/listBuckets/' . $page->id . '/' . $frame->id . '#frame-' . $frame->id)

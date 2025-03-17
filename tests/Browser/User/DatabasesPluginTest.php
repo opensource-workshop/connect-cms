@@ -2,15 +2,8 @@
 
 namespace Tests\Browser\User;
 
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Laravel\Dusk\Browser;
-use Tests\DuskTestCase;
-
-use App\Enums\PluginName;
 use App\Models\Common\Buckets;
-use App\Models\Common\Frame;
 use App\Models\Common\Uploads;
-use App\Models\Core\Dusks;
 use App\Models\User\Databases\Databases;
 use App\Models\User\Databases\DatabasesColumns;
 use App\Models\User\Databases\DatabasesColumnsRole;
@@ -19,6 +12,8 @@ use App\Models\User\Databases\DatabasesFrames;
 use App\Models\User\Databases\DatabasesInputCols;
 use App\Models\User\Databases\DatabasesInputs;
 use App\Models\User\Databases\DatabasesRole;
+use Laravel\Dusk\Browser;
+use Tests\DuskTestCase;
 
 /**
  * データベーステスト
@@ -253,6 +248,9 @@ class DatabasesPluginTest extends DuskTestCase
                     ->screenshot('user/databases/createBuckets/images/createBuckets')
                     ->press('登録確定');
 
+            // 画面表示がおいつかない場合があるので、ちょっと待つ
+            $browser->pause(500);
+
             // 一度、選択確定させる。
             $bucket = Buckets::where('plugin_name', 'databases')->first();
             $browser->visit('/plugin/databases/listBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
@@ -340,6 +338,9 @@ class DatabasesPluginTest extends DuskTestCase
                     ->type('row_group', '1')
                     ->type('column_group', '1')
                     ->press('#button_column');
+
+            // 画面表示がおいつかない場合があるので、ちょっと待つ
+            $browser->pause(500);
 
             // 都道府県名
             $browser->visit('/plugin/databases/editColumnDetail/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/2#frame-' . $this->test_frame->id)

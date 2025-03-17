@@ -258,6 +258,9 @@ class SlideshowsPluginTest extends DuskTestCase
                     ->screenshot('user/slideshows/createBuckets/images/createBuckets')
                     ->press('登録確定');
 
+            // 画面表示がおいつかない場合があるので、ちょっと待つ
+            $browser->pause(500);
+
             // 一度、選択確定させる。
             $bucket = Buckets::where('plugin_name', 'slideshows')->first();
             $browser->visit('/plugin/slideshows/listBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)

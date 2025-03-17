@@ -112,6 +112,9 @@ class QuestionnairesPluginTest extends DuskTestCase
                     ->screenshot('user/forms/createBuckets/images/createBuckets2')
                     ->press('登録確定');
 
+            // 画面表示がおいつかない場合があるので、ちょっと待つ
+            $browser->pause(500);
+
             // 一度、選択確定させる。
             $bucket = Buckets::where('plugin_name', 'forms')->first();
             $browser->visit('/plugin/forms/listBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
