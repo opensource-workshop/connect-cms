@@ -2,6 +2,7 @@
 
 namespace Tests\Browser\Common;
 
+use App\Enums\AreaType;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
@@ -111,7 +112,7 @@ class PasswordPageTest extends DuskTestCase
 
         // 固定記事を作成
         // ※ $this->browse() 入れ子対応。下記メソッドはなるべく$this->browse()内で使わない
-        $this->addPluginModal('contents', '/password', 2, false);
+        $this->addPluginModal('contents', '/password', AreaType::main, false);
 
         $bucket = Buckets::create(['bucket_name' => 'パスワード付きページテスト', 'plugin_name' => 'contents']);
 
