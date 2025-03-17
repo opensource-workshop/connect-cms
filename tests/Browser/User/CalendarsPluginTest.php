@@ -108,8 +108,8 @@ class CalendarsPluginTest extends DuskTestCase
                     ->type('end_date', $ym . '-01')
                     ->type('end_time', '12:00')
                     ->screenshot('user/calendars/edit/images/edit1')
-                    ->pause(500)
-                    ->press('登録確定');
+                    ->press('登録確定')
+                    ->pause(500);    // github actionsの安定性のためにpress後に少し待つ
 
             $browser->visit('plugin/calendars/edit/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '?date=' . $ym . '-08#frame-' . $this->test_frame->id)
                     ->assertPathBeginsWith('/')
@@ -119,8 +119,8 @@ class CalendarsPluginTest extends DuskTestCase
                     ->driver->executeScript('tinyMCE.get(0).setContent(\'この予定は全日予定です。\')');
 
             $browser->screenshot('user/calendars/edit/images/edit2')
-                    ->pause(500)
-                    ->press('登録確定');
+                    ->press('登録確定')
+                    ->pause(500);    // github actionsの安定性のためにpress後に少し待つ
 
             $browser->visit('plugin/calendars/edit/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '?date=' . $ym . '-20#frame-' . $this->test_frame->id)
                     ->assertPathBeginsWith('/')
