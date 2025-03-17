@@ -302,7 +302,7 @@ abstract class DuskTestCase extends BaseTestCase
         $this->browse(function (Browser $browser) use ($add_plugin, $permanent_link, $area, $screenshot) {
             // 管理機能からプラグイン追加で指定されたプラグインを追加する。
             $browser->visit($permanent_link)
-                    ->waitForText('管理機能', 10)   // テキストの待機
+                    ->waitForText('管理機能')   // テキストの待機
                     ->clickLink('管理機能')
                     ->assertPathBeginsWith('/');
             if ($screenshot) {
