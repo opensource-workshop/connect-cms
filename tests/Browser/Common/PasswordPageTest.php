@@ -85,7 +85,8 @@ class PasswordPageTest extends DuskTestCase
                     ->screenshot('common/password_page/viewPage/images/viewPage1')
                     ->type('password', 'pass123')
                     ->screenshot('common/password_page/viewPage/images/inputPassword')
-                    ->press('ページ閲覧');
+                    ->press('ページ閲覧')
+                    ->pause(500);    // github actionsの安定性のためにpress後に少し待つ
         });
 
         // *** データクリア
@@ -103,12 +104,6 @@ class PasswordPageTest extends DuskTestCase
         // *** ログインして固定記事を作成
         // ※ $this->browse()内で$this->login(), $this->logout() はなるべく使わない。$this->login(), $this->logout() は内部で$this->browse()を使っているため、入れ子呼び出しになり、ログインできたり・できなかったりする事あり（github actions+php8.1等）
         $this->login(1);
-
-        $this->browse(function (Browser $browser) {
-            // ログイン後に管理機能が表示されるか確認のため、スクリーンショットを撮る
-            $browser->visit('/password')
-                    ->screenshot('common/password_page/viewPage/images/viewPage2-0');
-        });
 
         // 固定記事を作成
         // ※ $this->browse() 入れ子対応。下記メソッドはなるべく$this->browse()内で使わない
