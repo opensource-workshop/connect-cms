@@ -2,15 +2,14 @@
 
 namespace Tests\Browser\Common;
 
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Laravel\Dusk\Browser;
-use Tests\DuskTestCase;
-
+use App\Enums\AreaType;
 use App\Models\Common\Buckets;
-use App\Models\Common\Page;
+
 use App\Models\Common\Frame;
 use App\Models\Core\Dusks;
 use App\Models\User\Contents\Contents;
+use Laravel\Dusk\Browser;
+use Tests\DuskTestCase;
 
 /**
  * WYSIWYGテスト
@@ -76,7 +75,7 @@ class WysiwygTest extends DuskTestCase
         }
 
         // 固定記事を作成
-        $this->addPluginModal('contents', '/test/content', 2, false);
+        $this->addPluginModal('contents', '/test/content', AreaType::main, false);
         $bucket = Buckets::create(['bucket_name' => 'WYSIWYGエディタ', 'plugin_name' => 'contents']);
 
         // 初めは記事は文字のみ。

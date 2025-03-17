@@ -90,6 +90,9 @@ class DatabasesearchesPluginTest extends DuskTestCase
                     ->screenshot('user/databasesearches/editBuckets/images/editBuckets2')
                     ->press("登録");
 
+            // 画面表示がおいつかない場合があるので、ちょっと待つ
+            $browser->pause(500);
+
             // 一度、選択確定させる。
             $bucket = Buckets::where('plugin_name', 'databasesearches')->first();
             $browser->visit('/plugin/databasesearches/listBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)

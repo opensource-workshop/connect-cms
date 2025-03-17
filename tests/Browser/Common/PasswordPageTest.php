@@ -2,17 +2,14 @@
 
 namespace Tests\Browser\Common;
 
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Laravel\Dusk\Browser;
-use Tests\DuskTestCase;
-
+use App\Enums\AreaType;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Core\Dusks;
 use App\Models\User\Contents\Contents;
-
-use App\Enums\PluginName;
+use Laravel\Dusk\Browser;
+use Tests\DuskTestCase;
 
 /**
  * パスワード付きページテスト
@@ -49,7 +46,8 @@ class PasswordPageTest extends DuskTestCase
                     ->type('password', 'pass123')
                     ->screenshot('common/password_page/index/images/setPassword')
                     ->scrollIntoView('footer')
-                    ->press('ページ更新');
+                    ->press('ページ更新')
+                    ->pause(500);    // github actionsの安定性のためにpress後に少し待つ
         });
 
         // マニュアル用データ出力
@@ -87,35 +85,38 @@ class PasswordPageTest extends DuskTestCase
                     ->screenshot('common/password_page/viewPage/images/viewPage1')
                     ->type('password', 'pass123')
                     ->screenshot('common/password_page/viewPage/images/inputPassword')
-                    ->press('ページ閲覧');
+                    ->press('ページ閲覧')
+                    ->pause(500);    // github actionsの安定性のためにpress後に少し待つ
         });
+
+        // *** データクリア
+        $page = Page::where('permanent_link', '/password')->first();
+        $frame = Frame::where('page_id', $page->id)->where('plugin_name', 'contents')->first();
+        if (!empty($frame)) {
+            $bucket = Buckets::find($frame->bucket_id);
+            if (!empty($bucket)) {
+                Contents::where('bucket_id', $bucket->id)->forceDelete();
+                Buckets::find($bucket->id)->forceDelete();
+            }
+            $frame->forceDelete();
+        }
 
         // *** ログインして固定記事を作成
         // ※ $this->browse()内で$this->login(), $this->logout() はなるべく使わない。$this->login(), $this->logout() は内部で$this->browse()を使っているため、入れ子呼び出しになり、ログインできたり・できなかったりする事あり（github actions+php8.1等）
         $this->login(1);
-        $this->browse(function (Browser $browser) {
-            // データクリア
-            $page = Page::where('permanent_link', '/password')->first();
-            $frame = Frame::where('page_id', $page->id)->where('plugin_name', 'contents')->first();
-            if (!empty($frame)) {
-                $bucket = Buckets::find($frame->bucket_id);
-                if (!empty($bucket)) {
-                    Contents::where('bucket_id', $bucket->id)->forceDelete();
-                    Buckets::find($bucket->id)->forceDelete();
-                }
-                $frame->forceDelete();
-            }
 
-            // 固定記事を作成
-            $this->addPluginModal('contents', '/password', 2, false);
-            $bucket = Buckets::create(['bucket_name' => 'パスワード付きページテスト', 'plugin_name' => 'contents']);
+        // 固定記事を作成
+        // ※ $this->browse() 入れ子対応。下記メソッドはなるべく$this->browse()内で使わない
+        $this->addPluginModal('contents', '/password', AreaType::main, false);
 
-            // 初めは記事は文字のみ。
-            $this->content = Contents::create(['bucket_id' => $bucket->id, 'content_text' => '<p>パスワード付きページのテストです。</p>', 'status' => 0]);
+        $bucket = Buckets::create(['bucket_name' => 'パスワード付きページテスト', 'plugin_name' => 'contents']);
 
-            $this->frame = Frame::orderBy('id', 'desc')->first();
-            $this->frame->update(['bucket_id' => $bucket->id]);
-        });
+        // 初めは記事は文字のみ。
+        $content = Contents::create(['bucket_id' => $bucket->id, 'content_text' => '<p>パスワード付きページのテストです。</p>', 'status' => 0]);
+
+        $frame = Frame::orderBy('id', 'desc')->first();
+        $frame->update(['bucket_id' => $bucket->id]);
+
         // パスワード入力済みセッションをクリアさせないため、ログアウトしない
         // $this->logout();
 

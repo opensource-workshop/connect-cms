@@ -2,20 +2,14 @@
 
 namespace Tests\Browser\User;
 
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Laravel\Dusk\Browser;
-use Tests\DuskTestCase;
-
-use App\Enums\PluginName;
 use App\Models\Common\Buckets;
-use App\Models\Common\Frame;
-use App\Models\Common\Uploads;
-use App\Models\Core\Dusks;
 use App\Models\User\Opacs\Opacs;
 use App\Models\User\Opacs\OpacsBooks;
 use App\Models\User\Opacs\OpacsBooksLents;
 use App\Models\User\Opacs\OpacsConfigs;
 use App\Models\User\Opacs\OpacsFrames;
+use Laravel\Dusk\Browser;
+use Tests\DuskTestCase;
 
 /**
  * Opacテスト
@@ -127,6 +121,9 @@ class OpacsPluginTest extends DuskTestCase
                     ->screenshot('user/opacs/createBuckets/images/createBuckets')
                     ->press("登録確定");
 
+            // 画面表示がおいつかない場合があるので、ちょっと待つ
+            $browser->pause(500);
+
             // 一度、選択確定させる。
             $bucket = Buckets::where('plugin_name', 'opacs')->first();
             $browser->visit('/plugin/opacs/listBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
@@ -160,6 +157,9 @@ class OpacsPluginTest extends DuskTestCase
     {
         // 実行
         $this->browse(function (Browser $browser) {
+            // 画面表示がおいつかない場合があるので、ちょっと待つ
+            $browser->pause(500);
+
             $browser->visit('/plugin/opacs/listBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                     ->assertPathBeginsWith('/')
                     ->screenshot('user/opacs/listBuckets/images/listBuckets')

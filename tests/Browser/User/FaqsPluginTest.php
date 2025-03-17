@@ -2,25 +2,20 @@
 
 namespace Tests\Browser\User;
 
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Laravel\Dusk\Browser;
-use Tests\DuskTestCase;
-
-use App\Enums\PluginName;
 use App\Models\Common\Buckets;
 use App\Models\Common\Categories;
-use App\Models\Common\Frame;
 use App\Models\Common\PluginCategory;
-use App\Models\Common\Uploads;
-use App\Models\Core\Dusks;
 use App\Models\User\Faqs\Faqs;
 use App\Models\User\Faqs\FaqsPosts;
 use App\Models\User\Faqs\FaqsPostsTags;
+use Laravel\Dusk\Browser;
+use Tests\DuskTestCase;
 
 /**
  * FAQテスト
  *
  * @see https://github.com/opensource-workshop/connect-cms/wiki/Dusk#テスト実行 [How to test]
+ * @see \Tests\Browser\Manage\SiteManageTest 実行後に実行すること（共通カテゴリが作成される）
  */
 class FaqsPluginTest extends DuskTestCase
 {
@@ -70,27 +65,36 @@ class FaqsPluginTest extends DuskTestCase
     {
         // 実行
         $this->browse(function (Browser $browser) {
-            $post = FaqsPosts::first();
             $category = PluginCategory::where('target', 'faqs')->first();
             $browser->visit('/test/faq')
                     ->assertPathBeginsWith('/')
                     ->screenshot('user/faqs/index/images/index1')
                     ->click('#a_category_button_' . $category->categories_id)
                     ->screenshot('user/faqs/index/images/index2');
+        });
 
-            // ドロップダウン形式の絞り込みの例
-            $this->login(1);
+        // ドロップダウン形式の絞り込みの例
+        // ※ $this->browse() 入れ子対応。$this->login(), $this->logout()はなるべく$this->browse()内で使わない
+        $this->login(1);
+        $this->browse(function (Browser $browser) {
             $browser->visit("/plugin/faqs/editBuckets/" . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                     ->assertPathBeginsWith('/')
                     ->click('#label_narrowing_down_type_dropdown')
-                    ->press("変更確定");
-            $this->logout();
+                    ->pause(500)    // github actionsの安定性のためにclick後に少し待つ
+                    ->screenshot('user/faqs/createBuckets/images/editBuckets2')
+                    ->press("変更確定")
+                    ->pause(500);    // github actionsの安定性のためにpress後に少し待つ
+        });
+        $this->logout();
 
+        $this->browse(function (Browser $browser) {
             $browser->visit('/test/faq')
-                    ->click('#categories_id_' . $this->test_frame->id)
-                    ->pause(500)
                     ->assertPathBeginsWith('/')
+                    ->screenshot('user/faqs/index/images/index3-0')
+                    ->click('#categories_id_' . $this->test_frame->id)  // ドロップダウンを開く
                     ->screenshot('user/faqs/index/images/index3');
+
+            $post = FaqsPosts::first();
 
             // 本文表示
             $browser->click('#button_collapse_faq' . $post->id)
@@ -138,6 +142,9 @@ class FaqsPluginTest extends DuskTestCase
                     ->screenshot('user/faqs/createBuckets/images/createBuckets')
                     ->press("登録確定");
 
+            // 画面表示がおいつかない場合があるので、ちょっと待つ
+            $browser->pause(500);
+
             // 一度、選択確定させる。
             $bucket = Buckets::where('plugin_name', 'faqs')->first();
             $browser->visit('/plugin/faqs/listBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
@@ -171,10 +178,13 @@ class FaqsPluginTest extends DuskTestCase
     {
         // 実行
         $this->browse(function (Browser $browser) {
+            // ループの連続実行で画面表示がおいついてないので、ちょっと待つ
+            $browser->pause(500);
+
             $browser->visit('/plugin/faqs/listCategories/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                    ->click('#div_general_view_flag_1')  // カスタムチェックボックスのインプットとラベルをくくるdivは自動テスト時、ラベルが空の場合にクリックできないための対応
                     ->pause(500)
                     ->assertPathBeginsWith('/')
+                    ->click('#div_general_view_flag_1')  // カスタムチェックボックスのインプットとラベルをくくるdivは自動テスト時、ラベルが空の場合にクリックできないための対応
                     ->press('変更')
                     ->screenshot('user/faqs/listCategories/images/listCategories');
         });
@@ -202,6 +212,9 @@ class FaqsPluginTest extends DuskTestCase
 
         // 個別カテゴリの作成
         $this->browse(function (Browser $browser) {
+            // 画面表示がおいつかない場合があるので、ちょっと待つ
+            $browser->pause(500);
+
             $browser->visit('/plugin/faqs/listCategories/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                     ->click('#div_add_view_flag')
                     ->type('add_display_sequence', '3')
@@ -249,6 +262,9 @@ class FaqsPluginTest extends DuskTestCase
      */
     private function postOne($browser, $title, $body, $category_id, $img_no1, $img_no2)
     {
+        // 画面表示がおいつかない場合があるので、ちょっと待つ
+        $browser->pause(500);
+
         $browser->visit('/plugin/faqs/create/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
                 ->type('post_title', $title)
                 ->driver->executeScript('tinyMCE.get(0).setContent(\'' . $body . '\')');
