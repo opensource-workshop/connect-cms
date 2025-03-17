@@ -2,7 +2,6 @@
 
 namespace Tests\Browser\Manage;
 
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Laravel\Dusk\Browser;
 use Tests\DuskTestCase;
 use Artisan;
@@ -131,6 +130,9 @@ class ReservationManageTest extends DuskTestCase
                     $reservations_category = '3';
                 }
 
+                // ループの連続実行で画面表示がおいついてないので、ちょっと待つ
+                $browser->pause(500);
+
                 $browser->visit('/manage/reservation/regist')
                         ->type('facility_name', $name)
                         ->select('reservations_categories_id', $reservations_category)
@@ -150,7 +152,9 @@ class ReservationManageTest extends DuskTestCase
             $browser->visit('/manage/reservation/categories')
                     ->type('add_display_sequence', '2')
                     ->type('add_category', '会議室')
-                    ->press('変更')
+                    ->press('変更');
+
+            $browser->visit('/manage/reservation/categories')
                     ->type('add_display_sequence', '3')
                     ->type('add_category', 'ドローン')
                     ->press('変更');

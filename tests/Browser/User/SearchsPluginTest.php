@@ -103,6 +103,9 @@ class SearchsPluginTest extends DuskTestCase
                     ->screenshot('user/searchs/createBuckets/images/createBuckets2')
                     ->press("登録");
 
+            // 画面表示がおいつかない場合があるので、ちょっと待つ
+            $browser->pause(500);
+
             // 一度、選択確定させる。
             $bucket = Buckets::where('plugin_name', 'searchs')->first();
             $browser->visit('/plugin/searchs/listBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)

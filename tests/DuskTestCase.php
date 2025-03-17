@@ -2,15 +2,7 @@
 
 namespace Tests;
 
-use Facebook\WebDriver\Chrome\ChromeOptions;
-use Facebook\WebDriver\Remote\DesiredCapabilities;
-use Facebook\WebDriver\Remote\RemoteWebDriver;
-
-use Laravel\Dusk\TestCase as BaseTestCase;
-use Laravel\Dusk\Browser;
-
-use Illuminate\Support\Facades\Storage;
-
+use App\Enums\AreaType;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
@@ -20,8 +12,12 @@ use App\Models\Core\Plugins;
 use App\Models\User\Contents\Contents;
 use App\Traits\ConnectCommonTrait;
 use App\User;
-
-use TruncateAllTables;
+use Facebook\WebDriver\Chrome\ChromeOptions;
+use Facebook\WebDriver\Remote\DesiredCapabilities;
+use Facebook\WebDriver\Remote\RemoteWebDriver;
+use Illuminate\Support\Facades\Storage;
+use Laravel\Dusk\TestCase as BaseTestCase;
+use Laravel\Dusk\Browser;
 
 abstract class DuskTestCase extends BaseTestCase
 {
@@ -250,7 +246,7 @@ abstract class DuskTestCase extends BaseTestCase
     /**
      * プラグイン追加
      */
-    public function addPlugin($add_plugin, $permanent_link = '/', $area = 0, $screenshot = true)
+    public function addPlugin($add_plugin, $permanent_link = '/', $area = AreaType::header, $screenshot = true)
     {
         $this->addPluginModal($add_plugin, $permanent_link, $area, $screenshot);
 
@@ -261,7 +257,7 @@ abstract class DuskTestCase extends BaseTestCase
     /**
      * プラグイン追加（なければ）+ ページ追加（なければ）
      */
-    public function addPluginFirst($add_plugin, $permanent_link = '/', $area = 0, $screenshot = true, $plugin_name_full = null)
+    public function addPluginFirst($add_plugin, $permanent_link = '/', $area = AreaType::header, $screenshot = true, $plugin_name_full = null)
     {
         $plugin = Plugins::where('plugin_name', ucfirst($add_plugin))->first();
         if (empty($plugin)) {
@@ -297,11 +293,12 @@ abstract class DuskTestCase extends BaseTestCase
     /**
      * プラグイン追加
      */
-    public function addPluginModal($add_plugin, $permanent_link = '/', $area = 0, $screenshot = true)
+    public function addPluginModal($add_plugin, $permanent_link = '/', $area = AreaType::header, $screenshot = true)
     {
         $this->browse(function (Browser $browser) use ($add_plugin, $permanent_link, $area, $screenshot) {
             // 管理機能からプラグイン追加で指定されたプラグインを追加する。
             $browser->visit($permanent_link)
+                    ->waitForText('管理機能')   // テキストの待機
                     ->clickLink('管理機能')
                     ->assertPathBeginsWith('/');
             if ($screenshot) {

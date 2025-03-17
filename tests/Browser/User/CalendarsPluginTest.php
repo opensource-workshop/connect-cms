@@ -2,18 +2,12 @@
 
 namespace Tests\Browser\User;
 
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Laravel\Dusk\Browser;
-use Tests\DuskTestCase;
-
-use App\Enums\PluginName;
 use App\Models\Common\Buckets;
-use App\Models\Common\Frame;
-use App\Models\Common\Uploads;
-use App\Models\Core\Dusks;
 use App\Models\User\Calendars\Calendar;
 use App\Models\User\Calendars\CalendarFrame;
 use App\Models\User\Calendars\CalendarPost;
+use Laravel\Dusk\Browser;
+use Tests\DuskTestCase;
 
 /**
  * カレンダーテスト
@@ -114,7 +108,8 @@ class CalendarsPluginTest extends DuskTestCase
                     ->type('end_date', $ym . '-01')
                     ->type('end_time', '12:00')
                     ->screenshot('user/calendars/edit/images/edit1')
-                    ->press('登録確定');
+                    ->press('登録確定')
+                    ->pause(500);    // github actionsの安定性のためにpress後に少し待つ
 
             $browser->visit('plugin/calendars/edit/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '?date=' . $ym . '-08#frame-' . $this->test_frame->id)
                     ->assertPathBeginsWith('/')
@@ -124,7 +119,8 @@ class CalendarsPluginTest extends DuskTestCase
                     ->driver->executeScript('tinyMCE.get(0).setContent(\'この予定は全日予定です。\')');
 
             $browser->screenshot('user/calendars/edit/images/edit2')
-                    ->press('登録確定');
+                    ->press('登録確定')
+                    ->pause(500);    // github actionsの安定性のためにpress後に少し待つ
 
             $browser->visit('plugin/calendars/edit/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '?date=' . $ym . '-20#frame-' . $this->test_frame->id)
                     ->assertPathBeginsWith('/')
@@ -175,6 +171,9 @@ class CalendarsPluginTest extends DuskTestCase
                     ->type('name', 'テストのカレンダー')
                     ->screenshot('user/calendars/createBuckets/images/createBuckets')
                     ->press('登録確定');
+
+            // 画面表示がおいつかない場合があるので、ちょっと待つ
+            $browser->pause(500);
 
             // 一度、選択確定させる。
             $bucket = Buckets::where('plugin_name', 'calendars')->first();

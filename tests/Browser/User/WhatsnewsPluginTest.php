@@ -104,6 +104,9 @@ class WhatsnewsPluginTest extends DuskTestCase
                     ->assertPathBeginsWith('/')
                     ->press("登録");
 
+            // 画面表示がおいつかない場合があるので、ちょっと待つ
+            $browser->pause(500);
+
             // 一度、選択確定させる。
             $bucket = Buckets::where('plugin_name', 'whatsnews')->first();
             $browser->visit('/plugin/whatsnews/listBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
