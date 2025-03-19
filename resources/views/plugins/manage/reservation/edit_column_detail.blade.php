@@ -226,7 +226,7 @@
             @endif
 
             {{-- ボタンエリア --}}
-            <div class="form-group text-center">
+            <div class="text-center">
                 <a href="{{url('/')}}/manage/reservation/editColumns/{{$columns_set->id}}" class="btn btn-secondary">
                     <i class="fas fa-chevron-left"></i> 項目設定へ
                 </a>
