@@ -27,9 +27,9 @@
         <input type="checkbox" name="required" value="1" @if (old('required') == Required::on) checked="checked" @endif data-toggle="tooltip" title="必須項目として指定します。">
     </td>
     {{-- ＋ボタン --}}
-    <td class="text-center">
-        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_column(this);">
-            <i class="fas fa-plus"></i> <span class="d-sm-none">追加</span>
+    <td class="text-center align-middle">
+        <button class="btn btn-primary btn-sm text-nowrap" onclick="javascript:submit_add_column(this);">
+            <i class="fas fa-plus"></i> 項目追加
         </button>
     </td>
     {{-- 表示上の区切り線が切れてしまう為、空のtdタグを設置 --}}

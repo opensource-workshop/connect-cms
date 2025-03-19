@@ -145,7 +145,7 @@
                                         @if (count($selects) > 0)
                                             <th class="text-center" nowrap>表示順</th>
                                             <th class="text-center" nowrap>選択肢名</th>
-                                            <th class="text-center" nowrap>非表示 <span class="fas fa-info-circle" data-toggle="tooltip" title="チェックした選択肢を非表示にします。"></th>
+                                            <th class="text-center" nowrap>非表示</th>
                                             <th class="text-center" nowrap>更新</th>
                                             <th class="text-center" nowrap>削除</th>
                                         @endif
@@ -175,26 +175,26 @@
 
                                             {{-- 非表示フラグ --}}
                                             <td class="align-middle text-center">
-                                                <input name="hide_flag_{{ $select->id }}" id="hide_flag_{{ $select->id }}" value="1" type="checkbox" @if (old('hide_flag_'.$select->id, $select->hide_flag)) checked="checked" @endif>
+                                                <input name="hide_flag_{{ $select->id }}" id="hide_flag_{{ $select->id }}" value="1" type="checkbox"  data-toggle="tooltip" title="チェックした選択肢を非表示にします。" @if (old('hide_flag_'.$select->id, $select->hide_flag)) checked="checked" @endif>
                                             </td>
 
                                             {{-- 更新ボタン --}}
                                             <td class="align-middle text-center">
                                                 <button
-                                                    class="btn btn-primary cc-font-90 text-nowrap"
+                                                    class="btn btn-primary btn-sm text-nowrap"
                                                     onclick="javascript:submit_update_select({{ $select->id }});"
                                                 >
-                                                    <i class="fas fa-check"></i> <span class="d-sm-none">更新</span>
+                                                    <i class="fas fa-check"></i> 更新
                                                 </button>
                                             </td>
 
                                             {{-- 削除ボタン --}}
                                             <td class="text-center">
                                                 <button
-                                                    class="btn btn-danger cc-font-90 text-nowrap"
+                                                    class="btn btn-danger btn-sm text-nowrap"
                                                     onclick="javascript:return submit_delete_select({{ $select->id }});"
                                                 >
-                                                    <i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span>
+                                                    <i class="fas fa-trash-alt"></i> 削除
                                                 </button>
                                             </td>
                                         </tr>
@@ -210,9 +210,9 @@
                                             {{-- 選択肢名 --}}
                                             <input class="form-control @if ($errors && $errors->has('select_name')) border-danger @endif" type="text" name="select_name" value="{{ old('select_name') }}" placeholder="選択肢名">
                                         </td>
-                                        <td class="text-center">
+                                        <td class="text-center align-middle ">
                                             {{-- ＋ボタン --}}
-                                            <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_select(this);"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
+                                            <button class="btn btn-primary btn-sm text-nowrap" onclick="javascript:submit_add_select(this);"><i class="fas fa-plus"></i> 選択肢追加</button>
                                         </td>
                                         <td></td>
                                         <td></td>

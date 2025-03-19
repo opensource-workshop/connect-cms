@@ -34,17 +34,17 @@
     </td>
     {{-- 必須 --}}
     <td class="align-middle text-center">
-        <input type="checkbox" name="required_{{ $column->id }}" value="1" @if (old('required_'.$column->id, $column->required) == Required::on) checked="checked" @endif>
+        <input type="checkbox" name="required_{{ $column->id }}" value="1" data-toggle="tooltip" title="必須項目として指定します。" @if (old('required_'.$column->id, $column->required) == Required::on) checked="checked" @endif>
     </td>
     {{-- 非表示フラグ --}}
     <td class="align-middle text-center">
-        <input name="hide_flag_{{ $column->id }}" id="hide_flag_{{ $column->id }}" value="1" type="checkbox" @if (old('hide_flag_'.$column->id, $column->hide_flag)) checked="checked" @endif>
+        <input name="hide_flag_{{ $column->id }}" id="hide_flag_{{ $column->id }}" value="1" type="checkbox" data-toggle="tooltip" title="チェックした項目を非表示にします。" @if (old('hide_flag_'.$column->id, $column->hide_flag)) checked="checked" @endif>
     </td>
     {{-- 選択肢の設定ボタン --}}
     <td class="text-center px-2">
         <button
             type="button"
-            class="btn btn-success btn-xs cc-font-90 text-nowrap"
+            class="btn btn-success btn-sm text-nowrap"
             @if ($column->column_type == ReservationColumnType::radio)
                 {{-- 選択肢の設定がない場合のみツールチップを表示 --}}
                 @if ($column->select_count == 0)
@@ -53,19 +53,19 @@
             @endif
             onclick="location.href='{{url('/')}}/manage/reservation/editColumnDetail/{{ $column->id }}'"
         >
-            <i class="far fa-window-restore"></i> <span class="d-sm-none">詳細</span>
+            <i class="far fa-window-restore"></i> 詳細編集
         </button>
     </td>
     {{-- 更新ボタン --}}
     <td class="text-center px-2">
-        <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_update_column({{ $column->id }});">
-            <i class="fas fa-check"></i> <span class="d-sm-none">更新</span>
+        <button class="btn btn-primary btn-sm text-nowrap" onclick="javascript:submit_update_column({{ $column->id }});">
+            <i class="fas fa-check"></i> 更新
         </button>
     </td>
 
     {{-- 削除ボタン --}}
     <td class="text-center px-2">
-        <button class="btn btn-danger cc-font-90 text-nowrap" onclick="javascript:return submit_delete_column({{ $column->id }});"><i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span></button>
+        <button class="btn btn-danger btn-sm text-nowrap" onclick="javascript:return submit_delete_column({{ $column->id }});"><i class="fas fa-trash-alt"></i> 削除</button>
     </td>
 </tr>
 {{-- 選択肢の設定内容の表示行 --}}
