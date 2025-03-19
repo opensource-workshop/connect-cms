@@ -84,7 +84,7 @@
                 </table>
             </div>
 
-            <div class="card card-body bg-light p-2 mb-3">
+            <div class="card card-body bg-light p-2 mb-3 small">
                 <ul>
                     <li>
                         課題管理プラグインで利用できる「定義名」は、

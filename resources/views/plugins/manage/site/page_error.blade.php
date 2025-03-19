@@ -53,7 +53,7 @@
                 <input type="text" name="page_permanent_link_404" value="{{ Configs::getConfigsValueAndOld($configs, 'page_permanent_link_404', null) }}" class="form-control">
             </div>
 
-            <div class="card card-body bg-light p-2 mb-3">
+            <div class="card card-body bg-light p-2 mb-3 small">
                 <ul>
                     <li>エラー設定の対象は一般画面です。管理画面は対象外です。</li>
                 </ul>
