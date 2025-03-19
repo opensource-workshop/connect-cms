@@ -120,7 +120,7 @@
         @endforeach
         {{-- ボタンエリア --}}
         <div class="form-group text-center">
-            <button class="btn btn-primary"><i class="fab fa-facebook-messenger"></i> {{__('messages.to_confirm')}}</button>
+            <button class="btn btn-primary"><i class="fa-solid fa-comment"></i> {{__('messages.to_confirm')}}</button>
         </div>
     </fieldset>
 </form>

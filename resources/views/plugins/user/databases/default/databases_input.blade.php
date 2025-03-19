@@ -124,7 +124,7 @@
                 <div class="col-xl-3"></div>
                 <div class="col-9 col-xl-6">
                     <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame_id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('lg')}}"> キャンセル</span></button>
-                    <button class="btn btn-primary"><i class="fab fa-facebook-messenger"></i> 確認画面へ</button>
+                    <button class="btn btn-primary"><i class="fa-solid fa-comment"></i> 確認画面へ</button>
                 </div>
                 @if (!empty($id))
                 <div class="col-3 col-xl-3 text-right">
