@@ -119,7 +119,7 @@
                 </table>
             </div>
 
-            <div class="card card-body bg-light p-2 mb-3">
+            <div class="card card-body bg-light p-2 mb-3 small">
                 <ul>
                     <li>対象が「ALL」のカテゴリは「共通カテゴリ」です。</li>
                     <li>対象が各プラグインのカテゴリは「個別カテゴリ」です。</li>
@@ -127,6 +127,9 @@
                     <li>各プラグインのカテゴリ設定から、コンテンツ単位で独自カテゴリを設定することも可能です。</li>
                     <li>「文字色」「背景色」にはHTMLで指定できる色キーワード（例：<code>red</code>, <code>blue</code>）やRGB色（例：<code>#000000</code>, <code>#111</code>）等を設定できます。</li>
                     <li>「クラス名」はCSSのクラス名を設定できます。<code>cc_category_クラス名</code> で使用できます。</li>
+                    <ul>
+                        <li>「クラス名」は「文字色」「背景色」を反映させるために、他カテゴリとは被らない「クラス名」を設定してください。</li>
+                    </ul>
                 </ul>
             </div>
 
