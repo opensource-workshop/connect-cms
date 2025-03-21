@@ -671,6 +671,31 @@ class LearningtasksTool
     }
 
     /**
+     * 課題の履歴に関するファイルをダウンロードできるか
+     */
+    public function canDownloadStatusFile(LearningtasksUsersStatuses $learningtasks_users_status)
+    {
+        // 管理者は常にダウンロード可能
+        if ($this->isLearningtaskAdmin()) {
+            return true;
+        }
+
+        // 課題の教員であればダウンロード可能
+        if ($this->isTeacher() && $this->teachers->where('id', $this->getUserId())->isNotEmpty()) {
+            return true;
+        }
+
+        // 学生は自身の履歴であればダウンロード可能
+        if ($this->isStudent()
+            && $this->students->where('id', $this->getUserId())->isNotEmpty()
+            && $learningtasks_users_status->user_id == $this->getUserId()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      *  レポートの履歴有無
      */
     public function hasReportStatuses($post_id)
