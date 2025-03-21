@@ -3568,9 +3568,9 @@ class LearningtasksPlugin extends UserPluginBase
             // 課題管理ツールを利用してチェックする。
             $tool = new LearningtasksTool($request, $frame->page_id, $learningtask, $post, $frame->id);
 
-            // 提出に対する権限はあるか。
+            // 提出関係のファイルに対する権限はあるか。
             // この結果がNG でも、複数ページの場合に次のページをチェックするため、return false はしない。
-            if ($tool->canPostView()) {
+            if ($tool->canDownloadStatusFile($learningtasks_users_status)) {
                 return [true, 'OK'];
             }
         }
