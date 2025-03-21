@@ -61,9 +61,6 @@ if (! isset($cc_configs)) {
     <script>Vue.config.devtools = true;</script>
 @endif
 
-    <!-- tempusdominus-bootstrap-4 -->
-    <link rel="stylesheet" href="{{asset('css/tempusdominus-bootstrap-4/tempusdominus-bootstrap-4.min.css')}}" />
-
     <!-- Connect-CMS Global CSS -->
     <link href="{{ asset('css/connect.css') }}?version={{ filemtime(public_path() . "/css/connect.css") }}" rel="stylesheet">
 
