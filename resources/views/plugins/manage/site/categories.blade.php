@@ -119,7 +119,7 @@
                 </table>
             </div>
 
-            <div class="card card-body bg-light p-2 mb-3">
+            <div class="card card-body bg-light p-2 mb-3 small">
                 <ul>
                     <li>対象が「ALL」のカテゴリは「共通カテゴリ」です。</li>
                     <li>対象が各プラグインのカテゴリは「個別カテゴリ」です。</li>
@@ -127,10 +127,13 @@
                     <li>各プラグインのカテゴリ設定から、コンテンツ単位で独自カテゴリを設定することも可能です。</li>
                     <li>「文字色」「背景色」にはHTMLで指定できる色キーワード（例：<code>red</code>, <code>blue</code>）やRGB色（例：<code>#000000</code>, <code>#111</code>）等を設定できます。</li>
                     <li>「クラス名」はCSSのクラス名を設定できます。<code>cc_category_クラス名</code> で使用できます。</li>
+                    <ul>
+                        <li>「クラス名」は「文字色」「背景色」を反映させるために、他カテゴリとは被らない「クラス名」を設定してください。</li>
+                    </ul>
                 </ul>
             </div>
 
-            <div class="form-group text-center">
+            <div class="text-center">
                 <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/manage/site/categories')}}'"><i class="fas fa-times"></i><span class="d-none d-md-inline"> キャンセル</span></button>
                 <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i><span class="d-none d-md-inline"> 変更</span></button>
             </div>

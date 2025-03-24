@@ -204,20 +204,20 @@ use App\Models\Core\UsersColumns;
                                             {{-- 更新ボタン --}}
                                             <td class="align-middle text-center">
                                                 <button
-                                                    class="btn btn-primary cc-font-90 text-nowrap"
+                                                    class="btn btn-primary btn-sm text-nowrap"
                                                     onclick="javascript:submit_update_select({{ $select->id }});"
                                                 >
-                                                    <i class="fas fa-check"></i> <span class="d-sm-none">更新</span>
+                                                    <i class="fas fa-check"></i> 更新
                                                 </button>
                                             </td>
 
                                             {{-- 削除ボタン --}}
-                                            <td class="text-center">
+                                            <td class="align-middle text-center">
                                                 <button
-                                                    class="btn btn-danger cc-font-90 text-nowrap"
+                                                    class="btn btn-danger btn-sm text-nowrap"
                                                     onclick="javascript:return submit_delete_select({{ $select->id }});"
                                                 >
-                                                    <i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span>
+                                                    <i class="fas fa-trash-alt"></i> 削除
                                                 </button>
                                             </td>
                                         </tr>
@@ -233,9 +233,9 @@ use App\Models\Core\UsersColumns;
                                             {{-- 選択肢名 --}}
                                             <input class="form-control @if ($errors && $errors->has('select_name')) border-danger @endif" type="text" name="select_name" value="{{ old('select_name') }}" placeholder="選択肢名">
                                         </td>
-                                        <td class="text-center">
+                                        <td class="align-middle text-center">
                                             {{-- ＋ボタン --}}
-                                            <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_select(this);"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
+                                            <button class="btn btn-primary btn-sm text-nowrap" onclick="javascript:submit_add_select(this);"><i class="fas fa-plus"></i> 選択肢追加</button>
                                         </td>
                                         <td></td>
                                     </tr>
@@ -448,22 +448,22 @@ use App\Models\Core\UsersColumns;
                                             {{-- 更新ボタン --}}
                                             <td class="align-middle text-center">
                                                 <button
-                                                    class="btn btn-primary cc-font-90 text-nowrap"
+                                                    class="btn btn-primary btn-sm text-nowrap"
                                                     onclick="javascript:submit_update_section({{ $section->id }});"
                                                 >
-                                                    <i class="fas fa-check"></i> <span class="d-sm-none">更新</span>
+                                                    <i class="fas fa-check"></i> 更新
                                                 </button>
                                             </td>
 
                                             {{-- 削除ボタン --}}
-                                            <td class="text-center">
+                                            <td class="align-middle text-center">
                                                 <div class="button-wrapper" @if ($section->users->count()) data-toggle="tooltip" title="所属しているユーザがいるため削除できません。" @endif>
                                                 <button
-                                                    class="btn btn-danger cc-font-90 text-nowrap"
+                                                    class="btn btn-danger btn-sm text-nowrap"
                                                     onclick="javascript:return submit_delete_section({{ $section->id }});"
                                                     @if ($section->users->count()) disabled @endif
                                                 >
-                                                    <i class="fas fa-trash-alt"></i> <span class="d-sm-none">削除</span>
+                                                    <i class="fas fa-trash-alt"></i> 削除
                                                 </button>
                                                 </div>
                                             </td>
@@ -484,9 +484,9 @@ use App\Models\Core\UsersColumns;
                                             {{-- コード --}}
                                             <input class="form-control @if ($errors && $errors->has('section_code')) border-danger @endif" type="text" name="section_code" value="{{ old('section_code') }}" placeholder="コード">
                                         </td>
-                                        <td class="text-center">
+                                        <td class="align-middle text-center">
                                             {{-- ＋ボタン --}}
-                                            <button class="btn btn-primary cc-font-90 text-nowrap" onclick="javascript:submit_add_section(this);"><i class="fas fa-plus"></i> <span class="d-sm-none">追加</span></button>
+                                            <button class="btn btn-primary btn-sm text-nowrap" onclick="javascript:submit_add_section(this);"><i class="fas fa-plus"></i> 組織追加</button>
                                         </td>
                                         <td></td>
                                     </tr>
@@ -714,7 +714,7 @@ use App\Models\Core\UsersColumns;
             </div>
 
             {{-- ボタンエリア --}}
-            <div class="form-group text-center">
+            <div class="text-center">
                 <a href="{{url('/')}}/manage/user/editColumns/{{$columns_set->id}}" class="btn btn-secondary">
                     <i class="fas fa-chevron-left"></i> 項目設定へ
                 </a>

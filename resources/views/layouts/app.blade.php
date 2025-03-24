@@ -6,10 +6,11 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category メニュープラグイン
+ * @category コア
 --}}
 <?php
 use App\Http\Controllers\Core\CookieCore;
+use App\Http\Controllers\Core\UploadController;
 
     // URL から現在のURL パスを判定する。
     $current_url = url()->current();
@@ -54,17 +55,11 @@ if (! isset($cc_configs)) {
     <!-- Styles -->
     <link href="{{ url('/') }}{{ mix('css/app.css') }}" rel="stylesheet">
 
-    <!-- Fonts -->
-    <link href="{{asset('fontawesome/css/all.min.css')}}" rel='stylesheet' type='text/css'>
-
     <!-- Scripts -->
     <script src="{{ url('/') }}{{ mix('/js/app.js') }}"></script>
 @if( App::environment(['local', 'staging']) )
     <script>Vue.config.devtools = true;</script>
 @endif
-
-    <!-- tempusdominus-bootstrap-4 -->
-    <link rel="stylesheet" href="{{asset('css/tempusdominus-bootstrap-4/tempusdominus-bootstrap-4.min.css')}}" />
 
     <!-- Connect-CMS Global CSS -->
     <link href="{{ asset('css/connect.css') }}?version={{ filemtime(public_path() . "/css/connect.css") }}" rel="stylesheet">
@@ -99,11 +94,11 @@ if (! isset($cc_configs)) {
     <script src="{{url('/')}}/themes/{{$themes['additional_js']}}/themes.js?version={{ filemtime(public_path() . "/themes/{$themes['additional_js']}/themes.js") }}"></script>
 @endif
 
+    <!-- Connect-CMS Site CSS -->
+    <link href="{{url('/')}}/file/css/site.css?version={{UploadController::getSiteCssTimestamp()}}" rel="stylesheet">
     <!-- Connect-CMS Page CSS -->
 @if (isset($page) && !empty($page->id))
-    <link href="{{url('/')}}/file/css/{{$page->id}}.css" rel="stylesheet">
-@else
-    <link href="{{url('/')}}/file/css/0.css" rel="stylesheet">
+    <link href="{{url('/')}}/file/css/page/{{$page->id}}.css?version={{UploadController::getPageCssTimestamp($page->id)}}" rel="stylesheet">
 @endif
 
     <!-- Context -->

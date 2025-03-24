@@ -2,18 +2,14 @@
 
 namespace Tests\Browser\User;
 
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Laravel\Dusk\Browser;
-use Tests\DuskTestCase;
-
-use App\Enums\PluginName;
+use App\Enums\AreaType;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
-use App\Models\Common\Uploads;
-use App\Models\Core\Dusks;
 use App\Models\User\Contents\Contents;
 use App\Models\User\Tabs\Tabs;
+use Laravel\Dusk\Browser;
+use Tests\DuskTestCase;
 
 /**
  * タブテスト
@@ -64,13 +60,13 @@ class TabsPluginTest extends DuskTestCase
         }
 
         // 固定記事×2、タブ×1を配置
-        $this->addPluginModal('contents', '/test/tab', 2, false);
+        $this->addPluginModal('contents', '/test/tab', AreaType::main, false);
         $bucket = Buckets::create(['bucket_name' => 'タブテスト②', 'plugin_name' => 'contents']);
         $content = Contents::create(['bucket_id' => $bucket->id, 'content_text' => '<p>タブテストのための固定記事<span style="color: red; font-size: 150%; font-weight: bold;"> ② </span>です。</p>', 'status' => 0]);
         $this->page_frames[0] = Frame::orderBy('id', 'desc')->first();
         $this->page_frames[0]->update(['bucket_id' => $bucket->id, 'frame_title' => '固定記事②', 'default_hidden' => 1]);
 
-        $this->addPluginModal('contents', '/test/tab', 2, false);
+        $this->addPluginModal('contents', '/test/tab', AreaType::main, false);
         $bucket = Buckets::create(['bucket_name' => 'タブテスト①', 'plugin_name' => 'contents']);
         $content = Contents::create(['bucket_id' => $bucket->id, 'content_text' => '<p>タブテストのための固定記事<span style="color: red; font-size: 150%; font-weight: bold;"> ① </span>です。</p>', 'status' => 0]);
         $this->page_frames[1] = Frame::orderBy('id', 'desc')->first();

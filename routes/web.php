@@ -92,7 +92,8 @@ Route::post('/download/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?
 Route::get('/download/plugin/{plugin_name}/{action}/{page_id?}/{frame_id?}/{id?}', 'Core\DefaultController@invokePostDownload')->name('get_download');
 
 // CSS の取得アクション
-Route::get('/file/css/{page_id?}.css', 'Core\UploadController@getCss')->name('get_css');
+Route::get('/file/css/site.css', 'Core\UploadController@getSiteCss')->name('get_site_css');
+Route::get('/file/css/page/{page_id?}.css', 'Core\UploadController@getPageCss')->name('get_page_css');
 
 // アップロードファイルの保存アクション
 Route::post('/upload/{method?}', 'Core\UploadController@postInvoke')->name('post_upload');
