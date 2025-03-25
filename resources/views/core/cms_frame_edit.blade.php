@@ -219,7 +219,7 @@
                         class="form-control datetimepicker-input {{ $errors->has('content_open_date_from') ? ' border-danger' : '' }}"
                         data-target="#content_open_date_from"
                         placeholder="YYYY-MM-DD hh:mm:ss"
-                        :readonly="v_content_open_type != {{ ContentOpenType::limited_open }}"
+                        :disabled="v_content_open_type != {{ ContentOpenType::limited_open }}"
                     >
                     <div class="input-group-append" data-target="#content_open_date_from" data-toggle="datetimepicker">
                         <div class="input-group-text"><i class="far fa-clock"></i></div>
@@ -242,7 +242,7 @@
                         class="form-control datetimepicker-input {{ $errors->has('content_open_date_to') ? ' border-danger' : '' }}"
                         data-target="#content_open_date_to"
                         placeholder="YYYY-MM-DD hh:mm:ss"
-                        :readonly="v_content_open_type != {{ ContentOpenType::limited_open }}"
+                        :disabled="v_content_open_type != {{ ContentOpenType::limited_open }}"
                     >
                     <div class="input-group-append" data-target="#content_open_date_to" data-toggle="datetimepicker">
                         <div class="input-group-text"><i class="far fa-clock"></i></div>
@@ -340,28 +340,8 @@
         v_content_open_type: content_open_type
       }
     })
-
-    $(function () {
-        // 公開日時Fromのpicker
-        $('#content_open_date_from').datetimepicker({
-            locale: 'ja',
-            sideBySide: true,
-            dayViewHeaderFormat: 'YYYY年 M月',
-            format: 'YYYY-MM-DD HH:mm:ss'
-        });
-
-        // 公開日時Toのpicker
-        $('#content_open_date_to').datetimepicker({
-            locale: 'ja',
-            sideBySide: true,
-            dayViewHeaderFormat: 'YYYY年 M月',
-            format: 'YYYY-MM-DD HH:mm:ss'
-        });
-
-        // 初期非表示の場合、日時入力をreadonlyにする（初期表示vueでdatetimepickerのinputをreadonlyしているが、datetimepicker側で強制解除されるため追加対応）
-        if (content_open_type != '{{ ContentOpenType::limited_open }}') {
-            $("#content_open_date_from_input").attr("readonly", "readonly");
-            $("#content_open_date_to_input").attr("readonly", "readonly");
-        }
-    });
 </script>
+
+{{-- DateTimePicker 呼び出し --}}
+@include('plugins.common.datetimepicker', ['element_id' => 'content_open_date_from', 'side_by_side' => true, 'format' => 'yyyy-MM-dd HH:mm:ss', 'seconds' => true])
+@include('plugins.common.datetimepicker', ['element_id' => 'content_open_date_to', 'side_by_side' => true, 'format' => 'yyyy-MM-dd HH:mm:ss', 'seconds' => true])
