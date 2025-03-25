@@ -39,7 +39,7 @@
                     </div>
                     @include('plugins.common.errors_inline', ['name' => 'holiday_date'])
                     {{-- DateTimePicker 呼び出し --}}
-                    @include('plugins.common.datetimepicker', ['element_id' => 'holiday_date', 'format' => 'yyyy-MM-dd', 'clock' => false])
+                    @include('plugins.common.datetimepicker', ['element_id' => 'holiday_date', 'format' => 'yyyy-MM-dd', 'clock_icon' => false])
                 </div>
             </div>
 

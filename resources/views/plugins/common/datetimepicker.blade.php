@@ -10,7 +10,7 @@
     $side_by_side = $side_by_side ?? false;
     $format = $format ?? 'yyyy-MM-dd HH:mm';
     $seconds = $seconds ?? false;
-    $clock = $clock ?? true;
+    $clock_icon = $clock_icon ?? true;
     $calendar_icon = $calendar_icon ?? true;
     $stepping = $stepping ?? 1;
     $view_mode = $view_mode ?? 'calendar';
@@ -55,7 +55,7 @@
                 @if ($seconds)
                     seconds: true,
                 @endif
-                @if (!$clock)
+                @if (!$clock_icon)
                     clock: false,
                 @endif
                 @if (!$calendar_icon)
