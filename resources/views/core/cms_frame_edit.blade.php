@@ -58,7 +58,7 @@
 </div>
 
 <div class="card-body frame-setting-body">
-    <form action="{{url('/')}}/core/frame/update/{{$page->id}}/{{ $frame->frame_id }}" name="form_{{ $frame->frame_id }}_setting" method="POST">
+    <form action="{{url('/')}}/core/frame/update/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame->frame_id}}" name="form_{{$frame->frame_id}}_setting" method="post">
         {{ csrf_field() }}
         @include('plugins.common.errors_form_line')
         <h5><span class="badge badge-secondary">デザイン設定</span></h5>
