@@ -60,8 +60,11 @@ if (token) {
  */
 window.moment = require('moment');
 import 'moment/locale/ja';
-require('tempusdominus-bootstrap-4');
+// require('tempusdominus-bootstrap-4');
 import 'moment-timezone';
+
+// Tempus Dominus Date/Time Picker
+window.tempusDominus = require('@eonasdan/tempus-dominus');
 
 // Default SortableJS
 window.Sortable = require('sortablejs').default;
