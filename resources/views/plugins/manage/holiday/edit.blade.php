@@ -1,5 +1,5 @@
 {{--
- * 祝日管理の編集画面
+ * 祝日管理の登録画面
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
@@ -38,15 +38,8 @@
                         </div>
                     </div>
                     @include('plugins.common.errors_inline', ['name' => 'holiday_date'])
-                    <script type="text/javascript">
-                    $(function () {
-                        $('#holiday_date').datetimepicker({
-                            locale: 'ja',
-                            dayViewHeaderFormat: 'YYYY年 M月',
-                            format: 'YYYY-MM-DD'
-                        });
-                    });
-                    </script>
+                    {{-- DateTimePicker 呼び出し --}}
+                    @include('plugins.common.datetimepicker', ['element_id' => 'holiday_date', 'format' => 'yyyy-MM-dd', 'clock' => false])
                 </div>
             </div>
 
