@@ -225,16 +225,10 @@
                         <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
+                @include('plugins.common.errors_inline', ['name' => 'content_open_date_from', 'class' => $text_muted_col_class])
                 <small class="{{$text_muted_col_class}} text-muted">
                     ※右のボタンからカレンダー入力も可能です。
                 </small>
-                @if ($errors && $errors->has('content_open_date_from'))
-                    <label class="{{$frame->getSettingLabelClass(true)}}"></label>
-                    <div class="text-danger" style="padding-left:15px;">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        {{$errors->first('content_open_date_from')}}
-                    </div>
-                @endif
             </div>
             {{-- 公開日時To --}}
             <div class="form-group row">
@@ -254,16 +248,10 @@
                         <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
+                @include('plugins.common.errors_inline', ['name' => 'content_open_date_to', 'class' => $text_muted_col_class])
                 <small class="{{$text_muted_col_class}} text-muted">
                     ※右のボタンからカレンダー入力も可能です。
                 </small>
-                @if ($errors && $errors->has('content_open_date_to'))
-                    <label class="{{$frame->getSettingLabelClass(true)}}"></label>
-                    <div class="text-danger" style="padding-left:15px;">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        {{$errors->first('content_open_date_to')}}
-                    </div>
-                @endif
             </div>
 
         {{-- このページのみ表示するチェック。メインエリアはもともとページ内のみなので対象外 --}}
