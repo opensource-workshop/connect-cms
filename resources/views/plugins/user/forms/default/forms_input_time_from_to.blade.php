@@ -99,12 +99,6 @@
     </div>
 
 </div>
-@if ($errors && $errors->has("forms_columns_value.$form_obj->id"))
-    <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("forms_columns_value.$form_obj->id")}}</div>
-@endif
-@if ($errors && $errors->has("forms_columns_value_for_time_from.$form_obj->id"))
-    <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("forms_columns_value_for_time_from.$form_obj->id")}}</div>
-@endif
-@if ($errors && $errors->has("forms_columns_value_for_time_to.$form_obj->id"))
-    <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("forms_columns_value_for_time_to.$form_obj->id")}}</div>
-@endif
+@include('plugins.common.errors_inline', ['name' => "forms_columns_value.$form_obj->id"])
+@include('plugins.common.errors_inline', ['name' => "forms_columns_value_for_time_from.$form_obj->id"])
+@include('plugins.common.errors_inline', ['name' => "forms_columns_value_for_time_to.$form_obj->id"])
