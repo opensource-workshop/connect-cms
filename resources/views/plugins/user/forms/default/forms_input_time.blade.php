@@ -6,31 +6,6 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
 --}}
-<script>
-    /**
-     * 時間カレンダーボタン押下
-     */
-    $(function () {
-        $('#{{ $form_obj->id }}').datetimepicker({
-            tooltips: {
-                close: '閉じる',
-                pickHour: '時間を取得',
-                incrementHour: '時間を増加',
-                decrementHour: '時間を減少',
-                pickMinute: '分を取得',
-                incrementMinute: '分を増加',
-                decrementMinute: '分を減少',
-                pickSecond: '秒を取得',
-                incrementSecond: '秒を増加',
-                decrementSecond: '秒を減少',
-                togglePeriod: '午前/午後切替',
-                selectTime: '時間を選択'
-            },
-            format: 'HH:mm',
-            stepping: {{ $form_obj->minutes_increments }}
-        });
-    });
-</script>
 @php
     $value = $request->forms_columns_value[$form_obj->id] ?? null;
 @endphp
@@ -49,3 +24,5 @@
     </div>
 </div>
 @include('plugins.common.errors_inline', ['name' => "forms_columns_value.$form_obj->id"])
+{{-- DateTimePicker 呼び出し --}}
+@include('plugins.common.datetimepicker', ['element_id' => "$form_obj->id", 'format' => 'HH:mm', 'view_mode' => 'clock', 'calendar_icon' => false, 'stepping' => $form_obj->minutes_increments_from])

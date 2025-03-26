@@ -6,21 +6,6 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
 --}}
-<script>
-    /**
-     * カレンダーボタン押下
-     */
-    $(function () {
-        $('#{{ $form_obj->id }}').datetimepicker({
-            @if (App::getLocale() == ConnectLocale::ja)
-                dayViewHeaderFormat: 'YYYY年 M月',
-            @endif
-            locale: '{{ App::getLocale() }}',
-            format: 'YYYY/MM/DD',
-            timepicker:false
-        });
-    });
-</script>
 @php
     $value = $request->forms_columns_value[$form_obj->id] ?? null;
 @endphp
@@ -40,3 +25,5 @@
     </div>
 </div>
 @include('plugins.common.errors_inline', ['name' => "forms_columns_value.$form_obj->id"])
+{{-- DateTimePicker 呼び出し --}}
+@include('plugins.common.datetimepicker', ['element_id' => $form_obj->id, 'format' => 'yyyy/MM/dd', 'clock_icon' => false])
