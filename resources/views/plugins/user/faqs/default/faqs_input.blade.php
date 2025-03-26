@@ -60,17 +60,9 @@
             </div>
         </div>
         @include('plugins.common.errors_inline', ['name' => 'posted_at'])
+        {{-- DateTimePicker 呼び出し --}}
+        @include('plugins.common.datetimepicker', ['element_id' => "posted_at", 'side_by_side' => true])
     </div>
-    <script type="text/javascript">
-        $(function () {
-            $('#posted_at').datetimepicker({
-                locale: 'ja',
-                sideBySide: true,
-                dayViewHeaderFormat: 'YYYY年 M月',
-                format: 'YYYY-MM-DD HH:mm'
-            });
-        });
-    </script>
 
     <div class="form-group">
         <label class="control-label">重要記事</label>
