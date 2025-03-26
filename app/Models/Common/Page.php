@@ -714,4 +714,24 @@ class Page extends Model
         }
         return;
     }
+
+    /**
+     * 継承元のメンバーシップのページを取得する。
+     * メンバーシップの設定を先祖ページから継承している場合は、直近の対象ページを返却する。
+     * 該当ページにも先祖にもメンバーシップの設定がなければ、null を返却する。
+     *
+     * @return Page|null
+     */
+    public function getInheritMembershipPage(): ?Page
+    {
+        if ($this->membership_flag == 1) {
+            return $this;
+        }
+
+        if ($this->parent) {
+            return $this->parent->getInheritMembershipPage();
+        }
+
+        return null;
+    }
 }
