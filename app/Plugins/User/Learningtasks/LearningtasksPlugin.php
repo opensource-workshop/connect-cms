@@ -3323,15 +3323,7 @@ class LearningtasksPlugin extends UserPluginBase
         $post = $this->getPost($post_id);
 
         // 配置されているページのメンバーシップの対象ユーザ取得
-        // 複数のページにプラグインは配置されている可能性を考慮
-        $pages = Page::select('pages.*')
-                     ->join('frames', function ($join) use ($post) {
-                         $join->on('frames.page_id', '=', 'pages.id')
-                              ->where('frames.bucket_id', '=', $post->bucket_id);
-                     })
-                     ->where('pages.membership_flag', 1)
-                     ->orderBy('pages._lft')
-                     ->get();
+        $pages = $this->getMembershipPages($post);
 
         // グループID 取得のために、配置されているページRoleを取得
         $page_roles = PageRole::select('group_id')->whereIn('page_id', $pages->pluck('id'))->groupBy('group_id')->get();
@@ -3395,6 +3387,34 @@ class LearningtasksPlugin extends UserPluginBase
             'tool'                     => $tool,
             ]
         );
+    }
+
+    /**
+     * 課題管理プラグインが配置されているページに関するメンバーシップページを取得する。
+     */
+    private function getMembershipPages($post)
+    {
+        // 課題管理プラグインが配置されているページを取得する
+        // 複数のページにプラグインは配置されている可能性を考慮
+        $bucket_pages = Page::select('pages.*')
+            ->join('frames', function ($join) use ($post) {
+                $join->on('frames.page_id', '=', 'pages.id')
+                    ->where('frames.bucket_id', '=', $post->bucket_id);
+            })
+            ->orderBy('pages._lft')
+            ->get();
+
+        // 親ページの継承設定を考慮してメンバーシップのページを抽出する
+        $membership_pages = collect();
+        foreach ($bucket_pages as $page) {
+            $membership_page = $page->getInheritMembershipPage();
+            if (!empty($membership_page)) {
+                $membership_pages->push($membership_page);
+            }
+        }
+        $membership_pages = $membership_pages->unique('id');
+
+        return $membership_pages;
     }
 
     /**
@@ -3568,9 +3588,9 @@ class LearningtasksPlugin extends UserPluginBase
             // 課題管理ツールを利用してチェックする。
             $tool = new LearningtasksTool($request, $frame->page_id, $learningtask, $post, $frame->id);
 
-            // 提出に対する権限はあるか。
+            // 提出関係のファイルに対する権限はあるか。
             // この結果がNG でも、複数ページの場合に次のページをチェックするため、return false はしない。
-            if ($tool->canPostView()) {
+            if ($tool->canDownloadStatusFile($learningtasks_users_status)) {
                 return [true, 'OK'];
             }
         }
