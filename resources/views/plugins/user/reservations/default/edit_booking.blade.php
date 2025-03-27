@@ -2,6 +2,7 @@
  * 施設予約の予約登録（更新）画面
  *
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 施設予約プラグイン
  --}}
@@ -14,78 +15,20 @@ use App\Models\User\Reservations\ReservationsFacility;
 
 @section("plugin_contents_$frame->id")
 <script type="text/javascript">
-    /**
-     * 登録ボタン押下
-     */
+    /** 登録ボタン押下 */
     function submit_booking_store(btn) {
         btn.disabled = true;
         form_save_booking{{$frame_id}}.submit();
     }
 
-    /**
-     * カレンダーボタン押下
-     */
-    $(function () {
-        let calendar_setting = {
-            @if (App::getLocale() == ConnectLocale::ja)
-                dayViewHeaderFormat: 'YYYY年 M月',
-            @endif
-            locale: '{{ App::getLocale() }}',
-            format: 'YYYY-MM-DD',
-            timepicker:false
-        };
-
-        // 予約日
-        $('#target_date_id').datetimepicker(calendar_setting);
-        // 繰り返し終了：指定日
-        $('#rrule_until_id').datetimepicker(calendar_setting);
-    });
-
-    /**
-     * 予約開始・終了時間ボタン押下
-     */
-    $(function () {
-        let time_setting = {
-            tooltips: {
-                close: '閉じる',
-                pickHour: '時間を取得',
-                incrementHour: '時間を増加',
-                decrementHour: '時間を減少',
-                pickMinute: '分を取得',
-                incrementMinute: '分を増加',
-                decrementMinute: '分を減少',
-                pickSecond: '秒を取得',
-                incrementSecond: '秒を増加',
-                decrementSecond: '秒を減少',
-                togglePeriod: '午前/午後切替',
-                selectTime: '時間を選択'
-            },
-            format: 'HH:mm',
-            stepping: 5
-        };
-
-        // 予約開始時間ボタン押下
-        $('#start_datetime').datetimepicker(time_setting);
-        // 予約終了時間ボタン押下
-        $('#end_datetime').datetimepicker(time_setting);
-
-        $('#end_datetime').on('change.datetimepicker hide.datetimepicker show.datetimepicker', function(e) {
-            convert_endtime_0h_to_24h();
-        });
-    });
-
-    /**
-     * 終了時間を0時から24時に変換
-     */
+    /** 終了時間を0時から24時に変換 */
     function convert_endtime_0h_to_24h() {
         if (form_save_booking{{$frame_id}}.end_datetime.value == '00:00') {
             form_save_booking{{$frame_id}}.end_datetime.value = '24:00';
         }
     }
 
-    /**
-     * 終日ボタン押下
-     */
+    /** 終日ボタン押下 */
      function all_day() {
         @if ($facility->is_time_control)
             form_save_booking{{$frame_id}}.start_datetime.value = '{{ substr($facility->start_time, 0, -3) }}';
@@ -96,21 +39,16 @@ use App\Models\User\Reservations\ReservationsFacility;
         @endif
     }
 
-    /**
-     * 繰り返しselect.change
-     */
     $(function () {
+        // 繰り返しselect.change
         $('#rrule_freq_id').change(function(){
             // 繰り返しルールの表示・非表示
             change_repeat_rule($(this).val());
         });
     });
 
-    /**
-     * 繰り返しルールの表示・非表示
-     */
+    /** 繰り返しルールの表示・非表示 */
     function change_repeat_rule(select_value) {
-        // 繰り返しルールの表示・非表示
         switch (select_value) {
             case '{{RruleFreq::DAILY}}':
                 $('#repeat_rule_id').collapse('show');
@@ -206,6 +144,8 @@ use App\Models\User\Reservations\ReservationsFacility;
                     </div>
                 </div>
             </div>
+            {{-- DateTimePicker 呼び出し --}}
+            @include('plugins.common.datetimepicker', ['element_id' => 'target_date_id', 'format' => 'yyyy-MM-dd', 'clock_icon' => false])
 
             <div class="row">
                 <div class="col">
@@ -261,6 +201,15 @@ use App\Models\User\Reservations\ReservationsFacility;
                 <div class="col">
                     @include('plugins.common.errors_inline', ['name' => 'start_datetime'])
                     @include('plugins.common.errors_inline', ['name' => 'end_datetime'])
+                    {{-- DateTimePicker 呼び出し --}}
+                    @include('plugins.common.datetimepicker', ['element_id' => "start_datetime", 'format' => 'HH:mm', 'view_mode' => 'clock', 'calendar_icon' => false, 'stepping' => 5])
+                    @include('plugins.common.datetimepicker', ['element_id' => "end_datetime", 'format' => 'HH:mm', 'view_mode' => 'clock', 'calendar_icon' => false, 'stepping' => 5])
+                    <script type="text/javascript">
+                        // datetimepicker内のjs変数 picker_end_datetime を使用して、値が変更されたときに実行
+                        picker_end_datetime.subscribe('change.td', (event) => {
+                            convert_endtime_0h_to_24h();
+                        });
+                    </script>
                     @if ($facility->is_time_control) <small class="text-muted">【利用時間】 {{ substr($facility->start_time, 0, -3) }} ~ {{ substr($facility->end_time, 0, -3) }}<br /></small> @endif
                     <small class="text-muted">※ 予約終了時間の 00:00 は 24:00 に自動変換します。</small>
                 </div>
@@ -480,6 +429,8 @@ use App\Models\User\Reservations\ReservationsFacility;
                             </div>
                         </div>
                         @include('plugins.common.errors_inline', ['name' => 'rrule_until'])
+                        {{-- DateTimePicker 呼び出し --}}
+                        @include('plugins.common.datetimepicker', ['element_id' => 'rrule_until_id', 'format' => 'yyyy-MM-dd', 'clock_icon' => false])
                     </div>
                 </div>
                 <div class="row">
