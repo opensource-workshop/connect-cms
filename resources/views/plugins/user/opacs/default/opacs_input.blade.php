@@ -2,6 +2,7 @@
  * 書誌データ登録画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category OPACプラグイン
  --}}
@@ -279,15 +280,8 @@
                 </div>
             </div>
             @if ($errors && $errors->has('accept_date')) <div class="text-danger">{{$errors->first('accept_date')}}</div> @endif
-            <script type="text/javascript">
-                $(function () {
-                    $('#accept_date').datetimepicker({
-                        locale: 'ja',
-                        dayViewHeaderFormat: 'YYYY年 M月',
-                        format: 'YYYY/MM/DD'
-                    });
-                });
-            </script>
+            {{-- DateTimePicker 呼び出し --}}
+            @include('plugins.common.datetimepicker', ['element_id' => 'accept_date', 'format' => 'yyyy/MM/dd', 'clock_icon' => false])
         </div>
     </div>
 
@@ -314,15 +308,8 @@
                 </div>
             </div>
             @if ($errors && $errors->has('storage_life')) <div class="text-danger">{{$errors->first('storage_life')}}</div> @endif
-            <script type="text/javascript">
-                $(function () {
-                    $('#storage_life').datetimepicker({
-                        locale: 'ja',
-                        dayViewHeaderFormat: 'YYYY年 M月',
-                        format: 'YYYY/MM/DD'
-                    });
-                });
-            </script>
+            {{-- DateTimePicker 呼び出し --}}
+            @include('plugins.common.datetimepicker', ['element_id' => 'storage_life', 'format' => 'yyyy/MM/dd', 'clock_icon' => false])
         </div>
     </div>
 
@@ -350,15 +337,8 @@
                 </div>
             </div>
             @if ($errors && $errors->has('remove_date')) <div class="text-danger">{{$errors->first('remove_date')}}</div> @endif
-            <script type="text/javascript">
-                $(function () {
-                    $('#remove_date').datetimepicker({
-                        locale: 'ja',
-                        dayViewHeaderFormat: 'YYYY年 M月',
-                        format: 'YYYY/MM/DD'
-                    });
-                });
-            </script>
+            {{-- DateTimePicker 呼び出し --}}
+            @include('plugins.common.datetimepicker', ['element_id' => 'remove_date', 'format' => 'yyyy/MM/dd', 'clock_icon' => false])
         </div>
     </div>
 
@@ -399,15 +379,8 @@
                 </div>
             </div>
             @if ($errors && $errors->has('last_lending_date')) <div class="text-danger">{{$errors->first('last_lending_date')}}</div> @endif
-            <script type="text/javascript">
-                $(function () {
-                    $('#last_lending_date').datetimepicker({
-                        locale: 'ja',
-                        dayViewHeaderFormat: 'YYYY年 M月',
-                        format: 'YYYY/MM/DD'
-                    });
-                });
-            </script>
+            {{-- DateTimePicker 呼び出し --}}
+            @include('plugins.common.datetimepicker', ['element_id' => 'last_lending_date', 'format' => 'yyyy/MM/dd', 'clock_icon' => false])
         </div>
     </div>
 
