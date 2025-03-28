@@ -6,6 +6,7 @@
  * @category プラグイン共通
 --}}
 @php
+    // TempusDominusの設定
     $element_id = $element_id ?? null;
     $side_by_side = $side_by_side ?? false;
     $format = $format ?? 'yyyy-MM-dd HH:mm';
@@ -14,10 +15,13 @@
     $calendar_icon = $calendar_icon ?? true;
     $stepping = $stepping ?? 1;
     $view_mode = $view_mode ?? 'calendar';
+
+    // 設定のみオプション
+    $is_setting_only = $is_setting_only ?? false;
 @endphp
 
 <script type="text/javascript">
-    const picker_{{$element_id}} = new tempusDominus.TempusDominus(document.getElementById('{{$element_id}}'), {
+    const picker_setting_{{$element_id}} = {
         localization: {
             locale: '{{ App::getLocale() }}',
             dayViewHeaderFormat: { year: 'numeric', month: 'long' },
@@ -68,5 +72,9 @@
             theme: 'light',
         },
         stepping: {{$stepping}},
-    });
+    }
+
+    @if (!$is_setting_only)
+        const picker_{{$element_id}} = new tempusDominus.TempusDominus(document.getElementById('{{$element_id}}'), picker_setting_{{$element_id}});
+    @endif
 </script>
