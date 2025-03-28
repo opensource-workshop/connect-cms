@@ -14,21 +14,6 @@
         $value = $value_obj->value;
     }
 @endphp
-<script>
-    /**
-     * カレンダーボタン押下
-     */
-    $(function () {
-        $('#{{ $database_obj->id }}').datetimepicker({
-            @if (App::getLocale() == ConnectLocale::ja)
-                dayViewHeaderFormat: 'YYYY年 M月',
-            @endif
-            locale: '{{ App::getLocale() }}',
-            format: 'YYYY/MM/DD',
-            timepicker:false
-        });
-    });
-</script>
 {{-- 日付 --}}
 <div class="input-group date" id="{{ $database_obj->id }}" data-target-input="nearest">
     <input
@@ -43,3 +28,5 @@
     </div>
 </div>
 @include('plugins.common.errors_inline', ['name' => "databases_columns_value.$database_obj->id"])
+{{-- DateTimePicker 呼び出し --}}
+@include('plugins.common.datetimepicker', ['element_id' => $database_obj->id, 'format' => 'yyyy/MM/dd', 'clock_icon' => false])

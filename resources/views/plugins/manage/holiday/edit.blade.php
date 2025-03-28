@@ -1,7 +1,8 @@
 {{--
- * 祝日管理の編集画面
+ * 祝日管理の登録画面
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 祝日管理
  --}}
@@ -18,6 +19,9 @@
     </div>
 
     <div class="card-body">
+        {{-- 共通エラーメッセージ 呼び出し --}}
+        @include('plugins.common.errors_form_line')
+
         <form name="form_edit" method="post" action="{{url('/')}}/manage/holiday/update">
             {{ csrf_field() }}
             <input type="hidden" name="post_id" value="{{$post->id}}">
@@ -33,16 +37,9 @@
                             <div class="input-group-text"><i class="far fa-clock"></i></div>
                         </div>
                     </div>
-                    @if ($errors && $errors->has('holiday_date')) <div class="text-danger">{{$errors->first('holiday_date')}}</div> @endif
-                    <script type="text/javascript">
-                    $(function () {
-                        $('#holiday_date').datetimepicker({
-                            locale: 'ja',
-                            dayViewHeaderFormat: 'YYYY年 M月',
-                            format: 'YYYY-MM-DD'
-                        });
-                    });
-                    </script>
+                    @include('plugins.common.errors_inline', ['name' => 'holiday_date'])
+                    {{-- DateTimePicker 呼び出し --}}
+                    @include('plugins.common.datetimepicker', ['element_id' => 'holiday_date', 'format' => 'yyyy-MM-dd', 'clock_icon' => false])
                 </div>
             </div>
 
@@ -53,7 +50,7 @@
                     <div class="input-group date" id="holiday_name">
                         <input type="text" name="holiday_name" value="{{old('holiday_name', $post->holiday_name)}}" class="form-control" />
                     </div>
-                    @if ($errors && $errors->has('holiday_name')) <div class="text-danger">{{$errors->first('holiday_name')}}</div> @endif
+                    @include('plugins.common.errors_inline', ['name' => 'holiday_name'])
                 </div>
             </div>
 

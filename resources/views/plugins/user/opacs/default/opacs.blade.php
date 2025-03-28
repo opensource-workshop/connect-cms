@@ -2,6 +2,7 @@
  * Opac 検索画面
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category Opac・プラグイン
 --}}
@@ -19,7 +20,7 @@
 
 {{-- OPAC 検索条件エリア --}}
 
-<form action="{{url('/')}}/redirect/plugin/opacs/search/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" id="form_search" name="form_search" method="POST">
+<form action="{{url('/')}}/redirect/plugin/opacs/search/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" id="form_search" name="form_search" method="post">
     {{ csrf_field() }}
     <input type="hidden" name="opac_search_type" @if(isset($opac_search_type)) value="{{$opac_search_type}}" @else value="1" @endif />
     <div class="form-group">
@@ -202,7 +203,7 @@
                     <i class="far fa-edit"></i>
                 </a>
                 @endcan
-                <a href="{{url('/')}}/plugin/opacs/show/{{$page->id}}/{{$frame_id}}/{{$book->id}}">{{$book->title}}</a>
+                <a href="{{url('/')}}/plugin/opacs/show/{{$page->id}}/{{$frame_id}}/{{$book->id}}#frame-{{$frame->id}}">{{$book->title}}</a>
             </td>
             <td>{{$book->creator}}</td>
             <td>{{$book->publisher}}</td>

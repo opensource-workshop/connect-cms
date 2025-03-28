@@ -16,52 +16,14 @@ use App\Models\User\Reservations\ReservationsFacility;
 @section('manage_content')
 
 <script type="text/javascript">
-
-    /**
-     * ボタンによってアクション切替
-     */
+    /** ボタンによってアクション切替 */
     function submitAction(url) {
         form_reservation.action = url;
         form_reservation.submit();
     }
 
-    /**
-     * 利用開始・終了時間ボタン押下
-     */
-     $(function () {
-        let time_setting = {
-            tooltips: {
-                close: '閉じる',
-                pickHour: '時間を取得',
-                incrementHour: '時間を増加',
-                decrementHour: '時間を減少',
-                pickMinute: '分を取得',
-                incrementMinute: '分を増加',
-                decrementMinute: '分を減少',
-                pickSecond: '秒を取得',
-                incrementSecond: '秒を増加',
-                decrementSecond: '秒を減少',
-                togglePeriod: '午前/午後切替',
-                selectTime: '時間を選択'
-            },
-            format: 'HH:mm',
-            stepping: 5
-        };
-
-        // 利用開始時間ボタン押下
-        $('#start_time').datetimepicker(time_setting);
-        // 利用終了時間ボタン押下
-        $('#end_time').datetimepicker(time_setting);
-
-        $('#end_time').on('change.datetimepicker hide.datetimepicker show.datetimepicker', function(e) {
-            convert_endtime_0h_to_24h();
-        });
-    });
-
-    /**
-     * 終了時間を0時から24時に変換
-     */
-     function convert_endtime_0h_to_24h() {
+    /** 終了時間を0時から24時に変換 */
+    function convert_endtime_0h_to_24h() {
         if (form_reservation.end_time.value == '00:00') {
             form_reservation.end_time.value = '24:00';
         }
@@ -169,6 +131,16 @@ use App\Models\User\Reservations\ReservationsFacility;
                             @include('plugins.common.errors_inline', ['name' => 'end_time'])
                             <small class="text-muted">※ 00:00 は 24:00 に自動変換します。</small>
                         </div>
+
+                        {{-- DateTimePicker 呼び出し --}}
+                        @include('plugins.common.datetimepicker', ['element_id' => 'start_time', 'format' => 'HH:mm', 'view_mode' => 'clock', 'calendar_icon' => false, 'stepping' => 5])
+                        @include('plugins.common.datetimepicker', ['element_id' => 'end_time', 'format' => 'HH:mm', 'view_mode' => 'clock', 'calendar_icon' => false, 'stepping' => 5])
+                        <script type="text/javascript">
+                            // datetimepicker内のjs変数 picker_end_time を使用して、値が変更されたときに実行
+                            picker_end_time.subscribe('change.td', (event) => {
+                                convert_endtime_0h_to_24h();
+                            });
+                        </script>
                     </div>
                 </div>
             </div>

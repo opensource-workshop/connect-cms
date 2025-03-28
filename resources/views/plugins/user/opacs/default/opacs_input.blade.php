@@ -2,6 +2,7 @@
  * 書誌データ登録画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category OPACプラグイン
  --}}
@@ -33,10 +34,10 @@
 
 {{-- 登録用フォーム --}}
 @if (empty($opacs_books->id))
-    <form action="{{url('/')}}/redirect/plugin/opacs/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" id="form_opac_book" name="form_opac_book" class="">
+    <form action="{{url('/')}}/redirect/plugin/opacs/save/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="post" id="form_opac_book" name="form_opac_book">
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/opacs/create/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
 @else
-    <form action="{{url('/')}}/redirect/plugin/opacs/save/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}#frame-{{$frame->id}}" id="form_opac_book" name="form_opac_book" method="POST" class="">
+    <form action="{{url('/')}}/redirect/plugin/opacs/save/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}#frame-{{$frame->id}}" id="form_opac_book" name="form_opac_book" method="post">
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/opacs/edit/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}#frame-{{$frame_id}}">
 @endif
     {{ csrf_field() }}
@@ -47,7 +48,7 @@
         <label class="col-sm-2 control-label">ISBN等 </label>
         <div class="col-sm-5">
             <input type="text" name="isbn" value="{{old('isbn', $opacs_books->isbn)}}" class="form-control">
-            @if ($errors && $errors->has('isbn')) <div class="text-danger">{{$errors->first('isbn')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'isbn'])
             <small class="form-text text-muted">※ ハイフンなしで10桁もしくは13桁の英数値で入力してください。</small>
         </div>
         <div class="col-sm-5">
@@ -62,7 +63,7 @@
                 <input type="text" name="title" value="{{$opacs_books->title}}" class="form-control">
             @else
                 <input type="text" name="title" value="{{old('title', $opacs_books->title)}}" class="form-control">
-                @if ($errors && $errors->has('title')) <div class="text-danger">{{$errors->first('title')}}</div> @endif
+                @include('plugins.common.errors_inline', ['name' => 'title'])
             @endif
         </div>
     </div>
@@ -74,7 +75,7 @@
                 <input type="text" name="ndc" value="{{$opacs_books->ndc}}" class="form-control">
             @else
                 <input type="text" name="ndc" value="{{old('ndc', $opacs_books->ndc)}}" class="form-control">
-                @if ($errors && $errors->has('ndc')) <div class="text-danger">{{$errors->first('ndc')}}</div> @endif
+                @include('plugins.common.errors_inline', ['name' => 'ndc'])
             @endif
             <small class="form-text text-muted">※ [分類]をもととした図書館独自の値を設定します。</small>
         </div>
@@ -87,7 +88,7 @@
                 <input type="text" name="creator" value="{{$opacs_books->creator}}" class="form-control">
             @else
                 <input type="text" name="creator" value="{{old('creator', $opacs_books->creator)}}" class="form-control">
-                @if ($errors && $errors->has('creator')) <div class="text-danger">{{$errors->first('creator')}}</div> @endif
+                @include('plugins.common.errors_inline', ['name' => 'creator'])
             @endif
         </div>
     </div>
@@ -99,7 +100,7 @@
                 <input type="text" name="publisher" value="{{$opacs_books->publisher}}" class="form-control">
             @else
                 <input type="text" name="publisher" value="{{old('publisher', $opacs_books->publisher)}}" class="form-control">
-                @if ($errors && $errors->has('publisher')) <div class="text-danger">{{$errors->first('publisher')}}</div> @endif
+                @include('plugins.common.errors_inline', ['name' => 'publisher'])
             @endif
         </div>
     </div>
@@ -119,7 +120,7 @@
         <label class="col-md-2 control-label">バーコード <label class="badge badge-danger">必須</label></label>
         <div class="col-md-10">
             <input type="text" name="barcode" value="{{old('barcode', $opacs_books->barcode)}}" class="form-control">
-            @if ($errors && $errors->has('barcode')) <div class="text-danger">{{$errors->first('barcode')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'barcode'])
             <small class="form-text text-muted">※ ハイフンなし、チェックデジットあり。</small>
         </div>
     </div>
@@ -131,7 +132,7 @@
                 <input type="text" name="title_read" value="{{$opacs_books->title_read}}" class="form-control">
             @else
                 <input type="text" name="title_read" value="{{old('title_read', $opacs_books->title_read)}}" class="form-control">
-                @if ($errors && $errors->has('title_read')) <div class="text-danger">{{$errors->first('title_read')}}</div> @endif
+                @include('plugins.common.errors_inline', ['name' => 'title_read'])
             @endif
         </div>
     </div>
@@ -140,7 +141,7 @@
         <label class="col-md-2 control-label">サブタイトル</label>
         <div class="col-md-10">
             <input type="text" name="subtitle" value="{{old('subtitle', $opacs_books->subtitle)}}" class="form-control">
-            @if ($errors && $errors->has('subtitle')) <div class="text-danger">{{$errors->first('subtitle')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'subtitle'])
         </div>
     </div>
 
@@ -151,7 +152,7 @@
                 <input type="text" name="series" value="{{$opacs_books->series}}" class="form-control">
             @else
                 <input type="text" name="series" value="{{old('series', $opacs_books->series)}}" class="form-control">
-                @if ($errors && $errors->has('series')) <div class="text-danger">{{$errors->first('series')}}</div> @endif
+                @include('plugins.common.errors_inline', ['name' => 'series'])
             @endif
         </div>
     </div>
@@ -163,7 +164,7 @@
                 <input type="text" name="publication_year" value="{{$opacs_books->publication_year}}" class="form-control">
             @else
                 <input type="text" name="publication_year" value="{{old('publication_year', $opacs_books->publication_year)}}" class="form-control">
-                @if ($errors && $errors->has('publication_year')) <div class="text-danger">{{$errors->first('publication_year')}}</div> @endif
+                @include('plugins.common.errors_inline', ['name' => 'publication_year'])
             @endif
         </div>
     </div>
@@ -175,7 +176,7 @@
                 <input type="text" name="class" value="{{$opacs_books->class}}" class="form-control">
             @else
                 <input type="text" name="class" value="{{old('class', $opacs_books->class)}}" class="form-control">
-                @if ($errors && $errors->has('class')) <div class="text-danger">{{$errors->first('class')}}</div> @endif
+                @include('plugins.common.errors_inline', ['name' => 'class'])
             @endif
         </div>
     </div>
@@ -187,7 +188,7 @@
                 <input type="text" name="size" value="{{$opacs_books->size}}" class="form-control">
             @else
                 <input type="text" name="size" value="{{old('size', $opacs_books->size)}}" class="form-control">
-                @if ($errors && $errors->has('size')) <div class="text-danger">{{$errors->first('size')}}</div> @endif
+                @include('plugins.common.errors_inline', ['name' => 'size'])
             @endif
         </div>
     </div>
@@ -199,7 +200,7 @@
                 <input type="text" name="page_number" value="{{$opacs_books->page_number}}" class="form-control">
             @else
                 <input type="text" name="page_number" value="{{old('page_number', $opacs_books->page_number)}}" class="form-control">
-                @if ($errors && $errors->has('page_number')) <div class="text-danger">{{$errors->first('page_number')}}</div> @endif
+                @include('plugins.common.errors_inline', ['name' => 'page_number'])
             @endif
         </div>
     </div>
@@ -211,7 +212,7 @@
                 <input type="text" name="marc" value="{{$opacs_books->marc}}" class="form-control">
             @else
                 <input type="text" name="marc" value="{{old('marc', $opacs_books->marc)}}" class="form-control">
-                @if ($errors && $errors->has('marc')) <div class="text-danger">{{$errors->first('marc')}}</div> @endif
+                @include('plugins.common.errors_inline', ['name' => 'marc'])
             @endif
         </div>
     </div>
@@ -225,7 +226,7 @@
                 <option value="3" @if(old('type', $opacs_books->type)=="3") selected @endif>3:雑誌</option>
                 <option value="4" @if(old('type', $opacs_books->type)=="4") selected @endif>4:ＡＶ</option>
             </select>
-            @if ($errors && $errors->has('type')) <div class="text-danger">{{$errors->first('type')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'type'])
         </div>
     </div>
 
@@ -239,7 +240,7 @@
                 <option value="3" @if(old('shelf', $opacs_books->shelf)=="3") selected @endif>3:研究室</option>
                 <option value="4" @if(old('shelf', $opacs_books->shelf)=="4") selected @endif>4:その他</option>
             </select>
-            @if ($errors && $errors->has('shelf')) <div class="text-danger">{{$errors->first('shelf')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'shelf'])
         </div>
     </div>
 
@@ -253,7 +254,7 @@
                 <option value="2" @if(old('lend_flag', $opacs_books->lend_flag)=="2") selected @endif>2:館内</option>
                 <option value="9" @if(old('lend_flag', $opacs_books->lend_flag)=="9") selected @endif>9:禁帯出</option>
             </select>
-            @if ($errors && $errors->has('lend_flag')) <div class="text-danger">{{$errors->first('lend_flag')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'lend_flag'])
         </div>
     </div>
 
@@ -265,7 +266,7 @@
                 <option value="0" @if(old('accept_flag', $opacs_books->accept_flag)=="0") selected @endif>0:購入</option>
                 <option value="1" @if(old('accept_flag', $opacs_books->accept_flag)=="1") selected @endif>1:寄贈</option>
             </select>
-            @if ($errors && $errors->has('accept_flag')) <div class="text-danger">{{$errors->first('accept_flag')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'accept_flag'])
         </div>
     </div>
 
@@ -278,16 +279,9 @@
                     <div class="input-group-text"><i class="far fa-clock"></i></div>
                 </div>
             </div>
-            @if ($errors && $errors->has('accept_date')) <div class="text-danger">{{$errors->first('accept_date')}}</div> @endif
-            <script type="text/javascript">
-                $(function () {
-                    $('#accept_date').datetimepicker({
-                        locale: 'ja',
-                        dayViewHeaderFormat: 'YYYY年 M月',
-                        format: 'YYYY/MM/DD'
-                    });
-                });
-            </script>
+            @include('plugins.common.errors_inline', ['name' => 'accept_date'])
+            {{-- DateTimePicker 呼び出し --}}
+            @include('plugins.common.datetimepicker', ['element_id' => 'accept_date', 'format' => 'yyyy/MM/dd', 'clock_icon' => false])
         </div>
     </div>
 
@@ -298,7 +292,7 @@
                 <input type="text" name="accept_price" value="{{$opacs_books->accept_price}}" class="form-control">
             @else
                 <input type="text" name="accept_price" value="{{old('accept_price', $opacs_books->accept_price)}}" class="form-control">
-                @if ($errors && $errors->has('accept_price')) <div class="text-danger">{{$errors->first('accept_price')}}</div> @endif
+                @include('plugins.common.errors_inline', ['name' => 'accept_price'])
             @endif
             <small class="form-text text-muted">※ "円"や"￥"の単位指定は不要。数値で入力してください。</small>
         </div>
@@ -313,16 +307,9 @@
                     <div class="input-group-text"><i class="far fa-clock"></i></div>
                 </div>
             </div>
-            @if ($errors && $errors->has('storage_life')) <div class="text-danger">{{$errors->first('storage_life')}}</div> @endif
-            <script type="text/javascript">
-                $(function () {
-                    $('#storage_life').datetimepicker({
-                        locale: 'ja',
-                        dayViewHeaderFormat: 'YYYY年 M月',
-                        format: 'YYYY/MM/DD'
-                    });
-                });
-            </script>
+            @include('plugins.common.errors_inline', ['name' => 'storage_life'])
+            {{-- DateTimePicker 呼び出し --}}
+            @include('plugins.common.datetimepicker', ['element_id' => 'storage_life', 'format' => 'yyyy/MM/dd', 'clock_icon' => false])
         </div>
     </div>
 
@@ -336,7 +323,7 @@
                 <option value="4" @if(old('remove_flag', $opacs_books->remove_flag)=="4") selected @endif>4:曝書不明</option>
                 <option value="5" @if(old('remove_flag', $opacs_books->remove_flag)=="5") selected @endif>5:その他</option>
             </select>
-            @if ($errors && $errors->has('remove_flag')) <div class="text-danger">{{$errors->first('remove_flag')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'remove_flag'])
         </div>
     </div>
 
@@ -349,16 +336,9 @@
                     <div class="input-group-text"><i class="far fa-clock"></i></div>
                 </div>
             </div>
-            @if ($errors && $errors->has('remove_date')) <div class="text-danger">{{$errors->first('remove_date')}}</div> @endif
-            <script type="text/javascript">
-                $(function () {
-                    $('#remove_date').datetimepicker({
-                        locale: 'ja',
-                        dayViewHeaderFormat: 'YYYY年 M月',
-                        format: 'YYYY/MM/DD'
-                    });
-                });
-            </script>
+            @include('plugins.common.errors_inline', ['name' => 'remove_date'])
+            {{-- DateTimePicker 呼び出し --}}
+            @include('plugins.common.datetimepicker', ['element_id' => 'remove_date', 'format' => 'yyyy/MM/dd', 'clock_icon' => false])
         </div>
     </div>
 
@@ -373,7 +353,7 @@
                 <option value="4" @if(old('possession', $opacs_books->possession)=="4") selected @endif>4:除籍</option>
                 <option value="5" @if(old('possession', $opacs_books->possession)=="5") selected @endif>5:不明本</option>
             </select>
-            @if ($errors && $errors->has('possession')) <div class="text-danger">{{$errors->first('possession')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'possession'])
         </div>
     </div>
 
@@ -385,7 +365,7 @@
                 <option value="1" @if(old('library', $opacs_books->library)=="1") selected @endif>1:横浜CP図書館</option>
                 <option value="2" @if(old('library', $opacs_books->library)=="2") selected @endif>2:箱根CP図書館</option>
             </select>
-            @if ($errors && $errors->has('library')) <div class="text-danger">{{$errors->first('library')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'library'])
         </div>
     </div>
 
@@ -398,16 +378,9 @@
                     <div class="input-group-text"><i class="far fa-clock"></i></div>
                 </div>
             </div>
-            @if ($errors && $errors->has('last_lending_date')) <div class="text-danger">{{$errors->first('last_lending_date')}}</div> @endif
-            <script type="text/javascript">
-                $(function () {
-                    $('#last_lending_date').datetimepicker({
-                        locale: 'ja',
-                        dayViewHeaderFormat: 'YYYY年 M月',
-                        format: 'YYYY/MM/DD'
-                    });
-                });
-            </script>
+            @include('plugins.common.errors_inline', ['name' => 'last_lending_date'])
+            {{-- DateTimePicker 呼び出し --}}
+            @include('plugins.common.datetimepicker', ['element_id' => 'last_lending_date', 'format' => 'yyyy/MM/dd', 'clock_icon' => false])
         </div>
     </div>
 
@@ -415,7 +388,7 @@
         <label class="col-md-2 control-label">貸出累計</label>
         <div class="col-md-10">
             <input type="text" name="total_lends" value="{{old('total_lends', $opacs_books->total_lends)}}" class="form-control">
-            @if ($errors && $errors->has('total_lends')) <div class="text-danger">{{$errors->first('total_lends')}}</div> @endif
+            @include('plugins.common.errors_inline', ['name' => 'total_lends'])
         </div>
     </div>
 
@@ -451,7 +424,7 @@
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
-                <form action="{{url('/')}}/plugin/opacs/destroy/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}#frame-{{$frame->id}}" method="POST">
+                <form action="{{url('/')}}/plugin/opacs/destroy/{{$page->id}}/{{$frame_id}}/{{$opacs_books->id}}#frame-{{$frame->id}}" method="post">
                     {{csrf_field()}}
                     <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>

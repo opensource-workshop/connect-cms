@@ -2,6 +2,7 @@
  * 課題管理 試験設定画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 課題管理プラグイン
 --}}
@@ -308,29 +309,10 @@
                                                 <div class="input-group-text @if ($errors->has('edit_entry_end_at.'.$examination->id)) border-danger @endif"><i class="far fa-clock"></i></div>
                                             </div>
                                         </div>
-
-                                        <script type="text/javascript">
-                                            $(function () {
-                                                $('#edit_start_at{{$examination->id}}').datetimepicker({
-                                                    locale: 'ja',
-                                                    sideBySide: true,
-                                                    dayViewHeaderFormat: 'YYYY年 M月',
-                                                    format: 'YYYY-MM-DD HH:mm'
-                                                });
-                                                $('#edit_end_at{{$examination->id}}').datetimepicker({
-                                                    locale: 'ja',
-                                                    sideBySide: true,
-                                                    dayViewHeaderFormat: 'YYYY年 M月',
-                                                    format: 'YYYY-MM-DD HH:mm'
-                                                });
-                                                $('#edit_entry_end_at{{$examination->id}}').datetimepicker({
-                                                    locale: 'ja',
-                                                    sideBySide: true,
-                                                    dayViewHeaderFormat: 'YYYY年 M月',
-                                                    format: 'YYYY-MM-DD HH:mm'
-                                                });
-                                            });
-                                        </script>
+                                        {{-- DateTimePicker 呼び出し --}}
+                                        @include('plugins.common.datetimepicker', ['element_id' => "edit_start_at{$examination->id}", 'side_by_side' => true])
+                                        @include('plugins.common.datetimepicker', ['element_id' => "edit_end_at{$examination->id}", 'side_by_side' => true])
+                                        @include('plugins.common.datetimepicker', ['element_id' => "edit_entry_end_at{$examination->id}", 'side_by_side' => true])
                                     </td>
                                     <td nowrap class="align-middle">
                                         <div class="custom-control custom-checkbox">
@@ -397,28 +379,10 @@
                 </div>
             </div>
         </div>
-        <script type="text/javascript">
-            $(function () {
-                $('#start_at').datetimepicker({
-                    locale: 'ja',
-                    sideBySide: true,
-                    dayViewHeaderFormat: 'YYYY年 M月',
-                    format: 'YYYY-MM-DD HH:mm'
-                });
-                $('#end_at').datetimepicker({
-                    locale: 'ja',
-                    sideBySide: true,
-                    dayViewHeaderFormat: 'YYYY年 M月',
-                    format: 'YYYY-MM-DD HH:mm'
-                });
-                $('#entry_end_at').datetimepicker({
-                    locale: 'ja',
-                    sideBySide: true,
-                    dayViewHeaderFormat: 'YYYY年 M月',
-                    format: 'YYYY-MM-DD HH:mm'
-                });
-            });
-        </script>
+        {{-- DateTimePicker 呼び出し --}}
+        @include('plugins.common.datetimepicker', ['element_id' => "start_at", 'side_by_side' => true])
+        @include('plugins.common.datetimepicker', ['element_id' => "end_at", 'side_by_side' => true])
+        @include('plugins.common.datetimepicker', ['element_id' => "entry_end_at", 'side_by_side' => true])
 
         <h5><span class="badge badge-secondary">問題設定</span></h5>
 

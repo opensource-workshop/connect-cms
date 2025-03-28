@@ -27,6 +27,4 @@
     placeholder="{{ __('messages.enter_same_email') }}"
     title="{{ __('messages.enter_same_email') }}"
 >
-@if ($errors && $errors->has("forms_columns_value.$form_obj->id"))
-    <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("forms_columns_value.$form_obj->id")}}</div>
-@endif
+@include('plugins.common.errors_inline', ['name' => "forms_columns_value.$form_obj->id"])

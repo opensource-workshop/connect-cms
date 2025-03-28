@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category コンテンツプラグイン
+ * @category ブログプラグイン
 --}}
 @php
 use App\Models\User\Blogs\BlogsPosts;
@@ -51,25 +51,16 @@ use App\Models\User\Blogs\BlogsPosts;
 
     <div class="form-group">
         <label class="control-label">投稿日時 <span class="badge badge-danger">必須</span></label>
-
         <div class="input-group date" id="posted_at" data-target-input="nearest">
-            <input type="text" name="posted_at" value="{{old('posted_at', $blogs_posts->posted_at)}}" class="form-control datetimepicker-input col-md-3 @if ($errors && $errors->has('posted_at')) border-danger @endif" data-target="#posted_at">
+            <input type="text" name="posted_at" value="{{old('posted_at', $blogs_posts->posted_at)}}" class="form-control datetimepicker-input col-xl-3 @if ($errors && $errors->has('posted_at')) border-danger @endif" data-target="#posted_at">
             <div class="input-group-append" data-target="#posted_at" data-toggle="datetimepicker">
                 <div class="input-group-text @if ($errors && $errors->has('posted_at')) border-danger @endif"><i class="far fa-clock"></i></div>
             </div>
         </div>
         @include('plugins.common.errors_inline', ['name' => 'posted_at'])
     </div>
-    <script type="text/javascript">
-        $(function () {
-            $('#posted_at').datetimepicker({
-                locale: 'ja',
-                sideBySide: true,
-                dayViewHeaderFormat: 'YYYY年 M月',
-                format: 'YYYY-MM-DD HH:mm'
-            });
-        });
-    </script>
+    {{-- DateTimePicker 呼び出し --}}
+    @include('plugins.common.datetimepicker', ['element_id' => 'posted_at', 'side_by_side' => true])
 
     <div class="form-group blog-input-important">
         <label class="control-label">重要記事</label>

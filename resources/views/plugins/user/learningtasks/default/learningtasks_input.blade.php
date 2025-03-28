@@ -2,6 +2,7 @@
  * 課題管理記事登録画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コンテンツプラグイン
 --}}
@@ -91,16 +92,8 @@
             @include('plugins.common.errors_inline', ['name' => 'posted_at'])
         </div>
     </div>
-    <script type="text/javascript">
-        $(function () {
-            $('#posted_at').datetimepicker({
-                locale: 'ja',
-                sideBySide: true,
-                dayViewHeaderFormat: 'YYYY年 M月',
-                format: 'YYYY-MM-DD HH:mm'
-            });
-        });
-    </script>
+    {{-- DateTimePicker 呼び出し --}}
+    @include('plugins.common.datetimepicker', ['element_id' => "posted_at", 'side_by_side' => true])
 
     {{-- delete: 「重要記事」は新着情報にのせる時のオプション項目。課題管理は新着情報に対応していないため、不要な項目のためコメントアウト
     <div class="form-group row">

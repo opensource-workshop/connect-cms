@@ -10,10 +10,8 @@
 @import '~@fortawesome/fontawesome-free/scss/regular';
 @import '~@fortawesome/fontawesome-free/scss/brands';
 
-// Tempusdominus-bootstrap-4
-// tempusdominus-bootstrap-4-build.sass内のImport bootstrap variablesがパス間違いのため、別ファイルにして修正
-// @import '~tempusdominus-bootstrap-4/src/sass/tempusdominus-bootstrap-4-build';
-@import 'tempusdominus-bootstrap-4-build';
+// Tempus Dominus Date/Time Picker
+@import '~@eonasdan/tempus-dominus/src/scss/tempus-dominus';
 
 // Connect-CMS
 //mixin

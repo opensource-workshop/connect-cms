@@ -12,24 +12,6 @@
 {{-- 管理画面メイン部分のコンテンツ section:manage_content で作ること --}}
 @section('manage_content')
 
-<script type="text/javascript">
-    let calendar_setting = {
-        @if (App::getLocale() == ConnectLocale::ja)
-            dayViewHeaderFormat: 'YYYY年 M月',
-        @endif
-        locale: '{{ App::getLocale() }}',
-        // 日時の両方入力
-        format: 'YYYY-MM-DD HH:mm:ss',
-        sideBySide: true
-    };
-
-    $(function () {
-        // 時計ボタン押下の設定
-        $('#start_created_at').datetimepicker(calendar_setting);
-        $('#end_created_at').datetimepicker(calendar_setting);
-    });
-</script>
-
 <div class="card">
     <div class="card-header p-0">
         {{-- 機能選択タブ --}}
@@ -88,6 +70,9 @@
                                     </div><!-- /.form-row -->
                                     @include('plugins.common.errors_inline', ['name' => 'app_log_search_condition.start_created_at'])
                                     @include('plugins.common.errors_inline', ['name' => 'app_log_search_condition.end_created_at'])
+                                    {{-- DateTimePicker 呼び出し --}}
+                                    @include('plugins.common.datetimepicker', ['element_id' => 'start_created_at', 'side_by_side' => true, 'format' => 'yyyy-MM-dd HH:mm:ss', 'seconds' => true])
+                                    @include('plugins.common.datetimepicker', ['element_id' => 'end_created_at', 'side_by_side' => true, 'format' => 'yyyy-MM-dd HH:mm:ss', 'seconds' => true])
 
                                 </div><!-- /.col-md-9 -->
                             </div><!-- /.row -->

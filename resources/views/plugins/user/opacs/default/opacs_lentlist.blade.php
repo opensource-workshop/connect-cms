@@ -2,6 +2,7 @@
  * 貸出中一覧画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category OPACプラグイン
  --}}
@@ -9,9 +10,8 @@
 
 @section("plugin_contents_$frame->id")
 
-{{-- ダウンロード用フォーム --}}
 <script type="text/javascript">
-    {{-- ダウンロードのsubmit JavaScript --}}
+    /** ダウンロードのsubmit JavaScript */
     function submit_download_shift_jis() {
         if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}で貸出累計をダウンロードします。\nよろしいですか？') ) {
             return;
@@ -26,25 +26,6 @@
         lent_download.character_code.value = '{{CsvCharacterCode::utf_8}}';
         lent_download.submit();
     }
-
-    /**
-     * 貸出期間（From）・貸出期間（To）ボタン押下
-     */
-    $(function () {
-        let calendar_setting = {
-            @if (App::getLocale() == ConnectLocale::ja)
-                dayViewHeaderFormat: 'YYYY年 M月',
-            @endif
-            locale: '{{ App::getLocale() }}',
-            format: 'YYYY-MM-DD',
-            timepicker:false
-        };
-
-        // 貸出期間（From）ボタン押下
-        $('#lent_term_from').datetimepicker(calendar_setting);
-        // 貸出期間（To）ボタン押下
-        $('#lent_term_to').datetimepicker(calendar_setting);
-    });
 </script>
 
 <div class="alert alert-info">
@@ -205,6 +186,7 @@
     <div class="card-header" id="frame-{{$frame->id}}-requestlist">貸出累計</div>
     <div class="card-body">
 
+        {{-- ダウンロード用フォーム --}}
         <form action="{{url('/')}}/download/plugin/opacs/downloadCsvLent/{{$page->id}}/{{$frame_id}}/{$opac_frame->opacs_id}" method="post" name="lent_download">
             {{ csrf_field() }}
             <input type="hidden" name="character_code" value="">
@@ -219,7 +201,7 @@
                             <div class="input-group date" id="lent_term_from" data-target-input="nearest">
                                 <input type="text" name="lent_term_from" value="{{ old('lent_term_from') }}" class="form-control datetimepicker-input @if ($errors && $errors->has('lent_term_from')) border-danger @endif" data-target="#lent_term_from">
                                 <div class="input-group-append" data-target="#lent_term_from" data-toggle="datetimepicker">
-                                    <div class="input-group-text"><i class="fas fa-clock"></i></div>
+                                    <div class="input-group-text"><i class="far fa-clock"></i></div>
                                 </div>
                             </div>
                         </div>
@@ -228,7 +210,7 @@
                             <div class="input-group date" id="lent_term_to" data-target-input="nearest">
                                 <input type="text" name="lent_term_to" value="{{ old('lent_term_to') }}" class="form-control datetimepicker-input @if ($errors && $errors->has('lent_term_to')) border-danger @endif" data-target="#lent_term_to">
                                 <div class="input-group-append" data-target="#lent_term_to" data-toggle="datetimepicker">
-                                    <div class="input-group-text"><i class="fas fa-clock"></i></div>
+                                    <div class="input-group-text"><i class="far fa-clock"></i></div>
                                 </div>
                             </div>
                         </div>
@@ -253,6 +235,9 @@
                             @include('plugins.common.errors_inline', ['name' => 'lent_term_from'])
                             @include('plugins.common.errors_inline', ['name' => 'lent_term_to'])
                             <small class="text-muted">期間は貸出データの作成日で絞ります。</small>
+                            {{-- DateTimePicker 呼び出し --}}
+                            @include('plugins.common.datetimepicker', ['element_id' => "lent_term_from", 'format' => 'yyyy-MM-dd', 'clock_icon' => false])
+                            @include('plugins.common.datetimepicker', ['element_id' => "lent_term_to", 'format' => 'yyyy-MM-dd', 'clock_icon' => false])
                         </div>
                     </div>
                 </div>
@@ -264,7 +249,7 @@
 
 <!-- 一覧へ戻る -->
 <div class="text-center">
-    <button type="button" class="btn btn-success" onclick="location.href='{{url('/')}}{{$page->getLinkUrl()}}'"><i class="fas fa-list"></i> 戻る</button>
+    <button type="button" class="btn btn-success" onclick="location.href='{{ url('/') . $page->getLinkUrl() . "#frame-{$frame->id}" }}'"><i class="fas fa-list"></i> 戻る</button>
 </div>
 
 @endsection

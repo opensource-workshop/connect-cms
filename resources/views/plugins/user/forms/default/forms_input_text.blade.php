@@ -10,6 +10,4 @@
     $value = $request->forms_columns_value[$form_obj->id] ?? null;
 @endphp
 <input name="forms_columns_value[{{$form_obj->id}}]" class="form-control" type="{{$form_obj->column_type}}" value="@if ($frame_id == $request->frame_id){{old('forms_columns_value.'.$form_obj->id, $value)}}@endif" placeholder="{{ $form_obj->place_holder }}" id="{{$label_id}}">
-@if ($errors && $errors->has("forms_columns_value.$form_obj->id"))
-    <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("forms_columns_value.$form_obj->id")}}</div>
-@endif
+@include('plugins.common.errors_inline', ['name' => "forms_columns_value.$form_obj->id"])
