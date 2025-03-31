@@ -32,7 +32,7 @@ class LearningtasksPosts extends Model
     /**
      * 使用設定を取得
      */
-    public function post_settings()
+    public function post_settings() // phpcs:ignore
     {
         return $this->hasMany(LearningtasksUseSettings::class, 'post_id', 'id');
     }

@@ -20,7 +20,7 @@ class Learningtasks extends Model
     /**
      * 使用設定を取得（科目の設定は除く）
      */
-    public function learningtask_settings()
+    public function learningtask_settings() // phpcs:ignore
     {
         // post_id = 0はバケツの設定となっている
         return $this->hasMany(LearningtasksUseSettings::class, 'learningtasks_id', 'id')->where('post_id', 0);
