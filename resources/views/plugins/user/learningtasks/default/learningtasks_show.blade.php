@@ -48,7 +48,7 @@
         <div id="data-management-{{$frame_id}}" class="collapse p-2 bg-light border border-light rounded mb-3">
             {{-- CSV出力 --}}
             <div class="form-group row">
-                <label class="col-sm-3 text-sm-right">CSV出力</label>
+                <label class="col-sm-3 text-sm-right">提出状況CSV</label>
                 <div class="col-sm-9">
                     <form action="{{url('/')}}/download/plugin/learningtasks/downloadCsvReport/{{$page->id}}/{{$frame_id}}/{{$post->id}}" name="csv_export{{$frame_id}}" method="GET">
                         <input type="hidden" id="csv-export-character-code{{$frame_id}}" name="character_code" value="{{CsvCharacterCode::sjis_win}}">
@@ -63,6 +63,9 @@
                                 <a class="dropdown-item" href="javascript:void(0);" onclick="downloadCsvReportShiftJis{{$frame_id}}();">ダウンロード（Shift-JIS）</a>
                                 <a class="dropdown-item" href="javascript:void(0);" onclick="downloadCsvReportUtf8{{$frame_id}}();">ダウンロード（UTF-8 BOM付）</a>
                             </div>
+                        </div>
+                        <div>
+                            <small class="text-info">複数回提出がある場合は、最後の提出内容を出力します。</small>
                         </div>
                         <script>
                             function downloadCsvReportShiftJis{{$frame_id}}() {
