@@ -193,7 +193,6 @@ class LearningtasksReportCsvExporterTest extends TestCase
         $this->assertEquals(null, $rows[2]['ファイルURL']);
         $this->assertEquals(null, $rows[2]['評価']);
         $this->assertEquals(null, $rows[2]['評価コメント']);
-
     }
 
     /**
