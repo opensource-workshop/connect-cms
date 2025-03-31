@@ -39,6 +39,46 @@
 
     {{-- 受講者選択：教員機能 --}}
     @if ($tool->isTeacher() || $tool->isLearningtaskAdmin())
+        {{-- CSV入出力機能 --}}
+        <div class="mb-2">
+            <button class="btn btn-success btn-sm" type="button" data-toggle="collapse" data-target="#data-management-{{$frame_id}}" aria-expanded="true" aria-controls="data-management-{{$frame_id}}">
+                データ管理
+            </button>
+        </div>
+        <div id="data-management-{{$frame_id}}" class="collapse p-2 bg-light border border-light rounded mb-3">
+            {{-- CSV出力 --}}
+            <div class="form-group row">
+                <label class="col-sm-3 text-sm-right">CSV出力</label>
+                <div class="col-sm-9">
+                    <form action="{{url('/')}}/download/plugin/learningtasks/downloadCsvReport/{{$page->id}}/{{$frame_id}}/{{$post->id}}" name="csv_export{{$frame_id}}" method="GET">
+                        <input type="hidden" id="csv-export-character-code{{$frame_id}}" name="character_code" value="{{CsvCharacterCode::sjis_win}}">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="downloadCsvReportShiftJis{{$frame_id}}();">
+                                <i class="fas fa-file-download"></i> ダウンロード
+                            </button>
+                            <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split btn-sm" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="sr-only">CSVの文字コードを選択する</span>
+                            </button>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="javascript:void(0);" onclick="downloadCsvReportShiftJis{{$frame_id}}();">ダウンロード（Shift-JIS）</a>
+                                <a class="dropdown-item" href="javascript:void(0);" onclick="downloadCsvReportUtf8{{$frame_id}}();">ダウンロード（UTF-8 BOM付）</a>
+                            </div>
+                        </div>
+                        <script>
+                            function downloadCsvReportShiftJis{{$frame_id}}() {
+                                document.getElementById('csv-export-character-code{{$frame_id}}').value='{{CsvCharacterCode::sjis_win}}';
+                                document.csv_export{{$frame_id}}.submit();
+                            }
+                            function downloadCsvReportUtf8{{$frame_id}}() {
+                                document.getElementById('csv-export-character-code{{$frame_id}}').value='{{CsvCharacterCode::utf_8}}';
+                                document.csv_export{{$frame_id}}.submit();
+                            }
+                        </script>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <h5><span class="badge badge-warning">評価中の受講者</span></h5>
         <div class="card mb-3 border-danger">
             <div class="card-body">

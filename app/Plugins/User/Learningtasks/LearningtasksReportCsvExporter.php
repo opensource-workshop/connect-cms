@@ -7,6 +7,9 @@ use App\Models\Common\Page;
 use App\Models\User\Learningtasks\LearningtasksPosts;
 use App\Models\User\Learningtasks\LearningtasksUsersStatuses;
 use App\Traits\Learningtasks\LearningtaskPostTrait;
+use App\User;
+use App\Utilities\Csv\CsvUtils;
+use App\Utilities\File\FileUtils;
 
 /**
  * 課題管理のレポート機能におけるCSVエクスポーター
@@ -19,6 +22,30 @@ class LearningtasksReportCsvExporter
     {
         $this->learningtask_post = LearningtasksPosts::findOrFail($learningtask_post_id);
         $this->page = Page::findOrFail($page_id);
+    }
+
+    /**
+     * CSVエクスポート
+     * @param string $site_url サイトURL
+     * @param string $character_code 文字コード
+     * @return \Illuminate\Http\Response CSVレスポンス
+     */
+    public function export($site_url, $character_code): \Illuminate\Http\Response
+    {
+        $header = $this->getHeaderColumns();
+        $rows = $this->getRows($site_url);
+        $csv_data = array_merge([$header], $rows);
+
+        $filename = FileUtils::toValidFilename($this->learningtask_post->post_title . '_レポート.csv');
+        $response_headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+
+        // データ
+        $csv_data = CsvUtils::getResponseCsvData($csv_data, $character_code);
+
+        return response()->make($csv_data, 200, $response_headers);
     }
 
     /**
@@ -107,5 +134,25 @@ class LearningtasksReportCsvExporter
         }
 
         return $rows;
+    }
+
+    /**
+     * ユーザーがCSVエクスポート可能かどうかを判定する
+     * @param User $user ユーザ
+     * @return bool エクスポート可能な場合はtrue、そうでない場合はfalse
+     */
+    public function canExport(User $user): bool
+    {
+        // 管理者であればエクスポート可能
+        if ($user->can('role_article_admin')) {
+            return true;
+        }
+
+        // 教員であればエクスポート可能
+        if ($this->fetchTeacherUsers()->contains($user)) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -10,6 +10,7 @@ use App\Models\User\Learningtasks\LearningtasksUsersStatuses;
 use App\Plugins\User\Learningtasks\LearningtasksReportCsvExporter;
 use App\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 
@@ -153,10 +154,9 @@ class LearningtasksReportCsvExporterTest extends TestCase
         // student3の提出と評価はなし
 
         // Mock fetchStudentUsers to return test students
-        // Create exporter instance
         $exporter = Mockery::mock(LearningtasksReportCsvExporter::class, [$learningtask_post->id, $page->id])->makePartial();
         $exporter->shouldReceive('isSettingEnabled')->andReturn(true);
-        $exporter->shouldReceive('fetchStudentUsers')->andReturn(collect([$student1, $student2, $student3]));
+        $exporter->shouldReceive('fetchStudentUsers')->andReturn(new EloquentCollection([$student1, $student2, $student3]));
 
         // Test getRows
         $site_url = 'http://example.com';
@@ -225,7 +225,7 @@ class LearningtasksReportCsvExporterTest extends TestCase
         // Mock fetchStudentUsers to return test students
         $exporter = Mockery::mock(LearningtasksReportCsvExporter::class, [$learningtask_post->id, $page->id])->makePartial();
         $exporter->shouldReceive('isSettingEnabled')->andReturn(false); // 設定を無効にする
-        $exporter->shouldReceive('fetchStudentUsers')->andReturn(collect([$student1]));
+        $exporter->shouldReceive('fetchStudentUsers')->andReturn(new EloquentCollection([$student1]));
 
         // Test getRows
         $site_url = 'http://example.com';
@@ -279,7 +279,7 @@ class LearningtasksReportCsvExporterTest extends TestCase
             ->with(LearningtaskUseFunction::use_report_evaluate)->andReturn(true); // 評価は有効
         $exporter->shouldReceive('isSettingEnabled')
             ->with(LearningtaskUseFunction::use_report_evaluate_comment)->andReturn(false); // 評価コメントは無効
-        $exporter->shouldReceive('fetchStudentUsers')->andReturn(collect([$student1]));
+        $exporter->shouldReceive('fetchStudentUsers')->andReturn(new EloquentCollection([$student1]));
 
         // Test getRows
         $site_url = 'http://example.com';
@@ -295,5 +295,119 @@ class LearningtasksReportCsvExporterTest extends TestCase
         $this->assertArrayNotHasKey('ファイルURL', $rows[0]); // ファイルURLは無効なので含まれない
         $this->assertArrayHasKey('評価', $rows[0]); // 評価は有効なので含まれる
         $this->assertArrayNotHasKey('評価コメント', $rows[0]); // 評価コメントは無効なので含まれない
+    }
+
+    /**
+     * canExport メソッドのテスト
+     *
+     * 管理者ユーザーがエクスポート可能であることを確認します。
+     */
+    public function testCanExportAsAdmin()
+    {
+        // Mock dependencies
+        $learningtask_post = LearningtasksPosts::factory()->create();
+        $page = Page::factory()->create();
+        // Mock admin user
+        $admin_user = Mockery::mock(User::class);
+        $admin_user->shouldReceive('can')->with('role_article_admin')->andReturn(true);
+
+        $exporter = new LearningtasksReportCsvExporter($learningtask_post->id, $page->id);
+
+        $this->assertTrue($exporter->canExport($admin_user));
+    }
+
+    /**
+     * canExport メソッドのテスト
+     *
+     * 教員ユーザーがエクスポート可能であることを確認します。
+     */
+    public function testCanExportAsTeacher()
+    {
+        // Mock dependencies
+        $learningtask_post = LearningtasksPosts::factory()->create();
+        $page = Page::factory()->create();
+        $teacher_user = User::factory()->create();
+
+        // Mock fetchTeacherUsers to include the teacher user
+        $exporter = Mockery::mock(LearningtasksReportCsvExporter::class, [$learningtask_post->id, $page->id])->makePartial();
+        $exporter->shouldReceive('fetchTeacherUsers')->andReturn(new EloquentCollection([$teacher_user]));
+
+        $this->assertTrue($exporter->canExport($teacher_user));
+    }
+
+    /**
+     * canExport メソッドのテスト
+     *
+     * 一般ユーザーがエクスポートできないことを確認します。
+     */
+    public function testCannotExportAsGuestUser()
+    {
+        // Mock dependencies
+        $learningtask_post = LearningtasksPosts::factory()->create();
+        $page = Page::factory()->create();
+        $guest_user = User::factory()->create();
+
+        // Mock fetchTeacherUsers to exclude the guest user
+        $exporter = Mockery::mock(LearningtasksReportCsvExporter::class, [$learningtask_post->id, $page->id])->makePartial();
+        $exporter->shouldReceive('fetchTeacherUsers')->andReturn(new EloquentCollection([]));
+
+        $this->assertFalse($exporter->canExport($guest_user));
+    }
+
+    /**
+     * export メソッドのテスト
+     *
+     * 正しいCSVレスポンスが返されることを確認します。
+     */
+    public function testExportWithValidData()
+    {
+        // Mock dependencies
+        $learningtask_post = LearningtasksPosts::factory()->create(['post_title' => 'Test/Task']);
+        $page = Page::factory()->create();
+
+        $exporter = Mockery::mock(LearningtasksReportCsvExporter::class, [$learningtask_post->id, $page->id])->makePartial();
+
+        // Mock methods
+        $exporter->shouldReceive('getHeaderColumns')->andReturn(['ログインID', 'ユーザ名', '提出日時']);
+        $exporter->shouldReceive('getRows')->with('http://example.com')->andReturn([
+            ['ログインID' => 'user1', 'ユーザ名' => 'User One', '提出日時' => '2023-01-01 12:00:00'],
+            ['ログインID' => 'user2', 'ユーザ名' => 'User Two', '提出日時' => '2023-01-02 12:00:00'],
+        ]);
+
+        // Call export
+        $response = $exporter->export('http://example.com', 'UTF-8');
+
+        // Verify response
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/csv', $response->headers->get('Content-Type'));
+        $this->assertEquals('attachment; filename="Test／Task_レポート.csv"', $response->headers->get('Content-Disposition'));
+        $this->assertEquals("\xEF\xBB\xBF\"ログインID\",\"ユーザ名\",\"提出日時\"\n\"user1\",\"User One\",\"2023-01-01 12:00:00\"\n\"user2\",\"User Two\",\"2023-01-02 12:00:00\"\n", $response->getContent());
+    }
+
+    /**
+     * export メソッドのテスト
+     *
+     * データが空の場合に正しいCSVレスポンスが返されることを確認します。
+     */
+    public function testExportWithEmptyData()
+    {
+        // Mock dependencies
+        $learningtask_post = LearningtasksPosts::factory()->create(['post_title' => 'Empty Task']);
+        $page = Page::factory()->create();
+
+        $exporter = Mockery::mock(LearningtasksReportCsvExporter::class, [$learningtask_post->id, $page->id])->makePartial();
+
+        // Mock methods
+        $exporter->shouldReceive('getHeaderColumns')->andReturn(['ログインID', 'ユーザ名', '提出日時']);
+        $exporter->shouldReceive('getRows')->with('http://example.com')->andReturn([]);
+
+        // Call export
+        $response = $exporter->export('http://example.com', 'UTF-8');
+
+        // Verify response
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/csv', $response->headers->get('Content-Type'));
+        $this->assertEquals('attachment; filename="Empty Task_レポート.csv"', $response->headers->get('Content-Disposition'));
+        $this->assertEquals("\xEF\xBB\xBF\"ログインID\",\"ユーザ名\",\"提出日時\"\n", $response->getContent());
     }
 }
