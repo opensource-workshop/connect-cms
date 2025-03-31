@@ -46,6 +46,14 @@ class LearningtasksPosts extends Model
     }
 
     /**
+     * 教員を取得する
+     */
+    public function teachers()
+    {
+        return $this->hasMany(LearningtasksUsers::class, 'post_id', 'id')->where('role_name', RoleName::teacher)->orderBy('user_id');
+    }
+
+    /**
      * リスト表示用タイトル
      * 改行を取り除いたもの。
      */

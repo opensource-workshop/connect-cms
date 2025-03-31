@@ -161,4 +161,58 @@ class LearningtaskPostTraitTest extends TestCase
         $this->assertEquals($user1->id, $students[0]->id);
         $this->assertEquals($user2->id, $students[1]->id);
     }
+
+    /**
+     * 教員ユーザーを取得するテスト
+     */
+    public function testFetchTeacherUsers()
+    {
+        // データ準備
+        // メンバーシップページを作成する
+        $page = Page::factory()->create(['membership_flag' => 1]);
+        // グループを作成し、ページロールを作成する
+        $group = Group::factory()->create();
+        $page_role = PageRole::factory()->create(['page_id' => $page->id, 'group_id' => $group->id]);
+
+        // 教員ユーザを4人作成する
+        // user1, user2, user3はグループに所属する = メンバーシップユーザとなる
+        // user4はグループに所属しない = メンバーシップユーザでない
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+        $user3 = User::factory()->create();
+        $user4 = User::factory()->create();
+        UsersRoles::factory()->create(['users_id' => $user1->id, 'target' => 'original_role', 'role_name' => RoleName::teacher]);
+        UsersRoles::factory()->create(['users_id' => $user2->id, 'target' => 'original_role', 'role_name' => RoleName::teacher]);
+        UsersRoles::factory()->create(['users_id' => $user3->id, 'target' => 'original_role', 'role_name' => RoleName::teacher]);
+        UsersRoles::factory()->create(['users_id' => $user4->id, 'target' => 'original_role', 'role_name' => RoleName::teacher]);
+        // グループにユーザを追加する
+        GroupUser::factory()->create(['group_id' => $group->id, 'user_id' => $user1->id]);
+        GroupUser::factory()->create(['group_id' => $group->id, 'user_id' => $user2->id]);
+        GroupUser::factory()->create(['group_id' => $group->id, 'user_id' => $user3->id]);
+
+        $learningtask = Learningtasks::factory()->create();
+        // 配置ページのメンバーシップユーザ全員
+        $learningtask_post_membership_teachers = LearningtasksPosts::factory()->create(['learningtasks_id' => $learningtask->id, 'teacher_join_flag' => 2]);
+        // 配置ページのメンバーシップユーザから選ぶ
+        $learningtask_post_teachers_selected = LearningtasksPosts::factory()->create(['learningtasks_id' => $learningtask->id, 'teacher_join_flag' => 3]);
+        LearningtasksUsers::factory()->create(['post_id' => $learningtask_post_teachers_selected->id, 'user_id' => $user1->id, 'role_name' => RoleName::teacher]);
+        LearningtasksUsers::factory()->create(['post_id' => $learningtask_post_teachers_selected->id, 'user_id' => $user2->id, 'role_name' => RoleName::teacher]);
+        // user3はメンバーシップユーザだが、選択されていない
+        // user4はメンバーシップユーザでないし、選択もされていない
+
+        // テスト実行
+        // 配置ページのメンバーシップユーザ全員
+        $this->setupTrait($learningtask_post_membership_teachers, $page);
+        $teachers = $this->trait->fetchTeacherUsers();
+        $this->assertCount(3, $teachers);
+        $this->assertEquals($user1->id, $teachers[0]->id);
+        $this->assertEquals($user2->id, $teachers[1]->id);
+        $this->assertEquals($user3->id, $teachers[2]->id);
+        // 配置ページのメンバーシップユーザから選ぶ
+        $this->setupTrait($learningtask_post_teachers_selected, $page);
+        $teachers = $this->trait->fetchTeacherUsers();
+        $this->assertCount(2, $teachers);
+        $this->assertEquals($user1->id, $teachers[0]->id);
+        $this->assertEquals($user2->id, $teachers[1]->id);
+    }
 }
