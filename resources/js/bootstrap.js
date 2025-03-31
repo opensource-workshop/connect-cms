@@ -65,6 +65,7 @@ import 'moment-timezone';
 
 // Tempus Dominus Date/Time Picker
 window.tempusDominus = require('@eonasdan/tempus-dominus');
+window.Popper = require('@popperjs/core');
 
 // Default SortableJS
 window.Sortable = require('sortablejs').default;
