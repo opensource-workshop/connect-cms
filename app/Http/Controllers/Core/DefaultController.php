@@ -63,8 +63,6 @@ class DefaultController extends ConnectController
      */
     public function __invoke(Request $request)
     {
-        // \Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
-
         // app\Http\Middleware\ConnectPage.php でセットした値
         $page = $request->attributes->get('page');
         $pages = $request->attributes->get('pages');
@@ -89,7 +87,6 @@ class DefaultController extends ConnectController
         }
 
         // フレーム一覧取得（メインエリアのみ）
-        // $frames = $this->getFramesMain($this->page->id);
         $frames = $this->getFramesMain($page->id);
 
         // プラグインのインスタンス取得（メインエリアのみ）
@@ -636,7 +633,6 @@ class DefaultController extends ConnectController
      */
     public function invokePost(Request $request, $plugin_name, $action = null, $page_id = null, $frame_id = null, $id = null)
     {
-        // dd($request->frame_id, $frame_id, $router);
         // app\Http\Middleware\ConnectPage.php でセットした値
         $page = $request->attributes->get('page');
         $pages = $request->attributes->get('pages');
@@ -655,31 +651,7 @@ class DefaultController extends ConnectController
         // // 現在のページが参照可能か判定して、NG なら403 ページを振り向ける。
         // $this->checkPageForbidden();
 
-// 親クラスで取得しているはず
-/*
-        if (empty($page_id)) {
-
-            // カレントページの取得
-            $this->page = $this->current_page();
-
-            // Page_id
-            $pages_id = $this->current_page->id;
-        }
-        else {
-
-            // page_id でPage テーブル検索
-            $this->current_page = Page::where('id', '=', $page_id)->first();
-            if (empty($this->current_page)) {
-                return view('404_not_found');
-            }
-
-            // Page_id
-            $pages_id = $page_id;
-        }
-*/
-
         // フレーム一覧取得
-        // $frames = $this->getFramesMain($this->page->id);
         $frames = $this->getFramesMain($page->id);
 
         // フレームとプラグインの一致をチェック
