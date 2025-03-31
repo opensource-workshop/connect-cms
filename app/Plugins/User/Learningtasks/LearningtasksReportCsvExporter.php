@@ -1,5 +1,7 @@
 <?php
 
+namespace App\Plugins\User\Learningtasks;
+
 use App\Enums\LearningtaskUseFunction;
 use App\Models\Common\Page;
 use App\Models\User\Learningtasks\LearningtasksPosts;
@@ -73,8 +75,8 @@ class LearningtasksReportCsvExporter
                 'ユーザ名' => $student->name,
             ];
 
-            $student_submits = $submits->where('user_id', $student->id)->sortBy('id', 'desc')->get();
-            $student_evaluations = $evaluations->where('user_id', $student->id)->sortBy('id', 'desc')->get();
+            $student_submits = $submits->where('user_id', $student->id)->sortByDesc('id');
+            $student_evaluations = $evaluations->where('user_id', $student->id)->sortByDesc('id');
 
             // 最後の提出と評価の組み合わせを出力する
             $last_submit = $student_submits->first();
@@ -90,7 +92,7 @@ class LearningtasksReportCsvExporter
             }
 
             if ($this->isSettingEnabled(LearningtaskUseFunction::use_report_file)) {
-                $row['ファイルURL'] = optional($last_submit)->upload_id ? $site_url . '/file/' . optional($last_submit)->file_id : null;
+                $row['ファイルURL'] = optional($last_submit)->upload_id ? $site_url . '/file/' . optional($last_submit)->upload_id : null;
             }
 
             if ($this->isSettingEnabled(LearningtaskUseFunction::use_report_evaluate)) {
