@@ -61,7 +61,8 @@ if (! isset($cc_configs)) {
     <script>Vue.config.devtools = true;</script>
 @endif
 
-    <!-- @popperjs/core Scripts(use Tempus Dominus Date/Time Picker) -->
+    {{-- (下記は Tempus Dominus Date/Time Pickerで使用。ディレクトリインストールで動作させるため、ここで読み込み) --}}
+    <!-- @popperjs/core Scripts -->
     <script src="{{ asset('js/707.js') }}?version={{ filemtime(public_path() . "/js/707.js") }}"></script>
 
     <!-- Connect-CMS Global CSS -->
