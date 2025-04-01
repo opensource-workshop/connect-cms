@@ -10,7 +10,9 @@
         "production": "mix --production"
     },
     "devDependencies": {
+        "@eonasdan/tempus-dominus": "^6.10.2",
         "@fortawesome/fontawesome-free": "^6.7.2",
+        "@popperjs/core": "^2.11.8",
         "axios": "^1.6.1",
         "bootstrap": "^4.0.0",
         "jquery": "^3.7.0",
@@ -23,7 +25,6 @@
         "sass": "^1.62.1",
         "sass-loader": "^12.6.0",
         "sortablejs": "^1.15.2",
-        "tempusdominus-bootstrap-4": "^5.39.2",
         "vue": "^2.5.7",
         "vue-loader": "^17.3.0",
         "vue-template-compiler": "^2.7.14"

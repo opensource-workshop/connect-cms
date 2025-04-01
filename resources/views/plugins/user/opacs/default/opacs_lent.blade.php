@@ -2,6 +2,7 @@
  * 書誌データ詳細画面（貸出部分）テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category OPACプラグイン
  --}}
@@ -44,19 +45,6 @@
                 {{$lent_error_message}}
             </div>
         @else
-            <script>
-                $(function () {
-                    /**
-                     * カレンダーボタン押下
-                     */
-                    $('#delivery_request_date{{$frame_id}}').datetimepicker({
-                        format: 'YYYY-MM-DD',
-                        timepicker:false,
-                        dayViewHeaderFormat: 'YYYY MMM',
-                    });
-                });
-            </script>
-
             <form action="{{url('/')}}/plugin/opacs/requestLent/{{$page->id}}/{{$frame_id}}/{{$opacs_books_id}}#frame-{{$frame_id}}" id="form_requestLent" name="form_requestLent" method="POST">
                 {{ csrf_field() }}
                 <div class="form-row">
@@ -136,6 +124,8 @@
                             </div>
                             @include('plugins.common.errors_inline', ['name' => 'delivery_request_date'])
                             <small class="text-muted">{{$opacs_configs['delivery_request_date_caption']}}</small>
+                            {{-- DateTimePicker 呼び出し --}}
+                            @include('plugins.common.datetimepicker', ['element_id' => "delivery_request_date{$frame_id}", 'format' => 'yyyy-MM-dd', 'clock_icon' => false])
                         </div>
                         <div class="form-group col-md-6">
                             <label class="control-label">配送希望時間</label> <label class="badge badge-danger">必須</label>
@@ -152,7 +142,7 @@
 
                 <div class="form-group form-row">
                     <div class="col-12 text-center">
-                        <button type="button" class="btn btn-success mr-3" onclick="location.href='{{url('/')}}{{$page->getLinkUrl()}}'"><i class="fas fa-list"></i> 一覧へ戻る</button>
+                        <button type="button" class="btn btn-success mr-3" onclick="location.href='{{ url('/') . $page->getLinkUrl() . "#frame-{$frame_id}" }}'"><i class="fas fa-list"></i> 一覧へ戻る</button>
                         <button type="button" class="btn btn-primary" onclick="javascript:form_requestLent.submit();"><i class="fas fa-check"></i> リクエストする</button>
                     </div>
                 </div>

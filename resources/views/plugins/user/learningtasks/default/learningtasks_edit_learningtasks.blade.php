@@ -2,6 +2,7 @@
  * 課題管理編集画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 課題管理プラグイン
 --}}
@@ -31,19 +32,6 @@
         @include('plugins.common.error_system_mail_setting')
     @endif
 @endif
-
-<script>
-    $(function () {
-        /**
-         * カレンダーボタン押下
-         */
-        $('#report_end_at{{$frame_id}}').datetimepicker({
-            format: 'YYYY-MM-DD HH:mm',
-            dayViewHeaderFormat: 'YYYY MMM',
-            sideBySide: true,
-        });
-    });
-</script>
 
 @if (!$learningtask->id && !$create_flag)
     {{-- idなし & 変更 = DB未選択&変更:初期表示 --}}
@@ -284,6 +272,8 @@
                     </div>
                 </div>
                 @include('plugins.common.errors_inline', ['name' => $old_function2])
+                {{-- DateTimePicker 呼び出し --}}
+                @include('plugins.common.datetimepicker', ['element_id' => $id_function2, 'side_by_side' => true])
             </div>
         </div>
 

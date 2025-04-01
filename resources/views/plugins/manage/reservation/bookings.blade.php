@@ -18,22 +18,6 @@
 </form>
 
 <script type="text/javascript">
-    let calendar_setting = {
-        @if (App::getLocale() == ConnectLocale::ja)
-            dayViewHeaderFormat: 'YYYY年 M月',
-        @endif
-        locale: '{{ App::getLocale() }}',
-        // 日時の両方入力
-        format: 'YYYY-MM-DD HH:mm',
-        sideBySide: true
-    };
-
-    $(function () {
-        // カレンダーボタン押下の設定
-        $('#start_datetime').datetimepicker(calendar_setting);
-        $('#end_datetime').datetimepicker(calendar_setting);
-    });
-
     /** ダウンロードのsubmit JavaScript */
     function submit_download_shift_jis() {
         if( !confirm('{{CsvCharacterCode::enum[CsvCharacterCode::sjis_win]}}で現在の絞り込み条件のユーザをダウンロードします。\nよろしいですか？') ) {
@@ -100,7 +84,7 @@
                                                 @endphp
                                                 <input type="text" name="app_reservation_search_condition[start_datetime]" value="{{$start_datetime}}" class="form-control datetimepicker-input" data-target="#start_datetime">
                                                 <div class="input-group-append" data-target="#start_datetime" data-toggle="datetimepicker">
-                                                    <div class="input-group-text"><i class="fas fa-calendar-alt"></i></div>
+                                                    <div class="input-group-text"><i class="far fa-clock"></i></div>
                                                 </div>
                                                 <div class="form-text pl-2">
                                                     ～
@@ -116,13 +100,16 @@
                                                 @endphp
                                                 <input type="text" name="app_reservation_search_condition[end_datetime]" value="{{$end_datetime}}" class="form-control datetimepicker-input" data-target="#end_datetime">
                                                 <div class="input-group-append" data-target="#end_datetime" data-toggle="datetimepicker">
-                                                    <div class="input-group-text"><i class="fas fa-calendar-alt"></i></div>
+                                                    <div class="input-group-text"><i class="far fa-clock"></i></div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div><!-- /.form-row -->
                                     @include('plugins.common.errors_inline', ['name' => 'app_reservation_search_condition.start_datetime'])
                                     @include('plugins.common.errors_inline', ['name' => 'app_reservation_search_condition.end_datetime'])
+                                    {{-- DateTimePicker 呼び出し --}}
+                                    @include('plugins.common.datetimepicker', ['element_id' => 'start_datetime', 'side_by_side' => true])
+                                    @include('plugins.common.datetimepicker', ['element_id' => 'end_datetime', 'side_by_side' => true])
 
                                 </div><!-- /.col-md-9 -->
                             </div><!-- /.row -->
