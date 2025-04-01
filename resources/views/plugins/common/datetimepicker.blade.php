@@ -10,6 +10,7 @@
     $element_id = $element_id ?? null;
     $side_by_side = $side_by_side ?? false;
     $format = $format ?? 'yyyy-MM-dd HH:mm';
+    $date = $date ?? true;
     $seconds = $seconds ?? false;
     $clock_icon = $clock_icon ?? true;
     $calendar_icon = $calendar_icon ?? true;
@@ -56,6 +57,9 @@
         display: {
             viewMode: '{{$view_mode}}',
             components: {
+                @if (!$date)
+                    date: false,
+                @endif
                 @if ($seconds)
                     seconds: true,
                 @endif
