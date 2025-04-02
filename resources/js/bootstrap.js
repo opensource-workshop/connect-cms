@@ -55,14 +55,6 @@ if (token) {
 // });
 
 
-/**
- * Load moment.js and tempusdominus-bootstrap-4
- */
-window.moment = require('moment');
-import 'moment/locale/ja';
-// require('tempusdominus-bootstrap-4');
-import 'moment-timezone';
-
 // Tempus Dominus Date/Time Picker
 window.tempusDominus = require('@eonasdan/tempus-dominus');
 // 下記でapp.jsに含めると、日付入力時に1度画面上部に飛ばされる動作をするため、含めない
