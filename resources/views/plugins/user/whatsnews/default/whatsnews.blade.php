@@ -1,7 +1,9 @@
 {{--
  * 新着情報表示画面
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 新着情報プラグイン
 --}}
@@ -93,7 +95,7 @@
     <template v-for="whatsnews in whatsnewses">
         {{-- 登録日時、カテゴリ --}}
         <dt v-if="view_posted_at == 1" v-bind:class="{ 'border-top': border == '1' }">
-            @{{ moment(whatsnews.posted_at).format('YYYY/MM/DD') }}
+            @{{ cc_format_date(whatsnews.posted_at) }}
             <span v-if="whatsnews.category != null && whatsnews.category != ''" :class="'badge cc_category_' + whatsnews.classname">@{{ whatsnews.category }}</span>
         </dt>
         {{-- タイトル＋リンク --}}
