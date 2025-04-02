@@ -110,7 +110,7 @@
             >
                 {{-- 登録日時 --}}
                 <div v-if="view_posted_at == 1" class="p-0 col-md-2 col-lg text-nowrap" style="display: contents;">
-                    <span class="mr-2">@{{ moment(whatsnews.posted_at).format('YYYY/MM/DD')}}</span>
+                    <span class="mr-2">@{{ cc_format_date(whatsnews.posted_at) }}</span>
                 </div>
                 {{-- カテゴリ --}}
                 <div v-if="whatsnews.category != null && whatsnews.category != ''" class="p-0 col-md-2 col-lg" style="display: contents;">

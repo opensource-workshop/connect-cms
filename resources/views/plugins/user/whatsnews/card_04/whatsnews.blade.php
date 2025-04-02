@@ -174,7 +174,7 @@
 
                         {{-- 登録日時 --}}
                         <dd v-if="view_posted_at == show" class="text-center whatsnew_posted_at">
-                            <span class="mr-2">@{{ moment(whatsnews.posted_at).format('YYYY/MM/DD')}}</span>
+                            <span class="mr-2">@{{ cc_format_date(whatsnews.posted_at) }}</span>
                         </dd>
 
                         {{-- 投稿者 --}}
