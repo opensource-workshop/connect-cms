@@ -54,7 +54,7 @@ class LearningtasksReportCsvExporter
      */
     public function getHeaderColumns(): array
     {
-        $header_columns = ['ログインID', 'ユーザ名', '提出日時'];
+        $header_columns = ['ログインID', 'ユーザ名', '提出日時', '提出回数'];
 
         // 本文
         if ($this->isSettingEnabled(LearningtaskUseFunction::use_report_comment)) {
@@ -113,6 +113,7 @@ class LearningtasksReportCsvExporter
                 $last_evaluation = $student_evaluations->first();
             }
             $row['提出日時'] = optional($last_submit)->created_at;
+            $row['提出回数'] = $student_submits->count();
 
             if ($this->isSettingEnabled(LearningtaskUseFunction::use_report_comment)) {
                 $row['本文'] = optional($last_submit)->comment;

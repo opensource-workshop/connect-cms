@@ -37,7 +37,7 @@ class LearningtasksReportCsvExporterTest extends TestCase
         $exporter->shouldReceive('isSettingEnabled')->andReturn(false);
         $exporter = new LearningtasksReportCsvExporter($learningtask_post->id, $page->id);
 
-        $this->assertEquals(['ログインID', 'ユーザ名', '提出日時'], $exporter->getHeaderColumns());
+        $this->assertEquals(['ログインID', 'ユーザ名', '提出日時', '提出回数'], $exporter->getHeaderColumns());
     }
 
     /**
@@ -55,7 +55,7 @@ class LearningtasksReportCsvExporterTest extends TestCase
         $exporter = Mockery::mock(LearningtasksReportCsvExporter::class, [$learningtask_post->id, $page->id])->makePartial();
         $exporter->shouldReceive('isSettingEnabled')->andReturn(true);
         $this->assertEquals(
-            ['ログインID', 'ユーザ名', '提出日時', '本文', 'ファイルURL', '評価', '評価コメント'],
+            ['ログインID', 'ユーザ名', '提出日時', '提出回数', '本文', 'ファイルURL', '評価', '評価コメント'],
             $exporter->getHeaderColumns()
         );
     }
@@ -83,7 +83,7 @@ class LearningtasksReportCsvExporterTest extends TestCase
             ->with(LearningtaskUseFunction::use_report_evaluate_comment)->andReturn(false);
 
         $this->assertEquals(
-            ['ログインID', 'ユーザ名', '提出日時', '本文', '評価'],
+            ['ログインID', 'ユーザ名', '提出日時', '提出回数', '本文', '評価'],
             $exporter->getHeaderColumns()
         );
     }
@@ -169,6 +169,7 @@ class LearningtasksReportCsvExporterTest extends TestCase
         $this->assertEquals('student1', $rows[0]['ログインID']);
         $this->assertEquals('Student One', $rows[0]['ユーザ名']);
         $this->assertEquals($submit1_student1->created_at, $rows[0]['提出日時']);
+        $this->assertEquals(1, $rows[0]['提出回数']);
         $this->assertEquals('Test comment1', $rows[0]['本文']);
         $this->assertEquals($site_url . '/file/1', $rows[0]['ファイルURL']);
         $this->assertEquals('A', $rows[0]['評価']);
@@ -179,6 +180,7 @@ class LearningtasksReportCsvExporterTest extends TestCase
         $this->assertEquals('student2', $rows[1]['ログインID']);
         $this->assertEquals('Student Two', $rows[1]['ユーザ名']);
         $this->assertEquals($submit2_student2->created_at, $rows[1]['提出日時']);
+        $this->assertEquals(2, $rows[1]['提出回数']);
         $this->assertEquals('submit again', $rows[1]['本文']);
         $this->assertEquals($site_url . '/file/3', $rows[1]['ファイルURL']);
         $this->assertEquals(null, $rows[1]['評価']);
@@ -189,6 +191,7 @@ class LearningtasksReportCsvExporterTest extends TestCase
         $this->assertEquals('student3', $rows[2]['ログインID']);
         $this->assertEquals('Student Three', $rows[2]['ユーザ名']);
         $this->assertEquals(null, $rows[2]['提出日時']);
+        $this->assertEquals(0, $rows[2]['提出回数']);
         $this->assertEquals(null, $rows[2]['本文']);
         $this->assertEquals(null, $rows[2]['ファイルURL']);
         $this->assertEquals(null, $rows[2]['評価']);
@@ -236,6 +239,7 @@ class LearningtasksReportCsvExporterTest extends TestCase
         $this->assertEquals('student1', $rows[0]['ログインID']);
         $this->assertEquals('Student One', $rows[0]['ユーザ名']);
         $this->assertEquals($submit1_student1->created_at, $rows[0]['提出日時']);
+        $this->assertEquals(1, $rows[0]['提出回数']);
         $this->assertArrayNotHasKey('本文', $rows[0]); // 本文は設定が無効なので含まれない
         $this->assertArrayNotHasKey('ファイルURL', $rows[0]); // ファイルURLは設定が無効なので含まれない
         $this->assertArrayNotHasKey('評価', $rows[0]); // 評価は設定が無効なので含まれない
@@ -290,6 +294,7 @@ class LearningtasksReportCsvExporterTest extends TestCase
         $this->assertEquals('student1', $rows[0]['ログインID']);
         $this->assertEquals('Student One', $rows[0]['ユーザ名']);
         $this->assertEquals($submit1_student1->created_at, $rows[0]['提出日時']);
+        $this->assertEquals(1, $rows[0]['提出回数']);
         $this->assertEquals('Test comment1', $rows[0]['本文']); // 本文は有効なので含まれる
         $this->assertArrayNotHasKey('ファイルURL', $rows[0]); // ファイルURLは無効なので含まれない
         $this->assertArrayHasKey('評価', $rows[0]); // 評価は有効なので含まれる
