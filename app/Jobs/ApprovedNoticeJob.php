@@ -10,7 +10,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class ApprovedNoticeJob implements ShouldQueue
@@ -56,9 +55,9 @@ class ApprovedNoticeJob implements ShouldQueue
         // 承認済み通知の 送信者メール,グループ,投稿者へ通知 から、通知するメールアドレス取得
         $approved_addresses = $bucket_mail->getApprovedEmailFromAddressesAndGroups($bucket_mail->approved_addresses, $bucket_mail->approved_groups, $this->created_id);
 
-        // エラーチェック（とりあえずデバックログに出力。管理画面で確認できるエラーテーブルに移すこと）
+        // エラーチェック
         if (empty($approved_addresses)) {
-            Log::debug("送信先メールアドレスの指定なし。buckets_id = " . $this->bucket->id);
+            $this->saveAppLog($bucket_mail->plugin_name, "送信メールアドレスなし。bucket_name = {$this->bucket->bucket_name} buckets_id = {$this->bucket->id}");
             return;
         }
 

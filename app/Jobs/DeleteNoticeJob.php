@@ -10,7 +10,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class DeleteNoticeJob implements ShouldQueue
@@ -29,6 +28,9 @@ class DeleteNoticeJob implements ShouldQueue
      */
     public $tries = 1;
 
+    /**
+     * @var \App\Models\Common\Buckets
+     */
     private $bucket = null;
     // change: $postは Eloquent モデルのため 物理削除時にキューで再取得できない。代わりに配列変数を使う。
     // private $post = null;
@@ -60,9 +62,9 @@ class DeleteNoticeJob implements ShouldQueue
         // 送信者メールとグループから、通知するメールアドレス取得
         $notice_addresses = $bucket_mail->getEmailFromAddressesAndGroups($bucket_mail->notice_addresses, $bucket_mail->notice_groups, $bucket_mail->notice_everyone);
 
-        // エラーチェック（とりあえずデバックログに出力。管理画面で確認できるエラーテーブルに移すこと）
+        // エラーチェック
         if (empty($notice_addresses)) {
-            Log::debug("送信メールアドレスなし。buckets_id = " . $this->bucket->id);
+            $this->saveAppLog($bucket_mail->plugin_name, "送信メールアドレスなし。bucket_name = {$this->bucket->bucket_name} buckets_id = {$this->bucket->id}");
             return;
         }
 
