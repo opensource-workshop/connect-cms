@@ -265,7 +265,7 @@
                     <td nowrap>{{$app_log->userid}}</td>
                     <td nowrap>{{$app_log->ip_address}}</td>
                     <td nowrap>{{$app_log->type}}</td>
-                    <td nowrap>{{$app_log->value}}</td>
+                    <td>{{$app_log->value}}</td>
                     <td nowrap>{{$app_log->method}}</td>
                     <td nowrap>{{$app_log->plugin_name}}</td>
                     <td nowrap>{{$app_log->route_name}}</th>
