@@ -1,7 +1,9 @@
 {{--
  * 新着情報表示画面（１行表示）
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 新着情報プラグイン
 --}}
@@ -110,7 +112,7 @@
             >
                 {{-- 登録日時 --}}
                 <div v-if="view_posted_at == 1" class="p-0 col-md-2 col-lg text-nowrap" style="display: contents;">
-                    <span class="mr-2">@{{ moment(whatsnews.posted_at).format('YYYY/MM/DD')}}</span>
+                    <span class="mr-2">@{{ cc_format_date(whatsnews.posted_at) }}</span>
                 </div>
                 {{-- カテゴリ --}}
                 <div v-if="whatsnews.category != null && whatsnews.category != ''" class="p-0 col-md-2 col-lg" style="display: contents;">
