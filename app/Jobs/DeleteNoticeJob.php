@@ -57,17 +57,16 @@ class DeleteNoticeJob implements ShouldQueue
         // buckets_mails の取得
         $bucket_mail = BucketsMail::firstOrNew(['buckets_id' => $this->bucket->id]);
 
-        // 現状(2024-10-03)、削除通知は「送信先メールアドレス」のみで通知している。
-        // エラーチェック（とりあえずデバックログに出力。管理画面で確認できるエラーテーブルに移すこと）
-        if (!$bucket_mail->notice_addresses) {
-            Log::debug("送信先メールアドレスの指定なし。buckets_id = " . $this->bucket->id);
-        }
+        // 送信者メールとグループから、通知するメールアドレス取得
+        $notice_addresses = $bucket_mail->getEmailFromAddressesAndGroups($bucket_mail->notice_addresses, $bucket_mail->notice_groups, $bucket_mail->notice_everyone);
 
-        // メール送信
-        $notice_addresses = explode(',', $bucket_mail->notice_addresses);
+        // エラーチェック（とりあえずデバックログに出力。管理画面で確認できるエラーテーブルに移すこと）
         if (empty($notice_addresses)) {
+            Log::debug("送信メールアドレスなし。buckets_id = " . $this->bucket->id);
             return;
         }
+
+        // *** メール送信
         foreach ($notice_addresses as $notice_address) {
             Mail::to($notice_address)->send(new DeleteNotice($this->notice_embedded_tags, $bucket_mail));
 
