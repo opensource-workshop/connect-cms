@@ -62,3 +62,9 @@ window.tempusDominus = require('@eonasdan/tempus-dominus');
 
 // Default SortableJS
 window.Sortable = require('sortablejs').default;
+
+// codemirror 5
+window.CodeMirror = require('codemirror');
+require('codemirror/mode/javascript/javascript');
+require('codemirror/mode/php/php');
+// codemirror/mode/java は公式になし
