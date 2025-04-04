@@ -68,7 +68,7 @@ window.CodeMirror = require('codemirror');
 // 言語モード
 require('codemirror/mode/javascript/javascript');
 require('codemirror/mode/php/php');
-// codemirror/mode/java は公式になし
+require('codemirror/mode/clike/clike'); // c, c++, java
 require('codemirror/mode/css/css');
 // プレースホルダー有効化
 require('codemirror/addon/display/placeholder.js');

@@ -79,8 +79,7 @@
     } elseif ($codestudy->study_lang == 'javascript') {
         $mode = 'javascript';
     } elseif ($codestudy->study_lang == 'java') {
-        // codemirror/mode/java は公式になし
-        $mode = 'javascript';
+        $mode = 'text/x-java';
     }
 @endphp
 @include('plugins.common.codemirror', ['element_id' => 'txt_editor', 'mode' => $mode])
