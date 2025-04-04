@@ -19,11 +19,11 @@ use App\Enums\CsvCharacterCode;
 use App\Plugins\User\UserPluginBase;
 
 /**
- * ブログプラグイン
+ * コードスタディプラグイン
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
- * @category コンテンツプラグイン
+ * @category コードスタディプラグイン
  * @package Contoroller
  */
 class CodestudiesPlugin extends UserPluginBase
