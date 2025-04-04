@@ -700,3 +700,8 @@ a.cc-cursor-text:hover {
 }
 .CodestudyLanguageVersion {
 }
+
+/* プレースホルダー */
+.CodeMirror pre.CodeMirror-placeholder {
+    color: #999;
+}

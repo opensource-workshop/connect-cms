@@ -2,6 +2,7 @@
  * テンプレート編集テンプレート
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category テーマ管理
  --}}
@@ -21,7 +22,7 @@
         <form action="{{url('/')}}/manage/theme/saveTemplate" method="POST">
             {{csrf_field()}}
             <input name="dir_name" type="hidden" value="{{$dir_name}}" />
-            <textarea name="template" class="form-control" rows=20
+            <textarea name="template" id="template" class="form-control" rows=20
                 placeholder="（例）&#13;
 templates : [&#13;
     {&#13;
@@ -38,6 +39,8 @@ templates : [&#13;
 <p>３行</p>`&#13;
     }&#13;
 ],">{{$template}}</textarea>
+            @include('plugins.common.codemirror', ['element_id' => 'template', 'mode' => 'javascript', 'height' => 500])
+
             <div class="form-group mt-3">
                 <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/manage/theme/'"><i class="fas fa-times"></i> キャンセル</button>
                 <button type="submit" class="btn btn-primary form-horizontal">
