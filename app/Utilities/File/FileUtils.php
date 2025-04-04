@@ -86,4 +86,28 @@ class FileUtils
             setlocale(LC_ALL, 'ja_JP.UTF-8');
         }
     }
+
+    /**
+     * ファイル名を有効なものに変換する
+     * Windowsで禁止されている半角文字を全角に変換
+     * @param string $filename
+     * @return string
+     * @see https://docs.microsoft.com/ja-jp/windows/win32/fileio/naming-a-file
+     */
+    public static function toValidFilename(string $filename): string
+    {
+        // Windowsで禁止されている半角文字を全角に変換
+        $invalid_chars = [
+            '<' => '＜',
+            '>' => '＞',
+            ':' => '：',
+            '"' => '”',
+            '/' => '／',
+            '\\' => '＼',
+            '|' => '｜',
+            '?' => '？',
+            '*' => '＊',
+        ];
+        return strtr($filename, $invalid_chars);
+    }
 }
