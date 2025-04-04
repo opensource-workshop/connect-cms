@@ -162,7 +162,9 @@
                             @if ($tool->checkFunction(LearningtaskUseFunction::use_report_file) || $tool->checkFunction(LearningtaskUseFunction::use_report_comment))
 
                                 <h5 class="mb-1"><span class="badge badge-secondary" for="status1">提出</span></h5>
-
+                                <div class="alert alert-info">
+                                    <span class="text-info submit-info-message">評価が確定するまでは提出内容を修正できます。提出済みの内容を修正する場合は、再度レポート提出を行ってください。</span>
+                                </div>
                                 <form action="{{url('/')}}/redirect/plugin/learningtasks/changeStatus1/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" name="form_status1" enctype="multipart/form-data">
                                     {{ csrf_field() }}
                                     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">

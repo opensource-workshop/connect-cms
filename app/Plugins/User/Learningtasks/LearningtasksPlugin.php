@@ -3031,6 +3031,11 @@ class LearningtasksPlugin extends UserPluginBase
             $this->sendMailLocal($post, $task_status, $tool, $student_user_id);
         }
 
+        // 評価前の再提出は、直前の提出の進捗ステータスを削除することで、提出の修正とする。
+        if ($task_status == 1 && $tool->shouldReviseReportSubmission($post->id)) {
+            $tool->prepareRevisingReportSubmission();
+        }
+
         // ユーザーの進捗ステータス保存
         LearningtasksUsersStatuses::create([
             'post_id'        => $post_id,
