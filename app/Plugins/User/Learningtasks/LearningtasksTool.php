@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 use App\Enums\DayOfWeek;
+use App\Enums\LearningtaskUseFunction;
 use App\Models\Common\PageRole;
 use App\Models\Common\GroupUser;
 use App\Models\Common\Page;
@@ -926,7 +927,9 @@ class LearningtasksTool
             }
             // D 評価がくれば再提出でtrue
             // 提出済みは締め切り前であれば修正可能
-            if ($report_status->task_status == 1) {
+            if ($report_status->task_status == 1 && !$this->checkFunction(LearningtaskUseFunction::use_report_revising)) {
+                $can_report_upload = array(false, '提出済みのため、現在は提出できません。');
+            } elseif ($report_status->task_status == 1 && $this->checkFunction(LearningtaskUseFunction::use_report_revising)) {
                 $can_report_upload = $this->checkReportUploadDeadline($can_report_upload);
             } elseif ($report_status->task_status == 2 && $report_status->grade == 'D') {
                 $can_report_upload = array(true, '再提出が必要');
