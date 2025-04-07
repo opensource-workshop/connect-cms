@@ -1050,13 +1050,14 @@ class PageManage extends ManagePluginBase
         }
 
         // グループの取得
+        // ※ with('group_user')は、数万ユーザの場合、1Gでもメモリ不足になる。
         $groups = Group::orderBy('display_sequence', 'asc')->get();
 
-        // グループ参加ユーザ
-        $users = User::whereIn('id', GroupUser::pluck('user_id')->unique())->get();
-
         foreach ($groups as $group) {
-            $group->group_user_names = $users->whereIn('id', $group->group_user->pluck('user_id'))->pluck('name')->implode('<br />');
+            // 数万ユーザでメモリ不足になるため、DB呼び出し
+            $group->group_user_names = User::whereIn('id', GroupUser::where('group_id', $group->id)->pluck('user_id'))
+                ->pluck('name')
+                ->implode('<br />');
         }
 
         // 管理画面プラグインの戻り値の返し方
