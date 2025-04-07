@@ -21,32 +21,37 @@
                 @endif
                 </li>
                 <li role="presentation" class="nav-item">
-                @if ($function == "generate")
+                @if ($function == "generateIndex")
                     <span class="nav-link"><span class="active">カスタムテーマ生成</span></span>
                 @else
                     <a href="{{url('/manage/theme/generateIndex')}}" class="nav-link">カスタムテーマ生成</a></li>
                 @endif
                 </li>
-                <li role="presentation" class="nav-item">
                 @if ($function == "editCss")
-                    <span class="nav-link"><span class="active">CSS編集</span></span>
+                    <li role="presentation" class="nav-item">
+                        <span class="nav-link"><span class="active">CSS編集</span></span>
+                    </li>
                 @endif
-                </li>
-                <li role="presentation" class="nav-item">
                 @if ($function == "editJs")
-                    <span class="nav-link"><span class="active">JavaScript編集</span></span>
+                    <li role="presentation" class="nav-item">
+                        <span class="nav-link"><span class="active">JavaScript編集</span></span>
+                    </li>
                 @endif
-                </li>
-                <li role="presentation" class="nav-item">
-                @if ($function == "editName")
-                    <span class="nav-link"><span class="active">テーマ名編集</span></span>
-                @endif
-                </li>
-                <li role="presentation" class="nav-item">
                 @if ($function == "listImages")
-                    <span class="nav-link"><span class="active">画像管理</span></span>
+                    <li role="presentation" class="nav-item">
+                        <span class="nav-link"><span class="active">画像管理</span></span>
+                    </li>
                 @endif
-                </li>
+                @if ($function == "editTemplate")
+                    <li role="presentation" class="nav-item">
+                        <span class="nav-link"><span class="active">テンプレート編集</span></span>
+                    </li>
+                @endif
+                @if ($function == "editName")
+                    <li role="presentation" class="nav-item">
+                        <span class="nav-link"><span class="active">テーマ名編集</span></span>
+                    </li>
+                @endif
             </ul>
         </div>
     </nav>
