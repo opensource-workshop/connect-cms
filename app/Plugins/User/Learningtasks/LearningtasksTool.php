@@ -1611,4 +1611,22 @@ class LearningtasksTool
             $last_submission->delete();
         }
     }
+
+    /**
+     * 削除された提出内容を取得
+     */
+    public function fetchDeletedSubmissions(): Collection
+    {
+        $query = LearningtasksUsersStatuses::onlyTrashed()
+            ->where('task_status', 1)
+            ->where('user_id', $this->student_id)
+            ->orderBy('id', 'asc');
+
+        // ログインユーザが学生の場合は自身で削除した提出内容のみ
+        if ($this->isStudent()) {
+            $query->where('user_id', $this->student_id);
+        }
+
+        return $query->get();
+    }
 }

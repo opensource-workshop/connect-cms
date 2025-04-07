@@ -1122,6 +1122,7 @@ class LearningtasksPlugin extends UserPluginBase
             'examination_files' => $examination_files,
             'examinations' => $examinations,
             'tool' => $tool,
+            'deleted_submissions' => $tool->fetchDeletedSubmissions(),
         ]);
     }
 
