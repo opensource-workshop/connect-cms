@@ -750,12 +750,13 @@ class PageManage extends ManagePluginBase
             ->orderBy('group_id', 'asc')
             ->get();
 
-        // グループ参加ユーザ
-        $users = User::whereIn('id', GroupUser::pluck('user_id')->unique())->get();
-
         foreach ($groups as $group) {
             $group->page_roles = $page_roles->where('group_id', $group->id);
-            $group->group_user_names = $users->whereIn('id', $group->group_user->pluck('user_id'))->pluck('name')->implode(', ');
+
+            // 数万ユーザでメモリ不足になるため、DB呼び出し
+            $group->group_user_names = User::whereIn('id', GroupUser::where('group_id', $group->id)->pluck('user_id'))
+                ->pluck('name')
+                ->implode(', ');
         }
 
         // 自分のページから親を遡って取得
