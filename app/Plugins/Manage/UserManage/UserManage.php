@@ -25,6 +25,7 @@ use App\Plugins\Manage\ManagePluginBase;
 use App\Rules\CustomValiUserEmailUnique;
 use App\Rules\CustomValiEmails;
 use App\Rules\CustomValiCsvExistsName;
+use App\Rules\CustomValiLoginIdAndPasswordDoNotMatch;
 use App\Traits\ConnectMailTrait;
 use App\User;
 use App\Utilities\Csv\CsvUtils;
@@ -845,8 +846,14 @@ class UserManage extends ManagePluginBase
                 // ログインID
                 'userid'         => ['required', 'max:255', Rule::unique('users', 'userid')->ignore($id)],
                 'email'          => ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($request->columns_set_id, $id)],
-                'password'       => 'nullable|string|min:6|confirmed',
-                'status'         => 'required',
+                'password'       => [
+                    'nullable',
+                    'string',
+                    'min:6',
+                    'confirmed',
+                    new CustomValiLoginIdAndPasswordDoNotMatch($request->userid, UsersColumns::getLabelLoginId($users_columns)),
+                ],
+                'status'         => ['required'],
                 'columns_set_id' => ['required'],
             ],
             'message' => [
