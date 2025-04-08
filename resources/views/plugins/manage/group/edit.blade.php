@@ -167,8 +167,8 @@
                             <tr>
                                 <td>{{$group_user->user_name}}</td>
                                 {{-- <td>{{GroupType::getDescription($group_user->group_role)}}</td> --}}
-                                <td>{{$group_user->created_at->format('Y/m/d')}}</td>
-                                <td>{{$group_user->updated_at->format('Y/m/d')}}</td>
+                                <td>{{ optional($group_user->created_at)->format('Y/m/d') }}</td>
+                                <td>{{ optional($group_user->updated_at)->format('Y/m/d') }}</td>
                                 <td>
                                     <button type="button" class="btn btn-danger btn-sm" onclick="removeUser({{$group_user->user_id}}, '{{$group_user->user_name}}');">
                                         <i class="fas fa-trash-alt"></i>

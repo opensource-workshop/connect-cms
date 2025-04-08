@@ -1964,6 +1964,8 @@ trait MigrationTrait
                     'group_id'   => $group->id,
                     'user_id'    => $user_id,
                     'group_role' => 'general',
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s'),
                 ];
             }
             // バルクINSERT
