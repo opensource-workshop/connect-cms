@@ -2,21 +2,24 @@
 
 namespace Tests\Browser\Manage;
 
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Illuminate\Support\Facades\Artisan;
-use Laravel\Dusk\Browser;
-use Tests\DuskTestCase;
-
 use App\Models\Core\Configs;
-use App\User;
 use App\Models\Core\UsersColumns;
 use App\Models\Core\UsersColumnsSelects;
 use App\Models\Core\UsersInputCols;
 use App\Models\Core\UsersLoginHistories;
 use App\Models\Core\UsersRoles;
+use App\User;
+use Illuminate\Support\Facades\Artisan;
+use Laravel\Dusk\Browser;
+use Tests\DuskTestCase;
 
 /**
+ * ユーザ管理テスト
+ *
  * > tests\bin\connect-cms-test.bat
+ *
+ * @see https://github.com/opensource-workshop/connect-cms/wiki/Dusk#テスト実行 [How to test]
+ * @see \Tests\Browser\Manage\GroupManageTest 実行後に実行すること（グループが作成される）
  */
 class UserManageTest extends DuskTestCase
 {
