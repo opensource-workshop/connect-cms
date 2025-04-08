@@ -100,6 +100,7 @@ class LearningtasksPlugin extends UserPluginBase
             'listGrade',
             'switchUserUrl',
             'importExaminations',
+            'downloadCsvReport',
         ];
         $functions['post'] = [
             'saveMail',
@@ -169,6 +170,7 @@ class LearningtasksPlugin extends UserPluginBase
         $role_check_table["changeStatus6"]    = array('role_guest');
         $role_check_table["changeStatus7"]    = array('role_guest');
         $role_check_table["changeStatus8"]    = array('role_guest');
+        $role_check_table["downloadCsvReport"] = array('role_article_admin', 'role_guest');
         return $role_check_table;
     }
 
@@ -3595,6 +3597,27 @@ class LearningtasksPlugin extends UserPluginBase
             }
         }
         return [false, '提出関係のファイルに対する権限なし'];
+    }
+
+    /**
+    * レポートの提出・評価をCSV形式でダウンロード
+    */
+    public function downloadCsvReport($request, $page_id, $frame_id, $post_id)
+    {
+        $learning_post = $this->getPost($post_id);
+        if (empty($learning_post->id)) {
+            return $this->viewError("404_inframe", null, 'post_idがありません。');
+        }
+
+        $exporter = new LearningtasksReportCsvExporter($learning_post->id, $page_id);
+
+        // 教員か管理者のみダウンロード可能
+        if (!$exporter->canExport(Auth::user())) {
+            return $this->viewError("403_inframe", null, 'CSVエクスポートの権限がありません。');
+        }
+
+        // CSV出力
+        return $exporter->export(url('/'), $request->character_code);
     }
 
     // delete: 権限設定廃止のためコメントアウト
