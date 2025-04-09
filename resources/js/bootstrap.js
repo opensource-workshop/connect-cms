@@ -55,13 +55,20 @@ if (token) {
 // });
 
 
-/**
- * Load moment.js and tempusdominus-bootstrap-4
- */
-window.moment = require('moment');
-import 'moment/locale/ja';
-require('tempusdominus-bootstrap-4');
-import 'moment-timezone';
+// Tempus Dominus Date/Time Picker
+window.tempusDominus = require('@eonasdan/tempus-dominus');
+// 下記でapp.jsに含めると、日付入力時に1度画面上部に飛ばされる動作をするため、含めない
+// window.Popper = require('@popperjs/core');
 
 // Default SortableJS
 window.Sortable = require('sortablejs').default;
+
+// --- codemirror 5
+window.CodeMirror = require('codemirror');
+// 言語モード
+require('codemirror/mode/javascript/javascript');
+require('codemirror/mode/php/php');
+require('codemirror/mode/clike/clike'); // c, c++, java
+require('codemirror/mode/css/css');
+// プレースホルダー有効化
+require('codemirror/addon/display/placeholder.js');

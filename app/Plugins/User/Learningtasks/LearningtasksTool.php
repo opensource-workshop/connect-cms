@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use App\Enums\DayOfWeek;
 use App\Models\Common\PageRole;
 use App\Models\Common\GroupUser;
+use App\Models\Common\Page;
 use App\Models\Core\UsersRoles;
 use App\Models\User\Learningtasks\LearningtasksConfigs;
 use App\Models\User\Learningtasks\LearningtasksUsers;
@@ -81,6 +82,11 @@ use Carbon\Carbon;
  */
 class LearningtasksTool
 {
+    /**
+     * ページ
+     */
+    private $page = null;
+
     /**
      * 課題バケツ
      */
@@ -157,6 +163,7 @@ class LearningtasksTool
         $this->examination_statuses = new Collection();
         $this->evaluate_statuses = new Collection();
 
+        $this->page = Page::findOrFail($page_id);
         $this->learningtask = $learningtask;
         $this->post = $post;
 
@@ -249,8 +256,9 @@ class LearningtasksTool
             if ($this->post->student_join_flag == 2) {
                 // 配置ページのメンバーシップユーザ全員
                 // ページから参加グループ取得
+                $membership_page = $this->page->getInheritMembershipPage();
                 $group_ids = PageRole::select('group_id')
-                                     ->where('page_id', $page_id)
+                                     ->where('page_id', optional($membership_page)->id)
                                      ->groupBy('group_id')
                                      ->orderBy('group_id')
                                      ->get();
@@ -667,6 +675,31 @@ class LearningtasksTool
                 return true;
             }
         }
+        return false;
+    }
+
+    /**
+     * 課題の履歴に関するファイルをダウンロードできるか
+     */
+    public function canDownloadStatusFile(LearningtasksUsersStatuses $learningtasks_users_status)
+    {
+        // 管理者は常にダウンロード可能
+        if ($this->isLearningtaskAdmin()) {
+            return true;
+        }
+
+        // 課題の教員であればダウンロード可能
+        if ($this->isTeacher() && $this->teachers->where('id', $this->getUserId())->isNotEmpty()) {
+            return true;
+        }
+
+        // 学生は自身の履歴であればダウンロード可能
+        if ($this->isStudent()
+            && $this->students->where('id', $this->getUserId())->isNotEmpty()
+            && $learningtasks_users_status->user_id == $this->getUserId()) {
+            return true;
+        }
+
         return false;
     }
 

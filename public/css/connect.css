@@ -125,16 +125,34 @@ a.cc-icon-external:after {
     margin: 0 0 3px 5px;
 }
 
-/* datepicker
+/* Tempus Dominus Date/Time Picker
 ------------------------------------- */
-/* datepickerの土日 */
-.datepicker-days th.dow:first-child,
-.datepicker-days td:first-child {
+/* DateTimePickerの土日 */
+.date-container-days div.dow {
+    color: #000 !important;
+    font-weight: bold;
+}
+.date-container-days div.dow:first-child {
+    color: #c42626 !important;
+}
+.date-container-days div.dow:nth-child(7) {
+    color: #005dbf !important;
+}
+.date-container-days div.day.weekend {
     color: #c42626;
 }
-.datepicker-days th.dow:last-child,
-.datepicker-days td:last-child {
+.date-container-days div.day:nth-child(7n) {
     color: #005dbf;
+}
+.date-container-days div.day.old.weekend,
+.date-container-days div.day.new.weekend {
+    color: #00000060;
+}
+
+/* sideBySideの時間を縦中央表示 */
+.tempus-dominus-widget.timepicker-sbs .td-row {
+    display: flex;
+    align-items: center;
 }
 
 /*  プラグイン追加
@@ -668,4 +686,22 @@ a.cc-cursor-text:hover {
 @keyframes blink {
     0% {opacity: 0;}
     100% {opacity: 1;}
+}
+
+/* CodeMirror 5
+------------------------------------- */
+.CodeMirror {
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+}
+.CodestudyLanguageVersionFrame {
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+}
+.CodestudyLanguageVersion {
+}
+
+/* プレースホルダー */
+.CodeMirror pre.CodeMirror-placeholder {
+    color: #999;
 }

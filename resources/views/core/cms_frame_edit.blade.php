@@ -58,7 +58,7 @@
 </div>
 
 <div class="card-body frame-setting-body">
-    <form action="{{url('/')}}/core/frame/update/{{$page->id}}/{{ $frame->frame_id }}" name="form_{{ $frame->frame_id }}_setting" method="POST">
+    <form action="{{url('/')}}/core/frame/update/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame->frame_id}}" name="form_{{$frame->frame_id}}_setting" method="post">
         {{ csrf_field() }}
         @include('plugins.common.errors_form_line')
         <h5><span class="badge badge-secondary">デザイン設定</span></h5>
@@ -219,22 +219,16 @@
                         class="form-control datetimepicker-input {{ $errors->has('content_open_date_from') ? ' border-danger' : '' }}"
                         data-target="#content_open_date_from"
                         placeholder="YYYY-MM-DD hh:mm:ss"
-                        :readonly="v_content_open_type != {{ ContentOpenType::limited_open }}"
+                        :disabled="v_content_open_type != {{ ContentOpenType::limited_open }}"
                     >
                     <div class="input-group-append" data-target="#content_open_date_from" data-toggle="datetimepicker">
                         <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
+                @include('plugins.common.errors_inline', ['name' => 'content_open_date_from', 'class' => $text_muted_col_class])
                 <small class="{{$text_muted_col_class}} text-muted">
                     ※右のボタンからカレンダー入力も可能です。
                 </small>
-                @if ($errors && $errors->has('content_open_date_from'))
-                    <label class="{{$frame->getSettingLabelClass(true)}}"></label>
-                    <div class="text-danger" style="padding-left:15px;">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        {{$errors->first('content_open_date_from')}}
-                    </div>
-                @endif
             </div>
             {{-- 公開日時To --}}
             <div class="form-group row">
@@ -248,22 +242,16 @@
                         class="form-control datetimepicker-input {{ $errors->has('content_open_date_to') ? ' border-danger' : '' }}"
                         data-target="#content_open_date_to"
                         placeholder="YYYY-MM-DD hh:mm:ss"
-                        :readonly="v_content_open_type != {{ ContentOpenType::limited_open }}"
+                        :disabled="v_content_open_type != {{ ContentOpenType::limited_open }}"
                     >
                     <div class="input-group-append" data-target="#content_open_date_to" data-toggle="datetimepicker">
                         <div class="input-group-text"><i class="far fa-clock"></i></div>
                     </div>
                 </div>
+                @include('plugins.common.errors_inline', ['name' => 'content_open_date_to', 'class' => $text_muted_col_class])
                 <small class="{{$text_muted_col_class}} text-muted">
                     ※右のボタンからカレンダー入力も可能です。
                 </small>
-                @if ($errors && $errors->has('content_open_date_to'))
-                    <label class="{{$frame->getSettingLabelClass(true)}}"></label>
-                    <div class="text-danger" style="padding-left:15px;">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        {{$errors->first('content_open_date_to')}}
-                    </div>
-                @endif
             </div>
 
         {{-- このページのみ表示するチェック。メインエリアはもともとページ内のみなので対象外 --}}
@@ -352,28 +340,8 @@
         v_content_open_type: content_open_type
       }
     })
-
-    $(function () {
-        // 公開日時Fromのpicker
-        $('#content_open_date_from').datetimepicker({
-            locale: 'ja',
-            sideBySide: true,
-            dayViewHeaderFormat: 'YYYY年 M月',
-            format: 'YYYY-MM-DD HH:mm:ss'
-        });
-
-        // 公開日時Toのpicker
-        $('#content_open_date_to').datetimepicker({
-            locale: 'ja',
-            sideBySide: true,
-            dayViewHeaderFormat: 'YYYY年 M月',
-            format: 'YYYY-MM-DD HH:mm:ss'
-        });
-
-        // 初期非表示の場合、日時入力をreadonlyにする（初期表示vueでdatetimepickerのinputをreadonlyしているが、datetimepicker側で強制解除されるため追加対応）
-        if (content_open_type != '{{ ContentOpenType::limited_open }}') {
-            $("#content_open_date_from_input").attr("readonly", "readonly");
-            $("#content_open_date_to_input").attr("readonly", "readonly");
-        }
-    });
 </script>
+
+{{-- DateTimePicker 呼び出し --}}
+@include('plugins.common.datetimepicker', ['element_id' => 'content_open_date_from', 'side_by_side' => true, 'format' => 'yyyy-MM-dd HH:mm:ss', 'seconds' => true])
+@include('plugins.common.datetimepicker', ['element_id' => 'content_open_date_to', 'side_by_side' => true, 'format' => 'yyyy-MM-dd HH:mm:ss', 'seconds' => true])

@@ -15,33 +15,12 @@
 
 @if (empty($setting_error_messages))
 
-    <script type="text/javascript">
-        /**
-         * 公開日時のカレンダーボタン押下
-         */
-        $(function () {
-            $('#posted_at{{$frame_id}}, #expires_at{{$frame_id}}').datetimepicker({
-                @if (App::getLocale() == ConnectLocale::ja)
-                    dayViewHeaderFormat: 'YYYY年 M月',
-                @endif
-                locale: '{{ App::getLocale() }}',
-                sideBySide: true,
-                format: 'YYYY-MM-DD HH:mm'
-            });
-        });
-    </script>
-
     @if (isset($id))
     <form action="{{URL::to('/')}}/plugin/databases/publicConfirm/{{$page->id}}/{{$frame_id}}/{{$id}}#frame-{{$frame_id}}" name="database_add_column{{$frame_id}}" method="POST" class="form-horizontal" enctype="multipart/form-data">
     @else
     <form action="{{URL::to('/')}}/plugin/databases/publicConfirm/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="database_add_column{{$frame_id}}" method="POST" class="form-horizontal" enctype="multipart/form-data">
     @endif
         {{ csrf_field() }}
-
-{{--
-<input name="test_value[0]" class="form-control" type="text" value="{{old('test_value.0', 'default1')}}">
-<input name="test_value[1]" class="form-control" type="text" value="{{old('test_value.1', 'default2')}}">
---}}
 
         @foreach($databases_columns as $database_column)
             {{-- 入力しないカラム型は表示しない --}}
@@ -75,6 +54,8 @@
                     </div>
                 </div>
                 @include('plugins.common.errors_inline', ['name' => 'posted_at'])
+                {{-- DateTimePicker 呼び出し --}}
+                @include('plugins.common.datetimepicker', ['element_id' => "posted_at{$frame_id}", 'side_by_side' => true])
             </div>
         </div>
 
@@ -88,6 +69,8 @@
                     </div>
                 </div>
                 @include('plugins.common.errors_inline', ['name' => 'expires_at'])
+                {{-- DateTimePicker 呼び出し --}}
+                @include('plugins.common.datetimepicker', ['element_id' => "expires_at{$frame_id}", 'side_by_side' => true])
             </div>
         </div>
 

@@ -2,6 +2,7 @@
  * コードスタディ画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コードスタディプラグイン
  --}}
@@ -67,26 +68,21 @@
 
     <div class="form-group">
         <label class="control-label">コード <label class="badge badge-danger">必須</label></label><br />
-        <textarea id="txt-editor" class="form-control" rows="10" name="code_text" style="font-family:'ＭＳ ゴシック', 'MS Gothic', 'Osaka－等幅', Osaka-mono, monospace;">{!!old('code_text', $codestudy->code_text)!!}</textarea>
+        <textarea id="txt_editor" class="form-control" rows="10" name="code_text" style="font-family:'ＭＳ ゴシック', 'MS Gothic', 'Osaka－等幅', Osaka-mono, monospace;">{!!old('code_text', $codestudy->code_text)!!}</textarea>
         @if ($errors && $errors->has('code_text')) <div class="text-danger">{{$errors->first('code_text')}}</div> @endif
     </div>
 
-<link rel="stylesheet" href="{{url('/')}}/codemirror/lib/codemirror.css">
-<link rel="stylesheet" href="{{url('/')}}/codemirror/lib/codemirror_cc.css">
-<script src="{{url('/')}}/codemirror/lib/codemirror.js"></script>
-<script src="{{url('/')}}/codemirror/mode/javascript/javascript.js"></script>
-
-<script type="text/javascript">
-    var editor = CodeMirror.fromTextArea(document.getElementById("txt-editor"),
-    {
-        //mode:"text/x-php",   // 言語を設定する
-        //mode:"htmlmixed",   // 言語を設定する
-        //mode:"text/javascript",   // 言語を設定する
-        lineNumbers: true,   // 行番号を表示する
-        lineWrapping: true,  // 行を折り返す
-        //indentUnit: 4,
-    });
-</script>
+@php
+    $mode = 'javascript';
+    if ($codestudy->study_lang == 'php') {
+        $mode = 'php';
+    } elseif ($codestudy->study_lang == 'javascript') {
+        $mode = 'javascript';
+    } elseif ($codestudy->study_lang == 'java') {
+        $mode = 'text/x-java';
+    }
+@endphp
+@include('plugins.common.codemirror', ['element_id' => 'txt_editor', 'mode' => $mode])
 
     <div class="container form-group row mb-2">
         <label class="control-label">言語 <label class="badge badge-danger">必須</span></label><br />

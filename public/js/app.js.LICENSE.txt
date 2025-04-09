@@ -5,6 +5,12 @@
   */
 
 /*!
+  * Tempus Dominus v6.10.0 (https://getdatepicker.com/)
+  * Copyright 2013-2025 Jonathan Peterson
+  * Licensed under MIT (https://github.com/Eonasdan/tempus-dominus/blob/master/LICENSE)
+  */
+
+/*!
  * The buffer module from node.js, for the browser.
  *
  * @author   Feross Aboukhadijeh <http://feross.org>
@@ -31,12 +37,6 @@
 /*! Axios v1.8.4 Copyright (c) 2025 Matt Zabriskie and contributors */
 
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
-
-/*!@preserve
- * Tempus Dominus Bootstrap4 v5.39.0 (https://tempusdominus.github.io/bootstrap-4/)
- * Copyright 2016-2020 Jonathan Peterson and contributors
- * Licensed under MIT (https://github.com/tempusdominus/bootstrap-3/blob/master/LICENSE)
- */
 
 /**
  * @license
@@ -78,17 +78,3 @@
  * @author	owenm    <owen23355@gmail.com>
  * @license MIT
  */
-
-//! Copyright (c) JS Foundation and other contributors
-
-//! github.com/moment/moment-timezone
-
-//! license : MIT
-
-//! moment-timezone.js
-
-//! moment.js
-
-//! moment.js locale configuration
-
-//! version : 0.5.47

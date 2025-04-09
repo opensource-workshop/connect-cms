@@ -2,12 +2,14 @@
 
 namespace App\Models\Core;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 
 class UsersRoles extends Model
 {
+    use HasFactory;
 
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト

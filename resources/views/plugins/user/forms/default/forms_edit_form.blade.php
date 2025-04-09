@@ -22,34 +22,6 @@
     @include('plugins.common.error_system_mail_setting')
 @endif
 
-<script>
-    $(function () {
-        /**
-         * カレンダーボタン押下
-         */
-        $('#display_from{{$frame_id}}').datetimepicker({
-            format: 'YYYY-MM-DD HH:mm',
-            dayViewHeaderFormat: 'YYYY MMM',
-            sideBySide: true,
-        });
-        $('#display_to{{$frame_id}}').datetimepicker({
-            format: 'YYYY-MM-DD HH:mm',
-            dayViewHeaderFormat: 'YYYY MMM',
-            sideBySide: true,
-        });
-        $('#regist_from{{$frame_id}}').datetimepicker({
-            format: 'YYYY-MM-DD HH:mm',
-            dayViewHeaderFormat: 'YYYY MMM',
-            sideBySide: true,
-        });
-        $('#regist_to{{$frame_id}}').datetimepicker({
-            format: 'YYYY-MM-DD HH:mm',
-            dayViewHeaderFormat: 'YYYY MMM',
-            sideBySide: true,
-        });
-    });
-</script>
-
 @if (!$form->id && !$create_flag)
     @include('plugins.user.forms.default.forms_warning_messages_line', ['warning_messages' => ['フォーム選択から選択するか、フォーム作成で作成してください。']])
 @else
@@ -256,6 +228,9 @@
                     ※ 終了日時になった瞬間に表示終了します。例えば15:00の場合、14:59まで表示します。
                 </small>
             </div>
+            {{-- DateTimePicker 呼び出し --}}
+            @include('plugins.common.datetimepicker', ['element_id' => "display_from{$frame_id}", 'side_by_side' => true])
+            @include('plugins.common.datetimepicker', ['element_id' => "display_to{$frame_id}", 'side_by_side' => true])
         </div>
     </div>
 
@@ -307,6 +282,9 @@
                     ※ 終了日時になった瞬間に登録終了します。例えば15:00の場合、14:59まで登録できます。
                 </small>
             </div>
+            {{-- DateTimePicker 呼び出し --}}
+            @include('plugins.common.datetimepicker', ['element_id' => "regist_from{$frame_id}", 'side_by_side' => true])
+            @include('plugins.common.datetimepicker', ['element_id' => "regist_to{$frame_id}", 'side_by_side' => true])
         </div>
     </div>
 

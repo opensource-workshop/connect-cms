@@ -6,56 +6,6 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
 --}}
-<script>
-    /**
-     * 時間Fromカレンダーボタン押下
-     */
-    $(function () {
-        $('#{{ $form_obj->id }}_from').datetimepicker({
-            tooltips: {
-                close: '閉じる',
-                pickHour: '時間を取得',
-                incrementHour: '時間を増加',
-                decrementHour: '時間を減少',
-                pickMinute: '分を取得',
-                incrementMinute: '分を増加',
-                decrementMinute: '分を減少',
-                pickSecond: '秒を取得',
-                incrementSecond: '秒を増加',
-                decrementSecond: '秒を減少',
-                togglePeriod: '午前/午後切替',
-                selectTime: '時間を選択'
-            },
-            format: 'HH:mm',
-            stepping: {{ $form_obj->minutes_increments_from }}
-        });
-    });
-
-    /**
-     * 時間Toカレンダーボタン押下
-     */
-    $(function () {
-        $('#{{ $form_obj->id }}_to').datetimepicker({
-            tooltips: {
-                close: '閉じる',
-                pickHour: '時間を取得',
-                incrementHour: '時間を増加',
-                decrementHour: '時間を減少',
-                pickMinute: '分を取得',
-                incrementMinute: '分を増加',
-                decrementMinute: '分を減少',
-                pickSecond: '秒を取得',
-                incrementSecond: '秒を増加',
-                decrementSecond: '秒を減少',
-                togglePeriod: '午前/午後切替',
-                selectTime: '時間を選択'
-            },
-            format: 'HH:mm',
-            stepping: {{ $form_obj->minutes_increments_to }}
-        });
-    });
-</script>
-
 @php
     $value_for_time_from = $request->forms_columns_value_for_time_from[$form_obj->id] ?? null;
     $value_for_time_to = $request->forms_columns_value_for_time_to[$form_obj->id] ?? null;
@@ -99,12 +49,9 @@
     </div>
 
 </div>
-@if ($errors && $errors->has("forms_columns_value.$form_obj->id"))
-    <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("forms_columns_value.$form_obj->id")}}</div>
-@endif
-@if ($errors && $errors->has("forms_columns_value_for_time_from.$form_obj->id"))
-    <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("forms_columns_value_for_time_from.$form_obj->id")}}</div>
-@endif
-@if ($errors && $errors->has("forms_columns_value_for_time_to.$form_obj->id"))
-    <div class="text-danger"><i class="fas fa-exclamation-circle"></i> {{$errors->first("forms_columns_value_for_time_to.$form_obj->id")}}</div>
-@endif
+@include('plugins.common.errors_inline', ['name' => "forms_columns_value.$form_obj->id"])
+@include('plugins.common.errors_inline', ['name' => "forms_columns_value_for_time_from.$form_obj->id"])
+@include('plugins.common.errors_inline', ['name' => "forms_columns_value_for_time_to.$form_obj->id"])
+{{-- DateTimePicker 呼び出し --}}
+@include('plugins.common.datetimepicker', ['element_id' => "{$form_obj->id}_from", 'format' => 'HH:mm', 'view_mode' => 'clock', 'calendar_icon' => false, 'stepping' => $form_obj->minutes_increments_from])
+@include('plugins.common.datetimepicker', ['element_id' => "{$form_obj->id}_to", 'format' => 'HH:mm', 'view_mode' => 'clock', 'calendar_icon' => false, 'stepping' => $form_obj->minutes_increments_to])

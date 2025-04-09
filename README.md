@@ -13,10 +13,12 @@ Connect-CMS is a content management system for easily creating websites.
 （Connect-CMS はWeb サイトを簡単に作成するためのコンテンツ管理システムです）  
   
 # Usage
-https://github.com/opensource-workshop/connect-cms/wiki
+* https://github.com/opensource-workshop/connect-cms/wiki
+  * [Install](https://github.com/opensource-workshop/connect-cms/wiki/Install)
+  * [Update](https://github.com/opensource-workshop/connect-cms/wiki/Update-%28%E3%82%A2%E3%83%83%E3%83%97%E3%83%87%E3%83%BC%E3%83%88%29)
 
 # Contribution Guide
-<a href="https://connect-cms.jp/abount/contributions" target="_blank">https://connect-cms.jp/abount/contributions</a>
+* <a href="https://connect-cms.jp/abount/contributions" target="_blank">https://connect-cms.jp/abount/contributions</a>
 
 # Connect with me
 <p style="text-align:left">

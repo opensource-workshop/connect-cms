@@ -2,6 +2,7 @@
  * カレンダー記事登録画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category カレンダープラグイン
 --}}
@@ -119,15 +120,8 @@
                     <div class="input-group-text @if ($errors && $errors->has('start_date')) border-danger @endif"><i class="fas fa-calendar-alt"></i></div>
                 </div>
             </div>
-            <script type="text/javascript">
-                $(function () {
-                    $('#start_date').datetimepicker({
-                        locale: 'ja',
-                        dayViewHeaderFormat: 'YYYY年 M月',
-                        format: 'YYYY-MM-DD'
-                    });
-                });
-            </script>
+            {{-- DateTimePicker 呼び出し --}}
+            @include('plugins.common.datetimepicker', ['element_id' => 'start_date', 'format' => 'yyyy-MM-dd', 'clock_icon' => false])
         </div>
 
         <div class="{{$input_area_time_class}}">
@@ -142,14 +136,8 @@
                 </div>
             </div>
             @include('plugins.common.errors_inline', ['name' => 'start_time'])
-            <script type="text/javascript">
-                $(function () {
-                    $('#start_time').datetimepicker({
-                        locale: 'ja',
-                        format: 'HH:mm'
-                    });
-                });
-            </script>
+            {{-- DateTimePicker 呼び出し --}}
+            @include('plugins.common.datetimepicker', ['element_id' => 'start_time', 'format' => 'HH:mm', 'view_mode' => 'clock', 'calendar_icon' => false])
         </div>
     </div>
     <div class="form-group form-row">
@@ -165,15 +153,8 @@
                     <div class="input-group-text @if ($errors && $errors->has('end_date')) border-danger @endif"><i class="fas fa-calendar-alt"></i></div>
                 </div>
             </div>
-            <script type="text/javascript">
-                $(function () {
-                    $('#end_date').datetimepicker({
-                        locale: 'ja',
-                        dayViewHeaderFormat: 'YYYY年 M月',
-                        format: 'YYYY-MM-DD'
-                    });
-                });
-            </script>
+            {{-- DateTimePicker 呼び出し --}}
+            @include('plugins.common.datetimepicker', ['element_id' => 'end_date', 'format' => 'yyyy-MM-dd', 'clock_icon' => false])
         </div>
 
         <div class="{{$input_area_time_class}}">
@@ -187,14 +168,8 @@
                     <div class="input-group-text"><i class="fas fa-clock"></i></div>
                 </div>
             </div>
-            <script type="text/javascript">
-                $(function () {
-                    $('#end_time').datetimepicker({
-                        locale: 'ja',
-                        format: 'HH:mm'
-                    });
-                });
-            </script>
+            {{-- DateTimePicker 呼び出し --}}
+            @include('plugins.common.datetimepicker', ['element_id' => 'end_time', 'format' => 'HH:mm', 'view_mode' => 'clock', 'calendar_icon' => false])
         </div>
     </div>
 

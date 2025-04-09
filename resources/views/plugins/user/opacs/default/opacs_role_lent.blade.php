@@ -2,6 +2,7 @@
  * 書誌貸出（権限あり）テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category OPACプラグイン
  --}}
@@ -150,19 +151,12 @@
                     <div class="input-group date" id="return_scheduled" data-target-input="nearest">
                         <input type="text" name="return_scheduled" value="{{old('return_scheduled')}}" class="form-control datetimepicker-input @if ($errors->has("return_scheduled")) border-danger @endif" data-target="#return_scheduled"/>
                         <div class="input-group-append" data-target="#return_scheduled" data-toggle="datetimepicker">
-                            <div class="input-group-text"><i class="fa fa-clock"></i></div>
+                            <div class="input-group-text"><i class="far fa-clock"></i></div>
                         </div>
                     </div>
                     @include('plugins.common.errors_inline', ['name' => 'return_scheduled'])
-                    <script type="text/javascript">
-                        $(function () {
-                            $('#return_scheduled').datetimepicker({
-                                locale: 'ja',
-                                dayViewHeaderFormat: 'YYYY年 M月',
-                                format: 'YYYY/MM/DD'
-                            });
-                        });
-                    </script>
+                    {{-- DateTimePicker 呼び出し --}}
+                    @include('plugins.common.datetimepicker', ['element_id' => "return_scheduled", 'format' => 'yyyy/MM/dd', 'clock_icon' => false])
                 </div>
 
                 <!-- 学籍番号/教職員番号 -->

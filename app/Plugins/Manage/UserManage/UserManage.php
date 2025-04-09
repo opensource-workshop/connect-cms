@@ -2,36 +2,6 @@
 
 namespace App\Plugins\Manage\UserManage;
 
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
-
-use App\Models\Core\Configs;
-use App\Models\Core\UsersColumns;
-use App\Models\Core\UsersColumnsSelects;
-use App\Models\Core\UsersColumnsSet;
-use App\Models\Core\UsersRoles;
-use App\Models\Core\UsersInputCols;
-use App\Models\Core\UsersLoginHistories;
-use App\Models\Common\Group;
-use App\Models\Common\GroupUser;
-use App\User;
-
-use App\Traits\ConnectMailTrait;
-
-use App\Plugins\Manage\ManagePluginBase;
-
-use App\Rules\CustomValiUserEmailUnique;
-use App\Rules\CustomValiEmails;
-use App\Rules\CustomValiCsvExistsName;
-
-use App\Utilities\Csv\CsvUtils;
-use App\Utilities\String\StringUtils;
-
 use App\Enums\CsvCharacterCode;
 use App\Enums\EditType;
 use App\Enums\Required;
@@ -40,8 +10,34 @@ use App\Enums\UserColumnType;
 use App\Enums\UserRegisterNoticeEmbeddedTag;
 use App\Enums\UserStatus;
 use App\Enums\UseType;
+use App\Models\Core\Configs;
 use App\Models\Core\Section;
+use App\Models\Core\UsersColumns;
+use App\Models\Core\UsersColumnsSelects;
+use App\Models\Core\UsersColumnsSet;
+use App\Models\Core\UsersRoles;
+use App\Models\Core\UsersInputCols;
+use App\Models\Core\UsersLoginHistories;
 use App\Models\Core\UserSection;
+use App\Models\Common\Group;
+use App\Models\Common\GroupUser;
+use App\Plugins\Manage\ManagePluginBase;
+use App\Rules\CustomValiUserEmailUnique;
+use App\Rules\CustomValiEmails;
+use App\Rules\CustomValiCsvExistsName;
+use App\Rules\CustomValiLoginIdAndPasswordDoNotMatch;
+use App\Traits\ConnectMailTrait;
+use App\User;
+use App\Utilities\Csv\CsvUtils;
+use App\Utilities\String\StringUtils;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * ユーザ管理クラス
@@ -118,15 +114,15 @@ class UserManage extends ManagePluginBase
     }
 
     /**
-     * データgetで取得
+     * ユーザquery取得
      */
-    private function getUsers($request, $users_columns, int $columns_set_id)
+    private function getUsersQuery($request, $users_columns, int $columns_set_id)
     {
         return $this->getUsersPaginate($request, null, $users_columns, $columns_set_id, false);
     }
 
     /**
-     * データ取得(paginate or get)
+     * ユーザデータ取得(paginate or query)
      */
     private function getUsersPaginate($request, $page, $users_columns, int $columns_set_id, $is_paginate = true)
     {
@@ -372,11 +368,20 @@ class UserManage extends ManagePluginBase
         if ($is_paginate) {
             // ページャーで取得
             $users = $users_query->paginate(10, null, 'page', $page);
-        } else {
-            // getで取得
-            $users = $users_query->get();
-        }
+            // ユーザデータ取得後の追加処理
+            return $this->getUsersAfter($users);
 
+        } else {
+            // query取得
+            return $users_query;
+        }
+    }
+
+    /**
+     * ユーザデータ取得後の追加処理
+     */
+    private function getUsersAfter($users)
+    {
         // ユーザデータからID の配列生成
         $user_ids = array();
         foreach ($users as $user) {
@@ -841,8 +846,14 @@ class UserManage extends ManagePluginBase
                 // ログインID
                 'userid'         => ['required', 'max:255', Rule::unique('users', 'userid')->ignore($id)],
                 'email'          => ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($request->columns_set_id, $id)],
-                'password'       => 'nullable|string|min:6|confirmed',
-                'status'         => 'required',
+                'password'       => [
+                    'nullable',
+                    'string',
+                    'min:6',
+                    'confirmed',
+                    new CustomValiLoginIdAndPasswordDoNotMatch($request->userid, UsersColumns::getLabelLoginId($users_columns)),
+                ],
+                'status'         => ['required'],
                 'columns_set_id' => ['required'],
             ],
             'message' => [
@@ -1595,8 +1606,8 @@ class UserManage extends ManagePluginBase
         // ユーザーのカラム
         $users_columns = UsersTool::getUsersColumns($id);
 
-        // User データの取得
-        $users = $this->getUsers($request, $users_columns, $id);
+        // ユーザquery取得
+        $users_query = $this->getUsersQuery($request, $users_columns, $id);
 
         /*
         ダウンロード前の配列イメージ。
@@ -1619,55 +1630,19 @@ class UserManage extends ManagePluginBase
             45 =>
         ]
         */
-        // 返却用配列
-        $csv_array = array();
-
         // データ行用の空配列
         $copy_base = array();
+
+        // 見出し行
+        $head = array();
 
         // インポートカラムの取得
         $import_column = $this->getImportColumn($users_columns);
 
         // 見出し行
         foreach ($import_column as $key => $column_name) {
-            $csv_array[0][$key] = $column_name;
+            $head[$key] = $column_name;
             $copy_base[$key] = '';
-        }
-
-        // $data_output_flag = falseは、CSVフォーマットダウンロード処理
-        if ($data_output_flag) {
-            // usersデータ
-            foreach ($users as $user) {
-                // ベースをセット
-                $csv_array[$user->id] = $copy_base;
-
-                // 初回で固定項目をセット
-                $csv_array[$user->id]['id'] = $user->id;
-                $csv_array[$user->id]['userid'] = $user->userid;     // ログインID
-                $csv_array[$user->id]['name'] = $user->name;
-
-                // グループ
-                $csv_array[$user->id]['group'] = $user->convertLoopValue('group_users', 'name', UsersTool::CHECKBOX_SEPARATOR);
-
-                $csv_array[$user->id]['email'] = $user->email;
-                $csv_array[$user->id]['password'] = '';              // パスワード、中身は空で出力
-
-                // 権限
-                $csv_array[$user->id]['view_user_roles'] = $user->convertLoopValue('view_user_roles', 'role_name', UsersTool::CHECKBOX_SEPARATOR);
-
-                // 役割設定
-                $csv_array[$user->id]['user_original_roles'] = $user->convertLoopValue('user_original_roles', 'value', UsersTool::CHECKBOX_SEPARATOR);
-
-                $csv_array[$user->id]['status'] = $user->status;
-            }
-
-            // 追加項目データの取得
-            $input_cols = UsersTool::getUsersInputCols($users->pluck('id')->all());
-
-            // 追加項目データ
-            foreach ($input_cols as $input_col) {
-                $csv_array[$input_col->users_id][$input_col->users_columns_id] = UsersTool::getUsersInputColValue($input_col);
-            }
         }
 
         // レスポンス
@@ -1682,10 +1657,85 @@ class UserManage extends ManagePluginBase
             'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
-        // データ
-        $csv_data = CsvUtils::getResponseCsvData($csv_array, $request->character_code);
+        $character_code = $request->character_code;
 
-        return response()->make($csv_data, 200, $headers);
+        // $data_output_flag = falseは、CSVフォーマットダウンロード処理
+        if (!$data_output_flag) {
+            // データ
+            $csv_array[0] = $head;
+            $csv_data = CsvUtils::getResponseCsvData($csv_array, $character_code);
+            return response()->make($csv_data, 200, $headers);
+        }
+
+        // Symfony の StreamedResponse で出力 ＆ chunk でデータ取得することにより
+        // 大容量の出力に対応
+        return new StreamedResponse(
+            function () use ($users_query, $head, $copy_base, $character_code) {
+                $stream = fopen('php://output', 'w');
+
+                // 文字コード変換
+                if ($character_code == CsvCharacterCode::utf_8) {
+                    mb_convert_variables(CsvCharacterCode::utf_8, CsvCharacterCode::utf_8, $head);
+                    // BOM付きにさせる場合にファイルの先頭に書き込む
+                    fwrite($stream, CsvUtils::bom);
+                } else {
+                    mb_convert_variables(CsvCharacterCode::sjis_win, CsvCharacterCode::utf_8, $head);
+                }
+                fputcsv($stream, $head);
+
+                // データの処理
+                $users_query->chunk(1000, function ($users) use ($stream, $copy_base, $character_code) {
+
+                    // ユーザデータ取得後の追加処理
+                    $users = $this->getUsersAfter($users);
+
+                    // 追加項目データの取得
+                    $input_cols = UsersTool::getUsersInputCols($users->pluck('id')->all());
+
+                    foreach ($users as $user) {
+                        // ベースをセット
+                        $csv_array = $copy_base;
+
+                        // 初回で固定項目をセット
+                        $csv_array['id'] = $user->id;
+                        $csv_array['userid'] = $user->userid;     // ログインID
+                        $csv_array['name'] = $user->name;
+
+                        // グループ
+                        $csv_array['group'] = $user->convertLoopValue('group_users', 'name', UsersTool::CHECKBOX_SEPARATOR);
+
+                        $csv_array['email'] = $user->email;
+                        $csv_array['password'] = '';              // パスワード、中身は空で出力
+
+                        // 権限
+                        $csv_array['view_user_roles'] = $user->convertLoopValue('view_user_roles', 'role_name', UsersTool::CHECKBOX_SEPARATOR);
+
+                        // 役割設定
+                        $csv_array['user_original_roles'] = $user->convertLoopValue('user_original_roles', 'value', UsersTool::CHECKBOX_SEPARATOR);
+
+                        $csv_array['status'] = $user->status;
+
+                        $input_cols_solo = $input_cols->where('users_id', $user->id);
+
+                        // 追加項目データ
+                        foreach ($input_cols_solo as $input_col) {
+                            $csv_array[$input_col->users_columns_id] = UsersTool::getUsersInputColValue($input_col);
+                        }
+
+                        // 文字コード変換
+                        if ($character_code == CsvCharacterCode::utf_8) {
+                            mb_convert_variables(CsvCharacterCode::utf_8, CsvCharacterCode::utf_8, $csv_array);
+                        } else {
+                            mb_convert_variables(CsvCharacterCode::sjis_win, CsvCharacterCode::utf_8, $csv_array);
+                        }
+                        fputcsv($stream, $csv_array);
+                    }
+                });
+                fclose($stream);
+            },
+            200,
+            $headers
+        );
     }
 
     /**

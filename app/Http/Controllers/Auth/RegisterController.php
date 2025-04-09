@@ -13,6 +13,7 @@ use App\Models\Core\UserSection;
 use App\Models\Core\UsersColumns;
 use App\Models\Core\UsersInputCols;
 use App\Plugins\Manage\UserManage\UsersTool;
+use App\Rules\CustomValiLoginIdAndPasswordDoNotMatch;
 //use App\Providers\RouteServiceProvider;
 use App\Rules\CustomValiUserEmailUnique;
 use App\User;
@@ -74,7 +75,13 @@ class RegisterController extends Controller
                 'name'           => 'required|string|max:255',
                 'userid'         => 'required|max:255|unique:users',
                 'email'          => ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($columns_set_id, null)],
-                'password'       => 'required|string|min:6|confirmed',
+                'password'       => [
+                    'required',
+                    'string',
+                    'min:6',
+                    'confirmed',
+                    new CustomValiLoginIdAndPasswordDoNotMatch($data['userid'], UsersColumns::getLabelLoginId($users_columns)),
+                ],
                 'status'         => 'required',
                 'columns_set_id' => ['required'],
             ],

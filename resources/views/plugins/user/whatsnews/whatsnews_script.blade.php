@@ -2,6 +2,7 @@
  * 新着情報のscriptテンプレート ※app.jsがコンパイル利用できるようになったらVueコンポーネント化する
  *
  * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 新着情報プラグイン
 --}}
@@ -93,4 +94,14 @@
 
         @endif
     });
+
+    /** 日付フォーマット */
+    function cc_format_date(date_str, sep_y="/", sep_m="/", sep_d="") {
+        const date = new Date(date_str);
+        const yyyy = date.getFullYear();
+        const mm = ('00' + (date.getMonth()+1)).slice(-2);
+        const dd = ('00' + date.getDate()).slice(-2);
+
+        return `${yyyy}${sep_y}${mm}${sep_m}${dd}${sep_d}`;
+    }
 </script>
