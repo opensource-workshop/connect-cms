@@ -2,23 +2,21 @@
 
 namespace app\Plugins\Mypage\ProfileMypage;
 
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
-
-use App\User;
+use App\Enums\EditType;
+use App\Enums\UserColumnType;
 use App\Models\Core\Section;
 use App\Models\Core\UsersColumns;
 use App\Models\Core\UsersInputCols;
 use App\Models\Core\UserSection;
-
-use App\Plugins\Mypage\MypagePluginBase;
-
-use App\Enums\EditType;
-use App\Enums\UserColumnType;
 use App\Plugins\Manage\UserManage\UsersTool;
+use App\Plugins\Mypage\MypagePluginBase;
+use App\Rules\CustomValiLoginIdAndPasswordDoNotMatch;
 use App\Rules\CustomValiUserEmailUnique;
+use App\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 /**
  * プロフィールマイページクラス
@@ -82,8 +80,8 @@ class ProfileMypage extends MypagePluginBase
         $user = User::where('id', $id)->first();
 
         // ユーザーのカラム
-        $users_columns = UsersTool::getUsersColumns($user->columns_set_id);
-        $users_columns = $users_columns->where('is_edit_my_page', EditType::ok);
+        $users_columns_all = UsersTool::getUsersColumns($user->columns_set_id);
+        $users_columns = $users_columns_all->where('is_edit_my_page', EditType::ok);
 
         // 項目のエラーチェック
         $validator_array = [
@@ -92,9 +90,8 @@ class ProfileMypage extends MypagePluginBase
                 'name'         => UsersColumns::getLabelUserName($users_columns),
                 'userid'       => UsersColumns::getLabelLoginId($users_columns),
                 'email'        => UsersColumns::getLabelUserEmail($users_columns),
-                'password'     => UsersColumns::getLabelUserPassword($users_columns),
-                'now_password' => '現在のパスワード',
-                'new_password' => '新しいパスワード',
+                'now_password' => '現在の' . UsersColumns::getLabelUserPassword($users_columns),
+                'new_password' => '新しい' . UsersColumns::getLabelUserPassword($users_columns),
             ]
         ];
 
@@ -124,7 +121,17 @@ class ProfileMypage extends MypagePluginBase
                         }
                     },
                 ];
-                $validator_array['column']['new_password'] = 'nullable|string|min:6|confirmed';
+
+                // ログインID
+                $userid = $request->userid ?? $user->userid;
+
+                $validator_array['column']['new_password'] = [
+                    'nullable',
+                    'string',
+                    'min:6',
+                    'confirmed',
+                    new CustomValiLoginIdAndPasswordDoNotMatch($userid, UsersColumns::getLabelLoginId($users_columns_all)),
+                ];
             } elseif ($users_column->column_type == UserColumnType::created_at) {
                 // チェックしない
             } elseif ($users_column->column_type == UserColumnType::updated_at) {
