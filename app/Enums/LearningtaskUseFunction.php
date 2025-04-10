@@ -32,6 +32,7 @@ final class LearningtaskUseFunction extends EnumsBase
     const use_report_mail = 'use_'.self::report.'_mail';
     const use_report_end = 'use_'.self::report.'_end';
     const report_end_at = 'report_end_at';
+    const use_report_revising = 'use_'.self::report.'_revising';
     // [利用する評価機能]
     const use_report_evaluate_file = 'use_'.self::report.'_evaluate_file';
     const use_report_evaluate_comment = 'use_'.self::report.'_evaluate_comment';
@@ -98,6 +99,7 @@ final class LearningtaskUseFunction extends EnumsBase
         self::use_report_mail => 'メール送信（教員宛）',
         self::use_report_end => 'レポート提出終了日時で制御する',
         self::report_end_at => 'レポート提出終了日時',
+        self::use_report_revising => '提出修正',
         // 利用する評価機能
         self::use_report_evaluate_file => 'アップロード',
         self::use_report_evaluate_comment => 'コメント入力',

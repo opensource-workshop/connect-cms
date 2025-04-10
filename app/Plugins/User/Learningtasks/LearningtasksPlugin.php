@@ -1124,6 +1124,7 @@ class LearningtasksPlugin extends UserPluginBase
             'examination_files' => $examination_files,
             'examinations' => $examinations,
             'tool' => $tool,
+            'deleted_submissions' => $tool->fetchDeletedSubmissions(),
         ]);
     }
 
@@ -3031,6 +3032,11 @@ class LearningtasksPlugin extends UserPluginBase
         // メール送信：機能設定でメール送信あり＆対象ユーザにメールアドレスの設定がある場合
         if ($task_status == 1 || $task_status == 2 || $task_status == 3 || $task_status == 5 || $task_status == 6 || $task_status == 7 || $task_status == 8) {
             $this->sendMailLocal($post, $task_status, $tool, $student_user_id);
+        }
+
+        // 評価前の再提出は、直前の提出の進捗ステータスを削除することで、提出の修正とする。
+        if ($task_status == 1 && $tool->shouldReviseReportSubmission($post->id)) {
+            $tool->prepareRevisingReportSubmission();
         }
 
         // ユーザーの進捗ステータス保存
