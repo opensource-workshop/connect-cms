@@ -110,4 +110,22 @@ trait MigrationLogTrait
             echo $log_str . "\n";
         }
     }
+
+    /**
+     * タイマースタート
+     */
+    private function timerStart(): float
+    {
+        return microtime(true);
+    }
+
+    /**
+     * タイマー終了
+     */
+    private function timerEnd(float $timer_start): string
+    {
+        $time = (int)(microtime(true) - $timer_start);
+        $time = round($time, 0);
+        return $time . '秒';
+    }
 }

@@ -443,7 +443,7 @@ trait MigrationNc3ExportTrait
         $this->target        = $target;
         $this->target_plugin = $target_plugin;
 
-        $this->putMonitor(3, "Start exportNc3.");
+        $this->putMonitor(3, "ExportNc3 Start.");
 
         // 移行の初期処理
         $this->migrationInit();
@@ -540,6 +540,9 @@ trait MigrationNc3ExportTrait
 
         // pages データとファイルのエクスポート
         if ($this->isTarget('nc3_export', 'pages')) {
+            $this->putMonitor(3, "Nc3ExportPages Start.");
+            $timer_start = $this->timerStart();
+
             // データクリア
             if ($redo === true) {
                 MigrationMapping::where('target_source_table', 'source_pages')->delete();
@@ -834,6 +837,8 @@ trait MigrationNc3ExportTrait
 
             // ページ入れ替え
             $this->changePageSequence();
+
+            $this->putMonitor(3, "Nc3ExportPages End.", $this->timerEnd($timer_start));
         }
     }
 
@@ -958,7 +963,8 @@ trait MigrationNc3ExportTrait
      */
     private function nc3ExportBasic()
     {
-        $this->putMonitor(3, "Start nc3ExportBasic.");
+        $this->putMonitor(3, "Nc3ExportBasic Start.");
+        $timer_start = $this->timerStart();
 
         $site_settings = Nc3SiteSetting::where('language_id', Nc3Language::language_id_ja)->get();
 
@@ -991,6 +997,8 @@ trait MigrationNc3ExportTrait
 
         // basic.ini ファイル保存
         $this->storagePut($this->getImportPath('basic/basic.ini'), $basic_ini);
+
+        $this->putMonitor(3, "Nc3ExportBasic End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -1015,7 +1023,8 @@ trait MigrationNc3ExportTrait
      */
     private function nc3ExportUploads($redo)
     {
-        $this->putMonitor(3, "Start nc3ExportUploads.");
+        $this->putMonitor(3, "Nc3ExportUploads Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -1127,6 +1136,8 @@ trait MigrationNc3ExportTrait
         if (Storage::exists($this->getImportPath('uploads/uploads.ini'))) {
             $this->uploads_ini = parse_ini_file(storage_path() . '/app/' . $this->getImportPath('uploads/uploads.ini'), true);
         }
+
+        $this->putMonitor(3, "Nc3ExportUploads End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -1134,7 +1145,8 @@ trait MigrationNc3ExportTrait
      */
     private function nc3ExportUsers($redo)
     {
-        $this->putMonitor(3, "Start nc3ExportUsers.");
+        $this->putMonitor(3, "Nc3ExportUsers Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -1163,6 +1175,7 @@ trait MigrationNc3ExportTrait
 
         // 空なら戻る
         if ($nc3_users->isEmpty()) {
+            $this->putMonitor(3, "Nc3ExportUsers End: no data.");
             return;
         }
 
@@ -1300,6 +1313,8 @@ trait MigrationNc3ExportTrait
             // Userカラムデータの出力
             $this->storagePut($this->getImportPath('users/users_columns_') . $this->zeroSuppress($nc3_any_item->id) . '.ini', $users_columns_ini);
         }
+
+        $this->putMonitor(3, "Nc3ExportUsers End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -1307,7 +1322,8 @@ trait MigrationNc3ExportTrait
      */
     private function nc3ExportRooms($redo)
     {
-        $this->putMonitor(3, "Start nc3ExportRooms.");
+        $this->putMonitor(3, "Nc3ExportRooms Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -1350,6 +1366,7 @@ trait MigrationNc3ExportTrait
 
         // 空なら戻る
         if ($nc3_rooms->isEmpty()) {
+            $this->putMonitor(3, "Nc3ExportRooms End: no data.");
             return;
         }
 
@@ -1431,6 +1448,8 @@ trait MigrationNc3ExportTrait
                 $this->storagePut($this->getImportPath('groups/group_') . $this->zeroSuppress($nc3_room->id) . '_' . $no . '.ini', $groups_ini);
             }
         }
+
+        $this->putMonitor(3, "Nc3ExportRooms End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -1438,7 +1457,8 @@ trait MigrationNc3ExportTrait
      */
     private function nc3ExportBlog($redo)
     {
-        $this->putMonitor(3, "Start nc3ExportBlog.");
+        $this->putMonitor(3, "Nc3ExportBlog Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -1461,6 +1481,7 @@ trait MigrationNc3ExportTrait
 
         // 空なら戻る
         if ($nc3_blogs->isEmpty()) {
+            $this->putMonitor(3, "Nc3ExportBlog End: no data.");
             return;
         }
 
@@ -1799,6 +1820,8 @@ trait MigrationNc3ExportTrait
             $journals_tsv = $this->exportStrReplace($journals_tsv, 'blogs');
             $this->storagePut($this->getImportPath('blogs/blog_') . $this->zeroSuppress($nc3_blog->id) . '.tsv', $journals_tsv);
         }
+
+        $this->putMonitor(3, "Nc3ExportBlog End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -1806,7 +1829,8 @@ trait MigrationNc3ExportTrait
      */
     private function nc3ExportBbs($redo)
     {
-        $this->putMonitor(3, "Start nc3ExportBbs.");
+        $this->putMonitor(3, "Nc3ExportBbs Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -1829,6 +1853,7 @@ trait MigrationNc3ExportTrait
 
         // 空なら戻る
         if ($nc3_bbses->isEmpty()) {
+            $this->putMonitor(3, "Nc3ExportBbs End: no data.");
             return;
         }
 
@@ -2145,6 +2170,8 @@ trait MigrationNc3ExportTrait
             $journals_tsv = $this->exportStrReplace($journals_tsv, 'bbses');
             $this->storagePut($this->getImportPath($export_path) . $this->zeroSuppress($nc3_bbs->id) . '.tsv', $journals_tsv);
         }
+
+        $this->putMonitor(3, "Nc3ExportBbs End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -2152,7 +2179,8 @@ trait MigrationNc3ExportTrait
      */
     private function nc3ExportFaq($redo)
     {
-        $this->putMonitor(3, "Start nc3ExportFaq.");
+        $this->putMonitor(3, "Nc3ExportFaq Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -2175,6 +2203,7 @@ trait MigrationNc3ExportTrait
 
         // 空なら戻る
         if ($nc3_faqs->isEmpty()) {
+            $this->putMonitor(3, "Nc3ExportFaq End: no data.");
             return;
         }
 
@@ -2307,6 +2336,8 @@ trait MigrationNc3ExportTrait
             $faqs_tsv = $this->exportStrReplace($faqs_tsv, 'faqs');
             $this->storagePut($this->getImportPath('faqs/faq_') . $this->zeroSuppress($nc3_faq->id) . '.tsv', $faqs_tsv);
         }
+
+        $this->putMonitor(3, "Nc3ExportFaq End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -2314,7 +2345,8 @@ trait MigrationNc3ExportTrait
      */
     private function nc3ExportLinklist($redo)
     {
-        $this->putMonitor(3, "Start nc3ExportLinklist.");
+        $this->putMonitor(3, "Nc3ExportLinklist Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -2338,6 +2370,7 @@ trait MigrationNc3ExportTrait
 
         // 空なら戻る
         if ($nc3_blocks->isEmpty()) {
+            $this->putMonitor(3, "Nc3ExportLinklist End: no data.");
             return;
         }
 
@@ -2444,6 +2477,8 @@ trait MigrationNc3ExportTrait
             // リンクリストの記事
             $this->storagePut($this->getImportPath('linklists/linklist_') . $this->zeroSuppress($nc3_block->id) . '.tsv', $linklists_tsv);
         }
+
+        $this->putMonitor(3, "Nc3ExportLinklist End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -2451,7 +2486,8 @@ trait MigrationNc3ExportTrait
      */
     private function nc3ExportMultidatabase($redo)
     {
-        $this->putMonitor(3, "Start nc3ExportMultidatabase.");
+        $this->putMonitor(3, "Nc3ExportMultidatabase Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -2480,6 +2516,7 @@ trait MigrationNc3ExportTrait
 
         // 空なら戻る
         if ($nc3_multidatabases->isEmpty()) {
+            $this->putMonitor(3, "Nc3ExportMultidatabase End. No data.");
             return;
         }
 
@@ -2968,6 +3005,8 @@ trait MigrationNc3ExportTrait
             // detabase の設定
             $this->storagePut($this->getImportPath('databases/database_') . $this->zeroSuppress($nc3_multidatabase->id) . '.ini', $multidatabase_ini);
         }
+
+        $this->putMonitor(3, "Nc3ExportMultidatabase End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -2975,7 +3014,8 @@ trait MigrationNc3ExportTrait
      */
     private function nc3ExportRegistration($redo)
     {
-        $this->putMonitor(3, "Start nc3ExportRegistration.");
+        $this->putMonitor(3, "Nc3ExportRegistration Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -3004,6 +3044,7 @@ trait MigrationNc3ExportTrait
 
         // 空なら戻る
         if ($nc3_registrations->isEmpty()) {
+            $this->putMonitor(3, "Nc3ExportRegistration End: no data.");
             return;
         }
 
@@ -3362,6 +3403,8 @@ trait MigrationNc3ExportTrait
                 $this->storagePut($this->getImportPath('forms/form_') . $this->zeroSuppress($nc3_registration->id) . '.txt', $registration_data_header . $registration_data);
             }
         }
+
+        $this->putMonitor(3, "Nc3ExportRegistration End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -3369,7 +3412,8 @@ trait MigrationNc3ExportTrait
      */
     private function nc3ExportTopics($redo)
     {
-        $this->putMonitor(3, "Start nc3ExportTopics.");
+        $this->putMonitor(3, "Nc3ExportTopics Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -3401,6 +3445,7 @@ trait MigrationNc3ExportTrait
 
         // 空なら戻る
         if ($nc3_frames->isEmpty()) {
+            $this->putMonitor(3, "Nc3ExportTopics End: no data.");
             return;
         }
 
@@ -3495,6 +3540,8 @@ trait MigrationNc3ExportTrait
             // 新着情報の設定を出力
             $this->storagePut($this->getImportPath('whatsnews/whatsnew_') . $this->zeroSuppress($nc3_frame->id) . '.ini', $whatsnew_ini);
         }
+
+        $this->putMonitor(3, "Nc3ExportTopics End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -3502,7 +3549,8 @@ trait MigrationNc3ExportTrait
      */
     private function nc3ExportCabinet($redo)
     {
-        $this->putMonitor(3, "Start nc3ExportCabinet.");
+        $this->putMonitor(3, "Nc3ExportCabinet Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -3529,6 +3577,7 @@ trait MigrationNc3ExportTrait
 
         // 空なら戻る
         if ($cabinets->isEmpty()) {
+            $this->putMonitor(3, "Nc3ExportCabinet End: no data.");
             return;
         }
 
@@ -3646,6 +3695,8 @@ trait MigrationNc3ExportTrait
             $tsv = $this->exportStrReplace($tsv, 'cabinets');
             $this->storagePut($this->getImportPath('cabinets/cabinet_') . $this->zeroSuppress($cabinet->id) . '.tsv', $tsv);
         }
+
+        $this->putMonitor(3, "Nc3ExportCabinet End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -3653,7 +3704,8 @@ trait MigrationNc3ExportTrait
      */
     private function nc3ExportCounter($redo)
     {
-        $this->putMonitor(3, "Start nc3ExportCounter.");
+        $this->putMonitor(3, "Nc3ExportCounter Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -3685,6 +3737,7 @@ trait MigrationNc3ExportTrait
 
         // 空なら戻る
         if ($nc3_counters->isEmpty()) {
+            $this->putMonitor(3, "Nc3ExportCounter End: no data.");
             return;
         }
 
@@ -3727,6 +3780,8 @@ trait MigrationNc3ExportTrait
             // カウンターの設定を出力
             $this->storagePut($this->getImportPath('counters/counter_') . $this->zeroSuppress($nc3_counter->id) . '.ini', $ini);
         }
+
+        $this->putMonitor(3, "Nc3ExportCounter End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -3734,7 +3789,8 @@ trait MigrationNc3ExportTrait
      */
     private function nc3ExportCalendar($redo)
     {
-        $this->putMonitor(3, "Start nc3ExportCalendar.");
+        $this->putMonitor(3, "Nc3ExportCalendar Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -4040,6 +4096,7 @@ trait MigrationNc3ExportTrait
 
         // 空なら戻る
         if ($nc3_calendar_frame_settings->isEmpty()) {
+            $this->putMonitor(3, "Nc3ExportCalendar End.", $this->timerEnd($timer_start));
             return;
         }
 
@@ -4063,6 +4120,8 @@ trait MigrationNc3ExportTrait
             // カレンダーの設定を出力
             $this->storagePut($this->getImportPath('calendars/calendar_block_') . $this->zeroSuppress($nc3_calendar_frame_setting->frame_id) . '.ini', $ini);
         }
+
+        $this->putMonitor(3, "Nc3ExportCalendar End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -4070,7 +4129,8 @@ trait MigrationNc3ExportTrait
      */
     private function nc3ExportReservation($redo)
     {
-        $this->putMonitor(3, "Start nc3ExportReservation.");
+        $this->putMonitor(3, "Nc3ExportReservation Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -4088,6 +4148,7 @@ trait MigrationNc3ExportTrait
 
         // 空なら戻る
         if (empty($block)) {
+            $this->putMonitor(3, "Nc3ExportReservation End: no data.");
             return;
         }
 
@@ -4543,6 +4604,7 @@ trait MigrationNc3ExportTrait
 
         // 空なら戻る
         if ($nc3_reservation_frame_settings->isEmpty()) {
+            $this->putMonitor(3, "Nc3ExportReservation End.", $this->timerEnd($timer_start));
             return;
         }
 
@@ -4600,6 +4662,8 @@ trait MigrationNc3ExportTrait
             // 施設予約の設定を出力
             $this->storagePut($this->getImportPath('reservations/reservation_block_') . $this->zeroSuppress($nc3_reservation_frame_setting->frame_id) . '.ini', $ini);
         }
+
+        $this->putMonitor(3, "Nc3ExportReservation End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -4607,7 +4671,8 @@ trait MigrationNc3ExportTrait
      */
     private function nc3ExportPhotoalbum($redo)
     {
-        $this->putMonitor(3, "Start nc3ExportPhotoalbum.");
+        $this->putMonitor(3, "Nc3ExportPhotoalbum Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -4646,6 +4711,7 @@ trait MigrationNc3ExportTrait
 
         // 空なら戻る
         if ($nc3_photoalbums->isEmpty()) {
+            $this->putMonitor(3, "Nc3ExportPhotoalbum End: no data.");
             return;
         }
 
@@ -4904,6 +4970,8 @@ trait MigrationNc3ExportTrait
                 $this->storagePut($this->getImportPath('slideshows/slideshows_') . $this->zeroSuppress($nc3_photoalbum_frame_setting->frame_id) . '.tsv', $slides_tsv);
             }
         }
+
+        $this->putMonitor(3, "Nc3ExportPhotoalbum End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -4911,7 +4979,8 @@ trait MigrationNc3ExportTrait
      */
     private function nc3ExportSearch($redo)
     {
-        $this->putMonitor(3, "Start nc3ExportSearch.");
+        $this->putMonitor(3, "Nc3ExportSearch Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -4943,6 +5012,7 @@ trait MigrationNc3ExportTrait
 
         // 空なら戻る
         if ($nc3_frames->isEmpty()) {
+            $this->putMonitor(3, "Nc3ExportSearch End: no data.");
             return;
         }
 
@@ -5002,6 +5072,8 @@ trait MigrationNc3ExportTrait
             // 新着情報の設定を出力
             $this->storagePut($this->getImportPath('searchs/search_') . $this->zeroSuppress($nc3_frame->frame_id) . '.ini', $search_ini);
         }
+
+        $this->putMonitor(3, "Nc3ExportSearch End.", $this->timerEnd($timer_start));
     }
 
     /**
@@ -5009,7 +5081,8 @@ trait MigrationNc3ExportTrait
      */
     private function nc3ExportVideo($redo)
     {
-        $this->putMonitor(3, "Start nc3ExportVideo.");
+        $this->putMonitor(3, "Nc3ExportVideo Start.");
+        $timer_start = $this->timerStart();
 
         // データクリア
         if ($redo === true) {
@@ -5036,6 +5109,7 @@ trait MigrationNc3ExportTrait
 
         // 空なら戻る
         if ($nc3_blocks->isEmpty()) {
+            $this->putMonitor(3, "Nc3ExportVideo End: no data.");
             return;
         }
 
@@ -5165,6 +5239,8 @@ trait MigrationNc3ExportTrait
             $tsv = $this->exportStrReplace($tsv, 'videos');
             $this->storageAppend($this->getImportPath($export_path) . $this->zeroSuppress($nc3_block->id) . '_' . $this->zeroSuppress($nc3_block->id) . '.tsv', $tsv);
         }
+
+        $this->putMonitor(3, "Nc3ExportVideo End.", $this->timerEnd($timer_start));
     }
 
     /**
