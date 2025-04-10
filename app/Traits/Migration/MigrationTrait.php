@@ -15324,22 +15324,4 @@ trait MigrationTrait
     {
         return $this->convertNc3PluginPermalinkToConnect($content, $url, $db_colum, $from_nc3_plugin_permalink, $to_cc_plugin_permalink, $content_target_source_table, true);
     }
-
-    /**
-     * タイマースタート
-     */
-    private function timerStart(): float
-    {
-        return microtime(true);
-    }
-
-    /**
-     * タイマー終了
-     */
-    private function timerEnd(float $timer_start): string
-    {
-        $time = (int)(microtime(true) - $timer_start);
-        $time = round($time, 0);
-        return $time . '秒';
-    }
 }
