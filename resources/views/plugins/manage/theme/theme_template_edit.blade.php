@@ -39,7 +39,7 @@ templates : [&#13;
 <p>３行</p>`&#13;
     }&#13;
 ],">{{$template}}</textarea>
-            @include('plugins.common.codemirror', ['element_id' => 'template', 'mode' => 'javascript', 'height' => 500])
+            @include('plugins.common.codemirror', ['element_id' => 'template', 'mode' => 'javascript()', 'height' => '500px'])
 
             <div class="form-group mt-3">
                 <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/manage/theme/'"><i class="fas fa-times"></i> キャンセル</button>

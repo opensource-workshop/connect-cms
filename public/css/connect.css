@@ -687,21 +687,3 @@ a.cc-cursor-text:hover {
     0% {opacity: 0;}
     100% {opacity: 1;}
 }
-
-/* CodeMirror 5
-------------------------------------- */
-.CodeMirror {
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-}
-.CodestudyLanguageVersionFrame {
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-}
-.CodestudyLanguageVersion {
-}
-
-/* プレースホルダー */
-.CodeMirror pre.CodeMirror-placeholder {
-    color: #999;
-}

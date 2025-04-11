@@ -23,7 +23,7 @@
             {{csrf_field()}}
             <input name="dir_name" type="hidden" value="{{$dir_name}}" />
             <textarea name="js" id="js" class="form-control" rows=20>{{$js}}</textarea>
-            @include('plugins.common.codemirror', ['element_id' => 'js', 'mode' => 'javascript', 'height' => 500])
+            @include('plugins.common.codemirror', ['element_id' => 'js', 'mode' => 'javascript()', 'height' => '500px'])
 
             <div class="form-group mt-3">
                 <button type="button" class="btn btn-secondary mr-2" onclick="location.href='{{url('/')}}/manage/theme/'"><i class="fas fa-times"></i> キャンセル</button>

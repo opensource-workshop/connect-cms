@@ -63,12 +63,19 @@ window.tempusDominus = require('@eonasdan/tempus-dominus');
 // Default SortableJS
 window.Sortable = require('sortablejs').default;
 
-// --- codemirror 5
-window.CodeMirror = require('codemirror');
+// --- codemirror 6
+import { EditorView, placeholder } from "@codemirror/view";
+window.EditorView = EditorView;
+window.placeholder = placeholder;   // プレースホルダー有効化
+import { basicSetup } from "codemirror"
+window.basicSetup = basicSetup;
 // 言語モード
-require('codemirror/mode/javascript/javascript');
-require('codemirror/mode/php/php');
-require('codemirror/mode/clike/clike'); // c, c++, java
-require('codemirror/mode/css/css');
-// プレースホルダー有効化
-require('codemirror/addon/display/placeholder.js');
+// ※ 対応言語はgithubのcodemirrorでlang-xxxを確認 https://github.com/codemirror?q=lang-&type=all&language=&sort=
+import {javascript} from "@codemirror/lang-javascript"
+window.javascript = javascript;
+import {css} from "@codemirror/lang-css"
+window.css = css;
+import {java} from "@codemirror/lang-java"
+window.java = java;
+import {php} from "@codemirror/lang-php"
+window.php = php;
