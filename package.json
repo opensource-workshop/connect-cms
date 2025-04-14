@@ -10,12 +10,16 @@
         "production": "mix --production"
     },
     "devDependencies": {
+        "@codemirror/lang-css": "^6.3.1",
+        "@codemirror/lang-java": "^6.0.1",
+        "@codemirror/lang-javascript": "^6.2.3",
+        "@codemirror/lang-php": "^6.0.1",
         "@eonasdan/tempus-dominus": "^6.10.2",
         "@fortawesome/fontawesome-free": "^6.7.2",
         "@popperjs/core": "^2.11.8",
         "axios": "^1.6.1",
         "bootstrap": "^4.0.0",
-        "codemirror": "^5.65.19",
+        "codemirror": "^6.0.1",
         "jquery": "^3.7.0",
         "laravel-mix": "^6.0.49",
         "lodash": "^4.17.19",
