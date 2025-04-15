@@ -193,7 +193,7 @@
                 },
                 methods: {
                     // 受け取ったイベントから画像オブジェクトのURL、ファイル名を生成してHTMLにセットする
-                    setImageResource(items_id, event){
+                    setImageResource(event, items_id){
                         const file = event.target.files[0];
                         // console.log(file);
                         eval("this.image_url_" + items_id + " = URL.createObjectURL(file);");

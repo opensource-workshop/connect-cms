@@ -17,6 +17,8 @@
         "@eonasdan/tempus-dominus": "^6.10.2",
         "@fortawesome/fontawesome-free": "^6.7.2",
         "@popperjs/core": "^2.11.8",
+        "@vue/compat": "^3.5.13",
+        "@vue/compiler-sfc": "^3.5.13",
         "axios": "^1.6.1",
         "bootstrap": "^4.0.0",
         "codemirror": "^6.0.1",
@@ -28,8 +30,7 @@
         "sass": "^1.62.1",
         "sass-loader": "^12.6.0",
         "sortablejs": "^1.15.2",
-        "vue": "^2.5.7",
-        "vue-loader": "^17.3.0",
-        "vue-template-compiler": "^2.7.14"
+        "vue": "^3.5.13",
+        "vue-loader": "^17.3.0"
     }
 }
