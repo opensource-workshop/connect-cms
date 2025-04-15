@@ -1,1 +1,1 @@
-        content_css: "/css/app.css, /css/connect.css, /themes/Defaults/DefaultAccessibility/themes.css", // スタイル
+        content_css: "css/app.css, css/connect.css, themes/Defaults/DefaultAccessibility/themes.css", // スタイル
