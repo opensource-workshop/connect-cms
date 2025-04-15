@@ -7,8 +7,7 @@
  * @category 新着情報プラグイン
 --}}
 <script>
-    const app_{{ $frame->id }} = new Vue({
-        el: "#app_{{ $frame->id }}",
+    createApp({
         data: function() {
             return {
                 url: '{{ url('/') }}',
@@ -102,5 +101,5 @@
         },
 
         @endif
-    });
+    }).mount('#app_{{ $frame->id }}');
 </script>

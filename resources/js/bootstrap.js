@@ -55,12 +55,12 @@ if (token) {
 // });
 
 
-// Tempus Dominus Date/Time Picker
+// --- Tempus Dominus Date/Time Picker
 window.tempusDominus = require('@eonasdan/tempus-dominus');
 // 下記でapp.jsに含めると、日付入力時に1度画面上部に飛ばされる動作をするため、含めない
 // window.Popper = require('@popperjs/core');
 
-// Default SortableJS
+// --- Default SortableJS
 window.Sortable = require('sortablejs').default;
 
 // --- codemirror 6
@@ -79,3 +79,7 @@ import {java} from "@codemirror/lang-java"
 window.java = java;
 import {php} from "@codemirror/lang-php"
 window.php = php;
+
+// --- Vue.js 3
+import { createApp } from 'vue';
+window.createApp = createApp;
