@@ -7,7 +7,7 @@
  * @category 新着情報プラグイン
 --}}
 <script>
-    createApp({
+    const app_{{ $frame->id }} = createApp({
         data: function() {
             return {
                 url: '{{ url('/') }}',

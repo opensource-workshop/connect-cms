@@ -35,7 +35,7 @@
     </span>
 
     <script>
-        createApp({
+        const app_like_{{$frame->id}}_{{$contents_id}} = createApp({
             data: function() {
                 return {
                     like_count: {{ $like_count }},
