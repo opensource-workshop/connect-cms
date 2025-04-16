@@ -547,11 +547,13 @@ use App\Models\Common\Page;
     </div>
 </form>
 <script>
-    new Vue({
-        el: "#app",
-        data: {
-            v_background_color: document.getElementById('background_color').value,
-            v_header_color: document.getElementById('header_color').value
+    createApp({
+        data: function() {
+            return {
+                v_background_color: '{{old('background_color', $page->background_color)}}',
+                v_header_color: '{{old('header_color', $page->header_color)}}'
+
+            }
         },
-    })
+    }).mount('#app');
 </script>
