@@ -35,8 +35,7 @@
     </span>
 
     <script>
-        const app_like_{{$frame->id}}_{{$contents_id}} = new Vue({
-            el: "#app_like_{{$frame->id}}_{{$contents_id}}",
+        createApp({
             data: function() {
                 return {
                     like_count: {{ $like_count }},
@@ -58,6 +57,6 @@
                         });
                 }
             },
-        });
+        }).mount('#app_like_{{$frame->id}}_{{$contents_id}}');
     </script>
 @endif
