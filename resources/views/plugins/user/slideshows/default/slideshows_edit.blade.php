@@ -176,8 +176,7 @@
             /**
              * 新規追加行・更新行のimgのsrc、及び、モーダルのヘッダーに表示しているファイル名をイベントから抽出して動的に書き換える
              */
-             const app_{{ $frame->id }} = new Vue({
-                el: "#app_{{ $frame->id }}",
+            const app_{{ $frame->id }} = createApp({
                 data: function() {
                     return {
                         // 更新行用の変数
@@ -208,7 +207,7 @@
                         this.selected_pdf = file.name;
                     }
                 }
-            });
+            }).mount('#app_{{ $frame->id }}');
         </script>
     @endauth
 @endsection
