@@ -78,7 +78,7 @@
             }, $dataArray);
             $modifiedFirstMatch = implode(', ', $modifiedDataArray);
             // content_cssに追記する
-            $content_css_file = 'content_css: "'. $firstMatch. ', '. $modifiedFirstMatch. '",';
+            $content_css_file = 'content_css: "' . $modifiedFirstMatch . '",';
         }
     }
 

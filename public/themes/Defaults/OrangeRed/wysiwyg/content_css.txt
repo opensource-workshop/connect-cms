@@ -1,1 +1,1 @@
-        content_css: "./css/app.css, ./css/connect.css, ./themes/Defaults/OrangeRed/themes.css", // スタイル
+        content_css: "/css/app.css, /css/connect.css, /themes/Defaults/OrangeRed/themes.css", // スタイル
