@@ -1,6 +1,14 @@
 User-agent: *
+# CC
 Disallow: /plugin/*?frame_*_page=
 Disallow: /json/
 Disallow: /redirect/
+# NC2
 Disallow: *?*action=
 Disallow: *?*active_action=
+# NC3
+Disallow: *multidatabases/multidatabase_contents/
+Disallow: *blogs/blog_entries/
+Disallow: *wysiwyg/image/download/
+Disallow: *calendars/calendars/
+Disallow: *cabinets/cabinet_files/
