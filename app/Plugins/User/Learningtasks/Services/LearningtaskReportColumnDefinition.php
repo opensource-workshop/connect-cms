@@ -55,18 +55,18 @@ class LearningtaskReportColumnDefinition implements ColumnDefinitionInterface //
     {
         // エクスポートと同じヘッダーを期待する
         $header_columns = ['ログインID', 'ユーザ名', '提出日時', '提出回数'];
-         if ($this->setting_checker->isEnabled(LearningtaskUseFunction::use_report_comment)) {
-             $header_columns[] = '本文';
-         }
-         if ($this->setting_checker->isEnabled(LearningtaskUseFunction::use_report_file)) {
-             $header_columns[] = 'ファイルURL';
-         }
-         if ($this->setting_checker->isEnabled(LearningtaskUseFunction::use_report_evaluate)) {
-             $header_columns[] = '評価';
-         }
-         if ($this->setting_checker->isEnabled(LearningtaskUseFunction::use_report_evaluate_comment)) {
-             $header_columns[] = '評価コメント';
-         }
+        if ($this->setting_checker->isEnabled(LearningtaskUseFunction::use_report_comment)) {
+            $header_columns[] = '本文';
+        }
+        if ($this->setting_checker->isEnabled(LearningtaskUseFunction::use_report_file)) {
+            $header_columns[] = 'ファイルURL';
+        }
+        if ($this->setting_checker->isEnabled(LearningtaskUseFunction::use_report_evaluate)) {
+            $header_columns[] = '評価';
+        }
+        if ($this->setting_checker->isEnabled(LearningtaskUseFunction::use_report_evaluate_comment)) {
+            $header_columns[] = '評価コメント';
+        }
         return $header_columns;
     }
 

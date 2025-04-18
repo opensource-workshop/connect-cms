@@ -424,5 +424,4 @@ class LearningtasksCsvImporter
         // どちらでもなければ拒否
         return false;
     }
-
 }

@@ -8,7 +8,8 @@ use Throwable;
 /**
  * CSVヘッダーが不正な場合にスローされるカスタム例外クラス。
  */
-class CsvInvalidHeaderException extends Exception {
+class CsvInvalidHeaderException extends Exception
+{
     /**
      * CsvInvalidHeaderException のコンストラクタ。
      *
