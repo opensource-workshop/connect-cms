@@ -34,6 +34,10 @@
         </div>
     @endif
 
+    {{-- フラッシュメッセージ --}}
+    @include('plugins.common.flash_message')
+    {{-- CSVインポートメッセージ --}}
+    @include('plugins.user.learningtasks.default.learningtasks_show_csv_import_messages')
     {{-- タイトル --}}
     <h2>{!!$post->post_title!!}</h2>
 
@@ -45,7 +49,7 @@
                 データ管理
             </button>
         </div>
-        <div id="data-management-{{$frame_id}}" class="collapse p-2 bg-light border border-light rounded mb-3">
+        <div id="data-management-{{$frame_id}}" class="collapse p-2 bg-light border border-light rounded mb-3 {{ $errors->has('csv_file') ? 'show' : '' }}">
             {{-- CSV出力 --}}
             <div class="form-group row">
                 <label class="col-sm-3 text-sm-right">提出状況CSV</label>
@@ -77,6 +81,24 @@
                                 document.csv_export{{$frame_id}}.submit();
                             }
                         </script>
+                    </form>
+                </div>
+            </div>
+            {{-- CSV入力 --}}
+            <div class="form-group row">
+                <label class="col-sm-3 text-sm-right">レポート評価インポート</label>
+                <div class="col-sm-9">
+                    <form action="{{url('/')}}/redirect/plugin/learningtasks/importCsv/{{$page->id}}/{{$frame_id}}/{{$post->id}}" name="csv_inport{{$frame_id}}" method="POST" enctype="multipart/form-data">
+                        {{ csrf_field() }}
+                        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
+                        <input type="hidden" name="import_type" value="{{LearningtaskImportType::report}}">
+                        <input type="file" name="csv_file" class="form-control-file" required>
+                        @include('plugins.common.errors_inline', ['name' => 'csv_file'])
+                        <div class="btn-group">
+                            <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('レポート評価をインポートします。よろしいですか？')">
+                                <i class="fas fa-upload"></i> アップロード
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
