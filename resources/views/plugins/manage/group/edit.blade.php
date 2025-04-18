@@ -138,7 +138,7 @@
             </div>
             <ul class="list-group" id="users">
                 <li class="list-group-item" v-for="user in users">
-                    <button class="btn btn-primary btn-sm" v-on:click="joinUser(user.id, user.name)">参加</button>
+                    <button class="btn btn-primary btn-sm mr-1" v-on:click="joinUser(user.id, user.name)">参加</button>
                     <span>@{{ user.name }}</span>
                 </li>
             </ul>
@@ -190,11 +190,12 @@
     </div>
 
     <script>
-        new Vue({
-            el: '#list',
-            data: {
-                keyword: '',
-                users: [],
+        createApp({
+            data: function() {
+                return {
+                    keyword: '',
+                    users: [],
+                }
             },
             methods: {
                 // ユーザーを取得する
@@ -225,7 +226,7 @@
                     }
                 }
             }
-        })
+        }).mount('#list');
     </script>
 @endif
 @endsection

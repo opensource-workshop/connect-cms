@@ -333,13 +333,14 @@
 <script>
     let content_open_type = '{{ old('content_open_type', $frame->content_open_type) }}';
 
-    new Vue({
-      el: "#app_{{ $frame->id }}",
-      data: {
-        // コンテンツ公開区分
-        v_content_open_type: content_open_type
+    createApp({
+      data: function() {
+        return {
+          // コンテンツ公開区分
+          v_content_open_type: content_open_type
+        }
       }
-    })
+    }).mount('#app_{{ $frame->id }}');
 </script>
 
 {{-- DateTimePicker 呼び出し --}}

@@ -197,27 +197,28 @@
     </form>
 
     <script>
-        new Vue({
-          el: "#app_{{ $frame->id }}",
-          data: {
-            // 表示条件
-            v_scope_radio: '{{ old('scope', $blog_frame_setting->scope) }}',
-            // 指定年
-            v_scope_value: '{{ old('scope_value', $blog_frame_setting->scope_value) }}'
+        createApp({
+          data: function() {
+            return {
+              // 表示条件
+              v_scope_radio: '{{ old('scope', $blog_frame_setting->scope) }}',
+              // 指定年
+              v_scope_value: '{{ old('scope_value', $blog_frame_setting->scope_value) }}'
+            }
           },
           computed: {
             // 表示条件と指定年に応じた抽出範囲のテキストを返す
             showTargetYmd: function () {
-                let target_range_text = '-';
-                if(this.v_scope_radio == ""){
-                    target_range_text = '全件';
-                }else if(this.v_scope_radio == "year" && this.isNumber(this.v_scope_value) && this.v_scope_value.length == 4){
-                    target_range_text = this.v_scope_value + '年1月1日 00:00:00 ~ ' + this.v_scope_value + '年12月31日 23:59:59';
-                }else if(this.v_scope_radio == "fiscal" && this.isNumber(this.v_scope_value) && this.v_scope_value.length == 4){
-                    target_range_text = this.v_scope_value + '年4月1日 00:00:00 ~ ' + (Number(this.v_scope_value) + 1) + '年3月31日 23:59:59';
-                }else if(this.v_scope_radio == "created_id"){
-                    target_range_text = '自身の投稿のみ';
-                }
+              let target_range_text = '-';
+              if (this.v_scope_radio == ""){
+                target_range_text = '全件';
+              } else if (this.v_scope_radio == "year" && this.isNumber(this.v_scope_value) && this.v_scope_value.length == 4){
+                target_range_text = this.v_scope_value + '年1月1日 00:00:00 ~ ' + this.v_scope_value + '年12月31日 23:59:59';
+              } else if (this.v_scope_radio == "fiscal" && this.isNumber(this.v_scope_value) && this.v_scope_value.length == 4){
+                target_range_text = this.v_scope_value + '年4月1日 00:00:00 ~ ' + (Number(this.v_scope_value) + 1) + '年3月31日 23:59:59';
+              } else if (this.v_scope_radio == "created_id"){
+                target_range_text = '自身の投稿のみ';
+              }
               return target_range_text;
             }
           },
@@ -228,7 +229,7 @@
               return regex.test(value);
             }
           }
-        })
+        }).mount('#app_{{ $frame->id }}');
     </script>
 @endif
 @endsection

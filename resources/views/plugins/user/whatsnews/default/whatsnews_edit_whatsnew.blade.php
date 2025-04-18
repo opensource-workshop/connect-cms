@@ -485,8 +485,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
 </div>
 
 <script>
-    new Vue({
-        el: "#app_{{ $frame->id }}",
+    createApp({
         data: function() {
             return {
                 read_more_use_flag : {{ $whatsnew->read_more_use_flag ? $whatsnew->read_more_use_flag : "0" }},
@@ -518,7 +517,7 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
         mounted: function(){
             this.setDisabledTargetFrame({{ $whatsnew->frame_select }});
         }
-    })
+    }).mount('#app_{{ $frame->id }}');
 
     {{-- 初期状態で開くもの --}}
     @if (old('rss', $whatsnew->rss) == ShowType::show)
