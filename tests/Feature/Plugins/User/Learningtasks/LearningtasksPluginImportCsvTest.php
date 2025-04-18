@@ -397,7 +397,8 @@ class LearningtasksPluginImportCsvTest extends TestCase
         $page = Page::factory()->create();
         $learningtask = Learningtasks::factory()->create();
         $post = LearningtasksPosts::factory()->create(
-            ['learningtasks_id' => $learningtask->id, 'student_join_flag' => 3, 'teacher_join_flag' => 3]);
+            ['learningtasks_id' => $learningtask->id, 'student_join_flag' => 3, 'teacher_join_flag' => 3]
+        );
         // この課題で評価インポートを有効にする設定を作成
         LearningtasksUseSettings::factory()->create([
             'post_id' => $post->id,
