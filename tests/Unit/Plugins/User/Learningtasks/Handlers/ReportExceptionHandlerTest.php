@@ -20,7 +20,6 @@ use Illuminate\Support\MessageBag;
 use Mockery; // Validator モック用
 use Tests\TestCase;
 
-
 /**
  * ReportExceptionHandler のユニットテストクラス
  * @coversDefaultClass \App\Plugins\User\Learningtasks\Handlers\ReportExceptionHandler
@@ -37,12 +36,12 @@ class ReportExceptionHandlerTest extends TestCase
         $this->handler = new ReportExceptionHandler();
     }
 
-     /** 各テスト後に Mockery コンテナをクリーンアップ (Validator モック用) */
-     protected function tearDown(): void
-     {
-         parent::tearDown();
-         Mockery::close();
-     }
+    /** 各テスト後に Mockery コンテナをクリーンアップ (Validator モック用) */
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+        Mockery::close();
+    }
 
     /**
      * handle メソッドが各種例外に対して正しい設定配列または null を返すことをテスト

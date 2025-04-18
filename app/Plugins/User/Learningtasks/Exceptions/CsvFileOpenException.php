@@ -8,7 +8,8 @@ use Throwable;
 /**
  * CSVファイルを開けなかった場合にスローされるカスタム例外クラス。
  */
-class CsvFileOpenException extends Exception {
+class CsvFileOpenException extends Exception
+{
     /**
      * CsvFileOpenException のコンストラクタ。
      *
@@ -17,7 +18,8 @@ class CsvFileOpenException extends Exception {
      * @param Throwable|null $previous 前の例外（例外チェーン用）。
      * @throws Throwable
      */
-    public function __construct(string $message = "CSVファイルを開けませんでした。", int $code = 0, ?Throwable $previous = null) {
+    public function __construct(string $message = "CSVファイルを開けませんでした。", int $code = 0, ?Throwable $previous = null)
+    {
         parent::__construct($message, $code, $previous);
     }
 }
