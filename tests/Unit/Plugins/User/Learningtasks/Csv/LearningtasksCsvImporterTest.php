@@ -128,16 +128,14 @@ class LearningtasksCsvImporterTest extends TestCase
             ->once()
             ->withArgs(fn($data, $post, $page, $importer) =>
                 isset($data['userid'], $data['grade']) && // キーの存在確認を追加(より安全)
-                $data['userid'] === $student1->userid && $data['grade'] === 'A'
-            )
+                $data['userid'] === $student1->userid && $data['grade'] === 'A')
             ->andReturnNull(); // 成功時は void (null)
 
         $this->mock_row_processor->shouldReceive('process')
             ->once()
             ->withArgs(fn($data, $post, $page, $importer) =>
                  isset($data['userid'], $data['grade']) &&
-                 $data['userid'] === $student2->userid && $data['grade'] === 'B'
-             )
+                 $data['userid'] === $student2->userid && $data['grade'] === 'B')
             ->andReturnNull();
 
         // 4. CSVファイルの内容と偽のアップロードファイルを作成

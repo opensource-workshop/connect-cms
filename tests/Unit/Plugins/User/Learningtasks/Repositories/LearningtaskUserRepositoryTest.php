@@ -134,7 +134,8 @@ class LearningtaskUserRepositoryTest extends TestCase
             ['learningtasks_id' => $learningtask->id, 'student_join_flag' => 3]
         );
         LearningtasksUsers::factory()->create(
-            ['post_id' => $post->id, 'user_id' => $user1->id, 'role_name' => RoleName::student]);
+            ['post_id' => $post->id, 'user_id' => $user1->id, 'role_name' => RoleName::student]
+        );
         // not_selected_userはメンバーシップユーザだが、選択されていない
 
         // Act: メソッドの実行
@@ -271,7 +272,8 @@ class LearningtaskUserRepositoryTest extends TestCase
             ['learningtasks_id' => $learningtask->id, 'teacher_join_flag' => 3]
         );
         LearningtasksUsers::factory()->create(
-            ['post_id' => $post->id, 'user_id' => $user1->id, 'role_name' => RoleName::teacher]);
+            ['post_id' => $post->id, 'user_id' => $user1->id, 'role_name' => RoleName::teacher]
+        );
         // not_selected_userはメンバーシップユーザだが、選択されていない
 
         // Act: メソッドの実行

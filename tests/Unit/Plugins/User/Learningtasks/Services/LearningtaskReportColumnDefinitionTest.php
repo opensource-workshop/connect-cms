@@ -128,13 +128,13 @@ class LearningtaskReportColumnDefinitionTest extends TestCase
          $expected_headers = [
             'ログインID', 'ユーザ名', '提出日時', '提出回数', // Base
             '評価', '評価コメント' // Enabled optional
-        ];
+         ];
 
         // Act
-        $headers = $definition->getHeaders();
+         $headers = $definition->getHeaders();
 
         // Assert
-        $this->assertEquals($expected_headers, $headers);
+         $this->assertEquals($expected_headers, $headers);
     }
 
     /**
@@ -267,22 +267,22 @@ class LearningtaskReportColumnDefinitionTest extends TestCase
      * @group learningtasks
      * @group learningtasks-coldef
      */
-     public function getValidationRulesBaseReturnsCorrectRulesWhenEvaluateOnCommentOff(): void
-     {
-         // Arrange: 評価ON, コメントOFF
-         $definition = $this->createInstance([
-             LearningtaskUseFunction::use_report_evaluate => true,
-             LearningtaskUseFunction::use_report_evaluate_comment => false,
-         ]);
-         // Act
-         $rules = $definition->getValidationRulesBase();
-         // Assert
-         $this->assertArrayHasKey('grade', $rules);
-         $this->assertIsObject($rules['grade'][2]); // Check Rule::in is object
-         $this->assertContains('nullable', $rules['grade']);
-         $this->assertArrayHasKey('comment', $rules);
-         $this->assertEquals(['prohibited'], $rules['comment']); // コメントは禁止される
-     }
+    public function getValidationRulesBaseReturnsCorrectRulesWhenEvaluateOnCommentOff(): void
+    {
+        // Arrange: 評価ON, コメントOFF
+        $definition = $this->createInstance([
+            LearningtaskUseFunction::use_report_evaluate => true,
+            LearningtaskUseFunction::use_report_evaluate_comment => false,
+        ]);
+        // Act
+        $rules = $definition->getValidationRulesBase();
+        // Assert
+        $this->assertArrayHasKey('grade', $rules);
+        $this->assertIsObject($rules['grade'][2]); // Check Rule::in is object
+        $this->assertContains('nullable', $rules['grade']);
+        $this->assertArrayHasKey('comment', $rules);
+        $this->assertEquals(['prohibited'], $rules['comment']); // コメントは禁止される
+    }
 
     /**
      * getValidationRulesBase が評価OFF/コメントON時に正しいルールを返すことをテスト
@@ -291,22 +291,22 @@ class LearningtaskReportColumnDefinitionTest extends TestCase
      * @group learningtasks
      * @group learningtasks-coldef
      */
-     public function getValidationRulesBaseReturnsCorrectRulesWhenEvaluateOffCommentOn(): void
-     {
-          // Arrange: 評価OFF, コメントON
-         $definition = $this->createInstance([
-             LearningtaskUseFunction::use_report_evaluate => false,
-             LearningtaskUseFunction::use_report_evaluate_comment => true,
-         ]);
-          // Act
-         $rules = $definition->getValidationRulesBase();
-          // Assert
-         $this->assertArrayHasKey('grade', $rules);
-         $this->assertEquals(['prohibited'], $rules['grade']); // 評価は禁止
-         $this->assertArrayHasKey('comment', $rules);
-         // コメントは有効だが、依存する grade が prohibited なので required_with は影響小
-         $this->assertEquals(['nullable', 'string', 'max:65535', 'required_with:grade'], $rules['comment']);
-     }
+    public function getValidationRulesBaseReturnsCorrectRulesWhenEvaluateOffCommentOn(): void
+    {
+         // Arrange: 評価OFF, コメントON
+        $definition = $this->createInstance([
+            LearningtaskUseFunction::use_report_evaluate => false,
+            LearningtaskUseFunction::use_report_evaluate_comment => true,
+        ]);
+         // Act
+        $rules = $definition->getValidationRulesBase();
+         // Assert
+        $this->assertArrayHasKey('grade', $rules);
+        $this->assertEquals(['prohibited'], $rules['grade']); // 評価は禁止
+        $this->assertArrayHasKey('comment', $rules);
+        // コメントは有効だが、依存する grade が prohibited なので required_with は影響小
+        $this->assertEquals(['nullable', 'string', 'max:65535', 'required_with:grade'], $rules['comment']);
+    }
 
      /**
      * getValidationMessages が期待されるメッセージ配列を返すことをテスト
@@ -330,5 +330,4 @@ class LearningtaskReportColumnDefinitionTest extends TestCase
         $this->assertEquals('評価コメント機能が無効なため、評価コメント列は入力できません（空にしてください）。', $messages['comment.prohibited']);
         // 全てのメッセージを網羅的にテストしても良い
     }
-
 }

@@ -127,13 +127,13 @@ class LearningtaskEvaluationRowProcessorTest extends TestCase
          $this->expectException(AlreadyEvaluatedException::class);
 
          // Act
-         try {
-              $this->processor->process($validated_data, $post, $page, $importer);
-         } catch (Exception $e) {
-             // 例外発生後、DBに追加の評価レコードがないことを確認
-             $this->assertDatabaseCount('learningtasks_users_statuses', 2); // 提出 + 既存評価 のままのはず
-             throw $e; // 例外を再スローして PHPUnit に検知させる
-         }
+        try {
+             $this->processor->process($validated_data, $post, $page, $importer);
+        } catch (Exception $e) {
+            // 例外発生後、DBに追加の評価レコードがないことを確認
+            $this->assertDatabaseCount('learningtasks_users_statuses', 2); // 提出 + 既存評価 のままのはず
+            throw $e; // 例外を再スローして PHPUnit に検知させる
+        }
     }
 
     /**
@@ -159,15 +159,15 @@ class LearningtaskEvaluationRowProcessorTest extends TestCase
          $this->expectException(InvalidStudentException::class);
 
          // Act
-         try {
-             $this->processor->process($validated_data, $post, $page, $importer);
-         } catch(Exception $e) {
-             // DBに評価が追加されていないことを確認
-             $this->assertDatabaseMissing('learningtasks_users_statuses', [
-                 'post_id' => $post->id, 'user_id' => $not_a_student->id, 'task_status' => 2
-             ]);
-             throw $e;
-         }
+        try {
+            $this->processor->process($validated_data, $post, $page, $importer);
+        } catch (Exception $e) {
+            // DBに評価が追加されていないことを確認
+            $this->assertDatabaseMissing('learningtasks_users_statuses', [
+                'post_id' => $post->id, 'user_id' => $not_a_student->id, 'task_status' => 2
+            ]);
+            throw $e;
+        }
     }
 
     /**
@@ -195,7 +195,7 @@ class LearningtaskEvaluationRowProcessorTest extends TestCase
         // Act
         try {
             $this->processor->process($validated_data, $post, $page, $importer);
-        } catch(Exception $e) {
+        } catch (Exception $e) {
              // DBに評価が追加されていないことを確認
             $this->assertDatabaseMissing('learningtasks_users_statuses', [
                 'post_id' => $post->id, 'user_id' => $student->id, 'task_status' => 2
@@ -226,5 +226,4 @@ class LearningtaskEvaluationRowProcessorTest extends TestCase
         // Act
         $this->processor->process($validated_data, $post, $page, $importer);
     }
-
 }
