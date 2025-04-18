@@ -22,6 +22,7 @@
         "axios": "^1.6.1",
         "bootstrap": "^4.0.0",
         "codemirror": "^6.0.1",
+        "dayjs": "^1.11.13",
         "jquery": "^3.7.0",
         "laravel-mix": "^6.0.49",
         "lodash": "^4.17.19",
