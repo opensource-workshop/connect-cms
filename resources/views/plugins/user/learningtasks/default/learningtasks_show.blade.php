@@ -84,24 +84,26 @@
                     </form>
                 </div>
             </div>
-            {{-- CSV入力 --}}
-            <div class="form-group row">
-                <label class="col-sm-3 text-sm-right">レポート評価インポート</label>
-                <div class="col-sm-9">
-                    <form action="{{url('/')}}/redirect/plugin/learningtasks/importCsv/{{$page->id}}/{{$frame_id}}/{{$post->id}}" name="csv_inport{{$frame_id}}" method="POST" enctype="multipart/form-data">
-                        {{ csrf_field() }}
-                        <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
-                        <input type="hidden" name="import_type" value="{{LearningtaskImportType::report}}">
-                        <input type="file" name="csv_file" class="form-control-file" required>
-                        @include('plugins.common.errors_inline', ['name' => 'csv_file'])
-                        <div class="btn-group">
-                            <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('レポート評価をインポートします。よろしいですか？')">
-                                <i class="fas fa-upload"></i> アップロード
-                            </button>
-                        </div>
-                    </form>
+            {{-- レポート評価CSV入力 評価機能有効時のみ --}}
+            @if ($tool->checkFunction(LearningtaskUseFunction::use_report_evaluate))
+                <div class="form-group row">
+                    <label class="col-sm-3 text-sm-right">レポート評価インポート</label>
+                    <div class="col-sm-9">
+                        <form action="{{url('/')}}/redirect/plugin/learningtasks/importCsv/{{$page->id}}/{{$frame_id}}/{{$post->id}}" name="csv_inport{{$frame_id}}" method="POST" enctype="multipart/form-data">
+                            {{ csrf_field() }}
+                            <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
+                            <input type="hidden" name="import_type" value="{{LearningtaskImportType::report}}">
+                            <input type="file" name="csv_file" class="form-control-file" required>
+                            @include('plugins.common.errors_inline', ['name' => 'csv_file'])
+                            <div class="btn-group">
+                                <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('レポート評価をインポートします。よろしいですか？')">
+                                    <i class="fas fa-upload"></i> アップロード
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-            </div>
+            @endif
         </div>
 
         <h5><span class="badge badge-warning">評価中の受講者</span></h5>
