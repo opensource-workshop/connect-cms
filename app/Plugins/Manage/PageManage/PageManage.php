@@ -765,8 +765,8 @@ class PageManage extends ManagePluginBase
 
         foreach ($groups as $group) {
             $group->page_roles = $page_roles->where('group_id', $group->id);
-            $group->group_user_names = $group_users->firstWhere('group_id', $group->id)->group_user_names;
-            $group->group_user_count = $group_users->firstWhere('group_id', $group->id)->user_count;
+            $group->group_user_names = optional($group_users->firstWhere('group_id', $group->id))->group_user_names;
+            $group->group_user_count = optional($group_users->firstWhere('group_id', $group->id))->user_count ?? 0;
         }
 
         // 自分のページから親を遡って取得
@@ -1078,8 +1078,8 @@ class PageManage extends ManagePluginBase
             ->get();
 
         foreach ($groups as $group) {
-            $group->group_user_names = $group_users->firstWhere('group_id', $group->id)->group_user_names;
-            $group->group_user_count = $group_users->firstWhere('group_id', $group->id)->user_count;
+            $group->group_user_names = optional($group_users->firstWhere('group_id', $group->id))->group_user_names;
+            $group->group_user_count = optional($group_users->firstWhere('group_id', $group->id))->user_count ?? 0;
         }
 
         // 管理画面プラグインの戻り値の返し方
