@@ -163,6 +163,13 @@
                     <input type="text" name="database_trend_words_caption" value="{{$database_trend_words_caption}}" class="form-control">
                 </div>
             </div>
+            <small class="form-text text-muted">
+                ※ 検索されたキーワードを、急上昇ワード(再検索できるキーワード)として手動で設定できます。<br>
+                ※ 設定するには事前に下記を設定します。<br>
+                　※ <a href="{{ url("/plugin/databases/editBuckets/{$page->id}/{$frame_id}#frame-{$frame_id}") }}" target="_blank">DB設定</a>の「検索キーワードを記録」を「使用する」に設定する。<br>
+                　※ 当表示設定の「検索機能の表示」を「表示する」に設定する。<br>
+                　※ 上記を設定後にデータベースが検索されると、当表示設定の「急上昇ワードの表示＞更新する値」の「最新化」ボタン押下で、急上昇ワードを設定できます。<br>
+            </small>
         </div>
     </div>
 
