@@ -750,13 +750,22 @@ class PageManage extends ManagePluginBase
             ->orderBy('group_id', 'asc')
             ->get();
 
+        // 数万ユーザでメモリ不足になるため、GROUP_CONCAT()を使用して、グループ参加者のユーザ名を取得
+        // GROUP_CONCAT()はmysql設定でgroup_concat_max_len(default=1024)の制限があり、それ以上の長さの文字列は消える。
+        $group_users = User::select(
+                'group_users.group_id',
+                DB::raw("GROUP_CONCAT(users.name SEPARATOR ',') as group_user_names"),
+                DB::raw('count(group_users.group_id) as user_count')
+            )
+            ->join('group_users', 'group_users.user_id', '=', 'users.id')
+            ->where('group_users.deleted_at', null)
+            ->groupBy('group_users.group_id')
+            ->get();
+
         foreach ($groups as $group) {
             $group->page_roles = $page_roles->where('group_id', $group->id);
-
-            // 数万ユーザでメモリ不足になるため、DB呼び出し
-            $group->group_user_names = User::whereIn('id', GroupUser::where('group_id', $group->id)->pluck('user_id'))
-                ->pluck('name')
-                ->implode(', ');
+            $group->group_user_names = $group_users->firstWhere('group_id', $group->id)->group_user_names;
+            $group->group_user_count = $group_users->firstWhere('group_id', $group->id)->user_count;
         }
 
         // 自分のページから親を遡って取得
@@ -1054,11 +1063,21 @@ class PageManage extends ManagePluginBase
         // ※ with('group_user')は、数万ユーザの場合、1Gでもメモリ不足になる。
         $groups = Group::orderBy('display_sequence', 'asc')->get();
 
+        // 数万ユーザでメモリ不足になるため、GROUP_CONCAT()を使用して、グループ参加者のユーザ名を取得
+        // GROUP_CONCAT()はmysql設定でgroup_concat_max_len(default=1024)の制限があり、それ以上の長さの文字列は消える。
+        $group_users = User::select(
+                'group_users.group_id',
+                DB::raw("GROUP_CONCAT(users.name SEPARATOR '<br>') as group_user_names"),
+                DB::raw('count(group_users.group_id) as user_count')
+            )
+            ->join('group_users', 'group_users.user_id', '=', 'users.id')
+            ->where('group_users.deleted_at', null)
+            ->groupBy('group_users.group_id')
+            ->get();
+
         foreach ($groups as $group) {
-            // 数万ユーザでメモリ不足になるため、DB呼び出し
-            $group->group_user_names = User::whereIn('id', GroupUser::where('group_id', $group->id)->pluck('user_id'))
-                ->pluck('name')
-                ->implode('<br />');
+            $group->group_user_names = $group_users->firstWhere('group_id', $group->id)->group_user_names;
+            $group->group_user_count = $group_users->firstWhere('group_id', $group->id)->user_count;
         }
 
         // 管理画面プラグインの戻り値の返し方

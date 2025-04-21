@@ -111,7 +111,7 @@
 
                             <div class="mt-1 mb-1">
                                 <small>
-                                    <b><a href="{{url('/manage/group/edit')}}/{{$group->id}}" target="_blank">参加ユーザ <i class="fas fa-external-link-alt"></i></a></b>：{{$group->group_user_names}}
+                                    <b><a href="{{url('/manage/group/edit')}}/{{$group->id}}" target="_blank">参加ユーザ <span class="badge badge-pill badge-primary">{{$group->group_user_count}}人</span> <i class="fas fa-external-link-alt"></i></a></b>：<span class="txt-limit">{{$group->group_user_names}}</span>
                                 </small>
                             </div>
 
@@ -149,4 +149,16 @@
         </div>
     </div>
 </div>
+
+<script>
+    // 表示する文字数制限
+    const limits = document.getElementsByClassName("txt-limit");
+    for (const limit of limits) {
+        const str = limit.innerHTML;
+        const len = 400; // 全角400字(約1000バイト)
+        if (str.length > len) {
+            limit.innerHTML = str.substring(0, len) + "<br><div class='text-danger'>(ユーザ多数のため以下省略)</div>";
+        }
+    }
+</script>
 @endsection
