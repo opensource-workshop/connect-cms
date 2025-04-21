@@ -752,7 +752,8 @@ class PageManage extends ManagePluginBase
 
         // 数万ユーザでメモリ不足になるため、GROUP_CONCAT()を使用して、グループ参加者のユーザ名を取得
         // GROUP_CONCAT()はmysql設定でgroup_concat_max_len(default=1024)の制限があり、それ以上の長さの文字列は消える。
-        $group_users = User::select(
+        $group_users = User::
+            select(
                 'group_users.group_id',
                 DB::raw("GROUP_CONCAT(users.name SEPARATOR ',') as group_user_names"),
                 DB::raw('count(group_users.group_id) as user_count')
@@ -1065,7 +1066,8 @@ class PageManage extends ManagePluginBase
 
         // 数万ユーザでメモリ不足になるため、GROUP_CONCAT()を使用して、グループ参加者のユーザ名を取得
         // GROUP_CONCAT()はmysql設定でgroup_concat_max_len(default=1024)の制限があり、それ以上の長さの文字列は消える。
-        $group_users = User::select(
+        $group_users = User::
+            select(
                 'group_users.group_id',
                 DB::raw("GROUP_CONCAT(users.name SEPARATOR '<br>') as group_user_names"),
                 DB::raw('count(group_users.group_id) as user_count')
