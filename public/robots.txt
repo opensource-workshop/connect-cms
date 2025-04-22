@@ -12,3 +12,6 @@ Disallow: *blogs/blog_entries/
 Disallow: *wysiwyg/image/download/
 Disallow: *calendars/calendars/
 Disallow: *cabinets/cabinet_files/
+Disallow: *photo_albums/photo_albums/
+Disallow: *videos/video_files/
+Disallow: *bbses/bbs_articles/
