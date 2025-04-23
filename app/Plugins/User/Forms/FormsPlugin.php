@@ -36,7 +36,6 @@ use App\Utilities\String\StringUtils;
 use App\Utilities\Token\TokenUtils;
 
 use App\Enums\Bs4TextColor;
-use App\Enums\CsvCharacterCode;
 use App\Enums\FormAccessLimitType;
 use App\Enums\FormColumnType;
 use App\Enums\FormMode;
@@ -58,7 +57,8 @@ use App\Utilities\Csv\CsvUtils;
  *
  * フォームの作成＆データ収集用プラグイン。
  *
- * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
  * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
@@ -113,6 +113,7 @@ class FormsPlugin extends UserPluginBase
             'copyForm',
             'downloadCsvAggregate',
             'registerOtherPlugins',
+            'updateSelectSequenceAll',
         ];
         return $functions;
     }
@@ -136,6 +137,7 @@ class FormsPlugin extends UserPluginBase
         $role_check_table["aggregate"]            = ['role_article'];
         $role_check_table["downloadCsvAggregate"] = ['role_article'];
         $role_check_table["registerOtherPlugins"] = ['role_article'];
+        $role_check_table['updateSelectSequenceAll'] = ['buckets.upColumnSequence', 'buckets.downColumnSequence'];
         return $role_check_table;
     }
 
@@ -2373,6 +2375,34 @@ class FormsPlugin extends UserPluginBase
         $pair_select->save();
 
         $message = '選択肢【 '. $target_select->value .' 】の表示順を更新しました。';
+
+        // 編集画面を呼び出す
+        return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, $message, null);
+    }
+
+    /**
+     * つまんで移動した選択肢の表示順を更新
+     */
+    public function updateSelectSequenceAll($request, $page_id, $frame_id)
+    {
+        DB::beginTransaction();
+        try {
+            foreach ($request->select_ids_order as $key => $select_id) {
+                $select = FormsColumnsSelects::where('id', $select_id)->first();
+                if ($select) {
+                    // display_sequenceを1から順に全選択肢を振り直し
+                    $select->display_sequence = $key + 1;
+                    $select->save();
+                }
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+
+        $message = '選択肢の表示順を更新しました。';
 
         // 編集画面を呼び出す
         return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, $message, null);
