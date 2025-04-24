@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 use App\Enums\DayOfWeek;
+use App\Enums\LearningtaskUseFunction;
 use App\Models\Common\PageRole;
 use App\Models\Common\GroupUser;
 use App\Models\Common\Page;
@@ -924,9 +925,12 @@ class LearningtasksTool
             if ($report_status->task_status == 2 && ($report_status->grade == 'A' || $report_status->grade == 'B' || $report_status->grade == 'C')) {
                 return array(false, 'すでに合格しているため、提出不要です。');
             }
-            // 提出済みがくればfalse、D 評価がくれば再提出でtrue
-            if ($report_status->task_status == 1) {
+            // D 評価がくれば再提出でtrue
+            // 提出済みは締め切り前であれば修正可能
+            if ($report_status->task_status == 1 && !$this->checkFunction(LearningtaskUseFunction::use_report_revising)) {
                 $can_report_upload = array(false, '提出済みのため、現在は提出できません。');
+            } elseif ($report_status->task_status == 1 && $this->checkFunction(LearningtaskUseFunction::use_report_revising)) {
+                $can_report_upload = $this->checkReportUploadDeadline($can_report_upload);
             } elseif ($report_status->task_status == 2 && $report_status->grade == 'D') {
                 $can_report_upload = array(true, '再提出が必要');
 
@@ -1564,5 +1568,68 @@ class LearningtasksTool
             return true;
         }
         return false;
+    }
+
+    /**
+     * 提出内容が修正可能かを判定する
+     * @return bool
+     */
+    public function shouldReviseReportSubmission($post_id): bool
+    {
+        if ($this->isOutOfDeadlineReportUpload()) {
+            // 提出期限オーバーなら、修正不可
+            return false;
+        }
+
+        // 提出内容が未評価の状態であれば、提出内容の修正を可能とする
+        $submissions = $this->report_statuses->where('post_id', $post_id)->where('task_status', 1);
+        $evaluations = $this->report_statuses->where('post_id', $post_id)->where('task_status', 2);
+        $evaluated = $submissions->count() > 0 && $submissions->count() === $evaluations->count(); # 提出は評価済みか
+        if ($submissions->count() > 0 && !$evaluated) {
+            return true;
+        }
+
+        Log::debug('shouldReviseReportSubmission checked', [
+            'submissions_count' => $submissions->count(),
+            'submissions_details' => $submissions->toArray(),
+            'evaluations_count' => $evaluations->count(),
+            'evaluations_details' => $evaluations->toArray(),
+            'evaluated' => $evaluated,
+        ]);
+
+        return false;
+    }
+
+    /**
+     * 提出内容の修正の前準備
+     */
+    public function prepareRevisingReportSubmission(): void
+    {
+        $last_submission = LearningtasksUsersStatuses::where('user_id', $this->student_id)
+            ->where('task_status', 1)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($last_submission) {
+            $last_submission->delete();
+        }
+    }
+
+    /**
+     * 削除された提出内容を取得
+     */
+    public function fetchDeletedSubmissions(): Collection
+    {
+        $query = LearningtasksUsersStatuses::onlyTrashed()
+            ->where('task_status', 1)
+            ->where('user_id', $this->student_id)
+            ->orderBy('id', 'asc');
+
+        // ログインユーザが学生の場合は自身で削除した提出内容のみ
+        if ($this->isStudent()) {
+            $query->where('user_id', $this->student_id);
+        }
+
+        return $query->get();
     }
 }

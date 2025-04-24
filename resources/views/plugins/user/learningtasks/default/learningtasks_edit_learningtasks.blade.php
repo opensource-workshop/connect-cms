@@ -221,7 +221,22 @@
                 </div>
             </div>
         </div>
-
+        <div class="form-group row mb-0">
+            <label class="{{$frame->getSettingLabelClass()}}">提出後の修正</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                <div class="custom-control custom-checkbox mr-3">
+                    <input type="checkbox"
+                        name="base_settings[{{LearningtaskUseFunction::use_report_revising}}]"
+                        value="on"
+                        class="custom-control-input"
+                        id="{{LearningtaskUseFunction::use_report_revising}}"
+                        @if(old("base_settings." . LearningtaskUseFunction::use_report_revising, $tool->getFunction(LearningtaskUseFunction::use_report_revising, true)) == 'on') checked="checked" @endif
+                    >
+                    <label class="custom-control-label" for="{{LearningtaskUseFunction::use_report_revising}}">提出後の修正を許可する</label>
+                    <small class="form-text text-muted">評価前もしくは提出期限まで、学生が提出内容の修正を行えます。</small>
+                </div>
+            </div>
+        </div>
         <div class="form-group row mb-0">
             <label class="{{$frame->getSettingLabelClass()}}">提出期限</label>
             <div class="{{$frame->getSettingInputClass(true)}}">
