@@ -37,11 +37,20 @@ use App\Plugins\User\UserPluginBase;
 use App\Utilities\Csv\CsvUtils;
 use App\Utilities\String\StringUtils;
 use App\Enums\CsvCharacterCode;
+use App\Enums\LearningtaskImportType;
 use App\Enums\LearningtasksExaminationColumn;
 use App\Enums\LearningtaskUseFunction;
 use App\Enums\RoleName;
-
+use App\Plugins\User\Learningtasks\Csv\LearningtasksCsvImporter;
+use App\Plugins\User\Learningtasks\Exceptions\FeatureDisabledException;
+use App\Plugins\User\Learningtasks\Factories\ColumnDefinitionFactory;
+use App\Plugins\User\Learningtasks\Factories\ExceptionHandlerFactory;
+use App\Plugins\User\Learningtasks\Factories\RowProcessorFactory;
+use App\Plugins\User\Learningtasks\Repositories\LearningtaskUserRepository;
 use App\Rules\CustomValiWysiwygMax;
+use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 /**
  * 課題管理プラグイン
@@ -122,6 +131,7 @@ class LearningtasksPlugin extends UserPluginBase
             'uploadCsvExaminations',
             'downloadCsvFormatExaminations',
             'downloadCsvExaminations',
+            'importCsv',
         ];
         return $functions;
     }
@@ -171,6 +181,7 @@ class LearningtasksPlugin extends UserPluginBase
         $role_check_table["changeStatus7"]    = array('role_guest');
         $role_check_table["changeStatus8"]    = array('role_guest');
         $role_check_table["downloadCsvReport"] = array('role_article_admin', 'role_guest');
+        $role_check_table["importCsv"] = array('role_guest');
         return $role_check_table;
     }
 
@@ -3624,6 +3635,121 @@ class LearningtasksPlugin extends UserPluginBase
 
         // CSV出力
         return $exporter->export(url('/'), $request->character_code);
+    }
+
+    /**
+     * CSVインポート処理 (文字コード自動判定)
+     *
+     * @param Request $request
+     * @param int $page_id
+     * @param int $frame_id
+     * @param int $id LearningtasksPosts の ID
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function importCsv(Request $request, int $page_id, int $frame_id, int $id)
+    {
+        $page = $this->page;
+        $post = LearningtasksPosts::with(['learningtask', 'post_settings'])->findOrFail($id);
+
+        // 画面エラーチェック
+        $validator = Validator::make($request->all(), [
+            'csv_file' => [
+                'required',        // 必須
+                'file',            // アップロードファイル
+                'mimes:csv,txt',   // MIMEタイプ制限
+            ],
+            'import_type' => ['required', Rule::in(LearningtaskImportType::getMemberKeys())]
+        ]);
+        $validator->setAttributeNames(['csv_file' => 'CSVファイル', 'import_type' => 'インポート形式']);
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $uploaded_file = $request->file('csv_file');
+        $import_type = $request->import_type;
+        try {
+            $user_repository = app(LearningtaskUserRepository::class);
+            $column_definition_factory = app(ColumnDefinitionFactory::class);
+            $row_processor_factory = app(RowProcessorFactory::class);
+            $exception_handler_factory = app(ExceptionHandlerFactory::class);
+            $column_definition = $column_definition_factory->make($import_type, $post);
+            $row_processor = $row_processor_factory->make($import_type);
+            $exception_handler = $exception_handler_factory->make($import_type);
+            $importer = new LearningtasksCsvImporter($post, $page, $column_definition, $row_processor, $user_repository, $exception_handler);
+        } catch (FeatureDisabledException $e) { // 評価設定などが無効になっている
+            Log::warning("CSV Import rejected for post ID {$id}: " . $e->getMessage());
+            return back()->with('error', $e->getMessage());
+        } catch (InvalidArgumentException $e) { // Factory での未知のタイプ等
+            Log::warning("CSV Import - Invalid argument for factory: " . $e->getMessage());
+            return back()->with('error', '無効なインポートタイプが指定されたか、処理の準備に失敗しました。');
+        } catch (Exception $e) {
+            Log::error("CSV Import - Service instantiation failed for post ID {$id}: " . $e->getMessage());
+            return redirect()->back()->with('error', 'インポート処理の準備に失敗しました。');
+        }
+
+        // 権限チェック
+        $current_user = Auth::user();
+        if (!$importer->canImport($current_user)) {
+            Log::error("CSV Import - Permission check failed for post ID {$id} by user ID {$current_user->id}");
+            abort(403, 'レポート評価CSVをインポートする権限がありません。');
+        }
+
+        // インポート実行
+        try {
+            $results = $importer->import($uploaded_file, $current_user);
+            // 結果を整形してフィードバックメッセージと共にリダイレクト
+            $request->flash_message = $this->formatImportResultFeedback($results);
+            // リダイレクト先はviewで指定される
+        } catch (Exception $e) {
+            // Importer 内で捕捉されなかった予期せぬ例外、または Importer が投げたファイル/判定エラーなど
+            Log::error("CSV Import - Unhandled exception or file/detection error for post ID {$id}: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return redirect()->back()->with('error', 'CSVインポート処理中にエラーが発生しました: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * インポート結果($results配列)をユーザーへのフィードバックメッセージに整形する。
+     * 必要に応じてエラー/スキップ詳細をセッションにフラッシュ格納する。
+     *
+     * @param array $results Importerから返された結果配列
+     * @return string 表示するメッセージ文字列
+     * 例:
+     * - 成功のみ: "CSVインポート処理完了：成功 10件。"
+     * - スキップのみ: "CSVインポート処理完了：成功 8件 / スキップ 2件。一部スキップされた行があります。"
+     * - エラーのみ: "CSVインポート処理完了：成功 7件 / エラー 3件。エラー内容を確認してください。"
+     * - エラーとスキップ混在: "CSVインポート処理完了：成功 5件 / スキップ 2件 / エラー 3件。エラー内容を確認してください。"
+     */
+    private function formatImportResultFeedback(array $results): string
+    {
+        // ベースとなるメッセージを作成
+        $message = "CSVインポート処理完了：";
+        $message .= "成功 {$results['success']}件";
+        if ($results['skipped'] > 0) {
+            $message .= " / スキップ {$results['skipped']}件";
+        }
+        if ($results['errors'] > 0) {
+            $message .= " / エラー {$results['errors']}件";
+        }
+
+        if ($results['errors'] > 0) {
+            // エラーがある場合は詳細をセッションへフラッシュ
+            session()->flash('csv_import_errors', $results['error_details']);
+        }
+        if ($results['skipped'] > 0) {
+            // スキップがある場合は詳細をセッションへフラッシュ
+            session()->flash('csv_import_skipped_details', $results['skip_details']);
+        }
+
+        // 追記メッセージの決定 (エラー優先)
+        if ($results['errors'] > 0) {
+            $message .= '。エラー内容を確認してください。'; // エラーがあればこちら
+        } elseif ($results['skipped'] > 0) {
+            $message .= '。一部スキップされた行があります。'; // エラーがなくスキップがある場合
+        } else {
+             $message .= '。'; // 成功の場合
+        }
+
+        return $message;
     }
 
     // delete: 権限設定廃止のためコメントアウト
