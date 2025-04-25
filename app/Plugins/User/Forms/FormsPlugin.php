@@ -114,6 +114,7 @@ class FormsPlugin extends UserPluginBase
             'downloadCsvAggregate',
             'registerOtherPlugins',
             'updateSelectSequenceAll',
+            'updateColumnSequenceAll',
         ];
         return $functions;
     }
@@ -138,6 +139,7 @@ class FormsPlugin extends UserPluginBase
         $role_check_table["downloadCsvAggregate"] = ['role_article'];
         $role_check_table["registerOtherPlugins"] = ['role_article'];
         $role_check_table['updateSelectSequenceAll'] = ['buckets.upColumnSequence', 'buckets.downColumnSequence'];
+        $role_check_table['updateColumnSequenceAll'] = ['buckets.upColumnSequence', 'buckets.downColumnSequence'];
         return $role_check_table;
     }
 
@@ -2145,6 +2147,34 @@ class FormsPlugin extends UserPluginBase
         $pair_column->save();
 
         $message = '項目【 '. $target_column->column_name .' 】の表示順を更新しました。';
+
+        // 編集画面を呼び出す
+        return $this->editColumn($request, $page_id, $frame_id, $request->forms_id, $message, null);
+    }
+
+    /**
+     * つまんで移動した項目の表示順を更新
+     */
+    public function updateColumnSequenceAll($request, $page_id, $frame_id)
+    {
+        DB::beginTransaction();
+        try {
+            foreach ($request->column_ids_order as $key => $column_id) {
+                $column = FormsColumns::where('id', $column_id)->first();
+                if ($column) {
+                    // display_sequenceを1から順に全項目を振り直し
+                    $column->display_sequence = $key + 1;
+                    $column->save();
+                }
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+
+        $message = '項目の表示順を更新しました。';
 
         // 編集画面を呼び出す
         return $this->editColumn($request, $page_id, $frame_id, $request->forms_id, $message, null);
