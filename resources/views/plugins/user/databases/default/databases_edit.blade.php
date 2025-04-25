@@ -110,10 +110,12 @@
 
                     <div class="table-responsive">
                         {{-- 項目の一覧 --}}
-                        <table class="table table-hover table-sm">
+                        <table class="table table-hover table-sm" id="sortable-columns">
                             <thead class="thead-light">
                                 <tr>
-                                    <th class="text-center text-nowrap">表示順</th>
+                                    <th class="text-center text-nowrap">
+                                        表示順 <a class="fas fa-info-circle" data-toggle="tooltip" data-html="true" title="<i class='fa-solid fa-grip-vertical'></i> をつまんで移動(ドラック＆ドロップ)すると表示順を変更できます。"></a>
+                                    </th>
                                     <th class="text-center text-nowrap" style="min-width: 165px;">項目名</th>
                                     <th class="text-center text-nowrap" style="min-width: 165px;">型</th>
                                     <th class="text-center text-nowrap">必須</th>
@@ -128,20 +130,34 @@
                                     <th class="text-center text-nowrap">削除</th>
                                 </tr>
                             </thead>
-                            <tbody>
                                 {{-- 更新用の行 --}}
                                 @foreach($columns as $column)
-                                    @include('plugins.user.databases.default.databases_edit_row')
+                                    <tbody>
+                                        @include('plugins.user.databases.default.databases_edit_row')
+                                    </tbody>
                                 @endforeach
-
+                            <tfoot>
                                 {{-- 新規登録用の行 --}}
                                 <tr class="thead-light">
                                     <th colspan="9">【項目の追加行】</th>
                                 </tr>
                                 @include('plugins.user.databases.default.databases_edit_row_add')
-                            </tbody>
+                            </tfoot>
                         </table>
                     </div>
+
+                    <script>
+                        // ドラック＆ドロップで表示順変更
+                        let el = document.getElementById('sortable-columns');
+                        new Sortable(el, {
+                            handle: '.sortable-handle',
+                            animation: 150,
+                            onUpdate: function (evt) {
+                                database_columns.action = "{{url('/')}}/plugin/databases/updateColumnSequenceAll/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+                                database_columns.submit();
+                            },
+                        });
+                    </script>
 
                     {{-- ボタンエリア --}}
                     <div class="text-center mt-3 mt-md-0">
