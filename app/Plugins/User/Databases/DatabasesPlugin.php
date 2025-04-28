@@ -111,6 +111,8 @@ class DatabasesPlugin extends UserPluginBase
             'addPref',
             'search',
             'indexCount',
+            'updateSelectSequenceAll',
+            'updateColumnSequenceAll',
         ];
         return $functions;
     }
@@ -136,9 +138,10 @@ class DatabasesPlugin extends UserPluginBase
         $role_check_table["input"]                = array('posts.create', 'posts.update');
         $role_check_table["publicConfirm"]        = array('posts.create', 'posts.update');
         $role_check_table["publicStore"]          = array('posts.create', 'posts.update');
-        $role_check_table["trendWords"] = array('frames.edit');
-
+        $role_check_table["trendWords"]           = array('frames.edit');
         $role_check_table["addPref"]              = array('buckets.addColumn');
+        $role_check_table['updateSelectSequenceAll'] = ['buckets.upColumnSequence', 'buckets.downColumnSequence'];
+        $role_check_table['updateColumnSequenceAll'] = ['buckets.upColumnSequence', 'buckets.downColumnSequence'];
         return $role_check_table;
     }
 
@@ -2627,6 +2630,34 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
+     * つまんで移動した項目の表示順を更新
+     */
+    public function updateColumnSequenceAll($request, $page_id, $frame_id)
+    {
+        DB::beginTransaction();
+        try {
+            foreach ($request->column_ids_order as $key => $column_id) {
+                $column = DatabasesColumns::where('id', $column_id)->first();
+                if ($column) {
+                    // display_sequenceを1から順に全項目を振り直し
+                    $column->display_sequence = $key + 1;
+                    $column->save();
+                }
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+
+        $message = '項目の表示順を更新しました。';
+
+        // 編集画面を呼び出す
+        return $this->editColumn($request, $page_id, $frame_id, $request->databases_id, $message, null);
+    }
+
+    /**
      * 項目に紐づく詳細設定の更新
      */
     public function updateColumnDetail($request, $page_id, $frame_id)
@@ -2969,6 +3000,34 @@ class DatabasesPlugin extends UserPluginBase
         $pair_select->save();
 
         $message = '選択肢【 '. $target_select->value .' 】の表示順を更新しました。';
+
+        // 編集画面を呼び出す
+        return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, $message, null);
+    }
+
+    /**
+     * つまんで移動した選択肢の表示順を更新
+     */
+    public function updateSelectSequenceAll($request, $page_id, $frame_id)
+    {
+        DB::beginTransaction();
+        try {
+            foreach ($request->select_ids_order as $key => $select_id) {
+                $select = DatabasesColumnsSelects::where('id', $select_id)->first();
+                if ($select) {
+                    // display_sequenceを1から順に全選択肢を振り直し
+                    $select->display_sequence = $key + 1;
+                    $select->save();
+                }
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+
+        $message = '選択肢の表示順を更新しました。';
 
         // 編集画面を呼び出す
         return $this->editColumnDetail($request, $page_id, $frame_id, $request->column_id, $message, null);
