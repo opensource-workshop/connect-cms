@@ -145,8 +145,8 @@
                 <div class="card-body">
                     <h6 class="card-title">更新する値</h6>
                     <div class="mb-2">
-                        <button type="button" class="btn btn-sm btn-primary" v-on:click="fetchTrendWordsDaily">最新化（日間）</button>
-                        <button type="button" class="btn btn-sm btn-primary" v-on:click="fetchTrendWordsWeekly">最新化（週間）</button>
+                        <button type="button" class="btn btn-sm btn-primary mr-1" v-on:click="fetchTrendWordsDaily">最新化（日間）</button>
+                        <button type="button" class="btn btn-sm btn-primary mr-1" v-on:click="fetchTrendWordsWeekly">最新化（週間）</button>
                         <button type="button" class="btn btn-sm btn-primary" v-on:click="fetchTrendWordsMonthly">最新化（月間）</button>
                     </div>
                     <div class="mb-2">
@@ -431,8 +431,7 @@
 </div>
 
 <script>
-    const app_{{ $frame->id }} = new Vue({
-        el: "#app_{{ $frame->id }}",
+    const app_{{ $frame->id }} = createApp({
         data: function() {
             return {
                 trend_words: [],
@@ -468,7 +467,7 @@
         mounted: function () {
             this.fetchTrendWordsOld();
         }
-    });
+    }).mount('#app_{{ $frame->id }}');
 </script>
 
 @endif

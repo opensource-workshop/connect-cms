@@ -55,12 +55,12 @@ if (token) {
 // });
 
 
-// Tempus Dominus Date/Time Picker
+// --- Tempus Dominus Date/Time Picker
 window.tempusDominus = require('@eonasdan/tempus-dominus');
 // 下記でapp.jsに含めると、日付入力時に1度画面上部に飛ばされる動作をするため、含めない
 // window.Popper = require('@popperjs/core');
 
-// Default SortableJS
+// --- Default SortableJS
 window.Sortable = require('sortablejs').default;
 
 // --- codemirror 6
@@ -71,11 +71,23 @@ import { basicSetup } from "codemirror"
 window.basicSetup = basicSetup;
 // 言語モード
 // ※ 対応言語はgithubのcodemirrorでlang-xxxを確認 https://github.com/codemirror?q=lang-&type=all&language=&sort=
-import {javascript} from "@codemirror/lang-javascript"
+import { javascript } from "@codemirror/lang-javascript"
 window.javascript = javascript;
-import {css} from "@codemirror/lang-css"
+import { css } from "@codemirror/lang-css"
 window.css = css;
-import {java} from "@codemirror/lang-java"
+import { java } from "@codemirror/lang-java"
 window.java = java;
-import {php} from "@codemirror/lang-php"
+import { php } from "@codemirror/lang-php"
 window.php = php;
+
+// --- Vue.js 3
+import { createApp } from 'vue';
+window.createApp = createApp;
+
+// --- dayjs(日付フォーマット)
+let dayjs = require('dayjs');
+let utc = require("dayjs/plugin/utc");
+let timezone = require("dayjs/plugin/timezone");
+dayjs.extend(utc);
+dayjs.extend(timezone);
+window.dayjs = dayjs;

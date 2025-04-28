@@ -410,13 +410,14 @@
     </div><!-- /card-body -->
 </div><!-- /card -->
 <script>
-    new Vue({
-        el: "#app",
-        data: {
-            v_base_background_color: document.getElementById('base_background_color').value,
-            v_base_header_color: document.getElementById('base_header_color').value
+    createApp({
+        data: function() {
+            return {
+                v_base_background_color: '{{Configs::getConfigsValueAndOld($configs, "base_background_color")}}',
+                v_base_header_color: '{{Configs::getConfigsValueAndOld($configs, "base_header_color")}}'
+            }
         },
-    })
+    }).mount('#app');
 </script>
 
 @endsection

@@ -5,7 +5,7 @@
   */
 
 /*!
-  * Tempus Dominus v6.10.0 (https://getdatepicker.com/)
+  * Tempus Dominus v6.10.2 (https://getdatepicker.com/)
   * Copyright 2013-2025 Jonathan Peterson
   * Licensed under MIT (https://github.com/Eonasdan/tempus-dominus/blob/master/LICENSE)
   */
@@ -15,12 +15,6 @@
  *
  * @author   Feross Aboukhadijeh <http://feross.org>
  * @license  MIT
- */
-
-/*!
- * Vue.js v2.7.16
- * (c) 2014-2023 Evan You
- * Released under the MIT License.
  */
 
 /*!
@@ -34,7 +28,9 @@
  * Date: 2023-08-28T13:37Z
  */
 
-/*! Axios v1.8.4 Copyright (c) 2025 Matt Zabriskie and contributors */
+/*! #__NO_SIDE_EFFECTS__ */
+
+/*! Axios v1.9.0 Copyright (c) 2025 Matt Zabriskie and contributors */
 
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 
@@ -46,6 +42,24 @@
  * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
  * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
  */
+
+/**
+* @vue/runtime-core v3.5.13
+* (c) 2018-present Yuxi (Evan) You and Vue contributors
+* @license MIT
+**/
+
+/**
+* @vue/runtime-dom v3.5.13
+* (c) 2018-present Yuxi (Evan) You and Vue contributors
+* @license MIT
+**/
+
+/**
+* @vue/shared v3.5.13
+* (c) 2018-present Yuxi (Evan) You and Vue contributors
+* @license MIT
+**/
 
 /**!
  * @fileOverview Kickass library to create and place poppers near their reference elements.
