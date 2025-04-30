@@ -221,7 +221,7 @@ class PageManage extends ManagePluginBase
     public function store($request)
     {
         // 固定リンクの先頭に / がない場合、追加する。
-        if (strncmp($request->permanent_link, '/', 1) !== 0) {
+        if (strncmp($request->permanent_link ?? '', '/', 1) !== 0) {
             $request->merge([
                 "permanent_link" => '/' . $request->permanent_link,
             ]);
@@ -264,7 +264,7 @@ class PageManage extends ManagePluginBase
     public function update($request, $page_id)
     {
         // 固定リンクの先頭に / がない場合、追加する。
-        if (strncmp($request->permanent_link, '/', 1) !== 0) {
+        if (strncmp($request->permanent_link ?? '', '/', 1) !== 0) {
             $request->merge([
                 "permanent_link" => '/' . $request->permanent_link,
             ]);
