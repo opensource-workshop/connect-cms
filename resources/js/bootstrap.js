@@ -105,7 +105,9 @@ import 'tinymce/icons/default';
 import 'tinymce/themes/silver';
 
 /* Import the skin */
-import 'tinymce/skins/ui/oxide/skin.css';
+// delete: webpack.mix.js でコピーする
+//         ここでCSSをimportすると、resources/views/layouts/app.blade.php の mix('/js/app.js') 配下に<style>でべた書きされ、デザインに影響する
+// import 'tinymce/skins/ui/oxide/skin.css';
 
 /* Import plugins */
 import 'tinymce/plugins/advlist';
@@ -133,10 +135,15 @@ import './tinymce/plugins/face/plugin.js';
 import './tinymce/plugins/image/plugin.js';
 
 /* Import content css */
-import contentUiCss from 'tinymce/skins/ui/oxide/content.css';
-import contentCss from 'tinymce/skins/content/default/content.css';
-window.contentUiCss = contentUiCss;
-window.contentCss = contentCss;
+// delete: webpack.mix.js でコピーする
+//         ここでCSSをimportすると、resources/views/layouts/app.blade.php の mix('/js/app.js') 配下に<style>でべた書きされ、デザインに影響する
+// import contentUiCss from 'tinymce/skins/ui/oxide/content.css';
+// window.contentUiCss = contentUiCss;
+
+// delete: contentCssは使用しない
+//         参考Path: node_modules/tinymce/skins/content/default/content.css
+// import contentCss from 'tinymce/skins/content/default/content.css';
+// window.contentCss = contentCss;
 
 /* ダウンロードした日本語＋Connect-CMSで追記
    Path: resources/js/tinymce/langs/ja.js */

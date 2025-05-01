@@ -355,10 +355,6 @@
         {{-- CSS --}}
         {!!$content_css_file!!}
 
-        // tinymce5 npm対応
-        skin: false,
-        content_style: contentUiCss.toString() + '\n' + contentCss.toString(),
-
         body_class : "{{$body_class}}",
 
         file_picker_types: 'file image media',
