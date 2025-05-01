@@ -2,6 +2,7 @@
  * 編集画面(データ選択)テンプレート
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category プラグイン共通
 --}}
@@ -264,8 +265,6 @@
 {{-- 登録時のリサイズ用 --}}
 <input type="text" class="d-none" id="cc-resized-image-size-{{$frame_id}}">
 
-{{-- tinymce5対応. 同フォルダでライブラリを入れ替えたため、ファイル名の後ろに?付けてブラウザキャッシュ対応 --}}
-<script type="text/javascript" src="{{url('/')}}/js/tinymce/tinymce.min.js?v=5.8.0"></script>
 <script type="text/javascript">
     tinymce.init({
         @if(isset($target_class) && $target_class)
@@ -274,7 +273,7 @@
             selector : 'textarea',
         @endif
 
-        cache_suffix: '?v=5.8.0.12',
+        cache_suffix: '?v=5.8.0.13',
 
         // change: app.blade.phpと同様にlocaleを見て切替
         // language : 'ja',

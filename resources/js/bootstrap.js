@@ -91,3 +91,60 @@ let timezone = require("dayjs/plugin/timezone");
 dayjs.extend(utc);
 dayjs.extend(timezone);
 window.dayjs = dayjs;
+
+// --- TinyMCE 5
+// 「Example src/editor.js」よりコピー: https://www.tiny.cloud/docs/tinymce/5/webpack-cjs-npm/#_procedure
+/* Import TinyMCE */
+import tinymce from 'tinymce';
+window.tinymce = tinymce;
+
+/* Default icons are required for TinyMCE 5.3 or above */
+import 'tinymce/icons/default';
+
+/* A theme is also required */
+import 'tinymce/themes/silver';
+
+/* Import the skin */
+// delete: webpack.mix.js でコピーする
+//         ここでCSSをimportすると、resources/views/layouts/app.blade.php の mix('/js/app.js') 配下に<style>でべた書きされ、デザインに影響する
+// import 'tinymce/skins/ui/oxide/skin.css';
+
+/* Import plugins */
+import 'tinymce/plugins/advlist';
+import 'tinymce/plugins/code';
+import 'tinymce/plugins/link';
+import 'tinymce/plugins/lists';
+import 'tinymce/plugins/table';
+import 'tinymce/plugins/imagetools';
+import 'tinymce/plugins/media';
+import 'tinymce/plugins/autolink';
+import 'tinymce/plugins/preview';
+import 'tinymce/plugins/template';
+import 'tinymce/plugins/hr';
+
+/* Import plugins(Connect-CMS Only)
+   Path: resources/js/tinymce/plugins/... */
+import './tinymce/plugins/file/plugin.js';
+import './tinymce/plugins/translate/plugin.js';
+import './tinymce/plugins/pdf/plugin.js';
+import './tinymce/plugins/face/plugin.js';
+
+/* Import plugins(Connect-CMS Custom)
+   コピー元import： import 'tinymce/plugins/image';
+   コピー元Path：   node_modules/tinymce/plugins/image/plugin.js */
+import './tinymce/plugins/image/plugin.js';
+
+/* Import content css */
+// delete: webpack.mix.js でコピーする
+//         ここでCSSをimportすると、resources/views/layouts/app.blade.php の mix('/js/app.js') 配下に<style>でべた書きされ、デザインに影響する
+// import contentUiCss from 'tinymce/skins/ui/oxide/content.css';
+// window.contentUiCss = contentUiCss;
+
+// delete: contentCssは使用しない
+//         参考Path: node_modules/tinymce/skins/content/default/content.css
+// import contentCss from 'tinymce/skins/content/default/content.css';
+// window.contentCss = contentCss;
+
+/* ダウンロードした日本語＋Connect-CMSで追記
+   Path: resources/js/tinymce/langs/ja.js */
+import './tinymce/langs/ja.js';
