@@ -265,7 +265,7 @@
 <input type="text" class="d-none" id="cc-resized-image-size-{{$frame_id}}">
 
 {{-- tinymce5対応. 同フォルダでライブラリを入れ替えたため、ファイル名の後ろに?付けてブラウザキャッシュ対応 --}}
-<script type="text/javascript" src="{{url('/')}}/js/tinymce/tinymce.min.js?v=5.8.0"></script>
+{{-- <script type="text/javascript" src="{{url('/')}}/js/tinymce/tinymce.min.js?v=5.8.0"></script> --}}
 <script type="text/javascript">
     tinymce.init({
         @if(isset($target_class) && $target_class)
@@ -354,6 +354,10 @@
 
         {{-- CSS --}}
         {!!$content_css_file!!}
+
+        // tinymce5 npm対応
+        skin: false,
+        content_style: contentUiCss.toString() + '\n' + contentCss.toString(),
 
         body_class : "{{$body_class}}",
 
