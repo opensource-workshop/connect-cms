@@ -115,12 +115,17 @@ import 'tinymce/plugins/code';
 import 'tinymce/plugins/link';
 import 'tinymce/plugins/lists';
 import 'tinymce/plugins/table';
-import 'tinymce/plugins/imagetools';
 import 'tinymce/plugins/media';
 import 'tinymce/plugins/autolink';
 import 'tinymce/plugins/preview';
 import 'tinymce/plugins/template';
 import 'tinymce/plugins/hr';
+
+// [非推奨] imagetoolsはTinyMCE 6.0のオープンソース版から削除される予定
+// The following deprecated features are currently enabled, these will be removed in TinyMCE 6.0. See https://www.tiny.cloud/docs/release-notes/6.0-upcoming-changes/ for more information.
+// Plugins:
+// - imagetools (moving to premium)
+import 'tinymce/plugins/imagetools';
 
 /* Import plugins(Connect-CMS Only)
    Path: resources/js/tinymce/plugins/... */
