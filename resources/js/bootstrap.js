@@ -92,24 +92,24 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 window.dayjs = dayjs;
 
-// --- TinyMCE 5
-// 「Example src/editor.js」よりコピー: https://www.tiny.cloud/docs/tinymce/5/webpack-cjs-npm/#_procedure
+// --- TinyMCE
+// 「Example src/editor.js」よりコピーして編集: https://www.tiny.cloud/docs/tinymce/6/vite-es6-npm/#procedures
 /* Import TinyMCE */
 import tinymce from 'tinymce';
 window.tinymce = tinymce;
 
-/* Default icons are required for TinyMCE 5.3 or above */
+/* Default icons are required. After that, import custom icons if applicable */
 import 'tinymce/icons/default';
 
-/* A theme is also required */
+/* Required TinyMCE components */
 import 'tinymce/themes/silver';
+import 'tinymce/models/dom';
 
-/* Import the skin */
-// delete: webpack.mix.js でコピーする
-//         ここでCSSをimportすると、resources/views/layouts/app.blade.php の mix('/js/app.js') 配下に<style>でべた書きされ、デザインに影響する
-// import 'tinymce/skins/ui/oxide/skin.css';
+/* Import a skin (can be a custom skin instead of the default) */
+import 'tinymce/skins/ui/oxide/skin.js';
 
 /* Import plugins */
+// delete: imagetools はTinyMCE 6.0のオープンソース版で削除されました
 import 'tinymce/plugins/advlist';
 import 'tinymce/plugins/code';
 import 'tinymce/plugins/link';
@@ -119,13 +119,11 @@ import 'tinymce/plugins/media';
 import 'tinymce/plugins/autolink';
 import 'tinymce/plugins/preview';
 import 'tinymce/plugins/template';
-import 'tinymce/plugins/hr';
 
-// [非推奨] imagetoolsはTinyMCE 6.0のオープンソース版から削除される予定
-// The following deprecated features are currently enabled, these will be removed in TinyMCE 6.0. See https://www.tiny.cloud/docs/release-notes/6.0-upcoming-changes/ for more information.
-// Plugins:
-// - imagetools (moving to premium)
-import 'tinymce/plugins/imagetools';
+/* Import plugins(Connect-CMS Custom)
+   コピー元Path：   node_modules/tinymce/plugins/image/plugin.js */
+// import 'tinymce/plugins/image';
+import './tinymce/plugins/image/plugin.js';
 
 /* Import plugins(Connect-CMS Only)
    Path: resources/js/tinymce/plugins/... */
@@ -134,22 +132,14 @@ import './tinymce/plugins/translate/plugin.js';
 import './tinymce/plugins/pdf/plugin.js';
 import './tinymce/plugins/face/plugin.js';
 
-/* Import plugins(Connect-CMS Custom)
-   コピー元import： import 'tinymce/plugins/image';
-   コピー元Path：   node_modules/tinymce/plugins/image/plugin.js */
-import './tinymce/plugins/image/plugin.js';
+/* content UI CSS is required */
+import 'tinymce/skins/ui/oxide/content.js';
 
-/* Import content css */
-// delete: webpack.mix.js でコピーする
-//         ここでCSSをimportすると、resources/views/layouts/app.blade.php の mix('/js/app.js') 配下に<style>でべた書きされ、デザインに影響する
-// import contentUiCss from 'tinymce/skins/ui/oxide/content.css';
-// window.contentUiCss = contentUiCss;
-
+/* The default content CSS can be changed or replaced with appropriate CSS for the editor content. */
 // delete: contentCssは使用しない
-//         参考Path: node_modules/tinymce/skins/content/default/content.css
-// import contentCss from 'tinymce/skins/content/default/content.css';
-// window.contentCss = contentCss;
+//         参考Path: node_modules/tinymce/skins/content/default/content.js
+// import 'tinymce/skins/content/default/content.js';
 
-/* ダウンロードした日本語＋Connect-CMSで追記
+/* ダウンロードした日本語 https://www.tiny.cloud/get-tiny/language-packages/
    Path: resources/js/tinymce/langs/ja.js */
 import './tinymce/langs/ja.js';

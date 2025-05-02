@@ -1,3 +1,2 @@
-This is where language files should be placed.
-
-Please DO NOT translate these directly use this service: https://www.transifex.com/projects/p/tinymce/
+Download the TinyMCE language packs (.zip)
+https://www.tiny.cloud/get-tiny/language-packages/

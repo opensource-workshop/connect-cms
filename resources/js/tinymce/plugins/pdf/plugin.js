@@ -48,14 +48,14 @@ tinymce.PluginManager.add('pdf', function(editor, url) {
                     {
                         type: 'collection',
                         name: 'upload_max_filesize_caption', // identifier
-                        label: editor.settings.cc_config.upload_max_filesize_caption
+                        label: editor.options.get('cc_config').upload_max_filesize_caption
                     },
                     {
                         type: 'listbox',
                         name: 'width_of_pdf_thumbnails', // identifier
                         label: 'サムネイルの大きさ',
                         disabled: false,
-                        items: editor.settings.cc_config.width_of_pdf_thumbnails_items,
+                        items: editor.options.get('cc_config').width_of_pdf_thumbnails_items,
                     },
                     {
                         // see) https://www.tiny.cloud/docs/ui-components/dialogcomponents/#listbox
@@ -63,7 +63,7 @@ tinymce.PluginManager.add('pdf', function(editor, url) {
                         name: 'number_of_pdf_thumbnails', // identifier
                         label: 'サムネイルの数',
                         disabled: false,
-                        items: editor.settings.cc_config.number_of_pdf_thumbnails_items,
+                        items: editor.options.get('cc_config').number_of_pdf_thumbnails_items,
                     },
                     {
                         // see) https://www.tiny.cloud/docs/ui-components/dialogcomponents/#input
@@ -84,8 +84,8 @@ tinymce.PluginManager.add('pdf', function(editor, url) {
             },
             // 初期値設定
             initialData: {
-                width_of_pdf_thumbnails: editor.settings.cc_config.width_of_pdf_thumbnails_initial,
-                number_of_pdf_thumbnails: editor.settings.cc_config.number_of_pdf_thumbnails_initial,
+                width_of_pdf_thumbnails: editor.options.get('cc_config').width_of_pdf_thumbnails_initial,
+                number_of_pdf_thumbnails: editor.options.get('cc_config').number_of_pdf_thumbnails_initial,
             },
             buttons: [
                 {
@@ -137,12 +137,12 @@ tinymce.PluginManager.add('pdf', function(editor, url) {
                 var data = api.getData();
 
                 // var frame_id = document.getElementsByName("frame_id")[0].value;
-                var frame_id = editor.settings.cc_config.frame_id;
+                var frame_id = editor.options.get('cc_config').frame_id;
 
                 formData = new FormData();
                 formData.append('_token', tokens[0].content);
                 formData.append('page_id', page_id[0].content);
-                formData.append('plugin_name', editor.settings.cc_config.plugin_name);
+                formData.append('plugin_name', editor.options.get('cc_config').plugin_name);
                 // tinymce5で input type fileが無くなったため、wysiwyg.blade.phpに用意した非表示のinput type fileを使って送信
                 formData.append('pdf', document.getElementById('cc-pdf-upload-' + frame_id).files[0]);
                 formData.append('pdf_password', data.pdf_password);

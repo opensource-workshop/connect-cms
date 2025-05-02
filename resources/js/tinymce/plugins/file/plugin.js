@@ -122,7 +122,7 @@ tinymce.PluginManager.add('file', function(editor, url) {
                     {
                         type: 'collection', // component type
                         name: 'upload_max_filesize_caption', // identifier
-                        label: editor.settings.cc_config.upload_max_filesize_caption
+                        label: editor.options.get('cc_config').upload_max_filesize_caption
                     }
                 ]
             },
@@ -215,7 +215,7 @@ tinymce.PluginManager.add('file', function(editor, url) {
                 //formData.append('plugin_name', e.data.plugin_name);
                 formData.append('_token', tokens[0].content);
                 formData.append('page_id', page_id[0].content);
-                formData.append('plugin_name', editor.settings.cc_config.plugin_name);
+                formData.append('plugin_name', editor.options.get('cc_config').plugin_name);
 
                 // change: tinymce5対応
                 // TinyMCE が出力するinputタグにnameがないため、classで選択。classesでの指定はcc-file-uploadだが、TinyMCE が mce- を付けて出力する。
@@ -230,7 +230,7 @@ tinymce.PluginManager.add('file', function(editor, url) {
 
                 // tinymce5で input type fileが無くなったため、wysiwyg.blade.phpに用意した非表示のinput type fileを使って送信
                 // var frame_id = document.getElementsByName("frame_id")[0].value;
-                var frame_id = editor.settings.cc_config.frame_id;
+                var frame_id = editor.options.get('cc_config').frame_id;
 
                 // console.log(frame_id[0].value);
                 formData.append('file1', document.getElementById('cc-file-upload-file1-' + frame_id).files[0]);
