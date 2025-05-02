@@ -771,9 +771,9 @@
         setup: function(editor) {
             // see) events https://www.tiny.cloud/docs/advanced/events/
             // see) editor https://www.tiny.cloud/docs/api/tinymce/tinymce.editor/
-            // see) editor.options https://www.tiny.cloud/docs/tinymce/latest/apis/tinymce.editoroptions/
 
             // Connect-CMS独自設定
+            // see) editor.options https://www.tiny.cloud/docs/tinymce/latest/apis/tinymce.editoroptions/
             editor.options.register('cc_config', {
                 processor: 'object',
                 default: {
