@@ -5,26 +5,20 @@ tinymce.PluginManager.add('file', function(editor, url) {
 
     // プラグインボタンの追加
     // change: tinymce5対応 see) https://www.tiny.cloud/docs/advanced/creating-a-plugin/
-    // editor.addButton("file", {
     editor.ui.registry.addButton("file", {
         icon: "file",
-        // delete: tinymce5対応
-        // image: tinyMCE.baseURL + "/plugins/file/plugin.png",
         tooltip: "ファイルアップロード",
         // change: tinymce5対応
-        // onclick: pluginWin, // コールバック関数
-        onAction: pluginWin,
+        onAction: pluginWin, // コールバック関数
 
         onPostRender: function() { // プラグイン要素選択時プラグインボタンアクティブ
             var _this = this;
             editor.on("NodeChange", function(e) {
-                //var is_active = jQuery( editor.selection.getNode() ).hasClass("ref");
                 var is_active = jQuery( editor.selection.getNode() ).hasClass("plugin");
                 _this.active( is_active );
             })
 
             editor.on("DblClick", function(e) {
-                //if ( e.target.className == "plugin" || e.target.className=="ref" ) {
                 if ( e.target.className == "plugin" ) {
                     pluginWin(e.toElement.innerText);
                 }
@@ -52,42 +46,6 @@ tinymce.PluginManager.add('file', function(editor, url) {
             width: 600,
             height: 250,
             // change: tinymce5対応
-            // body: [{
-            // 	type: "textbox",
-            // 	name: "file1",
-            // 	classes : "cc-file-upload",
-            // 	subtype: "file",
-            // 	filetype: 'file', // allow any file types
-            // 	label: 'ファイル1'
-            // },{
-            // 	type: "textbox",
-            // 	name: "file2",
-            // 	classes : "cc-file-upload",
-            // 	subtype: "file",
-            // 	filetype: 'file', // allow any file types
-            // 	label: 'ファイル2'
-            // },{
-            // 	type: "textbox",
-            // 	name: "file3",
-            // 	classes : "cc-file-upload",
-            // 	subtype: "file",
-            // 	filetype: 'file', // allow any file types
-            // 	label: 'ファイル3'
-            // },{
-            // 	type: "textbox",
-            // 	name: "file4",
-            // 	classes : "cc-file-upload",
-            // 	subtype: "file",
-            // 	filetype: 'file', // allow any file types
-            // 	label: 'ファイル4'
-            // },{
-            // 	type: "textbox",
-            // 	name: "file5",
-            // 	classes : "cc-file-upload",
-            // 	subtype: "file",
-            // 	filetype: 'file', // allow any file types
-            // 	label: 'ファイル5'
-            // }],
             body: {
                 type: 'panel',
                 items: [
@@ -156,16 +114,13 @@ tinymce.PluginManager.add('file', function(editor, url) {
                 xhr.withCredentials = false;
                 //xhr.open('POST', '/debug/postTest.php');
                 // change: tinymce5対応
-                // xhr.open('POST', tinymce.activeEditor.getParam('base_url') + '/upload');
                 xhr.open('POST', tinymce.activeEditor.getParam('document_base_url') + '/upload');
-                // console.log(tinymce.activeEditor.getParam('document_base_url') );
 
                 xhr.onload = function() {
                     var json;
 
                     if (xhr.status < 200 || xhr.status >= 300) {
                         // bugfix: 画像アップロード・ハンドラに存在する引数 failure コールバック変数はないため、コンソールのエラー出力に修正
-                        // failure('HTTP Error: ' + xhr.status);
                         console.error('HTTP Error: ' + xhr.status);
                         return;
                     }

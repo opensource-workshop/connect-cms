@@ -8,26 +8,20 @@ tinymce.PluginManager.add('translate', function(editor, url) {
 
     // プラグインボタンの追加
     // change: tinymce5対応 see) https://www.tiny.cloud/docs/advanced/creating-a-plugin/
-    // editor.addButton("translate", {
-    //     icon: "plugin",
-    // 	   image: "/js/tinymce/plugins/translate/translate.svg",
     editor.ui.registry.addButton("translate", {
         icon: "translate",
         tooltip: "翻訳",
         // change: tinymce5対応
-        // onclick: pluginWin, // コールバック関数
-        onAction: pluginWin,
+        onAction: pluginWin, // コールバック関数
 
         onPostRender: function() { // プラグイン要素選択時プラグインボタンアクティブ
             var _this = this;
             editor.on("NodeChange", function(e) {
-                //var is_active = jQuery( editor.selection.getNode() ).hasClass("ref");
                 var is_active = jQuery( editor.selection.getNode() ).hasClass("plugin");
                 _this.active( is_active );
             })
 
             editor.on("DblClick", function(e) {
-                //if ( e.target.className == "plugin" || e.target.className=="ref" ) {
                 if ( e.target.className == "plugin" ) {
                     pluginWin(e.toElement.innerText);
                 }
@@ -57,15 +51,6 @@ tinymce.PluginManager.add('translate', function(editor, url) {
             width: 600,
             height: 250,
             // change: tinymce5対応
-            // body: [{
-            // 	type: "textbox",
-            // 	name: "inline_text",
-            // 	multiline: true,
-            // 	minHeight: 220,
-            // 	classes : "cc-textarea",
-            // 	value : editor.selection.getContent(),
-            // 	label: ''
-            // }],
             body: {
                 type: 'panel',
                 items: [
@@ -134,7 +119,6 @@ tinymce.PluginManager.add('translate', function(editor, url) {
 
                     if (xhr.status < 200 || xhr.status >= 300) {
                         // bugfix: 画像アップロード・ハンドラに存在する引数 failure コールバック変数はないため、コンソールのエラー出力に修正
-                        // failure('HTTP Error: ' + xhr.status);
                         console.error('HTTP Error: ' + xhr.status);
                         return;
                     }

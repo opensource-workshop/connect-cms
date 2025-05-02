@@ -324,7 +324,6 @@
         contextmenu : '',
 
         // add: tinymce5対応
-        // toolbar_mode : 'wrap',
         toolbar_mode : '{{$pc_toolbar_mode}}',
         mobile: {
             toolbar_mode : 'floating',
@@ -337,7 +336,6 @@
         height: {{ isset($height) ? $height : 300 }},
         resize: 'both',
         branding: false,
-        //forced_root_block : false,
         valid_children : "+body[style|input],+a[div|p],",
         //extended_valid_elements : "script[type|charset|async|src]"
         //                         +",div[id|class|align|style|clear]"
@@ -475,8 +473,6 @@
                 // console.log(meta.fieldname);
 
                 // change: laravelでアップできる拡張子と同じにする。see) \Illuminate\Validation\Concerns\ValidatesAttributes::validateImage()
-                // input.setAttribute('accept', 'image/*');
-                // input.setAttribute('accept', '.jpg, .jpeg, .jpe, .png, .gif');
                 input.setAttribute('accept', '.jpeg, .jpg, .png, .gif, .bmp, .svg, .webp');
 
                 // image plugin
@@ -659,10 +655,6 @@
             return html;
         },
 
-        // delete: 不要なためコメントアウト
-        // image_caption: true,
-        // image_title: true,
-
         // 画像プラグイン＞アップロード（タブ）非表示. アップロード（タブ）で画像アップロードすると即時アップロードされ、一般（タブ）のリサイズのパラメータが拾えず全て原寸でアップロードされるため、使わない。
         image_uploadtab: false,
 
@@ -683,6 +675,7 @@
             'th': 'height',
             'td': 'height',
         },
+        // see) https://www.tiny.cloud/docs/tinymce/latest/table-options/#table_resize_bars
         //table_resize_bars: false,
         //object_resizing: 'img',
         //table_default_attributes: {
@@ -747,7 +740,7 @@
 
             formData = new FormData();
 
-            // bugfix: 「blobInfo.blob().name」は新規のアップロードの際しか名前が設定されないが、「blobInfo.filename()」は新規の時も回転などimagetoolsを使用した時も
+            // bugfix: 「blobInfo.blob().name」は新規のアップロードの際しか名前が設定されないが、「blobInfo.filename()」は新規の時も回転などimagetools(今はなし)を使用した時も
             // 常に設定されているので、typeofの評価は不要で常に fileName = blobInfo.filename(); でよいのではと思います。
             // https://github.com/opensource-workshop/connect-cms/pull/353#issuecomment-636411186
             //

@@ -44,8 +44,8 @@ tinymce.PluginManager.add('face', function(editor, url) {
                         filetype: 'file', // allow any file types
                         label: 'jpg, png 形式の画像ファイル'
                     },
-                        // アップロードできる最大サイズのキャプション
                     {
+                        // アップロードできる最大サイズのキャプション
                         type: 'collection',
                         name: 'upload_max_filesize_caption', // identifier
                         label: editor.options.get('cc_config').upload_max_filesize_caption
