@@ -605,7 +605,7 @@ class FormsPluginTest extends DuskTestCase
         // 実行
         $this->browse(function (Browser $browser) {
             // ヤンバルクイナは好きですか？
-            $col = FormsColumns::where('column_name', 'ヤンバルクイナは好きですか？')->first();
+            $col = FormsColumns::where('column_name', 'like', '%ヤンバルクイナは好きですか？%')->first();
             $browser->visit('/')
                     ->visit('/plugin/forms/editColumnDetail/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $col->id . '#div_column_selects')
                     ->type('select_name', '超好き')
@@ -623,7 +623,7 @@ class FormsPluginTest extends DuskTestCase
                     ->screenshot('user/questionnaires/editColumnDetail/images/editColumnDetailRadio1');
 
             // Connect-CMSは好きですか？
-            $col = FormsColumns::where('column_name', 'Connect-CMSは好きですか？')->first();
+            $col = FormsColumns::where('column_name', 'like', '%Connect-CMSは好きですか？%')->first();
             $browser->visit('/')
                     ->visit('/plugin/forms/editColumnDetail/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $col->id . '#div_column_selects')
                     ->type('select_name', 'Like Like Like')
