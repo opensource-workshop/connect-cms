@@ -30,7 +30,7 @@
         "sass": "^1.62.1",
         "sass-loader": "^12.6.0",
         "sortablejs": "^1.15.2",
-        "tinymce": "^5.10.9",
+        "tinymce": "^6.8.5",
         "vue": "^3.5.13",
         "vue-loader": "^17.3.0"
     }

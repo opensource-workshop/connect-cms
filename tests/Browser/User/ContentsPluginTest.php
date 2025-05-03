@@ -12,6 +12,11 @@ use App\Models\Common\Uploads;
 use App\Models\Core\Dusks;
 use App\Models\User\Contents\Contents;
 
+/**
+ * 固定記事テスト
+ *
+ * 事前に動かすテスト（管理機能テスト） php artisan dusk tests/Browser/Common/AdminLinkTest.php
+ */
 class ContentsPluginTest extends DuskTestCase
 {
     /**

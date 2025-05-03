@@ -44,11 +44,11 @@ tinymce.PluginManager.add('face', function(editor, url) {
                         filetype: 'file', // allow any file types
                         label: 'jpg, png 形式の画像ファイル'
                     },
-                        // アップロードできる最大サイズのキャプション
                     {
+                        // アップロードできる最大サイズのキャプション
                         type: 'collection',
                         name: 'upload_max_filesize_caption', // identifier
-                        label: editor.settings.cc_config.upload_max_filesize_caption
+                        label: editor.options.get('cc_config').upload_max_filesize_caption
                     },
                     {
                         // 代替テキスト
@@ -65,21 +65,21 @@ tinymce.PluginManager.add('face', function(editor, url) {
                         name: 'image_size', // identifier
                         label: '画像サイズ（最大でこの大きさに縮小されます）',
                         disabled: false,
-                        items: editor.settings.cc_config.face_image_sizes
+                        items: editor.options.get('cc_config').face_image_sizes
                     },
                     {
                         type: 'listbox',
                         name: 'mosaic_fineness', // identifier
                         label: 'モザイクの粗さ',
                         disabled: false,
-                        items: editor.settings.cc_config.finenesses
+                        items: editor.options.get('cc_config').finenesses
                     }
                 ]
             },
             // 初期値設定
             initialData: {
-                image_size:editor.settings.cc_config.face_image_initial,
-                mosaic_fineness:editor.settings.cc_config.fineness_initial
+                image_size: editor.options.get('cc_config').face_image_initial,
+                mosaic_fineness: editor.options.get('cc_config').fineness_initial
             },
             buttons: [
                 {
@@ -132,12 +132,12 @@ tinymce.PluginManager.add('face', function(editor, url) {
                 var data = api.getData();
 
                 // var frame_id = document.getElementsByName("frame_id")[0].value;
-                var frame_id = editor.settings.cc_config.frame_id;
+                var frame_id = editor.options.get('cc_config').frame_id;
 
                 formData = new FormData();
                 formData.append('_token', tokens[0].content);
                 formData.append('page_id', page_id[0].content);
-                formData.append('plugin_name', editor.settings.cc_config.plugin_name);
+                formData.append('plugin_name', editor.options.get('cc_config').plugin_name);
                 // tinymce5で input type fileが無くなったため、wysiwyg.blade.phpに用意した非表示のinput type fileを使って送信
                 formData.append('photo', document.getElementById('cc-face-upload-' + frame_id).files[0]);
                 formData.append('alt', data.alt);

@@ -531,6 +531,7 @@ class FormsPluginTest extends DuskTestCase
         $this->browse(function (Browser $browser) use ($view_only) {
             if (!$view_only) {
                 $browser->visit('/plugin/forms/editColumn/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                        ->pause(500)
                         ->driver->executeScript('tinyMCE.get(0).setContent(\'氏名\')');
 
                 // executeScriptした後は一度、メソッドチェーンを切らないと、次のメソッドでエラーが出る（ワーニングとかが出ている？？）
@@ -538,7 +539,7 @@ class FormsPluginTest extends DuskTestCase
                         ->select("column_type", 'text')
                         ->check("required")
                         //->pause(500)
-                        //->screenshot('user/questionnaires/editColumn/images/editColumn1')
+                        //->screenshot('user/questionnaires/editColumn/images/editColumn0')
                         ->press('#button_submit_add_column');
 
                 $this->editColumnOneQ(
@@ -585,6 +586,7 @@ class FormsPluginTest extends DuskTestCase
     {
         foreach ($columns as $column_name => $column_attr) {
             $browser->visit('/plugin/forms/editColumn/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->pause(500)
                     ->driver->executeScript('tinyMCE.get(0).setContent(\'' . $column_name . '\')');
 
             // executeScriptした後は一度、メソッドチェーンを切らないと、次のメソッドでエラーが出る（ワーニングとかが出ている？？）
@@ -605,7 +607,7 @@ class FormsPluginTest extends DuskTestCase
         // 実行
         $this->browse(function (Browser $browser) {
             // ヤンバルクイナは好きですか？
-            $col = FormsColumns::where('column_name', 'ヤンバルクイナは好きですか？')->first();
+            $col = FormsColumns::where('column_name', 'like', '%ヤンバルクイナは好きですか？%')->first();
             $browser->visit('/')
                     ->visit('/plugin/forms/editColumnDetail/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $col->id . '#div_column_selects')
                     ->type('select_name', '超好き')
@@ -623,7 +625,7 @@ class FormsPluginTest extends DuskTestCase
                     ->screenshot('user/questionnaires/editColumnDetail/images/editColumnDetailRadio1');
 
             // Connect-CMSは好きですか？
-            $col = FormsColumns::where('column_name', 'Connect-CMSは好きですか？')->first();
+            $col = FormsColumns::where('column_name', 'like', '%Connect-CMSは好きですか？%')->first();
             $browser->visit('/')
                     ->visit('/plugin/forms/editColumnDetail/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $col->id . '#div_column_selects')
                     ->type('select_name', 'Like Like Like')
