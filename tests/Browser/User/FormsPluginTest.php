@@ -531,6 +531,7 @@ class FormsPluginTest extends DuskTestCase
         $this->browse(function (Browser $browser) use ($view_only) {
             if (!$view_only) {
                 $browser->visit('/plugin/forms/editColumn/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                        ->pause(500)
                         ->driver->executeScript('tinyMCE.get(0).setContent(\'氏名\')');
 
                 // executeScriptした後は一度、メソッドチェーンを切らないと、次のメソッドでエラーが出る（ワーニングとかが出ている？？）
@@ -538,7 +539,7 @@ class FormsPluginTest extends DuskTestCase
                         ->select("column_type", 'text')
                         ->check("required")
                         //->pause(500)
-                        //->screenshot('user/questionnaires/editColumn/images/editColumn1')
+                        //->screenshot('user/questionnaires/editColumn/images/editColumn0')
                         ->press('#button_submit_add_column');
 
                 $this->editColumnOneQ(
