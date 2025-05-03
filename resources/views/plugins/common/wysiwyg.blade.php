@@ -285,7 +285,7 @@
 
         @if(isset($use_br) && $use_br)
             // 改行を p タグから br タグに変更
-            forced_root_block : false,
+            newline_behavior: 'invert',
         @endif
 
         {{-- plugins --}}
