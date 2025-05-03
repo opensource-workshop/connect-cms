@@ -586,6 +586,7 @@ class FormsPluginTest extends DuskTestCase
     {
         foreach ($columns as $column_name => $column_attr) {
             $browser->visit('/plugin/forms/editColumn/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->pause(500)
                     ->driver->executeScript('tinyMCE.get(0).setContent(\'' . $column_name . '\')');
 
             // executeScriptした後は一度、メソッドチェーンを切らないと、次のメソッドでエラーが出る（ワーニングとかが出ている？？）
