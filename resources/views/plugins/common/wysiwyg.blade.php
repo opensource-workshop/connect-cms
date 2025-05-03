@@ -143,21 +143,6 @@
         $advlist_number_lists_file = File::get($advlist_number_lists_default_path);
     }
 
-    // テーマ固有 簡易テンプレート
-    $templates_file = '';
-    $templates_path = public_path() . '/themes/' . $theme . '/wysiwyg/templates.txt';
-    $templates_group_default_path = public_path() . '/themes/' . $theme_group_default . '/wysiwyg/templates.txt';
-    $templates_default_path = public_path() . '/themes/Defaults/Default/wysiwyg/templates.txt';
-    if (File::exists($templates_path)) {
-        $templates_file = File::get($templates_path);
-    }
-    else if (File::exists($templates_group_default_path)) {
-        $templates_file = File::get($templates_group_default_path);
-    }
-    else if (File::exists($templates_default_path)) {
-        $templates_file = File::get($templates_default_path);
-    }
-
     // TinyMCE Body クラス
     $body_class = '';
     if ($frame->area_id == 0) {
@@ -180,7 +165,8 @@
     // change: tinymce5対応. textcolor は coreに含まれたため除外
     // change: tinymce6対応. imagetools は オープンソース版から削除のため除外
     // change: tinymce6対応. hr は coreに含まれたため除外
-    $plugins = 'file image media link autolink preview code table lists advlist template ';
+    // change: tinymce7対応. template は オープンソース版から削除のため除外
+    $plugins = 'file image media link autolink preview code table lists advlist ';
     if (Configs::getConfigsValue($cc_configs, 'use_translate', UseType::not_use) == UseType::use) {
         $plugins .= ' translate';
     }
@@ -203,11 +189,6 @@
     // toolbar
     $toolbar = "undo redo | bold italic underline strikethrough subscript superscript {$toolbar_fontsizeselect} | styles | forecolor backcolor | removeformat | table hr | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link | image file media | preview | code";
     $mobile_toolbar = "undo redo | image file media | link | code | bold italic underline strikethrough subscript superscript {$toolbar_fontsizeselect} | styles | forecolor backcolor | removeformat | table hr | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | preview";
-    // 簡易テンプレート設定がない場合、テンプレート挿入ボタン押下でエラー出るため、設定ない場合はボタン表示しない。
-    if (! empty($templates_file)) {
-        $toolbar .= '| template ';
-        $mobile_toolbar .= '| template ';
-    }
     // いずれかの外部サービスONの場合、頭に区切り文字 | を追加する
     if (Configs::getConfigsValue($cc_configs, 'use_translate', UseType::not_use) == UseType::use || Configs::getConfigsValue($cc_configs, 'use_pdf_thumbnail')) {
         $toolbar .= ' | ';
@@ -269,10 +250,15 @@
             selector : 'textarea',
         @endif
 
-        cache_suffix: '?v=6.1',
+        cache_suffix: '?v=7.1',
 
         // add: tinymce6対応. www.tiny.cloudのPRリンク表示OFF
+        // see) https://www.tiny.cloud/docs/tinymce/latest/promotions/
         promotion: false,
+
+        // add: tinymce7対応. ライセンスの設定
+        // see) https://www.tiny.cloud/docs/tinymce/latest/license-key/
+        license_key: 'gpl',
 
         // change: app.blade.phpと同様にlocaleを見て切替
         language : '{{ app()->getLocale() }}',
@@ -312,9 +298,6 @@
         {{-- テーマ固有 番号箇条書きリスト（OLタグ）の表示設定 --}}
         {!!$advlist_number_lists_file!!}
 
-        {{-- テーマ固有 簡易テンプレート設定 --}}
-        {!!$templates_file!!}
-
         formats: {
             // bugfix: bootstrap4のblockquoteはclassに'blockquote'付ける
             blockquote: { block: 'blockquote', classes: 'blockquote' }
@@ -333,7 +316,7 @@
         },
 
         relative_urls : false,
-        height: {{ isset($height) ? $height : 300 }},
+        height: {{ isset($height) ? $height : 400 }},
         resize: 'both',
         branding: false,
         valid_children : "+body[style|input],+a[div|p],",

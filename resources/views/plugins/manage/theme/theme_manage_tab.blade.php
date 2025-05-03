@@ -42,11 +42,12 @@
                         <span class="nav-link"><span class="active">画像管理</span></span>
                     </li>
                 @endif
+                {{-- delete: tinymce7対応. template はTinyMCE 7.xのオープンソース版から削除されてPremium版に移りました
                 @if ($function == "editTemplate")
                     <li role="presentation" class="nav-item">
                         <span class="nav-link"><span class="active">テンプレート編集</span></span>
                     </li>
-                @endif
+                @endif --}}
                 @if ($function == "editName")
                     <li role="presentation" class="nav-item">
                         <span class="nav-link"><span class="active">テーマ名編集</span></span>
