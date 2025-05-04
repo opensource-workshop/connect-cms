@@ -32,7 +32,7 @@ class ThemeManage extends ManagePluginBase
         $role_ckeck_table["create"]      = array('admin_site');
         $role_ckeck_table["editCss"]     = array('admin_site');
         $role_ckeck_table["saveCss"]     = array('admin_site');
-        $role_ckeck_table["editTemplate"] = array('admin_site');
+        // $role_ckeck_table["editTemplate"] = array('admin_site');
         $role_ckeck_table["saveTemplate"] = array('admin_site');
         $role_ckeck_table["editJs"]      = array('admin_site');
         $role_ckeck_table["saveJs"]      = array('admin_site');
@@ -386,13 +386,15 @@ class ThemeManage extends ManagePluginBase
         ]);
     }
 
+    // delete: tinymce7対応. template はTinyMCE 7.xのオープンソース版から削除されてPremium版に移りました
     /**
      * テンプレート編集画面
      *
-     * @method_title テンプレート編集
-     * @method_desc ユーザ・テーマ毎のテンプレートを画面で編集できます。
-     * @method_detail 保存したテンプレートは選択したテーマで反映されます。
+     * method_title テンプレート編集
+     * method_desc ユーザ・テーマ毎のテンプレートを画面で編集できます。
+     * method_detail 保存したテンプレートは選択したテーマで反映されます。
      */
+    /*
     public function editTemplate($request, $id)
     {
         // httpメソッド確認
@@ -426,6 +428,7 @@ class ThemeManage extends ManagePluginBase
             "template"         => $template,
         ]);
     }
+    */
 
     /**
      * テンプレート保存画面

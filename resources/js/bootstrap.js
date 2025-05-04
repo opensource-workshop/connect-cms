@@ -93,7 +93,7 @@ dayjs.extend(timezone);
 window.dayjs = dayjs;
 
 // --- TinyMCE
-// 「Example src/editor.js」よりコピーして編集: https://www.tiny.cloud/docs/tinymce/6/vite-es6-npm/#procedures
+// 「Example src/editor.js」よりコピーして編集: https://www.tiny.cloud/docs/tinymce/latest/vite-es6-npm/#procedures
 /* Import TinyMCE */
 import tinymce from 'tinymce';
 window.tinymce = tinymce;
@@ -109,7 +109,8 @@ import 'tinymce/models/dom';
 import 'tinymce/skins/ui/oxide/skin.js';
 
 /* Import plugins */
-// delete: imagetools はTinyMCE 6.0のオープンソース版で削除されました
+// delete: imagetools はTinyMCE 6.xのオープンソース版から削除されてPremium版に移りました
+// delete: template はTinyMCE 7.xのオープンソース版から削除されてPremium版に移りました
 import 'tinymce/plugins/advlist';
 import 'tinymce/plugins/code';
 import 'tinymce/plugins/link';
@@ -118,7 +119,6 @@ import 'tinymce/plugins/table';
 import 'tinymce/plugins/media';
 import 'tinymce/plugins/autolink';
 import 'tinymce/plugins/preview';
-import 'tinymce/plugins/template';
 
 /* Import plugins(Connect-CMS Custom)
    コピー元Path：   node_modules/tinymce/plugins/image/plugin.js */
