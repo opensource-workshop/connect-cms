@@ -6,8 +6,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class OpacsBooks extends Model
 {
-    // 日付型の場合、$dates にカラムを指定しておく。
-    protected $dates = ['accept_date', 'storage_life', 'remove_date', 'last_lending_date', 'posted_at'];
+    /**
+     * キャストする必要のある属性
+     */
+    protected $casts = [
+        'accept_date' => 'datetime',
+        'storage_life' => 'datetime',
+        'remove_date' => 'datetime',
+        'last_lending_date' => 'datetime',
+        'posted_at' => 'datetime',
+    ];
 
     // 更新する項目の定義
     protected $fillable = [

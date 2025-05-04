@@ -20,8 +20,12 @@ class BlogsPosts extends Model
     const read_more_button_default = '続きを読む';
     const close_more_button_default = '閉じる';
 
-    // 日付型の場合、$dates にカラムを指定しておく。
-    protected $dates = ['posted_at'];
+    /**
+     * キャストする必要のある属性
+     */
+    protected $casts = [
+        'posted_at' => 'datetime',
+    ];
 
     // 更新する項目の定義
     protected $fillable = [

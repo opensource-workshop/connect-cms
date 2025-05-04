@@ -16,8 +16,13 @@ class Nc3Frame extends Model
      */
     protected $table = 'frames';
 
-    // Carbonインスタンス（日付）に自動的に変換
-    protected $dates = ['created', 'modified'];
+    /**
+     * キャストする必要のある属性
+     */
+    protected $casts = [
+        'created' => 'datetime',
+        'modified' => 'datetime',
+    ];
 
     /**
      * NC3 header_type -> Connect-CMS frame_design 変換用テーブル
