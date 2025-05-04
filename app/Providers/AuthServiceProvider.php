@@ -25,8 +25,6 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->registerPolicies();
-
         // ユーザー認証はカスタマイズしたもので行う。
         Auth::provider('connect_eloquent', function ($app, array $config) {
             return new ConnectEloquentUserProvider($app['hash'], $config['model']);

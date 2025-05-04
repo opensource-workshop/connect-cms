@@ -59,9 +59,6 @@ class AppServiceProvider extends AuthServiceProvider
         // config('app.url') が https 始まりか？http 始まりか？ をもとに強制的に scheme を設定する
         URL::forceScheme(Str::startsWith(config('app.url'), 'https') ? 'https' : 'http');
 
-        // 認可サービス(Gate)利用の準備
-        $this->registerPolicies();
-
         // *** ロールから確認（一般）
 
         // ゲスト
