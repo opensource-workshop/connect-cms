@@ -12,17 +12,17 @@ on:
         description: 'テストするPHPバージョン'
         required: true
         options:
-        - '8.0'
         - '8.1'
         - '8.2'
-        default: '8.0'
+        - '8.3'
+        default: '8.1'
       # is_output_manual:
       #   type: boolean
       #   description: 'マニュアル出力'
       #   default: 'false'
 env:
   # schedule用
-  PHP_VERSION_DEFAULT: '8.0'
+  PHP_VERSION_DEFAULT: '8.1'
   # IS_OUTPUT_MANUAL_DEFAULT: 'false'
 
 jobs:
