@@ -38,8 +38,13 @@ class CalendarPost extends Model
         'contact',
     ];
 
-    // 日付型の場合、$dates にカラムを指定しておく。
-    protected $dates = ['start_date', 'end_date'];
+    /**
+     * キャストする必要のある属性
+     */
+    protected $casts = [
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
+    ];
 
     /**
      * 新しいEloqunetコレクションインスタンスの生成
