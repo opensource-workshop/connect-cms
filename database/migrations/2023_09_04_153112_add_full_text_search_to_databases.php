@@ -22,7 +22,8 @@ class AddFullTextSearchToDatabases extends Migration
             $table->mediumText('full_text')->nullable()->comment('全文検索用項目')->after('categories_id');
         });
 
-        $result = DB::select( DB::raw("select version() as version"));
+        // Laravel10対応(Laravel8でも動作)
+        $result = DB::select("select version() as version");
         $version =  $result[0]->version;
         // MariaDBはNGRAMが使えない
         if (strpos($version, 'Maria') !== false) {
