@@ -32,9 +32,9 @@
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.3",
-        "filp/whoops": "~2.0",
         "fakerphp/faker": "^1.9.1",
-        "laravel/dusk": "^7.10",
+        "filp/whoops": "~2.0",
+        "laravel/dusk": "^8.3",
         "mockery/mockery": "^1.4.4",
         "nunomaduro/collision": "^7.0",
         "phpunit/phpunit": "^10.1",
