@@ -32,6 +32,10 @@ class Contents extends Model
         'status',
     ];
 
-    // 日付型の場合、$dates にカラムを指定しておく。
-    protected $dates = ['deleted_at'];
+    /**
+     * キャストする必要のある属性
+     */
+    protected $casts = [
+        'deleted_at' => 'datetime',
+    ];
 }

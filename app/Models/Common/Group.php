@@ -32,9 +32,11 @@ class Group extends Model
     protected $fillable = ['name', 'initial_group_flag', 'display_sequence'];
 
     /**
-     * 日付型の場合、$dates にカラムを指定しておく。
+     * キャストする必要のある属性
      */
-    protected $dates = ['created_at', 'updated_at', 'deleted_at'];
+    protected $casts = [
+        'deleted_at' => 'datetime',
+    ];
 
     /**
      * 特定のページが指定されたときのグループに対する権限。ページ管理で使用。

@@ -29,9 +29,11 @@ class PageRole extends Model
     protected $fillable = ['page_id', 'group_id', 'target', 'role_name', 'role_value'];
 
     /**
-     * 日付型の場合、$dates にカラムを指定しておく。
+     * キャストする必要のある属性
      */
-    protected $dates = ['created_at', 'updated_at', 'deleted_at'];
+    protected $casts = [
+        'deleted_at' => 'datetime',
+    ];
 
     /**
      * ページの系統取得

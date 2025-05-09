@@ -27,9 +27,11 @@ class LearningtasksUseSettings extends Model
         'datetime_value',
     ];
 
-    // Carbonインスタンス（日付）に自動的に変換
-    protected $dates = [
-        'datetime_value',
+    /**
+     * キャストする必要のある属性
+     */
+    protected $casts = [
+        'datetime_value' => 'datetime',
     ];
 
     /**

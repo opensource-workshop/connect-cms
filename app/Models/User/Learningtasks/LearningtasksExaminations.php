@@ -17,11 +17,13 @@ class LearningtasksExaminations extends Model
     // 保存時のユーザー関連データの保持（履歴なしUserable）
     use UserableNohistory;
 
-    // 日付型の場合、$dates にカラムを指定しておく。
-    protected $dates = [
-        'start_at',
-        'end_at',
-        'entry_end_at',
+    /**
+     * キャストする必要のある属性
+     */
+    protected $casts = [
+        'start_at' => 'datetime',
+        'end_at' => 'datetime',
+        'entry_end_at' => 'datetime',
     ];
 
     /**

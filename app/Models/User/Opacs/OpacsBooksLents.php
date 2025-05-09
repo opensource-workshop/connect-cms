@@ -21,8 +21,14 @@ class OpacsBooksLents extends Model
         'delivery_request_time',
     ];
 
-    // 日付型の場合、$dates にカラムを指定しておく。
-    protected $dates = ['lent_at', 'scheduled_return', 'delivery_request_date'];
+    /**
+     * キャストする必要のある属性
+     */
+    protected $casts = [
+        'lent_at' => 'datetime',
+        'scheduled_return' => 'datetime',
+        'delivery_request_date' => 'datetime',
+    ];
 
     /**
      *  フォーマット付きの返却予定日を返却

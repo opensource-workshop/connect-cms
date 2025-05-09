@@ -25,9 +25,11 @@ class CounterCount extends Model
         'total_count',
     ];
 
-    // Carbonインスタンス（日付）に自動的に変換
-    protected $dates = [
-        'counted_at',
+    /**
+     * キャストする必要のある属性
+     */
+    protected $casts = [
+        'counted_at' => 'datetime',
     ];
 
     /**

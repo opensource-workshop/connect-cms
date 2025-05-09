@@ -15,6 +15,10 @@ class FaqsPostsTags extends Model
     // 保存時のユーザー関連データの保持
     use Userable;
 
-    // 日付型の場合、$dates にカラムを指定しておく。
-    protected $dates = ['posted_at'];
+    /**
+     * キャストする必要のある属性
+     */
+    protected $casts = [
+        'posted_at' => 'datetime',
+    ];
 }

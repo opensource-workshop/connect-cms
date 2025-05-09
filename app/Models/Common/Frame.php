@@ -13,10 +13,12 @@ class Frame extends Model
 {
     use HasFactory;
 
-    // 日付型
-    protected $dates = [
-        'content_open_date_from',
-        'content_open_date_to'
+    /**
+     * キャストする必要のある属性
+     */
+    protected $casts = [
+        'content_open_date_from' => 'datetime',
+        'content_open_date_to' => 'datetime',
     ];
 
     /**
