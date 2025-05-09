@@ -50,6 +50,10 @@ jobs:
           sed -i -e 's|PDF_THUMBNAIL_API_URL=""|PDF_THUMBNAIL_API_URL="http://localhost:8000"|g' .env
           sed -i -e 's|FACE_AI_API_URL=""|FACE_AI_API_URL="http://localhost:8000"|g' .env
           # sed -e "$ a MANUAL_PUT_BASE=\"$GITHUB_WORKSPACE/tests/Manual/html/\"" .env
+          # マニュアル出力しない
+          sed -i -e 's|#DUSK_NO_MANUAL=true|DUSK_NO_MANUAL=true|g' .env
+          # APIテストを実行しない
+          sed -i -e 's|#DUSK_NO_API_TEST=true|DUSK_NO_API_TEST=true|g' .env
 
       # schedule でphpバージョン指定
       - name: Set if input php_version is empty
@@ -343,7 +347,7 @@ jobs:
 
       - name: 'Run Dusk スライドショー'
         if: always()
-        run: php artisan dusk tests/Browser/User/SlideshowsPluginTest.php no_api_test
+        run: php artisan dusk tests/Browser/User/SlideshowsPluginTest.php
 
       - name: 'Run Dusk 開館カレンダー'
         if: always()
