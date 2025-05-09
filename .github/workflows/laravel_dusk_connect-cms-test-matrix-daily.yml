@@ -127,9 +127,10 @@ jobs:
       - name: Chrome Version
         run: /opt/google/chrome/chrome --version
 
-      # https://readouble.com/laravel/8.x/ja/dusk.html#managing-chromedriver-installations
-      #- name: Upgrade Chrome Driver
-      #  run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
+      # https://readouble.com/laravel/10.x/ja/dusk.html#managing-chromedriver-installations
+      - name: Upgrade Chrome Driver
+        # run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
+        run: php artisan dusk:chrome-driver --detect
 
       # https://stackoverflow.com/questions/76980975/chrome-driver-failing-in-laravel-dusk-failed-to-open-stream-http-request-fai
       # https://voicetechno-jp.secure-web.jp/ChromeDriverV115orNewer.html
@@ -145,24 +146,24 @@ jobs:
       # - name: Downgrade Chrome driver to v114
       #   run: php artisan dusk:chrome-driver 114
 
-      - name: Set env CHROME_VERSION
-        run: |
-          echo CHROME_VERSION=`/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1` >> $GITHUB_ENV
+      # - name: Set env CHROME_VERSION
+      #   run: |
+      #     echo CHROME_VERSION=`/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1` >> $GITHUB_ENV
 
       # https://github.com/browser-actions/setup-chrome (community)
-      - name: Download Chrome and Chrome Driver(use Chrome Driver Only)
-        uses: browser-actions/setup-chrome@v1
-        id: setup-chrome
-        with:
-          chrome-version: ${{ env.CHROME_VERSION }}
-          install-chromedriver: true
+      # - name: Download Chrome and Chrome Driver(use Chrome Driver Only)
+      #   uses: browser-actions/setup-chrome@v1
+      #   id: setup-chrome
+      #   with:
+      #     chrome-version: ${{ env.CHROME_VERSION }}
+      #     install-chromedriver: true
 
-      - name: Chrome Driver Copy
-        run: sudo \cp -f ${{ steps.setup-chrome.outputs.chromedriver-path }} ./vendor/laravel/dusk/bin/chromedriver-linux
+      # - name: Chrome Driver Copy
+      #   run: sudo \cp -f ${{ steps.setup-chrome.outputs.chromedriver-path }} ./vendor/laravel/dusk/bin/chromedriver-linux
 
-      - name: Chrome Driver Permission Denied 対応
-        run: |
-          sudo chmod +x ./vendor/laravel/dusk/bin/chromedriver-linux
+      # - name: Chrome Driver Permission Denied 対応
+      #   run: |
+      #     sudo chmod +x ./vendor/laravel/dusk/bin/chromedriver-linux
 
       - name: Start Chrome Driver
         run: ./vendor/laravel/dusk/bin/chromedriver-linux --port=9515 &
