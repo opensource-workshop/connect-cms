@@ -175,9 +175,9 @@ jobs:
       # - 事前準備用の実行
       # ---------------------------------------------
 
-      - name: 'Run Dusk データ準備用 - ログ管理 - マニュアルなし'
+      - name: 'Run Dusk データ準備用 - ログ管理'
         if: always()
-        run: php artisan dusk tests/Browser/Manage/LogManageTest.php no_manual
+        run: php artisan dusk tests/Browser/Manage/LogManageTest.php
 
       # ---------------------------------------------
       # - 設計 ①
