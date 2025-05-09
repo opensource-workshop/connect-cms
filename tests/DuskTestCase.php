@@ -108,6 +108,7 @@ abstract class DuskTestCase extends BaseTestCase
             });
         }
 
+        // Laravel9以前
         // コマンドライン引数 第5（配列インデックス4）に no_manual が指定されていた場合は、マニュアル作成しない。
         if ($_SERVER && count($_SERVER['argv']) > 4) {
             if ($_SERVER['argv'][4] == 'no_manual') {
@@ -117,6 +118,17 @@ abstract class DuskTestCase extends BaseTestCase
             if ($_SERVER['argv'][4] == 'no_api_test') {
                 $this->no_api_test = true;
             }
+        }
+
+        // Laravel 10対応(phpunit 10.x) dusk実行時のコマンドライン引数はテストクラスのパスと認識されるため、envで対応
+        // .envの DUSK_NO_MANUAL に何か値が指定されていた場合は、マニュアル作成しない。
+        if (env('DUSK_NO_MANUAL')) {
+            $this->no_manual = true;
+        }
+
+        // .envの DUSK_NO_API_TEST に何か値が指定されていた場合は、APIテストを実行しない。
+        if (env('DUSK_NO_API_TEST')) {
+            $this->no_api_test = true;
         }
 
 /* 一旦コメントアウト。データのクリアは、意識して行いたいかもしれないので。
