@@ -83,7 +83,7 @@ abstract class DuskTestCase extends BaseTestCase
         ]);
 
         return RemoteWebDriver::create(
-            $_ENV['DUSK_DRIVER_URL'] ?? 'http://localhost:9515',
+            $_ENV['DUSK_DRIVER_URL'] ?? env('DUSK_DRIVER_URL') ?? 'http://localhost:9515',
             DesiredCapabilities::chrome()->setCapability(
                 ChromeOptions::CAPABILITY, $options
             )
@@ -146,6 +146,7 @@ abstract class DuskTestCase extends BaseTestCase
     protected function login($user_id)
     {
         $this->browse(function (Browser $browser) use ($user_id) {
+
             $browser->loginAs(User::find($user_id));
             $this->assertTrue(true);
         });
