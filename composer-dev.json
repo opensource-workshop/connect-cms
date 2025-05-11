@@ -24,7 +24,6 @@
         "laravel/helpers": "^1.4",
         "laravel/tinker": "^2.5",
         "laravel/ui": "^3.0",
-        "laravelcollective/html": "^6.0",
         "mews/captcha": "3.3.0",
         "rlanvin/php-rrule": "^2.3",
         "setasign/fpdi": "^2.3",
