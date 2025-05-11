@@ -12,17 +12,17 @@ on:
         description: 'テストするPHPバージョン'
         required: true
         options:
-        - '8.0'
         - '8.1'
         - '8.2'
-        default: '8.0'
+        - '8.3'
+        default: '8.1'
       # is_output_manual:
       #   type: boolean
       #   description: 'マニュアル出力'
       #   default: 'false'
 env:
   # schedule用
-  PHP_VERSION_DEFAULT: '8.0'
+  PHP_VERSION_DEFAULT: '8.1'
   # IS_OUTPUT_MANUAL_DEFAULT: 'false'
 
 jobs:
@@ -50,6 +50,10 @@ jobs:
           sed -i -e 's|PDF_THUMBNAIL_API_URL=""|PDF_THUMBNAIL_API_URL="http://localhost:8000"|g' .env
           sed -i -e 's|FACE_AI_API_URL=""|FACE_AI_API_URL="http://localhost:8000"|g' .env
           # sed -e "$ a MANUAL_PUT_BASE=\"$GITHUB_WORKSPACE/tests/Manual/html/\"" .env
+          # マニュアル出力しない
+          sed -i -e 's|#DUSK_NO_MANUAL_ALL=true|DUSK_NO_MANUAL_ALL=true|g' .env
+          # APIテストを実行しない
+          sed -i -e 's|#DUSK_NO_API_TEST_ALL=true|DUSK_NO_API_TEST_ALL=true|g' .env
 
       # schedule でphpバージョン指定
       - name: Set if input php_version is empty
@@ -132,21 +136,21 @@ jobs:
       - name: Chrome Version
         run: /opt/google/chrome/chrome --version
 
-      # https://readouble.com/laravel/9.x/ja/dusk.html#managing-chromedriver-installations
-      # https://readouble.com/laravel/9.x/ja/dusk.html#running-tests-on-github-actions
+      # https://readouble.com/laravel/10.x/ja/dusk.html#managing-chromedriver-installations
+      # https://readouble.com/laravel/10.x/ja/dusk.html#running-tests-on-github-actions
       # Chrome Version と Chrome Driverを同じにする
       - name: Upgrade Chrome Driver
-        # run: php artisan dusk:chrome-driver --detect
+        run: php artisan dusk:chrome-driver --detect
         # run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
-        run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3`
+        # run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3`
 
-      - name: Chrome Driver Copy
-        run: sudo \cp -f ./vendor/laravel/dusk/bin/chromedriver-linux64/chromedriver ./vendor/laravel/dusk/bin/chromedriver-linux
+      # - name: Chrome Driver Copy
+      #   run: sudo \cp -f ./vendor/laravel/dusk/bin/chromedriver-linux64/chromedriver ./vendor/laravel/dusk/bin/chromedriver-linux
 
-      - name: Chrome Driver Permission Denied 対応
-        run: |
-          sudo chmod +x ./vendor/laravel/dusk/bin/chromedriver-linux64/chromedriver
-          sudo chmod +x ./vendor/laravel/dusk/bin/chromedriver-linux
+      # - name: Chrome Driver Permission Denied 対応
+      #   run: |
+      #     sudo chmod +x ./vendor/laravel/dusk/bin/chromedriver-linux64/chromedriver
+      #     sudo chmod +x ./vendor/laravel/dusk/bin/chromedriver-linux
 
       # https://stackoverflow.com/questions/76980975/chrome-driver-failing-in-laravel-dusk-failed-to-open-stream-http-request-fai
       # https://voicetechno-jp.secure-web.jp/ChromeDriverV115orNewer.html
@@ -173,9 +177,9 @@ jobs:
       # - 事前準備用の実行
       # ---------------------------------------------
 
-      - name: 'Run Dusk データ準備用 - ログ管理 - マニュアルなし'
+      - name: 'Run Dusk データ準備用 - ログ管理'
         if: always()
-        run: php artisan dusk tests/Browser/Manage/LogManageTest.php no_manual
+        run: php artisan dusk tests/Browser/Manage/LogManageTest.php
 
       # ---------------------------------------------
       # - 設計 ①
@@ -343,7 +347,7 @@ jobs:
 
       - name: 'Run Dusk スライドショー'
         if: always()
-        run: php artisan dusk tests/Browser/User/SlideshowsPluginTest.php no_api_test
+        run: php artisan dusk tests/Browser/User/SlideshowsPluginTest.php
 
       - name: 'Run Dusk 開館カレンダー'
         if: always()

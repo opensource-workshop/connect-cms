@@ -24,7 +24,13 @@ class ReservationsInput extends Model
         'status',
     ];
 
-    protected $dates = ['start_datetime', 'end_datetime'];
+    /**
+     * キャストする必要のある属性
+     */
+    protected $casts = [
+        'start_datetime' => 'datetime',
+        'end_datetime' => 'datetime',
+    ];
 
     /**
      * 表示する予約日付
