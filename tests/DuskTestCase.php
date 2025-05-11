@@ -121,13 +121,13 @@ abstract class DuskTestCase extends BaseTestCase
         }
 
         // Laravel 10対応(phpunit 10.x) dusk実行時のコマンドライン引数はテストクラスのパスと認識されるため、envで対応
-        // .envの DUSK_NO_MANUAL に何か値が指定されていた場合は、マニュアル作成しない。
-        if (env('DUSK_NO_MANUAL')) {
+        // .envの DUSK_NO_MANUAL_ALL に何か値が指定されていた場合は、マニュアル作成しない。
+        if (env('DUSK_NO_MANUAL_ALL')) {
             $this->no_manual = true;
         }
 
-        // .envの DUSK_NO_API_TEST に何か値が指定されていた場合は、APIテストを実行しない。
-        if (env('DUSK_NO_API_TEST')) {
+        // .envの DUSK_NO_API_TEST_ALL に何か値が指定されていた場合は、APIテストを実行しない。
+        if (env('DUSK_NO_API_TEST_ALL')) {
             $this->no_api_test = true;
         }
 
@@ -569,6 +569,11 @@ abstract class DuskTestCase extends BaseTestCase
      */
     public function putManualTemplateData($frame, $category, $test_path, $plugin, $templates)
     {
+        // マニュアル用データ出力がOFF の場合は、出力せずに戻る。
+        if ($this->no_manual) {
+            return;
+        }
+
         // 画像関係パス
         $img_args = "";
 
