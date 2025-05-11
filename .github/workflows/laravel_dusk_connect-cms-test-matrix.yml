@@ -44,8 +44,8 @@ jobs:
           sed -i -e 's|TRANSLATE_API_URL=""|TRANSLATE_API_URL="http://localhost:8000"|g' .env
           sed -i -e 's|PDF_THUMBNAIL_API_URL=""|PDF_THUMBNAIL_API_URL="http://localhost:8000"|g' .env
           sed -i -e 's|FACE_AI_API_URL=""|FACE_AI_API_URL="http://localhost:8000"|g' .env
-          sed -i -e 's|#DUSK_NO_MANUAL=true|DUSK_NO_MANUAL=true|g' .env
-          sed -i -e 's|#DUSK_NO_API_TEST=true|DUSK_NO_API_TEST=true|g' .env
+          sed -i -e 's|#DUSK_NO_MANUAL_ALL=true|DUSK_NO_MANUAL_ALL=true|g' .env
+          sed -i -e 's|#DUSK_NO_API_TEST_ALL=true|DUSK_NO_API_TEST_ALL=true|g' .env
           # sed -e "$ a MANUAL_PUT_BASE=\"$GITHUB_WORKSPACE/tests/Manual/html/\"" .env
 
       # schedule でphpバージョン指定

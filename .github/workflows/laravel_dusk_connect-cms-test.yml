@@ -51,9 +51,9 @@ jobs:
           sed -i -e 's|FACE_AI_API_URL=""|FACE_AI_API_URL="http://localhost:8000"|g' .env
           # sed -e "$ a MANUAL_PUT_BASE=\"$GITHUB_WORKSPACE/tests/Manual/html/\"" .env
           # マニュアル出力しない
-          sed -i -e 's|#DUSK_NO_MANUAL=true|DUSK_NO_MANUAL=true|g' .env
+          sed -i -e 's|#DUSK_NO_MANUAL_ALL=true|DUSK_NO_MANUAL_ALL=true|g' .env
           # APIテストを実行しない
-          sed -i -e 's|#DUSK_NO_API_TEST=true|DUSK_NO_API_TEST=true|g' .env
+          sed -i -e 's|#DUSK_NO_API_TEST_ALL=true|DUSK_NO_API_TEST_ALL=true|g' .env
 
       # schedule でphpバージョン指定
       - name: Set if input php_version is empty
