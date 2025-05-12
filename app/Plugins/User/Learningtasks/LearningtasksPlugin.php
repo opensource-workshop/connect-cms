@@ -3717,7 +3717,8 @@ class LearningtasksPlugin extends UserPluginBase
             $column_definition_factory = app(ColumnDefinitionFactory::class);
             $row_processor_factory = app(RowProcessorFactory::class);
             $exception_handler_factory = app(ExceptionHandlerFactory::class);
-            $column_definition = $column_definition_factory->make($import_type, $post);
+            $setting_checker = new LearningtaskSettingChecker($post);
+            $column_definition = $column_definition_factory->make($import_type, $setting_checker);
             $row_processor = $row_processor_factory->make($import_type);
             $exception_handler = $exception_handler_factory->make($import_type);
             $importer = new LearningtasksCsvImporter($post, $page, $column_definition, $row_processor, $user_repository, $exception_handler);
