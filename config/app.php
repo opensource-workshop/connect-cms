@@ -277,6 +277,7 @@ $app_array = [
         'RoleName' => \App\Enums\RoleName::class,
         'LearningtaskUserJoinFlag' => \App\Enums\LearningtaskUserJoinFlag::class,
         'LearningtasksExaminationColumn' => \App\Enums\LearningtasksExaminationColumn::class,
+        'LearningtaskExportType' => \App\Enums\LearningtaskExportType::class,
         'LearningtaskImportType' => \App\Enums\LearningtaskImportType::class,
         'CounterDesignType' => \App\Enums\CounterDesignType::class,
         'BaseLoginRedirectPage' => \App\Enums\BaseLoginRedirectPage::class,
