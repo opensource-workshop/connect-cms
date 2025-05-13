@@ -417,5 +417,4 @@ class LearningtasksPluginExportCsvTest extends TestCase
         $this->assertCount(1, $parsed_data, 'ヘッダー行のみであるべき');
         $this->assertEquals($expected_headers, $parsed_data[0], 'ヘッダー行の内容が正しいこと');
     }
-
 }
