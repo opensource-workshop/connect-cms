@@ -4,9 +4,6 @@ namespace App\Plugins\User\Learningtasks\Contracts;
 
 use App\Models\Common\Page;
 use App\Models\User\Learningtasks\LearningtasksPosts;
-// iterable は PHP 7.1 以降で使用可能
-// Generator を返す場合は Generator を use してもよい
-// use Generator;
 
 /**
  * CSV エクスポート用のデータ行を提供するクラスのためのインターフェース

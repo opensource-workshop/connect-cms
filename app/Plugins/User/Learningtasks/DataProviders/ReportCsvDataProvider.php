@@ -49,8 +49,7 @@ class ReportCsvDataProvider implements CsvDataProviderInterface
         LearningtasksPosts $post,
         Page $page,
         string $site_url
-    ): Generator
-    {
+    ): Generator {
         // 1. ヘッダーを取得 (順序の参照用に内部で使う)
         $header_columns = $column_definition->getHeaders();
         if (empty($header_columns)) {
@@ -60,7 +59,7 @@ class ReportCsvDataProvider implements CsvDataProviderInterface
 
         // 2. 対象学生を取得
         $students = $this->user_repository->getStudents($post, $page);
-        if ($students->isEmpty()){
+        if ($students->isEmpty()) {
             // 対象がいなければ何も yield しない
             return;
         }
@@ -127,14 +126,14 @@ class ReportCsvDataProvider implements CsvDataProviderInterface
      /**
       * 学生一人分のCSV行データを生成 (データ生成マップ利用)
       */
-     private function generateRowForStudent(
+    private function generateRowForStudent(
         User $student,
         ?LearningtasksUsersStatuses $last_submission,
         ?LearningtasksUsersStatuses $last_evaluation,
         int $submit_count,
         array $required_headers,
         string $site_url
-     ): array {
+    ): array {
         $row_values = [];
         $data_generators = $this->getColumnDataGenerators(
             $student, $last_submission, $last_evaluation, $submit_count, $site_url
@@ -148,7 +147,7 @@ class ReportCsvDataProvider implements CsvDataProviderInterface
             }
         }
         return $row_values; // 値のみの配列
-     }
+    }
 
     /**
      * 各カラムのデータ生成ロジック（クロージャ）を連想配列で返すヘルパー
@@ -166,7 +165,7 @@ class ReportCsvDataProvider implements CsvDataProviderInterface
             '提出日時' => fn() => optional($last_submission)->created_at,
             '提出回数' => fn() => $submit_count,
             '本文' => fn() => optional($last_submission)->comment,
-            'ファイルURL' => function() use ($last_submission, $site_url) {
+            'ファイルURL' => function () use ($last_submission, $site_url) {
                 $upload_id = optional($last_submission)->upload_id;
                 return $upload_id ? $site_url . '/file/' . $upload_id : null;
             },

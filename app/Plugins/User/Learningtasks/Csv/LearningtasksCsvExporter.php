@@ -70,7 +70,7 @@ class LearningtasksCsvExporter
         ];
 
         // 4. ストリーミング処理のコールバックを定義
-        $callback = function() use ($site_url, $character_code, $header_row) {
+        $callback = function () use ($site_url, $character_code, $header_row) {
             // 出力ストリーム 'php://output' を書き込みモードで開く
             $handle = fopen('php://output', 'w');
             if ($handle === false) {
