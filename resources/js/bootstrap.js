@@ -55,20 +55,91 @@ if (token) {
 // });
 
 
-// Tempus Dominus Date/Time Picker
+// --- Tempus Dominus Date/Time Picker
 window.tempusDominus = require('@eonasdan/tempus-dominus');
 // 下記でapp.jsに含めると、日付入力時に1度画面上部に飛ばされる動作をするため、含めない
 // window.Popper = require('@popperjs/core');
 
-// Default SortableJS
+// --- Default SortableJS
 window.Sortable = require('sortablejs').default;
 
-// --- codemirror 5
-window.CodeMirror = require('codemirror');
+// --- codemirror 6
+import { EditorView, placeholder } from "@codemirror/view";
+window.EditorView = EditorView;
+window.placeholder = placeholder;   // プレースホルダー有効化
+import { basicSetup } from "codemirror"
+window.basicSetup = basicSetup;
 // 言語モード
-require('codemirror/mode/javascript/javascript');
-require('codemirror/mode/php/php');
-require('codemirror/mode/clike/clike'); // c, c++, java
-require('codemirror/mode/css/css');
-// プレースホルダー有効化
-require('codemirror/addon/display/placeholder.js');
+// ※ 対応言語はgithubのcodemirrorでlang-xxxを確認 https://github.com/codemirror?q=lang-&type=all&language=&sort=
+import { javascript } from "@codemirror/lang-javascript"
+window.javascript = javascript;
+import { css } from "@codemirror/lang-css"
+window.css = css;
+import { java } from "@codemirror/lang-java"
+window.java = java;
+import { php } from "@codemirror/lang-php"
+window.php = php;
+
+// --- Vue.js 3
+import { createApp } from 'vue';
+window.createApp = createApp;
+
+// --- dayjs(日付フォーマット)
+let dayjs = require('dayjs');
+let utc = require("dayjs/plugin/utc");
+let timezone = require("dayjs/plugin/timezone");
+dayjs.extend(utc);
+dayjs.extend(timezone);
+window.dayjs = dayjs;
+
+// --- TinyMCE
+// 「Example src/editor.js」よりコピーして編集: https://www.tiny.cloud/docs/tinymce/latest/vite-es6-npm/#procedures
+/* Import TinyMCE */
+import tinymce from 'tinymce';
+window.tinymce = tinymce;
+
+/* Default icons are required. After that, import custom icons if applicable */
+import 'tinymce/icons/default';
+
+/* Required TinyMCE components */
+import 'tinymce/themes/silver';
+import 'tinymce/models/dom';
+
+/* Import a skin (can be a custom skin instead of the default) */
+import 'tinymce/skins/ui/oxide/skin.js';
+
+/* Import plugins */
+// delete: imagetools はTinyMCE 6.xのオープンソース版から削除されてPremium版に移りました
+// delete: template はTinyMCE 7.xのオープンソース版から削除されてPremium版に移りました
+import 'tinymce/plugins/advlist';
+import 'tinymce/plugins/code';
+import 'tinymce/plugins/link';
+import 'tinymce/plugins/lists';
+import 'tinymce/plugins/table';
+import 'tinymce/plugins/media';
+import 'tinymce/plugins/autolink';
+import 'tinymce/plugins/preview';
+
+/* Import plugins(Connect-CMS Custom)
+   コピー元Path：   node_modules/tinymce/plugins/image/plugin.js */
+// import 'tinymce/plugins/image';
+import './tinymce/plugins/image/plugin.js';
+
+/* Import plugins(Connect-CMS Only)
+   Path: resources/js/tinymce/plugins/... */
+import './tinymce/plugins/file/plugin.js';
+import './tinymce/plugins/translate/plugin.js';
+import './tinymce/plugins/pdf/plugin.js';
+import './tinymce/plugins/face/plugin.js';
+
+/* content UI CSS is required */
+import 'tinymce/skins/ui/oxide/content.js';
+
+/* The default content CSS can be changed or replaced with appropriate CSS for the editor content. */
+// delete: contentCssは使用しない
+//         参考Path: node_modules/tinymce/skins/content/default/content.js
+// import 'tinymce/skins/content/default/content.js';
+
+/* ダウンロードした日本語 https://www.tiny.cloud/get-tiny/language-packages/
+   Path: resources/js/tinymce/langs/ja.js */
+import './tinymce/langs/ja.js';

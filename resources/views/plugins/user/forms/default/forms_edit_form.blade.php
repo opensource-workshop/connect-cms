@@ -563,12 +563,13 @@
     </div>
 </div>
 <script>
-    new Vue({
-      el: "#app_numbering_prefix_{{ $frame->id }}",
-      data: {
-        v_numbering_prefix: document.getElementById('numbering_prefix').value
+    createApp({
+      data: function() {
+        return {
+          v_numbering_prefix: '{{old('numbering_prefix', $form->numbering_prefix)}}'
+        }
       }
-    })
+    }).mount('#app_numbering_prefix_{{ $frame->id }}');
 
     {{-- 初期状態で開くもの --}}
     @php $access_limit_type = $form->access_limit_type ?? FormAccessLimitType::getDefault(); @endphp

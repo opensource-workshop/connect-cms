@@ -39,7 +39,7 @@
         {{-- 画像選択ボタン --}}
         <label class="input-group-btn d-flex align-items-center justify-content-center">
             <span class="btn btn-primary text-nowrap" style="cursor: hand; cursor:pointer;">
-                画像選択<input type="file" name="image_files[{{ $item->id }}]" style="display:none" @change="setImageResource({{ $item->id }}, arguments[0])">
+                画像選択<input type="file" name="image_files[{{ $item->id }}]" style="display:none" @change="setImageResource($event, {{ $item->id }})">
                 <label class="badge badge-danger d-lg-none">必須</label>
             </span>
         </label>
@@ -59,7 +59,7 @@
                 <img
                     src="{{ asset("images/core/no_image/no_image3.png") }}"
                     width="100px"
-                >                       
+                >
             @endif
             </a>
         </div>

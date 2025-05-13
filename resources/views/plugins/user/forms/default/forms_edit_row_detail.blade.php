@@ -70,6 +70,11 @@
         form_column_detail.action = "{{url('/')}}/plugin/forms/updateColumnDetail/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
         form_column_detail.submit();
     }
+
+    $(function () {
+        // ツールチップ有効化
+        $('[data-toggle="tooltip"]').tooltip()
+    })
 </script>
 
 <form action="" id="form_column_detail" name="form_column_detail" method="POST" class="form-horizontal">
@@ -126,30 +131,38 @@
             <div class="table-responsive">
 
                 {{-- 選択項目の一覧 --}}
-                <table class="table table-hover table-sm">
+                <table class="table table-hover table-sm mb-0">
                     <thead class="thead-light">
                         <tr>
                             @if (count($selects) > 0)
-                                <th class="text-center" nowrap>表示順</th>
+                                <th class="text-center" nowrap>
+                                    表示順 <a class="fas fa-info-circle" data-toggle="tooltip" data-html="true" title="<i class='fa-solid fa-grip-vertical'></i> をつまんで移動(ドラック＆ドロップ)すると表示順を変更できます。"></a>
+                                </th>
                                 <th class="text-center" nowrap>選択肢名</th>
                                 <th class="text-center" nowrap>更新</th>
                                 <th class="text-center" nowrap>削除</th>
                             @endif
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="sortable-selects">
                         {{-- 更新用の行 --}}
                         @foreach($selects as $select)
-                            <tr  @if (isset($select->hide_flag)) class="table-secondary" @endif>
+                            <tr>
                                 {{-- 表示順操作 --}}
                                 <td class="text-center" nowrap>
+                                    {{-- つまんで移動 --}}
+                                    <button type="button" class="btn btn-default text-secondary p-1 sortable-handle">
+                                        <i class="fa-solid fa-grip-vertical"></i>
+                                    </button>
+                                    <input type="hidden" name="select_ids_order[]" value="{{ $select->id }}">
+
                                     {{-- 上移動 --}}
-                                    <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_display_sequence({{ $select->id }}, {{ $select->display_sequence }}, 'up')">
+                                    <button type="button" class="btn btn-default p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_display_sequence({{ $select->id }}, {{ $select->display_sequence }}, 'up')">
                                         <i class="fas fa-arrow-up"></i>
                                     </button>
 
                                     {{-- 下移動 --}}
-                                    <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->last) disabled @endif onclick="javascript:submit_display_sequence({{ $select->id }}, {{ $select->display_sequence }}, 'down')">
+                                    <button type="button" class="btn btn-default p-1" @if ($loop->last) disabled @endif onclick="javascript:submit_display_sequence({{ $select->id }}, {{ $select->display_sequence }}, 'down')">
                                         <i class="fas fa-arrow-down"></i>
                                     </button>
                                 </td>
@@ -179,6 +192,8 @@
                                 </td>
                             </tr>
                         @endforeach
+                    </tbody>
+                    <tbody>
                         <tr class="thead-light">
                             <th colspan="7">【選択肢の追加行】</th>
                         </tr>
@@ -209,6 +224,19 @@
             </div>
         </div>
     </div>
+
+    <script>
+        // ドラック＆ドロップで表示順変更
+        let el = document.getElementById('sortable-selects');
+        new Sortable(el, {
+            handle: '.sortable-handle',
+            animation: 150,
+            onUpdate: function (evt) {
+                form_column_detail.action = "{{url('/')}}/plugin/forms/updateSelectSequenceAll/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+                form_column_detail.submit();
+            },
+        });
+    </script>
 
     <br>
     @endif

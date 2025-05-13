@@ -28,7 +28,7 @@
     color: #ffff00; # デフォルトのヘッダーバー文字色を黄色にします。&#13;
 }"
             >{{$css}}</textarea>
-            @include('plugins.common.codemirror', ['element_id' => 'css', 'mode' => 'css', 'height' => 500])
+            @include('plugins.common.codemirror', ['element_id' => 'css', 'mode' => 'css()', 'height' => '500px'])
             <small class="text-muted">
                 <div>※ CSSを保存しても変更が反映されない時はブラウザのスーパーリロードを試行してください。</div>
             </small>

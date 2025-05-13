@@ -126,10 +126,12 @@
                     {{-- フォームの場合 --}}
                     <div class="table-responsive">
                         {{-- 項目の一覧 --}}
-                        <table class="table table-hover table-sm">
+                        <table class="table table-hover table-sm" id="sortable-columns">
                             <thead>
                                 <tr>
-                                    <th class="text-center" nowrap>表示順</th>
+                                    <th class="text-center" nowrap>
+                                        表示順 <a class="fas fa-info-circle" data-toggle="tooltip" data-html="true" title="<i class='fa-solid fa-grip-vertical'></i> をつまんで移動(ドラック＆ドロップ)すると表示順を変更できます。"></a>
+                                    </th>
                                     <th class="text-center" style="min-width: 165px;" nowrap>項目名</th>
                                     <th class="text-center" style="min-width: 165px;" nowrap>型</th>
                                     <th class="text-center" nowrap>必須</th>
@@ -139,27 +141,31 @@
                                     <th class="text-center" nowrap>削除</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                {{-- 更新用の行 --}}
-                                @foreach($columns as $column)
+                            {{-- 更新用の行 --}}
+                            @foreach($columns as $column)
+                                <tbody>
                                     @include('plugins.user.forms.default.forms_edit_row')
-                                @endforeach
+                                </tbody>
+                            @endforeach
+                            <tfoot>
                                 {{-- 新規登録用の行 --}}
                                 <tr>
                                     <th colspan="8">【項目の追加行】</th>
                                 </tr>
                                 @include('plugins.user.forms.default.forms_edit_row_add')
-                            </tbody>
+                            </tfoot>
                         </table>
                     </div>
                 @else
                     {{-- アンケートの場合 --}}
                     <div class="table-responsive">
                         {{-- 項目の一覧 --}}
-                        <table class="table table-hover table-sm">
+                        <table class="table table-hover table-sm" id="sortable-columns">
                             <thead>
                                 <tr>
-                                    <th class="text-center align-middle" rowspan="2" nowrap>表示順</th>
+                                    <th class="text-center align-middle" rowspan="2" nowrap>
+                                        表示順 <a class="fas fa-info-circle" data-toggle="tooltip" data-html="true" title="<i class='fa-solid fa-grip-vertical'></i> をつまんで移動(ドラック＆ドロップ)すると表示順を変更できます。"></a>
+                                    </th>
                                     <th class="text-center" colspan="6" nowrap>項目名</th>
                                 </tr>
                                 <tr>
@@ -172,20 +178,35 @@
                                     <th class="text-center" nowrap>削除</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                {{-- 更新用の行 --}}
-                                @foreach($columns as $column)
+                            {{-- 更新用の行 --}}
+                            @foreach($columns as $column)
+                                <tbody>
                                     @include('plugins.user.forms.default.forms_edit_row2')
-                                @endforeach
+                                </tbody>
+                            @endforeach
+                            <tfoot>
                                 {{-- 新規登録用の行 --}}
                                 <tr id="forms_edit_row2_add">
                                     <th colspan="8">【項目の追加行】</th>
                                 </tr>
                                 @include('plugins.user.forms.default.forms_edit_row2_add')
-                            </tbody>
+                            </tfoot>
                         </table>
                     </div>
                 @endif
+
+                <script>
+                    // ドラック＆ドロップで表示順変更
+                    let el = document.getElementById('sortable-columns');
+                    new Sortable(el, {
+                        handle: '.sortable-handle',
+                        animation: 150,
+                        onUpdate: function (evt) {
+                            form_columns.action = "{{url('/')}}/plugin/forms/updateColumnSequenceAll/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}";
+                            form_columns.submit();
+                        },
+                    });
+                </script>
 
                 {{-- ボタンエリア --}}
                 <div class="text-center mt-3 mt-md-0">

@@ -57,9 +57,6 @@ if (! isset($cc_configs)) {
 
     <!-- Scripts -->
     <script src="{{ url('/') }}{{ mix('/js/app.js') }}"></script>
-@if( App::environment(['local', 'staging']) )
-    <script>Vue.config.devtools = true;</script>
-@endif
 
     {{-- (下記は Tempus Dominus Date/Time Pickerで使用。ディレクトリインストールで動作させるため、ここで読み込み) --}}
     <!-- @popperjs/core Scripts -->

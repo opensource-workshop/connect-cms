@@ -34,6 +34,10 @@
         </div>
     @endif
 
+    {{-- フラッシュメッセージ --}}
+    @include('plugins.common.flash_message')
+    {{-- CSVインポートメッセージ --}}
+    @include('plugins.user.learningtasks.default.learningtasks_show_csv_import_messages')
     {{-- タイトル --}}
     <h2>{!!$post->post_title!!}</h2>
 
@@ -45,7 +49,7 @@
                 データ管理
             </button>
         </div>
-        <div id="data-management-{{$frame_id}}" class="collapse p-2 bg-light border border-light rounded mb-3">
+        <div id="data-management-{{$frame_id}}" class="collapse p-2 bg-light border border-light rounded mb-3 {{ $errors->has('csv_file') ? 'show' : '' }}">
             {{-- CSV出力 --}}
             <div class="form-group row">
                 <label class="col-sm-3 text-sm-right">提出状況CSV</label>
@@ -80,6 +84,26 @@
                     </form>
                 </div>
             </div>
+            {{-- レポート評価CSV入力 評価機能有効時のみ --}}
+            @if ($tool->checkFunction(LearningtaskUseFunction::use_report_evaluate))
+                <div class="form-group row">
+                    <label class="col-sm-3 text-sm-right">レポート評価インポート</label>
+                    <div class="col-sm-9">
+                        <form action="{{url('/')}}/redirect/plugin/learningtasks/importCsv/{{$page->id}}/{{$frame_id}}/{{$post->id}}" name="csv_inport{{$frame_id}}" method="POST" enctype="multipart/form-data">
+                            {{ csrf_field() }}
+                            <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">
+                            <input type="hidden" name="import_type" value="{{LearningtaskImportType::report}}">
+                            <input type="file" name="csv_file" class="form-control-file" required>
+                            @include('plugins.common.errors_inline', ['name' => 'csv_file'])
+                            <div class="btn-group">
+                                <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('レポート評価をインポートします。よろしいですか？')">
+                                    <i class="fas fa-upload"></i> アップロード
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            @endif
         </div>
 
         <h5><span class="badge badge-warning">評価中の受講者</span></h5>
@@ -145,42 +169,59 @@
 
                     @if ($tool->hasReportStatuses($post->id))
                         <ol class="mb-3">
+                            @php
+                                $previous_report_submission_id = null;
+                            @endphp
                             @foreach($tool->getReportStatuses($post->id) as $report_status)
+                                @php
+                                    // $report_statusに関する修正履歴を取得する
+                                    // 直前の提出と現在の提出の間にある削除されたレコードを修正履歴とする
+                                    $submission_revisions = $deleted_submissions->where('id', '>', $previous_report_submission_id)->where('id', '<', $report_status->id);
+                                @endphp
                                 @if (!$loop->last)
                                 <div class="collapse multi-collapse" id="multiCollapseReport{{$loop->iteration}}">
                                 @endif
 
                                     <li value="{{$loop->iteration}}">{{$report_status->getStstusName($tool->getStudentId())}}
-                                    <table class="table table-bordered table-sm report_table">
-                                        <tbody>
-                                            <tr>
-                                                <th>{{$report_status->getStstusPostTimeName()}}</th>
-                                                <td>{{$report_status->created_at}}</td>
-                                            </tr>
-                                            @if ($tool->isUseFunction($report_status->task_status, 'file'))
-                                                <tr>
-                                                    <th>{{$report_status->getUploadFileName()}}</th>
-                                                    @if (empty($report_status->upload_id))
-                                                        <td>なし</td>
-                                                    @else
-                                                        <td><a href="{{url('/')}}/file/{{$report_status->upload_id}}" target="_blank">{{$report_status->upload->client_original_name}}</a></td>
-                                                    @endif
-                                                </tr>
-                                            @endif
-                                            @if ($report_status->hasGrade())
-                                                <tr>
-                                                    <th>評価</th>
-                                                    <td><span class="text-danger font-weight-bold">{{$report_status->grade}}</span></td>
-                                                </tr>
-                                            @endif
-                                            @if ($tool->isUseFunction($report_status->task_status, 'comment'))
-                                                <tr>
-                                                    <th>コメント</th>
-                                                    <td>{!!nl2br(e($report_status->comment))!!}</td>
-                                                </tr>
-                                            @endif
-                                        </tbody>
-                                    </table>
+                                    {{-- 修正履歴 --}}
+                                    @if ($report_status->task_status == 1 && $submission_revisions->count() > 0)
+                                        <small class="text text-muted">（修正済み）</small>
+                                        @if ($tool->isTeacher())
+                                            <button type="button" class="btn btn-link p-0" data-toggle="modal" data-target="#submissionRevisionsModal{{$loop->iteration}}">
+                                                修正履歴を表示
+                                            </button>
+                                            {{-- Modal --}}
+                                            <div class="modal fade" id="submissionRevisionsModal{{$loop->iteration}}" tabindex="-1" role="dialog" aria-labelledby="submissionRevisionsModalLabel{{$loop->iteration}}" aria-hidden="true">
+                                                <div class="modal-dialog modal-lg" role="document">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="submissionRevisionsModalLabel{{$loop->iteration}}">修正履歴</h5>
+                                                            <button type="button" class="close" data-dismiss="modal" aria-label="閉じる">
+                                                                <span aria-hidden="true">&times;</span>
+                                                            </button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <ul>
+                                                                @foreach ($submission_revisions as $revision)
+                                                                    {{-- 履歴 --}}
+                                                                    @include('plugins.user.learningtasks.default.learningtasks_show_report_status', ['user_status' => $revision])
+                                                                    <p class="mb-2">
+                                                                        <span class="text-info">{{$revision->deleted_at}} {{$revision->deleted_name}}が修正</span>
+                                                                    </p>
+                                                                @endforeach
+                                                            </ul>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">閉じる</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    @endif
+
+                                    {{-- 履歴 --}}
+                                    @include('plugins.user.learningtasks.default.learningtasks_show_report_status', ['user_status' => $report_status])
 
                                     @if ($loop->last)
                                         {{-- 履歴削除ボタン：課題管理者機能 --}}
@@ -190,6 +231,13 @@
                                 @if (!$loop->last)
                                 </div>
                                 @endif
+
+                                @php
+                                    // 修正履歴を取得するため、直前のレポート提出IDを保持
+                                    if ($report_status->task_status == 1) {
+                                        $previous_report_submission_id = $report_status->id;
+                                    }
+                                @endphp
                             @endforeach
                         </ol>
                     @else
@@ -205,7 +253,12 @@
                             @if ($tool->checkFunction(LearningtaskUseFunction::use_report_file) || $tool->checkFunction(LearningtaskUseFunction::use_report_comment))
 
                                 <h5 class="mb-1"><span class="badge badge-secondary" for="status1">提出</span></h5>
-
+                                {{-- 修正可能のメッセージ --}}
+                                @if ($tool->checkFunction(LearningtaskUseFunction::use_report_revising))
+                                    <div class="alert alert-info">
+                                        <span class="text-info submit-info-message">評価が確定するまでは提出内容を修正できます。提出済みの内容を修正する場合は、再度レポート提出を行ってください。</span>
+                                    </div>
+                                @endif
                                 <form action="{{url('/')}}/redirect/plugin/learningtasks/changeStatus1/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}" method="POST" name="form_status1" enctype="multipart/form-data">
                                     {{ csrf_field() }}
                                     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/learningtasks/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame_id}}">

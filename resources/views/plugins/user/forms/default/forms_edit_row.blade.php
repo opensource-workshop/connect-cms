@@ -2,12 +2,19 @@
  * 項目の設定行テンプレート
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>, 井上 雅人 <inoue@opensource-workshop.jp / masamasamasato0216@gmail.com>
+ * @author 牟田口 満 <mutaguchi@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category フォーム・プラグイン
 --}}
 <tr>
     {{-- 表示順 --}}
     <td nowrap>
+        {{-- つまんで移動 --}}
+        <button type="button" class="btn btn-default text-secondary p-1 sortable-handle">
+            <i class="fa-solid fa-grip-vertical"></i>
+        </button>
+        <input type="hidden" name="column_ids_order[]" value="{{ $column->id }}">
+
         {{-- 上移動 --}}
         <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_display_sequence({{ $column->id }}, {{ $column->display_sequence }}, 'up')">
             <i class="fas fa-arrow-up"></i>

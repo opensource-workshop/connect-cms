@@ -73,13 +73,13 @@
     </div>
 
 @php
-    $mode = 'javascript';
+    $mode = 'javascript()';
     if ($codestudy->study_lang == 'php') {
-        $mode = 'php';
+        $mode = 'php()';
     } elseif ($codestudy->study_lang == 'javascript') {
-        $mode = 'javascript';
+        $mode = 'javascript()';
     } elseif ($codestudy->study_lang == 'java') {
-        $mode = 'text/x-java';
+        $mode = 'java()';
     }
 @endphp
 @include('plugins.common.codemirror', ['element_id' => 'txt_editor', 'mode' => $mode])

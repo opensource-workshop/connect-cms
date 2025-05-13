@@ -8,18 +8,39 @@
 @php
     // CodeMirrorの設定
     $element_id = $element_id ?? null;
-    $mode = $mode ?? null;
-    $height = $height ?? 'null';
+    $mode = $mode ?? 'javascript()';
+    $height = $height ?? '300px';
 @endphp
 
+<style>
+    .cm-editor {
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        height: {{$height}};
+    }
+</style>
 <script type="text/javascript">
-    var editor_{{$element_id}} = CodeMirror.fromTextArea(document.getElementById("{{$element_id}}"),
-    {
-        mode:"{{$mode}}",    // 言語を設定する.（laravel mixを使って resources/js/bootstrap.js に対応言語を設定し、public/js/app.js 内にまとめている）
-        lineNumbers: true,   // 行番号を表示する
-        lineWrapping: true,  // 行を折り返す
-    });
+    let view_{{$element_id}} = editorFromTextArea(document.getElementById("{{$element_id}}"))
 
-    // 高さ設定
-    editor_{{$element_id}}.setSize(null, {{$height}});
+    /**
+     * codemirror 5 互換 function
+     * @see https://codemirror.net/docs/migration/#codemirror.fromtextarea よりコピー
+     */
+    function editorFromTextArea(textarea) {
+        let view = new EditorView({
+            doc: textarea.value,
+            extensions: [
+                basicSetup,
+                placeholder(textarea.placeholder),  // プレースホルダ
+                EditorView.lineWrapping,            // 行を折り返す
+                {{$mode}},                          // 言語モード
+            ],
+        })
+        textarea.parentNode.insertBefore(view.dom, textarea)
+        textarea.style.display = "none"
+        if (textarea.form) textarea.form.addEventListener("submit", () => {
+            textarea.value = view.state.doc.toString()
+        })
+        return view
+    }
 </script>

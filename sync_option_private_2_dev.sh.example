@@ -35,17 +35,17 @@ rsync -arvz --delete "${src_root_dir}${option_plugin}/resources/views/plugins_op
 # バッチ
 rsync -arvz --delete "${src_root_dir}${option_plugin}/app/Console/CommandsOption/${option_plugin_command_dir}" "${dist_root_dir}app/Console/CommandsOption/"
 # マイグレーション
-rsync -arvz --delete --exclude '_readme.txt' "${src_root_dir}${option_plugin}/database/migrations_option" "${dist_root_dir}database/"
+rsync -arvz --exclude '_readme.txt' "${src_root_dir}${option_plugin}/database/migrations_option" "${dist_root_dir}database/"
 # シーダー
 rsync -arvz "${src_root_dir}${option_plugin}/database/seeders/Options/${option_plugin}" "${dist_root_dir}database/seeders/Options/"
 # Enum
-rsync -arvz --delete "${src_root_dir}${option_plugin}/app/EnumsOption" "${dist_root_dir}app/"
+rsync -arvz "${src_root_dir}${option_plugin}/app/EnumsOption" "${dist_root_dir}app/"
 # 画像
 rsync -arvz --delete "${src_root_dir}${option_plugin}/public/images/plugins/${option_plugin_resources_dir}" "${dist_root_dir}public/images/plugins/"
 # メールテンプレート
 rsync -arvz --delete "${src_root_dir}${option_plugin}/resources/views/mail_option/${option_plugin_resources_dir}" "${dist_root_dir}resources/views/mail_option/"
 # バリデーション
-rsync -arvz --delete "${src_root_dir}${option_plugin}/app/RulesOption/${option_plugin}" "${dist_root_dir}${option_plugin}/app/RulesOption/"
+rsync -arvz --delete "${src_root_dir}${option_plugin}/app/RulesOption/${option_plugin}" "${dist_root_dir}app/RulesOption/"
 # Composer Option
 cp -f "${src_root_dir}composer-option.json" "${dist_root_dir}"
 cp -f "${src_root_dir}composer-option.lock" "${dist_root_dir}"

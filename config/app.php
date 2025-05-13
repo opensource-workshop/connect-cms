@@ -175,6 +175,11 @@ $app_array = [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+
+        /*
+        * Connect-CMS Plugin Service Providers...
+        */
+        App\Plugins\User\Learningtasks\Providers\LearningtasksServiceProvider::class,
     ])->toArray(),
 
     /*
@@ -228,6 +233,7 @@ $app_array = [
         'RoleName' => \App\Enums\RoleName::class,
         'LearningtaskUserJoinFlag' => \App\Enums\LearningtaskUserJoinFlag::class,
         'LearningtasksExaminationColumn' => \App\Enums\LearningtasksExaminationColumn::class,
+        'LearningtaskImportType' => \App\Enums\LearningtaskImportType::class,
         'CounterDesignType' => \App\Enums\CounterDesignType::class,
         'BaseLoginRedirectPage' => \App\Enums\BaseLoginRedirectPage::class,
         'BlogFrameConfig' => \App\Enums\BlogFrameConfig::class,

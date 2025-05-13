@@ -7,8 +7,7 @@
  * @category 新着情報プラグイン
 --}}
 <script>
-    const app_{{ $frame->id }} = new Vue({
-        el: "#app_{{ $frame->id }}",
+    const app_{{ $frame->id }} = createApp({
         data: function() {
             return {
                 url: '{{ url('/') }}',
@@ -84,6 +83,15 @@
                     });
                 // offset値をカウントアップ
                 this.offset += this.limit;
+            },
+            /** 日付フォーマット */
+            cc_format_date(date_str, sep_y="/", sep_m="/", sep_d="") {
+                const date = new Date(date_str);
+                const yyyy = date.getFullYear();
+                const mm = ('00' + (date.getMonth()+1)).slice(-2);
+                const dd = ('00' + date.getDate()).slice(-2);
+
+                return `${yyyy}${sep_y}${mm}${sep_m}${dd}${sep_d}`;
             }
         },
         @if (FrameConfig::getConfigValue($frame_configs, WhatsnewFrameConfig::async) == UseType::use)
@@ -93,15 +101,5 @@
         },
 
         @endif
-    });
-
-    /** 日付フォーマット */
-    function cc_format_date(date_str, sep_y="/", sep_m="/", sep_d="") {
-        const date = new Date(date_str);
-        const yyyy = date.getFullYear();
-        const mm = ('00' + (date.getMonth()+1)).slice(-2);
-        const dd = ('00' + date.getDate()).slice(-2);
-
-        return `${yyyy}${sep_y}${mm}${sep_m}${dd}${sep_d}`;
-    }
+    }).mount('#app_{{ $frame->id }}');
 </script>
