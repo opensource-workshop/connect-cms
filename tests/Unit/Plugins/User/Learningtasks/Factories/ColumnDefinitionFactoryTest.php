@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Plugins\User\Learningtasks\Factories;
 
+use App\Enums\LearningtaskExportType;
 use App\Enums\LearningtaskImportType;
 use App\Enums\LearningtaskUseFunction;
 use App\Models\User\Learningtasks\LearningtasksPosts;
@@ -24,8 +25,8 @@ class ColumnDefinitionFactoryTest extends TestCase
     /** @var ColumnDefinitionFactory */
     private $factory;
 
-    /** @var LearningtasksPosts|MockInterface */
-    private $mock_post; // make() に渡すためのモック
+    /** @var LearningtaskSettingChecker|MockInterface */
+    private $mock_checker;
 
     /** 各テスト前に Factory を準備 */
     protected function setUp(): void
@@ -33,7 +34,7 @@ class ColumnDefinitionFactoryTest extends TestCase
         parent::setUp();
         $this->factory = new ColumnDefinitionFactory();
         // テストメソッド内で isEnabled の振る舞いを設定するため、基本的なモックだけ用意
-        $this->mock_post = Mockery::mock(LearningtasksPosts::class);
+        $this->mock_checker = Mockery::mock(LearningtaskSettingChecker::class);
     }
 
     /**
@@ -46,15 +47,13 @@ class ColumnDefinitionFactoryTest extends TestCase
     public function makeReturnsReportDefinitionForReportType(): void
     {
         // Arrange: SettingChecker の isEnabled が true を返すようにオーバーロードモックを設定
-        // 'overload:' をプレフィックスにつけると、今後 new される SettingChecker がモックになる
-        $mock_checker = Mockery::mock('overload:' . LearningtaskSettingChecker::class);
-        $mock_checker->shouldReceive('isEnabled')
+        $this->mock_checker->shouldReceive('isEnabled')
                      ->with(LearningtaskUseFunction::use_report_evaluate) // 正しい設定名を確認
                      ->once() // 1回呼ばれるはず
                      ->andReturn(true); // ★ 機能有効
 
         // Act: Factory の make メソッドを実行
-        $definition = $this->factory->make(LearningtaskImportType::report, $this->mock_post);
+        $definition = $this->factory->make(LearningtaskImportType::report, $this->mock_checker);
 
         // Assert: 正しいインスタンスが返ることを確認
         $this->assertInstanceOf(LearningtaskReportColumnDefinition::class, $definition);
@@ -72,8 +71,7 @@ class ColumnDefinitionFactoryTest extends TestCase
     public function makeThrowsFeatureDisabledExceptionWhenSettingDisabled(): void
     {
         // Arrange: SettingChecker の isEnabled が false を返すようにオーバーロードモックを設定
-        $mock_checker = Mockery::mock('overload:' . LearningtaskSettingChecker::class);
-        $mock_checker->shouldReceive('isEnabled')
+        $this->mock_checker->shouldReceive('isEnabled')
                     ->with(LearningtaskUseFunction::use_report_evaluate)
                     ->once()
                     ->andReturn(false); // ★ 機能無効
@@ -84,7 +82,7 @@ class ColumnDefinitionFactoryTest extends TestCase
          $this->expectExceptionMessageMatches('/レポート評価機能が有効になっていません。/');
 
          // Act: Factory の make メソッドを実行
-         $this->factory->make(LearningtaskImportType::report, $this->mock_post);
+         $this->factory->make(LearningtaskImportType::report, $this->mock_checker);
     }
 
 
@@ -99,14 +97,31 @@ class ColumnDefinitionFactoryTest extends TestCase
     {
         // Arrange
         $unknown_type = 'unknown_type_string';
-        $mock_checker = Mockery::mock('overload:' . LearningtaskSettingChecker::class);
 
         // Assert
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageMatches("/未知のカラム定義タイプ.*{$unknown_type}/");
 
         // Act
-        $this->factory->make($unknown_type, $this->mock_post);
+        $this->factory->make($unknown_type, $this->mock_checker);
+    }
+
+    /**
+     * "export report" タイプが指定された場合に LearningtaskReportColumnDefinition が返ることをテスト
+     * @test
+     * @covers ::make
+     * @group learningtasks
+     * @group learningtasks-factory
+     */
+    public function makeReturnsReportDefinitionForExportReportType(): void
+    {
+        // Act: Factory の make メソッドを実行
+        $definition = $this->factory->make(LearningtaskExportType::report, $this->mock_checker);
+
+        // Assert: 正しいインスタンスが返ることを確認
+        $this->assertInstanceOf(LearningtaskReportColumnDefinition::class, $definition);
+        $this->assertInstanceOf(ColumnDefinitionInterface::class, $definition);
+        // (任意) 返された Definition が内部にモックされた Checker を持っているかの確認も可能だが複雑になる
     }
 
     // 将来 'exam' タイプが追加された際のテストケース例
