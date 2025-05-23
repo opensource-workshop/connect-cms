@@ -1,12 +1,6 @@
 // resources/js/tinymce/plugins/cc_template/plugin.js
 
 tinymce.PluginManager.add('cc_template', function(editor, url) {
-    // アイコン定義 see) https://fontawesome.com/search?q=stamp&o=r ※svgコードそのままコピペでは表示されない為、widthとheightを指定
-    editor.ui.registry.addIcon(
-      'clone', 
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="24" height="24"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M312 201.8c0-17.4 9.2-33.2 19.9-47C344.5 138.5 352 118.1 352 96c0-53-43-96-96-96s-96 43-96 96c0 22.1 7.5 42.5 20.1 58.8c10.7 13.8 19.9 29.6 19.9 47c0 29.9-24.3 54.2-54.2 54.2L112 256C50.1 256 0 306.1 0 368c0 20.9 13.4 38.7 32 45.3L32 464c0 26.5 21.5 48 48 48l352 0c26.5 0 48-21.5 48-48l0-50.7c18.6-6.6 32-24.4 32-45.3c0-61.9-50.1-112-112-112l-33.8 0c-29.9 0-54.2-24.3-54.2-54.2zM416 416l0 32L96 448l0-32 320 0z"/></svg>'
-    );
-
     // （共通処理）プレビュー表示を更新
     function updateTemplatePreview(api, templates) {
       const selected_idx = api.getData().template_select;
@@ -25,7 +19,7 @@ tinymce.PluginManager.add('cc_template', function(editor, url) {
         preview.innerHTML = `
           <div>
             <div>${template.description || ''}</div>
-            <div>${template.content || ''}</div>
+            <div style="border: 1px solid; padding: 8px; margin-top: 4px; background-color: #f9f9f9;">${template.content || ''}</div>
           </div>
         `;
       }
@@ -33,7 +27,8 @@ tinymce.PluginManager.add('cc_template', function(editor, url) {
 
     // ウィジウィグエディタへカスタムプラグインのボタンを登録する
     editor.ui.registry.addButton('cc_template', {
-      icon: "clone",
+      // see) https://www.tiny.cloud/docs/tinymce/latest/editor-icon-identifiers/
+      icon: "template",
       tooltip: 'テンプレートの挿入',
       onAction: function () {
         // テンプレートの取得
