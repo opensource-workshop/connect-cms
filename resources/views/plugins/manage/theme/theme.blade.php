@@ -84,8 +84,7 @@
                <a href="javascript:view_css_edit('{{$dir['dir']}}');" id="css_edit_{{$loop->iteration}}">［CSS編集］</a>
                <a href="javascript:view_js_edit('{{$dir['dir']}}');" id="js_edit_{{$loop->iteration}}">［JavaScript編集］</a>
                <a href="javascript:view_list_images('{{$dir['dir']}}');" id="image_edit_{{$loop->iteration}}">［画像管理］</a>
-               {{-- delete: tinymce7対応. template はTinyMCE 7.xのオープンソース版から削除されてPremium版に移りました
-               <a href="javascript:view_template_edit('{{$dir['dir']}}');" id="template_edit_{{$loop->iteration}}">［テンプレート編集］</a> --}}
+               <a href="javascript:view_template_edit('{{$dir['dir']}}');" id="template_edit_{{$loop->iteration}}">［テンプレート編集］</a>
                <a href="javascript:view_name_edit('{{$dir['dir']}}');" id="name_edit_{{$loop->iteration}}">［テーマ編集］</a>
         </li>
     @endforeach

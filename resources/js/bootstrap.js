@@ -131,6 +131,7 @@ import './tinymce/plugins/file/plugin.js';
 import './tinymce/plugins/translate/plugin.js';
 import './tinymce/plugins/pdf/plugin.js';
 import './tinymce/plugins/face/plugin.js';
+import './tinymce/plugins/cc_template/plugin.js';
 
 /* content UI CSS is required */
 import 'tinymce/skins/ui/oxide/content.js';
