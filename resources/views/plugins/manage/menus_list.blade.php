@@ -94,9 +94,9 @@
         <div class="list-group-item bg-light">データ管理系</div>
         @if (Auth::user()->can('admin_site'))
             @if (isset($plugin_name) && $plugin_name == 'uploadfile')
-                <a href="{{url('/')}}/manage/uploadfile" class="list-group-item active">アップロードファイル</a>
+                <a href="{{url('/')}}/manage/uploadfile?page=1" class="list-group-item active">アップロードファイル</a>
             @else
-                <a href="{{url('/')}}/manage/uploadfile" class="list-group-item">アップロードファイル</a>
+                <a href="{{url('/')}}/manage/uploadfile?page=1" class="list-group-item">アップロードファイル</a>
             @endif
         @endif
         @if (Auth::user()->can('admin_site'))
