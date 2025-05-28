@@ -18,7 +18,7 @@
                 @if ($function == "index")
                     <span class="nav-link"><span class="active">ユーザ一覧</span></span>
                 @else
-                    <a href="{{url('/manage/user')}}" class="nav-link">ユーザ一覧</a></li>
+                    <a href="{{url('/manage/user?page=1')}}" class="nav-link">ユーザ一覧</a></li>
                 @endif
                 </li>
 

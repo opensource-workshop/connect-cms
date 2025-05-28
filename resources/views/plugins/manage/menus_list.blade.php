@@ -26,9 +26,9 @@
     @endif
     @if (Auth::user()->can('admin_user'))
         @if (isset($plugin_name) && $plugin_name == 'user')
-            <a href="{{url('/')}}/manage/user" class="list-group-item active">ユーザ管理</a>
+            <a href="{{url('/')}}/manage/user?page=1" class="list-group-item active">ユーザ管理</a>
         @else
-            <a href="{{url('/')}}/manage/user" class="list-group-item">ユーザ管理</a>
+            <a href="{{url('/')}}/manage/user?page=1" class="list-group-item">ユーザ管理</a>
         @endif
     @endif
     @if (Auth::user()->can('admin_user'))
