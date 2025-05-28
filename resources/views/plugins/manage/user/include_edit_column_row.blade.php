@@ -133,7 +133,7 @@ use App\Models\Core\UsersColumns;
             {{-- キャプションが設定されている場合、キャプションを表示する --}}
             <div class="small {{ $column->caption_color }}">
                 <i class="fas fa-pen" data-toggle="tooltip" title="キャプション"></i>
-                {!! mb_strimwidth($column->caption, 0, 60, '...', 'UTF-8') !!}
+                {{ mb_strimwidth($column->caption, 0, 60, '...', 'UTF-8') }}
             </div>
         @endif
 
@@ -141,7 +141,7 @@ use App\Models\Core\UsersColumns;
             {{-- プレースホルダが設定されている場合、プレースホルダを表示する --}}
             <div class="small">
                 <i class="fas fa-pen-square" data-toggle="tooltip" title="プレースホルダ"></i>
-                {!! mb_strimwidth($column->place_holder, 0, 60, '...', 'UTF-8') !!}
+                {{ mb_strimwidth($column->place_holder, 0, 60, '...', 'UTF-8') }}
             </div>
         @endif
 
@@ -149,7 +149,7 @@ use App\Models\Core\UsersColumns;
             {{-- 変数名を使用する場合、変数名を表示する --}}
             <div class="small">
                 <i class="fas fa-box" data-toggle="tooltip" title="変数名"></i>
-                {!! mb_strimwidth($column->variable_name, 0, 60, '...', 'UTF-8') !!}
+                {{ mb_strimwidth($column->variable_name, 0, 60, '...', 'UTF-8') }}
             </div>
         @endif
     </td>
