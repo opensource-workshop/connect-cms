@@ -1916,6 +1916,11 @@ class ReservationsPlugin extends UserPluginBase
                 ->orderBy('start_datetime', 'asc')
                 ->first();
 
+            // 親ID以外で一番若い日がいない（$input_earliest = null）場合、繰り返しも残っていないことになるので、何もしない。
+            if (is_null($input_earliest)) {
+                return;
+            }
+
             // 親ID更新
             ReservationsInput::where('id', '!=', $input_id)
                 ->where('inputs_parent_id', $input_id)
