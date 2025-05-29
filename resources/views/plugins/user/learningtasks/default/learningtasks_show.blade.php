@@ -52,9 +52,10 @@
         <div id="data-management-{{$frame_id}}" class="collapse p-2 bg-light border border-light rounded mb-3 {{ $errors->has('csv_file') ? 'show' : '' }}">
             {{-- CSV出力 --}}
             <div class="form-group row">
-                <label class="col-sm-3 text-sm-right">提出状況CSV</label>
+                <label class="col-sm-3 text-sm-right">レポート提出状況CSV</label>
                 <div class="col-sm-9">
-                    <form action="{{url('/')}}/download/plugin/learningtasks/downloadCsvReport/{{$page->id}}/{{$frame_id}}/{{$post->id}}" name="csv_export{{$frame_id}}" method="GET">
+                    <form action="{{url('/')}}/download/plugin/learningtasks/exportCsv/{{$page->id}}/{{$frame_id}}/{{$post->id}}" name="csv_export{{$frame_id}}" method="GET">
+                        <input type="hidden" name="export_type" value="{{LearningtaskExportType::report}}">
                         <input type="hidden" id="csv-export-character-code{{$frame_id}}" name="character_code" value="{{CsvCharacterCode::sjis_win}}">
                         <div class="btn-group">
                             <button type="button" class="btn btn-primary btn-sm" onclick="downloadCsvReportShiftJis{{$frame_id}}();">
