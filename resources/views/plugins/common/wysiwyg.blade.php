@@ -183,7 +183,7 @@
     // change: tinymce6対応. hr は coreに含まれたため除外
     // change: tinymce7対応. template は オープンソース版から削除のため除外
     // change: tinymce7対応. cc_template を追加
-    $plugins = 'file image media link autolink preview code table lists advlist cc_template ';
+    $plugins = 'file image media link autolink preview code table lists advlist cc_template cc_image_editor ';
     if (Configs::getConfigsValue($cc_configs, 'use_translate', UseType::not_use) == UseType::use) {
         $plugins .= ' translate';
     }
