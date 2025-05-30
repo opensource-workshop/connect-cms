@@ -5,7 +5,25 @@ tinymce.PluginManager.add('cc_image_editor', (editor, url) => {
     // Toast UI Editor を表示するコンテナ要素
     let tuiContainer = null;
 
-    const openToastUIEditorForSelectedImage = () => {
+    /**
+     * 画像のURLが有効か
+     * @param {string} url - チェックする画像のURL
+     * @returns {Promise<void>} - 成功時にresolve、失敗時にrejectするPromise
+     */
+    const checkImageExists = (url) => {
+        return new Promise((resolve, reject) => {
+            if (!url) { // URLが空やnullの場合は即座に失敗させる
+                reject(new Error('Image URL is empty.'));
+                return;
+            }
+            const img = new Image();
+            img.onload = () => resolve(); // 画像が正常に読み込めたら成功
+            img.onerror = () => reject(new Error(`Failed to load image at: ${url}`)); // 読み込みに失敗したらエラー
+            img.src = url;
+        });
+    };
+
+    const openToastUIEditorForSelectedImage = async () => {
         const selectedNode = editor.selection.getNode();
         if (!(selectedNode && selectedNode.nodeName === 'IMG')) {
             console.error('No image selected or selected node is not an image.');
@@ -13,7 +31,20 @@ tinymce.PluginManager.add('cc_image_editor', (editor, url) => {
         }
 
         const imageUrl = selectedNode.getAttribute('src');
-        const imageFileName = selectedNode.getAttribute('alt') || 'edited_image.png'; // ファイル名に拡張子を含めると良いでしょう
+        try {
+            await checkImageExists(imageUrl);
+        } catch (error) {
+            // 画像が存在しない、または読み込めない場合
+            console.error(error.message);
+            editor.notificationManager.open({
+                text: '画像が見つからないか、アクセスできません。',
+                type: 'error',
+                timeout: 5000
+            });
+            return; // ダイアログを開かずに処理を中断
+        }
+
+        const imageFileName = selectedNode.getAttribute('alt') || 'edited_image.png';
 
         // Toast UI Editor を表示するためのコンテナを準備
         const editorContainerId = 'tui-image-editor-container-modal';
