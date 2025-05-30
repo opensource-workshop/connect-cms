@@ -171,7 +171,7 @@ tinymce.PluginManager.add('cc_image_editor', (editor, url) => {
 
             // 画像をサーバーにアップロード
             try {
-                const uploadResponse = await fetch('/upload', {
+                const uploadResponse = await fetch(editor.getParam('document_base_url') + '/upload', {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': csrfToken,
