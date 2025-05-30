@@ -153,9 +153,17 @@ tinymce.PluginManager.add('cc_image_editor', (editor, url) => {
 
             // FormDataを作成して画像データを追加
             const formData = new FormData();
-            const fileName = selectedNode.getAttribute('alt') || `edited_image_${Date.now()}.png`;
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            const pageId = document.querySelector('meta[name="_page_id"]')?.getAttribute('content')
+            const pageId = document.querySelector('meta[name="_page_id"]')?.getAttribute('content');
+            // MIMEタイプから拡張子を決定 (例: 'image/png' -> 'png')
+            const mimeType = imageBlob.type || 'image/png'; // typeが空の場合のフォールバック
+            const extension = mimeType.split('/')[1] || 'png';
+            // alt属性からベースとなる名前を取得
+            let baseName = selectedNode.getAttribute('alt') || 'edited-image';
+            // 既存の拡張子らしきものがあれば取り除く (より安全に)
+            baseName = baseName.replace(/\.[^/.]+$/, "");
+            // ベース名と、MIMEタイプから取得した確実な拡張子でファイル名を生成
+            const fileName = `${baseName}.${extension}`;
             formData.append('image', imageBlob, fileName);
             formData.append('_token', csrfToken);
             formData.append('page_id', pageId);
