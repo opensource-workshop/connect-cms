@@ -171,6 +171,8 @@ class ReportCsvDataProvider implements CsvDataProviderInterface
             },
             '評価' => fn() => optional($last_evaluation)->grade,
             '評価コメント' => fn() => optional($last_evaluation)->comment,
+            '単語数' => fn() => optional($last_submission)->word_count,
+            '字数' => fn() => optional($last_submission)->char_count,
         ];
     }
 }

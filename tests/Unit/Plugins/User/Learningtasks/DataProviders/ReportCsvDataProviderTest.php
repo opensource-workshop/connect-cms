@@ -277,4 +277,57 @@ class ReportCsvDataProviderTest extends TestCase
         ];
         $this->assertEquals($expected_row_data, $result_rows_array[0], '提出/評価がない学生のデータが期待通りであること');
     }
+
+    /**
+     * 単語数・字数カラムが有効な場合に正しい値が出力されるテスト（カスタムアクセサ対応）
+     * @test
+     * @covers ::getRows
+     * @group learningtasks
+     * @group learningtasks-dataprovider
+     */
+    public function getRowsYieldsWordAndCharCountColumns(): void
+    {
+        // Arrange
+        $student = User::factory()->create(['userid' => 's003', 'name' => '学生 丙']);
+        $submission_comment = 'word テスト 123'; // 半角2単語+全角1単語+数字1単語 → str_word_count=3, mb_strlen=11
+        $submission_created_at_str = now()->subHour()->toDateTimeString();
+        $submission = LearningtasksUsersStatuses::factory()->create([
+            'post_id' => $this->post->id, 'user_id' => $student->id, 'task_status' => 1,
+            'comment' => $submission_comment, 'upload_id' => 888, 'created_at' => $submission_created_at_str,
+        ]);
+        // 評価データも追加（値は使わない）
+        LearningtasksUsersStatuses::factory()->create([
+            'post_id' => $this->post->id, 'user_id' => $student->id, 'task_status' => 2,
+            'grade' => '優', 'comment' => '評価コメント',
+        ]);
+
+        // ヘッダーに単語数・字数を含める
+        $headers = ['ログインID', 'ユーザ名', '提出日時', '提出回数', '単語数', '字数'];
+        $this->mock_column_definition->shouldReceive('getHeaders')->once()->andReturn($headers);
+        $this->mock_user_repository->shouldReceive('getStudents')
+            ->with($this->post, $this->page)
+            ->once()
+            ->andReturn(new EloquentCollection([$student]));
+
+        // Act
+        $result_iterable = $this->data_provider->getRows(
+            $this->mock_column_definition,
+            $this->post,
+            $this->page,
+            $this->site_url
+        );
+        $result_rows_array = iterator_to_array($result_iterable);
+
+        // Assert
+        $this->assertCount(1, $result_rows_array, '学生1名分のデータが yield されるべき');
+        $expected_row = [
+            $student->userid,
+            $student->name,
+            $submission_created_at_str,
+            '1', // 提出回数
+            str_word_count($submission_comment), // 単語数（PHPのstr_word_count仕様）
+            mb_strlen($submission_comment),      // 字数（全角・半角問わず）
+        ];
+        $this->assertEquals($expected_row, $result_rows_array[0], '単語数・字数カラムの値が正しく出力されること');
+    }
 }

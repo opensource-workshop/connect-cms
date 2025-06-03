@@ -192,4 +192,23 @@ class LearningtasksUsersStatuses extends Model
         // withDefault() を指定しておくことで、Uploads がないときに空のオブジェクトが返ってくるので、null po 防止。
         return $this->hasOne(Uploads::class, 'id', 'upload_id')->withDefault();
     }
+
+    /**
+     * 単語数を取得する
+     */
+    public function getWordCountAttribute()
+    {
+        // マルチバイト文字などは適切な値を取得できない
+        // 必要になれば形態素解析などを行う必要がある
+        return $this->comment ? str_word_count($this->comment) : 0;
+    }
+
+    /**
+     * 字数を取得する
+     * 文字数は、全角文字も半角文字も1文字としてカウントする。
+     */
+    public function getCharCountAttribute()
+    {
+        return $this->comment ? mb_strlen($this->comment) : 0;
+    }
 }

@@ -231,11 +231,20 @@
 
                 <div class="form-group row">
                     <label class="col-md-3 text-md-right">表示方法</label>
-                    <div class="col-md-9 d-md-flex">
-                        <div class="custom-control custom-checkbox mr-3">
+                    <div class="col-md-9">
+                        <div class="custom-control custom-checkbox custom-control-inline">
                             <input type="checkbox" name="post_settings[use_report_status_collapse]" value="on" class="custom-control-input" id="use_report_status_collapse" @if(old("post_settings.use_report_status_collapse", $tool->getFunction('use_report_status_collapse', true)) == 'on') checked=checked @endif>
                             <label class="custom-control-label" for="use_report_status_collapse">履歴を開閉する</label>
                         </div>
+                        <div class="custom-control custom-checkbox custom-control-inline">
+                            <input type="checkbox" name="post_settings[use_report_show_word_count]" value="on" class="custom-control-input" id="use_report_show_word_count" @if(old("post_settings.use_report_show_word_count", $tool->getFunction('use_report_show_word_count', true)) == 'on') checked=checked @endif>
+                            <label class="custom-control-label" for="use_report_show_word_count">単語数を表示する</label>
+                        </div>
+                        <div class="custom-control custom-checkbox custom-control-inline">
+                            <input type="checkbox" name="post_settings[use_report_show_char_count]" value="on" class="custom-control-input" id="use_report_show_char_count" @if(old("post_settings.use_report_show_char_count", $tool->getFunction('use_report_show_char_count', true)) == 'on') checked=checked @endif>
+                            <label class="custom-control-label" for="use_report_show_char_count">文字数を表示する</label>
+                        </div>
+                        <small class="form-text text-muted">単語数の表示は、日本語などのマルチバイト文字に対応していません。</small>
                     </div>
                 </div>
             </div>
