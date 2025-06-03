@@ -2,11 +2,10 @@
 
 namespace App\Rules;
 
-use Illuminate\Contracts\Validation\Rule;
-
-use Illuminate\Support\Collection;
-
 use App\Models\User\Reservations\ReservationsInput;
+use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Support\Collection;
+use Carbon\Carbon;
 
 /**
  * 施設予約重複チェック
@@ -33,6 +32,16 @@ class CustomValiDuplicateBookings implements Rule
 
         $this->start_datetime = $start_datetime;
         $this->end_datetime = $end_datetime;
+
+        // 終了日時を日付と時間に分割
+        [$end_date, $end_time] = explode(' ', $this->end_datetime);
+        if ($end_time == '24:00') {
+            // 予約重複できない設定＋2025-05-30 14:00-17:00予定あり時、2025-05-30 12:00-24:00の予約が重複登録できてしまう不具合対応。end_datatimeの'2025-05-30 24:00'は不正な値でチェックできないため、'2025-05-31 00:00'に変換する
+            $end_carbon = new Carbon($end_datetime);
+            $this->end_datetime = $end_carbon->format('Y-m-d H:i');
+        } else {
+            $this->end_datetime = $end_datetime;
+        }
 
         $this->message = $message;
     }

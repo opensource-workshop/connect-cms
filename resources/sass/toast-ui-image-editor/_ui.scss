@@ -1,0 +1,12 @@
+/* Custom styles for WYSIWYG Image Editor */
+#cc-tui-actual-editor {
+    /* Logoを非表示にする */
+    .tui-image-editor-header-logo {
+        display: none !important; /* !important が必要な場合もあります */
+    }
+
+    /* Download と Load ボタンを非表示にする */
+    .tui-image-editor-header-buttons {
+        display: none !important;
+    }
+}

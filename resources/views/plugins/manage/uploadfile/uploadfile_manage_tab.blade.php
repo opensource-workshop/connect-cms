@@ -17,7 +17,7 @@
                 @if ($function == "index")
                     <span class="nav-link"><span class="active">アップロードファイル一覧</span></span>
                 @else
-                    <a href="{{url('/manage/uploadfile')}}" class="nav-link">アップロードファイル一覧</a></li>
+                    <a href="{{url('/manage/uploadfile?page=1')}}" class="nav-link">アップロードファイル一覧</a></li>
                 @endif
                 </li>
                 <li role="presentation" class="nav-item">

@@ -143,6 +143,22 @@
         $advlist_number_lists_file = File::get($advlist_number_lists_default_path);
     }
 
+   // テーマ固有 簡易テンプレート
+    $templates_file = '';
+    $templates_path = public_path() . '/themes/' . $theme . '/wysiwyg/templates.txt';
+    $templates_group_default_path = public_path() . '/themes/' . $theme_group_default . '/wysiwyg/templates.txt';
+    $templates_default_path = public_path() . '/themes/Defaults/Default/wysiwyg/templates.txt';
+
+    if (File::exists($templates_path)) {
+        $templates_file = File::get($templates_path);
+    }
+    else if (File::exists($templates_group_default_path)) {
+        $templates_file = File::get($templates_group_default_path);
+    }
+    else if (File::exists($templates_default_path)) {
+        $templates_file = File::get($templates_default_path);
+    }
+
     // TinyMCE Body クラス
     $body_class = '';
     if ($frame->area_id == 0) {
@@ -166,7 +182,8 @@
     // change: tinymce6対応. imagetools は オープンソース版から削除のため除外
     // change: tinymce6対応. hr は coreに含まれたため除外
     // change: tinymce7対応. template は オープンソース版から削除のため除外
-    $plugins = 'file image media link autolink preview code table lists advlist ';
+    // change: tinymce7対応. cc_template を追加
+    $plugins = 'file image media link autolink preview code table lists advlist cc_template cc_image_editor ';
     if (Configs::getConfigsValue($cc_configs, 'use_translate', UseType::not_use) == UseType::use) {
         $plugins .= ' translate';
     }
@@ -189,6 +206,11 @@
     // toolbar
     $toolbar = "undo redo | bold italic underline strikethrough subscript superscript {$toolbar_fontsizeselect} | styles | forecolor backcolor | removeformat | table hr | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | link | image file media | preview | code";
     $mobile_toolbar = "undo redo | image file media | link | code | bold italic underline strikethrough subscript superscript {$toolbar_fontsizeselect} | styles | forecolor backcolor | removeformat | table hr | numlist bullist | blockquote | alignleft aligncenter alignright alignjustify | outdent indent | preview";
+    // 簡易テンプレート設定がない場合はボタン表示しない
+    if (!empty($templates_file)) {
+        $toolbar .= '| cc_template ';
+        $mobile_toolbar .= '| cc_template ';
+    }
     // いずれかの外部サービスONの場合、頭に区切り文字 | を追加する
     if (Configs::getConfigsValue($cc_configs, 'use_translate', UseType::not_use) == UseType::use || Configs::getConfigsValue($cc_configs, 'use_pdf_thumbnail')) {
         $toolbar .= ' | ';
@@ -241,7 +263,10 @@
 
 {{-- 登録時のリサイズ用 --}}
 <input type="text" class="d-none" id="cc-resized-image-size-{{$frame_id}}">
-
+{{-- テーマ固有 簡易テンプレート設定 --}}
+<script>
+    window.cc_templates = {{!!$templates_file!!}};
+</script>
 <script type="text/javascript">
     tinymce.init({
         @if(isset($target_class) && $target_class)
