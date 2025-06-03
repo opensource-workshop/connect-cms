@@ -279,7 +279,7 @@ class ReportCsvDataProviderTest extends TestCase
     }
 
     /**
-     * 単語数・字数カラムが有効な場合に正しい値が出力されるテスト（カスタムアクセサ対応）
+     * 単語数・字数カラムが有効な場合に正しい値が出力されるテスト
      * @test
      * @covers ::getRows
      * @group learningtasks
