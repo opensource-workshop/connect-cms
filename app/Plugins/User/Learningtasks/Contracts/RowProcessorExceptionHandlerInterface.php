@@ -23,7 +23,7 @@ interface RowProcessorExceptionHandlerInterface
     // 配列キーを示す定数
     public const KEY_OUTCOME = 'outcome';
     public const KEY_TYPE = 'type';
-    public const KEY_LOG_LEVEL = 'logLevel';
+    public const KEY_LOG_LEVEL = 'log_level';
 
     /**
      * 捕捉された例外を処理し、その結果（エラーかスキップか、詳細タイプ、ログレベル）を返す。
