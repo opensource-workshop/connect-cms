@@ -20,9 +20,8 @@ class DatabasesInputCols extends Model
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      * @phpcsSuppress
      */
-    public function databases_input()
+    public function databases_input() // phpcs:ignore
     {
         return $this->belongsTo(DatabasesInputs::class, 'databases_inputs_id');
     }
-
 }
