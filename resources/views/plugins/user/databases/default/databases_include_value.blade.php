@@ -85,7 +85,7 @@
     }
     // 更新日型
     elseif ($column->column_type == DatabaseColumnType::updated) {
-        $value = $input->updated_at;
+        $value = $input->last_col_updated_at;
     }
     // 表示件数型
     elseif ($column->column_type == DatabaseColumnType::views) {

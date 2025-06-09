@@ -1912,7 +1912,7 @@ class DatabasesPlugin extends UserPluginBase
             $value = $input->created_at;
         } elseif ($column->column_type == DatabaseColumnType::updated) {
             // 更新日型
-            $value = $input->updated_at;
+            $value = $input->last_col_updated_at;
         } elseif ($column->column_type == DatabaseColumnType::posted) {
             // 公開日型
             $value = $input->posted_at;
@@ -3139,7 +3139,7 @@ class DatabasesPlugin extends UserPluginBase
                                         select(
                                             'databases_input_cols.*',
                                             'databases_inputs.created_at as inputs_created_at',
-                                            'databases_inputs.updated_at as inputs_updated_at',
+                                            'databases_inputs.last_col_updated_at as inputs_updated_at',
                                             'databases_inputs.posted_at as inputs_posted_at',
                                             'databases_inputs.expires_at as inputs_expires_at',
                                             'databases_inputs.display_sequence as inputs_display_sequence',
