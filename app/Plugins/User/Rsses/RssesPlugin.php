@@ -125,6 +125,7 @@ class RssesPlugin extends UserPluginBase
         $rss = $this->getRsses($frame_id);
 
         $setting_error_messages = null;
+        $parse_errors = null;
         $rss_urls = new Collection();
         if ($rss) {
             $rss_urls = RssUrls::query()
@@ -156,12 +157,19 @@ class RssesPlugin extends UserPluginBase
                 }
                 // xmlレスポンスエラーの場合がある
                 if ($xml_response) {
-                    // Connect-CMS用にパース
-                    $xmlitems = $this->xmlParse($xml_response);
-                    // 出力数を調整
-                    $xmlitems = array_splice($xmlitems, 0, $urls->item_count);
-                    // 画面様に変数にセット
-                    $urls->items = $xmlitems;
+                    try {
+                        // Connect-CMS用にパース
+                        $xmlitems = $this->xmlParse($xml_response, $urls->url);
+                        // 出力数を調整
+                        $xmlitems = array_splice($xmlitems, 0, $urls->item_count);
+                        // 画面様に変数にセット
+                        $urls->items = $xmlitems;
+                    } catch (\Exception $e) {
+                        // パースエラー時はparse_errorsに格納
+                        $urls->items = [];
+                        $parse_errors['message'] = $e->getMessage();
+                        $parse_errors['url'][] = $urls->url;
+                    }
                 }
             }
 
@@ -183,7 +191,7 @@ class RssesPlugin extends UserPluginBase
         }
 
 
-        if (empty($setting_error_messages)) {
+        if (empty($setting_error_messages) && empty($parse_errors)) {
             // 表示テンプレートを呼び出す。
             return $this->view('rsses', [
                 'request' => $request,
@@ -197,6 +205,7 @@ class RssesPlugin extends UserPluginBase
             // エラーあり
             return $this->view('rsses_error_messages', [
                 'error_messages' => $setting_error_messages,
+                'parse_errors' => $parse_errors,
             ]);
         }
     }
@@ -251,7 +260,29 @@ class RssesPlugin extends UserPluginBase
     private function xmlParse($response)
     {
         // SimpleXMLを使用してXMLデータをオブジェクトに変換
-        $xml = simplexml_load_string($response);
+        libxml_use_internal_errors(true);
+        try {
+            $xml = simplexml_load_string($response);
+            if ($xml === false) {
+                $error_message = "simplexml_load_string error: ";
+                foreach (libxml_get_errors() as $error) {
+                    $error_message .= $error->message . " ";
+                }
+                throw new \Exception(trim($error_message));
+            }
+        } catch (\Exception $e) {
+            // 管理権限があるか判定
+            $is_admin = Auth::check() && Auth::user()->can('role_article_admin');
+            $display_message = $is_admin
+                ? 'RSSフィードの取得に失敗しました。URLが正しいか、またはフィードが有効であるかご確認ください。'
+                : 'RSSフィードの読み込みに失敗しました。しばらくしてから再度お試しください。';
+            // ログ出力
+            Log::error($e->getMessage());
+            // 画面用に例外を投げる
+            throw new \Exception($display_message);
+        } finally {
+            libxml_clear_errors();
+        }
 
         // フィードのバージョンに応じてアイテムを取得
         if (isset($xml->channel->item)) {
