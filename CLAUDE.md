@@ -114,3 +114,22 @@ npm run watch
    - Pull Requestを作成（`feature/task-name` → `master`）
    - レビュー・承認後にマージ
    - featureブランチを削除
+
+### Pull Requestルール
+PRを作成する際は以下のルールに従ってください：
+
+**タイトル形式**: `[Plugin/Area] 具体的な変更内容の説明`
+- 例: `[キャビネット] ZIPファイルを解凍してアップロードする機能を追加しました`
+- プラグイン名やエリア名を角括弧で明記
+- ですます調で記述
+- リリースノートに使用されるため、ユーザーが理解しやすい説明にする
+
+**PRテンプレート**: `.github/PULL_REQUEST_TEMPLATE.md` に従って作成
+- 概要: 変更の背景・目的・内容
+- レビュー完了希望日
+- 関連PR/Issues
+- 参考情報
+- DB変更の有無
+- チェックリスト
+
+詳細: https://github.com/opensource-workshop/connect-cms/wiki/Pull-requests-Rule
