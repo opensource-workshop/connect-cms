@@ -133,3 +133,31 @@ PRを作成する際は以下のルールに従ってください：
 - チェックリスト
 
 詳細: https://github.com/opensource-workshop/connect-cms/wiki/Pull-requests-Rule
+
+## 記録すべき内容
+
+- 現在のプロジェクトの状態や、今後の開発で注意すべき点を随時メモする
+- 特に、複雑な実装や重要な設計判断の背景を記録する
+- **プラグイン固有の知識**: 各プラグインの実装パターンや特殊な仕様は積極的に記録し、今後の開発効率化に活用する
+
+## 効率的な開発のためのベストプラクティス
+
+### 検索とファイル読み込み
+- 複数回にわたる検索が必要な場合は、Taskツールを使用してトークン消費を削減
+- 複数ファイルの同時読み込みには、並行してReadツールを実行
+- 特定のファイルパスが分かっている場合は、GrepやGlobよりもReadツールを直接使用
+
+### コード共通化
+- 重複するコードパターンを発見した場合は、DRY原則に従って共通テンプレートやヘルパー関数を作成
+- 特にビューファイルでは、includeを活用した部分テンプレート化を推奨
+
+### フォームプラグイン固有の知識
+- フォームモードは `form`（通常）と `questionnaire`（アンケート）の2種類
+- アンケートモードでは `index_tandem.blade.php` と `forms_confirm_tandem.blade.php` を使用
+- Captcha機能は `mews/captcha` ライブラリを使用、APIエンドポイント: `/captcha/api/flat`
+- 共通エラー表示は `@include('plugins.common.errors_inline', ['name' => 'field_name'])` を使用
+
+## 注意点
+
+- git comment や PR本文にはclaudeで生成した内容の文章は残さない
+- git commentにはprefixを付ける

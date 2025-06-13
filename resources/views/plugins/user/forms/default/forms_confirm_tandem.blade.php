@@ -35,6 +35,9 @@
 <form action="" name="forms_store{{$frame_id}}" method="POST">
     {{ csrf_field() }}
     <input type="hidden" name="redirect_path" value="">
+    
+    {{-- Captcha隠しフィールド --}}
+    @include('plugins.user.forms.default.forms_captcha_hidden')
 
     @php $no = 1; @endphp
     @foreach($forms_columns as $form_column)
