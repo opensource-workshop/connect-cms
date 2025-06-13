@@ -100,3 +100,17 @@ npm run watch
 - 新機能には対応するテストを作成
 - Feature テストとUnit テストを適切に使い分け
 - テストデータベースは `db-testing` データベースを使用
+
+## ブランチ戦略
+
+### GitHub Flow
+このプロジェクトではGitHub Flowを採用しています：
+
+1. **mainブランチ**: 常にデプロイ可能な状態を保つ
+2. **featureブランチ**: 新機能や修正は `feature/` プレフィックスで分岐
+3. **ワークフロー**:
+   - `master` から `feature/task-name` ブランチを作成
+   - 開発・テスト・コミット
+   - Pull Requestを作成（`feature/task-name` → `master`）
+   - レビュー・承認後にマージ
+   - featureブランチを削除
