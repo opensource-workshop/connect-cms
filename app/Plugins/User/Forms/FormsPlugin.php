@@ -815,6 +815,12 @@ class FormsPlugin extends UserPluginBase
             }
         }
 
+        // フォーム送信時Captcha認証の場合、Captchaバリデーションを追加
+        if ($form->access_limit_type == FormAccessLimitType::captcha_form_submit) {
+            $validator_array['column']['captcha'] = ['required', 'captcha'];
+            $validator_array['message']['captcha'] = '画像認証';
+        }
+
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $validator_array['column']);
         $validator->setAttributeNames($validator_array['message']);
@@ -901,6 +907,19 @@ class FormsPlugin extends UserPluginBase
     {
         // Forms、Frame データ
         $form = $this->getForms($frame_id);
+
+        // フォーム送信時Captcha認証の場合、Captcha検証
+        if ($form->access_limit_type == FormAccessLimitType::captcha_form_submit) {
+            $validator = Validator::make($request->all(), [
+                'captcha' => ['required', 'captcha'],
+            ]);
+            $validator->setAttributeNames([
+                'captcha' => '画像認証',
+            ]);
+            if ($validator->fails()) {
+                return redirect()->back()->withErrors($validator)->withInput();
+            }
+        }
 
         // 表示期間外か
         if ($this->isOutOfTermDisplay($form)) {
