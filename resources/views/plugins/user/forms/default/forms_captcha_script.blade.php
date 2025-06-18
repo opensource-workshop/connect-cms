@@ -9,30 +9,25 @@
 @if ($form->access_limit_type == App\Enums\FormAccessLimitType::captcha_form_submit)
 <script>
 function refreshCaptcha() {
-    // mews/captchaライブラリのAPIエンドポイントから新しい画像URLを取得
-    fetch('/captcha/api/flat?' + Math.random())
-        .then(response => response.json())
-        .then(data => {
-            // 新しい画像URLで更新
-            const captchaImg = document.querySelector('#captcha-{{$frame_id}}').parentElement.querySelector('img');
-            if (captchaImg && data.img) {
-                captchaImg.src = data.img;
-            }
-        })
-        .catch(error => {
-            console.error('Captcha refresh failed:', error);
-            // フォールバック: 通常のエンドポイントで画像を取得
-            const captchaImg = document.querySelector('#captcha-{{$frame_id}}').parentElement.querySelector('img');
-            if (captchaImg) {
-                captchaImg.src = '/captcha/flat?' + Math.random();
-            }
-        });
-    
     // 入力フィールドをクリア
     const captchaInput = document.getElementById('captcha-{{$frame_id}}');
     if (captchaInput) {
         captchaInput.value = '';
-        captchaInput.focus();
+    }
+
+    // 新しいCaptcha画像を取得
+    const captchaImg = document.querySelector('#captcha-{{$frame_id}}').parentElement.querySelector('img');
+    if (captchaImg) {
+        // キャッシュバスターを使用して新しい画像を取得
+        const newSrc = '{{url('/')}}/captcha/flat?' + Date.now();
+        captchaImg.src = newSrc;
+
+        // 画像読み込み完了後にフォーカス
+        captchaImg.onload = function() {
+            if (captchaInput) {
+                captchaInput.focus();
+            }
+        };
     }
 }
 </script>

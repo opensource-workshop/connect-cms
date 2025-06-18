@@ -18,7 +18,7 @@
         @else
             <label class="col-sm-2 control-label" for="captcha-{{$frame_id}}">画像認証 <strong class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</strong></label>
         @endif
-        
+
         @if (isset($is_tandem_template))
             <div class="col-12">
         @else
@@ -30,7 +30,7 @@
                     <i class="fas fa-sync-alt"></i>
                 </button>
             </div>
-            <input type="text" id="captcha-{{$frame_id}}" name="captcha" class="form-control @if($errors && $errors->has('captcha')) is-invalid @endif" placeholder="画像に表示されている文字を入力してください" autocomplete="off" value="{{ old('captcha') }}">
+            <input type="text" id="captcha-{{$frame_id}}" name="captcha" class="form-control @if($errors && $errors->has('captcha')) is-invalid @endif" placeholder="画像に表示されている文字を入力してください" autocomplete="off" value="">
             @include('plugins.common.errors_inline', ['name' => 'captcha'])
             <div class="small text-muted mt-1">
                 <i class="fas fa-info-circle"></i>

@@ -129,8 +129,5 @@
         </div>
     </fieldset>
 </form>
-@endsection
-
-@section('plugin_contents_footer')
 @include('plugins.user.forms.default.forms_captcha_script')
 @endsection
