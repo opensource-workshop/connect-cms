@@ -699,6 +699,7 @@ class ReservationManage extends ManagePluginBase
         DB::beginTransaction();
         try {
             foreach ($request->column_ids_order as $key => $column_id) {
+                // より安全に更新するため、columns_set_idも指定して取得
                 $column = ReservationsColumn::where('columns_set_id', $request->columns_set_id)->where('id', $column_id)->first();
                 if ($column) {
                     // display_sequenceを1から順に全項目を振り直し
