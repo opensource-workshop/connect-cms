@@ -2159,8 +2159,11 @@ class FormsPlugin extends UserPluginBase
     {
         DB::beginTransaction();
         try {
+            // まとめて取得
+            $columns = FormsColumns::whereIn('id', $request->column_ids_order)->get();
+
             foreach ($request->column_ids_order as $key => $column_id) {
-                $column = FormsColumns::where('id', $column_id)->first();
+                $column = $columns->firstWhere('id', $column_id);
                 if ($column) {
                     // display_sequenceを1から順に全項目を振り直し
                     $column->display_sequence = $key + 1;
@@ -2417,8 +2420,11 @@ class FormsPlugin extends UserPluginBase
     {
         DB::beginTransaction();
         try {
+            // まとめて取得
+            $selects = FormsColumnsSelects::whereIn('id', $request->select_ids_order)->get();
+
             foreach ($request->select_ids_order as $key => $select_id) {
-                $select = FormsColumnsSelects::where('id', $select_id)->first();
+                $select = $selects->firstWhere('id', $select_id);
                 if ($select) {
                     // display_sequenceを1から順に全選択肢を振り直し
                     $select->display_sequence = $key + 1;
