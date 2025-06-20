@@ -2786,9 +2786,11 @@ class UserManage extends ManagePluginBase
     {
         DB::beginTransaction();
         try {
+            // より安全に更新するため、columns_set_idも指定して、まとめて取得
+            $columns = UsersColumns::where('columns_set_id', $request->columns_set_id)->whereIn('id', $request->column_ids_order)->get();
+
             foreach ($request->column_ids_order as $key => $column_id) {
-                // より安全に更新するため、columns_set_idも指定して取得
-                $column = UsersColumns::where('columns_set_id', $request->columns_set_id)->where('id', $column_id)->first();
+                $column = $columns->firstWhere('id', $column_id);
                 if ($column) {
                     // display_sequenceを1から順に全項目を振り直し
                     $column->display_sequence = $key + 1;
@@ -3063,9 +3065,11 @@ class UserManage extends ManagePluginBase
     {
         DB::beginTransaction();
         try {
+            // より安全に更新するため、columns_set_idも指定して、まとめて取得
+            $selects = UsersColumnsSelects::where('columns_set_id', $request->columns_set_id)->whereIn('id', $request->select_ids_order)->get();
+
             foreach ($request->select_ids_order as $key => $select_id) {
-                // より安全に更新するため、columns_set_idも指定して取得
-                $select = UsersColumnsSelects::where('columns_set_id', $request->columns_set_id)->where('id', $select_id)->first();
+                $select = $selects->firstWhere('id', $select_id);
                 if ($select) {
                     // display_sequenceを1から順に全選択肢を振り直し
                     $select->display_sequence = $key + 1;
@@ -3247,13 +3251,15 @@ class UserManage extends ManagePluginBase
     {
         DB::beginTransaction();
         try {
+            // まとめて取得
+            $sections = Section::whereIn('id', $request->section_ids_order)->get();
+
             foreach ($request->section_ids_order as $key => $section_id) {
-                // より安全に更新するため、columns_set_idも指定して取得
-                $select = Section::where('id', $section_id)->first();
-                if ($select) {
+                $section = $sections->firstWhere('id', $section_id);
+                if ($section) {
                     // display_sequenceを1から順に全組織を振り直し
-                    $select->display_sequence = $key + 1;
-                    $select->save();
+                    $section->display_sequence = $key + 1;
+                    $section->save();
                 }
             }
 
