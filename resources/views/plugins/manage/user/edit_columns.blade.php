@@ -93,11 +93,13 @@
             <div class="table-responsive">
 
                 {{-- 項目の一覧 --}}
-                <table class="table table-hover table-sm">
+                <table class="table table-hover table-sm" id="sortable-columns">
                     <thead class="thead-light">
                         <tr>
                             @if (count($columns) > 0)
-                                <th class="text-center" nowrap>表示順</th>
+                                <th class="text-center text-nowrap">
+                                    表示順 <a class="fas fa-info-circle" data-toggle="tooltip" data-html="true" title="<i class='fa-solid fa-grip-vertical'></i> をつまんで移動(ドラック＆ドロップ)すると表示順を変更できます。"></a>
+                                </th>
                                 <th class="text-center" style="min-width: 150px" nowrap>項目名</th>
                                 <th class="text-center" nowrap>型</th>
                                 <th class="text-center" nowrap>必須</th>
@@ -107,19 +109,34 @@
                             @endif
                         </tr>
                     </thead>
-                    <tbody>
-                        {{-- 更新用の行 --}}
-                        @foreach($columns as $column)
+                    {{-- 更新用の行 --}}
+                    @foreach($columns as $column)
+                        <tbody>
                             @include('plugins.manage.user.include_edit_column_row')
-                        @endforeach
+                        </tbody>
+                    @endforeach
+                    <tfoot>
                         {{-- 新規登録用の行 --}}
                         <tr class="thead-light">
                             <th colspan="7">【項目の追加行】</th>
                         </tr>
                         @include('plugins.manage.user.include_edit_column_row_add')
-                    </tbody>
+                    </tfoot>
                 </table>
             </div>
+
+            <script>
+                // ドラック＆ドロップで表示順変更
+                let el = document.getElementById('sortable-columns');
+                new Sortable(el, {
+                    handle: '.sortable-handle',
+                    animation: 150,
+                    onUpdate: function (evt) {
+                        form_columns.action = "{{url('/')}}/manage/user/updateColumnSequenceAll";
+                        form_columns.submit();
+                    },
+                });
+            </script>
 
             {{-- ボタンエリア --}}
             <div class="text-center">
