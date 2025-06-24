@@ -98,6 +98,7 @@
             @if ($form->numbering_use_flag)
                 <th nowrap>採番</th>
             @endif
+            <th nowrap>登録ユーザ</th>
             <th nowrap>登録日時</th>
         </tr>
     </thead>
@@ -141,6 +142,10 @@
                     {{$input->number_with_prefix}}
                 </td>
             @endif
+
+            <td nowrap>
+                {{$input->created_name}}
+            </td>
 
             <td nowrap>
                 {{$input->created_at}}
