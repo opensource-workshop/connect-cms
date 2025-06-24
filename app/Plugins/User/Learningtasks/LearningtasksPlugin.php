@@ -37,16 +37,20 @@ use App\Plugins\User\UserPluginBase;
 use App\Utilities\Csv\CsvUtils;
 use App\Utilities\String\StringUtils;
 use App\Enums\CsvCharacterCode;
+use App\Enums\LearningtaskExportType;
 use App\Enums\LearningtaskImportType;
 use App\Enums\LearningtasksExaminationColumn;
 use App\Enums\LearningtaskUseFunction;
 use App\Enums\RoleName;
+use App\Plugins\User\Learningtasks\Csv\LearningtasksCsvExporter;
 use App\Plugins\User\Learningtasks\Csv\LearningtasksCsvImporter;
 use App\Plugins\User\Learningtasks\Exceptions\FeatureDisabledException;
 use App\Plugins\User\Learningtasks\Factories\ColumnDefinitionFactory;
+use App\Plugins\User\Learningtasks\Factories\CsvDataProviderFactory;
 use App\Plugins\User\Learningtasks\Factories\ExceptionHandlerFactory;
 use App\Plugins\User\Learningtasks\Factories\RowProcessorFactory;
 use App\Plugins\User\Learningtasks\Repositories\LearningtaskUserRepository;
+use App\Plugins\User\Learningtasks\Services\LearningtaskSettingChecker;
 use App\Rules\CustomValiWysiwygMax;
 use Exception;
 use Illuminate\Http\Request;
@@ -109,7 +113,7 @@ class LearningtasksPlugin extends UserPluginBase
             'listGrade',
             'switchUserUrl',
             'importExaminations',
-            'downloadCsvReport',
+            'exportCsv',
         ];
         $functions['post'] = [
             'saveMail',
@@ -180,7 +184,7 @@ class LearningtasksPlugin extends UserPluginBase
         $role_check_table["changeStatus6"]    = array('role_guest');
         $role_check_table["changeStatus7"]    = array('role_guest');
         $role_check_table["changeStatus8"]    = array('role_guest');
-        $role_check_table["downloadCsvReport"] = array('role_article_admin', 'role_guest');
+        $role_check_table["exportCsv"] = array('role_guest');
         $role_check_table["importCsv"] = array('role_guest');
         return $role_check_table;
     }
@@ -3617,24 +3621,65 @@ class LearningtasksPlugin extends UserPluginBase
     }
 
     /**
-    * レポートの提出・評価をCSV形式でダウンロード
-    */
-    public function downloadCsvReport($request, $page_id, $frame_id, $post_id)
+     * CSVエクスポート処理
+     */
+    public function exportCsv($request, $page_id, $frame_id, $post_id)
     {
-        $learning_post = $this->getPost($post_id);
-        if (empty($learning_post->id)) {
-            return $this->viewError("404_inframe", null, 'post_idがありません。');
+        // モデル取得
+        $page = $this->page;
+        // SettingChecker や DataProvider がリレーションを使う可能性を考慮し Eager Load
+        $post = LearningtasksPosts::with(['learningtask', 'post_settings'])->findOrFail($post_id);
+
+        // バリデーション (文字コードのみ)
+        $validated = $request->validate([
+            'export_type' => ['required', Rule::in(LearningtaskExportType::getMemberKeys())],
+            'character_code' => ['required', Rule::in(CsvCharacterCode::getMemberKeys())],
+        ]);
+        $character_code = $validated['character_code'];
+        $export_type = $validated['export_type'];
+
+        try {
+            // 依存性を解決/生成 (Factory利用)
+            $user_repository = app(LearningtaskUserRepository::class);
+            $column_definition_factory = app(ColumnDefinitionFactory::class);
+            $data_provider_factory = app(CsvDataProviderFactory::class);
+            $setting_checker = new LearningtaskSettingChecker($post);
+
+            // Factory を使って ColumnDefinition と DataProvider を取得
+            // ColumnDefinitionFactory が内部で SettingChecker を使う
+            $column_definition = $column_definition_factory->make($export_type, $setting_checker);
+            $data_provider = $data_provider_factory->make($export_type);
+            // Exporter 生成 (汎用 Exporter を使用)
+            $exporter = new LearningtasksCsvExporter(
+                $post,
+                $page,
+                $column_definition,
+                $data_provider,
+                $user_repository
+            );
+        } catch (InvalidArgumentException $e) {
+            // Factory で未知のタイプが指定された場合など
+            Log::warning("CSV Export - Invalid argument for factory: " . $e->getMessage());
+            return back()->with('error', '無効なエクスポートタイプが指定されたか、処理の準備に失敗しました。');
+        } catch (Exception $e) {
+            Log::error("CSV Export - Service instantiation failed for post ID {$post->id}: " . $e->getMessage());
+            return back()->with('error', 'エクスポート処理の準備に失敗しました。');
         }
 
-        $exporter = new LearningtasksReportCsvExporter($learning_post->id, $page_id);
-
-        // 教員か管理者のみダウンロード可能
+        // 権限チェック
         if (!$exporter->canExport(Auth::user())) {
-            return $this->viewError("403_inframe", null, 'CSVエクスポートの権限がありません。');
+            Log::error("CSV Export - Permission check failed for post ID {$post->id} by user ID " . Auth::id());
+            abort(403, 'CSVファイルをエクスポートする権限がありません。');
         }
 
-        // CSV出力
-        return $exporter->export(url('/'), $request->character_code);
+        // エクスポート実行
+        try {
+            $site_url = url('/');
+            return $exporter->export($site_url, $character_code);
+        } catch (Exception $e) {
+            Log::error("CSV Export - Export process failed for post ID {$post->id}: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return back()->with('error', 'CSVエクスポート処理中にエラーが発生しました。');
+        }
     }
 
     /**
@@ -3672,7 +3717,8 @@ class LearningtasksPlugin extends UserPluginBase
             $column_definition_factory = app(ColumnDefinitionFactory::class);
             $row_processor_factory = app(RowProcessorFactory::class);
             $exception_handler_factory = app(ExceptionHandlerFactory::class);
-            $column_definition = $column_definition_factory->make($import_type, $post);
+            $setting_checker = new LearningtaskSettingChecker($post);
+            $column_definition = $column_definition_factory->make($import_type, $setting_checker);
             $row_processor = $row_processor_factory->make($import_type);
             $exception_handler = $exception_handler_factory->make($import_type);
             $importer = new LearningtasksCsvImporter($post, $page, $column_definition, $row_processor, $user_repository, $exception_handler);

@@ -96,6 +96,7 @@ class UserManage extends ManagePluginBase
         $role_check_table["addColumn"]             = ['admin_site'];
         $role_check_table["updateColumn"]          = ['admin_site'];
         $role_check_table["updateColumnSequence"]  = ['admin_site'];
+        $role_check_table["updateColumnSequenceAll"]  = ['admin_site'];
         $role_check_table["deleteColumn"]          = ['admin_site'];
         // 項目詳細設定
         $role_check_table["editColumnDetail"]      = ['admin_site'];
@@ -103,11 +104,13 @@ class UserManage extends ManagePluginBase
         $role_check_table["addSelect"]             = ['admin_site'];
         $role_check_table["updateSelect"]          = ['admin_site'];
         $role_check_table["updateSelectSequence"]  = ['admin_site'];
+        $role_check_table["updateSelectSequenceAll"]  = ['admin_site'];
         $role_check_table["updateAgree"]           = ['admin_site'];
         $role_check_table["deleteSelect"]          = ['admin_site'];
         $role_check_table["addSection"]            = ['admin_site'];
         $role_check_table["updateSection"]         = ['admin_site'];
         $role_check_table["updateSectionSequence"] = ['admin_site'];
+        $role_check_table["updateSectionSequenceAll"] = ['admin_site'];
         $role_check_table["deleteSection"]         = ['admin_site'];
 
         return $role_check_table;
@@ -2777,6 +2780,37 @@ class UserManage extends ManagePluginBase
     }
 
     /**
+     * つまんで移動した項目の表示順を更新
+     */
+    public function updateColumnSequenceAll($request, $page_id, $frame_id)
+    {
+        DB::beginTransaction();
+        try {
+            // より安全に更新するため、columns_set_idも指定して、まとめて取得
+            $columns = UsersColumns::where('columns_set_id', $request->columns_set_id)->whereIn('id', $request->column_ids_order)->get();
+
+            foreach ($request->column_ids_order as $key => $column_id) {
+                $column = $columns->firstWhere('id', $column_id);
+                if ($column) {
+                    // display_sequenceを1から順に全項目を振り直し
+                    $column->display_sequence = $key + 1;
+                    $column->save();
+                }
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+
+        $message = '項目の表示順を更新しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/user/editColumns/" . $request->columns_set_id)->with('flash_message', $message);
+    }
+
+    /**
      * 項目の削除
      */
     public function deleteColumn($request, $id)
@@ -2999,10 +3033,10 @@ class UserManage extends ManagePluginBase
      */
     public function updateSelectSequence($request, $id)
     {
-        // ボタンが押された行の施設データ
+        // ボタンが押された行の選択肢データ
         $target_select = UsersColumnsSelects::where('id', $request->select_id)->first();
 
-        // ボタンが押された前（後）の施設データ
+        // ボタンが押された前（後）の選択肢データ
         $query = UsersColumnsSelects::where('users_columns_id', $request->column_id)->where('columns_set_id', $request->columns_set_id);
         $pair_select = $request->display_sequence_operation == 'up' ?
             $query->where('display_sequence', '<', $request->display_sequence)->orderby('display_sequence', 'desc')->limit(1)->first() :
@@ -3019,6 +3053,37 @@ class UserManage extends ManagePluginBase
         $pair_select->save();
 
         $message = '選択肢【 '. $target_select->select_name .' 】の表示順を更新しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/user/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
+    }
+
+    /**
+     * つまんで移動した選択肢の表示順を更新
+     */
+    public function updateSelectSequenceAll($request, $page_id, $frame_id)
+    {
+        DB::beginTransaction();
+        try {
+            // より安全に更新するため、columns_set_idも指定して、まとめて取得
+            $selects = UsersColumnsSelects::where('columns_set_id', $request->columns_set_id)->whereIn('id', $request->select_ids_order)->get();
+
+            foreach ($request->select_ids_order as $key => $select_id) {
+                $select = $selects->firstWhere('id', $select_id);
+                if ($select) {
+                    // display_sequenceを1から順に全選択肢を振り直し
+                    $select->display_sequence = $key + 1;
+                    $select->save();
+                }
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+
+        $message = '選択肢の表示順を更新しました。';
 
         // 編集画面を呼び出す
         return redirect("/manage/user/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
@@ -3154,10 +3219,10 @@ class UserManage extends ManagePluginBase
      */
     public function updateSectionSequence($request, $id)
     {
-        // ボタンが押された行の施設データ
+        // ボタンが押された行の組織データ
         $target_section = Section::where('id', $request->section_id)->first();
 
-        // ボタンが押された前（後）の施設データ
+        // ボタンが押された前（後）の組織データ
         $query = Section::query();
         $pair_section = $request->display_sequence_operation == 'up' ?
             $query->where('display_sequence', '<', $request->display_sequence)->orderby('display_sequence', 'desc')->limit(1)->first() :
@@ -3174,6 +3239,37 @@ class UserManage extends ManagePluginBase
         $pair_section->save();
 
         $message = '組織【 '. $target_section->section_name .' 】の表示順を更新しました。';
+
+        // 編集画面を呼び出す
+        return redirect("/manage/user/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
+    }
+
+    /**
+     * つまんで移動した組織の表示順を更新
+     */
+    public function updateSectionSequenceAll($request, $page_id, $frame_id)
+    {
+        DB::beginTransaction();
+        try {
+            // まとめて取得
+            $sections = Section::whereIn('id', $request->section_ids_order)->get();
+
+            foreach ($request->section_ids_order as $key => $section_id) {
+                $section = $sections->firstWhere('id', $section_id);
+                if ($section) {
+                    // display_sequenceを1から順に全組織を振り直し
+                    $section->display_sequence = $key + 1;
+                    $section->save();
+                }
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+
+        $message = '組織の表示順を更新しました。';
 
         // 編集画面を呼び出す
         return redirect("/manage/user/editColumnDetail/" . $request->column_id)->with('flash_message', $message);

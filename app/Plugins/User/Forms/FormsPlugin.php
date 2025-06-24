@@ -2159,8 +2159,11 @@ class FormsPlugin extends UserPluginBase
     {
         DB::beginTransaction();
         try {
+            // まとめて取得
+            $columns = FormsColumns::whereIn('id', $request->column_ids_order)->get();
+
             foreach ($request->column_ids_order as $key => $column_id) {
-                $column = FormsColumns::where('id', $column_id)->first();
+                $column = $columns->firstWhere('id', $column_id);
                 if ($column) {
                     // display_sequenceを1から順に全項目を振り直し
                     $column->display_sequence = $key + 1;
@@ -2417,8 +2420,11 @@ class FormsPlugin extends UserPluginBase
     {
         DB::beginTransaction();
         try {
+            // まとめて取得
+            $selects = FormsColumnsSelects::whereIn('id', $request->select_ids_order)->get();
+
             foreach ($request->select_ids_order as $key => $select_id) {
-                $select = FormsColumnsSelects::where('id', $select_id)->first();
+                $select = $selects->firstWhere('id', $select_id);
                 if ($select) {
                     // display_sequenceを1から順に全選択肢を振り直し
                     $select->display_sequence = $key + 1;
@@ -2506,6 +2512,7 @@ class FormsPlugin extends UserPluginBase
                     'forms_inputs.status as inputs_status',
                     'forms_inputs.number_with_prefix as number_with_prefix',
                     'forms_inputs.created_at as inputs_created_at',
+                    'forms_inputs.created_name as inputs_created_name',
                     'forms_input_cols.*'
                 )
                 ->leftjoin('forms_input_cols', 'forms_inputs.id', '=', 'forms_input_cols.forms_inputs_id')
@@ -2569,6 +2576,8 @@ ORDER BY forms_inputs_id, forms_columns_id
             $copy_base['number_with_prefix'] = '';
         }
         // 見出し行-行末（固定項目）
+        $csv_array[0]['created_name'] = '登録ユーザ';
+        $copy_base['created_name'] = '';
         $csv_array[0]['created_at'] = '登録日時';
         $copy_base['created_at'] = '';
 
@@ -2584,6 +2593,7 @@ ORDER BY forms_inputs_id, forms_columns_id
                     // 採番項目
                     $csv_array[$input_col->inputs_id]['number_with_prefix'] = $input_col->number_with_prefix;
                 }
+                $csv_array[$input_col->inputs_id]['created_name'] = $input_col->inputs_created_name;
                 $csv_array[$input_col->inputs_id]['created_at'] = $input_col->inputs_created_at;
             }
             $csv_array[$input_col->inputs_id][$input_col->forms_columns_id] = $input_col->value;

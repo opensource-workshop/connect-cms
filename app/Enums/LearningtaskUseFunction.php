@@ -43,6 +43,8 @@ final class LearningtaskUseFunction extends EnumsBase
     const use_report_reference_mail = 'use_'.self::report.'_reference_mail';
     // [表示方法]
     const use_report_status_collapse = 'use_'.self::report.'_status_collapse';
+    const use_report_show_word_count = 'use_'.self::report.'_show_word_count';
+    const use_report_show_char_count = 'use_'.self::report.'_show_char_count';
 
     // --- 試験設定
     // [利用する試験提出機能]
@@ -110,6 +112,8 @@ final class LearningtaskUseFunction extends EnumsBase
         self::use_report_reference_mail => 'メール送信（受講者宛）',
         // 表示方法
         self::use_report_status_collapse => '履歴を開閉する',
+        self::use_report_show_word_count => '文字数を表示する',
+        self::use_report_show_char_count => '字数を表示する',
         // --- 試験設定
         // 利用する試験提出機能
         self::use_examination => '提出',

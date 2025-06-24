@@ -28,6 +28,8 @@ class LearningtaskReportColumnDefinition implements ColumnDefinitionInterface //
         'ファイルURL' => 'file_url',
         '評価' => 'grade',
         '評価コメント' => 'comment',
+        '単語数' => 'word_count',
+        '字数' => 'char_count',
     ];
 
     /**
@@ -57,6 +59,12 @@ class LearningtaskReportColumnDefinition implements ColumnDefinitionInterface //
         $header_columns = ['ログインID', 'ユーザ名', '提出日時', '提出回数'];
         if ($this->setting_checker->isEnabled(LearningtaskUseFunction::use_report_comment)) {
             $header_columns[] = '本文';
+        }
+        if ($this->setting_checker->isEnabled(LearningtaskUseFunction::use_report_show_word_count)) {
+            $header_columns[] = '単語数';
+        }
+        if ($this->setting_checker->isEnabled(LearningtaskUseFunction::use_report_show_char_count)) {
+            $header_columns[] = '字数';
         }
         if ($this->setting_checker->isEnabled(LearningtaskUseFunction::use_report_file)) {
             $header_columns[] = 'ファイルURL';

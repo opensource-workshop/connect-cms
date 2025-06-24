@@ -31,7 +31,28 @@
             @if ($tool->isUseFunction($user_status->task_status, 'comment'))
             <tr>
                 <th>コメント</th>
-                <td>{!!nl2br(e($user_status->comment))!!}</td>
+                <td>{!!nl2br(e($user_status->comment))!!}
+                {{-- 文字数、単語数の表示 --}}
+                @php
+                    $should_show_word_count = $tool->isUseFunction($user_status->task_status, 'show_word_count');
+                    $should_show_char_count = $tool->isUseFunction($user_status->task_status, 'show_char_count');
+                    $word_count = $user_status->word_count;
+                    $char_count = $user_status->char_count;
+                @endphp
+                @if ($should_show_word_count || $should_show_char_count)
+                    <div><small class="text-muted">
+                        @if ($should_show_word_count)
+                            {{ $word_count }}単語
+                        @endif
+                        @if ($should_show_word_count && $should_show_char_count)
+                            /
+                        @endif
+                        @if ($should_show_char_count)
+                            {{ $char_count }}文字
+                        @endif
+                    </small></div>
+                @endif
+                </td>
             </tr>
         @endif
     </tbody>

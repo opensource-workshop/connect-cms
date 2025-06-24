@@ -30,6 +30,7 @@ class DatabasesInputs extends Model
         'first_committed_at',
         'categories_id',
         'views',
+        'last_col_updated_at',
         'created_at',
         'updated_at'
     ];

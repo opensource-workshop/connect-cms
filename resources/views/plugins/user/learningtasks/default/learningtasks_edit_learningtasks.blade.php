@@ -340,11 +340,20 @@
 
         <div class="form-group row mb-0">
             <label class="{{$frame->getSettingLabelClass()}}">表示方法</label>
-            <div class="{{$frame->getSettingInputClass(true)}}">
-                <div class="custom-control custom-checkbox mr-3">
+            <div class="{{$frame->getSettingInputClass()}}">
+                <div class="custom-control custom-checkbox custom-control-inline">
                     <input type="checkbox" name="base_settings[use_report_status_collapse]" value="on" class="custom-control-input" id="use_report_status_collapse" @if(old("base_settings.use_report_status_collapse", $tool->getFunction('use_report_status_collapse')) == 'on') checked=checked @endif>
                     <label class="custom-control-label" for="use_report_status_collapse">履歴を開閉する</label>
                 </div>
+                <div class="custom-control custom-checkbox custom-control-inline">
+                    <input type="checkbox" name="base_settings[use_report_show_word_count]" value="on" class="custom-control-input" id="use_report_show_word_count" @if(old("base_settings.use_report_show_word_count", $tool->getFunction('use_report_show_word_count')) == 'on') checked=checked @endif>
+                    <label class="custom-control-label" for="use_report_show_word_count">単語数を表示する</label>
+                </div>
+                <div class="custom-control custom-checkbox custom-control-inline">
+                    <input type="checkbox" name="base_settings[use_report_show_char_count]" value="on" class="custom-control-input" id="use_report_show_char_count" @if(old("base_settings.use_report_show_char_count", $tool->getFunction('use_report_show_char_count')) == 'on') checked=checked @endif>
+                    <label class="custom-control-label" for="use_report_show_char_count">文字数を表示する</label>
+                </div>
+                <small class="form-text text-muted">単語数の表示は、日本語などのマルチバイト文字に対応していません。</small>
             </div>
         </div>
 

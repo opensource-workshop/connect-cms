@@ -1912,7 +1912,7 @@ class DatabasesPlugin extends UserPluginBase
             $value = $input->created_at;
         } elseif ($column->column_type == DatabaseColumnType::updated) {
             // 更新日型
-            $value = $input->updated_at;
+            $value = $input->last_col_updated_at;
         } elseif ($column->column_type == DatabaseColumnType::posted) {
             // 公開日型
             $value = $input->posted_at;
@@ -2636,8 +2636,11 @@ class DatabasesPlugin extends UserPluginBase
     {
         DB::beginTransaction();
         try {
+            // まとめて取得
+            $columns = DatabasesColumns::whereIn('id', $request->column_ids_order)->get();
+
             foreach ($request->column_ids_order as $key => $column_id) {
-                $column = DatabasesColumns::where('id', $column_id)->first();
+                $column = $columns->firstWhere('id', $column_id);
                 if ($column) {
                     // display_sequenceを1から順に全項目を振り直し
                     $column->display_sequence = $key + 1;
@@ -3012,8 +3015,11 @@ class DatabasesPlugin extends UserPluginBase
     {
         DB::beginTransaction();
         try {
+            // まとめて取得
+            $selects = DatabasesColumnsSelects::whereIn('id', $request->select_ids_order)->get();
+
             foreach ($request->select_ids_order as $key => $select_id) {
-                $select = DatabasesColumnsSelects::where('id', $select_id)->first();
+                $select = $selects->firstWhere('id', $select_id);
                 if ($select) {
                     // display_sequenceを1から順に全選択肢を振り直し
                     $select->display_sequence = $key + 1;
@@ -3139,7 +3145,7 @@ class DatabasesPlugin extends UserPluginBase
                                         select(
                                             'databases_input_cols.*',
                                             'databases_inputs.created_at as inputs_created_at',
-                                            'databases_inputs.updated_at as inputs_updated_at',
+                                            'databases_inputs.last_col_updated_at as inputs_updated_at',
                                             'databases_inputs.posted_at as inputs_posted_at',
                                             'databases_inputs.expires_at as inputs_expires_at',
                                             'databases_inputs.display_sequence as inputs_display_sequence',
