@@ -833,7 +833,7 @@ trait MigrationNc3ExportTrait
 
                 // （多言語対応）マッピングテーブルの追加 ※noteカラムに言語情報をJSON形式で追加
                 $language_id = $nc3_sort_page->language_id ?? 2; // デフォルト日本語
-                $language_mapping = MigrationMapping::updateOrCreate(
+                MigrationMapping::updateOrCreate(
                     ['target_source_table' => 'source_pages_lang', 'source_key' => $nc3_sort_page->id . '_' . $language_id],
                     ['target_source_table' => 'source_pages_lang',
                      'source_key'          => $nc3_sort_page->id . '_' . $language_id,
