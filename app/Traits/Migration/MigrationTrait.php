@@ -2120,12 +2120,14 @@ trait MigrationTrait
         // ルームのトップページID未設定はスキップ
         $room_page_id_top = $group_ini['source_info']['room_page_id_top'] ?? null;
         if (empty($room_page_id_top)) {
+            Log::warning('ルームのトップページIDが設定されていません。', ['group_id' => $group->id, 'role_name' => $role_name]);
             return;
         }
 
         // ページ情報がHITしない場合はスキップ
         $source_page = MigrationMapping::where('target_source_table', 'source_pages')->where('source_key', $room_page_id_top)->first();
         if (empty($source_page)) {
+            Log::warning('ルームのトップページ情報が見つかりません。', ['room_page_id_top' => $room_page_id_top, 'group_id' => $group->id, 'role_name' => $role_name]);
             return;
         }
 
