@@ -279,6 +279,7 @@
             'player.vimeo.com',
             'dailymotion.com',
             'embed.music.apple.com',
+            'google.com',
             'open.spotify.com',
             'giphy.com',
             'dai.ly',
