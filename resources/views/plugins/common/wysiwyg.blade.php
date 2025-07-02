@@ -269,6 +269,21 @@
 </script>
 <script type="text/javascript">
     tinymce.init({
+        // see) https://www.tiny.cloud/docs/tinymce/latest/content-filtering/#sandbox-iframes-exclusions
+        sandbox_iframes: true,
+        // ホワイトリストにはTinyMCEのデフォルト値を設定
+        sandbox_iframes_exclusions: [
+            'youtube.com',
+            'youtu.be',
+            'vimeo.com',
+            'player.vimeo.com',
+            'dailymotion.com',
+            'embed.music.apple.com',
+            'open.spotify.com',
+            'giphy.com',
+            'dai.ly',
+            'codepen.io'
+        ],
         @if(isset($target_class) && $target_class)
             selector : 'textarea.{{$target_class}}',
         @else
