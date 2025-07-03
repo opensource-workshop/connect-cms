@@ -106,6 +106,14 @@
                     @endif
                 </li>
 
+                <li role="presentation" class="nav-item">
+                    @if ($function == "forceLogout")
+                        <span class="nav-link"><span class="active">強制ログアウト</span></span>
+                    @else
+                        <a href="{{url('/manage/user/forceLogout')}}" class="nav-link">強制ログアウト</a></li>
+                    @endif
+                </li>
+
             </ul>
         </div>
     </nav>

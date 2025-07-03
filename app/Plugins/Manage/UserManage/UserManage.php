@@ -84,6 +84,8 @@ class UserManage extends ManagePluginBase
         $role_check_table["loginHistory"]          = ['admin_user'];
         $role_check_table["mail"]                  = ['admin_user'];
         $role_check_table["mailSend"]              = ['admin_user'];
+        $role_check_table["forceLogout"]           = ['admin_user'];
+        $role_check_table["forceLogoutSubmit"]     = ['admin_user'];
         // 項目セット
         $role_check_table["columnSets"]            = ['admin_site'];
         $role_check_table["registColumnSet"]       = ['admin_site'];
@@ -3289,5 +3291,35 @@ class UserManage extends ManagePluginBase
 
         // 編集画面を呼び出す
         return redirect("/manage/user/editColumnDetail/" . $request->column_id)->with('flash_message', $message);
+    }
+
+    /**
+     * 強制ログアウト
+     *
+     * @method_title 強制ログアウト
+     * @method_desc 自分以外の全ユーザを強制ログアウトさせます。
+     * @method_detail ログイン済みのユーザは次回の画面遷移時にログアウトさせられ、ログイン画面に誘導されます。
+     */
+    public function forceLogout($request, $id = null)
+    {
+        // 画面の表示
+        return view('plugins.manage.user.force_logout', [
+            "function" => __FUNCTION__,
+        ]);
+    }
+
+    /**
+     * 強制ログアウトのデータ更新処理
+     *
+     * 自分以外のusersテーブルのis_force_logoutを1に更新する。
+     * 各ユーザは次のアクションでmiddlewareが動作し、ログインしていてis_force_logoutが 1 の場合は強制ログアウトする。
+     */
+    public function forceLogoutSubmit($request, $id = null)
+    {
+        // ユーザデータの更新
+        User::where('id', '!=', Auth::user()->id)->update(['is_force_logout' => 1]);
+
+        // 更新後は強制ログアウトを呼ぶ。
+        return redirect()->back()->with('flash_message', '強制ログアウトを設定しました。<br />全ユーザ、次回の画面操作でログアウトされ、ログイン画面に誘導されます。');
     }
 }
