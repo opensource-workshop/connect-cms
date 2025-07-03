@@ -95,7 +95,18 @@ class LoginController extends Controller
 
             try {
                 // 以下はもともとのAuthenticatesUsers@login 処理
-                return $this->laravelLogin($request);
+                // return $this->laravelLogin($request);
+
+                // ログインが成功したら、一旦戻り値を保持しておき、強制ログアウトフラグをクリアする。
+                $login_return = $this->laravelLogin($request);
+                if (Auth::check() && Auth::user()->is_force_logout) {
+                    // 強制ログアウトフラグを処理済みの 0 に戻す
+                    $user = Auth::user();
+                    $user->is_force_logout = 0;
+                    $user->save();
+                }
+                return $login_return;
+
             } catch (ValidationException $e) {
                 // ログインエラーの場合、NetCommons2 からの移行ユーザとして再度認証する。
                 $redirectNc2 = $this->authNetCommons2Password($request);
@@ -141,7 +152,18 @@ class LoginController extends Controller
                 // 通常ログインも使用する
                 try {
                     // 以下はもともとのAuthenticatesUsers@login 処理
-                    return $this->laravelLogin($request);
+                    // return $this->laravelLogin($request);
+
+                    // ログインが成功したら、一旦戻り値を保持しておき、強制ログアウトフラグをクリアする。
+                    $login_return = $this->laravelLogin($request);
+                    if (Auth::check() && Auth::user()->is_force_logout) {
+                        // 強制ログアウトフラグを処理済みの 0 に戻す
+                        $user = Auth::user();
+                        $user->is_force_logout = 0;
+                        $user->save();
+                    }
+                    return $login_return;
+
                 } catch (ValidationException $e) {
                     // ログインエラーの場合、NetCommons2 からの移行ユーザとして再度認証する。
                     $redirectNc2 = $this->authNetCommons2Password($request);
