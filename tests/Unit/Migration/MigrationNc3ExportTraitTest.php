@@ -2,11 +2,22 @@
 
 namespace Tests\Unit\Migration;
 
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use App\Console\Commands\Migration\ExportNc3;
+use App\Models\Migration\MigrationMapping;
+use Illuminate\Support\Facades\Artisan;
 
+/**
+ * MigrationNc3ExportTraitのテスト
+ *
+ * @package Tests\Unit\Migration
+ */
 class MigrationNc3ExportTraitTest extends TestCase
 {
+    use DatabaseTransactions;
+
     /**
      * @var ExportNc3
      */
@@ -22,6 +33,12 @@ class MigrationNc3ExportTraitTest extends TestCase
      */
     protected function setUp(): void
     {
+        $this->refreshApplication();
+        if (! RefreshDatabaseState::$migrated) {
+            Artisan::call('migrate:fresh');
+            RefreshDatabaseState::$migrated = true;
+        }
+
         parent::setUp();
         $this->controller = new ExportNc3();
         $this->reflection = new \ReflectionClass($this->controller);
