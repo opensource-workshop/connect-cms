@@ -3328,7 +3328,7 @@ class UserManage extends ManagePluginBase
             })
             ->update(['is_force_logout' => 1]);
 
-        Log::info('Force logout executed by admin user ID: ' . Auth::user()->id);
+        Log::info('Force logout registered by admin user ID: ' . Auth::user()->id);
 
         // 更新後は強制ログアウトを呼ぶ。
         return redirect()->back()->with('flash_message', '強制ログアウトを設定しました。<br />対象ユーザは、次回の画面操作でログアウトされ、ログイン画面に誘導されます。');
