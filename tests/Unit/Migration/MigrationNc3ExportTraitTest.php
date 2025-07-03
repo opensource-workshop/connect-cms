@@ -457,4 +457,320 @@ class MigrationNc3ExportTraitTest extends TestCase
         $result = $method->invokeArgs($this->controller, ['blogs', 'ommit_block_ids', 1]);
         $this->assertFalse($result, 'キーが存在しない場合にfalseが返されない');
     }
+
+    /**
+     * privateメソッドのchangePageSequenceのテスト
+     *
+     * @return void
+     */
+    public function testChangePageSequence()
+    {
+        $method = $this->getPrivateMethod('changePageSequence');
+
+        // 必要なプロパティを設定
+        $migration_config_property = $this->getPrivateProperty('migration_config');
+        $migration_base_property = $this->getPrivateProperty('migration_base');
+        $import_base_property = $this->getPrivateProperty('import_base');
+
+        $migration_base_property->setValue($this->controller, 'migration/');
+        $import_base_property->setValue($this->controller, '');
+
+        // テストケース1: 設定が空の場合（何も実行されない）
+        $migration_config_property->setValue($this->controller, []);
+        
+        // Storage::moveがコールされないことを確認するため、例外が発生しないことを確認
+        try {
+            $method->invokeArgs($this->controller, []);
+            $this->assertTrue(true, '設定が空の場合に例外が発生しない');
+        } catch (\Exception $e) {
+            $this->fail('設定が空の場合に例外が発生した: ' . $e->getMessage());
+        }
+
+        // テストケース2: 設定にnc3_export_change_pageがない場合
+        $migration_config_property->setValue($this->controller, [
+            'pages' => [
+                'other_setting' => 'value'
+            ]
+        ]);
+        
+        try {
+            $method->invokeArgs($this->controller, []);
+            $this->assertTrue(true, 'nc3_export_change_pageがない場合に例外が発生しない');
+        } catch (\Exception $e) {
+            $this->fail('nc3_export_change_pageがない場合に例外が発生した: ' . $e->getMessage());
+        }
+
+        // テストケース3: nc3_export_change_pageが空の場合
+        $migration_config_property->setValue($this->controller, [
+            'pages' => [
+                'nc3_export_change_page' => []
+            ]
+        ]);
+        
+        try {
+            $method->invokeArgs($this->controller, []);
+            $this->assertTrue(true, 'nc3_export_change_pageが空の場合に例外が発生しない');
+        } catch (\Exception $e) {
+            $this->fail('nc3_export_change_pageが空の場合に例外が発生した: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * privateメソッドのchangePageSequenceのパターンテスト
+     *
+     * @return void
+     */
+    public function testChangePageSequencePattern()
+    {
+        $patterns = [
+            '設定なし' => [
+                'migration_config' => [],
+                'expected_exception' => false,
+                'description' => '設定が空の場合は何も実行されない'
+            ],
+            'pagesセクションなし' => [
+                'migration_config' => [
+                    'other_section' => ['key' => 'value']
+                ],
+                'expected_exception' => false,
+                'description' => 'pagesセクションがない場合は何も実行されない'
+            ],
+            'nc3_export_change_pageキーなし' => [
+                'migration_config' => [
+                    'pages' => [
+                        'other_key' => 'value'
+                    ]
+                ],
+                'expected_exception' => false,
+                'description' => 'nc3_export_change_pageキーがない場合は何も実行されない'
+            ],
+            'nc3_export_change_page空配列' => [
+                'migration_config' => [
+                    'pages' => [
+                        'nc3_export_change_page' => []
+                    ]
+                ],
+                'expected_exception' => false,
+                'description' => 'nc3_export_change_pageが空配列の場合は何も実行されない'
+            ]
+        ];
+
+        foreach ($patterns as $key => $pattern) {
+            [$controller, $reflection] = $this->createNewController();
+            $method = $reflection->getMethod('changePageSequence');
+            $method->setAccessible(true);
+
+            // プライベートプロパティをセット
+            $migration_config_property = $reflection->getProperty('migration_config');
+            $migration_config_property->setAccessible(true);
+            $migration_config_property->setValue($controller, $pattern['migration_config']);
+
+            $migration_base_property = $reflection->getProperty('migration_base');
+            $migration_base_property->setAccessible(true);
+            $migration_base_property->setValue($controller, 'migration/');
+
+            $import_base_property = $reflection->getProperty('import_base');
+            $import_base_property->setAccessible(true);
+            $import_base_property->setValue($controller, '');
+
+            // メソッド実行
+            try {
+                $method->invokeArgs($controller, []);
+                if ($pattern['expected_exception']) {
+                    $this->fail("{$key}: {$pattern['description']} - 例外が発生する予定だった");
+                } else {
+                    $this->assertTrue(true, "{$key}: {$pattern['description']} - 正常に実行された");
+                }
+            } catch (\Exception $e) {
+                if ($pattern['expected_exception']) {
+                    $this->assertTrue(true, "{$key}: {$pattern['description']} - 期待通り例外が発生した");
+                } else {
+                    $this->fail("{$key}: {$pattern['description']} - 予期しない例外が発生した: " . $e->getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * データを使用したchangePageSequenceのテスト
+     * MigrationMappingが存在しない場合のテスト
+     *
+     * @return void
+     */
+    public function testChangePageSequenceWithMockData()
+    {
+        // テスト設定
+        $method = $this->getPrivateMethod('changePageSequence');
+        $migration_config_property = $this->getPrivateProperty('migration_config');
+        $migration_base_property = $this->getPrivateProperty('migration_base');
+        $import_base_property = $this->getPrivateProperty('import_base');
+
+        $migration_config_property->setValue($this->controller, [
+            'pages' => [
+                'nc3_export_change_page' => [
+                    '999' => '998'  // 存在しないpage_idを指定
+                ]
+            ]
+        ]);
+        
+        $migration_base_property->setValue($this->controller, 'migration/');
+        $import_base_property->setValue($this->controller, '');
+
+        // Storage::moveがMockされていない場合、実際のファイルシステムアクセスでエラーになる可能性があるが、
+        // MigrationMappingが見つからないため、Storage::moveは実行されない
+        try {
+            $method->invokeArgs($this->controller, []);
+            $this->assertTrue(true, 'MigrationMappingが存在しない場合は正常に実行される');
+        } catch (\Exception $e) {
+            $this->fail('予期しない例外が発生した: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * MigrationMappingデータを実際に作成してテストする
+     *
+     * @return void
+     */
+    public function testChangePageSequenceWithPartialMappingData()
+    {
+        // テスト用のMigrationMappingデータを作成
+        MigrationMapping::create([
+            'target_source_table' => 'source_pages',
+            'source_key' => '1',
+            'destination_key' => 'test_page_1'
+        ]);
+        
+        // テスト設定
+        $method = $this->getPrivateMethod('changePageSequence');
+        $migration_config_property = $this->getPrivateProperty('migration_config');
+        $migration_base_property = $this->getPrivateProperty('migration_base');
+        $import_base_property = $this->getPrivateProperty('import_base');
+
+        $migration_config_property->setValue($this->controller, [
+            'pages' => [
+                'nc3_export_change_page' => [
+                    '1' => '999'  // source_keyは存在するが、destination_keyは存在しない
+                ]
+            ]
+        ]);
+        
+        $migration_base_property->setValue($this->controller, 'migration/');
+        $import_base_property->setValue($this->controller, '');
+
+        // Storage::moveがMockされていない場合はファイルシステムエラーになる可能性があるが、
+        // destination_pageが見つからないため、Storage::moveは実行されない
+        try {
+            $method->invokeArgs($this->controller, []);
+            $this->assertTrue(true, 'MigrationMappingが部分的に存在しない場合は正常に実行される');
+        } catch (\Exception $e) {
+            $this->fail('予期しない例外が発生した: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * 複数のページ入れ替え設定のテスト
+     *
+     * @return void
+     */
+    public function testChangePageSequenceWithMultiplePages()
+    {
+        // テスト設定
+        $method = $this->getPrivateMethod('changePageSequence');
+        $migration_config_property = $this->getPrivateProperty('migration_config');
+        $migration_base_property = $this->getPrivateProperty('migration_base');
+        $import_base_property = $this->getPrivateProperty('import_base');
+
+        $migration_config_property->setValue($this->controller, [
+            'pages' => [
+                'nc3_export_change_page' => [
+                    '1' => '2',  // 1番目のページペア（存在しない）
+                    '3' => '4'   // 2番目のページペア（存在しない）
+                ]
+            ]
+        ]);
+        
+        $migration_base_property->setValue($this->controller, 'migration/');
+        $import_base_property->setValue($this->controller, '');
+
+        // MigrationMappingが存在しないため、Storage::moveは実行されない
+        try {
+            $method->invokeArgs($this->controller, []);
+            $this->assertTrue(true, '複数のページ設定でMigrationMappingが存在しない場合は正常に実行される');
+        } catch (\Exception $e) {
+            $this->fail('予期しない例外が発生した: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * import_baseの設定テスト
+     *
+     * @return void
+     */
+    public function testChangePageSequenceWithImportBase()
+    {
+        // テスト設定
+        $method = $this->getPrivateMethod('changePageSequence');
+        $migration_config_property = $this->getPrivateProperty('migration_config');
+        $migration_base_property = $this->getPrivateProperty('migration_base');
+        $import_base_property = $this->getPrivateProperty('import_base');
+
+        $migration_config_property->setValue($this->controller, [
+            'pages' => [
+                'nc3_export_change_page' => [
+                    '1' => '2'
+                ]
+            ]
+        ]);
+        
+        $migration_base_property->setValue($this->controller, 'test_migration/');
+        $import_base_property->setValue($this->controller, 'custom_base/');
+
+        // MigrationMappingが存在しないため、Storage::moveは実行されない
+        try {
+            $method->invokeArgs($this->controller, []);
+            $this->assertTrue(true, 'import_base設定でMigrationMappingが存在しない場合は正常に実行される');
+        } catch (\Exception $e) {
+            $this->fail('予期しない例外が発生した: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * getMigrationConfigメソッドの動作確認テスト
+     *
+     * @return void
+     */
+    public function testChangePageSequenceConfigAccess()
+    {
+        // getMigrationConfigメソッドのテスト
+        $getMigrationConfigMethod = $this->getPrivateMethod('getMigrationConfig');
+        $migration_config_property = $this->getPrivateProperty('migration_config');
+
+        // テスト設定データ
+        $testConfig = [
+            'pages' => [
+                'nc3_export_change_page' => [
+                    '10' => '20',
+                    '30' => '40'
+                ],
+                'other_setting' => 'test_value'
+            ],
+            'other_section' => [
+                'some_key' => 'some_value'
+            ]
+        ];
+
+        $migration_config_property->setValue($this->controller, $testConfig);
+
+        // nc3_export_change_pageの取得テスト
+        $result = $getMigrationConfigMethod->invokeArgs($this->controller, ['pages', 'nc3_export_change_page']);
+        $this->assertEquals(['10' => '20', '30' => '40'], $result, 'nc3_export_change_page設定が正しく取得できない');
+
+        // 存在しないキーのテスト
+        $result = $getMigrationConfigMethod->invokeArgs($this->controller, ['pages', 'non_existent_key']);
+        $this->assertFalse($result, '存在しないキーでfalseが返されない');
+
+        // デフォルト値のテスト
+        $result = $getMigrationConfigMethod->invokeArgs($this->controller, ['pages', 'non_existent_key', 'default_value']);
+        $this->assertEquals('default_value', $result, 'デフォルト値が正しく返されない');
+    }
 }
