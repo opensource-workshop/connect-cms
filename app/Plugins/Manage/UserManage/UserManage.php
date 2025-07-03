@@ -33,6 +33,7 @@ use App\Utilities\String\StringUtils;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -3316,10 +3317,20 @@ class UserManage extends ManagePluginBase
      */
     public function forceLogoutSubmit($request, $id = null)
     {
-        // ユーザデータの更新
-        User::where('id', '!=', Auth::user()->id)->update(['is_force_logout' => 1]);
+        // ユーザデータの更新（自分以外かつadmin_userロールを持たないユーザーのみ）
+        User::where('id', '!=', Auth::user()->id)
+            ->whereNotExists(function ($query) {
+                $query->select('id')
+                      ->from('users_roles')
+                      ->whereRaw('users_roles.users_id = users.id')
+                      ->where('role_name', 'admin_user')
+                      ->where('role_value', 1);
+            })
+            ->update(['is_force_logout' => 1]);
+
+        Log::info('Force logout executed by admin user ID: ' . Auth::user()->id);
 
         // 更新後は強制ログアウトを呼ぶ。
-        return redirect()->back()->with('flash_message', '強制ログアウトを設定しました。<br />全ユーザ、次回の画面操作でログアウトされ、ログイン画面に誘導されます。');
+        return redirect()->back()->with('flash_message', '強制ログアウトを設定しました。<br />対象ユーザは、次回の画面操作でログアウトされ、ログイン画面に誘導されます。');
     }
 }

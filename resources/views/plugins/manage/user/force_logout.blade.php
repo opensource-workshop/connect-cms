@@ -20,7 +20,7 @@
 
     <div class="card border-danger">
         <div class="card-body">
-            <span class="text-danger">強制ログアウトを設定します。<br />全ユーザ、次回の画面操作でログアウトされ、ログイン画面に誘導されます。</span>
+            <span class="text-danger">強制ログアウトを設定します。<br />全ユーザ、次回の画面操作でログアウトされ、ログイン画面に誘導されます。<br />ただし、自分とユーザ管理者権限を持つユーザはログアウトが設定されません。</span>
 
             <div class="text-center mt-3">
                 {{-- 強制ログアウトボタン --}}
