@@ -5,6 +5,7 @@ namespace Tests\Unit\Migration;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
+use Illuminate\Support\Facades\Storage;
 use App\Console\Commands\Migration\ExportNc3;
 use App\Models\Migration\MigrationMapping;
 use Illuminate\Support\Facades\Artisan;
@@ -772,5 +773,411 @@ class MigrationNc3ExportTraitTest extends TestCase
         // デフォルト値のテスト
         $result = $getMigrationConfigMethod->invokeArgs($this->controller, ['pages', 'non_existent_key', 'default_value']);
         $this->assertEquals('default_value', $result, 'デフォルト値が正しく返されない');
+    }
+
+    /**
+     * privateメソッドのstorageAppendのテスト
+     *
+     * @return void
+     */
+    public function testStorageAppend()
+    {
+        Storage::fake('local');
+        
+        $method = $this->getPrivateMethod('storageAppend');
+        $migration_config_property = $this->getPrivateProperty('migration_config');
+        
+        // テストケース1: 文字列置換なしの場合
+        $migration_config_property->setValue($this->controller, []);
+        $method->invokeArgs($this->controller, ['test.txt', 'Test content']);
+        Storage::assertExists('test.txt');
+        $this->assertEquals('Test content', Storage::get('test.txt'));
+
+        // テストケース2: 文字列置換ありの場合
+        $migration_config_property->setValue($this->controller, [
+            'basic' => [
+                'nc3_export_str_replace' => [
+                    'old_text' => 'new_text',
+                    'hello' => 'goodbye'
+                ]
+            ]
+        ]);
+        
+        $method->invokeArgs($this->controller, ['test2.txt', 'hello old_text world']);
+        Storage::assertExists('test2.txt');
+        $this->assertEquals('goodbye new_text world', Storage::get('test2.txt'));
+
+        // テストケース3: 追記機能の確認
+        $method->invokeArgs($this->controller, ['test.txt', "\nSecond line"]);
+        $content = Storage::get('test.txt');
+        $this->assertStringContainsString('Test content', $content);
+        $this->assertStringContainsString('Second line', $content);
+    }
+
+    /**
+     * privateメソッドのstoragePutのテスト
+     *
+     * @return void
+     */
+    public function testStoragePut()
+    {
+        Storage::fake('local');
+        
+        $method = $this->getPrivateMethod('storagePut');
+        $migration_config_property = $this->getPrivateProperty('migration_config');
+        
+        // テストケース1: 文字列置換なしの場合
+        $migration_config_property->setValue($this->controller, []);
+        $method->invokeArgs($this->controller, ['put_test.txt', 'Put test content']);
+        Storage::assertExists('put_test.txt');
+        $this->assertEquals('Put test content', Storage::get('put_test.txt'));
+
+        // テストケース2: 文字列置換ありの場合
+        $migration_config_property->setValue($this->controller, [
+            'basic' => [
+                'nc3_export_str_replace' => [
+                    'test' => 'modified',
+                    'content' => 'data'
+                ]
+            ]
+        ]);
+        
+        $method->invokeArgs($this->controller, ['put_test2.txt', 'test content replacement']);
+        Storage::assertExists('put_test2.txt');
+        $this->assertEquals('modified data replacement', Storage::get('put_test2.txt'));
+
+        // テストケース3: 上書き機能の確認
+        $method->invokeArgs($this->controller, ['put_test.txt', 'Overwritten data']);
+        $this->assertEquals('Overwritten data', Storage::get('put_test.txt'));
+    }
+
+    /**
+     * privateメソッドのexportStrReplaceのテスト
+     *
+     * @return void
+     */
+    public function testExportStrReplace()
+    {
+        $method = $this->getPrivateMethod('exportStrReplace');
+        $migration_config_property = $this->getPrivateProperty('migration_config');
+        
+        // テストケース1: 設定なしの場合
+        $migration_config_property->setValue($this->controller, []);
+        $result = $method->invokeArgs($this->controller, ['original text']);
+        $this->assertEquals('original text', $result);
+
+        // テストケース2: basic設定ありの場合
+        $migration_config_property->setValue($this->controller, [
+            'basic' => [
+                'nc3_export_str_replace' => [
+                    'original' => 'replaced',
+                    'text' => 'content'
+                ]
+            ]
+        ]);
+        
+        $result = $method->invokeArgs($this->controller, ['original text']);
+        $this->assertEquals('replaced content', $result);
+
+        // テストケース3: カスタムターゲット指定の場合
+        $migration_config_property->setValue($this->controller, [
+            'custom' => [
+                'nc3_export_str_replace' => [
+                    'hello' => 'hi',
+                    'world' => 'universe'
+                ]
+            ]
+        ]);
+        
+        $result = $method->invokeArgs($this->controller, ['hello world', 'custom']);
+        $this->assertEquals('hi universe', $result);
+
+        // テストケース4: 複数回置換の場合
+        $migration_config_property->setValue($this->controller, [
+            'basic' => [
+                'nc3_export_str_replace' => [
+                    'a' => 'b',
+                    'b' => 'c'
+                ]
+            ]
+        ]);
+        
+        $result = $method->invokeArgs($this->controller, ['abc']);
+        $this->assertEquals('ccc', $result);
+
+        // テストケース5: 空文字の場合
+        $result = $method->invokeArgs($this->controller, ['']);
+        $this->assertEquals('', $result);
+    }
+
+    /**
+     * privateメソッドのnc3GetPluginNameのテスト
+     *
+     * @return void
+     */
+    public function testNc3GetPluginName()
+    {
+        $method = $this->getPrivateMethod('nc3GetPluginName');
+        
+        // テストケース1: 存在するプラグインキー
+        $result = $method->invokeArgs($this->controller, ['bbses']);
+        $this->assertEquals('bbses', $result);
+
+        $result = $method->invokeArgs($this->controller, ['blogs']);
+        $this->assertEquals('blogs', $result);
+
+        $result = $method->invokeArgs($this->controller, ['announcements']);
+        $this->assertEquals('contents', $result);
+
+        $result = $method->invokeArgs($this->controller, ['multidatabases']);
+        $this->assertEquals('databases', $result);
+
+        // テストケース2: 開発中プラグイン
+        $result = $method->invokeArgs($this->controller, ['circular_notices']);
+        $this->assertEquals('Development', $result);
+
+        $result = $method->invokeArgs($this->controller, ['questionnaires']);
+        $this->assertEquals('Development', $result);
+
+        // テストケース3: 存在しないプラグインキー
+        $result = $method->invokeArgs($this->controller, ['non_existent_plugin']);
+        $this->assertEquals('NotFound', $result);
+
+        $result = $method->invokeArgs($this->controller, ['invalid_key']);
+        $this->assertEquals('NotFound', $result);
+
+        // テストケース4: 空文字・null
+        $result = $method->invokeArgs($this->controller, ['']);
+        $this->assertEquals('NotFound', $result);
+
+        $result = $method->invokeArgs($this->controller, [null]);
+        $this->assertEquals('NotFound', $result);
+    }
+
+    /**
+     * privateメソッドのgetCCPluginNamesFromNc3PluginKeysのテスト
+     *
+     * @return void
+     */
+    public function testGetCCPluginNamesFromNc3PluginKeys()
+    {
+        $method = $this->getPrivateMethod('getCCPluginNamesFromNc3PluginKeys');
+        
+        // 利用可能なConnect-CMSプラグイン名のリスト（テスト用）
+        $available_plugins = ['bbses', 'blogs', 'contents', 'databases', 'forms'];
+        
+        // テストケース1: 正常なプラグインキーのみ
+        $plugin_keys = ['bbses', 'blogs', 'announcements'];
+        $result = $method->invokeArgs($this->controller, [$plugin_keys, $available_plugins, 'テストプラグイン']);
+        $this->assertEquals('bbses,blogs,contents', $result);
+
+        // テストケース2: 開発中プラグインを含む場合
+        $plugin_keys = ['bbses', 'circular_notices', 'blogs'];
+        $result = $method->invokeArgs($this->controller, [$plugin_keys, $available_plugins, 'テストプラグイン']);
+        $this->assertEquals('bbses,blogs', $result);
+
+        // テストケース3: 利用可能リストにないプラグイン
+        $plugin_keys = ['bbses', 'cabinets'];  // cabinetsは$available_pluginsに含まれない
+        $result = $method->invokeArgs($this->controller, [$plugin_keys, $available_plugins, 'テストプラグイン']);
+        $this->assertEquals('bbses', $result);
+
+        // テストケース4: 存在しないプラグインキー
+        $plugin_keys = ['bbses', 'non_existent_plugin'];
+        $result = $method->invokeArgs($this->controller, [$plugin_keys, $available_plugins, 'テストプラグイン']);
+        $this->assertEquals('bbses', $result);
+
+        // テストケース5: 空配列
+        $plugin_keys = [];
+        $result = $method->invokeArgs($this->controller, [$plugin_keys, $available_plugins, 'テストプラグイン']);
+        $this->assertEquals('', $result);
+
+        // テストケース6: 全て無効なプラグイン
+        $plugin_keys = ['circular_notices', 'non_existent_plugin'];
+        $result = $method->invokeArgs($this->controller, [$plugin_keys, $available_plugins, 'テストプラグイン']);
+        $this->assertEquals('', $result);
+
+        // テストケース7: 混合パターン
+        $plugin_keys = ['bbses', 'multidatabases', 'questionnaires', 'invalid_key'];
+        $result = $method->invokeArgs($this->controller, [$plugin_keys, $available_plugins, 'テストプラグイン']);
+        $this->assertEquals('bbses,databases', $result);
+    }
+
+    /**
+     * exportStrReplaceのパターンテスト
+     *
+     * @return void
+     */
+    public function testExportStrReplacePatterns()
+    {
+        $patterns = [
+            '単純置換' => [
+                'config' => [
+                    'basic' => [
+                        'nc3_export_str_replace' => [
+                            'hello' => 'hi'
+                        ]
+                    ]
+                ],
+                'input' => 'hello world',
+                'target' => 'basic',
+                'expected' => 'hi world'
+            ],
+            '複数置換' => [
+                'config' => [
+                    'basic' => [
+                        'nc3_export_str_replace' => [
+                            'red' => 'blue',
+                            'cat' => 'dog',
+                            'small' => 'big'
+                        ]
+                    ]
+                ],
+                'input' => 'red small cat',
+                'target' => 'basic',
+                'expected' => 'blue big dog'
+            ],
+            '部分文字列置換' => [
+                'config' => [
+                    'basic' => [
+                        'nc3_export_str_replace' => [
+                            'test' => 'exam'
+                        ]
+                    ]
+                ],
+                'input' => 'testing tests test',
+                'target' => 'basic',
+                'expected' => 'examing exams exam'
+            ],
+            '置換対象なし' => [
+                'config' => [
+                    'basic' => [
+                        'nc3_export_str_replace' => [
+                            'hello' => 'hi'
+                        ]
+                    ]
+                ],
+                'input' => 'goodbye world',
+                'target' => 'basic',
+                'expected' => 'goodbye world'
+            ],
+            '存在しないターゲット' => [
+                'config' => [
+                    'basic' => [
+                        'nc3_export_str_replace' => [
+                            'hello' => 'hi'
+                        ]
+                    ]
+                ],
+                'input' => 'hello world',
+                'target' => 'nonexistent',
+                'expected' => 'hello world'
+            ]
+        ];
+
+        foreach ($patterns as $key => $pattern) {
+            [$controller, $reflection] = $this->createNewController();
+            $method = $reflection->getMethod('exportStrReplace');
+            $method->setAccessible(true);
+
+            $migration_config_property = $reflection->getProperty('migration_config');
+            $migration_config_property->setAccessible(true);
+            $migration_config_property->setValue($controller, $pattern['config']);
+
+            $result = $method->invokeArgs($controller, [$pattern['input'], $pattern['target']]);
+            $this->assertEquals($pattern['expected'], $result, "{$key} の処理が正しく動作していない");
+        }
+    }
+
+    /**
+     * nc3GetPluginNameの全件テスト
+     * 本体クラスの$plugin_name配列を参照してテストする
+     *
+     * @return void
+     */
+    public function testNc3GetPluginNamePatterns()
+    {
+        $nc3GetPluginNameMethod = $this->getPrivateMethod('nc3GetPluginName');
+        $pluginNameProperty = $this->getPrivateProperty('plugin_name');
+        
+        // 本体クラスのplugin_name配列を取得
+        $nc3ToConnectCmsPluginMappings = $pluginNameProperty->getValue($this->controller);
+        
+        // plugin_name配列の全てのキーに対してテスト
+        foreach ($nc3ToConnectCmsPluginMappings as $nc3PluginKey => $expectedConnectCmsPluginName) {
+            $actualPluginName = $nc3GetPluginNameMethod->invokeArgs($this->controller, [$nc3PluginKey]);
+            $this->assertEquals($expectedConnectCmsPluginName, $actualPluginName, "プラグインキー '{$nc3PluginKey}' の変換が正しく動作していない");
+        }
+        
+        // 存在しないプラグインキーのテスト（NotFoundのテスト）
+        $nonExistentPluginKeys = ['non_existent', 'invalid_plugin', 'unknown_key'];
+        foreach ($nonExistentPluginKeys as $nonExistentPluginKey) {
+            $actualPluginName = $nc3GetPluginNameMethod->invokeArgs($this->controller, [$nonExistentPluginKey]);
+            $this->assertEquals('NotFound', $actualPluginName, "存在しないプラグインキー '{$nonExistentPluginKey}' でNotFoundが返されない");
+        }
+    }
+
+    /**
+     * nc3GetPluginNameの$plugin_name配列全件テスト
+     * 実際のplugin_nameプロパティから取得してテストする
+     *
+     * @return void
+     */
+    public function testNc3GetPluginNameAllMappings()
+    {
+        $nc3GetPluginNameMethod = $this->getPrivateMethod('nc3GetPluginName');
+        $pluginNameProperty = $this->getPrivateProperty('plugin_name');
+        
+        // 実際のplugin_name配列を取得
+        $nc3ToConnectCmsPluginMappings = $pluginNameProperty->getValue($this->controller);
+        
+        // plugin_name配列の全てのキーに対してテスト
+        foreach ($nc3ToConnectCmsPluginMappings as $nc3PluginKey => $expectedConnectCmsPluginName) {
+            $actualPluginName = $nc3GetPluginNameMethod->invokeArgs($this->controller, [$nc3PluginKey]);
+            $this->assertEquals($expectedConnectCmsPluginName, $actualPluginName, 
+                "プラグインキー '{$nc3PluginKey}' の変換結果が期待値 '{$expectedConnectCmsPluginName}' と一致しない");
+        }
+        
+        // 配列に含まれる各カテゴリーの数をカウントして検証
+        $connectCmsPluginCount = 0;
+        $developmentPluginCount = 0;
+        $abolitionPluginCount = 0;
+        
+        foreach ($nc3ToConnectCmsPluginMappings as $connectCmsPluginName) {
+            switch ($connectCmsPluginName) {
+                case 'Development':
+                    $developmentPluginCount++;
+                    break;
+                case 'Abolition':
+                    $abolitionPluginCount++;
+                    break;
+                default:
+                    $connectCmsPluginCount++;
+                    break;
+            }
+        }
+        
+        // プラグイン数の検証
+        $totalPluginCount = count($nc3ToConnectCmsPluginMappings);
+        $calculatedTotalCount = $connectCmsPluginCount + $developmentPluginCount + $abolitionPluginCount;
+        $this->assertEquals($calculatedTotalCount, $totalPluginCount, 
+            'プラグインの分類合計が全体数と一致しない');
+        
+        // 期待される数の検証（現在のコードに基づく）
+        $expectedConnectCmsPluginCount = 16;
+        $expectedDevelopmentPluginCount = 7;
+        $expectedAbolitionPluginCount = 0;
+        $expectedTotalPluginCount = 23;
+        
+        $this->assertEquals($expectedConnectCmsPluginCount, $connectCmsPluginCount, 'Connect-CMSプラグイン数が期待値と異なる');
+        $this->assertEquals($expectedDevelopmentPluginCount, $developmentPluginCount, '開発中プラグイン数が期待値と異なる');
+        $this->assertEquals($expectedAbolitionPluginCount, $abolitionPluginCount, '廃止プラグイン数が期待値と異なる');
+        $this->assertEquals($expectedTotalPluginCount, $totalPluginCount, '総プラグイン数が期待値と異なる');
+        
+        // ログ出力（テスト結果の可視化）
+        echo "\n=== Plugin Mapping Statistics ===\n";
+        echo "Connect-CMS plugins: {$connectCmsPluginCount}\n";
+        echo "Development plugins: {$developmentPluginCount}\n";
+        echo "Abolition plugins: {$abolitionPluginCount}\n";
+        echo "Total plugins: {$totalPluginCount}\n";
     }
 }
