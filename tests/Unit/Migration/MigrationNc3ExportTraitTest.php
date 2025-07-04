@@ -634,9 +634,8 @@ class MigrationNc3ExportTraitTest extends TestCase
      */
     public function testChangePageSequenceWithPartialMappingData()
     {
-        // テスト用のMigrationMappingデータを作成
-        MigrationMapping::create([
-            'target_source_table' => 'source_pages',
+        // テスト用のMigrationMappingデータをFactoryで作成
+        MigrationMapping::factory()->sourcePages()->create([
             'source_key' => '1',
             'destination_key' => 'test_page_1'
         ]);
