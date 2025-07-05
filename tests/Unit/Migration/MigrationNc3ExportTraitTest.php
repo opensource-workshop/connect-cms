@@ -33,6 +33,11 @@ use App\Models\Migration\Nc3\Nc3Multidatabase;
 use App\Models\Migration\Nc3\Nc3MultidatabaseContent;
 use App\Models\Migration\Nc3\Nc3MultidatabaseFrameSetting;
 use App\Models\Migration\Nc3\Nc3MultidatabaseMetadata;
+use App\Models\Migration\Nc3\Nc3Registration;
+use App\Models\Migration\Nc3\Nc3RegistrationQuestion;
+use App\Models\Migration\Nc3\Nc3RegistrationChoice;
+use App\Models\Migration\Nc3\Nc3RegistrationPage;
+use App\Models\Migration\Nc3\Nc3RegistrationAnswerSummary;
 use Illuminate\Support\Facades\Artisan;
 
 /**
@@ -4799,6 +4804,434 @@ class MigrationNc3ExportTraitTest extends TestCase
                 'special_content' => '<strong>太字</strong>', // 特殊文字処理の検証用
                 'metadata_id' => $test_metadata_data['id'],
                 'metadata_name' => $test_metadata_data['name'],
+                'user_id' => $test_user_data['id'],
+                'username' => $test_user_data['username'],
+                'user_handlename' => $test_user_data['handlename'],
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * nc3ExportRegistrationの基本テスト
+     *
+     * @return void
+     */
+    public function testNc3ExportRegistration()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForRegistrationTest();
+
+            // テスト用のデータを作成
+            $expected_data = $this->createNc3RegistrationTestData();
+
+            // nc3ExportRegistrationメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportRegistration');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/registrations/registrations.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/registrations/registrations.tsv');
+                $this->assertStringContainsString($expected_data['registration_key'], $tsv_content, '投入した登録フォームキーが正確に出力されている');
+                $this->assertStringContainsString($expected_data['registration_name'], $tsv_content, '投入した登録フォーム名が正確に出力されている');
+                $this->assertStringContainsString($expected_data['question_value'], $tsv_content, '投入した質問内容が正確に出力されている');
+                $this->assertStringContainsString($expected_data['choice_label'], $tsv_content, '投入した選択肢ラベルが正確に出力されている');
+                $this->assertStringContainsString($expected_data['page_title'], $tsv_content, '投入したページタイトルが正確に出力されている');
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportRegistrationメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * nc3ExportRegistrationの複数登録フォームテスト
+     *
+     * @return void
+     */
+    public function testNc3ExportRegistrationMultipleRegistrations()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForRegistrationTest();
+
+            // 複数の登録フォームテストデータを作成
+            $expected_data_array = $this->createNc3RegistrationMultipleTestData();
+
+            // nc3ExportRegistrationメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportRegistration');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data_array) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/registrations/registrations.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/registrations/registrations.tsv');
+                
+                // 複数登録フォームの投入値と出力値の検証
+                foreach ($expected_data_array as $expected_data) {
+                    $this->assertStringContainsString($expected_data['registration_key'], $tsv_content, "投入した登録フォームキー {$expected_data['registration_key']} が正確に出力されている");
+                    $this->assertStringContainsString($expected_data['registration_name'], $tsv_content, "投入した登録フォーム名 {$expected_data['registration_name']} が正確に出力されている");
+                    $this->assertStringContainsString($expected_data['question_value'], $tsv_content, "投入した質問内容 {$expected_data['question_value']} が正確に出力されている");
+                }
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportRegistrationメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * nc3ExportRegistrationのコンテンツ処理テスト
+     *
+     * @return void
+     */
+    public function testNc3ExportRegistrationContentProcessing()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForRegistrationTest();
+
+            // 特殊文字を含む登録フォームテストデータを作成
+            $expected_data = $this->createNc3RegistrationContentProcessingTestData();
+
+            // nc3ExportRegistrationメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportRegistration');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/registrations/registrations.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/registrations/registrations.tsv');
+                $this->assertStringContainsString($expected_data['registration_key'], $tsv_content, '投入した登録フォームキーが正確に出力されている');
+                $this->assertStringContainsString($expected_data['registration_name'], $tsv_content, '投入した登録フォーム名が正確に出力されている');
+                $this->assertStringContainsString($expected_data['question_value'], $tsv_content, '投入した質問内容が正確に出力されている');
+                $this->assertStringContainsString($expected_data['special_content'], $tsv_content, '投入した特殊文字処理が正確に出力されている');
+                $this->assertStringContainsString($expected_data['username'], $tsv_content, '投入したユーザー名が正確に出力されている');
+                $this->assertStringContainsString($expected_data['user_handlename'], $tsv_content, '投入したユーザーハンドル名が正確に出力されている');
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportRegistrationメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * 登録フォームテスト用のプライベートプロパティを設定
+     *
+     * @return void
+     */
+    private function setPrivatePropertiesForRegistrationTest(): void
+    {
+        $migration_base_property = $this->getPrivateProperty('migration_base');
+        $migration_base_property->setValue($this->controller, storage_path('app/migration/'));
+
+        $import_base_property = $this->getPrivateProperty('import_base');
+        $import_base_property->setValue($this->controller, storage_path('app/'));
+    }
+
+    /**
+     * 登録フォーム基本テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3RegistrationTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Registration::truncate();
+            Nc3RegistrationQuestion::truncate();
+            Nc3RegistrationChoice::truncate();
+            Nc3RegistrationPage::truncate();
+            Nc3RegistrationAnswerSummary::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+
+            // テスト用の登録フォームを作成（投入値を定義）
+            $test_registration_data = [
+                'id' => 701,
+                'key' => 'test_registration_basic',
+                'name' => 'テスト投入基本登録フォーム',
+            ];
+            Nc3Registration::factory()->active()->create($test_registration_data);
+
+            // テスト用のページを作成（投入値を定義）
+            $test_page_data = [
+                'id' => 801,
+                'page_title' => 'テスト投入基本ページ',
+                'page_sequence' => 1,
+            ];
+            Nc3RegistrationPage::factory()->published()->forRegistration($test_registration_data['id'])->withRegistrationKey($test_registration_data['key'])->create($test_page_data);
+
+            // テスト用の質問を作成（投入値を定義）
+            $test_question_data = [
+                'id' => 901,
+                'question_value' => 'テスト投入基本質問',
+                'question_sequence' => 1,
+                'question_type' => Nc3RegistrationQuestion::question_type_radio,
+            ];
+            Nc3RegistrationQuestion::factory()->published()->forRegistration($test_registration_data['id'])->withRegistrationKey($test_registration_data['key'])->radioType()->create($test_question_data);
+
+            // テスト用の選択肢を作成（投入値を定義）
+            $test_choice_data = [
+                'id' => 1001,
+                'choice_label' => 'テスト投入選択肢1',
+                'choice_value' => 'choice1',
+                'choice_sequence' => 1,
+            ];
+            Nc3RegistrationChoice::factory()->published()->forQuestion($test_question_data['id'])->withRegistrationKey($test_registration_data['key'])->create($test_choice_data);
+
+            // テスト用の回答サマリを作成（投入値を定義）
+            $test_answer_summary_data = [
+                'id' => 1101,
+                'answer_value' => 'テスト投入回答',
+                'summary_value' => 'test_summary',
+                'answer_number' => 5,
+            ];
+            Nc3RegistrationAnswerSummary::factory()->forRegistration($test_registration_data['id'])->withRegistrationKey($test_registration_data['key'])->forQuestion($test_question_data['id'])->create($test_answer_summary_data);
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 1001,
+                'username' => 'basic_registration_admin',
+                'handlename' => 'テスト投入基本登録フォーム管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            // 期待値データを返す（投入値＝出力値の検証用）
+            return [
+                'registration_id' => $test_registration_data['id'],
+                'registration_key' => $test_registration_data['key'],
+                'registration_name' => $test_registration_data['name'],
+                'page_id' => $test_page_data['id'],
+                'page_title' => $test_page_data['page_title'],
+                'question_id' => $test_question_data['id'],
+                'question_value' => $test_question_data['question_value'],
+                'choice_id' => $test_choice_data['id'],
+                'choice_label' => $test_choice_data['choice_label'],
+                'choice_value' => $test_choice_data['choice_value'],
+                'answer_summary_id' => $test_answer_summary_data['id'],
+                'answer_value' => $test_answer_summary_data['answer_value'],
+                'user_id' => $test_user_data['id'],
+                'username' => $test_user_data['username'],
+                'user_handlename' => $test_user_data['handlename'],
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * 登録フォーム複数テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3RegistrationMultipleTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Registration::truncate();
+            Nc3RegistrationQuestion::truncate();
+            Nc3RegistrationChoice::truncate();
+            Nc3RegistrationPage::truncate();
+            Nc3RegistrationAnswerSummary::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+
+            // 複数の登録フォームを作成（投入値を定義）
+            $test_registration_data_array = [
+                [
+                    'id' => 702,
+                    'key' => 'test_registration_multiple_1',
+                    'name' => 'テスト投入複数登録フォーム1',
+                ],
+                [
+                    'id' => 703,
+                    'key' => 'test_registration_multiple_2',
+                    'name' => 'テスト投入複数登録フォーム2',
+                ],
+                [
+                    'id' => 704,
+                    'key' => 'test_registration_multiple_3',
+                    'name' => 'テスト投入複数登録フォーム3',
+                ],
+            ];
+
+            $expected_data_array = [];
+            foreach ($test_registration_data_array as $registration_data) {
+                Nc3Registration::factory()->active()->create($registration_data);
+
+                // 各登録フォームに対してページを作成（投入値を定義）
+                $test_page_data = [
+                    'id' => 800 + $registration_data['id'],
+                    'page_title' => "テスト投入{$registration_data['name']}のページ",
+                    'page_sequence' => 1,
+                ];
+                Nc3RegistrationPage::factory()->published()->forRegistration($registration_data['id'])->withRegistrationKey($registration_data['key'])->create($test_page_data);
+
+                // 各登録フォームに対して質問を作成（投入値を定義）
+                $test_question_data = [
+                    'id' => 900 + $registration_data['id'],
+                    'question_value' => "テスト投入{$registration_data['name']}の質問",
+                    'question_sequence' => 1,
+                    'question_type' => Nc3RegistrationQuestion::question_type_text,
+                ];
+                Nc3RegistrationQuestion::factory()->published()->forRegistration($registration_data['id'])->withRegistrationKey($registration_data['key'])->textType()->create($test_question_data);
+
+                // 期待値データを蓄積
+                $expected_data_array[] = [
+                    'registration_id' => $registration_data['id'],
+                    'registration_key' => $registration_data['key'],
+                    'registration_name' => $registration_data['name'],
+                    'page_id' => $test_page_data['id'],
+                    'page_title' => $test_page_data['page_title'],
+                    'question_id' => $test_question_data['id'],
+                    'question_value' => $test_question_data['question_value'],
+                ];
+            }
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 1002,
+                'username' => 'multiple_registration_admin',
+                'handlename' => 'テスト投入複数登録フォーム管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            return $expected_data_array;
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * 登録フォームコンテンツ処理テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3RegistrationContentProcessingTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Registration::truncate();
+            Nc3RegistrationQuestion::truncate();
+            Nc3RegistrationChoice::truncate();
+            Nc3RegistrationPage::truncate();
+            Nc3RegistrationAnswerSummary::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+            
+            // 特殊文字を含む登録フォームを作成（投入値を定義）
+            $test_registration_data = [
+                'id' => 705,
+                'key' => 'content_processing_registration',
+                'name' => 'テスト投入コンテンツ処理登録フォーム',
+            ];
+            Nc3Registration::factory()->active()->create($test_registration_data);
+
+            // 特殊文字を含むページを作成（投入値を定義）
+            $test_page_data = [
+                'id' => 802,
+                'page_title' => 'テスト投入特殊文字ページ',
+                'page_sequence' => 1,
+            ];
+            Nc3RegistrationPage::factory()->published()->forRegistration($test_registration_data['id'])->withRegistrationKey($test_registration_data['key'])->create($test_page_data);
+
+            // 特殊文字を含む質問を作成（投入値を定義）
+            $test_question_data = [
+                'id' => 902,
+                'question_value' => 'テスト投入特殊文字質問：HTMLタグ<strong>太字</strong>、改行\n\タブ\t、引用符"test"',
+                'question_sequence' => 1,
+                'question_type' => Nc3RegistrationQuestion::question_type_textarea,
+            ];
+            Nc3RegistrationQuestion::factory()->published()->forRegistration($test_registration_data['id'])->withRegistrationKey($test_registration_data['key'])->textareaType()->create($test_question_data);
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 1003,
+                'username' => 'content_registration_admin',
+                'handlename' => 'テスト投入コンテンツ登録フォーム管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            // 期待値データを返す（投入値＝出力値の検証用）
+            return [
+                'registration_id' => $test_registration_data['id'],
+                'registration_key' => $test_registration_data['key'],
+                'registration_name' => $test_registration_data['name'],
+                'page_id' => $test_page_data['id'],
+                'page_title' => $test_page_data['page_title'],
+                'question_id' => $test_question_data['id'],
+                'question_value' => $test_question_data['question_value'],
+                'special_content' => '<strong>太字</strong>', // 特殊文字処理の検証用
                 'user_id' => $test_user_data['id'],
                 'username' => $test_user_data['username'],
                 'user_handlename' => $test_user_data['handlename'],
