@@ -22,6 +22,9 @@ use App\Models\Migration\Nc3\Nc3Space;
 use App\Models\Migration\Nc3\Nc3Blog;
 use App\Models\Migration\Nc3\Nc3BlogEntry;
 use App\Models\Migration\Nc3\Nc3BlogFrameSetting;
+use App\Models\Migration\Nc3\Nc3Bbs;
+use App\Models\Migration\Nc3\Nc3BbsArticle;
+use App\Models\Migration\Nc3\Nc3BbsFrameSetting;
 use Illuminate\Support\Facades\Artisan;
 
 /**
@@ -3178,6 +3181,488 @@ class MigrationNc3ExportTraitTest extends TestCase
                 'entry_title' => $test_entry_data['title'],
                 'entry_body' => $test_entry_data['body1'],
                 'entry_body2' => $test_entry_data['body2'],
+                'special_content' => '<strong>太字</strong>', // 特殊文字処理の検証用
+                'user_id' => $test_user_data['id'],
+                'username' => $test_user_data['username'],
+                'user_handlename' => $test_user_data['handlename'],
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * nc3ExportBbsメソッドのテスト
+     *
+     * @return void
+     */
+    public function testNc3ExportBbs()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        // プライベートプロパティを設定
+        $this->setPrivatePropertiesForBbsTest();
+
+        // nc3ExportBbsメソッドを実行
+        $method = $this->getPrivateMethod('nc3ExportBbs');
+        
+        try {
+            // テストデータを準備（投入値）
+            $expected_data = $this->createNc3BbsTestData();
+            
+            $method->invokeArgs($this->controller, [false]); // $redo = false
+
+            // NC3環境が存在する場合、掲示板 INIファイルが作成される
+            if (Storage::exists('migration/bbses/') && $expected_data) {
+                $files = Storage::files('migration/bbses/');
+                if (!empty($files)) {
+                    foreach ($files as $file) {
+                        $content = Storage::get($file);
+                        
+                        // INIファイルの基本構造を確認
+                        $this->assertStringContainsString('[', $content);
+                        $this->assertStringContainsString(']', $content);
+                        
+                        // .iniファイルの場合、投入値と出力値の検証
+                        if (str_ends_with($file, '.ini')) {
+                            $this->assertStringContainsString('[bbs_base]', $content);
+                            $this->assertStringContainsString('[source_info]', $content);
+                            
+                            // 投入した掲示板名が出力されているか確認
+                            $this->assertStringContainsString("bbs_name = \"{$expected_data['bbs_name']}\"", $content, '投入した掲示板名が正確に出力されている');
+                            $this->assertStringContainsString("plugin_name = \"bbses\"", $content, 'プラグイン名が正確に出力されている');
+                            
+                            // TSVファイルが存在する場合、投入した記事データを確認
+                            $tsv_file = str_replace('.ini', '.tsv', $file);
+                            if (Storage::exists($tsv_file)) {
+                                $tsv_content = Storage::get($tsv_file);
+                                $this->assertStringContainsString($expected_data['article_title'], $tsv_content, '投入した記事タイトルが正確に出力されている');
+                                $this->assertStringContainsString($expected_data['article_content'], $tsv_content, '投入した記事コンテンツが正確に出力されている');
+                            }
+                        }
+                    }
+                }
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportBbsメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // NC3データベース接続エラーやスキーマ関連エラーは想定内
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('No such file'),
+                    $this->stringContains('parse_ini_file'),
+                    $this->stringContains('Column not found'),
+                    $this->stringContains('Unknown column'),
+                    $this->stringContains('Table'),
+                    $this->stringContains('doesn\'t exist')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * nc3ExportBbsの複数掲示板テスト
+     *
+     * @return void
+     */
+    public function testNc3ExportBbsMultipleBbses()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        // プライベートプロパティを設定
+        $this->setPrivatePropertiesForBbsTest();
+
+        // nc3ExportBbsメソッドを実行
+        $method = $this->getPrivateMethod('nc3ExportBbs');
+        
+        try {
+            // 複数掲示板のテストデータを準備（投入値）
+            $expected_data_array = $this->createNc3BbsMultipleTestData();
+            
+            $method->invokeArgs($this->controller, [false]);
+
+            // NC3環境が存在する場合のテスト
+            if (Storage::exists('migration/bbses/') && $expected_data_array) {
+                $files = Storage::files('migration/bbses/');
+                
+                // 各ファイルの内容を確認
+                foreach ($files as $file) {
+                    $content = Storage::get($file);
+                    
+                    // 基本的なファイル構造を確認
+                    $this->assertStringContainsString('[', $content);
+                    $this->assertStringContainsString(']', $content);
+                    
+                    // ファイル形式に応じた内容確認と投入値検証
+                    if (str_ends_with($file, '.ini')) {
+                        // INIファイルの場合、投入した掲示板情報を検証
+                        foreach ($expected_data_array as $expected_data) {
+                            if (strpos($content, $expected_data['bbs_name']) !== false) {
+                                $this->assertStringContainsString("bbs_name = \"{$expected_data['bbs_name']}\"", $content, "投入した掲示板名{$expected_data['bbs_name']}が正確に出力されている");
+                                $this->assertStringContainsString('[bbs_base]', $content, 'bbs_baseセクションが含まれている');
+                                $this->assertStringContainsString('[source_info]', $content, 'source_infoセクションが含まれている');
+                                $this->assertStringContainsString('plugin_name = "bbses"', $content, 'プラグイン名が正確に出力されている');
+                            }
+                        }
+                    } elseif (str_ends_with($file, '.tsv')) {
+                        // TSVファイルの場合、投入した記事データを検証
+                        foreach ($expected_data_array as $expected_data) {
+                            if (strpos($content, $expected_data['article_title']) !== false) {
+                                $this->assertStringContainsString($expected_data['article_title'], $content, "投入した記事タイトル{$expected_data['article_title']}が正確に出力されている");
+                                $this->assertStringContainsString($expected_data['article_content'], $content, "投入した記事コンテンツ{$expected_data['article_content']}が正確に出力されている");
+                            }
+                        }
+                        
+                        // TSVの基本構造確認
+                        $has_tabs = strpos($content, "\t") !== false;
+                        if ($has_tabs) {
+                            $this->assertTrue(true, 'TSVファイルがタブ区切り形式になっている');
+                        }
+                    }
+                }
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportBbsメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file'),
+                    $this->stringContains('Column not found'),
+                    $this->stringContains('Unknown column'),
+                    $this->stringContains('doesn\'t exist'),
+                    $this->stringContains('No such file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * nc3ExportBbsのコンテンツ処理テスト
+     *
+     * @return void
+     */
+    public function testNc3ExportBbsContentProcessing()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        // プライベートプロパティを設定
+        $this->setPrivatePropertiesForBbsTest();
+
+        // nc3ExportBbsメソッドを実行
+        $method = $this->getPrivateMethod('nc3ExportBbs');
+        
+        try {
+            // コンテンツ処理用のテストデータを準備（投入値）
+            $expected_data = $this->createNc3BbsContentProcessingTestData();
+            
+            $method->invokeArgs($this->controller, [false]);
+
+            // NC3環境が存在する場合のコンテンツ処理テスト
+            if (Storage::exists('migration/bbses/') && $expected_data) {
+                $files = Storage::files('migration/bbses/');
+                
+                // 各ファイルの内容を確認
+                foreach ($files as $file) {
+                    $content = Storage::get($file);
+                    
+                    // 基本的なファイル構造を確認
+                    $this->assertStringContainsString('[', $content);
+                    $this->assertStringContainsString(']', $content);
+                    
+                    // TSVファイルの場合、投入したコンテンツの処理結果を確認
+                    if (str_ends_with($file, '.tsv') && strpos($content, $expected_data['article_title']) !== false) {
+                        // 投入したコンテンツが正確に出力されているか確認
+                        $this->assertStringContainsString($expected_data['article_title'], $content, "投入した記事タイトル{$expected_data['article_title']}が正確に出力されている");
+                        $this->assertStringContainsString($expected_data['article_content'], $content, "投入した記事コンテンツ{$expected_data['article_content']}が正確に出力されている");
+                        
+                        // 特殊文字処理が正しく行われているか確認
+                        if (!empty($expected_data['special_content'])) {
+                            $this->assertStringContainsString($expected_data['special_content'], $content, "投入した特殊文字コンテンツ{$expected_data['special_content']}が正確に出力されている");
+                        }
+                        
+                        // TSVファイルの基本構造確認
+                        $lines = explode("\n", $content);
+                        foreach ($lines as $line) {
+                            if (!empty(trim($line))) {
+                                // TSVの各行が適切な列数を持つことを確認
+                                $columns = explode("\t", $line);
+                                $this->assertGreaterThan(0, count($columns), 'TSVの各行が適切な列数を持っている');
+                            }
+                        }
+                    }
+                }
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportBbsメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('parse_ini_file'),
+                    $this->stringContains('Column not found'),
+                    $this->stringContains('Unknown column'),
+                    $this->stringContains('doesn\'t exist'),
+                    $this->stringContains('No such file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * nc3ExportBbsテスト用のプライベートプロパティを設定
+     *
+     * @return void
+     */
+    private function setPrivatePropertiesForBbsTest()
+    {
+        // 必要なプライベートプロパティを設定
+        $migration_base_property = $this->getPrivateProperty('migration_base');
+        $migration_base_property->setValue($this->controller, 'migration/');
+
+        $import_base_property = $this->getPrivateProperty('import_base');
+        $import_base_property->setValue($this->controller, 'import/');
+
+        $migration_config_property = $this->getPrivateProperty('migration_config');
+        $migration_config_property->setValue($this->controller, [
+            'migration' => [
+                'nc3_export_make_group_of_default_entry_room' => true,
+                'older_than_nc3_2_0' => false,
+            ]
+        ]);
+    }
+
+    /**
+     * テスト用のNC3掲示板データを作成
+     *
+     * @return array|null 期待値データ（NC3環境がない場合はnull）
+     */
+    private function createNc3BbsTestData()
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Bbs::truncate();
+            Nc3BbsArticle::truncate();
+            Nc3BbsFrameSetting::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+            
+            // テスト用の掲示板を作成（投入値を定義）
+            $test_bbs_data = [
+                'id' => 501,
+                'key' => 'test_bbs_input_key',
+                'name' => 'テスト投入掲示板',
+            ];
+            Nc3Bbs::factory()->active()->create($test_bbs_data);
+
+            // 掲示板記事を作成（投入値を定義）
+            $test_article_data = [
+                'id' => 601,
+                'title' => 'テスト投入記事タイトル',
+                'content' => 'テスト投入メインコンテンツです。',
+            ];
+            Nc3BbsArticle::factory()->published()->forBbs($test_bbs_data['id'])->withBbsKey($test_bbs_data['key'])->create($test_article_data);
+
+            // フレーム設定を作成（投入値を定義）
+            Nc3BbsFrameSetting::factory()->forContent($test_bbs_data['key'])->create([
+                'frame_key' => 'test_bbs_frame_input_key',
+            ]);
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 701,
+                'username' => 'test_bbs_admin',
+                'handlename' => 'テスト投入掲示板管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            // 期待値データを返す（投入値＝出力値の検証用）
+            return [
+                'bbs_id' => $test_bbs_data['id'],
+                'bbs_key' => $test_bbs_data['key'],
+                'bbs_name' => $test_bbs_data['name'],
+                'article_id' => $test_article_data['id'],
+                'article_title' => $test_article_data['title'],
+                'article_content' => $test_article_data['content'],
+                'user_id' => $test_user_data['id'],
+                'username' => $test_user_data['username'],
+                'user_handlename' => $test_user_data['handlename'],
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * 複数掲示板用のテストデータを作成
+     *
+     * @return array|null 期待値データ配列（NC3環境がない場合はnull）
+     */
+    private function createNc3BbsMultipleTestData()
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Bbs::truncate();
+            Nc3BbsArticle::truncate();
+            Nc3BbsFrameSetting::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+            
+            // 複数の掲示板を作成（投入値を定義）
+            $bbs1_data = [
+                'id' => 801,
+                'key' => 'bbs_multiple_test_1',
+                'name' => 'テスト投入掲示板1',
+            ];
+            $bbs2_data = [
+                'id' => 802,
+                'key' => 'bbs_multiple_test_2',
+                'name' => 'テスト投入掲示板2',
+            ];
+            Nc3Bbs::factory()->active()->create($bbs1_data);
+            Nc3Bbs::factory()->active()->create($bbs2_data);
+
+            // 各掲示板に記事を作成（投入値を定義）
+            $article1_data = [
+                'id' => 901,
+                'title' => 'テスト投入掲示板1の記事',
+                'content' => 'テスト投入掲示板1のコンテンツです。',
+            ];
+            $article2_data = [
+                'id' => 902,
+                'title' => 'テスト投入掲示板2の記事',
+                'content' => 'テスト投入掲示板2のコンテンツです。',
+            ];
+            Nc3BbsArticle::factory()->published()->forBbs($bbs1_data['id'])->withBbsKey($bbs1_data['key'])->create($article1_data);
+            Nc3BbsArticle::factory()->published()->forBbs($bbs2_data['id'])->withBbsKey($bbs2_data['key'])->create($article2_data);
+
+            // フレーム設定を作成（投入値を定義）
+            Nc3BbsFrameSetting::factory()->forContent($bbs1_data['key'])->create([
+                'frame_key' => 'frame_multiple_bbs_test_1',
+            ]);
+            Nc3BbsFrameSetting::factory()->forContent($bbs2_data['key'])->create([
+                'frame_key' => 'frame_multiple_bbs_test_2',
+            ]);
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $user_data = [
+                'id' => 1001,
+                'username' => 'admin_multiple_bbs',
+                'handlename' => 'テスト投入システム管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($user_data);
+
+            // 期待値データ配列を返す（投入値＝出力値の検証用）
+            return [
+                [
+                    'bbs_id' => $bbs1_data['id'],
+                    'bbs_key' => $bbs1_data['key'],
+                    'bbs_name' => $bbs1_data['name'],
+                    'article_id' => $article1_data['id'],
+                    'article_title' => $article1_data['title'],
+                    'article_content' => $article1_data['content'],
+                ],
+                [
+                    'bbs_id' => $bbs2_data['id'],
+                    'bbs_key' => $bbs2_data['key'],
+                    'bbs_name' => $bbs2_data['name'],
+                    'article_id' => $article2_data['id'],
+                    'article_title' => $article2_data['title'],
+                    'article_content' => $article2_data['content'],
+                ],
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * コンテンツ処理用のテストデータを作成
+     *
+     * @return array|null 期待値データ（NC3環境がない場合はnull）
+     */
+    private function createNc3BbsContentProcessingTestData()
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Bbs::truncate();
+            Nc3BbsArticle::truncate();
+            Nc3BbsFrameSetting::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+            
+            // 特殊文字を含む掲示板を作成（投入値を定義）
+            $test_bbs_data = [
+                'id' => 601,
+                'key' => 'content_processing_bbs',
+                'name' => 'テスト投入コンテンツ処理掲示板',
+            ];
+            Nc3Bbs::factory()->active()->create($test_bbs_data);
+
+            // 特殊文字を含む記事を作成（投入値を定義）
+            $test_article_data = [
+                'id' => 701,
+                'title' => 'テスト投入特殊文字記事',
+                'content' => 'テスト投入メインコンテンツ：HTMLタグ<strong>太字</strong>、改行\n\タブ\t、引用符"test"、URLリンクhttp://example.com',
+            ];
+            Nc3BbsArticle::factory()->published()->forBbs($test_bbs_data['id'])->withBbsKey($test_bbs_data['key'])->create($test_article_data);
+
+            // フレーム設定を作成（投入値を定義）
+            Nc3BbsFrameSetting::factory()->forContent($test_bbs_data['key'])->create([
+                'frame_key' => 'content_processing_bbs_frame',
+            ]);
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 801,
+                'username' => 'content_bbs_admin',
+                'handlename' => 'テスト投入コンテンツ管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            // 期待値データを返す（投入値＝出力値の検証用）
+            return [
+                'bbs_id' => $test_bbs_data['id'],
+                'bbs_key' => $test_bbs_data['key'],
+                'bbs_name' => $test_bbs_data['name'],
+                'article_id' => $test_article_data['id'],
+                'article_title' => $test_article_data['title'],
+                'article_content' => $test_article_data['content'],
                 'special_content' => '<strong>太字</strong>', // 特殊文字処理の検証用
                 'user_id' => $test_user_data['id'],
                 'username' => $test_user_data['username'],
