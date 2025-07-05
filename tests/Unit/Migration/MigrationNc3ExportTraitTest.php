@@ -2126,8 +2126,32 @@ class MigrationNc3ExportTraitTest extends TestCase
                 $files = Storage::files('migration/groups');
                 if (!empty($files)) {
                     $content = Storage::get($files[0]);
+                    
+                    // 必須セクションの確認
                     $this->assertStringContainsString('[group_base]', $content);
+                    $this->assertStringContainsString('[source_info]', $content);
+                    $this->assertStringContainsString('[users]', $content);
+                    
+                    // group_baseセクションの必須項目確認
+                    $this->assertStringContainsString('name = ', $content);
                     $this->assertStringContainsString('role_name = ', $content);
+                    
+                    // source_infoセクションの必須項目確認
+                    $this->assertStringContainsString('room_id = ', $content);
+                    $this->assertStringContainsString('room_page_id_top = ', $content);
+                    
+                    // usersセクションの構造確認
+                    $this->assertThat(
+                        $content,
+                        $this->logicalOr(
+                            $this->stringContains('user['),
+                            $this->stringContains('room_administrator'),
+                            $this->stringContains('chief_editor'),
+                            $this->stringContains('editor'),
+                            $this->stringContains('general_user'),
+                            $this->stringContains('visitor')
+                        )
+                    );
                 }
             } else {
                 // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
@@ -2181,8 +2205,21 @@ class MigrationNc3ExportTraitTest extends TestCase
                 // 各ファイルの内容を確認
                 foreach ($files as $file) {
                     $content = Storage::get($file);
+                    
+                    // 基本的なINI構造確認
                     $this->assertStringContainsString('[', $content);
                     $this->assertStringContainsString(']', $content);
+                    
+                    // 必須セクションの確認
+                    $this->assertStringContainsString('[group_base]', $content);
+                    $this->assertStringContainsString('[source_info]', $content);
+                    $this->assertStringContainsString('[users]', $content);
+                    
+                    // 各セクションの必須項目確認
+                    $this->assertStringContainsString('name = ', $content);
+                    $this->assertStringContainsString('role_name = ', $content);
+                    $this->assertStringContainsString('room_id = ', $content);
+                    $this->assertStringContainsString('room_page_id_top = ', $content);
                 }
             } else {
                 // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
@@ -2239,12 +2276,33 @@ class MigrationNc3ExportTraitTest extends TestCase
                     $this->assertStringContainsString('[', $content);
                     $this->assertStringContainsString(']', $content);
                     
-                    // 権限関連の情報が含まれることを確認
-                    $hasRoleInfo = strpos($content, 'role_name') !== false ||
-                                   strpos($content, 'name') !== false;
-                    if ($hasRoleInfo) {
-                        $this->assertTrue(true, 'ファイルに権限情報が含まれている');
-                    }
+                    // 必須セクションの確認
+                    $this->assertStringContainsString('[group_base]', $content);
+                    $this->assertStringContainsString('[source_info]', $content);
+                    $this->assertStringContainsString('[users]', $content);
+                    
+                    // 権限マッピングの確認 - Connect-CMS role_nameが適切に設定されていることを確認
+                    $this->assertThat(
+                        $content,
+                        $this->logicalOr(
+                            $this->stringContains('role_article_admin'), // ルーム管理者・チーフエディター
+                            $this->stringContains('role_article'),       // エディター
+                            $this->stringContains('role_reporter'),      // 一般ユーザー
+                            $this->stringContains('role_guest')          // 訪問者
+                        )
+                    );
+                    
+                    // NC3権限キーの確認
+                    $this->assertThat(
+                        $content,
+                        $this->logicalOr(
+                            $this->stringContains('room_administrator'),
+                            $this->stringContains('chief_editor'),
+                            $this->stringContains('editor'),
+                            $this->stringContains('general_user'),
+                            $this->stringContains('visitor')
+                        )
+                    );
                 }
             } else {
                 // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
