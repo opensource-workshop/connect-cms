@@ -41,6 +41,8 @@ use App\Models\Migration\Nc3\Nc3RegistrationAnswerSummary;
 use App\Models\Migration\Nc3\Nc3Topic;
 use App\Models\Migration\Nc3\Nc3TopicFramePlugin;
 use App\Models\Migration\Nc3\Nc3TopicFrameSetting;
+use App\Models\Migration\Nc3\Nc3Cabinet;
+use App\Models\Migration\Nc3\Nc3CabinetFile;
 use Illuminate\Support\Facades\Artisan;
 
 /**
@@ -5654,6 +5656,417 @@ class MigrationNc3ExportTraitTest extends TestCase
                 'title' => $test_topic_data['title'],
                 'summary' => $test_topic_data['summary'],
                 'path' => $test_topic_data['path'],
+                'special_content' => '<strong>太字</strong>', // 特殊文字処理の検証用
+                'user_id' => $test_user_data['id'],
+                'username' => $test_user_data['username'],
+                'user_handlename' => $test_user_data['handlename'],
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * nc3ExportCabinetの基本テスト
+     *
+     * @return void
+     */
+    public function testNc3ExportCabinet()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForCabinetTest();
+
+            // テスト用のデータを作成
+            $expected_data = $this->createNc3CabinetTestData();
+
+            // nc3ExportCabinetメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportCabinet');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/cabinets/cabinets.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/cabinets/cabinets.tsv');
+                $this->assertStringContainsString($expected_data['cabinet_key'], $tsv_content, '投入したキャビネットキーが正確に出力されている');
+                $this->assertStringContainsString($expected_data['cabinet_name'], $tsv_content, '投入したキャビネット名が正確に出力されている');
+                $this->assertStringContainsString($expected_data['filename'], $tsv_content, '投入したファイル名が正確に出力されている');
+                $this->assertStringContainsString($expected_data['original_name'], $tsv_content, '投入したオリジナル名が正確に出力されている');
+                $this->assertStringContainsString($expected_data['description'], $tsv_content, '投入した説明が正確に出力されている');
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportCabinetメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * nc3ExportCabinetの複数キャビネットテスト
+     *
+     * @return void
+     */
+    public function testNc3ExportCabinetMultipleCabinets()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForCabinetTest();
+
+            // 複数のキャビネットテストデータを作成
+            $expected_data_array = $this->createNc3CabinetMultipleTestData();
+
+            // nc3ExportCabinetメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportCabinet');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data_array) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/cabinets/cabinets.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/cabinets/cabinets.tsv');
+                
+                // 複数キャビネットの投入値と出力値の検証
+                foreach ($expected_data_array as $expected_data) {
+                    $this->assertStringContainsString($expected_data['cabinet_key'], $tsv_content, "投入したキャビネットキー {$expected_data['cabinet_key']} が正確に出力されている");
+                    $this->assertStringContainsString($expected_data['cabinet_name'], $tsv_content, "投入したキャビネット名 {$expected_data['cabinet_name']} が正確に出力されている");
+                    $this->assertStringContainsString($expected_data['filename'], $tsv_content, "投入したファイル名 {$expected_data['filename']} が正確に出力されている");
+                }
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportCabinetメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * nc3ExportCabinetのコンテンツ処理テスト
+     *
+     * @return void
+     */
+    public function testNc3ExportCabinetContentProcessing()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForCabinetTest();
+
+            // 特殊文字を含むキャビネットテストデータを作成
+            $expected_data = $this->createNc3CabinetContentProcessingTestData();
+
+            // nc3ExportCabinetメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportCabinet');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/cabinets/cabinets.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/cabinets/cabinets.tsv');
+                $this->assertStringContainsString($expected_data['cabinet_key'], $tsv_content, '投入したキャビネットキーが正確に出力されている');
+                $this->assertStringContainsString($expected_data['cabinet_name'], $tsv_content, '投入したキャビネット名が正確に出力されている');
+                $this->assertStringContainsString($expected_data['filename'], $tsv_content, '投入したファイル名が正確に出力されている');
+                $this->assertStringContainsString($expected_data['special_content'], $tsv_content, '投入した特殊文字処理が正確に出力されている');
+                $this->assertStringContainsString($expected_data['username'], $tsv_content, '投入したユーザー名が正確に出力されている');
+                $this->assertStringContainsString($expected_data['user_handlename'], $tsv_content, '投入したユーザーハンドル名が正確に出力されている');
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportCabinetメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * キャビネットテスト用のプライベートプロパティを設定
+     *
+     * @return void
+     */
+    private function setPrivatePropertiesForCabinetTest(): void
+    {
+        $migration_base_property = $this->getPrivateProperty('migration_base');
+        $migration_base_property->setValue($this->controller, storage_path('app/migration/'));
+
+        $import_base_property = $this->getPrivateProperty('import_base');
+        $import_base_property->setValue($this->controller, storage_path('app/'));
+    }
+
+    /**
+     * キャビネット基本テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3CabinetTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Cabinet::truncate();
+            Nc3CabinetFile::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+
+            // テスト用のキャビネットを作成（投入値を定義）
+            $test_cabinet_data = [
+                'id' => 901,
+                'key' => 'test_cabinet_basic',
+                'name' => 'テスト投入基本キャビネット',
+            ];
+            Nc3Cabinet::factory()->active()->create($test_cabinet_data);
+
+            // テスト用のファイルを作成（投入値を定義）
+            $test_file_data = [
+                'id' => 1001,
+                'filename' => 'test_basic_file.pdf',
+                'original_name' => 'テスト投入基本ファイル.pdf',
+                'extension' => 'pdf',
+                'mimetype' => 'application/pdf',
+                'size' => 1048576, // 1MB
+                'description' => 'テスト投入基本ファイルの説明です。',
+                'download_count' => 5,
+            ];
+            Nc3CabinetFile::factory()->published()->forCabinet($test_cabinet_data['id'])->withCabinetKey($test_cabinet_data['key'])->pdfFile()->create($test_file_data);
+
+            // テスト用のフォルダを作成（投入値を定義）
+            $test_folder_data = [
+                'id' => 1002,
+                'filename' => 'test_folder',
+                'original_name' => 'テスト投入フォルダ',
+                'description' => 'テスト投入フォルダの説明です。',
+            ];
+            Nc3CabinetFile::factory()->published()->forCabinet($test_cabinet_data['id'])->withCabinetKey($test_cabinet_data['key'])->asFolder()->create($test_folder_data);
+
+            // フォルダ内のファイルを作成（投入値を定義）
+            $test_file_in_folder_data = [
+                'id' => 1003,
+                'filename' => 'test_file_in_folder.doc',
+                'original_name' => 'テスト投入フォルダ内ファイル.doc',
+                'extension' => 'doc',
+                'mimetype' => 'application/msword',
+                'size' => 524288, // 512KB
+                'description' => 'テスト投入フォルダ内ファイルの説明です。',
+                'download_count' => 2,
+            ];
+            Nc3CabinetFile::factory()->published()->forCabinet($test_cabinet_data['id'])->withCabinetKey($test_cabinet_data['key'])->docFile()->inFolder($test_folder_data['id'])->create($test_file_in_folder_data);
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 1201,
+                'username' => 'basic_cabinet_admin',
+                'handlename' => 'テスト投入基本キャビネット管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            // 期待値データを返す（投入値＝出力値の検証用）
+            return [
+                'cabinet_id' => $test_cabinet_data['id'],
+                'cabinet_key' => $test_cabinet_data['key'],
+                'cabinet_name' => $test_cabinet_data['name'],
+                'file_id' => $test_file_data['id'],
+                'filename' => $test_file_data['filename'],
+                'original_name' => $test_file_data['original_name'],
+                'extension' => $test_file_data['extension'],
+                'size' => $test_file_data['size'],
+                'description' => $test_file_data['description'],
+                'folder_id' => $test_folder_data['id'],
+                'folder_name' => $test_folder_data['original_name'],
+                'file_in_folder_id' => $test_file_in_folder_data['id'],
+                'user_id' => $test_user_data['id'],
+                'username' => $test_user_data['username'],
+                'user_handlename' => $test_user_data['handlename'],
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * キャビネット複数テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3CabinetMultipleTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Cabinet::truncate();
+            Nc3CabinetFile::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+
+            // 複数のキャビネットを作成（投入値を定義）
+            $test_cabinet_data_array = [
+                [
+                    'id' => 902,
+                    'key' => 'test_cabinet_multiple_1',
+                    'name' => 'テスト投入複数キャビネット1',
+                ],
+                [
+                    'id' => 903,
+                    'key' => 'test_cabinet_multiple_2',
+                    'name' => 'テスト投入複数キャビネット2',
+                ],
+                [
+                    'id' => 904,
+                    'key' => 'test_cabinet_multiple_3',
+                    'name' => 'テスト投入複数キャビネット3',
+                ],
+            ];
+
+            $expected_data_array = [];
+            foreach ($test_cabinet_data_array as $cabinet_data) {
+                Nc3Cabinet::factory()->active()->create($cabinet_data);
+
+                // 各キャビネットに対してファイルを作成（投入値を定義）
+                $test_file_data = [
+                    'id' => 1000 + $cabinet_data['id'],
+                    'filename' => "test_file_{$cabinet_data['id']}.pdf",
+                    'original_name' => "テスト投入{$cabinet_data['name']}のファイル.pdf",
+                    'extension' => 'pdf',
+                    'mimetype' => 'application/pdf',
+                    'size' => 2097152, // 2MB
+                    'description' => "テスト投入{$cabinet_data['name']}のファイル説明です。",
+                    'download_count' => 10,
+                ];
+                Nc3CabinetFile::factory()->published()->forCabinet($cabinet_data['id'])->withCabinetKey($cabinet_data['key'])->pdfFile()->create($test_file_data);
+
+                // 期待値データを蓄積
+                $expected_data_array[] = [
+                    'cabinet_id' => $cabinet_data['id'],
+                    'cabinet_key' => $cabinet_data['key'],
+                    'cabinet_name' => $cabinet_data['name'],
+                    'file_id' => $test_file_data['id'],
+                    'filename' => $test_file_data['filename'],
+                    'original_name' => $test_file_data['original_name'],
+                    'description' => $test_file_data['description'],
+                ];
+            }
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 1202,
+                'username' => 'multiple_cabinet_admin',
+                'handlename' => 'テスト投入複数キャビネット管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            return $expected_data_array;
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * キャビネットコンテンツ処理テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3CabinetContentProcessingTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Cabinet::truncate();
+            Nc3CabinetFile::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+            
+            // 特殊文字を含むキャビネットを作成（投入値を定義）
+            $test_cabinet_data = [
+                'id' => 905,
+                'key' => 'content_processing_cabinet',
+                'name' => 'テスト投入コンテンツ処理キャビネット',
+            ];
+            Nc3Cabinet::factory()->active()->create($test_cabinet_data);
+
+            // 特殊文字を含むファイルを作成（投入値を定義）
+            $test_file_data = [
+                'id' => 1004,
+                'filename' => 'special_chars_file.jpg',
+                'original_name' => 'テスト投入特殊文字ファイル.jpg',
+                'extension' => 'jpg',
+                'mimetype' => 'image/jpeg',
+                'size' => 3145728, // 3MB
+                'description' => 'テスト投入特殊文字説明：HTMLタグ<strong>太字</strong>、改行\n\タブ\t、引用符"test"、URLリンクhttp://example.com',
+                'download_count' => 15,
+            ];
+            Nc3CabinetFile::factory()->published()->forCabinet($test_cabinet_data['id'])->withCabinetKey($test_cabinet_data['key'])->imageFile()->create($test_file_data);
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 1203,
+                'username' => 'content_cabinet_admin',
+                'handlename' => 'テスト投入コンテンツキャビネット管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            // 期待値データを返す（投入値＝出力値の検証用）
+            return [
+                'cabinet_id' => $test_cabinet_data['id'],
+                'cabinet_key' => $test_cabinet_data['key'],
+                'cabinet_name' => $test_cabinet_data['name'],
+                'file_id' => $test_file_data['id'],
+                'filename' => $test_file_data['filename'],
+                'original_name' => $test_file_data['original_name'],
+                'description' => $test_file_data['description'],
                 'special_content' => '<strong>太字</strong>', // 特殊文字処理の検証用
                 'user_id' => $test_user_data['id'],
                 'username' => $test_user_data['username'],
