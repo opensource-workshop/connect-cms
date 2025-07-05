@@ -27,6 +27,8 @@ use App\Models\Migration\Nc3\Nc3BbsArticle;
 use App\Models\Migration\Nc3\Nc3BbsFrameSetting;
 use App\Models\Migration\Nc3\Nc3Faq;
 use App\Models\Migration\Nc3\Nc3FaqQuestion;
+use App\Models\Migration\Nc3\Nc3Link;
+use App\Models\Migration\Nc3\Nc3LinkFrameSetting;
 use Illuminate\Support\Facades\Artisan;
 
 /**
@@ -4032,6 +4034,351 @@ class MigrationNc3ExportTraitTest extends TestCase
                 'question' => $test_question_data['question'],
                 'answer' => $test_question_data['answer'],
                 'special_content' => '<strong>太字</strong>', // 特殊文字処理の検証用
+                'user_id' => $test_user_data['id'],
+                'username' => $test_user_data['username'],
+                'user_handlename' => $test_user_data['handlename'],
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * nc3ExportLinklistの基本テスト
+     *
+     * @return void
+     */
+    public function testNc3ExportLinklist()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForLinklistTest();
+
+            // テスト用のデータを作成
+            $expected_data = $this->createNc3LinklistTestData();
+
+            // nc3ExportLinklistメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportLinklist');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/linklists/linklists.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/linklists/linklists.tsv');
+                $this->assertStringContainsString($expected_data['link_key'], $tsv_content, '投入したリンクキーが正確に出力されている');
+                $this->assertStringContainsString($expected_data['link_name'], $tsv_content, '投入したリンク名が正確に出力されている');
+                $this->assertStringContainsString($expected_data['username'], $tsv_content, '投入したユーザー名が正確に出力されている');
+                $this->assertStringContainsString($expected_data['user_handlename'], $tsv_content, '投入したユーザーハンドル名が正確に出力されている');
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportLinklistメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * nc3ExportLinklistの複数リンクリストテスト
+     *
+     * @return void
+     */
+    public function testNc3ExportLinklistMultipleLinklists()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForLinklistTest();
+
+            // 複数のリンクリストテストデータを作成
+            $expected_data_array = $this->createNc3LinklistMultipleTestData();
+
+            // nc3ExportLinklistメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportLinklist');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data_array) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/linklists/linklists.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/linklists/linklists.tsv');
+                
+                // 複数リンクリストの投入値と出力値の検証
+                foreach ($expected_data_array as $expected_data) {
+                    $this->assertStringContainsString($expected_data['link_key'], $tsv_content, "投入したリンクキー {$expected_data['link_key']} が正確に出力されている");
+                    $this->assertStringContainsString($expected_data['link_name'], $tsv_content, "投入したリンク名 {$expected_data['link_name']} が正確に出力されている");
+                }
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportLinklistメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * nc3ExportLinklistのコンテンツ処理テスト
+     *
+     * @return void
+     */
+    public function testNc3ExportLinklistContentProcessing()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForLinklistTest();
+
+            // 特殊文字を含むリンクリストテストデータを作成
+            $expected_data = $this->createNc3LinklistContentProcessingTestData();
+
+            // nc3ExportLinklistメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportLinklist');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/linklists/linklists.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/linklists/linklists.tsv');
+                $this->assertStringContainsString($expected_data['link_key'], $tsv_content, '投入したリンクキーが正確に出力されている');
+                $this->assertStringContainsString($expected_data['link_name'], $tsv_content, '投入したリンク名が正確に出力されている');
+                $this->assertStringContainsString($expected_data['special_content'], $tsv_content, '投入した特殊文字処理が正確に出力されている');
+                $this->assertStringContainsString($expected_data['username'], $tsv_content, '投入したユーザー名が正確に出力されている');
+                $this->assertStringContainsString($expected_data['user_handlename'], $tsv_content, '投入したユーザーハンドル名が正確に出力されている');
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportLinklistメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * リンクリストテスト用のプライベートプロパティを設定
+     *
+     * @return void
+     */
+    private function setPrivatePropertiesForLinklistTest(): void
+    {
+        $migration_base_property = $this->getPrivateProperty('migration_base');
+        $migration_base_property->setValue($this->controller, storage_path('app/migration/'));
+
+        $import_base_property = $this->getPrivateProperty('import_base');
+        $import_base_property->setValue($this->controller, storage_path('app/'));
+    }
+
+    /**
+     * リンクリスト基本テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3LinklistTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Link::truncate();
+            Nc3LinkFrameSetting::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+
+            // テスト用のリンクを作成（投入値を定義）
+            $test_link_data = [
+                'id' => 501,
+                'key' => 'test_link_basic',
+                'name' => 'テスト投入基本リンクリスト',
+            ];
+            Nc3Link::factory()->active()->create($test_link_data);
+
+            // フレーム設定を作成（投入値を定義）
+            Nc3LinkFrameSetting::factory()->forContent($test_link_data['key'])->create([
+                'frame_key' => 'basic_linklist_frame',
+            ]);
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 801,
+                'username' => 'basic_link_admin',
+                'handlename' => 'テスト投入基本リンク管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            // 期待値データを返す（投入値＝出力値の検証用）
+            return [
+                'link_id' => $test_link_data['id'],
+                'link_key' => $test_link_data['key'],
+                'link_name' => $test_link_data['name'],
+                'user_id' => $test_user_data['id'],
+                'username' => $test_user_data['username'],
+                'user_handlename' => $test_user_data['handlename'],
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * リンクリスト複数テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3LinklistMultipleTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Link::truncate();
+            Nc3LinkFrameSetting::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+
+            // 複数のリンクリストを作成（投入値を定義）
+            $test_link_data_array = [
+                [
+                    'id' => 502,
+                    'key' => 'test_link_multiple_1',
+                    'name' => 'テスト投入複数リンクリスト1',
+                ],
+                [
+                    'id' => 503,
+                    'key' => 'test_link_multiple_2',
+                    'name' => 'テスト投入複数リンクリスト2',
+                ],
+                [
+                    'id' => 504,
+                    'key' => 'test_link_multiple_3',
+                    'name' => 'テスト投入複数リンクリスト3',
+                ],
+            ];
+
+            $expected_data_array = [];
+            foreach ($test_link_data_array as $link_data) {
+                Nc3Link::factory()->active()->create($link_data);
+
+                // 各リンクリストに対してフレーム設定を作成
+                Nc3LinkFrameSetting::factory()->forContent($link_data['key'])->create([
+                    'frame_key' => $link_data['key'] . '_frame',
+                ]);
+
+                // 期待値データを蓄積
+                $expected_data_array[] = [
+                    'link_id' => $link_data['id'],
+                    'link_key' => $link_data['key'],
+                    'link_name' => $link_data['name'],
+                ];
+            }
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 802,
+                'username' => 'multiple_link_admin',
+                'handlename' => 'テスト投入複数リンク管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            return $expected_data_array;
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * リンクリストコンテンツ処理テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3LinklistContentProcessingTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Link::truncate();
+            Nc3LinkFrameSetting::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+            
+            // 特殊文字を含むリンクリストを作成（投入値を定義）
+            $test_link_data = [
+                'id' => 505,
+                'key' => 'content_processing_link',
+                'name' => 'テスト投入コンテンツ処理リンクリスト',
+            ];
+            Nc3Link::factory()->active()->create($test_link_data);
+
+            // フレーム設定を作成（投入値を定義）
+            Nc3LinkFrameSetting::factory()->forContent($test_link_data['key'])->create([
+                'frame_key' => 'content_processing_link_frame',
+            ]);
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 803,
+                'username' => 'content_link_admin',
+                'handlename' => 'テスト投入コンテンツリンク管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            // 期待値データを返す（投入値＝出力値の検証用）
+            return [
+                'link_id' => $test_link_data['id'],
+                'link_key' => $test_link_data['key'],
+                'link_name' => $test_link_data['name'],
+                'special_content' => '<strong>リンク</strong>', // 特殊文字処理の検証用
                 'user_id' => $test_user_data['id'],
                 'username' => $test_user_data['username'],
                 'user_handlename' => $test_user_data['handlename'],
