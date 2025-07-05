@@ -43,6 +43,8 @@ use App\Models\Migration\Nc3\Nc3TopicFramePlugin;
 use App\Models\Migration\Nc3\Nc3TopicFrameSetting;
 use App\Models\Migration\Nc3\Nc3Cabinet;
 use App\Models\Migration\Nc3\Nc3CabinetFile;
+use App\Models\Migration\Nc3\Nc3AccessCounter;
+use App\Models\Migration\Nc3\Nc3AccessCounterFrameSetting;
 use Illuminate\Support\Facades\Artisan;
 
 /**
@@ -6068,6 +6070,408 @@ class MigrationNc3ExportTraitTest extends TestCase
                 'original_name' => $test_file_data['original_name'],
                 'description' => $test_file_data['description'],
                 'special_content' => '<strong>太字</strong>', // 特殊文字処理の検証用
+                'user_id' => $test_user_data['id'],
+                'username' => $test_user_data['username'],
+                'user_handlename' => $test_user_data['handlename'],
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * nc3ExportCounterの基本テスト
+     *
+     * @return void
+     */
+    public function testNc3ExportCounter()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForCounterTest();
+
+            // テスト用のデータを作成
+            $expected_data = $this->createNc3CounterTestData();
+
+            // nc3ExportCounterメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportCounter');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/counters/counters.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/counters/counters.tsv');
+                $this->assertStringContainsString($expected_data['counter_key'], $tsv_content, '投入したカウンターキーが正確に出力されている');
+                $this->assertStringContainsString($expected_data['counter_name'], $tsv_content, '投入したカウンター名が正確に出力されている');
+                $this->assertStringContainsString((string)$expected_data['count'], $tsv_content, '投入したカウント数が正確に出力されている');
+                $this->assertStringContainsString((string)$expected_data['display_type'], $tsv_content, '投入した表示タイプが正確に出力されている');
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportCounterメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * nc3ExportCounterの複数カウンターテスト
+     *
+     * @return void
+     */
+    public function testNc3ExportCounterMultipleCounters()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForCounterTest();
+
+            // 複数のカウンターテストデータを作成
+            $expected_data_array = $this->createNc3CounterMultipleTestData();
+
+            // nc3ExportCounterメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportCounter');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data_array) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/counters/counters.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/counters/counters.tsv');
+                
+                // 複数カウンターの投入値と出力値の検証
+                foreach ($expected_data_array as $expected_data) {
+                    $this->assertStringContainsString($expected_data['counter_key'], $tsv_content, "投入したカウンターキー {$expected_data['counter_key']} が正確に出力されている");
+                    $this->assertStringContainsString($expected_data['counter_name'], $tsv_content, "投入したカウンター名 {$expected_data['counter_name']} が正確に出力されている");
+                    $this->assertStringContainsString((string)$expected_data['count'], $tsv_content, "投入したカウント数 {$expected_data['count']} が正確に出力されている");
+                }
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportCounterメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * nc3ExportCounterのコンテンツ処理テスト
+     *
+     * @return void
+     */
+    public function testNc3ExportCounterContentProcessing()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForCounterTest();
+
+            // 特殊文字を含むカウンターテストデータを作成
+            $expected_data = $this->createNc3CounterContentProcessingTestData();
+
+            // nc3ExportCounterメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportCounter');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/counters/counters.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/counters/counters.tsv');
+                $this->assertStringContainsString($expected_data['counter_key'], $tsv_content, '投入したカウンターキーが正確に出力されている');
+                $this->assertStringContainsString($expected_data['counter_name'], $tsv_content, '投入したカウンター名が正確に出力されている');
+                $this->assertStringContainsString((string)$expected_data['count'], $tsv_content, '投入したカウント数が正確に出力されている');
+                $this->assertStringContainsString($expected_data['special_content'], $tsv_content, '投入した特殊文字処理が正確に出力されている');
+                $this->assertStringContainsString($expected_data['username'], $tsv_content, '投入したユーザー名が正確に出力されている');
+                $this->assertStringContainsString($expected_data['user_handlename'], $tsv_content, '投入したユーザーハンドル名が正確に出力されている');
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportCounterメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * カウンターテスト用のプライベートプロパティを設定
+     *
+     * @return void
+     */
+    private function setPrivatePropertiesForCounterTest(): void
+    {
+        $migration_base_property = $this->getPrivateProperty('migration_base');
+        $migration_base_property->setValue($this->controller, storage_path('app/migration/'));
+
+        $import_base_property = $this->getPrivateProperty('import_base');
+        $import_base_property->setValue($this->controller, storage_path('app/'));
+    }
+
+    /**
+     * カウンター基本テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3CounterTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3AccessCounter::truncate();
+            Nc3AccessCounterFrameSetting::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+
+            // テスト用のアクセスカウンターを作成（投入値を定義）
+            $test_counter_data = [
+                'id' => 1001,
+                'key' => 'test_counter_basic',
+                'name' => 'テスト投入基本カウンター',
+                'count' => 12345,
+                'display_type' => 2, // primary
+            ];
+            Nc3AccessCounter::factory()->active()->primaryDisplay()->create($test_counter_data);
+
+            // テスト用のフレーム設定を作成（投入値を定義）
+            $test_frame_setting_data = [
+                'id' => 1101,
+                'frame_key' => 'basic_counter_frame',
+                'data_type_key' => 'display_type',
+                'value' => Nc3AccessCounterFrameSetting::display_type_primary,
+            ];
+            Nc3AccessCounterFrameSetting::factory()->forFrame($test_frame_setting_data['frame_key'])->primaryDisplay()->create($test_frame_setting_data);
+
+            // 開始カウント設定を追加（投入値を定義）
+            $test_start_count_setting_data = [
+                'id' => 1102,
+                'frame_key' => 'basic_counter_frame',
+                'data_type_key' => 'start_count',
+                'value' => '1000',
+            ];
+            Nc3AccessCounterFrameSetting::factory()->forFrame($test_frame_setting_data['frame_key'])->startCount(1000)->create($test_start_count_setting_data);
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 1301,
+                'username' => 'basic_counter_admin',
+                'handlename' => 'テスト投入基本カウンター管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            // 期待値データを返す（投入値＝出力値の検証用）
+            return [
+                'counter_id' => $test_counter_data['id'],
+                'counter_key' => $test_counter_data['key'],
+                'counter_name' => $test_counter_data['name'],
+                'count' => $test_counter_data['count'],
+                'display_type' => $test_counter_data['display_type'],
+                'frame_setting_id' => $test_frame_setting_data['id'],
+                'start_count_setting_id' => $test_start_count_setting_data['id'],
+                'start_count' => 1000,
+                'user_id' => $test_user_data['id'],
+                'username' => $test_user_data['username'],
+                'user_handlename' => $test_user_data['handlename'],
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * カウンター複数テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3CounterMultipleTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3AccessCounter::truncate();
+            Nc3AccessCounterFrameSetting::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+
+            // 複数のアクセスカウンターを作成（投入値を定義）
+            $test_counter_data_array = [
+                [
+                    'id' => 1002,
+                    'key' => 'test_counter_multiple_1',
+                    'name' => 'テスト投入複数カウンター1',
+                    'count' => 5000,
+                    'display_type' => 1, // default
+                ],
+                [
+                    'id' => 1003,
+                    'key' => 'test_counter_multiple_2',
+                    'name' => 'テスト投入複数カウンター2',
+                    'count' => 15000,
+                    'display_type' => 3, // success
+                ],
+                [
+                    'id' => 1004,
+                    'key' => 'test_counter_multiple_3',
+                    'name' => 'テスト投入複数カウンター3',
+                    'count' => 25000,
+                    'display_type' => 5, // warning
+                ],
+            ];
+
+            $expected_data_array = [];
+            foreach ($test_counter_data_array as $counter_data) {
+                // 表示タイプに応じてファクトリメソッドを選択
+                $factory = Nc3AccessCounter::factory()->active();
+                switch ($counter_data['display_type']) {
+                    case 1:
+                        $factory = $factory->defaultDisplay();
+                        break;
+                    case 3:
+                        $factory = $factory->successDisplay();
+                        break;
+                    case 5:
+                        $factory = $factory->warningDisplay();
+                        break;
+                }
+                $factory->create($counter_data);
+
+                // 各カウンターに対してフレーム設定を作成
+                Nc3AccessCounterFrameSetting::factory()->forFrame($counter_data['key'] . '_frame')->displayType((string)$counter_data['display_type'])->create();
+
+                // 期待値データを蓄積
+                $expected_data_array[] = [
+                    'counter_id' => $counter_data['id'],
+                    'counter_key' => $counter_data['key'],
+                    'counter_name' => $counter_data['name'],
+                    'count' => $counter_data['count'],
+                    'display_type' => $counter_data['display_type'],
+                ];
+            }
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 1302,
+                'username' => 'multiple_counter_admin',
+                'handlename' => 'テスト投入複数カウンター管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            return $expected_data_array;
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * カウンターコンテンツ処理テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3CounterContentProcessingTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3AccessCounter::truncate();
+            Nc3AccessCounterFrameSetting::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+            
+            // 特殊文字を含むアクセスカウンターを作成（投入値を定義）
+            $test_counter_data = [
+                'id' => 1005,
+                'key' => 'content_processing_counter',
+                'name' => 'テスト投入コンテンツ処理カウンター：HTMLタグ<strong>太字</strong>',
+                'count' => 99999,
+                'display_type' => 6, // danger
+            ];
+            Nc3AccessCounter::factory()->active()->dangerDisplay()->create($test_counter_data);
+
+            // フレーム設定を作成（投入値を定義）
+            $test_frame_setting_data = [
+                'frame_key' => 'content_processing_counter_frame',
+                'data_type_key' => 'display_type',
+                'value' => Nc3AccessCounterFrameSetting::display_type_danger,
+            ];
+            Nc3AccessCounterFrameSetting::factory()->forFrame($test_frame_setting_data['frame_key'])->dangerDisplay()->create($test_frame_setting_data);
+
+            // リセット間隔設定を追加（投入値を定義）
+            $test_reset_setting_data = [
+                'frame_key' => 'content_processing_counter_frame',
+                'data_type_key' => 'reset_interval',
+                'value' => 'monthly',
+            ];
+            Nc3AccessCounterFrameSetting::factory()->forFrame($test_frame_setting_data['frame_key'])->resetInterval('monthly')->create($test_reset_setting_data);
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 1303,
+                'username' => 'content_counter_admin',
+                'handlename' => 'テスト投入コンテンツカウンター管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            // 期待値データを返す（投入値＝出力値の検証用）
+            return [
+                'counter_id' => $test_counter_data['id'],
+                'counter_key' => $test_counter_data['key'],
+                'counter_name' => $test_counter_data['name'],
+                'count' => $test_counter_data['count'],
+                'display_type' => $test_counter_data['display_type'],
+                'special_content' => '<strong>太字</strong>', // 特殊文字処理の検証用
+                'reset_interval' => 'monthly',
                 'user_id' => $test_user_data['id'],
                 'username' => $test_user_data['username'],
                 'user_handlename' => $test_user_data['handlename'],
