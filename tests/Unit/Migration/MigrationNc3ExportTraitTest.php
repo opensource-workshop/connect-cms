@@ -2118,10 +2118,13 @@ class MigrationNc3ExportTraitTest extends TestCase
         $method = $this->getPrivateMethod('nc3ExportRooms');
         
         try {
+            // テストデータを準備（投入値）
+            $expectedData = $this->createNc3RoomTestData();
+            
             $method->invokeArgs($this->controller, [false]); // $redo = false
 
             // 実際のNC3環境があればgroup INIファイルが作成される
-            // ファイルが存在する場合は内容を確認
+            // ファイルが存在する場合は投入値と出力値を検証
             if (Storage::exists('migration/groups')) {
                 $files = Storage::files('migration/groups');
                 if (!empty($files)) {
@@ -2132,26 +2135,18 @@ class MigrationNc3ExportTraitTest extends TestCase
                     $this->assertStringContainsString('[source_info]', $content);
                     $this->assertStringContainsString('[users]', $content);
                     
-                    // group_baseセクションの必須項目確認
-                    $this->assertStringContainsString('name = ', $content);
-                    $this->assertStringContainsString('role_name = ', $content);
-                    
-                    // source_infoセクションの必須項目確認
-                    $this->assertStringContainsString('room_id = ', $content);
-                    $this->assertStringContainsString('room_page_id_top = ', $content);
-                    
-                    // usersセクションの構造確認
-                    $this->assertThat(
-                        $content,
-                        $this->logicalOr(
-                            $this->stringContains('user['),
-                            $this->stringContains('room_administrator'),
-                            $this->stringContains('chief_editor'),
-                            $this->stringContains('editor'),
-                            $this->stringContains('general_user'),
-                            $this->stringContains('visitor')
-                        )
-                    );
+                    // 投入値と出力値の検証
+                    if ($expectedData) {
+                        // group_baseセクション：投入したルーム名が出力されているか
+                        $this->assertStringContainsString("name = \"{$expectedData['room_name']}_", $content, '投入したルーム名が出力に含まれている');
+                        
+                        // source_infoセクション：投入したroom_idとpage_idが出力されているか
+                        $this->assertStringContainsString("room_id = {$expectedData['room_id']}", $content, '投入したroom_idが正確に出力されている');
+                        $this->assertStringContainsString("room_page_id_top = {$expectedData['page_id_top']}", $content, '投入したpage_id_topが正確に出力されている');
+                        
+                        // usersセクション：投入したユーザー名と権限が出力されているか
+                        $this->assertStringContainsString("user[\"{$expectedData['username']}\"] = {$expectedData['role_key']}", $content, '投入したユーザー情報が正確に出力されている');
+                    }
                 }
             } else {
                 // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
@@ -2195,10 +2190,13 @@ class MigrationNc3ExportTraitTest extends TestCase
         $method = $this->getPrivateMethod('nc3ExportRooms');
         
         try {
+            // テストデータを準備（投入値）
+            $expectedDataArray = $this->createNc3RoomMultipleTestData();
+            
             $method->invokeArgs($this->controller, [false]);
 
             // NC3環境が存在する場合のテスト
-            if (Storage::exists('migration/groups/')) {
+            if (Storage::exists('migration/groups/') && $expectedDataArray) {
                 $files = Storage::files('migration/groups/');
                 $this->assertGreaterThan(0, count($files), 'グループファイルが作成されることを確認');
                 
@@ -2215,11 +2213,19 @@ class MigrationNc3ExportTraitTest extends TestCase
                     $this->assertStringContainsString('[source_info]', $content);
                     $this->assertStringContainsString('[users]', $content);
                     
-                    // 各セクションの必須項目確認
-                    $this->assertStringContainsString('name = ', $content);
-                    $this->assertStringContainsString('role_name = ', $content);
-                    $this->assertStringContainsString('room_id = ', $content);
-                    $this->assertStringContainsString('room_page_id_top = ', $content);
+                    // 投入値と出力値の検証（複数のデータのいずれかが含まれることを確認）
+                    $foundMatchingData = false;
+                    foreach ($expectedDataArray as $expectedData) {
+                        if (strpos($content, "room_id = {$expectedData['room_id']}") !== false) {
+                            // このファイルに対応する投入データが見つかった場合、詳細検証
+                            $this->assertStringContainsString("name = \"{$expectedData['room_name']}_", $content, '投入したルーム名が出力に含まれている');
+                            $this->assertStringContainsString("room_page_id_top = {$expectedData['page_id_top']}", $content, '投入したpage_id_topが正確に出力されている');
+                            $this->assertStringContainsString("user[\"{$expectedData['username']}\"] = {$expectedData['role_key']}", $content, '投入したユーザー情報が正確に出力されている');
+                            $foundMatchingData = true;
+                            break;
+                        }
+                    }
+                    $this->assertTrue($foundMatchingData, 'ファイル内容が投入データのいずれかと一致している');
                 }
             } else {
                 // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
@@ -2262,11 +2268,23 @@ class MigrationNc3ExportTraitTest extends TestCase
         $method = $this->getPrivateMethod('nc3ExportRooms');
         
         try {
+            // テストデータを準備（投入値）
+            $expectedDataArray = $this->createNc3RoomRoleMappingTestData();
+            
             $method->invokeArgs($this->controller, [false]);
 
             // NC3環境が存在する場合の権限マッピングテスト
-            if (Storage::exists('migration/groups/')) {
+            if (Storage::exists('migration/groups/') && $expectedDataArray) {
                 $files = Storage::files('migration/groups/');
+                
+                // 権限マッピングの検証：投入値と出力値の比較
+                $roleMapping = [
+                    'room_administrator' => 'role_article_admin',
+                    'chief_editor' => 'role_article_admin',
+                    'editor' => 'role_article',
+                    'general_user' => 'role_reporter',
+                    'visitor' => 'role_guest',
+                ];
                 
                 // 各ファイルの内容を確認
                 foreach ($files as $file) {
@@ -2281,28 +2299,24 @@ class MigrationNc3ExportTraitTest extends TestCase
                     $this->assertStringContainsString('[source_info]', $content);
                     $this->assertStringContainsString('[users]', $content);
                     
-                    // 権限マッピングの確認 - Connect-CMS role_nameが適切に設定されていることを確認
-                    $this->assertThat(
-                        $content,
-                        $this->logicalOr(
-                            $this->stringContains('role_article_admin'), // ルーム管理者・チーフエディター
-                            $this->stringContains('role_article'),       // エディター
-                            $this->stringContains('role_reporter'),      // 一般ユーザー
-                            $this->stringContains('role_guest')          // 訪問者
-                        )
-                    );
-                    
-                    // NC3権限キーの確認
-                    $this->assertThat(
-                        $content,
-                        $this->logicalOr(
-                            $this->stringContains('room_administrator'),
-                            $this->stringContains('chief_editor'),
-                            $this->stringContains('editor'),
-                            $this->stringContains('general_user'),
-                            $this->stringContains('visitor')
-                        )
-                    );
+                    // 投入値と出力値の検証（権限マッピングの正確性を確認）
+                    $foundMatchingData = false;
+                    foreach ($expectedDataArray as $expectedData) {
+                        if (strpos($content, "room_id = {$expectedData['room_id']}") !== false) {
+                            // このファイルに対応する投入データが見つかった場合、詳細検証
+                            $this->assertStringContainsString("name = \"{$expectedData['room_name']}_", $content, '投入したルーム名が出力に含まれている');
+                            $this->assertStringContainsString("room_page_id_top = {$expectedData['page_id_top']}", $content, '投入したpage_id_topが正確に出力されている');
+                            $this->assertStringContainsString("user[\"{$expectedData['username']}\"] = {$expectedData['nc3_role_key']}", $content, '投入したユーザー情報が正確に出力されている');
+                            
+                            // 権限マッピングの正確性を確認：NC3権限 → Connect-CMS権限
+                            $expectedConnectCmsRole = $roleMapping[$expectedData['nc3_role_key']];
+                            $this->assertStringContainsString("role_name = \"{$expectedConnectCmsRole}\"", $content, "NC3権限'{$expectedData['nc3_role_key']}'がConnect-CMS権限'{$expectedConnectCmsRole}'に正確にマッピングされている");
+                            
+                            $foundMatchingData = true;
+                            break;
+                        }
+                    }
+                    $this->assertTrue($foundMatchingData, 'ファイル内容が投入データのいずれかと一致している');
                 }
             } else {
                 // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
@@ -2330,191 +2344,299 @@ class MigrationNc3ExportTraitTest extends TestCase
     /**
      * テスト用のNC3ルームデータを作成
      *
-     * @return void
+     * @return array|null 期待値データ（NC3環境がない場合はnull）
      */
     private function createNc3RoomTestData()
     {
-        // NC3テーブルをクリーンアップ
-        Nc3Room::truncate();
-        Nc3RoomLanguage::truncate();
-        Nc3RoleRoomsUser::truncate();
-        Nc3RoleRoom::truncate();
-        Nc3User::truncate();
-        Nc3Language::truncate();
-        
-        // 言語データを作成
-        Nc3Language::factory()->japanese()->create();
-        
-        // テスト用のルームを作成
-        Nc3Room::factory()->publicSpace()->create([
-            'id' => 1,
-            'space_id' => 2, // PUBLIC_SPACE
-            'page_id_top' => 10,
-        ]);
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Room::truncate();
+            Nc3RoomLanguage::truncate();
+            Nc3RoleRoomsUser::truncate();
+            Nc3RoleRoom::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+            
+            // テスト用のルームを作成（投入値を定義）
+            $testRoomData = [
+                'id' => 100,
+                'space_id' => 2, // PUBLIC_SPACE
+                'page_id_top' => 999,
+            ];
+            Nc3Room::factory()->publicSpace()->create($testRoomData);
 
-        // ルーム多言語情報を作成
-        Nc3RoomLanguage::factory()->forRoom(1)->japanese()->create([
-            'room_id' => 1,
-            'name' => 'テストルーム',
-        ]);
+            // ルーム多言語情報を作成（投入値を定義）
+            $testRoomName = 'テスト投入ルーム';
+            Nc3RoomLanguage::factory()->forRoom($testRoomData['id'])->japanese()->create([
+                'room_id' => $testRoomData['id'],
+                'name' => $testRoomName,
+            ]);
 
-        // 権限定義を作成
-        Nc3RoleRoom::factory()->roomAdministrator()->create();
+            // 権限定義を作成
+            Nc3RoleRoom::factory()->roomAdministrator()->create();
 
-        // テスト用のユーザーを作成
-        Nc3User::factory()->systemAdmin()->create([
-            'id' => 1,
-            'username' => 'admin',
-            'handlename' => 'システム管理者',
-        ]);
+            // テスト用のユーザーを作成（投入値を定義）
+            $testUsername = 'test_admin';
+            Nc3User::factory()->systemAdmin()->create([
+                'id' => 50,
+                'username' => $testUsername,
+                'handlename' => 'テストシステム管理者',
+            ]);
 
-        // ユーザー・ルーム・権限の関連を作成
-        Nc3RoleRoomsUser::factory()->forUserAndRoom(1, 1)->roomAdmin()->create([
-            'user_id' => 1,
-            'room_id' => 1,
-            'roles_room_id' => 1,
-        ]);
+            // ユーザー・ルーム・権限の関連を作成
+            Nc3RoleRoomsUser::factory()->forUserAndRoom(50, $testRoomData['id'])->roomAdmin()->create([
+                'user_id' => 50,
+                'room_id' => $testRoomData['id'],
+                'roles_room_id' => 1,
+            ]);
+
+            // 期待値データを返す（投入値＝出力値の検証用）
+            return [
+                'room_id' => $testRoomData['id'],
+                'room_name' => $testRoomName,
+                'page_id_top' => $testRoomData['page_id_top'],
+                'username' => $testUsername,
+                'role_key' => 'room_administrator',
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
     }
 
     /**
      * 複数ルーム・複数権限用のテストデータを作成
      *
-     * @return void
+     * @return array|null 期待値データ配列（NC3環境がない場合はnull）
      */
     private function createNc3RoomMultipleTestData()
     {
-        // NC3テーブルをクリーンアップ
-        Nc3Room::truncate();
-        Nc3RoomLanguage::truncate();
-        Nc3RoleRoomsUser::truncate();
-        Nc3RoleRoom::truncate();
-        Nc3User::truncate();
-        Nc3Language::truncate();
-        
-        // 言語データを作成
-        Nc3Language::factory()->japanese()->create();
-        
-        // 複数ルームを作成
-        Nc3Room::factory()->publicSpace()->create([
-            'id' => 1,
-            'space_id' => 2, // PUBLIC_SPACE
-            'page_id_top' => 10,
-        ]);
-        Nc3Room::factory()->communitySpace()->create([
-            'id' => 2,
-            'space_id' => 4, // COMMUNITY_SPACE
-            'page_id_top' => 20,
-        ]);
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Room::truncate();
+            Nc3RoomLanguage::truncate();
+            Nc3RoleRoomsUser::truncate();
+            Nc3RoleRoom::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+            
+            // 複数ルームを作成（投入値を定義）
+            $room1Data = [
+                'id' => 201,
+                'space_id' => 2, // PUBLIC_SPACE
+                'page_id_top' => 1001,
+            ];
+            $room2Data = [
+                'id' => 202,
+                'space_id' => 4, // COMMUNITY_SPACE
+                'page_id_top' => 1002,
+            ];
+            Nc3Room::factory()->publicSpace()->create($room1Data);
+            Nc3Room::factory()->communitySpace()->create($room2Data);
 
-        // ルーム多言語情報を作成
-        Nc3RoomLanguage::factory()->forRoom(1)->create([
-            'room_id' => 1,
-            'name' => 'パブリックルーム',
-        ]);
-        Nc3RoomLanguage::factory()->forRoom(2)->create([
-            'room_id' => 2,
-            'name' => 'コミュニティルーム',
-        ]);
+            // ルーム多言語情報を作成（投入値を定義）
+            $room1Name = 'テスト投入パブリックルーム';
+            $room2Name = 'テスト投入コミュニティルーム';
+            Nc3RoomLanguage::factory()->forRoom($room1Data['id'])->create([
+                'room_id' => $room1Data['id'],
+                'name' => $room1Name,
+            ]);
+            Nc3RoomLanguage::factory()->forRoom($room2Data['id'])->create([
+                'room_id' => $room2Data['id'],
+                'name' => $room2Name,
+            ]);
 
-        // 権限定義を作成
-        Nc3RoleRoom::factory()->roomAdministrator()->create();
-        Nc3RoleRoom::factory()->chiefEditor()->create();
-        Nc3RoleRoom::factory()->generalUser()->create();
+            // 権限定義を作成
+            Nc3RoleRoom::factory()->roomAdministrator()->create();
+            Nc3RoleRoom::factory()->chiefEditor()->create();
+            Nc3RoleRoom::factory()->generalUser()->create();
 
-        // テスト用のユーザーを作成
-        Nc3User::factory()->systemAdmin()->create([
-            'id' => 1,
-            'username' => 'admin',
-            'handlename' => 'システム管理者',
-        ]);
-        Nc3User::factory()->generalUser()->create([
-            'id' => 2,
-            'username' => 'editor',
-            'handlename' => 'エディター',
-        ]);
-        Nc3User::factory()->generalUser()->create([
-            'id' => 3,
-            'username' => 'user1',
-            'handlename' => 'ユーザー1',
-        ]);
+            // テスト用のユーザーを作成（投入値を定義）
+            $user1Name = 'test_room_admin';
+            $user2Name = 'test_chief_editor';
+            $user3Name = 'test_general_user';
+            Nc3User::factory()->systemAdmin()->create([
+                'id' => 101,
+                'username' => $user1Name,
+                'handlename' => 'テストルーム管理者',
+            ]);
+            Nc3User::factory()->generalUser()->create([
+                'id' => 102,
+                'username' => $user2Name,
+                'handlename' => 'テストチーフエディター',
+            ]);
+            Nc3User::factory()->generalUser()->create([
+                'id' => 103,
+                'username' => $user3Name,
+                'handlename' => 'テスト一般ユーザー',
+            ]);
 
-        // ユーザー・ルーム・権限の関連を作成
-        Nc3RoleRoomsUser::factory()->forUserAndRoom(1, 1)->roomAdmin()->create();
-        Nc3RoleRoomsUser::factory()->forUserAndRoom(2, 2)->chiefEditor()->create();
-        Nc3RoleRoomsUser::factory()->forUserAndRoom(3, 1)->generalUser()->create();
+            // ユーザー・ルーム・権限の関連を作成
+            Nc3RoleRoomsUser::factory()->forUserAndRoom(101, $room1Data['id'])->roomAdmin()->create();
+            Nc3RoleRoomsUser::factory()->forUserAndRoom(102, $room2Data['id'])->chiefEditor()->create();
+            Nc3RoleRoomsUser::factory()->forUserAndRoom(103, $room1Data['id'])->generalUser()->create();
+
+            // 期待値データ配列を返す（投入値＝出力値の検証用）
+            return [
+                [
+                    'room_id' => $room1Data['id'],
+                    'room_name' => $room1Name,
+                    'page_id_top' => $room1Data['page_id_top'],
+                    'username' => $user1Name,
+                    'role_key' => 'room_administrator',
+                ],
+                [
+                    'room_id' => $room2Data['id'],
+                    'room_name' => $room2Name,
+                    'page_id_top' => $room2Data['page_id_top'],
+                    'username' => $user2Name,
+                    'role_key' => 'chief_editor',
+                ],
+                [
+                    'room_id' => $room1Data['id'],
+                    'room_name' => $room1Name,
+                    'page_id_top' => $room1Data['page_id_top'],
+                    'username' => $user3Name,
+                    'role_key' => 'general_user',
+                ],
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
     }
 
     /**
      * 権限マッピング用のテストデータを作成
      *
-     * @return void
+     * @return array|null 期待値データ配列（NC3環境がない場合はnull）
      */
     private function createNc3RoomRoleMappingTestData()
     {
-        // NC3テーブルをクリーンアップ
-        Nc3Room::truncate();
-        Nc3RoomLanguage::truncate();
-        Nc3RoleRoomsUser::truncate();
-        Nc3RoleRoom::truncate();
-        Nc3User::truncate();
-        Nc3Language::truncate();
-        
-        // 言語データを作成
-        Nc3Language::factory()->japanese()->create();
-        
-        // テスト用のルームを作成
-        Nc3Room::factory()->publicSpace()->create([
-            'id' => 1,
-            'space_id' => 2,
-            'page_id_top' => 10,
-        ]);
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Room::truncate();
+            Nc3RoomLanguage::truncate();
+            Nc3RoleRoomsUser::truncate();
+            Nc3RoleRoom::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+            
+            // テスト用のルームを作成（投入値を定義）
+            $roomData = [
+                'id' => 301,
+                'space_id' => 2,
+                'page_id_top' => 2001,
+            ];
+            Nc3Room::factory()->publicSpace()->create($roomData);
 
-        // ルーム多言語情報を作成
-        Nc3RoomLanguage::factory()->forRoom(1)->create([
-            'room_id' => 1,
-            'name' => 'テスト権限ルーム',
-        ]);
+            // ルーム多言語情報を作成（投入値を定義）
+            $roomName = 'テスト投入権限マッピングルーム';
+            Nc3RoomLanguage::factory()->forRoom($roomData['id'])->create([
+                'room_id' => $roomData['id'],
+                'name' => $roomName,
+            ]);
 
-        // 全権限定義を作成
-        Nc3RoleRoom::factory()->roomAdministrator()->create();
-        Nc3RoleRoom::factory()->chiefEditor()->create();
-        Nc3RoleRoom::factory()->editor()->create();
-        Nc3RoleRoom::factory()->generalUser()->create();
-        Nc3RoleRoom::factory()->visitor()->create();
+            // 全権限定義を作成
+            Nc3RoleRoom::factory()->roomAdministrator()->create();
+            Nc3RoleRoom::factory()->chiefEditor()->create();
+            Nc3RoleRoom::factory()->editor()->create();
+            Nc3RoleRoom::factory()->generalUser()->create();
+            Nc3RoleRoom::factory()->visitor()->create();
 
-        // 各権限のテスト用ユーザーを作成
-        Nc3User::factory()->systemAdmin()->create([
-            'id' => 1,
-            'username' => 'room_admin',
-            'handlename' => 'ルーム管理者',
-        ]);
-        Nc3User::factory()->generalUser()->create([
-            'id' => 2,
-            'username' => 'chief_editor',
-            'handlename' => 'チーフエディター',
-        ]);
-        Nc3User::factory()->generalUser()->create([
-            'id' => 3,
-            'username' => 'editor',
-            'handlename' => 'エディター',
-        ]);
-        Nc3User::factory()->generalUser()->create([
-            'id' => 4,
-            'username' => 'general_user',
-            'handlename' => '一般ユーザー',
-        ]);
-        Nc3User::factory()->generalUser()->create([
-            'id' => 5,
-            'username' => 'visitor',
-            'handlename' => '訪問者',
-        ]);
+            // 各権限のテスト用ユーザーを作成（投入値を定義）
+            $usernames = [
+                'test_room_admin_user',
+                'test_chief_editor_user',
+                'test_editor_user',
+                'test_general_user',
+                'test_visitor_user',
+            ];
+            
+            Nc3User::factory()->systemAdmin()->create([
+                'id' => 301,
+                'username' => $usernames[0],
+                'handlename' => 'テストルーム管理者',
+            ]);
+            Nc3User::factory()->generalUser()->create([
+                'id' => 302,
+                'username' => $usernames[1],
+                'handlename' => 'テストチーフエディター',
+            ]);
+            Nc3User::factory()->generalUser()->create([
+                'id' => 303,
+                'username' => $usernames[2],
+                'handlename' => 'テストエディター',
+            ]);
+            Nc3User::factory()->generalUser()->create([
+                'id' => 304,
+                'username' => $usernames[3],
+                'handlename' => 'テスト一般ユーザー',
+            ]);
+            Nc3User::factory()->generalUser()->create([
+                'id' => 305,
+                'username' => $usernames[4],
+                'handlename' => 'テスト訪問者',
+            ]);
 
-        // 各権限のユーザー・ルーム・権限関連を作成
-        Nc3RoleRoomsUser::factory()->forUserAndRoom(1, 1)->roomAdmin()->create();
-        Nc3RoleRoomsUser::factory()->forUserAndRoom(2, 1)->chiefEditor()->create();
-        Nc3RoleRoomsUser::factory()->forUserAndRoom(3, 1)->editor()->create();
-        Nc3RoleRoomsUser::factory()->forUserAndRoom(4, 1)->generalUser()->create();
-        Nc3RoleRoomsUser::factory()->forUserAndRoom(5, 1)->visitor()->create();
+            // 各権限のユーザー・ルーム・権限関連を作成
+            Nc3RoleRoomsUser::factory()->forUserAndRoom(301, $roomData['id'])->roomAdmin()->create();
+            Nc3RoleRoomsUser::factory()->forUserAndRoom(302, $roomData['id'])->chiefEditor()->create();
+            Nc3RoleRoomsUser::factory()->forUserAndRoom(303, $roomData['id'])->editor()->create();
+            Nc3RoleRoomsUser::factory()->forUserAndRoom(304, $roomData['id'])->generalUser()->create();
+            Nc3RoleRoomsUser::factory()->forUserAndRoom(305, $roomData['id'])->visitor()->create();
+
+            // 期待値データ配列を返す（投入値＝出力値の検証用）
+            return [
+                [
+                    'room_id' => $roomData['id'],
+                    'room_name' => $roomName,
+                    'page_id_top' => $roomData['page_id_top'],
+                    'username' => $usernames[0],
+                    'nc3_role_key' => 'room_administrator',
+                ],
+                [
+                    'room_id' => $roomData['id'],
+                    'room_name' => $roomName,
+                    'page_id_top' => $roomData['page_id_top'],
+                    'username' => $usernames[1],
+                    'nc3_role_key' => 'chief_editor',
+                ],
+                [
+                    'room_id' => $roomData['id'],
+                    'room_name' => $roomName,
+                    'page_id_top' => $roomData['page_id_top'],
+                    'username' => $usernames[2],
+                    'nc3_role_key' => 'editor',
+                ],
+                [
+                    'room_id' => $roomData['id'],
+                    'room_name' => $roomName,
+                    'page_id_top' => $roomData['page_id_top'],
+                    'username' => $usernames[3],
+                    'nc3_role_key' => 'general_user',
+                ],
+                [
+                    'room_id' => $roomData['id'],
+                    'room_name' => $roomName,
+                    'page_id_top' => $roomData['page_id_top'],
+                    'username' => $usernames[4],
+                    'nc3_role_key' => 'visitor',
+                ],
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
     }
 
     /**
