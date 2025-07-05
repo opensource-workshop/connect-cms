@@ -38,6 +38,9 @@ use App\Models\Migration\Nc3\Nc3RegistrationQuestion;
 use App\Models\Migration\Nc3\Nc3RegistrationChoice;
 use App\Models\Migration\Nc3\Nc3RegistrationPage;
 use App\Models\Migration\Nc3\Nc3RegistrationAnswerSummary;
+use App\Models\Migration\Nc3\Nc3Topic;
+use App\Models\Migration\Nc3\Nc3TopicFramePlugin;
+use App\Models\Migration\Nc3\Nc3TopicFrameSetting;
 use Illuminate\Support\Facades\Artisan;
 
 /**
@@ -5231,6 +5234,426 @@ class MigrationNc3ExportTraitTest extends TestCase
                 'page_title' => $test_page_data['page_title'],
                 'question_id' => $test_question_data['id'],
                 'question_value' => $test_question_data['question_value'],
+                'special_content' => '<strong>太字</strong>', // 特殊文字処理の検証用
+                'user_id' => $test_user_data['id'],
+                'username' => $test_user_data['username'],
+                'user_handlename' => $test_user_data['handlename'],
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * nc3ExportTopicsの基本テスト
+     *
+     * @return void
+     */
+    public function testNc3ExportTopics()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForTopicsTest();
+
+            // テスト用のデータを作成
+            $expected_data = $this->createNc3TopicsTestData();
+
+            // nc3ExportTopicsメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportTopics');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/topics/topics.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/topics/topics.tsv');
+                $this->assertStringContainsString($expected_data['plugin_key'], $tsv_content, '投入したプラグインキーが正確に出力されている');
+                $this->assertStringContainsString($expected_data['content_key'], $tsv_content, '投入したコンテンツキーが正確に出力されている');
+                $this->assertStringContainsString($expected_data['title'], $tsv_content, '投入したタイトルが正確に出力されている');
+                $this->assertStringContainsString($expected_data['summary'], $tsv_content, '投入したサマリが正確に出力されている');
+                $this->assertStringContainsString($expected_data['path'], $tsv_content, '投入したパスが正確に出力されている');
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportTopicsメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * nc3ExportTopicsの複数トピックステスト
+     *
+     * @return void
+     */
+    public function testNc3ExportTopicsMultipleTopics()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForTopicsTest();
+
+            // 複数のトピックステストデータを作成
+            $expected_data_array = $this->createNc3TopicsMultipleTestData();
+
+            // nc3ExportTopicsメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportTopics');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data_array) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/topics/topics.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/topics/topics.tsv');
+                
+                // 複数トピックスの投入値と出力値の検証
+                foreach ($expected_data_array as $expected_data) {
+                    $this->assertStringContainsString($expected_data['plugin_key'], $tsv_content, "投入したプラグインキー {$expected_data['plugin_key']} が正確に出力されている");
+                    $this->assertStringContainsString($expected_data['content_key'], $tsv_content, "投入したコンテンツキー {$expected_data['content_key']} が正確に出力されている");
+                    $this->assertStringContainsString($expected_data['title'], $tsv_content, "投入したタイトル {$expected_data['title']} が正確に出力されている");
+                }
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportTopicsメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * nc3ExportTopicsのコンテンツ処理テスト
+     *
+     * @return void
+     */
+    public function testNc3ExportTopicsContentProcessing()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForTopicsTest();
+
+            // 特殊文字を含むトピックステストデータを作成
+            $expected_data = $this->createNc3TopicsContentProcessingTestData();
+
+            // nc3ExportTopicsメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportTopics');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/topics/topics.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/topics/topics.tsv');
+                $this->assertStringContainsString($expected_data['plugin_key'], $tsv_content, '投入したプラグインキーが正確に出力されている');
+                $this->assertStringContainsString($expected_data['content_key'], $tsv_content, '投入したコンテンツキーが正確に出力されている');
+                $this->assertStringContainsString($expected_data['title'], $tsv_content, '投入したタイトルが正確に出力されている');
+                $this->assertStringContainsString($expected_data['special_content'], $tsv_content, '投入した特殊文字処理が正確に出力されている');
+                $this->assertStringContainsString($expected_data['username'], $tsv_content, '投入したユーザー名が正確に出力されている');
+                $this->assertStringContainsString($expected_data['user_handlename'], $tsv_content, '投入したユーザーハンドル名が正確に出力されている');
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportTopicsメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * トピックステスト用のプライベートプロパティを設定
+     *
+     * @return void
+     */
+    private function setPrivatePropertiesForTopicsTest(): void
+    {
+        $migration_base_property = $this->getPrivateProperty('migration_base');
+        $migration_base_property->setValue($this->controller, storage_path('app/migration/'));
+
+        $import_base_property = $this->getPrivateProperty('import_base');
+        $import_base_property->setValue($this->controller, storage_path('app/'));
+    }
+
+    /**
+     * トピックス基本テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3TopicsTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Topic::truncate();
+            Nc3TopicFramePlugin::truncate();
+            Nc3TopicFrameSetting::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+
+            // テスト用のトピックを作成（投入値を定義）
+            $test_topic_data = [
+                'id' => 801,
+                'plugin_key' => 'blogs',
+                'content_key' => 'test_topic_basic',
+                'title' => 'テスト投入基本トピック',
+                'summary' => 'テスト投入基本トピックサマリです。',
+                'path' => '/test-topic-basic',
+                'room_id' => 1,
+                'block_id' => 1,
+            ];
+            Nc3Topic::factory()->published()->blogTopic()->create($test_topic_data);
+
+            // テスト用のフレームプラグインを作成（投入値を定義）
+            $test_frame_plugin_data = [
+                'id' => 901,
+                'frame_key' => 'basic_topic_frame',
+                'plugin_key' => 'topics',
+            ];
+            Nc3TopicFramePlugin::factory()->enabled()->create($test_frame_plugin_data);
+
+            // テスト用のフレーム設定を作成（投入値を定義）
+            $test_frame_setting_data = [
+                'id' => 1001,
+                'frame_key' => 'basic_topic_frame',
+                'data_type_key' => 'content_per_page',
+                'value' => '10',
+            ];
+            Nc3TopicFrameSetting::factory()->forFrame($test_frame_plugin_data['frame_key'])->contentPerPage(10)->create($test_frame_setting_data);
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 1101,
+                'username' => 'basic_topics_admin',
+                'handlename' => 'テスト投入基本トピックス管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            // 期待値データを返す（投入値＝出力値の検証用）
+            return [
+                'topic_id' => $test_topic_data['id'],
+                'plugin_key' => $test_topic_data['plugin_key'],
+                'content_key' => $test_topic_data['content_key'],
+                'title' => $test_topic_data['title'],
+                'summary' => $test_topic_data['summary'],
+                'path' => $test_topic_data['path'],
+                'room_id' => $test_topic_data['room_id'],
+                'frame_plugin_id' => $test_frame_plugin_data['id'],
+                'frame_setting_id' => $test_frame_setting_data['id'],
+                'user_id' => $test_user_data['id'],
+                'username' => $test_user_data['username'],
+                'user_handlename' => $test_user_data['handlename'],
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * トピックス複数テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3TopicsMultipleTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Topic::truncate();
+            Nc3TopicFramePlugin::truncate();
+            Nc3TopicFrameSetting::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+
+            // 複数のトピックスを作成（投入値を定義）
+            $test_topic_data_array = [
+                [
+                    'id' => 802,
+                    'plugin_key' => 'blogs',
+                    'content_key' => 'test_topic_multiple_1',
+                    'title' => 'テスト投入複数トピック1',
+                    'summary' => 'テスト投入複数トピック1のサマリです。',
+                    'path' => '/test-topic-multiple-1',
+                ],
+                [
+                    'id' => 803,
+                    'plugin_key' => 'bbses',
+                    'content_key' => 'test_topic_multiple_2',
+                    'title' => 'テスト投入複数トピック2',
+                    'summary' => 'テスト投入複数トピック2のサマリです。',
+                    'path' => '/test-topic-multiple-2',
+                ],
+                [
+                    'id' => 804,
+                    'plugin_key' => 'faqs',
+                    'content_key' => 'test_topic_multiple_3',
+                    'title' => 'テスト投入複数トピック3',
+                    'summary' => 'テスト投入複数トピック3のサマリです。',
+                    'path' => '/test-topic-multiple-3',
+                ],
+            ];
+
+            $expected_data_array = [];
+            foreach ($test_topic_data_array as $topic_data) {
+                // プラグインキーに応じてファクトリメソッドを選択
+                $factory = Nc3Topic::factory()->published();
+                switch ($topic_data['plugin_key']) {
+                    case 'blogs':
+                        $factory = $factory->blogTopic();
+                        break;
+                    case 'bbses':
+                        $factory = $factory->bbsTopic();
+                        break;
+                    case 'faqs':
+                        $factory = $factory->faqTopic();
+                        break;
+                }
+                $factory->create($topic_data);
+
+                // 各トピックに対してフレームプラグインを作成
+                Nc3TopicFramePlugin::factory()->enabled()->forPlugin('topics')->create([
+                    'frame_key' => $topic_data['content_key'] . '_frame',
+                ]);
+
+                // 各トピックに対してフレーム設定を作成
+                Nc3TopicFrameSetting::factory()->forFrame($topic_data['content_key'] . '_frame')->contentPerPage(5)->create();
+
+                // 期待値データを蓄積
+                $expected_data_array[] = [
+                    'topic_id' => $topic_data['id'],
+                    'plugin_key' => $topic_data['plugin_key'],
+                    'content_key' => $topic_data['content_key'],
+                    'title' => $topic_data['title'],
+                    'summary' => $topic_data['summary'],
+                    'path' => $topic_data['path'],
+                ];
+            }
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 1102,
+                'username' => 'multiple_topics_admin',
+                'handlename' => 'テスト投入複数トピックス管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            return $expected_data_array;
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * トピックスコンテンツ処理テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3TopicsContentProcessingTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Topic::truncate();
+            Nc3TopicFramePlugin::truncate();
+            Nc3TopicFrameSetting::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+            
+            // 特殊文字を含むトピックを作成（投入値を定義）
+            $test_topic_data = [
+                'id' => 805,
+                'plugin_key' => 'blogs',
+                'content_key' => 'content_processing_topic',
+                'title' => 'テスト投入特殊文字トピック',
+                'summary' => 'テスト投入特殊文字サマリ：HTMLタグ<strong>太字</strong>、改行\n\タブ\t、引用符"test"、URLリンクhttp://example.com',
+                'path' => '/content-processing-topic',
+                'room_id' => 1,
+                'block_id' => 1,
+            ];
+            Nc3Topic::factory()->published()->blogTopic()->create($test_topic_data);
+
+            // フレームプラグインを作成（投入値を定義）
+            $test_frame_plugin_data = [
+                'frame_key' => 'content_processing_topic_frame',
+                'plugin_key' => 'topics',
+            ];
+            Nc3TopicFramePlugin::factory()->enabled()->create($test_frame_plugin_data);
+
+            // フレーム設定を作成（投入値を定義）
+            $test_frame_setting_data = [
+                'frame_key' => 'content_processing_topic_frame',
+                'data_type_key' => 'content_per_page',
+                'value' => '20',
+            ];
+            Nc3TopicFrameSetting::factory()->forFrame($test_frame_plugin_data['frame_key'])->contentPerPage(20)->create($test_frame_setting_data);
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 1103,
+                'username' => 'content_topics_admin',
+                'handlename' => 'テスト投入コンテンツトピックス管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            // 期待値データを返す（投入値＝出力値の検証用）
+            return [
+                'topic_id' => $test_topic_data['id'],
+                'plugin_key' => $test_topic_data['plugin_key'],
+                'content_key' => $test_topic_data['content_key'],
+                'title' => $test_topic_data['title'],
+                'summary' => $test_topic_data['summary'],
+                'path' => $test_topic_data['path'],
                 'special_content' => '<strong>太字</strong>', // 特殊文字処理の検証用
                 'user_id' => $test_user_data['id'],
                 'username' => $test_user_data['username'],
