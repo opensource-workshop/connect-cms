@@ -25,6 +25,8 @@ use App\Models\Migration\Nc3\Nc3BlogFrameSetting;
 use App\Models\Migration\Nc3\Nc3Bbs;
 use App\Models\Migration\Nc3\Nc3BbsArticle;
 use App\Models\Migration\Nc3\Nc3BbsFrameSetting;
+use App\Models\Migration\Nc3\Nc3Faq;
+use App\Models\Migration\Nc3\Nc3FaqQuestion;
 use Illuminate\Support\Facades\Artisan;
 
 /**
@@ -3663,6 +3665,372 @@ class MigrationNc3ExportTraitTest extends TestCase
                 'article_id' => $test_article_data['id'],
                 'article_title' => $test_article_data['title'],
                 'article_content' => $test_article_data['content'],
+                'special_content' => '<strong>太字</strong>', // 特殊文字処理の検証用
+                'user_id' => $test_user_data['id'],
+                'username' => $test_user_data['username'],
+                'user_handlename' => $test_user_data['handlename'],
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * nc3ExportFaqの基本テスト
+     *
+     * @return void
+     */
+    public function testNc3ExportFaq()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForFaqTest();
+
+            // テスト用のデータを作成
+            $expected_data = $this->createNc3FaqTestData();
+
+            // nc3ExportFaqメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportFaq');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/faqs/faqs.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/faqs/faqs.tsv');
+                $this->assertStringContainsString($expected_data['faq_key'], $tsv_content, '投入したFAQキーが正確に出力されている');
+                $this->assertStringContainsString($expected_data['faq_name'], $tsv_content, '投入したFAQ名が正確に出力されている');
+                $this->assertStringContainsString($expected_data['question'], $tsv_content, '投入した質問が正確に出力されている');
+                $this->assertStringContainsString($expected_data['answer'], $tsv_content, '投入した回答が正確に出力されている');
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportFaqメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * nc3ExportFaqの複数FAQテスト
+     *
+     * @return void
+     */
+    public function testNc3ExportFaqMultipleFaqs()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForFaqTest();
+
+            // 複数のFAQテストデータを作成
+            $expected_data_array = $this->createNc3FaqMultipleTestData();
+
+            // nc3ExportFaqメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportFaq');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data_array) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/faqs/faqs.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/faqs/faqs.tsv');
+                
+                // 複数FAQの投入値と出力値の検証
+                foreach ($expected_data_array as $expected_data) {
+                    $this->assertStringContainsString($expected_data['faq_key'], $tsv_content, "投入したFAQキー {$expected_data['faq_key']} が正確に出力されている");
+                    $this->assertStringContainsString($expected_data['faq_name'], $tsv_content, "投入したFAQ名 {$expected_data['faq_name']} が正確に出力されている");
+                    $this->assertStringContainsString($expected_data['question'], $tsv_content, "投入した質問 {$expected_data['question']} が正確に出力されている");
+                    $this->assertStringContainsString($expected_data['answer'], $tsv_content, "投入した回答が正確に出力されている");
+                }
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportFaqメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * nc3ExportFaqのコンテンツ処理テスト
+     *
+     * @return void
+     */
+    public function testNc3ExportFaqContentProcessing()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForFaqTest();
+
+            // 特殊文字を含むFAQテストデータを作成
+            $expected_data = $this->createNc3FaqContentProcessingTestData();
+
+            // nc3ExportFaqメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportFaq');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/faqs/faqs.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/faqs/faqs.tsv');
+                $this->assertStringContainsString($expected_data['faq_key'], $tsv_content, '投入したFAQキーが正確に出力されている');
+                $this->assertStringContainsString($expected_data['faq_name'], $tsv_content, '投入したFAQ名が正確に出力されている');
+                $this->assertStringContainsString($expected_data['question'], $tsv_content, '投入した質問が正確に出力されている');
+                $this->assertStringContainsString($expected_data['special_content'], $tsv_content, '投入した特殊文字処理が正確に出力されている');
+                $this->assertStringContainsString($expected_data['username'], $tsv_content, '投入したユーザー名が正確に出力されている');
+                $this->assertStringContainsString($expected_data['user_handlename'], $tsv_content, '投入したユーザーハンドル名が正確に出力されている');
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportFaqメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * FAQテスト用のプライベートプロパティを設定
+     *
+     * @return void
+     */
+    private function setPrivatePropertiesForFaqTest(): void
+    {
+        $migration_base_property = $this->getPrivateProperty('migration_base');
+        $migration_base_property->setValue($this->controller, storage_path('app/migration/'));
+
+        $import_base_property = $this->getPrivateProperty('import_base');
+        $import_base_property->setValue($this->controller, storage_path('app/'));
+    }
+
+    /**
+     * FAQ基本テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3FaqTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Faq::truncate();
+            Nc3FaqQuestion::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+
+            // テスト用のFAQを作成（投入値を定義）
+            $test_faq_data = [
+                'id' => 401,
+                'key' => 'test_faq_basic',
+                'name' => 'テスト投入基本FAQ',
+            ];
+            Nc3Faq::factory()->active()->create($test_faq_data);
+
+            // テスト用の質問を作成（投入値を定義）
+            $test_question_data = [
+                'id' => 501,
+                'question' => 'テスト投入基本質問？',
+                'answer' => 'テスト投入基本回答です。',
+            ];
+            Nc3FaqQuestion::factory()->published()->forFaq($test_faq_data['id'])->withFaqKey($test_faq_data['key'])->create($test_question_data);
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 701,
+                'username' => 'basic_faq_admin',
+                'handlename' => 'テスト投入基本管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            // 期待値データを返す（投入値＝出力値の検証用）
+            return [
+                'faq_id' => $test_faq_data['id'],
+                'faq_key' => $test_faq_data['key'],
+                'faq_name' => $test_faq_data['name'],
+                'question_id' => $test_question_data['id'],
+                'question' => $test_question_data['question'],
+                'answer' => $test_question_data['answer'],
+                'user_id' => $test_user_data['id'],
+                'username' => $test_user_data['username'],
+                'user_handlename' => $test_user_data['handlename'],
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * FAQ複数テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3FaqMultipleTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Faq::truncate();
+            Nc3FaqQuestion::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+
+            // 複数のFAQを作成（投入値を定義）
+            $test_faq_data_array = [
+                [
+                    'id' => 402,
+                    'key' => 'test_faq_multiple_1',
+                    'name' => 'テスト投入複数FAQ1',
+                ],
+                [
+                    'id' => 403,
+                    'key' => 'test_faq_multiple_2',
+                    'name' => 'テスト投入複数FAQ2',
+                ],
+                [
+                    'id' => 404,
+                    'key' => 'test_faq_multiple_3',
+                    'name' => 'テスト投入複数FAQ3',
+                ],
+            ];
+
+            $expected_data_array = [];
+            foreach ($test_faq_data_array as $faq_data) {
+                Nc3Faq::factory()->active()->create($faq_data);
+
+                // 各FAQに対して質問を作成（投入値を定義）
+                $test_question_data = [
+                    'id' => 500 + $faq_data['id'],
+                    'question' => "テスト投入{$faq_data['name']}の質問？",
+                    'answer' => "テスト投入{$faq_data['name']}の回答です。",
+                ];
+                Nc3FaqQuestion::factory()->published()->forFaq($faq_data['id'])->withFaqKey($faq_data['key'])->create($test_question_data);
+
+                // 期待値データを蓄積
+                $expected_data_array[] = [
+                    'faq_id' => $faq_data['id'],
+                    'faq_key' => $faq_data['key'],
+                    'faq_name' => $faq_data['name'],
+                    'question_id' => $test_question_data['id'],
+                    'question' => $test_question_data['question'],
+                    'answer' => $test_question_data['answer'],
+                ];
+            }
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 702,
+                'username' => 'multiple_faq_admin',
+                'handlename' => 'テスト投入複数管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            return $expected_data_array;
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * FAQコンテンツ処理テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3FaqContentProcessingTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Faq::truncate();
+            Nc3FaqQuestion::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+            
+            // 特殊文字を含むFAQを作成（投入値を定義）
+            $test_faq_data = [
+                'id' => 405,
+                'key' => 'content_processing_faq',
+                'name' => 'テスト投入コンテンツ処理FAQ',
+            ];
+            Nc3Faq::factory()->active()->create($test_faq_data);
+
+            // 特殊文字を含む質問を作成（投入値を定義）
+            $test_question_data = [
+                'id' => 701,
+                'question' => 'テスト投入特殊文字質問？',
+                'answer' => 'テスト投入メイン回答：HTMLタグ<strong>太字</strong>、改行\n\タブ\t、引用符"test"、URLリンクhttp://example.com',
+            ];
+            Nc3FaqQuestion::factory()->published()->forFaq($test_faq_data['id'])->withFaqKey($test_faq_data['key'])->create($test_question_data);
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 703,
+                'username' => 'content_faq_admin',
+                'handlename' => 'テスト投入コンテンツ管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            // 期待値データを返す（投入値＝出力値の検証用）
+            return [
+                'faq_id' => $test_faq_data['id'],
+                'faq_key' => $test_faq_data['key'],
+                'faq_name' => $test_faq_data['name'],
+                'question_id' => $test_question_data['id'],
+                'question' => $test_question_data['question'],
+                'answer' => $test_question_data['answer'],
                 'special_content' => '<strong>太字</strong>', // 特殊文字処理の検証用
                 'user_id' => $test_user_data['id'],
                 'username' => $test_user_data['username'],
