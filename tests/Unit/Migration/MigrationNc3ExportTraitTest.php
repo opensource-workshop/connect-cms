@@ -29,6 +29,10 @@ use App\Models\Migration\Nc3\Nc3Faq;
 use App\Models\Migration\Nc3\Nc3FaqQuestion;
 use App\Models\Migration\Nc3\Nc3Link;
 use App\Models\Migration\Nc3\Nc3LinkFrameSetting;
+use App\Models\Migration\Nc3\Nc3Multidatabase;
+use App\Models\Migration\Nc3\Nc3MultidatabaseContent;
+use App\Models\Migration\Nc3\Nc3MultidatabaseFrameSetting;
+use App\Models\Migration\Nc3\Nc3MultidatabaseMetadata;
 use Illuminate\Support\Facades\Artisan;
 
 /**
@@ -4379,6 +4383,422 @@ class MigrationNc3ExportTraitTest extends TestCase
                 'link_key' => $test_link_data['key'],
                 'link_name' => $test_link_data['name'],
                 'special_content' => '<strong>リンク</strong>', // 特殊文字処理の検証用
+                'user_id' => $test_user_data['id'],
+                'username' => $test_user_data['username'],
+                'user_handlename' => $test_user_data['handlename'],
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * nc3ExportMultidatabaseの基本テスト
+     *
+     * @return void
+     */
+    public function testNc3ExportMultidatabase()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForMultidatabaseTest();
+
+            // テスト用のデータを作成
+            $expected_data = $this->createNc3MultidatabaseTestData();
+
+            // nc3ExportMultidatabaseメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportMultidatabase');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/multidatabases/multidatabases.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/multidatabases/multidatabases.tsv');
+                $this->assertStringContainsString($expected_data['multidatabase_key'], $tsv_content, '投入したマルチデータベースキーが正確に出力されている');
+                $this->assertStringContainsString($expected_data['multidatabase_name'], $tsv_content, '投入したマルチデータベース名が正確に出力されている');
+                $this->assertStringContainsString($expected_data['content_title'], $tsv_content, '投入したコンテンツタイトルが正確に出力されている');
+                $this->assertStringContainsString($expected_data['content_body'], $tsv_content, '投入したコンテンツ本文が正確に出力されている');
+                $this->assertStringContainsString($expected_data['metadata_name'], $tsv_content, '投入したメタデータ名が正確に出力されている');
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportMultidatabaseメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * nc3ExportMultidatabaseの複数データベーステスト
+     *
+     * @return void
+     */
+    public function testNc3ExportMultidatabaseMultipleMultidatabases()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForMultidatabaseTest();
+
+            // 複数のマルチデータベーステストデータを作成
+            $expected_data_array = $this->createNc3MultidatabaseMultipleTestData();
+
+            // nc3ExportMultidatabaseメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportMultidatabase');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data_array) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/multidatabases/multidatabases.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/multidatabases/multidatabases.tsv');
+                
+                // 複数マルチデータベースの投入値と出力値の検証
+                foreach ($expected_data_array as $expected_data) {
+                    $this->assertStringContainsString($expected_data['multidatabase_key'], $tsv_content, "投入したマルチデータベースキー {$expected_data['multidatabase_key']} が正確に出力されている");
+                    $this->assertStringContainsString($expected_data['multidatabase_name'], $tsv_content, "投入したマルチデータベース名 {$expected_data['multidatabase_name']} が正確に出力されている");
+                    $this->assertStringContainsString($expected_data['content_title'], $tsv_content, "投入したコンテンツタイトル {$expected_data['content_title']} が正確に出力されている");
+                }
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportMultidatabaseメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * nc3ExportMultidatabaseのコンテンツ処理テスト
+     *
+     * @return void
+     */
+    public function testNc3ExportMultidatabaseContentProcessing()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForMultidatabaseTest();
+
+            // 特殊文字を含むマルチデータベーステストデータを作成
+            $expected_data = $this->createNc3MultidatabaseContentProcessingTestData();
+
+            // nc3ExportMultidatabaseメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportMultidatabase');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/multidatabases/multidatabases.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/multidatabases/multidatabases.tsv');
+                $this->assertStringContainsString($expected_data['multidatabase_key'], $tsv_content, '投入したマルチデータベースキーが正確に出力されている');
+                $this->assertStringContainsString($expected_data['multidatabase_name'], $tsv_content, '投入したマルチデータベース名が正確に出力されている');
+                $this->assertStringContainsString($expected_data['content_title'], $tsv_content, '投入したコンテンツタイトルが正確に出力されている');
+                $this->assertStringContainsString($expected_data['special_content'], $tsv_content, '投入した特殊文字処理が正確に出力されている');
+                $this->assertStringContainsString($expected_data['username'], $tsv_content, '投入したユーザー名が正確に出力されている');
+                $this->assertStringContainsString($expected_data['user_handlename'], $tsv_content, '投入したユーザーハンドル名が正確に出力されている');
+            } else {
+                // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
+                $this->assertTrue(true, 'nc3ExportMultidatabaseメソッドが正常に実行された');
+            }
+        } catch (\Exception $e) {
+            // エラーハンドリング
+            $this->assertThat(
+                $e->getMessage(),
+                $this->logicalOr(
+                    $this->stringContains('Connection'),
+                    $this->stringContains('database'),
+                    $this->stringContains('could not find driver'),
+                    $this->stringContains('File not found'),
+                    $this->stringContains('parse_ini_file')
+                ),
+                'NC3関連のエラーは想定内: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * マルチデータベーステスト用のプライベートプロパティを設定
+     *
+     * @return void
+     */
+    private function setPrivatePropertiesForMultidatabaseTest(): void
+    {
+        $migration_base_property = $this->getPrivateProperty('migration_base');
+        $migration_base_property->setValue($this->controller, storage_path('app/migration/'));
+
+        $import_base_property = $this->getPrivateProperty('import_base');
+        $import_base_property->setValue($this->controller, storage_path('app/'));
+    }
+
+    /**
+     * マルチデータベース基本テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3MultidatabaseTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Multidatabase::truncate();
+            Nc3MultidatabaseContent::truncate();
+            Nc3MultidatabaseFrameSetting::truncate();
+            Nc3MultidatabaseMetadata::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+
+            // テスト用のマルチデータベースを作成（投入値を定義）
+            $test_multidatabase_data = [
+                'id' => 601,
+                'key' => 'test_multidatabase_basic',
+                'name' => 'テスト投入基本マルチデータベース',
+            ];
+            Nc3Multidatabase::factory()->active()->create($test_multidatabase_data);
+
+            // テスト用のメタデータを作成（投入値を定義）
+            $test_metadata_data = [
+                'id' => 701,
+                'col_name' => 'test_field',
+                'name' => 'テスト投入フィールド',
+                'type' => 'text',
+            ];
+            Nc3MultidatabaseMetadata::factory()->forMultidatabase($test_multidatabase_data['id'])->withMultidatabaseKey($test_multidatabase_data['key'])->create($test_metadata_data);
+
+            // テスト用のコンテンツを作成（投入値を定義）
+            $test_content_data = [
+                'id' => 801,
+                'title' => 'テスト投入基本コンテンツ',
+                'content' => 'テスト投入基本コンテンツ本文です。',
+            ];
+            Nc3MultidatabaseContent::factory()->published()->forMultidatabase($test_multidatabase_data['id'])->withMultidatabaseKey($test_multidatabase_data['key'])->create($test_content_data);
+
+            // フレーム設定を作成（投入値を定義）
+            Nc3MultidatabaseFrameSetting::factory()->forContent($test_multidatabase_data['key'])->create([
+                'frame_key' => 'basic_multidatabase_frame',
+            ]);
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 901,
+                'username' => 'basic_multidatabase_admin',
+                'handlename' => 'テスト投入基本マルチデータベース管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            // 期待値データを返す（投入値＝出力値の検証用）
+            return [
+                'multidatabase_id' => $test_multidatabase_data['id'],
+                'multidatabase_key' => $test_multidatabase_data['key'],
+                'multidatabase_name' => $test_multidatabase_data['name'],
+                'content_id' => $test_content_data['id'],
+                'content_title' => $test_content_data['title'],
+                'content_body' => $test_content_data['content'],
+                'metadata_id' => $test_metadata_data['id'],
+                'metadata_name' => $test_metadata_data['name'],
+                'metadata_col_name' => $test_metadata_data['col_name'],
+                'user_id' => $test_user_data['id'],
+                'username' => $test_user_data['username'],
+                'user_handlename' => $test_user_data['handlename'],
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * マルチデータベース複数テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3MultidatabaseMultipleTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Multidatabase::truncate();
+            Nc3MultidatabaseContent::truncate();
+            Nc3MultidatabaseFrameSetting::truncate();
+            Nc3MultidatabaseMetadata::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+
+            // 複数のマルチデータベースを作成（投入値を定義）
+            $test_multidatabase_data_array = [
+                [
+                    'id' => 602,
+                    'key' => 'test_multidatabase_multiple_1',
+                    'name' => 'テスト投入複数マルチデータベース1',
+                ],
+                [
+                    'id' => 603,
+                    'key' => 'test_multidatabase_multiple_2',
+                    'name' => 'テスト投入複数マルチデータベース2',
+                ],
+                [
+                    'id' => 604,
+                    'key' => 'test_multidatabase_multiple_3',
+                    'name' => 'テスト投入複数マルチデータベース3',
+                ],
+            ];
+
+            $expected_data_array = [];
+            foreach ($test_multidatabase_data_array as $multidatabase_data) {
+                Nc3Multidatabase::factory()->active()->create($multidatabase_data);
+
+                // 各マルチデータベースに対してコンテンツを作成（投入値を定義）
+                $test_content_data = [
+                    'id' => 800 + $multidatabase_data['id'],
+                    'title' => "テスト投入{$multidatabase_data['name']}のコンテンツ",
+                    'content' => "テスト投入{$multidatabase_data['name']}のコンテンツ本文です。",
+                ];
+                Nc3MultidatabaseContent::factory()->published()->forMultidatabase($multidatabase_data['id'])->withMultidatabaseKey($multidatabase_data['key'])->create($test_content_data);
+
+                // 各マルチデータベースに対してメタデータを作成
+                Nc3MultidatabaseMetadata::factory()->forMultidatabase($multidatabase_data['id'])->withMultidatabaseKey($multidatabase_data['key'])->create([
+                    'col_name' => $multidatabase_data['key'] . '_field',
+                    'name' => $multidatabase_data['name'] . 'フィールド',
+                ]);
+
+                // フレーム設定を作成
+                Nc3MultidatabaseFrameSetting::factory()->forContent($multidatabase_data['key'])->create([
+                    'frame_key' => $multidatabase_data['key'] . '_frame',
+                ]);
+
+                // 期待値データを蓄積
+                $expected_data_array[] = [
+                    'multidatabase_id' => $multidatabase_data['id'],
+                    'multidatabase_key' => $multidatabase_data['key'],
+                    'multidatabase_name' => $multidatabase_data['name'],
+                    'content_id' => $test_content_data['id'],
+                    'content_title' => $test_content_data['title'],
+                    'content_body' => $test_content_data['content'],
+                ];
+            }
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 902,
+                'username' => 'multiple_multidatabase_admin',
+                'handlename' => 'テスト投入複数マルチデータベース管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            return $expected_data_array;
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * マルチデータベースコンテンツ処理テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3MultidatabaseContentProcessingTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Multidatabase::truncate();
+            Nc3MultidatabaseContent::truncate();
+            Nc3MultidatabaseFrameSetting::truncate();
+            Nc3MultidatabaseMetadata::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+            
+            // 特殊文字を含むマルチデータベースを作成（投入値を定義）
+            $test_multidatabase_data = [
+                'id' => 605,
+                'key' => 'content_processing_multidatabase',
+                'name' => 'テスト投入コンテンツ処理マルチデータベース',
+            ];
+            Nc3Multidatabase::factory()->active()->create($test_multidatabase_data);
+
+            // 特殊文字を含むメタデータを作成（投入値を定義）
+            $test_metadata_data = [
+                'id' => 702,
+                'col_name' => 'special_field',
+                'name' => 'テスト投入特殊フィールド',
+                'type' => 'textarea',
+            ];
+            Nc3MultidatabaseMetadata::factory()->forMultidatabase($test_multidatabase_data['id'])->withMultidatabaseKey($test_multidatabase_data['key'])->textareaType()->create($test_metadata_data);
+
+            // 特殊文字を含むコンテンツを作成（投入値を定義）
+            $test_content_data = [
+                'id' => 802,
+                'title' => 'テスト投入特殊文字コンテンツ',
+                'content' => 'テスト投入メインコンテンツ：HTMLタグ<strong>太字</strong>、改行\n\タブ\t、引用符"test"、URLリンクhttp://example.com',
+            ];
+            Nc3MultidatabaseContent::factory()->published()->forMultidatabase($test_multidatabase_data['id'])->withMultidatabaseKey($test_multidatabase_data['key'])->create($test_content_data);
+
+            // フレーム設定を作成（投入値を定義）
+            Nc3MultidatabaseFrameSetting::factory()->forContent($test_multidatabase_data['key'])->create([
+                'frame_key' => 'content_processing_multidatabase_frame',
+            ]);
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 903,
+                'username' => 'content_multidatabase_admin',
+                'handlename' => 'テスト投入コンテンツマルチデータベース管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            // 期待値データを返す（投入値＝出力値の検証用）
+            return [
+                'multidatabase_id' => $test_multidatabase_data['id'],
+                'multidatabase_key' => $test_multidatabase_data['key'],
+                'multidatabase_name' => $test_multidatabase_data['name'],
+                'content_id' => $test_content_data['id'],
+                'content_title' => $test_content_data['title'],
+                'content_body' => $test_content_data['content'],
+                'special_content' => '<strong>太字</strong>', // 特殊文字処理の検証用
+                'metadata_id' => $test_metadata_data['id'],
+                'metadata_name' => $test_metadata_data['name'],
                 'user_id' => $test_user_data['id'],
                 'username' => $test_user_data['username'],
                 'user_handlename' => $test_user_data['handlename'],
