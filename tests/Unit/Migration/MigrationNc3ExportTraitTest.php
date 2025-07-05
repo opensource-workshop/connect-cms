@@ -756,11 +756,11 @@ class MigrationNc3ExportTraitTest extends TestCase
     public function testChangePageSequenceConfigAccess()
     {
         // getMigrationConfigメソッドのテスト
-        $getMigrationConfigMethod = $this->getPrivateMethod('getMigrationConfig');
+        $get_migration_config_method = $this->getPrivateMethod('getMigrationConfig');
         $migration_config_property = $this->getPrivateProperty('migration_config');
 
         // テスト設定データ
-        $testConfig = [
+        $test_config = [
             'pages' => [
                 'nc3_export_change_page' => [
                     '10' => '20',
@@ -773,18 +773,18 @@ class MigrationNc3ExportTraitTest extends TestCase
             ]
         ];
 
-        $migration_config_property->setValue($this->controller, $testConfig);
+        $migration_config_property->setValue($this->controller, $test_config);
 
         // nc3_export_change_pageの取得テスト
-        $result = $getMigrationConfigMethod->invokeArgs($this->controller, ['pages', 'nc3_export_change_page']);
+        $result = $get_migration_config_method->invokeArgs($this->controller, ['pages', 'nc3_export_change_page']);
         $this->assertEquals(['10' => '20', '30' => '40'], $result, 'nc3_export_change_page設定が正しく取得できない');
 
         // 存在しないキーのテスト
-        $result = $getMigrationConfigMethod->invokeArgs($this->controller, ['pages', 'non_existent_key']);
+        $result = $get_migration_config_method->invokeArgs($this->controller, ['pages', 'non_existent_key']);
         $this->assertFalse($result, '存在しないキーでfalseが返されない');
 
         // デフォルト値のテスト
-        $result = $getMigrationConfigMethod->invokeArgs($this->controller, ['pages', 'non_existent_key', 'default_value']);
+        $result = $get_migration_config_method->invokeArgs($this->controller, ['pages', 'non_existent_key', 'default_value']);
         $this->assertEquals('default_value', $result, 'デフォルト値が正しく返されない');
     }
 
@@ -1109,23 +1109,23 @@ class MigrationNc3ExportTraitTest extends TestCase
      */
     public function testNc3GetPluginNamePatterns()
     {
-        $nc3GetPluginNameMethod = $this->getPrivateMethod('nc3GetPluginName');
-        $pluginNameProperty = $this->getPrivateProperty('plugin_name');
+        $nc3_get_plugin_name_method = $this->getPrivateMethod('nc3GetPluginName');
+        $plugin_name_property = $this->getPrivateProperty('plugin_name');
         
         // 本体クラスのplugin_name配列を取得
-        $nc3ToConnectCmsPluginMappings = $pluginNameProperty->getValue($this->controller);
+        $nc3_to_connect_cms_plugin_mappings = $plugin_name_property->getValue($this->controller);
         
         // plugin_name配列の全てのキーに対してテスト
-        foreach ($nc3ToConnectCmsPluginMappings as $nc3PluginKey => $expectedConnectCmsPluginName) {
-            $actualPluginName = $nc3GetPluginNameMethod->invokeArgs($this->controller, [$nc3PluginKey]);
-            $this->assertEquals($expectedConnectCmsPluginName, $actualPluginName, "プラグインキー '{$nc3PluginKey}' の変換が正しく動作していない");
+        foreach ($nc3_to_connect_cms_plugin_mappings as $nc3_plugin_key => $expected_connect_cms_plugin_name) {
+            $actual_plugin_name = $nc3_get_plugin_name_method->invokeArgs($this->controller, [$nc3_plugin_key]);
+            $this->assertEquals($expected_connect_cms_plugin_name, $actual_plugin_name, "プラグインキー '{$nc3_plugin_key}' の変換が正しく動作していない");
         }
         
         // 存在しないプラグインキーのテスト（NotFoundのテスト）
-        $nonExistentPluginKeys = ['non_existent', 'invalid_plugin', 'unknown_key'];
-        foreach ($nonExistentPluginKeys as $nonExistentPluginKey) {
-            $actualPluginName = $nc3GetPluginNameMethod->invokeArgs($this->controller, [$nonExistentPluginKey]);
-            $this->assertEquals('NotFound', $actualPluginName, "存在しないプラグインキー '{$nonExistentPluginKey}' でNotFoundが返されない");
+        $non_existent_plugin_keys = ['non_existent', 'invalid_plugin', 'unknown_key'];
+        foreach ($non_existent_plugin_keys as $non_existent_plugin_key) {
+            $actual_plugin_name = $nc3_get_plugin_name_method->invokeArgs($this->controller, [$non_existent_plugin_key]);
+            $this->assertEquals('NotFound', $actual_plugin_name, "存在しないプラグインキー '{$non_existent_plugin_key}' でNotFoundが返されない");
         }
     }
 
@@ -1137,65 +1137,65 @@ class MigrationNc3ExportTraitTest extends TestCase
      */
     public function testNc3GetPluginNameAllMappings()
     {
-        $nc3GetPluginNameMethod = $this->getPrivateMethod('nc3GetPluginName');
-        $pluginNameProperty = $this->getPrivateProperty('plugin_name');
+        $nc3_get_plugin_name_method = $this->getPrivateMethod('nc3GetPluginName');
+        $plugin_name_property = $this->getPrivateProperty('plugin_name');
         
         // 実際のplugin_name配列を取得
-        $nc3ToConnectCmsPluginMappings = $pluginNameProperty->getValue($this->controller);
+        $nc3_to_connect_cms_plugin_mappings = $plugin_name_property->getValue($this->controller);
         
         // plugin_name配列の全てのキーに対してテスト
-        foreach ($nc3ToConnectCmsPluginMappings as $nc3PluginKey => $expectedConnectCmsPluginName) {
-            $actualPluginName = $nc3GetPluginNameMethod->invokeArgs($this->controller, [$nc3PluginKey]);
+        foreach ($nc3_to_connect_cms_plugin_mappings as $nc3_plugin_key => $expected_connect_cms_plugin_name) {
+            $actual_plugin_name = $nc3_get_plugin_name_method->invokeArgs($this->controller, [$nc3_plugin_key]);
             $this->assertEquals(
-                $expectedConnectCmsPluginName, $actualPluginName,
-                "プラグインキー '{$nc3PluginKey}' の変換結果が期待値 '{$expectedConnectCmsPluginName}' と一致しない"
+                $expected_connect_cms_plugin_name, $actual_plugin_name,
+                "プラグインキー '{$nc3_plugin_key}' の変換結果が期待値 '{$expected_connect_cms_plugin_name}' と一致しない"
             );
         }
         
         // 配列に含まれる各カテゴリーの数をカウントして検証
-        $connectCmsPluginCount = 0;
-        $developmentPluginCount = 0;
-        $abolitionPluginCount = 0;
+        $connect_cms_plugin_count = 0;
+        $development_plugin_count = 0;
+        $abolition_plugin_count = 0;
         
-        foreach ($nc3ToConnectCmsPluginMappings as $connectCmsPluginName) {
-            switch ($connectCmsPluginName) {
+        foreach ($nc3_to_connect_cms_plugin_mappings as $connect_cms_plugin_name) {
+            switch ($connect_cms_plugin_name) {
                 case 'Development':
-                    $developmentPluginCount++;
+                    $development_plugin_count++;
                     break;
                 case 'Abolition':
-                    $abolitionPluginCount++;
+                    $abolition_plugin_count++;
                     break;
                 default:
-                    $connectCmsPluginCount++;
+                    $connect_cms_plugin_count++;
                     break;
             }
         }
         
         // プラグイン数の検証
-        $totalPluginCount = count($nc3ToConnectCmsPluginMappings);
-        $calculatedTotalCount = $connectCmsPluginCount + $developmentPluginCount + $abolitionPluginCount;
+        $total_plugin_count = count($nc3_to_connect_cms_plugin_mappings);
+        $calculated_total_count = $connect_cms_plugin_count + $development_plugin_count + $abolition_plugin_count;
         $this->assertEquals(
-            $calculatedTotalCount, $totalPluginCount,
+            $calculated_total_count, $total_plugin_count,
             'プラグインの分類合計が全体数と一致しない'
         );
         
         // 期待される数の検証（現在のコードに基づく）
-        $expectedConnectCmsPluginCount = 16;
-        $expectedDevelopmentPluginCount = 7;
-        $expectedAbolitionPluginCount = 0;
-        $expectedTotalPluginCount = 23;
+        $expected_connect_cms_plugin_count = 16;
+        $expected_development_plugin_count = 7;
+        $expected_abolition_plugin_count = 0;
+        $expected_total_plugin_count = 23;
         
-        $this->assertEquals($expectedConnectCmsPluginCount, $connectCmsPluginCount, 'Connect-CMSプラグイン数が期待値と異なる');
-        $this->assertEquals($expectedDevelopmentPluginCount, $developmentPluginCount, '開発中プラグイン数が期待値と異なる');
-        $this->assertEquals($expectedAbolitionPluginCount, $abolitionPluginCount, '廃止プラグイン数が期待値と異なる');
-        $this->assertEquals($expectedTotalPluginCount, $totalPluginCount, '総プラグイン数が期待値と異なる');
+        $this->assertEquals($expected_connect_cms_plugin_count, $connect_cms_plugin_count, 'Connect-CMSプラグイン数が期待値と異なる');
+        $this->assertEquals($expected_development_plugin_count, $development_plugin_count, '開発中プラグイン数が期待値と異なる');
+        $this->assertEquals($expected_abolition_plugin_count, $abolition_plugin_count, '廃止プラグイン数が期待値と異なる');
+        $this->assertEquals($expected_total_plugin_count, $total_plugin_count, '総プラグイン数が期待値と異なる');
         
         // ログ出力（テスト結果の可視化）
         echo "\n=== Plugin Mapping Statistics ===\n";
-        echo "Connect-CMS plugins: {$connectCmsPluginCount}\n";
-        echo "Development plugins: {$developmentPluginCount}\n";
-        echo "Abolition plugins: {$abolitionPluginCount}\n";
-        echo "Total plugins: {$totalPluginCount}\n";
+        echo "Connect-CMS plugins: {$connect_cms_plugin_count}\n";
+        echo "Development plugins: {$development_plugin_count}\n";
+        echo "Abolition plugins: {$abolition_plugin_count}\n";
+        echo "Total plugins: {$total_plugin_count}\n";
     }
 
     /**
@@ -1425,10 +1425,10 @@ class MigrationNc3ExportTraitTest extends TestCase
     /**
      * nc3ExportBasicテスト用のプライベートプロパティを設定
      *
-     * @param string|null $yamlPath YAMLファイルパス（nullの場合はデフォルト）
+     * @param string|null $yaml_path YAMLファイルパス（nullの場合はデフォルト）
      * @return void
      */
-    private function setPrivatePropertiesForBasicTest($yamlPath = null)
+    private function setPrivatePropertiesForBasicTest($yaml_path = null)
     {
         // migration_baseプロパティを設定
         $migration_base_property = $this->getPrivateProperty('migration_base');
@@ -1439,16 +1439,16 @@ class MigrationNc3ExportTraitTest extends TestCase
         $import_base_property->setValue($this->controller, '');
 
         // YAMLファイルパスはconfigから取得されるため、テスト用のファイルを作成
-        if (!$yamlPath) {
+        if (!$yaml_path) {
             // 実際のテスト用YAMLファイルを作成
-            $testYamlPath = storage_path('app/test_application.yml');
-            $yamlContent = "Security:\n  salt: test_security_salt\n";
-            file_put_contents($testYamlPath, $yamlContent);
+            $test_yaml_path = storage_path('app/test_application.yml');
+            $yaml_content = "Security:\n  salt: test_security_salt\n";
+            file_put_contents($test_yaml_path, $yaml_content);
             
             // configの値を一時的に上書き
-            config(['migration.NC3_APPLICATION_YML_PATH' => $testYamlPath]);
+            config(['migration.NC3_APPLICATION_YML_PATH' => $test_yaml_path]);
         } else {
-            config(['migration.NC3_APPLICATION_YML_PATH' => $yamlPath]);
+            config(['migration.NC3_APPLICATION_YML_PATH' => $yaml_path]);
         }
     }
 
@@ -1777,26 +1777,26 @@ class MigrationNc3ExportTraitTest extends TestCase
         
         try {
             // テストデータを準備（投入値）
-            $expectedData = $this->createNc3UserTestData();
+            $expected_data = $this->createNc3UserTestData();
             
             $method->invokeArgs($this->controller, [false]); // $redo = false
 
             // users.iniファイルが作成されることを確認
-            if (Storage::exists('migration/users/users.ini') && $expectedData) {
+            if (Storage::exists('migration/users/users.ini') && $expected_data) {
                 $content = Storage::get('migration/users/users.ini');
                 
                 // 基本構造の確認
                 $this->assertStringContainsString('[users]', $content);
                 
                 // 投入値と出力値の検証
-                $userId = $expectedData['user_id'];
-                $this->assertStringContainsString("user[\"{$userId}\"] = \"{$expectedData['handlename']}\"", $content, '投入したハンドル名が正確に出力されている');
-                $this->assertStringContainsString("[\"{$userId}\"]", $content, '投入したユーザーIDセクションが作成されている');
-                $this->assertStringContainsString("name               = \"{$expectedData['handlename']}\"", $content, '投入した名前が正確に出力されている');
-                $this->assertStringContainsString("email              = \"{$expectedData['email']}\"", $content, '投入したメールアドレスが正確に出力されている');
-                $this->assertStringContainsString("userid             = \"{$expectedData['username']}\"", $content, '投入したユーザーIDが正確に出力されている');
-                $this->assertStringContainsString("users_roles_manage = \"{$expectedData['expected_manage_role']}\"", $content, '投入した管理権限が正確に出力されている');
-                $this->assertStringContainsString("users_roles_base   = \"{$expectedData['expected_base_role']}\"", $content, '投入した基本権限が正確に出力されている');
+                $user_id = $expected_data['user_id'];
+                $this->assertStringContainsString("user[\"{$user_id}\"] = \"{$expected_data['handlename']}\"", $content, '投入したハンドル名が正確に出力されている');
+                $this->assertStringContainsString("[\"{$user_id}\"]", $content, '投入したユーザーIDセクションが作成されている');
+                $this->assertStringContainsString("name               = \"{$expected_data['handlename']}\"", $content, '投入した名前が正確に出力されている');
+                $this->assertStringContainsString("email              = \"{$expected_data['email']}\"", $content, '投入したメールアドレスが正確に出力されている');
+                $this->assertStringContainsString("userid             = \"{$expected_data['username']}\"", $content, '投入したユーザーIDが正確に出力されている');
+                $this->assertStringContainsString("users_roles_manage = \"{$expected_data['expected_manage_role']}\"", $content, '投入した管理権限が正確に出力されている');
+                $this->assertStringContainsString("users_roles_base   = \"{$expected_data['expected_base_role']}\"", $content, '投入した基本権限が正確に出力されている');
             } else {
                 // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
                 $this->assertTrue(true, 'nc3ExportUsersメソッドが正常に実行された');
@@ -1836,31 +1836,31 @@ class MigrationNc3ExportTraitTest extends TestCase
         
         try {
             // テストデータを準備（投入値）
-            $expectedDataArray = $this->createNc3UserMultipleTestData();
+            $expected_data_array = $this->createNc3UserMultipleTestData();
             
             $method->invokeArgs($this->controller, [false]); // $redo = false
 
             // users.iniファイルが作成されることを確認
-            if (Storage::exists('migration/users/users.ini') && $expectedDataArray) {
+            if (Storage::exists('migration/users/users.ini') && $expected_data_array) {
                 $content = Storage::get('migration/users/users.ini');
                 
                 // 基本構造の確認
                 $this->assertStringContainsString('[users]', $content);
 
                 // 複数ユーザーの投入値と出力値の検証
-                foreach ($expectedDataArray as $expectedData) {
-                    $userId = $expectedData['user_id'];
-                    $this->assertStringContainsString("user[\"{$userId}\"] = \"{$expectedData['handlename']}\"", $content, "投入したユーザー{$userId}のハンドル名が正確に出力されている");
-                    $this->assertStringContainsString("[\"{$userId}\"]", $content, "投入したユーザー{$userId}のセクションが作成されている");
-                    $this->assertStringContainsString("userid             = \"{$expectedData['username']}\"", $content, "投入したユーザー{$userId}のユーザーIDが正確に出力されている");
-                    $this->assertStringContainsString("email              = \"{$expectedData['email']}\"", $content, "投入したユーザー{$userId}のメールアドレスが正確に出力されている");
+                foreach ($expected_data_array as $expected_data) {
+                    $user_id = $expected_data['user_id'];
+                    $this->assertStringContainsString("user[\"{$user_id}\"] = \"{$expected_data['handlename']}\"", $content, "投入したユーザー{$user_id}のハンドル名が正確に出力されている");
+                    $this->assertStringContainsString("[\"{$user_id}\"]", $content, "投入したユーザー{$user_id}のセクションが作成されている");
+                    $this->assertStringContainsString("userid             = \"{$expected_data['username']}\"", $content, "投入したユーザー{$user_id}のユーザーIDが正確に出力されている");
+                    $this->assertStringContainsString("email              = \"{$expected_data['email']}\"", $content, "投入したユーザー{$user_id}のメールアドレスが正確に出力されている");
                     
                     // 権限マッピングの確認
-                    if (isset($expectedData['expected_manage_role'])) {
-                        $this->assertStringContainsString("users_roles_manage = \"{$expectedData['expected_manage_role']}\"", $content, "投入したユーザー{$userId}の管理権限が正確に出力されている");
+                    if (isset($expected_data['expected_manage_role'])) {
+                        $this->assertStringContainsString("users_roles_manage = \"{$expected_data['expected_manage_role']}\"", $content, "投入したユーザー{$user_id}の管理権限が正確に出力されている");
                     }
-                    if (isset($expectedData['expected_base_role'])) {
-                        $this->assertStringContainsString("users_roles_base   = \"{$expectedData['expected_base_role']}\"", $content, "投入したユーザー{$userId}の基本権限が正確に出力されている");
+                    if (isset($expected_data['expected_base_role'])) {
+                        $this->assertStringContainsString("users_roles_base   = \"{$expected_data['expected_base_role']}\"", $content, "投入したユーザー{$user_id}の基本権限が正確に出力されている");
                     }
                 }
             } else {
@@ -1957,29 +1957,29 @@ class MigrationNc3ExportTraitTest extends TestCase
             Nc3Language::factory()->japanese()->create();
             
             // テスト用のシステム管理者を作成（投入値を定義）
-            $testUserData = [
+            $test_user_data = [
                 'id' => 101,
                 'username' => 'test_admin_user',
                 'email' => 'test.admin@example.com',
                 'handlename' => 'テスト投入システム管理者',
             ];
-            Nc3User::factory()->systemAdmin()->create($testUserData);
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
 
             // 多言語情報を作成（投入値を定義）
-            $testProfileData = [
-                'user_id' => $testUserData['id'],
-                'name' => $testUserData['handlename'],
+            $test_profile_data = [
+                'user_id' => $test_user_data['id'],
+                'name' => $test_user_data['handlename'],
                 'profile' => 'テスト投入管理者のプロフィール',
             ];
-            Nc3UsersLanguage::factory()->forUser($testUserData['id'])->japanese()->create($testProfileData);
+            Nc3UsersLanguage::factory()->forUser($test_user_data['id'])->japanese()->create($test_profile_data);
 
             // 期待値データを返す（投入値＝出力値の検証用）
             return [
-                'user_id' => $testUserData['id'],
-                'username' => $testUserData['username'],
-                'email' => $testUserData['email'],
-                'handlename' => $testUserData['handlename'],
-                'profile' => $testProfileData['profile'],
+                'user_id' => $test_user_data['id'],
+                'username' => $test_user_data['username'],
+                'email' => $test_user_data['email'],
+                'handlename' => $test_user_data['handlename'],
+                'profile' => $test_profile_data['profile'],
                 'expected_manage_role' => 'admin_system',
                 'expected_base_role' => 'role_article_admin',
             ];
@@ -2006,7 +2006,7 @@ class MigrationNc3ExportTraitTest extends TestCase
             Nc3Language::factory()->japanese()->create();
             
             // 複数ユーザーのテストデータを定義（投入値）
-            $usersData = [
+            $users_data = [
                 [
                     'id' => 201,
                     'username' => 'test_system_admin',
@@ -2035,47 +2035,47 @@ class MigrationNc3ExportTraitTest extends TestCase
             
             // システム管理者
             Nc3User::factory()->systemAdmin()->create([
-                'id' => $usersData[0]['id'],
-                'username' => $usersData[0]['username'],
-                'email' => $usersData[0]['email'],
-                'handlename' => $usersData[0]['handlename'],
+                'id' => $users_data[0]['id'],
+                'username' => $users_data[0]['username'],
+                'email' => $users_data[0]['email'],
+                'handlename' => $users_data[0]['handlename'],
             ]);
             
             // サイト管理者
             Nc3User::factory()->siteAdmin()->create([
-                'id' => $usersData[1]['id'],
-                'username' => $usersData[1]['username'],
-                'email' => $usersData[1]['email'],
-                'handlename' => $usersData[1]['handlename'],
+                'id' => $users_data[1]['id'],
+                'username' => $users_data[1]['username'],
+                'email' => $users_data[1]['email'],
+                'handlename' => $users_data[1]['handlename'],
             ]);
             
             // 一般ユーザー
             Nc3User::factory()->generalUser()->create([
-                'id' => $usersData[2]['id'],
-                'username' => $usersData[2]['username'],
-                'email' => $usersData[2]['email'],
-                'handlename' => $usersData[2]['handlename'],
+                'id' => $users_data[2]['id'],
+                'username' => $users_data[2]['username'],
+                'email' => $users_data[2]['email'],
+                'handlename' => $users_data[2]['handlename'],
             ]);
 
             // 多言語情報を作成
-            foreach ($usersData as $userData) {
-                Nc3UsersLanguage::factory()->forUser($userData['id'])->japanese()->create([
-                    'user_id' => $userData['id'],
-                    'name' => $userData['handlename'],
+            foreach ($users_data as $user_data) {
+                Nc3UsersLanguage::factory()->forUser($user_data['id'])->japanese()->create([
+                    'user_id' => $user_data['id'],
+                    'name' => $user_data['handlename'],
                 ]);
             }
 
             // 期待値データ配列を返す（投入値＝出力値の検証用）
-            return array_map(function($userData) {
+            return array_map(function($user_data) {
                 return [
-                    'user_id' => $userData['id'],
-                    'username' => $userData['username'],
-                    'email' => $userData['email'],
-                    'handlename' => $userData['handlename'],
-                    'expected_manage_role' => $userData['expected_manage_role'],
-                    'expected_base_role' => $userData['expected_base_role'],
+                    'user_id' => $user_data['id'],
+                    'username' => $user_data['username'],
+                    'email' => $user_data['email'],
+                    'handlename' => $user_data['handlename'],
+                    'expected_manage_role' => $user_data['expected_manage_role'],
+                    'expected_base_role' => $user_data['expected_base_role'],
                 ];
-            }, $usersData);
+            }, $users_data);
         } catch (\Exception $e) {
             // NC3環境がない場合はnullを返す
             return null;
@@ -2190,7 +2190,7 @@ class MigrationNc3ExportTraitTest extends TestCase
         
         try {
             // テストデータを準備（投入値）
-            $expectedData = $this->createNc3RoomTestData();
+            $expected_data = $this->createNc3RoomTestData();
             
             $method->invokeArgs($this->controller, [false]); // $redo = false
 
@@ -2207,16 +2207,16 @@ class MigrationNc3ExportTraitTest extends TestCase
                     $this->assertStringContainsString('[users]', $content);
                     
                     // 投入値と出力値の検証
-                    if ($expectedData) {
+                    if ($expected_data) {
                         // group_baseセクション：投入したルーム名が出力されているか
-                        $this->assertStringContainsString("name = \"{$expectedData['room_name']}_", $content, '投入したルーム名が出力に含まれている');
+                        $this->assertStringContainsString("name = \"{$expected_data['room_name']}_", $content, '投入したルーム名が出力に含まれている');
                         
                         // source_infoセクション：投入したroom_idとpage_idが出力されているか
-                        $this->assertStringContainsString("room_id = {$expectedData['room_id']}", $content, '投入したroom_idが正確に出力されている');
-                        $this->assertStringContainsString("room_page_id_top = {$expectedData['page_id_top']}", $content, '投入したpage_id_topが正確に出力されている');
+                        $this->assertStringContainsString("room_id = {$expected_data['room_id']}", $content, '投入したroom_idが正確に出力されている');
+                        $this->assertStringContainsString("room_page_id_top = {$expected_data['page_id_top']}", $content, '投入したpage_id_topが正確に出力されている');
                         
                         // usersセクション：投入したユーザー名と権限が出力されているか
-                        $this->assertStringContainsString("user[\"{$expectedData['username']}\"] = {$expectedData['role_key']}", $content, '投入したユーザー情報が正確に出力されている');
+                        $this->assertStringContainsString("user[\"{$expected_data['username']}\"] = {$expected_data['role_key']}", $content, '投入したユーザー情報が正確に出力されている');
                     }
                 }
             } else {
@@ -2262,12 +2262,12 @@ class MigrationNc3ExportTraitTest extends TestCase
         
         try {
             // テストデータを準備（投入値）
-            $expectedDataArray = $this->createNc3RoomMultipleTestData();
+            $expected_data_array = $this->createNc3RoomMultipleTestData();
             
             $method->invokeArgs($this->controller, [false]);
 
             // NC3環境が存在する場合のテスト
-            if (Storage::exists('migration/groups/') && $expectedDataArray) {
+            if (Storage::exists('migration/groups/') && $expected_data_array) {
                 $files = Storage::files('migration/groups/');
                 $this->assertGreaterThan(0, count($files), 'グループファイルが作成されることを確認');
                 
@@ -2285,18 +2285,18 @@ class MigrationNc3ExportTraitTest extends TestCase
                     $this->assertStringContainsString('[users]', $content);
                     
                     // 投入値と出力値の検証（複数のデータのいずれかが含まれることを確認）
-                    $foundMatchingData = false;
-                    foreach ($expectedDataArray as $expectedData) {
-                        if (strpos($content, "room_id = {$expectedData['room_id']}") !== false) {
+                    $found_matching_data = false;
+                    foreach ($expected_data_array as $expected_data) {
+                        if (strpos($content, "room_id = {$expected_data['room_id']}") !== false) {
                             // このファイルに対応する投入データが見つかった場合、詳細検証
-                            $this->assertStringContainsString("name = \"{$expectedData['room_name']}_", $content, '投入したルーム名が出力に含まれている');
-                            $this->assertStringContainsString("room_page_id_top = {$expectedData['page_id_top']}", $content, '投入したpage_id_topが正確に出力されている');
-                            $this->assertStringContainsString("user[\"{$expectedData['username']}\"] = {$expectedData['role_key']}", $content, '投入したユーザー情報が正確に出力されている');
-                            $foundMatchingData = true;
+                            $this->assertStringContainsString("name = \"{$expected_data['room_name']}_", $content, '投入したルーム名が出力に含まれている');
+                            $this->assertStringContainsString("room_page_id_top = {$expected_data['page_id_top']}", $content, '投入したpage_id_topが正確に出力されている');
+                            $this->assertStringContainsString("user[\"{$expected_data['username']}\"] = {$expected_data['role_key']}", $content, '投入したユーザー情報が正確に出力されている');
+                            $found_matching_data = true;
                             break;
                         }
                     }
-                    $this->assertTrue($foundMatchingData, 'ファイル内容が投入データのいずれかと一致している');
+                    $this->assertTrue($found_matching_data, 'ファイル内容が投入データのいずれかと一致している');
                 }
             } else {
                 // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
@@ -2340,16 +2340,16 @@ class MigrationNc3ExportTraitTest extends TestCase
         
         try {
             // テストデータを準備（投入値）
-            $expectedDataArray = $this->createNc3RoomRoleMappingTestData();
+            $expected_data_array = $this->createNc3RoomRoleMappingTestData();
             
             $method->invokeArgs($this->controller, [false]);
 
             // NC3環境が存在する場合の権限マッピングテスト
-            if (Storage::exists('migration/groups/') && $expectedDataArray) {
+            if (Storage::exists('migration/groups/') && $expected_data_array) {
                 $files = Storage::files('migration/groups/');
                 
                 // 権限マッピングの検証：投入値と出力値の比較
-                $roleMapping = [
+                $role_mapping = [
                     'room_administrator' => 'role_article_admin',
                     'chief_editor' => 'role_article_admin',
                     'editor' => 'role_article',
@@ -2371,23 +2371,23 @@ class MigrationNc3ExportTraitTest extends TestCase
                     $this->assertStringContainsString('[users]', $content);
                     
                     // 投入値と出力値の検証（権限マッピングの正確性を確認）
-                    $foundMatchingData = false;
-                    foreach ($expectedDataArray as $expectedData) {
-                        if (strpos($content, "room_id = {$expectedData['room_id']}") !== false) {
+                    $found_matching_data = false;
+                    foreach ($expected_data_array as $expected_data) {
+                        if (strpos($content, "room_id = {$expected_data['room_id']}") !== false) {
                             // このファイルに対応する投入データが見つかった場合、詳細検証
-                            $this->assertStringContainsString("name = \"{$expectedData['room_name']}_", $content, '投入したルーム名が出力に含まれている');
-                            $this->assertStringContainsString("room_page_id_top = {$expectedData['page_id_top']}", $content, '投入したpage_id_topが正確に出力されている');
-                            $this->assertStringContainsString("user[\"{$expectedData['username']}\"] = {$expectedData['nc3_role_key']}", $content, '投入したユーザー情報が正確に出力されている');
+                            $this->assertStringContainsString("name = \"{$expected_data['room_name']}_", $content, '投入したルーム名が出力に含まれている');
+                            $this->assertStringContainsString("room_page_id_top = {$expected_data['page_id_top']}", $content, '投入したpage_id_topが正確に出力されている');
+                            $this->assertStringContainsString("user[\"{$expected_data['username']}\"] = {$expected_data['nc3_role_key']}", $content, '投入したユーザー情報が正確に出力されている');
                             
                             // 権限マッピングの正確性を確認：NC3権限 → Connect-CMS権限
-                            $expectedConnectCmsRole = $roleMapping[$expectedData['nc3_role_key']];
-                            $this->assertStringContainsString("role_name = \"{$expectedConnectCmsRole}\"", $content, "NC3権限'{$expectedData['nc3_role_key']}'がConnect-CMS権限'{$expectedConnectCmsRole}'に正確にマッピングされている");
+                            $expected_connect_cms_role = $role_mapping[$expected_data['nc3_role_key']];
+                            $this->assertStringContainsString("role_name = \"{$expected_connect_cms_role}\"", $content, "NC3権限'{$expected_data['nc3_role_key']}'がConnect-CMS権限'{$expected_connect_cms_role}'に正確にマッピングされている");
                             
-                            $foundMatchingData = true;
+                            $found_matching_data = true;
                             break;
                         }
                     }
-                    $this->assertTrue($foundMatchingData, 'ファイル内容が投入データのいずれかと一致している');
+                    $this->assertTrue($found_matching_data, 'ファイル内容が投入データのいずれかと一致している');
                 }
             } else {
                 // NC3環境が存在しない場合でも、メソッドが正常に実行されることを確認
@@ -2432,44 +2432,44 @@ class MigrationNc3ExportTraitTest extends TestCase
             Nc3Language::factory()->japanese()->create();
             
             // テスト用のルームを作成（投入値を定義）
-            $testRoomData = [
+            $test_room_data = [
                 'id' => 100,
                 'space_id' => 2, // PUBLIC_SPACE
                 'page_id_top' => 999,
             ];
-            Nc3Room::factory()->publicSpace()->create($testRoomData);
+            Nc3Room::factory()->publicSpace()->create($test_room_data);
 
             // ルーム多言語情報を作成（投入値を定義）
-            $testRoomName = 'テスト投入ルーム';
-            Nc3RoomLanguage::factory()->forRoom($testRoomData['id'])->japanese()->create([
-                'room_id' => $testRoomData['id'],
-                'name' => $testRoomName,
+            $test_room_name = 'テスト投入ルーム';
+            Nc3RoomLanguage::factory()->forRoom($test_room_data['id'])->japanese()->create([
+                'room_id' => $test_room_data['id'],
+                'name' => $test_room_name,
             ]);
 
             // 権限定義を作成
             Nc3RoleRoom::factory()->roomAdministrator()->create();
 
             // テスト用のユーザーを作成（投入値を定義）
-            $testUsername = 'test_admin';
+            $test_username = 'test_admin';
             Nc3User::factory()->systemAdmin()->create([
                 'id' => 50,
-                'username' => $testUsername,
+                'username' => $test_username,
                 'handlename' => 'テストシステム管理者',
             ]);
 
             // ユーザー・ルーム・権限の関連を作成
-            Nc3RoleRoomsUser::factory()->forUserAndRoom(50, $testRoomData['id'])->roomAdmin()->create([
+            Nc3RoleRoomsUser::factory()->forUserAndRoom(50, $test_room_data['id'])->roomAdmin()->create([
                 'user_id' => 50,
-                'room_id' => $testRoomData['id'],
+                'room_id' => $test_room_data['id'],
                 'roles_room_id' => 1,
             ]);
 
             // 期待値データを返す（投入値＝出力値の検証用）
             return [
-                'room_id' => $testRoomData['id'],
-                'room_name' => $testRoomName,
-                'page_id_top' => $testRoomData['page_id_top'],
-                'username' => $testUsername,
+                'room_id' => $test_room_data['id'],
+                'room_name' => $test_room_name,
+                'page_id_top' => $test_room_data['page_id_top'],
+                'username' => $test_username,
                 'role_key' => 'room_administrator',
             ];
         } catch (\Exception $e) {
@@ -2603,18 +2603,18 @@ class MigrationNc3ExportTraitTest extends TestCase
             Nc3Language::factory()->japanese()->create();
             
             // テスト用のルームを作成（投入値を定義）
-            $roomData = [
+            $room_data = [
                 'id' => 301,
                 'space_id' => 2,
                 'page_id_top' => 2001,
             ];
-            Nc3Room::factory()->publicSpace()->create($roomData);
+            Nc3Room::factory()->publicSpace()->create($room_data);
 
             // ルーム多言語情報を作成（投入値を定義）
-            $roomName = 'テスト投入権限マッピングルーム';
-            Nc3RoomLanguage::factory()->forRoom($roomData['id'])->create([
-                'room_id' => $roomData['id'],
-                'name' => $roomName,
+            $room_name = 'テスト投入権限マッピングルーム';
+            Nc3RoomLanguage::factory()->forRoom($room_data['id'])->create([
+                'room_id' => $room_data['id'],
+                'name' => $room_name,
             ]);
 
             // 全権限定義を作成
@@ -2660,46 +2660,46 @@ class MigrationNc3ExportTraitTest extends TestCase
             ]);
 
             // 各権限のユーザー・ルーム・権限関連を作成
-            Nc3RoleRoomsUser::factory()->forUserAndRoom(301, $roomData['id'])->roomAdmin()->create();
-            Nc3RoleRoomsUser::factory()->forUserAndRoom(302, $roomData['id'])->chiefEditor()->create();
-            Nc3RoleRoomsUser::factory()->forUserAndRoom(303, $roomData['id'])->editor()->create();
-            Nc3RoleRoomsUser::factory()->forUserAndRoom(304, $roomData['id'])->generalUser()->create();
-            Nc3RoleRoomsUser::factory()->forUserAndRoom(305, $roomData['id'])->visitor()->create();
+            Nc3RoleRoomsUser::factory()->forUserAndRoom(301, $room_data['id'])->roomAdmin()->create();
+            Nc3RoleRoomsUser::factory()->forUserAndRoom(302, $room_data['id'])->chiefEditor()->create();
+            Nc3RoleRoomsUser::factory()->forUserAndRoom(303, $room_data['id'])->editor()->create();
+            Nc3RoleRoomsUser::factory()->forUserAndRoom(304, $room_data['id'])->generalUser()->create();
+            Nc3RoleRoomsUser::factory()->forUserAndRoom(305, $room_data['id'])->visitor()->create();
 
             // 期待値データ配列を返す（投入値＝出力値の検証用）
             return [
                 [
-                    'room_id' => $roomData['id'],
-                    'room_name' => $roomName,
-                    'page_id_top' => $roomData['page_id_top'],
+                    'room_id' => $room_data['id'],
+                    'room_name' => $room_name,
+                    'page_id_top' => $room_data['page_id_top'],
                     'username' => $usernames[0],
                     'nc3_role_key' => 'room_administrator',
                 ],
                 [
-                    'room_id' => $roomData['id'],
-                    'room_name' => $roomName,
-                    'page_id_top' => $roomData['page_id_top'],
+                    'room_id' => $room_data['id'],
+                    'room_name' => $room_name,
+                    'page_id_top' => $room_data['page_id_top'],
                     'username' => $usernames[1],
                     'nc3_role_key' => 'chief_editor',
                 ],
                 [
-                    'room_id' => $roomData['id'],
-                    'room_name' => $roomName,
-                    'page_id_top' => $roomData['page_id_top'],
+                    'room_id' => $room_data['id'],
+                    'room_name' => $room_name,
+                    'page_id_top' => $room_data['page_id_top'],
                     'username' => $usernames[2],
                     'nc3_role_key' => 'editor',
                 ],
                 [
-                    'room_id' => $roomData['id'],
-                    'room_name' => $roomName,
-                    'page_id_top' => $roomData['page_id_top'],
+                    'room_id' => $room_data['id'],
+                    'room_name' => $room_name,
+                    'page_id_top' => $room_data['page_id_top'],
                     'username' => $usernames[3],
                     'nc3_role_key' => 'general_user',
                 ],
                 [
-                    'room_id' => $roomData['id'],
-                    'room_name' => $roomName,
-                    'page_id_top' => $roomData['page_id_top'],
+                    'room_id' => $room_data['id'],
+                    'room_name' => $room_name,
+                    'page_id_top' => $room_data['page_id_top'],
                     'username' => $usernames[4],
                     'nc3_role_key' => 'visitor',
                 ],
@@ -2751,12 +2751,12 @@ class MigrationNc3ExportTraitTest extends TestCase
         
         try {
             // テストデータを準備（投入値）
-            $expectedData = $this->createNc3BlogTestData();
+            $expected_data = $this->createNc3BlogTestData();
             
             $method->invokeArgs($this->controller, [false]); // $redo = false
 
             // NC3環境が存在する場合、blog INIファイルが作成される
-            if (Storage::exists('migration/blogs/') && $expectedData) {
+            if (Storage::exists('migration/blogs/') && $expected_data) {
                 $files = Storage::files('migration/blogs/');
                 if (!empty($files)) {
                     foreach ($files as $file) {
@@ -2772,15 +2772,15 @@ class MigrationNc3ExportTraitTest extends TestCase
                             $this->assertStringContainsString('[source_info]', $content);
                             
                             // 投入したブログ名が出力されているか確認
-                            $this->assertStringContainsString("blog_name = \"{$expectedData['blog_name']}\"", $content, '投入したブログ名が正確に出力されている');
+                            $this->assertStringContainsString("blog_name = \"{$expected_data['blog_name']}\"", $content, '投入したブログ名が正確に出力されている');
                             $this->assertStringContainsString("plugin_name = \"blogs\"", $content, 'プラグイン名が正確に出力されている');
                             
                             // TSVファイルが存在する場合、投入したエントリデータを確認
-                            $tsvFile = str_replace('.ini', '.tsv', $file);
-                            if (Storage::exists($tsvFile)) {
-                                $tsvContent = Storage::get($tsvFile);
-                                $this->assertStringContainsString($expectedData['entry_title'], $tsvContent, '投入したエントリタイトルが正確に出力されている');
-                                $this->assertStringContainsString($expectedData['entry_body'], $tsvContent, '投入したエントリ本文が正確に出力されている');
+                            $tsv_file = str_replace('.ini', '.tsv', $file);
+                            if (Storage::exists($tsv_file)) {
+                                $tsv_content = Storage::get($tsv_file);
+                                $this->assertStringContainsString($expected_data['entry_title'], $tsv_content, '投入したエントリタイトルが正確に出力されている');
+                                $this->assertStringContainsString($expected_data['entry_body'], $tsv_content, '投入したエントリ本文が正確に出力されている');
                             }
                         }
                     }
@@ -2828,12 +2828,12 @@ class MigrationNc3ExportTraitTest extends TestCase
         
         try {
             // 複数ブログのテストデータを準備（投入値）
-            $expectedDataArray = $this->createNc3BlogMultipleTestData();
+            $expected_data_array = $this->createNc3BlogMultipleTestData();
             
             $method->invokeArgs($this->controller, [false]);
 
             // NC3環境が存在する場合のテスト
-            if (Storage::exists('migration/blogs/') && $expectedDataArray) {
+            if (Storage::exists('migration/blogs/') && $expected_data_array) {
                 $files = Storage::files('migration/blogs/');
                 
                 // 各ファイルの内容を確認
@@ -2847,9 +2847,9 @@ class MigrationNc3ExportTraitTest extends TestCase
                     // ファイル形式に応じた内容確認と投入値検証
                     if (str_ends_with($file, '.ini')) {
                         // INIファイルの場合、投入したブログ情報を検証
-                        foreach ($expectedDataArray as $expectedData) {
-                            if (strpos($content, $expectedData['blog_name']) !== false) {
-                                $this->assertStringContainsString("blog_name = \"{$expectedData['blog_name']}\"", $content, "投入したブログ名{$expectedData['blog_name']}が正確に出力されている");
+                        foreach ($expected_data_array as $expected_data) {
+                            if (strpos($content, $expected_data['blog_name']) !== false) {
+                                $this->assertStringContainsString("blog_name = \"{$expected_data['blog_name']}\"", $content, "投入したブログ名{$expected_data['blog_name']}が正確に出力されている");
                                 $this->assertStringContainsString('[blog_base]', $content, 'blog_baseセクションが含まれている');
                                 $this->assertStringContainsString('[source_info]', $content, 'source_infoセクションが含まれている');
                                 $this->assertStringContainsString('plugin_name = "blogs"', $content, 'プラグイン名が正確に出力されている');
@@ -2857,16 +2857,16 @@ class MigrationNc3ExportTraitTest extends TestCase
                         }
                     } elseif (str_ends_with($file, '.tsv')) {
                         // TSVファイルの場合、投入したエントリデータを検証
-                        foreach ($expectedDataArray as $expectedData) {
-                            if (strpos($content, $expectedData['entry_title']) !== false) {
-                                $this->assertStringContainsString($expectedData['entry_title'], $content, "投入したエントリタイトル{$expectedData['entry_title']}が正確に出力されている");
-                                $this->assertStringContainsString($expectedData['entry_body'], $content, "投入したエントリ本文{$expectedData['entry_body']}が正確に出力されている");
+                        foreach ($expected_data_array as $expected_data) {
+                            if (strpos($content, $expected_data['entry_title']) !== false) {
+                                $this->assertStringContainsString($expected_data['entry_title'], $content, "投入したエントリタイトル{$expected_data['entry_title']}が正確に出力されている");
+                                $this->assertStringContainsString($expected_data['entry_body'], $content, "投入したエントリ本文{$expected_data['entry_body']}が正確に出力されている");
                             }
                         }
                         
                         // TSVの基本構造確認
-                        $hasTabs = strpos($content, "\t") !== false;
-                        if ($hasTabs) {
+                        $has_tabs = strpos($content, "\t") !== false;
+                        if ($has_tabs) {
                             $this->assertTrue(true, 'TSVファイルがタブ区切り形式になっている');
                         }
                     }
@@ -2913,12 +2913,12 @@ class MigrationNc3ExportTraitTest extends TestCase
         
         try {
             // コンテンツ処理用のテストデータを準備（投入値）
-            $expectedData = $this->createNc3BlogContentProcessingTestData();
+            $expected_data = $this->createNc3BlogContentProcessingTestData();
             
             $method->invokeArgs($this->controller, [false]);
 
             // NC3環境が存在する場合のコンテンツ処理テスト
-            if (Storage::exists('migration/blogs/') && $expectedData) {
+            if (Storage::exists('migration/blogs/') && $expected_data) {
                 $files = Storage::files('migration/blogs/');
                 
                 // 各ファイルの内容を確認
@@ -2930,14 +2930,14 @@ class MigrationNc3ExportTraitTest extends TestCase
                     $this->assertStringContainsString(']', $content);
                     
                     // TSVファイルの場合、投入したコンテンツの処理結果を確認
-                    if (str_ends_with($file, '.tsv') && strpos($content, $expectedData['entry_title']) !== false) {
+                    if (str_ends_with($file, '.tsv') && strpos($content, $expected_data['entry_title']) !== false) {
                         // 投入したコンテンツが正確に出力されているか確認
-                        $this->assertStringContainsString($expectedData['entry_title'], $content, "投入したエントリタイトル{$expectedData['entry_title']}が正確に出力されている");
-                        $this->assertStringContainsString($expectedData['entry_body'], $content, "投入したエントリ本文{$expectedData['entry_body']}が正確に出力されている");
+                        $this->assertStringContainsString($expected_data['entry_title'], $content, "投入したエントリタイトル{$expected_data['entry_title']}が正確に出力されている");
+                        $this->assertStringContainsString($expected_data['entry_body'], $content, "投入したエントリ本文{$expected_data['entry_body']}が正確に出力されている");
                         
                         // 特殊文字処理が正しく行われているか確認
-                        if (!empty($expectedData['special_content'])) {
-                            $this->assertStringContainsString($expectedData['special_content'], $content, "投入した特殊文字コンテンツ{$expectedData['special_content']}が正確に出力されている");
+                        if (!empty($expected_data['special_content'])) {
+                            $this->assertStringContainsString($expected_data['special_content'], $content, "投入した特殊文字コンテンツ{$expected_data['special_content']}が正確に出力されている");
                         }
                         
                         // TSVファイルの基本構造確認
@@ -3016,47 +3016,47 @@ class MigrationNc3ExportTraitTest extends TestCase
             Nc3Language::factory()->japanese()->create();
             
             // テスト用のブログを作成（投入値を定義）
-            $testBlogData = [
+            $test_blog_data = [
                 'id' => 401,
                 'key' => 'test_blog_input_key',
                 'name' => 'テスト投入ブログ',
             ];
-            Nc3Blog::factory()->active()->create($testBlogData);
+            Nc3Blog::factory()->active()->create($test_blog_data);
 
             // ブログエントリを作成（投入値を定義）
-            $testEntryData = [
+            $test_entry_data = [
                 'id' => 501,
                 'title' => 'テスト投入エントリタイトル',
                 'body1' => 'テスト投入メインコンテンツです。',
                 'body2' => 'テスト投入追加コンテンツです。',
             ];
-            Nc3BlogEntry::factory()->published()->forBlog($testBlogData['id'])->create($testEntryData);
+            Nc3BlogEntry::factory()->published()->forBlog($test_blog_data['id'])->create($test_entry_data);
 
             // フレーム設定を作成（投入値を定義）
-            Nc3BlogFrameSetting::factory()->forContent($testBlogData['key'])->create([
+            Nc3BlogFrameSetting::factory()->forContent($test_blog_data['key'])->create([
                 'frame_key' => 'test_frame_input_key',
             ]);
 
             // テスト用のユーザーを作成（投入値を定義）
-            $testUserData = [
+            $test_user_data = [
                 'id' => 601,
                 'username' => 'test_blog_admin',
                 'handlename' => 'テスト投入ブログ管理者',
             ];
-            Nc3User::factory()->systemAdmin()->create($testUserData);
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
 
             // 期待値データを返す（投入値＝出力値の検証用）
             return [
-                'blog_id' => $testBlogData['id'],
-                'blog_key' => $testBlogData['key'],
-                'blog_name' => $testBlogData['name'],
-                'entry_id' => $testEntryData['id'],
-                'entry_title' => $testEntryData['title'],
-                'entry_body' => $testEntryData['body1'],
-                'entry_body2' => $testEntryData['body2'],
-                'user_id' => $testUserData['id'],
-                'username' => $testUserData['username'],
-                'user_handlename' => $testUserData['handlename'],
+                'blog_id' => $test_blog_data['id'],
+                'blog_key' => $test_blog_data['key'],
+                'blog_name' => $test_blog_data['name'],
+                'entry_id' => $test_entry_data['id'],
+                'entry_title' => $test_entry_data['title'],
+                'entry_body' => $test_entry_data['body1'],
+                'entry_body2' => $test_entry_data['body2'],
+                'user_id' => $test_user_data['id'],
+                'username' => $test_user_data['username'],
+                'user_handlename' => $test_user_data['handlename'],
             ];
         } catch (\Exception $e) {
             // NC3環境がない場合はnullを返す
@@ -3140,48 +3140,48 @@ class MigrationNc3ExportTraitTest extends TestCase
             Nc3Language::factory()->japanese()->create();
             
             // 特殊文字を含むブログを作成（投入値を定義）
-            $testBlogData = [
+            $test_blog_data = [
                 'id' => 501,
                 'key' => 'content_processing_blog',
                 'name' => 'テスト投入コンテンツ処理ブログ',
             ];
-            Nc3Blog::factory()->active()->create($testBlogData);
+            Nc3Blog::factory()->active()->create($test_blog_data);
 
             // 特殊文字を含むエントリを作成（投入値を定義）
-            $testEntryData = [
+            $test_entry_data = [
                 'id' => 601,
                 'title' => 'テスト投入特殊文字エントリ',
                 'body1' => 'テスト投入メインコンテンツ：HTMLタグ<strong>太字</strong>、改行\n\タブ\t、引用符"test"',
                 'body2' => 'テスト投入追加コンテンツ：URLリンクhttp://example.com',
             ];
-            Nc3BlogEntry::factory()->published()->forBlog($testBlogData['id'])->create($testEntryData);
+            Nc3BlogEntry::factory()->published()->forBlog($test_blog_data['id'])->create($test_entry_data);
 
             // フレーム設定を作成（投入値を定義）
-            Nc3BlogFrameSetting::factory()->forContent($testBlogData['key'])->create([
+            Nc3BlogFrameSetting::factory()->forContent($test_blog_data['key'])->create([
                 'frame_key' => 'content_processing_frame',
             ]);
 
             // テスト用のユーザーを作成（投入値を定義）
-            $testUserData = [
+            $test_user_data = [
                 'id' => 701,
                 'username' => 'content_admin',
                 'handlename' => 'テスト投入コンテンツ管理者',
             ];
-            Nc3User::factory()->systemAdmin()->create($testUserData);
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
 
             // 期待値データを返す（投入値＝出力値の検証用）
             return [
-                'blog_id' => $testBlogData['id'],
-                'blog_key' => $testBlogData['key'],
-                'blog_name' => $testBlogData['name'],
-                'entry_id' => $testEntryData['id'],
-                'entry_title' => $testEntryData['title'],
-                'entry_body' => $testEntryData['body1'],
-                'entry_body2' => $testEntryData['body2'],
+                'blog_id' => $test_blog_data['id'],
+                'blog_key' => $test_blog_data['key'],
+                'blog_name' => $test_blog_data['name'],
+                'entry_id' => $test_entry_data['id'],
+                'entry_title' => $test_entry_data['title'],
+                'entry_body' => $test_entry_data['body1'],
+                'entry_body2' => $test_entry_data['body2'],
                 'special_content' => '<strong>太字</strong>', // 特殊文字処理の検証用
-                'user_id' => $testUserData['id'],
-                'username' => $testUserData['username'],
-                'user_handlename' => $testUserData['handlename'],
+                'user_id' => $test_user_data['id'],
+                'username' => $test_user_data['username'],
+                'user_handlename' => $test_user_data['handlename'],
             ];
         } catch (\Exception $e) {
             // NC3環境がない場合はnullを返す
