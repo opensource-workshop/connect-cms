@@ -2,10 +2,13 @@
 
 namespace App\Models\Migration\Nc3;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Nc3BlogFrameSetting extends Model
 {
+    use HasFactory;
+
     /**
      * 使用するDB Connection
      */
@@ -15,4 +18,9 @@ class Nc3BlogFrameSetting extends Model
      * テーブル名の指定
      */
     protected $table = 'blog_frame_settings';
+
+    /**
+     * タイムスタンプの自動更新を無効にする
+     */
+    public $timestamps = false;
 }

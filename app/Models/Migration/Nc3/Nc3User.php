@@ -2,11 +2,19 @@
 
 namespace App\Models\Migration\Nc3;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
 class Nc3User extends Model
 {
+    use HasFactory;
+    
+    /**
+     * タイムスタンプの自動更新を無効にする
+     */
+    public $timestamps = false;
+    
     /** ステータス */
     const
         status_active = 1,

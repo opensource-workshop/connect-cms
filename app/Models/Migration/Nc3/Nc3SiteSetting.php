@@ -2,11 +2,14 @@
 
 namespace App\Models\Migration\Nc3;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
 class Nc3SiteSetting extends Model
 {
+    use HasFactory;
+
     /**
      * 使用するDB Connection
      */
@@ -16,6 +19,11 @@ class Nc3SiteSetting extends Model
      * テーブル名の指定
      */
     protected $table = 'site_settings';
+
+    /**
+     * タイムスタンプの自動更新を無効にする
+     */
+    public $timestamps = false;
 
     /**
      * site_settingsのvalueをkeyで取得
