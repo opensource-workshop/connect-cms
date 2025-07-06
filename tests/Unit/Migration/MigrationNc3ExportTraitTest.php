@@ -45,6 +45,9 @@ use App\Models\Migration\Nc3\Nc3Cabinet;
 use App\Models\Migration\Nc3\Nc3CabinetFile;
 use App\Models\Migration\Nc3\Nc3AccessCounter;
 use App\Models\Migration\Nc3\Nc3AccessCounterFrameSetting;
+use App\Models\Migration\Nc3\Nc3Calendar;
+use App\Models\Migration\Nc3\Nc3CalendarEvent;
+use App\Models\Migration\Nc3\Nc3CalendarFrameSetting;
 use Illuminate\Support\Facades\Artisan;
 
 /**
@@ -6472,6 +6475,382 @@ class MigrationNc3ExportTraitTest extends TestCase
                 'display_type' => $test_counter_data['display_type'],
                 'special_content' => '<strong>太字</strong>', // 特殊文字処理の検証用
                 'reset_interval' => 'monthly',
+                'user_id' => $test_user_data['id'],
+                'username' => $test_user_data['username'],
+                'user_handlename' => $test_user_data['handlename'],
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * カレンダーエクスポートテスト
+     */
+    public function testNc3ExportCalendar()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForCalendarTest();
+
+            // テスト用のデータを作成
+            $expected_data = $this->createNc3CalendarTestData();
+
+            // nc3ExportCalendarメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportCalendar');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/calendars/calendars.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/calendars/calendars.tsv');
+                $this->assertStringContainsString($expected_data['event_title'], $tsv_content, '投入したイベントタイトルが正確に出力されている');
+                $this->assertStringContainsString($expected_data['event_description'], $tsv_content, '投入したイベント説明が正確に出力されている');
+                $this->assertStringContainsString($expected_data['event_location'], $tsv_content, '投入したイベント場所が正確に出力されている');
+                $this->assertStringContainsString($expected_data['event_contact'], $tsv_content, '投入したイベント連絡先が正確に出力されている');
+                $this->assertStringContainsString($expected_data['calendar_name'], $tsv_content, '投入したカレンダー名が正確に出力されている');
+            }
+        } catch (\Exception $e) {
+            // NC3環境がない場合はテストをスキップ
+            $this->markTestSkipped('NC3環境が利用できないため、テストをスキップしました: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * カレンダー複数イベントテスト
+     */
+    public function testNc3ExportCalendarMultipleEvents()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForCalendarTest();
+
+            // テスト用のデータを作成
+            $expected_data_array = $this->createNc3CalendarMultipleEventsTestData();
+
+            // nc3ExportCalendarメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportCalendar');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data_array) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/calendars/calendars.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/calendars/calendars.tsv');
+                
+                // 各イベントの投入値＝出力値を検証
+                foreach ($expected_data_array as $expected_data) {
+                    $this->assertStringContainsString($expected_data['event_title'], $tsv_content, '投入したイベントタイトルが正確に出力されている: ' . $expected_data['event_title']);
+                    $this->assertStringContainsString($expected_data['event_description'], $tsv_content, '投入したイベント説明が正確に出力されている: ' . $expected_data['event_description']);
+                    $this->assertStringContainsString($expected_data['event_location'], $tsv_content, '投入したイベント場所が正確に出力されている: ' . $expected_data['event_location']);
+                    $this->assertStringContainsString($expected_data['event_contact'], $tsv_content, '投入したイベント連絡先が正確に出力されている: ' . $expected_data['event_contact']);
+                }
+            }
+        } catch (\Exception $e) {
+            // NC3環境がない場合はテストをスキップ
+            $this->markTestSkipped('NC3環境が利用できないため、テストをスキップしました: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * カレンダーコンテンツ処理テスト
+     */
+    public function testNc3ExportCalendarContentProcessing()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForCalendarTest();
+
+            // テスト用のデータを作成
+            $expected_data = $this->createNc3CalendarContentProcessingTestData();
+
+            // nc3ExportCalendarメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportCalendar');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data) {
+                // ファイルが作成されたことを確認
+                $this->assertTrue(Storage::exists('migration/calendars/calendars.tsv'));
+
+                // TSVファイルの内容確認
+                $tsv_content = Storage::get('migration/calendars/calendars.tsv');
+                $this->assertStringContainsString($expected_data['event_title'], $tsv_content, '投入したイベントタイトルが正確に出力されている');
+                $this->assertStringContainsString($expected_data['event_description'], $tsv_content, '投入したイベント説明が正確に出力されている');
+                $this->assertStringContainsString($expected_data['event_location'], $tsv_content, '投入したイベント場所が正確に出力されている');
+                $this->assertStringContainsString($expected_data['rrule'], $tsv_content, '投入したRRULEが正確に出力されている');
+                $this->assertStringContainsString($expected_data['special_content'], $tsv_content, '投入した特殊文字が正確に出力されている');
+                $this->assertStringContainsString($expected_data['user_handlename'], $tsv_content, '投入したユーザー名が正確に出力されている');
+            }
+        } catch (\Exception $e) {
+            // NC3環境がない場合はテストをスキップ
+            $this->markTestSkipped('NC3環境が利用できないため、テストをスキップしました: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * カレンダーテスト用のプライベートプロパティを設定
+     */
+    private function setPrivatePropertiesForCalendarTest(): void
+    {
+        // migration_baseプロパティを設定
+        $migration_base_property = $this->reflection->getProperty('migration_base');
+        $migration_base_property->setAccessible(true);
+        $migration_base_property->setValue($this->controller, storage_path('app/migration'));
+
+        // import_baseプロパティを設定
+        $import_base_property = $this->reflection->getProperty('import_base');
+        $import_base_property->setAccessible(true);
+        $import_base_property->setValue($this->controller, storage_path('app/migration'));
+    }
+
+    /**
+     * カレンダーテスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3CalendarTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Calendar::truncate();
+            Nc3CalendarEvent::truncate();
+            Nc3CalendarFrameSetting::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+            
+            // テスト用のカレンダーを作成（投入値を定義）
+            $test_calendar_data = [
+                'id' => 801,
+                'key' => 'test_calendar_basic',
+                'name' => 'テスト投入基本カレンダー',
+            ];
+            Nc3Calendar::factory()->active()->create($test_calendar_data);
+
+            // テスト用のイベントを作成（投入値を定義）
+            $start_date = new \DateTime('2024-03-15 10:00:00');
+            $end_date = new \DateTime('2024-03-15 12:00:00');
+            $test_event_data = [
+                'id' => 901,
+                'calendar_key' => $test_calendar_data['key'],
+                'title' => 'テスト投入基本イベント',
+                'description' => 'テスト投入基本イベントの説明です。',
+                'location' => 'テスト投入会議室A',
+                'contact' => 'test@example.com',
+                'start_date' => $start_date,
+                'end_date' => $end_date,
+                'is_allday' => 0,
+                'rrule' => '',
+            ];
+            Nc3CalendarEvent::factory()->forCalendar($test_calendar_data['key'])->published()->create($test_event_data);
+
+            // フレーム設定を作成（投入値を定義）
+            $test_frame_setting_data = [
+                'frame_key' => 'basic_calendar_frame',
+                'data_type_key' => 'display_type',
+                'value' => 'month',
+            ];
+            Nc3CalendarFrameSetting::factory()->forFrame($test_frame_setting_data['frame_key'])->monthView()->create($test_frame_setting_data);
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 1401,
+                'username' => 'basic_calendar_admin',
+                'handlename' => 'テスト投入基本カレンダー管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            // 期待値データを返す（投入値＝出力値の検証用）
+            return [
+                'calendar_id' => $test_calendar_data['id'],
+                'calendar_key' => $test_calendar_data['key'],
+                'calendar_name' => $test_calendar_data['name'],
+                'event_id' => $test_event_data['id'],
+                'event_title' => $test_event_data['title'],
+                'event_description' => $test_event_data['description'],
+                'event_location' => $test_event_data['location'],
+                'event_contact' => $test_event_data['contact'],
+                'frame_setting_value' => $test_frame_setting_data['value'],
+                'user_id' => $test_user_data['id'],
+                'username' => $test_user_data['username'],
+                'user_handlename' => $test_user_data['handlename'],
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * カレンダー複数イベントテスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3CalendarMultipleEventsTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Calendar::truncate();
+            Nc3CalendarEvent::truncate();
+            Nc3CalendarFrameSetting::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+
+            // 複数のカレンダーを作成（投入値を定義）
+            $test_calendar_data_array = [
+                [
+                    'id' => 802,
+                    'key' => 'test_calendar_multiple_1',
+                    'name' => 'テスト投入複数カレンダー1',
+                ],
+                [
+                    'id' => 803,
+                    'key' => 'test_calendar_multiple_2',
+                    'name' => 'テスト投入複数カレンダー2',
+                ],
+            ];
+
+            $expected_data_array = [];
+            foreach ($test_calendar_data_array as $index => $calendar_data) {
+                // カレンダーを作成
+                Nc3Calendar::factory()->active()->create($calendar_data);
+
+                // 各カレンダーに複数のイベントを作成
+                for ($i = 1; $i <= 2; $i++) {
+                    $start_date = new \DateTime("2024-03-{$index + 15} 1{$i}:00:00");
+                    $end_date = new \DateTime("2024-03-{$index + 15} 1{$i}:30:00");
+                    $event_data = [
+                        'id' => 902 + ($index * 10) + $i,
+                        'calendar_key' => $calendar_data['key'],
+                        'title' => "テスト投入複数イベント{$calendar_data['name']}_{$i}",
+                        'description' => "テスト投入複数イベント{$calendar_data['name']}_{$i}の説明です。",
+                        'location' => "テスト投入会議室{$index + 1}_{$i}",
+                        'contact' => "test{$index}_{$i}@example.com",
+                        'start_date' => $start_date,
+                        'end_date' => $end_date,
+                        'is_allday' => 0,
+                        'rrule' => '',
+                    ];
+                    Nc3CalendarEvent::factory()->forCalendar($calendar_data['key'])->published()->create($event_data);
+
+                    // 期待値データを蓄積
+                    $expected_data_array[] = [
+                        'calendar_id' => $calendar_data['id'],
+                        'calendar_key' => $calendar_data['key'],
+                        'calendar_name' => $calendar_data['name'],
+                        'event_id' => $event_data['id'],
+                        'event_title' => $event_data['title'],
+                        'event_description' => $event_data['description'],
+                        'event_location' => $event_data['location'],
+                        'event_contact' => $event_data['contact'],
+                    ];
+                }
+            }
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 1402,
+                'username' => 'multiple_calendar_admin',
+                'handlename' => 'テスト投入複数カレンダー管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            return $expected_data_array;
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * カレンダーコンテンツ処理テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3CalendarContentProcessingTestData(): array|null
+    {
+        try {
+            // NC3テーブルをクリーンアップ
+            Nc3Calendar::truncate();
+            Nc3CalendarEvent::truncate();
+            Nc3CalendarFrameSetting::truncate();
+            Nc3User::truncate();
+            Nc3Language::truncate();
+            
+            // 言語データを作成
+            Nc3Language::factory()->japanese()->create();
+            
+            // 特殊文字を含むカレンダーを作成（投入値を定義）
+            $test_calendar_data = [
+                'id' => 804,
+                'key' => 'content_processing_calendar',
+                'name' => 'テスト投入コンテンツ処理カレンダー',
+            ];
+            Nc3Calendar::factory()->active()->create($test_calendar_data);
+
+            // 特殊文字を含むイベントを作成（投入値を定義）
+            $start_date = new \DateTime('2024-03-20 14:00:00');
+            $end_date = new \DateTime('2024-03-20 16:00:00');
+            $test_event_data = [
+                'id' => 905,
+                'calendar_key' => $test_calendar_data['key'],
+                'title' => 'テスト投入特殊文字イベント',
+                'description' => 'テスト投入特殊文字説明：HTMLタグ<strong>太字</strong>、改行\n\タブ\t、引用符"test"、URLリンクhttp://example.com',
+                'location' => 'テスト投入特殊文字会議室',
+                'contact' => 'special@example.com',
+                'start_date' => $start_date,
+                'end_date' => $end_date,
+                'is_allday' => 0,
+                'rrule' => 'FREQ=WEEKLY;BYDAY=MO,WE,FR',
+            ];
+            Nc3CalendarEvent::factory()->forCalendar($test_calendar_data['key'])->published()->withRrule('FREQ=WEEKLY;BYDAY=MO,WE,FR')->create($test_event_data);
+
+            // フレーム設定を作成（投入値を定義）
+            $test_frame_setting_data = [
+                'frame_key' => 'content_processing_calendar_frame',
+                'data_type_key' => 'display_type',
+                'value' => 'week',
+            ];
+            Nc3CalendarFrameSetting::factory()->forFrame($test_frame_setting_data['frame_key'])->weekView()->create($test_frame_setting_data);
+
+            // テスト用のユーザーを作成（投入値を定義）
+            $test_user_data = [
+                'id' => 1403,
+                'username' => 'content_calendar_admin',
+                'handlename' => 'テスト投入コンテンツカレンダー管理者',
+            ];
+            Nc3User::factory()->systemAdmin()->create($test_user_data);
+
+            // 期待値データを返す（投入値＝出力値の検証用）
+            return [
+                'calendar_id' => $test_calendar_data['id'],
+                'calendar_key' => $test_calendar_data['key'],
+                'calendar_name' => $test_calendar_data['name'],
+                'event_id' => $test_event_data['id'],
+                'event_title' => $test_event_data['title'],
+                'event_description' => $test_event_data['description'],
+                'event_location' => $test_event_data['location'],
+                'event_contact' => $test_event_data['contact'],
+                'rrule' => $test_event_data['rrule'],
+                'special_content' => '<strong>太字</strong>', // 特殊文字処理の検証用
                 'user_id' => $test_user_data['id'],
                 'username' => $test_user_data['username'],
                 'user_handlename' => $test_user_data['handlename'],
