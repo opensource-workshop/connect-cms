@@ -25,10 +25,21 @@ class Nc3SpaceFactory extends Factory
     public function definition(): array
     {
         return [
-            'room_id_root' => 1,
+            'parent_id' => null,
+            'lft' => null,
+            'rght' => null,
             'type' => 1,
+            'plugin_key' => null,
+            'default_setting_action' => null,
+            'room_disk_size' => null,
+            'room_id_root' => 1,
+            'page_id_top' => null,
             'permalink' => $this->faker->slug(),
+            'is_m17n' => 0,
+            'after_user_save_model' => null,
+            'created_user' => 1,
             'created' => $this->faker->dateTime(),
+            'modified_user' => 1,
             'modified' => $this->faker->dateTime(),
         ];
     }

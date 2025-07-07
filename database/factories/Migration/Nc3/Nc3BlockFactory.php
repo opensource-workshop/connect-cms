@@ -106,6 +106,20 @@ class Nc3BlockFactory extends Factory
     }
 
     /**
+     * 予約プラグイン用のブロック
+     *
+     * @return static
+     */
+    public function reservationPlugin(): static
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'plugin_key' => 'reservations',
+            ];
+        });
+    }
+
+    /**
      * 特定のキーを持つブロック
      *
      * @param string $key

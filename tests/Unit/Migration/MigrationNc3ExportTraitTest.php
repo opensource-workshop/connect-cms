@@ -49,6 +49,10 @@ use App\Models\Migration\Nc3\Nc3AccessCounterFrameSetting;
 use App\Models\Migration\Nc3\Nc3Calendar;
 use App\Models\Migration\Nc3\Nc3CalendarEvent;
 use App\Models\Migration\Nc3\Nc3CalendarFrameSetting;
+use App\Models\Migration\Nc3\Nc3Category;
+use App\Models\Migration\Nc3\Nc3CategoriesLanguage;
+use App\Models\Migration\Nc3\Nc3CategoryOrder;
+use App\Models\Migration\Nc3\Nc3ReservationLocation;
 use Illuminate\Support\Facades\Artisan;
 
 /**
@@ -6646,17 +6650,21 @@ class MigrationNc3ExportTraitTest extends TestCase
     }
 
     /**
-     * カレンダーテスト用のデータを作成
+     * NC3エクスポート用の基本データを作成
      *
      * @return array|null
      */
-    private function createNc3CalendarTestData(): array|null
+    private function createBasicNc3Data(): array|null
     {
         try {
             // テストに必要なテーブルをクリーンアップ
             Nc3Calendar::truncate();
             Nc3CalendarEvent::truncate();
             Nc3CalendarFrameSetting::truncate();
+            Nc3Category::truncate();
+            Nc3CategoriesLanguage::truncate();
+            Nc3CategoryOrder::truncate();
+            Nc3ReservationLocation::truncate();
             Nc3User::truncate();
             Nc3Language::truncate();
             Nc3Space::truncate();
@@ -6668,12 +6676,26 @@ class MigrationNc3ExportTraitTest extends TestCase
             Nc3Language::factory()->japanese()->create();
             
             // エクスポート処理に必要な基本データを作成
-            // 1. Space (COMMUNITY_SPACE_ID = 4) - ファクトリー使用
-            Nc3Space::factory()->communitySpace()->withRootRoom(99)->create([
+            // 1. Space (PUBLIC_SPACE_ID = 2) - ファクトリー使用
+            $public_space = Nc3Space::factory()->publicSpace()->withRootRoom(99)->create([
+                'id' => 2,
+                'created' => now(),
+                'modified' => now(),
+            ]);
+            
+            // 2. Community Space (COMMUNITY_SPACE_ID = 4) - ファクトリー使用
+            $community_space = Nc3Space::factory()->communitySpace()->withRootRoom(99)->create([
                 'id' => 4,
                 'created' => now(),
                 'modified' => now(),
             ]);
+            
+            // デバッグ: スペースが正しく作成されたか確認
+            $check_public_space = Nc3Space::find(2);
+            $check_community_space = Nc3Space::find(4);
+            if (!$check_public_space || !$check_community_space) {
+                throw new \Exception('Required spaces were not created properly');
+            }
             
             // 2. Rooms (All users room + Test room) - ファクトリー使用
             Nc3Room::factory()->communitySpace()->create([
@@ -6699,9 +6721,36 @@ class MigrationNc3ExportTraitTest extends TestCase
                 'modified' => now(),
             ]);
             
+            return [
+                'room_id' => 1,
+                'all_users_room_id' => 99,
+                'space_id' => 4,
+                'public_space_id' => 2,
+            ];
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * カレンダーテスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3CalendarTestData(): array|null
+    {
+        try {
+            // 基本データを作成
+            $basic_data = $this->createBasicNc3Data();
+            if (!$basic_data) {
+                return null;
+            }
+            
+            $room_id = $basic_data['room_id'];
+            
             // 4. Block (カレンダー用) - ファクトリー使用
             $block_key = 'calendar_block_key_' . uniqid();
-            Nc3Block::factory()->forRoom(1)->calendarPlugin()->withKey($block_key)->create([
+            Nc3Block::factory()->forRoom($room_id)->calendarPlugin()->withKey($block_key)->create([
                 'id' => 1,
                 'created' => now(),
                 'modified' => now(),
@@ -6728,7 +6777,7 @@ class MigrationNc3ExportTraitTest extends TestCase
                 'dtstart' => '20240315100000',
                 'dtend' => '20240315120000',
                 'calendar_rrule_id' => 0,
-                'room_id' => 1,
+                'room_id' => $room_id,
                 'is_latest' => 1,
                 'created' => now(),
                 'modified' => now(),
@@ -6767,7 +6816,7 @@ class MigrationNc3ExportTraitTest extends TestCase
                 'user_id' => $user_data['id'],
                 'username' => $user_data['username'],
                 'user_handlename' => $user_data['handlename'],
-                'room_id' => 1,
+                'room_id' => $room_id,
             ];
         } catch (\Exception $e) {
             // NC3環境がない場合はnullを返す（デバッグ用エラー表示）
@@ -6979,6 +7028,396 @@ class MigrationNc3ExportTraitTest extends TestCase
             // NC3環境がない場合はnullを返す
             return null;
         }
+    }
+
+    /**
+     * 予約エクスポートテスト
+     */
+    public function testNc3ExportReservation()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForReservationTest();
+
+            // テスト用のデータを作成
+            $expected_data = $this->createNc3ReservationTestData();
+
+            // nc3ExportReservationメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportReservation');
+            $method->invokeArgs($this->controller, [false]);
+
+
+            if ($expected_data) {
+                // コントローラーのzeroSuppressメソッドを使用（0埋めされる）
+                $method = $this->getPrivateMethod('zeroSuppress');
+                $zero_suppressed = $method->invokeArgs($this->controller, [$expected_data['category_id']]);
+                
+                // カテゴリファイルが作成されたことを確認（0埋めあり）
+                $category_file = 'migration/import/reservations/reservation_category_' . $zero_suppressed . '.ini';
+                $this->assertTrue(Storage::exists($category_file), 'カテゴリINIファイルが作成されている: ' . $category_file);
+
+                // カテゴリファイルの内容確認
+                $category_content = Storage::get($category_file);
+                $this->assertStringContainsString($expected_data['category_name'], $category_content, '投入したカテゴリ名が正確に出力されている');
+                $this->assertStringContainsString('display_sequence = ' . $expected_data['category_display_sequence'], $category_content, '投入した表示順が正確に出力されている');
+
+                // 施設ファイルが作成されたことを確認
+                $location_zero_suppressed = $method->invokeArgs($this->controller, [$expected_data['location_id']]);
+                $location_file = 'migration/import/reservations/reservation_location_' . $location_zero_suppressed . '.ini';
+                $this->assertTrue(Storage::exists($location_file), '施設INIファイルが作成されている: ' . $location_file);
+
+                // 施設ファイルの内容確認
+                $location_content = Storage::get($location_file);
+                $this->assertStringContainsString($expected_data['location_name'], $location_content, '投入した施設名が正確に出力されている');
+                $this->assertStringContainsString('category_id = ' . $expected_data['category_id'], $location_content, '投入したカテゴリIDが正確に出力されている');
+                $this->assertStringContainsString($expected_data['location_detail'], $location_content, '投入した施設詳細が正確に出力されている');
+            } else {
+                // テストデータが作成されなかった場合はエラー
+                $this->fail('テストデータの作成に失敗しました');
+            }
+        } catch (\Exception $e) {
+            // テストが失敗した場合は詳細なエラーを表示
+            $this->fail('テストに失敗しました: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+        }
+    }
+
+    /**
+     * 予約複数施設テスト
+     */
+    public function testNc3ExportReservationMultipleLocations()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForReservationTest();
+
+            // テスト用のデータを作成
+            $expected_data_array = $this->createNc3ReservationMultipleLocationsTestData();
+
+            // nc3ExportReservationメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportReservation');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data_array) {
+                // zeroSuppressメソッドを取得
+                $method = $this->getPrivateMethod('zeroSuppress');
+                
+                foreach ($expected_data_array as $expected_data) {
+                    // 施設ファイルが作成されたことを確認
+                    $location_zero_suppressed = $method->invokeArgs($this->controller, [$expected_data['location_id']]);
+                    $location_file = 'migration/import/reservations/reservation_location_' . $location_zero_suppressed . '.ini';
+                    $this->assertTrue(Storage::exists($location_file), '施設INIファイルが作成されている: ' . $location_file);
+
+                    // 施設ファイルの内容確認
+                    $location_content = Storage::get($location_file);
+                    $this->assertStringContainsString($expected_data['location_name'], $location_content, '投入した施設名が正確に出力されている');
+                    // display_sequenceは実際のエクスポート処理で1から振りなおされるため、1から3のいずれかであることを確認
+                    $this->assertThat(
+                        $location_content,
+                        $this->logicalOr(
+                            $this->stringContains('display_sequence = 1'),
+                            $this->stringContains('display_sequence = 2'),
+                            $this->stringContains('display_sequence = 3')
+                        ),
+                        '表示順が1-3の範囲内に設定されている'
+                    );
+                }
+            } else {
+                // テストデータが作成されなかった場合はエラー
+                $this->fail('テストデータの作成に失敗しました');
+            }
+        } catch (\Exception $e) {
+            // テストが失敗した場合は詳細なエラーを表示
+            $this->fail('テストに失敗しました: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+        }
+    }
+
+    /**
+     * 予約時間制御テスト
+     */
+    public function testNc3ExportReservationTimeControl()
+    {
+        // テスト用のモックStorageを設定
+        Storage::fake('local');
+
+        try {
+            // プライベートプロパティを設定
+            $this->setPrivatePropertiesForReservationTest();
+
+            // テスト用のデータを作成
+            $expected_data = $this->createNc3ReservationTimeControlTestData();
+
+            // nc3ExportReservationメソッドを実行
+            $method = $this->getPrivateMethod('nc3ExportReservation');
+            $method->invokeArgs($this->controller, [false]);
+
+            if ($expected_data) {
+                // 施設ファイルが作成されたことを確認
+                $method = $this->getPrivateMethod('zeroSuppress');
+                $location_zero_suppressed = $method->invokeArgs($this->controller, [$expected_data['location_id']]);
+                $location_file = 'migration/import/reservations/reservation_location_' . $location_zero_suppressed . '.ini';
+                $this->assertTrue(Storage::exists($location_file), '施設INIファイルが作成されている: ' . $location_file);
+
+                // 施設ファイルの内容確認
+                $location_content = Storage::get($location_file);
+                $this->assertStringContainsString('is_time_control = ' . $expected_data['is_time_control'], $location_content, '投入した時間制御設定が正確に出力されている');
+                $this->assertStringContainsString('start_time = ' . $expected_data['start_time'], $location_content, '投入した開始時間が正確に出力されている');
+                $this->assertStringContainsString('end_time = ' . $expected_data['end_time'], $location_content, '投入した終了時間が正確に出力されている');
+            } else {
+                // テストデータが作成されなかった場合はエラー
+                $this->fail('テストデータの作成に失敗しました');
+            }
+        } catch (\Exception $e) {
+            // テストが失敗した場合は詳細なエラーを表示
+            $this->fail('テストに失敗しました: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+        }
+    }
+
+    /**
+     * 予約テスト用のプライベートプロパティを設定
+     */
+    private function setPrivatePropertiesForReservationTest(): void
+    {
+        // migration_baseプロパティを設定（Storageフェイクに対応）
+        $migration_base_property = $this->reflection->getProperty('migration_base');
+        $migration_base_property->setAccessible(true);
+        $migration_base_property->setValue($this->controller, 'migration/');
+    }
+
+    /**
+     * 予約テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3ReservationTestData(): array|null
+    {
+        try {
+            // 基本データを作成（最初のテストと同じ構造）
+            $basic_data = $this->createBasicNc3Data();
+            if (!$basic_data) {
+                return null;
+            }
+
+            $room_id = $basic_data['room_id'];
+
+            // 1. 予約プラグイン用のブロックを作成
+            $block_key = 'reservation_block_' . uniqid();
+            $block = Nc3Block::factory()->reservationPlugin()->withKey($block_key)->create([
+                'id' => 301,
+                'room_id' => $room_id,
+                'plugin_key' => 'reservations',
+                'created' => now(),
+                'modified' => now(),
+            ]);
+            
+
+            // 2. カテゴリを作成
+            $category_key = 'reservation_category_' . uniqid();
+            $category = Nc3Category::factory()->forBlock($block->id)->withKey($category_key)->create([
+                'id' => 201,
+                'created' => now(),
+                'modified' => now(),
+            ]);
+
+            // 3. カテゴリ言語を作成
+            Nc3CategoriesLanguage::factory()->forCategory($category->id)->withName('テスト施設カテゴリ')->create([
+                'created' => now(),
+                'modified' => now(),
+            ]);
+
+            // 4. カテゴリ順序を作成
+            Nc3CategoryOrder::factory()->forCategory($category_key)->forBlock($block_key)->withWeight(1)->create([
+                'created' => now(),
+                'modified' => now(),
+            ]);
+
+            // 5. 予約施設を作成
+            $location_key = 'reservation_location_' . uniqid();
+            $location = Nc3ReservationLocation::factory()->forCategory($category->id)->withName('テスト会議室A')->withKey($location_key)->create([
+                'id' => 401,
+                'detail' => 'テスト会議室Aの詳細説明です。',
+                'time_table' => 'Sun|Mon|Tue|Wed|Thu|Fri|Sat',
+                'start_time' => '1970-01-01 00:00:00',
+                'end_time' => '1970-01-01 23:59:59',
+                'weight' => 1,
+                'created' => now(),
+                'modified' => now(),
+            ]);
+
+            // 期待値データを返す（投入値＝出力値の検証用）
+            return [
+                'category_id' => $category->id,
+                'category_name' => 'テスト施設カテゴリ',
+                'category_display_sequence' => 2, // weight + 1
+                'location_id' => $location->id,
+                'location_name' => 'テスト会議室A',
+                'location_detail' => 'テスト会議室Aの詳細説明です。',
+                'block_id' => $block->id,
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * 予約複数施設テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3ReservationMultipleLocationsTestData(): array|null
+    {
+        try {
+            // 基本データを作成
+            $basic_data = $this->createBasicNc3Data();
+            if (!$basic_data) {
+                return null;
+            }
+
+            $room_id = $basic_data['room_id'];
+            $expected_data_array = [];
+
+            // 1. 予約プラグイン用のブロックを作成
+            $block_key = 'reservation_block_multi_' . uniqid();
+            $block = Nc3Block::factory()->reservationPlugin()->withKey($block_key)->create([
+                'id' => 302,
+                'room_id' => $room_id,
+                'plugin_key' => 'reservations',
+                'created' => now(),
+                'modified' => now(),
+            ]);
+
+            // 2. カテゴリを作成
+            $category_key = 'reservation_category_multi_' . uniqid();
+            $category = Nc3Category::factory()->forBlock($block->id)->withKey($category_key)->create([
+                'id' => 202,
+                'created' => now(),
+                'modified' => now(),
+            ]);
+
+            // 3. カテゴリ言語を作成
+            Nc3CategoriesLanguage::factory()->forCategory($category->id)->withName('複数施設カテゴリ')->create([
+                'created' => now(),
+                'modified' => now(),
+            ]);
+
+            // 4. カテゴリ順序を作成
+            Nc3CategoryOrder::factory()->forCategory($category_key)->forBlock($block_key)->withWeight(2)->create([
+                'created' => now(),
+                'modified' => now(),
+            ]);
+
+            // 5. 複数の予約施設を作成
+            for ($i = 1; $i <= 3; $i++) {
+                $location_key = 'reservation_location_multi_' . $i . '_' . uniqid();
+                $location = Nc3ReservationLocation::factory()->forCategory($category->id)->withName("テスト会議室{$i}")->withKey($location_key)->withWeight($i)->create([
+                    'id' => 401 + $i,
+                    'detail' => "テスト会議室{$i}の詳細説明です。",
+                    'created' => now(),
+                    'modified' => now(),
+                ]);
+
+                $expected_data_array[] = [
+                    'location_id' => $location->id,
+                    'location_name' => "テスト会議室{$i}",
+                    'location_display_sequence' => $i, // カテゴリ内でシーケンシャルに1から始まる
+                ];
+            }
+
+            return $expected_data_array;
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * 予約時間制御テスト用のデータを作成
+     *
+     * @return array|null
+     */
+    private function createNc3ReservationTimeControlTestData(): array|null
+    {
+        try {
+            // 基本データを作成
+            $basic_data = $this->createBasicNc3Data();
+            if (!$basic_data) {
+                return null;
+            }
+
+            $room_id = $basic_data['room_id'];
+
+            // 1. 予約プラグイン用のブロックを作成
+            $block_key = 'reservation_block_time_' . uniqid();
+            $block = Nc3Block::factory()->reservationPlugin()->withKey($block_key)->create([
+                'id' => 303,
+                'room_id' => $room_id,
+                'plugin_key' => 'reservations',
+                'created' => now(),
+                'modified' => now(),
+            ]);
+
+            // 2. カテゴリを作成
+            $category_key = 'reservation_category_time_' . uniqid();
+            $category = Nc3Category::factory()->forBlock($block->id)->withKey($category_key)->create([
+                'id' => 203,
+                'created' => now(),
+                'modified' => now(),
+            ]);
+
+            // 3. カテゴリ言語を作成
+            Nc3CategoriesLanguage::factory()->forCategory($category->id)->withName('時間制御テストカテゴリ')->create([
+                'created' => now(),
+                'modified' => now(),
+            ]);
+
+            // 4. カテゴリ順序を作成
+            Nc3CategoryOrder::factory()->forCategory($category_key)->forBlock($block_key)->withWeight(3)->create([
+                'created' => now(),
+                'modified' => now(),
+            ]);
+
+            // 5. 時間制限ありの予約施設を作成（9:00-18:00）
+            $location_key = 'reservation_location_time_' . uniqid();
+            $location = Nc3ReservationLocation::factory()->forCategory($category->id)->withName('時間制限会議室')->withKey($location_key)->create([
+                'id' => 501,
+                'detail' => '営業時間：9:00-18:00',
+                'time_table' => 'Mon|Tue|Wed|Thu|Fri',
+                'start_time' => '1970-01-01 09:00:00',
+                'end_time' => '1970-01-01 18:00:00',
+                'timezone' => 'Asia/Tokyo',
+                'weight' => 1,
+                'created' => now(),
+                'modified' => now(),
+            ]);
+
+            // 期待値データを返す（UTC→JST変換を考慮）
+            return [
+                'location_id' => $location->id,
+                'is_time_control' => 1, // 24時間ではないので制限あり
+                'start_time' => '18:00:00', // UTC 09:00 + 9時間 = JST 18:00
+                'end_time' => '03:00:00',   // UTC 18:00 + 9時間 = JST 03:00 (翌日)
+            ];
+        } catch (\Exception $e) {
+            // NC3環境がない場合はnullを返す
+            return null;
+        }
+    }
+
+    /**
+     * ゼロサプレス（先頭の0を削除）
+     *
+     * @param int $number
+     * @return string
+     */
+    private function zeroSuppress(int $number): string
+    {
+        return (string)$number;
     }
 
 

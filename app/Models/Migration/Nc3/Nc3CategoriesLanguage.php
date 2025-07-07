@@ -5,7 +5,7 @@ namespace App\Models\Migration\Nc3;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Nc3ReservationLocation extends Model
+class Nc3CategoriesLanguage extends Model
 {
     use HasFactory;
 
@@ -22,5 +22,5 @@ class Nc3ReservationLocation extends Model
     /**
      * テーブル名の指定
      */
-    protected $table = 'reservation_locations';
+    protected $table = 'categories_languages';
 }
