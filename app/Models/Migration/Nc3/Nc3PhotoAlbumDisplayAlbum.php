@@ -23,4 +23,28 @@ class Nc3PhotoAlbumDisplayAlbum extends Model
      * タイムスタンプ管理
      */
     public $timestamps = false;
+
+    /**
+     * 一括代入可能な属性
+     */
+    protected $fillable = [
+        'frame_key',
+        'photoalbum_key',
+        'display_type',
+        'display_sequence',
+        'display_number',
+        'plugin_key',
+        'block_id',
+        'language_id',
+        'is_origin',
+        'is_translation',
+        'is_original_copy',
+        'status',
+        'is_active',
+        'is_latest',
+        'created_user',
+        'created',
+        'modified_user',
+        'modified',
+    ];
 }

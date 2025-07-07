@@ -7212,7 +7212,7 @@ class MigrationNc3ExportTraitTest extends TestCase
                 $zero_suppressed = $method->invokeArgs($this->controller, [$expected_data['room_id']]);
                 $photoalbum_file = 'migration/import/photoalbums/photoalbum_' . $zero_suppressed . '.ini';
                 
-                // PhotoAlbumDisplayAlbumが存在しない場合、INIファイルは作成されない（正常な動作）
+                // PhotoAlbumDisplayAlbumの存在確認と期待値検証
                 $display_albums = \App\Models\Migration\Nc3\Nc3PhotoAlbumDisplayAlbum::all();
                 if ($display_albums->isEmpty()) {
                     // 期待値: PhotoAlbumDisplayAlbumがない場合、INIファイルは作成されない
@@ -7230,13 +7230,21 @@ class MigrationNc3ExportTraitTest extends TestCase
                     });
                     $this->assertNotEmpty($monitor_files, 'エクスポート処理のモニターログが作成されている');
                 } else {
-                    // PhotoAlbumDisplayAlbumがある場合のみINIファイルの作成を期待
+                    // PhotoAlbumDisplayAlbumがある場合、INIファイルの詳細検証を実行
                     $this->assertTrue(Storage::exists($photoalbum_file), 'フォトアルバムINIファイルが作成されている: ' . $photoalbum_file);
                     
-                    // フォトアルバムファイルの内容確認
+                    // INIファイルの内容を詳細に検証
                     $photoalbum_content = Storage::get($photoalbum_file);
-                    $this->assertStringContainsString($expected_data['photoalbum_name'], $photoalbum_content, '投入したフォトアルバム名が正確に出力されている');
-                    $this->assertStringContainsString($expected_data['album_name'], $photoalbum_content, '投入したアルバム名が正確に出力されている');
+                    $this->validatePhotoalbumIniContent($photoalbum_content, $expected_data);
+                    
+                    // 写真TSVファイルが作成されたことを確認
+                    $album_zero_suppressed = $method->invokeArgs($this->controller, [$expected_data['album_id']]);
+                    $photo_tsv_file = 'migration/import/photoalbums/photoalbum_' . $zero_suppressed . '_' . $album_zero_suppressed . '.tsv';
+                    $this->assertTrue(Storage::exists($photo_tsv_file), '写真TSVファイルが作成されている: ' . $photo_tsv_file);
+                    
+                    // 写真TSVファイルの内容確認
+                    $photo_content = Storage::get($photo_tsv_file);
+                    $this->validatePhotoTsvContent($photo_content, $expected_data);
                 }
             } else {
                 // テストデータが作成されなかった場合はエラー
@@ -7589,9 +7597,10 @@ class MigrationNc3ExportTraitTest extends TestCase
             }
             
             // 1x1ピクセルのテスト用JPEG画像を作成
-            $test_image_data = base64_decode('/9j/4AAQSkZJRgABAQEAAAAAAAD//gA7Q1JFQVRPUjogZ2QtanBlZyB2MS4wICh1c2luZyBJSkcgSlBFRyB2NjIpLCBxdWFsaXR5ID0gOTAK/9sAQwADAgIDAgIDAwMDBAMDBAUIBQUEBAUKBwcGCAwKDAwLCgsLDQ4SEA0OEQ4LCxAWEBETFBUVFQwPFxgWFBgSFBUU/9sAQwEDBAQFBAUJBQUJFA0LDRQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQU/8AAEQgAAQABAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBkQgUobHB0fAjM+EV4fNDUmJyc4KSNTdJF5STlZKTsrK2g8LUxYXFxgqOztLS4vLygwLD/9oADAMBAAIRAxEAPwD8/fh5/wA8j6/4//wSf+Pg/wDPL+P/AO+j/wDFH//Z');
+            $test_image_data = base64_decode('/9j/4AAQSkZJRgABAQEAAAAAAAD//gA7Q1JFQVRPUjogZ2QtanBlZyB2MS4wICh1c2luZyBJSkcgSlBFRyB2NjIpLCBxdWFsaXR5ID0gOTAK/9sAQwADAgIDAgIDAwMDBAMDBAUIBQUEBAUKBwcGCAwKDAwLCgsLDQ4SEA0OEQ4LCxAWEBETFBUVFQwPFxgWFBgSFBUU/9sAQwEDBAQFBAUJBQUJFA0LDRQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQU/8AAEQgAAQABAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRDAUhMQYSQVEHYXETIjKBkQgUobHB0fAjM+EV4fNDUmJyc4KSNTdJF5STlZKTsrK2g8LUxYXFxgqOztLS4vLygwLD/9oADAMBAAIRAxEAPwD8/fh5/wA8j6/4//wSf+Pg/wDPL+P/AO+j/wDFH//Z');
             File::put($photo_dir . '/' . $photo_upload->real_file_name, $test_image_data);
             File::put($jacket_dir . '/' . $jacket_upload->real_file_name, $test_image_data);
+
 
             // 期待値データを返す（投入値＝出力値の検証用）
             return [
@@ -7599,18 +7608,92 @@ class MigrationNc3ExportTraitTest extends TestCase
                 'photoalbum_name' => 'Test Roomのフォトアルバム',
                 'album_id' => $album->id,
                 'album_name' => 'テストアルバム',
+                'album_description' => 'テストアルバムの説明です。',
+                'album_key' => $album_key,
                 'photo_id' => $photo->id,
                 'photo_title' => 'テスト写真',
                 'photo_description' => 'テスト写真の説明です。',
                 'block_id' => $block->id,
                 'photo_upload_id' => $photo_upload->id,
                 'jacket_upload_id' => $jacket_upload->id,
+                'image_width' => 1,  // 1x1ピクセル画像
+                'image_height' => 1,
+                'created_user' => 1,
+                'modified_user' => 1,
             ];
         } catch (\Exception $e) {
             // NC3環境がない場合はnullを返す
             error_log('createNc3PhotoalbumTestData exception: ' . $e->getMessage());
             error_log('Stack trace: ' . $e->getTraceAsString());
             return null;
+        }
+    }
+
+    /**
+     * フォトアルバムINIファイルの内容を詳細に検証
+     *
+     * @param string $ini_content
+     * @param array $expected_data
+     */
+    private function validatePhotoalbumIniContent(string $ini_content, array $expected_data): void
+    {
+        // [photoalbum_base]セクションの検証
+        $this->assertStringContainsString('[photoalbum_base]', $ini_content, 'photoalbum_baseセクションが存在する');
+        $this->assertStringContainsString('photoalbum_name = "' . $expected_data['photoalbum_name'] . '"', $ini_content, 'フォトアルバム名が正確に出力されている');
+        
+        // [source_info]セクションの検証
+        $this->assertStringContainsString('[source_info]', $ini_content, 'source_infoセクションが存在する');
+        $this->assertStringContainsString('photoalbum_id   = ' . $expected_data['room_id'], $ini_content, 'photoalbum_idが正確に出力されている');
+        $this->assertStringContainsString('room_id         = ' . $expected_data['room_id'], $ini_content, 'room_idが正確に出力されている');
+        $this->assertStringContainsString('module_name     = "photoalbums"', $ini_content, 'module_nameが正確に出力されている');
+        
+        // [albums]セクションの検証
+        $this->assertStringContainsString('[albums]', $ini_content, 'albumsセクションが存在する');
+        $this->assertStringContainsString('album[' . $expected_data['album_id'] . '] = "' . $expected_data['album_name'] . '"', $ini_content, 'アルバム情報が正確に出力されている');
+        
+        // [album_keys]セクションの検証
+        $this->assertStringContainsString('[album_keys]', $ini_content, 'album_keysセクションが存在する');
+        $this->assertStringContainsString('album_key[' . $expected_data['album_id'] . '] = "' . $expected_data['album_key'] . '"', $ini_content, 'アルバムキーが正確に出力されている');
+        
+        // アルバム詳細セクション[album_id]の検証
+        $this->assertStringContainsString('[' . $expected_data['album_id'] . ']', $ini_content, 'アルバム詳細セクションが存在する');
+        $this->assertStringContainsString('album_id                   = "' . $expected_data['album_id'] . '"', $ini_content, 'album_idが正確に出力されている');
+        $this->assertStringContainsString('album_name                 = "' . $expected_data['album_name'] . '"', $ini_content, 'album_nameが正確に出力されている');
+        $this->assertStringContainsString('album_description          = "' . $expected_data['album_description'] . '"', $ini_content, 'album_descriptionが正確に出力されている');
+        $this->assertStringContainsString('public_flag                = 1', $ini_content, 'public_flagが正確に出力されている');
+        $this->assertStringContainsString('upload_id                  = ' . $expected_data['jacket_upload_id'], $ini_content, 'upload_idが正確に出力されている');
+        $this->assertStringContainsString('width                      = ' . $expected_data['image_width'], $ini_content, 'widthが正確に出力されている');
+        $this->assertStringContainsString('height                     = ' . $expected_data['image_height'], $ini_content, 'heightが正確に出力されている');
+        
+        // 日時とユーザー情報の検証（フォーマットを確認）
+        $this->assertMatchesRegularExpression('/created_at\s*=\s*"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"/', $ini_content, 'created_atが正しい形式で出力されている');
+        $this->assertMatchesRegularExpression('/updated_at\s*=\s*"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"/', $ini_content, 'updated_atが正しい形式で出力されている');
+        $this->assertStringContainsString('created_name', $ini_content, 'created_nameフィールドが存在する');
+        $this->assertStringContainsString('insert_login_id', $ini_content, 'insert_login_idフィールドが存在する');
+        $this->assertStringContainsString('updated_name', $ini_content, 'updated_nameフィールドが存在する');
+        $this->assertStringContainsString('update_login_id', $ini_content, 'update_login_idフィールドが存在する');
+    }
+
+    /**
+     * 写真TSVファイルの内容を詳細に検証
+     *
+     * @param string $tsv_content
+     * @param array $expected_data
+     */
+    private function validatePhotoTsvContent(string $tsv_content, array $expected_data): void
+    {
+        // TSVファイルにはタブ区切りで写真データが含まれる
+        $this->assertStringContainsString($expected_data['photo_title'], $tsv_content, '投入した写真タイトルが正確に出力されている');
+        $this->assertStringContainsString($expected_data['photo_description'], $tsv_content, '投入した写真説明が正確に出力されている');
+        
+        // TSVファイルのフォーマット確認（タブ区切り）
+        $lines = explode("\n", trim($tsv_content));
+        $this->assertGreaterThan(0, count($lines), '写真データが1行以上存在する');
+        
+        // 最初の行に写真データが含まれているかを確認
+        if (count($lines) > 0) {
+            $first_line = $lines[0];
+            $this->assertStringContainsString("\t", $first_line, 'TSVファイルがタブ区切り形式になっている');
         }
     }
 
