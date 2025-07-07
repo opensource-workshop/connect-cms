@@ -120,6 +120,20 @@ class Nc3BlockFactory extends Factory
     }
 
     /**
+     * フォトアルバムプラグイン用のブロック
+     *
+     * @return static
+     */
+    public function photoAlbumPlugin(): static
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'plugin_key' => 'photo_albums',
+            ];
+        });
+    }
+
+    /**
      * 特定のキーを持つブロック
      *
      * @param string $key

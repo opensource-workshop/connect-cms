@@ -119,6 +119,25 @@ class Nc3UploadFileFactory extends Factory
     }
 
     /**
+     * 特定のコンテンツに紐づくファイルを生成する
+     *
+     * @param string $contentKey
+     * @param string $pluginKey
+     * @param string $fieldName
+     * @return static
+     */
+    public function forContent(string $contentKey, string $pluginKey, string $fieldName): static
+    {
+        return $this->state(function (array $attributes) use ($contentKey, $pluginKey, $fieldName) {
+            return [
+                'content_key' => $contentKey,
+                'plugin_key' => $pluginKey,
+                'field_name' => $fieldName,
+            ];
+        });
+    }
+
+    /**
      * 大容量ファイルを生成する
      *
      * @return static
