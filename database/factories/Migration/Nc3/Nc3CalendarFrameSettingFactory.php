@@ -13,8 +13,12 @@ class Nc3CalendarFrameSettingFactory extends Factory
     {
         return [
             'frame_key' => $this->faker->uuid(),
-            'data_type_key' => 'display_type',
-            'value' => 'month',
+            'display_type' => 0, // 0=month, 1=week, 2=day, 3=list
+            'start_pos' => 0,
+            'display_count' => 0,
+            'is_myroom' => 0,
+            'is_select_room' => 0,
+            'timeline_base_time' => 0,
             'created_user' => 1,
             'created' => $this->faker->dateTime(),
             'modified_user' => 1,
@@ -29,67 +33,59 @@ class Nc3CalendarFrameSettingFactory extends Factory
         ]);
     }
 
-    public function displayType(string $type): static
+    public function displayType(int $type): static
     {
         return $this->state(fn (array $attributes) => [
-            'data_type_key' => 'display_type',
-            'value' => $type,
+            'display_type' => $type,
         ]);
     }
 
     public function monthView(): static
     {
         return $this->state(fn (array $attributes) => [
-            'data_type_key' => 'display_type',
-            'value' => 'month',
+            'display_type' => 0,
         ]);
     }
 
     public function weekView(): static
     {
         return $this->state(fn (array $attributes) => [
-            'data_type_key' => 'display_type',
-            'value' => 'week',
+            'display_type' => 1,
         ]);
     }
 
     public function dayView(): static
     {
         return $this->state(fn (array $attributes) => [
-            'data_type_key' => 'display_type',
-            'value' => 'day',
+            'display_type' => 2,
         ]);
     }
 
     public function listView(): static
     {
         return $this->state(fn (array $attributes) => [
-            'data_type_key' => 'display_type',
-            'value' => 'list',
+            'display_type' => 3,
         ]);
     }
 
-    public function maxDisplayCount(int $count): static
+    public function displayCount(int $count): static
     {
         return $this->state(fn (array $attributes) => [
-            'data_type_key' => 'max_display_count',
-            'value' => (string)$count,
+            'display_count' => $count,
         ]);
     }
 
-    public function showTitle(bool $show): static
+    public function myRoom(bool $is_myroom = true): static
     {
         return $this->state(fn (array $attributes) => [
-            'data_type_key' => 'show_title',
-            'value' => $show ? '1' : '0',
+            'is_myroom' => $is_myroom ? 1 : 0,
         ]);
     }
 
-    public function showDescription(bool $show): static
+    public function selectRoom(bool $is_select_room = true): static
     {
         return $this->state(fn (array $attributes) => [
-            'data_type_key' => 'show_description',
-            'value' => $show ? '1' : '0',
+            'is_select_room' => $is_select_room ? 1 : 0,
         ]);
     }
 }

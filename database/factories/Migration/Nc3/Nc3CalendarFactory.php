@@ -12,11 +12,7 @@ class Nc3CalendarFactory extends Factory
     public function definition(): array
     {
         return [
-            'key' => $this->faker->uuid(),
-            'name' => $this->faker->words(3, true),
-            'status' => 1,
-            'is_active' => 1,
-            'is_latest' => 1,
+            'block_key' => $this->faker->uuid(),
             'created_user' => 1,
             'created' => $this->faker->dateTime(),
             'modified_user' => 1,
@@ -27,43 +23,35 @@ class Nc3CalendarFactory extends Factory
     public function active(): static
     {
         return $this->state(fn (array $attributes) => [
-            'is_active' => 1,
-            'is_latest' => 1,
+            // NC3 Calendar table has no status field
         ]);
     }
 
     public function inactive(): static
     {
         return $this->state(fn (array $attributes) => [
-            'is_active' => 0,
+            // NC3 Calendar table has no status field
         ]);
     }
 
-    public function withKey(string $key): static
+    public function withBlockKey(string $block_key): static
     {
         return $this->state(fn (array $attributes) => [
-            'key' => $key,
-        ]);
-    }
-
-    public function withName(string $name): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'name' => $name,
+            'block_key' => $block_key,
         ]);
     }
 
     public function published(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => 1,
+            // NC3 Calendar table has no status field
         ]);
     }
 
     public function draft(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => 2,
+            // NC3 Calendar table has no status field
         ]);
     }
 }

@@ -28,6 +28,8 @@ class Nc3RoomLanguageFactory extends Factory
             'room_id' => $this->faker->numberBetween(1, 100),
             'language_id' => 2, // 日本語
             'name' => $this->faker->words(2, true),
+            'created' => $this->faker->dateTime(),
+            'modified' => $this->faker->dateTime(),
         ];
     }
 
