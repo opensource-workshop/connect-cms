@@ -230,7 +230,7 @@ class SearchsPluginIndexPerformanceTest extends TestCase
             }
         }
 
-        // 3. 100ページ作成（階層構造）
+        // 3. 1000ページ作成（階層構造）
         $root_page = Page::create([
             'page_name' => 'root',
             'permanent_link' => 'root',
@@ -239,8 +239,8 @@ class SearchsPluginIndexPerformanceTest extends TestCase
 
         $pages = [$root_page];
 
-        // 10個の親ページを作成
-        for ($i = 1; $i <= 10; $i++) {
+        // 20個の親ページを作成
+        for ($i = 1; $i <= 20; $i++) {
             $parent = Page::create([
                 'page_name' => "parent_{$i}",
                 'permanent_link' => "parent_{$i}",
@@ -249,8 +249,8 @@ class SearchsPluginIndexPerformanceTest extends TestCase
             $parent->appendToNode($root_page);
             $pages[] = $parent;
 
-            // 各親ページに10個の子ページを作成
-            for ($j = 1; $j <= 10; $j++) {
+            // 各親ページに49個の子ページを作成（20 * 49 + 20 + 1 = 1000ページ）
+            for ($j = 1; $j <= 49; $j++) {
                 $child = Page::create([
                     'page_name' => "child_{$i}_{$j}",
                     'permanent_link' => "child_{$i}_{$j}",
