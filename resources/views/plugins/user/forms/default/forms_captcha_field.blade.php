@@ -9,15 +9,24 @@
 {{-- Captcha フィールド（フォーム送信時認証の場合） --}}
 @if ($form->access_limit_type == App\Enums\FormAccessLimitType::captcha_form_submit)
     <div class="form-group row">
-        @if (isset($is_template_label_sm_4))
-            <label class="col-sm-4 control-label" for="captcha-{{$frame_id}}">画像認証 <strong class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger lead' }}">{{__('messages.required')}}</strong></label>
-        @elseif (isset($is_template_label_sm_6))
-            <label class="col-sm-6 control-label" for="captcha-{{$frame_id}}">画像認証 <strong class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</strong></label>
-        @elseif (isset($is_tandem_template))
-            <label class="col-12 control-label" for="captcha-{{$frame_id}}">画像認証 <strong class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</strong></label>
-        @else
-            <label class="col-sm-2 control-label" for="captcha-{{$frame_id}}">画像認証 <strong class="{{ App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger' }}">{{__('messages.required')}}</strong></label>
-        @endif
+        @php
+            $label_class = 'col-sm-2';
+            $required_class = 'text-danger';
+            
+            if (isset($is_template_label_sm_4) && $is_template_label_sm_4) {
+                $label_class = 'col-sm-4';
+                $required_class = App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger lead';
+            } elseif (isset($is_template_label_sm_6) && $is_template_label_sm_6) {
+                $label_class = 'col-sm-6';
+                $required_class = App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger';
+            } elseif (isset($is_tandem_template) && $is_tandem_template) {
+                $label_class = 'col-12';
+                $required_class = App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger';
+            } else {
+                $required_class = App::getLocale() == ConnectLocale::ja ? 'badge badge-danger' : 'text-danger';
+            }
+        @endphp
+        <label class="{{$label_class}} control-label" for="captcha-{{$frame_id}}">{{__('messages.image_authentication')}} <strong class="{{$required_class}}">{{__('messages.required')}}</strong></label>
 
         @if (isset($is_tandem_template))
             <div class="col-12">
@@ -30,11 +39,11 @@
                     <i class="fas fa-sync-alt"></i>
                 </button>
             </div>
-            <input type="text" id="captcha-{{$frame_id}}" name="captcha" class="form-control @if($errors && $errors->has('captcha')) is-invalid @endif" placeholder="画像に表示されている文字を入力してください" autocomplete="off" value="">
+            <input type="text" id="captcha-{{$frame_id}}" name="captcha" class="form-control @if($errors && $errors->has('captcha')) is-invalid @endif" placeholder="{{__('messages.captcha_placeholder')}}" autocomplete="off" value="">
             @include('plugins.common.errors_inline', ['name' => 'captcha'])
             <div class="small text-muted mt-1">
                 <i class="fas fa-info-circle"></i>
-                文字が読みづらい場合は、右側の更新ボタンで新しい画像に変更できます。
+                {{__('messages.captcha_refresh_help')}}
             </div>
         </div>
     </div>
