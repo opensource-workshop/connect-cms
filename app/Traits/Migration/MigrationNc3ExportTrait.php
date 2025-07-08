@@ -4075,7 +4075,7 @@ trait MigrationNc3ExportTrait
             // 承認あり
             // room_idからcalendarsのblock_keyを取り出し
             $nc3_calendar = $nc3_calendars->firstWhere('room_id', $nc3_room->id) ?? new Nc3Calendar();
-            $use_workflow = Nc3BlockSetting::getNc3BlockSettingValue($block_settings, $nc3_calendar->block_key, 'use_workflow', $nc3_room->need_approval ?? '0');
+            $use_workflow = Nc3BlockSetting::getNc3BlockSettingValue($block_settings, $nc3_calendar->block_key, 'use_workflow', $nc3_room->need_approval);
 
             // カレンダー設定
             $ini = "";
