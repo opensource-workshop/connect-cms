@@ -853,8 +853,6 @@ class FormsPlugin extends UserPluginBase
         if ($form->access_limit_type == FormAccessLimitType::captcha_form_submit) {
             $captcha_success_key = "captcha_validated_{$frame_id}";
             session()->put($captcha_success_key, [
-                'validated_at' => now()->timestamp,
-                'captcha_value' => $request->input('captcha'),
                 'session_id' => session()->getId()
             ]);
         }
@@ -932,6 +930,16 @@ class FormsPlugin extends UserPluginBase
             $captcha_validated = session()->get($captcha_success_key);
 
             if ($captcha_validated) {
+                // セッション整合性検証（セッションID）
+                $current_session_id = session()->getId();
+                $session_id = $captcha_validated['session_id'] ?? '';
+
+                if ($session_id !== $current_session_id) {
+                    // セッション整合性エラー：入力画面にリダイレクト
+                    session()->forget($captcha_success_key);
+                    return collect(['redirect_path' => url($this->page->permanent_link)]);
+                }
+
                 // 入力画面で認証済み：認証フラグを削除して処理続行
                 session()->forget($captcha_success_key);
 
