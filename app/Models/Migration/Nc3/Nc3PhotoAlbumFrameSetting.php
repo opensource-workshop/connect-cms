@@ -2,10 +2,13 @@
 
 namespace App\Models\Migration\Nc3;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Nc3PhotoAlbumFrameSetting extends Model
 {
+    use HasFactory;
+
     /**
      * 使用するDB Connection
      */
@@ -15,6 +18,11 @@ class Nc3PhotoAlbumFrameSetting extends Model
      * テーブル名の指定
      */
     protected $table = 'photo_album_frame_settings';
+
+    /**
+     * タイムスタンプ管理
+     */
+    public $timestamps = false;
 
     // アルバム一覧表示
     const DISPLAY_ALBUM_LIST = 1;

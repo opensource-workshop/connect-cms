@@ -1985,19 +1985,8 @@ trait MigrationTrait
                     ['page_id' => $top_page->id, 'group_id' => $group->id, 'target' => 'base', 'role_name' => $group_ini['group_base']['role_name'], 'role_value' => 1]
                 );
             } else {
-                // page_roles 作成（元 page_id -> マッピング -> 新フォルダ -> マッピング -> 新 page_id）
-                $source_page = MigrationMapping::where('target_source_table', 'source_pages')->where('source_key', $group_ini['source_info']['room_page_id_top'])->first();
-                if (empty($source_page)) {
-                    continue;
-                }
-                $destination_page = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $source_page->destination_key)->first();
-                if (empty($destination_page)) {
-                    continue;
-                }
-                $page_role = PageRole::updateOrCreate(
-                    ['page_id' => $destination_page->destination_key, 'group_id' => $group->id],
-                    ['page_id' => $destination_page->destination_key, 'group_id' => $group->id, 'target' => 'base', 'role_name' => $group_ini['group_base']['role_name'], 'role_value' => 1]
-                );
+                // 多言語対応：言語別ページすべてに権限を設定
+                $this->setPageRolesForMultiLanguagePages($group, $group_ini, null);
             }
         }
 
@@ -2035,20 +2024,8 @@ trait MigrationTrait
             // ini_file の解析
             $group_ini = parse_ini_file($group_ini_path, true);
 
-            // page_roles 作成（元 page_id -> マッピング -> 新フォルダ -> マッピング -> 新 page_id）
-            $source_page = MigrationMapping::where('target_source_table', 'source_pages')->where('source_key', $group_ini['source_info']['room_page_id_top'])->first();
-            if (empty($source_page)) {
-                continue;
-            }
-            $destination_page = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $source_page->destination_key)->first();
-            if (empty($destination_page)) {
-                continue;
-            }
-            // 管理者グループに権限付与
-            $page_role = PageRole::updateOrCreate(
-                ['page_id' => $destination_page->destination_key, 'group_id' => $admin_group->id],
-                ['page_id' => $destination_page->destination_key, 'group_id' => $admin_group->id, 'target' => 'base', 'role_name' => 'role_article_admin', 'role_value' => 1]
-            );
+            // 多言語対応：管理者グループも言語別ページすべてに権限を設定
+            $this->setPageRolesForMultiLanguagePages($admin_group, $group_ini, 'role_article_admin');
         }
 
         // アップロード・ファイルのページIDを書き換えるために、アップロード・ファイル定義の読み込み
@@ -2130,6 +2107,62 @@ trait MigrationTrait
         }
 
         $this->putMonitor(3, "Groups import End.", $this->timerEnd($timer_start));
+    }
+
+    /**
+     * 多言語を考慮してページ権限を登録
+     */
+    private function setPageRolesForMultiLanguagePages($group, $group_ini, ?string $role_name)
+    {
+        // $role_nameが指定されていない場合は、グループのrole_nameを使用
+        $role_name = $role_name ?? $group_ini['group_base']['role_name'];
+
+        // ルームのトップページID未設定はスキップ
+        $room_page_id_top = $group_ini['source_info']['room_page_id_top'] ?? null;
+        if (empty($room_page_id_top)) {
+            Log::warning('ルームのトップページIDが設定されていません。', ['group_id' => $group->id, 'role_name' => $role_name]);
+            return;
+        }
+
+        // ページ情報がHITしない場合はスキップ
+        $source_page = MigrationMapping::where('target_source_table', 'source_pages')->where('source_key', $room_page_id_top)->first();
+        if (empty($source_page)) {
+            Log::warning('ルームのトップページ情報が見つかりません。', ['room_page_id_top' => $room_page_id_top, 'group_id' => $group->id, 'role_name' => $role_name]);
+            return;
+        }
+
+        // 移行先ページ情報がHITした場合、ページ権限を登録
+        $destination_page = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $source_page->destination_key)->first();
+        if (!empty($destination_page)) {
+            PageRole::updateOrCreate(
+                ['page_id' => $destination_page->destination_key, 'group_id' => $group->id],
+                ['page_id' => $destination_page->destination_key, 'group_id' => $group->id, 'target' => 'base', 'role_name' => $role_name, 'role_value' => 1]
+            );
+        }
+
+        /**
+         * （多言語対応）マイグレーションマッピングテーブルから、言語別ページを検索
+         * ※noteカラムにJSON形式で情報を格納している為、LaravelのJSON Where Clausesを利用
+         */
+        $language_pages = MigrationMapping::where('target_source_table', 'source_pages_lang')
+            ->where('note->room_page_id_top', $room_page_id_top)
+            ->get();
+
+        // 言語別ページに権限を設定
+        foreach ($language_pages as $language_page) {
+            // レコードが存在しない場合のみページ権限を作成
+            PageRole::firstOrCreate(
+                [
+                    'page_id' => $language_page->destination_key,
+                    'group_id' => $group->id,
+                    'target' => 'base',
+                ],
+                [
+                    'role_name' => $role_name,
+                    'role_value' => 1
+                ]
+            );
+        }
     }
 
     /**
