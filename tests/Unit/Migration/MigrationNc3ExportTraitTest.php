@@ -2102,7 +2102,7 @@ class MigrationNc3ExportTraitTest extends TestCase
             }
 
             // 期待値データ配列を返す（投入値＝出力値の検証用）
-            return array_map(function($user_data) {
+            return array_map(function ($user_data) {
                 return [
                     'user_id' => $user_data['id'],
                     'username' => $user_data['username'],
@@ -7230,7 +7230,7 @@ class MigrationNc3ExportTraitTest extends TestCase
                     
                     // エクスポート処理が開始されていることを確認（ログに出力されている）
                     $files = Storage::allFiles('migration');
-                    $monitor_files = array_filter($files, function($file) {
+                    $monitor_files = array_filter($files, function ($file) {
                         return strpos($file, 'monitor_') !== false;
                     });
                     $this->assertNotEmpty($monitor_files, 'エクスポート処理のモニターログが作成されている');
@@ -8523,11 +8523,11 @@ class MigrationNc3ExportTraitTest extends TestCase
                     ->select('blocks.*', 'blocks.key as block_key', 'rooms.space_id', 'blocks_languages.name')
                     ->join('blocks_languages', function ($join) {
                         $join->on('blocks_languages.block_id', '=', 'blocks.id')
-                            ->where('blocks_languages.language_id', 2); 
+                            ->where('blocks_languages.language_id', 2);
                     })
                     ->join('rooms', function ($join) {
                         $join->on('rooms.id', '=', 'blocks.room_id')
-                            ->whereIn('rooms.space_id', [2, 4]); 
+                            ->whereIn('rooms.space_id', [2, 4]);
                     })
                     ->where('blocks.plugin_key', 'videos')
                     ->orderBy('blocks.id')
@@ -8550,7 +8550,7 @@ class MigrationNc3ExportTraitTest extends TestCase
                 
                 // 作成されたファイルを確認
                 $all_files = Storage::allFiles('migration/');
-                $photoalbum_files = array_filter($all_files, function($file) {
+                $photoalbum_files = array_filter($all_files, function ($file) {
                     return strpos($file, 'photoalbum_video_') !== false;
                 });
                 
@@ -8559,7 +8559,7 @@ class MigrationNc3ExportTraitTest extends TestCase
                     $this->assertTrue(true, 'nc3ExportVideoメソッドが正常に実行されました（ファイル出力はスキップされました）');
                 } else {
                     // 実際に作成されたINIファイルのパスを使用
-                    $actual_ini_files = array_filter($photoalbum_files, function($file) {
+                    $actual_ini_files = array_filter($photoalbum_files, function ($file) {
                         return pathinfo($file, PATHINFO_EXTENSION) === 'ini';
                     });
                     
@@ -8569,7 +8569,7 @@ class MigrationNc3ExportTraitTest extends TestCase
                     $this->assertTrue(Storage::exists($ini_file_path), 'INIファイルが存在する');
                     
                     // TSVファイルの確認も実際に作成されたファイルベースで行う
-                    $actual_tsv_files = array_filter($photoalbum_files, function($file) {
+                    $actual_tsv_files = array_filter($photoalbum_files, function ($file) {
                         return pathinfo($file, PATHINFO_EXTENSION) === 'tsv';
                     });
                     
@@ -8640,7 +8640,7 @@ class MigrationNc3ExportTraitTest extends TestCase
             if ($expected_data_array) {
                 // 作成されたファイルを確認
                 $all_files = Storage::allFiles('migration/');
-                $photoalbum_files = array_filter($all_files, function($file) {
+                $photoalbum_files = array_filter($all_files, function ($file) {
                     return strpos($file, 'photoalbum_video_') !== false;
                 });
                 
@@ -8649,7 +8649,7 @@ class MigrationNc3ExportTraitTest extends TestCase
                     $this->assertTrue(true, 'nc3ExportVideo複数動画メソッドが正常に実行されました（ファイル出力はスキップされました）');
                 } else {
                     // 実際に作成されたINIファイルのパスを使用
-                    $actual_ini_files = array_filter($photoalbum_files, function($file) {
+                    $actual_ini_files = array_filter($photoalbum_files, function ($file) {
                         return pathinfo($file, PATHINFO_EXTENSION) === 'ini';
                     });
                     
@@ -8668,7 +8668,7 @@ class MigrationNc3ExportTraitTest extends TestCase
                     }
                     
                     // TSVファイルの確認
-                    $actual_tsv_files = array_filter($photoalbum_files, function($file) {
+                    $actual_tsv_files = array_filter($photoalbum_files, function ($file) {
                         return pathinfo($file, PATHINFO_EXTENSION) === 'tsv';
                     });
                     
