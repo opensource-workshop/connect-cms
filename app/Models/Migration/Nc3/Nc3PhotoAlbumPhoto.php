@@ -23,4 +23,24 @@ class Nc3PhotoAlbumPhoto extends Model
      * タイムスタンプ管理
      */
     public $timestamps = false;
+
+    /**
+     * 一括代入可能な属性
+     */
+    protected $fillable = [
+        'album_key',
+        'key',
+        'title',
+        'description',
+        'language_id',
+        'status',
+        'block_id',
+        'is_latest',
+        'is_active',
+        'created_user',
+        'created',
+        'modified_user',
+        'modified',
+        'upload_id',
+    ];
 }
