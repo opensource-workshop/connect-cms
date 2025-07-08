@@ -134,6 +134,20 @@ class Nc3BlockFactory extends Factory
     }
 
     /**
+     * 動画プラグイン用のブロック
+     *
+     * @return static
+     */
+    public function videoPlugin(): static
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'plugin_key' => 'videos',
+            ];
+        });
+    }
+
+    /**
      * 特定のキーを持つブロック
      *
      * @param string $key
