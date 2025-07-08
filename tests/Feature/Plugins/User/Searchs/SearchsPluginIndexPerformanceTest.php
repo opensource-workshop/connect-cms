@@ -76,7 +76,7 @@ class SearchsPluginIndexPerformanceTest extends TestCase
      *
      * @group index-performance
      */
-    public function test_performance_without_indexes()
+    public function testPerformanceWithoutIndexes()
     {
         // INDEXを削除
         $this->dropIndexes();
@@ -106,7 +106,7 @@ class SearchsPluginIndexPerformanceTest extends TestCase
      *
      * @group index-performance
      */
-    public function test_performance_with_indexes()
+    public function testPerformanceWithIndexes()
     {
         // INDEXを作成
         $this->createIndexes();
@@ -172,7 +172,7 @@ class SearchsPluginIndexPerformanceTest extends TestCase
         $query_count = count($query_log);
 
         // PageRoleクエリの詳細分析
-        $page_role_queries = array_filter($query_log, function($log) {
+        $page_role_queries = array_filter($query_log, function ($log) {
             return strpos($log['query'], 'page_roles') !== false &&
                    strpos($log['query'], 'group_users') !== false;
         });
