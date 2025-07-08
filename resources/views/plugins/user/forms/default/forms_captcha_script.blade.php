@@ -28,6 +28,12 @@ function refreshCaptcha() {
                 captchaInput.focus();
             }
         };
+
+        // 画像読み込みエラー時の処理
+        captchaImg.onerror = function() {
+            console.error('Failed to load new CAPTCHA image');
+            alert('{{__('messages.captcha_refresh_error')}}');
+        };
     }
 }
 </script>
