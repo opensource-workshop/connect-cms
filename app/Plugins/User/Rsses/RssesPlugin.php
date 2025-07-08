@@ -257,6 +257,10 @@ class RssesPlugin extends UserPluginBase
         return false;
     }
 
+    /**
+     * XMLをパースする
+     * @throws \Exception XMLパースエラー時
+     */
     private function xmlParse($response)
     {
         // SimpleXMLを使用してXMLデータをオブジェクトに変換
