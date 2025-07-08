@@ -148,6 +148,20 @@ class Nc3BlockFactory extends Factory
     }
 
     /**
+     * 検索プラグイン用のブロック
+     *
+     * @return static
+     */
+    public function searchPlugin(): static
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'plugin_key' => 'searches',
+            ];
+        });
+    }
+
+    /**
      * 特定のキーを持つブロック
      *
      * @param string $key
