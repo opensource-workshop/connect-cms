@@ -165,4 +165,44 @@ class Nc3UploadFileFactory extends Factory
             ];
         });
     }
+
+    /**
+     * 動画ファイル用のアップロードファイル
+     *
+     * @return static
+     */
+    public function videoFile(): static
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'plugin_key' => 'videos',
+                'field_name' => 'video_file',
+                'original_name' => $this->faker->word() . '.mp4',
+                'real_file_name' => $this->faker->uuid() . '.mp4',
+                'extension' => 'mp4',
+                'mimetype' => 'video/mp4',
+                'size' => $this->faker->numberBetween(1000000, 100000000), // 1MB-100MB
+            ];
+        });
+    }
+
+    /**
+     * サムネイルファイル用のアップロードファイル
+     *
+     * @return static
+     */
+    public function thumbnailFile(): static
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'plugin_key' => 'videos',
+                'field_name' => 'thumbnail',
+                'original_name' => $this->faker->word() . '.jpg',
+                'real_file_name' => $this->faker->uuid() . '.jpg',
+                'extension' => 'jpg',
+                'mimetype' => 'image/jpeg',
+                'size' => $this->faker->numberBetween(50000, 500000), // 50KB-500KB
+            ];
+        });
+    }
 }
