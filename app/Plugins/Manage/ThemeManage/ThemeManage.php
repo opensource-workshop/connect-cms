@@ -290,13 +290,12 @@ class ThemeManage extends ManagePluginBase
         // セッション初期化などのLaravel 処理
         $request->flash();
 
-        // copy by resources/lang/ja/validation.php - alpha_dash
-        $messages['dir_name.regex'] = ':attributeには英数字・ハイフン・アンダースコアのみからなる文字列を指定してください。';
+        $messages['dir_name.regex'] = '入力された:attributeは使用できません。半角の英数字、アンダースコア(_)、ハイフン(-)のみを使い、先頭がハイフンにならないように入力してください。';
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             /* regex：英数字_- OK */
-            'dir_name'   => ['required', 'regex:/\w+|[-]+/'],
+            'dir_name'   => ['required', 'regex:/^\w[\w-]*$/'],
             'theme_name' => ['required'],
         ], $messages);
         $validator->setAttributeNames([
@@ -870,11 +869,14 @@ class ThemeManage extends ManagePluginBase
         // セッション初期化などのLaravel 処理
         $request->flash();
 
+        $messages['dir_name.regex'] = '入力された:attributeは使用できません。半角の英数字、アンダースコア(_)、ハイフン(-)のみを使い、先頭がハイフンにならないように入力してください。';
+
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'dir_name'   => ['required'],
+            // regex：英数字_- OK
+            'dir_name'   => ['required', 'regex:/^\w[\w-]*$/'],
             'theme_name' => ['required'],
-        ]);
+        ], $messages);
         $validator->setAttributeNames([
             'dir_name'   => 'ディレクトリ名',
             'theme_name' => 'テーマ名',
@@ -884,13 +886,12 @@ class ThemeManage extends ManagePluginBase
         if ($validator->fails()) {
             return $this->generateIndex($request, $id, $validator->errors());
         }
-/* TODO 上書きさせるか否か決める
+
         // ディレクトリの存在チェック
-        if (File::isDirectory(public_path() . '/themes/Users/' . $request->dir_name)) {
+        if (File::isDirectory(public_path() . '/themes/Users/' . basename($request->dir_name))) {
             $validator->errors()->add('dir_name', 'このディレクトリは存在します。');
             return $this->generateIndex($request, $id, $validator->errors());
         }
-*/
 
         // 確認ボタンの場合は入力画面に戻る。
         $themes_css = $this->getSelectStyle($request);
