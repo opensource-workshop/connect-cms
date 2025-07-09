@@ -498,11 +498,13 @@ class SiteManage extends ManagePluginBase
         if (!empty($request->add_display_sequence) || !empty($request->add_classname)  || !empty($request->add_category) || !empty($request->add_color) || !empty($request->add_background_color)) {
             // 項目のエラーチェック
             $rules['add_display_sequence'] = ['required'];
+            $rules['add_classname'] = ['required', 'unique:categories,classname'];
             $rules['add_category'] = ['required'];
             $rules['add_color'] = ['required'];
             $rules['add_background_color'] = ['required'];
 
             $setAttributeNames['add_display_sequence'] = '追加行の表示順';
+            $setAttributeNames['add_classname'] = '追加行のクラス名';
             $setAttributeNames['add_category'] = '追加行のカテゴリ';
             $setAttributeNames['add_color'] = '追加行の文字色';
             $setAttributeNames['add_background_color'] = '追加行の背景色';
@@ -513,11 +515,13 @@ class SiteManage extends ManagePluginBase
             foreach ($request->categories_id as $category_id) {
                 // 項目のエラーチェック
                 $rules['display_sequence.'.$category_id] = ['required'];
+                $rules['classname.'.$category_id] = ['required'];
                 $rules['category.'.$category_id] = ['required'];
                 $rules['color.'.$category_id] = ['required'];
                 $rules['background_color.'.$category_id] = ['required'];
 
                 $setAttributeNames['display_sequence.'.$category_id] = '表示順';
+                $setAttributeNames['classname.'.$category_id] = 'クラス名';
                 $setAttributeNames['category.'.$category_id] = 'カテゴリ';
                 $setAttributeNames['color.'.$category_id] = '文字色';
                 $setAttributeNames['background_color.'.$category_id] = '背景色';
@@ -527,6 +531,24 @@ class SiteManage extends ManagePluginBase
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $rules);
         $validator->setAttributeNames($setAttributeNames);
+
+        // 既存項目のクラス名重複チェック
+        if (!empty($request->categories_id)) {
+            $validator->after(function ($validator) use ($request) {
+                foreach ($request->categories_id as $category_id) {
+                    if (!empty($request->classname[$category_id])) {
+                        $is_exists = Categories::query()
+                            ->where('classname', $request->classname[$category_id])
+                            ->where('id', '!=', $category_id)
+                            ->exists();
+                        
+                        if ($is_exists) {
+                            $validator->errors()->add('classname.'.$category_id, 'クラス名が重複しています。');
+                        }
+                    }
+                }
+            });
+        }
 
         if ($validator->fails()) {
             // return $this->categories($request, $id, $validator->errors());

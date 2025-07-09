@@ -49,7 +49,7 @@
                         --}}
                         <tr>
                             <th nowrap>表示順 <span class="badge badge-danger">必須</span></th>
-                            <th nowrap>クラス名</th>
+                            <th nowrap>クラス名 <span class="badge badge-danger">必須</span></th>
                             <th nowrap>カテゴリ <span class="badge badge-danger">必須</span></th>
                             <th nowrap>文字色 <span class="badge badge-danger">必須</span></th>
                             <th nowrap>背景色 <span class="badge badge-danger">必須</span></th>
@@ -129,6 +129,7 @@
                     <li>「クラス名」はCSSのクラス名を設定できます。<code>cc_category_クラス名</code> で使用できます。</li>
                     <ul>
                         <li>「クラス名」は「文字色」「背景色」を反映させるために、他カテゴリとは被らない「クラス名」を設定してください。</li>
+                        <li>「クラス名」は必須項目で、システム全体で重複することはできません。</li>
                     </ul>
                 </ul>
             </div>
