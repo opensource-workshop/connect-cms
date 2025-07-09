@@ -52,4 +52,40 @@ class BucketsMailTest extends TestCase
         // $this->assertStringContainsString('[[delete_comment]]', $subject, '件名の[[delete_comment]]は置換されない事');
         $this->assertStringContainsString('【サンプルサイト】', $subject, '件名の[[site_name]]は置換される事');
     }
+
+    /**
+     * getFormattedSubject()でnull値を渡した場合のテスト
+     */
+    public function testGetFormattedSubjectWithNull(): void
+    {
+        $notice_embedded_tags = [
+            NoticeEmbeddedTag::site_name => 'サンプルサイト',
+            NoticeEmbeddedTag::title => 'テストタイトル',
+            NoticeEmbeddedTag::body => 'HTMLを除いた本文',
+            NoticeEmbeddedTag::url => 'http://localhost/plugin/xxxx',
+        ];
+
+        $mail = new BucketsMail();
+        $result = $mail->getFormattedSubject(null, $notice_embedded_tags);
+
+        $this->assertEquals('【件名未設定】', $result, 'null値の場合はデフォルトメッセージが返される事');
+    }
+
+    /**
+     * getFormattedSubject()で空文字列を渡した場合のテスト
+     */
+    public function testGetFormattedSubjectWithEmptyString(): void
+    {
+        $notice_embedded_tags = [
+            NoticeEmbeddedTag::site_name => 'サンプルサイト',
+            NoticeEmbeddedTag::title => 'テストタイトル',
+            NoticeEmbeddedTag::body => 'HTMLを除いた本文',
+            NoticeEmbeddedTag::url => 'http://localhost/plugin/xxxx',
+        ];
+
+        $mail = new BucketsMail();
+        $result = $mail->getFormattedSubject('', $notice_embedded_tags);
+
+        $this->assertEquals('【件名未設定】', $result, '空文字列の場合はデフォルトメッセージが返される事');
+    }
 }
