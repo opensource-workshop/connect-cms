@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Validator;
 
+use App\Rules\CustomValiUniqueClassname;
 use App\UserableNohistory;
 
 class Categories extends Model
@@ -146,7 +147,7 @@ class Categories extends Model
         if (!empty($request->add_display_sequence) || !empty($request->add_classname)  || !empty($request->add_category) || !empty($request->add_color)) {
             // 項目のエラーチェック
             $rules['add_display_sequence'] = ['required'];
-            $rules['add_classname'] = ['required', 'unique:categories,classname'];
+            $rules['add_classname'] = ['required', new CustomValiUniqueClassname()];
             $rules['add_category'] = ['required'];
             $rules['add_color'] = ['required'];
             $rules['add_background_color'] = ['required'];
@@ -173,7 +174,7 @@ class Categories extends Model
             foreach ($request->plugin_categories_id as $category_id) {
                 // 項目のエラーチェック
                 $rules['plugin_display_sequence.'.$category_id] = ['required'];
-                $rules['plugin_classname.'.$category_id] = ['required'];
+                $rules['plugin_classname.'.$category_id] = ['required', new CustomValiUniqueClassname($category_id)];
                 $rules['plugin_category.'.$category_id] = ['required'];
                 $rules['plugin_color.'.$category_id] = ['required'];
                 $rules['plugin_background_color.'.$category_id] = ['required'];
@@ -189,24 +190,6 @@ class Categories extends Model
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $rules);
         $validator->setAttributeNames($setAttributeNames);
-
-        // 既存項目のクラス名重複チェック
-        if (!empty($request->plugin_categories_id)) {
-            $validator->after(function ($validator) use ($request) {
-                foreach ($request->plugin_categories_id as $category_id) {
-                    if (!empty($request->plugin_classname[$category_id])) {
-                        $is_exists = Categories::query()
-                            ->where('classname', $request->plugin_classname[$category_id])
-                            ->where('id', '!=', $category_id)
-                            ->exists();
-                        
-                        if ($is_exists) {
-                            $validator->errors()->add('plugin_classname.'.$category_id, 'クラス名が重複しています。');
-                        }
-                    }
-                }
-            });
-        }
 
         return $validator;
     }
