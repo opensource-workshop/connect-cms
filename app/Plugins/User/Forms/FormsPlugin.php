@@ -290,6 +290,12 @@ class FormsPlugin extends UserPluginBase
         // Forms、Frame データ
         $form = $this->getForms($frame_id);
 
+        // フォーム送信時Captcha認証の場合、入力画面表示時に毎回セッションを初期化
+        // 確認画面からのキャンセルやブラウザ戻るなど、どんな経路でも新しい状態から開始
+        if ($form && $form->access_limit_type == FormAccessLimitType::captcha_form_submit) {
+            session()->forget("captcha_validated_{$frame_id}");
+        }
+
         $setting_error_messages = null;
         $forms_columns = null;
         $forms_columns_id_select = null;
@@ -815,6 +821,12 @@ class FormsPlugin extends UserPluginBase
             }
         }
 
+        // フォーム送信時Captcha認証の場合、入力画面でCaptcha検証を実行
+        if ($form->access_limit_type == FormAccessLimitType::captcha_form_submit) {
+            $validator_array['column']['captcha'] = ['required', 'captcha'];
+            $validator_array['message']['captcha'] = '画像認証';
+        }
+
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $validator_array['column']);
         $validator->setAttributeNames($validator_array['message']);
@@ -833,6 +845,16 @@ class FormsPlugin extends UserPluginBase
             $request->flashExcept($flashExcepts);
 
             return $this->index($request, $page_id, $frame_id, $validator->errors());
+        }
+
+        // フォーム送信時Captcha認証の場合、認証成功フラグをセッションに保存
+        // mews/captchaライブラリのCache::pull()による一回限り制限を回避するため
+        // 入力画面での認証成功をセッションに記録し、最終送信時の重複検証を防ぐ
+        if ($form->access_limit_type == FormAccessLimitType::captcha_form_submit) {
+            $captcha_success_key = "captcha_validated_{$frame_id}";
+            session()->put($captcha_success_key, [
+                'session_id' => session()->getId()
+            ]);
         }
 
         // ファイル項目を探して保存
@@ -901,6 +923,31 @@ class FormsPlugin extends UserPluginBase
     {
         // Forms、Frame データ
         $form = $this->getForms($frame_id);
+
+        // フォーム送信時Captcha認証の場合、セッションフラグをチェック
+        if ($form->access_limit_type == FormAccessLimitType::captcha_form_submit) {
+            $captcha_success_key = "captcha_validated_{$frame_id}";
+            $captcha_validated = session()->get($captcha_success_key);
+
+            if ($captcha_validated) {
+                // セッション整合性検証（セッションID）
+                $current_session_id = session()->getId();
+                $session_id = $captcha_validated['session_id'] ?? '';
+
+                if ($session_id !== $current_session_id) {
+                    // セッション整合性エラー：入力画面にリダイレクト
+                    session()->forget($captcha_success_key);
+                    return collect(['redirect_path' => url($this->page->permanent_link)]);
+                }
+
+                // 入力画面で認証済み：認証フラグを削除して処理続行
+                session()->forget($captcha_success_key);
+
+            } else {
+                // 認証フラグがない場合は入力画面にリダイレクト
+                return collect(['redirect_path' => url($this->page->permanent_link)]);
+            }
+        }
 
         // 表示期間外か
         if ($this->isOutOfTermDisplay($form)) {

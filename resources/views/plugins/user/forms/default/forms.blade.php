@@ -148,10 +148,15 @@
                 @endswitch
             </div>
         @endforeach
+
+        {{-- Captcha フィールド --}}
+        @include('plugins.user.forms.default.forms_captcha_field')
+
         {{-- ボタンエリア --}}
         <div class="form-group text-center">
             <button class="btn btn-primary"><i class="fa-solid fa-comment"></i> {{__('messages.to_confirm')}}</button>
         </div>
     </fieldset>
 </form>
+@include('plugins.user.forms.default.forms_captcha_script')
 @endsection
