@@ -159,9 +159,7 @@ PRを作成する際は以下のルールに**必ず**従ってください：
 
 ## 注意点
 
-- git comment や PR本文にはclaudeで生成した内容の文章は残さない
 - git commentにはprefixを付ける
-- PR
 
 ## 禁止事項
 - masterブランチへのcommitは禁止です。featureブランチを作ること。 
