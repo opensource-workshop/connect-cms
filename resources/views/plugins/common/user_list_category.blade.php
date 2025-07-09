@@ -80,7 +80,7 @@
             <tr>
                 <th nowrap>表示</th>
                 <th nowrap>表示順 <span class="badge badge-danger">必須</span></th>
-                <th nowrap>クラス名</th>
+                <th nowrap>クラス名 <span class="badge badge-danger">必須</span></th>
                 <th nowrap>カテゴリ <span class="badge badge-danger">必須</span></th>
                 <th nowrap>文字色 <span class="badge badge-danger">必須</span></th>
                 <th nowrap>背景色 <span class="badge badge-danger">必須</span></th>
@@ -106,7 +106,7 @@
                     <input type="text" value="{{old('plugin_display_sequence.'.$category->id, $category->plugin_display_sequence)}}" name="plugin_display_sequence[{{$category->id}}]" class="form-control @if ($errors && $errors->has('plugin_display_sequence.'.$category->id)) border-danger @endif">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('plugin_classname.'.$category->id, $category->classname)}}" name="plugin_classname[{{$category->id}}]" class="form-control">
+                    <input type="text" value="{{old('plugin_classname.'.$category->id, $category->classname)}}" name="plugin_classname[{{$category->id}}]" class="form-control @if ($errors && $errors->has('plugin_classname.'.$category->id)) border-danger @endif">
                 </td>
                 <td nowrap>
                     <input type="text" value="{{old('plugin_category.'.$category->id, $category->category)}}" name="plugin_category[{{$category->id}}]" class="form-control @if ($errors && $errors->has('plugin_category.'.$category->id)) border-danger @endif">
@@ -139,7 +139,7 @@
                     <input type="text" value="{{old('add_display_sequence')}}" name="add_display_sequence" class="form-control @if ($errors && $errors->has('add_display_sequence')) border-danger @endif">
                 </td>
                 <td nowrap>
-                    <input type="text" value="{{old('add_classname')}}" name="add_classname" class="form-control">
+                    <input type="text" value="{{old('add_classname')}}" name="add_classname" class="form-control @if ($errors && $errors->has('add_classname')) border-danger @endif">
                 </td>
                 <td nowrap>
                     <input type="text" value="{{old('add_category')}}" name="add_category" class="form-control @if ($errors && $errors->has('add_category')) border-danger @endif">
