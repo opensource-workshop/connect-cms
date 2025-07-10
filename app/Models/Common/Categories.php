@@ -6,7 +6,9 @@ use App\Enums\ColorName;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\Request;
 
+use App\Rules\CustomValiUniqueClassname;
 use App\UserableNohistory;
 
 class Categories extends Model
@@ -130,61 +132,146 @@ class Categories extends Model
     }
 
     /**
+     * サイト管理用カテゴリ設定のバリデーション
+     *
+     * @param Request $request
+     * @return \Illuminate\Validation\Validator
+     */
+    public static function validateSiteCategories(Request $request): \Illuminate\Validation\Validator
+    {
+        $rules = [];
+        $set_attribute_names = [];
+
+        // 追加項目のバリデーション
+        self::addValidationRulesForAddFields($request, $rules, $set_attribute_names);
+
+        // 既存項目のバリデーション
+        self::addValidationRulesForExistingFields(
+            $request->categories_id ?? [],
+            '',
+            $rules,
+            $set_attribute_names
+        );
+
+        return self::createValidator($request, $rules, $set_attribute_names);
+    }
+
+    /**
      * 一般プラグイン-カテゴリ設定の入力エラーチェック
      */
-    public static function validatePluginCategories($request)
+    public static function validatePluginCategories(Request $request): \Illuminate\Validation\Validator
     {
-        /* エラーチェック
-        ------------------------------------ */
-
         $rules = [];
+        $set_attribute_names = [];
 
-        // エラーチェックの項目名
-        $setAttributeNames = [];
+        // 追加項目のバリデーション
+        self::addValidationRulesForAddFields($request, $rules, $set_attribute_names);
 
-        // 追加項目のどれかに値が入っていたら、行の他の項目も必須
-        if (!empty($request->add_display_sequence) || !empty($request->add_classname)  || !empty($request->add_category) || !empty($request->add_color)) {
-            // 項目のエラーチェック
-            $rules['add_display_sequence'] = ['required'];
-            $rules['add_category'] = ['required'];
-            $rules['add_color'] = ['required'];
-            $rules['add_background_color'] = ['required'];
-
-            $setAttributeNames['add_display_sequence'] = '追加行の表示順';
-            $setAttributeNames['add_category'] = '追加行のカテゴリ';
-            $setAttributeNames['add_color'] = '追加行の文字色';
-            $setAttributeNames['add_background_color'] = '追加行の背景色';
-        }
-
-        // 共通項目 のidに値が入っていたら、行の他の項目も必須
+        // 共通項目のバリデーション
         if (!empty($request->general_categories_id)) {
             foreach ($request->general_categories_id as $category_id) {
-                // 項目のエラーチェック
-                $rules['general_display_sequence.'.$category_id] = ['required'];
-
-                $setAttributeNames['general_display_sequence.'.$category_id] = '表示順';
+                $field_name = 'general_display_sequence.' . $category_id;
+                $rules[$field_name] = ['required'];
+                $set_attribute_names[$field_name] = '表示順';
             }
         }
 
-        // 既存項目 のidに値が入っていたら、行の他の項目も必須
-        if (!empty($request->plugin_categories_id)) {
-            foreach ($request->plugin_categories_id as $category_id) {
-                // 項目のエラーチェック
-                $rules['plugin_display_sequence.'.$category_id] = ['required'];
-                $rules['plugin_category.'.$category_id] = ['required'];
-                $rules['plugin_color.'.$category_id] = ['required'];
-                $rules['plugin_background_color.'.$category_id] = ['required'];
+        // 既存項目のバリデーション（プラグイン固有）
+        self::addValidationRulesForExistingFields(
+            $request->plugin_categories_id ?? [],
+            'plugin_',
+            $rules,
+            $set_attribute_names
+        );
 
-                $setAttributeNames['plugin_display_sequence.'.$category_id] = '表示順';
-                $setAttributeNames['plugin_category.'.$category_id] = 'カテゴリ';
-                $setAttributeNames['plugin_color.'.$category_id] = '文字色';
-                $setAttributeNames['plugin_background_color.'.$category_id] = '背景色';
-            }
+        return self::createValidator($request, $rules, $set_attribute_names);
+    }
+
+    /**
+     * 追加項目（新規行）のバリデーションルールを追加
+     *
+     * @param Request $request
+     * @param array $rules
+     * @param array $set_attribute_names
+     * @return void
+     */
+    private static function addValidationRulesForAddFields(Request $request, array &$rules, array &$set_attribute_names): void
+    {
+        // 追加項目が入力されていない場合は、処理を抜ける
+        if (!self::hasAddCategoryValue($request)) {
+            return;
         }
 
-        // 項目のエラーチェック
+        $rules['add_display_sequence'] = ['required'];
+        $rules['add_classname'] = ['required', new CustomValiUniqueClassname()];
+        $rules['add_category'] = ['required'];
+        $rules['add_color'] = ['required'];
+        $rules['add_background_color'] = ['required'];
+
+        $set_attribute_names['add_display_sequence'] = '追加行の表示順';
+        $set_attribute_names['add_classname'] = '追加行のクラス名';
+        $set_attribute_names['add_category'] = '追加行のカテゴリ';
+        $set_attribute_names['add_color'] = '追加行の文字色';
+        $set_attribute_names['add_background_color'] = '追加行の背景色';
+    }
+
+    /**
+     * 既存項目（更新行）のバリデーションルールを追加
+     *
+     * @param array $category_ids
+     * @param string $field_prefix
+     * @param array $rules
+     * @param array $set_attribute_names
+     * @return void
+     */
+    private static function addValidationRulesForExistingFields(array $category_ids, string $field_prefix, array &$rules, array &$set_attribute_names): void
+    {
+        foreach ($category_ids as $category_id) {
+            $rules[$field_prefix . 'display_sequence.' . $category_id] = ['required'];
+            $rules[$field_prefix . 'classname.' . $category_id] = ['required', new CustomValiUniqueClassname($category_id)];
+            $rules[$field_prefix . 'category.' . $category_id] = ['required'];
+            $rules[$field_prefix . 'color.' . $category_id] = ['required'];
+            $rules[$field_prefix . 'background_color.' . $category_id] = ['required'];
+
+            $set_attribute_names[$field_prefix . 'display_sequence.' . $category_id] = '表示順';
+            $set_attribute_names[$field_prefix . 'classname.' . $category_id] = 'クラス名';
+            $set_attribute_names[$field_prefix . 'category.' . $category_id] = 'カテゴリ';
+            $set_attribute_names[$field_prefix . 'color.' . $category_id] = '文字色';
+            $set_attribute_names[$field_prefix . 'background_color.' . $category_id] = '背景色';
+        }
+    }
+
+    /**
+     * 追加項目に値が入力されているかチェックして、true/falseを返す
+     *
+     * @param Request $request
+     * @return bool
+     */
+    private static function hasAddCategoryValue(Request $request): bool
+    {
+        $add_fields = ['add_display_sequence', 'add_classname', 'add_category', 'add_color', 'add_background_color'];
+        
+        foreach ($add_fields as $field) {
+            if (!empty($request->$field)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * バリデーターを作成して返却
+     *
+     * @param Request $request
+     * @param array $rules
+     * @param array $set_attribute_names
+     * @return \Illuminate\Validation\Validator
+     */
+    private static function createValidator(Request $request, array $rules, array $set_attribute_names): \Illuminate\Validation\Validator
+    {
         $validator = Validator::make($request->all(), $rules);
-        $validator->setAttributeNames($setAttributeNames);
+        $validator->setAttributeNames($set_attribute_names);
 
         return $validator;
     }
