@@ -73,24 +73,18 @@
 
             <div id="app">
                 @php
-                    // IEか判定
-                    $ua = $_SERVER['HTTP_USER_AGENT'];
-                    $is_ie = false;
                     $placeholder_message = 'HTMLカラーコードを入力';
-                    if (strstr($ua, 'Trident') || strstr($ua, 'MSIE')) {
-                        $is_ie = true;
-                    }
                 @endphp
                 {{-- 背景色 --}}
                 <div class="form-group">
                     <label class="col-form-label">背景色</label>
                     <input type="text" name="base_background_color" id="base_background_color" value="{{Configs::getConfigsValueAndOld($configs, "base_background_color")}}" class="form-control" v-model="v_base_background_color" placeholder="{{ $placeholder_message }}">
                     <small class="form-text text-muted">画面の基本の背景色（各ページで上書き可能）</small>
-                    @if (!$is_ie)
-                        {{-- IEなら表示しない --}}
-                        <input type="color" v-model="v_base_background_color">
-                        <small class="text-muted">左のカラーパレットから選択することも可能です。</small>
-                    @endif
+                    <div class="position-relative d-inline-block mt-2">
+                        <input type="color" v-model="v_base_background_color" class="btn" style="width: 38px; height: 38px; border: 2px solid #dee2e6; border-radius: 4px; padding: 0; cursor: pointer;" title="カラーパレットから選択">
+                        <i class="fas fa-palette position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; color: white; text-shadow: 1px 1px 1px rgba(0,0,0,0.5); font-size: 14px;"></i>
+                    </div>
+                    <small class="text-muted">カラーパレットから色選択もできます</small>
                 </div>
 
                 {{-- ヘッダーの背景色 --}}
@@ -98,11 +92,11 @@
                     <label class="col-form-label">ヘッダーバーの背景色</label>
                     <input type="text" name="base_header_color" id="base_header_color" value="{{Configs::getConfigsValueAndOld($configs, "base_header_color")}}" class="form-control" v-model="v_base_header_color" placeholder="{{ $placeholder_message }}">
                     <small class="form-text text-muted">画面の基本のヘッダー背景色（各ページで上書き可能）</small>
-                    @if (!$is_ie)
-                        {{-- IEなら表示しない --}}
-                        <input type="color" v-model="v_base_header_color">
-                        <small class="text-muted">左のカラーパレットから選択することも可能です。</small>
-                    @endif
+                    <div class="position-relative d-inline-block mt-2">
+                        <input type="color" v-model="v_base_header_color" class="btn" style="width: 38px; height: 38px; border: 2px solid #dee2e6; border-radius: 4px; padding: 0; cursor: pointer;" title="カラーパレットから選択">
+                        <i class="fas fa-palette position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; color: white; text-shadow: 1px 1px 1px rgba(0,0,0,0.5); font-size: 14px;"></i>
+                    </div>
+                    <small class="text-muted">カラーパレットから色選択もできます</small>
                 </div>
 
                 {{-- 基本のヘッダー文字色 --}}
