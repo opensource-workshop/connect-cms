@@ -188,24 +188,18 @@ use App\Models\Common\Page;
     </div>
     <div id="app">
         @php
-            // IEか判定
-            $ua = $_SERVER['HTTP_USER_AGENT'];
-            $is_ie = false;
             $placeholder_message = 'HTMLカラーコードを入力';
-            if (strstr($ua, 'Trident') || strstr($ua, 'MSIE')) {
-                $is_ie = true;
-            }
         @endphp
         <div class="form-group row">
             <label for="background_color" class="col-md-3 col-form-label text-md-right">背景色</label>
             <div class="col-md-9">
                 <input type="text" name="background_color" id="background_color" value="{{old('background_color', $page->background_color)}}" class="form-control" v-model="v_background_color" placeholder="{{ $placeholder_message }}">
                 @include('common.errors_inline', ['name' => 'background_color'])
-                @if (!$is_ie)
-                    {{-- IEなら表示しない --}}
-                    <input type="color" v-model="v_background_color">
-                    <small class="text-muted">※ 左のカラーパレットから選択することも可能です。</small>
-                @endif
+                <div class="position-relative d-inline-block mt-2">
+                    <input type="color" v-model="v_background_color" class="btn" style="width: 38px; height: 38px; border: 2px solid #dee2e6; border-radius: 4px; padding: 0; cursor: pointer;" title="カラーパレットから選択">
+                    <i class="fas fa-palette position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; color: white; text-shadow: 1px 1px 1px rgba(0,0,0,0.5); font-size: 14px;"></i>
+                </div>
+                <small class="text-muted">カラーパレットから色選択もできます</small>
             </div>
         </div>
         <div class="form-group row">
@@ -213,11 +207,11 @@ use App\Models\Common\Page;
             <div class="col-md-9">
                 <input type="text" name="header_color" id="header_color" value="{{old('header_color', $page->header_color)}}" class="form-control" v-model="v_header_color" placeholder="{{ $placeholder_message }}">
                 @include('common.errors_inline', ['name' => 'header_color'])
-                @if (!$is_ie)
-                    {{-- IEなら表示しない --}}
-                    <input type="color" v-model="v_header_color">
-                    <small class="text-muted">※ 左のカラーパレットから選択することも可能です。</small>
-                @endif
+                <div class="position-relative d-inline-block mt-2">
+                    <input type="color" v-model="v_header_color" class="btn" style="width: 38px; height: 38px; border: 2px solid #dee2e6; border-radius: 4px; padding: 0; cursor: pointer;" title="カラーパレットから選択">
+                    <i class="fas fa-palette position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; color: white; text-shadow: 1px 1px 1px rgba(0,0,0,0.5); font-size: 14px;"></i>
+                </div>
+                <small class="text-muted">カラーパレットから色選択もできます</small>
             </div>
         </div>
     </div>
