@@ -7,21 +7,21 @@ use App\Models\Common\Categories;
 
 /**
  * カテゴリのクラス名重複チェック用バリデーションルール
- * 
+ *
  * システム全体でカテゴリのクラス名が重複しないようにチェックします。
  * 新規追加時と既存編集時の両方に対応しています。
- * 
+ *
  * 使用例:
  * - 新規追加時: new CustomValiUniqueClassname()
  * - 既存編集時: new CustomValiUniqueClassname($category_id)
- * 
+ *
  * @package App\Rules
  */
 class CustomValiUniqueClassname implements Rule
 {
     /**
      * 除外するカテゴリID
-     * 
+     *
      * @var int|null
      */
     private $exclude_id;
@@ -38,10 +38,10 @@ class CustomValiUniqueClassname implements Rule
 
     /**
      * バリデーションルールが通るかどうかを判定
-     * 
+     *
      * 指定されたクラス名がcategoriesテーブルに存在するかチェックします。
      * 既存編集時は自分自身のレコードを除外してチェックします。
-     * 
+     *
      * @param string $attribute バリデーション対象の属性名
      * @param mixed $value バリデーション対象の値
      * @return bool バリデーションが通る場合はtrue、通らない場合はfalse
