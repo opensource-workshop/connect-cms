@@ -106,9 +106,20 @@ class BucketsMail extends Model
 
     /**
      * フォーマット済みの件名を取得
+     *
+     * @param string|null $subject
+     * @param array $notice_embedded_tags
+     * @return void
      */
-    public function getFormattedSubject(string $subject, array $notice_embedded_tags)
+    public function getFormattedSubject(string|null $subject, array $notice_embedded_tags)
     {
+        if ($subject === null || $subject === '') {
+            /**
+             * 件名が未設定の場合、Laravelのデフォルト値（「Post Notice」等）が設定されてわかりづらい為、【件名未設定】を設定する。
+             * ※別途、画面側でバリデーションを追加する為、件名が空の状態は今後、基本的にはありえないが、既存運用で件名が空のデータがある場合の対策として実装する。
+             */
+            return '【件名未設定】';
+        }
         return $this->replaceEmbeddedTags($subject, $notice_embedded_tags);
     }
 

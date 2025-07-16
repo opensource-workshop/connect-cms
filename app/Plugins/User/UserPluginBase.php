@@ -818,16 +818,43 @@ class UserPluginBase extends PluginBase
             $rules['approved_groups']      = [new CustomValiRequiredWithoutAllSupportsArrayInput([$request->approved_author, $request->approved_addresses], $name)];
         }
 
+        // 使用するメール送信メソッドを取得
+        $use_bucket_mail_methods = ['notice', 'relate', 'approval', 'approved']; // デフォルト値
+        if (method_exists($this, 'useBucketMailMethods')) {
+            $use_bucket_mail_methods = $this->useBucketMailMethods();
+        }
+
+        // 有効なメール機能に対してのみ件名フィールドのバリデーションを追加
+        if (in_array('notice', $use_bucket_mail_methods) && $request->notice_on) {
+            $rules['notice_subject'] = ['required', 'max:255'];
+        }
+
+        if (in_array('relate', $use_bucket_mail_methods) && $request->relate_on) {
+            $rules['relate_subject'] = ['required', 'max:255'];
+        }
+
+        if (in_array('approval', $use_bucket_mail_methods) && $request->approval_on) {
+            $rules['approval_subject'] = ['required', 'max:255'];
+        }
+
+        if (in_array('approved', $use_bucket_mail_methods) && $request->approved_on) {
+            $rules['approved_subject'] = ['required', 'max:255'];
+        }
+
         $validator = Validator::make($request->all(), $rules);
         $validator->setAttributeNames([
             'notice_addresses' => '送信先メールアドレス',
             'notice_groups' => '送信先グループ',
             'notice_everyone' => '全ユーザに通知',
+            'notice_subject' => '投稿通知の件名',
             'approval_addresses' => '送信先メールアドレス',
             'approval_groups' => '送信先グループ',
+            'approval_subject' => '承認通知の件名',
             'approved_author' => '投稿者へ通知する',
             'approved_addresses' => '送信先メールアドレス',
             'approved_groups' => '送信先グループ',
+            'approved_subject' => '承認済み通知の件名',
+            'relate_subject' => '関連記事通知の件名',
         ]);
 
         // エラーがあった場合は入力画面に戻る。

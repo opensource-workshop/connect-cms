@@ -36,6 +36,7 @@
             {{ csrf_field() }}
         </form>
 
+        <div id="app">
         <form action="{{url('/')}}/manage/site/saveCategories" method="POST">
             {{ csrf_field() }}
 
@@ -49,10 +50,10 @@
                         --}}
                         <tr>
                             <th nowrap>表示順 <span class="badge badge-danger">必須</span></th>
-                            <th nowrap>クラス名</th>
+                            <th nowrap>クラス名 <span class="badge badge-danger">必須</span></th>
                             <th nowrap>カテゴリ <span class="badge badge-danger">必須</span></th>
-                            <th nowrap>文字色 <span class="badge badge-danger">必須</span></th>
-                            <th nowrap>背景色 <span class="badge badge-danger">必須</span></th>
+                            <th nowrap>文字色 <span class="badge badge-danger">必須</span><br><small class="text-muted">パレット選択可</small></th>
+                            <th nowrap>背景色 <span class="badge badge-danger">必須</span><br><small class="text-muted">パレット選択可</small></th>
                             <th nowrap>対象</th>
                             <th nowrap>対象カテゴリID</th>
                             <th nowrap class="text-center"><i class="fas fa-trash-alt"></i></th>
@@ -72,10 +73,22 @@
                                     <input type="text" value="{{old('category.'.$category->id, $category->category)}}" name="category[{{$category->id}}]" class="form-control @if ($errors && $errors->has('category.'.$category->id)) border-danger @endif">
                                 </td>
                                 <td nowrap>
-                                    <input type="text" value="{{old('color.'.$category->id, $category->color)}}" name="color[{{$category->id}}]" class="form-control @if ($errors && $errors->has('color.'.$category->id)) border-danger @endif">
+                                    <div class="d-flex align-items-center">
+                                        <input type="text" v-model="v_color_{{$category->id}}" name="color[{{$category->id}}]" class="form-control @if ($errors && $errors->has('color.'.$category->id)) border-danger @endif" placeholder="(例)#000000" style="width: 100px;">
+                                        <div class="position-relative ml-2">
+                                            <input type="color" v-model="v_color_{{$category->id}}" class="btn" style="width: 38px; height: 38px; border: 2px solid #dee2e6; border-radius: 4px; padding: 0; cursor: pointer;" title="カラーパレットから選択">
+                                            <i class="fas fa-palette position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; color: white; text-shadow: 1px 1px 1px rgba(0,0,0,0.5); font-size: 14px;"></i>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td nowrap>
-                                    <input type="text" value="{{old('background_color.'.$category->id, $category->background_color)}}" name="background_color[{{$category->id}}]" class="form-control @if ($errors && $errors->has('background_color.'.$category->id)) border-danger @endif">
+                                    <div class="d-flex align-items-center">
+                                        <input type="text" v-model="v_background_color_{{$category->id}}" name="background_color[{{$category->id}}]" class="form-control @if ($errors && $errors->has('background_color.'.$category->id)) border-danger @endif" placeholder="(例)#ffffff" style="width: 100px;">
+                                        <div class="position-relative ml-2">
+                                            <input type="color" v-model="v_background_color_{{$category->id}}" class="btn" style="width: 38px; height: 38px; border: 2px solid #dee2e6; border-radius: 4px; padding: 0; cursor: pointer;" title="カラーパレットから選択">
+                                            <i class="fas fa-palette position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; color: white; text-shadow: 1px 1px 1px rgba(0,0,0,0.5); font-size: 14px;"></i>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td nowrap class="align-middle">
                                     <input type="hidden" value="{{old('target.'.$category->id, $category->target)}}" name="target[{{$category->id}}]" class="form-control">
@@ -106,10 +119,22 @@
                                 <input type="text" value="{{old('add_category')}}" name="add_category" class="form-control @if ($errors && $errors->has('add_category')) border-danger @endif">
                             </td>
                             <td nowrap>
-                                <input type="text" value="{{old('add_color')}}" name="add_color" class="form-control @if ($errors && $errors->has('add_color')) border-danger @endif" placeholder="(例)#000000">
+                                <div class="d-flex align-items-center">
+                                    <input type="text" v-model="v_add_color" name="add_color" class="form-control @if ($errors && $errors->has('add_color')) border-danger @endif" placeholder="(例)#000000" style="width: 100px;">
+                                    <div class="position-relative ml-2">
+                                        <input type="color" v-model="v_add_color" class="btn" style="width: 38px; height: 38px; border: 2px solid #dee2e6; border-radius: 4px; padding: 0; cursor: pointer;" title="カラーパレットから選択">
+                                        <i class="fas fa-palette position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; color: white; text-shadow: 1px 1px 1px rgba(0,0,0,0.5); font-size: 14px;"></i>
+                                    </div>
+                                </div>
                             </td>
                             <td nowrap>
-                                <input type="text" value="{{old('add_background_color')}}" name="add_background_color" class="form-control @if ($errors && $errors->has('add_background_color')) border-danger @endif" placeholder="(例)#ffffff">
+                                <div class="d-flex align-items-center">
+                                    <input type="text" v-model="v_add_background_color" name="add_background_color" class="form-control @if ($errors && $errors->has('add_background_color')) border-danger @endif" placeholder="(例)#ffffff" style="width: 100px;">
+                                    <div class="position-relative ml-2">
+                                        <input type="color" v-model="v_add_background_color" class="btn" style="width: 38px; height: 38px; border: 2px solid #dee2e6; border-radius: 4px; padding: 0; cursor: pointer;" title="カラーパレットから選択">
+                                        <i class="fas fa-palette position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; color: white; text-shadow: 1px 1px 1px rgba(0,0,0,0.5); font-size: 14px;"></i>
+                                    </div>
+                                </div>
                             </td>
                             <td nowrap></td>
                             <td nowrap></td>
@@ -125,10 +150,11 @@
                     <li>対象が各プラグインのカテゴリは「個別カテゴリ」です。</li>
                     <li>カテゴリ設定後は、各プラグインのカテゴリ設定で表示設定が必要です。</li>
                     <li>各プラグインのカテゴリ設定から、コンテンツ単位で独自カテゴリを設定することも可能です。</li>
-                    <li>「文字色」「背景色」にはHTMLで指定できる色キーワード（例：<code>red</code>, <code>blue</code>）やRGB色（例：<code>#000000</code>, <code>#111</code>）等を設定できます。</li>
+                    <li>「文字色」「背景色」にはHTMLで指定できる色キーワード（例：<code>red</code>, <code>blue</code>）やRGB色（例：<code>#000000</code>, <code>#111</code>）等を設定できます。パレットアイコンから色を選択することもできます。</li>
                     <li>「クラス名」はCSSのクラス名を設定できます。<code>cc_category_クラス名</code> で使用できます。</li>
                     <ul>
                         <li>「クラス名」は「文字色」「背景色」を反映させるために、他カテゴリとは被らない「クラス名」を設定してください。</li>
+                        <li>「クラス名」は必須項目で、システム全体で重複することはできません。</li>
                     </ul>
                 </ul>
             </div>
@@ -138,8 +164,24 @@
                 <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i><span class="d-none d-md-inline"> 変更</span></button>
             </div>
         </form>
+        </div>
 
     </div>
 </div>
+<script>
+    createApp({
+        data: function() {
+            return {
+                // カラーピッカー用のデータ
+                @foreach($categories as $category)
+                    v_color_{{$category->id}}: '{{old("color.".$category->id, $category->color)}}',
+                    v_background_color_{{$category->id}}: '{{old("background_color.".$category->id, $category->background_color)}}',
+                @endforeach
+                v_add_color: '{{old("add_color")}}',
+                v_add_background_color: '{{old("add_background_color")}}'
+            }
+        },
+    }).mount('#app');
+</script>
 
 @endsection

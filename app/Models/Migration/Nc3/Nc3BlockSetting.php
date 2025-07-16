@@ -20,7 +20,7 @@ class Nc3BlockSetting extends Model
     /**
      * block_settingsのvalueをblock_key,field_nameで取得
      */
-    public static function getNc3BlockSettingValue(Collection $block_settings, ?string $block_key, string $field_name, ?string $default = '0'): string
+    public static function getNc3BlockSettingValue(Collection $block_settings, ?string $block_key, string $field_name, string $default = '0'): string
     {
         $block_setting = $block_settings->where('block_key', $block_key)
             ->firstWhere('field_name', $field_name);

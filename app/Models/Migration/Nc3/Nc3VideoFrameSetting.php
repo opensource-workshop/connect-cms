@@ -16,6 +16,23 @@ class Nc3VideoFrameSetting extends Model
      */
     protected $table = 'video_frame_settings';
 
+    /**
+     * タイムスタンプ管理
+     */
+    public $timestamps = false;
+
+    /**
+     * 一括代入可能な属性
+     */
+    protected $fillable = [
+        'frame_key',
+        'display_order',
+        'created',
+        'modified',
+        'created_user',
+        'modified_user',
+    ];
+
     // 表示順
     const display_order_new  = 'new',           // 新着順
         display_order_title  = 'title',         // タイトル順

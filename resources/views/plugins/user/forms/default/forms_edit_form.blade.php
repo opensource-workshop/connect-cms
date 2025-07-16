@@ -107,6 +107,7 @@
                         @switch($enum_value)
                             @case(FormAccessLimitType::none)
                             @case(FormAccessLimitType::captcha)
+                            @case(FormAccessLimitType::captcha_form_submit)
                                 <input type="radio" value="{{$enum_value}}" id="access_limit_type_{{$enum_value}}" name="access_limit_type" class="custom-control-input" {{$checked}}
                                     data-toggle="collapse" data-target="#collapse_form_password{{$frame_id}}.show">
                                 @break

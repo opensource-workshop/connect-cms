@@ -136,6 +136,7 @@
                     </small>
 
                     <span class="badge badge-secondary mt-3 mb-1">投稿通知の件名</span>
+                    <span class="badge badge-danger">必須</span>
                     <div class="pl-0">
                         <input type="text" name="notice_subject" value="{{old('notice_subject', $bucket_mail->notice_subject)}}" class="form-control @if ($errors && $errors->has('notice_subject')) border-danger @endif">
                         @include('plugins.common.errors_inline', ['name' => 'notice_subject'])
@@ -166,6 +167,7 @@
                 </div>
                 <div class="collapse" id="collapse_relate">
                     <span class="badge badge-secondary mt-3 mb-1">関連記事通知の件名</span>
+                    <span class="badge badge-danger">必須</span>
                     <div class="pl-0">
                         <input type="text" name="relate_subject" value="{{old('relate_subject', $bucket_mail->relate_subject)}}" class="form-control @if ($errors && $errors->has('relate_subject')) border-danger @endif">
                         @include('plugins.common.errors_inline', ['name' => 'relate_subject'])
@@ -222,6 +224,7 @@
                     </small>
 
                     <span class="badge badge-secondary mt-3 mb-1">承認通知の件名</span>
+                    <span class="badge badge-danger">必須</span>
                     <div class="pl-0">
                         <input type="text" name="approval_subject" value="{{old('approval_subject', $bucket_mail->approval_subject)}}" class="form-control @if ($errors && $errors->has('approval_subject')) border-danger @endif">
                         @include('plugins.common.errors_inline', ['name' => 'approval_subject'])
@@ -290,6 +293,7 @@
                     </small>
 
                     <span class="badge badge-secondary mt-3 mb-1">承認済み通知の件名</span>
+                    <span class="badge badge-danger">必須</span>
                     <div class="pl-0">
                         <input type="text" name="approved_subject" value="{{old('approved_subject', $bucket_mail->approved_subject)}}" class="form-control @if ($errors && $errors->has('approved_subject')) border-danger @endif">
                         @include('plugins.common.errors_inline', ['name' => 'approved_subject'])
