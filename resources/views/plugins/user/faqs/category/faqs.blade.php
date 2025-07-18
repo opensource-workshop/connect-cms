@@ -48,6 +48,9 @@
     {{-- 条件クリア --}}
     @include('plugins.user.faqs.clear_conditions')
     
+    {{-- 件数表示 --}}
+    @include('plugins.user.faqs.count_display')
+    
     @php
         $sorted_posts = $faqs_posts;
         if ($faq_frame->sequence_conditions != 3) {

@@ -51,6 +51,8 @@
     {{-- 条件クリア --}}
     @include('plugins.user.faqs.clear_conditions')
 
+    {{-- 件数表示 --}}
+    @include('plugins.user.faqs.count_display')
 
     <div class="faq-list-full-display">
     @foreach($faqs_posts as $post)
