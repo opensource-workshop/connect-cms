@@ -237,27 +237,27 @@ class FaqsPlugin extends UserPluginBase
         // カテゴリのleftJoin
         $faqs_posts = Categories::appendCategoriesLeftJoin($faqs_posts, $this->frame->plugin_name, 'faqs_posts.categories_id', 'faqs_posts.faqs_id');
 
-        // タグのleftJoin
-        $faqs_posts->leftJoin('faqs_posts_tags', 'faqs_posts.id', '=', 'faqs_posts_tags.faqs_posts_id');
-
         // カテゴリ検索
         if (session('categories_id_'. $this->frame->id)) {
             $faqs_posts->where('faqs_posts.categories_id', session('categories_id_'. $this->frame->id));
         }
 
-        // ワード検索（タイトル、本文、カテゴリ、タグを対象）
+        // キーワード検索（タイトル、本文、カテゴリ、タグを対象）
         $search_keyword = session('search_keyword_'. $this->frame->id);
         if ($search_keyword) {
             $faqs_posts->where(function ($query) use ($search_keyword) {
                 $query->where('faqs_posts.post_title', 'like', "%{$search_keyword}%")
                       ->orWhere('faqs_posts.post_text', 'like', "%{$search_keyword}%")
                       ->orWhere('categories.category', 'like', "%{$search_keyword}%")
-                      ->orWhere('faqs_posts_tags.tags', 'like', "%{$search_keyword}%");
+                      ->orWhereExists(function ($subquery) use ($search_keyword) {
+                          $subquery->select(DB::raw(1))
+                                   ->from('faqs_posts_tags')
+                                   ->whereColumn('faqs_posts_tags.faqs_posts_id', 'faqs_posts.id')
+                                   ->where('faqs_posts_tags.tags', 'like', "%{$search_keyword}%")
+                                   ->whereNull('faqs_posts_tags.deleted_at');
+                      });
             });
         }
-
-        // タグのJOINによる重複を排除（DISTINCTを使用）
-        $faqs_posts->distinct();
 
         // 表示条件に対するソート条件追加
 
