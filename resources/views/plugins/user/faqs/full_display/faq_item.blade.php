@@ -4,7 +4,7 @@
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category FAQプラグイン
- * @param boolean $hide_category カテゴリを隠すか
+ * @param boolean $show_category カテゴリを表示するか
 --}}
 <article class="faq-item mb-4 border-bottom pb-3">
     {{-- 質問部分 --}}
@@ -15,7 +15,7 @@
                 <h5 class="mb-2 font-weight-bold">{{$post->getNobrPostTitle()}}</h5>
                 
                 {{-- カテゴリ --}}
-                @if($post->category_view_flag && !$hide_category)
+                @if($post->category_view_flag && $show_category)
                     <span class="badge mb-1" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>
                 @endif
 

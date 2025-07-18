@@ -47,7 +47,7 @@
     <div class="faq-full-display">
     @foreach($faqs_posts as $post)
         {{-- FAQの要素呼び出し --}}
-        @include('plugins.user.faqs.full_display.faq_item', ['post' => $post, 'hide_category' => false])
+        @include('plugins.user.faqs.full_display.faq_item', ['post' => $post, 'show_category' => true])
     @endforeach
     </div>
 
