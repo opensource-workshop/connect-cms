@@ -2,6 +2,7 @@
  * FAQ編集画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 井上 雅人 <inoue@opensource-workshop.co.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category FAQプラグイン
 --}}
@@ -199,6 +200,30 @@
                 <label class="custom-control-label" for="narrowing_down_type_{{$key}}" id="label_narrowing_down_type_{{$key}}">{{$type}}</label>
             </div>
             @endforeach
+        </div>
+    </div>
+
+    {{-- キーワード検索機能の表示 --}}
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">{{FaqFrameConfig::getDescription('faq_keyword_search_display')}}</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-radio custom-control-inline">
+                @if (FrameConfig::getConfigValueAndOld($frame_configs, FaqFrameConfig::faq_keyword_search_display) === '' ||
+                    FrameConfig::getConfigValueAndOld($frame_configs, FaqFrameConfig::faq_keyword_search_display) == ShowType::not_show)
+                    <input type="radio" value="{{ShowType::not_show}}" id="{{FaqFrameConfig::faq_keyword_search_display}}_0" name="{{FaqFrameConfig::faq_keyword_search_display}}" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="{{ShowType::not_show}}" id="{{FaqFrameConfig::faq_keyword_search_display}}_0" name="{{FaqFrameConfig::faq_keyword_search_display}}" class="custom-control-input">
+                @endif
+                <label class="custom-control-label text-nowrap" for="{{FaqFrameConfig::faq_keyword_search_display}}_0" id="label_{{FaqFrameConfig::faq_keyword_search_display}}_0">{{ShowType::getDescription(ShowType::not_show)}}</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                @if (FrameConfig::getConfigValueAndOld($frame_configs, FaqFrameConfig::faq_keyword_search_display) == ShowType::show)
+                    <input type="radio" value="{{ShowType::show}}" id="{{FaqFrameConfig::faq_keyword_search_display}}_1" name="{{FaqFrameConfig::faq_keyword_search_display}}" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="{{ShowType::show}}" id="{{FaqFrameConfig::faq_keyword_search_display}}_1" name="{{FaqFrameConfig::faq_keyword_search_display}}" class="custom-control-input">
+                @endif
+                <label class="custom-control-label text-nowrap" for="{{FaqFrameConfig::faq_keyword_search_display}}_1" id="label_{{FaqFrameConfig::faq_keyword_search_display}}_1">{{ShowType::getDescription(ShowType::show)}}</label>
+            </div>
         </div>
     </div>
 

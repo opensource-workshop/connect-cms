@@ -237,10 +237,27 @@ class FaqsPlugin extends UserPluginBase
         // カテゴリのleftJoin
         $faqs_posts = Categories::appendCategoriesLeftJoin($faqs_posts, $this->frame->plugin_name, 'faqs_posts.categories_id', 'faqs_posts.faqs_id');
 
+        // タグのleftJoin
+        $faqs_posts->leftJoin('faqs_posts_tags', 'faqs_posts.id', '=', 'faqs_posts_tags.faqs_posts_id');
+
         // カテゴリ検索
         if (session('categories_id_'. $this->frame->id)) {
             $faqs_posts->where('faqs_posts.categories_id', session('categories_id_'. $this->frame->id));
         }
+
+        // ワード検索（タイトル、本文、カテゴリ、タグを対象）
+        $search_keyword = session('search_keyword_'. $this->frame->id);
+        if ($search_keyword) {
+            $faqs_posts->where(function ($query) use ($search_keyword) {
+                $query->where('faqs_posts.post_title', 'like', "%{$search_keyword}%")
+                      ->orWhere('faqs_posts.post_text', 'like', "%{$search_keyword}%")
+                      ->orWhere('categories.category', 'like', "%{$search_keyword}%")
+                      ->orWhere('faqs_posts_tags.tags', 'like', "%{$search_keyword}%");
+            });
+        }
+
+        // タグのJOINによる重複を排除（DISTINCTを使用）
+        $faqs_posts->distinct();
 
         // 表示条件に対するソート条件追加
 
@@ -1177,17 +1194,37 @@ EOD;
     }
 
     /**
-     * FAQの絞り込み
+     * FAQの絞り込み・検索
      */
     public function search($request, $page_id, $frame_id)
     {
+        // カテゴリ絞り込み処理
         if ($request->filled('categories_id') && session('categories_id_'. $frame_id) != $request->categories_id) {
             // 絞り込み条件あり
             session(['categories_id_'. $frame_id => (int)$request->categories_id]);
-        } else {
+        } elseif (!$request->filled('categories_id') && !$request->filled('search_keyword')) {
             // 絞り込み条件で空白を選択したとき、
             // 選択中のものを再選択したときは絞り込みを解除する
             session()->forget('categories_id_'. $this->frame->id);
+        }
+
+        // キーワード検索処理
+        if ($request->filled('search_keyword')) {
+            $search_keyword = trim($request->search_keyword);
+            if (!empty($search_keyword)) {
+                session(['search_keyword_'. $frame_id => $search_keyword]);
+            } else {
+                session()->forget('search_keyword_'. $frame_id);
+            }
+        } elseif ($request->has('search_keyword') && empty(trim($request->search_keyword))) {
+            // 空文字での検索時はキーワードクリア
+            session()->forget('search_keyword_'. $frame_id);
+        }
+
+        // 検索条件クリア
+        if ($request->filled('clear_search')) {
+            session()->forget('categories_id_'. $frame_id);
+            session()->forget('search_keyword_'. $frame_id);
         }
 
         return $this->index($request, $page_id, $frame_id);
@@ -1199,5 +1236,6 @@ EOD;
     private function forgetParams()
     {
         session()->forget('categories_id_'. $this->frame->id);
+        session()->forget('search_keyword_'. $this->frame->id);
     }
 }

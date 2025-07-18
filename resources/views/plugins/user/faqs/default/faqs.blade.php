@@ -2,6 +2,7 @@
  * FAQ画面テンプレート。
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
+ * @author 井上 雅人 <inoue@opensource-workshop.co.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category FAQプラグイン
 --}}
@@ -41,8 +42,15 @@
 
 {{-- FAQ表示 --}}
 @if (isset($faqs_posts))
+    {{-- 検索フォーム --}}
+    @include('plugins.user.faqs.search_form')
+    
     {{-- 絞り込み機能 --}}
     @include('plugins.user.faqs.default.faqs_narrowing_down')
+
+    {{-- 条件クリア --}}
+    @include('plugins.user.faqs.clear_conditions')
+
 
     <div class="accordion" id="accordionFaq{{$frame_id}}">
     @foreach($faqs_posts as $post)
