@@ -44,7 +44,7 @@
     {{-- 絞り込み機能 --}}
     @include('plugins.user.faqs.default.faqs_narrowing_down')
 
-    <div class="faq-full-display">
+    <div class="faq-list-full-display">
     @foreach($faqs_posts as $post)
         {{-- FAQの要素呼び出し --}}
         @include('plugins.user.faqs.full_display.faq_item', ['post' => $post, 'show_category' => true])

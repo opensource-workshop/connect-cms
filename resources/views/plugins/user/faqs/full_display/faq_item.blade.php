@@ -6,9 +6,9 @@
  * @category FAQプラグイン
  * @param boolean $show_category カテゴリを表示するか
 --}}
-<article class="faq-item mb-4 border-bottom pb-3">
+<article class="faq-list-item mb-4 border-bottom pb-3">
     {{-- 質問部分 --}}
-    <div class="faq-question mb-3">
+    <div class="faq-list-question mb-3">
         <div class="d-flex align-items-start">
             <span class="mr-2 mt-1"><span class="h5"><span class="badge badge-primary">Q</span></span></span>
             <div class="flex-grow-1">
@@ -35,12 +35,12 @@
     </div>
 
     {{-- 回答部分 --}}
-    <div class="faq-answer">
+    <div class="faq-list-answer">
         <div class="d-flex align-items-start">
             <span class="mr-2 mt-1"><span class="h5"><span class="badge badge-secondary">A</span></span></span>
             <div class="flex-grow-1">
                 {{-- 記事本文 --}}
-                <div class="faq-answer-content">
+                <div class="faq-list-answer-content">
                     {!! $post->post_text !!}
                 </div>
             </div>
@@ -49,7 +49,7 @@
         {{-- フッター情報 --}}
         <footer class="mt-3">
             <div class="d-flex flex-wrap align-items-center justify-content-between">
-                <div class="faq-meta">
+                <div class="faq-list-meta">
                     @if ($faq_frame->display_posted_at_flag)
                         {{-- 投稿日時 --}}
                         <small class="text-muted mr-3">公開日時：{{$post->posted_at->format('Y年n月j日 H時i分')}}</small>
@@ -74,7 +74,7 @@
                 </div>
 
                 {{-- 操作ボタン --}}
-                <div class="faq-actions">
+                <div class="faq-list-actions">
                     @if ($post->status == 2)
                         @can('role_update_or_approval',[[$post, 'faqs', $buckets]])
                             <span class="badge badge-warning align-bottom mr-1">承認待ち</span>
