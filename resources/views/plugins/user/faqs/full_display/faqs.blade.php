@@ -1,5 +1,5 @@
 {{--
- * FAQ画面テンプレート。
+ * FAQ画面テンプレート（Q&A全表示）
  *
  * @author 永原　篤 <nagahara@opensource-workshop.jp>
  * @author 井上 雅人 <inoue@opensource-workshop.co.jp>
@@ -54,10 +54,10 @@
     {{-- 件数表示 --}}
     @include('plugins.user.faqs.count_display')
 
-    <div class="accordion" id="accordionFaq{{$frame_id}}">
+    <div class="faq-list-full-display">
     @foreach($faqs_posts as $post)
         {{-- FAQの要素呼び出し --}}
-        @include('plugins.user.faqs.default.faq', ['post' => $post, 'hide_category' => false])
+        @include('plugins.user.faqs.full_display.faq_item', ['post' => $post, 'show_category' => true])
     @endforeach
     </div>
 

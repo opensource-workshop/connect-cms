@@ -2,6 +2,7 @@
  * FAQ画面テンプレート（カテゴリー別表示）
  *
  * @author 石垣 佑樹 <ishigaki@opensource-workshop.jp>
+ * @author 井上 雅人 <inoue@opensource-workshop.co.jp>
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category FAQプラグイン
 --}}
@@ -41,6 +42,15 @@
 
 {{-- FAQ表示 --}}
 @if (isset($faqs_posts))
+    {{-- 検索フォーム --}}
+    @include('plugins.user.faqs.search_form')
+    
+    {{-- 条件クリア --}}
+    @include('plugins.user.faqs.clear_conditions')
+    
+    {{-- 件数表示 --}}
+    @include('plugins.user.faqs.count_display')
+    
     @php
         $sorted_posts = $faqs_posts;
         if ($faq_frame->sequence_conditions != 3) {
