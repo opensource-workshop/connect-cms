@@ -111,7 +111,7 @@ class BucketsMail extends Model
      * @param array $notice_embedded_tags
      * @return void
      */
-    public function getFormattedSubject(string|null $subject, array $notice_embedded_tags)
+    public function getFormattedSubject(?string $subject, array $notice_embedded_tags)
     {
         if ($subject === null || $subject === '') {
             /**
