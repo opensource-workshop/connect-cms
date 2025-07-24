@@ -611,7 +611,8 @@ trait MigrationNc3ExportTrait
                 $nc3_pages_query->whereNotIn('id', $this->getMigrationConfig('pages', 'nc3_export_ommit_page_ids'));
             }
 
-            $nc3_pages_query->orderBy('pages_languages.language_id');
+            // 日本語ページ(ID=2)を英語ページ(ID=1)より先に登録するため降順
+            $nc3_pages_query->orderBy('pages_languages.language_id', 'desc');
                 // ->orderBy('pages.sort_key')
                 // ->orderBy('rooms.sort_key')
                 // ->get();
