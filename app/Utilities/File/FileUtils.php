@@ -123,7 +123,7 @@ class FileUtils
         if (!is_dir($dir)) {
             return '0B';
         }
-        
+
         $total = 0;
         $files = self::getFileList($dir);
         foreach ($files as $file) {
@@ -131,5 +131,4 @@ class FileUtils
         }
         return self::getFormatSizeDecimalPoint($total);
     }
-
 }
