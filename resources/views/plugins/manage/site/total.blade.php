@@ -17,7 +17,7 @@
         @include('plugins.manage.site.site_manage_tab')
     </div>
     <div class="card-body">
-        ファイル使用容量: {{ $total }}
+        サイト全体の使用量: {{ $total }}
     </div>
 </div>
 
