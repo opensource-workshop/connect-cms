@@ -25,10 +25,10 @@
             <div class="card">
                 <button class="btn btn-link p-0 text-left collapsed" type="button" data-toggle="collapse" data-target="#search_collapse" aria-expanded="false" aria-controls="search_collapse">
                     <div class="card-header" id="search_condition">
-                        絞り込み条件 <i class="fas fa-angle-down"></i>
+                        絞り込み条件 <i class="fas fa-angle-down"></i>@if (Session::has('search_condition.client_original_name') || Session::has('search_condition.sort'))<span class="badge badge-pill badge-primary ml-2">条件設定中</span>@endif
                    </div>
                 </button>
-                @if (Session::has('search_condition.client_original_name') || (Session::has('search_condition.sort')))
+                @if (Session::has('search_condition.client_original_name') || Session::has('search_condition.sort'))
                 <div id="search_collapse" class="collapse show" aria-labelledby="search_condition" data-parent="#search_accordion">
                 @else
                 <div id="search_collapse" class="collapse" aria-labelledby="search_condition" data-parent="#search_accordion">
@@ -82,6 +82,33 @@
                 </div>
             </div>
         </div>
+
+    {{-- 検索結果情報 --}}
+    <div class="row">
+        <div class="col-3 text-left d-flex align-items-end">
+            {{-- (左側)件数 --}}
+            <span class="badge badge-pill badge-light">
+                {{ $uploads->total() }} 件
+                @if($uploads->total() > 0)
+                    {{ '(' . $uploads->firstItem() . '-' . $uploads->lastItem() . ')' }}
+                @endif
+            </span>
+        </div>
+        <div class="col text-right d-flex align-items-end justify-content-end">
+            {{-- (右側)表示件数選択 --}}
+            <form method="post" action="{{url('/')}}/manage/uploadfile/search" class="form-inline">
+                {{ csrf_field() }}
+                <input type="hidden" name="search_condition[client_original_name]" value="{{Session::get('search_condition.client_original_name')}}">
+                <input type="hidden" name="search_condition[sort]" value="{{Session::get('search_condition.sort')}}">
+                <label for="per_page_quick" class="mr-2 mb-0">表示件数:</label>
+                <select name="uploadfile_per_page" id="per_page_quick" class="form-control form-control-sm" onchange="this.form.submit()">
+                    @foreach($allowed_per_page as $per_page_option)
+                        <option value="{{ $per_page_option }}"@if(Session::get('uploadfile_per_page') == $per_page_option || (!Session::has('uploadfile_per_page') && $loop->first)) selected @endif>{{ $per_page_option }}件</option>
+                    @endforeach
+                </select>
+            </form>
+        </div>
+    </div>
 
     <form id="bulk-delete-form" method="post" action="{{url('/')}}/manage/uploadfile/bulkDelete">
         {{ csrf_field() }}

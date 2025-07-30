@@ -30,6 +30,11 @@ class UploadfileManage extends ManagePluginBase
     use ConnectCommonTrait;
 
     /**
+     * 表示件数の許可された値
+     */
+    private $allowed_per_page = [10, 50, 100];
+
+    /**
      *  権限定義
      */
     public function declareRole()
@@ -105,8 +110,18 @@ class UploadfileManage extends ManagePluginBase
             $uploads_query->orderBy('download_count', 'desc');
         }
 
+        // 表示件数の取得 ※デフォルトは10件
+        $per_page = $this->allowed_per_page[0];
+        if ($request->session()->has('uploadfile_per_page')) {
+            $per_page = (int)$request->session()->get('uploadfile_per_page');
+            // 許可された値のみを使用
+            if (!in_array($per_page, $this->allowed_per_page)) {
+                $per_page = $this->allowed_per_page[0];
+            }
+        }
+
         // データ取得
-        $uploads = $uploads_query->paginate(10, null, 'page', $page);
+        $uploads = $uploads_query->paginate($per_page, null, 'page', $page);
 
         // 入力値をsessionへ保存（検索用）
         $request->flash();
@@ -116,6 +131,7 @@ class UploadfileManage extends ManagePluginBase
             "function"    => __FUNCTION__,
             "plugin_name" => "uploadfile",
             "uploads"     => $uploads,
+            "allowed_per_page" => $this->allowed_per_page,
         ]);
     }
 
@@ -131,6 +147,11 @@ class UploadfileManage extends ManagePluginBase
         ];
 
         session(["search_condition" => $search_condition]);
+
+        // 表示件数は独立して保存（条件設定中バッジの対象外）
+        if ($request->has('uploadfile_per_page')) {
+            session(['uploadfile_per_page' => $request->input('uploadfile_per_page')]);
+        }
 
         return redirect("/manage/uploadfile");
     }
