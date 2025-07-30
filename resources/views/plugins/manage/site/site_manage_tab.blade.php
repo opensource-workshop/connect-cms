@@ -55,9 +55,9 @@
 
                 <li role="presentation" class="nav-item">
                     @if ($function == "total")
-                        <span class="nav-link"><span class="active">使用容量</span></span>
+                        <span class="nav-link"><span class="active">使用量</span></span>
                     @else
-                        <a href="{{url('/manage/site/total')}}" class="nav-link">使用容量</a>
+                        <a href="{{url('/manage/site/total')}}" class="nav-link">使用量</a>
                     @endif
                 </li>
 
