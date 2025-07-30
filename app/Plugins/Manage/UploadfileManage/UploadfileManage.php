@@ -397,6 +397,7 @@ class UploadfileManage extends ManagePluginBase
                 $upload->delete();
                 
             } catch (\Exception $e) {
+                Log::error('UploadfileManage: Bulk delete failed for file ID: ' . $upload_id, ['error' => $e->getMessage()]);
                 $error_files[] = "ID:" . $upload_id;
             }
         }
@@ -404,7 +405,7 @@ class UploadfileManage extends ManagePluginBase
         $message = count($deleted_files) . "件のファイルを削除しました。";
         if (!empty($error_files)) {
             $message .= " ※削除に失敗したファイル: " . implode(', ', $error_files);
-            Log::info('UploadfileManage: Bulk delete failed for files: ' . implode(', ', $error_files));
+            Log::error('UploadfileManage: Bulk delete failed for files: ' . implode(', ', $error_files));
         }
 
         return redirect('/manage/uploadfile/')->with('flash_message', $message);
